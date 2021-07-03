@@ -26,42 +26,21 @@ void USB::init() {
 }
 
 USBD_StatusTypeDef USB::cmdRecv() {
-    Assert(!_cmdRecvUnderway);
-    _cmdRecvUnderway = true;
+    Assert(!_cmdRecvBusy);
+    _cmdRecvBusy = true;
     return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdRecvBuf, sizeof(_cmdRecvBuf));
 }
 
-bool USB::cmdRecvUnderway() const {
-    return _cmdRecvUnderway;
-}
-
 USBD_StatusTypeDef USB::dataRecv(void* addr, size_t len) {
-    Assert(!_dataRecvUnderway);
-    _dataRecvUnderway = true;
+    Assert(!_dataRecvBusy);
+    _dataRecvBusy = true;
     return USBD_LL_PrepareReceive(&_device, Endpoints::DataOut, (uint8_t*)addr, len);
 }
 
-bool USB::dataRecvUnderway() const {
-    return _dataRecvUnderway;
-}
-
 USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
-    Assert(!_dataSendUnderway);
-    _dataSendUnderway = true;
-    if (data != _dataSendBuf) {
-        memcpy(_dataSendBuf, data, len);
-    }
-    return USBD_LL_Transmit(&_device, Endpoints::DataIn, (uint8_t*)_dataSendBuf, len);
-}
-
-void* USB::dataSendBuf() const {
-    Assert(!_dataSendUnderway);
-    return _dataSendBuf;
-}
-
-size_t USB::dataSendBufCap() const {
-    Assert(!_dataSendUnderway);
-    return sizeof(_dataSendBuf);
+    Assert(!_dataSendBusy);
+    _dataSendBusy = true;
+    return USBD_LL_Transmit(&_device, Endpoints::DataIn, (uint8_t*)data, len);
 }
 
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
@@ -109,7 +88,8 @@ uint8_t USB::_usbd_DataIn(uint8_t epnum) {
     switch (epnum) {
     // DataIn endpoint
     case EndpointNum(Endpoints::DataIn):
-        _dataSendUnderway = false;
+        dataSendChannel.writeTry(DataSend{});
+        _dataSendBusy = false;
         break;
     
     default:
@@ -132,7 +112,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
             .data = _cmdRecvBuf,
             .len = dataLen,
         });
-        _cmdRecvUnderway = false;
+        _cmdRecvBusy = false;
         break;
     
     // DataOut endpoint
@@ -140,7 +120,7 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
         dataRecvChannel.writeTry(Data{
             .len = dataLen,
         });
-        _dataRecvUnderway = false;
+        _dataRecvBusy = false;
         break;
     }
     

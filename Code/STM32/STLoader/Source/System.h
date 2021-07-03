@@ -31,7 +31,7 @@ private:
     void _iceUpdateState();
     void _iceHandleUSBDataRecv(const USB::Data& ev);
     void _iceHandleQSPIEvent(const QSPI::Signal& ev);
-    void _qspiWriteBuf();
+    void _qspiWriteFromBuf();
     void _qspiWrite(const void* data, size_t len);
     
     // MSP430 Bootloader
@@ -42,7 +42,7 @@ private:
     void _mspWriteFinish();
     void _mspHandleUSBDataRecv(const USB::Data& ev);
     void _mspUpdateState();
-    void _mspWriteBuf();
+    void _mspWriteFromBuf();
     
 //    // MSP430 Debug
 //    void _mspDebugConnect(const STLoader::Cmd& cmd);
@@ -60,6 +60,8 @@ private:
     
     STLoader::Op _usbDataOp = STLoader::Op::None;
     size_t _usbDataRem = 0;
+    bool _usbDataBusy = false;
+    bool _qspiBusy = false;
     STLoader::Status _status = STLoader::Status::OK;
     
     uint32_t _mspAddr = 0;
