@@ -177,8 +177,18 @@ int main() {
     UCA0CTLW0 &= ~UCSWRST;
     
     for (uint8_t i=0;; i++) {
-        const ICE40::LEDSetMsg msg(i);
-        txrx(msg);
+        
+        {
+            const char msgStr[] = "halla";
+            const ICE40::EchoMsg msg(msgStr);
+            ICE40::EchoResp resp;
+            txrx(msg, resp);
+            if (memcmp(msg.payload, resp.payload+1, sizeof(msgStr))) {
+                const ICE40::LEDSetMsg msg(i);
+                txrx(msg);
+            }
+        }
+        
         __delay_cycles(1600000);
     }
     
