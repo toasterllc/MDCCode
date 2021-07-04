@@ -112,49 +112,90 @@ void System::init() {
     _usb.init();
     _qspi.init();
     
-    for (bool x=true;; x=!x) {
-        _LED0::Write(x);
-        _LED1::Write(x);
-        _LED2::Write(!x);
-        _LED3::Write(!x);
-        HAL_Delay(500);
-    }
+//    for (bool x=true;; x=!x) {
+//        _LED0::Write(x);
+//        _LED1::Write(x);
+//        _LED2::Write(!x);
+//        _LED3::Write(!x);
+//        HAL_Delay(500);
+//    }
     
     // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
     // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high
     {
-        constexpr uint16_t PM5CTL0          = 0x0130;
-        constexpr uint16_t PAOUT            = 0x0202;
-        constexpr uint16_t PADIR            = 0x0204;
-        constexpr uint16_t PAREN            = 0x0206;
-        constexpr uint16_t PASEL0           = 0x020A;
-        constexpr uint16_t PASEL1           = 0x020C;
-        
-        constexpr uint16_t VDD_1V9_IMG_EN   = 1<<0;
-        constexpr uint16_t VDD_2V8_IMG_EN   = 1<<2;
-        
         auto s = _msp.connect();
         if (s != _msp.Status::OK) {
             abort();
         }
         
-        // Clear LOCKLPM5 in the PM5CTL0 register
-        // This is necessary to be able to control the GPIOs
-        _msp.write(PM5CTL0, 0x0010);
+        const _MSP430::Regs regsRead1 = _msp._regsGet();
+        const _MSP430::Regs regsRead2 = _msp._regsGet();
         
-        // Clear PAOUT so everything is driven to 0 by default
-        _msp.write(PAOUT, 0x0000);
+        const _MSP430::Regs regsWrote1 = {
+            0xAABBC,
+            0xFEEDF,
+            0xCAFEB,
+            0xBABEE,
+            
+            0x12121,
+            0x23232,
+            0x34343,
+            0x45454,
+            
+            0x56565,
+            0x67676,
+            0x78787,
+            0x89898,
+            
+            0x9A9A9,
+            0xABABA,
+            0xBCBCB,
+            0xCDCDC,
+        };
+        _msp._regsSet(regsWrote1);
         
-        // Make VDD_2V8_IMG_EN / VDD_1V9_IMG_EN outputs
-        _msp.write(PADIR, VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
+        const _MSP430::Regs regsRead3 = _msp._regsGet();
+        const _MSP430::Regs regsRead4 = _msp._regsGet();
         
-        // Turn on VDD_2V8_IMG_EN
-        _msp.write(PAOUT, VDD_2V8_IMG_EN);
-        HAL_Delay(10);
-        
-        // Turn on VDD_1V9_IMG_EN
-        _msp.write(PAOUT, VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
+        for (;;);
     }
+    
+    
+//    // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
+//    // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high
+//    {
+//        constexpr uint16_t PM5CTL0          = 0x0130;
+//        constexpr uint16_t PAOUT            = 0x0202;
+//        constexpr uint16_t PADIR            = 0x0204;
+//        constexpr uint16_t PAREN            = 0x0206;
+//        constexpr uint16_t PASEL0           = 0x020A;
+//        constexpr uint16_t PASEL1           = 0x020C;
+//        
+//        constexpr uint16_t VDD_1V9_IMG_EN   = 1<<0;
+//        constexpr uint16_t VDD_2V8_IMG_EN   = 1<<2;
+//        
+//        auto s = _msp.connect();
+//        if (s != _msp.Status::OK) {
+//            abort();
+//        }
+//        
+//        // Clear LOCKLPM5 in the PM5CTL0 register
+//        // This is necessary to be able to control the GPIOs
+//        _msp.write(PM5CTL0, 0x0010);
+//        
+//        // Clear PAOUT so everything is driven to 0 by default
+//        _msp.write(PAOUT, 0x0000);
+//        
+//        // Make VDD_2V8_IMG_EN / VDD_1V9_IMG_EN outputs
+//        _msp.write(PADIR, VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
+//        
+//        // Turn on VDD_2V8_IMG_EN
+//        _msp.write(PAOUT, VDD_2V8_IMG_EN);
+//        HAL_Delay(10);
+//        
+//        // Turn on VDD_1V9_IMG_EN
+//        _msp.write(PAOUT, VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
+//    }
 }
 
 

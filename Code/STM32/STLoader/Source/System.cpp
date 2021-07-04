@@ -118,6 +118,8 @@ void System::_usbHandleCmd(const USB::CmdRecv& ev) {
     case Op::MSPConnect:            _mspConnect(cmd);           break;
     case Op::MSPRead:               _mspRead(cmd);              break;
     case Op::MSPWrite:              _mspWrite(cmd);             break;
+    case Op::MSPReadRegs:           _mspReadRegs(cmd);          break;
+    case Op::MSPWriteRegs:          _mspWriteRegs(cmd);         break;
     case Op::MSPDisconnect:         _mspDisconnect(cmd);        break;
     // MSP430 Debug
     // Set LED
@@ -399,14 +401,11 @@ void System::_qspiWriteFromBuf() {
 
 #pragma mark - MSP430 Bootloader
 void System::_mspConnect(const Cmd& cmd) {
-    Assert(cmd.op == Op::MSPConnect);
     const auto r = _msp.connect();
     _finishCmd(r==_msp.Status::OK ? Status::OK : Status::Error);
 }
 
 void System::_mspRead(const STLoader::Cmd& cmd) {
-    Assert(cmd.op == Op::MSPRead);
-    
     // Update state
     _op = cmd.op;
     _opDataRem = cmd.arg.MSPRead.len;
@@ -475,8 +474,6 @@ void System::_mspReadHandleUSBDataSend(const USB::DataSend& ev) {
 }
 
 void System::_mspWrite(const Cmd& cmd) {
-    Assert(cmd.op == Op::MSPWrite);
-    
     // Update state
     _op = cmd.op;
     _opDataRem = cmd.arg.MSPWrite.len;
@@ -539,8 +536,15 @@ void System::_mspWriteFromBuf() {
     _bufs.pop();
 }
 
+void System::_mspReadRegs(const Cmd& cmd) {
+    
+}
+
+void System::_mspWriteRegs(const Cmd& cmd) {
+    
+}
+
 void System::_mspDisconnect(const Cmd& cmd) {
-    Assert(cmd.op == Op::MSPDisconnect);
     _msp.disconnect();
     _finishCmd(Status::OK);
 }
@@ -548,8 +552,6 @@ void System::_mspDisconnect(const Cmd& cmd) {
 #pragma mark - Other Commands
 
 void System::_ledSet(const Cmd& cmd) {
-    Assert(cmd.op == Op::LEDSet);
-    
     switch (cmd.arg.LEDSet.idx) {
     case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
     case 1: _LED1::Write(cmd.arg.LEDSet.on); break;

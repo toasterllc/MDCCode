@@ -31,9 +31,9 @@ namespace STLoader {
         MSPConnect,
         MSPRead,
         MSPWrite,
+        MSPReadRegs,
+        MSPWriteRegs,
         MSPDisconnect,
-        // MSP430 Debugger
-        
         // Other commands
         LEDSet,
     };

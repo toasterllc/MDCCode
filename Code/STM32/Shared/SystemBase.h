@@ -47,9 +47,10 @@ protected:
     
     using _MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
     using _MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
+    using _MSP430 = MSP430<_MSPTest,_MSPRst_,SystemClock::CPUFreqMHz>;
     // TODO: move this to STLoader's system
     // TODO: we should also rename to MSPJTAG to make it clear that it's not for comms with the MSP app
-    MSP430<_MSPTest,_MSPRst_,SystemClock::CPUFreqMHz> _msp;
+    _MSP430 _msp;
     
     // LEDs
     using _LED0 = GPIO<GPIOPortF, GPIO_PIN_14>;
