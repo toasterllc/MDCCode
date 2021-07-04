@@ -47,6 +47,8 @@ private:
     void _mspWriteHandleUSBDataRecv(const USB::DataRecv& ev);
     void _mspWriteUpdateState();
     void _mspWriteFromBuf();
+    void _mspReadRegs(const STLoader::Cmd& cmd);
+    void _mspWriteRegs(const STLoader::Cmd& cmd);
     void _mspDisconnect(const STLoader::Cmd& cmd);
     
     // Other commands

@@ -7,7 +7,12 @@
 
 template <typename Test, typename Rst_, uint8_t CPUFreqMHz>
 class MSP430 {
-private:
+public:
+    struct Regs {
+        uint32_t r[16]; // 32-bit (not 16-bit) because MSP430X registers are 20-bit
+    };
+    
+public:
     static constexpr uint8_t _Reverse(uint8_t x) {
         return (x&(1<<7))>>7 | (x&(1<<6))>>5 | (x&(1<<5))>>3 | (x&(1<<4))>>1 |
                (x&(1<<3))<<1 | (x&(1<<2))<<3 | (x&(1<<1))<<5 | (x&(1<<0))<<7 ;
@@ -38,6 +43,16 @@ private:
     static constexpr uint16_t _DeviceID             = 0x8311;
     static constexpr uint32_t _SafePC               = 0x00000004;
     static constexpr uint32_t _SYSCFG0Addr          = 0x00000160;
+    
+    static constexpr uint16_t JMBMailboxIn0Ready    = 0x0001;
+    static constexpr uint16_t JMBMailboxIn1Ready    = 0x0002;
+    static constexpr uint16_t JMBMailboxOut0Ready   = 0x0004;
+    static constexpr uint16_t JMBMailboxOut1Ready   = 0x0008;
+    static constexpr uint16_t JMBDirWrite           = 0x0001; // Direction = writing into mailbox
+    static constexpr uint16_t JMBDirRead            = 0x0004; // Direction = reading from mailbox
+    static constexpr uint16_t JMBWidth32            = 0x0010; // 32-bit operation
+    static constexpr uint16_t JMBMagicNum           = 0xA55A;
+    static constexpr uint16_t JMBEraseCmd           = 0x1A1A;
     
     static void _DelayUs(uint32_t us) {
         const uint32_t cycles = CPUFreqMHz*us;
@@ -587,23 +602,141 @@ private:
     }
     
     bool _jmbErase() {
-        constexpr uint16_t MailboxReady = 0x0001; // Mailbox ready flag
-        constexpr uint16_t Width32 = 0x0010; // 32-bit operation
-        constexpr uint16_t DirWrite = 0x0001; // Direction = writing into mailbox
-        constexpr uint16_t MagicNum = 0xA55A;
-        constexpr uint16_t EraseCmd = 0x1A1A;
-        
         _irShift(_IR_JMB_EXCHANGE);
         bool ready = false;
         for (int i=0; i<3000 && !ready; i++) {
-            ready = _drShift<16>(0) & MailboxReady;
+            ready = _drShift<16>(0) & JMBMailboxIn0Ready;
         }
         if (!ready) return false; // Timeout
         
-        _drShift<16>(Width32 | DirWrite);
-        _drShift<16>(MagicNum);
-        _drShift<16>(EraseCmd);
+        _drShift<16>(JMBWidth32 | JMBDirWrite);
+        _drShift<16>(JMBMagicNum);
+        _drShift<16>(JMBEraseCmd);
         return true;
+    }
+    
+    bool _jmbRead(uint32_t* val=nullptr) {
+        _irShift(_IR_JMB_EXCHANGE);
+        if (!(_drShift<16>(0) & JMBMailboxOut1Ready)) return false;
+        _drShift<16>(JMBWidth32 | JMBDirRead);
+        const uint32_t low = _drShift<16>(0);
+        const uint32_t high = _drShift<16>(0);
+        if (val) *val = (high<<16)|low;
+        return true;
+    }
+    
+    // TODO: cleanup
+    //   - altRomAddressForCpuRead -- remove
+    //   - reg -- move `Mova` calculation into _regGet
+    uint32_t _regGet(uint16_t reg) {
+        constexpr bool altRomAddressForCpuRead = true;
+        uint32_t Rx_l = 0;
+        uint32_t Rx_h = 0;
+        _irShift(_IR_CNTRL_SIG_CAPTURE);
+        const uint16_t jmbAddr = 0x014c;
+        _tclkSet(0);
+        _irShift(_IR_DATA_16BIT);
+        _tclkSet(1);
+        _drShift<16>(reg);
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x1401);
+        _irShift(_IR_DATA_16BIT);
+        _tclkSet(0);
+        _tclkSet(1);
+        if (altRomAddressForCpuRead) {
+            _drShift<16>(0x0ff6);
+        } else {
+            _drShift<16>(jmbAddr);
+        }
+        _tclkSet(0);
+        _tclkSet(1);
+        _drShift<16>(0x3ffd);
+        _tclkSet(0);
+        if (altRomAddressForCpuRead) {
+            _irShift(_IR_CNTRL_SIG_16BIT);
+            _drShift<16>(0x0501);
+        }
+        _irShift(_IR_DATA_CAPTURE);
+        _tclkSet(1);
+        Rx_l = _drShift<16>(0);
+        _tclkSet(0);
+        _tclkSet(1);
+        Rx_h = _drShift<16>(0);
+        _tclkSet(0);
+        _tclkSet(1);
+        _tclkSet(0);
+        _tclkSet(1);
+        _tclkSet(0);
+        _tclkSet(1);
+        
+        if (!altRomAddressForCpuRead) {
+            _irShift(_IR_CNTRL_SIG_16BIT);
+            _drShift<16>(0x0501);
+        }
+        
+        _tclkSet(0);
+        _irShift(_IR_DATA_CAPTURE);
+        _tclkSet(1);
+        return (Rx_h<<16) | Rx_l;
+    }
+    
+    // TODO: cleanup
+    Regs _regsGet() {
+        Regs regs;
+        _irShift(_IR_CNTRL_SIG_CAPTURE);
+        for (uint16_t i=0; i<16; i++) {
+            const uint16_t Mova = 0x0060 | ((i<<8)&0x0F00);
+            regs.r[i] = _regGet(Mova);
+            // Set PC to "safe" address
+            _pcSet(_SafePC);
+            _irShift(_IR_CNTRL_SIG_16BIT);
+            _drShift<16>(0x0501);
+            _tclkSet(1);
+            _irShift(_IR_ADDR_CAPTURE);
+        }
+        // all CPU register values have been moved to the JMBOUT register address
+        // -> JMB needs to be cleared again!!
+        _jmbRead();
+        return regs;
+    }
+    
+    // TODO: cleanup
+    void _regSet(uint16_t mova, uint16_t val) {
+        _tclkSet(0);
+        _irShift(_IR_DATA_16BIT);
+        _tclkSet(1);
+        _drShift<16>(mova);
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x1401);
+        _irShift(_IR_DATA_16BIT);
+        _tclkSet(0);
+        _tclkSet(1);
+        _drShift<16>(val);
+        _tclkSet(0);
+        _tclkSet(1);
+        _drShift<16>(0x3ffd);
+        _tclkSet(0);
+        _tclkSet(1);
+        _tclkSet(0);
+        _irShift(_IR_ADDR_CAPTURE);
+        _drShift<20>(0);
+        _tclkSet(1);
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x0501);
+        _tclkSet(0);
+        _tclkSet(1);
+        _tclkSet(0);
+        _irShift(_IR_DATA_CAPTURE);
+        _tclkSet(1);
+    }
+    
+    // TODO: cleanup
+    void _regsSet(const Regs& regs) {
+        for (uint16_t i=0; i<16; i++) {
+            const uint16_t Mova = 0x0080 | ((regs.r[i]>>8) & 0x0F00) | (i & 0x000F);
+            const uint16_t low = regs.r[i] & 0xFFFF;
+            _regSet(Mova, low);
+        }
     }
     
     void _jtagStart(bool rst_) {
