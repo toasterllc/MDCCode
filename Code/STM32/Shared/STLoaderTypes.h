@@ -24,7 +24,7 @@ namespace STLoader {
         None,
         // STM32 Bootloader
         STWrite,
-        STFinish,
+        STReset,
         // ICE40 Bootloader
         ICEWrite,
         // MSP430 Bootloader
@@ -54,7 +54,7 @@ namespace STLoader {
             
             struct {
                 uint32_t entryPointAddr;
-            } STFinish;
+            } STReset;
             
             struct {
                 uint32_t len;
