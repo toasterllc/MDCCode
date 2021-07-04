@@ -67,7 +67,7 @@ void System::_finishCmd(Status status) {
     Assert(!_usbDataBusy);
     
     // Update our state
-    _usbDataOp = Op::None;
+    _op = Op::None;
     
     // Send our response
     auto& buf = _bufs.back();
@@ -102,7 +102,7 @@ void System::_usbHandleEvent(const USB::Event& ev) {
 }
 
 void System::_usbHandleCmd(const USB::CmdRecv& ev) {
-    Assert(_usbDataOp == Op::None);
+    Assert(_op == Op::None);
     
     Cmd cmd;
     Assert(ev.len == sizeof(cmd));
@@ -129,12 +129,12 @@ void System::_usbHandleCmd(const USB::CmdRecv& ev) {
 
 void System::_usbHandleDataRecv(const USB::DataRecv& ev) {
     Assert(_usbDataBusy);
-    Assert(ev.len <= _usbDataRem);
+    Assert(ev.len <= _opDataRem);
     
-    _usbDataRem -= ev.len;
+    _opDataRem -= ev.len;
     _usbDataBusy = false;
     
-    switch (_usbDataOp) {
+    switch (_op) {
     case Op::STWrite:   _stHandleUSBDataRecv(ev);       break;
     case Op::ICEWrite:  _iceHandleUSBDataRecv(ev);      break;
     case Op::MSPWrite:  _mspWriteHandleUSBDataRecv(ev); break;
@@ -150,7 +150,7 @@ void System::_usbHandleDataSend(const USB::DataSend& ev) {
     _bufs.pop();
     _usbDataBusy = false;
     
-    switch (_usbDataOp) {
+    switch (_op) {
     case Op::MSPWrite:  _mspReadHandleUSBDataSend(ev);  break;
     // The host received the status response;
     // arrange to receive another command
@@ -169,13 +169,13 @@ static size_t _ceilToPacketLength(size_t len) {
 
 void System::_usbDataRecvToBuf() {
     Assert(!_bufs.full());
-    Assert(_usbDataRem);
+    Assert(_opDataRem);
     Assert(!_usbDataBusy);
     auto& buf = _bufs.back();
     
-    // Prepare to receive either `_usbDataRem` bytes or the
+    // Prepare to receive either `_opDataRem` bytes or the
     // buffer capacity bytes, whichever is smaller.
-    const size_t len = _ceilToPacketLength(std::min(_usbDataRem, buf.cap));
+    const size_t len = _ceilToPacketLength(std::min(_opDataRem, buf.cap));
     // Ensure that after rounding up to the nearest packet size, we don't
     // exceed the buffer capacity. (This should always be safe as long as
     // the buffer capacity is a multiple of the max packet size.)
@@ -224,8 +224,8 @@ void System::_stWrite(const Cmd& cmd) {
     Assert(regionCap >= ceilLen); // TODO: error handling
     
     // Update state
-    _usbDataOp = cmd.op;
-    _usbDataRem = len;
+    _op = cmd.op;
+    _opDataRem = len;
     
     // Arrange to receive USB data
     _usb.dataRecv(addr, ceilLen);
@@ -301,8 +301,8 @@ void System::_iceWrite(const Cmd& cmd) {
     _qspi.eventChannel.read();
     
     // Update state
-    _usbDataOp = cmd.op;
-    _usbDataRem = cmd.arg.ICEWrite.len;
+    _op = cmd.op;
+    _opDataRem = cmd.arg.ICEWrite.len;
     
     // Prepare to receive USB data
     _usbDataRecvToBuf();
@@ -355,14 +355,14 @@ void System::_iceUpdateState() {
     //   - we expect more data, and
     //   - there's space in the queue, and
     //   - we haven't arranged to receive USB data yet
-    if (_usbDataRem && !_bufs.full() && !_usbDataBusy) {
+    if (_opDataRem && !_bufs.full() && !_usbDataBusy) {
         _usbDataRecvToBuf();
     }
     
     // We're done when:
     //   - there's no more data coming over USB, and
     //   - there's no more data to write over QSPI
-    if (!_usbDataRem && _bufs.empty()) {
+    if (!_opDataRem && _bufs.empty()) {
         _iceWriteFinish();
     }
 }
@@ -379,7 +379,7 @@ void System::_iceHandleUSBDataRecv(const USB::DataRecv& ev) {
 }
 
 void System::_iceHandleQSPIEvent(const QSPI::Signal& ev) {
-    Assert(_usbDataOp == Op::ICEWrite);
+    Assert(_op == Op::ICEWrite);
     Assert(!_bufs.empty());
     Assert(_qspiBusy);
     
@@ -408,8 +408,8 @@ void System::_mspRead(const STLoader::Cmd& cmd) {
     Assert(cmd.op == Op::MSPRead);
     
     // Update state
-    _usbDataOp = cmd.op;
-    _usbDataRem = cmd.arg.MSPRead.len;
+    _op = cmd.op;
+    _opDataRem = cmd.arg.MSPRead.len;
     _mspAddr = cmd.arg.MSPRead.addr;
     
     _mspReadUpdateState();
@@ -432,7 +432,7 @@ void System::_mspReadUpdateState() {
     // Fill our buffers with data read from MSP430 when:
     //   - there's more data to be read, and
     //   - there's space in the queue
-    while (_usbDataRem && !_bufs.full()) {
+    while (_opDataRem && !_bufs.full()) {
         _mspReadToBuf();
     }
     
@@ -448,21 +448,21 @@ void System::_mspReadUpdateState() {
     // We're done when:
     //   - there's no more data to be read, and
     //   - there's no more data to send over USB
-    if (!_usbDataRem && _bufs.empty()) {
+    if (!_opDataRem && _bufs.empty()) {
         _mspReadFinish();
     }
 }
 
 void System::_mspReadToBuf() {
     Assert(!_bufs.full());
-    Assert(_usbDataRem);
+    Assert(_opDataRem);
     auto& buf = _bufs.back();
     
-    // Prepare to receive either `_usbDataRem` bytes or the
+    // Prepare to receive either `_opDataRem` bytes or the
     // buffer capacity bytes, whichever is smaller.
-    const size_t len = std::min(_usbDataRem, buf.cap);
+    const size_t len = std::min(_opDataRem, buf.cap);
     _msp.read(_mspAddr, buf.data, len);
-    _usbDataRem -= len;
+    _opDataRem -= len;
     _mspAddr += len;
     
     // Enqueue the buffer
@@ -478,8 +478,8 @@ void System::_mspWrite(const Cmd& cmd) {
     Assert(cmd.op == Op::MSPWrite);
     
     // Update state
-    _usbDataOp = cmd.op;
-    _usbDataRem = cmd.arg.MSPWrite.len;
+    _op = cmd.op;
+    _opDataRem = cmd.arg.MSPWrite.len;
     _msp.crcReset();
     _mspAddr = cmd.arg.MSPWrite.addr;
     
@@ -512,7 +512,7 @@ void System::_mspWriteUpdateState() {
     //
     // *** We want to do this before executing `_msp.write`, so that we can
     // *** be receiving USB data while we're sending data via Spy-bi-wire.
-    if (_usbDataRem && !_bufs.full() && !_usbDataBusy) {
+    if (_opDataRem && !_bufs.full() && !_usbDataBusy) {
         _usbDataRecvToBuf();
     }
     
@@ -523,7 +523,7 @@ void System::_mspWriteUpdateState() {
     
     // If there's no more data coming over USB, and there's no more
     // data to write, then we're done
-    if (!_usbDataRem && _bufs.empty()) {
+    if (!_opDataRem && _bufs.empty()) {
         _mspWriteFinish();
     }
 }
