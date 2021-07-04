@@ -12,7 +12,7 @@ public:
         uint32_t r[16]; // 32-bit (not 16-bit) because MSP430X registers are 20-bit
     };
     
-public:
+private:
     static constexpr uint8_t _Reverse(uint8_t x) {
         return (x&(1<<7))>>7 | (x&(1<<6))>>5 | (x&(1<<5))>>3 | (x&(1<<4))>>1 |
                (x&(1<<3))<<1 | (x&(1<<2))<<3 | (x&(1<<1))<<5 | (x&(1<<0))<<7 ;
@@ -921,5 +921,13 @@ public:
     Status crcVerify() {
         Assert(_crcStarted);
         return (_crcCalc(_crcAddr, _crcLen)==_crc ? Status::OK : Status::Error);
+    }
+    
+    Regs regsGet() {
+        return _regsGet();
+    }
+    
+    void regsSet(const Regs& regs) {
+        return _regsSet(regs);
     }
 };

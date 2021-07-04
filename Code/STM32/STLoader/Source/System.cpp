@@ -116,11 +116,11 @@ void System::_usbHandleCmd(const USB::CmdRecv& ev) {
     case Op::ICEWrite:              _iceWrite(cmd);             break;
     // MSP430 Bootloader
     case Op::MSPConnect:            _mspConnect(cmd);           break;
+    case Op::MSPDisconnect:         _mspDisconnect(cmd);        break;
     case Op::MSPRead:               _mspRead(cmd);              break;
     case Op::MSPWrite:              _mspWrite(cmd);             break;
-    case Op::MSPReadRegs:           _mspReadRegs(cmd);          break;
-    case Op::MSPWriteRegs:          _mspWriteRegs(cmd);         break;
-    case Op::MSPDisconnect:         _mspDisconnect(cmd);        break;
+    case Op::MSPRegsGet:            _mspRegsGet(cmd);          break;
+    case Op::MSPRegsSet:            _mspRegsSet(cmd);         break;
     // MSP430 Debug
     // Set LED
     case Op::LEDSet:                _ledSet(cmd);               break;
@@ -405,6 +405,11 @@ void System::_mspConnect(const Cmd& cmd) {
     _finishCmd(r==_msp.Status::OK ? Status::OK : Status::Error);
 }
 
+void System::_mspDisconnect(const Cmd& cmd) {
+    _msp.disconnect();
+    _finishCmd(Status::OK);
+}
+
 void System::_mspRead(const STLoader::Cmd& cmd) {
     // Update state
     _op = cmd.op;
@@ -536,16 +541,26 @@ void System::_mspWriteFromBuf() {
     _bufs.pop();
 }
 
-void System::_mspReadRegs(const Cmd& cmd) {
-    
+void System::_mspRegsGet(const Cmd& cmd) {
+    const _MSP430::Regs regs = _msp.regsGet();
+    _usb.dataSend(&regs.r, sizeof(regs.r));
+    _usb.dataSendChannel.read();
+    _finishCmd(Status::OK);
 }
 
-void System::_mspWriteRegs(const Cmd& cmd) {
+void System::_mspRegsSet(const Cmd& cmd) {
+    Assert(!_bufs.full());
     
-}
-
-void System::_mspDisconnect(const Cmd& cmd) {
-    _msp.disconnect();
+    _MSP430::Regs regs;
+    auto& buf = _bufs.back();
+    static_assert(sizeof(_buf0) >= sizeof(regs.r));
+    _usb.dataRecv(buf.data, buf.cap);
+    
+    const auto ev = _usb.dataRecvChannel.read();
+    Assert(ev.len == sizeof(regs.r));
+    memcpy(regs.r, buf.data, sizeof(regs.r));
+    
+    _msp.regsSet(regs);
     _finishCmd(Status::OK);
 }
 
