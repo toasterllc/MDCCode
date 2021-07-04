@@ -25,7 +25,6 @@ private:
     // STM32 Bootloader
     void _stWrite(const STLoader::Cmd& cmd);
     void _stReset(const STLoader::Cmd& cmd);
-    void _stWriteFinish();
     void _stHandleUSBDataRecv(const USB::DataRecv& ev);
     
     // ICE40 Bootloader
@@ -64,7 +63,6 @@ private:
     size_t _usbDataRem = 0;
     bool _usbDataBusy = false;
     bool _qspiBusy = false;
-    STLoader::Status _status = STLoader::Status::OK;
     
     uint32_t _mspAddr = 0;
     

@@ -67,13 +67,12 @@ void System::_finishCmd(Status status) {
     Assert(!_usbDataBusy);
     
     // Update our state
-    _status = status;
     _usbDataOp = Op::None;
     
     // Send our response
     auto& buf = _bufs.back();
-    memcpy(buf.data, &_status, sizeof(_status));
-    _bufs.back().len = sizeof(_status);
+    memcpy(buf.data, &status, sizeof(status));
+    _bufs.back().len = sizeof(status);
     _bufs.push();
     _usbDataSendFromBuf();
 }
@@ -103,8 +102,7 @@ void System::_usbHandleEvent(const USB::Event& ev) {
 }
 
 void System::_usbHandleCmd(const USB::CmdRecv& ev) {
-    // TODO: if this works, remove all the redundant checks from the functions called below
-    Assert(_status != Status::Busy);
+    Assert(_usbDataOp == Op::None);
     
     Cmd cmd;
     Assert(ev.len == sizeof(cmd));
@@ -130,7 +128,6 @@ void System::_usbHandleCmd(const USB::CmdRecv& ev) {
 }
 
 void System::_usbHandleDataRecv(const USB::DataRecv& ev) {
-    Assert(_status == Status::Busy);
     Assert(_usbDataBusy);
     Assert(ev.len <= _usbDataRem);
     
@@ -146,7 +143,6 @@ void System::_usbHandleDataRecv(const USB::DataRecv& ev) {
 }
 
 void System::_usbHandleDataSend(const USB::DataSend& ev) {
-//    Assert(_status == Status::Busy);
     Assert(_usbDataBusy);
     Assert(!_bufs.empty());
     
@@ -156,7 +152,8 @@ void System::_usbHandleDataSend(const USB::DataSend& ev) {
     
     switch (_usbDataOp) {
     case Op::MSPWrite:  _mspReadHandleUSBDataSend(ev);  break;
-    // Once the host receives the status response, accept another command
+    // The host received the status response;
+    // arrange to receive another command
     case Op::None:      _usbCmdRecv();                  break;
     default:            abort();                        break;
     }
@@ -218,9 +215,6 @@ static size_t _stRegionCapacity(void* addr) {
 
 #pragma mark - STM32 Bootloader
 void System::_stWrite(const Cmd& cmd) {
-    Assert(cmd.op == Op::STWrite);
-    Assert(_status != Status::Busy);
-    
     void*const addr = (void*)cmd.arg.STWrite.addr;
     const size_t len = cmd.arg.STWrite.len;
     const size_t ceilLen = _ceilToPacketLength(len);
@@ -232,7 +226,6 @@ void System::_stWrite(const Cmd& cmd) {
     // Update state
     _usbDataOp = cmd.op;
     _usbDataRem = len;
-    _status = Status::Busy;
     
     // Arrange to receive USB data
     _usb.dataRecv(addr, ceilLen);
@@ -240,8 +233,6 @@ void System::_stWrite(const Cmd& cmd) {
 }
 
 void System::_stReset(const Cmd& cmd) {
-    Assert(cmd.op == Op::STReset);
-    
     Start.setAppEntryPointAddr(cmd.arg.STReset.entryPointAddr);
     // Perform software reset
     HAL_NVIC_SystemReset();
@@ -249,15 +240,9 @@ void System::_stReset(const Cmd& cmd) {
     abort();
 }
 
-void System::_stWriteFinish() {
-    Assert(_status == Status::Busy);
-    _finishCmd(Status::OK);
-}
-
 void System::_stHandleUSBDataRecv(const USB::DataRecv& ev) {
     Assert(ev.len);
-    Assert(_status == Status::Busy);
-    _stWriteFinish();
+    _finishCmd(Status::OK);
 }
 
 #pragma mark - ICE40 Bootloader
@@ -288,9 +273,6 @@ static void _qspiWrite(QSPI& qspi, const void* data, size_t len) {
 }
 
 void System::_iceWrite(const Cmd& cmd) {
-    Assert(cmd.op == Op::ICEWrite);
-    Assert(_status != Status::Busy);
-    
     // Configure ICE40 control GPIOs
     _ICECRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICECDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -321,14 +303,12 @@ void System::_iceWrite(const Cmd& cmd) {
     // Update state
     _usbDataOp = cmd.op;
     _usbDataRem = cmd.arg.ICEWrite.len;
-    _status = Status::Busy;
     
     // Prepare to receive USB data
     _usbDataRecvToBuf();
 }
 
 void System::_iceWriteFinish() {
-    Assert(_status == Status::Busy);
     Assert(_bufs.empty());
     
     bool ok = false;
@@ -389,7 +369,6 @@ void System::_iceUpdateState() {
 
 void System::_iceHandleUSBDataRecv(const USB::DataRecv& ev) {
     Assert(ev.len);
-    Assert(_status == Status::Busy);
     Assert(!_bufs.full());
     
     // Enqueue the buffer
@@ -400,7 +379,7 @@ void System::_iceHandleUSBDataRecv(const USB::DataRecv& ev) {
 }
 
 void System::_iceHandleQSPIEvent(const QSPI::Signal& ev) {
-    Assert(_status == Status::Busy);
+    Assert(_usbDataOp == Op::ICEWrite);
     Assert(!_bufs.empty());
     Assert(_qspiBusy);
     
@@ -421,21 +400,17 @@ void System::_qspiWriteFromBuf() {
 #pragma mark - MSP430 Bootloader
 void System::_mspConnect(const Cmd& cmd) {
     Assert(cmd.op == Op::MSPConnect);
-    Assert(_status != Status::Busy);
-    
     const auto r = _msp.connect();
     _finishCmd(r==_msp.Status::OK ? Status::OK : Status::Error);
 }
 
 void System::_mspRead(const STLoader::Cmd& cmd) {
     Assert(cmd.op == Op::MSPRead);
-    Assert(_status != Status::Busy);
     
     // Update state
     _usbDataOp = cmd.op;
     _usbDataRem = cmd.arg.MSPRead.len;
     _mspAddr = cmd.arg.MSPRead.addr;
-    _status = Status::Busy;
     
     _mspReadUpdateState();
 }
@@ -496,20 +471,17 @@ void System::_mspReadToBuf() {
 }
 
 void System::_mspReadHandleUSBDataSend(const USB::DataSend& ev) {
-    Assert(_status == Status::Busy);
     _mspReadUpdateState();
 }
 
 void System::_mspWrite(const Cmd& cmd) {
     Assert(cmd.op == Op::MSPWrite);
-    Assert(_status != Status::Busy);
     
     // Update state
     _usbDataOp = cmd.op;
     _usbDataRem = cmd.arg.MSPWrite.len;
     _msp.crcReset();
     _mspAddr = cmd.arg.MSPWrite.addr;
-    _status = Status::Busy;
     
     // Prepare to receive USB data
     _usbDataRecvToBuf();
@@ -523,7 +495,6 @@ void System::_mspWriteFinish() {
 
 void System::_mspWriteHandleUSBDataRecv(const USB::DataRecv& ev) {
     Assert(ev.len);
-    Assert(_status == Status::Busy);
     Assert(!_bufs.full());
     
     // Enqueue the buffer
@@ -570,8 +541,6 @@ void System::_mspWriteFromBuf() {
 
 void System::_mspDisconnect(const Cmd& cmd) {
     Assert(cmd.op == Op::MSPDisconnect);
-    Assert(_status != Status::Busy);
-    
     _msp.disconnect();
     _finishCmd(Status::OK);
 }
@@ -580,7 +549,6 @@ void System::_mspDisconnect(const Cmd& cmd) {
 
 void System::_ledSet(const Cmd& cmd) {
     Assert(cmd.op == Op::LEDSet);
-    Assert(_status != Status::Busy);
     
     switch (cmd.arg.LEDSet.idx) {
     case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
