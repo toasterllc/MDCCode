@@ -47,12 +47,12 @@ public:
         _waitOrError("STWrite command failed");
     }
     
-    void stFinish(uint32_t entryPointAddr) {
+    void stReset(uint32_t entryPointAddr) {
         using namespace STLoader;
         const Cmd cmd = {
-            .op = Op::STFinish,
+            .op = Op::STReset,
             .arg = {
-                .STFinish = {
+                .STReset = {
                     .entryPointAddr = entryPointAddr,
                 },
             },

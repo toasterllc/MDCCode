@@ -75,7 +75,7 @@ void System::_finishCmd(Status status) {
     memcpy(buf.data, &_status, sizeof(_status));
     _bufs.back().len = sizeof(_status);
     _bufs.push();
-    _usbDataSend();
+    _usbDataSendFromBuf();
 }
 
 #pragma mark - USB
@@ -113,7 +113,7 @@ void System::_usbHandleCmd(const USB::CmdRecv& ev) {
     switch (cmd.op) {
     // STM32 Bootloader
     case Op::STWrite:               _stWrite(cmd);              break;
-    case Op::STFinish:              _stFinish(cmd);             break;
+    case Op::STReset:               _stReset(cmd);              break;
     // ICE40 Bootloader
     case Op::ICEWrite:              _iceWrite(cmd);             break;
     // MSP430 Bootloader
@@ -170,7 +170,7 @@ static size_t _ceilToPacketLength(size_t len) {
     return len;
 }
 
-void System::_usbDataRecv() {
+void System::_usbDataRecvToBuf() {
     Assert(!_bufs.full());
     Assert(_usbDataRem);
     Assert(!_usbDataBusy);
@@ -184,13 +184,12 @@ void System::_usbDataRecv() {
     // the buffer capacity is a multiple of the max packet size.)
     Assert(len <= buf.cap);
     
-    _usb.dataRecv(buf.data, len); // TODO: handle errors
+    _usb.dataRecv(buf.data, len);
     _usbDataBusy = true;
 }
 
-void System::_usbDataSend() {
+void System::_usbDataSendFromBuf() {
     Assert(!_bufs.empty());
-//    Assert(_usbDataRem);
     Assert(!_usbDataBusy);
     
     const auto& buf = _bufs.front();
@@ -235,14 +234,15 @@ void System::_stWrite(const Cmd& cmd) {
     _usbDataRem = len;
     _status = Status::Busy;
     
-    // Prepare to receive USB data
+    // Arrange to receive USB data
     _usb.dataRecv(addr, ceilLen);
+    _usbDataBusy = true;
 }
 
-void System::_stFinish(const Cmd& cmd) {
-    Assert(cmd.op == Op::STFinish);
+void System::_stReset(const Cmd& cmd) {
+    Assert(cmd.op == Op::STReset);
     
-    Start.setAppEntryPointAddr(cmd.arg.STFinish.entryPointAddr);
+    Start.setAppEntryPointAddr(cmd.arg.STReset.entryPointAddr);
     // Perform software reset
     HAL_NVIC_SystemReset();
     // Unreachable
@@ -324,7 +324,7 @@ void System::_iceWrite(const Cmd& cmd) {
     _status = Status::Busy;
     
     // Prepare to receive USB data
-    _usbDataRecv();
+    _usbDataRecvToBuf();
 }
 
 void System::_iceWriteFinish() {
@@ -376,7 +376,7 @@ void System::_iceUpdateState() {
     //   - there's space in the queue, and
     //   - we haven't arranged to receive USB data yet
     if (_usbDataRem && !_bufs.full() && !_usbDataBusy) {
-        _usbDataRecv();
+        _usbDataRecvToBuf();
     }
     
     // We're done when:
@@ -451,7 +451,7 @@ void System::_mspReadUpdateState() {
     // Do this before reading from MSP430, so we can send USB data
     // in the background while reading from MSP430.
     if (!_bufs.empty() && !_usbDataBusy) {
-        _usbDataSend();
+        _usbDataSendFromBuf();
     }
     
     // Fill our buffers with data read from MSP430 when:
@@ -467,7 +467,7 @@ void System::_mspReadUpdateState() {
     // Do this again after reading from MSP, since we may not have had any
     // buffers available to send before we read from MSP.
     if (!_bufs.empty() && !_usbDataBusy) {
-        _usbDataSend();
+        _usbDataSendFromBuf();
     }
     
     // We're done when:
@@ -512,7 +512,7 @@ void System::_mspWrite(const Cmd& cmd) {
     _status = Status::Busy;
     
     // Prepare to receive USB data
-    _usbDataRecv();
+    _usbDataRecvToBuf();
 }
 
 void System::_mspWriteFinish() {
@@ -542,7 +542,7 @@ void System::_mspWriteUpdateState() {
     // *** We want to do this before executing `_msp.write`, so that we can
     // *** be receiving USB data while we're sending data via Spy-bi-wire.
     if (_usbDataRem && !_bufs.full() && !_usbDataBusy) {
-        _usbDataRecv();
+        _usbDataRecvToBuf();
     }
     
     // Send data if we have data to write

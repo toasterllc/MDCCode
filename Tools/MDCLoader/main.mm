@@ -98,7 +98,7 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
     
     // Reset the device, triggering it to load the program we just wrote
     printf("STLoad: Resetting device\n");
-    device.stFinish(entryPointAddr);
+    device.stReset(entryPointAddr);
 }
 
 static void iceLoad(const Args& args, MDCLoaderDevice& device) {

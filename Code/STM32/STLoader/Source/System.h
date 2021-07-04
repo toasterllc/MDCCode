@@ -19,12 +19,12 @@ private:
     void _usbHandleCmd(const USB::CmdRecv& ev);
     void _usbHandleDataRecv(const USB::DataRecv& ev);
     void _usbHandleDataSend(const USB::DataSend& ev);
-    void _usbDataRecv();
-    void _usbDataSend();
+    void _usbDataRecvToBuf();
+    void _usbDataSendFromBuf();
     
     // STM32 Bootloader
     void _stWrite(const STLoader::Cmd& cmd);
-    void _stFinish(const STLoader::Cmd& cmd);
+    void _stReset(const STLoader::Cmd& cmd);
     void _stWriteFinish();
     void _stHandleUSBDataRecv(const USB::DataRecv& ev);
     
