@@ -129,6 +129,27 @@ static void mspLoad(const Args& args, MDCLoaderDevice& device) {
         device.mspWrite(dataAddr, data, dataLen);
     }
     
+    // Read back data and compare with what we expect
+//    for (const auto& s : sections) {
+//        // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
+//        if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
+//        // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
+//        if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
+//        const void*const data = bin.sectionData(s);
+//        const size_t dataLen = s.size;
+//        const uint32_t dataAddr = s.addr;
+//        if (!dataLen) continue; // Ignore sections with zero length
+//        
+//        printf("MSPLoad: Verifying %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
+//        
+//        auto buf = std::make_unique<uint8_t[]>(dataLen);
+//        device.mspRead(dataAddr, buf.get(), dataLen);
+//        
+//        if (memcmp(data, buf.get(), dataLen)) {
+//            throw RuntimeError("section %s doesn't match", s.name.c_str());
+//        }
+//    }
+    
     device.mspDisconnect();
 }
 

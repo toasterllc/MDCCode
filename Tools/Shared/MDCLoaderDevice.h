@@ -44,7 +44,7 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        _waitOrError("STWrite command failed");
+        _waitOrThrow("STWrite command failed");
     }
     
     void stReset(uint32_t entryPointAddr) {
@@ -75,7 +75,7 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        _waitOrError("ICEWrite command failed");
+        _waitOrThrow("ICEWrite command failed");
     }
     
     void mspConnect() {
@@ -85,7 +85,7 @@ public:
         };
         // Send command
         cmdOutPipe.write(cmd);
-        _waitOrError("MSPStart command failed");
+        _waitOrThrow("MSPStart command failed");
     }
     
     void mspWrite(uint32_t addr, const void* data, size_t len) {
@@ -103,7 +103,25 @@ public:
         cmdOutPipe.write(cmd);
         // Send data
         dataOutPipe.writeBuf(data, len);
-        _waitOrError("MSPWrite command failed");
+        _waitOrThrow("MSPWrite command failed");
+    }
+    
+    void mspRead(uint32_t addr, void* data, size_t len) {
+        using namespace STLoader;
+        const Cmd cmd = {
+            .op = Op::MSPRead,
+            .arg = {
+                .MSPRead = {
+                    .addr = addr,
+                    .len = (uint32_t)len,
+                },
+            },
+        };
+        // Send command
+        cmdOutPipe.write(cmd);
+        // Read data
+        dataInPipe.readBuf(data, len);
+        _waitOrThrow("MSPRead command failed");
     }
     
     void mspDisconnect() {
@@ -113,7 +131,7 @@ public:
         };
         // Send command
         cmdOutPipe.write(cmd);
-        _waitOrError("MSPFinish command failed");
+        _waitOrThrow("MSPFinish command failed");
     }
     
     void ledSet(uint8_t idx, bool on) {
@@ -128,7 +146,7 @@ public:
             },
         };
         cmdOutPipe.write(cmd);
-        _waitOrError("LEDSet command failed");
+        _waitOrThrow("LEDSet command failed");
     }
     
     USBPipe cmdOutPipe;
@@ -138,7 +156,7 @@ public:
 private:
     USBInterface _interface;
     
-    void _waitOrError(const char* errMsg) {
+    void _waitOrThrow(const char* errMsg) {
         // Wait for completion and throw on failure
         STLoader::Status s;
         dataInPipe.read(s);
