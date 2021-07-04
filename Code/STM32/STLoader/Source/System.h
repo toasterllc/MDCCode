@@ -59,8 +59,8 @@ private:
     using _ICESPIClk = GPIO<GPIOPortB, GPIO_PIN_2>;
     using _ICESPICS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     
-    STLoader::Op _usbDataOp = STLoader::Op::None;
-    size_t _usbDataRem = 0;
+    STLoader::Op _op = STLoader::Op::None;
+    size_t _opDataRem = 0;
     bool _usbDataBusy = false;
     bool _qspiBusy = false;
     
