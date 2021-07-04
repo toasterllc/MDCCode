@@ -51,7 +51,7 @@ private:
     }
     
     static bool _FRAMAddr(uint32_t addr) {
-        return addr>=0xE300 && addr<=0xFFFE;
+        return addr>=0xE300 && addr<=0xFFFF;
     }
     
     using _TCK = Test;
@@ -398,7 +398,7 @@ private:
         // (including at the end of the address space, and at the start/end
         // of regions).
         // In addition, unaligned word reads also appear to work, even
-        // across different region types (FRAM and ROM).
+        // when straddling different regions (eg FRAM and ROM).
         _pcSet(addr);
         _tclkSet(1);
         _irShift(_IR_CNTRL_SIG_16BIT);
