@@ -72,7 +72,7 @@ void System::_finishCmd(Status status) {
     // Send our response
     auto& buf = _bufs.back();
     memcpy(buf.data, &status, sizeof(status));
-    _bufs.back().len = sizeof(status);
+    buf.len = sizeof(status);
     _bufs.push();
     _usbDataSendFromBuf();
 }
@@ -151,7 +151,7 @@ void System::_usbHandleDataSend(const USB::DataSend& ev) {
     _usbDataBusy = false;
     
     switch (_op) {
-    case Op::MSPWrite:  _mspReadHandleUSBDataSend(ev);  break;
+    case Op::MSPRead:   _mspReadHandleUSBDataSend(ev);  break;
     // The host received the status response;
     // arrange to receive another command
     case Op::None:      _usbCmdRecv();                  break;
@@ -466,7 +466,7 @@ void System::_mspReadToBuf() {
     _mspAddr += len;
     
     // Enqueue the buffer
-    _bufs.back().len = len;
+    buf.len = len;
     _bufs.push();
 }
 

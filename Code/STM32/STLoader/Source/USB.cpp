@@ -15,14 +15,33 @@ void USB::init() {
     //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
     //   - FIFO sizes (supplied as arguments below) have units of 4-byte words.
     
+    constexpr size_t FIFOCapTotal       = 4096;
+    constexpr size_t FIFOCapRx          = 2048;
+    constexpr size_t FIFOCapTxCtrl      = 64;
+    constexpr size_t FIFOCapTxDataIn    = 1984;
+    
+    // Verify that the total memory allocated for the Rx/Tx FIFOs fits within the FIFO memory.
+    static_assert(FIFOCapRx+FIFOCapTxCtrl+FIFOCapTxDataIn <= FIFOCapTotal);
+    // Verify that FIFOCapRx can fit the max packet size + overhead
+    // USB reference manual claims that overhead is 12 words:
+    //   2 words (for the status of the control OUT data packet) +
+    //   10 words (for setup packets)"
+    static_assert(FIFOCapRx >= MaxPacketSize::Data+12*4);
+    // Verify that the FIFO space allocated for the Ctrl endpoint is large enough
+    // to fit the Ctrl endpoint's max packet size
+    static_assert(FIFOCapTxCtrl >= MaxPacketSize::Cmd);
+    // Verify that the FIFO space allocated for the DataIn endpoint is large enough
+    // to fit the DataIn endpoint's max packet size
+    static_assert(FIFOCapTxDataIn >= MaxPacketSize::Data);
+    
     // # Set Rx FIFO sizes, shared by all OUT endpoints (GRXFSIZ register):
     //   "The OTG peripheral uses a single receive FIFO that receives
     //   the data directed to all OUT endpoints."
-    HAL_PCDEx_SetRxFiFo(&_pcd, 512);
+    HAL_PCDEx_SetRxFiFo(&_pcd, FIFOCapRx/4);
     
     // # Set Tx FIFO sizes (IN endpoints; DIEPTXF0 register)
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::Ctrl), 16);
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::DataIn), 64);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::Ctrl), FIFOCapTxCtrl/4);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::DataIn), FIFOCapTxDataIn/4);
 }
 
 USBD_StatusTypeDef USB::cmdRecv() {
