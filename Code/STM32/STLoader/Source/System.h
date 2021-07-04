@@ -37,6 +37,7 @@ private:
     
     // MSP430 Bootloader
     void _mspConnect(const STLoader::Cmd& cmd);
+    void _mspDisconnect(const STLoader::Cmd& cmd);
     void _mspRead(const STLoader::Cmd& cmd);
     void _mspReadFinish();
     void _mspReadUpdateState();
@@ -47,9 +48,8 @@ private:
     void _mspWriteHandleUSBDataRecv(const USB::DataRecv& ev);
     void _mspWriteUpdateState();
     void _mspWriteFromBuf();
-    void _mspReadRegs(const STLoader::Cmd& cmd);
-    void _mspWriteRegs(const STLoader::Cmd& cmd);
-    void _mspDisconnect(const STLoader::Cmd& cmd);
+    void _mspRegsGet(const STLoader::Cmd& cmd);
+    void _mspRegsSet(const STLoader::Cmd& cmd);
     
     // Other commands
     void _ledSet(const STLoader::Cmd& cmd);

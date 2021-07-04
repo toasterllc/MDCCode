@@ -88,6 +88,16 @@ public:
         _waitOrThrow("MSPStart command failed");
     }
     
+    void mspDisconnect() {
+        using namespace STLoader;
+        const Cmd cmd = {
+            .op = Op::MSPDisconnect,
+        };
+        // Send command
+        cmdOutPipe.write(cmd);
+        _waitOrThrow("MSPFinish command failed");
+    }
+    
     void mspWrite(uint32_t addr, const void* data, size_t len) {
         using namespace STLoader;
         const Cmd cmd = {
@@ -122,16 +132,6 @@ public:
         // Read data
         dataInPipe.readBuf(data, len);
         _waitOrThrow("MSPRead command failed");
-    }
-    
-    void mspDisconnect() {
-        using namespace STLoader;
-        const Cmd cmd = {
-            .op = Op::MSPDisconnect,
-        };
-        // Send command
-        cmdOutPipe.write(cmd);
-        _waitOrThrow("MSPFinish command failed");
     }
     
     void ledSet(uint8_t idx, bool on) {

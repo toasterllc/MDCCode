@@ -29,11 +29,11 @@ namespace STLoader {
         ICEWrite,
         // MSP430 Bootloader
         MSPConnect,
+        MSPDisconnect,
         MSPRead,
         MSPWrite,
-        MSPReadRegs,
-        MSPWriteRegs,
-        MSPDisconnect,
+        MSPRegsGet,
+        MSPRegsSet,
         // Other commands
         LEDSet,
     };
