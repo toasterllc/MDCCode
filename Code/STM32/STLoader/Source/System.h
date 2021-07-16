@@ -38,18 +38,26 @@ private:
     // MSP430 Bootloader
     void _mspConnect(const STLoader::Cmd& cmd);
     void _mspDisconnect(const STLoader::Cmd& cmd);
+    
     void _mspRead(const STLoader::Cmd& cmd);
     void _mspReadFinish();
     void _mspReadUpdateState();
     void _mspReadToBuf();
     void _mspReadHandleUSBDataSend(const USB::DataSend& ev);
+    
     void _mspWrite(const STLoader::Cmd& cmd);
     void _mspWriteFinish();
     void _mspWriteHandleUSBDataRecv(const USB::DataRecv& ev);
     void _mspWriteUpdateState();
     void _mspWriteFromBuf();
-    void _mspRegsGet(const STLoader::Cmd& cmd);
-    void _mspRegsSet(const STLoader::Cmd& cmd);
+    
+    void _mspDebug(const STLoader::Cmd& cmd);
+    void _mspDebugHandleSetPins(const STLoader::MSPDebugCmd& cmd);
+    void _mspDebugPushReadBits();
+    void _mspDebugHandleSBWIO(const STLoader::MSPDebugCmd& cmd);
+    void _mspDebugHandleCmd(const STLoader::MSPDebugCmd& cmd);
+    void _mspDebugHandleWrite(size_t len);
+    void _mspDebugHandleRead(size_t len);
     
     // Other commands
     void _ledSet(const STLoader::Cmd& cmd);
@@ -67,6 +75,12 @@ private:
     bool _qspiBusy = false;
     
     uint32_t _mspAddr = 0;
+    
+    struct {
+        uint8_t bits = 0;
+        uint8_t bitsLen = 0;
+        size_t len = 0;
+    } _mspDebugRead;
     
     uint8_t _buf0[1024] __attribute__((aligned(4))); // Needs to be aligned to send via USB
     uint8_t _buf1[1024] __attribute__((aligned(4)));
