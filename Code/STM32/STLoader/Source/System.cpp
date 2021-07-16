@@ -39,6 +39,8 @@ void System::init() {
 }
 
 void System::_handleEvent() {
+//    _msp.connect();
+//    for (;;);
     // Wait for an event to occur on one of our channels
     ChannelSelect::Start();
     if (auto x = _usb.eventChannel.readSelect()) {
@@ -119,8 +121,7 @@ void System::_usbHandleCmd(const USB::CmdRecv& ev) {
     case Op::MSPDisconnect:         _mspDisconnect(cmd);        break;
     case Op::MSPRead:               _mspRead(cmd);              break;
     case Op::MSPWrite:              _mspWrite(cmd);             break;
-    case Op::MSPRegsGet:            _mspRegsGet(cmd);          break;
-    case Op::MSPRegsSet:            _mspRegsSet(cmd);         break;
+    case Op::MSPDebug:              _mspDebug(cmd);             break;
     // MSP430 Debug
     // Set LED
     case Op::LEDSet:                _ledSet(cmd);               break;
@@ -541,27 +542,119 @@ void System::_mspWriteFromBuf() {
     _bufs.pop();
 }
 
-void System::_mspRegsGet(const Cmd& cmd) {
-    const _MSP430::Regs regs = _msp.regsGet();
-    _usb.dataSend(&regs.r, sizeof(regs.r));
-    _usb.dataSendChannel.read();
+void System::_mspDebug(const Cmd& cmd) {
+    const auto& arg = cmd.arg.MSPDebug;
+    _mspDebugHandleWrite(arg.writeLen);
+    _mspDebugHandleRead(arg.readLen);
     _finishCmd(Status::OK);
 }
 
-void System::_mspRegsSet(const Cmd& cmd) {
-    Assert(!_bufs.full());
+void System::_mspDebugHandleSetPins(const MSPDebugCmd& cmd) {
+    // We have strict timing requirements for the pulse pin state, so disable interrupts
+    IRQState irq;
+    irq.disable();
     
-    _MSP430::Regs regs;
-    auto& buf = _bufs.back();
-    static_assert(sizeof(_buf0) >= sizeof(regs.r));
-    _usb.dataRecv(buf.data, buf.cap);
+    switch (cmd.testPinStateGet()) {
+    case MSPDebugCmd::PinStates::Out0:
+        _msp.debugTestSetState(1,0);
+        break;
+    case MSPDebugCmd::PinStates::Out1:
+        _msp.debugTestSetState(1,1);
+        break;
+    case MSPDebugCmd::PinStates::In:
+        _msp.debugTestSetState(0,0);
+        break;
+    case MSPDebugCmd::PinStates::Pulse01:
+        _msp.debugTestSetState(1,0);
+        _msp.debugTestSetState(1,1);
+        break;
+    }
     
-    const auto ev = _usb.dataRecvChannel.read();
-    Assert(ev.len == sizeof(regs.r));
-    memcpy(regs.r, buf.data, sizeof(regs.r));
-    
-    _msp.regsSet(regs);
-    _finishCmd(Status::OK);
+    switch (cmd.rstPinStateGet()) {
+    case MSPDebugCmd::PinStates::Out0:
+        _msp.debugRstSetState(1,0);
+        break;
+    case MSPDebugCmd::PinStates::Out1:
+        _msp.debugRstSetState(1,1);
+        break;
+    case MSPDebugCmd::PinStates::In:
+        _msp.debugRstSetState(0,0);
+        break;
+    case MSPDebugCmd::PinStates::Pulse01:
+        _msp.debugRstSetState(1,0);
+        _msp.debugRstSetState(1,1);
+        break;
+    }
+}
+
+void System::_mspDebugPushReadBits() {
+    Assert(_mspDebugRead.len < sizeof(_buf1));
+    // Enqueue the new byte into `_buf1`
+    _buf1[_mspDebugRead.len] = _mspDebugRead.bits;
+    _mspDebugRead.len++;
+    // Reset our bits
+    _mspDebugRead.bits = 0;
+    _mspDebugRead.bitsLen = 0;
+}
+
+void System::_mspDebugHandleSBWIO(const MSPDebugCmd& cmd) {
+    bool tdo = _msp.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
+    if (cmd.tdoReadGet()) {
+        // Enqueue a new bit
+        _mspDebugRead.bits <<= 1;
+        _mspDebugRead.bits |= tdo;
+        _mspDebugRead.bitsLen++;
+        
+        // Enqueue the byte if it's filled
+        if (_mspDebugRead.bitsLen == 8) {
+            _mspDebugPushReadBits();
+        }
+    }
+}
+
+void System::_mspDebugHandleCmd(const MSPDebugCmd& cmd) {
+    switch (cmd.opGet()) {
+    case MSPDebugCmd::Ops::SetPins:
+        _mspDebugHandleSetPins(cmd);
+        break;
+    case MSPDebugCmd::Ops::SBWIO:
+        _mspDebugHandleSBWIO(cmd);
+        break;
+    }
+}
+
+void System::_mspDebugHandleWrite(size_t len) {
+    // We're using _buf0/_buf1 directly, so make sure _bufs isn't in use
+    Assert(_bufs.empty());
+    // Accept MSPDebugCmds over the DataOut endpoint until we've handled `len` commands
+    size_t remLen = len;
+    while (remLen) {
+        _usb.dataRecv(_buf0, sizeof(_buf0));
+        
+        const auto ev = _usb.dataRecvChannel.read();
+        Assert(ev.len <= remLen);
+        remLen -= ev.len;
+        
+        // Handle each MSPDebugCmd
+        const MSPDebugCmd* cmds = (MSPDebugCmd*)_buf0;
+        for (size_t i=0; i<ev.len; i++) {
+            _mspDebugHandleCmd(cmds[i]);
+        }
+    }
+}
+
+void System::_mspDebugHandleRead(size_t len) {
+    Assert(len <= sizeof(_buf1));
+    // Push outstanding bits into the buffer
+    // This is necessary for when the client reads a number of bits
+    // that didn't fall on a byte boundary.
+    if (_mspDebugRead.bitsLen) _mspDebugPushReadBits();
+    if (len) {
+        // Send the data and wait for it to be received
+        _usb.dataSend(_buf1, len);
+        _usb.dataSendChannel.read();
+    }
+    _mspDebugRead = {};
 }
 
 #pragma mark - Other Commands
