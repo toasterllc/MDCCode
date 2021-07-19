@@ -120,46 +120,46 @@ void System::init() {
 //        HAL_Delay(500);
 //    }
     
-    // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
-    // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high
-    {
-        auto s = _msp.connect();
-        if (s != _msp.Status::OK) {
-            abort();
-        }
-        
-        const _MSP430::Regs regsRead1 = _msp._regsGet();
-        const _MSP430::Regs regsRead2 = _msp._regsGet();
-        
-        const _MSP430::Regs regsWrote1 = {
-            0xAABBC,
-            0xFEEDF,
-            0xCAFEB,
-            0xBABEE,
-            
-            0x12121,
-            0x23232,
-            0x34343,
-            0x45454,
-            
-            0x56565,
-            0x67676,
-            0x78787,
-            0x89898,
-            
-            0x9A9A9,
-            0xABABA,
-            0xBCBCB,
-            0xCDCDC,
-        };
-        _msp._regsSet(regsWrote1);
-        
-        const _MSP430::Regs regsRead3 = _msp._regsGet();
-        const _MSP430::Regs regsRead4 = _msp._regsGet();
-        
-        for (;;);
-    }
-    
+//    // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
+//    // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high
+//    {
+//        auto s = _msp.connect();
+//        if (s != _msp.Status::OK) {
+//            abort();
+//        }
+//
+//        const _MSP430::Regs regsRead1 = _msp._regsGet();
+//        const _MSP430::Regs regsRead2 = _msp._regsGet();
+//
+//        const _MSP430::Regs regsWrote1 = {
+//            0xAABBC,
+//            0xFEEDF,
+//            0xCAFEB,
+//            0xBABEE,
+//
+//            0x12121,
+//            0x23232,
+//            0x34343,
+//            0x45454,
+//
+//            0x56565,
+//            0x67676,
+//            0x78787,
+//            0x89898,
+//
+//            0x9A9A9,
+//            0xABABA,
+//            0xBCBCB,
+//            0xCDCDC,
+//        };
+//        _msp._regsSet(regsWrote1);
+//
+//        const _MSP430::Regs regsRead3 = _msp._regsGet();
+//        const _MSP430::Regs regsRead4 = _msp._regsGet();
+//
+//        for (;;);
+//    }
+//
     
 //    // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
 //    // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high

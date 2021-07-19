@@ -4,3 +4,6 @@
 [submodule "Tools/icestorm"]
 	path = Tools/icestorm
 	url = git@github.com:davekeck/icestorm-MDC.git
+[submodule "Code/Lib/Toastbox"]
+	path = Code/Lib/Toastbox
+	url = git@github.com:heytoaster/Toastbox.git
