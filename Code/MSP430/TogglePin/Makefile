@@ -7,7 +7,7 @@ DEVICE   = msp430fr2422
 CC       = $(GCC_DIR)/msp430-elf-gcc
 CXX      = $(GCC_DIR)/msp430-elf-g++
 GDB      = $(GCC_DIR)/msp430-elf-gdb
-MSPDEBUG = ~/repos/mspdebug/mspdebug
+MSPDEBUG = LD_LIBRARY_PATH=~/repos/MSPDebugStack ~/repos/mspdebug/mspdebug
 
 CFLAGS   = -I $(SUPPORT_FILE_DIRECTORY) -mmcu=$(DEVICE) -O0 -g -Wall -std=c11
 CXXFLAGS = -I $(SUPPORT_FILE_DIRECTORY) -mmcu=$(DEVICE) -O0 -g -Wall -std=c++17
@@ -20,8 +20,8 @@ debug: all
 	$(GDB) $(DEVICE).elf
 
 install: all
-	$(MSPDEBUG) rf2500 "prog $(DEVICE).elf"
-	$(MSPDEBUG) rf2500 "verify $(DEVICE).elf"
+	$(MSPDEBUG) tilib "prog $(DEVICE).elf"
+	$(MSPDEBUG) tilib "verify $(DEVICE).elf"
 
 clean:
 	rm -Rf *.o *.elf *.map
