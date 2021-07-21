@@ -931,70 +931,66 @@ public:
         return _regsSet(regs);
     }
     
-    void debugTestConfig(bool dir, bool val) {
+    void debugTestSetState(bool dir, bool val) {
         Test::Config((dir ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_INPUT), GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         Test::Write(val);
     }
     
-    void debugRstConfig(bool dir, bool val) {
+    void debugRstSetState(bool dir, bool val) {
         Rst_::Config((dir ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_INPUT), GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         Rst_::Write(val);
     }
     
-    bool debugRstRead() {
-        return Rst_::Read();
+    // TODO: combine with _sbwio
+    __attribute__((noinline))
+    bool debugSBWIO(bool tms, bool tclk, bool tdi) {
+        // We have strict timing requirements, so disable interrupts.
+        // Specifically, the low cycle of TCK can't be longer than 7us,
+        // otherwise SBW will be disabled.
+        IRQState irq;
+        irq.disable();
+        
+        // Write TMS
+        {
+            _TDIO::Write(tms);
+            _DelayUs(0);
+            
+            _TCK::Write(0);
+            _DelayUs(0);
+            
+            _TDIO::Write(tclk);
+            _TCK::Write(1);
+            _DelayUs(0);
+        }
+        
+        // Write TDI
+        {
+            _TDIO::Write(tdi);
+            _DelayUs(0);
+            
+            _TCK::Write(0);
+            _DelayUs(0);
+            
+            _TCK::Write(1);
+            // Stop driving SBWTDIO, in preparation for the slave to start driving it
+            _TDIO::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _DelayUs(0);
+        }
+        
+        // Read TDO
+        bool tdo = 0;
+        {
+            _TCK::Write(0);
+            _DelayUs(0);
+            // Read the TDO value, driven by the slave, while SBWTCK=0
+            tdo = _TDIO::Read();
+            _TCK::Write(1);
+            _DelayUs(0);
+            
+            // Start driving SBWTDIO again
+            _TDIO::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        }
+        
+        return tdo;
     }
-    
-//    // TODO: combine with _sbwio
-//    __attribute__((noinline))
-//    bool debugSBWIO(bool tms, bool tclk, bool tdi) {
-//        // We have strict timing requirements, so disable interrupts.
-//        // Specifically, the low cycle of TCK can't be longer than 7us,
-//        // otherwise SBW will be disabled.
-//        IRQState irq;
-//        irq.disable();
-//        
-//        // Write TMS
-//        {
-//            _TDIO::Write(tms);
-//            _DelayUs(0);
-//            
-//            _TCK::Write(0);
-//            _DelayUs(0);
-//            
-//            _TDIO::Write(tclk);
-//            _TCK::Write(1);
-//            _DelayUs(0);
-//        }
-//        
-//        // Write TDI
-//        {
-//            _TDIO::Write(tdi);
-//            _DelayUs(0);
-//            
-//            _TCK::Write(0);
-//            _DelayUs(0);
-//            
-//            _TCK::Write(1);
-//            // Stop driving SBWTDIO, in preparation for the slave to start driving it
-//            _TDIO::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//            _DelayUs(0);
-//        }
-//        
-//        // Read TDO
-//        bool tdo = 0;
-//        {
-//            _TCK::Write(0);
-//            _DelayUs(0);
-//            // Read the TDO value, driven by the slave, while SBWTCK=0
-//            tdo = _TDIO::Read();
-//            _TCK::Write(1);
-//            _DelayUs(0);
-//            
-//            // Start driving SBWTDIO again
-//            _TDIO::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
-//        }
-//        
-//        return tdo;
-//    }
 };

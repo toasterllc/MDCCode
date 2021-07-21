@@ -52,10 +52,10 @@ private:
     void _mspWriteFromBuf();
     
     void _mspDebug(const STLoader::Cmd& cmd);
+    void _mspDebugHandleSetPins(const STLoader::MSPDebugCmd& cmd);
     void _mspDebugPushReadBits();
-    void _mspDebugReadBit();
-    void _mspDebugExecuteCmds(const STLoader::MSPDebugCmd* cmds, size_t len);
-    size_t _mspDebugFindLastFlushOff(const STLoader::MSPDebugCmd* cmds, size_t len);
+    void _mspDebugHandleSBWIO(const STLoader::MSPDebugCmd& cmd);
+    void _mspDebugHandleCmd(const STLoader::MSPDebugCmd& cmd);
     void _mspDebugHandleWrite(size_t len);
     void _mspDebugHandleRead(size_t len);
     

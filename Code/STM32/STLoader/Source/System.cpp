@@ -549,43 +549,43 @@ void System::_mspDebug(const Cmd& cmd) {
     _finishCmd(Status::OK);
 }
 
-//void System::_mspDebugHandleSetPins(const MSPDebugCmd& cmd) {
-//    // We have strict timing requirements for the pulse pin state, so disable interrupts
-//    IRQState irq;
-//    irq.disable();
-//    
-//    switch (cmd.testPinStateGet()) {
-//    case MSPDebugCmd::PinStates::Out0:
-//        _msp.debugTestSetState(1,0);
-//        break;
-//    case MSPDebugCmd::PinStates::Out1:
-//        _msp.debugTestSetState(1,1);
-//        break;
-//    case MSPDebugCmd::PinStates::In:
-//        _msp.debugTestSetState(0,0);
-//        break;
-//    case MSPDebugCmd::PinStates::Pulse01:
-//        _msp.debugTestSetState(1,0);
-//        _msp.debugTestSetState(1,1);
-//        break;
-//    }
-//    
-//    switch (cmd.rstPinStateGet()) {
-//    case MSPDebugCmd::PinStates::Out0:
-//        _msp.debugRstSetState(1,0);
-//        break;
-//    case MSPDebugCmd::PinStates::Out1:
-//        _msp.debugRstSetState(1,1);
-//        break;
-//    case MSPDebugCmd::PinStates::In:
-//        _msp.debugRstSetState(0,0);
-//        break;
-//    case MSPDebugCmd::PinStates::Pulse01:
-//        _msp.debugRstSetState(1,0);
-//        _msp.debugRstSetState(1,1);
-//        break;
-//    }
-//}
+void System::_mspDebugHandleSetPins(const MSPDebugCmd& cmd) {
+    // We have strict timing requirements for the pulse pin state, so disable interrupts
+    IRQState irq;
+    irq.disable();
+    
+    switch (cmd.testPinStateGet()) {
+    case MSPDebugCmd::PinStates::Out0:
+        _msp.debugTestSetState(1,0);
+        break;
+    case MSPDebugCmd::PinStates::Out1:
+        _msp.debugTestSetState(1,1);
+        break;
+    case MSPDebugCmd::PinStates::In:
+        _msp.debugTestSetState(0,0);
+        break;
+    case MSPDebugCmd::PinStates::Pulse01:
+        _msp.debugTestSetState(1,0);
+        _msp.debugTestSetState(1,1);
+        break;
+    }
+    
+    switch (cmd.rstPinStateGet()) {
+    case MSPDebugCmd::PinStates::Out0:
+        _msp.debugRstSetState(1,0);
+        break;
+    case MSPDebugCmd::PinStates::Out1:
+        _msp.debugRstSetState(1,1);
+        break;
+    case MSPDebugCmd::PinStates::In:
+        _msp.debugRstSetState(0,0);
+        break;
+    case MSPDebugCmd::PinStates::Pulse01:
+        _msp.debugRstSetState(1,0);
+        _msp.debugRstSetState(1,1);
+        break;
+    }
+}
 
 void System::_mspDebugPushReadBits() {
     Assert(_mspDebugRead.len < sizeof(_buf1));
@@ -597,61 +597,30 @@ void System::_mspDebugPushReadBits() {
     _mspDebugRead.bitsLen = 0;
 }
 
-void System::_mspDebugReadBit() {
-    // Enqueue a new bit
-    _mspDebugRead.bits <<= 1;
-    _mspDebugRead.bits |= _msp.debugRstRead();
-    _mspDebugRead.bitsLen++;
-    
-    // Enqueue the byte if it's filled
-    if (_mspDebugRead.bitsLen == 8) {
-        _mspDebugPushReadBits();
-    }
-}
-
-//void System::_mspDebugHandleSBWIO(const MSPDebugCmd& cmd) {
-//    bool tdo = _msp.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
-//    if (cmd.tdoReadGet()) {
-//        // Enqueue a new bit
-//        _mspDebugRead.bits <<= 1;
-//        _mspDebugRead.bits |= tdo;
-//        _mspDebugRead.bitsLen++;
-//        
-//        // Enqueue the byte if it's filled
-//        if (_mspDebugRead.bitsLen == 8) {
-//            _mspDebugPushReadBits();
-//        }
-//    }
-//}
-
-void System::_mspDebugExecuteCmds(const MSPDebugCmd* cmds, size_t len) {
-    // We have strict timing requirements for the MSP commands, so disable interrupts
-    IRQState irq;
-    irq.disable();
-    
-    for (size_t i=0; i<len; i++) {
-        switch (cmds[i]) {
-        case MSPDebugCmds::Flush:                                       break;
-        case MSPDebugCmds::TestOut0:        _msp.debugTestConfig(1,0);  break;
-        case MSPDebugCmds::TestOut1:        _msp.debugTestConfig(1,1);  break;
-        case MSPDebugCmds::TestIn:          _msp.debugTestConfig(0,0);  break;
-        case MSPDebugCmds::RstOut0:         _msp.debugRstConfig(1,0);   break;
-        case MSPDebugCmds::RstOut1:         _msp.debugRstConfig(1,1);   break;
-        case MSPDebugCmds::RstIn:           _msp.debugRstConfig(0,0);   break;
-        case MSPDebugCmds::RstRead:         _mspDebugReadBit();         break;
-        default:                            abort();                    break;
+void System::_mspDebugHandleSBWIO(const MSPDebugCmd& cmd) {
+    bool tdo = _msp.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
+    if (cmd.tdoReadGet()) {
+        // Enqueue a new bit
+        _mspDebugRead.bits <<= 1;
+        _mspDebugRead.bits |= tdo;
+        _mspDebugRead.bitsLen++;
+        
+        // Enqueue the byte if it's filled
+        if (_mspDebugRead.bitsLen == 8) {
+            _mspDebugPushReadBits();
         }
     }
 }
 
-size_t System::_mspDebugFindLastFlushOff(const MSPDebugCmd* cmds, size_t len) {
-    for (size_t i=len; i>0; i--) {
-        const size_t idx = i-1;
-        const MSPDebugCmd& cmd = cmds[idx];
-        if (cmd == MSPDebugCmds::Flush) return idx;
+void System::_mspDebugHandleCmd(const MSPDebugCmd& cmd) {
+    switch (cmd.opGet()) {
+    case MSPDebugCmd::Ops::SetPins:
+        _mspDebugHandleSetPins(cmd);
+        break;
+    case MSPDebugCmd::Ops::SBWIO:
+        _mspDebugHandleSBWIO(cmd);
+        break;
     }
-    // No Flush found
-    abort();
 }
 
 void System::_mspDebugHandleWrite(size_t len) {
@@ -659,103 +628,20 @@ void System::_mspDebugHandleWrite(size_t len) {
     Assert(_bufs.empty());
     // Accept MSPDebugCmds over the DataOut endpoint until we've handled `len` commands
     size_t remLen = len;
-    size_t off = 0;
     while (remLen) {
-        // Confirm that we have space in the buffer, otherwise we're not making progress.
-        // This would happen if there are enough commands sent to fill the buffer, and
-        // none of the commands are flush commands.
-        Assert(sizeof(_buf0)-off > 0);
-        _usb.dataRecv(_buf0+off, sizeof(_buf0)-off);
+        _usb.dataRecv(_buf0, sizeof(_buf0));
         
         const auto ev = _usb.dataRecvChannel.read();
         Assert(ev.len <= remLen);
-        off += ev.len;
         remLen -= ev.len;
         
-        const MSPDebugCmd* cmds = (const MSPDebugCmd*)_buf0;
-        // Find the last Flush command
-        const size_t lastFlushOff = _mspDebugFindLastFlushOff(cmds, off);
-        const size_t chunkLen = lastFlushOff+1;
-        // Blast off all commands up until (and including) the last flush
-        _mspDebugExecuteCmds(cmds, chunkLen);
-        // Move every command after the last flush to the beginning of the buffer
-        memmove(_buf0, _buf0+chunkLen, off-chunkLen);
-        // Update our offset
-        off -= chunkLen;
-        
-//        for (size_t i=off; i>0; i--) {
-//            const MSPDebugCmd& cmd = cmds[i-1];
-//            if (cmd == MSPDebugCmds::FlushBoundary) {
-//                const size_t boundaryEnd = i;
-//                _mspDebugExecuteCmds(cmds+boundaryStart, boundaryEnd-boundaryStart);
-//                boundaryStart = i+1;
-//            }
-//        }
-//        
-//        // Handle each MSPDebugCmd
-//        const MSPDebugCmd* cmds = (const MSPDebugCmd*)_buf0;
-//        size_t boundaryStart = 0;
-//        for (size_t i=0; i<off; i++) {
-//            const MSPDebugCmd& cmd = cmds[i];
-//            if (cmd == MSPDebugCmds::FlushBoundary) {
-//                const size_t boundaryEnd = i;
-//                _mspDebugExecuteCmds(cmds+boundaryStart, boundaryEnd-boundaryStart);
-//                boundaryStart = i+1;
-//            }
-//        }
-//        
-//        // If the received data didn't end with a FlushBoundary, move the
-//        // remaining commands to the beginning of `_buf0`, since they
-//        // need to be executed first on the next chunk iteration.
-//        if (boundaryStart != off) {
-//            memmove(_buf0, _buf0+boundaryStart, off-boundaryStart);
-//        }
+        // Handle each MSPDebugCmd
+        const MSPDebugCmd* cmds = (MSPDebugCmd*)_buf0;
+        for (size_t i=0; i<ev.len; i++) {
+            _mspDebugHandleCmd(cmds[i]);
+        }
     }
 }
-
-
-//void System::_mspDebugHandleWrite(size_t len) {
-//    // We're using _buf0/_buf1 directly, so make sure _bufs isn't in use
-//    Assert(_bufs.empty());
-//    Assert(len < sizeof(_buf0));
-//    
-//    _usb.dataRecv(_buf0, sizeof(_buf0));
-//    const auto ev = _usb.dataRecvChannel.read();
-//    const size_t recvLen = ev.len;
-//    {
-//        // We have strict timing requirements for the MSP commands, so disable interrupts
-//        IRQState irq;
-//        irq.disable();
-//        
-//        // Handle each MSPDebugCmd
-//        const MSPDebugCmd* cmds = (MSPDebugCmd*)_buf0;
-//        size_t boundaryStart = 0;
-//        size_t boundaryEnd = 0;
-//        for (size_t i=0; i<recvLen; i++) {
-//            MSPDebugCmd& cmd = cmds[i];
-//            if (cmd == MSPDebugCmds::FlushBoundary) {
-//                boundaryEnd = i;
-//                for (size_t ii=boundaryStart; ii<boundaryEnd)
-//            } else {
-//                
-//            }
-//            switch (cmd) {
-//            case 
-//            }
-//            case MSPDebugCmds::TestOut0:    _msp.debugTestConfig(1,0);  break;
-//            case MSPDebugCmds::TestOut1:    _msp.debugTestConfig(1,1);  break;
-//            case MSPDebugCmds::TestIn:      _msp.debugTestConfig(0,0);  break;
-//            case MSPDebugCmds::TestRead:    abort();                    break;
-//            case MSPDebugCmds::RstOut0:     _msp.debugRstConfig(1,0);   break;
-//            case MSPDebugCmds::RstOut1:     _msp.debugRstConfig(1,1);   break;
-//            case MSPDebugCmds::RstIn:       _msp.debugRstConfig(0,0);   break;
-//            case MSPDebugCmds::RstRead:     _mspDebugReadBit();         break;
-//            default:                        abort();                    break;
-//            
-//            _mspDebugHandleCmd(cmds[i]);
-//        }
-//    }
-//}
 
 void System::_mspDebugHandleRead(size_t len) {
     Assert(len <= sizeof(_buf1));

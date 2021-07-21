@@ -8,11 +8,4 @@
 	</buildSpec>
 	<natures>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>Lib</name>
-			<type>2</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Lib</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>
