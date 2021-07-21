@@ -82,71 +82,54 @@ namespace STLoader {
     } __attribute__((packed));
     static_assert(sizeof(Cmd)==9, "Cmd: invalid size");
     
-    Enum(uint8_t, MSPDebugCmd, MSPDebugCmds,
-        TestOut0,
-        TestOut1,
-        TestIn,
-        RstOut0,
-        RstOut1,
-        RstIn,
-        RstRead,
-        Flush,
-    );
-    
-//    struct MSPDebugCmd {
-//        Enum(uint8_t, Pin, Pins,
-//            Test,
-//            Rst,
-//        );
-//        
-//        Enum(uint8_t, Op, Ops,
-//            Out0,
-//            Out1,
-//            In,
-//            Read,
-//        );
-//        
-//        MSPDebugCmd(Pin pin, Op op) {
-//            opSet(Ops::SetPins);
-//            testPinStateSet(test);
-//            rstPinStateSet(rst);
-//        }
-//        
-//        Pin pinGet() const      { return (data&(0x01<<0))>>0;           }
-//        void pinSet(Pin x)      { data = (data&(~(0x01<<0)))|(x<<0);    }
-//        
-//        Op opGet() const        { return (data&(0x03<<1))>>1;           }
-//        void opSet(Op x)        { data = (data&(~(0x03<<1)))|(s<<1);    }
-//        
-//        uint8_t data = 0;
-//    } __attribute__((packed));
-    
-    
-//    struct MSPDebugCmd {
-//        Enum(uint8_t, Pin, Pins,
-//            Test,
-//            Rst,
-//        );
-//        
-//        Enum(uint8_t, Op, Ops,
-//            Out0,
-//            Out1,
-//            In,
-//            Read,
-//        );
-//        
-//        MSPDebugCmd(Pin pin, Op op) {
-//            opSet(Ops::SetPins);
-//            testPinStateSet(test);
-//            rstPinStateSet(rst);
-//        }
-//        
-//        Pin pinGet() const      { return (data&(0x01<<0))>>0;           }
-//        void pinSet(Pin x)      { data = (data&(~(0x01<<0)))|(x<<0);    }
-//        
-//        Op opGet() const        { return (data&(0x03<<1))>>1;           }
-//        void opSet(Op x)        { data = (data&(~(0x03<<1)))|(s<<1);    }
-//        
-//        uint8_t data = 0;
-//    } __attribute__((packed));
+    struct MSPDebugCmd {
+        Enum(uint8_t, Op, Ops,
+            SetPins,
+            SBWIO,
+        );
+        
+        Enum(uint8_t, PinState, PinStates,
+            Out0,
+            Out1,
+            In,
+            Pulse01,
+        );
+        
+        MSPDebugCmd(PinState test, PinState rst) {
+            opSet(Ops::SetPins);
+            testPinStateSet(test);
+            rstPinStateSet(rst);
+        }
+        
+        MSPDebugCmd(bool tms, bool tclk, bool tdi, bool tdoRead) {
+            opSet(Ops::SBWIO);
+            tmsSet(tms);
+            tclkSet(tclk);
+            tdiSet(tdi);
+            tdoReadSet(tdoRead);
+        }
+        
+        Op opGet() const                    { return (data&(1<<7))>>7; }
+        void opSet(Op op)                   { data = (data&(~(1<<7)))|(op<<7); }
+        
+        PinState testPinStateGet() const    { return (data&(0x03<<2))>>2; }
+        void testPinStateSet(PinState s)    { data = (data&(~(0x03<<2)))|(s<<2); }
+        
+        PinState rstPinStateGet() const     { return (data&(0x03<<0))>>0; }
+        void rstPinStateSet(PinState s)     { data = (data&(~(0x03<<0)))|(s<<0); }
+        
+        bool tmsGet() const     { return (data&(1<<3))>>3; }
+        void tmsSet(bool s)     { data = (data&(~(1<<3)))|(s<<3); }
+        
+        bool tclkGet() const    { return (data&(1<<2))>>2; }
+        void tclkSet(bool s)    { data = (data&(~(1<<2)))|(s<<2); }
+        
+        bool tdiGet() const     { return (data&(1<<1))>>1; }
+        void tdiSet(bool s)     { data = (data&(~(1<<1)))|(s<<1); }
+        
+        bool tdoReadGet() const { return (data&(1<<0))>>0; }
+        void tdoReadSet(bool s) { data = (data&(~(1<<0)))|(s<<0); }
+        
+        uint8_t data = 0;
+    } __attribute__((packed));
 }
