@@ -829,6 +829,6 @@ public:
     }
     
     bool debugSBWIO(bool tms, bool tclk, bool tdi) {
-        _sbwio(tms, tclk, tdi);
+        return _sbwio(tms, tclk, tdi);
     }
 };
