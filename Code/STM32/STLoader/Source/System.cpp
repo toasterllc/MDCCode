@@ -549,43 +549,43 @@ void System::_mspDebug(const Cmd& cmd) {
     _finishCmd(Status::OK);
 }
 
-void System::_mspDebugHandleSetPins(const MSPDebugCmd& cmd) {
-    // We have strict timing requirements for the pulse pin state, so disable interrupts
-    IRQState irq;
-    irq.disable();
-    
-    switch (cmd.testPinStateGet()) {
-    case MSPDebugCmd::PinStates::Out0:
-        _msp.debugTestSetState(1,0);
-        break;
-    case MSPDebugCmd::PinStates::Out1:
-        _msp.debugTestSetState(1,1);
-        break;
-    case MSPDebugCmd::PinStates::In:
-        _msp.debugTestSetState(0,0);
-        break;
-    case MSPDebugCmd::PinStates::Pulse01:
-        _msp.debugTestSetState(1,0);
-        _msp.debugTestSetState(1,1);
-        break;
-    }
-    
-    switch (cmd.rstPinStateGet()) {
-    case MSPDebugCmd::PinStates::Out0:
-        _msp.debugRstSetState(1,0);
-        break;
-    case MSPDebugCmd::PinStates::Out1:
-        _msp.debugRstSetState(1,1);
-        break;
-    case MSPDebugCmd::PinStates::In:
-        _msp.debugRstSetState(0,0);
-        break;
-    case MSPDebugCmd::PinStates::Pulse01:
-        _msp.debugRstSetState(1,0);
-        _msp.debugRstSetState(1,1);
-        break;
-    }
-}
+//void System::_mspDebugHandleSetPins(const MSPDebugCmd& cmd) {
+//    // We have strict timing requirements for the pulse pin state, so disable interrupts
+//    IRQState irq;
+//    irq.disable();
+//    
+//    switch (cmd.testPinStateGet()) {
+//    case MSPDebugCmd::PinStates::Out0:
+//        _msp.debugTestSetState(1,0);
+//        break;
+//    case MSPDebugCmd::PinStates::Out1:
+//        _msp.debugTestSetState(1,1);
+//        break;
+//    case MSPDebugCmd::PinStates::In:
+//        _msp.debugTestSetState(0,0);
+//        break;
+//    case MSPDebugCmd::PinStates::Pulse01:
+//        _msp.debugTestSetState(1,0);
+//        _msp.debugTestSetState(1,1);
+//        break;
+//    }
+//    
+//    switch (cmd.rstPinStateGet()) {
+//    case MSPDebugCmd::PinStates::Out0:
+//        _msp.debugRstSetState(1,0);
+//        break;
+//    case MSPDebugCmd::PinStates::Out1:
+//        _msp.debugRstSetState(1,1);
+//        break;
+//    case MSPDebugCmd::PinStates::In:
+//        _msp.debugRstSetState(0,0);
+//        break;
+//    case MSPDebugCmd::PinStates::Pulse01:
+//        _msp.debugRstSetState(1,0);
+//        _msp.debugRstSetState(1,1);
+//        break;
+//    }
+//}
 
 void System::_mspDebugPushReadBits() {
     Assert(_mspDebugRead.len < sizeof(_buf1));
@@ -614,12 +614,11 @@ void System::_mspDebugHandleSBWIO(const MSPDebugCmd& cmd) {
 
 void System::_mspDebugHandleCmd(const MSPDebugCmd& cmd) {
     switch (cmd.opGet()) {
-    case MSPDebugCmd::Ops::SetPins:
-        _mspDebugHandleSetPins(cmd);
-        break;
-    case MSPDebugCmd::Ops::SBWIO:
-        _mspDebugHandleSBWIO(cmd);
-        break;
+    case MSPDebugCmd::Ops::TestSet:     _msp.debugTestSet(cmd.pinValGet()); break;
+    case MSPDebugCmd::Ops::RstSet:      _msp.debugRstSet(cmd.pinValGet());  break;
+    case MSPDebugCmd::Ops::TestPulse:   _msp.debugTestPulse();              break;
+    case MSPDebugCmd::Ops::SBWIO:       _mspDebugHandleSBWIO(cmd);          break;
+    default:                            abort();                            break;
     }
 }
 
