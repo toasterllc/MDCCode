@@ -7,11 +7,6 @@
 
 template <typename Test, typename Rst_, uint8_t CPUFreqMHz>
 class MSP430 {
-public:
-    struct Regs {
-        uint32_t r[16]; // 32-bit (not 16-bit) because MSP430X registers are 20-bit
-    };
-    
 private:
     static constexpr uint8_t _Reverse(uint8_t x) {
         return (x&(1<<7))>>7 | (x&(1<<6))>>5 | (x&(1<<5))>>3 | (x&(1<<4))>>1 |
@@ -82,12 +77,12 @@ private:
         // Reset JTAG state machine
         // TMS=1 for 6 clocks
         for (int i=0; i<6; i++) {
-            _sbwio(1, 0);
+            _sbwio(1, 1);
         }
         // <-- Test-Logic-Reset
         
         // TMS=0 for 1 clock
-        _sbwio(0, 0);
+        _sbwio(0, 1);
         // <-- Run-Test/Idle
     }
     
@@ -115,7 +110,7 @@ private:
     
     // Perform a single Spy-bi-wire I/O cycle
     __attribute__((noinline))
-    bool _sbwio(bool tms, bool tdi, bool restoreSavedTCLK=false) {
+    bool _sbwio(bool tms, bool tclk, bool tdi) {
         // We have strict timing requirements, so disable interrupts.
         // Specifically, the low cycle of TCK can't be longer than 7us,
         // otherwise SBW will be disabled.
@@ -130,13 +125,7 @@ private:
             _TCK::Write(0);
             _DelayUs(0);
             
-            if (restoreSavedTCLK) {
-                // Restore saved value of TCLK during TCK=0 period.
-                // "To provide only a falling edge for ClrTCLK, the SBWTDIO signal
-                // must be set high before entering the TDI slot."
-                _TDIO::Write(_tclkSaved);
-            }
-            
+            _TDIO::Write(tclk);
             _TCK::Write(1);
             _DelayUs(0);
         }
@@ -170,6 +159,12 @@ private:
         }
         
         return tdo;
+    }
+    
+    bool _sbwio(bool tms, bool tdi) {
+        // With no `tclk` specified, use the value for TMS, so that the line stays constant
+        // between registering the TMS value and outputting the TDI value
+        return _sbwio(tms, tms, tdi);
     }
     
     // Shifts `dout` MSB first
@@ -238,7 +233,7 @@ private:
     }
     
     void _tclkSet(bool tclk) {
-        _sbwio(0, tclk, true);
+        _sbwio(0, _tclkSaved, tclk);
         _tclkSaved = tclk;
     }
     
@@ -625,120 +620,6 @@ private:
         return true;
     }
     
-    // TODO: cleanup
-    //   - altRomAddressForCpuRead -- remove
-    //   - reg -- move `Mova` calculation into _regGet
-    uint32_t _regGet(uint16_t reg) {
-        constexpr bool altRomAddressForCpuRead = true;
-        uint32_t Rx_l = 0;
-        uint32_t Rx_h = 0;
-        _irShift(_IR_CNTRL_SIG_CAPTURE);
-        const uint16_t jmbAddr = 0x014c;
-        _tclkSet(0);
-        _irShift(_IR_DATA_16BIT);
-        _tclkSet(1);
-        _drShift<16>(reg);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x1401);
-        _irShift(_IR_DATA_16BIT);
-        _tclkSet(0);
-        _tclkSet(1);
-        if (altRomAddressForCpuRead) {
-            _drShift<16>(0x0ff6);
-        } else {
-            _drShift<16>(jmbAddr);
-        }
-        _tclkSet(0);
-        _tclkSet(1);
-        _drShift<16>(0x3ffd);
-        _tclkSet(0);
-        if (altRomAddressForCpuRead) {
-            _irShift(_IR_CNTRL_SIG_16BIT);
-            _drShift<16>(0x0501);
-        }
-        _irShift(_IR_DATA_CAPTURE);
-        _tclkSet(1);
-        Rx_l = _drShift<16>(0);
-        _tclkSet(0);
-        _tclkSet(1);
-        Rx_h = _drShift<16>(0);
-        _tclkSet(0);
-        _tclkSet(1);
-        _tclkSet(0);
-        _tclkSet(1);
-        _tclkSet(0);
-        _tclkSet(1);
-        
-        if (!altRomAddressForCpuRead) {
-            _irShift(_IR_CNTRL_SIG_16BIT);
-            _drShift<16>(0x0501);
-        }
-        
-        _tclkSet(0);
-        _irShift(_IR_DATA_CAPTURE);
-        _tclkSet(1);
-        return (Rx_h<<16) | Rx_l;
-    }
-    
-    // TODO: cleanup
-    Regs _regsGet() {
-        Regs regs;
-        _irShift(_IR_CNTRL_SIG_CAPTURE);
-        for (uint16_t i=0; i<16; i++) {
-            const uint16_t Mova = 0x0060 | ((i<<8)&0x0F00);
-            regs.r[i] = _regGet(Mova);
-            // Set PC to "safe" address
-            _pcSet(_SafePC);
-            _irShift(_IR_CNTRL_SIG_16BIT);
-            _drShift<16>(0x0501);
-            _tclkSet(1);
-            _irShift(_IR_ADDR_CAPTURE);
-        }
-        // all CPU register values have been moved to the JMBOUT register address
-        // -> JMB needs to be cleared again!!
-        _jmbRead();
-        return regs;
-    }
-    
-    // TODO: cleanup
-    void _regSet(uint16_t mova, uint16_t val) {
-        _tclkSet(0);
-        _irShift(_IR_DATA_16BIT);
-        _tclkSet(1);
-        _drShift<16>(mova);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x1401);
-        _irShift(_IR_DATA_16BIT);
-        _tclkSet(0);
-        _tclkSet(1);
-        _drShift<16>(val);
-        _tclkSet(0);
-        _tclkSet(1);
-        _drShift<16>(0x3ffd);
-        _tclkSet(0);
-        _tclkSet(1);
-        _tclkSet(0);
-        _irShift(_IR_ADDR_CAPTURE);
-        _drShift<20>(0);
-        _tclkSet(1);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0501);
-        _tclkSet(0);
-        _tclkSet(1);
-        _tclkSet(0);
-        _irShift(_IR_DATA_CAPTURE);
-        _tclkSet(1);
-    }
-    
-    // TODO: cleanup
-    void _regsSet(const Regs& regs) {
-        for (uint16_t i=0; i<16; i++) {
-            const uint16_t Mova = 0x0080 | ((regs.r[i]>>8) & 0x0F00) | (i & 0x000F);
-            const uint16_t low = regs.r[i] & 0xFFFF;
-            _regSet(Mova, low);
-        }
-    }
-    
     void _jtagStart(bool rst_) {
         // We have strict timing requirements, so disable interrupts.
         // Specifically, the low cycle of TCK can't be longer than 7us,
@@ -923,74 +804,31 @@ public:
         return (_crcCalc(_crcAddr, _crcLen)==_crc ? Status::OK : Status::Error);
     }
     
-    Regs regsGet() {
-        return _regsGet();
-    }
-    
-    void regsSet(const Regs& regs) {
-        return _regsSet(regs);
-    }
-    
-    void debugTestSetState(bool dir, bool val) {
-        Test::Config((dir ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_INPUT), GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    void debugTestSet(bool val) {
+        // Write before configuring. If we configured before writing, we could drive the
+        // wrong value momentarily before writing the correct value.
         Test::Write(val);
+        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
-    void debugRstSetState(bool dir, bool val) {
-        Rst_::Config((dir ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_INPUT), GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    void debugRstSet(bool val) {
+        // Write before configuring. If we configured before writing, we could drive the
+        // wrong value momentarily before writing the correct value.
         Rst_::Write(val);
+        Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
-    // TODO: combine with _sbwio
-    __attribute__((noinline))
-    bool debugSBWIO(bool tms, bool tclk, bool tdi) {
-        // We have strict timing requirements, so disable interrupts.
-        // Specifically, the low cycle of TCK can't be longer than 7us,
-        // otherwise SBW will be disabled.
+    void debugTestPulse() {
         IRQState irq;
         irq.disable();
-        
-        // Write TMS
-        {
-            _TDIO::Write(tms);
-            _DelayUs(0);
-            
-            _TCK::Write(0);
-            _DelayUs(0);
-            
-            _TDIO::Write(tclk);
-            _TCK::Write(1);
-            _DelayUs(0);
-        }
-        
-        // Write TDI
-        {
-            _TDIO::Write(tdi);
-            _DelayUs(0);
-            
-            _TCK::Write(0);
-            _DelayUs(0);
-            
-            _TCK::Write(1);
-            // Stop driving SBWTDIO, in preparation for the slave to start driving it
-            _TDIO::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-            _DelayUs(0);
-        }
-        
-        // Read TDO
-        bool tdo = 0;
-        {
-            _TCK::Write(0);
-            _DelayUs(0);
-            // Read the TDO value, driven by the slave, while SBWTCK=0
-            tdo = _TDIO::Read();
-            _TCK::Write(1);
-            _DelayUs(0);
-            
-            // Start driving SBWTDIO again
-            _TDIO::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
-        }
-        
-        return tdo;
+        // Write before configuring. If we configured before writing, we could drive the
+        // wrong value momentarily before writing the correct value.
+        Test::Write(0);
+        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        Test::Write(1);
+    }
+    
+    bool debugSBWIO(bool tms, bool tclk, bool tdi) {
+        _sbwio(tms, tclk, tdi);
     }
 };

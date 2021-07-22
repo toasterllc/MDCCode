@@ -84,24 +84,32 @@ namespace STLoader {
     
     struct MSPDebugCmd {
         Enum(uint8_t, Op, Ops,
-            SetPins,
+            TestSet,
+            RstSet,
+            TestPulse,
             SBWIO,
         );
         
-        Enum(uint8_t, PinState, PinStates,
-            Out0,
-            Out1,
-            In,
-            Pulse01,
-        );
+        struct TestSetType {}; static constexpr auto TestSet = TestSetType();
+        struct RstSetType {}; static constexpr auto RstSet = RstSetType();
+        struct TestPulseType {}; static constexpr auto TestPulse = TestPulseType();
+        struct SBWIOType {}; static constexpr auto SBWIO = SBWIOType();
         
-        MSPDebugCmd(PinState test, PinState rst) {
-            opSet(Ops::SetPins);
-            testPinStateSet(test);
-            rstPinStateSet(rst);
+        MSPDebugCmd(TestSetType, bool val) {
+            opSet(Ops::TestSet);
+            pinValSet(val);
         }
         
-        MSPDebugCmd(bool tms, bool tclk, bool tdi, bool tdoRead) {
+        MSPDebugCmd(RstSetType, bool val) {
+            opSet(Ops::RstSet);
+            pinValSet(val);
+        }
+        
+        MSPDebugCmd(TestPulseType) {
+            opSet(Ops::TestPulse);
+        }
+        
+        MSPDebugCmd(SBWIOType, bool tms, bool tclk, bool tdi, bool tdoRead) {
             opSet(Ops::SBWIO);
             tmsSet(tms);
             tclkSet(tclk);
@@ -109,26 +117,23 @@ namespace STLoader {
             tdoReadSet(tdoRead);
         }
         
-        Op opGet() const                    { return (data&(1<<7))>>7; }
-        void opSet(Op op)                   { data = (data&(~(1<<7)))|(op<<7); }
+        Op opGet() const            { return (data&(0x03<<0))>>0; }
+        void opSet(Op x)            { data = (data&(~(0x03<<0)))|(x<<0); }
         
-        PinState testPinStateGet() const    { return (data&(0x03<<2))>>2; }
-        void testPinStateSet(PinState s)    { data = (data&(~(0x03<<2)))|(s<<2); }
+        bool pinValGet() const      { return (data&(0x01<<2))>>2; }
+        void pinValSet(bool x)      { data = (data&(~(0x01<<2)))|(x<<2); }
         
-        PinState rstPinStateGet() const     { return (data&(0x03<<0))>>0; }
-        void rstPinStateSet(PinState s)     { data = (data&(~(0x03<<0)))|(s<<0); }
+        bool tmsGet() const         { return (data&(0x01<<2))>>2; }
+        void tmsSet(bool x)         { data = (data&(~(0x01<<2)))|(x<<2); }
         
-        bool tmsGet() const     { return (data&(1<<3))>>3; }
-        void tmsSet(bool s)     { data = (data&(~(1<<3)))|(s<<3); }
+        bool tclkGet() const        { return (data&(0x01<<3))>>3; }
+        void tclkSet(bool x)        { data = (data&(~(0x01<<3)))|(x<<3); }
         
-        bool tclkGet() const    { return (data&(1<<2))>>2; }
-        void tclkSet(bool s)    { data = (data&(~(1<<2)))|(s<<2); }
+        bool tdiGet() const         { return (data&(0x01<<4))>>4; }
+        void tdiSet(bool x)         { data = (data&(~(0x01<<4)))|(x<<4); }
         
-        bool tdiGet() const     { return (data&(1<<1))>>1; }
-        void tdiSet(bool s)     { data = (data&(~(1<<1)))|(s<<1); }
-        
-        bool tdoReadGet() const { return (data&(1<<0))>>0; }
-        void tdoReadSet(bool s) { data = (data&(~(1<<0)))|(s<<0); }
+        bool tdoReadGet() const     { return (data&(0x01<<5))>>5; }
+        void tdoReadSet(bool x)     { data = (data&(~(0x01<<5)))|(x<<5); }
         
         uint8_t data = 0;
     } __attribute__((packed));
