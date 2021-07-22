@@ -106,161 +106,160 @@ static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, s
     qspi.read(_ice40QSPICmd(msg, respLen), resp, respLen);
 }
 
+//void System::init() {
+//    _super::init();
+//    _usb.init();
+//    _qspi.init();
+//    
+////    for (bool x=true;; x=!x) {
+////        _LED0::Write(x);
+////        _LED1::Write(x);
+////        _LED2::Write(!x);
+////        _LED3::Write(!x);
+////        HAL_Delay(500);
+////    }
+//    
+////    // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
+////    // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high
+////    {
+////        auto s = _msp.connect();
+////        if (s != _msp.Status::OK) {
+////            abort();
+////        }
+////
+////        const _MSP430::Regs regsRead1 = _msp._regsGet();
+////        const _MSP430::Regs regsRead2 = _msp._regsGet();
+////
+////        const _MSP430::Regs regsWrote1 = {
+////            0xAABBC,
+////            0xFEEDF,
+////            0xCAFEB,
+////            0xBABEE,
+////
+////            0x12121,
+////            0x23232,
+////            0x34343,
+////            0x45454,
+////
+////            0x56565,
+////            0x67676,
+////            0x78787,
+////            0x89898,
+////
+////            0x9A9A9,
+////            0xABABA,
+////            0xBCBCB,
+////            0xCDCDC,
+////        };
+////        _msp._regsSet(regsWrote1);
+////
+////        const _MSP430::Regs regsRead3 = _msp._regsGet();
+////        const _MSP430::Regs regsRead4 = _msp._regsGet();
+////
+////        for (;;);
+////    }
+////
+//    
+////    // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
+////    // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high
+////    {
+////        constexpr uint16_t PM5CTL0          = 0x0130;
+////        constexpr uint16_t PAOUT            = 0x0202;
+////        constexpr uint16_t PADIR            = 0x0204;
+////        constexpr uint16_t PAREN            = 0x0206;
+////        constexpr uint16_t PASEL0           = 0x020A;
+////        constexpr uint16_t PASEL1           = 0x020C;
+////        
+////        constexpr uint16_t VDD_1V9_IMG_EN   = 1<<0;
+////        constexpr uint16_t VDD_2V8_IMG_EN   = 1<<2;
+////        
+////        auto s = _msp.connect();
+////        if (s != _msp.Status::OK) {
+////            abort();
+////        }
+////        
+////        // Clear LOCKLPM5 in the PM5CTL0 register
+////        // This is necessary to be able to control the GPIOs
+////        _msp.write(PM5CTL0, 0x0010);
+////        
+////        // Clear PAOUT so everything is driven to 0 by default
+////        _msp.write(PAOUT, 0x0000);
+////        
+////        // Make VDD_2V8_IMG_EN / VDD_1V9_IMG_EN outputs
+////        _msp.write(PADIR, VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
+////        
+////        // Turn on VDD_2V8_IMG_EN
+////        _msp.write(PAOUT, VDD_2V8_IMG_EN);
+////        HAL_Delay(10);
+////        
+////        // Turn on VDD_1V9_IMG_EN
+////        _msp.write(PAOUT, VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
+////    }
+//}
+
+
+template <typename MSP>
+void _testFRAMWrite(MSP msp) {
+    constexpr uint32_t AddrStart = 0xE300;
+    constexpr uint32_t AddrEnd = 0xFF80;
+    constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
+    
+    msp.crcReset();
+    msp.write(AddrStart, (uint16_t*)(0x00200000), Len);
+    
+    auto s = msp.crcVerify();
+    if (s != MSP::Status::OK) {
+        abort();
+    }
+}
+
+template <typename MSP>
+void _testRAMWrite(MSP msp) {
+    constexpr uint32_t AddrStart = 0x2000;
+    constexpr uint32_t AddrEnd = 0x2800;
+    constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
+    
+    msp.crcReset();
+    msp.write(AddrStart, (uint16_t*)(0x00200000), Len);
+    
+    auto s = msp.crcVerify();
+    if (s != MSP::Status::OK) {
+        abort();
+    }
+}
+
 // Test MSP430 RAM/FRAM writing
 void System::init() {
     _super::init();
     _usb.init();
     _qspi.init();
     
-//    for (bool x=true;; x=!x) {
-//        _LED0::Write(x);
-//        _LED1::Write(x);
-//        _LED2::Write(!x);
-//        _LED3::Write(!x);
-//        HAL_Delay(500);
-//    }
-    
-//    // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
-//    // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high
-//    {
-//        auto s = _msp.connect();
-//        if (s != _msp.Status::OK) {
-//            abort();
-//        }
-//
-//        const _MSP430::Regs regsRead1 = _msp._regsGet();
-//        const _MSP430::Regs regsRead2 = _msp._regsGet();
-//
-//        const _MSP430::Regs regsWrote1 = {
-//            0xAABBC,
-//            0xFEEDF,
-//            0xCAFEB,
-//            0xBABEE,
-//
-//            0x12121,
-//            0x23232,
-//            0x34343,
-//            0x45454,
-//
-//            0x56565,
-//            0x67676,
-//            0x78787,
-//            0x89898,
-//
-//            0x9A9A9,
-//            0xABABA,
-//            0xBCBCB,
-//            0xCDCDC,
-//        };
-//        _msp._regsSet(regsWrote1);
-//
-//        const _MSP430::Regs regsRead3 = _msp._regsGet();
-//        const _MSP430::Regs regsRead4 = _msp._regsGet();
-//
-//        for (;;);
-//    }
-//
-    
-//    // Turn on the IMG rails (VDD_2V8_IMG and VDD_1V9_IMG) by telling MSP430
-//    // to drive VDD_2V8_IMG_EN / VDD_1V9_IMG_EN high
-//    {
-//        constexpr uint16_t PM5CTL0          = 0x0130;
-//        constexpr uint16_t PAOUT            = 0x0202;
-//        constexpr uint16_t PADIR            = 0x0204;
-//        constexpr uint16_t PAREN            = 0x0206;
-//        constexpr uint16_t PASEL0           = 0x020A;
-//        constexpr uint16_t PASEL1           = 0x020C;
-//        
-//        constexpr uint16_t VDD_1V9_IMG_EN   = 1<<0;
-//        constexpr uint16_t VDD_2V8_IMG_EN   = 1<<2;
-//        
-//        auto s = _msp.connect();
-//        if (s != _msp.Status::OK) {
-//            abort();
-//        }
-//        
-//        // Clear LOCKLPM5 in the PM5CTL0 register
-//        // This is necessary to be able to control the GPIOs
-//        _msp.write(PM5CTL0, 0x0010);
-//        
-//        // Clear PAOUT so everything is driven to 0 by default
-//        _msp.write(PAOUT, 0x0000);
-//        
-//        // Make VDD_2V8_IMG_EN / VDD_1V9_IMG_EN outputs
-//        _msp.write(PADIR, VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
-//        
-//        // Turn on VDD_2V8_IMG_EN
-//        _msp.write(PAOUT, VDD_2V8_IMG_EN);
-//        HAL_Delay(10);
-//        
-//        // Turn on VDD_1V9_IMG_EN
-//        _msp.write(PAOUT, VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
-//    }
+    for (;; HAL_Delay(500)) {
+        auto s = _msp.connect();
+        if (s != _msp.Status::OK) {
+            if (s == _msp.Status::JTAGDisabled) {
+                s = _msp.erase();
+                continue;
+            } else {
+                abort();
+            }
+        }
+        
+        _testRAMWrite(_msp);
+        _testRAMWrite(_msp);
+        
+        _testRAMWrite(_msp);
+        _testFRAMWrite(_msp);
+        
+        _testFRAMWrite(_msp);
+        _testRAMWrite(_msp);
+        
+        _testFRAMWrite(_msp);
+        _testFRAMWrite(_msp);
+        
+        _msp.disconnect();
+    }
 }
-
-
-//template <typename MSP>
-//void _testFRAMWrite(MSP msp) {
-//    constexpr uint32_t AddrStart = 0xE300;
-//    constexpr uint32_t AddrEnd = 0xFF80;
-//    constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
-//    
-//    msp.crcReset();
-//    msp.framWrite(AddrStart, (uint16_t*)(0x00200000), Len);
-//    
-//    auto s = msp.crcVerify(AddrStart, Len);
-//    if (s != MSP::Status::OK) {
-//        abort();
-//    }
-//}
-//
-//template <typename MSP>
-//void _testRAMWrite(MSP msp) {
-//    constexpr uint32_t AddrStart = 0x2000;
-//    constexpr uint32_t AddrEnd = 0x2800;
-//    constexpr uint32_t Len = (AddrEnd-AddrStart)/2; // Number of 16-bit words
-//    
-//    msp.crcReset();
-//    msp.write(AddrStart, (uint16_t*)(0x00200000), Len);
-//    
-//    auto s = msp.crcVerify(AddrStart, Len);
-//    if (s != MSP::Status::OK) {
-//        abort();
-//    }
-//}
-//
-//// Test MSP430 RAM/FRAM writing
-//void System::init() {
-//    _super::init();
-//    _usb.init();
-//    _qspi.init();
-//    
-//    for (;; HAL_Delay(500)) {
-//        auto s = _msp.connect();
-//        if (s != _msp.Status::OK) {
-//            if (s == _msp.Status::JTAGDisabled) {
-//                s = _msp.erase();
-//                continue;
-//            } else {
-//                abort();
-//            }
-//        }
-//        
-//        _testRAMWrite(_msp);
-//        _testRAMWrite(_msp);
-//        
-//        _testRAMWrite(_msp);
-//        _testFRAMWrite(_msp);
-//        
-//        _testFRAMWrite(_msp);
-//        _testRAMWrite(_msp);
-//        
-//        _testFRAMWrite(_msp);
-//        _testFRAMWrite(_msp);
-//        
-//        _msp.disconnect();
-//    }
-//}
 
 
 //// Test MSP430 FRAM writing
