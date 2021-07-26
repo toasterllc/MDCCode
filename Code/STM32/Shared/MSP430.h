@@ -79,33 +79,33 @@ private:
         for (int i=0; i<6; i++) {
             _sbwio(1, 1);
         }
-        // <-- Test-Logic-Reset
+        // <- Test-Logic-Reset
         
         // TMS=0 for 1 clock
         _sbwio(0, 1);
-        // <-- Run-Test/Idle
+        // <- Run-Test/Idle
     }
     
     void _irShiftStart() {
-        // <-- Run-Test/Idle
+        // <- Run-Test/Idle
         _sbwio(1, _tclkSaved);
-        // <-- Select DR-Scan
+        // <- Select DR-Scan
         _sbwio(1, 1);
-        // <-- Select IR-Scan
+        // <- Select IR-Scan
         _sbwio(0, 1);
-        // <-- Capture-IR
+        // <- Capture-IR
         _sbwio(0, 1);
-        // <-- Shift-IR
+        // <- Shift-IR
     }
     
     void _drShiftStart() {
-        // <-- Run-Test/Idle
+        // <- Run-Test/Idle
         _sbwio(1, _tclkSaved);
-        // <-- Select DR-Scan
+        // <- Select DR-Scan
         _sbwio(0, 1);
-        // <-- Capture-IR
+        // <- Capture-IR
         _sbwio(0, 1);
-        // <-- Shift-DR
+        // <- Shift-DR
     }
     
     // Perform a single Spy-bi-wire I/O cycle
@@ -172,7 +172,7 @@ private:
     __attribute__((noinline))
     uint32_t _shift(uint32_t dout) {
         const uint32_t mask = (uint32_t)1<<(W-1);
-        // <-- Shift-DR / Shift-IR
+        // <- Shift-DR / Shift-IR
         uint32_t din = 0;
         for (uint8_t i=0; i<W; i++) {
             const bool tms = (i<(W-1) ? 0 : 1); // Final bit needs TMS=1
@@ -181,11 +181,11 @@ private:
             dout <<= 1;
         }
         
-        // <-- Exit1-DR / Exit1-IR
+        // <- Exit1-DR / Exit1-IR
         _sbwio(1, 1);
-        // <-- Update-DR / Update-IR
+        // <- Update-DR / Update-IR
         _sbwio(0, _tclkSaved);
-        // <-- Run-Test/Idle
+        // <- Run-Test/Idle
         
         return din;
     }
