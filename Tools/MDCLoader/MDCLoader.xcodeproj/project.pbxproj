@@ -42,10 +42,11 @@
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55E1D8ED253E892B00628EF6 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		55ECAFB426AF88AE00A339C7 /* USBDeviceLinux.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDeviceLinux.h; sourceTree = "<group>"; };
-		55ECAFB526AF88AE00A339C7 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
+		55ECAFB526AF88AE00A339C7 /* USBDeviceOld.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDeviceOld.h; sourceTree = "<group>"; };
 		55ECAFB626AF96F600A339C7 /* USB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USB.h; sourceTree = "<group>"; };
 		55ECAFCA26AFE2DC00A339C7 /* RefCounted.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RefCounted.h; sourceTree = "<group>"; };
 		55ECAFCB26B0293500A339C7 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		55ECAFCC26B0464A00A339C7 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,7 +70,8 @@
 				55671A21257E853100C1CDA4 /* MDCLoaderDevice.h */,
 				55671A24257E853100C1CDA4 /* Mmap.h */,
 				55671A26257E853100C1CDA4 /* SendRight.h */,
-				55ECAFB526AF88AE00A339C7 /* USBDevice.h */,
+				55ECAFCC26B0464A00A339C7 /* USBDevice.h */,
+				55ECAFB526AF88AE00A339C7 /* USBDeviceOld.h */,
 				55ECAFB426AF88AE00A339C7 /* USBDeviceLinux.h */,
 			);
 			name = Shared;
