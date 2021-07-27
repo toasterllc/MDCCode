@@ -164,7 +164,7 @@ int main(int argc, const char* argv[]) {
     try {
         devices = MDCLoaderDevice::GetDevices();
     } catch (const std::exception& e) {
-        fprintf(stderr, "Failed to find MDC loader devices: %s\n\n", e.what());
+        fprintf(stderr, "Failed to get MDC loader devices: %s\n\n", e.what());
         return 1;
     }
     

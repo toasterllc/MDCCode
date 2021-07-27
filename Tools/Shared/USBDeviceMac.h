@@ -32,15 +32,6 @@ public:
         Pipe(Interface& interface, uint8_t pipeRef, uint8_t epAddr) : 
         _interface(interface), _pipeRef(pipeRef), _epAddr(epAddr) {}
         
-//        // Copy constructor: illegal
-//        Pipe(const Pipe& x) = delete;
-//        // Copy assignment operator: illegal
-//        Pipe& operator=(const Pipe& x) = delete;
-//        // Move constructor: illegal
-//        Pipe(Pipe&& x) = delete;
-//        // Move assignment operator: illegal
-//        Pipe& operator=(Pipe&& x) = delete;
-        
         template <typename T>
         void write(T& x, Milliseconds timeout=Forever) const { _interface.write(*this, x, timeout); }
         void write(const void* buf, size_t len, Milliseconds timeout=Forever) const { _interface.write(*this, buf, len, timeout); }
@@ -100,7 +91,7 @@ public:
                 IOReturn ior = iokitExec<&IOUSBInterfaceInterface::GetNumEndpoints>(&epCount);
                 _CheckErr(ior, "GetNumEndpoints() failed");
                 
-                for (uint8_t pipeRef=1; pipeRef<epCount; pipeRef++) {
+                for (uint8_t pipeRef=1; pipeRef<=epCount; pipeRef++) {
                     IOUSBEndpointProperties props = { .bVersion = kUSBEndpointPropertiesVersion3 };
                     ior = iokitExec<&IOUSBInterfaceInterface::GetPipePropertiesV3>(pipeRef, &props);
                     _CheckErr(ior, "GetPipePropertiesV3() failed");
@@ -214,8 +205,10 @@ public:
         SendRight servicesIter(ioServicesIter);
         while (servicesIter) {
             SendRight service(IOIteratorNext(servicesIter));
-            if (service.valid()) break;
-            devices.emplace_back(service);
+            if (!service.valid()) break;
+            // Ignore devices that we fail to create a USBDevice for
+            try { devices.emplace_back(service); }
+            catch (...) {}
         }
         return devices;
     }
@@ -274,38 +267,21 @@ public:
                 _interfaces.push_back(std::make_unique<Interface>(std::move(service)));
             }
         }
-        
-        // Open the device
-        IOReturn ior = iokitExec<&IOUSBDeviceInterface::USBDeviceOpen>();
-        _CheckErr(ior, "USBDeviceOpen() failed");
     }
     
-//    // Copy constructor: illegal
-//    USBDevice(const USBDevice& x) = delete;
-//    // Copy assignment operator: illegal
-//    USBDevice& operator=(const USBDevice& x) = delete;
-//    // Move constructor: illegal
-//    USBDevice(USBDevice&& x) = delete;
-//    // Move assignment operator: illegal
-//    USBDevice& operator=(USBDevice&& x) = delete;
-    
-//    // Copy constructor: use copy assignment operator
-//    USBDevice(const USBDevice& x) { *this = x; }
-//    // Copy assignment operator
-//    USBDevice& operator=(const USBDevice& x) {
-//        return *this;
-//    }
-    // Move constructor: use move assignment operator
+    // Move constructor: use default implementation
+    // For some reason the default move implementation is deleted when we have _both_ a
+    // `RefCounted` member and a `std::vector<std::unique_ptr<Interface>>` member. When
+    // we only one exists, the default move implementation exists.
     USBDevice(USBDevice&& x) = default;
-//    // Move assignment operator
-//    USBDevice& operator=(USBDevice&& x) {
-//        _service = std::move(x._service);
-//        _iokitInterface = std::move(x._iokitInterface);
-//        _interfaces = std::move(x._interfaces);
-//        return *this;
-//    }
     
     USB::DeviceDescriptor deviceDescriptor() const {
+        // Apple's APIs don't provide a way to get the device descriptor, only
+        // the configuration descriptor (GetConfigurationDescriptorPtr).
+        // However in our testing, no IO actually occurs with the device when
+        // requesting its device descriptor, so the kernel must intercept the
+        // request and return a cached copy. So in short, requesting the
+        // device descriptor shouldn't be too expensive.
         using namespace Endian;
         USB::DeviceDescriptor desc;
         IOUSBDevRequest req = {
@@ -339,6 +315,8 @@ public:
     const Interface& getInterface(uint8_t idx) const { return *_interfaces.at(idx); }
     
     void vendorRequestOut(uint8_t req, void* data, size_t len) {
+        _openIfNeeded();
+        
         IOUSBDevRequest usbReq = {
             .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
             .bRequest       = req,
@@ -355,7 +333,16 @@ private:
         if (ior != kIOReturnSuccess) throw RuntimeError("%s: %s", errMsg, mach_error_string(ior));
     }
     
+    void _openIfNeeded() {
+        if (_open) return;
+        // Open the device
+        IOReturn ior = iokitExec<&IOUSBDeviceInterface::USBDeviceOpen>();
+        _CheckErr(ior, "USBDeviceOpen() failed");
+        _open = true;
+    }
+    
     SendRight _service;
     _IOUSBDeviceInterface _iokitInterface;
     std::vector<std::unique_ptr<Interface>> _interfaces;
+    bool _open = false;
 };
