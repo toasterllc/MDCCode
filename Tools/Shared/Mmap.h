@@ -5,8 +5,10 @@
 #include <errno.h>
 #include <stdexcept>
 #include <string>
+#include <cstring>
 #include <filesystem>
 #include <unistd.h>
+#include "Toastbox/RuntimeError.h"
 
 template <typename T=uint8_t>
 class Mmap {
@@ -15,15 +17,15 @@ public:
     Mmap(const std::filesystem::path& path) {
         try {
             _state.fd = open(path.c_str(), O_RDONLY);
-            if (_state.fd < 0) throw std::runtime_error(std::string("open failed: ") + strerror(errno));
+            if (_state.fd < 0) throw RuntimeError("open failed: %s", strerror(errno));
             
             struct stat st;
             int ir = fstat(_state.fd, &st);
-            if (ir) throw std::runtime_error(std::string("fstat failed: ") + strerror(errno));
+            if (ir) throw RuntimeError("fstat failed: %s", strerror(errno));
             _state.len = st.st_size/sizeof(T);
             
             void* data = mmap(nullptr, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, _state.fd, 0);
-            if (data == MAP_FAILED) throw std::runtime_error(std::string("mmap failed: ") + strerror(errno));
+            if (data == MAP_FAILED) throw RuntimeError("mmap failed: %s", strerror(errno));
             _state.data = (T*)data;
         
         } catch (...) {

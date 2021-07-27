@@ -1,6 +1,5 @@
 #pragma once
 #include "USBDevice.h"
-#include "SendRight.h"
 #include "STLoaderTypes.h"
 
 class MDCLoaderDevice {

@@ -2,7 +2,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <vector>
-#include "Enum.h"
+#include "Toastbox/Enum.h"
 #include "Mmap.h"
 
 class ELF32Binary {
@@ -34,14 +34,14 @@ public:
     );
     
     struct Section {
-        size_t idx;
-        std::string name;
-        SectionType type;
-        SectionFlag flags;
-        uint32_t addr;
-        uint32_t off;
-        uint32_t size;
-        uint32_t align;
+        size_t idx          = 0;
+        std::string name    = {};
+        SectionType type    = 0;
+        SectionFlag flags   = 0;
+        uint32_t addr       = 0;
+        uint32_t off        = 0;
+        uint32_t size       = 0;
+        uint32_t align      = 0;
     };
     
     // Throws on error
