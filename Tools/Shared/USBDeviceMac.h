@@ -115,14 +115,12 @@ public:
             _CheckErr(ior, "USBInterfaceOpen() failed");
         }
         
-//        // Copy constructor: illegal
-//        Interface(const Interface& x) = delete;
-//        // Copy assignment operator: illegal
-//        Interface& operator=(const Interface& x) = delete;
-//        // Move constructor: illegal
-//        Interface(Interface&& x) = delete;
-//        // Move assignment operator: illegal
-//        Interface& operator=(Interface&& x) = delete;
+        // Copying/moving aren't allowed because each Pipe within _pipes has a reference
+        // to this particular instance, so it can't move.
+        Interface(const Interface& x) = delete;
+        Interface& operator=(const Interface& x) = delete;
+        Interface(Interface&& x) = delete;
+        Interface& operator=(Interface&& x) = delete;
         
         template <typename T>
         void write(const Pipe& p, T& x, Milliseconds timeout=Forever) const {
@@ -282,21 +280,20 @@ public:
 //    USBDevice(USBDevice&& x) = delete;
 //    // Move assignment operator: illegal
 //    USBDevice& operator=(USBDevice&& x) = delete;
-//    
+    
 //    // Copy constructor: use copy assignment operator
 //    USBDevice(const USBDevice& x) { *this = x; }
 //    // Copy assignment operator
 //    USBDevice& operator=(const USBDevice& x) {
-//        _s = x._s;
-//        if (_s.iokitInterface) iokitExec<&IOUSBDeviceInterface::AddRef>();
 //        return *this;
 //    }
-//    // Move constructor: use move assignment operator
-//    USBDevice(USBDevice&& x) { *this = std::move(x); }
+    // Move constructor: use move assignment operator
+    USBDevice(USBDevice&& x) = default;
 //    // Move assignment operator
 //    USBDevice& operator=(USBDevice&& x) {
-//        _s = x._s;
-//        x._s = {};
+//        _service = std::move(x._service);
+//        _iokitInterface = std::move(x._iokitInterface);
+//        _interfaces = std::move(x._interfaces);
 //        return *this;
 //    }
     
@@ -346,7 +343,6 @@ public:
     }
     
 private:
-    
     static void _CheckErr(IOReturn ior, const char* errMsg) {
         if (ior != kIOReturnSuccess) throw RuntimeError("%s: %s", errMsg, mach_error_string(ior));
     }
