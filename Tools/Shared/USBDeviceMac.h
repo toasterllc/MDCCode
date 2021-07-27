@@ -109,10 +109,6 @@ public:
                     _pipes.push_back(std::make_unique<Pipe>(*this, pipeRef, epAddr));
                 }
             }
-            
-            // Open the interface
-            IOReturn ior = iokitExec<&IOUSBInterfaceInterface::USBInterfaceOpen>();
-            _CheckErr(ior, "USBInterfaceOpen() failed");
         }
         
         // Copying/moving aren't allowed because each Pipe within _pipes has a reference
@@ -123,7 +119,8 @@ public:
         Interface& operator=(Interface&& x) = delete;
         
         template <typename T>
-        void write(const Pipe& p, T& x, Milliseconds timeout=Forever) const {
+        void write(const Pipe& p, T& x, Milliseconds timeout=Forever) {
+            _openIfNeeded();
             if (timeout == Forever) {
                 IOReturn ior = iokitExec<&IOUSBInterfaceInterface::WritePipe>(p._pipeRef, (void*)&x, (uint32_t)sizeof(x));
                 _CheckErr(ior, "WritePipe() failed");
@@ -133,7 +130,8 @@ public:
             }
         }
         
-        void write(const Pipe& p, const void* buf, size_t len, Milliseconds timeout=Forever) const {
+        void write(const Pipe& p, const void* buf, size_t len, Milliseconds timeout=Forever) {
+            _openIfNeeded();
             if (timeout == Forever) {
                 IOReturn ior = iokitExec<&IOUSBInterfaceInterface::WritePipe>(p._pipeRef, (void*)buf, (uint32_t)len);
                 _CheckErr(ior, "WritePipe() failed");
@@ -144,7 +142,8 @@ public:
         }
         
         template <typename T>
-        void read(const Pipe& p, T& t, Milliseconds timeout=Forever) const {
+        void read(const Pipe& p, T& t, Milliseconds timeout=Forever) {
+            _openIfNeeded();
             uint32_t len32 = (uint32_t)sizeof(t);
             if (timeout == Forever) {
                 IOReturn ior = iokitExec<&IOUSBInterfaceInterface::ReadPipe>(p._pipeRef, &t, &len32);
@@ -158,7 +157,8 @@ public:
                 (uintmax_t)sizeof(t), (uintmax_t)len32);
         }
         
-        void read(const Pipe& p, void* buf, size_t len, Milliseconds timeout=Forever) const {
+        void read(const Pipe& p, void* buf, size_t len, Milliseconds timeout=Forever) {
+            _openIfNeeded();
             uint32_t len32 = (uint32_t)len;
             if (timeout == Forever) {
                 IOReturn ior = iokitExec<&IOUSBInterfaceInterface::ReadPipe>(p._pipeRef, buf, &len32);
@@ -172,7 +172,8 @@ public:
                 (uintmax_t)len, (uintmax_t)len32);
         }
         
-        void reset(const Pipe& p) const {
+        void reset(const Pipe& p) {
+            _openIfNeeded();
             IOReturn ior = iokitExec<&IOUSBInterfaceInterface::ResetPipe>(p._pipeRef);
             _CheckErr(ior, "ResetPipe() failed");
         }
@@ -185,7 +186,16 @@ public:
         }
         
     private:
+        void _openIfNeeded() {
+            if (_open) return;
+            // Open the interface
+            IOReturn ior = iokitExec<&IOUSBInterfaceInterface::USBInterfaceOpen>();
+            _CheckErr(ior, "USBInterfaceOpen() failed");
+            _open = true;
+        }
+        
         _IOUSBInterfaceInterface _iokitInterface;
+        bool _open = false;
         std::vector<std::unique_ptr<Pipe>> _pipes; // Using unique_ptr since Pipe has a deleted move+copy constructors
     };
     
@@ -204,7 +214,7 @@ public:
         SendRight servicesIter(ioServicesIter);
         while (servicesIter) {
             SendRight service(IOIteratorNext(servicesIter));
-            if (!service) break;
+            if (service.valid()) break;
             devices.emplace_back(service);
         }
         return devices;
@@ -223,10 +233,8 @@ public:
     }
     
     // Constructor: accept a SendRight
-    USBDevice(const SendRight& service) {
+    USBDevice(const SendRight& service) : _service(service) {
         assert(service);
-        
-        _service = service;
         
         _IOCFPlugInInterface plugin;
         {
@@ -262,7 +270,7 @@ public:
             SendRight servicesIter(ioServicesIter);
             while (servicesIter) {
                 SendRight service(IOIteratorNext(servicesIter));
-                if (!service) break;
+                if (!service.valid()) break;
                 _interfaces.push_back(std::make_unique<Interface>(std::move(service)));
             }
         }
