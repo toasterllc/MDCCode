@@ -3,7 +3,6 @@
 #include <iostream>
 #include <optional>
 #include "ELF32Binary.h"
-#include "SendRight.h"
 #include "USBDevice.h"
 #include "STLoaderTypes.h"
 #include "MDCLoaderDevice.h"

@@ -3,7 +3,6 @@
 #include "USBDevice.h"
 #include "USBInterface.h"
 #include "USBPipe.h"
-#include "SendRight.h"
 #include "STAppTypes.h"
 #include "TimeInstant.h"
 
@@ -19,11 +18,8 @@ public:
         return USBDevice::FindDevice<MDCDevice>(MatchingDictionary());
     }
     
-    // Default constructor: empty
-    MDCDevice() {}
-    
-    MDCDevice(SendRight&& service) :
-    USBDevice(std::move(service)) {
+    MDCDevice(USBDevice&& dev) :
+    _dev(std::move(dev)) {
         std::vector<USBInterface> interfaces = usbInterfaces();
         if (interfaces.size() != 1) throw std::runtime_error("invalid number of USB interfaces");
         _interface = interfaces[0];

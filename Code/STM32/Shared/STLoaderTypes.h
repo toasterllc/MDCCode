@@ -1,5 +1,5 @@
 #pragma once
-#include "Enum.h"
+#include "Toastbox/Enum.h"
 
 namespace STLoader {
     Enum(uint8_t, Endpoint, Endpoints,
