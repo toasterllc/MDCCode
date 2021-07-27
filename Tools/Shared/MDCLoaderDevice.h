@@ -16,11 +16,7 @@ public:
         return devs;
     }
     
-    MDCLoaderDevice(USBDevice&& dev) :
-    _dev(std::move(dev)),
-    _cmdOutPipe(_dev.getInterface(0).getPipe(STLoader::Endpoints::CmdOut)),
-    _dataOutPipe(_dev.getInterface(0).getPipe(STLoader::Endpoints::DataOut)),
-    _dataInPipe(_dev.getInterface(0).getPipe(STLoader::Endpoints::DataIn)) {}
+    MDCLoaderDevice(USBDevice&& dev) : _dev(std::move(dev)) {}
     
     void stWrite(uint32_t addr, const void* data, size_t len) {
         using namespace STLoader;
@@ -34,9 +30,9 @@ public:
             },
         };
         // Send command
-        _cmdOutPipe.write(cmd);
+        _dev.write(STLoader::Endpoints::CmdOut, cmd);
         // Send data
-        _dataOutPipe.write(data, len);
+        _dev.write(STLoader::Endpoints::DataOut, data, len);
         _waitOrThrow("STWrite command failed");
     }
     
@@ -51,7 +47,7 @@ public:
             },
         };
         
-        _cmdOutPipe.write(cmd);
+        _dev.write(STLoader::Endpoints::CmdOut, cmd);
     }
     
     void iceWrite(const void* data, size_t len) {
@@ -65,9 +61,9 @@ public:
             },
         };
         // Send command
-        _cmdOutPipe.write(cmd);
+        _dev.write(STLoader::Endpoints::CmdOut, cmd);
         // Send data
-        _dataOutPipe.write(data, len);
+        _dev.write(STLoader::Endpoints::DataOut, data, len);
         _waitOrThrow("ICEWrite command failed");
     }
     
@@ -77,7 +73,7 @@ public:
             .op = Op::MSPConnect,
         };
         // Send command
-        _cmdOutPipe.write(cmd);
+        _dev.write(STLoader::Endpoints::CmdOut, cmd);
         _waitOrThrow("MSPStart command failed");
     }
     
@@ -87,7 +83,7 @@ public:
             .op = Op::MSPDisconnect,
         };
         // Send command
-        _cmdOutPipe.write(cmd);
+        _dev.write(STLoader::Endpoints::CmdOut, cmd);
         _waitOrThrow("MSPFinish command failed");
     }
     
@@ -103,9 +99,9 @@ public:
             },
         };
         // Send command
-        _cmdOutPipe.write(cmd);
+        _dev.write(STLoader::Endpoints::CmdOut, cmd);
         // Send data
-        _dataOutPipe.write(data, len);
+        _dev.write(STLoader::Endpoints::DataOut, data, len);
         _waitOrThrow("MSPWrite command failed");
     }
     
@@ -121,9 +117,9 @@ public:
             },
         };
         // Send command
-        _cmdOutPipe.write(cmd);
+        _dev.write(STLoader::Endpoints::CmdOut, cmd);
         // Read data
-        _dataInPipe.read(data, len);
+        _dev.read(STLoader::Endpoints::DataIn, data, len);
         _waitOrThrow("MSPRead command failed");
     }
     
@@ -138,20 +134,17 @@ public:
                 },
             },
         };
-        _cmdOutPipe.write(cmd);
+        _dev.write(STLoader::Endpoints::CmdOut, cmd);
         _waitOrThrow("LEDSet command failed");
     }
     
 private:
     USBDevice _dev;
-    const USBDevice::Pipe& _cmdOutPipe;
-    const USBDevice::Pipe& _dataOutPipe;
-    const USBDevice::Pipe& _dataInPipe;
     
     void _waitOrThrow(const char* errMsg) {
         // Wait for completion and throw on failure
-        STLoader::Status s;
-        _dataInPipe.read(s);
+        STLoader::Status s = {};
+        _dev.read(STLoader::Endpoints::DataIn, s);
         if (s != STLoader::Status::OK) throw std::runtime_error(errMsg);
     }
 };
