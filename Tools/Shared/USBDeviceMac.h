@@ -3,6 +3,7 @@
 #include <IOKit/usb/IOUSBLib.h>
 #include <IOKit/IOCFPlugIn.h>
 #include <vector>
+#include <memory>
 #include <cassert>
 #include "Toastbox/USB.h"
 #include "Toastbox/RefCounted.h"
@@ -45,7 +46,7 @@ public:
         void write(const void* buf, size_t len, Milliseconds timeout=Forever) const { _interface.write(*this, buf, len, timeout); }
         
         template <typename T>
-        void read(T& t, Milliseconds timeout=Forever) const {_interface.read(*this, t, timeout); }
+        void read(T& t, Milliseconds timeout=Forever) const { _interface.read(*this, t, timeout); }
         void read(void* buf, size_t len, Milliseconds timeout=Forever) const { _interface.read(*this, buf, len, timeout); }
         void reset() const { _interface.reset(*this); }
         
@@ -299,16 +300,6 @@ public:
 //        return *this;
 //    }
     
-    ~USBDevice() {
-        if (_iokitInterface) {
-            // We don't call USBDeviceClose here!
-            // We allow USBDevice to be copied, and the copies assume
-            // the device is open.
-            // It'll be closed when the object is deallocated.
-            iokitExec<&IOUSBDeviceInterface::Release>();
-        }
-    }
-    
     USB::DeviceDescriptor deviceDescriptor() const {
         using namespace Endian;
         USB::DeviceDescriptor desc;
@@ -438,25 +429,7 @@ private:
         if (ior != kIOReturnSuccess) throw RuntimeError("%s: %s", errMsg, mach_error_string(ior));
     }
     
-//    void _reset() {
-//        if (_iokitInterface) {
-//            // We don't call USBDeviceClose here!
-//            // We allow USBDevice to be copied, and the copies assume
-//            // the device is open.
-//            // It'll be closed when the object is deallocated.
-//            iokitExec<&IOUSBDeviceInterface::Release>();
-//        }
-//        
-//        _service = {};
-//    }
-    
     SendRight _service;
     _IOUSBDeviceInterface _iokitInterface;
     std::vector<std::unique_ptr<Interface>> _interfaces;
-    
-//    struct {
-//        SendRight service;
-//        IOUSBDeviceInterface** iokitInterface = nullptr;
-//        std::optional<std::vector<Interface>> interfaces;
-//    } _s;
 };
