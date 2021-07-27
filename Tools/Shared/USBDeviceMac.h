@@ -333,80 +333,6 @@ public:
     
     const Interface& getInterface(uint8_t idx) const { return *_interfaces.at(idx); }
     
-//    uint16_t vendorID() {
-//        uint16_t u16 = 0;
-//        IOReturn ior = (*_s.iokitInterface)->GetDeviceVendor(_s.iokitInterface, &u16);
-//        if (ior != kIOReturnSuccess) throw RuntimeError("GetDeviceVendor() failed: 0x0x%x", ior);
-//        return u16;
-//    }
-//    
-//    uint16_t productID() {
-//        uint16_t u16 = 0;
-//        IOReturn ior = (*_s.iokitInterface)->GetDeviceProduct(_s.iokitInterface, &u16);
-//        if (ior != kIOReturnSuccess) throw RuntimeError("GetDeviceProduct() failed: 0x0x%x", ior);
-//        return u16;
-//    }
-//    
-//    
-//    USB::DeviceDescriptor deviceDescriptor() {
-//        
-//        
-//        struct libusb_device_descriptor desc;
-//        int ir = libusb_get_device_descriptor(_s.dev, &desc);
-//        _CheckErr(ir, "libusb_get_device_descriptor failed");
-//        return desc;
-//    }
-//    
-//    
-//    USB::DeviceDescriptor getConfigDescriptor(uint8_t idx) {
-//        struct libusb_config_descriptor* desc;
-//        int ir = libusb_get_config_descriptor(_s.dev, 0, &desc);
-//        _CheckErr(ir, "libusb_config_descriptor failed");
-//        return desc;
-//    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-//    IOUSBDeviceInterface** iokitInterface() const {
-//        assert(_s.iokitInterface);
-//        return _s.iokitInterface;
-//    }
-//    
-//    operator bool() const { return _iokitInterface; }
-//    
-//    std::vector<Interface> interfaces() {
-//        if (!_s.interfaces) {
-//            io_iterator_t ioServicesIter = MACH_PORT_NULL;
-//            IOUSBFindInterfaceRequest req = {
-//                .bInterfaceClass = kIOUSBFindInterfaceDontCare,
-//                .bInterfaceSubClass = kIOUSBFindInterfaceDontCare,
-//                .bInterfaceProtocol = kIOUSBFindInterfaceDontCare,
-//                .bAlternateSetting = kIOUSBFindInterfaceDontCare,
-//            };
-//            
-//            IOReturn ior = iokitExec<&IOUSBDeviceInterface::CreateInterfaceIterator>(&req, &ioServicesIter);
-//            if (ior != kIOReturnSuccess) throw std::runtime_error("CreateInterfaceIterator failed");
-//            
-//            SendRight servicesIter(ioServicesIter);
-//            _s.interfaces = {};
-//            while (servicesIter) {
-//                SendRight service(IOIteratorNext(servicesIter.port()));
-//                if (!service) break;
-//                _s.interfaces->emplace_back(std::move(service));
-//            }
-//        }
-//        return *_s.interfaces;
-//    }
-    
     void vendorRequestOut(uint8_t req, void* data, size_t len) {
         IOUSBDevRequest usbReq = {
             .bmRequestType  = USBmakebmRequestType(kUSBOut, kUSBVendor, kUSBDevice),
@@ -418,10 +344,6 @@ public:
         IOReturn ior = iokitExec<&IOUSBDeviceInterface::DeviceRequest>(&usbReq);
         _CheckErr(ior, "DeviceRequest() failed");
     }
-    
-//    IOServiceWatcher createWatcher(dispatch_queue_t queue, IOServiceWatcher::Handler handler) {
-//        return IOServiceWatcher(_s.service, queue, handler);
-//    }
     
 private:
     
