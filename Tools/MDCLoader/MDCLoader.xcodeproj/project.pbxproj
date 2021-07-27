@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		55E1D8EA253E868000628EF6 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E1D8E9253E868000628EF6 /* Foundation.framework */; };
 		55E1D8EC253E868400628EF6 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E1D8EB253E868400628EF6 /* IOKit.framework */; };
-		55E1D8EE253E892B00628EF6 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E1D8ED253E892B00628EF6 /* main.mm */; };
+		55E1D8EE253E892B00628EF6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55E1D8ED253E892B00628EF6 /* main.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,21 +26,26 @@
 
 /* Begin PBXFileReference section */
 		55671A19257E851B00C1CDA4 /* STLoaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STLoaderTypes.h; path = ../../Code/STM32/Shared/STLoaderTypes.h; sourceTree = "<group>"; };
-		55671A1B257E852900C1CDA4 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
-		55671A1D257E853100C1CDA4 /* USBPipe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
 		55671A1F257E853100C1CDA4 /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
-		55671A20257E853100C1CDA4 /* USBInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBInterface.h; sourceTree = "<group>"; };
 		55671A21257E853100C1CDA4 /* MDCLoaderDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCLoaderDevice.h; sourceTree = "<group>"; };
 		55671A22257E853100C1CDA4 /* ELF32Binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
-		55671A23257E853100C1CDA4 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
 		55671A24257E853100C1CDA4 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		55671A25257E853100C1CDA4 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
 		55671A26257E853100C1CDA4 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
-		558FFF9626914FC6000897AA /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
+		55CAD61E26AF7B5B00450881 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
+		55CAD61F26AF7B5B00450881 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
+		55CAD62026AF7B5B00450881 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
+		55CAD62126AF7B5B00450881 /* Defer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defer.h; sourceTree = "<group>"; };
+		55CAD62226AF7B5B00450881 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
+		55CAD62326AF7B5B00450881 /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
 		55E1D8DE253E864F00628EF6 /* MDCLoader */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCLoader; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
-		55E1D8ED253E892B00628EF6 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		55E1D8ED253E892B00628EF6 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		55ECAFB426AF88AE00A339C7 /* USBDeviceLinux.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDeviceLinux.h; sourceTree = "<group>"; };
+		55ECAFB526AF88AE00A339C7 /* USBDeviceMac.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDeviceMac.h; sourceTree = "<group>"; };
+		55ECAFB626AF96F600A339C7 /* USB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USB.h; sourceTree = "<group>"; };
+		55ECAFCA26AFE2DC00A339C7 /* RefCounted.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RefCounted.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,16 +61,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		55671A1A257E852900C1CDA4 /* Shared */ = {
-			isa = PBXGroup;
-			children = (
-				55671A1B257E852900C1CDA4 /* Enum.h */,
-				558FFF9626914FC6000897AA /* RuntimeError.h */,
-			);
-			name = Shared;
-			path = ../../Code/Shared;
-			sourceTree = "<group>";
-		};
 		55671A1C257E853100C1CDA4 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
@@ -73,23 +68,38 @@
 				55671A1F257E853100C1CDA4 /* MDCDevice.h */,
 				55671A21257E853100C1CDA4 /* MDCLoaderDevice.h */,
 				55671A24257E853100C1CDA4 /* Mmap.h */,
-				55671A23257E853100C1CDA4 /* RuntimeError.h */,
 				55671A26257E853100C1CDA4 /* SendRight.h */,
 				55671A25257E853100C1CDA4 /* USBDevice.h */,
-				55671A20257E853100C1CDA4 /* USBInterface.h */,
-				55671A1D257E853100C1CDA4 /* USBPipe.h */,
+				55ECAFB526AF88AE00A339C7 /* USBDeviceMac.h */,
+				55ECAFB426AF88AE00A339C7 /* USBDeviceLinux.h */,
 			);
 			name = Shared;
 			path = ../Shared;
 			sourceTree = "<group>";
 		};
+		55CAD61D26AF7B5B00450881 /* Toastbox */ = {
+			isa = PBXGroup;
+			children = (
+				55CAD62126AF7B5B00450881 /* Defer.h */,
+				55CAD61F26AF7B5B00450881 /* Endian.h */,
+				55CAD61E26AF7B5B00450881 /* Enum.h */,
+				55CAD62226AF7B5B00450881 /* HashInts.h */,
+				55CAD62326AF7B5B00450881 /* RingBuffer.h */,
+				55CAD62026AF7B5B00450881 /* RuntimeError.h */,
+				55ECAFB626AF96F600A339C7 /* USB.h */,
+				55ECAFCA26AFE2DC00A339C7 /* RefCounted.h */,
+			);
+			name = Toastbox;
+			path = ../../Code/Lib/Toastbox;
+			sourceTree = "<group>";
+		};
 		55E1D8D5253E864F00628EF6 = {
 			isa = PBXGroup;
 			children = (
-				55671A1A257E852900C1CDA4 /* Shared */,
+				55CAD61D26AF7B5B00450881 /* Toastbox */,
 				55671A1C257E853100C1CDA4 /* Shared */,
 				55671A19257E851B00C1CDA4 /* STLoaderTypes.h */,
-				55E1D8ED253E892B00628EF6 /* main.mm */,
+				55E1D8ED253E892B00628EF6 /* main.cpp */,
 				55E1D8E8253E868000628EF6 /* Frameworks */,
 				55E1D8DF253E864F00628EF6 /* Products */,
 			);
@@ -169,7 +179,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				55E1D8EE253E892B00628EF6 /* main.mm in Sources */,
+				55E1D8EE253E892B00628EF6 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,6 +306,11 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = (
+					../Shared,
+					../../Code/Shared,
+					../../Code/Lib,
+				);
 			};
 			name = Debug;
 		};
@@ -304,6 +319,11 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = (
+					../Shared,
+					../../Code/Shared,
+					../../Code/Lib,
+				);
 			};
 			name = Release;
 		};

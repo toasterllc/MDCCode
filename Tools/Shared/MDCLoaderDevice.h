@@ -1,33 +1,27 @@
 #pragma once
 #include "USBDevice.h"
-#include "USBInterface.h"
-#include "USBPipe.h"
 #include "SendRight.h"
 #include "STLoaderTypes.h"
 
-class MDCLoaderDevice : public USBDevice {
+class MDCLoaderDevice {
 public:
-    static NSDictionary* MatchingDictionary() {
-        return USBDevice::MatchingDictionary(1155, 57105);
+    static std::vector<MDCLoaderDevice> GetDevices() {
+        std::vector<MDCLoaderDevice> devs;
+        auto usbDevs = USBDevice::GetDevices();
+        for (USBDevice& usbDev : usbDevs) {
+            USB::DeviceDescriptor desc = usbDev.deviceDescriptor();
+            if (desc.idVendor==1155 && desc.idProduct==57105) {
+                devs.emplace_back(std::move(usbDev));
+            }
+        }
+        return devs;
     }
     
-    static std::vector<MDCLoaderDevice> FindDevice() {
-        return USBDevice::FindDevice<MDCLoaderDevice>(MatchingDictionary());
-    }
-    
-    // Default constructor: empty
-    MDCLoaderDevice() {}
-    
-    MDCLoaderDevice(SendRight&& service) :
-    USBDevice(std::move(service)) {
-        std::vector<USBInterface> interfaces = usbInterfaces();
-        if (interfaces.size() != 1) throw std::runtime_error("invalid number of USB interfaces");
-        _interface = interfaces[0];
-        
-        cmdOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::CmdOut);
-        dataOutPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataOut);
-        dataInPipe = USBPipe(_interface, STLoader::EndpointIdxs::DataIn);
-    }
+    MDCLoaderDevice(USBDevice&& dev) :
+    _dev(std::move(dev)),
+    _cmdOutPipe(_dev.getInterface(0).getPipe(STLoader::Endpoints::CmdOut)),
+    _dataOutPipe(_dev.getInterface(0).getPipe(STLoader::Endpoints::DataOut)),
+    _dataInPipe(_dev.getInterface(0).getPipe(STLoader::Endpoints::DataIn)) {}
     
     void stWrite(uint32_t addr, const void* data, size_t len) {
         using namespace STLoader;
@@ -41,9 +35,9 @@ public:
             },
         };
         // Send command
-        cmdOutPipe.write(cmd);
+        _cmdOutPipe.write(cmd);
         // Send data
-        dataOutPipe.writeBuf(data, len);
+        _dataOutPipe.write(data, len);
         _waitOrThrow("STWrite command failed");
     }
     
@@ -58,7 +52,7 @@ public:
             },
         };
         
-        cmdOutPipe.write(cmd);
+        _cmdOutPipe.write(cmd);
     }
     
     void iceWrite(const void* data, size_t len) {
@@ -72,9 +66,9 @@ public:
             },
         };
         // Send command
-        cmdOutPipe.write(cmd);
+        _cmdOutPipe.write(cmd);
         // Send data
-        dataOutPipe.writeBuf(data, len);
+        _dataOutPipe.write(data, len);
         _waitOrThrow("ICEWrite command failed");
     }
     
@@ -84,7 +78,7 @@ public:
             .op = Op::MSPConnect,
         };
         // Send command
-        cmdOutPipe.write(cmd);
+        _cmdOutPipe.write(cmd);
         _waitOrThrow("MSPStart command failed");
     }
     
@@ -94,7 +88,7 @@ public:
             .op = Op::MSPDisconnect,
         };
         // Send command
-        cmdOutPipe.write(cmd);
+        _cmdOutPipe.write(cmd);
         _waitOrThrow("MSPFinish command failed");
     }
     
@@ -110,9 +104,9 @@ public:
             },
         };
         // Send command
-        cmdOutPipe.write(cmd);
+        _cmdOutPipe.write(cmd);
         // Send data
-        dataOutPipe.writeBuf(data, len);
+        _dataOutPipe.write(data, len);
         _waitOrThrow("MSPWrite command failed");
     }
     
@@ -128,9 +122,9 @@ public:
             },
         };
         // Send command
-        cmdOutPipe.write(cmd);
+        _cmdOutPipe.write(cmd);
         // Read data
-        dataInPipe.readBuf(data, len);
+        _dataInPipe.read(data, len);
         _waitOrThrow("MSPRead command failed");
     }
     
@@ -145,21 +139,20 @@ public:
                 },
             },
         };
-        cmdOutPipe.write(cmd);
+        _cmdOutPipe.write(cmd);
         _waitOrThrow("LEDSet command failed");
     }
     
-    USBPipe cmdOutPipe;
-    USBPipe dataOutPipe;
-    USBPipe dataInPipe;
-    
 private:
-    USBInterface _interface;
+    USBDevice _dev;
+    const USBDevice::Pipe& _cmdOutPipe;
+    const USBDevice::Pipe& _dataOutPipe;
+    const USBDevice::Pipe& _dataInPipe;
     
     void _waitOrThrow(const char* errMsg) {
         // Wait for completion and throw on failure
         STLoader::Status s;
-        dataInPipe.read(s);
+        _dataInPipe.read(s);
         if (s != STLoader::Status::OK) throw std::runtime_error(errMsg);
     }
 };

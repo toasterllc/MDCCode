@@ -1,16 +1,12 @@
-#import <Foundation/Foundation.h>
-#import <IOKit/IOKitLib.h>
-#import <IOKit/usb/IOUSBLib.h>
-#import <IOKit/IOCFPlugIn.h>
-#import <vector>
-#import <string>
-#import <iostream>
-#import <optional>
-#import "ELF32Binary.h"
-#import "SendRight.h"
-#import "USBInterface.h"
-#import "STLoaderTypes.h"
-#import "MDCLoaderDevice.h"
+#include <vector>
+#include <string>
+#include <iostream>
+#include <optional>
+#include "ELF32Binary.h"
+#include "SendRight.h"
+#include "USBDevice.h"
+#include "STLoaderTypes.h"
+#include "MDCLoaderDevice.h"
 
 using namespace STLoader;
 
@@ -166,7 +162,7 @@ int main(int argc, const char* argv[]) {
     
     std::vector<MDCLoaderDevice> devices;
     try {
-        devices = MDCLoaderDevice::FindDevice();
+        devices = MDCLoaderDevice::GetDevices();
     } catch (const std::exception& e) {
         fprintf(stderr, "Failed to find MDC loader devices: %s\n\n", e.what());
         return 1;

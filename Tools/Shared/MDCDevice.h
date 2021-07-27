@@ -7,7 +7,7 @@
 #include "STAppTypes.h"
 #include "TimeInstant.h"
 
-class MDCDevice : public USBDevice {
+class MDCDevice {
 public:
     using Milliseconds = uint32_t;
     
@@ -15,7 +15,7 @@ public:
         return USBDevice::MatchingDictionary(1155, 57105);
     }
     
-    static std::vector<MDCDevice> FindDevice() {
+    static std::vector<MDCDevice> GetDevices() {
         return USBDevice::FindDevice<MDCDevice>(MatchingDictionary());
     }
     
@@ -312,7 +312,7 @@ public:
             throw RuntimeError("buffer capacity too small (image length: %ju pixels, buffer capacity: %ju pixels)",
                 (uintmax_t)imageLen, (uintmax_t)cap);
         
-        pixInPipe.readBuf(pixels, imageLen*sizeof(Pixel), timeout);
+        pixInPipe.read(pixels, imageLen*sizeof(Pixel), timeout);
         return hdr;
     }
     
