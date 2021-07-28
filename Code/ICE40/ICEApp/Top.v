@@ -122,7 +122,7 @@ module Top(
                 // By default, go to SPI_State_Nop
                 spi_state <= SPI_State_RespOut;
                 spi_dataCounter <= RespCycleCount;
-            
+                
                 case (spi_msgType)
                 // Echo
                 `Msg_Type_Echo: begin
@@ -131,17 +131,17 @@ module Top(
                     // spi_resp <= 64'h12345678_ABCDEF12;
                     spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
                 end
-            
+                
                 // LEDSet
                 `Msg_Type_LEDSet: begin
                     $display("[SPI] Got Msg_Type_LEDSet: %b", spi_msgArg[`Msg_Arg_LEDSet_Val_Bits]);
                     ice_led <= spi_msgArg[`Msg_Arg_LEDSet_Val_Bits];
                 end
-            
+                
                 `Msg_Type_NoOp: begin
                     $display("[SPI] Got Msg_Type_None");
                 end
-            
+                
                 default: begin
                     $display("[SPI] BAD COMMAND: %0d ❌", spi_msgType);
                     `Finish;
