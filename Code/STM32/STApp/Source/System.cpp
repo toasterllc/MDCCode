@@ -916,17 +916,18 @@ ICE40::PixCaptureStatusResp System::_pixCaptureStatus() {
 //        _ice40Transfer(_qspi, PixResetMsg(false));
 //        HAL_Delay(1);
 //        _ice40Transfer(_qspi, PixResetMsg(true));
-//        // Wait 150k EXTCLK (24MHz) periods
-//        // (150e3*(1/24e6)) == 6.25ms
-//        HAL_Delay(7);
+//        // Wait 150k EXTCLK (16MHz) periods
+//        // (150e3*(1/16e6)) == 9.25ms
+//        HAL_Delay(10);
 //    }
 //    
 //    // Sanity-check pix comms by reading a known register
 //    {
-//        const uint16_t chipVersion = _pixI2CRead(0x3000);
+//        _pixI2CRead(0x3000);
+////        const uint16_t chipVersion = _pixI2CRead(0x3000);
 //        // TODO: we probably don't want to check the version number in production, in case the version number changes?
 //        // also the 0x3000 isn't read-only, so in theory it could change
-//        Assert(chipVersion == 0x2604);
+////        Assert(chipVersion == 0x2604);
 //    }
 //    
 //    // Configure internal register initialization
@@ -1089,18 +1090,18 @@ ICE40::PixCaptureStatusResp System::_pixCaptureStatus() {
 //        _pixI2CWrite(0x301A, 0x10DC);
 //    }
 //    
-//    // Capture a frame
-//    for (bool ledOn=true;; ledOn=!ledOn) {
-//        _led0.write(ledOn);
-//        _ice40Transfer(_qspi, PixCaptureMsg(0));
-//        for (int i=0; i<10; i++) {
-//            auto status = _pixGetStatus();
-//            Assert(!status.capturePixelDropped());
-//            if (status.captureDone()) break;
-//            Assert(i < 10);
-//        }
-//        HAL_Delay(33);
-//    }
+////    // Capture a frame
+////    for (bool ledOn=true;; ledOn=!ledOn) {
+////        _led0.write(ledOn);
+////        _ice40Transfer(_qspi, PixCaptureMsg(0));
+////        for (int i=0; i<10; i++) {
+////            auto status = _pixGetStatus();
+////            Assert(!status.capturePixelDropped());
+////            if (status.captureDone()) break;
+////            Assert(i < 10);
+////        }
+////        HAL_Delay(33);
+////    }
 //    
 //    for (;;);
 //}

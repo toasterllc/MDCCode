@@ -184,7 +184,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
 #pragma mark - Private Methods
 
 - (void)_setZoomScale:(CGFloat)zoomScale anchor:(CGPoint)anchor {
-    const CGFloat MinScale = 1;
+    const CGFloat MinScale = .5;
     const CGFloat MaxScale = 200;
     
     _zoomScale = std::clamp(zoomScale, MinScale, MaxScale);
