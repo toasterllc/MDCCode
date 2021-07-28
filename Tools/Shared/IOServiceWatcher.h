@@ -9,7 +9,6 @@ class IOServiceWatcher {
 public:
     using Handler = void(^)(uint32_t msgType, void* msgArg);
     
-    // Constructor
     IOServiceWatcher(const SendRight& service, dispatch_queue_t queue, Handler handler) {
         assert(service);
         assert(queue);
@@ -36,22 +35,6 @@ public:
         
         _noteObj = SendRight(ioNoteObj);
     }
-    
-//    // Copy constructor: illegal
-//    IOServiceWatcher(const IOServiceWatcher& x) = delete;
-//    // Move constructor: use move assignment operator
-//    IOServiceWatcher(IOServiceWatcher&& x) { *this = std::move(x); }
-//    // Move assignment operator
-//    IOServiceWatcher& operator=(IOServiceWatcher&& x) {
-//        _reset();
-//        _state = std::move(x._state);
-//        x._state = {};
-//        return *this;
-//    }
-//    
-//    ~IOServiceWatcher() {
-//        _reset();
-//    }
     
 private:
     static void _callback(void* ctx, io_service_t service, uint32_t msgType, void* msgArg) {
