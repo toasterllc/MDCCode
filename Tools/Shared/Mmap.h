@@ -71,5 +71,5 @@ private:
         int fd = -1;
         T* data = nullptr;
         size_t len = 0;
-    } _state;
+    } _state = {};
 };

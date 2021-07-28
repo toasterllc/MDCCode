@@ -26,12 +26,12 @@ void printUsage() {
 }
 
 struct Args {
-    CmdStr cmd;
+    CmdStr cmd = {};
     struct {
-        uint8_t idx;
-        uint8_t on;
-    } ledSet;
-    std::string filePath;
+        uint8_t idx = 0;
+        uint8_t on = 0;
+    } ledSet = {};
+    std::string filePath = {};
 };
 
 static Args parseArgs(int argc, const char* argv[]) {

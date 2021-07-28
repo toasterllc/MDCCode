@@ -37,7 +37,6 @@ private:
     using _IOUSBDeviceInterface = RefCounted<IOUSBDeviceInterface**, _Retain<IOUSBDeviceInterface>, _Release<IOUSBDeviceInterface>>;
     using _IOUSBInterfaceInterface = RefCounted<IOUSBInterfaceInterface**, _Retain<IOUSBInterfaceInterface>, _Release<IOUSBInterfaceInterface>>;
     
-public:
     class _Interface {
     public:
         template <auto Fn, typename... Args>
@@ -84,10 +83,10 @@ public:
             uint32_t len32 = (uint32_t)len;
             if (timeout == Forever) {
                 IOReturn ior = iokitExec<&IOUSBInterfaceInterface::ReadPipe>(pipeRef, buf, &len32);
-                _CheckErr(ior, "ReadPipe() failed");
+                _CheckErr(ior, "ReadPipe failed");
             } else {
                 IOReturn ior = iokitExec<&IOUSBInterfaceInterface::ReadPipeTO>(pipeRef, buf, &len32, 0, (uint32_t)timeout.count());
-                _CheckErr(ior, "ReadPipeTO() failed");
+                _CheckErr(ior, "ReadPipeTO failed");
             }
             
             if (len32 != len) throw RuntimeError("ReadPipe() returned bad length (expected %ju bytes, got %ju bytes)",
@@ -103,17 +102,17 @@ public:
             _openIfNeeded();
             if (timeout == Forever) {
                 IOReturn ior = iokitExec<&IOUSBInterfaceInterface::WritePipe>(pipeRef, (void*)buf, (uint32_t)len);
-                _CheckErr(ior, "WritePipe() failed");
+                _CheckErr(ior, "WritePipe failed");
             } else {
                 IOReturn ior = iokitExec<&IOUSBInterfaceInterface::WritePipeTO>(pipeRef, (void*)buf, (uint32_t)len, 0, (uint32_t)timeout.count());
-                _CheckErr(ior, "WritePipeTO() failed");
+                _CheckErr(ior, "WritePipeTO failed");
             }
         }
         
         void reset(uint8_t pipeRef) {
             _openIfNeeded();
             IOReturn ior = iokitExec<&IOUSBInterfaceInterface::ResetPipe>(pipeRef);
-            _CheckErr(ior, "ResetPipe() failed");
+            _CheckErr(ior, "ResetPipe failed");
         }
         
     private:
@@ -121,7 +120,7 @@ public:
             if (_open) return;
             // Open the interface
             IOReturn ior = iokitExec<&IOUSBInterfaceInterface::USBInterfaceOpen>();
-            _CheckErr(ior, "USBInterfaceOpen() failed");
+            _CheckErr(ior, "USBInterfaceOpen failed");
             _open = true;
         }
         
@@ -129,14 +128,26 @@ public:
         bool _open = false;
     };
     
+#elif __linux__
+    
+    struct _Interface {
+        uint8_t bInterfaceNumber = 0;
+        bool claimed = false;
+    };
+    
 #endif
     
     
+public:
     
+    // Copying illegal/move OK
+    USBDevice(const USBDevice& x) = delete;
+    USBDevice& operator=(const USBDevice& x) = delete;
+    USBDevice(USBDevice&& x) = default;
+    USBDevice& operator=(USBDevice&& x) = default;
     
     
 #if __APPLE__
-    
     static std::vector<USBDevice> GetDevices() {
         std::vector<USBDevice> devices;
         io_iterator_t ioServicesIter = MACH_PORT_NULL;
@@ -198,7 +209,7 @@ public:
             };
             
             IOReturn ior = iokitExec<&IOUSBDeviceInterface::CreateInterfaceIterator>(&req, &ioServicesIter);
-            _CheckErr(ior, "CreateInterfaceIterator() failed");
+            _CheckErr(ior, "CreateInterfaceIterator failed");
             
             SendRight servicesIter(ioServicesIter);
             while (servicesIter) {
@@ -209,12 +220,12 @@ public:
                 _Interface& iface = _interfaces.back();
                 uint8_t epCount = 0;
                 IOReturn ior = iface.iokitExec<&IOUSBInterfaceInterface::GetNumEndpoints>(&epCount);
-                _CheckErr(ior, "GetNumEndpoints() failed");
+                _CheckErr(ior, "GetNumEndpoints failed");
                 
                 for (uint8_t pipeRef=1; pipeRef<=epCount; pipeRef++) {
                     IOUSBEndpointProperties props = { .bVersion = kUSBEndpointPropertiesVersion3 };
                     ior = iface.iokitExec<&IOUSBInterfaceInterface::GetPipePropertiesV3>(pipeRef, &props);
-                    _CheckErr(ior, "GetPipePropertiesV3() failed");
+                    _CheckErr(ior, "GetPipePropertiesV3 failed");
                     
                     const bool dirOut = props.bDirection==kUSBOut;
                     const uint8_t epAddr = (dirOut ? USB::Endpoint::DirOut : USB::Endpoint::DirIn)|props.bEndpointNumber;
@@ -227,12 +238,6 @@ public:
             }
         }
     }
-    
-    // Move constructor: use default implementation
-    // For some reason the default move implementation is deleted when we have _both_ a
-    // `RefCounted` member and a `std::vector<std::unique_ptr<Interface>>` member. When
-    // we only one exists, the default move implementation exists.
-    USBDevice(USBDevice&& x) = default;
     
     USB::DeviceDescriptor deviceDescriptor() const {
         // Apple's APIs don't provide a way to get the device descriptor, only
@@ -252,7 +257,7 @@ public:
         };
         
         IOReturn ior = iokitExec<&IOUSBDeviceInterface::DeviceRequest>(&req);
-        _CheckErr(ior, "DeviceRequest() failed");
+        _CheckErr(ior, "DeviceRequest failed");
         
         desc.bLength                = HFL(desc.bLength);
         desc.bDescriptorType        = HFL(desc.bDescriptorType);
@@ -306,7 +311,7 @@ public:
 //        };
 //        
 //        IOReturn ior = iokitExec<&IOUSBDeviceInterface::DeviceRequest>(&usbReq);
-//        _CheckErr(ior, "DeviceRequest() failed");
+//        _CheckErr(ior, "DeviceRequest failed");
 //    }
     
 private:
@@ -333,7 +338,7 @@ private:
 //        if (_open) return;
 //        // Open the device
 //        IOReturn ior = iokitExec<&IOUSBDeviceInterface::USBDeviceOpen>();
-//        _CheckErr(ior, "USBDeviceOpen() failed");
+//        _CheckErr(ior, "USBDeviceOpen failed");
 //        _open = true;
 //    }
     
@@ -342,6 +347,165 @@ private:
     std::vector<_Interface> _interfaces;
     _EndpointInfo _epInfos[USB::Endpoint::MaxCount];
 //    bool _open = false;
+    
+#elif __linux__
+    
+    static std::vector<USBDevice> GetDevices() {
+        libusb_device** devs = nullptr;
+        ssize_t devsCount = libusb_get_device_list(_USBCtx(), &devs);
+        _CheckErr((int)devsCount, "libusb_get_device_list failed");
+        Defer( if (devs) libusb_free_device_list(devs, true); );
+        
+        std::vector<USBDevice> r;
+        for (size_t i=0; i<(size_t)devsCount; i++) {
+            r.push_back(devs[i]);
+        }
+        return r;
+    }
+    
+    USBDevice(libusb_device* dev) : _dev(dev) {
+        assert(dev);
+        
+        // Populate _interfaces and _epInfos
+        {
+            struct libusb_config_descriptor* configDesc = nullptr;
+            int ir = libusb_get_config_descriptor(_dev, 0, &configDesc);
+            _CheckErr(ir, "libusb_config_descriptor failed");
+            
+            for (uint8_t ifaceIdx=0; ifaceIdx<configDesc->bNumInterfaces; ifaceIdx++) {
+                const struct libusb_interface& iface = configDesc->interface[ifaceIdx];
+                
+                // For now we're only looking at altsetting 0
+                if (iface.num_altsetting < 1) throw RuntimeError("interface has no altsettings");
+                _interfaces.push_back({
+                    .bInterfaceNumber = iface.altsetting[0].bInterfaceNumber,
+                });
+                
+                const struct libusb_interface_descriptor& ifaceDesc = iface.altsetting[0];
+                for (uint8_t epIdx=0; epIdx<ifaceDesc.bNumEndpoints; epIdx++) {
+                    const struct libusb_endpoint_descriptor& endpointDesc = ifaceDesc.endpoint[epIdx];
+                    const uint8_t epAddr = endpointDesc.bEndpointAddress;
+                    _epInfos[_OffsetForEndpointAddr(epAddr)] = _EndpointInfo{
+                        .epAddr     = epAddr,
+                        .ifaceIdx   = ifaceIdx,
+                    };
+                }
+            }
+        }
+    }
+    
+    USB::DeviceDescriptor deviceDescriptor() const {
+        struct libusb_device_descriptor desc;
+        int ir = libusb_get_device_descriptor(_dev, &desc);
+        _CheckErr(ir, "libusb_get_device_descriptor failed");
+        
+        return USB::DeviceDescriptor{
+            .bLength                = desc.bLength,
+            .bDescriptorType        = desc.bDescriptorType,
+            .bcdUSB                 = desc.bcdUSB,
+            .bDeviceClass           = desc.bDeviceClass,
+            .bDeviceSubClass        = desc.bDeviceSubClass,
+            .bDeviceProtocol        = desc.bDeviceProtocol,
+            .bMaxPacketSize0        = desc.bMaxPacketSize0,
+            .idVendor               = desc.idVendor,
+            .idProduct              = desc.idProduct,
+            .bcdDevice              = desc.bcdDevice,
+            .iManufacturer          = desc.iManufacturer,
+            .iProduct               = desc.iProduct,
+            .iSerialNumber          = desc.iSerialNumber,
+            .bNumConfigurations     = desc.bNumConfigurations,
+        };
+    }
+    
+    template <typename T>
+    void read(uint8_t epAddr, T& t, Milliseconds timeout=Forever) {
+        read(epAddr, (void*)&t, sizeof(t), timeout);
+    }
+    
+    void read(uint8_t epAddr, void* buf, size_t len, Milliseconds timeout=Forever) {
+        _claimInterfaceForEndpointAddr(epAddr);
+        
+        int xferLen = 0;
+        int ir = libusb_bulk_transfer(_devHandle, epAddr, (uint8_t*)buf, (int)len, &xferLen,
+            _LibUSBTimeoutFromMs(timeout));
+        _CheckErr(ir, "libusb_bulk_transfer failed");
+        if ((size_t)xferLen != len)
+            throw RuntimeError("libusb_bulk_transfer short read (tried: %zu, got: %zu)", len, (size_t)xferLen);
+    }
+    
+    template <typename T>
+    void write(uint8_t epAddr, T& x, Milliseconds timeout=Forever) {
+        write(epAddr, (void*)&x, sizeof(x), timeout);
+    }
+    
+    void write(uint8_t epAddr, const void* buf, size_t len, Milliseconds timeout=Forever) {
+        _claimInterfaceForEndpointAddr(epAddr);
+        
+        int xferLen = 0;
+        int ir = libusb_bulk_transfer(_devHandle, epAddr, (uint8_t*)buf, (int)len, &xferLen,
+            _LibUSBTimeoutFromMs(timeout));
+        _CheckErr(ir, "libusb_bulk_transfer failed");
+        if ((size_t)xferLen != len)
+            throw RuntimeError("libusb_bulk_transfer short write (tried: %zu, got: %zu)", len, (size_t)xferLen);
+    }
+    
+    void reset(uint8_t epAddr) {
+        _claimInterfaceForEndpointAddr(epAddr);
+        int ir = libusb_clear_halt(_devHandle, epAddr);
+        _CheckErr(ir, "libusb_clear_halt failed");
+    }
+    
+private:
+    struct _EndpointInfo {
+        uint8_t epAddr = 0;
+        uint8_t ifaceIdx = 0;
+    };
+    
+    static libusb_context* _USBCtx() {
+        static std::once_flag Once;
+        static libusb_context* Ctx = nullptr;
+        std::call_once(Once, [](){
+            int ir = libusb_init(&Ctx);
+            _CheckErr(ir, "libusb_init failed");
+        });
+        return Ctx;
+    }
+    
+    static uint8_t _OffsetForEndpointAddr(uint8_t epAddr) {
+        return ((epAddr&USB::Endpoint::DirMask)>>3) | (epAddr&USB::Endpoint::IdxMask);
+    }
+    
+    static unsigned int _LibUSBTimeoutFromMs(Milliseconds timeout) {
+        if (timeout == Forever) return 0;
+        else if (timeout == Milliseconds::zero()) return 1;
+        else return timeout.count();
+    }
+    
+    static void _CheckErr(int ir, const char* errMsg) {
+        if (ir < 0) throw RuntimeError("%s: %s", errMsg, libusb_error_name(ir));
+    }
+    
+    void _openIfNeeded() {
+        if (_devHandle) return;
+        int ir = libusb_open(_dev, &_devHandle);
+        _CheckErr(ir, "libusb_open failed");
+    }
+    
+    void _claimInterfaceForEndpointAddr(uint8_t epAddr) {
+        _openIfNeeded();
+        const _EndpointInfo& epInfo = _epInfos[_OffsetForEndpointAddr(epAddr)];
+        _Interface& iface = _interfaces.at(epInfo.ifaceIdx);
+        if (!iface.claimed) {
+            int ir = libusb_claim_interface(_devHandle, iface.bInterfaceNumber);
+            _CheckErr(ir, "libusb_claim_interface failed");
+            iface.claimed = true;
+        }
+    }
+    
+    libusb_device* _dev = nullptr;
+    libusb_device_handle* _devHandle = nullptr;
+    std::vector<_Interface> _interfaces = {};
+    _EndpointInfo _epInfos[USB::Endpoint::MaxCount] = {};
     
 #endif
 };
