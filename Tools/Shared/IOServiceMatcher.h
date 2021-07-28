@@ -1,64 +1,39 @@
 #pragma once
 #include <IOKit/IOKitLib.h>
 #include <vector>
-#include "SendRight.h"
-#include "USBInterface.h"
-#include "RuntimeError.h"
+#include "Toastbox/SendRight.h"
+#include "Toastbox/RuntimeError.h"
+#include "Toastbox/Uniqued.h"
 
 class IOServiceMatcher {
 public:
     using Handler = void(^)(SendRight&&);
     
-    // Default constructor: empty
-    IOServiceMatcher() {}
-    
-    // Constructor
     IOServiceMatcher(dispatch_queue_t queue, NSDictionary* match, Handler handler) {
-        try {
-            assert(queue);
-            assert(match);
-            assert(handler);
-            dispatch_assert_queue(queue);
-            
-            _state.queue = queue;
-            _state.handler = handler;
-            
-            _state.notifyPort = IONotificationPortCreate(kIOMasterPortDefault);
-            if (!_state.notifyPort) throw RuntimeError("IONotificationPortCreate returned null");
-            IONotificationPortSetDispatchQueue(_state.notifyPort, queue);
-            
-            io_iterator_t ioIter = MACH_PORT_NULL;
-            // *** Note ***
-            // We pass _state.handler as the context to IOServiceAddMatchingNotification(), not `this`,
-            // because we allow IOServiceMatcher's to be moved via the move operator, so `this` would
-            // no longer be valid if that happened, but the handler would still be valid.
-            kern_return_t kr = IOServiceAddMatchingNotification(_state.notifyPort, kIOMatchedNotification,
-                (CFDictionaryRef)CFBridgingRetain(match), _matchingCallback, (__bridge void*)_state.handler, &ioIter);
-            if (kr != KERN_SUCCESS) throw RuntimeError("IOServiceAddMatchingNotification failed: 0x%x", kr);
-            _state.serviceIter = SendRight(ioIter);
-            
-            _matchingCallback((void*)_state.handler, ioIter);
+        assert(queue);
+        assert(match);
+        assert(handler);
+        dispatch_assert_queue(queue);
         
-        } catch (...) {
-            _reset();
-            throw;
-        }
-    }
-    
-    // Copy constructor: illegal
-    IOServiceMatcher(const IOServiceMatcher& x) = delete;
-    // Move constructor: use move assignment operator
-    IOServiceMatcher(IOServiceMatcher&& x) { *this = std::move(x); }
-    // Move assignment operator
-    IOServiceMatcher& operator=(IOServiceMatcher&& x) {
-        _reset();
-        _state = std::move(x._state);
-        x._state = {};
-        return *this;
-    }
-    
-    ~IOServiceMatcher() {
-        _reset();
+        _queue = queue;
+        _handler = handler;
+        
+        IONotificationPortRef p = IONotificationPortCreate(kIOMasterPortDefault);
+        if (!p) throw RuntimeError("IONotificationPortCreate returned null");
+        _notifyPort = p;
+        IONotificationPortSetDispatchQueue(_notifyPort, queue);
+        
+        io_iterator_t ioIter = MACH_PORT_NULL;
+        // *** Note ***
+        // We pass _handler as the context to IOServiceAddMatchingNotification(), not `this`,
+        // because we allow IOServiceMatcher's to be moved via the move operator, so `this` would
+        // no longer be valid if that happened, but the handler would still be valid.
+        kern_return_t kr = IOServiceAddMatchingNotification(_notifyPort, kIOMatchedNotification,
+            (CFDictionaryRef)CFBridgingRetain(match), _matchingCallback, (__bridge void*)_handler, &ioIter);
+        if (kr != KERN_SUCCESS) throw RuntimeError("IOServiceAddMatchingNotification failed: 0x%x", kr);
+        _serviceIter = SendRight(ioIter);
+        
+        _matchingCallback((void*)_handler, ioIter);
     }
     
 private:
@@ -71,19 +46,9 @@ private:
         }
     }
     
-    void _reset() {
-        if (_state.queue) dispatch_assert_queue(_state.queue); // We can only be created and destroyed from the target queue
-        
-        if (_state.notifyPort) {
-            IONotificationPortDestroy(_state.notifyPort);
-            _state.notifyPort = nullptr;
-        }
-    }
-    
-    struct {
-        dispatch_queue_t queue = nullptr;
-        IONotificationPortRef notifyPort = nullptr;
-        SendRight serviceIter;
-        Handler handler = nullptr;
-    } _state;
+    using _IONotificationPortRef = Uniqued<IONotificationPortRef, IONotificationPortDestroy>;
+    dispatch_queue_t _queue = nullptr;
+    _IONotificationPortRef _notifyPort;
+    SendRight _serviceIter;
+    Handler _handler = nullptr;
 };

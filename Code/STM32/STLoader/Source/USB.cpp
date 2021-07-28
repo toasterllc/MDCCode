@@ -1,5 +1,5 @@
 #include "USB.h"
-#include "Enum.h"
+#include "Toastbox/Enum.h"
 #include "STLoaderTypes.h"
 #include "Assert.h"
 #include <string.h>

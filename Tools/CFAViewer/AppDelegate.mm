@@ -10,6 +10,7 @@
 #import <filesystem>
 #import <map>
 #import <set>
+#import <chrono>
 #import "ImageLayer.h"
 #import "HistogramLayer.h"
 #import "Mmap.h"
@@ -31,6 +32,7 @@
 using namespace CFAViewer;
 using namespace MetalUtil;
 using namespace ImagePipeline;
+using namespace std::chrono;
 namespace fs = std::filesystem;
 
 static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
@@ -131,11 +133,10 @@ struct PixConfig {
     bool _colorCheckersEnabled;
     float _colorCheckerCircleRadius;
     
-    IOServiceMatcher _serviceWatcher;
-    MDCDevice _mdcDevice;
-    IOServiceWatcher _mdcDeviceWatcher;
+    std::optional<IOServiceMatcher> _serviceAppearWatcher;
+    std::optional<IOServiceWatcher> _serviceDisappearWatcher;
+    SendRight _mdcService;
     
-    PixConfig _pixConfig;
     ImagePipelineManager* _imagePipelineManager;
     
     struct {
@@ -143,6 +144,7 @@ struct PixConfig {
         std::condition_variable signal;
         bool running = false;
         bool cancel = false;
+        std::optional<PixConfig> pixConfig;
         STApp::Pixel pixels[2200*2200];
         uint32_t width = 0;
         uint32_t height = 0;
@@ -216,14 +218,15 @@ struct PixConfig {
     [self _setFineIntegrationTime:0];
     [self _setAnalogGain:0];
     
-    [self _setMDCDevice:MDCDevice()];
-    _serviceWatcher = IOServiceMatcher(dispatch_get_main_queue(), MDCDevice::MatchingDictionary(), ^(SendRight&& service) {
-        [weakSelf _handleUSBDevice:std::move(service)];
-    });
+    [self _setMDCService:{}];
+    _serviceAppearWatcher = IOServiceMatcher(dispatch_get_main_queue(), MDCDevice::MatchingDictionary(),
+        ^(SendRight&& service) {
+            [weakSelf _handleMatchingService:std::move(service)];
+        });
     
-    [NSThread detachNewThreadWithBlock:^{
-        [self _threadReadInputCommands];
-    }];
+//    [NSThread detachNewThreadWithBlock:^{
+//        [self _threadReadInputCommands];
+//    }];
 }
 
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
@@ -346,82 +349,53 @@ static bool isCFAFile(const fs::path& path) {
 
 #pragma mark - MDCDevice
 
-- (void)_handleUSBDevice:(SendRight&&)service {
-    MDCDevice device;
-    try {
-        device = MDCDevice(std::move(service));
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Failed to create MDCDevice (it probably needs to be bootloaded): %s\n", e.what());
-    }
-    [self _setMDCDevice:std::move(device)];
+- (void)_handleMatchingService:(SendRight&&)service {
+    [self _setMDCService:std::move(service)];
 }
 
-// Throws on error
-static void initMDCDevice(const MDCDevice& device) {
-    // Reset the device to put it back in a pre-defined state
-    device.reset();
-    device.pixReset();
-    device.pixConfig();
-}
-
-// Throws on error
-static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
-    // Set coarse_integration_time
-    device.pixI2CWrite(0x3012, cfg.coarseIntegrationTime);
-    // Set fine_integration_time
-    device.pixI2CWrite(0x3014, cfg.fineIntegrationTime);
-    // Set analog_gain
-    device.pixI2CWrite(0x3060, cfg.analogGain);
-}
-
-- (void)_setMDCDevice:(MDCDevice&&)device {
-    // Disable streaming
-    [self _setStreamImagesEnabled:false];
+- (void)_setMDCService:(SendRight&&)service {
+    // Stop streaming, set switch to off, and enable or disable switch
+    [self _streamImagesStop];
     
-    _mdcDevice = std::move(device);
-    [_streamImagesSwitch setEnabled:_mdcDevice];
+    _mdcService = std::move(service);
+    [_streamImagesSwitch setEnabled:_mdcService.valid()];
+    [_streamImagesSwitch setState:NSControlStateValueOff];
     
-    // Watch the MDCDevice so we know when it's terminated
-    if (_mdcDevice) {
+    if (_mdcService.valid()) {
         __weak auto weakSelf = self;
-        try {
-            initMDCDevice(_mdcDevice);
-            _mdcDeviceWatcher = _mdcDevice.createWatcher(dispatch_get_main_queue(), ^(uint32_t msgType, void* msgArg) {
+        _serviceDisappearWatcher = IOServiceWatcher(_mdcService, dispatch_get_main_queue(),
+            ^(uint32_t msgType, void* msgArg) {
                 [weakSelf _handleMDCDeviceNotificationType:msgType arg:msgArg];
             });
-        
-        } catch (const std::exception& e) {
-            fprintf(stderr, "Failed to initialize MDCDevice: %s\n", e.what());
-            // If something goes wrong, assume the device was disconnected
-            [self _setMDCDevice:MDCDevice()];
-        }
+    } else {
+        _serviceDisappearWatcher = std::nullopt;
     }
 }
 
 - (void)_handleMDCDeviceNotificationType:(uint32_t)msgType arg:(void*)msgArg {
     if (msgType == kIOMessageServiceIsTerminated) {
-        [self _setMDCDevice:MDCDevice()];
+        [self _setMDCService:{}];
     }
 }
 
-- (void)_threadReadInputCommands {
-    for (;;) {
-        std::string line;
-        std::getline(std::cin, line);
-        
-        std::vector<std::string> argStrs;
-        std::stringstream argStream(line);
-        std::string argStr;
-        while (std::getline(argStream, argStr, ' ')) {
-            if (!argStr.empty()) argStrs.push_back(argStr);
-        }
-        
-        __weak auto weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf _handleInputCommand:argStrs];
-        });
-    }
-}
+//- (void)_threadReadInputCommands {
+//    for (;;) {
+//        std::string line;
+//        std::getline(std::cin, line);
+//        
+//        std::vector<std::string> argStrs;
+//        std::stringstream argStream(line);
+//        std::string argStr;
+//        while (std::getline(argStream, argStr, ' ')) {
+//            if (!argStr.empty()) argStrs.push_back(argStr);
+//        }
+//        
+//        __weak auto weakSelf = self;
+//        dispatch_async(dispatch_get_main_queue(), ^{
+//            [weakSelf _handleInputCommand:argStrs];
+//        });
+//    }
+//}
 
 - (void)_handleStreamImage {
     assert([NSThread isMainThread]);
@@ -437,26 +411,66 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     [[_mainView imageLayer] setNeedsDisplay];
 }
 
-- (void)_threadStreamImages:(MDCDevice)device {
+// Throws on error
+static void initMDCDevice(MDCDevice& device) {
+    // Reset the device to put it back in a pre-defined state
+    device.reset();
+    device.pixReset();
+    device.pixConfig();
+}
+
+// Throws on error
+static void configMDCDevice(MDCDevice& device, const PixConfig& cfg) {
+    // Set coarse_integration_time
+    device.pixI2CWrite(0x3012, cfg.coarseIntegrationTime);
+    // Set fine_integration_time
+    device.pixI2CWrite(0x3014, cfg.fineIntegrationTime);
+    // Set analog_gain
+    device.pixI2CWrite(0x3060, cfg.analogGain);
+}
+
+- (void)_threadStreamImages:(SendRight)service {
     using namespace STApp;
-    assert(device);
+    assert(service.valid());
+    
+    Defer(
+        // Notify that our thread has exited
+        _streamImagesThread.lock.lock();
+            _streamImagesThread.running = false;
+            _streamImagesThread.signal.notify_all();
+        _streamImagesThread.lock.unlock();
+    );
     
 //    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
 //    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
 //    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
     
+    std::optional<MDCDevice> mdcOpt;
+    try { mdcOpt.emplace(service); }
+    catch (const std::exception& e) {
+        fprintf(stderr, "Failed to create MDCDevice: %s\n", e.what());
+        return;
+    }
+    
+    MDCDevice& mdc = *mdcOpt;
     try {
-        // Reset the device to put it back in a pre-defined state
-        device.reset();
+        initMDCDevice(mdc);
         
         float intTime = .5;
         const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
         auto tmpPixels = std::make_unique<STApp::Pixel[]>(tmpPixelsCap);
+        
+        std::optional<PixConfig> pixConfig;
 //        uint32_t saveIdx = 1;
         for (uint32_t i=0;; i++) {
+            if (pixConfig) {
+                configMDCDevice(mdc, *pixConfig);
+                pixConfig = std::nullopt;
+            }
+            
             // Capture an image, timing-out after 1s so we can check the device status,
             // in case it reports a streaming error
-            const STApp::PixHeader pixStatus = device.pixCapture(tmpPixels.get(), tmpPixelsCap, 1000);
+            const STApp::PixHeader pixStatus = mdc.pixCapture(tmpPixels.get(), tmpPixelsCap, 1000ms);
             const size_t pixelCount = pixStatus.width*pixStatus.height;
             
             auto lock = std::unique_lock(_streamImagesThread.lock);
@@ -467,6 +481,10 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
                 std::copy(tmpPixels.get(), tmpPixels.get()+pixelCount, _streamImagesThread.pixels);
                 _streamImagesThread.width = pixStatus.width;
                 _streamImagesThread.height = pixStatus.height;
+                
+                // While we have the lock, copy the pixConfig that might be waiting
+                pixConfig = _streamImagesThread.pixConfig;
+                _streamImagesThread.pixConfig = std::nullopt;
             lock.unlock();
             
             // Invoke -_handleStreamImage on the main thread.
@@ -528,8 +546,8 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
                 );
                 
                 if (updateIntTime) {
-                    device.pixI2CWrite(0x3012, intTime*16384);
-                    device.pixI2CWrite(0x3060, gain*63);
+                    mdc.pixI2CWrite(0x3012, intTime*16384);
+                    mdc.pixI2CWrite(0x3060, gain*63);
                 }
             }
             
@@ -564,7 +582,7 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
         
         PixState pixState = PixState::Idle;
         try {
-            pixState = device.pixStatus().state;
+            pixState = mdc.pixStatus().state;
         } catch (const std::exception& e) {
             printf("pixStatus() failed: %s\n", e.what());
         }
@@ -581,44 +599,44 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
     _streamImagesThread.lock.unlock();
 }
 
-- (void)_handleInputCommand:(std::vector<std::string>)cmdStrs {
-    MDCUtil::Args args;
-    try {
-        args = MDCUtil::ParseArgs(cmdStrs);
-    
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Bad arguments: %s\n\n", e.what());
-        MDCUtil::PrintUsage();
-        return;
-    }
-    
-    if (!_mdcDevice) {
-        fprintf(stderr, "No MDC device connected\n\n");
-        return;
-    }
-    
-    // Disable streaming before we talk to the device
-    bool oldStreamImagesEnabled = [self _streamImagesEnabled];
-    [self _setStreamImagesEnabled:false];
-    
-    try {
-        MDCUtil::Run(_mdcDevice, args);
-    
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Error: %s\n\n", e.what());
-        return;
-    }
-    
-    // Re-enable streaming (if it was enabled previously)
-    if (oldStreamImagesEnabled) [self _setStreamImagesEnabled:true];
-}
+//- (void)_handleInputCommand:(std::vector<std::string>)cmdStrs {
+//    MDCUtil::Args args;
+//    try {
+//        args = MDCUtil::ParseArgs(cmdStrs);
+//    
+//    } catch (const std::exception& e) {
+//        fprintf(stderr, "Bad arguments: %s\n\n", e.what());
+//        MDCUtil::PrintUsage();
+//        return;
+//    }
+//    
+//    if (!_mdcDevice) {
+//        fprintf(stderr, "No MDC device connected\n\n");
+//        return;
+//    }
+//    
+//    // Disable streaming before we talk to the device
+//    bool oldStreamImagesEnabled = [self _streamImagesEnabled];
+//    [self _setStreamImagesEnabled:false];
+//    
+//    try {
+//        MDCUtil::Run(_mdcDevice, args);
+//    
+//    } catch (const std::exception& e) {
+//        fprintf(stderr, "Error: %s\n\n", e.what());
+//        return;
+//    }
+//    
+//    // Re-enable streaming (if it was enabled previously)
+//    if (oldStreamImagesEnabled) [self _setStreamImagesEnabled:true];
+//}
 
 - (bool)_streamImagesEnabled {
     auto lock = std::unique_lock(_streamImagesThread.lock);
     return _streamImagesThread.running;
 }
 
-- (void)_setStreamImagesEnabled:(bool)en {
+- (void)_streamImagesStop {
     // Cancel streaming and wait for it to stop
     for (;;) {
         auto lock = std::unique_lock(_streamImagesThread.lock);
@@ -626,18 +644,16 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
         _streamImagesThread.cancel = true;
         _streamImagesThread.signal.wait(lock);
     }
+}
+
+- (void)_setStreamImagesEnabled:(bool)en {
+    // Cancel streaming and wait for it to stop
+    [self _streamImagesStop];
     
     [_streamImagesSwitch setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
     
     if (en) {
-        assert(_mdcDevice); // Verify that we have a valid device, since we're trying to enable image streaming
-        
-        // Reset the device to put it back in a pre-defined state
-        // so that we can talk to it
-        _mdcDevice.reset();
-        
-        // Configure the device
-        configMDCDevice(_mdcDevice, _pixConfig);
+        assert(_mdcService); // Verify that we have a valid device, since we're trying to enable image streaming
         
         // Kick off a new streaming thread
         _streamImagesThread.lock.lock();
@@ -646,9 +662,9 @@ static void configMDCDevice(const MDCDevice& device, const PixConfig& cfg) {
             _streamImagesThread.signal.notify_all();
         _streamImagesThread.lock.unlock();
         
-        MDCDevice device = _mdcDevice;
+        SendRight mdcService = _mdcService;
         [NSThread detachNewThreadWithBlock:^{
-            [self _threadStreamImages:device];
+            [self _threadStreamImages:mdcService];
         }];
     }
 }
@@ -854,25 +870,34 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 }
 
 - (void)_setCoarseIntegrationTime:(double)intTime {
-    _pixConfig.coarseIntegrationTime = intTime*16384;
+    auto lock = std::unique_lock(_streamImagesThread.lock);
+    _streamImagesThread.pixConfig.emplace();
+    PixConfig& pixConfig = *_streamImagesThread.pixConfig;
+    pixConfig.coarseIntegrationTime = intTime*16384;
     [_coarseIntegrationTimeSlider setDoubleValue:intTime];
     [_coarseIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju",
-        (uintmax_t)_pixConfig.coarseIntegrationTime]];
+        (uintmax_t)pixConfig.coarseIntegrationTime]];
 }
 
 - (void)_setFineIntegrationTime:(double)intTime {
-    _pixConfig.fineIntegrationTime = intTime*UINT16_MAX;
+    auto lock = std::unique_lock(_streamImagesThread.lock);
+    _streamImagesThread.pixConfig.emplace();
+    PixConfig& pixConfig = *_streamImagesThread.pixConfig;
+    pixConfig.fineIntegrationTime = intTime*UINT16_MAX;
     [_fineIntegrationTimeSlider setDoubleValue:intTime];
     [_fineIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju",
-        (uintmax_t)_pixConfig.fineIntegrationTime]];
+        (uintmax_t)pixConfig.fineIntegrationTime]];
 }
 
 - (void)_setAnalogGain:(double)gain {
     const uint32_t i = gain*0x3F;
-    _pixConfig.analogGain = i;
+    auto lock = std::unique_lock(_streamImagesThread.lock);
+    _streamImagesThread.pixConfig.emplace();
+    PixConfig& pixConfig = *_streamImagesThread.pixConfig;
+    pixConfig.analogGain = i;
     [_analogGainSlider setDoubleValue:gain];
     [_analogGainLabel setStringValue:[NSString stringWithFormat:@"%ju",
-        (uintmax_t)_pixConfig.analogGain]];
+        (uintmax_t)pixConfig.analogGain]];
 }
 
 - (IBAction)_illumIdentityButtonAction:(id)sender {

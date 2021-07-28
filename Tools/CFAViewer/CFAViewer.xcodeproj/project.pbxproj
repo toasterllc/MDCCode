@@ -16,6 +16,7 @@
 		55460A3626049F0C0037A5AC /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A3526049F0C0037A5AC /* LocalContrast.metal */; };
 		55460A3B260AC5A00037A5AC /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */; };
 		55671A38257E984F00C1CDA4 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55671A37257E984E00C1CDA4 /* IOKit.framework */; };
+		556E460026B13CBD006681FA /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = 556E45F526B13CBD006681FA /* LICENSE.md */; };
 		559C33D22613C111001903FD /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 559C33D02613C111001903FD /* Renderer.metal */; };
 		559D8E102594205300836B47 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
 		559D8E132598300700836B47 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E122598300700836B47 /* ApplicationServices.framework */; };
@@ -46,25 +47,30 @@
 		554609FD2602C26A0037A5AC /* DebayerBilinear.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DebayerBilinear.metal; sourceTree = "<group>"; };
 		554609FF2603032A0037A5AC /* ImagePipeline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipeline.h; sourceTree = "<group>"; };
 		55460A1B2603CEAF0037A5AC /* DebayerLMMSE.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DebayerLMMSE.metal; sourceTree = "<group>"; };
-		55460A30260416750037A5AC /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
 		55460A31260479EC0037A5AC /* Saturation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Saturation.h; sourceTree = "<group>"; };
 		55460A3226047ED60037A5AC /* Saturation.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Saturation.metal; sourceTree = "<group>"; };
 		55460A3426049ED00037A5AC /* LocalContrast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
 		55460A3526049F0C0037A5AC /* LocalContrast.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
 		55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
-		55671A2A257E94BD00C1CDA4 /* USBPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
 		55671A2B257E94BD00C1CDA4 /* TimeInstant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
 		55671A2C257E94BD00C1CDA4 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
-		55671A2D257E94BD00C1CDA4 /* RuntimeError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
-		55671A2E257E94BD00C1CDA4 /* USBInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBInterface.h; sourceTree = "<group>"; };
 		55671A2F257E94BD00C1CDA4 /* MDCLoaderDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCLoaderDevice.h; sourceTree = "<group>"; };
 		55671A30257E94BD00C1CDA4 /* ELF32Binary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		55671A31257E94BD00C1CDA4 /* Mmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
-		55671A32257E94BD00C1CDA4 /* USBDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
-		55671A33257E94BD00C1CDA4 /* SendRight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
-		55671A35257E94C000C1CDA4 /* Enum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		55671A37257E984E00C1CDA4 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55671A3A2580178100C1CDA4 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
+		556E45F526B13CBD006681FA /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
+		556E45F626B13CBD006681FA /* Enum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
+		556E45F726B13CBD006681FA /* Endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
+		556E45F826B13CBD006681FA /* RuntimeError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
+		556E45F926B13CBD006681FA /* USB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USB.h; sourceTree = "<group>"; };
+		556E45FA26B13CBD006681FA /* Defer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Defer.h; sourceTree = "<group>"; };
+		556E45FB26B13CBD006681FA /* HashInts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
+		556E45FC26B13CBD006681FA /* RefCounted.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RefCounted.h; sourceTree = "<group>"; };
+		556E45FD26B13CBD006681FA /* USBDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
+		556E45FE26B13CBD006681FA /* RingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
+		556E45FF26B13CBD006681FA /* SendRight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
+		556E460126B1562F006681FA /* Uniqued.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Uniqued.h; sourceTree = "<group>"; };
 		558328AF25FE15E800730B6A /* Defringe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defringe.h; sourceTree = "<group>"; };
 		559C33D02613C111001903FD /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
 		559C33D12613C111001903FD /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
@@ -178,13 +184,8 @@
 				55AE80C1262E7BBC00BA227C /* Mod.h */,
 				55671A31257E94BD00C1CDA4 /* Mmap.h */,
 				55671A2B257E94BD00C1CDA4 /* TimeInstant.h */,
-				55671A2D257E94BD00C1CDA4 /* RuntimeError.h */,
-				55671A33257E94BD00C1CDA4 /* SendRight.h */,
 				55E98EBE25A930780062B458 /* IOServiceMatcher.h */,
 				55E98ED225A9577A0062B458 /* IOServiceWatcher.h */,
-				55671A32257E94BD00C1CDA4 /* USBDevice.h */,
-				55671A2E257E94BD00C1CDA4 /* USBInterface.h */,
-				55671A2A257E94BD00C1CDA4 /* USBPipe.h */,
 				55E98EBD25A92EAF0062B458 /* STAppTypes.h */,
 				55DE385B25F83EFB00AD2223 /* Poly2D.h */,
 				55AE80D92630C98100BA227C /* PixelSampler.h */,
@@ -193,21 +194,39 @@
 			path = ../Shared;
 			sourceTree = "<group>";
 		};
-		55671A34257E94C000C1CDA4 /* Shared */ = {
+		556E45F326B13CBD006681FA /* Lib */ = {
 			isa = PBXGroup;
 			children = (
-				55671A35257E94C000C1CDA4 /* Enum.h */,
-				55460A30260416750037A5AC /* HashInts.h */,
+				556E45F426B13CBD006681FA /* Toastbox */,
 			);
-			name = Shared;
-			path = ../../Code/Shared;
+			name = Lib;
+			path = ../../Code/Lib;
+			sourceTree = "<group>";
+		};
+		556E45F426B13CBD006681FA /* Toastbox */ = {
+			isa = PBXGroup;
+			children = (
+				556E45F526B13CBD006681FA /* LICENSE.md */,
+				556E45F626B13CBD006681FA /* Enum.h */,
+				556E45F726B13CBD006681FA /* Endian.h */,
+				556E45F826B13CBD006681FA /* RuntimeError.h */,
+				556E45F926B13CBD006681FA /* USB.h */,
+				556E45FA26B13CBD006681FA /* Defer.h */,
+				556E45FB26B13CBD006681FA /* HashInts.h */,
+				556E45FC26B13CBD006681FA /* RefCounted.h */,
+				556E460126B1562F006681FA /* Uniqued.h */,
+				556E45FD26B13CBD006681FA /* USBDevice.h */,
+				556E45FE26B13CBD006681FA /* RingBuffer.h */,
+				556E45FF26B13CBD006681FA /* SendRight.h */,
+			);
+			path = Toastbox;
 			sourceTree = "<group>";
 		};
 		55B9745024C504E2000B2633 = {
 			isa = PBXGroup;
 			children = (
+				556E45F326B13CBD006681FA /* Lib */,
 				55671A29257E94BD00C1CDA4 /* Shared */,
-				55671A34257E94C000C1CDA4 /* Shared */,
 				552E7D5A24C9316900438AAF /* CFAViewer.entitlements */,
 				559D8E0E2593EAB200836B47 /* Util.h */,
 				55E98EBB25A921D80062B458 /* ColorChecker.h */,
@@ -319,6 +338,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				55B9746024C504E2000B2633 /* Assets.xcassets in Resources */,
+				556E460026B13CBD006681FA /* LICENSE.md in Resources */,
 				55B9746324C504E2000B2633 /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -417,6 +437,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = ../../Code/Lib;
 			};
 			name = Release;
 		};

@@ -26,7 +26,6 @@
 
 /* Begin PBXFileReference section */
 		55671A19257E851B00C1CDA4 /* STLoaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STLoaderTypes.h; path = ../../Code/STM32/Shared/STLoaderTypes.h; sourceTree = "<group>"; };
-		55671A1F257E853100C1CDA4 /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		55671A21257E853100C1CDA4 /* MDCLoaderDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCLoaderDevice.h; sourceTree = "<group>"; };
 		55671A22257E853100C1CDA4 /* ELF32Binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		55671A24257E853100C1CDA4 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
@@ -64,7 +63,6 @@
 			isa = PBXGroup;
 			children = (
 				55671A22257E853100C1CDA4 /* ELF32Binary.h */,
-				55671A1F257E853100C1CDA4 /* MDCDevice.h */,
 				55671A21257E853100C1CDA4 /* MDCLoaderDevice.h */,
 				55671A24257E853100C1CDA4 /* Mmap.h */,
 			);

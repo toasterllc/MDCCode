@@ -7,8 +7,6 @@
 #include "ELF32Binary.h"
 #include "SendRight.h"
 #include "USBDevice.h"
-#include "USBInterface.h"
-#include "USBPipe.h"
 #include "STAppTypes.h"
 #include "RuntimeError.h"
 #include "MDCDevice.h"
@@ -168,7 +166,7 @@ private:
             },
         };
         
-        device.cmdOutPipe.write(cmd);
+        device.usbDevice().write(STApp::Endpoints::CmdOut, cmd);
     }
     
     static void _TestResetStream(const Args& args, MDCDevice& device) {
