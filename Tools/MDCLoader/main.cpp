@@ -2,8 +2,8 @@
 #include <string>
 #include <iostream>
 #include <optional>
+#include "Toastbox/USBDevice.h"
 #include "ELF32Binary.h"
-#include "USBDevice.h"
 #include "STLoaderTypes.h"
 #include "MDCLoaderDevice.h"
 
