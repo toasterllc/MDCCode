@@ -89,12 +89,6 @@ void QSPI::reset() {
 void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     AssertArg(cmd.DataMode == QSPI_DATA_NONE);
     AssertArg(!cmd.NbData);
-    Assert(!_busy);
-    
-    // Update _busy before the interrupt can occur, otherwise `_busy = true`
-    // could occur after the transaction is complete, cloberring the `_busy = false`
-    // assignment in the completion interrupt handler.
-    _busy = true;
     
     // Dummy cycles don't appear to work correctly when no data is transferred.
     // (For some reason, only DummyCycles=0 and DummyCycles=2 work correctly,
@@ -105,7 +99,6 @@ void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     // read instead. This will cause more cycles than the caller may expect,
     // so this strategy will only work if these extra cycles have no adverse
     // effect.
-    
     if (cmd.DummyCycles) {
         const size_t readLen = (_align==Align::Byte ? 1 : 4);
         QSPI_CommandTypeDef readCmd = cmd;
@@ -114,15 +107,22 @@ void QSPI::command(const QSPI_CommandTypeDef& cmd) {
         
         static uint32_t buf = 0;
         read(readCmd, &buf, readLen);
-        return;
-    }
     
-    // Use HAL_QSPI_Command_IT() in this case, instead of HAL_QSPI_Command(),
-    // because we're not transferring any data, so the HAL_QSPI_Command()
-    // synchronously performs the SPI transaction, instead asynchronously
-    // like we want.
-    HAL_StatusTypeDef hs = HAL_QSPI_Command_IT(&_device, &cmd);
-    Assert(hs == HAL_OK);
+    } else {
+        Assert(!_busy);
+        
+        // Update _busy before the interrupt can occur, otherwise `_busy = true`
+        // could occur after the transaction is complete, cloberring the `_busy = false`
+        // assignment in the completion interrupt handler.
+        _busy = true;
+        
+        // Use HAL_QSPI_Command_IT() in this case, instead of HAL_QSPI_Command(),
+        // because we're not transferring any data, so the HAL_QSPI_Command()
+        // synchronously performs the SPI transaction, instead asynchronously
+        // like we want.
+        HAL_StatusTypeDef hs = HAL_QSPI_Command_IT(&_device, &cmd);
+        Assert(hs == HAL_OK);
+    }
 }
 
 void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {

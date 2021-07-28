@@ -1,5 +1,5 @@
 #pragma once
-#include "Enum.h"
+#include "Toastbox/Enum.h"
 
 namespace STApp {
     Enum(uint8_t, Endpoint, Endpoints,
@@ -9,13 +9,6 @@ namespace STApp {
         // IN endpoints (high bit 1)
         CmdIn   = 0x81,
         PixIn   = 0x82,
-    );
-    
-    Enum(uint8_t, EndpointIdx, EndpointIdxs,
-        Ctrl    = 0x00,
-        CmdOut  = 0x01,
-        CmdIn   = 0x02,
-        PixIn   = 0x03,
     );
     
     // Vendor-defined Control Requests

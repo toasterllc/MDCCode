@@ -1,5 +1,5 @@
 #include "USB.h"
-#include "Enum.h"
+#include "Toastbox/Enum.h"
 #include "STAppTypes.h"
 
 void USB::init() {

@@ -1,60 +1,70 @@
 #pragma once
 #include <cassert>
-#include "USBDevice.h"
-#include "USBInterface.h"
-#include "USBPipe.h"
+#include <chrono>
+#include "Toastbox/USBDevice.h"
 #include "STAppTypes.h"
 #include "TimeInstant.h"
+using namespace std::chrono;
 
 class MDCDevice {
 public:
-    using Milliseconds = uint32_t;
-    
     static NSDictionary* MatchingDictionary() {
-        return USBDevice::MatchingDictionary(1155, 57105);
+        NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
+        match[@kIOPropertyMatchKey] = @{
+            @"idVendor": @1155,
+            @"idProduct": @57105,
+        };
+        return match;
     }
     
     static std::vector<MDCDevice> GetDevices() {
-        return USBDevice::FindDevice<MDCDevice>(MatchingDictionary());
+        std::vector<MDCDevice> devs;
+        auto usbDevs = USBDevice::GetDevices();
+        for (USBDevice& usbDev : usbDevs) {
+            USB::DeviceDescriptor desc = usbDev.deviceDescriptor();
+            if (desc.idVendor==1155 && desc.idProduct==57105) {
+                devs.emplace_back(std::move(usbDev));
+            }
+        }
+        return devs;
     }
     
     MDCDevice(USBDevice&& dev) :
     _dev(std::move(dev)) {
-        std::vector<USBInterface> interfaces = usbInterfaces();
-        if (interfaces.size() != 1) throw std::runtime_error("invalid number of USB interfaces");
-        _interface = interfaces[0];
-        cmdOutPipe = USBPipe(_interface, STApp::EndpointIdxs::CmdOut);
-        cmdInPipe = USBPipe(_interface, STApp::EndpointIdxs::CmdIn);
-        pixInPipe = USBPipe(_interface, STApp::EndpointIdxs::PixIn);
+//        _interface = interfaces[0];
+////        cmdOutPipe = USBPipe(_interface, Endpoints::CmdOut);
+////        cmdInPipe = USBPipe(_interface, Endpoints::CmdOut::CmdIn);
+//        pixInPipe = USBPipe(_interface, Endpoints::CmdOut::PixIn);
     }
     
-    void reset() const {
+    void reset() {
+        using namespace STApp;
         // Send the reset vendor-defined control request
-        vendorRequestOut(STApp::CtrlReqs::Reset, nullptr, 0);
+        _dev.vendorRequest(CtrlReqs::Reset, nullptr, 0);
         
         // Reset our pipes now that the device is reset
-        for (const USBPipe& pipe : {cmdOutPipe, cmdInPipe, pixInPipe}) {
-            pipe.reset();
+        for (const uint8_t ep : {Endpoints::CmdOut, Endpoints::CmdIn, Endpoints::PixIn}) {
+            _dev.reset(ep);
         }
     }
     
-    STApp::PixStatus pixStatus() const {
+    STApp::PixStatus pixStatus() {
         using namespace STApp;
         Cmd cmd = { .op = Cmd::Op::PixGetStatus };
-        cmdOutPipe.write(cmd);
+        _dev.write(Endpoints::CmdOut, cmd);
         
         PixStatus pixStatus;
-        cmdInPipe.read(pixStatus, 0);
+        _dev.read(Endpoints::CmdIn, pixStatus);
         return pixStatus;
     }
     
-    void pixReset() const {
+    void pixReset() {
         using namespace STApp;
         
         // Toggle the reset line
         {
             Cmd cmd = { .op = Cmd::Op::PixReset };
-            cmdOutPipe.write(cmd);
+            _dev.write(Endpoints::CmdOut, cmd);
             // Wait for completion by getting status
             pixStatus();
         }
@@ -85,7 +95,7 @@ public:
         
     }
     
-    void pixConfig() const {
+    void pixConfig() {
         // Enable parallel interface (R0x301A[7]=1), disable serial interface to save power (R0x301A[12]=1)
         // (Default value of 0x301A is 0x0058)
         {
@@ -258,7 +268,7 @@ public:
         }
     }
     
-    uint16_t pixI2CRead(uint16_t addr) const {
+    uint16_t pixI2CRead(uint16_t addr) {
         using namespace STApp;
         Cmd cmd = {
             .op = Cmd::Op::PixI2CTransaction,
@@ -269,13 +279,13 @@ public:
                 }
             }
         };
-        cmdOutPipe.write(cmd);
+        _dev.write(Endpoints::CmdOut, cmd);
         PixStatus status = pixStatus();
         if (status.i2cErr) throw std::runtime_error("device reported i2c error");
         return status.i2cReadVal;
     }
     
-    void pixI2CWrite(uint16_t addr, uint16_t val) const {
+    void pixI2CWrite(uint16_t addr, uint16_t val) {
         using namespace STApp;
         Cmd cmd = {
             .op = Cmd::Op::PixI2CTransaction,
@@ -287,39 +297,41 @@ public:
                 }
             }
         };
-        cmdOutPipe.write(cmd);
+        _dev.write(Endpoints::CmdOut, cmd);
         
         PixStatus status = pixStatus();
         if (status.i2cErr) throw std::runtime_error("device reported i2c error");
     }
     
-    STApp::PixHeader pixCapture(STApp::Pixel* pixels, size_t cap, Milliseconds timeout=1000) const {
+    STApp::PixHeader pixCapture(STApp::Pixel* pixels, size_t cap, USBDevice::Milliseconds timeout=USBDevice::Forever) {
         using namespace STApp;
         Cmd cmd = {
             .op = Cmd::Op::PixCapture,
         };
-        cmdOutPipe.write(cmd);
+        _dev.write(Endpoints::CmdOut, cmd);
         
         PixHeader hdr;
-        pixInPipe.read(hdr, timeout);
+        _dev.read(Endpoints::PixIn, hdr, timeout);
         
         const size_t imageLen = hdr.width*hdr.height;
         if (imageLen > cap)
             throw RuntimeError("buffer capacity too small (image length: %ju pixels, buffer capacity: %ju pixels)",
                 (uintmax_t)imageLen, (uintmax_t)cap);
         
-        pixInPipe.read(pixels, imageLen*sizeof(Pixel), timeout);
+        _dev.read(Endpoints::PixIn, pixels, imageLen*sizeof(Pixel), timeout);
         return hdr;
     }
+    
+    USBDevice& usbDevice() { return _dev; }
     
 //    void pixReadImage(STApp::Pixel* pixels, size_t count, Milliseconds timeout=0) const {
 //        pixInPipe.readBuf(pixels, count*sizeof(STApp::Pixel), timeout);
 //    }
-    
-    USBPipe cmdOutPipe;
-    USBPipe cmdInPipe;
-    USBPipe pixInPipe;
+//    
+//    USBPipe cmdOutPipe;
+//    USBPipe cmdInPipe;
+//    USBPipe pixInPipe;
     
 private:
-    USBInterface _interface;
+    USBDevice _dev;
 };
