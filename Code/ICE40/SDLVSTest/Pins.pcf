@@ -1,0 +1,13 @@
+set_io clk24mhz             C11
+
+set_io led[0]               F3
+set_io led[1]               F4
+set_io led[2]               G3
+
+set_io sd_pwr_en            E3
+set_io sd_clk               K4
+set_io sd_cmd               L3
+set_io sd_dat[0]            L2
+set_io sd_dat[1]            K3
+set_io sd_dat[2]            L5
+set_io sd_dat[3]            L4
