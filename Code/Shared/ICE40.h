@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <algorithm>
+#include "Toastbox/Enum.h"
 #include "Assert.h"
-#include "Enum.h"
 
 class ICE40 {
 public:
