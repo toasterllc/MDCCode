@@ -22,6 +22,7 @@
 `define     Msg_Arg_LEDSet_Val_Bits                             3:0
 
 `define Msg_Type_SDClkSrc                                       `Msg_Type_Len'h02
+`define     Msg_Arg_SDClkSrc_Delay_Len                          4
 `define     Msg_Arg_SDClkSrc_Delay_Bits                         5:2
 `define     Msg_Arg_SDClkSrc_Speed_Len                          2
 `define     Msg_Arg_SDClkSrc_Speed_Bits                         1:0

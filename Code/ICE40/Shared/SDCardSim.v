@@ -184,7 +184,7 @@ module SDCardSim(
                 cmdIn_rca = cmdIn_arg[31:16];
                 cmdIn_endBit = cmdIn[0];
                 
-                $display("[SD CARD] Received command: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, end: %b ]",
+                $display("[SDCardSim] Received command: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, end: %b ]",
                     cmdIn,
                     cmdIn_preamble,     // preamble
                     cmdIn_cmdIndex,     // cmd
@@ -194,19 +194,19 @@ module SDCardSim(
                 );
                 
                 if (cmdIn_preamble !== 2'b01) begin
-                    $display("[SD CARD] Bad preamble: %b ❌", cmdIn_preamble);
+                    $display("[SDCardSim] Bad preamble: %b ❌", cmdIn_preamble);
                     `Finish;
                 end
                 
                 if (cmdIn_theirCRC === cmdIn_ourCRCReg) begin
-                    $display("[SD CARD] ^^^ CRC Valid ✅");
+                    $display("[SDCardSim] ^^^ CRC Valid ✅");
                 end else begin
-                    $display("[SD CARD] ^^^ Bad CRC: ours=%b, theirs=%b ❌", cmdIn_ourCRCReg, cmdIn[7:1]);
+                    $display("[SDCardSim] ^^^ Bad CRC: ours=%b, theirs=%b ❌", cmdIn_ourCRCReg, cmdIn[7:1]);
                     `Finish;
                 end
                 
                 if (cmdIn_endBit !== 1'b1) begin
-                    $display("[SD CARD] Bad end bit: %b ❌", cmdIn_endBit);
+                    $display("[SDCardSim] Bad end bit: %b ❌", cmdIn_endBit);
                     // `Finish;
                 end
                 
@@ -234,7 +234,7 @@ module SDCardSim(
                 
                 CMD7: begin
                     if (cmdIn_rca !== rca) begin
-                        $display("[SD CARD] CMD7: Bad RCA received: %h ❌", cmdIn_rca);
+                        $display("[SDCardSim] CMD7: Bad RCA received: %h ❌", cmdIn_rca);
                         `Finish;
                     end
                     respOut=136'h070000070075ffffffffffffffffffffff;
@@ -272,7 +272,7 @@ module SDCardSim(
                 CMD55: begin
                     // TODO: uncomment -- we need this check, but disabled it for the case where we don't do the initialization sequence (because we assume the SD card was already initialized)
                     // if (cmdIn_rca !== rca) begin
-                    //     $display("[SD CARD] CMD55: Bad RCA received: %h ❌", cmdIn_rca);
+                    //     $display("[SDCardSim] CMD55: Bad RCA received: %h ❌", cmdIn_rca);
                     //     `Finish;
                     // end
                     respOut=136'h370000012083ffffffffffffffffffffff;
@@ -286,7 +286,7 @@ module SDCardSim(
                 
                 ACMD23: begin
                     if (!cmdIn_arg[22:0]) begin
-                        $display("[SD CARD] ACMD23: Zero block count received ❌");
+                        $display("[SDCardSim] ACMD23: Zero block count received ❌");
                         `Finish;
                     end
                     // TODO: make this a real ACMD23 response. right now it's a CMD3 response.
@@ -296,18 +296,18 @@ module SDCardSim(
                 
                 ACMD41: begin
                     if ($urandom % 2) begin
-                        $display("[SD CARD] ACMD41: card busy");
+                        $display("[SDCardSim] ACMD41: card busy");
                         respOut=136'h3f00ff8080ffffffffffffffffffffffff;
                     end
                     else begin
-                        $display("[SD CARD] ACMD41: card ready");
+                        $display("[SDCardSim] ACMD41: card ready");
                         respOut=136'h3fc1ff8080ffffffffffffffffffffffff;
                     end
                     respLen=48;
                 end
                 
                 default: begin
-                    $display("[SD CARD] BAD COMMAND: CMD%0d (%b)", cmdIn_cmdIndex, cmd);
+                    $display("[SDCardSim] BAD COMMAND: CMD%0d (%b)", cmdIn_cmdIndex, cmd);
                     `Finish;
                 end
                 endcase
@@ -329,7 +329,7 @@ module SDCardSim(
                     // Wait a 0-64 clocks before providing response
                     // (See the NCR timing parameter in the SD spec)
                     count = ($urandom%65);
-                    $display("[SD CARD] Response: delaying %0d clocks", count);
+                    $display("[SDCardSim] Response: delaying %0d clocks", count);
                     for (i=0; i<count; i++) begin
                         wait(sd_clk);
                         wait(!sd_clk);
@@ -337,7 +337,7 @@ module SDCardSim(
                     
                     // respOut = {2'b00, 6'b0, 32'b0, 7'b0, 1'b1};
                     if (respLen === 48) begin
-                        $display("[SD CARD] Sending response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, end: %b ]",
+                        $display("[SDCardSim] Sending response: %b [ preamble: %b, cmd: %0d, arg: %x, crc: %b, end: %b ]",
                             respOut,
                             respOut[135 : 134], // preamble
                             respOut[133 : 128], // cmd
@@ -347,7 +347,7 @@ module SDCardSim(
                         );
                     
                     end else if (respLen === 136) begin
-                        $display("[SD CARD] Sending response: %b [ preamble: %b, cmd: %0d, crc: %b, end: %b ]",
+                        $display("[SDCardSim] Sending response: %b [ preamble: %b, cmd: %0d, crc: %b, end: %b ]",
                             respOut,
                             respOut[135 : 134], // preamble
                             respOut[133 : 128], // cmd
@@ -460,9 +460,9 @@ module SDCardSim(
                 
                 if (recvWriteData) begin
                     if (sd_dat[0] === 1'b0) begin
-                        $display("[SD CARD] Good start bit ✅");
+                        $display("[SDCardSim] Good start bit ✅");
                     end else begin
-                        $display("[SD CARD] Bad start bit ❌: %b", sd_dat[0]);
+                        $display("[SDCardSim] Bad start bit ❌: %b", sd_dat[0]);
                     end
                 end
                 
@@ -477,7 +477,7 @@ module SDCardSim(
                 end
                 
                 if (recvWriteData) begin
-                    $display("[SD CARD] Received write data: %h", payloadDataReg);
+                    $display("[SDCardSim] Received write data: %h", payloadDataReg);
                 end
                 
                 if (recvWriteData) begin
@@ -501,30 +501,30 @@ module SDCardSim(
                 crcOK = 1;
                 if (recvWriteData) begin
                     if (dat_ourCRCReg[3] === dat_theirCRCReg[3]) begin
-                        $display("[SD CARD] DAT3: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[3], dat_theirCRCReg[3]);
+                        $display("[SDCardSim] DAT3: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[3], dat_theirCRCReg[3]);
                     end else begin
-                        $display("[SD CARD] DAT3: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[3], dat_theirCRCReg[3]);
+                        $display("[SDCardSim] DAT3: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[3], dat_theirCRCReg[3]);
                         crcOK = 0;
                     end
                     
                     if (dat_ourCRCReg[2] === dat_theirCRCReg[2]) begin
-                        $display("[SD CARD] DAT2: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[2], dat_theirCRCReg[2]);
+                        $display("[SDCardSim] DAT2: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[2], dat_theirCRCReg[2]);
                     end else begin
-                        $display("[SD CARD] DAT2: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[2], dat_theirCRCReg[2]);
+                        $display("[SDCardSim] DAT2: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[2], dat_theirCRCReg[2]);
                         crcOK = 0;
                     end
                     
                     if (dat_ourCRCReg[1] === dat_theirCRCReg[1]) begin
-                        $display("[SD CARD] DAT1: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[1], dat_theirCRCReg[1]);
+                        $display("[SDCardSim] DAT1: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[1], dat_theirCRCReg[1]);
                     end else begin
-                        $display("[SD CARD] DAT1: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[1], dat_theirCRCReg[1]);
+                        $display("[SDCardSim] DAT1: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[1], dat_theirCRCReg[1]);
                         crcOK = 0;
                     end
                     
                     if (dat_ourCRCReg[0] === dat_theirCRCReg[0]) begin
-                        $display("[SD CARD] DAT0: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[0], dat_theirCRCReg[0]);
+                        $display("[SDCardSim] DAT0: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[0], dat_theirCRCReg[0]);
                     end else begin
-                        $display("[SD CARD] DAT0: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[0], dat_theirCRCReg[0]);
+                        $display("[SDCardSim] DAT0: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[0], dat_theirCRCReg[0]);
                         crcOK = 0;
                     end
                 end
@@ -533,30 +533,30 @@ module SDCardSim(
                 if (recvWriteData) begin
                     wait(sd_clk);
                     if (sd_dat[3] === 1'b1) begin
-                        $display("[SD CARD] DAT3: End bit OK ✅");
+                        $display("[SDCardSim] DAT3: End bit OK ✅");
                     end else begin
-                        $display("[SD CARD] DAT3: Bad end bit: %b ❌", sd_dat[3]);
+                        $display("[SDCardSim] DAT3: Bad end bit: %b ❌", sd_dat[3]);
                         crcOK = 0;
                     end
                     
                     if (sd_dat[2] === 1'b1) begin
-                        $display("[SD CARD] DAT2: End bit OK ✅");
+                        $display("[SDCardSim] DAT2: End bit OK ✅");
                     end else begin
-                        $display("[SD CARD] DAT2: Bad end bit: %b ❌", sd_dat[2]);
+                        $display("[SDCardSim] DAT2: Bad end bit: %b ❌", sd_dat[2]);
                         crcOK = 0;
                     end
                     
                     if (sd_dat[1] === 1'b1) begin
-                        $display("[SD CARD] DAT1: End bit OK ✅");
+                        $display("[SDCardSim] DAT1: End bit OK ✅");
                     end else begin
-                        $display("[SD CARD] DAT1: Bad end bit: %b ❌", sd_dat[1]);
+                        $display("[SDCardSim] DAT1: Bad end bit: %b ❌", sd_dat[1]);
                         crcOK = 0;
                     end
                     
                     if (sd_dat[0] === 1'b1) begin
-                        $display("[SD CARD] DAT0: End bit OK ✅");
+                        $display("[SDCardSim] DAT0: End bit OK ✅");
                     end else begin
-                        $display("[SD CARD] DAT0: Bad end bit: %b ❌", sd_dat[0]);
+                        $display("[SDCardSim] DAT0: Bad end bit: %b ❌", sd_dat[0]);
                         crcOK = 0;
                     end
                     wait(!sd_clk);
@@ -679,7 +679,7 @@ module SDCardSim(
 
                 // // Shift out data
                 // payloadDataReg = PAYLOAD_DATA;
-                // $display("[SD CARD] Sending read data: %h", payloadDataReg);
+                // $display("[SDCardSim] Sending read data: %h", payloadDataReg);
                 //
                 // for (i=0; i<1024 && sendReadData; i++) begin
                 //     wait(!sd_clk);
@@ -689,12 +689,12 @@ module SDCardSim(
                 // end
                 
                 // Shift out data
-                $display("[SD CARD] Sending read data");
+                $display("[SDCardSim] Sending read data");
                 
                 for (i=0; i<1024 && sendReadData; i++) begin
                     datOutReg = i;
                     for (ii=0; ii<8 && sendReadData; ii++) begin
-                        // $display("[SD CARD] Sending bit: %b", datOut);
+                        // $display("[SDCardSim] Sending bit: %b", datOut);
                         wait(!sd_clk);
                         datOut = {4{datOutReg[7]}};
                         wait(sd_clk);
@@ -714,10 +714,10 @@ module SDCardSim(
                     dat_ourCRCReg[1] = dat_crcNext[1];
                     dat_ourCRCReg[0] = dat_crcNext[0];
                     
-                    $display("[SD CARD] CRC3: %h", dat_ourCRCReg[3]);
-                    $display("[SD CARD] CRC2: %h", dat_ourCRCReg[2]);
-                    $display("[SD CARD] CRC1: %h", dat_ourCRCReg[1]);
-                    $display("[SD CARD] CRC0: %h", dat_ourCRCReg[0]);
+                    $display("[SDCardSim] CRC3: %h", dat_ourCRCReg[3]);
+                    $display("[SDCardSim] CRC2: %h", dat_ourCRCReg[2]);
+                    $display("[SDCardSim] CRC1: %h", dat_ourCRCReg[1]);
+                    $display("[SDCardSim] CRC0: %h", dat_ourCRCReg[0]);
                     
                     // Shift out CRC
                     for (i=0; i<16 && sendReadData; i++) begin
@@ -781,9 +781,9 @@ module SDCardSim(
                 // Handle new access mode
                 changeAccessMode = cmdIn_arg[31];
                 if (changeAccessMode) begin
-                    $display("[SD CARD] Change access mode = 1 ✅");
+                    $display("[SDCardSim] Change access mode = 1 ✅");
                 end else begin
-                    $display("[SD CARD] Change access mode = 0 ❌");
+                    $display("[SDCardSim] Change access mode = 0 ❌");
                     `Finish;
                 end
                 
@@ -834,7 +834,7 @@ module SDCardSim(
                 datOutReg[379:376] = respAccessMode;
                 
                 // Send response
-                $display("[SD CARD] Sending CMD6 response: %0h", datOutReg);
+                $display("[SDCardSim] Sending CMD6 response: %0h", datOutReg);
                 wait(!sd_clk);
                 dat_crcRst_ = 1;
                 
@@ -857,10 +857,10 @@ module SDCardSim(
                 dat_ourCRCReg[1] = dat_crc[1];
                 dat_ourCRCReg[0] = dat_crc[0];
                 
-                $display("[SD CARD] CMD6 DatOut CRC3: %h", dat_ourCRCReg[3]);
-                $display("[SD CARD] CMD6 DatOut CRC2: %h", dat_ourCRCReg[2]);
-                $display("[SD CARD] CMD6 DatOut CRC1: %h", dat_ourCRCReg[1]);
-                $display("[SD CARD] CMD6 DatOut CRC0: %h", dat_ourCRCReg[0]);
+                $display("[SDCardSim] CMD6 DatOut CRC3: %h", dat_ourCRCReg[3]);
+                $display("[SDCardSim] CMD6 DatOut CRC2: %h", dat_ourCRCReg[2]);
+                $display("[SDCardSim] CMD6 DatOut CRC1: %h", dat_ourCRCReg[1]);
+                $display("[SDCardSim] CMD6 DatOut CRC0: %h", dat_ourCRCReg[0]);
                 
                 // Shift out CRC
                 for (i=0; i<16; i++) begin
