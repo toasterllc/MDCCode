@@ -140,41 +140,44 @@ int main() {
         PAOUT  &= ~BIT6;
     }
     
-    // PA.3 = GPIO output
-    PAOUT  &= ~BIT3;
-    PADIR  |=  BIT3;
-    PASEL1 &= ~BIT3;
-    PASEL0 &= ~BIT3;
-    
-    // PA.4 = GPIO input
-    PADIR  &= ~BIT4;
-    PASEL1 &= ~BIT4;
-    PASEL0 &= ~BIT4;
-    
-    // PA.5 = UCA0SOMI
-    PASEL1 &= ~BIT5;
-    PASEL0 |=  BIT5;
-    
-    // PA.6 = UCA0CLK
-    PASEL1 &= ~BIT6;
-    PASEL0 |=  BIT6;
-    
-    // Assert USCI reset
-    UCA0CTLW0 |= UCSWRST;
-    
-    UCA0CTLW0 |=
-        // phase=1, polarity=0, MSB first, width=8-bit
-        UCCKPH_1 | UCCKPL__LOW | UCMSB_1 | UC7BIT__8BIT |
-        // mode=master, mode=3-pin SPI, mode=synchronous, clock=SMCLK
-        UCMST__MASTER | UCMODE_0 | UCSYNC__SYNC | UCSSEL__SMCLK;
-    
-    // fBitClock = fBRCLK / 1;
-    UCA0BRW = 0;
-    // No modulation
-    UCA0MCTLW = 0;
-    
-    // De-assert USCI reset
-    UCA0CTLW0 &= ~UCSWRST;
+    // Configure SPI peripheral
+    {
+        // PA.3 = GPIO output
+        PAOUT  &= ~BIT3;
+        PADIR  |=  BIT3;
+        PASEL1 &= ~BIT3;
+        PASEL0 &= ~BIT3;
+        
+        // PA.4 = GPIO input
+        PADIR  &= ~BIT4;
+        PASEL1 &= ~BIT4;
+        PASEL0 &= ~BIT4;
+        
+        // PA.5 = UCA0SOMI
+        PASEL1 &= ~BIT5;
+        PASEL0 |=  BIT5;
+        
+        // PA.6 = UCA0CLK
+        PASEL1 &= ~BIT6;
+        PASEL0 |=  BIT6;
+        
+        // Assert USCI reset
+        UCA0CTLW0 |= UCSWRST;
+        
+        UCA0CTLW0 |=
+            // phase=1, polarity=0, MSB first, width=8-bit
+            UCCKPH_1 | UCCKPL__LOW | UCMSB_1 | UC7BIT__8BIT |
+            // mode=master, mode=3-pin SPI, mode=synchronous, clock=SMCLK
+            UCMST__MASTER | UCMODE_0 | UCSYNC__SYNC | UCSSEL__SMCLK;
+        
+        // fBitClock = fBRCLK / 1;
+        UCA0BRW = 0;
+        // No modulation
+        UCA0MCTLW = 0;
+        
+        // De-assert USCI reset
+        UCA0CTLW0 &= ~UCSWRST;
+    }
     
     for (uint8_t i=0;; i++) {
         

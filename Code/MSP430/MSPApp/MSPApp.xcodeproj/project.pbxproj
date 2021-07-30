@@ -8,7 +8,6 @@
 
 /* Begin PBXFileReference section */
 		556E45EA26B12023006681FA /* targetConfigs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = targetConfigs; sourceTree = "<group>"; };
-		556E45EB26B12023006681FA /* Debug */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Debug; sourceTree = "<group>"; };
 		556E45EC26B12023006681FA /* msp430fr2422.h.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2422.h.txt; sourceTree = "<group>"; };
 		556E45ED26B12023006681FA /* lnk_msp430fr2422.cmd */ = {isa = PBXFileReference; lastKnownFileType = text; path = lnk_msp430fr2422.cmd; sourceTree = "<group>"; };
 		556E45EE26B12023006681FA /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
@@ -24,7 +23,6 @@
 			children = (
 				556E45F226B12050006681FA /* Shared */,
 				556E45F126B1204A006681FA /* Lib */,
-				556E45EB26B12023006681FA /* Debug */,
 				556E45ED26B12023006681FA /* lnk_msp430fr2422.cmd */,
 				556E45EF26B12023006681FA /* main.cpp */,
 				556E45EE26B12023006681FA /* Makefile */,
