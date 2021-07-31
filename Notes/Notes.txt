@@ -1,6 +1,13 @@
 - Rev4 Todo
     
     - Get LVS SD initialization test working
+        - Determined that:
+            - SD card samples all signals (sd_cmd+sd_dat[3:0]), so all 5 signals need to be driven to 0V
+            - SD card samples signal levels at negative edge of sd_clk, so they need to be driven
+              a little longer than the negative edge.
+            - SD card drives sd_dat[2] 33us after the negative edge of sd_clk, so we need to stop
+              driving lines before then
+            - See SDCard-LVSInitialization.png
     
     - Get saving images to SD card working, especially with LVS SD initialization
     
