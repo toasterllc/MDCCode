@@ -109,6 +109,7 @@ public:
     };
     
     struct SDGetStatusResp : Resp {
+        // TODO: needs updating: add sdInitDone()
         // Command
         bool sdCmdDone() const                  { return getBit(63);                            }
         

@@ -31,8 +31,8 @@
 `define     Msg_Arg_SDConfig_ClkSrc_Speed_Fast                  `Msg_Arg_SDConfig_ClkSrc_Speed_Len'b10
 `define     Msg_Arg_SDConfig_Init_Trigger_Len                   1
 `define     Msg_Arg_SDConfig_Init_Trigger_Bits                  1:1
-`define     Msg_Arg_SDConfig_Init_En_Len                        1
-`define     Msg_Arg_SDConfig_Init_En_Bits                       0:0
+`define     Msg_Arg_SDConfig_Init_Rst_Len                       1
+`define     Msg_Arg_SDConfig_Init_Rst_Bits                      0:0
 
 `define Msg_Type_SDSendCmd                                      `Msg_Type_Len'h03
 `define     Msg_Arg_SDSendCmd_RespType_Len                      2
@@ -50,17 +50,18 @@
 `define     Msg_Arg_SDSendCmd_CmdData_Bits                      47:0
 
 `define Msg_Type_SDGetStatus                                    `Msg_Type_Len'h04
-`define     Resp_Arg_SDGetStatus_CmdDone_Bits                   63:63
-`define     Resp_Arg_SDGetStatus_RespDone_Bits                  62:62
-`define         Resp_Arg_SDGetStatus_RespCRCErr_Bits            61:61
-`define         Resp_Arg_SDGetStatus_Resp_Bits                  60:13
+`define     Resp_Arg_SDGetStatus_InitDone_Bits                  63:63
+`define     Resp_Arg_SDGetStatus_CmdDone_Bits                   62:62
+`define     Resp_Arg_SDGetStatus_RespDone_Bits                  61:61
+`define         Resp_Arg_SDGetStatus_RespCRCErr_Bits            60:60
+`define         Resp_Arg_SDGetStatus_Resp_Bits                  59:12
 `define         Resp_Arg_SDGetStatus_Resp_Len                   48
-`define     Resp_Arg_SDGetStatus_DatOutDone_Bits                12:12
-`define         Resp_Arg_SDGetStatus_DatOutCRCErr_Bits          11:11
-`define     Resp_Arg_SDGetStatus_DatInDone_Bits                 10:10
-`define         Resp_Arg_SDGetStatus_DatInCRCErr_Bits           9:9
-`define         Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits   8:5
-`define     Resp_Arg_SDGetStatus_Dat0Idle_Bits                  4:4
+`define     Resp_Arg_SDGetStatus_DatOutDone_Bits                11:11
+`define         Resp_Arg_SDGetStatus_DatOutCRCErr_Bits          10:10
+`define     Resp_Arg_SDGetStatus_DatInDone_Bits                 9:9
+`define         Resp_Arg_SDGetStatus_DatInCRCErr_Bits           8:8
+`define         Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits   7:4
+`define     Resp_Arg_SDGetStatus_Dat0Idle_Bits                  3:3
 
 `define Msg_Type_ImgReset                                       `Msg_Type_Len'h05
 `define     Msg_Arg_ImgReset_Val_Bits                           0:0

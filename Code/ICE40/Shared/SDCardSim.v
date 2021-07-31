@@ -1,6 +1,8 @@
 `ifndef SDCardSim_v
 `define SDCardSim_v
 
+`timescale 1ps/1ps
+
 module Sim_CRC7(
     input wire clk,
     input wire rst_,
@@ -147,9 +149,33 @@ module SDCardSim(
     // Handle commands from the host
     // ====================
     initial begin
-        // Let inputs settle first
+        reg lvsinit_sdCmd;
+        reg[3:0] lvsinit_sdDat;
+        time lvsinit_pulseBeginTime;
+        time lvsinit_pulseEndTime;
+        
+        // Handle LVS init sequence
         wait(sd_clk);
+        lvsinit_pulseBeginTime = $time;
+        lvsinit_sdCmd = sd_cmd;
+        lvsinit_sdDat = sd_dat;
         wait(!sd_clk);
+        lvsinit_pulseEndTime = $time;
+        
+        if (lvsinit_sdCmd===1'b0 && lvsinit_sdDat===4'b0 && (lvsinit_pulseEndTime-lvsinit_pulseBeginTime)>10000000) begin
+            $display("[SDCardSim] LVS init succeeded [ sd_cmd: %b, sd_dat: %b, duration: %0d ] ✅",
+                lvsinit_sdCmd,
+                lvsinit_sdDat,
+                lvsinit_pulseEndTime-lvsinit_pulseBeginTime
+            );
+        end else begin
+            $display("[SDCardSim] LVS init failed [ sd_cmd: %b, sd_dat: %b, duration: %0d ] ❌",
+                lvsinit_sdCmd,
+                lvsinit_sdDat,
+                lvsinit_pulseEndTime-lvsinit_pulseBeginTime
+            );
+            `Finish;
+        end
         
         forever begin
             cmdIn_ourCRC_rst_ = 0;

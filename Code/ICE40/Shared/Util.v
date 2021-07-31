@@ -53,4 +53,19 @@
 
 `define DivCeil(n, d) (((n)+(d)-1)/(d))
 
+// Clocks() returns the minimum number of `freq` clock cycles
+// for >= `ns` nanoseconds to elapse. For example, if ns=5ns, and
+// the clock period is 4ns, Clocks(freq=250e6,ns=5,sub=0) will return 2.
+// `sub` is subtracted from that value, with the result clipped to zero.
+function[63:0] Clocks;
+    input[63:0] freq;
+    input[63:0] ns;
+    input[63:0] sub;
+    begin
+        Clocks = `DivCeil(freq*ns, 1000000000);
+        if (Clocks >= sub) Clocks = Clocks-sub;
+        else Clocks = 0;
+    end
+endfunction
+
 `endif
