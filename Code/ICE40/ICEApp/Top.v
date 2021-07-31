@@ -43,8 +43,9 @@ module Top(
     // ====================
     // SDController
     // ====================
-    reg         sd_config_init_en_ = 0;
+    reg         sd_config_init_rst = 0;
     reg         sd_config_init_trigger = 0;
+    wire        sd_config_init_done;
     reg[1:0]    sd_config_clkSrc_speed = 0;
     reg[3:0]    sd_config_clkSrc_delay = 0;
     reg         sd_cmd_trigger = 0;
@@ -79,6 +80,9 @@ module Top(
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat),
         
+        .config_init_rst(sd_config_init_rst),
+        .config_init_trigger(sd_config_init_trigger),
+        .config_init_done(sd_config_init_done),
         .config_clkSrc_speed(sd_config_clkSrc_speed),
         .config_clkSrc_delay(sd_config_clkSrc_delay),
         
@@ -154,6 +158,7 @@ module Top(
     // ====================
     
     // SD nets
+    `ToggleAck(spi_sdInitDone_, spi_sdInitDoneAck, sd_config_init_done, posedge, spi_clk);
     `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, spi_clk);
     `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, spi_clk);
     `ToggleAck(spi_sdDatOutDone_, spi_sdDatOutDoneAck, sd_datOut_done, posedge, spi_clk);
@@ -237,7 +242,7 @@ module Top(
                         spi_msgArg[`Msg_Arg_SDConfig_ClkSrc_Delay_Bits],
                         spi_msgArg[`Msg_Arg_SDConfig_ClkSrc_Speed_Bits],
                         spi_msgArg[`Msg_Arg_SDConfig_Init_Trigger_Bits],
-                        spi_msgArg[`Msg_Arg_SDConfig_Init_En_Bits],
+                        spi_msgArg[`Msg_Arg_SDConfig_Init_Rst_Bits],
                     );
                     
                     // We don't need to synchronize `sd_clksrc_delay` into the sd_ domain,
@@ -250,8 +255,15 @@ module Top(
                     `Msg_Arg_SDConfig_ClkSrc_Speed_Fast:   sd_config_clkSrc_speed <= `SDController_Config_ClkSrc_Speed_Fast;
                     endcase
                     
-                    sd_config_init_trigger <= spi_msgArg[`Msg_Arg_SDConfig_Init_Trigger_Bits];
-                    sd_config_init_en_ <= !spi_msgArg[`Msg_Arg_SDConfig_Init_En_Bits];
+                    if (spi_msgArg[`Msg_Arg_SDConfig_Init_Trigger_Bits]) begin
+                        sd_config_init_trigger <= !sd_config_init_trigger;
+                    end
+                    
+                    if (spi_msgArg[`Msg_Arg_SDConfig_Init_Rst_Bits]) begin
+                        // Reset spi_sdInitDone_
+                        if (!spi_sdInitDone_) spi_sdInitDoneAck <= !spi_sdInitDoneAck;
+                        sd_config_init_rst <= !sd_config_init_rst;
+                    end
                 end
                 
                 // Clock out SD command
@@ -284,6 +296,7 @@ module Top(
                 // Get SD status / response
                 `Msg_Type_SDGetStatus: begin
                     $display("[SPI] Got Msg_Type_SDGetStatus");
+                    spi_resp[`Resp_Arg_SDGetStatus_InitDone_Bits] <= !spi_sdInitDone_;
                     spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits] <= !spi_sdCmdDone_;
                     spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits] <= !spi_sdRespDone_;
                         spi_resp[`Resp_Arg_SDGetStatus_RespCRCErr_Bits] <= sd_resp_crcErr;
@@ -552,14 +565,46 @@ module Testbench();
         end
     end endtask
     
-    task TestSDClkSrc(input[`Msg_Arg_SDConfig_ClkSrc_Delay_Len-1:0] delay, input[`Msg_Arg_SDConfig_ClkSrc_Speed_Len-1:0] speed); begin
+    task TestSDConfig(
+        input[`Msg_Arg_SDConfig_ClkSrc_Delay_Len-1:0] delay,
+        input[`Msg_Arg_SDConfig_ClkSrc_Speed_Len-1:0] speed,
+        input[`Msg_Arg_SDConfig_Init_Trigger_Len-1:0] trigger,
+        input[`Msg_Arg_SDConfig_Init_Rst_Len-1:0] rst
+    ); begin
         reg[`Msg_Arg_Len-1:0] arg;
         
-        $display("\n[Testbench] ========== TestSDClkSrc ==========");
+        // $display("\n[Testbench] ========== TestSDConfig ==========");
         arg[`Msg_Arg_SDConfig_ClkSrc_Delay_Bits] = delay;
         arg[`Msg_Arg_SDConfig_ClkSrc_Speed_Bits] = speed;
+        arg[`Msg_Arg_SDConfig_Init_Trigger_Bits] = trigger;
+        arg[`Msg_Arg_SDConfig_Init_Rst_Bits] = rst;
         
         SendMsg(`Msg_Type_SDConfig, arg);
+    end endtask
+    
+    task TestSDInit; begin
+        reg[15:0] i;
+        reg[`Msg_Arg_Len-1:0] arg;
+        reg done;
+        
+        $display("\n[Testbench] ========== TestSDInit ==========");
+        
+        TestSDConfig(0, `Msg_Arg_SDConfig_ClkSrc_Speed_Off,  0, 0); // Disable SD clock, enable SD init mode
+        TestSDConfig(0, `Msg_Arg_SDConfig_ClkSrc_Speed_Slow, 0, 0); // SD clock = slow clock
+        TestSDConfig(0, `Msg_Arg_SDConfig_ClkSrc_Speed_Slow, 0, 1); // Reset SDController's `init` state machine
+        // <-- Turn on power to SD card
+        TestSDConfig(0, `Msg_Arg_SDConfig_ClkSrc_Speed_Slow, 1, 0); // Trigger SDController init state machine
+        
+        // Wait for SD init to be complete
+        done = 0;
+        for (i=0; i<10 && !done; i++) begin
+            // Request SD status
+            SendMsg(`Msg_Type_SDGetStatus, 0);
+            // We're done when the `InitDone` bit is set
+            done = spi_resp[`Resp_Arg_SDGetStatus_InitDone_Bits];
+        end
+        
+        $display("[Testbench] Init done ✅");
     end endtask
     
     task TestSDCMD0; begin
@@ -803,8 +848,7 @@ module Testbench();
         TestNoOp();
         TestRst();
         
-        TestSDClkSrc(0, `Msg_Arg_SDConfig_ClkSrc_Speed_Off); // Disable SD clock
-        TestSDClkSrc(0, `Msg_Arg_SDConfig_ClkSrc_Speed_Slow); // Set SD clock source
+        TestSDInit();
         
         TestSDCMD0();
         TestSDCMD8();
