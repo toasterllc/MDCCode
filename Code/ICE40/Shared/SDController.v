@@ -7,17 +7,17 @@
 `include "CRC7.v"
 `include "CRC16.v"
 
-`define SDController_ClkSrc_Speed_Off       2'b00
-`define SDController_ClkSrc_Speed_Slow      2'b01
-`define SDController_ClkSrc_Speed_Fast      2'b10
-`define SDController_ClkSrc_Delay_Width     4
+`define SDController_Config_ClkSrc_Speed_Off        2'b00
+`define SDController_Config_ClkSrc_Speed_Slow       2'b01
+`define SDController_Config_ClkSrc_Speed_Fast       2'b10
+`define SDController_Config_ClkSrc_Delay_Width      4
 
-`define SDController_RespType_None          2'b00
-`define SDController_RespType_48            2'b01
-`define SDController_RespType_136           2'b10
+`define SDController_RespType_None                  2'b00
+`define SDController_RespType_48                    2'b01
+`define SDController_RespType_136                   2'b10
 
-`define SDController_DatInType_None         1'b0
-`define SDController_DatInType_512          1'b1
+`define SDController_DatInType_None                 1'b0
+`define SDController_DatInType_512                  1'b1
 
 module SDController #(
     parameter ClkFreq = 120_000_000
@@ -26,13 +26,15 @@ module SDController #(
     input wire clk,
     
     // SD card port
-    output wire     sd_clk,
-    inout wire      sd_cmd,
-    inout wire[3:0] sd_dat,
+    output wire         sd_clk,
+    inout wire          sd_cmd,
+    inout wire[3:0]     sd_dat,
     
-    // Clock source port (clock domain: async)
-    input wire[1:0]                                     clksrc_speed,
-    input wire[`SDController_ClkSrc_Delay_Width-1:0]    clksrc_delay,
+    // Config port (clock domain: async)
+    input wire          config_init_en_,
+    input wire          config_init_trigger, // Toggle
+    input wire[1:0]     config_clkSrc_speed,
+    input wire[`SDController_Config_ClkSrc_Delay_Width-1:0] config_clkSrc_delay,
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger, // Toggle
@@ -47,11 +49,11 @@ module SDController #(
     output reg          resp_crcErr = 0,
     
     // DatOut port (clock domain: `clk`)
-    input wire datOut_stop,         // Toggle
-    output reg datOut_stopped = 0,  // Toggle
-    input wire datOut_start,        // Toggle
-    output reg datOut_done = 0,     // Toggle
-    output reg datOut_crcErr = 0,
+    input wire          datOut_stop,         // Toggle
+    output reg          datOut_stopped = 0,  // Toggle
+    input wire          datOut_start,        // Toggle
+    output reg          datOut_done = 0,     // Toggle
+    output reg          datOut_crcErr = 0,
     
     // DatOutRead port (clock domain: `datOutRead_clk`)
     output wire         datOutRead_clk,
@@ -60,12 +62,12 @@ module SDController #(
     input wire[15:0]    datOutRead_data,
     
     // DatIn port (clock domain: `clk`)
-    output reg      datIn_done = 0, // Toggle
-    output reg      datIn_crcErr = 0,
-    output reg[3:0] datIn_cmd6AccessMode = 0,
+    output reg          datIn_done = 0, // Toggle
+    output reg          datIn_crcErr = 0,
+    output reg[3:0]     datIn_cmd6AccessMode = 0,
     
     // Status port (clock domain: `clk`)
-    output reg status_dat0Idle = 0
+    output reg          status_dat0Idle = 0
 );
     // ====================
     // clk_fast (ClkFreq)
@@ -87,23 +89,23 @@ module SDController #(
     // ====================
     // clk_int
     // ====================
-    wire clksrc_slow = clksrc_speed[0];
-    wire clksrc_fast = clksrc_speed[1];
-    `Sync(clk_slow_en, clksrc_slow, negedge, clk_slow);
-    `Sync(clk_fast_en, clksrc_fast, negedge, clk_fast);
+    wire config_clkSrc_slow = config_clkSrc_speed[0];
+    wire config_clkSrc_fast = config_clkSrc_speed[1];
+    `Sync(clk_slow_en, config_clkSrc_slow, negedge, clk_slow);
+    `Sync(clk_fast_en, config_clkSrc_fast, negedge, clk_fast);
     wire clk_int = (clk_slow_en ? clk_slow : (clk_fast_en ? clk_fast : 0));
     assign datOutRead_clk = clk_int;
     
     // ====================
-    // sd_clk / clksrc_delay
+    // sd_clk / config_clkSrc_delay
     //   Delay `sd_clk` relative to `clk_int` to correct the phase from the SD card's perspective
-    //   `clksrc_delay` should only be set while `clk_int` is stopped
+    //   `config_clkSrc_delay` should only be set while `clk_int` is stopped
     // ====================
     VariableDelay #(
-        .Count(1<<`SDController_ClkSrc_Delay_Width)
+        .Count(1<<`SDController_Config_ClkSrc_Delay_Width)
     ) VariableDelay (
         .in(clk_int),
-        .sel(clksrc_delay),
+        .sel(config_clkSrc_delay),
         .out(sd_clk)
     );
     

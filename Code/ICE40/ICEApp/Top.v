@@ -43,8 +43,10 @@ module Top(
     // ====================
     // SDController
     // ====================
-    reg[1:0]    sd_clksrc_speed = 0;
-    reg[3:0]    sd_clksrc_delay = 0;
+    reg         sd_config_init_en_ = 0;
+    reg         sd_config_init_trigger = 0;
+    reg[1:0]    sd_config_clkSrc_speed = 0;
+    reg[3:0]    sd_config_clkSrc_delay = 0;
     reg         sd_cmd_trigger = 0;
     reg[47:0]   sd_cmd_data = 0;
     reg[1:0]    sd_cmd_respType = 0;
@@ -77,8 +79,8 @@ module Top(
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat),
         
-        .clksrc_speed(sd_clksrc_speed),
-        .clksrc_delay(sd_clksrc_delay),
+        .config_clkSrc_speed(sd_config_clkSrc_speed),
+        .config_clkSrc_delay(sd_config_clkSrc_delay),
         
         .cmd_trigger(sd_cmd_trigger),
         .cmd_data(sd_cmd_data),
@@ -230,20 +232,26 @@ module Top(
                 end
                 
                 // Set SD clock source
-                `Msg_Type_SDClkSrc: begin
-                    $display("[SPI] Got Msg_Type_SDClkSrc: delay=%0d speed=%0d",
-                        spi_msgArg[`Msg_Arg_SDClkSrc_Delay_Bits],
-                        spi_msgArg[`Msg_Arg_SDClkSrc_Speed_Bits]);
+                `Msg_Type_SDConfig: begin
+                    $display("[SPI] Got Msg_Type_SDConfig: delay=%0d speed=%0d trigger=%0d en=%0d",
+                        spi_msgArg[`Msg_Arg_SDConfig_ClkSrc_Delay_Bits],
+                        spi_msgArg[`Msg_Arg_SDConfig_ClkSrc_Speed_Bits],
+                        spi_msgArg[`Msg_Arg_SDConfig_Init_Trigger_Bits],
+                        spi_msgArg[`Msg_Arg_SDConfig_Init_En_Bits],
+                    );
                     
                     // We don't need to synchronize `sd_clksrc_delay` into the sd_ domain,
                     // because it should only be set while the sd_ clock is disabled.
-                    sd_clksrc_delay <= spi_msgArg[`Msg_Arg_SDClkSrc_Delay_Bits];
+                    sd_config_clkSrc_delay <= spi_msgArg[`Msg_Arg_SDConfig_ClkSrc_Delay_Bits];
                     
-                    case (spi_msgArg[`Msg_Arg_SDClkSrc_Speed_Bits])
-                    `Msg_Arg_SDClkSrc_Speed_Off:    sd_clksrc_speed <= `SDController_ClkSrc_Speed_Off;
-                    `Msg_Arg_SDClkSrc_Speed_Slow:   sd_clksrc_speed <= `SDController_ClkSrc_Speed_Slow;
-                    `Msg_Arg_SDClkSrc_Speed_Fast:   sd_clksrc_speed <= `SDController_ClkSrc_Speed_Fast;
+                    case (spi_msgArg[`Msg_Arg_SDConfig_ClkSrc_Speed_Bits])
+                    `Msg_Arg_SDConfig_ClkSrc_Speed_Off:    sd_config_clkSrc_speed <= `SDController_Config_ClkSrc_Speed_Off;
+                    `Msg_Arg_SDConfig_ClkSrc_Speed_Slow:   sd_config_clkSrc_speed <= `SDController_Config_ClkSrc_Speed_Slow;
+                    `Msg_Arg_SDConfig_ClkSrc_Speed_Fast:   sd_config_clkSrc_speed <= `SDController_Config_ClkSrc_Speed_Fast;
                     endcase
+                    
+                    sd_config_init_trigger <= spi_msgArg[`Msg_Arg_SDConfig_Init_Trigger_Bits];
+                    sd_config_init_en_ <= !spi_msgArg[`Msg_Arg_SDConfig_Init_En_Bits];
                 end
                 
                 // Clock out SD command
@@ -544,14 +552,14 @@ module Testbench();
         end
     end endtask
     
-    task TestSDClkSrc(input[`Msg_Arg_SDClkSrc_Delay_Len-1:0] delay, input[`Msg_Arg_SDClkSrc_Speed_Len-1:0] speed); begin
+    task TestSDClkSrc(input[`Msg_Arg_SDConfig_ClkSrc_Delay_Len-1:0] delay, input[`Msg_Arg_SDConfig_ClkSrc_Speed_Len-1:0] speed); begin
         reg[`Msg_Arg_Len-1:0] arg;
         
         $display("\n[Testbench] ========== TestSDClkSrc ==========");
-        arg[`Msg_Arg_SDClkSrc_Delay_Bits] = delay;
-        arg[`Msg_Arg_SDClkSrc_Speed_Bits] = speed;
+        arg[`Msg_Arg_SDConfig_ClkSrc_Delay_Bits] = delay;
+        arg[`Msg_Arg_SDConfig_ClkSrc_Speed_Bits] = speed;
         
-        SendMsg(`Msg_Type_SDClkSrc, arg);
+        SendMsg(`Msg_Type_SDConfig, arg);
     end endtask
     
     task TestSDCMD0; begin
@@ -795,8 +803,8 @@ module Testbench();
         TestNoOp();
         TestRst();
         
-        TestSDClkSrc(0, `Msg_Arg_SDClkSrc_Speed_Off); // Disable SD clock
-        TestSDClkSrc(0, `Msg_Arg_SDClkSrc_Speed_Slow); // Set SD clock source
+        TestSDClkSrc(0, `Msg_Arg_SDConfig_ClkSrc_Speed_Off); // Disable SD clock
+        TestSDClkSrc(0, `Msg_Arg_SDConfig_ClkSrc_Speed_Slow); // Set SD clock source
         
         TestSDCMD0();
         TestSDCMD8();
