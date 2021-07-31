@@ -7,10 +7,10 @@
 `include "CRC7.v"
 `include "CRC16.v"
 
-`define SDController_Config_ClkSrc_Speed_Off        2'b00
-`define SDController_Config_ClkSrc_Speed_Slow       2'b01
-`define SDController_Config_ClkSrc_Speed_Fast       2'b10
-`define SDController_Config_ClkSrc_Delay_Width      4
+`define SDController_Init_ClkSrc_Speed_Off          2'b00
+`define SDController_Init_ClkSrc_Speed_Slow         2'b01
+`define SDController_Init_ClkSrc_Speed_Fast         2'b10
+`define SDController_Init_ClkSrc_Delay_Width        4
 
 `define SDController_RespType_None                  2'b00
 `define SDController_RespType_48                    2'b01
@@ -31,11 +31,11 @@ module SDController #(
     inout wire[3:0]     sd_dat,
     
     // Config port (clock domain: async)
-    input wire          config_init_rst,        // Toggle
-    input wire          config_init_trigger,    // Toggle
-    output reg          config_init_done = 0,   // Toggle
-    input wire[1:0]     config_clkSrc_speed,
-    input wire[`SDController_Config_ClkSrc_Delay_Width-1:0] config_clkSrc_delay,
+    input wire          init_rst,        // Toggle
+    input wire          init_trigger,    // Toggle
+    output reg          init_done = 0,   // Toggle
+    input wire[1:0]     init_clkSrc_speed,
+    input wire[`SDController_Init_ClkSrc_Delay_Width-1:0] init_clkSrc_delay,
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger, // Toggle
@@ -92,24 +92,24 @@ module SDController #(
     // ====================
     // clk_int
     // ====================
-    wire config_clkSrc_slow = config_clkSrc_speed[0];
-    wire config_clkSrc_fast = config_clkSrc_speed[1];
-    `Sync(clk_slow_en, config_clkSrc_slow, negedge, clk_slow);
-    `Sync(clk_fast_en, config_clkSrc_fast, negedge, clk_fast);
+    wire init_clkSrc_slow = init_clkSrc_speed[0];
+    wire init_clkSrc_fast = init_clkSrc_speed[1];
+    `Sync(clk_slow_en, init_clkSrc_slow, negedge, clk_slow);
+    `Sync(clk_fast_en, init_clkSrc_fast, negedge, clk_fast);
     wire clk_int = (clk_slow_en ? clk_slow : (clk_fast_en ? clk_fast : 0));
     assign datOutRead_clk = clk_int;
     
     // ====================
-    // clk_int_delayed / config_clkSrc_delay
+    // clk_int_delayed / init_clkSrc_delay
     //   Delay `clk_int_delayed` relative to `clk_int` to correct the phase from the SD card's perspective
-    //   `config_clkSrc_delay` should only be set while `clk_int` is stopped
+    //   `init_clkSrc_delay` should only be set while `clk_int` is stopped
     // ====================
     wire clk_int_delayed;
     VariableDelay #(
-        .Count(1<<`SDController_Config_ClkSrc_Delay_Width)
+        .Count(1<<`SDController_Init_ClkSrc_Delay_Width)
     ) VariableDelay (
         .in(clk_int),
-        .sel(config_clkSrc_delay),
+        .sel(init_clkSrc_delay),
         .out(clk_int_delayed)
     );
     
@@ -126,8 +126,8 @@ module SDController #(
     reg[3:0] init_sdDatOutEn = 0;
     reg[`RegWidth(Init_PulseCount)-1:0] init_pulseCounter = 0;
     reg init_en_ = 0;
-    `TogglePulse(init_rstPulse, config_init_rst, posedge, clk_int);
-    `TogglePulse(init_triggerPulse, config_init_trigger, posedge, clk_int);
+    `TogglePulse(init_rstPulse, init_rst, posedge, clk_int);
+    `TogglePulse(init_triggerPulse, init_trigger, posedge, clk_int);
     
     reg[2:0] init_state = 0;
     always @(posedge clk_int) begin
@@ -169,7 +169,7 @@ module SDController #(
         5: begin
             $display("[SDController:INIT] Done");
             // Notify that we're done initializing
-            config_init_done <= !config_init_done;
+            init_done <= !init_done;
             // Exit init mode
             init_en_ <= 1;
             init_state <= 0;
