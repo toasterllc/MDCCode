@@ -354,11 +354,11 @@ module Testbench();
     
     Top Top(.*);
     
-    // SDCardSim SDCardSim(
-    //     .sd_clk(sd_clk),
-    //     .sd_cmd(sd_cmd),
-    //     .sd_dat(sd_dat)
-    // );
+    SDCardSim SDCardSim(
+        .sd_clk(sd_clk),
+        .sd_cmd(sd_cmd),
+        .sd_dat(sd_dat)
+    );
     
     initial begin
         $dumpfile("Top.vcd");
@@ -412,50 +412,50 @@ module Testbench();
     end endtask
     
     task TestRst; begin
-        $display("\n========== TestRst ==========");
+        $display("\n[Testbench] ========== TestRst ==========");
         
-        $display("ice_msp_spi_clk = 0");
+        $display("[Testbench] ice_msp_spi_clk = 0");
         ice_msp_spi_clk = 0;
         #10000;
         
         if (sim_rst_ === 1'b1) begin
-            $display("sim_rst_ === 1'b1 ✅");
+            $display("[Testbench] sim_rst_ === 1'b1 ✅");
         end else begin
-            $display("sim_rst_ !== 1'b1 ❌");
+            $display("[Testbench] sim_rst_ !== 1'b1 ❌");
             `Finish;
         end
         
-        $display("\nice_msp_spi_clk = 1");
+        $display("\n[Testbench] ice_msp_spi_clk = 1");
         ice_msp_spi_clk = 1;
         #10000;
         
         if (sim_rst_ === 1'b0) begin
-            $display("sim_rst_ === 1'b0 ✅");
+            $display("[Testbench] sim_rst_ === 1'b0 ✅");
         end else begin
-            $display("sim_rst_ !== 1'b0 ❌");
+            $display("[Testbench] sim_rst_ !== 1'b0 ❌");
             `Finish;
         end
         
-        $display("\nice_msp_spi_clk = 0");
+        $display("\n[Testbench] ice_msp_spi_clk = 0");
         ice_msp_spi_clk = 0;
         #10000;
         
         if (sim_rst_ === 1'b1) begin
-            $display("sim_rst_ === 1'b1 ✅");
+            $display("[Testbench] sim_rst_ === 1'b1 ✅");
         end else begin
-            $display("sim_rst_ !== 1'b1 ❌");
+            $display("[Testbench] sim_rst_ !== 1'b1 ❌");
             `Finish;
         end
         
     end endtask
     
     task TestNoOp; begin
-        $display("\n========== TestNoOp ==========");
+        $display("\n[Testbench] ========== TestNoOp ==========");
         SendMsg(`Msg_Type_NoOp, 56'hFFFFFFFFFFFFFF);
         if (spi_resp === 64'hxxxxxxxxxxxxxxxx) begin
-            $display("Response OK: %h ✅", spi_resp);
+            $display("[Testbench] Response OK: %h ✅", spi_resp);
         end else begin
-            $display("Bad response: %h ❌", spi_resp);
+            $display("[Testbench] Bad response: %h ❌", spi_resp);
             `Finish;
         end
     end endtask
@@ -463,14 +463,14 @@ module Testbench();
     task TestEcho(input[`Msg_Arg_Echo_Msg_Len-1:0] val); begin
         reg[`Msg_Arg_Len-1:0] arg;
         
-        $display("\n========== TestEcho ==========");
+        $display("\n[Testbench] ========== TestEcho ==========");
         arg[`Msg_Arg_Echo_Msg_Bits] = val;
         
         SendMsg(`Msg_Type_Echo, arg);
         if (spi_resp[`Resp_Arg_Echo_Msg_Bits] === val) begin
-            $display("Response OK: %h ✅", spi_resp[`Resp_Arg_Echo_Msg_Bits]);
+            $display("[Testbench] Response OK: %h ✅", spi_resp[`Resp_Arg_Echo_Msg_Bits]);
         end else begin
-            $display("Bad response: %h ❌", spi_resp[`Resp_Arg_Echo_Msg_Bits]);
+            $display("[Testbench] Bad response: %h ❌", spi_resp[`Resp_Arg_Echo_Msg_Bits]);
             `Finish;
         end
     end endtask
@@ -478,14 +478,14 @@ module Testbench();
     task TestLEDSet(input[`Msg_Arg_LEDSet_Val_Len-1:0] val); begin
         reg[`Msg_Arg_Len-1:0] arg;
         
-        $display("\n========== TestLEDSet ==========");
+        $display("\n[Testbench] ========== TestLEDSet ==========");
         arg[`Msg_Arg_LEDSet_Val_Bits] = val;
         
         SendMsg(`Msg_Type_LEDSet, arg);
         if (ice_led === val) begin
-            $display("ice_led matches (%b) ✅", ice_led);
+            $display("[Testbench] ice_led matches (%b) ✅", ice_led);
         end else begin
-            $display("ice_led doesn't match (expected: %b, got: %b) ❌", val, ice_led);
+            $display("[Testbench] ice_led doesn't match (expected: %b, got: %b) ❌", val, ice_led);
             `Finish;
         end
     end endtask
@@ -539,7 +539,7 @@ module Testbench();
         end
         
         if (!done) begin
-            $display("[EXT] SD card response timeout ❌");
+            $display("[Testbench] SD card response timeout ❌");
             `Finish;
         end
     end endtask
@@ -547,7 +547,7 @@ module Testbench();
     task TestSDClkSrc(input[`Msg_Arg_SDClkSrc_Delay_Len-1:0] delay, input[`Msg_Arg_SDClkSrc_Speed_Len-1:0] speed); begin
         reg[`Msg_Arg_Len-1:0] arg;
         
-        $display("\n========== TestSDClkSrc ==========");
+        $display("\n[Testbench] ========== TestSDClkSrc ==========");
         arg[`Msg_Arg_SDClkSrc_Delay_Bits] = delay;
         arg[`Msg_Arg_SDClkSrc_Speed_Bits] = speed;
         
@@ -555,25 +555,31 @@ module Testbench();
     end endtask
     
     task TestSDCMD0; begin
-        $display("\n========== TestSDCMD0 ==========");
+        // ====================
+        // Test SD CMD0 (GO_IDLE)
+        // ====================
+        $display("\n[Testbench] ========== TestSDCMD0 ==========");
         SendSDCmdResp(CMD0, `Msg_Arg_SDSendCmd_RespType_None, `Msg_Arg_SDSendCmd_DatInType_None, 0);
     end endtask
     
     task TestSDCMD8; begin
+        // ====================
+        // Test SD CMD8 (SEND_IF_COND)
+        // ====================
         reg[`Resp_Arg_SDGetStatus_Resp_Len-1:0] sdResp;
         
-        $display("\n========== TestSDCMD8 ==========");
+        $display("\n[Testbench] ========== TestSDCMD8 ==========");
         
         // Send SD CMD8
         SendSDCmdResp(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'h000001AA);
         if (spi_resp[`Resp_Arg_SDGetStatus_RespCRCErr_Bits] !== 1'b0) begin
-            $display("[EXT] CRC error ❌");
+            $display("[Testbench] CRC error ❌");
             `Finish;
         end
 
         sdResp = spi_resp[`Resp_Arg_SDGetStatus_Resp_Bits];
         if (sdResp[15:8] !== 8'hAA) begin
-            $display("[EXT] Bad response: %h ❌", spi_resp);
+            $display("[Testbench] Bad response: %h ❌", spi_resp);
             `Finish;
         end
     end endtask
@@ -582,7 +588,9 @@ module Testbench();
     //     // ====================
     //     // Test writing data to SD card / DatOut
     //     // ====================
-    //
+    //     
+    //     $display("\n========== TestSDDatOut ==========");
+    //     
     //     // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
     //     SendSDCmdResp(CMD55, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
     //     SendSDCmdResp(ACMD23, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b1);
@@ -594,103 +602,108 @@ module Testbench();
     //     SendMsg(`Msg_Type_PixReadout, 0);
     //
     //     // Wait until we're done clocking out data on DAT lines
-    //     $display("[EXT] Waiting while data is written...");
+    //     $display("[Testbench] Waiting while data is written...");
     //     do begin
     //         // Request SD status
-    //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
+    //         SendMsg(`Msg_Type_SDGetStatus, 0);
     //     end while(!resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits]);
-    //     $display("[EXT] Done writing (SD resp: %b)", resp[`Resp_Arg_SDGetStatus_Resp_Bits]);
+    //     $display("[Testbench] Done writing (SD resp: %b)", resp[`Resp_Arg_SDGetStatus_Resp_Bits]);
     //
     //     // Check CRC status
     //     if (resp[`Resp_Arg_SDGetStatus_DatOutCRCErr_Bits] === 1'b0) begin
-    //         $display("[EXT] DatOut CRC OK ✅");
+    //         $display("[Testbench] DatOut CRC OK ✅");
     //     end else begin
-    //         $display("[EXT] DatOut CRC bad ❌");
+    //         $display("[Testbench] DatOut CRC bad ❌");
     //         `Finish;
     //     end
     //
     //     // Stop transmission
     //     SendSDCmdResp(CMD12, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
     // end endtask
-    //
-    // task TestSDDatIn; begin
-    //     // ====================
-    //     // Test CMD6 (SWITCH_FUNC) + DatIn
-    //     // ====================
-    //
-    //     // Send SD command CMD6 (SWITCH_FUNC)
-    //     SendSDCmdResp(CMD6, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512, 32'h80FFFFF3);
-    //     $display("[EXT] Waiting for DatIn to complete...");
-    //     do begin
-    //         // Request SD status
-    //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //     end while(!resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
-    //     $display("[EXT] DatIn completed");
-    //
-    //     // Check DatIn CRC status
-    //     if (resp[`Resp_Arg_SDGetStatus_DatInCRCErr_Bits] === 1'b0) begin
-    //         $display("[EXT] DatIn CRC OK ✅");
-    //     end else begin
-    //         $display("[EXT] DatIn CRC bad ❌");
-    //         `Finish;
-    //     end
-    //
-    //     // Check the access mode from the CMD6 response
-    //     if (resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits] === 4'h3) begin
-    //         $display("[EXT] CMD6 access mode == 0x3 ✅");
-    //     end else begin
-    //         $display("[EXT] CMD6 access mode == 0x%h ❌", resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits]);
-    //         `Finish;
-    //     end
-    // end endtask
-    //
-    //
-    // task TestSDCMD2; begin
-    //     // ====================
-    //     // Test CMD2 (ALL_SEND_CID) + long SD card response (136 bits)
-    //     //   Note: we expect CRC errors in the response because the R2
-    //     //   response CRC doesn't follow the semantics of other responses
-    //     // ====================
-    //
-    //     // Send SD command CMD2 (ALL_SEND_CID)
-    //     SendSDCmdResp(CMD2, `Msg_Arg_SDSendCmd_RespType_136, `Msg_Arg_SDSendCmd_DatInType_None, 0);
-    //     $display("====================================================");
-    //     $display("^^^ WE EXPECT CRC ERRORS IN THE SD CARD RESPONSE ^^^");
-    //     $display("====================================================");
-    // end endtask
-    //
-    // task TestSDRespRecovery; begin
-    //     reg done;
-    //     reg[15:0] i;
-    //
-    //     // Send an SD command that doesn't provide a response
-    //     SendSDCmd(CMD0, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 0);
-    //     $display("[EXT] Verifying that Resp times out...");
-    //     done = 0;
-    //     for (i=0; i<10 && !done; i++) begin
-    //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //         $display("[EXT] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
-    //             i+1,
-    //             resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-    //             resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-    //             resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-    //             resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
-    //
-    //         done = resp[`Resp_Arg_SDGetStatus_RespDone_Bits];
-    //     end
-    //
-    //     if (!done) begin
-    //         $display("[EXT] Resp timeout ✅");
-    //         $display("[EXT] Testing Resp after timeout...");
-    //         TestSDCMD8();
-    //         $display("[EXT] Resp Recovered ✅");
-    //
-    //     end else begin
-    //         $display("[EXT] DatIn didn't timeout? ❌");
-    //         `Finish;
-    //     end
-    // end endtask
-    //
+
+    task TestSDDatIn; begin
+        // ====================
+        // Test CMD6 (SWITCH_FUNC) + DatIn
+        // ====================
+        
+        $display("\n[Testbench] ========== TestSDDatIn ==========");
+        
+        // Send SD command CMD6 (SWITCH_FUNC)
+        SendSDCmdResp(CMD6, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512, 32'h80FFFFF3);
+        $display("[Testbench] Waiting for DatIn to complete...");
+        do begin
+            // Request SD status
+            SendMsg(`Msg_Type_SDGetStatus, 0);
+        end while(!spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
+        $display("[Testbench] DatIn completed");
+
+        // Check DatIn CRC status
+        if (spi_resp[`Resp_Arg_SDGetStatus_DatInCRCErr_Bits] === 1'b0) begin
+            $display("[Testbench] DatIn CRC OK ✅");
+        end else begin
+            $display("[Testbench] DatIn CRC bad ❌");
+            `Finish;
+        end
+        
+        // Check the access mode from the CMD6 response
+        if (spi_resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits] === 4'h3) begin
+            $display("[Testbench] CMD6 access mode == 0x3 ✅");
+        end else begin
+            $display("[Testbench] CMD6 access mode == 0x%h ❌", spi_resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits]);
+            `Finish;
+        end
+    end endtask
+    
+    task TestSDCMD2; begin
+        // ====================
+        // Test CMD2 (ALL_SEND_CID) + long SD card response (136 bits)
+        //   Note: we expect CRC errors in the response because the R2
+        //   response CRC doesn't follow the semantics of other responses
+        // ====================
+        
+        $display("\n[Testbench] ========== TestSDCMD2 ==========");
+        
+        // Send SD command CMD2 (ALL_SEND_CID)
+        SendSDCmdResp(CMD2, `Msg_Arg_SDSendCmd_RespType_136, `Msg_Arg_SDSendCmd_DatInType_None, 0);
+        $display("[Testbench] ====================================================");
+        $display("[Testbench] ^^^ WE EXPECT CRC ERRORS IN THE SD CARD RESPONSE ^^^");
+        $display("[Testbench] ====================================================");
+    end endtask
+    
+    task TestSDRespRecovery; begin
+        reg done;
+        reg[15:0] i;
+        
+        $display("\n[Testbench] ========== TestSDRespRecovery ==========");
+        
+        // Send an SD command that doesn't provide a response
+        SendSDCmd(CMD0, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 0);
+        $display("[Testbench] Verifying that Resp times out...");
+        done = 0;
+        for (i=0; i<10 && !done; i++) begin
+            SendMsg(`Msg_Type_SDGetStatus, 0);
+            $display("[Testbench] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+                i+1,
+                spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
+                spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
+                spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
+                spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
+            
+            done = spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits];
+        end
+        
+        if (!done) begin
+            $display("[Testbench] Resp timeout ✅");
+            $display("[Testbench] Testing Resp after timeout...");
+            TestSDCMD8();
+            $display("[Testbench] Resp Recovered ✅");
+        
+        end else begin
+            $display("[Testbench] DatIn didn't timeout? ❌");
+            `Finish;
+        end
+    end endtask
+
     // task TestSDDatOutRecovery; begin
     //     reg done;
     //     reg[15:0] i;
@@ -702,67 +715,66 @@ module Testbench();
     //     #50000;
     //
     //     // Verify that we timeout
-    //     $display("[EXT] Verifying that DatOut times out...");
+    //     $display("[Testbench] Verifying that DatOut times out...");
     //     done = 0;
     //     for (i=0; i<10 && !done; i++) begin
-    //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //         $display("[EXT] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+    //         SendMsg(`Msg_Type_SDGetStatus, 0);
+    //         $display("[Testbench] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
     //             i+1,
-    //             resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-    //             resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-    //             resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-    //             resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
+    //             spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
+    //             spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
+    //             spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
+    //             spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
     //
-    //         done = resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits];
+    //         done = spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits];
     //     end
     //
     //     if (!done) begin
-    //         $display("[EXT] DatOut timeout ✅");
-    //         $display("[EXT] Testing DatOut after timeout...");
+    //         $display("[Testbench] DatOut timeout ✅");
+    //         $display("[Testbench] Testing DatOut after timeout...");
     //         TestSDDatOut();
-    //         $display("[EXT] DatOut Recovered ✅");
+    //         $display("[Testbench] DatOut Recovered ✅");
     //
     //     end else begin
-    //         $display("[EXT] DatOut didn't timeout? ❌");
+    //         $display("[Testbench] DatOut didn't timeout? ❌");
     //         `Finish;
     //     end
     // end endtask
-    //
-    // task TestSDDatInRecovery; begin
-    //     reg done;
-    //     reg[15:0] i;
-    //
-    //     // Send SD command that doesn't respond on the DAT lines,
-    //     // but specify that we expect DAT data
-    //     SendSDCmd(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512, 0);
-    //     $display("[EXT] Verifying that DatIn times out...");
-    //     done = 0;
-    //     for (i=0; i<10 && !done; i++) begin
-    //         SendMsgResp(`Msg_Type_SDGetStatus, 0);
-    //         $display("[EXT] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
-    //             i+1,
-    //             resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-    //             resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-    //             resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-    //             resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
-    //
-    //         done = resp[`Resp_Arg_SDGetStatus_DatInDone_Bits];
-    //     end
-    //
-    //     if (!done) begin
-    //         $display("[EXT] DatIn timeout ✅");
-    //         $display("[EXT] Testing DatIn after timeout...");
-    //         TestSDDatIn();
-    //         $display("[EXT] DatIn Recovered ✅");
-    //
-    //     end else begin
-    //         $display("[EXT] DatIn didn't timeout? ❌");
-    //         `Finish;
-    //     end
-    // end endtask
-    
-    
-    
+
+    task TestSDDatInRecovery; begin
+        reg done;
+        reg[15:0] i;
+        
+        $display("\n[Testbench] ========== TestSDDatInRecovery ==========");
+        
+        // Send SD command that doesn't respond on the DAT lines,
+        // but specify that we expect DAT data
+        SendSDCmd(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512, 0);
+        $display("[Testbench] Verifying that DatIn times out...");
+        done = 0;
+        for (i=0; i<10 && !done; i++) begin
+            SendMsg(`Msg_Type_SDGetStatus, 0);
+            $display("[Testbench] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
+                i+1,
+                spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
+                spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
+                spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
+                spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
+
+            done = spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits];
+        end
+
+        if (!done) begin
+            $display("[Testbench] DatIn timeout ✅");
+            $display("[Testbench] Testing DatIn after timeout...");
+            TestSDDatIn();
+            $display("[Testbench] DatIn Recovered ✅");
+
+        end else begin
+            $display("[Testbench] DatIn didn't timeout? ❌");
+            `Finish;
+        end
+    end endtask
     
     initial begin
         // Set our initial state
@@ -784,10 +796,16 @@ module Testbench();
         TestRst();
         
         TestSDClkSrc(0, `Msg_Arg_SDClkSrc_Speed_Off); // Disable SD clock
-        TestSDClkSrc(0, `Msg_Arg_SDClkSrc_Speed_Fast); // Set SD clock source
+        TestSDClkSrc(0, `Msg_Arg_SDClkSrc_Speed_Slow); // Set SD clock source
         
-        // TestSDCMD0();
-        // TestSDCMD8();
+        TestSDCMD0();
+        TestSDCMD8();
+        // TestSDDatOut();
+        TestSDCMD2();
+        TestSDDatIn();
+        TestSDRespRecovery();
+        // TestSDDatOutRecovery();
+        TestSDDatInRecovery();
         
         `Finish;
     end
