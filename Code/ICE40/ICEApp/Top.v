@@ -245,19 +245,22 @@ module Top(
     // ====================
     // PixController
     // ====================
-    reg[1:0]    pixctrl_cmd = 0;
-    reg[2:0]    pixctrl_cmd_ramBlock = 0;
-    wire        pixctrl_readout_clk;
-    wire        pixctrl_readout_ready;
-    wire        pixctrl_readout_trigger;
-    wire[15:0]  pixctrl_readout_data;
-    wire        pixctrl_readout_done;
-    wire        pixctrl_status_captureDone;
-    wire        pixctrl_status_capturePixelDropped;
-    wire        pixctrl_status_readoutStarted;
+    reg[1:0]                            pixctrl_cmd = 0;
+    reg[2:0]                            pixctrl_cmd_ramBlock = 0;
+    wire                                pixctrl_readout_clk;
+    wire                                pixctrl_readout_ready;
+    wire                                pixctrl_readout_trigger;
+    wire[15:0]                          pixctrl_readout_data;
+    wire                                pixctrl_status_captureDone;
+    wire[`RegWidth(ImageWidthMax)-1:0]  pixctrl_status_captureImageWidth;
+    wire[`RegWidth(ImageHeightMax)-1:0] pixctrl_status_captureImageHeight;
+    wire[17:0]                          pixctrl_status_captureHighlightCount;
+    wire[17:0]                          pixctrl_status_captureShadowCount;
+    wire                                pixctrl_status_readoutStarted;
     PixController #(
         .ClkFreq(Pix_Clk_Freq),
-        .ImageSize(ImageWidth*ImageHeight)
+        .ImageWidthMax(ImageWidthMax),
+        .ImageHeightMax(ImageHeightMax)
     ) PixController (
         .clk(pix_clk),
         
@@ -268,10 +271,12 @@ module Top(
         .readout_ready(pixctrl_readout_ready),
         .readout_trigger(pixctrl_readout_trigger),
         .readout_data(pixctrl_readout_data),
-        .readout_done(pixctrl_readout_done),
         
         .status_captureDone(pixctrl_status_captureDone),
-        .status_capturePixelDropped(pixctrl_status_capturePixelDropped),
+        .status_captureImageWidth(pixctrl_status_captureImageWidth),
+        .status_captureImageHeight(pixctrl_status_captureImageHeight),
+        .status_captureHighlightCount(pixctrl_status_captureHighlightCount),
+        .status_captureShadowCount(pixctrl_status_captureShadowCount),
         .status_readoutStarted(pixctrl_status_readoutStarted),
         
         .pix_dclk(pix_dclk),
@@ -389,7 +394,7 @@ module Top(
     `Sync(ctrl_sdDat0Idle, sd_status_dat0Idle, posedge, ctrl_clk);
     
     `ToggleAck(ctrl_pixctrlStatusCaptureDone_, ctrl_pixctrlStatusCaptureDoneAck, pixctrl_statusCaptureDoneToggle, posedge, ctrl_clk);
-    `Sync(ctrl_pixctrlStatusCapturePixelDropped, pixctrl_status_capturePixelDropped, posedge, ctrl_clk);
+    // `Sync(ctrl_pixctrlStatusCapturePixelDropped, pixctrl_status_capturePixelDropped, posedge, ctrl_clk);
     
     always @(posedge ctrl_clk, negedge ctrl_rst_) begin
         if (!ctrl_rst_) begin
@@ -481,57 +486,57 @@ module Top(
                     ctrl_doutReg[`Resp_Arg_SDGetStatus_Resp_Bits] <= sd_resp_data;
                 end
                 
-                `Msg_Type_PixReset: begin
-                    $display("[CTRL] Got Msg_Type_PixReset (rst=%b)", ctrl_msgArg[`Msg_Arg_PixReset_Val_Bits]);
-                    pix_rst_ <= ctrl_msgArg[`Msg_Arg_PixReset_Val_Bits];
-                end
-                
-                `Msg_Type_PixCapture: begin
-                    $display("[CTRL] Got Msg_Type_PixCapture (block=%b)", ctrl_msgArg[`Msg_Arg_PixCapture_DstBlock_Bits]);
-                    
-                    // Reset `ctrl_pixctrlStatusCaptureDone_` if it's asserted
-                    if (!ctrl_pixctrlStatusCaptureDone_) ctrl_pixctrlStatusCaptureDoneAck <= !ctrl_pixctrlStatusCaptureDoneAck;
-                    
-                    pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixCapture_DstBlock_Bits];
-                    ctrl_pixCaptureTrigger <= !ctrl_pixCaptureTrigger;
-                end
-                
-                `Msg_Type_PixReadout: begin
-                    $display("[CTRL] Got Msg_Type_PixReadout (block=%b)", ctrl_msgArg[`Msg_Arg_PixReadout_SrcBlock_Bits]);
-                    
-                    // Reset `ctrl_sdDatOutDone_` if it's asserted
-                    if (!ctrl_sdDatOutDone_) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
-                    
-                    pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixReadout_SrcBlock_Bits];
-                    ctrl_pixReadoutTrigger <= !ctrl_pixReadoutTrigger;
-                end
-                
-                `Msg_Type_PixI2CTransaction: begin
-                    $display("[CTRL] Got Msg_Type_PixI2CTransaction");
-                    
-                    // Reset `ctrl_pixi2c_done_` if it's asserted
-                    if (!ctrl_pixi2c_done_) ctrl_pixi2c_doneAck <= !ctrl_pixi2c_doneAck;
-                    
-                    pixi2c_cmd_write <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_Write_Bits];
-                    pixi2c_cmd_regAddr <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits];
-                    pixi2c_cmd_dataLen <= (ctrl_msgArg[`Msg_Arg_PixI2CTransaction_DataLen_Bits]===`Msg_Arg_PixI2CTransaction_DataLen_2);
-                    pixi2c_cmd_writeData <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_WriteData_Bits];
-                    pixi2c_cmd_trigger <= !pixi2c_cmd_trigger;
-                end
-                
-                `Msg_Type_PixGetStatus: begin
-                    // $display("[CTRL] Got Msg_Type_PixGetStatus [I2CDone:%b, I2CErr:%b, I2CReadData:%b, CaptureDone:%b]",
-                    //     !ctrl_pixi2c_done_,
-                    //     pixi2c_status_err,
-                    //     pixi2c_status_readData,
-                    //     !ctrl_pixctrlStatusCaptureDone_
-                    // );
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CDone_Bits] <= !ctrl_pixi2c_done_;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CErr_Bits] <= pixi2c_status_err;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CReadData_Bits] <= pixi2c_status_readData;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= !ctrl_pixctrlStatusCaptureDone_;
-                    ctrl_doutReg[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits] <= ctrl_pixctrlStatusCapturePixelDropped;
-                end
+                // `Msg_Type_PixReset: begin
+                //     $display("[CTRL] Got Msg_Type_PixReset (rst=%b)", ctrl_msgArg[`Msg_Arg_PixReset_Val_Bits]);
+                //     pix_rst_ <= ctrl_msgArg[`Msg_Arg_PixReset_Val_Bits];
+                // end
+                //
+                // `Msg_Type_PixCapture: begin
+                //     $display("[CTRL] Got Msg_Type_PixCapture (block=%b)", ctrl_msgArg[`Msg_Arg_PixCapture_DstBlock_Bits]);
+                //
+                //     // Reset `ctrl_pixctrlStatusCaptureDone_` if it's asserted
+                //     if (!ctrl_pixctrlStatusCaptureDone_) ctrl_pixctrlStatusCaptureDoneAck <= !ctrl_pixctrlStatusCaptureDoneAck;
+                //
+                //     pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixCapture_DstBlock_Bits];
+                //     ctrl_pixCaptureTrigger <= !ctrl_pixCaptureTrigger;
+                // end
+                //
+                // `Msg_Type_PixReadout: begin
+                //     $display("[CTRL] Got Msg_Type_PixReadout (block=%b)", ctrl_msgArg[`Msg_Arg_PixReadout_SrcBlock_Bits]);
+                //
+                //     // Reset `ctrl_sdDatOutDone_` if it's asserted
+                //     if (!ctrl_sdDatOutDone_) ctrl_sdDatOutDoneAck <= !ctrl_sdDatOutDoneAck;
+                //
+                //     pixctrl_cmd_ramBlock <= ctrl_msgArg[`Msg_Arg_PixReadout_SrcBlock_Bits];
+                //     ctrl_pixReadoutTrigger <= !ctrl_pixReadoutTrigger;
+                // end
+                //
+                // `Msg_Type_PixI2CTransaction: begin
+                //     $display("[CTRL] Got Msg_Type_PixI2CTransaction");
+                //
+                //     // Reset `ctrl_pixi2c_done_` if it's asserted
+                //     if (!ctrl_pixi2c_done_) ctrl_pixi2c_doneAck <= !ctrl_pixi2c_doneAck;
+                //
+                //     pixi2c_cmd_write <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_Write_Bits];
+                //     pixi2c_cmd_regAddr <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits];
+                //     pixi2c_cmd_dataLen <= (ctrl_msgArg[`Msg_Arg_PixI2CTransaction_DataLen_Bits]===`Msg_Arg_PixI2CTransaction_DataLen_2);
+                //     pixi2c_cmd_writeData <= ctrl_msgArg[`Msg_Arg_PixI2CTransaction_WriteData_Bits];
+                //     pixi2c_cmd_trigger <= !pixi2c_cmd_trigger;
+                // end
+                //
+                // `Msg_Type_PixGetStatus: begin
+                //     // $display("[CTRL] Got Msg_Type_PixGetStatus [I2CDone:%b, I2CErr:%b, I2CReadData:%b, CaptureDone:%b]",
+                //     //     !ctrl_pixi2c_done_,
+                //     //     pixi2c_status_err,
+                //     //     pixi2c_status_readData,
+                //     //     !ctrl_pixctrlStatusCaptureDone_
+                //     // );
+                //     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CDone_Bits] <= !ctrl_pixi2c_done_;
+                //     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CErr_Bits] <= pixi2c_status_err;
+                //     ctrl_doutReg[`Resp_Arg_PixGetStatus_I2CReadData_Bits] <= pixi2c_status_readData;
+                //     ctrl_doutReg[`Resp_Arg_PixGetStatus_CaptureDone_Bits] <= !ctrl_pixctrlStatusCaptureDone_;
+                //     ctrl_doutReg[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits] <= ctrl_pixctrlStatusCapturePixelDropped;
+                // end
                 
                 `Msg_Type_NoOp: begin
                     $display("[CTRL] Got Msg_Type_None");
@@ -638,6 +643,8 @@ module Testbench();
         .sd_dat(sdcard_dat)
     );
     
+    localparam ImageWidth = 32;
+    localparam ImageHeight = 4;
     PixSim #(
         .ImageWidth(ImageWidth),
         .ImageHeight(ImageHeight)
@@ -1023,185 +1030,185 @@ module Testbench();
         end
     end endtask
     
-    task TestPixReset; begin
-        reg[`Msg_Arg_Len-1:0] arg;
-        
-        // ====================
-        // Test Pix reset
-        // ====================
-        arg = 0;
-        arg[`Msg_Arg_PixReset_Val_Bits] = 0;
-        SendMsg(`Msg_Type_PixReset, arg);
-        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-            $display("[EXT] Reset=0 success ✅");
-        end else begin
-            $display("[EXT] Reset=0 failed ❌");
-        end
-
-        arg = 0;
-        arg[`Msg_Arg_PixReset_Val_Bits] = 1;
-        SendMsg(`Msg_Type_PixReset, arg);
-        if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
-            $display("[EXT] Reset=1 success ✅");
-        end else begin
-            $display("[EXT] Reset=1 failed ❌");
-        end
-    end endtask
-
-    task TestPixCapture; begin
-        reg[`Msg_Arg_Len-1:0] arg;
-        
-        arg = 0;
-        arg[`Msg_Arg_PixReset_Val_Bits] = 1;
-        SendMsg(`Msg_Type_PixReset, arg); // Deassert Pix reset
-
-        arg = 0;
-        arg[`Msg_Arg_PixCapture_DstBlock_Bits] = 0;
-        SendMsg(`Msg_Type_PixCapture, arg);
-
-        // Wait until the capture is done
-        $display("[EXT] Waiting for capture to complete...");
-        do begin
-            // Request Pix status
-            SendMsgResp(`Msg_Type_PixGetStatus, 0);
-        end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
-        
-        $display("[EXT] Capture done ✅");
-        
-        if (!resp[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits]) begin
-            $display("[EXT] No dropped pixels ✅");
-        end else begin
-            $display("[EXT] Dropped pixels ❌");
-        end
-    end endtask
-    
-    task TestPixI2CWriteRead; begin
-        reg[`Msg_Arg_Len-1:0] arg;
-        reg done;
-        
-        // ====================
-        // Test PixI2C Write (len=2)
-        // ====================
-        arg = 0;
-        arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 1;
-        arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_2;
-        arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h4242;
-        arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'hCAFE;
-        SendMsg(`Msg_Type_PixI2CTransaction, arg);
-        
-        done = 0;
-        while (!done) begin
-            SendMsgResp(`Msg_Type_PixGetStatus, 0);
-            $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
-                resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
-            );
-
-            done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
-        end
-        
-        if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-            $display("[EXT] Write success ✅");
-        end else begin
-            $display("[EXT] Write failed ❌");
-        end
-        
-        // ====================
-        // Test PixI2C Read (len=2)
-        // ====================
-        arg = 0;
-        arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 0;
-        arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_2;
-        arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h4242;
-        SendMsg(`Msg_Type_PixI2CTransaction, arg);
-        
-        done = 0;
-        while (!done) begin
-            SendMsgResp(`Msg_Type_PixGetStatus, 0);
-            $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
-                resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
-            );
-
-            done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
-        end
-
-        if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-            $display("[EXT] Read success ✅");
-        end else begin
-            $display("[EXT] Read failed ❌");
-        end
-
-        if (resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits] === 16'hCAFE) begin
-            $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
-        end else begin
-            $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
-            `Finish;
-        end
-
-        // ====================
-        // Test PixI2C Write (len=1)
-        // ====================
-        arg = 0;
-        arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 1;
-        arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_1;
-        arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
-        arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'h0037;
-        SendMsg(`Msg_Type_PixI2CTransaction, arg);
-
-        done = 0;
-        while (!done) begin
-            SendMsgResp(`Msg_Type_PixGetStatus, 0);
-            $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
-                resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
-            );
-
-            done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
-        end
-
-        if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-            $display("[EXT] Write success ✅");
-        end else begin
-            $display("[EXT] Write failed ❌");
-        end
-
-        // ====================
-        // Test PixI2C Read (len=1)
-        // ====================
-        arg = 0;
-        arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 0;
-        arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_1;
-        arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
-        SendMsg(`Msg_Type_PixI2CTransaction, arg);
-
-        done = 0;
-        while (!done) begin
-            SendMsgResp(`Msg_Type_PixGetStatus, 0);
-            $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
-                resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
-                resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
-            );
-
-            done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
-        end
-
-        if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
-            $display("[EXT] Read success ✅");
-        end else begin
-            $display("[EXT] Read failed ❌");
-        end
-
-        if ((resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF) === 16'h0037) begin
-            $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
-        end else begin
-            $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
-        end
-    end endtask
+    // task TestPixReset; begin
+    //     reg[`Msg_Arg_Len-1:0] arg;
+    //
+    //     // ====================
+    //     // Test Pix reset
+    //     // ====================
+    //     arg = 0;
+    //     arg[`Msg_Arg_PixReset_Val_Bits] = 0;
+    //     SendMsg(`Msg_Type_PixReset, arg);
+    //     if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+    //         $display("[EXT] Reset=0 success ✅");
+    //     end else begin
+    //         $display("[EXT] Reset=0 failed ❌");
+    //     end
+    //
+    //     arg = 0;
+    //     arg[`Msg_Arg_PixReset_Val_Bits] = 1;
+    //     SendMsg(`Msg_Type_PixReset, arg);
+    //     if (pix_rst_ === arg[`Msg_Arg_PixReset_Val_Bits]) begin
+    //         $display("[EXT] Reset=1 success ✅");
+    //     end else begin
+    //         $display("[EXT] Reset=1 failed ❌");
+    //     end
+    // end endtask
+    //
+    // task TestPixCapture; begin
+    //     reg[`Msg_Arg_Len-1:0] arg;
+    //
+    //     arg = 0;
+    //     arg[`Msg_Arg_PixReset_Val_Bits] = 1;
+    //     SendMsg(`Msg_Type_PixReset, arg); // Deassert Pix reset
+    //
+    //     arg = 0;
+    //     arg[`Msg_Arg_PixCapture_DstBlock_Bits] = 0;
+    //     SendMsg(`Msg_Type_PixCapture, arg);
+    //
+    //     // Wait until the capture is done
+    //     $display("[EXT] Waiting for capture to complete...");
+    //     do begin
+    //         // Request Pix status
+    //         SendMsgResp(`Msg_Type_PixGetStatus, 0);
+    //     end while(!resp[`Resp_Arg_PixGetStatus_CaptureDone_Bits]);
+    //
+    //     $display("[EXT] Capture done ✅");
+    //
+    //     if (!resp[`Resp_Arg_PixGetStatus_CapturePixelDropped_Bits]) begin
+    //         $display("[EXT] No dropped pixels ✅");
+    //     end else begin
+    //         $display("[EXT] Dropped pixels ❌");
+    //     end
+    // end endtask
+    //
+    // task TestPixI2CWriteRead; begin
+    //     reg[`Msg_Arg_Len-1:0] arg;
+    //     reg done;
+    //
+    //     // ====================
+    //     // Test PixI2C Write (len=2)
+    //     // ====================
+    //     arg = 0;
+    //     arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 1;
+    //     arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_2;
+    //     arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h4242;
+    //     arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'hCAFE;
+    //     SendMsg(`Msg_Type_PixI2CTransaction, arg);
+    //
+    //     done = 0;
+    //     while (!done) begin
+    //         SendMsgResp(`Msg_Type_PixGetStatus, 0);
+    //         $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
+    //             resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
+    //             resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
+    //             resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
+    //         );
+    //
+    //         done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
+    //     end
+    //
+    //     if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
+    //         $display("[EXT] Write success ✅");
+    //     end else begin
+    //         $display("[EXT] Write failed ❌");
+    //     end
+    //
+    //     // ====================
+    //     // Test PixI2C Read (len=2)
+    //     // ====================
+    //     arg = 0;
+    //     arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 0;
+    //     arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_2;
+    //     arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h4242;
+    //     SendMsg(`Msg_Type_PixI2CTransaction, arg);
+    //
+    //     done = 0;
+    //     while (!done) begin
+    //         SendMsgResp(`Msg_Type_PixGetStatus, 0);
+    //         $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
+    //             resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
+    //             resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
+    //             resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
+    //         );
+    //
+    //         done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
+    //     end
+    //
+    //     if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
+    //         $display("[EXT] Read success ✅");
+    //     end else begin
+    //         $display("[EXT] Read failed ❌");
+    //     end
+    //
+    //     if (resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits] === 16'hCAFE) begin
+    //         $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
+    //     end else begin
+    //         $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]);
+    //         `Finish;
+    //     end
+    //
+    //     // ====================
+    //     // Test PixI2C Write (len=1)
+    //     // ====================
+    //     arg = 0;
+    //     arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 1;
+    //     arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_1;
+    //     arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
+    //     arg[`Msg_Arg_PixI2CTransaction_WriteData_Bits] = 16'h0037;
+    //     SendMsg(`Msg_Type_PixI2CTransaction, arg);
+    //
+    //     done = 0;
+    //     while (!done) begin
+    //         SendMsgResp(`Msg_Type_PixGetStatus, 0);
+    //         $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
+    //             resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
+    //             resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
+    //             resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
+    //         );
+    //
+    //         done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
+    //     end
+    //
+    //     if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
+    //         $display("[EXT] Write success ✅");
+    //     end else begin
+    //         $display("[EXT] Write failed ❌");
+    //     end
+    //
+    //     // ====================
+    //     // Test PixI2C Read (len=1)
+    //     // ====================
+    //     arg = 0;
+    //     arg[`Msg_Arg_PixI2CTransaction_Write_Bits] = 0;
+    //     arg[`Msg_Arg_PixI2CTransaction_DataLen_Bits] = `Msg_Arg_PixI2CTransaction_DataLen_1;
+    //     arg[`Msg_Arg_PixI2CTransaction_RegAddr_Bits] = 16'h8484;
+    //     SendMsg(`Msg_Type_PixI2CTransaction, arg);
+    //
+    //     done = 0;
+    //     while (!done) begin
+    //         SendMsgResp(`Msg_Type_PixGetStatus, 0);
+    //         $display("[EXT] PixI2C status: done:%b err:%b readData:0x%x",
+    //             resp[`Resp_Arg_PixGetStatus_I2CDone_Bits],
+    //             resp[`Resp_Arg_PixGetStatus_I2CErr_Bits],
+    //             resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]
+    //         );
+    //
+    //         done = resp[`Resp_Arg_PixGetStatus_I2CDone_Bits];
+    //     end
+    //
+    //     if (!resp[`Resp_Arg_PixGetStatus_I2CErr_Bits]) begin
+    //         $display("[EXT] Read success ✅");
+    //     end else begin
+    //         $display("[EXT] Read failed ❌");
+    //     end
+    //
+    //     if ((resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF) === 16'h0037) begin
+    //         $display("[EXT] Read correct data ✅ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
+    //     end else begin
+    //         $display("[EXT] Read incorrect data ❌ (0x%x)", resp[`Resp_Arg_PixGetStatus_I2CReadData_Bits]&16'h00FF);
+    //     end
+    // end endtask
     
     
     initial begin
@@ -1220,23 +1227,23 @@ module Testbench();
         // Set SD clock source
         SendMsg(`Msg_Type_SDClkSrc, `Msg_Arg_SDClkSrc_Speed_Fast);
         
-        TestNoOp();
-        TestEcho();
+        // TestNoOp();
+        // TestEcho();
         
-        // Do Pix stuff before SD stuff, so that the RAM is populated with an image, so that
-        // the RAM has valid content for when we do the readout to write to the SD card.
-        TestPixReset();
-        TestPixCapture();
-        TestPixI2CWriteRead();
+        // // Do Pix stuff before SD stuff, so that the RAM is populated with an image, so that
+        // // the RAM has valid content for when we do the readout to write to the SD card.
+        // TestPixReset();
+        // TestPixCapture();
+        // TestPixI2CWriteRead();
         
         TestSDCMD0();
         TestSDCMD8();
-        TestSDDatOut();
-        TestSDCMD2();
-        TestSDDatIn();
-        TestSDRespRecovery();
-        TestSDDatOutRecovery();
-        TestSDDatInRecovery();
+        // TestSDDatOut();
+        // TestSDCMD2();
+        // TestSDDatIn();
+        // TestSDRespRecovery();
+        // TestSDDatOutRecovery();
+        // TestSDDatInRecovery();
         `Finish;
         
         // forever begin

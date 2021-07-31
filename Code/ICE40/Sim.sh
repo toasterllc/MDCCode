@@ -19,5 +19,5 @@ cd "$proj/tmp"
 
 # Simulate!
 rm -f Top.vvp
-iverilog -DSIM -o Top.vvp -g2012 `yosys-config --datdir/ice40/cells_sim.v` Top.v
+iverilog -DSIM -o Top.vvp -g2012 -DNO_ICE40_DEFAULT_ASSIGNMENTS `yosys-config --datdir/ice40/cells_sim.v` Top.v
 ./Top.vvp
