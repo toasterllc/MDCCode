@@ -246,6 +246,9 @@ int main() {
 //        __delay_cycles(1600000);
 //    }
     
+    volatile bool go = false;
+    while (!go);
+    
     const uint8_t SDClkDelaySlow = 15;
     const uint8_t SDClkDelayFast = 2;
     
@@ -255,13 +258,6 @@ int main() {
         auto status = _ice40Transfer<EchoResp>(EchoMsg(str));
         Assert(!strcmp((char*)status.payload, str));
     }
-    
-    _ice40Transfer(LEDSetMsg(1<<3 | 0<<2 | 0<<1 | 1<<0));
-    
-    volatile bool go = false;
-    while (!go);
-    
-    auto status = _sdGetStatus();
     
     // Disable SD power
     _sdSetPowerEnabled(false);
