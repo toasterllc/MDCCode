@@ -22,17 +22,17 @@
 `define     Msg_Arg_LEDSet_Val_Bits                             3:0
 
 `define Msg_Type_SDInit                                         `Msg_Type_Len'h02
-`define     Msg_Arg_SDInit_ClkSrc_Delay_Len                     4
-`define     Msg_Arg_SDInit_ClkSrc_Delay_Bits                    7:4
-`define     Msg_Arg_SDInit_ClkSrc_Speed_Len                     2
-`define     Msg_Arg_SDInit_ClkSrc_Speed_Bits                    3:2
-`define     Msg_Arg_SDInit_ClkSrc_Speed_Off                     `Msg_Arg_SDInit_ClkSrc_Speed_Len'b00
-`define     Msg_Arg_SDInit_ClkSrc_Speed_Slow                    `Msg_Arg_SDInit_ClkSrc_Speed_Len'b01
-`define     Msg_Arg_SDInit_ClkSrc_Speed_Fast                    `Msg_Arg_SDInit_ClkSrc_Speed_Len'b10
+`define     Msg_Arg_SDInit_Clk_Delay_Len                        4
+`define     Msg_Arg_SDInit_Clk_Delay_Bits                       7:4
+`define     Msg_Arg_SDInit_Clk_Speed_Len                        2
+`define     Msg_Arg_SDInit_Clk_Speed_Bits                       3:2
+`define     Msg_Arg_SDInit_Clk_Speed_Off                        `Msg_Arg_SDInit_Clk_Speed_Len'b00
+`define     Msg_Arg_SDInit_Clk_Speed_Slow                       `Msg_Arg_SDInit_Clk_Speed_Len'b01
+`define     Msg_Arg_SDInit_Clk_Speed_Fast                       `Msg_Arg_SDInit_Clk_Speed_Len'b10
 `define     Msg_Arg_SDInit_Trigger_Len                          1
 `define     Msg_Arg_SDInit_Trigger_Bits                         1:1
-`define     Msg_Arg_SDInit_Rst_Len                              1
-`define     Msg_Arg_SDInit_Rst_Bits                             0:0
+`define     Msg_Arg_SDInit_En_Len                               1
+`define     Msg_Arg_SDInit_En_Bits                              0:0
 
 `define Msg_Type_SDSendCmd                                      `Msg_Type_Len'h03
 `define     Msg_Arg_SDSendCmd_RespType_Len                      2
@@ -50,7 +50,6 @@
 `define     Msg_Arg_SDSendCmd_CmdData_Bits                      47:0
 
 `define Msg_Type_SDGetStatus                                    `Msg_Type_Len'h04
-`define     Resp_Arg_SDGetStatus_InitDone_Bits                  63:63
 `define     Resp_Arg_SDGetStatus_CmdDone_Bits                   62:62
 `define     Resp_Arg_SDGetStatus_RespDone_Bits                  61:61
 `define         Resp_Arg_SDGetStatus_RespCRCErr_Bits            60:60
