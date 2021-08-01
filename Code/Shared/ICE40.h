@@ -116,7 +116,7 @@ struct SDInitMsg : Msg {
         payload[4] = 0;
         payload[5] = 0;
         payload[6] = (((uint8_t)delay   &0xF)<<4) |
-                     (((uint8_t)speed   &0x2)<<2) |
+                     (((uint8_t)speed   &0x3)<<2) |
                      (((uint8_t)trigger &0x1)<<1) |
                      (((uint8_t)reset   &0x1)<<0) ;
     }

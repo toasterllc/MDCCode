@@ -33,7 +33,7 @@ module SDController #(
     // Config port (clock domain: async)
     input wire          init_rst,        // Toggle
     input wire          init_trigger,    // Toggle
-    output reg          init_done = 0,   // Toggle
+    // output reg          init_done = 0,   // Toggle
     input wire[1:0]     init_clkSrc_speed,
     input wire[`SDController_Init_ClkSrc_Delay_Width-1:0] init_clkSrc_delay,
     
@@ -119,19 +119,20 @@ module SDController #(
     // ====================
     // Init State Machine
     // ====================
-    localparam Init_PulseWidthNs = 12000; // Pulse needs to be at least 10us
-    localparam Init_PulseCount = Clocks(Clk_Slow_Freq, Init_PulseWidthNs, 1);
+    localparam Init_ClockPulseWidthUs = 15; // Pulse needs to be at least 10us, per SD LVS spec
+    localparam Init_ClockPulseDelay = Clocks(Clk_Slow_Freq, Init_ClockPulseWidthUs*1000, 1);
+    localparam Init_HoldDelay = Clocks(Clk_Slow_Freq, 5*1000, 1); // Hold outputs for 5us after the negative edge of the clock pulse
     reg init_sdClk = 0;
     reg init_sdCmdOutEn = 0;
     reg[3:0] init_sdDatOutEn = 0;
-    reg[`RegWidth(Init_PulseCount)-1:0] init_pulseCounter = 0;
+    reg[`RegWidth(Init_ClockPulseDelay)-1:0] init_delayCounter = 0;
     reg init_en_ = 0;
     `TogglePulse(init_rstPulse, init_rst, posedge, clk_int);
     `TogglePulse(init_triggerPulse, init_trigger, posedge, clk_int);
     
     reg[2:0] init_state = 0;
     always @(posedge clk_int) begin
-        init_pulseCounter <= init_pulseCounter-1;
+        init_delayCounter <= init_delayCounter-1;
         
         case (init_state)
         0: begin
@@ -142,34 +143,43 @@ module SDController #(
             init_sdClk <= 0;
             init_sdCmdOutEn <= 1;
             init_sdDatOutEn <= 4'b1111;
-            init_pulseCounter <= Init_PulseCount;
+            init_delayCounter <= Init_ClockPulseDelay;
         end
         
         2: begin
             init_sdClk <= 1;
-            if (!init_pulseCounter) begin
+            if (!init_delayCounter) begin
                 init_state <= 3;
             end
         end
         
         3: begin
             init_sdClk <= 0;
-            init_sdCmdOutEn <= 0;
-            init_sdDatOutEn <= 4'b0000;
-            init_pulseCounter <= Init_PulseCount;
+            init_delayCounter <= Init_HoldDelay;
             init_state <= 4;
         end
         
         4: begin
-            if (!init_pulseCounter) begin
+            if (!init_delayCounter) begin
                 init_state <= 5;
             end
         end
         
         5: begin
             $display("[SDController:INIT] Done");
+            init_sdCmdOutEn <= 0;
+            init_sdDatOutEn <= 4'b0000;
             // Notify that we're done initializing
-            init_done <= !init_done;
+            // init_done <= !init_done;
+            // Exit init mode
+            // init_en_ <= 1;
+            init_state <= 0;
+        end
+        
+        6: begin
+            $display("[SDController:INIT] Done");
+            // Notify that we're done initializing
+            // init_done <= !init_done;
             // Exit init mode
             init_en_ <= 1;
             init_state <= 0;
