@@ -583,13 +583,10 @@ module Testbench();
         
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off,  0, 1); // Disable SD clock, InitMode=enabled
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // SD clock = slow clock, InitMode=enabled
-        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // Enable SDController init mode
         // <-- Turn on power to SD card
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 1, 1); // Trigger SDController init state machine
-        
         // Wait 5ms
         #5000000;
-        
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 0); // SDController InitMode=disabled
         
         // // Wait for SD init to be complete
