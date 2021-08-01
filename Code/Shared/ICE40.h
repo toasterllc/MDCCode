@@ -186,7 +186,7 @@ struct SDGetStatusResp : Resp {
     }
     
 private:
-    static constexpr size_t _RespIdx = 12;
+    static constexpr size_t _RespIdx = 13;
 };
 
 struct PixResetMsg : Msg {
