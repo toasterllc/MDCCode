@@ -92,10 +92,14 @@ struct LEDSetMsg : Msg {
 };
 
 struct SDInitMsg : Msg {
-    enum class Action : uint8_t {
-        None,
-        Reset,
-        Trigger,
+    enum class State : uint8_t {
+        Disabled    = 0,
+        Enabled     = 1,
+    };
+    
+    enum class Trigger : uint8_t {
+        Nop     = 0,
+        Trigger = 1,
     };
     
     enum class ClkSpeed : uint8_t {
@@ -104,10 +108,8 @@ struct SDInitMsg : Msg {
         Fast    = 2,
     };
     
-    SDInitMsg(Action act, ClkSpeed speed, uint8_t delay) {
-        AssertArg((delay&0xF) == delay); // Ensure delay fits in 4 bits
-        const bool reset = (act==Action::Reset);
-        const bool trigger = (act==Action::Trigger);
+    SDInitMsg(State state, Trigger trigger, ClkSpeed speed, uint8_t clkDelay) {
+        AssertArg((clkDelay&0xF) == clkDelay); // Ensure delay fits in 4 bits
         type = 0x02;
         payload[0] = 0;
         payload[1] = 0;
@@ -115,10 +117,10 @@ struct SDInitMsg : Msg {
         payload[3] = 0;
         payload[4] = 0;
         payload[5] = 0;
-        payload[6] = (((uint8_t)delay   &0xF)<<4) |
-                     (((uint8_t)speed   &0x3)<<2) |
-                     (((uint8_t)trigger &0x1)<<1) |
-                     (((uint8_t)reset   &0x1)<<0) ;
+        payload[6] = (((uint8_t)clkDelay &0xF)<<4) |
+                     (((uint8_t)speed    &0x3)<<2) |
+                     (((uint8_t)trigger  &0x1)<<1) |
+                     (((uint8_t)state    &0x1)<<0) ;
     }
 };
 
@@ -154,28 +156,25 @@ struct SDGetStatusMsg : Msg {
 };
 
 struct SDGetStatusResp : Resp {
-    // Init Done
-    bool sdInitDone() const                 { return getBit(63);                            }
-    
     // Command
-    bool sdCmdDone() const                  { return getBit(62);                            }
+    bool sdCmdDone() const                  { return getBit(63);                            }
     
     // Response
-    bool sdRespDone() const                 { return getBit(61);                            }
-    bool sdRespCRCErr() const               { return getBit(60);                            }
+    bool sdRespDone() const                 { return getBit(62);                            }
+    bool sdRespCRCErr() const               { return getBit(61);                            }
     uint64_t sdResp() const                 { return getBits(_RespIdx+48-1, _RespIdx);      }
     
     // DatOut
-    bool sdDatOutDone() const               { return getBit(11);                            }
-    bool sdDatOutCRCErr() const             { return getBit(10);                            }
+    bool sdDatOutDone() const               { return getBit(12);                            }
+    bool sdDatOutCRCErr() const             { return getBit(11);                            }
     
     // DatIn
-    bool sdDatInDone() const                { return getBit(9);                             }
-    bool sdDatInCRCErr() const              { return getBit(8);                             }
-    uint8_t sdDatInCMD6AccessMode() const   { return getBits(7,4);                          }
+    bool sdDatInDone() const                { return getBit(10);                            }
+    bool sdDatInCRCErr() const              { return getBit(9);                             }
+    uint8_t sdDatInCMD6AccessMode() const   { return getBits(8,5);                          }
     
     // Other
-    bool sdDat0Idle() const                 { return getBit(3);                             }
+    bool sdDat0Idle() const                 { return getBit(4);                             }
     
     // Helper methods
     uint64_t sdRespGetBit(uint8_t idx) const {

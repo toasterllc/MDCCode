@@ -259,24 +259,30 @@ int main() {
         Assert(!strcmp((char*)status.payload, str));
     }
     
+//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off,  0, 1); // Disable SD clock, InitMode=enabled
+//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // SD clock = slow clock, InitMode=enabled
+//        // <-- Turn on power to SD card
+//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 1, 1); // Trigger SDController init state machine
+//        
+//        // Wait 5ms
+//        #5000000;
+//        
+//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 0); // SDController InitMode=disabled
+    
     // Disable SD power
     _sdSetPowerEnabled(false);
-    // SD clock = off
-    _ice40Transfer(SDInitMsg(SDInitMsg::Action::None, SDInitMsg::ClkSpeed::Off, SDClkDelaySlow));
+    // InitMode=enabled, Clock=off
+    _ice40Transfer(SDInitMsg(SDInitMsg::State::Enabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Off, SDClkDelaySlow));
     // SD clock = slow clock
-    _ice40Transfer(SDInitMsg(SDInitMsg::Action::None, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
-    // Reset init state machine
-    _ice40Transfer(SDInitMsg(SDInitMsg::Action::Reset, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
+    _ice40Transfer(SDInitMsg(SDInitMsg::State::Enabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
     // Turn on SD card power
     _sdSetPowerEnabled(true);
     // Trigger the SD card low voltage signalling (LVS) init sequence
-    _ice40Transfer(SDInitMsg(SDInitMsg::Action::Trigger, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
-    // Wait until init sequence is complete
-    for (;;) {
-        auto status = _sdGetStatus();
-        if (status.sdInitDone()) break;
-        // Busy
-    }
+    _ice40Transfer(SDInitMsg(SDInitMsg::State::Enabled, SDInitMsg::Trigger::Trigger, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
+    // Wait 5ms for the LVS init sequence to complete
+    _delay(5000);
+    // Disable SDController init mode
+    _ice40Transfer(SDInitMsg(SDInitMsg::State::Disabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
     
 //    TestSDConfig(0, `Msg_Arg_SDInit_ClkSrc_Speed_Off,  0, 0); // Disable SD clock, enable SD init mode
 //    TestSDConfig(0, `Msg_Arg_SDInit_ClkSrc_Speed_Slow, 0, 0); // SD clock = slow clock
