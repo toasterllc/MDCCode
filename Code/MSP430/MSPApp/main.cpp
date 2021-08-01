@@ -4,9 +4,13 @@
 #include <inttypes.h>
 #include <cstddef>
 #include "ICE40.h"
+using namespace ICE40;
+using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
+using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
 
-constexpr uint32_t MCLKFreqHz = 16000000;
-constexpr uint32_t SPIResetThresholdUs = 10;
+constexpr uint64_t MCLKFreqHz = 16000000;
+
+#define _delay(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000);
 
 static void _clockInit() {
     constexpr uint32_t XT1FreqHz = 32768;
@@ -75,60 +79,11 @@ static void _sysInit() {
     }
 }
 
-static uint8_t txrx(uint8_t b) {
-    // Wait until `UCA0TXBUF` can accept more data
-    while (!(UCA0IFG & UCTXIFG));
-    // Clear UCRXIFG so we can tell when tx/rx is complete
-    UCA0IFG &= ~UCRXIFG;
-    // Start the SPI transaction
-    UCA0TXBUF = b;
-    // Wait for tx completion
-    // Wait for UCRXIFG, not UCTXIFG! UCTXIFG signifies that UCA0TXBUF
-    // can accept more data, not transfer completion. UCRXIFG signifies
-    // rx completion, which implies tx completion.
-    while (!(UCA0IFG & UCRXIFG));
-    return UCA0RXBUF;
-}
-
-static void txrx(const ICE40::Msg& msg, ICE40::Resp& resp) {
-    // PA.4 = UCA0SIMO
-    PASEL1 &= ~BIT4;
-    PASEL0 |=  BIT4;
-    
-    // PA.4 level shifter direction = MSP->ICE
-    PAOUT |= BIT3;
-    
-    txrx(msg.type);
-    
-    for (uint8_t b : msg.payload) {
-        txrx(b);
-    }
-    
-    // PA.4 = GPIO input
-    PASEL1 &= ~BIT4;
-    PASEL0 &= ~BIT4;
-    
-    // PA.4 level shifter direction = MSP<-ICE
-    PAOUT &= ~BIT3;
-    
-    // 8-cycle turnaround
-    txrx(0xFF);
-    
-    for (uint8_t& b : resp.payload) {
-        b = txrx(0xFF);
-    }
-}
-
-static void txrx(const ICE40::Msg& msg) {
-    ICE40::Resp resp;
-    txrx(msg, resp);
-}
-
-int main() {
-    _sysInit();
-    
+static void _spiInit() {
     // Reset the ICE40 SPI state machine by asserting ice_msp_spi_clk for 10us
     {
+        constexpr uint64_t ICE40SPIResetDurationUs = 10;
+        
         // PA.6 = GPIO output
         PAOUT  &= ~BIT6;
         PADIR  |=  BIT6;
@@ -136,7 +91,7 @@ int main() {
         PASEL0 &= ~BIT6;
         
         PAOUT  |=  BIT6;
-        __delay_cycles((SPIResetThresholdUs*MCLKFreqHz) / 1000000);
+        _delay(ICE40SPIResetDurationUs);
         PAOUT  &= ~BIT6;
     }
     
@@ -178,22 +133,429 @@ int main() {
         // De-assert USCI reset
         UCA0CTLW0 &= ~UCSWRST;
     }
+}
+
+static uint8_t _spiTxRx(uint8_t b) {
+    // Wait until `UCA0TXBUF` can accept more data
+    while (!(UCA0IFG & UCTXIFG));
+    // Clear UCRXIFG so we can tell when tx/rx is complete
+    UCA0IFG &= ~UCRXIFG;
+    // Start the SPI transaction
+    UCA0TXBUF = b;
+    // Wait for tx completion
+    // Wait for UCRXIFG, not UCTXIFG! UCTXIFG signifies that UCA0TXBUF
+    // can accept more data, not transfer completion. UCRXIFG signifies
+    // rx completion, which implies tx completion.
+    while (!(UCA0IFG & UCRXIFG));
+    return UCA0RXBUF;
+}
+
+static void _spiTxRx(const ICE40::Msg& msg, ICE40::Resp& resp) {
+    // PA.4 = UCA0SIMO
+    PASEL1 &= ~BIT4;
+    PASEL0 |=  BIT4;
     
-    for (uint8_t i=0;; i++) {
-        
-        {
-            const char msgStr[] = "halla";
-            const ICE40::EchoMsg msg(msgStr);
-            ICE40::EchoResp resp;
-            txrx(msg, resp);
-            if (memcmp(msg.payload, resp.payload+1, sizeof(msgStr))) {
-                const ICE40::LEDSetMsg msg(i);
-                txrx(msg);
-            }
-        }
-        
-        __delay_cycles(1600000);
+    // PA.4 level shifter direction = MSP->ICE
+    PAOUT |= BIT3;
+    
+    _spiTxRx(msg.type);
+    
+    for (uint8_t b : msg.payload) {
+        _spiTxRx(b);
     }
+    
+    // PA.4 = GPIO input
+    PASEL1 &= ~BIT4;
+    PASEL0 &= ~BIT4;
+    
+    // PA.4 level shifter direction = MSP<-ICE
+    PAOUT &= ~BIT3;
+    
+    // 8-cycle turnaround
+    _spiTxRx(0xFF);
+    
+    for (uint8_t& b : resp.payload) {
+        b = _spiTxRx(0xFF);
+    }
+}
+
+template <typename T>
+static T _ice40Transfer(const ICE40::Msg& msg) {
+    T resp;
+    _spiTxRx(msg, resp);
+    return resp;
+}
+
+static void _ice40Transfer(const ICE40::Msg& msg) {
+    _ice40Transfer<ICE40::Resp>(msg);
+}
+
+SDGetStatusResp _sdGetStatus() {
+    return _ice40Transfer<SDGetStatusResp>(SDGetStatusMsg());
+}
+
+SDGetStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
+    SDSendCmdMsg::RespType respType, SDSendCmdMsg::DatInType datInType) {
+    
+    _ice40Transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
+    
+    // Wait for command to be sent
+    const uint32_t MaxAttempts = 1000;
+    for (uint32_t i=0;; i++) {
+        Assert(i < MaxAttempts); // TODO: improve error handling
+        if (i >= 10) _delay(1000);
+        auto status = _sdGetStatus();
+        // Continue if the command hasn't been sent yet
+        if (!status.sdCmdDone()) continue;
+        // Continue if we expect a response but it hasn't been received yet
+        if (respType!=SDRespTypes::None && !status.sdRespDone()) continue;
+        // Continue if we expect DatIn but it hasn't been received yet
+        if (datInType!=SDDatInTypes::None && !status.sdDatInDone()) continue;
+        return status;
+    }
+}
+
+void _sdSetPowerEnabled(bool en) {
+    constexpr uint16_t VDD_SD_EN = BITB;
+    if (en) {
+        PADIR |=  VDD_SD_EN;
+        PAOUT |=  VDD_SD_EN;
+    } else {
+        PADIR |=  VDD_SD_EN;
+        PAOUT &= ~VDD_SD_EN;
+    }
+}
+
+int main() {
+    _sysInit();
+    _spiInit();
+    
+//    for (uint8_t i=0;; i++) {
+//        
+//        {
+//            const char msgStr[] = "halla";
+//            const ICE40::EchoMsg msg(msgStr);
+//            ICE40::EchoResp resp;
+//            txrx(msg, resp);
+//            if (memcmp(msg.payload, resp.payload+1, sizeof(msgStr))) {
+//                const ICE40::LEDSetMsg msg(i);
+//                txrx(msg);
+//            }
+//        }
+//        
+//        __delay_cycles(1600000);
+//    }
+    
+    const uint8_t SDClkDelaySlow = 15;
+    const uint8_t SDClkDelayFast = 2;
+    
+    // Confirm that we can communicate with the ICE40
+    {
+        char str[] = "halla";
+        auto status = _ice40Transfer<EchoResp>(EchoMsg(str));
+        Assert(!strcmp((char*)status.payload, str));
+    }
+    
+    _ice40Transfer(LEDSetMsg(1<<3 | 0<<2 | 0<<1 | 1<<0));
+    
+    volatile bool go = false;
+    while (!go);
+    
+    auto status = _sdGetStatus();
+    
+    // Disable SD power
+    _sdSetPowerEnabled(false);
+    // SD clock = off
+    _ice40Transfer(SDInitMsg(SDInitMsg::Action::None, SDInitMsg::ClkSpeed::Off, SDClkDelaySlow));
+    // SD clock = slow clock
+    _ice40Transfer(SDInitMsg(SDInitMsg::Action::None, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
+    // Reset init state machine
+    _ice40Transfer(SDInitMsg(SDInitMsg::Action::Reset, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
+    // Turn on SD card power
+    _sdSetPowerEnabled(true);
+    // Trigger the SD card low voltage signalling (LVS) init sequence
+    _ice40Transfer(SDInitMsg(SDInitMsg::Action::Trigger, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
+    // Wait until init sequence is complete
+    for (;;) {
+        auto status = _sdGetStatus();
+        if (status.sdInitDone()) break;
+        // Busy
+    }
+    
+//    TestSDConfig(0, `Msg_Arg_SDInit_ClkSrc_Speed_Off,  0, 0); // Disable SD clock, enable SD init mode
+//    TestSDConfig(0, `Msg_Arg_SDInit_ClkSrc_Speed_Slow, 0, 0); // SD clock = slow clock
+//    TestSDConfig(0, `Msg_Arg_SDInit_ClkSrc_Speed_Slow, 0, 1); // Reset SDController's `init` state machine
+//    // <-- Turn on power to SD card
+//    TestSDConfig(0, `Msg_Arg_SDInit_ClkSrc_Speed_Slow, 1, 0); // Trigger SDController init state machine
+//    
+//    // Wait for SD init to be complete
+//    done = 0;
+//    for (i=0; i<10 && !done; i++) begin
+//        // Request SD status
+//        SendMsg(`Msg_Type_SDGetStatus, 0);
+//        // We're done when the `InitDone` bit is set
+//        done = spi_resp[`Resp_Arg_SDGetStatus_InitDone_Bits];
+//    end
+    
+//    // Disable SD clock
+//    {
+//        _ice40Transfer(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+//    }
+//    
+//    // Enable SD slow clock
+//    {
+//        _ice40Transfer(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
+//    }
+//    
+//    // ====================
+//    // CMD0 | GO_IDLE_STATE
+//    //   State: X -> Idle
+//    //   Go to idle state
+//    // ====================
+//    {
+//        _sdSendCmd(0, 0, SDRespTypes::None);
+//        // There's no response to CMD0
+//    }
+//    
+//    // ====================
+//    // CMD8 | SEND_IF_COND
+//    //   State: Idle -> Idle
+//    //   Send interface condition
+//    // ====================
+//    {
+//        auto status = _sdSendCmd(8, 0x000001AA);
+//        Assert(!status.sdRespCRCErr());
+//        Assert(status.sdRespGetBits(15,8) == 0xAA); // Verify the response pattern is what we sent
+//    }
+//    
+//    // ====================
+//    // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
+//    //   State: Idle -> Ready
+//    //   Initialize
+//    // ====================
+//    bool switchTo1V8 = false;
+//    for (;;) {
+//        // CMD55
+//        {
+//            auto status = _sdSendCmd(55, 0);
+//            Assert(!status.sdRespCRCErr());
+//        }
+//        
+//        // CMD41
+//        {
+//            auto status = _sdSendCmd(41, 0x51008000);
+//            // Don't check CRC with .sdRespCRCOK() (the CRC response to ACMD41 is all 1's)
+//            Assert(status.sdRespGetBits(45,40) == 0x3F); // Command should be 6'b111111
+//            Assert(status.sdRespGetBits(7,1) == 0x7F); // CRC should be 7'b1111111
+//            // Check if card is ready. If it's not, retry ACMD41.
+//            if (!status.sdRespGetBit(39)) continue;
+//            // Check if we can switch to 1.8V
+//            // If not, we'll assume we're already in 1.8V mode
+//            switchTo1V8 = status.sdRespGetBit(32);
+//            break;
+//        }
+//    }
+//    
+//    if (switchTo1V8) {
+//        // ====================
+//        // CMD11 | VOLTAGE_SWITCH
+//        //   State: Ready -> Ready
+//        //   Switch to 1.8V signaling voltage
+//        // ====================
+//        {
+//            auto status = _sdSendCmd(11, 0);
+//            Assert(!status.sdRespCRCErr());
+//        }
+//        
+//        // Disable SD clock for 5ms (SD clock source = none)
+//        {
+//            _ice40Transfer(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+//            HAL_Delay(5);
+//        }
+//        
+//        // Re-enable the SD clock
+//        {
+//            _ice40Transfer(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
+//        }
+//        
+//        // Wait for SD card to indicate that it's ready (DAT0=1)
+//        {
+//            for (;;) {
+//                auto status = _sdGetStatus();
+//                if (status.sdDat0Idle()) break;
+//                // Busy
+//            }
+//            // Ready
+//        }
+//    }
+//    
+//    
+//    
+//    
+//    // ====================
+//    // CMD2 | ALL_SEND_CID
+//    //   State: Ready -> Identification
+//    //   Get card identification number (CID)
+//    // ====================
+//    {
+//        // The response to CMD2 is 136 bits, instead of the usual 48 bits
+//        _sdSendCmd(2, 0, SDRespTypes::Len136);
+//        // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
+//        // so it'll be flagged as incorrect.
+//    }
+//    
+//    // ====================
+//    // CMD3 | SEND_RELATIVE_ADDR
+//    //   State: Identification -> Standby
+//    //   Publish a new relative address (RCA)
+//    // ====================
+//    uint16_t rca = 0;
+//    {
+//        auto status = _sdSendCmd(3, 0);
+//        Assert(!status.sdRespCRCErr());
+//        // Get the card's RCA from the response
+//        rca = status.sdRespGetBits(39,24);
+//    }
+//    
+//    // ====================
+//    // CMD7 | SELECT_CARD/DESELECT_CARD
+//    //   State: Standby -> Transfer
+//    //   Select card
+//    // ====================
+//    {
+//        auto status = _sdSendCmd(7, ((uint32_t)rca)<<16);
+//        Assert(!status.sdRespCRCErr());
+//    }
+//    
+//    // ====================
+//    // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
+//    //   State: Transfer -> Transfer
+//    //   Set bus width to 4 bits
+//    // ====================
+//    {
+//        // CMD55
+//        {
+//            auto status = _sdSendCmd(55, ((uint32_t)rca)<<16);
+//            Assert(!status.sdRespCRCErr());
+//        }
+//        
+//        // CMD6
+//        {
+//            auto status = _sdSendCmd(6, 0x00000002);
+//            Assert(!status.sdRespCRCErr());
+//        }
+//    }
+//    
+//    // ====================
+//    // CMD6 | SWITCH_FUNC
+//    //   State: Transfer -> Data
+//    //   Switch to SDR104
+//    // ====================
+//    {
+//        // Mode = 1 (switch function)  = 0x80
+//        // Group 6 (Reserved)          = 0xF (no change)
+//        // Group 5 (Reserved)          = 0xF (no change)
+//        // Group 4 (Current Limit)     = 0xF (no change)
+//        // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
+//        // Group 2 (Command System)    = 0xF (no change)
+//        // Group 1 (Access Mode)       = 0x3 (SDR104)
+//        auto status = _sdSendCmd(6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512);
+//        Assert(!status.sdRespCRCErr());
+//        Assert(!status.sdDatInCRCErr());
+//        // Verify that the access mode was successfully changed
+//        // TODO: properly handle this failing, see CMD6 docs
+//        Assert(status.sdDatInCMD6AccessMode() == 0x03);
+//    }
+//    
+//    // Disable SD clock
+//    {
+//        _ice40Transfer(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkSlowDelay));
+//    }
+//    
+//    // Switch to the fast delay
+//    {
+//        _ice40Transfer(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Off, SDClkFastDelay));
+//    }
+//    
+//    // Enable SD fast clock
+//    {
+//        _ice40Transfer(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Fast, SDClkFastDelay));
+//    }
+//    
+//    bool on = true;
+//    for (volatile uint32_t iter=0;; iter++) {
+//        // ====================
+//        // ACMD23 | SET_WR_BLK_ERASE_COUNT
+//        //   State: Transfer -> Transfer
+//        //   Set the number of blocks to be
+//        //   pre-erased before writing
+//        // ====================
+//        {
+//            // CMD55
+//            {
+//                auto status = _sdSendCmd(55, ((uint32_t)rca)<<16);
+//                Assert(!status.sdRespCRCErr());
+//            }
+//            
+//            // CMD23
+//            {
+//                auto status = _sdSendCmd(23, 0x00000001);
+//                Assert(!status.sdRespCRCErr());
+//            }
+//        }
+//        
+//        // ====================
+//        // CMD25 | WRITE_MULTIPLE_BLOCK
+//        //   State: Transfer -> Receive Data
+//        //   Write blocks of data
+//        // ====================
+//        {
+//            auto status = _sdSendCmd(25, 0);
+//            Assert(!status.sdRespCRCErr());
+//        }
+//        
+//        // Clock out data on DAT lines
+//        {
+//            _ice40Transfer(PixReadoutMsg(0));
+//        }
+//        
+//        // Wait until we're done clocking out data on DAT lines
+//        {
+//            // Waiting for writing to finish
+//            for (;;) {
+//                auto status = _sdGetStatus();
+//                if (status.sdDatOutDone()) {
+//                    if (status.sdDatOutCRCErr()) {
+//                        _led3.write(true);
+//                        for (;;);
+//                    }
+//                    break;
+//                }
+//                // Busy
+//            }
+//        }
+//        
+//        // ====================
+//        // CMD12 | STOP_TRANSMISSION
+//        //   State: Receive Data -> Programming
+//        //   Finish writing
+//        // ====================
+//        {
+//            auto status = _sdSendCmd(12, 0);
+//            Assert(!status.sdRespCRCErr());
+//            
+//            // Wait for SD card to indicate that it's ready (DAT0=1)
+//            for (;;) {
+//                if (status.sdDat0Idle()) break;
+//                status = _sdGetStatus();
+//            }
+//        }
+//        
+//        _led0.write(on);
+//        on = !on;
+//    }
+//    
+//    for (;;);
     
     return 0;
 }

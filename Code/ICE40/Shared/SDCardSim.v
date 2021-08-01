@@ -151,28 +151,28 @@ module SDCardSim(
     initial begin
         reg lvsinit_sdCmd;
         reg[3:0] lvsinit_sdDat;
-        time lvsinit_pulseBeginTime;
-        time lvsinit_pulseEndTime;
+        time lvsinit_pulseBeginTimePs;
+        time lvsinit_pulseEndTimePs;
         
         // Handle LVS init sequence
         wait(sd_clk);
-        lvsinit_pulseBeginTime = $time;
+        lvsinit_pulseBeginTimePs = $time;
         lvsinit_sdCmd = sd_cmd;
         lvsinit_sdDat = sd_dat;
         wait(!sd_clk);
-        lvsinit_pulseEndTime = $time;
+        lvsinit_pulseEndTimePs = $time;
         
-        if (lvsinit_sdCmd===1'b0 && lvsinit_sdDat===4'b0 && (lvsinit_pulseEndTime-lvsinit_pulseBeginTime)>10000000) begin
-            $display("[SDCardSim] LVS init succeeded [ sd_cmd: %b, sd_dat: %b, duration: %0d ] ✅",
+        if (lvsinit_sdCmd===1'b0 && lvsinit_sdDat===4'b0 && (lvsinit_pulseEndTimePs-lvsinit_pulseBeginTimePs)>10000000) begin
+            $display("[SDCardSim] LVS init succeeded [ sd_cmd: %b, sd_dat: %b, duration (ns): %0d ] ✅",
                 lvsinit_sdCmd,
                 lvsinit_sdDat,
-                lvsinit_pulseEndTime-lvsinit_pulseBeginTime
+                (lvsinit_pulseEndTimePs-lvsinit_pulseBeginTimePs)/1000
             );
         end else begin
-            $display("[SDCardSim] LVS init failed [ sd_cmd: %b, sd_dat: %b, duration: %0d ] ❌",
+            $display("[SDCardSim] LVS init failed [ sd_cmd: %b, sd_dat: %b, duration (ns): %0d ] ❌",
                 lvsinit_sdCmd,
                 lvsinit_sdDat,
-                lvsinit_pulseEndTime-lvsinit_pulseBeginTime
+                (lvsinit_pulseEndTimePs-lvsinit_pulseBeginTimePs)/1000
             );
             `Finish;
         end
