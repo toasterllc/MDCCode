@@ -164,7 +164,7 @@ module SDController #(
         
         4: begin
             init_sdCmdOutEn <= 0;
-            init_sdDatOutEn <= 4'b0100;
+            init_sdDatOutEn <= 4'b0000;
         end
         endcase
         

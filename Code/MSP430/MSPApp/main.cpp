@@ -275,6 +275,7 @@ int main() {
     
     // Disable SD power
     _sdSetPowerEnabled(false);
+    _delay(100000);
     // InitMode=enabled, Clock=off
     _ice40Transfer(SDInitMsg(SDInitMsg::State::Enabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Off, SDClkDelaySlow));
     // SD clock = slow clock
@@ -329,9 +330,14 @@ int main() {
     //   Send interface condition
     // ====================
     {
-        auto status = _sdSendCmd(8, 0x000002AA);
+        constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
+        constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
+        auto status = _sdSendCmd(8, (Voltage<<8)|(CheckPattern<<0));
         Assert(!status.sdRespCRCErr());
-        Assert(status.sdRespGetBits(15,8) == 0xAA); // Verify the response pattern is what we sent
+        const uint8_t replyVoltage = status.sdRespGetBits(19,16);
+        Assert(replyVoltage == Voltage);
+        const uint8_t replyCheckPattern = status.sdRespGetBits(15,8);
+        Assert(replyCheckPattern == CheckPattern);
     }
     
 //    // ====================
