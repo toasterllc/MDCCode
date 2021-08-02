@@ -4,6 +4,8 @@
 `include "SDController.v"
 `include "ICEAppTypes.v"
 `include "ClockGen.v"
+`include "ImgController.v"
+`include "ImgI2CMaster.v"
 
 `ifdef SIM
 `include "SDCardSim.v"
@@ -17,16 +19,223 @@ module Top(
     input wire          ice_msp_spi_clk,
     inout wire          ice_msp_spi_data,
     
+    // SD port
     output wire         sd_clk,
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat,
     
-`ifdef SIM
-    output wire         sim_rst_, // Exported so that the sim can verify that the state machine is in reset
-`endif
+    // IMG port
+    input wire          img_dclk,
+    input wire[11:0]    img_d,
+    input wire          img_fv,
+    input wire          img_lv,
+    output reg          img_rst_ = 0,
+    output wire         img_sclk,
+    inout wire          img_sdata,
     
+    // RAM port
+    output wire         ram_clk,
+    output wire         ram_cke,
+    output wire[1:0]    ram_ba,
+    output wire[11:0]   ram_a,
+    output wire         ram_cs_,
+    output wire         ram_ras_,
+    output wire         ram_cas_,
+    output wire         ram_we_,
+    output wire[1:0]    ram_dqm,
+    inout wire[15:0]    ram_dq,
+    
+    // LED port
     output reg[3:0]     ice_led = 0
+    
+`ifdef SIM
+    // Exported so that the sim can verify that the state machine is in reset
+    , output wire         sim_rst_
+`endif
 );
+    // ====================
+    // spi_clk
+    // ====================
+    wire spi_clk = ice_msp_spi_clk;
+    
+    
+    
+    
+    
+    
+    
+    // ====================
+    // ImgI2CMaster
+    // ====================
+    localparam ImgI2CSlaveAddr = 7'h10;
+    reg imgi2c_cmd_write = 0;
+    reg[15:0] imgi2c_cmd_regAddr = 0;
+    reg imgi2c_cmd_dataLen = 0;
+    reg[15:0] imgi2c_cmd_writeData = 0;
+    reg imgi2c_cmd_trigger = 0;
+    wire imgi2c_status_done;
+    wire imgi2c_status_err;
+    wire[15:0] imgi2c_status_readData;
+    `ToggleAck(spi_imgi2c_done_, spi_imgi2c_doneAck, imgi2c_status_done, posedge, spi_clk);
+    
+    ImgI2CMaster #(
+        .ClkFreq(16_000_000),
+`ifdef SIM
+        .I2CClkFreq(4_000_000)
+`else
+        .I2CClkFreq(100_000) // TODO: try 400_000 (the max frequency) to see if it works. if not, the pullup's likely too weak.
+`endif
+    ) ImgI2CMaster (
+        .clk(ice_img_clk16mhz),
+        
+        .cmd_slaveAddr(ImgI2CSlaveAddr),
+        .cmd_write(imgi2c_cmd_write),
+        .cmd_regAddr(imgi2c_cmd_regAddr),
+        .cmd_dataLen(imgi2c_cmd_dataLen),
+        .cmd_writeData(imgi2c_cmd_writeData),
+        .cmd_trigger(imgi2c_cmd_trigger), // Toggle
+        
+        .status_done(imgi2c_status_done), // Toggle
+        .status_err(imgi2c_status_err),
+        .status_readData(imgi2c_status_readData),
+        
+        .i2c_clk(img_sclk),
+        .i2c_data(img_sdata)
+    );
+    
+    
+    
+    
+    
+    
+    
+    // ====================
+    // Img Clock (108 MHz)
+    // ====================
+    localparam Img_Clk_Freq = 108_000_000;
+    wire img_clk;
+    ClockGen #(
+        .FREQOUT(Img_Clk_Freq),
+        .DIVR(0),
+        .DIVF(53),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) ClockGen_img_clk(.clkRef(ice_img_clk16mhz), .clk(img_clk));
+    
+    // ====================
+    // ImgController
+    // ====================
+    reg[1:0]                            imgctrl_cmd = 0;
+    reg[0:0]                            imgctrl_cmd_ramBlock = 0;
+    wire                                imgctrl_readout_clk;
+    wire                                imgctrl_readout_ready;
+    wire                                imgctrl_readout_trigger;
+    wire[15:0]                          imgctrl_readout_data;
+    wire                                imgctrl_status_captureDone;
+    wire[`RegWidth(ImageWidthMax)-1:0]  imgctrl_status_captureImageWidth;
+    wire[`RegWidth(ImageHeightMax)-1:0] imgctrl_status_captureImageHeight;
+    wire[17:0]                          imgctrl_status_captureHighlightCount;
+    wire[17:0]                          imgctrl_status_captureShadowCount;
+    wire                                imgctrl_status_readoutStarted;
+    ImgController #(
+        .ClkFreq(Img_Clk_Freq),
+        .ImageWidthMax(ImageWidthMax),
+        .ImageHeightMax(ImageHeightMax)
+    ) ImgController (
+        .clk(img_clk),
+        
+        .cmd(imgctrl_cmd),
+        .cmd_ramBlock(imgctrl_cmd_ramBlock),
+        
+        .readout_clk(imgctrl_readout_clk),
+        .readout_ready(imgctrl_readout_ready),
+        .readout_trigger(imgctrl_readout_trigger),
+        .readout_data(imgctrl_readout_data),
+        
+        .status_captureDone(imgctrl_status_captureDone),
+        .status_captureImageWidth(imgctrl_status_captureImageWidth),
+        .status_captureImageHeight(imgctrl_status_captureImageHeight),
+        .status_captureHighlightCount(imgctrl_status_captureHighlightCount),
+        .status_captureShadowCount(imgctrl_status_captureShadowCount),
+        .status_readoutStarted(imgctrl_status_readoutStarted),
+        
+        .img_dclk(img_dclk),
+        .img_d(img_d),
+        .img_fv(img_fv),
+        .img_lv(img_lv),
+        
+        .ram_clk(ram_clk),
+        .ram_cke(ram_cke),
+        .ram_ba(ram_ba),
+        .ram_a(ram_a),
+        .ram_cs_(ram_cs_),
+        .ram_ras_(ram_ras_),
+        .ram_cas_(ram_cas_),
+        .ram_we_(ram_we_),
+        .ram_dqm(ram_dqm),
+        .ram_dq(ram_dq)
+    );
+    
+    reg spi_imgCaptureTrigger = 0;
+    `TogglePulse(img_captureTrigger, spi_imgCaptureTrigger, posedge, img_clk);
+    reg img_readoutStarted = 0;
+    
+    localparam Img_State_Idle       = 0;    // +0
+    localparam Img_State_Capture    = 1;    // +1
+    localparam Img_State_Readout    = 3;    // +0
+    localparam Img_State_Count      = 4;
+    reg[`RegWidth(Img_State_Count-1)-1:0] img_state = 0;
+    always @(posedge img_clk) begin
+        imgctrl_cmd <= `ImgController_Cmd_None;
+        
+        case (img_state)
+        Img_State_Idle: begin
+        end
+        
+        Img_State_Capture: begin
+            // Start a capture
+            imgctrl_cmd <= `ImgController_Cmd_Capture;
+            img_state <= Img_State_Capture+1;
+        end
+        
+        Img_State_Capture+1: begin
+            // Wait for the capture to complete, and then start readout
+            if (imgctrl_status_captureDone) begin
+                imgctrl_cmd <= `ImgController_Cmd_Readout;
+                img_state <= Img_State_Readout;
+            end
+        end
+        
+        Img_State_Readout: begin
+            // Wait for readout to start, and then signal so via img_readoutStarted
+            if (imgctrl_status_readoutStarted) begin
+                img_readoutStarted <= !img_readoutStarted;
+                img_state <= Img_State_Idle;
+            end
+        end
+        endcase
+        
+        if (img_captureTrigger) begin
+            // ice_led <= 4'b1111;
+            img_state <= Img_State_Capture;
+        end
+    end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // ====================
     // SD Clock (102 MHz)
     // ====================
@@ -119,11 +328,6 @@ module Top(
     
     
     // ====================
-    // spi_clk
-    // ====================
-    wire spi_clk = ice_msp_spi_clk;
-    
-    // ====================
     // spi_rst_ Generation
     // ====================
     localparam SPIRstClkFreqHz = 16000000;
@@ -178,6 +382,8 @@ module Top(
     reg spi_dataOut = 0;
     reg spi_dataOutEn = 0;
     wire spi_dataIn;
+    
+    `ToggleAck(spi_imgReadoutStarted, spi_imgReadoutStartedAck, img_readoutStarted, posedge, spi_clk);
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
@@ -301,6 +507,59 @@ module Top(
                     spi_resp[`Resp_Arg_SDGetStatus_Resp_Bits] <= sd_resp_data;
                 end
                 
+                `Msg_Type_ImgReset: begin
+                    $display("[SPI] Got Msg_Type_ImgReset (rst=%b)", spi_msgArg[`Msg_Arg_ImgReset_Val_Bits]);
+                    img_rst_ <= spi_msgArg[`Msg_Arg_ImgReset_Val_Bits];
+                end
+                
+                `Msg_Type_ImgCapture: begin
+                    $display("[SPI] Got Msg_Type_ImgCapture (block=%b)", spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits]);
+                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits];
+                    spi_imgCaptureTrigger <= !spi_imgCaptureTrigger;
+                end
+                
+                `Msg_Type_ImgCaptureStatus: begin
+                    // Use `CaptureDone` bit to signal whether we can readout,
+                    // not whether the capture has merely been written to RAM
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= spi_imgReadoutReady;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits] <= imgctrl_status_captureImageWidth;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits] <= imgctrl_status_captureImageHeight;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits] <= imgctrl_status_captureHighlightCount;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits] <= imgctrl_status_captureShadowCount;
+                    spi_state <= SPI_State_RespOut;
+                end
+                
+                `Msg_Type_ImgReadout: begin
+                    $display("[SPI] Got Msg_Type_ImgReadout");
+                    // Reset `spi_imgReadoutStarted` if it's asserted
+                    if (spi_imgReadoutStarted) spi_imgReadoutStartedAck <= !spi_imgReadoutStartedAck;
+                    
+                    spi_imgReadoutCounter <= spi_msgArg[`Msg_Arg_ImgReadout_Counter_Bits];
+                    spi_imgReadoutCaptureNext <= spi_msgArg[`Msg_Arg_ImgReadout_CaptureNext_Bits];
+                    spi_imgReadoutDone <= 0;
+                    spi_state <= SPI_State_ImgOut;
+                end
+                
+                `Msg_Type_ImgI2CTransaction: begin
+                    $display("[SPI] Got Msg_Type_ImgI2CTransaction");
+                    
+                    // Reset `spi_imgi2c_done_` if it's asserted
+                    if (!spi_imgi2c_done_) spi_imgi2c_doneAck <= !spi_imgi2c_doneAck;
+                    
+                    imgi2c_cmd_write <= spi_msgArg[`Msg_Arg_ImgI2CTransaction_Write_Bits];
+                    imgi2c_cmd_regAddr <= spi_msgArg[`Msg_Arg_ImgI2CTransaction_RegAddr_Bits];
+                    imgi2c_cmd_dataLen <= (spi_msgArg[`Msg_Arg_ImgI2CTransaction_DataLen_Bits]===`Msg_Arg_ImgI2CTransaction_DataLen_2);
+                    imgi2c_cmd_writeData <= spi_msgArg[`Msg_Arg_ImgI2CTransaction_WriteData_Bits];
+                    imgi2c_cmd_trigger <= !imgi2c_cmd_trigger;
+                end
+                
+                `Msg_Type_ImgI2CStatus: begin
+                    spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits] <= !spi_imgi2c_done_;
+                    spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits] <= imgi2c_status_err;
+                    spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits] <= imgi2c_status_readData;
+                    spi_state <= SPI_State_RespOut;
+                end
+                
                 `Msg_Type_NoOp: begin
                     $display("[SPI] Got Msg_Type_None");
                 end
@@ -329,8 +588,8 @@ module Top(
         .PIN_TYPE(6'b1101_00),
         .PULLUP(1'b1)
     ) SB_IO_ice_msp_spi_data (
-        .INPUT_CLK(ice_msp_spi_clk),
-        .OUTPUT_CLK(ice_msp_spi_clk),
+        .INPUT_CLK(spi_clk),
+        .OUTPUT_CLK(spi_clk),
         .PACKAGE_PIN(ice_msp_spi_data),
         .OUTPUT_ENABLE(spi_dataOutEn),
         .D_OUT_0(spi_dataOut),
@@ -354,6 +613,25 @@ module Testbench();
     wire sd_clk;
     wire sd_cmd;
     wire[3:0] sd_dat;
+    
+    wire        img_dclk;
+    wire[11:0]  img_d;
+    wire        img_fv;
+    wire        img_lv;
+    wire        img_rst_;
+    wire        img_sclk;
+    tri1        img_sdata;
+    
+    wire        ram_clk;
+    wire        ram_cke;
+    wire[1:0]   ram_ba;
+    wire[11:0]  ram_a;
+    wire        ram_cs_;
+    wire        ram_ras_;
+    wire        ram_cas_;
+    wire        ram_we_;
+    wire[1:0]   ram_dqm;
+    wire[15:0]  ram_dq;
     
     wire[3:0] ice_led;
     wire sim_rst_;

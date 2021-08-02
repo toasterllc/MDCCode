@@ -68,13 +68,20 @@
 `define Msg_Type_ImgCapture                                     `Msg_Type_Len'h06
 `define     Msg_Arg_ImgCapture_DstBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
-`define Msg_Type_ImgReadout                                     `Msg_Type_Len'h07
+`define Msg_Type_ImgCaptureStatus                               `Msg_Type_Len'h07
+`define     Resp_Arg_ImgCaptureStatus_Done_Bits                 63:63
+`define     Resp_Arg_ImgCaptureStatus_ImageWidth_Bits           62:51
+`define     Resp_Arg_ImgCaptureStatus_ImageHeight_Bits          50:39
+`define     Resp_Arg_ImgCaptureStatus_HighlightCount_Bits       38:21
+`define     Resp_Arg_ImgCaptureStatus_ShadowCount_Bits          20:3
+
+`define Msg_Type_ImgReadout                                     `Msg_Type_Len'h08
 `define     Msg_Arg_ImgReadout_Counter_Len                      16
 `define     Msg_Arg_ImgReadout_Counter_Bits                     31:16
 `define     Msg_Arg_ImgReadout_CaptureNext_Bits                 3:3
 `define     Msg_Arg_ImgReadout_SrcBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
-`define Msg_Type_ImgI2CTransaction                              `Msg_Type_Len'h08
+`define Msg_Type_ImgI2CTransaction                              `Msg_Type_Len'h09
 `define     Msg_Arg_ImgI2CTransaction_Write_Bits                55:55
 `define     Msg_Arg_ImgI2CTransaction_DataLen_Bits              54:54
 `define         Msg_Arg_ImgI2CTransaction_DataLen_1             1'b0
@@ -82,17 +89,10 @@
 `define     Msg_Arg_ImgI2CTransaction_RegAddr_Bits              31:16
 `define     Msg_Arg_ImgI2CTransaction_WriteData_Bits            15:0
 
-`define Msg_Type_ImgI2CStatus                                   `Msg_Type_Len'h09
+`define Msg_Type_ImgI2CStatus                                   `Msg_Type_Len'h0A
 `define     Resp_Arg_ImgI2CStatus_Done_Bits                     63:63
 `define     Resp_Arg_ImgI2CStatus_Err_Bits                      62:62
 `define     Resp_Arg_ImgI2CStatus_ReadData_Bits                 61:46
-
-`define Msg_Type_ImgCaptureStatus                               `Msg_Type_Len'h0A
-`define     Resp_Arg_ImgCaptureStatus_Done_Bits                 63:63
-`define     Resp_Arg_ImgCaptureStatus_ImageWidth_Bits           62:51
-`define     Resp_Arg_ImgCaptureStatus_ImageHeight_Bits          50:39
-`define     Resp_Arg_ImgCaptureStatus_HighlightCount_Bits       38:21
-`define     Resp_Arg_ImgCaptureStatus_ShadowCount_Bits          20:3
 
 `define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
 
