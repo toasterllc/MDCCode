@@ -88,6 +88,8 @@ module Top(
     reg[63:0] delay = 0;
     reg[7:0] state = 0;
     always @(posedge clk) begin
+        led[0] <= sd_datIn[2];
+        
         prevSlowClk <= slowClk;
         
         if (delay) delay <= delay-1;
@@ -102,7 +104,7 @@ module Top(
                 sd_cmdOutEn <= 1;
                 
                 sd_datOut <= 4'b0000;
-                sd_datOutEn <= 4'b1011; // Don't drive DAT2 -- it's pulled down by a resistor
+                sd_datOutEn <= 4'b1111;
                 
                 // Turn on LEDs
                 led <= 3'b111;
@@ -133,18 +135,14 @@ module Top(
             3: begin
                 // End clock pulse
                 sd_clk <= 0;
-                delay <= 3*Delay10Us;
+                delay <= 1*Delay10Us;
+                // delay <= 1*DelayS;
                 state <= state+1;
             end
             
             4: begin
                 sd_cmdOutEn <= 0;
                 sd_datOutEn <= 4'b0000;
-                state <= state+1;
-            end
-            
-            5: begin
-                led[0] <= sd_datIn[2];
             end
             endcase
         end
