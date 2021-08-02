@@ -273,20 +273,22 @@ int main() {
 //        
 //        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 0); // SDController InitMode=disabled
     
-    // Disable SD power
+    // Turn off SD card power and wait for it to reach 0V
     _sdSetPowerEnabled(false);
-    _delay(100000);
-    // InitMode=enabled, Clock=off
+    _delay(2000);
+    // InitMode=Enabled, Clock=Off
     _ice40Transfer(SDInitMsg(SDInitMsg::State::Enabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Off, SDClkDelaySlow));
-    // SD clock = slow clock
+    // Clock=SlowClock
     _ice40Transfer(SDInitMsg(SDInitMsg::State::Enabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
-    // Turn on SD card power
+    // Turn on SD card power and wait for it to reach 2.8V
+    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _sdSetPowerEnabled(true);
+    _delay(2000);
     // Trigger the SD card low voltage signalling (LVS) init sequence
     _ice40Transfer(SDInitMsg(SDInitMsg::State::Enabled, SDInitMsg::Trigger::Trigger, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
-    // Wait 5ms for the LVS init sequence to complete
+    // Wait 5ms for the LVS init sequence to complete (per the LVS spec)
     _delay(5000);
-    // Disable SDController init mode
+    // InitMode=Disabled
     _ice40Transfer(SDInitMsg(SDInitMsg::State::Disabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
     
 //    TestSDConfig(0, `Msg_Arg_SDInit_ClkSrc_Speed_Off,  0, 0); // Disable SD clock, enable SD init mode
@@ -320,6 +322,9 @@ int main() {
     //   Go to idle state
     // ====================
     {
+        // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
+        _delay(1000);
+        // Send CMD0
         _sdSendCmd(0, 0, SDRespTypes::None);
         // There's no response to CMD0
     }
@@ -339,6 +344,111 @@ int main() {
         const uint8_t replyCheckPattern = status.sdRespGetBits(15,8);
         Assert(replyCheckPattern == CheckPattern);
     }
+    
+    // ====================
+    // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
+    //   State: Idle -> Ready
+    //   Initialize
+    // ====================
+    for (;;) {
+        // CMD55
+        {
+            auto status = _sdSendCmd(55, 0);
+            Assert(!status.sdRespCRCErr());
+        }
+        
+        // CMD41
+        {
+            auto status = _sdSendCmd(41, 0x51008000);
+            // Don't check CRC with .sdRespCRCOK() (the CRC response to ACMD41 is all 1's)
+            Assert(status.sdRespGetBits(45,40) == 0x3F); // Command should be 6'b111111
+            Assert(status.sdRespGetBits(7,1) == 0x7F); // CRC should be 7'b1111111
+            // Check if card is ready. If it's not, retry ACMD41.
+            const bool ready = status.sdRespGetBit(39);
+            if (!ready) continue;
+            // Check S18A; for LVS initialization, it's expected to be 0
+            const bool S18A = status.sdRespGetBit(32);
+            Assert(S18A == 0);
+            break;
+        }
+    }
+    
+    // ====================
+    // CMD2 | ALL_SEND_CID
+    //   State: Ready -> Identification
+    //   Get card identification number (CID)
+    // ====================
+    {
+        // The response to CMD2 is 136 bits, instead of the usual 48 bits
+        _sdSendCmd(2, 0, SDRespTypes::Len136);
+        // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
+        // so it'll be flagged as incorrect.
+    }
+    
+    // ====================
+    // CMD3 | SEND_RELATIVE_ADDR
+    //   State: Identification -> Standby
+    //   Publish a new relative address (RCA)
+    // ====================
+    uint16_t rca = 0;
+    {
+        auto status = _sdSendCmd(3, 0);
+        Assert(!status.sdRespCRCErr());
+        // Get the card's RCA from the response
+        rca = status.sdRespGetBits(39,24);
+    }
+    
+    // ====================
+    // CMD7 | SELECT_CARD/DESELECT_CARD
+    //   State: Standby -> Transfer
+    //   Select card
+    // ====================
+    {
+        auto status = _sdSendCmd(7, ((uint32_t)rca)<<16);
+        Assert(!status.sdRespCRCErr());
+    }
+    
+    // ====================
+    // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
+    //   State: Transfer -> Transfer
+    //   Set bus width to 4 bits
+    // ====================
+    {
+        // CMD55
+        {
+            auto status = _sdSendCmd(55, ((uint32_t)rca)<<16);
+            Assert(!status.sdRespCRCErr());
+        }
+        
+        // CMD6
+        {
+            auto status = _sdSendCmd(6, 0x00000002);
+            Assert(!status.sdRespCRCErr());
+        }
+    }
+    
+    // ====================
+    // CMD6 | SWITCH_FUNC
+    //   State: Transfer -> Data
+    //   Switch to SDR104
+    // ====================
+    {
+        // Mode = 1 (switch function)  = 0x80
+        // Group 6 (Reserved)          = 0xF (no change)
+        // Group 5 (Reserved)          = 0xF (no change)
+        // Group 4 (Current Limit)     = 0xF (no change)
+        // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
+        // Group 2 (Command System)    = 0xF (no change)
+        // Group 1 (Access Mode)       = 0x3 (SDR104)
+        auto status = _sdSendCmd(6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512);
+        Assert(!status.sdRespCRCErr());
+        Assert(!status.sdDatInCRCErr());
+        // Verify that the access mode was successfully changed
+        // TODO: properly handle this failing, see CMD6 docs
+        Assert(status.sdDatInCMD6AccessMode() == 0x03);
+    }
+    
+    
     
 //    // ====================
 //    // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
