@@ -329,7 +329,7 @@ int main() {
     //   Send interface condition
     // ====================
     {
-        auto status = _sdSendCmd(8, 0x000002AA);
+        auto status = _sdSendCmd(8, 0x000001AA);
         Assert(!status.sdRespCRCErr());
         Assert(status.sdRespGetBits(15,8) == 0xAA); // Verify the response pattern is what we sent
     }

@@ -156,10 +156,10 @@ module SDController #(
         end
         
         3: begin
-            if (!init_delayCounter) begin
-                $display("[SDController:INIT] Done");
-                init_state <= 4;
-            end
+            // if (!init_delayCounter) begin
+            //     $display("[SDController:INIT] Done");
+            //     init_state <= 4;
+            // end
         end
         
         4: begin
