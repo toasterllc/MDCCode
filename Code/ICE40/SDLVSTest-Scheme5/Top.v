@@ -85,7 +85,7 @@ module Top(
     // ====================
     // State Machine
     // ====================
-    reg[19:0] delay = 0;
+    reg[63:0] delay = 0;
     reg[7:0] state = 0;
     always @(posedge clk) begin
         prevSlowClk <= slowClk;
@@ -108,7 +108,7 @@ module Top(
                 led <= 3'b111;
                 
                 // Delay 1 second
-                delay <= DelayS;
+                delay <= 1*DelayS;
                 state <= state+1;
             end
             
@@ -129,15 +129,22 @@ module Top(
                 delay <= 3*Delay10Us;
                 state <= state+1;
             end
-
+            
             3: begin
                 // End clock pulse
                 sd_clk <= 0;
+                delay <= 3*Delay10Us;
                 state <= state+1;
             end
             
             4: begin
-                if (sd_datIn[2]) led[0] <= 1;
+                sd_cmdOutEn <= 0;
+                sd_datOutEn <= 4'b0000;
+                state <= state+1;
+            end
+            
+            5: begin
+                led[0] <= sd_datIn[2];
             end
             endcase
         end
