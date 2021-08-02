@@ -189,8 +189,8 @@ private:
     static constexpr size_t _RespIdx = 13;
 };
 
-struct PixResetMsg : Msg {
-    PixResetMsg(bool val) {
+struct ImgResetMsg : Msg {
+    ImgResetMsg(bool val) {
         type = 0x05;
         payload[0] = 0;
         payload[1] = 0;
@@ -202,8 +202,8 @@ struct PixResetMsg : Msg {
     }
 };
 
-struct PixCaptureMsg : Msg {
-    PixCaptureMsg(uint8_t dstBlock) {
+struct ImgCaptureMsg : Msg {
+    ImgCaptureMsg(uint8_t dstBlock) {
         type = 0x06;
         payload[0] = 0;
         payload[1] = 0;
@@ -215,18 +215,32 @@ struct PixCaptureMsg : Msg {
     }
 };
 
-struct PixReadoutMsg : Msg {
+struct ImgCaptureStatusMsg : Msg {
+    ImgCaptureStatusMsg() {
+        type = 0x07;
+    }
+};
+
+struct ImgCaptureStatusResp : Resp {
+    bool done() const               { return getBit(63);        }
+    uint16_t imageWidth() const     { return getBits(62,51);    }
+    uint16_t imageHeight() const    { return getBits(50,39);    }
+    uint32_t highlightCount() const { return getBits(38,21);    }
+    uint32_t shadowCount() const    { return getBits(20,3);     }
+};
+
+struct ImgReadoutMsg : Msg {
     // The word count needs to be supplied to the ICE40 to prevent
     // over-reading, otherwise the end of the QSPI transaction
     // causes one more word to be read than wanted, and we'd drop
     // that word if not for this counter.
-    PixReadoutMsg(uint8_t srcBlock, bool captureNext, size_t wordCount) {
+    ImgReadoutMsg(uint8_t srcBlock, bool captureNext, size_t wordCount) {
         AssertArg(wordCount);
         // Supply the value to load into the ICE40 counter.
         // Put the burden of this calculation on the STM32,
         // to improve the performance of the ICE40 Verilog.
         const uint16_t counter = (wordCount-1)*2;
-        type = 0x07;
+        type = 0x08;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -237,10 +251,10 @@ struct PixReadoutMsg : Msg {
     }
 };
 
-struct PixI2CTransactionMsg : Msg {
-    PixI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) {
+struct ImgI2CTransactionMsg : Msg {
+    ImgI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) {
         Assert(len==1 || len==2);
-        type = 0x08;
+        type = 0x09;
         payload[0] = (write ? 0x80 : 0) | (len==2 ? 0x40 : 0);
         payload[1] = 0;
         payload[2] = 0;
@@ -251,30 +265,16 @@ struct PixI2CTransactionMsg : Msg {
     }
 };
 
-struct PixI2CStatusMsg : Msg {
-    PixI2CStatusMsg() {
-        type = 0x09;
-    }
-};
-
-struct PixI2CStatusResp : Resp {
-    bool done() const               { return getBit(63);        }
-    bool err() const                { return getBit(62);        }
-    uint16_t readData() const       { return getBits(61,46);    }
-};
-
-struct PixCaptureStatusMsg : Msg {
-    PixCaptureStatusMsg() {
+struct ImgI2CStatusMsg : Msg {
+    ImgI2CStatusMsg() {
         type = 0x0A;
     }
 };
 
-struct PixCaptureStatusResp : Resp {
+struct ImgI2CStatusResp : Resp {
     bool done() const               { return getBit(63);        }
-    uint16_t imageWidth() const     { return getBits(62,51);    }
-    uint16_t imageHeight() const    { return getBits(50,39);    }
-    uint32_t highlightCount() const { return getBits(38,21);    }
-    uint32_t shadowCount() const    { return getBits(20,3);     }
+    bool err() const                { return getBit(62);        }
+    uint16_t readData() const       { return getBits(61,46);    }
 };
 
 struct NopMsg : Msg {

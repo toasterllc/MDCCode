@@ -28,7 +28,7 @@ module ImgController #(
     output wire[15:0]   readout_data,
     
     // Status port (clock domain: `clk`)
-    output reg                                  status_captureDone = 0,
+    output reg                                  status_captureDone = 0,     // Pulse
     output wire[`RegWidth(ImageWidthMax)-1:0]   status_captureImageWidth,
     output wire[`RegWidth(ImageHeightMax)-1:0]  status_captureImageHeight,
     output wire[17:0]                           status_captureHighlightCount,
