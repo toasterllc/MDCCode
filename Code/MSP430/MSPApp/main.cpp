@@ -194,8 +194,12 @@ SDGetStatusResp _sdGetStatus() {
     return _ice40Transfer<SDGetStatusResp>(SDGetStatusMsg());
 }
 
-SDGetStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
-    SDSendCmdMsg::RespType respType, SDSendCmdMsg::DatInType datInType) {
+SDGetStatusResp _sdSendCmd(
+    uint8_t sdCmd,
+    uint32_t sdArg,
+    SDSendCmdMsg::RespType respType=ICE40::SDSendCmdMsg::RespTypes::Len48,
+    SDSendCmdMsg::DatInType datInType=ICE40::SDSendCmdMsg::DatInTypes::None
+) {
     
     _ice40Transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
     
@@ -246,8 +250,8 @@ int main() {
 //        __delay_cycles(1600000);
 //    }
     
-    volatile bool go = false;
-    while (!go);
+//    volatile bool go = false;
+//    while (!go);
     
     const uint8_t SDClkDelaySlow = 15;
     const uint8_t SDClkDelayFast = 2;
@@ -308,28 +312,28 @@ int main() {
 //    {
 //        _ice40Transfer(SDClkSrcMsg(SDClkSrcMsg::ClkSpeed::Slow, SDClkSlowDelay));
 //    }
-//    
-//    // ====================
-//    // CMD0 | GO_IDLE_STATE
-//    //   State: X -> Idle
-//    //   Go to idle state
-//    // ====================
-//    {
-//        _sdSendCmd(0, 0, SDRespTypes::None);
-//        // There's no response to CMD0
-//    }
-//    
-//    // ====================
-//    // CMD8 | SEND_IF_COND
-//    //   State: Idle -> Idle
-//    //   Send interface condition
-//    // ====================
-//    {
-//        auto status = _sdSendCmd(8, 0x000001AA);
-//        Assert(!status.sdRespCRCErr());
-//        Assert(status.sdRespGetBits(15,8) == 0xAA); // Verify the response pattern is what we sent
-//    }
-//    
+    
+    // ====================
+    // CMD0 | GO_IDLE_STATE
+    //   State: X -> Idle
+    //   Go to idle state
+    // ====================
+    {
+        _sdSendCmd(0, 0, SDRespTypes::None);
+        // There's no response to CMD0
+    }
+    
+    // ====================
+    // CMD8 | SEND_IF_COND
+    //   State: Idle -> Idle
+    //   Send interface condition
+    // ====================
+    {
+        auto status = _sdSendCmd(8, 0x000002AA);
+        Assert(!status.sdRespCRCErr());
+        Assert(status.sdRespGetBits(15,8) == 0xAA); // Verify the response pattern is what we sent
+    }
+    
 //    // ====================
 //    // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
 //    //   State: Idle -> Ready
@@ -556,8 +560,8 @@ int main() {
 //        _led0.write(on);
 //        on = !on;
 //    }
-//    
-//    for (;;);
+
+    for (;;);
     
     return 0;
 }
