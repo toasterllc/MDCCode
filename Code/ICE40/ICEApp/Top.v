@@ -334,17 +334,12 @@ module Top(
     // ====================
     // spi_rst_ Generation
     // ====================
-    localparam SPIRstClkFreqHz = 16000000;
-    // Our math is such that asserting `spi_clk` for 2x `SPIRstActivateThresholdUs`
-    // is guaranteed to trigger a reset.
-    // This is because we size `spirst_counter` to fit `SPIRstActivateThresholdUs`,
-    // but `spi_rst_` is only asserted when all bits in `spirst_counter` are 1,
-    // which will likely be >SPIRstTicks, since SPIRstTicks likely isn't a power
-    // of 2.
-    localparam SPIRstActivateThresholdUs = 5;
-    localparam SPIRstTicks = (SPIRstClkFreqHz*SPIRstActivateThresholdUs)/1000000;
-    wire spirst_clk = ice_img_clk16mhz;
+    // SPIRstTicks must be a power of 2 (since it determines the size of the spirst_counter
+    // register), and must be longer than the time to send a SPI message, otherwise a reset
+    // could be triggered during a SPI transaction.
+    localparam SPIRstTicks = 1<<8; // 256 ticks @ ice_img_clk16mhz (16 MHz) == 16 us
     reg[`RegWidth(SPIRstTicks-1)-1:0] spirst_counter = 0;
+    wire spirst_clk = ice_img_clk16mhz;
     `Sync(spirst_spiClkSynced, spi_clk, posedge, spirst_clk);
     wire spi_rst_ = !(&spirst_counter);
     always @(posedge spirst_clk) begin
@@ -613,8 +608,8 @@ module Top(
                         $display("[SPI] Readout data (%b %b): 0x%x", imgctrl_readout_ready, debug_readoutTrigger, imgctrl_readout_data);
                     end
                 end else begin
-                    // $display("[SPI] Readout done");
-                    // spi_state <= SPI_State_MsgIn;
+                    $display("[SPI] Readout done");
+                    spi_state <= SPI_State_MsgIn;
                 end
             end
             endcase
@@ -734,8 +729,9 @@ module Testbench();
     wire spi_dataIn = ice_msp_spi_data;
     assign ice_msp_spi_data = (spi_dataOutEn ? `LeftBit(spi_dataOutReg, 0) : 1'bz);
     
-    // localparam ice_msp_spi_clk_HALF_PERIOD = 32; // 16 MHz
-    localparam ice_msp_spi_clk_HALF_PERIOD = 1024; // 1 MHz
+    localparam ice_msp_spi_clk_HALF_PERIOD = 32; // 16 MHz
+    // localparam ice_msp_spi_clk_HALF_PERIOD = 64; // 8 MHz
+    // localparam ice_msp_spi_clk_HALF_PERIOD = 1024; // 1 MHz
     task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
         reg[15:0] i;
         
@@ -771,6 +767,13 @@ module Testbench();
             #(ice_msp_spi_clk_HALF_PERIOD);
             ice_msp_spi_clk = 0;
         end
+        
+        // Give some down time to prevent the SPI state machine from resetting.
+        // This can happen if the SPI master (this testbench) delivers clocks
+        // at the same frequency as spirst_clk. In that case, it's possible
+        // for the reset logic to always observe the SPI clock as being high
+        // (even though it's toggling), and trigger a reset.
+        #128;
     end endtask
     
     task TestRst; begin
@@ -1193,6 +1196,7 @@ module Testbench();
             $display("[Testbench] Reset=0 success ✅");
         end else begin
             $display("[Testbench] Reset=0 failed ❌");
+            `Finish;
         end
         
         arg = 0;
@@ -1202,6 +1206,7 @@ module Testbench();
             $display("[Testbench] Reset=1 success ✅");
         end else begin
             $display("[Testbench] Reset=1 failed ❌");
+            `Finish;
         end
     end endtask
     
@@ -1272,6 +1277,7 @@ module Testbench();
             $display("[Testbench] Write success ✅");
         end else begin
             $display("[Testbench] Write failed ❌");
+            `Finish;
         end
         
         // ====================
@@ -1299,6 +1305,7 @@ module Testbench();
             $display("[Testbench] Read success ✅");
         end else begin
             $display("[Testbench] Read failed ❌");
+            `Finish;
         end
         
         if (spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits] === 16'hCAFE) begin
@@ -1334,6 +1341,7 @@ module Testbench();
             $display("[Testbench] Write success ✅");
         end else begin
             $display("[Testbench] Write failed ❌");
+            `Finish;
         end
         
         // ====================
@@ -1353,7 +1361,7 @@ module Testbench();
                 spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits],
                 spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]
             );
-
+            
             done = spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits];
         end
 
@@ -1361,12 +1369,14 @@ module Testbench();
             $display("[Testbench] Read success ✅");
         end else begin
             $display("[Testbench] Read failed ❌");
+            `Finish;
         end
 
         if ((spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]&16'h00FF) === 16'h0037) begin
             $display("[Testbench] Read correct data ✅ (0x%x)", spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]&16'h00FF);
         end else begin
             $display("[Testbench] Read incorrect data ❌ (0x%x)", spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]&16'h00FF);
+            `Finish;
         end
     end endtask
     
