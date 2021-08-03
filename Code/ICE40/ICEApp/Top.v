@@ -1164,56 +1164,28 @@ module Testbench();
             $display("[Testbench] Reset=1 failed ❌");
         end
     end endtask
-
-    // task TestImgStream; begin
-    //     reg[`Msg_Arg_Len-1:0] arg;
-    //     reg[31:0] row;
-    //     reg[31:0] col;
-    //     reg[31:0] i;
-    //     reg[31:0] transferPixelCount;
-    //     $display("\n========== TestImgStream ==========");
-    //
-    //     arg = 0;
-    //     arg[`Msg_Arg_ImgReset_Val_Bits] = 1;
-    //     SendMsg(`Msg_Type_ImgReset, arg); // Deassert Img reset
-    //
-    //     arg = 0;
-    //     arg[`Msg_Arg_ImgCapture_DstBlock_Bits] = 0;
-    //     SendMsg(`Msg_Type_ImgCapture, arg);
-    //
-    //     forever begin
-    //         // Wait until readout is ready
-    //         $display("[Testbench] Waiting until readout is ready...");
-    //         do begin
-    //             // Request Img status
-    //             SendMsg(`Msg_Type_ImgCaptureStatus, 0);
-    //         end while(!resp[`Resp_Arg_ImgCaptureStatus_Done_Bits]);
-    //         $display("[Testbench] Readout ready ✅ (image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
-    //             resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits],
-    //             resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits],
-    //             resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits],
-    //             resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits],
-    //         );
-    //
-    //         // 1 pixels     counter=0
-    //         // 2 pixels     counter=2
-    //         // 3 pixels     counter=4
-    //         // 4 pixels     counter=6
-    //         transferPixelCount = 4; // 4 pixels at a time (since `resp` is only 8 bytes=4 pixels wide)
-    //         for (row=0; row<ImageHeight; row++) begin
-    //             for (i=0; i<ImageWidth/transferPixelCount; i++) begin
-    //                 arg[`Msg_Arg_ImgReadout_Counter_Bits] = (transferPixelCount-1)*2;
-    //                 arg[`Msg_Arg_ImgReadout_CaptureNext_Bits] = (row===(ImageHeight-1) && i===((ImageWidth/transferPixelCount)-1));
-    //                 arg[`Msg_Arg_ImgReadout_SrcBlock_Bits] = 0;
-    //
-    //                 SendMsg(`Msg_Type_ImgReadout, arg, transferPixelCount*2);
-    //                 imgRow = (imgRow<<(transferPixelCount*2*8))|resp;
-    //             end
-    //
-    //             $display("[Testbench] Row %04d: %h", row, imgRow);
-    //         end
-    //     end
-    // end endtask
+    
+    task TestImgCapture; begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        $display("\n[Testbench] ========== TestImgCapture ==========");
+        
+        arg = 0;
+        arg[`Msg_Arg_ImgCapture_DstBlock_Bits] = 0;
+        SendMsg(`Msg_Type_ImgCapture, arg);
+        
+        // Wait until capture is done
+        $display("[Testbench] Waiting until capture is complete...");
+        do begin
+            // Request Img status
+            SendMsg(`Msg_Type_ImgCaptureStatus, 0);
+        end while(!spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits]);
+        $display("[Testbench] Readout ready ✅ (image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
+            spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits],
+            spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits],
+            spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits],
+            spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits],
+        );
+    end endtask
     
     task TestImgI2CWriteRead; begin
         reg[`Msg_Arg_Len-1:0] arg;
@@ -1384,8 +1356,8 @@ module Testbench();
         // // Do Pix stuff before SD stuff, so that the RAM is populated with an image, so that
         // // the RAM has valid content for when we do the readout to write to the SD card.
         TestImgReset();
-        // TestImgCapture();
-        TestImgI2CWriteRead();
+        TestImgCapture();
+        // TestImgI2CWriteRead();
         
         `Finish;
     end
