@@ -5,10 +5,6 @@
 `include "TogglePulse.v"
 `include "AFIFO.v"
 
-`define ImgController_Cmd_None      2'b00
-`define ImgController_Cmd_Capture   2'b01
-`define ImgController_Cmd_Readout   2'b10
-
 module ImgController #(
     parameter ClkFreq = 24_000_000,
     parameter ImageWidthMax = 256,
@@ -18,7 +14,8 @@ module ImgController #(
     input wire          clk,
     
     // Command port (clock domain: `clk`)
-    input wire[1:0]     cmd,
+    input wire          cmd_capture,    // Toggle
+    input wire          cmd_readout,    // Toggle
     input wire[0:0]     cmd_ramBlock,
     
     // Readout port (clock domain: `readout_clk`)
@@ -28,12 +25,12 @@ module ImgController #(
     output wire[15:0]   readout_data,
     
     // Status port (clock domain: `clk`)
-    output reg                                  status_captureDone = 0,     // Pulse
+    output reg                                  status_captureDone = 0,     // Toggle
     output wire[`RegWidth(ImageWidthMax)-1:0]   status_captureImageWidth,
     output wire[`RegWidth(ImageHeightMax)-1:0]  status_captureImageHeight,
     output wire[17:0]                           status_captureHighlightCount,
     output wire[17:0]                           status_captureShadowCount,
-    output reg                                  status_readoutStarted = 0,
+    output reg                                  status_readoutStarted = 0,  // Toggle
     
     // Img port (clock domain: `img_dclk`)
     input wire          img_dclk,
@@ -244,9 +241,9 @@ module ImgController #(
             // Look at the high bits to determine if it's a highlight or shadow
             case (`LeftBits(fifoIn_countStatPx, 0, 7))
             // Highlight
-            7'b1111_111:   fifoIn_highlightCount <= fifoIn_highlightCount+1;
+            7'b111_1111:   fifoIn_highlightCount <= fifoIn_highlightCount+1;
             // Shadow
-            7'b0000_000:   fifoIn_shadowCount <= fifoIn_shadowCount+1;
+            7'b000_0000:   fifoIn_shadowCount <= fifoIn_shadowCount+1;
             endcase
         end
         
@@ -310,6 +307,9 @@ module ImgController #(
     // ====================
     // Control State Machine
     // ====================
+    `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
+    `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
+    
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +3
     localparam Ctrl_State_Readout   = 5; // +1
@@ -318,8 +318,6 @@ module ImgController #(
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
         fifoOut_rst <= 0;
-        status_captureDone <= 0;
-        status_readoutStarted <= 0;
         ramctrl_write_trigger <= 0;
         
         case (ctrl_state)
@@ -377,7 +375,7 @@ module ImgController #(
             // machine signals that it's done receiving data.
             if (!fifoIn_read_ready && ctrl_fifoInDone) begin
                 $display("[IMGCTRL:Capture] Finished");
-                status_captureDone <= 1;
+                status_captureDone <= !status_captureDone;
                 ctrl_state <= Ctrl_State_Idle;
             end
         end
@@ -395,18 +393,14 @@ module ImgController #(
         Ctrl_State_Readout+1: begin
             // Wait for the read command and FIFO reset to be consumed
             if (ramctrl_cmd===`RAMController_Cmd_None && !fifoOut_rst) begin
-                status_readoutStarted <= 1;
+                status_readoutStarted <= !status_readoutStarted;
                 ctrl_state <= Ctrl_State_Idle;
             end
         end
         endcase
         
-        if (cmd !== `ImgController_Cmd_None) begin
-            case (cmd)
-            `ImgController_Cmd_Capture:     ctrl_state <= Ctrl_State_Capture;
-            `ImgController_Cmd_Readout:     ctrl_state <= Ctrl_State_Readout;
-            endcase
-        end
+        if      (ctrl_cmdCapture) ctrl_state <= Ctrl_State_Capture;
+        else if (ctrl_cmdReadout) ctrl_state <= Ctrl_State_Readout;
     end
     
     // ====================

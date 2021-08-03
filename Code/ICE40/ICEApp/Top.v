@@ -9,6 +9,9 @@
 
 `ifdef SIM
 `include "SDCardSim.v"
+`include "ImgSim.v"
+`include "ImgI2CSlaveSim.v"
+`include "mt48h32m16lf/mobile_sdr.v"
 `endif
 
 `timescale 1ns/1ps
@@ -125,7 +128,8 @@ module Top(
     // ====================
     // ImgController
     // ====================
-    reg[1:0]                            imgctrl_cmd = 0;
+    reg                                 imgctrl_cmd_capture = 0;
+    reg                                 imgctrl_cmd_readout = 0;
     reg[0:0]                            imgctrl_cmd_ramBlock = 0;
     wire                                imgctrl_readout_clk;
     wire                                imgctrl_readout_ready;
@@ -144,7 +148,8 @@ module Top(
     ) ImgController (
         .clk(img_clk),
         
-        .cmd(imgctrl_cmd),
+        .cmd_capture(imgctrl_cmd_capture),
+        .cmd_readout(imgctrl_cmd_readout),
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
         
         .readout_clk(imgctrl_readout_clk),
@@ -176,55 +181,53 @@ module Top(
         .ram_dq(ram_dq)
     );
     
-    reg spi_imgCaptureTrigger = 0;
-    `TogglePulse(img_captureTrigger, spi_imgCaptureTrigger, posedge, img_clk);
-    reg img_readoutStarted = 0;
-    
-    localparam Img_State_Idle       = 0;    // +0
-    localparam Img_State_Capture    = 1;    // +1
-    localparam Img_State_Readout    = 3;    // +0
-    localparam Img_State_Count      = 4;
-    reg[`RegWidth(Img_State_Count-1)-1:0] img_state = 0;
-    always @(posedge img_clk) begin
-        imgctrl_cmd <= `ImgController_Cmd_None;
-        
-        case (img_state)
-        Img_State_Idle: begin
-        end
-        
-        Img_State_Capture: begin
-            // Start a capture
-            imgctrl_cmd <= `ImgController_Cmd_Capture;
-            img_state <= Img_State_Capture+1;
-        end
-        
-        Img_State_Capture+1: begin
-            // Wait for the capture to complete, and then start readout
-            if (imgctrl_status_captureDone) begin
-                imgctrl_cmd <= `ImgController_Cmd_Readout;
-                img_state <= Img_State_Readout;
-            end
-        end
-        
-        Img_State_Readout: begin
-            // Wait for readout to start, and then signal so via img_readoutStarted
-            if (imgctrl_status_readoutStarted) begin
-                img_readoutStarted <= !img_readoutStarted;
-                img_state <= Img_State_Idle;
-            end
-        end
-        endcase
-        
-        if (img_captureTrigger) begin
-            // ice_led <= 4'b1111;
-            img_state <= Img_State_Capture;
-        end
-    end
-    
-    
-    
-    
-    
+    // reg img_captureDone = 0;
+    // reg img_readoutStarted = 0;
+    //
+    // localparam Img_State_Idle       = 0;    // +0
+    // localparam Img_State_Capture    = 1;    // +1
+    // localparam Img_State_Readout    = 3;    // +0
+    // localparam Img_State_Count      = 4;
+    // reg[`RegWidth(Img_State_Count-1)-1:0] img_state = 0;
+    // always @(posedge img_clk) begin
+    //     imgctrl_cmd <= `ImgController_Cmd_None;
+    //
+    //     case (img_state)
+    //     Img_State_Idle: begin
+    //     end
+    //
+    //     // TODO: consider making ImgController just use a toggle input for the 2 commands (capture and readout)?
+    //     Img_State_Capture: begin
+    //         // Start a capture
+    //         imgctrl_cmd <= `ImgController_Cmd_Capture;
+    //         img_state <= Img_State_Idle;
+    //     end
+    //
+    //     // Img_State_Capture+1: begin
+    //     //     // Wait for the capture to complete, and then start readout
+    //     //     if (imgctrl_status_captureDone) begin
+    //     //         imgctrl_cmd <= `ImgController_Cmd_Readout;
+    //     //         img_state <= Img_State_Readout;
+    //     //     end
+    //     // end
+    //
+    //     Img_State_Readout: begin
+    //         // Wait for readout to start, and then signal so via img_readoutStarted
+    //         if (imgctrl_status_readoutStarted) begin
+    //             img_readoutStarted <= !img_readoutStarted;
+    //             img_state <= Img_State_Idle;
+    //         end
+    //     end
+    //     endcase
+    //
+    //     if (img_captureTrigger) begin
+    //         // ice_led <= 4'b1111;
+    //         img_state <= Img_State_Capture;
+    //     end
+    //
+    //     // Convert `imgctrl_status_captureDone` pulse into a toggle
+    //     if (imgctrl_status_captureDone) img_captureDone <= !img_captureDone;
+    // end
     
     
     
@@ -236,90 +239,95 @@ module Top(
     
     
     
-    // ====================
-    // SD Clock (102 MHz)
-    // ====================
-    localparam SD_Clk_Freq = 102_000_000;
-    wire sd_clk_int;
-    ClockGen #(
-        .FREQOUT(SD_Clk_Freq),
-        .DIVR(0),
-        .DIVF(50),
-        .DIVQ(3),
-        .FILTER_RANGE(1)
-    ) ClockGen_sd_clk_int(.clkRef(ice_img_clk16mhz), .clk(sd_clk_int));
     
-    // ====================
-    // SDController
-    // ====================
-    reg         sd_init_en_ = 0;
-    reg         sd_init_trigger = 0;
-    reg[1:0]    sd_init_clk_speed = 0;
-    reg[3:0]    sd_init_clk_delay = 0;
-    reg         sd_cmd_trigger = 0;
-    reg[47:0]   sd_cmd_data = 0;
-    reg[1:0]    sd_cmd_respType = 0;
-    reg         sd_cmd_datInType = 0;
-    wire        sd_cmd_done;
-    wire        sd_resp_done;
-    wire[47:0]  sd_resp_data;
-    wire        sd_resp_crcErr;
-    reg         sd_datOut_stop = 0;
-    wire        sd_datOut_stopped;
-    reg         sd_datOut_start = 0;
-    wire        sd_datOut_ready;
-    wire        sd_datOut_done;
-    wire        sd_datOut_crcErr;
-    wire        sd_datOutRead_clk;
-    wire        sd_datOutRead_ready;
-    wire        sd_datOutRead_trigger;
-    wire[15:0]  sd_datOutRead_data;
-    wire        sd_datIn_done;
-    wire        sd_datIn_crcErr;
-    wire[3:0]   sd_datIn_cmd6AccessMode;
-    wire        sd_status_dat0Idle;
     
-    SDController #(
-        .ClkFreq(SD_Clk_Freq)
-    ) SDController (
-        .clk(sd_clk_int),
-        
-        .sd_clk(sd_clk),
-        .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat),
-        
-        .init_en_(sd_init_en_),
-        .init_trigger(sd_init_trigger),
-        .init_clk_speed(sd_init_clk_speed),
-        .init_clk_delay(sd_init_clk_delay),
-        
-        .cmd_trigger(sd_cmd_trigger),
-        .cmd_data(sd_cmd_data),
-        .cmd_respType(sd_cmd_respType),
-        .cmd_datInType(sd_cmd_datInType),
-        .cmd_done(sd_cmd_done),
-        
-        .resp_done(sd_resp_done),
-        .resp_data(sd_resp_data),
-        .resp_crcErr(sd_resp_crcErr),
-        
-        .datOut_stop(sd_datOut_stop),
-        .datOut_stopped(sd_datOut_stopped),
-        .datOut_start(sd_datOut_start),
-        .datOut_done(sd_datOut_done),
-        .datOut_crcErr(sd_datOut_crcErr),
-        
-        .datOutRead_clk(sd_datOutRead_clk),
-        .datOutRead_ready(sd_datOutRead_ready),
-        .datOutRead_trigger(sd_datOutRead_trigger),
-        .datOutRead_data(sd_datOutRead_data),
-        
-        .datIn_done(sd_datIn_done),
-        .datIn_crcErr(sd_datIn_crcErr),
-        .datIn_cmd6AccessMode(sd_datIn_cmd6AccessMode),
-        
-        .status_dat0Idle(sd_status_dat0Idle)
-    );
+    
+    
+    
+    // // ====================
+    // // SD Clock (102 MHz)
+    // // ====================
+    // localparam SD_Clk_Freq = 102_000_000;
+    // wire sd_clk_int;
+    // ClockGen #(
+    //     .FREQOUT(SD_Clk_Freq),
+    //     .DIVR(0),
+    //     .DIVF(50),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_sd_clk_int(.clkRef(ice_img_clk16mhz), .clk(sd_clk_int));
+    //
+    // // ====================
+    // // SDController
+    // // ====================
+    // reg         sd_init_en_ = 0;
+    // reg         sd_init_trigger = 0;
+    // reg[1:0]    sd_init_clk_speed = 0;
+    // reg[3:0]    sd_init_clk_delay = 0;
+    // reg         sd_cmd_trigger = 0;
+    // reg[47:0]   sd_cmd_data = 0;
+    // reg[1:0]    sd_cmd_respType = 0;
+    // reg         sd_cmd_datInType = 0;
+    // wire        sd_cmd_done;
+    // wire        sd_resp_done;
+    // wire[47:0]  sd_resp_data;
+    // wire        sd_resp_crcErr;
+    // reg         sd_datOut_stop = 0;
+    // wire        sd_datOut_stopped;
+    // reg         sd_datOut_start = 0;
+    // wire        sd_datOut_ready;
+    // wire        sd_datOut_done;
+    // wire        sd_datOut_crcErr;
+    // wire        sd_datOutRead_clk;
+    // wire        sd_datOutRead_ready;
+    // wire        sd_datOutRead_trigger;
+    // wire[15:0]  sd_datOutRead_data;
+    // wire        sd_datIn_done;
+    // wire        sd_datIn_crcErr;
+    // wire[3:0]   sd_datIn_cmd6AccessMode;
+    // wire        sd_status_dat0Idle;
+    //
+    // SDController #(
+    //     .ClkFreq(SD_Clk_Freq)
+    // ) SDController (
+    //     .clk(sd_clk_int),
+    //
+    //     .sd_clk(sd_clk),
+    //     .sd_cmd(sd_cmd),
+    //     .sd_dat(sd_dat),
+    //
+    //     .init_en_(sd_init_en_),
+    //     .init_trigger(sd_init_trigger),
+    //     .init_clk_speed(sd_init_clk_speed),
+    //     .init_clk_delay(sd_init_clk_delay),
+    //
+    //     .cmd_trigger(sd_cmd_trigger),
+    //     .cmd_data(sd_cmd_data),
+    //     .cmd_respType(sd_cmd_respType),
+    //     .cmd_datInType(sd_cmd_datInType),
+    //     .cmd_done(sd_cmd_done),
+    //
+    //     .resp_done(sd_resp_done),
+    //     .resp_data(sd_resp_data),
+    //     .resp_crcErr(sd_resp_crcErr),
+    //
+    //     .datOut_stop(sd_datOut_stop),
+    //     .datOut_stopped(sd_datOut_stopped),
+    //     .datOut_start(sd_datOut_start),
+    //     .datOut_done(sd_datOut_done),
+    //     .datOut_crcErr(sd_datOut_crcErr),
+    //
+    //     .datOutRead_clk(sd_datOutRead_clk),
+    //     .datOutRead_ready(sd_datOutRead_ready),
+    //     .datOutRead_trigger(sd_datOutRead_trigger),
+    //     .datOutRead_data(sd_datOutRead_data),
+    //
+    //     .datIn_done(sd_datIn_done),
+    //     .datIn_crcErr(sd_datIn_crcErr),
+    //     .datIn_cmd6AccessMode(sd_datIn_cmd6AccessMode),
+    //
+    //     .status_dat0Idle(sd_status_dat0Idle)
+    // );
     
     
     
@@ -359,12 +367,14 @@ module Top(
     // SPI State Machine
     // ====================
     
-    // SD nets
-    `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, spi_clk);
-    `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, spi_clk);
-    `ToggleAck(spi_sdDatOutDone_, spi_sdDatOutDoneAck, sd_datOut_done, posedge, spi_clk);
-    `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, spi_clk);
-    `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, spi_clk);
+    // // SD nets
+    // `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, spi_clk);
+    // `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, spi_clk);
+    // `ToggleAck(spi_sdDatOutDone_, spi_sdDatOutDoneAck, sd_datOut_done, posedge, spi_clk);
+    // `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, spi_clk);
+    // `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, spi_clk);
+    
+    `ToggleAck(spi_imgCaptureDone, spi_imgCaptureDoneAck, imgctrl_status_captureDone, posedge, spi_clk);
     
     // SPI control nets
     localparam TurnaroundDelay = 8;
@@ -382,8 +392,6 @@ module Top(
     reg spi_dataOut = 0;
     reg spi_dataOutEn = 0;
     wire spi_dataIn;
-    
-    `ToggleAck(spi_imgReadoutStarted, spi_imgReadoutStartedAck, img_readoutStarted, posedge, spi_clk);
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
@@ -439,73 +447,73 @@ module Top(
                     ice_led <= spi_msgArg[`Msg_Arg_LEDSet_Val_Bits];
                 end
                 
-                // Set SD clock source
-                `Msg_Type_SDInit: begin
-                    $display("[SPI] Got Msg_Type_SDInit: delay=%0d speed=%0d trigger=%0d en=%0d",
-                        spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits],
-                        spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits],
-                        spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits],
-                        spi_msgArg[`Msg_Arg_SDInit_En_Bits],
-                    );
-                    
-                    // We don't need to synchronize `sd_clk_delay` into the sd_ domain,
-                    // because it should only be set while the sd_ clock is disabled.
-                    sd_init_clk_delay <= spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits];
-                    
-                    case (spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits])
-                    `Msg_Arg_SDInit_Clk_Speed_Off:  sd_init_clk_speed <= `SDController_Init_Clk_Speed_Off;
-                    `Msg_Arg_SDInit_Clk_Speed_Slow: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Slow;
-                    `Msg_Arg_SDInit_Clk_Speed_Fast: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Fast;
-                    endcase
-                    
-                    if (spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits]) begin
-                        sd_init_trigger <= !sd_init_trigger;
-                    end
-                    
-                    sd_init_en_ <= !spi_msgArg[`Msg_Arg_SDInit_En_Bits];
-                end
-                
-                // Clock out SD command
-                `Msg_Type_SDSendCmd: begin
-                    $display("[SPI] Got Msg_Type_SDSendCmd [respType:%0b]", spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]);
-                    // Reset spi_sdCmdDone_ / spi_sdRespDone_ / spi_sdDatInDone_
-                    if (!spi_sdCmdDone_) spi_sdCmdDoneAck <= !spi_sdCmdDoneAck;
-                    
-                    if (!spi_sdRespDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]!==`Msg_Arg_SDSendCmd_RespType_None)
-                        spi_sdRespDoneAck <= !spi_sdRespDoneAck;
-                    
-                    if (!spi_sdDatInDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits]!==`Msg_Arg_SDSendCmd_DatInType_None)
-                        spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
-                    
-                    case (spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits])
-                    `Msg_Arg_SDSendCmd_RespType_None:   sd_cmd_respType <= `SDController_RespType_None;
-                    `Msg_Arg_SDSendCmd_RespType_48:     sd_cmd_respType <= `SDController_RespType_48;
-                    `Msg_Arg_SDSendCmd_RespType_136:    sd_cmd_respType <= `SDController_RespType_136;
-                    endcase
-                    
-                    case (spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
-                    `Msg_Arg_SDSendCmd_DatInType_None:  sd_cmd_datInType <= `SDController_DatInType_None;
-                    `Msg_Arg_SDSendCmd_DatInType_512:   sd_cmd_datInType <= `SDController_DatInType_512;
-                    endcase
-                    
-                    sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
-                    sd_cmd_trigger <= !sd_cmd_trigger;
-                end
-                
-                // Get SD status / response
-                `Msg_Type_SDGetStatus: begin
-                    $display("[SPI] Got Msg_Type_SDGetStatus");
-                    spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits] <= !spi_sdCmdDone_;
-                    spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits] <= !spi_sdRespDone_;
-                        spi_resp[`Resp_Arg_SDGetStatus_RespCRCErr_Bits] <= sd_resp_crcErr;
-                    spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits] <= !spi_sdDatOutDone_;
-                        spi_resp[`Resp_Arg_SDGetStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
-                    spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
-                        spi_resp[`Resp_Arg_SDGetStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;
-                        spi_resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits] <= sd_datIn_cmd6AccessMode;
-                    spi_resp[`Resp_Arg_SDGetStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
-                    spi_resp[`Resp_Arg_SDGetStatus_Resp_Bits] <= sd_resp_data;
-                end
+                // // Set SD clock source
+                // `Msg_Type_SDInit: begin
+                //     $display("[SPI] Got Msg_Type_SDInit: delay=%0d speed=%0d trigger=%0d en=%0d",
+                //         spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits],
+                //         spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits],
+                //         spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits],
+                //         spi_msgArg[`Msg_Arg_SDInit_En_Bits],
+                //     );
+                //
+                //     // We don't need to synchronize `sd_clk_delay` into the sd_ domain,
+                //     // because it should only be set while the sd_ clock is disabled.
+                //     sd_init_clk_delay <= spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits];
+                //
+                //     case (spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits])
+                //     `Msg_Arg_SDInit_Clk_Speed_Off:  sd_init_clk_speed <= `SDController_Init_Clk_Speed_Off;
+                //     `Msg_Arg_SDInit_Clk_Speed_Slow: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Slow;
+                //     `Msg_Arg_SDInit_Clk_Speed_Fast: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Fast;
+                //     endcase
+                //
+                //     if (spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits]) begin
+                //         sd_init_trigger <= !sd_init_trigger;
+                //     end
+                //
+                //     sd_init_en_ <= !spi_msgArg[`Msg_Arg_SDInit_En_Bits];
+                // end
+                //
+                // // Clock out SD command
+                // `Msg_Type_SDSendCmd: begin
+                //     $display("[SPI] Got Msg_Type_SDSendCmd [respType:%0b]", spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]);
+                //     // Reset spi_sdCmdDone_ / spi_sdRespDone_ / spi_sdDatInDone_
+                //     if (!spi_sdCmdDone_) spi_sdCmdDoneAck <= !spi_sdCmdDoneAck;
+                //
+                //     if (!spi_sdRespDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]!==`Msg_Arg_SDSendCmd_RespType_None)
+                //         spi_sdRespDoneAck <= !spi_sdRespDoneAck;
+                //
+                //     if (!spi_sdDatInDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits]!==`Msg_Arg_SDSendCmd_DatInType_None)
+                //         spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
+                //
+                //     case (spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits])
+                //     `Msg_Arg_SDSendCmd_RespType_None:   sd_cmd_respType <= `SDController_RespType_None;
+                //     `Msg_Arg_SDSendCmd_RespType_48:     sd_cmd_respType <= `SDController_RespType_48;
+                //     `Msg_Arg_SDSendCmd_RespType_136:    sd_cmd_respType <= `SDController_RespType_136;
+                //     endcase
+                //
+                //     case (spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
+                //     `Msg_Arg_SDSendCmd_DatInType_None:  sd_cmd_datInType <= `SDController_DatInType_None;
+                //     `Msg_Arg_SDSendCmd_DatInType_512:   sd_cmd_datInType <= `SDController_DatInType_512;
+                //     endcase
+                //
+                //     sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
+                //     sd_cmd_trigger <= !sd_cmd_trigger;
+                // end
+                //
+                // // Get SD status / response
+                // `Msg_Type_SDGetStatus: begin
+                //     $display("[SPI] Got Msg_Type_SDGetStatus");
+                //     spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits] <= !spi_sdCmdDone_;
+                //     spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits] <= !spi_sdRespDone_;
+                //         spi_resp[`Resp_Arg_SDGetStatus_RespCRCErr_Bits] <= sd_resp_crcErr;
+                //     spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits] <= !spi_sdDatOutDone_;
+                //         spi_resp[`Resp_Arg_SDGetStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
+                //     spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
+                //         spi_resp[`Resp_Arg_SDGetStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;
+                //         spi_resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits] <= sd_datIn_cmd6AccessMode;
+                //     spi_resp[`Resp_Arg_SDGetStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
+                //     spi_resp[`Resp_Arg_SDGetStatus_Resp_Bits] <= sd_resp_data;
+                // end
                 
                 `Msg_Type_ImgReset: begin
                     $display("[SPI] Got Msg_Type_ImgReset (rst=%b)", spi_msgArg[`Msg_Arg_ImgReset_Val_Bits]);
@@ -514,14 +522,14 @@ module Top(
                 
                 `Msg_Type_ImgCapture: begin
                     $display("[SPI] Got Msg_Type_ImgCapture (block=%b)", spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits]);
+                    // Reset spi_imgCaptureDone
+                    if (spi_imgCaptureDone) spi_imgCaptureDoneAck <= !spi_imgCaptureDoneAck;
                     imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits];
-                    spi_imgCaptureTrigger <= !spi_imgCaptureTrigger;
+                    imgctrl_cmd_capture <= !imgctrl_cmd_capture;
                 end
                 
                 `Msg_Type_ImgCaptureStatus: begin
-                    // Use `CaptureDone` bit to signal whether we can readout,
-                    // not whether the capture has merely been written to RAM
-                    spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= spi_imgReadoutReady;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= spi_imgCaptureDone;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits] <= imgctrl_status_captureImageWidth;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits] <= imgctrl_status_captureImageHeight;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits] <= imgctrl_status_captureHighlightCount;
@@ -530,14 +538,14 @@ module Top(
                 end
                 
                 `Msg_Type_ImgReadout: begin
-                    $display("[SPI] Got Msg_Type_ImgReadout");
-                    // Reset `spi_imgReadoutStarted` if it's asserted
-                    if (spi_imgReadoutStarted) spi_imgReadoutStartedAck <= !spi_imgReadoutStartedAck;
-                    
-                    spi_imgReadoutCounter <= spi_msgArg[`Msg_Arg_ImgReadout_Counter_Bits];
-                    spi_imgReadoutCaptureNext <= spi_msgArg[`Msg_Arg_ImgReadout_CaptureNext_Bits];
-                    spi_imgReadoutDone <= 0;
-                    spi_state <= SPI_State_ImgOut;
+                    // $display("[SPI] Got Msg_Type_ImgReadout");
+                    // // Reset `spi_imgReadoutStarted` if it's asserted
+                    // if (spi_imgReadoutStarted) spi_imgReadoutStartedAck <= !spi_imgReadoutStartedAck;
+                    //
+                    // spi_imgReadoutCounter <= spi_msgArg[`Msg_Arg_ImgReadout_Counter_Bits];
+                    // spi_imgReadoutCaptureNext <= spi_msgArg[`Msg_Arg_ImgReadout_CaptureNext_Bits];
+                    // spi_imgReadoutDone <= 0;
+                    // spi_state <= SPI_State_ImgOut;
                 end
                 
                 `Msg_Type_ImgI2CTransaction: begin
@@ -554,6 +562,11 @@ module Top(
                 end
                 
                 `Msg_Type_ImgI2CStatus: begin
+                    $display("[SPI] Got Msg_Type_ImgI2CStatus done_:%0d err:%0d readData:0x%x)",
+                        spi_imgi2c_done_,
+                        imgi2c_status_err,
+                        imgi2c_status_readData
+                    );
                     spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits] <= !spi_imgi2c_done_;
                     spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits] <= imgi2c_status_err;
                     spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits] <= imgi2c_status_readData;
@@ -645,10 +658,28 @@ module Testbench();
     
     Top Top(.*);
     
-    SDCardSim SDCardSim(
-        .sd_clk(sd_clk),
-        .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat)
+    // SDCardSim SDCardSim(
+    //     .sd_clk(sd_clk),
+    //     .sd_cmd(sd_cmd),
+    //     .sd_dat(sd_dat)
+    // );
+    
+    localparam ImageWidth = 32;
+    localparam ImageHeight = 4;
+    ImgSim #(
+        .ImageWidth(ImageWidth),
+        .ImageHeight(ImageHeight)
+    ) ImgSim (
+        .img_dclk(img_dclk),
+        .img_d(img_d),
+        .img_fv(img_fv),
+        .img_lv(img_lv),
+        .img_rst_(img_rst_)
+    );
+    
+    ImgI2CSlaveSim ImgI2CSlaveSim(
+        .i2c_clk(img_sclk),
+        .i2c_data(img_sdata)
     );
     
     initial begin
@@ -1101,6 +1132,225 @@ module Testbench();
         end
     end endtask
     
+    
+    
+    
+    
+    
+    
+    
+    task TestImgReset; begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        $display("\n========== TestImgReset ==========");
+        
+        // ====================
+        // Test Img reset
+        // ====================
+        arg = 0;
+        arg[`Msg_Arg_ImgReset_Val_Bits] = 0;
+        SendMsg(`Msg_Type_ImgReset, arg);
+        if (img_rst_ === arg[`Msg_Arg_ImgReset_Val_Bits]) begin
+            $display("[Testbench] Reset=0 success ✅");
+        end else begin
+            $display("[Testbench] Reset=0 failed ❌");
+        end
+        
+        arg = 0;
+        arg[`Msg_Arg_ImgReset_Val_Bits] = 1;
+        SendMsg(`Msg_Type_ImgReset, arg);
+        if (img_rst_ === arg[`Msg_Arg_ImgReset_Val_Bits]) begin
+            $display("[Testbench] Reset=1 success ✅");
+        end else begin
+            $display("[Testbench] Reset=1 failed ❌");
+        end
+    end endtask
+
+    // task TestImgStream; begin
+    //     reg[`Msg_Arg_Len-1:0] arg;
+    //     reg[31:0] row;
+    //     reg[31:0] col;
+    //     reg[31:0] i;
+    //     reg[31:0] transferPixelCount;
+    //     $display("\n========== TestImgStream ==========");
+    //
+    //     arg = 0;
+    //     arg[`Msg_Arg_ImgReset_Val_Bits] = 1;
+    //     SendMsg(`Msg_Type_ImgReset, arg); // Deassert Img reset
+    //
+    //     arg = 0;
+    //     arg[`Msg_Arg_ImgCapture_DstBlock_Bits] = 0;
+    //     SendMsg(`Msg_Type_ImgCapture, arg);
+    //
+    //     forever begin
+    //         // Wait until readout is ready
+    //         $display("[Testbench] Waiting until readout is ready...");
+    //         do begin
+    //             // Request Img status
+    //             SendMsg(`Msg_Type_ImgCaptureStatus, 0);
+    //         end while(!resp[`Resp_Arg_ImgCaptureStatus_Done_Bits]);
+    //         $display("[Testbench] Readout ready ✅ (image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
+    //             resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits],
+    //             resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits],
+    //             resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits],
+    //             resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits],
+    //         );
+    //
+    //         // 1 pixels     counter=0
+    //         // 2 pixels     counter=2
+    //         // 3 pixels     counter=4
+    //         // 4 pixels     counter=6
+    //         transferPixelCount = 4; // 4 pixels at a time (since `resp` is only 8 bytes=4 pixels wide)
+    //         for (row=0; row<ImageHeight; row++) begin
+    //             for (i=0; i<ImageWidth/transferPixelCount; i++) begin
+    //                 arg[`Msg_Arg_ImgReadout_Counter_Bits] = (transferPixelCount-1)*2;
+    //                 arg[`Msg_Arg_ImgReadout_CaptureNext_Bits] = (row===(ImageHeight-1) && i===((ImageWidth/transferPixelCount)-1));
+    //                 arg[`Msg_Arg_ImgReadout_SrcBlock_Bits] = 0;
+    //
+    //                 SendMsg(`Msg_Type_ImgReadout, arg, transferPixelCount*2);
+    //                 imgRow = (imgRow<<(transferPixelCount*2*8))|resp;
+    //             end
+    //
+    //             $display("[Testbench] Row %04d: %h", row, imgRow);
+    //         end
+    //     end
+    // end endtask
+    
+    task TestImgI2CWriteRead; begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        reg done;
+        
+        // ====================
+        // Test ImgI2C Write (len=2)
+        // ====================
+        arg = 0;
+        arg[`Msg_Arg_ImgI2CTransaction_Write_Bits] = 1;
+        arg[`Msg_Arg_ImgI2CTransaction_DataLen_Bits] = `Msg_Arg_ImgI2CTransaction_DataLen_2;
+        arg[`Msg_Arg_ImgI2CTransaction_RegAddr_Bits] = 16'h4242;
+        arg[`Msg_Arg_ImgI2CTransaction_WriteData_Bits] = 16'hCAFE;
+        SendMsg(`Msg_Type_ImgI2CTransaction, arg);
+
+        done = 0;
+        while (!done) begin
+            SendMsg(`Msg_Type_ImgI2CStatus, 0);
+            $display("[Testbench] ImgI2C status: done:%b err:%b readData:0x%x",
+                spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits],
+                spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits],
+                spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]
+            );
+
+            done = spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits];
+        end
+
+        if (!spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits]) begin
+            $display("[Testbench] Write success ✅");
+        end else begin
+            $display("[Testbench] Write failed ❌");
+        end
+        
+        // ====================
+        // Test ImgI2C Read (len=2)
+        // ====================
+        arg = 0;
+        arg[`Msg_Arg_ImgI2CTransaction_Write_Bits] = 0;
+        arg[`Msg_Arg_ImgI2CTransaction_DataLen_Bits] = `Msg_Arg_ImgI2CTransaction_DataLen_2;
+        arg[`Msg_Arg_ImgI2CTransaction_RegAddr_Bits] = 16'h4242;
+        SendMsg(`Msg_Type_ImgI2CTransaction, arg);
+        
+        done = 0;
+        while (!done) begin
+            SendMsg(`Msg_Type_ImgI2CStatus, 0);
+            $display("[Testbench] ImgI2C status: done:%b err:%b readData:0x%x",
+                spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits],
+                spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits],
+                spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]
+            );
+            
+            done = spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits];
+        end
+        
+        if (!spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits]) begin
+            $display("[Testbench] Read success ✅");
+        end else begin
+            $display("[Testbench] Read failed ❌");
+        end
+        
+        if (spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits] === 16'hCAFE) begin
+            $display("[Testbench] Read correct data ✅ (0x%x)", spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]);
+        end else begin
+            $display("[Testbench] Read incorrect data ❌ (0x%x)", spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]);
+            `Finish;
+        end
+        
+        // ====================
+        // Test ImgI2C Write (len=1)
+        // ====================
+        arg = 0;
+        arg[`Msg_Arg_ImgI2CTransaction_Write_Bits] = 1;
+        arg[`Msg_Arg_ImgI2CTransaction_DataLen_Bits] = `Msg_Arg_ImgI2CTransaction_DataLen_1;
+        arg[`Msg_Arg_ImgI2CTransaction_RegAddr_Bits] = 16'h8484;
+        arg[`Msg_Arg_ImgI2CTransaction_WriteData_Bits] = 16'h0037;
+        SendMsg(`Msg_Type_ImgI2CTransaction, arg);
+        
+        done = 0;
+        while (!done) begin
+            SendMsg(`Msg_Type_ImgI2CStatus, 0);
+            $display("[Testbench] ImgI2C status: done:%b err:%b readData:0x%x",
+                spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits],
+                spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits],
+                spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]
+            );
+            
+            done = spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits];
+        end
+        
+        if (!spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits]) begin
+            $display("[Testbench] Write success ✅");
+        end else begin
+            $display("[Testbench] Write failed ❌");
+        end
+        
+        // ====================
+        // Test ImgI2C Read (len=1)
+        // ====================
+        arg = 0;
+        arg[`Msg_Arg_ImgI2CTransaction_Write_Bits] = 0;
+        arg[`Msg_Arg_ImgI2CTransaction_DataLen_Bits] = `Msg_Arg_ImgI2CTransaction_DataLen_1;
+        arg[`Msg_Arg_ImgI2CTransaction_RegAddr_Bits] = 16'h8484;
+        SendMsg(`Msg_Type_ImgI2CTransaction, arg);
+
+        done = 0;
+        while (!done) begin
+            SendMsg(`Msg_Type_ImgI2CStatus, 0);
+            $display("[Testbench] ImgI2C status: done:%b err:%b readData:0x%x",
+                spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits],
+                spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits],
+                spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]
+            );
+
+            done = spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits];
+        end
+
+        if (!spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits]) begin
+            $display("[Testbench] Read success ✅");
+        end else begin
+            $display("[Testbench] Read failed ❌");
+        end
+
+        if ((spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]&16'h00FF) === 16'h0037) begin
+            $display("[Testbench] Read correct data ✅ (0x%x)", spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]&16'h00FF);
+        end else begin
+            $display("[Testbench] Read incorrect data ❌ (0x%x)", spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]&16'h00FF);
+        end
+    end endtask
+    
+    
+    
+    
+    
+    
+    
+    
+    
     initial begin
         // Set our initial state
         spi_dataOutReg = ~0;
@@ -1111,25 +1361,31 @@ module Testbench();
         #1;
         ice_msp_spi_clk = 0;
         
-        TestRst();
-        TestNoOp();
-        TestEcho(56'hCAFEBABEFEEDAA);
-        TestLEDSet(4'b1010);
-        TestLEDSet(4'b0101);
-        TestEcho(56'h123456789ABCDE);
-        TestNoOp();
-        TestRst();
+        // TestRst();
+        // TestNoOp();
+        // TestEcho(56'hCAFEBABEFEEDAA);
+        // TestLEDSet(4'b1010);
+        // TestLEDSet(4'b0101);
+        // TestEcho(56'h123456789ABCDE);
+        // TestNoOp();
+        // TestRst();
         
-        TestSDInit();
+        // TestSDInit();
+        //
+        // TestSDCMD0();
+        // TestSDCMD8();
+        // // TestSDDatOut();
+        // TestSDCMD2();
+        // TestSDDatIn();
+        // TestSDRespRecovery();
+        // // TestSDDatOutRecovery();
+        // TestSDDatInRecovery();
         
-        TestSDCMD0();
-        TestSDCMD8();
-        // TestSDDatOut();
-        TestSDCMD2();
-        TestSDDatIn();
-        TestSDRespRecovery();
-        // TestSDDatOutRecovery();
-        TestSDDatInRecovery();
+        // // Do Pix stuff before SD stuff, so that the RAM is populated with an image, so that
+        // // the RAM has valid content for when we do the readout to write to the SD card.
+        TestImgReset();
+        // TestImgCapture();
+        TestImgI2CWriteRead();
         
         `Finish;
     end
