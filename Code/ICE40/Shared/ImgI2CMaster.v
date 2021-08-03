@@ -30,11 +30,13 @@ module ImgI2CMaster #(
     // I2CQuarterCycleDelay: number of `clk` cycles for a quarter of the `i2c_clk` cycle to elapse.
     // DivCeil() is necessary to perform the quarter-cycle calculation, so that the
     // division is ceiled to the nearest clock cycle. (Ie -- slower than I2CClkFreq is OK, faster is not.)
-    // -1 for the value that should be stored in a counter.
-    localparam I2CQuarterCycleDelay = `DivCeil(ClkFreq, 4*I2CClkFreq)-1;
-    
-    // Width of `delay`
-    localparam DelayWidth = $clog2(I2CQuarterCycleDelay+1);
+    // Notes:
+    //   - Subtract 1 (using `Sub() macro) to arrive at the value that should be stored in a counter.
+    //   - Minimum value is 1 (using `Max() macro), because the turnaround time between our state machine
+    //     letting go of SDA, and the slave driving it, is 2 `clk` cycles, and this needs to occur within
+    //     1 quarter cycle of `i2c_clk`. A value of 1 accomplishes this because it costs us 1 cycle getting
+    //     to the delay state, and 1 cycle leaving it.
+    localparam I2CQuarterCycleDelay = `Max(1, `Sub(`DivCeil(ClkFreq, 4*I2CClkFreq), 1));
     
     localparam State_Idle       = 0;    // +0
     localparam State_Start      = 1;    // +2
@@ -58,7 +60,7 @@ module ImgI2CMaster #(
     reg[3:0] dataInCounter = 0;
     assign status_readData = dataInShiftReg[15:0];
     wire dataIn;
-    reg[DelayWidth-1:0] delay = 0;
+    reg[`RegWidth(I2CQuarterCycleDelay)-1:0] delay = 0;
     reg clkOut = 0;
     
     `ToggleAck(trigger, triggerAck, cmd_trigger, posedge, clk);
