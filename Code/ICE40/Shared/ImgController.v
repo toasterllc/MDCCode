@@ -15,7 +15,6 @@ module ImgController #(
     
     // Command port (clock domain: `clk`)
     input wire          cmd_capture,    // Toggle
-    input wire          cmd_readout,    // Toggle
     input wire[0:0]     cmd_ramBlock,
     
     // Readout port (clock domain: `readout_clk`)
@@ -25,12 +24,11 @@ module ImgController #(
     output wire[15:0]   readout_data,
     
     // Status port (clock domain: `clk`)
-    output reg                                  status_captureDone = 0,     // Toggle
+    output reg                                  status_captureDone = 0, // Toggle
     output wire[`RegWidth(ImageWidthMax)-1:0]   status_captureImageWidth,
     output wire[`RegWidth(ImageHeightMax)-1:0]  status_captureImageHeight,
     output wire[17:0]                           status_captureHighlightCount,
     output wire[17:0]                           status_captureShadowCount,
-    output reg                                  status_readoutStarted = 0,  // Toggle
     
     // Img port (clock domain: `img_dclk`)
     input wire          img_dclk,
@@ -308,7 +306,11 @@ module ImgController #(
     // Control State Machine
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
-    `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
+    // TODO: try storing ctrl_imageWidth / ctrl_imageHeight in their own registers
+    wire[`RegWidth(ImageWidthMax)-1:0] ctrl_imageWidth = fifoIn_imageWidth;
+    wire[`RegWidth(ImageHeightMax)-1:0] ctrl_imageHeight = fifoIn_imageHeight;
+    reg[`RegWidth(ImageWidthMax)-1:0] ctrl_readoutX = 0;
+    reg[`RegWidth(ImageHeightMax)-1:0] ctrl_readoutY = 0;
     
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +3
@@ -375,32 +377,51 @@ module ImgController #(
             // machine signals that it's done receiving data.
             if (!fifoIn_read_ready && ctrl_fifoInDone) begin
                 $display("[IMGCTRL:Capture] Finished");
-                status_captureDone <= !status_captureDone;
-                ctrl_state <= Ctrl_State_Idle;
+                ctrl_state <= Ctrl_State_Readout;
             end
         end
         
         Ctrl_State_Readout: begin
-            $display("[IMGCTRL:Readout] Triggered");
+            $display("[IMGCTRL:Readout] Started");
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
             // Reset output FIFO
             fifoOut_rst <= 1;
+            // Reset readout state
+            ctrl_readoutX <= 0;
+            ctrl_readoutY <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end
         
         Ctrl_State_Readout+1: begin
             // Wait for the read command and FIFO reset to be consumed
             if (ramctrl_cmd===`RAMController_Cmd_None && !fifoOut_rst) begin
-                status_readoutStarted <= !status_readoutStarted;
-                ctrl_state <= Ctrl_State_Idle;
+                status_captureDone <= !status_captureDone;
+                ctrl_state <= Ctrl_State_Readout+2;
+            end
+        end
+        
+        Ctrl_State_Readout+2: begin
+            // TODO: pipeline `fifoOut_write_ready && fifoOut_write_trigger`
+            if (fifoOut_write_ready && fifoOut_write_trigger) begin
+                if (ctrl_readoutX !== ctrl_imageWidth) begin
+                    ctrl_readoutX <= ctrl_readoutX+1;
+                
+                end else begin
+                    if (ctrl_readoutY !== ctrl_imageHeight) begin
+                        ctrl_readoutX <= 0;
+                        ctrl_readoutY <= ctrl_readoutY+1;
+                    
+                    end else begin
+                        ctrl_state <= Ctrl_State_Idle;
+                    end
+                end
             end
         end
         endcase
         
-        if      (ctrl_cmdCapture) ctrl_state <= Ctrl_State_Capture;
-        else if (ctrl_cmdReadout) ctrl_state <= Ctrl_State_Readout;
+        if (ctrl_cmdCapture) ctrl_state <= Ctrl_State_Capture;
     end
     
     // ====================

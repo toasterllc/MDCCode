@@ -1,5 +1,9 @@
 - Rev4 Todo
     
+    - ICEApp
+        - ImgController: stop filling output FIFO once we've copied the entire image
+        - Reset SDController DatOut before a new capture starts filling the FIFO
+    
     - Get LVS SD initialization test working
         - Determined that:
             - SD card samples all signals (sd_cmd+sd_dat[3:0]), so all 5 signals need to be driven to 0V
