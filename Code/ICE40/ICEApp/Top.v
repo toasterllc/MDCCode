@@ -129,7 +129,6 @@ module Top(
     // ImgController
     // ====================
     reg                                 imgctrl_cmd_capture = 0;
-    reg                                 imgctrl_cmd_readout = 0;
     reg[0:0]                            imgctrl_cmd_ramBlock = 0;
     wire                                imgctrl_readout_clk;
     wire                                imgctrl_readout_ready;
@@ -140,7 +139,6 @@ module Top(
     wire[`RegWidth(ImageHeightMax)-1:0] imgctrl_status_captureImageHeight;
     wire[17:0]                          imgctrl_status_captureHighlightCount;
     wire[17:0]                          imgctrl_status_captureShadowCount;
-    wire                                imgctrl_status_readoutStarted;
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
         .ImageWidthMax(ImageWidthMax),
@@ -149,7 +147,6 @@ module Top(
         .clk(img_clk),
         
         .cmd_capture(imgctrl_cmd_capture),
-        .cmd_readout(imgctrl_cmd_readout),
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
         
         .readout_clk(imgctrl_readout_clk),
@@ -162,7 +159,6 @@ module Top(
         .status_captureImageHeight(imgctrl_status_captureImageHeight),
         .status_captureHighlightCount(imgctrl_status_captureHighlightCount),
         .status_captureShadowCount(imgctrl_status_captureShadowCount),
-        .status_readoutStarted(imgctrl_status_readoutStarted),
         
         .img_dclk(img_dclk),
         .img_d(img_d),
@@ -374,7 +370,8 @@ module Top(
     // `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, spi_clk);
     // `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, spi_clk);
     
-    `ToggleAck(spi_imgCaptureDone, spi_imgCaptureDoneAck, imgctrl_status_captureDone, posedge, spi_clk);
+    // IMG nets
+    `ToggleAck(spi_imgCaptureDone_, spi_imgCaptureDoneAck, imgctrl_status_captureDone, posedge, spi_clk);
     
     // SPI control nets
     localparam TurnaroundDelay = 8;
@@ -395,7 +392,8 @@ module Top(
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
-    localparam SPI_State_Count      = 4;
+    localparam SPI_State_DebugReadout = 4;    // +0 TODO: remove
+    localparam SPI_State_Count      = 5;
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     
     always @(posedge spi_clk, negedge spi_rst_) begin
@@ -428,7 +426,6 @@ module Top(
             end
         
             SPI_State_MsgIn+2: begin
-                // By default, go to SPI_State_Nop
                 spi_state <= SPI_State_RespOut;
                 spi_dataCounter <= RespCycleCount;
                 
@@ -522,23 +519,35 @@ module Top(
                 
                 `Msg_Type_ImgCapture: begin
                     $display("[SPI] Got Msg_Type_ImgCapture (block=%b)", spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits]);
-                    // Reset spi_imgCaptureDone
-                    if (spi_imgCaptureDone) spi_imgCaptureDoneAck <= !spi_imgCaptureDoneAck;
+                    // Reset spi_imgCaptureDone_
+                    if (!spi_imgCaptureDone_) spi_imgCaptureDoneAck <= !spi_imgCaptureDoneAck;
                     imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits];
                     imgctrl_cmd_capture <= !imgctrl_cmd_capture;
                 end
                 
                 `Msg_Type_ImgCaptureStatus: begin
-                    spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= spi_imgCaptureDone;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= !spi_imgCaptureDone_;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits] <= imgctrl_status_captureImageWidth;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits] <= imgctrl_status_captureImageHeight;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits] <= imgctrl_status_captureHighlightCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits] <= imgctrl_status_captureShadowCount;
-                    spi_state <= SPI_State_RespOut;
                 end
                 
+                // `Msg_Type_ImgReadout: begin
+                //     // $display("[SPI] Got Msg_Type_ImgReadout");
+                //     // // Reset `spi_imgReadoutStarted` if it's asserted
+                //     // if (spi_imgReadoutStarted) spi_imgReadoutStartedAck <= !spi_imgReadoutStartedAck;
+                //     //
+                //     // spi_imgReadoutCounter <= spi_msgArg[`Msg_Arg_ImgReadout_Counter_Bits];
+                //     // spi_imgReadoutCaptureNext <= spi_msgArg[`Msg_Arg_ImgReadout_CaptureNext_Bits];
+                //     // spi_imgReadoutDone <= 0;
+                //     // spi_state <= SPI_State_ImgOut;
+                // end
+                
                 `Msg_Type_ImgReadout: begin
-                    // $display("[SPI] Got Msg_Type_ImgReadout");
+                    $display("[SPI] Got Msg_Type_ImgReadout");
+                    spi_state <= SPI_State_DebugReadout;
+                    
                     // // Reset `spi_imgReadoutStarted` if it's asserted
                     // if (spi_imgReadoutStarted) spi_imgReadoutStartedAck <= !spi_imgReadoutStartedAck;
                     //
@@ -570,7 +579,6 @@ module Top(
                     spi_resp[`Resp_Arg_ImgI2CStatus_Done_Bits] <= !spi_imgi2c_done_;
                     spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits] <= imgi2c_status_err;
                     spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits] <= imgi2c_status_readData;
-                    spi_state <= SPI_State_RespOut;
                 end
                 
                 `Msg_Type_NoOp: begin
@@ -590,9 +598,20 @@ module Top(
                     spi_state <= SPI_State_MsgIn;
                 end
             end
+            
+    // wire                                imgctrl_readout_clk;
+    // wire                                imgctrl_readout_ready;
+    // wire                                imgctrl_readout_trigger;
+    // wire[15:0]                          imgctrl_readout_data;
+            
+            SPI_State_DebugReadout: begin
+                
+            end
             endcase
         end
     end
+    
+    // TODO: remove
     
     // ====================
     // Pin: ice_msp_spi_data
@@ -1179,7 +1198,7 @@ module Testbench();
             // Request Img status
             SendMsg(`Msg_Type_ImgCaptureStatus, 0);
         end while(!spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits]);
-        $display("[Testbench] Readout ready ✅ (image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
+        $display("[Testbench] Capture ready ✅ (image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
             spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits],
