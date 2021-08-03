@@ -76,7 +76,6 @@
 `define     Resp_Arg_ImgCaptureStatus_ShadowCount_Bits          20:3
 
 `define Msg_Type_ImgReadout                                     `Msg_Type_Len'h08
-`define     Msg_Arg_ImgReadout_SrcBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
 `define Msg_Type_ImgI2CTransaction                              `Msg_Type_Len'h09
 `define     Msg_Arg_ImgI2CTransaction_Write_Bits                55:55

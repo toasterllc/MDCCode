@@ -240,90 +240,96 @@ module Top(
     
     
     
-    // // ====================
-    // // SD Clock (102 MHz)
-    // // ====================
-    // localparam SD_Clk_Freq = 102_000_000;
-    // wire sd_clk_int;
-    // ClockGen #(
-    //     .FREQOUT(SD_Clk_Freq),
-    //     .DIVR(0),
-    //     .DIVF(50),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_sd_clk_int(.clkRef(ice_img_clk16mhz), .clk(sd_clk_int));
-    //
-    // // ====================
-    // // SDController
-    // // ====================
-    // reg         sd_init_en_ = 0;
-    // reg         sd_init_trigger = 0;
-    // reg[1:0]    sd_init_clk_speed = 0;
-    // reg[3:0]    sd_init_clk_delay = 0;
-    // reg         sd_cmd_trigger = 0;
-    // reg[47:0]   sd_cmd_data = 0;
-    // reg[1:0]    sd_cmd_respType = 0;
-    // reg         sd_cmd_datInType = 0;
-    // wire        sd_cmd_done;
-    // wire        sd_resp_done;
-    // wire[47:0]  sd_resp_data;
-    // wire        sd_resp_crcErr;
-    // reg         sd_datOut_stop = 0;
-    // wire        sd_datOut_stopped;
-    // reg         sd_datOut_start = 0;
-    // wire        sd_datOut_ready;
-    // wire        sd_datOut_done;
-    // wire        sd_datOut_crcErr;
-    // wire        sd_datOutRead_clk;
-    // wire        sd_datOutRead_ready;
-    // wire        sd_datOutRead_trigger;
-    // wire[15:0]  sd_datOutRead_data;
-    // wire        sd_datIn_done;
-    // wire        sd_datIn_crcErr;
-    // wire[3:0]   sd_datIn_cmd6AccessMode;
-    // wire        sd_status_dat0Idle;
-    //
-    // SDController #(
-    //     .ClkFreq(SD_Clk_Freq)
-    // ) SDController (
-    //     .clk(sd_clk_int),
-    //
-    //     .sd_clk(sd_clk),
-    //     .sd_cmd(sd_cmd),
-    //     .sd_dat(sd_dat),
-    //
-    //     .init_en_(sd_init_en_),
-    //     .init_trigger(sd_init_trigger),
-    //     .init_clk_speed(sd_init_clk_speed),
-    //     .init_clk_delay(sd_init_clk_delay),
-    //
-    //     .cmd_trigger(sd_cmd_trigger),
-    //     .cmd_data(sd_cmd_data),
-    //     .cmd_respType(sd_cmd_respType),
-    //     .cmd_datInType(sd_cmd_datInType),
-    //     .cmd_done(sd_cmd_done),
-    //
-    //     .resp_done(sd_resp_done),
-    //     .resp_data(sd_resp_data),
-    //     .resp_crcErr(sd_resp_crcErr),
-    //
-    //     .datOut_stop(sd_datOut_stop),
-    //     .datOut_stopped(sd_datOut_stopped),
-    //     .datOut_start(sd_datOut_start),
-    //     .datOut_done(sd_datOut_done),
-    //     .datOut_crcErr(sd_datOut_crcErr),
-    //
-    //     .datOutRead_clk(sd_datOutRead_clk),
-    //     .datOutRead_ready(sd_datOutRead_ready),
-    //     .datOutRead_trigger(sd_datOutRead_trigger),
-    //     .datOutRead_data(sd_datOutRead_data),
-    //
-    //     .datIn_done(sd_datIn_done),
-    //     .datIn_crcErr(sd_datIn_crcErr),
-    //     .datIn_cmd6AccessMode(sd_datIn_cmd6AccessMode),
-    //
-    //     .status_dat0Idle(sd_status_dat0Idle)
-    // );
+    // ====================
+    // SD Clock (102 MHz)
+    // ====================
+    localparam SD_Clk_Freq = 102_000_000;
+    wire sd_clk_int;
+    ClockGen #(
+        .FREQOUT(SD_Clk_Freq),
+        .DIVR(0),
+        .DIVF(50),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) ClockGen_sd_clk_int(.clkRef(ice_img_clk16mhz), .clk(sd_clk_int));
+
+    // ====================
+    // SDController
+    // ====================
+    reg         sd_init_en_ = 0;
+    reg         sd_init_trigger = 0;
+    reg[1:0]    sd_init_clk_speed = 0;
+    reg[3:0]    sd_init_clk_delay = 0;
+    reg         sd_cmd_trigger = 0;
+    reg[47:0]   sd_cmd_data = 0;
+    reg[1:0]    sd_cmd_respType = 0;
+    reg         sd_cmd_datInType = 0;
+    wire        sd_cmd_done;
+    wire        sd_resp_done;
+    wire[47:0]  sd_resp_data;
+    wire        sd_resp_crcErr;
+    reg         sd_datOut_stop = 0;
+    wire        sd_datOut_stopped;
+    reg         sd_datOut_start = 0;
+    wire        sd_datOut_ready;
+    wire        sd_datOut_done;
+    wire        sd_datOut_crcErr;
+    wire        sd_datOutRead_clk;
+    wire        sd_datOutRead_ready;
+    wire        sd_datOutRead_trigger;
+    wire[15:0]  sd_datOutRead_data;
+    wire        sd_datIn_done;
+    wire        sd_datIn_crcErr;
+    wire[3:0]   sd_datIn_cmd6AccessMode;
+    wire        sd_status_dat0Idle;
+
+    SDController #(
+        .ClkFreq(SD_Clk_Freq)
+    ) SDController (
+        .clk(sd_clk_int),
+
+        .sd_clk(sd_clk),
+        .sd_cmd(sd_cmd),
+        .sd_dat(sd_dat),
+
+        .init_en_(sd_init_en_),
+        .init_trigger(sd_init_trigger),
+        .init_clk_speed(sd_init_clk_speed),
+        .init_clk_delay(sd_init_clk_delay),
+
+        .cmd_trigger(sd_cmd_trigger),
+        .cmd_data(sd_cmd_data),
+        .cmd_respType(sd_cmd_respType),
+        .cmd_datInType(sd_cmd_datInType),
+        .cmd_done(sd_cmd_done),
+
+        .resp_done(sd_resp_done),
+        .resp_data(sd_resp_data),
+        .resp_crcErr(sd_resp_crcErr),
+
+        .datOut_stop(sd_datOut_stop),
+        .datOut_stopped(sd_datOut_stopped),
+        .datOut_start(sd_datOut_start),
+        .datOut_done(sd_datOut_done),
+        .datOut_crcErr(sd_datOut_crcErr),
+
+        .datOutRead_clk(sd_datOutRead_clk),
+        .datOutRead_ready(sd_datOutRead_ready),
+        .datOutRead_trigger(sd_datOutRead_trigger),
+        .datOutRead_data(sd_datOutRead_data),
+
+        .datIn_done(sd_datIn_done),
+        .datIn_crcErr(sd_datIn_crcErr),
+        .datIn_cmd6AccessMode(sd_datIn_cmd6AccessMode),
+
+        .status_dat0Idle(sd_status_dat0Idle)
+    );
+    
+    // Connect imgctrl_readout_* to sd_datOutRead_*
+    assign imgctrl_readout_clk = sd_datOutRead_clk;
+    assign sd_datOutRead_ready = imgctrl_readout_ready;
+    assign imgctrl_readout_trigger = sd_datOutRead_trigger;
+    assign sd_datOutRead_data = imgctrl_readout_data;
     
     
     
@@ -358,12 +364,12 @@ module Top(
     // SPI State Machine
     // ====================
     
-    // // SD nets
-    // `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, spi_clk);
-    // `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, spi_clk);
-    // `ToggleAck(spi_sdDatOutDone_, spi_sdDatOutDoneAck, sd_datOut_done, posedge, spi_clk);
-    // `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, spi_clk);
-    // `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, spi_clk);
+    // SD nets
+    `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, spi_clk);
+    `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, spi_clk);
+    `ToggleAck(spi_sdDatOutDone_, spi_sdDatOutDoneAck, sd_datOut_done, posedge, spi_clk);
+    `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, spi_clk);
+    `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, spi_clk);
     
     // IMG nets
     `ToggleAck(spi_imgCaptureDone_, spi_imgCaptureDoneAck, imgctrl_status_captureDone, posedge, spi_clk);
@@ -385,21 +391,9 @@ module Top(
     reg spi_dataOutEn = 0;
     wire spi_dataIn;
     
-    // wire                                imgctrl_readout_clk;
-    // wire                                imgctrl_readout_ready;
-    // wire                                imgctrl_readout_trigger;
-    // wire[15:0]                          imgctrl_readout_data;
-    
-    // TODO: remove
-    assign imgctrl_readout_clk = spi_clk;
-    reg debug_readoutTrigger = 0;
-    assign imgctrl_readout_trigger = debug_readoutTrigger;
-    
-    
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
-    localparam SPI_State_DebugReadout = 4;    // +0 TODO: remove
-    localparam SPI_State_Count      = 5;
+    localparam SPI_State_Count      = 4;
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     
     always @(posedge spi_clk, negedge spi_rst_) begin
@@ -415,8 +409,6 @@ module Top(
             spi_dataOutEn <= 0;
             spi_resp <= spi_resp<<1|1'b1;
             spi_dataOut <= `LeftBit(spi_resp, 0);
-            
-            debug_readoutTrigger <= 0; // Remove
             
             case (spi_state)
             SPI_State_MsgIn: begin
@@ -452,73 +444,73 @@ module Top(
                     ice_led <= spi_msgArg[`Msg_Arg_LEDSet_Val_Bits];
                 end
                 
-                // // Set SD clock source
-                // `Msg_Type_SDInit: begin
-                //     $display("[SPI] Got Msg_Type_SDInit: delay=%0d speed=%0d trigger=%0d en=%0d",
-                //         spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits],
-                //         spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits],
-                //         spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits],
-                //         spi_msgArg[`Msg_Arg_SDInit_En_Bits],
-                //     );
-                //
-                //     // We don't need to synchronize `sd_clk_delay` into the sd_ domain,
-                //     // because it should only be set while the sd_ clock is disabled.
-                //     sd_init_clk_delay <= spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits];
-                //
-                //     case (spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits])
-                //     `Msg_Arg_SDInit_Clk_Speed_Off:  sd_init_clk_speed <= `SDController_Init_Clk_Speed_Off;
-                //     `Msg_Arg_SDInit_Clk_Speed_Slow: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Slow;
-                //     `Msg_Arg_SDInit_Clk_Speed_Fast: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Fast;
-                //     endcase
-                //
-                //     if (spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits]) begin
-                //         sd_init_trigger <= !sd_init_trigger;
-                //     end
-                //
-                //     sd_init_en_ <= !spi_msgArg[`Msg_Arg_SDInit_En_Bits];
-                // end
-                //
-                // // Clock out SD command
-                // `Msg_Type_SDSendCmd: begin
-                //     $display("[SPI] Got Msg_Type_SDSendCmd [respType:%0b]", spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]);
-                //     // Reset spi_sdCmdDone_ / spi_sdRespDone_ / spi_sdDatInDone_
-                //     if (!spi_sdCmdDone_) spi_sdCmdDoneAck <= !spi_sdCmdDoneAck;
-                //
-                //     if (!spi_sdRespDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]!==`Msg_Arg_SDSendCmd_RespType_None)
-                //         spi_sdRespDoneAck <= !spi_sdRespDoneAck;
-                //
-                //     if (!spi_sdDatInDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits]!==`Msg_Arg_SDSendCmd_DatInType_None)
-                //         spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
-                //
-                //     case (spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits])
-                //     `Msg_Arg_SDSendCmd_RespType_None:   sd_cmd_respType <= `SDController_RespType_None;
-                //     `Msg_Arg_SDSendCmd_RespType_48:     sd_cmd_respType <= `SDController_RespType_48;
-                //     `Msg_Arg_SDSendCmd_RespType_136:    sd_cmd_respType <= `SDController_RespType_136;
-                //     endcase
-                //
-                //     case (spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
-                //     `Msg_Arg_SDSendCmd_DatInType_None:  sd_cmd_datInType <= `SDController_DatInType_None;
-                //     `Msg_Arg_SDSendCmd_DatInType_512:   sd_cmd_datInType <= `SDController_DatInType_512;
-                //     endcase
-                //
-                //     sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
-                //     sd_cmd_trigger <= !sd_cmd_trigger;
-                // end
-                //
-                // // Get SD status / response
-                // `Msg_Type_SDGetStatus: begin
-                //     $display("[SPI] Got Msg_Type_SDGetStatus");
-                //     spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits] <= !spi_sdCmdDone_;
-                //     spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits] <= !spi_sdRespDone_;
-                //         spi_resp[`Resp_Arg_SDGetStatus_RespCRCErr_Bits] <= sd_resp_crcErr;
-                //     spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits] <= !spi_sdDatOutDone_;
-                //         spi_resp[`Resp_Arg_SDGetStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
-                //     spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
-                //         spi_resp[`Resp_Arg_SDGetStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;
-                //         spi_resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits] <= sd_datIn_cmd6AccessMode;
-                //     spi_resp[`Resp_Arg_SDGetStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
-                //     spi_resp[`Resp_Arg_SDGetStatus_Resp_Bits] <= sd_resp_data;
-                // end
+                // Set SD clock source
+                `Msg_Type_SDInit: begin
+                    $display("[SPI] Got Msg_Type_SDInit: delay=%0d speed=%0d trigger=%0d en=%0d",
+                        spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits],
+                        spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits],
+                        spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits],
+                        spi_msgArg[`Msg_Arg_SDInit_En_Bits],
+                    );
+
+                    // We don't need to synchronize `sd_clk_delay` into the sd_ domain,
+                    // because it should only be set while the sd_ clock is disabled.
+                    sd_init_clk_delay <= spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits];
+
+                    case (spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits])
+                    `Msg_Arg_SDInit_Clk_Speed_Off:  sd_init_clk_speed <= `SDController_Init_Clk_Speed_Off;
+                    `Msg_Arg_SDInit_Clk_Speed_Slow: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Slow;
+                    `Msg_Arg_SDInit_Clk_Speed_Fast: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Fast;
+                    endcase
+
+                    if (spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits]) begin
+                        sd_init_trigger <= !sd_init_trigger;
+                    end
+
+                    sd_init_en_ <= !spi_msgArg[`Msg_Arg_SDInit_En_Bits];
+                end
+
+                // Clock out SD command
+                `Msg_Type_SDSendCmd: begin
+                    $display("[SPI] Got Msg_Type_SDSendCmd [respType:%0b]", spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]);
+                    // Reset spi_sdCmdDone_ / spi_sdRespDone_ / spi_sdDatInDone_
+                    if (!spi_sdCmdDone_) spi_sdCmdDoneAck <= !spi_sdCmdDoneAck;
+
+                    if (!spi_sdRespDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]!==`Msg_Arg_SDSendCmd_RespType_None)
+                        spi_sdRespDoneAck <= !spi_sdRespDoneAck;
+
+                    if (!spi_sdDatInDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits]!==`Msg_Arg_SDSendCmd_DatInType_None)
+                        spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
+
+                    case (spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits])
+                    `Msg_Arg_SDSendCmd_RespType_None:   sd_cmd_respType <= `SDController_RespType_None;
+                    `Msg_Arg_SDSendCmd_RespType_48:     sd_cmd_respType <= `SDController_RespType_48;
+                    `Msg_Arg_SDSendCmd_RespType_136:    sd_cmd_respType <= `SDController_RespType_136;
+                    endcase
+
+                    case (spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
+                    `Msg_Arg_SDSendCmd_DatInType_None:  sd_cmd_datInType <= `SDController_DatInType_None;
+                    `Msg_Arg_SDSendCmd_DatInType_512:   sd_cmd_datInType <= `SDController_DatInType_512;
+                    endcase
+
+                    sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
+                    sd_cmd_trigger <= !sd_cmd_trigger;
+                end
+
+                // Get SD status / response
+                `Msg_Type_SDGetStatus: begin
+                    $display("[SPI] Got Msg_Type_SDGetStatus");
+                    spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits] <= !spi_sdCmdDone_;
+                    spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits] <= !spi_sdRespDone_;
+                        spi_resp[`Resp_Arg_SDGetStatus_RespCRCErr_Bits] <= sd_resp_crcErr;
+                    spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits] <= !spi_sdDatOutDone_;
+                        spi_resp[`Resp_Arg_SDGetStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
+                    spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
+                        spi_resp[`Resp_Arg_SDGetStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;
+                        spi_resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits] <= sd_datIn_cmd6AccessMode;
+                    spi_resp[`Resp_Arg_SDGetStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
+                    spi_resp[`Resp_Arg_SDGetStatus_Resp_Bits] <= sd_resp_data;
+                end
                 
                 `Msg_Type_ImgReset: begin
                     $display("[SPI] Got Msg_Type_ImgReset (rst=%b)", spi_msgArg[`Msg_Arg_ImgReset_Val_Bits]);
@@ -554,8 +546,10 @@ module Top(
                 
                 `Msg_Type_ImgReadout: begin
                     $display("[SPI] Got Msg_Type_ImgReadout");
-                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_SrcBlock_Bits];
-                    spi_state <= SPI_State_DebugReadout;
+                    // Reset spi_sdDatOutDone_
+                    if (!spi_sdDatOutDone_) spi_sdDatOutDoneAck <= !spi_sdDatOutDoneAck;
+                    // Start SD DatOut
+                    sd_datOut_start <= !sd_datOut_start;
                 end
                 
                 `Msg_Type_ImgI2CTransaction: begin
@@ -596,19 +590,6 @@ module Top(
             SPI_State_RespOut: begin
                 spi_dataOutEn <= 1;
                 if (!spi_dataCounter) begin
-                    spi_state <= SPI_State_MsgIn;
-                end
-            end
-            
-            SPI_State_DebugReadout: begin
-                debug_readoutTrigger <= 1;
-                
-                if (imgctrl_readout_ready) begin
-                    if (debug_readoutTrigger) begin
-                        $display("[SPI] Readout data (%b %b): 0x%x", imgctrl_readout_ready, debug_readoutTrigger, imgctrl_readout_data);
-                    end
-                end else begin
-                    $display("[SPI] Readout done");
                     spi_state <= SPI_State_MsgIn;
                 end
             end
@@ -680,11 +661,11 @@ module Testbench();
     
     Top Top(.*);
     
-    // SDCardSim SDCardSim(
-    //     .sd_clk(sd_clk),
-    //     .sd_cmd(sd_cmd),
-    //     .sd_dat(sd_dat)
-    // );
+    SDCardSim SDCardSim(
+        .sd_clk(sd_clk),
+        .sd_cmd(sd_cmd),
+        .sd_dat(sd_dat)
+    );
     
     localparam ImageWidth = 32;
     localparam ImageHeight = 4;
@@ -892,15 +873,18 @@ module Testbench();
         
         // Wait for SD command to be sent
         done = 0;
-        for (i=0; i<10 && !done; i++) begin
+        for (i=0; i<100 && !done; i++) begin
             // Request SD status
             SendMsg(`Msg_Type_SDGetStatus, 0);
-            
             // We're done when the SD command is sent
             done = spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits];
             // If a response is expected, we're done when the response is received
             if (respType !== `Msg_Arg_SDSendCmd_RespType_None) done &= spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits];
             if (datInType !== `Msg_Arg_SDSendCmd_DatInType_None) done &= spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits];
+            
+            // // Our clock is much faster than the SD slow clock (16 MHz vs .4 MHz),
+            // // so wait a bit before asking for the status again
+            // #(50_000);
         end
         
         if (!done) begin
@@ -933,13 +917,17 @@ module Testbench();
         
         $display("\n[Testbench] ========== TestSDInit ==========");
         
-        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off,  0, 1); // Disable SD clock, InitMode=enabled
-        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // SD clock = slow clock, InitMode=enabled
+        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off,  0, 1); // Clock=off,  InitMode=enabled
+        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // Clock=slow, InitMode=enabled
         // <-- Turn on power to SD card
-        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 1, 1); // Trigger SDController init state machine
+        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 1, 1); // InitMode=enabled,trigger
         // Wait 5ms
-        #5000000;
-        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 0); // SDController InitMode=disabled
+        $display("[Testbench] Waiting 5ms...");
+        // TODO: switch back to 5ms, it takes forever though
+        #(50_000); // 50us
+        // #(5_000_000);    // 5ms
+        $display("[Testbench] 5ms elapsed");
+        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 0); // InitMode=disabled
         
         // // Wait for SD init to be complete
         // done = 0;
@@ -983,42 +971,42 @@ module Testbench();
         end
     end endtask
     
-    // task TestSDDatOut; begin
-    //     // ====================
-    //     // Test writing data to SD card / DatOut
-    //     // ====================
-    //     
-    //     $display("\n========== TestSDDatOut ==========");
-    //     
-    //     // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-    //     SendSDCmdResp(CMD55, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
-    //     SendSDCmdResp(ACMD23, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b1);
-    //
-    //     // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-    //     SendSDCmdResp(CMD25, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
-    //
-    //     // Clock out data on DAT lines
-    //     SendMsg(`Msg_Type_PixReadout, 0);
-    //
-    //     // Wait until we're done clocking out data on DAT lines
-    //     $display("[Testbench] Waiting while data is written...");
-    //     do begin
-    //         // Request SD status
-    //         SendMsg(`Msg_Type_SDGetStatus, 0);
-    //     end while(!resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits]);
-    //     $display("[Testbench] Done writing (SD resp: %b)", resp[`Resp_Arg_SDGetStatus_Resp_Bits]);
-    //
-    //     // Check CRC status
-    //     if (resp[`Resp_Arg_SDGetStatus_DatOutCRCErr_Bits] === 1'b0) begin
-    //         $display("[Testbench] DatOut CRC OK ✅");
-    //     end else begin
-    //         $display("[Testbench] DatOut CRC bad ❌");
-    //         `Finish;
-    //     end
-    //
-    //     // Stop transmission
-    //     SendSDCmdResp(CMD12, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
-    // end endtask
+    task TestSDDatOut; begin
+        // ====================
+        // Test writing data to SD card / DatOut
+        // ====================
+        
+        $display("\n========== TestSDDatOut ==========");
+        
+        // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
+        SendSDCmdResp(CMD55, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
+        SendSDCmdResp(ACMD23, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b1);
+        
+        // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
+        SendSDCmdResp(CMD25, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
+        
+        // Clock out data on DAT lines
+        TestImgReadout();
+        
+        // Wait until we're done clocking out data on DAT lines
+        $display("[Testbench] Waiting while data is written...");
+        do begin
+            // Request SD status
+            SendMsg(`Msg_Type_SDGetStatus, 0);
+        end while(!spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits]);
+        $display("[Testbench] Done writing (SD resp: %b)", spi_resp[`Resp_Arg_SDGetStatus_Resp_Bits]);
+        
+        // Check CRC status
+        if (spi_resp[`Resp_Arg_SDGetStatus_DatOutCRCErr_Bits] === 1'b0) begin
+            $display("[Testbench] DatOut CRC OK ✅");
+        end else begin
+            $display("[Testbench] DatOut CRC bad ❌");
+            `Finish;
+        end
+        
+        // Stop transmission
+        SendSDCmdResp(CMD12, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
+    end endtask
 
     task TestSDDatIn; begin
         // ====================
@@ -1237,14 +1225,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestImgReadout ==========");
         
         arg = 0;
-        arg[`Msg_Arg_ImgReadout_SrcBlock_Bits] = 0;
         SendMsg(`Msg_Type_ImgReadout, arg);
-        
-        // Supply clocks forever
-        forever begin
-            SendMsg(`Msg_Type_Nop, 56'hFFFFFFFFFFFFFF);
-        end
-        
     end endtask
     
     task TestImgI2CWriteRead; begin
@@ -1407,26 +1388,28 @@ module Testbench();
         // TestNop();
         // TestRst();
         
-        // TestSDInit();
-        //
-        // TestSDCMD0();
-        // TestSDCMD8();
-        // // TestSDDatOut();
+        // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
+        TestImgReset();
+        TestImgCapture();
+        // TestImgReadout();
+        
+        TestSDInit();
+        
+        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off, 0, 0);
+        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Fast, 0, 0);
+        
+        TestSDCMD0();
+        TestSDCMD8();
+        TestSDDatOut();
         // TestSDCMD2();
         // TestSDDatIn();
         // TestSDRespRecovery();
         // // TestSDDatOutRecovery();
         // TestSDDatInRecovery();
         
-        // // Do Pix stuff before SD stuff, so that the RAM is populated with an image, so that
-        // // the RAM has valid content for when we do the readout to write to the SD card.
-        TestImgReset();
-        TestImgCapture();
-        TestImgReadout();
-        
         // TestImgI2CWriteRead();
         
-        // `Finish;
+        `Finish;
     end
 endmodule
 `endif

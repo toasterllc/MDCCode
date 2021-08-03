@@ -165,13 +165,13 @@ module SDCardSim(
         lvsinit_pulseEndTimePs = $time;
         
         if (lvsinit_sdCmd===1'b0 && lvsinit_sdDat===4'b0 && (lvsinit_pulseEndTimePs-lvsinit_pulseBeginTimePs)>10000000) begin
-            $display("[SDCardSim] LVS init succeeded [ sd_cmd: %b, sd_dat: %b, duration (ns): %0d ] ✅",
+            $display("[SDCardSim] LVS init succeeded [ sd_cmd: %b, sd_dat: %b, pulse duration (ns): %0d ] ✅",
                 lvsinit_sdCmd,
                 lvsinit_sdDat,
                 (lvsinit_pulseEndTimePs-lvsinit_pulseBeginTimePs)/1000
             );
         end else begin
-            $display("[SDCardSim] LVS init failed [ sd_cmd: %b, sd_dat: %b, duration (ns): %0d ] ❌",
+            $display("[SDCardSim] LVS init failed [ sd_cmd: %b, sd_dat: %b, pulse duration (ns): %0d ] ❌",
                 lvsinit_sdCmd,
                 lvsinit_sdDat,
                 (lvsinit_pulseEndTimePs-lvsinit_pulseBeginTimePs)/1000
@@ -183,14 +183,14 @@ module SDCardSim(
         wait(sd_clk);
         
         if ($time-lvsinit_pulseEndTimePs >= Duration5Ms) begin
-            $display("[SDCardSim] First sd_clk after LVS init occurred after more than 5ms (%0d us) ✅",
+            $display("[SDCardSim] First sd_clk after LVS init occurred after more than 5ms (elapsed: %0d us) ✅",
                 ($time-lvsinit_pulseEndTimePs)/1000000
             );
         end else begin
-            $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (%0d us) ❌",
+            $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us) ❌",
                 ($time-lvsinit_pulseEndTimePs)/1000000
             );
-            `Finish;
+            // `Finish;
         end
         
         forever begin
