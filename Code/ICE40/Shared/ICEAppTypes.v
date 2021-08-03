@@ -76,9 +76,6 @@
 `define     Resp_Arg_ImgCaptureStatus_ShadowCount_Bits          20:3
 
 `define Msg_Type_ImgReadout                                     `Msg_Type_Len'h08
-`define     Msg_Arg_ImgReadout_Counter_Len                      16
-`define     Msg_Arg_ImgReadout_Counter_Bits                     31:16
-`define     Msg_Arg_ImgReadout_CaptureNext_Bits                 3:3
 `define     Msg_Arg_ImgReadout_SrcBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
 `define Msg_Type_ImgI2CTransaction                              `Msg_Type_Len'h09
@@ -94,7 +91,7 @@
 `define     Resp_Arg_ImgI2CStatus_Err_Bits                      62:62
 `define     Resp_Arg_ImgI2CStatus_ReadData_Bits                 61:46
 
-`define Msg_Type_NoOp                                           `Msg_Type_Len'hFF
+`define Msg_Type_Nop                                            `Msg_Type_Len'hFF
 
 localparam ImageWidthMax = 2304;
 localparam ImageHeightMax = 1296+2; // +2 rows for embedded statistics (histogram)

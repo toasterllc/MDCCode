@@ -390,6 +390,17 @@ module Top(
     reg spi_dataOutEn = 0;
     wire spi_dataIn;
     
+    // wire                                imgctrl_readout_clk;
+    // wire                                imgctrl_readout_ready;
+    // wire                                imgctrl_readout_trigger;
+    // wire[15:0]                          imgctrl_readout_data;
+    
+    // TODO: remove
+    assign imgctrl_readout_clk = spi_clk;
+    reg debug_readoutTrigger = 0;
+    assign imgctrl_readout_trigger = debug_readoutTrigger;
+    
+    
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
     localparam SPI_State_DebugReadout = 4;    // +0 TODO: remove
@@ -409,6 +420,8 @@ module Top(
             spi_dataOutEn <= 0;
             spi_resp <= spi_resp<<1|1'b1;
             spi_dataOut <= `LeftBit(spi_resp, 0);
+            
+            debug_readoutTrigger <= 0; // Remove
             
             case (spi_state)
             SPI_State_MsgIn: begin
@@ -546,15 +559,8 @@ module Top(
                 
                 `Msg_Type_ImgReadout: begin
                     $display("[SPI] Got Msg_Type_ImgReadout");
+                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_SrcBlock_Bits];
                     spi_state <= SPI_State_DebugReadout;
-                    
-                    // // Reset `spi_imgReadoutStarted` if it's asserted
-                    // if (spi_imgReadoutStarted) spi_imgReadoutStartedAck <= !spi_imgReadoutStartedAck;
-                    //
-                    // spi_imgReadoutCounter <= spi_msgArg[`Msg_Arg_ImgReadout_Counter_Bits];
-                    // spi_imgReadoutCaptureNext <= spi_msgArg[`Msg_Arg_ImgReadout_CaptureNext_Bits];
-                    // spi_imgReadoutDone <= 0;
-                    // spi_state <= SPI_State_ImgOut;
                 end
                 
                 `Msg_Type_ImgI2CTransaction: begin
@@ -581,7 +587,7 @@ module Top(
                     spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits] <= imgi2c_status_readData;
                 end
                 
-                `Msg_Type_NoOp: begin
+                `Msg_Type_Nop: begin
                     $display("[SPI] Got Msg_Type_None");
                 end
                 
@@ -599,19 +605,21 @@ module Top(
                 end
             end
             
-    // wire                                imgctrl_readout_clk;
-    // wire                                imgctrl_readout_ready;
-    // wire                                imgctrl_readout_trigger;
-    // wire[15:0]                          imgctrl_readout_data;
-            
             SPI_State_DebugReadout: begin
+                debug_readoutTrigger <= 1;
                 
+                if (imgctrl_readout_ready) begin
+                    if (debug_readoutTrigger) begin
+                        $display("[SPI] Readout data (%b %b): 0x%x", imgctrl_readout_ready, debug_readoutTrigger, imgctrl_readout_data);
+                    end
+                end else begin
+                    // $display("[SPI] Readout done");
+                    // spi_state <= SPI_State_MsgIn;
+                end
             end
             endcase
         end
     end
-    
-    // TODO: remove
     
     // ====================
     // Pin: ice_msp_spi_data
@@ -699,6 +707,19 @@ module Testbench();
     ImgI2CSlaveSim ImgI2CSlaveSim(
         .i2c_clk(img_sclk),
         .i2c_data(img_sdata)
+    );
+    
+    mobile_sdr mobile_sdr(
+        .clk(ram_clk),
+        .cke(ram_cke),
+        .addr(ram_a),
+        .ba(ram_ba),
+        .cs_n(ram_cs_),
+        .ras_n(ram_ras_),
+        .cas_n(ram_cas_),
+        .we_n(ram_we_),
+        .dq(ram_dq),
+        .dqm(ram_dqm)
     );
     
     initial begin
@@ -790,9 +811,9 @@ module Testbench();
         
     end endtask
     
-    task TestNoOp; begin
-        $display("\n[Testbench] ========== TestNoOp ==========");
-        SendMsg(`Msg_Type_NoOp, 56'hFFFFFFFFFFFFFF);
+    task TestNop; begin
+        $display("\n[Testbench] ========== TestNop ==========");
+        SendMsg(`Msg_Type_Nop, 56'hFFFFFFFFFFFFFF);
         if (spi_resp === 64'hxxxxxxxxxxxxxxxx) begin
             $display("[Testbench] Response OK: %h ✅", spi_resp);
         end else begin
@@ -1198,12 +1219,27 @@ module Testbench();
             // Request Img status
             SendMsg(`Msg_Type_ImgCaptureStatus, 0);
         end while(!spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits]);
-        $display("[Testbench] Capture ready ✅ (image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
+        $display("[Testbench] Capture done ✅ (image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
             spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits],
         );
+    end endtask
+    
+    task TestImgReadout; begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        $display("\n[Testbench] ========== TestImgReadout ==========");
+        
+        arg = 0;
+        arg[`Msg_Arg_ImgReadout_SrcBlock_Bits] = 0;
+        SendMsg(`Msg_Type_ImgReadout, arg);
+        
+        // Supply clocks forever
+        forever begin
+            SendMsg(`Msg_Type_Nop, 56'hFFFFFFFFFFFFFF);
+        end
+        
     end endtask
     
     task TestImgI2CWriteRead; begin
@@ -1353,12 +1389,12 @@ module Testbench();
         ice_msp_spi_clk = 0;
         
         // TestRst();
-        // TestNoOp();
+        // TestNop();
         // TestEcho(56'hCAFEBABEFEEDAA);
         // TestLEDSet(4'b1010);
         // TestLEDSet(4'b0101);
         // TestEcho(56'h123456789ABCDE);
-        // TestNoOp();
+        // TestNop();
         // TestRst();
         
         // TestSDInit();
@@ -1376,9 +1412,11 @@ module Testbench();
         // // the RAM has valid content for when we do the readout to write to the SD card.
         TestImgReset();
         TestImgCapture();
+        TestImgReadout();
+        
         // TestImgI2CWriteRead();
         
-        `Finish;
+        // `Finish;
     end
 endmodule
 `endif

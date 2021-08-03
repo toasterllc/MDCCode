@@ -314,8 +314,8 @@ module ImgController #(
     
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +3
-    localparam Ctrl_State_Readout   = 5; // +1
-    localparam Ctrl_State_Count     = 7;
+    localparam Ctrl_State_Readout   = 5; // +2
+    localparam Ctrl_State_Count     = 8;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -389,8 +389,8 @@ module ImgController #(
             // Reset output FIFO
             fifoOut_rst <= 1;
             // Reset readout state
-            ctrl_readoutX <= 0;
-            ctrl_readoutY <= 0;
+            ctrl_readoutX <= 1;
+            ctrl_readoutY <= 1;
             ctrl_state <= Ctrl_State_Readout+1;
         end
         
@@ -405,15 +405,18 @@ module ImgController #(
         Ctrl_State_Readout+2: begin
             // TODO: pipeline `fifoOut_write_ready && fifoOut_write_trigger`
             if (fifoOut_write_ready && fifoOut_write_trigger) begin
+                $display("ctrl_readoutX / ctrl_readoutY: %0d", ctrl_readoutX, ctrl_readoutY);
+                
                 if (ctrl_readoutX !== ctrl_imageWidth) begin
                     ctrl_readoutX <= ctrl_readoutX+1;
                 
                 end else begin
                     if (ctrl_readoutY !== ctrl_imageHeight) begin
-                        ctrl_readoutX <= 0;
+                        ctrl_readoutX <= 1;
                         ctrl_readoutY <= ctrl_readoutY+1;
                     
                     end else begin
+                        ramctrl_cmd <= `RAMController_Cmd_Stop;
                         ctrl_state <= Ctrl_State_Idle;
                     end
                 end
