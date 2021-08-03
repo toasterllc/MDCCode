@@ -80,9 +80,9 @@ static void _sysInit() {
 }
 
 static void _spiInit() {
-    // Reset the ICE40 SPI state machine by asserting ice_msp_spi_clk for 10us
+    // Reset the ICE40 SPI state machine by asserting ice_msp_spi_clk for some period
     {
-        constexpr uint64_t ICE40SPIResetDurationUs = 10;
+        constexpr uint64_t ICE40SPIResetDurationUs = 18;
         
         // PA.6 = GPIO output
         PAOUT  &= ~BIT6;
