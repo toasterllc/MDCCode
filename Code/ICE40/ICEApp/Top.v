@@ -59,7 +59,7 @@ module Top(
     // ====================
     // spi_clk
     // ====================
-    wire spi_clk = ice_msp_spi_clk;
+    wire spi_clk;
     
     
     
@@ -597,9 +597,36 @@ module Top(
         end
     end
     
+    
     // ====================
-    // Pin: ice_msp_spi_data
+    // Pin: ice_msp_spi_clk
     // ====================
+    SB_IO #(
+        .PIN_TYPE(6'b0000_01), // Output: none; input: unregistered
+        .PULLUP(1'b1)
+    ) SB_IO_ice_msp_spi_clk (
+        .PACKAGE_PIN(ice_msp_spi_clk),
+        .OUTPUT_ENABLE(spi_dataOutEn),
+        .D_IN_0(spi_clk)
+    );
+    
+    // // ====================
+    // // Pin: ice_msp_spi_data
+    // // ====================
+    // SB_IO #(
+    //     .PIN_TYPE(6'b1010_01), // Output: tristate; input: unregistered
+    //     .PULLUP(1'b1)
+    // ) SB_IO_ice_msp_spi_data (
+    //     .PACKAGE_PIN(ice_msp_spi_data),
+    //     .OUTPUT_ENABLE(spi_dataOutEn),
+    //     .D_OUT_0(spi_dataOut),
+    //     .D_IN_0(spi_dataIn)
+    // );
+    
+    // TODO: ideally we'd use the SB_IO definition below for `ice_msp_spi_data`, but we can't because
+    // TODO: Rev4's `ice_msp_spi_data` net (pin K1), is a PIO pair with `ram_dq[15]` (pin J1), which
+    // TODO: means they both have to use the same clock.
+    // TODO: since ice_msp_spi_data is relatively low speed (16 MHz), for now we just won't register it.
     SB_IO #(
         .PIN_TYPE(6'b1101_00),
         .PULLUP(1'b1)
