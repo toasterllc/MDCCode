@@ -8,9 +8,16 @@
 `include "ImgI2CMaster.v"
 
 `ifdef SIM
+// SDCARDSIM_LVS_IGNORE_5MS: Don't require waiting for 5ms, because that takes way too long in simulation
+`define SDCARDSIM_LVS_IGNORE_5MS
 `include "SDCardSim.v"
+
 `include "ImgSim.v"
 `include "ImgI2CSlaveSim.v"
+
+// MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
+// beyond the image that's written to the RAM, and we don't want to read x (don't care)
+`define MOBILE_SDR_INIT_VAL 16'hCAFE
 `include "mt48h32m16lf/mobile_sdr.v"
 `endif
 
@@ -452,21 +459,21 @@ module Top(
                         spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits],
                         spi_msgArg[`Msg_Arg_SDInit_En_Bits],
                     );
-
+                    
                     // We don't need to synchronize `sd_clk_delay` into the sd_ domain,
                     // because it should only be set while the sd_ clock is disabled.
                     sd_init_clk_delay <= spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits];
-
+                    
                     case (spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits])
                     `Msg_Arg_SDInit_Clk_Speed_Off:  sd_init_clk_speed <= `SDController_Init_Clk_Speed_Off;
                     `Msg_Arg_SDInit_Clk_Speed_Slow: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Slow;
                     `Msg_Arg_SDInit_Clk_Speed_Fast: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Fast;
                     endcase
-
+                    
                     if (spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits]) begin
                         sd_init_trigger <= !sd_init_trigger;
                     end
-
+                    
                     sd_init_en_ <= !spi_msgArg[`Msg_Arg_SDInit_En_Bits];
                 end
 
@@ -475,28 +482,28 @@ module Top(
                     $display("[SPI] Got Msg_Type_SDSendCmd [respType:%0b]", spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]);
                     // Reset spi_sdCmdDone_ / spi_sdRespDone_ / spi_sdDatInDone_
                     if (!spi_sdCmdDone_) spi_sdCmdDoneAck <= !spi_sdCmdDoneAck;
-
+                    
                     if (!spi_sdRespDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]!==`Msg_Arg_SDSendCmd_RespType_None)
                         spi_sdRespDoneAck <= !spi_sdRespDoneAck;
-
+                    
                     if (!spi_sdDatInDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits]!==`Msg_Arg_SDSendCmd_DatInType_None)
                         spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
-
+                    
                     case (spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits])
                     `Msg_Arg_SDSendCmd_RespType_None:   sd_cmd_respType <= `SDController_RespType_None;
                     `Msg_Arg_SDSendCmd_RespType_48:     sd_cmd_respType <= `SDController_RespType_48;
                     `Msg_Arg_SDSendCmd_RespType_136:    sd_cmd_respType <= `SDController_RespType_136;
                     endcase
-
+                    
                     case (spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
                     `Msg_Arg_SDSendCmd_DatInType_None:  sd_cmd_datInType <= `SDController_DatInType_None;
                     `Msg_Arg_SDSendCmd_DatInType_512:   sd_cmd_datInType <= `SDController_DatInType_512;
                     endcase
-
+                    
                     sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
                     sd_cmd_trigger <= !sd_cmd_trigger;
                 end
-
+                
                 // Get SD status / response
                 `Msg_Type_SDGetStatus: begin
                     $display("[SPI] Got Msg_Type_SDGetStatus");
@@ -526,6 +533,7 @@ module Top(
                 end
                 
                 `Msg_Type_ImgCaptureStatus: begin
+                    $display("[SPI] Got Msg_Type_ImgCaptureStatus");
                     spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= !spi_imgCaptureDone_;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits] <= imgctrl_status_captureImageWidth;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits] <= imgctrl_status_captureImageHeight;
@@ -605,7 +613,6 @@ module Top(
         .PIN_TYPE(6'b0000_01) // Output: none; input: unregistered
     ) SB_IO_ice_msp_spi_clk (
         .PACKAGE_PIN(ice_msp_spi_clk),
-        .OUTPUT_ENABLE(spi_dataOutEn),
         .D_IN_0(spi_clk)
     );
     
@@ -613,14 +620,22 @@ module Top(
     // Pin: ice_msp_spi_data
     // ====================
     SB_IO #(
-        .PIN_TYPE(6'b1010_01), // Output: tristate; input: unregistered
-        .PULLUP(1'b1)
+        .PIN_TYPE(6'b1010_01) // Output: tristate; input: unregistered
     ) SB_IO_ice_msp_spi_data (
         .PACKAGE_PIN(ice_msp_spi_data),
         .OUTPUT_ENABLE(spi_dataOutEn),
         .D_OUT_0(spi_dataOut),
         .D_IN_0(spi_dataIn)
     );
+    
+`ifdef SIM
+    // Sim workaround: for some reason `spi_dataOut` has to be assigned to something non-0
+    // before it will drive a 0, otherwise it drives an x.
+    initial begin
+        spi_dataOut = 1'bz;
+        spi_dataOut = 1'b0;
+    end
+`endif
     
     // // TODO: ideally we'd use the SB_IO definition below for `ice_msp_spi_data`, but we can't because
     // // TODO: Rev4's `ice_msp_spi_data` net (pin K1), is a PIO pair with `ram_dq[15]` (pin J1), which
@@ -692,8 +707,8 @@ module Testbench();
         .sd_dat(sd_dat)
     );
     
-    localparam ImageWidth = 32;
-    localparam ImageHeight = 4;
+    localparam ImageWidth = 64;
+    localparam ImageHeight = 32;
     ImgSim #(
         .ImageWidth(ImageWidth),
         .ImageHeight(ImageHeight)
@@ -947,12 +962,18 @@ module Testbench();
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // Clock=slow, InitMode=enabled
         // <-- Turn on power to SD card
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 1, 1); // InitMode=enabled,trigger
+        
+`ifdef SDCARDSIM_LVS_IGNORE_5MS
+        // Wait 50us, because waiting 5ms takes forever in simulation
+        $display("[Testbench] Waiting 50us (and pretending it's 5ms)...");
+        #(50_000);
+`else
         // Wait 5ms
         $display("[Testbench] Waiting 5ms...");
-        // TODO: switch back to 5ms, it takes forever though
-        #(50_000); // 50us
-        // #(5_000_000);    // 5ms
+        #(5_000_000);
+`endif
         $display("[Testbench] 5ms elapsed");
+        
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 0); // InitMode=disabled
         
         // // Wait for SD init to be complete
@@ -1238,7 +1259,8 @@ module Testbench();
             // Request Img status
             SendMsg(`Msg_Type_ImgCaptureStatus, 0);
         end while(!spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits]);
-        $display("[Testbench] Capture done ✅ (image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
+        $display("[Testbench] Capture done ✅ (done:%b image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
+            spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits],
@@ -1397,7 +1419,7 @@ module Testbench();
     
     initial begin
         // Set our initial state
-        spi_dataOutReg = ~0;
+        spi_dataOutReg = 0;
         spi_dataOutEn = 0;
         
         // Pulse the clock to get SB_IO initialized
@@ -1405,26 +1427,24 @@ module Testbench();
         #1;
         ice_msp_spi_clk = 0;
         
-        // TestRst();
-        // TestNop();
-        // TestEcho(56'hCAFEBABEFEEDAA);
-        // TestLEDSet(4'b1010);
-        // TestLEDSet(4'b0101);
-        // TestEcho(56'h123456789ABCDE);
-        // TestNop();
-        // TestRst();
-        // `Finish;
+        TestRst();
+        TestEcho(56'h00000000000000);
+        TestEcho(56'hCAFEBABEFEEDAA);
+        TestNop();
+        TestEcho(56'hCAFEBABEFEEDAA);
+        TestLEDSet(4'b1010);
+        TestLEDSet(4'b0101);
+        TestEcho(56'h123456789ABCDE);
+        TestNop();
+        TestRst();
         
         // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
         TestImgReset();
         TestImgCapture();
-        // TestImgReadout();
-
+        
         TestSDInit();
-
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off, 0, 0);
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Fast, 0, 0);
-
         TestSDCMD0();
         TestSDCMD8();
         TestSDDatOut();
