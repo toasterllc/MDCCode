@@ -58,7 +58,7 @@ struct Resp {
 
 struct EchoMsg : Msg {
     EchoMsg(const char* msg) {
-        type = 0x00;
+        type = 0x80;
         memcpy(payload, msg, std::min(sizeof(payload), strlen(msg)));
     }
 };
@@ -80,7 +80,7 @@ struct EchoResp : Resp {
 
 struct LEDSetMsg : Msg {
     LEDSetMsg(uint8_t val) {
-        type = 0x01;
+        type = 0x81;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -110,7 +110,7 @@ struct SDInitMsg : Msg {
     
     SDInitMsg(State state, Trigger trigger, ClkSpeed speed, uint8_t clkDelay) {
         AssertArg((clkDelay&0xF) == clkDelay); // Ensure delay fits in 4 bits
-        type = 0x02;
+        type = 0x82;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -138,7 +138,7 @@ struct SDSendCmdMsg : Msg {
     
     SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, RespType respType, DatInType datInType) {
         AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
-        type = 0x03;
+        type = 0x83;
         payload[0] = (respType<<1)|datInType;
         payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
         payload[2] = (sdArg&0xFF000000)>>24;
@@ -151,7 +151,7 @@ struct SDSendCmdMsg : Msg {
 
 struct SDGetStatusMsg : Msg {
     SDGetStatusMsg() {
-        type = 0x04;
+        type = 0x84;
     }
 };
 
@@ -191,7 +191,7 @@ private:
 
 struct ImgResetMsg : Msg {
     ImgResetMsg(bool val) {
-        type = 0x05;
+        type = 0x85;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -204,7 +204,7 @@ struct ImgResetMsg : Msg {
 
 struct ImgCaptureMsg : Msg {
     ImgCaptureMsg(uint8_t dstBlock) {
-        type = 0x06;
+        type = 0x86;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -217,7 +217,7 @@ struct ImgCaptureMsg : Msg {
 
 struct ImgCaptureStatusMsg : Msg {
     ImgCaptureStatusMsg() {
-        type = 0x07;
+        type = 0x87;
     }
 };
 
@@ -240,7 +240,7 @@ struct ImgReadoutMsg : Msg {
         // Put the burden of this calculation on the STM32,
         // to improve the performance of the ICE40 Verilog.
         const uint16_t counter = (wordCount-1)*2;
-        type = 0x08;
+        type = 0x88;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -254,7 +254,7 @@ struct ImgReadoutMsg : Msg {
 struct ImgI2CTransactionMsg : Msg {
     ImgI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) {
         Assert(len==1 || len==2);
-        type = 0x09;
+        type = 0x89;
         payload[0] = (write ? 0x80 : 0) | (len==2 ? 0x40 : 0);
         payload[1] = 0;
         payload[2] = 0;
@@ -267,7 +267,7 @@ struct ImgI2CTransactionMsg : Msg {
 
 struct ImgI2CStatusMsg : Msg {
     ImgI2CStatusMsg() {
-        type = 0x0A;
+        type = 0x8A;
     }
 };
 
@@ -279,7 +279,7 @@ struct ImgI2CStatusResp : Resp {
 
 struct NopMsg : Msg {
     NopMsg(uint8_t val) {
-        type = 0xFF;
+        type = 0x00;
         payload[0] = 0xFF;
         payload[1] = 0xFF;
         payload[2] = 0xFF;

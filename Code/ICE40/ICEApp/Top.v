@@ -376,7 +376,7 @@ module Top(
     
     // SPI control nets
     localparam TurnaroundDelay = 8;
-    localparam TurnaroundInherentDelay = 4;
+    localparam TurnaroundInherentDelay = 2; // TODO: =4 when `SB_IO_ice_msp_spi_data` registers the input
     localparam TurnaroundExtraDelay = TurnaroundDelay-TurnaroundInherentDelay;
     localparam MsgCycleCount = `Msg_Len+TurnaroundExtraDelay-2;
     localparam RespCycleCount = `Resp_Len-1;
@@ -407,13 +407,13 @@ module Top(
             spi_dataInReg <= spi_dataInReg<<1|`LeftBit(spi_dataInDelayed,0);
             spi_dataCounter <= spi_dataCounter-1;
             spi_dataOutEn <= 0;
-            spi_resp <= spi_resp<<1|1'b1;
+            spi_resp <= spi_resp<<1|1'b0;
             spi_dataOut <= `LeftBit(spi_resp, 0);
             
             case (spi_state)
             SPI_State_MsgIn: begin
-                // Wait for the start of the message, signified by the first 0 bit
-                if (!spi_dataIn) begin
+                // Wait for the start of the message, signified by the first high bit
+                if (spi_dataIn) begin
                     spi_dataCounter <= MsgCycleCount;
                     spi_state <= SPI_State_MsgIn+1;
                 end
@@ -602,42 +602,40 @@ module Top(
     // Pin: ice_msp_spi_clk
     // ====================
     SB_IO #(
-        .PIN_TYPE(6'b0000_01), // Output: none; input: unregistered
-        .PULLUP(1'b1)
+        .PIN_TYPE(6'b0000_01) // Output: none; input: unregistered
     ) SB_IO_ice_msp_spi_clk (
         .PACKAGE_PIN(ice_msp_spi_clk),
         .OUTPUT_ENABLE(spi_dataOutEn),
         .D_IN_0(spi_clk)
     );
     
-    // // ====================
-    // // Pin: ice_msp_spi_data
-    // // ====================
-    // SB_IO #(
-    //     .PIN_TYPE(6'b1010_01), // Output: tristate; input: unregistered
-    //     .PULLUP(1'b1)
-    // ) SB_IO_ice_msp_spi_data (
-    //     .PACKAGE_PIN(ice_msp_spi_data),
-    //     .OUTPUT_ENABLE(spi_dataOutEn),
-    //     .D_OUT_0(spi_dataOut),
-    //     .D_IN_0(spi_dataIn)
-    // );
-    
-    // TODO: ideally we'd use the SB_IO definition below for `ice_msp_spi_data`, but we can't because
-    // TODO: Rev4's `ice_msp_spi_data` net (pin K1), is a PIO pair with `ram_dq[15]` (pin J1), which
-    // TODO: means they both have to use the same clock.
-    // TODO: since ice_msp_spi_data is relatively low speed (16 MHz), for now we just won't register it.
+    // ====================
+    // Pin: ice_msp_spi_data
+    // ====================
     SB_IO #(
-        .PIN_TYPE(6'b1101_00),
+        .PIN_TYPE(6'b1010_01), // Output: tristate; input: unregistered
         .PULLUP(1'b1)
     ) SB_IO_ice_msp_spi_data (
-        .INPUT_CLK(spi_clk),
-        .OUTPUT_CLK(spi_clk),
         .PACKAGE_PIN(ice_msp_spi_data),
         .OUTPUT_ENABLE(spi_dataOutEn),
         .D_OUT_0(spi_dataOut),
         .D_IN_0(spi_dataIn)
     );
+    
+    // // TODO: ideally we'd use the SB_IO definition below for `ice_msp_spi_data`, but we can't because
+    // // TODO: Rev4's `ice_msp_spi_data` net (pin K1), is a PIO pair with `ram_dq[15]` (pin J1), which
+    // // TODO: means they both have to use the same clock.
+    // // TODO: since ice_msp_spi_data is relatively low speed (16 MHz), for now we just won't register it.
+    // SB_IO #(
+    //     .PIN_TYPE(6'b1101_00)
+    // ) SB_IO_ice_msp_spi_data (
+    //     .INPUT_CLK(spi_clk),
+    //     .OUTPUT_CLK(spi_clk),
+    //     .PACKAGE_PIN(ice_msp_spi_data),
+    //     .OUTPUT_ENABLE(spi_dataOutEn),
+    //     .D_OUT_0(spi_dataOut),
+    //     .D_IN_0(spi_dataIn)
+    // );
     
 endmodule
 
@@ -789,34 +787,34 @@ module Testbench();
         
         $display("[Testbench] ice_msp_spi_clk = 0");
         ice_msp_spi_clk = 0;
-        #10000;
+        #20000;
         
         if (sim_rst_ === 1'b1) begin
             $display("[Testbench] sim_rst_ === 1'b1 ✅");
         end else begin
-            $display("[Testbench] sim_rst_ !== 1'b1 ❌");
+            $display("[Testbench] sim_rst_ !== 1'b1 ❌ (%b)", sim_rst_);
             `Finish;
         end
         
         $display("\n[Testbench] ice_msp_spi_clk = 1");
         ice_msp_spi_clk = 1;
-        #10000;
+        #20000;
         
         if (sim_rst_ === 1'b0) begin
             $display("[Testbench] sim_rst_ === 1'b0 ✅");
         end else begin
-            $display("[Testbench] sim_rst_ !== 1'b0 ❌");
+            $display("[Testbench] sim_rst_ !== 1'b0 ❌ (%b)", sim_rst_);
             `Finish;
         end
         
         $display("\n[Testbench] ice_msp_spi_clk = 0");
         ice_msp_spi_clk = 0;
-        #10000;
+        #20000;
         
         if (sim_rst_ === 1'b1) begin
             $display("[Testbench] sim_rst_ === 1'b1 ✅");
         end else begin
-            $display("[Testbench] sim_rst_ !== 1'b1 ❌");
+            $display("[Testbench] sim_rst_ !== 1'b1 ❌ (%b)", sim_rst_);
             `Finish;
         end
         
@@ -824,7 +822,7 @@ module Testbench();
     
     task TestNop; begin
         $display("\n[Testbench] ========== TestNop ==========");
-        SendMsg(`Msg_Type_Nop, 56'hFFFFFFFFFFFFFF);
+        SendMsg(`Msg_Type_Nop, 56'h00000000000000);
         if (spi_resp === 64'hxxxxxxxxxxxxxxxx) begin
             $display("[Testbench] Response OK: %h ✅", spi_resp);
         end else begin
@@ -852,6 +850,7 @@ module Testbench();
         reg[`Msg_Arg_Len-1:0] arg;
         
         $display("\n[Testbench] ========== TestLEDSet ==========");
+        arg = 0;
         arg[`Msg_Arg_LEDSet_Val_Bits] = val;
         
         SendMsg(`Msg_Type_LEDSet, arg);
@@ -1414,17 +1413,18 @@ module Testbench();
         // TestEcho(56'h123456789ABCDE);
         // TestNop();
         // TestRst();
+        // `Finish;
         
         // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
         TestImgReset();
         TestImgCapture();
         // TestImgReadout();
-        
+
         TestSDInit();
-        
+
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off, 0, 0);
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Fast, 0, 0);
-        
+
         TestSDCMD0();
         TestSDCMD8();
         TestSDDatOut();
@@ -1433,7 +1433,7 @@ module Testbench();
         // TestSDRespRecovery();
         // // TestSDDatOutRecovery();
         // TestSDDatInRecovery();
-        
+
         // TestImgI2CWriteRead();
         
         `Finish;
