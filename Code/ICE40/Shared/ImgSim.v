@@ -25,6 +25,7 @@ module ImgSim #(
         reg[31:0] i;
         reg[31:0] row;
         reg[31:0] col;
+        reg[31:0] pxCount;
         
         // Wait 16 cycles before starting the next frame
         img_fv = 0;
@@ -41,18 +42,22 @@ module ImgSim #(
             wait(!clk);
         end
         
+        pxCount = 0;
         for (row=0; row<ImageHeight; row=row+1) begin
             // $display("[ImgSim] Row %0d", row);
             // img_lv=1 (line start)
             // Output a row
             img_lv = 1;
             for (col=0; col<ImageWidth; col=col+1) begin
-                // Test histogram
-                if (!(row%4) && !(col%4)) begin
-                    img_d = 12'hFFF; // Highlight
-                end else begin
-                    img_d = 12'h000; // Shadow
-                end
+                img_d = pxCount;
+                pxCount = pxCount+1;
+                
+                // // Test histogram
+                // if (!(row%4) && !(col%4)) begin
+                //     img_d = 12'hFFF; // Highlight
+                // end else begin
+                //     img_d = 12'h000; // Shadow
+                // end
                 wait(clk);
                 wait(!clk);
             end
