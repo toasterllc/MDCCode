@@ -1,5 +1,13 @@
 - Rev5 Todo
     
+    - Consider moving ICE_MSP_SPI_DATA to K3
+        - On Rev4, ICE_MSP_SPI_DATA is assigned to K1, which is a PIO pair with J1,
+          forcing them to share the same clock. J1 is ram_dq[15], which uses `ram_clk`,
+          which clearly can't be used for ICE_MSP_SPI_DATA.
+          
+        - We can move ICE_MSP_SPI_DATA to K3 if we don't need ICE_MSP_SPI_AUX
+            - K3 doesn't share a PIO with anything -- it's independent
+    
     - Switch USB receptacle to USB-C
     
     - Make board left/right borders smaller
