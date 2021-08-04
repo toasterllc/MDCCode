@@ -4,13 +4,29 @@
 #include <inttypes.h>
 #include <cstddef>
 #include "ICE40.h"
-using namespace ICE40;
+
+using EchoMsg = ICE40::EchoMsg;
+using EchoResp = ICE40::EchoResp;
+using SDInitMsg = ICE40::SDInitMsg;
+using SDSendCmdMsg = ICE40::SDSendCmdMsg;
+using SDGetStatusMsg = ICE40::SDGetStatusMsg;
+using SDGetStatusResp = ICE40::SDGetStatusResp;
+using ImgResetMsg = ICE40::ImgResetMsg;
+using ImgCaptureMsg = ICE40::ImgCaptureMsg;
+using ImgReadoutMsg = ICE40::ImgReadoutMsg;
+using ImgI2CTransactionMsg = ICE40::ImgI2CTransactionMsg;
+using ImgI2CStatusMsg = ICE40::ImgI2CStatusMsg;
+using ImgI2CStatusResp = ICE40::ImgI2CStatusResp;
+using ImgCaptureStatusMsg = ICE40::ImgCaptureStatusMsg;
+using ImgCaptureStatusResp = ICE40::ImgCaptureStatusResp;
+
 using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
 using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
 
 constexpr uint64_t MCLKFreqHz = 16000000;
 
-#define _delay(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000);
+#define _delayUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000);
+#define _delayMs(ms) __delay_cycles((((uint64_t)ms)*MCLKFreqHz) / 1000);
 
 static void _clockInit() {
     constexpr uint32_t XT1FreqHz = 32768;
@@ -91,7 +107,7 @@ static void _spiInit() {
         PASEL0 &= ~BIT6;
         
         PAOUT  |=  BIT6;
-        _delay(ICE40SPIResetDurationUs);
+        _delayUs(ICE40SPIResetDurationUs);
         PAOUT  &= ~BIT6;
     }
     
@@ -150,7 +166,7 @@ static uint8_t _spiTxRx(uint8_t b) {
     return UCA0RXBUF;
 }
 
-static void _spiTxRx(const ICE40::Msg& msg, ICE40::Resp& resp) {
+static void _ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
     // PA.4 = UCA0SIMO
     PASEL1 &= ~BIT4;
     PASEL0 |=  BIT4;
@@ -179,19 +195,15 @@ static void _spiTxRx(const ICE40::Msg& msg, ICE40::Resp& resp) {
     }
 }
 
-template <typename T>
-static T _ice40Transfer(const ICE40::Msg& msg) {
-    T resp;
-    _spiTxRx(msg, resp);
-    return resp;
-}
-
 static void _ice40Transfer(const ICE40::Msg& msg) {
-    _ice40Transfer<ICE40::Resp>(msg);
+    ICE40::Resp resp;
+    _ice40Transfer(msg, resp);
 }
 
 SDGetStatusResp _sdGetStatus() {
-    return _ice40Transfer<SDGetStatusResp>(SDGetStatusMsg());
+    SDGetStatusResp resp;
+    _ice40Transfer(SDGetStatusMsg(), resp);
+    return resp;
 }
 
 SDGetStatusResp _sdSendCmd(
@@ -207,7 +219,7 @@ SDGetStatusResp _sdSendCmd(
     const uint32_t MaxAttempts = 1000;
     for (uint32_t i=0;; i++) {
         Assert(i < MaxAttempts); // TODO: improve error handling
-        if (i >= 10) _delay(1000);
+        if (i >= 10) _delayMs(1);
         auto status = _sdGetStatus();
         // Continue if the command hasn't been sent yet
         if (!status.sdCmdDone()) continue;
@@ -230,52 +242,13 @@ void _sdSetPowerEnabled(bool en) {
     }
 }
 
-int main() {
-    _sysInit();
-    _spiInit();
-    
-//    for (uint8_t i=0;; i++) {
-//        
-//        {
-//            const char msgStr[] = "halla";
-//            const ICE40::EchoMsg msg(msgStr);
-//            ICE40::EchoResp resp;
-//            txrx(msg, resp);
-//            if (memcmp(msg.payload, resp.payload+1, sizeof(msgStr))) {
-//                const ICE40::LEDSetMsg msg(i);
-//                txrx(msg);
-//            }
-//        }
-//        
-//        __delay_cycles(1600000);
-//    }
-    
-//    volatile bool go = false;
-//    while (!go);
-    
+void _sdInit() {
     const uint8_t SDClkDelaySlow = 15;
     const uint8_t SDClkDelayFast = 2;
     
-    // Confirm that we can communicate with the ICE40
-    {
-        char str[] = "halla";
-        auto status = _ice40Transfer<EchoResp>(EchoMsg(str));
-        Assert(!strcmp((char*)status.payload, str));
-    }
-    
-//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off,  0, 1); // Disable SD clock, InitMode=enabled
-//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // SD clock = slow clock, InitMode=enabled
-//        // <-- Turn on power to SD card
-//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 1, 1); // Trigger SDController init state machine
-//        
-//        // Wait 5ms
-//        #5000000;
-//        
-//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 0); // SDController InitMode=disabled
-    
     // Turn off SD card power and wait for it to reach 0V
     _sdSetPowerEnabled(false);
-    _delay(2000);
+    _delayMs(2);
     // InitMode=Enabled, Clock=Off
     _ice40Transfer(SDInitMsg(SDInitMsg::State::Enabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Off, SDClkDelaySlow));
     // Clock=SlowClock
@@ -283,11 +256,11 @@ int main() {
     // Turn on SD card power and wait for it to reach 2.8V
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _sdSetPowerEnabled(true);
-    _delay(2000);
+    _delayMs(2);
     // Trigger the SD card low voltage signalling (LVS) init sequence
     _ice40Transfer(SDInitMsg(SDInitMsg::State::Enabled, SDInitMsg::Trigger::Trigger, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
     // Wait 5ms for the LVS init sequence to complete (per the LVS spec)
-    _delay(5000);
+    _delayMs(5);
     // InitMode=Disabled
     _ice40Transfer(SDInitMsg(SDInitMsg::State::Disabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
     
@@ -323,7 +296,7 @@ int main() {
     // ====================
     {
         // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
-        _delay(1000);
+        _delayMs(1);
         // Send CMD0
         _sdSendCmd(0, 0, SDRespTypes::None);
         // There's no response to CMD0
@@ -676,7 +649,126 @@ int main() {
 //        _led0.write(on);
 //        on = !on;
 //    }
+}
 
+void _imgSetPowerEnabled(bool en) {
+    constexpr uint16_t VDD_1V9_IMG_EN = BIT0;
+    constexpr uint16_t VDD_2V8_IMG_EN = BIT2;
+    if (en) {
+        PADIR |=  VDD_2V8_IMG_EN|VDD_1V9_IMG_EN;
+        PAOUT |=  VDD_2V8_IMG_EN;
+        _delayUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        PAOUT |=  VDD_1V9_IMG_EN;
+    } else {
+        PADIR |=  VDD_2V8_IMG_EN|VDD_1V9_IMG_EN;
+        PAOUT &= ~VDD_1V9_IMG_EN;
+        // No delay needed for power down (per AR0330CS datasheet)
+        PAOUT &= ~VDD_2V8_IMG_EN;
+    }
+}
+
+ImgI2CStatusResp _imgI2CStatus() {
+    ImgI2CStatusResp resp;
+    _ice40Transfer(ImgI2CStatusMsg(), resp);
+    return resp;
+}
+
+uint16_t _imgI2CRead(uint16_t addr) {
+    _ice40Transfer(ImgI2CTransactionMsg(false, 2, addr, 0));
+    
+    // Wait for the I2C transaction to complete
+    const uint32_t MaxAttempts = 1000;
+    for (uint32_t i=0; i<MaxAttempts; i++) {
+        if (i >= 10) _delayMs(1);
+        const ImgI2CStatusResp status = _imgI2CStatus();
+        if (status.err()) abort();
+        if (status.done()) return status.readData();
+    }
+    // Timeout getting response from ICE40
+    // This should never happen, since it indicates a Verilog error or a hardware failure.
+    abort();
+}
+
+void _imgI2CWrite(uint16_t addr, uint16_t val) {
+    _ice40Transfer(ImgI2CTransactionMsg(true, 2, addr, val));
+    
+    // Wait for the I2C transaction to complete
+    const uint32_t MaxAttempts = 1000;
+    for (uint32_t i=0; i<MaxAttempts; i++) {
+        if (i >= 10) _delayMs(1);
+        const ImgI2CStatusResp status = _imgI2CStatus();
+        if (status.err()) abort();
+        if (status.done()) return;
+    }
+    // Timeout getting response from ICE40
+    // This should never happen, since it indicates a Verilog error or a hardware failure.
+    abort();
+}
+
+void _imgInit() {
+    _imgSetPowerEnabled(true);
+    
+    // Toggle IMG_RST_
+    {
+        _ice40Transfer(ImgResetMsg(0));
+        _delayMs(1);
+        _ice40Transfer(ImgResetMsg(1));
+        // Wait 150k EXTCLK (16MHz) periods
+        // (150e3*(1/16e6)) == 9.375ms
+        _delayMs(10);
+    }
+    
+    // Configure internal register initialization
+    {
+        _imgI2CWrite(0x3052, 0xA114);
+    }
+    
+    // Start internal register initialization
+    {
+        _imgI2CWrite(0x304A, 0x0070);
+    }
+    
+    // Wait 150k EXTCLK (16MHz) periods
+    // (150e3*(1/16e6)) == 9.25ms
+    {
+        _delayMs(10);
+    }
+    
+    // Sanity-check pix comms by reading a known register
+    {
+        const uint16_t chipVersion = _imgI2CRead(0x3000);
+        // TODO: we probably don't want to check the version number in production, in case the version number changes?
+        // also the 0x3000 isn't read-only, so in theory it could change
+        Assert(chipVersion == 0x2604);
+    }
+}
+
+int main() {
+//    _sysInit();
+//    _spiInit();
+    
+    // Confirm that we can communicate with the ICE40
+    {
+        const char str[] = "halla";
+        EchoResp resp;
+        _ice40Transfer(EchoMsg(str), resp);
+//        Assert(!memcmp((char*)resp.payload, str, sizeof(str)));
+    }
+    
+//    _sdInit();
+    
+    //_imgInit();
+    
+//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off,  0, 1); // Disable SD clock, InitMode=enabled
+//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // SD clock = slow clock, InitMode=enabled
+//        // <-- Turn on power to SD card
+//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 1, 1); // Trigger SDController init state machine
+//        
+//        // Wait 5ms
+//        #5000000;
+//        
+//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 0); // SDController InitMode=disabled
+    
     for (;;);
     
     return 0;
