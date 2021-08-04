@@ -187,13 +187,13 @@ module SDCardSim(
                 ($time-lvsinit_pulseEndTimePs)/1000000
             );
         end else begin
-            `ifndef SDCARDSIM_LVS_IGNORE_5MS
+            `ifndef SDCARDSIM_LVS_INIT_IGNORE_5MS
                 $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us) ❌",
                     ($time-lvsinit_pulseEndTimePs)/1000000
                 );
                 `Finish;
             `else
-                $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us); ignoring because SDCARDSIM_LVS_IGNORE_5MS is defined",
+                $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us); ignoring because SDCARDSIM_LVS_INIT_IGNORE_5MS is defined",
                     ($time-lvsinit_pulseEndTimePs)/1000000
                 );
             `endif
