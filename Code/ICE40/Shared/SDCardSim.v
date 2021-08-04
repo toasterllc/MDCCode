@@ -240,7 +240,8 @@ module SDCardSim(
                     `Finish;
                 end
                 
-                if (cmdIn_theirCRC === cmdIn_ourCRCReg) begin
+                // Use ==, not ===, because we want x's to be considered unequal
+                if (cmdIn_theirCRC == cmdIn_ourCRCReg) begin
                     $display("[SDCardSim] ^^^ CRC Valid ✅");
                 end else begin
                     $display("[SDCardSim] ^^^ Bad CRC: ours=%b, theirs=%b ❌", cmdIn_ourCRCReg, cmdIn[7:1]);
@@ -542,28 +543,29 @@ module SDCardSim(
                 // Check CRCs
                 crcOK = 1;
                 if (recvWriteData) begin
-                    if (dat_ourCRCReg[3] === dat_theirCRCReg[3]) begin
+                    // Use ==, not ===, because we want x's to be considered unequal
+                    if (dat_ourCRCReg[3] == dat_theirCRCReg[3]) begin
                         $display("[SDCardSim] DAT3: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[3], dat_theirCRCReg[3]);
                     end else begin
                         $display("[SDCardSim] DAT3: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[3], dat_theirCRCReg[3]);
                         crcOK = 0;
                     end
                     
-                    if (dat_ourCRCReg[2] === dat_theirCRCReg[2]) begin
+                    if (dat_ourCRCReg[2] == dat_theirCRCReg[2]) begin
                         $display("[SDCardSim] DAT2: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[2], dat_theirCRCReg[2]);
                     end else begin
                         $display("[SDCardSim] DAT2: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[2], dat_theirCRCReg[2]);
                         crcOK = 0;
                     end
                     
-                    if (dat_ourCRCReg[1] === dat_theirCRCReg[1]) begin
+                    if (dat_ourCRCReg[1] == dat_theirCRCReg[1]) begin
                         $display("[SDCardSim] DAT1: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[1], dat_theirCRCReg[1]);
                     end else begin
                         $display("[SDCardSim] DAT1: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[1], dat_theirCRCReg[1]);
                         crcOK = 0;
                     end
                     
-                    if (dat_ourCRCReg[0] === dat_theirCRCReg[0]) begin
+                    if (dat_ourCRCReg[0] == dat_theirCRCReg[0]) begin
                         $display("[SDCardSim] DAT0: CRC Valid (ours=%h, theirs=%h) ✅", dat_ourCRCReg[0], dat_theirCRCReg[0]);
                     end else begin
                         $display("[SDCardSim] DAT0: Bad CRC (ours=%h, theirs=%h) ❌", dat_ourCRCReg[0], dat_theirCRCReg[0]);
