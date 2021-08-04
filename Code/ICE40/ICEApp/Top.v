@@ -8,8 +8,8 @@
 `include "ImgI2CMaster.v"
 
 `ifdef SIM
-// SDCARDSIM_LVS_IGNORE_5MS: Don't require waiting for 5ms, because that takes way too long in simulation
-`define SDCARDSIM_LVS_IGNORE_5MS
+// SDCARDSIM_LVS_INIT_IGNORE_5MS: Don't require waiting for 5ms, because that takes way too long in simulation
+`define SDCARDSIM_LVS_INIT_IGNORE_5MS
 `include "SDCardSim.v"
 
 `include "ImgSim.v"
@@ -963,7 +963,7 @@ module Testbench();
         // <-- Turn on power to SD card
         TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 1, 1); // InitMode=enabled,trigger
         
-`ifdef SDCARDSIM_LVS_IGNORE_5MS
+`ifdef SDCARDSIM_LVS_INIT_IGNORE_5MS
         // Wait 50us, because waiting 5ms takes forever in simulation
         $display("[Testbench] Waiting 50us (and pretending it's 5ms)...");
         #(50_000);
@@ -1440,6 +1440,7 @@ module Testbench();
         
         // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
         TestImgReset();
+        TestImgI2CWriteRead();
         TestImgCapture();
         
         TestSDInit();
@@ -1453,8 +1454,6 @@ module Testbench();
         // TestSDRespRecovery();
         // // TestSDDatOutRecovery();
         // TestSDDatInRecovery();
-
-        // TestImgI2CWriteRead();
         
         `Finish;
     end
