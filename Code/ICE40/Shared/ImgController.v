@@ -311,6 +311,8 @@ module ImgController #(
     wire[`RegWidth(ImageHeightMax)-1:0] ctrl_imageHeight = fifoIn_imageHeight;
     reg[`RegWidth(ImageWidthMax)-1:0] ctrl_readoutX = 0;
     reg[`RegWidth(ImageHeightMax)-1:0] ctrl_readoutY = 0;
+    reg ctrl_fifoOutWrite = 0;
+    reg ctrl_fifoOutDone = 0;
     
     localparam Ctrl_State_Idle      = 0; // +0
     localparam Ctrl_State_Capture   = 1; // +3
@@ -321,6 +323,21 @@ module ImgController #(
         ramctrl_cmd <= `RAMController_Cmd_None;
         fifoOut_rst <= 0;
         ramctrl_write_trigger <= 0;
+        ctrl_fifoOutDone <= 0;
+        
+        ctrl_fifoOutWrite <= fifoOut_write_ready && fifoOut_write_trigger;
+        if (ctrl_fifoOutWrite) begin
+            $display("[ImgController] ctrl_readoutX / ctrl_readoutY:  %0d  %0d", ctrl_readoutX, ctrl_readoutY);
+            ctrl_readoutX <= ctrl_readoutX-1;
+            if (ctrl_readoutX === 1) begin
+                ctrl_readoutX <= ctrl_imageWidth;
+                ctrl_readoutY <= ctrl_readoutY-1;
+            end
+            
+            if (ctrl_readoutX===1 && ctrl_readoutY===1) begin
+                ctrl_fifoOutDone <= 1;
+            end
+        end
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
@@ -389,8 +406,8 @@ module ImgController #(
             // Reset output FIFO
             fifoOut_rst <= 1;
             // Reset readout state
-            ctrl_readoutX <= 1;
-            ctrl_readoutY <= 1;
+            ctrl_readoutX <= ctrl_imageWidth;
+            ctrl_readoutY <= ctrl_imageHeight;
             ctrl_state <= Ctrl_State_Readout+1;
         end
         
@@ -403,23 +420,9 @@ module ImgController #(
         end
         
         Ctrl_State_Readout+2: begin
-            // TODO: pipeline `fifoOut_write_ready && fifoOut_write_trigger`
-            if (fifoOut_write_ready && fifoOut_write_trigger) begin
-                $display("ctrl_readoutX / ctrl_readoutY: %0d", ctrl_readoutX, ctrl_readoutY);
-                
-                if (ctrl_readoutX !== ctrl_imageWidth) begin
-                    ctrl_readoutX <= ctrl_readoutX+1;
-                
-                end else begin
-                    if (ctrl_readoutY !== ctrl_imageHeight) begin
-                        ctrl_readoutX <= 1;
-                        ctrl_readoutY <= ctrl_readoutY+1;
-                    
-                    end else begin
-                        ramctrl_cmd <= `RAMController_Cmd_Stop;
-                        ctrl_state <= Ctrl_State_Idle;
-                    end
-                end
+            if (ctrl_fifoOutDone) begin
+                ramctrl_cmd <= `RAMController_Cmd_Stop;
+                ctrl_state <= Ctrl_State_Idle;
             end
         end
         endcase
