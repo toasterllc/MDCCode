@@ -216,9 +216,8 @@ SDStatusResp _sdSendCmd(
     _ice40Transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
     
     // Wait for command to be sent
-    const uint32_t MaxAttempts = 1000;
-    for (uint32_t i=0;; i++) {
-        Assert(i < MaxAttempts); // TODO: improve error handling
+    const uint16_t MaxAttempts = 1000;
+    for (uint16_t i=0; i<MaxAttempts; i++) {
         if (i >= 10) _delayMs(1);
         auto status = _sdStatus();
         // Try again if the command hasn't been sent yet
@@ -229,6 +228,8 @@ SDStatusResp _sdSendCmd(
         if (datInType!=SDDatInTypes::None && !status.datInDone()) continue;
         return status;
     }
+    // Timeout sending SD command
+    abort();
 }
 
 void _sdSetPowerEnabled(bool en) {
@@ -760,8 +761,8 @@ uint16_t _imgI2CRead(uint16_t addr) {
     _ice40Transfer(ImgI2CTransactionMsg(false, 2, addr, 0));
     
     // Wait for the I2C transaction to complete
-    const uint32_t MaxAttempts = 1000;
-    for (uint32_t i=0; i<MaxAttempts; i++) {
+    const uint16_t MaxAttempts = 1000;
+    for (uint16_t i=0; i<MaxAttempts; i++) {
         if (i >= 10) _delayMs(1);
         const ImgI2CStatusResp status = _imgI2CStatus();
         if (status.err()) abort();
@@ -776,8 +777,8 @@ void _imgI2CWrite(uint16_t addr, uint16_t val) {
     _ice40Transfer(ImgI2CTransactionMsg(true, 2, addr, val));
     
     // Wait for the I2C transaction to complete
-    const uint32_t MaxAttempts = 1000;
-    for (uint32_t i=0; i<MaxAttempts; i++) {
+    const uint16_t MaxAttempts = 1000;
+    for (uint16_t i=0; i<MaxAttempts; i++) {
         if (i >= 10) _delayMs(1);
         const ImgI2CStatusResp status = _imgI2CStatus();
         if (status.done()) {
@@ -1012,9 +1013,8 @@ void _imgCaptureImage() {
     _ice40Transfer(ImgCaptureMsg(0));
     
     // Wait for command to be sent
-    const uint32_t MaxAttempts = 1000;
-    for (uint32_t i=0;; i++) {
-        Assert(i < MaxAttempts); // TODO: improve error handling
+    const uint16_t MaxAttempts = 1000;
+    for (uint16_t i=0; i<MaxAttempts; i++) {
         if (i >= 10) _delayMs(1);
         auto status = _imgCaptureStatus();
         // Try again if the image hasn't been captured yet
