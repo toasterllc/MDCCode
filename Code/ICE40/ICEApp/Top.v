@@ -32,17 +32,6 @@ module Top(
     output reg[3:0]     ice_led = 0
 );
     // ====================
-    // spi_clk
-    // ====================
-    wire spi_clk;
-    
-    
-    
-    
-    
-    
-    
-    // ====================
     // Img Clock (108 MHz)
     // ====================
     localparam Img_Clk_Freq = 108_000_000;
@@ -117,7 +106,7 @@ module Top(
     
     
     
-    `ToggleAck(spi_imgCaptureDone_, spi_imgCaptureDoneAck, imgctrl_status_captureDone, posedge, spi_clk);
+    `ToggleAck(spi_imgCaptureDone_, spi_imgCaptureDoneAck, imgctrl_status_captureDone, posedge, ice_img_clk16mhz);
     
     reg[3:0] debug_state = 0;
 `ifdef SIM
@@ -134,13 +123,12 @@ module Top(
         end else begin
             case (debug_state)
             0: begin
+                if (!spi_imgCaptureDone_) spi_imgCaptureDoneAck <= !spi_imgCaptureDoneAck;
                 debug_delay <= ~0;
                 debug_state <= 1;
             end
             
             1: begin
-                if (!spi_imgCaptureDone_) spi_imgCaptureDoneAck <= !spi_imgCaptureDoneAck;
-                imgctrl_cmd_ramBlock <= 0;
                 imgctrl_cmd_capture <= !imgctrl_cmd_capture;
                 debug_state <= 2;
             end
