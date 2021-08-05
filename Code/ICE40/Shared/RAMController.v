@@ -93,20 +93,6 @@ module RAMController #(
     localparam RAM_DQM_Unmasked         = 0;
     localparam RAM_DQM_Masked           = 1;
     
-    // Clocks() returns the minimum number of `ClkFreq` clock cycles
-    // for >= `t` nanoseconds to elapse. For example, if t=5ns, and
-    // the clock period is 3ns, Clocks(t=5,sub=0) will return 2.
-    // `sub` is subtracted from that value, with the result clipped to zero.
-    function[63:0] Clocks;
-        input[63:0] t;
-        input[63:0] sub;
-        begin
-            Clocks = `DivCeil(t*ClkFreq, 1000000000);
-            if (Clocks >= sub) Clocks = Clocks-sub;
-            else Clocks = 0;
-        end
-    endfunction
-    
     function[AddrWidth-1:0] AddrFromBlock;
         input[BlockCountRegWidth-1:0] block;
         AddrFromBlock = block << BlockSizeRegWidth;
@@ -247,13 +233,13 @@ module RAMController #(
     reg[Init_State_Width-1:0] init_state = 0;
     reg[Init_State_Width-1:0] init_nextState = 0;
     
-    localparam Init_Delay = Clocks(T_INIT,2); // -2 cycles getting to the next state
+    localparam Init_Delay = Clocks(ClkFreq,T_INIT,2); // -2 cycles getting to the next state
     localparam Init_DelayCounterWidth = `RegWidth5(
         // Init states
         Init_Delay,
         10,
-        Clocks(T_RP,2),
-        Clocks(T_RFC,2),
+        Clocks(ClkFreq,T_RP,2),
+        Clocks(ClkFreq,T_RFC,2),
         `Sub(C_MRD,2)
     );
     reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
@@ -272,19 +258,20 @@ module RAMController #(
     localparam Refresh_State_Delay  = 4;    // +1
     localparam Refresh_State_Count  = 6;
     localparam Refresh_State_Width  = `RegWidth(Refresh_State_Count-1);
-    localparam Refresh_Delay = Clocks(T_REFI,2);    // -2 cycles:
-                                                    //   -1: Because waiting N cycles requires loading a counter with N-1.
-                                                    //   -1: Because Clocks() ceils the result, so if we need to
-                                                    //       wait 10.5 cycles, Clocks() will return 11, when we
-                                                    //       actually want 10. This can cause us to be more
-                                                    //       conservative than necessary in the case where refresh period
-                                                    //       is an exact multiple of the clock period, but refreshing
-                                                    //       one cycle earlier is fine.
+    // Refresh_Delay: -2 cycles because:
+    //   -1: Because waiting N cycles requires loading a counter with N-1.
+    //   -1: Because Clocks(ClkFreq,) ceils the result, so if we need to
+    //       wait 10.5 cycles, Clocks(ClkFreq,) will return 11, when we
+    //       actually want 10. This can cause us to be more
+    //       conservative than necessary in the case where refresh period
+    //       is an exact multiple of the clock period, but refreshing
+    //       one cycle earlier is fine.
+    localparam Refresh_Delay = Clocks(ClkFreq,T_REFI,2);
     reg[`RegWidth(Refresh_Delay)-1:0] refresh_counter = 0;
     localparam Refresh_DelayCounterWidth = `RegWidth3(
         InterruptDelay,
-        Clocks(T_RP,2),
-        Clocks(T_RFC,2)
+        Clocks(ClkFreq,T_RP,2),
+        Clocks(ClkFreq,T_RFC,2)
     );
     reg[Refresh_DelayCounterWidth-1:0] refresh_delayCounter = 0;
     reg[Refresh_State_Width-1:0] refresh_state = 0;
@@ -297,27 +284,27 @@ module RAMController #(
         // T_RC: the previous cycle may have issued RAM_Cmd_BankActivate, so prevent violating T_RC
         // when we finish refreshing.
         // -2 cycles getting to the next state
-        Clocks(T_RC,2),
+        Clocks(ClkFreq,T_RC,2),
         // T_RRD: the previous cycle may have issued RAM_Cmd_BankActivate, so prevent violating T_RRD
         // when we finish refreshing.
         // -2 cycles getting to the next state
-        Clocks(T_RRD,2),
+        Clocks(ClkFreq,T_RRD,2),
         // T_RAS: the previous cycle may have issued RAM_Cmd_BankActivate, so prevent violating T_RAS
         // since we're about to issue CmdPrechargeAll.
         // -2 cycles getting to the next state
-        Clocks(T_RAS,2),
+        Clocks(ClkFreq,T_RAS,2),
         // T_RCD: the previous cycle may have issued RAM_Cmd_BankActivate, so prevent violating T_RCD
         // when we finish refreshing.
         // -2 cycles getting to the next state
-        Clocks(T_RCD,2),
+        Clocks(ClkFreq,T_RCD,2),
         // T_RP: the previous cycle may have issued RAM_Cmd_PrechargeAll, so delay other commands
         // until precharging is complete.
         // -2 cycles getting to the next state
-        Clocks(T_RP,2),
+        Clocks(ClkFreq,T_RP,2),
         // T_WR: the previous cycle may have issued RAM_Cmd_Write, so delay other commands
         // until precharging is complete.
         // -2 cycles getting to the next state
-        Clocks(T_WR,2)
+        Clocks(ClkFreq,T_WR,2)
     );
     
     
@@ -344,7 +331,7 @@ module RAMController #(
     localparam Data_BankActivateDelay = (
         // T_RCD: ensure "bank activate to read/write time".
         // -2 cycles getting to the next state
-        Clocks(T_RCD,2)
+        Clocks(ClkFreq,T_RCD,2)
     );
     
     localparam Data_FinishDelay = `Max4(
@@ -354,27 +341,27 @@ module RAMController #(
         //   issued ceil(tWR/tCK) cycles after the clock edge in which the
         //   last data-in element is registered."
         // -2 cycles getting to the next state
-        Clocks(T_WR,2),
+        Clocks(ClkFreq,T_WR,2),
         // T_RAS: ensure "row activate to precharge time", ie that we don't
         // CmdPrechargeAll too soon after we activate the bank.
         // -2 cycles getting to the next state
-        Clocks(T_RAS,2),
+        Clocks(ClkFreq,T_RAS,2),
         // T_RC: ensure "activate bank A to activate bank A time", to ensure that the next
         // bank can't be activated too soon after this bank activation.
         // -2 cycles getting to the next state
-        Clocks(T_RC,2),
+        Clocks(ClkFreq,T_RC,2),
         // T_RRD: ensure "activate bank A to activate bank B time", to ensure that the next
         // bank can't be activated too soon after this bank activation.
         // -2 cycles getting to the next state
-        Clocks(T_RRD,2)
+        Clocks(ClkFreq,T_RRD,2)
     );
     
     localparam Data_DelayCounterWidth = `RegWidth6(
         Data_BankActivateDelay,
         Data_FinishDelay,
-        Clocks(T_WR,2),
+        Clocks(ClkFreq,T_WR,2),
         C_CAS+1,
-        Clocks(T_RP,2),
+        Clocks(ClkFreq,T_RP,2),
         InterruptDelay
     );
     reg[Data_DelayCounterWidth-1:0] data_delayCounter = 0;
@@ -422,7 +409,7 @@ module RAMController #(
             ramCmd <= RAM_Cmd_PrechargeAll;
             ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
             
-            init_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+            init_delayCounter <= Clocks(ClkFreq,T_RP,2); // -2 cycles getting to the next state
             init_state <= Init_State_Delay;
             init_nextState <= Init_State_Init+3;
         end
@@ -434,7 +421,7 @@ module RAMController #(
             // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
             // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
             // we just have to wait T_RFC.
-            init_delayCounter <= Clocks(T_RFC,2); // -2 cycles getting to the next state
+            init_delayCounter <= Clocks(ClkFreq,T_RFC,2); // -2 cycles getting to the next state
             init_state <= Init_State_Delay;
             init_nextState <= Init_State_Init+4;
         end
@@ -446,7 +433,7 @@ module RAMController #(
             // The docs say it takes T_RFC for AutoRefresh to complete, but T_RP must be met
             // before issuing successive AutoRefresh commands. Because T_RFC>T_RP, assume
             // we just have to wait T_RFC.
-            init_delayCounter <= Clocks(T_RFC,2); // Delay T_RFC; -2 cycles getting to the next state
+            init_delayCounter <= Clocks(ClkFreq,T_RFC,2); // Delay T_RFC; -2 cycles getting to the next state
             init_state <= Init_State_Delay;
             init_nextState <= Init_State_Init+5;
         end
@@ -521,7 +508,7 @@ module RAMController #(
                     ramCmd <= RAM_Cmd_PrechargeAll;
                     ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
                     
-                    refresh_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+                    refresh_delayCounter <= Clocks(ClkFreq,T_RP,2); // -2 cycles getting to the next state
                     refresh_state <= Refresh_State_Delay;
                     refresh_nextState <= Refresh_State_Go+2;
                 end
@@ -532,7 +519,7 @@ module RAMController #(
                     ramCmd <= RAM_Cmd_AutoRefresh;
                     // Wait T_RFC (auto refresh time) to guarantee that the next command can
                     // activate the same bank immediately
-                    refresh_delayCounter <= Clocks(T_RFC,3); // -2 cycles getting to the next state
+                    refresh_delayCounter <= Clocks(ClkFreq,T_RFC,3); // -2 cycles getting to the next state
                     refresh_state <= Refresh_State_Delay;
                     refresh_nextState <= Refresh_State_Go+3;
                 end
@@ -671,7 +658,7 @@ module RAMController #(
                     ramCmd <= RAM_Cmd_PrechargeAll;
                     ramA <= 'b10000000000; // ram_a[10]=1 for PrechargeAll
                     
-                    data_delayCounter <= Clocks(T_RP,2); // -2 cycles getting to the next state
+                    data_delayCounter <= Clocks(ClkFreq,T_RP,2); // -2 cycles getting to the next state
                     data_state <= Data_State_Delay;
                     data_nextState <= data_restartState;
                 end
