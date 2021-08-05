@@ -4,6 +4,7 @@
 `include "RAMController.v"
 `include "TogglePulse.v"
 `include "AFIFO.v"
+`include "Sync.v"
 
 module ImgController #(
     parameter ClkFreq = 24_000_000,
