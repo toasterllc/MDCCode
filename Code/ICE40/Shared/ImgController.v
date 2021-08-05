@@ -311,7 +311,7 @@ module ImgController #(
     wire[`RegWidth(ImageHeightMax)-1:0] ctrl_imageHeight = fifoIn_imageHeight;
     reg[`RegWidth(ImageWidthMax)-1:0] ctrl_readoutX = 0;
     reg[`RegWidth(ImageHeightMax)-1:0] ctrl_readoutY = 0;
-    reg ctrl_fifoOutWrite = 0;
+    reg ctrl_fifoOutWrote = 0;
     reg ctrl_fifoOutDone = 0;
     
     localparam Ctrl_State_Idle      = 0; // +0
@@ -325,8 +325,8 @@ module ImgController #(
         ramctrl_write_trigger <= 0;
         ctrl_fifoOutDone <= 0;
         
-        ctrl_fifoOutWrite <= fifoOut_write_ready && fifoOut_write_trigger;
-        if (ctrl_fifoOutWrite) begin
+        ctrl_fifoOutWrote <= fifoOut_write_ready && fifoOut_write_trigger;
+        if (ctrl_fifoOutWrote) begin
             $display("[ImgController] ctrl_readoutX / ctrl_readoutY:  %0d  %0d", ctrl_readoutX, ctrl_readoutY);
             ctrl_readoutX <= ctrl_readoutX-1;
             if (ctrl_readoutX === 1) begin

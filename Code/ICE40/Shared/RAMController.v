@@ -687,7 +687,6 @@ module RAMController #(
                 write_ready <= 0;
                 read_ready <= 0;
                 // Trigger refresh
-                // TODO: uncomment
                 refresh_trigger <= 1;
             end
         end
