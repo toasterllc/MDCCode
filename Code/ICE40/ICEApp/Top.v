@@ -4,6 +4,10 @@
 `include "ImgController.v"
 `include "ICEAppTypes.v"
 
+`ifdef SIM
+`include "mt48h32m16lf/mobile_sdr.v"
+`endif
+
 `timescale 1ns/1ps
 
 module Top(
@@ -139,3 +143,65 @@ module Top(
         end
     end
 endmodule
+
+
+
+
+
+
+`ifdef SIM
+module Testbench();
+    reg ice_img_clk16mhz = 0;
+    
+    wire        img_dclk;
+    wire[11:0]  img_d;
+    wire        img_fv;
+    wire        img_lv;
+    wire        img_rst_;
+    
+    wire        ram_clk;
+    wire        ram_cke;
+    wire[1:0]   ram_ba;
+    wire[11:0]  ram_a;
+    wire        ram_cs_;
+    wire        ram_ras_;
+    wire        ram_cas_;
+    wire        ram_we_;
+    wire[1:0]   ram_dqm;
+    wire[15:0]  ram_dq;
+    
+    wire[3:0] ice_led;
+    
+    initial begin
+        forever begin
+            ice_img_clk16mhz = ~ice_img_clk16mhz;
+            #32;
+        end
+    end
+    
+    Top Top(.*);
+    
+    mobile_sdr mobile_sdr(
+        .clk(ram_clk),
+        .cke(ram_cke),
+        .addr(ram_a),
+        .ba(ram_ba),
+        .cs_n(ram_cs_),
+        .ras_n(ram_ras_),
+        .cas_n(ram_cas_),
+        .we_n(ram_we_),
+        .dq(ram_dq),
+        .dqm(ram_dqm)
+    );
+    
+    initial begin
+        $dumpfile("Top.vcd");
+        $dumpvars(0, Testbench);
+    end
+    
+    initial begin
+        #1000000000;
+        `Finish;
+    end
+endmodule
+`endif
