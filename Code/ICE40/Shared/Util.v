@@ -62,7 +62,7 @@ function[63:0] Clocks;
     input[63:0] ns;
     input[63:0] sub;
     begin
-        Clocks = `DivCeil(freq*ns, 1000000000);
+        Clocks = `DivCeil(freq*ns, 1_000_000_000);
         if (Clocks >= sub) Clocks = Clocks-sub;
         else Clocks = 0;
     end
