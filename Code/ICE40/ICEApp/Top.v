@@ -119,8 +119,6 @@ module Top(
     reg[20:0] debug_delay = 0;
 `endif
     always @(posedge ice_img_clk16mhz) begin
-        ice_led <= {4{!spi_imgCaptureDone_}};
-        
         if (debug_delay) begin
             debug_delay <= debug_delay-1;
         
@@ -138,6 +136,7 @@ module Top(
             end
             
             2: begin
+                ice_led <= {4{!spi_imgCaptureDone_}};
             end
             endcase
         end
@@ -200,7 +199,9 @@ module Testbench();
     end
     
     initial begin
-        #1000000000;
+        $display("[Testbench @ %0d] LED = %b", $time, ice_led);
+        wait(ice_led[0]);
+        $display("[Testbench @ %0d] LED = %b", $time, ice_led);
         `Finish;
     end
 endmodule
