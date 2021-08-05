@@ -1045,15 +1045,15 @@ int main() {
     _iceInit();
     // Initialize the image sensor
     _imgInit();
-//    // Initialize the SD card
-//    const uint16_t rca = _sdInit();
+    // Initialize the SD card
+    const uint16_t rca = _sdInit();
     // Enable image streaming
     _imgSetStreamEnabled(true);
     _ice40Transfer(LEDSetMsg(0x09));
     // Capture an image to RAM
     _imgCaptureImage();
-//    // Write the image to the SD card
-//    _sdWriteImage(rca);
+    // Write the image to the SD card
+    _sdWriteImage(rca);
     
 //        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off,  0, 1); // Disable SD clock, InitMode=enabled
 //        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // SD clock = slow clock, InitMode=enabled
