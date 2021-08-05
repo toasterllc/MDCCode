@@ -399,7 +399,7 @@ module Top(
     localparam TurnaroundInherentDelay = 2; // TODO: =4 when `SB_IO_ice_msp_spi_data` registers the input
     localparam TurnaroundExtraDelay = TurnaroundDelay-TurnaroundInherentDelay;
     localparam MsgCycleCount = `Msg_Len+TurnaroundExtraDelay-2;
-    localparam RespCycleCount = `Resp_Len-1;
+    localparam RespCycleCount = `Resp_Len;
     
     reg[`Msg_Len-1:0] spi_dataInReg = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dataInReg[`Msg_Type_Bits];
@@ -610,8 +610,9 @@ module Top(
             end
             
             SPI_State_RespOut: begin
-                spi_dataOutEn <= 1;
-                if (!spi_dataCounter) begin
+                if (spi_dataCounter) begin
+                    spi_dataOutEn <= 1;
+                end else begin
                     spi_state <= SPI_State_MsgIn;
                 end
             end
