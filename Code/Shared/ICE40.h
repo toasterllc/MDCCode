@@ -149,41 +149,36 @@ struct SDSendCmdMsg : Msg {
     }
 };
 
-struct SDGetStatusMsg : Msg {
-    SDGetStatusMsg() {
+struct SDStatusMsg : Msg {
+    SDStatusMsg() {
         type = 0x84;
     }
 };
 
-struct SDGetStatusResp : Resp {
+struct SDStatusResp : Resp {
     // Command
-    bool sdCmdDone() const                  { return getBit(63);                            }
+    bool cmdDone() const                                    { return getBit(63);                            }
     
     // Response
-    bool sdRespDone() const                 { return getBit(62);                            }
-    bool sdRespCRCErr() const               { return getBit(61);                            }
-    uint64_t sdResp() const                 { return getBits(_RespIdx+48-1, _RespIdx);      }
+    bool respDone() const                                   { return getBit(62);                            }
+    bool respCRCErr() const                                 { return getBit(61);                            }
+    uint64_t resp() const                                   { return getBits(_RespIdx+48-1, _RespIdx);      }
     
     // DatOut
-    bool sdDatOutDone() const               { return getBit(12);                            }
-    bool sdDatOutCRCErr() const             { return getBit(11);                            }
+    bool datOutDone() const                                 { return getBit(12);                            }
+    bool datOutCRCErr() const                               { return getBit(11);                            }
     
     // DatIn
-    bool sdDatInDone() const                { return getBit(10);                            }
-    bool sdDatInCRCErr() const              { return getBit(9);                             }
-    uint8_t sdDatInCMD6AccessMode() const   { return getBits(8,5);                          }
+    bool datInDone() const                                  { return getBit(10);                            }
+    bool datInCRCErr() const                                { return getBit(9);                             }
+    uint8_t datInCMD6AccessMode() const                     { return getBits(8,5);                          }
     
     // Other
-    bool sdDat0Idle() const                 { return getBit(4);                             }
+    bool dat0Idle() const                                   { return getBit(4);                             }
     
     // Helper methods
-    uint64_t sdRespGetBit(uint8_t idx) const {
-        return getBit(idx+_RespIdx);
-    }
-    
-    uint64_t sdRespGetBits(uint8_t start, uint8_t end) const {
-        return getBits(start+_RespIdx, end+_RespIdx);
-    }
+    uint64_t respGetBit(uint8_t idx) const                  { return getBit(idx+_RespIdx);                  }
+    uint64_t respGetBits(uint8_t start, uint8_t end) const  { return getBits(start+_RespIdx, end+_RespIdx); }
     
 private:
     static constexpr size_t _RespIdx = 13;
@@ -230,24 +225,15 @@ struct ImgCaptureStatusResp : Resp {
 };
 
 struct ImgReadoutMsg : Msg {
-    // The word count needs to be supplied to the ICE40 to prevent
-    // over-reading, otherwise the end of the QSPI transaction
-    // causes one more word to be read than wanted, and we'd drop
-    // that word if not for this counter.
-    ImgReadoutMsg(uint8_t srcBlock, bool captureNext, size_t wordCount) {
-        AssertArg(wordCount);
-        // Supply the value to load into the ICE40 counter.
-        // Put the burden of this calculation on the STM32,
-        // to improve the performance of the ICE40 Verilog.
-        const uint16_t counter = (wordCount-1)*2;
+    ImgReadoutMsg() {
         type = 0x88;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
-        payload[3] = (counter&0xFF00)>>8;
-        payload[4] = (counter&0x00FF)>>0;
+        payload[3] = 0;
+        payload[4] = 0;
         payload[5] = 0;
-        payload[6] = (captureNext ? 0x8 : 0x0) | (srcBlock&0x7);
+        payload[6] = 0;
     }
 };
 

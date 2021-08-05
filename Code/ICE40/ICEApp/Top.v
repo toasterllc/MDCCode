@@ -16,7 +16,8 @@
 `include "ImgI2CSlaveSim.v"
 
 // MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
-// beyond the image that's written to the RAM, and we don't want to read x (don't care)
+// beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
+// when that happens
 `define MOBILE_SDR_INIT_VAL 16'hCAFE
 `include "mt48h32m16lf/mobile_sdr.v"
 `endif
@@ -246,17 +247,29 @@ module Top(
     
     
     
+    // // ====================
+    // // SD Clock (102 MHz)
+    // // ====================
+    // localparam SD_Clk_Freq = 102_000_000;
+    // wire sd_clk_int;
+    // ClockGen #(
+    //     .FREQOUT(SD_Clk_Freq),
+    //     .DIVR(0),
+    //     .DIVF(50),
+    //     .DIVQ(3),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_sd_clk_int(.clkRef(ice_img_clk16mhz), .clk(sd_clk_int));
     
     // ====================
-    // SD Clock (102 MHz)
+    // SD Clock (50 MHz)
     // ====================
-    localparam SD_Clk_Freq = 102_000_000;
+    localparam SD_Clk_Freq = 50_000_000;
     wire sd_clk_int;
     ClockGen #(
         .FREQOUT(SD_Clk_Freq),
         .DIVR(0),
-        .DIVF(50),
-        .DIVQ(3),
+        .DIVF(49),
+        .DIVQ(4),
         .FILTER_RANGE(1)
     ) ClockGen_sd_clk_int(.clkRef(ice_img_clk16mhz), .clk(sd_clk_int));
 
@@ -505,18 +518,18 @@ module Top(
                 end
                 
                 // Get SD status / response
-                `Msg_Type_SDGetStatus: begin
-                    $display("[SPI] Got Msg_Type_SDGetStatus");
-                    spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits] <= !spi_sdCmdDone_;
-                    spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits] <= !spi_sdRespDone_;
-                        spi_resp[`Resp_Arg_SDGetStatus_RespCRCErr_Bits] <= sd_resp_crcErr;
-                    spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits] <= !spi_sdDatOutDone_;
-                        spi_resp[`Resp_Arg_SDGetStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
-                    spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
-                        spi_resp[`Resp_Arg_SDGetStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;
-                        spi_resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits] <= sd_datIn_cmd6AccessMode;
-                    spi_resp[`Resp_Arg_SDGetStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
-                    spi_resp[`Resp_Arg_SDGetStatus_Resp_Bits] <= sd_resp_data;
+                `Msg_Type_SDStatus: begin
+                    $display("[SPI] Got Msg_Type_SDStatus");
+                    spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits] <= !spi_sdCmdDone_;
+                    spi_resp[`Resp_Arg_SDStatus_RespDone_Bits] <= !spi_sdRespDone_;
+                        spi_resp[`Resp_Arg_SDStatus_RespCRCErr_Bits] <= sd_resp_crcErr;
+                    spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits] <= !spi_sdDatOutDone_;
+                        spi_resp[`Resp_Arg_SDStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
+                    spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
+                        spi_resp[`Resp_Arg_SDStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;
+                        spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] <= sd_datIn_cmd6AccessMode;
+                    spi_resp[`Resp_Arg_SDStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
+                    spi_resp[`Resp_Arg_SDStatus_Resp_Bits] <= sd_resp_data;
                 end
                 
                 `Msg_Type_ImgReset: begin
@@ -539,6 +552,7 @@ module Top(
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits] <= imgctrl_status_captureImageHeight;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits] <= imgctrl_status_captureHighlightCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits] <= imgctrl_status_captureShadowCount;
+                    spi_resp[2:0] <= 3'b101; // TODO: remove
                 end
                 
                 // `Msg_Type_ImgReadout: begin
@@ -916,12 +930,12 @@ module Testbench();
         done = 0;
         for (i=0; i<100 && !done; i++) begin
             // Request SD status
-            SendMsg(`Msg_Type_SDGetStatus, 0);
+            SendMsg(`Msg_Type_SDStatus, 0);
             // We're done when the SD command is sent
-            done = spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits];
+            done = spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits];
             // If a response is expected, we're done when the response is received
-            if (respType !== `Msg_Arg_SDSendCmd_RespType_None) done &= spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits];
-            if (datInType !== `Msg_Arg_SDSendCmd_DatInType_None) done &= spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits];
+            if (respType !== `Msg_Arg_SDSendCmd_RespType_None) done &= spi_resp[`Resp_Arg_SDStatus_RespDone_Bits];
+            if (datInType !== `Msg_Arg_SDSendCmd_DatInType_None) done &= spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits];
             
             // // Our clock is much faster than the SD slow clock (16 MHz vs .4 MHz),
             // // so wait a bit before asking for the status again
@@ -980,9 +994,9 @@ module Testbench();
         // done = 0;
         // for (i=0; i<10 && !done; i++) begin
         //     // Request SD status
-        //     SendMsg(`Msg_Type_SDGetStatus, 0);
+        //     SendMsg(`Msg_Type_SDStatus, 0);
         //     // We're done when the `InitDone` bit is set
-        //     done = spi_resp[`Resp_Arg_SDGetStatus_InitDone_Bits];
+        //     done = spi_resp[`Resp_Arg_SDStatus_InitDone_Bits];
         // end
         
         $display("[Testbench] Init done ✅");
@@ -1000,18 +1014,18 @@ module Testbench();
         // ====================
         // Test SD CMD8 (SEND_IF_COND)
         // ====================
-        reg[`Resp_Arg_SDGetStatus_Resp_Len-1:0] sdResp;
+        reg[`Resp_Arg_SDStatus_Resp_Len-1:0] sdResp;
         
         $display("\n[Testbench] ========== TestSDCMD8 ==========");
         
         // Send SD CMD8
         SendSDCmdResp(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'h000001AA);
-        if (spi_resp[`Resp_Arg_SDGetStatus_RespCRCErr_Bits] !== 1'b0) begin
+        if (spi_resp[`Resp_Arg_SDStatus_RespCRCErr_Bits] !== 1'b0) begin
             $display("[Testbench] CRC error ❌");
             `Finish;
         end
 
-        sdResp = spi_resp[`Resp_Arg_SDGetStatus_Resp_Bits];
+        sdResp = spi_resp[`Resp_Arg_SDStatus_Resp_Bits];
         if (sdResp[15:8] !== 8'hAA) begin
             $display("[Testbench] Bad response: %h ❌", spi_resp);
             `Finish;
@@ -1039,12 +1053,12 @@ module Testbench();
         $display("[Testbench] Waiting while data is written...");
         do begin
             // Request SD status
-            SendMsg(`Msg_Type_SDGetStatus, 0);
-        end while(!spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits]);
-        $display("[Testbench] Done writing (SD resp: %b)", spi_resp[`Resp_Arg_SDGetStatus_Resp_Bits]);
+            SendMsg(`Msg_Type_SDStatus, 0);
+        end while(!spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits]);
+        $display("[Testbench] Done writing (SD resp: %b)", spi_resp[`Resp_Arg_SDStatus_Resp_Bits]);
         
         // Check CRC status
-        if (spi_resp[`Resp_Arg_SDGetStatus_DatOutCRCErr_Bits] === 1'b0) begin
+        if (spi_resp[`Resp_Arg_SDStatus_DatOutCRCErr_Bits] === 1'b0) begin
             $display("[Testbench] DatOut CRC OK ✅");
         end else begin
             $display("[Testbench] DatOut CRC bad ❌");
@@ -1067,12 +1081,12 @@ module Testbench();
         $display("[Testbench] Waiting for DatIn to complete...");
         do begin
             // Request SD status
-            SendMsg(`Msg_Type_SDGetStatus, 0);
-        end while(!spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
+            SendMsg(`Msg_Type_SDStatus, 0);
+        end while(!spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits]);
         $display("[Testbench] DatIn completed");
 
         // Check DatIn CRC status
-        if (spi_resp[`Resp_Arg_SDGetStatus_DatInCRCErr_Bits] === 1'b0) begin
+        if (spi_resp[`Resp_Arg_SDStatus_DatInCRCErr_Bits] === 1'b0) begin
             $display("[Testbench] DatIn CRC OK ✅");
         end else begin
             $display("[Testbench] DatIn CRC bad ❌");
@@ -1080,10 +1094,10 @@ module Testbench();
         end
         
         // Check the access mode from the CMD6 response
-        if (spi_resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits] === 4'h3) begin
+        if (spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] === 4'h3) begin
             $display("[Testbench] CMD6 access mode == 0x3 ✅");
         end else begin
-            $display("[Testbench] CMD6 access mode == 0x%h ❌", spi_resp[`Resp_Arg_SDGetStatus_DatInCMD6AccessMode_Bits]);
+            $display("[Testbench] CMD6 access mode == 0x%h ❌", spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits]);
             `Finish;
         end
     end endtask
@@ -1115,15 +1129,15 @@ module Testbench();
         $display("[Testbench] Verifying that Resp times out...");
         done = 0;
         for (i=0; i<10 && !done; i++) begin
-            SendMsg(`Msg_Type_SDGetStatus, 0);
+            SendMsg(`Msg_Type_SDStatus, 0);
             $display("[Testbench] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
                 i+1,
-                spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-                spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-                spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-                spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
+                spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits],
+                spi_resp[`Resp_Arg_SDStatus_RespDone_Bits],
+                spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits],
+                spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits]);
             
-            done = spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits];
+            done = spi_resp[`Resp_Arg_SDStatus_RespDone_Bits];
         end
         
         if (!done) begin
@@ -1152,15 +1166,15 @@ module Testbench();
     //     $display("[Testbench] Verifying that DatOut times out...");
     //     done = 0;
     //     for (i=0; i<10 && !done; i++) begin
-    //         SendMsg(`Msg_Type_SDGetStatus, 0);
+    //         SendMsg(`Msg_Type_SDStatus, 0);
     //         $display("[Testbench] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
     //             i+1,
-    //             spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-    //             spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-    //             spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-    //             spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
+    //             spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits],
+    //             spi_resp[`Resp_Arg_SDStatus_RespDone_Bits],
+    //             spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits],
+    //             spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits]);
     //
-    //         done = spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits];
+    //         done = spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits];
     //     end
     //
     //     if (!done) begin
@@ -1187,15 +1201,15 @@ module Testbench();
         $display("[Testbench] Verifying that DatIn times out...");
         done = 0;
         for (i=0; i<10 && !done; i++) begin
-            SendMsg(`Msg_Type_SDGetStatus, 0);
+            SendMsg(`Msg_Type_SDStatus, 0);
             $display("[Testbench] Pre-timeout status (%0d/10): sdCmdDone:%b sdRespDone:%b sdDatOutDone:%b sdDatInDone:%b",
                 i+1,
-                spi_resp[`Resp_Arg_SDGetStatus_CmdDone_Bits],
-                spi_resp[`Resp_Arg_SDGetStatus_RespDone_Bits],
-                spi_resp[`Resp_Arg_SDGetStatus_DatOutDone_Bits],
-                spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits]);
+                spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits],
+                spi_resp[`Resp_Arg_SDStatus_RespDone_Bits],
+                spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits],
+                spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits]);
 
-            done = spi_resp[`Resp_Arg_SDGetStatus_DatInDone_Bits];
+            done = spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits];
         end
 
         if (!done) begin
@@ -1440,7 +1454,7 @@ module Testbench();
         
         // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
         TestImgReset();
-        TestImgI2CWriteRead();
+        // TestImgI2CWriteRead();
         TestImgCapture();
         
         TestSDInit();
