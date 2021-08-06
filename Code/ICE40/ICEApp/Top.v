@@ -247,31 +247,31 @@ module Top(
     
     
     
-    // // ====================
-    // // SD Clock (102 MHz)
-    // // ====================
-    // localparam SD_Clk_Freq = 102_000_000;
-    // wire sd_clk_int;
-    // ClockGen #(
-    //     .FREQOUT(SD_Clk_Freq),
-    //     .DIVR(0),
-    //     .DIVF(50),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_sd_clk_int(.clkRef(ice_img_clk16mhz), .clk(sd_clk_int));
-    
     // ====================
-    // SD Clock (50 MHz)
+    // SD Clock (102 MHz)
     // ====================
-    localparam SD_Clk_Freq = 50_000_000;
+    localparam SD_Clk_Freq = 102_000_000;
     wire sd_clk_int;
     ClockGen #(
         .FREQOUT(SD_Clk_Freq),
         .DIVR(0),
-        .DIVF(49),
-        .DIVQ(4),
+        .DIVF(50),
+        .DIVQ(3),
         .FILTER_RANGE(1)
     ) ClockGen_sd_clk_int(.clkRef(ice_img_clk16mhz), .clk(sd_clk_int));
+    
+    // // ====================
+    // // SD Clock (50 MHz)
+    // // ====================
+    // localparam SD_Clk_Freq = 50_000_000;
+    // wire sd_clk_int;
+    // ClockGen #(
+    //     .FREQOUT(SD_Clk_Freq),
+    //     .DIVR(0),
+    //     .DIVF(49),
+    //     .DIVQ(4),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_sd_clk_int(.clkRef(ice_img_clk16mhz), .clk(sd_clk_int));
 
     // ====================
     // SDController
