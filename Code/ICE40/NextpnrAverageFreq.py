@@ -7,9 +7,9 @@ import re
 import random
 import statistics
 
-if len(sys.argv) != 6:
+if len(sys.argv) != 5:
     print("Usage:")
-    print("  NextpnrAverageFreq.py <DeviceType> <DevicePackage> <ProjName> <ClkName> <NumTrials>")
+    print("  NextpnrAverageFreq.py <DeviceType> <DevicePackage> <ProjName> <NumTrials>")
     print("    DeviceType: hx1k (iCEstick), hx8k (MDC Rev4, iCE40HX board)")
     print("    DevicePackage: tq144 (iCEstick), bg121:4k (MDC Rev4), ct256 (iCE40HX board)")
     print("")
@@ -23,8 +23,7 @@ scriptDir = os.path.dirname(os.path.abspath(sys.argv[0]))
 dev = sys.argv[1]
 pkg = sys.argv[2]
 proj = sys.argv[3]
-clkName = sys.argv[4]
-ntrials = int(sys.argv[5])
+ntrials = int(sys.argv[4])
 
 # Print iterations progress
 def printProgress(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
@@ -70,36 +69,60 @@ def executeTrial(_):
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     outputLines = proc.stdout.decode("utf-8").splitlines()
     
-    # nextpnr should output 2 lines matching the clock string (and we want the second one)
-    p = re.compile('.*: Max frequency for clock.*'+re.escape(clkName))
+    # nextpnr should output 2 lines matching this 'Max frequency for clock' string, for each clock.
+    # We want the second set of matching strings, which is after nextpnr routes the design.
+    p = re.compile('.*: Max frequency for clock.*')
     clkLines = [ s for s in outputLines if p.match(s) ]
+    assert (len(clkLines) % 2) == 0 # There should be 2 matching lines for each clock
+    clkLines = clkLines[int(len(clkLines)/2):] # We want the second set of matching lines
     
-    assert len(clkLines) == 2
-    clkLine = clkLines[1]
+    clkFreqs = {}
+    for clkLine in clkLines:
+        parts = clkLine.split("'")
+        assert len(parts) == 3
+        clkName = parts[1]
+        
+        parts = [ s.strip() for s in clkLine.split(':') ]
+        assert len(parts) == 3
+        
+        parts = parts[2].split(' ')
+        assert len(parts) >= 2
+        assert parts[1] == 'MHz'
+        clkFreq = float(parts[0])
+        
+        clkFreqs[clkName] = clkFreq
     
-    parts = [ s.strip() for s in clkLine.split(':') ]
-    assert len(parts) == 3
-    
-    parts = parts[2].split(' ')
-    assert len(parts) >= 2
-    assert parts[1] == 'MHz'
-    freq = float(parts[0])
-    
-    return freq
+    return clkFreqs
 
-freqs = []
+clkFreqs = {}
 pool = multiprocessing.Pool(multiprocessing.cpu_count())
 for i, f in enumerate(pool.imap_unordered(executeTrial, range(ntrials)), 1):
-    freqs.append(f)
+    for clkName in f:
+        clkFreq = f[clkName]
+        if clkName not in clkFreqs:
+            clkFreqs[clkName] = [clkFreq]
+        else:
+            clkFreqs[clkName].append(clkFreq)
     printProgress(i, ntrials)
 
-freqMin = min(freqs)
-freqMax = max(freqs)
-freqAverage = statistics.mean(freqs)
-freqMedian = statistics.median(freqs)
+print('')
+print('')
+print('======================================================================================')
+print(f'Clk                                                   Min      Max      Avg      Med')
+print('--------------------------------------------------------------------------------------')
 
-print('==========================================')
-print(f'    Min frequency: {freqMin:.2f}')
-print(f'    Max frequency: {freqMax:.2f}')
-print(f'Average frequency: {freqAverage:.2f}')
-print(f' Median frequency: {freqMedian:.2f}')
+for clk in clkFreqs:
+    freqs = clkFreqs[clk]
+    freqMin = min(freqs)
+    freqMax = max(freqs)
+    freqAverage = statistics.mean(freqs)
+    freqMedian = statistics.median(freqs)
+    
+    print(f'{clk:50} {freqMin:8.2f} {freqMax:8.2f} {freqAverage:8.2f} {freqMedian:8.2f}')
+    
+    # print('==========================================')
+    # print(f'              Clk: {clk}')
+    # print(f'    Min frequency: {freqMin:.2f}')
+    # print(f'    Max frequency: {freqMax:.2f}')
+    # print(f'Average frequency: {freqAverage:.2f}')
+    # print(f' Median frequency: {freqMedian:.2f}')
