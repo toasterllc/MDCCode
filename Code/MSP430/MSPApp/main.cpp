@@ -245,7 +245,7 @@ void _sdSetPowerEnabled(bool en) {
 
 uint16_t _sdInit() {
     const uint8_t SDClkDelaySlow = 15;
-    const uint8_t SDClkDelayFast = 2;
+    const uint8_t SDClkDelayFast = 0;
     
     // Turn off SD card power and wait for it to reach 0V
     _sdSetPowerEnabled(false);
@@ -885,7 +885,7 @@ void _imgInit() {
 //            
 //            // Set test_data_greenb
 //            _imgI2CWrite(0x3078, 0x0000);
-        
+            
 //            // Set test_data_red
 //            _imgI2CWrite(0x3072, 0x0B2A);  // AAA
 //            _imgI2CWrite(0x3072, 0x0FFF);  // FFF
@@ -983,9 +983,17 @@ void _imgInit() {
         _imgI2CWrite(0x3064, 0x1802);  // Stats disabled
     }
     
+    constexpr uint16_t IntTimeMax = 16383;
+    constexpr uint16_t GainMax = 63;
+    
+    constexpr uint16_t intTime = 65535/2048;
+    constexpr uint16_t gain = intTime/3;
+    
     // Set coarse_integration_time
     {
-        _imgI2CWrite(0x3012, 16384/8);
+        // Normalize intTime to [0,IntTimeMax]
+        constexpr uint16_t normVal = (((uint32_t)intTime*IntTimeMax)/UINT16_MAX);
+        _imgI2CWrite(0x3012, normVal);
     }
     
     // Set fine_integration_time
@@ -995,7 +1003,9 @@ void _imgInit() {
     
     // Set analog_gain
     {
-        _imgI2CWrite(0x3060, 63/8);
+        // Normalize gain to [0,GainMax]
+        constexpr uint16_t normVal = std::max((uint32_t)1, (((uint32_t)gain*GainMax)/UINT16_MAX));
+        _imgI2CWrite(0x3060, normVal);
     }
 }
 
