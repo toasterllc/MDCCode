@@ -312,6 +312,7 @@ module ImgController #(
     reg[`RegWidth(ImageWidthMax)-1:0] ctrl_readoutX = 0;
     reg[`RegWidth(ImageHeightMax)-1:0] ctrl_readoutY = 0;
     reg ctrl_fifoOutWrote = 0;
+    reg ctrl_fifoOutLastPixel = 0;
     reg ctrl_fifoOutDone = 0;
     
     localparam Ctrl_State_Idle      = 0; // +0
@@ -323,7 +324,6 @@ module ImgController #(
         ramctrl_cmd <= `RAMController_Cmd_None;
         fifoOut_rst <= 0;
         ramctrl_write_trigger <= 0;
-        ctrl_fifoOutDone <= 0;
         
         ctrl_fifoOutWrote <= fifoOut_write_ready && fifoOut_write_trigger;
         if (ctrl_fifoOutWrote) begin
@@ -334,9 +334,14 @@ module ImgController #(
                 ctrl_readoutY <= ctrl_readoutY-1;
             end
             
-            if (ctrl_readoutX===1 && ctrl_readoutY===1) begin
-                ctrl_fifoOutDone <= 1;
+            if (ctrl_readoutX===3 && ctrl_readoutY===1) begin
+                ctrl_fifoOutLastPixel <= 1;
             end
+        end
+        
+        // Stop reading from RAM when we reach the last pixel
+        if (fifoOut_write_ready && fifoOut_write_trigger && ctrl_fifoOutLastPixel) begin
+            ctrl_fifoOutDone <= 1;
         end
         
         case (ctrl_state)
@@ -408,6 +413,8 @@ module ImgController #(
             // Reset readout state
             ctrl_readoutX <= ctrl_imageWidth;
             ctrl_readoutY <= ctrl_imageHeight;
+            ctrl_fifoOutLastPixel <= 0;
+            ctrl_fifoOutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end
         
@@ -441,7 +448,7 @@ module ImgController #(
     assign fifoIn_read_trigger = (!ramctrl_write_trigger || ramctrl_write_ready);
     
     // Connect RAM read -> output FIFO write
-    assign fifoOut_write_trigger = ramctrl_read_ready;
+    assign fifoOut_write_trigger = ramctrl_read_ready && !ctrl_fifoOutDone;
     assign ramctrl_read_trigger = fifoOut_write_ready;
     assign fifoOut_write_data = ramctrl_read_data;
     

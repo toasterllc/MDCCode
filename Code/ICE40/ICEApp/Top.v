@@ -15,10 +15,10 @@
 `include "ImgSim.v"
 `include "ImgI2CSlaveSim.v"
 
-// MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
-// beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
-// when that happens
-`define MOBILE_SDR_INIT_VAL 16'hCAFE
+// // MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
+// // beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
+// // when that happens
+// `define MOBILE_SDR_INIT_VAL 16'hCAFE
 `include "mt48h32m16lf/mobile_sdr.v"
 `endif
 
