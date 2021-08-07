@@ -403,6 +403,7 @@ module Top(
     
     reg[`Msg_Len-1:0] spi_dataInReg = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dataInReg[`Msg_Type_Bits];
+    wire spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dataInReg[`Msg_Arg_Bits];
     reg[`RegWidth2(MsgCycleCount,RespCycleCount)-1:0] spi_dataCounter = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
@@ -444,9 +445,9 @@ module Top(
                     spi_state <= SPI_State_MsgIn+2;
                 end
             end
-        
+            
             SPI_State_MsgIn+2: begin
-                spi_state <= SPI_State_RespOut;
+                spi_state <= (spi_msgResp ? SPI_State_RespOut : SPI_State_MsgIn);
                 spi_dataCounter <= RespCycleCount;
                 
                 case (spi_msgType)
@@ -793,15 +794,17 @@ module Testbench();
             ice_msp_spi_clk = 0;
         end
         
-        // Clock in response
-        for (i=0; i<`Resp_Len; i++) begin
-            #(ice_msp_spi_clk_HALF_PERIOD);
-            ice_msp_spi_clk = 1;
+        // Clock in response (if one is sent for this type of message)
+        if (typ[`Msg_Type_Resp_Bits]) begin
+            for (i=0; i<`Resp_Len; i++) begin
+                #(ice_msp_spi_clk_HALF_PERIOD);
+                ice_msp_spi_clk = 1;
             
-                spi_resp = spi_resp<<1|spi_dataIn;
+                    spi_resp = spi_resp<<1|spi_dataIn;
             
-            #(ice_msp_spi_clk_HALF_PERIOD);
-            ice_msp_spi_clk = 0;
+                #(ice_msp_spi_clk_HALF_PERIOD);
+                ice_msp_spi_clk = 0;
+            end
         end
         
         // Give some down time to prevent the SPI state machine from resetting.
@@ -853,12 +856,6 @@ module Testbench();
     task TestNop; begin
         $display("\n[Testbench] ========== TestNop ==========");
         SendMsg(`Msg_Type_Nop, 56'h00000000000000);
-        if (spi_resp === 64'hxxxxxxxxxxxxxxxx) begin
-            $display("[Testbench] Response OK: %h ✅", spi_resp);
-        end else begin
-            $display("[Testbench] Bad response: %h ❌", spi_resp);
-            `Finish;
-        end
     end endtask
     
     task TestEcho(input[`Msg_Arg_Echo_Msg_Len-1:0] val); begin
