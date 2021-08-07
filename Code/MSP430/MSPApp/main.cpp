@@ -167,7 +167,7 @@ static uint8_t _spiTxRx(uint8_t b) {
     return UCA0RXBUF;
 }
 
-static void _ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
+static void _ice40Transfer(const ICE40::Msg& msg) {
     // PA.4 = UCA0SIMO
     PASEL1 &= ~BIT4;
     PASEL0 |=  BIT4;
@@ -189,16 +189,16 @@ static void _ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
     PAOUT &= ~BIT3;
     
     // 8-cycle turnaround
-    _spiTxRx(0xFF);
-    
-    for (uint8_t& b : resp.payload) {
-        b = _spiTxRx(0xFF);
-    }
+    _spiTxRx(0);
 }
 
-static void _ice40Transfer(const ICE40::Msg& msg) {
-    ICE40::Resp resp;
-    _ice40Transfer(msg, resp);
+static void _ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
+    Assert(msg.type & ICE40::MsgType::Resp);
+    _ice40Transfer(msg);
+    // Clock in the response
+    for (uint8_t& b : resp.payload) {
+        b = _spiTxRx(0);
+    }
 }
 
 SDStatusResp _sdStatus() {

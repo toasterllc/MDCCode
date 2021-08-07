@@ -850,7 +850,6 @@ module Testbench();
             $display("[Testbench] sim_rst_ !== 1'b1 ❌ (%b)", sim_rst_);
             `Finish;
         end
-        
     end endtask
     
     task TestNop; begin

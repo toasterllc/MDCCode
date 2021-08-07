@@ -7,6 +7,11 @@
 
 namespace ICE40 {
 
+struct MsgType {
+    static constexpr uint8_t StartBit   = 0x80;
+    static constexpr uint8_t Resp       = 0x40;
+};
+
 bool _GetBit(const uint8_t* bytes, size_t len, uint8_t idx) {
     AssertArg(idx < len*8);
     const uint8_t byteIdx = len-(idx/8)-1;
@@ -58,7 +63,7 @@ struct Resp {
 
 struct EchoMsg : Msg {
     EchoMsg(const char* msg) {
-        type = 0x80;
+        type = MsgType::StartBit | MsgType::Resp | 0x00;
         memcpy(payload, msg, std::min(sizeof(payload), strlen(msg)));
     }
 };
@@ -80,7 +85,7 @@ struct EchoResp : Resp {
 
 struct LEDSetMsg : Msg {
     LEDSetMsg(uint8_t val) {
-        type = 0x81;
+        type = MsgType::StartBit | 0x01;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -110,7 +115,7 @@ struct SDInitMsg : Msg {
     
     SDInitMsg(State state, Trigger trigger, ClkSpeed speed, uint8_t clkDelay) {
         AssertArg((clkDelay&0xF) == clkDelay); // Ensure delay fits in 4 bits
-        type = 0x82;
+        type = MsgType::StartBit | 0x02;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -138,7 +143,7 @@ struct SDSendCmdMsg : Msg {
     
     SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, RespType respType, DatInType datInType) {
         AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
-        type = 0x83;
+        type = MsgType::StartBit | 0x03;
         payload[0] = (respType<<1)|datInType;
         payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
         payload[2] = (sdArg&0xFF000000)>>24;
@@ -151,7 +156,7 @@ struct SDSendCmdMsg : Msg {
 
 struct SDStatusMsg : Msg {
     SDStatusMsg() {
-        type = 0x84;
+        type = MsgType::StartBit | MsgType::Resp | 0x04;
     }
 };
 
@@ -186,7 +191,7 @@ private:
 
 struct ImgResetMsg : Msg {
     ImgResetMsg(bool val) {
-        type = 0x85;
+        type = MsgType::StartBit | 0x05;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -199,7 +204,7 @@ struct ImgResetMsg : Msg {
 
 struct ImgCaptureMsg : Msg {
     ImgCaptureMsg(uint8_t dstBlock) {
-        type = 0x86;
+        type = MsgType::StartBit | 0x06;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -212,7 +217,7 @@ struct ImgCaptureMsg : Msg {
 
 struct ImgCaptureStatusMsg : Msg {
     ImgCaptureStatusMsg() {
-        type = 0x87;
+        type = MsgType::StartBit | MsgType::Resp | 0x07;
     }
 };
 
@@ -226,7 +231,7 @@ struct ImgCaptureStatusResp : Resp {
 
 struct ImgReadoutMsg : Msg {
     ImgReadoutMsg() {
-        type = 0x88;
+        type = MsgType::StartBit | 0x08;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -240,7 +245,7 @@ struct ImgReadoutMsg : Msg {
 struct ImgI2CTransactionMsg : Msg {
     ImgI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) {
         Assert(len==1 || len==2);
-        type = 0x89;
+        type = MsgType::StartBit | 0x09;
         payload[0] = (write ? 0x80 : 0) | (len==2 ? 0x40 : 0);
         payload[1] = 0;
         payload[2] = 0;
@@ -253,7 +258,7 @@ struct ImgI2CTransactionMsg : Msg {
 
 struct ImgI2CStatusMsg : Msg {
     ImgI2CStatusMsg() {
-        type = 0x8A;
+        type = MsgType::StartBit | MsgType::Resp | 0x0A;
     }
 };
 
