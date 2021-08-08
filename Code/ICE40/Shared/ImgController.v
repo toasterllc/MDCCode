@@ -9,14 +9,15 @@ module ImgController #(
     parameter ClkFreq = 24_000_000,
     parameter ImageWidthMax = 256,
     parameter ImageHeightMax = 256,
+    parameter HeaderWidth = 128,
     localparam ImageSizeMax = ImageWidthMax*ImageHeightMax
 )(
     input wire          clk,
     
     // Command port (clock domain: `clk`)
-    input wire          cmd_capture,    // Toggle
-    input wire[0:0]     cmd_ramBlock,
-    input wire[127:0]   cmd_header,
+    input wire                  cmd_capture,    // Toggle
+    input wire[0:0]             cmd_ramBlock,
+    input wire[HeaderWidth-1:0] cmd_header,
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
@@ -273,7 +274,7 @@ module ImgController #(
         // Wait for the frame to be invalid
         3: begin
             if (!img_fv_reg) begin
-                $display("[IMGCTRL:FIFO] Waiting for frame invalid...");
+                $display("[ImgController:FIFO] Waiting for frame invalid...");
                 fifoIn_state <= 4;
             end
         end
@@ -281,7 +282,7 @@ module ImgController #(
         // Wait for the frame to start
         4: begin
             if (img_fv_reg) begin
-                $display("[IMGCTRL:FIFO] Frame start");
+                $display("[ImgController:FIFO] Frame start");
                 fifoIn_state <= 5;
             end
         end
@@ -291,7 +292,7 @@ module ImgController #(
             fifoIn_writeEn <= 1;
             
             if (!img_fv_reg) begin
-                $display("[IMGCTRL:FIFO] Frame end");
+                $display("[ImgController:FIFO] Frame end");
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
             end
@@ -315,11 +316,16 @@ module ImgController #(
     reg ctrl_fifoOutWrote = 0;
     reg ctrl_fifoOutLastPixel = 0;
     reg ctrl_fifoOutDone = 0;
+    reg[HeaderWidth-1:0] ctrl_cmdHeader = 0;
     
-    localparam Ctrl_State_Idle      = 0; // +0
-    localparam Ctrl_State_Capture   = 1; // +3
-    localparam Ctrl_State_Readout   = 5; // +2
-    localparam Ctrl_State_Count     = 8;
+    localparam HeaderWordCount = HeaderWidth/16;
+    reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_cmdHeaderCount = 0;
+    
+    localparam Ctrl_State_Idle          = 0; // +0
+    localparam Ctrl_State_WriteHeader   = 1; // +1
+    localparam Ctrl_State_Capture       = 3; // +2
+    localparam Ctrl_State_Readout       = 6; // +2
+    localparam Ctrl_State_Count         = 9;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -349,38 +355,49 @@ module ImgController #(
         Ctrl_State_Idle: begin
         end
         
-        Ctrl_State_Capture: begin
-            $display("[IMGCTRL:Capture] Triggered");
+        Ctrl_State_WriteHeader: begin
+            $display("[ImgController:WriteHeader] Triggered");
             // Supply 'Write' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Write;
-            $display("[IMGCTRL:Capture] Waiting for RAMController to be ready to write...");
+            ramctrl_write_data <= `LeftBits(cmd_header, 0, 16);
+            ctrl_cmdHeader <= cmd_header<<16;
+            ctrl_cmdHeaderCount <= HeaderWordCount-1;
+            $display("[ImgController:WriteHeader] Waiting for RAMController to be ready to write...");
+            ctrl_state <= Ctrl_State_WriteHeader+1;
+        end
+        
+        Ctrl_State_WriteHeader+1: begin
+            ramctrl_write_trigger <= 1;
+            // Wait for the write command to be consumed, and for the RAMController
+            // to be ready to write.
+            if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
+                $display("[ImgController:WriteHeader] Wrote header word");
+                ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
+                ctrl_cmdHeader <= ctrl_cmdHeader<<16;
+                ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
+                if (!ctrl_cmdHeaderCount) begin
+                    ramctrl_write_trigger <= 0;
+                    ctrl_state <= Ctrl_State_Capture;
+                end
+            end
+        end
+        
+        Ctrl_State_Capture: begin
+            $display("[ImgController:Capture] Waiting for FIFO to reset...");
+            // Start the FIFO data flow now that RAMController is ready to write
+            ctrl_fifoInCaptureTrigger <= !ctrl_fifoInCaptureTrigger;
             ctrl_state <= Ctrl_State_Capture+1;
         end
         
         Ctrl_State_Capture+1: begin
-            // Wait for the write command to be consumed, and for the RAMController
-            // to be ready to write.
-            // This is necessary because the RAMController/SDRAM takes some time to
-            // initialize upon power on. If we attempted a capture during this time,
-            // we'd drop most/all of the pixels because RAMController/SDRAM wouldn't
-            // be ready to write yet.
-            if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
-                $display("[IMGCTRL:Capture] Waiting for FIFO to reset...");
-                // Start the FIFO data flow now that RAMController is ready to write
-                ctrl_fifoInCaptureTrigger <= !ctrl_fifoInCaptureTrigger;
+            // Wait for the fifoIn state machine to start
+            if (ctrl_fifoInStarted) begin
                 ctrl_state <= Ctrl_State_Capture+2;
             end
         end
         
         Ctrl_State_Capture+2: begin
-            // Wait for the fifoIn state machine to start
-            if (ctrl_fifoInStarted) begin
-                ctrl_state <= Ctrl_State_Capture+3;
-            end
-        end
-        
-        Ctrl_State_Capture+3: begin
             // By default, prevent `ramctrl_write_trigger` from being reset
             ramctrl_write_trigger <= ramctrl_write_trigger;
             
@@ -391,7 +408,7 @@ module ImgController #(
             
             // Copy word from FIFO->RAM
             if (fifoIn_read_ready && fifoIn_read_trigger) begin
-                // $display("[IMGCTRL:Capture] Got pixel: %0d", fifoIn_read_data);
+                // $display("[ImgController:Capture] Got pixel: %0d", fifoIn_read_data);
                 ramctrl_write_data <= fifoIn_read_data;
                 ramctrl_write_trigger <= 1;
             end
@@ -399,13 +416,13 @@ module ImgController #(
             // We're finished when the FIFO doesn't have data, and the fifoIn state
             // machine signals that it's done receiving data.
             if (!fifoIn_read_ready && ctrl_fifoInDone) begin
-                $display("[IMGCTRL:Capture] Finished");
+                $display("[ImgController:Capture] Finished");
                 ctrl_state <= Ctrl_State_Readout;
             end
         end
         
         Ctrl_State_Readout: begin
-            $display("[IMGCTRL:Readout] Started");
+            $display("[ImgController:Readout] Started");
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
@@ -435,7 +452,7 @@ module ImgController #(
         end
         endcase
         
-        if (ctrl_cmdCapture) ctrl_state <= Ctrl_State_Capture;
+        if (ctrl_cmdCapture) ctrl_state <= Ctrl_State_WriteHeader;
     end
     
     // ====================

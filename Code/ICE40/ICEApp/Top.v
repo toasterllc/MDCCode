@@ -542,12 +542,12 @@ module Top(
                 
                 `Msg_Type_ImgSetHeader1: begin
                     $display("[SPI] Got Msg_Type_ImgSetHeader1 (header1=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader1_Header_Bits]);
-                    imgctrl_cmd_header[127:72] <= spi_msgArg[`Msg_Arg_ImgSetHeader2_Header_Bits];
+                    imgctrl_cmd_header[127:72] <= spi_msgArg[`Msg_Arg_ImgSetHeader1_Header_Bits];
                 end
                 
                 `Msg_Type_ImgSetHeader2: begin
                     $display("[SPI] Got Msg_Type_ImgSetHeader2 (header2=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader2_Header_Bits]);
-                    imgctrl_cmd_header[71:16] <= spi_msgArg[`Msg_Arg_ImgSetHeader1_Header_Bits];
+                    imgctrl_cmd_header[71:16] <= spi_msgArg[`Msg_Arg_ImgSetHeader2_Header_Bits];
                 end
                 
                 `Msg_Type_ImgCapture: begin
@@ -1273,9 +1273,9 @@ module Testbench();
         
         $display("\n[Testbench] ========== TestImgSetHeader1 ==========");
         arg = 0;
-        arg[127:120] = version;
-        arg[119:88] = timestamp;
-        arg[87:72] = imageWidth;
+        arg[55:48] = version;
+        arg[47:16] = timestamp;
+        arg[15: 0] = imageWidth;
         
         SendMsg(`Msg_Type_ImgSetHeader1, arg);
     end endtask
@@ -1285,9 +1285,9 @@ module Testbench();
         
         $display("\n[Testbench] ========== TestImgSetHeader2 ==========");
         arg = 0;
-        arg[71:56] = imageHeight;
-        arg[55:40] = exposure;
-        arg[39:24] = gain;
+        arg[55:40] = imageHeight;
+        arg[39:24] = exposure;
+        arg[23: 8] = gain;
         SendMsg(`Msg_Type_ImgSetHeader2, arg);
     end endtask
     
