@@ -138,6 +138,7 @@ module Top(
     // ====================
     reg                                 imgctrl_cmd_capture = 0;
     reg[0:0]                            imgctrl_cmd_ramBlock = 0;
+    reg[127:0]                          imgctrl_cmd_header = 0;
     wire                                imgctrl_readout_clk;
     wire                                imgctrl_readout_ready;
     wire                                imgctrl_readout_trigger;
@@ -156,6 +157,7 @@ module Top(
         
         .cmd_capture(imgctrl_cmd_capture),
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
+        .cmd_header(imgctrl_cmd_header),
         
         .readout_clk(imgctrl_readout_clk),
         .readout_ready(imgctrl_readout_ready),
@@ -536,6 +538,16 @@ module Top(
                 `Msg_Type_ImgReset: begin
                     $display("[SPI] Got Msg_Type_ImgReset (rst=%b)", spi_msgArg[`Msg_Arg_ImgReset_Val_Bits]);
                     img_rst_ <= spi_msgArg[`Msg_Arg_ImgReset_Val_Bits];
+                end
+                
+                `Msg_Type_ImgSetHeader1: begin
+                    $display("[SPI] Got Msg_Type_ImgSetHeader1 (header1=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader1_Header_Bits]);
+                    imgctrl_cmd_header[127:72] <= spi_msgArg[`Msg_Arg_ImgSetHeader2_Header_Bits];
+                end
+                
+                `Msg_Type_ImgSetHeader2: begin
+                    $display("[SPI] Got Msg_Type_ImgSetHeader2 (header2=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader2_Header_Bits]);
+                    imgctrl_cmd_header[71:16] <= spi_msgArg[`Msg_Arg_ImgSetHeader1_Header_Bits];
                 end
                 
                 `Msg_Type_ImgCapture: begin
@@ -1256,6 +1268,29 @@ module Testbench();
         end
     end endtask
     
+    task TestImgSetHeader1(input[7:0] version, input[31:0] timestamp, input[15:0] imageWidth); begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        
+        $display("\n[Testbench] ========== TestImgSetHeader1 ==========");
+        arg = 0;
+        arg[127:120] = version;
+        arg[119:88] = timestamp;
+        arg[87:72] = imageWidth;
+        
+        SendMsg(`Msg_Type_ImgSetHeader1, arg);
+    end endtask
+    
+    task TestImgSetHeader2(input[15:0] imageHeight, input[15:0] exposure, input[15:0] gain); begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        
+        $display("\n[Testbench] ========== TestImgSetHeader2 ==========");
+        arg = 0;
+        arg[71:56] = imageHeight;
+        arg[55:40] = exposure;
+        arg[39:24] = gain;
+        SendMsg(`Msg_Type_ImgSetHeader2, arg);
+    end endtask
+    
     task TestImgCapture; begin
         reg[`Msg_Arg_Len-1:0] arg;
         $display("\n[Testbench] ========== TestImgCapture ==========");
@@ -1451,6 +1486,8 @@ module Testbench();
         
         // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
         TestImgReset();
+        TestImgSetHeader1(8'h42 /* version */, 32'hAABBCCDD /* timestamp */, 16'd2304 /* image width */);
+        TestImgSetHeader2(16'd1296 /* image height */, 16'h1111 /* exposure */, 16'h2222 /* gain */);
         // TestImgI2CWriteRead();
         TestImgCapture();
         

@@ -202,9 +202,35 @@ struct ImgResetMsg : Msg {
     }
 };
 
+struct ImgSetHeader1 : Msg {
+    ImgSetHeader1(const uint8_t* h) {
+        type = MsgType::StartBit | 0x06;
+        payload[0] = h[0];
+        payload[1] = h[1];
+        payload[2] = h[2];
+        payload[3] = h[3];
+        payload[4] = h[4];
+        payload[5] = h[5];
+        payload[6] = h[6];
+    }
+};
+
+struct ImgSetHeader2 : Msg {
+    ImgSetHeader2(const uint8_t* h) {
+        type = MsgType::StartBit | 0x07;
+        payload[0] = h[0];
+        payload[1] = h[1];
+        payload[2] = h[2];
+        payload[3] = h[3];
+        payload[4] = h[4];
+        payload[5] = h[5];
+        payload[6] = h[6];
+    }
+};
+
 struct ImgCaptureMsg : Msg {
     ImgCaptureMsg(uint8_t dstBlock) {
-        type = MsgType::StartBit | 0x06;
+        type = MsgType::StartBit | 0x08;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -217,7 +243,7 @@ struct ImgCaptureMsg : Msg {
 
 struct ImgCaptureStatusMsg : Msg {
     ImgCaptureStatusMsg() {
-        type = MsgType::StartBit | MsgType::Resp | 0x07;
+        type = MsgType::StartBit | MsgType::Resp | 0x09;
     }
 };
 
@@ -231,7 +257,7 @@ struct ImgCaptureStatusResp : Resp {
 
 struct ImgReadoutMsg : Msg {
     ImgReadoutMsg() {
-        type = MsgType::StartBit | 0x08;
+        type = MsgType::StartBit | 0x0A;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -245,7 +271,7 @@ struct ImgReadoutMsg : Msg {
 struct ImgI2CTransactionMsg : Msg {
     ImgI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) {
         Assert(len==1 || len==2);
-        type = MsgType::StartBit | 0x09;
+        type = MsgType::StartBit | 0x0B;
         payload[0] = (write ? 0x80 : 0) | (len==2 ? 0x40 : 0);
         payload[1] = 0;
         payload[2] = 0;
@@ -258,7 +284,7 @@ struct ImgI2CTransactionMsg : Msg {
 
 struct ImgI2CStatusMsg : Msg {
     ImgI2CStatusMsg() {
-        type = MsgType::StartBit | MsgType::Resp | 0x0A;
+        type = MsgType::StartBit | MsgType::Resp | 0x0C;
     }
 };
 
