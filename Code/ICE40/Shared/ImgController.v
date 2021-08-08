@@ -16,6 +16,7 @@ module ImgController #(
     // Command port (clock domain: `clk`)
     input wire          cmd_capture,    // Toggle
     input wire[0:0]     cmd_ramBlock,
+    input wire[127:0]   cmd_header,
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
