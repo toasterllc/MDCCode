@@ -25,6 +25,16 @@ pkg = sys.argv[2]
 proj = sys.argv[3]
 ntrials = int(sys.argv[4])
 
+projDirPath = os.path.join(scriptDir, proj)
+topFilePath = os.path.join(projDirPath, "Synth", "Top.json")
+pcfFilePath = os.path.join(scriptDir, "Pins.pcf")
+
+synthProg = 'Synth.sh'
+synthArgs = [os.path.join(scriptDir, synthProg), dev, pkg, proj]
+
+pnrProg = 'nextpnr-ice40'
+pnrArgs = [pnrProg, '--'+dev, '--package', pkg, '--json', topFilePath, '--pcf', pcfFilePath, '--pcf-allow-unconstrained']
+
 # Print iterations progress
 def printProgress(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
     """
@@ -48,26 +58,12 @@ def printProgress(iteration, total, prefix = '', suffix = '', decimals = 1, leng
         print()
 
 def executeTrial(_):
-    projDirPath = os.path.join(scriptDir, proj)
-    topFilePath = os.path.join(projDirPath, "Synth", "Top.json")
-    pcfFilePath = os.path.join(scriptDir, "Pins.pcf")
-    
-    cmd = [
-        'nextpnr-ice40',
-        '--seed',
-        str(random.randint(-0x80000000,0x7FFFFFFF)),
-        '--'+dev,
-        '--package',
-        pkg,
-        '--json',
-        topFilePath,
-        '--pcf',
-        pcfFilePath,
-        '--pcf-allow-unconstrained',
-    ]
+    cmd = pnrArgs + ['--seed', str(random.randint(-0x80000000,0x7FFFFFFF))]
     
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     outputLines = proc.stdout.decode("utf-8").splitlines()
+    if proc.returncode != 0:
+        raise RuntimeError(f'{pnrProg} failed')
     
     # nextpnr should output 2 lines matching this 'Max frequency for clock' string, for each clock.
     # We want the second set of matching strings, which is after nextpnr routes the design.
@@ -94,6 +90,13 @@ def executeTrial(_):
     
     return clkFreqs
 
+# Synthesize the design with Synth.sh, since it might be out-of-date
+print(f"Synthesizing design ({synthProg} {' '.join(synthArgs[1:])})\n")
+proc = subprocess.run(synthArgs, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+if proc.returncode != 0:
+    raise RuntimeError(f'{synthProg} failed')
+
+print(f"Routing design with {ntrials} trials ({' '.join(pnrArgs)})\n")
 clkFreqs = {}
 pool = multiprocessing.Pool(multiprocessing.cpu_count())
 for i, f in enumerate(pool.imap_unordered(executeTrial, range(ntrials)), 1):
@@ -119,10 +122,3 @@ for clk in clkFreqs:
     freqMedian = statistics.median(freqs)
     
     print(f'{clk:50} {freqMin:8.2f} {freqMax:8.2f} {freqAverage:8.2f} {freqMedian:8.2f}')
-    
-    # print('==========================================')
-    # print(f'              Clk: {clk}')
-    # print(f'    Min frequency: {freqMin:.2f}')
-    # print(f'    Max frequency: {freqMax:.2f}')
-    # print(f'Average frequency: {freqAverage:.2f}')
-    # print(f' Median frequency: {freqMedian:.2f}')
