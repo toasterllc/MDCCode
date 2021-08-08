@@ -9,8 +9,7 @@ module ImgController #(
     parameter ClkFreq = 24_000_000,
     parameter ImageWidthMax = 256,
     parameter ImageHeightMax = 256,
-    parameter HeaderWidth = 128,
-    localparam ImageSizeMax = ImageWidthMax*ImageHeightMax
+    parameter HeaderWidth = 128
 )(
     input wire          clk,
     
@@ -50,6 +49,8 @@ module ImgController #(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
+    localparam ImageSizeMax = ImageWidthMax*ImageHeightMax;
+    
     // ====================
     // RAMController
     // ====================
@@ -311,7 +312,8 @@ module ImgController #(
     // TODO: try storing ctrl_imageWidth / ctrl_imageHeight in their own registers
     wire[`RegWidth(ImageWidthMax)-1:0] ctrl_imageWidth = fifoIn_imageWidth;
     wire[`RegWidth(ImageHeightMax)-1:0] ctrl_imageHeight = fifoIn_imageHeight;
-    reg[`RegWidth(ImageWidthMax)-1:0] ctrl_readoutX = 0;
+    // ctrl_readoutX: we add `HeaderWordCount` to the first row to account for the header
+    reg[`RegWidth(HeaderWordCount+ImageWidthMax)-1:0] ctrl_readoutX = 0;
     reg[`RegWidth(ImageHeightMax)-1:0] ctrl_readoutY = 0;
     reg ctrl_fifoOutWrote = 0;
     reg ctrl_fifoOutLastPixel = 0;
@@ -372,7 +374,9 @@ module ImgController #(
             // Wait for the write command to be consumed, and for the RAMController
             // to be ready to write.
             if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
-                $display("[ImgController:WriteHeader] Wrote header word");
+                $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
+                    HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
+                
                 ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
                 ctrl_cmdHeader <= ctrl_cmdHeader<<16;
                 ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
@@ -429,7 +433,7 @@ module ImgController #(
             // Reset output FIFO
             fifoOut_rst <= 1;
             // Reset readout state
-            ctrl_readoutX <= ctrl_imageWidth;
+            ctrl_readoutX <= HeaderWordCount+ctrl_imageWidth;
             ctrl_readoutY <= ctrl_imageHeight;
             ctrl_fifoOutLastPixel <= 0;
             ctrl_fifoOutDone <= 0;
