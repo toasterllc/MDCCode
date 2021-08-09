@@ -114,7 +114,7 @@ print('=========================================================================
 print(f'Clk                                                   Min      Max      Avg      Med')
 print('--------------------------------------------------------------------------------------')
 
-for clk in clkFreqs:
+for clk in sorted(clkFreqs):
     freqs = clkFreqs[clk]
     freqMin = min(freqs)
     freqMax = max(freqs)
