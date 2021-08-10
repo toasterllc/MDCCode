@@ -312,9 +312,7 @@ module ImgController #(
     // TODO: try storing ctrl_imageWidth / ctrl_imageHeight in their own registers
     wire[`RegWidth(ImageWidthMax)-1:0] ctrl_imageWidth = fifoIn_imageWidth;
     wire[`RegWidth(ImageHeightMax)-1:0] ctrl_imageHeight = fifoIn_imageHeight;
-    // ctrl_readoutX: we add `HeaderWordCount` to the first row to account for the header
-    reg[`RegWidth(HeaderWordCount+ImageWidthMax)-1:0] ctrl_readoutX = 0;
-    reg[`RegWidth(ImageHeightMax)-1:0] ctrl_readoutY = 0;
+    reg[`RegWidth(ImageSizeMax)-1:0] ctrl_readoutCount = 0;
     reg ctrl_fifoOutWrote = 0;
     reg ctrl_fifoOutLastPixel = 0;
     reg ctrl_fifoOutDone = 0;
@@ -336,14 +334,9 @@ module ImgController #(
         
         ctrl_fifoOutWrote <= fifoOut_write_ready && fifoOut_write_trigger;
         if (ctrl_fifoOutWrote) begin
-            $display("[ImgController] ctrl_readoutX / ctrl_readoutY:  %0d  %0d", ctrl_readoutX, ctrl_readoutY);
-            ctrl_readoutX <= ctrl_readoutX-1;
-            if (ctrl_readoutX === 1) begin
-                ctrl_readoutX <= ctrl_imageWidth;
-                ctrl_readoutY <= ctrl_readoutY-1;
-            end
-            
-            if (ctrl_readoutX===3 && ctrl_readoutY===1) begin
+            $display("[ImgController] ctrl_readoutCount: %0d", ctrl_readoutCount);
+            ctrl_readoutCount <= ctrl_readoutCount-1;
+            if (ctrl_readoutCount === 0) begin
                 ctrl_fifoOutLastPixel <= 1;
             end
         end
@@ -433,8 +426,12 @@ module ImgController #(
             // Reset output FIFO
             fifoOut_rst <= 1;
             // Reset readout state
-            ctrl_readoutX <= HeaderWordCount+ctrl_imageWidth;
-            ctrl_readoutY <= ctrl_imageHeight;
+`ifdef SIM
+            ctrl_readoutCount <= 64*32+HeaderWordCount-3;
+`else
+            ctrl_readoutCount <= 2304*1296+HeaderWordCount-3;
+`endif
+            // ctrl_readoutCount <= ImageSizeMax;
             ctrl_fifoOutLastPixel <= 0;
             ctrl_fifoOutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
