@@ -9,14 +9,16 @@ module ImgController #(
     parameter ClkFreq = 24_000_000,
     parameter ImageWidthMax = 256,
     parameter ImageHeightMax = 256,
-    parameter HeaderWidth = 128
+    parameter HeaderWidth = 128,
+    localparam ImageSizeMax = ImageWidthMax*ImageHeightMax
 )(
     input wire          clk,
     
     // Command port (clock domain: `clk`)
-    input wire                  cmd_capture,    // Toggle
-    input wire[0:0]             cmd_ramBlock,
-    input wire[HeaderWidth-1:0] cmd_header,
+    input wire                              cmd_capture,    // Toggle
+    input wire[0:0]                         cmd_ramBlock,
+    input wire[HeaderWidth-1:0]             cmd_header,
+    input wire[`RegWidth(ImageSizeMax)-1:0] cmd_pixelCount,
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
@@ -49,8 +51,6 @@ module ImgController #(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    localparam ImageSizeMax = ImageWidthMax*ImageHeightMax;
-    
     // ====================
     // RAMController
     // ====================
@@ -426,11 +426,7 @@ module ImgController #(
             // Reset output FIFO
             fifoOut_rst <= 1;
             // Reset readout state
-`ifdef SIM
-            ctrl_readoutCount <= 64*32+HeaderWordCount-3;
-`else
-            ctrl_readoutCount <= 2304*1296+HeaderWordCount-3;
-`endif
+            ctrl_readoutCount <= cmd_pixelCount;
             // ctrl_readoutCount <= ImageSizeMax;
             ctrl_fifoOutLastPixel <= 0;
             ctrl_fifoOutDone <= 0;

@@ -136,18 +136,19 @@ module Top(
     // ====================
     // ImgController
     // ====================
-    reg                                 imgctrl_cmd_capture = 0;
-    reg[0:0]                            imgctrl_cmd_ramBlock = 0;
-    reg[127:0]                          imgctrl_cmd_header = 0;
-    wire                                imgctrl_readout_clk;
-    wire                                imgctrl_readout_ready;
-    wire                                imgctrl_readout_trigger;
-    wire[15:0]                          imgctrl_readout_data;
-    wire                                imgctrl_status_captureDone;
-    wire[`RegWidth(ImageWidthMax)-1:0]  imgctrl_status_captureImageWidth;
-    wire[`RegWidth(ImageHeightMax)-1:0] imgctrl_status_captureImageHeight;
-    wire[17:0]                          imgctrl_status_captureHighlightCount;
-    wire[17:0]                          imgctrl_status_captureShadowCount;
+    reg                                                 imgctrl_cmd_capture = 0;
+    reg[0:0]                                            imgctrl_cmd_ramBlock = 0;
+    reg[127:0]                                          imgctrl_cmd_header = 0;
+    reg[`RegWidth(ImageWidthMax*ImageHeightMax)-1:0]    imgctrl_cmd_pixelCount = 0;
+    wire                                                imgctrl_readout_clk;
+    wire                                                imgctrl_readout_ready;
+    wire                                                imgctrl_readout_trigger;
+    wire[15:0]                                          imgctrl_readout_data;
+    wire                                                imgctrl_status_captureDone;
+    wire[`RegWidth(ImageWidthMax)-1:0]                  imgctrl_status_captureImageWidth;
+    wire[`RegWidth(ImageHeightMax)-1:0]                 imgctrl_status_captureImageHeight;
+    wire[17:0]                                          imgctrl_status_captureHighlightCount;
+    wire[17:0]                                          imgctrl_status_captureShadowCount;
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
         .ImageWidthMax(ImageWidthMax),
@@ -158,6 +159,7 @@ module Top(
         .cmd_capture(imgctrl_cmd_capture),
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
         .cmd_header(imgctrl_cmd_header),
+        .cmd_pixelCount(imgctrl_cmd_pixelCount),
         
         .readout_clk(imgctrl_readout_clk),
         .readout_ready(imgctrl_readout_ready),
@@ -554,6 +556,7 @@ module Top(
                     $display("[SPI] Got Msg_Type_ImgCapture (block=%b)", spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits]);
                     // Reset spi_imgCaptureDone_
                     if (!spi_imgCaptureDone_) spi_imgCaptureDoneAck <= !spi_imgCaptureDoneAck;
+                    imgctrl_cmd_pixelCount <= spi_msgArg[`Msg_Arg_ImgCapture_PixelCount_Bits];
                     imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits];
                     imgctrl_cmd_capture <= !imgctrl_cmd_capture;
                 end
@@ -736,7 +739,7 @@ module Testbench();
     );
     
     localparam ImageWidth = 64;
-    localparam ImageHeight = 32;
+    localparam ImageHeight = 1;
     ImgSim #(
         .ImageWidth(ImageWidth),
         .ImageHeight(ImageHeight)
@@ -1296,6 +1299,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestImgCapture ==========");
         
         arg = 0;
+        arg[`Msg_Arg_ImgCapture_PixelCount_Bits] = ImageWidth*ImageHeight+8-3; // +Header -3 cycles
         arg[`Msg_Arg_ImgCapture_DstBlock_Bits] = 0;
         SendMsg(`Msg_Type_ImgCapture, arg);
         
