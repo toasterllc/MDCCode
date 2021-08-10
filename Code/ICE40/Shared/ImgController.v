@@ -314,7 +314,6 @@ module ImgController #(
     wire[`RegWidth(ImageHeightMax)-1:0] ctrl_imageHeight = fifoIn_imageHeight;
     reg[`RegWidth(ImageSizeMax)-1:0] ctrl_readoutCount = 0;
     reg ctrl_fifoOutWrote = 0;
-    reg ctrl_fifoOutLastPixel = 0;
     reg ctrl_fifoOutDone = 0;
     reg[HeaderWidth-1:0] ctrl_cmdHeader = 0;
     
@@ -337,13 +336,8 @@ module ImgController #(
             $display("[ImgController] ctrl_readoutCount: %0d", ctrl_readoutCount);
             ctrl_readoutCount <= ctrl_readoutCount-1;
             if (ctrl_readoutCount === 0) begin
-                ctrl_fifoOutLastPixel <= 1;
+                ctrl_fifoOutDone <= 1;
             end
-        end
-        
-        // Stop reading from RAM when we reach the last pixel
-        if (fifoOut_write_ready && fifoOut_write_trigger && ctrl_fifoOutLastPixel) begin
-            ctrl_fifoOutDone <= 1;
         end
         
         case (ctrl_state)
@@ -369,7 +363,7 @@ module ImgController #(
             if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
                 $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
                     HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
-                
+                // TODO: for perf: try moving this into a new state
                 ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
                 ctrl_cmdHeader <= ctrl_cmdHeader<<16;
                 ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
@@ -428,7 +422,6 @@ module ImgController #(
             // Reset readout state
             ctrl_readoutCount <= cmd_pixelCount;
             // ctrl_readoutCount <= ImageSizeMax;
-            ctrl_fifoOutLastPixel <= 0;
             ctrl_fifoOutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end
