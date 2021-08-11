@@ -26,7 +26,7 @@ module ImgController #(
     
     // Status port (clock domain: `clk`)
     output reg                                  status_captureDone = 0, // Toggle
-    output wire[`RegWidth(ImageSizeMax)-1:0]    status_capturePixelCount,
+    output wire[`RegWidth(ImageSizeMax)-1:0]    status_captureWordCount,
     output wire[17:0]                           status_captureHighlightCount,
     output wire[17:0]                           status_captureShadowCount,
     
@@ -195,10 +195,10 @@ module ImgController #(
     reg fifoIn_started = 0;
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
-    reg[`RegWidth(ImageSizeMax)-1:0] fifoIn_pixelCount = 0;
+    reg[`RegWidth(ImageSizeMax)-1:0] fifoIn_wordCount = 0;
     reg[17:0] fifoIn_highlightCount = 0;
     reg[17:0] fifoIn_shadowCount = 0;
-    assign status_capturePixelCount = fifoIn_pixelCount;
+    assign status_captureWordCount = fifoIn_wordCount;
     assign status_captureHighlightCount = fifoIn_highlightCount;
     assign status_captureShadowCount = fifoIn_shadowCount;
     
@@ -211,41 +211,7 @@ module ImgController #(
     reg[11:0] fifoIn_countStatPx = 0;
     
     reg fifoIn_done = 0;
-    // `TogglePulse(ctrl_fifoInDone, fifoIn_done, posedge, clk);
-    // `ToggleAck(ctrl_fifoInDone, ctrl_fifoInDoneAck, fifoIn_done, posedge, clk);
     `Sync(ctrl_fifoInDone, fifoIn_done, posedge, clk);
-    
-        // reg[HeaderWidth-1:0] ctrl_cmdHeader = 0;
-        // reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_cmdHeaderCount = 0;
-        // if (ramctrl_write_trigger && ramctrl_write_ready) begin
-        //     ctrl_cmdHeader <= ctrl_cmdHeader<<16;
-        //     ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
-        // end
-        //
-        // // Ctrl_State_WriteHeader: begin
-        // //     $display("[ImgController:WriteHeader] Triggered");
-        // //     // Supply 'Write' RAM command
-        // //     ramctrl_cmd_block <= cmd_ramBlock;
-        // //     ramctrl_cmd <= `RAMController_Cmd_Write;
-        // //     ramctrl_write_data <= `LeftBits(cmd_header, 0, 16);
-        // //     ctrl_cmdHeader <= cmd_header<<16;
-        // //     ctrl_cmdHeaderCount <= HeaderWordCount-1;
-        // //     $display("[ImgController:WriteHeader] Waiting for RAMController to be ready to write...");
-        // //     ctrl_state <= Ctrl_State_WriteHeader+1;
-        // // end
-        // //
-        // // Ctrl_State_WriteHeader+1: begin
-        // //     ramctrl_write_trigger <= 1;
-        // //     if (ramctrl_write_trigger && ramctrl_write_ready) begin
-        // //         $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
-        // //             HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
-        // //         ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
-        // //         if (!ctrl_cmdHeaderCount) begin
-        // //             ramctrl_write_trigger <= 0;
-        // //             ctrl_state <= Ctrl_State_Capture;
-        // //         end
-        // //     end
-        // // end
     
     reg[2:0] fifoIn_state = 0;
     always @(posedge img_dclk) begin
@@ -256,10 +222,9 @@ module ImgController #(
         fifoIn_header <= fifoIn_header<<16;
         fifoIn_headerCount <= fifoIn_headerCount-1;
         
-        // TODO: perf: try looking at fifoIn_pixelWrite instead of fifoIn_write_trigger, and start fifoIn_pixelCount off at HeaderWordCount
         if (fifoIn_write_trigger) begin
             // Count the pixels in an image
-            fifoIn_pixelCount <= fifoIn_pixelCount+1;
+            fifoIn_wordCount <= fifoIn_wordCount+1;
         end
         
         if (!fifoIn_lv) fifoIn_x <= 0;
@@ -295,7 +260,7 @@ module ImgController #(
         1: begin
             fifoIn_rst <= 1;
             fifoIn_done <= 0;
-            fifoIn_pixelCount <= 0;
+            fifoIn_wordCount <= 0;
             fifoIn_highlightCount <= 0;
             fifoIn_shadowCount <= 0;
             fifoIn_state <= 2;
@@ -448,7 +413,7 @@ module ImgController #(
             // Reset output FIFO
             fifoOut_rst <= 1;
             // Reset readout state
-            ctrl_readoutCount <= fifoIn_pixelCount;
+            ctrl_readoutCount <= fifoIn_wordCount;
             ctrl_fifoOutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end

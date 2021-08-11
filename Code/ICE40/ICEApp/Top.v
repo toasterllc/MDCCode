@@ -145,7 +145,7 @@ module Top(
     wire                                                imgctrl_readout_trigger;
     wire[15:0]                                          imgctrl_readout_data;
     wire                                                imgctrl_status_captureDone;
-    wire[`RegWidth(ImageSizeMax)-1:0]                   imgctrl_status_capturePixelCount;
+    wire[`RegWidth(ImageSizeMax)-1:0]                   imgctrl_status_captureWordCount;
     wire[17:0]                                          imgctrl_status_captureHighlightCount;
     wire[17:0]                                          imgctrl_status_captureShadowCount;
     ImgController #(
@@ -165,7 +165,7 @@ module Top(
         .readout_data(imgctrl_readout_data),
         
         .status_captureDone(imgctrl_status_captureDone),
-        .status_capturePixelCount(imgctrl_status_capturePixelCount),
+        .status_captureWordCount(imgctrl_status_captureWordCount),
         .status_captureHighlightCount(imgctrl_status_captureHighlightCount),
         .status_captureShadowCount(imgctrl_status_captureShadowCount),
         
@@ -560,7 +560,7 @@ module Top(
                 `Msg_Type_ImgCaptureStatus: begin
                     $display("[SPI] Got Msg_Type_ImgCaptureStatus");
                     spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= !spi_imgCaptureDone_;
-                    spi_resp[`Resp_Arg_ImgCaptureStatus_PixelCount_Bits] <= imgctrl_status_capturePixelCount;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_WordCount_Bits] <= imgctrl_status_captureWordCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits] <= imgctrl_status_captureHighlightCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits] <= imgctrl_status_captureShadowCount;
                     spi_resp[2:0] <= 3'b101; // TODO: remove
@@ -1307,7 +1307,7 @@ module Testbench();
         end while(!spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits]);
         $display("[Testbench] Capture done ✅ (done:%b image size:%0d, highlightCount:%0d, shadowCount:%0d)",
             spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits],
-            spi_resp[`Resp_Arg_ImgCaptureStatus_PixelCount_Bits],
+            spi_resp[`Resp_Arg_ImgCaptureStatus_WordCount_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits],
         );
