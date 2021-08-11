@@ -187,6 +187,7 @@ module ImgController #(
     reg fifoIn_pixelWriteEn = 0;
     reg[`RegWidth(HeaderWordCount-1)-1:0] fifoIn_headerCount = 0;
     wire fifoIn_pixelWrite = (fifoIn_pixelWriteEn && img_lv_reg);
+    reg[HeaderWidth+16-1:0] fifoIn_header = 0;
     
     reg ctrl_fifoInCaptureTrigger = 0;
     `TogglePulse(fifoIn_captureTrigger, ctrl_fifoInCaptureTrigger, posedge, img_dclk);
@@ -252,6 +253,7 @@ module ImgController #(
         fifoIn_pixelWriteEn <= 0; // Reset by default
         fifoIn_headerWriteEn <= 0; // Reset by default
         fifoIn_lvPrev <= fifoIn_lv;
+        fifoIn_header <= fifoIn_header<<16;
         fifoIn_headerCount <= fifoIn_headerCount-1;
         
         // TODO: perf: try looking at fifoIn_pixelWrite instead of fifoIn_write_trigger, and start fifoIn_pixelCount off at HeaderWordCount
@@ -317,9 +319,10 @@ module ImgController #(
         
         // Wait for the frame to start
         4: begin
+            fifoIn_header <= cmd_header;
+            fifoIn_headerCount <= HeaderWordCount-1;
             if (img_fv_reg) begin
                 $display("[ImgController:fifoIn] Frame start");
-                fifoIn_headerCount <= HeaderWordCount-1;
                 fifoIn_state <= 5;
             end
         end
@@ -474,7 +477,7 @@ module ImgController #(
     // ====================
     // Connect input FIFO write -> pixel data
     assign fifoIn_write_trigger = (fifoIn_headerWriteEn || fifoIn_pixelWrite);
-    assign fifoIn_write_data = (fifoIn_headerWriteEn ? 16'hFFFF : {4'b0, img_d_reg});
+    assign fifoIn_write_data = (fifoIn_headerWriteEn ? `LeftBits(fifoIn_header, 0, 16) : {4'b0, img_d_reg});
     
     // Connect input FIFO read -> RAM write
     assign fifoIn_read_trigger = (!ramctrl_write_trigger || ramctrl_write_ready);
