@@ -184,6 +184,8 @@ module ImgController #(
     // Pixel input state machine
     // ====================
     reg fifoIn_writeEn = 0;
+    reg fifoIn_headerWrite = 0;
+    reg[`RegWidth(HeaderWordCount-1)-1:0] fifoIn_headerCount = 0;
     
     reg ctrl_fifoInCaptureTrigger = 0;
     `TogglePulse(fifoIn_captureTrigger, ctrl_fifoInCaptureTrigger, posedge, img_dclk);
@@ -211,11 +213,45 @@ module ImgController #(
     // `ToggleAck(ctrl_fifoInDone, ctrl_fifoInDoneAck, fifoIn_done, posedge, clk);
     `Sync(ctrl_fifoInDone, fifoIn_done, posedge, clk);
     
+        // reg[HeaderWidth-1:0] ctrl_cmdHeader = 0;
+        // reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_cmdHeaderCount = 0;
+        // if (ramctrl_write_trigger && ramctrl_write_ready) begin
+        //     ctrl_cmdHeader <= ctrl_cmdHeader<<16;
+        //     ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
+        // end
+        //
+        // // Ctrl_State_WriteHeader: begin
+        // //     $display("[ImgController:WriteHeader] Triggered");
+        // //     // Supply 'Write' RAM command
+        // //     ramctrl_cmd_block <= cmd_ramBlock;
+        // //     ramctrl_cmd <= `RAMController_Cmd_Write;
+        // //     ramctrl_write_data <= `LeftBits(cmd_header, 0, 16);
+        // //     ctrl_cmdHeader <= cmd_header<<16;
+        // //     ctrl_cmdHeaderCount <= HeaderWordCount-1;
+        // //     $display("[ImgController:WriteHeader] Waiting for RAMController to be ready to write...");
+        // //     ctrl_state <= Ctrl_State_WriteHeader+1;
+        // // end
+        // //
+        // // Ctrl_State_WriteHeader+1: begin
+        // //     ramctrl_write_trigger <= 1;
+        // //     if (ramctrl_write_trigger && ramctrl_write_ready) begin
+        // //         $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
+        // //             HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
+        // //         ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
+        // //         if (!ctrl_cmdHeaderCount) begin
+        // //             ramctrl_write_trigger <= 0;
+        // //             ctrl_state <= Ctrl_State_Capture;
+        // //         end
+        // //     end
+        // // end
+    
     reg[2:0] fifoIn_state = 0;
     always @(posedge img_dclk) begin
         fifoIn_rst <= 0; // Pulse
         fifoIn_writeEn <= 0; // Reset by default
         fifoIn_lvPrev <= fifoIn_lv;
+        fifoIn_headerWrite <= 0; // Reset by default
+        fifoIn_headerCount <= fifoIn_headerCount-1;
         
         if (fifoIn_write_trigger) begin
             // Count the pixels in an image
@@ -277,14 +313,22 @@ module ImgController #(
         4: begin
             if (img_fv_reg) begin
                 $display("[ImgController:FIFO] Frame start");
+                fifoIn_headerCount <= HeaderWordCount;
                 fifoIn_state <= 5;
             end
         end
         
-        // Wait until the end of the frame
         5: begin
+            fifoIn_headerWrite <= 1;
             fifoIn_writeEn <= 1;
-            
+            if (!fifoIn_headerCount) begin
+                fifoIn_state <= 6;
+            end
+        end
+        
+        // Wait until the end of the frame
+        6: begin
+            fifoIn_writeEn <= 1;
             if (!img_fv_reg) begin
                 $display("[ImgController:FIFO] Frame end");
                 fifoIn_done <= 1;
@@ -303,12 +347,9 @@ module ImgController #(
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
-    reg[`RegWidth(ImageSizeMax)-1:0] ctrl_pixelCount = 0;
     reg[`RegWidth(ImageSizeMax)-1:0] ctrl_readoutCount = 0;
     reg ctrl_fifoOutWrote = 0;
     reg ctrl_fifoOutDone = 0;
-    reg[HeaderWidth-1:0] ctrl_cmdHeader = 0;
-    reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_cmdHeaderCount = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
     // localparam Ctrl_State_WriteHeader   = 1; // +1
@@ -321,8 +362,6 @@ module ImgController #(
         fifoOut_rst <= 0;
         ramctrl_write_trigger <= 0;
         
-        ctrl_pixelCount <= fifoIn_pixelCount;
-        
         ctrl_fifoOutWrote <= fifoOut_write_ready && fifoOut_write_trigger;
         if (ctrl_fifoOutWrote) begin
             $display("[ImgController] ctrl_readoutCount: %0d", ctrl_readoutCount);
@@ -333,39 +372,9 @@ module ImgController #(
             ctrl_fifoOutDone <= 1;
         end
         
-        if (ramctrl_write_trigger && ramctrl_write_ready) begin
-            ctrl_cmdHeader <= ctrl_cmdHeader<<16;
-            ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
-        end
-        
         case (ctrl_state)
         Ctrl_State_Idle: begin
         end
-        
-        // Ctrl_State_WriteHeader: begin
-        //     $display("[ImgController:WriteHeader] Triggered");
-        //     // Supply 'Write' RAM command
-        //     ramctrl_cmd_block <= cmd_ramBlock;
-        //     ramctrl_cmd <= `RAMController_Cmd_Write;
-        //     ramctrl_write_data <= `LeftBits(cmd_header, 0, 16);
-        //     ctrl_cmdHeader <= cmd_header<<16;
-        //     ctrl_cmdHeaderCount <= HeaderWordCount-1;
-        //     $display("[ImgController:WriteHeader] Waiting for RAMController to be ready to write...");
-        //     ctrl_state <= Ctrl_State_WriteHeader+1;
-        // end
-        //
-        // Ctrl_State_WriteHeader+1: begin
-        //     ramctrl_write_trigger <= 1;
-        //     if (ramctrl_write_trigger && ramctrl_write_ready) begin
-        //         $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
-        //             HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
-        //         ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
-        //         if (!ctrl_cmdHeaderCount) begin
-        //             ramctrl_write_trigger <= 0;
-        //             ctrl_state <= Ctrl_State_Capture;
-        //         end
-        //     end
-        // end
         
         Ctrl_State_Capture: begin
             $display("[ImgController:Capture] Waiting for FIFO to reset...");
@@ -414,8 +423,7 @@ module ImgController #(
             // Reset output FIFO
             fifoOut_rst <= 1;
             // Reset readout state
-            ctrl_readoutCount <= ctrl_pixelCount;
-            // ctrl_readoutCount <= ImageSizeMax;
+            ctrl_readoutCount <= fifoIn_pixelCount;
             ctrl_fifoOutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end
@@ -443,8 +451,8 @@ module ImgController #(
     // Connections
     // ====================
     // Connect input FIFO write -> pixel data
-    assign fifoIn_write_trigger = fifoIn_writeEn && img_lv_reg;
-    assign fifoIn_write_data = {4'b0, img_d_reg};
+    assign fifoIn_write_trigger = fifoIn_writeEn && (fifoIn_headerWrite || img_lv_reg);
+    assign fifoIn_write_data = (fifoIn_headerWrite ? 16'b0 : {4'b0, img_d_reg});
     
     // Connect input FIFO read -> RAM write
     assign fifoIn_read_trigger = (!ramctrl_write_trigger || ramctrl_write_ready);
