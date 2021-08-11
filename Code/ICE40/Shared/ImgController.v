@@ -302,6 +302,7 @@ module ImgController #(
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     reg[`RegWidth(ImageSizeMax)-1:0] ctrl_readoutCount = 0;
+    reg ctrl_fifoOutWrote = 0;
     reg ctrl_fifoOutDone = 0;
     reg[HeaderWidth-1:0] ctrl_cmdHeader = 0;
     reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_cmdHeaderCount = 0;
@@ -317,7 +318,8 @@ module ImgController #(
         fifoOut_rst <= 0;
         ramctrl_write_trigger <= 0;
         
-        if (fifoOut_write_ready && fifoOut_write_trigger) begin
+        ctrl_fifoOutWrote <= fifoOut_write_ready && fifoOut_write_trigger;
+        if (ctrl_fifoOutWrote) begin
             $display("[ImgController] ctrl_readoutCount: %0d", ctrl_readoutCount);
             ctrl_readoutCount <= ctrl_readoutCount-1;
             if (ctrl_readoutCount === 0) begin
