@@ -78,13 +78,11 @@
 `define     Msg_Arg_ImgSetHeader2_Header_Bits                   55:0
 
 `define Msg_Type_ImgCapture                                     `Msg_Type_StartBit | `Msg_Type_Len'h08
-`define     Msg_Arg_ImgCapture_PixelCount_Bits                  24:3
 `define     Msg_Arg_ImgCapture_DstBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
 `define Msg_Type_ImgCaptureStatus                               `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h09
 `define     Resp_Arg_ImgCaptureStatus_Done_Bits                 63:63
-`define     Resp_Arg_ImgCaptureStatus_ImageWidth_Bits           62:51
-`define     Resp_Arg_ImgCaptureStatus_ImageHeight_Bits          50:39
+`define     Resp_Arg_ImgCaptureStatus_PixelCount_Bits           62:39
 `define     Resp_Arg_ImgCaptureStatus_HighlightCount_Bits       38:21
 `define     Resp_Arg_ImgCaptureStatus_ShadowCount_Bits          20:3
 
@@ -105,7 +103,16 @@
 
 `define Msg_Type_Nop                                            `Msg_Type_Len'h00
 
+// `ifdef SIM
+// localparam ImageWidthMax = 64;
+// localparam ImageHeightMax = 1;
+// `else
+// localparam ImageWidthMax = 2304;
+// localparam ImageHeightMax = 1296+2; // +2 rows for embedded statistics (histogram)
+// `endif
+
 localparam ImageWidthMax = 2304;
 localparam ImageHeightMax = 1296+2; // +2 rows for embedded statistics (histogram)
+localparam ImageSizeMax = ImageWidthMax*ImageHeightMax;
 
 `endif

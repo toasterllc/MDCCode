@@ -139,27 +139,23 @@ module Top(
     reg                                                 imgctrl_cmd_capture = 0;
     reg[0:0]                                            imgctrl_cmd_ramBlock = 0;
     reg[127:0]                                          imgctrl_cmd_header = 0;
-    reg[`RegWidth(ImageWidthMax*ImageHeightMax)-1:0]    imgctrl_cmd_pixelCount = 0;
     wire                                                imgctrl_readout_clk;
     wire                                                imgctrl_readout_ready;
     wire                                                imgctrl_readout_trigger;
     wire[15:0]                                          imgctrl_readout_data;
     wire                                                imgctrl_status_captureDone;
-    wire[`RegWidth(ImageWidthMax)-1:0]                  imgctrl_status_captureImageWidth;
-    wire[`RegWidth(ImageHeightMax)-1:0]                 imgctrl_status_captureImageHeight;
+    wire[`RegWidth(ImageSizeMax)-1:0]                   imgctrl_status_capturePixelCount;
     wire[17:0]                                          imgctrl_status_captureHighlightCount;
     wire[17:0]                                          imgctrl_status_captureShadowCount;
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
-        .ImageWidthMax(ImageWidthMax),
-        .ImageHeightMax(ImageHeightMax)
+        .ImageSizeMax(ImageSizeMax)
     ) ImgController (
         .clk(img_clk),
         
         .cmd_capture(imgctrl_cmd_capture),
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
         .cmd_header(imgctrl_cmd_header),
-        .cmd_pixelCount(imgctrl_cmd_pixelCount),
         
         .readout_clk(imgctrl_readout_clk),
         .readout_ready(imgctrl_readout_ready),
@@ -167,8 +163,7 @@ module Top(
         .readout_data(imgctrl_readout_data),
         
         .status_captureDone(imgctrl_status_captureDone),
-        .status_captureImageWidth(imgctrl_status_captureImageWidth),
-        .status_captureImageHeight(imgctrl_status_captureImageHeight),
+        .status_capturePixelCount(imgctrl_status_capturePixelCount),
         .status_captureHighlightCount(imgctrl_status_captureHighlightCount),
         .status_captureShadowCount(imgctrl_status_captureShadowCount),
         
@@ -556,7 +551,6 @@ module Top(
                     $display("[SPI] Got Msg_Type_ImgCapture (block=%b)", spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits]);
                     // Reset spi_imgCaptureDone_
                     if (!spi_imgCaptureDone_) spi_imgCaptureDoneAck <= !spi_imgCaptureDoneAck;
-                    imgctrl_cmd_pixelCount <= spi_msgArg[`Msg_Arg_ImgCapture_PixelCount_Bits];
                     imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits];
                     imgctrl_cmd_capture <= !imgctrl_cmd_capture;
                 end
@@ -564,8 +558,7 @@ module Top(
                 `Msg_Type_ImgCaptureStatus: begin
                     $display("[SPI] Got Msg_Type_ImgCaptureStatus");
                     spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= !spi_imgCaptureDone_;
-                    spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits] <= imgctrl_status_captureImageWidth;
-                    spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits] <= imgctrl_status_captureImageHeight;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_PixelCount_Bits] <= imgctrl_status_capturePixelCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits] <= imgctrl_status_captureHighlightCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits] <= imgctrl_status_captureShadowCount;
                     spi_resp[2:0] <= 3'b101; // TODO: remove
@@ -739,7 +732,7 @@ module Testbench();
     );
     
     localparam ImageWidth = 64;
-    localparam ImageHeight = 1;
+    localparam ImageHeight = 32;
     ImgSim #(
         .ImageWidth(ImageWidth),
         .ImageHeight(ImageHeight)
@@ -1299,7 +1292,6 @@ module Testbench();
         $display("\n[Testbench] ========== TestImgCapture ==========");
         
         arg = 0;
-        arg[`Msg_Arg_ImgCapture_PixelCount_Bits] = ImageWidth*ImageHeight+8-3; // +Header -3 cycles
         arg[`Msg_Arg_ImgCapture_DstBlock_Bits] = 0;
         SendMsg(`Msg_Type_ImgCapture, arg);
         
@@ -1309,10 +1301,9 @@ module Testbench();
             // Request Img status
             SendMsg(`Msg_Type_ImgCaptureStatus, 0);
         end while(!spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits]);
-        $display("[Testbench] Capture done ✅ (done:%b image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
+        $display("[Testbench] Capture done ✅ (done:%b image size:%0d, highlightCount:%0d, shadowCount:%0d)",
             spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits],
-            spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits],
-            spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits],
+            spi_resp[`Resp_Arg_ImgCaptureStatus_PixelCount_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits],
         );
