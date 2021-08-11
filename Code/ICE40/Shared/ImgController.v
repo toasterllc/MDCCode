@@ -311,10 +311,10 @@ module ImgController #(
     reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_cmdHeaderCount = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
-    localparam Ctrl_State_WriteHeader   = 1; // +1
-    localparam Ctrl_State_Capture       = 3; // +2
-    localparam Ctrl_State_Readout       = 6; // +2
-    localparam Ctrl_State_Count         = 9;
+    // localparam Ctrl_State_WriteHeader   = 1; // +1
+    localparam Ctrl_State_Capture       = 1; // +2
+    localparam Ctrl_State_Readout       = 4; // +2
+    localparam Ctrl_State_Count         = 7;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -342,30 +342,30 @@ module ImgController #(
         Ctrl_State_Idle: begin
         end
         
-        Ctrl_State_WriteHeader: begin
-            $display("[ImgController:WriteHeader] Triggered");
-            // Supply 'Write' RAM command
-            ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd <= `RAMController_Cmd_Write;
-            ramctrl_write_data <= `LeftBits(cmd_header, 0, 16);
-            ctrl_cmdHeader <= cmd_header<<16;
-            ctrl_cmdHeaderCount <= HeaderWordCount-1;
-            $display("[ImgController:WriteHeader] Waiting for RAMController to be ready to write...");
-            ctrl_state <= Ctrl_State_WriteHeader+1;
-        end
-        
-        Ctrl_State_WriteHeader+1: begin
-            ramctrl_write_trigger <= 1;
-            if (ramctrl_write_trigger && ramctrl_write_ready) begin
-                $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
-                    HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
-                ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
-                if (!ctrl_cmdHeaderCount) begin
-                    ramctrl_write_trigger <= 0;
-                    ctrl_state <= Ctrl_State_Capture;
-                end
-            end
-        end
+        // Ctrl_State_WriteHeader: begin
+        //     $display("[ImgController:WriteHeader] Triggered");
+        //     // Supply 'Write' RAM command
+        //     ramctrl_cmd_block <= cmd_ramBlock;
+        //     ramctrl_cmd <= `RAMController_Cmd_Write;
+        //     ramctrl_write_data <= `LeftBits(cmd_header, 0, 16);
+        //     ctrl_cmdHeader <= cmd_header<<16;
+        //     ctrl_cmdHeaderCount <= HeaderWordCount-1;
+        //     $display("[ImgController:WriteHeader] Waiting for RAMController to be ready to write...");
+        //     ctrl_state <= Ctrl_State_WriteHeader+1;
+        // end
+        //
+        // Ctrl_State_WriteHeader+1: begin
+        //     ramctrl_write_trigger <= 1;
+        //     if (ramctrl_write_trigger && ramctrl_write_ready) begin
+        //         $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
+        //             HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
+        //         ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
+        //         if (!ctrl_cmdHeaderCount) begin
+        //             ramctrl_write_trigger <= 0;
+        //             ctrl_state <= Ctrl_State_Capture;
+        //         end
+        //     end
+        // end
         
         Ctrl_State_Capture: begin
             $display("[ImgController:Capture] Waiting for FIFO to reset...");
@@ -435,7 +435,7 @@ module ImgController #(
         end
         endcase
         
-        if (ctrl_cmdCapture) ctrl_state <= Ctrl_State_WriteHeader;
+        if (ctrl_cmdCapture) ctrl_state <= Ctrl_State_Capture;
         if (ctrl_cmdReadout) ctrl_state <= Ctrl_State_Readout;
     end
     
