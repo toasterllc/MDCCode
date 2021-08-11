@@ -15,10 +15,10 @@
 `include "ImgSim.v"
 `include "ImgI2CSlaveSim.v"
 
-// // MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
-// // beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
-// // when that happens
-// `define MOBILE_SDR_INIT_VAL 16'hCAFE
+// MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
+// beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
+// when that happens
+`define MOBILE_SDR_INIT_VAL 16'hCAFE
 `include "mt48h32m16lf/mobile_sdr.v"
 `endif
 
@@ -136,26 +136,26 @@ module Top(
     // ====================
     // ImgController
     // ====================
-    reg                                 imgctrl_cmd_capture = 0;
-    reg[0:0]                            imgctrl_cmd_ramBlock = 0;
-    reg[127:0]                          imgctrl_cmd_header = 0;
-    wire                                imgctrl_readout_clk;
-    wire                                imgctrl_readout_ready;
-    wire                                imgctrl_readout_trigger;
-    wire[15:0]                          imgctrl_readout_data;
-    wire                                imgctrl_status_captureDone;
-    wire[`RegWidth(ImageWidthMax)-1:0]  imgctrl_status_captureImageWidth;
-    wire[`RegWidth(ImageHeightMax)-1:0] imgctrl_status_captureImageHeight;
-    wire[17:0]                          imgctrl_status_captureHighlightCount;
-    wire[17:0]                          imgctrl_status_captureShadowCount;
+    reg                                                 imgctrl_cmd_capture = 0;
+    reg                                                 imgctrl_cmd_readout = 0;
+    reg[0:0]                                            imgctrl_cmd_ramBlock = 0;
+    reg[127:0]                                          imgctrl_cmd_header = 0;
+    wire                                                imgctrl_readout_clk;
+    wire                                                imgctrl_readout_ready;
+    wire                                                imgctrl_readout_trigger;
+    wire[15:0]                                          imgctrl_readout_data;
+    wire                                                imgctrl_status_captureDone;
+    wire[`RegWidth(ImageSizeMax)-1:0]                   imgctrl_status_captureWordCount;
+    wire[17:0]                                          imgctrl_status_captureHighlightCount;
+    wire[17:0]                                          imgctrl_status_captureShadowCount;
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
-        .ImageWidthMax(ImageWidthMax),
-        .ImageHeightMax(ImageHeightMax)
+        .ImageSizeMax(ImageSizeMax)
     ) ImgController (
         .clk(img_clk),
         
         .cmd_capture(imgctrl_cmd_capture),
+        .cmd_readout(imgctrl_cmd_readout),
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
         .cmd_header(imgctrl_cmd_header),
         
@@ -165,8 +165,7 @@ module Top(
         .readout_data(imgctrl_readout_data),
         
         .status_captureDone(imgctrl_status_captureDone),
-        .status_captureImageWidth(imgctrl_status_captureImageWidth),
-        .status_captureImageHeight(imgctrl_status_captureImageHeight),
+        .status_captureWordCount(imgctrl_status_captureWordCount),
         .status_captureHighlightCount(imgctrl_status_captureHighlightCount),
         .status_captureShadowCount(imgctrl_status_captureShadowCount),
         
@@ -561,8 +560,7 @@ module Top(
                 `Msg_Type_ImgCaptureStatus: begin
                     $display("[SPI] Got Msg_Type_ImgCaptureStatus");
                     spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= !spi_imgCaptureDone_;
-                    spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits] <= imgctrl_status_captureImageWidth;
-                    spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits] <= imgctrl_status_captureImageHeight;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_WordCount_Bits] <= imgctrl_status_captureWordCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits] <= imgctrl_status_captureHighlightCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits] <= imgctrl_status_captureShadowCount;
                     spi_resp[2:0] <= 3'b101; // TODO: remove
@@ -583,6 +581,8 @@ module Top(
                     $display("[SPI] Got Msg_Type_ImgReadout");
                     // Reset spi_sdDatOutDone_
                     if (!spi_sdDatOutDone_) spi_sdDatOutDoneAck <= !spi_sdDatOutDoneAck;
+                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_DstBlock_Bits];
+                    imgctrl_cmd_readout <= !imgctrl_cmd_readout;
                     // Start SD DatOut
                     sd_datOut_start <= !sd_datOut_start;
                 end
@@ -1305,10 +1305,9 @@ module Testbench();
             // Request Img status
             SendMsg(`Msg_Type_ImgCaptureStatus, 0);
         end while(!spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits]);
-        $display("[Testbench] Capture done ✅ (done:%b image size:%0dx%0d, highlightCount:%0d, shadowCount:%0d)",
+        $display("[Testbench] Capture done ✅ (done:%b image size:%0d, highlightCount:%0d, shadowCount:%0d)",
             spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits],
-            spi_resp[`Resp_Arg_ImgCaptureStatus_ImageWidth_Bits],
-            spi_resp[`Resp_Arg_ImgCaptureStatus_ImageHeight_Bits],
+            spi_resp[`Resp_Arg_ImgCaptureStatus_WordCount_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits],
         );
@@ -1446,7 +1445,7 @@ module Testbench();
             $display("[Testbench] Read failed ❌");
             `Finish;
         end
-
+        
         if ((spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]&16'h00FF) === 16'h0037) begin
             $display("[Testbench] Read correct data ✅ (0x%x)", spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]&16'h00FF);
         end else begin

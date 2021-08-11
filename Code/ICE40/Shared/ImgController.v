@@ -7,16 +7,16 @@
 
 module ImgController #(
     parameter ClkFreq = 24_000_000,
-    parameter ImageWidthMax = 256,
-    parameter ImageHeightMax = 256,
+    parameter ImageSizeMax = 256*256,
     parameter HeaderWidth = 128
 )(
     input wire          clk,
     
     // Command port (clock domain: `clk`)
-    input wire                  cmd_capture,    // Toggle
-    input wire[0:0]             cmd_ramBlock,
-    input wire[HeaderWidth-1:0] cmd_header,
+    input wire                              cmd_capture,    // Toggle
+    input wire                              cmd_readout,    // Toggle
+    input wire[0:0]                         cmd_ramBlock,
+    input wire[HeaderWidth-1:0]             cmd_header,
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
@@ -26,8 +26,7 @@ module ImgController #(
     
     // Status port (clock domain: `clk`)
     output reg                                  status_captureDone = 0, // Toggle
-    output wire[`RegWidth(ImageWidthMax)-1:0]   status_captureImageWidth,
-    output wire[`RegWidth(ImageHeightMax)-1:0]  status_captureImageHeight,
+    output wire[`RegWidth(ImageSizeMax)-1:0]    status_captureWordCount,
     output wire[17:0]                           status_captureHighlightCount,
     output wire[17:0]                           status_captureShadowCount,
     
@@ -49,7 +48,7 @@ module ImgController #(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    localparam ImageSizeMax = ImageWidthMax*ImageHeightMax;
+    localparam HeaderWordCount = HeaderWidth/16;
     
     // ====================
     // RAMController
@@ -97,8 +96,8 @@ module ImgController #(
     // ====================
     reg fifoIn_rst = 0;
     wire fifoIn_write_ready;
-    wire fifoIn_write_trigger;
-    wire[15:0] fifoIn_write_data;
+    reg fifoIn_write_trigger = 0;
+    reg[15:0] fifoIn_write_data = 0;
     wire fifoIn_read_ready;
     wire fifoIn_read_trigger;
     wire[15:0] fifoIn_read_data;
@@ -184,7 +183,8 @@ module ImgController #(
     // ====================
     // Pixel input state machine
     // ====================
-    reg fifoIn_writeEn = 0;
+    reg[`RegWidth(HeaderWordCount-1)-1:0] fifoIn_headerCount = 0;
+    reg[HeaderWidth-1:0] fifoIn_header = 0;
     
     reg ctrl_fifoInCaptureTrigger = 0;
     `TogglePulse(fifoIn_captureTrigger, ctrl_fifoInCaptureTrigger, posedge, img_dclk);
@@ -192,12 +192,10 @@ module ImgController #(
     reg fifoIn_started = 0;
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
-    reg[`RegWidth(ImageWidthMax)-1:0] fifoIn_imageWidth = 0;
-    reg[`RegWidth(ImageHeightMax)-1:0] fifoIn_imageHeight = 0;
+    reg[`RegWidth(ImageSizeMax)-1:0] fifoIn_wordCount = 0;
     reg[17:0] fifoIn_highlightCount = 0;
     reg[17:0] fifoIn_shadowCount = 0;
-    assign status_captureImageWidth = fifoIn_imageWidth;
-    assign status_captureImageHeight = fifoIn_imageHeight;
+    assign status_captureWordCount = fifoIn_wordCount;
     assign status_captureHighlightCount = fifoIn_highlightCount;
     assign status_captureShadowCount = fifoIn_shadowCount;
     
@@ -210,22 +208,20 @@ module ImgController #(
     reg[11:0] fifoIn_countStatPx = 0;
     
     reg fifoIn_done = 0;
-    // `TogglePulse(ctrl_fifoInDone, fifoIn_done, posedge, clk);
-    // `ToggleAck(ctrl_fifoInDone, ctrl_fifoInDoneAck, fifoIn_done, posedge, clk);
     `Sync(ctrl_fifoInDone, fifoIn_done, posedge, clk);
     
     reg[2:0] fifoIn_state = 0;
     always @(posedge img_dclk) begin
         fifoIn_rst <= 0; // Pulse
-        fifoIn_writeEn <= 0; // Reset by default
         fifoIn_lvPrev <= fifoIn_lv;
+        fifoIn_header <= fifoIn_header<<16;
+        fifoIn_headerCount <= fifoIn_headerCount-1;
+        fifoIn_write_trigger <= 0; // Reset by default
+        fifoIn_countStat <= 0; // Reset by default
         
         if (fifoIn_write_trigger) begin
-            // Count the width of the image
-            if (!fifoIn_lvPrev) fifoIn_imageWidth <= 1;
-            else                fifoIn_imageWidth <= fifoIn_imageWidth+1;
-            // Count the height of the image
-            if (!fifoIn_lvPrev) fifoIn_imageHeight <= fifoIn_imageHeight+1;
+            // Count the words in an image
+            fifoIn_wordCount <= fifoIn_wordCount+1;
         end
         
         if (!fifoIn_lv) fifoIn_x <= 0;
@@ -234,9 +230,12 @@ module ImgController #(
         if (!fifoIn_fv)                         fifoIn_y <= 0;
         else if (fifoIn_lvPrev && !fifoIn_lv)   fifoIn_y <= fifoIn_y+1;
         
+        // if (fifoIn_write_trigger) begin
+        //     $display("[ImgController:fifoIn] Wrote word into FIFO: %x", fifoIn_write_data);
+        // end
+        
         // Count pixel stats (number of highlights/shadows)
         // We're pipelining `fifoIn_countStat` and `fifoIn_countStatPx` here for performance
-        fifoIn_countStat <= (fifoIn_write_trigger && !fifoIn_x && !fifoIn_y);
         fifoIn_countStatPx <= img_d_reg;
         if (fifoIn_countStat) begin
             // Look at the high bits to determine if it's a highlight or shadow
@@ -257,8 +256,7 @@ module ImgController #(
         1: begin
             fifoIn_rst <= 1;
             fifoIn_done <= 0;
-            fifoIn_imageWidth <= 0;
-            fifoIn_imageHeight <= 0;
+            fifoIn_wordCount <= 0;
             fifoIn_highlightCount <= 0;
             fifoIn_shadowCount <= 0;
             fifoIn_state <= 2;
@@ -274,26 +272,38 @@ module ImgController #(
         
         // Wait for the frame to be invalid
         3: begin
-            if (!img_fv_reg) begin
-                $display("[ImgController:FIFO] Waiting for frame invalid...");
+            if (!fifoIn_fv) begin
+                $display("[ImgController:fifoIn] Waiting for frame invalid...");
                 fifoIn_state <= 4;
             end
         end
         
         // Wait for the frame to start
         4: begin
-            if (img_fv_reg) begin
-                $display("[ImgController:FIFO] Frame start");
+            fifoIn_header <= cmd_header;
+            fifoIn_headerCount <= HeaderWordCount-1;
+            if (fifoIn_fv) begin
+                $display("[ImgController:fifoIn] Frame start");
                 fifoIn_state <= 5;
             end
         end
         
-        // Wait until the end of the frame
         5: begin
-            fifoIn_writeEn <= 1;
-            
-            if (!img_fv_reg) begin
-                $display("[ImgController:FIFO] Frame end");
+            // $display("[ImgController:fifoIn] Header state: %0d", fifoIn_headerCount);
+            fifoIn_write_trigger <= 1;
+            fifoIn_write_data <= `LeftBits(fifoIn_header, 0, 16);
+            if (!fifoIn_headerCount) begin
+                fifoIn_state <= 6;
+            end
+        end
+        
+        // Wait until the end of the frame
+        6: begin
+            fifoIn_countStat <= (fifoIn_lv && !fifoIn_x && !fifoIn_y);
+            fifoIn_write_trigger <= fifoIn_lv;
+            fifoIn_write_data <= {4'b0, img_d_reg};
+            if (!fifoIn_fv) begin
+                $display("[ImgController:fifoIn] Frame end");
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
             end
@@ -309,25 +319,15 @@ module ImgController #(
     // Control State Machine
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
-    // TODO: try storing ctrl_imageWidth / ctrl_imageHeight in their own registers
-    wire[`RegWidth(ImageWidthMax)-1:0] ctrl_imageWidth = fifoIn_imageWidth;
-    wire[`RegWidth(ImageHeightMax)-1:0] ctrl_imageHeight = fifoIn_imageHeight;
-    // ctrl_readoutX: we add `HeaderWordCount` to the first row to account for the header
-    reg[`RegWidth(HeaderWordCount+ImageWidthMax)-1:0] ctrl_readoutX = 0;
-    reg[`RegWidth(ImageHeightMax)-1:0] ctrl_readoutY = 0;
+    `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
+    reg[`RegWidth(ImageSizeMax)-1:0] ctrl_readoutCount = 0;
     reg ctrl_fifoOutWrote = 0;
-    reg ctrl_fifoOutLastPixel = 0;
     reg ctrl_fifoOutDone = 0;
-    reg[HeaderWidth-1:0] ctrl_cmdHeader = 0;
-    
-    localparam HeaderWordCount = HeaderWidth/16;
-    reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_cmdHeaderCount = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
-    localparam Ctrl_State_WriteHeader   = 1; // +1
-    localparam Ctrl_State_Capture       = 3; // +2
-    localparam Ctrl_State_Readout       = 6; // +2
-    localparam Ctrl_State_Count         = 9;
+    localparam Ctrl_State_Capture       = 1; // +3
+    localparam Ctrl_State_Readout       = 5; // +2
+    localparam Ctrl_State_Count         = 8;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -336,20 +336,11 @@ module ImgController #(
         
         ctrl_fifoOutWrote <= fifoOut_write_ready && fifoOut_write_trigger;
         if (ctrl_fifoOutWrote) begin
-            $display("[ImgController] ctrl_readoutX / ctrl_readoutY:  %0d  %0d", ctrl_readoutX, ctrl_readoutY);
-            ctrl_readoutX <= ctrl_readoutX-1;
-            if (ctrl_readoutX === 1) begin
-                ctrl_readoutX <= ctrl_imageWidth;
-                ctrl_readoutY <= ctrl_readoutY-1;
-            end
-            
-            if (ctrl_readoutX===3 && ctrl_readoutY===1) begin
-                ctrl_fifoOutLastPixel <= 1;
-            end
+            $display("[ImgController] ctrl_readoutCount: %0d", ctrl_readoutCount);
+            ctrl_readoutCount <= ctrl_readoutCount-1;
         end
         
-        // Stop reading from RAM when we reach the last pixel
-        if (fifoOut_write_ready && fifoOut_write_trigger && ctrl_fifoOutLastPixel) begin
+        if (ctrl_readoutCount === 0) begin
             ctrl_fifoOutDone <= 1;
         end
         
@@ -357,51 +348,38 @@ module ImgController #(
         Ctrl_State_Idle: begin
         end
         
-        Ctrl_State_WriteHeader: begin
-            $display("[ImgController:WriteHeader] Triggered");
+        Ctrl_State_Capture: begin
+            $display("[IMGCTRL:Capture] Triggered");
             // Supply 'Write' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Write;
-            ramctrl_write_data <= `LeftBits(cmd_header, 0, 16);
-            ctrl_cmdHeader <= cmd_header<<16;
-            ctrl_cmdHeaderCount <= HeaderWordCount-1;
-            $display("[ImgController:WriteHeader] Waiting for RAMController to be ready to write...");
-            ctrl_state <= Ctrl_State_WriteHeader+1;
-        end
-        
-        Ctrl_State_WriteHeader+1: begin
-            ramctrl_write_trigger <= 1;
-            // Wait for the write command to be consumed, and for the RAMController
-            // to be ready to write.
-            if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
-                $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
-                    HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
-                
-                ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
-                ctrl_cmdHeader <= ctrl_cmdHeader<<16;
-                ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
-                if (!ctrl_cmdHeaderCount) begin
-                    ramctrl_write_trigger <= 0;
-                    ctrl_state <= Ctrl_State_Capture;
-                end
-            end
-        end
-        
-        Ctrl_State_Capture: begin
-            $display("[ImgController:Capture] Waiting for FIFO to reset...");
-            // Start the FIFO data flow now that RAMController is ready to write
-            ctrl_fifoInCaptureTrigger <= !ctrl_fifoInCaptureTrigger;
+            $display("[IMGCTRL:Capture] Waiting for RAMController to be ready to write...");
             ctrl_state <= Ctrl_State_Capture+1;
         end
         
         Ctrl_State_Capture+1: begin
-            // Wait for the fifoIn state machine to start
-            if (ctrl_fifoInStarted) begin
+            // Wait for the write command to be consumed, and for the RAMController
+            // to be ready to write.
+            // This is necessary because the RAMController/SDRAM takes some time to
+            // initialize upon power on. If we attempted a capture during this time,
+            // we'd drop most/all of the pixels because RAMController/SDRAM wouldn't
+            // be ready to write yet.
+            if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
+                $display("[IMGCTRL:Capture] Waiting for FIFO to reset...");
+                // Start the FIFO data flow now that RAMController is ready to write
+                ctrl_fifoInCaptureTrigger <= !ctrl_fifoInCaptureTrigger;
                 ctrl_state <= Ctrl_State_Capture+2;
             end
         end
         
         Ctrl_State_Capture+2: begin
+            // Wait for the fifoIn state machine to start
+            if (ctrl_fifoInStarted) begin
+                ctrl_state <= Ctrl_State_Capture+3;
+            end
+        end
+        
+        Ctrl_State_Capture+3: begin
             // By default, prevent `ramctrl_write_trigger` from being reset
             ramctrl_write_trigger <= ramctrl_write_trigger;
             
@@ -421,7 +399,8 @@ module ImgController #(
             // machine signals that it's done receiving data.
             if (!fifoIn_read_ready && ctrl_fifoInDone) begin
                 $display("[ImgController:Capture] Finished");
-                ctrl_state <= Ctrl_State_Readout;
+                status_captureDone <= !status_captureDone;
+                ctrl_state <= Ctrl_State_Idle;
             end
         end
         
@@ -433,9 +412,7 @@ module ImgController #(
             // Reset output FIFO
             fifoOut_rst <= 1;
             // Reset readout state
-            ctrl_readoutX <= HeaderWordCount+ctrl_imageWidth;
-            ctrl_readoutY <= ctrl_imageHeight;
-            ctrl_fifoOutLastPixel <= 0;
+            ctrl_readoutCount <= fifoIn_wordCount;
             ctrl_fifoOutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end
@@ -443,7 +420,6 @@ module ImgController #(
         Ctrl_State_Readout+1: begin
             // Wait for the read command and FIFO reset to be consumed
             if (ramctrl_cmd===`RAMController_Cmd_None && !fifoOut_rst) begin
-                status_captureDone <= !status_captureDone;
                 ctrl_state <= Ctrl_State_Readout+2;
             end
         end
@@ -456,21 +432,22 @@ module ImgController #(
         end
         endcase
         
-        if (ctrl_cmdCapture) ctrl_state <= Ctrl_State_WriteHeader;
+        if (ctrl_cmdCapture) ctrl_state <= Ctrl_State_Capture;
+        if (ctrl_cmdReadout) ctrl_state <= Ctrl_State_Readout;
     end
     
     // ====================
     // Connections
     // ====================
     // Connect input FIFO write -> pixel data
-    assign fifoIn_write_trigger = fifoIn_writeEn && img_lv_reg;
-    assign fifoIn_write_data = {4'b0, img_d_reg};
+    // assign fifoIn_write_trigger = (fifoIn_headerWriteEn || fifoIn_pixelWrite);
+    // assign fifoIn_write_data = (fifoIn_headerWriteEn ? `LeftBits(fifoIn_header, 0, 16) : {4'b0, img_d_reg});
     
     // Connect input FIFO read -> RAM write
     assign fifoIn_read_trigger = (!ramctrl_write_trigger || ramctrl_write_ready);
     
     // Connect RAM read -> output FIFO write
-    assign fifoOut_write_trigger = ramctrl_read_ready && !ctrl_fifoOutDone;
+    assign fifoOut_write_trigger = ramctrl_read_ready;
     assign ramctrl_read_trigger = fifoOut_write_ready;
     assign fifoOut_write_data = ramctrl_read_data;
     
