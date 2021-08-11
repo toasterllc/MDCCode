@@ -7,10 +7,8 @@
 
 module ImgController #(
     parameter ClkFreq = 24_000_000,
-    parameter ImageWidthMax = 256,
-    parameter ImageHeightMax = 256,
-    parameter HeaderWidth = 128,
-    localparam ImageSizeMax = ImageWidthMax*ImageHeightMax
+    parameter ImageSizeMax = 256*256,
+    parameter HeaderWidth = 128
 )(
     input wire          clk,
     
@@ -18,7 +16,6 @@ module ImgController #(
     input wire                              cmd_capture,    // Toggle
     input wire[0:0]                         cmd_ramBlock,
     input wire[HeaderWidth-1:0]             cmd_header,
-    input wire[`RegWidth(ImageSizeMax)-1:0] cmd_pixelCount,
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
@@ -28,8 +25,7 @@ module ImgController #(
     
     // Status port (clock domain: `clk`)
     output reg                                  status_captureDone = 0, // Toggle
-    output wire[`RegWidth(ImageWidthMax)-1:0]   status_captureImageWidth,
-    output wire[`RegWidth(ImageHeightMax)-1:0]  status_captureImageHeight,
+    output wire[`RegWidth(ImageSizeMax)-1:0]    status_capturePixelCount,
     output wire[17:0]                           status_captureHighlightCount,
     output wire[17:0]                           status_captureShadowCount,
     
@@ -192,12 +188,10 @@ module ImgController #(
     reg fifoIn_started = 0;
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
-    reg[`RegWidth(ImageWidthMax)-1:0] fifoIn_imageWidth = 0;
-    reg[`RegWidth(ImageHeightMax)-1:0] fifoIn_imageHeight = 0;
+    reg[`RegWidth(ImageSizeMax)-1:0] fifoIn_pixelCount = 0;
     reg[17:0] fifoIn_highlightCount = 0;
     reg[17:0] fifoIn_shadowCount = 0;
-    assign status_captureImageWidth = fifoIn_imageWidth;
-    assign status_captureImageHeight = fifoIn_imageHeight;
+    assign status_capturePixelCount = fifoIn_pixelCount;
     assign status_captureHighlightCount = fifoIn_highlightCount;
     assign status_captureShadowCount = fifoIn_shadowCount;
     
@@ -221,11 +215,8 @@ module ImgController #(
         fifoIn_lvPrev <= fifoIn_lv;
         
         if (fifoIn_write_trigger) begin
-            // Count the width of the image
-            if (!fifoIn_lvPrev) fifoIn_imageWidth <= 1;
-            else                fifoIn_imageWidth <= fifoIn_imageWidth+1;
-            // Count the height of the image
-            if (!fifoIn_lvPrev) fifoIn_imageHeight <= fifoIn_imageHeight+1;
+            // Count the pixels in an image
+            fifoIn_pixelCount <= fifoIn_pixelCount+1;
         end
         
         if (!fifoIn_lv) fifoIn_x <= 0;
@@ -257,8 +248,7 @@ module ImgController #(
         1: begin
             fifoIn_rst <= 1;
             fifoIn_done <= 0;
-            fifoIn_imageWidth <= 0;
-            fifoIn_imageHeight <= 0;
+            fifoIn_pixelCount <= 0;
             fifoIn_highlightCount <= 0;
             fifoIn_shadowCount <= 0;
             fifoIn_state <= 2;
@@ -309,11 +299,7 @@ module ImgController #(
     // Control State Machine
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
-    // TODO: try storing ctrl_imageWidth / ctrl_imageHeight in their own registers
-    wire[`RegWidth(ImageWidthMax)-1:0] ctrl_imageWidth = fifoIn_imageWidth;
-    wire[`RegWidth(ImageHeightMax)-1:0] ctrl_imageHeight = fifoIn_imageHeight;
     reg[`RegWidth(ImageSizeMax)-1:0] ctrl_readoutCount = 0;
-    reg ctrl_fifoOutWrote = 0;
     reg ctrl_fifoOutDone = 0;
     reg[HeaderWidth-1:0] ctrl_cmdHeader = 0;
     
@@ -321,18 +307,17 @@ module ImgController #(
     reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_cmdHeaderCount = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
-    localparam Ctrl_State_WriteHeader   = 1; // +1
-    localparam Ctrl_State_Capture       = 3; // +2
-    localparam Ctrl_State_Readout       = 6; // +2
-    localparam Ctrl_State_Count         = 9;
+    localparam Ctrl_State_WriteHeader   = 1; // +2
+    localparam Ctrl_State_Capture       = 4; // +2
+    localparam Ctrl_State_Readout       = 7; // +2
+    localparam Ctrl_State_Count         = 10;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
         fifoOut_rst <= 0;
         ramctrl_write_trigger <= 0;
         
-        ctrl_fifoOutWrote <= fifoOut_write_ready && fifoOut_write_trigger;
-        if (ctrl_fifoOutWrote) begin
+        if (fifoOut_write_ready && fifoOut_write_trigger) begin
             $display("[ImgController] ctrl_readoutCount: %0d", ctrl_readoutCount);
             ctrl_readoutCount <= ctrl_readoutCount-1;
             if (ctrl_readoutCount === 0) begin
@@ -357,20 +342,24 @@ module ImgController #(
         end
         
         Ctrl_State_WriteHeader+1: begin
-            ramctrl_write_trigger <= 1;
             // Wait for the write command to be consumed, and for the RAMController
             // to be ready to write.
             if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
-                $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
-                    HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
-                // TODO: for perf: try moving this into a new state
-                ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
-                ctrl_cmdHeader <= ctrl_cmdHeader<<16;
-                ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
-                if (!ctrl_cmdHeaderCount) begin
-                    ramctrl_write_trigger <= 0;
-                    ctrl_state <= Ctrl_State_Capture;
-                end
+                ctrl_state <= Ctrl_State_WriteHeader+2;
+            end
+        end
+        
+        Ctrl_State_WriteHeader+2: begin
+            ramctrl_write_trigger <= 1;
+            $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
+                HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
+            // TODO: for perf: try moving this into a new state
+            ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
+            ctrl_cmdHeader <= ctrl_cmdHeader<<16;
+            ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
+            if (!ctrl_cmdHeaderCount) begin
+                ramctrl_write_trigger <= 0;
+                ctrl_state <= Ctrl_State_Capture;
             end
         end
         
@@ -420,7 +409,7 @@ module ImgController #(
             // Reset output FIFO
             fifoOut_rst <= 1;
             // Reset readout state
-            ctrl_readoutCount <= cmd_pixelCount;
+            ctrl_readoutCount <= fifoIn_pixelCount;
             // ctrl_readoutCount <= ImageSizeMax;
             ctrl_fifoOutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
@@ -456,7 +445,7 @@ module ImgController #(
     assign fifoIn_read_trigger = (!ramctrl_write_trigger || ramctrl_write_ready);
     
     // Connect RAM read -> output FIFO write
-    assign fifoOut_write_trigger = ramctrl_read_ready && !ctrl_fifoOutDone;
+    assign fifoOut_write_trigger = ramctrl_read_ready;
     assign ramctrl_read_trigger = fifoOut_write_ready;
     assign fifoOut_write_data = ramctrl_read_data;
     
