@@ -204,7 +204,6 @@ module ImgController #(
     reg fifoIn_lvPrev = 0;
     reg[1:0] fifoIn_x = 0;
     reg[1:0] fifoIn_y = 0;
-    reg fifoIn_countStatEn = 0;
     reg fifoIn_countStat = 0;
     reg[11:0] fifoIn_countStatPx = 0;
     
@@ -217,8 +216,8 @@ module ImgController #(
         fifoIn_lvPrev <= fifoIn_lv;
         fifoIn_header <= fifoIn_header<<16;
         fifoIn_headerCount <= fifoIn_headerCount-1;
-        fifoIn_countStatEn <= 0; // Reset by default
         fifoIn_write_trigger <= 0; // Reset by default
+        fifoIn_countStat <= 0; // Reset by default
         
         if (fifoIn_write_trigger) begin
             // Count the words in an image
@@ -237,7 +236,6 @@ module ImgController #(
         
         // Count pixel stats (number of highlights/shadows)
         // We're pipelining `fifoIn_countStat` and `fifoIn_countStatPx` here for performance
-        fifoIn_countStat <= (fifoIn_countStatEn && img_lv_reg && !fifoIn_x && !fifoIn_y);
         fifoIn_countStatPx <= img_d_reg;
         if (fifoIn_countStat) begin
             // Look at the high bits to determine if it's a highlight or shadow
@@ -274,7 +272,7 @@ module ImgController #(
         
         // Wait for the frame to be invalid
         3: begin
-            if (!img_fv_reg) begin
+            if (!fifoIn_fv) begin
                 $display("[ImgController:fifoIn] Waiting for frame invalid...");
                 fifoIn_state <= 4;
             end
@@ -284,7 +282,7 @@ module ImgController #(
         4: begin
             fifoIn_header <= cmd_header;
             fifoIn_headerCount <= HeaderWordCount-1;
-            if (img_fv_reg) begin
+            if (fifoIn_fv) begin
                 $display("[ImgController:fifoIn] Frame start");
                 fifoIn_state <= 5;
             end
@@ -301,10 +299,10 @@ module ImgController #(
         
         // Wait until the end of the frame
         6: begin
-            fifoIn_countStatEn <= 1;
-            fifoIn_write_trigger <= img_lv_reg;
+            fifoIn_countStat <= (fifoIn_lv && !fifoIn_x && !fifoIn_y);
+            fifoIn_write_trigger <= fifoIn_lv;
             fifoIn_write_data <= {4'b0, img_d_reg};
-            if (!img_fv_reg) begin
+            if (!fifoIn_fv) begin
                 $display("[ImgController:fifoIn] Frame end");
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
