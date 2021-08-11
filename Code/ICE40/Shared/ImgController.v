@@ -352,10 +352,9 @@ module ImgController #(
     reg ctrl_fifoOutDone = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
-    // localparam Ctrl_State_WriteHeader   = 1; // +1
-    localparam Ctrl_State_Capture       = 1; // +2
-    localparam Ctrl_State_Readout       = 4; // +2
-    localparam Ctrl_State_Count         = 7;
+    localparam Ctrl_State_Capture       = 1; // +3
+    localparam Ctrl_State_Readout       = 5; // +2
+    localparam Ctrl_State_Count         = 8;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -377,20 +376,37 @@ module ImgController #(
         end
         
         Ctrl_State_Capture: begin
-            $display("[ImgController:Capture] Waiting for FIFO to reset...");
-            // Start the FIFO data flow now that RAMController is ready to write
-            ctrl_fifoInCaptureTrigger <= !ctrl_fifoInCaptureTrigger;
+            $display("[IMGCTRL:Capture] Triggered");
+            // Supply 'Write' RAM command
+            ramctrl_cmd_block <= cmd_ramBlock;
+            ramctrl_cmd <= `RAMController_Cmd_Write;
+            $display("[IMGCTRL:Capture] Waiting for RAMController to be ready to write...");
             ctrl_state <= Ctrl_State_Capture+1;
         end
         
         Ctrl_State_Capture+1: begin
-            // Wait for the fifoIn state machine to start
-            if (ctrl_fifoInStarted) begin
+            // Wait for the write command to be consumed, and for the RAMController
+            // to be ready to write.
+            // This is necessary because the RAMController/SDRAM takes some time to
+            // initialize upon power on. If we attempted a capture during this time,
+            // we'd drop most/all of the pixels because RAMController/SDRAM wouldn't
+            // be ready to write yet.
+            if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
+                $display("[IMGCTRL:Capture] Waiting for FIFO to reset...");
+                // Start the FIFO data flow now that RAMController is ready to write
+                ctrl_fifoInCaptureTrigger <= !ctrl_fifoInCaptureTrigger;
                 ctrl_state <= Ctrl_State_Capture+2;
             end
         end
         
         Ctrl_State_Capture+2: begin
+            // Wait for the fifoIn state machine to start
+            if (ctrl_fifoInStarted) begin
+                ctrl_state <= Ctrl_State_Capture+3;
+            end
+        end
+        
+        Ctrl_State_Capture+3: begin
             // By default, prevent `ramctrl_write_trigger` from being reset
             ramctrl_write_trigger <= ramctrl_write_trigger;
             
