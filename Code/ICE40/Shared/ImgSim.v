@@ -52,12 +52,12 @@ module ImgSim #(
                 img_d = pxCount;
                 pxCount = pxCount+1;
                 
-                // // Test histogram
-                // if (!(row%4) && !(col%4)) begin
-                //     img_d = 12'hFFF; // Highlight
-                // end else begin
-                //     img_d = 12'h000; // Shadow
-                // end
+                // Test histogram
+                if (!(row%4) && !(col%4)) begin
+                    img_d = 12'hFFF; // Highlight
+                end else begin
+                    img_d = 12'h000; // Shadow
+                end
                 wait(clk);
                 wait(!clk);
             end
