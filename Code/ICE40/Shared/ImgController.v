@@ -322,9 +322,10 @@ module ImgController #(
         if (ctrl_fifoOutWrote) begin
             $display("[ImgController] ctrl_readoutCount: %0d", ctrl_readoutCount);
             ctrl_readoutCount <= ctrl_readoutCount-1;
-            if (ctrl_readoutCount === 0) begin
-                ctrl_fifoOutDone <= 1;
-            end
+        end
+        
+        if (ctrl_readoutCount === 0) begin
+            ctrl_fifoOutDone <= 1;
         end
         
         if (ramctrl_write_trigger && ramctrl_write_ready) begin
