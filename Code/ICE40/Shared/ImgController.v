@@ -14,6 +14,7 @@ module ImgController #(
     
     // Command port (clock domain: `clk`)
     input wire                              cmd_capture,    // Toggle
+    input wire                              cmd_readout,    // Toggle
     input wire[0:0]                         cmd_ramBlock,
     input wire[HeaderWidth-1:0]             cmd_header,
     
@@ -301,6 +302,8 @@ module ImgController #(
     // Control State Machine
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
+    `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
+    reg[`RegWidth(ImageSizeMax)-1:0] ctrl_pixelCount = 0;
     reg[`RegWidth(ImageSizeMax)-1:0] ctrl_readoutCount = 0;
     reg ctrl_fifoOutWrote = 0;
     reg ctrl_fifoOutDone = 0;
@@ -317,6 +320,8 @@ module ImgController #(
         ramctrl_cmd <= `RAMController_Cmd_None;
         fifoOut_rst <= 0;
         ramctrl_write_trigger <= 0;
+        
+        ctrl_pixelCount <= fifoIn_pixelCount;
         
         ctrl_fifoOutWrote <= fifoOut_write_ready && fifoOut_write_trigger;
         if (ctrl_fifoOutWrote) begin
@@ -396,7 +401,8 @@ module ImgController #(
             // machine signals that it's done receiving data.
             if (!fifoIn_read_ready && ctrl_fifoInDone) begin
                 $display("[ImgController:Capture] Finished");
-                ctrl_state <= Ctrl_State_Readout;
+                status_captureDone <= !status_captureDone;
+                ctrl_state <= Ctrl_State_Idle;
             end
         end
         
@@ -408,7 +414,7 @@ module ImgController #(
             // Reset output FIFO
             fifoOut_rst <= 1;
             // Reset readout state
-            ctrl_readoutCount <= fifoIn_pixelCount;
+            ctrl_readoutCount <= ctrl_pixelCount;
             // ctrl_readoutCount <= ImageSizeMax;
             ctrl_fifoOutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
@@ -417,7 +423,6 @@ module ImgController #(
         Ctrl_State_Readout+1: begin
             // Wait for the read command and FIFO reset to be consumed
             if (ramctrl_cmd===`RAMController_Cmd_None && !fifoOut_rst) begin
-                status_captureDone <= !status_captureDone;
                 ctrl_state <= Ctrl_State_Readout+2;
             end
         end
@@ -431,6 +436,7 @@ module ImgController #(
         endcase
         
         if (ctrl_cmdCapture) ctrl_state <= Ctrl_State_WriteHeader;
+        if (ctrl_cmdReadout) ctrl_state <= Ctrl_State_Readout;
     end
     
     // ====================

@@ -137,6 +137,7 @@ module Top(
     // ImgController
     // ====================
     reg                                                 imgctrl_cmd_capture = 0;
+    reg                                                 imgctrl_cmd_readout = 0;
     reg[0:0]                                            imgctrl_cmd_ramBlock = 0;
     reg[127:0]                                          imgctrl_cmd_header = 0;
     wire                                                imgctrl_readout_clk;
@@ -154,6 +155,7 @@ module Top(
         .clk(img_clk),
         
         .cmd_capture(imgctrl_cmd_capture),
+        .cmd_readout(imgctrl_cmd_readout),
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
         .cmd_header(imgctrl_cmd_header),
         
@@ -579,6 +581,8 @@ module Top(
                     $display("[SPI] Got Msg_Type_ImgReadout");
                     // Reset spi_sdDatOutDone_
                     if (!spi_sdDatOutDone_) spi_sdDatOutDoneAck <= !spi_sdDatOutDoneAck;
+                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_DstBlock_Bits];
+                    imgctrl_cmd_readout <= !imgctrl_cmd_readout;
                     // Start SD DatOut
                     sd_datOut_start <= !sd_datOut_start;
                 end
