@@ -732,7 +732,7 @@ module Testbench();
     );
     
     localparam ImageWidth = 64;
-    localparam ImageHeight = 32;
+    localparam ImageHeight = 1;
     ImgSim #(
         .ImageWidth(ImageWidth),
         .ImageHeight(ImageHeight)

@@ -307,10 +307,10 @@ module ImgController #(
     reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_cmdHeaderCount = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
-    localparam Ctrl_State_WriteHeader   = 1; // +2
-    localparam Ctrl_State_Capture       = 4; // +2
-    localparam Ctrl_State_Readout       = 7; // +2
-    localparam Ctrl_State_Count         = 10;
+    localparam Ctrl_State_WriteHeader   = 1; // +1
+    localparam Ctrl_State_Capture       = 3; // +2
+    localparam Ctrl_State_Readout       = 6; // +2
+    localparam Ctrl_State_Count         = 9;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -323,6 +323,11 @@ module ImgController #(
             if (ctrl_readoutCount === 0) begin
                 ctrl_fifoOutDone <= 1;
             end
+        end
+        
+        if (ramctrl_write_trigger && ramctrl_write_ready) begin
+            ctrl_cmdHeader <= ctrl_cmdHeader<<16;
+            ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
         end
         
         case (ctrl_state)
@@ -342,21 +347,11 @@ module ImgController #(
         end
         
         Ctrl_State_WriteHeader+1: begin
-            // Wait for the write command to be consumed, and for the RAMController
-            // to be ready to write.
-            if (ramctrl_cmd===`RAMController_Cmd_None) begin
-                ctrl_state <= Ctrl_State_WriteHeader+2;
-            end
-        end
-        
-        Ctrl_State_WriteHeader+2: begin
             ramctrl_write_trigger <= 1;
-            if (ramctrl_write_ready) begin
+            if (ramctrl_write_trigger && ramctrl_write_ready) begin
                 $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
                     HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
                 ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
-                ctrl_cmdHeader <= ctrl_cmdHeader<<16;
-                ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
                 if (!ctrl_cmdHeaderCount) begin
                     ramctrl_write_trigger <= 0;
                     ctrl_state <= Ctrl_State_Capture;
