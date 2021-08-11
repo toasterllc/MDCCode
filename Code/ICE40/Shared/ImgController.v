@@ -230,9 +230,9 @@ module ImgController #(
         if (!fifoIn_fv)                         fifoIn_y <= 0;
         else if (fifoIn_lvPrev && !fifoIn_lv)   fifoIn_y <= fifoIn_y+1;
         
-        if (fifoIn_write_trigger) begin
-            $display("[ImgController:fifoIn] Wrote word into FIFO: %x", fifoIn_write_data);
-        end
+        // if (fifoIn_write_trigger) begin
+        //     $display("[ImgController:fifoIn] Wrote word into FIFO: %x", fifoIn_write_data);
+        // end
         
         // Count pixel stats (number of highlights/shadows)
         // We're pipelining `fifoIn_countStat` and `fifoIn_countStatPx` here for performance
