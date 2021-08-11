@@ -183,8 +183,12 @@ module ImgController #(
     // ====================
     // Pixel input state machine
     // ====================
+    localparam QueueWidth = HeaderWidth;
+    localparam QueueWordCount = QueueWidth/16;
     reg[`RegWidth(HeaderWordCount-1)-1:0] fifoIn_headerCount = 0;
-    reg[HeaderWidth-1:0] fifoIn_header = 0;
+    reg[QueueWidth-1:0] fifoIn_queueData = 0;
+    reg[QueueWordCount-1:0] fifoIn_queueWrite = 0;
+    // reg fifoIn_pixelWriteEn = 0;
     
     reg ctrl_fifoInCaptureTrigger = 0;
     `TogglePulse(fifoIn_captureTrigger, ctrl_fifoInCaptureTrigger, posedge, img_dclk);
@@ -213,10 +217,15 @@ module ImgController #(
     reg[2:0] fifoIn_state = 0;
     always @(posedge img_dclk) begin
         fifoIn_rst <= 0; // Pulse
+        // fifoIn_pixelWriteEn <= 0; // Reset by default
         fifoIn_lvPrev <= fifoIn_lv;
-        fifoIn_header <= fifoIn_header<<16;
-        fifoIn_headerCount <= fifoIn_headerCount-1;
-        fifoIn_write_trigger <= 0; // Reset by default
+        fifoIn_queueData <= fifoIn_queueData<<16;
+        fifoIn_queueWrite <= fifoIn_queueWrite<<1;
+        fifoIn_write_data <= `LeftBits(fifoIn_queueData, 0, 16);
+        fifoIn_write_trigger <= `LeftBit(fifoIn_queueWrite,0);
+        
+        fifoIn_queueData[15:0] <= {4'b0, img_d_reg};
+        // fifoIn_queueWrite[0] <= fifoIn_lv;
         
         if (fifoIn_write_trigger) begin
             // Count the words in an image
@@ -272,35 +281,25 @@ module ImgController #(
         
         // Wait for the frame to be invalid
         3: begin
+            fifoIn_queueData <= cmd_header;
             if (!img_fv_reg) begin
                 $display("[ImgController:fifoIn] Waiting for frame invalid...");
+                fifoIn_queueWrite <= ~0;
                 fifoIn_state <= 4;
             end
         end
         
         // Wait for the frame to start
         4: begin
-            fifoIn_header <= cmd_header;
-            fifoIn_headerCount <= HeaderWordCount-1;
             if (img_fv_reg) begin
                 $display("[ImgController:fifoIn] Frame start");
                 fifoIn_state <= 5;
             end
         end
         
-        5: begin
-            // $display("[ImgController:fifoIn] Header state: %0d", fifoIn_headerCount);
-            fifoIn_write_trigger <= 1;
-            fifoIn_write_data <= `LeftBits(fifoIn_header, 0, 16);
-            if (!fifoIn_headerCount) begin
-                fifoIn_state <= 6;
-            end
-        end
-        
         // Wait until the end of the frame
-        6: begin
-            fifoIn_write_trigger <= img_lv_reg;
-            fifoIn_write_data <= {4'b0, img_d_reg};
+        5: begin
+            fifoIn_queueWrite[0] <= fifoIn_lv;
             if (!img_fv_reg) begin
                 $display("[ImgController:fifoIn] Frame end");
                 fifoIn_done <= 1;
