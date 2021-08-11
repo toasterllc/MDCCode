@@ -58,12 +58,21 @@ def printProgress(iteration, total, prefix = '', suffix = '', decimals = 1, leng
         print()
 
 def executeTrial(_):
-    cmd = pnrArgs + ['--seed', str(random.randint(-0x80000000,0x7FFFFFFF))]
+    proc = None
+    while True:
+        cmd = pnrArgs + ['--seed', str(random.randint(-0x80000000,0x7FFFFFFF))]
+        try:
+            # Sometimes nextpnr hangs, so if that happens, try executing it again.
+            # (It seems that certain seed values deterministically cause a hang,
+            # so we use a different seed for each attempt.)
+            proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=60)
+        except subprocess.TimeoutExpired:
+            print(f"{pnrProg} inovcation timed out: {' '.join(cmd)}\n")
+            continue
+        break
     
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    proc.check_returncode()
     outputLines = proc.stdout.decode("utf-8").splitlines()
-    if proc.returncode != 0:
-        raise RuntimeError(f'{pnrProg} failed')
     
     # nextpnr should output 2 lines matching this 'Max frequency for clock' string, for each clock.
     # We want the second set of matching strings, which is after nextpnr routes the design.
