@@ -47,6 +47,8 @@ module ImgController #(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
+    localparam HeaderWordCount = HeaderWidth/16;
+    
     // ====================
     // RAMController
     // ====================
@@ -248,7 +250,7 @@ module ImgController #(
         1: begin
             fifoIn_rst <= 1;
             fifoIn_done <= 0;
-            fifoIn_pixelCount <= 0;
+            fifoIn_pixelCount <= HeaderWordCount;
             fifoIn_highlightCount <= 0;
             fifoIn_shadowCount <= 0;
             fifoIn_state <= 2;
@@ -302,8 +304,6 @@ module ImgController #(
     reg[`RegWidth(ImageSizeMax)-1:0] ctrl_readoutCount = 0;
     reg ctrl_fifoOutDone = 0;
     reg[HeaderWidth-1:0] ctrl_cmdHeader = 0;
-    
-    localparam HeaderWordCount = HeaderWidth/16;
     reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_cmdHeaderCount = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
@@ -353,7 +353,6 @@ module ImgController #(
             ramctrl_write_trigger <= 1;
             $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
                 HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
-            // TODO: for perf: try moving this into a new state
             ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
             ctrl_cmdHeader <= ctrl_cmdHeader<<16;
             ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
