@@ -1441,7 +1441,7 @@ module Testbench();
             $display("[Testbench] Read failed ❌");
             `Finish;
         end
-
+        
         if ((spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]&16'h00FF) === 16'h0037) begin
             $display("[Testbench] Read correct data ✅ (0x%x)", spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits]&16'h00FF);
         end else begin

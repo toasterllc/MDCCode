@@ -344,21 +344,23 @@ module ImgController #(
         Ctrl_State_WriteHeader+1: begin
             // Wait for the write command to be consumed, and for the RAMController
             // to be ready to write.
-            if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
+            if (ramctrl_cmd===`RAMController_Cmd_None) begin
                 ctrl_state <= Ctrl_State_WriteHeader+2;
             end
         end
         
         Ctrl_State_WriteHeader+2: begin
             ramctrl_write_trigger <= 1;
-            $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
-                HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
-            ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
-            ctrl_cmdHeader <= ctrl_cmdHeader<<16;
-            ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
-            if (!ctrl_cmdHeaderCount) begin
-                ramctrl_write_trigger <= 0;
-                ctrl_state <= Ctrl_State_Capture;
+            if (ramctrl_write_ready) begin
+                $display("[ImgController:WriteHeader] Wrote header word %0d/%0d",
+                    HeaderWordCount-ctrl_cmdHeaderCount, HeaderWordCount);
+                ramctrl_write_data <= `LeftBits(ctrl_cmdHeader, 0, 16);
+                ctrl_cmdHeader <= ctrl_cmdHeader<<16;
+                ctrl_cmdHeaderCount <= ctrl_cmdHeaderCount-1;
+                if (!ctrl_cmdHeaderCount) begin
+                    ramctrl_write_trigger <= 0;
+                    ctrl_state <= Ctrl_State_Capture;
+                end
             end
         end
         
