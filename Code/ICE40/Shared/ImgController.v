@@ -183,9 +183,10 @@ module ImgController #(
     // ====================
     // Pixel input state machine
     // ====================
-    reg fifoIn_writeEn = 0;
-    reg fifoIn_headerWrite = 0;
+    reg fifoIn_headerWriteEn = 0;
+    reg fifoIn_pixelWriteEn = 0;
     reg[`RegWidth(HeaderWordCount-1)-1:0] fifoIn_headerCount = 0;
+    wire fifoIn_pixelWrite = (fifoIn_pixelWriteEn && img_lv_reg);
     
     reg ctrl_fifoInCaptureTrigger = 0;
     `TogglePulse(fifoIn_captureTrigger, ctrl_fifoInCaptureTrigger, posedge, img_dclk);
@@ -248,11 +249,12 @@ module ImgController #(
     reg[2:0] fifoIn_state = 0;
     always @(posedge img_dclk) begin
         fifoIn_rst <= 0; // Pulse
-        fifoIn_writeEn <= 0; // Reset by default
+        fifoIn_pixelWriteEn <= 0; // Reset by default
+        fifoIn_headerWriteEn <= 0; // Reset by default
         fifoIn_lvPrev <= fifoIn_lv;
-        fifoIn_headerWrite <= 0; // Reset by default
         fifoIn_headerCount <= fifoIn_headerCount-1;
         
+        // TODO: perf: try looking at fifoIn_pixelWrite instead of fifoIn_write_trigger, and start fifoIn_pixelCount off at HeaderWordCount
         if (fifoIn_write_trigger) begin
             // Count the pixels in an image
             fifoIn_pixelCount <= fifoIn_pixelCount+1;
@@ -264,9 +266,13 @@ module ImgController #(
         if (!fifoIn_fv)                         fifoIn_y <= 0;
         else if (fifoIn_lvPrev && !fifoIn_lv)   fifoIn_y <= fifoIn_y+1;
         
+        if (fifoIn_write_trigger) begin
+            $display("[ImgController:fifoIn] Wrote word into FIFO: %x", fifoIn_write_data);
+        end
+        
         // Count pixel stats (number of highlights/shadows)
         // We're pipelining `fifoIn_countStat` and `fifoIn_countStatPx` here for performance
-        fifoIn_countStat <= (fifoIn_write_trigger && !fifoIn_x && !fifoIn_y);
+        fifoIn_countStat <= (fifoIn_pixelWrite && !fifoIn_x && !fifoIn_y);
         fifoIn_countStatPx <= img_d_reg;
         if (fifoIn_countStat) begin
             // Look at the high bits to determine if it's a highlight or shadow
@@ -287,7 +293,7 @@ module ImgController #(
         1: begin
             fifoIn_rst <= 1;
             fifoIn_done <= 0;
-            fifoIn_pixelCount <= HeaderWordCount;
+            fifoIn_pixelCount <= 0;
             fifoIn_highlightCount <= 0;
             fifoIn_shadowCount <= 0;
             fifoIn_state <= 2;
@@ -304,7 +310,7 @@ module ImgController #(
         // Wait for the frame to be invalid
         3: begin
             if (!img_fv_reg) begin
-                $display("[ImgController:FIFO] Waiting for frame invalid...");
+                $display("[ImgController:fifoIn] Waiting for frame invalid...");
                 fifoIn_state <= 4;
             end
         end
@@ -312,15 +318,15 @@ module ImgController #(
         // Wait for the frame to start
         4: begin
             if (img_fv_reg) begin
-                $display("[ImgController:FIFO] Frame start");
-                fifoIn_headerCount <= HeaderWordCount;
+                $display("[ImgController:fifoIn] Frame start");
+                fifoIn_headerCount <= HeaderWordCount-1;
                 fifoIn_state <= 5;
             end
         end
         
         5: begin
-            fifoIn_headerWrite <= 1;
-            fifoIn_writeEn <= 1;
+            // $display("[ImgController:fifoIn] Header state: %0d", fifoIn_headerCount);
+            fifoIn_headerWriteEn <= 1;
             if (!fifoIn_headerCount) begin
                 fifoIn_state <= 6;
             end
@@ -328,9 +334,9 @@ module ImgController #(
         
         // Wait until the end of the frame
         6: begin
-            fifoIn_writeEn <= 1;
+            fifoIn_pixelWriteEn <= 1;
             if (!img_fv_reg) begin
-                $display("[ImgController:FIFO] Frame end");
+                $display("[ImgController:fifoIn] Frame end");
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
             end
@@ -467,8 +473,8 @@ module ImgController #(
     // Connections
     // ====================
     // Connect input FIFO write -> pixel data
-    assign fifoIn_write_trigger = fifoIn_writeEn && (fifoIn_headerWrite || img_lv_reg);
-    assign fifoIn_write_data = (fifoIn_headerWrite ? 16'b0 : {4'b0, img_d_reg});
+    assign fifoIn_write_trigger = (fifoIn_headerWriteEn || fifoIn_pixelWrite);
+    assign fifoIn_write_data = (fifoIn_headerWriteEn ? 16'hFFFF : {4'b0, img_d_reg});
     
     // Connect input FIFO read -> RAM write
     assign fifoIn_read_trigger = (!ramctrl_write_trigger || ramctrl_write_ready);
