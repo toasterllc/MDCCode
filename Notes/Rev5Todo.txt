@@ -16,6 +16,9 @@
     
     - Layout: when complete, make sure board origin is at 0,0
     
+    - Make sure that IMG i2c lines are 0V while IMG power is off
+        - On Rev4, ImgI2CMaster.v writes clkOut<=1 in its Idle state, so it's being driven when IMG is powered off
+    
     √ Fix motion sensor layout (we swapped the VDD and GND pins)
     
     √ Consolidate parts
