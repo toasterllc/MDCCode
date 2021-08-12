@@ -21,40 +21,20 @@ module ClockGen #(
     wire pllClk;
     assign clk = pllClk&locked;
     
-`ifdef SIM
-    reg simClk;
-    reg[3:0] simLockedCounter;
-    assign pllClk = simClk;
-    assign locked = &simLockedCounter;
-    
-    initial begin
-        simClk = 0;
-        simLockedCounter = 0;
-        forever begin
-            #(`DivCeil(1000000000000, 2*FREQOUT));
-            simClk = !simClk;
-            
-            if (!simClk & !locked) begin
-                simLockedCounter = simLockedCounter+1;
-            end
-        end
-    end
-
-`else
     SB_PLL40_CORE #(
-		.FEEDBACK_PATH("SIMPLE"),
-		.DIVR(DIVR),
-		.DIVF(DIVF),
-		.DIVQ(DIVQ),
-		.FILTER_RANGE(FILTER_RANGE)
+        .FEEDBACK_PATH("SIMPLE"),
+        .DIVR(DIVR),
+        .DIVF(DIVF),
+        .DIVQ(DIVQ),
+        .FILTER_RANGE(FILTER_RANGE),
+        .SIMFREQOUT(FREQOUT)
     ) pll (
-		.LOCK(locked),
-		.RESETB(1'b1),
-		.BYPASS(1'b0),
-		.REFERENCECLK(clkRef),
-		.PLLOUTCORE(pllClk)
+        .LOCK(locked),
+        .RESETB(1'b1),
+        .BYPASS(1'b0),
+        .REFERENCECLK(clkRef),
+        .PLLOUTCORE(pllClk)
     );
-`endif
     
     // Generate `rst`
     reg init = 0;
