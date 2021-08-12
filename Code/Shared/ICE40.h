@@ -249,14 +249,13 @@ struct ImgCaptureStatusMsg : Msg {
 
 struct ImgCaptureStatusResp : Resp {
     bool done() const               { return getBit(63);        }
-    uint16_t imageWidth() const     { return getBits(62,51);    }
-    uint16_t imageHeight() const    { return getBits(50,39);    }
+    uint32_t wordCount() const      { return getBits(62,39);    }
     uint32_t highlightCount() const { return getBits(38,21);    }
     uint32_t shadowCount() const    { return getBits(20,3);     }
 };
 
 struct ImgReadoutMsg : Msg {
-    ImgReadoutMsg() {
+    ImgReadoutMsg(uint8_t dstBlock) {
         type = MsgType::StartBit | 0x0A;
         payload[0] = 0;
         payload[1] = 0;
@@ -264,7 +263,7 @@ struct ImgReadoutMsg : Msg {
         payload[3] = 0;
         payload[4] = 0;
         payload[5] = 0;
-        payload[6] = 0;
+        payload[6] = dstBlock&0x7;
     }
 };
 
@@ -297,13 +296,13 @@ struct ImgI2CStatusResp : Resp {
 struct NopMsg : Msg {
     NopMsg(uint8_t val) {
         type = 0x00;
-        payload[0] = 0xFF;
-        payload[1] = 0xFF;
-        payload[2] = 0xFF;
-        payload[3] = 0xFF;
-        payload[4] = 0xFF;
-        payload[5] = 0xFF;
-        payload[6] = 0xFF;
+        payload[0] = 0x00;
+        payload[1] = 0x00;
+        payload[2] = 0x00;
+        payload[3] = 0x00;
+        payload[4] = 0x00;
+        payload[5] = 0x00;
+        payload[6] = 0x00;
     }
 };
 
