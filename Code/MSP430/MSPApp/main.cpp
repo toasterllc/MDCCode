@@ -702,7 +702,7 @@ void _sdWriteImage(uint16_t rca) {
     
     // Clock out the image on the DAT lines
     {
-        _ice40Transfer(ImgReadoutMsg());
+        _ice40Transfer(ImgReadoutMsg(0));
     }
     
     // Wait until we're done clocking out the image on the DAT lines
@@ -1053,17 +1053,24 @@ int main() {
     _sysInit();
     // Init ICE40 comms
     _iceInit();
-    // Initialize the image sensor
-    _imgInit();
-    // Initialize the SD card
+    
     const uint16_t rca = _sdInit();
-    // Enable image streaming
-    _imgSetStreamEnabled(true);
-    _ice40Transfer(LEDSetMsg(0x09));
-    // Capture an image to RAM
-    _imgCaptureImage();
-    // Write the image to the SD card
-    _sdWriteImage(rca);
+//    const uint8_t SDClkDelaySlow = 15;
+//    const uint8_t SDClkDelayFast = 0;
+//    _ice40Transfer(SDInitMsg(SDInitMsg::State::Disabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Off, SDClkDelaySlow));
+//    _ice40Transfer(SDInitMsg(SDInitMsg::State::Disabled, SDInitMsg::Trigger::Nop, SDInitMsg::ClkSpeed::Slow, SDClkDelaySlow));
+    
+//    // Initialize the image sensor
+//    _imgInit();
+    // Initialize the SD card
+//    const uint16_t rca = _sdInit();
+//    // Enable image streaming
+//    _imgSetStreamEnabled(true);
+//    _ice40Transfer(LEDSetMsg(0x09));
+//    // Capture an image to RAM
+//    _imgCaptureImage();
+//    // Write the image to the SD card
+//    _sdWriteImage(rca);
     
 //        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off,  0, 1); // Disable SD clock, InitMode=enabled
 //        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // SD clock = slow clock, InitMode=enabled

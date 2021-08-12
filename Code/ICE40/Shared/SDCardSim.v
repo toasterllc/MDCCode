@@ -176,7 +176,7 @@ module SDCardSim(
                 lvsinit_sdDat,
                 (lvsinit_pulseEndTimePs-lvsinit_pulseBeginTimePs)/1000
             );
-            `Finish;
+            // `Finish;
         end
         
         // Verify that there's a 5ms delay after the LVS sequence before the first clock is supplied
@@ -191,7 +191,7 @@ module SDCardSim(
                 $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us) ❌",
                     ($time-lvsinit_pulseEndTimePs)/1000000
                 );
-                `Finish;
+                // `Finish;
             `else
                 $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us); ignoring because SDCARDSIM_LVS_INIT_IGNORE_5MS is defined",
                     ($time-lvsinit_pulseEndTimePs)/1000000
