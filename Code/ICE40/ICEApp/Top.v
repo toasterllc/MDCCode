@@ -656,15 +656,6 @@ module Top(
         .D_IN_0(spi_dataIn)
     );
     
-`ifdef SIM
-    // Sim workaround: for some reason `spi_dataOut` has to be assigned to something non-0
-    // before it will drive a 0, otherwise it drives an x.
-    initial begin
-        spi_dataOut = 1'bz;
-        spi_dataOut = 1'b0;
-    end
-`endif
-    
     // // TODO: ideally we'd use the SB_IO definition below for `ice_msp_spi_data`, but we can't because
     // // TODO: Rev4's `ice_msp_spi_data` net (pin K1), is a PIO pair with `ram_dq[15]` (pin J1), which
     // // TODO: means they both have to use the same clock.
@@ -1463,15 +1454,6 @@ module Testbench();
     
     
     initial begin
-        // Set our initial state
-        spi_dataOutReg = 0;
-        spi_dataOutEn = 0;
-        
-        // Pulse the clock to get SB_IO initialized
-        ice_msp_spi_clk = 1;
-        #1;
-        ice_msp_spi_clk = 0;
-        
         TestRst();
         TestEcho(56'h00000000000000);
         TestEcho(56'hCAFEBABEFEEDAA);
