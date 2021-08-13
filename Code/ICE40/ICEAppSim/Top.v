@@ -1,5 +1,5 @@
-// `include "../ICEApp/Top.v"          // Before yosys synthesis
-`include "../ICEApp/Synth/Top.v"    // After yosys synthesis
+`include "../ICEApp/Top.v"          // Before yosys synthesis
+// `include "../ICEApp/Synth/Top.v"    // After yosys synthesis
 `include "ICEAppTypes.v"
 `include "Util.v"
 
@@ -13,7 +13,7 @@
 // // MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
 // // beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
 // // when that happens
-// `define MOBILE_SDR_INIT_VAL 16'hCAFE
+`define MOBILE_SDR_INIT_VAL 16'hCAFE
 `include "mt48h32m16lf/mobile_sdr.v"
 
 `timescale 1ns/1ps
@@ -819,7 +819,7 @@ module Testbench();
         TestImgReset();
         TestImgSetHeader1(8'h42 /* version */, 32'hAABBCCDD /* timestamp */, 16'd2304 /* image width */);
         TestImgSetHeader2(16'd1296 /* image height */, 16'h1111 /* exposure */, 16'h2222 /* gain */);
-        TestImgI2CWriteRead();
+        // TestImgI2CWriteRead();
         TestImgCapture();
         
         TestSDInit();
@@ -828,11 +828,11 @@ module Testbench();
         TestSDCMD0();
         TestSDCMD8();
         TestSDDatOut();
-        TestSDCMD2();
-        TestSDDatIn();
-        TestSDRespRecovery();
-        // TestSDDatOutRecovery();
-        TestSDDatInRecovery();
+        // TestSDCMD2();
+        // TestSDDatIn();
+        // TestSDRespRecovery();
+        // // TestSDDatOutRecovery();
+        // TestSDDatInRecovery();
         
         `Finish;
     end

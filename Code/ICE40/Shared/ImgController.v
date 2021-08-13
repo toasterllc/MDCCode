@@ -262,44 +262,47 @@ module ImgController #(
             fifoIn_state <= 2;
         end
         
-        // Wait for FIFO to be done resetting
+        // Delay state while FIFO resets
         2: begin
+            fifoIn_state <= 3;
+        end
+        
+        // Initiate writing header
+        3: begin
+            fifoIn_started <= !fifoIn_started;
             fifoIn_header <= cmd_header;
             fifoIn_headerCount <= HeaderWordCount-1;
-            if (!fifoIn_rst) begin
-                fifoIn_started <= !fifoIn_started;
-                fifoIn_state <= 3;
-            end
+            fifoIn_state <= 4;
         end
         
         // Write header
-        3: begin
+        4: begin
             $display("[ImgController:fifoIn] Header state: %0d", fifoIn_headerCount);
             fifoIn_write_trigger <= 1;
             fifoIn_write_data <= `LeftBits(fifoIn_header, 0, 16);
             if (!fifoIn_headerCount) begin
-                fifoIn_state <= 4;
-            end
-        end
-        
-        // Wait for the frame to be invalid
-        4: begin
-            if (!fifoIn_fv) begin
-                $display("[ImgController:fifoIn] Waiting for frame invalid...");
                 fifoIn_state <= 5;
             end
         end
         
-        // Wait for the frame to start
+        // Wait for the frame to be invalid
         5: begin
-            if (fifoIn_fv) begin
-                $display("[ImgController:fifoIn] Frame start");
+            if (!fifoIn_fv) begin
+                $display("[ImgController:fifoIn] Waiting for frame invalid...");
                 fifoIn_state <= 6;
             end
         end
         
-        // Wait until the end of the frame
+        // Wait for the frame to start
         6: begin
+            if (fifoIn_fv) begin
+                $display("[ImgController:fifoIn] Frame start");
+                fifoIn_state <= 7;
+            end
+        end
+        
+        // Wait until the end of the frame
+        7: begin
             fifoIn_countStat <= (fifoIn_lv && !fifoIn_x && !fifoIn_y);
             fifoIn_write_trigger <= fifoIn_lv;
             fifoIn_write_data <= {4'b0, img_d_reg};
