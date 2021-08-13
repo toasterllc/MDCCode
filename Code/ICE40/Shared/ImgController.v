@@ -230,9 +230,9 @@ module ImgController #(
         if (!fifoIn_fv)                         fifoIn_y <= 0;
         else if (fifoIn_lvPrev && !fifoIn_lv)   fifoIn_y <= fifoIn_y+1;
         
-        // if (fifoIn_write_trigger) begin
-        //     $display("[ImgController:fifoIn] Wrote word into FIFO: %x", fifoIn_write_data);
-        // end
+        if (fifoIn_write_trigger) begin
+            $display("[ImgController:fifoIn] Wrote word into FIFO: %x", fifoIn_write_data);
+        end
         
         // Count pixel stats (number of highlights/shadows)
         // We're pipelining `fifoIn_countStat` and `fifoIn_countStatPx` here for performance
@@ -264,35 +264,36 @@ module ImgController #(
         
         // Wait for FIFO to be done resetting
         2: begin
+            fifoIn_header <= cmd_header;
+            fifoIn_headerCount <= HeaderWordCount-1;
             if (!fifoIn_rst) begin
                 fifoIn_started <= !fifoIn_started;
                 fifoIn_state <= 3;
             end
         end
         
-        // Wait for the frame to be invalid
+        // Write header
         3: begin
-            if (!fifoIn_fv) begin
-                $display("[ImgController:fifoIn] Waiting for frame invalid...");
+            $display("[ImgController:fifoIn] Header state: %0d", fifoIn_headerCount);
+            fifoIn_write_trigger <= 1;
+            fifoIn_write_data <= `LeftBits(fifoIn_header, 0, 16);
+            if (!fifoIn_headerCount) begin
                 fifoIn_state <= 4;
             end
         end
         
-        // Wait for the frame to start
+        // Wait for the frame to be invalid
         4: begin
-            fifoIn_header <= cmd_header;
-            fifoIn_headerCount <= HeaderWordCount-1;
-            if (fifoIn_fv) begin
-                $display("[ImgController:fifoIn] Frame start");
+            if (!fifoIn_fv) begin
+                $display("[ImgController:fifoIn] Waiting for frame invalid...");
                 fifoIn_state <= 5;
             end
         end
         
+        // Wait for the frame to start
         5: begin
-            // $display("[ImgController:fifoIn] Header state: %0d", fifoIn_headerCount);
-            fifoIn_write_trigger <= 1;
-            fifoIn_write_data <= `LeftBits(fifoIn_header, 0, 16);
-            if (!fifoIn_headerCount) begin
+            if (fifoIn_fv) begin
+                $display("[ImgController:fifoIn] Frame start");
                 fifoIn_state <= 6;
             end
         end
