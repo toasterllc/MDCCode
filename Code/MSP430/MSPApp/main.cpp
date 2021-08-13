@@ -1028,7 +1028,7 @@ struct ImgHeader {
     uint16_t imageHeight    = 0;            // 0x0510
     uint16_t exposure       = 0;            // 0x1111
     uint16_t gain           = 0;            // 0x2222
-    uint8_t pad[3]          = {}            // 0x000000;
+    uint8_t pad[3]          = {};           // 0x000000
 } __attribute__((packed));
 
 void _imgCaptureImage() {
@@ -1089,7 +1089,7 @@ int main() {
     _imgSetStreamEnabled(true);
 //    _ice40Transfer(LEDSetMsg(0x09));
 //    // Capture an image to RAM
-    _imgCaptureImage();
+//    _imgCaptureImage();
 //    // Write the image to the SD card
 //    _sdWriteImage(rca);
     
