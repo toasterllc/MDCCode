@@ -1473,15 +1473,6 @@ module Testbench();
     
     
     initial begin
-        // TestRst();
-        // TestEcho(56'h6D656F77000000); // meow
-        // TestEcho(56'h6D656F77000000); // meow
-        //
-        // TestLEDSet(4'b1001);
-        //
-        // TestEcho(56'h6D656F77000000); // meow
-        // TestEcho(56'h6D656F77000000); // meow
-        
         TestRst();
         TestEcho(56'h00000000000000);
         TestEcho(56'hCAFEBABEFEEDAA);
