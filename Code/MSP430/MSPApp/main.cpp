@@ -1084,14 +1084,14 @@ int main() {
     // Initialize the image sensor
     _imgInit();
     // Initialize the SD card
-//    const uint16_t rca = _sdInit();
+    const uint16_t rca = _sdInit();
     // Enable image streaming
     _imgSetStreamEnabled(true);
-//    _ice40Transfer(LEDSetMsg(0x09));
-//    // Capture an image to RAM
-//    _imgCaptureImage();
-//    // Write the image to the SD card
-//    _sdWriteImage(rca);
+    _ice40Transfer(LEDSetMsg(0x09));
+    // Capture an image to RAM
+    _imgCaptureImage();
+    // Write the image to the SD card
+    _sdWriteImage(rca);
     
     for (;;);
     
