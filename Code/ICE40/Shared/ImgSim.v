@@ -27,17 +27,11 @@ module ImgSim #(
         reg[31:0] col;
         reg[31:0] pxCount;
         
-        // Wait 16 cycles before starting the next frame
-        img_fv = 0;
-        for (i=0; i<16; i=i+1) begin
-            wait(clk);
-            wait(!clk);
-        end
-        
         // img_fv=1 (frame start)
-        // Wait 16 cycles before starting the first row
         img_fv = 1;
-        for (i=0; i<16; i=i+1) begin
+        
+        // Wait 6 cycles before starting the first row (empirically measured)
+        for (i=0; i<6; i=i+1) begin
             wait(clk);
             wait(!clk);
         end
@@ -52,29 +46,32 @@ module ImgSim #(
                 img_d = pxCount;
                 pxCount = pxCount+1;
                 
-                // Test histogram
-                if (!(row%4) && !(col%4)) begin
-                    img_d = 12'hFFF; // Highlight
-                end else begin
-                    img_d = 12'h000; // Shadow
-                end
+                // // Test histogram
+                // if (!(row%4) && !(col%4)) begin
+                //     img_d = 12'hFFF; // Highlight
+                // end else begin
+                //     img_d = 12'h000; // Shadow
+                // end
                 wait(clk);
                 wait(!clk);
             end
             
             // img_lv=0 (line end)
-            // Wait 16 cycles before continuing to the next row
+            // Wait 6 cycles before continuing to the next row (empirically measured the
+            // final delay between img_lv=0 and img_fv=0; didn't measure the delay
+            // between normal rows)
             img_lv = 0;
-            for (i=0; i<16; i=i+1) begin
+            for (i=0; i<6; i=i+1) begin
                 wait(clk);
                 wait(!clk);
             end
         end
         
         // img_fv=0 (frame end)
-        // Wait 16 cycles before continuing to the next frame
         img_fv = 0;
-        for (i=0; i<16; i=i+1) begin
+        
+        // Wait 16 cycles before continuing to the next frame
+        for (i=0; i<6; i=i+1) begin
             wait(clk);
             wait(!clk);
         end
