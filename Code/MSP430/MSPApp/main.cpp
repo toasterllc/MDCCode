@@ -13,6 +13,8 @@ using SDSendCmdMsg = ICE40::SDSendCmdMsg;
 using SDStatusMsg = ICE40::SDStatusMsg;
 using SDStatusResp = ICE40::SDStatusResp;
 using ImgResetMsg = ICE40::ImgResetMsg;
+using ImgSetHeader1Msg = ICE40::ImgSetHeader1Msg;
+using ImgSetHeader2Msg = ICE40::ImgSetHeader2Msg;
 using ImgCaptureMsg = ICE40::ImgCaptureMsg;
 using ImgReadoutMsg = ICE40::ImgReadoutMsg;
 using ImgI2CTransactionMsg = ICE40::ImgI2CTransactionMsg;
@@ -702,7 +704,7 @@ void _sdWriteImage(uint16_t rca) {
     
     // Clock out the image on the DAT lines
     {
-        _ice40Transfer(ImgReadoutMsg());
+        _ice40Transfer(ImgReadoutMsg(0));
     }
     
     // Wait until we're done clocking out the image on the DAT lines
@@ -916,7 +918,7 @@ void _imgInit() {
         // 256: Walking 1s test pattern (12 bit)
 //        _imgI2CWrite(0x3070, 0x0000);  // Normal operation (default)
 //        _imgI2CWrite(0x3070, 0x0001);  // Solid color
-//        _imgI2CWrite(0x3070, 0x0002);  // Color bars
+        _imgI2CWrite(0x3070, 0x0002);  // Color bars
 //        _imgI2CWrite(0x3070, 0x0003);  // Fade-to-gray
 //        _imgI2CWrite(0x3070, 0x0100);  // Walking 1s
     }
@@ -983,30 +985,30 @@ void _imgInit() {
         _imgI2CWrite(0x3064, 0x1802);  // Stats disabled
     }
     
-    constexpr uint16_t IntTimeMax = 16383;
-    constexpr uint16_t GainMax = 63;
-    
-    constexpr uint16_t intTime = 65535/2048;
-    constexpr uint16_t gain = intTime/3;
-    
-    // Set coarse_integration_time
-    {
-        // Normalize intTime to [0,IntTimeMax]
-        constexpr uint16_t normVal = (((uint32_t)intTime*IntTimeMax)/UINT16_MAX);
-        _imgI2CWrite(0x3012, normVal);
-    }
-    
-    // Set fine_integration_time
-    {
-        _imgI2CWrite(0x3014, 0);
-    }
-    
-    // Set analog_gain
-    {
-        // Normalize gain to [0,GainMax]
-        constexpr uint16_t normVal = std::max((uint32_t)1, (((uint32_t)gain*GainMax)/UINT16_MAX));
-        _imgI2CWrite(0x3060, normVal);
-    }
+//    constexpr uint16_t IntTimeMax = 16383;
+//    constexpr uint16_t GainMax = 63;
+//    
+//    constexpr uint16_t intTime = 65535/2048;
+//    constexpr uint16_t gain = intTime/3;
+//    
+//    // Set coarse_integration_time
+//    {
+//        // Normalize intTime to [0,IntTimeMax]
+//        constexpr uint16_t normVal = (((uint32_t)intTime*IntTimeMax)/UINT16_MAX);
+//        _imgI2CWrite(0x3012, normVal);
+//    }
+//    
+//    // Set fine_integration_time
+//    {
+//        _imgI2CWrite(0x3014, 0);
+//    }
+//    
+//    // Set analog_gain
+//    {
+//        // Normalize gain to [0,GainMax]
+//        constexpr uint16_t normVal = std::max((uint32_t)1, (((uint32_t)gain*GainMax)/UINT16_MAX));
+//        _imgI2CWrite(0x3060, normVal);
+//    }
 }
 
 void _imgSetStreamEnabled(bool en) {
@@ -1019,16 +1021,42 @@ ImgCaptureStatusResp _imgCaptureStatus() {
     return resp;
 }
 
+struct ImgHeader {
+    uint8_t version         = 0;            // 0x42
+    uint32_t timestamp      = 0;            // 0xAABBCCDD
+    uint16_t imageWidth     = 0;            // 0x0900
+    uint16_t imageHeight    = 0;            // 0x0510
+    uint16_t exposure       = 0;            // 0x1111
+    uint16_t gain           = 0;            // 0x2222
+    uint8_t pad[3]          = {}            // 0x000000;
+} __attribute__((packed));
+
 void _imgCaptureImage() {
+    const ImgHeader header = {
+        .version        = 0x42,
+        .timestamp      = 0xAABBCCDD,
+        .imageWidth     = 2304,
+        .imageHeight    = 1296,
+        .exposure       = 0x1111,
+        .gain           = 0x2222,
+    };
+    
+    _ice40Transfer(ImgSetHeader1Msg((const uint8_t*)&header));
+    _ice40Transfer(ImgSetHeader2Msg((const uint8_t*)&header+ImgSetHeader1Msg::Len));
     _ice40Transfer(ImgCaptureMsg(0));
     
     // Wait for command to be sent
-    const uint16_t MaxAttempts = 1000;
+    constexpr uint32_t ImgWidth = 2304;
+    constexpr uint32_t ImgHeight = 1296;
+    constexpr uint32_t ImgWordCount = (sizeof(ImgHeader)/2)+ImgWidth*ImgHeight;
+    constexpr uint16_t MaxAttempts = 1000;
     for (uint16_t i=0; i<MaxAttempts; i++) {
         if (i >= 10) _delayMs(1);
         auto status = _imgCaptureStatus();
         // Try again if the image hasn't been captured yet
         if (!status.done()) continue;
+        const uint32_t imgWordCount = status.wordCount();
+        Assert(imgWordCount == ImgWordCount);
         return;
     }
     // Timeout capturing image
@@ -1056,24 +1084,14 @@ int main() {
     // Initialize the image sensor
     _imgInit();
     // Initialize the SD card
-    const uint16_t rca = _sdInit();
+//    const uint16_t rca = _sdInit();
     // Enable image streaming
     _imgSetStreamEnabled(true);
-    _ice40Transfer(LEDSetMsg(0x09));
-    // Capture an image to RAM
+//    _ice40Transfer(LEDSetMsg(0x09));
+//    // Capture an image to RAM
     _imgCaptureImage();
-    // Write the image to the SD card
-    _sdWriteImage(rca);
-    
-//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Off,  0, 1); // Disable SD clock, InitMode=enabled
-//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 1); // SD clock = slow clock, InitMode=enabled
-//        // <-- Turn on power to SD card
-//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 1, 1); // Trigger SDController init state machine
-//        
-//        // Wait 5ms
-//        #5000000;
-//        
-//        TestSDConfig(0, `Msg_Arg_SDInit_Clk_Speed_Slow, 0, 0); // SDController InitMode=disabled
+//    // Write the image to the SD card
+//    _sdWriteImage(rca);
     
     for (;;);
     
