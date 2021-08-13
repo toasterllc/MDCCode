@@ -434,13 +434,20 @@ module Top(
             
             case (spi_state)
             SPI_State_MsgIn: begin
+                // Verify that we never get a clock while spi_dataIn is undriven (z) / invalid (x)
+                if (spi_dataIn!==1'b0 && spi_dataIn!==1'b1) begin
+                    $display("spi_dataIn invalid: %b ❌", spi_dataIn);
+                    #1000;
+                    `Finish;
+                end
+                
                 // Wait for the start of the message, signified by the first high bit
                 if (spi_dataIn) begin
                     spi_dataCounter <= MsgCycleCount;
                     spi_state <= SPI_State_MsgIn+1;
                 end
             end
-        
+            
             SPI_State_MsgIn+1: begin
                 if (!spi_dataCounter) begin
                     spi_state <= SPI_State_MsgIn+2;
@@ -448,8 +455,8 @@ module Top(
             end
             
             SPI_State_MsgIn+2: begin
-                spi_state <= (spi_msgResp ? SPI_State_RespOut : SPI_State_MsgIn);
-                spi_dataCounter <= RespCycleCount;
+                spi_state <= SPI_State_RespOut;
+                spi_dataCounter <= (spi_msgResp ? RespCycleCount : 0);
                 
                 case (spi_msgType)
                 // Echo
@@ -790,11 +797,17 @@ module Testbench();
         spi_dataOutEn = 0;
         
         // Turnaround delay cycles
-        for (i=0; i<8; i++) begin
-            #(ice_msp_spi_clk_HALF_PERIOD);
-            ice_msp_spi_clk = 1;
-            #(ice_msp_spi_clk_HALF_PERIOD);
-            ice_msp_spi_clk = 0;
+        // Only do this if typ!=0. For nop's (typ==0), we don't want to perform these
+        // turnaround cycles because we're no longer driving the SPI data line,
+        // so the SPI state machine will (correctly) give an error when a SPI clock
+        // is supplied but the SPI data line is invalid.
+        if (typ !== 0) begin
+            for (i=0; i<8; i++) begin
+                #(ice_msp_spi_clk_HALF_PERIOD);
+                ice_msp_spi_clk = 1;
+                #(ice_msp_spi_clk_HALF_PERIOD);
+                ice_msp_spi_clk = 0;
+            end
         end
         
         // Clock in response (if one is sent for this type of message)
@@ -820,6 +833,9 @@ module Testbench();
     
     task TestRst; begin
         $display("\n[Testbench] ========== TestRst ==========");
+        
+        spi_dataOutReg = 0;
+        spi_dataOutEn = 1;
         
         $display("[Testbench] ice_msp_spi_clk = 0");
         ice_msp_spi_clk = 0;
@@ -853,6 +869,9 @@ module Testbench();
             $display("[Testbench] sim_rst_ !== 1'b1 ❌ (%b)", sim_rst_);
             `Finish;
         end
+        
+        spi_dataOutEn = 0;
+        
     end endtask
     
     task TestNop; begin
@@ -1454,6 +1473,15 @@ module Testbench();
     
     
     initial begin
+        // TestRst();
+        // TestEcho(56'h6D656F77000000); // meow
+        // TestEcho(56'h6D656F77000000); // meow
+        //
+        // TestLEDSet(4'b1001);
+        //
+        // TestEcho(56'h6D656F77000000); // meow
+        // TestEcho(56'h6D656F77000000); // meow
+        
         TestRst();
         TestEcho(56'h00000000000000);
         TestEcho(56'hCAFEBABEFEEDAA);
@@ -1469,7 +1497,7 @@ module Testbench();
         TestImgReset();
         TestImgSetHeader1(8'h42 /* version */, 32'hAABBCCDD /* timestamp */, 16'd2304 /* image width */);
         TestImgSetHeader2(16'd1296 /* image height */, 16'h1111 /* exposure */, 16'h2222 /* gain */);
-        // TestImgI2CWriteRead();
+        TestImgI2CWriteRead();
         TestImgCapture();
         
         TestSDInit();
@@ -1478,11 +1506,11 @@ module Testbench();
         TestSDCMD0();
         TestSDCMD8();
         TestSDDatOut();
-        // TestSDCMD2();
-        // TestSDDatIn();
-        // TestSDRespRecovery();
-        // // TestSDDatOutRecovery();
-        // TestSDDatInRecovery();
+        TestSDCMD2();
+        TestSDDatIn();
+        TestSDRespRecovery();
+        // TestSDDatOutRecovery();
+        TestSDDatInRecovery();
         
         `Finish;
     end
