@@ -1,6 +1,8 @@
 #include "USB.h"
 #include "Toastbox/Enum.h"
 #include "STAppTypes.h"
+#include <algorithm>
+using namespace STApp;
 
 void USB::init() {
     _super::init(true);
@@ -20,24 +22,38 @@ void USB::init() {
     //   sends us a larger packet than this amount, MPSIZ causes the excess data
     //   to be rejected.
     
+    
+    
+    
     // ## Set Rx/Tx FIFO sizes. Notes:
-    // - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
-    // - FIFO sizes (supplied as arguments below) have units of 4-byte words.
+    //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
+    //   - FIFO sizes (supplied as arguments below) have units of 4-byte words.
+    
+    constexpr size_t FIFOCapTotal       = 4096;
+    constexpr size_t FIFOCapRx          = 64;
+    constexpr size_t FIFOCapTxCtrl      = USB_MAX_EP0_SIZE;
+    constexpr size_t FIFOCapTxDataIn    = 3968;
+    constexpr size_t SetupPacketSize    = 8;
+    
+    // Verify that the total memory allocated for the Rx/Tx FIFOs fits within the FIFO memory.
+    static_assert(FIFOCapRx+FIFOCapTxCtrl+FIFOCapTxDataIn <= FIFOCapTotal);
+    // Verify that FIFOCapRx can fit the max packet size + overhead
+    // STM32 USB reference manual claims that overhead is 12 words:
+    //   2 words (for the status of the control OUT data packet) +
+    //   10 words (for setup packets)"
+    static_assert(FIFOCapRx >= std::max(SetupPacketSize,MaxPacketSize::Cmd)+12*sizeof(uint32_t));
+    // Verify that the FIFO space allocated for the DataIn endpoint is large enough
+    // to fit the DataIn endpoint's max packet size
+    static_assert(FIFOCapTxDataIn >= MaxPacketSize::Data);
     
     // # Set Rx FIFO sizes, shared by all OUT endpoints (GRXFSIZ register):
     //   "The OTG peripheral uses a single receive FIFO that receives
     //   the data directed to all OUT endpoints."
-    // TODO: revisit Rx FIFO sizing -- see RM 32.11.3
-    HAL_PCDEx_SetRxFiFo(&_pcd, 64);
+    HAL_PCDEx_SetRxFiFo(&_pcd, FIFOCapRx/sizeof(uint32_t));
     
     // # Set Tx FIFO sizes (IN endpoints; DIEPTXF0 register)
-    // - "The minimum RAM space required for each IN endpoint's transmit FIFO
-    //   is the maximum packet size for that particular IN endpoint."
-    // - "More space allocated in the transmit IN endpoint FIFO results in
-    //   better performance on the USB."
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(STApp::Endpoints::Ctrl), 16);
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(STApp::Endpoints::CmdOut), 4);
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(STApp::Endpoints::PixIn), 768);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::Ctrl), FIFOCapTxCtrl/sizeof(uint32_t));
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::DataIn), FIFOCapTxDataIn/sizeof(uint32_t));
 }
 
 void USB::resetFinish() {
@@ -47,9 +63,9 @@ void USB::resetFinish() {
     irq.disable();
     
     // Reset our channels so there are no pending events
-    resetChannel.reset();
-    cmdChannel.reset();
-    pixChannel.reset();
+    resetRecvChannel.reset();
+    cmdRecvChannel.reset();
+    dataSendChannel.reset();
     
     // Reset all endpoints to return them to the default state.
     // USB_ResetEndpoints() requires that SETUP packets aren't
@@ -60,7 +76,7 @@ void USB::resetFinish() {
     // and the USB host: during the time between the host sending
     // the reset control request and receiving our response, the host
     // must not send any control requests. (This should be easily met
-    // since control requests are typically synchronous.) This contact
+    // since control requests are typically synchronous.) This contract
     // guarantees that SETUP packets aren't delivered while
     // USB_ResetEndpoints() is executing.
     USB_ResetEndpoints(_pcd.Instance, _pcd.Init.dev_endpoints);
@@ -69,19 +85,15 @@ void USB::resetFinish() {
 }
 
 USBD_StatusTypeDef USB::cmdRecv() {
+    Assert(!_cmdRecvBusy);
+    _cmdRecvBusy = true;
     return USBD_LL_PrepareReceive(&_device, STApp::Endpoints::CmdOut, _cmdBuf, sizeof(_cmdBuf));
 }
 
-USBD_StatusTypeDef USB::cmdSend(const void* data, size_t len) {
-    // TODO: if this function is called twice, the second call will clobber the first.
-    //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
-    return USBD_LL_Transmit(&_device, STApp::Endpoints::CmdIn, (uint8_t*)data, len);
-}
-
-USBD_StatusTypeDef USB::pixSend(const void* data, size_t len) {
-    // TODO: if this function is called twice, the second call will clobber the first.
-    //       the second call should fail (returning BUSY) until the data is finished sending from the first call.
-    return USBD_LL_Transmit(&_device, STApp::Endpoints::PixIn, (uint8_t*)data, len);
+USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
+    Assert(!_dataSendBusy);
+    _dataSendBusy = true;
+    return USBD_LL_Transmit(&_device, STApp::Endpoints::DataIn, (uint8_t*)data, len);
 }
 
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
@@ -93,13 +105,9 @@ uint8_t USB::_usbd_Init(uint8_t cfgidx) {
         USBD_LL_OpenEP(&_device, STApp::Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize::Cmd);
         _device.ep_out[EndpointNum(STApp::Endpoints::CmdOut)].is_used = 1U;
         
-        // CmdIn endpoint
-        USBD_LL_OpenEP(&_device, STApp::Endpoints::CmdIn, USBD_EP_TYPE_BULK, MaxPacketSize::Cmd);
-        _device.ep_out[EndpointNum(STApp::Endpoints::CmdIn)].is_used = 1U;
-        
-        // PixIn endpoint
-        USBD_LL_OpenEP(&_device, STApp::Endpoints::PixIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
-        _device.ep_in[EndpointNum(STApp::Endpoints::PixIn)].is_used = 1U;
+        // DataIn endpoint
+        USBD_LL_OpenEP(&_device, STApp::Endpoints::DataIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
+        _device.ep_in[EndpointNum(STApp::Endpoints::DataIn)].is_used = 1U;
     }
     
     return (uint8_t)USBD_OK;
@@ -114,7 +122,7 @@ uint8_t USB::_usbd_Setup(USBD_SetupReqTypedef* req) {
     case USB_REQ_TYPE_VENDOR: {
         switch (req->bRequest) {
         case STApp::CtrlReqs::Reset: {
-            resetChannel.writeTry(Signal{});
+            resetRecvChannel.writeTry(ResetRecv{});
             return USBD_OK;
         }
         
@@ -145,9 +153,10 @@ uint8_t USB::_usbd_DataIn(uint8_t epnum) {
     _super::_usbd_DataIn(epnum);
     
     switch (epnum) {
-    // PixIn endpoint
-    case EndpointNum(STApp::Endpoints::PixIn): {
-        pixChannel.writeTry(Signal{});
+    // DataIn endpoint
+    case EndpointNum(STApp::Endpoints::DataIn): {
+        dataSendChannel.writeTry(DataSend{});
+        _dataSendBusy = false;
         break;
     }}
     
@@ -161,10 +170,11 @@ uint8_t USB::_usbd_DataOut(uint8_t epnum) {
     switch (epnum) {
     // CmdOut endpoint
     case EndpointNum(STApp::Endpoints::CmdOut): {
-        cmdChannel.writeTry(Cmd{
+        cmdRecvChannel.writeTry(CmdRecv{
             .data = _cmdBuf,
             .len = dataLen,
         });
+        _cmdRecvBusy = false;
         break;
     }}
     
@@ -187,12 +197,12 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
     _super::_usbd_GetHSConfigDescriptor(len);
     
     // USB DFU device Configuration Descriptor
-    constexpr size_t descLen = 39;
-    static uint8_t desc[] = {
+    constexpr size_t DescLen = 32;
+    static uint8_t Desc[] = {
         // Configuration descriptor
         0x09,                                       // bLength: configuration descriptor length
         USB_DESC_TYPE_CONFIGURATION,                // bDescriptorType: configuration descriptor
-        LOBYTE(descLen), HIBYTE(descLen),           // wTotalLength: total descriptor length
+        LOBYTE(DescLen), HIBYTE(DescLen),           // wTotalLength: total descriptor length
         0x01,                                       // bNumInterfaces: 1 interface
         0x01,                                       // bConfigurationValue: config 1
         0x00,                                       // iConfiguration: string descriptor index
@@ -218,26 +228,18 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 LOBYTE(MaxPacketSize::Cmd), HIBYTE(MaxPacketSize::Cmd),     // wMaxPacketSize
                 0x00,                                                       // bInterval: ignore for Bulk transfer
                 
-                // CmdIn endpoint
+                // DataIn endpoint
                 0x07,                                                       // bLength: Endpoint Descriptor size
                 USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-                STApp::Endpoints::CmdIn,                                    // bEndpointAddress
-                0x02,                                                       // bmAttributes: Bulk
-                LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),   // wMaxPacketSize
-                0x00,                                                       // bInterval: ignore for Bulk transfer
-                
-                // PixIn endpoint
-                0x07,                                                       // bLength: Endpoint Descriptor size
-                USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-                STApp::Endpoints::PixIn,                                    // bEndpointAddress
+                STApp::Endpoints::DataIn,                                   // bEndpointAddress
                 0x02,                                                       // bmAttributes: Bulk
                 LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),   // wMaxPacketSize
                 0x00,                                                       // bInterval: ignore for Bulk transfer
     };
-    static_assert(sizeof(desc)==descLen, "descLen invalid");
+    static_assert(sizeof(Desc)==DescLen, "descLen invalid");
     
-    *len = (uint16_t)descLen;
-    return desc;
+    *len = (uint16_t)DescLen;
+    return Desc;
 }
 
 uint8_t* USB::_usbd_GetFSConfigDescriptor(uint16_t* len) {
