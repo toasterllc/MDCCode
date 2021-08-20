@@ -12,28 +12,26 @@ public:
         static constexpr size_t Data    = 512;
     };
     
-    struct Cmd {
+    struct ResetRecv {};
+    
+    struct CmdRecv {
         const uint8_t* data;
         size_t len;
     };
     
-    struct Signal {};
+    struct DataSend {};
     
     // Methods
     void init();
     
-    // Reset
-    Channel<Signal, 1> resetChannel; // Signals that a reset was requested
-    void resetFinish(); // Call to complete resetting
+    Channel<ResetRecv, 1> resetRecvChannel; // Signals that a reset was requested
+    void resetFinish();
     
-    // Command input
-    Channel<Cmd, 1> cmdChannel;
-    USBD_StatusTypeDef cmdRecv(); // Arranges for another command to be received
-    USBD_StatusTypeDef cmdSend(const void* data, size_t len);
+    USBD_StatusTypeDef cmdRecv();
+    Channel<CmdRecv, 1> cmdRecvChannel;
     
-    // Pixel data output
-    Channel<Signal, 1> pixChannel; // Signals that the previous pixSend() is complete
-    USBD_StatusTypeDef pixSend(const void* data, size_t len);
+    USBD_StatusTypeDef dataSend(const void* data, size_t len);
+    Channel<DataSend, 1> dataSendChannel; // Signals that the previous sdSend() is complete
     
 protected:
     // Callbacks
@@ -55,6 +53,9 @@ protected:
     
 private:
     uint8_t _cmdBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
+    
+    bool _cmdRecvBusy = false;
+    bool _dataSendBusy = false;
     
     using _super = USBBase<USB>;
     friend class USBBase<USB>;

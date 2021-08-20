@@ -32,12 +32,7 @@ public:
     
     // Initialization
     void init(bool dmaEnable) {
-        USBD_StatusTypeDef us = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
-        Assert(us == USBD_OK);
-        
         _pcd.pData = &_device;
-        _device.pData = &_pcd;
-        
         _pcd.Instance = USB_OTG_HS;
         _pcd.Init.dev_endpoints = 9;
         _pcd.Init.dma_enable = dmaEnable;
@@ -48,12 +43,18 @@ public:
         _pcd.Init.vbus_sensing_enable = false;
         _pcd.Init.use_dedicated_ep1 = false;
         _pcd.Init.use_external_vbus = false;
+        
+        _device.pData = &_pcd;
+        
+        USBD_StatusTypeDef us = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
+        Assert(us == USBD_OK);
+        
         HAL_StatusTypeDef hs = HAL_PCD_Init(&_pcd);
         Assert(hs == HAL_OK);
         
-    #define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return ((T*)pdev->pCtx)->_usbd_##name(); }
-    #define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return ((T*)pdev->pCtx)->_usbd_##name(t0); }
-    #define Fwd2(name, T0, T1) [](USBD_HandleTypeDef* pdev, T0 t0, T1 t1) { return ((T*)pdev->pCtx)->_usbd_##name(t0, t1); }
+#define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return ((T*)pdev->pCtx)->_usbd_##name(); }
+#define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return ((T*)pdev->pCtx)->_usbd_##name(t0); }
+#define Fwd2(name, T0, T1) [](USBD_HandleTypeDef* pdev, T0 t0, T1 t1) { return ((T*)pdev->pCtx)->_usbd_##name(t0, t1); }
         
         static const USBD_ClassTypeDef usbClass = {
             .Init                           = Fwd1(Init, uint8_t),
@@ -73,9 +74,9 @@ public:
             .GetUsrStrDescriptor            = Fwd2(GetUsrStrDescriptor, uint8_t, uint16_t*),
         };
         
-    #undef Fwd0
-    #undef Fwd1
-    #undef Fwd2
+#undef Fwd0
+#undef Fwd1
+#undef Fwd2
         
         us = USBD_RegisterClass(&_device, &usbClass);
         Assert(us == USBD_OK);

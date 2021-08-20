@@ -4,20 +4,14 @@
 namespace STLoader {
     Enum(uint8_t, Endpoint, Endpoints,
         // Control endpoint
-        Ctrl        = 0x00,
+        Ctrl    = 0x00,
         
         // OUT endpoints (high bit 0)
-        CmdOut      = 0x01,
-        DataOut     = 0x02,
+        CmdOut  = 0x01,
+        DataOut = 0x02,
         
         // IN endpoints (high bit 1)
-        DataIn      = 0x81,
-    );
-    
-    Enum(uint8_t, EndpointIdx, EndpointIdxs,
-        CmdOut = 1,
-        DataOut,
-        DataIn,
+        DataIn  = 0x81,
     );
     
     enum class Op : uint8_t {
@@ -46,35 +40,35 @@ namespace STLoader {
     struct Cmd {
         Op op;
         union {
-            struct {
+            struct __attribute__((packed)) {
                 uint32_t addr;
                 uint32_t len;
             } STWrite;
             
-            struct {
+            struct __attribute__((packed)) {
                 uint32_t entryPointAddr;
             } STReset;
             
-            struct {
+            struct __attribute__((packed)) {
                 uint32_t len;
             } ICEWrite;
             
-            struct {
+            struct __attribute__((packed)) {
                 uint32_t addr;
                 uint32_t len;
             } MSPRead;
             
-            struct {
+            struct __attribute__((packed)) {
                 uint32_t addr;
                 uint32_t len;
             } MSPWrite;
             
-            struct {
+            struct __attribute__((packed)) {
                 uint32_t writeLen;
                 uint32_t readLen;
             } MSPDebug;
             
-            struct {
+            struct __attribute__((packed)) {
                 uint8_t idx;
                 uint8_t on;
             } LEDSet;
