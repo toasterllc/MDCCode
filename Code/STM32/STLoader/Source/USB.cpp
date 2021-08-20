@@ -14,21 +14,15 @@ void USB::init() {
     
     // ## Set Rx/Tx FIFO sizes. Notes:
     //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
-    //   - FIFO sizes (supplied as arguments below) have units of 4-byte words.
+    //   - FIFO sizes passed to HAL_PCDEx_SetRxFiFo/HAL_PCDEx_SetTxFiFo have units of 4-byte words.
     
     constexpr size_t FIFOCapTotal       = 4096;
-    constexpr size_t FIFOCapRx          = 2048;
+    constexpr size_t FIFOCapRx          = RxFIFOSize(2, MaxPacketSize::Data);
     constexpr size_t FIFOCapTxCtrl      = USB_MAX_EP0_SIZE;
-    constexpr size_t FIFOCapTxDataIn    = 1984;
-    constexpr size_t SetupPacketSize    = 8;
+    constexpr size_t FIFOCapTxDataIn    = FIFOCapTotal-FIFOCapRx-FIFOCapTxCtrl;
     
     // Verify that the total memory allocated for the Rx/Tx FIFOs fits within the FIFO memory.
     static_assert(FIFOCapRx+FIFOCapTxCtrl+FIFOCapTxDataIn <= FIFOCapTotal);
-    // Verify that FIFOCapRx can fit the max packet size + overhead
-    // STM32 USB reference manual claims that overhead is 12 words:
-    //   2 words (for the status of the control OUT data packet) +
-    //   10 words (for setup packets)"
-    static_assert(FIFOCapRx >= std::max(SetupPacketSize,std::max(MaxPacketSize::Cmd,MaxPacketSize::Data))+12*sizeof(uint32_t));
     // Verify that the FIFO space allocated for the DataIn endpoint is large enough
     // to fit the DataIn endpoint's max packet size
     static_assert(FIFOCapTxDataIn >= MaxPacketSize::Data);

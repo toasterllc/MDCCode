@@ -17,6 +17,20 @@ public:
         return epaddr&0xF;
     }
     
+    static constexpr uint32_t RxFIFOSize(uint8_t outEpCount, uint16_t maxPacketSize) {
+        // CtrlEpCount: Hardcoded because the hardware seems to assume that there's only
+        // one control endpoint (EP0)
+        constexpr uint8_t CtrlEpCount = 1;
+        // Formula from STM32 Reference Manual "USB on-the-go full-speed/high-speed (OTG_FS/OTG_HS)"
+        //
+        // We multiply the second term by 2 (unlike the formula in the reference manual) because
+        // the reference manual states:
+        //   "Typically, two (largest packet size / 4) + 1 spaces are recommended so that when the
+        //   previous packet is being transferred to the CPU, the USB can receive the subsequent
+        //   packet."
+        return ((5*CtrlEpCount+8) + 2*((maxPacketSize/4)+1) + (2*(CtrlEpCount+outEpCount)) + 1) * sizeof(uint32_t);
+    }
+    
     // Types
     struct Event {
         enum class Type : uint8_t {
