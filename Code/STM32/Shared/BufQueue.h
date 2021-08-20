@@ -32,7 +32,7 @@ public:
     // Read
     bool empty() const { return _w==_r && !_full; }
     
-    const Buf& front() const {
+    Buf& front() {
         Assert(!empty());
         return _bufs[_r];
     }
