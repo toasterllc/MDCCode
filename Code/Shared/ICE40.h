@@ -12,7 +12,7 @@ struct MsgType {
     static constexpr uint8_t Resp       = 0x40;
 };
 
-bool _GetBit(const uint8_t* bytes, size_t len, uint8_t idx) {
+inline bool _GetBit(const uint8_t* bytes, size_t len, uint8_t idx) {
     AssertArg(idx < len*8);
     const uint8_t byteIdx = len-(idx/8)-1;
     const uint8_t bitIdx = idx%8;
@@ -20,7 +20,7 @@ bool _GetBit(const uint8_t* bytes, size_t len, uint8_t idx) {
     return bytes[byteIdx] & bitMask;
 }
 
-uint64_t _GetBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t end) {
+inline uint64_t _GetBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t end) {
     AssertArg(start < len*8);
     AssertArg(start >= end);
     const uint8_t leftByteIdx = len-(start/8)-1;
