@@ -3,6 +3,7 @@
 #include "STLoaderTypes.h"
 #include "Assert.h"
 #include <string.h>
+#include <algorithm>
 using namespace STLoader;
 
 void USB::init() {
@@ -17,19 +18,17 @@ void USB::init() {
     
     constexpr size_t FIFOCapTotal       = 4096;
     constexpr size_t FIFOCapRx          = 2048;
-    constexpr size_t FIFOCapTxCtrl      = 64;
+    constexpr size_t FIFOCapTxCtrl      = USB_MAX_EP0_SIZE;
     constexpr size_t FIFOCapTxDataIn    = 1984;
+    constexpr size_t SetupPacketSize    = 8;
     
     // Verify that the total memory allocated for the Rx/Tx FIFOs fits within the FIFO memory.
     static_assert(FIFOCapRx+FIFOCapTxCtrl+FIFOCapTxDataIn <= FIFOCapTotal);
     // Verify that FIFOCapRx can fit the max packet size + overhead
-    // USB reference manual claims that overhead is 12 words:
+    // STM32 USB reference manual claims that overhead is 12 words:
     //   2 words (for the status of the control OUT data packet) +
     //   10 words (for setup packets)"
-    static_assert(FIFOCapRx >= MaxPacketSize::Data+12*4);
-    // Verify that the FIFO space allocated for the Ctrl endpoint is large enough
-    // to fit the Ctrl endpoint's max packet size
-    static_assert(FIFOCapTxCtrl >= MaxPacketSize::Cmd);
+    static_assert(FIFOCapRx >= std::max(SetupPacketSize,std::max(MaxPacketSize::Cmd,MaxPacketSize::Data))+12*sizeof(uint32_t));
     // Verify that the FIFO space allocated for the DataIn endpoint is large enough
     // to fit the DataIn endpoint's max packet size
     static_assert(FIFOCapTxDataIn >= MaxPacketSize::Data);
@@ -37,11 +36,11 @@ void USB::init() {
     // # Set Rx FIFO sizes, shared by all OUT endpoints (GRXFSIZ register):
     //   "The OTG peripheral uses a single receive FIFO that receives
     //   the data directed to all OUT endpoints."
-    HAL_PCDEx_SetRxFiFo(&_pcd, FIFOCapRx/4);
+    HAL_PCDEx_SetRxFiFo(&_pcd, FIFOCapRx/sizeof(uint32_t));
     
     // # Set Tx FIFO sizes (IN endpoints; DIEPTXF0 register)
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::Ctrl), FIFOCapTxCtrl/4);
-    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::DataIn), FIFOCapTxDataIn/4);
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::Ctrl), FIFOCapTxCtrl/sizeof(uint32_t));
+    HAL_PCDEx_SetTxFiFo(&_pcd, EndpointNum(Endpoints::DataIn), FIFOCapTxDataIn/sizeof(uint32_t));
 }
 
 USBD_StatusTypeDef USB::cmdRecv() {
