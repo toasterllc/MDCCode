@@ -208,7 +208,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
             USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
             0x00,                                       // bInterfaceNumber: interface index
             0x00,                                       // bAlternateSetting: alternate setting
-            0x03,                                       // bNumEndpoints
+            0x02,                                       // bNumEndpoints
             0xFF,                                       // bInterfaceClass: vendor specific
             0x00,                                       // bInterfaceSubClass
             0x00,                                       // nInterfaceProtocol
@@ -230,7 +230,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),   // wMaxPacketSize
                 0x00,                                                       // bInterval: ignore for Bulk transfer
     };
-    static_assert(sizeof(Desc)==DescLen, "descLen invalid");
+    static_assert(sizeof(Desc)==DescLen, "DescLen invalid");
     
     *len = (uint16_t)DescLen;
     return Desc;
