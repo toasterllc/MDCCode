@@ -76,7 +76,7 @@ void System::_finishCmd(Status status) {
     memcpy(buf.data, &status, sizeof(status));
     buf.len = sizeof(status);
     _bufs.push();
-    _usbDataSendFromBuf();
+    _usbSendFromBuf();
 }
 
 #pragma mark - USB
@@ -149,6 +149,8 @@ void System::_usbHandleDataSend(const USB::DataSend& ev) {
     Assert(_usbDataBusy);
     Assert(!_bufs.empty());
     
+    // Reset the buffer length so it's back in its default state
+    _bufs.front().len = 0;
     // Pop the buffer, which we just finished sending over USB
     _bufs.pop();
     _usbDataBusy = false;
@@ -170,7 +172,7 @@ static size_t _ceilToPacketLength(size_t len) {
     return len;
 }
 
-void System::_usbDataRecvToBuf() {
+void System::_usbRecvToBuf() {
     Assert(!_bufs.full());
     Assert(_opDataRem);
     Assert(!_usbDataBusy);
@@ -188,7 +190,7 @@ void System::_usbDataRecvToBuf() {
     _usbDataBusy = true;
 }
 
-void System::_usbDataSendFromBuf() {
+void System::_usbSendFromBuf() {
     Assert(!_bufs.empty());
     Assert(!_usbDataBusy);
     
@@ -308,7 +310,7 @@ void System::_iceWrite(const Cmd& cmd) {
     _opDataRem = cmd.arg.ICEWrite.len;
     
     // Prepare to receive USB data
-    _usbDataRecvToBuf();
+    _usbRecvToBuf();
 }
 
 void System::_iceWriteFinish() {
@@ -359,7 +361,7 @@ void System::_iceUpdateState() {
     //   - there's space in the queue, and
     //   - we haven't arranged to receive USB data yet
     if (_opDataRem && !_bufs.full() && !_usbDataBusy) {
-        _usbDataRecvToBuf();
+        _usbRecvToBuf();
     }
     
     // We're done when:
@@ -431,7 +433,7 @@ void System::_mspReadUpdateState() {
     // Do this before reading from MSP430, so we can send USB data
     // in the background while reading from MSP430.
     if (!_bufs.empty() && !_usbDataBusy) {
-        _usbDataSendFromBuf();
+        _usbSendFromBuf();
     }
     
     // Fill our buffers with data read from MSP430 when:
@@ -447,7 +449,7 @@ void System::_mspReadUpdateState() {
     // Do this again after reading from MSP, since we may not have had any
     // buffers available to send before we read from MSP.
     if (!_bufs.empty() && !_usbDataBusy) {
-        _usbDataSendFromBuf();
+        _usbSendFromBuf();
     }
     
     // We're done when:
@@ -487,7 +489,7 @@ void System::_mspWrite(const Cmd& cmd) {
     _mspAddr = cmd.arg.MSPWrite.addr;
     
     // Prepare to receive USB data
-    _usbDataRecvToBuf();
+    _usbRecvToBuf();
 }
 
 void System::_mspWriteFinish() {
@@ -516,7 +518,7 @@ void System::_mspWriteUpdateState() {
     // *** We want to do this before executing `_msp.write`, so that we can
     // *** be receiving USB data while we're sending data via Spy-bi-wire.
     if (_opDataRem && !_bufs.full() && !_usbDataBusy) {
-        _usbDataRecvToBuf();
+        _usbRecvToBuf();
     }
     
     // Send data if we have data to write

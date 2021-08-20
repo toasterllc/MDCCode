@@ -26,12 +26,12 @@ public:
     void init();
     
     USBD_StatusTypeDef cmdRecv();
-    USBD_StatusTypeDef dataRecv(void* addr, size_t len);
-    USBD_StatusTypeDef dataSend(const void* data, size_t len);
-    
-    // Channels
     Channel<CmdRecv, 1> cmdRecvChannel;
+    
+    USBD_StatusTypeDef dataRecv(void* addr, size_t len);
     Channel<DataRecv, 1> dataRecvChannel;
+    
+    USBD_StatusTypeDef dataSend(const void* data, size_t len);
     Channel<DataSend, 1> dataSendChannel;
     
 protected:
