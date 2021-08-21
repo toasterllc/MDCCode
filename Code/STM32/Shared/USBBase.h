@@ -111,7 +111,10 @@ protected:
     void _isr() {
         ISR_HAL_PCD(&_pcd);
     }
-    
+
+#warning remove
+public:
+
     USBD_HandleTypeDef _device;
     PCD_HandleTypeDef _pcd;
     State _state = State::Disconnected;

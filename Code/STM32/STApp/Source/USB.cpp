@@ -29,16 +29,28 @@ void USB::init() {
     //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
     //   - FIFO sizes passed to HAL_PCDEx_SetRxFiFo/HAL_PCDEx_SetTxFiFo have units of 4-byte words.
     
-    constexpr size_t FIFOCapTotal       = 4096;
-    constexpr size_t FIFOCapRx          = RxFIFOSize(1, MaxPacketSize);
-    constexpr size_t FIFOCapTxCtrl      = USB_MAX_EP0_SIZE;
-    constexpr size_t FIFOCapTxDataIn    = 2048;
+//  FIFOCapTotal	const size_t        4096	
+//  FIFOCapRx	    const size_t        1104	
+//  FIFOCapTxCtrl	const size_t        64	
+//  FIFOCapTxDataIn	const size_t	    2928	
     
-    // Verify that the total memory allocated for the Rx/Tx FIFOs fits within the FIFO memory.
-    static_assert(FIFOCapRx+FIFOCapTxCtrl+FIFOCapTxDataIn <= FIFOCapTotal);
-    // Verify that the FIFO space allocated for the DataIn endpoint is large enough
-    // to fit the DataIn endpoint's max packet size
-    static_assert(FIFOCapTxDataIn >= MaxPacketSize);
+    #warning TODO: Tx FIFO sizes may need to be a multiple of the maximum packet size
+    constexpr size_t FIFOCapTotal       = 4096;
+    constexpr size_t FIFOCapRx          = 1104;
+    constexpr size_t FIFOCapTxCtrl      = 64;
+//    constexpr size_t FIFOCapTxDataIn    = 2560;
+    constexpr size_t FIFOCapTxDataIn    = 2928-128;
+//    constexpr size_t FIFOCapTxDataIn    = 3072;
+    
+//    constexpr size_t FIFOCapRx          = RxFIFOSize(1, MaxPacketSize);
+//    constexpr size_t FIFOCapTxCtrl      = USB_MAX_EP0_SIZE;
+//    constexpr size_t FIFOCapTxDataIn    = FIFOCapTotal-FIFOCapRx-FIFOCapTxCtrl; // 2928
+    
+//    // Verify that the total memory allocated for the Rx/Tx FIFOs fits within the FIFO memory.
+//    static_assert(FIFOCapRx+FIFOCapTxCtrl+FIFOCapTxDataIn <= FIFOCapTotal);
+//    // Verify that the FIFO space allocated for the DataIn endpoint is large enough
+//    // to fit the DataIn endpoint's max packet size
+//    static_assert(FIFOCapTxDataIn >= MaxPacketSize);
     
     // # Set Rx FIFO sizes, shared by all OUT endpoints (GRXFSIZ register):
     //   "The OTG peripheral uses a single receive FIFO that receives

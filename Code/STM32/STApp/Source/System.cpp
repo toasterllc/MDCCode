@@ -150,7 +150,41 @@ void System::_usb_reset(bool usbResetFinish) {
         _usb.cmdRecv();
     irq.restore();
     
-    _usb.dataSend(_buf0, sizeof(_buf0));
+    
+    
+    USB_OTG_GlobalTypeDef* USBx = USB_OTG_HS;
+    uint32_t USBx_BASE = (uint32_t)USBx;
+    volatile uint16_t freeSpace1 = 4*(USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV);
+    volatile auto& USBDEV = *((USB_OTG_DeviceTypeDef*)(USBx_BASE + USB_OTG_DEVICE_BASE));
+    uint8_t* FIFODATA = (uint8_t*)(USBx_BASE+0x20000);
+    
+    constexpr uint32_t Len = 6*512;
+    uint32_t* buf32 = (uint32_t*)_buf0;
+    uint32_t off = 0;
+    for (uint32_t i=0; i<(512/sizeof(uint32_t)); off++, i++) buf32[off] = 0xAAAAAAAA;
+    for (uint32_t i=0; i<(512/sizeof(uint32_t)); off++, i++) buf32[off] = 0xBBBBBBBB;
+    for (uint32_t i=0; i<(512/sizeof(uint32_t)); off++, i++) buf32[off] = 0xCCCCCCCC;
+    for (uint32_t i=0; i<(512/sizeof(uint32_t)); off++, i++) buf32[off] = 0xDDDDDDDD;
+    for (uint32_t i=0; i<(512/sizeof(uint32_t)); off++, i++) buf32[off] = 0xEEEEEEEE;
+    for (uint32_t i=0; i<(512/sizeof(uint32_t)); off++, i++) buf32[off] = 0xFFFFFFFF;
+    _usb.dataSend(_buf0, Len);
+    
+    for (;;) {
+        constexpr uint8_t EP1 = 1;
+        volatile auto& INEP1 = *USBx_INEP(EP1);
+        volatile auto& DIEPTXF = USBx->DIEPTXF[EP1-1];
+        const uint16_t INEPTXSA = (DIEPTXF & USB_OTG_DIEPTXF_INEPTXSA_Msk) >> USB_OTG_DIEPTXF_INEPTXSA_Pos;
+        const uint16_t INEPTXFD = (DIEPTXF & USB_OTG_DIEPTXF_INEPTXFD_Msk) >> USB_OTG_DIEPTXF_INEPTXFD_Pos;
+        volatile uint32_t XFRSIZ = (USBx_INEP(EP1)->DIEPTSIZ & USB_OTG_DIEPTSIZ_XFRSIZ) >> 0;
+        volatile uint32_t PKTCNT = (USBx_INEP(EP1)->DIEPTSIZ & USB_OTG_DIEPTSIZ_PKTCNT) >> 19;
+        volatile uint32_t DIEPINT = USBx_INEP(EP1)->DIEPINT;
+        volatile uint16_t freeSpace2 = 4*(USBx_INEP(EP1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV);
+        
+//        #define USBx_DEVICE     ((USB_OTG_DeviceTypeDef *)(USBx_BASE + USB_OTG_DEVICE_BASE))
+//        USB_OTG_GLOBAL_BASE
+        
+        for (volatile int i=0; i<1; i++);
+    }
     
 //    // Confirm that we can communicate with the ICE40.
 //    // Interrupts need to be enabled for this, since _ice40Transfer()
@@ -241,7 +275,16 @@ void System::_usb_dataSendHandle(const USB::DataSend& ev) {
 constexpr size_t SDReadChunkLen = 512;
 
 void System::_sdRead(const Cmd& cmd) {
+//    USBD_HandleTypeDef* pdev = &_usb._device;
+//    PCD_HandleTypeDef* hpcd = (PCD_HandleTypeDef*)pdev->pData;
+//    USB_OTG_GlobalTypeDef* USBx = hpcd->Instance;
+//    uint32_t USBx_BASE = (uint32_t)USBx;
+//    volatile uint16_t freeSpace1 = (USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV);
+    
     _usb.dataSend(_buf0, 8*1024);
+    
+//    volatile uint16_t freeSpace2 = (USBx_INEP(1)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV);
+//    for (;;);
 //    _finishCmd(Status::OK);
     
 //    // Update state
