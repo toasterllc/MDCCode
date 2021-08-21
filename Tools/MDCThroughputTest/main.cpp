@@ -9,60 +9,7 @@
 
 using namespace STApp;
 
-using CmdStr = std::string;
-const CmdStr LEDSetCmd = "ledset";
-
-void printUsage() {
-    using namespace std;
-    cout << "MDCThroughputTest commands:\n";
-    cout << "  " << LEDSetCmd    << " <idx> <0/1>\n";
-    cout << "\n";
-}
-
-struct Args {
-    CmdStr cmd = {};
-    struct {
-        uint8_t idx = 0;
-        uint8_t on = 0;
-    } ledSet = {};
-    std::string filePath = {};
-};
-
-static Args parseArgs(int argc, const char* argv[]) {
-    std::vector<std::string> strs;
-    for (int i=0; i<argc; i++) strs.push_back(argv[i]);
-    
-    Args args;
-    if (strs.size() < 1) throw std::runtime_error("no command specified");
-    args.cmd = strs[0];
-    
-    if (args.cmd == LEDSetCmd) {
-        if (strs.size() < 3) throw std::runtime_error("LED index/state not specified");
-        args.ledSet.idx = std::stoi(strs[1]);
-        args.ledSet.on = std::stoi(strs[2]);
-    
-    } else {
-        throw std::runtime_error("invalid command");
-    }
-    
-    return args;
-}
-
-static void ledSet(const Args& args, MDCDevice& device) {
-    device.ledSet(args.ledSet.idx, args.ledSet.on);
-}
-
 int main(int argc, const char* argv[]) {
-    Args args;
-    try {
-        args = parseArgs(argc-1, argv+1);
-    
-    } catch (const std::exception& e) {
-        fprintf(stderr, "Bad arguments: %s\n\n", e.what());
-        printUsage();
-        return 1;
-    }
-    
     std::vector<MDCDevice> devices;
     try {
         devices = MDCDevice::GetDevices();
@@ -79,11 +26,41 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    MDCDevice& device = devices[0];
     try {
-        if (args.cmd == LEDSetCmd)          ledSet(args, device);
+        MDCDevice& device = devices[0];
+        auto& usbDevice = device.usbDevice();
+        
+//        STApp::Cmd cmd = {
+//            .op = Op::SDRead,
+//        };
+//        usbDevice.write(STApp::Endpoints::CmdOut, cmd);
+        
+        constexpr size_t BufCap = 16*1024;
+        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
+        printf("Reading...\n");
+        usbDevice.read(STApp::Endpoints::DataIn, buf.get(), BufCap);
+        printf("Done\n");
+        
+//        STApp::Status s = {};
+//        usbDevice.read(STApp::Endpoints::DataIn, s);
+//        if (s != STApp::Status::OK) abort();
+        
+//        printf("OK\n");
+        
+//        constexpr size_t BufCap = 128*1024*1024;
+//        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
+//        for (;;) {
+//            TimeInstant start;
+//            usbDevice.read(STApp::Endpoints::DataIn, buf.get(), BufCap);
+//            
+//            const uintmax_t bits = BufCap*8;
+//            const uintmax_t throughput_bitsPerSec = (1000*bits)/start.durationMs();
+//            const uintmax_t throughput_MbitsPerSec = throughput_bitsPerSec/UINTMAX_C(1000000);
+//            printf("Throughput: %ju Mbits/sec\n", throughput_MbitsPerSec);
+//        }
+    
     } catch (const std::exception& e) {
-        fprintf(stderr, "Error: %s\n", e.what());
+        fprintf(stderr, "Error: %s\n\n", e.what());
         return 1;
     }
     
