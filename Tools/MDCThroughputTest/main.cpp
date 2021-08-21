@@ -35,11 +35,19 @@ int main(int argc, const char* argv[]) {
 //        };
 //        usbDevice.write(STApp::Endpoints::CmdOut, cmd);
         
-        constexpr size_t BufCap = 16*1024;
+        constexpr size_t BufCap = 512;
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
         printf("Reading...\n");
         usbDevice.read(STApp::Endpoints::DataIn, buf.get(), BufCap);
         printf("Done\n");
+        const uint32_t* buf32 = (const uint32_t*)buf.get();
+        std::optional<uint32_t> last;
+        for (size_t i=0; i<BufCap/sizeof(uint32_t); i++) {
+            const uint32_t cur = buf32[i];
+            printf("%jx\n", (uintmax_t)(buf32[i]));
+//            if (last) assert(cur == *last+1);
+//            last = cur;
+        }
         
 //        STApp::Status s = {};
 //        usbDevice.read(STApp::Endpoints::DataIn, s);
