@@ -20,8 +20,8 @@ namespace STApp {
     
     enum class Op : uint8_t {
         None,
-        LEDSet,
         SDRead,
+        LEDSet,
     };
     
     enum class Status : uint8_t {

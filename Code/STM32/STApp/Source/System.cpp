@@ -150,6 +150,8 @@ void System::_usb_reset(bool usbResetFinish) {
         _usb.cmdRecv();
     irq.restore();
     
+    _usb.dataSend(_buf0, sizeof(_buf0));
+    
 //    // Confirm that we can communicate with the ICE40.
 //    // Interrupts need to be enabled for this, since _ice40Transfer()
 //    // waits for a response on qspi.eventChannel.
@@ -239,11 +241,14 @@ void System::_usb_dataSendHandle(const USB::DataSend& ev) {
 constexpr size_t SDReadChunkLen = 512;
 
 void System::_sdRead(const Cmd& cmd) {
-    // Update state
-    _op = cmd.op;
-    _opDataRem = 0xFFFFFE00; // divisible by 512
-    // Advance state machine
-    _sdRead_updateState();
+    _usb.dataSend(_buf0, 8*1024);
+//    _finishCmd(Status::OK);
+    
+//    // Update state
+//    _op = cmd.op;
+//    _opDataRem = 0xFFFFFE00; // divisible by 512
+//    // Advance state machine
+//    _sdRead_updateState();
 }
 
 void System::_sdRead_qspiReadToBuf() {

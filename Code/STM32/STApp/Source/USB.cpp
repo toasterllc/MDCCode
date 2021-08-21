@@ -30,15 +30,15 @@ void USB::init() {
     //   - FIFO sizes passed to HAL_PCDEx_SetRxFiFo/HAL_PCDEx_SetTxFiFo have units of 4-byte words.
     
     constexpr size_t FIFOCapTotal       = 4096;
-    constexpr size_t FIFOCapRx          = RxFIFOSize(1, USB_MAX_EP0_SIZE);
+    constexpr size_t FIFOCapRx          = RxFIFOSize(1, MaxPacketSize);
     constexpr size_t FIFOCapTxCtrl      = USB_MAX_EP0_SIZE;
-    constexpr size_t FIFOCapTxDataIn    = FIFOCapTotal-FIFOCapRx-FIFOCapTxCtrl;
+    constexpr size_t FIFOCapTxDataIn    = 2048;
     
     // Verify that the total memory allocated for the Rx/Tx FIFOs fits within the FIFO memory.
     static_assert(FIFOCapRx+FIFOCapTxCtrl+FIFOCapTxDataIn <= FIFOCapTotal);
     // Verify that the FIFO space allocated for the DataIn endpoint is large enough
     // to fit the DataIn endpoint's max packet size
-    static_assert(FIFOCapTxDataIn >= MaxPacketSize::Data);
+    static_assert(FIFOCapTxDataIn >= MaxPacketSize);
     
     // # Set Rx FIFO sizes, shared by all OUT endpoints (GRXFSIZ register):
     //   "The OTG peripheral uses a single receive FIFO that receives
@@ -96,11 +96,11 @@ uint8_t USB::_usbd_Init(uint8_t cfgidx) {
     // Open endpoints
     {
         // CmdOut endpoint
-        USBD_LL_OpenEP(&_device, STApp::Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize::Cmd);
+        USBD_LL_OpenEP(&_device, STApp::Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize);
         _device.ep_out[EndpointNum(STApp::Endpoints::CmdOut)].is_used = 1U;
         
         // DataIn endpoint
-        USBD_LL_OpenEP(&_device, STApp::Endpoints::DataIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
+        USBD_LL_OpenEP(&_device, STApp::Endpoints::DataIn, USBD_EP_TYPE_BULK, MaxPacketSize);
         _device.ep_in[EndpointNum(STApp::Endpoints::DataIn)].is_used = 1U;
     }
     
@@ -219,7 +219,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
                 STApp::Endpoints::CmdOut,                                   // bEndpointAddress
                 0x02,                                                       // bmAttributes: Bulk
-                LOBYTE(MaxPacketSize::Cmd), HIBYTE(MaxPacketSize::Cmd),     // wMaxPacketSize
+                LOBYTE(MaxPacketSize), HIBYTE(MaxPacketSize),               // wMaxPacketSize
                 0x00,                                                       // bInterval: ignore for Bulk transfer
                 
                 // DataIn endpoint
@@ -227,7 +227,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
                 STApp::Endpoints::DataIn,                                   // bEndpointAddress
                 0x02,                                                       // bmAttributes: Bulk
-                LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),   // wMaxPacketSize
+                LOBYTE(MaxPacketSize), HIBYTE(MaxPacketSize),               // wMaxPacketSize
                 0x00,                                                       // bInterval: ignore for Bulk transfer
     };
     static_assert(sizeof(Desc)==DescLen, "DescLen invalid");
