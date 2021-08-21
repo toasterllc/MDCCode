@@ -5,12 +5,6 @@
 
 class USB : public USBBase<USB> {
 public:
-    // Types
-    struct MaxPacketSize {
-        static constexpr size_t Cmd     = 16;
-        static constexpr size_t Data    = 512;
-    };
-    
     struct CmdRecv {
         const uint8_t* data;
         size_t len;
@@ -53,8 +47,8 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
-    uint8_t _cmdRecvBuf[MaxPacketSize::Cmd] __attribute__((aligned(4)));
-    uint8_t _dataSendBuf[MaxPacketSize::Data] __attribute__((aligned(4)));
+    uint8_t _cmdRecvBuf[MaxPacketSize] __attribute__((aligned(4)));
+    uint8_t _dataSendBuf[MaxPacketSize] __attribute__((aligned(4)));
     
     bool _cmdRecvBusy = false;
     bool _dataRecvBusy = false;

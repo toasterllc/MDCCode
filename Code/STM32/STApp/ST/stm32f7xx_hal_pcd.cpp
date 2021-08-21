@@ -963,7 +963,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
     /* avoid spurious interrupt */
     if (__HAL_PCD_IS_INVALID_INTERRUPT(hpcd))
     {
-      //return;
+      return;
     }
 
     if (__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_MMIS))
@@ -1052,7 +1052,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
       }
     }
 
-//    if (__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_IEPINT))
+    if (__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_IEPINT))
     {
       /* Read in the device interrupt bits */
       ep_intr = USB_ReadDevAllInEpInterrupt(hpcd->Instance);
@@ -1109,11 +1109,6 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
           if ((epint & USB_OTG_DIEPINT_TXFE) == USB_OTG_DIEPINT_TXFE)
           {
             (void)PCD_WriteEmptyTxFifo(hpcd, epnum);
-          }
-          
-          if ((epint & USB_OTG_DIEPINT_AHBERR))
-          {
-            for(volatile int i=0;; i++);
           }
         }
         epnum++;
@@ -1214,8 +1209,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 
         USBx_DEVICE->DINEP1MSK |= USB_OTG_DIEPMSK_TOM |
                                   USB_OTG_DIEPMSK_XFRCM |
-                                  USB_OTG_DIEPMSK_EPDM | 
-                                  USB_OTG_DIEPMSK_AHBERRM ;
+                                  USB_OTG_DIEPMSK_EPDM;
       }
       else
       {
@@ -1227,8 +1221,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 
         USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_TOM |
                                 USB_OTG_DIEPMSK_XFRCM |
-                                USB_OTG_DIEPMSK_EPDM |
-                                USB_OTG_DIEPMSK_AHBERRM ;
+                                USB_OTG_DIEPMSK_EPDM;
       }
 
       /* Set Default Address to 0 */
