@@ -13,6 +13,9 @@ extern "C" void ISR_OTG_HS();
 template <typename T>
 class USBBase {
 public:
+    // Types
+    static constexpr size_t MaxPacketSize = 512; // High-speed bulk endpoints only support wMaxPacketSize=512
+    
     static constexpr uint8_t EndpointNum(uint8_t epaddr) {
         return epaddr&0xF;
     }
@@ -111,10 +114,7 @@ protected:
     void _isr() {
         ISR_HAL_PCD(&_pcd);
     }
-
-#warning remove
-public:
-
+    
     USBD_HandleTypeDef _device;
     PCD_HandleTypeDef _pcd;
     State _state = State::Disconnected;

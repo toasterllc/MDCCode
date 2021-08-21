@@ -10,22 +10,64 @@ void USB::init() {
     // Disable USB DMA because we want USB to be able to write to
     // ITCM RAM (because we write to that region as a part of
     // bootloading), but DMA masters can't access it.
-    _super::init(false);
+    constexpr bool DMAEn = false;
+    _super::init(DMAEn);
     
     // ## Set Rx/Tx FIFO sizes. Notes:
     //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
+    //   
     //   - FIFO sizes passed to HAL_PCDEx_SetRxFiFo/HAL_PCDEx_SetTxFiFo have units of 4-byte words.
+    //   
+    //   - When DMA is enabled, the DMA-related FIFO registers appear to be stored at the end of the
+    //     FIFO RAM, so we reserve space using `FIFOCapDMARegisters`. The ST docs are silent about
+    //     the need to reserve space for these registers, but we determined that it's necessary because:
+    //       
+    //       - USB transfers fail when DMA is enabled and we use the entire FIFO without leaving space
+    //         at the end
+    //       
+    //       - when we don't leave space at the end for the DMA registers, and we dump the entire 4k
+    //         FIFO RAM contents [1], the RAM shows parts of our transfer data being clobbered by
+    //         values that appear to pointers within the FIFO RAM (and match the sizes we choose for
+    //         the Rx/Tx FIFOs)
+    //       
+    //       - the Silicon Labs EFM32HG uses the same/similar Synopsys USB IP, and its docs say:
+    //           - "These register information are stored at the end of the FIFO RAM after the space
+    //              allocated for receive and Transmit FIFO. These register space must also be taken
+    //              into account when calculating the total FIFO depth of the core"
+    //           
+    //           - "how much RAM space must be allocated to store these registers"
+    //             - "DMA mode: One location per end point direction"
+    //       
+    //       - we don't know the exact size to reserve for the DMA registers, but:
+    //         - empircally: 64 bytes doesn't work, 128 does work
+    //         - "One location per end point direction":
+    //             +1 for control IN endpoint
+    //             +1 for control OUT endpoint
+    //             +8 IN endpoints
+    //             +8 OUT endpoints
+    //             = 18 locations * 4 bytes/location == 72 bytes -> ceil power of 2 -> 128 bytes
+    //       
+    //       [1] the ST docs for STM32F7 don't mention that the content of the FIFO RAM can be
+    //           accessed for debugging, but the STM32F405 reference manual does, and the same
+    //           region offset works with STM32F7.
+    //             
+    //             - STM32F405 reference manual "USB on-the-go high-speed (OTG_HS)" section
+    //               - Subsection "CSR memory map"
+    //                 - "Direct access to data FIFO RAM for debugging" at offset "2 0000h"
+    //             - Absolute address of FIFO RAM on STM32F7 is USB_OTG_HS+0x20000==0x40060000
     
-    constexpr size_t FIFOCapTotal       = 4096;
-    constexpr size_t FIFOCapRx          = RxFIFOSize(2, MaxPacketSize::Data);
-    constexpr size_t FIFOCapTxCtrl      = USB_MAX_EP0_SIZE;
-    constexpr size_t FIFOCapTxDataIn    = FIFOCapTotal-FIFOCapRx-FIFOCapTxCtrl;
-    
-    // Verify that the total memory allocated for the Rx/Tx FIFOs fits within the FIFO memory.
-    static_assert(FIFOCapRx+FIFOCapTxCtrl+FIFOCapTxDataIn <= FIFOCapTotal);
-    // Verify that the FIFO space allocated for the DataIn endpoint is large enough
-    // to fit the DataIn endpoint's max packet size
-    static_assert(FIFOCapTxDataIn >= MaxPacketSize::Data);
+    constexpr size_t FIFOCapTotal           = 4096;
+    constexpr size_t FIFOCapDMARegisters    = (DMAEn ? 128 : 0);
+    constexpr size_t FIFOCapUsable          = FIFOCapTotal-FIFOCapDMARegisters;
+    constexpr size_t FIFOCapRx              = RxFIFOSize(2, MaxPacketSize);
+    constexpr size_t FIFOCapTxCtrl          = USB_MAX_EP0_SIZE;
+    // Verify that we haven't already overflowed FIFOCapUsable
+    static_assert((FIFOCapRx+FIFOCapTxCtrl) <= FIFOCapUsable);
+    constexpr size_t FIFOCapTxDataIn        = FIFOCapUsable-(FIFOCapRx+FIFOCapTxCtrl);
+    // Verify that FIFOCapTxDataIn is large enough to hold a packet
+    static_assert(FIFOCapTxDataIn >= MaxPacketSize);
+    // Verify that the total memory allocated fits within the FIFO memory.
+    static_assert(FIFOCapRx+FIFOCapTxCtrl+FIFOCapTxDataIn <= FIFOCapUsable);
     
     // # Set Rx FIFO sizes, shared by all OUT endpoints (GRXFSIZ register):
     //   "The OTG peripheral uses a single receive FIFO that receives
@@ -61,15 +103,15 @@ uint8_t USB::_usbd_Init(uint8_t cfgidx) {
     // Open endpoints
     {
         // CmdOut endpoint
-        USBD_LL_OpenEP(&_device, Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize::Cmd);
+        USBD_LL_OpenEP(&_device, Endpoints::CmdOut, USBD_EP_TYPE_BULK, MaxPacketSize);
         _device.ep_out[EndpointNum(Endpoints::CmdOut)].is_used = 1U;
         
         // DataOut endpoint
-        USBD_LL_OpenEP(&_device, Endpoints::DataOut, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
+        USBD_LL_OpenEP(&_device, Endpoints::DataOut, USBD_EP_TYPE_BULK, MaxPacketSize);
         _device.ep_out[EndpointNum(Endpoints::DataOut)].is_used = 1U;
         
         // DataIn endpoint
-        USBD_LL_OpenEP(&_device, Endpoints::DataIn, USBD_EP_TYPE_BULK, MaxPacketSize::Data);
+        USBD_LL_OpenEP(&_device, Endpoints::DataIn, USBD_EP_TYPE_BULK, MaxPacketSize);
         _device.ep_in[EndpointNum(Endpoints::DataIn)].is_used = 1U;
     }
     
@@ -183,7 +225,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 USB_DESC_TYPE_ENDPOINT,                                         // bDescriptorType: Endpoint
                 Endpoints::CmdOut,                                              // bEndpointAddress
                 0x02,                                                           // bmAttributes: Bulk
-                LOBYTE(MaxPacketSize::Cmd), HIBYTE(MaxPacketSize::Cmd),         // wMaxPacketSize
+                LOBYTE(MaxPacketSize), HIBYTE(MaxPacketSize),                   // wMaxPacketSize
                 0x00,                                                           // bInterval: ignore for Bulk transfer
                 
                 // DataOut endpoint
@@ -191,7 +233,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 USB_DESC_TYPE_ENDPOINT,                                         // bDescriptorType: Endpoint
                 Endpoints::DataOut,                                             // bEndpointAddress
                 0x02,                                                           // bmAttributes: Bulk
-                LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),       // wMaxPacketSize
+                LOBYTE(MaxPacketSize), HIBYTE(MaxPacketSize),                   // wMaxPacketSize
                 0x00,                                                           // bInterval: ignore for Bulk transfer
                 
                 // DataIn endpoint
@@ -199,7 +241,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 USB_DESC_TYPE_ENDPOINT,                                         // bDescriptorType: Endpoint
                 Endpoints::DataIn,                                              // bEndpointAddress
                 0x02,                                                           // bmAttributes: Bulk
-                LOBYTE(MaxPacketSize::Data), HIBYTE(MaxPacketSize::Data),       // wMaxPacketSize
+                LOBYTE(MaxPacketSize), HIBYTE(MaxPacketSize),                   // wMaxPacketSize
                 0x00,                                                           // bInterval: ignore for Bulk transfer
     };
     static_assert(sizeof(Desc)==DescLen, "descLen invalid");
