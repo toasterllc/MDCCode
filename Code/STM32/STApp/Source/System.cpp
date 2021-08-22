@@ -150,6 +150,7 @@ void System::_usb_reset(bool usbResetFinish) {
         _usb.cmdRecv();
     irq.restore();
     
+    _usb.dataSend(_buf0, sizeof(_buf0));
     
     
 //    USB_OTG_GlobalTypeDef* USBx = USB_OTG_HS;

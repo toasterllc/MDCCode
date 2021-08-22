@@ -8,12 +8,10 @@ class USB :
 public USBBase<
     // Subclass
     USB,
-    
-    // Disable USB DMA because we want USB to be able to write to
+    // DMA=disable because we want USB to be able to write to
     // ITCM RAM (because we write to that region as a part of
     // bootloading), but DMA masters can't access it.
     false,
-    
     // Endpoints
     STLoader::Endpoints::CmdOut,
     STLoader::Endpoints::DataOut,

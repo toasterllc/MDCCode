@@ -2,9 +2,19 @@
 #include "USBBase.h"
 #include "Channel.h"
 #include "usbd_def.h"
+#include "STAppTypes.h"
 #include <atomic>
 
-class USB : public USBBase<USB> {
+class USB :
+public USBBase<
+    // Subclass
+    USB,
+    // DMA=enabled
+    true,
+    // Endpoints
+    STApp::Endpoints::CmdOut,
+    STApp::Endpoints::DataIn
+> {
 public:
     struct ResetRecv {};
     
@@ -16,8 +26,6 @@ public:
     struct DataSend {};
     
     // Methods
-    void init();
-    
     Channel<ResetRecv, 1> resetRecvChannel; // Signals that a reset was requested
     void resetFinish();
     
@@ -46,11 +54,11 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
-    uint8_t _cmdRecvBuf[MaxPacketSize] __attribute__((aligned(4)));
+    uint8_t _cmdRecvBuf[MaxPacketSizeIn()] __attribute__((aligned(4)));
     
     bool _cmdRecvBusy = false;
     bool _dataSendBusy = false;
     
-    using _super = USBBase<USB>;
-    friend class USBBase<USB>;
+    using _super = USBBase;
+    friend class USBBase;
 };
