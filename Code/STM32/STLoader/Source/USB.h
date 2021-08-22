@@ -2,8 +2,23 @@
 #include "USBBase.h"
 #include "Channel.h"
 #include "usbd_def.h"
+#include "STLoaderTypes.h"
 
-class USB : public USBBase<USB> {
+class USB :
+public USBBase<
+    // Subclass
+    USB,
+    
+    // Disable USB DMA because we want USB to be able to write to
+    // ITCM RAM (because we write to that region as a part of
+    // bootloading), but DMA masters can't access it.
+    false,
+    
+    // Endpoints
+    STLoader::Endpoints::CmdOut,
+    STLoader::Endpoints::DataOut,
+    STLoader::Endpoints::DataIn
+> {
 public:
     struct CmdRecv {
         const uint8_t* data;
@@ -17,8 +32,6 @@ public:
     struct DataSend {};
     
     // Methods
-    void init();
-    
     USBD_StatusTypeDef cmdRecv();
     Channel<CmdRecv, 1> cmdRecvChannel;
     
@@ -47,13 +60,13 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
-    uint8_t _cmdRecvBuf[MaxPacketSize] __attribute__((aligned(4)));
-    uint8_t _dataSendBuf[MaxPacketSize] __attribute__((aligned(4)));
+    uint8_t _cmdRecvBuf[MaxPacketSizeOut()] __attribute__((aligned(4)));
+    uint8_t _dataSendBuf[MaxPacketSizeIn()] __attribute__((aligned(4)));
     
     bool _cmdRecvBusy = false;
     bool _dataRecvBusy = false;
     bool _dataSendBusy = false;
     
-    using _super = USBBase<USB>;
-    friend class USBBase<USB>;
+    using _super = USBBase;
+    friend class USBBase;
 };

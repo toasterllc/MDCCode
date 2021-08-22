@@ -1,4 +1,5 @@
 #pragma once
+#include <initializer_list>
 #include "Assert.h"
 #include "Channel.h"
 #include "stm32f7xx.h"
@@ -10,28 +11,64 @@
 
 extern "C" void ISR_OTG_HS();
 
-template <typename T>
+template <
+typename T,             // Subclass
+bool DMAEn,             // Whether DMA is enabled
+uint8_t... Endpoints    // List of endpoints
+>
 class USBBase {
 public:
-    // Types
-    static constexpr size_t MaxPacketSize = 512; // High-speed bulk endpoints only support wMaxPacketSize=512
+    static constexpr uint8_t EndpointIdx(uint8_t ep)    { return ep&0xF;        }
+    static constexpr bool EndpointOut(uint8_t ep)       { return !(ep&0x80);    }
+    static constexpr bool EndpointIn(uint8_t ep)        { return  (ep&0x80);    }
     
-    static constexpr uint8_t EndpointNum(uint8_t epaddr) {
-        return epaddr&0xF;
+    static constexpr size_t EndpointCountOut() {
+        size_t count = 0;
+        for (uint8_t ep : {Endpoints...}) count += EndpointOut(ep);
+        return count;
     }
     
-    static constexpr uint32_t RxFIFOSize(uint8_t outEpCount, uint16_t maxPacketSize) {
-        // CtrlEpCount: Hardcoded because the hardware seems to assume that there's only
+    static constexpr size_t EndpointCountIn() {
+        size_t count = 0;
+        for (uint8_t ep : {Endpoints...}) count += EndpointIn(ep);
+        return count;
+    }
+    
+    static constexpr size_t MaxPacketSizeIn() {
+        // Don't have IN endpoints: MPS=64 (the MPS for control transfers)
+        // Do have IN endpoints: MPS=512 (the only value that the spec allows for HS bulk endpoints)
+        return !EndpointCountIn() ? 64 : 512;
+    }
+    
+    static constexpr size_t MaxPacketSizeOut() {
+        // Don't have OUT endpoints: MPS=64 (the MPS for control transfers)
+        // Do have OUT endpoints: MPS=512 (the only value that the spec allows for HS bulk endpoints)
+        return !EndpointCountOut() ? 64 : 512;
+    }
+    
+    static constexpr uint32_t FIFORxSize() {
+        // EndpointCountCtrl: Hardcoded because the hardware seems to assume that there's only
         // one control endpoint (EP0)
-        constexpr uint8_t CtrlEpCount = 1;
+        constexpr uint8_t EndpointCountCtrl = 1;
         // Formula from STM32 Reference Manual "USB on-the-go full-speed/high-speed (OTG_FS/OTG_HS)"
+        //
+        //   Device RxFIFO =
+        //     (5 * number of control endpoints + 8) +
+        //     ((largest USB packet used / 4) + 1 for status information) +
+        //     (2 * number of OUT endpoints) +
+        //     (1 for Global NAK)
         //
         // We multiply the second term by 2 (unlike the formula in the reference manual) because
         // the reference manual states:
         //   "Typically, two (largest packet size / 4) + 1 spaces are recommended so that when the
         //   previous packet is being transferred to the CPU, the USB can receive the subsequent
         //   packet."
-        return ((5*CtrlEpCount+8) + 2*((maxPacketSize/4)+1) + (2*(CtrlEpCount+outEpCount)) + 1) * sizeof(uint32_t);
+        return (
+            (5*EndpointCountCtrl+8)                     +
+            (2*((MaxPacketSizeOut()/4)+1))              +
+            (2*(EndpointCountCtrl+EndpointCountOut()))  +
+            (1)
+        ) * sizeof(uint32_t);
     }
     
     // Types
@@ -48,11 +85,11 @@ public:
     };
     
     // Initialization
-    void init(bool dmaEnable) {
+    void init() {
         _pcd.pData = &_device;
         _pcd.Instance = USB_OTG_HS;
         _pcd.Init.dev_endpoints = 9;
-        _pcd.Init.dma_enable = dmaEnable;
+        _pcd.Init.dma_enable = DMAEn;
         _pcd.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
         _pcd.Init.sof_enable = false;
         _pcd.Init.low_power_enable = false;
@@ -100,6 +137,77 @@ public:
         
         us = USBD_Start(&_device);
         Assert(us == USBD_OK);
+        
+        // ## Set Rx/Tx FIFO sizes. Notes:
+        //   - OTG HS FIFO RAM is 4096 bytes, and must be shared amongst all endpoints.
+        //   
+        //   - FIFO sizes passed to HAL_PCDEx_SetRxFiFo/HAL_PCDEx_SetTxFiFo have units of 4-byte words.
+        //   
+        //   - When DMA is enabled, the DMA-related FIFO registers appear to be stored at the end of the
+        //     FIFO RAM, so we reserve space using `FIFOCapDMARegisters`. The ST docs are silent about
+        //     the need to reserve space for these registers, but we determined that it's necessary because:
+        //       
+        //       - USB transfers fail when DMA is enabled and we use the entire FIFO without leaving space
+        //         at the end
+        //       
+        //       - when we don't leave space at the end for the DMA registers, and we dump the entire 4k
+        //         FIFO RAM contents [1], the RAM shows parts of our transfer data being clobbered by
+        //         values that appear to pointers within the FIFO RAM (and match the sizes we choose for
+        //         the Rx/Tx FIFOs)
+        //       
+        //       - the Silicon Labs EFM32HG uses the same/similar Synopsys USB IP, and its docs say:
+        //           - "These register information are stored at the end of the FIFO RAM after the space
+        //              allocated for receive and Transmit FIFO. These register space must also be taken
+        //              into account when calculating the total FIFO depth of the core"
+        //           
+        //           - "how much RAM space must be allocated to store these registers"
+        //             - "DMA mode: One location per end point direction"
+        //       
+        //       - we don't know the exact size to reserve for the DMA registers, but:
+        //         - empircally: 64 bytes doesn't work, 128 does work
+        //         - "One location per end point direction":
+        //             +1 for control IN endpoint
+        //             +1 for control OUT endpoint
+        //             +8 IN endpoints
+        //             +8 OUT endpoints
+        //             = 18 locations * 4 bytes/location == 72 bytes -> ceil power of 2 -> 128 bytes
+        //       
+        //       [1] the ST docs for STM32F7 don't mention that the content of the FIFO RAM can be
+        //           accessed for debugging, but the STM32F405 reference manual does, and the same
+        //           region offset works with STM32F7.
+        //             
+        //             - STM32F405 reference manual "USB on-the-go high-speed (OTG_HS)" section
+        //               - Subsection "CSR memory map"
+        //                 - "Direct access to data FIFO RAM for debugging" at offset "2 0000h"
+        //             - Absolute address of FIFO RAM on STM32F7 is USB_OTG_HS+0x20000==0x40060000
+        
+        constexpr size_t FIFOCapTotal           = 4096;
+        constexpr size_t FIFOCapDMARegisters    = (DMAEn ? 128 : 0);
+        constexpr size_t FIFOCapUsable          = FIFOCapTotal-FIFOCapDMARegisters;
+        constexpr size_t FIFOCapRx              = FIFORxSize();
+        constexpr size_t FIFOCapTxCtrl          = USB_MAX_EP0_SIZE;
+        // Verify that we haven't already overflowed FIFOCapUsable
+        static_assert((FIFOCapRx+FIFOCapTxCtrl) <= FIFOCapUsable);
+        constexpr size_t FIFOCapTxBulk          = (FIFOCapUsable-(FIFOCapRx+FIFOCapTxCtrl))/EndpointCountIn();
+        // Verify that FIFOCapTxBulk is large enough to hold an IN packet
+        static_assert(FIFOCapTxBulk >= MaxPacketSizeIn());
+        // Verify that the total memory allocated fits within the FIFO memory.
+        static_assert(FIFOCapRx+FIFOCapTxCtrl+(FIFOCapTxBulk*EndpointCountIn()) <= FIFOCapUsable);
+        
+        // # Set Rx FIFO sizes, shared by all OUT endpoints (GRXFSIZ register):
+        //   "The OTG peripheral uses a single receive FIFO that receives
+        //   the data directed to all OUT endpoints."
+        HAL_PCDEx_SetRxFiFo(&_pcd, FIFOCapRx/sizeof(uint32_t));
+        
+        // # Set Tx FIFO size for control IN endpoint (DIEPTXF0 register)
+        HAL_PCDEx_SetTxFiFo(&_pcd, 0, FIFOCapTxCtrl/sizeof(uint32_t));
+        
+        // # Set Tx FIFO size for bulk IN endpoints (DIEPTXFx register)
+        for (uint8_t ep : {Endpoints...}) {
+            if (EndpointIn(ep)) {
+                HAL_PCDEx_SetTxFiFo(&_pcd, EndpointIdx(ep), FIFOCapTxBulk/sizeof(uint32_t));
+            }
+        }
     }
     
     // Accessors
@@ -124,6 +232,19 @@ protected:
         eventChannel.writeTry(Event{
             .type = Event::Type::StateChanged,
         });
+        
+        // Open endpoints
+        for (uint8_t ep : {Endpoints...}) {
+            if (EndpointOut(ep)) {
+                USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeOut());
+                _device.ep_out[EndpointIdx(ep)].is_used = 1U;
+            
+            } else {
+                USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeIn());
+                _device.ep_in[EndpointIdx(ep)].is_used = 1U;
+            }
+        }
+        
         return (uint8_t)USBD_OK;
     }
     
