@@ -288,7 +288,7 @@ void System::_usb_dataSendHandle(const USB::DataSend& ev) {
 
 #pragma mark - SD Reading
 
-constexpr size_t SDReadChunkLen = 512;
+constexpr size_t SDReadChunkLen = 512*4;
 
 void System::_sdRead(const Cmd& cmd) {
     // Update state
