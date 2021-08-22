@@ -150,6 +150,12 @@ void System::_usb_reset(bool usbResetFinish) {
         _usb.cmdRecv();
     irq.restore();
     
+    uint8_t i = 0;
+    for (uint8_t& x : _buf0) {
+        x = i;
+        i++;
+    }
+    
     _usb.dataSend(_buf0, sizeof(_buf0));
     
     
@@ -244,22 +250,24 @@ void System::_usb_sendFromBuf() {
 }
 
 void System::_usb_dataSendHandle(const USB::DataSend& ev) {
-    Assert(_usbDataBusy);
-    Assert(!_bufs.empty());
+    _usb.dataSend(_buf0, sizeof(_buf0));
     
-    // Reset the buffer length so it's back in its default state
-    _bufs.front().len = 0;
-    // Pop the buffer, which we just finished sending over USB
-    _bufs.pop();
-    _usbDataBusy = false;
-    
-    switch (_op) {
-    case Op::SDRead:    _sdRead_usbDataSendHandle(ev);  break;
-    // The host received the status response;
-    // arrange to receive another command
-    case Op::None:      _usb_cmdRecv();                 break;
-    default:            abort();                        break;
-    }
+//    Assert(_usbDataBusy);
+//    Assert(!_bufs.empty());
+//    
+//    // Reset the buffer length so it's back in its default state
+//    _bufs.front().len = 0;
+//    // Pop the buffer, which we just finished sending over USB
+//    _bufs.pop();
+//    _usbDataBusy = false;
+//    
+//    switch (_op) {
+//    case Op::SDRead:    _sdRead_usbDataSendHandle(ev);  break;
+//    // The host received the status response;
+//    // arrange to receive another command
+//    case Op::None:      _usb_cmdRecv();                 break;
+//    default:            abort();                        break;
+//    }
 }
 
 
