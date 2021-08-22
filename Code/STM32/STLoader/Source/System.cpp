@@ -167,8 +167,8 @@ void System::_usbHandleDataSend(const USB::DataSend& ev) {
 static size_t _ceilToPacketLength(size_t len) {
     // Round `len` up to the nearest packet size, since the USB hardware limits
     // the data received based on packets instead of bytes
-    const size_t rem = len%USB::MaxPacketSize;
-    len += (rem>0 ? USB::MaxPacketSize-rem : 0);
+    const size_t rem = len%USB::MaxPacketSizeIn();
+    len += (rem>0 ? USB::MaxPacketSizeIn()-rem : 0);
     return len;
 }
 
