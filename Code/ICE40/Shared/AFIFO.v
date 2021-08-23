@@ -113,13 +113,18 @@ module AFIFO #(
         endcase
     endgenerate
     
+    // We use WCLKE/RCLKE instead of WE/RE, because apparently WE/RE don't always
+    // work correctly due to a silicon bug.
+    // From https://github.com/nmigen/nmigen/issues/14:
+    //   "Yosys does not use RE or WE at all. Instead, RCLKE and WCLKE are used. This is due to a silicon bug."
+    //   "iCECube does not use RE or WE at all, similarly to Yosys."
     SB_RAM40_4K #(
         .READ_MODE(MODE()),
         .WRITE_MODE(MODE())
     ) SB_RAM40_4K(
         .WCLK(w_clk),
-        .WCLKE(1'b1),
-        .WE(w_trigger && w_ready),
+        .WCLKE(w_trigger && w_ready),
+        .WE(1'b1),
         .WADDR(WADDR),
         .WDATA(WDATA),
         .MASK(16'h0000),
