@@ -73,11 +73,11 @@ module Top(
             case (spi_state)
             SPI_State_MsgIn: begin
                 // Verify that we never get a clock while spi_d_in is undriven (z) / invalid (x)
-                if ((spi_d_in[0]!==1'b0 && spi_d_in[0]!==1'b1) ||
-                    (spi_d_in[1]!==1'b0 && spi_d_in[1]!==1'b1) ||
-                    (spi_d_in[2]!==1'b0 && spi_d_in[2]!==1'b1) ||
-                    (spi_d_in[3]!==1'b0 && spi_d_in[3]!==1'b1)) begin
-                    $display("spi_d_in invalid: %b ❌", spi_d_in);
+                if ((ice_st_spi_d[0]!==1'b0 && ice_st_spi_d[0]!==1'b1) ||
+                    (ice_st_spi_d[1]!==1'b0 && ice_st_spi_d[1]!==1'b1) ||
+                    (ice_st_spi_d[2]!==1'b0 && ice_st_spi_d[2]!==1'b1) ||
+                    (ice_st_spi_d[3]!==1'b0 && ice_st_spi_d[3]!==1'b1)) begin
+                    $display("ice_st_spi_d invalid: %b (time: %0d, spi_cs: %b) ❌", ice_st_spi_d, $time, spi_cs);
                     #1000;
                     `Finish;
                 end
@@ -147,7 +147,7 @@ module Top(
     genvar i;
     for (i=0; i<8; i++) begin
         SB_IO #(
-            .PIN_TYPE(6'b1101_00)
+            .PIN_TYPE(6'b1001_00)
         ) SB_IO_ice_st_spi_d (
             .INPUT_CLK(ice_st_spi_clk),
             .OUTPUT_CLK(ice_st_spi_clk),

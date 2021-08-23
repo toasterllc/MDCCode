@@ -9,7 +9,7 @@ module Testbench();
     reg         ice_img_clk16mhz = 0;
     
     reg         ice_st_spi_clk = 0;
-    reg         ice_st_spi_cs_ = 0;
+    reg         ice_st_spi_cs_ = 1;
     wire[7:0]   ice_st_spi_d;
     
     wire[3:0]   ice_led;
@@ -84,16 +84,16 @@ module Testbench();
             
             // Clock in response (if one is sent for this type of message)
             if (typ[`Msg_Type_Resp_Bits]) begin
-                for (i=0; i<`Resp_Len; i++) begin
+                for (i=0; i<`Resp_Len/8; i++) begin
                     #(ice_st_spi_clk_HALF_PERIOD);
                     ice_st_spi_clk = 1;
-                
+                    
                         if (!i[0]) spi_dinReg = 0;
                         spi_dinReg = spi_dinReg<<4|{4'b0000, spi_dataIn[3:0], 4'b0000, spi_dataIn[7:4]};
-                    
+                        
                         spi_resp = spi_resp<<8;
                         if (i[0]) spi_resp = spi_resp|spi_dinReg;
-                
+                    
                     #(ice_st_spi_clk_HALF_PERIOD);
                     ice_st_spi_clk = 0;
                 end
@@ -124,15 +124,15 @@ module Testbench();
     end endtask
     
     initial begin
-        #1;
-        ice_st_spi_cs_ = ~0;
-        spi_dataOutReg = ~0;
-        spi_dataOutEn = ~0;
-        #1
+        // // Pulse the clock to get Top's SB_IO initialized.
+        // // This is necessary because because its OUTPUT_ENABLE is x
+        // // This is necessary because
+        // spi_dataOutEn   = 1; #1;
+        // ice_st_spi_clk  = 1; #1;
+        // ice_st_spi_clk  = 0; #1;
+        // spi_dataOutEn   = 0; #1;
         
-        `Finish;
-        
-        
+        TestEcho(56'h00000000000000);
         TestEcho(56'h00000000000000);
         TestEcho(56'hCAFEBABEFEEDAA);
         TestNop();
