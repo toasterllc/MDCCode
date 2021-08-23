@@ -1,5 +1,5 @@
-`include "../ICEApp/Top.v"          // Before yosys synthesis
-// `include "../ICEApp/Synth/Top.v"    // After yosys synthesis
+`include "../ICEAppMSP/Top.v"          // Before yosys synthesis
+// `include "../ICEAppMSP/Synth/Top.v"    // After yosys synthesis
 `include "ICEAppTypes.v"
 `include "Util.v"
 

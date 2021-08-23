@@ -1,5 +1,11 @@
 - Rev4 Todo
     
+    - Figure out STApp/ICEAppMSP SD data comms scheme
+        - Requirements
+            - Start SD data transfer
+            - Terminate SD data transfer
+            - Signal whether SD data is available
+    
     - STLoader/STApp wMaxPacketSize for all endpoints can only be 512 bytes for high-speed devices
         - To save FIFO space, only have 2 endpoints (DataOut and DataIn), without a separate CmdOut endpoint?
     
