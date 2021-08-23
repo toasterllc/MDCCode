@@ -1,11 +1,13 @@
 `include "Util.v"
 `include "ClockGen.v"
+`include "Sync.v"
 `include "AFIFO.v"
 `include "ToggleAck.v"
 `include "TogglePulse.v"
 `timescale 1ns/1ps
 
 module Top(
+    input wire ice_st_spi_clk,
     input wire ice_img_clk16mhz,
     output reg[3:0] ice_led = 0
 );
@@ -21,6 +23,31 @@ module Top(
         .FILTER_RANGE(1)
     ) ClockGen_w_clk(.clkRef(ice_img_clk16mhz), .clk(w_clk));
     
+    
+    // // ====================
+    // // r_clk (24 MHz)
+    // // ====================
+    // wire r_clk;
+    // ClockGen #(
+    //     .FREQOUT(24_000_000),
+    //     .DIVR(0),
+    //     .DIVF(47),
+    //     .DIVQ(5),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_r_clk(.clkRef(ice_img_clk16mhz), .clk(r_clk));
+    
+    // // ====================
+    // // r_clk (48 MHz)
+    // // ====================
+    // wire r_clk;
+    // ClockGen #(
+    //     .FREQOUT(48_000_000),
+    //     .DIVR(0),
+    //     .DIVF(47),
+    //     .DIVQ(4),
+    //     .FILTER_RANGE(1)
+    // ) ClockGen_r_clk(.clkRef(ice_img_clk16mhz), .clk(r_clk));
+    
     // ====================
     // r_clk (96 MHz)
     // ====================
@@ -34,14 +61,18 @@ module Top(
     ) ClockGen_r_clk(.clkRef(ice_img_clk16mhz), .clk(r_clk));
     
     
+    // ====================
+    // Init Delay: wait for RAMs to be operational
+    // See ICE40-RAMInvalidDataNotes.txt
+    // ====================
+    reg initDelay_done = 0;
+    `Sync(w_initDelayDone, initDelay_done, posedge, w_clk);
     
-    
-    reg w_rst_ = 0;
-    reg[9:0] w_rstCounter = 0;
-    always @(posedge w_clk) begin
-        w_rstCounter <= w_rstCounter+1;
-        if (&w_rstCounter) begin
-            w_rst_ <= 1;
+    reg[4:0] initDelay_counter = 0;
+    always @(posedge ice_st_spi_clk) begin
+        initDelay_counter <= initDelay_counter+1;
+        if (&initDelay_counter) begin
+            initDelay_done <= 1;
         end
     end
     
@@ -101,10 +132,11 @@ module Top(
     always @(posedge w_clk) begin
         fifo_rst_ <= 1;
         
-        if (!w_rst_) begin
-            $display("Reset...");
+        if (!w_initDelayDone) begin
+            $display("Waiting to start...");
         
         end else begin
+            ice_led[0] <= 1'b1;
             w_trigger <= 0;
             
             case (w_state)
@@ -167,9 +199,9 @@ module Top(
                 $display("[Read] %x @ 0x%x", r_data, AFIFO.r_baddr);
                 r_lastData <= r_data;
                 if (r_lastDataInit && r_data!==(r_lastData+1'b1)) begin
-                    ice_led <= 4'b1111;
+                    ice_led[3:1] <= ~0;
                     $display("BAD DATA (r_lastData:%x, r_data:%x)", r_lastData, r_data);
-                    // `Finish;
+                    `Finish;
                 end else begin
                     // ice_led <= ~ice_led;
                 end
@@ -209,9 +241,12 @@ endmodule
 
 `ifdef SIM
 module Testbench();
+    reg ice_st_spi_clk = 0;
     reg ice_img_clk16mhz = 0;
     wire[3:0] ice_led;
     Top Top(.*);
+    
+    initial forever #10 ice_st_spi_clk = !ice_st_spi_clk;
     
     initial begin
         $dumpfile("Top.vcd");
