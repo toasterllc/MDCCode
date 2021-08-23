@@ -1,11 +1,12 @@
+`include "Util.v"
+
 `ifndef AFIFO_v
 `define AFIFO_v
 
 // Based on Clifford E. Cummings paper:
 //   http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO2.pdf
 module AFIFO #(
-    localparam W = 16, // Word width
-    localparam N = 8   // Word count (2^N)
+    parameter W = 16 // Word width; allowed values: 16, 8, 4, 2
 )(
     // Reset port (clock domain: async)
     input wire rst_,
@@ -20,6 +21,19 @@ module AFIFO #(
     output wire[W-1:0] r_data,      // Read data
     output wire r_ready             // Read OK (data available -- not empty)
 );
+`ifdef SIM
+    initial begin
+        if (W==16 || W==8 || W==4 || W==2);
+        else begin
+            $display("AFIFO: invalid width: %0d", W);
+            `Finish;
+        end
+    end
+`endif
+    
+    // Note that `N` is used directly in instantiations, not `N-1`, because we want an extra bit
+    localparam N = `RegWidth((4096/W)-1);
+    
     // ====================
     // Write handling
     // ====================
@@ -67,19 +81,54 @@ module AFIFO #(
     // ====================
     // RAM
     // ====================
-    SB_RAM40_4K SB_RAM40_4K(
+    function[1:0] MODE;
+        case (W)
+        16: MODE = 0;
+        8:  MODE = 1;
+        4:  MODE = 2;
+        2:  MODE = 3;
+        endcase
+    endfunction
+    
+    wire[10:0] WADDR = w_baddr[N-1:0];
+    wire[10:0] RADDR = r_baddrNext[N-1:0];
+    
+    wire[15:0] WDATA;
+    generate
+        case (W)
+        16: assign WDATA[15:0]                                                                          = w_data;
+        8:  assign {WDATA[14], WDATA[12], WDATA[10], WDATA[8], WDATA[6], WDATA[4], WDATA[2], WDATA[0]}  = w_data;
+        4:  assign {WDATA[13], WDATA[9], WDATA[5], WDATA[1]}                                            = w_data;
+        2:  assign {WDATA[11], WDATA[3]}                                                                = w_data;
+        endcase
+    endgenerate
+    
+    wire[15:0] RDATA;
+    generate
+        case (W)
+        16: assign r_data = RDATA[15:0];
+        8:  assign r_data = {RDATA[14], RDATA[12], RDATA[10], RDATA[8], RDATA[6], RDATA[4], RDATA[2], RDATA[0]};
+        4:  assign r_data = {RDATA[13], RDATA[9], RDATA[5], RDATA[1]};
+        2:  assign r_data = {RDATA[11], RDATA[3]};
+        endcase
+    endgenerate
+    
+    SB_RAM40_4K #(
+        .READ_MODE(MODE()),
+        .WRITE_MODE(MODE())
+    ) SB_RAM40_4K(
         .WCLK(w_clk),
         .WCLKE(1'b1),
         .WE(w_trigger && w_ready),
-        .WADDR({3'b000, w_baddr[N-1:0]}),
-        .WDATA(w_data),
+        .WADDR(WADDR),
+        .WDATA(WDATA),
         .MASK(16'h0000),
         
         .RCLK(r_clk),
         .RCLKE(1'b1),
         .RE(1'b1),
-        .RADDR({3'b000, r_baddrNext[N-1:0]}),
-        .RDATA(r_data)
+        .RADDR(RADDR),
+        .RDATA(RDATA)
     );
 endmodule
 
