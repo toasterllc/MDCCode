@@ -7,7 +7,7 @@
 
 module Top(
     input wire ice_img_clk16mhz,
-    output reg[3:0] led = 0
+    output reg[3:0] ice_led = 0
 );
     // ====================
     // w_clk (48 MHz)
@@ -61,19 +61,20 @@ module Top(
     // ====================
     // AFIFO
     // ====================
+    localparam W = 16;
+    
     reg w_trigger = 0;
-    reg[15:0] w_data = 0;
+    reg[W-1:0] w_data = 0;
     wire w_ready;
     
     reg r_trigger = 0;
-    wire[15:0] r_data;
+    wire[W-1:0] r_data;
     wire r_ready;
     
     reg fifo_rst_ = 0;
     
     AFIFO #(
-        // .W(16),
-        // .N(8)
+        .W(W)
     ) AFIFO (
         .rst_(fifo_rst_),
         
@@ -147,7 +148,7 @@ module Top(
     // ====================
     // Reader
     // ====================
-    reg[15:0] r_lastData = 0;
+    reg[W-1:0] r_lastData = 0;
     reg r_lastDataInit = 0;
     reg r_init = 0;
     reg[7:0] r_counter = 0;
@@ -166,11 +167,11 @@ module Top(
                 $display("[Read] %x @ 0x%x", r_data, AFIFO.r_baddr);
                 r_lastData <= r_data;
                 if (r_lastDataInit && r_data!==(r_lastData+1'b1)) begin
-                    led <= 4'b1111;
+                    ice_led <= 4'b1111;
                     $display("BAD DATA (r_lastData:%x, r_data:%x)", r_lastData, r_data);
-                    `Finish;
+                    // `Finish;
                 end else begin
-                    // led <= ~led;
+                    // ice_led <= ~ice_led;
                 end
                 r_lastDataInit <= 1;
             end
@@ -209,11 +210,11 @@ endmodule
 `ifdef SIM
 module Testbench();
     reg ice_img_clk16mhz = 0;
-    wire[3:0] led;
+    wire[3:0] ice_led;
     Top Top(.*);
     
     initial begin
-        $dumpfile("top.vcd");
+        $dumpfile("Top.vcd");
         $dumpvars(0, Testbench);
     end
 endmodule
