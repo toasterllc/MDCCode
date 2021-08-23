@@ -1,3 +1,5 @@
+`include "Util.v"
+`include "ICEAppTypes.v"
 `timescale 1ns/1ps
 
 module Top(
@@ -10,5 +12,150 @@ module Top(
     // LED port
     output reg[3:0]     ice_led = 0
 );
-    assign ice_st_spi_d = 0;
+    // ====================
+    // SPI State Machine
+    // ====================
+    
+    // MsgCycleCount notes:
+    //
+    //   - We include a dummy byte at the beginning of each command, to workaround an
+    //     apparent STM32 bug that always sends the first nibble as 0xF. As such, we
+    //     need to add 2 cycles to `MsgCycleCount`. Without this dummy byte,
+    //     MsgCycleCount=(`Msg_Len/4)-1, so with this dummy byte,
+    //     MsgCycleCount=(`Msg_Len/4)+1.
+    //
+    //   - Commands use 4 lines (ice_st_ice_st_spi_d[3:0]), so we divide `Msg_Len by 4.
+    //     Commands use only 4 lines, instead of all 8 lines used for responses,
+    //     because dual-QSPI doesn't allow that, since dual-QSPI is meant to control
+    //     two separate flash devices, so it outputs the same data on ice_st_ice_st_spi_d[3:0]
+    //     that it does on ice_st_ice_st_spi_d[7:4].
+    localparam MsgCycleCount = (`Msg_Len/4)+1;
+    reg[`RegWidth(MsgCycleCount)-1:0] spi_dinCounter = 0;
+    reg[0:0] spi_doutCounter = 0;
+    reg[`Msg_Len-1:0] spi_dinReg = 0;
+    reg[15:0] spi_doutReg = 0;
+    reg[`Resp_Len-1:0] spi_resp = 0;
+    wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
+    wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
+    
+    wire spi_cs;
+    reg spi_d_outEn = 0;
+    wire[7:0] spi_d_out;
+    wire[7:0] spi_d_in;
+    
+    assign spi_d_out = {
+        `LeftBits(spi_doutReg, 8, 4),   // High 4 bits: 4 bits of byte 1
+        `LeftBits(spi_doutReg, 0, 4)    // Low 4 bits:  4 bits of byte 0
+    };
+    
+    localparam SPI_State_MsgIn      = 0;    // +2
+    localparam SPI_State_RespOut    = 3;    // +0
+    localparam SPI_State_Nop        = 4;    // +0
+    localparam SPI_State_Count      = 5;
+    reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
+    
+    always @(posedge ice_st_spi_clk, negedge spi_cs) begin
+        // Reset ourself when we're de-selected
+        if (!spi_cs) begin
+            spi_state <= SPI_State_MsgIn;
+            spi_d_outEn <= 0;
+        
+        end else begin
+            // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
+            // See MsgCycleCount comment above.
+            spi_dinReg <= spi_dinReg<<4|spi_d_in[3:0];
+            spi_dinCounter <= spi_dinCounter-1;
+            spi_doutReg <= spi_doutReg<<4|4'b0;
+            spi_doutCounter <= spi_doutCounter-1;
+            spi_d_outEn <= 0;
+            spi_resp <= spi_resp<<8|8'b0;
+            
+            case (spi_state)
+            SPI_State_MsgIn: begin
+                // Verify that we never get a clock while spi_d_in is undriven (z) / invalid (x)
+                if ((spi_d_in[0]!==1'b0 && spi_d_in[0]!==1'b1) ||
+                    (spi_d_in[1]!==1'b0 && spi_d_in[1]!==1'b1) ||
+                    (spi_d_in[2]!==1'b0 && spi_d_in[2]!==1'b1) ||
+                    (spi_d_in[3]!==1'b0 && spi_d_in[3]!==1'b1)) begin
+                    $display("spi_d_in invalid: %b ❌", spi_d_in);
+                    #1000;
+                    `Finish;
+                end
+                
+                spi_dinCounter <= MsgCycleCount;
+                spi_state <= SPI_State_MsgIn+1;
+            end
+            
+            SPI_State_MsgIn+1: begin
+                if (!spi_dinCounter) begin
+                    spi_state <= SPI_State_MsgIn+2;
+                end
+            end
+            
+            SPI_State_MsgIn+2: begin
+                // By default, go to SPI_State_Nop
+                spi_state <= SPI_State_Nop;
+                spi_doutCounter <= 0;
+                
+                case (spi_msgType)
+                `Msg_Type_Echo: begin
+                    $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                    spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
+                    spi_state <= SPI_State_RespOut;
+                end
+                
+                `Msg_Type_Nop: begin
+                    $display("[SPI] Got Msg_Type_Nop");
+                end
+                
+                default: begin
+                    $display("[SPI] BAD COMMAND: %0d ❌", spi_msgType);
+                    `Finish;
+                end
+                endcase
+            end
+            
+            SPI_State_RespOut: begin
+                spi_d_outEn <= 1;
+                if (!spi_doutCounter) begin
+                    spi_doutReg <= `LeftBits(spi_resp, 0, 16);
+                end
+            end
+            
+            SPI_State_Nop: begin
+            end
+            endcase
+        end
+    end
+    
+    // ====================
+    // Pin: ice_st_spi_cs_
+    // ====================
+    wire spi_cs_tmp_;
+    SB_IO #(
+        .PIN_TYPE(6'b0000_01),
+        .PULLUP(1'b1)
+    ) SB_IO_ice_st_spi_cs_ (
+        .PACKAGE_PIN(ice_st_spi_cs_),
+        .D_IN_0(spi_cs_tmp_)
+    );
+    assign spi_cs = !spi_cs_tmp_;
+    
+    // ====================
+    // Pin: ice_st_spi_d
+    // ====================
+    genvar i;
+    for (i=0; i<8; i++) begin
+        SB_IO #(
+            .PIN_TYPE(6'b1101_00)
+        ) SB_IO_ice_st_spi_d (
+            .INPUT_CLK(ice_st_spi_clk),
+            .OUTPUT_CLK(ice_st_spi_clk),
+            .PACKAGE_PIN(ice_st_spi_d[i]),
+            .OUTPUT_ENABLE(spi_d_outEn),
+            .D_OUT_0(spi_d_out[i]),
+            .D_IN_0(spi_d_in[i])
+        );
+    end
+    
 endmodule
