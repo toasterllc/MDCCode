@@ -6,6 +6,8 @@
 `include "TogglePulse.v"
 `timescale 1ns/1ps
 
+`define Width 8
+
 module AFIFOSeries #(
     parameter W = 16
 )(
@@ -93,7 +95,7 @@ module AFIFOSeries #(
 endmodule
 
 module Top #(
-    parameter W = 16
+    parameter W = `Width
 )(
     input wire rst_,
     
@@ -107,7 +109,9 @@ module Top #(
     output wire[W-1:0] r_data,
     output wire r_ready
 );
-    AFIFOSeries AFIFOSeries(
+    AFIFOSeries #(
+        .W(W)
+    ) AFIFOSeries(
         .rst_(rst_),
         .w_clk(w_clk),
         .w_trigger(w_trigger),
@@ -120,24 +124,17 @@ module Top #(
     );
 endmodule
 
-
-
-
-
-
-
-
 `ifdef SIM
 module Testbench();
-    localparam W = 16;
+    localparam W = `Width;
     
-    wire rst_;
-    wire w_clk;
-    wire w_trigger;
-    wire[W-1:0] w_data;
+    reg rst_ = 1;
+    reg w_clk = 0;
+    reg w_trigger = 1;
+    reg[W-1:0] w_data = 0;
     wire w_ready;
-    wire r_clk;
-    wire r_trigger;
+    reg r_clk = 0;
+    reg r_trigger = 0;
     wire[W-1:0] r_data;
     wire r_ready;
     
@@ -157,7 +154,20 @@ module Testbench();
         $dumpfile("Top.vcd");
         $dumpvars(0, Testbench);
     end
+    
+    initial forever #10 w_clk = !w_clk;
+    initial forever #20 r_clk = !r_clk;
+    
+    initial begin
+        forever begin
+            wait(!w_clk);
+            wait(w_clk);
+            if (w_trigger && w_ready) begin
+                $display("Wrote %0d", w_data);
+                w_data = w_data+1;
+            end
+        end
+    end
+    
 endmodule
 `endif
-
-
