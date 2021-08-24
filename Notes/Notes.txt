@@ -1,5 +1,7 @@
 - Rev4 Todo
     
+    - Try to optimize USB throughput beyond 355e6 bits/sec
+    
     - Figure out STApp/ICEAppMSP SD data comms scheme
         - Requirements
             - Start SD data transfer
