@@ -10,19 +10,23 @@ module AFIFOChain #(
     parameter N = 2
 )(
     input wire rst_,
-    input wire clk, // Propagation clock; use the faster of `w_clk` and `r_clk`
     
+    // Propagation port
+    input wire prop_clk, // Propagation clock; use the faster of `w_clk` and `r_clk`
+    output wire prop_w_ready, // Whether half of the FIFO can be written
+    output wire prop_r_ready, // Whether half of the FIFO can be read
+    
+    // Write port
     input wire w_clk,
     input wire w_trigger,
     input wire[W-1:0] w_data,
     output wire w_ready,
-    output wire w_ready_half, // Whether half of the FIFO can be written
     
+    // Read port
     input wire r_clk,
     input wire r_trigger,
     output wire[W-1:0] r_data,
-    output wire r_ready,
-    output wire r_ready_half // Whether half of the FIFO can be read
+    output wire r_ready
 );
     wire[N-1:0]        afifo_rst_;
     wire[N-1:0]        afifo_w_clk;
@@ -57,7 +61,7 @@ module AFIFOChain #(
         if (i == 0)
         assign afifo_w_clk[i]           = w_clk;
         else
-        assign afifo_w_clk[i]           = clk; // Propagation clock
+        assign afifo_w_clk[i]           = prop_clk;
         
         if (i == 0)
         assign afifo_w_trigger[i]       = w_trigger;
@@ -75,7 +79,7 @@ module AFIFOChain #(
         assign afifo_r_trigger[i]       = r_trigger;
         
         if (i < N-1)
-        assign afifo_r_clk[i]           = clk; // Propagation clock
+        assign afifo_r_clk[i]           = prop_clk;
         else
         assign afifo_r_clk[i]           = r_clk;
     end
@@ -84,19 +88,17 @@ module AFIFOChain #(
     assign r_data                       = afifo_r_data[(N-1)*W +: W];
     assign r_ready                      = afifo_r_ready[N-1];
     
-    // w_ready_half: whether left half of the FIFO can be written
+    // prop_w_ready: whether left half of the FIFO can be written
     // == whether the middle-left AFIFO is empty
     // == middle-left AFIFO's !r_ready
-    wire r_leftEmpty                    = !afifo_r_ready[(N/2)-1];
-    `Sync(w_rLeftEmpty, r_leftEmpty, posedge, w_clk);
-    assign w_ready_half                 = w_rLeftEmpty;
+    wire prop_leftEmpty                 = !afifo_r_ready[(N/2)-1];
+    assign prop_w_ready                 = prop_leftEmpty;
     
-    // r_ready_half: whether right half of the FIFO can be read
+    // prop_r_ready: whether right half of the FIFO can be read
     // == whether the middle-right AFIFO is full
     // == middle-right AFIFO's !w_ready
-    wire w_rightFull                    = !afifo_w_ready[N/2];
-    `Sync(r_wRightFull, w_rightFull, posedge, r_clk);
-    assign r_ready_half                 = r_wRightFull;
+    wire prop_rightFull                 = !afifo_w_ready[N/2];
+    assign prop_r_ready                 = prop_rightFull;
 
 endmodule
 

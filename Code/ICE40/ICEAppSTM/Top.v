@@ -34,24 +34,27 @@ module Top(
     localparam AFIFOChainCount = 8; // 4096 bytes total, readable in chunks of 2048
     
     wire        fifo_rst_           = 1;
-    wire        fifo_clk            = prod_clk;
+    wire        fifo_prop_clk       = prod_clk;
+    wire        fifo_prop_w_ready;
+    wire        fifo_prop_r_ready;
     wire        fifo_w_clk          = prod_clk;
     reg         fifo_w_trigger      = 0;
     reg[7:0]    fifo_w_data         = 0;
     wire        fifo_w_ready;
-    wire        fifo_w_ready_half;
     wire        fifo_r_clk          = ice_st_spi_clk;
     reg         fifo_r_trigger      = 0;
     wire[7:0]   fifo_r_data;
     wire        fifo_r_ready;
-    wire        fifo_r_ready_half;
     
     AFIFOChain #(
         .W(8),
         .N(AFIFOChainCount)
     ) AFIFOChain(
         .rst_(fifo_rst_),
-        .clk(fifo_clk),
+        
+        .prop_clk(fifo_prop_clk),
+        .prop_w_ready(fifo_prop_w_ready),
+        .prop_r_ready(fifo_prop_r_ready),
         
         .w_clk(fifo_w_clk),
         .w_trigger(fifo_w_trigger),
@@ -97,7 +100,7 @@ module Top(
         end
         
         1: begin
-            if (fifo_w_ready_half) begin
+            if (fifo_prop_w_ready) begin
                 prod_state <= 2;
             end
         end
