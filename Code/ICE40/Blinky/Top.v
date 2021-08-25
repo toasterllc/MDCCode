@@ -4,8 +4,11 @@
 
 module Top(
     input wire ice_img_clk16mhz,
+    output wire[7:0] ice_st_spi_d,
     output wire[3:0] ice_led
 );
+    assign ice_st_spi_d = 0;
+    
     wire clk16mhz = ice_img_clk16mhz;
     
     wire clk;
