@@ -306,6 +306,26 @@ void System::_sdRead_qspiReadToBuf() {
     
     auto& buf = _bufs.back();
     
+    {
+        using SPID0 = GPIO<GPIOPortC, GPIO_PIN_9>;
+        while (SPID0::Read());
+//        volatile bool a = SPID0::Read();
+//        uint32_t b = 0;
+//        QSPI_CommandTypeDef qspiCmd = {
+//            .InstructionMode = QSPI_INSTRUCTION_NONE,
+//            .AddressMode = QSPI_ADDRESS_NONE,
+//            .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+//            .DummyCycles = 0,
+//            .NbData = sizeof(b),
+//            .DataMode = QSPI_DATA_4_LINES,
+//            .DdrMode = QSPI_DDR_MODE_DISABLE,
+//            .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+//            .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+//        };
+//        _qspi.read(qspiCmd, &b, sizeof(b));
+//        _qspi.eventChannel.read(); // Wait for read to complete
+    }
+    
     // TODO: ensure that the byte length is aligned to a u32 boundary, since QSPI requires that!
     // TODO: how do we handle lengths that aren't a multiple of SDReadChunkLen?
     const size_t len = SDReadChunkLen;
