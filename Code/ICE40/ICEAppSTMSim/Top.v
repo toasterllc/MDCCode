@@ -139,6 +139,10 @@ module Testbench();
         TestEcho(56'hCAFEBABEFEEDAA);
         TestEcho(56'h123456789ABCDE);
         TestNop();
-        `Finish;
+        
+        SendMsg(`Msg_Type_ImgReadout, 0);
+        
+        
+        // `Finish;
     end
 endmodule

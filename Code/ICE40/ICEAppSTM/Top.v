@@ -1,5 +1,8 @@
 `include "Util.v"
 `include "ICEAppTypes.v"
+`include "TogglePulse.v"
+`include "ClockGen.v"
+`include "AFIFOChain.v"
 `timescale 1ns/1ps
 
 module Top(
@@ -12,6 +15,112 @@ module Top(
     // LED port
     output reg[3:0]     ice_led = 0
 );
+    // ====================
+    // Producer Clock (102 MHz)
+    // ====================
+    localparam Prod_Clk_Freq = 102_000_000;
+    wire prod_clk;
+    ClockGen #(
+        .FREQOUT(Prod_Clk_Freq),
+        .DIVR(0),
+        .DIVF(50),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) ClockGen_prod_clk(.clkRef(ice_img_clk16mhz), .clk(prod_clk));
+    
+    // ====================
+    // AFIFOChain
+    // ====================
+    localparam AFIFOChainCount = 8; // 4096 bytes total, readable in chunks of 2048
+    
+    wire        fifo_rst_           = 1;
+    wire        fifo_clk            = prod_clk;
+    wire        fifo_w_clk          = prod_clk;
+    reg         fifo_w_trigger      = 0;
+    reg[7:0]    fifo_w_data         = 0;
+    wire        fifo_w_ready;
+    wire        fifo_w_ready_half;
+    wire        fifo_r_clk          = ice_st_spi_clk;
+    reg         fifo_r_trigger      = 0;
+    wire[7:0]   fifo_r_data;
+    wire        fifo_r_ready;
+    wire        fifo_r_ready_half;
+    
+    AFIFOChain #(
+        .W(8),
+        .N(AFIFOChainCount)
+    ) AFIFOChain(
+        .rst_(fifo_rst_),
+        .clk(fifo_clk),
+        
+        .w_clk(fifo_w_clk),
+        .w_trigger(fifo_w_trigger),
+        .w_data(fifo_w_data),
+        .w_ready(fifo_w_ready),
+        .w_ready_half(fifo_w_ready_half),
+        
+        .r_clk(fifo_r_clk),
+        .r_trigger(fifo_r_trigger),
+        .r_data(fifo_r_data),
+        .r_ready(fifo_r_ready),
+        .r_ready_half(fifo_r_ready_half)
+    );
+    
+    // ====================
+    // Producer
+    // ====================
+    reg[1:0] prod_state = 0;
+    reg[10:0] prod_counter = 0;
+    
+    reg spi_prodTrigger = 0;
+    `TogglePulse(prod_trigger, spi_prodTrigger, posedge, prod_clk);
+    
+    always @(posedge prod_clk) begin
+        fifo_w_trigger <= 0;
+        fifo_w_data <= fifo_w_data+1;
+        prod_counter <= prod_counter+1;
+        
+        if (fifo_w_trigger) begin
+            if (fifo_w_ready) begin
+                $display("Wrote: 0x%x", fifo_w_data);
+            
+            // Handle dropped writes
+            end else begin
+                $display("Error: !fifo_w_ready while writing...");
+                ice_led <= ~0;
+                `Finish;
+            end
+        end
+        
+        case (prod_state)
+        0: begin
+        end
+        
+        1: begin
+            if (fifo_w_ready_half) begin
+                prod_state <= 2;
+            end
+        end
+        
+        2: begin
+            fifo_w_trigger <= 1;
+            fifo_w_data <= 0;
+            prod_counter <= 1;
+            prod_state <= 3;
+        end
+        
+        3: begin
+            fifo_w_trigger <= 1;
+            if (&prod_counter) begin
+                prod_state <= 1;
+            end
+        end
+        endcase
+        
+        if (prod_trigger) prod_state <= 1;
+    end
+    
+    
     // ====================
     // SPI State Machine
     // ====================
@@ -50,8 +159,9 @@ module Top(
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
-    localparam SPI_State_Nop        = 4;    // +0
-    localparam SPI_State_Count      = 5;
+    localparam SPI_State_ImgReadout = 4;    // +1
+    localparam SPI_State_Nop        = 6;    // +0
+    localparam SPI_State_Count      = 7;
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     
     always @(posedge ice_st_spi_clk, negedge spi_cs) begin
@@ -104,6 +214,12 @@ module Top(
                     spi_state <= SPI_State_RespOut;
                 end
                 
+                `Msg_Type_ImgReadout: begin
+                    $display("[SPI] Got Msg_Type_ImgReadout");
+                    spi_prodTrigger <= !spi_prodTrigger;
+                    spi_state <= SPI_State_ImgReadout;
+                end
+                
                 `Msg_Type_Nop: begin
                     $display("[SPI] Got Msg_Type_Nop");
                 end
@@ -120,6 +236,13 @@ module Top(
                 if (!spi_doutCounter) begin
                     spi_doutReg <= `LeftBits(spi_resp, 0, 16);
                 end
+            end
+            
+            SPI_State_ImgReadout: begin
+            end
+            
+            SPI_State_ImgReadout+1: begin
+                spi_d_outEn <= 1;
             end
             
             SPI_State_Nop: begin
