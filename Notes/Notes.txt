@@ -7,6 +7,18 @@
             - Start SD data transfer
             - Terminate SD data transfer
             - Signal whether SD data is available
+                - Use ICE_ST_SPI_D0
+                    - Problem: ICE_ST_SPI_Dx uses clocked registers, so a clock is needed to change their value
+                    - Solutions:
+                        - Use OUTPUT_ENABLE, which isn't clocked
+                            - STM32: enable pull-down resistor
+                            - ICE40: OUTPUT_ENABLE=1
+                            - ICE40: drive ICE_ST_SPI_D0 low to remove remaining voltage
+                            - ICE40: OUTPUT_ENABLE=0
+                            - ICE40: spi_doutReg=~0
+                            - ICE40: wait for data available
+                            - ICE40: OUTPUT_ENABLE=1
+                - Use separate pin
     
     - STLoader/STApp wMaxPacketSize for all endpoints can only be 512 bytes for high-speed devices
         - To save FIFO space, only have 2 endpoints (DataOut and DataIn), without a separate CmdOut endpoint?
