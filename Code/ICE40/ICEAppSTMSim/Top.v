@@ -11,8 +11,10 @@ module Testbench();
     reg         ice_st_spi_clk = 0;
     reg         ice_st_spi_cs_ = 1;
     wire[7:0]   ice_st_spi_d;
+    wire        ice_st_spi_d_ready;
+    wire        ice_st_spi_d_ready_rev4bodge;
     
-    wire[3:0]   ice_led;
+    wire[2:0]   ice_led;
     
     Top Top(.*);
     
@@ -42,10 +44,10 @@ module Testbench();
     assign spi_dataOut[3:0] = `LeftBits(spi_dataOutReg,0,4);
     
     localparam ice_st_spi_clk_HALF_PERIOD = 8; // 64 MHz
-    task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
+    
+    task _SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
         reg[15:0] i;
         
-        ice_st_spi_cs_ = 0;
         spi_dataOutReg = {typ, arg};
         spi_dataOutEn = 1;
             
@@ -81,26 +83,42 @@ module Testbench();
                     ice_st_spi_clk = 0;
                 end
             end
+        
+    end endtask
+    
+    task _ReadResp(input[31:0] len); begin
+        reg[15:0] i;
+        // Clock in response (if one is sent for this type of message)
+        for (i=0; i<len/8; i++) begin
+            #(ice_st_spi_clk_HALF_PERIOD);
+            ice_st_spi_clk = 1;
+            
+                if (!i[0]) spi_dinReg = 0;
+                spi_dinReg = spi_dinReg<<4|{4'b0000, spi_dataIn[3:0], 4'b0000, spi_dataIn[7:4]};
+                
+                spi_resp = spi_resp<<8;
+                if (i[0]) spi_resp = spi_resp|spi_dinReg;
+            
+            #(ice_st_spi_clk_HALF_PERIOD);
+            ice_st_spi_clk = 0;
+        end
+    end endtask
+    
+    task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
+        reg[15:0] i;
+        
+        ice_st_spi_cs_ = 0;
+            
+            _SendMsg(typ, arg);
             
             // Clock in response (if one is sent for this type of message)
             if (typ[`Msg_Type_Resp_Bits]) begin
-                for (i=0; i<`Resp_Len/8; i++) begin
-                    #(ice_st_spi_clk_HALF_PERIOD);
-                    ice_st_spi_clk = 1;
-                    
-                        if (!i[0]) spi_dinReg = 0;
-                        spi_dinReg = spi_dinReg<<4|{4'b0000, spi_dataIn[3:0], 4'b0000, spi_dataIn[7:4]};
-                        
-                        spi_resp = spi_resp<<8;
-                        if (i[0]) spi_resp = spi_resp|spi_dinReg;
-                    
-                    #(ice_st_spi_clk_HALF_PERIOD);
-                    ice_st_spi_clk = 0;
-                end
+                _ReadResp(`Resp_Len);
             end
         
         ice_st_spi_cs_ = 1;
         #1; // Allow ice_st_spi_cs_ to take effect
+    
     end endtask
     
     task TestNop; begin
@@ -123,6 +141,43 @@ module Testbench();
         end
     end endtask
     
+    task TestSDReadout; begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        reg done;
+        reg[15:0] i;
+        parameter ChunkLen = 4096*4; // Each chunk consists of 4x RAM4K
+        parameter WordLen = 16;
+        
+        $display("\n[Testbench] ========== TestSDReadout ==========");
+        arg = 0;
+        
+        ice_st_spi_cs_ = 0;
+        
+            _SendMsg(`Msg_Type_SDReadout, arg);
+            
+            done = 0;
+            while (!done) begin
+                #100;
+                $display("Waiting ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
+                if (ice_st_spi_d_ready) begin
+                    done = 1;
+                end
+            end
+            
+            // Dummy cycles
+            _ReadResp(128);
+            
+            for (i=0; i<(ChunkLen/WordLen); i++) begin
+                _ReadResp(WordLen);
+                $display("Read word: %x", spi_resp[WordLen  -1 -: 8]);
+                $display("Read word: %x", spi_resp[WordLen-8-1 -: 8]);
+                // `Finish;
+            end
+        
+        ice_st_spi_cs_ = 1;
+        
+    end endtask
+    
     initial begin
         // // Pulse the clock to get Top's SB_IO initialized.
         // // This is necessary because because its OUTPUT_ENABLE is x
@@ -140,8 +195,7 @@ module Testbench();
         TestEcho(56'h123456789ABCDE);
         TestNop();
         
-        SendMsg(`Msg_Type_ImgReadout, 0);
-        
+        TestSDReadout;
         
         // `Finish;
     end

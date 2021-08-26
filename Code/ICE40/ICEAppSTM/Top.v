@@ -11,9 +11,11 @@ module Top(
     input wire          ice_st_spi_clk,
     input wire          ice_st_spi_cs_,
     inout wire[7:0]     ice_st_spi_d,
+    output wire         ice_st_spi_d_ready,
+    output wire         ice_st_spi_d_ready_rev4bodge,
     
     // LED port
-    output reg[3:0]     ice_led = 0
+    output reg[2:0]     ice_led = 0
 );
     // ====================
     // Producer Clock (102 MHz)
@@ -31,7 +33,7 @@ module Top(
     // ====================
     // AFIFOChain
     // ====================
-    localparam AFIFOChainCount = 8; // 4096 bytes total, readable in chunks of 2048
+    localparam AFIFOChainCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
     
     wire        fifo_rst_           = 1;
     wire        fifo_prop_clk       = prod_clk;
@@ -60,13 +62,11 @@ module Top(
         .w_trigger(fifo_w_trigger),
         .w_data(fifo_w_data),
         .w_ready(fifo_w_ready),
-        .w_ready_half(fifo_w_ready_half),
         
         .r_clk(fifo_r_clk),
         .r_trigger(fifo_r_trigger),
         .r_data(fifo_r_data),
-        .r_ready(fifo_r_ready),
-        .r_ready_half(fifo_r_ready_half)
+        .r_ready(fifo_r_ready)
     );
     
     // ====================
@@ -146,9 +146,14 @@ module Top(
     reg[0:0] spi_doutCounter = 0;
     reg[`Msg_Len-1:0] spi_dinReg = 0;
     reg[15:0] spi_doutReg = 0;
+    reg[15:0] spi_doutNext = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
+    
+    localparam SDReadoutLen = ((AFIFOChainCount/2)*4096)/8;
+    localparam SDReadoutCount = SDReadoutLen+3;
+    reg[`RegWidth(SDReadoutCount)-1:0] spi_sdReadoutCounter = 0;
     
     wire spi_cs;
     reg spi_d_outEn = 0;
@@ -162,7 +167,7 @@ module Top(
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
-    localparam SPI_State_ImgReadout = 4;    // +1
+    localparam SPI_State_SDReadout  = 4;    // +1
     localparam SPI_State_Nop        = 6;    // +0
     localparam SPI_State_Count      = 7;
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
@@ -172,16 +177,20 @@ module Top(
         if (!spi_cs) begin
             spi_state <= SPI_State_MsgIn;
             spi_d_outEn <= 0;
+            fifo_r_trigger <= 0;
         
         end else begin
             // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
             // See MsgCycleCount comment above.
             spi_dinReg <= spi_dinReg<<4|spi_d_in[3:0];
             spi_dinCounter <= spi_dinCounter-1;
-            spi_doutReg <= spi_doutReg<<4|4'b0;
+            spi_doutReg <= spi_doutReg<<4;
+            spi_doutNext <= spi_doutNext<<8;
             spi_doutCounter <= spi_doutCounter-1;
             spi_d_outEn <= 0;
             spi_resp <= spi_resp<<8|8'b0;
+            fifo_r_trigger <= 0;
+            spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
             
             case (spi_state)
             SPI_State_MsgIn: begin
@@ -217,10 +226,10 @@ module Top(
                     spi_state <= SPI_State_RespOut;
                 end
                 
-                `Msg_Type_ImgReadout: begin
-                    $display("[SPI] Got Msg_Type_ImgReadout");
+                `Msg_Type_SDReadout: begin
+                    $display("[SPI] Got Msg_Type_SDReadout");
                     spi_prodTrigger <= !spi_prodTrigger;
-                    spi_state <= SPI_State_ImgReadout;
+                    spi_state <= SPI_State_SDReadout;
                 end
                 
                 `Msg_Type_Nop: begin
@@ -241,11 +250,31 @@ module Top(
                 end
             end
             
-            SPI_State_ImgReadout: begin
+            SPI_State_SDReadout: begin
+                spi_sdReadoutCounter <= 11;
+                spi_state <= SPI_State_SDReadout+1;
             end
             
-            SPI_State_ImgReadout+1: begin
+            SPI_State_SDReadout+1: begin
+                spi_doutCounter <= 1;
+                if (!spi_sdReadoutCounter) begin
+                    spi_sdReadoutCounter <= SDReadoutCount;
+                    spi_state <= SPI_State_SDReadout+2;
+                end
+            end
+            
+            SPI_State_SDReadout+2: begin
                 spi_d_outEn <= 1;
+                spi_doutNext[7:0] <= fifo_r_data;
+                fifo_r_trigger <= 1;
+                
+                if (!spi_doutCounter) begin
+                    spi_doutReg <= spi_doutNext;
+                end
+                
+                if (!spi_sdReadoutCounter) begin
+                    spi_state <= SPI_State_SDReadout;
+                end
             end
             
             SPI_State_Nop: begin
@@ -283,5 +312,12 @@ module Top(
             .D_IN_0(spi_d_in[i])
         );
     end
+    
+    // ====================
+    // Pin: ice_st_spi_d_ready
+    // ====================
+    assign ice_st_spi_d_ready = fifo_prop_r_ready;
+    // Rev4 bodge
+    assign ice_st_spi_d_ready_rev4bodge = ice_st_spi_d_ready;
     
 endmodule
