@@ -18,6 +18,9 @@
                             - ICE40: spi_doutReg=~0
                             - ICE40: wait for data available
                             - ICE40: OUTPUT_ENABLE=1
+                        
+                        - Switch ice_st_spi_d's OUTPUT_CLK
+                            - Glitching could be an issue
                 - Use separate pin
     
     - STLoader/STApp wMaxPacketSize for all endpoints can only be 512 bytes for high-speed devices
