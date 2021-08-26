@@ -155,23 +155,25 @@ module Testbench();
         
             _SendMsg(`Msg_Type_SDReadout, arg);
             
-            done = 0;
-            while (!done) begin
-                #100;
-                $display("Waiting ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
-                if (ice_st_spi_d_ready) begin
-                    done = 1;
+            while (1) begin
+                done = 0;
+                while (!done) begin
+                    #100;
+                    $display("Waiting ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
+                    if (ice_st_spi_d_ready) begin
+                        done = 1;
+                    end
                 end
-            end
-            
-            // Dummy cycles
-            _ReadResp(128);
-            
-            for (i=0; i<(ChunkLen/WordLen); i++) begin
-                _ReadResp(WordLen);
-                $display("Read word: %x", spi_resp[WordLen  -1 -: 8]);
-                $display("Read word: %x", spi_resp[WordLen-8-1 -: 8]);
-                // `Finish;
+                
+                // Dummy cycles
+                _ReadResp(128);
+                
+                for (i=0; i<(ChunkLen/WordLen); i++) begin
+                    _ReadResp(WordLen);
+                    $display("Read word: %x", spi_resp[WordLen  -1 -: 8]);
+                    $display("Read word: %x", spi_resp[WordLen-8-1 -: 8]);
+                    // `Finish;
+                end
             end
         
         ice_st_spi_cs_ = 1;
