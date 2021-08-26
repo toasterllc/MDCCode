@@ -1,5 +1,10 @@
 - Rev5 Todo
     
+    - Create new connection:
+        - Name:     ICE_ST_SPI_D_READY
+        - Between:  ICE40.L5 <-> STM32.R3
+        - Purpose:  Signals that SD data is ready to be read from ICE40
+    
     - Consider moving ICE_MSP_SPI_DATA to K3
         - On Rev4, ICE_MSP_SPI_DATA is assigned to K1, which is a PIO pair with J1,
           forcing them to share the same clock. J1 is ram_dq[15], which uses `ram_clk`,
