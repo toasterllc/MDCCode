@@ -29,7 +29,7 @@ protected:
         __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
         
         // Configure our LEDs
-        _LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//        _LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         _LED3::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -37,7 +37,7 @@ protected:
     
     [[noreturn]] void abort() {
         for (bool x=true;; x=!x) {
-            _LED0::Write(x);
+//            _LED0::Write(x);
             _LED1::Write(x);
             _LED2::Write(x);
             _LED3::Write(x);
@@ -53,7 +53,7 @@ protected:
     _MSP430 _msp;
     
     // LEDs
-    using _LED0 = GPIO<GPIOPortF, GPIO_PIN_14>;
+//    using _LED0 = GPIO<GPIOPortF, GPIO_PIN_14>;
     using _LED1 = GPIO<GPIOPortE, GPIO_PIN_7>;
     using _LED2 = GPIO<GPIOPortE, GPIO_PIN_10>;
     using _LED3 = GPIO<GPIOPortE, GPIO_PIN_12>;
