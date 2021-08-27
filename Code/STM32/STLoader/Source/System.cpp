@@ -25,7 +25,7 @@ int main() {
 System::System() :
 // QSPI clock divider=5 => run QSPI clock at 21.3 MHz
 // QSPI alignment=byte, so we can transfer single bytes at a time
-_qspi(QSPI::Mode::Single, 5, QSPI::Align::Byte),
+_qspi(QSPI::Mode::Single, 5, QSPI::Align::Byte, QSPI::ChipSelect::Controlled),
 _bufs(_buf0, _buf1) {
 }
 
@@ -279,25 +279,25 @@ static void _qspiWrite(QSPI& qspi, const void* data, size_t len) {
 
 void System::_iceWrite(const Cmd& cmd) {
     // Configure ICE40 control GPIOs
-    _ICECRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICECDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICESPIClk::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICESPICS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Put ICE40 into configuration mode
-    _ICESPIClk::Write(1);
+    _ICE_ST_SPI_CLK::Write(1);
     
-    _ICESPICS_::Write(0);
-    _ICECRST_::Write(0);
+    _ICE_ST_SPI_CS_::Write(0);
+    _ICE_CRST_::Write(0);
     HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
     
-    _ICECRST_::Write(1);
+    _ICE_CRST_::Write(1);
     HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
     
-    // Release chip-select before we give control of _ICESPIClk/_ICESPICS_ to QSPI
-    _ICESPICS_::Write(1);
+    // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
+    _ICE_ST_SPI_CS_::Write(1);
     
-    // Have QSPI take over _ICESPIClk/_ICESPICS_
+    // Have QSPI take over _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_
     _qspi.config();
     
     // Send 8 clocks and wait for them to complete
@@ -318,7 +318,7 @@ void System::_iceWriteFinish() {
     
     bool ok = false;
     for (int i=0; i<10; i++) {
-        ok = _ICECDONE::Read();
+        ok = _ICE_CDONE::Read();
         if (ok) break;
         HAL_Delay(1); // Sleep 1 ms
     }
@@ -624,7 +624,7 @@ void System::_mspDebugHandleRead(size_t len) {
 
 void System::_ledSet(const Cmd& cmd) {
     switch (cmd.arg.LEDSet.idx) {
-    case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
+//    case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
     case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
     case 2: _LED2::Write(cmd.arg.LEDSet.on); break;
     case 3: _LED3::Write(cmd.arg.LEDSet.on); break;

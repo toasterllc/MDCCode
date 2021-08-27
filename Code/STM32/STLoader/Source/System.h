@@ -64,10 +64,10 @@ private:
     
     USB _usb;
     QSPI _qspi;
-    using _ICECRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
-    using _ICECDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
-    using _ICESPIClk = GPIO<GPIOPortB, GPIO_PIN_2>;
-    using _ICESPICS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
+    using _ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
+    using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
+    using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
+    using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     
     STLoader::Op _op = STLoader::Op::None;
     size_t _opDataRem = 0;
