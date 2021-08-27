@@ -148,6 +148,7 @@ module Top(
     reg[15:0] spi_doutReg = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
+    wire spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
     
     localparam SDReadoutLen = ((AFIFOChainCount/2)*4096)/8;
@@ -219,15 +220,13 @@ module Top(
             end
             
             SPI_State_MsgIn+2: begin
-                // By default, go to SPI_State_Nop
-                spi_state <= SPI_State_Nop;
+                spi_state <= (spi_msgResp ? SPI_State_RespOut : SPI_State_Nop);
                 spi_doutCounter <= 0;
                 
                 case (spi_msgType)
                 `Msg_Type_Echo: begin
                     $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
                     spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
-                    spi_state <= SPI_State_RespOut;
                 end
                 
                 `Msg_Type_SDReadout: begin
@@ -249,8 +248,6 @@ module Top(
             
             SPI_State_RespOut: begin
                 spi_d_outEn <= 1;
-                // $display("SPI_State_RespOut: %0d", spi_doutCounter);
-                // spi_doutNext[7:0] <= `LeftBits(spi_resp, 0, 8);
                 if (!spi_doutCounter) begin
                     spi_doutReg <= `LeftBits(spi_resp, 0, 16);
                 end
