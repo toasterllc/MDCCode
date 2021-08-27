@@ -146,14 +146,15 @@ module Top(
     reg[0:0] spi_doutCounter = 0;
     reg[`Msg_Len-1:0] spi_dinReg = 0;
     reg[15:0] spi_doutReg = 0;
-    reg[15:0] spi_doutNext = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
     
     localparam SDReadoutLen = ((AFIFOChainCount/2)*4096)/8;
     localparam SDReadoutCount = SDReadoutLen+3;
+    reg[15:0] spi_sdReadoutWord = 0;
     reg[`RegWidth(SDReadoutCount)-1:0] spi_sdReadoutCounter = 0;
+    reg spi_sdReadoutEnding = 0;
     
     wire spi_cs;
     reg spi_d_outEn = 0;
@@ -167,9 +168,9 @@ module Top(
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
-    localparam SPI_State_SDReadout  = 4;    // +1
-    localparam SPI_State_Nop        = 6;    // +0
-    localparam SPI_State_Count      = 7;
+    localparam SPI_State_SDReadout  = 4;    // +3
+    localparam SPI_State_Nop        = 8;    // +0
+    localparam SPI_State_Count      = 9;
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     
     always @(posedge ice_st_spi_clk, negedge spi_cs) begin
@@ -184,13 +185,16 @@ module Top(
             // See MsgCycleCount comment above.
             spi_dinReg <= spi_dinReg<<4|spi_d_in[3:0];
             spi_dinCounter <= spi_dinCounter-1;
-            spi_doutReg <= spi_doutReg<<4;
-            spi_doutNext <= spi_doutNext<<8;
+            spi_sdReadoutWord <= spi_sdReadoutWord<<8;
             spi_doutCounter <= spi_doutCounter-1;
             spi_d_outEn <= 0;
             spi_resp <= spi_resp<<8|8'b0;
             fifo_r_trigger <= 0;
             spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
+            if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
+            
+            spi_doutReg <= spi_doutReg<<4;
+            // if (!spi_doutCounter) spi_doutReg <= spi_doutNext;
             
             case (spi_state)
             SPI_State_MsgIn: begin
@@ -245,35 +249,43 @@ module Top(
             
             SPI_State_RespOut: begin
                 spi_d_outEn <= 1;
+                // $display("SPI_State_RespOut: %0d", spi_doutCounter);
+                // spi_doutNext[7:0] <= `LeftBits(spi_resp, 0, 8);
                 if (!spi_doutCounter) begin
                     spi_doutReg <= `LeftBits(spi_resp, 0, 16);
                 end
             end
             
             SPI_State_SDReadout: begin
-                spi_sdReadoutCounter <= 11;
+                // Delay state
                 spi_state <= SPI_State_SDReadout+1;
             end
             
             SPI_State_SDReadout+1: begin
-                spi_doutCounter <= 1;
-                if (!spi_sdReadoutCounter) begin
-                    spi_sdReadoutCounter <= SDReadoutCount;
-                    spi_state <= SPI_State_SDReadout+2;
-                end
+                spi_sdReadoutCounter <= 2;
+                spi_state <= SPI_State_SDReadout+2;
             end
             
             SPI_State_SDReadout+2: begin
+                spi_doutCounter <= 1;
+                if (!spi_sdReadoutCounter) begin
+                    spi_sdReadoutCounter <= SDReadoutCount;
+                    spi_sdReadoutEnding <= 0;
+                    spi_state <= SPI_State_SDReadout+3;
+                end
+            end
+            
+            SPI_State_SDReadout+3: begin
                 spi_d_outEn <= 1;
-                spi_doutNext[7:0] <= fifo_r_data;
-                fifo_r_trigger <= 1;
+                spi_sdReadoutWord[7:0] <= fifo_r_data;
+                fifo_r_trigger <= !spi_sdReadoutEnding;
                 
                 if (!spi_doutCounter) begin
-                    spi_doutReg <= spi_doutNext;
+                    spi_doutReg <= spi_sdReadoutWord;
                 end
                 
                 if (!spi_sdReadoutCounter) begin
-                    spi_state <= SPI_State_SDReadout;
+                    spi_state <= SPI_State_SDReadout+1;
                 end
             end
             

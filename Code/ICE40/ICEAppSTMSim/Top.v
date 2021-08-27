@@ -59,6 +59,7 @@ module Testbench();
                 ice_st_spi_clk = 0;
             end
             
+            // Clock out message
             for (i=0; i<`Msg_Len/4; i++) begin
                 #(ice_st_spi_clk_HALF_PERIOD);
                 ice_st_spi_clk = 1;
@@ -142,6 +143,11 @@ module Testbench();
     end endtask
     
     task TestSDReadout; begin
+        reg[7:0] word;
+        reg[7:0] lastWord;
+        reg[7:0] expectedWord;
+        reg lastWordInit;
+        
         reg[`Msg_Arg_Len-1:0] arg;
         reg done;
         reg[15:0] i;
@@ -155,6 +161,7 @@ module Testbench();
         
             _SendMsg(`Msg_Type_SDReadout, arg);
             
+            lastWordInit = 0;
             while (1) begin
                 done = 0;
                 while (!done) begin
@@ -165,13 +172,37 @@ module Testbench();
                     end
                 end
                 
-                // Dummy cycles
-                _ReadResp(128);
+                // Dummy cycles (8)
+                _ReadResp(8*8);
                 
                 for (i=0; i<(ChunkLen/WordLen); i++) begin
                     _ReadResp(WordLen);
-                    $display("Read word: %x", spi_resp[WordLen  -1 -: 8]);
-                    $display("Read word: %x", spi_resp[WordLen-8-1 -: 8]);
+                    
+                    word = spi_resp[WordLen  -1 -: 8];
+                    $display("Read word: %x", word);
+                    
+                    if (lastWordInit) begin
+                        expectedWord = lastWord+1;
+                        if (word !== expectedWord) begin
+                            $display("Bad word; expected:%x got:%x", expectedWord, word);
+                            #100;
+                            `Finish;
+                        end
+                    end
+                    
+                    lastWord = word;
+                    lastWordInit = 1;
+                    word = spi_resp[WordLen-8-1 -: 8];
+                    $display("Read word: %x", word);
+                    
+                    expectedWord = lastWord+1;
+                    if (word !== expectedWord) begin
+                        $display("Bad word; expected:%x got:%x", expectedWord, word);
+                        #100;
+                        `Finish;
+                    end
+                    
+                    lastWord = word;
                     // `Finish;
                 end
             end
@@ -199,6 +230,6 @@ module Testbench();
         
         TestSDReadout;
         
-        // `Finish;
+        `Finish;
     end
 endmodule
