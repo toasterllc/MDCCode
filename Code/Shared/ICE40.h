@@ -190,6 +190,10 @@ private:
 };
 
 struct SDReadoutMsg : Msg {
+    // ReadoutLen: the number of bytes in a single chunk
+    // After `ReadoutLen` bytes are read, the SPI master must wait
+    // until ICE_ST_SPI_D_READY=1 to clock out more data
+    static constexpr size_t ReadoutLen = 512*4;
     SDReadoutMsg() {
         type = MsgType::StartBit | 0x05;
     }
