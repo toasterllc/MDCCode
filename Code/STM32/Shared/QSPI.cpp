@@ -1,10 +1,11 @@
 #include "QSPI.h"
 #include "Assert.h"
 
-QSPI::QSPI(Mode mode, uint8_t clkDivider, Align align) :
+QSPI::QSPI(Mode mode, uint8_t clkDivider, Align align, ChipSelect chipSelect) :
 _mode(mode),
 _clkDivider(clkDivider),
-_align(align)
+_align(align),
+_chipSelect(chipSelect)
 {}
 
 void QSPI::init() {
@@ -62,7 +63,8 @@ void QSPI::init() {
 
 void QSPI::config() {
     _Clk::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-    _CS::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+    if (_chipSelect == ChipSelect::Controlled)
+        _CS::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
     _D0::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
     _D1::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
     _D2::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);

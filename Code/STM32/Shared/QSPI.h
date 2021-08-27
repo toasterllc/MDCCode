@@ -10,15 +10,20 @@ class QSPI {
 public:
     enum class Mode {
         Single,
-        Dual
+        Dual,
     };
     
     enum class Align {
         Byte,
-        Word // Best performance for large transfers
+        Word, // Best performance for large transfers
     };
     
-    QSPI(Mode mode, uint8_t clkDivider, Align align);
+    enum class ChipSelect {
+        Controlled,
+        Uncontrolled,
+    };
+    
+    QSPI(Mode mode, uint8_t clkDivider, Align align, ChipSelect chipSelect);
     void init();
     void config(); // Reconfigures GPIOs, in case they're reused for some other purpose
     
@@ -40,6 +45,7 @@ private:
     Mode _mode = Mode::Single;
     uint8_t _clkDivider = 0;
     Align _align = Align::Byte;
+    ChipSelect _chipSelect = ChipSelect::Uncontrolled;
     
     QSPI_HandleTypeDef _device;
     DMA_HandleTypeDef _dma;
