@@ -30,10 +30,10 @@ int main(int argc, const char* argv[]) {
         MDCDevice& device = devices[0];
         auto& usbDevice = device.usbDevice();
         
-//        STApp::Cmd cmd = {
-//            .op = Op::SDRead,
-//        };
-//        usbDevice.write(STApp::Endpoints::CmdOut, cmd);
+        STApp::Cmd cmd = {
+            .op = Op::SDRead,
+        };
+        usbDevice.write(STApp::Endpoints::CmdOut, cmd);
         
 //        constexpr size_t BufCap = 512;
 //        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);

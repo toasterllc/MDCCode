@@ -33,6 +33,8 @@ private:
     // Peripherals
     USB _usb;
     QSPI _qspi;
+    using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
+    using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
     
     STApp::Op _op = STApp::Op::None;
     size_t _opDataRem = 0;
