@@ -92,14 +92,36 @@ module AFIFO #(
     
     wire[10:0] WADDR = w_baddr[N-1:0];
     wire[10:0] RADDR = r_baddrNext[N-1:0];
-    
     wire[15:0] WDATA;
     generate
         case (W)
-        16: assign WDATA[15:0]                                                                          = w_data;
-        8:  assign {WDATA[14], WDATA[12], WDATA[10], WDATA[8], WDATA[6], WDATA[4], WDATA[2], WDATA[0]}  = w_data;
-        4:  assign {WDATA[13], WDATA[9], WDATA[5], WDATA[1]}                                            = w_data;
-        2:  assign {WDATA[11], WDATA[3]}                                                                = w_data;
+        16: assign WDATA = {
+            w_data[15], w_data[14], w_data[13], w_data[12],
+            w_data[11], w_data[10], w_data[ 9], w_data[ 8],
+            w_data[ 7], w_data[ 6], w_data[ 5], w_data[ 4],
+            w_data[ 3], w_data[ 2], w_data[ 1], w_data[ 0]
+        };
+        
+        8: assign WDATA = {
+            1'bx,       w_data[7],  1'bx,       w_data[6],
+            1'bx,       w_data[5],  1'bx,       w_data[4],
+            1'bx,       w_data[3],  1'bx,       w_data[2],
+            1'bx,       w_data[1],  1'bx,       w_data[0]
+        };
+        
+        4: assign WDATA = {
+            1'bx,       1'bx,       w_data[3],  1'bx,
+            1'bx,       1'bx,       w_data[2],  1'bx,
+            1'bx,       1'bx,       w_data[1],  1'bx,
+            1'bx,       1'bx,       w_data[0],  1'bx
+        };
+        
+        2: assign WDATA = {
+            1'bx,       1'bx,       1'bx,       1'bx,
+            w_data[1],  1'bx,       1'bx,       1'bx,
+            1'bx,       1'bx,       1'bx,       1'bx,
+            w_data[0],  1'bx,       1'bx,       1'bx
+        };
         endcase
     endgenerate
     
