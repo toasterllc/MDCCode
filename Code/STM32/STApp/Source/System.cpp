@@ -14,62 +14,62 @@ using namespace STApp;
 System::System() :
 // QSPI clock divider=1 => run QSPI clock at 64 MHz
 // QSPI alignment=word for high performance transfers
-_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word),
+_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
 _bufs(_buf0, _buf1) {
 }
 
-//static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) {
-//    uint8_t b[8];
-//    static_assert(sizeof(msg) == sizeof(b));
-//    memcpy(b, &msg, sizeof(b));
-//    
-//    // When dual-flash quadspi is enabled, the supplied address is
-//    // divided by 2, so we left-shift `addr` in anticipation of that.
-//    // But by doing so, we throw out the high bit of `msg`, so we
-//    // require it to be 0.
-//    AssertArg(!(b[0] & 0x80));
-//    
-//    return QSPI_CommandTypeDef{
-//        .Instruction = 0xFF,
-//        .InstructionMode = QSPI_INSTRUCTION_4_LINES,
-//        
-//        // When dual-flash quadspi is enabled, the supplied address is
-//        // divided by 2, so we left-shift `addr` in anticipation of that.
-//        .Address = (
-//            (uint32_t)b[0]<<24  |
-//            (uint32_t)b[1]<<16  |
-//            (uint32_t)b[2]<<8   |
-//            (uint32_t)b[3]<<0
-//        ) << 1,
-////            .Address = 0,
-//        .AddressSize = QSPI_ADDRESS_32_BITS,
-//        .AddressMode = QSPI_ADDRESS_4_LINES,
-//        
-//        .AlternateBytes = (
-//            (uint32_t)b[4]<<24  |
-//            (uint32_t)b[5]<<16  |
-//            (uint32_t)b[6]<<8   |
-//            (uint32_t)b[7]<<0
-//        ),
-////            .AlternateBytes = 0,
-//        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
-//        .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
-//        
-//        .DummyCycles = 4,
-//        
-//        .NbData = (uint32_t)respLen,
-//        .DataMode = (respLen ? QSPI_DATA_4_LINES : QSPI_DATA_NONE),
-//        
-//        .DdrMode = QSPI_DDR_MODE_DISABLE,
-//        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
-//        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
-//    };
-//}
-//
-//static void _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg) {
-//    qspi.command(_ice40QSPICmd(msg, 0));
-//    qspi.eventChannel.read(); // Wait for the transfer to complete
-//}
+static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) {
+    uint8_t b[8];
+    static_assert(sizeof(msg) == sizeof(b));
+    memcpy(b, &msg, sizeof(b));
+    
+    // When dual-flash quadspi is enabled, the supplied address is
+    // divided by 2, so we left-shift `addr` in anticipation of that.
+    // But by doing so, we throw out the high bit of `msg`, so we
+    // require it to be 0.
+    AssertArg(!(b[0] & 0x80));
+    
+    return QSPI_CommandTypeDef{
+        .Instruction = 0xFF,
+        .InstructionMode = QSPI_INSTRUCTION_4_LINES,
+        
+        // When dual-flash quadspi is enabled, the supplied address is
+        // divided by 2, so we left-shift `addr` in anticipation of that.
+        .Address = (
+            (uint32_t)b[0]<<24  |
+            (uint32_t)b[1]<<16  |
+            (uint32_t)b[2]<<8   |
+            (uint32_t)b[3]<<0
+        ) << 1,
+//            .Address = 0,
+        .AddressSize = QSPI_ADDRESS_32_BITS,
+        .AddressMode = QSPI_ADDRESS_4_LINES,
+        
+        .AlternateBytes = (
+            (uint32_t)b[4]<<24  |
+            (uint32_t)b[5]<<16  |
+            (uint32_t)b[6]<<8   |
+            (uint32_t)b[7]<<0
+        ),
+//            .AlternateBytes = 0,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_32_BITS,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES,
+        
+        .DummyCycles = 4,
+        
+        .NbData = (uint32_t)respLen,
+        .DataMode = (respLen ? QSPI_DATA_4_LINES : QSPI_DATA_NONE),
+        
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+}
+
+static void _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg) {
+    qspi.command(_ice40QSPICmd(msg, 0));
+    qspi.eventChannel.read(); // Wait for the transfer to complete
+}
 //
 //template <typename T>
 //static T _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg) {
@@ -92,6 +92,9 @@ void System::init() {
     _super::init();
     _usb.init();
     _qspi.init();
+    
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+    _ICE_ST_SPI_CS_::Write(1);
 }
 
 void System::_handleEvent() {
@@ -149,13 +152,6 @@ void System::_usb_reset(bool usbResetFinish) {
         // Prepare to receive commands
         _usb.cmdRecv();
     irq.restore();
-    
-    // Update state
-    _op = Op::SDRead;
-    _opDataRem = 0xFFFFFE00; // divisible by 512
-    // Advance state machine
-    _sdRead_updateState();
-    
     
 //    uint8_t i = 0;
 //    for (uint8_t& x : _buf0) {
@@ -288,12 +284,16 @@ void System::_usb_dataSendHandle(const USB::DataSend& ev) {
 
 #pragma mark - SD Reading
 
-constexpr size_t SDReadChunkLen = 512*4;
-
 void System::_sdRead(const Cmd& cmd) {
     // Update state
     _op = cmd.op;
     _opDataRem = 0xFFFFFE00; // divisible by 512
+    
+    // Send the SDReadout message, which causes us to enter the SD-readout mode until
+    // we release the chip select
+    _ICE_ST_SPI_CS_::Write(0);
+    _ice40Transfer(_qspi, ICE40::SDReadoutMsg());
+    
     // Advance state machine
     _sdRead_updateState();
 }
@@ -306,34 +306,17 @@ void System::_sdRead_qspiReadToBuf() {
     
     auto& buf = _bufs.back();
     
-    {
-        using SPID0 = GPIO<GPIOPortC, GPIO_PIN_9>;
-        while (SPID0::Read());
-//        volatile bool a = SPID0::Read();
-//        uint32_t b = 0;
-//        QSPI_CommandTypeDef qspiCmd = {
-//            .InstructionMode = QSPI_INSTRUCTION_NONE,
-//            .AddressMode = QSPI_ADDRESS_NONE,
-//            .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
-//            .DummyCycles = 0,
-//            .NbData = sizeof(b),
-//            .DataMode = QSPI_DATA_4_LINES,
-//            .DdrMode = QSPI_DDR_MODE_DISABLE,
-//            .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
-//            .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
-//        };
-//        _qspi.read(qspiCmd, &b, sizeof(b));
-//        _qspi.eventChannel.read(); // Wait for read to complete
-    }
+    // Wait for ICE40 to signal that data is ready
+    while (!_ICE_ST_SPI_D_READY::Read());
     
     // TODO: ensure that the byte length is aligned to a u32 boundary, since QSPI requires that!
-    // TODO: how do we handle lengths that aren't a multiple of SDReadChunkLen?
-    const size_t len = SDReadChunkLen;
+    // TODO: how do we handle lengths that aren't a multiple of ReadoutLen?
+    const size_t len = ICE40::SDReadoutMsg::ReadoutLen;
     QSPI_CommandTypeDef qspiCmd = {
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         .AddressMode = QSPI_ADDRESS_NONE,
         .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
-        .DummyCycles = 0,
+        .DummyCycles = 8,
         .NbData = (uint32_t)len,
         .DataMode = QSPI_DATA_4_LINES,
         .DdrMode = QSPI_DDR_MODE_DISABLE,
@@ -359,7 +342,7 @@ void System::_sdRead_qspiEventHandle(const QSPI::Signal& ev) {
     
     // If we can't read any more data into the producer buffer,
     // push it so the data will be sent over USB
-    if (buf.cap-buf.len < SDReadChunkLen) {
+    if (buf.cap-buf.len < ICE40::SDReadoutMsg::ReadoutLen) {
         _opDataRem -= buf.len;
         _bufs.push();
     }
@@ -428,6 +411,7 @@ void System::_sdRead_updateState() {
 }
 
 void System::_sdRead_finish() {
+    _ICE_ST_SPI_CS_::Write(1);
     _finishCmd(Status::OK);
 }
 
@@ -435,7 +419,7 @@ void System::_sdRead_finish() {
 
 void System::_ledSet(const Cmd& cmd) {
     switch (cmd.arg.LEDSet.idx) {
-    case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
+//    case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
     case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
     case 2: _LED2::Write(cmd.arg.LEDSet.on); break;
     case 3: _LED3::Write(cmd.arg.LEDSet.on); break;
