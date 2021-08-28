@@ -169,6 +169,21 @@ void System::_usb_reset(bool usbResetFinish) {
     _ice40Transfer(ICE40::EchoMsg(str), resp);
     Assert(!strcmp((char*)resp.payload, str));
     
+    
+    // Update state
+    _op = Op::SDRead;
+    _opDataRem = 0xFFFFFE00; // divisible by 512
+    
+    // Send the SDReadout message, which causes us to enter the SD-readout mode until
+    // we release the chip select
+    _ICE_ST_SPI_CS_::Write(0);
+    _ice40TransferNoCS(ICE40::SDReadoutMsg());
+    
+    // Advance state machine
+    _sdRead_updateState();
+    
+    
+    
 //    uint8_t i = 0;
 //    for (uint8_t& x : _buf0) {
 //        x = i;
@@ -315,8 +330,10 @@ void System::_sdRead_qspiReadToBuf() {
     
     auto& buf = _bufs.back();
     
-    // Wait for ICE40 to signal that data is ready
-    while (!_ICE_ST_SPI_D_READY::Read());
+    HAL_Delay(1);
+    
+//    // Wait for ICE40 to signal that data is ready
+//    while (!_ICE_ST_SPI_D_READY::Read());
     
     // TODO: ensure that the byte length is aligned to a u32 boundary, since QSPI requires that!
     // TODO: how do we handle lengths that aren't a multiple of ReadoutLen?
@@ -325,7 +342,7 @@ void System::_sdRead_qspiReadToBuf() {
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         .AddressMode = QSPI_ADDRESS_NONE,
         .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
-        .DummyCycles = 8,
+        .DummyCycles = 4,
         .NbData = (uint32_t)len,
         .DataMode = QSPI_DATA_4_LINES,
         .DdrMode = QSPI_DDR_MODE_DISABLE,
