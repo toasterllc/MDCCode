@@ -15,7 +15,7 @@ module Top(
     output wire         ice_st_spi_d_ready_rev4bodge,
     
     // LED port
-    output reg[2:0]     ice_led = 0
+    output reg[3:0]     ice_led = 0
 );
     // ====================
     // Producer Clock (102 MHz)
@@ -85,12 +85,11 @@ module Top(
         
         if (fifo_w_trigger) begin
             if (fifo_w_ready) begin
-                $display("Wrote: 0x%x", fifo_w_data);
+                // $display("Wrote word: 0x%x", fifo_w_data);
             
             // Handle dropped writes
             end else begin
                 $display("Error: !fifo_w_ready while writing...");
-                ice_led <= ~0;
                 `Finish;
             end
         end
@@ -147,7 +146,10 @@ module Top(
     reg[`Msg_Len-1:0] spi_dinReg = 0;
     reg[15:0] spi_doutReg = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
-    wire[`Msg_Type_Len-1:0] spi_msgType = spi_dinReg[`Msg_Type_Bits];
+    // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
+    // for setting the first bit to 1, so we fake the first bit.
+    wire[`Msg_Type_Len-1:0] spi_msgTypeRaw = spi_dinReg[`Msg_Type_Bits];
+    wire[`Msg_Type_Len-1:0] spi_msgType = {1'b1, spi_msgTypeRaw[`Msg_Type_Len-2:0]};
     wire spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
     
@@ -193,9 +195,7 @@ module Top(
             fifo_r_trigger <= 0;
             spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
             if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
-            
             spi_doutReg <= spi_doutReg<<4;
-            // if (!spi_doutCounter) spi_doutReg <= spi_doutNext;
             
             case (spi_state)
             SPI_State_MsgIn: begin
@@ -229,9 +229,15 @@ module Top(
                     spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
                 end
                 
+                // LEDSet
+                `Msg_Type_LEDSet: begin
+                    $display("[SPI] Got Msg_Type_LEDSet: %b", spi_msgArg[`Msg_Arg_LEDSet_Val_Bits]);
+                    ice_led <= spi_msgArg[`Msg_Arg_LEDSet_Val_Bits];
+                end
+                
                 `Msg_Type_SDReadout: begin
                     $display("[SPI] Got Msg_Type_SDReadout");
-                    spi_prodTrigger <= !spi_prodTrigger;
+                    spi_prodTrigger <= 1; // Only triggers once (once started, the producer continues forever)
                     spi_state <= SPI_State_SDReadout;
                 end
                 

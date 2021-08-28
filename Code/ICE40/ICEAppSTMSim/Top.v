@@ -14,7 +14,7 @@ module Testbench();
     wire        ice_st_spi_d_ready;
     wire        ice_st_spi_d_ready_rev4bodge;
     
-    wire[2:0]   ice_led;
+    wire[3:0]   ice_led;
     
     Top Top(.*);
     
@@ -142,6 +142,22 @@ module Testbench();
         end
     end endtask
     
+    task TestLEDSet(input[`Msg_Arg_LEDSet_Val_Len-1:0] val); begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        
+        $display("\n[Testbench] ========== TestLEDSet ==========");
+        arg = 0;
+        arg[`Msg_Arg_LEDSet_Val_Bits] = val;
+        
+        SendMsg(`Msg_Type_LEDSet, arg);
+        if (ice_led === val) begin
+            $display("[Testbench] ice_led matches (%b) ✅", ice_led);
+        end else begin
+            $display("[Testbench] ice_led doesn't match (expected: %b, got: %b) ❌", val, ice_led);
+            `Finish;
+        end
+    end endtask
+    
     task TestSDReadout; begin
         reg[7:0] word;
         reg[7:0] lastWord;
@@ -151,8 +167,10 @@ module Testbench();
         reg[`Msg_Arg_Len-1:0] arg;
         reg done;
         reg[15:0] i;
+        reg[15:0] chunkIdx;
         parameter ChunkLen = 4096*4; // Each chunk consists of 4x RAM4K
         parameter WordLen = 16;
+        parameter ChunkCount = 4; // Number of chunks to read
         
         $display("\n[Testbench] ========== TestSDReadout ==========");
         arg = 0;
@@ -162,11 +180,13 @@ module Testbench();
             _SendMsg(`Msg_Type_SDReadout, arg);
             
             lastWordInit = 0;
-            while (1) begin
+            for (chunkIdx=0; chunkIdx<ChunkCount; chunkIdx++) begin
+                $display("Reading chunk %0d/%0d...", chunkIdx+1, ChunkCount);
+                
                 done = 0;
                 while (!done) begin
-                    #100;
-                    $display("Waiting ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
+                    #2000;
+                    $display("Waiting for ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
                     if (ice_st_spi_d_ready) begin
                         done = 1;
                     end
@@ -179,12 +199,12 @@ module Testbench();
                     _ReadResp(WordLen);
                     
                     word = spi_resp[WordLen  -1 -: 8];
-                    $display("Read word: %x", word);
+                    // $display("Read word: %x", word);
                     
                     if (lastWordInit) begin
                         expectedWord = lastWord+1;
                         if (word !== expectedWord) begin
-                            $display("Bad word; expected:%x got:%x", expectedWord, word);
+                            $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
                             #100;
                             `Finish;
                         end
@@ -193,11 +213,11 @@ module Testbench();
                     lastWord = word;
                     lastWordInit = 1;
                     word = spi_resp[WordLen-8-1 -: 8];
-                    $display("Read word: %x", word);
+                    // $display("Read word: %x", word);
                     
                     expectedWord = lastWord+1;
                     if (word !== expectedWord) begin
-                        $display("Bad word; expected:%x got:%x", expectedWord, word);
+                        $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
                         #100;
                         `Finish;
                     end
@@ -208,6 +228,9 @@ module Testbench();
             end
         
         ice_st_spi_cs_ = 1;
+        #1; // Let ice_st_spi_cs_ take effect
+        
+        $display("[Testbench] TestSDReadout OK ✅");
         
     end endtask
     
@@ -226,8 +249,13 @@ module Testbench();
         TestNop();
         TestEcho(56'hCAFEBABEFEEDAA);
         TestEcho(56'h123456789ABCDE);
+        TestLEDSet(4'b1010);
+        TestLEDSet(4'b0101);
         TestNop();
         
+        TestSDReadout;
+        TestLEDSet(4'b1111);
+        TestSDReadout;
         TestSDReadout;
         
         `Finish;
