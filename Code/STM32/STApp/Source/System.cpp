@@ -25,9 +25,10 @@ static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) 
     
     // When dual-flash quadspi is enabled, the supplied address is
     // divided by 2, so we left-shift `addr` in anticipation of that.
-    // But by doing so, we throw out the high bit of `msg`, so we
-    // require it to be 0.
-    AssertArg(!(b[0] & 0x80));
+    // By doing so, we throw out the high bit of `msg`, however we
+    // wrote the ICE40 Verilog to fake the first bit as 1, so verify
+    // that the first bit is indeed 1.
+    AssertArg(b[0] & 0x80);
     
     return QSPI_CommandTypeDef{
         .Instruction = 0xFF,
@@ -70,15 +71,15 @@ static void _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg) {
     qspi.command(_ice40QSPICmd(msg, 0));
     qspi.eventChannel.read(); // Wait for the transfer to complete
 }
-//
-//template <typename T>
-//static T _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg) {
-//    T resp;
-//    qspi.read(_ice40QSPICmd(msg, sizeof(resp)), &resp, sizeof(resp));
-//    qspi.eventChannel.read(); // Wait for the transfer to complete
-//    return resp;
-//}
-//
+
+template <typename T>
+static T _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg) {
+    T resp;
+    qspi.read(_ice40QSPICmd(msg, sizeof(resp)), &resp, sizeof(resp));
+    qspi.eventChannel.read(); // Wait for the transfer to complete
+    return resp;
+}
+
 //static void _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg, void* resp, size_t respLen) {
 //    qspi.read(_ice40QSPICmd(msg, respLen), resp, respLen);
 //    qspi.eventChannel.read(); // Wait for the transfer to complete
@@ -153,6 +154,13 @@ void System::_usb_reset(bool usbResetFinish) {
         _usb.cmdRecv();
     irq.restore();
     
+    // Confirm that we can communicate with the ICE40.
+    // Interrupts need to be enabled for this, since _ice40Transfer()
+    // waits for a response on qspi.eventChannel.
+    char str[] = "halla";
+    auto status = _ice40Transfer<ICE40::EchoResp>(_qspi, ICE40::EchoMsg(str));
+    Assert(!strcmp((char*)status.payload, str));
+    
 //    uint8_t i = 0;
 //    for (uint8_t& x : _buf0) {
 //        x = i;
@@ -195,13 +203,6 @@ void System::_usb_reset(bool usbResetFinish) {
 //        
 //        for (volatile int i=0; i<1; i++);
 //    }
-    
-//    // Confirm that we can communicate with the ICE40.
-//    // Interrupts need to be enabled for this, since _ice40Transfer()
-//    // waits for a response on qspi.eventChannel.
-//    char str[] = "halla";
-//    auto status = _ice40Transfer<EchoResp>(_qspi, EchoMsg(str));
-//    Assert(!strcmp((char*)status.payload, str));
 }
 
 void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
