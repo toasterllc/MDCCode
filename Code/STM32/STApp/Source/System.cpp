@@ -31,7 +31,9 @@ static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) 
     AssertArg(b[0] & 0x80);
     
     return QSPI_CommandTypeDef{
-        .Instruction = 0xFF,
+        // Use instruction stage to introduce 2 dummy cycles, to workaround an
+        // apparent STM32 bug that always sends the first nibble as 0xF.
+        .Instruction = 0x00,
         .InstructionMode = QSPI_INSTRUCTION_4_LINES,
         
         // When dual-flash quadspi is enabled, the supplied address is
@@ -65,19 +67,6 @@ static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) 
         .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
         .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
     };
-}
-
-static void _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg) {
-    qspi.command(_ice40QSPICmd(msg, 0));
-    qspi.eventChannel.read(); // Wait for the transfer to complete
-}
-
-template <typename T>
-static T _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg) {
-    T resp;
-    qspi.read(_ice40QSPICmd(msg, sizeof(resp)), &resp, sizeof(resp));
-    qspi.eventChannel.read(); // Wait for the transfer to complete
-    return resp;
 }
 
 //static void _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg, void* resp, size_t respLen) {
@@ -137,6 +126,24 @@ void System::_finishCmd(Status status) {
     _usb_sendFromBuf();
 }
 
+void System::_ice40TransferNoCS(const ICE40::Msg& msg) {
+    _qspi.command(_ice40QSPICmd(msg, 0));
+    _qspi.eventChannel.read(); // Wait for the transfer to complete
+}
+
+void System::_ice40Transfer(const ICE40::Msg& msg) {
+    _ICE_ST_SPI_CS_::Write(0);
+    _ice40TransferNoCS(msg);
+    _ICE_ST_SPI_CS_::Write(1);
+}
+
+void System::_ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
+    _ICE_ST_SPI_CS_::Write(0);
+    _qspi.read(_ice40QSPICmd(msg, sizeof(resp)), &resp, sizeof(resp));
+    _qspi.eventChannel.read(); // Wait for the transfer to complete
+    _ICE_ST_SPI_CS_::Write(1);
+}
+
 #pragma mark - USB
 
 void System::_usb_reset(bool usbResetFinish) {
@@ -157,9 +164,10 @@ void System::_usb_reset(bool usbResetFinish) {
     // Confirm that we can communicate with the ICE40.
     // Interrupts need to be enabled for this, since _ice40Transfer()
     // waits for a response on qspi.eventChannel.
-    char str[] = "halla";
-    auto status = _ice40Transfer<ICE40::EchoResp>(_qspi, ICE40::EchoMsg(str));
-    Assert(!strcmp((char*)status.payload, str));
+    ICE40::EchoResp resp;
+    const char str[] = "halla";
+    _ice40Transfer(ICE40::EchoMsg(str), resp);
+    Assert(!strcmp((char*)resp.payload, str));
     
 //    uint8_t i = 0;
 //    for (uint8_t& x : _buf0) {
@@ -293,7 +301,7 @@ void System::_sdRead(const Cmd& cmd) {
     // Send the SDReadout message, which causes us to enter the SD-readout mode until
     // we release the chip select
     _ICE_ST_SPI_CS_::Write(0);
-    _ice40Transfer(_qspi, ICE40::SDReadoutMsg());
+    _ice40TransferNoCS(ICE40::SDReadoutMsg());
     
     // Advance state machine
     _sdRead_updateState();
