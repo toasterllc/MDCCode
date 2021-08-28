@@ -61,9 +61,9 @@ int main(int argc, const char* argv[]) {
             TimeInstant start;
             usbDevice.read(STApp::Endpoints::DataIn, buf.get(), BufCap);
             
-//            for (int i=0; i<1000; i++) {
-//                printf("%x\n", buf[i]);
-//            }
+            for (int i=0; i<1000; i++) {
+                printf("%x\n", buf[i]);
+            }
             
             const uintmax_t bits = BufCap*8;
             const uintmax_t throughput_bitsPerSec = (1000*bits)/start.durationMs();

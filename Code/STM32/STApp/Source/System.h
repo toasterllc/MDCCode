@@ -13,6 +13,10 @@ public:
     void _handleEvent();
     void _finishCmd(STApp::Status status);
     
+    void _ice40TransferNoCS(const ICE40::Msg& msg);
+    void _ice40Transfer(const ICE40::Msg& msg);
+    void _ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp);
+    
     void _usb_reset(bool usbResetFinish);
     void _usb_cmdHandle(const USB::CmdRecv& ev);
     void _usb_cmdRecv();

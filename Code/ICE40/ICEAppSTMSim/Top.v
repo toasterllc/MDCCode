@@ -192,14 +192,19 @@ module Testbench();
                     end
                 end
                 
-                // Dummy cycles (8)
-                _ReadResp(8*8);
+                // 8 dummy cycles
+                for (i=0; i<8; i++) begin
+                    #(ice_st_spi_clk_HALF_PERIOD);
+                    ice_st_spi_clk = 1;
+                    #(ice_st_spi_clk_HALF_PERIOD);
+                    ice_st_spi_clk = 0;
+                end
                 
                 for (i=0; i<(ChunkLen/WordLen); i++) begin
                     _ReadResp(WordLen);
                     
                     word = spi_resp[WordLen  -1 -: 8];
-                    // $display("Read word: %x", word);
+                    $display("Read word: %x", word);
                     
                     if (lastWordInit) begin
                         expectedWord = lastWord+1;
@@ -213,7 +218,7 @@ module Testbench();
                     lastWord = word;
                     lastWordInit = 1;
                     word = spi_resp[WordLen-8-1 -: 8];
-                    // $display("Read word: %x", word);
+                    $display("Read word: %x", word);
                     
                     expectedWord = lastWord+1;
                     if (word !== expectedWord) begin
