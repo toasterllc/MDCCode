@@ -80,7 +80,7 @@ module Top(
     
     always @(posedge prod_clk) begin
         fifo_w_trigger <= 0;
-        fifo_w_data <= fifo_w_data+1;
+        fifo_w_data <= fifo_w_data-1;
         prod_counter <= prod_counter+1;
         
         if (fifo_w_trigger) begin
@@ -106,7 +106,7 @@ module Top(
         
         2: begin
             fifo_w_trigger <= 1;
-            fifo_w_data <= 0;
+            fifo_w_data <= ~0;
             prod_counter <= 1;
             prod_state <= 3;
         end
@@ -146,6 +146,7 @@ module Top(
     reg[`Msg_Len-1:0] spi_dinReg = 0;
     reg[15:0] spi_doutReg = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
+    reg[7:0] spi_counterTmp = 0;
     // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
     // for setting the first bit to 1, so we fake the first bit.
     wire[`Msg_Type_Len-1:0] spi_msgTypeRaw = spi_dinReg[`Msg_Type_Bits];
@@ -196,6 +197,8 @@ module Top(
             spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
             if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
             spi_doutReg <= spi_doutReg<<4;
+            
+            spi_counterTmp <= spi_counterTmp-1;
             
             case (spi_state)
             SPI_State_MsgIn: begin
@@ -265,22 +268,23 @@ module Top(
             end
             
             SPI_State_SDReadout+1: begin
-                spi_sdReadoutCounter <= 2;
+                spi_sdReadoutCounter <= 3;
                 spi_state <= SPI_State_SDReadout+2;
             end
             
             SPI_State_SDReadout+2: begin
-                spi_doutCounter <= 1;
+                spi_counterTmp <= ~0;
+                spi_doutCounter <= 0;
+                spi_sdReadoutEnding <= 0;
                 if (!spi_sdReadoutCounter) begin
                     spi_sdReadoutCounter <= SDReadoutCount;
-                    spi_sdReadoutEnding <= 0;
                     spi_state <= SPI_State_SDReadout+3;
                 end
             end
             
             SPI_State_SDReadout+3: begin
                 spi_d_outEn <= 1;
-                spi_sdReadoutWord[7:0] <= fifo_r_data;
+                spi_sdReadoutWord[7:0] <= spi_counterTmp;
                 fifo_r_trigger <= !spi_sdReadoutEnding;
                 
                 if (!spi_doutCounter) begin
