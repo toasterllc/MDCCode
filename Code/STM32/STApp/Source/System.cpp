@@ -14,7 +14,7 @@ using namespace STApp;
 System::System() :
 // QSPI clock divider=1 => run QSPI clock at 64 MHz
 // QSPI alignment=word for high performance transfers
-_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
+_qspi(QSPI::Mode::Dual, 8, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
 _bufs(_buf0, _buf1) {
 }
 
@@ -147,6 +147,36 @@ void System::_ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
 #pragma mark - USB
 
 void System::_usb_reset(bool usbResetFinish) {
+    // Send the SDReadout message, which causes us to enter the SD-readout mode until
+    // we release the chip select
+    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_ST_SPI_CS_::Write(0);
+    _ice40TransferNoCS(ICE40::SDReadoutMsg());
+    
+    for (;;) {
+        uint8_t buf[16];
+        QSPI_CommandTypeDef qspiCmd = {
+            .InstructionMode = QSPI_INSTRUCTION_NONE,
+            .AddressMode = QSPI_ADDRESS_NONE,
+            .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+            .DummyCycles = 8,
+            .NbData = sizeof(buf),
+            .DataMode = QSPI_DATA_4_LINES,
+            .DdrMode = QSPI_DDR_MODE_DISABLE,
+            .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+            .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+        };
+        
+        _qspi.read(qspiCmd, buf, sizeof(buf));
+        _qspi.eventChannel.read(); // Wait for the transfer to complete
+        HAL_Delay(1);
+    }
+    
+//    for (;;) {
+//        _qspi.read(qspiCmd, buf, sizeof(buf));
+//        _qspi.eventChannel.read(); // Wait for the transfer to complete
+//    }
+    
     // Disable interrupts so that resetting is atomic
     IRQState irq;
     irq.disable();
@@ -337,19 +367,25 @@ void System::_sdRead_qspiReadToBuf() {
     
     // TODO: ensure that the byte length is aligned to a u32 boundary, since QSPI requires that!
     // TODO: how do we handle lengths that aren't a multiple of ReadoutLen?
-    const size_t len = ICE40::SDReadoutMsg::ReadoutLen;
+    const size_t len = 4;
+//    const size_t len = ICE40::SDReadoutMsg::ReadoutLen;
     QSPI_CommandTypeDef qspiCmd = {
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         .AddressMode = QSPI_ADDRESS_NONE,
         .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
-        .DummyCycles = 4,
+        .DummyCycles = 0,
         .NbData = (uint32_t)len,
         .DataMode = QSPI_DATA_4_LINES,
         .DdrMode = QSPI_DDR_MODE_DISABLE,
         .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
         .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
     };
-    _qspi.read(qspiCmd, buf.data+buf.len, len);
+    
+    for (;;) {
+        _qspi.read(qspiCmd, buf.data+buf.len, len);
+        _qspi.eventChannel.read(); // Wait for the transfer to complete
+    }
+    
     buf.len += len;
     
     _qspiBusy = true;
