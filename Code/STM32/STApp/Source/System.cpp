@@ -14,7 +14,7 @@ using namespace STApp;
 System::System() :
 // QSPI clock divider=1 => run QSPI clock at 64 MHz
 // QSPI alignment=word for high performance transfers
-_qspi(QSPI::Mode::Dual, 8, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
+_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
 _bufs(_buf0, _buf1) {
 }
 
@@ -373,7 +373,7 @@ void System::_sdRead_qspiReadToBuf() {
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         .AddressMode = QSPI_ADDRESS_NONE,
         .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
-        .DummyCycles = 0,
+        .DummyCycles = 8,
         .NbData = (uint32_t)len,
         .DataMode = QSPI_DATA_4_LINES,
         .DdrMode = QSPI_DDR_MODE_DISABLE,
