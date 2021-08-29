@@ -1,12 +1,28 @@
 - Rev4 Todo
     
+    - SDController: Implement SD card reading
+    
     - Try to optimize USB throughput beyond 355e6 bits/sec
     
-    - Figure out STApp/ICEAppMSP SD data comms scheme
+    - Add CRC to the end of images
+    
+    - STLoader/STApp wMaxPacketSize for all endpoints can only be 512 bytes for high-speed devices
+        - To save FIFO space, only have 2 endpoints (DataOut and DataIn), without a separate CmdOut endpoint?
+    
+    - STApp: try speeding up USB transfers by trying different values of GAHBCFG.HBSTLEN
+    
+    - ICEApp
+        - Reset SDController DatOut before a new capture starts filling the FIFO
+        √ ImgController: stop reading from RAM beyond the last image pixel
+    
+    √ Figure out STApp/ICEAppMSP SD data comms scheme
         - Requirements
-            - Start SD data transfer
-            - Terminate SD data transfer
-            - Signal whether SD data is available
+            √ Start SD data transfer
+                √ Use regular messages
+            √ Terminate SD data transfer
+                √ Use chip select
+            √ Signal whether SD data is available
+                √ Use separate pin
                 - Use ICE_ST_SPI_D0
                     - Problem: ICE_ST_SPI_Dx uses clocked registers, so a clock is needed to change their value
                     - Solutions:
@@ -21,16 +37,6 @@
                         
                         - Switch ice_st_spi_d's OUTPUT_CLK
                             - Glitching could be an issue
-                - Use separate pin
-    
-    - STLoader/STApp wMaxPacketSize for all endpoints can only be 512 bytes for high-speed devices
-        - To save FIFO space, only have 2 endpoints (DataOut and DataIn), without a separate CmdOut endpoint?
-    
-    - STApp: try speeding up USB transfers by trying different values of GAHBCFG.HBSTLEN
-    
-    - ICEApp
-        - Reset SDController DatOut before a new capture starts filling the FIFO
-        √ ImgController: stop reading from RAM beyond the last image pixel
     
     √ Get saving images to SD card working, especially with LVS SD initialization
         √ Working at 50MHz, need to try at higher frequencies
