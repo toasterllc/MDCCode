@@ -96,19 +96,43 @@ void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     // (For some reason, only DummyCycles=0 and DummyCycles=2 work correctly,
     // while other values never trigger the "Transfer complete" (TCF) flag,
     // so we hang forever.)
+    // 
+    //   * Mode=Single
+    //       DummyCycles=2       read 1 byte  / 4 lines = 2 cycle
+    //       DummyCycles=4       read 2 bytes / 4 lines = 4 cycles
+    //       DummyCycles=6       read 3 bytes / 4 lines = 6 cycles
+    //       DummyCycles=8       read 4 bytes / 4 lines = 8 cycles
+    //       ...
+    //       Len = DummyCycles/2 (only even DummyCycles allowed)
     //
-    // To work around this, if dummy cycles are used, perform a minimum-length
-    // read instead. This will cause more cycles than the caller may expect,
-    // so this strategy will only work if these extra cycles have no adverse
-    // effect.
+    //   * Mode=Dual
+    //       DummyCycles=1       read 1 byte / 8 lines = 1 cycle
+    //       DummyCycles=2       read 2 bytes / 8 lines = 2 cycles
+    //       DummyCycles=3       read 3 bytes / 8 lines = 3 cycles
+    //       DummyCycles=4       read 4 bytes / 8 lines = 4 cycles
+    //       ...
+    //       Len = DummyCycles
     if (cmd.DummyCycles) {
-        const size_t readLen = (_align==Align::Byte ? 1 : 4);
+        static uint8_t buf[32]; // Dummy cycles (DCYC) register is 5 bits == up to 31 cycles
+        size_t readLen = 0;
+        switch (_mode) {
+        case Mode::Single:
+            // In single mode, we can only fake even values for the number of dummy cycles.
+            // This is because we can only read whole bytes, and each byte requires 2 cycles
+            // when using 4 lines (QSPI_DATA_4_LINES).
+            AssertArg(!(cmd.DummyCycles % 2));
+            readLen = cmd.DummyCycles/2;
+            break;
+        case Mode::Dual:
+            readLen = cmd.DummyCycles;
+            break;
+        }
+        
         QSPI_CommandTypeDef readCmd = cmd;
         readCmd.NbData = readLen;
         readCmd.DataMode = QSPI_DATA_4_LINES;
-        
-        static uint32_t buf = 0;
-        read(readCmd, &buf, readLen);
+        readCmd.DummyCycles = 0;
+        read(readCmd, buf, readLen);
     
     } else {
         Assert(!_busy);
@@ -132,6 +156,8 @@ void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
     AssertArg(cmd.NbData == len);
     AssertArg(data);
     AssertArg(len);
+    // Validate `len` alignment
+    if (_align == Align::Word) AssertArg(!(len % sizeof(uint32_t)));
     Assert(!_busy);
     
     // Update _busy before the interrupt can occur, otherwise `_busy = true`
@@ -151,6 +177,8 @@ void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
     AssertArg(cmd.NbData == len);
     AssertArg(data);
     AssertArg(len);
+    // Validate `len` alignment
+    if (_align == Align::Word) AssertArg(!(len % sizeof(uint32_t)));
     Assert(!_busy);
     
     // Update _busy before the interrupt can occur, otherwise `_busy = true`
