@@ -80,7 +80,7 @@ module Top(
     
     always @(posedge prod_clk) begin
         fifo_w_trigger <= 0;
-        fifo_w_data <= fifo_w_data-1;
+        fifo_w_data <= fifo_w_data+1;
         prod_counter <= prod_counter+1;
         
         if (fifo_w_trigger) begin
@@ -106,7 +106,7 @@ module Top(
         
         2: begin
             fifo_w_trigger <= 1;
-            fifo_w_data <= ~0;
+            fifo_w_data <= 0;
             prod_counter <= 1;
             prod_state <= 3;
         end
