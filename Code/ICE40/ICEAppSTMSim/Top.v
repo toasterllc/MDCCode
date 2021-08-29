@@ -170,7 +170,7 @@ module Testbench();
         reg[15:0] chunkIdx;
         parameter ChunkLen = 4096*4; // Each chunk consists of 4x RAM4K
         parameter WordLen = 16;
-        parameter ChunkCount = 1; // Number of chunks to read
+        parameter ChunkCount = 4; // Number of chunks to read
         
         $display("\n[Testbench] ========== TestSDReadout ==========");
         arg = 0;
@@ -203,39 +203,36 @@ module Testbench();
                     ice_st_spi_clk = 0;
                 end
                 
-                for (i=0; i<5; i++) begin
-                // for (i=0; i<(ChunkLen/WordLen); i++) begin
+                for (i=0; i<(ChunkLen/WordLen); i++) begin
                     _ReadResp(WordLen);
                     
                     word = spi_resp[WordLen-1 -: 8];
-                    $display("Read word: 0x%x", word);
+                    // $display("Read word: 0x%x", word);
                     
                     if (lastWordInit) begin
-                        expectedWord = lastWord-1;
-                        // if (word !== expectedWord) begin
-                        //     $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
-                        //     #100;
-                        //     `Finish;
-                        // end
+                        expectedWord = lastWord+1;
+                        if (word !== expectedWord) begin
+                            $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
+                            #100;
+                            `Finish;
+                        end
                     end
                     
                     lastWord = word;
                     lastWordInit = 1;
                     word = spi_resp[WordLen-8-1 -: 8];
-                    $display("Read word: 0x%x", word);
+                    // $display("Read word: 0x%x", word);
                     
-                    expectedWord = lastWord-1;
-                    // if (word !== expectedWord) begin
-                    //     $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
-                    //     #100;
-                    //     `Finish;
-                    // end
+                    expectedWord = lastWord+1;
+                    if (word !== expectedWord) begin
+                        $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
+                        #100;
+                        `Finish;
+                    end
                     
                     lastWord = word;
                     // `Finish;
                 end
-                
-                `Finish;
             end
         
         ice_st_spi_cs_ = 1;
@@ -254,20 +251,20 @@ module Testbench();
         // ice_st_spi_clk  = 0; #1;
         // spi_dataOutEn   = 0; #1;
         
-        // TestEcho(56'h00000000000000);
-        // TestEcho(56'h00000000000000);
-        // TestEcho(56'hCAFEBABEFEEDAA);
-        // TestNop();
-        // TestEcho(56'hCAFEBABEFEEDAA);
-        // TestEcho(56'h123456789ABCDE);
-        // TestLEDSet(4'b1010);
-        // TestLEDSet(4'b0101);
-        // TestNop();
+        TestEcho(56'h00000000000000);
+        TestEcho(56'h00000000000000);
+        TestEcho(56'hCAFEBABEFEEDAA);
+        TestNop();
+        TestEcho(56'hCAFEBABEFEEDAA);
+        TestEcho(56'h123456789ABCDE);
+        TestLEDSet(4'b1010);
+        TestLEDSet(4'b0101);
+        TestNop();
         
         TestSDReadout;
-        // TestLEDSet(4'b1111);
-        // TestSDReadout;
-        // TestSDReadout;
+        TestLEDSet(4'b1111);
+        TestSDReadout;
+        TestSDReadout;
         
         `Finish;
     end
