@@ -72,8 +72,8 @@ module Top(
     // ====================
     // Producer
     // ====================
-    reg[1:0] prod_state = 0;
-    reg[10:0] prod_counter = 0;
+    reg[2:0] prod_state = 0;
+    reg[12:0] prod_counter = 0;
     
     reg spi_prodTrigger = 0;
     `TogglePulse(prod_trigger, spi_prodTrigger, posedge, prod_clk);
@@ -113,6 +113,12 @@ module Top(
         
         3: begin
             fifo_w_trigger <= 1;
+            if (prod_counter === 11'd2047) begin
+                prod_state <= 4;
+            end
+        end
+        
+        4: begin
             if (&prod_counter) begin
                 prod_state <= 1;
             end
