@@ -274,8 +274,8 @@ void System::_sdRead_qspiReadToBuf() {
     
 //    HAL_Delay(1);
     
-//    // Wait for ICE40 to signal that data is ready
-//    while (!_ICE_ST_SPI_D_READY::Read());
+    // Wait for ICE40 to signal that data is ready
+    while (!_ICE_ST_SPI_D_READY::Read());
     
     // TODO: how do we handle lengths that aren't a multiple of ReadoutLen?
     const size_t len = ICE40::SDReadoutMsg::ReadoutLen;
