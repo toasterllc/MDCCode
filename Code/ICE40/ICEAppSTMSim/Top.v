@@ -91,14 +91,14 @@ module Testbench();
         reg[15:0] i;
         // Clock in response (if one is sent for this type of message)
         for (i=0; i<len/8; i++) begin
-            #(ice_st_spi_clk_HALF_PERIOD);
-            ice_st_spi_clk = 1;
-            
                 if (!i[0]) spi_dinReg = 0;
                 spi_dinReg = spi_dinReg<<4|{4'b0000, spi_dataIn[3:0], 4'b0000, spi_dataIn[7:4]};
                 
                 spi_resp = spi_resp<<8;
                 if (i[0]) spi_resp = spi_resp|spi_dinReg;
+            
+            #(ice_st_spi_clk_HALF_PERIOD);
+            ice_st_spi_clk = 1;
             
             #(ice_st_spi_clk_HALF_PERIOD);
             ice_st_spi_clk = 0;
@@ -175,7 +175,10 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDReadout ==========");
         arg = 0;
         
+        ice_st_spi_cs_ = 1;
+        #1; // Let ice_st_spi_cs_ take effect
         ice_st_spi_cs_ = 0;
+        #1; // Let ice_st_spi_cs_ take effect
         
             _SendMsg(`Msg_Type_SDReadout, arg);
             
@@ -192,7 +195,7 @@ module Testbench();
                     end
                 end
                 
-                // 8 dummy cycles
+                // Dummy cycles
                 for (i=0; i<8; i++) begin
                     #(ice_st_spi_clk_HALF_PERIOD);
                     ice_st_spi_clk = 1;
@@ -201,9 +204,10 @@ module Testbench();
                 end
                 
                 for (i=0; i<5; i++) begin
+                // for (i=0; i<(ChunkLen/WordLen); i++) begin
                     _ReadResp(WordLen);
                     
-                    word = spi_resp[WordLen  -1 -: 8];
+                    word = spi_resp[WordLen-1 -: 8];
                     $display("Read word: 0x%x", word);
                     
                     if (lastWordInit) begin
@@ -250,15 +254,15 @@ module Testbench();
         // ice_st_spi_clk  = 0; #1;
         // spi_dataOutEn   = 0; #1;
         
-        TestEcho(56'h00000000000000);
-        TestEcho(56'h00000000000000);
-        TestEcho(56'hCAFEBABEFEEDAA);
-        TestNop();
-        TestEcho(56'hCAFEBABEFEEDAA);
-        TestEcho(56'h123456789ABCDE);
-        TestLEDSet(4'b1010);
-        TestLEDSet(4'b0101);
-        TestNop();
+        // TestEcho(56'h00000000000000);
+        // TestEcho(56'h00000000000000);
+        // TestEcho(56'hCAFEBABEFEEDAA);
+        // TestNop();
+        // TestEcho(56'hCAFEBABEFEEDAA);
+        // TestEcho(56'h123456789ABCDE);
+        // TestLEDSet(4'b1010);
+        // TestLEDSet(4'b0101);
+        // TestNop();
         
         TestSDReadout;
         // TestLEDSet(4'b1111);
