@@ -32,27 +32,27 @@ module SDController #(
     
     // Init port (clock domain: async)
     input wire          init_en_,
-    input wire          init_trigger,   // Toggle
+    input wire          init_trigger,       // Toggle
     input wire[1:0]     init_clk_speed,
     input wire[`SDController_Init_Clk_Delay_Width-1:0] init_clk_delay,
     
     // Command port (clock domain: `clk`)
-    input wire          cmd_trigger, // Toggle
+    input wire          cmd_trigger,        // Toggle
     input wire[47:0]    cmd_data,
     input wire[1:0]     cmd_respType,
     input wire          cmd_datInType,
-    output reg          cmd_done = 0, // Toggle
+    output reg          cmd_done = 0,       // Toggle
     
     // Response port (clock domain: `clk`)
-    output reg          resp_done = 0, // Toggle
+    output reg          resp_done = 0,      // Toggle
     output reg[47:0]    resp_data = 0,
     output reg          resp_crcErr = 0,
     
     // DatOut port (clock domain: `clk`)
-    input wire          datOut_stop,         // Toggle
-    output reg          datOut_stopped = 0,  // Toggle
-    input wire          datOut_start,        // Toggle
-    output reg          datOut_done = 0,     // Toggle
+    input wire          datOut_stop,        // Toggle
+    output reg          datOut_stopped = 0, // Toggle
+    input wire          datOut_start,       // Toggle
+    output reg          datOut_done = 0,    // Toggle
     output reg          datOut_crcErr = 0,
     
     // DatOutRead port (clock domain: `datOutRead_clk`)
@@ -62,9 +62,15 @@ module SDController #(
     input wire[15:0]    datOutRead_data,
     
     // DatIn port (clock domain: `clk`)
-    output reg          datIn_done = 0, // Toggle
+    output reg          datIn_done = 0,     // Toggle
     output reg          datIn_crcErr = 0,
     output reg[3:0]     datIn_cmd6AccessMode = 0,
+    
+    // DatInWrite port (clock domain: `datInWrite_clk`)
+    output wire         datInWrite_clk,
+    input wire          datInWrite_ready,
+    output reg          datInWrite_trigger = 0,
+    output wire[15:0]   datInWrite_data,
     
     // Status port (clock domain: `clk`)
     output reg          status_dat0Idle = 0
@@ -97,6 +103,7 @@ module SDController #(
     `Sync(clk_fast_en, init_clk_fast, negedge, clk_fast);
     wire clk_int = (clk_slow_en ? clk_slow : (clk_fast_en ? clk_fast : 0));
     assign datOutRead_clk = clk_int;
+    assign datInWrite_clk = clk_int;
     
     // ====================
     // clk_int_delayed / init_clk_delay
@@ -112,75 +119,16 @@ module SDController #(
         .out(clk_int_delayed)
     );
     
-    
-    
-    
     // ====================
-    // Init State Machine
+    // Manual Control
     // ====================
-    localparam Init_ClockPulseWidthUs = 15; // Pulse needs to be at least 10us, per SD LVS spec
-    localparam Init_ClockPulseDelay = Clocks(Clk_Slow_Freq, Init_ClockPulseWidthUs*1000, 1);
-    localparam Init_HoldDelay = Clocks(Clk_Slow_Freq, 5*1000, 2); // Hold outputs for 5us after the negative edge of the clock pulse
-    reg init_sdClk = 0;
-    reg init_sdCmdOutEn = 0;
-    reg[3:0] init_sdDatOutEn = 0;
-    reg[`RegWidth(Init_ClockPulseDelay)-1:0] init_delayCounter = 0;
-    reg init_en_syncedPrev_ = 0;
-    `Sync(init_en_synced_, init_en_, posedge, clk_int);
-    `TogglePulse(init_triggerPulse, init_trigger, posedge, clk_int);
-    
-    reg[2:0] init_state = 0;
-    always @(posedge clk_int) begin
-        init_delayCounter <= init_delayCounter-1;
-        init_en_syncedPrev_ <= init_en_synced_;
-        
-        case (init_state)
-        0: begin
-            init_sdClk <= 0;
-            init_sdCmdOutEn <= 1;
-            init_sdDatOutEn <= 4'b1111;
-            init_delayCounter <= Init_ClockPulseDelay;
-        end
-        
-        1: begin
-            init_sdClk <= 1;
-            if (!init_delayCounter) begin
-                init_state <= 2;
-            end
-        end
-        
-        2: begin
-            init_sdClk <= 0;
-            init_delayCounter <= Init_HoldDelay;
-            init_state <= 3;
-        end
-        
-        3: begin
-            if (!init_delayCounter) begin
-                $display("[SDController:INIT] Done");
-                init_state <= 4;
-            end
-        end
-        
-        4: begin
-            init_sdCmdOutEn <= 0;
-            init_sdDatOutEn <= 4'b0000;
-        end
-        endcase
-        
-        // Reset init state machine when init_en_synced_ transitions 1->0
-        if (init_en_syncedPrev_ && !init_en_synced_) begin
-            $display("[SDController:INIT] Resetting");
-            init_state <= 0;
-        
-        end else if (init_triggerPulse) begin
-            $display("[SDController:INIT] Triggering");
-            init_state <= 1;
-        end
-    end
-    
-    
-    
+    reg         man_en_         = 0;
+    reg         man_sdClk       = 0;
+    wire        man_sdCmdOut    = 0;
+    reg         man_sdCmdOutEn  = 0;
+    wire[3:0]   man_sdDatOut    = 0;
+    reg[3:0]    man_sdDatOutEn  = 0;
+    `Sync(man_enSynced_, man_en_, negedge, clk_int);
     
     // ====================
     // State Machine
@@ -231,6 +179,15 @@ module SDController #(
     wire[3:0] datIn_crc;
     reg[6:0] datIn_counter = 0;
     reg[3:0] datIn_crcCounter = 0;
+    
+    localparam Init_ClockPulseWidthUs = 15; // Pulse needs to be at least 10us, per SD LVS spec
+    localparam Init_ClockPulseDelay = Clocks(Clk_Slow_Freq, Init_ClockPulseWidthUs*1000, 1);
+    localparam Init_HoldDelay = Clocks(Clk_Slow_Freq, 5*1000, 2); // Hold outputs for 5us after the negative edge of the clock pulse
+    reg[`RegWidth(Init_ClockPulseDelay)-1:0] init_delayCounter = 0;
+    reg init_enSyncedPrev_ = 0;
+    `Sync(init_enSynced_, init_en_, posedge, clk_int);
+    `TogglePulse(init_triggerPulse, init_trigger, posedge, clk_int);
+    reg[2:0] init_state = 0;
     
     always @(posedge clk_int) begin
         cmd_counter <= cmd_counter-1;
@@ -620,12 +577,69 @@ module SDController #(
         if (cmd_triggerPulse) begin
             cmd_state <= 1;
         end
+        
+        
+        
+        
+        
+        
+        
+        
+        // ====================
+        // Init State Machine
+        // ====================
+        init_delayCounter <= init_delayCounter-1;
+        init_enSyncedPrev_ <= init_enSynced_;
+        
+        case (init_state)
+        0: begin
+            man_sdClk <= 0;
+            man_sdCmdOutEn <= 1;
+            man_sdDatOutEn <= '1;
+            init_delayCounter <= Init_ClockPulseDelay;
+        end
+        
+        1: begin
+            man_sdClk <= 1;
+            if (!init_delayCounter) begin
+                init_state <= 2;
+            end
+        end
+        
+        2: begin
+            man_sdClk <= 0;
+            init_delayCounter <= Init_HoldDelay;
+            init_state <= 3;
+        end
+        
+        3: begin
+            if (!init_delayCounter) begin
+                $display("[SDController:INIT] Done");
+                init_state <= 4;
+            end
+        end
+        
+        4: begin
+            man_sdCmdOutEn <= 0;
+            man_sdDatOutEn <= 0;
+        end
+        endcase
+        
+        // Reset init state machine when init_enSynced_ transitions 1->0
+        if (init_enSyncedPrev_ && !init_enSynced_) begin
+            $display("[SDController:INIT] Resetting");
+            init_state <= 0;
+        
+        end else if (init_triggerPulse) begin
+            $display("[SDController:INIT] Triggering");
+            init_state <= 1;
+        end
     end
     
     // ====================
     // Pin: sd_clk
     // ====================
-    assign sd_clk = (!init_en_synced_ ? init_sdClk : clk_int_delayed);
+    assign sd_clk = (!man_enSynced_ ? man_sdClk : clk_int_delayed);
     
     // ====================
     // Pin: sd_cmd
@@ -633,12 +647,12 @@ module SDController #(
     SB_IO #(
         .PIN_TYPE(6'b1101_00)
     ) SB_IO_sd_cmd (
-        .INPUT_CLK(clk_int),
-        .OUTPUT_CLK(clk_int),
-        .PACKAGE_PIN(sd_cmd),
-        .OUTPUT_ENABLE(!init_en_synced_ ? init_sdCmdOutEn : cmd_active[0]),
-        .D_OUT_0(!init_en_synced_ ? 1'b0 : cmdresp_shiftReg[47]),
-        .D_IN_0(cmd_in)
+        .INPUT_CLK      (clk_int                                                    ),
+        .OUTPUT_CLK     (clk_int                                                    ),
+        .PACKAGE_PIN    (sd_cmd                                                     ),
+        .OUTPUT_ENABLE  (!man_enSynced_ ? man_sdCmdOutEn   : cmd_active[0]          ),
+        .D_OUT_0        (!man_enSynced_ ? man_sdCmdOut     : cmdresp_shiftReg[47]   ),
+        .D_IN_0         (cmd_in                                                     )
     );
     
     // ====================
@@ -649,12 +663,12 @@ module SDController #(
         SB_IO #(
             .PIN_TYPE(6'b1101_00)
         ) SB_IO_sd_dat (
-            .INPUT_CLK(clk_int),
-            .OUTPUT_CLK(clk_int),
-            .PACKAGE_PIN(sd_dat[i]),
-            .OUTPUT_ENABLE(!init_en_synced_ ? init_sdDatOutEn[i] : datOut_active[0]),
-            .D_OUT_0(!init_en_synced_ ? 1'b0 : datOut_reg[16+i]),
-            .D_IN_0(datIn[i])
+            .INPUT_CLK      (clk_int                                                    ),
+            .OUTPUT_CLK     (clk_int                                                    ),
+            .PACKAGE_PIN    (sd_dat[i]                                                  ),
+            .OUTPUT_ENABLE  (!man_enSynced_ ? man_sdDatOutEn[i]    : datOut_active[0]   ),
+            .D_OUT_0        (!man_enSynced_ ? man_sdDatOut[i]      : datOut_reg[16+i]   ),
+            .D_IN_0         (datIn[i]                                                   )
         );
     end
     

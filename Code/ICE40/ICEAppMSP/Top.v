@@ -482,7 +482,7 @@ module Top(
                     
                     sd_init_en_ <= !spi_msgArg[`Msg_Arg_SDInit_En_Bits];
                 end
-
+                
                 // Clock out SD command
                 `Msg_Type_SDSendCmd: begin
                     $display("[SPI] Got Msg_Type_SDSendCmd [respType:%0b]", spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]);
