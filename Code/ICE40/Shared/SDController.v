@@ -185,7 +185,11 @@ module SDController #(
     localparam Init_ClockPulseDelay = Clocks(Clk_Slow_Freq, Init_ClockPulseUs*1000, 1);
     localparam Init_HoldUs = 5; // Hold outputs for 5us after the negative edge of the clock pulse
     localparam Init_HoldDelay = Clocks(Clk_Slow_Freq, Init_HoldUs*1000, 1);
-    localparam Init_FinishUs = 6000; // Hold outputs for 6ms after the negative edge of the clock pulse
+`ifdef SIM
+    localparam Init_FinishUs = 50; // Don't wait as long during simulation
+`else
+    localparam Init_FinishUs = 5500; // Hold outputs for 5.5ms after the negative edge of the clock pulse
+`endif
     localparam Init_FinishDelay = Clocks(Clk_Slow_Freq, Init_FinishUs*1000, 1);
     localparam Init_DelayCounterWidth = `RegWidth3(Init_ClockPulseDelay,Init_HoldDelay,Init_FinishDelay);
     reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
@@ -601,42 +605,30 @@ module SDController #(
         1: begin
             man_sdClk <= 1;
             if (!init_delayCounter) begin
+                man_sdClk <= 0;
+                init_delayCounter <= Init_HoldDelay;
                 init_state <= 2;
             end
         end
         
         2: begin
-            man_sdClk <= 0;
-            init_delayCounter <= Init_HoldDelay;
-            init_state <= 3;
+            if (!init_delayCounter) begin
+                man_sdCmdOutEn <= 0;
+                man_sdDatOutEn <= 0;
+                init_delayCounter <= Init_FinishDelay;
+                init_state <= 3;
+            end
         end
         
         3: begin
             if (!init_delayCounter) begin
+                $display("[SDController:INIT] Done");
+                man_en_ <= 1;
                 init_state <= 4;
             end
         end
         
         4: begin
-            man_sdCmdOutEn <= 0;
-            man_sdDatOutEn <= 0;
-            init_delayCounter <= Init_FinishDelay;
-            init_state <= 5;
-        end
-        
-        5: begin
-            if (!init_delayCounter) begin
-                init_state <= 6;
-            end
-        end
-        
-        6: begin
-            $display("[SDController:INIT] Done");
-            man_en_ <= 1;
-            init_state <= 7;
-        end
-        
-        7: begin
         end
         endcase
         
