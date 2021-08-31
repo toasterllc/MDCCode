@@ -35,8 +35,8 @@
 `define     Msg_Arg_SDInit_Clk_Speed_Off                        `Msg_Arg_SDInit_Clk_Speed_Len'b00
 `define     Msg_Arg_SDInit_Clk_Speed_Slow                       `Msg_Arg_SDInit_Clk_Speed_Len'b01
 `define     Msg_Arg_SDInit_Clk_Speed_Fast                       `Msg_Arg_SDInit_Clk_Speed_Len'b10
-`define     Msg_Arg_SDInit_Finish_Len                           1
-`define     Msg_Arg_SDInit_Finish_Bits                          2:2
+// `define     Msg_Arg_SDInit_Finish_Len                           1
+// `define     Msg_Arg_SDInit_Finish_Bits                          2:2
 `define     Msg_Arg_SDInit_Trigger_Len                          1
 `define     Msg_Arg_SDInit_Trigger_Bits                         1:1
 `define     Msg_Arg_SDInit_Reset_Len                            1

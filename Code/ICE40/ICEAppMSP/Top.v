@@ -263,7 +263,7 @@ module Top(
     // ====================
     reg         sd_init_reset = 0;
     reg         sd_init_trigger = 0;
-    reg         sd_init_finish = 0;
+    // reg         sd_init_finish = 0;
     reg[1:0]    sd_init_clk_speed = 0;
     reg[3:0]    sd_init_clk_delay = 0;
     reg         sd_cmd_trigger = 0;
@@ -300,7 +300,7 @@ module Top(
 
         .init_reset(sd_init_reset),
         .init_trigger(sd_init_trigger),
-        .init_finish(sd_init_finish),
+        // .init_finish(sd_init_finish),
         .init_clk_speed(sd_init_clk_speed),
         .init_clk_delay(sd_init_clk_delay),
 
@@ -461,10 +461,10 @@ module Top(
                 
                 // Set SD clock source
                 `Msg_Type_SDInit: begin
-                    $display("[SPI] Got Msg_Type_SDInit: delay=%0d speed=%0d finish=%b trigger=%b reset=%b",
+                    $display("[SPI] Got Msg_Type_SDInit: delay=%0d speed=%0d trigger=%b reset=%b",
                         spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits],
                         spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits],
-                        spi_msgArg[`Msg_Arg_SDInit_Finish_Bits],
+                        // spi_msgArg[`Msg_Arg_SDInit_Finish_Bits],
                         spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits],
                         spi_msgArg[`Msg_Arg_SDInit_Reset_Bits],
                     );
@@ -479,9 +479,9 @@ module Top(
                     `Msg_Arg_SDInit_Clk_Speed_Fast: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Fast;
                     endcase
                     
-                    if (spi_msgArg[`Msg_Arg_SDInit_Finish_Bits]) begin
-                        sd_init_finish <= !sd_init_finish;
-                    end
+                    // if (spi_msgArg[`Msg_Arg_SDInit_Finish_Bits]) begin
+                    //     sd_init_finish <= !sd_init_finish;
+                    // end
                     
                     if (spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits]) begin
                         sd_init_trigger <= !sd_init_trigger;
