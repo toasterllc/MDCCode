@@ -301,7 +301,7 @@ module Testbench();
     task TestSDConfig(
         input[`Msg_Arg_SDInit_Clk_Delay_Len-1:0] delay,
         input[`Msg_Arg_SDInit_Clk_Speed_Len-1:0] speed,
-        input[`Msg_Arg_SDInit_Finish_Len-1:0] finish,
+        // input[`Msg_Arg_SDInit_Finish_Len-1:0] finish,
         input[`Msg_Arg_SDInit_Trigger_Len-1:0] trigger,
         input[`Msg_Arg_SDInit_Reset_Len-1:0] reset
     ); begin
@@ -310,7 +310,7 @@ module Testbench();
         // $display("\n[Testbench] ========== TestSDConfig ==========");
         arg[`Msg_Arg_SDInit_Clk_Delay_Bits] = delay;
         arg[`Msg_Arg_SDInit_Clk_Speed_Bits] = speed;
-        arg[`Msg_Arg_SDInit_Finish_Bits] = finish;
+        // arg[`Msg_Arg_SDInit_Finish_Bits] = finish;
         arg[`Msg_Arg_SDInit_Trigger_Bits] = trigger;
         arg[`Msg_Arg_SDInit_Reset_Bits] = reset;
         
@@ -324,12 +324,12 @@ module Testbench();
         
         $display("\n[Testbench] ========== TestSDInit ==========");
         
-        //           delay, speed,                          finish, trigger, reset
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Off,  0,      0,       0);
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 0,      0,       0);
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 0,      0,       1);
+        //           delay, speed,                          trigger, reset
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Off,  0,       0);
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 0,       0);
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 0,       1);
         // <-- Turn on power to SD card
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 0,      1,       0);
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 1,       0);
         
 `ifdef SDCARDSIM_LVS_INIT_IGNORE_5MS
         // Wait 50us, because waiting 5ms takes forever in simulation
@@ -341,8 +341,6 @@ module Testbench();
         #(5_000_000);
 `endif
         $display("[Testbench] 5ms elapsed");
-        
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 1,      0,       0);
         
         // // Wait for SD init to be complete
         // done = 0;
@@ -827,9 +825,9 @@ module Testbench();
         TestImgCapture();
         
         TestSDInit();
-        //           delay, speed,                          finish, trigger, reset
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Off,  0,      0,       0);
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Fast, 0,      0,       0);
+        //           delay, speed,                          trigger, reset
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Off,  0,       0);
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Fast, 0,       0);
         TestSDCMD0();
         TestSDCMD8();
         TestSDDatOut();
