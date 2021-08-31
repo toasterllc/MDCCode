@@ -31,8 +31,9 @@ module SDController #(
     inout wire[3:0]     sd_dat,
     
     // Init port (clock domain: async)
-    input wire          init_en_,
+    input wire          init_reset,         // Toggle
     input wire          init_trigger,       // Toggle
+    input wire          init_finish,        // Toggle
     input wire[1:0]     init_clk_speed,
     input wire[`SDController_Init_Clk_Delay_Width-1:0] init_clk_delay,
     
@@ -180,13 +181,15 @@ module SDController #(
     reg[6:0] datIn_counter = 0;
     reg[3:0] datIn_crcCounter = 0;
     
-    localparam Init_ClockPulseWidthUs = 15; // Pulse needs to be at least 10us, per SD LVS spec
-    localparam Init_ClockPulseDelay = Clocks(Clk_Slow_Freq, Init_ClockPulseWidthUs*1000, 1);
-    localparam Init_HoldDelay = Clocks(Clk_Slow_Freq, 5*1000, 2); // Hold outputs for 5us after the negative edge of the clock pulse
+    localparam Init_ClockPulseUs = 15; // Pulse needs to be at least 10us, per SD LVS spec
+    localparam Init_ClockPulseDelay = Clocks(Clk_Slow_Freq, Init_ClockPulseUs*1000, 1);
+    localparam Init_HoldUs = 5; // Hold outputs for 5us after the negative edge of the clock pulse
+    localparam Init_HoldDelay = Clocks(Clk_Slow_Freq, Init_HoldUs*1000, 2);
     reg[`RegWidth(Init_ClockPulseDelay)-1:0] init_delayCounter = 0;
-    reg init_enSyncedPrev_ = 0;
-    `Sync(init_enSynced_, init_en_, posedge, clk_int);
+    `TogglePulse(init_resetPulse, init_reset, posedge, clk_int);
     `TogglePulse(init_triggerPulse, init_trigger, posedge, clk_int);
+    // TODO: instead of `init_finish`, try counting for 5ms to automatically transition states. how does that affect perf?
+    `TogglePulse(init_finishPulse, init_finish, posedge, clk_int);
     reg[2:0] init_state = 0;
     
     always @(posedge clk_int) begin
@@ -232,6 +235,8 @@ module SDController #(
         datIn_crcCounter <= datIn_crcCounter-1;
         datIn_crcRst <= 0;
         datIn_crcEn <= 0;
+        
+        init_delayCounter <= init_delayCounter-1;
         
         status_dat0Idle <= datIn_reg[0];
         
@@ -578,21 +583,12 @@ module SDController #(
             cmd_state <= 1;
         end
         
-        
-        
-        
-        
-        
-        
-        
         // ====================
         // Init State Machine
         // ====================
-        init_delayCounter <= init_delayCounter-1;
-        init_enSyncedPrev_ <= init_enSynced_;
-        
         case (init_state)
         0: begin
+            man_en_ <= 0;
             man_sdClk <= 0;
             man_sdCmdOutEn <= 1;
             man_sdDatOutEn <= '1;
@@ -623,16 +619,26 @@ module SDController #(
             man_sdCmdOutEn <= 0;
             man_sdDatOutEn <= 0;
         end
+        
+        5: begin
+            man_en_ <= 1;
+            init_state <= 6;
+        end
+        
+        6: begin
+        end
         endcase
         
         // Reset init state machine when init_enSynced_ transitions 1->0
-        if (init_enSyncedPrev_ && !init_enSynced_) begin
-            $display("[SDController:INIT] Resetting");
+        if (init_resetPulse) begin
+            $display("[SDController:INIT] Reset");
             init_state <= 0;
-        
         end else if (init_triggerPulse) begin
-            $display("[SDController:INIT] Triggering");
+            $display("[SDController:INIT] Trigger");
             init_state <= 1;
+        end else if (init_finishPulse) begin
+            $display("[SDController:INIT] Finish");
+            init_state <= 5;
         end
     end
     

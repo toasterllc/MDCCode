@@ -29,16 +29,18 @@
 
 `define Msg_Type_SDInit                                         `Msg_Type_StartBit | `Msg_Type_Len'h02
 `define     Msg_Arg_SDInit_Clk_Delay_Len                        4
-`define     Msg_Arg_SDInit_Clk_Delay_Bits                       7:4
+`define     Msg_Arg_SDInit_Clk_Delay_Bits                       8:5
 `define     Msg_Arg_SDInit_Clk_Speed_Len                        2
-`define     Msg_Arg_SDInit_Clk_Speed_Bits                       3:2
+`define     Msg_Arg_SDInit_Clk_Speed_Bits                       4:3
 `define     Msg_Arg_SDInit_Clk_Speed_Off                        `Msg_Arg_SDInit_Clk_Speed_Len'b00
 `define     Msg_Arg_SDInit_Clk_Speed_Slow                       `Msg_Arg_SDInit_Clk_Speed_Len'b01
 `define     Msg_Arg_SDInit_Clk_Speed_Fast                       `Msg_Arg_SDInit_Clk_Speed_Len'b10
+`define     Msg_Arg_SDInit_Finish_Len                           1
+`define     Msg_Arg_SDInit_Finish_Bits                          2:2
 `define     Msg_Arg_SDInit_Trigger_Len                          1
 `define     Msg_Arg_SDInit_Trigger_Bits                         1:1
-`define     Msg_Arg_SDInit_En_Len                               1
-`define     Msg_Arg_SDInit_En_Bits                              0:0
+`define     Msg_Arg_SDInit_Reset_Len                            1
+`define     Msg_Arg_SDInit_Reset_Bits                           0:0
 
 `define Msg_Type_SDSendCmd                                      `Msg_Type_StartBit | `Msg_Type_Len'h03
 `define     Msg_Arg_SDSendCmd_RespType_Len                      2
