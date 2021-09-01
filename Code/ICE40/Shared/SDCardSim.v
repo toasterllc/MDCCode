@@ -157,6 +157,7 @@ module SDCardSim(
         time lvsinit_pulseEndTimePs;
         
         // Handle LVS init sequence
+        $display("[SDCardSim] Waiting for LVS init sequence...");
         wait(sd_clk);
         lvsinit_pulseBeginTimePs = $time;
         lvsinit_sdCmd = sd_cmd;
@@ -730,10 +731,17 @@ module SDCardSim(
                 
                 // Shift out data
                 // payloadDataReg = PAYLOAD_DATA;
-                // Fill payloadDataReg with random data
-                for (i=0; i<$size(payloadDataReg)/32; i++) begin
-                    payloadDataReg[((32*((i)+1))-1) -: 32] = $urandom;
+                
+                // Fill payloadDataReg with incrementing integers
+                for (i=0; i<$size(payloadDataReg)/8; i++) begin
+                    payloadDataReg[$size(payloadDataReg)-(i*8)-1 -: 8] = i;
                 end
+                
+                // // Fill payloadDataReg with random data
+                // for (i=0; i<$size(payloadDataReg)/32; i++) begin
+                //     payloadDataReg[((32*((i)+1))-1) -: 32] = $urandom;
+                // end
+                
                 $display("[SDCardSim:ReadData] Sending read data: %h", payloadDataReg);
 
                 for (i=0; i<1024 && sendReadData; i++) begin
