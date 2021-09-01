@@ -3,11 +3,25 @@
 `include "TogglePulse.v"
 `include "ClockGen.v"
 `include "AFIFOChain.v"
+`include "SDController.v"
+`include "ToggleAck.v"
+`include "Sync.v"
 `timescale 1ns/1ps
+
+// TODO: have consistent ordering for FIFO ports for: AFIFO, AFIFOChain, SDController, ImgController
+//       clk, trigger, data, ready
+
+// TODO: try to make width of SDController data nets a parameter (4, 8, 16, ...), so that ICEAppSTM can use width=8 to read, but ICEAppMSP can use width=16 to write
 
 module Top(
     input wire          ice_img_clk16mhz,
     
+    // SD port
+    output wire         sd_clk,
+    inout wire          sd_cmd,
+    inout wire[3:0]     sd_dat,
+    
+    // STM SPI port
     input wire          ice_st_spi_clk,
     input wire          ice_st_spi_cs_,
     inout wire[7:0]     ice_st_spi_d,
@@ -18,38 +32,25 @@ module Top(
     output reg[3:0]     ice_led = 0
 );
     // ====================
-    // Producer Clock (102 MHz)
-    // ====================
-    localparam Prod_Clk_Freq = 102_000_000;
-    wire prod_clk;
-    ClockGen #(
-        .FREQOUT(Prod_Clk_Freq),
-        .DIVR(0),
-        .DIVF(50),
-        .DIVQ(3),
-        .FILTER_RANGE(1)
-    ) ClockGen_prod_clk(.clkRef(ice_img_clk16mhz), .clk(prod_clk));
-    
-    // ====================
     // AFIFOChain
     // ====================
     localparam AFIFOChainCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
     
-    wire        fifo_rst_           = 1;
-    wire        fifo_prop_clk       = prod_clk;
+    wire        fifo_rst_;
+    wire        fifo_prop_clk;
     wire        fifo_prop_w_ready;
     wire        fifo_prop_r_ready;
-    wire        fifo_w_clk          = prod_clk;
-    reg         fifo_w_trigger      = 0;
-    reg[7:0]    fifo_w_data         = 0;
+    wire        fifo_w_clk;
+    wire        fifo_w_trigger;
+    wire[15:0]  fifo_w_data;
     wire        fifo_w_ready;
-    wire        fifo_r_clk          = ice_st_spi_clk;
+    wire        fifo_r_clk;
     reg         fifo_r_trigger      = 0;
-    wire[7:0]   fifo_r_data;
+    wire[15:0]  fifo_r_data;
     wire        fifo_r_ready;
     
     AFIFOChain #(
-        .W(8),
+        .W(16),
         .N(AFIFOChainCount)
     ) AFIFOChain(
         .rst_(fifo_rst_),
@@ -69,63 +70,119 @@ module Top(
         .r_ready(fifo_r_ready)
     );
     
+    assign fifo_prop_clk    = fifo_w_clk;
+    assign fifo_r_clk       = ice_st_spi_clk;
+    
     // ====================
-    // Producer
+    // SD Clock (102 MHz)
     // ====================
-    reg[1:0] prod_state = 0;
-    reg[10:0] prod_counter = 0;
+    localparam SD_Clk_Freq = 102_000_000;
+    wire sd_clk_int;
+    ClockGen #(
+        .FREQOUT(SD_Clk_Freq),
+        .DIVR(0),
+        .DIVF(50),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) ClockGen_sd_clk_int(.clkRef(ice_img_clk16mhz), .clk(sd_clk_int));
     
-    reg spi_prodTrigger = 0;
-    `TogglePulse(prod_trigger, spi_prodTrigger, posedge, prod_clk);
+    // ====================
+    // SDController
+    // ====================
+    reg         sd_init_reset           = 0;
+    reg         sd_init_trigger         = 0;
+    reg[1:0]    sd_init_clk_speed       = 0;
+    reg[3:0]    sd_init_clk_delay       = 0;
+    reg         sd_cmd_trigger          = 0;
+    reg[47:0]   sd_cmd_data             = 0;
+    reg[1:0]    sd_cmd_respType         = 0;
+    reg[1:0]    sd_cmd_datInType        = 0;
+    wire        sd_cmd_done;
+    wire        sd_resp_done;
+    wire[47:0]  sd_resp_data;
+    wire        sd_resp_crcErr;
+    reg         sd_datOut_stop          = 0;
+    wire        sd_datOut_stopped;
+    reg         sd_datOut_start         = 0;
+    wire        sd_datOut_ready;
+    wire        sd_datOut_done;
+    wire        sd_datOut_crcErr;
+    wire        sd_datOutRead_clk;
+    wire        sd_datOutRead_ready;
+    wire        sd_datOutRead_trigger;
+    wire[15:0]  sd_datOutRead_data;
+    wire        sd_datIn_done;
+    wire        sd_datIn_crcErr;
+    wire        sd_datInWrite_rst_;
+    wire        sd_datInWrite_clk;
+    wire        sd_datInWrite_ready;
+    wire        sd_datInWrite_trigger;
+    wire[15:0]  sd_datInWrite_data;
+    wire        sd_status_dat0Idle;
     
-    always @(posedge prod_clk) begin
-        fifo_w_trigger <= 0;
-        fifo_w_data <= fifo_w_data+1;
-        prod_counter <= prod_counter+1;
+    SDController #(
+        .ClkFreq(SD_Clk_Freq)
+    ) SDController (
+        .clk(sd_clk_int),
         
-        if (fifo_w_trigger) begin
-            if (fifo_w_ready) begin
-                // $display("Wrote word: 0x%x", fifo_w_data);
-            
-            // Handle dropped writes
-            end else begin
-                $display("Error: !fifo_w_ready while writing...");
-                `Finish;
-            end
-        end
+        .sd_clk(sd_clk),
+        .sd_cmd(sd_cmd),
+        .sd_dat(sd_dat),
         
-        case (prod_state)
-        0: begin
-        end
+        .init_reset(sd_init_reset),
+        .init_trigger(sd_init_trigger),
+        .init_clk_speed(sd_init_clk_speed),
+        .init_clk_delay(sd_init_clk_delay),
         
-        1: begin
-            if (fifo_prop_w_ready) begin
-                prod_state <= 2;
-            end
-        end
+        .cmd_trigger(sd_cmd_trigger),
+        .cmd_data(sd_cmd_data),
+        .cmd_respType(sd_cmd_respType),
+        .cmd_datInType(sd_cmd_datInType),
+        .cmd_done(sd_cmd_done),
         
-        2: begin
-            fifo_w_trigger <= 1;
-            fifo_w_data <= 0;
-            prod_counter <= 1;
-            prod_state <= 3;
-        end
+        .resp_done(sd_resp_done),
+        .resp_data(sd_resp_data),
+        .resp_crcErr(sd_resp_crcErr),
         
-        3: begin
-            fifo_w_trigger <= 1;
-            if (&prod_counter) begin
-                prod_state <= 1;
-            end
-        end
-        endcase
+        .datOut_stop(sd_datOut_stop),
+        .datOut_stopped(sd_datOut_stopped),
+        .datOut_start(sd_datOut_start),
+        .datOut_done(sd_datOut_done),
+        .datOut_crcErr(sd_datOut_crcErr),
         
-        if (prod_trigger) prod_state <= 1;
-    end
+        .datOutRead_clk(sd_datOutRead_clk),
+        .datOutRead_ready(sd_datOutRead_ready),
+        .datOutRead_trigger(sd_datOutRead_trigger),
+        .datOutRead_data(sd_datOutRead_data),
+        
+        .datIn_done(sd_datIn_done),
+        .datIn_crcErr(sd_datIn_crcErr),
+        
+        .datInWrite_rst_(sd_datInWrite_rst_),
+        .datInWrite_clk(sd_datInWrite_clk),
+        .datInWrite_ready(sd_datInWrite_ready),
+        .datInWrite_trigger(sd_datInWrite_trigger),
+        .datInWrite_data(sd_datInWrite_data),
+        
+        .status_dat0Idle(sd_status_dat0Idle)
+    );
     
+    assign fifo_rst_            = sd_datInWrite_rst_;
+    assign fifo_w_clk           = sd_datInWrite_clk;
+    assign fifo_w_trigger       = sd_datInWrite_trigger;
+    assign fifo_w_data          = sd_datInWrite_data;
+    assign sd_datInWrite_ready  = fifo_w_ready;
     
     // ====================
     // SPI State Machine
     // ====================
+    
+    // SD nets
+    `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, ice_st_spi_clk);
+    `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, ice_st_spi_clk);
+    `ToggleAck(spi_sdDatOutDone_, spi_sdDatOutDoneAck, sd_datOut_done, posedge, ice_st_spi_clk);
+    `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, ice_st_spi_clk);
+    `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, ice_st_spi_clk);
     
     // MsgCycleCount notes:
     //
@@ -156,7 +213,6 @@ module Top(
     
     localparam SDReadoutLen = ((AFIFOChainCount/2)*4096)/8;
     localparam SDReadoutCount = SDReadoutLen+3;
-    reg[15:0] spi_sdReadoutWord = 0;
     reg[`RegWidth(SDReadoutCount)-1:0] spi_sdReadoutCounter = 0;
     reg spi_sdReadoutEnding = 0;
     
@@ -189,7 +245,6 @@ module Top(
             // See MsgCycleCount comment above.
             spi_dinReg <= spi_dinReg<<4|spi_d_in[3:0];
             spi_dinCounter <= spi_dinCounter-1;
-            spi_sdReadoutWord <= spi_sdReadoutWord<<8;
             spi_doutCounter <= spi_doutCounter-1;
             spi_d_outEn <= 0;
             spi_resp <= spi_resp<<8|8'b0;
@@ -238,9 +293,79 @@ module Top(
                     ice_led <= spi_msgArg[`Msg_Arg_LEDSet_Val_Bits];
                 end
                 
+                // Set SD clock source
+                `Msg_Type_SDInit: begin
+                    $display("[SPI] Got Msg_Type_SDInit: delay=%0d speed=%0d trigger=%b reset=%b",
+                        spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits],
+                        spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits],
+                        spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits],
+                        spi_msgArg[`Msg_Arg_SDInit_Reset_Bits],
+                    );
+                    
+                    // We don't need to synchronize `sd_clk_delay` into the sd_ domain,
+                    // because it should only be set while the sd_ clock is disabled.
+                    sd_init_clk_delay <= spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits];
+                    
+                    case (spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits])
+                    `Msg_Arg_SDInit_Clk_Speed_Off:  sd_init_clk_speed <= `SDController_Init_Clk_Speed_Off;
+                    `Msg_Arg_SDInit_Clk_Speed_Slow: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Slow;
+                    `Msg_Arg_SDInit_Clk_Speed_Fast: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Fast;
+                    endcase
+                    
+                    if (spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits]) begin
+                        sd_init_trigger <= !sd_init_trigger;
+                    end
+                    
+                    if (spi_msgArg[`Msg_Arg_SDInit_Reset_Bits]) begin
+                        sd_init_reset <= !sd_init_reset;
+                    end
+                end
+                
+                // Clock out SD command
+                `Msg_Type_SDSendCmd: begin
+                    $display("[SPI] Got Msg_Type_SDSendCmd [respType:%0b]", spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]);
+                    // Reset spi_sdCmdDone_ / spi_sdRespDone_ / spi_sdDatInDone_
+                    if (!spi_sdCmdDone_) spi_sdCmdDoneAck <= !spi_sdCmdDoneAck;
+                    
+                    if (!spi_sdRespDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]!==`Msg_Arg_SDSendCmd_RespType_None)
+                        spi_sdRespDoneAck <= !spi_sdRespDoneAck;
+                    
+                    if (!spi_sdDatInDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits]!==`Msg_Arg_SDSendCmd_DatInType_None)
+                        spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
+                    
+                    case (spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits])
+                    `Msg_Arg_SDSendCmd_RespType_None:       sd_cmd_respType <= `SDController_RespType_None;
+                    `Msg_Arg_SDSendCmd_RespType_48:         sd_cmd_respType <= `SDController_RespType_48;
+                    `Msg_Arg_SDSendCmd_RespType_136:        sd_cmd_respType <= `SDController_RespType_136;
+                    endcase
+                    
+                    case (spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
+                    `Msg_Arg_SDSendCmd_DatInType_None:      sd_cmd_datInType <= `SDController_DatInType_None;
+                    `Msg_Arg_SDSendCmd_DatInType_1x512:     sd_cmd_datInType <= `SDController_DatInType_1x512;
+                    `Msg_Arg_SDSendCmd_DatInType_Nx4096:    sd_cmd_datInType <= `SDController_DatInType_Nx4096;
+                    endcase
+                    
+                    sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
+                    sd_cmd_trigger <= !sd_cmd_trigger;
+                end
+                
+                // Get SD status / response
+                `Msg_Type_SDStatus: begin
+                    $display("[SPI] Got Msg_Type_SDStatus");
+                    spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits] <= !spi_sdCmdDone_;
+                    spi_resp[`Resp_Arg_SDStatus_RespDone_Bits] <= !spi_sdRespDone_;
+                        spi_resp[`Resp_Arg_SDStatus_RespCRCErr_Bits] <= sd_resp_crcErr;
+                    spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits] <= !spi_sdDatOutDone_;
+                        spi_resp[`Resp_Arg_SDStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
+                    spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
+                        spi_resp[`Resp_Arg_SDStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;
+                        spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] <= 4'bxxxx; // TODO: how do we handle CMD6AccessMode?
+                    spi_resp[`Resp_Arg_SDStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
+                    spi_resp[`Resp_Arg_SDStatus_Resp_Bits] <= sd_resp_data;
+                end
+                
                 `Msg_Type_SDReadout: begin
                     $display("[SPI] Got Msg_Type_SDReadout");
-                    spi_prodTrigger <= 1; // Only triggers once (once started, the producer continues forever)
                     spi_state <= SPI_State_SDReadout;
                 end
                 
@@ -284,11 +409,14 @@ module Top(
             
             SPI_State_SDReadout+3: begin
                 spi_d_outEn <= 1;
-                spi_sdReadoutWord[7:0] <= fifo_r_data;
-                fifo_r_trigger <= !spi_sdReadoutEnding;
+                
+                // if (fifo_r_trigger) begin
+                //     $display("AAA Read word: %x", fifo_r_data);
+                // end
                 
                 if (!spi_doutCounter) begin
-                    spi_doutReg <= spi_sdReadoutWord;
+                    spi_doutReg <= fifo_r_data;
+                    fifo_r_trigger <= !spi_sdReadoutEnding;
                 end
                 
                 if (!spi_sdReadoutCounter) begin
