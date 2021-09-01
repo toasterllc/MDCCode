@@ -16,11 +16,13 @@
 `define SDController_RespType_48                    2'b01
 `define SDController_RespType_136                   2'b10
 
-`define SDController_DatInType_None                 1'b0
-`define SDController_DatInType_512                  1'b1
+`define SDController_DatInType_None                 2'b00
+`define SDController_DatInType_1x512                2'b01   // 1x512 bit response (eg CMD6 response)
+`define SDController_DatInType_Nx4096               2'b10   // Nx4096 bit response (eg mass data read response)
 
 module SDController #(
-    parameter ClkFreq = 120_000_000
+    parameter ClkFreq               = 120_000_000,
+    parameter DatInWrite_BlockCount = 4 // The number of blocks to write between checking `datInWrite_ready`
 )(
     // Clock
     input wire          clk,
@@ -33,7 +35,6 @@ module SDController #(
     // Init port (clock domain: async)
     input wire          init_reset,         // Toggle
     input wire          init_trigger,       // Toggle
-    // input wire          init_finish,        // Toggle
     input wire[1:0]     init_clk_speed,
     input wire[`SDController_Init_Clk_Delay_Width-1:0] init_clk_delay,
     
@@ -41,7 +42,7 @@ module SDController #(
     input wire          cmd_trigger,        // Toggle
     input wire[47:0]    cmd_data,
     input wire[1:0]     cmd_respType,
-    input wire          cmd_datInType,
+    input wire[1:0]     cmd_datInType,
     output reg          cmd_done = 0,       // Toggle
     
     // Response port (clock domain: `clk`)
@@ -65,13 +66,13 @@ module SDController #(
     // DatIn port (clock domain: `clk`)
     output reg          datIn_done = 0,     // Toggle
     output reg          datIn_crcErr = 0,
-    output reg[3:0]     datIn_cmd6AccessMode = 0,
     
     // DatInWrite port (clock domain: `datInWrite_clk`)
+    output reg          datInWrite_rst_ = 0,
     output wire         datInWrite_clk,
     input wire          datInWrite_ready,
     output reg          datInWrite_trigger = 0,
-    output wire[15:0]   datInWrite_data,
+    output reg[15:0]    datInWrite_data = 0,
     
     // Status port (clock domain: `clk`)
     output reg          status_dat0Idle = 0
@@ -121,7 +122,7 @@ module SDController #(
     );
     
     // ====================
-    // Manual Control
+    // Manual SD Line Control
     // ====================
     reg         man_en_         = 0;
     reg         man_sdClk       = 0;
@@ -172,21 +173,23 @@ module SDController #(
     `TogglePulse(datOut_startPulse, datOut_start, posedge, clk_int);
     `TogglePulse(datOut_stopPulse, datOut_stop, posedge, clk_int);
     
-    reg[2:0] datIn_state = 0;
+    reg[3:0] datIn_state = 0;
     wire[3:0] datIn;
     reg[19:0] datIn_reg = 0;
     reg datIn_crcRst = 0;
     reg datIn_crcEn = 0;
     wire[3:0] datIn_crc;
-    reg[6:0] datIn_counter = 0;
+    reg[9:0] datIn_counter = 0;
     reg[3:0] datIn_crcCounter = 0;
+    reg[1:0] datInWrite_counter = 0;
+    reg[`RegWidth(DatInWrite_BlockCount-1)-1:0] datInWrite_blockCounter = 0;
     
     localparam Init_ClockPulseUs = 15; // Pulse needs to be at least 10us, per SD LVS spec
     localparam Init_ClockPulseDelay = Clocks(Clk_Slow_Freq, Init_ClockPulseUs*1000, 1);
     localparam Init_HoldUs = 5; // Hold outputs for 5us after the negative edge of the clock pulse
     localparam Init_HoldDelay = Clocks(Clk_Slow_Freq, Init_HoldUs*1000, 1);
-`ifdef SIM
-    localparam Init_FinishUs = 50; // Don't wait as long during simulation
+`ifdef SD_LVS_SHORT_INIT
+    localparam Init_FinishUs = 10; // Don't wait as long during simulation
 `else
     localparam Init_FinishUs = 5500; // Hold outputs for 5.5ms after the negative edge of the clock pulse
 `endif
@@ -195,8 +198,6 @@ module SDController #(
     reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
     `TogglePulse(init_resetPulse, init_reset, posedge, clk_int);
     `TogglePulse(init_triggerPulse, init_trigger, posedge, clk_int);
-    // // TODO: instead of `init_finish`, try counting for 5ms to automatically transition states. how does that affect perf?
-    // `TogglePulse(init_finishPulse, init_finish, posedge, clk_int);
     reg[2:0] init_state = 0;
     
     always @(posedge clk_int) begin
@@ -237,11 +238,15 @@ module SDController #(
         // between output and input.
         datOut_active <= (datOut_active<<1)|1'b0;
         
-        datIn_reg <= (datIn_reg<<4)|(datOut_active[2] ? 4'b1111 : {datIn[3], datIn[2], datIn[1], datIn[0]});
+        datIn_reg <= (datIn_reg<<4)|(`LeftBit(datOut_active,0) ? 4'b1111 : {datIn[3], datIn[2], datIn[1], datIn[0]});
         datIn_counter <= datIn_counter-1;
         datIn_crcCounter <= datIn_crcCounter-1;
         datIn_crcRst <= 0;
         datIn_crcEn <= 0;
+        datInWrite_rst_ <= 1; // Pulse
+        datInWrite_trigger <= 0; // Pulse
+        datInWrite_counter <= datInWrite_counter-1;
+        datInWrite_data <= datIn_reg;
         
         init_delayCounter <= init_delayCounter-1;
         
@@ -444,41 +449,51 @@ module SDController #(
         end
         
         1: begin
-            datIn_crcRst <= 1;
-            datIn_crcErr <= 0;
+            datInWrite_rst_ <= 0;
+            datInWrite_blockCounter <= DatInWrite_BlockCount-1;
             datIn_state <= 2;
         end
         
         2: begin
-            datIn_counter <= 127;
-            if (!datIn_reg[0]) begin
-                $display("[SDController:DATIN] Triggered");
-                datIn_state <= 3;
-            end
+            datIn_crcRst <= 1;
+            datIn_crcErr <= 0;
+            man_en_ <= 1; // Re-enable sd_clk
+            datIn_state <= 3;
         end
         
         3: begin
-            datIn_crcEn <= 1;
-            // Stash the access mode from the DatIn response.
-            // (This assumes we're receiving a CMD6 response.)
-            if (datIn_counter === 7'd94) begin
-                datIn_cmd6AccessMode <= datIn_reg[3:0];
-            end
-            
-            // Stay in this state until datIn_counter==0
-            if (!datIn_counter) begin
+            // We're accessing `cmd_datInType` without synchronization, but that's
+            // safe because the cmd_ domain isn't allowed to modify it until we
+            // signal `datIn_done`
+            datIn_counter <= (cmd_datInType===`SDController_DatInType_1x512 ? 127 : 1023);
+            datInWrite_counter <= 3;
+            if (!datIn_reg[0]) begin
+                $display("[SDController:DATIN] Triggered");
                 datIn_state <= 4;
             end
         end
         
         4: begin
-            datIn_crcCounter <= 15;
-            datIn_state <= 5;
+            datIn_crcEn <= 1;
+            
+            if (!datInWrite_counter) begin
+                datInWrite_trigger <= 1;
+            end
+            
+            // Stay in this state until datIn_counter==0
+            if (!datIn_counter) begin
+                datIn_state <= 5;
+            end
         end
         
         5: begin
+            datIn_crcCounter <= 15;
+            datIn_state <= 6;
+        end
+        
+        6: begin
             if (datIn_crc[3] === datIn_reg[7]) begin
-                $display("[SDController:DATIN] DAT3 CRC valid ✅");
+                $display("[SDController:DATIN] DAT3 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[7]);
             end else begin
                 $display("[SDController:DATIN] Bad DAT3 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[7]);
                 `Finish;
@@ -486,7 +501,7 @@ module SDController #(
             end
             
             if (datIn_crc[2] === datIn_reg[6]) begin
-                $display("[SDController:DATIN] DAT2 CRC valid ✅");
+                $display("[SDController:DATIN] DAT2 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[6]);
             end else begin
                 $display("[SDController:DATIN] Bad DAT2 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[6]);
                 `Finish;
@@ -494,7 +509,7 @@ module SDController #(
             end
             
             if (datIn_crc[1] === datIn_reg[5]) begin
-                $display("[SDController:DATIN] DAT1 CRC valid ✅");
+                $display("[SDController:DATIN] DAT1 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[5]);
             end else begin
                 $display("[SDController:DATIN] Bad DAT1 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[5]);
                 `Finish;
@@ -502,7 +517,7 @@ module SDController #(
             end
             
             if (datIn_crc[0] === datIn_reg[4]) begin
-                $display("[SDController:DATIN] DAT0 CRC valid ✅");
+                $display("[SDController:DATIN] DAT0 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[4]);
             end else begin
                 $display("[SDController:DATIN] Bad DAT0 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[4]);
                 `Finish;
@@ -510,21 +525,50 @@ module SDController #(
             end
             
             if (!datIn_crcCounter) begin
-                datIn_state <= 6;
+                datIn_state <= 7;
             end
         end
         
-        6: begin
+        7: begin
             if (datIn_reg[7:4] === 4'b1111) begin
-                $display("[SDController:DATIN] Good end bit ✅");
+                $display("[SDController:DATIN] Good end bits ✅ (expected: %b, got: 4'b1111) ✅", datIn_reg[7:4]);
             end else begin
-                $display("[SDController:DATIN] Bad end bit ❌");
+                $display("[SDController:DATIN] Bad end bits ❌ (expected: %b, got: 4'b1111) ✅", datIn_reg[7:4]);
                 `Finish;
                 datIn_crcErr <= 1;
             end
+            
+            // TODO: perf: try merging this state with the next one
+            datIn_state <= 8;
+        end
+        
+        8: begin
+            datInWrite_blockCounter <= datInWrite_blockCounter-1;
+            
             // Signal that the DatIn is complete
             datIn_done <= !datIn_done;
-            datIn_state <= 0;
+            
+            if (cmd_datInType === `SDController_DatInType_1x512) begin
+                datIn_state <= 0;
+            
+            // TODO: perf: try moving the rest of this if-statement to the next state
+            end else if (!datInWrite_blockCounter) begin
+                datIn_state <= 9;
+            
+            end else begin
+                datIn_state <= 2;
+            end
+        end
+        
+        9: begin
+            // Disable sd_clk while we're in this state
+            man_en_ <= 0;
+            man_sdClk <= 0;
+            
+            // Wait until the FIFO can accept data
+            if (datInWrite_ready) begin
+                datIn_state <= 2;
+            end
         end
         endcase
         
@@ -580,8 +624,8 @@ module SDController #(
             cmd_active[0] <= 1;
             $display("[SDController:CMD] Done");
             cmd_done <= !cmd_done;
-            if (cmd_respType!==`SDController_RespType_None) resp_state <= 1;
-            if (cmd_datInType!==`SDController_DatInType_None) datIn_state <= 1;
+            resp_state <= (cmd_respType===`SDController_RespType_None ? 0 : 1);
+            datIn_state <= (cmd_datInType===`SDController_DatInType_None ? 0 : 1);
             cmd_state <= 0;
         end
         endcase
@@ -639,9 +683,6 @@ module SDController #(
         end else if (init_triggerPulse) begin
             $display("[SDController:INIT] Trigger");
             init_state <= 1;
-        // end else if (init_finishPulse) begin
-        //     $display("[SDController:INIT] Finish");
-        //     init_state <= 5;
         end
     end
     

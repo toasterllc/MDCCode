@@ -187,15 +187,15 @@ module SDCardSim(
                 ($time-lvsinit_pulseEndTimePs)/1000000
             );
         end else begin
-            `ifndef SDCARDSIM_LVS_INIT_IGNORE_5MS
+            `ifdef SD_LVS_SHORT_INIT
+                $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us); ignoring because SD_LVS_SHORT_INIT is defined",
+                    ($time-lvsinit_pulseEndTimePs)/1000000
+                );
+            `else
                 $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us) ❌",
                     ($time-lvsinit_pulseEndTimePs)/1000000
                 );
                 `Finish;
-            `else
-                $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us); ignoring because SDCARDSIM_LVS_INIT_IGNORE_5MS is defined",
-                    ($time-lvsinit_pulseEndTimePs)/1000000
-                );
             `endif
         end
         
@@ -313,7 +313,7 @@ module SDCardSim(
                 end
                 
                 CMD25: begin
-                    // TODO: make this a real CMD18 response. right now it's a CMD3 response.
+                    // TODO: make this a real CMD25 response. right now it's a CMD3 response.
                     respOut=136'h03aaaa0520d1ffffffffffffffffffffff;
                     respLen=48;
                 end
@@ -717,6 +717,7 @@ module SDCardSim(
             if (sendReadData) begin
                 reg[15:0] i;
                 reg[15:0] ii;
+                reg[15:0] count;
                 reg[7:0] datOutReg;
                 
                 // Start bit
@@ -726,32 +727,38 @@ module SDCardSim(
                 
                 wait(!sd_clk);
                 dat_crcRst_ = 1;
-
-                // // Shift out data
-                // payloadDataReg = PAYLOAD_DATA;
-                // $display("[SDCardSim] Sending read data: %h", payloadDataReg);
-                //
-                // for (i=0; i<1024 && sendReadData; i++) begin
-                //     wait(!sd_clk);
-                //     datOut = payloadDataReg[4095:4092];
-                //     payloadDataReg = payloadDataReg<<4;
-                //     wait(sd_clk);
-                // end
                 
                 // Shift out data
-                $display("[SDCardSim] Sending read data");
-                
-                for (i=0; i<1024 && sendReadData; i++) begin
-                    datOutReg = i;
-                    for (ii=0; ii<8 && sendReadData; ii++) begin
-                        // $display("[SDCardSim] Sending bit: %b", datOut);
-                        wait(!sd_clk);
-                        datOut = {4{datOutReg[7]}};
-                        wait(sd_clk);
-                        
-                        datOutReg = datOutReg<<1;
-                    end
+                // payloadDataReg = PAYLOAD_DATA;
+                // Fill payloadDataReg with random data
+                for (i=0; i<$size(payloadDataReg)/32; i++) begin
+                    payloadDataReg[((32*((i)+1))-1) -: 32] = $urandom;
                 end
+                $display("[SDCardSim:ReadData] Sending read data: %h", payloadDataReg);
+
+                for (i=0; i<1024 && sendReadData; i++) begin
+                    wait(!sd_clk);
+                    datOut = payloadDataReg[4095:4092];
+                    payloadDataReg = payloadDataReg<<4;
+                    wait(sd_clk);
+                end
+                
+                // // Shift out data
+                // $display("[SDCardSim] Sending read data START");
+                //
+                // for (i=0; i<1024 && sendReadData; i++) begin
+                //     datOutReg = i;
+                //     for (ii=0; ii<8 && sendReadData; ii++) begin
+                //         $display("[SDCardSim] Sending bit: %b", datOut);
+                //         wait(!sd_clk);
+                //         datOut = {4{datOutReg[7]}};
+                //         wait(sd_clk);
+                //
+                //         datOutReg = datOutReg<<1;
+                //     end
+                // end
+                //
+                // $display("[SDCardSim] Sending read data END");
                 
                 if (sendReadData) begin
                     // dat_ourCRCReg[3] = 16'b1010_1010_1010_XXXX;
@@ -764,10 +771,10 @@ module SDCardSim(
                     dat_ourCRCReg[1] = dat_crcNext[1];
                     dat_ourCRCReg[0] = dat_crcNext[0];
                     
-                    $display("[SDCardSim] CRC3: %h", dat_ourCRCReg[3]);
-                    $display("[SDCardSim] CRC2: %h", dat_ourCRCReg[2]);
-                    $display("[SDCardSim] CRC1: %h", dat_ourCRCReg[1]);
-                    $display("[SDCardSim] CRC0: %h", dat_ourCRCReg[0]);
+                    $display("[SDCardSim:ReadData] CRC3: %h", dat_ourCRCReg[3]);
+                    $display("[SDCardSim:ReadData] CRC2: %h", dat_ourCRCReg[2]);
+                    $display("[SDCardSim:ReadData] CRC1: %h", dat_ourCRCReg[1]);
+                    $display("[SDCardSim:ReadData] CRC0: %h", dat_ourCRCReg[0]);
                     
                     // Shift out CRC
                     for (i=0; i<16 && sendReadData; i++) begin
@@ -784,24 +791,38 @@ module SDCardSim(
                 
                 dat_crcRst_ = 0;
                 
-                // End bit
-                wait(!sd_clk);
-                datOut = 4'b1111;
-                wait(sd_clk);
+                if (sendReadData) begin
+                    // End bit
+                    wait(!sd_clk);
+                    datOut = 4'b1111;
+                    wait(sd_clk);
+                    
+                    // Wait between [4,16] cycles before starting the next block.
+                    //
+                    // The SD spec specifies exactly N_AC cycles between blocks,
+                    // but we want to make sure that SDController is more robust
+                    // to a varying number of cycles.
+                    //
+                    // The SD spec also specifies that min(N_AC)=8 cycles, but
+                    // again we want to be more robust, so we allow down to 4
+                    // cycles.
+                    count = 4+($urandom%13);
+                    $display("[SDCardSim:ReadData] Waiting %0d cycles before outputting next block", count);
+                    for (i=0; i<count; i++) begin
+                        wait(!sd_clk);
+                        wait(sd_clk);
+                    end
                 
-                // Stop driving DAT lines
-                wait(!sd_clk);
-                datOut = 4'bzzzz;
-                wait(sd_clk);
-                
-                wait(!sd_clk);
-                wait(sd_clk);
-                
-                wait(!sd_clk);
-                wait(sd_clk);
-            end
+                end else begin
+                    // Stop driving DAT lines if we're bailing
+                    wait(!sd_clk);
+                    datOut = 4'bzzzz;
+                    wait(sd_clk);
+                end
             
-            wait(!sd_clk);
+            end else begin
+                wait(!sd_clk);
+            end
         end
     end
     
@@ -884,7 +905,7 @@ module SDCardSim(
                 datOutReg[379:376] = respAccessMode;
                 
                 // Send response
-                $display("[SDCardSim] Sending CMD6 response: %0h", datOutReg);
+                $display("[SDCardSim] Sending CMD6 response: %h", datOutReg);
                 wait(!sd_clk);
                 dat_crcRst_ = 1;
                 

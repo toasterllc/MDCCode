@@ -263,13 +263,12 @@ module Top(
     // ====================
     reg         sd_init_reset = 0;
     reg         sd_init_trigger = 0;
-    // reg         sd_init_finish = 0;
     reg[1:0]    sd_init_clk_speed = 0;
     reg[3:0]    sd_init_clk_delay = 0;
     reg         sd_cmd_trigger = 0;
     reg[47:0]   sd_cmd_data = 0;
     reg[1:0]    sd_cmd_respType = 0;
-    reg         sd_cmd_datInType = 0;
+    reg[1:0]    sd_cmd_datInType = 0;
     wire        sd_cmd_done;
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
@@ -286,7 +285,6 @@ module Top(
     wire[15:0]  sd_datOutRead_data;
     wire        sd_datIn_done;
     wire        sd_datIn_crcErr;
-    wire[3:0]   sd_datIn_cmd6AccessMode;
     wire        sd_status_dat0Idle;
 
     SDController #(
@@ -300,7 +298,6 @@ module Top(
 
         .init_reset(sd_init_reset),
         .init_trigger(sd_init_trigger),
-        // .init_finish(sd_init_finish),
         .init_clk_speed(sd_init_clk_speed),
         .init_clk_delay(sd_init_clk_delay),
 
@@ -327,7 +324,6 @@ module Top(
 
         .datIn_done(sd_datIn_done),
         .datIn_crcErr(sd_datIn_crcErr),
-        .datIn_cmd6AccessMode(sd_datIn_cmd6AccessMode),
 
         .status_dat0Idle(sd_status_dat0Idle)
     );
@@ -464,7 +460,6 @@ module Top(
                     $display("[SPI] Got Msg_Type_SDInit: delay=%0d speed=%0d trigger=%b reset=%b",
                         spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits],
                         spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits],
-                        // spi_msgArg[`Msg_Arg_SDInit_Finish_Bits],
                         spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits],
                         spi_msgArg[`Msg_Arg_SDInit_Reset_Bits],
                     );
@@ -478,10 +473,6 @@ module Top(
                     `Msg_Arg_SDInit_Clk_Speed_Slow: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Slow;
                     `Msg_Arg_SDInit_Clk_Speed_Fast: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Fast;
                     endcase
-                    
-                    // if (spi_msgArg[`Msg_Arg_SDInit_Finish_Bits]) begin
-                    //     sd_init_finish <= !sd_init_finish;
-                    // end
                     
                     if (spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits]) begin
                         sd_init_trigger <= !sd_init_trigger;
@@ -505,14 +496,15 @@ module Top(
                         spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
                     
                     case (spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits])
-                    `Msg_Arg_SDSendCmd_RespType_None:   sd_cmd_respType <= `SDController_RespType_None;
-                    `Msg_Arg_SDSendCmd_RespType_48:     sd_cmd_respType <= `SDController_RespType_48;
-                    `Msg_Arg_SDSendCmd_RespType_136:    sd_cmd_respType <= `SDController_RespType_136;
+                    `Msg_Arg_SDSendCmd_RespType_None:       sd_cmd_respType <= `SDController_RespType_None;
+                    `Msg_Arg_SDSendCmd_RespType_48:         sd_cmd_respType <= `SDController_RespType_48;
+                    `Msg_Arg_SDSendCmd_RespType_136:        sd_cmd_respType <= `SDController_RespType_136;
                     endcase
                     
                     case (spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
-                    `Msg_Arg_SDSendCmd_DatInType_None:  sd_cmd_datInType <= `SDController_DatInType_None;
-                    `Msg_Arg_SDSendCmd_DatInType_512:   sd_cmd_datInType <= `SDController_DatInType_512;
+                    `Msg_Arg_SDSendCmd_DatInType_None:      sd_cmd_datInType <= `SDController_DatInType_None;
+                    `Msg_Arg_SDSendCmd_DatInType_1x512:     sd_cmd_datInType <= `SDController_DatInType_1x512;
+                    `Msg_Arg_SDSendCmd_DatInType_Nx4096:    sd_cmd_datInType <= `SDController_DatInType_Nx4096;
                     endcase
                     
                     sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
@@ -529,7 +521,7 @@ module Top(
                         spi_resp[`Resp_Arg_SDStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
                     spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
                         spi_resp[`Resp_Arg_SDStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;
-                        spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] <= sd_datIn_cmd6AccessMode;
+                        spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] <= 4'bxxxx; // TODO: how do we handle CMD6AccessMode?
                     spi_resp[`Resp_Arg_SDStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
                     spi_resp[`Resp_Arg_SDStatus_Resp_Bits] <= sd_resp_data;
                 end

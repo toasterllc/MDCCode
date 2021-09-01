@@ -2,8 +2,9 @@
     
     - SDController: Implement SD card reading
         - Requirements
-            - Read N blocks at a time, when FIFO space permits
-            - Stop clock between N blocks if we don't have space yet
+            - Read 1 block without outputting to FIFO (for CMD6)
+            - Read N blocks at a time and output through FIFO, when FIFO space permits (for reading mass data)
+            - Stop clock between N blocks if the FIFO doesn't have space
                 - Clock requirements
                     - Internal: Manual control of sd_clk (for LVS init sequence)
                     - External: Switch between clk_slow and clk_fast (after initializing SD card)
