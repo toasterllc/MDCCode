@@ -201,6 +201,8 @@ module SDController #(
     reg[2:0] init_state = 0;
     
     always @(posedge clk_int) begin
+        man_en_ <= 1; // Disable manual control by default
+        
         cmd_counter <= cmd_counter-1;
         // `cmd_active` is 3 bits to track whether `cmd_in` is
         // valid or not, since it takes several cycles to transition
@@ -457,7 +459,6 @@ module SDController #(
         2: begin
             datIn_crcRst <= 1;
             datIn_crcErr <= 0;
-            man_en_ <= 1; // Re-enable sd_clk
             datIn_state <= 3;
         end
         
@@ -487,6 +488,7 @@ module SDController #(
         end
         
         5: begin
+            // TODO: perf: try removing this state
             datIn_crcCounter <= 15;
             datIn_state <= 6;
         end
@@ -647,32 +649,44 @@ module SDController #(
         end
         
         1: begin
+            man_en_ <= 0;
             man_sdClk <= 1;
             if (!init_delayCounter) begin
-                man_sdClk <= 0;
-                init_delayCounter <= Init_HoldDelay;
                 init_state <= 2;
             end
         end
         
         2: begin
-            if (!init_delayCounter) begin
-                man_sdCmdOutEn <= 0;
-                man_sdDatOutEn <= 0;
-                init_delayCounter <= Init_FinishDelay;
-                init_state <= 3;
-            end
+            man_en_ <= 0;
+            man_sdClk <= 0;
+            init_delayCounter <= Init_HoldDelay;
+            init_state <= 3;
         end
         
         3: begin
+            man_en_ <= 0;
             if (!init_delayCounter) begin
-                $display("[SDController:INIT] Done");
-                man_en_ <= 1;
                 init_state <= 4;
             end
         end
         
         4: begin
+            man_en_ <= 0;
+            man_sdCmdOutEn <= 0;
+            man_sdDatOutEn <= 0;
+            init_delayCounter <= Init_FinishDelay;
+            init_state <= 5;
+        end
+        
+        5: begin
+            man_en_ <= 0;
+            if (!init_delayCounter) begin
+                $display("[SDController:INIT] Done");
+                init_state <= 6;
+            end
+        end
+        
+        6: begin
         end
         endcase
         
