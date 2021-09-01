@@ -814,7 +814,7 @@ module SDCardSim(
                     // The SD spec also specifies that min(N_AC)=8 cycles, but
                     // again we want to be more robust, so we allow down to 4
                     // cycles.
-                    count = 4+($urandom%13);
+                    count = 8+($urandom%13);
                     $display("[SDCardSim:ReadData] Waiting %0d cycles before outputting next block", count);
                     for (i=0; i<count; i++) begin
                         wait(!sd_clk);
