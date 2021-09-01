@@ -1,19 +1,21 @@
+// SD_LVS_SHORT_INIT: When simulating, don't require waiting the full 5ms when initializing
+// the SD card, because it takes a long time to simulate
+`ifdef SIM
+`define SD_LVS_SHORT_INIT
+`endif
+
 `include "../ICEAppMSP/Top.v"          // Before yosys synthesis
 // `include "../ICEAppMSP/Synth/Top.v"    // After yosys synthesis
 `include "ICEAppTypes.v"
 `include "Util.v"
-
-// SDCARDSIM_LVS_INIT_IGNORE_5MS: Don't require waiting for 5ms, because that takes way too long in simulation
-`define SDCARDSIM_LVS_INIT_IGNORE_5MS
 `include "SDCardSim.v"
-
 `include "ImgSim.v"
 `include "ImgI2CSlaveSim.v"
 
 // // MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
 // // beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
 // // when that happens
-`define MOBILE_SDR_INIT_VAL 16'hCAFE
+// `define MOBILE_SDR_INIT_VAL 16'hCAFE
 `include "mt48h32m16lf/mobile_sdr.v"
 
 `timescale 1ns/1ps
@@ -82,18 +84,18 @@ module Testbench();
         .i2c_data(img_sdata)
     );
     
-    mobile_sdr mobile_sdr(
-        .clk(ram_clk),
-        .cke(ram_cke),
-        .addr(ram_a),
-        .ba(ram_ba),
-        .cs_n(ram_cs_),
-        .ras_n(ram_ras_),
-        .cas_n(ram_cas_),
-        .we_n(ram_we_),
-        .dq(ram_dq),
-        .dqm(ram_dqm)
-    );
+    // mobile_sdr mobile_sdr(
+    //     .clk(ram_clk),
+    //     .cke(ram_cke),
+    //     .addr(ram_a),
+    //     .ba(ram_ba),
+    //     .cs_n(ram_cs_),
+    //     .ras_n(ram_ras_),
+    //     .cas_n(ram_cas_),
+    //     .we_n(ram_we_),
+    //     .dq(ram_dq),
+    //     .dqm(ram_dqm)
+    // );
     
     initial begin
         $dumpfile("Top.vcd");
@@ -255,6 +257,7 @@ module Testbench();
     localparam CMD8     = 6'd8;     // SEND_BIT_IF_COND
     localparam CMD11    = 6'd11;    // VOLTAGE_SWITCH
     localparam CMD12    = 6'd12;    // STOP_TRANSMISSION
+    localparam CMD18    = 6'd18;    // READ_MULTIPLE_BLOCK
     localparam CMD25    = 6'd25;    // WRITE_MULTIPLE_BLOCK
     localparam CMD41    = 6'd41;    // SD_SEND_BIT_OP_COND
     localparam CMD55    = 6'd55;    // APP_CMD
@@ -285,7 +288,7 @@ module Testbench();
             done = spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits];
             // If a response is expected, we're done when the response is received
             if (respType !== `Msg_Arg_SDSendCmd_RespType_None) done &= spi_resp[`Resp_Arg_SDStatus_RespDone_Bits];
-            if (datInType !== `Msg_Arg_SDSendCmd_DatInType_None) done &= spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits];
+            if (datInType === `Msg_Arg_SDSendCmd_DatInType_1x512) done &= spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits];
             
             // // Our clock is much faster than the SD slow clock (16 MHz vs .4 MHz),
             // // so wait a bit before asking for the status again
@@ -301,7 +304,6 @@ module Testbench();
     task TestSDConfig(
         input[`Msg_Arg_SDInit_Clk_Delay_Len-1:0] delay,
         input[`Msg_Arg_SDInit_Clk_Speed_Len-1:0] speed,
-        // input[`Msg_Arg_SDInit_Finish_Len-1:0] finish,
         input[`Msg_Arg_SDInit_Trigger_Len-1:0] trigger,
         input[`Msg_Arg_SDInit_Reset_Len-1:0] reset
     ); begin
@@ -310,7 +312,6 @@ module Testbench();
         // $display("\n[Testbench] ========== TestSDConfig ==========");
         arg[`Msg_Arg_SDInit_Clk_Delay_Bits] = delay;
         arg[`Msg_Arg_SDInit_Clk_Speed_Bits] = speed;
-        // arg[`Msg_Arg_SDInit_Finish_Bits] = finish;
         arg[`Msg_Arg_SDInit_Trigger_Bits] = trigger;
         arg[`Msg_Arg_SDInit_Reset_Bits] = reset;
         
@@ -331,7 +332,7 @@ module Testbench();
         // <-- Turn on power to SD card
         TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 1,       0);
         
-`ifdef SDCARDSIM_LVS_INIT_IGNORE_5MS
+`ifdef SD_LVS_SHORT_INIT
         // Wait 50us, because waiting 5ms takes forever in simulation
         $display("[Testbench] Waiting 50us (and pretending it's 5ms)...");
         #(50_000);
@@ -384,6 +385,13 @@ module Testbench();
         end
     end endtask
     
+    task TestSDDatIn; begin
+        $display("\n[Testbench] ========== TestSDDatIn ==========");
+        
+        // Send SD command CMD18 (READ_MULTIPLE_BLOCK)
+        SendSDCmdResp(CMD18, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_Nx4096, 32'b0);
+    end endtask
+    
     task TestSDDatOut; begin
         // ====================
         // Test writing data to SD card / DatOut
@@ -421,15 +429,15 @@ module Testbench();
         SendSDCmdResp(CMD12, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'b0);
     end endtask
 
-    task TestSDDatIn; begin
+    task TestSDCMD6; begin
         // ====================
         // Test CMD6 (SWITCH_FUNC) + DatIn
         // ====================
         
-        $display("\n[Testbench] ========== TestSDDatIn ==========");
+        $display("\n[Testbench] ========== TestSDCMD6 ==========");
         
         // Send SD command CMD6 (SWITCH_FUNC)
-        SendSDCmdResp(CMD6, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512, 32'h80FFFFF3);
+        SendSDCmdResp(CMD6, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_1x512, 32'h80FFFFF3);
         $display("[Testbench] Waiting for DatIn to complete...");
         do begin
             // Request SD status
@@ -450,7 +458,7 @@ module Testbench();
             $display("[Testbench] CMD6 access mode == 0x3 ✅");
         end else begin
             $display("[Testbench] CMD6 access mode == 0x%h ❌", spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits]);
-            `Finish;
+            // `Finish;
         end
     end endtask
     
@@ -549,7 +557,7 @@ module Testbench();
         
         // Send SD command that doesn't respond on the DAT lines,
         // but specify that we expect DAT data
-        SendSDCmd(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512, 0);
+        SendSDCmd(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_1x512, 0);
         $display("[Testbench] Verifying that DatIn times out...");
         done = 0;
         for (i=0; i<10 && !done; i++) begin
@@ -567,7 +575,7 @@ module Testbench();
         if (!done) begin
             $display("[Testbench] DatIn timeout ✅");
             $display("[Testbench] Testing DatIn after timeout...");
-            TestSDDatIn();
+            TestSDCMD6();
             $display("[Testbench] DatIn Recovered ✅");
 
         end else begin
@@ -817,26 +825,29 @@ module Testbench();
         TestNop();
         TestRst();
         
-        // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
-        TestImgReset();
-        TestImgSetHeader1(8'h42 /* version */, 32'hAABBCCDD /* timestamp */, 16'd2304 /* image width */);
-        TestImgSetHeader2(16'd1296 /* image height */, 16'h1111 /* exposure */, 16'h2222 /* gain */);
-        // TestImgI2CWriteRead();
-        TestImgCapture();
+        // // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
+        // TestImgReset();
+        // TestImgSetHeader1(8'h42 /* version */, 32'hAABBCCDD /* timestamp */, 16'd2304 /* image width */);
+        // TestImgSetHeader2(16'd1296 /* image height */, 16'h1111 /* exposure */, 16'h2222 /* gain */);
+        // // TestImgI2CWriteRead();
+        // TestImgCapture();
         
         TestSDInit();
+        TestSDCMD0();
+        TestSDCMD8();
+        TestSDCMD6();
         //           delay, speed,                          trigger, reset
         TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Off,  0,       0);
         TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Fast, 0,       0);
-        TestSDCMD0();
-        TestSDCMD8();
-        TestSDDatOut();
+        
+        TestSDDatIn();
+        
+        // TestSDDatOut();
         // TestSDCMD2();
-        // TestSDDatIn();
         // TestSDRespRecovery();
         // // TestSDDatOutRecovery();
         // TestSDDatInRecovery();
         
-        `Finish;
+        // `Finish;
     end
 endmodule
