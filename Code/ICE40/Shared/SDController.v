@@ -530,6 +530,7 @@ module SDController #(
         end
         
         7: begin
+            // Check end bits
             if (datIn_reg[7:4] === 4'b1111) begin
                 $display("[SDController:DATIN] Good end bits ✅ (expected: %b, got: 4'b1111) ✅", datIn_reg[7:4]);
             end else begin
@@ -538,11 +539,10 @@ module SDController #(
                 datIn_crcErr <= 1;
             end
             
-            // TODO: perf: try merging this state with the next one
-            datIn_state <= 8;
-        end
-        
-        8: begin
+            // TODO: perf: try moving the rest of this state to an intermediate one
+            //             we originally moved it out of its own state, to save a
+            //             state since N_AC=8, which is tight
+            
             datInWrite_blockCounter <= datInWrite_blockCounter-1;
             
             // Signal that the DatIn is complete
@@ -553,14 +553,14 @@ module SDController #(
             
             // TODO: perf: try moving the rest of this if-statement to the next state
             end else if (!datInWrite_blockCounter) begin
-                datIn_state <= 9;
+                datIn_state <= 8;
             
             end else begin
                 datIn_state <= 2;
             end
         end
         
-        9: begin
+        8: begin
             // Disable sd_clk while we're in this state
             man_en_ <= 0;
             man_sdClk <= 0;
