@@ -539,7 +539,16 @@ module SDController #(
             
             datIn_done <= !datIn_done; // Signal that the DatIn is complete
             datInWrite_blockCounter <= datInWrite_blockCounter-1;
-            datIn_state <= ((cmd_datInType===`SDController_DatInType_Nx4096) ? 7 : 0);
+            
+            if (cmd_datInType===`SDController_DatInType_Nx4096) begin
+                if (!datInWrite_blockCounter) begin
+                    datIn_state <= 7;
+                end else begin
+                    datIn_state <= 2;
+                end
+            end else begin
+                datIn_state <= 0;
+            end
         end
         
         7: begin
@@ -548,7 +557,7 @@ module SDController #(
             man_sdClk <= 0;
             
             // Wait until the FIFO can accept data
-            if (!(&datInWrite_blockCounter) || datInWrite_ready) begin
+            if (datInWrite_ready) begin
                 datIn_state <= 2;
             end
         end
