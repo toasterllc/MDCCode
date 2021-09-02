@@ -181,6 +181,7 @@ module SDController #(
     wire[3:0] datIn_crc;
     reg[9:0] datIn_counter = 0;
     reg[3:0] datIn_crcCounter = 0;
+    reg datIn_repeat = 0;
     reg[1:0] datInWrite_counter = 0;
     reg[`RegWidth(DatInWrite_BlockCount-1)-1:0] datInWrite_blockCounter = 0;
     
@@ -466,6 +467,7 @@ module SDController #(
             // We're accessing `cmd_datInType` without synchronization, but that's
             // safe because the cmd_ domain isn't allowed to modify it until we
             // signal `datIn_done`
+            // TODO: perf: try registering the value for datIn_counter
             datIn_counter <= (cmd_datInType===`SDController_DatInType_1x512 ? 127 : 1023);
             datInWrite_counter <= 3;
             if (!datIn_reg[0]) begin
@@ -536,25 +538,11 @@ module SDController #(
                 datIn_crcErr <= 1;
             end
             
-            // TODO: perf: try moving the rest of this state to an intermediate one
-            //             we originally moved it out of its own state, to save a
-            //             state since N_AC=8, which is tight
-            
             datInWrite_blockCounter <= datInWrite_blockCounter-1;
             
             // Signal that the DatIn is complete
             datIn_done <= !datIn_done;
-            
-            if (cmd_datInType === `SDController_DatInType_1x512) begin
-                datIn_state <= 0;
-            
-            // TODO: perf: try moving the rest of this if-statement to the next state
-            end else if (!datInWrite_blockCounter) begin
-                datIn_state <= 7;
-            
-            end else begin
-                datIn_state <= 2;
-            end
+            datIn_state <= (datIn_repeat ? 7 : 0);
         end
         
         7: begin
@@ -563,7 +551,7 @@ module SDController #(
             man_sdClk <= 0;
             
             // Wait until the FIFO can accept data
-            if (datInWrite_ready) begin
+            if (!(&datInWrite_blockCounter) || datInWrite_ready) begin
                 datIn_state <= 2;
             end
         end
@@ -623,6 +611,7 @@ module SDController #(
             cmd_done <= !cmd_done;
             resp_state <= (cmd_respType===`SDController_RespType_None ? 0 : 1);
             datIn_state <= (cmd_datInType===`SDController_DatInType_None ? 0 : 1);
+            datIn_repeat <= (cmd_datInType===`SDController_DatInType_Nx4096);
             cmd_state <= 0;
         end
         endcase
