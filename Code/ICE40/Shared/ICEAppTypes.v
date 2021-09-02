@@ -30,27 +30,18 @@
 `define Msg_Type_SDInit                                         `Msg_Type_StartBit | `Msg_Type_Len'h02
 `define     Msg_Arg_SDInit_Clk_Delay_Len                        4
 `define     Msg_Arg_SDInit_Clk_Delay_Bits                       7:4
-`define     Msg_Arg_SDInit_Clk_Speed_Len                        2
-`define     Msg_Arg_SDInit_Clk_Speed_Bits                       3:2
-`define     Msg_Arg_SDInit_Clk_Speed_Off                        `Msg_Arg_SDInit_Clk_Speed_Len'b00
-`define     Msg_Arg_SDInit_Clk_Speed_Slow                       `Msg_Arg_SDInit_Clk_Speed_Len'b01
-`define     Msg_Arg_SDInit_Clk_Speed_Fast                       `Msg_Arg_SDInit_Clk_Speed_Len'b10
-`define     Msg_Arg_SDInit_Trigger_Len                          1
+`define     Msg_Arg_SDInit_Clk_Speed_Fast_Bits                  3:3
+`define     Msg_Arg_SDInit_Clk_Speed_Slow_Bits                  2:2
 `define     Msg_Arg_SDInit_Trigger_Bits                         1:1
-`define     Msg_Arg_SDInit_Reset_Len                            1
 `define     Msg_Arg_SDInit_Reset_Bits                           0:0
 
 `define Msg_Type_SDSendCmd                                      `Msg_Type_StartBit | `Msg_Type_Len'h03
-`define     Msg_Arg_SDSendCmd_RespType_Len                      2
 `define     Msg_Arg_SDSendCmd_RespType_Bits                     51:50
-`define     Msg_Arg_SDSendCmd_RespType_136                      `Msg_Arg_SDSendCmd_RespType_Len'b10
-`define     Msg_Arg_SDSendCmd_RespType_48                       `Msg_Arg_SDSendCmd_RespType_Len'b01
-`define     Msg_Arg_SDSendCmd_RespType_None                     `Msg_Arg_SDSendCmd_RespType_Len'b00
-`define     Msg_Arg_SDSendCmd_DatInType_Len                     2
+`define     Msg_Arg_SDSendCmd_RespType_136_Bits                 51:51
+`define     Msg_Arg_SDSendCmd_RespType_48_Bits                  50:50
 `define     Msg_Arg_SDSendCmd_DatInType_Bits                    49:48
-`define     Msg_Arg_SDSendCmd_DatInType_Nx4096                  `Msg_Arg_SDSendCmd_DatInType_Len'b10
-`define     Msg_Arg_SDSendCmd_DatInType_1x512                   `Msg_Arg_SDSendCmd_DatInType_Len'b01
-`define     Msg_Arg_SDSendCmd_DatInType_None                    `Msg_Arg_SDSendCmd_DatInType_Len'b00
+`define     Msg_Arg_SDSendCmd_DatInType_4096xN_Bits             49:49
+`define     Msg_Arg_SDSendCmd_DatInType_512x1_Bits              48:48
 `define     Msg_Arg_SDSendCmd_CmdData_Bits                      47:0
 
 `define Msg_Type_SDStatus                                       `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h04
