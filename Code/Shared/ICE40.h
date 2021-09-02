@@ -97,14 +97,10 @@ struct LEDSetMsg : Msg {
 };
 
 struct SDInitMsg : Msg {
-    enum class State : uint8_t {
-        Disabled    = 0,
-        Enabled     = 1,
-    };
-    
-    enum class Trigger : uint8_t {
-        Nop     = 0,
-        Trigger = 1,
+    enum class Action {
+        Nop,
+        Reset,
+        Trigger,
     };
     
     enum class ClkSpeed : uint8_t {
@@ -113,7 +109,7 @@ struct SDInitMsg : Msg {
         Fast    = 2,
     };
     
-    SDInitMsg(State state, Trigger trigger, ClkSpeed speed, uint8_t clkDelay) {
+    SDInitMsg(Action action, ClkSpeed speed, uint8_t clkDelay) {
         AssertArg((clkDelay&0xF) == clkDelay); // Ensure delay fits in 4 bits
         type = MsgType::StartBit | 0x02;
         payload[0] = 0;
@@ -122,10 +118,11 @@ struct SDInitMsg : Msg {
         payload[3] = 0;
         payload[4] = 0;
         payload[5] = 0;
-        payload[6] = (((uint8_t)clkDelay &0xF)<<4) |
-                     (((uint8_t)speed    &0x3)<<2) |
-                     (((uint8_t)trigger  &0x1)<<1) |
-                     (((uint8_t)state    &0x1)<<0) ;
+        payload[6] = (((uint8_t)clkDelay                    &0xF)<<4) |
+                     (((uint8_t)speed                       &0x3)<<2) |
+                     (((uint8_t)(action==Action::Trigger)   &0x1)<<1) |
+                     (((uint8_t)(action==Action::Reset)     &0x1)<<0) ;
+        
     }
 };
 
@@ -138,13 +135,14 @@ struct SDSendCmdMsg : Msg {
     
     Enum(uint8_t, DatInType, DatInTypes,
         None        = 0,
-        Len512      = 1,
+        Len512x1    = 1,
+        Len4096xN   = 2,
     );
     
     SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, RespType respType, DatInType datInType) {
         AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
         type = MsgType::StartBit | 0x03;
-        payload[0] = (respType<<1)|datInType;
+        payload[0] = (respType<<2)|datInType;
         payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
         payload[2] = (sdArg&0xFF000000)>>24;
         payload[3] = (sdArg&0x00FF0000)>>16;

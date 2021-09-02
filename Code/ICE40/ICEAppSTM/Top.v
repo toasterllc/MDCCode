@@ -323,24 +323,14 @@ module Top(
                     // Reset spi_sdCmdDone_ / spi_sdRespDone_ / spi_sdDatInDone_
                     if (!spi_sdCmdDone_) spi_sdCmdDoneAck <= !spi_sdCmdDoneAck;
                     
-                    if (!spi_sdRespDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]!==`Msg_Arg_SDSendCmd_RespType_None)
+                    if (!spi_sdRespDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]!==`SDController_RespType_None)
                         spi_sdRespDoneAck <= !spi_sdRespDoneAck;
                     
-                    if (!spi_sdDatInDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits]!==`Msg_Arg_SDSendCmd_DatInType_None)
+                    if (!spi_sdDatInDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits]!==`SDController_DatInType_None)
                         spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
                     
-                    case (spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits])
-                    `Msg_Arg_SDSendCmd_RespType_None:       sd_cmd_respType <= `SDController_RespType_None;
-                    `Msg_Arg_SDSendCmd_RespType_48:         sd_cmd_respType <= `SDController_RespType_48;
-                    `Msg_Arg_SDSendCmd_RespType_136:        sd_cmd_respType <= `SDController_RespType_136;
-                    endcase
-                    
-                    case (spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
-                    `Msg_Arg_SDSendCmd_DatInType_None:      sd_cmd_datInType <= `SDController_DatInType_None;
-                    `Msg_Arg_SDSendCmd_DatInType_512x1:     sd_cmd_datInType <= `SDController_DatInType_512x1;
-                    `Msg_Arg_SDSendCmd_DatInType_4096xN:    sd_cmd_datInType <= `SDController_DatInType_4096xN;
-                    endcase
-                    
+                    sd_cmd_respType <= spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits];
+                    sd_cmd_datInType <= spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits];
                     sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
                     sd_cmd_trigger <= !sd_cmd_trigger;
                 end
