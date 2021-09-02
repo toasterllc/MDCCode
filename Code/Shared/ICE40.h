@@ -97,23 +97,27 @@ struct LEDSetMsg : Msg {
 };
 
 struct SDInitMsg : Msg {
-    enum class State : uint8_t {
-        Disabled    = 0,
-        Enabled     = 1,
+    
+`define     Msg_Arg_SDInit_Clk_Delay_Len                        4
+`define     Msg_Arg_SDInit_Clk_Delay_Bits                       7:4
+`define     Msg_Arg_SDInit_Clk_Speed_Len                        2
+`define     Msg_Arg_SDInit_Clk_Speed_Bits                       3:2
+`define     Msg_Arg_SDInit_Clk_Speed_Off                        `Msg_Arg_SDInit_Clk_Speed_Len'b00
+`define     Msg_Arg_SDInit_Clk_Speed_Slow                       `Msg_Arg_SDInit_Clk_Speed_Len'b01
+`define     Msg_Arg_SDInit_Clk_Speed_Fast                       `Msg_Arg_SDInit_Clk_Speed_Len'b10
+`define     Msg_Arg_SDInit_Trigger_Len                          1
+`define     Msg_Arg_SDInit_Trigger_Bits                         1:1
+`define     Msg_Arg_SDInit_Reset_Len                            1
+`define     Msg_Arg_SDInit_Reset_Bits                           0:0
+    
+    
+    enum class Action {
+        Nop,
+        Reset,
+        Trigger,
     };
     
-    enum class Trigger : uint8_t {
-        Nop     = 0,
-        Trigger = 1,
-    };
-    
-    enum class ClkSpeed : uint8_t {
-        Off     = 0,
-        Slow    = 1,
-        Fast    = 2,
-    };
-    
-    SDInitMsg(State state, Trigger trigger, ClkSpeed speed, uint8_t clkDelay) {
+    SDInitMsg(Action action, ClkSpeed speed, uint8_t clkDelay) {
         AssertArg((clkDelay&0xF) == clkDelay); // Ensure delay fits in 4 bits
         type = MsgType::StartBit | 0x02;
         payload[0] = 0;
@@ -122,10 +126,12 @@ struct SDInitMsg : Msg {
         payload[3] = 0;
         payload[4] = 0;
         payload[5] = 0;
-        payload[6] = (((uint8_t)clkDelay &0xF)<<4) |
-                     (((uint8_t)speed    &0x3)<<2) |
-                     (((uint8_t)trigger  &0x1)<<1) |
-                     (((uint8_t)state    &0x1)<<0) ;
+        payload[6] = (((uint8_t)clkDelay                    &0xF)<<4) |
+                     (((uint8_t)speed                       &0x3)<<2) |
+                     (((uint8_t)(action==Action::Trigger)   &0x1)<<1) |
+                     (((uint8_t)(action==Action::Reset)     &0x1)<<0) ;
+        
+        switch (action)
     }
 };
 
