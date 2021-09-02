@@ -475,12 +475,11 @@ void System::_sdInit() {
         auto status = _sdSendCmd(6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512x1);
         Assert(!status.respCRCErr());
         Assert(!status.datInCRCErr());
-//        // Verify that the access mode was successfully changed
-//        // TODO: properly handle this failing, see CMD6 docs
-//        Assert(status.datInCMD6AccessMode() == 0x03);
         
-        // Read DatIn data into _buf0
-        _sdRead_qspiReadToBufSync(_buf0, 512/8);
+        // Verify that the access mode was successfully changed
+        // TODO: properly handle this failing, see CMD6 docs
+        _sdRead_qspiReadToBufSync(_buf0, 512/8); // Read DatIn data into _buf0
+        Assert((_buf0[16]&0x0F) == 0x03);
     }
     
     // SDClock=Off

@@ -55,6 +55,7 @@ module Testbench();
     
     reg[`Msg_Len-1:0] spi_dataOutReg = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
+    reg[511:0] spi_datIn = 0;
     
     reg[15:0] spi_dinReg = 0;
     assign spi_dataOut[7:4] = `LeftBits(spi_dataOutReg,0,4);
@@ -322,42 +323,54 @@ module Testbench();
         end
     end endtask
     
-    task TestSDReadout; begin
-        reg[7:0] word;
-        reg[7:0] lastWord;
-        reg[7:0] expectedWord;
-        reg lastWordInit;
+    task SDReadout(input waitForDReady, input validateWords, input[7:0] wordWidth, input[31:0] wordCount); begin
+        parameter MinWordWidth = 16;
+        parameter MaxWordWidth = 32;
+        parameter ChunkLen = 4*4096; // Each chunk consists of 4x RAM4K == 4*4096 bits
         
-        reg[`Msg_Arg_Len-1:0] arg;
-        reg done;
-        reg[15:0] i;
-        reg[15:0] chunkIdx;
-        parameter ChunkLen = 4096*4; // Each chunk consists of 4x RAM4K
-        parameter WordLen = 16;
-        parameter ChunkCount = 256; // Number of chunks to read
+        $display("\n[Testbench] ========== SDReadout ==========");
         
-        $display("\n[Testbench] ========== TestSDReadout ==========");
-        arg = 0;
+        if (wordWidth<MinWordWidth || wordWidth>MaxWordWidth) begin
+            $display("\n[Testbench] SDReadout: invalid wordWidth=%0d", wordWidth);
+            `Finish;
+        end
         
         ice_st_spi_cs_ = 1;
         #1; // Let ice_st_spi_cs_ take effect
         ice_st_spi_cs_ = 0;
         #1; // Let ice_st_spi_cs_ take effect
         
-            _SendMsg(`Msg_Type_SDReadout, arg);
-            
+        begin
+            reg[MaxWordWidth-1:0] word;
+            reg[MaxWordWidth-1:0] lastWord;
+            reg[MaxWordWidth-1:0] expectedWord;
+            reg lastWordInit;
+            reg[31:0] wordIdx;
+            reg[31:0] chunkIdx;
+            reg[31:0] chunkCount;
             lastWordInit = 0;
-            for (chunkIdx=0; chunkIdx<ChunkCount; chunkIdx++) begin
-                $display("Reading chunk %0d/%0d...", chunkIdx+1, ChunkCount);
+            wordIdx = 0;
+            chunkIdx = 0;
+            chunkCount = ((wordWidth*wordCount)+(ChunkLen-1)) / ChunkLen;
+            
+            _SendMsg(`Msg_Type_SDReadout, 0);
+            
+            while (wordIdx < wordCount) begin
+                reg[15:0] i;
                 
-                // done = 0;
-                // while (!done) begin
-                //     #2000;
-                //     $display("Waiting for ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
-                //     if (ice_st_spi_d_ready) begin
-                //         done = 1;
-                //     end
-                // end
+                $display("Reading chunk %0d/%0d...", chunkIdx+1, chunkCount);
+                
+                if (waitForDReady) begin
+                    reg done;
+                    done = 0;
+                    while (!done) begin
+                        #2000;
+                        $display("Waiting for ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
+                        if (ice_st_spi_d_ready) begin
+                            done = 1;
+                        end
+                    end
+                end
                 
                 #100; // TODO: remove; this helps debug where 8 dummy cycles start
                 
@@ -371,44 +384,38 @@ module Testbench();
                 
                 #100; // TODO: remove; this helps debug where 8 dummy cycles end
                 
-                for (i=0; i<(ChunkLen/WordLen); i++) begin
-                    _ReadResp(WordLen);
-                    
-                    word = spi_resp[WordLen-1 -: 8];
+                for (i=0; i<(ChunkLen/wordWidth) && (wordIdx<wordCount); i++) begin
+                    spi_resp = 0;
+                    _ReadResp(wordWidth);
+                    word = spi_resp[MaxWordWidth-1:0];
                     $display("Read word: 0x%x", word);
                     
-                    // `Finish;
+                    if (lastWordInit) begin
+                        // expectedWord = lastWord+1;   // Expect incrementing integers
+                        expectedWord = lastWord-1;   // Expect decrementing integers
+                        if (validateWords && word!==expectedWord) begin
+                            $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
+                            #100;
+                            `Finish;
+                        end
+                    end
                     
-                    // if (lastWordInit) begin
-                    //     expectedWord = lastWord+1;
-                    //     if (word !== expectedWord) begin
-                    //         $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
-                    //         #100;
-                    //         `Finish;
-                    //     end
-                    // end
+                    spi_datIn = spi_datIn<<wordWidth;
+                    spi_datIn |= word;
                     
                     lastWord = word;
                     lastWordInit = 1;
-                    word = spi_resp[WordLen-8-1 -: 8];
-                    $display("Read word: 0x%x", word);
-                    
-                    expectedWord = lastWord+1;
-                    // if (word !== expectedWord) begin
-                    //     $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
-                    //     #100;
-                    //     `Finish;
-                    // end
-                    
-                    lastWord = word;
-                    // `Finish;
+                    wordIdx++;
                 end
+                
+                chunkIdx++;
             end
+        end
         
         ice_st_spi_cs_ = 1;
         #1; // Let ice_st_spi_cs_ take effect
         
-        $display("[Testbench] TestSDReadout OK ✅");
+        $display("[Testbench] SDReadout OK ✅");
     end endtask
     
     task TestSDDatIn; begin
@@ -416,7 +423,8 @@ module Testbench();
         
         // Send SD command CMD18 (READ_MULTIPLE_BLOCK)
         SendSDCmdResp(CMD18, `SDController_RespType_48, `SDController_DatInType_4096xN, 32'b0);
-        TestSDReadout();
+        
+        SDReadout(/* waitForDReady */ 1, /* validateWords */ 1, /* wordWidth */ 32, /* wordCount */ 128*1024);
     end endtask
     
     task TestSDCMD6; begin
@@ -434,7 +442,7 @@ module Testbench();
             SendMsg(`Msg_Type_SDStatus, 0);
         end while(!spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits]);
         $display("[Testbench] DatIn completed");
-
+        
         // Check DatIn CRC status
         if (spi_resp[`Resp_Arg_SDStatus_DatInCRCErr_Bits] === 1'b0) begin
             $display("[Testbench] DatIn CRC OK ✅");
@@ -443,15 +451,15 @@ module Testbench();
             `Finish;
         end
         
-        TestSDReadout();
+        SDReadout(/* waitForDReady */ 0, /* validateWords */ 0, /* wordWidth */ 16, /* wordCount */ (512/16));
         
-        // // Check the access mode from the CMD6 response
-        // if (spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] === 4'h3) begin
-        //     $display("[Testbench] CMD6 access mode == 0x3 ✅");
-        // end else begin
-        //     $display("[Testbench] CMD6 access mode == 0x%h ❌", spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits]);
-        //     // `Finish;
-        // end
+        // Check the access mode from the CMD6 response
+        if (spi_datIn[379:376] === 4'h3) begin
+            $display("[Testbench] CMD6 access mode (expected: 4'h3, got: 4'h%x) ✅", spi_datIn[379:376]);
+        end else begin
+            $display("[Testbench] CMD6 access mode (expected: 4'h3, got: 4'h%x) ❌", spi_datIn[379:376]);
+            // `Finish;
+        end
     end endtask
     
     task TestSDCMD2; begin
@@ -492,8 +500,7 @@ module Testbench();
         TestSDInit();
         TestSDCMD0();
         TestSDCMD8();
-        // TestSDCMD6();
-        // `Finish;
+        TestSDCMD6();
         //           delay, speed,                            trigger, reset
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
@@ -504,10 +511,10 @@ module Testbench();
         
         
         
-        // TestSDReadout;
+        // SDReadout;
         // TestLEDSet(4'b1111);
-        // TestSDReadout;
-        // TestSDReadout;
+        // SDReadout;
+        // SDReadout;
         
         // `Finish;
     end
