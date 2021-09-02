@@ -182,6 +182,7 @@ module SDController #(
     reg[9:0] datIn_counter = 0;
     reg[3:0] datIn_crcCounter = 0;
     reg datIn_repeat = 0;
+    reg[9:0] datIn_blockLen = 0;
     reg[1:0] datInWrite_counter = 0;
     reg[`RegWidth(DatInWrite_BlockCount-1)-1:0] datInWrite_blockCounter = 0;
     
@@ -452,6 +453,8 @@ module SDController #(
         end
         
         1: begin
+            datIn_repeat <= (cmd_datInType===`SDController_DatInType_Nx4096);
+            datIn_blockLen <= (cmd_datInType===`SDController_DatInType_1x512 ? 127 : 1023);
             datInWrite_rst_ <= 0;
             datInWrite_blockCounter <= DatInWrite_BlockCount-1;
             datIn_state <= 2;
@@ -468,7 +471,7 @@ module SDController #(
             // safe because the cmd_ domain isn't allowed to modify it until we
             // signal `datIn_done`
             // TODO: perf: try registering the value for datIn_counter
-            datIn_counter <= (cmd_datInType===`SDController_DatInType_1x512 ? 127 : 1023);
+            datIn_counter <= datIn_blockLen;
             datInWrite_counter <= 3;
             if (!datIn_reg[0]) begin
                 $display("[SDController:DATIN] Triggered");
@@ -611,7 +614,6 @@ module SDController #(
             cmd_done <= !cmd_done;
             resp_state <= (cmd_respType===`SDController_RespType_None ? 0 : 1);
             datIn_state <= (cmd_datInType===`SDController_DatInType_None ? 0 : 1);
-            datIn_repeat <= (cmd_datInType===`SDController_DatInType_Nx4096);
             cmd_state <= 0;
         end
         endcase
