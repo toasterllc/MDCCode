@@ -173,7 +173,7 @@ module SDController #(
     `TogglePulse(datOut_startPulse, datOut_start, posedge, clk_int);
     `TogglePulse(datOut_stopPulse, datOut_stop, posedge, clk_int);
     
-    reg[3:0] datIn_state = 0;
+    reg[2:0] datIn_state = 0;
     wire[3:0] datIn;
     reg[19:0] datIn_reg = 0;
     reg datIn_crcRst = 0;
@@ -181,8 +181,6 @@ module SDController #(
     wire[3:0] datIn_crc;
     reg[9:0] datIn_counter = 0;
     reg[3:0] datIn_crcCounter = 0;
-    reg datIn_repeat = 0;
-    reg[9:0] datIn_blockLen = 0;
     reg[1:0] datInWrite_counter = 0;
     reg[`RegWidth(DatInWrite_BlockCount-1)-1:0] datInWrite_blockCounter = 0;
     
@@ -453,8 +451,7 @@ module SDController #(
         end
         
         1: begin
-            datIn_repeat <= (cmd_datInType===`SDController_DatInType_Nx4096);
-            datIn_blockLen <= (cmd_datInType===`SDController_DatInType_1x512 ? 127 : 1023);
+            datIn_crcErr <= 0;
             datInWrite_rst_ <= 0;
             datInWrite_blockCounter <= DatInWrite_BlockCount-1;
             datIn_state <= 2;
@@ -462,7 +459,6 @@ module SDController #(
         
         2: begin
             datIn_crcRst <= 1;
-            datIn_crcErr <= 0;
             datIn_state <= 3;
         end
         
@@ -471,7 +467,7 @@ module SDController #(
             // safe because the cmd_ domain isn't allowed to modify it until we
             // signal `datIn_done`
             // TODO: perf: try registering the value for datIn_counter
-            datIn_counter <= datIn_blockLen;
+            datIn_counter <= (cmd_datInType===`SDController_DatInType_1x512 ? 127 : 1023);
             datInWrite_counter <= 3;
             if (!datIn_reg[0]) begin
                 $display("[SDController:DATIN] Triggered");
@@ -541,11 +537,9 @@ module SDController #(
                 datIn_crcErr <= 1;
             end
             
+            datIn_done <= !datIn_done; // Signal that the DatIn is complete
             datInWrite_blockCounter <= datInWrite_blockCounter-1;
-            
-            // Signal that the DatIn is complete
-            datIn_done <= !datIn_done;
-            datIn_state <= (datIn_repeat ? 7 : 0);
+            datIn_state <= ((cmd_datInType===`SDController_DatInType_Nx4096) ? 7 : 0);
         end
         
         7: begin
