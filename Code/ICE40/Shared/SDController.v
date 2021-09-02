@@ -7,11 +7,21 @@
 `include "CRC7.v"
 `include "CRC16.v"
 
-`define SDController_Init_ClkDelayWidth 4
+`define SDController_Init_Clk_Speed_Off             2'b00
+`define SDController_Init_Clk_Speed_Slow            2'b01
+`define SDController_Init_Clk_Speed_Fast            2'b10
+`define SDController_Init_Clk_Delay_Width           4
+
+`define SDController_RespType_None                  2'b00
+`define SDController_RespType_48                    2'b01
+`define SDController_RespType_136                   2'b10
+
+`define SDController_DatInType_None                 2'b00
+`define SDController_DatInType_1x512                2'b01   // 1x512 bit response (eg CMD6 response)
+`define SDController_DatInType_Nx4096               2'b10   // Nx4096 bit response (eg mass data read response)
 
 module SDController #(
     parameter ClkFreq               = 120_000_000,
-    parameter ClkDelayWidth         = 4,
     parameter DatInWrite_BlockCount = 4 // The number of blocks to write between checking `datInWrite_ready`
 )(
     // Clock
@@ -25,18 +35,14 @@ module SDController #(
     // Init port (clock domain: async)
     input wire          init_reset,         // Toggle
     input wire          init_trigger,       // Toggle
-    input wire          init_clkSlow,
-    input wire          init_clkFast,
-    input wire[ClkDelayWidth-1:0]
-                        init_clkDelay,
+    input wire[1:0]     init_clk_speed,
+    input wire[`SDController_Init_Clk_Delay_Width-1:0] init_clk_delay,
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger,        // Toggle
     input wire[47:0]    cmd_data,
-    input wire          cmd_respType48,
-    input wire          cmd_respType136,
-    input wire          cmd_datInType512x1,
-    input wire          cmd_datInType4096xN,
+    input wire[1:0]     cmd_respType,
+    input wire[1:0]     cmd_datInType,
     output reg          cmd_done = 0,       // Toggle
     
     // Response port (clock domain: `clk`)
@@ -93,23 +99,25 @@ module SDController #(
     // ====================
     // clk_int
     // ====================
-    `Sync(clk_slow_en, init_clkSlow, negedge, clk_slow);
-    `Sync(clk_fast_en, init_clkFast, negedge, clk_fast);
+    wire init_clk_slow = init_clk_speed[0];
+    wire init_clk_fast = init_clk_speed[1];
+    `Sync(clk_slow_en, init_clk_slow, negedge, clk_slow);
+    `Sync(clk_fast_en, init_clk_fast, negedge, clk_fast);
     wire clk_int = (clk_slow_en ? clk_slow : (clk_fast_en ? clk_fast : 0));
     assign datOutRead_clk = clk_int;
     assign datInWrite_clk = clk_int;
     
     // ====================
-    // clk_int_delayed / init_clkDelay
+    // clk_int_delayed / init_clk_delay
     //   Delay `clk_int_delayed` relative to `clk_int` to correct the phase from the SD card's perspective
-    //   `init_clkDelay` should only be set while `clk_int` is stopped
+    //   `init_clk_delay` should only be set while `clk_int` is stopped
     // ====================
     wire clk_int_delayed;
     VariableDelay #(
-        .Count(1<<`SDController_Init_ClkDelayWidth)
+        .Count(1<<`SDController_Init_Clk_Delay_Width)
     ) VariableDelay (
         .in(clk_int),
-        .sel(init_clkDelay),
+        .sel(init_clk_delay),
         .out(clk_int_delayed)
     );
     
@@ -257,10 +265,10 @@ module SDController #(
         1: begin
             resp_crcRst <= 1;
             resp_crcErr <= 0;
-            // We're accessing `cmd_respType48` without synchronization, but that's
+            // We're accessing `cmd_respType` without synchronization, but that's
             // safe because the cmd_ domain isn't allowed to modify it until we
             // signal `resp_done`
-            resp_counter <= (cmd_respType48 ? 48-8-1 : 136-8-1);
+            resp_counter <= (cmd_respType===`SDController_RespType_48 ? 48-8-1 : 136-8-1);
             // Wait for response to start
             if (!resp_staged) begin
                 $display("[SDController:RESP] Triggered");
@@ -335,7 +343,7 @@ module SDController #(
         
         2: begin
             $display("[SDController:DATOUT] Write another block");
-            datOut_counter <= 1024-1;
+            datOut_counter <= 1023;
             datOut_readCounter <= 0;
             datOut_crcRst <= 1;
             datOut_startBit <= 1;
@@ -459,7 +467,7 @@ module SDController #(
             // safe because the cmd_ domain isn't allowed to modify it until we
             // signal `datIn_done`
             // TODO: perf: try registering the value for datIn_counter
-            datIn_counter <= (cmd_datInType512x1 ? 128-1 : 1024-1);
+            datIn_counter <= (cmd_datInType===`SDController_DatInType_1x512 ? 127 : 1023);
             datInWrite_counter <= 3;
             if (!datIn_reg[0]) begin
                 $display("[SDController:DATIN] Triggered");
@@ -532,7 +540,7 @@ module SDController #(
             datIn_done <= !datIn_done; // Signal that the DatIn is complete
             datInWrite_blockCounter <= datInWrite_blockCounter-1;
             
-            if (cmd_datInType4096xN) begin
+            if (cmd_datInType===`SDController_DatInType_Nx4096) begin
                 if (!datInWrite_blockCounter) begin
                     datIn_state <= 7;
                 end else begin
@@ -607,8 +615,8 @@ module SDController #(
             cmd_active[0] <= 1;
             $display("[SDController:CMD] Done");
             cmd_done <= !cmd_done;
-            resp_state <= (cmd_respType48||cmd_respType136 ? 1 : 0);
-            datIn_state <= (cmd_datInType512x1||cmd_datInType4096xN ? 1 : 0);
+            resp_state <= (cmd_respType===`SDController_RespType_None ? 0 : 1);
+            datIn_state <= (cmd_datInType===`SDController_DatInType_None ? 0 : 1);
             cmd_state <= 0;
         end
         endcase

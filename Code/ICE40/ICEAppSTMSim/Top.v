@@ -198,22 +198,20 @@ module Testbench();
     localparam CMD55    = 6'd55;    // APP_CMD
     localparam ACMD23   = 6'd23;    // SET_WR_BLK_ERASE_COUNT
     
-    task SendSDCmd(input[5:0] sdCmd, input respType136, input respType48, input datInType4096xN, input datInType512x1, input[31:0] sdArg); begin
+    task SendSDCmd(input[5:0] sdCmd, input[`Msg_Arg_SDSendCmd_RespType_Len-1:0] respType, input[`Msg_Arg_SDSendCmd_DatInType_Len-1:0] datInType, input[31:0] sdArg); begin
         reg[`Msg_Arg_Len-1] arg;
         arg = 0;
-        arg[`Msg_Arg_SDSendCmd_RespType_136_Bits] = respType136;
-        arg[`Msg_Arg_SDSendCmd_RespType_48_Bits] = respType48;
-        arg[`Msg_Arg_SDSendCmd_DatInType_4096xN_Bits] = datInType4096xN;
-        arg[`Msg_Arg_SDSendCmd_DatInType_512x1_Bits] = datInType512x1;
+        arg[`Msg_Arg_SDSendCmd_RespType_Bits] = respType;
+        arg[`Msg_Arg_SDSendCmd_DatInType_Bits] = datInType;
         arg[`Msg_Arg_SDSendCmd_CmdData_Bits] = {2'b01, sdCmd, sdArg, 7'b0, 1'b1};
         
         SendMsg(`Msg_Type_SDSendCmd, arg);
     end endtask
     
-    task SendSDCmdResp(input[5:0] sdCmd, input respType136, input respType48, input datInType4096xN, input datInType512x1, input[31:0] sdArg); begin
+    task SendSDCmdResp(input[5:0] sdCmd, input[`Msg_Arg_SDSendCmd_RespType_Len-1:0] respType, input[`Msg_Arg_SDSendCmd_DatInType_Len-1:0] datInType, input[31:0] sdArg); begin
         reg[15:0] i;
         reg done;
-        SendSDCmd(sdCmd, respType136, respType48, datInType4096xN, datInType512x1, sdArg);
+        SendSDCmd(sdCmd, respType, datInType, sdArg);
         
         // Wait for SD command to be sent
         done = 0;
@@ -223,8 +221,8 @@ module Testbench();
             // We're done when the SD command is sent
             done = spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits];
             // If a response is expected, we're done when the response is received
-            if (respType136 || respType48) done &= spi_resp[`Resp_Arg_SDStatus_RespDone_Bits];
-            if (datInType512x1) done &= spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits];
+            if (respType !== `Msg_Arg_SDSendCmd_RespType_None) done &= spi_resp[`Resp_Arg_SDStatus_RespDone_Bits];
+            if (datInType === `Msg_Arg_SDSendCmd_DatInType_1x512) done &= spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits];
             
             // Our clock is much faster than the SD slow clock (64 MHz vs .4 MHz),
             // so wait a bit before asking for the status again
@@ -237,13 +235,20 @@ module Testbench();
         end
     end endtask
     
-    task SDInit(input[3:0] delay, input clkFast, input clkSlow, input trigger, input reset); begin
+    task TestSDConfig(
+        input[`Msg_Arg_SDInit_Clk_Delay_Len-1:0] delay,
+        input[`Msg_Arg_SDInit_Clk_Speed_Len-1:0] speed,
+        input[`Msg_Arg_SDInit_Trigger_Len-1:0] trigger,
+        input[`Msg_Arg_SDInit_Reset_Len-1:0] reset
+    ); begin
         reg[`Msg_Arg_Len-1:0] arg;
-        arg[`Msg_Arg_SDInit_Clk_Delay_Bits]         = delay;
-        arg[`Msg_Arg_SDInit_Clk_Speed_Fast_Bits]    = clkFast;
-        arg[`Msg_Arg_SDInit_Clk_Speed_Slow_Bits]    = clkSlow;
-        arg[`Msg_Arg_SDInit_Trigger_Bits]           = trigger;
-        arg[`Msg_Arg_SDInit_Reset_Bits]             = reset;
+        
+        // $display("\n[Testbench] ========== TestSDConfig ==========");
+        arg[`Msg_Arg_SDInit_Clk_Delay_Bits] = delay;
+        arg[`Msg_Arg_SDInit_Clk_Speed_Bits] = speed;
+        arg[`Msg_Arg_SDInit_Trigger_Bits] = trigger;
+        arg[`Msg_Arg_SDInit_Reset_Bits] = reset;
+        
         SendMsg(`Msg_Type_SDInit, arg);
     end endtask
     
@@ -254,15 +259,15 @@ module Testbench();
         
         $display("\n[Testbench] ========== TestSDInit ==========");
         
-        //     delay, clkFast, clkSlow, trigger, reset
-        SDInit(0,     0,       0,       0,       0);
+        //           delay, speed,                          trigger, reset
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Off,  0,       0);
         #((10*1e9)/400e3); // Wait 10 400kHz cycles
-        SDInit(0,     0,       1,       0,       0);
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 0,       0);
         #((10*1e9)/400e3); // Wait 10 400kHz cycles
-        SDInit(0,     0,       1,       0,       1);
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 0,       1);
         #((10*1e9)/400e3); // Wait 10 400kHz cycles
         // <-- Turn on power to SD card
-        SDInit(0,     0,       1,       1,       0);
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 1,       0);
         
 `ifdef SD_LVS_SHORT_INIT
         // Wait 50us, because waiting 5ms takes forever in simulation
@@ -292,7 +297,7 @@ module Testbench();
         // Test SD CMD0 (GO_IDLE)
         // ====================
         $display("\n[Testbench] ========== TestSDCMD0 ==========");
-        SendSDCmdResp(CMD0, 0, 0, 0, 0, 0);
+        SendSDCmdResp(CMD0, `Msg_Arg_SDSendCmd_RespType_None, `Msg_Arg_SDSendCmd_DatInType_None, 0);
     end endtask
     
     task TestSDCMD8; begin
@@ -304,7 +309,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDCMD8 ==========");
         
         // Send SD CMD8
-        SendSDCmdResp(CMD8, 0, 1, 0, 0, 32'h000001AA);
+        SendSDCmdResp(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'h000001AA);
         if (spi_resp[`Resp_Arg_SDStatus_RespCRCErr_Bits] !== 1'b0) begin
             $display("[Testbench] CRC error ❌");
             `Finish;
@@ -404,7 +409,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDDatIn ==========");
         
         // Send SD command CMD18 (READ_MULTIPLE_BLOCK)
-        SendSDCmdResp(CMD18, 0, 1, 1, 0, 32'b0);
+        SendSDCmdResp(CMD18, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_Nx4096, 32'b0);
         TestSDReadout();
     end endtask
     
@@ -416,7 +421,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDCMD6 ==========");
         
         // Send SD command CMD6 (SWITCH_FUNC)
-        SendSDCmdResp(CMD6, 0, 1, 0, 1, 32'h80FFFFF3);
+        SendSDCmdResp(CMD6, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_1x512, 32'h80FFFFF3);
         $display("[Testbench] Waiting for DatIn to complete...");
         do begin
             // Request SD status
@@ -451,7 +456,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDCMD2 ==========");
         
         // Send SD command CMD2 (ALL_SEND_CID)
-        SendSDCmdResp(CMD2, 1, 0, 0, 0, 0);
+        SendSDCmdResp(CMD2, `Msg_Arg_SDSendCmd_RespType_136, `Msg_Arg_SDSendCmd_DatInType_None, 0);
         $display("[Testbench] ====================================================");
         $display("[Testbench] ^^^ WE EXPECT CRC ERRORS IN THE SD CARD RESPONSE ^^^");
         $display("[Testbench] ====================================================");
@@ -480,9 +485,9 @@ module Testbench();
         TestSDCMD0();
         TestSDCMD8();
         TestSDCMD6();
-        //     delay, clkFast, clkSlow, trigger, reset
-        SDInit(0,     0,       0,       0,       0);
-        SDInit(0,     1,       0,       0,       0);
+        //           delay, speed,                          trigger, reset
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Off,  0,       0);
+        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Fast, 0,       0);
         
         TestSDDatIn();
         

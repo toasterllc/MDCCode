@@ -2,17 +2,30 @@
 
 `timescale 1ns/1ps
 
-module Testbench();
-    wire[1:0] hello = 2'b00;
+module Testbench #(
+    parameter W = 16 // Word width; allowed values: 16, 8, 4, 2
+)();
+// `ifdef SIM
+//     if ()
+// `endif
+//
+    // initial $error("hello");
+    // $assert(W == 8);
+    
+    wire[8:0] hello = 8'b11111000;
+    
+    // assign hello[3] = 1'b0;
+    // assign hello[0] = 1'b0;
+    // assign {hello[3], hello[0]} = ~0;
+    
+    // initial begin
+    //     $dumpfile("Top.vcd");
+    //     $dumpvars(0, Testbench);
+    // end
     
     initial begin
         #1;
-        $display("%b", hello);
-        
-        if (hello) begin
-            $display("HELLO");
-        end
-        
+        $display("%b", hello[0 +: 4]);
         $finish;
     end
 endmodule
