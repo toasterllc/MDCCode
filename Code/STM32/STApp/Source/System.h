@@ -9,14 +9,9 @@ class System : public SystemBase<System> {
 public:
     System();
     void init();
-    void _mspInit();
     
     void _handleEvent();
     void _finishCmd(STApp::Status status);
-    
-    void _ice40TransferNoCS(const ICE40::Msg& msg);
-    void _ice40Transfer(const ICE40::Msg& msg);
-    void _ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp);
     
     void _usb_reset(bool usbResetFinish);
     void _usb_cmdHandle(const USB::CmdRecv& ev);
@@ -25,14 +20,22 @@ public:
     void _usb_sendFromBuf();
     void _usb_dataSendHandle(const USB::DataSend& ev);
     
+    void _iceInit();
+    void _ice40TransferNoCS(const ICE40::Msg& msg);
+    void _ice40Transfer(const ICE40::Msg& msg);
+    void _ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp);
+    
+    void _mspInit();
+    
+    void _sdInit();
     void _sdSetPowerEnabled(bool en);
     ICE40::SDStatusResp _sdStatus();
     ICE40::SDStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
         ICE40::SDSendCmdMsg::RespType respType=ICE40::SDSendCmdMsg::RespTypes::Len48,
         ICE40::SDSendCmdMsg::DatInType datInType=ICE40::SDSendCmdMsg::DatInTypes::None);
-    uint16_t _sdInit();
     void _sdRead(const STApp::Cmd& cmd);
     void _sdRead_qspiReadToBuf();
+    void _sdRead_qspiReadToBufSync(void* buf, size_t len);
     void _sdRead_qspiEventHandle(const QSPI::Signal& ev);
     void _sdRead_usbDataSendHandle(const USB::DataSend& ev);
     void _sdRead_updateState();
