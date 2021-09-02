@@ -70,12 +70,7 @@ module SDCardSim(
     reg acmd = 0;
     wire[6:0] cmd = {acmd, cmdIn_cmdIndex};
     
-    localparam PAYLOAD_DATA = {4096{1'b0}};
-    // localparam PAYLOAD_DATA = {4096{1'b1}};
-    // localparam PAYLOAD_DATA = {128{32'h42434445}};
-    // localparam PAYLOAD_DATA = {128{32'hFF00FF00}};
     reg[3:0] datOut = 4'bzzzz;
-    reg[4095:0] payloadDataReg = 0;
     assign sd_dat = datOut;
     
     reg recvWriteData = 0;
@@ -498,6 +493,7 @@ module SDCardSim(
         forever begin
             wait(sd_clk);
             if (recvWriteData) begin
+                reg[4095:0] datInReg;
                 reg[15:0] i;
                 reg[7:0] count;
                 reg crcOK;
@@ -522,12 +518,12 @@ module SDCardSim(
                 
                 for (i=0; i<1024 && recvWriteData; i++) begin
                     wait(sd_clk);
-                    payloadDataReg = (payloadDataReg<<4)|sd_dat[3:0];
+                    datInReg = (datInReg<<4)|sd_dat[3:0];
                     wait(!sd_clk);
                 end
                 
                 if (recvWriteData) begin
-                    $display("[SDCardSim] Received write data: %h", payloadDataReg);
+                    $display("[SDCardSim] Received write data: %h", datInReg);
                 end
                 
                 if (recvWriteData) begin
@@ -713,13 +709,17 @@ module SDCardSim(
     // Handle reading from the card
     // ====================
     initial begin
+        reg[31:0] nextDatOutVal;
+        // nextDatOutVal = 0;
+        nextDatOutVal = '1;
+        
         forever begin
             wait(sd_clk);
             if (sendReadData) begin
                 reg[15:0] i;
                 reg[15:0] ii;
                 reg[15:0] count;
-                reg[7:0] datOutReg;
+                reg[4095:0] datOutReg;
                 
                 // Start bit
                 wait(!sd_clk);
@@ -729,44 +729,55 @@ module SDCardSim(
                 wait(!sd_clk);
                 dat_crcRst_ = 1;
                 
-                // Shift out data
-                // payloadDataReg = PAYLOAD_DATA;
-                
-                // Fill payloadDataReg with incrementing integers
-                for (i=0; i<$size(payloadDataReg)/8; i++) begin
-                    payloadDataReg[$size(payloadDataReg)-(i*8)-1 -: 8] = i;
-                end
-                
-                // // Fill payloadDataReg with random data
-                // for (i=0; i<$size(payloadDataReg)/32; i++) begin
-                //     payloadDataReg[((32*((i)+1))-1) -: 32] = $urandom;
+                // // Fill datOutReg with incrementing u8
+                // for (i=0; i<$size(datOutReg)/8; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*8)-1 -: 8] = nextDatOutVal;
+                //     nextDatOutVal = nextDatOutVal+1;
+                // end
+                //
+                // // Fill datOutReg with decrementing u8
+                // for (i=0; i<$size(datOutReg)/8; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*8)-1 -: 8] = nextDatOutVal;
+                //     nextDatOutVal = nextDatOutVal-1;
+                // end
+                //
+                // // Fill datOutReg with incrementing u16
+                // for (i=0; i<$size(datOutReg)/16; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*16)-1 -: 16] = nextDatOutVal;
+                //     nextDatOutVal = nextDatOutVal+1;
+                // end
+                //
+                // // Fill datOutReg with decrementing u16
+                // for (i=0; i<$size(datOutReg)/16; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*16)-1 -: 16] = nextDatOutVal;
+                //     nextDatOutVal = nextDatOutVal-1;
+                // end
+                //
+                // // Fill datOutReg with incrementing u32
+                // for (i=0; i<$size(datOutReg)/32; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*32)-1 -: 32] = i;
+                //     nextDatOutVal = nextDatOutVal+1;
                 // end
                 
-                $display("[SDCardSim:ReadData] Sending read data: %h", payloadDataReg);
-
+                // Fill datOutReg with decrementing u32
+                for (i=0; i<$size(datOutReg)/32; i++) begin
+                    datOutReg[$size(datOutReg)-(i*32)-1 -: 32] = nextDatOutVal;
+                    nextDatOutVal = nextDatOutVal-1;
+                end
+                
+                // // Fill datOutReg with random data
+                // for (i=0; i<$size(datOutReg)/32; i++) begin
+                //     datOutReg[((32*((i)+1))-1) -: 32] = $urandom;
+                // end
+                
+                // Shift out data
+                $display("[SDCardSim:ReadData] Sending read data: %h", datOutReg);
                 for (i=0; i<1024 && sendReadData; i++) begin
                     wait(!sd_clk);
-                    datOut = payloadDataReg[4095:4092];
-                    payloadDataReg = payloadDataReg<<4;
+                    datOut = datOutReg[4095:4092];
+                    datOutReg = datOutReg<<4;
                     wait(sd_clk);
                 end
-                
-                // // Shift out data
-                // $display("[SDCardSim] Sending read data START");
-                //
-                // for (i=0; i<1024 && sendReadData; i++) begin
-                //     datOutReg = i;
-                //     for (ii=0; ii<8 && sendReadData; ii++) begin
-                //         $display("[SDCardSim] Sending bit: %b", datOut);
-                //         wait(!sd_clk);
-                //         datOut = {4{datOutReg[7]}};
-                //         wait(sd_clk);
-                //
-                //         datOutReg = datOutReg<<1;
-                //     end
-                // end
-                //
-                // $display("[SDCardSim] Sending read data END");
                 
                 if (sendReadData) begin
                     // dat_ourCRCReg[3] = 16'b1010_1010_1010_XXXX;
@@ -848,6 +859,10 @@ module SDCardSim(
     // ====================
     reg[3:0] accessMode = 0;
     initial begin
+        reg[31:0] nextDatOutVal;
+        // nextDatOutVal = 0;
+        nextDatOutVal = '1;
+        
         forever begin
             wait(sd_clk);
             if (sendCMD6Data) begin
@@ -893,15 +908,46 @@ module SDCardSim(
                 
                 datOutReg = 0;
                 
-                // Fill payloadDataReg with incrementing integers
-                for (i=0; i<$size(datOutReg)/8; i++) begin
-                    datOutReg[$size(datOutReg)-(i*8)-1 -: 8] = i;
-                end
-                
-                // // Fill payloadDataReg with random data
-                // for (i=0; i<$size(payloadDataReg)/32; i++) begin
-                //     payloadDataReg[((32*((i)+1))-1) -: 32] = $urandom;
+                // // Fill datOutReg with incrementing u8
+                // for (i=0; i<$size(datOutReg)/8; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*8)-1 -: 8] = nextDatOutVal;
+                //     nextDatOutVal = nextDatOutVal+1;
                 // end
+                //
+                // // Fill datOutReg with decrementing u8
+                // for (i=0; i<$size(datOutReg)/8; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*8)-1 -: 8] = nextDatOutVal;
+                //     nextDatOutVal = nextDatOutVal-1;
+                // end
+                //
+                // // Fill datOutReg with incrementing u16
+                // for (i=0; i<$size(datOutReg)/16; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*16)-1 -: 16] = nextDatOutVal;
+                //     nextDatOutVal = nextDatOutVal+1;
+                // end
+                //
+                // // Fill datOutReg with decrementing u16
+                // for (i=0; i<$size(datOutReg)/16; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*16)-1 -: 16] = nextDatOutVal;
+                //     nextDatOutVal = nextDatOutVal-1;
+                // end
+                //
+                // // Fill datOutReg with incrementing u32
+                // for (i=0; i<$size(datOutReg)/32; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*32)-1 -: 32] = i;
+                //     nextDatOutVal = nextDatOutVal+1;
+                // end
+                //
+                // // Fill datOutReg with decrementing u32
+                // for (i=0; i<$size(datOutReg)/32; i++) begin
+                //     datOutReg[$size(datOutReg)-(i*32)-1 -: 32] = nextDatOutVal;
+                //     nextDatOutVal = nextDatOutVal-1;
+                // end
+                
+                // Fill datOutReg with random data
+                for (i=0; i<$size(datOutReg)/32; i++) begin
+                    datOutReg[((32*((i)+1))-1) -: 32] = $urandom;
+                end
                 
                 datOutReg[379:376] = respAccessMode;
                 

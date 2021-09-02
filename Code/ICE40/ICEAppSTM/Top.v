@@ -203,7 +203,6 @@ module Top(
     reg[`Msg_Len-1:0] spi_dinReg = 0;
     reg[15:0] spi_doutReg = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
-    reg[7:0] spi_counterTmp = 0;
     // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
     // for setting the first bit to 1, so we fake the first bit.
     wire[`Msg_Type_Len-1:0] spi_msgTypeRaw = spi_dinReg[`Msg_Type_Bits];
@@ -228,9 +227,9 @@ module Top(
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
-    localparam SPI_State_SDReadout  = 4;    // +3
-    localparam SPI_State_Nop        = 8;    // +0
-    localparam SPI_State_Count      = 9;
+    localparam SPI_State_SDReadout  = 4;    // +1
+    localparam SPI_State_Nop        = 6;    // +0
+    localparam SPI_State_Count      = 7;
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     
     always @(posedge ice_st_spi_clk, negedge spi_cs) begin
@@ -252,8 +251,6 @@ module Top(
             spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
             if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
             spi_doutReg <= spi_doutReg<<4;
-            
-            spi_counterTmp <= spi_counterTmp-1;
             
             case (spi_state)
             SPI_State_MsgIn: begin
@@ -352,6 +349,7 @@ module Top(
                 
                 `Msg_Type_SDReadout: begin
                     $display("[SPI] Got Msg_Type_SDReadout");
+                    spi_sdReadoutCounter <= 6;
                     spi_state <= SPI_State_SDReadout;
                 end
                 
@@ -374,26 +372,15 @@ module Top(
             end
             
             SPI_State_SDReadout: begin
-                // Delay state
-                spi_state <= SPI_State_SDReadout+1;
-            end
-            
-            SPI_State_SDReadout+1: begin
-                spi_sdReadoutCounter <= 2;
-                spi_state <= SPI_State_SDReadout+2;
-            end
-            
-            SPI_State_SDReadout+2: begin
-                spi_counterTmp <= ~0;
                 spi_doutCounter <= 1;
                 spi_sdReadoutEnding <= 0;
                 if (!spi_sdReadoutCounter) begin
                     spi_sdReadoutCounter <= SDReadoutCount;
-                    spi_state <= SPI_State_SDReadout+3;
+                    spi_state <= SPI_State_SDReadout+1;
                 end
             end
             
-            SPI_State_SDReadout+3: begin
+            SPI_State_SDReadout+1: begin
                 spi_d_outEn <= 1;
                 
                 // if (fifo_r_trigger) begin
@@ -406,7 +393,8 @@ module Top(
                 end
                 
                 if (!spi_sdReadoutCounter) begin
-                    spi_state <= SPI_State_SDReadout+1;
+                    spi_sdReadoutCounter <= 3;
+                    spi_state <= SPI_State_SDReadout;
                 end
             end
             
