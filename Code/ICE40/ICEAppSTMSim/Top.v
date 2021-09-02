@@ -259,15 +259,15 @@ module Testbench();
         
         $display("\n[Testbench] ========== TestSDInit ==========");
         
-        //           delay, speed,                          trigger, reset
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Off,  0,       0);
+        //           delay, speed,                            trigger, reset
+        TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
         #((10*1e9)/400e3); // Wait 10 400kHz cycles
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 0,       0);
+        TestSDConfig(0,     `SDController_Init_ClkSpeed_Slow, 0,       0);
         #((10*1e9)/400e3); // Wait 10 400kHz cycles
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 0,       1);
+        TestSDConfig(0,     `SDController_Init_ClkSpeed_Slow, 0,       1);
         #((10*1e9)/400e3); // Wait 10 400kHz cycles
         // <-- Turn on power to SD card
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Slow, 1,       0);
+        TestSDConfig(0,     `SDController_Init_ClkSpeed_Slow, 1,       0);
         
 `ifdef SD_LVS_SHORT_INIT
         // Wait 50us, because waiting 5ms takes forever in simulation
@@ -485,9 +485,9 @@ module Testbench();
         TestSDCMD0();
         TestSDCMD8();
         TestSDCMD6();
-        //           delay, speed,                          trigger, reset
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Off,  0,       0);
-        TestSDConfig(0,     `Msg_Arg_SDInit_Clk_Speed_Fast, 0,       0);
+        //           delay, speed,                            trigger, reset
+        TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
+        TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
         
         TestSDDatIn();
         

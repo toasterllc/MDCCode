@@ -7,10 +7,10 @@
 `include "CRC7.v"
 `include "CRC16.v"
 
-`define SDController_Init_Clk_Speed_Off             2'b00
-`define SDController_Init_Clk_Speed_Slow            2'b01
-`define SDController_Init_Clk_Speed_Fast            2'b10
-`define SDController_Init_Clk_Delay_Width           4
+`define SDController_Init_ClkSpeed_Off              2'b00
+`define SDController_Init_ClkSpeed_Slow             2'b01
+`define SDController_Init_ClkSpeed_Fast             2'b10
+`define SDController_Init_ClkDelay_Width            4
 
 `define SDController_RespType_None                  2'b00
 `define SDController_RespType_48                    2'b01
@@ -35,8 +35,9 @@ module SDController #(
     // Init port (clock domain: async)
     input wire          init_reset,         // Toggle
     input wire          init_trigger,       // Toggle
-    input wire[1:0]     init_clk_speed,
-    input wire[`SDController_Init_Clk_Delay_Width-1:0] init_clk_delay,
+    input wire[1:0]     init_clkSpeed,
+    input wire[`SDController_Init_ClkDelay_Width-1:0]
+                        init_clkDelay,
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger,        // Toggle
@@ -80,7 +81,7 @@ module SDController #(
     // ====================
     // clk_fast (ClkFreq)
     // ====================
-    localparam Clk_Fast_Freq = ClkFreq;
+    localparam Clk_FastFreq = ClkFreq;
     wire clk_fast = clk;
     
     // TODO: since we're initializing with LVS, we may be able to start off in SDR12 (25 MHz).
@@ -88,10 +89,10 @@ module SDController #(
     // ====================
     // clk_slow (<400 kHz)
     // ====================
-    localparam Clk_Slow_Freq = 400000;
-    localparam Clk_Slow_DividerWidth = $clog2(`DivCeil(Clk_Fast_Freq, Clk_Slow_Freq));
-    reg[Clk_Slow_DividerWidth-1:0] clk_slow_divider = 0;
-    wire clk_slow = clk_slow_divider[Clk_Slow_DividerWidth-1];
+    localparam Clk_SlowFreq = 400000;
+    localparam Clk_SlowDividerWidth = $clog2(`DivCeil(Clk_FastFreq, Clk_SlowFreq));
+    reg[Clk_SlowDividerWidth-1:0] clk_slow_divider = 0;
+    wire clk_slow = clk_slow_divider[Clk_SlowDividerWidth-1];
     always @(posedge clk_fast) begin
         clk_slow_divider <= clk_slow_divider+1;
     end
@@ -99,25 +100,25 @@ module SDController #(
     // ====================
     // clk_int
     // ====================
-    wire init_clk_slow = init_clk_speed[0];
-    wire init_clk_fast = init_clk_speed[1];
-    `Sync(clk_slow_en, init_clk_slow, negedge, clk_slow);
-    `Sync(clk_fast_en, init_clk_fast, negedge, clk_fast);
-    wire clk_int = (clk_slow_en ? clk_slow : (clk_fast_en ? clk_fast : 0));
+    wire init_clkSlow = init_clkSpeed[0];
+    wire init_clkFast = init_clkSpeed[1];
+    `Sync(clk_slowEn, init_clkSlow, negedge, clk_slow);
+    `Sync(clk_fastEn, init_clkFast, negedge, clk_fast);
+    wire clk_int = (clk_slowEn ? clk_slow : (clk_fastEn ? clk_fast : 0));
     assign datOutRead_clk = clk_int;
     assign datInWrite_clk = clk_int;
     
     // ====================
-    // clk_int_delayed / init_clk_delay
+    // clk_int_delayed / init_clkDelay
     //   Delay `clk_int_delayed` relative to `clk_int` to correct the phase from the SD card's perspective
-    //   `init_clk_delay` should only be set while `clk_int` is stopped
+    //   `init_clkDelay` should only be set while `clk_int` is stopped
     // ====================
     wire clk_int_delayed;
     VariableDelay #(
-        .Count(1<<`SDController_Init_Clk_Delay_Width)
+        .Count(1<<`SDController_Init_ClkDelay_Width)
     ) VariableDelay (
         .in(clk_int),
-        .sel(init_clk_delay),
+        .sel(init_clkDelay),
         .out(clk_int_delayed)
     );
     
@@ -185,15 +186,15 @@ module SDController #(
     reg[`RegWidth(DatInWrite_BlockCount-1)-1:0] datInWrite_blockCounter = 0;
     
     localparam Init_ClockPulseUs = 15; // Pulse needs to be at least 10us, per SD LVS spec
-    localparam Init_ClockPulseDelay = Clocks(Clk_Slow_Freq, Init_ClockPulseUs*1000, 1);
+    localparam Init_ClockPulseDelay = Clocks(Clk_SlowFreq, Init_ClockPulseUs*1000, 1);
     localparam Init_HoldUs = 5; // Hold outputs for 5us after the negative edge of the clock pulse
-    localparam Init_HoldDelay = Clocks(Clk_Slow_Freq, Init_HoldUs*1000, 1);
+    localparam Init_HoldDelay = Clocks(Clk_SlowFreq, Init_HoldUs*1000, 1);
 `ifdef SD_LVS_SHORT_INIT
     localparam Init_FinishUs = 10; // Don't wait as long during simulation
 `else
     localparam Init_FinishUs = 5500; // Hold outputs for 5.5ms after the negative edge of the clock pulse
 `endif
-    localparam Init_FinishDelay = Clocks(Clk_Slow_Freq, Init_FinishUs*1000, 1);
+    localparam Init_FinishDelay = Clocks(Clk_SlowFreq, Init_FinishUs*1000, 1);
     localparam Init_DelayCounterWidth = `RegWidth3(Init_ClockPulseDelay,Init_HoldDelay,Init_FinishDelay);
     reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
     `TogglePulse(init_resetPulse, init_reset, posedge, clk_int);
