@@ -221,8 +221,8 @@ module Testbench();
             // We're done when the SD command is sent
             done = spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits];
             // If a response is expected, we're done when the response is received
-            if (respType !== `Msg_Arg_SDSendCmd_RespType_None) done &= spi_resp[`Resp_Arg_SDStatus_RespDone_Bits];
-            if (datInType === `Msg_Arg_SDSendCmd_DatInType_512x1) done &= spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits];
+            if (respType !== `SDController_RespType_None) done &= spi_resp[`Resp_Arg_SDStatus_RespDone_Bits];
+            if (datInType === `SDController_DatInType_512x1) done &= spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits];
             
             // Our clock is much faster than the SD slow clock (64 MHz vs .4 MHz),
             // so wait a bit before asking for the status again
@@ -297,7 +297,7 @@ module Testbench();
         // Test SD CMD0 (GO_IDLE)
         // ====================
         $display("\n[Testbench] ========== TestSDCMD0 ==========");
-        SendSDCmdResp(CMD0, `Msg_Arg_SDSendCmd_RespType_None, `Msg_Arg_SDSendCmd_DatInType_None, 0);
+        SendSDCmdResp(CMD0, `SDController_RespType_None, `SDController_DatInType_None, 0);
     end endtask
     
     task TestSDCMD8; begin
@@ -309,7 +309,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDCMD8 ==========");
         
         // Send SD CMD8
-        SendSDCmdResp(CMD8, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_None, 32'h000001AA);
+        SendSDCmdResp(CMD8, `SDController_RespType_48, `SDController_DatInType_None, 32'h000001AA);
         if (spi_resp[`Resp_Arg_SDStatus_RespCRCErr_Bits] !== 1'b0) begin
             $display("[Testbench] CRC error ❌");
             `Finish;
@@ -409,7 +409,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDDatIn ==========");
         
         // Send SD command CMD18 (READ_MULTIPLE_BLOCK)
-        SendSDCmdResp(CMD18, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_4096xN, 32'b0);
+        SendSDCmdResp(CMD18, `SDController_RespType_48, `SDController_DatInType_4096xN, 32'b0);
         TestSDReadout();
     end endtask
     
@@ -421,7 +421,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDCMD6 ==========");
         
         // Send SD command CMD6 (SWITCH_FUNC)
-        SendSDCmdResp(CMD6, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512x1, 32'h80FFFFF3);
+        SendSDCmdResp(CMD6, `SDController_RespType_48, `SDController_DatInType_512x1, 32'h80FFFFF3);
         $display("[Testbench] Waiting for DatIn to complete...");
         do begin
             // Request SD status
@@ -456,7 +456,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDCMD2 ==========");
         
         // Send SD command CMD2 (ALL_SEND_CID)
-        SendSDCmdResp(CMD2, `Msg_Arg_SDSendCmd_RespType_136, `Msg_Arg_SDSendCmd_DatInType_None, 0);
+        SendSDCmdResp(CMD2, `SDController_RespType_136, `SDController_DatInType_None, 0);
         $display("[Testbench] ====================================================");
         $display("[Testbench] ^^^ WE EXPECT CRC ERRORS IN THE SD CARD RESPONSE ^^^");
         $display("[Testbench] ====================================================");

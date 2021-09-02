@@ -9,6 +9,7 @@ class System : public SystemBase<System> {
 public:
     System();
     void init();
+    void _mspInit();
     
     void _handleEvent();
     void _finishCmd(STApp::Status status);
@@ -24,6 +25,12 @@ public:
     void _usb_sendFromBuf();
     void _usb_dataSendHandle(const USB::DataSend& ev);
     
+    void _sdSetPowerEnabled(bool en);
+    ICE40::SDStatusResp _sdStatus();
+    ICE40::SDStatusResp _sdSendCmd(uint8_t sdCmd, uint32_t sdArg,
+        ICE40::SDSendCmdMsg::RespType respType=ICE40::SDSendCmdMsg::RespTypes::Len48,
+        ICE40::SDSendCmdMsg::DatInType datInType=ICE40::SDSendCmdMsg::DatInTypes::None);
+    uint16_t _sdInit();
     void _sdRead(const STApp::Cmd& cmd);
     void _sdRead_qspiReadToBuf();
     void _sdRead_qspiEventHandle(const QSPI::Signal& ev);
@@ -45,6 +52,8 @@ private:
     bool _usbDataBusy = false;
     bool _qspiBusy = false;
     BufQueue<2> _bufs;
+    
+    uint16_t _sdRCA = 0;
     
     friend int main();
     friend void ISR_OTG_HS();

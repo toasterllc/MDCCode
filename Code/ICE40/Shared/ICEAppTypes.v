@@ -40,14 +40,8 @@
 `define Msg_Type_SDSendCmd                                      `Msg_Type_StartBit | `Msg_Type_Len'h03
 `define     Msg_Arg_SDSendCmd_RespType_Len                      2
 `define     Msg_Arg_SDSendCmd_RespType_Bits                     51:50
-`define     Msg_Arg_SDSendCmd_RespType_136                      `Msg_Arg_SDSendCmd_RespType_Len'b10
-`define     Msg_Arg_SDSendCmd_RespType_48                       `Msg_Arg_SDSendCmd_RespType_Len'b01
-`define     Msg_Arg_SDSendCmd_RespType_None                     `Msg_Arg_SDSendCmd_RespType_Len'b00
 `define     Msg_Arg_SDSendCmd_DatInType_Len                     2
 `define     Msg_Arg_SDSendCmd_DatInType_Bits                    49:48
-`define     Msg_Arg_SDSendCmd_DatInType_4096xN                  `Msg_Arg_SDSendCmd_DatInType_Len'b10
-`define     Msg_Arg_SDSendCmd_DatInType_512x1                   `Msg_Arg_SDSendCmd_DatInType_Len'b01
-`define     Msg_Arg_SDSendCmd_DatInType_None                    `Msg_Arg_SDSendCmd_DatInType_Len'b00
 `define     Msg_Arg_SDSendCmd_CmdData_Bits                      47:0
 
 `define Msg_Type_SDStatus                                       `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h04
