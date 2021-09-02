@@ -222,7 +222,7 @@ module Testbench();
             done = spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits];
             // If a response is expected, we're done when the response is received
             if (respType !== `Msg_Arg_SDSendCmd_RespType_None) done &= spi_resp[`Resp_Arg_SDStatus_RespDone_Bits];
-            if (datInType === `Msg_Arg_SDSendCmd_DatInType_1x512) done &= spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits];
+            if (datInType === `Msg_Arg_SDSendCmd_DatInType_512x1) done &= spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits];
             
             // Our clock is much faster than the SD slow clock (64 MHz vs .4 MHz),
             // so wait a bit before asking for the status again
@@ -409,7 +409,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDDatIn ==========");
         
         // Send SD command CMD18 (READ_MULTIPLE_BLOCK)
-        SendSDCmdResp(CMD18, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_Nx4096, 32'b0);
+        SendSDCmdResp(CMD18, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_4096xN, 32'b0);
         TestSDReadout();
     end endtask
     
@@ -421,7 +421,7 @@ module Testbench();
         $display("\n[Testbench] ========== TestSDCMD6 ==========");
         
         // Send SD command CMD6 (SWITCH_FUNC)
-        SendSDCmdResp(CMD6, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_1x512, 32'h80FFFFF3);
+        SendSDCmdResp(CMD6, `Msg_Arg_SDSendCmd_RespType_48, `Msg_Arg_SDSendCmd_DatInType_512x1, 32'h80FFFFF3);
         $display("[Testbench] Waiting for DatIn to complete...");
         do begin
             // Request SD status

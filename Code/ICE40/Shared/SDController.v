@@ -17,8 +17,8 @@
 `define SDController_RespType_136                   2'b10
 
 `define SDController_DatInType_None                 2'b00
-`define SDController_DatInType_1x512                2'b01   // 1x512 bit response (eg CMD6 response)
-`define SDController_DatInType_Nx4096               2'b10   // Nx4096 bit response (eg mass data read response)
+`define SDController_DatInType_512x1                2'b01   // 512x1 bit response (eg CMD6 response)
+`define SDController_DatInType_4096xN               2'b10   // 4096xN bit response (eg mass data read response)
 
 module SDController #(
     parameter ClkFreq               = 120_000_000,
@@ -468,7 +468,7 @@ module SDController #(
             // safe because the cmd_ domain isn't allowed to modify it until we
             // signal `datIn_done`
             // TODO: perf: try registering the value for datIn_counter
-            datIn_counter <= (cmd_datInType===`SDController_DatInType_1x512 ? 127 : 1023);
+            datIn_counter <= (cmd_datInType===`SDController_DatInType_512x1 ? 127 : 1023);
             datInWrite_counter <= 3;
             if (!datIn_reg[0]) begin
                 $display("[SDController:DATIN] Triggered");
@@ -541,7 +541,7 @@ module SDController #(
             datIn_done <= !datIn_done; // Signal that the DatIn is complete
             datInWrite_blockCounter <= datInWrite_blockCounter-1;
             
-            if (cmd_datInType===`SDController_DatInType_Nx4096) begin
+            if (cmd_datInType===`SDController_DatInType_4096xN) begin
                 if (!datInWrite_blockCounter) begin
                     datIn_state <= 7;
                 end else begin

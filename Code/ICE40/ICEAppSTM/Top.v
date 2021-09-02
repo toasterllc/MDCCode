@@ -337,8 +337,8 @@ module Top(
                     
                     case (spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
                     `Msg_Arg_SDSendCmd_DatInType_None:      sd_cmd_datInType <= `SDController_DatInType_None;
-                    `Msg_Arg_SDSendCmd_DatInType_1x512:     sd_cmd_datInType <= `SDController_DatInType_1x512;
-                    `Msg_Arg_SDSendCmd_DatInType_Nx4096:    sd_cmd_datInType <= `SDController_DatInType_Nx4096;
+                    `Msg_Arg_SDSendCmd_DatInType_512x1:     sd_cmd_datInType <= `SDController_DatInType_512x1;
+                    `Msg_Arg_SDSendCmd_DatInType_4096xN:    sd_cmd_datInType <= `SDController_DatInType_4096xN;
                     endcase
                     
                     sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
