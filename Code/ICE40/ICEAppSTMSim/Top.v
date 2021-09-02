@@ -350,14 +350,16 @@ module Testbench();
             for (chunkIdx=0; chunkIdx<ChunkCount; chunkIdx++) begin
                 $display("Reading chunk %0d/%0d...", chunkIdx+1, ChunkCount);
                 
-                done = 0;
-                while (!done) begin
-                    #2000;
-                    $display("Waiting for ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
-                    if (ice_st_spi_d_ready) begin
-                        done = 1;
-                    end
-                end
+                // done = 0;
+                // while (!done) begin
+                //     #2000;
+                //     $display("Waiting for ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
+                //     if (ice_st_spi_d_ready) begin
+                //         done = 1;
+                //     end
+                // end
+                
+                #100; // TODO: remove; this helps debug where 8 dummy cycles start
                 
                 // Dummy cycles
                 for (i=0; i<8; i++) begin
@@ -367,32 +369,36 @@ module Testbench();
                     ice_st_spi_clk = 0;
                 end
                 
+                #100; // TODO: remove; this helps debug where 8 dummy cycles end
+                
                 for (i=0; i<(ChunkLen/WordLen); i++) begin
                     _ReadResp(WordLen);
                     
                     word = spi_resp[WordLen-1 -: 8];
-                    // $display("Read word: 0x%x", word);
+                    $display("Read word: 0x%x", word);
                     
-                    if (lastWordInit) begin
-                        expectedWord = lastWord+1;
-                        if (word !== expectedWord) begin
-                            $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
-                            #100;
-                            `Finish;
-                        end
-                    end
+                    // `Finish;
+                    
+                    // if (lastWordInit) begin
+                    //     expectedWord = lastWord+1;
+                    //     if (word !== expectedWord) begin
+                    //         $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
+                    //         #100;
+                    //         `Finish;
+                    //     end
+                    // end
                     
                     lastWord = word;
                     lastWordInit = 1;
                     word = spi_resp[WordLen-8-1 -: 8];
-                    // $display("Read word: 0x%x", word);
+                    $display("Read word: 0x%x", word);
                     
                     expectedWord = lastWord+1;
-                    if (word !== expectedWord) begin
-                        $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
-                        #100;
-                        `Finish;
-                    end
+                    // if (word !== expectedWord) begin
+                    //     $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
+                    //     #100;
+                    //     `Finish;
+                    // end
                     
                     lastWord = word;
                     // `Finish;
@@ -437,13 +443,15 @@ module Testbench();
             `Finish;
         end
         
-        // Check the access mode from the CMD6 response
-        if (spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] === 4'h3) begin
-            $display("[Testbench] CMD6 access mode == 0x3 ✅");
-        end else begin
-            $display("[Testbench] CMD6 access mode == 0x%h ❌", spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits]);
-            // `Finish;
-        end
+        TestSDReadout();
+        
+        // // Check the access mode from the CMD6 response
+        // if (spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] === 4'h3) begin
+        //     $display("[Testbench] CMD6 access mode == 0x3 ✅");
+        // end else begin
+        //     $display("[Testbench] CMD6 access mode == 0x%h ❌", spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits]);
+        //     // `Finish;
+        // end
     end endtask
     
     task TestSDCMD2; begin
@@ -484,7 +492,8 @@ module Testbench();
         TestSDInit();
         TestSDCMD0();
         TestSDCMD8();
-        TestSDCMD6();
+        // TestSDCMD6();
+        // `Finish;
         //           delay, speed,                            trigger, reset
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
