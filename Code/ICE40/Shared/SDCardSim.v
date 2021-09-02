@@ -891,24 +891,17 @@ module SDCardSim(
                 end
                 endcase
                 
-                // Fill datOutReg with random data so we can stress test CRC calculation
                 datOutReg = 0;
-                datOutReg[((32*((15)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*((14)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*((13)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*((12)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*((11)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*((10)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*(( 9)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*(( 8)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*(( 7)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*(( 6)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*(( 5)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*(( 4)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*(( 3)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*(( 2)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*(( 1)+1))-1) -: 32] = $urandom;
-                datOutReg[((32*(( 0)+1))-1) -: 32] = $urandom;
+                
+                // Fill payloadDataReg with incrementing integers
+                for (i=0; i<$size(datOutReg)/8; i++) begin
+                    datOutReg[$size(datOutReg)-(i*8)-1 -: 8] = i;
+                end
+                
+                // // Fill payloadDataReg with random data
+                // for (i=0; i<$size(payloadDataReg)/32; i++) begin
+                //     payloadDataReg[((32*((i)+1))-1) -: 32] = $urandom;
+                // end
                 
                 datOutReg[379:376] = respAccessMode;
                 
