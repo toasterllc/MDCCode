@@ -91,40 +91,17 @@ static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) 
     };
 }
 
-//static void _ice40Transfer(QSPI& qspi, const ICE40::Msg& msg, void* resp, size_t respLen) {
-//    qspi.read(_ice40QSPICmd(msg, respLen), resp, respLen);
-//    qspi.eventChannel.read(); // Wait for the transfer to complete
-//}
-//
-//static void _ice40TransferAsync(QSPI& qspi, const ICE40::Msg& msg, void* resp, size_t respLen) {
-//    qspi.read(_ice40QSPICmd(msg, respLen), resp, respLen);
-//}
-
 void System::init() {
     _super::init();
     _usb.init();
     _qspi.init();
     
-    _mspInit();
-    _sdInit();
-    
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     _ICE_ST_SPI_CS_::Write(1);
-}
-
-void System::_mspInit() {
-    constexpr uint16_t PM5CTL0          = 0x0130;
-    constexpr uint16_t PAOUT            = 0x0202;
     
-    auto s = _msp.connect();
-    Assert(s == _msp.Status::OK);
-    
-    // Clear LOCKLPM5 in the PM5CTL0 register
-    // This is necessary to be able to control the GPIOs
-    _msp.write(PM5CTL0, 0x0010);
-    
-    // Clear PAOUT so everything is driven to 0 by default
-    _msp.write(PAOUT, 0x0000);
+    _iceInit();
+    _mspInit();
+    _sdInit();
 }
 
 void System::_handleEvent() {
@@ -166,24 +143,6 @@ void System::_finishCmd(Status status) {
     _usb_sendFromBuf();
 }
 
-void System::_ice40TransferNoCS(const ICE40::Msg& msg) {
-    _qspi.command(_ice40QSPICmd(msg, 0));
-    _qspi.eventChannel.read(); // Wait for the transfer to complete
-}
-
-void System::_ice40Transfer(const ICE40::Msg& msg) {
-    _ICE_ST_SPI_CS_::Write(0);
-    _ice40TransferNoCS(msg);
-    _ICE_ST_SPI_CS_::Write(1);
-}
-
-void System::_ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
-    _ICE_ST_SPI_CS_::Write(0);
-    _qspi.read(_ice40QSPICmd(msg, sizeof(resp)), &resp, sizeof(resp));
-    _qspi.eventChannel.read(); // Wait for the transfer to complete
-    _ICE_ST_SPI_CS_::Write(1);
-}
-
 #pragma mark - USB
 
 void System::_usb_reset(bool usbResetFinish) {
@@ -200,14 +159,6 @@ void System::_usb_reset(bool usbResetFinish) {
         // Prepare to receive commands
         _usb.cmdRecv();
     irq.restore();
-    
-    // Confirm that we can communicate with the ICE40.
-    // Interrupts need to be enabled for this, since _ice40Transfer()
-    // waits for a response on qspi.eventChannel.
-    EchoResp resp;
-    const char str[] = "halla";
-    _ice40Transfer(EchoMsg(str), resp);
-    Assert(!strcmp((char*)resp.payload, str));
 }
 
 void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
@@ -279,16 +230,54 @@ void System::_usb_dataSendHandle(const USB::DataSend& ev) {
     }
 }
 
+#pragma mark - ICE40
 
+void System::_iceInit() {
+    // Confirm that we can communicate with the ICE40.
+    // Interrupts need to be enabled for this, since _ice40Transfer()
+    // waits for a response on qspi.eventChannel.
+    EchoResp resp;
+    const char str[] = "halla";
+    _ice40Transfer(EchoMsg(str), resp);
+    Assert(!strcmp((char*)resp.payload, str));
+}
 
+void System::_ice40TransferNoCS(const ICE40::Msg& msg) {
+    _qspi.command(_ice40QSPICmd(msg, 0));
+    _qspi.eventChannel.read(); // Wait for the transfer to complete
+}
 
+void System::_ice40Transfer(const ICE40::Msg& msg) {
+    _ICE_ST_SPI_CS_::Write(0);
+    _ice40TransferNoCS(msg);
+    _ICE_ST_SPI_CS_::Write(1);
+}
 
+void System::_ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
+    _ICE_ST_SPI_CS_::Write(0);
+    _qspi.read(_ice40QSPICmd(msg, sizeof(resp)), &resp, sizeof(resp));
+    _qspi.eventChannel.read(); // Wait for the transfer to complete
+    _ICE_ST_SPI_CS_::Write(1);
+}
 
+#pragma mark - MSP430
 
+void System::_mspInit() {
+    constexpr uint16_t PM5CTL0          = 0x0130;
+    constexpr uint16_t PAOUT            = 0x0202;
+    
+    auto s = _msp.connect();
+    Assert(s == _msp.Status::OK);
+    
+    // Clear LOCKLPM5 in the PM5CTL0 register
+    // This is necessary to be able to control the GPIOs
+    _msp.write(PM5CTL0, 0x0010);
+    
+    // Clear PAOUT so everything is driven to 0 by default
+    _msp.write(PAOUT, 0x0000);
+}
 
-
-
-#pragma mark - SD Reading
+#pragma mark - SD Card
 
 void System::_sdSetPowerEnabled(bool en) {
     constexpr uint16_t BITB         = 0x0800;
@@ -339,18 +328,22 @@ void System::_sdInit() {
     // Disable SDController clock
     _ice40Transfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Off,   SDClkDelaySlow));
     HAL_Delay(1);
+    
     // Enable slow SDController clock
     _ice40Transfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
     HAL_Delay(1);
+    
     // Enter the init mode of the SDController state machine
     _ice40Transfer(SDInitMsg(SDInitMsg::Action::Reset,      SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
     // Turn off SD card power and wait for it to reach 0V
     _sdSetPowerEnabled(false);
     HAL_Delay(2);
+    
     // Turn on SD card power and wait for it to reach 2.8V
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _sdSetPowerEnabled(true);
     HAL_Delay(2);
+    
     // Trigger the SD card low voltage signalling (LVS) init sequence
     _ice40Transfer(SDInitMsg(SDInitMsg::Action::Trigger,    SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
     // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
@@ -443,7 +436,7 @@ void System::_sdInit() {
     //   Select card
     // ====================
     {
-        auto status = _sdSendCmd(7, ((uint32_t)rca)<<16);
+        auto status = _sdSendCmd(7, ((uint32_t)_sdRCA)<<16);
         Assert(!status.respCRCErr());
     }
     
@@ -455,7 +448,7 @@ void System::_sdInit() {
     {
         // CMD55
         {
-            auto status = _sdSendCmd(55, ((uint32_t)rca)<<16);
+            auto status = _sdSendCmd(55, ((uint32_t)_sdRCA)<<16);
             Assert(!status.respCRCErr());
         }
         
@@ -482,9 +475,12 @@ void System::_sdInit() {
         auto status = _sdSendCmd(6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512x1);
         Assert(!status.respCRCErr());
         Assert(!status.datInCRCErr());
-        // Verify that the access mode was successfully changed
-        // TODO: properly handle this failing, see CMD6 docs
-        Assert(status.datInCMD6AccessMode() == 0x03);
+//        // Verify that the access mode was successfully changed
+//        // TODO: properly handle this failing, see CMD6 docs
+//        Assert(status.datInCMD6AccessMode() == 0x03);
+        
+        // Read DatIn data into _buf0
+        _sdRead_qspiReadToBufSync(_buf0, 512/8);
     }
     
     // SDClock=Off
@@ -513,7 +509,7 @@ void System::_sdInit() {
 //        {
 //            // CMD55
 //            {
-//                auto status = _sdSendCmd(55, ((uint32_t)rca)<<16);
+//                auto status = _sdSendCmd(55, ((uint32_t)_sdRCA)<<16);
 //                Assert(!status.respCRCErr());
 //            }
 //            
@@ -625,6 +621,33 @@ void System::_sdRead_qspiReadToBuf() {
 //    _opDataRem -= len;
 //    buf.len = len;
 //    _bufs.push();
+}
+
+void System::_sdRead_qspiReadToBufSync(void* buf, size_t len) {
+    // Assert chip-select so that we stay in the readout state until we release it
+    _ICE_ST_SPI_CS_::Write(0);
+    
+    // Send the SDReadout message, which causes us to enter the SD-readout mode until
+    // we release the chip select
+    _ice40TransferNoCS(SDReadoutMsg());
+    
+    // TODO: how do we handle lengths that aren't a multiple of ReadoutLen?
+    QSPI_CommandTypeDef qspiCmd = {
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        .DummyCycles = 8,
+        .NbData = (uint32_t)len,
+        .DataMode = QSPI_DATA_4_LINES,
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+    
+    _qspi.read(qspiCmd, buf, len);
+    _qspi.eventChannel.read(); // Wait for the transfer to complete
+    
+    _ICE_ST_SPI_CS_::Write(1);
 }
 
 void System::_sdRead_qspiEventHandle(const QSPI::Signal& ev) {
