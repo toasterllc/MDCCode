@@ -312,9 +312,9 @@ SDStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg, SDSendCmdMsg::Res
         // Try again if the command hasn't been sent yet
         if (!status.cmdDone()) continue;
         // Try again if we expect a response but it hasn't been received yet
-        if (respType!=SDRespTypes::None && !status.respDone()) continue;
+        if ((respType==SDRespTypes::Len48||respType==SDRespTypes::Len136) && !status.respDone()) continue;
         // Try again if we expect DatIn but it hasn't been received yet
-        if (datInType!=SDDatInTypes::None && !status.datInDone()) continue;
+        if (datInType==SDDatInTypes::Len512x1 && !status.datInDone()) continue;
         return status;
     }
     // Timeout sending SD command
@@ -322,7 +322,7 @@ SDStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg, SDSendCmdMsg::Res
 }
 
 void System::_sdInit() {
-    const uint8_t SDClkDelaySlow = 15;
+    const uint8_t SDClkDelaySlow = 7;
     const uint8_t SDClkDelayFast = 0;
     
     // Disable SDController clock
@@ -393,9 +393,20 @@ void System::_sdInit() {
         // CMD41
         {
             auto status = _sdSendCmd(41, 0x51008000);
+            
             // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
-            Assert(status.respGetBits(45,40) == 0x3F); // Command should be 6'b111111
-            Assert(status.respGetBits(7,1) == 0x7F); // CRC should be 7'b1111111
+            
+            if (status.respGetBits(45,40) != 0x3F) {
+                for (volatile int i=0; i<10; i++);
+                continue;
+            }
+            
+            // TODO: determine if the wrong CRC in the ACMD41 response is because `SDClkDelaySlow` needs tuning
+            if (status.respGetBits(7,1) != 0x7F) {
+                for (volatile int i=0; i<10; i++);
+                continue;
+            }
+            
             // Check if card is ready. If it's not, retry ACMD41.
             const bool ready = status.respGetBit(39);
             if (!ready) continue;
@@ -497,6 +508,33 @@ void System::_sdInit() {
         _ice40Transfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Fast,   SDClkDelayFast));
     }
     
+    
+//    {
+//        // Update state
+//        _op = Op::SDRead;
+//        _opDataRem = 0xFFFFFE00; // divisible by 512
+//        
+//        // ====================
+//        // CMD18 | READ_MULTIPLE_BLOCK
+//        //   State: Transfer -> Send Data
+//        //   Read blocks of data (1 block == 512 bytes)
+//        // ====================
+//        {
+//            auto status = _sdSendCmd(18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+//            Assert(!status.respCRCErr());
+//        }
+//        
+//        // Send the SDReadout message, which causes us to enter the SD-readout mode until
+//        // we release the chip select
+//        _ICE_ST_SPI_CS_::Write(0);
+//        _ice40TransferNoCS(SDReadoutMsg());
+//        
+//        // Advance state machine
+//        _sdRead_updateState();
+//    }
+    
+    
+    
 //    bool on = true;
 //    for (volatile uint32_t iter=0;; iter++) {
 //        // ====================
@@ -522,7 +560,7 @@ void System::_sdInit() {
 //        // ====================
 //        // CMD25 | WRITE_MULTIPLE_BLOCK
 //        //   State: Transfer -> Receive Data
-//        //   Write blocks of data
+//        //   Write blocks of data (1 block == 512 bytes)
 //        // ====================
 //        {
 //            auto status = _sdSendCmd(25, 0);
@@ -576,6 +614,16 @@ void System::_sdRead(const Cmd& cmd) {
     _op = cmd.op;
     _opDataRem = 0xFFFFFE00; // divisible by 512
     
+    // ====================
+    // CMD18 | READ_MULTIPLE_BLOCK
+    //   State: Transfer -> Send Data
+    //   Read blocks of data (1 block == 512 bytes)
+    // ====================
+    {
+        auto status = _sdSendCmd(18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+        Assert(!status.respCRCErr());
+    }
+    
     // Send the SDReadout message, which causes us to enter the SD-readout mode until
     // we release the chip select
     _ICE_ST_SPI_CS_::Write(0);
@@ -592,8 +640,6 @@ void System::_sdRead_qspiReadToBuf() {
     Assert(!_qspiBusy);
     
     auto& buf = _bufs.back();
-    
-//    HAL_Delay(1);
     
     // Wait for ICE40 to signal that data is ready
     while (!_ICE_ST_SPI_D_READY::Read());
@@ -616,10 +662,6 @@ void System::_sdRead_qspiReadToBuf() {
     buf.len += len;
     
     _qspiBusy = true;
-    
-//    _opDataRem -= len;
-//    buf.len = len;
-//    _bufs.push();
 }
 
 void System::_sdRead_qspiReadToBufSync(void* buf, size_t len) {
