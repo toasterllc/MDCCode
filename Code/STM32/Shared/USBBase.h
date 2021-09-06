@@ -152,8 +152,8 @@ public:
         //       
         //       - when we don't leave space at the end for the DMA registers, and we dump the entire 4k
         //         FIFO RAM contents [1], the RAM shows parts of our transfer data being clobbered by
-        //         values that appear to pointers within the FIFO RAM (and match the sizes we choose for
-        //         the Rx/Tx FIFOs)
+        //         values that appear to be pointers within the FIFO RAM (and match the sizes we choose
+        //         for the Rx/Tx FIFOs)
         //       
         //       - the Silicon Labs EFM32HG uses the same/similar Synopsys USB IP, and its docs say:
         //           - "These register information are stored at the end of the FIFO RAM after the space
@@ -218,7 +218,7 @@ public:
     // Channels
     Channel<Event, 1> eventChannel;
     
-protected:
+//protected:
     void _isr() {
         ISR_HAL_PCD(&_pcd);
     }

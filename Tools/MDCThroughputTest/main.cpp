@@ -30,12 +30,12 @@ int main(int argc, const char* argv[]) {
         MDCDevice& device = devices[0];
         auto& usbDevice = device.usbDevice();
         
-        printf("Sending SDRead command...\n");
-        STApp::Cmd cmd = {
-            .op = Op::SDRead,
-        };
-        usbDevice.write(STApp::Endpoints::CmdOut, cmd);
-        printf("-> Done\n\n");
+//        printf("Sending SDRead command...\n");
+//        STApp::Cmd cmd = {
+//            .op = Op::SDRead,
+//        };
+//        usbDevice.write(STApp::Endpoints::CmdOut, cmd);
+//        printf("-> Done\n\n");
         
 //        constexpr size_t BufCap = 512;
 //        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
@@ -63,21 +63,21 @@ int main(int argc, const char* argv[]) {
             TimeInstant start;
             usbDevice.read(STApp::Endpoints::DataIn, buf.get(), BufCap);
             
-            for (int i=0; i<1000; i++) {
-                printf("%x\n", buf[i]);
-            }
+//            for (int i=0; i<1000; i++) {
+//                printf("%x\n", buf[i]);
+//            }
             
             const uintmax_t bits = BufCap*8;
             const uintmax_t throughput_bitsPerSec = (1000*bits)/start.durationMs();
             const uintmax_t throughput_MbitsPerSec = throughput_bitsPerSec/UINTMAX_C(1000000);
             
-            printf("Validating data...\n");
-            for (size_t i=1; i<BufCap; i++) {
-                if (buf[i] != (((buf[i-1])+1)&0xFF)) {
-                    printf("-> Invalid sequence: buf[%zu]=%d, buf[%zu]=%d\n", i-1, buf[i-1], i, buf[i]);
-                    break;
-                }
-            }
+//            printf("Validating data...\n");
+//            for (size_t i=1; i<BufCap; i++) {
+//                if (buf[i] != (((buf[i-1])+1)&0xFF)) {
+//                    printf("-> Invalid sequence: buf[%zu]=%d, buf[%zu]=%d\n", i-1, buf[i-1], i, buf[i]);
+//                    break;
+//                }
+//            }
             
             printf("Throughput: %ju Mbits/sec\n\n", throughput_MbitsPerSec);
         }

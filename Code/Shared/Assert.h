@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#define MEOWBUFLEN ((176*1024))
+
 inline void Assert(bool x) {
     if (!x) abort();
 }

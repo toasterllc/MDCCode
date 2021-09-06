@@ -151,9 +151,10 @@ HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
 
   if (cfg.dma_enable == 1U)
   {
-    USBx->GAHBCFG |= USB_OTG_GAHBCFG_HBSTLEN_2;
     USBx->GAHBCFG |= USB_OTG_GAHBCFG_DMAEN;
   }
+  USBx->GAHBCFG |= USB_OTG_GAHBCFG_HBSTLEN_4;
+  USBx->GAHBCFG &= ~USB_OTG_GAHBCFG_TXFELVL;
 
   return ret;
 }

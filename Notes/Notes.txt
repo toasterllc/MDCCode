@@ -20,7 +20,7 @@
     - STLoader/STApp wMaxPacketSize for all endpoints can only be 512 bytes for high-speed devices
         - To save FIFO space, only have 2 endpoints (DataOut and DataIn), without a separate CmdOut endpoint?
     
-    - STApp: try speeding up USB transfers by trying different values of GAHBCFG.HBSTLEN
+    - STApp: try speeding up USB transfers by trying different values of GAHBCFG.HBSTLEN, TXFELVL
     
     - ICEApp
         - Reset SDController DatOut before a new capture starts filling the FIFO

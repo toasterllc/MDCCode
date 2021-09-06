@@ -54,7 +54,7 @@ private:
     size_t _opDataRem = 0;
     bool _usbDataBusy = false;
     bool _qspiBusy = false;
-    BufQueue<2> _bufs;
+//    BufQueue<2> _bufs;
     
     uint16_t _sdRCA = 0;
     
