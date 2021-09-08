@@ -1,5 +1,10 @@
 - Rev4 Todo
     
+    - STLoader / STApp
+        - Move commands to default control endpoint
+            - This will save space in the limited FIFO RAM
+            - This will also help improve our command/response scheme since EP0 gets replies for every request
+    
     - SDController: Implement SD card reading
         - Requirements
             - Read 512x1 transfers (for CMD6)
@@ -16,9 +21,6 @@
     - Try to optimize USB throughput beyond 355e6 bits/sec
     
     - Add CRC to the end of images
-    
-    - STLoader/STApp wMaxPacketSize for all endpoints can only be 512 bytes for high-speed devices
-        - To save FIFO space, only have 2 endpoints (DataOut and DataIn), without a separate CmdOut endpoint?
     
     - STApp: try speeding up USB transfers by trying different values of GAHBCFG.HBSTLEN
     
