@@ -1,9 +1,10 @@
 - Rev4 Todo
     
-    - STLoader / STApp
-        - Move commands to default control endpoint
-            - This will save space in the limited FIFO RAM
-            - This will also help improve our command/response scheme since EP0 gets replies for every request
+    - STLoader / STApp: Move commands to default control endpoint
+        - This will save space in the limited FIFO RAM
+        - This will also help improve our command/response scheme since EP0 gets replies for every request
+    
+    - STLoader / STApp: add a 'flush' command to allow signalling which will cause IN endpoints to issue ZLPs before starting 
     
     - SDController: Implement SD card reading
         - Requirements
