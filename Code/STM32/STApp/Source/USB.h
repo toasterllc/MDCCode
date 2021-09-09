@@ -23,6 +23,8 @@ public:
     struct DataSend {};
     
     // Methods
+    void reset();
+    
     Channel<CmdRecv, 1> cmdRecvChannel;
     void cmdSendStatus(bool status);
     

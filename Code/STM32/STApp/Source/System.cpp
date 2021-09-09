@@ -122,6 +122,18 @@ void System::_handleEvent() {
     }
 }
 
+void System::_reset(const Cmd& cmd) {
+    // Disable interrupts so that resetting is atomic
+    IRQState irq;
+    irq.disable();
+        _usb.reset();
+        _qspi.reset();
+        _bufs.reset();
+    irq.restore();
+    
+    _finishCmd(true);
+}
+
 void System::_finishCmd(bool status) {
     Assert(!_bufs.full());
     Assert(!_usbDataBusy);
@@ -143,43 +155,12 @@ void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
-    case Op::Reset:     _usb_reset(cmd);    break;
-    case Op::SDRead:    _sdRead(cmd);       break;
-    case Op::LEDSet:    _ledSet(cmd);       break;
+    case Op::Reset:     _reset(cmd);    break;
+    case Op::SDRead:    _sdRead(cmd);   break;
+    case Op::LEDSet:    _ledSet(cmd);   break;
     // Bad command
-    default:            abort();            break;
+    default:            abort();        break;
     }
-}
-
-void System::_usb_reset(bool usbResetFinish) {
-    // Disable interrupts so that resetting is atomic
-    IRQState irq;
-    irq.disable();
-        // Complete USB reset, if the source of the reset was _usb.resetChannel
-        if (usbResetFinish) _usb.resetFinish();
-        
-        // Reset our state
-        _qspi.reset();
-        _bufs.reset();
-        
-        // Prepare to receive commands
-        _usb.cmdRecv();
-    irq.restore();
-}
-
-void System::_usb_reset() {
-    // Disable interrupts so that resetting is atomic
-    IRQState irq;
-    irq.disable();
-        // Reset our state
-        _usb.reset();
-        _qspi.reset();
-        _bufs.reset();
-    irq.restore();
-}
-
-void System::_usb_cmdRecv() {
-    // TODO: if we don't need to do anything here, remove this function
 }
 
 void System::_usb_sendFromBuf() {

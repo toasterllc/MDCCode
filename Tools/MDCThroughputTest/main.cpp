@@ -53,6 +53,12 @@ int main(int argc, const char* argv[]) {
 //        printf("-> Done\n\n");
 //        exit(0);
         
+        try {
+            printf("Resetting device...\n");
+            device.reset();
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Error: %s\n\n", e.what());
+        }
         
         try {
             STApp::Cmd cmd = {
@@ -77,7 +83,7 @@ int main(int argc, const char* argv[]) {
                 .arg = {
                     .LEDSet = {
                         .idx = 1,
-                        .on = 0,
+                        .on = 1,
                     },
                 },
             };
