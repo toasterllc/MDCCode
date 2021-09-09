@@ -5,11 +5,8 @@ namespace STLoader {
     Enum(uint8_t, Endpoint, Endpoints,
         // Control endpoint
         Ctrl    = 0x00,
-        
         // OUT endpoints (high bit 0)
-        CmdOut  = 0x01,
-        DataOut = 0x02,
-        
+        DataOut = 0x01,
         // IN endpoints (high bit 1)
         DataIn  = 0x81,
     );

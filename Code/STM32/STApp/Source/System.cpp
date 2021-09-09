@@ -99,9 +99,9 @@ void System::init() {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     _ICE_ST_SPI_CS_::Write(1);
     
-    _iceInit();
-    _mspInit();
-    _sdInit();
+//    _iceInit();
+//    _mspInit();
+//    _sdInit();
 }
 
 void System::_handleEvent() {
@@ -109,9 +109,6 @@ void System::_handleEvent() {
     ChannelSelect::Start();
     if (auto x = _usb.eventChannel.readSelect()) {
         _usb_eventHandle(*x);
-    
-    } else if (auto x = _usb.resetRecvChannel.readSelect()) {
-        _usb_reset(true);
     
     } else if (auto x = _usb.cmdRecvChannel.readSelect()) {
         _usb_cmdHandle(*x);
@@ -136,11 +133,8 @@ void System::_finishCmd(Status status) {
     _op = Op::None;
     
     // Send our response
-    auto& buf = _bufs.back();
-    memcpy(buf.data, &status, sizeof(status));
-    buf.len = sizeof(status);
-    _bufs.push();
-    _usb_sendFromBuf();
+    _status = status;
+    _usb.cmdSend(&_status, sizeof(_status));
 }
 
 #pragma mark - USB
@@ -149,16 +143,18 @@ void System::_usb_reset(bool usbResetFinish) {
     // Disable interrupts so that resetting is atomic
     IRQState irq;
     irq.disable();
-        // Complete USB reset, if the source of the reset was _usb.resetChannel
-        if (usbResetFinish) _usb.resetFinish();
+//        // Complete USB reset, if the source of the reset was _usb.resetChannel
+//        if (usbResetFinish) _usb.resetFinish();
         
         // Reset our state
         _qspi.reset();
         _bufs.reset();
         
         // Prepare to receive commands
-        _usb.cmdRecv();
+        _usb_cmdRecv();
     irq.restore();
+    
+    
 }
 
 void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
@@ -179,8 +175,7 @@ void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
 }
 
 void System::_usb_cmdRecv() {
-    // Prepare to receive another command
-    _usb.cmdRecv();
+    // TODO: if we don't need to do anything here, remove this function
 }
 
 void System::_usb_eventHandle(const USB::Event& ev) {
@@ -777,7 +772,7 @@ void System::_sdRead_finish() {
 
 void System::_ledSet(const Cmd& cmd) {
     switch (cmd.arg.LEDSet.idx) {
-//    case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
+    case 0: _finishCmd(Status::Error); return;
     case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
     case 2: _LED2::Write(cmd.arg.LEDSet.on); break;
     case 3: _LED3::Write(cmd.arg.LEDSet.on); break;

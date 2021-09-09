@@ -18,6 +18,9 @@ uint8_t... Endpoints    // List of endpoints
 >
 class USBBase {
 public:
+    static constexpr size_t MaxPacketSizeCtrl = 64;
+    static constexpr size_t MaxPacketSizeBulk = 512;
+    
     static constexpr uint8_t EndpointIdx(uint8_t ep)    { return ep&0xF;        }
     static constexpr bool EndpointOut(uint8_t ep)       { return !(ep&0x80);    }
     static constexpr bool EndpointIn(uint8_t ep)        { return  (ep&0x80);    }
@@ -35,15 +38,15 @@ public:
     }
     
     static constexpr size_t MaxPacketSizeIn() {
-        // Don't have IN endpoints: MPS=64 (the MPS for control transfers)
-        // Do have IN endpoints: MPS=512 (the only value that the spec allows for HS bulk endpoints)
-        return !EndpointCountIn() ? 64 : 512;
+        // Don't have IN endpoints: MPS=control transfer MPS (64)
+        // Do have IN endpoints: MPS=bulk transfer MPS (512, the only value that the spec allows for HS bulk endpoints)
+        return !EndpointCountIn() ? MaxPacketSizeCtrl : MaxPacketSizeBulk;
     }
     
     static constexpr size_t MaxPacketSizeOut() {
-        // Don't have OUT endpoints: MPS=64 (the MPS for control transfers)
-        // Do have OUT endpoints: MPS=512 (the only value that the spec allows for HS bulk endpoints)
-        return !EndpointCountOut() ? 64 : 512;
+        // Don't have OUT endpoints: MPS=control transfer MPS (64)
+        // Do have OUT endpoints: MPS=bulk transfer MPS (512, the only value that the spec allows for HS bulk endpoints)
+        return !EndpointCountOut() ? MaxPacketSizeCtrl : MaxPacketSizeBulk;
     }
     
     static constexpr uint32_t FIFORxSize() {
@@ -218,7 +221,7 @@ public:
     // Channels
     Channel<Event, 1> eventChannel;
     
-protected:
+//protected:
     void _isr() {
         ISR_HAL_PCD(&_pcd);
     }
