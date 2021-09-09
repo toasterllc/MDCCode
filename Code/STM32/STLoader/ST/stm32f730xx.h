@@ -14085,6 +14085,9 @@ typedef struct
 #define USB_OTG_DIEPMSK_EPDM_Pos                 (1U)
 #define USB_OTG_DIEPMSK_EPDM_Msk                 (0x1UL << USB_OTG_DIEPMSK_EPDM_Pos) /*!< 0x00000002 */
 #define USB_OTG_DIEPMSK_EPDM                     USB_OTG_DIEPMSK_EPDM_Msk      /*!< Endpoint disabled interrupt mask                  */
+#define USB_OTG_DIEPMSK_AHBERRM_Pos              (2U)
+#define USB_OTG_DIEPMSK_AHBERRM_Msk              (0x1UL << USB_OTG_DIEPMSK_AHBERRM_Pos) /*!< 0x00000004 */
+#define USB_OTG_DIEPMSK_AHBERRM                  USB_OTG_DIEPMSK_AHBERRM_Msk      /*!< AHB error mask for USB OTG HS                  */
 #define USB_OTG_DIEPMSK_TOM_Pos                  (3U)
 #define USB_OTG_DIEPMSK_TOM_Msk                  (0x1UL << USB_OTG_DIEPMSK_TOM_Pos) /*!< 0x00000008 */
 #define USB_OTG_DIEPMSK_TOM                      USB_OTG_DIEPMSK_TOM_Msk       /*!< Timeout condition mask (nonisochronous endpoints) */
