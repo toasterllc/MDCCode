@@ -151,6 +151,22 @@ void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
     }
 }
 
+void System::_usb_reset(bool usbResetFinish) {
+    // Disable interrupts so that resetting is atomic
+    IRQState irq;
+    irq.disable();
+        // Complete USB reset, if the source of the reset was _usb.resetChannel
+        if (usbResetFinish) _usb.resetFinish();
+        
+        // Reset our state
+        _qspi.reset();
+        _bufs.reset();
+        
+        // Prepare to receive commands
+        _usb.cmdRecv();
+    irq.restore();
+}
+
 void System::_usb_reset() {
     // Disable interrupts so that resetting is atomic
     IRQState irq;

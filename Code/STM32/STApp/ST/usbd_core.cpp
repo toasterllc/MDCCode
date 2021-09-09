@@ -471,6 +471,7 @@ USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef* pdev,
         }
         else
         {
+          // DKeck: allow the client to handle sending the status
           (void)USBD_CtlSendStatus(pdev);
         }
       }
