@@ -29,16 +29,14 @@ public:
     }
     
     void reset() {
-        #warning TODO: implement
-        abort();
-//        using namespace STApp;
-//        // Send the reset vendor-defined control request
-//        _dev.vendorRequestOut(CtrlReqs::Reset, nullptr, 0);
-//        
-//        // Reset our pipes now that the device is reset
-//        for (const uint8_t ep : {Endpoints::CmdOut, Endpoints::DataIn}) {
-//            _dev.reset(ep);
-//        }
+        using namespace STApp;
+        Cmd cmd = { .op = Op::Reset };
+        _dev.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
+        
+        // Reset our pipes now that the device is reset
+        for (const uint8_t ep : {Endpoints::DataIn}) {
+            _dev.reset(ep);
+        }
     }
     
     void ledSet(uint8_t idx, bool on) {

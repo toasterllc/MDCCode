@@ -9,12 +9,26 @@ void USB::reset() {
     IRQState irq;
     irq.disable();
     
-    // Reset state
-    _dataSendBusy = false;
-    
     // Reset our channels so there are no pending events
     cmdRecvChannel.reset();
     dataSendChannel.reset();
+    
+    // Reset state
+    _dataSendBusy = false;
+    
+    // Reset all endpoints to return them to the default state.
+    // USB_ResetEndpoints() requires that SETUP packets aren't
+    // received while it's executing. (See comment within
+    // USB_ResetEndpoints().)
+    //
+    // This requirement necessitates a contract between the device
+    // and the USB host: during the time between the host sending
+    // the reset control request and receiving our response, the host
+    // must not send any control requests. (This should be easily met
+    // since control requests are typically synchronous.) This contract
+    // guarantees that SETUP packets aren't delivered while
+    // USB_ResetEndpoints() is executing.
+    USB_ResetEndpoints(_pcd.Instance, _pcd.Init.dev_endpoints);
 }
 
 //USBD_StatusTypeDef USB::cmdRecv() {
@@ -51,6 +65,7 @@ uint8_t USB::_usbd_Setup(USBD_SetupReqTypedef* req) {
     case USB_REQ_TYPE_VENDOR: {
         switch (req->bRequest) {
         case STApp::CtrlReqs::CmdExec: {
+            USBD_CtlSendStatus(&_device);
             USBD_CtlPrepareRx(&_device, _cmdRecvBuf, sizeof(_cmdRecvBuf));
             return USBD_OK;
         }

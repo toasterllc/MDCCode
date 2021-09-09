@@ -11,11 +11,10 @@ public:
     void init();
     
     void _handleEvent();
+    void _reset(const STApp::Cmd& cmd);
     void _finishCmd(bool status);
     
-    void _usb_reset();
     void _usb_cmdHandle(const USB::CmdRecv& ev);
-    void _usb_cmdRecv();
     void _usb_sendFromBuf();
     void _usb_dataSendHandle(const USB::DataSend& ev);
     
