@@ -24,10 +24,10 @@ public:
     
     // Methods
     Channel<CmdRecv, 1> cmdRecvChannel;
-    USBD_StatusTypeDef cmdSend(const void* data, size_t len);
+    void cmdSendStatus(bool status);
     
     USBD_StatusTypeDef dataSend(const void* data, size_t len);
-    Channel<DataSend, 1> dataSendChannel; // Signals that the previous sdSend() is complete
+    Channel<DataSend, 1> dataSendChannel; // Signals that the previous dataSend() is complete
     
 protected:
     // Callbacks
@@ -50,7 +50,6 @@ protected:
 private:
     uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
     
-    bool _cmdRecvBusy = false;
     bool _dataSendBusy = false;
     
     using _super = USBBase;

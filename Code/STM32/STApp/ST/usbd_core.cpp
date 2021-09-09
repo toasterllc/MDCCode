@@ -469,7 +469,10 @@ USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef* pdev,
         {
           pdev->pClass->EP0_RxReady(pdev);
         }
-        (void)USBD_CtlSendStatus(pdev);
+        else
+        {
+          (void)USBD_CtlSendStatus(pdev);
+        }
       }
     }
   }

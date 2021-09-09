@@ -54,18 +54,39 @@ int main(int argc, const char* argv[]) {
 //        exit(0);
         
         
-        STApp::Cmd cmd = {
-            .op = Op::LEDSet,
-            .arg = {
-                .LEDSet = {
-                    .idx = 1,
-                    .on = 1,
+        try {
+            STApp::Cmd cmd = {
+                .op = Op::LEDSet,
+                .arg = {
+                    .LEDSet = {
+                        .idx = 0,
+                        .on = 1,
+                    },
                 },
-            },
-        };
+            };
+            
+            printf("Sending command...\n");
+            usbDevice.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Error: %s\n\n", e.what());
+        }
         
-        printf("Sending reset...\n");
-        usbDevice.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
+        try {
+            STApp::Cmd cmd = {
+                .op = Op::LEDSet,
+                .arg = {
+                    .LEDSet = {
+                        .idx = 1,
+                        .on = 0,
+                    },
+                },
+            };
+            
+            printf("Sending command...\n");
+            usbDevice.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Error: %s\n\n", e.what());
+        }
         
 //        printf("Reading response...\n");
 //        uint8_t buf2[512];

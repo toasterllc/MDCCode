@@ -14,14 +14,9 @@ namespace STApp {
         CmdExec,
     );
     
-    enum class Status : uint8_t {
-        OK,
-        Busy,
-        Error
-    };
-    
     enum class Op : uint8_t {
         None,
+        Reset,
         SDRead,
         LEDSet,
     };
