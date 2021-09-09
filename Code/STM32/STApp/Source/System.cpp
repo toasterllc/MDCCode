@@ -33,13 +33,6 @@ static uint8_t _buf1[63*1024] __attribute__((aligned(4))) __attribute__((section
 
 using namespace STApp;
 
-System::System() :
-// QSPI clock divider=1 => run QSPI clock at 64 MHz
-// QSPI alignment=word for high performance transfers
-_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
-_bufs(_buf0, _buf1) {
-}
-
 static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) {
     uint8_t b[8];
     static_assert(sizeof(msg) == sizeof(b));
@@ -91,6 +84,13 @@ static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) 
     };
 }
 
+System::System() :
+// QSPI clock divider=1 => run QSPI clock at 64 MHz
+// QSPI alignment=word for high performance transfers
+_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
+_bufs(_buf0, _buf1) {
+}
+
 void System::init() {
     _super::init();
     _usb.init();
@@ -107,10 +107,7 @@ void System::init() {
 void System::_handleEvent() {
     // Wait for an event to occur on one of our channels
     ChannelSelect::Start();
-    if (auto x = _usb.eventChannel.readSelect()) {
-        _usb_eventHandle(*x);
-    
-    } else if (auto x = _usb.cmdRecvChannel.readSelect()) {
+    if (auto x = _usb.cmdRecvChannel.readSelect()) {
         _usb_cmdHandle(*x);
     
     } else if (auto x = _usb.dataSendChannel.readSelect()) {
@@ -125,7 +122,7 @@ void System::_handleEvent() {
     }
 }
 
-void System::_finishCmd(Status status) {
+void System::_finishCmd(bool status) {
     Assert(!_bufs.full());
     Assert(!_usbDataBusy);
     
@@ -133,29 +130,10 @@ void System::_finishCmd(Status status) {
     _op = Op::None;
     
     // Send our response
-    _status = status;
-    _usb.cmdSend(&_status, sizeof(_status));
+    _usb.cmdSendStatus(status);
 }
 
 #pragma mark - USB
-
-void System::_usb_reset(bool usbResetFinish) {
-    // Disable interrupts so that resetting is atomic
-    IRQState irq;
-    irq.disable();
-//        // Complete USB reset, if the source of the reset was _usb.resetChannel
-//        if (usbResetFinish) _usb.resetFinish();
-        
-        // Reset our state
-        _qspi.reset();
-        _bufs.reset();
-        
-        // Prepare to receive commands
-        _usb_cmdRecv();
-    irq.restore();
-    
-    
-}
 
 void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
     Assert(_op == Op::None);
@@ -165,34 +143,27 @@ void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
-    // SD Read
-    case Op::SDRead:                _sdRead(cmd);   break;
-    // Set LED
-    case Op::LEDSet:                _ledSet(cmd);   break;
+    case Op::Reset:     _usb_reset(cmd);    break;
+    case Op::SDRead:    _sdRead(cmd);       break;
+    case Op::LEDSet:    _ledSet(cmd);       break;
     // Bad command
-    default:                        abort();        break;
+    default:            abort();            break;
     }
+}
+
+void System::_usb_reset() {
+    // Disable interrupts so that resetting is atomic
+    IRQState irq;
+    irq.disable();
+        // Reset our state
+        _usb.reset();
+        _qspi.reset();
+        _bufs.reset();
+    irq.restore();
 }
 
 void System::_usb_cmdRecv() {
     // TODO: if we don't need to do anything here, remove this function
-}
-
-void System::_usb_eventHandle(const USB::Event& ev) {
-    using Type = USB::Event::Type;
-    switch (ev.type) {
-    case Type::StateChanged: {
-        // Handle USB connection
-        if (_usb.state() == USB::State::Connected) {
-            _usb_reset(false);
-        }
-        break;
-    }
-    
-    default: {
-        // Invalid event type
-        abort();
-    }}
 }
 
 void System::_usb_sendFromBuf() {
@@ -218,9 +189,6 @@ void System::_usb_dataSendHandle(const USB::DataSend& ev) {
     
     switch (_op) {
     case Op::SDRead:    _sdRead_usbDataSendHandle(ev);  break;
-    // The host received the status response;
-    // arrange to receive another command
-    case Op::None:      _usb_cmdRecv();                 break;
     default:            abort();                        break;
     }
 }
@@ -765,20 +733,20 @@ void System::_sdRead_updateState() {
 
 void System::_sdRead_finish() {
     _ICE_ST_SPI_CS_::Write(1);
-    _finishCmd(Status::OK);
+    _finishCmd(true);
 }
 
 #pragma mark - Other Commands
 
 void System::_ledSet(const Cmd& cmd) {
     switch (cmd.arg.LEDSet.idx) {
-    case 0: _finishCmd(Status::Error); return;
+    case 0: _finishCmd(false); return;
     case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
     case 2: _LED2::Write(cmd.arg.LEDSet.on); break;
     case 3: _LED3::Write(cmd.arg.LEDSet.on); break;
     }
     
-    _finishCmd(Status::OK);
+    _finishCmd(true);
 }
 
 System Sys;

@@ -11,12 +11,11 @@ public:
     void init();
     
     void _handleEvent();
-    void _finishCmd(STApp::Status status);
+    void _finishCmd(bool status);
     
-    void _usb_reset(bool usbResetFinish);
+    void _usb_reset();
     void _usb_cmdHandle(const USB::CmdRecv& ev);
     void _usb_cmdRecv();
-    void _usb_eventHandle(const USB::Event& ev);
     void _usb_sendFromBuf();
     void _usb_dataSendHandle(const USB::DataSend& ev);
     
@@ -52,7 +51,6 @@ private:
     
     STApp::Op _op = STApp::Op::None;
     size_t _opDataRem = 0;
-    STApp::Status _status = STApp::Status::OK;
     bool _usbDataBusy = false;
     bool _qspiBusy = false;
     BufQueue<2> _bufs;
