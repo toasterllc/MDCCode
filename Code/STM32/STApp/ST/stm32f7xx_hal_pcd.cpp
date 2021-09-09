@@ -1651,11 +1651,6 @@ HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, u
   AssertArg(len); // We don't support zero-length packets
   PCD_EPTypeDef *ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
   
-  // Verify that `len` is a multiple of the max packet size.
-  // (The hardware doesn't restrict itself to non-packet boundaries,
-  // so `len` can only be used to control the packet count.)
-  AssertArg(!(len % ep->maxpacket));
-  
   /*setup and start the Xfer */
   ep->xfer_buff = pBuf;
   ep->xfer_len = len;
@@ -1670,10 +1665,21 @@ HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, u
 
   if ((ep_addr & EP_ADDR_MSK) == 0U)
   {
+    // Verify that `len` is a exactly the max packet size.
+    // The OTG_DIEPTSIZ* register differs between EP0 (OTG_DIEPTSIZ0) and EPx (OTG_DIEPTSIZx),
+    // requiring a special version of USB_EP*StartXfer for EP0 (USB_EP0StartXfer).
+    // (This is because OTG_DIEPTSIZ0.PKTCNT is 2 bits, while OTG_DIEPTSIZx.PKTCNT is 10 bits.)
+    // USB_EP0StartXfer assumes that we're sending exactly one packet, so we enforce that here
+    // by checking that len==MPS
+    AssertArg(len == ep->maxpacket);
     (void)USB_EP0StartXfer(hpcd->Instance, ep, (uint8_t)hpcd->Init.dma_enable);
   }
   else
   {
+    // Verify that `len` is a multiple of the max packet size.
+    // (The hardware doesn't restrict itself to non-packet boundaries,
+    // so `len` can only be used to control the packet count.)
+    AssertArg(!(len % ep->maxpacket));
     (void)USB_EPStartXfer(hpcd->Instance, ep, (uint8_t)hpcd->Init.dma_enable);
   }
 
