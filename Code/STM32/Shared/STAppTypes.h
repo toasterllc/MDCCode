@@ -5,29 +5,25 @@ namespace STApp {
     Enum(uint8_t, Endpoint, Endpoints,
         // Control endpoint
         Ctrl    = 0x00,
-        
-        // OUT endpoints (high bit 0)
-        CmdOut  = 0x01,
-        
         // IN endpoints (high bit 1)
         DataIn  = 0x81,
     );
     
     // Vendor-defined Control Requests
     Enum(uint8_t, CtrlReq, CtrlReqs,
-        Reset,
+        CmdExec,
     );
-    
-    enum class Op : uint8_t {
-        None,
-        SDRead,
-        LEDSet,
-    };
     
     enum class Status : uint8_t {
         OK,
         Busy,
         Error
+    };
+    
+    enum class Op : uint8_t {
+        None,
+        SDRead,
+        LEDSet,
     };
     
     struct Cmd {

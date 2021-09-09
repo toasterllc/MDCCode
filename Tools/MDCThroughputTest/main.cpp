@@ -30,12 +30,56 @@ int main(int argc, const char* argv[]) {
         MDCDevice& device = devices[0];
         auto& usbDevice = device.usbDevice();
         
-        printf("Sending SDRead command...\n");
+        
+//        printf("Sending SDRead command...\n");
+//        STApp::Cmd cmd = {
+//            .op = Op::SDRead,
+//        };
+//        usbDevice.write(STApp::Endpoints::CmdOut, cmd);
+//        printf("-> Done\n\n");
+//        exit(0);
+        
+//        printf("Sending LEDSet command...\n");
+//        STApp::Cmd cmd = {
+//            .op = Op::LEDSet,
+//            .arg = {
+//                .LEDSet = {
+//                    .idx = 1,
+//                    .on = 1,
+//                },
+//            },
+//        };
+//        usbDevice.write(STApp::Endpoints::CmdOut, cmd);
+//        printf("-> Done\n\n");
+//        exit(0);
+        
+        
         STApp::Cmd cmd = {
-            .op = Op::SDRead,
+            .op = Op::LEDSet,
+            .arg = {
+                .LEDSet = {
+                    .idx = 1,
+                    .on = 1,
+                },
+            },
         };
-        usbDevice.write(STApp::Endpoints::CmdOut, cmd);
-        printf("-> Done\n\n");
+        
+        printf("Sending reset...\n");
+        usbDevice.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
+        
+//        printf("Reading response...\n");
+//        uint8_t buf2[512];
+//        usbDevice.read(0, buf2, sizeof(buf2));
+        
+        printf("HALLO\n");
+        exit(0);
+        
+//        printf("Sending SDRead command...\n");
+//        STApp::Cmd cmd = {
+//            .op = Op::SDRead,
+//        };
+//        usbDevice.write(STApp::Endpoints::CmdOut, cmd);
+//        printf("-> Done\n\n");
         
 //        constexpr size_t BufCap = 512;
 //        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);

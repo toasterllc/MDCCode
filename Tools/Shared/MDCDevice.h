@@ -29,29 +29,33 @@ public:
     }
     
     void reset() {
-        using namespace STApp;
-        // Send the reset vendor-defined control request
-        _dev.vendorRequest(CtrlReqs::Reset, nullptr, 0);
-        
-        // Reset our pipes now that the device is reset
-        for (const uint8_t ep : {Endpoints::CmdOut, Endpoints::DataIn}) {
-            _dev.reset(ep);
-        }
+        #warning TODO: implement
+        abort();
+//        using namespace STApp;
+//        // Send the reset vendor-defined control request
+//        _dev.vendorRequestOut(CtrlReqs::Reset, nullptr, 0);
+//        
+//        // Reset our pipes now that the device is reset
+//        for (const uint8_t ep : {Endpoints::CmdOut, Endpoints::DataIn}) {
+//            _dev.reset(ep);
+//        }
     }
     
     void ledSet(uint8_t idx, bool on) {
-        using namespace STApp;
-        Cmd cmd = {
-            .op = Op::LEDSet,
-            .arg = {
-                .LEDSet = {
-                    .idx = idx,
-                    .on = on,
-                },
-            },
-        };
-        _dev.write(STApp::Endpoints::CmdOut, cmd);
-        _waitOrThrow("LEDSet command failed");
+        #warning TODO: implement
+        abort();
+//        using namespace STApp;
+//        Cmd cmd = {
+//            .op = Op::LEDSet,
+//            .arg = {
+//                .LEDSet = {
+//                    .idx = idx,
+//                    .on = on,
+//                },
+//            },
+//        };
+//        _dev.write(STApp::Endpoints::CmdOut, cmd);
+//        _waitOrThrow("LEDSet command failed");
     }
     
     USBDevice& usbDevice() { return _dev; }
@@ -68,9 +72,11 @@ private:
     USBDevice _dev;
     
     void _waitOrThrow(const char* errMsg) {
-        // Wait for completion and throw on failure
-        STApp::Status s = {};
-        _dev.read(STApp::Endpoints::DataIn, s);
-        if (s != STApp::Status::OK) throw std::runtime_error(errMsg);
+        #warning TODO: implement
+        abort();
+//        // Wait for completion and throw on failure
+//        STApp::Status s = {};
+//        _dev.read(STApp::Endpoints::DataIn, s);
+//        if (s != STApp::Status::OK) throw std::runtime_error(errMsg);
     }
 };

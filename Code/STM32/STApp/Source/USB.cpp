@@ -3,38 +3,47 @@
 #include <algorithm>
 using namespace STApp;
 
-void USB::resetFinish() {
-    // Disable interrupts while we reset our endpoints, to prevent
-    // USB interrupts from corrupting the reset process.
-    IRQState irq;
-    irq.disable();
-    
-    // Reset our channels so there are no pending events
-    resetRecvChannel.reset();
-    cmdRecvChannel.reset();
-    dataSendChannel.reset();
-    
-    // Reset all endpoints to return them to the default state.
-    // USB_ResetEndpoints() requires that SETUP packets aren't
-    // received while it's executing. (See comment within
-    // USB_ResetEndpoints().)
-    //
-    // This requirement necessitates a contract between the device
-    // and the USB host: during the time between the host sending
-    // the reset control request and receiving our response, the host
-    // must not send any control requests. (This should be easily met
-    // since control requests are typically synchronous.) This contract
-    // guarantees that SETUP packets aren't delivered while
-    // USB_ResetEndpoints() is executing.
-    USB_ResetEndpoints(_pcd.Instance, _pcd.Init.dev_endpoints);
-    // Reply to the reset control request
-    USBD_CtlSendStatus(&_device);
-}
+//void USB::resetFinish() {
+//    // Disable interrupts while we reset our endpoints, to prevent
+//    // USB interrupts from corrupting the reset process.
+//    IRQState irq;
+//    irq.disable();
+//    
+//    // Reset our channels so there are no pending events
+//    resetRecvChannel.reset();
+//    cmdRecvChannel.reset();
+//    dataSendChannel.reset();
+//    
+//    // Reset all endpoints to return them to the default state.
+//    // USB_ResetEndpoints() requires that SETUP packets aren't
+//    // received while it's executing. (See comment within
+//    // USB_ResetEndpoints().)
+//    //
+//    // This requirement necessitates a contract between the device
+//    // and the USB host: during the time between the host sending
+//    // the reset control request and receiving our response, the host
+//    // must not send any control requests. (This should be easily met
+//    // since control requests are typically synchronous.) This contract
+//    // guarantees that SETUP packets aren't delivered while
+//    // USB_ResetEndpoints() is executing.
+//    USB_ResetEndpoints(_pcd.Instance, _pcd.Init.dev_endpoints);
+//    // Reply to the reset control request
+//    USBD_CtlSendStatus(&_device);
+//}
 
-USBD_StatusTypeDef USB::cmdRecv() {
-    Assert(!_cmdRecvBusy);
-    _cmdRecvBusy = true;
-    return USBD_LL_PrepareReceive(&_device, STApp::Endpoints::CmdOut, _cmdRecvBuf, sizeof(_cmdRecvBuf));
+//USBD_StatusTypeDef USB::cmdRecv() {
+//    Assert(!_cmdRecvBusy);
+//    _cmdRecvBusy = true;
+//    return USBD_LL_PrepareReceive(&_device, STApp::Endpoints::CmdOut, _cmdRecvBuf, sizeof(_cmdRecvBuf));
+//}
+//
+//void USB::cmdSendStatus(bool status) {
+//    if (status) USBD_CtlSendStatus(&_device);
+//    else        USBD_CtlError(&_device, nullptr);
+//}
+
+USBD_StatusTypeDef USB::cmdSend(const void* data, size_t len) {
+    return USBD_CtlSendData(&_device, (uint8_t*)data, 4);
 }
 
 USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
@@ -55,8 +64,8 @@ uint8_t USB::_usbd_Setup(USBD_SetupReqTypedef* req) {
     switch (req->bmRequest & USB_REQ_TYPE_MASK) {
     case USB_REQ_TYPE_VENDOR: {
         switch (req->bRequest) {
-        case STApp::CtrlReqs::Reset: {
-            resetRecvChannel.writeTry(ResetRecv{});
+        case STApp::CtrlReqs::CmdExec: {
+            USBD_CtlPrepareRx(&_device, _cmdRecvBuf, sizeof(_cmdRecvBuf));
             return USBD_OK;
         }
         
@@ -76,10 +85,16 @@ uint8_t USB::_usbd_Setup(USBD_SetupReqTypedef* req) {
 }
 
 uint8_t USB::_usbd_EP0_TxSent() {
+//    for (;;);
     return _super::_usbd_EP0_TxSent();
 }
 
 uint8_t USB::_usbd_EP0_RxReady() {
+    const size_t dataLen = USBD_LL_GetRxDataSize(&_device, 0);
+    cmdRecvChannel.writeTry(CmdRecv{
+        .data = _cmdRecvBuf,
+        .len = dataLen,
+    });
     return _super::_usbd_EP0_RxReady();
 }
 
@@ -98,21 +113,7 @@ uint8_t USB::_usbd_DataIn(uint8_t epnum) {
 }
 
 uint8_t USB::_usbd_DataOut(uint8_t epnum) {
-    _super::_usbd_DataOut(epnum);
-    
-    const size_t dataLen = USBD_LL_GetRxDataSize(&_device, epnum);
-    switch (epnum) {
-    // CmdOut endpoint
-    case EndpointIdx(STApp::Endpoints::CmdOut): {
-        cmdRecvChannel.writeTry(CmdRecv{
-            .data = _cmdRecvBuf,
-            .len = dataLen,
-        });
-        _cmdRecvBusy = false;
-        break;
-    }}
-    
-    return (uint8_t)USBD_OK;
+    return _super::_usbd_DataOut(epnum);
 }
 
 uint8_t USB::_usbd_SOF() {
@@ -131,7 +132,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
     _super::_usbd_GetHSConfigDescriptor(len);
     
     // USB DFU device Configuration Descriptor
-    constexpr size_t DescLen = 32;
+    constexpr size_t DescLen = 25;
     static uint8_t Desc[] = {
         // Configuration descriptor
         0x09,                                       // bLength: configuration descriptor length
@@ -148,20 +149,12 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
             USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
             0x00,                                       // bInterfaceNumber: interface index
             0x00,                                       // bAlternateSetting: alternate setting
-            0x02,                                       // bNumEndpoints
+            0x01,                                       // bNumEndpoints
             0xFF,                                       // bInterfaceClass: vendor specific
             0x00,                                       // bInterfaceSubClass
             0x00,                                       // nInterfaceProtocol
             0x00,                                       // iInterface: string descriptor index
             
-                // CmdOut endpoint
-                0x07,                                                       // bLength: Endpoint Descriptor size
-                USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint
-                STApp::Endpoints::CmdOut,                                   // bEndpointAddress
-                0x02,                                                       // bmAttributes: Bulk
-                LOBYTE(MaxPacketSizeOut()), HIBYTE(MaxPacketSizeOut()),     // wMaxPacketSize
-                0x00,                                                       // bInterval: ignore for Bulk transfer
-                
                 // DataIn endpoint
                 0x07,                                                       // bLength: Endpoint Descriptor size
                 USB_DESC_TYPE_ENDPOINT,                                     // bDescriptorType: Endpoint

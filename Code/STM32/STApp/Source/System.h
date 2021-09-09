@@ -52,6 +52,7 @@ private:
     
     STApp::Op _op = STApp::Op::None;
     size_t _opDataRem = 0;
+    STApp::Status _status = STApp::Status::OK;
     bool _usbDataBusy = false;
     bool _qspiBusy = false;
     BufQueue<2> _bufs;

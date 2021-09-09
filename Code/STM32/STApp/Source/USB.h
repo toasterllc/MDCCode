@@ -12,12 +12,9 @@ public USBBase<
     // DMA=enabled
     true,
     // Endpoints
-    STApp::Endpoints::CmdOut,
     STApp::Endpoints::DataIn
 > {
 public:
-    struct ResetRecv {};
-    
     struct CmdRecv {
         const uint8_t* data;
         size_t len;
@@ -26,11 +23,8 @@ public:
     struct DataSend {};
     
     // Methods
-    Channel<ResetRecv, 1> resetRecvChannel; // Signals that a reset was requested
-    void resetFinish();
-    
-    USBD_StatusTypeDef cmdRecv();
     Channel<CmdRecv, 1> cmdRecvChannel;
+    USBD_StatusTypeDef cmdSend(const void* data, size_t len);
     
     USBD_StatusTypeDef dataSend(const void* data, size_t len);
     Channel<DataSend, 1> dataSendChannel; // Signals that the previous sdSend() is complete
@@ -54,7 +48,7 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
-    uint8_t _cmdRecvBuf[MaxPacketSizeIn()] __attribute__((aligned(4)));
+    uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
     
     bool _cmdRecvBusy = false;
     bool _dataSendBusy = false;
