@@ -469,8 +469,7 @@ HAL_StatusTypeDef USB_DevInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef cf
   * @brief  USB_OTG_FlushTxFifo : Flush a Tx FIFO
   * @param  USBx  Selected device
   * @param  num  FIFO number
-  *         This parameter can be a value from 1 to 15
-            15 means Flush all Tx FIFOs
+  *         This parameter can be a value from 0-15, or 16 to flush all FIFOs
   * @retval HAL status
   */
 HAL_StatusTypeDef USB_FlushTxFifo(USB_OTG_GlobalTypeDef *USBx, uint32_t num)
@@ -724,6 +723,183 @@ HAL_StatusTypeDef USB_DeactivateDedicatedEndpoint(USB_OTG_GlobalTypeDef *USBx, U
   }
 
   return HAL_OK;
+}
+
+static bool setIgnoreOUTTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
+    const uint32_t USBx_BASE = (uint32_t)USBx;
+    auto& OTG_GINTSTS = USBx->GINTSTS;
+    auto& OTG_DCTL = USBx_DEVICE->DCTL;
+    
+    const uint32_t mask = USB_OTG_GINTMSK_GONAKEFFM;
+    const uint32_t set = USB_OTG_DCTL_SGONAK;
+    const uint32_t clear = USB_OTG_DCTL_CGONAK;
+    
+    // We have to check what state "Global OUT NAK" is in. If it's already
+    // in the state we want it in, we don't do anything:
+    //
+    //   "The application must set [SGONAK] only after making sure that
+    //   the Global OUT NAK effective bit in the core interrupt register
+    //   (GONAKEFF bit in OTG_GINTSTS) is cleared."
+    const bool state = OTG_GINTSTS&mask;
+    if (!state && ignore) {
+        OTG_DCTL |= set;
+        while (!(OTG_GINTSTS & mask));
+    
+    } else if (state && !ignore) {
+        OTG_DCTL |= clear;
+        while (OTG_GINTSTS & mask);
+    }
+    return state;
+}
+
+static bool setIgnoreINTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
+    const uint32_t USBx_BASE = (uint32_t)USBx;
+    auto& OTG_GINTSTS = USBx->GINTSTS;
+    auto& OTG_DCTL = USBx_DEVICE->DCTL;
+    
+    const uint32_t mask = USB_OTG_GINTMSK_GINAKEFFM;
+    const uint32_t set = USB_OTG_DCTL_SGINAK;
+    const uint32_t clear = USB_OTG_DCTL_CGINAK;
+    
+    // We have to check what state "Global IN NAK" is in. If it's already
+    // in the state we want it in, we don't do anything:
+    //
+    //   "The application must set [SGINAK] only after making sure that
+    //   the Global IN NAK effective bit in the core interrupt register
+    //   (GINAKEFF bit in OTG_GINTSTS) is cleared."
+    const bool state = OTG_GINTSTS&mask;
+    if (!state && ignore) {
+        OTG_DCTL |= set;
+        while (!(OTG_GINTSTS & mask));
+    
+    } else if (state && !ignore) {
+        OTG_DCTL |= clear;
+        while (OTG_GINTSTS & mask);
+    }
+    return state;
+}
+
+HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx, uint8_t count) {
+    // Reset all endpoints to return them to the default state.
+    // We require that the Rx/Tx FIFOs are idle (not being
+    // read from/written to) since we're about to flush them.
+    // 
+    // The only way we can guarantee that the FIFOs are idle is by
+    // enabling the global NAK modes (using setIgnoreOUTTransactions/
+    // setIgnoreINTransactions), but even with that, it appears to
+    // be impossible to prevent the USB core from writing SETUP
+    // packets into the Rx FIFO, since the USB core always ACKs SETUP
+    // packets. Therefore successfully resetting the endpoints
+    // requires that the caller of this function guarantees that
+    // SETUP packets won't be received while during this function's
+    // execution.
+    uint32_t USBx_BASE = (uint32_t)USBx;
+    
+    // NAK all transactions while we reset our endpoints.
+    // This is necessary to prevent writing into the FIFOs,
+    // which we'll flush at the end.
+    bool oldIgnoreINTransactions = setIgnoreINTransactions(USBx, true);
+    bool oldIgnoreOUTTransactions = setIgnoreOUTTransactions(USBx, true);
+    
+    // Abort all underway transfers on all endpoints,
+    // and reset their PIDs to DATA0
+    for (uint8_t i=0; i<count; i++) {
+        // IN endpoint handling
+        {
+            auto epin = USBx_INEP(i);
+            auto& DIEPCTL = epin->DIEPCTL;
+            auto& DIEPINT = epin->DIEPINT;
+            
+            if (DIEPCTL & USB_OTG_DIEPCTL_USBAEP) {
+                // Enable endpoint NAK mode
+                DIEPCTL |= USB_OTG_DIEPCTL_SNAK;
+                
+                // Check if transfer in progress
+                if (DIEPCTL & USB_OTG_DIEPCTL_EPENA) {
+                    // Wait for NAK mode to be enabled (per "IN endpoint disable"
+                    // from the Reference Manual)
+                    // We only wait for INEPNE completion when EPENA=1, because
+                    // INEPNE doesn't get asserted as a result of SNAK=1, when
+                    // EPENA=0.
+                    while (!(DIEPINT & USB_OTG_DIEPINT_INEPNE));
+                    
+                    // Disable the endpoint (set EPDIS) and wait for completion
+                    // Clear USB_OTG_DIEPCTL_EPENA here, since setting it to 1 enables the endpoint.
+                    DIEPCTL |= USB_OTG_DIEPCTL_EPDIS;
+                    while (!(DIEPINT & USB_OTG_DIEPINT_EPDISD));
+                    // Verify that EPDIS is cleared: "The core clears [EPDIS] before
+                    // setting the endpoint disabled interrupt."
+                    Assert(!(DIEPCTL & USB_OTG_DIEPCTL_EPDIS));
+                    // Clear EPDISD
+                    DIEPINT = USB_OTG_DIEPINT_EPDISD;
+                }
+                
+                // Clear STALL
+                DIEPCTL &= ~USB_OTG_DIEPCTL_STALL;
+                // Reset PID to DATA0
+                DIEPCTL |= USB_OTG_DIEPCTL_SD0PID_SEVNFRM;
+            }
+        }
+        
+        // OUT endpoint handling
+        {
+            auto epout = USBx_OUTEP(i);
+            auto& DOEPCTL = epout->DOEPCTL;
+            auto& DOEPINT = epout->DOEPINT;
+            
+            if (DOEPCTL & USB_OTG_DOEPCTL_USBAEP) {
+                // Set endpoint SNAK
+                // For some reason, for OUT endpoints, there's no mechanism to poll for
+                // SNAK being enabled (eg OUTEPNE / "OUT endpoint NAK effective"),
+                // like there is for IN endpoints (INEPNE / "IN endpoint NAK effective").
+                DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
+                
+                // Check if transfer in progress
+                if (DOEPCTL & USB_OTG_DOEPCTL_EPENA) {
+                    // Skip endpoint 0, since it can't be disabled
+                    if (i) {
+                        // Disable the endpoint (set EPDIS) and wait for completion
+                        // Clear USB_OTG_DOEPCTL_EPENA here, since setting it to 1 enables the endpoint.
+                        DOEPCTL |= USB_OTG_DOEPCTL_EPDIS;
+                        while (!(DOEPINT & USB_OTG_DOEPINT_EPDISD));
+                        // Verify that EPDIS is cleared: "The core clears [EPDIS] before
+                        // setting the endpoint disabled interrupt."
+                        Assert(!(DOEPCTL & USB_OTG_DOEPCTL_EPDIS));
+                        // Clear EPDISD
+                        DOEPINT = USB_OTG_DOEPINT_EPDISD;
+                    }
+                }
+                
+                // Clear STALL (endpoint 0 doesn't support resetting STALL)
+                if (i) DOEPCTL &= ~USB_OTG_DOEPCTL_STALL;
+                
+                // Reset PID to DATA0 (endpoint 0 doesn't support resetting PID to 0)
+                if (i) DOEPCTL |= USB_OTG_DOEPCTL_SD0PID_SEVNFRM;
+            }
+        }
+    }
+    
+    // Prepare to flush the FIFO
+    // Before flushing the FIFO: "The application must [check] that the core
+    // is neither writing to the Tx FIFO nor reading from the Tx FIFO."
+    // Write: "AHBIDL bit in OTG_GRSTCTL ensures the core is not writing
+    //         anything to the FIFO"
+    // Read: "NAK Effective [INEPNE] interrupt ensures the core is not
+    //        reading from the FIFO" (checked above)
+    while (!(USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL));
+    
+    // Flush Rx FIFO
+    USBx->GRSTCTL = USB_OTG_GRSTCTL_RXFFLSH;
+    while (USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH);
+    
+    // Flush all Tx FIFOs
+    USBx->GRSTCTL = (USB_OTG_GRSTCTL_TXFFLSH | (0x10 << 6));
+    while (USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH);
+    
+    // Restore old NAK state
+    setIgnoreOUTTransactions(USBx, oldIgnoreOUTTransactions);
+    setIgnoreINTransactions(USBx, oldIgnoreINTransactions);
+    return HAL_OK;
 }
 
 /**
