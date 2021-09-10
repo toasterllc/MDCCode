@@ -14,6 +14,10 @@ void USB::resetFinish() {
     cmdRecvChannel.reset();
     dataSendChannel.reset();
     
+    // Reset state
+    _cmdRecvBusy = false;
+    _dataSendBusy = false;
+    
     // Reset all endpoints to return them to the default state.
     // USB_ResetEndpoints() requires that SETUP packets aren't
     // received while it's executing. (See comment within

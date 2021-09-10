@@ -30,6 +30,15 @@ int main(int argc, const char* argv[]) {
         MDCDevice& device = devices[0];
         auto& usbDevice = device.usbDevice();
         
+        for (;;) {
+            printf("Resetting...\n");
+            device.reset();
+            
+//            printf("LEDSet...\n");
+//            device.ledSet(1, 1);
+//            printf("-> Done\n\n");
+        }
+        
         printf("Sending SDRead command...\n");
         STApp::Cmd cmd = {
             .op = Op::SDRead,
