@@ -748,11 +748,9 @@ static bool setIgnoreOUTTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     const bool prevState = OTG_GINTSTS&mask;
     
 //    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
-    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
     
     if (!prevState && ignore) {
         auto GRXSTSR = USBx->GRXSTSR;
-        
         OTG_DCTL |= set;
         while (!(OTG_GINTSTS & mask)) {
 //            USBx_DFIFO(0);
@@ -813,6 +811,8 @@ HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx, uint8_t count)
     // SETUP packets won't be received while during this function's
     // execution.
     uint32_t USBx_BASE = (uint32_t)USBx;
+    
+//    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
     
     // NAK all transactions while we reset our endpoints.
     // This is necessary to prevent writing into the FIFOs,
@@ -918,6 +918,9 @@ HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx, uint8_t count)
     // Restore old NAK state
     setIgnoreOUTTransactions(USBx, oldIgnoreOUTTransactions);
     setIgnoreINTransactions(USBx, oldIgnoreINTransactions);
+    
+//    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+    
     return HAL_OK;
 }
 

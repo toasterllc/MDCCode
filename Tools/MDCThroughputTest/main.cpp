@@ -60,12 +60,22 @@ int main(int argc, const char* argv[]) {
 //            fprintf(stderr, "Error: %s\n\n", e.what());
 //        }
         
+        for (;;) {
+        
         try {
-            printf("reset_dataStage1...\n");
-            device.reset_dataStage1();
+            printf("reset_dataStage0...\n");
+            device.reset_dataStage0();
         } catch (const std::exception& e) {
             fprintf(stderr, "Error: %s\n\n", e.what());
         }
+        
+        
+//        try {
+//            printf("reset_dataStage1...\n");
+//            device.reset_dataStage1();
+//        } catch (const std::exception& e) {
+//            fprintf(stderr, "Error: %s\n\n", e.what());
+//        }
         
         try {
             STApp::Cmd cmd = {
@@ -73,7 +83,7 @@ int main(int argc, const char* argv[]) {
                 .arg = {
                     .LEDSet = {
                         .idx = 0,
-                        .on = 1,
+                        .on = (bool)(arc4random()%2),
                     },
                 },
             };
@@ -90,7 +100,7 @@ int main(int argc, const char* argv[]) {
                 .arg = {
                     .LEDSet = {
                         .idx = 1,
-                        .on = 1,
+                        .on = (bool)(arc4random()%2),
                     },
                 },
             };
@@ -99,6 +109,59 @@ int main(int argc, const char* argv[]) {
             usbDevice.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
         } catch (const std::exception& e) {
             fprintf(stderr, "Error: %s\n\n", e.what());
+        }
+        
+        try {
+            STApp::Cmd cmd = {
+                .op = Op::LEDSet,
+                .arg = {
+                    .LEDSet = {
+                        .idx = 2,
+                        .on = (bool)(arc4random()%2),
+                    },
+                },
+            };
+            
+            printf("Sending command...\n");
+            usbDevice.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Error: %s\n\n", e.what());
+        }
+        
+        try {
+            STApp::Cmd cmd = {
+                .op = Op::LEDSet,
+                .arg = {
+                    .LEDSet = {
+                        .idx = 3,
+                        .on = (bool)(arc4random()%2),
+                    },
+                },
+            };
+            
+            printf("Sending command...\n");
+            usbDevice.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Error: %s\n\n", e.what());
+        }
+        
+        try {
+            STApp::Cmd cmd = {
+                .op = Op::LEDSet,
+                .arg = {
+                    .LEDSet = {
+                        .idx = 0,
+                        .on = (bool)(arc4random()%2),
+                    },
+                },
+            };
+            
+            printf("Sending command...\n");
+            usbDevice.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Error: %s\n\n", e.what());
+        }
+        
         }
         
 //        printf("Reading response...\n");
