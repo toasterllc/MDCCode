@@ -70,7 +70,7 @@ public:
             (5*EndpointCountCtrl+8)                     +
             (2*((MaxPacketSizeOut()/4)+1))              +
             (2*(EndpointCountCtrl+EndpointCountOut()))  +
-            (1)
+            (20)
         ) * sizeof(uint32_t);
     }
     

@@ -1009,6 +1009,8 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 
     if (__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_OEPINT))
     {
+      auto& DOEPTSIZ0 = USBx_OUTEP(0U)->DOEPTSIZ;
+      auto& DOEPCTL0 = USBx_OUTEP(0U)->DOEPCTL;
       epnum = 0U;
 
       /* Read in the device interrupt bits */

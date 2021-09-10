@@ -747,12 +747,15 @@ static bool setIgnoreOUTTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     //   (GONAKEFF bit in OTG_GINTSTS) is cleared."
     const bool prevState = OTG_GINTSTS&mask;
     
+//    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
+    
 //    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
     
     if (!prevState && ignore) {
         auto GRXSTSR = USBx->GRXSTSR;
         OTG_DCTL |= set;
         while (!(OTG_GINTSTS & mask)) {
+            USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
 //            USBx_DFIFO(0);
         }
     

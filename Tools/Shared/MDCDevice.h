@@ -43,10 +43,10 @@ public:
         Cmd cmd = { .op = Op::Reset };
         _dev.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
         
-        // Reset our pipes now that the device is reset
-        for (const uint8_t ep : {Endpoints::DataIn}) {
-            _dev.reset(ep);
-        }
+//        // Reset our pipes now that the device is reset
+//        for (const uint8_t ep : {Endpoints::DataIn}) {
+//            _dev.reset(ep);
+//        }
     }
     
     void ledSet(uint8_t idx, bool on) {
