@@ -15,6 +15,8 @@ public USBBase<
     STApp::Endpoints::DataIn
 > {
 public:
+    struct ResetRecv {};
+    
     struct CmdRecv {
         const uint8_t* data;
         size_t len;
@@ -24,6 +26,8 @@ public:
     
     // Methods
     void reset();
+    
+    Channel<ResetRecv, 1> resetRecvChannel;
     
     Channel<CmdRecv, 1> cmdRecvChannel;
     void cmdSendStatus(bool status);

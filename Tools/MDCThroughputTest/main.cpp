@@ -53,9 +53,16 @@ int main(int argc, const char* argv[]) {
 //        printf("-> Done\n\n");
 //        exit(0);
         
+//        try {
+//            printf("reset_dataStage0...\n");
+//            device.reset_dataStage0();
+//        } catch (const std::exception& e) {
+//            fprintf(stderr, "Error: %s\n\n", e.what());
+//        }
+        
         try {
-            printf("Resetting device...\n");
-            device.reset();
+            printf("reset_dataStage1...\n");
+            device.reset_dataStage1();
         } catch (const std::exception& e) {
             fprintf(stderr, "Error: %s\n\n", e.what());
         }

@@ -105,9 +105,17 @@ void System::init() {
 }
 
 void System::_handleEvent() {
+    auto USBx = _usb._pcd.Instance;
+    auto& GRXSTSR = USBx->GRXSTSR;
+    auto& GINTSTS = USBx->GINTSTS;
+    
     // Wait for an event to occur on one of our channels
     ChannelSelect::Start();
-    if (auto x = _usb.cmdRecvChannel.readSelect()) {
+    if (auto x = _usb.resetRecvChannel.readSelect()) {
+        Cmd cmd;
+        _reset(cmd);
+    
+    } else if (auto x = _usb.cmdRecvChannel.readSelect()) {
         _usb_cmdHandle(*x);
     
     } else if (auto x = _usb.dataSendChannel.readSelect()) {

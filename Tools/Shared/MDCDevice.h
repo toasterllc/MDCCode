@@ -28,7 +28,17 @@ public:
 //        pixInPipe = USBPipe(_interface, Endpoints::CmdOut::PixIn);
     }
     
-    void reset() {
+    void reset_dataStage0() {
+        using namespace STApp;
+        _dev.vendorRequestOut(STApp::CtrlReqs::ResetMeow, nullptr, 0);
+        
+        // Reset our pipes now that the device is reset
+        for (const uint8_t ep : {Endpoints::DataIn}) {
+            _dev.reset(ep);
+        }
+    }
+    
+    void reset_dataStage1() {
         using namespace STApp;
         Cmd cmd = { .op = Op::Reset };
         _dev.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);

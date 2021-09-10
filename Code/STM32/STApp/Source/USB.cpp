@@ -64,24 +64,30 @@ uint8_t USB::_usbd_Setup(USBD_SetupReqTypedef* req) {
     switch (req->bmRequest & USB_REQ_TYPE_MASK) {
     case USB_REQ_TYPE_VENDOR: {
         switch (req->bRequest) {
-        case STApp::CtrlReqs::CmdExec: {
-            USBD_CtlSendStatus(&_device);
-            USBD_CtlPrepareRx(&_device, _cmdRecvBuf, sizeof(_cmdRecvBuf));
+        case STApp::CtrlReqs::ResetMeow: {
+            resetRecvChannel.writeTry(ResetRecv{});
             return USBD_OK;
         }
         
-        default: {
-            USBD_CtlError(&_device, req);
-            break;
-        }}
+        case STApp::CtrlReqs::CmdExec: {
+            auto USBx = _pcd.Instance;
+            auto& GRXSTSR = USBx->GRXSTSR;
+            auto& GINTSTS = USBx->GINTSTS;
+            
+            USBD_CtlPrepareRx(&_device, _cmdRecvBuf, sizeof(_cmdRecvBuf));
+            
+            return USBD_OK;
+        }
+        
+        default: break;
+        }
         break;
     }
     
-    default: {
-        USBD_CtlError(&_device, req);
-        break;
-    }}
+    default: break;
+    }
     
+    USBD_CtlError(&_device, req);
     return USBD_FAIL;
 }
 
@@ -93,10 +99,22 @@ uint8_t USB::_usbd_EP0_RxReady() {
     _super::_usbd_EP0_RxReady();
     
     const size_t dataLen = USBD_LL_GetRxDataSize(&_device, 0);
-    cmdRecvChannel.writeTry(CmdRecv{
-        .data = _cmdRecvBuf,
-        .len = dataLen,
-    });
+    reset();
+    USBD_CtlSendStatus(&_device);
+    
+//    USBD_CtlSendStatus(&_device);
+//    cmdRecvChannel.writeTry(CmdRecv{
+//        .data = _cmdRecvBuf,
+//        .len = dataLen,
+//    });
+    
+//    for (;;) {
+//        auto USBx = _pcd.Instance;
+//        auto& GRXSTSR = USBx->GRXSTSR;
+//        auto& GINTSTS = USBx->GINTSTS;
+//        USBD_CtlSendStatus(&_device);
+//    }
+    
     return (uint8_t)USBD_OK;
 }
 
