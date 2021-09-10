@@ -111,6 +111,12 @@ void System::_handleEvent() {
         _usb_eventHandle(*x);
     
     } else if (auto x = _usb.resetRecvChannel.readSelect()) {
+//        {
+//            IRQState irq;
+//            irq.disable();
+//            for (volatile uint32_t i=0; i<0xFFFFF; i++);
+//        }
+        
         _usb_reset(true);
     
     } else if (auto x = _usb.cmdRecvChannel.readSelect()) {
@@ -156,8 +162,8 @@ void System::_usb_reset(bool usbResetFinish) {
         _qspi.reset();
         _bufs.reset();
         
-        // Prepare to receive commands
-        _usb.cmdRecv();
+//        // Prepare to receive commands
+//        _usb.cmdRecv();
     irq.restore();
 }
 
