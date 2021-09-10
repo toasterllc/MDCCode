@@ -956,6 +956,9 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
   uint32_t i, ep_intr, epint, epnum;
   uint32_t fifoemptymsk, temp;
   USB_OTG_EPTypeDef *ep;
+  
+  auto& GRXSTSR = USBx->GRXSTSR;
+  auto& GINTSTS = USBx->GINTSTS;
 
   /* ensure that we are in device mode */
   if (USB_GetMode(hpcd->Instance) == USB_OTG_MODE_DEVICE)

@@ -221,7 +221,7 @@ public:
     // Channels
     Channel<Event, 1> eventChannel;
     
-protected:
+//protected:
     void _isr() {
         ISR_HAL_PCD(&_pcd);
     }

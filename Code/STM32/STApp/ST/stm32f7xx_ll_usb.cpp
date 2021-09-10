@@ -732,6 +732,9 @@ static bool setIgnoreOUTTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     auto& OTG_GINTSTS = USBx->GINTSTS;
     auto& OTG_DCTL = USBx_DEVICE->DCTL;
     
+    auto& GRXSTSR = USBx->GRXSTSR;
+    auto& GINTSTS = USBx->GINTSTS;
+    
     const uint32_t mask = USB_OTG_GINTMSK_GONAKEFFM;
     const uint32_t set = USB_OTG_DCTL_SGONAK;
     const uint32_t clear = USB_OTG_DCTL_CGONAK;
@@ -743,13 +746,15 @@ static bool setIgnoreOUTTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     //   the Global OUT NAK effective bit in the core interrupt register
     //   (GONAKEFF bit in OTG_GINTSTS) is cleared."
     const bool prevState = OTG_GINTSTS&mask;
+    
+//    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
+    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
+    
     if (!prevState && ignore) {
         auto GRXSTSR = USBx->GRXSTSR;
         
         OTG_DCTL |= set;
         while (!(OTG_GINTSTS & mask)) {
-            
-            ISR_OTG_HS();
 //            USBx_DFIFO(0);
         }
     
@@ -1497,6 +1502,9 @@ HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uin
 {
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t gSNPSiD = *(__IO uint32_t *)(&USBx->CID + 0x1U);
+
+  auto& GRXSTSR = USBx->GRXSTSR;
+  auto& GINTSTS = USBx->GINTSTS;
 
   if (gSNPSiD > USB_OTG_CORE_ID_300A)
   {

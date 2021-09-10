@@ -11,6 +11,7 @@ namespace STApp {
     
     // Vendor-defined Control Requests
     Enum(uint8_t, CtrlReq, CtrlReqs,
+        ResetMeow,
         CmdExec,
     );
     
