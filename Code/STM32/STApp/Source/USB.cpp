@@ -99,21 +99,10 @@ uint8_t USB::_usbd_EP0_RxReady() {
     _super::_usbd_EP0_RxReady();
     
     const size_t dataLen = USBD_LL_GetRxDataSize(&_device, 0);
-    reset();
-    USBD_CtlSendStatus(&_device);
-    
-//    USBD_CtlSendStatus(&_device);
-//    cmdRecvChannel.writeTry(CmdRecv{
-//        .data = _cmdRecvBuf,
-//        .len = dataLen,
-//    });
-    
-//    for (;;) {
-//        auto USBx = _pcd.Instance;
-//        auto& GRXSTSR = USBx->GRXSTSR;
-//        auto& GINTSTS = USBx->GINTSTS;
-//        USBD_CtlSendStatus(&_device);
-//    }
+    cmdRecvChannel.writeTry(CmdRecv{
+        .data = _cmdRecvBuf,
+        .len = dataLen,
+    });
     
     return (uint8_t)USBD_OK;
 }
