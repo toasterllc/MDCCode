@@ -1086,6 +1086,8 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
 {
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t epnum = (uint32_t)ep->num;
+  
+  Events.writeOver('T');
 
   /* IN endpoint */
   if (ep->is_in == 1U)
