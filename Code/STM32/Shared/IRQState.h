@@ -29,9 +29,9 @@ public:
     }
     
     static void Sleep() {
-//        HAL_SuspendTick();
+        HAL_SuspendTick();
         __WFI();
-//        HAL_ResumeTick();
+        HAL_ResumeTick();
     }
     
     ~IRQState() {
