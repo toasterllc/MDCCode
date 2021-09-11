@@ -1123,7 +1123,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
         {
           epint = USB_ReadDevInEPInterrupt(hpcd->Instance, (uint8_t)epnum);
 
-          if ((epint & USB_OTG_DIEPINT_XFRC) == USB_OTG_DIEPINT_XFRC)
+          if ((epint & USB_OTG_DIEPINT_XFRC) == USB_OTG_DIEPINT_XFRC)       // 0
           {
             DebugEvents.writeOver(DebugEvent('C'));
             
@@ -1152,29 +1152,41 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
             HAL_PCD_DataInStageCallback(hpcd, (uint8_t)epnum);
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
           }
-          if ((epint & USB_OTG_DIEPINT_TOC) == USB_OTG_DIEPINT_TOC)
+          if ((epint & USB_OTG_DIEPINT_TOC) == USB_OTG_DIEPINT_TOC)         // 3
           {
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_TOC);
           }
-          if ((epint & USB_OTG_DIEPINT_ITTXFE) == USB_OTG_DIEPINT_ITTXFE)
+          if ((epint & USB_OTG_DIEPINT_ITTXFE) == USB_OTG_DIEPINT_ITTXFE)   // 4
           {
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_ITTXFE);
           }
-          if ((epint & USB_OTG_DIEPINT_INEPNE) == USB_OTG_DIEPINT_INEPNE)
+          if ((epint & USB_OTG_DIEPINT_INEPNE) == USB_OTG_DIEPINT_INEPNE)   // 6
           {
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_INEPNE);
           }
-          if ((epint & USB_OTG_DIEPINT_EPDISD) == USB_OTG_DIEPINT_EPDISD)
+          if ((epint & USB_OTG_DIEPINT_EPDISD) == USB_OTG_DIEPINT_EPDISD)   // 1
           {
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_EPDISD);
           }
-          if ((epint & USB_OTG_DIEPINT_AHBERR))
-          {
-            for (;;);
-          }
-          if ((epint & USB_OTG_DIEPINT_TXFE) == USB_OTG_DIEPINT_TXFE)
+          if ((epint & USB_OTG_DIEPINT_TXFE) == USB_OTG_DIEPINT_TXFE)       // 7
           {
             (void)PCD_WriteEmptyTxFifo(hpcd, epnum);
+          }
+          
+          
+          
+          
+          if (epint & USB_OTG_DIEPMSK_NAKM)                                 // 13
+          {
+            CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_NAKM);
+          }
+          if (epint & USB_OTG_DIEPMSK_INEPNMM)                              // 5
+          {
+            CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_INEPNMM);
+          }
+          if (epint & USB_OTG_DIEPMSK_AHBERRM)                              // 2
+          {
+            CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_AHBERRM);
           }
         }
         epnum++;
@@ -1280,8 +1292,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
       }
       else
       {
-        USBx_DEVICE->DOEPMSK |=
-                                USB_OTG_DOEPMSK_NAKM        |   // 13
+        USBx_DEVICE->DOEPMSK |= USB_OTG_DOEPMSK_NAKM        |   // 13
                                 USB_OTG_DOEPMSK_BERRM       |   // 12
                                 USB_OTG_DOEPMSK_OPEM        |   // 8
                                 USB_OTG_DOEPMSK_B2BSTUP     |   // 6
@@ -1291,13 +1302,13 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
                                 USB_OTG_DOEPMSK_EPDM        |   // 1
                                 USB_OTG_DOEPMSK_XFRCM       ;   // 0
         
-        USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_TOM         |
-                                USB_OTG_DIEPMSK_XFRCM       |
-                                USB_OTG_DIEPMSK_EPDM        |
-                                
-                                USB_OTG_DIEPMSK_INEPNMM     |
-                                USB_OTG_DIEPMSK_ITTXFEMSK   |
-                                USB_OTG_DIEPMSK_AHBERRM     ;
+        USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_NAKM        |   // 13
+                                USB_OTG_DIEPMSK_INEPNMM     |   // 5
+                                USB_OTG_DIEPMSK_ITTXFEMSK   |   // 4
+                                USB_OTG_DIEPMSK_TOM         |   // 3
+                                USB_OTG_DIEPMSK_AHBERRM     |   // 2
+                                USB_OTG_DIEPMSK_EPDM        |   // 1
+                                USB_OTG_DIEPMSK_XFRCM       ;   // 0
       }
 
       /* Set Default Address to 0 */
