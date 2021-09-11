@@ -946,9 +946,7 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
 #if defined (USB_OTG_FS) || defined (USB_OTG_HS)
 
 
-#include "Toastbox/RingBuffer.h"
-
-RingBuffer<char,64> Events;
+#include "DebugEvents.h"
 
 /**
   * @brief  Handles PCD interrupt request.
@@ -957,6 +955,8 @@ RingBuffer<char,64> Events;
   */
 void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 {
+  DebugEvents.writeOver(DebugEvent('I'));
+  
   USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t i, ep_intr, epint, epnum;
@@ -1037,8 +1037,6 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 
           if ((epint & USB_OTG_DOEPINT_STUP) == USB_OTG_DOEPINT_STUP)
           {
-            Events.writeOver('S');
-            
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_STUP);
             /* Class B setup phase done for previous decoded setup */
             (void)PCD_EP_OutSetupPacket_int(hpcd, epnum);
@@ -1052,7 +1050,6 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
           /* Clear Status Phase Received interrupt */
           if ((epint & USB_OTG_DOEPINT_OTEPSPR) == USB_OTG_DOEPINT_OTEPSPR)
           {
-            Events.writeOver('O');
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_OTEPSPR);
           }
 
@@ -1082,6 +1079,8 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 
           if ((epint & USB_OTG_DIEPINT_XFRC) == USB_OTG_DIEPINT_XFRC)
           {
+            DebugEvents.writeOver(DebugEvent('C'));
+            
             fifoemptymsk = (uint32_t)(0x1UL << (epnum & EP_ADDR_MSK));
             USBx_DEVICE->DIEPEMPMSK &= ~fifoemptymsk;
 
@@ -1096,10 +1095,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
               {
                 if (hpcd->IN_ep[epnum].xfer_len == 0U) {
                     /* prepare to rx more setup packets */
-                    Events.writeOver('P');
                     (void)USB_EP0_OutStart(hpcd->Instance, 1U, (uint8_t *)hpcd->Setup);
-                } else {
-                    Events.writeOver('Q');
                 }
               }
             }
