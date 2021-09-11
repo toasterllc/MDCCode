@@ -39,6 +39,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
+#include "Toastbox/RingBuffer.h"
+
+extern RingBuffer<char,64> Events;
 
 /** @addtogroup STM32F7xx_LL_USB_DRIVER
   * @{
@@ -1090,6 +1093,7 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
     /* Zero Length Packet? */
     if (ep->xfer_len == 0U)
     {
+      Events.writeOver('Z');
       USBx_INEP(epnum)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_PKTCNT);
       USBx_INEP(epnum)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_PKTCNT & (1U << 19));
       USBx_INEP(epnum)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_XFRSIZ);
@@ -1136,6 +1140,8 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
   }
   else /* OUT endpoint */
   {
+    Events.writeOver('E');
+    
     /* Program the transfer size and packet count as follows:
     * pktcnt = N
     * xfersize = N * maxpacket
@@ -1504,6 +1510,7 @@ HAL_StatusTypeDef  USB_ActivateSetup(USB_OTG_GlobalTypeDef *USBx)
   * @param  psetup  pointer to setup packet
   * @retval HAL status
   */
+
 HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uint8_t *psetup)
 {
   uint32_t USBx_BASE = (uint32_t)USBx;
@@ -1511,19 +1518,27 @@ HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uin
 
   auto& GRXSTSR = USBx->GRXSTSR;
   auto& GINTSTS = USBx->GINTSTS;
+  
+  auto& DOEPTSIZ0 = USBx_OUTEP(0U)->DOEPTSIZ;
+  auto& DOEPDMA0 = USBx_OUTEP(0U)->DOEPDMA;
+  auto& DOEPCTL0 = USBx_OUTEP(0U)->DOEPCTL;
 
   if (gSNPSiD > USB_OTG_CORE_ID_300A)
   {
     if ((USBx_OUTEP(0U)->DOEPCTL & USB_OTG_DOEPCTL_EPENA) == USB_OTG_DOEPCTL_EPENA)
     {
+      Events.writeOver('B');
       return HAL_OK;
     }
   }
 
+  Events.writeOver('X');
   USBx_OUTEP(0U)->DOEPTSIZ = 0U;
   USBx_OUTEP(0U)->DOEPTSIZ |= (USB_OTG_DOEPTSIZ_PKTCNT & (1U << 19));
   USBx_OUTEP(0U)->DOEPTSIZ |= (3U * 8U);
   USBx_OUTEP(0U)->DOEPTSIZ |=  USB_OTG_DOEPTSIZ_STUPCNT;
+//  USBx_OUTEP(0U)->DOEPTSIZ |= (8U);
+//  USBx_OUTEP(0U)->DOEPTSIZ |=  USB_OTG_DOEPTSIZ_STUPCNT_0;
 
   if (dma == 1U)
   {

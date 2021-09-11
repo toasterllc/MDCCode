@@ -944,6 +944,12 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   return HAL_OK;
 }
 #if defined (USB_OTG_FS) || defined (USB_OTG_HS)
+
+
+#include "Toastbox/RingBuffer.h"
+
+RingBuffer<char,64> Events;
+
 /**
   * @brief  Handles PCD interrupt request.
   * @param  hpcd PCD handle
@@ -1011,6 +1017,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
     {
       auto& DOEPTSIZ0 = USBx_OUTEP(0U)->DOEPTSIZ;
       auto& DOEPCTL0 = USBx_OUTEP(0U)->DOEPCTL;
+      auto& DOEPDMA0 = USBx_OUTEP(0U)->DOEPDMA;
       epnum = 0U;
 
       /* Read in the device interrupt bits */
@@ -1030,6 +1037,8 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 
           if ((epint & USB_OTG_DOEPINT_STUP) == USB_OTG_DOEPINT_STUP)
           {
+            Events.writeOver('S');
+            
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_STUP);
             /* Class B setup phase done for previous decoded setup */
             (void)PCD_EP_OutSetupPacket_int(hpcd, epnum);
@@ -1043,6 +1052,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
           /* Clear Status Phase Received interrupt */
           if ((epint & USB_OTG_DOEPINT_OTEPSPR) == USB_OTG_DOEPINT_OTEPSPR)
           {
+            Events.writeOver('O');
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_OTEPSPR);
           }
 
@@ -1082,10 +1092,15 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
               hpcd->IN_ep[epnum].xfer_buff += hpcd->IN_ep[epnum].maxpacket;
 
               /* this is ZLP, so prepare EP0 for next setup */
-              if ((epnum == 0U) && (hpcd->IN_ep[epnum].xfer_len == 0U))
+              if ((epnum == 0U))
               {
-                /* prepare to rx more setup packets */
-                (void)USB_EP0_OutStart(hpcd->Instance, 1U, (uint8_t *)hpcd->Setup);
+                if (hpcd->IN_ep[epnum].xfer_len == 0U) {
+                    /* prepare to rx more setup packets */
+                    Events.writeOver('P');
+                    (void)USB_EP0_OutStart(hpcd->Instance, 1U, (uint8_t *)hpcd->Setup);
+                } else {
+                    Events.writeOver('Q');
+                }
               }
             }
 
