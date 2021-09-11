@@ -35,6 +35,12 @@ public:
     USBD_StatusTypeDef dataSend(const void* data, size_t len);
     Channel<DataSend, 1> dataSendChannel; // Signals that the previous dataSend() is complete
     
+    #define USBx_BASE 0x40040000
+    volatile uint32_t& DIEPTSIZ0 = USBx_INEP(0)->DIEPTSIZ;
+    volatile uint32_t& DIEPCTL0 = USBx_INEP(0)->DIEPCTL;
+    volatile uint32_t& DIEPDMA0 = USBx_INEP(0)->DIEPDMA;
+    #undef USBx_BASE
+
 protected:
     // Callbacks
     uint8_t _usbd_Init(uint8_t cfgidx);
