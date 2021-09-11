@@ -39,9 +39,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
-#include "Toastbox/RingBuffer.h"
-
-extern RingBuffer<char,64> Events;
+#include "DebugEvents.h"
 
 /** @addtogroup STM32F7xx_LL_USB_DRIVER
   * @{
@@ -1087,15 +1085,12 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t epnum = (uint32_t)ep->num;
   
-  Events.writeOver('T');
-
   /* IN endpoint */
   if (ep->is_in == 1U)
   {
     /* Zero Length Packet? */
     if (ep->xfer_len == 0U)
     {
-      Events.writeOver('Z');
       USBx_INEP(epnum)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_PKTCNT);
       USBx_INEP(epnum)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_PKTCNT & (1U << 19));
       USBx_INEP(epnum)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_XFRSIZ);
@@ -1124,8 +1119,9 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
       {
         USBx_INEP(epnum)->DIEPDMA = (uint32_t)(ep->dma_addr);
       }
-
+      
       /* EP enable, IN data in FIFO */
+      DebugEvents.writeOver(DebugEvent('Z'));
       USBx_INEP(epnum)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
     }
     else
@@ -1142,8 +1138,6 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
   }
   else /* OUT endpoint */
   {
-    Events.writeOver('E');
-    
     /* Program the transfer size and packet count as follows:
     * pktcnt = N
     * xfersize = N * maxpacket
@@ -1529,12 +1523,10 @@ HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uin
   {
     if ((USBx_OUTEP(0U)->DOEPCTL & USB_OTG_DOEPCTL_EPENA) == USB_OTG_DOEPCTL_EPENA)
     {
-      Events.writeOver('B');
       return HAL_OK;
     }
   }
 
-  Events.writeOver('X');
   USBx_OUTEP(0U)->DOEPTSIZ = 0U;
   USBx_OUTEP(0U)->DOEPTSIZ |= (USB_OTG_DOEPTSIZ_PKTCNT & (1U << 19));
   USBx_OUTEP(0U)->DOEPTSIZ |= (3U * 8U);
