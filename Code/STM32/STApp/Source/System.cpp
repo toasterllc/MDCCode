@@ -105,12 +105,6 @@ void System::init() {
 }
 
 void System::_handleEvent() {
-    static bool done = false;
-    if (HAL_GetTick()>5000 && !done) {
-        _usb.cmdSendStatus(true);
-        done = true;
-    }
-    
     auto USBx = _usb._pcd.Instance;
     auto& GRXSTSR = USBx->GRXSTSR;
     auto& GINTSTS = USBx->GINTSTS;
