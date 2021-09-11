@@ -1158,6 +1158,7 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
           }
           if ((epint & USB_OTG_DIEPINT_ITTXFE) == USB_OTG_DIEPINT_ITTXFE)   // 4
           {
+            DebugEvents.writeOver(DebugEvent('E'));
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_ITTXFE);
           }
           if ((epint & USB_OTG_DIEPINT_INEPNE) == USB_OTG_DIEPINT_INEPNE)   // 6
@@ -1178,14 +1179,17 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
           
           if (epint & USB_OTG_DIEPMSK_NAKM)                                 // 13
           {
+            DebugEvents.writeOver(DebugEvent('N'));
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_NAKM);
           }
           if (epint & USB_OTG_DIEPMSK_INEPNMM)                              // 5
           {
+            DebugEvents.writeOver(DebugEvent('M'));
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_INEPNMM);
           }
           if (epint & USB_OTG_DIEPMSK_AHBERRM)                              // 2
           {
+            DebugEvents.writeOver(DebugEvent('A'));
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_AHBERRM);
           }
         }

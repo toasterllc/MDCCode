@@ -110,7 +110,9 @@ void System::_handleEvent() {
     auto& GINTSTS = USBx->GINTSTS;
     
     // Wait for an event to occur on one of our channels
-    ChannelSelect::Start();
+    IRQState irq;
+    irq.disable();
+    
     if (auto x = _usb.resetRecvChannel.readSelect()) {
         Cmd cmd;
         _reset(cmd);
@@ -126,7 +128,7 @@ void System::_handleEvent() {
     
     } else {
         // No events, go to sleep
-        ChannelSelect::Wait();
+        IRQState::Sleep();
     }
 }
 
