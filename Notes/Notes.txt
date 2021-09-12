@@ -1,5 +1,10 @@
 - Rev4 Todo
     
+    - Throughput:
+        - Does hub limit the data throughput?
+        - Sometimes the USB Tx FIFO is empty -- we're not filling it fast enough
+        - When we're done sending a transfer, the ST APIs have to call out to our user code
+    
     - STLoader / STApp: Move commands to default control endpoint
         - This will save space in the limited FIFO RAM
         - This will also help improve our command/response scheme since EP0 gets replies for every request
