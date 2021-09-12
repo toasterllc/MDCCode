@@ -10,7 +10,6 @@ void USB::reset() {
     irq.disable();
     
     // Reset our channels so there are no pending events
-    resetRecvChannel.reset();
     cmdRecvChannel.reset();
     dataSendChannel.reset();
     
@@ -32,20 +31,10 @@ void USB::reset() {
     USB_ResetEndpoints(_pcd.Instance, _pcd.Init.dev_endpoints);
 }
 
-//USBD_StatusTypeDef USB::cmdRecv() {
-//    Assert(!_cmdRecvBusy);
-//    _cmdRecvBusy = true;
-//    return USBD_LL_PrepareReceive(&_device, STApp::Endpoints::CmdOut, _cmdRecvBuf, sizeof(_cmdRecvBuf));
-//}
-
 void USB::cmdSendStatus(bool status) {
     if (status) USBD_CtlSendStatus(&_device);
     else        USBD_CtlError(&_device, nullptr);
 }
-
-//USBD_StatusTypeDef USB::cmdSend(const void* data, size_t len) {
-//    return USBD_CtlSendData(&_device, (uint8_t*)data, len);
-//}
 
 USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
     Assert(!_dataSendBusy);
@@ -65,18 +54,8 @@ uint8_t USB::_usbd_Setup(USBD_SetupReqTypedef* req) {
     switch (req->bmRequest & USB_REQ_TYPE_MASK) {
     case USB_REQ_TYPE_VENDOR: {
         switch (req->bRequest) {
-        case STApp::CtrlReqs::ResetMeow: {
-            resetRecvChannel.writeTry(ResetRecv{});
-            return USBD_OK;
-        }
-        
         case STApp::CtrlReqs::CmdExec: {
-            auto USBx = _pcd.Instance;
-            auto& GRXSTSR = USBx->GRXSTSR;
-            auto& GINTSTS = USBx->GINTSTS;
-            
             USBD_CtlPrepareRx(&_device, _cmdRecvBuf, sizeof(_cmdRecvBuf));
-            
             return USBD_OK;
         }
         

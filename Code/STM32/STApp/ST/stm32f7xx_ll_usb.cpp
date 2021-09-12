@@ -39,7 +39,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
-#include "DebugEvents.h"
 
 /** @addtogroup STM32F7xx_LL_USB_DRIVER
   * @{
@@ -726,15 +725,10 @@ HAL_StatusTypeDef USB_DeactivateDedicatedEndpoint(USB_OTG_GlobalTypeDef *USBx, U
   return HAL_OK;
 }
 
-extern "C" void ISR_OTG_HS();
-
 static bool setIgnoreOUTTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     const uint32_t USBx_BASE = (uint32_t)USBx;
     auto& OTG_GINTSTS = USBx->GINTSTS;
     auto& OTG_DCTL = USBx_DEVICE->DCTL;
-    
-    auto& GRXSTSR = USBx->GRXSTSR;
-    auto& GINTSTS = USBx->GINTSTS;
     
     const uint32_t mask = USB_OTG_GINTMSK_GONAKEFFM;
     const uint32_t set = USB_OTG_DCTL_SGONAK;
@@ -749,7 +743,6 @@ static bool setIgnoreOUTTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     const bool prevState = OTG_GINTSTS&mask;
     
     if (!prevState && ignore) {
-        auto GRXSTSR = USBx->GRXSTSR;
         OTG_DCTL |= set;
         while (!(OTG_GINTSTS & mask));
     
@@ -907,9 +900,6 @@ HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx, uint8_t count)
     // Restore old NAK state
     setIgnoreOUTTransactions(USBx, oldIgnoreOUTTransactions);
     setIgnoreINTransactions(USBx, oldIgnoreINTransactions);
-    
-//    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
-    
     return HAL_OK;
 }
 
@@ -1069,7 +1059,7 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
 {
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t epnum = (uint32_t)ep->num;
-  
+
   /* IN endpoint */
   if (ep->is_in == 1U)
   {
@@ -1106,7 +1096,6 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
       }
       
       /* EP enable, IN data in FIFO */
-      DebugEvents.writeOver(DebugEvent('Z'));
       USBx_INEP(epnum)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
     }
     else
@@ -1497,13 +1486,6 @@ HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uin
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t gSNPSiD = *(__IO uint32_t *)(&USBx->CID + 0x1U);
 
-  auto& GRXSTSR = USBx->GRXSTSR;
-  auto& GINTSTS = USBx->GINTSTS;
-  
-  auto& DOEPTSIZ0 = USBx_OUTEP(0U)->DOEPTSIZ;
-  auto& DOEPDMA0 = USBx_OUTEP(0U)->DOEPDMA;
-  auto& DOEPCTL0 = USBx_OUTEP(0U)->DOEPCTL;
-
   if (gSNPSiD > USB_OTG_CORE_ID_300A)
   {
     if ((USBx_OUTEP(0U)->DOEPCTL & USB_OTG_DOEPCTL_EPENA) == USB_OTG_DOEPCTL_EPENA)
@@ -1516,8 +1498,6 @@ HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uin
   USBx_OUTEP(0U)->DOEPTSIZ |= (USB_OTG_DOEPTSIZ_PKTCNT & (1U << 19));
   USBx_OUTEP(0U)->DOEPTSIZ |= (3U * 8U);
   USBx_OUTEP(0U)->DOEPTSIZ |=  USB_OTG_DOEPTSIZ_STUPCNT;
-//  USBx_OUTEP(0U)->DOEPTSIZ |= (8U);
-//  USBx_OUTEP(0U)->DOEPTSIZ |=  USB_OTG_DOEPTSIZ_STUPCNT_0;
 
   if (dma == 1U)
   {

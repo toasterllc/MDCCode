@@ -27,23 +27,11 @@ public:
     // Methods
     void reset();
     
-    Channel<ResetRecv, 1> resetRecvChannel;
-    
     Channel<CmdRecv, 1> cmdRecvChannel;
     void cmdSendStatus(bool status);
     
     USBD_StatusTypeDef dataSend(const void* data, size_t len);
     Channel<DataSend, 1> dataSendChannel; // Signals that the previous dataSend() is complete
-    
-    #define USBx_BASE 0x40040000
-    volatile uint32_t& DIEPTSIZ0 = USBx_INEP(0)->DIEPTSIZ;
-    volatile uint32_t& DIEPCTL0 = USBx_INEP(0)->DIEPCTL;
-    volatile uint32_t& DIEPDMA0 = USBx_INEP(0)->DIEPDMA;
-    
-    volatile uint32_t& DOEPTSIZ0 = USBx_OUTEP(0)->DOEPTSIZ;
-    volatile uint32_t& DOEPCTL0 = USBx_OUTEP(0)->DOEPCTL;
-    volatile uint32_t& DOEPDMA0 = USBx_OUTEP(0)->DOEPDMA;
-    #undef USBx_BASE
 
 protected:
     // Callbacks

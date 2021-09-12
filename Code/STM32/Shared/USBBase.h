@@ -185,10 +185,10 @@ public:
         //             - Absolute address of FIFO RAM on STM32F7 is USB_OTG_HS+0x20000==0x40060000
         
         constexpr size_t FIFOCapTotal           = 4096;
-        constexpr size_t FIFOCapDMARegisters    = (DMAEn ? 512 : 0);
+        constexpr size_t FIFOCapDMARegisters    = (DMAEn ? 128 : 0);
         constexpr size_t FIFOCapUsable          = FIFOCapTotal-FIFOCapDMARegisters;
         constexpr size_t FIFOCapRx              = FIFORxSize();
-        constexpr size_t FIFOCapTxCtrl          = MaxPacketSizeCtrl*4;
+        constexpr size_t FIFOCapTxCtrl          = MaxPacketSizeCtrl;
         // Verify that we haven't already overflowed FIFOCapUsable
         static_assert((FIFOCapRx+FIFOCapTxCtrl) <= FIFOCapUsable);
         constexpr size_t FIFOCapTxBulk          = (FIFOCapUsable-(FIFOCapRx+FIFOCapTxCtrl))/EndpointCountIn();
@@ -221,7 +221,7 @@ public:
     // Channels
     Channel<Event, 1> eventChannel;
     
-//protected:
+protected:
     void _isr() {
         ISR_HAL_PCD(&_pcd);
     }

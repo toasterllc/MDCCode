@@ -70,8 +70,8 @@ int main(int argc, const char* argv[]) {
 //            }
             
             try {
-                printf("reset_dataStage1...\n");
-                device.reset_dataStage1();
+                printf("Resetting...\n");
+                device.reset();
             } catch (const std::exception& e) {
                 fprintf(stderr, "Error: %s\n\n", e.what());
             }
