@@ -10,7 +10,7 @@ public USBBase<
     // Subclass
     USB,
     // DMA=enabled
-    true,
+    false,
     // Endpoints
     STApp::Endpoints::DataIn
 > {
@@ -39,6 +39,10 @@ public:
     volatile uint32_t& DIEPTSIZ0 = USBx_INEP(0)->DIEPTSIZ;
     volatile uint32_t& DIEPCTL0 = USBx_INEP(0)->DIEPCTL;
     volatile uint32_t& DIEPDMA0 = USBx_INEP(0)->DIEPDMA;
+    
+    volatile uint32_t& DOEPTSIZ0 = USBx_OUTEP(0)->DOEPTSIZ;
+    volatile uint32_t& DOEPCTL0 = USBx_OUTEP(0)->DOEPCTL;
+    volatile uint32_t& DOEPDMA0 = USBx_OUTEP(0)->DOEPDMA;
     #undef USBx_BASE
 
 protected:
