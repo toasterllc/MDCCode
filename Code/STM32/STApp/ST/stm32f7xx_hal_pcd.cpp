@@ -2157,7 +2157,7 @@ static HAL_StatusTypeDef PCD_EP_OutXfrComplete_int(PCD_HandleTypeDef *hpcd, uint
             hpcd->OUT_ep[epnum].xfer_count = 0;
         }
         
-        if ((epnum == 0U) && (hpcd->OUT_ep[epnum].xfer_len == 0U))
+        if (epnum == 0U)
         {
           /* this is ZLP, so prepare EP0 for next setup */
           (void)USB_EP0_OutStart(hpcd->Instance, 1U, (uint8_t *)hpcd->Setup);
