@@ -62,19 +62,19 @@ int main(int argc, const char* argv[]) {
         
         for (;;) {
         
-            try {
-                printf("reset_dataStage0...\n");
-                device.reset_dataStage0();
-            } catch (const std::exception& e) {
-                fprintf(stderr, "Error: %s\n\n", e.what());
-            }
-            
 //            try {
-//                printf("reset_dataStage1...\n");
-//                device.reset_dataStage1();
+//                printf("reset_dataStage0...\n");
+//                device.reset_dataStage0();
 //            } catch (const std::exception& e) {
 //                fprintf(stderr, "Error: %s\n\n", e.what());
 //            }
+            
+            try {
+                printf("reset_dataStage1...\n");
+                device.reset_dataStage1();
+            } catch (const std::exception& e) {
+                fprintf(stderr, "Error: %s\n\n", e.what());
+            }
             
 //            try {
 //                STApp::Cmd cmd = {
