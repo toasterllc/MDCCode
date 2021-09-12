@@ -18,7 +18,7 @@ public USBBase<
     STLoader::Endpoints::DataIn
 > {
 public:
-    struct CtrlRecv {
+    struct CmdRecv {
         const uint8_t* data;
         size_t len;
     };
@@ -30,8 +30,7 @@ public:
     struct DataSend {};
     
     // Methods
-    USBD_StatusTypeDef ctrlRecv();
-    USBD_StatusTypeDef ctrlSend(bool ok);
+    USBD_StatusTypeDef cmdRecv();
     Channel<CmdRecv, 1> cmdRecvChannel;
     
     USBD_StatusTypeDef dataRecv(void* addr, size_t len);

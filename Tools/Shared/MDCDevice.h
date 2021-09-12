@@ -21,24 +21,9 @@ public:
     }
     
     MDCDevice(USBDevice&& dev) :
-    _dev(std::move(dev)) {
-//        _interface = interfaces[0];
-////        cmdOutPipe = USBPipe(_interface, Endpoints::CmdOut);
-////        cmdInPipe = USBPipe(_interface, Endpoints::CmdOut::CmdIn);
-//        pixInPipe = USBPipe(_interface, Endpoints::CmdOut::PixIn);
-    }
+    _dev(std::move(dev)) {}
     
-    void reset_dataStage0() {
-        using namespace STApp;
-        _dev.vendorRequestOut(STApp::CtrlReqs::ResetMeow, nullptr, 0);
-        
-        // Reset our pipes now that the device is reset
-        for (const uint8_t ep : {Endpoints::DataIn}) {
-            _dev.reset(ep);
-        }
-    }
-    
-    void reset_dataStage1() {
+    void reset() {
         using namespace STApp;
         Cmd cmd = { .op = Op::Reset };
         _dev.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
@@ -50,41 +35,21 @@ public:
     }
     
     void ledSet(uint8_t idx, bool on) {
-        #warning TODO: implement
-        abort();
-//        using namespace STApp;
-//        Cmd cmd = {
-//            .op = Op::LEDSet,
-//            .arg = {
-//                .LEDSet = {
-//                    .idx = idx,
-//                    .on = on,
-//                },
-//            },
-//        };
-//        _dev.write(STApp::Endpoints::CmdOut, cmd);
-//        _waitOrThrow("LEDSet command failed");
+        using namespace STApp;
+        Cmd cmd = {
+            .op = Op::LEDSet,
+            .arg = {
+                .LEDSet = {
+                    .idx = idx,
+                    .on = on,
+                },
+            },
+        };
+        _dev.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
     }
     
     USBDevice& usbDevice() { return _dev; }
     
-//    void pixReadImage(STApp::Pixel* pixels, size_t count, Milliseconds timeout=0) const {
-//        pixInPipe.readBuf(pixels, count*sizeof(STApp::Pixel), timeout);
-//    }
-//    
-//    USBPipe cmdOutPipe;
-//    USBPipe cmdInPipe;
-//    USBPipe pixInPipe;
-    
 private:
     USBDevice _dev;
-    
-    void _waitOrThrow(const char* errMsg) {
-        #warning TODO: implement
-        abort();
-//        // Wait for completion and throw on failure
-//        STApp::Status s = {};
-//        _dev.read(STApp::Endpoints::DataIn, s);
-//        if (s != STApp::Status::OK) throw std::runtime_error(errMsg);
-    }
 };

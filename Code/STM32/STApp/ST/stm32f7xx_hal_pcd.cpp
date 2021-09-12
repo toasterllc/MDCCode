@@ -944,10 +944,6 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   return HAL_OK;
 }
 #if defined (USB_OTG_FS) || defined (USB_OTG_HS)
-
-
-#include "DebugEvents.h"
-
 /**
   * @brief  Handles PCD interrupt request.
   * @param  hpcd PCD handle
@@ -955,16 +951,11 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   */
 void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 {
-  DebugEvents.writeOver(DebugEvent('I'));
-  
   USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t i, ep_intr, epint, epnum;
   uint32_t fifoemptymsk, temp;
   USB_OTG_EPTypeDef *ep;
-  
-  auto& GRXSTSR = USBx->GRXSTSR;
-  auto& GINTSTS = USBx->GINTSTS;
 
   /* ensure that we are in device mode */
   if (USB_GetMode(hpcd->Instance) == USB_OTG_MODE_DEVICE)
@@ -1015,9 +1006,6 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
 
     if (__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_OEPINT))
     {
-      auto& DOEPTSIZ0 = USBx_OUTEP(0U)->DOEPTSIZ;
-      auto& DOEPCTL0 = USBx_OUTEP(0U)->DOEPCTL;
-      auto& DOEPDMA0 = USBx_OUTEP(0U)->DOEPDMA;
       epnum = 0U;
 
       /* Read in the device interrupt bits */
@@ -1029,81 +1017,35 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
         {
           epint = USB_ReadDevOutEPInterrupt(hpcd->Instance, (uint8_t)epnum);
 
-          if ((epint & USB_OTG_DOEPINT_XFRC) == USB_OTG_DOEPINT_XFRC) // 0
+          if ((epint & USB_OTG_DOEPINT_XFRC) == USB_OTG_DOEPINT_XFRC)
           {
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_XFRC);
             (void)PCD_EP_OutXfrComplete_int(hpcd, epnum);
           }
 
-          if ((epint & USB_OTG_DOEPINT_STUP) == USB_OTG_DOEPINT_STUP) // 3
+          if ((epint & USB_OTG_DOEPINT_STUP) == USB_OTG_DOEPINT_STUP)
           {
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_STUP);
             /* Class B setup phase done for previous decoded setup */
             (void)PCD_EP_OutSetupPacket_int(hpcd, epnum);
           }
 
-          if ((epint & USB_OTG_DOEPINT_OTEPDIS) == USB_OTG_DOEPINT_OTEPDIS) // 4
+          if ((epint & USB_OTG_DOEPINT_OTEPDIS) == USB_OTG_DOEPINT_OTEPDIS)
           {
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_OTEPDIS);
           }
 
           /* Clear Status Phase Received interrupt */
-          if ((epint & USB_OTG_DOEPINT_OTEPSPR) == USB_OTG_DOEPINT_OTEPSPR) // 5
+          if ((epint & USB_OTG_DOEPINT_OTEPSPR) == USB_OTG_DOEPINT_OTEPSPR)
           {
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_OTEPSPR);
           }
 
           /* Clear OUT NAK interrupt */
-          if ((epint & USB_OTG_DOEPINT_NAK) == USB_OTG_DOEPINT_NAK) // 13
+          if ((epint & USB_OTG_DOEPINT_NAK) == USB_OTG_DOEPINT_NAK)
           {
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_NAK);
           }
-          
-//          if (epint & USB_OTG_DOEPMSK_NAKM) // 13
-//          {
-//            CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPMSK_NAKM);
-//          }
-          
-          if (epint & USB_OTG_DOEPMSK_BERRM) // 12
-          {
-            CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPMSK_BERRM);
-          }
-          
-          if (epint & USB_OTG_DOEPMSK_OPEM) // 8
-          {
-            CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPMSK_OPEM);
-          }
-          
-          if (epint & USB_OTG_DOEPMSK_B2BSTUP) // 6
-          {
-            CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPMSK_B2BSTUP);
-          }
-          
-//          if (epint & USB_OTG_DOEPMSK_OTEPSPRM) // 5
-//          {
-//            CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPMSK_OTEPSPRM);
-//          }
-          
-//          if (epint & USB_OTG_DOEPMSK_STUPM) // 3
-//          {
-//            CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPMSK_STUPM);
-//          }
-          
-          if (epint & USB_OTG_DOEPMSK_AHBERRM) // 2
-          {
-            CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPMSK_AHBERRM);
-          }
-          
-          if (epint & USB_OTG_DOEPMSK_EPDM) // 1
-          {
-            CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPMSK_EPDM);
-          }
-          
-//          if (epint & USB_OTG_DOEPMSK_XFRCM) // 0
-//          {
-//            CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPMSK_XFRCM);
-//          }
-
         }
         epnum++;
         ep_intr >>= 1U;
@@ -1123,10 +1065,8 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
         {
           epint = USB_ReadDevInEPInterrupt(hpcd->Instance, (uint8_t)epnum);
 
-          if ((epint & USB_OTG_DIEPINT_XFRC) == USB_OTG_DIEPINT_XFRC)       // 0
+          if ((epint & USB_OTG_DIEPINT_XFRC) == USB_OTG_DIEPINT_XFRC)
           {
-            DebugEvents.writeOver(DebugEvent('C'));
-            
             fifoemptymsk = (uint32_t)(0x1UL << (epnum & EP_ADDR_MSK));
             USBx_DEVICE->DIEPEMPMSK &= ~fifoemptymsk;
 
@@ -1137,12 +1077,10 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
               hpcd->IN_ep[epnum].xfer_buff += hpcd->IN_ep[epnum].maxpacket;
 
               /* this is ZLP, so prepare EP0 for next setup */
-              if ((epnum == 0U))
+              if ((epnum == 0U) && (hpcd->IN_ep[epnum].xfer_len == 0U))
               {
-                if (hpcd->IN_ep[epnum].xfer_len == 0U) {
-                    /* prepare to rx more setup packets */
-                    (void)USB_EP0_OutStart(hpcd->Instance, 1U, (uint8_t *)hpcd->Setup);
-                }
+                /* prepare to rx more setup packets */
+                (void)USB_EP0_OutStart(hpcd->Instance, 1U, (uint8_t *)hpcd->Setup);
               }
             }
 
@@ -1152,45 +1090,25 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
             HAL_PCD_DataInStageCallback(hpcd, (uint8_t)epnum);
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
           }
-          if ((epint & USB_OTG_DIEPINT_TOC) == USB_OTG_DIEPINT_TOC)         // 3
+          if ((epint & USB_OTG_DIEPINT_TOC) == USB_OTG_DIEPINT_TOC)
           {
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_TOC);
           }
-          if ((epint & USB_OTG_DIEPINT_ITTXFE) == USB_OTG_DIEPINT_ITTXFE)   // 4
+          if ((epint & USB_OTG_DIEPINT_ITTXFE) == USB_OTG_DIEPINT_ITTXFE)
           {
-            DebugEvents.writeOver(DebugEvent('E'));
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_ITTXFE);
           }
-          if ((epint & USB_OTG_DIEPINT_INEPNE) == USB_OTG_DIEPINT_INEPNE)   // 6
+          if ((epint & USB_OTG_DIEPINT_INEPNE) == USB_OTG_DIEPINT_INEPNE)
           {
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_INEPNE);
           }
-          if ((epint & USB_OTG_DIEPINT_EPDISD) == USB_OTG_DIEPINT_EPDISD)   // 1
+          if ((epint & USB_OTG_DIEPINT_EPDISD) == USB_OTG_DIEPINT_EPDISD)
           {
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_EPDISD);
           }
-          if ((epint & USB_OTG_DIEPINT_TXFE) == USB_OTG_DIEPINT_TXFE)       // 7
+          if ((epint & USB_OTG_DIEPINT_TXFE) == USB_OTG_DIEPINT_TXFE)
           {
             (void)PCD_WriteEmptyTxFifo(hpcd, epnum);
-          }
-          
-          
-          
-          
-          if (epint & USB_OTG_DIEPMSK_NAKM)                                 // 13
-          {
-            DebugEvents.writeOver(DebugEvent('N'));
-            CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_NAKM);
-          }
-          if (epint & USB_OTG_DIEPMSK_INEPNMM)                              // 5
-          {
-            DebugEvents.writeOver(DebugEvent('M'));
-            CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_INEPNMM);
-          }
-          if (epint & USB_OTG_DIEPMSK_AHBERRM)                              // 2
-          {
-            DebugEvents.writeOver(DebugEvent('A'));
-            CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_AHBERRM);
           }
         }
         epnum++;
@@ -1292,27 +1210,18 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
         USBx_DEVICE->DINEP1MSK |= USB_OTG_DIEPMSK_TOM |
                                   USB_OTG_DIEPMSK_XFRCM |
                                   USB_OTG_DIEPMSK_EPDM;
-        for (;;);
       }
       else
       {
-        USBx_DEVICE->DOEPMSK |= USB_OTG_DOEPMSK_NAKM        |   // 13
-                                USB_OTG_DOEPMSK_BERRM       |   // 12
-                                USB_OTG_DOEPMSK_OPEM        |   // 8
-                                USB_OTG_DOEPMSK_B2BSTUP     |   // 6
-                                USB_OTG_DOEPMSK_OTEPSPRM    |   // 5
-                                USB_OTG_DOEPMSK_STUPM       |   // 3
-                                USB_OTG_DOEPMSK_AHBERRM     |   // 2
-                                USB_OTG_DOEPMSK_EPDM        |   // 1
-                                USB_OTG_DOEPMSK_XFRCM       ;   // 0
-        
-        USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_NAKM        |   // 13
-                                USB_OTG_DIEPMSK_INEPNMM     |   // 5
-                                USB_OTG_DIEPMSK_ITTXFEMSK   |   // 4
-                                USB_OTG_DIEPMSK_TOM         |   // 3
-                                USB_OTG_DIEPMSK_AHBERRM     |   // 2
-                                USB_OTG_DIEPMSK_EPDM        |   // 1
-                                USB_OTG_DIEPMSK_XFRCM       ;   // 0
+        USBx_DEVICE->DOEPMSK |= USB_OTG_DOEPMSK_STUPM |
+                                USB_OTG_DOEPMSK_XFRCM |
+                                USB_OTG_DOEPMSK_EPDM |
+                                USB_OTG_DOEPMSK_OTEPSPRM |
+                                USB_OTG_DOEPMSK_NAKM;
+
+        USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_TOM |
+                                USB_OTG_DIEPMSK_XFRCM |
+                                USB_OTG_DIEPMSK_EPDM;
       }
 
       /* Set Default Address to 0 */
