@@ -748,23 +748,14 @@ static bool setIgnoreOUTTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     //   (GONAKEFF bit in OTG_GINTSTS) is cleared."
     const bool prevState = OTG_GINTSTS&mask;
     
-//    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK;
-    
-//    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
-    
     if (!prevState && ignore) {
         auto GRXSTSR = USBx->GRXSTSR;
         OTG_DCTL |= set;
-        while (!(OTG_GINTSTS & mask)) {
-            USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
-//            USBx_DFIFO(0);
-        }
+        while (!(OTG_GINTSTS & mask));
     
     } else if (prevState && !ignore) {
         OTG_DCTL |= clear;
-        while (OTG_GINTSTS & mask) {
-//            USBx_DFIFO(0);
-        }
+        while (OTG_GINTSTS & mask);
     }
     return prevState;
 }
@@ -787,15 +778,11 @@ static bool setIgnoreINTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     const bool prevState = OTG_GINTSTS&mask;
     if (!prevState && ignore) {
         OTG_DCTL |= set;
-        while (!(OTG_GINTSTS & mask)) {
-//            USBx_DFIFO(0);
-        }
+        while (!(OTG_GINTSTS & mask));
     
     } else if (prevState && !ignore) {
         OTG_DCTL |= clear;
-        while (OTG_GINTSTS & mask) {
-//            USBx_DFIFO(0);
-        }
+        while (OTG_GINTSTS & mask);
     }
     return prevState;
 }
@@ -815,8 +802,6 @@ HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx, uint8_t count)
     // SETUP packets won't be received while during this function's
     // execution.
     uint32_t USBx_BASE = (uint32_t)USBx;
-    
-//    USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_SNAK | USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
     
     // NAK all transactions while we reset our endpoints.
     // This is necessary to prevent writing into the FIFOs,
