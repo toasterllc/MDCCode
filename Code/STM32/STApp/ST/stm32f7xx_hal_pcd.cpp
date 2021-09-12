@@ -1032,7 +1032,6 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
           if ((epint & USB_OTG_DOEPINT_XFRC) == USB_OTG_DOEPINT_XFRC) // 0
           {
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_XFRC);
-            CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_NAK);
             (void)PCD_EP_OutXfrComplete_int(hpcd, epnum);
           }
 
@@ -1058,13 +1057,6 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
           if ((epint & USB_OTG_DOEPINT_NAK) == USB_OTG_DOEPINT_NAK) // 13
           {
             CLEAR_OUT_EP_INTR(epnum, USB_OTG_DOEPINT_NAK);
-            if (epnum == 0) {
-                const bool en = USBx_INEP(epnum)->DIEPCTL & USB_OTG_DIEPCTL_EPENA;
-                const bool nak = USBx_INEP(epnum)->DIEPCTL & USB_OTG_DIEPCTL_NAKSTS;
-                if (en) {
-                    for (volatile int i=0; i<1; i++);
-                }
-            }
           }
           
 //          if (epint & USB_OTG_DOEPMSK_NAKM) // 13
@@ -1139,7 +1131,6 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
             USBx_DEVICE->DIEPEMPMSK &= ~fifoemptymsk;
 
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_XFRC);
-            CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_NAKM);
 
             if (hpcd->Init.dma_enable == 1U)
             {
@@ -1190,14 +1181,6 @@ void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd)
           {
             DebugEvents.writeOver(DebugEvent('N'));
             CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_NAKM);
-            
-            if (epnum == 0) {
-                const bool en = USBx_OUTEP(epnum)->DOEPCTL & USB_OTG_DOEPCTL_EPENA;
-                const bool nak = USBx_OUTEP(epnum)->DOEPCTL & USB_OTG_DOEPCTL_NAKSTS;
-                if (en) {
-                    for (volatile int i=0; i<1; i++);
-                }
-            }
           }
           if (epint & USB_OTG_DIEPMSK_INEPNMM)                              // 5
           {
