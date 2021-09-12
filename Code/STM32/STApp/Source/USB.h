@@ -10,7 +10,7 @@ public USBBase<
     // Subclass
     USB,
     // DMA=enabled
-    false,
+    true,
     // Endpoints
     STApp::Endpoints::DataIn
 > {
