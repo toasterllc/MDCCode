@@ -39,23 +39,24 @@ int main(int argc, const char* argv[]) {
 //        printf("-> Done\n\n");
 //        exit(0);
         
-        for (;;) {
-            auto start = std::chrono::steady_clock::now();
-            const size_t IterCount = 1000;
-            for (size_t i=0; i<IterCount; i++) {
-                device.reset();
-            }
-            size_t durationUs = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::steady_clock::now()-start).count();
-            
-            printf("Time per reset: %ju us\n", durationUs/IterCount);
-        }
+        // Profile resetting
+//        for (;;) {
+//            auto start = std::chrono::steady_clock::now();
+//            const size_t IterCount = 1000;
+//            for (size_t i=0; i<IterCount; i++) {
+//                device.reset();
+//            }
+//            size_t durationUs = std::chrono::duration_cast<std::chrono::microseconds>(
+//                std::chrono::steady_clock::now()-start).count();
+//            
+//            printf("Time per reset: %ju us\n", durationUs/IterCount);
+//        }
         
         try {
             printf("Resetting...\n");
             device.reset();
         } catch (const std::exception& e) {
-            fprintf(stderr, "Error: %s\n\n", e.what());
+            throw RuntimeError("Reset failed: %s", e.what());
         }
         
         for (;;) {
@@ -64,8 +65,8 @@ int main(int argc, const char* argv[]) {
                     .op = Op::LEDSet,
                     .arg = {
                         .LEDSet = {
-                            .idx = 1,
-//                            .idx = (bool)(arc4random()%4),
+//                            .idx = 1,
+                            .idx = (uint8_t)(arc4random()%4),
                             .on = (bool)(arc4random()%2),
                         },
                     },
