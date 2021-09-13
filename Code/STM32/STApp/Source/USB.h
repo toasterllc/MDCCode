@@ -31,8 +31,10 @@ public:
     void cmdSendStatus(bool status);
     
     USBD_StatusTypeDef dataSend(const void* data, size_t len);
+    bool dataSendReady() const;
+    void dataSendReset(); // Sends 2 zero-length packets + 1-byte sentinel
     Channel<DataSend, 1> dataSendChannel; // Signals that the previous dataSend() is complete
-
+    
 protected:
     // Callbacks
     uint8_t _usbd_Init(uint8_t cfgidx);
@@ -52,9 +54,21 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
+    enum class _DataSendState {
+        Reset,
+        ResetZLP1,
+        ResetZLP2,
+        ResetSentinel,
+        Ready,
+        Busy,
+    };
+    
+    static const uint8_t _ResetSentinel = 0;
+    
     uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
     
-    bool _dataSendBusy = false;
+    _DataSendState _dataSendState = _DataSendState::Reset;
+    bool _dataSendNeedsReset = false;
     
     using _super = USBBase;
     friend class USBBase;

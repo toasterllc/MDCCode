@@ -13,9 +13,6 @@ void USB::reset() {
     cmdRecvChannel.reset();
     dataSendChannel.reset();
     
-    // Reset state
-    _dataSendBusy = false;
-    
     // Reset all endpoints to return them to the default state.
     // USB_ResetEndpoints() requires that SETUP packets aren't
     // received while it's executing. (See comment within
@@ -37,13 +34,78 @@ void USB::cmdSendStatus(bool status) {
 }
 
 USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
-    Assert(!_dataSendBusy);
-    _dataSendBusy = true;
+    IRQState irq;
+    irq.disable();
+    
+    Assert(dataSendReady());
+    _dataSendAdvanceState();
     return USBD_LL_Transmit(&_device, STApp::Endpoints::DataIn, (uint8_t*)data, len);
 }
 
+void USB::dataSendReady() {
+    IRQState irq;
+    irq.disable();
+    return _dataSendState==_DataSendState::Ready;
+}
+
+void USB::dataSendReset() {
+    IRQState irq;
+    irq.disable();
+    
+    if (dataSendReady()) {
+        _dataSendReset();
+    } else {
+        _dataSendNeedsReset = true;
+    }
+}
+
+// Interrupts must be disabled if called from main thread
+void USB::_dataSendReset() {
+    _dataSendState = _DataSendState::Reset;
+    _dataSendNeedsReset = false;
+    _dataSendAdvanceState();
+}
+
+// Interrupts must be disabled if called from main thread
+void USB::_dataSendAdvanceState() {
+    if (_dataSendNeedsReset) {
+        _dataSendReset();
+        return;
+    }
+    
+    switch (_dataSendState) {
+    case _DataSendState::Reset:
+        _dataSendState = _DataSendState::ResetZLP1;
+        USBD_LL_TransmitZeroLen(&_device, STApp::Endpoints::DataIn);
+        break;
+    case _DataSendState::ResetZLP1:
+        _dataSendState = _DataSendState::ResetZLP2;
+        USBD_LL_TransmitZeroLen(&_device, STApp::Endpoints::DataIn);
+        break;
+    case _DataSendState::ResetZLP2:
+        _dataSendState = _DataSendState::ResetSentinel;
+        USBD_LL_Transmit(&_device, STApp::Endpoints::DataIn, (uint8_t*)&_ResetSentinel, sizeof(_ResetSentinel));
+        break;
+    case _DataSendState::ResetSentinel:
+        _dataSendState = _DataSendState::Ready;
+        dataSendChannel.writeTry(DataSend{});
+        break;
+    case _DataSendState::Ready:
+        _dataSendState = _DataSendState::Busy;
+        break;
+    case _DataSendState::Busy:
+        _dataSendState = _DataSendState::Ready;
+        dataSendChannel.writeTry(DataSend{});
+        break;
+    default:
+        abort();
+    }
+}
+
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
-    return _super::_usbd_Init(cfgidx);
+    _super::_usbd_Init(cfgidx);
+    _dataSendReset();
+    return (uint8_t)USBD_OK;
 }
 
 uint8_t USB::_usbd_DeInit(uint8_t cfgidx) {
@@ -93,8 +155,14 @@ uint8_t USB::_usbd_DataIn(uint8_t epnum) {
     switch (epnum) {
     // DataIn endpoint
     case EndpointIdx(STApp::Endpoints::DataIn): {
-        dataSendChannel.writeTry(DataSend{});
-        _dataSendBusy = false;
+        // Sanity-check our state
+        Assert(
+            _dataSendState == _DataSendState::ResetZLP1         ||
+            _dataSendState == _DataSendState::ResetZLP2         ||
+            _dataSendState == _DataSendState::ResetSentinel     ||
+            _dataSendState == _DataSendState::Busy
+        );
+        _dataSendAdvanceState();
         break;
     }}
     
