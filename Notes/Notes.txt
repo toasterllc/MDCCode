@@ -14,7 +14,7 @@
         - This will save space in the limited FIFO RAM
         - This will also help improve our command/response scheme since EP0 gets replies for every request
     
-    - STLoader / STApp: add a 'flush' command to allow signalling which will cause IN endpoints to issue ZLPs before starting 
+    - STLoader / STApp: add a command to reset the DataIn endpoint, which sends 2 ZLPs + 1 sentinel
     
     - SDController: Implement SD card reading
         - Requirements
