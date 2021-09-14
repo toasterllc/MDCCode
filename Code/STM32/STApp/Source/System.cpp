@@ -111,7 +111,7 @@ void System::_handleEvent() {
         _usb_cmdHandle(*x);
     
     } else if (auto x = _usb.dataSendChannel.readSelect()) {
-        _usb_dataSendHandle(*x);
+        _usb_dataSendReady(*x);
     
     } else if (auto x = _qspi.eventChannel.readSelect()) {
         _sdRead_qspiEventHandle(*x);
@@ -124,24 +124,10 @@ void System::_handleEvent() {
 }
 
 void System::_reset(const Cmd& cmd) {
-    // Disable interrupts so that resetting is atomic
-    IRQState irq;
-    irq.disable();
-        _usb.reset();
-        _qspi.reset();
-        _bufs.reset();
-    irq.restore();
-    
     _finishCmd(true);
 }
 
 void System::_finishCmd(bool status) {
-    Assert(!_bufs.full());
-    Assert(!_usbDataBusy);
-    
-    // Update our state
-    _op = Op::None;
-    
     // Send our response
     _usb.cmdSendStatus(status);
 }
@@ -149,14 +135,11 @@ void System::_finishCmd(bool status) {
 #pragma mark - USB
 
 void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
-    Assert(_op == Op::None);
-    
     Cmd cmd;
     Assert(ev.len == sizeof(cmd)); // TODO: handle errors
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
-    case Op::Reset:     _reset(cmd);    break;
     case Op::SDRead:    _sdRead(cmd);   break;
     case Op::LEDSet:    _ledSet(cmd);   break;
     // Bad command
@@ -166,27 +149,22 @@ void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
 
 void System::_usb_sendFromBuf() {
     Assert(!_bufs.empty());
-    Assert(!_usbDataBusy);
+    Assert(_usb.dataSendReady());
     
     const auto& buf = _bufs.front();
     _usb.dataSend(buf.data, buf.len);
-    _usbDataBusy = true;
 }
 
-void System::_usb_dataSendHandle(const USB::DataSend& ev) {
-//    _usb.dataSend(_buf0, sizeof(_buf0));
-    
-    Assert(_usbDataBusy);
+void System::_usb_dataSendReady(const USB::DataSend& ev) {
     Assert(!_bufs.empty());
     
     // Reset the buffer length so it's back in its default state
     _bufs.front().len = 0;
     // Pop the buffer, which we just finished sending over USB
     _bufs.pop();
-    _usbDataBusy = false;
     
     switch (_op) {
-    case Op::SDRead:    _sdRead_usbDataSendHandle(ev);  break;
+    case Op::SDRead:    _sdRead_usbDataSendReady(ev);  break;
     default:            abort();                        break;
     }
 }
@@ -296,6 +274,7 @@ void System::_sdInit() {
     
     // Enter the init mode of the SDController state machine
     _ice40Transfer(SDInitMsg(SDInitMsg::Action::Reset,      SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
+    
     // Turn off SD card power and wait for it to reach 0V
     _sdSetPowerEnabled(false);
     HAL_Delay(2);
@@ -572,26 +551,34 @@ void System::_sdInit() {
 
 void System::_sdRead(const Cmd& cmd) {
     // Update state
-    _op = cmd.op;
+    _op = Op::SDRead;
     _opDataRem = 0xFFFFFE00; // divisible by 512
     
-    // ====================
-    // CMD18 | READ_MULTIPLE_BLOCK
-    //   State: Transfer -> Send Data
-    //   Read blocks of data (1 block == 512 bytes)
-    // ====================
-    {
-        auto status = _sdSendCmd(18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
-        Assert(!status.respCRCErr());
-    }
+    _bufs.reset();
+    
+    #warning TODO: uncomment
+//    // ====================
+//    // CMD18 | READ_MULTIPLE_BLOCK
+//    //   State: Transfer -> Send Data
+//    //   Read blocks of data (1 block == 512 bytes)
+//    // ====================
+//    {
+//        auto status = _sdSendCmd(18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+//        Assert(!status.respCRCErr());
+//    }
     
     // Send the SDReadout message, which causes us to enter the SD-readout mode until
     // we release the chip select
     _ICE_ST_SPI_CS_::Write(0);
     _ice40TransferNoCS(SDReadoutMsg());
     
+    // Reset the data channel by sending ZLPs and sentinel
+    _usb.dataSendReset();
+    
     // Advance state machine
     _sdRead_updateState();
+    
+    _finishCmd(true);
 }
 
 void System::_sdRead_qspiReadToBuf() {
@@ -602,8 +589,9 @@ void System::_sdRead_qspiReadToBuf() {
     
     auto& buf = _bufs.back();
     
-    // Wait for ICE40 to signal that data is ready
-    while (!_ICE_ST_SPI_D_READY::Read());
+    #warning TODO: uncomment
+//    // Wait for ICE40 to signal that data is ready
+//    while (!_ICE_ST_SPI_D_READY::Read());
     
     // TODO: how do we handle lengths that aren't a multiple of ReadoutLen?
     const size_t len = SDReadoutMsg::ReadoutLen;
@@ -670,7 +658,7 @@ void System::_sdRead_qspiEventHandle(const QSPI::Signal& ev) {
     _sdRead_updateState();
 }
 
-void System::_sdRead_usbDataSendHandle(const USB::DataSend& ev) {
+void System::_sdRead_usbDataSendReady(const USB::DataSend& ev) {
     Assert(_op == Op::SDRead);
     // Advance state machine
     _sdRead_updateState();
@@ -717,7 +705,7 @@ void System::_sdRead_updateState() {
     // Send data from the consumer buffer when:
     //   - we have data to write, and
     //   - we're not currently sending data over USB
-    if (!_bufs.empty() && !_usbDataBusy) {
+    if (!_bufs.empty() && _usb.dataSendReady()) {
         _usb_sendFromBuf();
     }
     
@@ -731,7 +719,6 @@ void System::_sdRead_updateState() {
 
 void System::_sdRead_finish() {
     _ICE_ST_SPI_CS_::Write(1);
-    _finishCmd(true);
 }
 
 #pragma mark - Other Commands

@@ -3,31 +3,6 @@
 #include <algorithm>
 using namespace STApp;
 
-void USB::reset() {
-    // Disable interrupts while we reset our endpoints, to prevent
-    // USB interrupts from corrupting the reset process.
-    IRQState irq;
-    irq.disable();
-    
-    // Reset our channels so there are no pending events
-    cmdRecvChannel.reset();
-    dataSendChannel.reset();
-    
-    // Reset all endpoints to return them to the default state.
-    // USB_ResetEndpoints() requires that SETUP packets aren't
-    // received while it's executing. (See comment within
-    // USB_ResetEndpoints().)
-    //
-    // This requirement necessitates a contract between the device
-    // and the USB host: during the time between the host sending
-    // the reset control request and receiving our response, the host
-    // must not send any control requests. (This should be easily met
-    // since control requests are typically synchronous.) This contract
-    // guarantees that SETUP packets aren't delivered while
-    // USB_ResetEndpoints() is executing.
-    USB_ResetEndpoints(_pcd.Instance, _pcd.Init.dev_endpoints);
-}
-
 void USB::cmdSendStatus(bool status) {
     if (status) USBD_CtlSendStatus(&_device);
     else        USBD_CtlError(&_device, nullptr);
@@ -42,7 +17,7 @@ USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
     return USBD_LL_Transmit(&_device, STApp::Endpoints::DataIn, (uint8_t*)data, len);
 }
 
-void USB::dataSendReady() {
+bool USB::dataSendReady() const {
     IRQState irq;
     irq.disable();
     return _dataSendState==_DataSendState::Ready;
@@ -88,14 +63,14 @@ void USB::_dataSendAdvanceState() {
         break;
     case _DataSendState::ResetSentinel:
         _dataSendState = _DataSendState::Ready;
-        dataSendChannel.writeTry(DataSend{});
+        dataSendReadyChannel.writeTry(DataSend{});
         break;
     case _DataSendState::Ready:
         _dataSendState = _DataSendState::Busy;
         break;
     case _DataSendState::Busy:
         _dataSendState = _DataSendState::Ready;
-        dataSendChannel.writeTry(DataSend{});
+        dataSendReadyChannel.writeTry(DataSend{});
         break;
     default:
         abort();

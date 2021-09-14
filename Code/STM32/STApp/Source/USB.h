@@ -25,17 +25,18 @@ public:
     struct DataSend {};
     
     // Methods
-    void reset();
-    
     Channel<CmdRecv, 1> cmdRecvChannel;
     void cmdSendStatus(bool status);
     
     USBD_StatusTypeDef dataSend(const void* data, size_t len);
-    bool dataSendReady() const;
     void dataSendReset(); // Sends 2 zero-length packets + 1-byte sentinel
-    Channel<DataSend, 1> dataSendChannel; // Signals that the previous dataSend() is complete
+    bool dataSendReady() const;
+    Channel<DataSend, 1> dataSendReadyChannel; // Signals that more data can be sent
     
 protected:
+    void _dataSendReset();
+    void _dataSendAdvanceState();
+    
     // Callbacks
     uint8_t _usbd_Init(uint8_t cfgidx);
     uint8_t _usbd_DeInit(uint8_t cfgidx);
@@ -63,7 +64,7 @@ private:
         Busy,
     };
     
-    static const uint8_t _ResetSentinel = 0;
+    static const inline uint8_t _ResetSentinel = 0;
     
     uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
     
