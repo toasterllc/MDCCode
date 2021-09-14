@@ -11,6 +11,7 @@ public:
     void init();
     
     void _handleEvent();
+    void _reset(const STApp::Cmd& cmd);
     void _finishCmd(bool status);
     
     void _usb_cmdHandle(const USB::CmdRecv& ev);
