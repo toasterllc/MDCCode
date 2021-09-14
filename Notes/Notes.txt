@@ -18,6 +18,8 @@
         - Automatically reset each time we send the SDRead command
         - Should every command that sends data automatically reset the DataIn endpoint? For example, what about STLoader commands that send data?
             - Quantify: how much overhead does it add to send the reset sequence (2 ZLPs + sentinel)?
+                - Without reset sequence:   XXX us
+                - With reset sequence:      XXX us
     
     - SDController: Implement SD card reading
         - Requirements

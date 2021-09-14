@@ -39,46 +39,42 @@ int main(int argc, const char* argv[]) {
 //        printf("-> Done\n\n");
 //        exit(0);
         
-        // Profile resetting
-//        for (;;) {
-//            auto start = std::chrono::steady_clock::now();
-//            const size_t IterCount = 1000;
-//            for (size_t i=0; i<IterCount; i++) {
-//                device.reset();
-//            }
-//            size_t durationUs = std::chrono::duration_cast<std::chrono::microseconds>(
-//                std::chrono::steady_clock::now()-start).count();
-//            
-//            printf("Time per reset: %ju us\n", durationUs/IterCount);
-//        }
+//        printf("Resetting...\n");
+//        device.reset();
         
-        try {
-            printf("Resetting...\n");
-            device.reset();
-        } catch (const std::exception& e) {
-            throw RuntimeError("Reset failed: %s", e.what());
-        }
-        
+        // Profile command
+        constexpr size_t BufCap = 16*1024;
+        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
         for (;;) {
-            try {
-                STApp::Cmd cmd = {
-                    .op = Op::LEDSet,
-                    .arg = {
-                        .LEDSet = {
-//                            .idx = 1,
-                            .idx = (uint8_t)(arc4random()%4),
-                            .on = (bool)(arc4random()%2),
-                        },
-                    },
-                };
-                
-                printf("Sending command...\n");
+            auto start = std::chrono::steady_clock::now();
+            const size_t IterCount = 1000;
+            for (size_t i=0; i<IterCount; i++) {
+                Cmd cmd = { .op = Op::SDRead, };
                 usbDevice.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
-            } catch (const std::exception& e) {
-                fprintf(stderr, "Error: %s\n\n", e.what());
+                
+                // Flush data from the endpoint until we get a ZLP
+                for (;;) {
+                    const size_t len = usbDevice.read(STApp::Endpoints::DataIn, buf.get(), BufCap);
+                    if (len == 0) break;
+                }
+                
+                // Read until we get the sentinel
+                // It's possible to get a ZLP in this stage -- just ignore it
+                for (;;) {
+                    uint8_t sentinel = 0;
+                    const size_t len = usbDevice.read(STApp::Endpoints::DataIn, &sentinel, sizeof(sentinel));
+                    if (len == sizeof(sentinel)) break;
+                }
+                
+                // Read packet
+                uint8_t packet[512];
+                usbDevice.read(STApp::Endpoints::DataIn, packet);
             }
             
-            continue;
+            size_t durationUs = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now()-start).count();
+            
+            printf("Time per iteration: %ju us\n", durationUs/IterCount);
         }
         
 //        printf("Reading response...\n");
@@ -113,32 +109,32 @@ int main(int argc, const char* argv[]) {
 //        usbDevice.read(STApp::Endpoints::DataIn, s);
 //        if (s != STApp::Status::OK) abort();
         
-        constexpr size_t BufCap = 128*1024*1024;
-        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
-        for (;;) {
-            printf("Reading data...\n");
-            
-            TimeInstant start;
-            usbDevice.read(STApp::Endpoints::DataIn, buf.get(), BufCap);
-            
-            for (int i=0; i<1000; i++) {
-                printf("%x\n", buf[i]);
-            }
-            
-            const uintmax_t bits = BufCap*8;
-            const uintmax_t throughput_bitsPerSec = (1000*bits)/start.durationMs();
-            const uintmax_t throughput_MbitsPerSec = throughput_bitsPerSec/UINTMAX_C(1000000);
-            
-            printf("Validating data...\n");
-            for (size_t i=1; i<BufCap; i++) {
-                if (buf[i] != (((buf[i-1])+1)&0xFF)) {
-                    printf("-> Invalid sequence: buf[%zu]=%d, buf[%zu]=%d\n", i-1, buf[i-1], i, buf[i]);
-                    break;
-                }
-            }
-            
-            printf("Throughput: %ju Mbits/sec\n\n", throughput_MbitsPerSec);
-        }
+//        constexpr size_t BufCap = 128*1024*1024;
+//        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
+//        for (;;) {
+//            printf("Reading data...\n");
+//            
+//            TimeInstant start;
+//            usbDevice.read(STApp::Endpoints::DataIn, buf.get(), BufCap);
+//            
+//            for (int i=0; i<1000; i++) {
+//                printf("%x\n", buf[i]);
+//            }
+//            
+//            const uintmax_t bits = BufCap*8;
+//            const uintmax_t throughput_bitsPerSec = (1000*bits)/start.durationMs();
+//            const uintmax_t throughput_MbitsPerSec = throughput_bitsPerSec/UINTMAX_C(1000000);
+//            
+//            printf("Validating data...\n");
+//            for (size_t i=1; i<BufCap; i++) {
+//                if (buf[i] != (((buf[i-1])+1)&0xFF)) {
+//                    printf("-> Invalid sequence: buf[%zu]=%d, buf[%zu]=%d\n", i-1, buf[i-1], i, buf[i]);
+//                    break;
+//                }
+//            }
+//            
+//            printf("Throughput: %ju Mbits/sec\n\n", throughput_MbitsPerSec);
+//        }
     
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n\n", e.what());

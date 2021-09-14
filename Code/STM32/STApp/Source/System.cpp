@@ -110,7 +110,7 @@ void System::_handleEvent() {
     if (auto x = _usb.cmdRecvChannel.readSelect()) {
         _usb_cmdHandle(*x);
     
-    } else if (auto x = _usb.dataSendChannel.readSelect()) {
+    } else if (auto x = _usb.dataSendReadyChannel.readSelect()) {
         _usb_dataSendReady(*x);
     
     } else if (auto x = _qspi.eventChannel.readSelect()) {
@@ -124,6 +124,8 @@ void System::_handleEvent() {
 }
 
 void System::_reset(const Cmd& cmd) {
+    _op = Op::None;
+    _usb.dataSendReset();
     _finishCmd(true);
 }
 
@@ -140,6 +142,7 @@ void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
+    case Op::Reset:     _reset(cmd);    break;
     case Op::SDRead:    _sdRead(cmd);   break;
     case Op::LEDSet:    _ledSet(cmd);   break;
     // Bad command
@@ -156,16 +159,9 @@ void System::_usb_sendFromBuf() {
 }
 
 void System::_usb_dataSendReady(const USB::DataSend& ev) {
-    Assert(!_bufs.empty());
-    
-    // Reset the buffer length so it's back in its default state
-    _bufs.front().len = 0;
-    // Pop the buffer, which we just finished sending over USB
-    _bufs.pop();
-    
     switch (_op) {
     case Op::SDRead:    _sdRead_usbDataSendReady(ev);  break;
-    default:            abort();                        break;
+    default:                                           break;
     }
 }
 
@@ -552,31 +548,9 @@ void System::_sdInit() {
 void System::_sdRead(const Cmd& cmd) {
     // Update state
     _op = Op::SDRead;
-    _opDataRem = 0xFFFFFE00; // divisible by 512
     
-    _bufs.reset();
-    
-    #warning TODO: uncomment
-//    // ====================
-//    // CMD18 | READ_MULTIPLE_BLOCK
-//    //   State: Transfer -> Send Data
-//    //   Read blocks of data (1 block == 512 bytes)
-//    // ====================
-//    {
-//        auto status = _sdSendCmd(18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
-//        Assert(!status.respCRCErr());
-//    }
-    
-    // Send the SDReadout message, which causes us to enter the SD-readout mode until
-    // we release the chip select
-    _ICE_ST_SPI_CS_::Write(0);
-    _ice40TransferNoCS(SDReadoutMsg());
-    
-    // Reset the data channel by sending ZLPs and sentinel
+    // Reset the data channel (which sends a 2xZLP+sentinel sequence)
     _usb.dataSendReset();
-    
-    // Advance state machine
-    _sdRead_updateState();
     
     _finishCmd(true);
 }
@@ -660,8 +634,8 @@ void System::_sdRead_qspiEventHandle(const QSPI::Signal& ev) {
 
 void System::_sdRead_usbDataSendReady(const USB::DataSend& ev) {
     Assert(_op == Op::SDRead);
-    // Advance state machine
-    _sdRead_updateState();
+    _usb.dataSend(_buf0, 512);
+    _op = Op::None;
 }
 
 
