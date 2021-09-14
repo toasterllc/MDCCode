@@ -29,9 +29,8 @@ public:
         _dev.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
         
         // Flush data from the endpoint until we get a ZLP
-        uint8_t buf[512];
         for (;;) {
-            const size_t len = _dev.read(STApp::Endpoints::DataIn, buf, sizeof(buf));
+            const size_t len = _dev.read(STApp::Endpoints::DataIn, _buf, sizeof(_buf));
             if (!len) break;
         }
         
@@ -42,11 +41,6 @@ public:
             const uint8_t len = _dev.read(STApp::Endpoints::DataIn, &sentinel, sizeof(sentinel));
             if (len == sizeof(sentinel)) break;
         }
-        
-//        // Reset our pipes now that the device is reset
-//        for (const uint8_t ep : {Endpoints::DataIn}) {
-//            _dev.reset(ep);
-//        }
     }
     
     void ledSet(uint8_t idx, bool on) {
@@ -67,4 +61,5 @@ public:
     
 private:
     USBDevice _dev;
+    uint8_t _buf[16*1024];
 };

@@ -27,6 +27,7 @@ public:
     void init();
     void config(); // Reconfigures GPIOs, in case they're reused for some other purpose
     
+    bool ready() const;
     void reset(); // Aborts whatever is in progress, and resets all channels
     void command(const QSPI_CommandTypeDef& cmd);
     void read(const QSPI_CommandTypeDef& cmd, void* data, size_t len);
