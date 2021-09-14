@@ -39,32 +39,17 @@ int main(int argc, const char* argv[]) {
 //        printf("-> Done\n\n");
 //        exit(0);
         
-//        printf("Resetting...\n");
-//        device.reset();
+        printf("Resetting...\n");
+        device.reset();
         
         // Profile command
-        constexpr size_t BufCap = 16*1024;
-        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
+        printf("Profiling...\n");
         for (;;) {
             auto start = std::chrono::steady_clock::now();
             const size_t IterCount = 1000;
             for (size_t i=0; i<IterCount; i++) {
                 Cmd cmd = { .op = Op::SDRead, };
                 usbDevice.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
-                
-                // Flush data from the endpoint until we get a ZLP
-                for (;;) {
-                    const size_t len = usbDevice.read(STApp::Endpoints::DataIn, buf.get(), BufCap);
-                    if (len == 0) break;
-                }
-                
-                // Read until we get the sentinel
-                // It's possible to get a ZLP in this stage -- just ignore it
-                for (;;) {
-                    uint8_t sentinel = 0;
-                    const size_t len = usbDevice.read(STApp::Endpoints::DataIn, &sentinel, sizeof(sentinel));
-                    if (len == sizeof(sentinel)) break;
-                }
                 
                 // Read packet
                 uint8_t packet[512];

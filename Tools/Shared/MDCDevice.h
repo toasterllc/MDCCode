@@ -28,6 +28,21 @@ public:
         Cmd cmd = { .op = Op::Reset };
         _dev.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
         
+        // Flush data from the endpoint until we get a ZLP
+        uint8_t buf[512];
+        for (;;) {
+            const size_t len = _dev.read(STApp::Endpoints::DataIn, buf, sizeof(buf));
+            if (!len) break;
+        }
+        
+        // Read until we get the sentinel
+        // It's possible to get a ZLP in this stage -- just ignore it
+        for (;;) {
+            uint8_t sentinel = 0;
+            const uint8_t len = _dev.read(STApp::Endpoints::DataIn, &sentinel, sizeof(sentinel));
+            if (len == sizeof(sentinel)) break;
+        }
+        
 //        // Reset our pipes now that the device is reset
 //        for (const uint8_t ep : {Endpoints::DataIn}) {
 //            _dev.reset(ep);

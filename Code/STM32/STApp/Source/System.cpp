@@ -546,12 +546,7 @@ void System::_sdInit() {
 }
 
 void System::_sdRead(const Cmd& cmd) {
-    // Update state
-    _op = Op::SDRead;
-    
-    // Reset the data channel (which sends a 2xZLP+sentinel sequence)
-    _usb.dataSendReset();
-    
+    _usb.dataSend(_buf0, 512);
     _finishCmd(true);
 }
 
