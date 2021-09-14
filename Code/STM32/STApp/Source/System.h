@@ -37,7 +37,7 @@ public:
     void _sdRead_qspiEventHandle(const QSPI::Signal& ev);
     void _sdRead_usbDataSendReady(const USB::DataSend& ev);
     void _sdRead_updateState();
-    void _sdRead_finish();
+    void _sdRead_stop();
     
     void _ledSet(const STApp::Cmd& cmd);
     
@@ -50,7 +50,6 @@ private:
     
     STApp::Op _op = STApp::Op::None;
     size_t _opDataRem = 0;
-    bool _qspiBusy = false;
     BufQueue<2> _bufs;
     
     uint16_t _sdRCA = 0;

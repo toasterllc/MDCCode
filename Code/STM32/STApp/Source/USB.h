@@ -36,6 +36,7 @@ public:
 protected:
     void _dataSendReset();
     void _dataSendAdvanceState();
+    bool _dataSendReady() const;
     
     // Callbacks
     uint8_t _usbd_Init(uint8_t cfgidx);

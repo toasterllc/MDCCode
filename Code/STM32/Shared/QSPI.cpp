@@ -75,6 +75,10 @@ void QSPI::config() {
     _D7::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
 }
 
+bool QSPI::ready() const {
+    return !_busy;
+}
+
 void QSPI::reset() {
     // Disable interrupts so that resetting is atomic
     IRQState irq;
@@ -83,7 +87,7 @@ void QSPI::reset() {
     // Abort whatever is underway (if anything)
     HAL_QSPI_Abort(&_device);
     
-    // Reset channels to clear pending events
+    // Reset state
     eventChannel.reset();
     _busy = false;
 }
@@ -135,7 +139,7 @@ void QSPI::command(const QSPI_CommandTypeDef& cmd) {
         read(readCmd, buf, readLen);
     
     } else {
-        Assert(!_busy);
+        Assert(ready());
         
         // Update _busy before the interrupt can occur, otherwise `_busy = true`
         // could occur after the transaction is complete, cloberring the `_busy = false`
@@ -158,7 +162,7 @@ void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
     AssertArg(len);
     // Validate `len` alignment
     if (_align == Align::Word) AssertArg(!(len % sizeof(uint32_t)));
-    Assert(!_busy);
+    Assert(ready());
     
     // Update _busy before the interrupt can occur, otherwise `_busy = true`
     // could occur after the transaction is complete, cloberring the `_busy = false`
@@ -179,7 +183,7 @@ void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
     AssertArg(len);
     // Validate `len` alignment
     if (_align == Align::Word) AssertArg(!(len % sizeof(uint32_t)));
-    Assert(!_busy);
+    Assert(ready());
     
     // Update _busy before the interrupt can occur, otherwise `_busy = true`
     // could occur after the transaction is complete, cloberring the `_busy = false`

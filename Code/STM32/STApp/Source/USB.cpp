@@ -12,7 +12,7 @@ USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
     IRQState irq;
     irq.disable();
     
-    Assert(dataSendReady());
+    Assert(_dataSendReady());
     _dataSendAdvanceState();
     return USBD_LL_Transmit(&_device, STApp::Endpoints::DataIn, (uint8_t*)data, len);
 }
@@ -20,14 +20,14 @@ USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
 bool USB::dataSendReady() const {
     IRQState irq;
     irq.disable();
-    return _dataSendState==_DataSendState::Ready;
+    return _dataSendReady();
 }
 
 void USB::dataSendReset() {
     IRQState irq;
     irq.disable();
     
-    if (dataSendReady()) {
+    if (_dataSendReady()) {
         _dataSendReset();
     } else {
         _dataSendNeedsReset = true;
@@ -48,6 +48,16 @@ void USB::_dataSendAdvanceState() {
         return;
     }
     
+    // We send two ZLPs (instead of just one) because if a transfer is in progress, the first ZLP will
+    // get 'eaten' as a ZLP that terminates the existing transfer. So to guarantee that the reader
+    // actually gets a ZLP, we have to send two.
+    // After sending the two ZLPs, we also send a sentinel to account for the fact that we don't know
+    // how many ZLPs that the reader will receive, because we don't know if the first ZLP will
+    // necessarily terminate a transfer (because a transfer may not have been in progress, or if a
+    // transfer was in progress, it may have sent exactly the number of bytes that the reader
+    // requested, in which case no ZLP is needed to end the transfer). By using a sentinel, the
+    // reader knows that no further ZLPs will be received after the sentinel has been received, and
+    // therefore the endpoint is finished being reset.
     switch (_dataSendState) {
     case _DataSendState::Reset:
         _dataSendState = _DataSendState::ResetZLP1;
@@ -77,10 +87,13 @@ void USB::_dataSendAdvanceState() {
     }
 }
 
+// Interrupts must be disabled if called from main thread
+bool USB::_dataSendReady() const {
+    return _dataSendState==_DataSendState::Ready;
+}
+
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
-    _super::_usbd_Init(cfgidx);
-    _dataSendReset();
-    return (uint8_t)USBD_OK;
+    return _super::_usbd_Init(cfgidx);
 }
 
 uint8_t USB::_usbd_DeInit(uint8_t cfgidx) {
