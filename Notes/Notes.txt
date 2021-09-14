@@ -14,7 +14,10 @@
         - This will save space in the limited FIFO RAM
         - This will also help improve our command/response scheme since EP0 gets replies for every request
     
-    - STLoader / STApp: add a command to reset the DataIn endpoint, which sends 2 ZLPs + 1 sentinel
+    - STLoader / STApp: add ability to reset DataIn endpoint, which sends 2 ZLPs + sentinel
+        - Automatically reset each time we send the SDRead command
+        - Should every command that sends data automatically reset the DataIn endpoint? For example, what about STLoader commands that send data?
+            - Quantify: how much overhead does it add to send the reset sequence (2 ZLPs + sentinel)?
     
     - SDController: Implement SD card reading
         - Requirements
