@@ -57,19 +57,20 @@ protected:
     
 private:
     enum class _DataSendState {
+        Ready,
+        Busy,
+        
         Reset,
         ResetZLP1,
         ResetZLP2,
         ResetSentinel,
-        Ready,
-        Busy,
     };
     
     static const inline uint8_t _ResetSentinel = 0;
     
     uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
     
-    _DataSendState _dataSendState = _DataSendState::Reset;
+    _DataSendState _dataSendState = _DataSendState::Ready;
     bool _dataSendNeedsReset = false;
     
     using _super = USBBase;

@@ -26,21 +26,22 @@ public:
     void reset() {
         using namespace STApp;
         Cmd cmd = { .op = Op::Reset };
-        _dev.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
-        
-        // Flush data from the endpoint until we get a ZLP
-        for (;;) {
-            const size_t len = _dev.read(STApp::Endpoints::DataIn, _buf, sizeof(_buf));
-            if (!len) break;
-        }
-        
-        // Read until we get the sentinel
-        // It's possible to get a ZLP in this stage -- just ignore it
-        for (;;) {
-            uint8_t sentinel = 0;
-            const uint8_t len = _dev.read(STApp::Endpoints::DataIn, &sentinel, sizeof(sentinel));
-            if (len == sizeof(sentinel)) break;
-        }
+        _dev.vendorRequestOut(CtrlReqs::CmdExec, cmd);
+        _flushEndpoint(Endpoints::DataIn);
+    }
+    
+    void sdRead(uint32_t addr) {
+        using namespace STApp;
+        Cmd cmd = {
+            .op = Op::SDRead,
+            .arg = {
+                .SDRead = {
+                    .addr = addr,
+                },
+            },
+        };
+        _dev.vendorRequestOut(CtrlReqs::CmdExec, cmd);
+        _flushEndpoint(Endpoints::DataIn);
     }
     
     void ledSet(uint8_t idx, bool on) {
@@ -54,12 +55,28 @@ public:
                 },
             },
         };
-        _dev.vendorRequestOut(STApp::CtrlReqs::CmdExec, cmd);
+        _dev.vendorRequestOut(CtrlReqs::CmdExec, cmd);
     }
     
     USBDevice& usbDevice() { return _dev; }
     
 private:
+    void _flushEndpoint(uint8_t ep) {
+        // Flush data from the endpoint until we get a ZLP
+        for (;;) {
+            const size_t len = _dev.read(ep, _buf, sizeof(_buf));
+            if (!len) break;
+        }
+        
+        // Read until we get the sentinel
+        // It's possible to get a ZLP in this stage -- just ignore it
+        for (;;) {
+            uint8_t sentinel = 0;
+            const uint8_t len = _dev.read(ep, &sentinel, sizeof(sentinel));
+            if (len == sizeof(sentinel)) break;
+        }
+    }
+    
     USBDevice _dev;
     uint8_t _buf[16*1024];
 };
