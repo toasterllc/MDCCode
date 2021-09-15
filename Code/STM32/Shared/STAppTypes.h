@@ -25,11 +25,15 @@ namespace STApp {
         Op op;
         union {
             struct __attribute__((packed)) {
+                uint32_t addr;
+            } SDRead;
+            
+            struct __attribute__((packed)) {
                 uint8_t idx;
                 uint8_t on;
             } LEDSet;
         } arg;
         
     } __attribute__((packed));
-    static_assert(sizeof(Cmd)==3, "Cmd: invalid size");
+    static_assert(sizeof(Cmd)<=64, "Cmd: invalid size"); // Verify that Cmd will fit in a single EP0 packet
 }

@@ -59,6 +59,15 @@ void USB::_dataSendAdvanceState() {
     // reader knows that no further ZLPs will be received after the sentinel has been received, and
     // therefore the endpoint is finished being reset.
     switch (_dataSendState) {
+    
+    case _DataSendState::Ready:
+        _dataSendState = _DataSendState::Busy;
+        break;
+    case _DataSendState::Busy:
+        _dataSendState = _DataSendState::Ready;
+        dataSendReadyChannel.writeTry(DataSend{});
+        break;
+    
     case _DataSendState::Reset:
         _dataSendState = _DataSendState::ResetZLP1;
         USBD_LL_TransmitZeroLen(&_device, STApp::Endpoints::DataIn);
@@ -75,13 +84,7 @@ void USB::_dataSendAdvanceState() {
         _dataSendState = _DataSendState::Ready;
         dataSendReadyChannel.writeTry(DataSend{});
         break;
-    case _DataSendState::Ready:
-        _dataSendState = _DataSendState::Busy;
-        break;
-    case _DataSendState::Busy:
-        _dataSendState = _DataSendState::Ready;
-        dataSendReadyChannel.writeTry(DataSend{});
-        break;
+    
     default:
         abort();
     }

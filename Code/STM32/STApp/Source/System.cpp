@@ -99,9 +99,9 @@ void System::init() {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     _ICE_ST_SPI_CS_::Write(1);
     
-//    _iceInit();
-//    _mspInit();
-//    _sdInit();
+    _iceInit();
+    _mspInit();
+    _sdInit();
 }
 
 void System::_handleEvent() {
