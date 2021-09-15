@@ -154,7 +154,7 @@ void System::_usb_reset(bool usbResetFinish) {
         _usb.cmdRecv();
     irq.restore();
     
-    USBD_LL_Transmit(&_usb._device, 0x81, MEOWBUF, (1<<19)-512);
+    USBD_LL_Transmit(&_usb._device, 0x81, MEOWBUF, MEOWBUFLEN);
 }
 
 void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
