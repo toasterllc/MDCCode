@@ -110,7 +110,7 @@ void System::_handleEvent() {
     if (auto x = _usb.cmdRecvChannel.readSelect()) {
         _usb_cmdHandle(*x);
     
-    } else if (auto x = _usb.dataSendReadyChannel.readSelect()) {
+    } else if (auto x = _usb.sendReadyChannel(Endpoints::DataIn).readSelect()) {
         _usb_dataSendReady(*x);
     
     } else if (auto x = _qspi.eventChannel.readSelect()) {
@@ -125,7 +125,7 @@ void System::_handleEvent() {
 
 void System::_reset(const Cmd& cmd) {
     _op = Op::None;
-    _usb.dataSendReset();
+    _usb.reset(Endpoints::DataIn);
     _finishCmd(true);
 }
 
@@ -158,13 +158,13 @@ void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
 
 void System::_usb_sendFromBuf() {
     Assert(!_bufs.empty());
-    Assert(_usb.dataSendReady());
+    Assert(_usb.sendReady(Endpoints::DataIn));
     
     const auto& buf = _bufs.front();
-    _usb.dataSend(buf.data, buf.len);
+    _usb.send(Endpoints::DataIn, buf.data, buf.len);
 }
 
-void System::_usb_dataSendReady(const USB::DataSend& ev) {
+void System::_usb_dataSendReady(const USB::Event& ev) {
     switch (_op) {
     case Op::SDRead:    _sdRead_usbDataSendReady(ev);  break;
     default:                                           break;
@@ -561,7 +561,7 @@ void System::_sdRead(const Cmd& cmd) {
     _opDataRem = 0xFFFFFE00; // divisible by 512
     
     // Reset the data channel (which sends a 2xZLP+sentinel sequence)
-    _usb.dataSendReset();
+    _usb.reset(Endpoints::DataIn);
     
     // ====================
     // CMD18 | READ_MULTIPLE_BLOCK
@@ -656,7 +656,7 @@ void System::_sdRead_qspiEventHandle(const QSPI::Signal& ev) {
     _sdRead_updateState();
 }
 
-void System::_sdRead_usbDataSendReady(const USB::DataSend& ev) {
+void System::_sdRead_usbDataSendReady(const USB::Event& ev) {
     Assert(_op == Op::SDRead);
     // Advance state machine
     _sdRead_updateState();
@@ -674,7 +674,7 @@ void System::_sdRead_updateState() {
     // Send data from the consumer buffer when:
     //   - we have data to write, and
     //   - the DataIn USB endpoint is ready to accept data
-    if (!_bufs.empty() && _usb.dataSendReady()) {
+    if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
         _usb_sendFromBuf();
     }
     

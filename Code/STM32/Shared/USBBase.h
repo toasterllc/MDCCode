@@ -18,6 +18,26 @@ uint8_t... Endpoints    // List of endpoints
 >
 class USBBase {
 public:
+    struct Event {};
+    
+private:
+    struct _InEndpoint {
+        enum class State : uint8_t {
+            Ready,
+            Busy,
+            
+            Reset,
+            ResetZLP1,
+            ResetZLP2,
+            ResetSentinel,
+        };
+        
+        State state = State::Ready;
+        bool needsReset = false;
+        Channel<Event,1> sendReadyChannel;
+    };
+    
+public:
     static constexpr size_t MaxPacketSizeCtrl = 64;
     static constexpr size_t MaxPacketSizeBulk = 512;
     
@@ -75,13 +95,6 @@ public:
     }
     
     // Types
-    struct Event {
-        enum class Type : uint8_t {
-            StateChanged,
-        };
-        Type type;
-    };
-    
     enum class State : uint8_t {
         Disconnected,
         Connected,
@@ -218,23 +231,54 @@ public:
         return _state;
     }
     
+    USBD_StatusTypeDef send(uint8_t ep, const void* data, size_t len) {
+        _InEndpoint& inep = _inEndpoint(ep);
+        
+        IRQState irq;
+        irq.disable();
+        Assert(_sendReady(inep));
+        _advanceState(ep, inep);
+        return USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
+    }
+    
+    bool sendReady(uint8_t ep) const {
+        IRQState irq;
+        irq.disable();
+        const _InEndpoint& inep = _inEndpoint(ep);
+        return _sendReady(inep);
+    }
+    
+    Channel<Event,1>& sendReadyChannel(uint8_t ep) {
+        _InEndpoint& inep = _inEndpoint(ep);
+        return inep.sendReadyChannel;
+    }
+    
+    void reset(uint8_t ep) {
+        IRQState irq;
+        irq.disable();
+        
+        if (EndpointOut(ep)) {
+            // TODO: implement
+            abort();
+        
+        } else {
+            _InEndpoint& inep = _inEndpoint(ep);
+            if (_sendReady(inep))   _reset(ep, inep);
+            else                    inep.needsReset = true;
+        }
+    }
+    
     // Channels
-    Channel<Event, 1> eventChannel;
+    Channel<Event,1> stateChangedChannel;
     
 protected:
     void _isr() {
         ISR_HAL_PCD(&_pcd);
     }
     
-    USBD_HandleTypeDef _device;
-    PCD_HandleTypeDef _pcd;
-    State _state = State::Disconnected;
-    
     uint8_t _usbd_Init(uint8_t cfgidx) {
         _state = State::Connected;
-        eventChannel.writeTry(Event{
-            .type = Event::Type::StateChanged,
-        });
+        stateChangedChannel.writeTry(Event{});
         
         // Open endpoints
         for (uint8_t ep : {Endpoints...}) {
@@ -253,9 +297,7 @@ protected:
     
     uint8_t _usbd_DeInit(uint8_t cfgidx) {
         _state = State::Disconnected;
-        eventChannel.writeTry(Event{
-            .type = Event::Type::StateChanged,
-        });
+        stateChangedChannel.writeTry(Event{});
         return (uint8_t)USBD_OK;
     }
     
@@ -271,11 +313,21 @@ protected:
         return (uint8_t)USBD_OK;
     }
     
-    uint8_t _usbd_DataIn(uint8_t epnum) {
+    uint8_t _usbd_DataIn(uint8_t ep) {
+        // Sanity-check the endpoint state
+        _InEndpoint& inep = _inEndpoint(ep);
+        Assert(
+            inep.state == _InEndpoint::State::ResetZLP1     ||
+            inep.state == _InEndpoint::State::ResetZLP2     ||
+            inep.state == _InEndpoint::State::ResetSentinel ||
+            inep.state == _InEndpoint::State::Busy
+        );
+        
+        _advanceState(ep, inep);
         return (uint8_t)USBD_OK;
     }
     
-    uint8_t _usbd_DataOut(uint8_t epnum) {
+    uint8_t _usbd_DataOut(uint8_t ep) {
         return (uint8_t)USBD_OK;
     }
     
@@ -283,11 +335,11 @@ protected:
         return (uint8_t)USBD_OK;
     }
     
-    uint8_t _usbd_IsoINIncomplete(uint8_t epnum) {
+    uint8_t _usbd_IsoINIncomplete(uint8_t ep) {
         return (uint8_t)USBD_OK;
     }
     
-    uint8_t _usbd_IsoOUTIncomplete(uint8_t epnum) {
+    uint8_t _usbd_IsoOUTIncomplete(uint8_t ep) {
         return (uint8_t)USBD_OK;
     }
     
@@ -310,6 +362,86 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len) {
         return nullptr;
     }
+
+private:
+    _InEndpoint& _inEndpoint(uint8_t ep) {
+        return _inEndpoints[EndpointIdx(ep)-1];
+    }
+    
+    const _InEndpoint& _inEndpoint(uint8_t ep) const {
+        return _inEndpoints[EndpointIdx(ep)-1];
+    }
+
+    // Interrupts must be disabled if called from main thread
+    bool _sendReady(const _InEndpoint& inep) const {
+        return inep.state==_InEndpoint::State::Ready;
+    }
+    
+    // Interrupts must be disabled if called from main thread
+    void _reset(uint8_t ep, _InEndpoint& inep) {
+        inep.state = _InEndpoint::State::Reset;
+        inep.needsReset = false;
+        _advanceState(ep, inep);
+    }
+    
+    // Interrupts must be disabled if called from main thread
+    void _advanceState(uint8_t ep, _InEndpoint& inep) {
+        if (inep.needsReset) {
+            _reset(ep, inep);
+            return;
+        }
+        
+        // We send two ZLPs (instead of just one) because if a transfer is in progress, the first ZLP will
+        // get 'eaten' as a ZLP that terminates the existing transfer. So to guarantee that the reader
+        // actually gets a ZLP, we have to send two.
+        // After sending the two ZLPs, we also send a sentinel to account for the fact that we don't know
+        // how many ZLPs that the reader will receive, because we don't know if the first ZLP will
+        // necessarily terminate a transfer (because a transfer may not have been in progress, or if a
+        // transfer was in progress, it may have sent exactly the number of bytes that the reader
+        // requested, in which case no ZLP is needed to end the transfer). By using a sentinel, the
+        // reader knows that no further ZLPs will be received after the sentinel has been received, and
+        // therefore the endpoint is finished being reset.
+        switch (inep.state) {
+        
+        case _InEndpoint::State::Ready:
+            inep.state = _InEndpoint::State::Busy;
+            break;
+        case _InEndpoint::State::Busy:
+            inep.state = _InEndpoint::State::Ready;
+            inep.sendReadyChannel.writeTry(Event{});
+            break;
+        
+        case _InEndpoint::State::Reset:
+            inep.state = _InEndpoint::State::ResetZLP1;
+            USBD_LL_TransmitZeroLen(&_device, ep);
+            break;
+        case _InEndpoint::State::ResetZLP1:
+            inep.state = _InEndpoint::State::ResetZLP2;
+            USBD_LL_TransmitZeroLen(&_device, ep);
+            break;
+        case _InEndpoint::State::ResetZLP2:
+            inep.state = _InEndpoint::State::ResetSentinel;
+            USBD_LL_Transmit(&_device, ep, (uint8_t*)&_ResetSentinel, sizeof(_ResetSentinel));
+            break;
+        case _InEndpoint::State::ResetSentinel:
+            inep.state = _InEndpoint::State::Ready;
+            inep.sendReadyChannel.writeTry(Event{});
+            break;
+        
+        default:
+            abort();
+        }
+    }
     
     friend void ISR_OTG_HS();
+    
+protected:
+    USBD_HandleTypeDef _device;
+    
+private:
+    static const inline uint8_t _ResetSentinel = 0;
+    
+    _InEndpoint _inEndpoints[EndpointCountIn()] = {};
+    PCD_HandleTypeDef _pcd;
+    State _state = State::Disconnected;
 };
