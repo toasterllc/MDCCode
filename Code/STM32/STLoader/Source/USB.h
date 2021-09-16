@@ -13,16 +13,10 @@ public USBBase<
     // bootloading), but DMA masters can't access it.
     false,
     // Endpoints
-    STLoader::Endpoints::CmdOut,
     STLoader::Endpoints::DataOut,
     STLoader::Endpoints::DataIn
 > {
 public:
-    struct CmdRecv {
-        const uint8_t* data;
-        size_t len;
-    };
-    
     struct DataRecv {
         size_t len;
     };
@@ -30,9 +24,6 @@ public:
     struct DataSend {};
     
     // Methods
-    Channel<CmdRecv, 1> cmdRecvChannel;
-    void cmdSendStatus(bool status);
-    
     USBD_StatusTypeDef dataRecv(void* addr, size_t len);
     Channel<DataRecv, 1> dataRecvChannel;
     
