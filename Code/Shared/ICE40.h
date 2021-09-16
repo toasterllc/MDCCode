@@ -127,6 +127,17 @@ struct SDInitMsg : Msg {
 };
 
 struct SDSendCmdMsg : Msg {
+    static constexpr uint8_t CMD0  = 0;
+    static constexpr uint8_t CMD2  = 2;
+    static constexpr uint8_t CMD3  = 3;
+    static constexpr uint8_t CMD6  = 6;
+    static constexpr uint8_t CMD7  = 7;
+    static constexpr uint8_t CMD8  = 8;
+    static constexpr uint8_t CMD12 = 12;
+    static constexpr uint8_t CMD18 = 18;
+    static constexpr uint8_t CMD41 = 41;
+    static constexpr uint8_t CMD55 = 55;
+    
     Enum(uint8_t, RespType, RespTypes,
         None        = 0,
         Len48       = 1,

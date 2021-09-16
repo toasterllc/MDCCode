@@ -300,7 +300,7 @@ void System::_sdInit() {
         // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
         HAL_Delay(1);
         // Send CMD0
-        _sdSendCmd(0, 0, SDRespTypes::None);
+        _sdSendCmd(SDSendCmdMsg::CMD0, 0, SDRespTypes::None);
         // There's no response to CMD0
     }
     
@@ -312,7 +312,7 @@ void System::_sdInit() {
     {
         constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
         constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
-        auto status = _sdSendCmd(8, (Voltage<<8)|(CheckPattern<<0));
+        auto status = _sdSendCmd(SDSendCmdMsg::CMD8, (Voltage<<8)|(CheckPattern<<0));
         Assert(!status.respCRCErr());
         const uint8_t replyVoltage = status.respGetBits(19,16);
         Assert(replyVoltage == Voltage);
@@ -328,13 +328,13 @@ void System::_sdInit() {
     for (;;) {
         // CMD55
         {
-            auto status = _sdSendCmd(55, 0);
+            auto status = _sdSendCmd(SDSendCmdMsg::CMD55, 0);
             Assert(!status.respCRCErr());
         }
         
         // CMD41
         {
-            auto status = _sdSendCmd(41, 0x51008000);
+            auto status = _sdSendCmd(SDSendCmdMsg::CMD41, 0x51008000);
             
             // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
             
@@ -366,7 +366,7 @@ void System::_sdInit() {
     // ====================
     {
         // The response to CMD2 is 136 bits, instead of the usual 48 bits
-        _sdSendCmd(2, 0, SDRespTypes::Len136);
+        _sdSendCmd(SDSendCmdMsg::CMD2, 0, SDRespTypes::Len136);
         // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
         // so it'll be flagged as incorrect.
     }
@@ -377,7 +377,7 @@ void System::_sdInit() {
     //   Publish a new relative address (RCA)
     // ====================
     {
-        auto status = _sdSendCmd(3, 0);
+        auto status = _sdSendCmd(SDSendCmdMsg::CMD3, 0);
         Assert(!status.respCRCErr());
         // Get the card's RCA from the response
         _sdRCA = status.respGetBits(39,24);
@@ -389,7 +389,7 @@ void System::_sdInit() {
     //   Select card
     // ====================
     {
-        auto status = _sdSendCmd(7, ((uint32_t)_sdRCA)<<16);
+        auto status = _sdSendCmd(SDSendCmdMsg::CMD7, ((uint32_t)_sdRCA)<<16);
         Assert(!status.respCRCErr());
     }
     
@@ -401,13 +401,13 @@ void System::_sdInit() {
     {
         // CMD55
         {
-            auto status = _sdSendCmd(55, ((uint32_t)_sdRCA)<<16);
+            auto status = _sdSendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sdRCA)<<16);
             Assert(!status.respCRCErr());
         }
         
         // CMD6
         {
-            auto status = _sdSendCmd(6, 0x00000002);
+            auto status = _sdSendCmd(SDSendCmdMsg::CMD6, 0x00000002);
             Assert(!status.respCRCErr());
         }
     }
@@ -425,7 +425,7 @@ void System::_sdInit() {
         // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
         // Group 2 (Command System)    = 0xF (no change)
         // Group 1 (Access Mode)       = 0x3 (SDR104)
-        auto status = _sdSendCmd(6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512x1);
+        auto status = _sdSendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512x1);
         Assert(!status.respCRCErr());
         Assert(!status.datInCRCErr());
         
@@ -462,7 +462,7 @@ void System::_sdInit() {
 //        //   Read blocks of data (1 block == 512 bytes)
 //        // ====================
 //        {
-//            auto status = _sdSendCmd(18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+//            auto status = _sdSendCmd(SDSendCmdMsg::CMD18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
 //            Assert(!status.respCRCErr());
 //        }
 //        
@@ -488,13 +488,13 @@ void System::_sdInit() {
 //        {
 //            // CMD55
 //            {
-//                auto status = _sdSendCmd(55, ((uint32_t)_sdRCA)<<16);
+//                auto status = _sdSendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sdRCA)<<16);
 //                Assert(!status.respCRCErr());
 //            }
 //            
 //            // CMD23
 //            {
-//                auto status = _sdSendCmd(23, 0x00000001);
+//                auto status = _sdSendCmd(SDSendCmdMsg::CMD23, 0x00000001);
 //                Assert(!status.respCRCErr());
 //            }
 //        }
@@ -505,7 +505,7 @@ void System::_sdInit() {
 //        //   Write blocks of data (1 block == 512 bytes)
 //        // ====================
 //        {
-//            auto status = _sdSendCmd(25, 0);
+//            auto status = _sdSendCmd(SDSendCmdMsg::CMD25, 0);
 //            Assert(!status.respCRCErr());
 //        }
 //        
@@ -536,7 +536,7 @@ void System::_sdInit() {
 //        //   Finish writing
 //        // ====================
 //        {
-//            auto status = _sdSendCmd(12, 0);
+//            auto status = _sdSendCmd(SDSendCmdMsg::CMD12, 0);
 //            Assert(!status.respCRCErr());
 //            
 //            // Wait for SD card to indicate that it's ready (DAT0=1)
@@ -569,7 +569,7 @@ void System::_sdRead(const Cmd& cmd) {
     //   Read blocks of data (1 block == 512 bytes)
     // ====================
     {
-        auto status = _sdSendCmd(18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+        auto status = _sdSendCmd(SDSendCmdMsg::CMD18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
         Assert(!status.respCRCErr());
     }
     
@@ -695,8 +695,10 @@ void System::_sdRead_stop() {
     //   State: Send Data -> Transfer
     //   Finish reading
     // ====================
-    auto status = _sdSendCmd(12, 0);
-    Assert(!status.respCRCErr());
+    {
+        auto status = _sdSendCmd(SDSendCmdMsg::CMD12, 0);
+        Assert(!status.respCRCErr());
+    }
     
     _op = Op::None;
 }
