@@ -248,7 +248,7 @@ public:
         return _sendReady(inep);
     }
     
-    Channel<Event,1>& sendReadyChannel(uint8_t ep) {
+    constexpr Channel<Event,1>& sendReadyChannel(uint8_t ep) {
         _InEndpoint& inep = _inEndpoint(ep);
         return inep.sendReadyChannel;
     }
@@ -364,27 +364,27 @@ protected:
     }
 
 private:
-    _InEndpoint& _inEndpoint(uint8_t ep) {
+    constexpr _InEndpoint& _inEndpoint(uint8_t ep) {
         return _inEndpoints[EndpointIdx(ep)-1];
     }
     
-    const _InEndpoint& _inEndpoint(uint8_t ep) const {
+    constexpr const _InEndpoint& _inEndpoint(uint8_t ep) const {
         return _inEndpoints[EndpointIdx(ep)-1];
     }
 
-    // Interrupts must be disabled if called from main thread
+    // Interrupts must be disabled
     bool _sendReady(const _InEndpoint& inep) const {
         return inep.state==_InEndpoint::State::Ready;
     }
     
-    // Interrupts must be disabled if called from main thread
+    // Interrupts must be disabled
     void _reset(uint8_t ep, _InEndpoint& inep) {
         inep.state = _InEndpoint::State::Reset;
         inep.needsReset = false;
         _advanceState(ep, inep);
     }
     
-    // Interrupts must be disabled if called from main thread
+    // Interrupts must be disabled
     void _advanceState(uint8_t ep, _InEndpoint& inep) {
         if (inep.needsReset) {
             _reset(ep, inep);

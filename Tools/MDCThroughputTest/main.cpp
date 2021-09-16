@@ -72,7 +72,7 @@ int main(int argc, const char* argv[]) {
 //                }
 //            }
             
-            printf("Throughput: %ju Mbits/sec\n\n", throughput_MbitsPerSec);
+            printf("Throughput: %ju Mbits/sec\n", throughput_MbitsPerSec);
         }
         
         
