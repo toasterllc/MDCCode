@@ -19,24 +19,35 @@ uint8_t... Endpoints    // List of endpoints
 class USBBase {
 public:
     struct Event {};
+    
     struct CmdRecv {
         const uint8_t* data;
         size_t len;
     };
     
+    struct DataRecv {
+        size_t len;
+    };
+    
 private:
-    struct _InEndpoint {
-        enum class State : uint8_t {
-            Ready,
-            Busy,
-            
-            Reset,
-            ResetZLP1,
-            ResetZLP2,
-            ResetSentinel,
-        };
+    enum class _EndpointState : uint8_t {
+        Ready,
+        Busy,
         
-        State state = State::Ready;
+        Reset,
+        ResetZLP1,
+        ResetZLP2,
+        ResetSentinel,
+    };
+    
+    struct _OutEndpoint {
+        _EndpointState state = _EndpointState::Ready;
+        bool needsReset = false;
+        Channel<Event,1> recvDoneChannel;
+    };
+    
+    struct _InEndpoint {
+        _EndpointState state = _EndpointState::Ready;
         bool needsReset = false;
         Channel<Event,1> sendReadyChannel;
     };
@@ -235,9 +246,46 @@ public:
         return _state;
     }
     
+    // Methods
     void cmdSendStatus(bool status) {
         if (status) USBD_CtlSendStatus(&_device);
         else        USBD_CtlError(&_device, nullptr);
+    }
+    
+    void reset(uint8_t ep) {
+        IRQState irq;
+        irq.disable();
+        
+        if (EndpointOut(ep)) {
+            // TODO: implement
+            abort();
+        
+        } else {
+            _InEndpoint& inep = _inEndpoint(ep);
+            if (_sendReady(inep))   _reset(ep, inep);
+            else                    inep.needsReset = true;
+        }
+    }
+    
+    USBD_StatusTypeDef recv(uint8_t ep, void* data, size_t len) {
+        _OutEndpoint& outep = _outEndpoint(ep);
+        
+        IRQState irq;
+        irq.disable();
+        Assert(_recvReady(outep));
+        _advanceState(ep, outep);
+        return USBD_LL_PrepareReceive(&_device, ep, data, len);
+    }
+    
+    bool recvReady(uint8_t ep) const {
+        IRQState irq;
+        irq.disable();
+        return _recvReady(_outEndpoint(ep));
+    }
+    
+    constexpr Channel<Event,1>& recvDoneChannel(uint8_t ep) {
+        _OutEndpoint& outep = _outEndpoint(ep);
+        return outep.recvDoneChannel;
     }
     
     USBD_StatusTypeDef send(uint8_t ep, const void* data, size_t len) {
@@ -259,21 +307,6 @@ public:
     constexpr Channel<Event,1>& sendReadyChannel(uint8_t ep) {
         _InEndpoint& inep = _inEndpoint(ep);
         return inep.sendReadyChannel;
-    }
-    
-    void reset(uint8_t ep) {
-        IRQState irq;
-        irq.disable();
-        
-        if (EndpointOut(ep)) {
-            // TODO: implement
-            abort();
-        
-        } else {
-            _InEndpoint& inep = _inEndpoint(ep);
-            if (_sendReady(inep))   _reset(ep, inep);
-            else                    inep.needsReset = true;
-        }
     }
     
     // Channels
@@ -340,10 +373,10 @@ protected:
         // Sanity-check the endpoint state
         _InEndpoint& inep = _inEndpoint(ep);
         Assert(
-            inep.state == _InEndpoint::State::ResetZLP1     ||
-            inep.state == _InEndpoint::State::ResetZLP2     ||
-            inep.state == _InEndpoint::State::ResetSentinel ||
-            inep.state == _InEndpoint::State::Busy
+            inep.state == _EndpointState::ResetZLP1     ||
+            inep.state == _EndpointState::ResetZLP2     ||
+            inep.state == _EndpointState::ResetSentinel ||
+            inep.state == _EndpointState::Busy
         );
         
         _advanceState(ep, inep);
@@ -387,22 +420,19 @@ protected:
     }
 
 private:
-    constexpr _InEndpoint& _inEndpoint(uint8_t ep) {
-        return _inEndpoints[EndpointIdx(ep)-1];
-    }
+    constexpr       _OutEndpoint&   _outEndpoint(uint8_t ep)        { return _outEndpoints[EndpointIdx(ep)-1];  }
+    constexpr const _OutEndpoint&   _outEndpoint(uint8_t ep) const  { return _outEndpoints[EndpointIdx(ep)-1];  }
+    constexpr       _InEndpoint&    _inEndpoint(uint8_t ep)         { return _inEndpoints[EndpointIdx(ep)-1];   }
+    constexpr const _InEndpoint&    _inEndpoint(uint8_t ep) const   { return _inEndpoints[EndpointIdx(ep)-1];   }
     
-    constexpr const _InEndpoint& _inEndpoint(uint8_t ep) const {
-        return _inEndpoints[EndpointIdx(ep)-1];
-    }
-
     // Interrupts must be disabled
-    bool _sendReady(const _InEndpoint& inep) const {
-        return inep.state==_InEndpoint::State::Ready;
-    }
+    bool _recvReady(const _OutEndpoint& outep)  const { return outep.state==_EndpointState::Ready;  }
+    // Interrupts must be disabled
+    bool _sendReady(const _InEndpoint& inep)    const { return inep.state==_EndpointState::Ready;   }
     
     // Interrupts must be disabled
     void _reset(uint8_t ep, _InEndpoint& inep) {
-        inep.state = _InEndpoint::State::Reset;
+        inep.state = _EndpointState::Reset;
         inep.needsReset = false;
         _advanceState(ep, inep);
     }
@@ -426,28 +456,28 @@ private:
         // therefore the endpoint is finished being reset.
         switch (inep.state) {
         
-        case _InEndpoint::State::Ready:
-            inep.state = _InEndpoint::State::Busy;
+        case _EndpointState::Ready:
+            inep.state = _EndpointState::Busy;
             break;
-        case _InEndpoint::State::Busy:
-            inep.state = _InEndpoint::State::Ready;
+        case _EndpointState::Busy:
+            inep.state = _EndpointState::Ready;
             inep.sendReadyChannel.writeTry(Event{});
             break;
         
-        case _InEndpoint::State::Reset:
-            inep.state = _InEndpoint::State::ResetZLP1;
+        case _EndpointState::Reset:
+            inep.state = _EndpointState::ResetZLP1;
             USBD_LL_TransmitZeroLen(&_device, ep);
             break;
-        case _InEndpoint::State::ResetZLP1:
-            inep.state = _InEndpoint::State::ResetZLP2;
+        case _EndpointState::ResetZLP1:
+            inep.state = _EndpointState::ResetZLP2;
             USBD_LL_TransmitZeroLen(&_device, ep);
             break;
-        case _InEndpoint::State::ResetZLP2:
-            inep.state = _InEndpoint::State::ResetSentinel;
+        case _EndpointState::ResetZLP2:
+            inep.state = _EndpointState::ResetSentinel;
             USBD_LL_Transmit(&_device, ep, (uint8_t*)&_ResetSentinel, sizeof(_ResetSentinel));
             break;
-        case _InEndpoint::State::ResetSentinel:
-            inep.state = _InEndpoint::State::Ready;
+        case _EndpointState::ResetSentinel:
+            inep.state = _EndpointState::Ready;
             inep.sendReadyChannel.writeTry(Event{});
             break;
         
@@ -465,6 +495,7 @@ private:
     static const inline uint8_t _ResetSentinel = 0;
     
     uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
+    _OutEndpoint _outEndpoints[EndpointCountOut()] = {};
     _InEndpoint _inEndpoints[EndpointCountIn()] = {};
     PCD_HandleTypeDef _pcd;
     State _state = State::Disconnected;
