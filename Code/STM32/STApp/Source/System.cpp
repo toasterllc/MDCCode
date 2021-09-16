@@ -154,7 +154,28 @@ void System::_usb_reset(bool usbResetFinish) {
         _usb.cmdRecv();
     irq.restore();
     
-    USBD_LL_Transmit(&_usb._device, 0x81, MEOWBUF, MEOWBUFLEN);
+    USBD_LL_Transmit(&_usb._device, 0x81, MEOWBUF, MEOWSENDLEN);
+    irq.disable();
+    for (;;) {
+        PCD_HandleTypeDef* hpcd = &_usb._pcd;
+        
+//        irq.disable();
+        for (;;) {
+            const uint8_t EP1 = 1;
+            const auto& ep = hpcd->IN_ep[EP1];
+            extern HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t epnum);
+            PCD_WriteEmptyTxFifo(hpcd, EP1);
+            if (ep.xfer_len == ep.xfer_count) {
+                break;
+    //            USBD_LL_Transmit(&_usb._device, 0x81, MEOWBUF, MEOWSENDLEN);
+            }
+        }
+        
+        extern void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd);
+        ISR_HAL_PCD(hpcd);
+        
+//        irq.restore();
+    }
 }
 
 void System::_usb_cmdHandle(const USB::CmdRecv& ev) {

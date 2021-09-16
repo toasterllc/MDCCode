@@ -89,7 +89,7 @@
   * @{
   */
 #if defined (USB_OTG_FS) || defined (USB_OTG_HS)
-static HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t epnum);
+HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t epnum);
 static HAL_StatusTypeDef PCD_EP_OutXfrComplete_int(PCD_HandleTypeDef *hpcd, uint32_t epnum);
 static HAL_StatusTypeDef PCD_EP_OutSetupPacket_int(PCD_HandleTypeDef *hpcd, uint32_t epnum);
 #endif /* defined (USB_OTG_FS) || defined (USB_OTG_HS) */
@@ -1009,7 +1009,7 @@ if (__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_IEPINT))
 #else
             if (epnum == 1) {
                 extern uint8_t MEOWBUF[MEOWBUFLEN];
-                HAL_PCD_EP_Transmit(hpcd, 0x81, MEOWBUF, MEOWBUFLEN);
+                HAL_PCD_EP_Transmit(hpcd, 0x81, MEOWBUF, MEOWSENDLEN);
             } else {
                 HAL_PCD_DataInStageCallback(hpcd, (uint8_t)epnum);
             }
@@ -1962,7 +1962,7 @@ PCD_StateTypeDef HAL_PCD_GetState(PCD_HandleTypeDef *hpcd)
   * @param  epnum endpoint number
   * @retval HAL status
   */
-static HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t epnum)
+HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t epnum)
 {
   USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
   uint32_t USBx_BASE = (uint32_t)USBx;
@@ -1999,13 +1999,13 @@ static HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t 
 //  }
   
   
-  volatile uint16_t freeSpace = 4*(USBx_INEP(epnum)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV);
-  static volatile uint32_t emptyCount = 0;
-  if (epnum == 1) {
-    if (freeSpace == 2928) {
-        emptyCount++;
-    }
-  }
+//  volatile uint16_t freeSpace = 4*(USBx_INEP(epnum)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV);
+//  static volatile uint32_t emptyCount = 0;
+//  if (epnum == 1) {
+//    if (freeSpace == 2928) {
+//        emptyCount++;
+//    }
+//  }
 
   while (((USBx_INEP(epnum)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) >= len32b) &&
          (ep->xfer_count < ep->xfer_len) && (ep->xfer_len != 0U))
