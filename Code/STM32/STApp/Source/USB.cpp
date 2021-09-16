@@ -3,11 +3,6 @@
 #include <algorithm>
 using namespace STApp;
 
-void USB::cmdSendStatus(bool status) {
-    if (status) USBD_CtlSendStatus(&_device);
-    else        USBD_CtlError(&_device, nullptr);
-}
-
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
     return _super::_usbd_Init(cfgidx);
 }
@@ -17,24 +12,7 @@ uint8_t USB::_usbd_DeInit(uint8_t cfgidx) {
 }
 
 uint8_t USB::_usbd_Setup(USBD_SetupReqTypedef* req) {
-    switch (req->bmRequest & USB_REQ_TYPE_MASK) {
-    case USB_REQ_TYPE_VENDOR: {
-        switch (req->bRequest) {
-        case STApp::CtrlReqs::CmdExec: {
-            USBD_CtlPrepareRx(&_device, _cmdRecvBuf, sizeof(_cmdRecvBuf));
-            return USBD_OK;
-        }
-        
-        default: break;
-        }
-        break;
-    }
-    
-    default: break;
-    }
-    
-    USBD_CtlError(&_device, req);
-    return USBD_FAIL;
+    return _super::_usbd_Setup(req);
 }
 
 uint8_t USB::_usbd_EP0_TxSent() {
@@ -42,35 +20,27 @@ uint8_t USB::_usbd_EP0_TxSent() {
 }
 
 uint8_t USB::_usbd_EP0_RxReady() {
-    _super::_usbd_EP0_RxReady();
-    
-    const size_t dataLen = USBD_LL_GetRxDataSize(&_device, 0);
-    cmdRecvChannel.writeTry(CmdRecv{
-        .data = _cmdRecvBuf,
-        .len = dataLen,
-    });
-    
-    return (uint8_t)USBD_OK;
+    return _super::_usbd_EP0_RxReady();
 }
 
-uint8_t USB::_usbd_DataIn(uint8_t epnum) {
-    return _super::_usbd_DataIn(epnum);
+uint8_t USB::_usbd_DataIn(uint8_t ep) {
+    return _super::_usbd_DataIn(ep);
 }
 
-uint8_t USB::_usbd_DataOut(uint8_t epnum) {
-    return _super::_usbd_DataOut(epnum);
+uint8_t USB::_usbd_DataOut(uint8_t ep) {
+    return _super::_usbd_DataOut(ep);
 }
 
 uint8_t USB::_usbd_SOF() {
   return _super::_usbd_SOF();
 }
 
-uint8_t USB::_usbd_IsoINIncomplete(uint8_t epnum) {
-    return _super::_usbd_IsoINIncomplete(epnum);
+uint8_t USB::_usbd_IsoINIncomplete(uint8_t ep) {
+    return _super::_usbd_IsoINIncomplete(ep);
 }
 
-uint8_t USB::_usbd_IsoOUTIncomplete(uint8_t epnum) {
-    return _super::_usbd_IsoOUTIncomplete(epnum);
+uint8_t USB::_usbd_IsoOUTIncomplete(uint8_t ep) {
+    return _super::_usbd_IsoOUTIncomplete(ep);
 }
 
 uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {

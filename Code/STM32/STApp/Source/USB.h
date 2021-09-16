@@ -14,15 +14,6 @@ public USBBase<
     // Endpoints
     STApp::Endpoints::DataIn
 > {
-public:
-    struct CmdRecv {
-        const uint8_t* data;
-        size_t len;
-    };
-    
-    // Methods
-    Channel<CmdRecv,1> cmdRecvChannel;
-    void cmdSendStatus(bool status);
     
 protected:
     // Callbacks
@@ -43,8 +34,6 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
-    uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
-    
     using _super = USBBase;
     friend class USBBase;
 };

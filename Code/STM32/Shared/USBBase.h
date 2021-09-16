@@ -19,6 +19,10 @@ uint8_t... Endpoints    // List of endpoints
 class USBBase {
 public:
     struct Event {};
+    struct CmdRecv {
+        const uint8_t* data;
+        size_t len;
+    };
     
 private:
     struct _InEndpoint {
@@ -231,6 +235,11 @@ public:
         return _state;
     }
     
+    void cmdSendStatus(bool status) {
+        if (status) USBD_CtlSendStatus(&_device);
+        else        USBD_CtlError(&_device, nullptr);
+    }
+    
     USBD_StatusTypeDef send(uint8_t ep, const void* data, size_t len) {
         _InEndpoint& inep = _inEndpoint(ep);
         
@@ -269,6 +278,7 @@ public:
     
     // Channels
     Channel<Event,1> stateChangedChannel;
+    Channel<CmdRecv,1> cmdRecvChannel;
     
 protected:
     void _isr() {
@@ -301,7 +311,15 @@ protected:
     }
     
     uint8_t _usbd_Setup(USBD_SetupReqTypedef* req) {
-        return (uint8_t)USBD_OK;
+        switch (req->bmRequest & USB_REQ_TYPE_MASK) {
+        case USB_REQ_TYPE_VENDOR:
+            USBD_CtlPrepareRx(&_device, _cmdRecvBuf, sizeof(_cmdRecvBuf));
+            return USBD_OK;
+        
+        default:
+            USBD_CtlError(&_device, req);
+            return USBD_FAIL;
+        }
     }
     
     uint8_t _usbd_EP0_TxSent() {
@@ -309,6 +327,12 @@ protected:
     }
     
     uint8_t _usbd_EP0_RxReady() {
+        const size_t dataLen = USBD_LL_GetRxDataSize(&_device, 0);
+        cmdRecvChannel.writeTry(CmdRecv{
+            .data = _cmdRecvBuf,
+            .len = dataLen,
+        });
+        
         return (uint8_t)USBD_OK;
     }
     
@@ -440,6 +464,7 @@ protected:
 private:
     static const inline uint8_t _ResetSentinel = 0;
     
+    uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
     _InEndpoint _inEndpoints[EndpointCountIn()] = {};
     PCD_HandleTypeDef _pcd;
     State _state = State::Disconnected;

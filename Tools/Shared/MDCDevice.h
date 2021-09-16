@@ -26,7 +26,7 @@ public:
     void reset() {
         using namespace STApp;
         Cmd cmd = { .op = Op::Reset };
-        _dev.vendorRequestOut(CtrlReqs::CmdExec, cmd);
+        _dev.vendorRequestOut(0, cmd);
         _flushEndpoint(Endpoints::DataIn);
     }
     
@@ -40,7 +40,7 @@ public:
                 },
             },
         };
-        _dev.vendorRequestOut(CtrlReqs::CmdExec, cmd);
+        _dev.vendorRequestOut(0, cmd);
         _flushEndpoint(Endpoints::DataIn);
     }
     
@@ -55,7 +55,7 @@ public:
                 },
             },
         };
-        _dev.vendorRequestOut(CtrlReqs::CmdExec, cmd);
+        _dev.vendorRequestOut(0, cmd);
     }
     
     USBDevice& usbDevice() { return _dev; }
