@@ -8,93 +8,6 @@ void USB::cmdSendStatus(bool status) {
     else        USBD_CtlError(&_device, nullptr);
 }
 
-USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
-    IRQState irq;
-    irq.disable();
-    
-    Assert(_dataSendReady());
-    _dataSendAdvanceState();
-    return USBD_LL_Transmit(&_device, STApp::Endpoints::DataIn, (uint8_t*)data, len);
-}
-
-bool USB::dataSendReady() const {
-    IRQState irq;
-    irq.disable();
-    return _dataSendReady();
-}
-
-void USB::dataSendReset() {
-    IRQState irq;
-    irq.disable();
-    
-    if (_dataSendReady()) {
-        _dataSendReset();
-    } else {
-        _dataSendNeedsReset = true;
-    }
-}
-
-// Interrupts must be disabled if called from main thread
-void USB::_dataSendReset() {
-    _dataSendState = _DataSendState::Reset;
-    _dataSendNeedsReset = false;
-    _dataSendAdvanceState();
-}
-
-// Interrupts must be disabled if called from main thread
-void USB::_dataSendAdvanceState() {
-    if (_dataSendNeedsReset) {
-        _dataSendReset();
-        return;
-    }
-    
-    // We send two ZLPs (instead of just one) because if a transfer is in progress, the first ZLP will
-    // get 'eaten' as a ZLP that terminates the existing transfer. So to guarantee that the reader
-    // actually gets a ZLP, we have to send two.
-    // After sending the two ZLPs, we also send a sentinel to account for the fact that we don't know
-    // how many ZLPs that the reader will receive, because we don't know if the first ZLP will
-    // necessarily terminate a transfer (because a transfer may not have been in progress, or if a
-    // transfer was in progress, it may have sent exactly the number of bytes that the reader
-    // requested, in which case no ZLP is needed to end the transfer). By using a sentinel, the
-    // reader knows that no further ZLPs will be received after the sentinel has been received, and
-    // therefore the endpoint is finished being reset.
-    switch (_dataSendState) {
-    
-    case _DataSendState::Ready:
-        _dataSendState = _DataSendState::Busy;
-        break;
-    case _DataSendState::Busy:
-        _dataSendState = _DataSendState::Ready;
-        dataSendReadyChannel.writeTry(DataSend{});
-        break;
-    
-    case _DataSendState::Reset:
-        _dataSendState = _DataSendState::ResetZLP1;
-        USBD_LL_TransmitZeroLen(&_device, STApp::Endpoints::DataIn);
-        break;
-    case _DataSendState::ResetZLP1:
-        _dataSendState = _DataSendState::ResetZLP2;
-        USBD_LL_TransmitZeroLen(&_device, STApp::Endpoints::DataIn);
-        break;
-    case _DataSendState::ResetZLP2:
-        _dataSendState = _DataSendState::ResetSentinel;
-        USBD_LL_Transmit(&_device, STApp::Endpoints::DataIn, (uint8_t*)&_ResetSentinel, sizeof(_ResetSentinel));
-        break;
-    case _DataSendState::ResetSentinel:
-        _dataSendState = _DataSendState::Ready;
-        dataSendReadyChannel.writeTry(DataSend{});
-        break;
-    
-    default:
-        abort();
-    }
-}
-
-// Interrupts must be disabled if called from main thread
-bool USB::_dataSendReady() const {
-    return _dataSendState==_DataSendState::Ready;
-}
-
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
     return _super::_usbd_Init(cfgidx);
 }
@@ -141,23 +54,7 @@ uint8_t USB::_usbd_EP0_RxReady() {
 }
 
 uint8_t USB::_usbd_DataIn(uint8_t epnum) {
-    _super::_usbd_DataIn(epnum);
-    
-    switch (epnum) {
-    // DataIn endpoint
-    case EndpointIdx(STApp::Endpoints::DataIn): {
-        // Sanity-check our state
-        Assert(
-            _dataSendState == _DataSendState::ResetZLP1         ||
-            _dataSendState == _DataSendState::ResetZLP2         ||
-            _dataSendState == _DataSendState::ResetSentinel     ||
-            _dataSendState == _DataSendState::Busy
-        );
-        _dataSendAdvanceState();
-        break;
-    }}
-    
-    return (uint8_t)USBD_OK;
+    return _super::_usbd_DataIn(epnum);
 }
 
 uint8_t USB::_usbd_DataOut(uint8_t epnum) {

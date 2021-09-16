@@ -11,6 +11,11 @@ namespace STLoader {
         DataIn  = 0x81,
     );
     
+    // Vendor-defined Control Requests
+    Enum(uint8_t, CtrlReq, CtrlReqs,
+        CmdExec,
+    );
+    
     enum class Op : uint8_t {
         None,
         // STM32 Bootloader

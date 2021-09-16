@@ -15,29 +15,16 @@ public USBBase<
     STApp::Endpoints::DataIn
 > {
 public:
-    struct ResetRecv {};
-    
     struct CmdRecv {
         const uint8_t* data;
         size_t len;
     };
     
-    struct DataSend {};
-    
     // Methods
     Channel<CmdRecv, 1> cmdRecvChannel;
     void cmdSendStatus(bool status);
     
-    USBD_StatusTypeDef dataSend(const void* data, size_t len);
-    void dataSendReset(); // Sends 2 zero-length packets + 1-byte sentinel
-    bool dataSendReady() const;
-    Channel<DataSend, 1> dataSendReadyChannel; // Signals that more data can be sent
-    
 protected:
-    void _dataSendReset();
-    void _dataSendAdvanceState();
-    bool _dataSendReady() const;
-    
     // Callbacks
     uint8_t _usbd_Init(uint8_t cfgidx);
     uint8_t _usbd_DeInit(uint8_t cfgidx);
@@ -56,22 +43,7 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
-    enum class _DataSendState {
-        Ready,
-        Busy,
-        
-        Reset,
-        ResetZLP1,
-        ResetZLP2,
-        ResetSentinel,
-    };
-    
-    static const inline uint8_t _ResetSentinel = 0;
-    
     uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
-    
-    _DataSendState _dataSendState = _DataSendState::Ready;
-    bool _dataSendNeedsReset = false;
     
     using _super = USBBase;
     friend class USBBase;

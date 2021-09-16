@@ -32,7 +32,22 @@ uint8_t USB::_usbd_DeInit(uint8_t cfgidx) {
 }
 
 uint8_t USB::_usbd_Setup(USBD_SetupReqTypedef* req) {
-    _super::_usbd_Setup(req);
+    switch (req->bmRequest & USB_REQ_TYPE_MASK) {
+    case USB_REQ_TYPE_VENDOR: {
+        switch (req->bRequest) {
+        case STApp::CtrlReqs::CmdExec: {
+            USBD_CtlPrepareRx(&_device, _cmdRecvBuf, sizeof(_cmdRecvBuf));
+            return USBD_OK;
+        }
+        
+        default: break;
+        }
+        break;
+    }
+    
+    default: break;
+    }
+    
     USBD_CtlError(&_device, req);
     return USBD_FAIL;
 }
@@ -42,7 +57,15 @@ uint8_t USB::_usbd_EP0_TxSent() {
 }
 
 uint8_t USB::_usbd_EP0_RxReady() {
-    return _super::_usbd_EP0_RxReady();
+    _super::_usbd_EP0_RxReady();
+    
+    const size_t dataLen = USBD_LL_GetRxDataSize(&_device, 0);
+    cmdRecvChannel.writeTry(CmdRecv{
+        .data = _cmdRecvBuf,
+        .len = dataLen,
+    });
+    
+    return (uint8_t)USBD_OK;
 }
 
 uint8_t USB::_usbd_DataIn(uint8_t epnum) {

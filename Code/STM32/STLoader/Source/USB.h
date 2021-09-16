@@ -30,8 +30,8 @@ public:
     struct DataSend {};
     
     // Methods
-    USBD_StatusTypeDef cmdRecv();
     Channel<CmdRecv, 1> cmdRecvChannel;
+    void cmdSendStatus(bool status);
     
     USBD_StatusTypeDef dataRecv(void* addr, size_t len);
     Channel<DataRecv, 1> dataRecvChannel;
