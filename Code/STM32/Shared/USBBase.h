@@ -244,8 +244,7 @@ public:
     bool sendReady(uint8_t ep) const {
         IRQState irq;
         irq.disable();
-        const _InEndpoint& inep = _inEndpoint(ep);
-        return _sendReady(inep);
+        return _sendReady(_inEndpoint(ep));
     }
     
     constexpr Channel<Event,1>& sendReadyChannel(uint8_t ep) {
