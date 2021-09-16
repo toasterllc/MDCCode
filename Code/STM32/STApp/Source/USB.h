@@ -21,7 +21,7 @@ public:
     };
     
     // Methods
-    Channel<CmdRecv, 1> cmdRecvChannel;
+    Channel<CmdRecv,1> cmdRecvChannel;
     void cmdSendStatus(bool status);
     
 protected:
