@@ -11,16 +11,14 @@ public:
     
 private:
     void _handleEvent();
-    void _finishCmd(STLoader::Status status);
+    void _finishCmd(bool status);
     
     // USB
-    void _usbCmdRecv();
-    void _usbHandleEvent(const USB::Event& ev);
-    void _usbHandleCmd(const USB::CmdRecv& ev);
-    void _usbHandleDataRecv(const USB::DataRecv& ev);
-    void _usbHandleDataSend(const USB::DataSend& ev);
-    void _usbRecvToBuf();
-    void _usbSendFromBuf();
+    void _usb_cmdHandle(const USB::CmdRecv& ev);
+    void _usb_dataRecvDone(const USB::DataRecv& ev);
+    void _usb_dataSendReady(const USB::Event& ev);
+    void _usb_recvToBuf();
+    void _usb_sendFromBuf();
     
     // STM32 Bootloader
     void _stWrite(const STLoader::Cmd& cmd);

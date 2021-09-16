@@ -99,9 +99,9 @@ void System::init() {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     _ICE_ST_SPI_CS_::Write(1);
     
-    _iceInit();
-    _mspInit();
-    _sdInit();
+    _ice_init();
+    _msp_init();
+    _sd_init();
 }
 
 void System::_handleEvent() {
@@ -173,28 +173,28 @@ void System::_usb_dataSendReady(const USB::Event& ev) {
 
 #pragma mark - ICE40
 
-void System::_iceInit() {
+void System::_ice_init() {
     // Confirm that we can communicate with the ICE40.
-    // Interrupts need to be enabled for this, since _ice40Transfer()
+    // Interrupts need to be enabled for this, since _ice_transfer()
     // waits for a response on qspi.eventChannel.
     EchoResp resp;
     const char str[] = "halla";
-    _ice40Transfer(EchoMsg(str), resp);
+    _ice_transfer(EchoMsg(str), resp);
     Assert(!strcmp((char*)resp.payload, str));
 }
 
-void System::_ice40TransferNoCS(const ICE40::Msg& msg) {
+void System::_ice_transferNoCS(const ICE40::Msg& msg) {
     _qspi.command(_ice40QSPICmd(msg, 0));
     _qspi.eventChannel.read(); // Wait for the transfer to complete
 }
 
-void System::_ice40Transfer(const ICE40::Msg& msg) {
+void System::_ice_transfer(const ICE40::Msg& msg) {
     _ICE_ST_SPI_CS_::Write(0);
-    _ice40TransferNoCS(msg);
+    _ice_transferNoCS(msg);
     _ICE_ST_SPI_CS_::Write(1);
 }
 
-void System::_ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
+void System::_ice_transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
     _ICE_ST_SPI_CS_::Write(0);
     _qspi.read(_ice40QSPICmd(msg, sizeof(resp)), &resp, sizeof(resp));
     _qspi.eventChannel.read(); // Wait for the transfer to complete
@@ -203,7 +203,7 @@ void System::_ice40Transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
 
 #pragma mark - MSP430
 
-void System::_mspInit() {
+void System::_msp_init() {
     constexpr uint16_t PM5CTL0          = 0x0130;
     constexpr uint16_t PAOUT            = 0x0202;
     
@@ -220,7 +220,7 @@ void System::_mspInit() {
 
 #pragma mark - SD Card
 
-void System::_sdSetPowerEnabled(bool en) {
+void System::_sd_setPowerEnabled(bool en) {
     constexpr uint16_t BITB         = 0x0800;
     constexpr uint16_t VDD_SD_EN    = BITB;
     constexpr uint16_t PADIR        = 0x0204;
@@ -235,59 +235,32 @@ void System::_sdSetPowerEnabled(bool en) {
     }
 }
 
-SDStatusResp System::_sdStatus() {
-    using namespace ICE40;
-    SDStatusResp resp;
-    _ice40Transfer(SDStatusMsg(), resp);
-    return resp;
-}
-
-SDStatusResp System::_sdSendCmd(uint8_t sdCmd, uint32_t sdArg, SDSendCmdMsg::RespType respType, SDSendCmdMsg::DatInType datInType) {
-    _ice40Transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
-    
-    // Wait for command to be sent
-    const uint16_t MaxAttempts = 1000;
-    for (uint16_t i=0; i<MaxAttempts; i++) {
-        if (i >= 10) HAL_Delay(1);
-        auto status = _sdStatus();
-        // Try again if the command hasn't been sent yet
-        if (!status.cmdDone()) continue;
-        // Try again if we expect a response but it hasn't been received yet
-        if ((respType==SDRespTypes::Len48||respType==SDRespTypes::Len136) && !status.respDone()) continue;
-        // Try again if we expect DatIn but it hasn't been received yet
-        if (datInType==SDDatInTypes::Len512x1 && !status.datInDone()) continue;
-        return status;
-    }
-    // Timeout sending SD command
-    abort();
-}
-
-void System::_sdInit() {
+void System::_sd_init() {
     const uint8_t SDClkDelaySlow = 7;
     const uint8_t SDClkDelayFast = 0;
     
     // Disable SDController clock
-    _ice40Transfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Off,   SDClkDelaySlow));
+    _ice_transfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Off,   SDClkDelaySlow));
     HAL_Delay(1);
     
     // Enable slow SDController clock
-    _ice40Transfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
+    _ice_transfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
     HAL_Delay(1);
     
     // Enter the init mode of the SDController state machine
-    _ice40Transfer(SDInitMsg(SDInitMsg::Action::Reset,      SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
+    _ice_transfer(SDInitMsg(SDInitMsg::Action::Reset,      SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
     
     // Turn off SD card power and wait for it to reach 0V
-    _sdSetPowerEnabled(false);
+    _sd_setPowerEnabled(false);
     HAL_Delay(2);
     
     // Turn on SD card power and wait for it to reach 2.8V
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    _sdSetPowerEnabled(true);
+    _sd_setPowerEnabled(true);
     HAL_Delay(2);
     
     // Trigger the SD card low voltage signalling (LVS) init sequence
-    _ice40Transfer(SDInitMsg(SDInitMsg::Action::Trigger,    SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
+    _ice_transfer(SDInitMsg(SDInitMsg::Action::Trigger,    SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
     // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
     HAL_Delay(6);
     
@@ -300,7 +273,7 @@ void System::_sdInit() {
         // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
         HAL_Delay(1);
         // Send CMD0
-        _sdSendCmd(SDSendCmdMsg::CMD0, 0, SDRespTypes::None);
+        _sd_sendCmd(SDSendCmdMsg::CMD0, 0, SDRespTypes::None);
         // There's no response to CMD0
     }
     
@@ -312,7 +285,7 @@ void System::_sdInit() {
     {
         constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
         constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
-        auto status = _sdSendCmd(SDSendCmdMsg::CMD8, (Voltage<<8)|(CheckPattern<<0));
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD8, (Voltage<<8)|(CheckPattern<<0));
         Assert(!status.respCRCErr());
         const uint8_t replyVoltage = status.respGetBits(19,16);
         Assert(replyVoltage == Voltage);
@@ -328,13 +301,13 @@ void System::_sdInit() {
     for (;;) {
         // CMD55
         {
-            auto status = _sdSendCmd(SDSendCmdMsg::CMD55, 0);
+            auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, 0);
             Assert(!status.respCRCErr());
         }
         
         // CMD41
         {
-            auto status = _sdSendCmd(SDSendCmdMsg::CMD41, 0x51008000);
+            auto status = _sd_sendCmd(SDSendCmdMsg::CMD41, 0x51008000);
             
             // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
             
@@ -366,7 +339,7 @@ void System::_sdInit() {
     // ====================
     {
         // The response to CMD2 is 136 bits, instead of the usual 48 bits
-        _sdSendCmd(SDSendCmdMsg::CMD2, 0, SDRespTypes::Len136);
+        _sd_sendCmd(SDSendCmdMsg::CMD2, 0, SDRespTypes::Len136);
         // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
         // so it'll be flagged as incorrect.
     }
@@ -377,7 +350,7 @@ void System::_sdInit() {
     //   Publish a new relative address (RCA)
     // ====================
     {
-        auto status = _sdSendCmd(SDSendCmdMsg::CMD3, 0);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD3, 0);
         Assert(!status.respCRCErr());
         // Get the card's RCA from the response
         _sdRCA = status.respGetBits(39,24);
@@ -389,7 +362,7 @@ void System::_sdInit() {
     //   Select card
     // ====================
     {
-        auto status = _sdSendCmd(SDSendCmdMsg::CMD7, ((uint32_t)_sdRCA)<<16);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD7, ((uint32_t)_sdRCA)<<16);
         Assert(!status.respCRCErr());
     }
     
@@ -401,13 +374,13 @@ void System::_sdInit() {
     {
         // CMD55
         {
-            auto status = _sdSendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sdRCA)<<16);
+            auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sdRCA)<<16);
             Assert(!status.respCRCErr());
         }
         
         // CMD6
         {
-            auto status = _sdSendCmd(SDSendCmdMsg::CMD6, 0x00000002);
+            auto status = _sd_sendCmd(SDSendCmdMsg::CMD6, 0x00000002);
             Assert(!status.respCRCErr());
         }
     }
@@ -425,7 +398,7 @@ void System::_sdInit() {
         // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
         // Group 2 (Command System)    = 0xF (no change)
         // Group 1 (Access Mode)       = 0x3 (SDR104)
-        auto status = _sdSendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512x1);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512x1);
         Assert(!status.respCRCErr());
         Assert(!status.datInCRCErr());
         
@@ -437,17 +410,17 @@ void System::_sdInit() {
     
     // SDClock=Off
     {
-        _ice40Transfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   SDClkDelaySlow));
+        _ice_transfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   SDClkDelaySlow));
     }
     
     // SDClockDelay=FastDelay
     {
-        _ice40Transfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   SDClkDelayFast));
+        _ice_transfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   SDClkDelayFast));
     }
     
     // SDClock=FastClock
     {
-        _ice40Transfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Fast,   SDClkDelayFast));
+        _ice_transfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Fast,   SDClkDelayFast));
     }
     
     
@@ -462,14 +435,14 @@ void System::_sdInit() {
 //        //   Read blocks of data (1 block == 512 bytes)
 //        // ====================
 //        {
-//            auto status = _sdSendCmd(SDSendCmdMsg::CMD18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+//            auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
 //            Assert(!status.respCRCErr());
 //        }
 //        
 //        // Send the SDReadout message, which causes us to enter the SD-readout mode until
 //        // we release the chip select
 //        _ICE_ST_SPI_CS_::Write(0);
-//        _ice40TransferNoCS(SDReadoutMsg());
+//        _ice_transferNoCS(SDReadoutMsg());
 //        
 //        // Advance state machine
 //        _sdRead_updateState();
@@ -488,13 +461,13 @@ void System::_sdInit() {
 //        {
 //            // CMD55
 //            {
-//                auto status = _sdSendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sdRCA)<<16);
+//                auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sdRCA)<<16);
 //                Assert(!status.respCRCErr());
 //            }
 //            
 //            // CMD23
 //            {
-//                auto status = _sdSendCmd(SDSendCmdMsg::CMD23, 0x00000001);
+//                auto status = _sd_sendCmd(SDSendCmdMsg::CMD23, 0x00000001);
 //                Assert(!status.respCRCErr());
 //            }
 //        }
@@ -505,20 +478,20 @@ void System::_sdInit() {
 //        //   Write blocks of data (1 block == 512 bytes)
 //        // ====================
 //        {
-//            auto status = _sdSendCmd(SDSendCmdMsg::CMD25, 0);
+//            auto status = _sd_sendCmd(SDSendCmdMsg::CMD25, 0);
 //            Assert(!status.respCRCErr());
 //        }
 //        
 //        // Clock out data on DAT lines
 //        {
-//            _ice40Transfer(PixReadoutMsg(0));
+//            _ice_transfer(PixReadoutMsg(0));
 //        }
 //        
 //        // Wait until we're done clocking out data on DAT lines
 //        {
 //            // Waiting for writing to finish
 //            for (;;) {
-//                auto status = _sdStatus();
+//                auto status = _sd_status();
 //                if (status.datOutDone()) {
 //                    if (status.datOutCRCErr()) {
 //                        _led3.write(true);
@@ -536,19 +509,46 @@ void System::_sdInit() {
 //        //   Finish writing
 //        // ====================
 //        {
-//            auto status = _sdSendCmd(SDSendCmdMsg::CMD12, 0);
+//            auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
 //            Assert(!status.respCRCErr());
 //            
 //            // Wait for SD card to indicate that it's ready (DAT0=1)
 //            for (;;) {
 //                if (status.dat0Idle()) break;
-//                status = _sdStatus();
+//                status = _sd_status();
 //            }
 //        }
 //        
 //        _led0.write(on);
 //        on = !on;
 //    }
+}
+
+SDStatusResp System::_sd_status() {
+    using namespace ICE40;
+    SDStatusResp resp;
+    _ice_transfer(SDStatusMsg(), resp);
+    return resp;
+}
+
+SDStatusResp System::_sd_sendCmd(uint8_t sdCmd, uint32_t sdArg, SDSendCmdMsg::RespType respType, SDSendCmdMsg::DatInType datInType) {
+    _ice_transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
+    
+    // Wait for command to be sent
+    const uint16_t MaxAttempts = 1000;
+    for (uint16_t i=0; i<MaxAttempts; i++) {
+        if (i >= 10) HAL_Delay(1);
+        auto status = _sd_status();
+        // Try again if the command hasn't been sent yet
+        if (!status.cmdDone()) continue;
+        // Try again if we expect a response but it hasn't been received yet
+        if ((respType==SDRespTypes::Len48||respType==SDRespTypes::Len136) && !status.respDone()) continue;
+        // Try again if we expect DatIn but it hasn't been received yet
+        if (datInType==SDDatInTypes::Len512x1 && !status.datInDone()) continue;
+        return status;
+    }
+    // Timeout sending SD command
+    abort();
 }
 
 void System::_sdRead(const Cmd& cmd) {
@@ -569,14 +569,14 @@ void System::_sdRead(const Cmd& cmd) {
     //   Read blocks of data (1 block == 512 bytes)
     // ====================
     {
-        auto status = _sdSendCmd(SDSendCmdMsg::CMD18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
         Assert(!status.respCRCErr());
     }
     
     // Send the SDReadout message, which causes us to enter the SD-readout mode until
     // we release the chip select
     _ICE_ST_SPI_CS_::Write(0);
-    _ice40TransferNoCS(SDReadoutMsg());
+    _ice_transferNoCS(SDReadoutMsg());
     
     // Advance state machine
     _sdRead_updateState();
@@ -619,7 +619,7 @@ void System::_sdRead_qspiReadToBufSync(void* buf, size_t len) {
     
     // Send the SDReadout message, which causes us to enter the SD-readout mode until
     // we release the chip select
-    _ice40TransferNoCS(SDReadoutMsg());
+    _ice_transferNoCS(SDReadoutMsg());
     
     // TODO: how do we handle lengths that aren't a multiple of ReadoutLen?
     QSPI_CommandTypeDef qspiCmd = {
@@ -696,7 +696,7 @@ void System::_sdRead_stop() {
     //   Finish reading
     // ====================
     {
-        auto status = _sdSendCmd(SDSendCmdMsg::CMD12, 0);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
         Assert(!status.respCRCErr());
     }
     

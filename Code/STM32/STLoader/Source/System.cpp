@@ -43,17 +43,14 @@ void System::_handleEvent() {
 //    for (;;);
     // Wait for an event to occur on one of our channels
     ChannelSelect::Start();
-    if (auto x = _usb.eventChannel.readSelect()) {
-        _usbHandleEvent(*x);
+    if (auto x = _usb.cmdRecvChannel.readSelect()) {
+    	_usb_cmdHandle(*x);
     
-    } else if (auto x = _usb.cmdRecvChannel.readSelect()) {
-        _usbHandleCmd(*x);
-    
-    } else if (auto x = _usb.dataRecvChannel.readSelect()) {
+    } else if (auto x = _usb.recvDoneChannel(Endpoints::DataOut).readSelect()) {
         _usbHandleDataRecv(*x);
     
-    } else if (auto x = _usb.dataSendChannel.readSelect()) {
-        _usbHandleDataSend(*x);
+    } else if (auto x = _usb.sendReadyChannel(Endpoints::DataIn).readSelect()) {
+    	_usb_dataSendReady(*x);
     
     } else if (auto x = _qspi.eventChannel.readSelect()) {
         _iceHandleQSPIEvent(*x);
@@ -64,50 +61,22 @@ void System::_handleEvent() {
     }
 }
 
-void System::_finishCmd(Status status) {
-    Assert(!_bufs.full());
-    Assert(!_usbDataBusy);
-    
-    // Update our state
-    _op = Op::None;
-    
+void System::_finishCmd(bool status) {
     // Send our response
-    auto& buf = _bufs.back();
-    memcpy(buf.data, &status, sizeof(status));
-    buf.len = sizeof(status);
-    _bufs.push();
-    _usbSendFromBuf();
+    _usb.cmdSendStatus(status);
 }
 
 #pragma mark - USB
-void System::_usbCmdRecv() {
-    // Prepare to receive another command
-    _usb.cmdRecv();
-}
 
-void System::_usbHandleEvent(const USB::Event& ev) {
-    using Type = USB::Event::Type;
-    switch (ev.type) {
-    case Type::StateChanged: {
-        // Handle USB connection
-        if (_usb.state() == USB::State::Connected) {
-            // Prepare to receive bootloader commands
-            _usbCmdRecv();
-        }
-        break;
+void System::_usb_cmdHandle(const USB::CmdRecv& ev){
+    Cmd cmd;
+
+    // Validate command length
+    if (ev.len != sizeof(cmd)) {
+        _finishCmd(false);
+        return;
     }
     
-    default: {
-        // Invalid event type
-        abort();
-    }}
-}
-
-void System::_usbHandleCmd(const USB::CmdRecv& ev) {
-    Assert(_op == Op::None);
-    
-    Cmd cmd;
-    Assert(ev.len == sizeof(cmd));
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
@@ -126,16 +95,14 @@ void System::_usbHandleCmd(const USB::CmdRecv& ev) {
     // Set LED
     case Op::LEDSet:                _ledSet(cmd);               break;
     // Bad command
-    default:                        abort();                    break;
+    default:            			_finishCmd(false);  		break;
     }
 }
 
-void System::_usbHandleDataRecv(const USB::DataRecv& ev) {
-    Assert(_usbDataBusy);
+void System::_usb_dataRecvDone(const USB::DataRecv& ev) {
     Assert(ev.len <= _opDataRem);
     
     _opDataRem -= ev.len;
-    _usbDataBusy = false;
     
     switch (_op) {
     case Op::STWrite:   _stHandleUSBDataRecv(ev);       break;
@@ -145,21 +112,16 @@ void System::_usbHandleDataRecv(const USB::DataRecv& ev) {
     }
 }
 
-void System::_usbHandleDataSend(const USB::DataSend& ev) {
-    Assert(_usbDataBusy);
+void USB::_usb_dataSendReady(const USB::Event& ev);
     Assert(!_bufs.empty());
     
     // Reset the buffer length so it's back in its default state
     _bufs.front().len = 0;
     // Pop the buffer, which we just finished sending over USB
     _bufs.pop();
-    _usbDataBusy = false;
     
     switch (_op) {
     case Op::MSPRead:   _mspReadHandleUSBDataSend(ev);  break;
-    // The host received the status response;
-    // arrange to receive another command
-    case Op::None:      _usbCmdRecv();                  break;
     default:            abort();                        break;
     }
 }
@@ -172,10 +134,9 @@ static size_t _ceilToPacketLength(size_t len) {
     return len;
 }
 
-void System::_usbRecvToBuf() {
+void System::_usb_recvToBuf() {
     Assert(!_bufs.full());
     Assert(_opDataRem);
-    Assert(!_usbDataBusy);
     auto& buf = _bufs.back();
     
     // Prepare to receive either `_opDataRem` bytes or the
@@ -186,16 +147,14 @@ void System::_usbRecvToBuf() {
     // the buffer capacity is a multiple of the max packet size.)
     Assert(len <= buf.cap);
     
-    _usb.dataRecv(buf.data, len);
+    _usb.recv(Endpoints::DataOut, buf.data, len);
     _usbDataBusy = true;
 }
 
-void System::_usbSendFromBuf() {
+void System::_usb_sendFromBuf() {
     Assert(!_bufs.empty());
-    Assert(!_usbDataBusy);
-    
     const auto& buf = _bufs.front();
-    _usb.dataSend(buf.data, buf.len);
+    _usb.send(Endpoints::DataIn, buf.data, buf.len);
     _usbDataBusy = true;
 }
 
