@@ -1035,6 +1035,12 @@ if (__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_IEPINT))
           {
             (void)PCD_WriteEmptyTxFifo(hpcd, epnum);
           }
+          if (epint & USB_OTG_DIEPMSK_NAKM) {
+              CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_NAKM);
+          }
+          if (epint & USB_OTG_DIEPMSK_ITTXFEMSK) {
+              CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPMSK_ITTXFEMSK);
+          }
         }
         epnum++;
         ep_intr >>= 1U;
@@ -1224,7 +1230,9 @@ if (__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_IEPINT))
                                 USB_OTG_DOEPMSK_OTEPSPRM |
                                 USB_OTG_DOEPMSK_NAKM;
 
-        USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_TOM |
+        USBx_DEVICE->DIEPMSK |= USB_OTG_DIEPMSK_NAKM        |   // 13
+                                USB_OTG_DIEPMSK_ITTXFEMSK   |   // 4
+                                USB_OTG_DIEPMSK_TOM |
                                 USB_OTG_DIEPMSK_XFRCM |
                                 USB_OTG_DIEPMSK_EPDM;
       }

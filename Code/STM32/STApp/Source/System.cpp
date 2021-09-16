@@ -172,6 +172,19 @@ void System::_usb_reset(bool usbResetFinish) {
             CLEAR_IN_EP_INTR(EP1, USB_OTG_DIEPINT_XFRC);
             USBD_LL_Transmit(&_usb._device, 0x80|EP1, MEOWBUF, MEOWSENDLEN);
         }
+        
+        static volatile uint32_t NAKCount = 0;
+        static volatile uint32_t ITTXFECount = 0;
+
+        if (epint & USB_OTG_DIEPMSK_NAKM) {
+            CLEAR_IN_EP_INTR(EP1, USB_OTG_DIEPMSK_NAKM);
+            NAKCount++;
+        }
+        
+        if (epint & USB_OTG_DIEPMSK_ITTXFEMSK) {
+            CLEAR_IN_EP_INTR(EP1, USB_OTG_DIEPMSK_ITTXFEMSK);
+            ITTXFECount++;
+        }
     }
 }
 
