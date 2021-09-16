@@ -43,7 +43,7 @@ private:
     struct _OutEndpoint {
         _EndpointState state = _EndpointState::Ready;
         bool needsReset = false;
-        Channel<Event,1> recvDoneChannel;
+        Channel<DataRecv,1> recvDoneChannel;
     };
     
     struct _InEndpoint {
@@ -257,8 +257,9 @@ public:
         irq.disable();
         
         if (EndpointOut(ep)) {
-            // TODO: implement
-            abort();
+            _OutEndpoint& outep = _outEndpoint(ep);
+            if (_recvReady(outep))  _reset(ep, outep);
+            else                    outep.needsReset = true;
         
         } else {
             _InEndpoint& inep = _inEndpoint(ep);
@@ -431,10 +432,50 @@ private:
     bool _sendReady(const _InEndpoint& inep)    const { return inep.state==_EndpointState::Ready;   }
     
     // Interrupts must be disabled
-    void _reset(uint8_t ep, _InEndpoint& inep) {
-        inep.state = _EndpointState::Reset;
-        inep.needsReset = false;
-        _advanceState(ep, inep);
+    template <typename OutInEndpoint>
+    void _reset(uint8_t ep, OutInEndpoint& outinep) {
+        outinep.state = _EndpointState::Reset;
+        outinep.needsReset = false;
+        _advanceState(ep, outinep);
+    }
+    
+    // Interrupts must be disabled
+    void _advanceState(uint8_t ep, _OutEndpoint& outep) {
+        if (outep.needsReset) {
+            _reset(ep, outep);
+            return;
+        }
+        
+        switch (outep.state) {
+        
+        case _EndpointState::Ready:
+            outep.state = _EndpointState::Busy;
+            break;
+        case _EndpointState::Busy:
+            outep.state = _EndpointState::Ready;
+            outep.recvDoneChannel.writeTry(DataRecv{.len = USBD_LL_GetRxDataSize(&_device, ep)});
+            break;
+        
+        case _EndpointState::Reset:
+            outep.state = _EndpointState::ResetZLP1;
+            USBD_LL_PrepareReceiveZeroLen(&_device, ep);
+            break;
+        case _EndpointState::ResetZLP1:
+            outep.state = _EndpointState::ResetZLP2;
+            USBD_LL_PrepareReceiveZeroLen(&_device, ep);
+            break;
+        case _EndpointState::ResetZLP2:
+            outep.state = _EndpointState::ResetSentinel;
+            // Receive to `_DevNullAddr` so that the written data will be dropped
+            USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, sizeof(_ResetSentinel));
+            break;
+        case _EndpointState::ResetSentinel:
+            outep.state = _EndpointState::Ready;
+            break;
+        
+        default:
+            abort();
+        }
     }
     
     // Interrupts must be disabled
@@ -493,6 +534,14 @@ protected:
     
 private:
     static const inline uint8_t _ResetSentinel = 0;
+    
+    // _DevNullAddr: address that throw-away data can be written to.
+    // This must be a region that a packet can be written to without causing
+    // side-effects. We don't want to reserve actual RAM for this because it'd
+    // just be wasted.
+    // We're currently using the flash base address, so that the writes will be
+    // ignored as long as the flash isn't unlocked.
+    static constexpr uint32_t _DevNullAddr = 0x08000000;
     
     uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
     _OutEndpoint _outEndpoints[EndpointCountOut()] = {};
