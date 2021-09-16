@@ -158,25 +158,18 @@ void System::_usb_reset(bool usbResetFinish) {
     PCD_HandleTypeDef* hpcd = &_usb._pcd;
     USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
     uint32_t USBx_BASE = (uint32_t)USBx;
-    const auto& ep1 = hpcd->IN_ep[EP1];
     
     irq.disable();
     USBD_LL_Transmit(&_usb._device, 0x80|EP1, MEOWBUF, MEOWSENDLEN);
     for (;;) {
-        for (;;) {
-            extern HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t epnum);
-            PCD_WriteEmptyTxFifo(hpcd, EP1);
-            if (ep1.xfer_len == ep1.xfer_count) {
-                break;
-            }
-        }
+        extern HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t epnum);
+        PCD_WriteEmptyTxFifo(hpcd, EP1);
         
-        uint32_t epnum = 1;
         uint32_t epint = USB_ReadDevInEPInterrupt(hpcd->Instance, EP1);
         if (epint & USB_OTG_DIEPINT_XFRC) {
-            uint32_t fifoemptymsk = (uint32_t)(0x1UL << (epnum & EP_ADDR_MSK));
+            uint32_t fifoemptymsk = (uint32_t)(0x1UL << (EP1 & EP_ADDR_MSK));
             USBx_DEVICE->DIEPEMPMSK &= ~fifoemptymsk;
-            CLEAR_IN_EP_INTR(epnum, USB_OTG_DIEPINT_XFRC);
+            CLEAR_IN_EP_INTR(EP1, USB_OTG_DIEPINT_XFRC);
             USBD_LL_Transmit(&_usb._device, 0x80|EP1, MEOWBUF, MEOWSENDLEN);
         }
     }
