@@ -16,19 +16,6 @@ public USBBase<
     STLoader::Endpoints::DataOut,
     STLoader::Endpoints::DataIn
 > {
-public:
-    struct DataRecv {
-        size_t len;
-    };
-    
-    struct DataSend {};
-    
-    // Methods
-    USBD_StatusTypeDef dataRecv(void* addr, size_t len);
-    Channel<DataRecv, 1> dataRecvChannel;
-    
-    USBD_StatusTypeDef dataSend(const void* data, size_t len);
-    Channel<DataSend, 1> dataSendChannel;
     
 protected:
     // Callbacks
@@ -49,13 +36,6 @@ protected:
     uint8_t* _usbd_GetUsrStrDescriptor(uint8_t index, uint16_t* len);
     
 private:
-    uint8_t _cmdRecvBuf[MaxPacketSizeOut()] __attribute__((aligned(4)));
-    uint8_t _dataSendBuf[MaxPacketSizeIn()] __attribute__((aligned(4)));
-    
-    bool _cmdRecvBusy = false;
-    bool _dataRecvBusy = false;
-    bool _dataSendBusy = false;
-    
     using _super = USBBase;
     friend class USBBase;
 };

@@ -5,24 +5,6 @@
 #include <algorithm>
 using namespace STLoader;
 
-USBD_StatusTypeDef USB::cmdRecv() {
-    Assert(!_cmdRecvBusy);
-    _cmdRecvBusy = true;
-    return USBD_LL_PrepareReceive(&_device, Endpoints::CmdOut, _cmdRecvBuf, sizeof(_cmdRecvBuf));
-}
-
-USBD_StatusTypeDef USB::dataRecv(void* addr, size_t len) {
-    Assert(!_dataRecvBusy);
-    _dataRecvBusy = true;
-    return USBD_LL_PrepareReceive(&_device, Endpoints::DataOut, (uint8_t*)addr, len);
-}
-
-USBD_StatusTypeDef USB::dataSend(const void* data, size_t len) {
-    Assert(!_dataSendBusy);
-    _dataSendBusy = true;
-    return USBD_LL_Transmit(&_device, Endpoints::DataIn, (uint8_t*)data, len);
-}
-
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
     return _super::_usbd_Init(cfgidx);
 }
@@ -32,24 +14,7 @@ uint8_t USB::_usbd_DeInit(uint8_t cfgidx) {
 }
 
 uint8_t USB::_usbd_Setup(USBD_SetupReqTypedef* req) {
-    switch (req->bmRequest & USB_REQ_TYPE_MASK) {
-    case USB_REQ_TYPE_VENDOR: {
-        switch (req->bRequest) {
-        case STApp::CtrlReqs::CmdExec: {
-            USBD_CtlPrepareRx(&_device, _cmdRecvBuf, sizeof(_cmdRecvBuf));
-            return USBD_OK;
-        }
-        
-        default: break;
-        }
-        break;
-    }
-    
-    default: break;
-    }
-    
-    USBD_CtlError(&_device, req);
-    return USBD_FAIL;
+    return _super::_usbd_Setup(req);
 }
 
 uint8_t USB::_usbd_EP0_TxSent() {
@@ -57,60 +22,15 @@ uint8_t USB::_usbd_EP0_TxSent() {
 }
 
 uint8_t USB::_usbd_EP0_RxReady() {
-    _super::_usbd_EP0_RxReady();
-    
-    const size_t dataLen = USBD_LL_GetRxDataSize(&_device, 0);
-    cmdRecvChannel.writeTry(CmdRecv{
-        .data = _cmdRecvBuf,
-        .len = dataLen,
-    });
-    
-    return (uint8_t)USBD_OK;
+    return _super::_usbd_EP0_RxReady();
 }
 
-uint8_t USB::_usbd_DataIn(uint8_t epnum) {
-    _super::_usbd_DataIn(epnum);
-    
-    switch (epnum) {
-    // DataIn endpoint
-    case EndpointIdx(Endpoints::DataIn):
-        dataSendChannel.writeTry(DataSend{});
-        _dataSendBusy = false;
-        break;
-    
-    default:
-        abort();
-        break;
-    }
-    
-    return (uint8_t)USBD_OK;
+uint8_t USB::_usbd_DataIn(uint8_t ep) {
+    return _super::_usbd_DataIn(ep);
 }
 
-uint8_t USB::_usbd_DataOut(uint8_t epnum) {
-    _super::_usbd_DataOut(epnum);
-    
-    const size_t dataLen = USBD_LL_GetRxDataSize(&_device, epnum);
-    switch (epnum) {
-    
-    // CmdOut endpoint
-    case EndpointIdx(Endpoints::CmdOut):
-        cmdRecvChannel.writeTry(CmdRecv{
-            .data = _cmdRecvBuf,
-            .len = dataLen,
-        });
-        _cmdRecvBusy = false;
-        break;
-    
-    // DataOut endpoint
-    case EndpointIdx(Endpoints::DataOut):
-        dataRecvChannel.writeTry(DataRecv{
-            .len = dataLen,
-        });
-        _dataRecvBusy = false;
-        break;
-    }
-    
-    return (uint8_t)USBD_OK;
+uint8_t USB::_usbd_DataOut(uint8_t ep) {
+    return _super::_usbd_DataOut(ep);
 }
 
 uint8_t USB::_usbd_SOF() {
