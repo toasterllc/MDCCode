@@ -111,7 +111,7 @@ void System::_handleEvent() {
         _usb_cmdHandle(*x);
     
     } else if (auto x = _usb.sendReadyChannel(Endpoints::DataIn).readSelect()) {
-        _usb_dataSendReady(*x);
+        _usb_sendReady(*x);
     
     } else if (auto x = _qspi.eventChannel.readSelect()) {
         _sdRead_qspiEventHandle(*x);
@@ -164,10 +164,10 @@ void System::_usb_sendFromBuf() {
     _usb.send(Endpoints::DataIn, buf.data, buf.len);
 }
 
-void System::_usb_dataSendReady(const USB::Event& ev) {
+void System::_usb_sendReady(const USB::Event& ev) {
     switch (_op) {
-    case Op::SDRead:    _sdRead_usbDataSendReady(ev);  break;
-    default:                                           break;
+    case Op::SDRead:    _sdRead_usbSendReady(ev);   break;
+    default:                                        break;
     }
 }
 
@@ -640,7 +640,7 @@ void System::_sdRead_qspiReadToBufSync(void* buf, size_t len) {
     _ICE_ST_SPI_CS_::Write(1);
 }
 
-void System::_sdRead_qspiEventHandle(const QSPI::Signal& ev) {
+void System::_sdRead_qspiEventHandle(const QSPI::Event& ev) {
     Assert(_op == Op::SDRead);
     
     auto& buf = _bufs.back();
@@ -656,7 +656,7 @@ void System::_sdRead_qspiEventHandle(const QSPI::Signal& ev) {
     _sdRead_updateState();
 }
 
-void System::_sdRead_usbDataSendReady(const USB::Event& ev) {
+void System::_sdRead_usbSendReady(const USB::Event& ev) {
     Assert(_op == Op::SDRead);
     // Advance state machine
     _sdRead_updateState();

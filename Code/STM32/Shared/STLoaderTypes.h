@@ -13,9 +13,10 @@ namespace STLoader {
     
     enum class Op : uint8_t {
         None,
+        Reset,
         // STM32 Bootloader
-        STWrite,
-        STReset,
+        STMWrite,
+        STMReset,
         // ICE40 Bootloader
         ICEWrite,
         // MSP430 Bootloader
@@ -28,23 +29,17 @@ namespace STLoader {
         LEDSet,
     };
     
-    enum class Status : uint8_t {
-        OK,
-        Busy,
-        Error
-    };
-    
     struct Cmd {
         Op op;
         union {
             struct __attribute__((packed)) {
                 uint32_t addr;
                 uint32_t len;
-            } STWrite;
+            } STMWrite;
             
             struct __attribute__((packed)) {
                 uint32_t entryPointAddr;
-            } STReset;
+            } STMReset;
             
             struct __attribute__((packed)) {
                 uint32_t len;
@@ -71,7 +66,7 @@ namespace STLoader {
             } LEDSet;
         } arg;
     } __attribute__((packed));
-    static_assert(sizeof(Cmd)==9, "Cmd: invalid size");
+    static_assert(sizeof(Cmd)<=64, "Cmd: invalid size"); // Verify that Cmd will fit in a single EP0 packet
     
     struct MSPDebugCmd {
         Enum(uint8_t, Op, Ops,

@@ -11,51 +11,51 @@ public:
     
 private:
     void _handleEvent();
+    void _reset(const STLoader::Cmd& cmd);
     void _finishCmd(bool status);
     
     // USB
-    void _usb_cmdHandle(const USB::CmdRecv& ev);
-    void _usb_dataRecvDone(const USB::DataRecv& ev);
-    void _usb_dataSendReady(const USB::Event& ev);
+    void _usb_cmdHandle(const USB::CmdRecvEvent& ev);
+    void _usb_recvDone(const USB::RecvDoneEvent& ev);
+    void _usb_sendReady(const USB::SendReadyEvent& ev);
     void _usb_recvToBuf();
     void _usb_sendFromBuf();
     
     // STM32 Bootloader
-    void _stWrite(const STLoader::Cmd& cmd);
-    void _stReset(const STLoader::Cmd& cmd);
-    void _stHandleUSBDataRecv(const USB::DataRecv& ev);
+    void _stm_write(const STLoader::Cmd& cmd);
+    void _stm_reset(const STLoader::Cmd& cmd);
+    void _stm_usbRecvDone(const USB::RecvDoneEvent& ev);
     
     // ICE40 Bootloader
-    void _iceWrite(const STLoader::Cmd& cmd);
-    void _iceWriteFinish();
-    void _iceUpdateState();
-    void _iceHandleUSBDataRecv(const USB::DataRecv& ev);
-    void _iceHandleQSPIEvent(const QSPI::Signal& ev);
-    void _qspiWriteFromBuf();
+    void _ice_write(const STLoader::Cmd& cmd);
+    void _ice_writeFinish();
+    void _ice_updateState();
+    void _ice_usbRecvDone(const USB::RecvDoneEvent& ev);
+    void _ice_qspiHandleEvent(const QSPI::Event& ev);
+    void _ice_writeFromBuf();
     
     // MSP430 Bootloader
-    void _mspConnect(const STLoader::Cmd& cmd);
-    void _mspDisconnect(const STLoader::Cmd& cmd);
+    void _msp_connect(const STLoader::Cmd& cmd);
+    void _msp_disconnect(const STLoader::Cmd& cmd);
     
     void _mspRead(const STLoader::Cmd& cmd);
-    void _mspReadFinish();
-    void _mspReadUpdateState();
-    void _mspReadToBuf();
-    void _mspReadHandleUSBDataSend(const USB::DataSend& ev);
+    void _mspRead_finish();
+    void _mspRead_updateState();
+    void _mspRead_readToBuf();
+    void _mspRead_usbSendReady(const USB::SendReadyEvent& ev);
     
     void _mspWrite(const STLoader::Cmd& cmd);
-    void _mspWriteFinish();
-    void _mspWriteHandleUSBDataRecv(const USB::DataRecv& ev);
-    void _mspWriteUpdateState();
-    void _mspWriteFromBuf();
+    void _mspWrite_finish();
+    void _mspWrite_usbRecvDone(const USB::RecvDoneEvent& ev);
+    void _mspWrite_updateState();
+    void _mspWrite_writeFromBuf();
     
     void _mspDebug(const STLoader::Cmd& cmd);
-//    void _mspDebugHandleSetPins(const STLoader::MSPDebugCmd& cmd);
-    void _mspDebugPushReadBits();
-    void _mspDebugHandleSBWIO(const STLoader::MSPDebugCmd& cmd);
-    void _mspDebugHandleCmd(const STLoader::MSPDebugCmd& cmd);
-    void _mspDebugHandleWrite(size_t len);
-    void _mspDebugHandleRead(size_t len);
+    void _mspDebug_pushReadBits();
+    void _mspDebug_handleSBWIO(const STLoader::MSPDebugCmd& cmd);
+    void _mspDebug_handleCmd(const STLoader::MSPDebugCmd& cmd);
+    void _mspDebug_handleWrite(size_t len);
+    void _mspDebug_handleRead(size_t len);
     
     // Other commands
     void _ledSet(const STLoader::Cmd& cmd);
@@ -69,8 +69,6 @@ private:
     
     STLoader::Op _op = STLoader::Op::None;
     size_t _opDataRem = 0;
-    bool _usbDataBusy = false;
-    bool _qspiBusy = false;
     
     uint32_t _mspAddr = 0;
     
