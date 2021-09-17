@@ -33,8 +33,8 @@ public:
     void read(const QSPI_CommandTypeDef& cmd, void* data, size_t len);
     void write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len);
     
-    struct Signal {};
-    Channel<Signal, 1> eventChannel;
+    struct Event {};
+    Channel<Event, 1> eventChannel;
     
 private:
     void _isrQSPI();

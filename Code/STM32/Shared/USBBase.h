@@ -20,12 +20,14 @@ class USBBase {
 public:
     struct Event {};
     
-    struct CmdRecv {
+    struct CmdRecvEvent {
         const uint8_t* data;
         size_t len;
     };
     
-    struct DataRecv {
+    struct SendReadyEvent {};
+    
+    struct RecvDoneEvent {
         size_t len;
     };
     
@@ -43,13 +45,13 @@ private:
     struct _OutEndpoint {
         _EndpointState state = _EndpointState::Ready;
         bool needsReset = false;
-        Channel<DataRecv,1> recvDoneChannel;
+        Channel<RecvDoneEvent,1> recvDoneChannel;
     };
     
     struct _InEndpoint {
         _EndpointState state = _EndpointState::Ready;
         bool needsReset = false;
-        Channel<Event,1> sendReadyChannel;
+        Channel<SendReadyEvent,1> sendReadyChannel;
     };
     
 public:
@@ -275,7 +277,7 @@ public:
         irq.disable();
         Assert(_recvReady(outep));
         _advanceState(ep, outep);
-        return USBD_LL_PrepareReceive(&_device, ep, data, len);
+        return USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)data, len);
     }
     
     bool recvReady(uint8_t ep) const {
@@ -284,7 +286,7 @@ public:
         return _recvReady(_outEndpoint(ep));
     }
     
-    constexpr Channel<Event,1>& recvDoneChannel(uint8_t ep) {
+    constexpr Channel<RecvDoneEvent,1>& recvDoneChannel(uint8_t ep) {
         _OutEndpoint& outep = _outEndpoint(ep);
         return outep.recvDoneChannel;
     }
@@ -305,14 +307,14 @@ public:
         return _sendReady(_inEndpoint(ep));
     }
     
-    constexpr Channel<Event,1>& sendReadyChannel(uint8_t ep) {
+    constexpr Channel<SendReadyEvent,1>& sendReadyChannel(uint8_t ep) {
         _InEndpoint& inep = _inEndpoint(ep);
         return inep.sendReadyChannel;
     }
     
     // Channels
     Channel<Event,1> stateChangedChannel;
-    Channel<CmdRecv,1> cmdRecvChannel;
+    Channel<CmdRecvEvent,1> cmdRecvChannel;
     
 protected:
     void _isr() {
@@ -362,7 +364,7 @@ protected:
     
     uint8_t _usbd_EP0_RxReady() {
         const size_t dataLen = USBD_LL_GetRxDataSize(&_device, 0);
-        cmdRecvChannel.writeTry(CmdRecv{
+        cmdRecvChannel.writeTry(CmdRecvEvent{
             .data = _cmdRecvBuf,
             .len = dataLen,
         });
@@ -453,7 +455,7 @@ private:
             break;
         case _EndpointState::Busy:
             outep.state = _EndpointState::Ready;
-            outep.recvDoneChannel.writeTry(DataRecv{.len = USBD_LL_GetRxDataSize(&_device, ep)});
+            outep.recvDoneChannel.writeTry(RecvDoneEvent{.len = USBD_LL_GetRxDataSize(&_device, ep)});
             break;
         
         case _EndpointState::Reset:
@@ -502,7 +504,7 @@ private:
             break;
         case _EndpointState::Busy:
             inep.state = _EndpointState::Ready;
-            inep.sendReadyChannel.writeTry(Event{});
+            inep.sendReadyChannel.writeTry(SendReadyEvent{});
             break;
         
         case _EndpointState::Reset:
@@ -519,7 +521,7 @@ private:
             break;
         case _EndpointState::ResetSentinel:
             inep.state = _EndpointState::Ready;
-            inep.sendReadyChannel.writeTry(Event{});
+            inep.sendReadyChannel.writeTry(SendReadyEvent{});
             break;
         
         default:

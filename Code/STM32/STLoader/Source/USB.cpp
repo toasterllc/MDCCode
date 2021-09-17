@@ -49,7 +49,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
     _super::_usbd_GetHSConfigDescriptor(len);
     
     // USB DFU device Configuration Descriptor
-    constexpr size_t DescLen = 39;
+    constexpr size_t DescLen = 32;
     static uint8_t Desc[] = {
         // Configuration descriptor
         0x09,                                       // bLength: configuration descriptor length
@@ -72,14 +72,6 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
             0x00,                                       // nInterfaceProtocol
             0x00,                                       // iInterface: string descriptor index
             
-                // CmdOut endpoint
-                0x07,                                                           // bLength: Endpoint Descriptor size
-                USB_DESC_TYPE_ENDPOINT,                                         // bDescriptorType: Endpoint
-                Endpoints::CmdOut,                                              // bEndpointAddress
-                0x02,                                                           // bmAttributes: Bulk
-                LOBYTE(MaxPacketSizeOut()), HIBYTE(MaxPacketSizeOut()),         // wMaxPacketSize
-                0x00,                                                           // bInterval: ignore for Bulk transfer
-                
                 // DataOut endpoint
                 0x07,                                                           // bLength: Endpoint Descriptor size
                 USB_DESC_TYPE_ENDPOINT,                                         // bDescriptorType: Endpoint

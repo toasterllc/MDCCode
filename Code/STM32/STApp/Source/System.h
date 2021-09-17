@@ -16,7 +16,7 @@ public:
     
     void _usb_cmdHandle(const USB::CmdRecv& ev);
     void _usb_sendFromBuf();
-    void _usb_dataSendReady(const USB::Event& ev);
+    void _usb_sendReady(const USB::Event& ev);
     
     void _ice_init();
     void _ice_transferNoCS(const ICE40::Msg& msg);
@@ -35,8 +35,8 @@ public:
     void _sdRead(const STApp::Cmd& cmd);
     void _sdRead_qspiReadToBuf();
     void _sdRead_qspiReadToBufSync(void* buf, size_t len);
-    void _sdRead_qspiEventHandle(const QSPI::Signal& ev);
-    void _sdRead_usbDataSendReady(const USB::Event& ev);
+    void _sdRead_qspiEventHandle(const QSPI::Event& ev);
+    void _sdRead_usbSendReady(const USB::Event& ev);
     void _sdRead_updateState();
     void _sdRead_stop();
     

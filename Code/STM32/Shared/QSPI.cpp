@@ -206,17 +206,17 @@ void QSPI::_isrDMA() {
 }
 
 void QSPI::_handleCommandDone() {
-    eventChannel.writeTry(Signal{});
+    eventChannel.writeTry(Event{});
     _busy = false;
 }
 
 void QSPI::_handleReadDone() {
-    eventChannel.writeTry(Signal{});
+    eventChannel.writeTry(Event{});
     _busy = false;
 }
 
 void QSPI::_handleWriteDone() {
-    eventChannel.writeTry(Signal{});
+    eventChannel.writeTry(Event{});
     _busy = false;
 }
 
