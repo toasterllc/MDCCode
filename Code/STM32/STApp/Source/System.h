@@ -4,16 +4,16 @@
 #include "BufQueue.h"
 #include "USB.h"
 #include "STAppTypes.h"
+#include "Toastbox/Task.h"
 
 class System : public SystemBase<System> {
 public:
     System();
     void init();
     
-    void _handleEvent();
-    void _reset(const STApp::Cmd& cmd);
     void _finishCmd(bool status);
     
+    void _usb_task(Task& task);
     void _usb_cmdHandle(const USB::CmdRecv& ev);
     void _usb_sendFromBuf();
     void _usb_sendReady(const USB::Event& ev);
@@ -25,6 +25,7 @@ public:
     
     void _msp_init();
     
+    void _sd_task(Task& task);
     void _sd_setPowerEnabled(bool en);
     void _sd_init();
     ICE40::SDStatusResp _sd_status();
@@ -49,11 +50,16 @@ private:
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
     
-    STApp::Op _op = STApp::Op::None;
     size_t _opDataRem = 0;
     BufQueue<2> _bufs;
     
-    uint16_t _sdRCA = 0;
+    Task _cmdTask;
+    
+    struct {
+        Task task;
+        Channel<STApp::Cmd,1> trigger;
+        uint16_t rca = 0;
+    } _sd;
     
     friend int main();
     friend void ISR_OTG_HS();

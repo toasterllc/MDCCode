@@ -88,7 +88,9 @@ System::System() :
 // QSPI clock divider=1 => run QSPI clock at 64 MHz
 // QSPI alignment=word for high performance transfers
 _qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
-_bufs(_buf0, _buf1) {
+_bufs(_buf0, _buf1),
+_cmdTask([&](Task& t) { _cmdTaskFn(t); }),
+_sd({ .task = Task([&](Task& t) { _sdTaskFn(t); }) })
 }
 
 void System::init() {
@@ -104,30 +106,30 @@ void System::init() {
     _sd_init();
 }
 
-void System::_handleEvent() {
-    // Wait for an event to occur on one of our channels
-    ChannelSelect::Start();
-    if (auto x = _usb.cmdRecvChannel.readSelect()) {
-        _usb_cmdHandle(*x);
-    
-    } else if (auto x = _usb.sendReadyChannel(Endpoints::DataIn).readSelect()) {
-        _usb_sendReady(*x);
-    
-    } else if (auto x = _qspi.eventChannel.readSelect()) {
-        _sdRead_qspiEventHandle(*x);
-    
-    } else {
-        // No events, go to sleep
-        ChannelSelect::Wait();
-    }
-    ChannelSelect::End();
-}
-
-void System::_reset(const Cmd& cmd) {
-    _op = Op::None;
-    _usb.reset(Endpoints::DataIn);
-    _finishCmd(true);
-}
+//void System::_handleEvent() {
+//    // Wait for an event to occur on one of our channels
+//    ChannelSelect::Start();
+//    if (auto x = _usb.cmdRecvChannel.readSelect()) {
+//        _usb_cmdHandle(*x);
+//    
+//    } else if (auto x = _usb.sendReadyChannel(Endpoints::DataIn).readSelect()) {
+//        _usb_sendReady(*x);
+//    
+//    } else if (auto x = _qspi.eventChannel.readSelect()) {
+//        _sdRead_qspiEventHandle(*x);
+//    
+//    } else {
+//        // No events, go to sleep
+//        ChannelSelect::Wait();
+//    }
+//    ChannelSelect::End();
+//}
+//
+//void System::_reset(const Cmd& cmd) {
+//    _op = Op::None;
+//    _usb.reset(Endpoints::DataIn);
+//    _finishCmd(true);
+//}
 
 void System::_finishCmd(bool status) {
     // Send our response
@@ -135,6 +137,15 @@ void System::_finishCmd(bool status) {
 }
 
 #pragma mark - USB
+
+void System::_usb_cmdTaskFn(Task& task) {
+    TaskBegin();
+    for (;;) {
+        TaskWait(_usb.cmdRecvChannel.readable());
+        _usb_cmdHandle(*_usb.cmdRecvChannel.read());
+    }
+    TaskEnd();
+}
 
 void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
     Cmd cmd;
@@ -148,7 +159,6 @@ void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
-    case Op::Reset:     _reset(cmd);        break;
     case Op::SDRead:    _sdRead(cmd);       break;
     case Op::LEDSet:    _ledSet(cmd);       break;
     // Bad command
@@ -582,6 +592,14 @@ void System::_sdRead(const Cmd& cmd) {
     _sdRead_updateState();
     
     _finishCmd(true);
+}
+
+void System::_sdTaskFn(Task& task) {
+    TaskBegin();
+    for (;;) {
+        TaskWait(_sd.trigger);
+    }
+    TaskEnd();
 }
 
 void System::_sdRead_qspiReadToBuf() {

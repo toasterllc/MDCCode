@@ -11,7 +11,6 @@ namespace STApp {
     
     enum class Op : uint8_t {
         None,
-        Reset,
         SDRead,
         LEDSet,
     };
