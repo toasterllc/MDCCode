@@ -1,9 +1,7 @@
 #pragma once
 #include "USBBase.h"
-#include "Channel.h"
 #include "usbd_def.h"
 #include "STAppTypes.h"
-#include <atomic>
 
 class USB :
 public USBBase<

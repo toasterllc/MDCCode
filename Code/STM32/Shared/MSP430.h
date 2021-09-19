@@ -2,8 +2,8 @@
 #include <string.h>
 #include <type_traits>
 #include "GPIO.h"
-#include "IRQState.h"
 #include "Assert.h"
+#include "Toastbox/Task.h"
 
 template <typename Test, typename Rst_, uint8_t CPUFreqMHz>
 class MSP430 {

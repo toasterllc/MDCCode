@@ -33,7 +33,119 @@ static uint8_t _buf1[63*1024] __attribute__((aligned(4))) __attribute__((section
 
 using namespace STApp;
 
-static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) {
+System::System() :
+// QSPI clock divider=1 => run QSPI clock at 64 MHz
+// QSPI alignment=word for high performance transfers
+_usbTask([&] { _usb_task(); }),
+_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
+_bufs(_buf0, _buf1),
+_sd({ .task = Task([&] { _sd_task(); }) }) {
+}
+
+void System::init() {
+    _super::init();
+    _usb.init();
+    _qspi.init();
+    
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+    _ICE_ST_SPI_CS_::Write(1);
+    
+    _ice_init();
+    _msp_init();
+    _sd_init();
+}
+
+void System::run() {
+    Task::Run(_usbTask, _sd.task);
+}
+
+//void System::_handleEvent() {
+//    // Wait for an event to occur on one of our channels
+//    ChannelSelect::Start();
+//    if (auto x = _usb.cmdRecvChannel.readSelect()) {
+//        _usb_handleCmd(*x);
+//    
+//    } else if (auto x = _usb.sendDoneChannel(Endpoints::DataIn).readSelect()) {
+//        _usb_sendReady(*x);
+//    
+//    } else if (auto x = _qspi.eventChannel.readSelect()) {
+//        _sdRead_qspiEventHandle(*x);
+//    
+//    } else {
+//        // No events, go to sleep
+//        ChannelSelect::Wait();
+//    }
+//    ChannelSelect::End();
+//}
+//
+//void System::_reset(const Cmd& cmd) {
+//    _op = Op::None;
+//    _usb.reset(Endpoints::DataIn);
+//    _usb_finishCmd(true);
+//}
+
+#pragma mark - USB
+
+void System::_usb_task() {
+    TaskBegin();
+    for (;;) {
+        TaskWait(_usb.cmdRecvChannel.readable());
+        
+        auto ev = _usb.cmdRecvChannel.read();
+        Cmd cmd;
+        
+        // Validate command length
+        if (ev.len != sizeof(cmd)) {
+            _usb_finishCmd(false);
+            continue;
+        }
+        
+        memcpy(&cmd, ev.data, ev.len);
+        
+        switch (cmd.op) {
+        
+        case Op::SDRead:
+            _sd.task.reset();
+            _sd.trigger.reset();
+            _sd.trigger.write(cmd);
+            break;
+        
+        case Op::LEDSet:
+            _ledSet(cmd);
+            break;
+        
+        // Bad command
+        default:
+            _usb_finishCmd(false);
+            break;
+        }
+    }
+    TaskEnd();
+}
+
+void System::_usb_sendFromBuf() {
+    Assert(!_bufs.empty());
+    Assert(_usb.sendReady(Endpoints::DataIn));
+    
+    const auto& buf = _bufs.front();
+    _usb.send(Endpoints::DataIn, buf.data, buf.len);
+}
+
+//void System::_usb_sendReady(const USB::Event& ev) {
+//    switch (_op) {
+//    case Op::SDRead:    _sdRead_usbSendReady(ev);   break;
+//    default:                                        break;
+//    }
+//}
+
+void System::_usb_finishCmd(bool status) {
+    // Send our response
+    _usb.cmdSendStatus(status);
+}
+
+#pragma mark - ICE40
+
+static QSPI_CommandTypeDef _ice_qspiCmd(const ICE40::Msg& msg, size_t respLen) {
     uint8_t b[8];
     static_assert(sizeof(msg) == sizeof(b));
     memcpy(b, &msg, sizeof(b));
@@ -84,105 +196,6 @@ static QSPI_CommandTypeDef _ice40QSPICmd(const ICE40::Msg& msg, size_t respLen) 
     };
 }
 
-System::System() :
-// QSPI clock divider=1 => run QSPI clock at 64 MHz
-// QSPI alignment=word for high performance transfers
-_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
-_bufs(_buf0, _buf1),
-_cmdTask([&](Task& t) { _cmdTaskFn(t); }),
-_sd({ .task = Task([&](Task& t) { _sdTaskFn(t); }) })
-}
-
-void System::init() {
-    _super::init();
-    _usb.init();
-    _qspi.init();
-    
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-    _ICE_ST_SPI_CS_::Write(1);
-    
-    _ice_init();
-    _msp_init();
-    _sd_init();
-}
-
-//void System::_handleEvent() {
-//    // Wait for an event to occur on one of our channels
-//    ChannelSelect::Start();
-//    if (auto x = _usb.cmdRecvChannel.readSelect()) {
-//        _usb_cmdHandle(*x);
-//    
-//    } else if (auto x = _usb.sendReadyChannel(Endpoints::DataIn).readSelect()) {
-//        _usb_sendReady(*x);
-//    
-//    } else if (auto x = _qspi.eventChannel.readSelect()) {
-//        _sdRead_qspiEventHandle(*x);
-//    
-//    } else {
-//        // No events, go to sleep
-//        ChannelSelect::Wait();
-//    }
-//    ChannelSelect::End();
-//}
-//
-//void System::_reset(const Cmd& cmd) {
-//    _op = Op::None;
-//    _usb.reset(Endpoints::DataIn);
-//    _finishCmd(true);
-//}
-
-void System::_finishCmd(bool status) {
-    // Send our response
-    _usb.cmdSendStatus(status);
-}
-
-#pragma mark - USB
-
-void System::_usb_cmdTaskFn(Task& task) {
-    TaskBegin();
-    for (;;) {
-        TaskWait(_usb.cmdRecvChannel.readable());
-        _usb_cmdHandle(*_usb.cmdRecvChannel.read());
-    }
-    TaskEnd();
-}
-
-void System::_usb_cmdHandle(const USB::CmdRecv& ev) {
-    Cmd cmd;
-    
-    // Validate command length
-    if (ev.len != sizeof(cmd)) {
-        _finishCmd(false);
-        return;
-    }
-    
-    memcpy(&cmd, ev.data, ev.len);
-    
-    switch (cmd.op) {
-    case Op::SDRead:    _sdRead(cmd);       break;
-    case Op::LEDSet:    _ledSet(cmd);       break;
-    // Bad command
-    default:            _finishCmd(false);  break;
-    }
-}
-
-void System::_usb_sendFromBuf() {
-    Assert(!_bufs.empty());
-    Assert(_usb.sendReady(Endpoints::DataIn));
-    
-    const auto& buf = _bufs.front();
-    _usb.send(Endpoints::DataIn, buf.data, buf.len);
-}
-
-void System::_usb_sendReady(const USB::Event& ev) {
-    switch (_op) {
-    case Op::SDRead:    _sdRead_usbSendReady(ev);   break;
-    default:                                        break;
-    }
-}
-
-#pragma mark - ICE40
-
 void System::_ice_init() {
     // Confirm that we can communicate with the ICE40.
     // Interrupts need to be enabled for this, since _ice_transfer()
@@ -194,7 +207,7 @@ void System::_ice_init() {
 }
 
 void System::_ice_transferNoCS(const ICE40::Msg& msg) {
-    _qspi.command(_ice40QSPICmd(msg, 0));
+    _qspi.command(_ice_qspiCmd(msg, 0));
     _qspi.eventChannel.read(); // Wait for the transfer to complete
 }
 
@@ -206,7 +219,7 @@ void System::_ice_transfer(const ICE40::Msg& msg) {
 
 void System::_ice_transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
     _ICE_ST_SPI_CS_::Write(0);
-    _qspi.read(_ice40QSPICmd(msg, sizeof(resp)), &resp, sizeof(resp));
+    _qspi.read(_ice_qspiCmd(msg, sizeof(resp)), &resp, sizeof(resp));
     _qspi.eventChannel.read(); // Wait for the transfer to complete
     _ICE_ST_SPI_CS_::Write(1);
 }
@@ -363,7 +376,7 @@ void System::_sd_init() {
         auto status = _sd_sendCmd(SDSendCmdMsg::CMD3, 0);
         Assert(!status.respCRCErr());
         // Get the card's RCA from the response
-        _sdRCA = status.respGetBits(39,24);
+        _sd.rca = status.respGetBits(39,24);
     }
     
     // ====================
@@ -372,7 +385,7 @@ void System::_sd_init() {
     //   Select card
     // ====================
     {
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD7, ((uint32_t)_sdRCA)<<16);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD7, ((uint32_t)_sd.rca)<<16);
         Assert(!status.respCRCErr());
     }
     
@@ -384,7 +397,7 @@ void System::_sd_init() {
     {
         // CMD55
         {
-            auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sdRCA)<<16);
+            auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sd.rca)<<16);
             Assert(!status.respCRCErr());
         }
         
@@ -414,7 +427,7 @@ void System::_sd_init() {
         
         // Verify that the access mode was successfully changed
         // TODO: properly handle this failing, see CMD6 docs
-        _sdRead_qspiReadToBufSync(_buf0, 512/8); // Read DatIn data into _buf0
+        _sd_readToBufSync(_buf0, 512/8); // Read DatIn data into _buf0
         Assert((_buf0[16]&0x0F) == 0x03);
     }
     
@@ -471,7 +484,7 @@ void System::_sd_init() {
 //        {
 //            // CMD55
 //            {
-//                auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sdRCA)<<16);
+//                auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sd.rca)<<16);
 //                Assert(!status.respCRCErr());
 //            }
 //            
@@ -561,51 +574,70 @@ SDStatusResp System::_sd_sendCmd(uint8_t sdCmd, uint32_t sdArg, SDSendCmdMsg::Re
     abort();
 }
 
-void System::_sdRead(const Cmd& cmd) {
-    if (_op == Op::SDRead) {
-        _sdRead_stop();
-    }
-    
-    // Update state
-    _op = Op::SDRead;
-    _opDataRem = 0xFFFFFE00; // divisible by 512
-    
-    // Reset the data channel (which sends a 2xZLP+sentinel sequence)
-    _usb.reset(Endpoints::DataIn);
-    
-    // ====================
-    // CMD18 | READ_MULTIPLE_BLOCK
-    //   State: Transfer -> Send Data
-    //   Read blocks of data (1 block == 512 bytes)
-    // ====================
-    {
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
-        Assert(!status.respCRCErr());
-    }
-    
-    // Send the SDReadout message, which causes us to enter the SD-readout mode until
-    // we release the chip select
-    _ICE_ST_SPI_CS_::Write(0);
-    _ice_transferNoCS(SDReadoutMsg());
-    
-    // Advance state machine
-    _sdRead_updateState();
-    
-    _finishCmd(true);
-}
-
-void System::_sdTaskFn(Task& task) {
+void System::_sd_task() {
     TaskBegin();
     for (;;) {
-        TaskWait(_sd.trigger);
+        // Wait for an SDRead command
+        TaskWait(_sd.trigger.readable());
+        const Cmd cmd = _sd.trigger.read();
+        
+        // Stop reading from the SD card if a read is currently underway
+        _sd_stopReading();
+        
+        // Reset the data channel (which sends a 2xZLP+sentinel sequence)
+        _usb.reset(Endpoints::DataIn);
+        // Wait until we're done resetting the DataIn endpoint
+        TaskWait(_usb.sendReady(Endpoints::DataIn));
+        
+        // ====================
+        // CMD18 | READ_MULTIPLE_BLOCK
+        //   State: Transfer -> Send Data
+        //   Read blocks of data (1 block == 512 bytes)
+        // ====================
+        {
+            auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, cmd.arg.SDRead.addr, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+            Assert(!status.respCRCErr());
+        }
+        
+        // Send the SDReadout message, which causes us to enter the SD-readout mode until
+        // we release the chip select
+        _ICE_ST_SPI_CS_::Write(0);
+        _ice_transferNoCS(SDReadoutMsg());
+        
+        // Let the host know that the USB command was successful
+        _usb_finishCmd(true);
+        
+        // Indefinitely read data over QSPI and write it to USB
+        for (;;) {
+            for (;;) {
+                bool didWork = false;
+                // Read data into the producer buffer when:
+                //   - there's space in the queue, and
+                //   - QSPI is ready to accept commands
+                if (!_bufs.full() && _qspi.ready()) {
+                    _sd_readToBuf();
+                    didWork = true;
+                }
+                
+                // Send data from the consumer buffer when:
+                //   - we have data to write, and
+                //   - the DataIn USB endpoint is ready to accept data
+                if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
+                    _usb_sendFromBuf();
+                    didWork = true;
+                }
+                
+                if (!didWork) break;
+            }
+            
+            TaskYield();
+        }
     }
     TaskEnd();
 }
 
-void System::_sdRead_qspiReadToBuf() {
-    Assert(_op == Op::SDRead);
+void System::_sd_readToBuf() {
     Assert(!_bufs.full());
-    Assert(_opDataRem);
     Assert(_qspi.ready());
     
     auto& buf = _bufs.back();
@@ -631,7 +663,7 @@ void System::_sdRead_qspiReadToBuf() {
     buf.len += len;
 }
 
-void System::_sdRead_qspiReadToBufSync(void* buf, size_t len) {
+void System::_sd_readToBufSync(void* buf, size_t len) {
     // Assert chip-select so that we stay in the readout state until we release it
     _ICE_ST_SPI_CS_::Write(0);
     
@@ -658,90 +690,99 @@ void System::_sdRead_qspiReadToBufSync(void* buf, size_t len) {
     _ICE_ST_SPI_CS_::Write(1);
 }
 
-void System::_sdRead_qspiEventHandle(const QSPI::Event& ev) {
-    Assert(_op == Op::SDRead);
-    
-    auto& buf = _bufs.back();
-    
-    // If we can't read any more data into the producer buffer,
-    // push it so the data will be sent over USB
-    if (buf.cap-buf.len < SDReadoutMsg::ReadoutLen) {
-        _opDataRem -= buf.len;
-        _bufs.push();
-    }
-    
-    // Advance state machine
-    _sdRead_updateState();
-}
+//void System::_sdRead_qspiEventHandle(const QSPI::Event& ev) {
+//    Assert(_op == Op::SDRead);
+//    
+//    auto& buf = _bufs.back();
+//    
+//    // If we can't read any more data into the producer buffer,
+//    // push it so the data will be sent over USB
+//    if (buf.cap-buf.len < SDReadoutMsg::ReadoutLen) {
+//        _opDataRem -= buf.len;
+//        _bufs.push();
+//    }
+//    
+//    // Advance state machine
+//    _sdRead_updateState();
+//}
 
-void System::_sdRead_usbSendReady(const USB::Event& ev) {
-    Assert(_op == Op::SDRead);
-    // Advance state machine
-    _sdRead_updateState();
-}
+//void System::_sdRead_usbSendReady(const USB::Event& ev) {
+//    Assert(_op == Op::SDRead);
+//    // Advance state machine
+//    _sdRead_updateState();
+//}
 
-void System::_sdRead_updateState() {
-    // Read data into the producer buffer when:
-    //   - there's more data to be read, and
-    //   - there's space in the queue, and
-    //   - QSPI is ready to accept commands
-    if (_opDataRem && !_bufs.full() && _qspi.ready()) {
-        _sdRead_qspiReadToBuf();
-    }
-    
-    // Send data from the consumer buffer when:
-    //   - we have data to write, and
-    //   - the DataIn USB endpoint is ready to accept data
-    if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
-        _usb_sendFromBuf();
-    }
-    
-    // We're done when:
-    //   - there's no more data to be read, and
-    //   - there's no more data to send over USB
-    if (!_opDataRem && _bufs.empty()) {
-        _sdRead_stop();
-    }
-}
+//void System::_sdRead_updateState() {
+//    // Read data into the producer buffer when:
+//    //   - there's more data to be read, and
+//    //   - there's space in the queue, and
+//    //   - QSPI is ready to accept commands
+//    if (_opDataRem && !_bufs.full() && _qspi.ready()) {
+//        _sd_readToBuf();
+//    }
+//    
+//    // Send data from the consumer buffer when:
+//    //   - we have data to write, and
+//    //   - the DataIn USB endpoint is ready to accept data
+//    if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
+//        _usb_sendFromBuf();
+//    }
+//    
+//    // We're done when:
+//    //   - there's no more data to be read, and
+//    //   - there's no more data to send over USB
+//    if (!_opDataRem && _bufs.empty()) {
+//        _sdRead_stop();
+//    }
+//}
 
-void System::_sdRead_stop() {
-    Assert(_op == Op::SDRead);
-    _ICE_ST_SPI_CS_::Write(1);
-    
-    // ====================
-    // CMD12 | STOP_TRANSMISSION
-    //   State: Send Data -> Transfer
-    //   Finish reading
-    // ====================
-    {
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
-        Assert(!status.respCRCErr());
+void System::_sd_stopReading() {
+    if (_sd.reading) {
+        _ICE_ST_SPI_CS_::Write(1);
+        
+        // ====================
+        // CMD12 | STOP_TRANSMISSION
+        //   State: Send Data -> Transfer
+        //   Finish reading
+        // ====================
+        {
+            auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
+            Assert(!status.respCRCErr());
+        }
+        
+        _sd.reading = false;
     }
-    
-    _op = Op::None;
 }
 
 #pragma mark - Other Commands
 
 void System::_ledSet(const Cmd& cmd) {
     switch (cmd.arg.LEDSet.idx) {
-    case 0: _finishCmd(false); return;
+    case 0: _usb_finishCmd(false); return;
     case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
     case 2: _LED2::Write(cmd.arg.LEDSet.on); break;
     case 3: _LED3::Write(cmd.arg.LEDSet.on); break;
     }
     
-    _finishCmd(true);
+    _usb_finishCmd(true);
 }
 
 System Sys;
 
+bool IRQState::SetInterruptsEnabled(bool en) {
+    const bool prevEn = !__get_PRIMASK();
+    if (en) __enable_irq();
+    else __disable_irq();
+    return prevEn;
+}
+
+void IRQState::WaitForInterrupt() {
+    __WFI();
+}
+
 int main() {
     Sys.init();
-    // Event loop
-    for (;;) {
-        Sys._handleEvent();
-    }
+    Sys.run();
     return 0;
 }
 

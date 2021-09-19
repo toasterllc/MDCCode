@@ -10,13 +10,13 @@ class System : public SystemBase<System> {
 public:
     System();
     void init();
+    [[noreturn]] void run();
     
-    void _finishCmd(bool status);
-    
-    void _usb_task(Task& task);
-    void _usb_cmdHandle(const USB::CmdRecv& ev);
+private:
+    void _usb_task();
     void _usb_sendFromBuf();
-    void _usb_sendReady(const USB::Event& ev);
+//    void _usb_sendReady(const USB::Event& ev);
+    void _usb_finishCmd(bool status);
     
     void _ice_init();
     void _ice_transferNoCS(const ICE40::Msg& msg);
@@ -25,7 +25,7 @@ public:
     
     void _msp_init();
     
-    void _sd_task(Task& task);
+    void _sd_task();
     void _sd_setPowerEnabled(bool en);
     void _sd_init();
     ICE40::SDStatusResp _sd_status();
@@ -33,19 +33,19 @@ public:
         ICE40::SDSendCmdMsg::RespType respType=ICE40::SDSendCmdMsg::RespTypes::Len48,
         ICE40::SDSendCmdMsg::DatInType datInType=ICE40::SDSendCmdMsg::DatInTypes::None);
     
-    void _sdRead(const STApp::Cmd& cmd);
-    void _sdRead_qspiReadToBuf();
-    void _sdRead_qspiReadToBufSync(void* buf, size_t len);
-    void _sdRead_qspiEventHandle(const QSPI::Event& ev);
-    void _sdRead_usbSendReady(const USB::Event& ev);
-    void _sdRead_updateState();
-    void _sdRead_stop();
+    void _sd_readToBuf();
+    void _sd_readToBufSync(void* buf, size_t len);
+//    void _sdRead_qspiEventHandle(const QSPI::Event& ev);
+//    void _sdRead_usbSendReady(const USB::Event& ev);
+//    void _sdRead_updateState();
+    void _sd_stopReading();
     
     void _ledSet(const STApp::Cmd& cmd);
     
-private:
     // Peripherals
     USB _usb;
+    Task _usbTask;
+    
     QSPI _qspi;
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
@@ -53,12 +53,12 @@ private:
     size_t _opDataRem = 0;
     BufQueue<2> _bufs;
     
-    Task _cmdTask;
-    
     struct {
         Task task;
         Channel<STApp::Cmd,1> trigger;
         uint16_t rca = 0;
+        bool reading = false;
+        size_t dataRem = 0;
     } _sd;
     
     friend int main();
