@@ -35,9 +35,6 @@ private:
     
     void _sd_readToBuf();
     void _sd_readToBufSync(void* buf, size_t len);
-//    void _sdRead_qspiEventHandle(const QSPI::Event& ev);
-//    void _sdRead_usbSendReady(const USB::Event& ev);
-//    void _sdRead_updateState();
     void _sd_stopReading();
     
     void _ledSet(const STApp::Cmd& cmd);
