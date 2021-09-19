@@ -433,10 +433,35 @@ protected:
     }
 
 private:
-    constexpr       _OutEndpoint&   _outEndpoint(uint8_t ep)        { return _outEndpoints[EndpointIdx(ep)-1];  }
-    constexpr const _OutEndpoint&   _outEndpoint(uint8_t ep) const  { return _outEndpoints[EndpointIdx(ep)-1];  }
-    constexpr       _InEndpoint&    _inEndpoint(uint8_t ep)         { return _inEndpoints[EndpointIdx(ep)-1];   }
-    constexpr const _InEndpoint&    _inEndpoint(uint8_t ep) const   { return _inEndpoints[EndpointIdx(ep)-1];   }
+    _OutEndpoint& _outEndpoint(uint8_t ep) {
+        if constexpr (EndpointCountOut()) {
+            return _outEndpoints[EndpointIdx(ep)-1];
+        }
+        abort();
+    }
+    
+    const _OutEndpoint& _outEndpoint(uint8_t ep) const {
+        if constexpr (EndpointCountOut()) {
+            return _outEndpoints[EndpointIdx(ep)-1];
+        }
+        abort();
+//        return const_cast<const _OutEndpoint&>(std::as_const(*this)._outEndpoint(ep));
+    }
+    
+    _InEndpoint& _inEndpoint(uint8_t ep) {
+        if constexpr (EndpointCountIn()) {
+            return _inEndpoints[EndpointIdx(ep)-1];
+        }
+        abort();
+    }
+    
+    const _InEndpoint& _inEndpoint(uint8_t ep) const {
+        if constexpr (EndpointCountIn()) {
+            return _inEndpoints[EndpointIdx(ep)-1];
+        }
+        abort();
+//        return const_cast<const _InEndpoint&>(std::as_const(*this)._inEndpoint(ep));
+    }
     
     // Interrupts must be disabled
     bool _recvReady(const _OutEndpoint& outep)  const { return outep.state==_EndpointState::Ready;  }
