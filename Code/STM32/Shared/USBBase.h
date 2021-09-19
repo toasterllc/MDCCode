@@ -1,12 +1,12 @@
 #pragma once
 #include <initializer_list>
 #include "Assert.h"
-#include "Channel.h"
 #include "stm32f7xx.h"
 #include "usbd_def.h"
 #include "usbd_core.h"
 //#include "usbd_ctlreq.h"
 #include "usbd_desc.h"
+#include "Toastbox/Task.h"
 //#include "usbd_ioreq.h"
 
 extern "C" void ISR_OTG_HS();
@@ -25,7 +25,7 @@ public:
         size_t len;
     };
     
-    struct SendReadyEvent {};
+    struct SendDoneEvent {};
     
     struct RecvDoneEvent {
         size_t len;
@@ -51,7 +51,7 @@ private:
     struct _InEndpoint {
         _EndpointState state = _EndpointState::Ready;
         bool needsReset = false;
-        Channel<SendReadyEvent,1> sendReadyChannel;
+        Channel<SendDoneEvent,1> sendDoneChannel;
     };
     
 public:
@@ -307,9 +307,9 @@ public:
         return _sendReady(_inEndpoint(ep));
     }
     
-    constexpr Channel<SendReadyEvent,1>& sendReadyChannel(uint8_t ep) {
+    constexpr Channel<SendDoneEvent,1>& sendDoneChannel(uint8_t ep) {
         _InEndpoint& inep = _inEndpoint(ep);
-        return inep.sendReadyChannel;
+        return inep.sendDoneChannel;
     }
     
     // Channels
@@ -387,6 +387,16 @@ protected:
     }
     
     uint8_t _usbd_DataOut(uint8_t ep) {
+        // Sanity-check the endpoint state
+        _OutEndpoint& outep = _outEndpoint(ep);
+        Assert(
+            outep.state == _EndpointState::ResetZLP1     ||
+            outep.state == _EndpointState::ResetZLP2     ||
+            outep.state == _EndpointState::ResetSentinel ||
+            outep.state == _EndpointState::Busy
+        );
+        
+        _advanceState(ep, outep);
         return (uint8_t)USBD_OK;
     }
     
@@ -448,31 +458,37 @@ private:
             return;
         }
         
+        const size_t rxLen = USBD_LL_GetRxDataSize(&_device, ep);
+        
         switch (outep.state) {
         
         case _EndpointState::Ready:
             outep.state = _EndpointState::Busy;
+            outep.recvDoneChannel.reset();
             break;
         case _EndpointState::Busy:
             outep.state = _EndpointState::Ready;
-            outep.recvDoneChannel.writeTry(RecvDoneEvent{.len = USBD_LL_GetRxDataSize(&_device, ep)});
+            outep.recvDoneChannel.write(RecvDoneEvent{.len = rxLen});
             break;
         
         case _EndpointState::Reset:
             outep.state = _EndpointState::ResetZLP1;
-            USBD_LL_PrepareReceiveZeroLen(&_device, ep);
+            outep.recvDoneChannel.reset();
+            USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
             break;
         case _EndpointState::ResetZLP1:
-            outep.state = _EndpointState::ResetZLP2;
-            USBD_LL_PrepareReceiveZeroLen(&_device, ep);
-            break;
-        case _EndpointState::ResetZLP2:
-            outep.state = _EndpointState::ResetSentinel;
-            // Receive to `_DevNullAddr` so that the written data will be dropped
-            USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, sizeof(_ResetSentinel));
+            // Only advance if we received a ZLP
+            if (rxLen == 0) outep.state = _EndpointState::ResetSentinel;
+            USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
             break;
         case _EndpointState::ResetSentinel:
-            outep.state = _EndpointState::Ready;
+            // Only advance if we received the sentinel
+            if (rxLen == sizeof(_ResetSentinel)) {
+                outep.state = _EndpointState::Ready;
+                outep.recvDoneChannel.write(RecvDoneEvent{.len = rxLen});
+            } else {
+                USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
+            }
             break;
         
         default:
@@ -501,14 +517,16 @@ private:
         
         case _EndpointState::Ready:
             inep.state = _EndpointState::Busy;
+            inep.sendDoneChannel.reset();
             break;
         case _EndpointState::Busy:
             inep.state = _EndpointState::Ready;
-            inep.sendReadyChannel.writeTry(SendReadyEvent{});
+            inep.sendDoneChannel.write(SendDoneEvent{});
             break;
         
         case _EndpointState::Reset:
             inep.state = _EndpointState::ResetZLP1;
+            inep.sendDoneChannel.reset();
             USBD_LL_TransmitZeroLen(&_device, ep);
             break;
         case _EndpointState::ResetZLP1:
@@ -521,7 +539,7 @@ private:
             break;
         case _EndpointState::ResetSentinel:
             inep.state = _EndpointState::Ready;
-            inep.sendReadyChannel.writeTry(SendReadyEvent{});
+            inep.sendDoneChannel.write(SendDoneEvent{});
             break;
         
         default:
