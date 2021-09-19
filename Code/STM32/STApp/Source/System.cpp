@@ -639,13 +639,20 @@ void System::_sd_readToBuf() {
     Assert(!_bufs.full());
     Assert(_qspi.ready());
     
+    const size_t len = SDReadoutMsg::ReadoutLen;
     auto& buf = _bufs.back();
+    
+    // If we can't read any more data into the producer buffer,
+    // push it so the data will be sent over USB
+    if (buf.cap-buf.len < SDReadoutMsg::ReadoutLen) {
+        _bufs.push();
+        return;
+    }
     
     // Wait for ICE40 to signal that data is ready
     while (!_ICE_ST_SPI_D_READY::Read());
     
     // TODO: how do we handle lengths that aren't a multiple of ReadoutLen?
-    const size_t len = SDReadoutMsg::ReadoutLen;
     QSPI_CommandTypeDef qspiCmd = {
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         .AddressMode = QSPI_ADDRESS_NONE,
