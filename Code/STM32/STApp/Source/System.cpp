@@ -59,31 +59,6 @@ void System::run() {
     Task::Run(_usbTask, _sd.task);
 }
 
-//void System::_handleEvent() {
-//    // Wait for an event to occur on one of our channels
-//    ChannelSelect::Start();
-//    if (auto x = _usb.cmdRecvChannel.readSelect()) {
-//        _usb_handleCmd(*x);
-//    
-//    } else if (auto x = _usb.sendDoneChannel(Endpoints::DataIn).readSelect()) {
-//        _usb_sendReady(*x);
-//    
-//    } else if (auto x = _qspi.eventChannel.readSelect()) {
-//        _sdRead_qspiEventHandle(*x);
-//    
-//    } else {
-//        // No events, go to sleep
-//        ChannelSelect::Wait();
-//    }
-//    ChannelSelect::End();
-//}
-//
-//void System::_reset(const Cmd& cmd) {
-//    _op = Op::None;
-//    _usb.reset(Endpoints::DataIn);
-//    _usb_finishCmd(true);
-//}
-
 #pragma mark - USB
 
 void System::_usb_task() {
@@ -128,13 +103,6 @@ void System::_usb_sendFromBuf() {
     const auto& buf = _bufs.front();
     _usb.send(Endpoints::DataIn, buf.data, buf.len);
 }
-
-//void System::_usb_sendReady(const USB::Event& ev) {
-//    switch (_op) {
-//    case Op::SDRead:    _sdRead_usbSendReady(ev);   break;
-//    default:                                        break;
-//    }
-//}
 
 void System::_usb_finishCmd(bool status) {
     // Send our response
@@ -606,10 +574,12 @@ void System::_sd_task() {
         // Wait until we're done resetting the DataIn endpoint
         TaskWait(_usb.sendReady(Endpoints::DataIn));
         
-        // Indefinitely read data over QSPI and write it to USB
+        // Read data over QSPI and write it to USB, indefinitely
         for (;;) {
-            for (;;) {
-                bool didWork = false;
+            bool didWork;
+            do {
+                didWork = false;
+                
                 // Read data into the producer buffer when:
                 //   - there's space in the queue, and
                 //   - QSPI is ready to accept commands
@@ -625,9 +595,7 @@ void System::_sd_task() {
                     _usb_sendFromBuf();
                     didWork = true;
                 }
-                
-                if (!didWork) break;
-            }
+            } while (didWork);
             
             TaskYield();
         }
@@ -695,52 +663,6 @@ void System::_sd_readToBufSync(void* buf, size_t len) {
     
     _ICE_ST_SPI_CS_::Write(1);
 }
-
-//void System::_sdRead_qspiEventHandle(const QSPI::Event& ev) {
-//    Assert(_op == Op::SDRead);
-//    
-//    auto& buf = _bufs.back();
-//    
-//    // If we can't read any more data into the producer buffer,
-//    // push it so the data will be sent over USB
-//    if (buf.cap-buf.len < SDReadoutMsg::ReadoutLen) {
-//        _opDataRem -= buf.len;
-//        _bufs.push();
-//    }
-//    
-//    // Advance state machine
-//    _sdRead_updateState();
-//}
-
-//void System::_sdRead_usbSendReady(const USB::Event& ev) {
-//    Assert(_op == Op::SDRead);
-//    // Advance state machine
-//    _sdRead_updateState();
-//}
-
-//void System::_sdRead_updateState() {
-//    // Read data into the producer buffer when:
-//    //   - there's more data to be read, and
-//    //   - there's space in the queue, and
-//    //   - QSPI is ready to accept commands
-//    if (_opDataRem && !_bufs.full() && _qspi.ready()) {
-//        _sd_readToBuf();
-//    }
-//    
-//    // Send data from the consumer buffer when:
-//    //   - we have data to write, and
-//    //   - the DataIn USB endpoint is ready to accept data
-//    if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
-//        _usb_sendFromBuf();
-//    }
-//    
-//    // We're done when:
-//    //   - there's no more data to be read, and
-//    //   - there's no more data to send over USB
-//    if (!_opDataRem && _bufs.empty()) {
-//        _sdRead_stop();
-//    }
-//}
 
 void System::_sd_stopReading() {
     if (_sd.reading) {
