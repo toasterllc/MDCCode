@@ -38,9 +38,15 @@ int main(int argc, const char* argv[]) {
 //        printf("-> Done\n\n");
 //        exit(0);
         
-        printf("Resetting...\n");
-        device.reset();
-        printf("-> OK\n\n");
+//        printf("Resetting...\n");
+//        device.reset();
+//        printf("-> OK\n\n");
+        
+//        printf("Sending LEDSet commands...\n");
+//        for (;;) {
+//            device.ledSet(arc4random_uniform(3)+1, arc4random_uniform(2));
+//        }
+//        printf("-> OK\n\n");
         
         printf("Sending SDRead command...\n");
         device.sdRead(0);

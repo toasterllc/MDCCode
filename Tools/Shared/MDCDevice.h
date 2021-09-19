@@ -23,12 +23,12 @@ public:
     MDCDevice(USBDevice&& dev) :
     _dev(std::move(dev)) {}
     
-    void reset() {
-        using namespace STApp;
-        Cmd cmd = { .op = Op::Reset };
-        _dev.vendorRequestOut(0, cmd);
-        _flushEndpoint(Endpoints::DataIn);
-    }
+//    void reset() {
+//        using namespace STApp;
+//        Cmd cmd = { .op = Op::Reset };
+//        _dev.vendorRequestOut(0, cmd);
+//        _flushEndpoint(Endpoints::DataIn);
+//    }
     
     void sdRead(uint32_t addr) {
         using namespace STApp;

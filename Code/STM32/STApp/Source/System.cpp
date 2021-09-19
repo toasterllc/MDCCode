@@ -89,9 +89,7 @@ void System::run() {
 void System::_usb_task() {
     TaskBegin();
     for (;;) {
-        TaskWait(_usb.cmdRecvChannel.readable());
-        
-        auto ev = _usb.cmdRecvChannel.read();
+        auto ev = TaskRead(_usb.cmdRecvChannel);
         Cmd cmd;
         
         // Validate command length
@@ -578,16 +576,10 @@ void System::_sd_task() {
     TaskBegin();
     for (;;) {
         // Wait for an SDRead command
-        TaskWait(_sd.trigger.readable());
-        const Cmd cmd = _sd.trigger.read();
+        const Cmd cmd = TaskRead(_sd.trigger);
         
         // Stop reading from the SD card if a read is currently underway
         _sd_stopReading();
-        
-        // Reset the data channel (which sends a 2xZLP+sentinel sequence)
-        _usb.reset(Endpoints::DataIn);
-        // Wait until we're done resetting the DataIn endpoint
-        TaskWait(_usb.sendReady(Endpoints::DataIn));
         
         // ====================
         // CMD18 | READ_MULTIPLE_BLOCK
@@ -605,7 +597,14 @@ void System::_sd_task() {
         _ice_transferNoCS(SDReadoutMsg());
         
         // Let the host know that the USB command was successful
+        // This needs to happen before we reset the DataIn endpoint, otherwise we'll deadlock, because
+        // the host can't start receiving on DataIn until we respond to the request on EP0
         _usb_finishCmd(true);
+        
+        // Reset the data channel (which sends a 2xZLP+sentinel sequence)
+        _usb.reset(Endpoints::DataIn);
+        // Wait until we're done resetting the DataIn endpoint
+        TaskWait(_usb.sendReady(Endpoints::DataIn));
         
         // Indefinitely read data over QSPI and write it to USB
         for (;;) {
