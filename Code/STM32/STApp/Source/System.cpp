@@ -36,11 +36,11 @@ using namespace STApp;
 System::System() :
 // QSPI clock divider=1 => run QSPI clock at 64 MHz
 // QSPI alignment=word for high performance transfers
-_usbTask([&] { _usbCmd_task(); }),
-_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
-_bufs(_buf0, _buf1),
-_sd({ .task = Task([&] { _sd_task(); }) }) {
-}
+_qspi       (QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
+_bufs       (_buf0, _buf1),
+_usbCmd     ( { .task = Task([&] { _usbCmd_task();  }) } ),
+_sd         ( { .task = Task([&] { _sd_task();      }) } )
+{}
 
 void System::init() {
     _super::init();
@@ -58,7 +58,10 @@ void System::init() {
 }
 
 void System::run() {
-    Task::Run(_usbTask, _sd.task);
+    Task::Run(
+        _usbCmd.task,
+        _sd.task
+    );
 }
 
 void System::_pauseTasks() {

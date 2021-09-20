@@ -1,6 +1,5 @@
 #pragma once
 #include "USBBase.h"
-#include "Channel.h"
 #include "usbd_def.h"
 #include "STLoaderTypes.h"
 

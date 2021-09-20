@@ -8,6 +8,7 @@ class System : public SystemBase<System> {
 public:
     System();
     void init();
+    [[noreturn]] void run();
     
 private:
     void _pauseTasks();
@@ -18,6 +19,7 @@ private:
     
     void _usbDataOut_task();
     
+    void _usbDataIn_task();
     void _usbDataIn_sendStatus(bool status);
     
     // STM32 Bootloader
@@ -52,7 +54,11 @@ private:
     using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     
-    STApp::Cmd _cmd;
+    STLoader::Cmd _cmd = {};
+    
+    alignas(4) uint8_t _buf0[1024]; // Aligned to send via USB
+    alignas(4) uint8_t _buf1[1024]; // Aligned to send via USB
+    BufQueue<2> _bufs;
     
     struct {
         Task task;
@@ -93,10 +99,6 @@ private:
             size_t len = 0;
         } read;
     } _mspDebug;
-    
-    alignas(4) uint8_t _buf0[1024]; // Aligned to send via USB
-    alignas(4) uint8_t _buf1[1024]; // Aligned to send via USB
-    BufQueue<2> _bufs;
     
     friend int main();
     friend void ISR_OTG_HS();
