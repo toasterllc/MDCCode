@@ -38,34 +38,6 @@ void System::init() {
     _qspi.init();
 }
 
-void System::_handleEvent() {
-    // Wait for an event to occur on one of our channels
-    ChannelSelect::Start();
-    if (auto x = _usb.cmdRecvChannel.readSelect()) {
-    	_usb_cmdHandle(*x);
-    
-    } else if (auto x = _usb.recvDoneChannel(Endpoints::DataOut).readSelect()) {
-        _usb_recvDone(*x);
-    
-    } else if (auto x = _usb.sendReadyChannel(Endpoints::DataIn).readSelect()) {
-    	_usb_sendReady(*x);
-    
-    } else if (auto x = _qspi.eventChannel.readSelect()) {
-        _ice_qspiHandleEvent(*x);
-    
-    } else {
-        // No events, go to sleep
-        ChannelSelect::Wait();
-    }
-}
-
-void System::_reset(const Cmd& cmd) {
-    _op = Op::None;
-    _usb.reset(Endpoints::DataOut);
-    _usb.reset(Endpoints::DataIn);
-    _usbCmd_finish(true);
-}
-
 #pragma mark - USB
 
 void System::_usbCmd_task() {
@@ -465,42 +437,96 @@ void System::_mspDebug_task() {
     const auto& arg = _cmd.arg.MSPDebug;
     TaskBegin();
     
-    // Reset state
-    _bufs.reset();
-    
-    // Trigger the USB DataOut task with the amount of data
-    _usbDataOut.task.reset();
-    _usbDataOut.len = arg.writeLen;
-    
-    // Handle debug commands from the DataOut endpoint
-    while (arg.len) {
-        TaskWait(!_bufs.empty());
-        
-        // Handle each MSPDebugCmd
-        auto& buf = _bufs.front();
-        const MSPDebugCmd* cmds = (MSPDebugCmd*)buf.data;
-        const size_t cmdsLen = buf.len/sizeof(MSPDebugCmd);
-        for (size_t i=0; i<cmdsLen; i++) {
-            _mspDebug_handleCmd(cmds[i]);
-        }
-        _bufs.pop();
+    // Validate our arguments
+    if (arg.respLen > sizeof(_buf1)) {
+        _usbCmd_finish(false);
+        return;
     }
+    
+    // Respond to the command
+    _usbCmd_finish(true);
+    
+    // Reset endpoints
+    _usb.reset(Endpoints::DataOut);
+    _usb.reset(Endpoints::DataIn);
+    // Wait until we're done resetting the endpoints
+    TaskWait(_usb.recvReady(Endpoints::DataOut) && _usb.sendReady(Endpoints::DataIn));
+    
+    // Handle debug commands
+    {
+        bool ok = true;
+        while (arg.cmdsLen) {
+            // Receive debug commands into _buf0
+            _usb.recv(Endpoints::DataOut, _buf0, sizeof(_buf0));
+            TaskWait(_usb.recvReady(Endpoints::DataOut));
+            
+            // Handle each MSPDebugCmd
+            const MSPDebugCmd* cmds = (MSPDebugCmd*)_buf0;
+            const size_t cmdsLen = _usb.recvLen(Endpoints::DataOut) / sizeof(MSPDebugCmd);
+            for (size_t i=0; i<cmdsLen; i++) {
+                ok = _mspDebug_handleCmd(cmds[i]);
+                if (!ok) break; // Ignore commands after a failure
+            }
+            
+            arg.cmdsLen -= cmdsLen;
+        }
+        
+        // Send status
+        _usbDataIn_sendStatus(ok);
+        if (!ok) return;
+    }
+    
+    // Reply with data generated from debug commands
+    {
+        bool ok = true;
+        // Push outstanding bits into the buffer
+        // This is necessary for when the client reads a number of bits
+        // that didn't fall on a byte boundary.
+        if (_mspDebugRead.bitsLen) {
+            ok = _mspDebug_pushReadBits();
+        }
+        
+        if (arg.cmdsLen) {
+            // Send the data and wait for it to be received
+            _usb.send(Endpoints::DataIn, _buf1, len);
+            _usb.sendReadyChannel(Endpoints::DataIn).read();
+        }
+        _mspDebugRead = {};
+    }
+    
+    
+    
+    if (arg.respLen > sizeof(_buf1))
+    
+    Assert(len <= sizeof(_buf1));
+    // Push outstanding bits into the buffer
+    // This is necessary for when the client reads a number of bits
+    // that didn't fall on a byte boundary.
+    if (_mspDebugRead.bitsLen) _mspDebug_pushReadBits();
+    if (len) {
+        // Send the data and wait for it to be received
+        _usb.send(Endpoints::DataIn, _buf1, len);
+        _usb.sendReadyChannel(Endpoints::DataIn).read();
+    }
+    _mspDebugRead = {};
     
     
 }
 
-void System::_mspDebug_pushReadBits() {
-    Assert(_mspDebugRead.len < sizeof(_buf1));
+bool System::_mspDebug_pushReadBits() {
+    // Return an error if the amount of data we're reading doesn't fit in _buf1
+    if (_mspDebugRead.len >= sizeof(_buf1)) return false;
     // Enqueue the new byte into `_buf1`
     _buf1[_mspDebugRead.len] = _mspDebugRead.bits;
     _mspDebugRead.len++;
     // Reset our bits
     _mspDebugRead.bits = 0;
     _mspDebugRead.bitsLen = 0;
+    return true;
 }
 
-void System::_mspDebug_handleSBWIO(const MSPDebugCmd& cmd) {
-    bool tdo = _msp.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
+bool System::_mspDebug_handleSBWIO(const MSPDebugCmd& cmd) {
+    const bool tdo = _msp.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
     if (cmd.tdoReadGet()) {
         // Enqueue a new bit
         _mspDebugRead.bits <<= 1;
@@ -509,18 +535,19 @@ void System::_mspDebug_handleSBWIO(const MSPDebugCmd& cmd) {
         
         // Enqueue the byte if it's filled
         if (_mspDebugRead.bitsLen == 8) {
-            _mspDebug_pushReadBits();
+            return _mspDebug_pushReadBits();
         }
     }
+    return true;
 }
 
-void System::_mspDebug_handleCmd(const MSPDebugCmd& cmd) {
+bool System::_mspDebug_handleCmd(const MSPDebugCmd& cmd) {
     switch (cmd.opGet()) {
-    case MSPDebugCmd::Ops::TestSet:     _msp.debugTestSet(cmd.pinValGet()); break;
-    case MSPDebugCmd::Ops::RstSet:      _msp.debugRstSet(cmd.pinValGet());  break;
-    case MSPDebugCmd::Ops::TestPulse:   _msp.debugTestPulse();              break;
-    case MSPDebugCmd::Ops::SBWIO:       _mspDebug_handleSBWIO(cmd);         break;
-    default:                            abort();                            break;
+    case MSPDebugCmd::Ops::TestSet:     _msp.debugTestSet(cmd.pinValGet()); return true;
+    case MSPDebugCmd::Ops::RstSet:      _msp.debugRstSet(cmd.pinValGet()); return true;
+    case MSPDebugCmd::Ops::TestPulse:   _msp.debugTestPulse(); return true;
+    case MSPDebugCmd::Ops::SBWIO:       return _mspDebug_handleSBWIO(cmd);
+    default:                            return false;
     }
 }
 

@@ -44,6 +44,7 @@ private:
     
     struct _OutEndpoint {
         _EndpointState state = _EndpointState::Ready;
+        size_t len = 0;
         bool needsReset = false;
         Channel<RecvDoneEvent,1> recvDoneChannel;
     };
@@ -288,6 +289,13 @@ public:
         return _recvReady(_outEndpoint(ep));
     }
     
+    size_t recvLen(uint8_t ep) const {
+        AssertArg(EndpointOut(ep));
+        IRQState irq;
+        irq.disable();
+        return _recvLen(_outEndpoint(ep));
+    }
+    
     #warning: do we still need this?
     constexpr Channel<RecvDoneEvent,1>& recvDoneChannel(uint8_t ep) {
         AssertArg(EndpointOut(ep));
@@ -474,6 +482,8 @@ private:
     // Interrupts must be disabled
     bool _sendReady(const _InEndpoint& inep)    const { return inep.state==_EndpointState::Ready;   }
     
+    size_t _recvLen(const _OutEndpoint& outep)  const { return outep.len;                           }
+    
     // Interrupts must be disabled
     template <typename OutInEndpoint>
     void _reset(uint8_t ep, OutInEndpoint& outinep) {
@@ -489,7 +499,7 @@ private:
             return;
         }
         
-        const size_t rxLen = USBD_LL_GetRxDataSize(&_device, ep);
+        outep.len = USBD_LL_GetRxDataSize(&_device, ep);
         
         switch (outep.state) {
         
@@ -499,7 +509,7 @@ private:
             break;
         case _EndpointState::Busy:
             outep.state = _EndpointState::Ready;
-            outep.recvDoneChannel.write(RecvDoneEvent{.len = rxLen});
+            outep.recvDoneChannel.write(RecvDoneEvent{.len = outep.len});
             break;
         
         case _EndpointState::Reset:
@@ -509,14 +519,14 @@ private:
             break;
         case _EndpointState::ResetZLP1:
             // Only advance if we received a ZLP
-            if (rxLen == 0) outep.state = _EndpointState::ResetSentinel;
+            if (outep.len == 0) outep.state = _EndpointState::ResetSentinel;
             USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
             break;
         case _EndpointState::ResetSentinel:
             // Only advance if we received the sentinel
-            if (rxLen == sizeof(_ResetSentinel)) {
+            if (outep.len == sizeof(_ResetSentinel)) {
                 outep.state = _EndpointState::Ready;
-                outep.recvDoneChannel.write(RecvDoneEvent{.len = rxLen});
+                outep.recvDoneChannel.write(RecvDoneEvent{.len = outep.len});
             } else {
                 USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
             }
