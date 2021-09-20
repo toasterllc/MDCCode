@@ -53,10 +53,16 @@ void System::init() {
     _ice_init();
     _msp_init();
     _sd_init();
+    
+    _pauseTasks();
 }
 
 void System::run() {
     Task::Run(_usbTask, _sd.task);
+}
+
+void System::_pauseTasks() {
+    _sd.task.pause();
 }
 
 #pragma mark - USB
@@ -75,7 +81,7 @@ void System::_usbCmd_task() {
         memcpy(&_cmd, ev.data, ev.len);
         
         // Stop all tasks
-        _sd.task.pause();
+        _pauseTasks();
         
         switch (_cmd.op) {
         case Op::SDRead:    _sd.task.reset();       break;

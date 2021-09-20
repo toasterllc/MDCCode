@@ -13,6 +13,8 @@ public:
     [[noreturn]] void run();
     
 private:
+    void _pauseTasks();
+    
     void _usbCmd_task();
     void _usbCmd_finish(bool status);
     

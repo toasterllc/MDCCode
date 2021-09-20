@@ -10,6 +10,8 @@ public:
     void init();
     
 private:
+    void _pauseTasks();
+    
     // USB
     void _usbCmd_task();
     void _usbCmd_finish(bool status);
