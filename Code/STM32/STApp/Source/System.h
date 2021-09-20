@@ -46,9 +46,10 @@ private:
     
     BufQueue<2> _bufs;
     
+    STApp::Cmd _cmd;
+    
     struct {
         Task task;
-        std::optional<STApp::Cmd> cmd;
         uint16_t rca = 0;
         bool reading = false;
     } _sd;
