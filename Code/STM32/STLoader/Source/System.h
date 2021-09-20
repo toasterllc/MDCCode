@@ -20,28 +20,28 @@ private:
     
     // STM32 Bootloader
     void _stm_task();
-    void _stm_reset(const STLoader::Cmd& cmd);
+    void _stm_reset();
     
     // ICE40 Bootloader
     void _ice_task();
-    void _ice_write(const STLoader::Cmd& cmd);
+    void _ice_write();
     bool _ice_writeFinish();
     
     // MSP430 Bootloader
-    void _msp_connect(const STLoader::Cmd& cmd);
-    void _msp_disconnect(const STLoader::Cmd& cmd);
+    void _msp_connect();
+    void _msp_disconnect();
     
     void _mspRead_task();
     
     void _mspWrite_task();
     
-    void _mspDebug_task(const STLoader::Cmd& cmd);
+    void _mspDebug_task();
     void _mspDebug_pushReadBits();
     void _mspDebug_handleSBWIO(const STLoader::MSPDebugCmd& cmd);
     void _mspDebug_handleCmd(const STLoader::MSPDebugCmd& cmd);
     
     // Other commands
-    void _ledSet(const STLoader::Cmd& cmd);
+    void _ledSet();
     
     USB _usb;
     QSPI _qspi;

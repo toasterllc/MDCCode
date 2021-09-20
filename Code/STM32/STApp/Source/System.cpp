@@ -67,7 +67,7 @@ void System::_usbCmd_task() {
         auto ev = TaskRead(_usb.cmdRecvChannel);
         
         // Validate command length
-        if (ev.len != sizeof(cmd)) {
+        if (ev.len != sizeof(_cmd)) {
             _usbCmd_finish(false);
             continue;
         }
@@ -77,9 +77,9 @@ void System::_usbCmd_task() {
         // Stop all tasks
         _sd.task.pause();
         
-        switch (cmd.op) {
+        switch (_cmd.op) {
         case Op::SDRead:    _sd.task.reset();       break;
-        case Op::LEDSet:    _ledSet(cmd);           break;
+        case Op::LEDSet:    _ledSet();              break;
         // Bad command
         default:            _usbCmd_finish(false);  break;
         }
@@ -650,12 +650,12 @@ void System::_sd_readToBufSync(void* buf, size_t len) {
 
 #pragma mark - Other Commands
 
-void System::_ledSet(const Cmd& cmd) {
-    switch (cmd.arg.LEDSet.idx) {
+void System::_ledSet() {
+    switch (_cmd.arg.LEDSet.idx) {
     case 0: _usbCmd_finish(false); return;
-    case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
-    case 2: _LED2::Write(cmd.arg.LEDSet.on); break;
-    case 3: _LED3::Write(cmd.arg.LEDSet.on); break;
+    case 1: _LED1::Write(_cmd.arg.LEDSet.on); break;
+    case 2: _LED2::Write(_cmd.arg.LEDSet.on); break;
+    case 3: _LED3::Write(_cmd.arg.LEDSet.on); break;
     }
     
     _usbCmd_finish(true);

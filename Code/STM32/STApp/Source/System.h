@@ -34,7 +34,7 @@ private:
     void _sd_readToBuf();
     void _sd_readToBufSync(void* buf, size_t len);
     
-    void _ledSet(const STApp::Cmd& cmd);
+    void _ledSet();
     
     // Peripherals
     USB _usb;
