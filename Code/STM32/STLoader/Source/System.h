@@ -21,6 +21,7 @@ private:
     
     // STM32 Bootloader
     void _stm_task();
+    void _stm_reset(const STLoader::Cmd& cmd);
     
     // ICE40 Bootloader
     void _ice_task();
@@ -30,15 +31,9 @@ private:
     // MSP430 Bootloader
     void _msp_connect(const STLoader::Cmd& cmd);
     void _msp_disconnect(const STLoader::Cmd& cmd);
+    void _mspRead_task();
+    void _mspWrite_task();
     
-    void _mspRead(const STLoader::Cmd& cmd);
-    void _mspRead_finish();
-    void _mspRead_updateState();
-    void _mspRead_readToBuf();
-    void _mspRead_usbSendReady(const USB::SendReadyEvent& ev);
-    
-    void _mspWrite(const STLoader::Cmd& cmd);
-    void _mspWrite_finish();
     void _mspWrite_usbRecvDone(const USB::RecvDoneEvent& ev);
     void _mspWrite_updateState();
     void _mspWrite_writeFromBuf();
@@ -60,27 +55,42 @@ private:
     using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     
+    STApp::Cmd _cmd;
+    
     struct {
         Task task;
     } _usbCmd;
     
     struct {
         Task task;
+        size_t len = 0;
     } _usbDataOut;
     
     struct {
+        Task task;
+        size_t len = 0;
         alignas(4) bool status = false; // Aligned to send via USB
     } _usbDataIn;
     
     struct {
         Task task;
-        std::optional<STApp::Cmd> cmd;
     } _stm;
     
     struct {
         Task task;
-        std::optional<STApp::Cmd> cmd;
     } _ice;
+    
+    struct {
+        Task task;
+        uint32_t addr = 0;
+        size_t len = 0;
+    } _mspRead;
+    
+    struct {
+        Task task;
+        uint32_t addr = 0;
+        size_t len = 0;
+    } _mspWrite;
     
     uint32_t _mspAddr = 0;
     

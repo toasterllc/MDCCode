@@ -72,7 +72,6 @@ void System::_usbCmd_task() {
     TaskBegin();
     for (;;) {
         auto ev = TaskRead(_usb.cmdRecvChannel);
-        Cmd cmd;
         
         // Validate command length
         if (ev.len != sizeof(cmd)) {
@@ -80,35 +79,53 @@ void System::_usbCmd_task() {
             continue;
         }
         
-        memcpy(&cmd, ev.data, ev.len);
+        memcpy(&_cmd, ev.data, ev.len);
         
-        switch (cmd.op) {
-//        case Op::Reset:                 _reset(cmd);                break;
+        switch (_cmd.op) {
         // STM32 Bootloader
         case Op::STMWrite:
-        case Op::STMReset:
             _stm.task.reset();
-            _stm.cmd = cmd;
             break;
+        
+        case Op::STMReset:
+            _stm_reset(cmd);
+            break;
+        
         // ICE40 Bootloader
         case Op::ICEWrite:
             _ice.task.reset();
-            _ice.cmd = cmd;
             break;
+        
         // MSP430 Bootloader
-        case Op::MSPConnect:            _msp_connect(cmd);          break;
-        case Op::MSPDisconnect:         _msp_disconnect(cmd);       break;
+        case Op::MSPConnect:
+            _msp_connect(cmd);
+            break;
+        case Op::MSPDisconnect:
+            _msp_disconnect(cmd);
+            break;
+        
         // MSP430 Debug
-        case Op::MSPRead:               _mspRead(cmd);              break;
-        case Op::MSPWrite:              _mspWrite(cmd);             break;
-        case Op::MSPDebug:              _mspDebug(cmd);             break;
+        case Op::MSPRead:
+            _mspRead.task.reset();
+            break;
+        case Op::MSPWrite:
+            _mspWrite.task.reset();
+            break;
+        case Op::MSPDebug:
+            _mspDebug.task.reset();
+            break;
+        
         // Set LED
-        case Op::LEDSet:                _ledSet(cmd);               break;
+        case Op::LEDSet:
+            _ledSet(cmd);
+            break;
+        
         // Bad command
-        default:            			_usbCmd_finish(false);      break;
+        default:
+            _usbCmd_finish(false);
+            break;
         }
     }
-    TaskEnd();
 }
 
 void System::_usbCmd_finish(bool status) {
@@ -116,41 +133,60 @@ void System::_usbCmd_finish(bool status) {
     _usb.cmdSendStatus(status);
 }
 
+// _usbDataOut_task: reads `_usbDataOut.len` bytes from the DataOut endpoint and writes it to _bufs
 void System::_usbDataOut_task() {
+    auto& s = _usbDataOut;
     TaskBegin();
-    for (;;) {
-        TaskWait(_usbDataOut.remLen);
+    // Reset the DataOut endpoint (which sends a 2xZLP+sentinel sequence)
+    _usb.reset(Endpoints::DataOut);
+    // Wait until we're done resetting the DataOut endpoint
+    TaskWait(_usb.recvReady(Endpoints::DataOut));
+    
+    while (s.len) {
+        static size_t chunkLen;
+        TaskWait(!_bufs.full());
         
-        // Reset the data channel (which sends a 2xZLP+sentinel sequence)
-        _usb.reset(Endpoints::DataOut);
-        // Wait until we're done resetting the DataOut endpoint
-        TaskWait(_usb.recvReady(Endpoints::DataOut));
-        
-        while (_usbDataOut.remLen) {
-            static size_t chunkLen;
-            TaskWait(!_bufs.full());
+        {
+            auto& buf = _bufs.back();
+            // Prepare to receive either `s.len` bytes or the
+            // buffer capacity bytes, whichever is smaller.
+            chunkLen = _ceilToPacketLength(std::min(s.len, buf.cap));
+            // Ensure that after rounding up to the nearest packet size, we don't
+            // exceed the buffer capacity. (This should always be safe as long as
+            // the buffer capacity is a multiple of the max packet size.)
+            Assert(len <= buf.cap);
             
-            {
-                auto& buf = _bufs.back();
-                // Prepare to receive either `_usbDataOut.remLen` bytes or the
-                // buffer capacity bytes, whichever is smaller.
-                chunkLen = _ceilToPacketLength(std::min(_usbDataOut.remLen, buf.cap));
-                // Ensure that after rounding up to the nearest packet size, we don't
-                // exceed the buffer capacity. (This should always be safe as long as
-                // the buffer capacity is a multiple of the max packet size.)
-                Assert(len <= buf.cap);
-                
-                _usb.recv(Endpoints::DataOut, buf.data, len);
-                buf.len = len;
-            }
-            
-            // Wait for the transfer to complete and push the buffer
-            TaskWait(_usb.recvReady(Endpoints::DataOut));
-            _usbDataOut.remLen -= chunkLen;
-            _bufs.push();
+            _usb.recv(Endpoints::DataOut, buf.data, len);
+            buf.len = len;
         }
+        
+        // Wait for the transfer to complete and push the buffer
+        TaskWait(_usb.recvReady(Endpoints::DataOut));
+        s.len -= chunkLen;
+        _bufs.push();
     }
-    TaskEnd();
+}
+
+// _usbDataIn_task: reads `_usbDataIn.len` bytes from _bufs and writes it to the DataIn endpoint
+void System::_usbDataIn_task() {
+    auto& s = _usbDataIn;
+    TaskBegin();
+    // Reset the DataIn endpoint (which sends a 2xZLP+sentinel sequence)
+    _usb.reset(Endpoints::DataIn);
+    // Wait until we're done resetting the DataIn endpoint
+    TaskWait(_usb.sendReady(Endpoints::DataIn));
+    
+    while (s.len) {
+        static size_t chunkLen;
+        TaskWait(!_bufs.empty());
+        
+        // Send the data and wait until the transfer is complete
+        _usb.send(Endpoints::DataIn, _bufs.front().data, _bufs.front().len);
+        TaskWait(_usb.sendReady(Endpoints::DataIn));
+        
+        s.len -= _bufs.front();
+        _bufs.pop();
+    }
 }
 
 void System::_usbDataIn_sendStatus(bool status) {
@@ -188,53 +224,42 @@ static size_t _stm_regionCapacity(void* addr) {
 }
 
 void System::_stm_task() {
-    const auto& arg = _stm.cmd.arg.STMWrite;
+    auto& s = _stm;
+    const auto& arg = cmd.arg.STMWrite;
+    
     TaskBegin();
-    for (;;) {
-        // Wait for a command
-        TaskWait(_stm.cmd);
-        
-        switch (cmd.op) {
-        case Op::STMWrite: {
-            static size_t len;
-            
-            // Confirm that the region's capacity is large enough to hold the incoming
-            // data length (ceiled to the packet length)
-            len = _ceilToPacketLength(arg.len);
-            if (len > _stm_regionCapacity(arg.addr)) {
-                _usbCmd_finish(false);
-                break;
-            }
-            
-            // Respond to the command
-            _usbCmd_finish(true);
-            // Reset the endpoints
-            _usb.reset(Endpoints::DataOut);
-            _usb.reset(Endpoints::DataIn);
-            // Wait until we're done resetting the endpoints
-            TaskWait(_usb.recvReady(Endpoints::DataOut) && _usb.sendReady(Endpoints::DataIn));
-            
-            // Receive USB data
-            _usb.recv(Endpoints::DataOut, arg.addr, len);
-            TaskWait(_usb.recvReady(Endpoints::DataOut));
-            
-            // Send our status
-            _usbDataIn_sendStatus(true);
-            break;
-        }
-        
-        case Op::STMReset: {
-            Start.setAppEntryPointAddr(cmd.arg.STMReset.entryPointAddr);
-            // Perform software reset
-            HAL_NVIC_SystemReset();
-            // Unreachable
-            abort();
-            break;
-        }}
-        
-        _stm.cmd = std::nullopt;
+    
+    // Confirm that the region's capacity is large enough to hold the incoming
+    // data length (ceiled to the packet length)
+    static size_t len;
+    len = _ceilToPacketLength(arg.len);
+    if (len > _stm_regionCapacity(arg.addr)) {
+        _usbCmd_finish(false);
+        return;
     }
-    TaskEnd();
+    
+    // Respond to the command
+    _usbCmd_finish(true);
+    // Reset the endpoints
+    _usb.reset(Endpoints::DataOut);
+    _usb.reset(Endpoints::DataIn);
+    // Wait until we're done resetting the endpoints
+    TaskWait(_usb.recvReady(Endpoints::DataOut) && _usb.sendReady(Endpoints::DataIn));
+    
+    // Receive USB data
+    _usb.recv(Endpoints::DataOut, arg.addr, len);
+    TaskWait(_usb.recvReady(Endpoints::DataOut));
+    
+    // Send our status
+    _usbDataIn_sendStatus(true);
+}
+
+void System::_stm_reset(const Cmd& cmd) {
+    Start.setAppEntryPointAddr(cmd.arg.STMReset.entryPointAddr);
+    // Perform software reset
+    HAL_NVIC_SystemReset();
+    // Unreachable
+    abort();
 }
 
 #pragma mark - ICE40 Bootloader
@@ -265,67 +290,62 @@ static void _ice_qspiWrite(QSPI& qspi, const void* data, size_t len) {
 }
 
 void System::_ice_task() {
-    const auto& arg = _ice.cmd.arg.ICEWrite;
+    auto& s = _ice;
+    const auto& arg = _cmd.arg.ICEWrite;
     TaskBegin();
-    for (;;) {
-        // Wait for a command
-        TaskWait(_ice.cmd);
+    
+    // Configure ICE40 control GPIOs
+    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Put ICE40 into configuration mode
+    _ICE_ST_SPI_CLK::Write(1);
+    
+    _ICE_ST_SPI_CS_::Write(0);
+    _ICE_CRST_::Write(0);
+    HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
+    
+    _ICE_CRST_::Write(1);
+    HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+    
+    // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
+    _ICE_ST_SPI_CS_::Write(1);
+    
+    // Have QSPI take over _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_
+    _qspi.config();
+    
+    // Send 8 clocks and wait for them to complete
+    static const uint8_t ff = 0xff;
+    _ice_qspiWrite(_qspi, &ff, 1);
+    _qspi.eventChannel.read();
+    
+    // Respond to the command
+    _usbCmd_finish(true);
+    // Reset state
+    _bufs.reset();
+    // Trigger the USB DataOut task with the amount of data
+    _usbDataOut.task.reset();
+    _usbDataOut.len = arg.len;
+    
+    static size_t len;
+    len = arg.len;
+    while (len) {
+        // Wait until we have data to consume, and QSPI is ready to write
+        TaskWait(!_bufs.empty() && _qspi.ready());
         
-        // Configure ICE40 control GPIOs
-        _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        // Write the data over QSPI and wait for completion
+        _ice_qspiWrite(_qspi, _bufs.front().data, _bufs.front().len);
+        TaskWait(_qspi.ready());
         
-        // Put ICE40 into configuration mode
-        _ICE_ST_SPI_CLK::Write(1);
-        
-        _ICE_ST_SPI_CS_::Write(0);
-        _ICE_CRST_::Write(0);
-        HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
-        
-        _ICE_CRST_::Write(1);
-        HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
-        
-        // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
-        _ICE_ST_SPI_CS_::Write(1);
-        
-        // Have QSPI take over _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_
-        _qspi.config();
-        
-        // Send 8 clocks and wait for them to complete
-        static const uint8_t ff = 0xff;
-        _ice_qspiWrite(_qspi, &ff, 1);
-        _qspi.eventChannel.read();
-        
-        // Respond to the command
-        _usbCmd_finish(true);
-        
-        // Trigger the USB DataOut task with the amount of data
-        _usbDataOut.task.reset();
-        _usbDataOut.remLen = arg.len;
-        
-        static size_t remLen;
-        remLen = arg.len;
-        while (remLen) {
-            // Wait until we have data to consume, and QSPI is ready to write
-            TaskWait(!_bufs.empty() && _qspi.ready());
-            
-            // Write the data over QSPI and wait for completion
-            _ice_qspiWrite(_qspi, _bufs.front().data, _bufs.front().len);
-            TaskWait(_qspi.ready());
-            
-            // Update the remaining data and pop the buffer so it can be used again
-            remLen -= _bufs.front().len;
-            _bufs.pop();
-        }
-        
-        const bool br = _ice_writeFinish();
-        _usbDataIn_sendStatus(br);
-        
-        _ice.cmd = std::nullopt;
+        // Update the remaining data and pop the buffer so it can be used again
+        len -= _bufs.front().len;
+        _bufs.pop();
     }
-    TaskEnd();
+    
+    const bool br = _ice_writeFinish();
+    _usbDataIn_sendStatus(br);
 }
 
 bool System::_ice_writeFinish() {
@@ -367,142 +387,115 @@ void System::_msp_disconnect(const Cmd& cmd) {
     _usbCmd_finish(true);
 }
 
-void System::_mspRead(const STLoader::Cmd& cmd) {
-    // Update state
-    _op = Op::MSPRead;
-    _opDataRem = cmd.arg.MSPRead.len;
-    _mspAddr = cmd.arg.MSPRead.addr;
+void System::_mspRead_task() {
+    auto& s = _mspRead;
+    const auto& arg = _cmd.arg.MSPRead;
+    TaskBegin();
     
-    _mspRead_updateState();
-    
+    // Respond to the command
     _usbCmd_finish(true);
-}
-
-void System::_mspRead_finish() {
-    #warning how do we communicate status to host?
-}
-
-void System::_mspRead_updateState() {
-    // Send data when:
-    //   - we have data to write
-    //   - we haven't arranged to send USB data yet
-    // Do this before reading from MSP430, so we can send USB data
-    // in the background while reading from MSP430.
-    if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
-        _usb_sendFromBuf();
+    
+    // Reset state
+    _bufs.reset();
+    
+    // Trigger the USB DataIn task with the amount of data
+    _usbDataIn.task.reset();
+    _usbDataIn.len = arg.len;
+    
+    s.addr = arg.addr;
+    s.len = arg.len;
+    while (s.len) {
+        TaskWait(!_bufs.full());
+        
+        auto& buf = _bufs.back();
+        // Prepare to receive either `s.len` bytes or the
+        // buffer capacity bytes, whichever is smaller.
+        const size_t chunkLen = std::min(s.len, buf.cap);
+        _msp.read(s.addr, buf.data, chunkLen);
+        s.addr += chunkLen;
+        s.len -= chunkLen;
+        // Enqueue the buffer
+        buf.len = chunkLen;
+        _bufs.push();
     }
     
-    // Fill our buffers with data read from MSP430 when:
-    //   - there's more data to be read, and
-    //   - there's space in the queue
-    while (_opDataRem && !_bufs.full()) {
-        _mspRead_readToBuf();
-    }
-    
-    // Send data when:
-    //   - we have data to write
-    //   - we haven't arranged to send USB data yet
-    // Do this again after reading from MSP, since we may not have had any
-    // buffers available to send before we read from MSP.
-    if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
-        _usb_sendFromBuf();
-    }
-    
-    // We're done when:
-    //   - there's no more data to be read, and
-    //   - there's no more data to send over USB
-    if (!_opDataRem && _bufs.empty()) {
-        _mspRead_finish();
-    }
+    // Wait until all of our data is sent
+    TaskWait(_usbDataIn.len == 0);
+    // Send our status
+    _usbDataIn_sendStatus(true);
 }
 
-void System::_mspRead_readToBuf() {
-    Assert(!_bufs.full());
-    Assert(_opDataRem);
-    auto& buf = _bufs.back();
+void System::_mspWrite_task() {
+    auto& s = _mspWrite;
+    const auto& arg = _cmd.arg.MSPWrite;
+    TaskBegin();
     
-    // Prepare to receive either `_opDataRem` bytes or the
-    // buffer capacity bytes, whichever is smaller.
-    const size_t len = std::min(_opDataRem, buf.cap);
-    _msp.read(_mspAddr, buf.data, len);
-    _opDataRem -= len;
-    _mspAddr += len;
+    // Respond to the command
+    _usbCmd_finish(true);
     
-    // Enqueue the buffer
-    buf.len = len;
-    _bufs.push();
-}
-
-void System::_mspRead_usbSendReady(const USB::SendReadyEvent& ev) {
-    _mspRead_updateState();
-}
-
-void System::_mspWrite(const Cmd& cmd) {
-    // Update state
-    _op = Op::MSPWrite;
-    _opDataRem = cmd.arg.MSPWrite.len;
+    // Reset state
+    _bufs.reset();
     _msp.crcReset();
-    _mspAddr = cmd.arg.MSPWrite.addr;
     
-    // Prepare to receive USB data
-    _usb_recvToBuf();
+    // Trigger the USB DataOut task with the amount of data
+    _usbDataOut.task.reset();
+    _usbDataOut.len = arg.len;
     
-    _usbCmd_finish(true);
-}
-
-void System::_mspWrite_finish() {
+    // Reset the DataIn endpoint, which we'll send our status on
+    _usb.reset(Endpoints::DataIn);
+    // Wait until we're done resetting the endpoints
+    TaskWait(_usb.sendReady(Endpoints::DataIn));
+    
+    s.addr = arg.addr;
+    s.len = arg.len;
+    while (s.len) {
+        TaskWait(!_bufs.empty());
+        
+        // Write the data over Spy-bi-wire
+        auto& buf = _bufs.front();
+        _msp.write(s.addr, buf.data, buf.len);
+        // Update the MSP430 address to write to
+        s.addr += len;
+        s.len -= len;
+        // Pop the buffer, which we just finished sending over Spy-bi-wire
+        _bufs.pop();
+    }
+    
     // Verify the CRC of all the data we wrote
     const auto r = _msp.crcVerify();
-    #warning how do we communicate status to host?
+    // Send our status
+    _usbDataIn_sendStatus(r==_msp.Status::OK ? Status::OK : Status::Error);
 }
 
-void System::_mspWrite_usbRecvDone(const USB::RecvDoneEvent& ev) {
-    Assert(ev.len);
-    Assert(!_bufs.full());
+void System::_mspDebug_task() {
+    auto& s = _mspDebug;
+    const auto& arg = _cmd.arg.MSPDebug;
+    TaskBegin();
     
-    // Enqueue the buffer
-    _bufs.back().len = ev.len;
-    _bufs.push();
+    // Reset state
+    _bufs.reset();
     
-    _mspWrite_updateState();
-}
-
-void System::_mspWrite_updateState() {
-    // Prepare to receive more USB data if:
-    //   - we expect more data, and
-    //   - there's space in the queue, and
-    //   - we haven't arranged to receive USB data yet
-    //
-    // *** We want to do this before executing `_msp.write`, so that we can
-    // *** be receiving USB data while we're sending data via Spy-bi-wire.
-    if (_opDataRem && !_bufs.full() && _usb.recvReady(Endpoints::DataOut)) {
-        _usb_recvToBuf();
+    // Trigger the USB DataOut task with the amount of data
+    _usbDataOut.task.reset();
+    _usbDataOut.len = arg.writeLen;
+    
+    // Accept MSPDebugCmds over the DataOut endpoint until we've handled `len` commands
+    size_t remLen = len;
+    while (remLen) {
+        _usb.recv(Endpoints::DataOut, _buf0, sizeof(_buf0));
+        
+        const auto ev = _usb.recvDoneChannel(Endpoints::DataOut).read();
+        Assert(ev.len <= remLen);
+        remLen -= ev.len;
+        
+        // Handle each MSPDebugCmd
+        const MSPDebugCmd* cmds = (MSPDebugCmd*)_buf0;
+        for (size_t i=0; i<ev.len; i++) {
+            _mspDebug_handleCmd(cmds[i]);
+        }
     }
     
-    // Send data if we have data to write
-    if (!_bufs.empty()) {
-        _mspWrite_writeFromBuf();
-    }
     
-    // If there's no more data coming over USB, and there's no more
-    // data to write, then we're done
-    if (!_opDataRem && _bufs.empty()) {
-        _mspWrite_finish();
-    }
-}
-
-void System::_mspWrite_writeFromBuf() {
-    // Write the data over Spy-bi-wire
-    const void* data = _bufs.front().data;
-    const size_t len = _bufs.front().len;
-    _msp.write(_mspAddr, data, len);
-    // Update the MSP430 address to write to
-    _mspAddr += len;
-    // Pop the buffer, which we just finished sending over Spy-bi-wire
-    _bufs.pop();
-}
-
-void System::_mspDebug(const Cmd& cmd) {
     _usbCmd_finish(true);
     
     const auto& arg = cmd.arg.MSPDebug;

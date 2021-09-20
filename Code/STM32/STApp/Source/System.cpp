@@ -79,8 +79,7 @@ void System::_usbCmd_task() {
         
         case Op::SDRead:
             _sd.task.reset();
-            _sd.chan.reset();
-            _sd.chan.write(cmd);
+            _sd.cmd = cmd;
             break;
         
         case Op::LEDSet:
@@ -533,13 +532,28 @@ SDStatusResp System::_sd_sendCmd(uint8_t sdCmd, uint32_t sdArg, SDSendCmdMsg::Re
 }
 
 void System::_sd_task() {
+    const auto& arg = _sd.cmd.arg.SDRead;
     TaskBegin();
     for (;;) {
         // Wait for a command
-        const Cmd cmd = TaskRead(_sd.chan);
+        TaskWait(_sd.cmd);
         
         // Stop reading from the SD card if a read is currently underway
-        _sd_stopReading();
+        if (_sd.reading) {
+            _ICE_ST_SPI_CS_::Write(1);
+            
+            // ====================
+            // CMD12 | STOP_TRANSMISSION
+            //   State: Send Data -> Transfer
+            //   Finish reading
+            // ====================
+            {
+                auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
+                Assert(!status.respCRCErr());
+            }
+            
+            _sd.reading = false;
+        }
         
         // ====================
         // CMD18 | READ_MULTIPLE_BLOCK
@@ -547,7 +561,7 @@ void System::_sd_task() {
         //   Read blocks of data (1 block == 512 bytes)
         // ====================
         {
-            auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, cmd.arg.SDRead.addr, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+            auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, arg.addr, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
             Assert(!status.respCRCErr());
         }
         
@@ -648,24 +662,6 @@ void System::_sd_readToBufSync(void* buf, size_t len) {
     _qspi.eventChannel.read(); // Wait for the transfer to complete
     
     _ICE_ST_SPI_CS_::Write(1);
-}
-
-void System::_sd_stopReading() {
-    if (_sd.reading) {
-        _ICE_ST_SPI_CS_::Write(1);
-        
-        // ====================
-        // CMD12 | STOP_TRANSMISSION
-        //   State: Send Data -> Transfer
-        //   Finish reading
-        // ====================
-        {
-            auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
-            Assert(!status.respCRCErr());
-        }
-        
-        _sd.reading = false;
-    }
 }
 
 #pragma mark - Other Commands

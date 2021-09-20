@@ -369,11 +369,12 @@ protected:
     
     uint8_t _usbd_EP0_RxReady() {
         const size_t dataLen = USBD_LL_GetRxDataSize(&_device, 0);
-        cmdRecvChannel.writeTry(CmdRecvEvent{
+        bool br = cmdRecvChannel.writeTry(CmdRecvEvent{
             .data = _cmdRecvBuf,
             .len = dataLen,
         });
-        
+        // If we couldn't write to the channel, respond to the request with an error
+        if (!br) USBD_CtlError(&_device, nullptr);
         return (uint8_t)USBD_OK;
     }
     
