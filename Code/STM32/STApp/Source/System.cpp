@@ -79,8 +79,8 @@ void System::_usb_task() {
         
         case Op::SDRead:
             _sd.task.reset();
-            _sd.trigger.reset();
-            _sd.trigger.write(cmd);
+            _sd.chan.reset();
+            _sd.chan.write(cmd);
             break;
         
         case Op::LEDSet:
@@ -94,14 +94,6 @@ void System::_usb_task() {
         }
     }
     TaskEnd();
-}
-
-void System::_usb_sendFromBuf() {
-    Assert(!_bufs.empty());
-    Assert(_usb.sendReady(Endpoints::DataIn));
-    
-    const auto& buf = _bufs.front();
-    _usb.send(Endpoints::DataIn, buf.data, buf.len);
 }
 
 void System::_usb_finishCmd(bool status) {
@@ -543,8 +535,8 @@ SDStatusResp System::_sd_sendCmd(uint8_t sdCmd, uint32_t sdArg, SDSendCmdMsg::Re
 void System::_sd_task() {
     TaskBegin();
     for (;;) {
-        // Wait for an SDRead command
-        const Cmd cmd = TaskRead(_sd.trigger);
+        // Wait for a command
+        const Cmd cmd = TaskRead(_sd.chan);
         
         // Stop reading from the SD card if a read is currently underway
         _sd_stopReading();
@@ -576,28 +568,22 @@ void System::_sd_task() {
         
         // Read data over QSPI and write it to USB, indefinitely
         for (;;) {
-            bool didWork;
-            do {
-                didWork = false;
-                
-                // Read data into the producer buffer when:
-                //   - there's space in the queue, and
-                //   - QSPI is ready to accept commands
-                if (!_bufs.full() && _qspi.ready()) {
-                    _sd_readToBuf();
-                    didWork = true;
-                }
-                
-                // Send data from the consumer buffer when:
-                //   - we have data to write, and
-                //   - the DataIn USB endpoint is ready to accept data
-                if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
-                    _usb_sendFromBuf();
-                    didWork = true;
-                }
-            } while (didWork);
+            // Read data into the producer buffer when:
+            //   - there's space in the queue, and
+            //   - QSPI is ready to accept commands
+            if (!_bufs.full() && _qspi.ready()) {
+                _sd_readToBuf();
             
-            TaskYield();
+            // Send data from the consumer buffer when:
+            //   - we have data to write, and
+            //   - the DataIn USB endpoint is ready to accept data
+            } else if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
+                const auto& buf = _bufs.front();
+                _usb.send(Endpoints::DataIn, buf.data, buf.len);
+            
+            } else {
+                TaskYield();
+            }
         }
     }
     TaskEnd();

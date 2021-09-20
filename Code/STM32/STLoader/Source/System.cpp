@@ -66,12 +66,48 @@ void System::_reset(const Cmd& cmd) {
     _finishCmd(true);
 }
 
-void System::_finishCmd(bool status) {
-    // Send our response
-    _usb.cmdSendStatus(status);
-}
-
 #pragma mark - USB
+
+void System::_usb_task() {
+    TaskBegin();
+    for (;;) {
+        auto ev = TaskRead(_usb.cmdRecvChannel);
+        Cmd cmd;
+        
+        // Validate command length
+        if (ev.len != sizeof(cmd)) {
+            _usb_finishCmd(false);
+            continue;
+        }
+        
+        memcpy(&cmd, ev.data, ev.len);
+        
+        switch (cmd.op) {
+        case Op::Reset:                 _reset(cmd);                break;
+        // STM32 Bootloader
+        case Op::STMWrite:
+        case Op::STMReset:
+            _stm.task.reset();
+            _stm.chan.reset();
+            _stm.chan.write(cmd);
+            break;
+        // ICE40 Bootloader
+        case Op::ICEWrite:              _ice_write(cmd);            break;
+        // MSP430 Bootloader
+        case Op::MSPConnect:            _msp_connect(cmd);          break;
+        case Op::MSPDisconnect:         _msp_disconnect(cmd);       break;
+        // MSP430 Debug
+        case Op::MSPRead:               _mspRead(cmd);              break;
+        case Op::MSPWrite:              _mspWrite(cmd);             break;
+        case Op::MSPDebug:              _mspDebug(cmd);             break;
+        // Set LED
+        case Op::LEDSet:                _ledSet(cmd);               break;
+        // Bad command
+        default:            			_finishCmd(false);  		break;
+        }
+    }
+    TaskEnd();
+}
 
 void System::_usb_cmdHandle(const USB::CmdRecvEvent& ev) {
     Cmd cmd;
@@ -85,12 +121,22 @@ void System::_usb_cmdHandle(const USB::CmdRecvEvent& ev) {
     memcpy(&cmd, ev.data, ev.len);
     
     switch (cmd.op) {
-    case Op::Reset:                 _reset(cmd);                break;
+    case Op::Reset:
+        _reset(cmd);
+        break;
     // STM32 Bootloader
-    case Op::STMWrite:              _stm_write(cmd);            break;
-    case Op::STMReset:              _stm_reset(cmd);            break;
+    case Op::STMWrite:
+    case Op::STMReset:
+        _stm.task.reset();
+        _stm.chan.reset();
+        _stm.chan.write(cmd);
+        break;
     // ICE40 Bootloader
-    case Op::ICEWrite:              _ice_write(cmd);            break;
+    case Op::ICEWrite:
+        _ice.task.reset();
+        _ice.chan.reset();
+        _ice.chan.write(cmd);
+        break;
     // MSP430 Bootloader
     case Op::MSPConnect:            _msp_connect(cmd);          break;
     case Op::MSPDisconnect:         _msp_disconnect(cmd);       break;
@@ -162,6 +208,13 @@ void System::_usb_sendFromBuf() {
     _usb.send(Endpoints::DataIn, buf.data, buf.len);
 }
 
+void System::_usb_finishCmd(bool status) {
+    // Send our response
+    _usb.cmdSendStatus(status);
+}
+
+#pragma mark - STM32 Bootloader
+
 static size_t _stm_regionCapacity(void* addr) {
     // Verify that `addr` is in one of the allowed RAM regions
     extern uint8_t _sitcm_ram[], _eitcm_ram[];
@@ -181,39 +234,45 @@ static size_t _stm_regionCapacity(void* addr) {
     return cap;
 }
 
-#pragma mark - STM32 Bootloader
-void System::_stm_write(const Cmd& cmd) {
-    void*const addr = (void*)cmd.arg.STMWrite.addr;
-    const size_t len = cmd.arg.STMWrite.len;
-    const size_t ceilLen = _ceilToPacketLength(len);
-    const size_t regionCap = _stm_regionCapacity(addr);
-    // Confirm that the region's capacity is large enough to hold the incoming
-    // data length (ceiled to the packet length)
-    Assert(regionCap >= ceilLen); // TODO: error handling
-    
-    // Update state
-    _op = Op::STMWrite;
-    _opDataRem = len;
-    
-    _usb.reset(Endpoints::DataOut);
-    
-    // Arrange to receive USB data
-    _usb.recv(Endpoints::DataOut, addr, ceilLen);
-    
-    _finishCmd(true);
-}
-
-void System::_stm_reset(const Cmd& cmd) {
-    Start.setAppEntryPointAddr(cmd.arg.STMReset.entryPointAddr);
-    // Perform software reset
-    HAL_NVIC_SystemReset();
-    // Unreachable
-    abort();
-}
-
-void System::_stm_usbRecvDone(const USB::RecvDoneEvent& ev) {
-    Assert(ev.len);
-    _finishCmd(true);
+void System::_stm_task() {
+    TaskBegin();
+    for (;;) {
+        // Wait for a command
+        const Cmd cmd = TaskRead(_stm.chan);
+        
+        switch (cmd.op) {
+        case Op::STMWrite: {
+            void*const addr = (void*)cmd.arg.STMWrite.addr;
+            const size_t len = cmd.arg.STMWrite.len;
+            const size_t ceilLen = _ceilToPacketLength(len);
+            const size_t regionCap = _stm_regionCapacity(addr);
+            // Confirm that the region's capacity is large enough to hold the incoming
+            // data length (ceiled to the packet length)
+            Assert(regionCap >= ceilLen); // TODO: error handling
+            
+            _finishCmd(true);
+            
+            // Reset the data channel (which sends a 2xZLP+sentinel sequence)
+            _usb.reset(Endpoints::DataOut);
+            // Wait until we're done resetting the DataOut endpoint
+            TaskWait(_usb.recvReady(Endpoints::DataOut));
+            
+            // Arrange to receive USB data
+            _usb.recv(Endpoints::DataOut, addr, ceilLen);
+            
+            break;
+        }
+        
+        case Op::STMReset: {
+            Start.setAppEntryPointAddr(cmd.arg.STMReset.entryPointAddr);
+            // Perform software reset
+            HAL_NVIC_SystemReset();
+            // Unreachable
+            abort();
+            break;
+        }}
+    }
+    TaskEnd();
 }
 
 #pragma mark - ICE40 Bootloader
@@ -243,40 +302,78 @@ static void _qspiWrite(QSPI& qspi, const void* data, size_t len) {
     qspi.write(cmd, data, len);
 }
 
-void System::_ice_write(const Cmd& cmd) {
-    // Configure ICE40 control GPIOs
-    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    
-    // Put ICE40 into configuration mode
-    _ICE_ST_SPI_CLK::Write(1);
-    
-    _ICE_ST_SPI_CS_::Write(0);
-    _ICE_CRST_::Write(0);
-    HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
-    
-    _ICE_CRST_::Write(1);
-    HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
-    
-    // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
-    _ICE_ST_SPI_CS_::Write(1);
-    
-    // Have QSPI take over _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_
-    _qspi.config();
-    
-    // Send 8 clocks and wait for them to complete
-    static const uint8_t ff = 0xff;
-    _qspiWrite(_qspi, &ff, 1);
-    _qspi.eventChannel.read();
-    
-    // Update state
-    _op = Op::ICEWrite;
-    _opDataRem = cmd.arg.ICEWrite.len;
-    
-    // Prepare to receive USB data
-    _usb_recvToBuf();
+void System::_ice_task() {
+    TaskBegin();
+    for (;;) {
+        // Wait for a command
+        const Cmd cmd = TaskRead(_ice.chan);
+        
+        // Configure ICE40 control GPIOs
+        _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        
+        // Put ICE40 into configuration mode
+        _ICE_ST_SPI_CLK::Write(1);
+        
+        _ICE_ST_SPI_CS_::Write(0);
+        _ICE_CRST_::Write(0);
+        HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
+        
+        _ICE_CRST_::Write(1);
+        HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+        
+        // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
+        _ICE_ST_SPI_CS_::Write(1);
+        
+        // Have QSPI take over _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_
+        _qspi.config();
+        
+        // Send 8 clocks and wait for them to complete
+        static const uint8_t ff = 0xff;
+        _qspiWrite(_qspi, &ff, 1);
+        _qspi.eventChannel.read();
+        
+        // Update state
+        _op = Op::ICEWrite;
+        _opDataRem = cmd.arg.ICEWrite.len;
+        
+        for (;;) {
+            bool didWork;
+            
+            do {
+                // Start a QSPI transaction when:
+                //   - we have data to write, and
+                //   - we haven't arranged to send QSPI data yet
+                if (!_bufs.empty() && _qspi.ready()) {
+                    _ice_writeFromBuf();
+                    didWork = true;
+                }
+                
+                // Prepare to receive more USB data if:
+                //   - we expect more data, and
+                //   - there's space in the queue, and
+                //   - we haven't arranged to receive USB data yet
+                if (_opDataRem && !_bufs.full() && _usb.recvReady(Endpoints::DataOut)) {
+                    _usb_recvToBuf();
+                    didWork = true;
+                }
+                
+                // We're done when:
+                //   - there's no more data coming over USB, and
+                //   - there's no more data to write over QSPI
+                if (!_opDataRem && _bufs.empty()) {
+                    _ice_writeFinish();
+                    didWork = true;
+                }
+            } while (didWork);
+        }
+        
+        // Prepare to receive USB data
+        _usb_recvToBuf();
+    }
+    TaskEnd();
 }
 
 void System::_ice_writeFinish() {
@@ -315,27 +412,7 @@ void System::_ice_writeFinish() {
 }
 
 void System::_ice_updateState() {
-    // Start a QSPI transaction when:
-    //   - we have data to write, and
-    //   - we haven't arranged to send QSPI data yet
-    if (!_bufs.empty() && _qspi.ready()) {
-        _ice_writeFromBuf();
-    }
-    
-    // Prepare to receive more USB data if:
-    //   - we expect more data, and
-    //   - there's space in the queue, and
-    //   - we haven't arranged to receive USB data yet
-    if (_opDataRem && !_bufs.full() && _usb.recvReady(Endpoints::DataOut)) {
-        _usb_recvToBuf();
-    }
-    
-    // We're done when:
-    //   - there's no more data coming over USB, and
-    //   - there's no more data to write over QSPI
-    if (!_opDataRem && _bufs.empty()) {
-        _ice_writeFinish();
-    }
+
 }
 
 void System::_ice_usbRecvDone(const USB::RecvDoneEvent& ev) {

@@ -12,21 +12,20 @@ public:
 private:
     void _handleEvent();
     void _reset(const STLoader::Cmd& cmd);
-    void _finishCmd(bool status);
     
     // USB
-    void _usb_cmdHandle(const USB::CmdRecvEvent& ev);
+    void _usb_task();
     void _usb_recvDone(const USB::RecvDoneEvent& ev);
     void _usb_sendReady(const USB::SendReadyEvent& ev);
     void _usb_recvToBuf();
     void _usb_sendFromBuf();
+    void _usb_finishCmd(bool status);
     
     // STM32 Bootloader
-    void _stm_write(const STLoader::Cmd& cmd);
-    void _stm_reset(const STLoader::Cmd& cmd);
-    void _stm_usbRecvDone(const USB::RecvDoneEvent& ev);
+    void _stm_task();
     
     // ICE40 Bootloader
+    void _ice_task();
     void _ice_write(const STLoader::Cmd& cmd);
     void _ice_writeFinish();
     void _ice_updateState();
