@@ -14,12 +14,10 @@ private:
     void _reset(const STLoader::Cmd& cmd);
     
     // USB
-    void _usb_task();
-    void _usb_recvDone(const USB::RecvDoneEvent& ev);
-    void _usb_sendReady(const USB::SendReadyEvent& ev);
-    void _usb_recvToBuf();
-    void _usb_sendFromBuf();
-    void _usb_finishCmd(bool status);
+    void _usbCmd_task();
+    void _usbCmd_finish(bool status);
+    void _usbDataOut_task();
+    void _usbDataIn_sendStatus(bool status);
     
     // STM32 Bootloader
     void _stm_task();
@@ -27,11 +25,7 @@ private:
     // ICE40 Bootloader
     void _ice_task();
     void _ice_write(const STLoader::Cmd& cmd);
-    void _ice_writeFinish();
-    void _ice_updateState();
-    void _ice_usbRecvDone(const USB::RecvDoneEvent& ev);
-    void _ice_qspiHandleEvent(const QSPI::Event& ev);
-    void _ice_writeFromBuf();
+    bool _ice_writeFinish();
     
     // MSP430 Bootloader
     void _msp_connect(const STLoader::Cmd& cmd);
@@ -66,8 +60,27 @@ private:
     using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     
-    STLoader::Op _op = STLoader::Op::None;
-    size_t _opDataRem = 0;
+    struct {
+        Task task;
+    } _usbCmd;
+    
+    struct {
+        Task task;
+    } _usbDataOut;
+    
+    struct {
+        alignas(4) bool status = false; // Aligned to send via USB
+    } _usbDataIn;
+    
+    struct {
+        Task task;
+        std::optional<STApp::Cmd> cmd;
+    } _stm;
+    
+    struct {
+        Task task;
+        std::optional<STApp::Cmd> cmd;
+    } _ice;
     
     uint32_t _mspAddr = 0;
     
@@ -77,8 +90,8 @@ private:
         size_t len = 0;
     } _mspDebugRead;
     
-    uint8_t _buf0[1024] __attribute__((aligned(4))); // Needs to be aligned to send via USB
-    uint8_t _buf1[1024] __attribute__((aligned(4)));
+    alignas(4) uint8_t _buf0[1024]; // Aligned to send via USB
+    alignas(4) uint8_t _buf1[1024]; // Aligned to send via USB
     BufQueue<2> _bufs;
     
     friend int main();

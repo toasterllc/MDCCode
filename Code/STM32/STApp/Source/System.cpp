@@ -36,7 +36,7 @@ using namespace STApp;
 System::System() :
 // QSPI clock divider=1 => run QSPI clock at 64 MHz
 // QSPI alignment=word for high performance transfers
-_usbTask([&] { _usb_task(); }),
+_usbTask([&] { _usbCmd_task(); }),
 _qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
 _bufs(_buf0, _buf1),
 _sd({ .task = Task([&] { _sd_task(); }) }) {
@@ -61,7 +61,7 @@ void System::run() {
 
 #pragma mark - USB
 
-void System::_usb_task() {
+void System::_usbCmd_task() {
     TaskBegin();
     for (;;) {
         auto ev = TaskRead(_usb.cmdRecvChannel);
@@ -69,7 +69,7 @@ void System::_usb_task() {
         
         // Validate command length
         if (ev.len != sizeof(cmd)) {
-            _usb_finishCmd(false);
+            _usbCmd_finish(false);
             continue;
         }
         
@@ -89,14 +89,14 @@ void System::_usb_task() {
         
         // Bad command
         default:
-            _usb_finishCmd(false);
+            _usbCmd_finish(false);
             break;
         }
     }
     TaskEnd();
 }
 
-void System::_usb_finishCmd(bool status) {
+void System::_usbCmd_finish(bool status) {
     // Send our response
     _usb.cmdSendStatus(status);
 }
@@ -559,7 +559,7 @@ void System::_sd_task() {
         // Let the host know that the USB command was successful
         // This needs to happen before we reset the DataIn endpoint, otherwise we'll deadlock, because
         // the host can't start receiving on DataIn until we respond to the request on EP0
-        _usb_finishCmd(true);
+        _usbCmd_finish(true);
         
         // Reset the data channel (which sends a 2xZLP+sentinel sequence)
         _usb.reset(Endpoints::DataIn);
@@ -672,13 +672,13 @@ void System::_sd_stopReading() {
 
 void System::_ledSet(const Cmd& cmd) {
     switch (cmd.arg.LEDSet.idx) {
-    case 0: _usb_finishCmd(false); return;
+    case 0: _usbCmd_finish(false); return;
     case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
     case 2: _LED2::Write(cmd.arg.LEDSet.on); break;
     case 3: _LED3::Write(cmd.arg.LEDSet.on); break;
     }
     
-    _usb_finishCmd(true);
+    _usbCmd_finish(true);
 }
 
 System Sys;
