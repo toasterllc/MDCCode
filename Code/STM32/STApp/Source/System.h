@@ -13,8 +13,8 @@ public:
     [[noreturn]] void run();
     
 private:
-    void _usb_task();
-    void _usb_finishCmd(bool status);
+    void _usbCmd_task();
+    void _usbCmd_finish(bool status);
     
     void _ice_init();
     void _ice_transferNoCS(const ICE40::Msg& msg);
@@ -52,7 +52,6 @@ private:
         Channel<STApp::Cmd,1> chan;
         uint16_t rca = 0;
         bool reading = false;
-        size_t dataRem = 0;
     } _sd;
     
     friend int main();
