@@ -271,6 +271,7 @@ public:
     }
     
     USBD_StatusTypeDef recv(uint8_t ep, void* data, size_t len) {
+        AssertArg(EndpointOut(ep));
         _OutEndpoint& outep = _outEndpoint(ep);
         
         IRQState irq;
@@ -281,19 +282,21 @@ public:
     }
     
     bool recvReady(uint8_t ep) const {
+        AssertArg(EndpointOut(ep));
         IRQState irq;
         irq.disable();
         return _recvReady(_outEndpoint(ep));
     }
     
+    #warning: do we still need this?
     constexpr Channel<RecvDoneEvent,1>& recvDoneChannel(uint8_t ep) {
+        AssertArg(EndpointOut(ep));
         _OutEndpoint& outep = _outEndpoint(ep);
         return outep.recvDoneChannel;
     }
     
     USBD_StatusTypeDef send(uint8_t ep, const void* data, size_t len) {
         _InEndpoint& inep = _inEndpoint(ep);
-        
         IRQState irq;
         irq.disable();
         Assert(_sendReady(inep));
@@ -302,11 +305,13 @@ public:
     }
     
     bool sendReady(uint8_t ep) const {
+        AssertArg(EndpointIn(ep));
         IRQState irq;
         irq.disable();
         return _sendReady(_inEndpoint(ep));
     }
     
+    #warning: do we still need this?
     constexpr Channel<SendDoneEvent,1>& sendDoneChannel(uint8_t ep) {
         _InEndpoint& inep = _inEndpoint(ep);
         return inep.sendDoneChannel;

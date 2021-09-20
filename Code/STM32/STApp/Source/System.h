@@ -14,8 +14,6 @@ public:
     
 private:
     void _usb_task();
-    void _usb_sendFromBuf();
-//    void _usb_sendReady(const USB::Event& ev);
     void _usb_finishCmd(bool status);
     
     void _ice_init();
@@ -47,12 +45,11 @@ private:
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
     
-    size_t _opDataRem = 0;
     BufQueue<2> _bufs;
     
     struct {
         Task task;
-        Channel<STApp::Cmd,1> trigger;
+        Channel<STApp::Cmd,1> chan;
         uint16_t rca = 0;
         bool reading = false;
         size_t dataRem = 0;
