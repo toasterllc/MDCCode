@@ -10,9 +10,6 @@ public:
     void init();
     
 private:
-    void _handleEvent();
-    void _reset(const STLoader::Cmd& cmd);
-    
     // USB
     void _usbCmd_task();
     void _usbCmd_finish(bool status);
@@ -39,9 +36,9 @@ private:
     void _mspWrite_writeFromBuf();
     
     void _mspDebug(const STLoader::Cmd& cmd);
-    void _mspDebug_pushReadBits();
-    void _mspDebug_handleSBWIO(const STLoader::MSPDebugCmd& cmd);
-    void _mspDebug_handleCmd(const STLoader::MSPDebugCmd& cmd);
+    bool _mspDebug_pushReadBits();
+    bool _mspDebug_handleSBWIO(const STLoader::MSPDebugCmd& cmd);
+    bool _mspDebug_handleCmd(const STLoader::MSPDebugCmd& cmd);
     void _mspDebug_handleWrite(size_t len);
     void _mspDebug_handleRead(size_t len);
     

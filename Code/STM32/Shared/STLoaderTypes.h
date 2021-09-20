@@ -56,8 +56,8 @@ namespace STLoader {
             } MSPWrite;
             
             struct __attribute__((packed)) {
-                uint32_t writeLen;
-                uint32_t readLen;
+                uint32_t cmdsLen;
+                uint32_t respLen;
             } MSPDebug;
             
             struct __attribute__((packed)) {
