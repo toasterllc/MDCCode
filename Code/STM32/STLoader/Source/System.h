@@ -82,14 +82,10 @@ private:
     
     struct {
         Task task;
-        uint32_t addr = 0;
-        size_t len = 0;
     } _mspRead;
     
     struct {
         Task task;
-        uint32_t addr = 0;
-        size_t len = 0;
     } _mspWrite;
     
     uint32_t _mspAddr = 0;

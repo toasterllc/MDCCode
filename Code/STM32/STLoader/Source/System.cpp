@@ -388,7 +388,6 @@ void System::_msp_disconnect(const Cmd& cmd) {
 }
 
 void System::_mspRead_task() {
-    auto& s = _mspRead;
     const auto& arg = _cmd.arg.MSPRead;
     TaskBegin();
     
@@ -402,18 +401,16 @@ void System::_mspRead_task() {
     _usbDataIn.task.reset();
     _usbDataIn.len = arg.len;
     
-    s.addr = arg.addr;
-    s.len = arg.len;
-    while (s.len) {
+    while (arg.len) {
         TaskWait(!_bufs.full());
         
         auto& buf = _bufs.back();
-        // Prepare to receive either `s.len` bytes or the
+        // Prepare to receive either `arg.len` bytes or the
         // buffer capacity bytes, whichever is smaller.
-        const size_t chunkLen = std::min(s.len, buf.cap);
-        _msp.read(s.addr, buf.data, chunkLen);
-        s.addr += chunkLen;
-        s.len -= chunkLen;
+        const size_t chunkLen = std::min(arg.len, buf.cap);
+        _msp.read(arg.addr, buf.data, chunkLen);
+        arg.addr += chunkLen;
+        arg.len -= chunkLen;
         // Enqueue the buffer
         buf.len = chunkLen;
         _bufs.push();
@@ -426,7 +423,6 @@ void System::_mspRead_task() {
 }
 
 void System::_mspWrite_task() {
-    auto& s = _mspWrite;
     const auto& arg = _cmd.arg.MSPWrite;
     TaskBegin();
     
@@ -446,17 +442,15 @@ void System::_mspWrite_task() {
     // Wait until we're done resetting the endpoints
     TaskWait(_usb.sendReady(Endpoints::DataIn));
     
-    s.addr = arg.addr;
-    s.len = arg.len;
-    while (s.len) {
+    while (arg.len) {
         TaskWait(!_bufs.empty());
         
         // Write the data over Spy-bi-wire
         auto& buf = _bufs.front();
-        _msp.write(s.addr, buf.data, buf.len);
+        _msp.write(arg.addr, buf.data, buf.len);
         // Update the MSP430 address to write to
-        s.addr += len;
-        s.len -= len;
+        arg.addr += len;
+        arg.len -= len;
         // Pop the buffer, which we just finished sending over Spy-bi-wire
         _bufs.pop();
     }
@@ -468,7 +462,6 @@ void System::_mspWrite_task() {
 }
 
 void System::_mspDebug_task() {
-    auto& s = _mspDebug;
     const auto& arg = _cmd.arg.MSPDebug;
     TaskBegin();
     
@@ -479,28 +472,21 @@ void System::_mspDebug_task() {
     _usbDataOut.task.reset();
     _usbDataOut.len = arg.writeLen;
     
-    // Accept MSPDebugCmds over the DataOut endpoint until we've handled `len` commands
-    size_t remLen = len;
-    while (remLen) {
-        _usb.recv(Endpoints::DataOut, _buf0, sizeof(_buf0));
-        
-        const auto ev = _usb.recvDoneChannel(Endpoints::DataOut).read();
-        Assert(ev.len <= remLen);
-        remLen -= ev.len;
+    // Handle debug commands from the DataOut endpoint
+    while (arg.len) {
+        TaskWait(!_bufs.empty());
         
         // Handle each MSPDebugCmd
-        const MSPDebugCmd* cmds = (MSPDebugCmd*)_buf0;
-        for (size_t i=0; i<ev.len; i++) {
+        auto& buf = _bufs.front();
+        const MSPDebugCmd* cmds = (MSPDebugCmd*)buf.data;
+        const size_t cmdsLen = buf.len/sizeof(MSPDebugCmd);
+        for (size_t i=0; i<cmdsLen; i++) {
             _mspDebug_handleCmd(cmds[i]);
         }
+        _bufs.pop();
     }
     
     
-    _usbCmd_finish(true);
-    
-    const auto& arg = cmd.arg.MSPDebug;
-    _mspDebug_handleWrite(arg.writeLen);
-    _mspDebug_handleRead(arg.readLen);
 }
 
 void System::_mspDebug_pushReadBits() {
