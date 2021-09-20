@@ -36,6 +36,18 @@ void System::init() {
     
     _usb.init();
     _qspi.init();
+    
+    _pauseTasks();
+}
+
+void System::_pauseTasks() {
+    _usbDataOut.task.pause();
+    _usbDataIn.task.pause();
+    _stm.task.pause();
+    _ice.task.pause();
+    _mspRead.task.pause();
+    _mspWrite.task.pause();
+    _mspDebug.task.pause();
 }
 
 #pragma mark - USB
@@ -54,13 +66,7 @@ void System::_usbCmd_task() {
         memcpy(&_cmd, ev.data, ev.len);
         
         // Stop all tasks
-        _usbDataOut.task.pause();
-        _usbDataIn.task.pause();
-        _stm.task.pause();
-        _ice.task.pause();
-        _mspRead.task.pause();
-        _mspWrite.task.pause();
-        _mspDebug.task.pause();
+        _pauseTasks();
         
         switch (_cmd.op) {
         // STM32 Bootloader
