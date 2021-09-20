@@ -33,7 +33,6 @@ private:
     
     void _sd_readToBuf();
     void _sd_readToBufSync(void* buf, size_t len);
-    void _sd_stopReading();
     
     void _ledSet(const STApp::Cmd& cmd);
     
@@ -49,7 +48,7 @@ private:
     
     struct {
         Task task;
-        Channel<STApp::Cmd,1> chan;
+        std::optional<STApp::Cmd> cmd;
         uint16_t rca = 0;
         bool reading = false;
     } _sd;
