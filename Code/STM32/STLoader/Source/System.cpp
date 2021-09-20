@@ -8,26 +8,21 @@
 using namespace STLoader;
 
 #pragma mark - System
-System Sys;
-
-int main() {
-    Sys.init();
-    // Event loop
-    for (;;) {
-        Sys._handleEvent();
-    }
-}
-
-[[noreturn]] void abort() {
-    Sys.abort();
-}
 
 System::System() :
 // QSPI clock divider=5 => run QSPI clock at 21.3 MHz
 // QSPI alignment=byte, so we can transfer single bytes at a time
-_qspi(QSPI::Mode::Single, 5, QSPI::Align::Byte, QSPI::ChipSelect::Controlled),
-_bufs(_buf0, _buf1) {
-}
+_qspi       (QSPI::Mode::Single, 5, QSPI::Align::Byte, QSPI::ChipSelect::Controlled),
+_bufs       (_buf0, _buf1),
+_usbCmd     ( { .task = Task([&] { _usbCmd_task();        }) } ),
+_usbDataOut ( { .task = Task([&] { _usbDataOut_task();    }) } ),
+_usbDataIn  ( { .task = Task([&] { _usbDataIn_task();     }) } ),
+_stm        ( { .task = Task([&] { _stm_task();           }) } ),
+_ice        ( { .task = Task([&] { _ice_task();           }) } ),
+_mspRead    ( { .task = Task([&] { _mspRead_task();       }) } ),
+_mspWrite   ( { .task = Task([&] { _mspWrite_task();      }) } ),
+_mspDebug   ( { .task = Task([&] { _mspDebug_task();      }) } )
+{}
 
 void System::init() {
     _super::init();
@@ -38,6 +33,19 @@ void System::init() {
     _qspi.init();
     
     _pauseTasks();
+}
+
+void System::run() {
+    Task::Run(
+        _usbCmd.task,
+        _usbDataOut.task,
+        _usbDataIn.task,
+        _stm.task,
+        _ice.task,
+        _mspRead.task,
+        _mspWrite.task,
+        _mspDebug.task
+    );
 }
 
 void System::_pauseTasks() {
@@ -58,7 +66,7 @@ void System::_usbCmd_task() {
         auto ev = TaskRead(_usb.cmdRecvChannel);
         
         // Validate command length
-        if (ev.len != sizeof(cmd)) {
+        if (ev.len != sizeof(_cmd)) {
             _usbCmd_finish(false);
             continue;
         }
@@ -71,18 +79,18 @@ void System::_usbCmd_task() {
         switch (_cmd.op) {
         // STM32 Bootloader
         case Op::STMWrite:      _stm.task.reset();      break;
-        case Op::STMReset:      _stm_reset(cmd);        break;
+        case Op::STMReset:      _stm_reset();           break;
         // ICE40 Bootloader
         case Op::ICEWrite:      _ice.task.reset();      break;
         // MSP430 Bootloader
-        case Op::MSPConnect:    _msp_connect(cmd);      break;
-        case Op::MSPDisconnect: _msp_disconnect(cmd);   break;
+        case Op::MSPConnect:    _msp_connect();         break;
+        case Op::MSPDisconnect: _msp_disconnect();      break;
         // MSP430 Debug
         case Op::MSPRead:       _mspRead.task.reset();  break;
         case Op::MSPWrite:      _mspWrite.task.reset(); break;
         case Op::MSPDebug:      _mspDebug.task.reset(); break;
         // Set LED
-        case Op::LEDSet:        _ledSet(cmd);           break;
+        case Op::LEDSet:        _ledSet();              break;
         // Bad command
         default:                _usbCmd_finish(false);  break;
         }
@@ -92,6 +100,14 @@ void System::_usbCmd_task() {
 void System::_usbCmd_finish(bool status) {
     // Send our response
     _usb.cmdSendStatus(status);
+}
+
+static size_t _ceilToPacketLength(size_t len) {
+    // Round `len` up to the nearest packet size, since the USB hardware limits
+    // the data received based on packets instead of bytes
+    const size_t rem = len%USB::MaxPacketSizeIn();
+    len += (rem>0 ? USB::MaxPacketSizeIn()-rem : 0);
+    return len;
 }
 
 // _usbDataOut_task: reads `_usbDataOut.len` bytes from the DataOut endpoint and writes it to _bufs
@@ -115,10 +131,10 @@ void System::_usbDataOut_task() {
             // Ensure that after rounding up to the nearest packet size, we don't
             // exceed the buffer capacity. (This should always be safe as long as
             // the buffer capacity is a multiple of the max packet size.)
-            Assert(len <= buf.cap);
+            Assert(chunkLen <= buf.cap);
             
-            _usb.recv(Endpoints::DataOut, buf.data, len);
-            buf.len = len;
+            _usb.recv(Endpoints::DataOut, buf.data, chunkLen);
+            buf.len = chunkLen;
         }
         
         // Wait for the transfer to complete and push the buffer
@@ -138,14 +154,13 @@ void System::_usbDataIn_task() {
     TaskWait(_usb.sendReady(Endpoints::DataIn));
     
     while (s.len) {
-        static size_t chunkLen;
         TaskWait(!_bufs.empty());
         
         // Send the data and wait until the transfer is complete
         _usb.send(Endpoints::DataIn, _bufs.front().data, _bufs.front().len);
         TaskWait(_usb.sendReady(Endpoints::DataIn));
         
-        s.len -= _bufs.front();
+        s.len -= _bufs.front().len;
         _bufs.pop();
     }
 }
@@ -153,14 +168,6 @@ void System::_usbDataIn_task() {
 void System::_usbDataIn_sendStatus(bool status) {
     _usbDataIn.status = status;
     _usb.send(Endpoints::DataIn, &_usbDataIn.status, sizeof(_usbDataIn.status));
-}
-
-static size_t _ceilToPacketLength(size_t len) {
-    // Round `len` up to the nearest packet size, since the USB hardware limits
-    // the data received based on packets instead of bytes
-    const size_t rem = len%USB::MaxPacketSizeIn();
-    len += (rem>0 ? USB::MaxPacketSizeIn()-rem : 0);
-    return len;
 }
 
 #pragma mark - STM32 Bootloader
@@ -185,8 +192,7 @@ static size_t _stm_regionCapacity(void* addr) {
 }
 
 void System::_stm_task() {
-    auto& s = _stm;
-    const auto& arg = cmd.arg.STMWrite;
+    const auto& arg = _cmd.arg.STMWrite;
     
     TaskBegin();
     
@@ -194,7 +200,7 @@ void System::_stm_task() {
     // data length (ceiled to the packet length)
     static size_t len;
     len = _ceilToPacketLength(arg.len);
-    if (len > _stm_regionCapacity(arg.addr)) {
+    if (len > _stm_regionCapacity((void*)arg.addr)) {
         _usbCmd_finish(false);
         return;
     }
@@ -208,7 +214,7 @@ void System::_stm_task() {
     TaskWait(_usb.recvReady(Endpoints::DataOut) && _usb.sendReady(Endpoints::DataIn));
     
     // Receive USB data
-    _usb.recv(Endpoints::DataOut, arg.addr, len);
+    _usb.recv(Endpoints::DataOut, (void*)arg.addr, len);
     TaskWait(_usb.recvReady(Endpoints::DataOut));
     
     // Send our status
@@ -216,7 +222,7 @@ void System::_stm_task() {
 }
 
 void System::_stm_reset() {
-    Start.setAppEntryPointAddr(cmd.arg.STMReset.entryPointAddr);
+    Start.setAppEntryPointAddr(_cmd.arg.STMReset.entryPointAddr);
     // Perform software reset
     HAL_NVIC_SystemReset();
     // Unreachable
@@ -251,7 +257,6 @@ static void _ice_qspiWrite(QSPI& qspi, const void* data, size_t len) {
 }
 
 void System::_ice_task() {
-    auto& s = _ice;
     const auto& arg = _cmd.arg.ICEWrite;
     TaskBegin();
     
@@ -349,7 +354,7 @@ void System::_msp_disconnect() {
 }
 
 void System::_mspRead_task() {
-    const auto& arg = _cmd.arg.MSPRead;
+    auto& arg = _cmd.arg.MSPRead;
     TaskBegin();
     
     // Respond to the command
@@ -368,7 +373,7 @@ void System::_mspRead_task() {
         auto& buf = _bufs.back();
         // Prepare to receive either `arg.len` bytes or the
         // buffer capacity bytes, whichever is smaller.
-        const size_t chunkLen = std::min(arg.len, buf.cap);
+        const size_t chunkLen = std::min((size_t)arg.len, buf.cap);
         _msp.read(arg.addr, buf.data, chunkLen);
         arg.addr += chunkLen;
         arg.len -= chunkLen;
@@ -379,7 +384,7 @@ void System::_mspRead_task() {
 }
 
 void System::_mspWrite_task() {
-    const auto& arg = _cmd.arg.MSPWrite;
+    auto& arg = _cmd.arg.MSPWrite;
     TaskBegin();
     
     // Respond to the command
@@ -405,8 +410,8 @@ void System::_mspWrite_task() {
         auto& buf = _bufs.front();
         _msp.write(arg.addr, buf.data, buf.len);
         // Update the MSP430 address to write to
-        arg.addr += len;
-        arg.len -= len;
+        arg.addr += buf.len;
+        arg.len -= buf.len;
         // Pop the buffer, which we just finished sending over Spy-bi-wire
         _bufs.pop();
     }
@@ -414,11 +419,11 @@ void System::_mspWrite_task() {
     // Verify the CRC of all the data we wrote
     const auto r = _msp.crcVerify();
     // Send our status
-    _usbDataIn_sendStatus(r==_msp.Status::OK ? Status::OK : Status::Error);
+    _usbDataIn_sendStatus(r == _msp.Status::OK);
 }
 
 void System::_mspDebug_task() {
-    const auto& arg = _cmd.arg.MSPDebug;
+    auto& arg = _cmd.arg.MSPDebug;
     TaskBegin();
     
     // Validate our arguments
@@ -472,7 +477,7 @@ void System::_mspDebug_task() {
     }
 }
 
-bool System::_mspDebug_pushReadBits() {
+void System::_mspDebug_pushReadBits() {
     Assert(_mspDebug.read.len < sizeof(_buf1));
     // Enqueue the new byte into `_buf1`
     _buf1[_mspDebug.read.len] = _mspDebug.read.bits;
@@ -509,12 +514,35 @@ void System::_mspDebug_handleCmd(const MSPDebugCmd& cmd) {
 #pragma mark - Other Commands
 
 void System::_ledSet() {
-    switch (cmd.arg.LEDSet.idx) {
+    switch (_cmd.arg.LEDSet.idx) {
 //    case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
-    case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
-    case 2: _LED2::Write(cmd.arg.LEDSet.on); break;
-    case 3: _LED3::Write(cmd.arg.LEDSet.on); break;
+    case 1: _LED1::Write(_cmd.arg.LEDSet.on); break;
+    case 2: _LED2::Write(_cmd.arg.LEDSet.on); break;
+    case 3: _LED3::Write(_cmd.arg.LEDSet.on); break;
     }
     
     _usbCmd_finish(true);
+}
+
+System Sys;
+
+bool IRQState::SetInterruptsEnabled(bool en) {
+    const bool prevEn = !__get_PRIMASK();
+    if (en) __enable_irq();
+    else __disable_irq();
+    return prevEn;
+}
+
+void IRQState::WaitForInterrupt() {
+    __WFI();
+}
+
+int main() {
+    Sys.init();
+    Sys.run();
+    return 0;
+}
+
+[[noreturn]] void abort() {
+    Sys.abort();
 }

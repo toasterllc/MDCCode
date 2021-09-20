@@ -40,7 +40,6 @@ private:
     
     // Peripherals
     USB _usb;
-    Task _usbTask;
     
     QSPI _qspi;
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
@@ -48,7 +47,11 @@ private:
     
     BufQueue<2> _bufs;
     
-    STApp::Cmd _cmd;
+    STApp::Cmd _cmd = {};
+    
+    struct {
+        Task task;
+    } _usbCmd;
     
     struct {
         Task task;
