@@ -209,7 +209,7 @@ void System::_stm_task() {
     _usbDataIn_sendStatus(true);
 }
 
-void System::_stm_reset(const Cmd& cmd) {
+void System::_stm_reset() {
     Start.setAppEntryPointAddr(cmd.arg.STMReset.entryPointAddr);
     // Perform software reset
     HAL_NVIC_SystemReset();
@@ -332,12 +332,12 @@ bool System::_ice_writeFinish() {
 }
 
 #pragma mark - MSP430 Bootloader
-void System::_msp_connect(const Cmd& cmd) {
+void System::_msp_connect() {
     const auto r = _msp.connect();
     _usbCmd_finish(r == _msp.Status::OK);
 }
 
-void System::_msp_disconnect(const Cmd& cmd) {
+void System::_msp_disconnect() {
     _msp.disconnect();
     _usbCmd_finish(true);
 }
@@ -502,7 +502,7 @@ void System::_mspDebug_handleCmd(const MSPDebugCmd& cmd) {
 
 #pragma mark - Other Commands
 
-void System::_ledSet(const Cmd& cmd) {
+void System::_ledSet() {
     switch (cmd.arg.LEDSet.idx) {
 //    case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
     case 1: _LED1::Write(cmd.arg.LEDSet.on); break;
