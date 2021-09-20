@@ -13,7 +13,9 @@ private:
     // USB
     void _usbCmd_task();
     void _usbCmd_finish(bool status);
+    
     void _usbDataOut_task();
+    
     void _usbDataIn_sendStatus(bool status);
     
     // STM32 Bootloader
@@ -28,19 +30,15 @@ private:
     // MSP430 Bootloader
     void _msp_connect(const STLoader::Cmd& cmd);
     void _msp_disconnect(const STLoader::Cmd& cmd);
+    
     void _mspRead_task();
+    
     void _mspWrite_task();
     
-    void _mspWrite_usbRecvDone(const USB::RecvDoneEvent& ev);
-    void _mspWrite_updateState();
-    void _mspWrite_writeFromBuf();
-    
-    void _mspDebug(const STLoader::Cmd& cmd);
-    bool _mspDebug_pushReadBits();
-    bool _mspDebug_handleSBWIO(const STLoader::MSPDebugCmd& cmd);
-    bool _mspDebug_handleCmd(const STLoader::MSPDebugCmd& cmd);
-    void _mspDebug_handleWrite(size_t len);
-    void _mspDebug_handleRead(size_t len);
+    void _mspDebug_task(const STLoader::Cmd& cmd);
+    void _mspDebug_pushReadBits();
+    void _mspDebug_handleSBWIO(const STLoader::MSPDebugCmd& cmd);
+    void _mspDebug_handleCmd(const STLoader::MSPDebugCmd& cmd);
     
     // Other commands
     void _ledSet(const STLoader::Cmd& cmd);
@@ -85,13 +83,14 @@ private:
         Task task;
     } _mspWrite;
     
-    uint32_t _mspAddr = 0;
-    
     struct {
-        uint8_t bits = 0;
-        uint8_t bitsLen = 0;
-        size_t len = 0;
-    } _mspDebugRead;
+        Task task;
+        struct {
+            uint8_t bits = 0;
+            uint8_t bitsLen = 0;
+            size_t len = 0;
+        } read;
+    } _mspDebug;
     
     alignas(4) uint8_t _buf0[1024]; // Aligned to send via USB
     alignas(4) uint8_t _buf1[1024]; // Aligned to send via USB

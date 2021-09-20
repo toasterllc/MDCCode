@@ -65,7 +65,6 @@ void System::_usbCmd_task() {
     TaskBegin();
     for (;;) {
         auto ev = TaskRead(_usb.cmdRecvChannel);
-        Cmd cmd;
         
         // Validate command length
         if (ev.len != sizeof(cmd)) {
@@ -73,26 +72,18 @@ void System::_usbCmd_task() {
             continue;
         }
         
-        memcpy(&cmd, ev.data, ev.len);
+        memcpy(&_cmd, ev.data, ev.len);
+        
+        // Stop all tasks
+        _sd.task.pause();
         
         switch (cmd.op) {
-        
-        case Op::SDRead:
-            _sd.task.reset();
-            _sd.cmd = cmd;
-            break;
-        
-        case Op::LEDSet:
-            _ledSet(cmd);
-            break;
-        
+        case Op::SDRead:    _sd.task.reset();       break;
+        case Op::LEDSet:    _ledSet(cmd);           break;
         // Bad command
-        default:
-            _usbCmd_finish(false);
-            break;
+        default:            _usbCmd_finish(false);  break;
         }
     }
-    TaskEnd();
 }
 
 void System::_usbCmd_finish(bool status) {
@@ -532,81 +523,74 @@ SDStatusResp System::_sd_sendCmd(uint8_t sdCmd, uint32_t sdArg, SDSendCmdMsg::Re
 }
 
 void System::_sd_task() {
-    const auto& arg = _sd.cmd.arg.SDRead;
+    auto& s = _sd;
+    const auto& arg = _cmd.arg.SDRead;
     TaskBegin();
-    for (;;) {
-        // Wait for a command
-        TaskWait(_sd.cmd);
-        
-        // Stop reading from the SD card if a read is currently underway
-        if (_sd.reading) {
-            _ICE_ST_SPI_CS_::Write(1);
-            
-            // ====================
-            // CMD12 | STOP_TRANSMISSION
-            //   State: Send Data -> Transfer
-            //   Finish reading
-            // ====================
-            {
-                auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
-                Assert(!status.respCRCErr());
-            }
-            
-            _sd.reading = false;
-        }
+    
+    // Stop reading from the SD card if a read is in progress
+    if (s.reading) {
+        _ICE_ST_SPI_CS_::Write(1);
         
         // ====================
-        // CMD18 | READ_MULTIPLE_BLOCK
-        //   State: Transfer -> Send Data
-        //   Read blocks of data (1 block == 512 bytes)
+        // CMD12 | STOP_TRANSMISSION
+        //   State: Send Data -> Transfer
+        //   Finish reading
         // ====================
         {
-            auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, arg.addr, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+            auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
             Assert(!status.respCRCErr());
         }
         
-        // Send the SDReadout message, which causes us to enter the SD-readout mode until
-        // we release the chip select
-        _ICE_ST_SPI_CS_::Write(0);
-        _ice_transferNoCS(SDReadoutMsg());
+        s.reading = false;
+    }
+    
+    // ====================
+    // CMD18 | READ_MULTIPLE_BLOCK
+    //   State: Transfer -> Send Data
+    //   Read blocks of data (1 block == 512 bytes)
+    // ====================
+    {
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, arg.addr, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+        Assert(!status.respCRCErr());
+    }
+    
+    // Send the SDReadout message, which causes us to enter the SD-readout mode until
+    // we release the chip select
+    _ICE_ST_SPI_CS_::Write(0);
+    _ice_transferNoCS(SDReadoutMsg());
+    
+    // Let the host know that the USB command was successful
+    // This needs to happen before we reset the DataIn endpoint, otherwise we'll deadlock, because
+    // the host can't start receiving on DataIn until we respond to the request on EP0
+    _usbCmd_finish(true);
+    
+    // Reset the data channel (which sends a 2xZLP+sentinel sequence)
+    _usb.reset(Endpoints::DataIn);
+    // Wait until we're done resetting the DataIn endpoint
+    TaskWait(_usb.sendReady(Endpoints::DataIn));
+    
+    // Read data over QSPI and write it to USB, indefinitely
+    for (;;) {
+        // Read data into the producer buffer when:
+        //   - there's space in the queue, and
+        //   - QSPI is ready to accept commands
+        if (!_bufs.full() && _qspi.ready()) {
+            _sd_readToBuf();
         
-        // Let the host know that the USB command was successful
-        // This needs to happen before we reset the DataIn endpoint, otherwise we'll deadlock, because
-        // the host can't start receiving on DataIn until we respond to the request on EP0
-        _usbCmd_finish(true);
+        // Send data from the consumer buffer when:
+        //   - we have data to write, and
+        //   - the DataIn USB endpoint is ready to accept data
+        } else if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
+            const auto& buf = _bufs.front();
+            _usb.send(Endpoints::DataIn, buf.data, buf.len);
         
-        // Reset the data channel (which sends a 2xZLP+sentinel sequence)
-        _usb.reset(Endpoints::DataIn);
-        // Wait until we're done resetting the DataIn endpoint
-        TaskWait(_usb.sendReady(Endpoints::DataIn));
-        
-        // Read data over QSPI and write it to USB, indefinitely
-        for (;;) {
-            // Read data into the producer buffer when:
-            //   - there's space in the queue, and
-            //   - QSPI is ready to accept commands
-            if (!_bufs.full() && _qspi.ready()) {
-                _sd_readToBuf();
-            
-            // Send data from the consumer buffer when:
-            //   - we have data to write, and
-            //   - the DataIn USB endpoint is ready to accept data
-            } else if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
-                const auto& buf = _bufs.front();
-                _usb.send(Endpoints::DataIn, buf.data, buf.len);
-            
-            } else {
-                TaskYield();
-            }
+        } else {
+            TaskYield();
         }
     }
-    TaskEnd();
 }
 
 void System::_sd_readToBuf() {
-    Assert(!_bufs.full());
-    Assert(_qspi.ready());
-    
     const size_t len = SDReadoutMsg::ReadoutLen;
     auto& buf = _bufs.back();
     
