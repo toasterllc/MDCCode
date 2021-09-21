@@ -115,6 +115,7 @@ void System::_usbCmd_reset() {
     _usbCmd_accept(true);
     _usb.reset(Endpoints::DataOut);
     _usb.reset(Endpoints::DataIn);
+    #error we need to turn this into a task so that we can wait before sending status
     // Send status
     _usbDataIn_sendStatus(true);
 }
@@ -209,24 +210,41 @@ void System::_stm_task() {
     
     TaskBegin();
     
-    // Reject commands if the region capacity is too small to hold the
-    // incoming data length (ceiled to the packet length)
-    static size_t len;
-    len = _ceilToPacketLength(arg.len);
-    if (len > _stm_regionCapacity((void*)arg.addr)) {
-        _usbCmd_accept(false);
-        return;
-    }
+    static size_t cap;
+    cap = _stm_regionCapacity((void*)arg.addr);
     
     // Accept command
     _usbCmd_accept(true);
     
-    // Receive USB data
-    _usb.recv(Endpoints::DataOut, (void*)arg.addr, len);
-    TaskWait(_usb.ready(Endpoints::DataOut));
+    // Reset state
+    _bufs.reset();
+    // Trigger the USB DataOut task with the amount of data
+    _usbDataOut.task.reset();
+    _usbDataOut.len = arg.len;
+    
+    static bool ok;
+    ok = true;
+    
+    while (arg.len) {
+        // Wait until we have data to consume
+        TaskWait(!_bufs.empty());
+        
+        const auto& buf = _bufs.front();
+        
+        // Fail if the received data spans beyond the capacity
+        ok &= (buf.len <= cap);
+        
+        const size_t chunkLen = std::min(cap, buf.len);
+        memcpy((void*)arg.addr, buf.data, chunkLen);
+        arg.addr += chunkLen;
+        arg.len -= chunkLen;
+        cap -= chunkLen;
+        
+        _bufs.pop();
+    }
     
     // Send our status
-    _usbDataIn_sendStatus(true);
+    _usbDataIn_sendStatus(ok);
 }
 
 void System::_stm_reset() {
@@ -400,6 +418,8 @@ void System::_mspRead_task() {
         _bufs.push();
     }
     
+    // Wait for DataIn task to complete
+    TaskWait(_usbDataIn.len == 0);
     // Send status
     _usbDataIn_sendStatus(true);
 }
