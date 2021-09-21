@@ -53,7 +53,7 @@ int main(int argc, const char* argv[]) {
         printf("-> OK\n\n");
         
         printf("Profiling...\n");
-        constexpr size_t BufCap = 128*1024*1024;
+        constexpr size_t BufCap = 8*1024*1024;
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
         for (;;) {
             auto startTime = std::chrono::steady_clock::now();
