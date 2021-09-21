@@ -480,7 +480,7 @@ void System::_mspDebug_task() {
         // Push outstanding bits into the buffer
         // This is necessary for when the client reads a number of bits
         // that didn't fall on a byte boundary.
-        if (_mspDebug.read.bitsLen) _mspDebug_pushReadBits();
+        if (_mspDebug.read.bitsLen) ok &= _mspDebug_pushReadBits();
         _mspDebug.read = {};
         
         if (arg.respLen) {
