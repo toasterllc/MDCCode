@@ -17,6 +17,7 @@ _bufs       (_buf0, _buf1),
 _usbCmd     ( { .task = Task([&] { _usbCmd_task();        }) } ),
 _usbDataOut ( { .task = Task([&] { _usbDataOut_task();    }) } ),
 _usbDataIn  ( { .task = Task([&] { _usbDataIn_task();     }) } ),
+_reset      ( { .task = Task([&] { _reset_task();         }) } ),
 _stm        ( { .task = Task([&] { _stm_task();           }) } ),
 _ice        ( { .task = Task([&] { _ice_task();           }) } ),
 _mspRead    ( { .task = Task([&] { _mspRead_task();       }) } ),
@@ -40,6 +41,7 @@ void System::run() {
         _usbCmd.task,
         _usbDataOut.task,
         _usbDataIn.task,
+        _reset.task,
         _stm.task,
         _ice.task,
         _mspRead.task,
@@ -51,6 +53,7 @@ void System::run() {
 void System::_pauseTasks() {
     _usbDataOut.task.pause();
     _usbDataIn.task.pause();
+    _reset.task.pause();
     _stm.task.pause();
     _ice.task.pause();
     _mspRead.task.pause();
@@ -67,7 +70,7 @@ void System::_usbCmd_task() {
         
         // Reject command if the length isn't valid
         if (ev.len != sizeof(_cmd)) {
-            _usbCmd_accept(false);
+            _usb.cmdAccept(false);
             continue;
         }
         
@@ -79,13 +82,13 @@ void System::_usbCmd_task() {
         // Specially handle the Reset command -- it's the only command that doesn't
         // require the endpoints to be ready.
         if (_cmd.op == Op::Reset) {
-            _usbCmd_reset();
+            _reset.task.reset();
             continue;
         }
         
         // Reject command if the endpoints aren't ready
         if (!_usb.ready(Endpoints::DataOut) || !_usb.ready(Endpoints::DataIn)) {
-            _usbCmd_accept(false);
+            _usb.cmdAccept(false);
             continue;
         }
         
@@ -105,23 +108,9 @@ void System::_usbCmd_task() {
         // Set LED
         case Op::LEDSet:        _ledSet();              break;
         // Bad command
-        default:                _usbCmd_accept(false);  break;
+        default:                _usb.cmdAccept(false);  break;
         }
     }
-}
-
-void System::_usbCmd_reset() {
-    // Accept command
-    _usbCmd_accept(true);
-    _usb.reset(Endpoints::DataOut);
-    _usb.reset(Endpoints::DataIn);
-    #error we need to turn this into a task so that we can wait before sending status
-    // Send status
-    _usbDataIn_sendStatus(true);
-}
-
-void System::_usbCmd_accept(bool accept) {
-    _usb.cmdAccept(accept);
 }
 
 static size_t _ceilToPacketLength(size_t len) {
@@ -184,6 +173,20 @@ void System::_usbDataIn_sendStatus(bool status) {
     _usb.send(Endpoints::DataIn, &_usbDataIn.status, sizeof(_usbDataIn.status));
 }
 
+#pragma mark - Reset
+
+void System::_reset_task() {
+    TaskBegin();
+    // Accept command
+    _usb.cmdAccept(true);
+    // Reset endpoints
+    _usb.reset(Endpoints::DataOut);
+    _usb.reset(Endpoints::DataIn);
+    TaskWait(_usb.ready(Endpoints::DataOut) && _usb.ready(Endpoints::DataIn));
+    // Send status
+    _usbDataIn_sendStatus(true);
+}
+
 #pragma mark - STM32 Bootloader
 
 static size_t _stm_regionCapacity(void* addr) {
@@ -210,46 +213,29 @@ void System::_stm_task() {
     
     TaskBegin();
     
-    static size_t cap;
-    cap = _stm_regionCapacity((void*)arg.addr);
-    
-    // Accept command
-    _usbCmd_accept(true);
-    
-    // Reset state
-    _bufs.reset();
-    // Trigger the USB DataOut task with the amount of data
-    _usbDataOut.task.reset();
-    _usbDataOut.len = arg.len;
-    
-    static bool ok;
-    ok = true;
-    
-    while (arg.len) {
-        // Wait until we have data to consume
-        TaskWait(!_bufs.empty());
-        
-        const auto& buf = _bufs.front();
-        
-        // Fail if the received data spans beyond the capacity
-        ok &= (buf.len <= cap);
-        
-        const size_t chunkLen = std::min(cap, buf.len);
-        memcpy((void*)arg.addr, buf.data, chunkLen);
-        arg.addr += chunkLen;
-        arg.len -= chunkLen;
-        cap -= chunkLen;
-        
-        _bufs.pop();
+    // Reject command if the region capacity is too small to hold the
+    // incoming data length (ceiled to the packet length)
+    static size_t len;
+    len = _ceilToPacketLength(arg.len);
+    if (len > _stm_regionCapacity((void*)arg.addr)) {
+        _usb.cmdAccept(false);
+        return;
     }
     
+    // Accept command
+    _usb.cmdAccept(true);
+    
+    // Receive USB data
+    _usb.recv(Endpoints::DataOut, (void*)arg.addr, len);
+    TaskWait(_usb.ready(Endpoints::DataOut));
+    
     // Send our status
-    _usbDataIn_sendStatus(ok);
+    _usbDataIn_sendStatus(true);
 }
 
 void System::_stm_reset() {
     // Accept command
-    _usbCmd_accept(true);
+    _usb.cmdAccept(true);
     
     Start.setAppEntryPointAddr(_cmd.arg.STMReset.entryPointAddr);
     // Perform software reset
@@ -290,7 +276,7 @@ void System::_ice_task() {
     TaskBegin();
     
     // Accept command
-    _usbCmd_accept(true);
+    _usb.cmdAccept(true);
     
     // Configure ICE40 control GPIOs
     _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -375,7 +361,7 @@ bool System::_ice_writeFinish() {
 #pragma mark - MSP430 Bootloader
 void System::_msp_connect() {
     // Accept command
-    _usbCmd_accept(true);
+    _usb.cmdAccept(true);
     const auto r = _msp.connect();
     // Send status
     _usbDataIn_sendStatus(r == _msp.Status::OK);
@@ -383,7 +369,7 @@ void System::_msp_connect() {
 
 void System::_msp_disconnect() {
     // Accept command
-    _usbCmd_accept(true);
+    _usb.cmdAccept(true);
     _msp.disconnect();
     // Send status
     _usbDataIn_sendStatus(true);
@@ -394,7 +380,7 @@ void System::_mspRead_task() {
     TaskBegin();
     
     // Accept command
-    _usbCmd_accept(true);
+    _usb.cmdAccept(true);
     
     // Reset state
     _bufs.reset();
@@ -429,7 +415,7 @@ void System::_mspWrite_task() {
     TaskBegin();
     
     // Accept command
-    _usbCmd_accept(true);
+    _usb.cmdAccept(true);
     
     // Reset state
     _bufs.reset();
@@ -462,13 +448,20 @@ void System::_mspDebug_task() {
     auto& arg = _cmd.arg.MSPDebug;
     TaskBegin();
     
+    // Reject command if more data was requested than the size of our buffer
+    if (arg.respLen > sizeof(_buf1)) {
+        _usbCmd_finish(false);
+        return;
+    }
+    
     // Accept command
-    _usbCmd_accept(true);
+    _usb.cmdAccept(true);
+    
+    static bool ok;
+    ok = true;
     
     // Handle debug commands
-    static bool ok;
     {
-        ok = true;
         while (arg.cmdsLen) {
             // Receive debug commands into _buf0
             _usb.recv(Endpoints::DataOut, _buf0, sizeof(_buf0));
@@ -495,13 +488,7 @@ void System::_mspDebug_task() {
         
         if (arg.respLen) {
             // Send the data and wait for it to be received
-            if (arg.respLen <= sizeof(_buf1)) {
-                _usb.send(Endpoints::DataIn, _buf1, arg.respLen);
-            // If more data was requested than the size of our buffer, send a ZLP
-            } else {
-                _usb.send(Endpoints::DataIn, nullptr, 0);
-                ok = false;
-            }
+            _usb.send(Endpoints::DataIn, _buf1, arg.respLen);
             TaskWait(_usb.ready(Endpoints::DataIn));
         }
     }
@@ -551,7 +538,7 @@ bool System::_mspDebug_handleCmd(const MSPDebugCmd& cmd) {
 
 void System::_ledSet() {
     // Accept command
-    _usbCmd_accept(true);
+    _usb.cmdAccept(true);
     
     switch (_cmd.arg.LEDSet.idx) {
     case 0: _usbDataIn_sendStatus(false); return;
