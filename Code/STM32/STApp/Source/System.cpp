@@ -576,7 +576,7 @@ void System::_sd_task() {
     // Reset the data channel (which sends a 2xZLP+sentinel sequence)
     _usb.reset(Endpoints::DataIn);
     // Wait until we're done resetting the DataIn endpoint
-    TaskWait(_usb.sendReady(Endpoints::DataIn));
+    TaskWait(_usb.ready(Endpoints::DataIn));
     
     // Read data over QSPI and write it to USB, indefinitely
     for (;;) {
@@ -589,7 +589,7 @@ void System::_sd_task() {
         // Send data from the consumer buffer when:
         //   - we have data to write, and
         //   - the DataIn USB endpoint is ready to accept data
-        } else if (!_bufs.empty() && _usb.sendReady(Endpoints::DataIn)) {
+        } else if (!_bufs.empty() && _usb.ready(Endpoints::DataIn)) {
             const auto& buf = _bufs.front();
             _usb.send(Endpoints::DataIn, buf.data, buf.len);
         
