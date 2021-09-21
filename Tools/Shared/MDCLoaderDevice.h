@@ -28,6 +28,7 @@ public:
         // Flush endpoints
         _flushEndpoint(Endpoints::DataOut);
         _flushEndpoint(Endpoints::DataIn);
+        _waitOrThrow("Reset command failed");
     }
     
     void stmWrite(uint32_t addr, const void* data, size_t len) {
@@ -85,6 +86,7 @@ public:
         };
         // Send command
         _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("MSPConnect command failed");
     }
     
     void mspDisconnect() {
@@ -94,6 +96,7 @@ public:
         };
         // Send command
         _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("MSPDisconnect command failed");
     }
     
     void mspWrite(uint32_t addr, const void* data, size_t len) {
@@ -144,6 +147,7 @@ public:
             },
         };
         _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("LEDSet command failed");
     }
     
 private:
