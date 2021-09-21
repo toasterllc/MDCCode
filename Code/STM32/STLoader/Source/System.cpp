@@ -113,7 +113,7 @@ void System::_usbCmd_task() {
     }
 }
 
-static size_t _ceilToPacketLength(size_t len) {
+static size_t _ceilToMaxPacketSize(size_t len) {
     // Round `len` up to the nearest packet size, since the USB hardware limits
     // the data received based on packets instead of bytes
     const size_t rem = len%USB::MaxPacketSizeIn();
@@ -124,29 +124,28 @@ static size_t _ceilToPacketLength(size_t len) {
 // _usbDataOut_task: reads `_usbDataOut.len` bytes from the DataOut endpoint and writes it to _bufs
 void System::_usbDataOut_task() {
     auto& s = _usbDataOut;
+    
     TaskBegin();
     
     while (s.len) {
-        static size_t chunkLen;
         TaskWait(!_bufs.full());
         
-        {
-            auto& buf = _bufs.back();
-            // Prepare to receive either `s.len` bytes or the
-            // buffer capacity bytes, whichever is smaller.
-            chunkLen = _ceilToPacketLength(std::min(s.len, buf.cap));
-            // Ensure that after rounding up to the nearest packet size, we don't
-            // exceed the buffer capacity. (This should always be safe as long as
-            // the buffer capacity is a multiple of the max packet size.)
-            Assert(chunkLen <= buf.cap);
-            
-            _usb.recv(Endpoints::DataOut, buf.data, chunkLen);
-            buf.len = chunkLen;
-        }
-        
-        // Wait for the transfer to complete and push the buffer
+        // Prepare to receive either `s.len` bytes or the
+        // buffer capacity bytes, whichever is smaller.
+        static size_t cap;
+        cap = _ceilToMaxPacketSize(std::min(s.len, _bufs.back().cap));
+        // Ensure that after rounding up to the nearest packet size, we don't
+        // exceed the buffer capacity. (This should always be safe as long as
+        // the buffer capacity is a multiple of the max packet size.)
+        Assert(cap <= _bufs.back().cap);
+        _usb.recv(Endpoints::DataOut, _bufs.back().data, cap);
         TaskWait(_usb.ready(Endpoints::DataOut));
-        s.len -= chunkLen;
+        
+        // Never claim that we read more than the requested data, even if ceiling
+        // to the max packet size caused us to read more than requested.
+        const size_t recvLen = std::min(s.len, _usb.recvLen(Endpoints::DataOut));
+        s.len -= recvLen;
+        _bufs.back().len = recvLen;
         _bufs.push();
     }
 }
@@ -216,7 +215,7 @@ void System::_stm_task() {
     // Reject command if the region capacity is too small to hold the
     // incoming data length (ceiled to the packet length)
     static size_t len;
-    len = _ceilToPacketLength(arg.len);
+    len = _ceilToMaxPacketSize(arg.len);
     if (len > _stm_regionCapacity((void*)arg.addr)) {
         _usb.cmdAccept(false);
         return;
@@ -272,7 +271,7 @@ static void _ice_qspiWrite(QSPI& qspi, const void* data, size_t len) {
 }
 
 void System::_ice_task() {
-    const auto& arg = _cmd.arg.ICEWrite;
+    auto& arg = _cmd.arg.ICEWrite;
     TaskBegin();
     
     // Accept command
@@ -311,9 +310,7 @@ void System::_ice_task() {
     _usbDataOut.task.reset();
     _usbDataOut.len = arg.len;
     
-    static size_t len;
-    len = arg.len;
-    while (len) {
+    while (arg.len) {
         // Wait until we have data to consume, and QSPI is ready to write
         TaskWait(!_bufs.empty() && _qspi.ready());
         
@@ -322,7 +319,7 @@ void System::_ice_task() {
         TaskWait(_qspi.ready());
         
         // Update the remaining data and pop the buffer so it can be used again
-        len -= _bufs.front().len;
+        arg.len -= _bufs.front().len;
         _bufs.pop();
     }
     

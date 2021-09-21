@@ -591,7 +591,7 @@ protected:
     USBD_HandleTypeDef _device;
     
 private:
-    static const inline uint8_t _ResetSentinel = 0;
+    alignas(4) static const inline uint8_t _ResetSentinel = 0;
     
     // _DevNullAddr: address that throw-away data can be written to.
     // This must be a region that a packet can be written to without causing
@@ -601,7 +601,7 @@ private:
     // ignored as long as the flash isn't unlocked.
     static constexpr uint32_t _DevNullAddr = 0x08000000;
     
-    uint8_t _cmdRecvBuf[MaxPacketSizeCtrl] __attribute__((aligned(4)));
+    alignas(4) uint8_t _cmdRecvBuf[MaxPacketSizeCtrl];
     _OutEndpoint _outEndpoints[EndpointCountOut()] = {};
     _InEndpoint _inEndpoints[EndpointCountIn()] = {};
     PCD_HandleTypeDef _pcd;
