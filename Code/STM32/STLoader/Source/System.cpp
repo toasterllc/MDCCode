@@ -83,7 +83,7 @@ void System::_usbCmd_task() {
             continue;
         }
         
-        // Only allow commands if the endpoints are ready
+        // Reject commands if the endpoints aren't ready
         if (!_usb.ready(Endpoints::DataOut) || !_usb.ready(Endpoints::DataIn)) {
             _usbCmd_finish(false);
             continue;
@@ -111,10 +111,12 @@ void System::_usbCmd_task() {
 }
 
 void System::_usbCmd_reset() {
-    // Respond to the command
+    // Accept command
     _usbCmd_finish(true);
     _usb.reset(Endpoints::DataOut);
     _usb.reset(Endpoints::DataIn);
+    // Send status
+    _usbDataIn_sendStatus(true);
 }
 
 void System::_usbCmd_finish(bool status) {
@@ -208,8 +210,8 @@ void System::_stm_task() {
     
     TaskBegin();
     
-    // Confirm that the region's capacity is large enough to hold the incoming
-    // data length (ceiled to the packet length)
+    // Reject commands if the region capacity is too small to hold the
+    // incoming data length (ceiled to the packet length)
     static size_t len;
     len = _ceilToPacketLength(arg.len);
     if (len > _stm_regionCapacity((void*)arg.addr)) {
@@ -217,7 +219,7 @@ void System::_stm_task() {
         return;
     }
     
-    // Respond to the command
+    // Accept the command
     _usbCmd_finish(true);
     
     // Receive USB data
@@ -267,6 +269,9 @@ void System::_ice_task() {
     const auto& arg = _cmd.arg.ICEWrite;
     TaskBegin();
     
+    // Accept the command
+    _usbCmd_finish(true);
+    
     // Configure ICE40 control GPIOs
     _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -294,8 +299,6 @@ void System::_ice_task() {
     _ice_qspiWrite(_qspi, &ff, 1);
     _qspi.eventChannel.read();
     
-    // Respond to the command
-    _usbCmd_finish(true);
     // Reset state
     _bufs.reset();
     // Trigger the USB DataOut task with the amount of data
@@ -351,20 +354,26 @@ bool System::_ice_writeFinish() {
 
 #pragma mark - MSP430 Bootloader
 void System::_msp_connect() {
+    // Accept command
+    _usbCmd_finish(true);
     const auto r = _msp.connect();
-    _usbCmd_finish(r == _msp.Status::OK);
+    // Send status
+    _usbDataIn_sendStatus(r == _msp.Status::OK);
 }
 
 void System::_msp_disconnect() {
-    _msp.disconnect();
+    // Accept command
     _usbCmd_finish(true);
+    _msp.disconnect();
+    // Send status
+    _usbDataIn_sendStatus(true);
 }
 
 void System::_mspRead_task() {
     auto& arg = _cmd.arg.MSPRead;
     TaskBegin();
     
-    // Respond to the command
+    // Accept command
     _usbCmd_finish(true);
     
     // Reset state
@@ -388,6 +397,9 @@ void System::_mspRead_task() {
         buf.len = chunkLen;
         _bufs.push();
     }
+    
+    // Send status
+    _usbDataIn_sendStatus(true);
 }
 
 void System::_mspWrite_task() {
@@ -420,7 +432,7 @@ void System::_mspWrite_task() {
     
     // Verify the CRC of all the data we wrote
     const auto r = _msp.crcVerify();
-    // Send our status
+    // Send status
     _usbDataIn_sendStatus(r == _msp.Status::OK);
 }
 
@@ -428,13 +440,7 @@ void System::_mspDebug_task() {
     auto& arg = _cmd.arg.MSPDebug;
     TaskBegin();
     
-    // Validate our arguments
-    if (arg.respLen > sizeof(_buf1)) {
-        _usbCmd_finish(false);
-        return;
-    }
-    
-    // Respond to the command
+    // Accept command
     _usbCmd_finish(true);
     
     // Handle debug commands
@@ -463,13 +469,20 @@ void System::_mspDebug_task() {
         if (_mspDebug.read.bitsLen) {
             _mspDebug_pushReadBits();
         }
+        _mspDebug.read = {};
         
-        if (arg.cmdsLen) {
+        if (arg.respLen) {
             // Send the data and wait for it to be received
-            _usb.send(Endpoints::DataIn, _buf1, arg.cmdsLen);
+            if (arg.respLen <= sizeof(_buf1)) {
+                _usb.send(Endpoints::DataIn, _buf1, arg.respLen);
+            
+            // If too much data was requested, send a ZLP
+            } else {
+                _usb.send(Endpoints::DataIn, nullptr, 0);
+            }
+            
             TaskWait(_usb.ready(Endpoints::DataIn));
         }
-        _mspDebug.read = {};
     }
 }
 
