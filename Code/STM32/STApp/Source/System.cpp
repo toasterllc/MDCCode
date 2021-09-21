@@ -149,9 +149,7 @@ static QSPI_CommandTypeDef _ice_qspiCmd(const ICE40::Msg& msg, size_t respLen) {
 }
 
 void System::_ice_init() {
-    // Confirm that we can communicate with the ICE40.
-    // Interrupts need to be enabled for this, since _ice_transfer()
-    // waits for a response on qspi.eventChannel.
+    // Confirm that we can communicate with the ICE40
     EchoResp resp;
     const char str[] = "halla";
     _ice_transfer(EchoMsg(str), resp);
@@ -160,7 +158,7 @@ void System::_ice_init() {
 
 void System::_ice_transferNoCS(const ICE40::Msg& msg) {
     _qspi.command(_ice_qspiCmd(msg, 0));
-    _qspi.eventChannel.read(); // Wait for the transfer to complete
+    _qspi.wait();
 }
 
 void System::_ice_transfer(const ICE40::Msg& msg) {
@@ -172,7 +170,7 @@ void System::_ice_transfer(const ICE40::Msg& msg) {
 void System::_ice_transfer(const ICE40::Msg& msg, ICE40::Resp& resp) {
     _ICE_ST_SPI_CS_::Write(0);
     _qspi.read(_ice_qspiCmd(msg, sizeof(resp)), &resp, sizeof(resp));
-    _qspi.eventChannel.read(); // Wait for the transfer to complete
+    _qspi.wait();
     _ICE_ST_SPI_CS_::Write(1);
 }
 
@@ -631,7 +629,6 @@ void System::_sd_readToBufSync(void* buf, size_t len) {
     // we release the chip select
     _ice_transferNoCS(SDReadoutMsg());
     
-    // TODO: how do we handle lengths that aren't a multiple of ReadoutLen?
     QSPI_CommandTypeDef qspiCmd = {
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         .AddressMode = QSPI_ADDRESS_NONE,
@@ -645,7 +642,7 @@ void System::_sd_readToBufSync(void* buf, size_t len) {
     };
     
     _qspi.read(qspiCmd, buf, len);
-    _qspi.eventChannel.read(); // Wait for the transfer to complete
+    _qspi.wait();
     
     _ICE_ST_SPI_CS_::Write(1);
 }

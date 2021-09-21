@@ -302,7 +302,7 @@ void System::_ice_task() {
     // Send 8 clocks and wait for them to complete
     static const uint8_t ff = 0xff;
     _ice_qspiWrite(_qspi, &ff, 1);
-    _qspi.eventChannel.read();
+    TaskWait(_qspi.ready());
     
     // Reset state
     _bufs.reset();
@@ -323,36 +323,41 @@ void System::_ice_task() {
         _bufs.pop();
     }
     
-    const bool br = _ice_writeFinish();
-    _usbDataIn_sendStatus(br);
-}
-
-bool System::_ice_writeFinish() {
-    bool ok = false;
-    for (int i=0; i<10; i++) {
-        ok = _ICE_CDONE::Read();
-        if (ok) break;
-        HAL_Delay(1); // Sleep 1 ms
+    // Wait for CDONE to be asserted
+    {
+        bool ok = false;
+        for (int i=0; i<10 && !ok; i++) {
+            if (i) HAL_Delay(1); // Sleep 1 ms
+            ok = _ICE_CDONE::Read();
+        }
+        
+        if (!ok) {
+            _usbDataIn_sendStatus(false);
+            return;
+        }
     }
     
-    if (!ok) return false;
-    
-    // Supply >=49 additional clocks (8*7=56 clocks), per the
-    // "iCE40 Programming and Configuration" guide.
-    // These clocks apparently reach the user application. Since this
-    // appears unavoidable, prevent the clocks from affecting the user
-    // application in two ways:
-    //   1. write 0xFF, which the user application must consider as a NOP;
-    //   2. write a byte at a time, causing chip-select to be de-asserted
-    //      between bytes, which must cause the user application to reset
-    //      itself.
-    const uint8_t clockCount = 7;
-    for (int i=0; i<clockCount; i++) {
-        static const uint8_t ff = 0xff;
-        _ice_qspiWrite(_qspi, &ff, 1);
-        _qspi.eventChannel.read(); // Wait for write to complete
+    // Finish
+    {
+        // Supply >=49 additional clocks (8*7=56 clocks), per the
+        // "iCE40 Programming and Configuration" guide.
+        // These clocks apparently reach the user application. Since this
+        // appears unavoidable, prevent the clocks from affecting the user
+        // application in two ways:
+        //   1. write 0xFF, which the user application must consider as a NOP;
+        //   2. write a byte at a time, causing chip-select to be de-asserted
+        //      between bytes, which must cause the user application to reset
+        //      itself.
+        constexpr uint8_t ClockCount = 7;
+        static int i;
+        for (i=0; i<ClockCount; i++) {
+            static const uint8_t ff = 0xff;
+            _ice_qspiWrite(_qspi, &ff, sizeof(ff));
+            TaskWait(_qspi.ready());
+        }
     }
-    return true;
+    
+    _usbDataIn_sendStatus(true);
 }
 
 #pragma mark - MSP430 Bootloader

@@ -30,8 +30,6 @@ private:
     
     // ICE40 Bootloader
     void _ice_task();
-    void _ice_write();
-    bool _ice_writeFinish();
     
     // MSP430 Bootloader
     void _msp_connect();

@@ -114,8 +114,7 @@ private:
         // We have strict timing requirements, so disable interrupts.
         // Specifically, the low cycle of TCK can't be longer than 7us,
         // otherwise SBW will be disabled.
-        IRQState irq;
-        irq.disable();
+        IRQState irq = IRQState::Disabled();
         
         // Write TMS
         {
@@ -624,8 +623,7 @@ private:
         // We have strict timing requirements, so disable interrupts.
         // Specifically, the low cycle of TCK can't be longer than 7us,
         // otherwise SBW will be disabled.
-        IRQState irq;
-        irq.disable();
+        IRQState irq = IRQState::Disabled();
         
         // Reset pin states
         {
@@ -819,8 +817,7 @@ public:
     }
     
     void debugTestPulse() {
-        IRQState irq;
-        irq.disable();
+        IRQState irq = IRQState::Disabled();
         // Write before configuring. If we configured before writing, we could drive the
         // wrong value momentarily before writing the correct value.
         Test::Write(0);
