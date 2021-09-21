@@ -45,7 +45,7 @@ public:
         // Send command
         _dev.vendorRequestOut(0, cmd);
         // Send data
-        _dev.write(STLoader::Endpoints::DataOut, data, len);
+        _dev.write(Endpoints::DataOut, data, len);
         _waitOrThrow("STMWrite command failed");
     }
     
@@ -75,7 +75,7 @@ public:
         // Send command
         _dev.vendorRequestOut(0, cmd);
         // Send data
-        _dev.write(STLoader::Endpoints::DataOut, data, len);
+        _dev.write(Endpoints::DataOut, data, len);
         _waitOrThrow("ICEWrite command failed");
     }
     
@@ -113,7 +113,7 @@ public:
         // Send command
         _dev.vendorRequestOut(0, cmd);
         // Send data
-        _dev.write(STLoader::Endpoints::DataOut, data, len);
+        _dev.write(Endpoints::DataOut, data, len);
         _waitOrThrow("MSPWrite command failed");
     }
     
@@ -131,8 +131,36 @@ public:
         // Send command
         _dev.vendorRequestOut(0, cmd);
         // Read data
-        _dev.read(STLoader::Endpoints::DataIn, data, len);
+        _dev.read(Endpoints::DataIn, data, len);
         _waitOrThrow("MSPRead command failed");
+    }
+    
+    void mspDebug(const STLoader::MSPDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
+        using namespace STLoader;
+        const Cmd cmd = {
+            .op = Op::MSPDebug,
+            .arg = {
+                .MSPDebug = {
+                    .cmdsLen = (uint32_t)cmdsLen,
+                    .respLen = (uint32_t)respLen,
+                },
+            },
+        };
+        
+        // Send command
+        _dev.vendorRequestOut(0, cmd);
+        
+        // Write the MSPDebugCmds
+        if (cmdsLen) {
+            _dev.write(Endpoints::DataOut, cmds, cmdsLen*sizeof(MSPDebugCmd));
+        }
+        
+        // Read back the queued data
+        if (respLen) {
+            _dev.read(Endpoints::DataIn, resp, respLen);
+        }
+        
+        _waitOrThrow("MSPDebug command failed");
     }
     
     void ledSet(uint8_t idx, bool on) {
@@ -177,9 +205,10 @@ private:
     }
     
     void _waitOrThrow(const char* errMsg) {
+        using namespace STLoader;
         // Wait for completion and throw on failure
         bool s = false;
-        _dev.read(STLoader::Endpoints::DataIn, s);
+        _dev.read(Endpoints::DataIn, s);
         if (!s) throw std::runtime_error(errMsg);
     }
     
