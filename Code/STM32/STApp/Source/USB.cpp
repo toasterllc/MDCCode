@@ -64,7 +64,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
             USB_DESC_TYPE_INTERFACE,                    // bDescriptorType: interface descriptor
             0x00,                                       // bInterfaceNumber: interface index
             0x00,                                       // bAlternateSetting: alternate setting
-            0x01,                                       // bNumEndpoints
+            EndpointCount(),                            // bNumEndpoints
             0xFF,                                       // bInterfaceClass: vendor specific
             0x00,                                       // bInterfaceSubClass
             0x00,                                       // nInterfaceProtocol

@@ -75,6 +75,10 @@ public:
         return count;
     }
     
+    static constexpr size_t EndpointCount() {
+        return sizeof...(Endpoints);
+    }
+    
     static constexpr size_t MaxPacketSizeIn() {
         // Don't have IN endpoints: MPS=control transfer MPS (64)
         // Do have IN endpoints: MPS=bulk transfer MPS (512, the only value that the spec allows for HS bulk endpoints)

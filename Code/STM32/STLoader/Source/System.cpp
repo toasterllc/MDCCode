@@ -511,7 +511,7 @@ void System::_mspDebug_handleCmd(const MSPDebugCmd& cmd) {
 
 void System::_ledSet() {
     switch (_cmd.arg.LEDSet.idx) {
-//    case 0: _LED0::Write(cmd.arg.LEDSet.on); break;
+    case 0: _usbCmd_finish(false); return;
     case 1: _LED1::Write(_cmd.arg.LEDSet.on); break;
     case 2: _LED2::Write(_cmd.arg.LEDSet.on); break;
     case 3: _LED3::Write(_cmd.arg.LEDSet.on); break;
