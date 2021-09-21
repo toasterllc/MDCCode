@@ -28,8 +28,8 @@ using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
-static uint8_t _buf0[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
-static uint8_t _buf1[63*1024] __attribute__((aligned(4))) __attribute__((section(".sram1")));
+alignas(4) static uint8_t _buf0[63*1024] __attribute__((section(".sram1")));
+alignas(4) static uint8_t _buf1[63*1024] __attribute__((section(".sram1")));
 
 using namespace STApp;
 
