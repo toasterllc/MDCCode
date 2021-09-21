@@ -75,21 +75,19 @@ void QSPI::config() {
     _D7::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
 }
 
-bool QSPI::ready() const {
-    return !_busy;
-}
-
 void QSPI::reset() {
     // Disable interrupts so that resetting is atomic
-    IRQState irq;
-    irq.disable();
+    IRQState irq = IRQState::Disabled();
     
     // Abort whatever is underway (if anything)
     HAL_QSPI_Abort(&_device);
     
     // Reset state
-    eventChannel.reset();
     _busy = false;
+}
+
+bool QSPI::ready() const {
+    return !_busy;
 }
 
 void QSPI::command(const QSPI_CommandTypeDef& cmd) {
@@ -197,6 +195,16 @@ void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
     Assert(hs == HAL_OK);
 }
 
+void QSPI::wait() const {
+    for (;;) {
+        // Disable interrupts to prevent a race between checking ready() and going to sleep,
+        // between which we may have become ready, had we not disabled interrupts.
+        IRQState irq = IRQState::Disabled();
+        if (ready()) return;
+        IRQState::WaitForInterrupt();
+    }
+}
+
 void QSPI::_isrQSPI() {
     ISR_HAL_QSPI(&_device);
 }
@@ -206,17 +214,14 @@ void QSPI::_isrDMA() {
 }
 
 void QSPI::_handleCommandDone() {
-    eventChannel.writeTry(Event{});
     _busy = false;
 }
 
 void QSPI::_handleReadDone() {
-    eventChannel.writeTry(Event{});
     _busy = false;
 }
 
 void QSPI::_handleWriteDone() {
-    eventChannel.writeTry(Event{});
     _busy = false;
 }
 

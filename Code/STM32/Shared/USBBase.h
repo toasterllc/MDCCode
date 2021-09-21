@@ -258,8 +258,7 @@ public:
     }
     
     void reset(uint8_t ep) {
-        IRQState irq;
-        irq.disable();
+        IRQState irq = IRQState::Disabled();
         
         if (EndpointOut(ep)) {
             _OutEndpoint& outep = _outEndpoint(ep);
@@ -274,8 +273,7 @@ public:
     }
     
     bool ready(uint8_t ep) {
-        IRQState irq;
-        irq.disable();
+        IRQState irq = IRQState::Disabled();
         if (EndpointOut(ep))    return _ready(_outEndpoint(ep));
         else                    return _ready(_inEndpoint(ep));
     }
@@ -284,8 +282,7 @@ public:
         AssertArg(EndpointOut(ep));
         _OutEndpoint& outep = _outEndpoint(ep);
         
-        IRQState irq;
-        irq.disable();
+        IRQState irq = IRQState::Disabled();
         Assert(_ready(outep));
         _advanceState(ep, outep);
         return USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)data, len);
@@ -293,22 +290,19 @@ public:
     
     size_t recvLen(uint8_t ep) const {
         AssertArg(EndpointOut(ep));
-        IRQState irq;
-        irq.disable();
+        IRQState irq = IRQState::Disabled();
         return _recvLen(_outEndpoint(ep));
     }
     
     USBD_StatusTypeDef send(uint8_t ep, const void* data, size_t len) {
         _InEndpoint& inep = _inEndpoint(ep);
-        IRQState irq;
-        irq.disable();
+        IRQState irq = IRQState::Disabled();
         Assert(_ready(inep));
         _advanceState(ep, inep);
         return USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
     }
     
     // Channels
-    Channel<Event,1> stateChangedChannel;
     Channel<CmdRecvEvent,1> cmdRecvChannel;
     
 protected:
@@ -318,7 +312,6 @@ protected:
     
     uint8_t _usbd_Init(uint8_t cfgidx) {
         _state = State::Connected;
-        stateChangedChannel.writeTry(Event{});
         
         // Open endpoints
         for (uint8_t ep : {Endpoints...}) {
@@ -337,7 +330,6 @@ protected:
     
     uint8_t _usbd_DeInit(uint8_t cfgidx) {
         _state = State::Disconnected;
-        stateChangedChannel.writeTry(Event{});
         return (uint8_t)USBD_OK;
     }
     
