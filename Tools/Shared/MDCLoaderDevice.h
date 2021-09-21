@@ -170,7 +170,7 @@ private:
             // It's possible to get a ZLP in this stage -- just ignore it
             for (;;) {
                 uint8_t sentinel = 0;
-                const uint8_t len = _dev.read(ep, &sentinel, sizeof(sentinel));
+                const size_t len = _dev.read(ep, &sentinel, sizeof(sentinel));
                 if (len == sizeof(sentinel)) break;
             }
         }
