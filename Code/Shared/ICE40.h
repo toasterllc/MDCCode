@@ -135,6 +135,8 @@ struct SDSendCmdMsg : Msg {
     static constexpr uint8_t CMD8  = 8;
     static constexpr uint8_t CMD12 = 12;
     static constexpr uint8_t CMD18 = 18;
+    static constexpr uint8_t CMD23 = 23;
+    static constexpr uint8_t CMD25 = 25;
     static constexpr uint8_t CMD41 = 41;
     static constexpr uint8_t CMD55 = 55;
     
