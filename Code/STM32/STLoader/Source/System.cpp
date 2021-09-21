@@ -450,7 +450,7 @@ void System::_mspDebug_task() {
     
     // Reject command if more data was requested than the size of our buffer
     if (arg.respLen > sizeof(_buf1)) {
-        _usbCmd_finish(false);
+        _usb.cmdAccept(false);
         return;
     }
     
