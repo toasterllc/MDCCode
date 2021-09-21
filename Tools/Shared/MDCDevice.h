@@ -62,18 +62,27 @@ public:
     
 private:
     void _flushEndpoint(uint8_t ep) {
-        // Flush data from the endpoint until we get a ZLP
-        for (;;) {
-            const size_t len = _dev.read(ep, _buf, sizeof(_buf));
-            if (!len) break;
-        }
+        if (ep & USB::Endpoint::DirectionIn) {
+            // Flush data from the endpoint until we get a ZLP
+            for (;;) {
+                const size_t len = _dev.read(ep, _buf, sizeof(_buf));
+                if (!len) break;
+            }
+            
+            // Read until we get the sentinel
+            // It's possible to get a ZLP in this stage -- just ignore it
+            for (;;) {
+                uint8_t sentinel = 0;
+                const uint8_t len = _dev.read(ep, &sentinel, sizeof(sentinel));
+                if (len == sizeof(sentinel)) break;
+            }
         
-        // Read until we get the sentinel
-        // It's possible to get a ZLP in this stage -- just ignore it
-        for (;;) {
-            uint8_t sentinel = 0;
-            const uint8_t len = _dev.read(ep, &sentinel, sizeof(sentinel));
-            if (len == sizeof(sentinel)) break;
+        } else {
+            // Send 2x ZLPs + sentinel
+            _dev.write(ep, nullptr, 0);
+            _dev.write(ep, nullptr, 0);
+            const uint8_t sentinel = 0;
+            _dev.write(ep, &sentinel, sizeof(sentinel));
         }
     }
     

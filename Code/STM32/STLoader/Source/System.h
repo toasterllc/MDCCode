@@ -15,6 +15,7 @@ private:
     
     // USB
     void _usbCmd_task();
+    void _usbCmd_reset();
     void _usbCmd_finish(bool status);
     
     void _usbDataOut_task();
