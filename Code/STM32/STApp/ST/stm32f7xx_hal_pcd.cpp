@@ -1699,7 +1699,7 @@ HAL_StatusTypeDef HAL_PCD_EP_ReceiveZeroLen(PCD_HandleTypeDef *hpcd, uint8_t ep_
 
   if (hpcd->Init.dma_enable == 1U)
   {
-    #warning this allows the ITCM RAM region (at address 0x0) to be written to, doesn't it? if the host decides to send data instead of a ZLP?
+    #warning this allows the ITCM RAM region (at address 0x0) to be written to, doesnt it? if the host decides to send data instead of a ZLP?
     ep->dma_addr = (uint32_t)NULL;
   }
 

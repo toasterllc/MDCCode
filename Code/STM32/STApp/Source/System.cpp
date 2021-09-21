@@ -75,9 +75,9 @@ void System::_usbCmd_task() {
     for (;;) {
         auto ev = TaskRead(_usb.cmdRecvChannel);
         
-        // Validate command length
+        // Reject command if the length isn't valid
         if (ev.len != sizeof(_cmd)) {
-            _usbCmd_finish(false);
+            _usb.cmdAccept(false);
             continue;
         }
         
@@ -90,14 +90,9 @@ void System::_usbCmd_task() {
         case Op::SDRead:    _sd.task.reset();       break;
         case Op::LEDSet:    _ledSet();              break;
         // Bad command
-        default:            _usbCmd_finish(false);  break;
+        default:            _usb.cmdAccept(false);  break;
         }
     }
-}
-
-void System::_usbCmd_finish(bool status) {
-    // Send our response
-    _usb.cmdSendStatus(status);
 }
 
 #pragma mark - ICE40
@@ -536,6 +531,9 @@ void System::_sd_task() {
     const auto& arg = _cmd.arg.SDRead;
     TaskBegin();
     
+    // Accept command
+    _usb.cmdAccept(true);
+    
     // Stop reading from the SD card if a read is in progress
     if (s.reading) {
         _ICE_ST_SPI_CS_::Write(1);
@@ -567,11 +565,6 @@ void System::_sd_task() {
     // we release the chip select
     _ICE_ST_SPI_CS_::Write(0);
     _ice_transferNoCS(SDReadoutMsg());
-    
-    // Let the host know that the USB command was successful
-    // This needs to happen before we reset the DataIn endpoint, otherwise we'll deadlock, because
-    // the host can't start receiving on DataIn until we respond to the request on EP0
-    _usbCmd_finish(true);
     
     // Reset the data channel (which sends a 2xZLP+sentinel sequence)
     _usb.reset(Endpoints::DataIn);
@@ -661,13 +654,13 @@ void System::_sd_readToBufSync(void* buf, size_t len) {
 
 void System::_ledSet() {
     switch (_cmd.arg.LEDSet.idx) {
-    case 0: _usbCmd_finish(false); return;
+    case 0: _usb.cmdAccept(false); return;
     case 1: _LED1::Write(_cmd.arg.LEDSet.on); break;
     case 2: _LED2::Write(_cmd.arg.LEDSet.on); break;
     case 3: _LED3::Write(_cmd.arg.LEDSet.on); break;
     }
     
-    _usbCmd_finish(true);
+    _usb.cmdAccept(true);
 }
 
 System Sys;

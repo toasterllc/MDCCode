@@ -15,13 +15,14 @@ private:
     
     // USB
     void _usbCmd_task();
-    void _usbCmd_reset();
-    void _usbCmd_finish(bool status);
     
     void _usbDataOut_task();
     
     void _usbDataIn_task();
     void _usbDataIn_sendStatus(bool status);
+    
+    // Reset
+    void _reset_task();
     
     // STM32 Bootloader
     void _stm_task();
@@ -75,6 +76,10 @@ private:
         size_t len = 0;
         alignas(4) bool status = false; // Aligned to send via USB
     } _usbDataIn;
+    
+    struct {
+        Task task;
+    } _reset;
     
     struct {
         Task task;
