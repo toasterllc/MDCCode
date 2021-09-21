@@ -46,13 +46,11 @@ private:
         _EndpointState state = _EndpointState::Ready;
         size_t len = 0;
         bool needsReset = false;
-        Channel<RecvDoneEvent,1> recvDoneChannel;
     };
     
     struct _InEndpoint {
         _EndpointState state = _EndpointState::Ready;
         bool needsReset = false;
-        Channel<SendDoneEvent,1> sendDoneChannel;
     };
     
 public:
@@ -300,13 +298,6 @@ public:
         return _recvLen(_outEndpoint(ep));
     }
     
-    #warning: do we still need this?
-    constexpr Channel<RecvDoneEvent,1>& recvDoneChannel(uint8_t ep) {
-        AssertArg(EndpointOut(ep));
-        _OutEndpoint& outep = _outEndpoint(ep);
-        return outep.recvDoneChannel;
-    }
-    
     USBD_StatusTypeDef send(uint8_t ep, const void* data, size_t len) {
         _InEndpoint& inep = _inEndpoint(ep);
         IRQState irq;
@@ -314,12 +305,6 @@ public:
         Assert(_ready(inep));
         _advanceState(ep, inep);
         return USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
-    }
-    
-    #warning: do we still need this?
-    constexpr Channel<SendDoneEvent,1>& sendDoneChannel(uint8_t ep) {
-        _InEndpoint& inep = _inEndpoint(ep);
-        return inep.sendDoneChannel;
     }
     
     // Channels
@@ -502,16 +487,13 @@ private:
         
         case _EndpointState::Ready:
             outep.state = _EndpointState::Busy;
-            outep.recvDoneChannel.reset();
             break;
         case _EndpointState::Busy:
             outep.state = _EndpointState::Ready;
-            outep.recvDoneChannel.write(RecvDoneEvent{.len = outep.len});
             break;
         
         case _EndpointState::Reset:
             outep.state = _EndpointState::ResetZLP1;
-            outep.recvDoneChannel.reset();
             USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
             break;
         case _EndpointState::ResetZLP1:
@@ -523,7 +505,6 @@ private:
             // Only advance if we received the sentinel
             if (outep.len == sizeof(_ResetSentinel)) {
                 outep.state = _EndpointState::Ready;
-                outep.recvDoneChannel.write(RecvDoneEvent{.len = outep.len});
             } else {
                 USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
             }
@@ -555,16 +536,13 @@ private:
         
         case _EndpointState::Ready:
             inep.state = _EndpointState::Busy;
-            inep.sendDoneChannel.reset();
             break;
         case _EndpointState::Busy:
             inep.state = _EndpointState::Ready;
-            inep.sendDoneChannel.write(SendDoneEvent{});
             break;
         
         case _EndpointState::Reset:
             inep.state = _EndpointState::ResetZLP1;
-            inep.sendDoneChannel.reset();
             USBD_LL_TransmitZeroLen(&_device, ep);
             break;
         case _EndpointState::ResetZLP1:
@@ -577,7 +555,6 @@ private:
             break;
         case _EndpointState::ResetSentinel:
             inep.state = _EndpointState::Ready;
-            inep.sendDoneChannel.write(SendDoneEvent{});
             break;
         
         default:
