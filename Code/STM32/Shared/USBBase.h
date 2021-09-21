@@ -261,13 +261,29 @@ public:
         
         if (EndpointOut(ep)) {
             _OutEndpoint& outep = _outEndpoint(ep);
-            if (_recvReady(outep))  _reset(ep, outep);
-            else                    outep.needsReset = true;
+            if (_ready(outep))  _reset(ep, outep);
+            else                outep.needsReset = true;
         
         } else {
             _InEndpoint& inep = _inEndpoint(ep);
-            if (_sendReady(inep))   _reset(ep, inep);
-            else                    inep.needsReset = true;
+            if (_ready(inep))   _reset(ep, inep);
+            else                inep.needsReset = true;
+        }
+    }
+    
+    void ready(uint8_t ep) {
+        IRQState irq;
+        irq.disable();
+        
+        if (EndpointOut(ep)) {
+            _OutEndpoint& outep = _outEndpoint(ep);
+            if (_ready(outep))  _reset(ep, outep);
+            else                outep.needsReset = true;
+        
+        } else {
+            _InEndpoint& inep = _inEndpoint(ep);
+            if (_ready(inep))   _reset(ep, inep);
+            else                inep.needsReset = true;
         }
     }
     
@@ -277,16 +293,9 @@ public:
         
         IRQState irq;
         irq.disable();
-        Assert(_recvReady(outep));
+        Assert(_ready(outep));
         _advanceState(ep, outep);
         return USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)data, len);
-    }
-    
-    bool recvReady(uint8_t ep) const {
-        AssertArg(EndpointOut(ep));
-        IRQState irq;
-        irq.disable();
-        return _recvReady(_outEndpoint(ep));
     }
     
     size_t recvLen(uint8_t ep) const {
@@ -307,16 +316,9 @@ public:
         _InEndpoint& inep = _inEndpoint(ep);
         IRQState irq;
         irq.disable();
-        Assert(_sendReady(inep));
+        Assert(_ready(inep));
         _advanceState(ep, inep);
         return USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
-    }
-    
-    bool sendReady(uint8_t ep) const {
-        AssertArg(EndpointIn(ep));
-        IRQState irq;
-        irq.disable();
-        return _sendReady(_inEndpoint(ep));
     }
     
     #warning: do we still need this?
@@ -478,9 +480,9 @@ private:
     }
     
     // Interrupts must be disabled
-    bool _recvReady(const _OutEndpoint& outep)  const { return outep.state==_EndpointState::Ready;  }
+    bool _ready(const _OutEndpoint& outep)      const { return outep.state==_EndpointState::Ready;  }
     // Interrupts must be disabled
-    bool _sendReady(const _InEndpoint& inep)    const { return inep.state==_EndpointState::Ready;   }
+    bool _ready(const _InEndpoint& inep)        const { return inep.state==_EndpointState::Ready;   }
     
     size_t _recvLen(const _OutEndpoint& outep)  const { return outep.len;                           }
     

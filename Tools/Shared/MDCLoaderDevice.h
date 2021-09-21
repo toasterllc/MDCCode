@@ -18,36 +18,37 @@ public:
     
     MDCLoaderDevice(USBDevice&& dev) : _dev(std::move(dev)) {}
     
-    void stWrite(uint32_t addr, const void* data, size_t len) {
+    void stmWrite(uint32_t addr, const void* data, size_t len) {
         using namespace STLoader;
         const Cmd cmd = {
-            .op = Op::STWrite,
+            .op = Op::STMWrite,
             .arg = {
-                .STWrite = {
+                .STMWrite = {
                     .addr = addr,
                     .len = (uint32_t)len,
                 },
             },
         };
         // Send command
-        _dev.write(STLoader::Endpoints::CmdOut, cmd);
+        _dev.vendorRequestOut(0, cmd);
         // Send data
+        _flushEndpoint(Endpoints::DataOut);
         _dev.write(STLoader::Endpoints::DataOut, data, len);
-        _waitOrThrow("STWrite command failed");
+        _waitOrThrow("STMWrite command failed");
     }
     
-    void stReset(uint32_t entryPointAddr) {
+    void stmReset(uint32_t entryPointAddr) {
         using namespace STLoader;
         const Cmd cmd = {
-            .op = Op::STReset,
+            .op = Op::STMReset,
             .arg = {
-                .STReset = {
+                .STMReset = {
                     .entryPointAddr = entryPointAddr,
                 },
             },
         };
         
-        _dev.write(STLoader::Endpoints::CmdOut, cmd);
+        _dev.vendorRequestOut(0, cmd);
     }
     
     void iceWrite(const void* data, size_t len) {
@@ -61,7 +62,7 @@ public:
             },
         };
         // Send command
-        _dev.write(STLoader::Endpoints::CmdOut, cmd);
+        _dev.vendorRequestOut(0, cmd);
         // Send data
         _dev.write(STLoader::Endpoints::DataOut, data, len);
         _waitOrThrow("ICEWrite command failed");
@@ -73,7 +74,7 @@ public:
             .op = Op::MSPConnect,
         };
         // Send command
-        _dev.write(STLoader::Endpoints::CmdOut, cmd);
+        _dev.vendorRequestOut(0, cmd);
         _waitOrThrow("MSPStart command failed");
     }
     
@@ -83,7 +84,7 @@ public:
             .op = Op::MSPDisconnect,
         };
         // Send command
-        _dev.write(STLoader::Endpoints::CmdOut, cmd);
+        _dev.vendorRequestOut(0, cmd);
         _waitOrThrow("MSPFinish command failed");
     }
     
@@ -99,7 +100,7 @@ public:
             },
         };
         // Send command
-        _dev.write(STLoader::Endpoints::CmdOut, cmd);
+        _dev.vendorRequestOut(0, cmd);
         // Send data
         _dev.write(STLoader::Endpoints::DataOut, data, len);
         _waitOrThrow("MSPWrite command failed");
@@ -117,7 +118,7 @@ public:
             },
         };
         // Send command
-        _dev.write(STLoader::Endpoints::CmdOut, cmd);
+        _dev.vendorRequestOut(0, cmd);
         // Read data
         _dev.read(STLoader::Endpoints::DataIn, data, len);
         _waitOrThrow("MSPRead command failed");
@@ -134,17 +135,43 @@ public:
                 },
             },
         };
-        _dev.write(STLoader::Endpoints::CmdOut, cmd);
+        _dev.vendorRequestOut(0, cmd);
         _waitOrThrow("LEDSet command failed");
     }
     
 private:
-    USBDevice _dev;
+    void _flushEndpoint(uint8_t ep) {
+        if (ep & USB::Endpoint::DirectionIn) {
+            // Flush data from the endpoint until we get a ZLP
+            for (;;) {
+                const size_t len = _dev.read(ep, _buf, sizeof(_buf));
+                if (!len) break;
+            }
+            
+            // Read until we get the sentinel
+            // It's possible to get a ZLP in this stage -- just ignore it
+            for (;;) {
+                uint8_t sentinel = 0;
+                const uint8_t len = _dev.read(ep, &sentinel, sizeof(sentinel));
+                if (len == sizeof(sentinel)) break;
+            }
+        
+        } else {
+            // Send 2x ZLPs + sentinel
+            _dev.write(ep, nullptr, 0);
+            _dev.write(ep, nullptr, 0);
+            const uint8_t sentinel = 0;
+            _dev.write(ep, &sentinel, sizeof(sentinel));
+        }
+    }
     
     void _waitOrThrow(const char* errMsg) {
         // Wait for completion and throw on failure
-        STLoader::Status s = {};
+        bool s = false;
         _dev.read(STLoader::Endpoints::DataIn, s);
-        if (s != STLoader::Status::OK) throw std::runtime_error(errMsg);
+        if (!s) throw std::runtime_error(errMsg);
     }
+    
+    USBDevice _dev;
+    uint8_t _buf[16*1024];
 };

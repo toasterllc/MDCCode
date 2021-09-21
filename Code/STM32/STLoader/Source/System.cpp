@@ -76,6 +76,19 @@ void System::_usbCmd_task() {
         // Stop all tasks
         _pauseTasks();
         
+        // Specially handle the Reset command -- it's the only command that doesn't
+        // require the endpoints to be ready.
+        if (_cmd.op == Op::Reset) {
+            _usbCmd_reset();
+            continue;
+        }
+        
+        // Only allow commands if the endpoints are ready
+        if (!_usb.ready(Endpoints::DataOut) || !_usb.ready(Endpoints::DataIn)) {
+            _usbCmd_finish(false);
+            continue;
+        }
+        
         switch (_cmd.op) {
         // STM32 Bootloader
         case Op::STMWrite:      _stm.task.reset();      break;
@@ -97,6 +110,13 @@ void System::_usbCmd_task() {
     }
 }
 
+void System::_usbCmd_reset() {
+    // Respond to the command
+    _usbCmd_finish(true);
+    _usb.reset(Endpoints::DataOut);
+    _usb.reset(Endpoints::DataIn);
+}
+
 void System::_usbCmd_finish(bool status) {
     // Send our response
     _usb.cmdSendStatus(status);
@@ -114,10 +134,6 @@ static size_t _ceilToPacketLength(size_t len) {
 void System::_usbDataOut_task() {
     auto& s = _usbDataOut;
     TaskBegin();
-    // Reset the DataOut endpoint (which sends a 2xZLP+sentinel sequence)
-    _usb.reset(Endpoints::DataOut);
-    // Wait until we're done resetting the DataOut endpoint
-    TaskWait(_usb.recvReady(Endpoints::DataOut));
     
     while (s.len) {
         static size_t chunkLen;
@@ -138,7 +154,7 @@ void System::_usbDataOut_task() {
         }
         
         // Wait for the transfer to complete and push the buffer
-        TaskWait(_usb.recvReady(Endpoints::DataOut));
+        TaskWait(_usb.ready(Endpoints::DataOut));
         s.len -= chunkLen;
         _bufs.push();
     }
@@ -148,17 +164,13 @@ void System::_usbDataOut_task() {
 void System::_usbDataIn_task() {
     auto& s = _usbDataIn;
     TaskBegin();
-    // Reset the DataIn endpoint (which sends a 2xZLP+sentinel sequence)
-    _usb.reset(Endpoints::DataIn);
-    // Wait until we're done resetting the DataIn endpoint
-    TaskWait(_usb.sendReady(Endpoints::DataIn));
     
     while (s.len) {
         TaskWait(!_bufs.empty());
         
         // Send the data and wait until the transfer is complete
         _usb.send(Endpoints::DataIn, _bufs.front().data, _bufs.front().len);
-        TaskWait(_usb.sendReady(Endpoints::DataIn));
+        TaskWait(_usb.ready(Endpoints::DataIn));
         
         s.len -= _bufs.front().len;
         _bufs.pop();
@@ -207,15 +219,10 @@ void System::_stm_task() {
     
     // Respond to the command
     _usbCmd_finish(true);
-    // Reset the endpoints
-    _usb.reset(Endpoints::DataOut);
-    _usb.reset(Endpoints::DataIn);
-    // Wait until we're done resetting the endpoints
-    TaskWait(_usb.recvReady(Endpoints::DataOut) && _usb.sendReady(Endpoints::DataIn));
     
     // Receive USB data
     _usb.recv(Endpoints::DataOut, (void*)arg.addr, len);
-    TaskWait(_usb.recvReady(Endpoints::DataOut));
+    TaskWait(_usb.ready(Endpoints::DataOut));
     
     // Send our status
     _usbDataIn_sendStatus(true);
@@ -398,11 +405,6 @@ void System::_mspWrite_task() {
     _usbDataOut.task.reset();
     _usbDataOut.len = arg.len;
     
-    // Reset the DataIn endpoint, which we'll send our status on
-    _usb.reset(Endpoints::DataIn);
-    // Wait until we're done resetting the endpoints
-    TaskWait(_usb.sendReady(Endpoints::DataIn));
-    
     while (arg.len) {
         TaskWait(!_bufs.empty());
         
@@ -435,18 +437,12 @@ void System::_mspDebug_task() {
     // Respond to the command
     _usbCmd_finish(true);
     
-    // Reset endpoints
-    _usb.reset(Endpoints::DataOut);
-    _usb.reset(Endpoints::DataIn);
-    // Wait until we're done resetting the endpoints
-    TaskWait(_usb.recvReady(Endpoints::DataOut) && _usb.sendReady(Endpoints::DataIn));
-    
     // Handle debug commands
     {
         while (arg.cmdsLen) {
             // Receive debug commands into _buf0
             _usb.recv(Endpoints::DataOut, _buf0, sizeof(_buf0));
-            TaskWait(_usb.recvReady(Endpoints::DataOut));
+            TaskWait(_usb.ready(Endpoints::DataOut));
             
             // Handle each MSPDebugCmd
             const MSPDebugCmd* cmds = (MSPDebugCmd*)_buf0;
@@ -471,7 +467,7 @@ void System::_mspDebug_task() {
         if (arg.cmdsLen) {
             // Send the data and wait for it to be received
             _usb.send(Endpoints::DataIn, _buf1, arg.cmdsLen);
-            TaskWait(_usb.sendReady(Endpoints::DataIn));
+            TaskWait(_usb.ready(Endpoints::DataIn));
         }
         _mspDebug.read = {};
     }

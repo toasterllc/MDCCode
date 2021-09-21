@@ -88,12 +88,12 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
         if (!dataLen) continue; // Ignore sections with zero length
         
         printf("STLoad: Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
-        device.stWrite(dataAddr, data, dataLen);
+        device.stmWrite(dataAddr, data, dataLen);
     }
     
     // Reset the device, triggering it to load the program we just wrote
     printf("STLoad: Resetting device\n");
-    device.stReset(entryPointAddr);
+    device.stmReset(entryPointAddr);
 }
 
 static void iceLoad(const Args& args, MDCLoaderDevice& device) {
