@@ -41,9 +41,9 @@ private:
     void _mspWrite_task();
     
     void _mspDebug_task();
-    void _mspDebug_pushReadBits();
-    void _mspDebug_handleSBWIO(const STLoader::MSPDebugCmd& cmd);
-    void _mspDebug_handleCmd(const STLoader::MSPDebugCmd& cmd);
+    bool _mspDebug_pushReadBits();
+    bool _mspDebug_handleSBWIO(const STLoader::MSPDebugCmd& cmd);
+    bool _mspDebug_handleCmd(const STLoader::MSPDebugCmd& cmd);
     
     // Other commands
     void _ledSet();

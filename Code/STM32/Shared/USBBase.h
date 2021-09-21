@@ -254,8 +254,8 @@ public:
     }
     
     // Methods
-    void cmdSendStatus(bool status) {
-        if (status) USBD_CtlSendStatus(&_device);
+    void cmdAccept(bool accept) {
+        if (accept) USBD_CtlSendStatus(&_device);
         else        USBD_CtlError(&_device, nullptr);
     }
     
