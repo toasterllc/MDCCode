@@ -740,16 +740,17 @@ static bool setIgnoreOUTTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     //   "The application must set [SGONAK] only after making sure that
     //   the Global OUT NAK effective bit in the core interrupt register
     //   (GONAKEFF bit in OTG_GINTSTS) is cleared."
-    const bool state = OTG_GINTSTS&mask;
-    if (!state && ignore) {
+    const bool prevState = OTG_GINTSTS&mask;
+    
+    if (!prevState && ignore) {
         OTG_DCTL |= set;
         while (!(OTG_GINTSTS & mask));
     
-    } else if (state && !ignore) {
+    } else if (prevState && !ignore) {
         OTG_DCTL |= clear;
         while (OTG_GINTSTS & mask);
     }
-    return state;
+    return prevState;
 }
 
 static bool setIgnoreINTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
@@ -767,16 +768,16 @@ static bool setIgnoreINTransactions(USB_OTG_GlobalTypeDef* USBx, bool ignore) {
     //   "The application must set [SGINAK] only after making sure that
     //   the Global IN NAK effective bit in the core interrupt register
     //   (GINAKEFF bit in OTG_GINTSTS) is cleared."
-    const bool state = OTG_GINTSTS&mask;
-    if (!state && ignore) {
+    const bool prevState = OTG_GINTSTS&mask;
+    if (!prevState && ignore) {
         OTG_DCTL |= set;
         while (!(OTG_GINTSTS & mask));
     
-    } else if (state && !ignore) {
+    } else if (prevState && !ignore) {
         OTG_DCTL |= clear;
         while (OTG_GINTSTS & mask);
     }
-    return state;
+    return prevState;
 }
 
 HAL_StatusTypeDef USB_ResetEndpoints(USB_OTG_GlobalTypeDef* USBx, uint8_t count) {
@@ -1093,7 +1094,7 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
       {
         USBx_INEP(epnum)->DIEPDMA = (uint32_t)(ep->dma_addr);
       }
-
+      
       /* EP enable, IN data in FIFO */
       USBx_INEP(epnum)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
     }
@@ -1479,6 +1480,7 @@ HAL_StatusTypeDef  USB_ActivateSetup(USB_OTG_GlobalTypeDef *USBx)
   * @param  psetup  pointer to setup packet
   * @retval HAL status
   */
+
 HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uint8_t *psetup)
 {
   uint32_t USBx_BASE = (uint32_t)USBx;

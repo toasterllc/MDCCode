@@ -469,7 +469,12 @@ USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef* pdev,
         {
           pdev->pClass->EP0_RxReady(pdev);
         }
-        (void)USBD_CtlSendStatus(pdev);
+        else
+        {
+          // DKeck: only send status if we're not calling the client's callback.
+          // DKeck: if we are calling the client's callback, let the it handle sending the status.
+          (void)USBD_CtlSendStatus(pdev);
+        }
       }
     }
   }

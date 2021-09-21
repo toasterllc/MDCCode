@@ -14106,6 +14106,9 @@ typedef struct
 #define USB_OTG_DIEPMSK_BIM_Pos                  (9U)
 #define USB_OTG_DIEPMSK_BIM_Msk                  (0x1UL << USB_OTG_DIEPMSK_BIM_Pos) /*!< 0x00000200 */
 #define USB_OTG_DIEPMSK_BIM                      USB_OTG_DIEPMSK_BIM_Msk       /*!< BNA interrupt mask                                */
+#define USB_OTG_DIEPMSK_NAKM_Pos                 (13U)
+#define USB_OTG_DIEPMSK_NAKM_Msk                 (0x1UL << USB_OTG_DIEPMSK_NAKM_Pos) /*!< 0x00002000 */
+#define USB_OTG_DIEPMSK_NAKM                     USB_OTG_DIEPMSK_NAKM_Msk       /*!< NAK interrupt mask                                */
 
 /********************  Bit definition for USB_OTG_HPTXSTS register  ********************/
 #define USB_OTG_HPTXSTS_PTXFSAVL_Pos             (0U)
