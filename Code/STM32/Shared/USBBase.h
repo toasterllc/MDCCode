@@ -271,20 +271,11 @@ public:
         }
     }
     
-    void ready(uint8_t ep) {
+    bool ready(uint8_t ep) {
         IRQState irq;
         irq.disable();
-        
-        if (EndpointOut(ep)) {
-            _OutEndpoint& outep = _outEndpoint(ep);
-            if (_ready(outep))  _reset(ep, outep);
-            else                outep.needsReset = true;
-        
-        } else {
-            _InEndpoint& inep = _inEndpoint(ep);
-            if (_ready(inep))   _reset(ep, inep);
-            else                inep.needsReset = true;
-        }
+        if (EndpointOut(ep))    return _ready(_outEndpoint(ep));
+        else                    return _ready(_inEndpoint(ep));
     }
     
     USBD_StatusTypeDef recv(uint8_t ep, void* data, size_t len) {
