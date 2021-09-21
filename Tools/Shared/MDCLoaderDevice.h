@@ -18,6 +18,18 @@ public:
     
     MDCLoaderDevice(USBDevice&& dev) : _dev(std::move(dev)) {}
     
+    void reset() {
+        using namespace STLoader;
+        const Cmd cmd = {
+            .op = Op::Reset,
+        };
+        // Send command
+        _dev.vendorRequestOut(0, cmd);
+        // Flush endpoints
+        _flushEndpoint(Endpoints::DataOut);
+        _flushEndpoint(Endpoints::DataIn);
+    }
+    
     void stmWrite(uint32_t addr, const void* data, size_t len) {
         using namespace STLoader;
         const Cmd cmd = {
@@ -32,7 +44,6 @@ public:
         // Send command
         _dev.vendorRequestOut(0, cmd);
         // Send data
-        _flushEndpoint(Endpoints::DataOut);
         _dev.write(STLoader::Endpoints::DataOut, data, len);
         _waitOrThrow("STMWrite command failed");
     }
@@ -47,7 +58,6 @@ public:
                 },
             },
         };
-        
         _dev.vendorRequestOut(0, cmd);
     }
     
@@ -75,7 +85,6 @@ public:
         };
         // Send command
         _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("MSPStart command failed");
     }
     
     void mspDisconnect() {
@@ -85,7 +94,6 @@ public:
         };
         // Send command
         _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("MSPFinish command failed");
     }
     
     void mspWrite(uint32_t addr, const void* data, size_t len) {
@@ -136,12 +144,18 @@ public:
             },
         };
         _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("LEDSet command failed");
     }
     
 private:
     void _flushEndpoint(uint8_t ep) {
-        if (ep & USB::Endpoint::DirectionIn) {
+        if ((ep&USB::Endpoint::DirectionMask) == USB::Endpoint::DirectionOut) {
+            // Send 2x ZLPs + sentinel
+            _dev.write(ep, nullptr, 0);
+            _dev.write(ep, nullptr, 0);
+            const uint8_t sentinel = 0;
+            _dev.write(ep, &sentinel, sizeof(sentinel));
+        
+        } else {
             // Flush data from the endpoint until we get a ZLP
             for (;;) {
                 const size_t len = _dev.read(ep, _buf, sizeof(_buf));
@@ -155,13 +169,6 @@ private:
                 const uint8_t len = _dev.read(ep, &sentinel, sizeof(sentinel));
                 if (len == sizeof(sentinel)) break;
             }
-        
-        } else {
-            // Send 2x ZLPs + sentinel
-            _dev.write(ep, nullptr, 0);
-            _dev.write(ep, nullptr, 0);
-            const uint8_t sentinel = 0;
-            _dev.write(ep, &sentinel, sizeof(sentinel));
         }
     }
     
