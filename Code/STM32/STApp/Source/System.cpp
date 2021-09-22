@@ -76,15 +76,15 @@ void System::_pauseTasks() {
 void System::_usbCmd_task() {
     TaskBegin();
     for (;;) {
-        auto ev = TaskRead(_usb.cmdRecvChannel);
+        auto usbCmd = *TaskWait(_usb.cmdRecv());
         
         // Reject command if the length isn't valid
-        if (ev.len != sizeof(_cmd)) {
+        if (usbCmd.len != sizeof(_cmd)) {
             _usb.cmdAccept(false);
             continue;
         }
         
-        memcpy(&_cmd, ev.data, ev.len);
+        memcpy(&_cmd, usbCmd.data, usbCmd.len);
         
         // Stop all tasks
         _pauseTasks();
