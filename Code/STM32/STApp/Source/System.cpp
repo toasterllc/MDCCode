@@ -38,8 +38,9 @@ System::System() :
 // QSPI alignment=word for high performance transfers
 _qspi       (QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
 _bufs       (_buf0, _buf1),
-_usbCmd     ( { .task = Task([&] { _usbCmd_task();  }) } ),
-_sd         ( { .task = Task([&] { _sd_task();      }) } )
+_usbCmd     ( { .task = Task([&] { _usbCmd_task();      }) } ),
+_usbDataIn  ( { .task = Task([&] { _usbDataIn_task();   }) } ),
+_sd         ( { .task = Task([&] { _sd_task();          }) } )
 {}
 
 void System::init() {
@@ -60,12 +61,14 @@ void System::init() {
 void System::run() {
     Task::Run(
         _usbCmd.task,
+        _usbDataIn.task,
         _sd.task
     );
 }
 
 void System::_pauseTasks() {
     _sd.task.pause();
+    _usbDataIn.task.pause();
 }
 
 #pragma mark - USB
@@ -92,6 +95,21 @@ void System::_usbCmd_task() {
         // Bad command
         default:            _usb.cmdAccept(false);  break;
         }
+    }
+}
+
+// _usbDataIn_task: writes buffers from _bufs to the DataIn endpoint, and pops them from _bufs
+void System::_usbDataIn_task() {
+    TaskBegin();
+    
+    for (;;) {
+        TaskWait(!_bufs.empty());
+        
+        // Send the data and wait until the transfer is complete
+        _usb.send(Endpoints::DataIn, _bufs.front().data, _bufs.front().len);
+        TaskWait(_usb.ready(Endpoints::DataIn));
+        
+        _bufs.pop();
     }
 }
 
@@ -377,7 +395,7 @@ void System::_sd_init() {
         
         // Verify that the access mode was successfully changed
         // TODO: properly handle this failing, see CMD6 docs
-        _sd_readToBufSync(_buf0, 512/8); // Read DatIn data into _buf0
+        _sd_readout(_buf0, 512/8); // Read DatIn data into _buf0
         Assert((_buf0[16]&0x0F) == 0x03);
     }
     
@@ -549,6 +567,16 @@ void System::_sd_task() {
         s.reading = false;
     }
     
+    // Reset DataIn endpoint (which sends a 2xZLP+sentinel sequence)
+    _usb.reset(Endpoints::DataIn);
+    // Wait until we're done resetting the DataIn endpoint
+    TaskWait(_usb.ready(Endpoints::DataIn));
+    
+    // Reset state
+    _bufs.reset();
+    // Start the USB DataIn task
+    _usbDataIn.task.reset();
+    
     // ====================
     // CMD18 | READ_MULTIPLE_BLOCK
     //   State: Transfer -> Send Data
@@ -564,72 +592,42 @@ void System::_sd_task() {
     _ICE_ST_SPI_CS_::Write(0);
     _ice_transferNoCS(SDReadoutMsg());
     
-    // Reset the data channel (which sends a 2xZLP+sentinel sequence)
-    _usb.reset(Endpoints::DataIn);
-    // Wait until we're done resetting the DataIn endpoint
-    TaskWait(_usb.ready(Endpoints::DataIn));
-    
     // Read data over QSPI and write it to USB, indefinitely
     for (;;) {
-        // Read data into the producer buffer when:
-        //   - there's space in the queue, and
-        //   - QSPI is ready to accept commands
-        if (!_bufs.full() && _qspi.ready()) {
-            _sd_readToBuf();
+        // Wait until there's an available buffer to write to, and QSPI is ready for a command
+        TaskWait(!_bufs.full() && _qspi.ready());
         
-        // Send data from the consumer buffer when:
-        //   - we have data to write, and
-        //   - the DataIn USB endpoint is ready to accept data
-        } else if (!_bufs.empty() && _usb.ready(Endpoints::DataIn)) {
-            const auto& buf = _bufs.front();
-            _usb.send(Endpoints::DataIn, buf.data, buf.len);
+        const size_t len = SDReadoutMsg::ReadoutLen;
+        auto& buf = _bufs.back();
         
-        } else {
-            TaskYield();
+        // If we can't read any more data into the producer buffer,
+        // push it so the data will be sent over USB
+        if (buf.cap-buf.len < len) {
+            _bufs.push();
+            continue;
         }
+        
+        // Wait for ICE40 to signal that data is ready
+        while (!_ICE_ST_SPI_D_READY::Read());
+        
+        _sd_qspiRead(buf.data+buf.len, len);
+        buf.len += len;
     }
 }
 
-void System::_sd_readToBuf() {
-    const size_t len = SDReadoutMsg::ReadoutLen;
-    auto& buf = _bufs.back();
-    
-    // If we can't read any more data into the producer buffer,
-    // push it so the data will be sent over USB
-    if (buf.cap-buf.len < SDReadoutMsg::ReadoutLen) {
-        _bufs.push();
-        return;
-    }
-    
-    // Wait for ICE40 to signal that data is ready
-    while (!_ICE_ST_SPI_D_READY::Read());
-    
-    // TODO: how do we handle lengths that aren't a multiple of ReadoutLen?
-    QSPI_CommandTypeDef qspiCmd = {
-        .InstructionMode = QSPI_INSTRUCTION_NONE,
-        .AddressMode = QSPI_ADDRESS_NONE,
-        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
-        .DummyCycles = 8,
-        .NbData = (uint32_t)len,
-        .DataMode = QSPI_DATA_4_LINES,
-        .DdrMode = QSPI_DDR_MODE_DISABLE,
-        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
-        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
-    };
-    
-    _qspi.read(qspiCmd, buf.data+buf.len, len);
-    buf.len += len;
-}
-
-void System::_sd_readToBufSync(void* buf, size_t len) {
+void System::_sd_readout(void* buf, size_t len) {
     // Assert chip-select so that we stay in the readout state until we release it
     _ICE_ST_SPI_CS_::Write(0);
-    
     // Send the SDReadout message, which causes us to enter the SD-readout mode until
     // we release the chip select
     _ice_transferNoCS(SDReadoutMsg());
-    
-    QSPI_CommandTypeDef qspiCmd = {
+    _sd_qspiRead(buf, len);
+    _qspi.wait();
+    _ICE_ST_SPI_CS_::Write(1);
+}
+
+void System::_sd_qspiRead(void* buf, size_t len) {
+    const QSPI_CommandTypeDef qspiCmd = {
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         .AddressMode = QSPI_ADDRESS_NONE,
         .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
@@ -642,9 +640,6 @@ void System::_sd_readToBufSync(void* buf, size_t len) {
     };
     
     _qspi.read(qspiCmd, buf, len);
-    _qspi.wait();
-    
-    _ICE_ST_SPI_CS_::Write(1);
 }
 
 #pragma mark - Other Commands
