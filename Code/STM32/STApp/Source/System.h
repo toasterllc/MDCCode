@@ -17,6 +17,8 @@ private:
     
     void _usbCmd_task();
     
+    void _usbDataIn_task();
+    
     void _ice_init();
     void _ice_transferNoCS(const ICE40::Msg& msg);
     void _ice_transfer(const ICE40::Msg& msg);
@@ -32,8 +34,8 @@ private:
         ICE40::SDSendCmdMsg::RespType respType=ICE40::SDSendCmdMsg::RespTypes::Len48,
         ICE40::SDSendCmdMsg::DatInType datInType=ICE40::SDSendCmdMsg::DatInTypes::None);
     
-    void _sd_readToBuf();
-    void _sd_readToBufSync(void* buf, size_t len);
+    void _sd_readout(void* buf, size_t len);
+    void _sd_qspiRead(void* buf, size_t len);
     
     void _ledSet();
     
@@ -51,6 +53,10 @@ private:
     struct {
         Task task;
     } _usbCmd;
+    
+    struct {
+        Task task;
+    } _usbDataIn;
     
     struct {
         Task task;
