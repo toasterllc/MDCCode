@@ -18,18 +18,10 @@ uint8_t... Endpoints    // List of endpoints
 >
 class USBBase {
 public:
-    struct Event {};
-    
-    struct CmdRecvEvent {
+    struct Cmd {
         const uint8_t* data;
         size_t len;
-    };
-    
-    struct SendDoneEvent {};
-    
-    struct RecvDoneEvent {
-        size_t len;
-    };
+    };    
     
 private:
     enum class _EndpointState : uint8_t {
@@ -252,11 +244,6 @@ public:
     }
     
     // Methods
-    void cmdAccept(bool accept) {
-        if (accept) USBD_CtlSendStatus(&_device);
-        else        USBD_CtlError(&_device, nullptr);
-    }
-    
     void reset(uint8_t ep) {
         IRQState irq = IRQState::Disabled();
         
@@ -270,6 +257,18 @@ public:
             if (_ready(inep))   _reset(ep, inep);
             else                inep.needsReset = true;
         }
+    }
+    
+    std::optional<Cmd> cmdRecv() {
+        IRQState irq = IRQState::Disabled();
+        auto cmd = _cmd;
+        _cmd = std::nullopt;
+        return cmd;
+    }
+    
+    void cmdAccept(bool accept) {
+        if (accept) USBD_CtlSendStatus(&_device);
+        else        USBD_CtlError(&_device, nullptr);
     }
     
     bool ready(uint8_t ep) {
@@ -301,9 +300,6 @@ public:
         _advanceState(ep, inep);
         return USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
     }
-    
-    // Channels
-    Channel<CmdRecvEvent,1> cmdRecvChannel;
     
 protected:
     void _isr() {
@@ -351,12 +347,15 @@ protected:
     
     uint8_t _usbd_EP0_RxReady() {
         const size_t dataLen = USBD_LL_GetRxDataSize(&_device, 0);
-        bool br = cmdRecvChannel.writeTry(CmdRecvEvent{
-            .data = _cmdRecvBuf,
-            .len = dataLen,
-        });
-        // If we couldn't write to the channel, respond to the request with an error
-        if (!br) USBD_CtlError(&_device, nullptr);
+        if (!_cmd) {
+            _cmd = Cmd{
+                .data = _cmdRecvBuf,
+                .len = dataLen,
+            };
+        } else {
+            // If a command is already underway, respond to the request with an error
+            USBD_CtlError(&_device, nullptr);
+        }
         return (uint8_t)USBD_OK;
     }
     
@@ -570,6 +569,7 @@ private:
     // ignored as long as the flash isn't unlocked.
     static constexpr uint32_t _DevNullAddr = 0x08000000;
     
+    std::optional<Cmd> _cmd;
     alignas(4) uint8_t _cmdRecvBuf[MaxPacketSizeCtrl];
     _OutEndpoint _outEndpoints[EndpointCountOut()] = {};
     _InEndpoint _inEndpoints[EndpointCountIn()] = {};
