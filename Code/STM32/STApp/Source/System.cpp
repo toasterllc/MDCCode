@@ -594,8 +594,8 @@ void System::_sd_task() {
     
     // Read data over QSPI and write it to USB, indefinitely
     for (;;) {
-        // Wait until there's an available buffer to write to, and QSPI is ready for a command
-        TaskWait(!_bufs.full() && _qspi.ready());
+        // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
+        TaskWait(!_bufs.full() && _qspi.ready() && _ICE_ST_SPI_D_READY::Read());
         
         const size_t len = SDReadoutMsg::ReadoutLen;
         auto& buf = _bufs.back();
@@ -606,9 +606,6 @@ void System::_sd_task() {
             _bufs.push();
             continue;
         }
-        
-        // Wait for ICE40 to signal that data is ready
-        while (!_ICE_ST_SPI_D_READY::Read());
         
         _sd_qspiRead(buf.data+buf.len, len);
         buf.len += len;
