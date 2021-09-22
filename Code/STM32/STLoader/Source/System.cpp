@@ -150,19 +150,17 @@ void System::_usbDataOut_task() {
     }
 }
 
-// _usbDataIn_task: reads `_usbDataIn.len` bytes from _bufs and writes it to the DataIn endpoint
+// _usbDataIn_task: writes buffers from _bufs to the DataIn endpoint, and pops them from _bufs
 void System::_usbDataIn_task() {
-    auto& s = _usbDataIn;
     TaskBegin();
     
-    while (s.len) {
+    for (;;) {
         TaskWait(!_bufs.empty());
         
         // Send the data and wait until the transfer is complete
         _usb.send(Endpoints::DataIn, _bufs.front().data, _bufs.front().len);
         TaskWait(_usb.ready(Endpoints::DataIn));
         
-        s.len -= _bufs.front().len;
         _bufs.pop();
     }
 }
@@ -387,9 +385,8 @@ void System::_mspRead_task() {
     // Reset state
     _bufs.reset();
     
-    // Trigger the USB DataIn task with the amount of data
+    // Start the USB DataIn task
     _usbDataIn.task.reset();
-    _usbDataIn.len = arg.len;
     
     while (arg.len) {
         TaskWait(!_bufs.full());
@@ -407,7 +404,7 @@ void System::_mspRead_task() {
     }
     
     // Wait for DataIn task to complete
-    TaskWait(_usbDataIn.len == 0);
+    TaskWait(_bufs.empty());
     // Send status
     _usbDataIn_sendStatus(true);
 }
