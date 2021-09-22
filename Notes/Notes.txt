@@ -1,48 +1,48 @@
 - Rev4 Todo
     
-    - Throughput:
+    - ICEAppMSP: re-implement capturing the CMD6 access mode
+    
+    - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
         - Does the USB hub limit the data throughput?
         - Perf debugging tactic: check how often the DIEPINT.NAK interrupt occurs when sending mass data to the
           host (signifying the host requesting data, but the device saying it doesn't have any)
         - Sometimes the USB Tx FIFO is empty -- we're not filling it fast enough
+        - Try speeding up USB transfers by trying different values of GAHBCFG.HBSTLEN
         - When we're done sending a transfer, the ST APIs have to call out to our user code.
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
     
-    - STLoader / STApp: Move commands to default control endpoint
-        - This will save space in the limited FIFO RAM
-        - This will also help improve our command/response scheme since EP0 gets replies for every request
-    
-    - STLoader / STApp: add ability to reset DataIn endpoint, which sends 2 ZLPs + sentinel
-        - Automatically reset each time we send the SDRead command
-        - Should every command that sends data automatically reset the DataIn endpoint? For example, what about STLoader commands that send data?
-            - Quantify: how much overhead does it add to send the reset sequence (2 ZLPs + sentinel)?
-                - Without reset sequence:   XXX us
-                - With reset sequence:      XXX us
-    
-    - SDController: Implement SD card reading
-        - Requirements
-            - Read 512x1 transfers (for CMD6)
-            - Read 4096xN transfers (for reading mass data)
-            - Stop clock between N blocks if the FIFO doesn't have space
-                - Clock requirements
-                    - Internal: Manual control of sd_clk (for LVS init sequence)
-                    - External: Switch between clk_slow and clk_fast (after initializing SD card)
-                    - Internal: Disable sd_clk output (to delay reading until space is available)
-            - Always write into FIFO when doing DatIn
-            - Reset FIFO when performing new DatIn transfer
-            - Move CMD6 access mode detection to client so ICEAppMSP can keep track of it, instead of SDController
-    
-    - Try to optimize USB throughput beyond 355e6 bits/sec
-    
     - Add CRC to the end of images
-    
-    - STApp: try speeding up USB transfers by trying different values of GAHBCFG.HBSTLEN
     
     - ICEApp
         - Reset SDController DatOut before a new capture starts filling the FIFO
         √ ImgController: stop reading from RAM beyond the last image pixel
+    
+    √ STLoader / STApp: add ability to reset DataIn endpoint, which sends 2 ZLPs + sentinel
+        √ Automatically reset each time we send the SDRead command
+        X Should every command that sends data automatically reset the DataIn endpoint? For example, what about STLoader commands that send data?
+            X No, only reset at the beginning of comms. Otherwise it adds a lot of overhead.
+            √ Quantify: how much overhead does it add to send the reset sequence (2 ZLPs + sentinel)?
+                - Without reset sequence:   180 us
+                - With reset sequence:      422 us
+    
+    √ STLoader / STApp: Move commands to default control endpoint
+        - This will save space in the limited FIFO RAM
+        - This will also help improve our command/response scheme since EP0 gets replies for every request
+    
+    √ SDController: Implement SD card reading
+        - Requirements
+            √ Read 512x1 transfers (for CMD6)
+            √ Read 4096xN transfers (for reading mass data)
+            √ Stop clock between N blocks if the FIFO doesn't have space
+                - Clock requirements
+                    - Internal: Manual control of sd_clk (for LVS init sequence)
+                    - External: Switch between clk_slow and clk_fast (after initializing SD card)
+                    - Internal: Disable sd_clk output (to delay reading until space is available)
+            √ Always write into FIFO when doing DatIn
+            √ Reset FIFO when performing new DatIn transfer
+            √ Move CMD6 access mode detection to client so ICEAppMSP can keep track of it, instead of SDController
     
     √ Figure out STApp/ICEAppMSP SD data comms scheme
         - Requirements
