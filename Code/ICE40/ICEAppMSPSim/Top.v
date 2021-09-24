@@ -62,12 +62,6 @@ module Testbench();
     
     Top Top(.*);
     
-    SDCardSim SDCardSim(
-        .sd_clk(sd_clk),
-        .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat)
-    );
-    
     localparam ImageWidth = 64;
     localparam ImageHeight = 32;
     ImgSim #(
@@ -79,6 +73,17 @@ module Testbench();
         .img_fv(img_fv),
         .img_lv(img_lv),
         .img_rst_(img_rst_)
+    );
+    
+    SDCardSim #(
+        .RecvHeaderWordCount(ImageHeaderWordCount),
+        .RecvWordCount(ImageWidth*ImageHeight),
+        .RecvWordInitialValue(16'h0FFF),
+        .RecvWordDelta(-1)
+    ) SDCardSim (
+        .sd_clk(sd_clk),
+        .sd_cmd(sd_cmd),
+        .sd_dat(sd_dat)
     );
     
     ImgI2CSlaveSim ImgI2CSlaveSim(
@@ -270,19 +275,19 @@ module Testbench();
         TestImgReset();
         TestImgSetHeader1(8'h42 /* version */, 32'hAABBCCDD /* timestamp */, 16'd2304 /* image width */);
         TestImgSetHeader2(16'd1296 /* image height */, 16'h1111 /* exposure */, 16'h2222 /* gain */);
-        TestImgI2CWriteRead();
+        // TestImgI2CWriteRead();
         TestImgCapture();
         
         TestSDInit();
-        TestSDCMD0();
-        TestSDCMD8();
-        TestSDCMD2();
+        // TestSDCMD0();
+        // TestSDCMD8();
+        // TestSDCMD2();
         // TestSDCMD6();
         //           delay, speed,                            trigger, reset
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
         
-        TestSDRespRecovery();
+        // TestSDRespRecovery();
         TestSDDatOut();
         // TestSDDatOutRecovery();
         

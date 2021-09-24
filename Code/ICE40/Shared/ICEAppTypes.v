@@ -103,8 +103,9 @@
 // localparam ImageHeightMax = 1296+2; // +2 rows for embedded statistics (histogram)
 // `endif
 
-localparam ImageWidthMax = 2304;
-localparam ImageHeightMax = 1296+2; // +2 rows for embedded statistics (histogram)
-localparam ImageSizeMax = ImageWidthMax*ImageHeightMax;
+localparam ImageHeaderWordCount = 8;
+localparam ImageWidthMax        = 2304;
+localparam ImageHeightMax       = 1296+2; // +2 rows for embedded statistics (histogram)
+localparam ImageSizeMax         = ImageWidthMax*ImageHeightMax;
 
 `endif

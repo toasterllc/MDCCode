@@ -43,7 +43,7 @@ module ImgSim #(
             // Output a row
             img_lv = 1;
             for (col=0; col<ImageWidth; col=col+1) begin
-                img_d = pxCount;
+                img_d = ~pxCount;
                 pxCount = pxCount+1;
                 
                 // // Test histogram
