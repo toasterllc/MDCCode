@@ -261,21 +261,21 @@ module Top(
     // ====================
     // SDController
     // ====================
-    reg         sd_init_reset = 0;
-    reg         sd_init_trigger = 0;
-    reg[1:0]    sd_init_clk_speed = 0;
-    reg[3:0]    sd_init_clk_delay = 0;
-    reg         sd_cmd_trigger = 0;
-    reg[47:0]   sd_cmd_data = 0;
-    reg[1:0]    sd_cmd_respType = 0;
-    reg[1:0]    sd_cmd_datInType = 0;
+    reg         sd_init_reset           = 0;
+    reg         sd_init_trigger         = 0;
+    reg[1:0]    sd_init_clkSpeed        = 0;
+    reg[3:0]    sd_init_clkDelay        = 0;
+    reg         sd_cmd_trigger          = 0;
+    reg[47:0]   sd_cmd_data             = 0;
+    reg[1:0]    sd_cmd_respType         = 0;
+    reg[1:0]    sd_cmd_datInType        = 0;
     wire        sd_cmd_done;
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
     wire        sd_resp_crcErr;
-    reg         sd_datOut_stop = 0;
+    reg         sd_datOut_stop          = 0;
     wire        sd_datOut_stopped;
-    reg         sd_datOut_start = 0;
+    reg         sd_datOut_start         = 0;
     wire        sd_datOut_ready;
     wire        sd_datOut_done;
     wire        sd_datOut_crcErr;
@@ -285,46 +285,57 @@ module Top(
     wire[15:0]  sd_datOutRead_data;
     wire        sd_datIn_done;
     wire        sd_datIn_crcErr;
+    wire        sd_datInWrite_rst_;
+    wire        sd_datInWrite_clk;
+    wire        sd_datInWrite_ready;
+    wire        sd_datInWrite_trigger;
+    wire[15:0]  sd_datInWrite_data;
     wire        sd_status_dat0Idle;
-
+    
     SDController #(
         .ClkFreq(SD_Clk_Freq)
     ) SDController (
         .clk(sd_clk_int),
-
+        
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat),
-
+        
         .init_reset(sd_init_reset),
         .init_trigger(sd_init_trigger),
-        .init_clk_speed(sd_init_clk_speed),
-        .init_clk_delay(sd_init_clk_delay),
-
+        .init_clkSpeed(sd_init_clkSpeed),
+        .init_clkDelay(sd_init_clkDelay),
+        
         .cmd_trigger(sd_cmd_trigger),
         .cmd_data(sd_cmd_data),
         .cmd_respType(sd_cmd_respType),
         .cmd_datInType(sd_cmd_datInType),
         .cmd_done(sd_cmd_done),
-
+        
         .resp_done(sd_resp_done),
         .resp_data(sd_resp_data),
         .resp_crcErr(sd_resp_crcErr),
-
+        
         .datOut_stop(sd_datOut_stop),
         .datOut_stopped(sd_datOut_stopped),
         .datOut_start(sd_datOut_start),
         .datOut_done(sd_datOut_done),
         .datOut_crcErr(sd_datOut_crcErr),
-
+        
         .datOutRead_clk(sd_datOutRead_clk),
         .datOutRead_ready(sd_datOutRead_ready),
         .datOutRead_trigger(sd_datOutRead_trigger),
         .datOutRead_data(sd_datOutRead_data),
-
+        
         .datIn_done(sd_datIn_done),
         .datIn_crcErr(sd_datIn_crcErr),
-
+        
+        .datInWrite_rst_(sd_datInWrite_rst_),
+        .datInWrite_clk(sd_datInWrite_clk),
+        .datInWrite_ready(sd_datInWrite_ready),
+        .datInWrite_trigger(sd_datInWrite_trigger),
+        .datInWrite_data(sd_datInWrite_data),
+        
         .status_dat0Idle(sd_status_dat0Idle)
     );
     
@@ -466,13 +477,9 @@ module Top(
                     
                     // We don't need to synchronize `sd_clk_delay` into the sd_ domain,
                     // because it should only be set while the sd_ clock is disabled.
-                    sd_init_clk_delay <= spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits];
+                    sd_init_clkDelay <= spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits];
                     
-                    case (spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits])
-                    `Msg_Arg_SDInit_Clk_Speed_Off:  sd_init_clk_speed <= `SDController_Init_Clk_Speed_Off;
-                    `Msg_Arg_SDInit_Clk_Speed_Slow: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Slow;
-                    `Msg_Arg_SDInit_Clk_Speed_Fast: sd_init_clk_speed <= `SDController_Init_Clk_Speed_Fast;
-                    endcase
+                    sd_init_clkSpeed <= spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits];
                     
                     if (spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits]) begin
                         sd_init_trigger <= !sd_init_trigger;
@@ -489,24 +496,14 @@ module Top(
                     // Reset spi_sdCmdDone_ / spi_sdRespDone_ / spi_sdDatInDone_
                     if (!spi_sdCmdDone_) spi_sdCmdDoneAck <= !spi_sdCmdDoneAck;
                     
-                    if (!spi_sdRespDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]!==`Msg_Arg_SDSendCmd_RespType_None)
+                    if (!spi_sdRespDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits]!==`SDController_RespType_None)
                         spi_sdRespDoneAck <= !spi_sdRespDoneAck;
                     
-                    if (!spi_sdDatInDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits]!==`Msg_Arg_SDSendCmd_DatInType_None)
+                    if (!spi_sdDatInDone_ && spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits]!==`SDController_DatInType_None)
                         spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
                     
-                    case (spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits])
-                    `Msg_Arg_SDSendCmd_RespType_None:       sd_cmd_respType <= `SDController_RespType_None;
-                    `Msg_Arg_SDSendCmd_RespType_48:         sd_cmd_respType <= `SDController_RespType_48;
-                    `Msg_Arg_SDSendCmd_RespType_136:        sd_cmd_respType <= `SDController_RespType_136;
-                    endcase
-                    
-                    case (spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits])
-                    `Msg_Arg_SDSendCmd_DatInType_None:      sd_cmd_datInType <= `SDController_DatInType_None;
-                    `Msg_Arg_SDSendCmd_DatInType_1x512:     sd_cmd_datInType <= `SDController_DatInType_1x512;
-                    `Msg_Arg_SDSendCmd_DatInType_Nx4096:    sd_cmd_datInType <= `SDController_DatInType_Nx4096;
-                    endcase
-                    
+                    sd_cmd_respType <= spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits];
+                    sd_cmd_datInType <= spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits];
                     sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
                     sd_cmd_trigger <= !sd_cmd_trigger;
                 end
