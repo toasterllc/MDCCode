@@ -329,8 +329,8 @@ module ImgController #(
     
     localparam Ctrl_State_Idle          = 0; // +0
     localparam Ctrl_State_Capture       = 1; // +3
-    localparam Ctrl_State_Readout       = 5; // +1
-    localparam Ctrl_State_Count         = 7;
+    localparam Ctrl_State_Readout       = 5; // +2
+    localparam Ctrl_State_Count         = 8;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -421,6 +421,13 @@ module ImgController #(
         end
         
         Ctrl_State_Readout+1: begin
+            // Wait for the read command and FIFO reset to be consumed
+            if (ramctrl_cmd===`RAMController_Cmd_None && !fifoOut_rst) begin
+                ctrl_state <= Ctrl_State_Readout+2;
+            end
+        end
+        
+        Ctrl_State_Readout+2: begin
             if (ctrl_fifoOutDone) begin
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 ctrl_state <= Ctrl_State_Idle;
