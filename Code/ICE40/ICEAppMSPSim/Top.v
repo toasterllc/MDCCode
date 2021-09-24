@@ -287,8 +287,13 @@ module Testbench();
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
         
+        TestSDRespRecovery();
+        // TestSDDatOut();
+        TestSDDatOutRecovery();
+        
+        // Fails:
         // TestSDRespRecovery();
-        TestSDDatOut();
+        // // TestSDDatOut();
         // TestSDDatOutRecovery();
         
         `Finish;

@@ -410,7 +410,7 @@ task TestSDCMD8; begin
         $display("[Testbench] CRC error ❌");
         `Finish;
     end
-
+    
     sdResp = spi_resp[`Resp_Arg_SDStatus_Resp_Bits];
     if (sdResp[15:8] !== 8'hAA) begin
         $display("[Testbench] Bad response: %h ❌", spi_resp);
