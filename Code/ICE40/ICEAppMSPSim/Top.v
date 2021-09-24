@@ -21,7 +21,7 @@
 `timescale 1ns/1ps
 
 module Testbench();
-    `include "ICEAppSimTest.v"
+    `include "ICEAppSim.v"
     
     reg ice_img_clk16mhz = 0;
     reg ice_msp_spi_clk = 0;
@@ -273,8 +273,10 @@ module Testbench();
         
         // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
         TestImgReset();
-        TestImgSetHeader1(8'h42 /* version */, 32'hAABBCCDD /* timestamp */, 16'd2304 /* image width */);
-        TestImgSetHeader2(16'd1296 /* image height */, 16'h1111 /* exposure */, 16'h2222 /* gain */);
+        TestImgSetHeader(0, {16'h4242 /* version */, 16'd2304 /* image width */, 16'd1296 /* image height */, 8'b0 /* padding */});
+        TestImgSetHeader(1, {32'hCAFEBABE /* counter */, 24'b0 /* padding */});
+        TestImgSetHeader(2, {32'hDEADBEEF /* timestamp */, 24'b0 /* padding */});
+        TestImgSetHeader(3, {16'h1111 /* exposure */, 16'h2222 /* gain */, 24'b0 /* padding */});
         // TestImgI2CWriteRead();
         TestImgCapture();
         

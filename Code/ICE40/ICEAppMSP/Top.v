@@ -120,19 +120,19 @@ module Top(
     // ====================
     // ImgController
     // ====================
-    reg                                                 imgctrl_cmd_capture = 0;
-    reg                                                 imgctrl_cmd_readout = 0;
-    reg[0:0]                                            imgctrl_cmd_ramBlock = 0;
-    reg[127:0]                                          imgctrl_cmd_header = 0;
-    wire                                                imgctrl_readout_clk;
-    wire                                                imgctrl_readout_start;
-    wire                                                imgctrl_readout_ready;
-    wire                                                imgctrl_readout_trigger;
-    wire[15:0]                                          imgctrl_readout_data;
-    wire                                                imgctrl_status_captureDone;
-    wire[`RegWidth(ImageSizeMax)-1:0]                   imgctrl_status_captureWordCount;
-    wire[17:0]                                          imgctrl_status_captureHighlightCount;
-    wire[17:0]                                          imgctrl_status_captureShadowCount;
+    reg                                 imgctrl_cmd_capture = 0;
+    reg                                 imgctrl_cmd_readout = 0;
+    reg[0:0]                            imgctrl_cmd_ramBlock = 0;
+    reg[ImageHeaderWordCount*16-1:0]    imgctrl_cmd_header = 0;
+    wire                                imgctrl_readout_clk;
+    wire                                imgctrl_readout_start;
+    wire                                imgctrl_readout_ready;
+    wire                                imgctrl_readout_trigger;
+    wire[15:0]                          imgctrl_readout_data;
+    wire                                imgctrl_status_captureDone;
+    wire[`RegWidth(ImageSizeMax)-1:0]   imgctrl_status_captureWordCount;
+    wire[17:0]                          imgctrl_status_captureHighlightCount;
+    wire[17:0]                          imgctrl_status_captureShadowCount;
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
         .ImageSizeMax(ImageSizeMax),
@@ -552,14 +552,24 @@ module Top(
                     img_rst_ <= spi_msgArg[`Msg_Arg_ImgReset_Val_Bits];
                 end
                 
+                `Msg_Type_ImgSetHeader0: begin
+                    $display("[SPI] Got Msg_Type_ImgSetHeader0 (header=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits]);
+                    `LeftBits(imgctrl_cmd_header,0*64,56) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                end
+                
                 `Msg_Type_ImgSetHeader1: begin
-                    $display("[SPI] Got Msg_Type_ImgSetHeader1 (header1=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader1_Header_Bits]);
-                    imgctrl_cmd_header[127:72] <= spi_msgArg[`Msg_Arg_ImgSetHeader1_Header_Bits];
+                    $display("[SPI] Got Msg_Type_ImgSetHeader1 (header=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits]);
+                    `LeftBits(imgctrl_cmd_header,1*64,56) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
                 end
                 
                 `Msg_Type_ImgSetHeader2: begin
-                    $display("[SPI] Got Msg_Type_ImgSetHeader2 (header2=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader2_Header_Bits]);
-                    imgctrl_cmd_header[71:16] <= spi_msgArg[`Msg_Arg_ImgSetHeader2_Header_Bits];
+                    $display("[SPI] Got Msg_Type_ImgSetHeader2 (header=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits]);
+                    `LeftBits(imgctrl_cmd_header,2*64,56) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                end
+                
+                `Msg_Type_ImgSetHeader3: begin
+                    $display("[SPI] Got Msg_Type_ImgSetHeader3 (header=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits]);
+                    `LeftBits(imgctrl_cmd_header,3*64,56) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
                 end
                 
                 `Msg_Type_ImgCapture: begin

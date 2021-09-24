@@ -179,27 +179,18 @@ task TestImgI2CWriteRead; begin
     end
 end endtask
 
-task TestImgSetHeader1(input[7:0] version, input[31:0] timestamp, input[15:0] imageWidth); begin
-    reg[`Msg_Arg_Len-1:0] arg;
-    
-    $display("\n[Testbench] ========== TestImgSetHeader1 ==========");
-    arg = 0;
-    arg[55:48] = version;
-    arg[47:16] = timestamp;
-    arg[15: 0] = imageWidth;
-    
-    SendMsg(`Msg_Type_ImgSetHeader1, arg);
-end endtask
-
-task TestImgSetHeader2(input[15:0] imageHeight, input[15:0] exposure, input[15:0] gain); begin
-    reg[`Msg_Arg_Len-1:0] arg;
-    
-    $display("\n[Testbench] ========== TestImgSetHeader2 ==========");
-    arg = 0;
-    arg[55:40] = imageHeight;
-    arg[39:24] = exposure;
-    arg[23: 8] = gain;
-    SendMsg(`Msg_Type_ImgSetHeader2, arg);
+task TestImgSetHeader(input[7:0] idx, input[`Msg_Arg_Len-1:0] arg); begin
+    $display("\n[Testbench] ========== TestImgSetHeader%0d ==========", idx);
+    case (idx)
+    0: SendMsg(`Msg_Type_ImgSetHeader0, arg);
+    1: SendMsg(`Msg_Type_ImgSetHeader1, arg);
+    2: SendMsg(`Msg_Type_ImgSetHeader2, arg);
+    3: SendMsg(`Msg_Type_ImgSetHeader3, arg);
+    default: begin
+        $display("[Testbench] Invalid header index %0d", idx);
+        `Finish;
+    end
+    endcase
 end endtask
 
 task TestImgCapture; begin

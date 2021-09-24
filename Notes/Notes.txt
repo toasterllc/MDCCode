@@ -1,7 +1,5 @@
 - Rev4 Todo
     
-    - ICEAppMSP: re-implement capturing the CMD6 access mode
-    
     - ICEAppMSP: add image counter to image header, so software can keep track of which images have already been downloaded
     
     - Add CRC to the end of images
@@ -16,6 +14,8 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ ICEAppMSP: re-implement capturing the CMD6 access mode
     
     √ ICEAppMSP
         √ Reset SDController DatOut before a new capture starts filling the FIFO
