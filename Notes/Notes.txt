@@ -44,7 +44,7 @@
             √ Reset FIFO when performing new DatIn transfer
             √ Move CMD6 access mode detection to client so ICEAppMSP can keep track of it, instead of SDController
     
-    √ Figure out STApp/ICEAppMSP SD data comms scheme
+    √ Figure out STApp/ICEAppSTM SD data comms scheme
         - Requirements
             √ Start SD data transfer
                 √ Use regular messages
