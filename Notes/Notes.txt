@@ -2,6 +2,10 @@
     
     - ICEAppMSP: re-implement capturing the CMD6 access mode
     
+    - ICEAppMSP: add image counter to image header, so software can keep track of which images have already been downloaded
+    
+    - Add CRC to the end of images
+    
     - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
         - Does the USB hub limit the data throughput?
         - Perf debugging tactic: check how often the DIEPINT.NAK interrupt occurs when sending mass data to the
@@ -13,14 +17,12 @@
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
     
-    - Add CRC to the end of images
-    
-    - ICEApp
-        - Reset SDController DatOut before a new capture starts filling the FIFO
+    √ ICEAppMSP
+        √ Reset SDController DatOut before a new capture starts filling the FIFO
         X ImgController: stop reading from RAM beyond the last image pixel
-            - Nevermind, it requires too much combination logic without any gain to do so.
+            - Nevermind, it requires too much combinational logic without any benefit of doing so.
               We would only want to do this if it would save us from writing an additional SD block,
-              but it doesn't so it's not worth it.
+              but it doesn't, so it's not worth the complexity and perf slowdown.
     
     √ STLoader / STApp: add ability to reset DataIn endpoint, which sends 2 ZLPs + sentinel
         √ Automatically reset each time we send the SDRead command

@@ -349,7 +349,27 @@ module Top(
     assign imgctrl_readout_trigger = sd_datOutRead_trigger;
     assign sd_datOutRead_data = imgctrl_readout_data;
     
-    
+    // ====================
+    // CMD6 Access Mode Capture
+    // ====================
+    assign sd_datInWrite_ready = 1;
+    reg[`RegWidth((512/16)-1)-1:0] sdcmd6_counter = 0;
+    reg[3:0] sdcmd6_accessMode = 0;
+    always @(posedge sd_datInWrite_clk, negedge sd_datInWrite_rst_) begin
+        if (!sd_datInWrite_rst_) begin
+            sdcmd6_counter <= ~0;
+        
+        end else begin
+            if (sd_datInWrite_trigger) begin
+                sdcmd6_counter <= sdcmd6_counter-1;
+                
+                if (sdcmd6_counter === 23) begin
+                    sdcmd6_accessMode <= sd_datInWrite_data[11:8];
+                    $display("sdcmd6_accessMode: %h", sd_datInWrite_data[11:8]);
+                end
+            end
+        end
+    end
     
     
     
@@ -522,7 +542,7 @@ module Top(
                         spi_resp[`Resp_Arg_SDStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
                     spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
                         spi_resp[`Resp_Arg_SDStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;
-                        spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] <= 4'bxxxx; // TODO: how do we handle CMD6AccessMode?
+                        spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] <= sdcmd6_accessMode;
                     spi_resp[`Resp_Arg_SDStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
                     spi_resp[`Resp_Arg_SDStatus_Resp_Bits] <= sd_resp_data;
                 end
@@ -556,7 +576,6 @@ module Top(
                     spi_resp[`Resp_Arg_ImgCaptureStatus_WordCount_Bits] <= imgctrl_status_captureWordCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits] <= imgctrl_status_captureHighlightCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits] <= imgctrl_status_captureShadowCount;
-                    spi_resp[2:0] <= 3'b101; // TODO: remove
                 end
                 
                 `Msg_Type_ImgReadout: begin

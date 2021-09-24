@@ -290,7 +290,7 @@ module SDController #(
         end
         
         4: begin
-            if (resp_crc === cmdresp_shiftReg[1]) begin
+            if (resp_crc == cmdresp_shiftReg[1]) begin
                 $display("[SDController:RESP] Response: Good CRC bit (ours: %b, theirs: %b) ✅", resp_crc, cmdresp_shiftReg[1]);
             end else begin
 `ifdef SIM
@@ -491,7 +491,7 @@ module SDController #(
         end
         
         5: begin
-            if (datIn_crc[3] === datIn_reg[3]) begin
+            if (datIn_crc[3] == datIn_reg[3]) begin
                 $display("[SDController:DATIN] DAT3 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[7]);
             end else begin
                 $display("[SDController:DATIN] Bad DAT3 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[7]);
@@ -499,7 +499,7 @@ module SDController #(
                 datIn_crcErr <= 1;
             end
             
-            if (datIn_crc[2] === datIn_reg[2]) begin
+            if (datIn_crc[2] == datIn_reg[2]) begin
                 $display("[SDController:DATIN] DAT2 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[6]);
             end else begin
                 $display("[SDController:DATIN] Bad DAT2 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[6]);
@@ -507,7 +507,7 @@ module SDController #(
                 datIn_crcErr <= 1;
             end
             
-            if (datIn_crc[1] === datIn_reg[1]) begin
+            if (datIn_crc[1] == datIn_reg[1]) begin
                 $display("[SDController:DATIN] DAT1 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[5]);
             end else begin
                 $display("[SDController:DATIN] Bad DAT1 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[5]);
@@ -515,7 +515,7 @@ module SDController #(
                 datIn_crcErr <= 1;
             end
             
-            if (datIn_crc[0] === datIn_reg[0]) begin
+            if (datIn_crc[0] == datIn_reg[0]) begin
                 $display("[SDController:DATIN] DAT0 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[4]);
             end else begin
                 $display("[SDController:DATIN] Bad DAT0 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[4]);
