@@ -17,7 +17,10 @@
     
     - ICEApp
         - Reset SDController DatOut before a new capture starts filling the FIFO
-        √ ImgController: stop reading from RAM beyond the last image pixel
+        X ImgController: stop reading from RAM beyond the last image pixel
+            - Nevermind, it requires too much combination logic without any gain to do so.
+              We would only want to do this if it would save us from writing an additional SD block,
+              but it doesn't so it's not worth it.
     
     √ STLoader / STApp: add ability to reset DataIn endpoint, which sends 2 ZLPs + sentinel
         √ Automatically reset each time we send the SDRead command

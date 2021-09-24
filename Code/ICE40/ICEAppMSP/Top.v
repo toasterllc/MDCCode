@@ -125,6 +125,7 @@ module Top(
     reg[0:0]                                            imgctrl_cmd_ramBlock = 0;
     reg[127:0]                                          imgctrl_cmd_header = 0;
     wire                                                imgctrl_readout_clk;
+    wire                                                imgctrl_readout_start;
     wire                                                imgctrl_readout_ready;
     wire                                                imgctrl_readout_trigger;
     wire[15:0]                                          imgctrl_readout_data;
@@ -145,6 +146,7 @@ module Top(
         .cmd_header(imgctrl_cmd_header),
         
         .readout_clk(imgctrl_readout_clk),
+        .readout_start(imgctrl_readout_start),
         .readout_ready(imgctrl_readout_ready),
         .readout_trigger(imgctrl_readout_trigger),
         .readout_data(imgctrl_readout_data),
@@ -276,7 +278,7 @@ module Top(
     wire        sd_resp_crcErr;
     reg         sd_datOut_stop          = 0;
     wire        sd_datOut_stopped;
-    reg         sd_datOut_start         = 0;
+    wire        sd_datOut_start;
     wire        sd_datOut_ready;
     wire        sd_datOut_done;
     wire        sd_datOut_crcErr;
@@ -342,6 +344,7 @@ module Top(
     
     // Connect imgctrl_readout_* to sd_datOutRead_*
     assign imgctrl_readout_clk = sd_datOutRead_clk;
+    assign sd_datOut_start = imgctrl_readout_start;
     assign sd_datOutRead_ready = imgctrl_readout_ready;
     assign imgctrl_readout_trigger = sd_datOutRead_trigger;
     assign sd_datOutRead_data = imgctrl_readout_data;
@@ -556,25 +559,12 @@ module Top(
                     spi_resp[2:0] <= 3'b101; // TODO: remove
                 end
                 
-                // `Msg_Type_ImgReadout: begin
-                //     // $display("[SPI] Got Msg_Type_ImgReadout");
-                //     // // Reset `spi_imgReadoutStarted` if it's asserted
-                //     // if (spi_imgReadoutStarted) spi_imgReadoutStartedAck <= !spi_imgReadoutStartedAck;
-                //     //
-                //     // spi_imgReadoutCounter <= spi_msgArg[`Msg_Arg_ImgReadout_Counter_Bits];
-                //     // spi_imgReadoutCaptureNext <= spi_msgArg[`Msg_Arg_ImgReadout_CaptureNext_Bits];
-                //     // spi_imgReadoutDone <= 0;
-                //     // spi_state <= SPI_State_ImgOut;
-                // end
-                
                 `Msg_Type_ImgReadout: begin
                     $display("[SPI] Got Msg_Type_ImgReadout");
                     // Reset spi_sdDatOutDone_
                     if (!spi_sdDatOutDone_) spi_sdDatOutDoneAck <= !spi_sdDatOutDoneAck;
                     imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_DstBlock_Bits];
                     imgctrl_cmd_readout <= !imgctrl_cmd_readout;
-                    // Start SD DatOut
-                    sd_datOut_start <= !sd_datOut_start;
                 end
                 
                 `Msg_Type_ImgI2CTransaction: begin
