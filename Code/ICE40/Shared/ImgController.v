@@ -8,7 +8,8 @@
 module ImgController #(
     parameter ClkFreq = 24_000_000,
     parameter ImageSizeMax = 256*256,
-    parameter HeaderWidth = 128
+    parameter HeaderWordCount = 8,
+    localparam HeaderWidth = HeaderWordCount*16
 )(
     input wire          clk,
     
@@ -48,8 +49,6 @@ module ImgController #(
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq
 );
-    localparam HeaderWordCount = HeaderWidth/16;
-    
     // ====================
     // RAMController
     // ====================

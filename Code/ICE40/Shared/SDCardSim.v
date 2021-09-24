@@ -43,7 +43,14 @@ endmodule
 
 
 
-module SDCardSim(
+module SDCardSim #(
+    // Recv* data validation:
+    //   Validates that the received data follows the specified pattern
+    parameter RecvHeaderWordCount   = 0, // Number of 16-bit words to ignore at the beginning of the received data
+    parameter RecvWordCount         = 0, // Number of 16-bit words to validate
+    parameter RecvWordInitialValue  = 0, // Expected value of the first word
+    parameter RecvWordDelta         = 0  // Expected difference between current word value and previous word value
+)(
     input wire      sd_clk,
     inout wire      sd_cmd,
     inout wire[3:0] sd_dat
@@ -490,6 +497,16 @@ module SDCardSim(
     // Handle writing to the card
     // ====================
     initial begin
+        reg[7:0]    recvHeaderWordCounter;
+        reg[31:0]   recvWordCounter;
+        reg[15:0]   recvWordPrev;
+        reg         recvWordPrevInit;
+        
+        recvHeaderWordCounter   = 0;
+        recvWordCounter         = 0;
+        recvWordPrev            = 0;
+        recvWordPrevInit        = 0;
+        
         forever begin
             wait(sd_clk);
             if (recvWriteData) begin
@@ -520,6 +537,35 @@ module SDCardSim(
                     wait(sd_clk);
                     datInReg = (datInReg<<4)|sd_dat[3:0];
                     wait(!sd_clk);
+                    
+                    // Validate every 16-bit word
+                    if (i[1:0] === 3) begin
+                        if (recvHeaderWordCounter < RecvHeaderWordCount) begin
+                            recvHeaderWordCounter = recvHeaderWordCounter+1;
+                        
+                        end else if (recvWordCounter < RecvWordCount) begin
+                            reg[15:0] recvWordExpected;
+                            reg[15:0] recvWordGot;
+                            
+                            if (!recvWordPrevInit) begin
+                                recvWordExpected = RecvWordInitialValue;
+                            end else begin
+                                recvWordExpected = recvWordPrev+RecvWordDelta;
+                            end
+                            
+                            recvWordGot = datInReg[15:0];
+                            
+                            if (recvWordExpected === recvWordGot) begin
+                                $display("[SDCardSim] Received valid word (expected:%h, got:%h) ✅", recvWordExpected, recvWordGot);
+                            end else begin
+                                $display("[SDCardSim] Received invalid word (expected:%h, got:%h) ❌", recvWordExpected, recvWordGot);
+                                `Finish;
+                            end
+                            recvWordCounter = recvWordCounter+1;
+                            recvWordPrev = recvWordGot;
+                            recvWordPrevInit = 1;
+                        end
+                    end
                 end
                 
                 if (recvWriteData) begin
@@ -695,6 +741,12 @@ module SDCardSim(
                 end
                 
                 dat_crcRst_ = 0;
+            
+            end else begin
+                // Reset our variables when a transfer ends
+                recvHeaderWordCounter   = 0;
+                recvWordCounter         = 0;
+                recvWordPrevInit        = 0;
             end
 
             wait(!sd_clk);

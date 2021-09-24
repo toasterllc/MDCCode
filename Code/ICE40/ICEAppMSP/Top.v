@@ -134,7 +134,8 @@ module Top(
     wire[17:0]                                          imgctrl_status_captureShadowCount;
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
-        .ImageSizeMax(ImageSizeMax)
+        .ImageSizeMax(ImageSizeMax),
+        .HeaderWordCount(ImageHeaderWordCount)
     ) ImgController (
         .clk(img_clk),
         
