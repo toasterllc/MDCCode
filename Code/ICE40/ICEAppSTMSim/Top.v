@@ -13,7 +13,7 @@
 `timescale 1ns/1ps
 
 module Testbench();
-    `include "ICEAppSimTest.v"
+    `include "ICEAppSim.v"
     
     reg         ice_img_clk16mhz = 0;
     
