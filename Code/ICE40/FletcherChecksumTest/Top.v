@@ -10,8 +10,8 @@ module Fletcher32(
 );
     reg[15:0] a = 0;
     reg[15:0] b = 0;
-    wire[31:0] an = (a + din) % 16'hFFFF;
-    wire[31:0] bn = (b + an) % 16'hFFFF;
+    wire[15:0] an = (a + {1'b0,din}) % 16'hFFFF;
+    wire[15:0] bn = (b + {1'b0,an}) % 16'hFFFF;
     always @(posedge clk) begin
         if (rst) begin
             a <= 0;
@@ -56,9 +56,8 @@ module Testbench();
             clk = 1;
             #1
             clk = 0;
-            #1
+            #1;
             
-            $display("  din: %h", din);
             $display("%h", dout);
         end
         
