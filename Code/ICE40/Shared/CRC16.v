@@ -30,7 +30,7 @@ module CRC16 #(
     input wire clk,
     input wire rst,
     input wire en,
-    input din,
+    input wire din,
     output wire dout
 );
     localparam PosDelay = (Delay > 0 ? Delay : 0);
