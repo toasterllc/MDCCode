@@ -4,6 +4,7 @@
 `include "RAMController.v"
 `include "TogglePulse.v"
 `include "AFIFO.v"
+`include "CRC16.v"
 
 module ImgController #(
     parameter ClkFreq = 24_000_000,
@@ -14,10 +15,10 @@ module ImgController #(
     input wire          clk,
     
     // Command port (clock domain: `clk`)
-    input wire                              cmd_capture,    // Toggle
-    input wire                              cmd_readout,    // Toggle
-    input wire[0:0]                         cmd_ramBlock,
-    input wire[HeaderWidth-1:0]             cmd_header,
+    input wire                  cmd_capture,    // Toggle
+    input wire                  cmd_readout,    // Toggle
+    input wire[0:0]             cmd_ramBlock,
+    input wire[HeaderWidth-1:0] cmd_header,
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
@@ -181,6 +182,27 @@ module ImgController #(
     );
     
     // ====================
+    // fifoIn CRC
+    // ====================
+    wire        fifoIn_crc_clk;
+    reg         fifoIn_crc_rst = 0;
+    wire        fifoIn_crc_en;
+    wire[15:0]  fifoIn_crc_din;
+    wire[15:0]  fifoIn_crc_dout;
+    CRC16 #(
+        .Delay(0)
+    ) CRC16_fifoIn(
+        .clk    (fifoIn_crc_clk ),
+        .rst    (fifoIn_crc_rst ),
+        .en     (fifoIn_crc_en  ),
+        .din    (fifoIn_crc_din ),
+        .dout   (fifoIn_crc_dout)
+    );
+    assign fifoIn_crc_clk   = img_dclk;
+    assign fifoIn_crc_en    = fifoIn_write_trigger;
+    assign fifoIn_crc_din   = fifoIn_write_data;
+    
+    // ====================
     // Pixel input state machine
     // ====================
     reg[`RegWidth(HeaderWordCount-1)-1:0] fifoIn_headerCount = 0;
@@ -216,8 +238,9 @@ module ImgController #(
         fifoIn_lvPrev <= fifoIn_lv;
         fifoIn_header <= fifoIn_header<<16;
         fifoIn_headerCount <= fifoIn_headerCount-1;
-        fifoIn_write_trigger <= 0; // Reset by default
-        fifoIn_countStat <= 0; // Reset by default
+        fifoIn_write_trigger <= 0; // Pulse
+        fifoIn_countStat <= 0; // Pulse
+        fifoIn_crc_rst <= 0; // Pulse
         
         if (fifoIn_write_trigger) begin
             // Count the words in an image
@@ -231,7 +254,7 @@ module ImgController #(
         else if (fifoIn_lvPrev && !fifoIn_lv)   fifoIn_y <= fifoIn_y+1;
         
         if (fifoIn_write_trigger) begin
-            $display("[ImgController:fifoIn] Wrote word into FIFO: %x", fifoIn_write_data);
+            $display("[ImgController:fifoIn] Wrote word into FIFO: %x (CRC: %h)", fifoIn_write_data, fifoIn_crc_dout);
         end
         
         // Count pixel stats (number of highlights/shadows)
@@ -259,6 +282,7 @@ module ImgController #(
             fifoIn_wordCount <= 0;
             fifoIn_highlightCount <= 0;
             fifoIn_shadowCount <= 0;
+            fifoIn_crc_rst <= 1;
             fifoIn_state <= 2;
         end
         

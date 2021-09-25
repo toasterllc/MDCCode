@@ -280,18 +280,18 @@ module Testbench();
         // TestImgI2CWriteRead();
         TestImgCapture();
         
-        TestSDInit();
-        TestSDCMD0();
-        TestSDCMD8();
-        TestSDCMD2();
-        TestSDCMD6();
-        //           delay, speed,                            trigger, reset
-        TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
-        TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
-        
-        TestSDRespRecovery();
-        TestSDDatOut();
-        TestSDDatOutRecovery();
+        // TestSDInit();
+        // TestSDCMD0();
+        // TestSDCMD8();
+        // TestSDCMD2();
+        // TestSDCMD6();
+        // //           delay, speed,                            trigger, reset
+        // TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
+        // TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
+        //
+        // TestSDRespRecovery();
+        // TestSDDatOut();
+        // TestSDDatOutRecovery();
         
         `Finish;
     end
