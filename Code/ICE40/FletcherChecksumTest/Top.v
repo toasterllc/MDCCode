@@ -18,8 +18,15 @@ endmodule
 `ifdef SIM
 
 module Testbench();
-    localparam ChecksumWidth = 16;
+    localparam ChecksumWidth = 32;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
+    
+    wire[ChecksumWidth-1:0] ExpectedChecksum;
+    case (ChecksumWidth)
+    16: assign ExpectedChecksum = 16'h0627;
+    32: assign ExpectedChecksum = 32'hebe19591;
+    64: assign ExpectedChecksum = 64'h312E2B28CCCAC8C6;
+    endcase
     
     reg                         clk     = 0;
     reg                         rst     = 0;
@@ -52,7 +59,7 @@ module Testbench();
         en = 1;
         #1;
         
-        for (i=0; i<($size(data)/ChecksumWidthHalf)+10; i++) begin
+        for (i=0; i<($size(data)/ChecksumWidthHalf)+1; i++) begin
             $display("data: %h", data);
             
             clk = 1;
@@ -69,7 +76,8 @@ module Testbench();
             // data = (data<<ChecksumWidthHalf) | {ChecksumWidthHalf{'1}};
             #1;
             
-            $display("checksum: %h\n", dout);
+            if (dout===ExpectedChecksum)    $display("checksum: %h ✅\n", dout);
+            else                            $display("checksum: %h ❌\n", dout);
         end
         
         $finish;
