@@ -16,7 +16,7 @@ module SwapEndianness #(
 endmodule
 
 module Testbench();
-    localparam ChecksumWidth = 16;
+    localparam ChecksumWidth = 64;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     reg                         clk     = 0;
