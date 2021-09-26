@@ -26,8 +26,8 @@ module FletcherChecksum #(
 );
     reg[WidthHalf-1:0]  a = 0;
     reg[WidthHalf-1:0]  b = 0;
-    wire[WidthHalf-1:0] an = (a + {1'b0,din}) % {WidthHalf{'1}};
-    wire[WidthHalf-1:0] bn = (b + {1'b0,an}) % {WidthHalf{'1}};
+    wire[WidthHalf-1:0] an = ({1'b0,a} + din) % {WidthHalf{'1}};
+    wire[WidthHalf-1:0] bn = ({1'b0,b} + an)  % {WidthHalf{'1}};
     always @(posedge clk) begin
         if (rst) begin
             a <= 0;
@@ -43,7 +43,7 @@ module FletcherChecksum #(
 endmodule
 
 module Testbench();
-    localparam ChecksumWidth = 32;
+    localparam ChecksumWidth = 64;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     reg                         clk     = 0;
