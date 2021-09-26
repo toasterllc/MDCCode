@@ -79,8 +79,8 @@ module Testbench();
             // that definitely affects the checksum, to make sure that at the time that
             // we read the checksum output, the algorithm hasn't been accidentally peeking
             // ahead.
-            data = (data<<ChecksumWidthHalf) | {(ChecksumWidthHalf/8){8'h00}};
-            if (i === 8) en = 0;
+            data = (data<<ChecksumWidthHalf) | {(ChecksumWidthHalf/8){8'h41}};
+            if (i === 8-1) en = 0;
             // data = (data<<ChecksumWidthHalf) | {ChecksumWidthHalf{'1}};
             #1;
             
