@@ -18,7 +18,7 @@ endmodule
 `ifdef SIM
 
 module Testbench();
-    localparam ChecksumWidth = 16;
+    localparam ChecksumWidth = 64;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     wire[ChecksumWidth-1:0] ExpectedChecksum;
@@ -73,6 +73,7 @@ module Testbench();
             // we read the checksum output, the algorithm hasn't been accidentally peeking
             // ahead.
             data = (data<<ChecksumWidthHalf) | {(ChecksumWidthHalf/8){8'h00}};
+            if (i === 2) en = 0;
             // data = (data<<ChecksumWidthHalf) | {ChecksumWidthHalf{'1}};
             #1;
             
