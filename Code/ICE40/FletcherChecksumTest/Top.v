@@ -24,22 +24,22 @@ module FletcherChecksum #(
     input wire[WidthHalf-1:0]   din,
     output wire[Width-1:0]      dout
 );
-    reg[WidthHalf-1:0]  a = 0;
-    reg[WidthHalf-1:0]  b = 0;
-    wire[WidthHalf-1:0] an = ({1'b0,a} + din) % {WidthHalf{'1}};
-    wire[WidthHalf-1:0] bn = ({1'b0,b} + an)  % {WidthHalf{'1}};
+    reg[WidthHalf-1:0] a = 0;
+    reg[WidthHalf-1:0] a2 = 0;
+    reg[WidthHalf-1:0] b = 0;
     always @(posedge clk) begin
         if (rst) begin
             a <= 0;
             b <= 0;
         
         end else if (en) begin
-            a <= an;
-            b <= bn;
+            a <= ({1'b0,a} + din) % {WidthHalf{'1}};
+            b <= ({1'b0,b} + a  ) % {WidthHalf{'1}};
+            a2 <= a;
         end
     end
     assign dout[Width-1:WidthHalf]  = b;
-    assign dout[WidthHalf-1:0]      = a;
+    assign dout[WidthHalf-1:0]      = a2;
 endmodule
 
 module Testbench();
@@ -77,13 +77,16 @@ module Testbench();
         en = 1;
         #1;
         
-        for (i=0; i<($size(data)/ChecksumWidthHalf); i++) begin
+        for (i=0; i<($size(data)/ChecksumWidthHalf)+1; i++) begin
+            $display("  data: %h", data);
+            
             clk = 1;
             #1
             clk = 0;
             #1;
             
-            data = data<<ChecksumWidthHalf;
+            // data = (data<<ChecksumWidthHalf) | 8'h42;
+            data = (data<<ChecksumWidthHalf) | {ChecksumWidthHalf{'1}};
             #1;
             
             $display("%h", dout);
