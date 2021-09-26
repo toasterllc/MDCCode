@@ -43,7 +43,7 @@ module FletcherChecksum #(
 endmodule
 
 module Testbench();
-    localparam ChecksumWidth = 64;
+    localparam ChecksumWidth = 16;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     reg                         clk     = 0;
@@ -78,18 +78,23 @@ module Testbench();
         #1;
         
         for (i=0; i<($size(data)/ChecksumWidthHalf)+1; i++) begin
-            $display("  data: %h", data);
+            $display("data: %h", data);
             
             clk = 1;
             #1
             clk = 0;
             #1;
             
-            // data = (data<<ChecksumWidthHalf) | 8'h42;
-            data = (data<<ChecksumWidthHalf) | {ChecksumWidthHalf{'1}};
+            // We fill `data` with a 'weird' value (0x41), and not with 00/FF, because the
+            // checksum is unaffected by these latter values. So we use a 'weird' value
+            // that definitely affects the checksum, to make sure that at the time that
+            // we read the checksum output, the algorithm hasn't been accidentally peeking
+            // ahead.
+            data = (data<<ChecksumWidthHalf) | {(ChecksumWidthHalf/8){8'h41}};
+            // data = (data<<ChecksumWidthHalf) | {ChecksumWidthHalf{'1}};
             #1;
             
-            $display("%h", dout);
+            $display("checksum: %h\n", dout);
         end
         
         $finish;
