@@ -10,6 +10,7 @@ module OnesComplementAdder #(
 );
     wire[Width:0] sum = a+b;
     wire carry = sum[Width];
+    // assign y = sum;
     assign y = sum+carry;
 endmodule
 
