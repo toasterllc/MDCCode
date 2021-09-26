@@ -1,4 +1,5 @@
 `include "Util.v"
+`include "FletcherChecksum.v"
 `timescale 1ns/1ps
 
 module SwapEndianness #(
@@ -12,34 +13,6 @@ module SwapEndianness #(
         assign `RightBits(dout,i,8) = `LeftBits(din,i,8);
         assign `LeftBits(dout,i,8)  = `RightBits(din,i,8);
     end
-endmodule
-
-module FletcherChecksum #(
-    parameter Width         = 32,
-    localparam WidthHalf    = Width/2
-)(
-    input wire                  clk,
-    input wire                  rst,
-    input wire                  en,
-    input wire[WidthHalf-1:0]   din,
-    output wire[Width-1:0]      dout
-);
-    reg[WidthHalf-1:0] a = 0;
-    reg[WidthHalf-1:0] a2 = 0;
-    reg[WidthHalf-1:0] b = 0;
-    always @(posedge clk) begin
-        if (rst) begin
-            a <= 0;
-            b <= 0;
-        
-        end else if (en) begin
-            a <= ({1'b0,a} + din) % {WidthHalf{'1}};
-            b <= ({1'b0,b} + a  ) % {WidthHalf{'1}};
-            a2 <= a;
-        end
-    end
-    assign dout[Width-1:WidthHalf]  = b;
-    assign dout[WidthHalf-1:0]      = a2;
 endmodule
 
 module Testbench();
