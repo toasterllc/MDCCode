@@ -42,23 +42,22 @@ module FletcherChecksum #(
     // //     .y(bsum)
     // // );
     
-    reg[WidthHalf:0] a = 0;
-    reg[WidthHalf-1:0] adelayed = 0;
-    reg[WidthHalf:0] b = 0;
-    reg[WidthHalf-1:0] bmod = 0;
+    reg[Width:0] a = 0;
+    reg[Width:0] adelayed = 0;
+    reg[Width:0] b = 0;
     always @(posedge clk) begin
         if (rst) begin
             a <= 0;
             b <= 0;
         
         end else if (en) begin
-            a <= (a+din) % {WidthHalf{'1}};
-            b <= (a+b) % {WidthHalf{'1}};
+            a <= (a+din);
+            b <= (a+b);
             adelayed <= a;
         end
     end
-    assign dout[Width-1:WidthHalf]  = b;
-    assign dout[WidthHalf-1:0]      = adelayed;
+    assign dout[Width-1:WidthHalf]  = b % {WidthHalf{'1}};
+    assign dout[WidthHalf-1:0]      = adelayed % {WidthHalf{'1}};
 endmodule
 
 `endif
