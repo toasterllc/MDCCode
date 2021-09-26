@@ -24,39 +24,38 @@ module FletcherChecksum #(
     input wire[WidthHalf-1:0]   din,
     output wire[Width-1:0]      dout
 );
-    reg[WidthHalf+2:0]  asum = 0;
-    reg[WidthHalf+2:0]  bsum = 0;
-    reg[WidthHalf-1:0]  asumdelayed = 0;
-    
-    reg[WidthHalf+2:0]  asub = 0;
-    reg[WidthHalf+2:0]  bsub = 0;
+    reg[Width:0]  asum = 0;
+    reg[Width:0]  bsum = 0;
+    reg[Width:0]  asub = 0;
+    reg[Width:0]  bsub = 0;
+    reg[Width:0]  asumdelayed = 0;
     
     always @(posedge clk) begin
         if (rst) begin
             asum <= 0;
             bsum <= 0;
+            asub <= 0;
+            bsub <= 0;
             asumdelayed <= 0;
         
         end else if (en) begin
             asum <= ((asum-asub)+din);
-            bsum <= ((asum-bsub)+bsum);
+            bsum <= ((bsum-bsub)+asum);
             
-            if (&asum[WidthHalf:1]) begin
-                // Subtract 255*2, leaving only the least significant bit
-                asub <= {{WidthHalf{'1}}, 1'b0};
-            end else if (asum[WidthHalf] || &asum[WidthHalf-1:0]) begin
+            $display("asum:%0d asub:%0d bsum:%0d bsub:%0d din:%0d", asum, asub, bsum, bsub, din);
+            
+            if (asub===0 && (|asum[Width:WidthHalf] || &asum[WidthHalf-1:0])) begin
                 // Subtract 255
+                $display("asub: NEED TO SUB 255");
                 asub <= {WidthHalf{'1}};
             end else begin
                 // Subtract 0
                 asub <= 0;
             end
             
-            if (&bsum[WidthHalf:1]) begin
-                // Subtract 255*2, leaving only the least significant bit
-                bsub <= {{WidthHalf{'1}}, 1'b0};
-            end else if (bsum[WidthHalf] || &bsum[WidthHalf-1:0]) begin
+            if (bsub===0 && (|bsum[Width:WidthHalf] || &bsum[WidthHalf-1:0])) begin
                 // Subtract 255
+                $display("bsub: NEED TO SUB 255");
                 bsub <= {WidthHalf{'1}};
             end else begin
                 // Subtract 0
@@ -66,8 +65,8 @@ module FletcherChecksum #(
             asumdelayed <= asum;
         end
     end
-    assign dout[Width-1:WidthHalf]  = bsum;
-    assign dout[WidthHalf-1:0]      = asumdelayed;
+    assign dout[Width-1:WidthHalf]  = bsum;// % {WidthHalf{'1}};
+    assign dout[WidthHalf-1:0]      = asumdelayed;// % {WidthHalf{'1}};
 endmodule
 
 `endif
