@@ -18,7 +18,7 @@ endmodule
 `ifdef SIM
 
 module Testbench();
-    localparam ChecksumWidth = 16;
+    localparam ChecksumWidth = 32;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     wire[ChecksumWidth-1:0] ExpectedChecksum;
@@ -59,7 +59,7 @@ module Testbench();
         en = 1;
         #1;
         
-        for (i=0; i<($size(data)/ChecksumWidthHalf)+1; i++) begin
+        for (i=0; i<($size(data)/ChecksumWidthHalf)+5; i++) begin
             $display("data: %h", data);
             
             clk = 1;
