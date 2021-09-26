@@ -44,7 +44,7 @@ module FletcherChecksum #(
             
             $display("asum:%0d asub:%0d bsum:%0d bsub:%0d din:%0d", asum, asub, bsum, bsub, din);
             
-            if (asub===0 && (|asum[Width:WidthHalf] || &asum[WidthHalf-1:0])) begin
+            if ((|asum[Width:WidthHalf] || &asum[WidthHalf-1:0])) begin
                 // Subtract 255
                 $display("asub: NEED TO SUB 255");
                 asub <= {WidthHalf{'1}};
@@ -53,7 +53,7 @@ module FletcherChecksum #(
                 asub <= 0;
             end
             
-            if (bsub===0 && (|bsum[Width:WidthHalf] || &bsum[WidthHalf-1:0])) begin
+            if ((|bsum[Width:WidthHalf] || &bsum[WidthHalf-1:0])) begin
                 // Subtract 255
                 $display("bsub: NEED TO SUB 255");
                 bsub <= {WidthHalf{'1}};
