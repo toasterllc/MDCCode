@@ -18,7 +18,7 @@ endmodule
 `ifdef SIM
 
 module Testbench();
-    localparam ChecksumWidth = 64;
+    localparam ChecksumWidth = 32;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     wire[ChecksumWidth-1:0] ExpectedChecksum;
@@ -45,6 +45,9 @@ module Testbench();
     );
     
     reg[63:0] data = 64'h6162636465666768; // abcdefgh
+    // reg[128-1:0] data = 128'h6162636465666768_6162636465666768; // abcdefgh_abcdefgh
+    // reg[128-1:0] data = 128'hFFFFFFFFFFFFFFFF_FFFFFFFFFFFFFFFF; // abcdefgh_abcdefgh
+    // reg[128-1:0] data = 128'hFEFEFEFEFEFEFEFE_FEFEFEFEFEFEFEFE;
     reg[31:0] i = 0;
     reg[31:0] ii = 0;
     
@@ -59,7 +62,7 @@ module Testbench();
         en = 1;
         #1;
         
-        for (i=0; i<($size(data)/ChecksumWidthHalf)+15; i++) begin
+        for (i=0; i<($size(data)/ChecksumWidthHalf)+30; i++) begin
             $display("data: %h", data);
             
             clk = 1;
@@ -73,7 +76,7 @@ module Testbench();
             // we read the checksum output, the algorithm hasn't been accidentally peeking
             // ahead.
             data = (data<<ChecksumWidthHalf) | {(ChecksumWidthHalf/8){8'h00}};
-            if (i === 2) en = 0;
+            if (i === 4) en = 0;
             // data = (data<<ChecksumWidthHalf) | {ChecksumWidthHalf{'1}};
             #1;
             
