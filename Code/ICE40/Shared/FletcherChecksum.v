@@ -24,12 +24,12 @@ module FletcherChecksum #(
     input wire[WidthHalf-1:0]   din,
     output wire[Width-1:0]      dout
 );
-    reg[WidthHalf:0]    asum = 0;
-    reg[WidthHalf:0]    bsum = 0;
+    reg[WidthHalf+2:0]  asum = 0;
+    reg[WidthHalf+2:0]  bsum = 0;
     reg[WidthHalf-1:0]  asumdelayed = 0;
     
-    wire[WidthHalf:0] a = asum+din;
-    wire[WidthHalf:0] b = asum+bsum;
+    reg[WidthHalf+2:0]  asub = 0;
+    reg[WidthHalf+2:0]  bsub = 0;
     
     always @(posedge clk) begin
         if (rst) begin
@@ -38,24 +38,29 @@ module FletcherChecksum #(
             asumdelayed <= 0;
         
         end else if (en) begin
-            if (&a[WidthHalf:1]) begin
+            asum <= ((asum-asub)+din);
+            bsum <= ((asum-bsub)+bsum);
+            
+            if (&asum[WidthHalf:1]) begin
                 // Subtract 255*2, leaving only the least significant bit
-                asum <= a[0];
-            end else if (a[WidthHalf] || &a[WidthHalf-1:0]) begin
+                asub <= {{WidthHalf{'1}}, 1'b0};
+            end else if (asum[WidthHalf] || &asum[WidthHalf-1:0]) begin
                 // Subtract 255
-                asum <= a-{WidthHalf{'1}};
+                asub <= {WidthHalf{'1}};
             end else begin
-                asum <= a;
+                // Subtract 0
+                asub <= 0;
             end
             
-            if (&b[WidthHalf:1]) begin
+            if (&bsum[WidthHalf:1]) begin
                 // Subtract 255*2, leaving only the least significant bit
-                bsum <= b[0];
-            end else if (b[WidthHalf] || &b[WidthHalf-1:0]) begin
+                bsub <= {{WidthHalf{'1}}, 1'b0};
+            end else if (bsum[WidthHalf] || &bsum[WidthHalf-1:0]) begin
                 // Subtract 255
-                bsum <= b-{WidthHalf{'1}};
+                bsub <= {WidthHalf{'1}};
             end else begin
-                bsum <= b;
+                // Subtract 0
+                bsub <= 0;
             end
             
             asumdelayed <= asum;
