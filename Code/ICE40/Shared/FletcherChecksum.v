@@ -1,6 +1,8 @@
 `ifndef FletcherChecksum_v
 `define FletcherChecksum_v
 
+`include "Util.v"
+
 module OnesComplementAdder #(
     parameter Width         = 32
 )(
@@ -24,66 +26,40 @@ module FletcherChecksum #(
     input wire[WidthHalf-1:0]   din,
     output wire[Width-1:0]      dout
 );
-    reg[Width:0]  asum = 0;
-    reg[Width:0]  bsum = 0;
-    reg[Width:0]  aadd = 0;
-    reg[Width:0]  badd = 0;
-    reg[Width:0]  asub = 0;
-    reg[Width:0]  bsub = 0;
-    reg[Width:0]  asumdelayed = 0;
+    reg[WidthHalf+2:0]  asum = 0;
+    reg[WidthHalf+2:0]  asumtmp = 0;
+    reg[WidthHalf+2:0]  bsum = 0;
+    reg[WidthHalf-1:0]  asumdelayed = 0;
+    
+    wire[WidthHalf-1:0] asub = (!`LeftBit(asum,0) ? {WidthHalf{'1}} : 0);
+    wire[WidthHalf-1:0] bsub = (!`LeftBit(bsum,0) ? {WidthHalf{'1}} : 0);
+    
+    wire[WidthHalf-1:0] a = asum[WidthHalf-1:0]-1;
+    wire[WidthHalf-1:0] b = bsum[WidthHalf-1:0]-1;
     
     always @(posedge clk) begin
         if (rst) begin
             asum <= 0;
             bsum <= 0;
-            aadd <= 0;
-            badd <= 0;
-            asub <= 0;
-            bsub <= 0;
             asumdelayed <= 0;
         
         end begin
             if (en) begin
-                asum <= ((asum+aadd-asub)+din);
-                bsum <= ((bsum+badd-bsub)+asum);
+                asum <= ((asum-asub)+din);
+                asumtmp <= (asum+din);
+                bsum <= ((bsum-bsub)+asumtmp);
             end else begin
-                asum <= (asum+aadd-asub);
-                bsum <= (bsum+badd-bsub);
-            end
-            
-            $display("asum:%0d asub:%0d bsum:%0d bsub:%0d din:%0d", asum, asub, bsum, bsub, din);
-            
-            aadd <= 0;
-            asub <= 0;
-            if (aadd===0 && asub===0) begin
-                if (asum[Width]) begin
-                    // Add 255
-                    aadd <= {WidthHalf{'1}};
-                end else if ((|asum[Width-1:WidthHalf] || &asum[WidthHalf-1:0])) begin
-                    // Subtract 255
-                    $display("asub: NEED TO SUB 255");
-                    asub <= {WidthHalf{'1}};
-                end
-            end
-            
-            badd <= 0;
-            bsub <= 0;
-            if (badd===0 && bsub===0) begin
-                if (bsum[Width]) begin
-                    // Add 255
-                    badd <= {WidthHalf{'1}};
-                end else if ((|bsum[Width-1:WidthHalf] || &bsum[WidthHalf-1:0])) begin
-                    // Subtract 255
-                    $display("bsub: NEED TO SUB 255");
-                    bsub <= {WidthHalf{'1}};
-                end
+                asum <= asum-asub;
+                bsum <= bsum-bsub;
             end
             
             asumdelayed <= asum;
+            
+            $display("bsum:%0d bsub:%0d  |  asum:%0d asub:%0d  |  din:%0d", bsum, bsub, asum, asub, din);
         end
     end
-    assign dout[Width-1:WidthHalf]  = bsum;// % {WidthHalf{'1}};
-    assign dout[WidthHalf-1:0]      = asum;// % {WidthHalf{'1}};
+    // assign dout = {bsum[WidthHalf-1:0], asum[WidthHalf-1:0]};
+    assign dout = {b, a};
 endmodule
 
 `endif
