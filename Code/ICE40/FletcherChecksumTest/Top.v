@@ -15,8 +15,10 @@ module SwapEndianness #(
     end
 endmodule
 
+`ifdef SIM
+
 module Testbench();
-    localparam ChecksumWidth = 64;
+    localparam ChecksumWidth = 32;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     reg                         clk     = 0;
@@ -73,3 +75,36 @@ module Testbench();
         $finish;
     end
 endmodule
+
+`else
+
+module Top(
+    input wire rst_,
+    
+    output wire prop_w_ready, // Whether half of the FIFO can be written
+    output wire prop_r_ready, // Whether half of the FIFO can be read
+    
+    input wire w_clk,
+    input wire w_trigger,
+    input wire[15:0] w_data,
+    output wire w_ready,
+    
+    input wire r_clk,
+    input wire r_trigger,
+    output wire[31:0] r_data,
+    output wire r_ready
+);
+    
+    FletcherChecksum #(
+        .Width(32)
+    ) FletcherChecksum(
+        .clk    (w_clk),
+        .rst    (rst_),
+        .en     (w_trigger),
+        .din    (w_data),
+        .dout   (r_data)
+    );
+    
+endmodule
+
+`endif

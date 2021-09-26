@@ -90,7 +90,7 @@ set_io sd_dat[3]                        L2
 
 
 
-# AFIFOSeriesTest
+# AFIFOChainTest
 
 set_io rst_                             D5
 set_io prop_w_ready                     B3
