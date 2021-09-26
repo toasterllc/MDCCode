@@ -42,7 +42,7 @@ module FletcherChecksum #(
     );
     
     reg[WidthHalf-1:0] a = 0;
-    reg[WidthHalf-1:0] a2 = 0;
+    reg[WidthHalf-1:0] adelayed = 0;
     reg[WidthHalf-1:0] b = 0;
     always @(posedge clk) begin
         if (rst) begin
@@ -52,11 +52,11 @@ module FletcherChecksum #(
         end else if (en) begin
             a <= asum;
             b <= bsum;
-            a2 <= a;
+            adelayed <= a;
         end
     end
     assign dout[Width-1:WidthHalf]  = b;
-    assign dout[WidthHalf-1:0]      = a2;
+    assign dout[WidthHalf-1:0]      = adelayed;
 endmodule
 
 `endif
