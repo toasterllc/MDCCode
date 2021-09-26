@@ -18,7 +18,7 @@ endmodule
 `ifdef SIM
 
 module Testbench();
-    localparam ChecksumWidth = 32;
+    localparam ChecksumWidth = 16;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     wire[ChecksumWidth-1:0] ExpectedChecksum;
