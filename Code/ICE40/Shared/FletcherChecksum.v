@@ -38,8 +38,8 @@ module FletcherChecksum #(
             amoddelayed <= 0;
         
         end else if (en) begin
-            asum <= asum+din;
-            bsum <= asum+bsum;
+            asum <= amod+din;
+            bsum <= amod+bmod;
             
             if (&asum[WidthHalf:1]) begin
                 // Subtract 255*2, leaving only the least significant bit
