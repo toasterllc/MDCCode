@@ -1,30 +1,6 @@
 `include "Util.v"
 `timescale 1ns/1ps
 
-// function[31:0] SwapEndian32;
-//     input[31:0] d;
-//     begin
-//         localparam Half = (32)/2;
-//         reg[31:0] i;
-//         for (i=0; i<Half; i+=8) begin
-//             // assign `RightBits(SwapEndian32,i,8) = `LeftBits(d,i,8);
-//             assign `LeftBits(SwapEndian32,i,8) = `RightBits(d,i,8);
-//         end
-//     end
-// endfunction
-//
-// function[63:0] SwapEndian64;
-//     input[63:0] d;
-//     genvar i;
-//     begin
-//         localparam Half = (64)/2;
-//         for (i=0; i<Half; i+=8) begin
-//             assign `RightBits(SwapEndian64,i,8) = `LeftBits(d,i,8);
-//             assign `LeftBits(SwapEndian64,i,8) = `RightBits(d,i,8);
-//         end
-//     end
-// endfunction
-
 module SwapEndianness #(
     parameter Width = 32
 )(
@@ -67,7 +43,7 @@ module FletcherChecksum #(
 endmodule
 
 module Testbench();
-    localparam ChecksumWidth = 16;
+    localparam ChecksumWidth = 32;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     reg                         clk     = 0;
@@ -85,12 +61,6 @@ module Testbench();
         .din    (din    ),
         .dout   (dout   )
     );
-    
-    // assign data_swapped = {<<8{data}};
-    
-    // reg[47:0] data = 48'h61_62_63_64_65_66; // abcdef
-    // reg[47:0] data = 48'h6261_6463_6665; // ba_dc_fe
-    // reg[63:0] data = 64'h64636261_00006665; // dcba_00fe
     
     reg[63:0] data = 64'h6162636465666768; // abcdefgh
     reg[31:0] i = 0;
