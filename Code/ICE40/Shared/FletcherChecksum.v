@@ -55,7 +55,7 @@ module FletcherChecksum #(
             
             asumdelayed <= asum;
             
-            $display("bsum:%0d bsub:%0d  |  asum:%0d asub:%0d  |  din:%0d", bsum, bsub, asum, asub, din);
+            $display("bsum:%0d bsub:%0d  |  asum:%0d asub:%0d  |  din:%0d  |  en:%0d", bsum, bsub, asum, asub, din, en);
         end
     end
     // assign dout = {bsum[WidthHalf-1:0], asum[WidthHalf-1:0]};
