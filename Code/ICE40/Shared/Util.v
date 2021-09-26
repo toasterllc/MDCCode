@@ -39,6 +39,9 @@
 `define LeftBit(r, idx)         r[$size(r)-(idx)-1]
 `define LeftBits(r, idx, len)   r[($size(r)-(idx)-1) -: (len)]
 
+`define RightBit(r, idx)        r[(idx)]
+`define RightBits(r, idx, len)  r[(idx)+(len)-1 : (idx)]
+
 `ifdef SIM
     `define Assert(cond) do if (!(cond)) begin $error("Assertion failed: %s (%s:%0d)", `Stringify(cond), `__FILE__, `__LINE__); $finish; end while (0)
 `else
