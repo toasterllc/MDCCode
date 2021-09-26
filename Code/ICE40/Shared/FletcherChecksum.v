@@ -24,40 +24,51 @@ module FletcherChecksum #(
     input wire[WidthHalf-1:0]   din,
     output wire[Width-1:0]      dout
 );
-    wire[WidthHalf-1:0] asum;
-    OnesComplementAdder #(
-        .Width(WidthHalf)
-    ) OnesComplementAdder_asum(
-        .a(a),
-        .b(din),
-        .y(asum)
-    );
-    
-    wire[WidthHalf-1:0] bsum;
-    OnesComplementAdder #(
-        .Width(WidthHalf)
-    ) OnesComplementAdder_bsum(
-        .a(a),
-        .b(b),
-        .y(bsum)
-    );
-    
-    reg[WidthHalf-1:0] a = 0;
-    reg[WidthHalf-1:0] adelayed = 0;
-    reg[WidthHalf-1:0] b = 0;
+    reg[WidthHalf:0]    asum = 0;
+    reg[WidthHalf:0]    bsum = 0;
+    reg[WidthHalf-1:0]  amod = 0;
+    reg[WidthHalf-1:0]  bmod = 0;
+    reg[WidthHalf-1:0]  amoddelayed = 0;
     always @(posedge clk) begin
         if (rst) begin
-            a <= 0;
-            b <= 0;
+            asum <= 0;
+            bsum <= 0;
+            amod <= 0;
+            bmod <= 0;
+            amoddelayed <= 0;
         
         end else if (en) begin
-            a <= asum;
-            b <= bsum;
-            adelayed <= a;
+            asum <= asum+din;
+            bsum <= asum+bsum;
+            
+            if (&asum[WidthHalf:1]) begin
+                // Subtract 255*2, leaving only the least significant bit
+                amod <= asum[0];
+            end else if (asum[WidthHalf] || &asum[WidthHalf-1:0]) begin
+                // Subtract 255
+                amod <= asum-{WidthHalf{'1}};
+            end else begin
+                amod <= asum;
+            end
+            
+            if (&bsum[WidthHalf:1]) begin
+                // Subtract 255*2, leaving only the least significant bit
+                bmod <= bsum[0];
+            end else if (bsum[WidthHalf] || &bsum[WidthHalf-1:0]) begin
+                // Subtract 255
+                bmod <= bsum-{WidthHalf{'1}};
+            end else begin
+                bmod <= bsum;
+            end
+            
+            // amod <= (asum[WidthHalf] || &asum[WidthHalf-1:0] ? asum-{WidthHalf{'1}} : asum);
+            // bmod <= (bsum[WidthHalf] || &bsum[WidthHalf-1:0] ? bsum-{WidthHalf{'1}} : bsum);
+            
+            amoddelayed <= amod;
         end
     end
-    assign dout[Width-1:WidthHalf]  = b;
-    assign dout[WidthHalf-1:0]      = adelayed;
+    assign dout[Width-1:WidthHalf]  = bmod;
+    assign dout[WidthHalf-1:0]      = amoddelayed;
 endmodule
 
 `endif

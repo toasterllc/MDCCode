@@ -18,7 +18,7 @@ endmodule
 `ifdef SIM
 
 module Testbench();
-    localparam ChecksumWidth = 32;
+    localparam ChecksumWidth = 16;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     reg                         clk     = 0;
@@ -52,7 +52,7 @@ module Testbench();
         en = 1;
         #1;
         
-        for (i=0; i<($size(data)/ChecksumWidthHalf)+1; i++) begin
+        for (i=0; i<($size(data)/ChecksumWidthHalf)+10; i++) begin
             $display("data: %h", data);
             
             clk = 1;
@@ -65,7 +65,7 @@ module Testbench();
             // that definitely affects the checksum, to make sure that at the time that
             // we read the checksum output, the algorithm hasn't been accidentally peeking
             // ahead.
-            data = (data<<ChecksumWidthHalf) | {(ChecksumWidthHalf/8){8'h41}};
+            data = (data<<ChecksumWidthHalf) | {(ChecksumWidthHalf/8){8'h00}};
             // data = (data<<ChecksumWidthHalf) | {ChecksumWidthHalf{'1}};
             #1;
             
