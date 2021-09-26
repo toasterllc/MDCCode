@@ -62,4 +62,34 @@ module FletcherChecksum #(
     assign dout = {b, a};
 endmodule
 
+module FletcherChecksumCorrect #(
+    parameter Width         = 32,
+    localparam WidthHalf    = Width/2
+)(
+    input wire                  clk,
+    input wire                  rst,
+    input wire                  en,
+    input wire[WidthHalf-1:0]   din,
+    output wire[Width-1:0]      dout
+);
+    reg[WidthHalf-1:0] asum = 0;
+    reg[WidthHalf-1:0] bsum = 0;
+    
+    always @(posedge clk) begin
+        if (rst) begin
+            asum <= 0;
+            bsum <= 0;
+        
+        end begin
+            if (en) begin
+                asum <= ({1'b0,asum}+din) % {WidthHalf{'1}};
+                bsum <= ({1'b0,bsum}+asum) % {WidthHalf{'1}};
+            end
+            
+            $display("bsum:%0d  |  asum:%0d  |  din:%0d  |  en:%0d", bsum, asum, din, en);
+        end
+    end
+    assign dout = {bsum, asum};
+endmodule
+
 `endif
