@@ -41,10 +41,12 @@ module FletcherChecksum #(
     always @(posedge clk) begin
         if (rst) begin
             asum <= 0;
+            asumtmp <= 0;
             bsum <= 0;
             enprev <= 0;
+            $display("[FletcherChecksum]\t\t RESET");
         
-        end begin
+        end else begin
             enprev <= en;
             
             if (en) begin
@@ -60,7 +62,7 @@ module FletcherChecksum #(
                 bsum <= bsum-bsub;
             end
             
-            $display("[FletcherChecksum]\t\t bsum:%h bsub:%h \t asum:%h asub:%h \t din:%h \t\t en:%h", bsum, bsub, asum, asub, din, en);
+            $display("[FletcherChecksum]\t\t bsum:%h bsub:%h \t asum:%h asub:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]", bsum, bsub, asum, asub, din, rst, en, dout);
         end
     end
     // assign dout = {bsum[WidthHalf-1:0], asum[WidthHalf-1:0]};
