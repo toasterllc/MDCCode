@@ -79,8 +79,8 @@ module FletcherChecksum #(
     input wire[WidthHalf-1:0]   din,
     output wire[Width-1:0]      dout
 );
-    reg[WidthHalf+2:0]  asum = 0;
-    reg[WidthHalf+2:0]  bsum = 0;
+    reg[WidthHalf:0] asum = 0;
+    reg[WidthHalf:0] bsum = 0;
     
     wire[WidthHalf-1:0] asub = (asum>={WidthHalf{'1}} ? {WidthHalf{'1}} : 0);
     wire[WidthHalf-1:0] bsub = (bsum>={WidthHalf{'1}} ? {WidthHalf{'1}} : 0);
@@ -92,7 +92,7 @@ module FletcherChecksum #(
             asum <= 0;
             bsum <= 0;
             enprev <= 0;
-            $display("[FletcherChecksum]\t\t RESET");
+            // $display("[FletcherChecksum]\t\t RESET");
         
         end else begin
             enprev <= en;
@@ -103,7 +103,7 @@ module FletcherChecksum #(
             if (enprev) bsum <= ((bsum-bsub)+(asum-asub));
             else        bsum <= bsum-bsub;
             
-            $display("[FletcherChecksum]\t\t bsum:%h bsub:%h \t asum:%h asub:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]", bsum, bsub, asum, asub, din, rst, en, dout);
+            // $display("[FletcherChecksum]\t\t bsum:%h bsub:%h \t asum:%h asub:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]", bsum, bsub, asum, asub, din, rst, en, dout);
         end
     end
     assign dout = {bsum[WidthHalf-1:0], asum[WidthHalf-1:0]};
