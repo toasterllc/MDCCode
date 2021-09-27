@@ -171,14 +171,16 @@ module Testbench();
             // `RightBits(data,7*8,8) = 8'hee;
             // len = 8;
 
-            `RightBits(data,0*8,8) = 8'h17;
-            `RightBits(data,1*8,8) = 8'h02;
-            `RightBits(data,2*8,8) = 8'hf5;
-            `RightBits(data,3*8,8) = 8'h0b;
-            `RightBits(data,4*8,8) = 8'h0a;
-            `RightBits(data,5*8,8) = 8'h96;
-            `RightBits(data,6*8,8) = 8'h3a;
-            `RightBits(data,7*8,8) = 8'h05;
+            // `RightBits(data,0*8,8) = 8'h17;
+            // `RightBits(data,1*8,8) = 8'h02;
+            // `RightBits(data,2*8,8) = 8'hf5;
+            // `RightBits(data,3*8,8) = 8'h0b;
+            // `RightBits(data,4*8,8) = 8'h0a;
+            // `RightBits(data,5*8,8) = 8'h96;
+            // `RightBits(data,6*8,8) = 8'h3a;
+            // `RightBits(data,7*8,8) = 8'h05;
+            // len = 8;
+            
             len = 8;
             
             // Reset checksums
@@ -203,6 +205,15 @@ module Testbench();
             Clk16();
             Clk16();
             Clk16();
+            Clk16();
+            Clk16();
+            Clk16();
+            Clk16();
+            // Clk16();
+            // Clk16();
+            // Clk16();
+            // Clk16();
+            // Clk16();
             
             if (dout16 == doutCorrect16) begin
                 $display("checksum: %h [expected: %h] ✅\n", dout16, doutCorrect16);
@@ -211,7 +222,7 @@ module Testbench();
                 `Finish;
             end
             
-            `Finish;
+            // `Finish;
             
             // // Fletcher-32
             // en32 = 1;
