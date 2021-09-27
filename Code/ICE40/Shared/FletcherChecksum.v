@@ -16,6 +16,59 @@ module OnesComplementAdder #(
     assign y = sum+carry;
 endmodule
 
+// module FletcherChecksum #(
+//     parameter Width         = 32,
+//     localparam WidthHalf    = Width/2
+// )(
+//     input wire                  clk,
+//     input wire                  rst,
+//     input wire                  en,
+//     input wire[WidthHalf-1:0]   din,
+//     output wire[Width-1:0]      dout
+// );
+//     reg[WidthHalf+2:0]  asum = 0;
+//     reg[WidthHalf+2:0]  asumtmp = 0;
+//     reg[WidthHalf+2:0]  bsum = 0;
+//
+//     wire[WidthHalf:0] aadd = (`LeftBit(asum,0) ? {1'b0, {WidthHalf{'1}}} : {1'b1, {WidthHalf-1{'0}}, 1'b1});
+//     wire[WidthHalf:0] badd = (`LeftBit(bsum,0) ? {1'b0, {WidthHalf{'1}}} : {1'b1, {WidthHalf-1{'0}}, 1'b1});
+//
+//     wire[WidthHalf-1:0] a = asum[WidthHalf-1:0]-1;
+//     wire[WidthHalf-1:0] b = bsum[WidthHalf-1:0]-1;
+//
+//     reg enprev = 0;
+//
+//     always @(posedge clk) begin
+//         if (rst) begin
+//             asum <= 0;
+//             asumtmp <= 0;
+//             bsum <= 0;
+//             enprev <= 0;
+//             $display("[FletcherChecksum]\t\t RESET");
+//
+//         end else begin
+//             enprev <= en;
+//
+//             if (en) begin
+//                 asum <= ((asum+aadd)+din);
+//                 asumtmp <= (asum+din);
+//             end else begin
+//                 asum <= asum+aadd;
+//             end
+//
+//             if (enprev) begin
+//                 bsum <= ((bsum+badd)+asumtmp);
+//             end else begin
+//                 bsum <= bsum+badd;
+//             end
+//
+//             $display("[FletcherChecksum]\t\t bsum:%h badd:%h \t asum:%h aadd:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]", bsum, badd, asum, aadd, din, rst, en, dout);
+//         end
+//     end
+//     // assign dout = {bsum[WidthHalf-1:0], asum[WidthHalf-1:0]};
+//     assign dout = {b, a};
+// endmodule
+
 module FletcherChecksum #(
     parameter Width         = 32,
     localparam WidthHalf    = Width/2
@@ -89,7 +142,7 @@ module FletcherChecksumCorrect #(
             b <= 0;
             enprev <= 0;
         
-        end begin
+        end else begin
             enprev <= en;
             if (en)     a <= ({1'b0,a}+din) % {WidthHalf{'1}};
             if (enprev) b <= ({1'b0,b}+a  ) % {WidthHalf{'1}};
