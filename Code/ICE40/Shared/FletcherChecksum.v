@@ -29,7 +29,6 @@ module FletcherChecksum #(
     reg[WidthHalf+2:0]  asum = 0;
     reg[WidthHalf+2:0]  asumtmp = 0;
     reg[WidthHalf+2:0]  bsum = 0;
-    reg[WidthHalf-1:0]  asumdelayed = 0;
     
     wire[WidthHalf-1:0] asub = (!`LeftBit(asum,0) ? {WidthHalf{'1}} : 0);
     wire[WidthHalf-1:0] bsub = (!`LeftBit(bsum,0) ? {WidthHalf{'1}} : 0);
@@ -37,23 +36,29 @@ module FletcherChecksum #(
     wire[WidthHalf-1:0] a = asum[WidthHalf-1:0]-1;
     wire[WidthHalf-1:0] b = bsum[WidthHalf-1:0]-1;
     
+    reg enprev = 0;
+    
     always @(posedge clk) begin
         if (rst) begin
             asum <= 0;
             bsum <= 0;
-            asumdelayed <= 0;
+            enprev <= 0;
         
         end begin
+            enprev <= en;
+            
             if (en) begin
                 asum <= ((asum-asub)+din);
                 asumtmp <= (asum+din);
-                bsum <= ((bsum-bsub)+asumtmp);
             end else begin
                 asum <= asum-asub;
-                bsum <= bsum-bsub;
             end
             
-            asumdelayed <= asum;
+            if (enprev) begin
+                bsum <= ((bsum-bsub)+asumtmp);
+            end else begin
+                bsum <= bsum-bsub;
+            end
             
             $display("[FletcherChecksum]\t\t bsum:%h bsub:%h \t asum:%h asub:%h \t din:%h \t\t en:%h", bsum, bsub, asum, asub, din, en);
         end
