@@ -18,7 +18,7 @@ endmodule
 `ifdef SIM
 
 module Testbench();
-    localparam ChecksumWidth = 64;
+    localparam ChecksumWidth = 16;
     localparam ChecksumWidthHalf = ChecksumWidth/2;
     
     reg                         clk     = 0;
@@ -79,13 +79,16 @@ module Testbench();
             // that definitely affects the checksum, to make sure that at the time that
             // we read the checksum output, the algorithm hasn't been accidentally peeking
             // ahead.
-            data = (data<<ChecksumWidthHalf) | {(ChecksumWidthHalf/8){8'hFF}};
-            if (i === 2) en = 0;
+            data = (data<<ChecksumWidthHalf) | {(ChecksumWidthHalf/8){8'h41}};
+            if (i === 8-1) en = 0;
             // data = (data<<ChecksumWidthHalf) | {ChecksumWidthHalf{'1}};
             #1;
             
-            if (checksum===checksumCorrect) $display("checksum: %h ✅ [expected: %h]\n", checksum, checksumCorrect);
-            else                            $display("checksum: %h ❌ [expected: %h]\n", checksum, checksumCorrect);
+            $display("checksum:\t\t\t %h\t\t\t %h\n", `LeftBits(checksum,0,ChecksumWidthHalf), `RightBits(checksum,0,ChecksumWidthHalf));
+            // $display("checksum: %h\n", checksumCorrect);
+            
+            // if (checksum===checksumCorrect) $display("checksum: %h ✅ [expected: %h]\n", checksum, checksumCorrect);
+            // else                            $display("checksum: %h ❌ [expected: %h]\n", checksum, checksumCorrect);
         end
         
         $finish;
