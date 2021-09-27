@@ -48,26 +48,26 @@ module Testbench();
         .dout   (dout16 )
     );
    
-    // FletcherChecksum #(
-    //     .Width(32)
-    // ) FletcherChecksum32(
-    //     .clk    (clk32  ),
-    //     .rst    (rst32  ),
-    //     .en     (en32   ),
-    //     .din    (din32  ),
-    //     .dout   (dout32 )
-    // );
-    //
-    // FletcherChecksum #(
-    //     .Width(64)
-    // ) FletcherChecksum64(
-    //     .clk    (clk64  ),
-    //     .rst    (rst64  ),
-    //     .en     (en64   ),
-    //     .din    (din64  ),
-    //     .dout   (dout64 )
-    // );
-    
+    FletcherChecksum #(
+        .Width(32)
+    ) FletcherChecksum32(
+        .clk    (clk32  ),
+        .rst    (rst32  ),
+        .en     (en32   ),
+        .din    (din32  ),
+        .dout   (dout32 )
+    );
+
+    FletcherChecksum #(
+        .Width(64)
+    ) FletcherChecksum64(
+        .clk    (clk64  ),
+        .rst    (rst64  ),
+        .en     (en64   ),
+        .din    (din64  ),
+        .dout   (dout64 )
+    );
+
     FletcherChecksumCorrect #(
         .Width(16)
     ) FletcherChecksumCorrect16(
@@ -77,26 +77,26 @@ module Testbench();
         .din    (din16  ),
         .dout   (doutCorrect16 )
     );
-    
-    // FletcherChecksumCorrect #(
-    //     .Width(32)
-    // ) FletcherChecksumCorrect32(
-    //     .clk    (clk32  ),
-    //     .rst    (rst32  ),
-    //     .en     (en32   ),
-    //     .din    (din32  ),
-    //     .dout   (doutCorrect32 )
-    // );
-    //
-    // FletcherChecksumCorrect #(
-    //     .Width(64)
-    // ) FletcherChecksumCorrect64(
-    //     .clk    (clk64  ),
-    //     .rst    (rst64  ),
-    //     .en     (en64   ),
-    //     .din    (din64  ),
-    //     .dout   (doutCorrect64 )
-    // );
+
+    FletcherChecksumCorrect #(
+        .Width(32)
+    ) FletcherChecksumCorrect32(
+        .clk    (clk32  ),
+        .rst    (rst32  ),
+        .en     (en32   ),
+        .din    (din32  ),
+        .dout   (doutCorrect32 )
+    );
+
+    FletcherChecksumCorrect #(
+        .Width(64)
+    ) FletcherChecksumCorrect64(
+        .clk    (clk64  ),
+        .rst    (rst64  ),
+        .en     (en64   ),
+        .din    (din64  ),
+        .dout   (doutCorrect64 )
+    );
     
     reg[32768-1:0] data = 0;
     reg[31:0] len = 0;
@@ -170,7 +170,7 @@ module Testbench();
             // `RightBits(data,6*8,8) = 8'h53;
             // `RightBits(data,7*8,8) = 8'hee;
             // len = 8;
-            
+
             `RightBits(data,0*8,8) = 8'h17;
             `RightBits(data,1*8,8) = 8'h02;
             `RightBits(data,2*8,8) = 8'hf5;
@@ -203,7 +203,6 @@ module Testbench();
             Clk16();
             Clk16();
             Clk16();
-            Clk16();
             
             if (dout16 == doutCorrect16) begin
                 $display("checksum: %h [expected: %h] ✅\n", dout16, doutCorrect16);
@@ -212,15 +211,53 @@ module Testbench();
                 `Finish;
             end
             
-            // `Finish;
+            `Finish;
             
             // // Fletcher-32
+            // en32 = 1;
+            // #1;
             // for (i=0; i<(len+1)/2; i++) begin
+            //     din32 = `RightBits(data,i*ChecksumWidthHalf32,ChecksumWidthHalf32);
+            //     #1;
+            //     Clk32();
+            // end
+            // en32 = 0;
+            // #1;
+            // Clk32();
+            // Clk32();
+            // Clk32();
+            //
+            // if (dout32 == doutCorrect32) begin
+            //     $display("checksum: %h [expected: %h] ✅\n", dout32, doutCorrect32);
+            // end else begin
+            //     $display("checksum: %h [expected: %h] ❌\n", dout32, doutCorrect32);
+            //     `Finish;
             // end
             //
+            // `Finish;
+            
             // // Fletcher-64
+            // en64 = 1;
+            // #1;
             // for (i=0; i<(len+3)/4; i++) begin
+            //     din64 = `RightBits(data,i*ChecksumWidthHalf64,ChecksumWidthHalf64);
+            //     #1;
+            //     Clk64();
             // end
+            // en64 = 0;
+            // #1;
+            // Clk64();
+            // Clk64();
+            // Clk64();
+            //
+            // if (dout64 == doutCorrect64) begin
+            //     $display("checksum: %h [expected: %h] ✅\n", dout64, doutCorrect64);
+            // end else begin
+            //     $display("checksum: %h [expected: %h] ❌\n", dout64, doutCorrect64);
+            //     `Finish;
+            // end
+            //
+            // `Finish;
         end
         
         // for (i=0; i<($size(data)/ChecksumWidthHalf)+4; i++) begin
