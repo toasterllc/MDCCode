@@ -55,7 +55,7 @@ module FletcherChecksum #(
             
             asumdelayed <= asum;
             
-            $display("[FletcherChecksum]\t\t bsum:%0d bsub:%0d \t asum:%0d asub:%0d \t din:%0d \t\t en:%0d", bsum, bsub, asum, asub, din, en);
+            $display("[FletcherChecksum]\t\t bsum:%h bsub:%h \t asum:%h asub:%h \t din:%h \t\t en:%h", bsum, bsub, asum, asub, din, en);
         end
     end
     // assign dout = {bsum[WidthHalf-1:0], asum[WidthHalf-1:0]};
@@ -84,8 +84,8 @@ module FletcherChecksumCorrect #(
         
         end begin
             enprev <= en;
-            if (en) a <= ({1'b0,a}+din) % {WidthHalf{'1}};
-            if (enprev) b <= ({1'b0,b}+a) % {WidthHalf{'1}};
+            if (en)     a <= ({1'b0,a}+din) % {WidthHalf{'1}};
+            if (enprev) b <= ({1'b0,b}+a  ) % {WidthHalf{'1}};
             // $display("[FletcherChecksumCorrect]\t b:%h \t\t a:%h \t\t din:%h \t\t en:%h", b, a, din, en);
         end
     end
