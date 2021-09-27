@@ -82,8 +82,8 @@ module FletcherChecksum #(
     reg[WidthHalf:0] asum = 0;
     reg[WidthHalf:0] bsum = 0;
     
-    wire[WidthHalf-1:0] asub = (asum>={WidthHalf{'1}} ? {WidthHalf{'1}} : 0);
-    wire[WidthHalf-1:0] bsub = (bsum>={WidthHalf{'1}} ? {WidthHalf{'1}} : 0);
+    wire[WidthHalf-1:0] asub = (`LeftBit(asum,0) || &asum[WidthHalf-1:0] ? {WidthHalf{'1}} : 0);
+    wire[WidthHalf-1:0] bsub = (`LeftBit(bsum,0) || &bsum[WidthHalf-1:0] ? {WidthHalf{'1}} : 0);
     
     reg enprev = 0;
     
