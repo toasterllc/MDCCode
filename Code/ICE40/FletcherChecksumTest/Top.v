@@ -80,14 +80,12 @@ module Testbench();
             // we read the checksum output, the algorithm hasn't been accidentally peeking
             // ahead.
             data = (data<<ChecksumWidthHalf) | {(ChecksumWidthHalf/8){8'hFF}};
-            if (i === 2-1) en = 0;
+            if (i === 2) en = 0;
             // data = (data<<ChecksumWidthHalf) | {ChecksumWidthHalf{'1}};
             #1;
             
-            $display("checksum: %h\n", checksumCorrect);
-            
-            // if (checksum===checksumCorrect) $display("checksum: %h ✅ [expected: %h]\n", checksum, checksumCorrect);
-            // else                            $display("checksum: %h ❌ [expected: %h]\n", checksum, checksumCorrect);
+            if (checksum===checksumCorrect) $display("checksum: %h ✅ [expected: %h]\n", checksum, checksumCorrect);
+            else                            $display("checksum: %h ❌ [expected: %h]\n", checksum, checksumCorrect);
         end
         
         $finish;
