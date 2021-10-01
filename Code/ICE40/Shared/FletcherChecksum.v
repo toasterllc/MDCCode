@@ -79,21 +79,28 @@ module FletcherChecksum #(
     input wire[WidthHalf-1:0]   din,
     output wire[Width-1:0]      dout
 );
-    reg[WidthHalf:0] asum = 0;
-    reg[WidthHalf:0] bsum = 0;
+    reg[WidthHalf:0] asum1 = 0;
+    reg[WidthHalf:0] asum2 = 0;
+    wire[WidthHalf:0] asumx = (!`LeftBit(asum1,0) ? asum1 : asum2);
     
-    wire[WidthHalf:0] asumx1 = (asum+din) - {WidthHalf{'1}};
-    wire[WidthHalf:0] asumx2 = (asum+din);
+    reg[WidthHalf:0] bsum1 = 0;
+    reg[WidthHalf:0] bsum2 = 0;
+    wire[WidthHalf:0] bsumx = (!`LeftBit(bsum1,0) ? bsum1 : bsum2);
     
-    wire[WidthHalf:0] bsumx1 = (bsum+asum) - {WidthHalf{'1}};
-    wire[WidthHalf:0] bsumx2 = (bsum+asum);
+    // wire[WidthHalf:0] asumx2 = (asum+din);
+    
+    // wire[WidthHalf:0] bsumx1 = (bsum+asum) - {WidthHalf{'1}};
+    // wire[WidthHalf:0] bsumx2 = (bsum+asum);
     
     reg enprev = 0;
     
     always @(posedge clk) begin
         if (rst) begin
-            asum <= 0;
-            bsum <= 0;
+            asum1 <= 0;
+            asum2 <= 0;
+            bsum1 <= 0;
+            bsum2 <= 0;
+            
             enprev <= 0;
             // $display("[FletcherChecksum]\t\t RESET");
         
@@ -101,9 +108,13 @@ module FletcherChecksum #(
             enprev <= en;
             
             if (en) begin
-                asum  <= (!`LeftBit(asumx1,0) ? asumx1 : asumx2);
-            end else begin
-                // asum <= asum-asub;
+                asum1 <= asumx + din - {WidthHalf{'1}};
+                asum2 <= asumx + din;
+            end
+            
+            if (enprev) begin
+                bsum1 <= bsumx + asumx - {WidthHalf{'1}};
+                bsum2 <= bsumx + asumx;
             end
             
             // bsum <= ((bsum3-{WidthHalf{'1}})+asum3);
@@ -112,19 +123,19 @@ module FletcherChecksum #(
             
             // tmp2 <= (`LeftBit(asum,0) ? );
             
-            if (enprev) begin
-                bsum  <= (!`LeftBit(bsumx1,0) ? bsumx1 : bsumx2);
-            end else begin
-                // bsum <= bsum-bsub;
-            end
+            // if (enprev) begin
+            //     bsum  <= (!`LeftBit(bsumx1,0) ? bsumx1 : bsumx2);
+            // end else begin
+            //     // bsum <= bsum-bsub;
+            // end
             
-            // $display("[FletcherChecksum]\t\t bsum:%h \t asum:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]",
-            //     bsum,
-            //     asum,
+            // $display("[FletcherChecksum]\t\t bsumx:%h \t asumx:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]",
+            //     bsumx,
+            //     asumx,
             //     din, rst, en, dout);
         end
     end
-    assign dout = {bsum[WidthHalf-1:0], asum[WidthHalf-1:0]};
+    assign dout = {bsumx[WidthHalf-1:0], asumx[WidthHalf-1:0]};
 endmodule
 
 module FletcherChecksumCorrect #(
