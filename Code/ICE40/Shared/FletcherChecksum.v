@@ -118,10 +118,10 @@ module FletcherChecksum #(
                 // bsum <= bsum-bsub;
             end
             
-            $display("[FletcherChecksum]\t\t bsum:%h \t asum:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]",
-                bsum,
-                asum,
-                din, rst, en, dout);
+            // $display("[FletcherChecksum]\t\t bsum:%h \t asum:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]",
+            //     bsum,
+            //     asum,
+            //     din, rst, en, dout);
         end
     end
     assign dout = {bsum[WidthHalf-1:0], asum[WidthHalf-1:0]};
