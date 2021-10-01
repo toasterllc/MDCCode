@@ -1,6 +1,8 @@
 `ifndef SDCardSim_v
 `define SDCardSim_v
 
+`include "FletcherChecksum.v"
+
 `timescale 1ps/1ps
 
 module Sim_CRC7(
@@ -49,7 +51,8 @@ module SDCardSim #(
     parameter RecvHeaderWordCount   = 0, // Number of 16-bit words to ignore at the beginning of the received data
     parameter RecvWordCount         = 0, // Number of 16-bit words to validate
     parameter RecvWordInitialValue  = 0, // Expected value of the first word
-    parameter RecvWordDelta         = 0  // Expected difference between current word value and previous word value
+    parameter RecvWordDelta         = 0, // Expected difference between current word value and previous word value
+    parameter RecvValidateChecksum  = 0  // Whether to check the checksum appended to the data
 )(
     input wire      sd_clk,
     inout wire      sd_cmd,
@@ -494,6 +497,26 @@ module SDCardSim #(
     
     
     // ====================
+    // Checksum of written data
+    //   This is to validate the Fletcher32 checksum appended to the image data
+    // ====================
+    wire        recv_checksum_clk = sd_clk;
+    reg         recv_checksum_rst = 0;
+    reg         recv_checksum_en = 0;
+    reg[15:0]   recv_checksum_din = 0;
+    wire[31:0]  recv_checksum_dout;
+    FletcherChecksumCorrect #(
+        .Width(32)
+    ) FletcherChecksumCorrect32(
+        .clk    (recv_checksum_clk   ),
+        .rst    (recv_checksum_rst   ),
+        .en     (recv_checksum_en    ),
+        .din    (recv_checksum_din   ),
+        .dout   (recv_checksum_dout  )
+    );
+    
+    
+    // ====================
     // Handle writing to the card
     // ====================
     initial begin
@@ -501,19 +524,23 @@ module SDCardSim #(
         reg[31:0]   recvWordCounter;
         reg[15:0]   recvWordPrev;
         reg         recvWordPrevInit;
+        reg[31:0]   recvValidateChecksumState;
         
-        recvHeaderWordCounter   = 0;
-        recvWordCounter         = 0;
-        recvWordPrev            = 0;
-        recvWordPrevInit        = 0;
+        recvHeaderWordCounter       = 0;
+        recvWordCounter             = 0;
+        recvWordPrev                = 0;
+        recvWordPrevInit            = 0;
+        recvValidateChecksumState   = 0;
         
         forever begin
             wait(sd_clk);
             if (recvWriteData) begin
                 reg[4095:0] datInReg;
-                reg[15:0] i;
+                reg[31:0] i;
                 reg[7:0] count;
                 reg crcOK;
+                
+                recv_checksum_rst = 0; // Disable checksum reset
                 
                 // Wait for start bit
                 while (sd_dat[0]!==1'b0 && recvWriteData) begin
@@ -536,10 +563,15 @@ module SDCardSim #(
                 for (i=0; i<1024 && recvWriteData; i++) begin
                     wait(sd_clk);
                     datInReg = (datInReg<<4)|sd_dat[3:0];
+                    recv_checksum_din = (recv_checksum_din<<4)|sd_dat[3:0];
                     wait(!sd_clk);
+                    
+                    recv_checksum_en = 0;
                     
                     // Validate every 16-bit word
                     if (i[1:0] === 3) begin
+                        recv_checksum_en = 1;
+                        
                         if (recvHeaderWordCounter < RecvHeaderWordCount) begin
                             recvHeaderWordCounter = recvHeaderWordCounter+1;
                         
@@ -564,6 +596,19 @@ module SDCardSim #(
                             recvWordCounter = recvWordCounter+1;
                             recvWordPrev = recvWordGot;
                             recvWordPrevInit = 1;
+                        
+                        // Receive checksum
+                        end else if (RecvValidateChecksum) begin
+                            case (recvValidateChecksumState)
+                            0: begin
+                                recvValidateChecksumState = 1;
+                            end
+                            
+                            1: begin
+                                $display("[SDCardSim] Checksum: received:%h expected:%h", datInReg[31:0], recv_checksum_dout);
+                                `Finish;
+                            end
+                            endcase
                         end
                     end
                 end
@@ -744,9 +789,12 @@ module SDCardSim #(
             
             end else begin
                 // Reset our variables when a transfer ends
-                recvHeaderWordCounter   = 0;
-                recvWordCounter         = 0;
-                recvWordPrevInit        = 0;
+                recvHeaderWordCounter       = 0;
+                recvWordCounter             = 0;
+                recvWordPrevInit            = 0;
+                recvValidateChecksumState   = 0;
+                
+                recv_checksum_rst           = 1;
             end
 
             wait(!sd_clk);

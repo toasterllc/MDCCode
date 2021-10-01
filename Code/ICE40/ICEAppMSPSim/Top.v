@@ -79,7 +79,8 @@ module Testbench();
         .RecvHeaderWordCount(ImageHeaderWordCount),
         .RecvWordCount(ImageWidth*ImageHeight),
         .RecvWordInitialValue(16'h0FFF),
-        .RecvWordDelta(-1)
+        .RecvWordDelta(-1),
+        .RecvValidateChecksum(1)
     ) SDCardSim (
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
@@ -280,17 +281,17 @@ module Testbench();
         // TestImgI2CWriteRead();
         TestImgCapture();
         
-        // TestSDInit();
+        TestSDInit();
         // TestSDCMD0();
         // TestSDCMD8();
         // TestSDCMD2();
         // TestSDCMD6();
-        // //           delay, speed,                            trigger, reset
-        // TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
-        // TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
-        //
+        //           delay, speed,                            trigger, reset
+        TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
+        TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
+
         // TestSDRespRecovery();
-        // TestSDDatOut();
+        TestSDDatOut();
         // TestSDDatOutRecovery();
         
         `Finish;
