@@ -216,7 +216,7 @@ module Testbench();
                     `Finish;
                 end
             end
-            `Finish;
+            // `Finish;
             
             // // Fletcher-32
             // begin
