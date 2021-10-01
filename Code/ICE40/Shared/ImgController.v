@@ -244,7 +244,7 @@ module ImgController #(
         fifoIn_countStat <= 0; // Pulse
         fifoIn_checksum_rst <= 0; // Pulse
         fifoIn_checksum_count <= fifoIn_checksum_count-1;
-        fifoIn_checksum_shiftReg <= fifoIn_checksum_shiftReg>>16;
+        fifoIn_checksum_shiftReg <= fifoIn_checksum_shiftReg<<16;
         
         if (fifoIn_write_trigger) begin
             // Count the words in an image
@@ -346,7 +346,7 @@ module ImgController #(
         8: begin
             $display("[ImgController:fifoIn] Writing checksum (checksum: %h)", fifoIn_checksum_dout);
             fifoIn_write_trigger <= 1;
-            fifoIn_write_data <= fifoIn_checksum_shiftReg[15:0];
+            fifoIn_write_data <= `LeftBits(fifoIn_checksum_shiftReg,0,16);
             if (!fifoIn_checksum_count) begin
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
