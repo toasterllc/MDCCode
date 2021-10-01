@@ -201,7 +201,6 @@ module Testbench();
                     din16 = `RightBits(data,i*ChecksumWidthHalf16,ChecksumWidthHalf16);
                     #1;
                     Clk16();
-                    Clk16();
                     // if (i==0) begin
                     //     Clk16();
                     // end
