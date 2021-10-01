@@ -342,21 +342,15 @@ module ImgController #(
             end
         end
         
-        // Write checksum word 1 of 2
+        // Write checksum
         8: begin
-            $display("[ImgController:fifoIn] Writing checksum 1/2 (checksum: %h)", fifoIn_checksum_dout);
+            $display("[ImgController:fifoIn] Writing checksum (checksum: %h)", fifoIn_checksum_dout);
             fifoIn_write_trigger <= 1;
             fifoIn_write_data <= `LeftBits(fifoIn_checksum_shiftReg,0,16);
-            fifoIn_state <= 9;
-        end
-        
-        // Write checksum word 2 of 2
-        9: begin
-            $display("[ImgController:fifoIn] Writing checksum 2/2 (checksum: %h)", fifoIn_checksum_dout);
-            fifoIn_write_trigger <= 1;
-            fifoIn_write_data <= `LeftBits(fifoIn_checksum_shiftReg,0,16);
-            fifoIn_done <= 1;
-            fifoIn_state <= 0;
+            if (!fifoIn_checksum_count) begin
+                fifoIn_done <= 1;
+                fifoIn_state <= 0;
+            end
         end
         endcase
         
