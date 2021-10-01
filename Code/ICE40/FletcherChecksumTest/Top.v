@@ -204,8 +204,8 @@ module Testbench();
                 end
                 en16 = 0;
                 #1;
-                for (i=0; i<2; i++) Clk16();
-
+                for (i=0; i<1; i++) Clk16();
+                
                 if (dout16 == doutCorrect16) begin
                     $display("checksum: %h [expected: %h] [len:%0d] ✅", dout16, doutCorrect16, len);
                 end else begin
@@ -226,7 +226,7 @@ module Testbench();
             //     end
             //     en32 = 0;
             //     #1;
-            //     for (i=0; i<2; i++) Clk32();
+            //     for (i=0; i<1; i++) Clk32();
             //
             //     if (dout32 == doutCorrect32) begin
             //         $display("checksum: %h [expected: %h] [len:%0d] ✅", dout32, doutCorrect32, len);
@@ -248,7 +248,7 @@ module Testbench();
             //     end
             //     en64 = 0;
             //     #1;
-            //     for (i=0; i<2; i++) Clk64();
+            //     for (i=0; i<1; i++) Clk64();
             //
             //     if (dout64 == doutCorrect64) begin
             //         $display("checksum: %h [expected: %h] [len:%0d] ✅", dout64, doutCorrect64, len);

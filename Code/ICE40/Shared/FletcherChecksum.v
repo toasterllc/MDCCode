@@ -162,7 +162,7 @@ module FletcherChecksumCorrect #(
             enprev <= en;
             if (en)     a <= ({1'b0,a}+din) % {WidthHalf{'1}};
             if (enprev) b <= ({1'b0,b}+a  ) % {WidthHalf{'1}};
-            $display("[FletcherChecksumCorrect]\t b:%h \t\t a:%h \t\t din:%h \t\t en:%h", b, a, din, en);
+            // $display("[FletcherChecksumCorrect]\t b:%h \t\t a:%h \t\t din:%h \t\t en:%h", b, a, din, en);
         end
     end
     assign dout = {b, a};
