@@ -187,14 +187,14 @@ module Testbench();
             while (wordIdx < wordCount) begin
                 reg[15:0] i;
                 
-                $display("Reading chunk %0d/%0d...", chunkIdx+1, chunkCount);
+                $display("[Testbench] Reading chunk %0d/%0d...", chunkIdx+1, chunkCount);
                 
                 if (waitForDReady) begin
                     reg done;
                     done = 0;
                     while (!done) begin
                         #2000;
-                        $display("Waiting for ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
+                        $display("[Testbench] Waiting for ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
                         if (ice_st_spi_d_ready) begin
                             done = 1;
                         end
@@ -217,13 +217,13 @@ module Testbench();
                     spi_resp = 0;
                     _ReadResp(wordWidth);
                     word = spi_resp[MaxWordWidth-1:0];
-                    $display("Read word: 0x%x", word);
+                    // $display("[Testbench] Read word: 0x%x", word);
                     
                     if (lastWordInit) begin
                         // expectedWord = lastWord+1;   // Expect incrementing integers
                         expectedWord = lastWord-1;   // Expect decrementing integers
                         if (validateWords && word!==expectedWord) begin
-                            $display("Bad word; expected:%x got:%x ❌", expectedWord, word);
+                            $display("[Testbench] Bad word; expected:%x got:%x ❌", expectedWord, word);
                             #100;
                             `Finish;
                         end
@@ -256,13 +256,13 @@ module Testbench();
             $display("[Testbench] CMD6 access mode (expected: 4'h3, got: 4'h%x) ✅", spi_datIn[379:376]);
         end else begin
             $display("[Testbench] CMD6 access mode (expected: 4'h3, got: 4'h%x) ❌", spi_datIn[379:376]);
-            // `Finish;
+            `Finish;
         end
     end endtask
     
     // TestSDDatIn_Readout: required by TestSDDatIn
     task TestSDDatIn_Readout; begin
-        SDReadout(/* waitForDReady */ 1, /* validateWords */ 1, /* wordWidth */ 32, /* wordCount */ 128*1024);
+        SDReadout(/* waitForDReady */ 1, /* validateWords */ 1, /* wordWidth */ 32, /* wordCount */ 4*1024);
     end endtask
     
     initial begin
@@ -294,16 +294,9 @@ module Testbench();
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
         
         TestSDDatIn();
+        TestLEDSet(4'b1010);
+        TestSDDatIn();
         
-        
-        
-        
-        
-        // SDReadout;
-        // TestLEDSet(4'b1111);
-        // SDReadout;
-        // SDReadout;
-        
-        // `Finish;
+        `Finish;
     end
 endmodule
