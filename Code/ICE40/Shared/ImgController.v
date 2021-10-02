@@ -186,11 +186,10 @@ module ImgController #(
     // ====================
     wire        fifoIn_checksum_clk;
     reg         fifoIn_checksum_rst = 0;
-    wire        fifoIn_checksum_en;
+    reg         fifoIn_checksum_en = 0;
     wire[15:0]  fifoIn_checksum_din;
     wire[31:0]  fifoIn_checksum_dout;
     reg         fifoIn_checksum_count = 0;
-    reg[31:0]   fifoIn_checksum_shiftReg = 0;
     FletcherChecksum #(
         .Width(32)
     ) FletcherChecksum_fifoIn(
@@ -201,7 +200,6 @@ module ImgController #(
         .dout   (fifoIn_checksum_dout)
     );
     assign fifoIn_checksum_clk  = img_dclk;
-    assign fifoIn_checksum_en   = fifoIn_write_trigger;
     assign fifoIn_checksum_din  = fifoIn_write_data;
     
     // ====================
@@ -243,8 +241,8 @@ module ImgController #(
         fifoIn_write_trigger <= 0; // Pulse
         fifoIn_countStat <= 0; // Pulse
         fifoIn_checksum_rst <= 0; // Pulse
+        fifoIn_checksum_en <= 0; // Pulse
         fifoIn_checksum_count <= fifoIn_checksum_count-1;
-        fifoIn_checksum_shiftReg <= fifoIn_checksum_shiftReg<<16;
         
         if (fifoIn_write_trigger) begin
             // Count the words in an image
@@ -308,6 +306,7 @@ module ImgController #(
             $display("[ImgController:fifoIn] Header state: %0d", fifoIn_headerCount);
             fifoIn_write_trigger <= 1;
             fifoIn_write_data <= `LeftBits(fifoIn_header, 0, 16);
+            fifoIn_checksum_en <= 1;
             if (!fifoIn_headerCount) begin
                 fifoIn_state <= 5;
             end
@@ -334,8 +333,8 @@ module ImgController #(
             fifoIn_countStat <= (fifoIn_lv && !fifoIn_x && !fifoIn_y);
             fifoIn_write_trigger <= fifoIn_lv;
             fifoIn_write_data <= {4'b0, img_d_reg};
+            fifoIn_checksum_en <= fifoIn_lv;
             fifoIn_checksum_count <= 1;
-            fifoIn_checksum_shiftReg <= fifoIn_checksum_dout;
             if (!fifoIn_fv) begin
                 $display("[ImgController:fifoIn] Frame end");
                 fifoIn_state <= 8;
@@ -346,7 +345,7 @@ module ImgController #(
         8: begin
             $display("[ImgController:fifoIn] Writing checksum (checksum: %h)", fifoIn_checksum_dout);
             fifoIn_write_trigger <= 1;
-            fifoIn_write_data <= `LeftBits(fifoIn_checksum_shiftReg,0,16);
+            fifoIn_write_data <= fifoIn_checksum_count ? `LeftBits(fifoIn_checksum_dout,0,16) : `RightBits(fifoIn_checksum_dout,0,16);
             if (!fifoIn_checksum_count) begin
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
