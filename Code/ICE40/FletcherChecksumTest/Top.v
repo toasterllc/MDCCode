@@ -138,9 +138,7 @@ module Testbench();
                 `RightBits(data,i*32,32) = $urandom;
             end
             
-            // $display(data);
-            // `Finish;
-            
+            // Test vector: abcdefgh
             // `RightBits(data,0*8,8) = 8'h61;
             // `RightBits(data,1*8,8) = 8'h62;
             // `RightBits(data,2*8,8) = 8'h63;
@@ -149,37 +147,6 @@ module Testbench();
             // `RightBits(data,5*8,8) = 8'h66;
             // `RightBits(data,6*8,8) = 8'h67;
             // `RightBits(data,7*8,8) = 8'h68;
-            // len = 8;
-            
-            // `RightBits(data,0*8,8) = 8'hb0;
-            // `RightBits(data,1*8,8) = 8'h6a;
-            // `RightBits(data,2*8,8) = 8'h6a;
-            // `RightBits(data,3*8,8) = 8'h58;
-            // `RightBits(data,4*8,8) = 8'h3c;
-            // `RightBits(data,5*8,8) = 8'h87;
-            // `RightBits(data,6*8,8) = 8'h1c;
-            // `RightBits(data,7*8,8) = 8'h9e;
-            // len = 8;
-            
-            
-            // `RightBits(data,0*8,8) = 8'hd3;
-            // `RightBits(data,1*8,8) = 8'h1d;
-            // `RightBits(data,2*8,8) = 8'he3;
-            // `RightBits(data,3*8,8) = 8'he9;
-            // `RightBits(data,4*8,8) = 8'hdc;
-            // `RightBits(data,5*8,8) = 8'hdf;
-            // `RightBits(data,6*8,8) = 8'h53;
-            // `RightBits(data,7*8,8) = 8'hee;
-            // len = 8;
-
-            // `RightBits(data,0*8,8) = 8'h17;
-            // `RightBits(data,1*8,8) = 8'h02;
-            // `RightBits(data,2*8,8) = 8'hf5;
-            // `RightBits(data,3*8,8) = 8'h0b;
-            // `RightBits(data,4*8,8) = 8'h0a;
-            // `RightBits(data,5*8,8) = 8'h96;
-            // `RightBits(data,6*8,8) = 8'h3a;
-            // `RightBits(data,7*8,8) = 8'h05;
             // len = 8;
             
             // len = 8;
@@ -213,51 +180,51 @@ module Testbench();
                     `Finish;
                 end
             end
-            `Finish;
+            // `Finish;
             
-            // // Fletcher-32
-            // begin
-            //     en32 = 1;
-            //     #1;
-            //     for (i=0; i<(len+1)/2; i++) begin
-            //         din32 = `RightBits(data,i*ChecksumWidthHalf32,ChecksumWidthHalf32);
-            //         #1;
-            //         Clk32();
-            //     end
-            //     en32 = 0;
-            //     #1;
-            //     for (i=0; i<1; i++) Clk32();
-            //
-            //     if (dout32 == doutCorrect32) begin
-            //         $display("checksum: %h [expected: %h] [len:%0d] ✅", dout32, doutCorrect32, len);
-            //     end else begin
-            //         $display("checksum: %h [expected: %h] [len:%0d] ❌", dout32, doutCorrect32, len);
-            //         `Finish;
-            //     end
-            // end
-            // // `Finish;
-            //
-            // // Fletcher-64
-            // begin
-            //     en64 = 1;
-            //     #1;
-            //     for (i=0; i<(len+3)/4; i++) begin
-            //         din64 = `RightBits(data,i*ChecksumWidthHalf64,ChecksumWidthHalf64);
-            //         #1;
-            //         Clk64();
-            //     end
-            //     en64 = 0;
-            //     #1;
-            //     for (i=0; i<1; i++) Clk64();
-            //
-            //     if (dout64 == doutCorrect64) begin
-            //         $display("checksum: %h [expected: %h] [len:%0d] ✅", dout64, doutCorrect64, len);
-            //     end else begin
-            //         $display("checksum: %h [expected: %h] [len:%0d] ❌", dout64, doutCorrect64, len);
-            //         `Finish;
-            //     end
-            // end
-            // // `Finish;
+            // Fletcher-32
+            begin
+                en32 = 1;
+                #1;
+                for (i=0; i<(len+1)/2; i++) begin
+                    din32 = `RightBits(data,i*ChecksumWidthHalf32,ChecksumWidthHalf32);
+                    #1;
+                    Clk32();
+                end
+                en32 = 0;
+                #1;
+                for (i=0; i<1; i++) Clk32();
+
+                if (dout32 == doutCorrect32) begin
+                    $display("checksum: %h [expected: %h] [len:%0d] ✅", dout32, doutCorrect32, len);
+                end else begin
+                    $display("checksum: %h [expected: %h] [len:%0d] ❌", dout32, doutCorrect32, len);
+                    `Finish;
+                end
+            end
+            // `Finish;
+            
+            // Fletcher-64
+            begin
+                en64 = 1;
+                #1;
+                for (i=0; i<(len+3)/4; i++) begin
+                    din64 = `RightBits(data,i*ChecksumWidthHalf64,ChecksumWidthHalf64);
+                    #1;
+                    Clk64();
+                end
+                en64 = 0;
+                #1;
+                for (i=0; i<1; i++) Clk64();
+
+                if (dout64 == doutCorrect64) begin
+                    $display("checksum: %h [expected: %h] [len:%0d] ✅", dout64, doutCorrect64, len);
+                end else begin
+                    $display("checksum: %h [expected: %h] [len:%0d] ❌", dout64, doutCorrect64, len);
+                    `Finish;
+                end
+            end
+            // `Finish;
         end
         
         // for (i=0; i<($size(data)/ChecksumWidthHalf)+4; i++) begin
