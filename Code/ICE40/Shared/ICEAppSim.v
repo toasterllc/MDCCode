@@ -524,6 +524,9 @@ task TestSDDatIn; begin
     SendSDCmdResp(CMD18, `SDController_RespType_48, `SDController_DatInType_4096xN, 32'b0);
     
     TestSDDatIn_Readout();
+    
+    // Stop transmission
+    SendSDCmdResp(CMD12, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
 end endtask
 
 task TestSDDatInRecovery; begin
@@ -560,16 +563,5 @@ task TestSDDatInRecovery; begin
         `Finish;
     end
 end endtask
-
-
-
-
-
-
-
-
-
-
-
 
 `endif
