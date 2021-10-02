@@ -189,6 +189,7 @@ module ImgController #(
     reg         fifoIn_checksum_en = 0;
     wire[15:0]  fifoIn_checksum_din;
     wire[31:0]  fifoIn_checksum_dout;
+    reg[31:0]   fifoIn_checksum_shiftReg = 0;
     reg         fifoIn_checksum_done_ = 0;
     FletcherChecksum #(
         .Width(32)
@@ -242,6 +243,7 @@ module ImgController #(
         fifoIn_countStat <= 0; // Pulse
         fifoIn_checksum_rst <= 0; // Pulse
         fifoIn_checksum_en <= 0; // Pulse
+        fifoIn_checksum_shiftReg <= fifoIn_checksum_shiftReg<<16;
         fifoIn_checksum_done_ <= 0; // Pulse
         
         if (fifoIn_write_trigger) begin
@@ -334,6 +336,7 @@ module ImgController #(
             fifoIn_write_trigger <= fifoIn_lv;
             fifoIn_write_data <= {4'b0, img_d_reg};
             fifoIn_checksum_en <= fifoIn_lv;
+            fifoIn_checksum_shiftReg <= fifoIn_checksum_dout;
             fifoIn_checksum_done_ <= 1;
             if (!fifoIn_fv) begin
                 $display("[ImgController:fifoIn] Frame end");
@@ -345,7 +348,7 @@ module ImgController #(
         8: begin
             $display("[ImgController:fifoIn] Writing checksum (checksum: %h)", fifoIn_checksum_dout);
             fifoIn_write_trigger <= 1;
-            fifoIn_write_data <= fifoIn_checksum_done_ ? `LeftBits(fifoIn_checksum_dout,0,16) : `RightBits(fifoIn_checksum_dout,0,16);
+            fifoIn_write_data <= `LeftBits(fifoIn_checksum_shiftReg,0,16);
             if (!fifoIn_checksum_done_) begin
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
