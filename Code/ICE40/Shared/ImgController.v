@@ -226,7 +226,6 @@ module ImgController #(
     wire fifoIn_lv = img_lv_reg;
     wire fifoIn_fv = img_fv_reg;
     reg fifoIn_lvPrev = 0;
-    reg fifoIn_fvPrev = 0;
     reg[1:0] fifoIn_x = 0;
     reg[1:0] fifoIn_y = 0;
     reg fifoIn_countStat = 0;
@@ -239,13 +238,12 @@ module ImgController #(
     always @(posedge img_dclk) begin
         fifoIn_rst <= 0; // Pulse
         fifoIn_lvPrev <= fifoIn_lv;
-        fifoIn_fvPrev <= fifoIn_fv;
         fifoIn_header <= fifoIn_header<<16;
         fifoIn_headerCount <= fifoIn_headerCount-1;
         fifoIn_write_trigger <= 0; // Pulse
         fifoIn_countStat <= 0; // Pulse
         fifoIn_checksum_rst <= 0; // Pulse
-        fifoIn_checksum_count <= 0; // Pulse
+        fifoIn_checksum_count <= fifoIn_checksum_count-1;
         fifoIn_checksum_shiftReg <= fifoIn_checksum_shiftReg<<16;
         
         if (fifoIn_write_trigger) begin
@@ -315,16 +313,24 @@ module ImgController #(
             end
         end
         
-        // Wait for the frame to start
+        // Wait for the frame to be invalid
         5: begin
-            if (fifoIn_fv && !fifoIn_fvPrev) begin
-                $display("[ImgController:fifoIn] Waiting for frame to start...");
+            if (!fifoIn_fv) begin
+                $display("[ImgController:fifoIn] Waiting for frame invalid...");
                 fifoIn_state <= 6;
             end
         end
         
-        // Wait until the end of the frame
+        // Wait for the frame to start
         6: begin
+            if (fifoIn_fv) begin
+                $display("[ImgController:fifoIn] Frame start");
+                fifoIn_state <= 7;
+            end
+        end
+        
+        // Wait until the end of the frame
+        7: begin
             fifoIn_countStat <= (fifoIn_lv && !fifoIn_x && !fifoIn_y);
             fifoIn_write_trigger <= fifoIn_lv;
             fifoIn_write_data <= {4'b0, img_d_reg};
@@ -332,24 +338,19 @@ module ImgController #(
             fifoIn_checksum_shiftReg <= fifoIn_checksum_dout;
             if (!fifoIn_fv) begin
                 $display("[ImgController:fifoIn] Frame end");
-                fifoIn_state <= 7;
+                fifoIn_state <= 8;
             end
         end
         
         // Write checksum
-        7: begin
-            $display("[ImgController:fifoIn] Writing checksum (checksum: %h)", fifoIn_checksum_dout);
-            fifoIn_write_trigger <= 1;
-            fifoIn_write_data <= `LeftBits(fifoIn_checksum_shiftReg,0,16);
-            fifoIn_state <= 8;
-        end
-        
         8: begin
             $display("[ImgController:fifoIn] Writing checksum (checksum: %h)", fifoIn_checksum_dout);
             fifoIn_write_trigger <= 1;
             fifoIn_write_data <= `LeftBits(fifoIn_checksum_shiftReg,0,16);
-            fifoIn_done <= 1;
-            fifoIn_state <= 0;
+            if (!fifoIn_checksum_count) begin
+                fifoIn_done <= 1;
+                fifoIn_state <= 0;
+            end
         end
         endcase
         
