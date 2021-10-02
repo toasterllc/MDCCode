@@ -1,7 +1,5 @@
 - Rev4 Todo
     
-    - Add CRC to the end of images
-    
     - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
         - Does the USB hub limit the data throughput?
         - Perf debugging tactic: check how often the DIEPINT.NAK interrupt occurs when sending mass data to the
@@ -12,6 +10,12 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ Add checksum to the end of images
+        - Ended up using Fletcher-32 checksum.
+            - Ideally we'd use a CRC, but we can't because they're computed a bit at a time,
+              and our data is incoming at 16-bits per clock. So we use a checksum instead
+              since it can be computed a 16-bit word at a time.
     
     √ ICEAppMSP: add image counter to image header, so software can keep track of which images have already been downloaded
     
