@@ -278,21 +278,21 @@ module Testbench();
         TestImgSetHeader(1, {32'hCAFEBABE /* counter */, 24'b0 /* padding */});
         TestImgSetHeader(2, {32'hDEADBEEF /* timestamp */, 24'b0 /* padding */});
         TestImgSetHeader(3, {16'h1111 /* exposure */, 16'h2222 /* gain */, 24'b0 /* padding */});
-        // TestImgI2CWriteRead();
+        TestImgI2CWriteRead();
         TestImgCapture();
         
         TestSDInit();
-        // TestSDCMD0();
-        // TestSDCMD8();
-        // TestSDCMD2();
-        // TestSDCMD6();
+        TestSDCMD0();
+        TestSDCMD8();
+        TestSDCMD2();
+        TestSDCMD6();
         //           delay, speed,                            trigger, reset
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
 
-        // TestSDRespRecovery();
+        TestSDRespRecovery();
         TestSDDatOut();
-        // TestSDDatOutRecovery();
+        TestSDDatOutRecovery();
         
         `Finish;
     end
