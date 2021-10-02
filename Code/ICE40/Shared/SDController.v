@@ -480,6 +480,7 @@ module SDController #(
             datIn_crcEn <= 1;
             
             if (!datInWrite_counter) begin
+                // $display("[SDController:DATIN] Received word: %h", datIn_reg[15:0]);
                 datInWrite_trigger <= 1;
             end
             
@@ -492,33 +493,33 @@ module SDController #(
         
         5: begin
             if (datIn_crc[3] == datIn_reg[3]) begin
-                $display("[SDController:DATIN] DAT3 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[7]);
+                $display("[SDController:DATIN] DAT3 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[3]);
             end else begin
-                $display("[SDController:DATIN] Bad DAT3 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[7]);
+                $display("[SDController:DATIN] Bad DAT3 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[3], datIn_reg[3]);
                 `Finish;
                 datIn_crcErr <= 1;
             end
             
             if (datIn_crc[2] == datIn_reg[2]) begin
-                $display("[SDController:DATIN] DAT2 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[6]);
+                $display("[SDController:DATIN] DAT2 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[2]);
             end else begin
-                $display("[SDController:DATIN] Bad DAT2 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[6]);
+                $display("[SDController:DATIN] Bad DAT2 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[2], datIn_reg[2]);
                 `Finish;
                 datIn_crcErr <= 1;
             end
             
             if (datIn_crc[1] == datIn_reg[1]) begin
-                $display("[SDController:DATIN] DAT1 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[5]);
+                $display("[SDController:DATIN] DAT1 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[1]);
             end else begin
-                $display("[SDController:DATIN] Bad DAT1 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[5]);
+                $display("[SDController:DATIN] Bad DAT1 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[1], datIn_reg[1]);
                 `Finish;
                 datIn_crcErr <= 1;
             end
             
             if (datIn_crc[0] == datIn_reg[0]) begin
-                $display("[SDController:DATIN] DAT0 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[4]);
+                $display("[SDController:DATIN] DAT0 CRC valid ✅ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[0]);
             end else begin
-                $display("[SDController:DATIN] Bad DAT0 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[4]);
+                $display("[SDController:DATIN] Bad DAT0 CRC ❌ (ours: %b, theirs: %b)", datIn_crc[0], datIn_reg[0]);
                 `Finish;
                 datIn_crcErr <= 1;
             end
@@ -531,9 +532,9 @@ module SDController #(
         6: begin
             // Check end bits
             if (datIn_reg[3:0] === 4'b1111) begin
-                $display("[SDController:DATIN] Good end bits ✅ (expected: %b, got: 4'b1111) ✅", datIn_reg[7:4]);
+                $display("[SDController:DATIN] Good end bits ✅ (expected: %b, got: 4'b1111) ✅", datIn_reg[3:0]);
             end else begin
-                $display("[SDController:DATIN] Bad end bits ❌ (expected: %b, got: 4'b1111) ✅", datIn_reg[7:4]);
+                $display("[SDController:DATIN] Bad end bits ❌ (expected: %b, got: 4'b1111) ✅", datIn_reg[3:0]);
                 `Finish;
                 datIn_crcErr <= 1;
             end
