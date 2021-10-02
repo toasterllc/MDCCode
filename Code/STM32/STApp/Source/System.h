@@ -1,6 +1,6 @@
 #include "SystemBase.h"
 #include "QSPI.h"
-#include "ICE40.h"
+#include "ICE40Types.h"
 #include "BufQueue.h"
 #include "USB.h"
 #include "STAppTypes.h"

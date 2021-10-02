@@ -3,7 +3,8 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <cstddef>
-#include "ICE40.h"
+#include "MDCTypes.h"
+#include "ICE40Types.h"
 
 using EchoMsg = ICE40::EchoMsg;
 using EchoResp = ICE40::EchoResp;
@@ -13,8 +14,7 @@ using SDSendCmdMsg = ICE40::SDSendCmdMsg;
 using SDStatusMsg = ICE40::SDStatusMsg;
 using SDStatusResp = ICE40::SDStatusResp;
 using ImgResetMsg = ICE40::ImgResetMsg;
-using ImgSetHeader1Msg = ICE40::ImgSetHeader1Msg;
-using ImgSetHeader2Msg = ICE40::ImgSetHeader2Msg;
+using ImgSetHeaderMsg = ICE40::ImgSetHeaderMsg;
 using ImgCaptureMsg = ICE40::ImgCaptureMsg;
 using ImgReadoutMsg = ICE40::ImgReadoutMsg;
 using ImgI2CTransactionMsg = ICE40::ImgI2CTransactionMsg;
@@ -1028,34 +1028,34 @@ ImgCaptureStatusResp _img_captureStatus() {
     return resp;
 }
 
-struct ImgHeader {
-    uint8_t version         = 0;            // 0x42
-    uint32_t timestamp      = 0;            // 0xAABBCCDD
-    uint16_t imageWidth     = 0;            // 0x0900
-    uint16_t imageHeight    = 0;            // 0x0510
-    uint16_t exposure       = 0;            // 0x1111
-    uint16_t gain           = 0;            // 0x2222
-    uint8_t pad[3]          = {};           // 0x000000
-} __attribute__((packed));
-
 void _img_captureImage() {
-    const ImgHeader header = {
-        .version        = 0x42,
-        .timestamp      = 0xAABBCCDD,
+    const MDC::ImgHeader header = {
+        // Section idx=0
+        .version        = 0x4242,
         .imageWidth     = 2304,
         .imageHeight    = 1296,
+        ._pad0          = 0,
+        // Section idx=1
+        .counter        = 0xCAFEBABE,
+        ._pad1          = 0,
+        // Section idx=2
+        .timestamp      = 0xDEADBEEF,
+        ._pad2          = 0,
+        // Section idx=3
         .exposure       = 0x1111,
         .gain           = 0x2222,
+        ._pad3          = 0,
     };
     
-    _ice_transfer(ImgSetHeader1Msg((const uint8_t*)&header));
-    _ice_transfer(ImgSetHeader2Msg((const uint8_t*)&header+ImgSetHeader1Msg::Len));
+    // Set the header of the image
+    for (uint8_t i=0, off=0; i<4; i++, off+=8) {
+        _ice_transfer(ImgSetHeaderMsg(i, (const uint8_t*)&header+off));
+    }
+    
+    // Tell ICE40 to start capturing an image
     _ice_transfer(ImgCaptureMsg(0));
     
     // Wait for command to be sent
-    constexpr uint32_t ImgWidth = 2304;
-    constexpr uint32_t ImgHeight = 1296;
-    constexpr uint32_t ImgWordCount = (sizeof(ImgHeader)/2)+ImgWidth*ImgHeight;
     constexpr uint16_t MaxAttempts = 1000;
     for (uint16_t i=0; i<MaxAttempts; i++) {
         if (i >= 10) _delayMs(1);
@@ -1063,7 +1063,7 @@ void _img_captureImage() {
         // Try again if the image hasn't been captured yet
         if (!status.done()) continue;
         const uint32_t imgWordCount = status.wordCount();
-        Assert(imgWordCount == ImgWordCount);
+        Assert(imgWordCount == MDC::ImgLen/sizeof(uint16_t));
         return;
     }
     // Timeout capturing image

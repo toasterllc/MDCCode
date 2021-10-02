@@ -224,7 +224,6 @@ struct ImgResetMsg : Msg {
 };
 
 struct ImgSetHeaderMsg : Msg {
-    static constexpr size_t Len = 7;
     ImgSetHeaderMsg(uint8_t idx, const uint8_t* h) {
         type = MsgType::StartBit | 0x07;
         payload[0] = h[0];
@@ -233,7 +232,7 @@ struct ImgSetHeaderMsg : Msg {
         payload[3] = h[3];
         payload[4] = h[4];
         payload[5] = h[5];
-        payload[6] = h[6];
+        payload[6] = idx;
     }
 };
 
