@@ -274,10 +274,10 @@ module Testbench();
         
         // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
         TestImgReset();
-        TestImgSetHeader(0, {16'h4242 /* version */, 16'd2304 /* image width */, 16'd1296 /* image height */, 8'b0 /* padding */});
-        TestImgSetHeader(1, {32'hCAFEBABE /* counter */, 24'b0 /* padding */});
-        TestImgSetHeader(2, {32'hDEADBEEF /* timestamp */, 24'b0 /* padding */});
-        TestImgSetHeader(3, {16'h1111 /* exposure */, 16'h2222 /* gain */, 24'b0 /* padding */});
+        TestImgSetHeader(0, {16'h4242 /* version */, 16'd2304 /* image width */, 16'd1296 /* image height */});
+        TestImgSetHeader(1, {32'hCAFEBABE /* counter */, 16'b0 /* padding */});
+        TestImgSetHeader(2, {32'hDEADBEEF /* timestamp */, 16'b0 /* padding */});
+        TestImgSetHeader(3, {16'h1111 /* exposure */, 16'h2222 /* gain */, 16'b0 /* padding */});
         TestImgI2CWriteRead();
         TestImgCapture();
         

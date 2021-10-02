@@ -50,6 +50,8 @@ task TestImgI2CWriteRead; begin
     reg[`Msg_Arg_Len-1:0] arg;
     reg done;
     
+    $display("\n[Testbench] ========== TestImgI2CWriteRead ==========");
+    
     // ====================
     // Test ImgI2C Write (len=2)
     // ====================
@@ -179,18 +181,16 @@ task TestImgI2CWriteRead; begin
     end
 end endtask
 
-task TestImgSetHeader(input[7:0] idx, input[`Msg_Arg_Len-1:0] arg); begin
-    $display("\n[Testbench] ========== TestImgSetHeader%0d ==========", idx);
-    case (idx)
-    0: SendMsg(`Msg_Type_ImgSetHeader0, arg);
-    1: SendMsg(`Msg_Type_ImgSetHeader1, arg);
-    2: SendMsg(`Msg_Type_ImgSetHeader2, arg);
-    3: SendMsg(`Msg_Type_ImgSetHeader3, arg);
-    default: begin
-        $display("[Testbench] Invalid header index %0d", idx);
-        `Finish;
-    end
-    endcase
+task TestImgSetHeader(input[`Msg_Arg_ImgSetHeader_Idx_Len-1:0] idx, input[`Msg_Arg_ImgSetHeader_Header_Len-1:0] header); begin
+    reg[`Msg_Arg_Len-1:0] arg;
+    
+    $display("\n[Testbench] ========== TestImgSetHeader (idx:%0d, header:%h) ==========", idx, header);
+    
+    arg = 0;
+    arg[`Msg_Arg_ImgSetHeader_Idx_Bits]     = idx;
+    arg[`Msg_Arg_ImgSetHeader_Header_Bits]  = header;
+    
+    SendMsg(`Msg_Type_ImgSetHeader, arg);
 end endtask
 
 task TestImgCapture; begin
