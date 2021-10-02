@@ -932,15 +932,11 @@ module SDCardSim #(
                     datOut = 4'b1111;
                     wait(sd_clk);
                     
-                    // Wait between [4,16] cycles before starting the next block.
+                    // Wait between [8,20] cycles before starting the next block.
                     //
-                    // The SD spec specifies exactly N_AC cycles between blocks,
+                    // The SD spec specifies exactly N_AC=8 cycles between blocks,
                     // but we want to make sure that SDController is more robust
                     // to a varying number of cycles.
-                    //
-                    // The SD spec also specifies that min(N_AC)=8 cycles, but
-                    // again we want to be more robust, so we allow down to 4
-                    // cycles.
                     count = 8+($urandom%13);
                     $display("[SDCardSim:ReadData] Waiting %0d cycles before outputting next block", count);
                     for (i=0; i<count; i++) begin
