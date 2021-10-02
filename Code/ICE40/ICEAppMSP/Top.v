@@ -365,7 +365,7 @@ module Top(
                 
                 if (sdcmd6_counter === 23) begin
                     sdcmd6_accessMode <= sd_datInWrite_data[11:8];
-                    $display("sdcmd6_accessMode: %h", sd_datInWrite_data[11:8]);
+                    $display("[SPI] sdcmd6_accessMode: %h", sd_datInWrite_data[11:8]);
                 end
             end
         end
@@ -453,7 +453,7 @@ module Top(
             SPI_State_MsgIn: begin
                 // Verify that we never get a clock while spi_dataIn is undriven (z) / invalid (x)
                 if (spi_dataIn!==1'b0 && spi_dataIn!==1'b1) begin
-                    $display("spi_dataIn invalid: %b ❌", spi_dataIn);
+                    $display("[SPI] spi_dataIn invalid: %b ❌", spi_dataIn);
                     #1000;
                     `Finish;
                 end
@@ -552,24 +552,18 @@ module Top(
                     img_rst_ <= spi_msgArg[`Msg_Arg_ImgReset_Val_Bits];
                 end
                 
-                `Msg_Type_ImgSetHeader0: begin
-                    $display("[SPI] Got Msg_Type_ImgSetHeader0 (header=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits]);
-                    `LeftBits(imgctrl_cmd_header,0*64,56) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
-                end
-                
-                `Msg_Type_ImgSetHeader1: begin
-                    $display("[SPI] Got Msg_Type_ImgSetHeader1 (header=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits]);
-                    `LeftBits(imgctrl_cmd_header,1*64,56) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
-                end
-                
-                `Msg_Type_ImgSetHeader2: begin
-                    $display("[SPI] Got Msg_Type_ImgSetHeader2 (header=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits]);
-                    `LeftBits(imgctrl_cmd_header,2*64,56) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
-                end
-                
-                `Msg_Type_ImgSetHeader3: begin
-                    $display("[SPI] Got Msg_Type_ImgSetHeader3 (header=%x)", spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits]);
-                    `LeftBits(imgctrl_cmd_header,3*64,56) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                `Msg_Type_ImgSetHeader: begin
+                    $display("[SPI] Got Msg_Type_ImgSetHeader (idx=%h, header=%h)",
+                        spi_msgArg[`Msg_Arg_ImgSetHeader_Idx_Bits],
+                        spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits]
+                    );
+                    
+                    case (spi_msgArg[`Msg_Arg_ImgSetHeader_Idx_Bits])
+                    0: `LeftBits(imgctrl_cmd_header,0*64,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    1: `LeftBits(imgctrl_cmd_header,1*64,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    2: `LeftBits(imgctrl_cmd_header,2*64,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    3: `LeftBits(imgctrl_cmd_header,3*64,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    endcase
                 end
                 
                 `Msg_Type_ImgCapture: begin
@@ -610,7 +604,7 @@ module Top(
                 end
                 
                 `Msg_Type_ImgI2CStatus: begin
-                    $display("[SPI] Got Msg_Type_ImgI2CStatus done_:%0d err:%0d readData:0x%x)",
+                    $display("[SPI] Got Msg_Type_ImgI2CStatus done_:%0d err:%0d readData:0x%h)",
                         spi_imgi2c_done_,
                         imgi2c_status_err,
                         imgi2c_status_readData
