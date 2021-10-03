@@ -260,6 +260,9 @@ module Testbench();
         `Finish;
     end endtask
     
+    EndianSwap #(.Width(16)) LittleFromHost16();
+    EndianSwap #(.Width(32)) LittleFromHost32();
+    
     initial begin
         TestRst();
         TestEcho(56'h00000000000000);
@@ -274,10 +277,28 @@ module Testbench();
         
         // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
         TestImgReset();
-        TestImgSetHeader(0, {16'h4242 /* version */, 16'd2304 /* image width */, 16'd1296 /* image height */});
-        TestImgSetHeader(1, {32'hCAFEBABE /* counter */, 16'b0 /* padding */});
-        TestImgSetHeader(2, {32'hDEADBEEF /* timestamp */, 16'b0 /* padding */});
-        TestImgSetHeader(3, {16'h1111 /* exposure */, 16'h2222 /* gain */, 16'b0 /* padding */});
+        TestImgSetHeader(0, {
+            LittleFromHost16.Swap(16'h4242)     /* version      */,
+            LittleFromHost16.Swap(16'd2304)     /* image width  */,
+            LittleFromHost16.Swap(16'd1296)     /* image height */
+        });
+        
+        TestImgSetHeader(1, {
+            LittleFromHost32.Swap(32'hCAFEBABE) /* counter      */,
+            LittleFromHost16.Swap(16'b0)        /* padding      */
+        });
+        
+        TestImgSetHeader(2, {
+            LittleFromHost32.Swap(32'hDEADBEEF) /* timestamp    */,
+            LittleFromHost16.Swap(16'b0)        /* padding      */
+        });
+        
+        TestImgSetHeader(3, {
+            LittleFromHost16.Swap(16'h1111)     /* exposure     */,
+            LittleFromHost16.Swap(16'h2222)     /* gain         */,
+            LittleFromHost16.Swap(16'b0)        /* padding      */
+        });
+        
         TestImgI2CWriteRead();
         TestImgCapture();
         
@@ -289,7 +310,7 @@ module Testbench();
         //           delay, speed,                            trigger, reset
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
-
+        
         TestSDRespRecovery();
         TestSDDatOut();
         TestSDDatOutRecovery();

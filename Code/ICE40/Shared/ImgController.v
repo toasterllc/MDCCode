@@ -201,7 +201,9 @@ module ImgController #(
         .dout   (fifoIn_checksum_dout)
     );
     assign fifoIn_checksum_clk  = img_dclk;
-    assign fifoIn_checksum_din  = fifoIn_write_data;
+    // fifoIn_checksum_din: treat `fifoIn_write_data` values as little-endian when
+    // calculating the checksum, to match host behavior
+    assign fifoIn_checksum_din  = {fifoIn_write_data[7:0], fifoIn_write_data[15:8]};
     
     // ====================
     // Pixel input state machine
@@ -346,7 +348,7 @@ module ImgController #(
         
         // Write checksum
         8: begin
-            $display("[ImgController:fifoIn] Writing checksum (checksum: %h)", fifoIn_checksum_dout);
+            $display("[ImgController:fifoIn] Writing checksum %0d/2 (checksum: %h)", (fifoIn_checksum_done_ ? 1 : 2), fifoIn_checksum_dout);
             fifoIn_write_trigger <= 1;
             fifoIn_write_data <= {fifoIn_checksum_shiftReg[7:0], fifoIn_checksum_shiftReg[15:8]}; // Little endian
             if (!fifoIn_checksum_done_) begin

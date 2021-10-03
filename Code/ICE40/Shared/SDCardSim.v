@@ -496,11 +496,15 @@ module SDCardSim #(
         end
     end
     
+    // ====================
+    // Handle writing to the card
+    // ====================
     
-    // ====================
+    EndianSwap #(.Width(16)) Recv_HostFromLittle16();
+    EndianSwap #(.Width(32)) Recv_HostFromLittle32();
+    
     // Checksum of written data
-    //   This is to validate the Fletcher32 checksum appended to the image data
-    // ====================
+    // This is to validate the Fletcher32 checksum appended to the image data
     reg         recv_checksum_clk = 0;
     reg         recv_checksum_rst = 0;
     reg         recv_checksum_en = 0;
@@ -517,18 +521,15 @@ module SDCardSim #(
     );
     
     task ChecksumConsumeWord(input[15:0] word); begin
-        recv_checksum_din   = word;
+        // Treat the word as a little-endian uint16, mimicking the checksum
+        // algorithm on the host computer reading from the SD card
+        recv_checksum_din   = Recv_HostFromLittle16.Swap(word);
         recv_checksum_en    = 1; #1;
         recv_checksum_clk   = 1; #1;
         recv_checksum_clk   = 0; #1;
         recv_checksum_en    = 0; #1;
     end endtask
     
-    // ====================
-    // Handle writing to the card
-    // ====================
-    EndianSwap #(.Width(16)) Recv_HostFromLittle16();
-    EndianSwap #(.Width(32)) Recv_HostFromLittle32();
     initial begin
         reg[31:0]   recvWordCounter;
         reg[15:0]   recvWordPrev;
