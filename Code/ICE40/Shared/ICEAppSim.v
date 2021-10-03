@@ -251,7 +251,6 @@ localparam ACMD23    = 6'd23;   // SET_WR_BLK_ERASE_COUNT
 task SendSDCmd(
     input[5:0] sdCmd,
     input[`Msg_Arg_SDSendCmd_RespType_Len-1:0] respType,
-    input[`Msg_Arg_SDSendCmd_DatOutType_Len-1:0] datOutType,
     input[`Msg_Arg_SDSendCmd_DatInType_Len-1:0] datInType,
     input[31:0] sdArg
 ); begin
@@ -259,7 +258,6 @@ task SendSDCmd(
     reg[`Msg_Arg_Len-1] arg;
     arg = 0;
     arg[`Msg_Arg_SDSendCmd_RespType_Bits] = respType;
-    arg[`Msg_Arg_SDSendCmd_DatOutType_Bits] = datOutType;
     arg[`Msg_Arg_SDSendCmd_DatInType_Bits] = datInType;
     arg[`Msg_Arg_SDSendCmd_CmdData_Bits] = {2'b01, sdCmd, sdArg, 7'b0, 1'b1};
     
@@ -269,14 +267,13 @@ end endtask
 task SendSDCmdResp(
     input[5:0] sdCmd,
     input[`Msg_Arg_SDSendCmd_RespType_Len-1:0] respType,
-    input[`Msg_Arg_SDSendCmd_DatOutType_Len-1:0] datOutType,
     input[`Msg_Arg_SDSendCmd_DatInType_Len-1:0] datInType,
     input[31:0] sdArg
 ); begin
     
     reg[15:0] i;
     reg done;
-    SendSDCmd(sdCmd, respType, datOutType, datInType, sdArg);
+    SendSDCmd(sdCmd, respType, datInType, sdArg);
     
     // Wait for SD command to be sent
     done = 0;
@@ -362,7 +359,7 @@ task TestSDCMD0; begin
     // Test SD CMD0 (GO_IDLE)
     // ====================
     $display("\n[Testbench] ========== TestSDCMD0 ==========");
-    SendSDCmdResp(CMD0, `SDController_RespType_None, `SDController_DatOutType_None, `SDController_DatInType_None, 0);
+    SendSDCmdResp(CMD0, `SDController_RespType_None, `SDController_DatInType_None, 0);
 end endtask
 
 task TestSDCMD2; begin
@@ -375,7 +372,7 @@ task TestSDCMD2; begin
     $display("\n[Testbench] ========== TestSDCMD2 ==========");
     
     // Send SD command CMD2 (ALL_SEND_CID)
-    SendSDCmdResp(CMD2, `SDController_RespType_136, `SDController_DatOutType_None, `SDController_DatInType_None, 0);
+    SendSDCmdResp(CMD2, `SDController_RespType_136, `SDController_DatInType_None, 0);
     $display("[Testbench] ====================================================");
     $display("[Testbench] ^^^ WE EXPECT CRC ERRORS IN THE SD CARD RESPONSE ^^^");
     $display("[Testbench] ====================================================");
@@ -389,7 +386,7 @@ task TestSDCMD6; begin
     $display("\n[Testbench] ========== TestSDCMD6 ==========");
     
     // Send SD command CMD6 (SWITCH_FUNC)
-    SendSDCmdResp(CMD6, `SDController_RespType_48, `SDController_DatOutType_None, `SDController_DatInType_512x1, 32'h80FFFFF3);
+    SendSDCmdResp(CMD6, `SDController_RespType_48, `SDController_DatInType_512x1, 32'h80FFFFF3);
     
     // Check DatIn CRC status
     if (spi_resp[`Resp_Arg_SDStatus_DatInCRCErr_Bits] === 1'b0) begin
@@ -411,7 +408,7 @@ task TestSDCMD8; begin
     $display("\n[Testbench] ========== TestSDCMD8 ==========");
     
     // Send SD CMD8
-    SendSDCmdResp(CMD8, `SDController_RespType_48, `SDController_DatOutType_None, `SDController_DatInType_None, 32'h000001AA);
+    SendSDCmdResp(CMD8, `SDController_RespType_48, `SDController_DatInType_None, 32'h000001AA);
     if (spi_resp[`Resp_Arg_SDStatus_RespCRCErr_Bits] !== 1'b0) begin
         $display("[Testbench] CRC error ❌");
         `Finish;
@@ -431,7 +428,7 @@ task TestSDRespRecovery; begin
     $display("\n[Testbench] ========== TestSDRespRecovery ==========");
     
     // Send an SD command that doesn't provide a response
-    SendSDCmd(CMD0, `SDController_RespType_48, `SDController_DatOutType_None, `SDController_DatInType_None, 0);
+    SendSDCmd(CMD0, `SDController_RespType_48, `SDController_DatInType_None, 0);
     $display("[Testbench] Verifying that Resp times out...");
     done = 0;
     for (i=0; i<10 && !done; i++) begin
@@ -466,15 +463,14 @@ task TestSDDatOut; begin
     $display("\n========== TestSDDatOut ==========");
     
     // Send SD command ACMD23 (SET_WR_BLK_ERASE_COUNT)
-    SendSDCmdResp(CMD55, `SDController_RespType_48, `SDController_DatOutType_None, `SDController_DatInType_None, 32'b0);
-    SendSDCmdResp(ACMD23, `SDController_RespType_48, `SDController_DatOutType_None, `SDController_DatInType_None, 32'b1);
-    
-    // Start image readout
-    // Do this before sending CMD25, so that the output FIFO is filled before we trigger the SD DatOut state machine
-    TestImgReadout();
+    SendSDCmdResp(CMD55, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
+    SendSDCmdResp(ACMD23, `SDController_RespType_48, `SDController_DatInType_None, 32'b1);
     
     // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
-    SendSDCmdResp(CMD25, `SDController_RespType_48, `SDController_DatOutType_512xN, `SDController_DatInType_None, 32'b0);
+    SendSDCmdResp(CMD25, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
+    
+    // Start image readout
+    TestImgReadout();
     
     // Wait until we're done clocking out data on DAT lines
     $display("[Testbench] Waiting while data is written...");
@@ -493,7 +489,7 @@ task TestSDDatOut; begin
     end
     
     // Stop transmission
-    SendSDCmdResp(CMD12, `SDController_RespType_48, `SDController_DatOutType_None, `SDController_DatInType_None, 32'b0);
+    SendSDCmdResp(CMD12, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
 end endtask
 
 task TestSDDatOutRecovery; begin
@@ -537,12 +533,12 @@ task TestSDDatIn; begin
     $display("\n[Testbench] ========== TestSDDatIn ==========");
     
     // Send SD command CMD18 (READ_MULTIPLE_BLOCK)
-    SendSDCmdResp(CMD18, `SDController_RespType_48, `SDController_DatOutType_None, `SDController_DatInType_4096xN, 32'b0);
+    SendSDCmdResp(CMD18, `SDController_RespType_48, `SDController_DatInType_4096xN, 32'b0);
     
     TestSDDatIn_Readout();
     
     // Stop transmission
-    SendSDCmdResp(CMD12, `SDController_RespType_48, `SDController_DatOutType_None, `SDController_DatInType_None, 32'b0);
+    SendSDCmdResp(CMD12, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
 end endtask
 
 task TestSDDatInRecovery; begin
@@ -553,7 +549,7 @@ task TestSDDatInRecovery; begin
     
     // Send SD command that doesn't respond on the DAT lines,
     // but specify that we expect DAT data
-    SendSDCmd(CMD8, `SDController_RespType_48, `SDController_DatOutType_None, `SDController_DatInType_512x1, 0);
+    SendSDCmd(CMD8, `SDController_RespType_48, `SDController_DatInType_512x1, 0);
     $display("[Testbench] Verifying that DatIn times out...");
     done = 0;
     for (i=0; i<10 && !done; i++) begin

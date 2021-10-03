@@ -16,9 +16,6 @@
 `define SDController_RespType_48                    2'b01
 `define SDController_RespType_136                   2'b10
 
-`define SDController_DatOutType_None                1'b0
-`define SDController_DatOutType_512xN               1'b1    // 512xN bit data; writes indefinitely via `datOutRead` port, until a new SD command is issued
-
 `define SDController_DatInType_None                 2'b00
 `define SDController_DatInType_512x1                2'b01   // 512x1 bit response (eg CMD6 response)
 `define SDController_DatInType_4096xN               2'b10   // 4096xN bit response (eg mass data read response)
@@ -46,7 +43,6 @@ module SDController #(
     input wire          cmd_trigger,        // Toggle signal
     input wire[47:0]    cmd_data,
     input wire[1:0]     cmd_respType,
-    input wire          cmd_datOutType,
     input wire[1:0]     cmd_datInType,
     output reg          cmd_done = 0,       // Toggle signal
     
@@ -173,6 +169,7 @@ module SDController #(
     wire[4:0] datOut_crcStatus = {datIn_reg[16], datIn_reg[12], datIn_reg[8], datIn_reg[4], datIn_reg[0]};
     wire datOut_crcStatusOK = datOut_crcStatus===5'b0_010_1; // 5 bits: start bit, CRC status, end bit
     reg datOut_crcStatusOKReg = 0;
+    `TogglePulse(datOut_triggerPulse, datOut_trigger, posedge, clk_int);
     
     reg[2:0] datIn_state = 0;
     wire[3:0] datIn;
@@ -323,10 +320,6 @@ module SDController #(
             
             // Signal that we're done
             resp_done <= !resp_done;
-            
-            // Start DatOut if needed
-            datOut_state <= (cmd_datOutType===`SDController_DatOutType_None ? 0 : 1);
-            
             resp_state <= 0;
         end
         endcase
@@ -339,10 +332,13 @@ module SDController #(
         end
         
         1: begin
+            // TODO: perf: remove this state:
+            // TODO:   move `datOut_crcErr <= 0;` to 0 state
+            // TODO:   we don't need to check for datOutRead_ready
+            $display("[SDController:DatOut] Write session starting");
             datOut_crcErr <= 0;
             // Wait for data to start
             if (datOutRead_ready) begin
-                $display("[SDController:DatOut] Write session starting");
                 datOut_state <= 2;
             end
         end
@@ -443,6 +439,11 @@ module SDController #(
 `endif
         end
         endcase
+        
+        if (datOut_triggerPulse) begin
+            $display("[SDController:DatOut] Triggered");
+            datOut_state <= 1;
+        end
         
         // ====================
         // DatIn State Machine
@@ -618,8 +619,6 @@ module SDController #(
             cmd_active[0] <= 1;
             $display("[SDController:Cmd] Done");
             cmd_done <= !cmd_done;
-            // Note that `datOut_state` is assigned by the Resp state machine, since DatOut
-            // needs to start after the end of the SD card's response
             resp_state <= (cmd_respType===`SDController_RespType_None ? 0 : 1);
             datIn_state <= (cmd_datInType===`SDController_DatInType_None ? 0 : 1);
             cmd_state <= 0;

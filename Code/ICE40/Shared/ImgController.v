@@ -15,19 +15,20 @@ module ImgController #(
     input wire          clk,
     
     // Command port (clock domain: `clk`)
-    input wire                  cmd_capture,    // Toggle
-    input wire                  cmd_readout,    // Toggle
+    input wire                  cmd_capture,    // Toggle signal
+    input wire                  cmd_readout,    // Toggle signal
     input wire[0:0]             cmd_ramBlock,
     input wire[HeaderWidth-1:0] cmd_header,
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
+    output reg          readout_start = 0,  // Toggle signal
     output wire         readout_ready,
     input wire          readout_trigger,
     output wire[15:0]   readout_data,
     
     // Status port (clock domain: `clk`)
-    output reg                                  status_captureDone = 0, // Toggle
+    output reg                                  status_captureDone = 0, // Toggle signal
     output wire[`RegWidth(ImageSizeMax)-1:0]    status_captureWordCount,
     output wire[17:0]                           status_captureHighlightCount,
     output wire[17:0]                           status_captureShadowCount,
@@ -373,8 +374,8 @@ module ImgController #(
     
     localparam Ctrl_State_Idle          = 0; // +0
     localparam Ctrl_State_Capture       = 1; // +3
-    localparam Ctrl_State_Readout       = 5; // +2
-    localparam Ctrl_State_Count         = 8;
+    localparam Ctrl_State_Readout       = 5; // +3
+    localparam Ctrl_State_Count         = 9;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -470,6 +471,14 @@ module ImgController #(
         end
         
         Ctrl_State_Readout+2: begin
+            // Wait for the FIFO to be filled before signalling for readout to start
+            if (!fifoOut_write_ready) begin
+                readout_start <= !readout_start;
+                ctrl_state <= Ctrl_State_Readout+3;
+            end
+        end
+        
+        Ctrl_State_Readout+3: begin
             if (ctrl_fifoOutDone) begin
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 ctrl_state <= Ctrl_State_Idle;
