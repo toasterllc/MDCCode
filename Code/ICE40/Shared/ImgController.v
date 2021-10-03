@@ -245,6 +245,7 @@ module ImgController #(
         fifoIn_countStat <= 0; // Pulse
         fifoIn_checksum_rst <= 0; // Pulse
         fifoIn_checksum_en <= 0; // Pulse
+        fifoIn_checksum_shiftReg <= fifoIn_checksum_shiftReg>>16;
         fifoIn_checksum_done <= 1; // Pulse
         
         if (fifoIn_write_trigger) begin
@@ -349,12 +350,7 @@ module ImgController #(
         8: begin
             $display("[ImgController:fifoIn] Writing checksum %0d/2 (checksum: %h)", (fifoIn_checksum_done ? 1 : 2), fifoIn_checksum_dout);
             fifoIn_write_trigger <= 1;
-            
-            if (!fifoIn_checksum_done)
-                fifoIn_write_data <= {fifoIn_checksum_shiftReg[7-:8], fifoIn_checksum_shiftReg[15-:8]}; // Little endian
-            else
-                fifoIn_write_data <= {fifoIn_checksum_shiftReg[23-:8], fifoIn_checksum_shiftReg[31-:8]}; // Little endian
-            
+            fifoIn_write_data <= {fifoIn_checksum_shiftReg[7:0], fifoIn_checksum_shiftReg[15:8]}; // Little endian
             if (fifoIn_checksum_done) begin
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
