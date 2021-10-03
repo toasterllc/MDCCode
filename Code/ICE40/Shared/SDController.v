@@ -329,30 +329,19 @@ module SDController #(
         // ====================
         case (datOut_state)
         0: begin
+            datOut_crcErr <= 0;
         end
         
         1: begin
-            // TODO: perf: remove this state:
-            // TODO:   move `datOut_crcErr <= 0;` to 0 state
-            // TODO:   we don't need to check for datOutRead_ready
-            $display("[SDController:DatOut] Write session starting");
-            datOut_crcErr <= 0;
-            // Wait for data to start
-            if (datOutRead_ready) begin
-                datOut_state <= 2;
-            end
-        end
-        
-        2: begin
             $display("[SDController:DatOut] Write another block");
             datOut_counter <= 1023;
             datOut_readCounter <= 0;
             datOut_crcRst <= 1;
             datOut_startBit <= 1;
-            datOut_state <= 3;
+            datOut_state <= 2;
         end
         
-        3: begin
+        2: begin
             datOut_active[0] <= 1;
             datOut_crcEn <= 1;
             
@@ -363,45 +352,45 @@ module SDController #(
             
             if (!datOut_counter) begin
                 $display("[SDController:DatOut] Done writing");
-                datOut_state <= 4;
+                datOut_state <= 3;
             end
         end
         
         // Output the CRC
-        4: begin
+        3: begin
             datOut_active[0] <= 1;
             datOut_crcEn <= 1;
             datOut_crcOutEn <= 1;
             datOut_crcCounter <= 15;
-            datOut_state <= 5;
+            datOut_state <= 4;
         end
         
         // Wait for CRC output to finish
-        5: begin
+        4: begin
             datOut_active[0] <= 1;
             if (datOut_crcCounter) begin
                 datOut_crcOutEn <= 1;
             end else begin
                 datOut_endBit <= 1;
-                datOut_state <= 6;
+                datOut_state <= 5;
             end
         end
         
         // Output the end bit
-        6: begin
+        5: begin
             datOut_active[0] <= 1;
-            datOut_state <= 7;
+            datOut_state <= 6;
         end
         
         // Wait for the CRC status from the card
-        7: begin
+        6: begin
             if (!datIn_reg[16]) begin
-                datOut_state <= 8;
+                datOut_state <= 7;
             end
         end
         
         // Check CRC status token
-        8: begin
+        7: begin
             $display("[SDController:DatOut] DatOut: datOut_crcStatusOKReg: %b", datOut_crcStatusOKReg);
             // 5 bits: start bit, CRC status, end bit
             if (datOut_crcStatusOKReg) begin
@@ -411,11 +400,11 @@ module SDController #(
                 `Finish;
                 datOut_crcErr <= 1;
             end
-            datOut_state <= 9;
+            datOut_state <= 8;
         end
         
         // Wait until the card stops being busy (busy == DAT0 low)
-        9: begin
+        8: begin
             if (datIn_reg[0]) begin
                 // $display("[SDController:DatOut] Card ready (%b)", datIn_reg[0]);
                 
@@ -424,7 +413,7 @@ module SDController #(
                     datOut_done <= 1;
                 
                 end else begin
-                    datOut_state <= 2;
+                    datOut_state <= 1;
                 end
             
             end else begin
