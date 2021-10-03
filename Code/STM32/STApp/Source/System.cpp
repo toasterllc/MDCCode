@@ -108,6 +108,7 @@ void System::_usbDataIn_task() {
         _usb.send(Endpoints::DataIn, _bufs.front().data, _bufs.front().len);
         TaskWait(_usb.ready(Endpoints::DataIn));
         
+        _bufs.front().len = 0;
         _bufs.pop();
     }
 }
@@ -576,6 +577,16 @@ void System::_sd_task() {
     // Start the USB DataIn task
     _usbDataIn.task.reset();
     
+//    // ====================
+//    // CMD23 | SET_BLOCK_COUNT
+//    //   State: Transfer -> Transfer
+//    //   Set the number of blocks to be read by the CMD18 that follows
+//    // ====================
+//    {
+//        auto status = _sd_sendCmd(SDSendCmdMsg::CMD23, 0xFFFFFFFF);
+//        Assert(!status.respCRCErr());
+//    }
+    
     // ====================
     // CMD18 | READ_MULTIPLE_BLOCK
     //   State: Transfer -> Send Data
@@ -594,7 +605,7 @@ void System::_sd_task() {
     // Read data over QSPI and write it to USB, indefinitely
     for (;;) {
         // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
-        TaskWait(!_bufs.full() && _qspi.ready() && _ICE_ST_SPI_D_READY::Read());
+        TaskWait(!_bufs.full() && _qspi.ready());
         
         const size_t len = SDReadoutMsg::ReadoutLen;
         auto& buf = _bufs.back();
@@ -605,6 +616,9 @@ void System::_sd_task() {
             _bufs.push();
             continue;
         }
+        
+        // Wait until ICE40 signals that data is ready to be read
+        while (!_ICE_ST_SPI_D_READY::Read());
         
         _sd_qspiRead(buf.data+buf.len, len);
         buf.len += len;
