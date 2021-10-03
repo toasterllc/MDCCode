@@ -127,9 +127,6 @@ module Top(
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
     wire        sd_resp_crcErr;
-    reg         sd_datOut_stop          = 0;
-    wire        sd_datOut_stopped;
-    reg         sd_datOut_start         = 0;
     wire        sd_datOut_ready;
     wire        sd_datOut_done;
     wire        sd_datOut_crcErr;
@@ -170,9 +167,6 @@ module Top(
         .resp_data(sd_resp_data),
         .resp_crcErr(sd_resp_crcErr),
         
-        .datOut_stop(sd_datOut_stop),
-        .datOut_stopped(sd_datOut_stopped),
-        .datOut_start(sd_datOut_start),
         .datOut_done(sd_datOut_done),
         .datOut_crcErr(sd_datOut_crcErr),
         
@@ -206,7 +200,7 @@ module Top(
     // SD nets
     `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, ice_st_spi_clk);
     `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, ice_st_spi_clk);
-    `ToggleAck(spi_sdDatOutDone_, spi_sdDatOutDoneAck, sd_datOut_done, posedge, ice_st_spi_clk);
+    `Sync(spi_sdDatOutDone, sd_datOut_done, posedge, ice_st_spi_clk);
     `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, ice_st_spi_clk);
     `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, ice_st_spi_clk);
     
@@ -364,7 +358,7 @@ module Top(
                     spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits] <= !spi_sdCmdDone_;
                     spi_resp[`Resp_Arg_SDStatus_RespDone_Bits] <= !spi_sdRespDone_;
                         spi_resp[`Resp_Arg_SDStatus_RespCRCErr_Bits] <= sd_resp_crcErr;
-                    spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits] <= !spi_sdDatOutDone_;
+                    spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits] <= spi_sdDatOutDone;
                         spi_resp[`Resp_Arg_SDStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
                     spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
                         spi_resp[`Resp_Arg_SDStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;

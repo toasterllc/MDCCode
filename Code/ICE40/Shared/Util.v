@@ -42,6 +42,8 @@
 `define RightBit(r, idx)        r[(idx)]
 `define RightBits(r, idx, len)  r[(idx)+(len)-1 -: (len)]
 
+`define ValidBits(a) (((a)^(a)) === 0) // 1 if there are no x's or z's
+
 `ifdef SIM
     `define Assert(cond) do if (!(cond)) begin $error("Assertion failed: %s (%s:%0d)", `Stringify(cond), `__FILE__, `__LINE__); $finish; end while (0)
 `else

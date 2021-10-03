@@ -140,22 +140,27 @@ struct SDSendCmdMsg : Msg {
     static constexpr uint8_t CMD41 = 41;
     static constexpr uint8_t CMD55 = 55;
     
-    Enum(uint8_t, RespType, RespTypes,
+    enum class RespType : uint8_t {
         None        = 0,
         Len48       = 1,
         Len136      = 2,
-    );
+    };
     
-    Enum(uint8_t, DatInType, DatInTypes,
+    enum class DatOutType : uint8_t {
+        None        = 0,
+        Len512xN    = 1,
+    };
+    
+    enum class DatInType : uint8_t {
         None        = 0,
         Len512x1    = 1,
         Len4096xN   = 2,
-    );
+    };
     
-    SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, RespType respType, DatInType datInType) {
+    SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, RespType respType, DatOutType datOutType, DatInType datInType) {
         AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
         type = MsgType::StartBit | 0x03;
-        payload[0] = (respType<<2)|datInType;
+        payload[0] = ((uint8_t)respType<<3)|((uint8_t)datOutType<<2)|(uint8_t)datInType;
         payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
         payload[2] = (sdArg&0xFF000000)>>24;
         payload[3] = (sdArg&0x00FF0000)>>16;

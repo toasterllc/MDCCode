@@ -39,7 +39,9 @@
 
 `define Msg_Type_SDSendCmd                                      `Msg_Type_StartBit | `Msg_Type_Len'h03
 `define     Msg_Arg_SDSendCmd_RespType_Len                      2
-`define     Msg_Arg_SDSendCmd_RespType_Bits                     51:50
+`define     Msg_Arg_SDSendCmd_RespType_Bits                     52:51
+`define     Msg_Arg_SDSendCmd_DatOutType_Len                    1
+`define     Msg_Arg_SDSendCmd_DatOutType_Bits                   50:50
 `define     Msg_Arg_SDSendCmd_DatInType_Len                     2
 `define     Msg_Arg_SDSendCmd_DatInType_Bits                    49:48
 `define     Msg_Arg_SDSendCmd_CmdData_Bits                      47:0

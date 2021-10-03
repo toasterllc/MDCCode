@@ -22,8 +22,9 @@ using ImgI2CStatusResp = ICE40::ImgI2CStatusResp;
 using ImgCaptureStatusMsg = ICE40::ImgCaptureStatusMsg;
 using ImgCaptureStatusResp = ICE40::ImgCaptureStatusResp;
 
-using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
-using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
+using SDRespType = ICE40::SDSendCmdMsg::RespType;
+using SDDatOutType = ICE40::SDSendCmdMsg::DatOutType;
+using SDDatInType = ICE40::SDSendCmdMsg::DatInType;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -58,11 +59,35 @@ void System::init() {
 }
 
 void System::run() {
-    Task::Run(
-        _usbCmd.task,
-        _usbDataIn.task,
-        _sd.task
-    );
+    // ====================
+    // CMD18 | READ_MULTIPLE_BLOCK
+    //   State: Transfer -> Send Data
+    //   Read blocks of data (1 block == 512 bytes)
+    // ====================
+    {
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, 0, SDRespType::Len48, SDDatOutType::None, SDDatInType::Len4096xN);
+        Assert(!status.respCRCErr());
+    }
+    
+    HAL_Delay(100);
+    
+    // ====================
+    // CMD12 | STOP_TRANSMISSION
+    //   State: Send Data -> Transfer
+    //   Finish reading
+    // ====================
+    {
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
+        Assert(!status.respCRCErr());
+    }
+    
+    
+    
+//    Task::Run(
+//        _usbCmd.task,
+//        _usbDataIn.task,
+//        _sd.task
+//    );
 }
 
 void System::_pauseTasks() {
@@ -264,7 +289,7 @@ void System::_sd_init() {
         // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
         HAL_Delay(1);
         // Send CMD0
-        _sd_sendCmd(SDSendCmdMsg::CMD0, 0, SDRespTypes::None);
+        _sd_sendCmd(SDSendCmdMsg::CMD0, 0, SDRespType::None);
         // There's no response to CMD0
     }
     
@@ -330,7 +355,7 @@ void System::_sd_init() {
     // ====================
     {
         // The response to CMD2 is 136 bits, instead of the usual 48 bits
-        _sd_sendCmd(SDSendCmdMsg::CMD2, 0, SDRespTypes::Len136);
+        _sd_sendCmd(SDSendCmdMsg::CMD2, 0, SDRespType::Len136);
         // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
         // so it'll be flagged as incorrect.
     }
@@ -389,7 +414,7 @@ void System::_sd_init() {
         // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
         // Group 2 (Command System)    = 0xF (no change)
         // Group 1 (Access Mode)       = 0x3 (SDR104)
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512x1);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespType::Len48, SDDatOutType::None, SDDatInType::Len512x1);
         Assert(!status.respCRCErr());
         Assert(!status.datInCRCErr());
         
@@ -426,7 +451,7 @@ void System::_sd_init() {
 //        //   Read blocks of data (1 block == 512 bytes)
 //        // ====================
 //        {
-//            auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, 0, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+//            auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, 0, SDRespType::Len48, SDDatInType::Len4096xN);
 //            Assert(!status.respCRCErr());
 //        }
 //        
@@ -522,8 +547,15 @@ SDStatusResp System::_sd_status() {
     return resp;
 }
 
-SDStatusResp System::_sd_sendCmd(uint8_t sdCmd, uint32_t sdArg, SDSendCmdMsg::RespType respType, SDSendCmdMsg::DatInType datInType) {
-    _ice_transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
+SDStatusResp System::_sd_sendCmd(
+    uint8_t sdCmd,
+    uint32_t sdArg,
+    SDSendCmdMsg::RespType respType,
+    SDSendCmdMsg::DatOutType datOutType,
+    SDSendCmdMsg::DatInType datInType
+) {
+    
+    _ice_transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datOutType, datInType));
     
     // Wait for command to be sent
     const uint16_t MaxAttempts = 1000;
@@ -533,9 +565,9 @@ SDStatusResp System::_sd_sendCmd(uint8_t sdCmd, uint32_t sdArg, SDSendCmdMsg::Re
         // Try again if the command hasn't been sent yet
         if (!status.cmdDone()) continue;
         // Try again if we expect a response but it hasn't been received yet
-        if ((respType==SDRespTypes::Len48||respType==SDRespTypes::Len136) && !status.respDone()) continue;
+        if ((respType==SDRespType::Len48||respType==SDRespType::Len136) && !status.respDone()) continue;
         // Try again if we expect DatIn but it hasn't been received yet
-        if (datInType==SDDatInTypes::Len512x1 && !status.datInDone()) continue;
+        if (datInType==SDDatInType::Len512x1 && !status.datInDone()) continue;
         return status;
     }
     // Timeout sending SD command
@@ -585,7 +617,7 @@ void System::_sd_task() {
     //   Read blocks of data (1 block == 512 bytes)
     // ====================
     {
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, arg.addr, SDRespTypes::Len48, SDDatInTypes::Len4096xN);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, arg.addr, SDRespType::Len48, SDDatOutType::None, SDDatInType::Len4096xN);
         Assert(!status.respCRCErr());
     }
     

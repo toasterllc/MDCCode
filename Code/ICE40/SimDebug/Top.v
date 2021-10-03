@@ -12,7 +12,8 @@ module Testbench #(
     // initial $error("hello");
     // $assert(W == 8);
     
-    wire[8:0] hello = 8'b11111000;
+    wire[8:0] hello = 8'b111z1000;
+    // wire[8:0] hello = 8'b11111000;
     
     // assign hello[3] = 1'b0;
     // assign hello[0] = 1'b0;
@@ -23,9 +24,15 @@ module Testbench #(
     //     $dumpvars(0, Testbench);
     // end
     
+    // initial begin
+    //     #1;
+    //     $display("%b", hello[0 +: 4]);
+    //     $finish;
+    // end
+    
+    
     initial begin
-        #1;
-        $display("%b", hello[0 +: 4]);
+        $display("%b", ((hello^hello) === 0));
         $finish;
     end
 endmodule

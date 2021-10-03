@@ -125,7 +125,6 @@ module Top(
     reg[0:0]                            imgctrl_cmd_ramBlock = 0;
     reg[ImageHeaderWordCount*16-1:0]    imgctrl_cmd_header = 0;
     wire                                imgctrl_readout_clk;
-    wire                                imgctrl_readout_start;
     wire                                imgctrl_readout_ready;
     wire                                imgctrl_readout_trigger;
     wire[15:0]                          imgctrl_readout_data;
@@ -146,7 +145,6 @@ module Top(
         .cmd_header(imgctrl_cmd_header),
         
         .readout_clk(imgctrl_readout_clk),
-        .readout_start(imgctrl_readout_start),
         .readout_ready(imgctrl_readout_ready),
         .readout_trigger(imgctrl_readout_trigger),
         .readout_data(imgctrl_readout_data),
@@ -271,14 +269,12 @@ module Top(
     reg         sd_cmd_trigger          = 0;
     reg[47:0]   sd_cmd_data             = 0;
     reg[1:0]    sd_cmd_respType         = 0;
+    reg         sd_cmd_datOutType       = 0;
     reg[1:0]    sd_cmd_datInType        = 0;
     wire        sd_cmd_done;
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
     wire        sd_resp_crcErr;
-    reg         sd_datOut_stop          = 0;
-    wire        sd_datOut_stopped;
-    wire        sd_datOut_start;
     wire        sd_datOut_ready;
     wire        sd_datOut_done;
     wire        sd_datOut_crcErr;
@@ -312,6 +308,7 @@ module Top(
         .cmd_trigger(sd_cmd_trigger),
         .cmd_data(sd_cmd_data),
         .cmd_respType(sd_cmd_respType),
+        .cmd_datOutType(sd_cmd_datOutType),
         .cmd_datInType(sd_cmd_datInType),
         .cmd_done(sd_cmd_done),
         
@@ -319,9 +316,6 @@ module Top(
         .resp_data(sd_resp_data),
         .resp_crcErr(sd_resp_crcErr),
         
-        .datOut_stop(sd_datOut_stop),
-        .datOut_stopped(sd_datOut_stopped),
-        .datOut_start(sd_datOut_start),
         .datOut_done(sd_datOut_done),
         .datOut_crcErr(sd_datOut_crcErr),
         
@@ -344,7 +338,6 @@ module Top(
     
     // Connect imgctrl_readout_* to sd_datOutRead_*
     assign imgctrl_readout_clk = sd_datOutRead_clk;
-    assign sd_datOut_start = imgctrl_readout_start;
     assign sd_datOutRead_ready = imgctrl_readout_ready;
     assign imgctrl_readout_trigger = sd_datOutRead_trigger;
     assign sd_datOutRead_data = imgctrl_readout_data;
@@ -405,7 +398,7 @@ module Top(
     // SD nets
     `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, spi_clk);
     `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, spi_clk);
-    `ToggleAck(spi_sdDatOutDone_, spi_sdDatOutDoneAck, sd_datOut_done, posedge, spi_clk);
+    `Sync(spi_sdDatOutDone, sd_datOut_done, posedge, spi_clk);
     `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, spi_clk);
     `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, spi_clk);
     
@@ -527,6 +520,7 @@ module Top(
                         spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
                     
                     sd_cmd_respType <= spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits];
+                    sd_cmd_datOutType <= spi_msgArg[`Msg_Arg_SDSendCmd_DatOutType_Bits];
                     sd_cmd_datInType <= spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits];
                     sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
                     sd_cmd_trigger <= !sd_cmd_trigger;
@@ -538,7 +532,7 @@ module Top(
                     spi_resp[`Resp_Arg_SDStatus_CmdDone_Bits] <= !spi_sdCmdDone_;
                     spi_resp[`Resp_Arg_SDStatus_RespDone_Bits] <= !spi_sdRespDone_;
                         spi_resp[`Resp_Arg_SDStatus_RespCRCErr_Bits] <= sd_resp_crcErr;
-                    spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits] <= !spi_sdDatOutDone_;
+                    spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits] <= spi_sdDatOutDone;
                         spi_resp[`Resp_Arg_SDStatus_DatOutCRCErr_Bits] <= sd_datOut_crcErr;
                     spi_resp[`Resp_Arg_SDStatus_DatInDone_Bits] <= !spi_sdDatInDone_;
                         spi_resp[`Resp_Arg_SDStatus_DatInCRCErr_Bits] <= sd_datIn_crcErr;
@@ -584,8 +578,6 @@ module Top(
                 
                 `Msg_Type_ImgReadout: begin
                     $display("[SPI] Got Msg_Type_ImgReadout");
-                    // Reset spi_sdDatOutDone_
-                    if (!spi_sdDatOutDone_) spi_sdDatOutDoneAck <= !spi_sdDatOutDoneAck;
                     imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_DstBlock_Bits];
                     imgctrl_cmd_readout <= !imgctrl_cmd_readout;
                 end
