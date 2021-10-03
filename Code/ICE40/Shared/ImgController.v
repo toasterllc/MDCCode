@@ -22,7 +22,6 @@ module ImgController #(
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
-    output reg          readout_start = 0,  // Toggle
     output wire         readout_ready,
     input wire          readout_trigger,
     output wire[15:0]   readout_data,
@@ -467,8 +466,6 @@ module ImgController #(
         
         Ctrl_State_Readout+1: begin
             // Wait for the read command and FIFO reset to be consumed.
-            // Also signal that we're ready to start readout via `readout_start`.
-            readout_start <= !readout_start;
             ctrl_state <= Ctrl_State_Readout+2;
         end
         

@@ -29,7 +29,7 @@ module Testbench();
     
     wire sd_clk;
     wire sd_cmd;
-    wire[3:0] sd_dat;
+    tri1[3:0] sd_dat;
     
     wire        img_dclk;
     wire[11:0]  img_d;

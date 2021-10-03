@@ -30,9 +30,13 @@ private:
     void _sd_setPowerEnabled(bool en);
     void _sd_init();
     ICE40::SDStatusResp _sd_status();
-    ICE40::SDStatusResp _sd_sendCmd(uint8_t sdCmd, uint32_t sdArg,
-        ICE40::SDSendCmdMsg::RespType respType=ICE40::SDSendCmdMsg::RespTypes::Len48,
-        ICE40::SDSendCmdMsg::DatInType datInType=ICE40::SDSendCmdMsg::DatInTypes::None);
+    ICE40::SDStatusResp _sd_sendCmd(
+        uint8_t sdCmd,
+        uint32_t sdArg,
+        ICE40::SDSendCmdMsg::RespType respType      = ICE40::SDSendCmdMsg::RespType::Len48,
+        ICE40::SDSendCmdMsg::DatOutType datOutType  = ICE40::SDSendCmdMsg::DatOutType::None,
+        ICE40::SDSendCmdMsg::DatInType datInType    = ICE40::SDSendCmdMsg::DatInType::None
+    );
     
     void _sd_readout(void* buf, size_t len);
     void _sd_qspiRead(void* buf, size_t len);
