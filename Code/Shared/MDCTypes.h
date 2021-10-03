@@ -21,12 +21,13 @@ namespace MDC {
         uint32_t _pad3          = 0;    // 0x00000000
     } __attribute__((packed));
     
+    using Pixel = uint16_t;
+    
     constexpr uint32_t ImgHeaderLen     = sizeof(ImgHeader);
     constexpr uint32_t ImgPixelWidth    = 2304;
     constexpr uint32_t ImgPixelHeight   = 1296;
-    constexpr uint32_t ImgPixelLen      = sizeof(uint16_t);
     constexpr uint32_t ImgChecksumLen   = sizeof(uint32_t);
-    constexpr uint32_t ImgNoChecksumLen = ImgHeaderLen + ImgPixelWidth*ImgPixelHeight*ImgPixelLen;
-    constexpr uint32_t ImgLen           = ImgHeaderLen + ImgPixelWidth*ImgPixelHeight*ImgPixelLen + ImgChecksumLen;
+    constexpr uint32_t ImgNoChecksumLen = ImgHeaderLen + ImgPixelWidth*ImgPixelHeight*sizeof(Pixel);
+    constexpr uint32_t ImgLen           = ImgHeaderLen + ImgPixelWidth*ImgPixelHeight*sizeof(Pixel) + ImgChecksumLen;
 
 } // namespace ICE40
