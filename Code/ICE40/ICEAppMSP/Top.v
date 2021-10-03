@@ -125,6 +125,7 @@ module Top(
     reg[0:0]                            imgctrl_cmd_ramBlock = 0;
     reg[ImageHeaderWordCount*16-1:0]    imgctrl_cmd_header = 0;
     wire                                imgctrl_readout_clk;
+    wire                                imgctrl_readout_start;
     wire                                imgctrl_readout_ready;
     wire                                imgctrl_readout_trigger;
     wire[15:0]                          imgctrl_readout_data;
@@ -145,6 +146,7 @@ module Top(
         .cmd_header(imgctrl_cmd_header),
         
         .readout_clk(imgctrl_readout_clk),
+        .readout_start(imgctrl_readout_start),
         .readout_ready(imgctrl_readout_ready),
         .readout_trigger(imgctrl_readout_trigger),
         .readout_data(imgctrl_readout_data),
@@ -269,12 +271,12 @@ module Top(
     reg         sd_cmd_trigger          = 0;
     reg[47:0]   sd_cmd_data             = 0;
     reg[1:0]    sd_cmd_respType         = 0;
-    reg         sd_cmd_datOutType       = 0;
     reg[1:0]    sd_cmd_datInType        = 0;
     wire        sd_cmd_done;
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
     wire        sd_resp_crcErr;
+    wire        sd_datOut_trigger;
     wire        sd_datOut_ready;
     wire        sd_datOut_done;
     wire        sd_datOut_crcErr;
@@ -308,7 +310,6 @@ module Top(
         .cmd_trigger(sd_cmd_trigger),
         .cmd_data(sd_cmd_data),
         .cmd_respType(sd_cmd_respType),
-        .cmd_datOutType(sd_cmd_datOutType),
         .cmd_datInType(sd_cmd_datInType),
         .cmd_done(sd_cmd_done),
         
@@ -316,6 +317,7 @@ module Top(
         .resp_data(sd_resp_data),
         .resp_crcErr(sd_resp_crcErr),
         
+        .datOut_trigger(sd_datOut_trigger),
         .datOut_done(sd_datOut_done),
         .datOut_crcErr(sd_datOut_crcErr),
         
@@ -338,6 +340,7 @@ module Top(
     
     // Connect imgctrl_readout_* to sd_datOutRead_*
     assign imgctrl_readout_clk = sd_datOutRead_clk;
+    assign sd_datOut_trigger = imgctrl_readout_start;
     assign sd_datOutRead_ready = imgctrl_readout_ready;
     assign imgctrl_readout_trigger = sd_datOutRead_trigger;
     assign sd_datOutRead_data = imgctrl_readout_data;
@@ -520,7 +523,6 @@ module Top(
                         spi_sdDatInDoneAck <= !spi_sdDatInDoneAck;
                     
                     sd_cmd_respType <= spi_msgArg[`Msg_Arg_SDSendCmd_RespType_Bits];
-                    sd_cmd_datOutType <= spi_msgArg[`Msg_Arg_SDSendCmd_DatOutType_Bits];
                     sd_cmd_datInType <= spi_msgArg[`Msg_Arg_SDSendCmd_DatInType_Bits];
                     sd_cmd_data <= spi_msgArg[`Msg_Arg_SDSendCmd_CmdData_Bits];
                     sd_cmd_trigger <= !sd_cmd_trigger;

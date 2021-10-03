@@ -34,7 +34,6 @@ private:
         uint8_t sdCmd,
         uint32_t sdArg,
         ICE40::SDSendCmdMsg::RespType respType      = ICE40::SDSendCmdMsg::RespType::Len48,
-        ICE40::SDSendCmdMsg::DatOutType datOutType  = ICE40::SDSendCmdMsg::DatOutType::None,
         ICE40::SDSendCmdMsg::DatInType datInType    = ICE40::SDSendCmdMsg::DatInType::None
     );
     

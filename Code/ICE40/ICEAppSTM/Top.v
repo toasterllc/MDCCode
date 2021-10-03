@@ -127,6 +127,7 @@ module Top(
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
     wire        sd_resp_crcErr;
+    reg         sd_datOut_trigger       = 0;
     wire        sd_datOut_ready;
     wire        sd_datOut_done;
     wire        sd_datOut_crcErr;
@@ -167,6 +168,7 @@ module Top(
         .resp_data(sd_resp_data),
         .resp_crcErr(sd_resp_crcErr),
         
+        .datOut_trigger(sd_datOut_trigger),
         .datOut_done(sd_datOut_done),
         .datOut_crcErr(sd_datOut_crcErr),
         

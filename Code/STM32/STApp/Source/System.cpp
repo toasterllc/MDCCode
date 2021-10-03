@@ -23,7 +23,6 @@ using ImgCaptureStatusMsg = ICE40::ImgCaptureStatusMsg;
 using ImgCaptureStatusResp = ICE40::ImgCaptureStatusResp;
 
 using SDRespType = ICE40::SDSendCmdMsg::RespType;
-using SDDatOutType = ICE40::SDSendCmdMsg::DatOutType;
 using SDDatInType = ICE40::SDSendCmdMsg::DatInType;
 
 // We're using 63K buffers instead of 64K, because the
@@ -65,7 +64,7 @@ void System::run() {
     //   Read blocks of data (1 block == 512 bytes)
     // ====================
     {
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, 0, SDRespType::Len48, SDDatOutType::None, SDDatInType::Len4096xN);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, 0, SDRespType::Len48, SDDatInType::Len4096xN);
         Assert(!status.respCRCErr());
     }
     
@@ -414,7 +413,7 @@ void System::_sd_init() {
         // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
         // Group 2 (Command System)    = 0xF (no change)
         // Group 1 (Access Mode)       = 0x3 (SDR104)
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespType::Len48, SDDatOutType::None, SDDatInType::Len512x1);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespType::Len48, SDDatInType::Len512x1);
         Assert(!status.respCRCErr());
         Assert(!status.datInCRCErr());
         
@@ -551,11 +550,10 @@ SDStatusResp System::_sd_sendCmd(
     uint8_t sdCmd,
     uint32_t sdArg,
     SDSendCmdMsg::RespType respType,
-    SDSendCmdMsg::DatOutType datOutType,
     SDSendCmdMsg::DatInType datInType
 ) {
     
-    _ice_transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datOutType, datInType));
+    _ice_transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
     
     // Wait for command to be sent
     const uint16_t MaxAttempts = 1000;
@@ -617,7 +615,7 @@ void System::_sd_task() {
     //   Read blocks of data (1 block == 512 bytes)
     // ====================
     {
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, arg.addr, SDRespType::Len48, SDDatOutType::None, SDDatInType::Len4096xN);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, arg.addr, SDRespType::Len48, SDDatInType::Len4096xN);
         Assert(!status.respCRCErr());
     }
     
