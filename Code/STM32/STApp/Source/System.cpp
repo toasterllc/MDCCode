@@ -576,16 +576,8 @@ void System::_sd_task() {
     _bufs.reset();
     // Start the USB DataIn task
     _usbDataIn.task.reset();
-    
-//    // ====================
-//    // CMD23 | SET_BLOCK_COUNT
-//    //   State: Transfer -> Transfer
-//    //   Set the number of blocks to be read by the CMD18 that follows
-//    // ====================
-//    {
-//        auto status = _sd_sendCmd(SDSendCmdMsg::CMD23, 0xFFFFFFFF);
-//        Assert(!status.respCRCErr());
-//    }
+    // Update state
+    s.reading = true;
     
     // ====================
     // CMD18 | READ_MULTIPLE_BLOCK
