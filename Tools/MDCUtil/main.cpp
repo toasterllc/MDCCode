@@ -98,7 +98,7 @@ static void imgRead(const Args& args, MDCDevice& device) {
         const uint32_t checksumExpected = checksumFletcher32(buf.get(), MDC::ImgNoChecksumLen);
         uint32_t checksumGot = 0;
         memcpy(&checksumGot, (uint8_t*)buf.get()+MDC::ImgNoChecksumLen, sizeof(checksumGot));
-        printf("-> Checksum: expected:0x%08x got:0x%08x\n", checksumExpected, checksumGot);
+        printf("-> Checksum: expected:0x%08x got:0x%08x %s\n", checksumExpected, checksumGot, (checksumExpected==checksumGot ? "✅" : "❌"));
     }
     
     // Write image
