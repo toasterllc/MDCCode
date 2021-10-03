@@ -189,7 +189,6 @@ module ImgController #(
     reg         fifoIn_checksum_en = 0;
     wire[15:0]  fifoIn_checksum_din;
     wire[31:0]  fifoIn_checksum_dout;
-    reg[31:0]   fifoIn_checksum_shiftReg = 0;
     reg         fifoIn_checksum_done = 0;
     FletcherChecksum #(
         .Width(32)
@@ -337,7 +336,6 @@ module ImgController #(
             fifoIn_write_trigger <= fifoIn_lv;
             fifoIn_write_data <= {{img_d_reg[7:0]}, {4'b0, img_d_reg[11:8]}}; // Little endian
             fifoIn_checksum_en <= fifoIn_lv;
-            fifoIn_checksum_shiftReg <= fifoIn_checksum_dout;
             fifoIn_checksum_done <= 0;
             if (!fifoIn_fv) begin
                 $display("[ImgController:fifoIn] Frame end");
@@ -351,9 +349,9 @@ module ImgController #(
             fifoIn_write_trigger <= 1;
             
             if (!fifoIn_checksum_done)
-                fifoIn_write_data <= {fifoIn_checksum_shiftReg[7-:8], fifoIn_checksum_shiftReg[15-:8]}; // Little endian
+                fifoIn_write_data <= {fifoIn_checksum_dout[7-:8], fifoIn_checksum_dout[15-:8]}; // Little endian
             else
-                fifoIn_write_data <= {fifoIn_checksum_shiftReg[23-:8], fifoIn_checksum_shiftReg[31-:8]}; // Little endian
+                fifoIn_write_data <= {fifoIn_checksum_dout[23-:8], fifoIn_checksum_dout[31-:8]}; // Little endian
             
             if (fifoIn_checksum_done) begin
                 fifoIn_done <= 1;
