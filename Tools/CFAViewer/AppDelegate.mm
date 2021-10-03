@@ -23,12 +23,12 @@
 #import "MDCDevice.h"
 #import "IOServiceMatcher.h"
 #import "IOServiceWatcher.h"
-#import "MDCUtil.h"
 #import "Assert.h"
 #import "ImagePipelineTypes.h"
 #import "Color.h"
 #import "ImagePipelineManager.h"
 #import "PixelSampler.h"
+#import "MDCTypes.h"
 using namespace CFAViewer;
 using namespace MetalUtil;
 using namespace ImagePipeline;
@@ -145,13 +145,13 @@ struct PixConfig {
         bool running = false;
         bool cancel = false;
         std::optional<PixConfig> pixConfig;
-        STApp::Pixel pixels[2200*2200];
+        MDC::Pixel pixels[2200*2200];
         uint32_t width = 0;
         uint32_t height = 0;
     } _streamImagesThread;
     
     struct {
-        STApp::Pixel pixels[2200*2200];
+        MDC::Pixel pixels[2200*2200];
         Pipeline::RawImage img = {
             .cfaDesc = {
                 CFAColor::Green, CFAColor::Red,
@@ -219,10 +219,11 @@ struct PixConfig {
     [self _setAnalogGain:0];
     
     [self _setMDCService:{}];
-    _serviceAppearWatcher = IOServiceMatcher(dispatch_get_main_queue(), MDCDevice::MatchingDictionary(),
-        ^(SendRight&& service) {
-            [weakSelf _handleMatchingService:std::move(service)];
-        });
+    // TODO: get working again -- need to implement MDCDevice::MatchingDictionary() again
+//    _serviceAppearWatcher = IOServiceMatcher(dispatch_get_main_queue(), MDCDevice::MatchingDictionary(),
+//        ^(SendRight&& service) {
+//            [weakSelf _handleMatchingService:std::move(service)];
+//        });
     
 //    [NSThread detachNewThreadWithBlock:^{
 //        [self _threadReadInputCommands];
@@ -413,190 +414,193 @@ static bool isCFAFile(const fs::path& path) {
 
 // Throws on error
 static void initMDCDevice(MDCDevice& device) {
-    // Reset the device to put it back in a pre-defined state
-    device.reset();
-    device.pixReset();
-    device.pixConfig();
+    #warning reimplement
+//    // Reset the device to put it back in a pre-defined state
+//    device.reset();
+//    device.pixReset();
+//    device.pixConfig();
 }
 
 // Throws on error
 static void configMDCDevice(MDCDevice& device, const PixConfig& cfg) {
-    // Set coarse_integration_time
-    device.pixI2CWrite(0x3012, cfg.coarseIntegrationTime);
-    // Set fine_integration_time
-    device.pixI2CWrite(0x3014, cfg.fineIntegrationTime);
-    // Set analog_gain
-    device.pixI2CWrite(0x3060, cfg.analogGain);
+    #warning reimplement
+//    // Set coarse_integration_time
+//    device.pixI2CWrite(0x3012, cfg.coarseIntegrationTime);
+//    // Set fine_integration_time
+//    device.pixI2CWrite(0x3014, cfg.fineIntegrationTime);
+//    // Set analog_gain
+//    device.pixI2CWrite(0x3060, cfg.analogGain);
 }
 
 - (void)_threadStreamImages:(SendRight)service {
-    using namespace STApp;
-    assert(service.valid());
-    
-    Defer(
-        // Notify that our thread has exited
-        _streamImagesThread.lock.lock();
-            _streamImagesThread.running = false;
-            _streamImagesThread.signal.notify_all();
-        _streamImagesThread.lock.unlock();
-    );
-    
-//    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
-//    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
-//    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
-    
-    std::optional<MDCDevice> mdcOpt;
-    try { mdcOpt.emplace(service); }
-    catch (const std::exception& e) {
-        fprintf(stderr, "Failed to create MDCDevice: %s\n", e.what());
-        return;
-    }
-    
-    MDCDevice& mdc = *mdcOpt;
-    try {
-        initMDCDevice(mdc);
-        
-        float intTime = .5;
-        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
-        auto tmpPixels = std::make_unique<STApp::Pixel[]>(tmpPixelsCap);
-        
-        std::optional<PixConfig> pixConfig;
-//        uint32_t saveIdx = 1;
-        for (uint32_t i=0;; i++) {
-            if (pixConfig) {
-                configMDCDevice(mdc, *pixConfig);
-                pixConfig = std::nullopt;
-            }
-            
-            // Capture an image, timing-out after 1s so we can check the device status,
-            // in case it reports a streaming error
-            const STApp::PixHeader pixStatus = mdc.pixCapture(tmpPixels.get(), tmpPixelsCap, 1000ms);
-            const size_t pixelCount = pixStatus.width*pixStatus.height;
-            
-            auto lock = std::unique_lock(_streamImagesThread.lock);
-                // Check if we've been cancelled
-                if (_streamImagesThread.cancel) break;
-                
-                // Copy the image into our persistent buffer
-                std::copy(tmpPixels.get(), tmpPixels.get()+pixelCount, _streamImagesThread.pixels);
-                _streamImagesThread.width = pixStatus.width;
-                _streamImagesThread.height = pixStatus.height;
-                
-                // While we have the lock, copy the pixConfig that might be waiting
-                pixConfig = _streamImagesThread.pixConfig;
-                _streamImagesThread.pixConfig = std::nullopt;
-            lock.unlock();
-            
-            // Invoke -_handleStreamImage on the main thread.
-            // Don't use dispatch_async here, because dispatch_async's don't get drained
-            // while the runloop is run recursively, eg during mouse tracking.
-            __weak auto weakSelf = self;
-            CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
-                [weakSelf _handleStreamImage];
-            });
-            CFRunLoopWakeUp(CFRunLoopGetMain());
-            
-//            if (!(i % 10)) {
-//                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
-//                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
-//                std::ofstream f;
-//                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-//                f.open([imagePath UTF8String]);
-//                f.write((char*)_streamImagesThread.pixels, pixelCount*sizeof(STApp::Pixel));
-//                saveIdx++;
-//                printf("Saved %s\n", [imagePath UTF8String]);
-//            }
-            
-            // Adjust exposure
-            const uint32_t SubsampleFactor = 16;
-            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
-            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
-            const float highlightFraction = (float)highlightCount/pixelCount;
-            const float shadowFraction = (float)shadowCount/pixelCount;
-//            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
-            
-            const float diff = shadowFraction-highlightFraction;
-            const float absdiff = fabs(diff);
-            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
-            
-            if (absdiff > .01) {
-                bool updateIntTime = false;
-                if (shadowFraction > highlightFraction) {
-                    // Increase exposure
-                    intTime *= adjust;
-                    updateIntTime = true;
-                
-                } else if (highlightFraction > shadowFraction) {
-                    // Decrease exposure
-                    intTime *= adjust;
-                    updateIntTime = true;
-                }
-                
-                intTime = std::clamp(intTime, 0.001f, 1.f);
-                const float gain = intTime/3;
-                
-                printf("adjust:%f\n"
-                       "shadowFraction:%f\n"
-                       "highlightFraction:%f\n"
-                       "intTime: %f\n\n",
-                       adjust,
-                       shadowFraction,
-                       highlightFraction,
-                       intTime
-                );
-                
-                if (updateIntTime) {
-                    mdc.pixI2CWrite(0x3012, intTime*16384);
-                    mdc.pixI2CWrite(0x3060, gain*63);
-                }
-            }
-            
-            
-            
-//            const float ShadowAdjustThreshold = 0.1;
-//            const float HighlightAdjustThreshold = 0.1;
-//            const float AdjustDelta = 1.1;
-//            bool updateIntTime = false;
-//            if (shadowFraction > ShadowAdjustThreshold) {
-//                // Increase exposure
-//                intTime *= AdjustDelta;
-//                updateIntTime = true;
-//            
-//            } else if (highlightFraction > HighlightAdjustThreshold) {
-//                // Decrease exposure
-//                intTime /= AdjustDelta;
-//                updateIntTime = true;
+    #warning reimplement
+//    using namespace STApp;
+//    assert(service.valid());
+//    
+//    Defer(
+//        // Notify that our thread has exited
+//        _streamImagesThread.lock.lock();
+//            _streamImagesThread.running = false;
+//            _streamImagesThread.signal.notify_all();
+//        _streamImagesThread.lock.unlock();
+//    );
+//    
+////    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
+////    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
+////    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
+//    
+//    std::optional<MDCDevice> mdcOpt;
+//    try { mdcOpt.emplace(service); }
+//    catch (const std::exception& e) {
+//        fprintf(stderr, "Failed to create MDCDevice: %s\n", e.what());
+//        return;
+//    }
+//    
+//    MDCDevice& mdc = *mdcOpt;
+//    try {
+//        initMDCDevice(mdc);
+//        
+//        float intTime = .5;
+//        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
+//        auto tmpPixels = std::make_unique<MDC::Pixel[]>(tmpPixelsCap);
+//        
+//        std::optional<PixConfig> pixConfig;
+////        uint32_t saveIdx = 1;
+//        for (uint32_t i=0;; i++) {
+//            if (pixConfig) {
+//                configMDCDevice(mdc, *pixConfig);
+//                pixConfig = std::nullopt;
 //            }
 //            
-//            intTime = std::clamp(intTime, 0.f, 1.f);
-//            const float gain = intTime/3;
+//            // Capture an image, timing-out after 1s so we can check the device status,
+//            // in case it reports a streaming error
+//            const MDC::ImgHeader pixStatus = mdc.pixCapture(tmpPixels.get(), tmpPixelsCap, 1000ms);
+//            const size_t pixelCount = pixStatus.width*pixStatus.height;
 //            
-//            if (updateIntTime) {
-//                device.pixI2CWrite(0x3012, intTime*16384);
-//                device.pixI2CWrite(0x3060, gain*63);
+//            auto lock = std::unique_lock(_streamImagesThread.lock);
+//                // Check if we've been cancelled
+//                if (_streamImagesThread.cancel) break;
+//                
+//                // Copy the image into our persistent buffer
+//                std::copy(tmpPixels.get(), tmpPixels.get()+pixelCount, _streamImagesThread.pixels);
+//                _streamImagesThread.width = pixStatus.width;
+//                _streamImagesThread.height = pixStatus.height;
+//                
+//                // While we have the lock, copy the pixConfig that might be waiting
+//                pixConfig = _streamImagesThread.pixConfig;
+//                _streamImagesThread.pixConfig = std::nullopt;
+//            lock.unlock();
+//            
+//            // Invoke -_handleStreamImage on the main thread.
+//            // Don't use dispatch_async here, because dispatch_async's don't get drained
+//            // while the runloop is run recursively, eg during mouse tracking.
+//            __weak auto weakSelf = self;
+//            CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
+//                [weakSelf _handleStreamImage];
+//            });
+//            CFRunLoopWakeUp(CFRunLoopGetMain());
+//            
+////            if (!(i % 10)) {
+////                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
+////                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
+////                std::ofstream f;
+////                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+////                f.open([imagePath UTF8String]);
+////                f.write((char*)_streamImagesThread.pixels, pixelCount*sizeof(MDC::Pixel));
+////                saveIdx++;
+////                printf("Saved %s\n", [imagePath UTF8String]);
+////            }
+//            
+//            // Adjust exposure
+//            const uint32_t SubsampleFactor = 16;
+//            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
+//            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
+//            const float highlightFraction = (float)highlightCount/pixelCount;
+//            const float shadowFraction = (float)shadowCount/pixelCount;
+////            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
+//            
+//            const float diff = shadowFraction-highlightFraction;
+//            const float absdiff = fabs(diff);
+//            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
+//            
+//            if (absdiff > .01) {
+//                bool updateIntTime = false;
+//                if (shadowFraction > highlightFraction) {
+//                    // Increase exposure
+//                    intTime *= adjust;
+//                    updateIntTime = true;
+//                
+//                } else if (highlightFraction > shadowFraction) {
+//                    // Decrease exposure
+//                    intTime *= adjust;
+//                    updateIntTime = true;
+//                }
+//                
+//                intTime = std::clamp(intTime, 0.001f, 1.f);
+//                const float gain = intTime/3;
+//                
+//                printf("adjust:%f\n"
+//                       "shadowFraction:%f\n"
+//                       "highlightFraction:%f\n"
+//                       "intTime: %f\n\n",
+//                       adjust,
+//                       shadowFraction,
+//                       highlightFraction,
+//                       intTime
+//                );
+//                
+//                if (updateIntTime) {
+//                    mdc.pixI2CWrite(0x3012, intTime*16384);
+//                    mdc.pixI2CWrite(0x3060, gain*63);
+//                }
 //            }
-        }
-    
-    } catch (const std::exception& e) {
-        printf("Streaming failed: %s\n", e.what());
-        
-        PixState pixState = PixState::Idle;
-        try {
-            pixState = mdc.pixStatus().state;
-        } catch (const std::exception& e) {
-            printf("pixStatus() failed: %s\n", e.what());
-        }
-        
-        if (pixState != PixState::Capturing) {
-            printf("pixStatus.state != PixState::Capturing\n");
-        }
-    }
-    
-    // Notify that our thread has exited
-    _streamImagesThread.lock.lock();
-        _streamImagesThread.running = false;
-        _streamImagesThread.signal.notify_all();
-    _streamImagesThread.lock.unlock();
+//            
+//            
+//            
+////            const float ShadowAdjustThreshold = 0.1;
+////            const float HighlightAdjustThreshold = 0.1;
+////            const float AdjustDelta = 1.1;
+////            bool updateIntTime = false;
+////            if (shadowFraction > ShadowAdjustThreshold) {
+////                // Increase exposure
+////                intTime *= AdjustDelta;
+////                updateIntTime = true;
+////            
+////            } else if (highlightFraction > HighlightAdjustThreshold) {
+////                // Decrease exposure
+////                intTime /= AdjustDelta;
+////                updateIntTime = true;
+////            }
+////            
+////            intTime = std::clamp(intTime, 0.f, 1.f);
+////            const float gain = intTime/3;
+////            
+////            if (updateIntTime) {
+////                device.pixI2CWrite(0x3012, intTime*16384);
+////                device.pixI2CWrite(0x3060, gain*63);
+////            }
+//        }
+//    
+//    } catch (const std::exception& e) {
+//        printf("Streaming failed: %s\n", e.what());
+//        
+//        PixState pixState = PixState::Idle;
+//        try {
+//            pixState = mdc.pixStatus().state;
+//        } catch (const std::exception& e) {
+//            printf("pixStatus() failed: %s\n", e.what());
+//        }
+//        
+//        if (pixState != PixState::Capturing) {
+//            printf("pixStatus.state != PixState::Capturing\n");
+//        }
+//    }
+//    
+//    // Notify that our thread has exited
+//    _streamImagesThread.lock.lock();
+//        _streamImagesThread.running = false;
+//        _streamImagesThread.signal.notify_all();
+//    _streamImagesThread.lock.unlock();
 }
 
 //- (void)_handleInputCommand:(std::vector<std::string>)cmdStrs {

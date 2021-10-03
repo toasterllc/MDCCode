@@ -58,7 +58,6 @@
 		55671A30257E94BD00C1CDA4 /* ELF32Binary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		55671A31257E94BD00C1CDA4 /* Mmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		55671A37257E984E00C1CDA4 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
-		55671A3A2580178100C1CDA4 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
 		556E45F526B13CBD006681FA /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		556E45F626B13CBD006681FA /* Enum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		556E45F726B13CBD006681FA /* Endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
@@ -100,6 +99,9 @@
 		55B9747724C50A81000B2633 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		55B9747924C50A86000B2633 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		55B9747B24C50A8A000B2633 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		55D0820D27092A8200B9BB97 /* MDCTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCTypes.h; sourceTree = "<group>"; };
+		55D0820E27092A8200B9BB97 /* ICE40Types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICE40Types.h; sourceTree = "<group>"; };
+		55D0820F27092A8200B9BB97 /* Assert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
 		55DE384325F6DA2400AD2223 /* Defringe.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Defringe.metal; sourceTree = "<group>"; };
 		55DE385B25F83EFB00AD2223 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
 		55E74408262BC9A600472115 /* ReconstructHighlights.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReconstructHighlights.h; sourceTree = "<group>"; };
@@ -180,7 +182,6 @@
 				55671A30257E94BD00C1CDA4 /* ELF32Binary.h */,
 				55671A2C257E94BD00C1CDA4 /* MDCDevice.h */,
 				55671A2F257E94BD00C1CDA4 /* MDCLoaderDevice.h */,
-				55671A3A2580178100C1CDA4 /* MDCUtil.h */,
 				55AE80C1262E7BBC00BA227C /* Mod.h */,
 				55671A31257E94BD00C1CDA4 /* Mmap.h */,
 				55671A2B257E94BD00C1CDA4 /* TimeInstant.h */,
@@ -227,6 +228,7 @@
 			children = (
 				556E45F326B13CBD006681FA /* Lib */,
 				55671A29257E94BD00C1CDA4 /* Shared */,
+				55D0820C27092A8200B9BB97 /* Shared */,
 				552E7D5A24C9316900438AAF /* CFAViewer.entitlements */,
 				559D8E0E2593EAB200836B47 /* Util.h */,
 				55E98EBB25A921D80062B458 /* ColorChecker.h */,
@@ -278,6 +280,17 @@
 				55B9747724C50A81000B2633 /* Cocoa.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		55D0820C27092A8200B9BB97 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				55D0820F27092A8200B9BB97 /* Assert.h */,
+				55D0820E27092A8200B9BB97 /* ICE40Types.h */,
+				55D0820D27092A8200B9BB97 /* MDCTypes.h */,
+			);
+			name = Shared;
+			path = ../../Code/Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
