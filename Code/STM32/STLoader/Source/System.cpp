@@ -161,6 +161,7 @@ void System::_usbDataIn_task() {
         _usb.send(Endpoints::DataIn, _bufs.front().data, _bufs.front().len);
         TaskWait(_usb.ready(Endpoints::DataIn));
         
+        _bufs.front().len = 0;
         _bufs.pop();
     }
 }
