@@ -2,6 +2,7 @@
 `define SDCardSim_v
 
 `include "FletcherChecksum.v"
+`include "EndianSwap.v"
 
 `timescale 1ps/1ps
 
@@ -526,6 +527,8 @@ module SDCardSim #(
     // ====================
     // Handle writing to the card
     // ====================
+    EndianSwap #(.Width(16)) Recv_HostFromLittle16();
+    EndianSwap #(.Width(32)) Recv_HostFromLittle32();
     initial begin
         reg[31:0]   recvWordCounter;
         reg[15:0]   recvWordPrev;
@@ -593,7 +596,7 @@ module SDCardSim #(
                                 recvWordExpected = recvWordPrev+RecvWordDelta;
                             end
                             
-                            recvWordGot = datInReg[15:0];
+                            recvWordGot = Recv_HostFromLittle16.Swap(datInReg[15:0]); // Unpack little-endian
                             
                             if (recvWordExpected === recvWordGot) begin
                                 $display("[SDCardSim] Received valid word (expected:%h, got:%h) ✅", recvWordExpected, recvWordGot);
@@ -616,7 +619,7 @@ module SDCardSim #(
                                     reg[31:0] checksumGot;
                                     
                                     checksumExpected    = recv_checksum_dout;
-                                    checksumGot         = datInReg[31:0];
+                                    checksumGot         = Recv_HostFromLittle32.Swap(datInReg[31:0]);
                                     
                                     if (checksumExpected === checksumGot) begin
                                         $display("[SDCardSim] Checksum valid [expected:%h got:%h] ✅", checksumExpected, checksumGot);
@@ -824,10 +827,13 @@ module SDCardSim #(
     // ====================
     // Handle reading from the card
     // ====================
+    parameter Send_WordWidth        = 32;
+    parameter Send_WordIncrement    = -1;
+    EndianSwap #(.Width(Send_WordWidth)) Send_EndianSwap();
+    
     initial begin
-        reg[31:0] nextDatOutVal;
-        // nextDatOutVal = 0;
-        nextDatOutVal = '1;
+        reg[Send_WordWidth-1:0] nextDatOutVal;
+        nextDatOutVal = (Send_WordIncrement>0 ? 0 : '1);
         
         forever begin
             wait(sd_clk);
@@ -845,40 +851,10 @@ module SDCardSim #(
                 wait(!sd_clk);
                 dat_crcRst_ = 1;
                 
-                // // Fill datOutReg with incrementing u8
-                // for (i=0; i<$size(datOutReg)/8; i++) begin
-                //     datOutReg[$size(datOutReg)-(i*8)-1 -: 8] = nextDatOutVal;
-                //     nextDatOutVal = nextDatOutVal+1;
-                // end
-                //
-                // // Fill datOutReg with decrementing u8
-                // for (i=0; i<$size(datOutReg)/8; i++) begin
-                //     datOutReg[$size(datOutReg)-(i*8)-1 -: 8] = nextDatOutVal;
-                //     nextDatOutVal = nextDatOutVal-1;
-                // end
-                //
-                // // Fill datOutReg with incrementing u16
-                // for (i=0; i<$size(datOutReg)/16; i++) begin
-                //     datOutReg[$size(datOutReg)-(i*16)-1 -: 16] = nextDatOutVal;
-                //     nextDatOutVal = nextDatOutVal+1;
-                // end
-                //
-                // // Fill datOutReg with decrementing u16
-                // for (i=0; i<$size(datOutReg)/16; i++) begin
-                //     datOutReg[$size(datOutReg)-(i*16)-1 -: 16] = nextDatOutVal;
-                //     nextDatOutVal = nextDatOutVal-1;
-                // end
-                //
-                // // Fill datOutReg with incrementing u32
-                // for (i=0; i<$size(datOutReg)/32; i++) begin
-                //     datOutReg[$size(datOutReg)-(i*32)-1 -: 32] = i;
-                //     nextDatOutVal = nextDatOutVal+1;
-                // end
-                
-                // Fill datOutReg with decrementing u32
-                for (i=0; i<$size(datOutReg)/32; i++) begin
-                    datOutReg[$size(datOutReg)-(i*32)-1 -: 32] = nextDatOutVal;
-                    nextDatOutVal = nextDatOutVal-1;
+                // Fill datOutReg with incrementing/decrementing words
+                for (i=0; i<$size(datOutReg)/Send_WordWidth; i++) begin
+                    datOutReg[$size(datOutReg)-(i*Send_WordWidth)-1 -: Send_WordWidth] = Send_EndianSwap.Swap(nextDatOutVal);
+                    nextDatOutVal = nextDatOutVal + Send_WordIncrement;
                 end
                 
                 // // Fill datOutReg with random data

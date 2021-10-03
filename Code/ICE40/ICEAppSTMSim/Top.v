@@ -9,6 +9,7 @@
 `include "ICEAppTypes.v"
 `include "Util.v"
 `include "SDCardSim.v"
+`include "EndianSwap.v"
 
 `timescale 1ns/1ps
 
@@ -146,20 +147,18 @@ module Testbench();
     
     
     
-    
-
-    
-    
-
+    EndianSwap #(.Width(16)) SDReadout_HostFromLittle16();
+    EndianSwap #(.Width(32)) SDReadout_HostFromLittle32();
     
     task SDReadout(input waitForDReady, input validateWords, input[7:0] wordWidth, input[31:0] wordCount); begin
-        parameter MinWordWidth = 16;
-        parameter MaxWordWidth = 32;
+        parameter WordWidthMin = 16;
+        parameter WordWidthMax = 32;
+        parameter WordIncrement = -1;
         parameter ChunkLen = 4*4096; // Each chunk consists of 4x RAM4K == 4*4096 bits
         
         $display("\n[Testbench] ========== SDReadout ==========");
         
-        if (wordWidth<MinWordWidth || wordWidth>MaxWordWidth) begin
+        if (wordWidth<WordWidthMin || wordWidth>WordWidthMax) begin
             $display("\n[Testbench] SDReadout: invalid wordWidth=%0d", wordWidth);
             `Finish;
         end
@@ -170,9 +169,9 @@ module Testbench();
         #1; // Let ice_st_spi_cs_ take effect
         
         begin
-            reg[MaxWordWidth-1:0] word;
-            reg[MaxWordWidth-1:0] lastWord;
-            reg[MaxWordWidth-1:0] expectedWord;
+            reg[WordWidthMax-1:0] word;
+            reg[WordWidthMax-1:0] lastWord;
+            reg[WordWidthMax-1:0] expectedWord;
             reg lastWordInit;
             reg[31:0] wordIdx;
             reg[31:0] chunkIdx;
@@ -216,12 +215,16 @@ module Testbench();
                 for (i=0; i<(ChunkLen/wordWidth) && (wordIdx<wordCount); i++) begin
                     spi_resp = 0;
                     _ReadResp(wordWidth);
-                    word = spi_resp[MaxWordWidth-1:0];
+                    
+                    case (wordWidth)
+                    16: word = SDReadout_HostFromLittle16.Swap(spi_resp[15:0]);
+                    32: word = SDReadout_HostFromLittle32.Swap(spi_resp[31:0]);
+                    endcase
+                    
                     // $display("[Testbench] Read word: 0x%x", word);
                     
                     if (lastWordInit) begin
-                        // expectedWord = lastWord+1;   // Expect incrementing integers
-                        expectedWord = lastWord-1;   // Expect decrementing integers
+                        expectedWord = lastWord + WordIncrement;
                         if (validateWords && word!==expectedWord) begin
                             $display("[Testbench] Bad word; expected:%x got:%x ❌", expectedWord, word);
                             #100;

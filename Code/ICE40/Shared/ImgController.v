@@ -243,7 +243,7 @@ module ImgController #(
         fifoIn_countStat <= 0; // Pulse
         fifoIn_checksum_rst <= 0; // Pulse
         fifoIn_checksum_en <= 0; // Pulse
-        fifoIn_checksum_shiftReg <= fifoIn_checksum_shiftReg<<16;
+        fifoIn_checksum_shiftReg <= fifoIn_checksum_shiftReg>>16;
         fifoIn_checksum_done_ <= 0; // Pulse
         
         if (fifoIn_write_trigger) begin
@@ -334,7 +334,7 @@ module ImgController #(
         7: begin
             fifoIn_countStat <= (fifoIn_lv && !fifoIn_x && !fifoIn_y);
             fifoIn_write_trigger <= fifoIn_lv;
-            fifoIn_write_data <= {4'b0, img_d_reg};
+            fifoIn_write_data <= {{img_d_reg[7:0]}, {4'b0, img_d_reg[11:8]}}; // Little endian
             fifoIn_checksum_en <= fifoIn_lv;
             fifoIn_checksum_shiftReg <= fifoIn_checksum_dout;
             fifoIn_checksum_done_ <= 1;
@@ -348,7 +348,7 @@ module ImgController #(
         8: begin
             $display("[ImgController:fifoIn] Writing checksum (checksum: %h)", fifoIn_checksum_dout);
             fifoIn_write_trigger <= 1;
-            fifoIn_write_data <= `LeftBits(fifoIn_checksum_shiftReg,0,16);
+            fifoIn_write_data <= {fifoIn_checksum_shiftReg[7:0], fifoIn_checksum_shiftReg[15:8]}; // Little endian
             if (!fifoIn_checksum_done_) begin
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
