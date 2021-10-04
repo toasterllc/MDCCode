@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <cstring>
 #include "STAppTypes.h"
 #include "MDCDevice.h"
 #include "MDCTypes.h"
@@ -9,14 +10,16 @@
 #include "ChecksumFletcher32.h"
 
 using CmdStr = std::string;
-const CmdStr ImgReadCmd = "ImgRead";
-const CmdStr LEDSetCmd = "LEDSet";
+const CmdStr BootloaderCmd  = "Bootloader";
+const CmdStr ImgReadCmd     = "ImgRead";
+const CmdStr LEDSetCmd      = "LEDSet";
 
 void printUsage() {
     using namespace std;
     cout << "MDCUtil commands:\n";
-    cout << "  " << ImgReadCmd  << " <idx> <output.cfa>\n";
-    cout << "  " << LEDSetCmd   << " <idx> <0/1>\n";
+    cout << "  " << BootloaderCmd   << "\n";
+    cout << "  " << ImgReadCmd      << " <idx> <output.cfa>\n";
+    cout << "  " << LEDSetCmd       << " <idx> <0/1>\n";
     cout << "\n";
 }
 
@@ -48,7 +51,9 @@ static Args parseArgs(int argc, const char* argv[]) {
     if (strs.size() < 1) throw std::runtime_error("no command specified");
     args.cmd = lower(strs[0]);
     
-    if (args.cmd == lower(ImgReadCmd)) {
+    if (args.cmd == lower(BootloaderCmd)) {
+    
+    } else if (args.cmd == lower(ImgReadCmd)) {
         if (strs.size() < 3) throw std::runtime_error("index/file path not specified");
         args.imgRead.idx = std::stoi(strs[1]);
         args.imgRead.filePath = strs[2];
@@ -63,6 +68,12 @@ static Args parseArgs(int argc, const char* argv[]) {
     }
     
     return args;
+}
+
+static void bootloader(const Args& args, MDCDevice& device) {
+    printf("Sending Bootloader command...\n");
+    device.bootloader();
+    printf("-> OK\n\n");
 }
 
 static void imgRead(const Args& args, MDCDevice& device) {
@@ -155,8 +166,9 @@ int main(int argc, const char* argv[]) {
     
     MDCDevice& device = devices[0];
     try {
-        if (args.cmd == lower(ImgReadCmd))     imgRead(args, device);
-        else if (args.cmd == lower(LEDSetCmd)) ledSet(args, device);
+        if (args.cmd == lower(BootloaderCmd))   bootloader(args, device);
+        else if (args.cmd == lower(ImgReadCmd)) imgRead(args, device);
+        else if (args.cmd == lower(LEDSetCmd))  ledSet(args, device);
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;

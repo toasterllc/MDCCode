@@ -30,6 +30,14 @@ public:
 //        _flushEndpoint(Endpoints::DataIn);
 //    }
     
+    void bootloader() {
+        using namespace STApp;
+        Cmd cmd = {
+            .op = Op::Bootloader,
+        };
+        _dev.vendorRequestOut(0, cmd);
+    }
+    
     void sdRead(uint32_t addr) {
         using namespace STApp;
         Cmd cmd = {
