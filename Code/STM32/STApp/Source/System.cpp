@@ -58,35 +58,11 @@ void System::init() {
 }
 
 void System::run() {
-    // ====================
-    // CMD18 | READ_MULTIPLE_BLOCK
-    //   State: Transfer -> Send Data
-    //   Read blocks of data (1 block == 512 bytes)
-    // ====================
-    {
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD18, 0, SDRespType::Len48, SDDatInType::Len4096xN);
-        Assert(!status.respCRCErr());
-    }
-    
-    HAL_Delay(100);
-    
-    // ====================
-    // CMD12 | STOP_TRANSMISSION
-    //   State: Send Data -> Transfer
-    //   Finish reading
-    // ====================
-    {
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
-        Assert(!status.respCRCErr());
-    }
-    
-    
-    
-//    Task::Run(
-//        _usbCmd.task,
-//        _usbDataIn.task,
-//        _sd.task
-//    );
+    Task::Run(
+        _usbCmd.task,
+        _usbDataIn.task,
+        _sd.task
+    );
 }
 
 void System::_pauseTasks() {
