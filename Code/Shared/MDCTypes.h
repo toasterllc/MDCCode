@@ -23,17 +23,18 @@ namespace MDC {
         uint32_t _pad3          = 0;    // 0x00000000
     } __attribute__((packed));
     
-    constexpr uint32_t ImgHeaderLen     = sizeof(ImgHeader);
-    constexpr uint32_t ImgPixelWidth    = 2304;
-    constexpr uint32_t ImgPixelHeight   = 1296;
-    constexpr uint32_t ImgPixelCount    = ImgPixelWidth*ImgPixelHeight;
-    constexpr uint32_t ImgPixelLen      = ImgPixelCount*sizeof(ImgPixel);
-    constexpr uint32_t ImgChecksumLen   = sizeof(uint32_t);
-    constexpr uint32_t ImgLen           = ImgHeaderLen + ImgPixelLen + ImgChecksumLen;
+    constexpr uint32_t ImgHeaderLen         = sizeof(ImgHeader);
+    constexpr uint32_t ImgPixelWidth        = 2304;
+    constexpr uint32_t ImgPixelHeight       = 1296;
+    constexpr uint32_t ImgPixelCount        = ImgPixelWidth*ImgPixelHeight;
+    constexpr uint32_t ImgPixelLen          = ImgPixelCount*sizeof(ImgPixel);
+    constexpr uint32_t ImgChecksumLen       = sizeof(uint32_t);
+    constexpr uint32_t ImgLen               = ImgHeaderLen + ImgPixelLen + ImgChecksumLen;
+    constexpr uint32_t ImgChecksumOffset    = ImgLen-ImgChecksumLen;
     
     // SDBlockLen: block size of SD card
-    constexpr uint32_t SDBlockLen       = 512;
+    constexpr uint32_t SDBlockLen           = 512;
     // SDImgLen: image length padded to a multiple of SD card block size; determines image boundaries
-    constexpr uint32_t SDImgLen         = ((ImgLen+SDBlockLen-1)/SDBlockLen)*SDBlockLen;
+    constexpr uint32_t SDImgLen             = ((ImgLen+SDBlockLen-1)/SDBlockLen)*SDBlockLen;
 
 } // namespace ICE40

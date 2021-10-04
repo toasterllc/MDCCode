@@ -29,6 +29,7 @@
 #import "ImagePipelineManager.h"
 #import "PixelSampler.h"
 #import "MDCTypes.h"
+#import "ChecksumFletcher32.h"
 using namespace CFAViewer;
 using namespace MetalUtil;
 using namespace ImagePipeline;
@@ -324,6 +325,11 @@ static bool isCFAFile(const fs::path& path) {
     } else if (imgData.len() == MDC::ImgLen) {
         // Copy the image data into _rawImage
         memcpy(_rawImage.pixels, imgData.data()+MDC::ImgHeaderLen, MDC::ImgPixelLen);
+        
+        const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), MDC::ImgChecksumOffset);
+        uint32_t checksumGot = 0;
+        memcpy(&checksumGot, imgData.data()+MDC::ImgChecksumOffset, sizeof(checksumGot));
+        assert(checksumExpected == checksumGot);
     
     // invaid image
     } else {

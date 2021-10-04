@@ -102,6 +102,7 @@
 		55D0820D27092A8200B9BB97 /* MDCTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCTypes.h; sourceTree = "<group>"; };
 		55D0820E27092A8200B9BB97 /* ICE40Types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICE40Types.h; sourceTree = "<group>"; };
 		55D0820F27092A8200B9BB97 /* Assert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
+		55D08211270BACA600B9BB97 /* ChecksumFletcher32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChecksumFletcher32.h; sourceTree = "<group>"; };
 		55DE384325F6DA2400AD2223 /* Defringe.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Defringe.metal; sourceTree = "<group>"; };
 		55DE385B25F83EFB00AD2223 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
 		55E74408262BC9A600472115 /* ReconstructHighlights.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReconstructHighlights.h; sourceTree = "<group>"; };
@@ -288,6 +289,7 @@
 				55D0820F27092A8200B9BB97 /* Assert.h */,
 				55D0820E27092A8200B9BB97 /* ICE40Types.h */,
 				55D0820D27092A8200B9BB97 /* MDCTypes.h */,
+				55D08211270BACA600B9BB97 /* ChecksumFletcher32.h */,
 			);
 			name = Shared;
 			path = ../../Code/Shared;
