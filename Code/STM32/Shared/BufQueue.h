@@ -103,6 +103,8 @@ public:
     
     // Reset
     void reset() {
+        for (Buf& buf : _bufs) buf.len = 0;
+        
         _w = 0;
         _r = 0;
         _full = false;
