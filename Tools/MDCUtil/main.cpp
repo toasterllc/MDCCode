@@ -80,7 +80,7 @@ static uint32_t checksumFletcher32(const void* data, size_t len) {
 
 static void imgRead(const Args& args, MDCDevice& device) {
     printf("Sending SDRead command...\n");
-    device.sdRead(0);
+    device.sdRead(args.imgRead.idx*MDC::SDImgLen);
     printf("-> OK\n\n");
     
     constexpr size_t BufCap = 8*1024*1024;

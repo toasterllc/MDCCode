@@ -145,13 +145,13 @@ struct PixConfig {
         bool running = false;
         bool cancel = false;
         std::optional<PixConfig> pixConfig;
-        MDC::Pixel pixels[2200*2200];
+        MDC::ImgPixel pixels[2200*2200];
         uint32_t width = 0;
         uint32_t height = 0;
     } _streamImagesThread;
     
     struct {
-        MDC::Pixel pixels[2200*2200];
+        MDC::ImgPixel pixels[2200*2200];
         Pipeline::RawImage img = {
             .cfaDesc = {
                 CFAColor::Green, CFAColor::Red,
