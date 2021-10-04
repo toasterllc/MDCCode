@@ -16,12 +16,10 @@ module FletcherChecksum #(
     reg[WidthHalf:0] a1 = 0;
     reg[WidthHalf:0] a2 = 0;
     wire[WidthHalf:0] ax = (!`LeftBit(a1,0) ? a1 : a2);
-    reg[WidthHalf-1:0] af = 0;
     
     reg[WidthHalf:0] b1 = 0;
     reg[WidthHalf:0] b2 = 0;
     wire[WidthHalf:0] bx = (!`LeftBit(b1,0) ? b1 : b2);
-    reg[WidthHalf-1:0] bf = 0;
     
     reg enprev = 0;
     
@@ -46,16 +44,13 @@ module FletcherChecksum #(
                 b2 <= bx + ax;
             end
             
-            bf <= bx[WidthHalf-1:0];
-            af <= ax[WidthHalf-1:0];
-            
             // $display("[FletcherChecksum]\t\t bx:%h \t ax:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]",
             //     bx,
             //     ax,
             //     din, rst, en, dout);
         end
     end
-    assign dout = {bf, af};
+    assign dout = {bx[WidthHalf-1:0], ax[WidthHalf-1:0]};
 endmodule
 
 module FletcherChecksumCorrect #(
