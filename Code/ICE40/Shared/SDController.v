@@ -562,6 +562,7 @@ module SDController #(
         // ====================
         case (cmd_state)
         0: begin
+            cmd_counter[1:0] <= '1;
         end
         
         1: begin
@@ -571,7 +572,14 @@ module SDController #(
             datOut_state <= 0;
             datIn_state <= 0;
             cmd_crcRst <= 1;
-            cmd_state <= 2;
+            // Delay a few cycles (while manual control is potentially being disabled) before issuing the SD command.
+            // This is necessary because the DatIn state machine halts the clock (using `man_en_`) until
+            // the FIFO has space (`datInWrite_ready`). So if we're coming from that state, we need to
+            // wait until the clock is unhalted, which will happen automatically because we reset
+            // resp_state/datOut_state/datIn_state.
+            if (!cmd_counter[1:0]) begin
+                cmd_state <= 2;
+            end
         end
         
         2: begin
