@@ -139,15 +139,15 @@ module Testbench();
             end
             
             // Test vector: abcdefgh
-            // `RightBits(data,0*8,8) = 8'h61;
-            // `RightBits(data,1*8,8) = 8'h62;
-            // `RightBits(data,2*8,8) = 8'h63;
-            // `RightBits(data,3*8,8) = 8'h64;
-            // `RightBits(data,4*8,8) = 8'h65;
-            // `RightBits(data,5*8,8) = 8'h66;
-            // `RightBits(data,6*8,8) = 8'h67;
-            // `RightBits(data,7*8,8) = 8'h68;
-            // len = 8;
+            `RightBits(data,0*8,8) = 8'h61;
+            `RightBits(data,1*8,8) = 8'h62;
+            `RightBits(data,2*8,8) = 8'h63;
+            `RightBits(data,3*8,8) = 8'h64;
+            `RightBits(data,4*8,8) = 8'h65;
+            `RightBits(data,5*8,8) = 8'h66;
+            `RightBits(data,6*8,8) = 8'h67;
+            `RightBits(data,7*8,8) = 8'h68;
+            len = 8;
             
             // len = 8;
             
@@ -171,7 +171,7 @@ module Testbench();
                 end
                 en16 = 0;
                 #1;
-                for (i=0; i<1; i++) Clk16();
+                for (i=0; i<5; i++) Clk16();
                 
                 if (dout16 == doutCorrect16) begin
                     $display("checksum: %h [expected: %h] [len:%0d] ✅", dout16, doutCorrect16, len);
@@ -180,7 +180,7 @@ module Testbench();
                     `Finish;
                 end
             end
-            // `Finish;
+            `Finish;
             
             // Fletcher-32
             begin
