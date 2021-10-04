@@ -26,8 +26,10 @@ namespace MDC {
     constexpr uint32_t ImgHeaderLen     = sizeof(ImgHeader);
     constexpr uint32_t ImgPixelWidth    = 2304;
     constexpr uint32_t ImgPixelHeight   = 1296;
+    constexpr uint32_t ImgPixelCount    = ImgPixelWidth*ImgPixelHeight;
+    constexpr uint32_t ImgPixelLen      = ImgPixelCount*sizeof(ImgPixel);
     constexpr uint32_t ImgChecksumLen   = sizeof(uint32_t);
-    constexpr uint32_t ImgLen           = ImgHeaderLen + ImgPixelWidth*ImgPixelHeight*sizeof(ImgPixel) + ImgChecksumLen;
+    constexpr uint32_t ImgLen           = ImgHeaderLen + ImgPixelLen + ImgChecksumLen;
     
     // SDBlockLen: block size of SD card
     constexpr uint32_t SDBlockLen       = 512;
