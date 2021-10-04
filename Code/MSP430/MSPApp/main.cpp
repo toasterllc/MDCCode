@@ -677,7 +677,7 @@ uint16_t _sd_init() {
     return rca;
 }
 
-void _sd_writeImage(uint16_t rca) {
+void _sd_writeImage(uint16_t rca, uint16_t idx) {
     // TODO: calculate the correct number of blocks to pre-erase with SET_WR_BLK_ERASE_COUNT
     // ====================
     // ACMD23 | SET_WR_BLK_ERASE_COUNT
@@ -705,7 +705,8 @@ void _sd_writeImage(uint16_t rca) {
     //   Write blocks of data
     // ====================
     {
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD25, 0);
+        const uint32_t addr = idx*MDC::SDImgLen;
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD25, addr);
         Assert(!status.respCRCErr());
     }
     
@@ -925,7 +926,7 @@ void _img_init() {
         // 256: Walking 1s test pattern (12 bit)
 //        _img_i2cWrite(0x3070, 0x0000);  // Normal operation (default)
 //        _img_i2cWrite(0x3070, 0x0001);  // Solid color
-        _img_i2cWrite(0x3070, 0x0002);  // Color bars
+//        _img_i2cWrite(0x3070, 0x0002);  // Color bars
 //        _img_i2cWrite(0x3070, 0x0003);  // Fade-to-gray
 //        _img_i2cWrite(0x3070, 0x0100);  // Walking 1s
     }
@@ -992,30 +993,30 @@ void _img_init() {
         _img_i2cWrite(0x3064, 0x1802);  // Stats disabled
     }
     
-//    constexpr uint16_t IntTimeMax = 16383;
-//    constexpr uint16_t GainMax = 63;
-//    
-//    constexpr uint16_t intTime = 65535/2048;
-//    constexpr uint16_t gain = intTime/3;
-//    
-//    // Set coarse_integration_time
-//    {
-//        // Normalize intTime to [0,IntTimeMax]
-//        constexpr uint16_t normVal = (((uint32_t)intTime*IntTimeMax)/UINT16_MAX);
-//        _img_i2cWrite(0x3012, normVal);
-//    }
-//    
-//    // Set fine_integration_time
-//    {
-//        _img_i2cWrite(0x3014, 0);
-//    }
-//    
-//    // Set analog_gain
-//    {
-//        // Normalize gain to [0,GainMax]
-//        constexpr uint16_t normVal = std::max((uint32_t)1, (((uint32_t)gain*GainMax)/UINT16_MAX));
-//        _img_i2cWrite(0x3060, normVal);
-//    }
+    constexpr uint16_t IntTimeMax = 16383;
+    constexpr uint16_t GainMax = 63;
+    
+    constexpr uint16_t intTime = IntTimeMax/10;
+    constexpr uint16_t gain = GainMax/10;
+    
+    // Set coarse_integration_time
+    {
+        // Normalize intTime to [0,IntTimeMax]
+        constexpr uint16_t normVal = (((uint32_t)intTime*IntTimeMax)/UINT16_MAX);
+        _img_i2cWrite(0x3012, normVal);
+    }
+    
+    // Set fine_integration_time
+    {
+        _img_i2cWrite(0x3014, 0);
+    }
+    
+    // Set analog_gain
+    {
+        // Normalize gain to [0,GainMax]
+        constexpr uint16_t normVal = std::max((uint32_t)1, (((uint32_t)gain*GainMax)/UINT16_MAX));
+        _img_i2cWrite(0x3060, normVal);
+    }
 }
 
 void _img_setStreamEnabled(bool en) {
@@ -1094,10 +1095,16 @@ int main() {
     const uint16_t rca = _sd_init();
     // Enable image streaming
     _img_setStreamEnabled(true);
-    // Capture an image to RAM
-    _img_captureImage();
-    // Write the image to the SD card
-    _sd_writeImage(rca);
+    
+    for (int i=0; i<10; i++) {
+        _ice_transfer(LEDSetMsg(i));
+        
+        // Capture an image to RAM
+        _img_captureImage();
+        // Write the image to the SD card
+        _sd_writeImage(rca, i);
+        _delayMs(1000);
+    }
     
     for (;;);
     
