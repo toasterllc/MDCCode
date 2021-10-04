@@ -80,6 +80,16 @@ void System::run() {
         Assert(!status.respCRCErr());
     }
     
+    // ====================
+    // CMD12 | STOP_TRANSMISSION
+    //   State: Send Data -> Transfer
+    //   Finish reading
+    // ====================
+    {
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD12, 0);
+        Assert(!status.respCRCErr());
+    }
+    
     
     
 //    Task::Run(
@@ -569,7 +579,7 @@ SDStatusResp System::_sd_sendCmd(
         return status;
     }
     // Timeout sending SD command
-    abort();
+//    abort();
 }
 
 void System::_sd_task() {
