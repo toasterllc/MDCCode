@@ -288,22 +288,17 @@ module Testbench();
         TestNop();
         
         TestSDInit();
-        // TestSDCMD0();
-        // TestSDCMD8();
-        // TestSDCMD2();
-        // TestSDCMD6();
+        TestSDCMD0();
+        TestSDCMD8();
+        TestSDCMD2();
+        TestSDCMD6();
         //           delay, speed,                            trigger, reset
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
         TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
         
-        // TestSDDatIn();
-        // TestLEDSet(4'b1010);
-        // TestSDDatIn();
-        
-        // Send SD command CMD18 (READ_MULTIPLE_BLOCK)
-        SendSDCmdResp(CMD18, `SDController_RespType_48, `SDController_DatInType_4096xN, 32'b0);
-        // SDReadout(/* waitForDReady */ 1, /* validateWords */ 1, /* wordWidth */ 32, /* wordCount */ 4*1024);
-        SendSDCmdResp(CMD12, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
+        TestSDDatIn();
+        TestLEDSet(4'b1010);
+        TestSDDatIn();
         
         `Finish;
     end
