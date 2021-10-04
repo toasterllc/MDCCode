@@ -562,7 +562,7 @@ module SDController #(
         // ====================
         case (cmd_state)
         0: begin
-            cmd_counter[1:0] <= '1;
+            cmd_counter <= 1;
         end
         
         1: begin
@@ -577,7 +577,7 @@ module SDController #(
             // the FIFO has space (`datInWrite_ready`). So if we're coming from that state, we need to
             // wait until the clock is unhalted, which will happen automatically because we reset
             // resp_state/datOut_state/datIn_state.
-            if (!cmd_counter[1:0]) begin
+            if (!cmd_counter) begin
                 cmd_state <= 2;
             end
         end
