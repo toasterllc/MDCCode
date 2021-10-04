@@ -13,39 +13,37 @@ module FletcherChecksum #(
     input wire[WidthHalf-1:0]   din,
     output wire[Width-1:0]      dout
 );
-    reg[WidthHalf:0] a1 = 0;
-    reg[WidthHalf:0] a2 = 0;
-    wire[WidthHalf:0] ax = (!`LeftBit(a1,0) ? a1 : a2);
+    wire[WidthHalf:0] asub = a - {WidthHalf{'1}};
+    wire[WidthHalf:0] ax = (!`LeftBit(asub,0) ? asub : a);
+    reg[WidthHalf:0] a = 0;
     
-    reg[WidthHalf:0] b1 = 0;
-    reg[WidthHalf:0] b2 = 0;
-    wire[WidthHalf:0] bx = (!`LeftBit(b1,0) ? b1 : b2);
+    wire[WidthHalf:0] bsub = b - {WidthHalf{'1}};
+    wire[WidthHalf:0] bx = (!`LeftBit(bsub,0) ? bsub : b);
+    reg[WidthHalf:0] b = 0;
     
     reg enprev = 0;
     
     always @(posedge clk) begin
         if (rst) begin
-            a1 <= 0;
-            a2 <= 0;
-            b1 <= 0;
-            b2 <= 0;
+            a <= 0;
+            b <= 0;
             enprev <= 0;
         
         end else begin
             enprev <= en;
             
             if (en) begin
-                a1 <= ax + din - {WidthHalf{'1}};
-                a2 <= ax + din;
+                a <= ax + din;
             end
             
             if (enprev) begin
-                b1 <= bx + ax - {WidthHalf{'1}};
-                b2 <= bx + ax;
+                b <= bx + ax;
             end
             
-            // $display("[FletcherChecksum]\t\t bx:%h \t ax:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]",
+            // $display("[FletcherChecksum]\t\t b:%h \t bx:%h \t a:%h \t ax:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]",
+            //     b,
             //     bx,
+            //     a,
             //     ax,
             //     din, rst, en, dout);
         end
