@@ -16,8 +16,9 @@ private:
     void _pauseTasks();
     
     void _usbCmd_task();
-    
     void _usbDataIn_task();
+    
+    void _bootloader();
     
     void _ice_init();
     void _ice_transferNoCS(const ICE40::Msg& msg);

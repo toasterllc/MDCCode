@@ -89,10 +89,11 @@ void System::_usbCmd_task() {
         _pauseTasks();
         
         switch (_cmd.op) {
-        case Op::SDRead:    _sd.task.reset();       break;
-        case Op::LEDSet:    _ledSet();              break;
+        case Op::Bootloader:    _bootloader();          break;
+        case Op::SDRead:        _sd.task.reset();       break;
+        case Op::LEDSet:        _ledSet();              break;
         // Bad command
-        default:            _usb.cmdAccept(false);  break;
+        default:                _usb.cmdAccept(false);  break;
         }
     }
 }
@@ -111,6 +112,14 @@ void System::_usbDataIn_task() {
         _bufs.front().len = 0;
         _bufs.pop();
     }
+}
+
+void System::_bootloader() {
+    _usb.cmdAccept(true);
+    // Perform software reset
+    HAL_NVIC_SystemReset();
+    // Unreachable
+    abort();
 }
 
 #pragma mark - ICE40
