@@ -13,49 +13,44 @@ module FletcherChecksum #(
     input wire[WidthHalf-1:0]   din,
     output wire[Width-1:0]      dout
 );
-    reg[WidthHalf+1:0] a = 0;
-    reg[WidthHalf:0] asub = 0;
-    reg[WidthHalf+1:0] afinal1 = 0;
-    reg[WidthHalf+1:0] afinal2 = 0;
-    wire[WidthHalf+1:0] afinalx = (!`LeftBit(afinal1,0) ? afinal1 : afinal2);
+    reg[WidthHalf:0] a1 = 0;
+    reg[WidthHalf:0] a2 = 0;
+    wire[WidthHalf:0] ax = (!`LeftBit(a1,0) ? a1 : a2);
     
-    // reg[WidthHalf:0] b1 = 0;
-    // reg[WidthHalf:0] b2 = 0;
-    // wire[WidthHalf:0] bx = (!`LeftBit(b1,0) ? b1 : b2);
+    reg[WidthHalf:0] b1 = 0;
+    reg[WidthHalf:0] b2 = 0;
+    wire[WidthHalf:0] bx = (!`LeftBit(b1,0) ? b1 : b2);
     
     reg enprev = 0;
     
     always @(posedge clk) begin
         if (rst) begin
-            a <= 0;
-            asub <= 0;
+            a1 <= 0;
+            a2 <= 0;
+            b1 <= 0;
+            b2 <= 0;
             enprev <= 0;
         
         end else begin
             enprev <= en;
             
             if (en) begin
-                a <= a + din - asub;
-                asub <= `LeftBit(a,0) ? {{WidthHalf{'1}},1'b0} : 0;
+                a1 <= ax + din - {WidthHalf{'1}};
+                a2 <= ax + din;
             end
             
-            afinal1 <= a - {WidthHalf{'1}};
-            afinal2 <= a;
+            if (enprev) begin
+                b1 <= bx + ax - {WidthHalf{'1}};
+                b2 <= bx + ax;
+            end
             
-            // if (enprev) begin
-            //     b1 <= bx + ax - {WidthHalf{'1}};
-            //     b2 <= bx + ax;
-            // end
-            
-            $display("[FletcherChecksum]\t\t a:%h \t asub:%h \t afinal1:%h \t afinal2:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]",
-                a,
-                asub,
-                afinal1,
-                afinal2,
-                din, rst, en, dout);
+            // $display("[FletcherChecksum]\t\t bx:%h \t ax:%h \t din:%h \t\t rst:%h en:%h [checksum: %h]",
+            //     bx,
+            //     ax,
+            //     din, rst, en, dout);
         end
     end
-    assign dout = {{WidthHalf{1'b0}}, afinalx[WidthHalf-1:0]};
+    assign dout = {bx[WidthHalf-1:0], ax[WidthHalf-1:0]};
 endmodule
 
 module FletcherChecksumCorrect #(
