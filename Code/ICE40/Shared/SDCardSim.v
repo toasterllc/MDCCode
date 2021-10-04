@@ -249,7 +249,7 @@ module SDCardSim #(
                 );
                 
                 if (cmdIn_preamble !== 2'b01) begin
-                    $display("[SDCardSim] Bad preamble: %b ❌", cmdIn_preamble);
+                    $display("[SDCardSim] Bad preamble (expected:01 got:%b) ❌", cmdIn_preamble);
                     `Finish;
                 end
                 
@@ -368,6 +368,14 @@ module SDCardSim #(
                 end
                 endcase
                 
+                // Handle stop command (CMD12)
+                // This needs to happen before we send the response, because the dataflow is supposed
+                // to stop N_SD=[2,3] cycles after the end of CMD12
+                if (cmd === CMD12) begin
+                    recvWriteData = 0;
+                    sendReadData = 0;
+                end
+                
                 // Signal busy (DAT=0) if we were previously writing,
                 // and we received the stop command
                 signalBusy = (cmd===CMD12 && recvWriteData);
@@ -453,11 +461,6 @@ module SDCardSim #(
                     #(1*1000000);
                     // Let go of DAT lines
                     datOut = 4'bzzzz;
-                end
-                
-                CMD12: begin
-                    recvWriteData = 0;
-                    sendReadData = 0;
                 end
                 
                 CMD18: begin
