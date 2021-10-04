@@ -95,9 +95,10 @@ static void imgRead(const Args& args, MDCDevice& device) {
     
     // Validate checksum
     {
-        const uint32_t checksumExpected = checksumFletcher32(buf.get(), MDC::ImgNoChecksumLen);
+        constexpr size_t ChecksumOffset = MDC::ImgLen-MDC::ImgChecksumLen;
+        const uint32_t checksumExpected = checksumFletcher32(buf.get(), ChecksumOffset);
         uint32_t checksumGot = 0;
-        memcpy(&checksumGot, (uint8_t*)buf.get()+MDC::ImgNoChecksumLen, sizeof(checksumGot));
+        memcpy(&checksumGot, (uint8_t*)buf.get()+ChecksumOffset, sizeof(checksumGot));
         printf("-> Checksum: expected:0x%08x got:0x%08x %s\n", checksumExpected, checksumGot, (checksumExpected==checksumGot ? "✅" : "❌"));
     }
     

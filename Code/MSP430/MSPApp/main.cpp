@@ -1094,7 +1094,6 @@ int main() {
     const uint16_t rca = _sd_init();
     // Enable image streaming
     _img_setStreamEnabled(true);
-    _ice_transfer(LEDSetMsg(0x09));
     // Capture an image to RAM
     _img_captureImage();
     // Write the image to the SD card
