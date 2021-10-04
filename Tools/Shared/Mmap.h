@@ -53,6 +53,7 @@ public:
     const T* data() const { return _state.data; }
     // The number of T elements in `data`
     size_t len() const { return _state.len; }
+    size_t byteLen() const { return _state.len*sizeof(T); }
     
 private:
     void _reset() {

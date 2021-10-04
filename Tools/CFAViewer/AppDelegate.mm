@@ -157,8 +157,8 @@ struct PixConfig {
                 CFAColor::Green, CFAColor::Red,
                 CFAColor::Blue, CFAColor::Green,
             },
-            .width = 2304,
-            .height = 1296,
+            .width = MDC::ImgPixelWidth,
+            .height = MDC::ImgPixelHeight,
             .pixels = pixels,
         };
     } _rawImage;
@@ -312,12 +312,24 @@ static bool isCFAFile(const fs::path& path) {
 - (void)_loadImage:(const fs::path&)path {
     std::cout << path.filename().string() << "\n";
     
-    const Mmap<MetalUtil::ImagePixel> imgData(path);
-    const size_t pixelCount = _rawImage.img.width*_rawImage.img.height;
-    // Verify that the size of the file matches the size of the image
-    assert(imgData.len() == pixelCount);
-    // Copy the image data into _rawImage
-    std::copy(imgData.data(), imgData.data()+pixelCount, _rawImage.pixels);
+    const Mmap<uint8_t> imgData(path);
+    
+    // Support 2 different filetypes:
+    // (1) solely raw pixel data
+    if (imgData.len() == MDC::ImgPixelLen) {
+        // Copy the image data into _rawImage
+        memcpy(_rawImage.pixels, imgData.data(), MDC::ImgPixelLen);
+    
+    // (2) header + raw pixel data + checksum
+    } else if (imgData.len() == MDC::ImgLen) {
+        // Copy the image data into _rawImage
+        memcpy(_rawImage.pixels, imgData.data()+MDC::ImgHeaderLen, MDC::ImgPixelLen);
+    
+    // invaid image
+    } else {
+        abort();
+    }
+    
     [[_mainView imageLayer] setNeedsDisplay];
     
     // Reset the illuminant so auto-white-balance is enabled again
