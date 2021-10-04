@@ -23,8 +23,8 @@ using ImgI2CStatusResp = ICE40::ImgI2CStatusResp;
 using ImgCaptureStatusMsg = ICE40::ImgCaptureStatusMsg;
 using ImgCaptureStatusResp = ICE40::ImgCaptureStatusResp;
 
-using SDRespTypes = ICE40::SDSendCmdMsg::RespTypes;
-using SDDatInTypes = ICE40::SDSendCmdMsg::DatInTypes;
+using SDRespType = ICE40::SDSendCmdMsg::RespType;
+using SDDatInType = ICE40::SDSendCmdMsg::DatInType;
 
 constexpr uint64_t MCLKFreqHz = 16000000;
 
@@ -212,8 +212,8 @@ SDStatusResp _sd_status() {
 SDStatusResp _sd_sendCmd(
     uint8_t sdCmd,
     uint32_t sdArg,
-    SDSendCmdMsg::RespType respType=ICE40::SDSendCmdMsg::RespTypes::Len48,
-    SDSendCmdMsg::DatInType datInType=ICE40::SDSendCmdMsg::DatInTypes::None
+    SDSendCmdMsg::RespType respType     = ICE40::SDSendCmdMsg::RespType::Len48,
+    SDSendCmdMsg::DatInType datInType   = ICE40::SDSendCmdMsg::DatInType::None
 ) {
     _ice_transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
     
@@ -225,9 +225,9 @@ SDStatusResp _sd_sendCmd(
         // Try again if the command hasn't been sent yet
         if (!status.cmdDone()) continue;
         // Try again if we expect a response but it hasn't been received yet
-        if (respType!=SDRespTypes::None && !status.respDone()) continue;
+        if (respType!=SDRespType::None && !status.respDone()) continue;
         // Try again if we expect DatIn but it hasn't been received yet
-        if (datInType!=SDDatInTypes::None && !status.datInDone()) continue;
+        if (datInType!=SDDatInType::None && !status.datInDone()) continue;
         return status;
     }
     // Timeout sending SD command
@@ -308,7 +308,7 @@ uint16_t _sd_init() {
         // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
         _delayMs(1);
         // Send CMD0
-        _sd_sendCmd(SDSendCmdMsg::CMD0, 0, SDRespTypes::None);
+        _sd_sendCmd(SDSendCmdMsg::CMD0, 0, SDRespType::None);
         // There's no response to CMD0
     }
     
@@ -363,7 +363,7 @@ uint16_t _sd_init() {
     // ====================
     {
         // The response to CMD2 is 136 bits, instead of the usual 48 bits
-        _sd_sendCmd(SDSendCmdMsg::CMD2, 0, SDRespTypes::Len136);
+        _sd_sendCmd(SDSendCmdMsg::CMD2, 0, SDRespType::Len136);
         // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
         // so it'll be flagged as incorrect.
     }
@@ -423,7 +423,7 @@ uint16_t _sd_init() {
         // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
         // Group 2 (Command System)    = 0xF (no change)
         // Group 1 (Access Mode)       = 0x3 (SDR104)
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512x1);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespType::Len48, SDDatInType::Len512x1);
         Assert(!status.respCRCErr());
         Assert(!status.datInCRCErr());
         // Verify that the access mode was successfully changed
@@ -518,7 +518,7 @@ uint16_t _sd_init() {
 //    // ====================
 //    {
 //        // The response to CMD2 is 136 bits, instead of the usual 48 bits
-//        _sd_sendCmd(SDSendCmdMsg::CMD2, 0, SDRespTypes::Len136);
+//        _sd_sendCmd(SDSendCmdMsg::CMD2, 0, SDRespType::Len136);
 //        // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
 //        // so it'll be flagged as incorrect.
 //    }
@@ -578,7 +578,7 @@ uint16_t _sd_init() {
 //        // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
 //        // Group 2 (Command System)    = 0xF (no change)
 //        // Group 1 (Access Mode)       = 0x3 (SDR104)
-//        auto status = _sd_sendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespTypes::Len48, SDDatInTypes::Len512);
+//        auto status = _sd_sendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, SDRespType::Len48, SDDatInType::Len512);
 //        Assert(!status.respCRCErr());
 //        Assert(!status.datInCRCErr());
 //        // Verify that the access mode was successfully changed
