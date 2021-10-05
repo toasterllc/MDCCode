@@ -6,8 +6,6 @@
 `include "SDController.v"
 `include "ToggleAck.v"
 `include "Sync.v"
-`include "ImgController.v"
-`include "ImgI2CMaster.v"
 `timescale 1ns/1ps
 
 // TODO: have consistent ordering for FIFO ports for: AFIFO, AFIFOChain, SDController, ImgController
@@ -30,155 +28,13 @@ module Top(
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat,
     
-    // IMG port
-    input wire          img_dclk,
-    input wire[11:0]    img_d,
-    input wire          img_fv,
-    input wire          img_lv,
-    output reg          img_rst_ = 0,
-    output wire         img_sclk,
-    inout wire          img_sdata,
-    
-    // RAM port
-    output wire         ram_clk,
-    output wire         ram_cke,
-    output wire[1:0]    ram_ba,
-    output wire[11:0]   ram_a,
-    output wire         ram_cs_,
-    output wire         ram_ras_,
-    output wire         ram_cas_,
-    output wire         ram_we_,
-    output wire[1:0]    ram_dqm,
-    inout wire[15:0]    ram_dq,
-    
     // LED port
     output reg[3:0]     ice_led = 0
 );
     // ====================
-    // ImgI2CMaster
+    // spi_clk
     // ====================
-    localparam ImgI2CSlaveAddr = 7'h10;
-    reg imgi2c_cmd_write = 0;
-    reg[15:0] imgi2c_cmd_regAddr = 0;
-    reg imgi2c_cmd_dataLen = 0;
-    reg[15:0] imgi2c_cmd_writeData = 0;
-    reg imgi2c_cmd_trigger = 0;
-    wire imgi2c_status_done;
-    wire imgi2c_status_err;
-    wire[15:0] imgi2c_status_readData;
-    `ToggleAck(spi_imgi2c_done_, spi_imgi2c_doneAck, imgi2c_status_done, posedge, spi_clk);
-    
-    ImgI2CMaster #(
-        .ClkFreq(16_000_000),
-`ifdef SIM
-        .I2CClkFreq(4_000_000)
-`else
-        .I2CClkFreq(100_000) // TODO: try 400_000 (the max frequency) to see if it works. if not, the pullup's likely too weak.
-`endif
-    ) ImgI2CMaster (
-        .clk(ice_img_clk16mhz),
-        
-        .cmd_slaveAddr(ImgI2CSlaveAddr),
-        .cmd_write(imgi2c_cmd_write),
-        .cmd_regAddr(imgi2c_cmd_regAddr),
-        .cmd_dataLen(imgi2c_cmd_dataLen),
-        .cmd_writeData(imgi2c_cmd_writeData),
-        .cmd_trigger(imgi2c_cmd_trigger), // Toggle
-        
-        .status_done(imgi2c_status_done), // Toggle
-        .status_err(imgi2c_status_err),
-        .status_readData(imgi2c_status_readData),
-        
-        .i2c_clk(img_sclk),
-        .i2c_data(img_sdata)
-    );
-    
-    
-    
-    
-    
-    
-    
-    // ====================
-    // Img Clock (108 MHz)
-    // ====================
-    localparam Img_Clk_Freq = 108_000_000;
-    wire img_clk;
-    ClockGen #(
-        .FREQOUT(Img_Clk_Freq),
-        .DIVR(0),
-        .DIVF(53),
-        .DIVQ(3),
-        .FILTER_RANGE(1)
-    ) ClockGen_img_clk(.clkRef(ice_img_clk16mhz), .clk(img_clk));
-    
-    // ====================
-    // ImgController
-    // ====================
-    reg                                 imgctrl_cmd_capture = 0;
-    reg                                 imgctrl_cmd_readout = 0;
-    reg[0:0]                            imgctrl_cmd_ramBlock = 0;
-    reg[ImageHeaderWordCount*16-1:0]    imgctrl_cmd_header = 0;
-    wire                                imgctrl_readout_clk;
-    wire                                imgctrl_readout_start;
-    wire                                imgctrl_readout_ready;
-    wire                                imgctrl_readout_trigger;
-    wire[15:0]                          imgctrl_readout_data;
-    wire                                imgctrl_status_captureDone;
-    wire[`RegWidth(ImageSizeMax)-1:0]   imgctrl_status_captureWordCount;
-    wire[17:0]                          imgctrl_status_captureHighlightCount;
-    wire[17:0]                          imgctrl_status_captureShadowCount;
-    ImgController #(
-        .ClkFreq(Img_Clk_Freq),
-        .ImageSizeMax(ImageSizeMax),
-        .HeaderWordCount(ImageHeaderWordCount)
-    ) ImgController (
-        .clk(img_clk),
-        
-        .cmd_capture(imgctrl_cmd_capture),
-        .cmd_readout(imgctrl_cmd_readout),
-        .cmd_ramBlock(imgctrl_cmd_ramBlock),
-        .cmd_header(imgctrl_cmd_header),
-        
-        .readout_clk(imgctrl_readout_clk),
-        .readout_start(imgctrl_readout_start),
-        .readout_ready(imgctrl_readout_ready),
-        .readout_trigger(imgctrl_readout_trigger),
-        .readout_data(imgctrl_readout_data),
-        
-        .status_captureDone(imgctrl_status_captureDone),
-        .status_captureWordCount(imgctrl_status_captureWordCount),
-        .status_captureHighlightCount(imgctrl_status_captureHighlightCount),
-        .status_captureShadowCount(imgctrl_status_captureShadowCount),
-        
-        .img_dclk(img_dclk),
-        .img_d(img_d),
-        .img_fv(img_fv),
-        .img_lv(img_lv),
-        
-        .ram_clk(ram_clk),
-        .ram_cke(ram_cke),
-        .ram_ba(ram_ba),
-        .ram_a(ram_a),
-        .ram_cs_(ram_cs_),
-        .ram_ras_(ram_ras_),
-        .ram_cas_(ram_cas_),
-        .ram_we_(ram_we_),
-        .ram_dqm(ram_dqm),
-        .ram_dq(ram_dq)
-    );
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    wire spi_clk;
     
     
     
@@ -222,7 +78,7 @@ module Top(
     );
     
     assign fifo_prop_clk    = fifo_w_clk;
-    assign fifo_r_clk       = ice_st_spi_clk;
+    assign fifo_r_clk       = spi_clk;
     
     // ====================
     // SD Clock (102 MHz)
@@ -325,11 +181,11 @@ module Top(
     // ====================
     
     // SD nets
-    `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, ice_st_spi_clk);
-    `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, ice_st_spi_clk);
-    `Sync(spi_sdDatOutDone, sd_datOut_done, posedge, ice_st_spi_clk);
-    `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, ice_st_spi_clk);
-    `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, ice_st_spi_clk);
+    `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, spi_clk);
+    `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, spi_clk);
+    `Sync(spi_sdDatOutDone, sd_datOut_done, posedge, spi_clk);
+    `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, spi_clk);
+    `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, spi_clk);
     
     // MsgCycleCount notes:
     //
@@ -379,7 +235,7 @@ module Top(
     localparam SPI_State_Count      = 7;
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     
-    always @(posedge ice_st_spi_clk, negedge spi_cs) begin
+    always @(posedge spi_clk, negedge spi_cs) begin
         // Reset ourself when we're de-selected
         if (!spi_cs) begin
             spi_state <= SPI_State_MsgIn;
@@ -500,11 +356,6 @@ module Top(
                     spi_state <= SPI_State_SDReadout;
                 end
                 
-                `Msg_Type_ImgReset: begin
-                    $display("[SPI] Got Msg_Type_ImgReset (rst=%b)", spi_msgArg[`Msg_Arg_ImgReset_Val_Bits]);
-                    img_rst_ <= spi_msgArg[`Msg_Arg_ImgReset_Val_Bits];
-                end
-                
                 `Msg_Type_Nop: begin
                     $display("[SPI] Got Msg_Type_Nop");
                 end
@@ -557,6 +408,16 @@ module Top(
     end
     
     // ====================
+    // Pin: ice_st_spi_clk
+    // ====================
+    SB_IO #(
+        .PIN_TYPE(6'b0000_01) // Output: none; input: unregistered
+    ) SB_IO_ice_st_spi_clk (
+        .PACKAGE_PIN(ice_st_spi_clk),
+        .D_IN_0(spi_clk)
+    );
+    
+    // ====================
     // Pin: ice_st_spi_cs_
     // ====================
     wire spi_cs_tmp_;
@@ -577,8 +438,8 @@ module Top(
         SB_IO #(
             .PIN_TYPE(6'b1001_00)
         ) SB_IO_ice_st_spi_d (
-            .INPUT_CLK(ice_st_spi_clk),
-            .OUTPUT_CLK(ice_st_spi_clk),
+            .INPUT_CLK(spi_clk),
+            .OUTPUT_CLK(spi_clk),
             .PACKAGE_PIN(ice_st_spi_d[i]),
             .OUTPUT_ENABLE(spi_d_outEn),
             .D_OUT_0(spi_d_out[i]),
