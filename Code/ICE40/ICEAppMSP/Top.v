@@ -11,6 +11,7 @@
 module Top(
     input wire          ice_img_clk16mhz,
     
+    // MSP SPI port
     input wire          ice_msp_spi_clk,
     inout wire          ice_msp_spi_data,
     
