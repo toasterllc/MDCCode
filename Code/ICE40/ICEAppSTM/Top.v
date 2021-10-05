@@ -6,6 +6,8 @@
 `include "SDController.v"
 `include "ToggleAck.v"
 `include "Sync.v"
+`include "ImgController.v"
+`include "ImgI2CMaster.v"
 `timescale 1ns/1ps
 
 // TODO: have consistent ordering for FIFO ports for: AFIFO, AFIFOChain, SDController, ImgController
@@ -52,6 +54,134 @@ module Top(
     // LED port
     output reg[3:0]     ice_led = 0
 );
+    // ====================
+    // ImgI2CMaster
+    // ====================
+    localparam ImgI2CSlaveAddr = 7'h10;
+    reg imgi2c_cmd_write = 0;
+    reg[15:0] imgi2c_cmd_regAddr = 0;
+    reg imgi2c_cmd_dataLen = 0;
+    reg[15:0] imgi2c_cmd_writeData = 0;
+    reg imgi2c_cmd_trigger = 0;
+    wire imgi2c_status_done;
+    wire imgi2c_status_err;
+    wire[15:0] imgi2c_status_readData;
+    `ToggleAck(spi_imgi2c_done_, spi_imgi2c_doneAck, imgi2c_status_done, posedge, spi_clk);
+    
+    ImgI2CMaster #(
+        .ClkFreq(16_000_000),
+`ifdef SIM
+        .I2CClkFreq(4_000_000)
+`else
+        .I2CClkFreq(100_000) // TODO: try 400_000 (the max frequency) to see if it works. if not, the pullup's likely too weak.
+`endif
+    ) ImgI2CMaster (
+        .clk(ice_img_clk16mhz),
+        
+        .cmd_slaveAddr(ImgI2CSlaveAddr),
+        .cmd_write(imgi2c_cmd_write),
+        .cmd_regAddr(imgi2c_cmd_regAddr),
+        .cmd_dataLen(imgi2c_cmd_dataLen),
+        .cmd_writeData(imgi2c_cmd_writeData),
+        .cmd_trigger(imgi2c_cmd_trigger), // Toggle
+        
+        .status_done(imgi2c_status_done), // Toggle
+        .status_err(imgi2c_status_err),
+        .status_readData(imgi2c_status_readData),
+        
+        .i2c_clk(img_sclk),
+        .i2c_data(img_sdata)
+    );
+    
+    
+    
+    
+    
+    
+    
+    // ====================
+    // Img Clock (108 MHz)
+    // ====================
+    localparam Img_Clk_Freq = 108_000_000;
+    wire img_clk;
+    ClockGen #(
+        .FREQOUT(Img_Clk_Freq),
+        .DIVR(0),
+        .DIVF(53),
+        .DIVQ(3),
+        .FILTER_RANGE(1)
+    ) ClockGen_img_clk(.clkRef(ice_img_clk16mhz), .clk(img_clk));
+    
+    // ====================
+    // ImgController
+    // ====================
+    reg                                 imgctrl_cmd_capture = 0;
+    reg                                 imgctrl_cmd_readout = 0;
+    reg[0:0]                            imgctrl_cmd_ramBlock = 0;
+    reg[ImageHeaderWordCount*16-1:0]    imgctrl_cmd_header = 0;
+    wire                                imgctrl_readout_clk;
+    wire                                imgctrl_readout_start;
+    wire                                imgctrl_readout_ready;
+    wire                                imgctrl_readout_trigger;
+    wire[15:0]                          imgctrl_readout_data;
+    wire                                imgctrl_status_captureDone;
+    wire[`RegWidth(ImageSizeMax)-1:0]   imgctrl_status_captureWordCount;
+    wire[17:0]                          imgctrl_status_captureHighlightCount;
+    wire[17:0]                          imgctrl_status_captureShadowCount;
+    ImgController #(
+        .ClkFreq(Img_Clk_Freq),
+        .ImageSizeMax(ImageSizeMax),
+        .HeaderWordCount(ImageHeaderWordCount)
+    ) ImgController (
+        .clk(img_clk),
+        
+        .cmd_capture(imgctrl_cmd_capture),
+        .cmd_readout(imgctrl_cmd_readout),
+        .cmd_ramBlock(imgctrl_cmd_ramBlock),
+        .cmd_header(imgctrl_cmd_header),
+        
+        .readout_clk(imgctrl_readout_clk),
+        .readout_start(imgctrl_readout_start),
+        .readout_ready(imgctrl_readout_ready),
+        .readout_trigger(imgctrl_readout_trigger),
+        .readout_data(imgctrl_readout_data),
+        
+        .status_captureDone(imgctrl_status_captureDone),
+        .status_captureWordCount(imgctrl_status_captureWordCount),
+        .status_captureHighlightCount(imgctrl_status_captureHighlightCount),
+        .status_captureShadowCount(imgctrl_status_captureShadowCount),
+        
+        .img_dclk(img_dclk),
+        .img_d(img_d),
+        .img_fv(img_fv),
+        .img_lv(img_lv),
+        
+        .ram_clk(ram_clk),
+        .ram_cke(ram_cke),
+        .ram_ba(ram_ba),
+        .ram_a(ram_a),
+        .ram_cs_(ram_cs_),
+        .ram_ras_(ram_ras_),
+        .ram_cas_(ram_cas_),
+        .ram_we_(ram_we_),
+        .ram_dqm(ram_dqm),
+        .ram_dq(ram_dq)
+    );
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // ====================
     // AFIFOChain
     // ====================
@@ -368,6 +498,11 @@ module Top(
                     $display("[SPI] Got Msg_Type_SDReadout");
                     spi_sdReadoutCounter <= 6;
                     spi_state <= SPI_State_SDReadout;
+                end
+                
+                `Msg_Type_ImgReset: begin
+                    $display("[SPI] Got Msg_Type_ImgReset (rst=%b)", spi_msgArg[`Msg_Arg_ImgReset_Val_Bits]);
+                    img_rst_ <= spi_msgArg[`Msg_Arg_ImgReset_Val_Bits];
                 end
                 
                 `Msg_Type_Nop: begin
