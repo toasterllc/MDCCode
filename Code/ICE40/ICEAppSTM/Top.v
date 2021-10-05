@@ -218,7 +218,7 @@ module Top(
     reg[`RegWidth(SDReadoutCount)-1:0] spi_sdReadoutCounter = 0;
     reg spi_sdReadoutEnding = 0;
     
-    wire spi_cs;
+    wire spi_rst_;
     reg spi_d_outEn = 0;
     wire[7:0] spi_d_out;
     wire[7:0] spi_d_in;
@@ -235,9 +235,9 @@ module Top(
     localparam SPI_State_Count      = 7;
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     
-    always @(posedge spi_clk, negedge spi_cs) begin
+    always @(posedge spi_clk, negedge spi_rst_) begin
         // Reset ourself when we're de-selected
-        if (!spi_cs) begin
+        if (!spi_rst_) begin
             spi_state <= SPI_State_MsgIn;
             spi_d_outEn <= 0;
             fifo_r_trigger <= 0;
@@ -262,7 +262,7 @@ module Top(
                     (ice_st_spi_d[1]!==1'b0 && ice_st_spi_d[1]!==1'b1) ||
                     (ice_st_spi_d[2]!==1'b0 && ice_st_spi_d[2]!==1'b1) ||
                     (ice_st_spi_d[3]!==1'b0 && ice_st_spi_d[3]!==1'b1)) begin
-                    $display("ice_st_spi_d invalid: %b (time: %0d, spi_cs: %b) ❌", ice_st_spi_d, $time, spi_cs);
+                    $display("ice_st_spi_d invalid: %b (time: %0d, spi_rst_: %b) ❌", ice_st_spi_d, $time, spi_rst_);
                     #1000;
                     `Finish;
                 end
@@ -420,15 +420,15 @@ module Top(
     // ====================
     // Pin: ice_st_spi_cs_
     // ====================
-    wire spi_cs_tmp_;
+    wire spi_cs_;
     SB_IO #(
         .PIN_TYPE(6'b0000_01),
         .PULLUP(1'b1)
     ) SB_IO_ice_st_spi_cs_ (
         .PACKAGE_PIN(ice_st_spi_cs_),
-        .D_IN_0(spi_cs_tmp_)
+        .D_IN_0(spi_cs_)
     );
-    assign spi_cs = !spi_cs_tmp_;
+    assign spi_rst_ = !spi_cs_;
     
     // ====================
     // Pin: ice_st_spi_d
