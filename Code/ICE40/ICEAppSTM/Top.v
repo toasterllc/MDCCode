@@ -31,32 +31,6 @@ module Top(
     // LED port
     output reg[3:0]     ice_led = 0
 );
-    // // ====================
-    // // Producer Clock (102 MHz)
-    // // ====================
-    // localparam Prod_Clk_Freq = 102_000_000;
-    // wire prod_clk;
-    // ClockGen #(
-    //     .FREQOUT(Prod_Clk_Freq),
-    //     .DIVR(0),
-    //     .DIVF(50),
-    //     .DIVQ(3),
-    //     .FILTER_RANGE(1)
-    // ) ClockGen_prod_clk(.clkRef(ice_img_clk16mhz), .clk(prod_clk));
-    
-    // ====================
-    // Producer Clock (51 MHz)
-    // ====================
-    localparam Prod_Clk_Freq = 51_000_000;
-    wire prod_clk;
-    ClockGen #(
-        .FREQOUT(Prod_Clk_Freq),
-        .DIVR(0),
-        .DIVF(50),
-        .DIVQ(4),
-        .FILTER_RANGE(1)
-    ) ClockGen_prod_clk(.clkRef(ice_img_clk16mhz), .clk(prod_clk));
-    
     // ====================
     // AFIFOChain
     // ====================
