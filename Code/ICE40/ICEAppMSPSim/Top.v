@@ -12,9 +12,9 @@
 `include "ImgSim.v"
 `include "ImgI2CSlaveSim.v"
 
-// // MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
-// // beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
-// // when that happens
+// MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
+// beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
+// when that happens
 `define MOBILE_SDR_INIT_VAL 16'hCAFE
 `include "mt48h32m16lf/mobile_sdr.v"
 
@@ -75,18 +75,6 @@ module Testbench();
         .img_rst_(img_rst_)
     );
     
-    SDCardSim #(
-        .RecvHeaderWordCount(ImageHeaderWordCount),
-        .RecvWordCount(ImageWidth*ImageHeight),
-        .RecvWordInitialValue(16'h0FFF),
-        .RecvWordDelta(-1),
-        .RecvValidateChecksum(1)
-    ) SDCardSim (
-        .sd_clk(sd_clk),
-        .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat)
-    );
-    
     ImgI2CSlaveSim ImgI2CSlaveSim(
         .i2c_clk(img_sclk),
         .i2c_data(img_sdata)
@@ -103,6 +91,18 @@ module Testbench();
         .we_n(ram_we_),
         .dq(ram_dq),
         .dqm(ram_dqm)
+    );
+    
+    SDCardSim #(
+        .RecvHeaderWordCount(ImageHeaderWordCount),
+        .RecvWordCount(ImageWidth*ImageHeight),
+        .RecvWordInitialValue(16'h0FFF),
+        .RecvWordDelta(-1),
+        .RecvValidateChecksum(1)
+    ) SDCardSim (
+        .sd_clk(sd_clk),
+        .sd_cmd(sd_cmd),
+        .sd_dat(sd_dat)
     );
     
     initial begin

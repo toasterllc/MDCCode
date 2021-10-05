@@ -18,15 +18,15 @@ module Testbench();
     
     reg         ice_img_clk16mhz = 0;
     
-    wire        sd_clk;
-    wire        sd_cmd;
-    wire[3:0]   sd_dat;
-    
     reg         ice_st_spi_clk = 0;
     reg         ice_st_spi_cs_ = 1;
     wire[7:0]   ice_st_spi_d;
     wire        ice_st_spi_d_ready;
     wire        ice_st_spi_d_ready_rev4bodge;
+    
+    wire        sd_clk;
+    wire        sd_cmd;
+    tri1[3:0]   sd_dat;
     
     wire[3:0]   ice_led;
     
