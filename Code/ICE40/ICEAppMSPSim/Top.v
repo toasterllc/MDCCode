@@ -51,7 +51,7 @@ module Testbench();
     wire[15:0]  ram_dq;
     
     wire[3:0] ice_led;
-    wire sim_rst_;
+    wire sim_spiRst_;
     
     initial begin
         forever begin
@@ -182,10 +182,10 @@ module Testbench();
         ice_msp_spi_clk = 0;
         #20000;
         
-        if (sim_rst_ === 1'b1) begin
-            $display("[Testbench] sim_rst_ === 1'b1 ✅");
+        if (sim_spiRst_ === 1'b1) begin
+            $display("[Testbench] sim_spiRst_ === 1'b1 ✅");
         end else begin
-            $display("[Testbench] sim_rst_ !== 1'b1 ❌ (%b)", sim_rst_);
+            $display("[Testbench] sim_spiRst_ !== 1'b1 ❌ (%b)", sim_spiRst_);
             // `Finish;
         end
         
@@ -193,10 +193,10 @@ module Testbench();
         ice_msp_spi_clk = 1;
         #20000;
         
-        if (sim_rst_ === 1'b0) begin
-            $display("[Testbench] sim_rst_ === 1'b0 ✅");
+        if (sim_spiRst_ === 1'b0) begin
+            $display("[Testbench] sim_spiRst_ === 1'b0 ✅");
         end else begin
-            $display("[Testbench] sim_rst_ !== 1'b0 ❌ (%b)", sim_rst_);
+            $display("[Testbench] sim_spiRst_ !== 1'b0 ❌ (%b)", sim_spiRst_);
             // `Finish;
         end
         
@@ -204,10 +204,10 @@ module Testbench();
         ice_msp_spi_clk = 0;
         #20000;
         
-        if (sim_rst_ === 1'b1) begin
-            $display("[Testbench] sim_rst_ === 1'b1 ✅");
+        if (sim_spiRst_ === 1'b1) begin
+            $display("[Testbench] sim_spiRst_ === 1'b1 ✅");
         end else begin
-            $display("[Testbench] sim_rst_ !== 1'b1 ❌ (%b)", sim_rst_);
+            $display("[Testbench] sim_spiRst_ !== 1'b1 ❌ (%b)", sim_spiRst_);
             // `Finish;
         end
         
