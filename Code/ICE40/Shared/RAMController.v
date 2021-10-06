@@ -36,7 +36,8 @@ module RAMController #(
     // TODO: consider re-ordering: cmd_block, cmd_write, cmd_trigger
     // Command port (clock domain: `clk`)
     input wire[1:0]             cmd,                // CmdWrite/CmdRead/CmdStop
-    input wire[BlockCountRegWidth-1:0]  cmd_block,  // Block index
+    input wire[BlockCountRegWidth-1:0]
+                                cmd_block,          // Block index
     
     // TODO: consider re-ordering: write_data, write_trigger, write_ready
     // Write port (clock domain: `clk`)

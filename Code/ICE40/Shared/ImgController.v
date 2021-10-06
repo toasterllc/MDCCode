@@ -5,20 +5,22 @@
 `include "TogglePulse.v"
 `include "AFIFO.v"
 `include "FletcherChecksum.v"
+`include "Sync.v"
 
 module ImgController #(
     parameter ClkFreq = 24_000_000,
-    parameter ImageSizeMax = 256*256,
+    parameter ImageSizeMax = 2304*1296,
     parameter HeaderWordCount = 8,
     localparam HeaderWidth = HeaderWordCount*16
 )(
     input wire          clk,
     
     // Command port (clock domain: `clk`)
-    input wire                  cmd_capture,    // Toggle signal
-    input wire                  cmd_readout,    // Toggle signal
-    input wire[0:0]             cmd_ramBlock,
-    input wire[HeaderWidth-1:0] cmd_header,
+    input wire          cmd_capture,    // Toggle signal
+    input wire          cmd_readout,    // Toggle signal
+    input wire[0:0]     cmd_ramBlock,
+    input wire[HeaderWidth-1:0]
+                        cmd_header,
     
     // Readout port (clock domain: `readout_clk`)
     input wire          readout_clk,
@@ -28,10 +30,11 @@ module ImgController #(
     output wire[15:0]   readout_data,
     
     // Status port (clock domain: `clk`)
-    output reg                                  status_captureDone = 0, // Toggle signal
-    output wire[`RegWidth(ImageSizeMax)-1:0]    status_captureWordCount,
-    output wire[17:0]                           status_captureHighlightCount,
-    output wire[17:0]                           status_captureShadowCount,
+    output reg          status_captureDone = 0, // Toggle signal
+    output wire[`RegWidth(ImageSizeMax)-1:0]
+                        status_captureWordCount,
+    output wire[17:0]   status_captureHighlightCount,
+    output wire[17:0]   status_captureShadowCount,
     
     // Img port (clock domain: `img_dclk`)
     input wire          img_dclk,
