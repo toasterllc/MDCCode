@@ -467,8 +467,8 @@ module ICEApp(
     //     two separate flash devices, so it outputs the same data on ice_st_ice_st_spi_d[3:0]
     //     that it does on ice_st_ice_st_spi_d[7:4].
     localparam MsgCycleCount = (`Msg_Len/4)+1;
-    reg[`RegWidth(MsgCycleCount)-1:0] spi_dinCounter = 0;
-    reg[0:0] spi_doutCounter = 0;
+    reg[`RegWidth(MsgCycleCount)-1:0] spi_dataInCounter = 0;
+    reg[0:0] spi_dataOutCounter = 0;
     reg[15:0] spi_dataOut = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
     // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
@@ -530,8 +530,8 @@ module ICEApp(
             // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
             // See MsgCycleCount comment above.
             spi_dataInReg <= spi_dataInReg<<4|spi_d_in[3:0];
-            spi_dinCounter <= spi_dinCounter-1;
-            spi_doutCounter <= spi_doutCounter-1;
+            spi_dataInCounter <= spi_dataInCounter-1;
+            spi_dataOutCounter <= spi_dataOutCounter-1;
             spi_resp <= spi_resp<<8|8'b0;
             fifo_r_trigger <= 0;
             spi_dataOut <= spi_dataOut<<4;
@@ -570,7 +570,7 @@ module ICEApp(
                     `Finish;
                 end
                 
-                spi_dinCounter <= MsgCycleCount;
+                spi_dataInCounter <= MsgCycleCount;
                 spi_state <= SPI_State_MsgIn+1;
 `endif // ICEApp_STM_En
             end
@@ -583,7 +583,7 @@ module ICEApp(
 `endif // ICEApp_MSP_En
                 
 `ifdef ICEApp_STM_En
-                if (!spi_dinCounter) begin
+                if (!spi_dataInCounter) begin
                     spi_state <= SPI_State_MsgIn+2;
                 end
 `endif // ICEApp_STM_En
@@ -597,7 +597,7 @@ module ICEApp(
                 
 `ifdef ICEApp_STM_En
                 spi_state <= (spi_msgResp ? SPI_State_RespOut : SPI_State_Nop);
-                spi_doutCounter <= 0;
+                spi_dataOutCounter <= 0;
 `endif // ICEApp_STM_En
                 
                 case (spi_msgType)
@@ -771,7 +771,7 @@ module ICEApp(
                 
 `ifdef ICEApp_STM_En
                 spi_dataOutEn <= 1;
-                if (!spi_doutCounter) begin
+                if (!spi_dataOutCounter) begin
                     spi_dataOut <= `LeftBits(spi_resp, 0, 16);
                 end
 `endif // ICEApp_STM_En
@@ -779,7 +779,7 @@ module ICEApp(
             
 `ifdef ICEApp_SDRead_En
             SPI_State_SDReadout: begin
-                spi_doutCounter <= 1;
+                spi_dataOutCounter <= 1;
                 spi_sdReadoutEnding <= 0;
                 if (!spi_sdReadoutCounter) begin
                     spi_sdReadoutCounter <= SDReadoutCount;
@@ -794,7 +794,7 @@ module ICEApp(
                 //     $display("AAA Read word: %x", fifo_r_data);
                 // end
                 
-                if (!spi_doutCounter) begin
+                if (!spi_dataOutCounter) begin
                     spi_dataOut <= fifo_r_data;
                     fifo_r_trigger <= !spi_sdReadoutEnding;
                 end
