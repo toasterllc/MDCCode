@@ -209,8 +209,8 @@ module ICEApp(
     // ====================
     // AFIFOChain
     // ====================
-    localparam AFIFOChainCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
-    localparam SDReadoutLen = ((AFIFOChainCount/2)*4096)/8;
+    localparam SDReadoutFIFOCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
+    localparam SDReadoutLen = ((SDReadoutFIFOCount/2)*4096)/8;
     localparam SDReadoutCount = SDReadoutLen+3;
     
     wire        fifo_rst_;
@@ -228,7 +228,7 @@ module ICEApp(
     
     AFIFOChain #(
         .W(16),
-        .N(AFIFOChainCount)
+        .N(SDReadoutFIFOCount)
     ) AFIFOChain(
         .rst_(fifo_rst_),
         
