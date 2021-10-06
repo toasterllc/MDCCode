@@ -36,9 +36,9 @@ args=(
     --pcf                       "$rootDir/Pins.pcf"
     --randomize-seed
     --pcf-allow-unconstrained
-    --placer-heap-alpha         0.025
+    --placer-heap-alpha         0.3
     --placer-heap-beta          0.5
-    --placer-heap-critexp       3
+    --placer-heap-critexp       1
     --placer-heap-timingweight  11
 )
 

@@ -6,32 +6,23 @@
 
 // TODO: try to make width of SDController data nets a parameter (4, 8, 16, ...), so that ICEAppSTM can use width=8 to read, but ICEAppMSP can use width=16 to write
 
-`ifdef ICEApp_SDRead_En
-`define ICEApp_SD_En
-`elsif ICEApp_SDWrite_En
-`define ICEApp_SD_En
-`endif
-
 `include "Util.v"
 `include "Sync.v"
 `include "ToggleAck.v"
 `include "ClockGen.v"
 `include "ICEAppTypes.v"
-
-`ifdef ICEApp_SD_En
 `include "SDController.v"
-`endif
-
-`ifdef ICEApp_Img_En
 `include "ImgController.v"
 `include "ImgI2CMaster.v"
-`endif // ICEApp_Img_En
-
-`ifdef ICEApp_SDRead_En
 `include "AFIFOChain.v"
-`endif // ICEApp_SDRead_En
 
 `timescale 1ns/1ps
+
+`ifdef ICEApp_SDRead_En
+`define ICEApp_SD_En
+`elsif ICEApp_SDWrite_En
+`define ICEApp_SD_En
+`endif
 
 module ICEApp(
     input wire          ice_img_clk16mhz,
