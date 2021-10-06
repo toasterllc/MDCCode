@@ -443,7 +443,7 @@ module ICEApp(
     reg[`Resp_Len-1:0] spi_resp = 0;
     reg[TurnaroundExtraDelay-1:0] spi_dataInDelayed = 0;
     reg spi_dataOut = 0;
-    wire spi_dataIn;
+    wire spi_dataInWire;
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
@@ -519,7 +519,7 @@ module ICEApp(
             spi_dataOutEn <= 0;
             
 `ifdef ICEApp_MSP_En
-            spi_dataInDelayed <= spi_dataInDelayed<<1|spi_dataIn;
+            spi_dataInDelayed <= spi_dataInDelayed<<1|spi_dataInWire;
             spi_dataInReg <= spi_dataInReg<<1|`LeftBit(spi_dataInDelayed,0);
             spi_dataCounter <= spi_dataCounter-1;
             spi_resp <= spi_resp<<1|1'b0;
@@ -545,15 +545,15 @@ module ICEApp(
             case (spi_state)
             SPI_State_MsgIn: begin
 `ifdef ICEApp_MSP_En
-                // Verify that we never get a clock while spi_dataIn is undriven (z) / invalid (x)
-                if (spi_dataIn!==1'b0 && spi_dataIn!==1'b1) begin
-                    $display("[SPI] spi_dataIn invalid: %b ❌", spi_dataIn);
+                // Verify that we never get a clock while spi_dataInWire is undriven (z) / invalid (x)
+                if (spi_dataInWire!==1'b0 && spi_dataInWire!==1'b1) begin
+                    $display("[SPI] spi_dataInWire invalid: %b ❌", spi_dataInWire);
                     #1000;
                     `Finish;
                 end
                 
                 // Wait for the start of the message, signified by the first high bit
-                if (spi_dataIn) begin
+                if (spi_dataInWire) begin
                     spi_dataCounter <= MsgCycleCount;
                     spi_state <= SPI_State_MsgIn+1;
                 end
@@ -832,7 +832,7 @@ module ICEApp(
         .PACKAGE_PIN(ice_msp_spi_data),
         .OUTPUT_ENABLE(spi_dataOutEn),
         .D_OUT_0(spi_dataOut),
-        .D_IN_0(spi_dataIn)
+        .D_IN_0(spi_dataInWire)
     );
     
     // // TODO: ideally we'd use the SB_IO definition below for `ice_msp_spi_data`, but we can't because
@@ -847,7 +847,7 @@ module ICEApp(
     //     .PACKAGE_PIN(ice_msp_spi_data),
     //     .OUTPUT_ENABLE(spi_dataOutEn),
     //     .D_OUT_0(spi_dataOut),
-    //     .D_IN_0(spi_dataIn)
+    //     .D_IN_0(spi_dataInWire)
     // );
 `endif // ICEApp_MSP_En
     
