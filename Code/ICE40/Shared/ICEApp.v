@@ -210,6 +210,8 @@ module ICEApp(
     // AFIFOChain
     // ====================
     localparam AFIFOChainCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
+    localparam SDReadoutLen = ((AFIFOChainCount/2)*4096)/8;
+    localparam SDReadoutCount = SDReadoutLen+3;
     
     wire        fifo_rst_;
     wire        fifo_prop_clk;
@@ -479,11 +481,6 @@ module ICEApp(
     wire spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
     
-    localparam SDReadoutLen = ((AFIFOChainCount/2)*4096)/8;
-    localparam SDReadoutCount = SDReadoutLen+3;
-    reg[`RegWidth(SDReadoutCount)-1:0] spi_sdReadoutCounter = 0;
-    reg spi_sdReadoutEnding = 0;
-    
     wire spi_rst_;
     reg spi_d_outEn = 0;
     wire[7:0] spi_d_out;
@@ -500,6 +497,11 @@ module ICEApp(
     localparam SPI_State_Nop        = 6;    // +0
     localparam SPI_State_Count      = 7;
 `endif // ICEApp_STM_En
+    
+`ifdef ICEApp_SDRead_En
+    reg[`RegWidth(SDReadoutCount)-1:0] spi_sdReadoutCounter = 0;
+    reg spi_sdReadoutEnding = 0;
+`endif // ICEApp_SDRead_En
     
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     
@@ -538,10 +540,13 @@ module ICEApp(
             spi_d_outEn <= 0;
             spi_resp <= spi_resp<<8|8'b0;
             fifo_r_trigger <= 0;
-            spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
-            if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
             spi_doutReg <= spi_doutReg<<4;
 `endif // ICEApp_STM_En
+            
+`ifdef ICEApp_SDRead_En
+            spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
+            if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
+`endif // ICEApp_SDRead_En
             
             case (spi_state)
             SPI_State_MsgIn: begin
@@ -778,7 +783,7 @@ module ICEApp(
 `endif // ICEApp_STM_En
             end
             
-`ifdef ICEApp_STM_En
+`ifdef ICEApp_SDRead_En
             SPI_State_SDReadout: begin
                 spi_doutCounter <= 1;
                 spi_sdReadoutEnding <= 0;
@@ -805,7 +810,7 @@ module ICEApp(
                     spi_state <= SPI_State_SDReadout;
                 end
             end
-`endif // ICEApp_STM_En
+`endif // ICEApp_SDRead_En
             
             endcase
         end
