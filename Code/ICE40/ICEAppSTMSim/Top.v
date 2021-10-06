@@ -129,19 +129,19 @@ module Testbench();
     
     task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
         reg[15:0] i;
-
+        
         ice_st_spi_cs_ = 0;
-
+        
             _SendMsg(typ, arg);
-
+            
             // Clock in response (if one is sent for this type of message)
             if (typ[`Msg_Type_Resp_Bits]) begin
                 _ReadResp(`Resp_Len);
             end
-
+        
         ice_st_spi_cs_ = 1;
         #1; // Allow ice_st_spi_cs_ to take effect
-
+    
     end endtask
     
     
@@ -155,19 +155,19 @@ module Testbench();
         parameter WordWidthMax = 32;
         parameter WordIncrement = -1;
         parameter ChunkLen = 4*4096; // Each chunk consists of 4x RAM4K == 4*4096 bits
-
+        
         $display("\n[Testbench] ========== SDReadout ==========");
-
+        
         if (wordWidth<WordWidthMin || wordWidth>WordWidthMax) begin
             $display("\n[Testbench] SDReadout: invalid wordWidth=%0d", wordWidth);
             `Finish;
         end
-
+        
         ice_st_spi_cs_ = 1;
         #1; // Let ice_st_spi_cs_ take effect
         ice_st_spi_cs_ = 0;
         #1; // Let ice_st_spi_cs_ take effect
-
+        
         begin
             reg[WordWidthMax-1:0] word;
             reg[WordWidthMax-1:0] lastWord;
@@ -180,14 +180,14 @@ module Testbench();
             wordIdx = 0;
             chunkIdx = 0;
             chunkCount = ((wordWidth*wordCount)+(ChunkLen-1)) / ChunkLen;
-
+            
             _SendMsg(`Msg_Type_SDReadout, 0);
-
+            
             while (wordIdx < wordCount) begin
                 reg[15:0] i;
-
+                
                 $display("[Testbench] Reading chunk %0d/%0d...", chunkIdx+1, chunkCount);
-
+                
                 if (waitForDReady) begin
                     reg done;
                     done = 0;
@@ -199,9 +199,9 @@ module Testbench();
                         end
                     end
                 end
-
+                
                 #100; // TODO: remove; this helps debug where 8 dummy cycles start
-
+                
                 // Dummy cycles
                 for (i=0; i<8; i++) begin
                     #(ice_st_spi_clk_HALF_PERIOD);
@@ -209,9 +209,9 @@ module Testbench();
                     #(ice_st_spi_clk_HALF_PERIOD);
                     ice_st_spi_clk = 0;
                 end
-
+                
                 #100; // TODO: remove; this helps debug where 8 dummy cycles end
-
+                
                 for (i=0; i<(ChunkLen/wordWidth) && (wordIdx<wordCount); i++) begin
                     spi_resp = 0;
                     _ReadResp(wordWidth);
@@ -220,9 +220,9 @@ module Testbench();
                     16: word = SDReadout_HostFromLittle16.Swap(spi_resp[15:0]);
                     32: word = SDReadout_HostFromLittle32.Swap(spi_resp[31:0]);
                     endcase
-
+                    
                     // $display("[Testbench] Read word: 0x%x", word);
-
+                    
                     if (lastWordInit) begin
                         expectedWord = lastWord + WordIncrement;
                         if (validateWords && word!==expectedWord) begin
@@ -231,29 +231,29 @@ module Testbench();
                             `Finish;
                         end
                     end
-
+                    
                     spi_datIn = spi_datIn<<wordWidth;
                     spi_datIn |= word;
-
+                    
                     lastWord = word;
                     lastWordInit = 1;
                     wordIdx++;
                 end
-
+                
                 chunkIdx++;
             end
         end
-
+        
         ice_st_spi_cs_ = 1;
         #1; // Let ice_st_spi_cs_ take effect
-
+        
         $display("[Testbench] SDReadout OK ✅");
     end endtask
     
     // TestSDCMD6_CheckAccessMode: required by TestSDCMD6
     task TestSDCMD6_CheckAccessMode; begin
         SDReadout(/* waitForDReady */ 0, /* validateWords */ 0, /* wordWidth */ 16, /* wordCount */ (512/16));
-
+        
         // Check the access mode from the CMD6 response
         if (spi_datIn[379:376] === 4'h3) begin
             $display("[Testbench] CMD6 access mode (expected: 4'h3, got: 4'h%x) ✅", spi_datIn[379:376]);
