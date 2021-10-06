@@ -1,5 +1,4 @@
 `include "Util.v"
-`include "ImgController.v"
 
 `timescale 1ns/1ps
 
@@ -13,7 +12,7 @@ module Testbench #(
     // initial $error("hello");
     // $assert(W == 8);
     
-    wire[8:0] hello = 4'b1000;
+    wire[8:0] hello = 8'b111z1000;
     // wire[8:0] hello = 8'b11111000;
     
     // assign hello[3] = 1'b0;
@@ -33,7 +32,7 @@ module Testbench #(
     
     
     initial begin
-        $display("%b", {'0, hello});
+        $display("%b", ((hello^hello) === 0));
         $finish;
     end
 endmodule
