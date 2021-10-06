@@ -396,7 +396,7 @@ module ICEApp(
     reg[`RegWidth(SPIRstTicks-1)-1:0] spirst_counter = 0;
     wire spirst_clk = ice_img_clk16mhz;
     `Sync(spirst_spiClkSynced, spi_clk, posedge, spirst_clk);
-    wire spi_rst_ = !(&spirst_counter);
+    assign spi_rst_ = !(&spirst_counter);
     always @(posedge spirst_clk) begin
         spirst_counter <= spirst_counter;
         if (!spirst_spiClkSynced) begin
@@ -436,9 +436,9 @@ module ICEApp(
     localparam MsgCycleCount = `Msg_Len+TurnaroundExtraDelay-2;
     localparam RespCycleCount = `Resp_Len;
     
-    wire[`Msg_Type_Len-1:0] spi_msgType = spi_dataInReg[`Msg_Type_Bits];
-    wire spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
-    wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dataInReg[`Msg_Arg_Bits];
+    assign spi_msgType = spi_dataIn[`Msg_Type_Bits];
+    assign spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
+    assign spi_msgArg = spi_dataIn[`Msg_Arg_Bits];
     reg[`RegWidth2(MsgCycleCount,RespCycleCount)-1:0] spi_dataCounter = 0;
     reg[TurnaroundExtraDelay-1:0] spi_dataInDelayed = 0;
     reg spi_dataOut = 0;
@@ -448,7 +448,7 @@ module ICEApp(
     localparam SPI_State_RespOut    = 3;    // +0
     localparam SPI_State_Count      = 4;
 `endif // ICEApp_MSP_En
-
+    
 `ifdef ICEApp_STM_En
     // SPI control nets
     
@@ -471,19 +471,16 @@ module ICEApp(
     reg[15:0] spi_dataOut = 0;
     // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
     // for setting the first bit to 1, so we fake the first bit.
-    wire[`Msg_Type_Len-1:0] spi_msgTypeRaw = spi_dataInReg[`Msg_Type_Bits];
-    wire[`Msg_Type_Len-1:0] spi_msgType = {1'b1, spi_msgTypeRaw[`Msg_Type_Len-2:0]};
-    wire spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
-    wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dataInReg[`Msg_Arg_Bits];
+    wire[`Msg_Type_Len-1:0] spi_msgTypeRaw = spi_dataIn[`Msg_Type_Bits];
+    assign spi_msgType = {1'b1, spi_msgTypeRaw[`Msg_Type_Len-2:0]};
+    assign spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
+    assign spi_msgArg = spi_dataIn[`Msg_Arg_Bits];
     
-    wire spi_rst_;
-    wire[7:0] spi_d_out;
-    wire[7:0] spi_d_in;
-    
-    assign spi_d_out = {
+    wire[7:0] spi_dataOutWire = {
         `LeftBits(spi_dataOut, 8, 4),   // High 4 bits: 4 bits of byte 1
         `LeftBits(spi_dataOut, 0, 4)    // Low 4 bits:  4 bits of byte 0
     };
+    wire[7:0] spi_dataInWire;
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
@@ -498,9 +495,14 @@ module ICEApp(
 `endif // ICEApp_SDRead_En
     
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
-    reg[`Msg_Len-1:0] spi_dataInReg = 0;
+    reg[`Msg_Len-1:0] spi_dataIn = 0;
     reg spi_dataOutEn = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
+    
+    wire[`Msg_Type_Len-1:0] spi_msgType;
+    wire spi_msgResp;
+    wire[`Msg_Arg_Len-1:0] spi_msgArg;
+    wire spi_rst_;
     
     always @(posedge spi_clk, negedge spi_rst_) begin
         if (!spi_rst_) begin
@@ -519,7 +521,7 @@ module ICEApp(
             
 `ifdef ICEApp_MSP_En
             spi_dataInDelayed <= spi_dataInDelayed<<1|spi_dataInWire;
-            spi_dataInReg <= spi_dataInReg<<1|`LeftBit(spi_dataInDelayed,0);
+            spi_dataIn <= spi_dataIn<<1|`LeftBit(spi_dataInDelayed,0);
             spi_dataCounter <= spi_dataCounter-1;
             spi_resp <= spi_resp<<1|1'b0;
             spi_dataOut <= `LeftBit(spi_resp, 0);
@@ -528,7 +530,7 @@ module ICEApp(
 `ifdef ICEApp_STM_En
             // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
             // See MsgCycleCount comment above.
-            spi_dataInReg <= spi_dataInReg<<4|spi_d_in[3:0];
+            spi_dataIn <= spi_dataIn<<4|spi_dataInWire[3:0];
             spi_dataInCounter <= spi_dataInCounter-1;
             spi_dataOutCounter <= spi_dataOutCounter-1;
             spi_resp <= spi_resp<<8|8'b0;
@@ -559,7 +561,7 @@ module ICEApp(
 `endif // ICEApp_MSP_En
                 
 `ifdef ICEApp_STM_En
-                // Verify that we never get a clock while spi_d_in is undriven (z) / invalid (x)
+                // Verify that we never get a clock while spi_dataInWire is undriven (z) / invalid (x)
                 if ((ice_st_spi_d[0]!==1'b0 && ice_st_spi_d[0]!==1'b1) ||
                     (ice_st_spi_d[1]!==1'b0 && ice_st_spi_d[1]!==1'b1) ||
                     (ice_st_spi_d[2]!==1'b0 && ice_st_spi_d[2]!==1'b1) ||
@@ -886,8 +888,8 @@ module ICEApp(
             .OUTPUT_CLK(spi_clk),
             .PACKAGE_PIN(ice_st_spi_d[i]),
             .OUTPUT_ENABLE(spi_dataOutEn),
-            .D_OUT_0(spi_d_out[i]),
-            .D_IN_0(spi_d_in[i])
+            .D_OUT_0(spi_dataOutWire[i]),
+            .D_IN_0(spi_dataInWire[i])
         );
     end
     
