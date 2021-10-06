@@ -440,7 +440,6 @@ module ICEApp(
     wire spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dataInReg[`Msg_Arg_Bits];
     reg[`RegWidth2(MsgCycleCount,RespCycleCount)-1:0] spi_dataCounter = 0;
-    reg[`Resp_Len-1:0] spi_resp = 0;
     reg[TurnaroundExtraDelay-1:0] spi_dataInDelayed = 0;
     reg spi_dataOut = 0;
     wire spi_dataInWire;
@@ -470,7 +469,6 @@ module ICEApp(
     reg[`RegWidth(MsgCycleCount)-1:0] spi_dataInCounter = 0;
     reg[0:0] spi_dataOutCounter = 0;
     reg[15:0] spi_dataOut = 0;
-    reg[`Resp_Len-1:0] spi_resp = 0;
     // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
     // for setting the first bit to 1, so we fake the first bit.
     wire[`Msg_Type_Len-1:0] spi_msgTypeRaw = spi_dataInReg[`Msg_Type_Bits];
@@ -502,6 +500,7 @@ module ICEApp(
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     reg[`Msg_Len-1:0] spi_dataInReg = 0;
     reg spi_dataOutEn = 0;
+    reg[`Resp_Len-1:0] spi_resp = 0;
     
     always @(posedge spi_clk, negedge spi_rst_) begin
         if (!spi_rst_) begin
