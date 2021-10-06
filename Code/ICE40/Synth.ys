@@ -4,7 +4,7 @@
 begin:
     # read_verilog -I ../Shared -D ICE40_HX -lib -specify +/ice40/cells_sim.v Top.v
     read_verilog -D ICE40_HX -lib -specify +/ice40/cells_sim.v
-    read_verilog -I ../Shared Top.v
+    read_verilog -sv -I ../Shared Top.v
     # # DKeck: Added this opt_clean pass because unused modules inexpicably
     # # changed the output performance/size (by as much as 10%)
     # opt_clean
