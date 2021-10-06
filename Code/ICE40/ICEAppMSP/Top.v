@@ -1,6 +1,6 @@
 `define ICEApp_MSP_En
-`define ICEApp_SDWrite_En
-`define ICEApp_Img_En
+`define ICEApp_ImgReadoutToSD_En
+
 `include "ICEApp.v"
 
 `timescale 1ns/1ps

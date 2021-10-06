@@ -1,5 +1,14 @@
 - Rev4 Todo
     
+    - ICEApp.v: consider removing readout FIFO from ImgController, and replace with FIFO chain
+        - This might allow us to remove ImgController's `readout_start` signal, in favor of using
+          the FIFO chain's `readoutfifo_prop_r_ready` signal instead, since the purpose of
+          `readout_start` is to signal when there's enough data such that SDController can
+          start writing
+        - We'll probably need to add a `readout_rst_` signal to clear the output FIFO
+            - This is nice because it mirror's SDController's `datInWrite_rst_`
+        - Does this speed up the affected designs (ICEAppMSP / ICEAppImgCaptureSTM)?
+    
     - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
         - Does the USB hub limit the data throughput?
         - Perf debugging tactic: check how often the DIEPINT.NAK interrupt occurs when sending mass data to the
