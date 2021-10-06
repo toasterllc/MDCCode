@@ -474,7 +474,7 @@ module ICEApp(
     localparam SPI_State_Count      = 7;
     
     reg[`RegWidth(MsgCycleCount)-1:0] spi_dataInCounter = 0;
-    reg[0:0] spi_dataOutCounter = 0;
+    reg spi_dataOutLoad_ = 0;
     reg[15:0] spi_dataOut = 0;
     wire[7:0] spi_dataIn;
     wire[7:0] spi_dataInRaw = ice_st_spi_d;
@@ -528,7 +528,7 @@ module ICEApp(
             // See MsgCycleCount comment above.
             spi_msg <= spi_msg<<4|spi_dataIn[3:0];
             spi_dataInCounter <= spi_dataInCounter-1;
-            spi_dataOutCounter <= spi_dataOutCounter-1;
+            spi_dataOutLoad_ <= !spi_dataOutLoad_;
             spi_resp <= spi_resp<<8|8'b0;
             spi_dataOut <= spi_dataOut<<4;
 `endif // ICEApp_STM_En
@@ -584,7 +584,7 @@ module ICEApp(
                 
 `ifdef ICEApp_STM_En
                 spi_state <= (spi_msgResp ? SPI_State_RespOut : SPI_State_Nop);
-                spi_dataOutCounter <= 0;
+                spi_dataOutLoad_ <= 0;
 `endif // ICEApp_STM_En
                 
                 case (spi_msgType)
@@ -758,7 +758,7 @@ module ICEApp(
                 
 `ifdef ICEApp_STM_En
                 spi_dataOutEn <= 1;
-                if (!spi_dataOutCounter) begin
+                if (!spi_dataOutLoad_) begin
                     spi_dataOut <= `LeftBits(spi_resp, 0, 16);
                 end
 `endif // ICEApp_STM_En
@@ -766,7 +766,7 @@ module ICEApp(
             
 `ifdef ICEApp_SDRead_En
             SPI_State_SDReadout: begin
-                spi_dataOutCounter <= 1;
+                spi_dataOutLoad_ <= 1;
                 spi_sdReadoutEnding <= 0;
                 if (!spi_sdReadoutCounter) begin
                     spi_sdReadoutCounter <= SDReadoutCount;
@@ -781,7 +781,7 @@ module ICEApp(
                 //     $display("AAA Read word: %x", fifo_r_data);
                 // end
                 
-                if (!spi_dataOutCounter) begin
+                if (!spi_dataOutLoad_) begin
                     spi_dataOut <= fifo_r_data;
                     fifo_r_trigger <= !spi_sdReadoutEnding;
                 end
