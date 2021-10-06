@@ -33,7 +33,18 @@ synthProg = 'Synth.sh'
 synthArgs = [os.path.join(scriptDir, synthProg), dev, pkg, proj]
 
 pnrProg = 'nextpnr-ice40'
-pnrArgs = [pnrProg, '--'+dev, '--package', pkg, '--json', topFilePath, '--pcf', pcfFilePath, '--pcf-allow-unconstrained']
+pnrArgs = [
+    pnrProg,
+    '--'+dev,
+    '--package', pkg,
+    '--json', topFilePath,
+    '--pcf', pcfFilePath,
+    '--pcf-allow-unconstrained',
+    '--placer-heap-alpha', '0.025',
+    '--placer-heap-beta', '0.5',
+    '--placer-heap-critexp', '3',
+    '--placer-heap-timingweight', '11',
+]
 
 # Print iterations progress
 def printProgress(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
