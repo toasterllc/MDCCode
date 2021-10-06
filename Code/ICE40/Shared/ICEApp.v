@@ -484,9 +484,9 @@ module ICEApp(
 `endif // ICEApp_STM_En
     
 `ifdef ICEApp_SDRead_En
-    localparam SPI_SDReadoutLen     = ((SDFIFO_FIFOCount/2)*4096)/8;
-    localparam SPI_SDReadoutCount   = SPI_SDReadoutLen+3;
-    reg[`RegWidth(SPI_SDReadoutCount)-1:0] spi_sdReadoutCounter = 0;
+    localparam SPI_SDReadoutBitCount    = ((SDFIFO_FIFOCount/2)*4096)/8;
+    localparam SPI_SDReadoutCycleCount  = SPI_SDReadoutBitCount+3;
+    reg[`RegWidth(SPI_SDReadoutCycleCount)-1:0] spi_sdReadoutCounter = 0;
     reg spi_sdReadoutEnding = 0;
 `endif // ICEApp_SDRead_En
     
@@ -507,36 +507,36 @@ module ICEApp(
             spi_state <= SPI_State_MsgIn;
             spi_dataOutEn <= 0;
             
-`ifdef ICEApp_SDRead_En
-            sdfifo_r_trigger <= 0;
-`endif // ICEApp_SDRead_En
+            `ifdef ICEApp_SDRead_En
+                sdfifo_r_trigger <= 0;
+            `endif // ICEApp_SDRead_En
         
         end else begin
         
             spi_dataOutEn <= 0;
             spi_dataCounter <= spi_dataCounter-1;
             
-`ifdef ICEApp_MSP_En
-            spi_msg <= spi_msg<<1|`LeftBit(spi_dataInDelayed,0);
-            spi_dataInDelayed <= spi_dataInDelayed<<1|spi_dataIn;
-            spi_resp <= spi_resp<<1|1'b0;
-            spi_dataOut <= `LeftBit(spi_resp, 0);
-`endif // ICEApp_MSP_En
+            `ifdef ICEApp_MSP_En
+                spi_msg <= spi_msg<<1|`LeftBit(spi_dataInDelayed,0);
+                spi_dataInDelayed <= spi_dataInDelayed<<1|spi_dataIn;
+                spi_resp <= spi_resp<<1|1'b0;
+                spi_dataOut <= `LeftBit(spi_resp, 0);
+            `endif // ICEApp_MSP_En
             
-`ifdef ICEApp_STM_En
-            // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
-            // See MsgCycleCount comment above.
-            spi_msg <= spi_msg<<4|spi_dataIn[3:0];
-            spi_dataOutLoad_ <= !spi_dataOutLoad_;
-            spi_resp <= spi_resp<<8|8'b0;
-            spi_dataOut <= spi_dataOut<<4;
-`endif // ICEApp_STM_En
+            `ifdef ICEApp_STM_En
+                // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
+                // See MsgCycleCount comment above.
+                spi_msg <= spi_msg<<4|spi_dataIn[3:0];
+                spi_dataOutLoad_ <= !spi_dataOutLoad_;
+                spi_resp <= spi_resp<<8|8'b0;
+                spi_dataOut <= spi_dataOut<<4;
+            `endif // ICEApp_STM_En
             
-`ifdef ICEApp_SDRead_En
-            sdfifo_r_trigger <= 0;
-            spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
-            if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
-`endif // ICEApp_SDRead_En
+            `ifdef ICEApp_SDRead_En
+                sdfifo_r_trigger <= 0;
+                spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
+                if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
+            `endif // ICEApp_SDRead_En
             
             case (spi_state)
             SPI_State_MsgIn: begin
@@ -547,18 +547,18 @@ module ICEApp(
                     `Finish;
                 end
                 
-`ifdef ICEApp_MSP_En
-                // Wait for the start of the message, signified by the first high bit
-                if (spi_dataIn) begin
+                `ifdef ICEApp_MSP_En
+                    // Wait for the start of the message, signified by the first high bit
+                    if (spi_dataIn) begin
+                        spi_dataCounter <= MsgCycleCount;
+                        spi_state <= SPI_State_MsgIn+1;
+                    end
+                `endif // ICEApp_MSP_En
+                
+                `ifdef ICEApp_STM_En
                     spi_dataCounter <= MsgCycleCount;
                     spi_state <= SPI_State_MsgIn+1;
-                end
-`endif // ICEApp_MSP_En
-                
-`ifdef ICEApp_STM_En
-                spi_dataCounter <= MsgCycleCount;
-                spi_state <= SPI_State_MsgIn+1;
-`endif // ICEApp_STM_En
+                `endif // ICEApp_STM_En
             end
             
             SPI_State_MsgIn+1: begin
@@ -570,13 +570,13 @@ module ICEApp(
             SPI_State_MsgIn+2: begin
                 spi_state <= SPI_State_RespOut;
                 
-`ifdef ICEApp_MSP_En
-                spi_dataCounter <= (spi_msgResp ? RespCycleCount : 0);
-`endif // ICEApp_MSP_En
+                `ifdef ICEApp_MSP_En
+                    spi_dataCounter <= (spi_msgResp ? RespCycleCount : 0);
+                `endif // ICEApp_MSP_En
                 
-`ifdef ICEApp_STM_En
-                spi_dataOutLoad_ <= 0;
-`endif // ICEApp_STM_En
+                `ifdef ICEApp_STM_En
+                    spi_dataOutLoad_ <= 0;
+                `endif // ICEApp_STM_En
                 
                 case (spi_msgType)
                 // Echo
@@ -739,20 +739,20 @@ module ICEApp(
             end
             
             SPI_State_RespOut: begin
-`ifdef ICEApp_MSP_En
-                if (spi_dataCounter) begin
-                    spi_dataOutEn <= 1;
-                end else begin
-                    spi_state <= SPI_State_MsgIn;
-                end
-`endif // ICEApp_MSP_En
+                `ifdef ICEApp_MSP_En
+                    if (spi_dataCounter) begin
+                        spi_dataOutEn <= 1;
+                    end else begin
+                        spi_state <= SPI_State_MsgIn;
+                    end
+                `endif // ICEApp_MSP_En
                 
-`ifdef ICEApp_STM_En
-                spi_dataOutEn <= 1;
-                if (!spi_dataOutLoad_) begin
-                    spi_dataOut <= `LeftBits(spi_resp, 0, 16);
-                end
-`endif // ICEApp_STM_En
+                `ifdef ICEApp_STM_En
+                    spi_dataOutEn <= 1;
+                    if (!spi_dataOutLoad_) begin
+                        spi_dataOut <= `LeftBits(spi_resp, 0, 16);
+                    end
+                `endif // ICEApp_STM_En
             end
             
 `ifdef ICEApp_SDRead_En
@@ -760,7 +760,7 @@ module ICEApp(
                 spi_dataOutLoad_ <= 1;
                 spi_sdReadoutEnding <= 0;
                 if (!spi_sdReadoutCounter) begin
-                    spi_sdReadoutCounter <= SPI_SDReadoutCount;
+                    spi_sdReadoutCounter <= SPI_SDReadoutCycleCount;
                     spi_state <= SPI_State_SDReadout+1;
                 end
             end
