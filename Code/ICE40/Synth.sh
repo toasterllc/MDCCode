@@ -33,11 +33,12 @@ rm -Rf "$synthDir"
 mkdir -p "$synthDir"
 
 # Synthesize the design from Verilog (.v -> .json)
-cd "$proj"
+pushd "$proj"
 yosys -s "$rootDir/Synth.ys"
+popd
 
 # Place and route the design ({Top.json, Pins.pcf} -> .asc)
-nextpnr-ice40 -r "--$dev" --package "$pkg" --json "$synthDir/Top.json" --pcf "$rootDir/Pins.pcf" --asc "$synthDir/Top.asc" --pcf-allow-unconstrained --top Top
+$rootDir/Nextpnr.sh "$dev" "$pkg" "$proj"
 
 # Generate the bitstream file (.asc -> .bin)
 icepack "$synthDir/Top.asc" "$synthDir/Top.bin"

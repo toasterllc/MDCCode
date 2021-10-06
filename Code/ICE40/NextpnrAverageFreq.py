@@ -32,19 +32,8 @@ pcfFilePath = os.path.join(scriptDir, "Pins.pcf")
 synthProg = 'Synth.sh'
 synthArgs = [os.path.join(scriptDir, synthProg), dev, pkg, proj]
 
-pnrProg = 'nextpnr-ice40'
-pnrArgs = [
-    pnrProg,
-    '--'+dev,
-    '--package', pkg,
-    '--json', topFilePath,
-    '--pcf', pcfFilePath,
-    '--pcf-allow-unconstrained',
-    '--placer-heap-alpha', '0.025',
-    '--placer-heap-beta', '0.5',
-    '--placer-heap-critexp', '3',
-    '--placer-heap-timingweight', '11',
-]
+pnrProg = 'Nextpnr.sh'
+pnrArgs = [os.path.join(scriptDir, pnrProg), dev, pkg, proj]
 
 # Print iterations progress
 def printProgress(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
@@ -71,7 +60,7 @@ def printProgress(iteration, total, prefix = '', suffix = '', decimals = 1, leng
 def executeTrial(_):
     proc = None
     while True:
-        cmd = pnrArgs + ['--seed', str(random.randint(-0x80000000,0x7FFFFFFF))]
+        cmd = pnrArgs # + ['--seed', str(random.randint(-0x80000000,0x7FFFFFFF))]  <-- We pass --randomize-seed to Nextpnr.sh
         try:
             # Sometimes nextpnr hangs, so if that happens, try executing it again.
             # (It seems that certain seed values deterministically cause a hang,
