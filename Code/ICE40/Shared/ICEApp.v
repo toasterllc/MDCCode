@@ -383,7 +383,7 @@ module ICEApp(
             end
         end
     end
-`endif
+`endif // ICEApp_MSP_En
     
 `ifdef ICEApp_MSP_En
     // ====================
@@ -436,17 +436,16 @@ module ICEApp(
     localparam MsgCycleCount = `Msg_Len+TurnaroundExtraDelay-2;
     localparam RespCycleCount = `Resp_Len;
     
-    assign spi_msgType = spi_dataIn[`Msg_Type_Bits];
-    assign spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
-    assign spi_msgArg = spi_dataIn[`Msg_Arg_Bits];
+    localparam SPI_State_MsgIn      = 0;    // +2
+    localparam SPI_State_RespOut    = 3;    // +0
+    localparam SPI_State_Count      = 4;
+    
     reg[`RegWidth2(MsgCycleCount,RespCycleCount)-1:0] spi_dataCounter = 0;
     reg[TurnaroundExtraDelay-1:0] spi_dataInDelayed = 0;
     reg spi_dataOut = 0;
     wire spi_dataInWire;
     
-    localparam SPI_State_MsgIn      = 0;    // +2
-    localparam SPI_State_RespOut    = 3;    // +0
-    localparam SPI_State_Count      = 4;
+    assign spi_msgType = spi_msg[`Msg_Type_Bits];
 `endif // ICEApp_MSP_En
     
 `ifdef ICEApp_STM_En
@@ -466,15 +465,16 @@ module ICEApp(
     //     two separate flash devices, so it outputs the same data on ice_st_ice_st_spi_d[3:0]
     //     that it does on ice_st_ice_st_spi_d[7:4].
     localparam MsgCycleCount = (`Msg_Len/4)+1;
+    
+    localparam SPI_State_MsgIn      = 0;    // +2
+    localparam SPI_State_RespOut    = 3;    // +0
+    localparam SPI_State_SDReadout  = 4;    // +1
+    localparam SPI_State_Nop        = 6;    // +0
+    localparam SPI_State_Count      = 7;
+    
     reg[`RegWidth(MsgCycleCount)-1:0] spi_dataInCounter = 0;
     reg[0:0] spi_dataOutCounter = 0;
     reg[15:0] spi_dataOut = 0;
-    // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
-    // for setting the first bit to 1, so we fake the first bit.
-    wire[`Msg_Type_Len-1:0] spi_msgTypeRaw = spi_dataIn[`Msg_Type_Bits];
-    assign spi_msgType = {1'b1, spi_msgTypeRaw[`Msg_Type_Len-2:0]};
-    assign spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
-    assign spi_msgArg = spi_dataIn[`Msg_Arg_Bits];
     
     wire[7:0] spi_dataOutWire = {
         `LeftBits(spi_dataOut, 8, 4),   // High 4 bits: 4 bits of byte 1
@@ -482,11 +482,10 @@ module ICEApp(
     };
     wire[7:0] spi_dataInWire;
     
-    localparam SPI_State_MsgIn      = 0;    // +2
-    localparam SPI_State_RespOut    = 3;    // +0
-    localparam SPI_State_SDReadout  = 4;    // +1
-    localparam SPI_State_Nop        = 6;    // +0
-    localparam SPI_State_Count      = 7;
+    // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
+    // for setting the first bit to 1, so we fake the first bit.
+    wire[`Msg_Type_Len-1:0] spi_msgTypeRaw = spi_msg[`Msg_Type_Bits];
+    assign spi_msgType = {1'b1, spi_msgTypeRaw[`Msg_Type_Len-2:0]};
 `endif // ICEApp_STM_En
     
 `ifdef ICEApp_SDRead_En
@@ -495,13 +494,13 @@ module ICEApp(
 `endif // ICEApp_SDRead_En
     
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
-    reg[`Msg_Len-1:0] spi_dataIn = 0;
+    reg[`Msg_Len-1:0] spi_msg = 0;
     reg spi_dataOutEn = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
     
     wire[`Msg_Type_Len-1:0] spi_msgType;
-    wire spi_msgResp;
-    wire[`Msg_Arg_Len-1:0] spi_msgArg;
+    wire spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
+    wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_msg[`Msg_Arg_Bits];
     wire spi_rst_;
     
     always @(posedge spi_clk, negedge spi_rst_) begin
@@ -511,17 +510,17 @@ module ICEApp(
             spi_state <= SPI_State_MsgIn;
             spi_dataOutEn <= 0;
             
-`ifdef ICEApp_STM_En
+`ifdef ICEApp_SDRead_En
             fifo_r_trigger <= 0;
-`endif // ICEApp_STM_En
+`endif // ICEApp_SDRead_En
         
         end else begin
         
             spi_dataOutEn <= 0;
             
 `ifdef ICEApp_MSP_En
+            spi_msg <= spi_msg<<1|`LeftBit(spi_dataInDelayed,0);
             spi_dataInDelayed <= spi_dataInDelayed<<1|spi_dataInWire;
-            spi_dataIn <= spi_dataIn<<1|`LeftBit(spi_dataInDelayed,0);
             spi_dataCounter <= spi_dataCounter-1;
             spi_resp <= spi_resp<<1|1'b0;
             spi_dataOut <= `LeftBit(spi_resp, 0);
@@ -530,15 +529,15 @@ module ICEApp(
 `ifdef ICEApp_STM_En
             // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
             // See MsgCycleCount comment above.
-            spi_dataIn <= spi_dataIn<<4|spi_dataInWire[3:0];
+            spi_msg <= spi_msg<<4|spi_dataInWire[3:0];
             spi_dataInCounter <= spi_dataInCounter-1;
             spi_dataOutCounter <= spi_dataOutCounter-1;
             spi_resp <= spi_resp<<8|8'b0;
-            fifo_r_trigger <= 0;
             spi_dataOut <= spi_dataOut<<4;
 `endif // ICEApp_STM_En
             
 `ifdef ICEApp_SDRead_En
+            fifo_r_trigger <= 0;
             spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
             if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
 `endif // ICEApp_SDRead_En
@@ -546,8 +545,8 @@ module ICEApp(
             case (spi_state)
             SPI_State_MsgIn: begin
 `ifdef ICEApp_MSP_En
-                // Verify that we never get a clock while spi_dataInWire is undriven (z) / invalid (x)
-                if (spi_dataInWire!==1'b0 && spi_dataInWire!==1'b1) begin
+                // Verify that we never get a clock while ice_msp_spi_data is undriven (z) / invalid (x)
+                if (!`ValidBits(spi_dataInWire)) begin
                     $display("[SPI] spi_dataInWire invalid: %b ❌", spi_dataInWire);
                     #1000;
                     `Finish;
@@ -562,10 +561,7 @@ module ICEApp(
                 
 `ifdef ICEApp_STM_En
                 // Verify that we never get a clock while spi_dataInWire is undriven (z) / invalid (x)
-                if ((ice_st_spi_d[0]!==1'b0 && ice_st_spi_d[0]!==1'b1) ||
-                    (ice_st_spi_d[1]!==1'b0 && ice_st_spi_d[1]!==1'b1) ||
-                    (ice_st_spi_d[2]!==1'b0 && ice_st_spi_d[2]!==1'b1) ||
-                    (ice_st_spi_d[3]!==1'b0 && ice_st_spi_d[3]!==1'b1)) begin
+                if (!`ValidBits(ice_st_spi_d)) begin
                     $display("ice_st_spi_d invalid: %b (time: %0d, spi_rst_: %b) ❌", ice_st_spi_d, $time, spi_rst_);
                     #1000;
                     `Finish;
@@ -681,7 +677,7 @@ module ICEApp(
                     spi_sdReadoutCounter <= 6;
                     spi_state <= SPI_State_SDReadout;
                 end
-`endif
+`endif // ICEApp_SDRead_En
                 
 `ifdef ICEApp_Img_En
                 `Msg_Type_ImgReset: begin
@@ -868,7 +864,7 @@ module ICEApp(
     // ====================
     wire spi_cs_;
     SB_IO #(
-        .PIN_TYPE(6'b0000_01),
+        .PIN_TYPE(6'b0000_01), // Output: none; input: unregistered
         .PULLUP(1'b1)
     ) SB_IO_ice_st_spi_cs_ (
         .PACKAGE_PIN(ice_st_spi_cs_),
@@ -882,7 +878,7 @@ module ICEApp(
     genvar i;
     for (i=0; i<8; i++) begin
         SB_IO #(
-            .PIN_TYPE(6'b1001_00)
+            .PIN_TYPE(6'b1001_00) // Output: registered with unregistered enable; input: registered
         ) SB_IO_ice_st_spi_d (
             .INPUT_CLK(spi_clk),
             .OUTPUT_CLK(spi_clk),
