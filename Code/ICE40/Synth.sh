@@ -38,7 +38,7 @@ yosys -s "$rootDir/Synth.ys"
 popd
 
 # Place and route the design ({Top.json, Pins.pcf} -> .asc)
-$rootDir/Nextpnr.sh "$dev" "$pkg" "$proj"
+$rootDir/Nextpnr.sh "$dev" "$pkg" "$proj" "$synthDir/Top.asc"
 
 # Generate the bitstream file (.asc -> .bin)
 icepack "$synthDir/Top.asc" "$synthDir/Top.bin"
