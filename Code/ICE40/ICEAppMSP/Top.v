@@ -46,5 +46,34 @@ module Top(
     , output wire         sim_spiRst_
 `endif
 );
-    ICEApp ICEApp(.*);
+    ICEApp ICEApp(
+        .ice_img_clk16mhz(ice_img_clk16mhz),
+        .ice_msp_spi_clk(ice_msp_spi_clk),
+        .ice_msp_spi_data(ice_msp_spi_data),
+        .sd_clk(sd_clk),
+        .sd_cmd(sd_cmd),
+        .sd_dat(sd_dat),
+        .img_dclk(img_dclk),
+        .img_d(img_d),
+        .img_fv(img_fv),
+        .img_lv(img_lv),
+        .img_rst_(img_rst_),
+        .img_sclk(img_sclk),
+        .img_sdata(img_sdata),
+        .ram_clk(ram_clk),
+        .ram_cke(ram_cke),
+        .ram_ba(ram_ba),
+        .ram_a(ram_a),
+        .ram_cs_(ram_cs_),
+        .ram_ras_(ram_ras_),
+        .ram_cas_(ram_cas_),
+        .ram_we_(ram_we_),
+        .ram_dqm(ram_dqm),
+        .ram_dq(ram_dq),
+        .ice_led(ice_led)
+        
+`ifdef SIM
+        , .sim_spiRst_(sim_spiRst_)
+`endif
+    );
 endmodule
