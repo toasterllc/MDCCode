@@ -9,7 +9,7 @@
 
 module ImgController #(
     parameter ClkFreq = 24_000_000,
-    parameter ImageSizeMax = 2304*1296,
+    parameter ImageSizeMax = 4096*4096,
     parameter HeaderWordCount = 8,
     localparam HeaderWidth = HeaderWordCount*16
 )(
