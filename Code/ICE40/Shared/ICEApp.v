@@ -473,7 +473,7 @@ module ICEApp(
     localparam SPI_State_Nop        = 6;    // +0
     localparam SPI_State_Count      = 7;
     
-    reg[`RegWidth(MsgCycleCount)-1:0] spi_dataInCounter = 0;
+    reg[`RegWidth(MsgCycleCount)-1:0] spi_dataCounter = 0;
     reg spi_dataOutLoad_ = 0;
     reg[15:0] spi_dataOut = 0;
     wire[7:0] spi_dataIn;
@@ -514,11 +514,11 @@ module ICEApp(
         end else begin
         
             spi_dataOutEn <= 0;
+            spi_dataCounter <= spi_dataCounter-1;
             
 `ifdef ICEApp_MSP_En
             spi_msg <= spi_msg<<1|`LeftBit(spi_dataInDelayed,0);
             spi_dataInDelayed <= spi_dataInDelayed<<1|spi_dataIn;
-            spi_dataCounter <= spi_dataCounter-1;
             spi_resp <= spi_resp<<1|1'b0;
             spi_dataOut <= `LeftBit(spi_resp, 0);
 `endif // ICEApp_MSP_En
@@ -527,7 +527,6 @@ module ICEApp(
             // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
             // See MsgCycleCount comment above.
             spi_msg <= spi_msg<<4|spi_dataIn[3:0];
-            spi_dataInCounter <= spi_dataInCounter-1;
             spi_dataOutLoad_ <= !spi_dataOutLoad_;
             spi_resp <= spi_resp<<8|8'b0;
             spi_dataOut <= spi_dataOut<<4;
@@ -557,23 +556,15 @@ module ICEApp(
 `endif // ICEApp_MSP_En
                 
 `ifdef ICEApp_STM_En
-                spi_dataInCounter <= MsgCycleCount;
+                spi_dataCounter <= MsgCycleCount;
                 spi_state <= SPI_State_MsgIn+1;
 `endif // ICEApp_STM_En
             end
             
             SPI_State_MsgIn+1: begin
-`ifdef ICEApp_MSP_En
                 if (!spi_dataCounter) begin
                     spi_state <= SPI_State_MsgIn+2;
                 end
-`endif // ICEApp_MSP_En
-                
-`ifdef ICEApp_STM_En
-                if (!spi_dataInCounter) begin
-                    spi_state <= SPI_State_MsgIn+2;
-                end
-`endif // ICEApp_STM_En
             end
             
             SPI_State_MsgIn+2: begin
