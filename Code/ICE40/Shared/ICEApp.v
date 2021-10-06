@@ -469,7 +469,7 @@ module ICEApp(
     localparam MsgCycleCount = (`Msg_Len/4)+1;
     reg[`RegWidth(MsgCycleCount)-1:0] spi_dinCounter = 0;
     reg[0:0] spi_doutCounter = 0;
-    reg[15:0] spi_doutReg = 0;
+    reg[15:0] spi_dataOut = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
     // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
     // for setting the first bit to 1, so we fake the first bit.
@@ -483,8 +483,8 @@ module ICEApp(
     wire[7:0] spi_d_in;
     
     assign spi_d_out = {
-        `LeftBits(spi_doutReg, 8, 4),   // High 4 bits: 4 bits of byte 1
-        `LeftBits(spi_doutReg, 0, 4)    // Low 4 bits:  4 bits of byte 0
+        `LeftBits(spi_dataOut, 8, 4),   // High 4 bits: 4 bits of byte 1
+        `LeftBits(spi_dataOut, 0, 4)    // Low 4 bits:  4 bits of byte 0
     };
     
     localparam SPI_State_MsgIn      = 0;    // +2
@@ -534,7 +534,7 @@ module ICEApp(
             spi_doutCounter <= spi_doutCounter-1;
             spi_resp <= spi_resp<<8|8'b0;
             fifo_r_trigger <= 0;
-            spi_doutReg <= spi_doutReg<<4;
+            spi_dataOut <= spi_dataOut<<4;
 `endif // ICEApp_STM_En
             
 `ifdef ICEApp_SDRead_En
@@ -772,7 +772,7 @@ module ICEApp(
 `ifdef ICEApp_STM_En
                 spi_dataOutEn <= 1;
                 if (!spi_doutCounter) begin
-                    spi_doutReg <= `LeftBits(spi_resp, 0, 16);
+                    spi_dataOut <= `LeftBits(spi_resp, 0, 16);
                 end
 `endif // ICEApp_STM_En
             end
@@ -795,7 +795,7 @@ module ICEApp(
                 // end
                 
                 if (!spi_doutCounter) begin
-                    spi_doutReg <= fifo_r_data;
+                    spi_dataOut <= fifo_r_data;
                     fifo_r_trigger <= !spi_sdReadoutEnding;
                 end
                 
