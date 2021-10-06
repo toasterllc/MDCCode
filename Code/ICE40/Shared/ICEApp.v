@@ -1,6 +1,11 @@
 `ifndef ICEApp_v
 `define ICEApp_v
 
+// TODO: have consistent ordering for FIFO ports for: AFIFO, AFIFOChain, SDController, ImgController
+//       clk, trigger, data, ready
+
+// TODO: try to make width of SDController data nets a parameter (4, 8, 16, ...), so that ICEAppSTM can use width=8 to read, but ICEAppMSP can use width=16 to write
+
 `include "Util.v"
 `include "Sync.v"
 `include "ToggleAck.v"
@@ -9,16 +14,17 @@
 `include "ClockGen.v"
 `include "ImgController.v"
 `include "ImgI2CMaster.v"
+`include "AFIFOChain.v"
 
 `timescale 1ns/1ps
 
-`if ICEApp_SDRead_En
+`ifdef ICEApp_SDRead_En
 `define ICEApp_SD_En
 `elsif ICEApp_SDWrite_En
 `define ICEApp_SD_En
 `endif
 
-module Top(
+module ICEApp(
     input wire          ice_img_clk16mhz,
     
 `ifdef ICEApp_MSP_En
@@ -116,9 +122,9 @@ module Top(
         .ClkFreq(16_000_000),
 `ifdef SIM
         .I2CClkFreq(4_000_000)
-`else
+`else // !SIM
         .I2CClkFreq(100_000) // TODO: try 400_000 (the max frequency) to see if it works. if not, the pullup's likely too weak.
-`endif
+`endif // SIM
     ) ImgI2CMaster (
         .clk(ice_img_clk16mhz),
         
@@ -199,13 +205,49 @@ module Top(
     
     
     
+`ifdef ICEApp_SDRead_En
+    // ====================
+    // AFIFOChain
+    // ====================
+    localparam AFIFOChainCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
     
+    wire        fifo_rst_;
+    wire        fifo_prop_clk;
+    wire        fifo_prop_w_ready;
+    wire        fifo_prop_r_ready;
+    wire        fifo_w_clk;
+    wire        fifo_w_trigger;
+    wire[15:0]  fifo_w_data;
+    wire        fifo_w_ready;
+    wire        fifo_r_clk;
+    reg         fifo_r_trigger      = 0;
+    wire[15:0]  fifo_r_data;
+    wire        fifo_r_ready;
     
+    AFIFOChain #(
+        .W(16),
+        .N(AFIFOChainCount)
+    ) AFIFOChain(
+        .rst_(fifo_rst_),
+        
+        .prop_clk(fifo_prop_clk),
+        .prop_w_ready(fifo_prop_w_ready),
+        .prop_r_ready(fifo_prop_r_ready),
+        
+        .w_clk(fifo_w_clk),
+        .w_trigger(fifo_w_trigger),
+        .w_data(fifo_w_data),
+        .w_ready(fifo_w_ready),
+        
+        .r_clk(fifo_r_clk),
+        .r_trigger(fifo_r_trigger),
+        .r_data(fifo_r_data),
+        .r_ready(fifo_r_ready)
+    );
     
-    
-    
-    
-    
+    assign fifo_prop_clk    = fifo_w_clk;
+    assign fifo_r_clk       = spi_clk;
+`endif // ICEApp_SDRead_En
     
 `ifdef ICEApp_SD_En
     // ====================
@@ -299,6 +341,7 @@ module Top(
         
         .status_dat0Idle(sd_status_dat0Idle)
     );
+`endif // ICEApp_SD_En
     
 `ifdef ICEApp_SDWrite_En
     // Connect imgctrl_readout_* to sd_datOutRead_*
@@ -316,8 +359,6 @@ module Top(
     assign fifo_w_data              = sd_datInWrite_data;
     assign sd_datInWrite_ready      = fifo_w_ready;
 `endif // ICEApp_SDRead_En
-    
-`endif // ICEApp_SD_En
     
 `ifdef ICEApp_MSP_En
     // ====================
@@ -342,7 +383,6 @@ module Top(
     end
 `endif
     
-    
 `ifdef ICEApp_MSP_En
     // ====================
     // spi_rst_ Generation
@@ -364,9 +404,9 @@ module Top(
         end
     end
 `ifdef SIM
-    assign sim_rst_ = spi_rst_;
-`endif
-`endif
+    assign sim_spiRst_ = spi_rst_;
+`endif // SIM
+`endif // ICEApp_MSP_En
     
     // ====================
     // SPI State Machine
@@ -379,12 +419,12 @@ module Top(
     `Sync(spi_sdDatOutDone, sd_datOut_done, posedge, spi_clk);
     `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, spi_clk);
     `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, spi_clk);
-`endif
+`endif // ICEApp_SD_En
     
 `ifdef ICEApp_Img_En
     // IMG nets
     `ToggleAck(spi_imgCaptureDone_, spi_imgCaptureDoneAck, imgctrl_status_captureDone, posedge, spi_clk);
-`endif
+`endif // ICEApp_Img_En
     
 `ifdef ICEApp_MSP_En
     // SPI control nets

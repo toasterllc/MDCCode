@@ -186,7 +186,7 @@ module Testbench();
             $display("[Testbench] sim_spiRst_ === 1'b1 ✅");
         end else begin
             $display("[Testbench] sim_spiRst_ !== 1'b1 ❌ (%b)", sim_spiRst_);
-            // `Finish;
+            `Finish;
         end
         
         $display("\n[Testbench] ice_msp_spi_clk = 1");
@@ -197,7 +197,7 @@ module Testbench();
             $display("[Testbench] sim_spiRst_ === 1'b0 ✅");
         end else begin
             $display("[Testbench] sim_spiRst_ !== 1'b0 ❌ (%b)", sim_spiRst_);
-            // `Finish;
+            `Finish;
         end
         
         $display("\n[Testbench] ice_msp_spi_clk = 0");
@@ -208,7 +208,7 @@ module Testbench();
             $display("[Testbench] sim_spiRst_ === 1'b1 ✅");
         end else begin
             $display("[Testbench] sim_spiRst_ !== 1'b1 ❌ (%b)", sim_spiRst_);
-            // `Finish;
+            `Finish;
         end
         
         spi_dataOutEn = 0;
