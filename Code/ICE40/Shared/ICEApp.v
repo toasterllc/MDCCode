@@ -568,13 +568,13 @@ module ICEApp(
             end
             
             SPI_State_MsgIn+2: begin
-`ifdef ICEApp_MSP_En
                 spi_state <= SPI_State_RespOut;
+                
+`ifdef ICEApp_MSP_En
                 spi_dataCounter <= (spi_msgResp ? RespCycleCount : 0);
 `endif // ICEApp_MSP_En
                 
 `ifdef ICEApp_STM_En
-                spi_state <= (spi_msgResp ? SPI_State_RespOut : SPI_State_Nop);
                 spi_dataOutLoad_ <= 0;
 `endif // ICEApp_STM_En
                 
