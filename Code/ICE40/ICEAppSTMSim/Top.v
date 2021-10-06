@@ -181,7 +181,7 @@ module Testbench();
             chunkIdx = 0;
             chunkCount = ((wordWidth*wordCount)+(ChunkLen-1)) / ChunkLen;
             
-            _SendMsg(`Msg_Type_SDReadout, 0);
+            _SendMsg(`Msg_Type_Readout, 0);
             
             while (wordIdx < wordCount) begin
                 reg[15:0] i;

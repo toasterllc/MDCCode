@@ -1,5 +1,5 @@
 `define ICEApp_STM_En
-`define ICEApp_SDRead_En
+`define ICEApp_SDReadoutToSPI_En
 `include "ICEApp.v"
 
 `timescale 1ns/1ps

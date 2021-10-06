@@ -18,10 +18,19 @@
 
 `timescale 1ns/1ps
 
-`ifdef ICEApp_SDRead_En
-`define ICEApp_SD_En
-`elsif ICEApp_SDWrite_En
-`define ICEApp_SD_En
+`ifdef ICEApp_ImgReadoutToSD_En
+    `define _ICEApp_Img_En
+    `define _ICEApp_SD_En
+`endif
+
+`ifdef ICEApp_SDReadoutToSPI_En
+    `define _ICEApp_SD_En
+    `define _ICEApp_SPIReadout_En
+`endif
+
+`ifdef ICEApp_ImgReadoutToSPI_En
+    `define _ICEApp_Img_En
+    `define _ICEApp_SPIReadout_En
 `endif
 
 module ICEApp(
@@ -42,14 +51,14 @@ module ICEApp(
     output wire         ice_st_spi_d_ready_rev4bodge,
 `endif // ICEApp_STM_En
     
-`ifdef ICEApp_SD_En
+`ifdef _ICEApp_SD_En
     // SD port
     output wire         sd_clk,
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat,
-`endif // ICEApp_SD_En
+`endif // _ICEApp_SD_En
     
-`ifdef ICEApp_Img_En
+`ifdef _ICEApp_Img_En
     // IMG port
     input wire          img_dclk,
     input wire[11:0]    img_d,
@@ -70,7 +79,7 @@ module ICEApp(
     output wire         ram_we_,
     output wire[1:0]    ram_dqm,
     inout wire[15:0]    ram_dq,
-`endif // ICEApp_Img_En
+`endif // _ICEApp_Img_En
     
     // LED port
     output reg[3:0]     ice_led = 0
@@ -90,7 +99,7 @@ module ICEApp(
     
     
     
-`ifdef ICEApp_Img_En
+`ifdef _ICEApp_Img_En
     // ====================
     // Img Clock (108 MHz)
     // ====================
@@ -198,58 +207,58 @@ module ICEApp(
         .ram_dqm(ram_dqm),
         .ram_dq(ram_dq)
     );
-`endif // ICEApp_Img_En
+`endif // _ICEApp_Img_En
     
     
     
     
     
     
-`ifdef ICEApp_SDRead_En
+`ifdef _ICEApp_SPIReadout_En
     // ====================
     // AFIFOChain
     // ====================
-    localparam SDFIFO_FIFOCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
+    localparam ReadoutFIFO_FIFOCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
     
-    wire        sdfifo_rst_;
-    wire        sdfifo_prop_clk;
-    wire        sdfifo_prop_w_ready;
-    wire        sdfifo_prop_r_ready;
-    wire        sdfifo_w_clk;
-    wire        sdfifo_w_trigger;
-    wire[15:0]  sdfifo_w_data;
-    wire        sdfifo_w_ready;
-    wire        sdfifo_r_clk;
-    reg         sdfifo_r_trigger = 0;
-    wire[15:0]  sdfifo_r_data;
-    wire        sdfifo_r_ready;
+    wire        readoutfifo_rst_;
+    wire        readoutfifo_prop_clk;
+    wire        readoutfifo_prop_w_ready;
+    wire        readoutfifo_prop_r_ready;
+    wire        readoutfifo_w_clk;
+    wire        readoutfifo_w_trigger;
+    wire[15:0]  readoutfifo_w_data;
+    wire        readoutfifo_w_ready;
+    wire        readoutfifo_r_clk;
+    reg         readoutfifo_r_trigger = 0;
+    wire[15:0]  readoutfifo_r_data;
+    wire        readoutfifo_r_ready;
     
     AFIFOChain #(
         .W(16),
-        .N(SDFIFO_FIFOCount)
+        .N(ReadoutFIFO_FIFOCount)
     ) AFIFOChain(
-        .rst_(sdfifo_rst_),
+        .rst_(readoutfifo_rst_),
         
-        .prop_clk(sdfifo_prop_clk),
-        .prop_w_ready(sdfifo_prop_w_ready),
-        .prop_r_ready(sdfifo_prop_r_ready),
+        .prop_clk(readoutfifo_prop_clk),
+        .prop_w_ready(readoutfifo_prop_w_ready),
+        .prop_r_ready(readoutfifo_prop_r_ready),
         
-        .w_clk(sdfifo_w_clk),
-        .w_trigger(sdfifo_w_trigger),
-        .w_data(sdfifo_w_data),
-        .w_ready(sdfifo_w_ready),
+        .w_clk(readoutfifo_w_clk),
+        .w_trigger(readoutfifo_w_trigger),
+        .w_data(readoutfifo_w_data),
+        .w_ready(readoutfifo_w_ready),
         
-        .r_clk(sdfifo_r_clk),
-        .r_trigger(sdfifo_r_trigger),
-        .r_data(sdfifo_r_data),
-        .r_ready(sdfifo_r_ready)
+        .r_clk(readoutfifo_r_clk),
+        .r_trigger(readoutfifo_r_trigger),
+        .r_data(readoutfifo_r_data),
+        .r_ready(readoutfifo_r_ready)
     );
     
-    assign sdfifo_prop_clk    = sdfifo_w_clk;
-    assign sdfifo_r_clk       = spi_clk;
-`endif // ICEApp_SDRead_En
+    assign readoutfifo_prop_clk    = readoutfifo_w_clk;
+    assign readoutfifo_r_clk       = spi_clk;
+`endif // _ICEApp_SPIReadout_En
     
-`ifdef ICEApp_SD_En
+`ifdef _ICEApp_SD_En
     // ====================
     // SD Clock (102 MHz)
     // ====================
@@ -341,24 +350,34 @@ module ICEApp(
         
         .status_dat0Idle(sd_status_dat0Idle)
     );
-`endif // ICEApp_SD_En
+`endif // _ICEApp_SD_En
     
-`ifdef ICEApp_SDWrite_En
+`ifdef ICEApp_ImgReadoutToSD_En
     // Connect imgctrl_readout_* to sd_datOutRead_*
     assign imgctrl_readout_clk      = sd_datOutRead_clk;
+    assign imgctrl_readout_trigger  = sd_datOutRead_trigger;
     assign sd_datOut_trigger        = imgctrl_readout_start;
     assign sd_datOutRead_ready      = imgctrl_readout_ready;
-    assign imgctrl_readout_trigger  = sd_datOutRead_trigger;
     assign sd_datOutRead_data       = imgctrl_readout_data;
-`endif // ICEApp_SDWrite_En
+`endif // ICEApp_ImgReadoutToSD_En
     
-`ifdef ICEApp_SDRead_En
-    assign sdfifo_rst_              = sd_datInWrite_rst_;
-    assign sdfifo_w_clk             = sd_datInWrite_clk;
-    assign sdfifo_w_trigger         = sd_datInWrite_trigger;
-    assign sdfifo_w_data            = sd_datInWrite_data;
-    assign sd_datInWrite_ready      = sdfifo_w_ready;
-`endif // ICEApp_SDRead_En
+`ifdef ICEApp_SDReadoutToSPI_En
+    assign readoutfifo_rst_         = sd_datInWrite_rst_;
+    assign readoutfifo_w_clk        = sd_datInWrite_clk;
+    assign readoutfifo_w_trigger    = sd_datInWrite_trigger;
+    assign readoutfifo_w_data       = sd_datInWrite_data;
+    assign sd_datInWrite_ready      = readoutfifo_w_ready;
+`endif // ICEApp_SDReadoutToSPI_En
+    
+`ifdef ICEApp_ImgReadoutToSPI_En
+    assign readoutfifo_rst_         = ???;
+    assign readoutfifo_w_clk        = imgctrl_readout_clk;
+    assign readoutfifo_w_trigger    = imgctrl_readout_ready;
+    assign readoutfifo_w_data       = imgctrl_readout_data;
+    
+    assign imgctrl_readout_clk      = img_clk;
+    assign imgctrl_readout_trigger  = readoutfifo_w_ready;
+`endif // ICEApp_ImgReadoutToSPI_En
     
 `ifdef ICEApp_MSP_En
     // ====================
@@ -412,19 +431,19 @@ module ICEApp(
     // SPI State Machine
     // ====================
     
-`ifdef ICEApp_SD_En
+`ifdef _ICEApp_SD_En
     // SD nets
     `ToggleAck(spi_sdCmdDone_, spi_sdCmdDoneAck, sd_cmd_done, posedge, spi_clk);
     `ToggleAck(spi_sdRespDone_, spi_sdRespDoneAck, sd_resp_done, posedge, spi_clk);
     `Sync(spi_sdDatOutDone, sd_datOut_done, posedge, spi_clk);
     `ToggleAck(spi_sdDatInDone_, spi_sdDatInDoneAck, sd_datIn_done, posedge, spi_clk);
     `Sync(spi_sdDat0Idle, sd_status_dat0Idle, posedge, spi_clk);
-`endif // ICEApp_SD_En
+`endif // _ICEApp_SD_En
     
-`ifdef ICEApp_Img_En
+`ifdef _ICEApp_Img_En
     // IMG nets
     `ToggleAck(spi_imgCaptureDone_, spi_imgCaptureDoneAck, imgctrl_status_captureDone, posedge, spi_clk);
-`endif // ICEApp_Img_En
+`endif // _ICEApp_Img_En
     
 `ifdef ICEApp_MSP_En
     // SPI control nets
@@ -467,7 +486,7 @@ module ICEApp(
     
     localparam SPI_State_MsgIn      = 0;    // +2
     localparam SPI_State_RespOut    = 3;    // +0
-    localparam SPI_State_SDReadout  = 4;    // +1
+    localparam SPI_State_Readout    = 4;    // +1
     localparam SPI_State_Nop        = 6;    // +0
     localparam SPI_State_Count      = 7;
     
@@ -483,12 +502,12 @@ module ICEApp(
     assign spi_msgType = {1'b1, spi_msgTypeRaw[`Msg_Type_Len-2:0]};
 `endif // ICEApp_STM_En
     
-`ifdef ICEApp_SDRead_En
-    localparam SPI_SDReadoutBitCount    = ((SDFIFO_FIFOCount/2)*4096)/8;
-    localparam SPI_SDReadoutCycleCount  = SPI_SDReadoutBitCount+3;
-    reg[`RegWidth(SPI_SDReadoutCycleCount)-1:0] spi_sdReadoutCounter = 0;
-    reg spi_sdReadoutEnding = 0;
-`endif // ICEApp_SDRead_En
+`ifdef _ICEApp_SPIReadout_En
+    localparam SPI_ReadoutBitCount      = ((ReadoutFIFO_FIFOCount/2)*4096)/8;
+    localparam SPI_ReadoutCycleCount    = SPI_ReadoutBitCount+3;
+    reg[`RegWidth(SPI_ReadoutCycleCount)-1:0] spi_readoutCounter = 0;
+    reg spi_readoutEnding = 0;
+`endif // _ICEApp_SPIReadout_En
     
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
     reg[`Msg_Len-1:0] spi_msg = 0;
@@ -507,9 +526,9 @@ module ICEApp(
             spi_state <= SPI_State_MsgIn;
             spi_dataOutEn <= 0;
             
-            `ifdef ICEApp_SDRead_En
-                sdfifo_r_trigger <= 0;
-            `endif // ICEApp_SDRead_En
+            `ifdef _ICEApp_SPIReadout_En
+                readoutfifo_r_trigger <= 0;
+            `endif // _ICEApp_SPIReadout_En
         
         end else begin
         
@@ -532,11 +551,11 @@ module ICEApp(
                 spi_dataOut <= spi_dataOut<<4;
             `endif // ICEApp_STM_En
             
-            `ifdef ICEApp_SDRead_En
-                sdfifo_r_trigger <= 0;
-                spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
-                if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
-            `endif // ICEApp_SDRead_En
+            `ifdef _ICEApp_SPIReadout_En
+                readoutfifo_r_trigger <= 0;
+                spi_readoutCounter <= spi_readoutCounter-1;
+                if (spi_readoutCounter === 4) spi_readoutEnding <= 1;
+            `endif // _ICEApp_SPIReadout_En
             
             case (spi_state)
             SPI_State_MsgIn: begin
@@ -593,7 +612,7 @@ module ICEApp(
                     ice_led <= spi_msgArg[`Msg_Arg_LEDSet_Val_Bits];
                 end
                 
-`ifdef ICEApp_SD_En
+`ifdef _ICEApp_SD_En
                 // Set SD clock source
                 `Msg_Type_SDInit: begin
                     $display("[SPI] Got Msg_Type_SDInit: delay=%0d speed=%0d trigger=%b reset=%b",
@@ -650,17 +669,9 @@ module ICEApp(
                     spi_resp[`Resp_Arg_SDStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
                     spi_resp[`Resp_Arg_SDStatus_Resp_Bits] <= sd_resp_data;
                 end
-`endif // ICEApp_SD_En
+`endif // _ICEApp_SD_En
                 
-`ifdef ICEApp_SDRead_En
-                `Msg_Type_SDReadout: begin
-                    $display("[SPI] Got Msg_Type_SDReadout");
-                    spi_sdReadoutCounter <= 6;
-                    spi_state <= SPI_State_SDReadout;
-                end
-`endif // ICEApp_SDRead_En
-                
-`ifdef ICEApp_Img_En
+`ifdef _ICEApp_Img_En
                 `Msg_Type_ImgReset: begin
                     $display("[SPI] Got Msg_Type_ImgReset (rst=%b)", spi_msgArg[`Msg_Arg_ImgReset_Val_Bits]);
                     img_rst_ <= spi_msgArg[`Msg_Arg_ImgReset_Val_Bits];
@@ -725,7 +736,15 @@ module ICEApp(
                     spi_resp[`Resp_Arg_ImgI2CStatus_Err_Bits] <= imgi2c_status_err;
                     spi_resp[`Resp_Arg_ImgI2CStatus_ReadData_Bits] <= imgi2c_status_readData;
                 end
-`endif // ICEApp_Img_En
+`endif // _ICEApp_Img_En
+                
+`ifdef _ICEApp_SPIReadout_En
+                `Msg_Type_Readout: begin
+                    $display("[SPI] Got Msg_Type_Readout");
+                    spi_readoutCounter <= 6;
+                    spi_state <= SPI_State_Readout;
+                end
+`endif // _ICEApp_SPIReadout_En
                 
                 `Msg_Type_Nop: begin
                     $display("[SPI] Got Msg_Type_None");
@@ -755,30 +774,30 @@ module ICEApp(
                 `endif // ICEApp_STM_En
             end
             
-`ifdef ICEApp_SDRead_En
-            SPI_State_SDReadout: begin
+`ifdef _ICEApp_SPIReadout_En
+            SPI_State_Readout: begin
                 spi_dataOutLoad_ <= 1;
-                spi_sdReadoutEnding <= 0;
-                if (!spi_sdReadoutCounter) begin
-                    spi_sdReadoutCounter <= SPI_SDReadoutCycleCount;
-                    spi_state <= SPI_State_SDReadout+1;
+                spi_readoutEnding <= 0;
+                if (!spi_readoutCounter) begin
+                    spi_readoutCounter <= SPI_ReadoutCycleCount;
+                    spi_state <= SPI_State_Readout+1;
                 end
             end
             
-            SPI_State_SDReadout+1: begin
+            SPI_State_Readout+1: begin
                 spi_dataOutEn <= 1;
                 
                 if (!spi_dataOutLoad_) begin
-                    spi_dataOut <= sdfifo_r_data;
-                    sdfifo_r_trigger <= !spi_sdReadoutEnding;
+                    spi_dataOut <= readoutfifo_r_data;
+                    readoutfifo_r_trigger <= !spi_readoutEnding;
                 end
                 
-                if (!spi_sdReadoutCounter) begin
-                    spi_sdReadoutCounter <= 3;
-                    spi_state <= SPI_State_SDReadout;
+                if (!spi_readoutCounter) begin
+                    spi_readoutCounter <= 3;
+                    spi_state <= SPI_State_Readout;
                 end
             end
-`endif // ICEApp_SDRead_En
+`endif // _ICEApp_SPIReadout_En
             
             endcase
         end
@@ -874,7 +893,7 @@ module ICEApp(
     // ====================
     // Pin: ice_st_spi_d_ready
     // ====================
-    assign ice_st_spi_d_ready = sdfifo_prop_r_ready;
+    assign ice_st_spi_d_ready = readoutfifo_prop_r_ready;
     // Rev4 bodge
     assign ice_st_spi_d_ready_rev4bodge = ice_st_spi_d_ready;
 `endif // ICEApp_STM_En
