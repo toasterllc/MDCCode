@@ -209,46 +209,44 @@ module ICEApp(
     // ====================
     // AFIFOChain
     // ====================
-    localparam SDReadoutFIFOCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
-    localparam SDReadoutLen = ((SDReadoutFIFOCount/2)*4096)/8;
-    localparam SDReadoutCount = SDReadoutLen+3;
+    localparam SDFIFO_FIFOCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
     
-    wire        fifo_rst_;
-    wire        fifo_prop_clk;
-    wire        fifo_prop_w_ready;
-    wire        fifo_prop_r_ready;
-    wire        fifo_w_clk;
-    wire        fifo_w_trigger;
-    wire[15:0]  fifo_w_data;
-    wire        fifo_w_ready;
-    wire        fifo_r_clk;
-    reg         fifo_r_trigger      = 0;
-    wire[15:0]  fifo_r_data;
-    wire        fifo_r_ready;
+    wire        sdfifo_rst_;
+    wire        sdfifo_prop_clk;
+    wire        sdfifo_prop_w_ready;
+    wire        sdfifo_prop_r_ready;
+    wire        sdfifo_w_clk;
+    wire        sdfifo_w_trigger;
+    wire[15:0]  sdfifo_w_data;
+    wire        sdfifo_w_ready;
+    wire        sdfifo_r_clk;
+    reg         sdfifo_r_trigger = 0;
+    wire[15:0]  sdfifo_r_data;
+    wire        sdfifo_r_ready;
     
     AFIFOChain #(
         .W(16),
-        .N(SDReadoutFIFOCount)
+        .N(SDFIFO_FIFOCount)
     ) AFIFOChain(
-        .rst_(fifo_rst_),
+        .rst_(sdfifo_rst_),
         
-        .prop_clk(fifo_prop_clk),
-        .prop_w_ready(fifo_prop_w_ready),
-        .prop_r_ready(fifo_prop_r_ready),
+        .prop_clk(sdfifo_prop_clk),
+        .prop_w_ready(sdfifo_prop_w_ready),
+        .prop_r_ready(sdfifo_prop_r_ready),
         
-        .w_clk(fifo_w_clk),
-        .w_trigger(fifo_w_trigger),
-        .w_data(fifo_w_data),
-        .w_ready(fifo_w_ready),
+        .w_clk(sdfifo_w_clk),
+        .w_trigger(sdfifo_w_trigger),
+        .w_data(sdfifo_w_data),
+        .w_ready(sdfifo_w_ready),
         
-        .r_clk(fifo_r_clk),
-        .r_trigger(fifo_r_trigger),
-        .r_data(fifo_r_data),
-        .r_ready(fifo_r_ready)
+        .r_clk(sdfifo_r_clk),
+        .r_trigger(sdfifo_r_trigger),
+        .r_data(sdfifo_r_data),
+        .r_ready(sdfifo_r_ready)
     );
     
-    assign fifo_prop_clk    = fifo_w_clk;
-    assign fifo_r_clk       = spi_clk;
+    assign sdfifo_prop_clk    = sdfifo_w_clk;
+    assign sdfifo_r_clk       = spi_clk;
 `endif // ICEApp_SDRead_En
     
 `ifdef ICEApp_SD_En
@@ -355,11 +353,11 @@ module ICEApp(
 `endif // ICEApp_SDWrite_En
     
 `ifdef ICEApp_SDRead_En
-    assign fifo_rst_                = sd_datInWrite_rst_;
-    assign fifo_w_clk               = sd_datInWrite_clk;
-    assign fifo_w_trigger           = sd_datInWrite_trigger;
-    assign fifo_w_data              = sd_datInWrite_data;
-    assign sd_datInWrite_ready      = fifo_w_ready;
+    assign sdfifo_rst_              = sd_datInWrite_rst_;
+    assign sdfifo_w_clk             = sd_datInWrite_clk;
+    assign sdfifo_w_trigger         = sd_datInWrite_trigger;
+    assign sdfifo_w_data            = sd_datInWrite_data;
+    assign sd_datInWrite_ready      = sdfifo_w_ready;
 `endif // ICEApp_SDRead_En
     
 `ifdef ICEApp_MSP_En
@@ -486,7 +484,9 @@ module ICEApp(
 `endif // ICEApp_STM_En
     
 `ifdef ICEApp_SDRead_En
-    reg[`RegWidth(SDReadoutCount)-1:0] spi_sdReadoutCounter = 0;
+    localparam SPI_SDReadoutLen     = ((SDFIFO_FIFOCount/2)*4096)/8;
+    localparam SPI_SDReadoutCount   = SPI_SDReadoutLen+3;
+    reg[`RegWidth(SPI_SDReadoutCount)-1:0] spi_sdReadoutCounter = 0;
     reg spi_sdReadoutEnding = 0;
 `endif // ICEApp_SDRead_En
     
@@ -508,7 +508,7 @@ module ICEApp(
             spi_dataOutEn <= 0;
             
 `ifdef ICEApp_SDRead_En
-            fifo_r_trigger <= 0;
+            sdfifo_r_trigger <= 0;
 `endif // ICEApp_SDRead_En
         
         end else begin
@@ -533,7 +533,7 @@ module ICEApp(
 `endif // ICEApp_STM_En
             
 `ifdef ICEApp_SDRead_En
-            fifo_r_trigger <= 0;
+            sdfifo_r_trigger <= 0;
             spi_sdReadoutCounter <= spi_sdReadoutCounter-1;
             if (spi_sdReadoutCounter === 4) spi_sdReadoutEnding <= 1;
 `endif // ICEApp_SDRead_En
@@ -760,7 +760,7 @@ module ICEApp(
                 spi_dataOutLoad_ <= 1;
                 spi_sdReadoutEnding <= 0;
                 if (!spi_sdReadoutCounter) begin
-                    spi_sdReadoutCounter <= SDReadoutCount;
+                    spi_sdReadoutCounter <= SPI_SDReadoutCount;
                     spi_state <= SPI_State_SDReadout+1;
                 end
             end
@@ -768,13 +768,9 @@ module ICEApp(
             SPI_State_SDReadout+1: begin
                 spi_dataOutEn <= 1;
                 
-                // if (fifo_r_trigger) begin
-                //     $display("AAA Read word: %x", fifo_r_data);
-                // end
-                
                 if (!spi_dataOutLoad_) begin
-                    spi_dataOut <= fifo_r_data;
-                    fifo_r_trigger <= !spi_sdReadoutEnding;
+                    spi_dataOut <= sdfifo_r_data;
+                    sdfifo_r_trigger <= !spi_sdReadoutEnding;
                 end
                 
                 if (!spi_sdReadoutCounter) begin
@@ -878,7 +874,7 @@ module ICEApp(
     // ====================
     // Pin: ice_st_spi_d_ready
     // ====================
-    assign ice_st_spi_d_ready = fifo_prop_r_ready;
+    assign ice_st_spi_d_ready = sdfifo_prop_r_ready;
     // Rev4 bodge
     assign ice_st_spi_d_ready_rev4bodge = ice_st_spi_d_ready;
 `endif // ICEApp_STM_En
