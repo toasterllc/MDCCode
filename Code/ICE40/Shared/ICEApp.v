@@ -436,7 +436,6 @@ module ICEApp(
     localparam MsgCycleCount = `Msg_Len+TurnaroundExtraDelay-2;
     localparam RespCycleCount = `Resp_Len;
     
-    reg[`Msg_Len-1:0] spi_dataInReg = 0;
     wire[`Msg_Type_Len-1:0] spi_msgType = spi_dataInReg[`Msg_Type_Bits];
     wire spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
     wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dataInReg[`Msg_Arg_Bits];
@@ -444,7 +443,6 @@ module ICEApp(
     reg[`Resp_Len-1:0] spi_resp = 0;
     reg[TurnaroundExtraDelay-1:0] spi_dataInDelayed = 0;
     reg spi_dataOut = 0;
-    reg spi_dataOutEn = 0;
     wire spi_dataIn;
     
     localparam SPI_State_MsgIn      = 0;    // +2
@@ -471,18 +469,16 @@ module ICEApp(
     localparam MsgCycleCount = (`Msg_Len/4)+1;
     reg[`RegWidth(MsgCycleCount)-1:0] spi_dinCounter = 0;
     reg[0:0] spi_doutCounter = 0;
-    reg[`Msg_Len-1:0] spi_dinReg = 0;
     reg[15:0] spi_doutReg = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
     // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
     // for setting the first bit to 1, so we fake the first bit.
-    wire[`Msg_Type_Len-1:0] spi_msgTypeRaw = spi_dinReg[`Msg_Type_Bits];
+    wire[`Msg_Type_Len-1:0] spi_msgTypeRaw = spi_dataInReg[`Msg_Type_Bits];
     wire[`Msg_Type_Len-1:0] spi_msgType = {1'b1, spi_msgTypeRaw[`Msg_Type_Len-2:0]};
     wire spi_msgResp = spi_msgType[`Msg_Type_Resp_Bits];
-    wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dinReg[`Msg_Arg_Bits];
+    wire[`Msg_Arg_Len-1:0] spi_msgArg = spi_dataInReg[`Msg_Arg_Bits];
     
     wire spi_rst_;
-    reg spi_d_outEn = 0;
     wire[7:0] spi_d_out;
     wire[7:0] spi_d_in;
     
@@ -504,29 +500,28 @@ module ICEApp(
 `endif // ICEApp_SDRead_En
     
     reg[`RegWidth(SPI_State_Count-1)-1:0] spi_state = 0;
+    reg[`Msg_Len-1:0] spi_dataInReg = 0;
+    reg spi_dataOutEn = 0;
     
     always @(posedge spi_clk, negedge spi_rst_) begin
         if (!spi_rst_) begin
             $display("[SPI] Reset");
             
             spi_state <= SPI_State_MsgIn;
-            
-`ifdef ICEApp_MSP_En
             spi_dataOutEn <= 0;
-`endif // ICEApp_MSP_En
             
 `ifdef ICEApp_STM_En
-            spi_d_outEn <= 0;
             fifo_r_trigger <= 0;
 `endif // ICEApp_STM_En
         
         end else begin
         
+            spi_dataOutEn <= 0;
+            
 `ifdef ICEApp_MSP_En
             spi_dataInDelayed <= spi_dataInDelayed<<1|spi_dataIn;
             spi_dataInReg <= spi_dataInReg<<1|`LeftBit(spi_dataInDelayed,0);
             spi_dataCounter <= spi_dataCounter-1;
-            spi_dataOutEn <= 0;
             spi_resp <= spi_resp<<1|1'b0;
             spi_dataOut <= `LeftBit(spi_resp, 0);
 `endif // ICEApp_MSP_En
@@ -534,10 +529,9 @@ module ICEApp(
 `ifdef ICEApp_STM_En
             // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
             // See MsgCycleCount comment above.
-            spi_dinReg <= spi_dinReg<<4|spi_d_in[3:0];
+            spi_dataInReg <= spi_dataInReg<<4|spi_d_in[3:0];
             spi_dinCounter <= spi_dinCounter-1;
             spi_doutCounter <= spi_doutCounter-1;
-            spi_d_outEn <= 0;
             spi_resp <= spi_resp<<8|8'b0;
             fifo_r_trigger <= 0;
             spi_doutReg <= spi_doutReg<<4;
@@ -776,7 +770,7 @@ module ICEApp(
 `endif // ICEApp_MSP_En
                 
 `ifdef ICEApp_STM_En
-                spi_d_outEn <= 1;
+                spi_dataOutEn <= 1;
                 if (!spi_doutCounter) begin
                     spi_doutReg <= `LeftBits(spi_resp, 0, 16);
                 end
@@ -794,7 +788,7 @@ module ICEApp(
             end
             
             SPI_State_SDReadout+1: begin
-                spi_d_outEn <= 1;
+                spi_dataOutEn <= 1;
                 
                 // if (fifo_r_trigger) begin
                 //     $display("AAA Read word: %x", fifo_r_data);
@@ -892,7 +886,7 @@ module ICEApp(
             .INPUT_CLK(spi_clk),
             .OUTPUT_CLK(spi_clk),
             .PACKAGE_PIN(ice_st_spi_d[i]),
-            .OUTPUT_ENABLE(spi_d_outEn),
+            .OUTPUT_ENABLE(spi_dataOutEn),
             .D_OUT_0(spi_d_out[i]),
             .D_IN_0(spi_d_in[i])
         );
