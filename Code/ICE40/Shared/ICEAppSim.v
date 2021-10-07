@@ -665,7 +665,6 @@ module ICEAppSim();
         end
     end endtask
     
-`ifdef ICEApp_SDReadoutToSPI_En
     task TestSDReadoutToSPI; begin
         $display("\n[ICEAppSim] ========== TestSDReadoutToSPI ==========");
         
@@ -677,7 +676,6 @@ module ICEAppSim();
         // Stop transmission
         SendSDCmdResp(CMD12, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
     end endtask
-`endif // ICEApp_SDReadoutToSPI_En
     
     task TestSDReadoutToSPIRecovery; begin
         reg done;
@@ -712,6 +710,12 @@ module ICEAppSim();
             $display("[ICEAppSim] DatIn didn't timeout? ❌");
             `Finish;
         end
+    end endtask
+    
+    task TestImgReadoutToSPI; begin
+        $display("\n[ICEAppSim] ========== TestImgReadoutToSPI ==========");
+        TestImgReadout();
+        TestImgReadoutToSPI_Readout();
     end endtask
     
 `ifdef ICEApp_MSP_En
@@ -761,21 +765,21 @@ module ICEAppSim();
                 LittleFromHost16.Swap(16'b0)        /* padding      */
             });
             
-            TestImgI2CWriteRead();
+            // TestImgI2CWriteRead();
             TestImgCapture();
         `endif // _ICEApp_Img_En
         
         `ifdef _ICEApp_SD_En
             TestSDInit();
-            TestSDCMD0();
-            TestSDCMD8();
-            TestSDCMD2();
-            TestSDCMD6();
+            // TestSDCMD0();
+            // TestSDCMD8();
+            // TestSDCMD2();
+            // TestSDCMD6();
             //           delay, speed,                            trigger, reset
             TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
             TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
             
-            TestSDRespRecovery();
+            // TestSDRespRecovery();
         `endif // _ICEApp_SD_En
         
         `ifdef ICEApp_ImgReadoutToSD_En
@@ -788,6 +792,10 @@ module ICEAppSim();
             TestLEDSet(4'b1010);
             TestSDReadoutToSPI();
         `endif // ICEApp_SDReadoutToSPI_En
+        
+        `ifdef ICEApp_ImgReadoutToSPI_En
+            TestImgReadoutToSPI();
+        `endif // ICEApp_ImgReadoutToSPI_En
         
         `Finish;
     end

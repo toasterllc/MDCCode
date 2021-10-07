@@ -246,3 +246,8 @@ end endtask
 task TestSDReadoutToSPI_Readout; begin
     SPIReadout(/* waitForDReady */ 1, /* validateWords */ 1, /* wordWidth */ 32, /* wordCount */ 4*1024);
 end endtask
+
+// TestImgReadoutToSPI_Readout: required by TestImgReadoutToSPI
+task TestImgReadoutToSPI_Readout; begin
+    SPIReadout(/* waitForDReady */ 1, /* validateWords */ 1, /* wordWidth */ 32, /* wordCount */ 4*1024);
+end endtask

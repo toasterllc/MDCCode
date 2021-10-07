@@ -112,3 +112,13 @@ task TestSDCMD6_CheckAccessMode; begin
         `Finish;
     end
 end endtask
+
+task TestSDReadoutToSPI_Readout; begin
+    $display("[ICEAppSim] TestSDReadoutToSPI_Readout unsupported");
+    `Finish;
+end endtask
+
+task TestImgReadoutToSPI_Readout; begin
+    $display("[ICEAppSim] TestImgReadoutToSPI_Readout unsupported");
+    `Finish;
+end endtask
