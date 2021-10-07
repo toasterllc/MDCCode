@@ -502,13 +502,7 @@ module SDCardSim #(
     // ====================
     // Handle writing to the card
     // ====================
-    WordValidator #(
-        .HeaderWordCount    (RecvHeaderWordCount),
-        .WordCount          (RecvWordCount),
-        .WordInitialValue   (RecvWordInitialValue),
-        .WordDelta          (RecvWordDelta),
-        .ValidateChecksum   (RecvValidateChecksum)
-    ) WordValidator();
+    WordValidator WordValidator();
     
     initial begin
         forever begin
@@ -724,6 +718,13 @@ module SDCardSim #(
             
             end else begin
                 WordValidator.Reset();
+                WordValidator.Config(
+                    RecvHeaderWordCount,
+                    RecvWordCount,
+                    RecvWordInitialValue,
+                    RecvWordDelta,
+                    RecvValidateChecksum
+                );
             end
 
             wait(!sd_clk);
@@ -737,13 +738,12 @@ module SDCardSim #(
     // ====================
     // Handle reading from the card
     // ====================
-    parameter Send_WordWidth        = 32;
+    parameter Send_WordWidth        = 16;
     parameter Send_WordIncrement    = -1;
     EndianSwap #(.Width(Send_WordWidth)) Send_EndianSwap();
     
     initial begin
         reg[Send_WordWidth-1:0] nextDatOutVal;
-        nextDatOutVal = (Send_WordIncrement>0 ? 0 : '1);
         
         forever begin
             wait(sd_clk);
@@ -838,8 +838,10 @@ module SDCardSim #(
                 end
             
             end else begin
-                wait(!sd_clk);
+                nextDatOutVal = (Send_WordIncrement>0 ? 0 : '1);
             end
+            
+            wait(!sd_clk);
         end
     end
     
