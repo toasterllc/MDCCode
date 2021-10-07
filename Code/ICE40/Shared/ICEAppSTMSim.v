@@ -264,9 +264,9 @@ task TestImgReadoutToSPI_Readout; begin
         1,                      // waitForDReady,
         1,                      // validateWords,
         ImageHeaderWordCount,   // headerWordCount,
-        ImageWidth*ImageHeight, // wordCount,
-        32'h0FFF,               // wordInitialValue,
-        -1,                     // wordDelta,
+        ImageWordCount,         // wordCount,
+        ImageWordInitialValue,  // wordInitialValue,
+        ImageWordDelta,         // wordDelta,
         1                       // validateChecksum
     );
 end endtask

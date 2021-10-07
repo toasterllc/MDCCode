@@ -68,6 +68,9 @@ module ICEAppSim();
     
     localparam ImageWidth = 64;
     localparam ImageHeight = 32;
+    localparam ImageWordCount = ImageWidth*ImageHeight;
+    localparam ImageWordInitialValue = 16'h0FFF;
+    localparam ImageWordDelta = -1;
     
     `ifdef _ICEApp_Img_En
         mobile_sdr mobile_sdr(
@@ -103,9 +106,9 @@ module ICEAppSim();
     `ifdef _ICEApp_SD_En
         SDCardSim #(
             .RecvHeaderWordCount(ImageHeaderWordCount),
-            .RecvWordCount(ImageWidth*ImageHeight),
-            .RecvWordInitialValue(16'h0FFF),
-            .RecvWordDelta(-1),
+            .RecvWordCount(ImageWordCount),
+            .RecvWordInitialValue(ImageWordInitialValue),
+            .RecvWordDelta(ImageWordDelta),
             .RecvValidateChecksum(1)
         ) SDCardSim (
             .sd_clk(sd_clk),
