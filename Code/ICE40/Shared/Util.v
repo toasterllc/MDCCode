@@ -61,6 +61,7 @@
 `endif
 
 `define DivCeil(n, d) (((n)+(d)-1)/(d))
+`define Ceil(val, mult) (`DivCeil((val), (mult)) * (mult))
 
 // Clocks() returns the minimum number of `freq` clock cycles
 // for >= `ns` nanoseconds to elapse. For example, if ns=5ns, and
