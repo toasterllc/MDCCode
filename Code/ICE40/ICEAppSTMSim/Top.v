@@ -16,41 +16,6 @@
 module Testbench();
     `include "ICEAppSim.v"
     
-    reg         ice_img_clk16mhz = 0;
-    
-    reg         ice_st_spi_clk = 0;
-    reg         ice_st_spi_cs_ = 1;
-    wire[7:0]   ice_st_spi_d;
-    wire        ice_st_spi_d_ready;
-    wire        ice_st_spi_d_ready_rev4bodge;
-    
-    wire        sd_clk;
-    wire        sd_cmd;
-    tri1[3:0]   sd_dat;
-    
-    wire[3:0]   ice_led;
-    wire        sim_spiRst_;
-    
-    Top Top(.*);
-    
-    SDCardSim SDCardSim(
-        .sd_clk(sd_clk),
-        .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat)
-    );
-    
-    initial begin
-        forever begin
-            ice_img_clk16mhz = ~ice_img_clk16mhz;
-            #32;
-        end
-    end
-    
-    initial begin
-        $dumpfile("Top.vcd");
-        $dumpvars(0, Testbench);
-    end
-    
     wire[7:0]   spi_dataOut;
     reg         spi_dataOutEn = 0;
     wire[7:0]   spi_dataIn;
@@ -141,11 +106,7 @@ module Testbench();
         
         ice_st_spi_cs_ = 1;
         #1; // Allow ice_st_spi_cs_ to take effect
-    
     end endtask
-    
-    
-    
     
     EndianSwap #(.Width(16)) SDReadout_HostFromLittle16();
     EndianSwap #(.Width(32)) SDReadout_HostFromLittle32();

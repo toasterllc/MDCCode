@@ -5,7 +5,6 @@
 `endif
 
 `include "../ICEAppMSP/Top.v"          // Before yosys synthesis
-// `include "../ICEAppMSP/Synth/Top.v"    // After yosys synthesis
 `include "ICEAppTypes.v"
 `include "Util.v"
 `include "SDCardSim.v"
@@ -22,93 +21,6 @@
 
 module Testbench();
     `include "ICEAppSim.v"
-    
-    reg ice_img_clk16mhz = 0;
-    reg ice_msp_spi_clk = 0;
-    wire ice_msp_spi_data;
-    
-    wire sd_clk;
-    wire sd_cmd;
-    tri1[3:0] sd_dat;
-    
-    wire        img_dclk;
-    wire[11:0]  img_d;
-    wire        img_fv;
-    wire        img_lv;
-    wire        img_rst_;
-    wire        img_sclk;
-    tri1        img_sdata;
-    
-    wire        ram_clk;
-    wire        ram_cke;
-    wire[1:0]   ram_ba;
-    wire[11:0]  ram_a;
-    wire        ram_cs_;
-    wire        ram_ras_;
-    wire        ram_cas_;
-    wire        ram_we_;
-    wire[1:0]   ram_dqm;
-    wire[15:0]  ram_dq;
-    
-    wire[3:0] ice_led;
-    wire sim_spiRst_;
-    
-    initial begin
-        forever begin
-            ice_img_clk16mhz = ~ice_img_clk16mhz;
-            #32;
-        end
-    end
-    
-    Top Top(.*);
-    
-    localparam ImageWidth = 64;
-    localparam ImageHeight = 32;
-    ImgSim #(
-        .ImageWidth(ImageWidth),
-        .ImageHeight(ImageHeight)
-    ) ImgSim (
-        .img_dclk(img_dclk),
-        .img_d(img_d),
-        .img_fv(img_fv),
-        .img_lv(img_lv),
-        .img_rst_(img_rst_)
-    );
-    
-    ImgI2CSlaveSim ImgI2CSlaveSim(
-        .i2c_clk(img_sclk),
-        .i2c_data(img_sdata)
-    );
-    
-    mobile_sdr mobile_sdr(
-        .clk(ram_clk),
-        .cke(ram_cke),
-        .addr(ram_a),
-        .ba(ram_ba),
-        .cs_n(ram_cs_),
-        .ras_n(ram_ras_),
-        .cas_n(ram_cas_),
-        .we_n(ram_we_),
-        .dq(ram_dq),
-        .dqm(ram_dqm)
-    );
-    
-    SDCardSim #(
-        .RecvHeaderWordCount(ImageHeaderWordCount),
-        .RecvWordCount(ImageWidth*ImageHeight),
-        .RecvWordInitialValue(16'h0FFF),
-        .RecvWordDelta(-1),
-        .RecvValidateChecksum(1)
-    ) SDCardSim (
-        .sd_clk(sd_clk),
-        .sd_cmd(sd_cmd),
-        .sd_dat(sd_dat)
-    );
-    
-    initial begin
-        $dumpfile("Top.vcd");
-        $dumpvars(0, Testbench);
-    end
     
     reg[`Msg_Len-1:0] spi_dataOutReg = 0;
     reg[`Resp_Len-1:0] spi_resp = 0;
