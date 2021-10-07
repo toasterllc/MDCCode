@@ -23,6 +23,7 @@ module ImgController #(
                         cmd_header,
     
     // Readout port (clock domain: `readout_clk`)
+    output reg          readout_rst_ = 0,
     input wire          readout_clk,
     output reg          readout_start = 0,  // Toggle signal
     output wire         readout_ready,
@@ -123,7 +124,7 @@ module ImgController #(
     // ====================
     // Output FIFO (RAM->Output)
     // ====================
-    reg fifoOut_rst = 0;
+    reg fifoOut_rst_ = 0;
     wire fifoOut_write_ready;
     wire fifoOut_write_trigger;
     wire[15:0] fifoOut_write_data;
@@ -132,7 +133,7 @@ module ImgController #(
     wire[15:0] fifoOut_read_data;
     
     AFIFO AFIFO_fifoOut(
-        .rst_(!fifoOut_rst),
+        .rst_(fifoOut_rst_),
         
         .w_clk(clk),
         .w_ready(fifoOut_write_ready),
@@ -382,8 +383,9 @@ module ImgController #(
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
-        fifoOut_rst <= 0;
         ramctrl_write_trigger <= 0;
+        fifoOut_rst_ <= 1; // Pulse
+        readout_rst_ <= 1; // Pulse
         
         ctrl_fifoOutWrote <= fifoOut_write_ready && fifoOut_write_trigger;
         if (ctrl_fifoOutWrote) begin
@@ -461,7 +463,8 @@ module ImgController #(
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
             // Reset output FIFO
-            fifoOut_rst <= 1;
+            fifoOut_rst_ <= 0;
+            readout_rst_ <= 0;
             // Reset readout state
             ctrl_readoutCount <= fifoIn_wordCount;
             ctrl_fifoOutDone <= 0;
@@ -472,7 +475,7 @@ module ImgController #(
             // Wait for the read command and FIFO reset to be consumed,
             // and wait for the FIFO to be filled, before signalling
             // for readout to start
-            if (!fifoOut_rst && !fifoOut_write_ready) begin
+            if (fifoOut_rst_ && !fifoOut_write_ready) begin
                 readout_start <= !readout_start;
                 ctrl_state <= Ctrl_State_Readout+2;
             end
