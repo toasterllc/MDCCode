@@ -133,12 +133,13 @@ task SPIReadout(
     input waitForDReady,
     input validateWords,
     input[31:0] headerWordCount,
-    input[31:0] wordWidth,
     input[31:0] wordCount,
     input[31:0] wordInitialValue,
     input[31:0] wordDelta,
     input validateChecksum
 ); begin
+    
+    parameter WordWidth = 16;
     parameter ChunkLen = 4*4096; // Each chunk consists of 4x RAM4K == 4*4096 bits
     
     WordValidator.Reset();
@@ -163,7 +164,7 @@ task SPIReadout(
         reg[31:0] chunkCount;
         wordIdx = 0;
         chunkIdx = 0;
-        chunkCount = ((wordWidth*wordCount)+(ChunkLen-1)) / ChunkLen;
+        chunkCount = ((WordWidth*wordCount)+(ChunkLen-1)) / ChunkLen;
         
         _SendMsg(`Msg_Type_Readout, 0);
         
@@ -196,22 +197,18 @@ task SPIReadout(
             
             #100; // TODO: remove; this helps debug where 8 dummy cycles end
             
-            for (i=0; i<(ChunkLen/wordWidth) && (wordIdx<wordCount); i++) begin
-                reg[31:0] word;
+            for (i=0; i<(ChunkLen/WordWidth) && (wordIdx<wordCount); i++) begin
+                reg[WordWidth-1:0] word;
                 
                 spi_resp = 0;
-                _ReadResp(wordWidth);
-                
-                case (wordWidth)
-                16: word = spi_resp[15:0];
-                32: word = spi_resp[31:0];
-                endcase
+                _ReadResp(WordWidth);
+                word = spi_resp[WordWidth-1:0];
                 
                 if (validateWords) WordValidator.Validate(word);
                 
                 // $display("[ICEAppSim] Read word: 0x%x", word);
                 
-                spi_datIn = spi_datIn<<wordWidth;
+                spi_datIn = spi_datIn<<WordWidth;
                 spi_datIn |= word;
                 
                 wordIdx++;
@@ -233,7 +230,6 @@ task TestSDCMD6_CheckAccessMode; begin
         0,              // waitForDReady,
         0,              // validateWords,
         0,              // headerWordCount,
-        16,             // wordWidth,
         (512/16),       // wordCount,
         0,              // wordInitialValue,
         0,              // wordDelta,
@@ -255,7 +251,6 @@ task TestSDReadoutToSPI_Readout; begin
         1,              // waitForDReady,
         1,              // validateWords,
         0,              // headerWordCount,
-        16,             // wordWidth,
         4*1024,         // wordCount,
         32'h0000FFFF,   // wordInitialValue,
         -1,             // wordDelta,
@@ -269,7 +264,6 @@ task TestImgReadoutToSPI_Readout; begin
         1,                      // waitForDReady,
         1,                      // validateWords,
         ImageHeaderWordCount,   // headerWordCount,
-        16,                     // wordWidth,
         ImageWidth*ImageHeight, // wordCount,
         32'h0FFF,               // wordInitialValue,
         -1,                     // wordDelta,
