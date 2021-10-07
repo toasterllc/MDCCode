@@ -141,6 +141,9 @@ task SPIReadout(
     
     parameter WordWidth = 16;
     parameter ChunkLen = 4*4096; // Each chunk consists of 4x RAM4K == 4*4096 bits
+    reg[31:0] totalWordCount;
+    
+    totalWordCount = headerWordCount+wordCount+(validateChecksum ? 2:0);
     
     WordValidator.Reset();
     WordValidator.Config(
@@ -164,11 +167,11 @@ task SPIReadout(
         reg[31:0] chunkCount;
         wordIdx = 0;
         chunkIdx = 0;
-        chunkCount = ((WordWidth*wordCount)+(ChunkLen-1)) / ChunkLen;
+        chunkCount = ((WordWidth*totalWordCount)+(ChunkLen-1)) / ChunkLen;
         
         _SendMsg(`Msg_Type_Readout, 0);
         
-        while (wordIdx < wordCount) begin
+        while (wordIdx < totalWordCount) begin
             reg[15:0] i;
             
             $display("[ICEAppSim] Reading chunk %0d/%0d...", chunkIdx+1, chunkCount);
@@ -197,7 +200,7 @@ task SPIReadout(
             
             #100; // TODO: remove; this helps debug where 8 dummy cycles end
             
-            for (i=0; i<(ChunkLen/WordWidth) && (wordIdx<wordCount); i++) begin
+            for (i=0; i<(ChunkLen/WordWidth) && (wordIdx<totalWordCount); i++) begin
                 reg[WordWidth-1:0] word;
                 
                 spi_resp = 0;
