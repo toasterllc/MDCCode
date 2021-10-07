@@ -4,6 +4,7 @@
 `include "ICEAppTypes.v"
 `include "EndianSwap.v"
 `include "Util.v"
+`include "WordValidator.v"
 
 `ifdef _ICEApp_SD_En
 `include "SDCardSim.v"
@@ -112,6 +113,8 @@ module ICEAppSim();
             .sd_dat(sd_dat)
         );
     `endif // _ICEApp_SD_En
+    
+    WordValidator WordValidator();
     
     Top Top(.*);
     

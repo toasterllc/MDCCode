@@ -129,18 +129,28 @@ task TestRst; begin
     spi_dataOutEn = 0;
 end endtask
 
-task SPIReadout(input waitForDReady, input validateWords, input[7:0] wordWidth, input[31:0] wordCount); begin
-    parameter WordWidthMin = 16;
-    parameter WordWidthMax = 32;
-    parameter WordIncrement = -1;
+task SPIReadout(
+    input waitForDReady,
+    input validateWords,
+    input[31:0] headerWordCount,
+    input[31:0] wordWidth,
+    input[31:0] wordCount,
+    input[31:0] wordInitialValue,
+    input[31:0] wordDelta,
+    input validateChecksum
+); begin
     parameter ChunkLen = 4*4096; // Each chunk consists of 4x RAM4K == 4*4096 bits
     
-    $display("\n[ICEAppSim] ========== SPIReadout ==========");
+    WordValidator.Reset();
+    WordValidator.Config(
+        headerWordCount,    // HeaderWordCount
+        wordCount,          // WordCount
+        wordInitialValue,   // WordInitialValue
+        wordDelta,          // WordDelta
+        validateChecksum    // ValidateChecksum
+    );
     
-    if (wordWidth<WordWidthMin || wordWidth>WordWidthMax) begin
-        $display("\n[ICEAppSim] SPIReadout: invalid wordWidth=%0d", wordWidth);
-        `Finish;
-    end
+    $display("\n[ICEAppSim] ========== SPIReadout ==========");
     
     ice_st_spi_cs_ = 1;
     #1; // Let ice_st_spi_cs_ take effect
@@ -148,14 +158,9 @@ task SPIReadout(input waitForDReady, input validateWords, input[7:0] wordWidth, 
     #1; // Let ice_st_spi_cs_ take effect
     
     begin
-        reg[WordWidthMax-1:0] word;
-        reg[WordWidthMax-1:0] lastWord;
-        reg[WordWidthMax-1:0] expectedWord;
-        reg lastWordInit;
         reg[31:0] wordIdx;
         reg[31:0] chunkIdx;
         reg[31:0] chunkCount;
-        lastWordInit = 0;
         wordIdx = 0;
         chunkIdx = 0;
         chunkCount = ((wordWidth*wordCount)+(ChunkLen-1)) / ChunkLen;
@@ -192,30 +197,23 @@ task SPIReadout(input waitForDReady, input validateWords, input[7:0] wordWidth, 
             #100; // TODO: remove; this helps debug where 8 dummy cycles end
             
             for (i=0; i<(ChunkLen/wordWidth) && (wordIdx<wordCount); i++) begin
+                reg[31:0] word;
+                
                 spi_resp = 0;
                 _ReadResp(wordWidth);
-
+                
                 case (wordWidth)
-                16: word = HostFromLittle16.Swap(spi_resp[15:0]);
-                32: word = HostFromLittle32.Swap(spi_resp[31:0]);
+                16: word = spi_resp[15:0];
+                32: word = spi_resp[31:0];
                 endcase
                 
-                // $display("[ICEAppSim] Read word: 0x%x", word);
+                if (validateWords) WordValidator.Validate(word);
                 
-                if (lastWordInit) begin
-                    expectedWord = lastWord + WordIncrement;
-                    if (validateWords && word!==expectedWord) begin
-                        $display("[ICEAppSim] Bad word; expected:%x got:%x ❌", expectedWord, word);
-                        #100;
-                        `Finish;
-                    end
-                end
+                // $display("[ICEAppSim] Read word: 0x%x", word);
                 
                 spi_datIn = spi_datIn<<wordWidth;
                 spi_datIn |= word;
                 
-                lastWord = word;
-                lastWordInit = 1;
                 wordIdx++;
             end
             
@@ -231,7 +229,16 @@ end endtask
 
 // TestSDCMD6_CheckAccessMode: required by TestSDCMD6
 task TestSDCMD6_CheckAccessMode; begin
-    SPIReadout(/* waitForDReady */ 0, /* validateWords */ 0, /* wordWidth */ 16, /* wordCount */ (512/16));
+    SPIReadout(
+        0,              // waitForDReady,
+        0,              // validateWords,
+        0,              // headerWordCount,
+        16,             // wordWidth,
+        (512/16),       // wordCount,
+        0,              // wordInitialValue,
+        0,              // wordDelta,
+        0               // validateChecksum
+    );
     
     // Check the access mode from the CMD6 response
     if (spi_datIn[379:376] === 4'h3) begin
@@ -244,10 +251,28 @@ end endtask
 
 // TestSDReadoutToSPI_Readout: required by TestSDReadoutToSPI
 task TestSDReadoutToSPI_Readout; begin
-    SPIReadout(/* waitForDReady */ 1, /* validateWords */ 1, /* wordWidth */ 32, /* wordCount */ 4*1024);
+    SPIReadout(
+        1,              // waitForDReady,
+        1,              // validateWords,
+        0,              // headerWordCount,
+        16,             // wordWidth,
+        4*1024,         // wordCount,
+        32'h0000FFFF,   // wordInitialValue,
+        -1,             // wordDelta,
+        0               // validateChecksum
+    );
 end endtask
 
 // TestImgReadoutToSPI_Readout: required by TestImgReadoutToSPI
 task TestImgReadoutToSPI_Readout; begin
-    SPIReadout(/* waitForDReady */ 1, /* validateWords */ 1, /* wordWidth */ 32, /* wordCount */ 4*1024);
+    SPIReadout(
+        1,                      // waitForDReady,
+        1,                      // validateWords,
+        ImageHeaderWordCount,   // headerWordCount,
+        16,                     // wordWidth,
+        ImageWidth*ImageHeight, // wordCount,
+        32'h0FFF,               // wordInitialValue,
+        -1,                     // wordDelta,
+        1                       // validateChecksum
+    );
 end endtask
