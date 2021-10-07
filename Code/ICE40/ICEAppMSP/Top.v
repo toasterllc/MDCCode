@@ -1,7 +1,10 @@
 `define ICEApp_MSP_En
 `define ICEApp_ImgReadoutToSD_En
-
 `include "ICEApp.v"
+
+`ifdef SIM
+`include "ICEAppSim.v"
+`endif
 
 `timescale 1ns/1ps
 

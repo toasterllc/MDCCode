@@ -1,9 +1,3 @@
-// SD_LVS_SHORT_INIT: When simulating, don't require waiting the full 5ms when initializing
-// the SD card, because it takes a long time to simulate
-`ifdef SIM
-`define SD_LVS_SHORT_INIT
-`endif
-
 `include "../ICEAppMSP/Top.v"          // Before yosys synthesis
 `include "ICEAppTypes.v"
 `include "Util.v"
