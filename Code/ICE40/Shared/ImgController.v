@@ -22,10 +22,8 @@ module ImgController #(
     input wire[HeaderWidth-1:0]
                         cmd_header,
     
-    // Readout port (clock domain: `readout_clk`)
-    output reg          readout_rst_ = 0,
-    input wire          readout_clk,
-    output reg          readout_start = 0,  // Toggle signal
+    // Readout port (clock domain: `clk`)
+    output reg          readout_rst = 0,
     output wire         readout_ready,
     input wire          readout_trigger,
     output wire[15:0]   readout_data,
@@ -119,31 +117,6 @@ module ImgController #(
         .r_ready(fifoIn_read_ready),
         .r_trigger(fifoIn_read_trigger),
         .r_data(fifoIn_read_data)
-    );
-    
-    // ====================
-    // Output FIFO (RAM->Output)
-    // ====================
-    reg fifoOut_rst_ = 0;
-    wire fifoOut_write_ready;
-    wire fifoOut_write_trigger;
-    wire[15:0] fifoOut_write_data;
-    wire fifoOut_read_ready;
-    wire fifoOut_read_trigger;
-    wire[15:0] fifoOut_read_data;
-    
-    AFIFO AFIFO_fifoOut(
-        .rst_(fifoOut_rst_),
-        
-        .w_clk(clk),
-        .w_ready(fifoOut_write_ready),
-        .w_trigger(fifoOut_write_trigger),
-        .w_data(fifoOut_write_data),
-        
-        .r_clk(readout_clk),
-        .r_ready(fifoOut_read_ready),
-        .r_trigger(fifoOut_read_trigger),
-        .r_data(fifoOut_read_data)
     );
     
     // ====================
@@ -373,28 +346,27 @@ module ImgController #(
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
     reg[`RegWidth(ImgWordCountMax)-1:0] ctrl_readoutCount = 0;
-    reg ctrl_fifoOutWrote = 0;
-    reg ctrl_fifoOutDone = 0;
+    reg ctrl_readoutWrote = 0;
+    reg ctrl_readoutDone = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
     localparam Ctrl_State_Capture       = 1; // +3
-    localparam Ctrl_State_Readout       = 5; // +2
-    localparam Ctrl_State_Count         = 8;
+    localparam Ctrl_State_Readout       = 5; // +1
+    localparam Ctrl_State_Count         = 7;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
         ramctrl_write_trigger <= 0;
-        fifoOut_rst_ <= 1; // Pulse
-        readout_rst_ <= 1; // Pulse
+        readout_rst <= 0; // Pulse
         
-        ctrl_fifoOutWrote <= fifoOut_write_ready && fifoOut_write_trigger;
-        if (ctrl_fifoOutWrote) begin
+        ctrl_readoutWrote <= readout_ready && readout_trigger;
+        if (ctrl_readoutWrote) begin
             $display("[ImgController] ctrl_readoutCount: %0d", ctrl_readoutCount);
             ctrl_readoutCount <= ctrl_readoutCount-1;
         end
         
         if (ctrl_readoutCount === 0) begin
-            ctrl_fifoOutDone <= 1;
+            ctrl_readoutDone <= 1;
         end
         
         case (ctrl_state)
@@ -463,26 +435,15 @@ module ImgController #(
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
             // Reset output FIFO
-            fifoOut_rst_ <= 0;
-            readout_rst_ <= 0;
+            readout_rst <= 1;
             // Reset readout state
             ctrl_readoutCount <= fifoIn_wordCount;
-            ctrl_fifoOutDone <= 0;
+            ctrl_readoutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end
         
         Ctrl_State_Readout+1: begin
-            // Wait for the read command and FIFO reset to be consumed,
-            // and wait for the FIFO to be filled, before signalling
-            // for readout to start
-            if (fifoOut_rst_ && !fifoOut_write_ready) begin
-                readout_start <= !readout_start;
-                ctrl_state <= Ctrl_State_Readout+2;
-            end
-        end
-        
-        Ctrl_State_Readout+2: begin
-            if (ctrl_fifoOutDone) begin
+            if (ctrl_readoutDone) begin
                 $display("[ImgController:Readout] Stopping");
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 ctrl_state <= Ctrl_State_Idle;
@@ -504,15 +465,10 @@ module ImgController #(
     // Connect input FIFO read -> RAM write
     assign fifoIn_read_trigger = (!ramctrl_write_trigger || ramctrl_write_ready);
     
-    // Connect RAM read -> output FIFO write
-    assign fifoOut_write_trigger = ramctrl_read_ready;
-    assign ramctrl_read_trigger = fifoOut_write_ready;
-    assign fifoOut_write_data = ramctrl_read_data;
-    
-    // Connect output FIFO read -> readout port
-    assign readout_ready = fifoOut_read_ready;
-    assign fifoOut_read_trigger = readout_trigger;
-    assign readout_data = fifoOut_read_data;
+    // Connect RAM read -> readout
+    assign readout_ready = ramctrl_read_ready;
+    assign readout_data = ramctrl_read_data;
+    assign ramctrl_read_trigger = readout_trigger;
     
 endmodule
 

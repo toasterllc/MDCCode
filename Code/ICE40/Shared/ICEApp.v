@@ -159,9 +159,7 @@ module ICEApp(
     reg                                     imgctrl_cmd_readout = 0;
     reg[0:0]                                imgctrl_cmd_ramBlock = 0;
     reg[ImgHeaderWordCount*16-1:0]          imgctrl_cmd_header = 0;
-    wire                                    imgctrl_readout_rst_;
-    wire                                    imgctrl_readout_clk;
-    wire                                    imgctrl_readout_start;
+    wire                                    imgctrl_readout_rst;
     wire                                    imgctrl_readout_ready;
     wire                                    imgctrl_readout_trigger;
     wire[15:0]                              imgctrl_readout_data;
@@ -181,9 +179,7 @@ module ICEApp(
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
         .cmd_header(imgctrl_cmd_header),
         
-        .readout_rst_(imgctrl_readout_rst_),
-        .readout_clk(imgctrl_readout_clk),
-        .readout_start(imgctrl_readout_start),
+        .readout_rst(imgctrl_readout_rst),
         .readout_ready(imgctrl_readout_ready),
         .readout_trigger(imgctrl_readout_trigger),
         .readout_data(imgctrl_readout_data),
@@ -216,7 +212,6 @@ module ICEApp(
     
     
     
-`ifdef _ICEApp_SPIReadout_En
     // ====================
     // AFIFOChain
     // ====================
@@ -231,7 +226,7 @@ module ICEApp(
     wire[15:0]  readoutfifo_w_data;
     wire        readoutfifo_w_ready;
     wire        readoutfifo_r_clk;
-    reg         readoutfifo_r_trigger = 0;
+    wire        readoutfifo_r_trigger;
     wire[15:0]  readoutfifo_r_data;
     wire        readoutfifo_r_ready;
     
@@ -257,8 +252,6 @@ module ICEApp(
     );
     
     assign readoutfifo_prop_clk    = readoutfifo_w_clk;
-    assign readoutfifo_r_clk       = spi_clk;
-`endif // _ICEApp_SPIReadout_En
     
 `ifdef _ICEApp_SD_En
     // ====================
@@ -289,7 +282,7 @@ module ICEApp(
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
     wire        sd_resp_crcErr;
-    wire        sd_datOut_trigger;
+    reg         sd_datOut_trigger       = 0;
     wire        sd_datOut_ready;
     wire        sd_datOut_done;
     wire        sd_datOut_crcErr;
@@ -299,7 +292,7 @@ module ICEApp(
     wire[15:0]  sd_datOutRead_data;
     wire        sd_datIn_done;
     wire        sd_datIn_crcErr;
-    wire        sd_datInWrite_rst_;
+    wire        sd_datInWrite_rst;
     wire        sd_datInWrite_clk;
     wire        sd_datInWrite_ready;
     wire        sd_datInWrite_trigger;
@@ -344,7 +337,7 @@ module ICEApp(
         .datIn_done(sd_datIn_done),
         .datIn_crcErr(sd_datIn_crcErr),
         
-        .datInWrite_rst_(sd_datInWrite_rst_),
+        .datInWrite_rst(sd_datInWrite_rst),
         .datInWrite_clk(sd_datInWrite_clk),
         .datInWrite_ready(sd_datInWrite_ready),
         .datInWrite_trigger(sd_datInWrite_trigger),
@@ -355,16 +348,47 @@ module ICEApp(
 `endif // _ICEApp_SD_En
     
 `ifdef ICEApp_ImgReadoutToSD_En
-    // Connect imgctrl_readout_* to sd_datOutRead_*
-    assign imgctrl_readout_clk      = sd_datOutRead_clk;
-    assign imgctrl_readout_trigger  = sd_datOutRead_trigger;
-    assign sd_datOut_trigger        = imgctrl_readout_start;
-    assign sd_datOutRead_ready      = imgctrl_readout_ready;
-    assign sd_datOutRead_data       = imgctrl_readout_data;
+    assign readoutfifo_w_clk        = img_clk;
+    assign readoutfifo_w_trigger    = imgctrl_readout_ready;
+    assign readoutfifo_w_data       = imgctrl_readout_data;
+    assign imgctrl_readout_trigger  = readoutfifo_w_ready;
+    
+    assign readoutfifo_r_clk        = sd_datOutRead_clk;
+    assign readoutfifo_r_trigger    = sd_datOutRead_trigger;
+    assign sd_datOutRead_ready      = readoutfifo_r_ready;
+    assign sd_datOutRead_data       = readoutfifo_r_data;
+    
+    // assign sd_datOut_trigger        = imgctrl_readout_start;
+    
+    // ====================
+    // SD DatOut Trigger State Machine
+    //   Trigger SD DatOut after both of these events occur:
+    //     (1) ImgController resets the AFIFO chain, and
+    //     (2) the AFIFO chain is half-full
+    // ====================
+    reg sdDatOutTrigger_state = 0;
+    always @(posedge img_clk) begin
+        sd_datOut_trigger <= 0; // Pulse
+        
+        case (sdDatOutTrigger_state)
+        0: begin
+        end
+        
+        1: begin
+            // When half of the FIFO is full, trigger SD DatOut
+            if (readoutfifo_prop_r_ready) begin
+                sd_datOut_trigger <= !sd_datOut_trigger;
+                sdDatOutTrigger_state <= 0;
+            end
+        end
+        endcase
+        
+        if (imgctrl_readout_rst) sdDatOutTrigger_state <= 1;
+    end
 `endif // ICEApp_ImgReadoutToSD_En
     
 `ifdef ICEApp_SDReadoutToSPI_En
-    assign readoutfifo_rst_         = sd_datInWrite_rst_;
+    assign readoutfifo_rst_         = !sd_datInWrite_rst;
     assign readoutfifo_w_clk        = sd_datInWrite_clk;
     assign readoutfifo_w_trigger    = sd_datInWrite_trigger;
     assign readoutfifo_w_data       = sd_datInWrite_data;
@@ -372,13 +396,18 @@ module ICEApp(
 `endif // ICEApp_SDReadoutToSPI_En
     
 `ifdef ICEApp_ImgReadoutToSPI_En
-    assign readoutfifo_rst_         = imgctrl_readout_rst_;
-    assign readoutfifo_w_clk        = imgctrl_readout_clk;
+    assign readoutfifo_rst_         = !imgctrl_readout_rst;
+    assign readoutfifo_w_clk        = imgctrl_readout_clk???;
     assign readoutfifo_w_trigger    = imgctrl_readout_ready;
     assign readoutfifo_w_data       = imgctrl_readout_data;
-    assign imgctrl_readout_clk      = img_clk;
+    assign imgctrl_readout_clk???   = img_clk;
     assign imgctrl_readout_trigger  = readoutfifo_w_ready;
 `endif // ICEApp_ImgReadoutToSPI_En
+    
+`ifdef _ICEApp_SPIReadout_En
+    assign readoutfifo_r_clk        = spi_clk;
+    assign readoutfifo_r_trigger    = spi_readoutTrigger;
+`endif // _ICEApp_SPIReadout_En
     
 `ifdef ICEApp_MSP_En
     // ====================
@@ -386,18 +415,16 @@ module ICEApp(
     // ====================
     assign sd_datInWrite_ready = 1;
     reg[`RegWidth((512/16)-1)-1:0] sd_cmd6_counter = 0;
-    always @(posedge sd_datInWrite_clk, negedge sd_datInWrite_rst_) begin
-        if (!sd_datInWrite_rst_) begin
-            sd_cmd6_counter <= ~0;
+    always @(posedge sd_datInWrite_clk) begin
+        if (sd_datInWrite_rst) begin
+            sd_cmd6_counter <= '1;
         
-        end else begin
-            if (sd_datInWrite_trigger) begin
-                sd_cmd6_counter <= sd_cmd6_counter-1;
-                
-                if (sd_cmd6_counter === 23) begin
-                    sd_cmd6_accessMode <= sd_datInWrite_data[11:8];
-                    $display("[SPI] sd_cmd6_accessMode: %h", sd_datInWrite_data[11:8]);
-                end
+        end else if (sd_datInWrite_trigger) begin
+            sd_cmd6_counter <= sd_cmd6_counter-1;
+            
+            if (sd_cmd6_counter === 23) begin
+                sd_cmd6_accessMode <= sd_datInWrite_data[11:8];
+                $display("[SPI] sd_cmd6_accessMode: %h", sd_datInWrite_data[11:8]);
             end
         end
     end
@@ -508,6 +535,7 @@ module ICEApp(
     localparam SPI_ReadoutBitCount      = ((ReadoutFIFO_FIFOCount/2)*4096)/8;
     localparam SPI_ReadoutCycleCount    = SPI_ReadoutBitCount+3;
     reg[`RegWidth(SPI_ReadoutCycleCount)-1:0] spi_readoutCounter = 0;
+    reg spi_readoutTrigger = 0;
     reg spi_readoutEnding = 0;
 `endif // _ICEApp_SPIReadout_En
     
@@ -529,7 +557,7 @@ module ICEApp(
             spi_dataOutEn <= 0;
             
             `ifdef _ICEApp_SPIReadout_En
-                readoutfifo_r_trigger <= 0;
+                spi_readoutTrigger <= 0;
             `endif // _ICEApp_SPIReadout_En
         
         end else begin
@@ -554,7 +582,7 @@ module ICEApp(
             `endif // ICEApp_STM_En
             
             `ifdef _ICEApp_SPIReadout_En
-                readoutfifo_r_trigger <= 0;
+                spi_readoutTrigger <= 0;
                 spi_readoutCounter <= spi_readoutCounter-1;
                 if (spi_readoutCounter === 4) spi_readoutEnding <= 1;
             `endif // _ICEApp_SPIReadout_En
@@ -791,7 +819,7 @@ module ICEApp(
                 
                 if (!spi_dataOutLoad_) begin
                     spi_dataOut <= readoutfifo_r_data;
-                    readoutfifo_r_trigger <= !spi_readoutEnding;
+                    spi_readoutTrigger <= !spi_readoutEnding;
                 end
                 
                 if (!spi_readoutCounter) begin
