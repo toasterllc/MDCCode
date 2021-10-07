@@ -159,6 +159,7 @@ module ICEApp(
     reg                                 imgctrl_cmd_readout = 0;
     reg[0:0]                            imgctrl_cmd_ramBlock = 0;
     reg[ImageHeaderWordCount*16-1:0]    imgctrl_cmd_header = 0;
+    wire                                imgctrl_readout_rst_;
     wire                                imgctrl_readout_clk;
     wire                                imgctrl_readout_start;
     wire                                imgctrl_readout_ready;
@@ -180,6 +181,7 @@ module ICEApp(
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
         .cmd_header(imgctrl_cmd_header),
         
+        .readout_rst_(imgctrl_readout_rst_),
         .readout_clk(imgctrl_readout_clk),
         .readout_start(imgctrl_readout_start),
         .readout_ready(imgctrl_readout_ready),
@@ -370,7 +372,7 @@ module ICEApp(
 `endif // ICEApp_SDReadoutToSPI_En
     
 `ifdef ICEApp_ImgReadoutToSPI_En
-    assign readoutfifo_rst_         = ???;
+    assign readoutfifo_rst_         = imgctrl_readout_rst_;
     assign readoutfifo_w_clk        = imgctrl_readout_clk;
     assign readoutfifo_w_trigger    = imgctrl_readout_ready;
     assign readoutfifo_w_data       = imgctrl_readout_data;
