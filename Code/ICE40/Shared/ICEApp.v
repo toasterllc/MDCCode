@@ -374,7 +374,6 @@ module ICEApp(
     assign readoutfifo_w_clk        = imgctrl_readout_clk;
     assign readoutfifo_w_trigger    = imgctrl_readout_ready;
     assign readoutfifo_w_data       = imgctrl_readout_data;
-    
     assign imgctrl_readout_clk      = img_clk;
     assign imgctrl_readout_trigger  = readoutfifo_w_ready;
 `endif // ICEApp_ImgReadoutToSPI_En

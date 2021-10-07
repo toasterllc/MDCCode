@@ -1,12 +1,19 @@
 - Rev4 Todo
     
     - ICEApp.v: consider removing readout FIFO from ImgController, and replace with FIFO chain
-        - This might allow us to remove ImgController's `readout_start` signal, in favor of using
-          the FIFO chain's `readoutfifo_prop_r_ready` signal instead, since the purpose of
-          `readout_start` is to signal when there's enough data such that SDController can
-          start writing
+        - This would clean up the design because in the ICEApp_ImgReadoutToSPI_En case, ImgController
+          has a readout FIFO, which is connected directly to the AFIFO chain, so it's redundant.
+        - This might allow us to remove ImgController's `readout_start` signal (which controls
+          SDController.datOut_trigger) in favor of using the FIFO chain's `readoutfifo_prop_r_ready`
+          signal instead, since the purpose of `readout_start` is to signal when there's enough
+          data in the FIFO such that SDController can start writing
+            - Use a FIFO chain with 2x FIFOs in this case, so that `readoutfifo_prop_r_ready`
+              signifies that 512 bytes are available (ie 1 complete SD block)
         - We'll probably need to add a `readout_rst_` signal to clear the output FIFO
             - This is nice because it mirror's SDController's `datInWrite_rst_`
+            ? Assert readout_rst_ when capturing an image, not upon readout, so that the FIFO is
+              guaranteed empty when we start readout?
+                - But that breaks the case where we perform successive readouts without capturing.
         - Does this speed up the affected designs (ICEAppMSP / ICEAppImgCaptureSTM)?
     
     - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
