@@ -186,7 +186,7 @@ module SDController #(
     localparam Init_ClockPulseDelay = Clocks(Clk_SlowFreq, Init_ClockPulseUs*1000, 1);
     localparam Init_HoldUs = 5; // Hold outputs for 5us after the negative edge of the clock pulse
     localparam Init_HoldDelay = Clocks(Clk_SlowFreq, Init_HoldUs*1000, 1);
-`ifdef SD_LVS_SHORT_INIT
+`ifdef SIM
     localparam Init_FinishUs = 10; // Don't wait as long during simulation
 `else
     localparam Init_FinishUs = 5500; // Hold outputs for 5.5ms after the negative edge of the clock pulse

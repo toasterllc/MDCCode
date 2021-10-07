@@ -423,10 +423,11 @@ module ICEApp(
             spirst_counter <= spirst_counter+1;
         end
     end
+`endif // ICEApp_MSP_En
+    
 `ifdef SIM
     assign sim_spiRst_ = spi_rst_;
 `endif // SIM
-`endif // ICEApp_MSP_En
     
     // ====================
     // SPI State Machine

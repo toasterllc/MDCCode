@@ -2,6 +2,10 @@
 `define ICEApp_SDReadoutToSPI_En
 `include "ICEApp.v"
 
+`ifdef SIM
+`include "ICEAppSim.v"
+`endif
+
 `timescale 1ns/1ps
 
 module Top(
