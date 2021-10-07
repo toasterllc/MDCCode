@@ -1,34 +1,9 @@
 - Rev4 Todo
     
-    - ImgController: reconsider whether we should hard-code the ImageSize for readout purposes
-        - If we allow readout to be configured to continue indefinitely, then we don't need to hardcode the image size
-    
     - ImgController: configure whether readout is stopped automatically or continues indefinitely?
         - Allowing readout to continue indefinitely would fix the ImgReadoutToSPI hang issue,
           caused by the 8x FIFO not being half full
         - If we allow it to continue indefinitely, can it be reset properly?
-    
-    - ImgController: does `ctrl_readoutCount` underflow when simulating ICEAppMSP?
-        X No, it doesn't
-        - Why does it underflow when running `./Sim.sh ICEAppImgCaptureSTM` ? ("[ImgController] ctrl_readoutCount: 1507")
-            - Because ImgController doesn't transition to the "Ctrl_State_Readout+2" state until the FIFO is full,
-              and it keeps getting drained because of the 8x AFIFO chain
-    
-    - ICEApp.v: consider removing readout FIFO from ImgController, and replace with FIFO chain
-        - This would clean up the design because in the ICEApp_ImgReadoutToSPI_En case, ImgController
-          has a readout FIFO, which is connected directly to the AFIFO chain, so it's redundant.
-        - This might allow us to remove ImgController's `readout_start` signal (which controls
-          SDController.datOut_trigger) in favor of using the FIFO chain's `readoutfifo_prop_r_ready`
-          signal instead, since the purpose of `readout_start` is to signal when there's enough
-          data in the FIFO such that SDController can start writing
-            - Use a FIFO chain with 2x FIFOs in this case, so that `readoutfifo_prop_r_ready`
-              signifies that 512 bytes are available (ie 1 complete SD block)
-        - We'll probably need to add a `readout_rst_` signal to clear the output FIFO
-            - This is nice because it mirror's SDController's `datInWrite_rst_`
-            ? Assert readout_rst_ when capturing an image, not upon readout, so that the FIFO is
-              guaranteed empty when we start readout?
-                - But that breaks the case where we perform successive readouts without capturing.
-        - Does this speed up the affected designs (ICEAppMSP / ICEAppImgCaptureSTM)?
     
     - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
         - Does the USB hub limit the data throughput?
@@ -40,6 +15,43 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ ICEApp.v: consider removing readout FIFO from ImgController, and replace with FIFO chain
+        - This would clean up the design because in the ICEApp_ImgReadoutToSPI_En case, ImgController
+          has a readout FIFO, which is connected directly to the AFIFO chain, so it's redundant.
+        √ This might allow us to remove ImgController's `readout_start` signal (which controls
+          SDController.datOut_trigger) in favor of using the FIFO chain's `readoutfifo_prop_r_ready`
+          signal instead, since the purpose of `readout_start` is to signal when there's enough
+          data in the FIFO such that SDController can start writing
+          
+            √ We ended up removing readout_start
+            
+            X Use a FIFO chain with 2x FIFOs in this case, so that `readoutfifo_prop_r_ready`
+              signifies that 512 bytes are available (ie 1 complete SD block)
+            
+                X Nevermind, we're using the full 8x FIFOs and sticking with the strategy
+                  where SDController checks for any data being available to write, instead
+                  of checking whether a full block is available.
+        
+        √ We'll probably need to add a `readout_rst` signal to clear the output FIFO
+            - This is nice because it mirror's SDController's `datInWrite_rst`
+            √ We ended up adding a readout_rst signal
+            X Assert readout_rst when capturing an image, not upon readout, so that the FIFO is
+              guaranteed empty when we start readout?
+                X But that breaks the case where we perform successive readouts without capturing.
+        
+        √ Does this speed up the affected designs (ICEAppMSP / ICEAppImgCaptureSTM)?
+            √ It did increase perf somewhat
+    
+    √ Investigate: ImgController: reconsider whether we should hard-code the ImageSize for readout purposes
+        - If we allow readout to be configured to continue indefinitely, then we don't need to hardcode the image size
+        √ Switched back to previous strategy where we readout the number of words that we counted during capturing
+    
+    √ Investigate: ImgController: does `ctrl_readoutCount` underflow when simulating ICEAppMSP?
+        X No, it doesn't
+        - Why does it underflow when running `./Sim.sh ICEAppImgCaptureSTM` ? ("[ImgController] ctrl_readoutCount: 1507")
+            - Because ImgController doesn't transition to the "Ctrl_State_Readout+2" state until the FIFO is full,
+              and it keeps getting drained because of the 8x AFIFO chain
     
     √ Add checksum to the end of images
         - Ended up using Fletcher-32 checksum.
