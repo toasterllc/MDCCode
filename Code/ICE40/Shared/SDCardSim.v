@@ -1,8 +1,8 @@
 `ifndef SDCardSim_v
 `define SDCardSim_v
 
-`include "FletcherChecksum.v"
 `include "EndianSwap.v"
+`include "WordValidator.v"
 
 `timescale 1ps/1ps
 
@@ -502,48 +502,15 @@ module SDCardSim #(
     // ====================
     // Handle writing to the card
     // ====================
-    
-    EndianSwap #(.Width(16)) Recv_HostFromLittle16();
-    EndianSwap #(.Width(32)) Recv_HostFromLittle32();
-    
-    // Checksum of written data
-    // This is to validate the Fletcher32 checksum appended to the image data
-    reg         recv_checksum_clk = 0;
-    reg         recv_checksum_rst = 0;
-    reg         recv_checksum_en = 0;
-    reg[15:0]   recv_checksum_din = 0;
-    wire[31:0]  recv_checksum_dout;
-    FletcherChecksumCorrect #(
-        .Width(32)
-    ) FletcherChecksumCorrect32(
-        .clk    (recv_checksum_clk   ),
-        .rst    (recv_checksum_rst   ),
-        .en     (recv_checksum_en    ),
-        .din    (recv_checksum_din   ),
-        .dout   (recv_checksum_dout  )
-    );
-    
-    task ChecksumConsumeWord(input[15:0] word); begin
-        // Treat the word as a little-endian uint16, mimicking the checksum
-        // algorithm on the host computer reading from the SD card
-        recv_checksum_din   = Recv_HostFromLittle16.Swap(word);
-        recv_checksum_en    = 1; #1;
-        recv_checksum_clk   = 1; #1;
-        recv_checksum_clk   = 0; #1;
-        recv_checksum_en    = 0; #1;
-    end endtask
+    WordValidator #(
+        .HeaderWordCount    (RecvHeaderWordCount),
+        .WordCount          (RecvWordCount),
+        .WordInitialValue   (RecvWordInitialValue),
+        .WordDelta          (RecvWordDelta),
+        .ValidateChecksum   (RecvValidateChecksum)
+    ) WordValidator();
     
     initial begin
-        reg[31:0]   recvWordCounter;
-        reg[15:0]   recvWordPrev;
-        reg         recvWordPrevInit;
-        reg[31:0]   recvValidateChecksumState;
-        
-        recvWordCounter             = 0;
-        recvWordPrev                = 0;
-        recvWordPrevInit            = 0;
-        recvValidateChecksumState   = 0;
-        
         forever begin
             wait(sd_clk);
             if (recvWriteData) begin
@@ -571,71 +538,13 @@ module SDCardSim #(
                 dat_crcRst_ = 1;
                 
                 for (i=0; i<1024 && recvWriteData; i++) begin
-                    if (!recvWordCounter) begin
-                        // Reset the checksum
-                        recv_checksum_rst = 1; #1;
-                        recv_checksum_clk = 1; #1;
-                        recv_checksum_clk = 0; #1;
-                        recv_checksum_rst = 0; #1;
-                    end
-                    
                     wait(sd_clk);
                     datInReg = (datInReg<<4)|sd_dat[3:0];
                     wait(!sd_clk);
                     
                     // Validate every 16-bit word
                     if (i[1:0] === 3) begin
-                        if (recvWordCounter < RecvHeaderWordCount) begin
-                            ChecksumConsumeWord(datInReg[15:0]);
-                        
-                        end else if (recvWordCounter < RecvHeaderWordCount+RecvWordCount) begin
-                            reg[15:0] recvWordExpected;
-                            reg[15:0] recvWordGot;
-                            
-                            ChecksumConsumeWord(datInReg[15:0]);
-                            
-                            if (!recvWordPrevInit) begin
-                                recvWordExpected = RecvWordInitialValue;
-                            end else begin
-                                recvWordExpected = recvWordPrev+RecvWordDelta;
-                            end
-                            
-                            recvWordGot = Recv_HostFromLittle16.Swap(datInReg[15:0]); // Unpack little-endian
-                            
-                            if (recvWordExpected === recvWordGot) begin
-                                $display("[SDCardSim] Received valid word (expected:%h, got:%h) ✅", recvWordExpected, recvWordGot);
-                            end else begin
-                                $display("[SDCardSim] Received invalid word (expected:%h, got:%h) ❌", recvWordExpected, recvWordGot);
-                                `Finish;
-                            end
-                            recvWordPrev = recvWordGot;
-                            recvWordPrevInit = 1;
-                        
-                        end else if (recvWordCounter == RecvHeaderWordCount+RecvWordCount+1) begin
-                            // Validate checksum
-                            if (RecvValidateChecksum) begin
-                                // Supply one last clock to get the correct output
-                                recv_checksum_clk   = 1; #1;
-                                recv_checksum_clk   = 0; #1;
-                                
-                                begin
-                                    reg[31:0] checksumExpected;
-                                    reg[31:0] checksumGot;
-                                    
-                                    checksumExpected    = recv_checksum_dout;
-                                    checksumGot         = Recv_HostFromLittle32.Swap(datInReg[31:0]);
-                                    
-                                    if (checksumExpected === checksumGot) begin
-                                        $display("[SDCardSim] Checksum valid [expected:%h got:%h] ✅", checksumExpected, checksumGot);
-                                    end else begin
-                                        $display("[SDCardSim] Checksum invalid [expected:%h got:%h] ❌", checksumExpected, checksumGot);
-                                        `Finish;
-                                    end
-                                end
-                            end
-                        end
-                        
-                        recvWordCounter = recvWordCounter+1;
+                        WordValidator.Validate(datInReg[15:0]);
                     end
                 end
                 
@@ -814,10 +723,7 @@ module SDCardSim #(
                 dat_crcRst_ = 0;
             
             end else begin
-                // Reset our variables when a transfer ends
-                recvWordCounter             = 0;
-                recvWordPrevInit            = 0;
-                recvValidateChecksumState   = 0;
+                WordValidator.Reset();
             end
 
             wait(!sd_clk);
