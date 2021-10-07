@@ -355,8 +355,6 @@ module ICEApp(
     // ====================
     reg sdDatOutTrigger_state = 0;
     always @(posedge img_clk) begin
-        sd_datOut_trigger <= 0; // Pulse
-        
         case (sdDatOutTrigger_state)
         0: begin
         end
