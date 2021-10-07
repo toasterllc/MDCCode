@@ -4,8 +4,8 @@
 `timescale 1ps/1ps
 
 module ImgSim #(
-    parameter ImageWidth = 256,
-    parameter ImageHeight = 256
+    parameter ImgWidth  = 256,
+    parameter ImgHeight = 256
 )(
     output wire         img_dclk,
     output reg[11:0]    img_d = 0,
@@ -37,12 +37,12 @@ module ImgSim #(
         end
         
         pxCount = 0;
-        for (row=0; row<ImageHeight; row=row+1) begin
+        for (row=0; row<ImgHeight; row=row+1) begin
             // $display("[ImgSim] Row %0d", row);
             // img_lv=1 (line start)
             // Output a row
             img_lv = 1;
-            for (col=0; col<ImageWidth; col=col+1) begin
+            for (col=0; col<ImgWidth; col=col+1) begin
                 img_d = ~pxCount;
                 pxCount = pxCount+1;
                 

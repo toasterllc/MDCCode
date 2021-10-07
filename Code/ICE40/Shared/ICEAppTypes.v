@@ -1,6 +1,8 @@
 `ifndef ICEAppTypes_v
 `define ICEAppTypes_v
 
+`include "Util.v"
+
 `define Msg_Len                                                 64
 
 `define Msg_Type_Len                                            8
@@ -95,17 +97,11 @@
 
 `define Msg_Type_Nop                                            `Msg_Type_Len'h00
 
-// `ifdef SIM
-// localparam ImageWidthMax = 64;
-// localparam ImageHeightMax = 1;
-// `else
-// localparam ImageWidthMax = 2304;
-// localparam ImageHeightMax = 1296+2; // +2 rows for embedded statistics (histogram)
-// `endif
-
-localparam ImageHeaderWordCount = 16;
-localparam ImageWidthMax        = 2304;
-localparam ImageHeightMax       = 1296+2; // +2 rows for embedded statistics (histogram)
-localparam ImageSizeMax         = ImageWidthMax*ImageHeightMax;
+localparam ImgWidthMax              = 2304;
+localparam ImgHeightMax             = 1296+2; // +2 rows for embedded statistics (histogram)
+localparam ImgHeaderWordCount       = 16;
+localparam ImgPixelCountMax         = ImgWidthMax*ImgHeightMax;
+localparam ImgChecksumWordCount     = 2;
+localparam ImgWordCountMax          = ImgHeaderWordCount + ImgPixelCountMax + ImgChecksumWordCount;
 
 `endif

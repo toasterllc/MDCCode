@@ -37,44 +37,44 @@ module WordValidator();
         checksum_en    = 0; #1;
     end endtask
     
-    reg[31:0] _HeaderWordCount     = 0;
-    reg[31:0] _WordCount           = 0;
-    reg[31:0] _WordInitialValue    = 0;
-    reg[31:0] _WordDelta           = 0;
-    reg[31:0] _ValidateChecksum    = 0;
+    reg[31:0] _HeaderWordCount      = 0;
+    reg[31:0] _BodyWordCount        = 0;
+    reg[31:0] _BodyWordInitialValue = 0;
+    reg[31:0] _BodyWordDelta        = 0;
+    reg[31:0] _ValidateChecksum     = 0;
     
     reg[31:0]   wordCounter             = 0;
     reg[15:0]   wordPrev                = 0;
     reg         wordValidationStarted   = 0;
     
     task Config(
-        input[31:0] headerWordCount,    // Number of 16-bit words to ignore at the beginning of the received data
-        input[31:0] wordCount,          // Number of 16-bit words to validate
-        input[31:0] wordInitialValue,   // Expected value of the first word
-        input[31:0] wordDelta,          // Expected difference between current word value and previous word value
-        input[31:0] validateChecksum    // Whether to check the checksum appended to the data
+        input[31:0] headerWordCount,        // Number of 16-bit words to ignore at the beginning of the received data
+        input[31:0] bodyWordCount,          // Number of 16-bit words to validate
+        input[31:0] bodyWordInitialValue,   // Expected value of the first word
+        input[31:0] bodyWordDelta,          // Expected difference between current word value and previous word value
+        input[31:0] validateChecksum        // Whether to check the checksum appended to the data
     ); begin
-        _HeaderWordCount   = headerWordCount;
-        _WordCount         = wordCount;
-        _WordInitialValue  = wordInitialValue;
-        _WordDelta         = wordDelta;
-        _ValidateChecksum  = validateChecksum;
+        _HeaderWordCount        = headerWordCount;
+        _BodyWordCount          = bodyWordCount;
+        _BodyWordInitialValue   = bodyWordInitialValue;
+        _BodyWordDelta          = bodyWordDelta;
+        _ValidateChecksum       = validateChecksum;
     end endtask
     
     task Validate(input[15:0] word); begin
         if (wordCounter < _HeaderWordCount) begin
             _ChecksumConsumeWord(word);
         
-        end else if (wordCounter < _HeaderWordCount+_WordCount) begin
+        end else if (wordCounter < _HeaderWordCount+_BodyWordCount) begin
             reg[15:0] wordExpected;
             reg[15:0] wordGot;
             
             _ChecksumConsumeWord(word);
             
             if (!wordValidationStarted) begin
-                wordExpected = _WordInitialValue;
+                wordExpected = _BodyWordInitialValue;
             end else begin
-                wordExpected = HostFromLittle16.Swap(wordPrev)+_WordDelta;
+                wordExpected = HostFromLittle16.Swap(wordPrev)+_BodyWordDelta;
             end
             
             wordGot = HostFromLittle16.Swap(word); // Unpack little-endian
@@ -88,7 +88,7 @@ module WordValidator();
             
             wordValidationStarted = 1;
         
-        end else if (wordCounter == _HeaderWordCount+_WordCount+1) begin
+        end else if (wordCounter == _HeaderWordCount+_BodyWordCount+1) begin
             // Validate checksum
             if (_ValidateChecksum) begin
                 // Supply one last clock to get the correct output

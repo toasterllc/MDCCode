@@ -141,9 +141,10 @@ task SPIReadout(
     
     parameter WordWidth = 16;
     parameter ChunkLen = 4*4096; // Each chunk consists of 4x RAM4K == 4*4096 bits
+    parameter ChecksumWordCount = 2;
     reg[31:0] totalWordCount;
     
-    totalWordCount = headerWordCount+wordCount+(validateChecksum ? 2:0);
+    totalWordCount = headerWordCount+wordCount+(validateChecksum ? ChecksumWordCount : 0);
     
     WordValidator.Reset();
     WordValidator.Config(
@@ -264,12 +265,12 @@ end endtask
 // TestImgReadoutToSPI_Readout: required by TestImgReadoutToSPI
 task TestImgReadoutToSPI_Readout; begin
     SPIReadout(
-        1,                      // waitForDReady,
-        1,                      // validateWords,
-        ImageHeaderWordCount,   // headerWordCount,
-        ImageWordCount,         // wordCount,
-        ImageWordInitialValue,  // wordInitialValue,
-        ImageWordDelta,         // wordDelta,
-        1                       // validateChecksum
+        1,                          // waitForDReady,
+        1,                          // validateWords,
+        ImgHeaderWordCount,         // headerWordCount,
+        Sim_ImgPixelCount,          // wordCount,
+        Sim_ImgWordInitialValue,    // wordInitialValue,
+        Sim_ImgWordDelta,           // wordDelta,
+        1                           // validateChecksum
     );
 end endtask

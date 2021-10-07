@@ -66,11 +66,11 @@ module ICEAppSim();
     EndianSwap #(.Width(16)) HostFromLittle16();
     EndianSwap #(.Width(32)) HostFromLittle32();
     
-    localparam ImageWidth = 64;
-    localparam ImageHeight = 32;
-    localparam ImageWordCount = ImageWidth*ImageHeight;
-    localparam ImageWordInitialValue = 16'h0FFF;
-    localparam ImageWordDelta = -1;
+    localparam Sim_ImgWidth             = 64;
+    localparam Sim_ImgHeight            = 32;
+    localparam Sim_ImgPixelCount        = Sim_ImgWidth*Sim_ImgHeight;
+    localparam Sim_ImgWordInitialValue  = 16'h0FFF;
+    localparam Sim_ImgWordDelta         = -1;
     
     `ifdef _ICEApp_Img_En
         mobile_sdr mobile_sdr(
@@ -87,8 +87,8 @@ module ICEAppSim();
         );
         
         ImgSim #(
-            .ImageWidth(ImageWidth),
-            .ImageHeight(ImageHeight)
+            .ImgWidth(Sim_ImgWidth),
+            .ImgHeight(Sim_ImgHeight)
         ) ImgSim (
             .img_dclk(img_dclk),
             .img_d(img_d),
@@ -105,10 +105,10 @@ module ICEAppSim();
     
     `ifdef _ICEApp_SD_En
         SDCardSim #(
-            .RecvHeaderWordCount(ImageHeaderWordCount),
-            .RecvWordCount(ImageWordCount),
-            .RecvWordInitialValue(ImageWordInitialValue),
-            .RecvWordDelta(ImageWordDelta),
+            .RecvHeaderWordCount(ImgHeaderWordCount),
+            .RecvBodyWordCount(Sim_ImgPixelCount),
+            .RecvBodyWordInitialValue(Sim_ImgWordInitialValue),
+            .RecvBodyWordDelta(Sim_ImgWordDelta),
             .RecvValidateChecksum(1)
         ) SDCardSim (
             .sd_clk(sd_clk),
@@ -771,26 +771,26 @@ module ICEAppSim();
                 LittleFromHost16.Swap(16'b0)        /* padding      */
             });
             
-            TestImgI2CWriteRead();
+            // TestImgI2CWriteRead();
             TestImgCapture();
         `endif // _ICEApp_Img_En
         
         `ifdef _ICEApp_SD_En
             TestSDInit();
-            TestSDCMD0();
-            TestSDCMD8();
-            TestSDCMD2();
-            TestSDCMD6();
+            // TestSDCMD0();
+            // TestSDCMD8();
+            // TestSDCMD2();
+            // TestSDCMD6();
             //           delay, speed,                            trigger, reset
             TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
             TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
             
-            TestSDRespRecovery();
+            // TestSDRespRecovery();
         `endif // _ICEApp_SD_En
         
         `ifdef ICEApp_ImgReadoutToSD_En
             TestImgReadoutToSD();
-            TestImgReadoutToSDRecovery();
+            // TestImgReadoutToSDRecovery();
         `endif // ICEApp_ImgReadoutToSD_En
         
         `ifdef ICEApp_SDReadoutToSPI_En
@@ -798,7 +798,7 @@ module ICEAppSim();
             TestLEDSet(4'b1010);
             TestSDReadoutToSPI();
         `endif // ICEApp_SDReadoutToSPI_En
-        
+
         `ifdef ICEApp_ImgReadoutToSPI_En
             TestImgReadoutToSPI();
         `endif // ICEApp_ImgReadoutToSPI_En

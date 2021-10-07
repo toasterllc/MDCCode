@@ -8,10 +8,10 @@
 `include "Sync.v"
 
 module ImgController #(
-    parameter ClkFreq = 24_000_000,
-    parameter ImageSizeMax = 4096*4096,
-    parameter HeaderWordCount = 8,
-    localparam HeaderWidth = HeaderWordCount*16
+    parameter ClkFreq           = 24_000_000,
+    parameter HeaderWordCount   = 8,
+    parameter ImgWordCountMax   = 4096*4096, // Total image word count (header + pixels + checksum)
+    localparam HeaderWidth      = HeaderWordCount*16
 )(
     input wire          clk,
     
@@ -32,7 +32,7 @@ module ImgController #(
     
     // Status port (clock domain: `clk`)
     output reg          status_captureDone = 0, // Toggle signal
-    output wire[`RegWidth(ImageSizeMax)-1:0]
+    output wire[`RegWidth(ImgWordCountMax)-1:0]
                         status_captureWordCount,
     output wire[17:0]   status_captureHighlightCount,
     output wire[17:0]   status_captureShadowCount,
@@ -69,7 +69,7 @@ module ImgController #(
     
     RAMController #(
         .ClkFreq(ClkFreq),
-        .BlockSize(ImageSizeMax)
+        .BlockSize(ImgWordCountMax)
     ) RAMController (
         .clk(clk),
         
@@ -221,7 +221,7 @@ module ImgController #(
     reg fifoIn_started = 0;
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
-    reg[`RegWidth(ImageSizeMax)-1:0] fifoIn_wordCount = 0;
+    reg[`RegWidth(ImgWordCountMax)-1:0] fifoIn_wordCount = 0;
     reg[17:0] fifoIn_highlightCount = 0;
     reg[17:0] fifoIn_shadowCount = 0;
     assign status_captureWordCount = fifoIn_wordCount;
@@ -372,7 +372,7 @@ module ImgController #(
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
-    reg[`RegWidth(ImageSizeMax)-1:0] ctrl_readoutCount = 0;
+    reg[`RegWidth(ImgWordCountMax)-1:0] ctrl_readoutCount = 0;
     reg ctrl_fifoOutWrote = 0;
     reg ctrl_fifoOutDone = 0;
     
@@ -402,11 +402,11 @@ module ImgController #(
         end
         
         Ctrl_State_Capture: begin
-            $display("[IMGCTRL:Capture] Triggered");
+            $display("[ImgController:Capture] Triggered");
             // Supply 'Write' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Write;
-            $display("[IMGCTRL:Capture] Waiting for RAMController to be ready to write...");
+            $display("[ImgController:Capture] Waiting for RAMController to be ready to write...");
             ctrl_state <= Ctrl_State_Capture+1;
         end
         
@@ -418,7 +418,7 @@ module ImgController #(
             // we'd drop most/all of the pixels because RAMController/SDRAM wouldn't
             // be ready to write yet.
             if (ramctrl_cmd===`RAMController_Cmd_None && ramctrl_write_ready) begin
-                $display("[IMGCTRL:Capture] Waiting for FIFO to reset...");
+                $display("[ImgController:Capture] Waiting for FIFO to reset...");
                 // Start the FIFO data flow now that RAMController is ready to write
                 ctrl_fifoInCaptureTrigger <= !ctrl_fifoInCaptureTrigger;
                 ctrl_state <= Ctrl_State_Capture+2;
@@ -483,6 +483,7 @@ module ImgController #(
         
         Ctrl_State_Readout+2: begin
             if (ctrl_fifoOutDone) begin
+                $display("[ImgController:Readout] Stopping");
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 ctrl_state <= Ctrl_State_Idle;
             end
