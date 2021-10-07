@@ -353,6 +353,7 @@ module ICEApp(
     //     (1) ImgController resets the AFIFO chain, and
     //     (2) the AFIFO chain is half-full
     // ====================
+`ifdef ICEApp_ImgReadoutToSD_En
     reg sdDatOutTrigger_state = 0;
     always @(posedge img_clk) begin
         case (sdDatOutTrigger_state)
@@ -370,6 +371,7 @@ module ICEApp(
         
         if (imgctrl_readout_rst) sdDatOutTrigger_state <= 1;
     end
+`endif // ICEApp_ImgReadoutToSD_En
     
 `ifdef ICEApp_ImgReadoutToSD_En
     assign readoutfifo_rst_         = !imgctrl_readout_rst;
