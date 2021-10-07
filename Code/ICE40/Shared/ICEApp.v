@@ -6,11 +6,11 @@
 
 // TODO: try to make width of SDController data nets a parameter (4, 8, 16, ...), so that ICEAppSTM can use width=8 to read, but ICEAppMSP can use width=16 to write
 
+`include "ICEAppTypes.v"
 `include "Util.v"
 `include "Sync.v"
 `include "ToggleAck.v"
 `include "ClockGen.v"
-`include "ICEAppTypes.v"
 `include "SDController.v"
 `include "ImgController.v"
 `include "ImgI2CMaster.v"
@@ -155,24 +155,24 @@ module ICEApp(
     // ====================
     // ImgController
     // ====================
-    reg                                 imgctrl_cmd_capture = 0;
-    reg                                 imgctrl_cmd_readout = 0;
-    reg[0:0]                            imgctrl_cmd_ramBlock = 0;
-    reg[ImageHeaderWordCount*16-1:0]    imgctrl_cmd_header = 0;
-    wire                                imgctrl_readout_rst_;
-    wire                                imgctrl_readout_clk;
-    wire                                imgctrl_readout_start;
-    wire                                imgctrl_readout_ready;
-    wire                                imgctrl_readout_trigger;
-    wire[15:0]                          imgctrl_readout_data;
-    wire                                imgctrl_status_captureDone;
-    wire[`RegWidth(ImageSizeMax)-1:0]   imgctrl_status_captureWordCount;
-    wire[17:0]                          imgctrl_status_captureHighlightCount;
-    wire[17:0]                          imgctrl_status_captureShadowCount;
+    reg                                     imgctrl_cmd_capture = 0;
+    reg                                     imgctrl_cmd_readout = 0;
+    reg[0:0]                                imgctrl_cmd_ramBlock = 0;
+    reg[ImgHeaderWordCount*16-1:0]          imgctrl_cmd_header = 0;
+    wire                                    imgctrl_readout_rst_;
+    wire                                    imgctrl_readout_clk;
+    wire                                    imgctrl_readout_start;
+    wire                                    imgctrl_readout_ready;
+    wire                                    imgctrl_readout_trigger;
+    wire[15:0]                              imgctrl_readout_data;
+    wire                                    imgctrl_status_captureDone;
+    wire[`RegWidth(ImgWordCountMax)-1:0]    imgctrl_status_captureWordCount;
+    wire[17:0]                              imgctrl_status_captureHighlightCount;
+    wire[17:0]                              imgctrl_status_captureShadowCount;
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
-        .ImageSizeMax(ImageSizeMax),
-        .HeaderWordCount(ImageHeaderWordCount)
+        .ImgWordCountMax(ImgWordCountMax),
+        .HeaderWordCount(ImgHeaderWordCount)
     ) ImgController (
         .clk(img_clk),
         

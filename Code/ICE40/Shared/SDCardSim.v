@@ -49,11 +49,11 @@ endmodule
 module SDCardSim #(
     // Recv* data validation:
     //   Validates that the received data follows the specified pattern
-    parameter RecvHeaderWordCount   = 0, // Number of 16-bit words to ignore at the beginning of the received data
-    parameter RecvWordCount         = 0, // Number of 16-bit words to validate
-    parameter RecvWordInitialValue  = 0, // Expected value of the first word
-    parameter RecvWordDelta         = 0, // Expected difference between current word value and previous word value
-    parameter RecvValidateChecksum  = 0  // Whether to check the checksum appended to the data
+    parameter RecvHeaderWordCount       = 0, // Number of 16-bit words to ignore at the beginning of the received data
+    parameter RecvBodyWordCount         = 0, // Number of 16-bit words to validate
+    parameter RecvBodyWordInitialValue  = 0, // Expected value of the first word
+    parameter RecvBodyWordDelta         = 0, // Expected difference between current word value and previous word value
+    parameter RecvValidateChecksum      = 0  // Whether to check the checksum appended to the data
 )(
     input wire      sd_clk,
     inout wire      sd_cmd,
@@ -720,9 +720,9 @@ module SDCardSim #(
                 WordValidator.Reset();
                 WordValidator.Config(
                     RecvHeaderWordCount,
-                    RecvWordCount,
-                    RecvWordInitialValue,
-                    RecvWordDelta,
+                    RecvBodyWordCount,
+                    RecvBodyWordInitialValue,
+                    RecvBodyWordDelta,
                     RecvValidateChecksum
                 );
             end
