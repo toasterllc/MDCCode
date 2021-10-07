@@ -9,8 +9,10 @@
         - If we allow it to continue indefinitely, can it be reset properly?
     
     - ImgController: does `ctrl_readoutCount` underflow when simulating ICEAppMSP?
-        - Why does it underflow when running `./Sim.sh ICEAppImgCaptureSTM` ?
-            - [ImgController] ctrl_readoutCount: 1507
+        X No, it doesn't
+        - Why does it underflow when running `./Sim.sh ICEAppImgCaptureSTM` ? ("[ImgController] ctrl_readoutCount: 1507")
+            - Because ImgController doesn't transition to the "Ctrl_State_Readout+2" state until the FIFO is full,
+              and it keeps getting drained because of the 8x AFIFO chain
     
     - ICEApp.v: consider removing readout FIFO from ImgController, and replace with FIFO chain
         - This would clean up the design because in the ICEApp_ImgReadoutToSPI_En case, ImgController
