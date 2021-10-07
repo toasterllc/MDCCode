@@ -347,19 +347,6 @@ module ICEApp(
     );
 `endif // _ICEApp_SD_En
     
-`ifdef ICEApp_ImgReadoutToSD_En
-    assign readoutfifo_w_clk        = img_clk;
-    assign readoutfifo_w_trigger    = imgctrl_readout_ready;
-    assign readoutfifo_w_data       = imgctrl_readout_data;
-    assign imgctrl_readout_trigger  = readoutfifo_w_ready;
-    
-    assign readoutfifo_r_clk        = sd_datOutRead_clk;
-    assign readoutfifo_r_trigger    = sd_datOutRead_trigger;
-    assign sd_datOutRead_ready      = readoutfifo_r_ready;
-    assign sd_datOutRead_data       = readoutfifo_r_data;
-    
-    // assign sd_datOut_trigger        = imgctrl_readout_start;
-    
     // ====================
     // SD DatOut Trigger State Machine
     //   Trigger SD DatOut after both of these events occur:
@@ -385,6 +372,17 @@ module ICEApp(
         
         if (imgctrl_readout_rst) sdDatOutTrigger_state <= 1;
     end
+    
+`ifdef ICEApp_ImgReadoutToSD_En
+    assign readoutfifo_rst_         = !imgctrl_readout_rst;
+    assign readoutfifo_w_clk        = img_clk;
+    assign readoutfifo_w_trigger    = imgctrl_readout_ready;
+    assign readoutfifo_w_data       = imgctrl_readout_data;
+    assign readoutfifo_r_clk        = sd_datOutRead_clk;
+    assign readoutfifo_r_trigger    = sd_datOutRead_trigger;
+    assign sd_datOutRead_ready      = readoutfifo_r_ready;
+    assign sd_datOutRead_data       = readoutfifo_r_data;
+    assign imgctrl_readout_trigger  = readoutfifo_w_ready;
 `endif // ICEApp_ImgReadoutToSD_En
     
 `ifdef ICEApp_SDReadoutToSPI_En
@@ -392,22 +390,20 @@ module ICEApp(
     assign readoutfifo_w_clk        = sd_datInWrite_clk;
     assign readoutfifo_w_trigger    = sd_datInWrite_trigger;
     assign readoutfifo_w_data       = sd_datInWrite_data;
+    assign readoutfifo_r_clk        = spi_clk;
+    assign readoutfifo_r_trigger    = spi_readoutTrigger;
     assign sd_datInWrite_ready      = readoutfifo_w_ready;
 `endif // ICEApp_SDReadoutToSPI_En
     
 `ifdef ICEApp_ImgReadoutToSPI_En
     assign readoutfifo_rst_         = !imgctrl_readout_rst;
-    assign readoutfifo_w_clk        = imgctrl_readout_clk???;
+    assign readoutfifo_w_clk        = img_clk;
     assign readoutfifo_w_trigger    = imgctrl_readout_ready;
     assign readoutfifo_w_data       = imgctrl_readout_data;
-    assign imgctrl_readout_clk???   = img_clk;
-    assign imgctrl_readout_trigger  = readoutfifo_w_ready;
-`endif // ICEApp_ImgReadoutToSPI_En
-    
-`ifdef _ICEApp_SPIReadout_En
     assign readoutfifo_r_clk        = spi_clk;
     assign readoutfifo_r_trigger    = spi_readoutTrigger;
-`endif // _ICEApp_SPIReadout_En
+    assign imgctrl_readout_trigger  = readoutfifo_w_ready;
+`endif // ICEApp_ImgReadoutToSPI_En
     
 `ifdef ICEApp_MSP_En
     // ====================
