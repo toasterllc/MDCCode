@@ -67,7 +67,7 @@ module SDController #(
     output reg          datIn_crcErr = 0,
     
     // DatInWrite port (clock domain: `datInWrite_clk`)
-    output reg          datInWrite_rst_ = 0,
+    output reg          datInWrite_rst = 0,
     output wire         datInWrite_clk,
     input wire          datInWrite_ready,
     output reg          datInWrite_trigger = 0,
@@ -244,7 +244,7 @@ module SDController #(
         datIn_crcCounter <= datIn_crcCounter-1;
         datIn_crcRst <= 0;
         datIn_crcEn <= 0;
-        datInWrite_rst_ <= 1; // Pulse
+        datInWrite_rst <= 0; // Pulse
         datInWrite_trigger <= 0; // Pulse
         datInWrite_counter <= datInWrite_counter-1;
         datInWrite_data <= datIn_reg;
@@ -443,7 +443,7 @@ module SDController #(
         
         1: begin
             datIn_crcErr <= 0;
-            datInWrite_rst_ <= 0;
+            datInWrite_rst <= 1;
             datInWrite_blockCounter <= DatInWrite_BlockCount-1;
             datIn_state <= 2;
         end
