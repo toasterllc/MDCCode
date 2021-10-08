@@ -14,8 +14,6 @@ namespace STApp {
         Reset,
         Bootloader,
         SDRead,
-        #error automatically reset / power on the image sensor as a result of ImgI2C
-        ImgReset,
         ImgI2C,
         ImgCapture,
         LEDSet,
@@ -27,9 +25,6 @@ namespace STApp {
             struct __attribute__((packed)) {
                 uint32_t addr;
             } SDRead;
-            
-            struct __attribute__((packed)) {
-            } ImgReset;
             
             struct __attribute__((packed)) {
                 uint8_t write;
