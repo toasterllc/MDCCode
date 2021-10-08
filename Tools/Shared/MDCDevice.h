@@ -23,12 +23,12 @@ public:
     MDCDevice(USBDevice&& dev) :
     _dev(std::move(dev)) {}
     
-//    void reset() {
-//        using namespace STApp;
-//        Cmd cmd = { .op = Op::Reset };
-//        _dev.vendorRequestOut(0, cmd);
-//        _flushEndpoint(Endpoints::DataIn);
-//    }
+    void reset() {
+        using namespace STApp;
+        Cmd cmd = { .op = Op::Reset };
+        _dev.vendorRequestOut(0, cmd);
+        _flushEndpoint(Endpoints::DataIn);
+    }
     
     void bootloader() {
         using namespace STApp;
@@ -52,6 +52,14 @@ public:
         _flushEndpoint(Endpoints::DataIn);
     }
     
+    void imgCapture() {
+        using namespace STApp;
+        Cmd cmd = {
+            .op = Op::ImgCapture,
+        };
+        _dev.vendorRequestOut(0, cmd);
+    }
+    
     void ledSet(uint8_t idx, bool on) {
         using namespace STApp;
         Cmd cmd = {
@@ -64,6 +72,10 @@ public:
             },
         };
         _dev.vendorRequestOut(0, cmd);
+    }
+    
+    size_t readout(void* buf, size_t len) {
+        return _dev.read(STApp::Endpoints::DataIn, buf, len);
     }
     
     USBDevice& usbDevice() { return _dev; }

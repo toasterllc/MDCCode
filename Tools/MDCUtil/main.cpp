@@ -11,14 +11,16 @@
 
 using CmdStr = std::string;
 const CmdStr BootloaderCmd  = "Bootloader";
-const CmdStr ImgReadCmd     = "ImgRead";
+const CmdStr SDImgReadCmd   = "SDImgRead";
+const CmdStr ImgCaptureCmd  = "ImgCapture";
 const CmdStr LEDSetCmd      = "LEDSet";
 
 void printUsage() {
     using namespace std;
     cout << "MDCUtil commands:\n";
     cout << "  " << BootloaderCmd   << "\n";
-    cout << "  " << ImgReadCmd      << " <idx> <output.cfa>\n";
+    cout << "  " << SDImgReadCmd    << " <idx> <output.cfa>\n";
+    cout << "  " << ImgCaptureCmd   << " <output.cfa>\n";
     cout << "  " << LEDSetCmd       << " <idx> <0/1>\n";
     cout << "\n";
 }
@@ -29,7 +31,11 @@ struct Args {
     struct {
         uint8_t idx = 0;
         std::string filePath;
-    } imgRead = {};
+    } sdImgRead = {};
+    
+    struct {
+        std::string filePath;
+    } imgCapture = {};
     
     struct {
         uint8_t idx = 0;
@@ -53,10 +59,14 @@ static Args parseArgs(int argc, const char* argv[]) {
     
     if (args.cmd == lower(BootloaderCmd)) {
     
-    } else if (args.cmd == lower(ImgReadCmd)) {
+    } else if (args.cmd == lower(SDImgReadCmd)) {
         if (strs.size() < 3) throw std::runtime_error("index/file path not specified");
-        args.imgRead.idx = std::stoi(strs[1]);
-        args.imgRead.filePath = strs[2];
+        args.sdImgRead.idx = std::stoi(strs[1]);
+        args.sdImgRead.filePath = strs[2];
+    
+    } else if (args.cmd == lower(ImgCaptureCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("index/file path not specified");
+        args.sdImgRead.filePath = strs[1];
     
     } else if (args.cmd == lower(LEDSetCmd)) {
         if (strs.size() < 3) throw std::runtime_error("LED index/state not specified");
@@ -76,9 +86,31 @@ static void bootloader(const Args& args, MDCDevice& device) {
     printf("-> OK\n\n");
 }
 
-static void imgRead(const Args& args, MDCDevice& device) {
+static std::unique_ptr<uint8_t[]> _readoutImg(MDCDevice& device) {
+    constexpr size_t BufCap = 8*1024*1024;
+    static_assert(BufCap >= MDC::ImgLen);
+    std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
+    
+    printf("Reading image...\n");
+    const size_t len = device.readout(buf.get(), BufCap);
+    if (len < MDC::ImgLen) {
+        throw RuntimeError("expected at least 0x%jx bytes, but only got 0x%jx bytes", (uintmax_t)MDC::ImgLen, (uintmax_t)len);
+    }
+    
+    // Validate checksum
+    const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), MDC::ImgChecksumOffset);
+    uint32_t checksumGot = 0;
+    memcpy(&checksumGot, (uint8_t*)buf.get()+MDC::ImgChecksumOffset, sizeof(checksumGot));
+    if (checksumGot != checksumExpected) {
+        throw RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+    }
+    
+    return buf;
+}
+
+static void sdImgRead(const Args& args, MDCDevice& device) {
     printf("Sending SDRead command...\n");
-    device.sdRead(args.imgRead.idx*MDC::SDImgLen);
+    device.sdRead(args.sdImgRead.idx*MDC::SDImgLen);
     printf("-> OK\n\n");
     
     constexpr size_t BufCap = 8*1024*1024;
@@ -86,27 +118,32 @@ static void imgRead(const Args& args, MDCDevice& device) {
     std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
     
     printf("Reading image...\n");
-    const size_t len = device.usbDevice().read(STApp::Endpoints::DataIn, buf.get(), BufCap);
-    if (len < MDC::ImgLen) {
-        throw RuntimeError("expected at least 0x%jx bytes, but only got 0x%jx bytes", (uintmax_t)MDC::ImgLen, (uintmax_t)len);
-    }
-    
-    // Validate checksum
-    {
-        const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), MDC::ImgChecksumOffset);
-        uint32_t checksumGot = 0;
-        memcpy(&checksumGot, (uint8_t*)buf.get()+MDC::ImgChecksumOffset, sizeof(checksumGot));
-        printf("-> Checksum: expected:0x%08x got:0x%08x %s\n", checksumExpected, checksumGot, (checksumExpected==checksumGot ? "✅" : "❌"));
-    }
+    std::unique_ptr<uint8_t[]> img = _readoutImg(device);
+    printf("-> OK\n\n");
     
     // Write image
-    {
-        std::ofstream f;
-        f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        f.open(args.imgRead.filePath.c_str());
-        f.write((char*)buf.get(), MDC::ImgLen);
-        printf("-> Wrote %ju bytes\n", (uintmax_t)MDC::ImgLen);
-    }
+    std::ofstream f;
+    f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    f.open(args.sdImgRead.filePath.c_str());
+    f.write((char*)img.get(), MDC::ImgLen);
+    printf("-> Wrote %ju bytes\n", (uintmax_t)MDC::ImgLen);
+}
+
+static void imgCapture(const Args& args, MDCDevice& device) {
+    printf("Sending ImgCapture command...\n");
+    device.imgCapture();
+    printf("-> OK\n\n");
+    
+    printf("Reading image...\n");
+    std::unique_ptr<uint8_t[]> img = _readoutImg(device);
+    printf("-> OK\n\n");
+    
+    // Write image
+    std::ofstream f;
+    f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    f.open(args.sdImgRead.filePath.c_str());
+    f.write((char*)img.get(), MDC::ImgLen);
+    printf("-> Wrote %ju bytes\n", (uintmax_t)MDC::ImgLen);
 }
 
 static void ledSet(const Args& args, MDCDevice& device) {
@@ -157,18 +194,20 @@ int main(int argc, const char* argv[]) {
     }
     
     if (devices.empty()) {
-        fprintf(stderr, "No matching MDC loader devices\n\n");
+        fprintf(stderr, "No matching MDC devices\n\n");
         return 1;
     } else if (devices.size() > 1) {
-        fprintf(stderr, "Too many matching MDC loader devices\n\n");
+        fprintf(stderr, "Too many matching MDC devices\n\n");
         return 1;
     }
     
     MDCDevice& device = devices[0];
     try {
-        if (args.cmd == lower(BootloaderCmd))   bootloader(args, device);
-        else if (args.cmd == lower(ImgReadCmd)) imgRead(args, device);
-        else if (args.cmd == lower(LEDSetCmd))  ledSet(args, device);
+        device.reset();
+        if (args.cmd == lower(BootloaderCmd))       bootloader(args, device);
+        else if (args.cmd == lower(SDImgReadCmd))   sdImgRead(args, device);
+        else if (args.cmd == lower(ImgCaptureCmd))  imgCapture(args, device);
+        else if (args.cmd == lower(LEDSetCmd))      ledSet(args, device);
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;
