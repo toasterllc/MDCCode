@@ -11,6 +11,7 @@ module ImgController #(
     parameter ClkFreq           = 24_000_000,
     parameter HeaderWordCount   = 8,
     parameter ImgWordCountMax   = 4096*4096, // Total image word count (header + pixels + checksum)
+    parameter UnlimitedReadout  = 0, // Keep writing to `readout_*` port indefinitely
     localparam HeaderWidth      = HeaderWordCount*16
 )(
     input wire          clk,
@@ -439,7 +440,7 @@ module ImgController #(
             // Reset readout state
             ctrl_readoutCount <= fifoIn_wordCount;
             ctrl_readoutDone <= 0;
-            ctrl_state <= Ctrl_State_Readout+1;
+            ctrl_state <= (UnlimitedReadout ? Ctrl_State_Idle : Ctrl_State_Readout+1);
         end
         
         Ctrl_State_Readout+1: begin
