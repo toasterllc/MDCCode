@@ -1,4 +1,3 @@
-#error update the message types!
 #pragma once
 #include <stdint.h>
 #include <string.h>
@@ -203,7 +202,7 @@ private:
 
 struct ImgResetMsg : Msg {
     ImgResetMsg(bool val) {
-        type = MsgType::StartBit | 0x06;
+        type = MsgType::StartBit | 0x05;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -216,7 +215,7 @@ struct ImgResetMsg : Msg {
 
 struct ImgSetHeaderMsg : Msg {
     ImgSetHeaderMsg(uint8_t idx, const uint8_t* h) {
-        type = MsgType::StartBit | 0x07;
+        type = MsgType::StartBit | 0x06;
         payload[0] = h[0];
         payload[1] = h[1];
         payload[2] = h[2];
@@ -229,7 +228,7 @@ struct ImgSetHeaderMsg : Msg {
 
 struct ImgCaptureMsg : Msg {
     ImgCaptureMsg(uint8_t dstBlock) {
-        type = MsgType::StartBit | 0x08;
+        type = MsgType::StartBit | 0x07;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -242,7 +241,7 @@ struct ImgCaptureMsg : Msg {
 
 struct ImgCaptureStatusMsg : Msg {
     ImgCaptureStatusMsg() {
-        type = MsgType::StartBit | MsgType::Resp | 0x09;
+        type = MsgType::StartBit | MsgType::Resp | 0x08;
     }
 };
 
@@ -255,7 +254,7 @@ struct ImgCaptureStatusResp : Resp {
 
 struct ImgReadoutMsg : Msg {
     ImgReadoutMsg(uint8_t dstBlock) {
-        type = MsgType::StartBit | 0x0A;
+        type = MsgType::StartBit | 0x09;
         payload[0] = 0;
         payload[1] = 0;
         payload[2] = 0;
@@ -269,7 +268,7 @@ struct ImgReadoutMsg : Msg {
 struct ImgI2CTransactionMsg : Msg {
     ImgI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) {
         Assert(len==1 || len==2);
-        type = MsgType::StartBit | 0x0B;
+        type = MsgType::StartBit | 0x0A;
         payload[0] = (write ? 0x80 : 0) | (len==2 ? 0x40 : 0);
         payload[1] = 0;
         payload[2] = 0;
@@ -282,7 +281,7 @@ struct ImgI2CTransactionMsg : Msg {
 
 struct ImgI2CStatusMsg : Msg {
     ImgI2CStatusMsg() {
-        type = MsgType::StartBit | MsgType::Resp | 0x0C;
+        type = MsgType::StartBit | MsgType::Resp | 0x0B;
     }
 };
 
@@ -298,7 +297,7 @@ struct ReadoutMsg : Msg {
     // until ICE_ST_SPI_D_READY=1 to clock out more data
     static constexpr size_t ReadoutLen = 512*4;
     ReadoutMsg() {
-        type = MsgType::StartBit | 0x05;
+        type = MsgType::StartBit | 0x0C;
     }
 };
 

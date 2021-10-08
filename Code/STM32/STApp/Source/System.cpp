@@ -35,15 +35,8 @@ using namespace STApp;
 System::System() :
 // QSPI clock divider=1 => run QSPI clock at 64 MHz
 // QSPI alignment=word for high performance transfers
-_qspi           (QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
-_bufs           (_buf0, _buf1),
-_usbCmdTask     ( Task([&] { _usbCmd_task();        }) ),
-_usbDataInTask  ( Task([&] { _usbDataIn_task();     }) ),
-_resetTask      ( Task([&] { _reset_task();         }) ),
-_readoutTask    ( Task([&] { _readout_task();       }) ),
-_sdReadTask     ( Task([&] { _sd_readTask();        }) ),
-_imgI2CTask     ( Task([&] { _img_i2cTask();        }) ),
-_imgCaptureTask ( Task([&] { _img_captureTask();    }) ),
+_qspi(QSPI::Mode::Dual, 1, QSPI::Align::Word, QSPI::ChipSelect::Uncontrolled),
+_bufs(_buf0, _buf1)
 {}
 
 void System::init() {
@@ -56,7 +49,6 @@ void System::init() {
     
     _ice_init();
     _msp_init();
-    _sd_init();
     
     _pauseTasks();
 }
@@ -93,7 +85,7 @@ void System::_usbCmd_task() {
         // Specially handle the Reset command -- it's the only command that doesn't
         // require the endpoints to be ready.
         if (_cmd.op == Op::Reset) {
-            _reset.task.reset();
+            _resetTask.reset();
             continue;
         }
         
@@ -106,7 +98,6 @@ void System::_usbCmd_task() {
         switch (_cmd.op) {
         case Op::Bootloader:    _bootloader();              break;
         case Op::SDRead:        _sdReadTask.reset();        break;
-        case Op::ImgReset:      _img_reset();               break;
         case Op::ImgI2C:        _imgI2CTask.reset();        break;
         case Op::ImgCapture:    _imgCaptureTask.reset();    break;
         case Op::LEDSet:        _ledSet();                  break;
@@ -141,8 +132,6 @@ void System::_reset_task() {
     // Reset endpoints
     _usb.reset(Endpoints::DataIn);
     TaskWait(_usb.ready(Endpoints::DataIn));
-    // Send status
-    _usbDataIn_sendStatus(true);
 }
 
 #pragma mark - Readout
@@ -153,7 +142,7 @@ void System::_readout_task() {
     // Reset state
     _bufs.reset();
     // Start the USB DataIn task
-    _usbDataIn.task.reset();
+    _usbDataInTask.reset();
     
     // Send the Readout message, which causes us to enter the readout mode until
     // we release the chip select
@@ -319,23 +308,29 @@ void System::_msp_init() {
 #pragma mark - SD Card
 
 void System::_sd_setPowerEnabled(bool en) {
-    constexpr uint16_t BITB         = 0x0800;
+    constexpr uint16_t BITB         = 1<<0xB;
     constexpr uint16_t VDD_SD_EN    = BITB;
-    constexpr uint16_t PADIR        = 0x0204;
-    constexpr uint16_t PAOUT        = 0x0202;
+    constexpr uint16_t PADIRAddr    = 0x0204;
+    constexpr uint16_t PAOUTAddr    = 0x0202;
+    
+    const uint16_t PADIR = _msp.read(PADIRAddr);
+    const uint16_t PAOUT = _msp.read(PAOUTAddr);
+    _msp.write(PADIRAddr, PADIR | VDD_SD_EN);
     
     if (en) {
-        _msp.write(PADIR, VDD_SD_EN);
-        _msp.write(PAOUT, VDD_SD_EN);
+        _msp.write(PAOUTAddr, PAOUT | VDD_SD_EN);
     } else {
-        _msp.write(PADIR, VDD_SD_EN);
-        _msp.write(PAOUT, 0);
+        _msp.write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
     }
+    
+    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
+    HAL_Delay(2);
 }
 
-void System::_sd_init() {
+uint16_t System::_sd_init() {
     const uint8_t SDClkDelaySlow = 7;
     const uint8_t SDClkDelayFast = 0;
+    uint16_t rca = 0;
     
     // Disable SDController clock
     _ice_transfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Off,   SDClkDelaySlow));
@@ -350,12 +345,9 @@ void System::_sd_init() {
     
     // Turn off SD card power and wait for it to reach 0V
     _sd_setPowerEnabled(false);
-    HAL_Delay(2);
     
     // Turn on SD card power and wait for it to reach 2.8V
-    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _sd_setPowerEnabled(true);
-    HAL_Delay(2);
     
     // Trigger the SD card low voltage signalling (LVS) init sequence
     _ice_transfer(SDInitMsg(SDInitMsg::Action::Trigger,    SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
@@ -451,7 +443,7 @@ void System::_sd_init() {
         auto status = _sd_sendCmd(SDSendCmdMsg::CMD3, 0);
         Assert(!status.respCRCErr());
         // Get the card's RCA from the response
-        _sd.rca = status.respGetBits(39,24);
+        rca = status.respGetBits(39,24);
     }
     
     // ====================
@@ -460,7 +452,7 @@ void System::_sd_init() {
     //   Select card
     // ====================
     {
-        auto status = _sd_sendCmd(SDSendCmdMsg::CMD7, ((uint32_t)_sd.rca)<<16);
+        auto status = _sd_sendCmd(SDSendCmdMsg::CMD7, ((uint32_t)rca)<<16);
         Assert(!status.respCRCErr());
     }
     
@@ -472,7 +464,7 @@ void System::_sd_init() {
     {
         // CMD55
         {
-            auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sd.rca)<<16);
+            auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, ((uint32_t)rca)<<16);
             Assert(!status.respCRCErr());
         }
         
@@ -559,7 +551,7 @@ void System::_sd_init() {
 //        {
 //            // CMD55
 //            {
-//                auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, ((uint32_t)_sd.rca)<<16);
+//                auto status = _sd_sendCmd(SDSendCmdMsg::CMD55, ((uint32_t)rca)<<16);
 //                Assert(!status.respCRCErr());
 //            }
 //            
@@ -620,6 +612,8 @@ void System::_sd_init() {
 //        _led0.write(on);
 //        on = !on;
 //    }
+    
+    return rca;
 }
 
 SDStatusResp System::_sd_status() {
@@ -635,7 +629,6 @@ SDStatusResp System::_sd_sendCmd(
     SDSendCmdMsg::RespType respType,
     SDSendCmdMsg::DatInType datInType
 ) {
-    
     _ice_transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
     
     // Wait for command to be sent
@@ -656,12 +649,21 @@ SDStatusResp System::_sd_sendCmd(
 }
 
 void System::_sd_readTask() {
+    static bool init = false;
     static bool reading = false;
+    static uint16_t rca = 0;
     const auto& arg = _cmd.arg.SDRead;
+    
     TaskBegin();
     
     // Accept command
     _usb.cmdAccept(true);
+    
+    // Initialize the SD card if we haven't done so
+    if (!init) {
+        rca = _sd_init();
+        init = true;
+    }
     
     // Stop reading from the SD card if a read is in progress
     if (reading) {
@@ -704,14 +706,54 @@ void System::_sd_readTask() {
 
 #pragma mark - Img
 
-ICE40::ImgI2CStatusResp System::_imgI2CStatus() {
-    ImgI2CStatusResp resp;
-    return _ice_transfer(ImgI2CStatusMsg(), resp);
+void System::_img_setPowerEnabled(bool en) {
+    constexpr uint16_t BIT0             = 1<<0;
+    constexpr uint16_t BIT2             = 1<<2;
+    constexpr uint16_t VDD_1V9_IMG_EN   = BIT0;
+    constexpr uint16_t VDD_2V8_IMG_EN   = BIT2;
+    constexpr uint16_t PADIRAddr       = 0x0204;
+    constexpr uint16_t PAOUTAddr       = 0x0202;
+    
+    const uint16_t PADIR = _msp.read(PADIRAddr);
+    const uint16_t PAOUT = _msp.read(PAOUTAddr);
+    _msp.write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V9_IMG_EN));
+    
+    if (en) {
+        _msp.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
+        HAL_Delay(1); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        _msp.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V9_IMG_EN));
+    
+    } else {
+        // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
+        _msp.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V9_IMG_EN));
+    }
+    
+    #warning TODO: measure how long it takes for IMG rails to rise
+    // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
+    HAL_Delay(2);
 }
 
-ICE40::ImgCaptureStatusResp System::_imgCaptureStatus() {
+void System::_img_init() {
+    _img_setPowerEnabled(true);
+    
+    _ice_transfer(ImgResetMsg(0));
+    HAL_Delay(1);
+    _ice_transfer(ImgResetMsg(1));
+    // Wait 150k EXTCLK (16MHz) periods
+    // (150e3*(1/16e6)) == 9.375ms
+    HAL_Delay(10);
+}
+
+ImgI2CStatusResp System::_imgI2CStatus() {
+    ImgI2CStatusResp resp;
+    _ice_transfer(ImgI2CStatusMsg(), resp);
+    return resp;
+}
+
+ImgCaptureStatusResp System::_imgCaptureStatus() {
     ImgCaptureStatusResp resp;
-    return _ice_transfer(ImgCaptureStatusMsg(), resp);
+    _ice_transfer(ImgCaptureStatusMsg(), resp);
+    return resp;
 }
 
 ImgI2CStatusResp System::_imgI2C(bool write, uint16_t addr, uint16_t val) {
@@ -737,37 +779,34 @@ ImgI2CStatusResp System::_imgI2CWrite(uint16_t addr, uint16_t val) {
     return _imgI2C(true, addr, val);
 }
 
-void _img_reset() {
-    _usb.cmdAccept(true);
-    
-    _ice_transfer(ImgResetMsg(0));
-    HAL_Delay(1);
-    _ice_transfer(ImgResetMsg(1));
-    // Wait 150k EXTCLK (16MHz) periods
-    // (150e3*(1/16e6)) == 9.375ms
-    HAL_Delay(10);
-}
-
 void System::_img_i2cTask() {
-    static ImgI2CStatus imgStatus = {};
+    static bool init = false;
+    static ImgI2CStatus status = {};
     const auto& arg = _cmd.arg.ImgI2C;
+    
     TaskBegin();
     _usb.cmdAccept(true);
     
-    {
-        const ImgI2CStatusResp status = _imgI2C(arg.write, arg.addr, arg.val);
-        imgStatus.ok = !status.err();
-        imgStatus.readData = status.readData();
+    // Initialize image sensor if we haven't done so already
+    if (!init) {
+        _img_init();
+        init = true;
     }
     
     {
-        _usb.send(Endpoints::DataIn, &imgStatus, sizeof(imgStatus));
+        const ImgI2CStatusResp s = _imgI2C(arg.write, arg.addr, arg.val);
+        status.ok = !s.err();
+        status.readData = s.readData();
+    }
+    
+    {
+        _usb.send(Endpoints::DataIn, &status, sizeof(status));
         TaskWait(_usb.ready(Endpoints::DataIn));
     }
 }
 
 void System::_img_captureTask() {
-    static ImgCaptureStatus imgStatus = {};
+    static ImgCaptureStatus status = {};
     TaskBegin();
     _usb.cmdAccept(true);
     
@@ -776,22 +815,22 @@ void System::_img_captureTask() {
     // Wait a max of `MaxDelayMs` for the the capture to be ready for readout
     constexpr uint32_t MaxDelayMs = 1000;
     const uint32_t startTime = HAL_GetTick();
-    ICE40::ImgCaptureStatusResp status;
+    ImgCaptureStatusResp s;
     for (;;) {
-        status = _imgCaptureStatus();
-        if (status.done() || (HAL_GetTick()-startTime)>=MaxDelayMs) break;
+        s = _imgCaptureStatus();
+        if (s.done() || (HAL_GetTick()-startTime)>=MaxDelayMs) break;
     }
     
-    imgStatus.ok                = status.done();
-    imgStatus.wordCount         = status.wordCount();
-    imgStatus.highlightCount    = status.highlightCount();
-    imgStatus.shadowCount       = status.shadowCount();
+    status.ok               = s.done();
+    status.wordCount        = s.wordCount();
+    status.highlightCount   = s.highlightCount();
+    status.shadowCount      = s.shadowCount();
     
-    _usb.send(Endpoints::DataIn, &imgStatus, sizeof(imgStatus));
+    _usb.send(Endpoints::DataIn, &status, sizeof(status));
     TaskWait(_usb.ready(Endpoints::DataIn));
     
     // Bail if the capture failed
-    if (!imgStatus.ok) return;
+    if (!status.ok) return;
     
     // Start the Readout task
     _readoutTask.reset();

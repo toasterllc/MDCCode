@@ -243,6 +243,9 @@ void _sd_setPowerEnabled(bool en) {
         PADIR |=  VDD_SD_EN;
         PAOUT &= ~VDD_SD_EN;
     }
+    
+    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
+    _delayMs(2);
 }
 
 uint16_t _sd_init() {
@@ -262,12 +265,9 @@ uint16_t _sd_init() {
     
     // Turn off SD card power and wait for it to reach 0V
     _sd_setPowerEnabled(false);
-    _delayMs(2);
     
     // Turn on SD card power and wait for it to reach 2.8V
-    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _sd_setPowerEnabled(true);
-    _delayMs(2);
     
     // Trigger the SD card low voltage signalling (LVS) init sequence
     _ice_transfer(SDInitMsg(SDInitMsg::Action::Trigger,    SDInitMsg::ClkSpeed::Slow,  SDClkDelaySlow));
@@ -748,16 +748,15 @@ void _sd_writeImage(uint16_t rca, uint16_t idx) {
 void _img_setPowerEnabled(bool en) {
     constexpr uint16_t VDD_1V9_IMG_EN = BIT0;
     constexpr uint16_t VDD_2V8_IMG_EN = BIT2;
+    PADIR |=  VDD_2V8_IMG_EN|VDD_1V9_IMG_EN;
+    
     if (en) {
-        PADIR |=  VDD_2V8_IMG_EN|VDD_1V9_IMG_EN;
         PAOUT |=  VDD_2V8_IMG_EN;
         _delayUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         PAOUT |=  VDD_1V9_IMG_EN;
     } else {
-        PADIR |=  VDD_2V8_IMG_EN|VDD_1V9_IMG_EN;
-        PAOUT &= ~VDD_1V9_IMG_EN;
-        // No delay needed for power down (per AR0330CS datasheet)
-        PAOUT &= ~VDD_2V8_IMG_EN;
+        // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
+        PAOUT &= ~(VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
     }
 }
 
