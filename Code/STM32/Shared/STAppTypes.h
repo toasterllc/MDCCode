@@ -11,8 +11,13 @@ namespace STApp {
     
     enum class Op : uint8_t {
         None,
+        Reset,
         Bootloader,
         SDRead,
+        #error automatically reset / power on the image sensor as a result of ImgI2C
+        ImgReset,
+        ImgI2C,
+        ImgCapture,
         LEDSet,
     };
     
@@ -24,6 +29,19 @@ namespace STApp {
             } SDRead;
             
             struct __attribute__((packed)) {
+            } ImgReset;
+            
+            struct __attribute__((packed)) {
+                uint8_t write;
+                uint8_t _pad;
+                uint16_t addr;
+                uint16_t val;
+            } ImgI2C;
+            
+            struct __attribute__((packed)) {
+            } ImgCapture;
+            
+            struct __attribute__((packed)) {
                 uint8_t idx;
                 uint8_t on;
             } LEDSet;
@@ -31,4 +49,18 @@ namespace STApp {
         
     } __attribute__((packed));
     static_assert(sizeof(Cmd)<=64, "Cmd: invalid size"); // Verify that Cmd will fit in a single EP0 packet
+    
+    struct ImgCaptureStatus {
+        uint8_t ok;
+        uint8_t _pad[3];
+        uint32_t wordCount;
+        uint32_t highlightCount;
+        uint32_t shadowCount;
+    } __attribute__((packed));
+    
+    struct ImgI2CStatus {
+        uint8_t ok;
+        uint8_t _pad;
+        uint16_t readData;
+    } __attribute__((packed));
 }

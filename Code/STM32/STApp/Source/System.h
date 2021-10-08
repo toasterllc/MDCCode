@@ -18,6 +18,8 @@ private:
     void _usbCmd_task();
     void _usbDataIn_task();
     
+    void _reset_task();
+    
     void _bootloader();
     
     void _ice_init();
@@ -41,6 +43,10 @@ private:
     void _sd_readout(void* buf, size_t len);
     void _sd_qspiRead(void* buf, size_t len);
     
+    void _img_reset();
+    void _img_i2c();
+    void _img_capture();
+    
     void _ledSet();
     
     // Peripherals
@@ -54,19 +60,25 @@ private:
     
     STApp::Cmd _cmd = {};
     
-    struct {
-        Task task;
-    } _usbCmd;
+    Task _usbCmdTask;
+    Task _usbDataInTask;
+    Task _resetTask;
+    Task _readoutTask;
+    Task _sdReadTask;
+    Task _imgI2CTask;
+    Task _imgCaptureTask;
     
-    struct {
-        Task task;
-    } _usbDataIn;
+    std::reference_wrapper<Task> _tasks[6] = {
+        _usbCmdTask,
+        _usbDataInTask,
+        _resetTask,
+        _readoutTask,
+        _sdReadTask,
+        _imgI2CTask,
+        _imgCaptureTask,
+    };
     
-    struct {
-        Task task;
-        uint16_t rca = 0;
-        bool reading = false;
-    } _sd;
+    uint16_t _sdRCA = 0;
     
     friend int main();
     friend void ISR_OTG_HS();
