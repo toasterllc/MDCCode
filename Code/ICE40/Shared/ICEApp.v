@@ -169,8 +169,18 @@ module ICEApp(
     wire[17:0]                              imgctrl_status_captureShadowCount;
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
+        .HeaderWordCount(ImgHeaderWordCount),
         .ImgWordCountMax(ImgWordCountMax),
-        .HeaderWordCount(ImgHeaderWordCount)
+`ifdef ICEApp_ImgReadoutToSPI_En
+        // ImgController readout needs to be unlimited when we readout to SPI,
+        // otherwise `ice_st_spi_d_ready` would be de-asserted on the final
+        // block of data, if it's not a multiple of AFIFOChain/2 (and it's not).
+        // Note that this mirrors the behavior of SDReadoutToSPI, which is also
+        // unlimited readout
+        .UnlimitedReadout(1)
+`else
+        .UnlimitedReadout(0)
+`endif // ICEApp_ImgReadoutToSPI_En
     ) ImgController (
         .clk(img_clk),
         
