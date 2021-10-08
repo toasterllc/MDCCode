@@ -50,14 +50,19 @@ void System::init() {
     _ice_init();
     _msp_init();
     
-    _pauseTasks();
+    _resetTasks();
 }
 
 void System::run() {
     Task::Run(_tasks);
 }
 
-void System::_pauseTasks() {
+void System::_resetTasks() {
+    // De-assert the SPI chip select
+    // This is necessary because the readout task asserts the SPI chip select,
+    // but has no way to deassert it, because it continues indefinitely
+    _ICE_ST_SPI_CS_::Write(1);
+    
     for (Task& t : _tasks) {
         if (&t == &_usbCmdTask) continue; // Never pause the USB command task
         t.pause();
@@ -80,12 +85,12 @@ void System::_usbCmd_task() {
         memcpy(&_cmd, usbCmd.data, usbCmd.len);
         
         // Stop all tasks
-        _pauseTasks();
+        _resetTasks();
         
         // Specially handle the Reset command -- it's the only command that doesn't
         // require the endpoints to be ready.
         if (_cmd.op == Op::Reset) {
-            _resetTask.reset();
+            _resetTask.start();
             continue;
         }
         
@@ -97,9 +102,9 @@ void System::_usbCmd_task() {
         
         switch (_cmd.op) {
         case Op::Bootloader:    _bootloader();              break;
-        case Op::SDRead:        _sdReadTask.reset();        break;
-        case Op::ImgI2C:        _imgI2CTask.reset();        break;
-        case Op::ImgCapture:    _imgCaptureTask.reset();    break;
+        case Op::SDRead:        _sdReadTask.start();        break;
+        case Op::ImgI2C:        _imgI2CTask.start();        break;
+        case Op::ImgCapture:    _imgCaptureTask.start();    break;
         case Op::LEDSet:        _ledSet();                  break;
         // Bad command
         default:                _usb.cmdAccept(false);      break;
@@ -142,7 +147,7 @@ void System::_readout_task() {
     // Reset state
     _bufs.reset();
     // Start the USB DataIn task
-    _usbDataInTask.reset();
+    _usbDataInTask.start();
     
     // Send the Readout message, which causes us to enter the readout mode until
     // we release the chip select
@@ -154,8 +159,15 @@ void System::_readout_task() {
         // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
         TaskWait(!_bufs.full() && _qspi.ready());
         
-        const size_t len = ReadoutMsg::ReadoutLen;
+        const size_t len = std::min(_readoutLen.value_or(SIZE_MAX), ReadoutMsg::ReadoutLen);
         auto& buf = _bufs.back();
+        
+        // If there's no more data to read, bail
+        if (!len) {
+            // Before bailing, push the final buffer if it holds data
+            if (buf.len) _bufs.push();
+            break;
+        }
         
         // If we can't read any more data into the producer buffer,
         // push it so the data will be sent over USB
@@ -169,6 +181,8 @@ void System::_readout_task() {
         
         _ice_qspiRead(buf.data+buf.len, len);
         buf.len += len;
+        
+        if (_readoutLen) *_readoutLen -= len;
     }
 }
 
@@ -701,7 +715,8 @@ void System::_sd_readTask() {
     }
     
     // Start the Readout task
-    _readoutTask.reset();
+    _readoutLen = std::nullopt;
+    _readoutTask.start();
 }
 
 #pragma mark - Img
@@ -833,7 +848,8 @@ void System::_img_captureTask() {
     if (!status.ok) return;
     
     // Start the Readout task
-    _readoutTask.reset();
+    _readoutLen = (size_t)status.wordCount;
+    _readoutTask.start();
 }
 
 #pragma mark - Other Commands

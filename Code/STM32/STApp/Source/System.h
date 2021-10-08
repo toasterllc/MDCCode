@@ -13,7 +13,7 @@ public:
     [[noreturn]] void run();
     
 private:
-    void _pauseTasks();
+    void _resetTasks();
     
     void _usbCmd_task();
     void _usbDataIn_task();
@@ -44,9 +44,6 @@ private:
     );
     
     void _sd_readTask();
-    
-    void _sd_readout(void* buf, size_t len);
-    void _sd_qspiRead(void* buf, size_t len);
     
     void _img_setPowerEnabled(bool en);
     void _img_init();
@@ -88,6 +85,8 @@ private:
         _imgI2CTask,
         _imgCaptureTask,
     };
+    
+    std::optional<size_t> _readoutLen;
     
     friend int main();
     friend void ISR_OTG_HS();
