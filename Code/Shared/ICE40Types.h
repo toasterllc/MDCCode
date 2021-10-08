@@ -1,3 +1,4 @@
+#error update the message types!
 #pragma once
 #include <stdint.h>
 #include <string.h>
@@ -200,16 +201,6 @@ private:
     static constexpr size_t _RespIdx = 13;
 };
 
-struct SDReadoutMsg : Msg {
-    // ReadoutLen: the number of bytes in a single chunk
-    // After `ReadoutLen` bytes are read, the SPI master must wait
-    // until ICE_ST_SPI_D_READY=1 to clock out more data
-    static constexpr size_t ReadoutLen = 512*4;
-    SDReadoutMsg() {
-        type = MsgType::StartBit | 0x05;
-    }
-};
-
 struct ImgResetMsg : Msg {
     ImgResetMsg(bool val) {
         type = MsgType::StartBit | 0x06;
@@ -299,6 +290,16 @@ struct ImgI2CStatusResp : Resp {
     bool done() const               { return getBit(63);        }
     bool err() const                { return getBit(62);        }
     uint16_t readData() const       { return getBits(61,46);    }
+};
+
+struct ReadoutMsg : Msg {
+    // ReadoutLen: the number of bytes in a single chunk
+    // After `ReadoutLen` bytes are read, the SPI master must wait
+    // until ICE_ST_SPI_D_READY=1 to clock out more data
+    static constexpr size_t ReadoutLen = 512*4;
+    ReadoutMsg() {
+        type = MsgType::StartBit | 0x05;
+    }
 };
 
 struct NopMsg : Msg {
