@@ -11,9 +11,8 @@ module ImgController #(
     parameter ClkFreq                   = 24_000_000,
     parameter HeaderWordCount           = 8,
     parameter ImgWordCountMax           = 4096*4096, // Total image word count (header + pixels + checksum)
-    parameter BlockSize                 = 128, // Number of words in a block
-    localparam HeaderWidth              = HeaderWordCount*16,
-    localparam BlockSizeRegWidth        = `RegWidth(BlockSize-1)
+    parameter ReadoutWordCount          = 128, // Number of words to readout
+    localparam HeaderWidth              = HeaderWordCount*16
 )(
     input wire          clk,
     
@@ -354,9 +353,7 @@ module ImgController #(
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
     reg[`RegWidth(ImgWordCountMax)-1:0] ctrl_readoutCount = 0;
-    reg[BlockSizeRegWidth-1:0] ctrl_readoutBlock = 0;
     reg ctrl_readoutWrote = 0;
-    reg ctrl_readoutDoneArmed = 0;
     reg ctrl_readoutDone = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
@@ -376,10 +373,6 @@ module ImgController #(
         end
         
         if (ctrl_readoutCount === 0) begin
-            ctrl_readoutDoneArmed <= 1;
-        end
-        
-        if (ctrl_readoutDoneArmed && ctrl_readoutBlock===0) begin
             ctrl_readoutDone <= 1;
         end
         
@@ -434,11 +427,7 @@ module ImgController #(
             // Reset output FIFO
             readout_rst <= 1;
             // Reset readout state
-            ctrl_readoutCount <= fifoIn_wordCount;
-            ctrl_readoutBlock <= {!fifoIn_wordCount[BlockSizeRegWidth-1], {BlockSizeRegWidth-1{'1}}};
-            $display("MEOWMIX Adding: %0d", {!fifoIn_wordCount[BlockSizeRegWidth-1], {BlockSizeRegWidth-1{'1}}});
-            
-            ctrl_readoutDoneArmed <= 0;
+            ctrl_readoutCount <= ReadoutWordCount;
             ctrl_readoutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end

@@ -172,7 +172,7 @@ module ICEApp(
         .ClkFreq(Img_Clk_Freq),
         .HeaderWordCount(ImgHeaderWordCount),
         .ImgWordCountMax(ImgWordCountMax),
-        .BlockSize(512/2) // Readout in multiples of 512 bytes == 256 16-bit words
+        .ReadoutWordCount(512/2) // Readout in multiples of 512 bytes == 256 16-bit words
     ) ImgController (
         .clk(img_clk),
         
