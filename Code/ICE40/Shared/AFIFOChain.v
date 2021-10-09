@@ -27,7 +27,11 @@ module AFIFOChain #(
     input wire r_trigger,
     output wire[W-1:0] r_data,
     output wire r_ready,
-    output wire r_thresh // Whether >=R_Thresh FIFOs are full
+    output wire r_thresh, // Whether >=R_Thresh FIFOs are full
+    
+    // Async port
+    output wire async_w_thresh, // Async version of `w_thresh`
+    output wire async_r_thresh  // Async version of `r_thresh`
 );
     wire[N-1:0]        afifo_rst_;
     wire[N-1:0]        afifo_w_clk;
@@ -92,8 +96,8 @@ module AFIFOChain #(
     localparam W_ThreshIdx = W_Thresh-1;
     localparam R_ThreshIdx = N-R_Thresh;
     
-    wire async_w_thresh = !afifo_r_ready[W_ThreshIdx];
-    wire async_r_thresh = !afifo_w_ready[R_ThreshIdx];
+    assign async_w_thresh = !afifo_r_ready[W_ThreshIdx];
+    assign async_r_thresh = !afifo_w_ready[R_ThreshIdx];
     
     `Sync(w_threshSynced, async_w_thresh, posedge, w_clk);
     `Sync(r_threshSynced, async_r_thresh, posedge, r_clk);
