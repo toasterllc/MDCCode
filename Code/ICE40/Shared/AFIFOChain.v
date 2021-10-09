@@ -6,8 +6,11 @@
 `define AFIFOChain_v
 
 module AFIFOChain #(
-    parameter W = 16,
-    parameter N = 2
+    parameter W = 16,   // Word width
+    parameter N = 2,    // FIFO count
+    
+    parameter W_Thresh = N/2,   // Write threshold (default: half of the FIFO is empty)
+    parameter R_Thresh = N/2    // Read threshold (default: half of the FIFO is full)
 )(
     input wire rst_,
     input wire prop_clk, // Propagation clock; supply the faster of `w_clk` and `r_clk`
@@ -16,15 +19,15 @@ module AFIFOChain #(
     input wire w_clk,
     input wire w_trigger,
     input wire[W-1:0] w_data,
-    output wire[N-1] w_ready,
-    output wire w_halfEmpty, // Whether half of the FIFO can be written
+    output wire w_ready,
+    output wire w_thresh, // Whether >=W_Thresh FIFOs are empty
     
     // Read port
     input wire r_clk,
     input wire r_trigger,
     output wire[W-1:0] r_data,
-    output wire[N-1] r_ready
-    output wire r_halfFull, // Whether half of the FIFO can be read
+    output wire r_ready
+    output wire r_thresh, // Whether >=R_Thresh FIFOs are full
 );
     wire[N-1:0]        afifo_rst_;
     wire[N-1:0]        afifo_w_clk;
@@ -82,26 +85,18 @@ module AFIFOChain #(
         assign afifo_r_clk[i]           = r_clk;
     end
     
-    assign w_ready  = afifo_w_ready;
+    assign w_ready  = afifo_w_ready[0];
     assign r_data   = afifo_r_data[(N-1)*W +: W];
-    assign r_ready  = afifo_r_ready;
+    assign r_ready  = afifo_r_ready[N-1];
     
-    // w_halfEmpty: whether the left half of the FIFO is empty
-    //   == whether the middle-left AFIFO is empty
-    //   == middle-left AFIFO's !r_ready
+    localparam W_ThreshIdx = W_Thresh-1;
+    localparam R_ThreshIdx = N-R_Thresh;
     
-    // r_halfFull: whether the right half of the FIFO is full
-    //   == whether the middle-right AFIFO is full
-    //   == middle-right AFIFO's !w_ready
+    wire async_w_thresh = !afifo_r_ready[W_ThreshIdx];
+    wire async_r_thresh = !afifo_w_ready[R_ThreshIdx];
     
-    localparam MiddleLeft   = (N/2)-1;
-    localparam MiddleRight  = N/2;
-    
-    wire async_halfEmpty    = !afifo_r_ready[MiddleLeft];
-    wire async_halfFull     = !afifo_w_ready[MiddleRight];
-    
-    `Sync(w_halfEmpty, async_halfEmpty, posedge, afifo_r_clk[MiddleLeft]);
-    `Sync(r_halfFull, async_halfFull, posedge, afifo_w_clk[MiddleRight);
+    `Sync(w_thresh, async_w_thresh, posedge, w_clk);
+    `Sync(r_thresh, async_r_thresh, posedge, r_clk);
 endmodule
 
 `endif
