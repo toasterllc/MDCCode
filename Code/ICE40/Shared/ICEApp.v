@@ -309,8 +309,6 @@ module ICEApp(
     wire[15:0]  sd_datInWrite_data;
     wire        sd_status_dat0Idle;
     
-    reg[3:0]    sd_cmd6_accessMode      = 0;
-    
     SDController #(
         .ClkFreq(SD_Clk_Freq)
     ) SDController (
@@ -355,6 +353,34 @@ module ICEApp(
         
         .status_dat0Idle(sd_status_dat0Idle)
     );
+    
+    // ====================
+    // CMD6 Access Mode Capture
+    // ====================
+    reg[3:0] sd_cmd6_accessMode = 0;
+    reg[`RegWidth((512/16)-1)-1:0] sd_cmd6_counter = 0;
+    wire sd_cmd6_datInWrite = sd_datInWrite_trigger && sd_datInWrite_ready;
+    
+    // If SDReadoutToSPI is enabled, then the AFIFO chain needs to control `sd_datInWrite_ready`.
+    // Otherwise (ie when ICEApp_SDReadoutToSPI_En==0), set sd_datInWrite_ready=1 so that DatIn
+    // data is already accepted.
+`ifndef ICEApp_SDReadoutToSPI_En
+    assign sd_datInWrite_ready = 1;
+`endif // ICEApp_SDReadoutToSPI_En
+    
+    always @(posedge sd_datInWrite_clk) begin
+        if (sd_datInWrite_rst) begin
+            sd_cmd6_counter <= '1;
+        
+        end else if (sd_cmd6_datInWrite) begin
+            sd_cmd6_counter <= sd_cmd6_counter-1;
+            
+            if (sd_cmd6_counter === 23) begin
+                sd_cmd6_accessMode <= sd_datInWrite_data[11:8];
+                $display("[SPI] sd_cmd6_accessMode: %h", sd_datInWrite_data[11:8]);
+            end
+        end
+    end
 `endif // _ICEApp_SD_En
     
     // ====================
@@ -414,27 +440,6 @@ module ICEApp(
     assign readoutfifo_r_trigger    = spi_readoutTrigger;
     assign imgctrl_readout_trigger  = readoutfifo_w_ready;
 `endif // ICEApp_ImgReadoutToSPI_En
-    
-`ifdef ICEApp_MSP_En
-    // ====================
-    // CMD6 Access Mode Capture
-    // ====================
-    assign sd_datInWrite_ready = 1;
-    reg[`RegWidth((512/16)-1)-1:0] sd_cmd6_counter = 0;
-    always @(posedge sd_datInWrite_clk) begin
-        if (sd_datInWrite_rst) begin
-            sd_cmd6_counter <= '1;
-        
-        end else if (sd_datInWrite_trigger) begin
-            sd_cmd6_counter <= sd_cmd6_counter-1;
-            
-            if (sd_cmd6_counter === 23) begin
-                sd_cmd6_accessMode <= sd_datInWrite_data[11:8];
-                $display("[SPI] sd_cmd6_accessMode: %h", sd_datInWrite_data[11:8]);
-            end
-        end
-    end
-`endif // ICEApp_MSP_En
     
 `ifdef ICEApp_MSP_En
     // ====================
