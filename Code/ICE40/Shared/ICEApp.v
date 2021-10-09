@@ -160,6 +160,7 @@ module ICEApp(
     reg[0:0]                                imgctrl_cmd_ramBlock = 0;
     reg[ImgHeaderWordCount*16-1:0]          imgctrl_cmd_header = 0;
     wire                                    imgctrl_readout_rst;
+    wire                                    imgctrl_readout_start;
     wire                                    imgctrl_readout_ready;
     wire                                    imgctrl_readout_trigger;
     wire[15:0]                              imgctrl_readout_data;
@@ -190,6 +191,7 @@ module ICEApp(
         .cmd_header(imgctrl_cmd_header),
         
         .readout_rst(imgctrl_readout_rst),
+        .readout_start(imgctrl_readout_start),
         .readout_ready(imgctrl_readout_ready),
         .readout_trigger(imgctrl_readout_trigger),
         .readout_data(imgctrl_readout_data),
@@ -306,7 +308,7 @@ module ICEApp(
     wire        sd_resp_done;
     wire[47:0]  sd_resp_data;
     wire        sd_resp_crcErr;
-    reg         sd_datOut_trigger       = 0;
+    wire        sd_datOut_trigger;
     wire        sd_datOut_ready;
     wire        sd_datOut_done;
     wire        sd_datOut_crcErr;
@@ -397,32 +399,6 @@ module ICEApp(
     end
 `endif // _ICEApp_SD_En
     
-    // ====================
-    // SD DatOut Trigger State Machine
-    //   Trigger SD DatOut after both of these events occur:
-    //     (1) ImgController resets the AFIFO chain, and
-    //     (2) the AFIFO chain is half-full
-    // ====================
-`ifdef ICEApp_ImgReadoutToSD_En
-    reg sdDatOutTrigger_state = 0;
-    always @(posedge img_clk) begin
-        case (sdDatOutTrigger_state)
-        0: begin
-        end
-        
-        1: begin
-            // When half of the FIFO is full, trigger SD DatOut
-            if (readoutfifo_r_thresh) begin
-                sd_datOut_trigger <= !sd_datOut_trigger;
-                sdDatOutTrigger_state <= 0;
-            end
-        end
-        endcase
-        
-        if (imgctrl_readout_rst) sdDatOutTrigger_state <= 1;
-    end
-`endif // ICEApp_ImgReadoutToSD_En
-    
 `ifdef ICEApp_ImgReadoutToSD_En
     assign readoutfifo_rst_         = !imgctrl_readout_rst;
     assign readoutfifo_w_clk        = img_clk;
@@ -430,6 +406,7 @@ module ICEApp(
     assign readoutfifo_w_data       = imgctrl_readout_data;
     assign readoutfifo_r_clk        = sd_datOutRead_clk;
     assign readoutfifo_r_trigger    = sd_datOutRead_trigger;
+    assign sd_datOut_trigger        = imgctrl_readout_start;
     assign sd_datOutRead_ready      = readoutfifo_r_thresh;
     assign sd_datOutRead_data       = readoutfifo_r_data;
     assign imgctrl_readout_trigger  = readoutfifo_w_ready;
@@ -442,6 +419,7 @@ module ICEApp(
     assign readoutfifo_w_data       = sd_datInWrite_data;
     assign readoutfifo_r_clk        = spi_clk;
     assign readoutfifo_r_trigger    = spi_readoutTrigger;
+    assign sd_datOut_trigger        = 0;
     assign sd_datInWrite_ready      = readoutfifo_w_thresh;
 `endif // ICEApp_SDReadoutToSPI_En
     
