@@ -248,6 +248,8 @@ module ICEApp(
     wire[15:0]  readoutfifo_r_data;
     wire        readoutfifo_r_ready;
     wire        readoutfifo_r_thresh;
+    wire        readoutfifo_async_w_thresh;
+    wire        readoutfifo_async_r_thresh;
     
     AFIFOChain #(
         .W(16),
@@ -269,7 +271,10 @@ module ICEApp(
         .r_trigger(readoutfifo_r_trigger),
         .r_data(readoutfifo_r_data),
         .r_ready(readoutfifo_r_ready),
-        .r_thresh(readoutfifo_r_thresh)
+        .r_thresh(readoutfifo_r_thresh),
+        
+        .async_w_thresh(readoutfifo_async_w_thresh),
+        .async_r_thresh(readoutfifo_async_r_thresh)
     );
     
     assign readoutfifo_prop_clk    = readoutfifo_w_clk;
@@ -921,7 +926,11 @@ module ICEApp(
     // ====================
     // Pin: ice_st_spi_d_ready
     // ====================
-    assign ice_st_spi_d_ready = readoutfifo_r_thresh;
+    // ice_st_spi_d_ready: we have to use AFIFOChain's `async_r_thresh` (the r_clk async version),
+    // not `r_thresh` (the r_clk sync version) because when STM32 is waiting for data, it's not
+    // driving spi_clk (AFIFOChain's r_clk), so `r_thresh` is never asserted. `async_r_thresh`
+    // is driven by AFIFOChain's `w_clk`, so it can toggle while `r_clk` is halted.
+    assign ice_st_spi_d_ready = readoutfifo_async_r_thresh;
     // Rev4 bodge
     assign ice_st_spi_d_ready_rev4bodge = ice_st_spi_d_ready;
 `endif // ICEApp_STM_En
