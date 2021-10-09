@@ -21,7 +21,7 @@
 `define SDController_DatInType_4096xN               2'b10   // 4096xN bit response (eg mass data read response)
 
 module SDController #(
-    parameter ClkFreq = 120_000_000,
+    parameter ClkFreq = 120_000_000
 )(
     // Clock
     input wire          clk,
@@ -155,6 +155,7 @@ module SDController #(
     
     reg[3:0] datOut_state = 0;
     reg[2:0] datOut_active = 0; // 3 bits -- see explanation where assigned
+    reg datOut_first = 0;
     reg datOut_crcRst = 0;
     reg datOut_crcEn = 0;
     reg datOut_crcOutEn = 0;
@@ -328,20 +329,33 @@ module SDController #(
         case (datOut_state)
         0: begin
             datOut_crcErr <= 0;
+            datOut_first <= 1;
         end
         
         1: begin
-            $display("[SDController:DatOut] Write another block");
             datOut_counter <= 1023;
             datOut_readCounter <= 0;
             datOut_crcRst <= 1;
             datOut_startBit <= 1;
-            datOut_state <= 2;
+            
+            if (datOutRead_ready) begin
+                $display("[SDController:DatOut] Write another block");
+                datOut_state <= 2;
+            
+            end else if (!datOut_first) begin
+                // Signal that we're done while we're in this state (and therefore
+                // there's no data to write), and this isn't the first block being
+                // written. We inhibit datOut_done=1 before the first block so that
+                // observers don't observe datOut_done=1 before writing has begun
+                // -- only after writing is complete.
+                datOut_done <= 1;
+            end
         end
         
         2: begin
             datOut_active[0] <= 1;
             datOut_crcEn <= 1;
+            datOut_first <= 0; // Remember that the first block has been sent
             
             if (!datOut_readCounter) begin
                 // $display("[SDController:DatOut]   Write another word: %x", datOutRead_data);
@@ -404,15 +418,8 @@ module SDController #(
         // Wait until the card stops being busy (busy == DAT0 low)
         8: begin
             if (datIn_reg[0]) begin
-                // $display("[SDController:DatOut] Card ready (%b)", datIn_reg[0]);
-                
-                if (!datOutRead_ready) begin
-                    // Signal that we're done while we're in this state and there's no data to write
-                    datOut_done <= 1;
-                
-                end else begin
-                    datOut_state <= 1;
-                end
+                $display("[SDController:DatOut] Card ready (%b)", datIn_reg[0]);
+                datOut_state <= 1;
             
             end else begin
                 $display("[SDController:DatOut] Card busy (%b)", datIn_reg[0]);
