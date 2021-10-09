@@ -46,6 +46,7 @@ module WordValidator();
     reg[31:0]   wordCounter             = 0;
     reg[15:0]   wordPrev                = 0;
     reg         wordValidationStarted   = 0;
+    reg         checksumReceived        = 0;
     
     task Config(
         input[31:0] headerWordCount,        // Number of 16-bit words to ignore at the beginning of the received data
@@ -101,12 +102,13 @@ module WordValidator();
                     
                     checksumExpected    = checksum_dout;
                     checksumGot         = HostFromLittle32.Swap(wordPrev<<16|word);
+                    checksumReceived    = 1;
                     
                     if (checksumExpected === checksumGot) begin
                         $display("[WordValidator] Checksum valid [expected:%h got:%h] ✅", checksumExpected, checksumGot);
                     end else begin
                         $display("[WordValidator] Checksum invalid [expected:%h got:%h] ❌", checksumExpected, checksumGot);
-                        // `Finish;
+                        `Finish;
                     end
                 end
             end
@@ -117,9 +119,15 @@ module WordValidator();
     end endtask
     
     task Reset; begin
-        wordCounter = 0;
-        wordPrev = 0;
-        wordValidationStarted = 0;
+        if (wordCounter && !checksumReceived) begin
+            $display("[WordValidator] Didn't receive checksum ❌");
+            `Finish;
+        end
+        
+        wordCounter             = 0;
+        wordPrev                = 0;
+        wordValidationStarted   = 0;
+        checksumReceived        = 0;
         
         checksum_rst = 1; #1;
         checksum_clk = 1; #1;
