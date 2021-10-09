@@ -168,8 +168,9 @@ module ICEApp(
     wire[`RegWidth(ImgWordCount)-1:0]       imgctrl_status_captureWordCount;
     wire[17:0]                              imgctrl_status_captureHighlightCount;
     wire[17:0]                              imgctrl_status_captureShadowCount;
-    // ImgWordCountCeiled: image word count ceiled to SD block length
-    localparam ImgWordCountCeiled = `Ceil(ImgWordCount, `SDController_BlockLen/2);
+    // ImgWordCountCeiled: image word count ceiled so that ImgController readout outputs
+    // enough data to trigger the AFIFOChain read threshold (`readoutfifo_r_thresh`)
+    localparam ImgWordCountCeiled = `Ceil(ImgWordCount, ReadoutFIFO_R_Thresh*512/2);
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
         .HeaderWordCount(ImgHeaderWordCount),
@@ -387,7 +388,7 @@ module ICEApp(
             
             if (sd_cmd6_counter === 23) begin
                 sd_cmd6_accessMode <= sd_datInWrite_data[11:8];
-                $display("[SPI] sd_cmd6_accessMode: %h", sd_datInWrite_data[11:8]);
+                // $display("[SPI] sd_cmd6_accessMode: %h", sd_datInWrite_data[11:8]);
             end
         end
     end
