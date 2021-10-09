@@ -10,23 +10,21 @@ module AFIFOChain #(
     parameter N = 2
 )(
     input wire rst_,
-    
-    // Propagation port
-    input wire prop_clk, // Propagation clock; use the faster of `w_clk` and `r_clk`
-    output wire prop_w_ready, // Whether half of the FIFO can be written
-    output wire prop_r_ready, // Whether half of the FIFO can be read
+    input wire prop_clk, // Propagation clock; supply the faster of `w_clk` and `r_clk`
     
     // Write port
     input wire w_clk,
     input wire w_trigger,
     input wire[W-1:0] w_data,
-    output wire w_ready,
+    output wire[N-1] w_ready,
+    output wire w_halfEmpty, // Whether half of the FIFO can be written
     
     // Read port
     input wire r_clk,
     input wire r_trigger,
     output wire[W-1:0] r_data,
-    output wire r_ready
+    output wire[N-1] r_ready
+    output wire r_halfFull, // Whether half of the FIFO can be read
 );
     wire[N-1:0]        afifo_rst_;
     wire[N-1:0]        afifo_w_clk;
@@ -84,22 +82,26 @@ module AFIFOChain #(
         assign afifo_r_clk[i]           = r_clk;
     end
     
-    assign w_ready                      = afifo_w_ready[0];
-    assign r_data                       = afifo_r_data[(N-1)*W +: W];
-    assign r_ready                      = afifo_r_ready[N-1];
+    assign w_ready  = afifo_w_ready;
+    assign r_data   = afifo_r_data[(N-1)*W +: W];
+    assign r_ready  = afifo_r_ready;
     
-    // prop_w_ready: whether left half of the FIFO can be written
-    // == whether the middle-left AFIFO is empty
-    // == middle-left AFIFO's !r_ready
-    wire prop_leftEmpty                 = !afifo_r_ready[(N/2)-1];
-    assign prop_w_ready                 = prop_leftEmpty;
+    // w_halfEmpty: whether the left half of the FIFO is empty
+    //   == whether the middle-left AFIFO is empty
+    //   == middle-left AFIFO's !r_ready
     
-    // prop_r_ready: whether right half of the FIFO can be read
-    // == whether the middle-right AFIFO is full
-    // == middle-right AFIFO's !w_ready
-    wire prop_rightFull                 = !afifo_w_ready[N/2];
-    assign prop_r_ready                 = prop_rightFull;
-
+    // r_halfFull: whether the right half of the FIFO is full
+    //   == whether the middle-right AFIFO is full
+    //   == middle-right AFIFO's !w_ready
+    
+    localparam MiddleLeft   = (N/2)-1;
+    localparam MiddleRight  = N/2;
+    
+    wire async_halfEmpty    = !afifo_r_ready[MiddleLeft];
+    wire async_halfFull     = !afifo_w_ready[MiddleRight];
+    
+    `Sync(w_halfEmpty, async_halfEmpty, posedge, afifo_r_clk[MiddleLeft]);
+    `Sync(r_halfFull, async_halfFull, posedge, afifo_w_clk[MiddleRight);
 endmodule
 
 `endif
