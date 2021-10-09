@@ -21,8 +21,7 @@
 `define SDController_DatInType_4096xN               2'b10   // 4096xN bit response (eg mass data read response)
 
 module SDController #(
-    parameter ClkFreq               = 120_000_000,
-    parameter DatInWrite_BlockCount = 4 // The number of blocks to write between checking `datInWrite_ready`
+    parameter ClkFreq = 120_000_000,
 )(
     // Clock
     input wire          clk,
@@ -180,7 +179,6 @@ module SDController #(
     reg[9:0] datIn_counter = 0;
     reg[3:0] datIn_crcCounter = 0;
     reg[1:0] datInWrite_counter = 0;
-    reg[`RegWidth(DatInWrite_BlockCount-1)-1:0] datInWrite_blockCounter = 0;
     
     localparam Init_ClockPulseUs = 15; // Pulse needs to be at least 10us, per SD LVS spec
     localparam Init_ClockPulseDelay = Clocks(Clk_SlowFreq, Init_ClockPulseUs*1000, 1);
@@ -444,7 +442,6 @@ module SDController #(
         1: begin
             datIn_crcErr <= 0;
             datInWrite_rst <= 1;
-            datInWrite_blockCounter <= DatInWrite_BlockCount-1;
             datIn_state <= 2;
         end
         
@@ -530,14 +527,9 @@ module SDController #(
             end
             
             datIn_done <= !datIn_done; // Signal that the DatIn is complete
-            datInWrite_blockCounter <= datInWrite_blockCounter-1;
             
             if (cmd_datInType===`SDController_DatInType_4096xN) begin
-                if (!datInWrite_blockCounter) begin
-                    datIn_state <= 7;
-                end else begin
-                    datIn_state <= 2;
-                end
+                datIn_state <= 7;
             end else begin
                 datIn_state <= 0;
             end

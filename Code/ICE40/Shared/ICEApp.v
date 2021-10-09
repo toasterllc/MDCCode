@@ -227,6 +227,18 @@ module ICEApp(
     // ====================
     localparam ReadoutFIFO_FIFOCount = 8; // 4096*8=32768 bits=4096 bytes total, readable in chunks of 2048
     
+    // ReadoutFIFO_W_Thresh: Signal `readoutfifo_w_thresh` when >=1 FIFO is empty
+    localparam ReadoutFIFO_W_Thresh = 1;
+    
+    // ReadoutFIFO_R_Thresh: Signal `readoutfifo_r_thresh` when >=X FIFOs are full, where X:
+    //   Readout destination=SPI: X=ReadoutFIFO_FIFOCount/2 (SPI master consumes 2048-byte chunks)
+    //   Readout destination=SD: X=1 (SDController consumes 512-byte chunks)
+`ifdef _ICEApp_SPIReadout_En
+    localparam ReadoutFIFO_R_Thresh = ReadoutFIFO_FIFOCount/2;
+`else
+    localparam ReadoutFIFO_R_Thresh = 1;
+`endif
+    
     wire        readoutfifo_rst_;
     wire        readoutfifo_prop_clk;
     wire        readoutfifo_w_clk;
@@ -243,8 +255,8 @@ module ICEApp(
     AFIFOChain #(
         .W(16),
         .N(ReadoutFIFO_FIFOCount),
-        .W_Thresh(ReadoutFIFO_FIFOCount/2),
-        .R_Thresh(ReadoutFIFO_FIFOCount/2)
+        .W_Thresh(ReadoutFIFO_W_Thresh),
+        .R_Thresh(ReadoutFIFO_R_Thresh)
     ) AFIFOChain(
         .rst_(readoutfifo_rst_),
         
@@ -365,7 +377,7 @@ module ICEApp(
     
     // If SDReadoutToSPI is enabled, then the AFIFO chain needs to control `sd_datInWrite_ready`.
     // Otherwise (ie when ICEApp_SDReadoutToSPI_En==0), set sd_datInWrite_ready=1 so that DatIn
-    // data is already accepted.
+    // data is always accepted.
 `ifndef ICEApp_SDReadoutToSPI_En
     assign sd_datInWrite_ready = 1;
 `endif // ICEApp_SDReadoutToSPI_En
@@ -418,7 +430,7 @@ module ICEApp(
     assign readoutfifo_w_data       = imgctrl_readout_data;
     assign readoutfifo_r_clk        = sd_datOutRead_clk;
     assign readoutfifo_r_trigger    = sd_datOutRead_trigger;
-    assign sd_datOutRead_ready      = readoutfifo_r_ready;
+    assign sd_datOutRead_ready      = readoutfifo_r_thresh;
     assign sd_datOutRead_data       = readoutfifo_r_data;
     assign imgctrl_readout_trigger  = readoutfifo_w_ready;
 `endif // ICEApp_ImgReadoutToSD_En
@@ -430,7 +442,7 @@ module ICEApp(
     assign readoutfifo_w_data       = sd_datInWrite_data;
     assign readoutfifo_r_clk        = spi_clk;
     assign readoutfifo_r_trigger    = spi_readoutTrigger;
-    assign sd_datInWrite_ready      = readoutfifo_w_ready;
+    assign sd_datInWrite_ready      = readoutfifo_w_thresh;
 `endif // ICEApp_SDReadoutToSPI_En
     
 `ifdef ICEApp_ImgReadoutToSPI_En
