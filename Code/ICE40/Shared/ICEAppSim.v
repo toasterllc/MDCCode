@@ -68,9 +68,9 @@ module ICEAppSim();
     
     // localparam Sim_ImgWidth             = 64;
     // localparam Sim_ImgHeight            = 32;
-    localparam Sim_ImgWidth             = 1006;
-    localparam Sim_ImgHeight            = 1;
-    localparam Sim_ImgPixelCount        = Sim_ImgWidth*Sim_ImgHeight;
+    // localparam Sim_ImgWidth             = 1006;
+    // localparam Sim_ImgHeight            = 1;
+    // localparam Sim_ImgPixelCount        = ImgWidth*ImgHeight;
     localparam Sim_ImgWordInitialValue  = 16'h0FFF;
     localparam Sim_ImgWordDelta         = -1;
     
@@ -89,8 +89,8 @@ module ICEAppSim();
         );
         
         ImgSim #(
-            .ImgWidth(Sim_ImgWidth),
-            .ImgHeight(Sim_ImgHeight)
+            .ImgWidth(ImgWidth),
+            .ImgHeight(ImgHeight)
         ) ImgSim (
             .img_dclk(img_dclk),
             .img_d(img_d),
@@ -108,7 +108,7 @@ module ICEAppSim();
     `ifdef _ICEApp_SD_En
         SDCardSim #(
             .RecvHeaderWordCount(ImgHeaderWordCount),
-            .RecvBodyWordCount(Sim_ImgPixelCount),
+            .RecvBodyWordCount(ImgPixelCount),
             .RecvBodyWordInitialValue(Sim_ImgWordInitialValue),
             .RecvBodyWordDelta(Sim_ImgWordDelta),
             .RecvValidateChecksum(1)

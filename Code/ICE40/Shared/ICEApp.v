@@ -165,14 +165,15 @@ module ICEApp(
     wire                                    imgctrl_readout_trigger;
     wire[15:0]                              imgctrl_readout_data;
     wire                                    imgctrl_status_captureDone;
-    wire[`RegWidth(ImgWordCountMax)-1:0]    imgctrl_status_captureWordCount;
+    wire[`RegWidth(ImgWordCount)-1:0]       imgctrl_status_captureWordCount;
     wire[17:0]                              imgctrl_status_captureHighlightCount;
     wire[17:0]                              imgctrl_status_captureShadowCount;
+    // ImgWordCountCeiled: image word count ceiled to SD block length
+    localparam ImgWordCountCeiled = `Ceil(ImgWordCount, `SDController_BlockLen/2);
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
         .HeaderWordCount(ImgHeaderWordCount),
-        .ImgWordCountMax(ImgWordCountMax),
-        .ReadoutWordCount(512/2) // Readout in multiples of 512 bytes == 256 16-bit words
+        .ImgWordCount(ImgWordCountCeiled)
     ) ImgController (
         .clk(img_clk),
         

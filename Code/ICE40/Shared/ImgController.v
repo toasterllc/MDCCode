@@ -10,8 +10,7 @@
 module ImgController #(
     parameter ClkFreq                   = 24_000_000,
     parameter HeaderWordCount           = 8,
-    parameter ImgWordCountMax           = 4096*4096, // Total image word count (header + pixels + checksum)
-    parameter ReadoutWordCount          = 128, // Number of words to readout
+    parameter ImgWordCount              = 4096*4096, // Total image word count (header + pixels + checksum)
     localparam HeaderWidth              = HeaderWordCount*16
 )(
     input wire          clk,
@@ -32,7 +31,7 @@ module ImgController #(
     
     // Status port (clock domain: `clk`)
     output reg          status_captureDone = 0, // Toggle signal
-    output wire[`RegWidth(ImgWordCountMax)-1:0]
+    output wire[`RegWidth(ImgWordCount)-1:0]
                         status_captureWordCount,
     output wire[17:0]   status_captureHighlightCount,
     output wire[17:0]   status_captureShadowCount,
@@ -69,7 +68,7 @@ module ImgController #(
     
     RAMController #(
         .ClkFreq(ClkFreq),
-        .BlockSize(ImgWordCountMax)
+        .BlockSize(ImgWordCount)
     ) RAMController (
         .clk(clk),
         
@@ -201,7 +200,7 @@ module ImgController #(
     reg fifoIn_started = 0;
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
-    reg[`RegWidth(ImgWordCountMax)-1:0] fifoIn_wordCount = 0;
+    reg[`RegWidth(ImgWordCount)-1:0] fifoIn_wordCount = 0;
     reg[17:0] fifoIn_highlightCount = 0;
     reg[17:0] fifoIn_shadowCount = 0;
     assign status_captureWordCount = fifoIn_wordCount;
@@ -352,7 +351,7 @@ module ImgController #(
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
-    reg[`RegWidth(ImgWordCountMax)-1:0] ctrl_readoutCount = 0;
+    reg[`RegWidth(ImgWordCount)-1:0] ctrl_readoutCount = 0;
     reg ctrl_readoutWrote = 0;
     reg ctrl_readoutDone = 0;
     
@@ -369,7 +368,6 @@ module ImgController #(
         if (ctrl_readoutWrote) begin
             $display("[ImgController] ctrl_readoutCount: %0d", ctrl_readoutCount);
             ctrl_readoutCount <= ctrl_readoutCount-1;
-            ctrl_readoutBlock <= ctrl_readoutBlock-1;
         end
         
         if (ctrl_readoutCount === 0) begin
@@ -427,7 +425,7 @@ module ImgController #(
             // Reset output FIFO
             readout_rst <= 1;
             // Reset readout state
-            ctrl_readoutCount <= ReadoutWordCount;
+            ctrl_readoutCount <= ImgWordCount;
             ctrl_readoutDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end

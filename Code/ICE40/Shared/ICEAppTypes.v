@@ -97,11 +97,17 @@
 
 `define Msg_Type_Nop                                            `Msg_Type_Len'h00
 
-localparam ImgWidthMax              = 2304;
-localparam ImgHeightMax             = 1296+2; // +2 rows for embedded statistics (histogram)
+`ifdef SIM
+localparam ImgWidth                 = 64;
+localparam ImgHeight                = 32;
+`else
+localparam ImgWidth                 = 2304;
+localparam ImgHeight                = 1296;
+`endif
+
 localparam ImgHeaderWordCount       = 16;
-localparam ImgPixelCountMax         = ImgWidthMax*ImgHeightMax;
+localparam ImgPixelCount            = ImgWidth*ImgHeight;
 localparam ImgChecksumWordCount     = 2;
-localparam ImgWordCountMax          = ImgHeaderWordCount + ImgPixelCountMax + ImgChecksumWordCount;
+localparam ImgWordCount             = ImgHeaderWordCount + ImgPixelCount + ImgChecksumWordCount;
 
 `endif
