@@ -1,5 +1,13 @@
 - Rev4 Todo
     
+    - AFIFOChain: the r_thresh signal can't be in the r_clk domain for the ReadoutToSPI cases,
+      because STM32 won't be driving the clock while it's waiting for data to become available.
+      So we need an async version of the signal, along with synchronous versions for internal use.
+    
+    - ICEApp: fix simulation warning:
+        /home/dave/repos/MDC/Code/ICE40/Shared/ImgController.v:72: warning: Port 3 (cmd_block) of RAMController expects 11 bits, got 1.
+        /home/dave/repos/MDC/Code/ICE40/Shared/ImgController.v:72:        : Padding 10 high bits of the port.
+    
     - ICEAppMSP: optimize perf back to previous levels
         - ImgController: try going back to registering solution, instead of connecting RAMController directly to readout port?
         - Option1: Have ImgController write in full blocks
