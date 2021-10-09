@@ -4,6 +4,7 @@
 #include "BufQueue.h"
 #include "USB.h"
 #include "STAppTypes.h"
+#include "SDCard.h"
 #include "Toastbox/Task.h"
 
 class System : public SystemBase<System> {
@@ -33,16 +34,6 @@ private:
     
     void _msp_init();
     
-    void _sd_setPowerEnabled(bool en);
-    uint16_t _sd_init();
-    ICE40::SDStatusResp _sd_status();
-    ICE40::SDStatusResp _sd_sendCmd(
-        uint8_t sdCmd,
-        uint32_t sdArg,
-        ICE40::SDSendCmdMsg::RespType respType      = ICE40::SDSendCmdMsg::RespType::Len48,
-        ICE40::SDSendCmdMsg::DatInType datInType    = ICE40::SDSendCmdMsg::DatInType::None
-    );
-    
     void _sd_readTask();
     
     void _img_setPowerEnabled(bool en);
@@ -59,15 +50,20 @@ private:
     
     // Peripherals
     USB _usb;
-    
     QSPI _qspi;
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
     
+    const uint8_t SDClkDelaySlow = 7;
+    const uint8_t SDClkDelayFast = 0;
+    using SDCard = SDCard<SDClkDelaySlow, SDClkDelayFast>;
+    SDCard _sd;
+    
     BufQueue<2> _bufs;
-    
     STApp::Cmd _cmd = {};
+    std::optional<size_t> _readoutLen;
     
+    // Tasks
     Task _usbCmdTask     = Task([&] { _usbCmd_task();       });
     Task _usbDataInTask  = Task([&] { _usbDataIn_task();    });
     Task _resetTask      = Task([&] { _reset_task();        });
@@ -85,8 +81,6 @@ private:
         _imgI2CTask,
         _imgCaptureTask,
     };
-    
-    std::optional<size_t> _readoutLen;
     
     friend int main();
     friend void ISR_OTG_HS();
