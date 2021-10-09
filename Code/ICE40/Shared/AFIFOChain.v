@@ -26,8 +26,8 @@ module AFIFOChain #(
     input wire r_clk,
     input wire r_trigger,
     output wire[W-1:0] r_data,
-    output wire r_ready
-    output wire r_thresh, // Whether >=R_Thresh FIFOs are full
+    output wire r_ready,
+    output wire r_thresh // Whether >=R_Thresh FIFOs are full
 );
     wire[N-1:0]        afifo_rst_;
     wire[N-1:0]        afifo_w_clk;
@@ -95,8 +95,11 @@ module AFIFOChain #(
     wire async_w_thresh = !afifo_r_ready[W_ThreshIdx];
     wire async_r_thresh = !afifo_w_ready[R_ThreshIdx];
     
-    `Sync(w_thresh, async_w_thresh, posedge, w_clk);
-    `Sync(r_thresh, async_r_thresh, posedge, r_clk);
+    `Sync(w_threshSynced, async_w_thresh, posedge, w_clk);
+    `Sync(r_threshSynced, async_r_thresh, posedge, r_clk);
+    
+    assign w_thresh = w_threshSynced;
+    assign r_thresh = r_threshSynced;
 endmodule
 
 `endif

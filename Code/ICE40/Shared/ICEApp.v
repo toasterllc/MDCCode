@@ -229,36 +229,38 @@ module ICEApp(
     
     wire        readoutfifo_rst_;
     wire        readoutfifo_prop_clk;
-    wire        readoutfifo_prop_w_ready;
-    wire        readoutfifo_prop_r_ready;
     wire        readoutfifo_w_clk;
     wire        readoutfifo_w_trigger;
     wire[15:0]  readoutfifo_w_data;
     wire        readoutfifo_w_ready;
+    wire        readoutfifo_w_thresh;
     wire        readoutfifo_r_clk;
     wire        readoutfifo_r_trigger;
     wire[15:0]  readoutfifo_r_data;
     wire        readoutfifo_r_ready;
+    wire        readoutfifo_r_thresh;
     
     AFIFOChain #(
         .W(16),
-        .N(ReadoutFIFO_FIFOCount)
+        .N(ReadoutFIFO_FIFOCount),
+        .W_Thresh(ReadoutFIFO_FIFOCount/2),
+        .R_Thresh(ReadoutFIFO_FIFOCount/2)
     ) AFIFOChain(
         .rst_(readoutfifo_rst_),
         
         .prop_clk(readoutfifo_prop_clk),
-        .prop_w_ready(readoutfifo_prop_w_ready),
-        .prop_r_ready(readoutfifo_prop_r_ready),
         
         .w_clk(readoutfifo_w_clk),
         .w_trigger(readoutfifo_w_trigger),
         .w_data(readoutfifo_w_data),
         .w_ready(readoutfifo_w_ready),
+        .w_thresh(readoutfifo_w_thresh),
         
         .r_clk(readoutfifo_r_clk),
         .r_trigger(readoutfifo_r_trigger),
         .r_data(readoutfifo_r_data),
-        .r_ready(readoutfifo_r_ready)
+        .r_ready(readoutfifo_r_ready),
+        .r_thresh(readoutfifo_r_thresh)
     );
     
     assign readoutfifo_prop_clk    = readoutfifo_w_clk;
@@ -398,7 +400,7 @@ module ICEApp(
         
         1: begin
             // When half of the FIFO is full, trigger SD DatOut
-            if (readoutfifo_prop_r_ready) begin
+            if (readoutfifo_r_thresh) begin
                 sd_datOut_trigger <= !sd_datOut_trigger;
                 sdDatOutTrigger_state <= 0;
             end
@@ -934,7 +936,7 @@ module ICEApp(
     // ====================
     // Pin: ice_st_spi_d_ready
     // ====================
-    assign ice_st_spi_d_ready = readoutfifo_prop_r_ready;
+    assign ice_st_spi_d_ready = readoutfifo_r_thresh;
     // Rev4 bodge
     assign ice_st_spi_d_ready_rev4bodge = ice_st_spi_d_ready;
 `endif // ICEApp_STM_En
