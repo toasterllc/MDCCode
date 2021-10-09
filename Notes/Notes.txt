@@ -5,10 +5,6 @@
         - Option1: Have ImgController write in full blocks
         - Option2: Bring back small state machine and trigger SD DatOut when r_thresh ('is 1 entire block available?') is asserted, but SDController monitors r_ready ('is any data available?')
     
-    - Why did ICEAppMSP design size balloon?
-        - What did it used to be?
-        - Is it just AFIFOChain?
-    
     - ImgController: configure whether readout is stopped automatically or continues indefinitely?
         - Allowing readout to continue indefinitely would fix the ImgReadoutToSPI hang issue,
           caused by the 8x FIFO not being half full
@@ -24,6 +20,12 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ Investigate: why did ICEAppMSP design size balloon?
+        - What did it used to be?
+            - As a result of using the 8x AFIFO chain in ICEAppMSP, the design went from: 2735 (35%) -> 3661 (47%) LUTs
+        - Is it just AFIFOChain?
+            - Yes
     
     √ ICEApp.v: consider removing readout FIFO from ImgController, and replace with FIFO chain
         - This would clean up the design because in the ICEApp_ImgReadoutToSPI_En case, ImgController
