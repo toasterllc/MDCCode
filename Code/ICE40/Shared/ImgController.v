@@ -60,8 +60,8 @@ module ImgController #(
     reg[0:0]    ramctrl_cmd_block = 0;
     reg[1:0]    ramctrl_cmd = 0;
     wire        ramctrl_write_ready;
-    wire        ramctrl_write_trigger;
-    wire[15:0]  ramctrl_write_data;
+    reg         ramctrl_write_trigger = 0;
+    reg[15:0]   ramctrl_write_data = 0;
     wire        ramctrl_read_ready;
     wire        ramctrl_read_trigger;
     wire[15:0]  ramctrl_read_data;
@@ -99,31 +99,26 @@ module ImgController #(
     // Input FIFO (Pixels->RAM)
     // ====================
     reg fifoIn_rst = 0;
-    wire fifoIn_w_clk;
-    wire fifoIn_w_ready;
-    reg fifoIn_w_trigger = 0;
-    reg[15:0] fifoIn_w_data = 0;
-    wire fifoIn_r_clk;
-    wire fifoIn_r_ready;
-    wire fifoIn_r_trigger;
-    wire[15:0] fifoIn_r_data;
+    wire fifoIn_write_ready;
+    reg fifoIn_write_trigger = 0;
+    reg[15:0] fifoIn_write_data = 0;
+    wire fifoIn_read_ready;
+    wire fifoIn_read_trigger;
+    wire[15:0] fifoIn_read_data;
     
     AFIFO AFIFO_fifoIn(
         .rst_(!fifoIn_rst),
         
-        .w_clk(fifoIn_w_clk),
-        .w_ready(fifoIn_w_ready),
-        .w_trigger(fifoIn_w_trigger),
-        .w_data(fifoIn_w_data),
+        .w_clk(img_dclk),
+        .w_ready(fifoIn_write_ready),
+        .w_trigger(fifoIn_write_trigger),
+        .w_data(fifoIn_write_data),
         
         .r_clk(clk),
-        .r_ready(fifoIn_r_ready),
-        .r_trigger(fifoIn_r_trigger),
-        .r_data(fifoIn_r_data)
+        .r_ready(fifoIn_read_ready),
+        .r_trigger(fifoIn_read_trigger),
+        .r_data(fifoIn_read_data)
     );
-    
-    assign fifoIn_w_clk = img_dclk;
-    assign fifoIn_r_clk = clk;
     
     // ====================
     // Pin: img_d
@@ -184,9 +179,9 @@ module ImgController #(
         .dout   (fifoIn_checksum_dout)
     );
     assign fifoIn_checksum_clk  = img_dclk;
-    // fifoIn_checksum_din: treat `fifoIn_w_data` values as little-endian when
+    // fifoIn_checksum_din: treat `fifoIn_write_data` values as little-endian when
     // calculating the checksum, to match host behavior
-    assign fifoIn_checksum_din  = {fifoIn_w_data[7:0], fifoIn_w_data[15:8]};
+    assign fifoIn_checksum_din  = {fifoIn_write_data[7:0], fifoIn_write_data[15:8]};
     
     // ====================
     // Pixel input state machine
@@ -224,14 +219,14 @@ module ImgController #(
         fifoIn_lvPrev <= fifoIn_lv;
         fifoIn_header <= fifoIn_header<<16;
         fifoIn_headerCount <= fifoIn_headerCount-1;
-        fifoIn_w_trigger <= 0; // Pulse
+        fifoIn_write_trigger <= 0; // Pulse
         fifoIn_countStat <= 0; // Pulse
         fifoIn_checksum_rst <= 0; // Pulse
         fifoIn_checksum_en <= 0; // Pulse
         fifoIn_checksum_shiftReg <= fifoIn_checksum_shiftReg>>16;
         fifoIn_checksum_done_ <= 0; // Pulse
         
-        if (fifoIn_w_trigger) begin
+        if (fifoIn_write_trigger) begin
             // Count the words in an image
             fifoIn_wordCount <= fifoIn_wordCount+1;
         end
@@ -242,8 +237,8 @@ module ImgController #(
         if (!fifoIn_fv)                         fifoIn_y <= 0;
         else if (fifoIn_lvPrev && !fifoIn_lv)   fifoIn_y <= fifoIn_y+1;
         
-        if (fifoIn_w_trigger) begin
-            $display("[ImgController:fifoIn] Wrote word into FIFO: %x (checksum: %h)", fifoIn_w_data, fifoIn_checksum_dout);
+        if (fifoIn_write_trigger) begin
+            $display("[ImgController:fifoIn] Wrote word into FIFO: %x (checksum: %h)", fifoIn_write_data, fifoIn_checksum_dout);
         end
         
         // Count pixel stats (number of highlights/shadows)
@@ -291,8 +286,8 @@ module ImgController #(
         // Write header
         4: begin
             $display("[ImgController:fifoIn] Header state: %0d", fifoIn_headerCount);
-            fifoIn_w_trigger <= 1;
-            fifoIn_w_data <= `LeftBits(fifoIn_header, 0, 16);
+            fifoIn_write_trigger <= 1;
+            fifoIn_write_data <= `LeftBits(fifoIn_header, 0, 16);
             fifoIn_checksum_en <= 1;
             if (!fifoIn_headerCount) begin
                 fifoIn_state <= 5;
@@ -318,8 +313,8 @@ module ImgController #(
         // Wait until the end of the frame
         7: begin
             fifoIn_countStat <= (fifoIn_lv && !fifoIn_x && !fifoIn_y);
-            fifoIn_w_trigger <= fifoIn_lv;
-            fifoIn_w_data <= {{img_d_reg[7:0]}, {4'b0, img_d_reg[11:8]}}; // Little endian
+            fifoIn_write_trigger <= fifoIn_lv;
+            fifoIn_write_data <= {{img_d_reg[7:0]}, {4'b0, img_d_reg[11:8]}}; // Little endian
             fifoIn_checksum_en <= fifoIn_lv;
             fifoIn_checksum_shiftReg <= fifoIn_checksum_dout;
             fifoIn_checksum_done_ <= 1;
@@ -332,8 +327,8 @@ module ImgController #(
         // Write checksum
         8: begin
             $display("[ImgController:fifoIn] Writing checksum %0d/2 (checksum: %h)", (fifoIn_checksum_done_ ? 1 : 2), fifoIn_checksum_dout);
-            fifoIn_w_trigger <= 1;
-            fifoIn_w_data <= {fifoIn_checksum_shiftReg[7:0], fifoIn_checksum_shiftReg[15:8]}; // Little endian
+            fifoIn_write_trigger <= 1;
+            fifoIn_write_data <= {fifoIn_checksum_shiftReg[7:0], fifoIn_checksum_shiftReg[15:8]}; // Little endian
             if (!fifoIn_checksum_done_) begin
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
@@ -362,6 +357,7 @@ module ImgController #(
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
+        ramctrl_write_trigger <= 0;
         readout_rst <= 0; // Pulse
         
         ctrl_readoutWrote <= readout_ready && readout_trigger;
@@ -410,7 +406,24 @@ module ImgController #(
         end
         
         Ctrl_State_Capture+3: begin
-            if (ctrl_fifoInDone) begin
+            // By default, prevent `ramctrl_write_trigger` from being reset
+            ramctrl_write_trigger <= ramctrl_write_trigger;
+            
+            // Reset `ramctrl_write_trigger` if RAMController accepted the data
+            if (ramctrl_write_ready && ramctrl_write_trigger) begin
+                ramctrl_write_trigger <= 0;
+            end
+            
+            // Copy word from FIFO->RAM
+            if (fifoIn_read_ready && fifoIn_read_trigger) begin
+                // $display("[ImgController:Capture] Got pixel: %0d", fifoIn_read_data);
+                ramctrl_write_data <= fifoIn_read_data;
+                ramctrl_write_trigger <= 1;
+            end
+            
+            // We're finished when the FIFO doesn't have data, and the fifoIn state
+            // machine signals that it's done receiving data.
+            if (!fifoIn_read_ready && ctrl_fifoInDone) begin
                 $display("[ImgController:Capture] Finished");
                 status_captureDone <= !status_captureDone;
                 ctrl_state <= Ctrl_State_Idle;
@@ -455,13 +468,11 @@ module ImgController #(
     // Connections
     // ====================
     // Connect input FIFO write -> pixel data
-    // assign fifoIn_w_trigger = (fifoIn_headerWriteEn || fifoIn_pixelWrite);
-    // assign fifoIn_w_data = (fifoIn_headerWriteEn ? `LeftBits(fifoIn_header, 0, 16) : {4'b0, img_d_reg});
+    // assign fifoIn_write_trigger = (fifoIn_headerWriteEn || fifoIn_pixelWrite);
+    // assign fifoIn_write_data = (fifoIn_headerWriteEn ? `LeftBits(fifoIn_header, 0, 16) : {4'b0, img_d_reg});
     
-    // Connect fifoIn -> RAM write
-    assign fifoIn_r_trigger = ramctrl_write_ready;
-    assign ramctrl_write_trigger = fifoIn_r_ready;
-    assign ramctrl_write_data = fifoIn_r_data;
+    // Connect input FIFO read -> RAM write
+    assign fifoIn_read_trigger = (!ramctrl_write_trigger || ramctrl_write_ready);
     
     // Connect RAM read -> readout
     assign readout_ready = ramctrl_read_ready;
