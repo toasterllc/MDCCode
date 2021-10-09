@@ -106,7 +106,7 @@ module WordValidator();
                         $display("[WordValidator] Checksum valid [expected:%h got:%h] ✅", checksumExpected, checksumGot);
                     end else begin
                         $display("[WordValidator] Checksum invalid [expected:%h got:%h] ❌", checksumExpected, checksumGot);
-                        `Finish;
+                        // `Finish;
                     end
                 end
             end
