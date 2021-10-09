@@ -66,8 +66,10 @@ module ICEAppSim();
     EndianSwap #(.Width(16)) HostFromLittle16();
     EndianSwap #(.Width(32)) HostFromLittle32();
     
-    localparam Sim_ImgWidth             = 64;
-    localparam Sim_ImgHeight            = 32;
+    // localparam Sim_ImgWidth             = 64;
+    // localparam Sim_ImgHeight            = 32;
+    localparam Sim_ImgWidth             = 1006;
+    localparam Sim_ImgHeight            = 1;
     localparam Sim_ImgPixelCount        = Sim_ImgWidth*Sim_ImgHeight;
     localparam Sim_ImgWordInitialValue  = 16'h0FFF;
     localparam Sim_ImgWordDelta         = -1;
