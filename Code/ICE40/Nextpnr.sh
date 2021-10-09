@@ -36,15 +36,26 @@ args=(
     --pcf                       "$rootDir/Pins.pcf"
     --randomize-seed
     --pcf-allow-unconstrained
+    
     # --placer-heap-alpha         0.4
     # --placer-heap-beta          0.525
     # --placer-heap-critexp       6
     # --placer-heap-timingweight  26
     
-    --placer-heap-alpha         0.225
-    --placer-heap-beta          0.9
-    --placer-heap-critexp       6
-    --placer-heap-timingweight  26
+    # --placer-heap-alpha         0.225
+    # --placer-heap-beta          0.9
+    # --placer-heap-critexp       6
+    # --placer-heap-timingweight  26
+    
+    # --placer-heap-alpha         0.125
+    # --placer-heap-beta          0.825
+    # --placer-heap-critexp       5
+    # --placer-heap-timingweight  21
+    
+    --placer-heap-alpha         0.075
+    --placer-heap-beta          0.55
+    --placer-heap-critexp       4
+    --placer-heap-timingweight  31
 )
 
 if [ ! -z "$outputASCFilePath" ]; then

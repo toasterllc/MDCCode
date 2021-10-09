@@ -7,6 +7,8 @@
 `include "CRC7.v"
 `include "CRC16.v"
 
+`define SDController_BlockLen                       512
+
 `define SDController_Init_ClkSpeed_Off              2'b00
 `define SDController_Init_ClkSpeed_Slow             2'b01
 `define SDController_Init_ClkSpeed_Fast             2'b10

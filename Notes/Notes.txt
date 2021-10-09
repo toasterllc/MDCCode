@@ -1,5 +1,14 @@
 - Rev4 Todo
     
+    - ICEAppMSP: optimize perf back to previous levels
+        - ImgController: try going back to registering solution, instead of connecting RAMController directly to readout port?
+        - Option1: Have ImgController write in full blocks
+        - Option2: Bring back small state machine and trigger SD DatOut when r_thresh ('is 1 entire block available?') is asserted, but SDController monitors r_ready ('is any data available?')
+    
+    - Why did ICEAppMSP design size balloon?
+        - What did it used to be?
+        - Is it just AFIFOChain?
+    
     - ImgController: configure whether readout is stopped automatically or continues indefinitely?
         - Allowing readout to continue indefinitely would fix the ImgReadoutToSPI hang issue,
           caused by the 8x FIFO not being half full
