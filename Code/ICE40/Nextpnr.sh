@@ -52,6 +52,10 @@ args=(
     # --placer-heap-critexp       5
     # --placer-heap-timingweight  21
     
+    # Parameters generated via:
+    #   ./nextpnr-mango.py nextpnr-ice40 --hx8k --package bg121:4k  \
+    #     --json Top.json --pcf Pins.pcf --pcf-allow-unconstrained
+    
     --placer-heap-alpha         0.075
     --placer-heap-beta          0.55
     --placer-heap-critexp       4
