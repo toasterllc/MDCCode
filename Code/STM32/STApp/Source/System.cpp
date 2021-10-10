@@ -253,11 +253,11 @@ void System::_ice_init() {
     // Confirm that we can communicate with the ICE40
     EchoResp resp;
     const char str[] = "halla";
-    _ice_transfer(EchoMsg(str), resp);
+    _ice_transfer(EchoMsg(str), &resp);
     Assert(!strcmp((char*)resp.payload, str));
 }
 
-void System::_ice_transferNoCS(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr) {
+void System::_ice_transferNoCS(const ICE40::Msg& msg, ICE40::Resp* resp) {
     if ((msg.type&ICE40::MsgType::Resp) && resp) {
         _qspi.read(_ice_qspiCmd(msg, sizeof(*resp)), resp, sizeof(*resp));
     } else {
@@ -266,9 +266,9 @@ void System::_ice_transferNoCS(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr)
     _qspi.wait();
 }
 
-void System::_ice_transfer(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr) {
+void System::_ice_transfer(const ICE40::Msg& msg, ICE40::Resp* resp) {
     _ICE_ST_SPI_CS_::Write(0);
-    resp = _ice_transferNoCS(msg, resp);
+    _ice_transferNoCS(msg, resp);
     _ICE_ST_SPI_CS_::Write(1);
 }
 
@@ -338,22 +338,21 @@ void System::_sd_setPowerEnabled(bool en) {
     HAL_Delay(2);
 }
 
-static void SDCard::SleepMs(uint32_t ms) {
+static void SDCard_SleepMs(uint32_t ms) {
     HAL_Delay(ms);
 }
 
-static void SDCard::SetPowerEnabled(bool en) {
+static void SDCard_SetPowerEnabled(bool en) {
     Sys._sd_setPowerEnabled(en);
 }
 
-static void SDCard::ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp) {
+static void SDCard_ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp) {
     Sys._ice_transfer(msg, resp);
 }
 
 void System::_sd_readTask() {
     static bool init = false;
     static bool reading = false;
-    static uint16_t rca = 0;
     const auto& arg = _cmd.arg.SDRead;
     
     TaskBegin();
@@ -363,7 +362,7 @@ void System::_sd_readTask() {
     
     // Initialize the SD card if we haven't done so
     if (!init) {
-        rca = _sd_init();
+        _sd.init();
         init = true;
     }
     
@@ -430,13 +429,13 @@ void System::_img_init() {
 
 ImgI2CStatusResp System::_imgI2CStatus() {
     ImgI2CStatusResp resp;
-    _ice_transfer(ImgI2CStatusMsg(), resp);
+    _ice_transfer(ImgI2CStatusMsg(), &resp);
     return resp;
 }
 
 ImgCaptureStatusResp System::_imgCaptureStatus() {
     ImgCaptureStatusResp resp;
-    _ice_transfer(ImgCaptureStatusMsg(), resp);
+    _ice_transfer(ImgCaptureStatusMsg(), &resp);
     return resp;
 }
 

@@ -2,14 +2,14 @@
 #include "ICE40Types.h"
 #include "Assert.h"
 
+// Functions provided by client
+static void SDCard_SleepMs(uint32_t ms);
+static void SDCard_SetPowerEnabled(bool en);
+static void SDCard_ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr);
+
 template <uint8_t ClkDelaySlow, uint8_t ClkDelayFast>
 class SDCard {
 public:
-    // Functions provided by client
-    static void SleepMs(uint32_t ms);
-    static void SetPowerEnabled(bool en);
-    static void ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr);
-    
     // BlockLen: block size of SD card
     static constexpr uint32_t BlockLen = 512;
     
@@ -17,26 +17,26 @@ public:
         using namespace ICE40;
         
         // Disable SDController clock
-        ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Off,   ClkDelaySlow));
-        SleepMs(1);
+        SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Off,   ClkDelaySlow));
+        SDCard_SleepMs(1);
         
         // Enable slow SDController clock
-        ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
-        SleepMs(1);
+        SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
+        SDCard_SleepMs(1);
         
         // Enter the init mode of the SDController state machine
-        ICETransfer(SDInitMsg(SDInitMsg::Action::Reset,      SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
+        SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Reset,      SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
         
         // Turn off SD card power and wait for it to reach 0V
-        SetPowerEnabled(false);
+        SDCard_SetPowerEnabled(false);
         
         // Turn on SD card power and wait for it to reach 2.8V
-        SetPowerEnabled(true);
+        SDCard_SetPowerEnabled(true);
         
         // Trigger the SD card low voltage signalling (LVS) init sequence
-        ICETransfer(SDInitMsg(SDInitMsg::Action::Trigger,    SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
+        SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Trigger,    SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
-        SleepMs(6);
+        SDCard_SleepMs(6);
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -45,7 +45,7 @@ public:
         // ====================
         {
             // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
-            SleepMs(1);
+            SDCard_SleepMs(1);
             // Send CMD0
             _sendCmd(SDSendCmdMsg::CMD0, 0, _RespType::None);
             // There's no response to CMD0
@@ -182,17 +182,17 @@ public:
         
         // SDClock=Off
         {
-            ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   ClkDelaySlow));
+            SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   ClkDelaySlow));
         }
         
         // SDClockDelay=FastDelay
         {
-            ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   ClkDelayFast));
+            SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   ClkDelayFast));
         }
         
         // SDClock=FastClock
         {
-            ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Fast,   ClkDelayFast));
+            SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Fast,   ClkDelayFast));
         }
         
         
@@ -256,7 +256,7 @@ public:
     //        
     //        // Clock out data on DAT lines
     //        {
-    //            ICETransfer(PixReadoutMsg(0));
+    //            SDCard_ICETransfer(PixReadoutMsg(0));
     //        }
     //        
     //        // Wait until we're done clocking out data on DAT lines
@@ -297,6 +297,7 @@ public:
     }
     
     void readStart(uint32_t addr) {
+        using namespace ICE40;
         // ====================
         // CMD18 | READ_MULTIPLE_BLOCK
         //   State: Transfer -> Send Data
@@ -314,6 +315,7 @@ public:
     // optimization. More data can be written than `lenEst`, but performance may suffer if the actual length
     // is longer than the estimate.
     void writeStart(uint32_t addr, uint32_t lenEst=0) {
+        using namespace ICE40;
         // ====================
         // ACMD23 | SET_WR_BLK_ERASE_COUNT
         //   State: Transfer -> Transfer
@@ -330,7 +332,7 @@ public:
             // CMD23
             {
                 // Round up to the nearest block size, with a minimum of 1 block
-                const size_t blockCount = std::min(1, (lenEst+BlockLen-1)/BlockLen);
+                const size_t blockCount = std::min(UINT32_C(1), (lenEst+BlockLen-1)/BlockLen);
                 auto status = _sendCmd(SDSendCmdMsg::CMD23, blockCount);
                 Assert(!status.respCRCErr());
             }
@@ -342,7 +344,6 @@ public:
         //   Write blocks of data
         // ====================
         {
-            const uint32_t addr = idx*MDC::SDImgLen;
             auto status = _sendCmd(SDSendCmdMsg::CMD25, addr);
             Assert(!status.respCRCErr());
         }
@@ -357,8 +358,9 @@ private:
     using _DatInType = ICE40::SDSendCmdMsg::DatInType;
     
     ICE40::SDStatusResp _status() {
-        ICE40::SDStatusResp resp;
-        ICETransfer(SDStatusMsg(), &resp);
+        using namespace ICE40;
+        SDStatusResp resp;
+        SDCard_ICETransfer(SDStatusMsg(), &resp);
         return resp;
     }
     
@@ -369,12 +371,12 @@ private:
         ICE40::SDSendCmdMsg::DatInType datInType    = ICE40::SDSendCmdMsg::DatInType::None
     ) {
         using namespace ICE40;
-        ICETransfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
+        SDCard_ICETransfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
         
         // Wait for command to be sent
         const uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) SleepMs(1);
+            if (i >= 10) SDCard_SleepMs(1);
             auto status = _status();
             // Try again if the command hasn't been sent yet
             if (!status.cmdDone()) continue;
@@ -389,15 +391,14 @@ private:
     }
     
     void _readWriteStop() {
+        using namespace ICE40;
         // ====================
         // CMD12 | STOP_TRANSMISSION
         //   State: Send Data -> Transfer
         //   Finish reading
         // ====================
-        {
-            auto status = _sendCmd(SDSendCmdMsg::CMD12, 0);
-            Assert(!status.respCRCErr());
-        }
+        auto status = _sendCmd(SDSendCmdMsg::CMD12, 0);
+        Assert(!status.respCRCErr());
     }
     
     uint16_t _rca = 0;
