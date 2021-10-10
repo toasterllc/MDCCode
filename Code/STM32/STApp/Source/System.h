@@ -26,14 +26,14 @@ private:
     void _bootloader();
     
     void _ice_init();
-    void _ice_transferNoCS(const ICE40::Msg& msg);
-    void _ice_transfer(const ICE40::Msg& msg);
-    void _ice_transfer(const ICE40::Msg& msg, ICE40::Resp& resp);
+    void _ice_transferNoCS(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr);
+    void _ice_transfer(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr);
     void _ice_qspiRead(void* buf, size_t len);
     void _ice_readout(void* buf, size_t len);
     
     void _msp_init();
     
+    void _sd_setPowerEnabled(bool en);
     void _sd_readTask();
     
     void _img_setPowerEnabled(bool en);
@@ -54,10 +54,9 @@ private:
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
     
-    const uint8_t SDClkDelaySlow = 7;
-    const uint8_t SDClkDelayFast = 0;
-    using SDCard = SDCard<SDClkDelaySlow, SDClkDelayFast>;
-    SDCard _sd;
+    static constexpr uint8_t SDClkDelaySlow = 7;
+    static constexpr uint8_t SDClkDelayFast = 0;
+    SDCard<SDClkDelaySlow, SDClkDelayFast> _sd;
     
     BufQueue<2> _bufs;
     STApp::Cmd _cmd = {};
@@ -86,6 +85,10 @@ private:
     friend void ISR_OTG_HS();
     friend void ISR_QUADSPI();
     friend void ISR_DMA2_Stream7();
+    
+    friend void SDCard_SleepMs(uint32_t ms);
+    friend void SDCard_SetPowerEnabled(bool en);
+    friend void SDCard_ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp);
     
     using _super = SystemBase<System>;
     friend class SystemBase<System>;
