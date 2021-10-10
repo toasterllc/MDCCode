@@ -258,7 +258,8 @@ void System::_ice_init() {
 }
 
 void System::_ice_transferNoCS(const ICE40::Msg& msg, ICE40::Resp* resp) {
-    if ((msg.type&ICE40::MsgType::Resp) && resp) {
+    AssertArg((bool)resp == (bool)(msg.type & ICE40::MsgType::Resp));
+    if (resp) {
         _qspi.read(_ice_qspiCmd(msg, sizeof(*resp)), resp, sizeof(*resp));
     } else {
         _qspi.command(_ice_qspiCmd(msg, 0));

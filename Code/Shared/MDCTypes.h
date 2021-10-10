@@ -31,8 +31,5 @@ namespace MDC {
     constexpr uint32_t ImgChecksumLen       = sizeof(uint32_t);
     constexpr uint32_t ImgLen               = ImgHeaderLen + ImgPixelLen + ImgChecksumLen;
     constexpr uint32_t ImgChecksumOffset    = ImgLen-ImgChecksumLen;
-    
-    // SDImgLen: image length padded to a multiple of SD card block size; determines image boundaries
-    constexpr uint32_t SDImgLen             = ((ImgLen+SDBlockLen-1)/SDBlockLen)*SDBlockLen;
 
-} // namespace ICE40
+} // namespace MDC
