@@ -175,11 +175,9 @@ public:
             auto status = _sendCmd(SDSendCmdMsg::CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
             Assert(!status.respCRCErr());
             Assert(!status.datInCRCErr());
-            
             // Verify that the access mode was successfully changed
             // TODO: properly handle this failing, see CMD6 docs
-            _ice_readout(_buf0, 512/8); // Read DatIn data into _buf0
-            Assert((_buf0[16]&0x0F) == 0x03);
+            Assert(status.datInCMD6AccessMode() == 0x03);
         }
         
         // SDClock=Off
