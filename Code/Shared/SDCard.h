@@ -2,14 +2,17 @@
 #include "ICE40Types.h"
 #include "Assert.h"
 
-// Functions provided by client
-static void SDCard_SleepMs(uint32_t ms);
-static void SDCard_SetPowerEnabled(bool en);
-static void SDCard_ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr);
-
-template <uint8_t ClkDelaySlow, uint8_t ClkDelayFast>
 class SDCard {
 public:
+    // Functions provided by client
+    static void SleepMs(uint32_t ms);
+    static void SetPowerEnabled(bool en);
+    static void ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr);
+    
+    // Values provided by client
+    static const uint8_t ClkDelaySlow;
+    static const uint8_t ClkDelayFast;
+    
     // BlockLen: block size of SD card
     static constexpr uint32_t BlockLen = 512;
     
@@ -17,26 +20,26 @@ public:
         using namespace ICE40;
         
         // Disable SDController clock
-        SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Off,   ClkDelaySlow));
-        SDCard_SleepMs(1);
+        ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Off,   ClkDelaySlow));
+        SleepMs(1);
         
         // Enable slow SDController clock
-        SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
-        SDCard_SleepMs(1);
+        ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,        SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
+        SleepMs(1);
         
         // Enter the init mode of the SDController state machine
-        SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Reset,      SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
+        ICETransfer(SDInitMsg(SDInitMsg::Action::Reset,      SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
         
         // Turn off SD card power and wait for it to reach 0V
-        SDCard_SetPowerEnabled(false);
+        SetPowerEnabled(false);
         
         // Turn on SD card power and wait for it to reach 2.8V
-        SDCard_SetPowerEnabled(true);
+        SetPowerEnabled(true);
         
         // Trigger the SD card low voltage signalling (LVS) init sequence
-        SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Trigger,    SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
+        ICETransfer(SDInitMsg(SDInitMsg::Action::Trigger,    SDInitMsg::ClkSpeed::Slow,  ClkDelaySlow));
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
-        SDCard_SleepMs(6);
+        SleepMs(6);
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -45,7 +48,7 @@ public:
         // ====================
         {
             // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
-            SDCard_SleepMs(1);
+            SleepMs(1);
             // Send CMD0
             _sendCmd(SDSendCmdMsg::CMD0, 0, _RespType::None);
             // There's no response to CMD0
@@ -182,17 +185,17 @@ public:
         
         // SDClock=Off
         {
-            SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   ClkDelaySlow));
+            ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   ClkDelaySlow));
         }
         
         // SDClockDelay=FastDelay
         {
-            SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   ClkDelayFast));
+            ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Off,   ClkDelayFast));
         }
         
         // SDClock=FastClock
         {
-            SDCard_ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Fast,   ClkDelayFast));
+            ICETransfer(SDInitMsg(SDInitMsg::Action::Nop,    SDInitMsg::ClkSpeed::Fast,   ClkDelayFast));
         }
         
         
@@ -256,7 +259,7 @@ public:
     //        
     //        // Clock out data on DAT lines
     //        {
-    //            SDCard_ICETransfer(PixReadoutMsg(0));
+    //            ICETransfer(PixReadoutMsg(0));
     //        }
     //        
     //        // Wait until we're done clocking out data on DAT lines
@@ -360,7 +363,7 @@ private:
     ICE40::SDStatusResp _status() {
         using namespace ICE40;
         SDStatusResp resp;
-        SDCard_ICETransfer(SDStatusMsg(), &resp);
+        ICETransfer(SDStatusMsg(), &resp);
         return resp;
     }
     
@@ -371,12 +374,12 @@ private:
         ICE40::SDSendCmdMsg::DatInType datInType    = ICE40::SDSendCmdMsg::DatInType::None
     ) {
         using namespace ICE40;
-        SDCard_ICETransfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
+        ICETransfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
         
         // Wait for command to be sent
         const uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) SDCard_SleepMs(1);
+            if (i >= 10) SleepMs(1);
             auto status = _status();
             // Try again if the command hasn't been sent yet
             if (!status.cmdDone()) continue;

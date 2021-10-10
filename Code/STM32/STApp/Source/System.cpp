@@ -318,6 +318,21 @@ void System::_msp_init() {
 
 #pragma mark - SD Card
 
+void SDCard::SleepMs(uint32_t ms) {
+    HAL_Delay(ms);
+}
+
+void SDCard::SetPowerEnabled(bool en) {
+    Sys._sd_setPowerEnabled(en);
+}
+
+void SDCard::ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp) {
+    Sys._ice_transfer(msg, resp);
+}
+
+const uint8_t SDCard::ClkDelaySlow = 7;
+const uint8_t SDCard::ClkDelayFast = 0;
+
 void System::_sd_setPowerEnabled(bool en) {
     constexpr uint16_t BITB         = 1<<0xB;
     constexpr uint16_t VDD_SD_EN    = BITB;
@@ -336,18 +351,6 @@ void System::_sd_setPowerEnabled(bool en) {
     
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     HAL_Delay(2);
-}
-
-static void SDCard_SleepMs(uint32_t ms) {
-    HAL_Delay(ms);
-}
-
-static void SDCard_SetPowerEnabled(bool en) {
-    Sys._sd_setPowerEnabled(en);
-}
-
-static void SDCard_ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp) {
-    Sys._ice_transfer(msg, resp);
 }
 
 void System::_sd_readTask() {

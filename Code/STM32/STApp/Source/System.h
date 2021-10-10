@@ -54,9 +54,7 @@ private:
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
     
-    static constexpr uint8_t SDClkDelaySlow = 7;
-    static constexpr uint8_t SDClkDelayFast = 0;
-    SDCard<SDClkDelaySlow, SDClkDelayFast> _sd;
+    SDCard _sd;
     
     BufQueue<2> _bufs;
     STApp::Cmd _cmd = {};
@@ -86,9 +84,9 @@ private:
     friend void ISR_QUADSPI();
     friend void ISR_DMA2_Stream7();
     
-    friend void SDCard_SleepMs(uint32_t ms);
-    friend void SDCard_SetPowerEnabled(bool en);
-    friend void SDCard_ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp);
+    friend void SDCard::SleepMs(uint32_t ms);
+    friend void SDCard::SetPowerEnabled(bool en);
+    friend void SDCard::ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp);
     
     using _super = SystemBase<System>;
     friend class SystemBase<System>;
