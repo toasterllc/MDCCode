@@ -57,7 +57,7 @@ module ImgController #(
     // ====================
     // RAMController
     // ====================
-    reg[0:0]    ramctrl_cmd_block = 0;
+    reg         ramctrl_cmd_block = 0;
     reg[1:0]    ramctrl_cmd = 0;
     wire        ramctrl_write_ready;
     wire        ramctrl_write_trigger;
@@ -68,7 +68,7 @@ module ImgController #(
     
     RAMController #(
         .ClkFreq(ClkFreq),
-        .BlockSize(ImgWordCount)
+        .BlockCount(2)
     ) RAMController (
         .clk(clk),
         

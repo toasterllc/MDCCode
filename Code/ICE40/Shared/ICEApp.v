@@ -222,15 +222,14 @@ module ICEApp(
     // ====================
     // ReadoutFIFO_FIFOCount: 4096*8=32768 bits=4096 bytes total
     localparam ReadoutFIFO_FIFOCount = 8;
-`ifdef _ICEApp_SPIReadout_En
     // ReadoutFIFO_W_Thresh: Signal `readoutfifo_w_thresh` when >=1 FIFO is empty
     localparam ReadoutFIFO_W_Thresh = 1;
+    
+`ifdef _ICEApp_SPIReadout_En
     // ReadoutFIFO_R_Thresh: Signal `readoutfifo_r_thresh` when >=4 FIFOs are full (SPI master
     // consumes 2048-byte chunks)
     localparam ReadoutFIFO_R_Thresh = 4;
 `else
-    // ReadoutFIFO_W_Thresh: Signal `readoutfifo_w_thresh` when >=1 FIFO is empty
-    localparam ReadoutFIFO_W_Thresh = 1;
     // ReadoutFIFO_R_Thresh: Signal `readoutfifo_r_thresh` when >=1 FIFO is full (SDController
     // consumes 512-byte chunks)
     localparam ReadoutFIFO_R_Thresh = 1;
