@@ -1,18 +1,9 @@
 - Rev4 Todo
     
-    - ICEApp: fix simulation warning:
-        /home/dave/repos/MDC/Code/ICE40/Shared/ImgController.v:72: warning: Port 3 (cmd_block) of RAMController expects 11 bits, got 1.
-        /home/dave/repos/MDC/Code/ICE40/Shared/ImgController.v:72:        : Padding 10 high bits of the port.
-    
     - ICEAppMSP: optimize perf back to previous levels
         - ImgController: try going back to registering solution, instead of connecting RAMController directly to readout port?
         - Option1: Have ImgController write in full blocks
         - Option2: Bring back small state machine and trigger SD DatOut when r_thresh ('is 1 entire block available?') is asserted, but SDController monitors r_ready ('is any data available?')
-    
-    - ImgController: configure whether readout is stopped automatically or continues indefinitely?
-        - Allowing readout to continue indefinitely would fix the ImgReadoutToSPI hang issue,
-          caused by the 8x FIFO not being half full
-        - If we allow it to continue indefinitely, can it be reset properly?
     
     - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
         - Does the USB hub limit the data throughput?
@@ -24,6 +15,18 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    X ImgController: configure whether readout is stopped automatically or continues indefinitely?
+        √ We ended up modifying ImgController to hard-code the image and readout lengths, so
+          now ICEApp controls how much data is read out, ensuring that it's over the AFIFOChain
+          read threshold, thereby fixing the ImgReadoutToSPI hang issue
+        X Allowing readout to continue indefinitely would fix the ImgReadoutToSPI hang issue,
+          caused by the 8x FIFO not being half full
+        X If we allow it to continue indefinitely, can it be reset properly?
+    
+    √ ICEApp: fix simulation warning:
+        /home/dave/repos/MDC/Code/ICE40/Shared/ImgController.v:72: warning: Port 3 (cmd_block) of RAMController expects 11 bits, got 1.
+        /home/dave/repos/MDC/Code/ICE40/Shared/ImgController.v:72:        : Padding 10 high bits of the port.
     
     √ AFIFOChain: the r_thresh signal can't be in the r_clk domain for the ReadoutToSPI cases,
       because STM32 won't be driving the clock while it's waiting for data to become available.
