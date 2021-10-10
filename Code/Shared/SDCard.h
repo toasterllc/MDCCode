@@ -5,7 +5,7 @@
 class SDCard {
 public:
     // Functions provided by client
-    static void SleepMs(uint32_t ms);
+//    static void SleepMs(uint32_t ms);
     static void SetPowerEnabled(bool en);
     static void ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr);
     
@@ -15,6 +15,10 @@ public:
     
     // BlockLen: block size of SD card
     static constexpr uint32_t BlockLen = 512;
+    
+    static constexpr uint32_t CeilToBlockLen(uint32_t len) {
+        return ((len+BlockLen-1)/BlockLen)*BlockLen;
+    }
     
     void init() {
         using namespace ICE40;
@@ -266,7 +270,7 @@ public:
     //        {
     //            // Waiting for writing to finish
     //            for (;;) {
-    //                auto status = _status();
+    //                auto status = status();
     //                if (status.datOutDone()) {
     //                    if (status.datOutCRCErr()) {
     //                        _led3.write(true);
@@ -290,7 +294,7 @@ public:
     //            // Wait for SD card to indicate that it's ready (DAT0=1)
     //            for (;;) {
     //                if (status.dat0Idle()) break;
-    //                status = _status();
+    //                status = status();
     //            }
     //        }
     //        
@@ -335,7 +339,7 @@ public:
             // CMD23
             {
                 // Round up to the nearest block size, with a minimum of 1 block
-                const size_t blockCount = std::min(UINT32_C(1), (lenEst+BlockLen-1)/BlockLen);
+                const uint32_t blockCount = std::min(UINT32_C(1), (lenEst+BlockLen-1)/BlockLen);
                 auto status = _sendCmd(SDSendCmdMsg::CMD23, blockCount);
                 Assert(!status.respCRCErr());
             }
@@ -356,16 +360,16 @@ public:
         _readWriteStop();
     }
     
-private:
-    using _RespType = ICE40::SDSendCmdMsg::RespType;
-    using _DatInType = ICE40::SDSendCmdMsg::DatInType;
-    
-    ICE40::SDStatusResp _status() {
+    ICE40::SDStatusResp status() {
         using namespace ICE40;
         SDStatusResp resp;
         ICETransfer(SDStatusMsg(), &resp);
         return resp;
     }
+    
+private:
+    using _RespType = ICE40::SDSendCmdMsg::RespType;
+    using _DatInType = ICE40::SDSendCmdMsg::DatInType;
     
     ICE40::SDStatusResp _sendCmd(
         uint8_t sdCmd,
@@ -380,14 +384,14 @@ private:
         const uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
             if (i >= 10) SleepMs(1);
-            auto status = _status();
+            auto s = status();
             // Try again if the command hasn't been sent yet
-            if (!status.cmdDone()) continue;
+            if (!s.cmdDone()) continue;
             // Try again if we expect a response but it hasn't been received yet
-            if ((respType==_RespType::Len48||respType==_RespType::Len136) && !status.respDone()) continue;
+            if ((respType==_RespType::Len48||respType==_RespType::Len136) && !s.respDone()) continue;
             // Try again if we expect DatIn but it hasn't been received yet
-            if (datInType==_DatInType::Len512x1 && !status.datInDone()) continue;
-            return status;
+            if (datInType==_DatInType::Len512x1 && !s.datInDone()) continue;
+            return s;
         }
         // Timeout sending SD command
         abort();
