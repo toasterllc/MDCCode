@@ -10,26 +10,25 @@
 `define RAMController_Cmd_Stop      2'b11
 
 module RAMController #(
-    parameter ClkFreq               = 16_000_000,
-    parameter RAMClkDelay           = 0,
-    parameter BlockSize             = 16,   // Number of words in a block
+    parameter ClkFreq                   = 16_000_000,
+    parameter RAMClkDelay               = 0,
+    parameter BlockCount                = 16,   // Number of blocks to divide the RAM into
     
-    localparam WordWidth            = 16,
-    localparam BankWidth            = 2,
-    localparam RowWidth             = 12,
-    localparam ColWidth             = 9,
-    localparam DQMWidth             = 2,
+    localparam WordWidth                = 16,
+    localparam BankWidth                = 2,
+    localparam RowWidth                 = 12,
+    localparam ColWidth                 = 9,
+    localparam DQMWidth                 = 2,
     
-    localparam AddrWidth            = BankWidth+RowWidth+ColWidth,
-    localparam WordCount            = 64'b1<<AddrWidth,
-    `define BankBits                AddrWidth-1                     -: BankWidth
-    `define RowBits                 AddrWidth-BankWidth-1           -: RowWidth
-    `define ColBits                 AddrWidth-BankWidth-RowWidth-1  -: ColWidth
+    localparam AddrWidth                = BankWidth+RowWidth+ColWidth,
+    localparam WordCount                = 64'b1<<AddrWidth,
+    `define BankBits                    AddrWidth-1                     -: BankWidth
+    `define RowBits                     AddrWidth-BankWidth-1           -: RowWidth
+    `define ColBits                     AddrWidth-BankWidth-RowWidth-1  -: ColWidth
     
-    localparam BlockSizeRegWidth    = `RegWidth(BlockSize-1),
-    localparam BlockSizeCeilPow2    = 64'b1<<BlockSizeRegWidth,
-    localparam BlockCount           = WordCount/BlockSizeCeilPow2,  // Total number of blocks in entire RAM
-    localparam BlockCountRegWidth   = `RegWidth(BlockCount-1)
+    localparam BlockWordCount           = WordCount/BlockCount,
+    localparam BlockWordCountRegWidth   = `RegWidth(BlockWordCount-1),
+    localparam BlockCountRegWidth       = `RegWidth(BlockCount-1)
 )(
     input wire                  clk,            // Clock
     
@@ -96,7 +95,7 @@ module RAMController #(
     
     function[AddrWidth-1:0] AddrFromBlock;
         input[BlockCountRegWidth-1:0] block;
-        AddrFromBlock = block << BlockSizeRegWidth;
+        AddrFromBlock = block << BlockWordCountRegWidth;
     endfunction
     
     // ====================
