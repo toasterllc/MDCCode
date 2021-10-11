@@ -3,6 +3,7 @@
 #include "SystemClock.h"
 #include "Startup.h"
 #include "MSP430.h"
+#include "SleepMs.h"
 
 using EchoMsg = ICE40::EchoMsg;
 using EchoResp = ICE40::EchoResp;
@@ -32,6 +33,12 @@ alignas(4) static uint8_t _buf1[63*1024] __attribute__((section(".sram1")));
 
 using namespace STApp;
 
+// SleepMs.h implementation
+// Used by ICE40, ImgSensor, SDCard
+void SleepMs(uint32_t ms) {
+    HAL_Delay(ms);
+}
+
 System::System() :
 // QSPI clock divider=1 => run QSPI clock at 64 MHz
 // QSPI alignment=word for high performance transfers
@@ -47,7 +54,7 @@ void System::init() {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     _ICE_ST_SPI_CS_::Write(1);
     
-    _ice_init();
+    _ice.init();
     _msp_init();
     
     _resetTasks();
@@ -103,6 +110,7 @@ void System::_usbCmd_task() {
         switch (_cmd.op) {
         case Op::Bootloader:    _bootloader();              break;
         case Op::SDRead:        _sdReadTask.start();        break;
+        case Op::ImgReset:      _img_reset();               break;
         case Op::ImgI2C:        _imgI2CTask.start();        break;
         case Op::ImgCapture:    _imgCaptureTask.start();    break;
         case Op::LEDSet:        _ledSet();                  break;
@@ -126,74 +134,6 @@ void System::_usbDataIn_task() {
         _bufs.front().len = 0;
         _bufs.pop();
     }
-}
-
-#pragma mark - Reset
-
-void System::_reset_task() {
-    TaskBegin();
-    // Accept command
-    _usb.cmdAccept(true);
-    // Reset endpoints
-    _usb.reset(Endpoints::DataIn);
-    TaskWait(_usb.ready(Endpoints::DataIn));
-}
-
-#pragma mark - Readout
-
-void System::_readout_task() {
-    TaskBegin();
-    
-    // Reset state
-    _bufs.reset();
-    // Start the USB DataIn task
-    _usbDataInTask.start();
-    
-    // Send the Readout message, which causes us to enter the readout mode until
-    // we release the chip select
-    _ICE_ST_SPI_CS_::Write(0);
-    _ice_transferNoCS(ReadoutMsg());
-    
-    // Read data over QSPI and write it to USB, indefinitely
-    for (;;) {
-        // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
-        TaskWait(!_bufs.full() && _qspi.ready());
-        
-        const size_t len = std::min(_readoutLen.value_or(SIZE_MAX), ReadoutMsg::ReadoutLen);
-        auto& buf = _bufs.back();
-        
-        // If there's no more data to read, bail
-        if (!len) {
-            // Before bailing, push the final buffer if it holds data
-            if (buf.len) _bufs.push();
-            break;
-        }
-        
-        // If we can't read any more data into the producer buffer,
-        // push it so the data will be sent over USB
-        if (buf.cap-buf.len < len) {
-            _bufs.push();
-            continue;
-        }
-        
-        // Wait until ICE40 signals that data is ready to be read
-        while (!_ICE_ST_SPI_D_READY::Read());
-        
-        _ice_qspiRead(buf.data+buf.len, len);
-        buf.len += len;
-        
-        if (_readoutLen) *_readoutLen -= len;
-    }
-}
-
-#pragma mark - Bootloader
-
-void System::_bootloader() {
-    _usb.cmdAccept(true);
-    // Perform software reset
-    HAL_NVIC_SystemReset();
-    // Unreachable
-    abort();
 }
 
 #pragma mark - ICE40
@@ -249,32 +189,8 @@ static QSPI_CommandTypeDef _ice_qspiCmd(const ICE40::Msg& msg, size_t respLen) {
     };
 }
 
-void System::_ice_init() {
-    // Confirm that we can communicate with the ICE40
-    EchoResp resp;
-    const char str[] = "halla";
-    _ice_transfer(EchoMsg(str), &resp);
-    Assert(!strcmp((char*)resp.payload, str));
-}
-
-void System::_ice_transferNoCS(const ICE40::Msg& msg, ICE40::Resp* resp) {
-    AssertArg((bool)resp == (bool)(msg.type & ICE40::MsgType::Resp));
-    if (resp) {
-        _qspi.read(_ice_qspiCmd(msg, sizeof(*resp)), resp, sizeof(*resp));
-    } else {
-        _qspi.command(_ice_qspiCmd(msg, 0));
-    }
-    _qspi.wait();
-}
-
-void System::_ice_transfer(const ICE40::Msg& msg, ICE40::Resp* resp) {
-    _ICE_ST_SPI_CS_::Write(0);
-    _ice_transferNoCS(msg, resp);
-    _ICE_ST_SPI_CS_::Write(1);
-}
-
-void System::_ice_qspiRead(void* buf, size_t len) {
-    const QSPI_CommandTypeDef qspiCmd = {
+static QSPI_CommandTypeDef _ice_qspiCmdReadOnly(size_t len) {
+    return QSPI_CommandTypeDef{
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         .AddressMode = QSPI_ADDRESS_NONE,
         .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
@@ -285,19 +201,88 @@ void System::_ice_qspiRead(void* buf, size_t len) {
         .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
         .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
     };
-    
-    _qspi.read(qspiCmd, buf, len);
 }
 
-void System::_ice_readout(void* buf, size_t len) {
-    // Assert chip-select so that we stay in the readout state until we release it
-    _ICE_ST_SPI_CS_::Write(0);
-    // Send the Readout message, which causes us to enter the SD-readout mode until
+void ICE40::Transfer(const Msg& msg, Resp* resp) {
+    System::_ICE_ST_SPI_CS_::Write(0);
+    
+    AssertArg((bool)resp == (bool)(msg.type & ICE40::MsgType::Resp));
+    if (resp) {
+        Sys._qspi.read(_ice_qspiCmd(msg, sizeof(*resp)), resp, sizeof(*resp));
+    } else {
+        Sys._qspi.command(_ice_qspiCmd(msg, 0));
+    }
+    Sys._qspi.wait();
+    
+    System::_ICE_ST_SPI_CS_::Write(1);
+}
+
+#pragma mark - Reset
+
+void System::_reset_task() {
+    TaskBegin();
+    // Accept command
+    _usb.cmdAccept(true);
+    // Reset endpoints
+    _usb.reset(Endpoints::DataIn);
+    TaskWait(_usb.ready(Endpoints::DataIn));
+}
+
+#pragma mark - Readout
+
+void System::_readout_task() {
+    TaskBegin();
+    
+    // Reset state
+    _bufs.reset();
+    // Start the USB DataIn task
+    _usbDataInTask.start();
+    
+    // Send the Readout message, which causes us to enter the readout mode until
     // we release the chip select
-    _ice_transferNoCS(ReadoutMsg());
-    _ice_qspiRead(buf, len);
-    _qspi.wait();
-    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_ST_SPI_CS_::Write(0);
+    _qspi.command(_ice_qspiCmd(ReadoutMsg(), 0));
+    
+    // Read data over QSPI and write it to USB, indefinitely
+    for (;;) {
+        // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
+        TaskWait(!_bufs.full() && _qspi.ready());
+        
+        const size_t len = std::min(_readoutLen.value_or(SIZE_MAX), ReadoutMsg::ReadoutLen);
+        auto& buf = _bufs.back();
+        
+        // If there's no more data to read, bail
+        if (!len) {
+            // Before bailing, push the final buffer if it holds data
+            if (buf.len) _bufs.push();
+            break;
+        }
+        
+        // If we can't read any more data into the producer buffer,
+        // push it so the data will be sent over USB
+        if (buf.cap-buf.len < len) {
+            _bufs.push();
+            continue;
+        }
+        
+        // Wait until ICE40 signals that data is ready to be read
+        while (!_ICE_ST_SPI_D_READY::Read());
+        
+        _qspi.read(_ice_qspiCmdReadOnly(len), buf.data+buf.len, len);
+        buf.len += len;
+        
+        if (_readoutLen) *_readoutLen -= len;
+    }
+}
+
+#pragma mark - Bootloader
+
+void System::_bootloader() {
+    _usb.cmdAccept(true);
+    // Perform software reset
+    HAL_NVIC_SystemReset();
+    // Unreachable
+    abort();
 }
 
 #pragma mark - MSP430
@@ -319,40 +304,28 @@ void System::_msp_init() {
 
 #pragma mark - SD Card
 
-void SDCard::SleepMs(uint32_t ms) {
-    HAL_Delay(ms);
-}
-
 void SDCard::SetPowerEnabled(bool en) {
-    Sys._sd_setPowerEnabled(en);
-}
-
-void SDCard::ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp) {
-    Sys._ice_transfer(msg, resp);
-}
-
-const uint8_t SDCard::ClkDelaySlow = 7;
-const uint8_t SDCard::ClkDelayFast = 0;
-
-void System::_sd_setPowerEnabled(bool en) {
     constexpr uint16_t BITB         = 1<<0xB;
     constexpr uint16_t VDD_SD_EN    = BITB;
     constexpr uint16_t PADIRAddr    = 0x0204;
     constexpr uint16_t PAOUTAddr    = 0x0202;
     
-    const uint16_t PADIR = _msp.read(PADIRAddr);
-    const uint16_t PAOUT = _msp.read(PAOUTAddr);
-    _msp.write(PADIRAddr, PADIR | VDD_SD_EN);
+    const uint16_t PADIR = Sys._msp.read(PADIRAddr);
+    const uint16_t PAOUT = Sys._msp.read(PAOUTAddr);
+    Sys._msp.write(PADIRAddr, PADIR | VDD_SD_EN);
     
     if (en) {
-        _msp.write(PAOUTAddr, PAOUT | VDD_SD_EN);
+        Sys._msp.write(PAOUTAddr, PAOUT | VDD_SD_EN);
     } else {
-        _msp.write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
+        Sys._msp.write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
     }
     
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     HAL_Delay(2);
 }
+
+const uint8_t SDCard::ClkDelaySlow = 7;
+const uint8_t SDCard::ClkDelayFast = 0;
 
 void System::_sd_readTask() {
     static bool init = false;
@@ -420,68 +393,23 @@ void System::_img_setPowerEnabled(bool en) {
     HAL_Delay(2);
 }
 
-void System::_img_init() {
+void System::_img_reset() {
+    _usb.cmdAccept(true);
+    // Power on
     _img_setPowerEnabled(true);
-    
-    _ice_transfer(ImgResetMsg(0));
-    HAL_Delay(1);
-    _ice_transfer(ImgResetMsg(1));
-    // Wait 150k EXTCLK (16MHz) periods
-    // (150e3*(1/16e6)) == 9.375ms
-    HAL_Delay(10);
-}
-
-ImgI2CStatusResp System::_imgI2CStatus() {
-    ImgI2CStatusResp resp;
-    _ice_transfer(ImgI2CStatusMsg(), &resp);
-    return resp;
-}
-
-ImgCaptureStatusResp System::_imgCaptureStatus() {
-    ImgCaptureStatusResp resp;
-    _ice_transfer(ImgCaptureStatusMsg(), &resp);
-    return resp;
-}
-
-ImgI2CStatusResp System::_imgI2C(bool write, uint16_t addr, uint16_t val) {
-    _ice_transfer(ImgI2CTransactionMsg(write, 2, addr, 0));
-    
-    // Wait for the I2C transaction to complete
-    const uint32_t MaxAttempts = 1000;
-    for (uint32_t i=0; i<MaxAttempts; i++) {
-        if (i >= 10) HAL_Delay(1);
-        const ImgI2CStatusResp status = _imgI2CStatus();
-        if (status.err() || status.done()) return status;
-    }
-    // Timeout getting response from ICE40
-    // This should never happen, since it indicates a Verilog error or a hardware failure.
-    abort();
-}
-
-ImgI2CStatusResp System::_imgI2CRead(uint16_t addr) {
-    return _imgI2C(false, addr, 0);
-}
-
-ImgI2CStatusResp System::_imgI2CWrite(uint16_t addr, uint16_t val) {
-    return _imgI2C(true, addr, val);
+    // Toggle IMG_RST_
+    _ice.imgReset();
 }
 
 void System::_img_i2cTask() {
-    static bool init = false;
     static ImgI2CStatus status = {};
     const auto& arg = _cmd.arg.ImgI2C;
     
     TaskBegin();
     _usb.cmdAccept(true);
     
-    // Initialize image sensor if we haven't done so already
-    if (!init) {
-        _img_init();
-        init = true;
-    }
-    
     {
-        const ImgI2CStatusResp s = _imgI2C(arg.write, arg.addr, arg.val);
+        const ImgI2CStatusResp s = _ice.imgI2C(arg.write, arg.addr, arg.val);
         status.ok = !s.err();
         status.readData = s.readData();
     }
@@ -497,14 +425,14 @@ void System::_img_captureTask() {
     TaskBegin();
     _usb.cmdAccept(true);
     
-    _ice_transfer(ImgCaptureMsg(0));
+    ICE40::Transfer(ImgCaptureMsg(0));
     
     // Wait a max of `MaxDelayMs` for the the capture to be ready for readout
     constexpr uint32_t MaxDelayMs = 1000;
     const uint32_t startTime = HAL_GetTick();
     ImgCaptureStatusResp s;
     for (;;) {
-        s = _imgCaptureStatus();
+        s = _ice.imgCaptureStatus();
         if (s.done() || (HAL_GetTick()-startTime)>=MaxDelayMs) break;
     }
     
