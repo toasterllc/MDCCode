@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "Assert.h"
 #include "SleepMs.h"
+#include "MDCTypes.h"
 
 class ICE40 {
 public:
@@ -319,8 +320,8 @@ public:
         // Wait for image to be captured
         constexpr uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) _delayMs(1);
-            auto status = imgCaptureStatus();
+            if (i >= 10) SleepMs(1);
+            auto status = ImgCaptureStatus();
             // Try again if the image hasn't been captured yet
             if (!status.done()) continue;
             const uint32_t imgWordCount = status.wordCount();
@@ -345,7 +346,7 @@ public:
         const uint32_t MaxAttempts = 1000;
         for (uint32_t i=0; i<MaxAttempts; i++) {
             if (i >= 10) SleepMs(1);
-            const ImgI2CStatusResp status = imgI2CStatus();
+            const ImgI2CStatusResp status = ImgI2CStatus();
             if (status.err() || status.done()) return status;
         }
         // Timeout getting response from ICE40
@@ -354,13 +355,13 @@ public:
     }
     
     static uint16_t ImgI2CRead(uint16_t addr) {
-        const ImgI2CStatusResp resp = imgI2C(false, addr, 0);
+        const ImgI2CStatusResp resp = ImgI2C(false, addr, 0);
         Assert(!resp.err());
         return resp.readData();
     }
     
     static void ImgI2CWrite(uint16_t addr, uint16_t val) {
-        const ImgI2CStatusResp resp = imgI2C(false, addr, 0);
+        const ImgI2CStatusResp resp = ImgI2C(false, addr, 0);
         Assert(!resp.err());
     }
     
@@ -384,13 +385,13 @@ public:
         const uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
             if (i >= 10) SleepMs(1);
-            auto s = status();
+            auto s = SDStatus();
             // Try again if the command hasn't been sent yet
             if (!s.cmdDone()) continue;
             // Try again if we expect a response but it hasn't been received yet
-            if ((respType==SDRespType::Len48||respType==SDRespType::Len136) && !s.respDone()) continue;
+            if ((respType==SDSendCmdMsg::RespType::Len48||respType==SDSendCmdMsg::RespType::Len136) && !s.respDone()) continue;
             // Try again if we expect DatIn but it hasn't been received yet
-            if (datInType==SDDatInType::Len512x1 && !s.datInDone()) continue;
+            if (datInType==SDSendCmdMsg::DatInType::Len512x1 && !s.datInDone()) continue;
             return s;
         }
         // Timeout sending SD command

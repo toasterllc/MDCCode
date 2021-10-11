@@ -306,7 +306,7 @@ public:
         //   State: Transfer -> Send Data
         //   Read blocks of data (1 block == 512 bytes)
         // ====================
-        auto status = ICE40::SDSendCmd(ICE40::SDSendCmdMsg::CMD18, addr, _RespType::Len48, _DatInType::Len4096xN);
+        auto status = ICE40::SDSendCmd(_CMD18, addr, _RespType::Len48, _DatInType::Len4096xN);
         Assert(!status.respCRCErr());
     }
     
@@ -357,9 +357,6 @@ public:
     
 private:
     using _SDInitMsg        = ICE40::SDInitMsg;
-    using _SDSendCmdMsg     = ICE40::SDSendCmdMsg;
-    using _SDStatusMsg      = ICE40::SDStatusMsg;
-    using _SDStatusResp     = ICE40::SDStatusResp;
     using _RespType         = ICE40::SDSendCmdMsg::RespType;
     using _DatInType        = ICE40::SDSendCmdMsg::DatInType;
     

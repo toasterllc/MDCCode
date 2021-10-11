@@ -54,7 +54,7 @@ void System::init() {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     _ICE_ST_SPI_CS_::Write(1);
     
-    _ice.init();
+    ICE40::Init();
     _msp_init();
     
     _resetTasks();
@@ -398,7 +398,7 @@ void System::_img_reset() {
     // Power on
     _img_setPowerEnabled(true);
     // Toggle IMG_RST_
-    _ice.imgReset();
+    ICE40::ImgReset();
 }
 
 void System::_img_i2cTask() {
@@ -409,7 +409,7 @@ void System::_img_i2cTask() {
     _usb.cmdAccept(true);
     
     {
-        const ImgI2CStatusResp s = _ice.imgI2C(arg.write, arg.addr, arg.val);
+        const ImgI2CStatusResp s = ICE40::ImgI2C(arg.write, arg.addr, arg.val);
         status.ok = !s.err();
         status.readData = s.readData();
     }
@@ -432,7 +432,7 @@ void System::_img_captureTask() {
     const uint32_t startTime = HAL_GetTick();
     ImgCaptureStatusResp s;
     for (;;) {
-        s = _ice.imgCaptureStatus();
+        s = ICE40::ImgCaptureStatus();
         if (s.done() || (HAL_GetTick()-startTime)>=MaxDelayMs) break;
     }
     
