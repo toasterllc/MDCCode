@@ -14,6 +14,7 @@ namespace STApp {
         Reset,
         Bootloader,
         SDRead,
+        ImgReset,
         ImgI2C,
         ImgCapture,
         LEDSet,

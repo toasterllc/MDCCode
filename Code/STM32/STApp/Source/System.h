@@ -1,6 +1,6 @@
 #include "SystemBase.h"
 #include "QSPI.h"
-#include "ICE40Types.h"
+#include "ICE40.h"
 #include "BufQueue.h"
 #include "USB.h"
 #include "STAppTypes.h"
@@ -25,24 +25,12 @@ private:
     
     void _bootloader();
     
-    void _ice_init();
-    void _ice_transferNoCS(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr);
-    void _ice_transfer(const ICE40::Msg& msg, ICE40::Resp* resp=nullptr);
-    void _ice_qspiRead(void* buf, size_t len);
-    void _ice_readout(void* buf, size_t len);
-    
     void _msp_init();
     
-    void _sd_setPowerEnabled(bool en);
     void _sd_readTask();
     
     void _img_setPowerEnabled(bool en);
-    void _img_init();
-    ICE40::ImgI2CStatusResp _imgI2CStatus();
-    ICE40::ImgCaptureStatusResp _imgCaptureStatus();
-    ICE40::ImgI2CStatusResp _imgI2C(bool write, uint16_t addr, uint16_t val);
-    ICE40::ImgI2CStatusResp _imgI2CRead(uint16_t addr);
-    ICE40::ImgI2CStatusResp _imgI2CWrite(uint16_t addr, uint16_t val);
+    void _img_reset();
     void _img_i2cTask();
     void _img_captureTask();
     
@@ -54,6 +42,7 @@ private:
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
     
+    ICE40 _ice;
     SDCard _sd;
     
     BufQueue<2> _bufs;
@@ -84,9 +73,8 @@ private:
     friend void ISR_QUADSPI();
     friend void ISR_DMA2_Stream7();
     
-    friend void SDCard::SleepMs(uint32_t ms);
-    friend void SDCard::SetPowerEnabled(bool en);
-    friend void SDCard::ICETransfer(const ICE40::Msg& msg, ICE40::Resp* resp);
+    friend class ICE40;
+    friend class SDCard;
     
     using _super = SystemBase<System>;
     friend class SystemBase<System>;
