@@ -8,7 +8,7 @@ public:
     static uint16_t I2CRead(uint16_t addr);
     static void I2CWrite(uint16_t addr, uint16_t val);
     
-    void init() {
+    void Init() {
         // Power on and toggle IMG_RST_
         {
             Reset();
@@ -225,7 +225,7 @@ public:
         }
     }
     
-    void setStreamEnabled(bool en) {
+    void SetStreamEnabled(bool en) {
         I2CWrite(0x301A, (en ? 0x10DC : 0x10D8));
     }
 

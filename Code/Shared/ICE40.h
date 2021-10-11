@@ -94,19 +94,6 @@ public:
     };
     
     struct SDSendCmdMsg : Msg {
-        static constexpr uint8_t CMD0  = 0;
-        static constexpr uint8_t CMD2  = 2;
-        static constexpr uint8_t CMD3  = 3;
-        static constexpr uint8_t CMD6  = 6;
-        static constexpr uint8_t CMD7  = 7;
-        static constexpr uint8_t CMD8  = 8;
-        static constexpr uint8_t CMD12 = 12;
-        static constexpr uint8_t CMD18 = 18;
-        static constexpr uint8_t CMD23 = 23;
-        static constexpr uint8_t CMD25 = 25;
-        static constexpr uint8_t CMD41 = 41;
-        static constexpr uint8_t CMD55 = 55;
-        
         enum class RespType : uint8_t {
             None        = 0,
             Len48       = 1,
@@ -286,7 +273,7 @@ public:
     
     #pragma mark - Methods
     
-    void init() {
+    static void Init() {
         // Confirm that we can communicate with ICE40
         const char str[] = "halla";
         EchoResp resp;
@@ -296,13 +283,13 @@ public:
     
     #pragma mark - Img
     
-    void imgReset() {
+    static void ImgReset() {
         Transfer(ImgResetMsg(0));
         SleepMs(1);
         Transfer(ImgResetMsg(1));
     }
     
-    void imgCapture() {
+    static void ImgCapture() {
         const MDC::ImgHeader header = {
             // Section idx=0
             .version        = 0x4242,
@@ -345,13 +332,13 @@ public:
         abort();
     }
     
-    ImgCaptureStatusResp imgCaptureStatus() {
+    static ImgCaptureStatusResp ImgCaptureStatus() {
         ImgCaptureStatusResp resp;
         Transfer(ImgCaptureStatusMsg(), &resp);
         return resp;
     }
     
-    ImgI2CStatusResp imgI2C(bool write, uint16_t addr, uint16_t val) {
+    static ImgI2CStatusResp ImgI2C(bool write, uint16_t addr, uint16_t val) {
         Transfer(ImgI2CTransactionMsg(write, 2, addr, 0));
         
         // Wait for the I2C transaction to complete
@@ -366,18 +353,18 @@ public:
         abort();
     }
     
-    uint16_t imgI2CRead(uint16_t addr) {
+    static uint16_t ImgI2CRead(uint16_t addr) {
         const ImgI2CStatusResp resp = imgI2C(false, addr, 0);
         Assert(!resp.err());
         return resp.readData();
     }
     
-    void imgI2CWrite(uint16_t addr, uint16_t val) {
+    static void ImgI2CWrite(uint16_t addr, uint16_t val) {
         const ImgI2CStatusResp resp = imgI2C(false, addr, 0);
         Assert(!resp.err());
     }
     
-    ImgI2CStatusResp imgI2CStatus() {
+    static ImgI2CStatusResp ImgI2CStatus() {
         ImgI2CStatusResp resp;
         Transfer(ImgI2CStatusMsg(), &resp);
         return resp;
@@ -385,36 +372,34 @@ public:
     
     #pragma mark - SD
     
-    void sdWriteImage(uint16_t idx) {
-        constexpr uint32_t ImgSDBlockLen = SDCard::CeilToBlockLen(MDC::ImgLen);
-        const uint32_t addr = idx*ImgSDBlockLen;
-        _sd.writeStart(addr, ImgSDBlockLen);
+    static SDStatusResp SDSendCmd(
+        uint8_t sdCmd,
+        uint32_t sdArg,
+        SDSendCmdMsg::RespType respType      = SDSendCmdMsg::RespType::Len48,
+        SDSendCmdMsg::DatInType datInType    = SDSendCmdMsg::DatInType::None
+    ) {
+        Transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
         
-        // Clock out the image on the DAT lines
-        ICE40::Transfer(ImgReadoutMsg(0));
-        
-        // Wait for writing to finish
-        for (;;) {
-            auto status = _sd.status();
-            if (status.datOutDone()) {
-                Assert(!status.datOutCRCErr());
-                break;
-            }
-            // Busy
+        // Wait for command to be sent
+        const uint16_t MaxAttempts = 1000;
+        for (uint16_t i=0; i<MaxAttempts; i++) {
+            if (i >= 10) SleepMs(1);
+            auto s = status();
+            // Try again if the command hasn't been sent yet
+            if (!s.cmdDone()) continue;
+            // Try again if we expect a response but it hasn't been received yet
+            if ((respType==SDRespType::Len48||respType==SDRespType::Len136) && !s.respDone()) continue;
+            // Try again if we expect DatIn but it hasn't been received yet
+            if (datInType==SDDatInType::Len512x1 && !s.datInDone()) continue;
+            return s;
         }
-        
-        _sd.writeStop();
-        
-        // Wait for SD card to indicate that it's ready (DAT0=1)
-        for (;;) {
-            auto status = _sd.status();
-            if (status.dat0Idle()) break;
-        }
+        // Timeout sending SD command
+        abort();
     }
     
-    ICE40::SDStatusResp sdStatus() {
-        _SDStatusResp resp;
-        ICE40::Transfer(_SDStatusMsg(), &resp);
+    static SDStatusResp SDStatus() {
+        SDStatusResp resp;
+        Transfer(SDStatusMsg(), &resp);
         return resp;
     }
     
