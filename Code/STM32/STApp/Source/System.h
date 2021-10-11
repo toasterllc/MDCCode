@@ -42,7 +42,6 @@ private:
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
     
-    ICE40 _ice;
     SDCard _sd;
     
     BufQueue<2> _bufs;

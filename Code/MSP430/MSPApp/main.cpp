@@ -8,26 +8,6 @@
 #include "SDCard.h"
 #include "ImgSensor.h"
 
-using EchoMsg = ICE40::EchoMsg;
-using EchoResp = ICE40::EchoResp;
-using LEDSetMsg = ICE40::LEDSetMsg;
-using SDInitMsg = ICE40::SDInitMsg;
-using SDSendCmdMsg = ICE40::SDSendCmdMsg;
-using SDStatusMsg = ICE40::SDStatusMsg;
-using SDStatusResp = ICE40::SDStatusResp;
-using ImgResetMsg = ICE40::ImgResetMsg;
-using ImgSetHeaderMsg = ICE40::ImgSetHeaderMsg;
-using ImgCaptureMsg = ICE40::ImgCaptureMsg;
-using ImgReadoutMsg = ICE40::ImgReadoutMsg;
-using ImgI2CTransactionMsg = ICE40::ImgI2CTransactionMsg;
-using ImgI2CStatusMsg = ICE40::ImgI2CStatusMsg;
-using ImgI2CStatusResp = ICE40::ImgI2CStatusResp;
-using ImgCaptureStatusMsg = ICE40::ImgCaptureStatusMsg;
-using ImgCaptureStatusResp = ICE40::ImgCaptureStatusResp;
-
-using SDRespType = ICE40::SDSendCmdMsg::RespType;
-using SDDatInType = ICE40::SDSendCmdMsg::DatInType;
-
 constexpr uint64_t MCLKFreqHz = 16000000;
 
 #define _delayUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
@@ -240,11 +220,11 @@ void _sd_writeImage(uint16_t idx) {
     _sd.writeStart(addr, ImgSDBlockLen);
     
     // Clock out the image on the DAT lines
-    ICE40::Transfer(ImgReadoutMsg(0));
+    ICE40::Transfer(ICE40::ImgReadoutMsg(0));
     
     // Wait for writing to finish
     for (;;) {
-        auto status = _sd.status();
+        auto status = ICE40::SDStatus();
         if (status.datOutDone()) {
             Assert(!status.datOutCRCErr());
             break;
@@ -256,7 +236,7 @@ void _sd_writeImage(uint16_t idx) {
     
     // Wait for SD card to indicate that it's ready (DAT0=1)
     for (;;) {
-        auto status = _sd.status();
+        auto status = ICE40::SDStatus();
         if (status.dat0Idle()) break;
     }
 }
@@ -299,7 +279,7 @@ int main() {
     // Init system (clock, pins, etc)
     _sys_init();
     // Init ICE40
-    ICE40::init();
+    ICE40::Init();
     // Initialize image sensor
     ImgSensor::Init();
     // Initialize SD card
@@ -308,7 +288,7 @@ int main() {
     ImgSensor::SetStreamEnabled(true);
     
     for (int i=0; i<10; i++) {
-        ICE40::Transfer(LEDSetMsg(i));
+        ICE40::Transfer(ICE40::LEDSetMsg(i));
         
         // Capture an image to RAM
         ICE40::ImgCapture();
