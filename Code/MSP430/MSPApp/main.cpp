@@ -180,8 +180,6 @@ static void _sys_init() {
 
 #pragma mark - ICE40
 
-ICE40 _ice;
-
 void ICE40::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & ICE40::MsgType::Resp));
     
@@ -265,8 +263,6 @@ void _sd_writeImage(uint16_t idx) {
 
 #pragma mark - Image Sensor
 
-ImgSensor _img;
-
 void _img_setPowerEnabled(bool en) {
     constexpr uint16_t VDD_1V9_IMG_EN = BIT0;
     constexpr uint16_t VDD_2V8_IMG_EN = BIT2;
@@ -286,15 +282,15 @@ void ImgSensor::Reset() {
     // Power on
     _img_setPowerEnabled(true);
     // Toggle IMG_RST_
-    _ice.imgReset();
+    ICE40::ImgReset();
 }
 
 uint16_t ImgSensor::I2CRead(uint16_t addr) {
-    return _ice.imgI2CRead(addr);
+    return ICE40::ImgI2CRead(addr);
 }
 
 void ImgSensor::I2CWrite(uint16_t addr, uint16_t val) {
-    _ice.imgI2CWrite(addr, val);
+    ICE40::ImgI2CWrite(addr, val);
 }
 
 #pragma mark - Main
@@ -303,19 +299,19 @@ int main() {
     // Init system (clock, pins, etc)
     _sys_init();
     // Init ICE40
-    _ice.init();
+    ICE40::init();
     // Initialize image sensor
-    _img.init();
+    ImgSensor::Init();
     // Initialize SD card
     _sd.init();
     // Enable image streaming
-    _img.setStreamEnabled(true);
+    ImgSensor::SetStreamEnabled(true);
     
     for (int i=0; i<10; i++) {
         ICE40::Transfer(LEDSetMsg(i));
         
         // Capture an image to RAM
-        _ice.imgCapture();
+        ICE40::ImgCapture();
         // Write the image to the SD card
         _sd_writeImage(i);
         _delayMs(1000);
