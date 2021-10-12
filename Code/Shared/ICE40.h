@@ -201,10 +201,10 @@ public:
     };
     
     struct ImgCaptureStatusResp : Resp {
-        bool done() const               { return getBit(63);        }
-        uint32_t wordCount() const      { return getBits(62,39);    }
-        uint32_t highlightCount() const { return getBits(38,21);    }
-        uint32_t shadowCount() const    { return getBits(20,3);     }
+        bool done() const               { return getBit(63);                }
+        uint32_t wordCount() const      { return (uint32_t)getBits(62,39);  }
+        uint32_t highlightCount() const { return (uint32_t)getBits(38,21);  }
+        uint32_t shadowCount() const    { return (uint32_t)getBits(20,3);   }
     };
     
     struct ImgReadoutMsg : Msg {

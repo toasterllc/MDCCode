@@ -108,13 +108,13 @@ void System::_usbCmd_task() {
         }
         
         switch (_cmd.op) {
-        case Op::Bootloader:    _bootloader();              break;
-        case Op::SDRead:        _sdReadTask.start();        break;
-        case Op::ImgI2C:        _imgI2CTask.start();        break;
-        case Op::ImgCapture:    _imgCaptureTask.start();    break;
-        case Op::LEDSet:        _ledSet();                  break;
+        case Op::Bootloader:        _bootloader();              break;
+        case Op::SDRead:            _sdReadTask.start();        break;
+        case Op::ImgSetExposure:    _img_setExposure();         break;
+        case Op::ImgCapture:        _imgCaptureTask.start();    break;
+        case Op::LEDSet:            _ledSet();                  break;
         // Bad command
-        default:                _usb.cmdAccept(false);      break;
+        default:                    _usb.cmdAccept(false);      break;
         }
     }
 }
@@ -391,30 +391,19 @@ void Img::Sensor::SetPowerEnabled(bool en) {
     HAL_Delay(2);
 }
 
-void _img_init() {
+void System::_img_init() {
     if (_imgInit) return;
     Img::Sensor::Init();
     _imgInit = true;
 }
 
-void System::_img_i2cTask() {
-    static ImgI2CStatus status = {};
-    const auto& arg = _cmd.arg.ImgI2C;
-    
-    TaskBegin();
+void System::_img_setExposure() {
+    const auto& arg = _cmd.arg.ImgSetExposure;
     _usb.cmdAccept(true);
     _img_init();
-    
-    {
-        const ImgI2CStatusResp s = ICE40::ImgI2C(arg.write, arg.addr, arg.val);
-        status.ok = !s.err();
-        status.readData = s.readData();
-    }
-    
-    {
-        _usb.send(Endpoints::DataIn, &status, sizeof(status));
-        TaskWait(_usb.ready(Endpoints::DataIn));
-    }
+    Img::Sensor::SetCoarseIntegrationTime(arg.coarseIntTime);
+    Img::Sensor::SetFineIntegrationTime(arg.fineIntTime);
+    Img::Sensor::SetGain(arg.gain);
 }
 
 void System::_img_captureTask() {

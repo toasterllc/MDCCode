@@ -14,7 +14,7 @@ namespace STApp {
         Reset,
         Bootloader,
         SDRead,
-        ImgI2C,
+        ImgSetExposure,
         ImgCapture,
         LEDSet,
     };
@@ -27,11 +27,10 @@ namespace STApp {
             } SDRead;
             
             struct __attribute__((packed)) {
-                uint8_t write;
-                uint8_t _pad;
-                uint16_t addr;
-                uint16_t val;
-            } ImgI2C;
+                uint16_t coarseIntTime;
+                uint16_t fineIntTime;
+                uint16_t gain;
+            } ImgSetExposure;
             
             struct __attribute__((packed)) {
             } ImgCapture;
@@ -51,11 +50,5 @@ namespace STApp {
         uint32_t wordCount;
         uint32_t highlightCount;
         uint32_t shadowCount;
-    } __attribute__((packed));
-    
-    struct ImgI2CStatus {
-        uint8_t ok;
-        uint8_t _pad;
-        uint16_t readData;
     } __attribute__((packed));
 }
