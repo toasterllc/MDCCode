@@ -54,8 +54,11 @@
 		55B2152D27091004001423C1 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mod.h; sourceTree = "<group>"; };
 		55B2152E27091004001423C1 /* Interp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Interp.h; sourceTree = "<group>"; };
 		55B2152F27091004001423C1 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
-		55B2153127091044001423C1 /* MDCTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCTypes.h; sourceTree = "<group>"; };
 		55B2153327091044001423C1 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
+		55B66B3F271525F800AD39A5 /* Img.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Img.h; sourceTree = "<group>"; };
+		55B66B40271525F800AD39A5 /* SD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SD.h; sourceTree = "<group>"; };
+		55B66B412715274200AD39A5 /* ImgSensor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgSensor.h; sourceTree = "<group>"; };
+		55B66B422715286A00AD39A5 /* SDCard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SDCard.h; sourceTree = "<group>"; };
 		55CAD61E26AF7B5B00450881 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		55CAD61F26AF7B5B00450881 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
 		55CAD62026AF7B5B00450881 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
@@ -138,8 +141,11 @@
 			children = (
 				55D08210270BAC6500B9BB97 /* ChecksumFletcher32.h */,
 				55B2153327091044001423C1 /* Assert.h */,
-				55B2153127091044001423C1 /* MDCTypes.h */,
 				55D082382714C58400B9BB97 /* ICE40.h */,
+				55B66B3F271525F800AD39A5 /* Img.h */,
+				55B66B412715274200AD39A5 /* ImgSensor.h */,
+				55B66B40271525F800AD39A5 /* SD.h */,
+				55B66B422715286A00AD39A5 /* SDCard.h */,
 			);
 			name = Shared;
 			path = ../../Code/Shared;

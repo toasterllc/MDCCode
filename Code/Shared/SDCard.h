@@ -2,8 +2,11 @@
 #include "ICE40.h"
 #include "Assert.h"
 #include "SleepMs.h"
+#include "SD.h"
 
-class SDCard {
+namespace SD {
+
+class Card {
 public:
     // Functions provided by client
     static void SetPowerEnabled(bool en);
@@ -11,13 +14,6 @@ public:
     // Values provided by client
     static const uint8_t ClkDelaySlow;
     static const uint8_t ClkDelayFast;
-    
-    // BlockLen: block size of SD card
-    static constexpr uint32_t BlockLen = 512;
-    
-    static constexpr uint32_t CeilToBlockLen(uint32_t len) {
-        return ((len+BlockLen-1)/BlockLen)*BlockLen;
-    }
     
     void init() {
         // Disable SDController clock
@@ -334,7 +330,7 @@ public:
             // CMD23
             {
                 // Round up to the nearest block size, with a minimum of 1 block
-                const uint32_t blockCount = std::min(UINT32_C(1), CeilToBlockLen(lenEst));
+                const uint32_t blockCount = std::min(UINT32_C(1), SD::CeilToBlockLen(lenEst));
                 auto status = ICE40::SDSendCmd(_CMD23, blockCount);
                 Assert(!status.respCRCErr());
             }
@@ -356,7 +352,7 @@ public:
     }
     
     void writeImage(uint16_t idx) {
-        constexpr uint32_t ImgSDBlockLen = CeilToBlockLen(MDC::ImgLen);
+        constexpr uint32_t ImgSDBlockLen = SD::CeilToBlockLen(Img::Len);
         const uint32_t addr = idx*ImgSDBlockLen;
         writeStart(addr, ImgSDBlockLen);
         
@@ -412,3 +408,5 @@ private:
     
     uint16_t _rca = 0;
 };
+
+} // namespace SD

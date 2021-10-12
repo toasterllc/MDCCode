@@ -25,22 +25,20 @@ public:
     
     void reset() {
         using namespace STApp;
-        Cmd cmd = { .op = Op::Reset };
+        const Cmd cmd = { .op = Op::Reset };
         _dev.vendorRequestOut(0, cmd);
         _flushEndpoint(Endpoints::DataIn);
     }
     
     void bootloader() {
         using namespace STApp;
-        Cmd cmd = {
-            .op = Op::Bootloader,
-        };
+        const Cmd cmd = { .op = Op::Bootloader };
         _dev.vendorRequestOut(0, cmd);
     }
     
     void sdRead(uint32_t addr) {
         using namespace STApp;
-        Cmd cmd = {
+        const Cmd cmd = {
             .op = Op::SDRead,
             .arg = {
                 .SDRead = {
@@ -52,17 +50,41 @@ public:
         _flushEndpoint(Endpoints::DataIn);
     }
     
+    void imgReset() {
+        using namespace STApp;
+        const Cmd cmd = { .op = Op::ImgReset };
+        _dev.vendorRequestOut(0, cmd);
+    }
+    
+    uint16_t imgI2C(bool write, uint16_t addr, uint16_t val) {
+        using namespace STApp;
+        const Cmd cmd = {
+            .op = Op::ImgI2C,
+            .arg = {
+                .ImgI2C = {
+                    .write = write,
+                    .addr = addr,
+                    .val = val,
+                },
+            },
+        };
+        _dev.vendorRequestOut(0, cmd);
+        
+        ImgI2CStatus status;
+        _dev.read(STApp::Endpoints::DataIn, status);
+        if (!status.ok) throw std::runtime_error("I2C transaction failed");
+        return status.readData;
+    }
+    
     void imgCapture() {
         using namespace STApp;
-        Cmd cmd = {
-            .op = Op::ImgCapture,
-        };
+        const Cmd cmd = { .op = Op::ImgCapture };
         _dev.vendorRequestOut(0, cmd);
     }
     
     void ledSet(uint8_t idx, bool on) {
         using namespace STApp;
-        Cmd cmd = {
+        const Cmd cmd = {
             .op = Op::LEDSet,
             .arg = {
                 .LEDSet = {

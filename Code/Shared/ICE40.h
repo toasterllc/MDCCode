@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "Assert.h"
 #include "SleepMs.h"
-#include "MDCTypes.h"
+#include "Img.h"
 
 class ICE40 {
 public:
@@ -291,7 +291,7 @@ public:
     }
     
     static void ImgCapture() {
-        const MDC::ImgHeader header = {
+        const Img::Header header = {
             // Section idx=0
             .version        = 0x4242,
             .imageWidth     = 2304,
@@ -325,7 +325,7 @@ public:
             // Try again if the image hasn't been captured yet
             if (!status.done()) continue;
             const uint32_t imgWordCount = status.wordCount();
-            Assert(imgWordCount == MDC::ImgLen/sizeof(uint16_t));
+            Assert(imgWordCount == Img::Len/sizeof(Img::Word));
             return;
         }
         // Timeout capturing image

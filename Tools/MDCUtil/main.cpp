@@ -5,9 +5,11 @@
 #include <cstring>
 #include "STAppTypes.h"
 #include "MDCDevice.h"
-#include "MDCTypes.h"
 #include "Toastbox/RuntimeError.h"
 #include "ChecksumFletcher32.h"
+#include "Img.h"
+#include "ImgSensor.h"
+#include "SD.h"
 
 using CmdStr = std::string;
 const CmdStr BootloaderCmd  = "Bootloader";
@@ -86,21 +88,23 @@ static void bootloader(const Args& args, MDCDevice& device) {
     printf("-> OK\n\n");
 }
 
+constexpr size_t ImgSDLen = SD::CeilToBlockLen(Img::Len);
+
 static std::unique_ptr<uint8_t[]> _readoutImg(MDCDevice& device) {
     constexpr size_t BufCap = 8*1024*1024;
-    static_assert(BufCap >= MDC::ImgLen);
+    static_assert(BufCap >= ImgSDLen);
     std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
     
     printf("Reading image...\n");
     const size_t len = device.readout(buf.get(), BufCap);
-    if (len < MDC::ImgLen) {
-        throw RuntimeError("expected at least 0x%jx bytes, but only got 0x%jx bytes", (uintmax_t)MDC::ImgLen, (uintmax_t)len);
+    if (len < Img::Len) {
+        throw RuntimeError("expected at least 0x%jx bytes, but only got 0x%jx bytes", (uintmax_t)Img::Len, (uintmax_t)len);
     }
     
     // Validate checksum
-    const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), MDC::ImgChecksumOffset);
+    const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), Img::ChecksumOffset);
     uint32_t checksumGot = 0;
-    memcpy(&checksumGot, (uint8_t*)buf.get()+MDC::ImgChecksumOffset, sizeof(checksumGot));
+    memcpy(&checksumGot, (uint8_t*)buf.get()+Img::ChecksumOffset, sizeof(checksumGot));
     if (checksumGot != checksumExpected) {
         throw RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
     }
@@ -110,11 +114,11 @@ static std::unique_ptr<uint8_t[]> _readoutImg(MDCDevice& device) {
 
 static void sdImgRead(const Args& args, MDCDevice& device) {
     printf("Sending SDRead command...\n");
-    device.sdRead(args.sdImgRead.idx*MDC::SDImgLen);
+    device.sdRead(args.sdImgRead.idx*ImgSDLen);
     printf("-> OK\n\n");
     
     constexpr size_t BufCap = 8*1024*1024;
-    static_assert(BufCap >= MDC::ImgLen);
+    static_assert(BufCap >= Img::Len);
     std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
     
     printf("Reading image...\n");
@@ -125,11 +129,24 @@ static void sdImgRead(const Args& args, MDCDevice& device) {
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     f.open(args.sdImgRead.filePath.c_str());
-    f.write((char*)img.get(), MDC::ImgLen);
-    printf("-> Wrote %ju bytes\n", (uintmax_t)MDC::ImgLen);
+    f.write((char*)img.get(), Img::Len);
+    printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Len);
+}
+
+void Img::Sensor::Reset() {
+}
+
+uint16_t Img::Sensor::I2CRead(uint16_t addr) {
+    return 0;
+}
+
+void Img::Sensor::I2CWrite(uint16_t addr, uint16_t val) {
+    
 }
 
 static void imgCapture(const Args& args, MDCDevice& device) {
+    
+    
     printf("Sending ImgCapture command...\n");
     device.imgCapture();
     printf("-> OK\n\n");
@@ -142,8 +159,8 @@ static void imgCapture(const Args& args, MDCDevice& device) {
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     f.open(args.sdImgRead.filePath.c_str());
-    f.write((char*)img.get(), MDC::ImgLen);
-    printf("-> Wrote %ju bytes\n", (uintmax_t)MDC::ImgLen);
+    f.write((char*)img.get(), Img::Len);
+    printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Len);
 }
 
 static void ledSet(const Args& args, MDCDevice& device) {

@@ -303,7 +303,7 @@ void System::_msp_init() {
 
 #pragma mark - SD Card
 
-void SDCard::SetPowerEnabled(bool en) {
+void SD::Card::SetPowerEnabled(bool en) {
     constexpr uint16_t BITB         = 1<<0xB;
     constexpr uint16_t VDD_SD_EN    = BITB;
     constexpr uint16_t PADIRAddr    = 0x0204;
@@ -323,8 +323,8 @@ void SDCard::SetPowerEnabled(bool en) {
     HAL_Delay(2);
 }
 
-const uint8_t SDCard::ClkDelaySlow = 7;
-const uint8_t SDCard::ClkDelayFast = 0;
+const uint8_t SD::Card::ClkDelaySlow = 7;
+const uint8_t SD::Card::ClkDelayFast = 0;
 
 void System::_sd_readTask() {
     static bool init = false;
