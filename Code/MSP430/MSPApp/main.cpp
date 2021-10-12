@@ -10,8 +10,8 @@
 
 constexpr uint64_t MCLKFreqHz = 16000000;
 
-#define _delayUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
-#define _delayMs(ms) __delay_cycles((((uint64_t)ms)*MCLKFreqHz) / 1000)
+#define _sleepUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
+#define _sleepMs(ms) __delay_cycles((((uint64_t)ms)*MCLKFreqHz) / 1000)
 
 #pragma mark - System
 
@@ -68,7 +68,7 @@ static void _spi_init() {
         PASEL0 &= ~BIT6;
         
         PAOUT  |=  BIT6;
-        _delayUs(ICE40SPIResetDurationUs);
+        _sleepUs(ICE40SPIResetDurationUs);
         PAOUT  &= ~BIT6;
     }
     
@@ -211,46 +211,19 @@ void SDCard::SetPowerEnabled(bool en) {
     }
     
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    _delayMs(2);
-}
-
-void _sd_writeImage(uint16_t idx) {
-    constexpr uint32_t ImgSDBlockLen = SDCard::CeilToBlockLen(MDC::ImgLen);
-    const uint32_t addr = idx*ImgSDBlockLen;
-    _sd.writeStart(addr, ImgSDBlockLen);
-    
-    // Clock out the image on the DAT lines
-    ICE40::Transfer(ICE40::ImgReadoutMsg(0));
-    
-    // Wait for writing to finish
-    for (;;) {
-        auto status = ICE40::SDStatus();
-        if (status.datOutDone()) {
-            Assert(!status.datOutCRCErr());
-            break;
-        }
-        // Busy
-    }
-    
-    _sd.writeStop();
-    
-    // Wait for SD card to indicate that it's ready (DAT0=1)
-    for (;;) {
-        auto status = ICE40::SDStatus();
-        if (status.dat0Idle()) break;
-    }
+    _sleepMs(2);
 }
 
 #pragma mark - Image Sensor
 
-void _img_setPowerEnabled(bool en) {
+static void _img_setPowerEnabled(bool en) {
     constexpr uint16_t VDD_1V9_IMG_EN = BIT0;
     constexpr uint16_t VDD_2V8_IMG_EN = BIT2;
     PADIR |=  VDD_2V8_IMG_EN|VDD_1V9_IMG_EN;
     
     if (en) {
         PAOUT |=  VDD_2V8_IMG_EN;
-        _delayUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        _sleepUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         PAOUT |=  VDD_1V9_IMG_EN;
     } else {
         // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
@@ -293,8 +266,8 @@ int main() {
         // Capture an image to RAM
         ICE40::ImgCapture();
         // Write the image to the SD card
-        _sd_writeImage(i);
-        _delayMs(1000);
+        _sd.writeImage(i);
+        _sleepMs(1000);
     }
     
     for (;;);

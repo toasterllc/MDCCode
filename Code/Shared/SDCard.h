@@ -355,6 +355,33 @@ public:
         _readWriteStop();
     }
     
+    void writeImage(uint16_t idx) {
+        constexpr uint32_t ImgSDBlockLen = CeilToBlockLen(MDC::ImgLen);
+        const uint32_t addr = idx*ImgSDBlockLen;
+        writeStart(addr, ImgSDBlockLen);
+        
+        // Clock out the image on the DAT lines
+        ICE40::Transfer(ICE40::ImgReadoutMsg(0));
+        
+        // Wait for writing to finish
+        for (;;) {
+            auto status = ICE40::SDStatus();
+            if (status.datOutDone()) {
+                Assert(!status.datOutCRCErr());
+                break;
+            }
+            // Busy
+        }
+        
+        writeStop();
+        
+        // Wait for SD card to indicate that it's ready (DAT0=1)
+        for (;;) {
+            auto status = ICE40::SDStatus();
+            if (status.dat0Idle()) break;
+        }
+    }
+    
 private:
     using _SDInitMsg        = ICE40::SDInitMsg;
     using _RespType         = ICE40::SDSendCmdMsg::RespType;

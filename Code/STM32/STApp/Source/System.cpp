@@ -204,16 +204,15 @@ static QSPI_CommandTypeDef _ice_qspiCmdReadOnly(size_t len) {
 }
 
 void ICE40::Transfer(const Msg& msg, Resp* resp) {
-    System::_ICE_ST_SPI_CS_::Write(0);
-    
     AssertArg((bool)resp == (bool)(msg.type & ICE40::MsgType::Resp));
+    
+    System::_ICE_ST_SPI_CS_::Write(0);
     if (resp) {
         Sys._qspi.read(_ice_qspiCmd(msg, sizeof(*resp)), resp, sizeof(*resp));
     } else {
         Sys._qspi.command(_ice_qspiCmd(msg, 0));
     }
     Sys._qspi.wait();
-    
     System::_ICE_ST_SPI_CS_::Write(1);
 }
 
