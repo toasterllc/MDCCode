@@ -215,7 +215,7 @@ void SD::Card::SetPowerEnabled(bool en) {
 
 #pragma mark - Image Sensor
 
-static void _img_setPowerEnabled(bool en) {
+void Img::Sensor::SetPowerEnabled() {
     constexpr uint16_t VDD_1V9_IMG_EN = BIT0;
     constexpr uint16_t VDD_2V8_IMG_EN = BIT2;
     PADIR |=  VDD_2V8_IMG_EN|VDD_1V9_IMG_EN;
@@ -228,21 +228,6 @@ static void _img_setPowerEnabled(bool en) {
         // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
         PAOUT &= ~(VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
     }
-}
-
-void Img::Sensor::Reset() {
-    // Power on
-    _img_setPowerEnabled(true);
-    // Toggle IMG_RST_
-    ICE40::ImgReset();
-}
-
-uint16_t Img::Sensor::I2CRead(uint16_t addr) {
-    return ICE40::ImgI2CRead(addr);
-}
-
-void Img::Sensor::I2CWrite(uint16_t addr, uint16_t val) {
-    ICE40::ImgI2CWrite(addr, val);
 }
 
 #pragma mark - Main
