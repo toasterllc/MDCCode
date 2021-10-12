@@ -340,7 +340,7 @@ public:
     }
     
     static ImgI2CStatusResp ImgI2C(bool write, uint16_t addr, uint16_t val) {
-        Transfer(ImgI2CTransactionMsg(write, 2, addr, 0));
+        Transfer(ImgI2CTransactionMsg(write, 2, addr, val));
         
         // Wait for the I2C transaction to complete
         const uint32_t MaxAttempts = 1000;
@@ -361,7 +361,7 @@ public:
     }
     
     static void ImgI2CWrite(uint16_t addr, uint16_t val) {
-        const ImgI2CStatusResp resp = ImgI2C(false, addr, 0);
+        const ImgI2CStatusResp resp = ImgI2C(true, addr, val);
         Assert(!resp.err());
     }
     
