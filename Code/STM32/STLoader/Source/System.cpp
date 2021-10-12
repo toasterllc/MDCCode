@@ -82,7 +82,7 @@ void System::_usbCmd_task() {
         // Specially handle the Reset command -- it's the only command that doesn't
         // require the endpoints to be ready.
         if (_cmd.op == Op::ResetEndpoints) {
-            _resetEndpoints.task.reset();
+            _resetEndpoints.task.start();
             continue;
         }
         
@@ -94,17 +94,17 @@ void System::_usbCmd_task() {
         
         switch (_cmd.op) {
         // STM32 Bootloader
-        case Op::STMWrite:      _stm.task.reset();      break;
+        case Op::STMWrite:      _stm.task.start();      break;
         case Op::STMReset:      _stm_reset();           break;
         // ICE40 Bootloader
-        case Op::ICEWrite:      _ice.task.reset();      break;
+        case Op::ICEWrite:      _ice.task.start();      break;
         // MSP430 Bootloader
         case Op::MSPConnect:    _msp_connect();         break;
         case Op::MSPDisconnect: _msp_disconnect();      break;
         // MSP430 Debug
-        case Op::MSPRead:       _mspRead.task.reset();  break;
-        case Op::MSPWrite:      _mspWrite.task.reset(); break;
-        case Op::MSPDebug:      _mspDebug.task.reset(); break;
+        case Op::MSPRead:       _mspRead.task.start();  break;
+        case Op::MSPWrite:      _mspWrite.task.start(); break;
+        case Op::MSPDebug:      _mspDebug.task.start(); break;
         // Set LED
         case Op::LEDSet:        _ledSet();              break;
         // Bad command
@@ -306,7 +306,7 @@ void System::_ice_task() {
     // Reset state
     _bufs.reset();
     // Trigger the USB DataOut task with the amount of data
-    _usbDataOut.task.reset();
+    _usbDataOut.task.start();
     _usbDataOut.len = arg.len;
     
     while (arg.len) {
@@ -387,7 +387,7 @@ void System::_mspRead_task() {
     _bufs.reset();
     
     // Start the USB DataIn task
-    _usbDataIn.task.reset();
+    _usbDataIn.task.start();
     
     while (arg.len) {
         TaskWait(!_bufs.full());
@@ -422,7 +422,7 @@ void System::_mspWrite_task() {
     _msp.crcReset();
     
     // Trigger the USB DataOut task with the amount of data
-    _usbDataOut.task.reset();
+    _usbDataOut.task.start();
     _usbDataOut.len = arg.len;
     
     while (arg.len) {
