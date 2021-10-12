@@ -42,7 +42,7 @@ private:
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
     
-    SDCard _sd;
+    SD::Card _sd;
     
     BufQueue<2> _bufs;
     STApp::Cmd _cmd = {};
@@ -73,7 +73,7 @@ private:
     friend void ISR_DMA2_Stream7();
     
     friend class ICE40;
-    friend class SDCard;
+    friend class SD::Card;
     
     using _super = SystemBase<System>;
     friend class SystemBase<System>;

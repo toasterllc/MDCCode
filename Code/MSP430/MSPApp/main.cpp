@@ -3,9 +3,8 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <cstddef>
-#include "MDCTypes.h"
-#include "ICE40.h"
 #include "SDCard.h"
+#include "ICE40.h"
 #include "ImgSensor.h"
 
 constexpr uint64_t MCLKFreqHz = 16000000;
@@ -196,11 +195,11 @@ void ICE40::Transfer(const Msg& msg, Resp* resp) {
 
 #pragma mark - SD Card
 
-SDCard _sd;
-const uint8_t SDCard::ClkDelaySlow = 7;
-const uint8_t SDCard::ClkDelayFast = 0;
+SD::Card _sd;
+const uint8_t SD::Card::ClkDelaySlow = 7;
+const uint8_t SD::Card::ClkDelayFast = 0;
 
-void SDCard::SetPowerEnabled(bool en) {
+void SD::Card::SetPowerEnabled(bool en) {
     constexpr uint16_t VDD_SD_EN = BITB;
     if (en) {
         PADIR |=  VDD_SD_EN;
@@ -231,18 +230,18 @@ static void _img_setPowerEnabled(bool en) {
     }
 }
 
-void ImgSensor::Reset() {
+void Img::Sensor::Reset() {
     // Power on
     _img_setPowerEnabled(true);
     // Toggle IMG_RST_
     ICE40::ImgReset();
 }
 
-uint16_t ImgSensor::I2CRead(uint16_t addr) {
+uint16_t Img::Sensor::I2CRead(uint16_t addr) {
     return ICE40::ImgI2CRead(addr);
 }
 
-void ImgSensor::I2CWrite(uint16_t addr, uint16_t val) {
+void Img::Sensor::I2CWrite(uint16_t addr, uint16_t val) {
     ICE40::ImgI2CWrite(addr, val);
 }
 
@@ -254,11 +253,11 @@ int main() {
     // Init ICE40
     ICE40::Init();
     // Initialize image sensor
-    ImgSensor::Init();
+    Img::Sensor::Init();
     // Initialize SD card
     _sd.init();
     // Enable image streaming
-    ImgSensor::SetStreamEnabled(true);
+    Img::Sensor::SetStreamEnabled(true);
     
     for (int i=0; i<10; i++) {
         ICE40::Transfer(ICE40::LEDSetMsg(i));

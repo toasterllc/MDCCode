@@ -1,7 +1,10 @@
 #pragma once
 #include "SleepMs.h"
+#include "Assert.h"
 
-class ImgSensor {
+namespace Img {
+
+class Sensor {
 public:
     // Functions provided by client
     static void Reset();
@@ -230,3 +233,5 @@ public:
     }
 
 };
+
+} // namespace Img

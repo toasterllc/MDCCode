@@ -1,11 +1,12 @@
 #pragma once
 #include <cstdint>
 
-namespace MDC {
+namespace Img {
     
-    using ImgPixel = uint16_t;
+    using Word  = uint16_t;
+    using Pixel = Word;
     
-    struct ImgHeader {
+    struct Header {
         // Section idx=0
         uint16_t version        = 0;    // 0x4242
         uint16_t imageWidth     = 0;    // 0x0900
@@ -23,13 +24,13 @@ namespace MDC {
         uint32_t _pad3          = 0;    // 0x00000000
     } __attribute__((packed));
     
-    constexpr uint32_t ImgHeaderLen         = sizeof(ImgHeader);
-    constexpr uint32_t ImgPixelWidth        = 2304;
-    constexpr uint32_t ImgPixelHeight       = 1296;
-    constexpr uint32_t ImgPixelCount        = ImgPixelWidth*ImgPixelHeight;
-    constexpr uint32_t ImgPixelLen          = ImgPixelCount*sizeof(ImgPixel);
-    constexpr uint32_t ImgChecksumLen       = sizeof(uint32_t);
-    constexpr uint32_t ImgLen               = ImgHeaderLen + ImgPixelLen + ImgChecksumLen;
-    constexpr uint32_t ImgChecksumOffset    = ImgLen-ImgChecksumLen;
+    constexpr uint32_t HeaderLen        = sizeof(Header);
+    constexpr uint32_t PixelWidth       = 2304;
+    constexpr uint32_t PixelHeight      = 1296;
+    constexpr uint32_t PixelCount       = PixelWidth*PixelHeight;
+    constexpr uint32_t PixelLen         = PixelCount*sizeof(Pixel);
+    constexpr uint32_t ChecksumLen      = sizeof(uint32_t);
+    constexpr uint32_t Len              = HeaderLen + PixelLen + ChecksumLen;
+    constexpr uint32_t ChecksumOffset   = Len-ChecksumLen;
 
-} // namespace MDC
+} // namespace Img
