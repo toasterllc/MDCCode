@@ -6,6 +6,7 @@
 #include "STAppTypes.h"
 #include "SDCard.h"
 #include "Toastbox/Task.h"
+#include "ImgSensor.h"
 
 class System : public SystemBase<System> {
 public:
@@ -29,7 +30,7 @@ private:
     
     void _sd_readTask();
     
-    void _img_setPowerEnabled(bool en);
+    void _img_init();
     void _img_reset();
     void _img_i2cTask();
     void _img_captureTask();
@@ -47,6 +48,7 @@ private:
     BufQueue<2> _bufs;
     STApp::Cmd _cmd = {};
     std::optional<size_t> _readoutLen;
+    bool _imgInit = false;
     
     // Tasks
     Task _usbCmdTask     = Task([&] { _usbCmd_task();       });
@@ -73,6 +75,7 @@ private:
     friend void ISR_DMA2_Stream7();
     
     friend class ICE40;
+    friend class Img::Sensor;
     friend class SD::Card;
     
     using _super = SystemBase<System>;

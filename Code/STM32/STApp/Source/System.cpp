@@ -110,7 +110,6 @@ void System::_usbCmd_task() {
         switch (_cmd.op) {
         case Op::Bootloader:    _bootloader();              break;
         case Op::SDRead:        _sdReadTask.start();        break;
-        case Op::ImgReset:      _img_reset();               break;
         case Op::ImgI2C:        _imgI2CTask.start();        break;
         case Op::ImgCapture:    _imgCaptureTask.start();    break;
         case Op::LEDSet:        _ledSet();                  break;
@@ -365,7 +364,7 @@ void System::_sd_readTask() {
 
 #pragma mark - Img
 
-void System::_img_setPowerEnabled(bool en) {
+void Img::Sensor::SetPowerEnabled(bool en) {
     constexpr uint16_t BIT0             = 1<<0;
     constexpr uint16_t BIT2             = 1<<2;
     constexpr uint16_t VDD_1V9_IMG_EN   = BIT0;
@@ -373,18 +372,18 @@ void System::_img_setPowerEnabled(bool en) {
     constexpr uint16_t PADIRAddr       = 0x0204;
     constexpr uint16_t PAOUTAddr       = 0x0202;
     
-    const uint16_t PADIR = _msp.read(PADIRAddr);
-    const uint16_t PAOUT = _msp.read(PAOUTAddr);
-    _msp.write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V9_IMG_EN));
+    const uint16_t PADIR = Sys._msp.read(PADIRAddr);
+    const uint16_t PAOUT = Sys._msp.read(PAOUTAddr);
+    Sys._msp.write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V9_IMG_EN));
     
     if (en) {
-        _msp.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
+        Sys._msp.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
         HAL_Delay(1); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
-        _msp.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V9_IMG_EN));
+        Sys._msp.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V9_IMG_EN));
     
     } else {
         // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
-        _msp.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V9_IMG_EN));
+        Sys._msp.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V9_IMG_EN));
     }
     
     #warning TODO: measure how long it takes for IMG rails to rise
@@ -392,12 +391,10 @@ void System::_img_setPowerEnabled(bool en) {
     HAL_Delay(2);
 }
 
-void System::_img_reset() {
-    _usb.cmdAccept(true);
-    // Power on
-    _img_setPowerEnabled(true);
-    // Toggle IMG_RST_
-    ICE40::ImgReset();
+void _img_init() {
+    if (_imgInit) return;
+    Img::Sensor::Init();
+    _imgInit = true;
 }
 
 void System::_img_i2cTask() {
@@ -406,6 +403,7 @@ void System::_img_i2cTask() {
     
     TaskBegin();
     _usb.cmdAccept(true);
+    _img_init();
     
     {
         const ImgI2CStatusResp s = ICE40::ImgI2C(arg.write, arg.addr, arg.val);
@@ -423,6 +421,7 @@ void System::_img_captureTask() {
     static ImgCaptureStatus status = {};
     TaskBegin();
     _usb.cmdAccept(true);
+    _img_init();
     
     ICE40::Transfer(ImgCaptureMsg(0));
     
