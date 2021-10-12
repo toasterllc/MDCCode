@@ -334,7 +334,7 @@ public:
             // CMD23
             {
                 // Round up to the nearest block size, with a minimum of 1 block
-                const uint32_t blockCount = std::min(UINT32_C(1), (lenEst+BlockLen-1)/BlockLen);
+                const uint32_t blockCount = std::min(UINT32_C(1), CeilToBlockLen(lenEst));
                 auto status = ICE40::SDSendCmd(_CMD23, blockCount);
                 Assert(!status.respCRCErr());
             }
