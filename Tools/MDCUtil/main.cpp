@@ -133,20 +133,7 @@ static void sdImgRead(const Args& args, MDCDevice& device) {
     printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Len);
 }
 
-void Img::Sensor::Reset() {
-}
-
-uint16_t Img::Sensor::I2CRead(uint16_t addr) {
-    return 0;
-}
-
-void Img::Sensor::I2CWrite(uint16_t addr, uint16_t val) {
-    
-}
-
 static void imgCapture(const Args& args, MDCDevice& device) {
-    
-    
     printf("Sending ImgCapture command...\n");
     device.imgCapture();
     printf("-> OK\n\n");

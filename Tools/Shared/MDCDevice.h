@@ -50,30 +50,19 @@ public:
         _flushEndpoint(Endpoints::DataIn);
     }
     
-    void imgReset() {
-        using namespace STApp;
-        const Cmd cmd = { .op = Op::ImgReset };
-        _dev.vendorRequestOut(0, cmd);
-    }
-    
-    uint16_t imgI2C(bool write, uint16_t addr, uint16_t val) {
+    void imgSetExposure(uint16_t coarseIntTime, uint16_t fineIntTime, uint16_t gain) {
         using namespace STApp;
         const Cmd cmd = {
-            .op = Op::ImgI2C,
+            .op = Op::ImgSetExposure,
             .arg = {
-                .ImgI2C = {
-                    .write = write,
-                    .addr = addr,
-                    .val = val,
+                .ImgSetExposure = {
+                    .coarseIntTime  = coarseIntTime,
+                    .fineIntTime    = fineIntTime,
+                    .gain           = gain,
                 },
             },
         };
         _dev.vendorRequestOut(0, cmd);
-        
-        ImgI2CStatus status;
-        _dev.read(STApp::Endpoints::DataIn, status);
-        if (!status.ok) throw std::runtime_error("I2C transaction failed");
-        return status.readData;
     }
     
     void imgCapture() {

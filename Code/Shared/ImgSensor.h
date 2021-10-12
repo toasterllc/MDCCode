@@ -211,12 +211,12 @@ public:
         ICE40::ImgI2CWrite(0x301A, (en ? 0x10DC : 0x10D8));
     }
     
-    static void SetCoarseIntegrationTime(uint16_t coarseIntTime, uint16_t fineIntTime, uint16_t gain) {
+    static void SetCoarseIntegrationTime(uint16_t coarseIntTime) {
         // Set coarse_integration_time
         ICE40::ImgI2CWrite(0x3012, coarseIntTime);
     }
     
-    static void SetFineIntegrationTime(uint16_t coarseIntTime, uint16_t fineIntTime, uint16_t gain) {
+    static void SetFineIntegrationTime(uint16_t fineIntTime) {
         // Set fine_integration_time
         ICE40::ImgI2CWrite(0x3014, fineIntTime);
     }

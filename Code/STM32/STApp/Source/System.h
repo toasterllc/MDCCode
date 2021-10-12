@@ -31,8 +31,8 @@ private:
     void _sd_readTask();
     
     void _img_init();
+    void _img_setExposure();
     void _img_reset();
-    void _img_i2cTask();
     void _img_captureTask();
     
     void _ledSet();
@@ -56,16 +56,14 @@ private:
     Task _resetTask      = Task([&] { _reset_task();        });
     Task _readoutTask    = Task([&] { _readout_task();      });
     Task _sdReadTask     = Task([&] { _sd_readTask();       });
-    Task _imgI2CTask     = Task([&] { _img_i2cTask();       });
     Task _imgCaptureTask = Task([&] { _img_captureTask();   });
     
-    std::reference_wrapper<Task> _tasks[7] = {
+    std::reference_wrapper<Task> _tasks[6] = {
         _usbCmdTask,
         _usbDataInTask,
         _resetTask,
         _readoutTask,
         _sdReadTask,
-        _imgI2CTask,
         _imgCaptureTask,
     };
     

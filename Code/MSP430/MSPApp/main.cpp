@@ -215,7 +215,7 @@ void SD::Card::SetPowerEnabled(bool en) {
 
 #pragma mark - Image Sensor
 
-void Img::Sensor::SetPowerEnabled() {
+void Img::Sensor::SetPowerEnabled(bool en) {
     constexpr uint16_t VDD_1V9_IMG_EN = BIT0;
     constexpr uint16_t VDD_2V8_IMG_EN = BIT2;
     PADIR |=  VDD_2V8_IMG_EN|VDD_1V9_IMG_EN;
