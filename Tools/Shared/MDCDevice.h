@@ -3,7 +3,6 @@
 #include <chrono>
 #include "Toastbox/USBDevice.h"
 #include "STAppTypes.h"
-#include "TimeInstant.h"
 using namespace std::chrono;
 
 class MDCDevice {
@@ -23,9 +22,9 @@ public:
     MDCDevice(USBDevice&& dev) :
     _dev(std::move(dev)) {}
     
-    void reset() {
+    void resetEndpoints() {
         using namespace STApp;
-        const Cmd cmd = { .op = Op::Reset };
+        const Cmd cmd = { .op = Op::ResetEndpoints };
         _dev.vendorRequestOut(0, cmd);
         _flushEndpoint(Endpoints::DataIn);
     }
@@ -83,10 +82,6 @@ public:
             },
         };
         _dev.vendorRequestOut(0, cmd);
-    }
-    
-    size_t readout(void* buf, size_t len) {
-        return _dev.read(STApp::Endpoints::DataIn, buf, len);
     }
     
     USBDevice& usbDevice() { return _dev; }

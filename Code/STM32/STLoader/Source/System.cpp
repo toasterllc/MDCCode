@@ -12,17 +12,17 @@ using namespace STLoader;
 System::System() :
 // QSPI clock divider=5 => run QSPI clock at 21.3 MHz
 // QSPI alignment=byte, so we can transfer single bytes at a time
-_qspi       (QSPI::Mode::Single, 5, QSPI::Align::Byte, QSPI::ChipSelect::Controlled),
-_bufs       (_buf0, _buf1),
-_usbCmd     ( { .task = Task([&] { _usbCmd_task();        }) } ),
-_usbDataOut ( { .task = Task([&] { _usbDataOut_task();    }) } ),
-_usbDataIn  ( { .task = Task([&] { _usbDataIn_task();     }) } ),
-_reset      ( { .task = Task([&] { _reset_task();         }) } ),
-_stm        ( { .task = Task([&] { _stm_task();           }) } ),
-_ice        ( { .task = Task([&] { _ice_task();           }) } ),
-_mspRead    ( { .task = Task([&] { _mspRead_task();       }) } ),
-_mspWrite   ( { .task = Task([&] { _mspWrite_task();      }) } ),
-_mspDebug   ( { .task = Task([&] { _mspDebug_task();      }) } )
+_qspi           (QSPI::Mode::Single, 5, QSPI::Align::Byte, QSPI::ChipSelect::Controlled),
+_bufs           (_buf0, _buf1),
+_usbCmd         ( { .task = Task([&] { _usbCmd_task();          }) } ),
+_usbDataOut     ( { .task = Task([&] { _usbDataOut_task();      }) } ),
+_usbDataIn      ( { .task = Task([&] { _usbDataIn_task();       }) } ),
+_resetEndpoints ( { .task = Task([&] { _resetEndpoints_task();  }) } ),
+_stm            ( { .task = Task([&] { _stm_task();             }) } ),
+_ice            ( { .task = Task([&] { _ice_task();             }) } ),
+_mspRead        ( { .task = Task([&] { _mspRead_task();         }) } ),
+_mspWrite       ( { .task = Task([&] { _mspWrite_task();        }) } ),
+_mspDebug       ( { .task = Task([&] { _mspDebug_task();        }) } )
 {}
 
 void System::init() {
@@ -41,7 +41,7 @@ void System::run() {
         _usbCmd.task,
         _usbDataOut.task,
         _usbDataIn.task,
-        _reset.task,
+        _resetEndpoints.task,
         _stm.task,
         _ice.task,
         _mspRead.task,
@@ -53,7 +53,7 @@ void System::run() {
 void System::_pauseTasks() {
     _usbDataOut.task.pause();
     _usbDataIn.task.pause();
-    _reset.task.pause();
+    _resetEndpoints.task.pause();
     _stm.task.pause();
     _ice.task.pause();
     _mspRead.task.pause();
@@ -81,8 +81,8 @@ void System::_usbCmd_task() {
         
         // Specially handle the Reset command -- it's the only command that doesn't
         // require the endpoints to be ready.
-        if (_cmd.op == Op::Reset) {
-            _reset.task.reset();
+        if (_cmd.op == Op::ResetEndpoints) {
+            _resetEndpoints.task.reset();
             continue;
         }
         
@@ -173,7 +173,7 @@ void System::_usbDataIn_sendStatus(bool status) {
 
 #pragma mark - Reset
 
-void System::_reset_task() {
+void System::_resetEndpoints_task() {
     TaskBegin();
     // Accept command
     _usb.cmdAccept(true);

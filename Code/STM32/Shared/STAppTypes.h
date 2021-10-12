@@ -11,7 +11,7 @@ namespace STApp {
     
     enum class Op : uint8_t {
         None,
-        Reset,
+        ResetEndpoints,
         Bootloader,
         SDRead,
         ImgSetExposure,

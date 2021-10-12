@@ -20,7 +20,7 @@ private:
     void _usbCmd_task();
     void _usbDataIn_task();
     
-    void _reset_task();
+    void _resetEndpoints_task();
     
     void _readout_task();
     
@@ -51,17 +51,17 @@ private:
     bool _imgInit = false;
     
     // Tasks
-    Task _usbCmdTask     = Task([&] { _usbCmd_task();       });
-    Task _usbDataInTask  = Task([&] { _usbDataIn_task();    });
-    Task _resetTask      = Task([&] { _reset_task();        });
-    Task _readoutTask    = Task([&] { _readout_task();      });
-    Task _sdReadTask     = Task([&] { _sd_readTask();       });
-    Task _imgCaptureTask = Task([&] { _img_captureTask();   });
+    Task _usbCmdTask            = Task([&] { _usbCmd_task();            });
+    Task _usbDataInTask         = Task([&] { _usbDataIn_task();         });
+    Task _resetEndpointsTask    = Task([&] { _resetEndpoints_task();    });
+    Task _readoutTask           = Task([&] { _readout_task();           });
+    Task _sdReadTask            = Task([&] { _sd_readTask();            });
+    Task _imgCaptureTask        = Task([&] { _img_captureTask();        });
     
     std::reference_wrapper<Task> _tasks[6] = {
         _usbCmdTask,
         _usbDataInTask,
-        _resetTask,
+        _resetEndpointsTask,
         _readoutTask,
         _sdReadTask,
         _imgCaptureTask,

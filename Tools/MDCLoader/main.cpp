@@ -177,7 +177,7 @@ int main(int argc, const char* argv[]) {
     
     MDCLoaderDevice& device = devices[0];
     try {
-        device.reset();
+        device.resetEndpoints();
         if (args.cmd == LEDSetCmd)          ledSet(args, device);
         else if (args.cmd == STLoadCmd)     stLoad(args, device);
         else if (args.cmd == ICELoadCmd)    iceLoad(args, device);

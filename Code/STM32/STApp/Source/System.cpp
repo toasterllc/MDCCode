@@ -5,27 +5,6 @@
 #include "MSP430.h"
 #include "SleepMs.h"
 
-using EchoMsg = ICE40::EchoMsg;
-using EchoResp = ICE40::EchoResp;
-using LEDSetMsg = ICE40::LEDSetMsg;
-using SDInitMsg = ICE40::SDInitMsg;
-using SDSendCmdMsg = ICE40::SDSendCmdMsg;
-using SDStatusMsg = ICE40::SDStatusMsg;
-using SDStatusResp = ICE40::SDStatusResp;
-using ReadoutMsg = ICE40::ReadoutMsg;
-using ImgResetMsg = ICE40::ImgResetMsg;
-using ImgSetHeaderMsg = ICE40::ImgSetHeaderMsg;
-using ImgCaptureMsg = ICE40::ImgCaptureMsg;
-using ImgReadoutMsg = ICE40::ImgReadoutMsg;
-using ImgI2CTransactionMsg = ICE40::ImgI2CTransactionMsg;
-using ImgI2CStatusMsg = ICE40::ImgI2CStatusMsg;
-using ImgI2CStatusResp = ICE40::ImgI2CStatusResp;
-using ImgCaptureStatusMsg = ICE40::ImgCaptureStatusMsg;
-using ImgCaptureStatusResp = ICE40::ImgCaptureStatusResp;
-
-using SDRespType = ICE40::SDSendCmdMsg::RespType;
-using SDDatInType = ICE40::SDSendCmdMsg::DatInType;
-
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
 alignas(4) static uint8_t _buf0[63*1024] __attribute__((section(".sram1")));
@@ -33,8 +12,8 @@ alignas(4) static uint8_t _buf1[63*1024] __attribute__((section(".sram1")));
 
 using namespace STApp;
 
-// SleepMs.h implementation
-// Used by ICE40, ImgSensor, SDCard
+// SleepMs implementation, declared in SleepMs.h
+// Used by ICE40, Img::Sensor, SD::Card
 void SleepMs(uint32_t ms) {
     HAL_Delay(ms);
 }
@@ -96,8 +75,8 @@ void System::_usbCmd_task() {
         
         // Specially handle the Reset command -- it's the only command that doesn't
         // require the endpoints to be ready.
-        if (_cmd.op == Op::Reset) {
-            _resetTask.start();
+        if (_cmd.op == Op::ResetEndpoints) {
+            _resetEndpointsTask.start();
             continue;
         }
         
@@ -215,9 +194,9 @@ void ICE40::Transfer(const Msg& msg, Resp* resp) {
     System::_ICE_ST_SPI_CS_::Write(1);
 }
 
-#pragma mark - Reset
+#pragma mark - Reset Endpoints
 
-void System::_reset_task() {
+void System::_resetEndpoints_task() {
     TaskBegin();
     // Accept command
     _usb.cmdAccept(true);
@@ -239,14 +218,14 @@ void System::_readout_task() {
     // Send the Readout message, which causes us to enter the readout mode until
     // we release the chip select
     _ICE_ST_SPI_CS_::Write(0);
-    _qspi.command(_ice_qspiCmd(ReadoutMsg(), 0));
+    _qspi.command(_ice_qspiCmd(ICE40::ReadoutMsg(), 0));
     
     // Read data over QSPI and write it to USB, indefinitely
     for (;;) {
         // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
         TaskWait(!_bufs.full() && _qspi.ready());
         
-        const size_t len = std::min(_readoutLen.value_or(SIZE_MAX), ReadoutMsg::ReadoutLen);
+        const size_t len = std::min(_readoutLen.value_or(SIZE_MAX), ICE40::ReadoutMsg::ReadoutLen);
         auto& buf = _bufs.back();
         
         // If there's no more data to read, bail
@@ -394,6 +373,7 @@ void Img::Sensor::SetPowerEnabled(bool en) {
 void System::_img_init() {
     if (_imgInit) return;
     Img::Sensor::Init();
+    Img::Sensor::SetStreamEnabled(true);
     _imgInit = true;
 }
 
@@ -412,12 +392,12 @@ void System::_img_captureTask() {
     _usb.cmdAccept(true);
     _img_init();
     
-    ICE40::Transfer(ImgCaptureMsg(0));
+    ICE40::Transfer(ICE40::ImgCaptureMsg(0));
     
     // Wait a max of `MaxDelayMs` for the the capture to be ready for readout
     constexpr uint32_t MaxDelayMs = 1000;
     const uint32_t startTime = HAL_GetTick();
-    ImgCaptureStatusResp s;
+    ICE40::ImgCaptureStatusResp s;
     for (;;) {
         s = ICE40::ImgCaptureStatus();
         if (s.done() || (HAL_GetTick()-startTime)>=MaxDelayMs) break;

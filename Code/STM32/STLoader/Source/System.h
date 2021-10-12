@@ -22,7 +22,7 @@ private:
     void _usbDataIn_sendStatus(bool status);
     
     // Reset
-    void _reset_task();
+    void _resetEndpoints_task();
     
     // STM32 Bootloader
     void _stm_task();
@@ -77,7 +77,7 @@ private:
     
     struct {
         Task task;
-    } _reset;
+    } _resetEndpoints;
     
     struct {
         Task task;

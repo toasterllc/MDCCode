@@ -18,17 +18,17 @@ public:
     
     MDCLoaderDevice(USBDevice&& dev) : _dev(std::move(dev)) {}
     
-    void reset() {
+    void resetEndpoints() {
         using namespace STLoader;
         const Cmd cmd = {
-            .op = Op::Reset,
+            .op = Op::ResetEndpoints,
         };
         // Send command
         _dev.vendorRequestOut(0, cmd);
         // Flush endpoints
         _flushEndpoint(Endpoints::DataOut);
         _flushEndpoint(Endpoints::DataIn);
-        _waitOrThrow("Reset command failed");
+        _waitOrThrow("ResetEndpoints command failed");
     }
     
     void stmWrite(uint32_t addr, const void* data, size_t len) {
