@@ -95,8 +95,7 @@ static std::unique_ptr<uint8_t[]> _readoutImg(MDCDevice& device) {
     static_assert(BufCap >= ImgSDLen);
     std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
     
-    printf("Reading image...\n");
-    const size_t len = device.readout(buf.get(), BufCap);
+    const size_t len = device.usbDevice().read(STApp::Endpoints::DataIn, buf.get(), BufCap);
     if (len < Img::Len) {
         throw RuntimeError("expected at least 0x%jx bytes, but only got 0x%jx bytes", (uintmax_t)Img::Len, (uintmax_t)len);
     }
@@ -136,7 +135,12 @@ static void sdImgRead(const Args& args, MDCDevice& device) {
 static void imgCapture(const Args& args, MDCDevice& device) {
     printf("Sending ImgCapture command...\n");
     device.imgCapture();
-    printf("-> OK\n\n");
+    
+    // Read and check status
+    STApp::ImgCaptureStatus status;
+    device.usbDevice().read(STApp::Endpoints::DataIn, status);
+    if (!status.ok) throw std::runtime_error("image capture failed");
+    printf("-> OK (word count: %ju)\n\n", (uintmax_t)status.wordCount);
     
     printf("Reading image...\n");
     std::unique_ptr<uint8_t[]> img = _readoutImg(device);
@@ -207,7 +211,7 @@ int main(int argc, const char* argv[]) {
     
     MDCDevice& device = devices[0];
     try {
-        device.reset();
+        device.resetEndpoints();
         if (args.cmd == lower(BootloaderCmd))       bootloader(args, device);
         else if (args.cmd == lower(SDImgReadCmd))   sdImgRead(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))  imgCapture(args, device);

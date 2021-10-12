@@ -13,7 +13,7 @@ namespace STLoader {
     
     enum class Op : uint8_t {
         None,
-        Reset,
+        ResetEndpoints,
         // STM32 Bootloader
         STMWrite,
         STMReset,

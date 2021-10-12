@@ -1,9 +1,10 @@
 - Rev4 Todo
     
-    - ICEAppMSP: optimize perf back to previous levels
-        - ImgController: try going back to registering solution, instead of connecting RAMController directly to readout port?
-        - Option1: Have ImgController write in full blocks
-        - Option2: Bring back small state machine and trigger SD DatOut when r_thresh ('is 1 entire block available?') is asserted, but SDController monitors r_ready ('is any data available?')
+    - STLoader: cleanup tasks the way we did for STApp
+    
+    - STApp / STLoader: in cases where the device reboots (STLoader: `STMReset` command,
+      STApp: `Bootloader` command), can we wait until the host receives the command
+      acceptance to actually reset, so the host doesn't get an error for the command?
     
     - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
         - Does the USB hub limit the data throughput?
@@ -15,6 +16,11 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ ICEAppMSP: optimize perf back to previous levels
+        √ Option1: Have ImgController write in full blocks
+        X Option2: Bring back small state machine and trigger SD DatOut when r_thresh ('is 1 entire block available?') is asserted, but SDController monitors r_ready ('is any data available?')
+        X ImgController: try going back to registering solution, instead of connecting RAMController directly to readout port?
     
     X ImgController: configure whether readout is stopped automatically or continues indefinitely?
         √ We ended up modifying ImgController to hard-code the image and readout lengths, so
