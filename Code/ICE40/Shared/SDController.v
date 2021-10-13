@@ -6,6 +6,7 @@
 `include "TogglePulse.v"
 `include "CRC7.v"
 `include "CRC16.v"
+`include "Sync.v"
 
 `define SDController_BlockLen                       512
 
