@@ -12,8 +12,8 @@ using namespace STM;
 System::System() :
 // QSPI clock divider=5 => run QSPI clock at 21.3 MHz
 // QSPI alignment=byte, so we can transfer single bytes at a time
-_qspi           (QSPI::Mode::Single, 5, QSPI::Align::Byte, QSPI::ChipSelect::Controlled),
-_bufs           (_buf0, _buf1)
+_qspi(QSPI::Mode::Single, 5, QSPI::Align::Byte, QSPI::ChipSelect::Controlled),
+_bufs(_buf0, _buf1)
 {}
 
 void System::init() {
@@ -59,6 +59,7 @@ void System::_usb_cmdTaskFn() {
         // Specially handle the FlushEndpoints command -- it's the only command that doesn't
         // require the endpoints to be ready.
         if (_cmd.op == Op::FlushEndpoints) {
+            _usb.cmdAccept(true);
             _flushEndpoints_task.start();
             continue;
         }
@@ -73,13 +74,13 @@ void System::_usb_cmdTaskFn() {
         
         switch (_cmd.op) {
         // Set LED
-        case Op::InvokeBootloader:  _invokeBootloader();            break;
+        case Op::InvokeBootloader:  _invokeBootloader_task.start(); break;
         case Op::LEDSet:            _ledSet();                      break;
         // STM32 Bootloader
-        case Op::STMWrite:          _stm_task.start();              break;
-        case Op::STMReset:          _stm_reset();                   break;
+        case Op::STMWrite:          _stm_writeTask.start();         break;
+        case Op::STMReset:          _stm_resetTask.start();         break;
         // ICE40 Bootloader
-        case Op::ICEWrite:          _ice_task.start();              break;
+        case Op::ICEWrite:          _ice_writeTask.start();         break;
         // MSP430 Bootloader
         case Op::MSPConnect:        _msp_connect();                 break;
         case Op::MSPDisconnect:     _msp_disconnect();              break;
@@ -163,7 +164,8 @@ void System::_flushEndpoints_taskFn() {
     _usb_dataInSendStatus(true);
 }
 
-void System::_invokeBootloader() {
+void System::_invokeBootloader_taskFn() {
+    TaskBegin();
     // Send status
     _usb_dataInSendStatus(true);
     // Wait for host to receive status before resetting
@@ -208,7 +210,7 @@ static size_t _stm_regionCapacity(void* addr) {
     return cap;
 }
 
-void System::_stm_taskFn() {
+void System::_stm_writeTaskFn() {
     const auto& arg = _cmd.arg.STMWrite;
     
     TaskBegin();
@@ -235,7 +237,8 @@ void System::_stm_taskFn() {
     _usb_dataInSendStatus(true);
 }
 
-void System::_stm_reset() {
+void System::_stm_resetTaskFn() {
+    TaskBegin();
     Start.setAppEntryPointAddr(_cmd.arg.STMReset.entryPointAddr);
     
     // Send status
@@ -276,7 +279,7 @@ static void _ice_qspiWrite(QSPI& qspi, const void* data, size_t len) {
     qspi.write(cmd, data, len);
 }
 
-void System::_ice_taskFn() {
+void System::_ice_writeTaskFn() {
     auto& arg = _cmd.arg.ICEWrite;
     TaskBegin();
     

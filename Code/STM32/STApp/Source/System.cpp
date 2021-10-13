@@ -77,6 +77,7 @@ void System::_usb_cmdTaskFn() {
         // Specially handle the Reset command -- it's the only command that doesn't
         // require the endpoints to be ready.
         if (_cmd.op == Op::FlushEndpoints) {
+            _usb.cmdAccept(true);
             _flushEndpoints_task.start();
             continue;
         }
@@ -90,7 +91,7 @@ void System::_usb_cmdTaskFn() {
         _usb.cmdAccept(true);
         
         switch (_cmd.op) {
-        case Op::InvokeBootloader:  _invokeBootloader();            break;
+        case Op::InvokeBootloader:  _invokeBootloader_task.start(); break;
         case Op::LEDSet:            _ledSet();                      break;
         case Op::SDRead:            _sd_readTask.start();           break;
         case Op::ImgCapture:        _img_captureTask.start();       break;
@@ -260,7 +261,8 @@ void System::_flushEndpoints_taskFn() {
     _usb_dataInSendStatus(true);
 }
 
-void System::_invokeBootloader() {
+void System::_invokeBootloader_taskFn() {
+    TaskBegin();
     // Send status
     _usb_dataInSendStatus(true);
     // Wait for host to receive status before resetting
@@ -400,30 +402,41 @@ void System::_img_setExposure() {
     Img::Sensor::SetCoarseIntegrationTime(arg.coarseIntTime);
     Img::Sensor::SetFineIntegrationTime(arg.fineIntTime);
     Img::Sensor::SetGain(arg.gain);
+    // Send status
+    _usb_dataInSendStatus(true);
 }
 
 void System::_img_captureTaskFn() {
-    static ImgCaptureStatus status = {};
+    static std::optional<ICE::ImgCaptureStatusResp> resp;
+    static ImgCaptureStats stats;
+    
     TaskBegin();
     _img_init();
     
-    auto resp               = ICE::ImgCapture();
-    status.ok               = (bool)resp;
-    status.wordCount        = (*resp).wordCount();
-    status.highlightCount   = (*resp).highlightCount();
-    status.shadowCount      = (*resp).shadowCount();
+    resp = ICE::ImgCapture();
+    if (!resp) {
+        _usb_dataInSendStatus(false);
+        return;
+    }
     
-    _usb.send(Endpoints::DataIn, &status, sizeof(status));
+    // Send status
+    _usb_dataInSendStatus(true);
     TaskWait(_usb.ready(Endpoints::DataIn));
     
-    // Bail if the capture failed
-    if (!status.ok) return;
+    // Send ImgCaptureStats
+    stats = {
+        .wordCount         = resp->wordCount(),
+        .highlightCount    = resp->highlightCount(),
+        .shadowCount       = resp->shadowCount(),
+    };
+    _usb.send(Endpoints::DataIn, &stats, sizeof(stats));
+    TaskWait(_usb.ready(Endpoints::DataIn));
     
     // Arrange for the image to be read out
     ICE::Transfer(ICE::ImgReadoutMsg(0));
     
     // Start the Readout task
-    _readout.len = (size_t)status.wordCount*sizeof(Img::Word);
+    _readout.len = (size_t)stats.wordCount*sizeof(Img::Word);
     _readout_task.start();
 }
 
