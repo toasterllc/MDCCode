@@ -22,7 +22,7 @@ private:
     void _usb_dataInSendStatus(bool status);
     
     // Common Commands
-    void _resetEndpoints_taskFn();
+    void _flushEndpoints_taskFn();
     void _invokeBootloader();
     void _ledSet();
     
@@ -77,7 +77,7 @@ private:
     Task _usb_cmdTask           = Task([&] {  _usb_cmdTaskFn();           });
     Task _usb_dataOutTask       = Task([&] {  _usb_dataOutTaskFn();       });
     Task _usb_dataInTask        = Task([&] {  _usb_dataInTaskFn();        });
-    Task _resetEndpoints_task   = Task([&] {  _resetEndpoints_taskFn();   });
+    Task _flushEndpoints_task   = Task([&] {  _flushEndpoints_taskFn();   });
     Task _stm_task              = Task([&] {  _stm_taskFn();              });
     Task _ice_task              = Task([&] {  _ice_taskFn();              });
     Task _msp_readTask          = Task([&] {  _msp_readTaskFn();          });
@@ -88,7 +88,7 @@ private:
         _usb_cmdTask,
         _usb_dataOutTask,
         _usb_dataInTask,
-        _resetEndpoints_task,
+        _flushEndpoints_task,
         _stm_task,
         _ice_task,
         _msp_readTask,

@@ -76,8 +76,8 @@ void System::_usb_cmdTaskFn() {
         
         // Specially handle the Reset command -- it's the only command that doesn't
         // require the endpoints to be ready.
-        if (_cmd.op == Op::ResetEndpoints) {
-            _resetEndpoints_task.start();
+        if (_cmd.op == Op::FlushEndpoints) {
+            _flushEndpoints_task.start();
             continue;
         }
         
@@ -251,7 +251,7 @@ void System::_readout_taskFn() {
 
 #pragma mark - Common Commands
 
-void System::_resetEndpoints_taskFn() {
+void System::_flushEndpoints_taskFn() {
     TaskBegin();
     // Reset endpoints
     _usb.reset(Endpoints::DataIn);
