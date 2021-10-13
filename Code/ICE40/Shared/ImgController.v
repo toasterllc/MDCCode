@@ -201,6 +201,7 @@ module ImgController #(
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
     reg[`RegWidth(ImgWordCount)-1:0] fifoIn_wordCount = 0;
+    reg[15:0] fifoIn_wordCountMeowmix = 0;
     reg[17:0] fifoIn_highlightCount = 0;
     reg[17:0] fifoIn_shadowCount = 0;
     assign status_captureWordCount = fifoIn_wordCount;
@@ -269,6 +270,7 @@ module ImgController #(
             fifoIn_rst <= 1;
             fifoIn_done <= 0;
             fifoIn_wordCount <= 0;
+            fifoIn_wordCountMeowmix <= 0;
             fifoIn_highlightCount <= 0;
             fifoIn_shadowCount <= 0;
             fifoIn_checksum_rst <= 1;
@@ -319,7 +321,8 @@ module ImgController #(
         7: begin
             fifoIn_countStat <= (fifoIn_lv && !fifoIn_x && !fifoIn_y);
             fifoIn_w_trigger <= fifoIn_lv;
-            fifoIn_w_data <= {{img_d_reg[7:0]}, {4'b0, img_d_reg[11:8]}}; // Little endian
+            fifoIn_w_data <= {{fifoIn_wordCountMeowmix[7:0]}, {fifoIn_wordCountMeowmix[15:8]}}; // Little endian
+            if (fifoIn_lv) fifoIn_wordCountMeowmix <= fifoIn_wordCountMeowmix+1;
             fifoIn_checksum_en <= fifoIn_lv;
             fifoIn_checksum_shiftReg <= fifoIn_checksum_dout;
             fifoIn_checksum_done_ <= 1;

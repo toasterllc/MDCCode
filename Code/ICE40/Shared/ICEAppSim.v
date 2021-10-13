@@ -71,8 +71,8 @@ module ICEAppSim();
     // localparam Sim_ImgWidth             = 1006;
     // localparam Sim_ImgHeight            = 1;
     // localparam Sim_ImgPixelCount        = ImgWidth*ImgHeight;
-    localparam Sim_ImgWordInitialValue  = 16'h0FFF;
-    localparam Sim_ImgWordDelta         = -1;
+    localparam Sim_ImgWordInitialValue  = 0;
+    localparam Sim_ImgWordDelta         = 1;
     
     `ifdef _ICEApp_Img_En
         mobile_sdr mobile_sdr(

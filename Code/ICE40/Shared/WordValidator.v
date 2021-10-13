@@ -86,7 +86,7 @@ module WordValidator();
                 $display("[WordValidator] Received valid word (expected:%h, got:%h) ✅", wordExpected, wordGot);
             end else begin
                 $display("[WordValidator] Received invalid word (expected:%h, got:%h) ❌", wordExpected, wordGot);
-                `Finish;
+                // `Finish;
             end
             
             _wordValidationStarted = 1;

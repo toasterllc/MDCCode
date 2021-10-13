@@ -37,6 +37,7 @@ void System::init() {
     _msp_init();
     
     _resetTasks();
+    _imgCaptureTask.start();
 }
 
 void System::run() {
@@ -397,24 +398,11 @@ void System::_img_captureTask() {
     _usb.cmdAccept(true);
     _img_init();
     
-    ICE40::Transfer(ICE40::ImgCaptureMsg(0));
-    
-    // Wait a max of `MaxDelayMs` for the the capture to be ready for readout
-    constexpr uint32_t MaxDelayMs = 1000;
-    const uint32_t startTime = HAL_GetTick();
-    ICE40::ImgCaptureStatusResp s;
-    for (;;) {
-        s = ICE40::ImgCaptureStatus();
-        if (s.done() || (HAL_GetTick()-startTime)>=MaxDelayMs) break;
-    }
-    
-    status.ok               = s.done();
-    status.wordCount        = s.wordCount();
-    status.highlightCount   = s.highlightCount();
-    status.shadowCount      = s.shadowCount();
-    
-    _usb.send(Endpoints::DataIn, &status, sizeof(status));
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    auto resp               = ICE40::ImgCapture();
+    status.ok               = (bool)resp;
+    status.wordCount        = (*resp).wordCount();
+    status.highlightCount   = (*resp).highlightCount();
+    status.shadowCount      = (*resp).shadowCount();
     
     // Bail if the capture failed
     if (!status.ok) return;
@@ -424,7 +412,38 @@ void System::_img_captureTask() {
     
     // Start the Readout task
     _readoutLen = (size_t)status.wordCount*sizeof(Img::Word);
-    _readoutTask.start();
+    
+    // Send the Readout message, which causes us to enter the readout mode until
+    // we release the chip select
+    _ICE_ST_SPI_CS_::Write(0);
+    _qspi.command(_ice_qspiCmd(ICE40::ReadoutMsg(), 0));
+    
+    // Read data over QSPI and write it to USB, indefinitely
+    for (;;) {
+        // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
+        TaskWait(!_bufs.full() && _qspi.ready());
+        
+        const size_t len = std::min(_readoutLen.value_or(SIZE_MAX), ICE40::ReadoutMsg::ReadoutLen);
+        auto& buf = _bufs.back();
+        
+        // If there's no more data to read, bail
+        if (!len) {
+            for (;;);
+        }
+        
+        if (len < ICE40::ReadoutMsg::ReadoutLen) {
+        	volatile bool stay = true;
+        	while (stay);
+        }
+        
+        // Wait until ICE40 signals that data is ready to be read
+        while (!_ICE_ST_SPI_D_READY::Read());
+        
+        _qspi.read(_ice_qspiCmdReadOnly(len), buf.data, len);
+        buf.len += len;
+        
+        if (_readoutLen) *_readoutLen -= len;
+    }
 }
 
 #pragma mark - Other Commands
