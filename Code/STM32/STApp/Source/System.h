@@ -20,7 +20,7 @@ private:
     void _usb_dataInTaskFn();
     void _usb_dataInSendStatus(bool status);
     
-    void _resetEndpoints_taskFn();
+    void _flushEndpoints_taskFn();
     void _invokeBootloader();
     void _ledSet();
     
@@ -60,7 +60,7 @@ private:
     // Tasks
     Task _usb_cmdTask           = Task([&] { _usb_cmdTaskFn();          });
     Task _usb_dataInTask        = Task([&] { _usb_dataInTaskFn();       });
-    Task _resetEndpoints_task   = Task([&] { _resetEndpoints_taskFn();  });
+    Task _flushEndpoints_task   = Task([&] { _flushEndpoints_taskFn();  });
     Task _readout_task          = Task([&] { _readout_taskFn();         });
     Task _sd_readTask           = Task([&] { _sd_readTaskFn();          });
     Task _img_captureTask       = Task([&] { _img_captureTaskFn();      });
@@ -68,7 +68,7 @@ private:
     std::reference_wrapper<Task> _tasks[6] = {
         _usb_cmdTask,
         _usb_dataInTask,
-        _resetEndpoints_task,
+        _flushEndpoints_task,
         _readout_task,
         _sd_readTask,
         _img_captureTask,

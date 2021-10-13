@@ -14,7 +14,7 @@ namespace STM {
     enum class Op : uint8_t {
         // # Common command set
         None,
-        ResetEndpoints,
+        FlushEndpoints,
         InvokeBootloader,
         LEDSet,
         
