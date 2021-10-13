@@ -16,54 +16,62 @@ public:
 private:
     void _resetTasks();
     
-    void _usbCmd_taskFn();
-    void _usbDataIn_taskFn();
+    void _usb_cmdTaskFn();
+    void _usb_dataInTaskFn();
+    void _usb_dataInSendStatus(bool status);
     
     void _resetEndpoints_taskFn();
+    void _invokeBootloader();
+    void _ledSet();
     
     void _readout_taskFn();
     
-    void _invokeBootloader();
-    
     void _msp_init();
     
-    void _sd_readTask();
+    void _sd_readTaskFn();
     
     void _img_init();
     void _img_setExposure();
-    void _img_reset();
-    void _img_captureTask();
-    
-    void _ledSet();
+    void _img_captureTaskFn();
     
     // Peripherals
     USB _usb;
     QSPI _qspi;
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
-    
     SD::Card _sd;
     
     BufQueue<2> _bufs;
     STM::Cmd _cmd = {};
-    std::optional<size_t> _readoutLen;
-    bool _imgInit = false;
+    
+    struct {
+        size_t len = 0;
+        alignas(4) bool status = false; // Aligned to send via USB
+    } _usbDataIn;
+    
+    struct {
+        std::optional<size_t> len;
+    } _readout;
+    
+    struct {
+        bool init = false;
+    } _img;
     
     // Tasks
-    Task _usbCmd_task           = Task([&] { _usbCmd_taskFn();          });
-    Task _usbDataIn_task        = Task([&] { _usbDataIn_taskFn();       });
+    Task _usb_cmdTask           = Task([&] { _usb_cmdTaskFn();          });
+    Task _usb_dataInTask        = Task([&] { _usb_dataInTaskFn();       });
     Task _resetEndpoints_task   = Task([&] { _resetEndpoints_taskFn();  });
     Task _readout_task          = Task([&] { _readout_taskFn();         });
-    Task _sdRead_task           = Task([&] { _sd_readTask();            });
-    Task _imgCapture_task       = Task([&] { _img_captureTask();        });
+    Task _sd_readTask           = Task([&] { _sd_readTaskFn();          });
+    Task _img_captureTask       = Task([&] { _img_captureTaskFn();      });
     
     std::reference_wrapper<Task> _tasks[6] = {
-        _usbCmd_task,
-        _usbDataIn_task,
+        _usb_cmdTask,
+        _usb_dataInTask,
         _resetEndpoints_task,
         _readout_task,
-        _sdRead_task,
-        _imgCapture_task,
+        _sd_readTask,
+        _img_captureTask,
     };
     
     friend int main();

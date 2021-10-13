@@ -14,12 +14,12 @@ private:
     void _resetTasks();
     
     // USB
-    void _usbCmd_taskFn();
+    void _usb_cmdTaskFn();
     
-    void _usbDataOut_taskFn();
+    void _usb_dataOutTaskFn();
     
-    void _usbDataIn_taskFn();
-    void _usbDataIn_sendStatus(bool status);
+    void _usb_dataInTaskFn();
+    void _usb_dataInSendStatus(bool status);
     
     // Common Commands
     void _resetEndpoints_taskFn();
@@ -36,16 +36,14 @@ private:
     // MSP430 Bootloader
     void _msp_connect();
     void _msp_disconnect();
+    void _msp_readTaskFn();
+    void _msp_writeTaskFn();
+    void _msp_debugTaskFn();
+    bool _msp_debugPushReadBits();
+    bool _msp_debugHandleSBWIO(const STM::MSPDebugCmd& cmd);
+    bool _msp_debugHandleCmd(const STM::MSPDebugCmd& cmd);
     
-    void _mspRead_taskFn();
-    
-    void _mspWrite_taskFn();
-    
-    void _mspDebug_taskFn();
-    bool _mspDebug_pushReadBits();
-    bool _mspDebug_handleSBWIO(const STM::MSPDebugCmd& cmd);
-    bool _mspDebug_handleCmd(const STM::MSPDebugCmd& cmd);
-    
+    // Peripherals
     USB _usb;
     QSPI _qspi;
     using _ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
@@ -76,26 +74,26 @@ private:
         } read;
     } _mspDebug;
     
-    Task _usbCmd_task           = Task([&] {  _usbCmd_taskFn();           });
-    Task _usbDataOut_task       = Task([&] {  _usbDataOut_taskFn();       });
-    Task _usbDataIn_task        = Task([&] {  _usbDataIn_taskFn();        });
+    Task _usb_cmdTask           = Task([&] {  _usb_cmdTaskFn();           });
+    Task _usb_dataOutTask       = Task([&] {  _usb_dataOutTaskFn();       });
+    Task _usb_dataInTask        = Task([&] {  _usb_dataInTaskFn();        });
     Task _resetEndpoints_task   = Task([&] {  _resetEndpoints_taskFn();   });
     Task _stm_task              = Task([&] {  _stm_taskFn();              });
     Task _ice_task              = Task([&] {  _ice_taskFn();              });
-    Task _mspRead_task          = Task([&] {  _mspRead_taskFn();          });
-    Task _mspWrite_task         = Task([&] {  _mspWrite_taskFn();         });
-    Task _mspDebug_task         = Task([&] {  _mspDebug_taskFn();         });
+    Task _msp_readTask          = Task([&] {  _msp_readTaskFn();          });
+    Task _msp_writeTask         = Task([&] {  _msp_writeTaskFn();         });
+    Task _msp_debugTask         = Task([&] {  _msp_debugTaskFn();         });
     
     std::reference_wrapper<Task> _tasks[9] = {
-        _usbCmd_task,
-        _usbDataOut_task,
-        _usbDataIn_task,
+        _usb_cmdTask,
+        _usb_dataOutTask,
+        _usb_dataInTask,
         _resetEndpoints_task,
         _stm_task,
         _ice_task,
-        _mspRead_task,
-        _mspWrite_task,
-        _mspDebug_task,
+        _msp_readTask,
+        _msp_writeTask,
+        _msp_debugTask,
     };
     
     friend int main();
