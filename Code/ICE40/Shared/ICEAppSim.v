@@ -1,6 +1,7 @@
 `ifndef ICEAppSim_v
 `define ICEAppSim_v
 
+`include "SDController.v"
 `include "ICEAppTypes.v"
 `include "EndianSwap.v"
 `include "Util.v"

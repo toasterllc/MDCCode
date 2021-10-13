@@ -85,3 +85,6 @@ check:
 
 json:
     write_json Synth/Top.json
+
+verilog:
+    write_verilog Synth/Top.v

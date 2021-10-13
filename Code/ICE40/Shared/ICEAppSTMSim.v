@@ -101,7 +101,7 @@ task TestRst; begin
         $display("[ICEAppSim] sim_spiRst_ === 1'b1 ✅");
     end else begin
         $display("[ICEAppSim] sim_spiRst_ !== 1'b1 ❌ (%b)", sim_spiRst_);
-        `Finish;
+        // `Finish;
     end
     
     $display("\n[ICEAppSim] ice_st_spi_cs_ = 1");
@@ -112,7 +112,7 @@ task TestRst; begin
         $display("[ICEAppSim] sim_spiRst_ === 1'b0 ✅");
     end else begin
         $display("[ICEAppSim] sim_spiRst_ !== 1'b0 ❌ (%b)", sim_spiRst_);
-        `Finish;
+        // `Finish;
     end
     
     $display("\n[ICEAppSim] ice_st_spi_cs_ = 0");
@@ -123,7 +123,7 @@ task TestRst; begin
         $display("[ICEAppSim] sim_spiRst_ === 1'b1 ✅");
     end else begin
         $display("[ICEAppSim] sim_spiRst_ !== 1'b1 ❌ (%b)", sim_spiRst_);
-        `Finish;
+        // `Finish;
     end
     
     spi_dataOutEn = 0;
