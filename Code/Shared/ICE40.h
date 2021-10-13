@@ -290,7 +290,7 @@ public:
         Transfer(ImgResetMsg(1));
     }
     
-    static void ImgCapture() {
+    static std::optional<ImgCaptureStatusResp> ImgCapture() {
         const Img::Header header = {
             // Section idx=0
             .version        = 0x4242,
@@ -326,11 +326,11 @@ public:
             if (!status.done()) continue;
             const uint32_t imgWordCount = status.wordCount();
             Assert(imgWordCount == Img::Len/sizeof(Img::Word));
-            return;
+            return status;
         }
         // Timeout capturing image
         // This should never happen, since it indicates a Verilog error or a hardware failure.
-        abort();
+        return std::nullopt;
     }
     
     static ImgCaptureStatusResp ImgCaptureStatus() {
