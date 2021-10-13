@@ -5,7 +5,7 @@
 #include <string.h>
 #include <algorithm>
 
-using namespace ST;
+using namespace STM;
 
 #pragma mark - System
 

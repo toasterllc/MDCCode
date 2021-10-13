@@ -74,7 +74,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 // DataOut endpoint
                 0x07,                                                           // bLength: Endpoint Descriptor size
                 USB_DESC_TYPE_ENDPOINT,                                         // bDescriptorType: Endpoint
-                ST::Endpoints::DataOut,                                         // bEndpointAddress
+                STM::Endpoints::DataOut,                                         // bEndpointAddress
                 0x02,                                                           // bmAttributes: Bulk
                 LOBYTE(MaxPacketSizeOut()), HIBYTE(MaxPacketSizeOut()),         // wMaxPacketSize
                 0x00,                                                           // bInterval: ignore for Bulk transfer
@@ -82,7 +82,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 // DataIn endpoint
                 0x07,                                                           // bLength: Endpoint Descriptor size
                 USB_DESC_TYPE_ENDPOINT,                                         // bDescriptorType: Endpoint
-                ST::Endpoints::DataIn,                                          // bEndpointAddress
+                STM::Endpoints::DataIn,                                          // bEndpointAddress
                 0x02,                                                           // bmAttributes: Bulk
                 LOBYTE(MaxPacketSizeIn()), HIBYTE(MaxPacketSizeIn()),           // wMaxPacketSize
                 0x00,                                                           // bInterval: ignore for Bulk transfer

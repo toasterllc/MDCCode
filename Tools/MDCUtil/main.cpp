@@ -3,7 +3,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cstring>
-#include "ST.h"
+#include "STM.h"
 #include "MDCDevice.h"
 #include "Toastbox/RuntimeError.h"
 #include "ChecksumFletcher32.h"
@@ -95,7 +95,7 @@ static std::unique_ptr<uint8_t[]> _readoutImg(MDCDevice& device) {
     static_assert(BufCap >= ImgSDLen);
     std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
     
-    const size_t len = device.usbDevice().read(ST::Endpoints::DataIn, buf.get(), BufCap);
+    const size_t len = device.usbDevice().read(STM::Endpoints::DataIn, buf.get(), BufCap);
     if (len < Img::Len) {
         throw RuntimeError("expected at least 0x%jx bytes, but only got 0x%jx bytes", (uintmax_t)Img::Len, (uintmax_t)len);
     }
@@ -137,8 +137,8 @@ static void imgCapture(const Args& args, MDCDevice& device) {
     device.imgCapture();
     
     // Read and check status
-    ST::ImgCaptureStatus status;
-    device.usbDevice().read(ST::Endpoints::DataIn, status);
+    STM::ImgCaptureStatus status;
+    device.usbDevice().read(STM::Endpoints::DataIn, status);
     if (!status.ok) throw std::runtime_error("image capture failed");
     printf("-> OK (word count: %ju)\n\n", (uintmax_t)status.wordCount);
     

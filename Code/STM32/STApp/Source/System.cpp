@@ -10,7 +10,7 @@
 alignas(4) static uint8_t _buf0[63*1024] __attribute__((section(".sram1")));
 alignas(4) static uint8_t _buf1[63*1024] __attribute__((section(".sram1")));
 
-using namespace ST;
+using namespace STM;
 
 // SleepMs implementation, declared in SleepMs.h
 // Used by ICE40, Img::Sensor, SD::Card

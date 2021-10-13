@@ -1,5 +1,5 @@
 #include "SystemBase.h"
-#include "ST.h"
+#include "STM.h"
 #include "USB.h"
 #include "QSPI.h"
 #include "BufQueue.h"
@@ -43,8 +43,8 @@ private:
     
     void _mspDebug_taskFn();
     bool _mspDebug_pushReadBits();
-    bool _mspDebug_handleSBWIO(const ST::MSPDebugCmd& cmd);
-    bool _mspDebug_handleCmd(const ST::MSPDebugCmd& cmd);
+    bool _mspDebug_handleSBWIO(const STM::MSPDebugCmd& cmd);
+    bool _mspDebug_handleCmd(const STM::MSPDebugCmd& cmd);
     
     USB _usb;
     QSPI _qspi;
@@ -53,7 +53,7 @@ private:
     using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     
-    ST::Cmd _cmd = {};
+    STM::Cmd _cmd = {};
     
     alignas(4) uint8_t _buf0[1024]; // Aligned to send via USB
     alignas(4) uint8_t _buf1[1024]; // Aligned to send via USB

@@ -3,7 +3,7 @@
 #include "ICE40.h"
 #include "BufQueue.h"
 #include "USB.h"
-#include "ST.h"
+#include "STM.h"
 #include "SDCard.h"
 #include "Toastbox/Task.h"
 #include "ImgSensor.h"
@@ -46,7 +46,7 @@ private:
     SD::Card _sd;
     
     BufQueue<2> _bufs;
-    ST::Cmd _cmd = {};
+    STM::Cmd _cmd = {};
     std::optional<size_t> _readoutLen;
     bool _imgInit = false;
     
