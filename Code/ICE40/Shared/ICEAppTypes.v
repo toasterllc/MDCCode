@@ -98,8 +98,8 @@
 `define Msg_Type_Nop                                            `Msg_Type_Len'h00
 
 `ifdef SIM
-localparam ImgWidth                 = 64;
-localparam ImgHeight                = 32;
+localparam ImgWidth                 = 2304/32;
+localparam ImgHeight                = 1296/32;
 `else
 localparam ImgWidth                 = 2304;
 localparam ImgHeight                = 1296;

@@ -242,6 +242,11 @@ void System::_readout_task() {
             continue;
         }
         
+        if (len < ICE40::ReadoutMsg::ReadoutLen) {
+        	volatile bool stay = true;
+        	while (stay);
+        }
+        
         // Wait until ICE40 signals that data is ready to be read
         while (!_ICE_ST_SPI_D_READY::Read());
         
@@ -414,8 +419,11 @@ void System::_img_captureTask() {
     // Bail if the capture failed
     if (!status.ok) return;
     
+    // Start readout
+    ICE40::Transfer(ICE40::ImgReadoutMsg(0));
+    
     // Start the Readout task
-    _readoutLen = (size_t)status.wordCount;
+    _readoutLen = (size_t)status.wordCount*sizeof(Img::Word);
     _readoutTask.start();
 }
 

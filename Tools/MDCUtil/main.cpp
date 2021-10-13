@@ -95,7 +95,11 @@ static std::unique_ptr<uint8_t[]> _readoutImg(MDCDevice& device) {
     static_assert(BufCap >= ImgSDLen);
     std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
     
-    const size_t len = device.usbDevice().read(STApp::Endpoints::DataIn, buf.get(), BufCap);
+    const size_t len = device.usbDevice().read(STApp::Endpoints::DataIn, buf.get(), 2304*1296);
+    for (int i=0; i<128; i++) {
+        printf("%3d: 0x%02x\n", i, buf[i]);
+    }
+    
     if (len < Img::Len) {
         throw RuntimeError("expected at least 0x%jx bytes, but only got 0x%jx bytes", (uintmax_t)Img::Len, (uintmax_t)len);
     }

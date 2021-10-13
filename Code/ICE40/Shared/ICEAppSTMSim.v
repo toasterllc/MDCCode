@@ -189,7 +189,7 @@ task SPIReadout(
                 end
             end
             
-            #100; // TODO: remove; this helps debug where 8 dummy cycles start
+            // #100; // TODO: remove; this helps debug where 8 dummy cycles start
             
             // Dummy cycles
             for (i=0; i<8; i++) begin
@@ -199,7 +199,7 @@ task SPIReadout(
                 ice_st_spi_clk = 0;
             end
             
-            #100; // TODO: remove; this helps debug where 8 dummy cycles end
+            // #100; // TODO: remove; this helps debug where 8 dummy cycles end
             
             for (i=0; i<(ChunkLen/WordWidth) && (wordIdx<totalWordCount); i++) begin
                 reg[WordWidth-1:0] word;
