@@ -56,7 +56,7 @@ void System::_usbCmd_taskFn() {
         // Stop all tasks
         _resetTasks();
         
-        // Specially handle the Reset command -- it's the only command that doesn't
+        // Specially handle the ResetEndpoints command -- it's the only command that doesn't
         // require the endpoints to be ready.
         if (_cmd.op == Op::ResetEndpoints) {
             _resetEndpoints_task.start();

@@ -5,7 +5,7 @@
 #include "Toastbox/USBDevice.h"
 #include "ELF32Binary.h"
 #include "STM.h"
-#include "MDCLoaderDevice.h"
+#include "MDCDevice.h"
 
 using namespace STM;
 
@@ -66,11 +66,11 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
-static void ledSet(const Args& args, MDCLoaderDevice& device) {
+static void ledSet(const Args& args, MDCDevice& device) {
     device.ledSet(args.ledSet.idx, args.ledSet.on);
 }
 
-static void stLoad(const Args& args, MDCLoaderDevice& device) {
+static void stLoad(const Args& args, MDCDevice& device) {
     ELF32Binary bin(args.filePath.c_str());
     auto sections = bin.sections();
     
@@ -96,7 +96,7 @@ static void stLoad(const Args& args, MDCLoaderDevice& device) {
     device.stmReset(entryPointAddr);
 }
 
-static void iceLoad(const Args& args, MDCLoaderDevice& device) {
+static void iceLoad(const Args& args, MDCDevice& device) {
     Mmap mmap(args.filePath.c_str());
     
     // Send the ICE40 binary
@@ -104,7 +104,7 @@ static void iceLoad(const Args& args, MDCLoaderDevice& device) {
     device.iceWrite(mmap.data(), mmap.len());
 }
 
-static void mspLoad(const Args& args, MDCLoaderDevice& device) {
+static void mspLoad(const Args& args, MDCDevice& device) {
     ELF32Binary bin(args.filePath.c_str());
     auto sections = bin.sections();
     
@@ -159,9 +159,9 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    std::vector<MDCLoaderDevice> devices;
+    std::vector<MDCDevice> devices;
     try {
-        devices = MDCLoaderDevice::GetDevices();
+        devices = MDCDevice::GetDevices();
     } catch (const std::exception& e) {
         fprintf(stderr, "Failed to get MDC loader devices: %s\n\n", e.what());
         return 1;
@@ -175,7 +175,7 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    MDCLoaderDevice& device = devices[0];
+    MDCDevice& device = devices[0];
     try {
         device.resetEndpoints();
         if (args.cmd == LEDSetCmd)          ledSet(args, device);
