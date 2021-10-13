@@ -1,7 +1,7 @@
 #pragma once
 #include "USBBase.h"
 #include "usbd_def.h"
-#include "STAppTypes.h"
+#include "ST.h"
 
 class USB :
 public USBBase<
@@ -10,7 +10,7 @@ public USBBase<
     // DMA=enabled
     true,
     // Endpoints
-    STApp::Endpoints::DataIn
+    ST::Endpoints::DataIn
 > {
     
 protected:

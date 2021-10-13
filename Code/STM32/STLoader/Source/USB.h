@@ -1,7 +1,7 @@
 #pragma once
 #include "USBBase.h"
 #include "usbd_def.h"
-#include "STLoaderTypes.h"
+#include "ST.h"
 
 class USB :
 public USBBase<
@@ -12,8 +12,8 @@ public USBBase<
     // bootloading), but DMA masters can't access it.
     false,
     // Endpoints
-    STLoader::Endpoints::DataOut,
-    STLoader::Endpoints::DataIn
+    ST::Endpoints::DataOut,
+    ST::Endpoints::DataIn
 > {
     
 protected:

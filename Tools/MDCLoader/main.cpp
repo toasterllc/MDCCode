@@ -4,10 +4,10 @@
 #include <optional>
 #include "Toastbox/USBDevice.h"
 #include "ELF32Binary.h"
-#include "STLoaderTypes.h"
+#include "ST.h"
 #include "MDCLoaderDevice.h"
 
-using namespace STLoader;
+using namespace ST;
 
 using CmdStr = std::string;
 const CmdStr LEDSetCmd = "ledset";

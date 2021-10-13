@@ -1,7 +1,7 @@
 #pragma once
 #include "Toastbox/Enum.h"
 
-namespace STLoader {
+namespace ST {
     Enum(uint8_t, Endpoint, Endpoints,
         // Control endpoint
         Ctrl    = 0x00,
@@ -12,8 +12,13 @@ namespace STLoader {
     );
     
     enum class Op : uint8_t {
+        // # Common command set
         None,
         ResetEndpoints,
+        InvokeBootloader,
+        LEDSet,
+        
+        // # STLoader
         // STM32 Bootloader
         STMWrite,
         STMReset,
@@ -25,13 +30,22 @@ namespace STLoader {
         MSPRead,
         MSPWrite,
         MSPDebug,
-        // Other commands
-        LEDSet,
+        
+        // # STApp
+        SDRead,
+        ImgCapture,
+        ImgSetExposure,
     };
     
     struct Cmd {
         Op op;
         union {
+            struct __attribute__((packed)) {
+                uint8_t idx;
+                uint8_t on;
+            } LEDSet;
+            
+            // # STLoader
             struct __attribute__((packed)) {
                 uint32_t addr;
                 uint32_t len;
@@ -60,11 +74,21 @@ namespace STLoader {
                 uint32_t respLen;
             } MSPDebug;
             
+            // # STApp
             struct __attribute__((packed)) {
-                uint8_t idx;
-                uint8_t on;
-            } LEDSet;
+                uint32_t addr;
+            } SDRead;
+            
+            struct __attribute__((packed)) {
+            } ImgCapture;
+            
+            struct __attribute__((packed)) {
+                uint16_t coarseIntTime;
+                uint16_t fineIntTime;
+                uint16_t gain;
+            } ImgSetExposure;
         } arg;
+        
     } __attribute__((packed));
     static_assert(sizeof(Cmd)<=64, "Cmd: invalid size"); // Verify that Cmd will fit in a single EP0 packet
     
@@ -122,5 +146,13 @@ namespace STLoader {
         void tdoReadSet(bool x)     { data = (data&(~(0x01<<5)))|(x<<5); }
         
         uint8_t data = 0;
+    } __attribute__((packed));
+    
+    struct ImgCaptureStatus {
+        uint8_t ok;
+        uint8_t _pad[3];
+        uint32_t wordCount;
+        uint32_t highlightCount;
+        uint32_t shadowCount;
     } __attribute__((packed));
 }

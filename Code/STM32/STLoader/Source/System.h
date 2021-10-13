@@ -1,5 +1,5 @@
 #include "SystemBase.h"
-#include "STLoaderTypes.h"
+#include "ST.h"
 #include "USB.h"
 #include "QSPI.h"
 #include "BufQueue.h"
@@ -21,8 +21,10 @@ private:
     void _usbDataIn_taskFn();
     void _usbDataIn_sendStatus(bool status);
     
-    // Reset
+    // Common Commands
     void _resetEndpoints_taskFn();
+    void _invokeBootloader();
+    void _ledSet();
     
     // STM32 Bootloader
     void _stm_taskFn();
@@ -41,11 +43,8 @@ private:
     
     void _mspDebug_taskFn();
     bool _mspDebug_pushReadBits();
-    bool _mspDebug_handleSBWIO(const STLoader::MSPDebugCmd& cmd);
-    bool _mspDebug_handleCmd(const STLoader::MSPDebugCmd& cmd);
-    
-    // Other commands
-    void _ledSet();
+    bool _mspDebug_handleSBWIO(const ST::MSPDebugCmd& cmd);
+    bool _mspDebug_handleCmd(const ST::MSPDebugCmd& cmd);
     
     USB _usb;
     QSPI _qspi;
@@ -54,7 +53,7 @@ private:
     using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
     using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
     
-    STLoader::Cmd _cmd = {};
+    ST::Cmd _cmd = {};
     
     alignas(4) uint8_t _buf0[1024]; // Aligned to send via USB
     alignas(4) uint8_t _buf1[1024]; // Aligned to send via USB

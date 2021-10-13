@@ -25,10 +25,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		55671A19257E851B00C1CDA4 /* STLoaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = STLoaderTypes.h; path = ../../Code/STM32/Shared/STLoaderTypes.h; sourceTree = "<group>"; };
 		55671A21257E853100C1CDA4 /* MDCLoaderDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCLoaderDevice.h; sourceTree = "<group>"; };
 		55671A22257E853100C1CDA4 /* ELF32Binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		55671A24257E853100C1CDA4 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
+		55B66B452717635200AD39A5 /* ST.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ST.h; path = ../../Code/STM32/Shared/ST.h; sourceTree = "<group>"; };
 		55CAD61E26AF7B5B00450881 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		55CAD61F26AF7B5B00450881 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
 		55CAD62026AF7B5B00450881 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
@@ -94,7 +94,7 @@
 				55ECAFCB26B0293500A339C7 /* Makefile */,
 				55CAD61D26AF7B5B00450881 /* Toastbox */,
 				55671A1C257E853100C1CDA4 /* Shared */,
-				55671A19257E851B00C1CDA4 /* STLoaderTypes.h */,
+				55B66B452717635200AD39A5 /* ST.h */,
 				55E1D8ED253E892B00628EF6 /* main.cpp */,
 				55E1D8E8253E868000628EF6 /* Frameworks */,
 				55E1D8DF253E864F00628EF6 /* Products */,

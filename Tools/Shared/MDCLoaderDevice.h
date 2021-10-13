@@ -1,6 +1,6 @@
 #pragma once
 #include "Toastbox/USBDevice.h"
-#include "STLoaderTypes.h"
+#include "ST.h"
 
 class MDCLoaderDevice {
 public:
@@ -19,7 +19,7 @@ public:
     MDCLoaderDevice(USBDevice&& dev) : _dev(std::move(dev)) {}
     
     void resetEndpoints() {
-        using namespace STLoader;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::ResetEndpoints,
         };
@@ -31,8 +31,23 @@ public:
         _waitOrThrow("ResetEndpoints command failed");
     }
     
+    void ledSet(uint8_t idx, bool on) {
+        using namespace ST;
+        Cmd cmd = {
+            .op = Op::LEDSet,
+            .arg = {
+                .LEDSet = {
+                    .idx = idx,
+                    .on = on,
+                },
+            },
+        };
+        _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("LEDSet command failed");
+    }
+    
     void stmWrite(uint32_t addr, const void* data, size_t len) {
-        using namespace STLoader;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::STMWrite,
             .arg = {
@@ -50,7 +65,7 @@ public:
     }
     
     void stmReset(uint32_t entryPointAddr) {
-        using namespace STLoader;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::STMReset,
             .arg = {
@@ -63,7 +78,7 @@ public:
     }
     
     void iceWrite(const void* data, size_t len) {
-        using namespace STLoader;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::ICEWrite,
             .arg = {
@@ -80,7 +95,7 @@ public:
     }
     
     void mspConnect() {
-        using namespace STLoader;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::MSPConnect,
         };
@@ -90,7 +105,7 @@ public:
     }
     
     void mspDisconnect() {
-        using namespace STLoader;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::MSPDisconnect,
         };
@@ -100,7 +115,7 @@ public:
     }
     
     void mspWrite(uint32_t addr, const void* data, size_t len) {
-        using namespace STLoader;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::MSPWrite,
             .arg = {
@@ -118,7 +133,7 @@ public:
     }
     
     void mspRead(uint32_t addr, void* data, size_t len) {
-        using namespace STLoader;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::MSPRead,
             .arg = {
@@ -135,8 +150,8 @@ public:
         _waitOrThrow("MSPRead command failed");
     }
     
-    void mspDebug(const STLoader::MSPDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
-        using namespace STLoader;
+    void mspDebug(const ST::MSPDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::MSPDebug,
             .arg = {
@@ -161,21 +176,6 @@ public:
         }
         
         _waitOrThrow("MSPDebug command failed");
-    }
-    
-    void ledSet(uint8_t idx, bool on) {
-        using namespace STLoader;
-        Cmd cmd = {
-            .op = Op::LEDSet,
-            .arg = {
-                .LEDSet = {
-                    .idx = idx,
-                    .on = on,
-                },
-            },
-        };
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("LEDSet command failed");
     }
     
 private:
@@ -205,7 +205,7 @@ private:
     }
     
     void _waitOrThrow(const char* errMsg) {
-        using namespace STLoader;
+        using namespace ST;
         // Wait for completion and throw on failure
         bool s = false;
         _dev.read(Endpoints::DataIn, s);

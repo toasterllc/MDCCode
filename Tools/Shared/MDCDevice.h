@@ -2,7 +2,7 @@
 #include <cassert>
 #include <chrono>
 #include "Toastbox/USBDevice.h"
-#include "STAppTypes.h"
+#include "ST.h"
 using namespace std::chrono;
 
 class MDCDevice {
@@ -23,20 +23,20 @@ public:
     _dev(std::move(dev)) {}
     
     void resetEndpoints() {
-        using namespace STApp;
+        using namespace ST;
         const Cmd cmd = { .op = Op::ResetEndpoints };
         _dev.vendorRequestOut(0, cmd);
         _flushEndpoint(Endpoints::DataIn);
     }
     
-    void bootloader() {
-        using namespace STApp;
-        const Cmd cmd = { .op = Op::Bootloader };
+    void invokeBootloader() {
+        using namespace ST;
+        const Cmd cmd = { .op = Op::InvokeBootloader };
         _dev.vendorRequestOut(0, cmd);
     }
     
     void sdRead(uint32_t addr) {
-        using namespace STApp;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::SDRead,
             .arg = {
@@ -50,7 +50,7 @@ public:
     }
     
     void imgSetExposure(uint16_t coarseIntTime, uint16_t fineIntTime, uint16_t gain) {
-        using namespace STApp;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::ImgSetExposure,
             .arg = {
@@ -65,13 +65,13 @@ public:
     }
     
     void imgCapture() {
-        using namespace STApp;
+        using namespace ST;
         const Cmd cmd = { .op = Op::ImgCapture };
         _dev.vendorRequestOut(0, cmd);
     }
     
     void ledSet(uint8_t idx, bool on) {
-        using namespace STApp;
+        using namespace ST;
         const Cmd cmd = {
             .op = Op::LEDSet,
             .arg = {
