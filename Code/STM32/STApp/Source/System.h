@@ -1,6 +1,5 @@
 #include "SystemBase.h"
 #include "QSPI.h"
-#include "ICE40.h"
 #include "BufQueue.h"
 #include "USB.h"
 #include "STM.h"
@@ -72,7 +71,7 @@ private:
     friend void ISR_QUADSPI();
     friend void ISR_DMA2_Stream7();
     
-    friend class ICE40;
+    friend class ICE;
     friend class Img::Sensor;
     friend class SD::Card;
     

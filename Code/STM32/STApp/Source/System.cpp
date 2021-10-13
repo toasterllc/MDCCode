@@ -4,6 +4,7 @@
 #include "Startup.h"
 #include "MSP430.h"
 #include "SleepMs.h"
+#include "ICE.h"
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -33,7 +34,7 @@ void System::init() {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     _ICE_ST_SPI_CS_::Write(1);
     
-    ICE40::Init();
+    ICE::Init();
     _msp_init();
     
     _resetTasks();
@@ -116,7 +117,7 @@ void System::_usbDataIn_taskFn() {
 
 #pragma mark - ICE40
 
-static QSPI_CommandTypeDef _ice_qspiCmd(const ICE40::Msg& msg, size_t respLen) {
+static QSPI_CommandTypeDef _ice_qspiCmd(const ICE::Msg& msg, size_t respLen) {
     uint8_t b[8];
     static_assert(sizeof(msg) == sizeof(b));
     memcpy(b, &msg, sizeof(b));
@@ -181,8 +182,8 @@ static QSPI_CommandTypeDef _ice_qspiCmdReadOnly(size_t len) {
     };
 }
 
-void ICE40::Transfer(const Msg& msg, Resp* resp) {
-    AssertArg((bool)resp == (bool)(msg.type & ICE40::MsgType::Resp));
+void ICE::Transfer(const Msg& msg, Resp* resp) {
+    AssertArg((bool)resp == (bool)(msg.type & ICE::MsgType::Resp));
     
     System::_ICE_ST_SPI_CS_::Write(0);
     if (resp) {
@@ -207,14 +208,14 @@ void System::_readout_taskFn() {
     // Send the Readout message, which causes us to enter the readout mode until
     // we release the chip select
     _ICE_ST_SPI_CS_::Write(0);
-    _qspi.command(_ice_qspiCmd(ICE40::ReadoutMsg(), 0));
+    _qspi.command(_ice_qspiCmd(ICE::ReadoutMsg(), 0));
     
     // Read data over QSPI and write it to USB, indefinitely
     for (;;) {
         // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
         TaskWait(!_bufs.full() && _qspi.ready());
         
-        const size_t len = std::min(_readoutLen.value_or(SIZE_MAX), ICE40::ReadoutMsg::ReadoutLen);
+        const size_t len = std::min(_readoutLen.value_or(SIZE_MAX), ICE::ReadoutMsg::ReadoutLen);
         auto& buf = _bufs.back();
         
         // If there's no more data to read, bail
@@ -401,7 +402,7 @@ void System::_img_captureTask() {
     _usb.cmdAccept(true);
     _img_init();
     
-    auto resp               = ICE40::ImgCapture();
+    auto resp               = ICE::ImgCapture();
     status.ok               = (bool)resp;
     status.wordCount        = (*resp).wordCount();
     status.highlightCount   = (*resp).highlightCount();
@@ -414,7 +415,7 @@ void System::_img_captureTask() {
     if (!status.ok) return;
     
     // Arrange for the image to be read out
-    ICE40::Transfer(ICE40::ImgReadoutMsg(0));
+    ICE::Transfer(ICE::ImgReadoutMsg(0));
     
     // Start the Readout task
     _readoutLen = (size_t)status.wordCount*sizeof(Img::Word);
