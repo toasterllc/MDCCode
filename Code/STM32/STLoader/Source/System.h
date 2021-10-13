@@ -11,35 +11,35 @@ public:
     [[noreturn]] void run();
     
 private:
-    void _pauseTasks();
+    void _resetTasks();
     
     // USB
-    void _usbCmd_task();
+    void _usbCmd_taskFn();
     
-    void _usbDataOut_task();
+    void _usbDataOut_taskFn();
     
-    void _usbDataIn_task();
+    void _usbDataIn_taskFn();
     void _usbDataIn_sendStatus(bool status);
     
     // Reset
-    void _resetEndpoints_task();
+    void _resetEndpoints_taskFn();
     
     // STM32 Bootloader
-    void _stm_task();
+    void _stm_taskFn();
     void _stm_reset();
     
     // ICE40 Bootloader
-    void _ice_task();
+    void _ice_taskFn();
     
     // MSP430 Bootloader
     void _msp_connect();
     void _msp_disconnect();
     
-    void _mspRead_task();
+    void _mspRead_taskFn();
     
-    void _mspWrite_task();
+    void _mspWrite_taskFn();
     
-    void _mspDebug_task();
+    void _mspDebug_taskFn();
     bool _mspDebug_pushReadBits();
     bool _mspDebug_handleSBWIO(const STLoader::MSPDebugCmd& cmd);
     bool _mspDebug_handleCmd(const STLoader::MSPDebugCmd& cmd);
@@ -61,48 +61,43 @@ private:
     BufQueue<2> _bufs;
     
     struct {
-        Task task;
-    } _usbCmd;
-    
-    struct {
-        Task task;
         size_t len = 0;
     } _usbDataOut;
     
     struct {
-        Task task;
         size_t len = 0;
         alignas(4) bool status = false; // Aligned to send via USB
     } _usbDataIn;
     
     struct {
-        Task task;
-    } _resetEndpoints;
-    
-    struct {
-        Task task;
-    } _stm;
-    
-    struct {
-        Task task;
-    } _ice;
-    
-    struct {
-        Task task;
-    } _mspRead;
-    
-    struct {
-        Task task;
-    } _mspWrite;
-    
-    struct {
-        Task task;
         struct {
             uint8_t bits = 0;
             uint8_t bitsLen = 0;
             size_t len = 0;
         } read;
     } _mspDebug;
+    
+    Task _usbCmd_task           = Task([&] {  _usbCmd_taskFn();           });
+    Task _usbDataOut_task       = Task([&] {  _usbDataOut_taskFn();       });
+    Task _usbDataIn_task        = Task([&] {  _usbDataIn_taskFn();        });
+    Task _resetEndpoints_task   = Task([&] {  _resetEndpoints_taskFn();   });
+    Task _stm_task              = Task([&] {  _stm_taskFn();              });
+    Task _ice_task              = Task([&] {  _ice_taskFn();              });
+    Task _mspRead_task          = Task([&] {  _mspRead_taskFn();          });
+    Task _mspWrite_task         = Task([&] {  _mspWrite_taskFn();         });
+    Task _mspDebug_task         = Task([&] {  _mspDebug_taskFn();         });
+    
+    std::reference_wrapper<Task> _tasks[9] = {
+        _usbCmd_task,
+        _usbDataOut_task,
+        _usbDataIn_task,
+        _resetEndpoints_task,
+        _stm_task,
+        _ice_task,
+        _mspRead_task,
+        _mspWrite_task,
+        _mspDebug_task,
+    };
     
     friend int main();
     friend void ISR_OTG_HS();

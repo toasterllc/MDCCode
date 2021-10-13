@@ -50,14 +50,14 @@ void System::_resetTasks() {
     _ICE_ST_SPI_CS_::Write(1);
     
     for (Task& t : _tasks) {
-        if (&t == &_usbCmdTask) continue; // Never pause the USB command task
+        if (&t == &_usbCmd_task) continue; // Never pause the USB command task
         t.pause();
     }
 }
 
 #pragma mark - USB
 
-void System::_usbCmd_task() {
+void System::_usbCmd_taskFn() {
     TaskBegin();
     for (;;) {
         auto usbCmd = *TaskWait(_usb.cmdRecv());
@@ -76,7 +76,7 @@ void System::_usbCmd_task() {
         // Specially handle the Reset command -- it's the only command that doesn't
         // require the endpoints to be ready.
         if (_cmd.op == Op::ResetEndpoints) {
-            _resetEndpointsTask.start();
+            _resetEndpoints_task.start();
             continue;
         }
         
@@ -88,9 +88,9 @@ void System::_usbCmd_task() {
         
         switch (_cmd.op) {
         case Op::Bootloader:        _bootloader();              break;
-        case Op::SDRead:            _sdReadTask.start();        break;
+        case Op::SDRead:            _sdRead_task.start();        break;
         case Op::ImgSetExposure:    _img_setExposure();         break;
-        case Op::ImgCapture:        _imgCaptureTask.start();    break;
+        case Op::ImgCapture:        _imgCapture_task.start();    break;
         case Op::LEDSet:            _ledSet();                  break;
         // Bad command
         default:                    _usb.cmdAccept(false);      break;
@@ -99,7 +99,7 @@ void System::_usbCmd_task() {
 }
 
 // _usbDataIn_task: writes buffers from _bufs to the DataIn endpoint, and pops them from _bufs
-void System::_usbDataIn_task() {
+void System::_usbDataIn_taskFn() {
     TaskBegin();
     
     for (;;) {
@@ -196,7 +196,7 @@ void ICE40::Transfer(const Msg& msg, Resp* resp) {
 
 #pragma mark - Reset Endpoints
 
-void System::_resetEndpoints_task() {
+void System::_resetEndpoints_taskFn() {
     TaskBegin();
     // Accept command
     _usb.cmdAccept(true);
@@ -207,13 +207,13 @@ void System::_resetEndpoints_task() {
 
 #pragma mark - Readout
 
-void System::_readout_task() {
+void System::_readout_taskFn() {
     TaskBegin();
     
     // Reset state
     _bufs.reset();
     // Start the USB DataIn task
-    _usbDataInTask.start();
+    _usbDataIn_task.start();
     
     // Send the Readout message, which causes us to enter the readout mode until
     // we release the chip select
@@ -338,7 +338,7 @@ void System::_sd_readTask() {
     
     // Start the Readout task
     _readoutLen = std::nullopt;
-    _readoutTask.start();
+    _readout_task.start();
 }
 
 #pragma mark - Img
@@ -409,7 +409,7 @@ void System::_img_captureTask() {
     
     // Start the Readout task
     _readoutLen = (size_t)status.wordCount*sizeof(Img::Word);
-    _readoutTask.start();
+    _readout_task.start();
 }
 
 #pragma mark - Other Commands

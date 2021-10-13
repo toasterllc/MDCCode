@@ -17,12 +17,12 @@ public:
 private:
     void _resetTasks();
     
-    void _usbCmd_task();
-    void _usbDataIn_task();
+    void _usbCmd_taskFn();
+    void _usbDataIn_taskFn();
     
-    void _resetEndpoints_task();
+    void _resetEndpoints_taskFn();
     
-    void _readout_task();
+    void _readout_taskFn();
     
     void _bootloader();
     
@@ -51,20 +51,20 @@ private:
     bool _imgInit = false;
     
     // Tasks
-    Task _usbCmdTask            = Task([&] { _usbCmd_task();            });
-    Task _usbDataInTask         = Task([&] { _usbDataIn_task();         });
-    Task _resetEndpointsTask    = Task([&] { _resetEndpoints_task();    });
-    Task _readoutTask           = Task([&] { _readout_task();           });
-    Task _sdReadTask            = Task([&] { _sd_readTask();            });
-    Task _imgCaptureTask        = Task([&] { _img_captureTask();        });
+    Task _usbCmd_task           = Task([&] { _usbCmd_taskFn();          });
+    Task _usbDataIn_task        = Task([&] { _usbDataIn_taskFn();       });
+    Task _resetEndpoints_task   = Task([&] { _resetEndpoints_taskFn();  });
+    Task _readout_task          = Task([&] { _readout_taskFn();         });
+    Task _sdRead_task           = Task([&] { _sd_readTask();            });
+    Task _imgCapture_task       = Task([&] { _img_captureTask();        });
     
     std::reference_wrapper<Task> _tasks[6] = {
-        _usbCmdTask,
-        _usbDataInTask,
-        _resetEndpointsTask,
-        _readoutTask,
-        _sdReadTask,
-        _imgCaptureTask,
+        _usbCmd_task,
+        _usbDataIn_task,
+        _resetEndpoints_task,
+        _readout_task,
+        _sdRead_task,
+        _imgCapture_task,
     };
     
     friend int main();
