@@ -6,7 +6,7 @@
 #include "SleepMs.h"
 #include "Img.h"
 
-class ICE40 {
+class ICE {
 public:
     #pragma mark - Types
     
