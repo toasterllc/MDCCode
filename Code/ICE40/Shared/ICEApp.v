@@ -174,7 +174,7 @@ module ICEApp(
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
         .HeaderWordCount(ImgHeaderWordCount),
-        .ImgWordCount(ImgWordCountCeiled)
+        .ImgWordCountMeow(ImgWordCountCeiled)
     ) ImgController (
         .clk(img_clk),
         

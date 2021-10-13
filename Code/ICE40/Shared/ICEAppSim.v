@@ -773,33 +773,33 @@ module ICEAppSim();
                 LittleFromHost16.Swap(16'b0)        /* padding      */
             });
             
-            TestImgI2CWriteRead();
+            // TestImgI2CWriteRead();
             TestImgCapture();
         `endif // _ICEApp_Img_En
         
-        `ifdef _ICEApp_SD_En
-            TestSDInit();
-            TestSDCMD0();
-            TestSDCMD8();
-            TestSDCMD2();
-            TestSDCMD6();
-            //           delay, speed,                            trigger, reset
-            TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
-            TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
-            
-            TestSDRespRecovery();
-        `endif // _ICEApp_SD_En
-        
-        `ifdef ICEApp_ImgReadoutToSD_En
-            TestImgReadoutToSD();
-            TestImgReadoutToSDRecovery();
-        `endif // ICEApp_ImgReadoutToSD_En
-        
-        `ifdef ICEApp_SDReadoutToSPI_En
-            TestSDReadoutToSPI();
-            TestLEDSet(4'b1010);
-            TestSDReadoutToSPI();
-        `endif // ICEApp_SDReadoutToSPI_En
+        // `ifdef _ICEApp_SD_En
+        //     TestSDInit();
+        //     TestSDCMD0();
+        //     TestSDCMD8();
+        //     TestSDCMD2();
+        //     TestSDCMD6();
+        //     //           delay, speed,                            trigger, reset
+        //     TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
+        //     TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
+        //
+        //     TestSDRespRecovery();
+        // `endif // _ICEApp_SD_En
+        //
+        // `ifdef ICEApp_ImgReadoutToSD_En
+        //     TestImgReadoutToSD();
+        //     TestImgReadoutToSDRecovery();
+        // `endif // ICEApp_ImgReadoutToSD_En
+        //
+        // `ifdef ICEApp_SDReadoutToSPI_En
+        //     TestSDReadoutToSPI();
+        //     TestLEDSet(4'b1010);
+        //     TestSDReadoutToSPI();
+        // `endif // ICEApp_SDReadoutToSPI_En
 
         `ifdef ICEApp_ImgReadoutToSPI_En
             TestImgReadoutToSPI();

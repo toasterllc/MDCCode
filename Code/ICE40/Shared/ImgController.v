@@ -10,7 +10,7 @@
 module ImgController #(
     parameter ClkFreq                   = 24_000_000,
     parameter HeaderWordCount           = 8,
-    parameter ImgWordCount              = 4096*4096, // Total image word count (header + pixels + checksum)
+    parameter ImgWordCountMeow          = 4096*4096, // Total image word count (header + pixels + checksum)
     localparam HeaderWidth              = HeaderWordCount*16
 )(
     input wire          clk,
