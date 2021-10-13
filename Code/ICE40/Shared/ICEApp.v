@@ -158,23 +158,23 @@ module ICEApp(
     reg                                     imgctrl_cmd_capture = 0;
     reg                                     imgctrl_cmd_readout = 0;
     reg[0:0]                                imgctrl_cmd_ramBlock = 0;
-    reg[ImgHeaderWordCount*16-1:0]          imgctrl_cmd_header = 0;
+    reg[`Img_HeaderWordCount*16-1:0]        imgctrl_cmd_header = 0;
     wire                                    imgctrl_readout_rst;
     wire                                    imgctrl_readout_start;
     wire                                    imgctrl_readout_ready;
     wire                                    imgctrl_readout_trigger;
     wire[15:0]                              imgctrl_readout_data;
     wire                                    imgctrl_status_captureDone;
-    wire[`RegWidth(ImgWordCount)-1:0]       imgctrl_status_captureWordCount;
+    wire[`RegWidth(`Img_WordCount)-1:0]     imgctrl_status_captureWordCount;
     wire[17:0]                              imgctrl_status_captureHighlightCount;
     wire[17:0]                              imgctrl_status_captureShadowCount;
-    // ImgWordCountCeiled: image word count ceiled so that ImgController readout outputs
+    // ImgCtrl_WordCountCeiled: image word count ceiled so that ImgController readout outputs
     // enough data to trigger the AFIFOChain read threshold (`readoutfifo_r_thresh`)
-    localparam ImgWordCountCeiled = `Ceil(ImgWordCount, ReadoutFIFO_R_Thresh*512/2);
+    localparam ImgCtrl_WordCountCeiled = `Ceil(`Img_WordCount, ReadoutFIFO_R_Thresh*512/2);
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
-        .HeaderWordCount(ImgHeaderWordCount),
-        .ImgWordCount(ImgWordCountCeiled)
+        .HeaderWordCount(`Img_HeaderWordCount),
+        .ImgWordCount(ImgCtrl_WordCountCeiled)
     ) ImgController (
         .clk(img_clk),
         

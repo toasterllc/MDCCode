@@ -267,8 +267,8 @@ task TestImgReadoutToSPI_Readout; begin
     SPIReadout(
         1,                          // waitForDReady,
         1,                          // validateWords,
-        ImgHeaderWordCount,         // headerWordCount,
-        ImgPixelCount,              // wordCount,
+        `Img_HeaderWordCount,       // headerWordCount,
+        `Img_PixelCount,            // wordCount,
         Sim_ImgWordInitialValue,    // wordInitialValue,
         Sim_ImgWordDelta,           // wordDelta,
         1                           // validateChecksum

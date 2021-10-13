@@ -98,16 +98,16 @@
 `define Msg_Type_Nop                                            `Msg_Type_Len'h00
 
 `ifdef SIM
-localparam ImgWidth                 = 64;
-localparam ImgHeight                = 32;
+`define Img_Width               64
+`define Img_Height              32
 `else
-localparam ImgWidth                 = 2304;
-localparam ImgHeight                = 1296;
+`define Img_Width               2304
+`define Img_Height              1296
 `endif
 
-localparam ImgHeaderWordCount       = 16;
-localparam ImgPixelCount            = ImgWidth*ImgHeight;
-localparam ImgChecksumWordCount     = 2;
-localparam ImgWordCount             = ImgHeaderWordCount + ImgPixelCount + ImgChecksumWordCount;
+`define Img_HeaderWordCount     16
+`define Img_PixelCount          (`Img_Width*`Img_Height)
+`define Img_ChecksumWordCount   2
+`define Img_WordCount           (`Img_HeaderWordCount + `Img_PixelCount + `Img_ChecksumWordCount)
 
 `endif
