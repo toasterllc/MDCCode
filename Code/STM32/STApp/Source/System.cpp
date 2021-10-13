@@ -404,8 +404,11 @@ void System::_img_captureTask() {
     // Bail if the capture failed
     if (!status.ok) return;
     
+    // Arrange for the image to be read out
+    ICE40::Transfer(ICE40::ImgReadoutMsg(0));
+    
     // Start the Readout task
-    _readoutLen = (size_t)status.wordCount;
+    _readoutLen = (size_t)status.wordCount*sizeof(Img::Word);
     _readoutTask.start();
 }
 
