@@ -57,7 +57,7 @@
 		55B66B40271525F800AD39A5 /* SD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SD.h; sourceTree = "<group>"; };
 		55B66B412715274200AD39A5 /* ImgSensor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgSensor.h; sourceTree = "<group>"; };
 		55B66B422715286A00AD39A5 /* SDCard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SDCard.h; sourceTree = "<group>"; };
-		55B66B44271762D500AD39A5 /* ST.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ST.h; sourceTree = "<group>"; };
+		55B66B472717691200AD39A5 /* STM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STM.h; sourceTree = "<group>"; };
 		55CAD61E26AF7B5B00450881 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		55CAD61F26AF7B5B00450881 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
 		55CAD62026AF7B5B00450881 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
@@ -104,7 +104,6 @@
 				55B2151727090FD2001423C1 /* SystemClock.h */,
 				55B2151627090FD2001423C1 /* USBBase.h */,
 				55B2151A27090FD2001423C1 /* Util.h */,
-				55B66B44271762D500AD39A5 /* ST.h */,
 				55B2151327090FD2001423C1 /* VectorTable.s */,
 			);
 			name = Shared;
@@ -144,6 +143,7 @@
 				55B66B412715274200AD39A5 /* ImgSensor.h */,
 				55B66B40271525F800AD39A5 /* SD.h */,
 				55B66B422715286A00AD39A5 /* SDCard.h */,
+				55B66B472717691200AD39A5 /* STM.h */,
 			);
 			name = Shared;
 			path = ../../Code/Shared;

@@ -1,7 +1,7 @@
 #pragma once
 #include "Toastbox/Enum.h"
 
-namespace ST {
+namespace STM {
     Enum(uint8_t, Endpoint, Endpoints,
         // Control endpoint
         Ctrl    = 0x00,
@@ -18,7 +18,7 @@ namespace ST {
         InvokeBootloader,
         LEDSet,
         
-        // # STLoader
+        // # STMLoader
         // STM32 Bootloader
         STMWrite,
         STMReset,
@@ -31,7 +31,7 @@ namespace ST {
         MSPWrite,
         MSPDebug,
         
-        // # STApp
+        // # STMApp
         SDRead,
         ImgCapture,
         ImgSetExposure,
@@ -45,7 +45,7 @@ namespace ST {
                 uint8_t on;
             } LEDSet;
             
-            // # STLoader
+            // # STMLoader
             struct __attribute__((packed)) {
                 uint32_t addr;
                 uint32_t len;
@@ -74,7 +74,7 @@ namespace ST {
                 uint32_t respLen;
             } MSPDebug;
             
-            // # STApp
+            // # STMApp
             struct __attribute__((packed)) {
                 uint32_t addr;
             } SDRead;
