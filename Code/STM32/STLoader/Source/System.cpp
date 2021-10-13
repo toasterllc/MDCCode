@@ -5,7 +5,7 @@
 #include <string.h>
 #include <algorithm>
 
-using namespace STLoader;
+using namespace ST;
 
 #pragma mark - System
 
@@ -70,22 +70,23 @@ void System::_usbCmd_taskFn() {
         }
         
         switch (_cmd.op) {
-        // STM32 Bootloader
-        case Op::STMWrite:      _stm_task.start();      break;
-        case Op::STMReset:      _stm_reset();           break;
-        // ICE40 Bootloader
-        case Op::ICEWrite:      _ice_task.start();      break;
-        // MSP430 Bootloader
-        case Op::MSPConnect:    _msp_connect();         break;
-        case Op::MSPDisconnect: _msp_disconnect();      break;
-        // MSP430 Debug
-        case Op::MSPRead:       _mspRead_task.start();  break;
-        case Op::MSPWrite:      _mspWrite_task.start(); break;
-        case Op::MSPDebug:      _mspDebug_task.start(); break;
         // Set LED
-        case Op::LEDSet:        _ledSet();              break;
+        case Op::InvokeBootloader:  _invokeBootloader();    break;
+        case Op::LEDSet:            _ledSet();              break;
+        // STM32 Bootloader
+        case Op::STMWrite:          _stm_task.start();      break;
+        case Op::STMReset:          _stm_reset();           break;
+        // ICE40 Bootloader
+        case Op::ICEWrite:          _ice_task.start();      break;
+        // MSP430 Bootloader
+        case Op::MSPConnect:        _msp_connect();         break;
+        case Op::MSPDisconnect:     _msp_disconnect();      break;
+        // MSP430 Debug
+        case Op::MSPRead:           _mspRead_task.start();  break;
+        case Op::MSPWrite:          _mspWrite_task.start(); break;
+        case Op::MSPDebug:          _mspDebug_task.start(); break;
         // Bad command
-        default:                _usb.cmdAccept(false);  break;
+        default:                    _usb.cmdAccept(false);  break;
         }
     }
 }
@@ -148,7 +149,7 @@ void System::_usbDataIn_sendStatus(bool status) {
     _usb.send(Endpoints::DataIn, &_usbDataIn.status, sizeof(_usbDataIn.status));
 }
 
-#pragma mark - Reset
+#pragma mark - Common Commands
 
 void System::_resetEndpoints_taskFn() {
     TaskBegin();
@@ -158,6 +159,29 @@ void System::_resetEndpoints_taskFn() {
     _usb.reset(Endpoints::DataOut);
     _usb.reset(Endpoints::DataIn);
     TaskWait(_usb.ready(Endpoints::DataOut) && _usb.ready(Endpoints::DataIn));
+    // Send status
+    _usbDataIn_sendStatus(true);
+}
+
+void System::_invokeBootloader() {
+    _usb.cmdAccept(true);
+    // Perform software reset
+    HAL_NVIC_SystemReset();
+    // Unreachable
+    abort();
+}
+
+void System::_ledSet() {
+    // Accept command
+    _usb.cmdAccept(true);
+    
+    switch (_cmd.arg.LEDSet.idx) {
+    case 0: _usbDataIn_sendStatus(false); return;
+    case 1: _LED1::Write(_cmd.arg.LEDSet.on); break;
+    case 2: _LED2::Write(_cmd.arg.LEDSet.on); break;
+    case 3: _LED3::Write(_cmd.arg.LEDSet.on); break;
+    }
+    
     // Send status
     _usbDataIn_sendStatus(true);
 }
@@ -509,23 +533,6 @@ bool System::_mspDebug_handleCmd(const MSPDebugCmd& cmd) {
     case MSPDebugCmd::Ops::SBWIO:       return _mspDebug_handleSBWIO(cmd);
     default:                            abort();
     }
-}
-
-#pragma mark - Other Commands
-
-void System::_ledSet() {
-    // Accept command
-    _usb.cmdAccept(true);
-    
-    switch (_cmd.arg.LEDSet.idx) {
-    case 0: _usbDataIn_sendStatus(false); return;
-    case 1: _LED1::Write(_cmd.arg.LEDSet.on); break;
-    case 2: _LED2::Write(_cmd.arg.LEDSet.on); break;
-    case 3: _LED3::Write(_cmd.arg.LEDSet.on); break;
-    }
-    
-    // Send status
-    _usbDataIn_sendStatus(true);
 }
 
 System Sys;

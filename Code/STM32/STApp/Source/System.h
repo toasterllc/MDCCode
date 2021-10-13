@@ -3,7 +3,7 @@
 #include "ICE40.h"
 #include "BufQueue.h"
 #include "USB.h"
-#include "STAppTypes.h"
+#include "ST.h"
 #include "SDCard.h"
 #include "Toastbox/Task.h"
 #include "ImgSensor.h"
@@ -24,7 +24,7 @@ private:
     
     void _readout_taskFn();
     
-    void _bootloader();
+    void _invokeBootloader();
     
     void _msp_init();
     
@@ -46,7 +46,7 @@ private:
     SD::Card _sd;
     
     BufQueue<2> _bufs;
-    STApp::Cmd _cmd = {};
+    ST::Cmd _cmd = {};
     std::optional<size_t> _readoutLen;
     bool _imgInit = false;
     

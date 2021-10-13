@@ -3,7 +3,6 @@
 #include "Assert.h"
 #include <string.h>
 #include <algorithm>
-using namespace STLoader;
 
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {
     return _super::_usbd_Init(cfgidx);
@@ -75,7 +74,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 // DataOut endpoint
                 0x07,                                                           // bLength: Endpoint Descriptor size
                 USB_DESC_TYPE_ENDPOINT,                                         // bDescriptorType: Endpoint
-                Endpoints::DataOut,                                             // bEndpointAddress
+                ST::Endpoints::DataOut,                                         // bEndpointAddress
                 0x02,                                                           // bmAttributes: Bulk
                 LOBYTE(MaxPacketSizeOut()), HIBYTE(MaxPacketSizeOut()),         // wMaxPacketSize
                 0x00,                                                           // bInterval: ignore for Bulk transfer
@@ -83,7 +82,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
                 // DataIn endpoint
                 0x07,                                                           // bLength: Endpoint Descriptor size
                 USB_DESC_TYPE_ENDPOINT,                                         // bDescriptorType: Endpoint
-                Endpoints::DataIn,                                              // bEndpointAddress
+                ST::Endpoints::DataIn,                                          // bEndpointAddress
                 0x02,                                                           // bmAttributes: Bulk
                 LOBYTE(MaxPacketSizeIn()), HIBYTE(MaxPacketSizeIn()),           // wMaxPacketSize
                 0x00,                                                           // bInterval: ignore for Bulk transfer

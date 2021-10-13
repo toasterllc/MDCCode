@@ -10,7 +10,7 @@
 alignas(4) static uint8_t _buf0[63*1024] __attribute__((section(".sram1")));
 alignas(4) static uint8_t _buf1[63*1024] __attribute__((section(".sram1")));
 
-using namespace STApp;
+using namespace ST;
 
 // SleepMs implementation, declared in SleepMs.h
 // Used by ICE40, Img::Sensor, SD::Card
@@ -87,11 +87,11 @@ void System::_usbCmd_taskFn() {
         }
         
         switch (_cmd.op) {
-        case Op::Bootloader:        _bootloader();              break;
-        case Op::SDRead:            _sdRead_task.start();        break;
-        case Op::ImgSetExposure:    _img_setExposure();         break;
-        case Op::ImgCapture:        _imgCapture_task.start();    break;
+        case Op::InvokeBootloader:  _invokeBootloader();        break;
         case Op::LEDSet:            _ledSet();                  break;
+        case Op::SDRead:            _sdRead_task.start();       break;
+        case Op::ImgSetExposure:    _img_setExposure();         break;
+        case Op::ImgCapture:        _imgCapture_task.start();   break;
         // Bad command
         default:                    _usb.cmdAccept(false);      break;
         }
@@ -194,17 +194,6 @@ void ICE40::Transfer(const Msg& msg, Resp* resp) {
     System::_ICE_ST_SPI_CS_::Write(1);
 }
 
-#pragma mark - Reset Endpoints
-
-void System::_resetEndpoints_taskFn() {
-    TaskBegin();
-    // Accept command
-    _usb.cmdAccept(true);
-    // Reset endpoints
-    _usb.reset(Endpoints::DataIn);
-    TaskWait(_usb.ready(Endpoints::DataIn));
-}
-
 #pragma mark - Readout
 
 void System::_readout_taskFn() {
@@ -252,14 +241,34 @@ void System::_readout_taskFn() {
     }
 }
 
-#pragma mark - Bootloader
+#pragma mark - Common Commands
 
-void System::_bootloader() {
+void System::_resetEndpoints_taskFn() {
+    TaskBegin();
+    // Accept command
+    _usb.cmdAccept(true);
+    // Reset endpoints
+    _usb.reset(Endpoints::DataIn);
+    TaskWait(_usb.ready(Endpoints::DataIn));
+}
+
+void System::_invokeBootloader() {
     _usb.cmdAccept(true);
     // Perform software reset
     HAL_NVIC_SystemReset();
     // Unreachable
     abort();
+}
+
+void System::_ledSet() {
+    switch (_cmd.arg.LEDSet.idx) {
+    case 0: _usb.cmdAccept(false); return;
+    case 1: _LED1::Write(_cmd.arg.LEDSet.on); break;
+    case 2: _LED2::Write(_cmd.arg.LEDSet.on); break;
+    case 3: _LED3::Write(_cmd.arg.LEDSet.on); break;
+    }
+    
+    _usb.cmdAccept(true);
 }
 
 #pragma mark - MSP430
@@ -410,19 +419,6 @@ void System::_img_captureTask() {
     // Start the Readout task
     _readoutLen = (size_t)status.wordCount*sizeof(Img::Word);
     _readout_task.start();
-}
-
-#pragma mark - Other Commands
-
-void System::_ledSet() {
-    switch (_cmd.arg.LEDSet.idx) {
-    case 0: _usb.cmdAccept(false); return;
-    case 1: _LED1::Write(_cmd.arg.LEDSet.on); break;
-    case 2: _LED2::Write(_cmd.arg.LEDSet.on); break;
-    case 3: _LED3::Write(_cmd.arg.LEDSet.on); break;
-    }
-    
-    _usb.cmdAccept(true);
 }
 
 System Sys;
