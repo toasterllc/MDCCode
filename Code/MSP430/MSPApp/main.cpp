@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <cstddef>
 #include "SDCard.h"
-#include "ICE40.h"
+#include "ICE.h"
 #include "ImgSensor.h"
 
 constexpr uint64_t MCLKFreqHz = 16000000;
@@ -159,8 +159,8 @@ static void _sys_init() {
 
 #pragma mark - ICE40
 
-void ICE40::Transfer(const Msg& msg, Resp* resp) {
-    AssertArg((bool)resp == (bool)(msg.type & ICE40::MsgType::Resp));
+void ICE::Transfer(const Msg& msg, Resp* resp) {
+    AssertArg((bool)resp == (bool)(msg.type & ICE::MsgType::Resp));
     
     // PA.4 = UCA0SIMO
     PASEL1 &= ~BIT4;
@@ -236,7 +236,7 @@ int main() {
     // Init system (clock, pins, etc)
     _sys_init();
     // Init ICE40
-    ICE40::Init();
+    ICE::Init();
     // Initialize image sensor
     Img::Sensor::Init();
     // Initialize SD card
@@ -245,10 +245,10 @@ int main() {
     Img::Sensor::SetStreamEnabled(true);
     
     for (int i=0; i<10; i++) {
-        ICE40::Transfer(ICE40::LEDSetMsg(i));
+        ICE::Transfer(ICE::LEDSetMsg(i));
         
         // Capture an image to RAM
-        ICE40::ImgCapture();
+        ICE::ImgCapture();
         // Write the image to the SD card
         _sd.writeImage(i);
         _sleepMs(1000);

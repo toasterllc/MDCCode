@@ -148,9 +148,7 @@ namespace STM {
         uint8_t data = 0;
     } __attribute__((packed));
     
-    struct ImgCaptureStatus {
-        uint8_t ok;
-        uint8_t _pad[3];
+    struct ImgCaptureStats {
         uint32_t wordCount;
         uint32_t highlightCount;
         uint32_t shadowCount;

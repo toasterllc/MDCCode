@@ -247,13 +247,8 @@ static void SDImgRead(const Args& args, MDCDevice& device) {
 
 static void ImgCapture(const Args& args, MDCDevice& device) {
     printf("Sending ImgCapture command...\n");
-    device.imgCapture();
-    
-    // Read and check status
-    STM::ImgCaptureStatus status;
-    device.usbDevice().read(STM::Endpoints::DataIn, status);
-    if (!status.ok) throw std::runtime_error("image capture failed");
-    printf("-> OK (word count: %ju)\n\n", (uintmax_t)status.wordCount);
+    STM::ImgCaptureStats stats = device.imgCapture();
+    printf("-> OK (word count: %ju)\n\n", (uintmax_t)stats.wordCount);
     
     printf("Reading image...\n");
     std::unique_ptr<uint8_t[]> img = _readoutImg(device);
@@ -262,7 +257,7 @@ static void ImgCapture(const Args& args, MDCDevice& device) {
     // Write image
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    f.open(args.SDImgRead.filePath.c_str());
+    f.open(args.ImgCapture.filePath.c_str());
     f.write((char*)img.get(), Img::Len);
     printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Len);
 }
@@ -320,7 +315,7 @@ int main(int argc, const char* argv[]) {
     
     MDCDevice& device = devices[0];
     try {
-        device.resetEndpoints();
+        device.flushEndpoints();
         if (args.cmd == lower(LEDSetCmd))           LEDSet(args, device);
         else if (args.cmd == lower(STMLoadCmd))     STMLoad(args, device);
         else if (args.cmd == lower(ICELoadCmd))     ICELoad(args, device);

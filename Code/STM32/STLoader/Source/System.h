@@ -23,15 +23,15 @@ private:
     
     // Common Commands
     void _flushEndpoints_taskFn();
-    void _invokeBootloader();
+    void _invokeBootloader_taskFn();
     void _ledSet();
     
     // STM32 Bootloader
-    void _stm_taskFn();
-    void _stm_reset();
+    void _stm_writeTaskFn();
+    void _stm_resetTaskFn();
     
     // ICE40 Bootloader
-    void _ice_taskFn();
+    void _ice_writeTaskFn();
     
     // MSP430 Bootloader
     void _msp_connect();
@@ -74,23 +74,27 @@ private:
         } read;
     } _mspDebug;
     
-    Task _usb_cmdTask           = Task([&] {  _usb_cmdTaskFn();           });
-    Task _usb_dataOutTask       = Task([&] {  _usb_dataOutTaskFn();       });
-    Task _usb_dataInTask        = Task([&] {  _usb_dataInTaskFn();        });
-    Task _flushEndpoints_task   = Task([&] {  _flushEndpoints_taskFn();   });
-    Task _stm_task              = Task([&] {  _stm_taskFn();              });
-    Task _ice_task              = Task([&] {  _ice_taskFn();              });
-    Task _msp_readTask          = Task([&] {  _msp_readTaskFn();          });
-    Task _msp_writeTask         = Task([&] {  _msp_writeTaskFn();         });
-    Task _msp_debugTask         = Task([&] {  _msp_debugTaskFn();         });
+    Task _usb_cmdTask           = Task([&] {  _usb_cmdTaskFn();             });
+    Task _usb_dataOutTask       = Task([&] {  _usb_dataOutTaskFn();         });
+    Task _usb_dataInTask        = Task([&] {  _usb_dataInTaskFn();          });
+    Task _flushEndpoints_task   = Task([&] {  _flushEndpoints_taskFn();     });
+    Task _invokeBootloader_task = Task([&] {  _invokeBootloader_taskFn();   });
+    Task _stm_writeTask         = Task([&] {  _stm_writeTaskFn();           });
+    Task _stm_resetTask         = Task([&] {  _stm_resetTaskFn();           });
+    Task _ice_writeTask         = Task([&] {  _ice_writeTaskFn();           });
+    Task _msp_readTask          = Task([&] {  _msp_readTaskFn();            });
+    Task _msp_writeTask         = Task([&] {  _msp_writeTaskFn();           });
+    Task _msp_debugTask         = Task([&] {  _msp_debugTaskFn();           });
     
-    std::reference_wrapper<Task> _tasks[9] = {
+    std::reference_wrapper<Task> _tasks[11] = {
         _usb_cmdTask,
         _usb_dataOutTask,
         _usb_dataInTask,
         _flushEndpoints_task,
-        _stm_task,
-        _ice_task,
+        _invokeBootloader_task,
+        _stm_writeTask,
+        _stm_resetTask,
+        _ice_writeTask,
         _msp_readTask,
         _msp_writeTask,
         _msp_debugTask,

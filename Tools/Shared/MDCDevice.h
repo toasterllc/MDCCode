@@ -25,9 +25,9 @@ public:
     USBDevice& usbDevice() { return _dev; }
     
     #pragma mark - Common Commands
-    void resetEndpoints() {
+    void flushEndpoints() {
         using namespace STM;
-        const Cmd cmd = { .op = Op::ResetEndpoints };
+        const Cmd cmd = { .op = Op::FlushEndpoints };
         // Send command
         _dev.vendorRequestOut(0, cmd);
         
@@ -36,13 +36,14 @@ public:
         for (const uint8_t ep : eps) {
             _flushEndpoint(ep);
         }
-        _waitOrThrow("ResetEndpoints command failed");
+        _waitOrThrow("FlushEndpoints command failed");
     }
     
     void invokeBootloader() {
         using namespace STM;
         const Cmd cmd = { .op = Op::InvokeBootloader };
         _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("InvokeBootloader command failed");
     }
     
     void ledSet(uint8_t idx, bool on) {
@@ -74,9 +75,11 @@ public:
         };
         // Send command
         _dev.vendorRequestOut(0, cmd);
+        // Check preliminary status
+        _waitOrThrow("STMWrite command failed");
         // Send data
         _dev.write(Endpoints::DataOut, data, len);
-        _waitOrThrow("STMWrite command failed");
+        _waitOrThrow("STMWrite DataOut failed");
     }
     
     void stmReset(uint32_t entryPointAddr) {
@@ -90,6 +93,7 @@ public:
             },
         };
         _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("STMReset command failed");
     }
     
     void iceWrite(const void* data, size_t len) {
@@ -179,6 +183,8 @@ public:
         
         // Send command
         _dev.vendorRequestOut(0, cmd);
+        // Check preliminary status
+        _waitOrThrow("MSPDebug command failed");
         
         // Write the MSPDebugCmds
         if (cmdsLen) {
@@ -190,7 +196,7 @@ public:
             _dev.read(Endpoints::DataIn, resp, respLen);
         }
         
-        _waitOrThrow("MSPDebug command failed");
+        _waitOrThrow("MSPDebug DataOut/DataIn command failed");
     }
     
     #pragma mark - STMApp Commands
@@ -205,7 +211,7 @@ public:
             },
         };
         _dev.vendorRequestOut(0, cmd);
-        _flushEndpoint(Endpoints::DataIn);
+        _waitOrThrow("SDRead command failed");
     }
     
     void imgSetExposure(uint16_t coarseIntTime, uint16_t fineIntTime, uint16_t gain) {
@@ -221,12 +227,18 @@ public:
             },
         };
         _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("ImgSetExposure command failed");
     }
     
-    void imgCapture() {
+    STM::ImgCaptureStats imgCapture() {
         using namespace STM;
         const Cmd cmd = { .op = Op::ImgCapture };
         _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("ImgCapture command failed");
+        
+        ImgCaptureStats stats;
+        _dev.read(Endpoints::DataIn, stats);
+        return stats;
     }
     
 private:
