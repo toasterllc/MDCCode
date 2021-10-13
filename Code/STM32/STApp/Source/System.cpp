@@ -431,10 +431,10 @@ void System::_img_captureTask() {
             for (;;);
         }
         
-        if (len < ICE40::ReadoutMsg::ReadoutLen) {
-        	volatile bool stay = true;
-        	while (stay);
-        }
+//        if (len < ICE40::ReadoutMsg::ReadoutLen) {
+//        	volatile bool stay = true;
+//        	while (stay);
+//        }
         
         // Wait until ICE40 signals that data is ready to be read
         while (!_ICE_ST_SPI_D_READY::Read());
