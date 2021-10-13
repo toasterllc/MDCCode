@@ -37,22 +37,22 @@ module WordValidator();
         _checksum_en    = 0; #1;
     end endtask
     
-    reg[31:0] _cfgHeaderWordCount       = 0;
-    reg[31:0] _cfgBodyWordCount         = 0;
-    reg[31:0] _cfgBodyWordInitialValue  = 0;
-    reg[31:0] _cfgBodyWordDelta         = 0;
-    reg[31:0] _cfgValidateChecksum      = 0;
+    reg[31:0]   _cfgHeaderWordCount         = 0;
+    reg[31:0]   _cfgBodyWordCount           = 0;
+    reg[31:0]   _cfgBodyWordInitialValue    = 0;
+    integer     _cfgBodyWordDelta           = 0;
+    reg[31:0]   _cfgValidateChecksum        = 0;
     
-    reg[31:0]   _wordCounter            = 0;
-    reg[15:0]   _wordPrev               = 0;
-    reg         _wordValidationStarted  = 0;
-    reg         _checksumReceived       = 0;
+    reg[31:0]   _wordCounter                = 0;
+    reg[15:0]   _wordPrev                   = 0;
+    reg         _wordValidationStarted      = 0;
+    reg         _checksumReceived           = 0;
     
     task Config(
         input[31:0] headerWordCount,        // Number of 16-bit words to ignore at the beginning of the received data
         input[31:0] bodyWordCount,          // Number of 16-bit words to validate
         input[31:0] bodyWordInitialValue,   // Expected value of the first word
-        input[31:0] bodyWordDelta,          // Expected difference between current word value and previous word value
+        integer     bodyWordDelta,          // Expected difference between current word value and previous word value
         input[31:0] validateChecksum        // Whether to check the checksum appended to the data
     ); begin
         _cfgHeaderWordCount        = headerWordCount;
@@ -72,7 +72,9 @@ module WordValidator();
             
             _ChecksumConsumeWord(word);
             
-            if (!_wordValidationStarted) begin
+            if (!_wordValidationStarted                 ||
+                (_cfgBodyWordDelta>0 && (&_wordPrev))   ||      // Check for overflow
+                (_cfgBodyWordDelta<0 && (!_wordPrev))) begin    // Check for overflow
                 wordExpected = _cfgBodyWordInitialValue;
             end else begin
                 wordExpected = HostFromLittle16.Swap(_wordPrev)+_cfgBodyWordDelta;
