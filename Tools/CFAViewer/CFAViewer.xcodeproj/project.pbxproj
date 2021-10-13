@@ -89,6 +89,7 @@
 		55AE80CB262F5B3100BA227C /* ImagePipelineManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImagePipelineManager.h; sourceTree = "<group>"; };
 		55AE80CC262F5B3100BA227C /* ImagePipelineManager.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImagePipelineManager.mm; sourceTree = "<group>"; };
 		55AE80D92630C98100BA227C /* PixelSampler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PixelSampler.h; sourceTree = "<group>"; };
+		55B66B4327168D5D00AD39A5 /* Img.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Img.h; sourceTree = "<group>"; };
 		55B93E5A262E72A600463F34 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineTypes.h; sourceTree = "<group>"; };
 		55B9745924C504E2000B2633 /* CFAViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CFAViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55B9745D24C504E2000B2633 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
@@ -99,8 +100,6 @@
 		55B9747724C50A81000B2633 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		55B9747924C50A86000B2633 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		55B9747B24C50A8A000B2633 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		55D0820D27092A8200B9BB97 /* MDCTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCTypes.h; sourceTree = "<group>"; };
-		55D0820E27092A8200B9BB97 /* ICE40Types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICE40Types.h; sourceTree = "<group>"; };
 		55D0820F27092A8200B9BB97 /* Assert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
 		55D08211270BACA600B9BB97 /* ChecksumFletcher32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChecksumFletcher32.h; sourceTree = "<group>"; };
 		55DE384325F6DA2400AD2223 /* Defringe.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Defringe.metal; sourceTree = "<group>"; };
@@ -287,8 +286,7 @@
 			isa = PBXGroup;
 			children = (
 				55D0820F27092A8200B9BB97 /* Assert.h */,
-				55D0820E27092A8200B9BB97 /* ICE40Types.h */,
-				55D0820D27092A8200B9BB97 /* MDCTypes.h */,
+				55B66B4327168D5D00AD39A5 /* Img.h */,
 				55D08211270BACA600B9BB97 /* ChecksumFletcher32.h */,
 			);
 			name = Shared;

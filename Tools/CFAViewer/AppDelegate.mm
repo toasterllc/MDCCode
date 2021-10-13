@@ -28,7 +28,7 @@
 #import "Color.h"
 #import "ImagePipelineManager.h"
 #import "PixelSampler.h"
-#import "MDCTypes.h"
+#import "Img.h"
 #import "ChecksumFletcher32.h"
 using namespace CFAViewer;
 using namespace MetalUtil;
@@ -146,20 +146,20 @@ struct PixConfig {
         bool running = false;
         bool cancel = false;
         std::optional<PixConfig> pixConfig;
-        MDC::ImgPixel pixels[2200*2200];
+        Img::Pixel pixels[2200*2200];
         uint32_t width = 0;
         uint32_t height = 0;
     } _streamImagesThread;
     
     struct {
-        MDC::ImgPixel pixels[2200*2200];
+        Img::Pixel pixels[2200*2200];
         Pipeline::RawImage img = {
             .cfaDesc = {
                 CFAColor::Green, CFAColor::Red,
                 CFAColor::Blue, CFAColor::Green,
             },
-            .width = MDC::ImgPixelWidth,
-            .height = MDC::ImgPixelHeight,
+            .width = Img::PixelWidth,
+            .height = Img::PixelHeight,
             .pixels = pixels,
         };
     } _rawImage;
@@ -317,18 +317,18 @@ static bool isCFAFile(const fs::path& path) {
     
     // Support 2 different filetypes:
     // (1) solely raw pixel data
-    if (imgData.len() == MDC::ImgPixelLen) {
+    if (imgData.len() == Img::PixelLen) {
         // Copy the image data into _rawImage
-        memcpy(_rawImage.pixels, imgData.data(), MDC::ImgPixelLen);
+        memcpy(_rawImage.pixels, imgData.data(), Img::PixelLen);
     
     // (2) header + raw pixel data + checksum
-    } else if (imgData.len() == MDC::ImgLen) {
+    } else if (imgData.len() == Img::Len) {
         // Copy the image data into _rawImage
-        memcpy(_rawImage.pixels, imgData.data()+MDC::ImgHeaderLen, MDC::ImgPixelLen);
+        memcpy(_rawImage.pixels, imgData.data()+Img::HeaderLen, Img::PixelLen);
         
-        const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), MDC::ImgChecksumOffset);
+        const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), Img::ChecksumOffset);
         uint32_t checksumGot = 0;
-        memcpy(&checksumGot, imgData.data()+MDC::ImgChecksumOffset, sizeof(checksumGot));
+        memcpy(&checksumGot, imgData.data()+Img::ChecksumOffset, sizeof(checksumGot));
         assert(checksumExpected == checksumGot);
     
     // invaid image
