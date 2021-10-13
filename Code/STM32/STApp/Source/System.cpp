@@ -51,14 +51,14 @@ void System::_resetTasks() {
     _ICE_ST_SPI_CS_::Write(1);
     
     for (Task& t : _tasks) {
-        if (&t == &_usbCmd_task) continue; // Never pause the USB command task
+        if (&t == &_usb_cmdTask) continue; // Never pause the USB command task
         t.pause();
     }
 }
 
 #pragma mark - USB
 
-void System::_usbCmd_taskFn() {
+void System::_usb_cmdTaskFn() {
     TaskBegin();
     for (;;) {
         auto usbCmd = *TaskWait(_usb.cmdRecv());
@@ -87,20 +87,22 @@ void System::_usbCmd_taskFn() {
             continue;
         }
         
+        _usb.cmdAccept(true);
+        
         switch (_cmd.op) {
-        case Op::InvokeBootloader:  _invokeBootloader();        break;
-        case Op::LEDSet:            _ledSet();                  break;
-        case Op::SDRead:            _sdRead_task.start();       break;
-        case Op::ImgSetExposure:    _img_setExposure();         break;
-        case Op::ImgCapture:        _imgCapture_task.start();   break;
+        case Op::InvokeBootloader:  _invokeBootloader();            break;
+        case Op::LEDSet:            _ledSet();                      break;
+        case Op::SDRead:            _sd_readTask.start();           break;
+        case Op::ImgCapture:        _img_captureTask.start();       break;
+        case Op::ImgSetExposure:    _img_setExposure();             break;
         // Bad command
-        default:                    _usb.cmdAccept(false);      break;
+        default:                    _usb_dataInSendStatus(false);   break;
         }
     }
 }
 
 // _usbDataIn_task: writes buffers from _bufs to the DataIn endpoint, and pops them from _bufs
-void System::_usbDataIn_taskFn() {
+void System::_usb_dataInTaskFn() {
     TaskBegin();
     
     for (;;) {
@@ -113,6 +115,11 @@ void System::_usbDataIn_taskFn() {
         _bufs.front().len = 0;
         _bufs.pop();
     }
+}
+
+void System::_usb_dataInSendStatus(bool status) {
+    _usbDataIn.status = status;
+    _usb.send(Endpoints::DataIn, &_usbDataIn.status, sizeof(_usbDataIn.status));
 }
 
 #pragma mark - ICE40
@@ -203,7 +210,7 @@ void System::_readout_taskFn() {
     // Reset state
     _bufs.reset();
     // Start the USB DataIn task
-    _usbDataIn_task.start();
+    _usb_dataInTask.start();
     
     // Send the Readout message, which causes us to enter the readout mode until
     // we release the chip select
@@ -215,7 +222,7 @@ void System::_readout_taskFn() {
         // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
         TaskWait(!_bufs.full() && _qspi.ready());
         
-        const size_t len = std::min(_readoutLen.value_or(SIZE_MAX), ICE::ReadoutMsg::ReadoutLen);
+        const size_t len = std::min(_readout.len.value_or(SIZE_MAX), ICE::ReadoutMsg::ReadoutLen);
         auto& buf = _bufs.back();
         
         // If there's no more data to read, bail
@@ -238,7 +245,7 @@ void System::_readout_taskFn() {
         _qspi.read(_ice_qspiCmdReadOnly(len), buf.data+buf.len, len);
         buf.len += len;
         
-        if (_readoutLen) *_readoutLen -= len;
+        if (_readout.len) *_readout.len -= len;
     }
 }
 
@@ -246,15 +253,19 @@ void System::_readout_taskFn() {
 
 void System::_resetEndpoints_taskFn() {
     TaskBegin();
-    // Accept command
-    _usb.cmdAccept(true);
     // Reset endpoints
     _usb.reset(Endpoints::DataIn);
     TaskWait(_usb.ready(Endpoints::DataIn));
+    // Send status
+    _usb_dataInSendStatus(true);
 }
 
 void System::_invokeBootloader() {
-    _usb.cmdAccept(true);
+    // Send status
+    _usb_dataInSendStatus(true);
+    // Wait for host to receive status before resetting
+    TaskWait(_usb.ready(Endpoints::DataIn));
+    
     // Perform software reset
     HAL_NVIC_SystemReset();
     // Unreachable
@@ -263,13 +274,14 @@ void System::_invokeBootloader() {
 
 void System::_ledSet() {
     switch (_cmd.arg.LEDSet.idx) {
-    case 0: _usb.cmdAccept(false); return;
+    case 0: _usb_dataInSendStatus(false); return;
     case 1: _LED1::Write(_cmd.arg.LEDSet.on); break;
     case 2: _LED2::Write(_cmd.arg.LEDSet.on); break;
     case 3: _LED3::Write(_cmd.arg.LEDSet.on); break;
     }
     
-    _usb.cmdAccept(true);
+    // Send status
+    _usb_dataInSendStatus(true);
 }
 
 #pragma mark - MSP430
@@ -314,15 +326,12 @@ void SD::Card::SetPowerEnabled(bool en) {
 const uint8_t SD::Card::ClkDelaySlow = 7;
 const uint8_t SD::Card::ClkDelayFast = 0;
 
-void System::_sd_readTask() {
+void System::_sd_readTaskFn() {
     static bool init = false;
     static bool reading = false;
     const auto& arg = _cmd.arg.SDRead;
     
     TaskBegin();
-    
-    // Accept command
-    _usb.cmdAccept(true);
     
     // Initialize the SD card if we haven't done so
     if (!init) {
@@ -337,17 +346,15 @@ void System::_sd_readTask() {
         reading = false;
     }
     
-    // Reset DataIn endpoint (which sends a 2xZLP+sentinel sequence)
-    _usb.reset(Endpoints::DataIn);
-    // Wait until we're done resetting the DataIn endpoint
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    // Send status
+    _usb_dataInSendStatus(true);
     
     // Update state
     reading = true;
     _sd.readStart(arg.addr);
     
     // Start the Readout task
-    _readoutLen = std::nullopt;
+    _readout.len = std::nullopt;
     _readout_task.start();
 }
 
@@ -381,25 +388,23 @@ void Img::Sensor::SetPowerEnabled(bool en) {
 }
 
 void System::_img_init() {
-    if (_imgInit) return;
+    if (_img.init) return;
     Img::Sensor::Init();
     Img::Sensor::SetStreamEnabled(true);
-    _imgInit = true;
+    _img.init = true;
 }
 
 void System::_img_setExposure() {
     const auto& arg = _cmd.arg.ImgSetExposure;
-    _usb.cmdAccept(true);
     _img_init();
     Img::Sensor::SetCoarseIntegrationTime(arg.coarseIntTime);
     Img::Sensor::SetFineIntegrationTime(arg.fineIntTime);
     Img::Sensor::SetGain(arg.gain);
 }
 
-void System::_img_captureTask() {
+void System::_img_captureTaskFn() {
     static ImgCaptureStatus status = {};
     TaskBegin();
-    _usb.cmdAccept(true);
     _img_init();
     
     auto resp               = ICE::ImgCapture();
@@ -418,7 +423,7 @@ void System::_img_captureTask() {
     ICE::Transfer(ICE::ImgReadoutMsg(0));
     
     // Start the Readout task
-    _readoutLen = (size_t)status.wordCount*sizeof(Img::Word);
+    _readout.len = (size_t)status.wordCount*sizeof(Img::Word);
     _readout_task.start();
 }
 
