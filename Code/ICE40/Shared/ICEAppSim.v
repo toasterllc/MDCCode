@@ -5,6 +5,7 @@
 `include "EndianSwap.v"
 `include "Util.v"
 `include "WordValidator.v"
+`include "SDController.v"
 
 `ifdef _ICEApp_SD_En
 `include "SDCardSim.v"

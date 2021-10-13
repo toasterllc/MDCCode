@@ -392,21 +392,11 @@ void System::_img_captureTask() {
     _usb.cmdAccept(true);
     _img_init();
     
-    ICE40::Transfer(ICE40::ImgCaptureMsg(0));
-    
-    // Wait a max of `MaxDelayMs` for the the capture to be ready for readout
-    constexpr uint32_t MaxDelayMs = 1000;
-    const uint32_t startTime = HAL_GetTick();
-    ICE40::ImgCaptureStatusResp s;
-    for (;;) {
-        s = ICE40::ImgCaptureStatus();
-        if (s.done() || (HAL_GetTick()-startTime)>=MaxDelayMs) break;
-    }
-    
-    status.ok               = s.done();
-    status.wordCount        = s.wordCount();
-    status.highlightCount   = s.highlightCount();
-    status.shadowCount      = s.shadowCount();
+    auto resp               = ICE40::ImgCapture();
+    status.ok               = (bool)resp;
+    status.wordCount        = (*resp).wordCount();
+    status.highlightCount   = (*resp).highlightCount();
+    status.shadowCount      = (*resp).shadowCount();
     
     _usb.send(Endpoints::DataIn, &status, sizeof(status));
     TaskWait(_usb.ready(Endpoints::DataIn));
