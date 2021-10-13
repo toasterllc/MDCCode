@@ -71,24 +71,21 @@ using namespace MetalUtil;
         i++;
     }
     
-    _zoomScale = 1;
     NSMagnificationGestureRecognizer* magnify = [[NSMagnificationGestureRecognizer alloc] initWithTarget:self
         action:@selector(_handleMagnify:)];
     [magnify setDelegate:self];
     [self addGestureRecognizer:magnify];
     
     [self registerForDraggedTypes:@[NSPasteboardTypeFileURL]];
+    
+    [self reset];
 }
 
 #pragma mark - Public Methods
 
 - (void)reset {
     [_sampleLayer setFrame:CGRectNull];
-    
-    _zoomScale = 1;
-    _rootLayerOffset = {0,0};
-    [_rootLayer setTransform:CATransform3DIdentity];
-    [_viewLayer setNeedsLayout];
+    [self _setZoomScale:.5 anchor:{0,0}];
 }
 
 - (ImageLayer*)imageLayer {

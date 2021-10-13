@@ -342,8 +342,8 @@ static bool isCFAFile(const fs::path& path) {
     _imagePipelineManager->options.illum = std::nullopt;
     // Reset the sample rect
     _imagePipelineManager->options.sampleRect = {};
-    // Reset the image scale / position
-    [_mainView reset];
+//    // Reset the image scale / position
+//    [_mainView reset];
 }
 
 - (IBAction)_previousImage:(id)sender {
