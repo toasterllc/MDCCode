@@ -58,6 +58,7 @@
 		55B66B412715274200AD39A5 /* ImgSensor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgSensor.h; sourceTree = "<group>"; };
 		55B66B422715286A00AD39A5 /* SDCard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SDCard.h; sourceTree = "<group>"; };
 		55B66B472717691200AD39A5 /* STM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STM.h; sourceTree = "<group>"; };
+		55B66B4A27176EC700AD39A5 /* ICE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ICE.h; sourceTree = "<group>"; };
 		55CAD61E26AF7B5B00450881 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		55CAD61F26AF7B5B00450881 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
 		55CAD62026AF7B5B00450881 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
@@ -65,7 +66,6 @@
 		55CAD62226AF7B5B00450881 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
 		55CAD62326AF7B5B00450881 /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
 		55D08210270BAC6500B9BB97 /* ChecksumFletcher32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChecksumFletcher32.h; sourceTree = "<group>"; };
-		55D082382714C58400B9BB97 /* ICE40.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ICE40.h; sourceTree = "<group>"; };
 		55E1D8DE253E864F00628EF6 /* MDCUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCUtil; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -138,12 +138,12 @@
 			children = (
 				55D08210270BAC6500B9BB97 /* ChecksumFletcher32.h */,
 				55B2153327091044001423C1 /* Assert.h */,
-				55D082382714C58400B9BB97 /* ICE40.h */,
 				55B66B3F271525F800AD39A5 /* Img.h */,
 				55B66B412715274200AD39A5 /* ImgSensor.h */,
 				55B66B40271525F800AD39A5 /* SD.h */,
 				55B66B422715286A00AD39A5 /* SDCard.h */,
 				55B66B472717691200AD39A5 /* STM.h */,
+				55B66B4A27176EC700AD39A5 /* ICE.h */,
 			);
 			name = Shared;
 			path = ../../Code/Shared;

@@ -10,20 +10,35 @@
 #include "Img.h"
 #include "ImgSensor.h"
 #include "SD.h"
+#include "ELF32Binary.h"
 
 using CmdStr = std::string;
-const CmdStr BootloaderCmd  = "Bootloader";
-const CmdStr SDImgReadCmd   = "SDImgRead";
-const CmdStr ImgCaptureCmd  = "ImgCapture";
-const CmdStr LEDSetCmd      = "LEDSet";
+
+// Common Commands
+const CmdStr LEDSetCmd              = "LEDSet";
+
+// STMLoader Commands
+const CmdStr STMLoadCmd             = "STMLoad";
+const CmdStr ICELoadCmd             = "ICELoad";
+const CmdStr MSPLoadCmd             = "MSPLoad";
+
+// STMApp Commands
+const CmdStr SDImgReadCmd           = "SDImgRead";
+const CmdStr ImgCaptureCmd          = "ImgCapture";
 
 void printUsage() {
     using namespace std;
     cout << "MDCUtil commands:\n";
-    cout << "  " << BootloaderCmd   << "\n";
+    
+    cout << "  " << LEDSetCmd       << " <idx> <0/1>\n";
+    
+    cout << "  " << STMLoadCmd      << " <file>\n";
+    cout << "  " << ICELoadCmd      << " <file>\n";
+    cout << "  " << MSPLoadCmd      << " <file>\n";
+    
     cout << "  " << SDImgReadCmd    << " <idx> <output.cfa>\n";
     cout << "  " << ImgCaptureCmd   << " <output.cfa>\n";
-    cout << "  " << LEDSetCmd       << " <idx> <0/1>\n";
+    
     cout << "\n";
 }
 
@@ -32,17 +47,29 @@ struct Args {
     
     struct {
         uint8_t idx = 0;
-        std::string filePath;
-    } sdImgRead = {};
+        uint8_t on = 0;
+    } LEDSet = {};
     
     struct {
         std::string filePath;
-    } imgCapture = {};
+    } STMLoad = {};
+    
+    struct {
+        std::string filePath;
+    } ICELoad = {};
+    
+    struct {
+        std::string filePath;
+    } MSPLoad = {};
     
     struct {
         uint8_t idx = 0;
-        uint8_t on = 0;
-    } ledSet = {};
+        std::string filePath;
+    } SDImgRead = {};
+    
+    struct {
+        std::string filePath;
+    } ImgCapture = {};
 };
 
 static std::string lower(const std::string& str) {
@@ -59,33 +86,37 @@ static Args parseArgs(int argc, const char* argv[]) {
     if (strs.size() < 1) throw std::runtime_error("no command specified");
     args.cmd = lower(strs[0]);
     
-    if (args.cmd == lower(BootloaderCmd)) {
+    if (args.cmd == lower(LEDSetCmd)) {
+        if (strs.size() < 3) throw std::runtime_error("LED index/state not specified");
+        args.LEDSet.idx = std::stoi(strs[1]);
+        args.LEDSet.on = std::stoi(strs[2]);
+    
+    } else if (args.cmd == lower(STMLoadCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("file path not specified");
+        args.STMLoad.filePath = strs[1];
+    
+    } else if (args.cmd == lower(ICELoadCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("file path not specified");
+        args.ICELoad.filePath = strs[1];
+    
+    } else if (args.cmd == lower(MSPLoadCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("file path not specified");
+        args.MSPLoad.filePath = strs[1];
     
     } else if (args.cmd == lower(SDImgReadCmd)) {
         if (strs.size() < 3) throw std::runtime_error("index/file path not specified");
-        args.sdImgRead.idx = std::stoi(strs[1]);
-        args.sdImgRead.filePath = strs[2];
+        args.SDImgRead.idx = std::stoi(strs[1]);
+        args.SDImgRead.filePath = strs[2];
     
     } else if (args.cmd == lower(ImgCaptureCmd)) {
         if (strs.size() < 2) throw std::runtime_error("index/file path not specified");
-        args.sdImgRead.filePath = strs[1];
-    
-    } else if (args.cmd == lower(LEDSetCmd)) {
-        if (strs.size() < 3) throw std::runtime_error("LED index/state not specified");
-        args.ledSet.idx = std::stoi(strs[1]);
-        args.ledSet.on = std::stoi(strs[2]);
+        args.ImgCapture.filePath = strs[1];
     
     } else {
         throw std::runtime_error("invalid command");
     }
     
     return args;
-}
-
-static void bootloader(const Args& args, MDCDevice& device) {
-    printf("Sending Bootloader command...\n");
-    device.invokeBootloader();
-    printf("-> OK\n\n");
 }
 
 constexpr size_t ImgSDLen = SD::CeilToBlockLen(Img::Len);
@@ -111,9 +142,91 @@ static std::unique_ptr<uint8_t[]> _readoutImg(MDCDevice& device) {
     return buf;
 }
 
-static void sdImgRead(const Args& args, MDCDevice& device) {
+static void LEDSet(const Args& args, MDCDevice& device) {
+    device.ledSet(args.LEDSet.idx, args.LEDSet.on);
+}
+
+static void STMLoad(const Args& args, MDCDevice& device) {
+    ELF32Binary bin(args.STMLoad.filePath.c_str());
+    auto sections = bin.sections();
+    
+    uint32_t entryPointAddr = bin.entryPointAddr();
+    if (!entryPointAddr) throw std::runtime_error("no entry point");
+    
+    for (const auto& s : sections) {
+        // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
+        if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
+        // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
+        if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
+        const void*const data = bin.sectionData(s);
+        const size_t dataLen = s.size;
+        const uint32_t dataAddr = s.addr;
+        if (!dataLen) continue; // Ignore sections with zero length
+        
+        printf("STLoad: Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
+        device.stmWrite(dataAddr, data, dataLen);
+    }
+    
+    // Reset the device, triggering it to load the program we just wrote
+    printf("STLoad: Resetting device\n");
+    device.stmReset(entryPointAddr);
+}
+
+static void ICELoad(const Args& args, MDCDevice& device) {
+    Mmap mmap(args.ICELoad.filePath.c_str());
+    
+    // Send the ICE40 binary
+    printf("ICELoad: Writing %ju bytes\n", (uintmax_t)mmap.len());
+    device.iceWrite(mmap.data(), mmap.len());
+}
+
+static void MSPLoad(const Args& args, MDCDevice& device) {
+    ELF32Binary bin(args.MSPLoad.filePath.c_str());
+    auto sections = bin.sections();
+    
+    device.mspConnect();
+    
+    for (const auto& s : sections) {
+        // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
+        if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
+        // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
+        if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
+        const void*const data = bin.sectionData(s);
+        const size_t dataLen = s.size;
+        const uint32_t dataAddr = s.addr;
+        if (!dataLen) continue; // Ignore sections with zero length
+        
+        printf("MSPLoad: Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
+        device.mspWrite(dataAddr, data, dataLen);
+    }
+    
+    // Read back data and compare with what we expect
+//    for (const auto& s : sections) {
+//        // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
+//        if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
+//        // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
+//        if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
+//        const void*const data = bin.sectionData(s);
+//        const size_t dataLen = s.size;
+//        const uint32_t dataAddr = s.addr;
+//        if (!dataLen) continue; // Ignore sections with zero length
+//        
+//        printf("MSPLoad: Verifying %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
+//        
+//        auto buf = std::make_unique<uint8_t[]>(dataLen);
+//        device.mspRead(dataAddr, buf.get(), dataLen);
+//        
+//        if (memcmp(data, buf.get(), dataLen)) {
+//            throw RuntimeError("section %s doesn't match", s.name.c_str());
+//        }
+//    }
+    
+    device.mspDisconnect();
+}
+
+static void SDImgRead(const Args& args, MDCDevice& device) {
     printf("Sending SDRead command...\n");
-    device.sdRead(args.sdImgRead.idx*ImgSDLen);
+    device.sdRead(args.SDImgRead.idx*ImgSDLen);
     printf("-> OK\n\n");
     
     constexpr size_t BufCap = 8*1024*1024;
@@ -127,12 +240,12 @@ static void sdImgRead(const Args& args, MDCDevice& device) {
     // Write image
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    f.open(args.sdImgRead.filePath.c_str());
+    f.open(args.SDImgRead.filePath.c_str());
     f.write((char*)img.get(), Img::Len);
     printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Len);
 }
 
-static void imgCapture(const Args& args, MDCDevice& device) {
+static void ImgCapture(const Args& args, MDCDevice& device) {
     printf("Sending ImgCapture command...\n");
     device.imgCapture();
     
@@ -149,13 +262,9 @@ static void imgCapture(const Args& args, MDCDevice& device) {
     // Write image
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    f.open(args.sdImgRead.filePath.c_str());
+    f.open(args.SDImgRead.filePath.c_str());
     f.write((char*)img.get(), Img::Len);
     printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Len);
-}
-
-static void ledSet(const Args& args, MDCDevice& device) {
-    device.ledSet(args.ledSet.idx, args.ledSet.on);
 }
 
 int main(int argc, const char* argv[]) {
@@ -212,10 +321,12 @@ int main(int argc, const char* argv[]) {
     MDCDevice& device = devices[0];
     try {
         device.resetEndpoints();
-        if (args.cmd == lower(BootloaderCmd))       bootloader(args, device);
-        else if (args.cmd == lower(SDImgReadCmd))   sdImgRead(args, device);
-        else if (args.cmd == lower(ImgCaptureCmd))  imgCapture(args, device);
-        else if (args.cmd == lower(LEDSetCmd))      ledSet(args, device);
+        if (args.cmd == lower(LEDSetCmd))           LEDSet(args, device);
+        else if (args.cmd == lower(STMLoadCmd))     STMLoad(args, device);
+        else if (args.cmd == lower(ICELoadCmd))     ICELoad(args, device);
+        else if (args.cmd == lower(MSPLoadCmd))     MSPLoad(args, device);
+        else if (args.cmd == lower(SDImgReadCmd))   SDImgRead(args, device);
+        else if (args.cmd == lower(ImgCaptureCmd))  ImgCapture(args, device);
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;
