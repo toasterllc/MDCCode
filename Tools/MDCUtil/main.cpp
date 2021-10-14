@@ -119,29 +119,6 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
-constexpr size_t ImgSDLen = SD::CeilToBlockLen(Img::Len);
-
-static std::unique_ptr<uint8_t[]> _readoutImg(MDCDevice& device) {
-    constexpr size_t BufCap = 8*1024*1024;
-    static_assert(BufCap >= ImgSDLen);
-    std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
-    
-    const size_t len = device.usbDevice().read(STM::Endpoints::DataIn, buf.get(), BufCap);
-    if (len < Img::Len) {
-        throw RuntimeError("expected at least 0x%jx bytes, but only got 0x%jx bytes", (uintmax_t)Img::Len, (uintmax_t)len);
-    }
-    
-    // Validate checksum
-    const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), Img::ChecksumOffset);
-    uint32_t checksumGot = 0;
-    memcpy(&checksumGot, (uint8_t*)buf.get()+Img::ChecksumOffset, sizeof(checksumGot));
-    if (checksumGot != checksumExpected) {
-        throw RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
-    }
-    
-    return buf;
-}
-
 static void LEDSet(const Args& args, MDCDevice& device) {
     device.ledSet(args.LEDSet.idx, args.LEDSet.on);
 }
@@ -226,15 +203,11 @@ static void MSPLoad(const Args& args, MDCDevice& device) {
 
 static void SDImgRead(const Args& args, MDCDevice& device) {
     printf("Sending SDRead command...\n");
-    device.sdRead(args.SDImgRead.idx*ImgSDLen);
+    device.sdRead(args.SDImgRead.idx*Img::PaddedLen);
     printf("-> OK\n\n");
     
-    constexpr size_t BufCap = 8*1024*1024;
-    static_assert(BufCap >= Img::Len);
-    std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(BufCap);
-    
     printf("Reading image...\n");
-    std::unique_ptr<uint8_t[]> img = _readoutImg(device);
+    auto img = device.imgReadout();
     printf("-> OK\n\n");
     
     // Write image
@@ -252,7 +225,7 @@ static void ImgCapture(const Args& args, MDCDevice& device) {
     printf("-> OK (word count: %ju)\n\n", (uintmax_t)stats.wordCount);
     
     printf("Reading image...\n");
-    std::unique_ptr<uint8_t[]> img = _readoutImg(device);
+    auto img = device.imgReadout();
     printf("-> OK\n\n");
     
     // Write image

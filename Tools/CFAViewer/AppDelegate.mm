@@ -136,7 +136,7 @@ struct PixConfig {
     
     std::optional<IOServiceMatcher> _serviceAppearWatcher;
     std::optional<IOServiceWatcher> _serviceDisappearWatcher;
-    SendRight _mdcService;
+    std::optional<MDCDevice> _mdcDevice;
     
     ImagePipelineManager* _imagePipelineManager;
     
@@ -219,12 +219,22 @@ struct PixConfig {
     [self _setFineIntegrationTime:0];
     [self _setAnalogGain:0];
     
-    [self _setMDCService:{}];
-    // TODO: get working again -- need to implement MDCDevice::MatchingDictionary() again
-//    _serviceAppearWatcher = IOServiceMatcher(dispatch_get_main_queue(), MDCDevice::MatchingDictionary(),
-//        ^(SendRight&& service) {
-//            [weakSelf _handleMatchingService:std::move(service)];
-//        });
+    [self _setMDCDevice:std::nullopt];
+    
+//    static NSDictionary* MatchingDictionary() {
+//        NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
+//        match[@kIOPropertyMatchKey] = @{
+//            @"idVendor": @1155,
+//            @"idProduct": @57105,
+//        };
+//        return match;
+//    }
+    
+    NSDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
+    _serviceAppearWatcher = IOServiceMatcher(dispatch_get_main_queue(), match,
+        ^(SendRight&& service) {
+            [weakSelf _handleNewUSBDevice:std::move(service)];
+        });
     
 //    [NSThread detachNewThreadWithBlock:^{
 //        [self _threadReadInputCommands];
@@ -368,21 +378,24 @@ static bool isCFAFile(const fs::path& path) {
 
 #pragma mark - MDCDevice
 
-- (void)_handleMatchingService:(SendRight&&)service {
-    [self _setMDCService:std::move(service)];
+- (void)_handleNewUSBDevice:(SendRight&&)service {
+    USBDevice dev(service);
+    if (MDCDevice::USBDeviceMatches(dev)) {
+        [self _setMDCDevice:std::move(dev)];
+    }
 }
 
-- (void)_setMDCService:(SendRight&&)service {
+- (void)_setMDCDevice:(std::optional<MDCDevice>)dev {
     // Stop streaming, set switch to off, and enable or disable switch
     [self _streamImagesStop];
     
-    _mdcService = std::move(service);
-    [_streamImagesSwitch setEnabled:_mdcService.valid()];
+    _mdcDevice = std::move(dev);
+    [_streamImagesSwitch setEnabled:(bool)_mdcDevice];
     [_streamImagesSwitch setState:NSControlStateValueOff];
     
-    if (_mdcService.valid()) {
+    if (_mdcDevice) {
         __weak auto weakSelf = self;
-        _serviceDisappearWatcher = IOServiceWatcher(_mdcService, dispatch_get_main_queue(),
+        _serviceDisappearWatcher = IOServiceWatcher(_mdcDevice->usbDevice().service(), dispatch_get_main_queue(),
             ^(uint32_t msgType, void* msgArg) {
                 [weakSelf _handleMDCDeviceNotificationType:msgType arg:msgArg];
             });
@@ -393,7 +406,7 @@ static bool isCFAFile(const fs::path& path) {
 
 - (void)_handleMDCDeviceNotificationType:(uint32_t)msgType arg:(void*)msgArg {
     if (msgType == kIOMessageServiceIsTerminated) {
-        [self _setMDCService:{}];
+        [self _setMDCDevice:std::nullopt];
     }
 }
 
@@ -450,175 +463,166 @@ static void configMDCDevice(MDCDevice& device, const PixConfig& cfg) {
 //    device.pixI2CWrite(0x3060, cfg.analogGain);
 }
 
-- (void)_threadStreamImages:(SendRight)service {
-    #warning reimplement
-//    using namespace STApp;
-//    assert(service.valid());
-//    
-//    Defer(
-//        // Notify that our thread has exited
-//        _streamImagesThread.lock.lock();
-//            _streamImagesThread.running = false;
-//            _streamImagesThread.signal.notify_all();
-//        _streamImagesThread.lock.unlock();
-//    );
-//    
-////    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
-////    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
-////    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
-//    
-//    std::optional<MDCDevice> mdcOpt;
-//    try { mdcOpt.emplace(service); }
-//    catch (const std::exception& e) {
-//        fprintf(stderr, "Failed to create MDCDevice: %s\n", e.what());
-//        return;
-//    }
-//    
-//    MDCDevice& mdc = *mdcOpt;
-//    try {
-//        initMDCDevice(mdc);
-//        
-//        float intTime = .5;
-//        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
-//        auto tmpPixels = std::make_unique<MDC::Pixel[]>(tmpPixelsCap);
-//        
-//        std::optional<PixConfig> pixConfig;
-////        uint32_t saveIdx = 1;
-//        for (uint32_t i=0;; i++) {
-//            if (pixConfig) {
-//                configMDCDevice(mdc, *pixConfig);
-//                pixConfig = std::nullopt;
+- (void)_threadStreamImages {
+    assert(_mdcDevice);
+    MDCDevice& dev = *_mdcDevice;
+    
+    Defer(
+        // Notify that our thread has exited
+        _streamImagesThread.lock.lock();
+            _streamImagesThread.running = false;
+            _streamImagesThread.signal.notify_all();
+        _streamImagesThread.lock.unlock();
+    );
+    
+//    NSString* dirName = [NSString stringWithFormat:@"CFAViewerSession-%f", [NSDate timeIntervalSinceReferenceDate]];
+//    NSString* dirPath = [NSString stringWithFormat:@"/Users/dave/Desktop/%@", dirName];
+//    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
+    
+    try {
+        initMDCDevice(mdc);
+        
+        float intTime = .5;
+        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
+        auto tmpPixels = std::make_unique<MDC::Pixel[]>(tmpPixelsCap);
+        
+        std::optional<PixConfig> pixConfig;
+//        uint32_t saveIdx = 1;
+        for (uint32_t i=0;; i++) {
+            if (pixConfig) {
+                configMDCDevice(mdc, *pixConfig);
+                pixConfig = std::nullopt;
+            }
+            
+            // Capture an image, timing-out after 1s so we can check the device status,
+            // in case it reports a streaming error
+            const MDC::ImgHeader pixStatus = mdc.pixCapture(tmpPixels.get(), tmpPixelsCap, 1000ms);
+            const size_t pixelCount = pixStatus.width*pixStatus.height;
+            
+            auto lock = std::unique_lock(_streamImagesThread.lock);
+                // Check if we've been cancelled
+                if (_streamImagesThread.cancel) break;
+                
+                // Copy the image into our persistent buffer
+                std::copy(tmpPixels.get(), tmpPixels.get()+pixelCount, _streamImagesThread.pixels);
+                _streamImagesThread.width = pixStatus.width;
+                _streamImagesThread.height = pixStatus.height;
+                
+                // While we have the lock, copy the pixConfig that might be waiting
+                pixConfig = _streamImagesThread.pixConfig;
+                _streamImagesThread.pixConfig = std::nullopt;
+            lock.unlock();
+            
+            // Invoke -_handleStreamImage on the main thread.
+            // Don't use dispatch_async here, because dispatch_async's don't get drained
+            // while the runloop is run recursively, eg during mouse tracking.
+            __weak auto weakSelf = self;
+            CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
+                [weakSelf _handleStreamImage];
+            });
+            CFRunLoopWakeUp(CFRunLoopGetMain());
+            
+//            if (!(i % 10)) {
+//                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
+//                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
+//                std::ofstream f;
+//                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+//                f.open([imagePath UTF8String]);
+//                f.write((char*)_streamImagesThread.pixels, pixelCount*sizeof(MDC::Pixel));
+//                saveIdx++;
+//                printf("Saved %s\n", [imagePath UTF8String]);
+//            }
+            
+            // Adjust exposure
+            const uint32_t SubsampleFactor = 16;
+            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
+            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
+            const float highlightFraction = (float)highlightCount/pixelCount;
+            const float shadowFraction = (float)shadowCount/pixelCount;
+//            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
+            
+            const float diff = shadowFraction-highlightFraction;
+            const float absdiff = fabs(diff);
+            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
+            
+            if (absdiff > .01) {
+                bool updateIntTime = false;
+                if (shadowFraction > highlightFraction) {
+                    // Increase exposure
+                    intTime *= adjust;
+                    updateIntTime = true;
+                
+                } else if (highlightFraction > shadowFraction) {
+                    // Decrease exposure
+                    intTime *= adjust;
+                    updateIntTime = true;
+                }
+                
+                intTime = std::clamp(intTime, 0.001f, 1.f);
+                const float gain = intTime/3;
+                
+                printf("adjust:%f\n"
+                       "shadowFraction:%f\n"
+                       "highlightFraction:%f\n"
+                       "intTime: %f\n\n",
+                       adjust,
+                       shadowFraction,
+                       highlightFraction,
+                       intTime
+                );
+                
+                if (updateIntTime) {
+                    mdc.pixI2CWrite(0x3012, intTime*16384);
+                    mdc.pixI2CWrite(0x3060, gain*63);
+                }
+            }
+            
+            
+            
+//            const float ShadowAdjustThreshold = 0.1;
+//            const float HighlightAdjustThreshold = 0.1;
+//            const float AdjustDelta = 1.1;
+//            bool updateIntTime = false;
+//            if (shadowFraction > ShadowAdjustThreshold) {
+//                // Increase exposure
+//                intTime *= AdjustDelta;
+//                updateIntTime = true;
+//            
+//            } else if (highlightFraction > HighlightAdjustThreshold) {
+//                // Decrease exposure
+//                intTime /= AdjustDelta;
+//                updateIntTime = true;
 //            }
 //            
-//            // Capture an image, timing-out after 1s so we can check the device status,
-//            // in case it reports a streaming error
-//            const MDC::ImgHeader pixStatus = mdc.pixCapture(tmpPixels.get(), tmpPixelsCap, 1000ms);
-//            const size_t pixelCount = pixStatus.width*pixStatus.height;
+//            intTime = std::clamp(intTime, 0.f, 1.f);
+//            const float gain = intTime/3;
 //            
-//            auto lock = std::unique_lock(_streamImagesThread.lock);
-//                // Check if we've been cancelled
-//                if (_streamImagesThread.cancel) break;
-//                
-//                // Copy the image into our persistent buffer
-//                std::copy(tmpPixels.get(), tmpPixels.get()+pixelCount, _streamImagesThread.pixels);
-//                _streamImagesThread.width = pixStatus.width;
-//                _streamImagesThread.height = pixStatus.height;
-//                
-//                // While we have the lock, copy the pixConfig that might be waiting
-//                pixConfig = _streamImagesThread.pixConfig;
-//                _streamImagesThread.pixConfig = std::nullopt;
-//            lock.unlock();
-//            
-//            // Invoke -_handleStreamImage on the main thread.
-//            // Don't use dispatch_async here, because dispatch_async's don't get drained
-//            // while the runloop is run recursively, eg during mouse tracking.
-//            __weak auto weakSelf = self;
-//            CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
-//                [weakSelf _handleStreamImage];
-//            });
-//            CFRunLoopWakeUp(CFRunLoopGetMain());
-//            
-////            if (!(i % 10)) {
-////                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
-////                    stringWithFormat:@"%ju.cfa",(uintmax_t)saveIdx]];
-////                std::ofstream f;
-////                f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-////                f.open([imagePath UTF8String]);
-////                f.write((char*)_streamImagesThread.pixels, pixelCount*sizeof(MDC::Pixel));
-////                saveIdx++;
-////                printf("Saved %s\n", [imagePath UTF8String]);
-////            }
-//            
-//            // Adjust exposure
-//            const uint32_t SubsampleFactor = 16;
-//            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
-//            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
-//            const float highlightFraction = (float)highlightCount/pixelCount;
-//            const float shadowFraction = (float)shadowCount/pixelCount;
-////            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
-//            
-//            const float diff = shadowFraction-highlightFraction;
-//            const float absdiff = fabs(diff);
-//            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
-//            
-//            if (absdiff > .01) {
-//                bool updateIntTime = false;
-//                if (shadowFraction > highlightFraction) {
-//                    // Increase exposure
-//                    intTime *= adjust;
-//                    updateIntTime = true;
-//                
-//                } else if (highlightFraction > shadowFraction) {
-//                    // Decrease exposure
-//                    intTime *= adjust;
-//                    updateIntTime = true;
-//                }
-//                
-//                intTime = std::clamp(intTime, 0.001f, 1.f);
-//                const float gain = intTime/3;
-//                
-//                printf("adjust:%f\n"
-//                       "shadowFraction:%f\n"
-//                       "highlightFraction:%f\n"
-//                       "intTime: %f\n\n",
-//                       adjust,
-//                       shadowFraction,
-//                       highlightFraction,
-//                       intTime
-//                );
-//                
-//                if (updateIntTime) {
-//                    mdc.pixI2CWrite(0x3012, intTime*16384);
-//                    mdc.pixI2CWrite(0x3060, gain*63);
-//                }
+//            if (updateIntTime) {
+//                device.pixI2CWrite(0x3012, intTime*16384);
+//                device.pixI2CWrite(0x3060, gain*63);
 //            }
-//            
-//            
-//            
-////            const float ShadowAdjustThreshold = 0.1;
-////            const float HighlightAdjustThreshold = 0.1;
-////            const float AdjustDelta = 1.1;
-////            bool updateIntTime = false;
-////            if (shadowFraction > ShadowAdjustThreshold) {
-////                // Increase exposure
-////                intTime *= AdjustDelta;
-////                updateIntTime = true;
-////            
-////            } else if (highlightFraction > HighlightAdjustThreshold) {
-////                // Decrease exposure
-////                intTime /= AdjustDelta;
-////                updateIntTime = true;
-////            }
-////            
-////            intTime = std::clamp(intTime, 0.f, 1.f);
-////            const float gain = intTime/3;
-////            
-////            if (updateIntTime) {
-////                device.pixI2CWrite(0x3012, intTime*16384);
-////                device.pixI2CWrite(0x3060, gain*63);
-////            }
-//        }
-//    
-//    } catch (const std::exception& e) {
-//        printf("Streaming failed: %s\n", e.what());
-//        
-//        PixState pixState = PixState::Idle;
-//        try {
-//            pixState = mdc.pixStatus().state;
-//        } catch (const std::exception& e) {
-//            printf("pixStatus() failed: %s\n", e.what());
-//        }
-//        
-//        if (pixState != PixState::Capturing) {
-//            printf("pixStatus.state != PixState::Capturing\n");
-//        }
-//    }
-//    
-//    // Notify that our thread has exited
-//    _streamImagesThread.lock.lock();
-//        _streamImagesThread.running = false;
-//        _streamImagesThread.signal.notify_all();
-//    _streamImagesThread.lock.unlock();
+        }
+    
+    } catch (const std::exception& e) {
+        printf("Streaming failed: %s\n", e.what());
+        
+        PixState pixState = PixState::Idle;
+        try {
+            pixState = mdc.pixStatus().state;
+        } catch (const std::exception& e) {
+            printf("pixStatus() failed: %s\n", e.what());
+        }
+        
+        if (pixState != PixState::Capturing) {
+            printf("pixStatus.state != PixState::Capturing\n");
+        }
+    }
+    
+    // Notify that our thread has exited
+    _streamImagesThread.lock.lock();
+        _streamImagesThread.running = false;
+        _streamImagesThread.signal.notify_all();
+    _streamImagesThread.lock.unlock();
 }
 
 //- (void)_handleInputCommand:(std::vector<std::string>)cmdStrs {
@@ -675,7 +679,7 @@ static void configMDCDevice(MDCDevice& device, const PixConfig& cfg) {
     [_streamImagesSwitch setState:(en ? NSControlStateValueOn : NSControlStateValueOff)];
     
     if (en) {
-        assert(_mdcService); // Verify that we have a valid device, since we're trying to enable image streaming
+        assert(_mdcDevice); // Verify that we have a valid device, since we're trying to enable image streaming
         
         // Kick off a new streaming thread
         _streamImagesThread.lock.lock();
@@ -684,9 +688,8 @@ static void configMDCDevice(MDCDevice& device, const PixConfig& cfg) {
             _streamImagesThread.signal.notify_all();
         _streamImagesThread.lock.unlock();
         
-        SendRight mdcService = _mdcService;
         [NSThread detachNewThreadWithBlock:^{
-            [self _threadStreamImages:mdcService];
+            [self _threadStreamImages];
         }];
     }
 }

@@ -3,16 +3,22 @@
 #include <chrono>
 #include "Toastbox/USBDevice.h"
 #include "STM.h"
+#include "Img.h"
+#include "ChecksumFletcher32.h"
 using namespace std::chrono;
 
 class MDCDevice {
 public:
+    static bool USBDeviceMatches(const USBDevice& dev) {
+        USB::DeviceDescriptor desc = dev.deviceDescriptor();
+        return desc.idVendor==1155 && desc.idProduct==57105;
+    }
+    
     static std::vector<MDCDevice> GetDevices() {
         std::vector<MDCDevice> devs;
         auto usbDevs = USBDevice::GetDevices();
         for (USBDevice& usbDev : usbDevs) {
-            USB::DeviceDescriptor desc = usbDev.deviceDescriptor();
-            if (desc.idVendor==1155 && desc.idProduct==57105) {
+            if (USBDeviceMatches(usbDev)) {
                 devs.emplace_back(std::move(usbDev));
             }
         }
@@ -239,6 +245,24 @@ public:
         ImgCaptureStats stats;
         _dev.read(Endpoints::DataIn, stats);
         return stats;
+    }
+    
+    std::unique_ptr<uint8_t[]> imgReadout() {
+        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(Img::PaddedLen);
+        const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), Img::PaddedLen);
+        if (lenGot != Img::PaddedLen) {
+            throw RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)Img::PaddedLen, (uintmax_t)lenGot);
+        }
+        
+        // Validate checksum
+        const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), Img::ChecksumOffset);
+        uint32_t checksumGot = 0;
+        memcpy(&checksumGot, (uint8_t*)buf.get()+Img::ChecksumOffset, Img::ChecksumLen);
+        if (checksumGot != checksumExpected) {
+            throw RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+        }
+        
+        return buf;
     }
     
 private:

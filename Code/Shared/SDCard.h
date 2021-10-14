@@ -3,6 +3,7 @@
 #include "Assert.h"
 #include "SleepMs.h"
 #include "SD.h"
+#include "Util.h"
 
 namespace SD {
 
@@ -330,7 +331,7 @@ public:
             // CMD23
             {
                 // Round up to the nearest block size, with a minimum of 1 block
-                const uint32_t blockCount = std::min(UINT32_C(1), SD::CeilToBlockLen(lenEst));
+                const uint32_t blockCount = std::min(UINT32_C(1), Util::DivCeil(lenEst, SD::BlockLen));
                 auto status = ICE::SDSendCmd(_CMD23, blockCount);
                 Assert(!status.respCRCErr());
             }
@@ -352,9 +353,11 @@ public:
     }
     
     void writeImage(uint16_t idx) {
-        constexpr uint32_t ImgSDBlockLen = SD::CeilToBlockLen(Img::Len);
-        const uint32_t addr = idx*ImgSDBlockLen;
-        writeStart(addr, ImgSDBlockLen);
+        // Confirm that Img::PaddedLen is a multiple of the SD block length
+        static_assert((Img::PaddedLen % SD::BlockLen) == 0);
+        const uint32_t addr = idx*Img::PaddedLen;
+        
+        writeStart(addr, Img::Len);
         
         // Clock out the image on the DAT lines
         ICE::Transfer(ICE::ImgReadoutMsg(0));
