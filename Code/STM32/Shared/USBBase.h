@@ -474,35 +474,37 @@ private:
         
         outep.len = USBD_LL_GetRxDataSize(&_device, ep);
         
+        // State transitions
         switch (outep.state) {
-        
         case _EndpointState::Ready:
             outep.state = _EndpointState::Busy;
             break;
         case _EndpointState::Busy:
             outep.state = _EndpointState::Ready;
             break;
-        
         case _EndpointState::Reset:
             outep.state = _EndpointState::ResetZLP1;
-            USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
             break;
         case _EndpointState::ResetZLP1:
             // Only advance if we received a ZLP
             if (outep.len == 0) outep.state = _EndpointState::ResetSentinel;
-            USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
             break;
         case _EndpointState::ResetSentinel:
             // Only advance if we received the sentinel
-            if (outep.len == sizeof(_ResetSentinel)) {
-                outep.state = _EndpointState::Ready;
-            } else {
-                USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
-            }
+            if (outep.len == sizeof(_ResetSentinel)) outep.state = _EndpointState::Ready;
             break;
-        
         default:
             abort();
+        }
+        
+        // State actions
+        switch (outep.state) {
+        case _EndpointState::ResetZLP1:
+        case _EndpointState::ResetSentinel:
+            USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
+            break;
+        default:
+            break;
         }
     }
     
@@ -523,33 +525,29 @@ private:
         // requested, in which case no ZLP is needed to end the transfer). By using a sentinel, the
         // reader knows that no further ZLPs will be received after the sentinel has been received, and
         // therefore the endpoint is finished being reset.
+        
+        // State transitions
         switch (inep.state) {
+        case _EndpointState::Ready:         inep.state = _EndpointState::Busy;          break;
+        case _EndpointState::Busy:          inep.state = _EndpointState::Ready;         break;
+        case _EndpointState::Reset:         inep.state = _EndpointState::ResetZLP1;     break;
+        case _EndpointState::ResetZLP1:     inep.state = _EndpointState::ResetZLP2;     break;
+        case _EndpointState::ResetZLP2:     inep.state = _EndpointState::ResetSentinel; break;
+        case _EndpointState::ResetSentinel: inep.state = _EndpointState::Ready;         break;
+        default:                            abort();
+        }
         
-        case _EndpointState::Ready:
-            inep.state = _EndpointState::Busy;
-            break;
-        case _EndpointState::Busy:
-            inep.state = _EndpointState::Ready;
-            break;
-        
-        case _EndpointState::Reset:
-            inep.state = _EndpointState::ResetZLP1;
-            USBD_LL_TransmitZeroLen(&_device, ep);
-            break;
+        // State actions
+        switch (inep.state) {
         case _EndpointState::ResetZLP1:
-            inep.state = _EndpointState::ResetZLP2;
-            USBD_LL_TransmitZeroLen(&_device, ep);
-            break;
         case _EndpointState::ResetZLP2:
-            inep.state = _EndpointState::ResetSentinel;
-            USBD_LL_Transmit(&_device, ep, (uint8_t*)&_ResetSentinel, sizeof(_ResetSentinel));
+            USBD_LL_TransmitZeroLen(&_device, ep);
             break;
         case _EndpointState::ResetSentinel:
-            inep.state = _EndpointState::Ready;
+            USBD_LL_Transmit(&_device, ep, (uint8_t*)&_ResetSentinel, sizeof(_ResetSentinel));
             break;
-        
         default:
-            abort();
+            break;
         }
     }
     
