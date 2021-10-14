@@ -367,8 +367,8 @@ void Img::Sensor::SetPowerEnabled(bool en) {
     constexpr uint16_t BIT2             = 1<<2;
     constexpr uint16_t VDD_1V9_IMG_EN   = BIT0;
     constexpr uint16_t VDD_2V8_IMG_EN   = BIT2;
-    constexpr uint16_t PADIRAddr       = 0x0204;
-    constexpr uint16_t PAOUTAddr       = 0x0202;
+    constexpr uint16_t PADIRAddr        = 0x0204;
+    constexpr uint16_t PAOUTAddr        = 0x0202;
     
     const uint16_t PADIR = Sys._msp.read(PADIRAddr);
     const uint16_t PAOUT = Sys._msp.read(PAOUTAddr);
@@ -407,15 +407,24 @@ void System::_img_setExposure() {
 }
 
 void System::_img_captureTaskFn() {
-    static ICE::ImgCaptureStatusResp resp;
     static ImgCaptureStats stats;
-    
     TaskBegin();
     _img_init();
     
-    bool ok = false;
-    std::tie(ok, resp) = ICE::ImgCapture();
+    auto [ok, resp] = ICE::ImgCapture();
     if (!ok) {
+        _usb_dataInSendStatus(false);
+        return;
+    }
+    
+    stats = {
+        .wordCount      = resp.wordCount(),
+        .highlightCount = resp.highlightCount(),
+        .shadowCount    = resp.shadowCount(),
+    };
+    
+    // Validate word count
+    if (stats.wordCount != Img::Len) {
         _usb_dataInSendStatus(false);
         return;
     }
@@ -425,11 +434,6 @@ void System::_img_captureTaskFn() {
     TaskWait(_usb.ready(Endpoints::DataIn));
     
     // Send ImgCaptureStats
-    stats = {
-        .wordCount         = resp.wordCount(),
-        .highlightCount    = resp.highlightCount(),
-        .shadowCount       = resp.shadowCount(),
-    };
     _usb.send(Endpoints::DataIn, &stats, sizeof(stats));
     TaskWait(_usb.ready(Endpoints::DataIn));
     
@@ -437,7 +441,7 @@ void System::_img_captureTaskFn() {
     ICE::Transfer(ICE::ImgReadoutMsg(0));
     
     // Start the Readout task
-    _readout.len = (size_t)stats.wordCount*sizeof(Img::Word);
+    _readout.len = Img::PaddedLen;
     _readout_task.start();
 }
 

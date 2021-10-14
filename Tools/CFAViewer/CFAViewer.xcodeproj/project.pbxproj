@@ -54,7 +54,6 @@
 		55460A3A260AC5A00037A5AC /* ReconstructHighlights.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
 		55671A2B257E94BD00C1CDA4 /* TimeInstant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
 		55671A2C257E94BD00C1CDA4 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
-		55671A2F257E94BD00C1CDA4 /* MDCLoaderDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCLoaderDevice.h; sourceTree = "<group>"; };
 		55671A30257E94BD00C1CDA4 /* ELF32Binary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		55671A31257E94BD00C1CDA4 /* Mmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		55671A37257E984E00C1CDA4 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -181,7 +180,6 @@
 				55EBCC8F25896F160089A441 /* Assert.h */,
 				55671A30257E94BD00C1CDA4 /* ELF32Binary.h */,
 				55671A2C257E94BD00C1CDA4 /* MDCDevice.h */,
-				55671A2F257E94BD00C1CDA4 /* MDCLoaderDevice.h */,
 				55AE80C1262E7BBC00BA227C /* Mod.h */,
 				55671A31257E94BD00C1CDA4 /* Mmap.h */,
 				55671A2B257E94BD00C1CDA4 /* TimeInstant.h */,

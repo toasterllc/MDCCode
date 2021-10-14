@@ -32,7 +32,6 @@
 		55B2151627090FD2001423C1 /* USBBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBBase.h; sourceTree = "<group>"; };
 		55B2151727090FD2001423C1 /* SystemClock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SystemClock.h; sourceTree = "<group>"; };
 		55B2151927090FD2001423C1 /* GPIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GPIO.h; sourceTree = "<group>"; };
-		55B2151A27090FD2001423C1 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		55B2151B27090FD2001423C1 /* QSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QSPI.h; sourceTree = "<group>"; };
 		55B2151C27090FD2001423C1 /* MSP430.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP430.h; sourceTree = "<group>"; };
 		55B2151D27090FD2001423C1 /* LinkerBase.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = LinkerBase.ld; sourceTree = "<group>"; };
@@ -102,7 +101,6 @@
 				55B2151127090FD1001423C1 /* SystemBase.h */,
 				55B2151727090FD2001423C1 /* SystemClock.h */,
 				55B2151627090FD2001423C1 /* USBBase.h */,
-				55B2151A27090FD2001423C1 /* Util.h */,
 				55B2151327090FD2001423C1 /* VectorTable.s */,
 			);
 			name = Shared;

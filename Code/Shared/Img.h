@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "Util.h"
 
 namespace Img {
     
@@ -32,5 +33,8 @@ namespace Img {
     constexpr uint32_t ChecksumLen      = sizeof(uint32_t);
     constexpr uint32_t Len              = HeaderLen + PixelLen + ChecksumLen;
     constexpr uint32_t ChecksumOffset   = Len-ChecksumLen;
+    
+    // PaddedLen: the length of the image padded to a multiple of 512 bytes
+    constexpr uint32_t PaddedLen        = Util::Ceil(Len, (uint32_t)512);
 
 } // namespace Img
