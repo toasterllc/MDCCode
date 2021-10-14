@@ -238,6 +238,7 @@ static void SDImgRead(const Args& args, MDCDevice& device) {
     printf("-> OK\n\n");
     
     // Write image
+    printf("Writing image...\n");
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     f.open(args.SDImgRead.filePath.c_str());
@@ -255,6 +256,7 @@ static void ImgCapture(const Args& args, MDCDevice& device) {
     printf("-> OK\n\n");
     
     // Write image
+    printf("Writing image...\n");
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     f.open(args.ImgCapture.filePath.c_str());

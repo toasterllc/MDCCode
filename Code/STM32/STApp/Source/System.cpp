@@ -407,14 +407,15 @@ void System::_img_setExposure() {
 }
 
 void System::_img_captureTaskFn() {
-    static std::optional<ICE::ImgCaptureStatusResp> resp;
+    static ICE::ImgCaptureStatusResp resp;
     static ImgCaptureStats stats;
     
     TaskBegin();
     _img_init();
     
-    resp = ICE::ImgCapture();
-    if (!resp) {
+    bool ok = false;
+    std::tie(ok, resp) = ICE::ImgCapture();
+    if (!ok) {
         _usb_dataInSendStatus(false);
         return;
     }
@@ -425,9 +426,9 @@ void System::_img_captureTaskFn() {
     
     // Send ImgCaptureStats
     stats = {
-        .wordCount         = resp->wordCount(),
-        .highlightCount    = resp->highlightCount(),
-        .shadowCount       = resp->shadowCount(),
+        .wordCount         = resp.wordCount(),
+        .highlightCount    = resp.highlightCount(),
+        .shadowCount       = resp.shadowCount(),
     };
     _usb.send(Endpoints::DataIn, &stats, sizeof(stats));
     TaskWait(_usb.ready(Endpoints::DataIn));

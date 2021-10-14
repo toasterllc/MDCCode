@@ -1,7 +1,8 @@
 #pragma once
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include <algorithm>
+#include <utility>
 #include "Assert.h"
 #include "SleepMs.h"
 #include "Img.h"
@@ -290,7 +291,7 @@ public:
         Transfer(ImgResetMsg(1));
     }
     
-    static std::optional<ImgCaptureStatusResp> ImgCapture() {
+    static std::pair<bool,ImgCaptureStatusResp> ImgCapture() {
         const Img::Header header = {
             // Section idx=0
             .version        = 0x4242,
@@ -326,11 +327,11 @@ public:
             if (!status.done()) continue;
             const uint32_t imgWordCount = status.wordCount();
             Assert(imgWordCount == Img::Len/sizeof(Img::Word));
-            return status;
+            return {true, status};
         }
         // Timeout capturing image
         // This should never happen, since it indicates a Verilog error or a hardware failure.
-        return std::nullopt;
+        return {false, {}};
     }
     
     static ImgCaptureStatusResp ImgCaptureStatus() {
