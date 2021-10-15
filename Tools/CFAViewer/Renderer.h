@@ -608,7 +608,7 @@ private:
         }
         
         size_t hash() const {
-            return std::hash<std::string>{}(_name) ^ HashInts(_fmt);
+            return std::hash<std::string>{}(_name) ^ Toastbox::HashInts(_fmt);
         }
         
         struct Hash {
@@ -637,7 +637,7 @@ private:
         }
         
         size_t hash() const {
-            return HashInts(_fmt, _width, _height, _usage);
+            return Toastbox::HashInts(_fmt, _width, _height, _usage);
         }
         
         struct Hash {

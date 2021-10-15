@@ -2,7 +2,7 @@
 #include "Toastbox/Enum.h"
 #include "Util.h"
 #include "Img.h"
-//#include "USB.h"
+#include "Toastbox/USB.h"
 
 namespace STM {
     Enum(uint8_t, Endpoint, Endpoints,
@@ -161,9 +161,7 @@ namespace STM {
     // This is necessary so that when multiple images are streamed, the
     // transfer continues indefinitely and isn't cut short by a short packet
     // (ie a packet < the MPS).
-    #warning use USB::Endpoint::MaxPacketSizeBulk instead
-    constexpr size_t MaxPacketSizeBulk = 512;
-    static_assert((Img::PaddedLen % MaxPacketSizeBulk) == 0);
+    static_assert((Img::PaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
     
 //    // ImgPaddedLen: Ceil the image size to the SD block size
 //    // This is the amount of data that's sent from device -> host, for each image.

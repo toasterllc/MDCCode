@@ -1,15 +1,19 @@
 #pragma once
 #include <cassert>
 #include <chrono>
+#include "Toastbox/USB.h"
 #include "Toastbox/USBDevice.h"
+#include "Toastbox/RuntimeError.h"
 #include "STM.h"
 #include "Img.h"
 #include "ChecksumFletcher32.h"
-using namespace std::chrono;
 
 class MDCDevice {
 public:
+    using USBDevice = Toastbox::USBDevice;
+    
     static bool USBDeviceMatches(const USBDevice& dev) {
+        namespace USB = Toastbox::USB;
         USB::DeviceDescriptor desc = dev.deviceDescriptor();
         return desc.idVendor==1155 && desc.idProduct==57105;
     }
@@ -220,6 +224,17 @@ public:
         _waitOrThrow("SDRead command failed");
     }
     
+    STM::ImgCaptureStats imgCapture() {
+        using namespace STM;
+        const Cmd cmd = { .op = Op::ImgCapture };
+        _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("ImgCapture command failed");
+        
+        ImgCaptureStats stats;
+        _dev.read(Endpoints::DataIn, stats);
+        return stats;
+    }
+    
     void imgSetExposure(uint16_t coarseIntTime, uint16_t fineIntTime, uint16_t gain) {
         using namespace STM;
         const Cmd cmd = {
@@ -236,22 +251,11 @@ public:
         _waitOrThrow("ImgSetExposure command failed");
     }
     
-    STM::ImgCaptureStats imgCapture() {
-        using namespace STM;
-        const Cmd cmd = { .op = Op::ImgCapture };
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("ImgCapture command failed");
-        
-        ImgCaptureStats stats;
-        _dev.read(Endpoints::DataIn, stats);
-        return stats;
-    }
-    
     std::unique_ptr<uint8_t[]> imgReadout() {
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(Img::PaddedLen);
         const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), Img::PaddedLen);
         if (lenGot != Img::PaddedLen) {
-            throw RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)Img::PaddedLen, (uintmax_t)lenGot);
+            throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)Img::PaddedLen, (uintmax_t)lenGot);
         }
         
         // Validate checksum
@@ -259,7 +263,7 @@ public:
         uint32_t checksumGot = 0;
         memcpy(&checksumGot, (uint8_t*)buf.get()+Img::ChecksumOffset, Img::ChecksumLen);
         if (checksumGot != checksumExpected) {
-            throw RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+            throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
         }
         
         return buf;
@@ -267,6 +271,7 @@ public:
     
 private:
     void _flushEndpoint(uint8_t ep) {
+        namespace USB = Toastbox::USB;
         if ((ep&USB::Endpoint::DirectionMask) == USB::Endpoint::DirectionOut) {
             // Send 2x ZLPs + sentinel
             _dev.write(ep, nullptr, 0);

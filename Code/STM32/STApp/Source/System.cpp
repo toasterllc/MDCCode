@@ -424,7 +424,7 @@ void System::_img_captureTaskFn() {
     };
     
     // Validate word count
-    if (stats.wordCount != Img::Len) {
+    if (stats.wordCount*sizeof(Img::Word) != Img::Len) {
         _usb_dataInSendStatus(false);
         return;
     }
