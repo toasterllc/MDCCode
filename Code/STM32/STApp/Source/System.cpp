@@ -406,39 +406,105 @@ void System::_img_setExposure() {
     _usb_dataInSendStatus(true);
 }
 
+//    // Send status
+//    _task._setWaiting();
+//    auto c = (_usb.ready(Endpoints::DataIn));
+//    while (!((bool)c)) {
+//        __label__ jmp;
+//        _task._jmp = &&jmp;
+//        return;
+//        jmp:;
+//        c = (_usb.ready(Endpoints::DataIn));
+//    }
+//    _task._setRunning();
+
+//void System::_img_captureTaskFn() {
+//    Task& _task = *Task::_CurrentTask;
+//    void*const addr = _task._jmp;
+//    if (addr) goto *addr;
+//    
+//    int a = 1;
+//    
+//    // Send status
+//    {
+//        __label__ jmp;
+//        jmp: {
+//            auto c = _usb.ready(Endpoints::DataIn);
+//            if (!c) {
+//                _task._jmp = &&jmp;
+//                return;
+//            }
+//        }
+//    }
+//    
+//    Assert(a == 1);
+//}
+
 void System::_img_captureTaskFn() {
-    static ImgCaptureStats stats;
+//    ({
+//        if (Task::_CurrentTask->_jmp) {
+//            goto *Task::_CurrentTask->_jmp;
+//        }
+//    });
+//    void**volatile addr = (&Task::_CurrentTask->_jmp);
+//    switch ((uint32_t)(Task::_CurrentTask->_jmp)) {
+//    case 0:     break;
+//    default:    goto *Task::_CurrentTask->_jmp;
+//    }
     
-    TaskBegin();
-    _img_init();
+    if (Task::_CurrentTask->_jmp)
+        goto *Task::_CurrentTask->_jmp;
     
-    auto [ok, resp] = ICE::ImgCapture();
-    if (!ok) {
-        _usb_dataInSendStatus(false);
-        return;
+    int a = 1;
+    
+//    // Send status
+//    for (;;) {
+//        __label__ jmp;
+//        Task::_CurrentTask->_jmp = &&jmp;
+//        jmp:;
+//        break;
+//    }
+    
+    for (;;) {
+        __label__ jmp;
+        auto c = (_usb.ready(Endpoints::DataIn));
+        Task::_CurrentTask->_jmp = &&jmp;
+        if (!c) return;
+        jmp:;
     }
     
-    stats = {
-        .len            = resp.wordCount()*sizeof(Img::Word),
-        .highlightCount = resp.highlightCount(),
-        .shadowCount    = resp.shadowCount(),
-    };
-    
     // Send status
-    _usb_dataInSendStatus(true);
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    for (;;) {
+        __label__ jmp;
+        Task::_CurrentTask->_jmp = &&jmp;
+        jmp:;
+        break;
+    }
     
-    // Send ImgCaptureStats
-    _usb.send(Endpoints::DataIn, &stats, sizeof(stats));
-    TaskWait(_usb.ready(Endpoints::DataIn));
+//    
+//    // Send status
+//    for (;;) {
+//        __label__ jmp;
+//        Task::_CurrentTask->_jmp = &&jmp;
+//        jmp:;
+//        break;
+//    }
     
-    // Arrange for the image to be read out
-    ICE::Transfer(ICE::ImgReadoutMsg(0));
+//    auto c = (_usb.ready(Endpoints::DataIn));
+//    for (;;) {
+//        __label__ jmp;
+//        Task::_CurrentTask->_jmp = &&jmp;
+//        return;
+//        jmp:;
+//        break;
+////        c = (_usb.ready(Endpoints::DataIn));
+//    }
     
-    // Start the Readout task
-    _readout.len = (size_t)stats.len;
-    _readout_task.start();
+    Assert(a == 1);
 }
+
+
+
 
 System Sys;
 
