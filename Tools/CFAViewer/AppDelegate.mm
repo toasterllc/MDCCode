@@ -33,6 +33,7 @@
 using namespace CFAViewer;
 using namespace MetalUtil;
 using namespace ImagePipeline;
+using namespace Toastbox;
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
@@ -480,8 +481,6 @@ static void configMDCDevice(MDCDevice& device, const PixConfig& cfg) {
 //    assert([[NSFileManager defaultManager] createDirectoryAtPath:dirPath withIntermediateDirectories:false attributes:nil error:nil]);
     
     try {
-        initMDCDevice(mdc);
-        
         float intTime = .5;
         const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
         auto tmpPixels = std::make_unique<MDC::Pixel[]>(tmpPixelsCap);

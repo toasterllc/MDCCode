@@ -6,7 +6,7 @@
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "Toastbox/Task.h"
-//#include "Toastbox/USB.h"
+#include "Toastbox/USB.h"
 
 extern "C" void ISR_OTG_HS();
 
@@ -45,11 +45,8 @@ private:
     };
     
 public:
-    #warning switch to Toastbox::USB::Endpoint::MaxPacketSizeXXX
-    static constexpr size_t MaxPacketSizeCtrl = 64;
-    static constexpr size_t MaxPacketSizeBulk = 512;
-//    static constexpr size_t MaxPacketSizeCtrl = USB::Endpoint::MaxPacketSizeCtrl;
-//    static constexpr size_t MaxPacketSizeBulk = USB::Endpoint::MaxPacketSizeBulk;
+    static constexpr size_t MaxPacketSizeCtrl = Toastbox::USB::Endpoint::MaxPacketSizeCtrl;
+    static constexpr size_t MaxPacketSizeBulk = Toastbox::USB::Endpoint::MaxPacketSizeBulk;
     
     static constexpr uint8_t EndpointIdx(uint8_t ep)    { return ep&0xF;        }
     static constexpr bool EndpointOut(uint8_t ep)       { return !(ep&0x80);    }

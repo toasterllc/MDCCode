@@ -7,6 +7,7 @@
 
 class IOServiceMatcher {
 public:
+    using SendRight = Toastbox::SendRight;
     using Handler = void(^)(SendRight&&);
     
     IOServiceMatcher(dispatch_queue_t queue, NSDictionary* match, Handler handler) {
@@ -19,7 +20,7 @@ public:
         _handler = handler;
         
         IONotificationPortRef p = IONotificationPortCreate(kIOMasterPortDefault);
-        if (!p) throw RuntimeError("IONotificationPortCreate returned null");
+        if (!p) throw Toastbox::RuntimeError("IONotificationPortCreate returned null");
         _notifyPort = p;
         IONotificationPortSetDispatchQueue(_notifyPort, queue);
         
@@ -30,7 +31,7 @@ public:
         // no longer be valid if that happened, but the handler would still be valid.
         kern_return_t kr = IOServiceAddMatchingNotification(_notifyPort, kIOMatchedNotification,
             (CFDictionaryRef)CFBridgingRetain(match), _matchingCallback, (__bridge void*)_handler, &ioIter);
-        if (kr != KERN_SUCCESS) throw RuntimeError("IOServiceAddMatchingNotification failed: 0x%x", kr);
+        if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddMatchingNotification failed: 0x%x", kr);
         _serviceIter = SendRight(ioIter);
         
         _matchingCallback((void*)_handler, ioIter);
