@@ -290,7 +290,7 @@ int main(int argc, const char* argv[]) {
     
     MDCDevice& device = devices[0];
     try {
-        device.flushEndpoints();
+        device.endpointsFlush();
         if (args.cmd == lower(LEDSetCmd))           LEDSet(args, device);
         else if (args.cmd == lower(STMLoadCmd))     STMLoad(args, device);
         else if (args.cmd == lower(ICELoadCmd))     ICELoad(args, device);

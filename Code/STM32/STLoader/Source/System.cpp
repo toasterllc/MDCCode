@@ -56,11 +56,11 @@ void System::_usb_cmdTaskFn() {
         // Stop all tasks
         _resetTasks();
         
-        // Specially handle the FlushEndpoints command -- it's the only command that doesn't
+        // Specially handle the EndpointsFlush command -- it's the only command that doesn't
         // require the endpoints to be ready.
-        if (_cmd.op == Op::FlushEndpoints) {
+        if (_cmd.op == Op::EndpointsFlush) {
             _usb.cmdAccept(true);
-            _flushEndpoints_task.start();
+            _endpointsFlush_task.start();
             continue;
         }
         
@@ -74,7 +74,7 @@ void System::_usb_cmdTaskFn() {
         
         switch (_cmd.op) {
         // Set LED
-        case Op::InvokeBootloader:  _invokeBootloader_task.start(); break;
+        case Op::BootloaderInvoke:  _bootloaderInvoke_task.start(); break;
         case Op::LEDSet:            _ledSet();                      break;
         // STM32 Bootloader
         case Op::STMWrite:          _stm_writeTask.start();         break;
@@ -154,7 +154,7 @@ void System::_usb_dataInSendStatus(bool status) {
 
 #pragma mark - Common Commands
 
-void System::_flushEndpoints_taskFn() {
+void System::_endpointsFlush_taskFn() {
     TaskBegin();
     // Reset endpoints
     _usb.reset(Endpoints::DataOut);
@@ -164,7 +164,7 @@ void System::_flushEndpoints_taskFn() {
     _usb_dataInSendStatus(true);
 }
 
-void System::_invokeBootloader_taskFn() {
+void System::_bootloaderInvoke_taskFn() {
     TaskBegin();
     // Send status
     _usb_dataInSendStatus(true);

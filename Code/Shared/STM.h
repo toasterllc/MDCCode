@@ -17,8 +17,8 @@ namespace STM {
     enum class Op : uint8_t {
         // # Common command set
         None,
-        FlushEndpoints,
-        InvokeBootloader,
+        EndpointsFlush,
+        BootloaderInvoke,
         LEDSet,
         
         // # STMLoader

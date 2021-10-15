@@ -20,8 +20,8 @@ private:
     void _usb_dataInTaskFn();
     void _usb_dataInSendStatus(bool status);
     
-    void _flushEndpoints_taskFn();
-    void _invokeBootloader_taskFn();
+    void _endpointsFlush_taskFn();
+    void _bootloaderInvoke_taskFn();
     void _ledSet();
     
     void _readout_taskFn();
@@ -60,8 +60,8 @@ private:
     // Tasks
     Task _usb_cmdTask           = Task([&] { _usb_cmdTaskFn();              });
     Task _usb_dataInTask        = Task([&] { _usb_dataInTaskFn();           });
-    Task _flushEndpoints_task   = Task([&] { _flushEndpoints_taskFn();      });
-    Task _invokeBootloader_task = Task([&] { _invokeBootloader_taskFn();    });
+    Task _endpointsFlush_task   = Task([&] { _endpointsFlush_taskFn();      });
+    Task _bootloaderInvoke_task = Task([&] { _bootloaderInvoke_taskFn();    });
     Task _readout_task          = Task([&] { _readout_taskFn();             });
     Task _sd_readTask           = Task([&] { _sd_readTaskFn();              });
     Task _img_captureTask       = Task([&] { _img_captureTaskFn();          });
@@ -69,8 +69,8 @@ private:
     std::reference_wrapper<Task> _tasks[7] = {
         _usb_cmdTask,
         _usb_dataInTask,
-        _flushEndpoints_task,
-        _invokeBootloader_task,
+        _endpointsFlush_task,
+        _bootloaderInvoke_task,
         _readout_task,
         _sd_readTask,
         _img_captureTask,

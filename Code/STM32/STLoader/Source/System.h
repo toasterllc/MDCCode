@@ -22,8 +22,8 @@ private:
     void _usb_dataInSendStatus(bool status);
     
     // Common Commands
-    void _flushEndpoints_taskFn();
-    void _invokeBootloader_taskFn();
+    void _endpointsFlush_taskFn();
+    void _bootloaderInvoke_taskFn();
     void _ledSet();
     
     // STM32 Bootloader
@@ -77,8 +77,8 @@ private:
     Task _usb_cmdTask           = Task([&] {  _usb_cmdTaskFn();             });
     Task _usb_dataOutTask       = Task([&] {  _usb_dataOutTaskFn();         });
     Task _usb_dataInTask        = Task([&] {  _usb_dataInTaskFn();          });
-    Task _flushEndpoints_task   = Task([&] {  _flushEndpoints_taskFn();     });
-    Task _invokeBootloader_task = Task([&] {  _invokeBootloader_taskFn();   });
+    Task _endpointsFlush_task   = Task([&] {  _endpointsFlush_taskFn();     });
+    Task _bootloaderInvoke_task = Task([&] {  _bootloaderInvoke_taskFn();   });
     Task _stm_writeTask         = Task([&] {  _stm_writeTaskFn();           });
     Task _stm_resetTask         = Task([&] {  _stm_resetTaskFn();           });
     Task _ice_writeTask         = Task([&] {  _ice_writeTaskFn();           });
@@ -90,8 +90,8 @@ private:
         _usb_cmdTask,
         _usb_dataOutTask,
         _usb_dataInTask,
-        _flushEndpoints_task,
-        _invokeBootloader_task,
+        _endpointsFlush_task,
+        _bootloaderInvoke_task,
         _stm_writeTask,
         _stm_resetTask,
         _ice_writeTask,

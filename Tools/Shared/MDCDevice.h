@@ -35,9 +35,9 @@ public:
     USBDevice& usbDevice() { return _dev; }
     
     #pragma mark - Common Commands
-    void flushEndpoints() {
+    void endpointsFlush() {
         using namespace STM;
-        const Cmd cmd = { .op = Op::FlushEndpoints };
+        const Cmd cmd = { .op = Op::EndpointsFlush };
         // Send command
         _dev.vendorRequestOut(0, cmd);
         
@@ -46,14 +46,14 @@ public:
         for (const uint8_t ep : eps) {
             _flushEndpoint(ep);
         }
-        _waitOrThrow("FlushEndpoints command failed");
+        _waitOrThrow("EndpointsFlush command failed");
     }
     
-    void invokeBootloader() {
+    void bootloaderInvoke() {
         using namespace STM;
-        const Cmd cmd = { .op = Op::InvokeBootloader };
+        const Cmd cmd = { .op = Op::BootloaderInvoke };
         _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("InvokeBootloader command failed");
+        _waitOrThrow("BootloaderInvoke command failed");
     }
     
     void ledSet(uint8_t idx, bool on) {
