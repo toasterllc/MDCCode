@@ -451,75 +451,106 @@ void System::_img_captureTaskFn() {
 //    case 0:     break;
 //    default:    goto *Task::_CurrentTask->_jmp;
 //    }
-    
     TaskBegin();
+    goto end;
     
-    int a = 1;
-    
-//    // Send status
-//    for (;;) {
-//        __label__ jmp;
-//        Task::_CurrentTask->_jmp = &&jmp;
-//        jmp:;
-//        break;
+//    if (Task::_CurrentTask->_jmp) {
+//        goto *Task::_CurrentTask->_jmp;
+//    } else {
+//        goto end;
 //    }
     
-    ({
-        _task._setWaiting();
-        auto c = _usb.ready(Endpoints::DataIn);
-        for (;;) {
-            if (!c) return;
-            _TaskYield();
-            c = _usb.ready(Endpoints::DataIn);
-        }
-        _task._setRunning();
+start:
+    
+    {
+        int a = 1;
         
-        {
-            __label__ jmp;
-            *((void*volatile*)&&jmp);
-            jmp:;
-        }
+    //    // Send status
+    //    for (;;) {
+    //        __label__ jmp;
+    //        Task::_CurrentTask->_jmp = &&jmp;
+    //        jmp:;
+    //        break;
+    //    }
         
-        c;
-    });
+//        TaskWait(_usb.ready(Endpoints::DataIn));
+        
+    //    volatile bool mmm = 1;
+    //    if (mmm) {
+    //        ({
+    //            _task._setWaiting();
+    //            auto c = _usb.ready(Endpoints::DataIn);
+    //            do {
+    //                _TaskYield();
+    //            } while ((c = _usb.ready(Endpoints::DataIn)));
+    //            _task._setRunning();
+    //            
+    //            {
+    //                __label__ jmp;
+    //                *((void*volatile*)&&jmp);
+    //                jmp:;
+    //            }
+    //            
+    //            c;
+    //        });
+    //    }
+        
+        
+    //    ({
+    //        {
+    //            __label__ jmp;
+    //            *((void*volatile*)&&jmp);
+    //            jmp:;
+    //        }
+    //        
+    //        auto c = (_usb.ready(Endpoints::DataIn));
+    //        for (;;) {
+    //            __label__ jmp;
+    //            Task::_CurrentTask->_jmp = &&jmp;
+    //            if (!c) return;
+    //            jmp:;
+    //        }
+    //    });
+        
+    //    
+    //    // Send status
+    //    for (;;) {
+    //        __label__ jmp;
+    //        Task::_CurrentTask->_jmp = &&jmp;
+    //        jmp:;
+    //        break;
+    //    }
+        
+    //    auto c = (_usb.ready(Endpoints::DataIn));
+    //    for (;;) {
+    //        __label__ jmp;
+    //        Task::_CurrentTask->_jmp = &&jmp;
+    //        return;
+    //        jmp:;
+    //        break;
+    ////        c = (_usb.ready(Endpoints::DataIn));
+    //    }
+        
+        Assert(a == 1);
+    }
     
+    return;
+end:
+    goto start;
     
-//    ({
-//        {
-//            __label__ jmp;
-//            *((void*volatile*)&&jmp);
-//            jmp:;
-//        }
-//        
-//        auto c = (_usb.ready(Endpoints::DataIn));
-//        for (;;) {
-//            __label__ jmp;
-//            Task::_CurrentTask->_jmp = &&jmp;
-//            if (!c) return;
-//            jmp:;
-//        }
-//    });
-    
+//    {
+//        __label__ jmp;
+//        *((void*volatile*)&&jmp);
+//        jmp:;
+//    }
 //    
-//    // Send status
-//    for (;;) {
+//    Task::_CurrentTask->_jmp = &&start;
+//    
+//    {
 //        __label__ jmp;
-//        Task::_CurrentTask->_jmp = &&jmp;
+//        *((void*volatile*)&&jmp);
 //        jmp:;
-//        break;
 //    }
-    
-//    auto c = (_usb.ready(Endpoints::DataIn));
-//    for (;;) {
-//        __label__ jmp;
-//        Task::_CurrentTask->_jmp = &&jmp;
-//        return;
-//        jmp:;
-//        break;
-////        c = (_usb.ready(Endpoints::DataIn));
-//    }
-    
-    Assert(a == 1);
 }
 
 
