@@ -258,7 +258,7 @@ public:
     };
     
     struct NopMsg : Msg {
-        NopMsg(uint8_t val) {
+        NopMsg() {
             type = 0x00;
             payload[0] = 0x00;
             payload[1] = 0x00;

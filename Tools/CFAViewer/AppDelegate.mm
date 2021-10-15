@@ -497,7 +497,11 @@ static void configMDCDevice(MDCDevice& device, const ExposureConfig& exp) {
 //                exp = std::nullopt;
 //            }
             
-            dev.imgCapture();
+            const STM::ImgCaptureStats imgStats = dev.imgCapture();
+            if (imgStats.len != Img::Len) {
+                throw Toastbox::RuntimeError("invalid image length (expected: %ju, got: %ju)", (uintmax_t)Img::Len, (uintmax_t)imgStats.len);
+            }
+            
             std::unique_ptr<uint8_t[]> img = dev.imgReadout();
             
 //            // Capture an image, timing-out after 1s so we can check the device status,

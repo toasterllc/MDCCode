@@ -152,7 +152,7 @@ namespace STM {
     } __attribute__((packed));
     
     struct ImgCaptureStats {
-        uint32_t wordCount;
+        uint32_t len;
         uint32_t highlightCount;
         uint32_t shadowCount;
     } __attribute__((packed));

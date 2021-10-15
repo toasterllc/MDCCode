@@ -408,6 +408,7 @@ void System::_img_setExposure() {
 
 void System::_img_captureTaskFn() {
     static ImgCaptureStats stats;
+    
     TaskBegin();
     _img_init();
     
@@ -418,16 +419,10 @@ void System::_img_captureTaskFn() {
     }
     
     stats = {
-        .wordCount      = resp.wordCount(),
+        .len            = resp.wordCount()*sizeof(Img::Word),
         .highlightCount = resp.highlightCount(),
         .shadowCount    = resp.shadowCount(),
     };
-    
-    // Validate word count
-    if (stats.wordCount*sizeof(Img::Word) != Img::Len) {
-        _usb_dataInSendStatus(false);
-        return;
-    }
     
     // Send status
     _usb_dataInSendStatus(true);
@@ -441,7 +436,7 @@ void System::_img_captureTaskFn() {
     ICE::Transfer(ICE::ImgReadoutMsg(0));
     
     // Start the Readout task
-    _readout.len = Img::PaddedLen;
+    _readout.len = (size_t)stats.len;
     _readout_task.start();
 }
 
