@@ -473,12 +473,10 @@ void System::_img_captureTaskFn() {
         jmp:;
     }
     
-    // Send status
-    for (;;) {
+    {
         __label__ jmp;
-        Task::_CurrentTask->_jmp = &&jmp;
+        __attribute__((used)) void* addr = &&jmp;
         jmp:;
-        break;
     }
     
 //    
