@@ -452,8 +452,7 @@ void System::_img_captureTaskFn() {
 //    default:    goto *Task::_CurrentTask->_jmp;
 //    }
     
-    if (Task::_CurrentTask->_jmp)
-        goto *Task::_CurrentTask->_jmp;
+    TaskBegin();
     
     int a = 1;
     
@@ -465,19 +464,41 @@ void System::_img_captureTaskFn() {
 //        break;
 //    }
     
-    for (;;) {
-        __label__ jmp;
-        auto c = (_usb.ready(Endpoints::DataIn));
-        Task::_CurrentTask->_jmp = &&jmp;
-        if (!c) return;
-        jmp:;
-    }
+    ({
+        _task._setWaiting();
+        auto c = _usb.ready(Endpoints::DataIn);
+        for (;;) {
+            if (!c) return;
+            _TaskYield();
+            c = _usb.ready(Endpoints::DataIn);
+        }
+        _task._setRunning();
+        
+        {
+            __label__ jmp;
+            *((void*volatile*)&&jmp);
+            jmp:;
+        }
+        
+        c;
+    });
     
-    {
-        __label__ jmp;
-        __attribute__((used)) void* addr = &&jmp;
-        jmp:;
-    }
+    
+//    ({
+//        {
+//            __label__ jmp;
+//            *((void*volatile*)&&jmp);
+//            jmp:;
+//        }
+//        
+//        auto c = (_usb.ready(Endpoints::DataIn));
+//        for (;;) {
+//            __label__ jmp;
+//            Task::_CurrentTask->_jmp = &&jmp;
+//            if (!c) return;
+//            jmp:;
+//        }
+//    });
     
 //    
 //    // Send status
