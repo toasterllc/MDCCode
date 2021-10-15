@@ -254,7 +254,7 @@ public:
     std::unique_ptr<uint8_t[]> imgReadout() {
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(Img::PaddedLen);
         const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), Img::PaddedLen);
-        if (lenGot != Img::PaddedLen) {
+        if (lenGot < Img::Len) {
             throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)Img::PaddedLen, (uintmax_t)lenGot);
         }
         

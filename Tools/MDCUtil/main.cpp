@@ -222,7 +222,7 @@ static void SDImgRead(const Args& args, MDCDevice& device) {
 static void ImgCapture(const Args& args, MDCDevice& device) {
     printf("Sending ImgCapture command...\n");
     STM::ImgCaptureStats stats = device.imgCapture();
-    printf("-> OK (word count: %ju)\n\n", (uintmax_t)stats.wordCount);
+    printf("-> OK (len: %ju)\n\n", (uintmax_t)stats.len);
     
     printf("Reading image...\n");
     auto img = device.imgReadout();
@@ -234,7 +234,7 @@ static void ImgCapture(const Args& args, MDCDevice& device) {
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     f.open(args.ImgCapture.filePath.c_str());
     f.write((char*)img.get(), Img::Len);
-    printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Len);
+    printf("-> Wrote (len: %ju)\n", (uintmax_t)Img::Len);
 }
 
 int main(int argc, const char* argv[]) {
