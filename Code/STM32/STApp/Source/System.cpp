@@ -76,9 +76,9 @@ void System::_usb_cmdTaskFn() {
         
         // Specially handle the Reset command -- it's the only command that doesn't
         // require the endpoints to be ready.
-        if (_cmd.op == Op::FlushEndpoints) {
+        if (_cmd.op == Op::EndpointsFlush) {
             _usb.cmdAccept(true);
-            _flushEndpoints_task.start();
+            _endpointsFlush_task.start();
             continue;
         }
         
@@ -91,7 +91,7 @@ void System::_usb_cmdTaskFn() {
         _usb.cmdAccept(true);
         
         switch (_cmd.op) {
-        case Op::InvokeBootloader:  _invokeBootloader_task.start(); break;
+        case Op::BootloaderInvoke:  _bootloaderInvoke_task.start(); break;
         case Op::LEDSet:            _ledSet();                      break;
         case Op::SDRead:            _sd_readTask.start();           break;
         case Op::ImgCapture:        _img_captureTask.start();       break;
@@ -252,7 +252,7 @@ void System::_readout_taskFn() {
 
 #pragma mark - Common Commands
 
-void System::_flushEndpoints_taskFn() {
+void System::_endpointsFlush_taskFn() {
     TaskBegin();
     // Reset endpoints
     _usb.reset(Endpoints::DataIn);
@@ -261,7 +261,7 @@ void System::_flushEndpoints_taskFn() {
     _usb_dataInSendStatus(true);
 }
 
-void System::_invokeBootloader_taskFn() {
+void System::_bootloaderInvoke_taskFn() {
     TaskBegin();
     // Send status
     _usb_dataInSendStatus(true);
