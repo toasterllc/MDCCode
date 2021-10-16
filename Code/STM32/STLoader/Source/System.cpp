@@ -73,7 +73,8 @@ void System::_usb_cmdTaskFn() {
         _usb.cmdAccept(true);
         
         switch (_cmd.op) {
-        // Set LED
+        // Common Commands
+        case Op::StatusGet:         _statusGet_task.start();        break;
         case Op::BootloaderInvoke:  _bootloaderInvoke_task.start(); break;
         case Op::LEDSet:            _ledSet();                      break;
         // STM32 Bootloader
