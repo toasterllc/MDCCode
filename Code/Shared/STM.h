@@ -102,6 +102,7 @@ namespace STM {
         static constexpr uint32_t MagicNumber = 0xCAFEBABE;
         
         Enum(uint32_t, Mode, Modes,
+            None,
             STMLoader,
             STMApp,
         );
