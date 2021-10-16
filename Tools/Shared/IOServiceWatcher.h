@@ -34,7 +34,7 @@ public:
             kIOGeneralInterest, _callback, (__bridge void*)_handler, &ioNoteObj);
         if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddInterestNotification failed: 0x%x", kr);
         
-        _noteObj = SendRight(ioNoteObj);
+        _noteObj = SendRight(SendRight::NoRetain, ioNoteObj);
     }
     
 private:

@@ -13,12 +13,6 @@ alignas(4) static uint8_t _buf1[63*1024] __attribute__((section(".sram1")));
 
 using namespace STM;
 
-// SleepMs implementation, declared in SleepMs.h
-// Used by ICE40, Img::Sensor, SD::Card
-void SleepMs(uint32_t ms) {
-    HAL_Delay(ms);
-}
-
 System::System() :
 // QSPI clock divider=1 => run QSPI clock at 64 MHz
 // QSPI alignment=word for high performance transfers
@@ -91,6 +85,7 @@ void System::_usb_cmdTaskFn() {
         _usb.cmdAccept(true);
         
         switch (_cmd.op) {
+        case Op::StatusGet:         _statusGet_task.start();        break;
         case Op::BootloaderInvoke:  _bootloaderInvoke_task.start(); break;
         case Op::LEDSet:            _ledSet();                      break;
         case Op::SDRead:            _sd_readTask.start();           break;
@@ -259,6 +254,23 @@ void System::_endpointsFlush_taskFn() {
     TaskWait(_usb.ready(Endpoints::DataIn));
     // Send status
     _usb_dataInSendStatus(true);
+}
+
+void System::_statusGet_taskFn() {
+    TaskBegin();
+    // Send status
+    _usb_dataInSendStatus(true);
+    // Wait for host to receive status
+    TaskWait(_usb.ready(Endpoints::DataIn));
+    
+    // Send status struct
+    static const STM::Status status = {
+        .magic      = STM::Status::MagicNumber,
+        .version    = STM::Version,
+        .mode       = STM::Status::Modes::STMApp,
+    };
+    
+    _usb.send(Endpoints::DataIn, &status, sizeof(status));
 }
 
 void System::_bootloaderInvoke_taskFn() {
@@ -461,4 +473,10 @@ int main() {
 
 [[noreturn]] void abort() {
     Sys.abort();
+}
+
+// SleepMs implementation, declared in SleepMs.h
+// Used by ICE40, Img::Sensor, SD::Card
+void SleepMs(uint32_t ms) {
+    HAL_Delay(ms);
 }

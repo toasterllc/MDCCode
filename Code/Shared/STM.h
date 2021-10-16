@@ -5,6 +5,8 @@
 #include "Toastbox/USB.h"
 
 namespace STM {
+    static constexpr uint32_t Version = 0;
+    
     Enum(uint8_t, Endpoint, Endpoints,
         // Control endpoint
         Ctrl    = 0x00,
@@ -18,6 +20,7 @@ namespace STM {
         // # Common command set
         None,
         EndpointsFlush,
+        StatusGet,
         BootloaderInvoke,
         LEDSet,
         
@@ -94,6 +97,19 @@ namespace STM {
         
     } __attribute__((packed));
     static_assert(sizeof(Cmd)<=64, "Cmd: invalid size"); // Verify that Cmd will fit in a single EP0 packet
+    
+    struct Status {
+        static constexpr uint32_t MagicNumber = 0xCAFEBABE;
+        
+        Enum(uint32_t, Mode, Modes,
+            STMLoader,
+            STMApp,
+        );
+        
+        uint32_t magic;
+        uint32_t version;
+        Mode mode;
+    } __attribute__((packed));
     
     struct MSPDebugCmd {
         Enum(uint8_t, Op, Ops,

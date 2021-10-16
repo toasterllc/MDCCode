@@ -32,7 +32,7 @@ public:
         kern_return_t kr = IOServiceAddMatchingNotification(_notifyPort, kIOMatchedNotification,
             (CFDictionaryRef)CFBridgingRetain(match), _matchingCallback, (__bridge void*)_handler, &ioIter);
         if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddMatchingNotification failed: 0x%x", kr);
-        _serviceIter = SendRight(ioIter);
+        _serviceIter = SendRight(SendRight::NoRetain, ioIter);
         
         _matchingCallback((void*)_handler, ioIter);
     }
@@ -41,7 +41,7 @@ private:
     static void _matchingCallback(void* ctx, io_iterator_t iter) {
         Handler handler = (__bridge Handler)ctx;
         while (iter) {
-            SendRight service(IOIteratorNext(iter));
+            SendRight service(SendRight::NoRetain, IOIteratorNext(iter));
             if (!service) break;
             handler(std::move(service));
         }
