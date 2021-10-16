@@ -34,50 +34,6 @@ public:
         return devs;
     }
     
-    static std::vector<MDCDevice> GetResetDevices() {
-        // TODO: implement this function better by using the USB devices' serial numbers
-        // to track the devices across enumerations
-        constexpr uint64_t TimeoutMs = 1000;
-        std::vector<MDCDevice> devs = GetDevices();
-        
-        // Flush all endpoints for all devices
-        for (MDCDevice& dev : devs) {
-            dev.endpointsFlush();
-        }
-        
-        // Return all devices to the bootloader
-        std::vector<std::reference_wrapper<MDCDevice>> devsResetting;
-        for (MDCDevice& dev : devs) {
-            const STM::Status status = dev.statusGet();
-            if (status.mode != STM::Status::Modes::STMLoader) {
-                dev.bootloaderInvoke();
-                devsResetting.push_back(dev);
-            }
-        }
-        
-        // Wait until all reset devices disappear
-        TimeInstant startTime;
-        for (MDCDevice& dev : devsResetting) {
-            while (startTime.durationMs() < TimeoutMs) {
-                try {
-                    dev.endpointsFlush();
-                } catch (...) {
-                    // Bail once we get an error, presumably due to the device disappearing
-                    break;
-                }
-            }
-        }
-        
-        // Wait up to 1 second for all of the devices to be present
-        const size_t expectedDevCount = devs.size();
-        startTime = TimeInstant();
-        do {
-            devs = GetDevices();
-        } while (devs.size()<expectedDevCount && startTime.durationMs()<TimeoutMs);
-        
-        return devs;
-    }
-    
     MDCDevice(USBDevice&& dev) : _dev(std::move(dev)) {
         _serial = _dev.serialNumber();
         const STM::Status status = statusGet();
@@ -143,11 +99,6 @@ public:
         
         throw Toastbox::RuntimeError("timeout waiting for device to re-enumerate");
     }
-    
-//    void bootloaderInvokeIfNeeded() {
-//        STM::Status status = statusGet();
-//        if (status.mode)
-//    }
     
     void ledSet(uint8_t idx, bool on) {
         STM::Cmd cmd = {
