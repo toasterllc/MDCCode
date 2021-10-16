@@ -7,6 +7,7 @@
 #include "STM.h"
 #include "Img.h"
 #include "ChecksumFletcher32.h"
+#include "TimeInstant.h"
 
 class MDCDevice {
 public:
@@ -23,9 +24,53 @@ public:
         auto usbDevs = USBDevice::GetDevices();
         for (USBDevice& usbDev : usbDevs) {
             if (USBDeviceMatches(usbDev)) {
-                devs.emplace_back(std::move(usbDev));
+                devs.push_back(std::move(usbDev));
             }
         }
+        return devs;
+    }
+    
+    static std::vector<MDCDevice> GetResetDevices() {
+        // TODO: implement this function better by using the USB devices' serial numbers
+        // to track the devices across enumerations
+        constexpr uint64_t TimeoutMs = 1000;
+        std::vector<MDCDevice> devs = GetDevices();
+        
+        // Flush all endpoints for all devices
+        for (MDCDevice& dev : devs) {
+            dev.endpointsFlush();
+        }
+        
+        // Return all devices to the bootloader
+        std::vector<std::reference_wrapper<MDCDevice>> devsResetting;
+        for (MDCDevice& dev : devs) {
+            const STM::Status status = dev.statusGet();
+            if (status.mode != STM::Status::Modes::STMLoader) {
+                dev.bootloaderInvoke();
+                devsResetting.push_back(dev);
+            }
+        }
+        
+        // Wait until all reset devices disappear
+        TimeInstant startTime;
+        for (MDCDevice& dev : devsResetting) {
+            while (startTime.durationMs() < TimeoutMs) {
+                try {
+                    dev.endpointsFlush();
+                } catch (...) {
+                    // Bail once we get an error, presumably due to the device disappearing
+                    break;
+                }
+            }
+        }
+        
+        // Wait up to 1 second for all of the devices to be present
+        const size_t expectedDevCount = devs.size();
+        startTime = TimeInstant();
+        do {
+            devs = GetDevices();
+        } while (devs.size()<expectedDevCount && startTime.durationMs()<TimeoutMs);
+        
         return devs;
     }
     
@@ -49,12 +94,32 @@ public:
         _waitOrThrow("EndpointsFlush command failed");
     }
     
+    STM::Status statusGet() {
+        using namespace STM;
+        const Cmd cmd = { .op = Op::StatusGet };
+        _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("StatusGet command failed");
+        
+        STM::Status status;
+        _dev.read(Endpoints::DataIn, status);
+        if (status.magic != STM::Status::MagicNumber) {
+            throw Toastbox::RuntimeError("invalid magic number (expected:0x%08jx got:0x%08jx)",
+                (uintmax_t)STM::Status::MagicNumber, (uintmax_t)status.magic);
+        }
+        return status;
+    }
+    
     void bootloaderInvoke() {
         using namespace STM;
         const Cmd cmd = { .op = Op::BootloaderInvoke };
         _dev.vendorRequestOut(0, cmd);
         _waitOrThrow("BootloaderInvoke command failed");
     }
+    
+//    void bootloaderInvokeIfNeeded() {
+//        STM::Status status = statusGet();
+//        if (status.mode)
+//    }
     
     void ledSet(uint8_t idx, bool on) {
         using namespace STM;

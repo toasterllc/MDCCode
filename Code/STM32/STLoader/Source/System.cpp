@@ -164,6 +164,23 @@ void System::_endpointsFlush_taskFn() {
     _usb_dataInSendStatus(true);
 }
 
+void System::_statusGet_taskFn() {
+    TaskBegin();
+    // Send status
+    _usb_dataInSendStatus(true);
+    // Wait for host to receive status
+    TaskWait(_usb.ready(Endpoints::DataIn));
+    
+    // Send status struct
+    static const STM::Status status = {
+        .magic      = STM::Status::MagicNumber,
+        .version    = STM::Version,
+        .mode       = STM::Status::Modes::STMLoader,
+    };
+    
+    _usb.send(Endpoints::DataIn, &status, sizeof(status));
+}
+
 void System::_bootloaderInvoke_taskFn() {
     TaskBegin();
     // Send status

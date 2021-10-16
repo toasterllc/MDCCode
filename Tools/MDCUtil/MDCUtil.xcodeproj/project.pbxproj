@@ -57,6 +57,7 @@
 		55B66B422715286A00AD39A5 /* SDCard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SDCard.h; sourceTree = "<group>"; };
 		55B66B472717691200AD39A5 /* STM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STM.h; sourceTree = "<group>"; };
 		55B66B4A27176EC700AD39A5 /* ICE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ICE.h; sourceTree = "<group>"; };
+		55B66B4B271A261600AD39A5 /* Uniqued.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Uniqued.h; sourceTree = "<group>"; };
 		55CAD61E26AF7B5B00450881 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 		55CAD61F26AF7B5B00450881 /* Endian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Endian.h; sourceTree = "<group>"; };
 		55CAD62026AF7B5B00450881 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
@@ -156,6 +157,7 @@
 				55CAD62026AF7B5B00450881 /* RuntimeError.h */,
 				55ECAFB626AF96F600A339C7 /* USB.h */,
 				55ECAFCA26AFE2DC00A339C7 /* RefCounted.h */,
+				55B66B4B271A261600AD39A5 /* Uniqued.h */,
 				55ECAFCD26B0DF0D00A339C7 /* USBDevice.h */,
 				55ECAFCE26B0DF1300A339C7 /* SendRight.h */,
 			);
