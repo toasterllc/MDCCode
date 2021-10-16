@@ -24,7 +24,11 @@ public:
         auto usbDevs = USBDevice::GetDevices();
         for (USBDevice& usbDev : usbDevs) {
             if (USBDeviceMatches(usbDev)) {
-                devs.push_back(std::move(usbDev));
+                try {
+                    devs.push_back(std::move(usbDev));
+                
+                // Suppress failures to create a MDCDevice
+                } catch (...) {}
             }
         }
         return devs;
@@ -74,15 +78,25 @@ public:
         return devs;
     }
     
-    MDCDevice(USBDevice&& dev) :
-    _dev(std::move(dev)) {}
+    MDCDevice(USBDevice&& dev) : _dev(std::move(dev)) {
+        _serial = _dev.serialNumber();
+        const STM::Status status = statusGet();
+        _mode = status.mode;
+    }
+    
+    bool operator==(const MDCDevice& x) const {
+        return _dev == x._dev;
+    }
     
     USBDevice& usbDevice() { return _dev; }
     
+    #pragma mark - Accessors
+    
+    const std::string& serial() const { return _serial; }
+    
     #pragma mark - Common Commands
     void endpointsFlush() {
-        using namespace STM;
-        const Cmd cmd = { .op = Op::EndpointsFlush };
+        const STM::Cmd cmd = { .op = STM::Op::EndpointsFlush };
         // Send command
         _dev.vendorRequestOut(0, cmd);
         
@@ -95,13 +109,12 @@ public:
     }
     
     STM::Status statusGet() {
-        using namespace STM;
-        const Cmd cmd = { .op = Op::StatusGet };
+        const STM::Cmd cmd = { .op = STM::Op::StatusGet };
         _dev.vendorRequestOut(0, cmd);
         _waitOrThrow("StatusGet command failed");
         
         STM::Status status;
-        _dev.read(Endpoints::DataIn, status);
+        _dev.read(STM::Endpoints::DataIn, status);
         if (status.magic != STM::Status::MagicNumber) {
             throw Toastbox::RuntimeError("invalid magic number (expected:0x%08jx got:0x%08jx)",
                 (uintmax_t)STM::Status::MagicNumber, (uintmax_t)status.magic);
@@ -110,10 +123,25 @@ public:
     }
     
     void bootloaderInvoke() {
-        using namespace STM;
-        const Cmd cmd = { .op = Op::BootloaderInvoke };
+        const STM::Cmd cmd = { .op = STM::Op::BootloaderInvoke };
         _dev.vendorRequestOut(0, cmd);
         _waitOrThrow("BootloaderInvoke command failed");
+        
+        // Wait for a new MDCDevice that's not equal to `this` (ie the underlying USB
+        // device is different), but has the same serial number
+        TimeInstant startTime;
+        do {
+            std::vector<MDCDevice> devs = GetDevices();
+            for (MDCDevice& dev : devs) {
+                if (dev == *this) continue;
+                if (_serial == dev.serial()) {
+                    *this = std::move(dev);
+                    return;
+                }
+            }
+        } while (startTime.durationMs() < 5000);
+        
+        throw Toastbox::RuntimeError("timeout waiting for device to re-enumerate");
     }
     
 //    void bootloaderInvokeIfNeeded() {
@@ -122,9 +150,8 @@ public:
 //    }
     
     void ledSet(uint8_t idx, bool on) {
-        using namespace STM;
-        Cmd cmd = {
-            .op = Op::LEDSet,
+        STM::Cmd cmd = {
+            .op = STM::Op::LEDSet,
             .arg = {
                 .LEDSet = {
                     .idx = idx,
@@ -138,9 +165,9 @@ public:
     
     #pragma mark - STMLoader Commands
     void stmWrite(uint32_t addr, const void* data, size_t len) {
-        using namespace STM;
-        const Cmd cmd = {
-            .op = Op::STMWrite,
+        assert(_mode == STM::Status::Modes::STMLoader);
+        const STM::Cmd cmd = {
+            .op = STM::Op::STMWrite,
             .arg = {
                 .STMWrite = {
                     .addr = addr,
@@ -153,14 +180,14 @@ public:
         // Check preliminary status
         _waitOrThrow("STMWrite command failed");
         // Send data
-        _dev.write(Endpoints::DataOut, data, len);
+        _dev.write(STM::Endpoints::DataOut, data, len);
         _waitOrThrow("STMWrite DataOut failed");
     }
     
     void stmReset(uint32_t entryPointAddr) {
-        using namespace STM;
-        const Cmd cmd = {
-            .op = Op::STMReset,
+        assert(_mode == STM::Status::Modes::STMLoader);
+        const STM::Cmd cmd = {
+            .op = STM::Op::STMReset,
             .arg = {
                 .STMReset = {
                     .entryPointAddr = entryPointAddr,
@@ -172,9 +199,9 @@ public:
     }
     
     void iceWrite(const void* data, size_t len) {
-        using namespace STM;
-        const Cmd cmd = {
-            .op = Op::ICEWrite,
+        assert(_mode == STM::Status::Modes::STMLoader);
+        const STM::Cmd cmd = {
+            .op = STM::Op::ICEWrite,
             .arg = {
                 .ICEWrite = {
                     .len = (uint32_t)len,
@@ -184,14 +211,14 @@ public:
         // Send command
         _dev.vendorRequestOut(0, cmd);
         // Send data
-        _dev.write(Endpoints::DataOut, data, len);
+        _dev.write(STM::Endpoints::DataOut, data, len);
         _waitOrThrow("ICEWrite command failed");
     }
     
     void mspConnect() {
-        using namespace STM;
-        const Cmd cmd = {
-            .op = Op::MSPConnect,
+        assert(_mode == STM::Status::Modes::STMLoader);
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPConnect,
         };
         // Send command
         _dev.vendorRequestOut(0, cmd);
@@ -199,9 +226,9 @@ public:
     }
     
     void mspDisconnect() {
-        using namespace STM;
-        const Cmd cmd = {
-            .op = Op::MSPDisconnect,
+        assert(_mode == STM::Status::Modes::STMLoader);
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPDisconnect,
         };
         // Send command
         _dev.vendorRequestOut(0, cmd);
@@ -209,9 +236,9 @@ public:
     }
     
     void mspWrite(uint32_t addr, const void* data, size_t len) {
-        using namespace STM;
-        const Cmd cmd = {
-            .op = Op::MSPWrite,
+        assert(_mode == STM::Status::Modes::STMLoader);
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPWrite,
             .arg = {
                 .MSPWrite = {
                     .addr = addr,
@@ -222,14 +249,14 @@ public:
         // Send command
         _dev.vendorRequestOut(0, cmd);
         // Send data
-        _dev.write(Endpoints::DataOut, data, len);
+        _dev.write(STM::Endpoints::DataOut, data, len);
         _waitOrThrow("MSPWrite command failed");
     }
     
     void mspRead(uint32_t addr, void* data, size_t len) {
-        using namespace STM;
-        const Cmd cmd = {
-            .op = Op::MSPRead,
+        assert(_mode == STM::Status::Modes::STMLoader);
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPRead,
             .arg = {
                 .MSPRead = {
                     .addr = addr,
@@ -240,14 +267,14 @@ public:
         // Send command
         _dev.vendorRequestOut(0, cmd);
         // Read data
-        _dev.read(Endpoints::DataIn, data, len);
+        _dev.read(STM::Endpoints::DataIn, data, len);
         _waitOrThrow("MSPRead command failed");
     }
     
     void mspDebug(const STM::MSPDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
-        using namespace STM;
-        const Cmd cmd = {
-            .op = Op::MSPDebug,
+        assert(_mode == STM::Status::Modes::STMLoader);
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPDebug,
             .arg = {
                 .MSPDebug = {
                     .cmdsLen = (uint32_t)cmdsLen,
@@ -263,12 +290,12 @@ public:
         
         // Write the MSPDebugCmds
         if (cmdsLen) {
-            _dev.write(Endpoints::DataOut, cmds, cmdsLen*sizeof(MSPDebugCmd));
+            _dev.write(STM::Endpoints::DataOut, cmds, cmdsLen*sizeof(STM::MSPDebugCmd));
         }
         
         // Read back the queued data
         if (respLen) {
-            _dev.read(Endpoints::DataIn, resp, respLen);
+            _dev.read(STM::Endpoints::DataIn, resp, respLen);
         }
         
         _waitOrThrow("MSPDebug DataOut/DataIn command failed");
@@ -276,9 +303,9 @@ public:
     
     #pragma mark - STMApp Commands
     void sdRead(uint32_t addr) {
-        using namespace STM;
-        const Cmd cmd = {
-            .op = Op::SDRead,
+        assert(_mode == STM::Status::Modes::STMApp);
+        const STM::Cmd cmd = {
+            .op = STM::Op::SDRead,
             .arg = {
                 .SDRead = {
                     .addr = addr,
@@ -290,20 +317,20 @@ public:
     }
     
     STM::ImgCaptureStats imgCapture() {
-        using namespace STM;
-        const Cmd cmd = { .op = Op::ImgCapture };
+        assert(_mode == STM::Status::Modes::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::ImgCapture };
         _dev.vendorRequestOut(0, cmd);
         _waitOrThrow("ImgCapture command failed");
         
-        ImgCaptureStats stats;
-        _dev.read(Endpoints::DataIn, stats);
+        STM::ImgCaptureStats stats;
+        _dev.read(STM::Endpoints::DataIn, stats);
         return stats;
     }
     
     void imgSetExposure(uint16_t coarseIntTime, uint16_t fineIntTime, uint16_t gain) {
-        using namespace STM;
-        const Cmd cmd = {
-            .op = Op::ImgSetExposure,
+        assert(_mode == STM::Status::Modes::STMApp);
+        const STM::Cmd cmd = {
+            .op = STM::Op::ImgSetExposure,
             .arg = {
                 .ImgSetExposure = {
                     .coarseIntTime  = coarseIntTime,
@@ -317,6 +344,7 @@ public:
     }
     
     std::unique_ptr<uint8_t[]> imgReadout() {
+        assert(_mode == STM::Status::Modes::STMApp);
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(Img::PaddedLen);
         const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), Img::PaddedLen);
         if (lenGot < Img::Len) {
@@ -362,13 +390,14 @@ private:
     }
     
     void _waitOrThrow(const char* errMsg) {
-        using namespace STM;
         // Wait for completion and throw on failure
         bool s = false;
-        _dev.read(Endpoints::DataIn, s);
+        _dev.read(STM::Endpoints::DataIn, s);
         if (!s) throw std::runtime_error(errMsg);
     }
     
     USBDevice _dev;
+    std::string _serial = {};
+    STM::Status::Mode _mode = STM::Status::Modes::None;
     uint8_t _buf[16*1024];
 };
