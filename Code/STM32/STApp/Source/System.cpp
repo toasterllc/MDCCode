@@ -8,8 +8,8 @@
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
-alignas(4) static uint8_t _buf0[63*1024] __attribute__((section(".sram1")));
-alignas(4) static uint8_t _buf1[63*1024] __attribute__((section(".sram1")));
+alignas(4) static uint8_t _buf0[4*1024] __attribute__((section(".sram1")));
+alignas(4) static uint8_t _buf1[4*1024] __attribute__((section(".sram1")));
 
 using namespace STM;
 
@@ -55,7 +55,28 @@ void System::_resetTasks() {
 void System::_usb_cmdTaskFn() {
     TaskBegin();
     for (;;) {
-        auto usbCmd = *TaskWait(_usb.cmdRecv());
+        // Wait for USB to be connected (`Connecting` state) so we can call _usb.connect(),
+        // or for a new command to arrive (in the `Connected` state).
+        TaskWait(_usb.state()==USB::State::Connecting ||
+                 (_usb.state()==USB::State::Connected && _usb.cmdRecv()));
+        
+        // Stop all tasks
+        // This needs to happen before we call `_usb.connect()` so that any tasks that
+        // were running in the previous USB session are cancelled before we enable
+        // USB again by calling _usb.connect().
+        _resetTasks();
+        
+        switch (_usb.state()) {
+        case USB::State::Connecting:
+            _usb.connect();
+            continue;
+        case USB::State::Connected:
+            break;
+        default:
+            abort();
+        }
+        
+        auto usbCmd = *_usb.cmdRecv();
         
         // Reject command if the length isn't valid
         if (usbCmd.len != sizeof(_cmd)) {
@@ -65,10 +86,7 @@ void System::_usb_cmdTaskFn() {
         
         memcpy(&_cmd, usbCmd.data, usbCmd.len);
         
-        // Stop all tasks
-        _resetTasks();
-        
-        // Specially handle the Reset command -- it's the only command that doesn't
+        // Specially handle the EndpointsFlush command -- it's the only command that doesn't
         // require the endpoints to be ready.
         if (_cmd.op == Op::EndpointsFlush) {
             _usb.cmdAccept(true);
@@ -88,7 +106,7 @@ void System::_usb_cmdTaskFn() {
         case Op::StatusGet:         _statusGet_task.start();        break;
         case Op::BootloaderInvoke:  _bootloaderInvoke_task.start(); break;
         case Op::LEDSet:            _ledSet();                      break;
-        case Op::SDRead:            _sd_readTask.start();           break;
+//        case Op::SDRead:            _sd_readTask.start();           break;
         case Op::ImgCapture:        _img_captureTask.start();       break;
         case Op::ImgSetExposure:    _img_setExposure();             break;
         // Bad command
@@ -250,7 +268,7 @@ void System::_readout_taskFn() {
 void System::_endpointsFlush_taskFn() {
     TaskBegin();
     // Reset endpoints
-    _usb.reset(Endpoints::DataIn);
+    _usb.resetEndpoint(Endpoints::DataIn);
     TaskWait(_usb.ready(Endpoints::DataIn));
     // Send status
     _usb_dataInSendStatus(true);
@@ -340,37 +358,37 @@ void SD::Card::SetPowerEnabled(bool en) {
 const uint8_t SD::Card::ClkDelaySlow = 7;
 const uint8_t SD::Card::ClkDelayFast = 0;
 
-void System::_sd_readTaskFn() {
-    static bool init = false;
-    static bool reading = false;
-    const auto& arg = _cmd.arg.SDRead;
-    
-    TaskBegin();
-    
-    // Initialize the SD card if we haven't done so
-    if (!init) {
-        _sd.init();
-        init = true;
-    }
-    
-    // Stop reading from the SD card if a read is in progress
-    if (reading) {
-        _ICE_ST_SPI_CS_::Write(1);
-        _sd.readStop();
-        reading = false;
-    }
-    
-    // Send status
-    _usb_dataInSendStatus(true);
-    
-    // Update state
-    reading = true;
-    _sd.readStart(arg.addr);
-    
-    // Start the Readout task
-    _readout.len = std::nullopt;
-    _readout_task.start();
-}
+//void System::_sd_readTaskFn() {
+//    static bool init = false;
+//    static bool reading = false;
+//    const auto& arg = _cmd.arg.SDRead;
+//    
+//    TaskBegin();
+//    
+//    // Initialize the SD card if we haven't done so
+//    if (!init) {
+//        _sd.init();
+//        init = true;
+//    }
+//    
+//    // Stop reading from the SD card if a read is in progress
+//    if (reading) {
+//        _ICE_ST_SPI_CS_::Write(1);
+//        _sd.readStop();
+//        reading = false;
+//    }
+//    
+//    // Send status
+//    _usb_dataInSendStatus(true);
+//    
+//    // Update state
+//    reading = true;
+//    _sd.readStart(arg.addr);
+//    
+//    // Start the Readout task
+//    _readout.len = std::nullopt;
+//    _readout_task.start();
+//}
 
 #pragma mark - Img
 

@@ -108,6 +108,7 @@ public:
     // Types
     enum class State : uint8_t {
         Disconnected,
+        Connecting,
         Connected,
     };
     
@@ -239,35 +240,63 @@ public:
     
     // Accessors
     State state() const {
+        IRQState irq = IRQState::Disabled();
         return _state;
     }
     
     // Methods
-    void reset(uint8_t ep) {
+    bool connect() {
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connecting) return false;
+        
+        // Open endpoints
+        for (uint8_t ep : {Endpoints...}) {
+            if (EndpointOut(ep)) {
+                USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeOut());
+                _device.ep_out[EndpointIdx(ep)].is_used = 1U;
+                // Reset endpoint state
+                _outEndpoint(ep) = {};
+            
+            } else {
+                USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeIn());
+                _device.ep_in[EndpointIdx(ep)].is_used = 1U;
+                // Reset endpoint state
+                _inEndpoint(ep) = {};
+            }
+        }
+        
+        _cmd = std::nullopt;
+        _state = State::Connected;
+        return true;
+    }
+    
+    void resetEndpoint(uint8_t ep) {
         IRQState irq = IRQState::Disabled();
         
         if (EndpointOut(ep)) {
             _OutEndpoint& outep = _outEndpoint(ep);
-            if (_ready(outep))  _reset(ep, outep);
+            if (_ready(outep))  _resetEndpoint(ep, outep);
             else                outep.needsReset = true;
         
         } else {
             _InEndpoint& inep = _inEndpoint(ep);
-            if (_ready(inep))   _reset(ep, inep);
+            if (_ready(inep))   _resetEndpoint(ep, inep);
             else                inep.needsReset = true;
         }
     }
     
     std::optional<Cmd> cmdRecv() {
         IRQState irq = IRQState::Disabled();
-        auto cmd = _cmd;
-        _cmd = std::nullopt;
-        return cmd;
+        return _cmd;
     }
     
     void cmdAccept(bool accept) {
+        IRQState irq = IRQState::Disabled();
+        
         if (accept) USBD_CtlSendStatus(&_device);
         else        USBD_CtlError(&_device, nullptr);
+        
+        _cmd = std::nullopt;
     }
     
     bool ready(uint8_t ep) {
@@ -276,14 +305,19 @@ public:
         else                    return _ready(_inEndpoint(ep));
     }
     
-    USBD_StatusTypeDef recv(uint8_t ep, void* data, size_t len) {
+    bool recv(uint8_t ep, void* data, size_t len) {
         AssertArg(EndpointOut(ep));
         _OutEndpoint& outep = _outEndpoint(ep);
         
         IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return false;
+        
         Assert(_ready(outep));
         _advanceState(ep, outep);
-        return USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)data, len);
+        const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)data, len);
+        if (us != USBD_OK) return false;
+        
+        return true;
     }
     
     size_t recvLen(uint8_t ep) const {
@@ -292,12 +326,18 @@ public:
         return _recvLen(_outEndpoint(ep));
     }
     
-    USBD_StatusTypeDef send(uint8_t ep, const void* data, size_t len) {
+    bool send(uint8_t ep, const void* data, size_t len) {
         _InEndpoint& inep = _inEndpoint(ep);
         IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return false;
+        
         Assert(_ready(inep));
         _advanceState(ep, inep);
-        return USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
+        
+        const USBD_StatusTypeDef us = USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
+        if (us != USBD_OK) return false;
+        
+        return true;
     }
     
 protected:
@@ -306,20 +346,7 @@ protected:
     }
     
     uint8_t _usbd_Init(uint8_t cfgidx) {
-        _state = State::Connected;
-        
-        // Open endpoints
-        for (uint8_t ep : {Endpoints...}) {
-            if (EndpointOut(ep)) {
-                USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeOut());
-                _device.ep_out[EndpointIdx(ep)].is_used = 1U;
-            
-            } else {
-                USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeIn());
-                _device.ep_in[EndpointIdx(ep)].is_used = 1U;
-            }
-        }
-        
+        _state = State::Connecting;
         return (uint8_t)USBD_OK;
     }
     
@@ -458,7 +485,7 @@ private:
     
     // Interrupts must be disabled
     template <typename OutInEndpoint>
-    void _reset(uint8_t ep, OutInEndpoint& outinep) {
+    void _resetEndpoint(uint8_t ep, OutInEndpoint& outinep) {
         outinep.state = _EndpointState::Reset;
         outinep.needsReset = false;
         _advanceState(ep, outinep);
@@ -467,7 +494,7 @@ private:
     // Interrupts must be disabled
     void _advanceState(uint8_t ep, _OutEndpoint& outep) {
         if (outep.needsReset) {
-            _reset(ep, outep);
+            _resetEndpoint(ep, outep);
             return;
         }
         
@@ -510,7 +537,7 @@ private:
     // Interrupts must be disabled
     void _advanceState(uint8_t ep, _InEndpoint& inep) {
         if (inep.needsReset) {
-            _reset(ep, inep);
+            _resetEndpoint(ep, inep);
             return;
         }
         

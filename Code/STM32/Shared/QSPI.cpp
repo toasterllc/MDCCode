@@ -196,6 +196,7 @@ void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
 }
 
 void QSPI::wait() const {
+    IRQState irq = IRQState::Enabled();
     for (;;) {
         // Disable interrupts to prevent a race between checking ready() and going to sleep,
         // between which we may have become ready, had we not disabled interrupts.

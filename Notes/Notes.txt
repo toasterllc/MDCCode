@@ -1,5 +1,14 @@
 - Rev4 Todo
     
+    - Fix bug: With STLink connected, sometimes the USB device doesn't enumerate when connecting the USB cable
+        - Try:
+            - keep interrupts disabled while running tasks
+            - have QSPI ready() poll the hardware register, instead of relying on interrupts, so that interrupts don't need to be enabled
+                - we should be able to delete the _busy flag
+                - we should be able to delete HAL_QSPI_CmdCpltCallback() etc
+    
+    - Fix bug: Without STLink connected, sometimes STApp crashes
+    
     - STLoader: cleanup tasks the way we did for STApp
     
     - STApp / STLoader: in cases where the device reboots (STLoader: `STMReset` command,
