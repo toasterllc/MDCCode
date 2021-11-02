@@ -240,13 +240,15 @@ public:
     
     // Accessors
     State state() const {
-        IRQState irq = IRQState::Disabled();
         return _state;
     }
     
     // Methods
+    // Interrupts must be disabled when calling these methods!
+    
     bool connect() {
-        IRQState irq = IRQState::Disabled();
+        AssertArg(!IRQState::InterruptsEnabled());
+        
         if (_state != State::Connecting) return false;
         
         // Open endpoints
@@ -271,7 +273,7 @@ public:
     }
     
     void resetEndpoint(uint8_t ep) {
-        IRQState irq = IRQState::Disabled();
+        AssertArg(!IRQState::InterruptsEnabled());
         
         if (EndpointOut(ep)) {
             _OutEndpoint& outep = _outEndpoint(ep);
@@ -286,12 +288,12 @@ public:
     }
     
     std::optional<Cmd> cmdRecv() {
-        IRQState irq = IRQState::Disabled();
+        AssertArg(!IRQState::InterruptsEnabled());
         return _cmd;
     }
     
     void cmdAccept(bool accept) {
-        IRQState irq = IRQState::Disabled();
+        AssertArg(!IRQState::InterruptsEnabled());
         
         if (accept) USBD_CtlSendStatus(&_device);
         else        USBD_CtlError(&_device, nullptr);
@@ -300,18 +302,18 @@ public:
     }
     
     bool ready(uint8_t ep) {
-        IRQState irq = IRQState::Disabled();
+        AssertArg(!IRQState::InterruptsEnabled());
+        
         if (EndpointOut(ep))    return _ready(_outEndpoint(ep));
         else                    return _ready(_inEndpoint(ep));
     }
     
     bool recv(uint8_t ep, void* data, size_t len) {
+        AssertArg(!IRQState::InterruptsEnabled());
+        AssertArg(_state == State::Connected);
         AssertArg(EndpointOut(ep));
+        
         _OutEndpoint& outep = _outEndpoint(ep);
-        
-        IRQState irq = IRQState::Disabled();
-        if (_state != State::Connected) return false;
-        
         Assert(_ready(outep));
         _advanceState(ep, outep);
         const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)data, len);
@@ -321,14 +323,14 @@ public:
     }
     
     size_t recvLen(uint8_t ep) const {
+        AssertArg(!IRQState::InterruptsEnabled());
         AssertArg(EndpointOut(ep));
-        IRQState irq = IRQState::Disabled();
         return _recvLen(_outEndpoint(ep));
     }
     
     bool send(uint8_t ep, const void* data, size_t len) {
+        AssertArg(!IRQState::InterruptsEnabled());
         _InEndpoint& inep = _inEndpoint(ep);
-        IRQState irq = IRQState::Disabled();
         if (_state != State::Connected) return false;
         
         Assert(_ready(inep));

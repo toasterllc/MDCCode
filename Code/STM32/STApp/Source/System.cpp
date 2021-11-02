@@ -56,7 +56,7 @@ void System::_usb_cmdTaskFn() {
     TaskBegin();
     for (;;) {
         // Wait for USB to be connected (`Connecting` state) so we can call _usb.connect(),
-        // or for a new command to arrive (in the `Connected` state).
+        // or for a new command to arrive (in the `Connected` state) so we can handle it.
         TaskWait(_usb.state()==USB::State::Connecting ||
                  (_usb.state()==USB::State::Connected && _usb.cmdRecv()));
         
@@ -472,11 +472,13 @@ void System::_img_captureTaskFn() {
 
 System Sys;
 
-bool IRQState::SetInterruptsEnabled(bool en) {
-    const bool prevEn = !__get_PRIMASK();
+bool IRQState::InterruptsEnabled() {
+    return __get_PRIMASK();
+}
+
+void IRQState::SetInterruptsEnabled(bool en) {
     if (en) __enable_irq();
     else __disable_irq();
-    return prevEn;
 }
 
 void IRQState::WaitForInterrupt() {
