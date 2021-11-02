@@ -55,7 +55,7 @@ void System::_resetTasks() {
 void System::_usb_cmdTaskFn() {
     TaskBegin();
     for (;;) {
-        // Wait for USB to be connected (`Connecting` state) so we can call _usb.connect(),
+        // Wait for USB to be re-connected (`Connecting` state) so we can call _usb.connect(),
         // or for a new command to arrive (in the `Connected` state) so we can handle it.
         TaskWait(_usb.state()==USB::State::Connecting ||
                  (_usb.state()==USB::State::Connected && _usb.cmdRecv()));

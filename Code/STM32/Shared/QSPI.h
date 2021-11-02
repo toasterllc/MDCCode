@@ -37,18 +37,14 @@ public:
 private:
     void _isrQSPI();
     void _isrDMA();
-    void _handleCommandDone();
-    void _handleReadDone();
-    void _handleWriteDone();
     
-    Mode _mode = Mode::Single;
-    uint8_t _clkDivider = 0;
-    Align _align = Align::Byte;
-    ChipSelect _chipSelect = ChipSelect::Uncontrolled;
+    const Mode _mode                = Mode::Single;
+    const uint8_t _clkDivider       = 0;
+    const Align _align              = Align::Byte;
+    const ChipSelect _chipSelect    = ChipSelect::Uncontrolled;
     
     QSPI_HandleTypeDef _device;
     DMA_HandleTypeDef _dma;
-    bool _busy = false;
     
     using _Clk = GPIO<GPIOPortB, GPIO_PIN_2>;
     using _CS = GPIO<GPIOPortB, GPIO_PIN_6>;
