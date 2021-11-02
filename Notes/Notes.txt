@@ -1,11 +1,23 @@
 - Rev4 Todo
     
     - Fix bug: With STLink connected, sometimes the USB device doesn't enumerate when connecting the USB cable
-        - Try:
+        - Solutions:
             - keep interrupts disabled while running tasks
-            - have QSPI ready() poll the hardware register, instead of relying on interrupts, so that interrupts don't need to be enabled
-                - we should be able to delete the _busy flag
-                - we should be able to delete HAL_QSPI_CmdCpltCallback() etc
+                - have QSPI ready() poll the hardware register, instead of relying on
+                  interrupts, so that interrupts don't need to be enabled
+                    - we should be able to delete the _busy flag
+                    - we should be able to delete HAL_QSPI_CmdCpltCallback() etc
+            
+            - when USB is re-connected, have USB require an acknowledgement (USB::connect()) before
+              permitting USB transactions
+                - if a USB method is called before the acknowledgement, short-circuit / return an error
+        
+        - Reasons not to have interrupts disabled while tasks are running:
+            - HAL_Delay() is broken when ints are disabled
+                - We'll lose track of time if interrupts are disabled for longer than 1ms
+            - QSPI needs ints to be enabled for the QSPI::wait() (and the _busy flag) to work correctly
+                - We might be able to work around this though
+            - 
     
     - Fix bug: Without STLink connected, sometimes STApp crashes
     
