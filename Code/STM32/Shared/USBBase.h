@@ -138,6 +138,22 @@ public:
         
         _device.pData = &_pcd;
         
+        
+        
+        
+//        USBD_StatusTypeDef us = USBD_Stop(&_device);
+//        Assert(us == USBD_OK);
+//        
+//        HAL_StatusTypeDef hs = HAL_PCD_DeInit(&_pcd);
+//        Assert(hs == HAL_OK);
+//        
+//        us = USBD_DeInit(&_device);
+//        Assert(us == USBD_OK);
+        
+        
+        
+        
+        
         USBD_StatusTypeDef us = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
         Assert(us == USBD_OK);
         
@@ -151,6 +167,8 @@ public:
         static const USBD_ClassTypeDef usbClass = {
             .Init                           = Fwd1(Init, uint8_t),
             .DeInit                         = Fwd1(DeInit, uint8_t),
+            .Suspend                        = Fwd0(Suspend),
+            .Resume                         = Fwd0(Resume),
             .Setup                          = Fwd1(Setup, USBD_SetupReqTypedef*),
             .EP0_TxSent                     = Fwd0(EP0_TxSent),
             .EP0_RxReady                    = Fwd0(EP0_RxReady),
@@ -360,45 +378,16 @@ protected:
         ISR_HAL_PCD(&_pcd);
     }
     
-    void _deinit() {
-//        USBD_StatusTypeDef us = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
+//    void _deinit() {
+//        us = USBD_Stop(&_device);
 //        Assert(us == USBD_OK);
 //        
-//        HAL_StatusTypeDef hs = HAL_PCD_Init(&_pcd);
+//        HAL_StatusTypeDef hs = HAL_PCD_DeInit(&_pcd);
 //        Assert(hs == HAL_OK);
 //        
-//#define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return ((T*)pdev->pCtx)->_usbd_##name(); }
-//#define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return ((T*)pdev->pCtx)->_usbd_##name(t0); }
-//#define Fwd2(name, T0, T1) [](USBD_HandleTypeDef* pdev, T0 t0, T1 t1) { return ((T*)pdev->pCtx)->_usbd_##name(t0, t1); }
-//        
-//        static const USBD_ClassTypeDef usbClass = {
-//            .Init                           = Fwd1(Init, uint8_t),
-//            .DeInit                         = Fwd1(DeInit, uint8_t),
-//            .Setup                          = Fwd1(Setup, USBD_SetupReqTypedef*),
-//            .EP0_TxSent                     = Fwd0(EP0_TxSent),
-//            .EP0_RxReady                    = Fwd0(EP0_RxReady),
-//            .DataIn                         = Fwd1(DataIn, uint8_t),
-//            .DataOut                        = Fwd1(DataOut, uint8_t),
-//            .SOF                            = Fwd0(SOF),
-//            .IsoINIncomplete                = Fwd1(IsoINIncomplete, uint8_t),
-//            .IsoOUTIncomplete               = Fwd1(IsoOUTIncomplete, uint8_t),
-//            .GetHSConfigDescriptor          = Fwd1(GetHSConfigDescriptor, uint16_t*),
-//            .GetFSConfigDescriptor          = Fwd1(GetFSConfigDescriptor, uint16_t*),
-//            .GetOtherSpeedConfigDescriptor  = Fwd1(GetOtherSpeedConfigDescriptor, uint16_t*),
-//            .GetDeviceQualifierDescriptor   = Fwd1(GetDeviceQualifierDescriptor, uint16_t*),
-//            .GetUsrStrDescriptor            = Fwd2(GetUsrStrDescriptor, uint8_t, uint16_t*),
-//        };
-//        
-//#undef Fwd0
-//#undef Fwd1
-//#undef Fwd2
-//        
-//        us = USBD_RegisterClass(&_device, &usbClass);
+//        USBD_StatusTypeDef us = USBD_DeInit(&_device);
 //        Assert(us == USBD_OK);
-//        
-//        us = USBD_Start(&_device);
-//        Assert(us == USBD_OK);
-    }
+//    }
     
     uint8_t _usbd_Init(uint8_t cfgidx) {
         _state = State::Connecting;
@@ -407,6 +396,21 @@ protected:
     
     uint8_t _usbd_DeInit(uint8_t cfgidx) {
         _state = State::Disconnected;
+        return (uint8_t)USBD_OK;
+    }
+    
+    uint8_t _usbd_Suspend() {
+        if (_state != State::Disconnected) {
+            init();
+        }
+        
+        _state = State::Disconnected;
+//        _deinit();
+        return (uint8_t)USBD_OK;
+    }
+    
+    uint8_t _usbd_Resume() {
+        _state = State::Connecting;
         return (uint8_t)USBD_OK;
     }
     

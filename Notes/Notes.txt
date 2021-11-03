@@ -2,9 +2,9 @@
     
     - Fix bug: With STLink connected, sometimes the USB device doesn't enumerate when connecting the USB cable
         - Solutions:
-            - keep interrupts disabled while running tasks
+            - keep ints disabled while running tasks
                 - have QSPI ready() poll the hardware register, instead of relying on
-                  interrupts, so that interrupts don't need to be enabled
+                  ints, so that ints don't need to be enabled
                     - we should be able to delete the _busy flag
                     - we should be able to delete HAL_QSPI_CmdCpltCallback() etc
             
@@ -12,12 +12,11 @@
               permitting USB transactions
                 - if a USB method is called before the acknowledgement, short-circuit / return an error
         
-        - Reasons not to have interrupts disabled while tasks are running:
+        - Reasons not to have ints disabled while tasks are running:
             - HAL_Delay() is broken when ints are disabled
-                - We'll lose track of time if interrupts are disabled for longer than 1ms
+                - We'll lose track of time if ints are disabled for longer than 1ms
             - QSPI needs ints to be enabled for the QSPI::wait() (and the _busy flag) to work correctly
                 - We might be able to work around this though
-            - 
     
     - Fix bug: Without STLink connected, sometimes STApp crashes
         - One cause is because Img::Sensor::Init() failed, because of an IMG I2C error
