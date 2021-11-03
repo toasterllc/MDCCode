@@ -76,12 +76,18 @@ void QSPI::config() {
 }
 
 void QSPI::reset() {
+    // Disable interrupts so that resetting is atomic
+    IRQState irq = IRQState::Disabled();
+    
     // Abort whatever is underway (if anything)
     HAL_QSPI_Abort(&_device);
+    
+    // Reset state
+    _busy = false;
 }
 
 bool QSPI::ready() const {
-    return !HAL_QSPI_GetBusy(&_device);
+    return !_busy;
 }
 
 void QSPI::command(const QSPI_CommandTypeDef& cmd) {
@@ -133,6 +139,11 @@ void QSPI::command(const QSPI_CommandTypeDef& cmd) {
     } else {
         Assert(ready());
         
+        // Update _busy before the interrupt can occur, otherwise `_busy = true`
+        // could occur after the transaction is complete, cloberring the `_busy = false`
+        // assignment in the completion interrupt handler.
+        _busy = true;
+        
         // Use HAL_QSPI_Command_IT() in this case, instead of HAL_QSPI_Command(),
         // because we're not transferring any data, so the HAL_QSPI_Command()
         // synchronously performs the SPI transaction, instead asynchronously
@@ -151,6 +162,11 @@ void QSPI::read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
     if (_align == Align::Word) AssertArg(!(len % sizeof(uint32_t)));
     Assert(ready());
     
+    // Update _busy before the interrupt can occur, otherwise `_busy = true`
+    // could occur after the transaction is complete, cloberring the `_busy = false`
+    // assignment in the completion interrupt handler.
+    _busy = true;
+    
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     Assert(hs == HAL_OK);
     
@@ -167,6 +183,11 @@ void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
     if (_align == Align::Word) AssertArg(!(len % sizeof(uint32_t)));
     Assert(ready());
     
+    // Update _busy before the interrupt can occur, otherwise `_busy = true`
+    // could occur after the transaction is complete, cloberring the `_busy = false`
+    // assignment in the completion interrupt handler.
+    _busy = true;
+    
     HAL_StatusTypeDef hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     Assert(hs == HAL_OK);
     
@@ -175,7 +196,13 @@ void QSPI::write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
 }
 
 void QSPI::wait() const {
-    while (!ready());
+    for (;;) {
+        // Disable interrupts to prevent a race between checking ready() and going to sleep,
+        // between which we may have become ready, had we not disabled interrupts.
+        IRQState irq = IRQState::Disabled();
+        if (ready()) return;
+        IRQState::WaitForInterrupt();
+    }
 }
 
 void QSPI::_isrQSPI() {
@@ -184,6 +211,30 @@ void QSPI::_isrQSPI() {
 
 void QSPI::_isrDMA() {
     ISR_HAL_DMA(&_dma);
+}
+
+void QSPI::_handleCommandDone() {
+    _busy = false;
+}
+
+void QSPI::_handleReadDone() {
+    _busy = false;
+}
+
+void QSPI::_handleWriteDone() {
+    _busy = false;
+}
+
+void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device) {
+    ((QSPI*)device->Ctx)->_handleCommandDone();
+}
+
+void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef* device) {
+    ((QSPI*)device->Ctx)->_handleReadDone();
+}
+
+void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* device) {
+    ((QSPI*)device->Ctx)->_handleWriteDone();
 }
 
 void HAL_QSPI_ErrorCallback(QSPI_HandleTypeDef* device) {

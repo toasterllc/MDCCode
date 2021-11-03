@@ -392,7 +392,7 @@ USBD_StatusTypeDef USBD_SetClassConfig(USBD_HandleTypeDef* pdev, uint8_t cfgidx)
   if (pdev->pClass != NULL)
   {
     // Set configuration and Start the Class
-    ret = (USBD_StatusTypeDef)pdev->pClass->Init(pdev, cfgidx);
+    ret = (USBD_StatusTypeDef)pdev->pClass->SetConfig(pdev, cfgidx);
   }
 
   return ret;
@@ -404,7 +404,7 @@ USBD_StatusTypeDef USBD_ClrClassConfig(USBD_HandleTypeDef* pdev, uint8_t cfgidx)
   // Clear configuration and De-initialize the Class process
   if (pdev->pClass != NULL)
   {
-    pdev->pClass->DeInit(pdev, cfgidx);
+    pdev->pClass->ClearConfig(pdev, cfgidx);
   }
 
   return USBD_OK;

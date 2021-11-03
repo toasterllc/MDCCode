@@ -632,7 +632,6 @@ HAL_StatusTypeDef     HAL_QSPI_UnRegisterCallback   (QSPI_HandleTypeDef *hqspi, 
 /* Peripheral Control and State functions  ************************************/
 HAL_QSPI_StateTypeDef HAL_QSPI_GetState        (QSPI_HandleTypeDef *hqspi);
 uint32_t              HAL_QSPI_GetError        (QSPI_HandleTypeDef *hqspi);
-bool                  HAL_QSPI_GetBusy         (QSPI_HandleTypeDef *hqspi);
 HAL_StatusTypeDef     HAL_QSPI_Abort           (QSPI_HandleTypeDef *hqspi);
 HAL_StatusTypeDef     HAL_QSPI_Abort_IT        (QSPI_HandleTypeDef *hqspi);
 void                  HAL_QSPI_SetTimeout      (QSPI_HandleTypeDef *hqspi, uint32_t Timeout);

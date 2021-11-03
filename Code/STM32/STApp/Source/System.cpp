@@ -56,11 +56,13 @@ void System::_usb_cmdTaskFn() {
     TaskBegin();
     for (;;) {
         // Wait for USB to be re-connected (`Connecting` state) so we can call _usb.connect(),
-        // or for a new command to arrive (in the `Connected` state) so we can handle it.
-        TaskWait(_usb.state()==USB::State::Connecting ||
-                 (_usb.state()==USB::State::Connected && _usb.cmdRecv()));
+        // or for a new command to arrive so we can handle it.
+        TaskWait(_usb.state()==USB::State::Connecting || _usb.cmdRecv());
         
-        // Stop all tasks
+        // Disable interrupts so we can inspect+modify _usb atomically
+        IRQState irq = IRQState::Disabled();
+        
+        // Reset all tasks
         // This needs to happen before we call `_usb.connect()` so that any tasks that
         // were running in the previous USB session are cancelled before we enable
         // USB again by calling _usb.connect().
@@ -71,9 +73,10 @@ void System::_usb_cmdTaskFn() {
             _usb.connect();
             continue;
         case USB::State::Connected:
+            if (!_usb.cmdRecv()) continue;
             break;
         default:
-            abort();
+            continue;
         }
         
         auto usbCmd = *_usb.cmdRecv();
@@ -95,7 +98,7 @@ void System::_usb_cmdTaskFn() {
         }
         
         // Reject command if the endpoints aren't ready
-        if (!_usb.ready(Endpoints::DataIn)) {
+        if (!_usb.endpointReady(Endpoints::DataIn)) {
             _usb.cmdAccept(false);
             continue;
         }
@@ -124,7 +127,7 @@ void System::_usb_dataInTaskFn() {
         
         // Send the data and wait until the transfer is complete
         _usb.send(Endpoints::DataIn, _bufs.front().data, _bufs.front().len);
-        TaskWait(_usb.ready(Endpoints::DataIn));
+        TaskWait(_usb.endpointReady(Endpoints::DataIn));
         
         _bufs.front().len = 0;
         _bufs.pop();
@@ -268,8 +271,8 @@ void System::_readout_taskFn() {
 void System::_endpointsFlush_taskFn() {
     TaskBegin();
     // Reset endpoints
-    _usb.resetEndpoint(Endpoints::DataIn);
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    _usb.endpointReset(Endpoints::DataIn);
+    TaskWait(_usb.endpointReady(Endpoints::DataIn));
     // Send status
     _usb_dataInSendStatus(true);
 }
@@ -279,7 +282,7 @@ void System::_statusGet_taskFn() {
     // Send status
     _usb_dataInSendStatus(true);
     // Wait for host to receive status
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     // Send status struct
     static const STM::Status status = {
@@ -296,7 +299,7 @@ void System::_bootloaderInvoke_taskFn() {
     // Send status
     _usb_dataInSendStatus(true);
     // Wait for host to receive status before resetting
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     // Perform software reset
     HAL_NVIC_SystemReset();
@@ -456,11 +459,11 @@ void System::_img_captureTaskFn() {
     
     // Send status
     _usb_dataInSendStatus(true);
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     // Send ImgCaptureStats
     _usb.send(Endpoints::DataIn, &stats, sizeof(stats));
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     // Arrange for the image to be read out
     ICE::Transfer(ICE::ImgReadoutMsg(0));
@@ -472,13 +475,11 @@ void System::_img_captureTaskFn() {
 
 System Sys;
 
-bool IRQState::InterruptsEnabled() {
-    return __get_PRIMASK();
-}
-
-void IRQState::SetInterruptsEnabled(bool en) {
+bool IRQState::SetInterruptsEnabled(bool en) {
+    const bool prevEn = !__get_PRIMASK();
     if (en) __enable_irq();
     else __disable_irq();
+    return prevEn;
 }
 
 void IRQState::WaitForInterrupt() {

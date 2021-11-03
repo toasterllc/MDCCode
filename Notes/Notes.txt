@@ -20,6 +20,9 @@
             - 
     
     - Fix bug: Without STLink connected, sometimes STApp crashes
+        - One cause is because Img::Sensor::Init() failed, because of an IMG I2C error
+            - Might be because we're not waiting long enough after turning on the power rails
+                - "#warning TODO: measure how long it takes for IMG rails to rise"
     
     - STLoader: cleanup tasks the way we did for STApp
     

@@ -2264,16 +2264,6 @@ uint32_t HAL_QSPI_GetError(QSPI_HandleTypeDef *hqspi)
 }
 
 /**
-* @brief  Return the QSPI error code.
-* @param  hqspi : QSPI handle
-* @retval QSPI Error Code
-*/
-bool HAL_QSPI_GetBusy(QSPI_HandleTypeDef *hqspi)
-{
-  return __HAL_QSPI_GET_FLAG(hqspi, QSPI_FLAG_BUSY);
-}
-
-/**
 * @brief  Abort the current transmission.
 * @param  hqspi : QSPI handle
 * @retval HAL status

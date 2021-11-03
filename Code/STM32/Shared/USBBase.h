@@ -7,6 +7,7 @@
 #include "usbd_desc.h"
 #include "Toastbox/Task.h"
 #include "Toastbox/USB.h"
+#include "stm32f7xx_ll_usb.h"
 
 extern "C" void ISR_OTG_HS();
 
@@ -17,6 +18,14 @@ uint8_t... Endpoints    // List of endpoints
 >
 class USBBase {
 public:
+    
+    static constexpr uint32_t USBx_BASE	= 0x40040000;
+	volatile uint32_t& DIEPTSIZ_0x81 = USBx_INEP(1)->DIEPTSIZ;
+    volatile uint32_t& DTXFSTS_0x81  = USBx_INEP(1)->DTXFSTS;
+    volatile uint32_t& DIEPINT_0x81  = USBx_INEP(1)->DIEPINT;
+    volatile uint32_t& DIEPCTL_0x81  = USBx_INEP(1)->DIEPCTL;
+    volatile uint32_t& DIEPDMA_0x81  = USBx_INEP(1)->DIEPDMA;
+    
     struct Cmd {
         const uint8_t* data;
         size_t len;
@@ -30,6 +39,7 @@ private:
         Reset,
         ResetZLP1,
         ResetZLP2,
+        ResetZLP3,
         ResetSentinel,
     };
     
@@ -240,16 +250,14 @@ public:
     
     // Accessors
     State state() const {
+        IRQState irq = IRQState::Disabled();
         return _state;
     }
     
     // Methods
-    // Interrupts must be disabled when calling these methods!
-    
-    bool connect() {
-        AssertArg(!IRQState::InterruptsEnabled());
-        
-        if (_state != State::Connecting) return false;
+    void connect() {
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connecting) return; // Short-circuit if we're not Connecting
         
         // Open endpoints
         for (uint8_t ep : {Endpoints...}) {
@@ -269,31 +277,41 @@ public:
         
         _cmd = std::nullopt;
         _state = State::Connected;
-        return true;
     }
     
-    void resetEndpoint(uint8_t ep) {
-        AssertArg(!IRQState::InterruptsEnabled());
+    void endpointReset(uint8_t ep) {
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return; // Short-circuit if we're not Connected
         
         if (EndpointOut(ep)) {
             _OutEndpoint& outep = _outEndpoint(ep);
-            if (_ready(outep))  _resetEndpoint(ep, outep);
+            if (_ready(outep))  _endpointReset(ep, outep);
             else                outep.needsReset = true;
         
         } else {
             _InEndpoint& inep = _inEndpoint(ep);
-            if (_ready(inep))   _resetEndpoint(ep, inep);
+            if (_ready(inep))   _endpointReset(ep, inep);
             else                inep.needsReset = true;
         }
     }
     
+    bool endpointReady(uint8_t ep) {
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return false; // Short-circuit if we're not Connected
+        
+        if (EndpointOut(ep))    return _ready(_outEndpoint(ep));
+        else                    return _ready(_inEndpoint(ep));
+    }
+    
     std::optional<Cmd> cmdRecv() {
-        AssertArg(!IRQState::InterruptsEnabled());
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
         return _cmd;
     }
     
     void cmdAccept(bool accept) {
-        AssertArg(!IRQState::InterruptsEnabled());
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return; // Short-circuit if we're not Connected
         
         if (accept) USBD_CtlSendStatus(&_device);
         else        USBD_CtlError(&_device, nullptr);
@@ -301,50 +319,85 @@ public:
         _cmd = std::nullopt;
     }
     
-    bool ready(uint8_t ep) {
-        AssertArg(!IRQState::InterruptsEnabled());
-        
-        if (EndpointOut(ep))    return _ready(_outEndpoint(ep));
-        else                    return _ready(_inEndpoint(ep));
-    }
-    
-    bool recv(uint8_t ep, void* data, size_t len) {
-        AssertArg(!IRQState::InterruptsEnabled());
-        AssertArg(_state == State::Connected);
+    void recv(uint8_t ep, void* data, size_t len) {
         AssertArg(EndpointOut(ep));
+        
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return; // Short-circuit if we're not Connected
         
         _OutEndpoint& outep = _outEndpoint(ep);
         Assert(_ready(outep));
         _advanceState(ep, outep);
-        const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)data, len);
-        if (us != USBD_OK) return false;
         
-        return true;
+        USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)data, len);
+        Assert(us == USBD_OK);
     }
     
     size_t recvLen(uint8_t ep) const {
-        AssertArg(!IRQState::InterruptsEnabled());
         AssertArg(EndpointOut(ep));
+        
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return 0; // Short-circuit if we're not Connected
         return _recvLen(_outEndpoint(ep));
     }
     
-    bool send(uint8_t ep, const void* data, size_t len) {
-        AssertArg(!IRQState::InterruptsEnabled());
-        _InEndpoint& inep = _inEndpoint(ep);
-        if (_state != State::Connected) return false;
+    void send(uint8_t ep, const void* data, size_t len) {
+        AssertArg(EndpointIn(ep));
         
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return; // Short-circuit if we're not Connected
+        
+        _InEndpoint& inep = _inEndpoint(ep);
         Assert(_ready(inep));
         _advanceState(ep, inep);
         
-        const USBD_StatusTypeDef us = USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
-        if (us != USBD_OK) return false;
-        
-        return true;
+        USBD_StatusTypeDef us = USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
+        Assert(us == USBD_OK);
     }
     
 protected:
     void _isr() {
         ISR_HAL_PCD(&_pcd);
+    }
+    
+    void _deinit() {
+//        USBD_StatusTypeDef us = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
+//        Assert(us == USBD_OK);
+//        
+//        HAL_StatusTypeDef hs = HAL_PCD_Init(&_pcd);
+//        Assert(hs == HAL_OK);
+//        
+//#define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return ((T*)pdev->pCtx)->_usbd_##name(); }
+//#define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return ((T*)pdev->pCtx)->_usbd_##name(t0); }
+//#define Fwd2(name, T0, T1) [](USBD_HandleTypeDef* pdev, T0 t0, T1 t1) { return ((T*)pdev->pCtx)->_usbd_##name(t0, t1); }
+//        
+//        static const USBD_ClassTypeDef usbClass = {
+//            .Init                           = Fwd1(Init, uint8_t),
+//            .DeInit                         = Fwd1(DeInit, uint8_t),
+//            .Setup                          = Fwd1(Setup, USBD_SetupReqTypedef*),
+//            .EP0_TxSent                     = Fwd0(EP0_TxSent),
+//            .EP0_RxReady                    = Fwd0(EP0_RxReady),
+//            .DataIn                         = Fwd1(DataIn, uint8_t),
+//            .DataOut                        = Fwd1(DataOut, uint8_t),
+//            .SOF                            = Fwd0(SOF),
+//            .IsoINIncomplete                = Fwd1(IsoINIncomplete, uint8_t),
+//            .IsoOUTIncomplete               = Fwd1(IsoOUTIncomplete, uint8_t),
+//            .GetHSConfigDescriptor          = Fwd1(GetHSConfigDescriptor, uint16_t*),
+//            .GetFSConfigDescriptor          = Fwd1(GetFSConfigDescriptor, uint16_t*),
+//            .GetOtherSpeedConfigDescriptor  = Fwd1(GetOtherSpeedConfigDescriptor, uint16_t*),
+//            .GetDeviceQualifierDescriptor   = Fwd1(GetDeviceQualifierDescriptor, uint16_t*),
+//            .GetUsrStrDescriptor            = Fwd2(GetUsrStrDescriptor, uint8_t, uint16_t*),
+//        };
+//        
+//#undef Fwd0
+//#undef Fwd1
+//#undef Fwd2
+//        
+//        us = USBD_RegisterClass(&_device, &usbClass);
+//        Assert(us == USBD_OK);
+//        
+//        us = USBD_Start(&_device);
+//        Assert(us == USBD_OK);
     }
     
     uint8_t _usbd_Init(uint8_t cfgidx) {
@@ -393,6 +446,7 @@ protected:
         Assert(
             inep.state == _EndpointState::ResetZLP1     ||
             inep.state == _EndpointState::ResetZLP2     ||
+            inep.state == _EndpointState::ResetZLP3     ||
             inep.state == _EndpointState::ResetSentinel ||
             inep.state == _EndpointState::Busy
         );
@@ -487,7 +541,7 @@ private:
     
     // Interrupts must be disabled
     template <typename OutInEndpoint>
-    void _resetEndpoint(uint8_t ep, OutInEndpoint& outinep) {
+    void _endpointReset(uint8_t ep, OutInEndpoint& outinep) {
         outinep.state = _EndpointState::Reset;
         outinep.needsReset = false;
         _advanceState(ep, outinep);
@@ -496,7 +550,7 @@ private:
     // Interrupts must be disabled
     void _advanceState(uint8_t ep, _OutEndpoint& outep) {
         if (outep.needsReset) {
-            _resetEndpoint(ep, outep);
+            _endpointReset(ep, outep);
             return;
         }
         
@@ -539,7 +593,7 @@ private:
     // Interrupts must be disabled
     void _advanceState(uint8_t ep, _InEndpoint& inep) {
         if (inep.needsReset) {
-            _resetEndpoint(ep, inep);
+            _endpointReset(ep, inep);
             return;
         }
         
@@ -560,7 +614,8 @@ private:
         case _EndpointState::Busy:          inep.state = _EndpointState::Ready;         break;
         case _EndpointState::Reset:         inep.state = _EndpointState::ResetZLP1;     break;
         case _EndpointState::ResetZLP1:     inep.state = _EndpointState::ResetZLP2;     break;
-        case _EndpointState::ResetZLP2:     inep.state = _EndpointState::ResetSentinel; break;
+        case _EndpointState::ResetZLP2:     inep.state = _EndpointState::ResetZLP3;     break;
+        case _EndpointState::ResetZLP3:     inep.state = _EndpointState::ResetSentinel; break;
         case _EndpointState::ResetSentinel: inep.state = _EndpointState::Ready;         break;
         default:                            abort();
         }
@@ -569,6 +624,7 @@ private:
         switch (inep.state) {
         case _EndpointState::ResetZLP1:
         case _EndpointState::ResetZLP2:
+        case _EndpointState::ResetZLP3:
             USBD_LL_TransmitZeroLen(&_device, ep);
             break;
         case _EndpointState::ResetSentinel:
