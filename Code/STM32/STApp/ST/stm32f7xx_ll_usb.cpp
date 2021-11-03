@@ -292,8 +292,7 @@ HAL_StatusTypeDef USB_SetCurrentMode(USB_OTG_GlobalTypeDef *USBx, USB_OTG_ModeTy
   {
     return HAL_ERROR;
   }
-  for (volatile int i=0; i<1000000; i++);
-  //HAL_Delay(50U);
+  HAL_Delay(50U);
 
   return HAL_OK;
 }
@@ -1327,8 +1326,7 @@ HAL_StatusTypeDef  USB_DevConnect(USB_OTG_GlobalTypeDef *USBx)
   uint32_t USBx_BASE = (uint32_t)USBx;
 
   USBx_DEVICE->DCTL &= ~USB_OTG_DCTL_SDIS;
-  for (volatile int i=0; i<1000000; i++);
-//  HAL_Delay(3U);
+  HAL_Delay(3U);
 
   return HAL_OK;
 }
@@ -1343,8 +1341,7 @@ HAL_StatusTypeDef  USB_DevDisconnect(USB_OTG_GlobalTypeDef *USBx)
   uint32_t USBx_BASE = (uint32_t)USBx;
 
   USBx_DEVICE->DCTL |= USB_OTG_DCTL_SDIS;
-  for (volatile int i=0; i<1000000; i++);
-  //HAL_Delay(3U);
+  HAL_Delay(3U);
 
   return HAL_OK;
 }
@@ -1610,8 +1607,7 @@ static HAL_StatusTypeDef USB_HS_PHYCInit(USB_OTG_GlobalTypeDef *USBx)
   USB_HS_PHYC->USB_HS_PHYC_PLL |= USB_HS_PHYC_PLL_PLLEN;
 
   /* 2ms Delay required to get internal phy clock stable */
-  for (volatile int i=0; i<1000000; i++);
-  //HAL_Delay(2U);
+  HAL_Delay(2U);
 
   return HAL_OK;
 }
