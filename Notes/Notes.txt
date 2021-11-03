@@ -1,26 +1,8 @@
 - Rev4 Todo
     
-    - Fix bug: With STLink connected, sometimes the USB device doesn't enumerate when connecting the USB cable
-        - Solutions:
-            - keep ints disabled while running tasks
-                - have QSPI ready() poll the hardware register, instead of relying on
-                  ints, so that ints don't need to be enabled
-                    - we should be able to delete the _busy flag
-                    - we should be able to delete HAL_QSPI_CmdCpltCallback() etc
-            
-            - when USB is re-connected, have USB require an acknowledgement (USB::connect()) before
-              permitting USB transactions
-                - if a USB method is called before the acknowledgement, short-circuit / return an error
-        
-        - Reasons not to have ints disabled while tasks are running:
-            - HAL_Delay() is broken when ints are disabled
-                - We'll lose track of time if ints are disabled for longer than 1ms
-            - QSPI needs ints to be enabled for the QSPI::wait() (and the _busy flag) to work correctly
-                - We might be able to work around this though
-    
-    - Fix bug: Without STLink connected, sometimes STApp crashes
+    - Fix bug: Without STLink connected, sometimes STApp crashes when plugging in
         - One cause is because Img::Sensor::Init() failed, because of an IMG I2C error
-            - Might be because we're not waiting long enough after turning on the power rails
+            - Might be because we're not waiting long enough after turning on the power rails to do I2C comms
                 - "#warning TODO: measure how long it takes for IMG rails to rise"
     
     - STLoader: cleanup tasks the way we did for STApp
@@ -39,6 +21,26 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ Fix bug: With STLink connected, sometimes the USB device doesn't enumerate when connecting the USB cable
+        - Solutions:
+            √ when USB is re-connected, have USB require an acknowledgement (USB::connect()) before
+              permitting USB transactions
+                - if a USB method is called before the acknowledgement, short-circuit / return an error
+            
+            √ when USB is disconnected (suspended), reset the USB stack
+            
+            X keep ints disabled while running tasks
+                - have QSPI ready() poll the hardware register, instead of relying on
+                  ints, so that ints don't need to be enabled
+                    - we should be able to delete the _busy flag
+                    - we should be able to delete HAL_QSPI_CmdCpltCallback() etc
+        
+        - Reasons not to have ints disabled while tasks are running:
+            - HAL_Delay() is broken when ints are disabled
+                - We'll lose track of time if ints are disabled for longer than 1ms
+            - QSPI needs ints to be enabled for the QSPI::wait() (and the _busy flag) to work correctly
+                - We might be able to work around this though
     
     √ ICEAppMSP: optimize perf back to previous levels
         √ Option1: Have ImgController write in full blocks

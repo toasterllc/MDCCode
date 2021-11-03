@@ -311,7 +311,7 @@ HAL_StatusTypeDef HAL_PCD_UnRegisterLpmCallback(PCD_HandleTypeDef *hpcd);
   */
 HAL_StatusTypeDef HAL_PCD_Start(PCD_HandleTypeDef *hpcd);
 HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd);
-void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd);
+void ISR_HAL_PCD(PCD_HandleTypeDef *hpcd) __attribute__((optimize("-Os")));
 
 void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd);
 void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd);
