@@ -3205,7 +3205,7 @@ typedef struct
 /** @addtogroup RCCEx_Exported_Functions_Group1
   * @{
   */
-HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClkInit) __attribute__((optimize(3)));
+HAL_StatusTypeDef HAL_RCCEx_PeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClkInit) __attribute__((optimize("-Os")));
 void HAL_RCCEx_GetPeriphCLKConfig(RCC_PeriphCLKInitTypeDef  *PeriphClkInit);
 uint32_t HAL_RCCEx_GetPeriphCLKFreq(uint32_t PeriphClk);
 HAL_StatusTypeDef HAL_RCCEx_EnablePLLI2S(RCC_PLLI2SInitTypeDef  *PLLI2SInit);

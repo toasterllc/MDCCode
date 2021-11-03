@@ -7,7 +7,6 @@
 #include "usbd_desc.h"
 #include "Toastbox/Task.h"
 #include "Toastbox/USB.h"
-#include "stm32f7xx_ll_usb.h"
 
 extern "C" void ISR_OTG_HS();
 
@@ -18,14 +17,6 @@ uint8_t... Endpoints    // List of endpoints
 >
 class USBBase {
 public:
-    
-    static constexpr uint32_t USBx_BASE	= 0x40040000;
-	volatile uint32_t& DIEPTSIZ_0x81 = USBx_INEP(1)->DIEPTSIZ;
-    volatile uint32_t& DTXFSTS_0x81  = USBx_INEP(1)->DTXFSTS;
-    volatile uint32_t& DIEPINT_0x81  = USBx_INEP(1)->DIEPINT;
-    volatile uint32_t& DIEPCTL_0x81  = USBx_INEP(1)->DIEPCTL;
-    volatile uint32_t& DIEPDMA_0x81  = USBx_INEP(1)->DIEPDMA;
-    
     struct Cmd {
         const uint8_t* data;
         size_t len;
@@ -39,7 +30,6 @@ private:
         Reset,
         ResetZLP1,
         ResetZLP2,
-        ResetZLP3,
         ResetSentinel,
     };
     
@@ -419,7 +409,6 @@ protected:
         Assert(
             inep.state == _EndpointState::ResetZLP1     ||
             inep.state == _EndpointState::ResetZLP2     ||
-            inep.state == _EndpointState::ResetZLP3     ||
             inep.state == _EndpointState::ResetSentinel ||
             inep.state == _EndpointState::Busy
         );
@@ -587,8 +576,7 @@ private:
         case _EndpointState::Busy:          inep.state = _EndpointState::Ready;         break;
         case _EndpointState::Reset:         inep.state = _EndpointState::ResetZLP1;     break;
         case _EndpointState::ResetZLP1:     inep.state = _EndpointState::ResetZLP2;     break;
-        case _EndpointState::ResetZLP2:     inep.state = _EndpointState::ResetZLP3;     break;
-        case _EndpointState::ResetZLP3:     inep.state = _EndpointState::ResetSentinel; break;
+        case _EndpointState::ResetZLP2:     inep.state = _EndpointState::ResetSentinel; break;
         case _EndpointState::ResetSentinel: inep.state = _EndpointState::Ready;         break;
         default:                            abort();
         }
@@ -597,7 +585,6 @@ private:
         switch (inep.state) {
         case _EndpointState::ResetZLP1:
         case _EndpointState::ResetZLP2:
-        case _EndpointState::ResetZLP3:
             USBD_LL_TransmitZeroLen(&_device, ep);
             break;
         case _EndpointState::ResetSentinel:

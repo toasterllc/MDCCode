@@ -9,16 +9,18 @@ _chipSelect(chipSelect)
 {}
 
 void QSPI::init() {
+    constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
+    
     // DMA clock/IRQ
     __HAL_RCC_DMA2_CLK_ENABLE();
-    HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, InterruptPriority, 0);
     HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
     
     // QSPI clock/IRQ
     __HAL_RCC_QSPI_CLK_ENABLE();
     __HAL_RCC_QSPI_FORCE_RESET();
     __HAL_RCC_QSPI_RELEASE_RESET();
-    HAL_NVIC_SetPriority(QUADSPI_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(QUADSPI_IRQn, InterruptPriority, 0);
     HAL_NVIC_EnableIRQ(QUADSPI_IRQn);
     
     // Init QUADSPI

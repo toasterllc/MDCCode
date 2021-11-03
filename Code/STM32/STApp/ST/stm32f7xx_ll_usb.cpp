@@ -966,9 +966,7 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDef
           USBx_INEP(epnum)->DIEPCTL |= USB_OTG_DIEPCTL_SD0PID_SEVNFRM;
         }
       }
-      
-      Assert(!(USBx_INEP(epnum)->DIEPCTL & USB_OTG_DIEPCTL_EPENA));
-      
+
       /* EP enable, IN data in FIFO */
       USBx_INEP(epnum)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
     }

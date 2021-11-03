@@ -337,7 +337,6 @@ private:
             // Flush data from the endpoint until we get a ZLP
             for (;;) {
                 const size_t len = _dev.read(ep, _buf, sizeof(_buf));
-                printf("MEOWMIX %zu\n", len);
                 if (!len) break;
             }
             
