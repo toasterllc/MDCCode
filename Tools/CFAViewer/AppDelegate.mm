@@ -30,6 +30,7 @@
 #import "PixelSampler.h"
 #import "Img.h"
 #import "ChecksumFletcher32.h"
+#import "ELF32Binary.h"
 using namespace CFAViewer;
 using namespace MetalUtil;
 using namespace ImagePipeline;
@@ -135,7 +136,7 @@ struct ExposureConfig {
     bool _colorCheckersEnabled;
     float _colorCheckerCircleRadius;
     
-    std::optional<IOServiceMatcher> _serviceAppearWatcher;
+//    std::optional<IOServiceMatcher> _serviceAppearWatcher;
     std::optional<IOServiceWatcher> _serviceDisappearWatcher;
     std::optional<MDCDevice> _mdcDevice;
     
@@ -222,6 +223,10 @@ struct ExposureConfig {
     
     [self _setMDCDevice:std::nullopt];
     
+    [NSThread detachNewThreadWithBlock:^{
+        [self _threadHandleNewMDCDevices];
+    }];
+    
 //    static NSDictionary* MatchingDictionary() {
 //        NSMutableDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
 //        match[@kIOPropertyMatchKey] = @{
@@ -230,13 +235,13 @@ struct ExposureConfig {
 //        };
 //        return match;
 //    }
-    
-    NSDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
-    _serviceAppearWatcher = IOServiceMatcher(dispatch_get_main_queue(), match,
-        ^(SendRight&& service) {
-            [weakSelf _handleNewUSBDevice:std::move(service)];
-        });
-    
+//    
+//    NSDictionary* match = CFBridgingRelease(IOServiceMatching(kIOUSBDeviceClassName));
+//    _serviceAppearWatcher = IOServiceMatcher(dispatch_get_main_queue(), match,
+//        ^(SendRight&& service) {
+//            [weakSelf _handleNewUSBDevice:std::move(service)];
+//        });
+//    
 //    [NSThread detachNewThreadWithBlock:^{
 //        [self _threadReadInputCommands];
 //    }];
@@ -379,16 +384,135 @@ static bool isCFAFile(const fs::path& path) {
 
 #pragma mark - MDCDevice
 
-- (void)_handleNewUSBDevice:(SendRight&&)service {
-    try {
-        USBDevice dev(service);
-        if (MDCDevice::USBDeviceMatches(dev)) {
-            [self _setMDCDevice:std::move(dev)];
+static void _nop(void* ctx, io_iterator_t iter) {}
+
+static void _configureDevice(MDCDevice& dev) {
+    {
+        const char* ICEBinPath = "/Users/dave/repos/MDC/Code/ICE40/ICEAppImgCaptureSTM/Synth/Top.bin";
+        Mmap mmap(ICEBinPath);
+        
+        // Write the ICE40 binary
+        dev.iceWrite(mmap.data(), mmap.len());
+    }
+    
+    {
+        const char* STMBinPath = "/Users/dave/repos/MDC/Code/STM32/STApp/Release/STApp.elf";
+        ELF32Binary bin(STMBinPath);
+        auto sections = bin.sections();
+        
+        uint32_t entryPointAddr = bin.entryPointAddr();
+        if (!entryPointAddr) throw std::runtime_error("no entry point");
+        
+        for (const auto& s : sections) {
+            // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
+            if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
+            // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
+            if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
+            const void*const data = bin.sectionData(s);
+            const size_t dataLen = s.size;
+            const uint32_t dataAddr = s.addr;
+            if (!dataLen) continue; // Ignore sections with zero length
+            
+            dev.stmWrite(dataAddr, data, dataLen);
         }
-    } catch (const std::exception& e) {
-        // Ignore failures to create USBDevice
+        
+        // Reset the device, triggering it to load the program we just wrote
+        dev.stmReset(entryPointAddr);
     }
 }
+
+- (void)_threadHandleNewMDCDevices {
+    IONotificationPortRef p = IONotificationPortCreate(kIOMasterPortDefault);
+    if (!p) throw Toastbox::RuntimeError("IONotificationPortCreate returned null");
+    Defer(IONotificationPortDestroy(p));
+    
+    SendRight serviceIter;
+    {
+        io_iterator_t iter = MACH_PORT_NULL;
+        kern_return_t kr = IOServiceAddMatchingNotification(p, kIOMatchedNotification,
+            IOServiceMatching(kIOUSBDeviceClassName), _nop, nullptr, &iter);
+        if (kr != KERN_SUCCESS) throw Toastbox::RuntimeError("IOServiceAddMatchingNotification failed: 0x%x", kr);
+        serviceIter = SendRight(SendRight::NoRetain, iter);
+    }
+    
+    CFRunLoopSourceRef rls = IONotificationPortGetRunLoopSource(p);
+    CFRunLoopAddSource(CFRunLoopGetCurrent(), rls, kCFRunLoopCommonModes);
+    
+    std::set<std::string> configuredDevices;
+    for (;;) {
+        // Drain all services from the iterator
+        for (;;) {
+            SendRight service(SendRight::NoRetain, IOIteratorNext(serviceIter));
+            if (!service) break;
+            
+            try {
+                USBDevice dev(service);
+                if (!MDCDevice::USBDeviceMatches(dev)) continue;
+                
+                __block MDCDevice mdc(std::move(dev));
+                
+                const STM::Status status = mdc.statusGet();
+                switch (status.mode) {
+                case STM::Status::Modes::STMLoader:
+                    _configureDevice(mdc);
+                    configuredDevices.insert(mdc.serial());
+                    break;
+                
+                case STM::Status::Modes::STMApp:
+                    // If we previously configured this device, this device is ready to handed off!
+//                    if (configuredDevices.find(mdc.serial()) != configuredDevices.end()) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [self _setMDCDevice:std::move(mdc)];
+                        });
+                        
+                        configuredDevices.erase(mdc.serial());
+                        
+//                    // If we didn't previously configure this device, trigger the bootloader so we can configure it
+//                    } else {
+//                        mdc.bootloaderInvoke();
+//                    }
+                    break;
+                
+//                default:
+//                    configuredDevices.erase(mdc.serial());
+//                    mdc.bootloaderInvoke();
+//                    break;
+                }
+            
+            } catch (const std::exception& e) {
+                // Ignore failures to create USBDevice
+                printf("Configure MDCDevice failed: %s\n", e.what());
+            }
+        }
+        
+        // Wait for matching services to appear
+        CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
+        assert(r == kCFRunLoopRunHandledSource);
+    }
+}
+
+//- (void)_handleNewUSBDevice:(SendRight&&)service {
+//    try {
+//        USBDevice dev(service);
+//        if (!MDCDevice::USBDeviceMatches(dev)) return;
+//        
+//        MDCDevice mdc(std::move(dev));
+//        
+//        const STM::Status status = mdc.statusGet();
+//        // Return the MDC device to the bootloader, if it's not in the bootloader currently
+//        if (status.mode != STM::Status::Mode::STMLoader) {
+//            mdc.bootloaderInvoke();
+//            return;
+//        }
+//        
+//        // 
+//        
+//        [self _setMDCDevice:std::move(mdc)];
+//    
+//    } catch (const std::exception& e) {
+//        // Ignore failures to create USBDevice
+//    }
+//}
 
 - (void)_setMDCDevice:(std::optional<MDCDevice>)dev {
     // Stop streaming, set switch to off, and enable or disable switch
@@ -404,6 +528,8 @@ static bool isCFAFile(const fs::path& path) {
             ^(uint32_t msgType, void* msgArg) {
                 [weakSelf _handleMDCDeviceNotificationType:msgType arg:msgArg];
             });
+        
+        [self _setStreamImagesEnabled:true];
     } else {
         _serviceDisappearWatcher = std::nullopt;
     }

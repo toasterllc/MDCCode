@@ -108,6 +108,7 @@ public:
     // Types
     enum class State : uint8_t {
         Disconnected,
+        Connecting,
         Connected,
     };
     
@@ -140,6 +141,8 @@ public:
         static const USBD_ClassTypeDef usbClass = {
             .Init                           = Fwd1(Init, uint8_t),
             .DeInit                         = Fwd1(DeInit, uint8_t),
+            .Suspend                        = Fwd0(Suspend),
+            .Resume                         = Fwd0(Resume),
             .Setup                          = Fwd1(Setup, USBD_SetupReqTypedef*),
             .EP0_TxSent                     = Fwd0(EP0_TxSent),
             .EP0_RxReady                    = Fwd0(EP0_RxReady),
@@ -239,65 +242,91 @@ public:
     
     // Accessors
     State state() const {
+        IRQState irq = IRQState::Disabled();
         return _state;
     }
     
     // Methods
-    void reset(uint8_t ep) {
+    void connect() {
         IRQState irq = IRQState::Disabled();
+        if (_state != State::Connecting) return; // Short-circuit if we're not Connecting
+        _state = State::Connected;
+    }
+    
+    void endpointReset(uint8_t ep) {
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return; // Short-circuit if we're not Connected
         
         if (EndpointOut(ep)) {
             _OutEndpoint& outep = _outEndpoint(ep);
-            if (_ready(outep))  _reset(ep, outep);
+            if (_ready(outep))  _endpointReset(ep, outep);
             else                outep.needsReset = true;
         
         } else {
             _InEndpoint& inep = _inEndpoint(ep);
-            if (_ready(inep))   _reset(ep, inep);
+            if (_ready(inep))   _endpointReset(ep, inep);
             else                inep.needsReset = true;
         }
     }
     
-    std::optional<Cmd> cmdRecv() {
+    bool endpointReady(uint8_t ep) {
         IRQState irq = IRQState::Disabled();
-        auto cmd = _cmd;
-        _cmd = std::nullopt;
-        return cmd;
-    }
-    
-    void cmdAccept(bool accept) {
-        if (accept) USBD_CtlSendStatus(&_device);
-        else        USBD_CtlError(&_device, nullptr);
-    }
-    
-    bool ready(uint8_t ep) {
-        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return false; // Short-circuit if we're not Connected
+        
         if (EndpointOut(ep))    return _ready(_outEndpoint(ep));
         else                    return _ready(_inEndpoint(ep));
     }
     
-    USBD_StatusTypeDef recv(uint8_t ep, void* data, size_t len) {
+    std::optional<Cmd> cmdRecv() {
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
+        return _cmd;
+    }
+    
+    void cmdAccept(bool accept) {
+        IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return; // Short-circuit if we're not Connected
+        
+        if (accept) USBD_CtlSendStatus(&_device);
+        else        USBD_CtlError(&_device, nullptr);
+        
+        _cmd = std::nullopt;
+    }
+    
+    void recv(uint8_t ep, void* data, size_t len) {
         AssertArg(EndpointOut(ep));
-        _OutEndpoint& outep = _outEndpoint(ep);
         
         IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return; // Short-circuit if we're not Connected
+        
+        _OutEndpoint& outep = _outEndpoint(ep);
         Assert(_ready(outep));
         _advanceState(ep, outep);
-        return USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)data, len);
+        
+        USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_device, ep, (uint8_t*)data, len);
+        Assert(us == USBD_OK);
     }
     
     size_t recvLen(uint8_t ep) const {
         AssertArg(EndpointOut(ep));
+        
         IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return 0; // Short-circuit if we're not Connected
         return _recvLen(_outEndpoint(ep));
     }
     
-    USBD_StatusTypeDef send(uint8_t ep, const void* data, size_t len) {
-        _InEndpoint& inep = _inEndpoint(ep);
+    void send(uint8_t ep, const void* data, size_t len) {
+        AssertArg(EndpointIn(ep));
+        
         IRQState irq = IRQState::Disabled();
+        if (_state != State::Connected) return; // Short-circuit if we're not Connected
+        
+        _InEndpoint& inep = _inEndpoint(ep);
         Assert(_ready(inep));
         _advanceState(ep, inep);
-        return USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
+        
+        USBD_StatusTypeDef us = USBD_LL_Transmit(&_device, ep, (uint8_t*)data, len);
+        Assert(us == USBD_OK);
     }
     
 protected:
@@ -306,25 +335,41 @@ protected:
     }
     
     uint8_t _usbd_Init(uint8_t cfgidx) {
-        _state = State::Connected;
-        
         // Open endpoints
         for (uint8_t ep : {Endpoints...}) {
             if (EndpointOut(ep)) {
                 USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeOut());
                 _device.ep_out[EndpointIdx(ep)].is_used = 1U;
+                // Reset endpoint state
+                _outEndpoint(ep) = {};
             
             } else {
                 USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeIn());
                 _device.ep_in[EndpointIdx(ep)].is_used = 1U;
+                // Reset endpoint state
+                _inEndpoint(ep) = {};
             }
         }
+        
+        _cmd = std::nullopt;
+        _state = State::Connecting;
         
         return (uint8_t)USBD_OK;
     }
     
     uint8_t _usbd_DeInit(uint8_t cfgidx) {
+        return (uint8_t)USBD_OK;
+    }
+    
+    uint8_t _usbd_Suspend() {
+        if (_state == State::Disconnected) return USBD_OK; // Short-circuit if we're already Disconnected
+        
+        init();
         _state = State::Disconnected;
+        return (uint8_t)USBD_OK;
+    }
+    
+    uint8_t _usbd_Resume() {
         return (uint8_t)USBD_OK;
     }
     
@@ -458,7 +503,7 @@ private:
     
     // Interrupts must be disabled
     template <typename OutInEndpoint>
-    void _reset(uint8_t ep, OutInEndpoint& outinep) {
+    void _endpointReset(uint8_t ep, OutInEndpoint& outinep) {
         outinep.state = _EndpointState::Reset;
         outinep.needsReset = false;
         _advanceState(ep, outinep);
@@ -467,7 +512,7 @@ private:
     // Interrupts must be disabled
     void _advanceState(uint8_t ep, _OutEndpoint& outep) {
         if (outep.needsReset) {
-            _reset(ep, outep);
+            _endpointReset(ep, outep);
             return;
         }
         
@@ -510,7 +555,7 @@ private:
     // Interrupts must be disabled
     void _advanceState(uint8_t ep, _InEndpoint& inep) {
         if (inep.needsReset) {
-            _reset(ep, inep);
+            _endpointReset(ep, inep);
             return;
         }
         

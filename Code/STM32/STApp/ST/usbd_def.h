@@ -132,6 +132,8 @@ typedef struct _Device_cb
 {
   uint8_t (*Init)(struct _USBD_HandleTypeDef *pdev, uint8_t cfgidx);
   uint8_t (*DeInit)(struct _USBD_HandleTypeDef *pdev, uint8_t cfgidx);
+  uint8_t (*Suspend)(struct _USBD_HandleTypeDef *pdev);
+  uint8_t (*Resume)(struct _USBD_HandleTypeDef *pdev);
   /* Control Endpoints*/
   uint8_t (*Setup)(struct _USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef  *req);
   uint8_t (*EP0_TxSent)(struct _USBD_HandleTypeDef *pdev);
