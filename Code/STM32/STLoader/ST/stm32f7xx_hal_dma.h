@@ -624,7 +624,7 @@ typedef struct __DMA_HandleTypeDef
   * @brief   Initialization and de-initialization functions 
   * @{
   */
-HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma); 
+HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma) __attribute__((optimize("-Os")));
 HAL_StatusTypeDef HAL_DMA_DeInit(DMA_HandleTypeDef *hdma);
 /**
   * @}

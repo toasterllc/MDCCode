@@ -32,7 +32,8 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
     __HAL_RCC_OTGPHYC_CLK_ENABLE();
 
     // Peripheral interrupt init
-    HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
+    constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, InterruptPriority, 0);
     HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
   }
 }
@@ -613,6 +614,11 @@ USBD_StatusTypeDef USBD_LL_Suspend(USBD_HandleTypeDef* pdev)
   pdev->dev_old_state = pdev->dev_state;
   pdev->dev_state = USBD_STATE_SUSPENDED;
 
+  if (pdev->pClass != NULL)
+  {
+    pdev->pClass->Suspend(pdev);
+  }
+
   return USBD_OK;
 }
 
@@ -622,6 +628,11 @@ USBD_StatusTypeDef USBD_LL_Resume(USBD_HandleTypeDef* pdev)
   if (pdev->dev_state == USBD_STATE_SUSPENDED)
   {
     pdev->dev_state = pdev->dev_old_state;
+  }
+
+  if (pdev->pClass != NULL)
+  {
+    pdev->pClass->Resume(pdev);
   }
 
   return USBD_OK;

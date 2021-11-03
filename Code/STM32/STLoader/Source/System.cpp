@@ -43,7 +43,31 @@ void System::_resetTasks() {
 void System::_usb_cmdTaskFn() {
     TaskBegin();
     for (;;) {
-        auto usbCmd = *TaskWait(_usb.cmdRecv());
+        // Wait for USB to be re-connected (`Connecting` state) so we can call _usb.connect(),
+        // or for a new command to arrive so we can handle it.
+        TaskWait(_usb.state()==USB::State::Connecting || _usb.cmdRecv());
+        
+        // Disable interrupts so we can inspect+modify _usb atomically
+        IRQState irq = IRQState::Disabled();
+        
+        // Reset all tasks
+        // This needs to happen before we call `_usb.connect()` so that any tasks that
+        // were running in the previous USB session are cancelled before we enable
+        // USB again by calling _usb.connect().
+        _resetTasks();
+        
+        switch (_usb.state()) {
+        case USB::State::Connecting:
+            _usb.connect();
+            continue;
+        case USB::State::Connected:
+            if (!_usb.cmdRecv()) continue;
+            break;
+        default:
+            continue;
+        }
+        
+        auto usbCmd = *_usb.cmdRecv();
         
         // Reject command if the length isn't valid
         if (usbCmd.len != sizeof(_cmd)) {
@@ -52,9 +76,6 @@ void System::_usb_cmdTaskFn() {
         }
         
         memcpy(&_cmd, usbCmd.data, usbCmd.len);
-        
-        // Stop all tasks
-        _resetTasks();
         
         // Specially handle the EndpointsFlush command -- it's the only command that doesn't
         // require the endpoints to be ready.
@@ -65,7 +86,7 @@ void System::_usb_cmdTaskFn() {
         }
         
         // Reject command if the endpoints aren't ready
-        if (!_usb.ready(Endpoints::DataOut) || !_usb.ready(Endpoints::DataIn)) {
+        if (!_usb.endpointReady(Endpoints::DataOut) || !_usb.endpointReady(Endpoints::DataIn)) {
             _usb.cmdAccept(false);
             continue;
         }
@@ -121,7 +142,7 @@ void System::_usb_dataOutTaskFn() {
         // the buffer capacity is a multiple of the max packet size.)
         Assert(cap <= _bufs.back().cap);
         _usb.recv(Endpoints::DataOut, _bufs.back().data, cap);
-        TaskWait(_usb.ready(Endpoints::DataOut));
+        TaskWait(_usb.endpointReady(Endpoints::DataOut));
         
         // Never claim that we read more than the requested data, even if ceiling
         // to the max packet size caused us to read more than requested.
@@ -141,7 +162,7 @@ void System::_usb_dataInTaskFn() {
         
         // Send the data and wait until the transfer is complete
         _usb.send(Endpoints::DataIn, _bufs.front().data, _bufs.front().len);
-        TaskWait(_usb.ready(Endpoints::DataIn));
+        TaskWait(_usb.endpointReady(Endpoints::DataIn));
         
         _bufs.front().len = 0;
         _bufs.pop();
@@ -158,9 +179,9 @@ void System::_usb_dataInSendStatus(bool status) {
 void System::_endpointsFlush_taskFn() {
     TaskBegin();
     // Reset endpoints
-    _usb.reset(Endpoints::DataOut);
-    _usb.reset(Endpoints::DataIn);
-    TaskWait(_usb.ready(Endpoints::DataOut) && _usb.ready(Endpoints::DataIn));
+    _usb.endpointReset(Endpoints::DataOut);
+    _usb.endpointReset(Endpoints::DataIn);
+    TaskWait(_usb.endpointReady(Endpoints::DataOut) && _usb.endpointReady(Endpoints::DataIn));
     // Send status
     _usb_dataInSendStatus(true);
 }
@@ -170,7 +191,7 @@ void System::_statusGet_taskFn() {
     // Send status
     _usb_dataInSendStatus(true);
     // Wait for host to receive status
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     // Send status struct
     static const STM::Status status = {
@@ -187,7 +208,7 @@ void System::_bootloaderInvoke_taskFn() {
     // Send status
     _usb_dataInSendStatus(true);
     // Wait for host to receive status before resetting
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     // Perform software reset
     HAL_NVIC_SystemReset();
@@ -245,11 +266,11 @@ void System::_stm_writeTaskFn() {
     
     // Send preliminary status: OK
     _usb_dataInSendStatus(true);
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     // Receive USB data
     _usb.recv(Endpoints::DataOut, (void*)arg.addr, len);
-    TaskWait(_usb.ready(Endpoints::DataOut));
+    TaskWait(_usb.endpointReady(Endpoints::DataOut));
     
     // Send final status
     _usb_dataInSendStatus(true);
@@ -262,7 +283,7 @@ void System::_stm_resetTaskFn() {
     // Send status
     _usb_dataInSendStatus(true);
     // Wait for host to receive status before resetting
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     // Perform software reset
     HAL_NVIC_SystemReset();
@@ -472,7 +493,7 @@ void System::_msp_debugTaskFn() {
     
     // Send preliminary status: OK
     _usb_dataInSendStatus(true);
-    TaskWait(_usb.ready(Endpoints::DataIn));
+    TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     static bool ok;
     ok = true;
@@ -482,7 +503,7 @@ void System::_msp_debugTaskFn() {
         while (arg.cmdsLen) {
             // Receive debug commands into _buf0
             _usb.recv(Endpoints::DataOut, _buf0, sizeof(_buf0));
-            TaskWait(_usb.ready(Endpoints::DataOut));
+            TaskWait(_usb.endpointReady(Endpoints::DataOut));
             
             // Handle each MSPDebugCmd
             const MSPDebugCmd* cmds = (MSPDebugCmd*)_buf0;
@@ -506,7 +527,7 @@ void System::_msp_debugTaskFn() {
         if (arg.respLen) {
             // Send the data and wait for it to be received
             _usb.send(Endpoints::DataIn, _buf1, arg.respLen);
-            TaskWait(_usb.ready(Endpoints::DataIn));
+            TaskWait(_usb.endpointReady(Endpoints::DataIn));
         }
     }
     
