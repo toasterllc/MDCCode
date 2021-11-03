@@ -35,6 +35,9 @@ public:
     }
     
     MDCDevice(USBDevice&& dev) : _dev(std::move(dev)) {
+        // We don't know what state the device was left in, so flush the endpoints
+        endpointsFlush();
+        
         _serial = _dev.serialNumber();
         const STM::Status status = statusGet();
         _mode = status.mode;
@@ -82,23 +85,30 @@ public:
         const STM::Cmd cmd = { .op = STM::Op::BootloaderInvoke };
         _dev.vendorRequestOut(0, cmd);
         _waitOrThrow("BootloaderInvoke command failed");
-        
-        // Wait for a new MDCDevice that's not equal to `this` (ie the underlying USB
-        // device is different), but has the same serial number
-        TimeInstant startTime;
-        do {
-            std::vector<MDCDevice> devs = GetDevices();
-            for (MDCDevice& dev : devs) {
-                if (dev == *this) continue;
-                if (_serial == dev.serial()) {
-                    *this = std::move(dev);
-                    return;
-                }
-            }
-        } while (startTime.durationMs() < 5000);
-        
-        throw Toastbox::RuntimeError("timeout waiting for device to re-enumerate");
     }
+    
+    // bootloaderInvoke version that replaces `this` with the newly-enumerated USB device
+//    void bootloaderInvoke() {
+//        const STM::Cmd cmd = { .op = STM::Op::BootloaderInvoke };
+//        _dev.vendorRequestOut(0, cmd);
+//        _waitOrThrow("BootloaderInvoke command failed");
+//        
+//        // Wait for a new MDCDevice that's not equal to `this` (ie the underlying USB
+//        // device is different), but has the same serial number
+//        TimeInstant startTime;
+//        do {
+//            std::vector<MDCDevice> devs = GetDevices();
+//            for (MDCDevice& dev : devs) {
+//                if (dev == *this) continue;
+//                if (_serial == dev.serial()) {
+//                    *this = std::move(dev);
+//                    return;
+//                }
+//            }
+//        } while (startTime.durationMs() < 5000);
+//        
+//        throw Toastbox::RuntimeError("timeout waiting for device to re-enumerate");
+//    }
     
     void ledSet(uint8_t idx, bool on) {
         STM::Cmd cmd = {
