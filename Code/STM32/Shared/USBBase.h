@@ -138,22 +138,6 @@ public:
         
         _device.pData = &_pcd;
         
-        
-        
-        
-//        USBD_StatusTypeDef us = USBD_Stop(&_device);
-//        Assert(us == USBD_OK);
-//        
-//        HAL_StatusTypeDef hs = HAL_PCD_DeInit(&_pcd);
-//        Assert(hs == HAL_OK);
-//        
-//        us = USBD_DeInit(&_device);
-//        Assert(us == USBD_OK);
-        
-        
-        
-        
-        
         USBD_StatusTypeDef us = USBD_Init(&_device, &HS_Desc, DEVICE_HS, this);
         Assert(us == USBD_OK);
         
@@ -276,24 +260,6 @@ public:
     void connect() {
         IRQState irq = IRQState::Disabled();
         if (_state != State::Connecting) return; // Short-circuit if we're not Connecting
-        
-        // Open endpoints
-        for (uint8_t ep : {Endpoints...}) {
-            if (EndpointOut(ep)) {
-                USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeOut());
-                _device.ep_out[EndpointIdx(ep)].is_used = 1U;
-                // Reset endpoint state
-                _outEndpoint(ep) = {};
-            
-            } else {
-                USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeIn());
-                _device.ep_in[EndpointIdx(ep)].is_used = 1U;
-                // Reset endpoint state
-                _inEndpoint(ep) = {};
-            }
-        }
-        
-        _cmd = std::nullopt;
         _state = State::Connected;
     }
     
@@ -378,39 +344,42 @@ protected:
         ISR_HAL_PCD(&_pcd);
     }
     
-//    void _deinit() {
-//        us = USBD_Stop(&_device);
-//        Assert(us == USBD_OK);
-//        
-//        HAL_StatusTypeDef hs = HAL_PCD_DeInit(&_pcd);
-//        Assert(hs == HAL_OK);
-//        
-//        USBD_StatusTypeDef us = USBD_DeInit(&_device);
-//        Assert(us == USBD_OK);
-//    }
-    
     uint8_t _usbd_Init(uint8_t cfgidx) {
+        // Open endpoints
+        for (uint8_t ep : {Endpoints...}) {
+            if (EndpointOut(ep)) {
+                USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeOut());
+                _device.ep_out[EndpointIdx(ep)].is_used = 1U;
+                // Reset endpoint state
+                _outEndpoint(ep) = {};
+            
+            } else {
+                USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeIn());
+                _device.ep_in[EndpointIdx(ep)].is_used = 1U;
+                // Reset endpoint state
+                _inEndpoint(ep) = {};
+            }
+        }
+        
+        _cmd = std::nullopt;
         _state = State::Connecting;
+        
         return (uint8_t)USBD_OK;
     }
     
     uint8_t _usbd_DeInit(uint8_t cfgidx) {
-        _state = State::Disconnected;
         return (uint8_t)USBD_OK;
     }
     
     uint8_t _usbd_Suspend() {
-        if (_state != State::Disconnected) {
-            init();
-        }
+        if (_state == State::Disconnected) return USBD_OK; // Short-circuit if we're already Disconnected
         
+        init();
         _state = State::Disconnected;
-//        _deinit();
         return (uint8_t)USBD_OK;
     }
     
     uint8_t _usbd_Resume() {
-        _state = State::Connecting;
         return (uint8_t)USBD_OK;
     }
     
