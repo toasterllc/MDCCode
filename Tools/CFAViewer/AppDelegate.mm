@@ -43,12 +43,6 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 using ImagePaths = std::vector<fs::path>;
 using ImagePathsIter = ImagePaths::iterator;
 
-struct ExposureConfig {
-    uint16_t coarseIntegrationTime = 0;
-    uint16_t fineIntegrationTime = 0;
-    uint8_t analogGain = 0;
-};
-
 @interface AppDelegate : NSObject <NSApplicationDelegate, MainViewDelegate>
 @property(weak) IBOutlet NSWindow* window;
 @end
@@ -133,6 +127,8 @@ struct ExposureConfig {
     IBOutlet NSSlider*      _highlightFactorB2Slider;
     IBOutlet NSTextField*   _highlightFactorB2Label;
     
+    MDCDevice::ImgExposure _imgExp;
+    
     bool _colorCheckersEnabled;
     float _colorCheckerCircleRadius;
     
@@ -147,7 +143,7 @@ struct ExposureConfig {
         std::condition_variable signal;
         bool running = false;
         bool cancel = false;
-        std::optional<ExposureConfig> exposure;
+        std::optional<MDCDevice::ImgExposure> exp;
         Img::Pixel pixels[2200*2200];
         uint32_t width = Img::PixelWidth;
         uint32_t height = Img::PixelHeight;
@@ -217,10 +213,7 @@ struct ExposureConfig {
         [_mainView setColorCheckerPositions:points];
     }
     
-    [self _setCoarseIntegrationTime:0];
-    [self _setFineIntegrationTime:0];
-    [self _setAnalogGain:0];
-    
+    [self _setImageExposure:{}];
     [self _setMDCDevice:std::nullopt];
     
     [NSThread detachNewThreadWithBlock:^{
@@ -583,17 +576,6 @@ static void initMDCDevice(MDCDevice& device) {
 //    device.pixConfig();
 }
 
-// Throws on error
-static void configMDCDevice(MDCDevice& device, const ExposureConfig& exp) {
-    #warning reimplement
-//    // Set coarse_integration_time
-//    device.pixI2CWrite(0x3012, cfg.coarseIntegrationTime);
-//    // Set fine_integration_time
-//    device.pixI2CWrite(0x3014, cfg.fineIntegrationTime);
-//    // Set analog_gain
-//    device.pixI2CWrite(0x3060, cfg.analogGain);
-}
-
 - (void)_threadStreamImages {
     assert(_mdcDevice);
     MDCDevice& dev = *_mdcDevice;
@@ -615,13 +597,15 @@ static void configMDCDevice(MDCDevice& device, const ExposureConfig& exp) {
 //        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
 //        auto tmpPixels = std::make_unique<MDC::Pixel[]>(tmpPixelsCap);
         
-        std::optional<ExposureConfig> exp;
+        std::optional<MDCDevice::ImgExposure> exp;
 //        uint32_t saveIdx = 1;
         for (uint32_t i=0;; i++) {
-//            if (exp) {
-//                configMDCDevice(mdc, *exp);
-//                exp = std::nullopt;
-//            }
+            // Set the image exposure if the exposure changed
+            if (exp) {
+                dev.imgSetExposure(*exp);
+                printf("Set exposure\n");
+//                usleep(100000);
+            }
             
             const STM::ImgCaptureStats imgStats = dev.imgCapture();
             if (imgStats.len != Img::Len) {
@@ -635,17 +619,19 @@ static void configMDCDevice(MDCDevice& device, const ExposureConfig& exp) {
 //            const MDC::ImgHeader pixStatus = dev.imgCapture(tmpPixels.get(), tmpPixelsCap, 1000ms);
 //            const size_t pixelCount = pixStatus.width*pixStatus.height;
             
-            auto lock = std::unique_lock(_streamImagesThread.lock);
+            {
+                auto lock = std::unique_lock(_streamImagesThread.lock);
+                
                 // Check if we've been cancelled
                 if (_streamImagesThread.cancel) break;
                 
                 // Copy the image into our persistent buffer
                 memcpy(_streamImagesThread.pixels, img.get()+Img::HeaderLen, Img::PixelLen);
-                
-//                // While we have the lock, copy the exp that might be waiting
-//                exp = _streamImagesThread.pixConfig;
-//                _streamImagesThread.exp = std::nullopt;
-            lock.unlock();
+                    
+                // While we have the lock, copy the exp that might be waiting
+                exp = _streamImagesThread.exp;
+                _streamImagesThread.exp = std::nullopt;
+            }
             
             // Invoke -_handleStreamImage on the main thread.
             // Don't use dispatch_async here, because dispatch_async's don't get drained
@@ -655,6 +641,7 @@ static void configMDCDevice(MDCDevice& device, const ExposureConfig& exp) {
                 [weakSelf _handleStreamImage];
             });
             CFRunLoopWakeUp(CFRunLoopGetMain());
+            
             
 //            if (!(i % 10)) {
 //                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
@@ -667,13 +654,12 @@ static void configMDCDevice(MDCDevice& device, const ExposureConfig& exp) {
 //                printf("Saved %s\n", [imagePath UTF8String]);
 //            }
             
-//            // Adjust exposure
-//            const uint32_t SubsampleFactor = 16;
-//            const uint32_t highlightCount = (uint32_t)pixStatus.highlightCount*SubsampleFactor;
-//            const uint32_t shadowCount = (uint32_t)pixStatus.shadowCount*SubsampleFactor;
-//            const float highlightFraction = (float)highlightCount/pixelCount;
-//            const float shadowFraction = (float)shadowCount/pixelCount;
-////            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
+            // Adjust exposure
+            const uint32_t highlightCount = imgStats.highlightCount*Img::StatsSubsampleFactor;
+            const uint32_t shadowCount = imgStats.shadowCount*Img::StatsSubsampleFactor;
+            const float highlightFraction = (float)highlightCount/Img::PixelCount;
+            const float shadowFraction = (float)shadowCount/Img::PixelCount;
+            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
 //            
 //            const float diff = shadowFraction-highlightFraction;
 //            const float absdiff = fabs(diff);
@@ -1018,46 +1004,70 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 }
 
 - (IBAction)_streamSettingsAction:(id)sender {
-    [self _setCoarseIntegrationTime:[_coarseIntegrationTimeSlider doubleValue]];
-    [self _setFineIntegrationTime:[_fineIntegrationTimeSlider doubleValue]];
-    [self _setAnalogGain:[_analogGainSlider doubleValue]];
+    [self _setImageExposure:{
+        .coarseIntTime  = (uint16_t)([_coarseIntegrationTimeSlider doubleValue] * Img::CoarseIntTimeMax),
+        .fineIntTime    = (uint16_t)([_fineIntegrationTimeSlider doubleValue]   * Img::FineIntTimeMax),
+        .analogGain     = (uint16_t)([_analogGainSlider doubleValue]            * Img::AnalogGainMax),
+    }];
     
-    if ([self _streamImagesEnabled]) {
-        [self _setStreamImagesEnabled:false];
-        [self _setStreamImagesEnabled:true];
-    }
+//    _imgExp.coarseIntTime = [_coarseIntegrationTimeSlider doubleValue]*65535;
+//    _imgExp.fineIntTime = [_fineIntegrationTimeSlider doubleValue]*65535;
+//    _imgExp.gain = [_analogGainSlider doubleValue]*65535;
+//    
+//    auto lock = std::unique_lock(_streamImagesThread.lock);
+//    _streamImagesThread.exp = _imgExp;
 }
 
-- (void)_setCoarseIntegrationTime:(double)intTime {
+
+- (void)_setImageExposure:(const MDCDevice::ImgExposure&)exp {
+    _imgExp = exp;
+    
+    [_coarseIntegrationTimeSlider setDoubleValue:
+        (double)exp.coarseIntTime/Img::CoarseIntTimeMax];
+    [_coarseIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)exp.coarseIntTime]];
+    
+    [_fineIntegrationTimeSlider setDoubleValue:
+        (double)exp.fineIntTime/Img::FineIntTimeMax];
+    [_fineIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)exp.fineIntTime]];
+    
+    [_analogGainSlider setDoubleValue:
+        (double)exp.analogGain/Img::AnalogGainMax];
+    [_analogGainLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)exp.analogGain]];
+    
     auto lock = std::unique_lock(_streamImagesThread.lock);
-    _streamImagesThread.exposure.emplace();
-    ExposureConfig& exp = *_streamImagesThread.exposure;
-    exp.coarseIntegrationTime = intTime*16384;
-    [_coarseIntegrationTimeSlider setDoubleValue:intTime];
-    [_coarseIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju",
-        (uintmax_t)exp.coarseIntegrationTime]];
+    _streamImagesThread.exp = _imgExp;
 }
 
-- (void)_setFineIntegrationTime:(double)intTime {
-    auto lock = std::unique_lock(_streamImagesThread.lock);
-    _streamImagesThread.exposure.emplace();
-    ExposureConfig& exp = *_streamImagesThread.exposure;
-    exp.fineIntegrationTime = intTime*UINT16_MAX;
-    [_fineIntegrationTimeSlider setDoubleValue:intTime];
-    [_fineIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju",
-        (uintmax_t)exp.fineIntegrationTime]];
-}
-
-- (void)_setAnalogGain:(double)gain {
-    const uint32_t i = gain*0x3F;
-    auto lock = std::unique_lock(_streamImagesThread.lock);
-    _streamImagesThread.exposure.emplace();
-    ExposureConfig& exp = *_streamImagesThread.exposure;
-    exp.analogGain = i;
-    [_analogGainSlider setDoubleValue:gain];
-    [_analogGainLabel setStringValue:[NSString stringWithFormat:@"%ju",
-        (uintmax_t)exp.analogGain]];
-}
+//- (void)_setCoarseIntegrationTime:(double)intTime {
+//    auto lock = std::unique_lock(_streamImagesThread.lock);
+//    _streamImagesThread.exposure.emplace();
+//    ExposureConfig& exp = *_streamImagesThread.exposure;
+//    exp.coarseIntegrationTime = intTime*16384;
+//    [_coarseIntegrationTimeSlider setDoubleValue:intTime];
+//    [_coarseIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju",
+//        (uintmax_t)exp.coarseIntegrationTime]];
+//}
+//
+//- (void)_setFineIntegrationTime:(double)intTime {
+//    auto lock = std::unique_lock(_streamImagesThread.lock);
+//    _streamImagesThread.exposure.emplace();
+//    ExposureConfig& exp = *_streamImagesThread.exposure;
+//    exp.fineIntegrationTime = intTime*UINT16_MAX;
+//    [_fineIntegrationTimeSlider setDoubleValue:intTime];
+//    [_fineIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju",
+//        (uintmax_t)exp.fineIntegrationTime]];
+//}
+//
+//- (void)_setAnalogGain:(double)gain {
+//    const uint32_t i = gain*0x3F;
+//    auto lock = std::unique_lock(_streamImagesThread.lock);
+//    _streamImagesThread.exposure.emplace();
+//    ExposureConfig& exp = *_streamImagesThread.exposure;
+//    exp.analogGain = i;
+//    [_analogGainSlider setDoubleValue:gain];
+//    [_analogGainLabel setStringValue:[NSString stringWithFormat:@"%ju",
+//        (uintmax_t)exp.analogGain]];
+//}
 
 - (IBAction)_illumIdentityButtonAction:(id)sender {
     auto& opts = _imagePipelineManager->options;

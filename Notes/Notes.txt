@@ -5,12 +5,6 @@
             - Might be because we're not waiting long enough after turning on the power rails to do I2C comms
                 - "#warning TODO: measure how long it takes for IMG rails to rise"
     
-    - STLoader: cleanup tasks the way we did for STApp
-    
-    - STApp / STLoader: in cases where the device reboots (STLoader: `STMReset` command,
-      STApp: `Bootloader` command), can we wait until the host receives the command
-      acceptance to actually reset, so the host doesn't get an error for the command?
-    
     - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
         - Does the USB hub limit the data throughput?
         - Perf debugging tactic: check how often the DIEPINT.NAK interrupt occurs when sending mass data to the
@@ -21,6 +15,13 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ STLoader: cleanup tasks the way we did for STApp
+    
+    √ STApp / STLoader: in cases where the device reboots (STLoader: `STMReset` command,
+      STApp: `Bootloader` command), can we wait until the host receives the command
+      acceptance to actually reset, so the host doesn't get an error for the command?
+          √ Implemented
     
     √ Fix bug: With STLink connected, sometimes the USB device doesn't enumerate when connecting the USB cable
         - Solutions:

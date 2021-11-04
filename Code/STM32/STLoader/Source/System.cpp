@@ -69,6 +69,9 @@ void System::_usb_cmdTaskFn() {
         
         auto usbCmd = *_usb.cmdRecv();
         
+        // Re-enable interrupts while we handle the command
+        irq.restore();
+        
         // Reject command if the length isn't valid
         if (usbCmd.len != sizeof(_cmd)) {
             _usb.cmdAccept(false);

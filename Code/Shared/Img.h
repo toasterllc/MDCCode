@@ -20,8 +20,8 @@ namespace Img {
         uint32_t timestamp      = 0;    // 0xDEADBEEF
         uint32_t _pad2          = 0;    // 0x00000000
         // Section idx=3
-        uint16_t exposure       = 0;    // 0x1111
-        uint16_t gain           = 0;    // 0x2222
+        uint16_t coarseIntTime  = 0;    // 0x1111
+        uint16_t analogGain     = 0;    // 0x2222
         uint32_t _pad3          = 0;    // 0x00000000
     } __attribute__((packed));
     
@@ -33,6 +33,13 @@ namespace Img {
     constexpr uint32_t ChecksumLen      = sizeof(uint32_t);
     constexpr uint32_t Len              = HeaderLen + PixelLen + ChecksumLen;
     constexpr uint32_t ChecksumOffset   = Len-ChecksumLen;
+    
+    // StatsSubsampleFactor: We only sample 1/16 of pixels for highlights/shadows
+    const uint32_t StatsSubsampleFactor = 16;
+    
+    const uint16_t CoarseIntTimeMax     = 16383;
+    const uint16_t FineIntTimeMax       = 16383;
+    const uint16_t AnalogGainMax        = 63;
     
     // PaddedLen: the length of the image padded to a multiple of 512 bytes
     constexpr uint32_t PaddedLen        = Util::Ceil(Len, (uint32_t)512);

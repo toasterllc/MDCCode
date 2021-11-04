@@ -288,15 +288,21 @@ public:
         return stats;
     }
     
-    void imgSetExposure(uint16_t coarseIntTime, uint16_t fineIntTime, uint16_t gain) {
+    struct ImgExposure {
+        uint16_t coarseIntTime  = 0;
+        uint16_t fineIntTime    = 0;
+        uint16_t analogGain     = 0;
+    };
+    
+    void imgSetExposure(const ImgExposure& exp) {
         assert(_mode == STM::Status::Modes::STMApp);
         const STM::Cmd cmd = {
             .op = STM::Op::ImgSetExposure,
             .arg = {
                 .ImgSetExposure = {
-                    .coarseIntTime  = coarseIntTime,
-                    .fineIntTime    = fineIntTime,
-                    .gain           = gain,
+                    .coarseIntTime  = exp.coarseIntTime,
+                    .fineIntTime    = exp.fineIntTime,
+                    .analogGain     = exp.analogGain,
                 },
             },
         };

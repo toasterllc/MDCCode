@@ -81,6 +81,9 @@ void System::_usb_cmdTaskFn() {
         
         auto usbCmd = *_usb.cmdRecv();
         
+        // Re-enable interrupts while we handle the command
+        irq.restore();
+        
         // Reject command if the length isn't valid
         if (usbCmd.len != sizeof(_cmd)) {
             _usb.cmdAccept(false);
@@ -432,9 +435,9 @@ void System::_img_init() {
 void System::_img_setExposure() {
     const auto& arg = _cmd.arg.ImgSetExposure;
     _img_init();
-    Img::Sensor::SetCoarseIntegrationTime(arg.coarseIntTime);
-    Img::Sensor::SetFineIntegrationTime(arg.fineIntTime);
-    Img::Sensor::SetGain(arg.gain);
+    Img::Sensor::SetCoarseIntTime(arg.coarseIntTime);
+    Img::Sensor::SetFineIntTime(arg.fineIntTime);
+    Img::Sensor::SetAnalogGain(arg.analogGain);
     // Send status
     _usb_dataInSendStatus(true);
 }
