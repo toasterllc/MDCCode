@@ -338,15 +338,19 @@ module ImgController #(
             fifoIn_w_data <= {fifoIn_checksum_shiftReg[7:0], fifoIn_checksum_shiftReg[15:8]}; // Little endian
             
             if (!fifoIn_checksum_done_) begin
-                fifoIn_skipCount <= fifoIn_skipCount-1;
-                
-                if (fifoIn_skipCount) begin
-                    fifoIn_state <= 2;
-                
-                end else begin
-                    fifoIn_done <= 1;
-                    fifoIn_state <= 0;
-                end
+                fifoIn_state <= 9;
+            end
+        end
+        
+        9: begin
+            fifoIn_skipCount <= fifoIn_skipCount-1;
+            
+            if (fifoIn_skipCount) begin
+                fifoIn_state <= 2;
+            
+            end else begin
+                fifoIn_done <= 1;
+                fifoIn_state <= 0;
             end
         end
         endcase
