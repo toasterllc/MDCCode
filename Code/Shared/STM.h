@@ -86,6 +86,8 @@ namespace STM {
             } SDRead;
             
             struct __attribute__((packed)) {
+                uint8_t dstBlock;
+                uint8_t skipCount;
             } ImgCapture;
             
             struct __attribute__((packed)) {

@@ -534,25 +534,6 @@ static void _configureDevice(MDCDevice& dev) {
     }
 }
 
-//- (void)_threadReadInputCommands {
-//    for (;;) {
-//        std::string line;
-//        std::getline(std::cin, line);
-//        
-//        std::vector<std::string> argStrs;
-//        std::stringstream argStream(line);
-//        std::string argStr;
-//        while (std::getline(argStream, argStr, ' ')) {
-//            if (!argStr.empty()) argStrs.push_back(argStr);
-//        }
-//        
-//        __weak auto weakSelf = self;
-//        dispatch_async(dispatch_get_main_queue(), ^{
-//            [weakSelf _handleInputCommand:argStrs];
-//        });
-//    }
-//}
-
 - (void)_handleStreamImage {
     assert([NSThread isMainThread]);
     
@@ -565,15 +546,6 @@ static void _configureDevice(MDCDevice& dev) {
     lock.unlock();
     
     [[_mainView imageLayer] setNeedsDisplay];
-}
-
-// Throws on error
-static void initMDCDevice(MDCDevice& device) {
-    #warning reimplement
-//    // Reset the device to put it back in a pre-defined state
-//    device.reset();
-//    device.pixReset();
-//    device.pixConfig();
 }
 
 - (void)_threadStreamImages {
@@ -601,13 +573,17 @@ static void initMDCDevice(MDCDevice& device) {
 //        uint32_t saveIdx = 1;
         for (uint32_t i=0;; i++) {
             // Set the image exposure if the exposure changed
+            const bool setExp = exp.has_value();
             if (exp) {
                 dev.imgSetExposure(*exp);
+                exp = std::nullopt;
                 printf("Set exposure\n");
 //                usleep(100000);
             }
             
-            const STM::ImgCaptureStats imgStats = dev.imgCapture();
+            constexpr uint8_t DstBlock = 0; // Always save to RAM block 0
+            const uint8_t skipCount = (setExp ? 1 : 0); // Skip one image if we set the exposure, so that the image we receive has the exposure applied
+            const STM::ImgCaptureStats imgStats = dev.imgCapture(DstBlock, skipCount);
             if (imgStats.len != Img::Len) {
                 throw Toastbox::RuntimeError("invalid image length (expected: %ju, got: %ju)", (uintmax_t)Img::Len, (uintmax_t)imgStats.len);
             }
@@ -660,7 +636,7 @@ static void initMDCDevice(MDCDevice& device) {
             const float highlightFraction = (float)highlightCount/Img::PixelCount;
             const float shadowFraction = (float)shadowCount/Img::PixelCount;
             printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
-//            
+            
 //            const float diff = shadowFraction-highlightFraction;
 //            const float absdiff = fabs(diff);
 //            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
