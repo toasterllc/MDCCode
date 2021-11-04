@@ -56,10 +56,10 @@ args=(
     #   ./nextpnr-mango.py nextpnr-ice40 --hx8k --package bg121:4k  \
     #     --json Top.json --pcf Pins.pcf --pcf-allow-unconstrained
     
-    --placer-heap-alpha         0.35
-    --placer-heap-beta          0.575
+    --placer-heap-alpha         0.15
+    --placer-heap-beta          0.775
     --placer-heap-critexp       9
-    --placer-heap-timingweight  26
+    --placer-heap-timingweight  11
 )
 
 if [ ! -z "$outputASCFilePath" ]; then
