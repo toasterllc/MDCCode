@@ -444,11 +444,12 @@ void System::_img_setExposure() {
 
 void System::_img_captureTaskFn() {
     static ImgCaptureStats stats;
+    const auto& arg = _cmd.arg.ImgCapture;
     
     TaskBegin();
     _img_init();
     
-    auto [ok, resp] = ICE::ImgCapture();
+    auto [ok, resp] = ICE::ImgCapture(arg.dstBlock, arg.skipCount);
     if (!ok) {
         _usb_dataInSendStatus(false);
         return;
@@ -469,7 +470,7 @@ void System::_img_captureTaskFn() {
     TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     // Arrange for the image to be read out
-    ICE::Transfer(ICE::ImgReadoutMsg(0));
+    ICE::Transfer(ICE::ImgReadoutMsg(arg.dstBlock));
     
     // Start the Readout task
     _readout.len = (size_t)stats.len;

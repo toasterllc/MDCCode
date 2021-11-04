@@ -277,9 +277,19 @@ public:
         _waitOrThrow("SDRead command failed");
     }
     
-    STM::ImgCaptureStats imgCapture() {
+    STM::ImgCaptureStats imgCapture(uint8_t dstBlock, uint8_t skipCount) {
         assert(_mode == STM::Status::Modes::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::ImgCapture };
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::ImgCapture,
+            .arg = {
+                .ImgCapture = {
+                    .dstBlock = 0,
+                    .skipCount = skipCount,
+                },
+            },
+        };
+        
         _dev.vendorRequestOut(0, cmd);
         _waitOrThrow("ImgCapture command failed");
         

@@ -183,7 +183,7 @@ public:
     };
     
     struct ImgCaptureMsg : Msg {
-        ImgCaptureMsg(uint8_t dstBlock) {
+        ImgCaptureMsg(uint8_t dstBlock, uint8_t skipCount) {
             type = MsgType::StartBit | 0x07;
             payload[0] = 0;
             payload[1] = 0;
@@ -191,7 +191,7 @@ public:
             payload[3] = 0;
             payload[4] = 0;
             payload[5] = 0;
-            payload[6] = dstBlock&0x7;
+            payload[6] = ((skipCount&0x7)<<3) | (dstBlock&0x7);
         }
     };
     
@@ -291,7 +291,7 @@ public:
         Transfer(ImgResetMsg(1));
     }
     
-    static std::pair<bool,ImgCaptureStatusResp> ImgCapture() {
+    static std::pair<bool,ImgCaptureStatusResp> ImgCapture(uint8_t dstBlock, uint8_t skipCount) {
         const Img::Header header = {
             // Section idx=0
             .version        = 0x4242,
@@ -316,7 +316,7 @@ public:
         }
         
         // Tell ICE40 to start capturing an image
-        Transfer(ImgCaptureMsg(0));
+        Transfer(ImgCaptureMsg(dstBlock, skipCount));
         
         // Wait for image to be captured
         constexpr uint16_t MaxAttempts = 1000;
