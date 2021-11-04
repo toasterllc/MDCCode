@@ -39,7 +39,7 @@ using namespace ImagePipeline;
         _ipm->renderer.present(drawable);
         _ipm->renderer.commit();
     }
-    printf("Display took %f\n", start.durationMs()/1000.);
+//    printf("Display took %f\n", start.durationMs()/1000.);
 }
 
 - (void)setContentsScale:(CGFloat)scale {

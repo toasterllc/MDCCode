@@ -54,7 +54,20 @@ public:
         // Enable parallel interface (R0x301A[7]=1), disable serial interface to save power (R0x301A[12]=1)
         // (Default value of 0x301A is 0x0058)
         {
-            ICE::ImgI2CWrite(0x301A, 0x10D8);
+            constexpr uint16_t DefaultValue             = 0x0058;
+            constexpr uint16_t EnableParallelInterface  = 1<<7;
+            constexpr uint16_t MaskBadFrames            = 1<<9;
+            constexpr uint16_t RestartBadFrames         = 1<<10;
+            constexpr uint16_t DisableSerialInterface   = 1<<12;
+            ICE::ImgI2CWrite(0x301A,
+                DefaultValue                |
+                EnableParallelInterface     |
+                
+                MaskBadFrames               |
+                RestartBadFrames            |
+                
+                DisableSerialInterface
+            );
         }
         
         // Set pre_pll_clk_div
@@ -211,19 +224,19 @@ public:
         ICE::ImgI2CWrite(0x301A, (en ? 0x10DC : 0x10D8));
     }
     
-    static void SetCoarseIntegrationTime(uint16_t coarseIntTime) {
+    static void SetCoarseIntTime(uint16_t coarseIntTime) {
         // Set coarse_integration_time
         ICE::ImgI2CWrite(0x3012, coarseIntTime);
     }
     
-    static void SetFineIntegrationTime(uint16_t fineIntTime) {
+    static void SetFineIntTime(uint16_t fineIntTime) {
         // Set fine_integration_time
         ICE::ImgI2CWrite(0x3014, fineIntTime);
     }
     
-    static void SetGain(uint16_t gain) {
+    static void SetAnalogGain(uint16_t analogGain) {
         // Set analog_gain
-        ICE::ImgI2CWrite(0x3060, gain);
+        ICE::ImgI2CWrite(0x3060, analogGain);
     }
 
 };

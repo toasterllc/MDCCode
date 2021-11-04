@@ -91,7 +91,7 @@ namespace STM {
             struct __attribute__((packed)) {
                 uint16_t coarseIntTime;
                 uint16_t fineIntTime;
-                uint16_t gain;
+                uint16_t analogGain;
             } ImgSetExposure;
         } arg;
         

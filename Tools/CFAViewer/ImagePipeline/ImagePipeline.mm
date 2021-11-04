@@ -212,7 +212,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         // Camera raw -> ProPhotoRGB
         {
             const CCM ccm = CCMForIlluminant(illum);
-            printf("CCT: %f\n", ccm.cct);
+//            printf("CCT: %f\n", ccm.cct);
             const simd::float3x3 colorMatrix = simdForMat(ccm.m);
             
 //            const simd::float3x3 colorMatrix = simdForMat(opts.colorMatrix);

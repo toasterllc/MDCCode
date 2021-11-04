@@ -209,7 +209,7 @@ public:
     };
     
     struct ImgReadoutMsg : Msg {
-        ImgReadoutMsg(uint8_t dstBlock) {
+        ImgReadoutMsg(uint8_t srcBlock) {
             type = MsgType::StartBit | 0x09;
             payload[0] = 0;
             payload[1] = 0;
@@ -217,7 +217,7 @@ public:
             payload[3] = 0;
             payload[4] = 0;
             payload[5] = 0;
-            payload[6] = dstBlock&0x7;
+            payload[6] = srcBlock&0x7;
         }
     };
     
@@ -305,8 +305,8 @@ public:
             .timestamp      = 0xDEADBEEF,
             ._pad2          = 0,
             // Section idx=3
-            .exposure       = 0x1111,
-            .gain           = 0x2222,
+            .coarseIntTime  = 0x1111,
+            .analogGain     = 0x2222,
             ._pad3          = 0,
         };
         
