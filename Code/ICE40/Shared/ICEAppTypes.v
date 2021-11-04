@@ -69,6 +69,7 @@
 `define     Msg_Arg_ImgSetHeader_Idx_Len                        8
 
 `define Msg_Type_ImgCapture                                     `Msg_Type_StartBit | `Msg_Type_Len'h07
+`define     Msg_Arg_ImgCapture_SkipCount_Bits                   5:3 // Wider than currently necessary to future-proof
 `define     Msg_Arg_ImgCapture_DstBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
 `define Msg_Type_ImgCaptureStatus                               `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h08
@@ -78,7 +79,7 @@
 `define     Resp_Arg_ImgCaptureStatus_ShadowCount_Bits          20:3
 
 `define Msg_Type_ImgReadout                                     `Msg_Type_StartBit | `Msg_Type_Len'h09
-`define     Msg_Arg_ImgReadout_DstBlock_Bits                    2:0 // Wider than currently necessary to future-proof
+`define     Msg_Arg_ImgReadout_SrcBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
 `define Msg_Type_ImgI2CTransaction                              `Msg_Type_StartBit | `Msg_Type_Len'h0A
 `define     Msg_Arg_ImgI2CTransaction_Write_Bits                55:55

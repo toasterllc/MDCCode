@@ -353,6 +353,7 @@ module ICEAppSim();
         
         arg = 0;
         arg[`Msg_Arg_ImgCapture_DstBlock_Bits] = 0;
+        arg[`Msg_Arg_ImgCapture_SkipCount_Bits] = 0;
         SendMsg(`Msg_Type_ImgCapture, arg);
         
         // Wait until capture is done
@@ -753,25 +754,25 @@ module ICEAppSim();
             // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
             TestImgReset();
             TestImgSetHeader(0, {
-                LittleFromHost16.Swap(16'h4242)     /* version      */,
-                LittleFromHost16.Swap(16'd2304)     /* image width  */,
-                LittleFromHost16.Swap(16'd1296)     /* image height */
+                LittleFromHost16.Swap(16'h4242)     /* version          */,
+                LittleFromHost16.Swap(16'd2304)     /* image width      */,
+                LittleFromHost16.Swap(16'd1296)     /* image height     */
             });
-        
+            
             TestImgSetHeader(1, {
-                LittleFromHost32.Swap(32'hCAFEBABE) /* counter      */,
-                LittleFromHost16.Swap(16'b0)        /* padding      */
+                LittleFromHost32.Swap(32'hCAFEBABE) /* counter          */,
+                LittleFromHost16.Swap(16'b0)        /* padding          */
             });
-        
+            
             TestImgSetHeader(2, {
-                LittleFromHost32.Swap(32'hDEADBEEF) /* timestamp    */,
-                LittleFromHost16.Swap(16'b0)        /* padding      */
+                LittleFromHost32.Swap(32'hDEADBEEF) /* timestamp        */,
+                LittleFromHost16.Swap(16'b0)        /* padding          */
             });
-        
+            
             TestImgSetHeader(3, {
-                LittleFromHost16.Swap(16'h1111)     /* exposure     */,
-                LittleFromHost16.Swap(16'h2222)     /* gain         */,
-                LittleFromHost16.Swap(16'b0)        /* padding      */
+                LittleFromHost16.Swap(16'h1111)     /* coarse int time  */,
+                LittleFromHost16.Swap(16'h2222)     /* analog gain      */,
+                LittleFromHost16.Swap(16'b0)        /* padding          */
             });
             
             TestImgI2CWriteRead();

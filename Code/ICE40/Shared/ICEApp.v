@@ -158,6 +158,7 @@ module ICEApp(
     reg                                     imgctrl_cmd_capture = 0;
     reg                                     imgctrl_cmd_readout = 0;
     reg[0:0]                                imgctrl_cmd_ramBlock = 0;
+    reg[0:0]                                imgctrl_cmd_skipCount = 0;
     reg[`Img_HeaderWordCount*16-1:0]        imgctrl_cmd_header = 0;
     wire                                    imgctrl_readout_rst;
     wire                                    imgctrl_readout_start;
@@ -181,6 +182,7 @@ module ICEApp(
         .cmd_capture(imgctrl_cmd_capture),
         .cmd_readout(imgctrl_cmd_readout),
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
+        .cmd_skipCount(imgctrl_cmd_skipCount),
         .cmd_header(imgctrl_cmd_header),
         
         .readout_rst(imgctrl_readout_rst),
@@ -724,10 +726,13 @@ module ICEApp(
                 end
                 
                 `Msg_Type_ImgCapture: begin
-                    $display("[SPI] Got Msg_Type_ImgCapture (block=%b)", spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits]);
+                    $display("[SPI] Got Msg_Type_ImgCapture (skipCount=%d, block=%d)",
+                        spi_msgArg[`Msg_Arg_ImgCapture_SkipCount_Bits],
+                        spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits]);
                     // Reset spi_imgCaptureDone_
                     if (!spi_imgCaptureDone_) spi_imgCaptureDoneAck <= !spi_imgCaptureDoneAck;
                     imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits];
+                    imgctrl_cmd_skipCount <= spi_msgArg[`Msg_Arg_ImgCapture_SkipCount_Bits];
                     imgctrl_cmd_capture <= !imgctrl_cmd_capture;
                 end
                 
@@ -741,7 +746,7 @@ module ICEApp(
                 
                 `Msg_Type_ImgReadout: begin
                     $display("[SPI] Got Msg_Type_ImgReadout");
-                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_DstBlock_Bits];
+                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_SrcBlock_Bits];
                     imgctrl_cmd_readout <= !imgctrl_cmd_readout;
                 end
                 
