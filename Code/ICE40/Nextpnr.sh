@@ -58,8 +58,11 @@ args=(
     
     --placer-heap-alpha         0.025
     --placer-heap-beta          0.5
-    --placer-heap-critexp       5
+    --placer-heap-critexp       7
     --placer-heap-timingweight  21
+
+
+
 )
 
 if [ ! -z "$outputASCFilePath" ]; then
