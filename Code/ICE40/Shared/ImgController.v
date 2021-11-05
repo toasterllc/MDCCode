@@ -222,7 +222,7 @@ module ImgController #(
     reg fifoIn_done = 0;
     `Sync(ctrl_fifoInDone, fifoIn_done, posedge, clk);
     
-    reg[2:0] fifoIn_state = 0;
+    reg[3:0] fifoIn_state = 0;
     always @(posedge img_dclk) begin
         fifoIn_rst <= 0; // Pulse
         fifoIn_lvPrev <= fifoIn_lv;
@@ -271,49 +271,47 @@ module ImgController #(
         0: begin
         end
         
-        // Reset FIFO / ourself
         1: begin
+            fifoIn_skipCount <= cmd_skipCount;
+            fifoIn_state <= 2;
+        end
+        
+        // Reset FIFO / ourself
+        2: begin
             fifoIn_rst <= 1;
             fifoIn_done <= 0;
             fifoIn_wordCount <= 0;
             fifoIn_highlightCount <= 0;
             fifoIn_shadowCount <= 0;
             fifoIn_checksum_rst <= 1;
-            fifoIn_skipCount <= cmd_skipCount;
-            fifoIn_state <= 2;
-        end
-        
-        // Initiate writing header
-        2: begin
-            fifoIn_started <= !fifoIn_started;
-            fifoIn_header <= cmd_header;
-            fifoIn_headerCount <= HeaderWordCount-1;
             fifoIn_state <= 3;
         end
         
-        // Write header
+        // Initiate writing header
         3: begin
+            fifoIn_started <= !fifoIn_started;
+            fifoIn_header <= cmd_header;
+            fifoIn_headerCount <= HeaderWordCount-1;
+            fifoIn_state <= 4;
+        end
+        
+        // Write header
+        4: begin
             $display("[ImgController:fifoIn] Header state: %0d", fifoIn_headerCount);
             fifoIn_w_trigger <= 1;
             fifoIn_w_data <= `LeftBits(fifoIn_header, 0, 16);
             fifoIn_checksum_en <= 1;
             if (!fifoIn_headerCount) begin
-                fifoIn_state <= 4;
-            end
-        end
-        
-        // Wait for the frame to start
-        4: begin
-            if (fifoIn_frameStart) begin
-                $display("[ImgController:fifoIn] Frame start");
                 fifoIn_state <= 5;
             end
         end
         
         // Wait for the frame to start
         5: begin
-            fifoIn_skipCount <= fifoIn_skipCount-1;
-            fifoIn_state <= (fifoIn_skipCount ? 4 : 6);
+            if (fifoIn_frameStart) begin
+                $display("[ImgController:fifoIn] Frame start");
+                fifoIn_state <= 6;
+            end
         end
         
         // Wait until the end of the frame
@@ -337,6 +335,17 @@ module ImgController #(
             fifoIn_w_data <= {fifoIn_checksum_shiftReg[7:0], fifoIn_checksum_shiftReg[15:8]}; // Little endian
             
             if (!fifoIn_checksum_done_) begin
+                fifoIn_state <= 8;
+            end
+        end
+        
+        8: begin
+            fifoIn_skipCount <= fifoIn_skipCount-1;
+            
+            if (fifoIn_skipCount) begin
+                fifoIn_state <= 2;
+            
+            end else begin
                 fifoIn_done <= 1;
                 fifoIn_state <= 0;
             end
