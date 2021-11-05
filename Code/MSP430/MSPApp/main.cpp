@@ -248,7 +248,7 @@ int main() {
         ICE::Transfer(ICE::LEDSetMsg(i));
         
         // Capture an image to RAM
-        ICE::ImgCapture();
+        ICE::ImgCapture(0, 0);
         // Write the image to the SD card
         _sd.writeImage(i);
         _sleepMs(1000);

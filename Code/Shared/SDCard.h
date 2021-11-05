@@ -354,7 +354,7 @@ public:
     
     void writeImage(uint16_t idx) {
         // Confirm that Img::PaddedLen is a multiple of the SD block length
-        static_assert((Img::PaddedLen % SD::BlockLen) == 0);
+        static_assert((Img::PaddedLen % SD::BlockLen) == 0, "");
         const uint32_t addr = idx*Img::PaddedLen;
         
         writeStart(addr, Img::Len);

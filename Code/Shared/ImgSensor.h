@@ -56,8 +56,8 @@ public:
         {
             constexpr uint16_t DefaultValue             = 0x0058;
             constexpr uint16_t EnableParallelInterface  = 1<<7;
-            constexpr uint16_t MaskBadFrames            = 1<<9;
-            constexpr uint16_t RestartBadFrames         = 1<<10;
+//            constexpr uint16_t MaskBadFrames            = 1<<9;
+//            constexpr uint16_t RestartBadFrames         = 1<<10;
             constexpr uint16_t DisableSerialInterface   = 1<<12;
             ICE::ImgI2CWrite(0x301A,
                 DefaultValue                |
