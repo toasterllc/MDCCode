@@ -672,7 +672,6 @@ static float intTimeClamp(float t) {
                 if (shadowBalance >= ShadowThreshold) {
                     // Increase exposure
                     const float adjustment = 1.f+(std::log(shadowBalance)/std::log(LogBase));
-//                    const float adjustment = std::clamp(std::log10(shadowBalance), 1.01f, 2.f);
                     printf("Increase exposure (balance: %f, adjustment: %f)\n", shadowBalance, adjustment);
                     autoExposure.intTime *= adjustment;
                     
@@ -681,77 +680,12 @@ static float intTimeClamp(float t) {
                     
                     // Decrease exposure
                     const float adjustment = 1.f+(std::log(highlightBalance)/std::log(LogBase));
-//                    const float adjustment = std::clamp(std::log10(highlightBalance), 1.01f, 2.f);
                     printf("Decrease exposure (balance: %f, adjustment: %f)\n", highlightBalance, adjustment);
                     autoExposure.intTime /= adjustment;
                 }
                 
                 autoExposure.intTime = std::clamp(autoExposure.intTime, 10.f, (float)Img::CoarseIntTimeMax);
                 exposure.coarseIntTime = std::round(autoExposure.intTime);
-                
-    //            const float diff = shadowFraction-highlightFraction;
-    //            const float absdiff = fabs(diff);
-    //            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
-    //            
-    //            if (absdiff > .01) {
-    //                bool updateIntTime = false;
-    //                if (shadowFraction > highlightFraction) {
-    //                    // Increase exposure
-    //                    intTime *= adjust;
-    //                    updateIntTime = true;
-    //                
-    //                } else if (highlightFraction > shadowFraction) {
-    //                    // Decrease exposure
-    //                    intTime *= adjust;
-    //                    updateIntTime = true;
-    //                }
-    //                
-    //                intTime = std::clamp(intTime, 0.001f, 1.f);
-    //                const float gain = intTime/3;
-    //                
-    //                printf("adjust:%f\n"
-    //                       "shadowFraction:%f\n"
-    //                       "highlightFraction:%f\n"
-    //                       "intTime: %f\n\n",
-    //                       adjust,
-    //                       shadowFraction,
-    //                       highlightFraction,
-    //                       intTime
-    //                );
-    //                
-    //                if (updateIntTime) {
-    //                    mdc.pixI2CWrite(0x3012, intTime*16384);
-    //                    mdc.pixI2CWrite(0x3060, gain*63);
-    //                }
-    //            }
-                
-                
-                
-//                const float ShadowAdjustThreshold = 0.1;
-//                const float HighlightAdjustThreshold = 0.1;
-//                const float AdjustDelta = 1.1;
-//                if (shadowFraction > ShadowAdjustThreshold) {
-//                    // Increase exposure
-//                    float intTime = intTimeClamp(exposure.coarseIntTime);
-//                    intTime *= AdjustDelta;
-//                    intTime = intTimeClamp(intTime);
-//                    exposure.coarseIntTime = std::round(intTime);
-//                    
-//                    
-//                    std::clamp(t, 10.f, (float)Img::CoarseIntTimeMax);
-//                
-//                } else if (highlightFraction > HighlightAdjustThreshold) {
-//                    // Decrease exposure
-//                    exposure.coarseIntTime = std::max(10.f, (float)exposure.coarseIntTime)/AdjustDelta;
-//                }
-//                
-//                intTime = std::clamp(intTime, 0.f, 1.f);
-//                const float gain = intTime/3;
-//                
-//                if (updateIntTime) {
-//                    device.pixI2CWrite(0x3012, intTime*16384);
-//                    device.pixI2CWrite(0x3060, gain*63);
-//                }
             }
         }
     
