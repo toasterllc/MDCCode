@@ -353,7 +353,7 @@ module ICEAppSim();
         
         arg = 0;
         arg[`Msg_Arg_ImgCapture_DstBlock_Bits] = 0;
-        arg[`Msg_Arg_ImgCapture_SkipCount_Bits] = 0;
+        arg[`Msg_Arg_ImgCapture_SkipCount_Bits] = 1;
         SendMsg(`Msg_Type_ImgCapture, arg);
         
         // Wait until capture is done
