@@ -452,24 +452,24 @@ static void _configureDevice(MDCDevice& dev) {
                     break;
                 
                 case STM::Status::Modes::STMApp:
-                    // If we previously configured this device, this device is ready to handed off!
-//                    if (configuredDevices.find(mdc.serial()) != configuredDevices.end()) {
+                    // If we previously configured this device, this device is ready!
+                    if (configuredDevices.find(mdc.serial()) != configuredDevices.end()) {
                         dispatch_async(dispatch_get_main_queue(), ^{
                             [self _setMDCDevice:std::move(mdc)];
                         });
                         
                         configuredDevices.erase(mdc.serial());
                         
-//                    // If we didn't previously configure this device, trigger the bootloader so we can configure it
-//                    } else {
-//                        mdc.bootloaderInvoke();
-//                    }
+                    // If we didn't previously configure this device, trigger the bootloader so we can configure it
+                    } else {
+                        mdc.bootloaderInvoke();
+                    }
                     break;
                 
-//                default:
-//                    configuredDevices.erase(mdc.serial());
-//                    mdc.bootloaderInvoke();
-//                    break;
+                default:
+                    configuredDevices.erase(mdc.serial());
+                    mdc.bootloaderInvoke();
+                    break;
                 }
             
             } catch (const std::exception& e) {
