@@ -653,31 +653,31 @@ static float intTimeClamp(float t) {
             if (autoExposure.en) {
                 const uint32_t highlightCount = std::max((uint32_t)128, imgStats.highlightCount*Img::StatsSubsampleFactor);
                 const uint32_t shadowCount = std::max((uint32_t)128, imgStats.shadowCount*Img::StatsSubsampleFactor);
-                const uint32_t highlightBalance = highlightCount / shadowCount;
-                const uint32_t shadowBalance = shadowCount / highlightCount;
                 
                 CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
                     [weakSelf _updateAutoExposureUI:exposure];
                 });
                 CFRunLoopWakeUp(CFRunLoopGetMain());
                 
-                constexpr float ShadowThreshold     = 1<<1;
-                constexpr float HighlightThreshold  = 1<<3;
-                constexpr float LogBase             = 1<<14;
+                constexpr uint32_t ShadowThreshold      = 1<<1;
+                constexpr uint32_t HighlightThreshold   = 1<<3;
+                constexpr float LogBase                 = 1<<14;
                 
-                if (shadowBalance >= ShadowThreshold) {
+                if (shadowCount >= ShadowThreshold*highlightCount) {
                     // Increase exposure
+                    const uint32_t shadowBalance = shadowCount / highlightCount;
                     const float adjustment = 1.f+(std::log(shadowBalance)/std::log(LogBase));
-                    printf("Increase exposure (balance: %ju, adjustment: %f)\n", (uintmax_t)shadowBalance, adjustment);
                     autoExposure.intTime *= adjustment;
                     
-                } else if (highlightBalance >= HighlightThreshold) {
-//                    printf("Balance: %f\n\n", highlightBalance);
+                    printf("Increase exposure (balance: %ju, adjustment: %f)\n", (uintmax_t)shadowBalance, adjustment);
                     
+                } else if (highlightCount >= HighlightThreshold*shadowCount) {
                     // Decrease exposure
+                    const uint32_t highlightBalance = highlightCount / shadowCount;
                     const float adjustment = 1.f+(std::log(highlightBalance)/std::log(LogBase));
-                    printf("Decrease exposure (balance: %ju, adjustment: %f)\n", (uintmax_t)highlightBalance, adjustment);
                     autoExposure.intTime /= adjustment;
+                    
+                    printf("Decrease exposure (balance: %ju, adjustment: %f)\n", (uintmax_t)highlightBalance, adjustment);
                 }
                 
                 autoExposure.intTime = std::clamp(autoExposure.intTime, 10.f, (float)Img::CoarseIntTimeMax);
