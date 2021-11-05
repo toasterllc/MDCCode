@@ -63,8 +63,8 @@ public:
                 DefaultValue                |
                 EnableParallelInterface     |
                 
-                MaskBadFrames               |
-                RestartBadFrames            |
+//                MaskBadFrames               |
+//                RestartBadFrames            |
                 
                 DisableSerialInterface
             );
