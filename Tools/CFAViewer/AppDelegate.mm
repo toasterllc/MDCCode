@@ -653,8 +653,8 @@ static float intTimeClamp(float t) {
             if (autoExposure.en) {
                 const uint32_t highlightCount = imgStats.highlightCount*Img::StatsSubsampleFactor;
                 const uint32_t shadowCount = imgStats.shadowCount*Img::StatsSubsampleFactor;
-                const float highlightFraction = (float)std::max((uint32_t)1,highlightCount)/Img::PixelCount;
-                const float shadowFraction = (float)std::max((uint32_t)1,shadowCount)/Img::PixelCount;
+                const float highlightFraction = (float)std::max((uint32_t)100,highlightCount)/Img::PixelCount;
+                const float shadowFraction = (float)std::max((uint32_t)100,shadowCount)/Img::PixelCount;
                 printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
 //                printf("H/L: %f\n\n", highlightFraction/shadowFraction);
                 
@@ -665,7 +665,7 @@ static float intTimeClamp(float t) {
                 
                 constexpr float ShadowThreshold = 2;
                 constexpr float HighlightThreshold = 10;
-                constexpr float LogBase = 8192;
+                constexpr float LogBase = 1<<14;
                 const float shadowBalance = shadowFraction/highlightFraction;
                 const float highlightBalance = highlightFraction/shadowFraction;
                 
