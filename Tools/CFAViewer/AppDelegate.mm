@@ -659,25 +659,23 @@ static float intTimeClamp(float t) {
                 });
                 CFRunLoopWakeUp(CFRunLoopGetMain());
                 
-                constexpr uint32_t ShadowThreshold      = 1<<1;
-                constexpr uint32_t HighlightThreshold   = 1<<3;
-                constexpr float LogBase                 = 1<<14;
+                constexpr uint32_t ShadowThreshold      = 2;
+                constexpr uint32_t HighlightThreshold   = 8;
+                constexpr uint32_t LogDenom             = 4;
                 
                 if (shadowCount >= ShadowThreshold*highlightCount) {
                     // Increase exposure
-                    const uint32_t shadowBalance = shadowCount / highlightCount;
-                    const float adjustment = 1.f+(std::log(shadowBalance)/std::log(LogBase));
+                    const float adjustment = 1.f+((std::log((float)shadowCount) - std::log((float)highlightCount))/LogDenom);
                     autoExposure.intTime *= adjustment;
                     
-                    printf("Increase exposure (balance: %ju, adjustment: %f)\n", (uintmax_t)shadowBalance, adjustment);
+                    printf("Increase exposure (adjustment: %f)\n", adjustment);
                     
                 } else if (highlightCount >= HighlightThreshold*shadowCount) {
                     // Decrease exposure
-                    const uint32_t highlightBalance = highlightCount / shadowCount;
-                    const float adjustment = 1.f+(std::log(highlightBalance)/std::log(LogBase));
+                    const float adjustment = 1.f+((std::log((float)highlightCount) - std::log((float)shadowCount))/LogDenom);
                     autoExposure.intTime /= adjustment;
                     
-                    printf("Decrease exposure (balance: %ju, adjustment: %f)\n", (uintmax_t)highlightBalance, adjustment);
+                    printf("Decrease exposure (adjustment: %f)\n", adjustment);
                 }
                 
                 autoExposure.intTime = std::clamp(autoExposure.intTime, 10.f, (float)Img::CoarseIntTimeMax);
