@@ -16,6 +16,7 @@
             <connections>
                 <outlet property="_analogGainLabel" destination="Yz0-oE-QrP" id="4Np-vT-mXQ"/>
                 <outlet property="_analogGainSlider" destination="VIy-yc-WPP" id="9d4-UE-hfZ"/>
+                <outlet property="_autoExposureCheckbox" destination="XjO-wo-Wvg" id="cqT-lu-IBd"/>
                 <outlet property="_brightnessLabel" destination="FRv-mn-pu4" id="1F8-vb-AV1"/>
                 <outlet property="_brightnessSlider" destination="iHy-kh-c6W" id="e4r-LY-DCF"/>
                 <outlet property="_coarseIntegrationTimeLabel" destination="Q4n-34-nSq" id="g90-15-2u2"/>
@@ -721,7 +722,7 @@
             <windowStyleMask key="styleMask" titled="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="335" y="390" width="480" height="360"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1792" height="1097"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="EiT-Mj-1SZ" customClass="MainView">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -735,7 +736,7 @@
             <windowStyleMask key="styleMask" titled="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="179" y="218" width="400" height="1045"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1792" height="1097"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="SDP-Rt-KYP">
                 <rect key="frame" x="0.0" y="0.0" width="400" height="1045"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -747,16 +748,26 @@
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Htl-ND-O3N">
-                                    <rect key="frame" x="0.0" y="-749" width="400" height="1794"/>
+                                    <rect key="frame" x="0.0" y="-775" width="400" height="1820"/>
                                     <subviews>
                                         <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="ktH-HS-6VN">
-                                            <rect key="frame" x="18" y="1731" width="42" height="24"/>
+                                            <rect key="frame" x="18" y="1757" width="42" height="24"/>
                                             <connections>
                                                 <action selector="_streamImagesSwitchAction:" target="Voe-Tx-rLC" id="W1i-lr-DP7"/>
                                             </connections>
                                         </switch>
+                                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XjO-wo-Wvg">
+                                            <rect key="frame" x="18" y="1731" width="110" height="18"/>
+                                            <buttonCell key="cell" type="check" title="Auto exposure" bezelStyle="regularSquare" imagePosition="left" inset="2" id="9vB-aW-W8B">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="_streamSettingsAction:" target="Voe-Tx-rLC" id="U9Y-QD-h4B"/>
+                                            </connections>
+                                        </button>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PZc-YF-PY7">
-                                            <rect key="frame" x="64" y="1736" width="95" height="16"/>
+                                            <rect key="frame" x="64" y="1762" width="95" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Stream Images" id="7tF-ny-LX5">
                                                 <font key="font" usesAppearanceFont="YES"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -898,7 +909,7 @@
                                             <rect key="frame" x="319" y="1471" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="label" size="11"/>
+                                                <font key="font" metaFont="message" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_colorMatrixIdentityButtonAction:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
@@ -1090,7 +1101,7 @@
                                             <rect key="frame" x="329" y="1498" width="56" height="27"/>
                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hsH-kE-yRp">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="label" size="11"/>
+                                                <font key="font" metaFont="message" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>
@@ -1356,7 +1367,7 @@
                                             <rect key="frame" x="0.0" y="376" width="400" height="5"/>
                                         </box>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="48V-lI-UpB">
-                                            <rect key="frame" x="18" y="1766" width="60" height="16"/>
+                                            <rect key="frame" x="18" y="1792" width="60" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="STREAM" id="wKQ-Wb-jWT">
                                                 <font key="font" metaFont="systemBold"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -1560,7 +1571,7 @@
                                             <rect key="frame" x="319" y="1569" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cKq-CO-v4Z">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="label" size="11"/>
+                                                <font key="font" metaFont="message" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_illumIdentityButtonAction:" target="Voe-Tx-rLC" id="2kN-Yb-ZXe"/>
@@ -1605,6 +1616,7 @@
                                         <constraint firstItem="xlP-aa-4HM" firstAttribute="centerY" secondItem="Shi-kw-rTa" secondAttribute="centerY" id="53h-7j-0se"/>
                                         <constraint firstAttribute="trailing" secondItem="9qd-8Y-gEI" secondAttribute="trailing" id="55q-Bc-aGW"/>
                                         <constraint firstItem="sHm-KX-87O" firstAttribute="leading" secondItem="Brp-Px-E6d" secondAttribute="trailing" constant="20" id="68U-Sn-tef"/>
+                                        <constraint firstItem="mh2-nt-YqH" firstAttribute="top" secondItem="XjO-wo-Wvg" secondAttribute="bottom" constant="12" id="6Ix-oG-yFI"/>
                                         <constraint firstItem="Igu-Le-QYW" firstAttribute="top" secondItem="Vqb-ms-1bB" secondAttribute="bottom" constant="12" id="6kS-SD-J0E"/>
                                         <constraint firstItem="x4z-0U-eCW" firstAttribute="width" secondItem="ojQ-A0-d2a" secondAttribute="width" id="6pq-eN-6n4"/>
                                         <constraint firstItem="NSW-Ho-NVP" firstAttribute="top" secondItem="k5K-pT-L2W" secondAttribute="bottom" constant="20" id="6sC-y0-b61"/>
@@ -1617,6 +1629,7 @@
                                         <constraint firstAttribute="trailing" secondItem="OZV-YJ-T1U" secondAttribute="trailing" constant="20" id="8jg-TD-nca"/>
                                         <constraint firstItem="9BP-nP-E8G" firstAttribute="top" secondItem="3Dl-iZ-oiG" secondAttribute="bottom" constant="12" id="8nE-KD-X1P"/>
                                         <constraint firstItem="rvZ-kB-DXu" firstAttribute="top" secondItem="kbI-BK-MGm" secondAttribute="bottom" constant="12" id="90X-Lj-97y"/>
+                                        <constraint firstItem="XjO-wo-Wvg" firstAttribute="leading" secondItem="Htl-ND-O3N" secondAttribute="leading" constant="20" id="9Q6-1N-3ST"/>
                                         <constraint firstItem="gAk-uD-BoR" firstAttribute="top" secondItem="Igu-Le-QYW" secondAttribute="bottom" constant="12" id="9q9-gF-Hyh"/>
                                         <constraint firstAttribute="trailing" secondItem="2dC-Xf-ZpL" secondAttribute="trailing" constant="20" id="9qb-ym-hMi"/>
                                         <constraint firstItem="uMC-7O-8rq" firstAttribute="leading" secondItem="A1Z-Ls-8NL" secondAttribute="trailing" constant="20" id="9t6-as-ArW"/>
@@ -1778,7 +1791,6 @@
                                         <constraint firstItem="5n0-Jb-664" firstAttribute="leading" secondItem="uMC-7O-8rq" secondAttribute="trailing" constant="20" id="lvl-Qn-Ps5"/>
                                         <constraint firstAttribute="trailing" secondItem="8bN-2G-VLm" secondAttribute="trailing" constant="20" id="mUh-vt-VU1"/>
                                         <constraint firstItem="Vqb-ms-1bB" firstAttribute="top" secondItem="yGp-i8-JuX" secondAttribute="bottom" constant="12" id="meX-o3-hNW"/>
-                                        <constraint firstItem="mh2-nt-YqH" firstAttribute="top" secondItem="ktH-HS-6VN" secondAttribute="bottom" constant="12" id="nVw-Y9-hcF"/>
                                         <constraint firstItem="xoy-54-fme" firstAttribute="top" secondItem="1GV-0H-WTo" secondAttribute="bottom" constant="12" id="nYG-pJ-hbD"/>
                                         <constraint firstAttribute="trailing" secondItem="osY-3C-qNQ" secondAttribute="trailing" constant="20" id="nej-ym-Ta5"/>
                                         <constraint firstItem="sHm-KX-87O" firstAttribute="centerY" secondItem="x4z-0U-eCW" secondAttribute="centerY" id="nk5-y7-HgC"/>
@@ -1822,6 +1834,7 @@
                                         <constraint firstItem="2Wg-W3-cjt" firstAttribute="centerY" secondItem="2iy-ao-YZy" secondAttribute="centerY" id="w0L-ji-ZGr"/>
                                         <constraint firstAttribute="trailing" secondItem="LD1-EE-QUu" secondAttribute="trailing" constant="20" id="wA8-Mu-4re"/>
                                         <constraint firstItem="4lq-F3-K8B" firstAttribute="top" secondItem="wub-1q-B6M" secondAttribute="bottom" constant="12" id="wKR-GD-yRg"/>
+                                        <constraint firstItem="XjO-wo-Wvg" firstAttribute="top" secondItem="ktH-HS-6VN" secondAttribute="bottom" constant="12" id="wQG-fc-9Qf"/>
                                         <constraint firstItem="ktH-HS-6VN" firstAttribute="top" secondItem="48V-lI-UpB" secondAttribute="bottom" constant="12" id="wZe-kE-XZf"/>
                                         <constraint firstItem="2dC-Xf-ZpL" firstAttribute="leading" secondItem="k5K-pT-L2W" secondAttribute="trailing" constant="20" id="wcO-9m-Gca"/>
                                         <constraint firstItem="MO3-af-L9c" firstAttribute="top" secondItem="kjM-IQ-0EC" secondAttribute="bottom" constant="8" id="wdZ-fr-CJK"/>
@@ -1854,7 +1867,7 @@
                             <rect key="frame" x="0.0" y="1029" width="400" height="16"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="0.056074766355140193" horizontal="NO" id="9ve-T6-sMB">
+                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="0.051612903225806472" horizontal="NO" id="9ve-T6-sMB">
                             <rect key="frame" x="384" y="0.0" width="16" height="1045"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>

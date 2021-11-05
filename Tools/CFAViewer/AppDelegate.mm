@@ -43,6 +43,11 @@ static NSString* const ColorCheckerPositionsKey = @"ColorCheckerPositions";
 using ImagePaths = std::vector<fs::path>;
 using ImagePathsIter = ImagePaths::iterator;
 
+struct ExposureSettings {
+    bool autoExposure = false;
+    MDCDevice::ImgExposure exposure;
+};
+
 @interface AppDelegate : NSObject <NSApplicationDelegate, MainViewDelegate>
 @property(weak) IBOutlet NSWindow* window;
 @end
@@ -51,6 +56,8 @@ using ImagePathsIter = ImagePaths::iterator;
     IBOutlet MainView* _mainView;
     
     IBOutlet NSSwitch* _streamImagesSwitch;
+    
+    IBOutlet NSButton* _autoExposureCheckbox;
     
     IBOutlet NSSlider* _coarseIntegrationTimeSlider;
     IBOutlet NSTextField* _coarseIntegrationTimeLabel;
@@ -127,7 +134,7 @@ using ImagePathsIter = ImagePaths::iterator;
     IBOutlet NSSlider*      _highlightFactorB2Slider;
     IBOutlet NSTextField*   _highlightFactorB2Label;
     
-    MDCDevice::ImgExposure _imgExp;
+    ExposureSettings _exposureSettings;
     
     bool _colorCheckersEnabled;
     float _colorCheckerCircleRadius;
@@ -143,7 +150,7 @@ using ImagePathsIter = ImagePaths::iterator;
         std::condition_variable signal;
         bool running = false;
         bool cancel = false;
-        std::optional<MDCDevice::ImgExposure> exp;
+        ExposureSettings exposureSettings;
         Img::Pixel pixels[2200*2200];
         uint32_t width = Img::PixelWidth;
         uint32_t height = Img::PixelHeight;
@@ -213,7 +220,9 @@ using ImagePathsIter = ImagePaths::iterator;
         [_mainView setColorCheckerPositions:points];
     }
     
-    [self _setImageExposure:{}];
+    [self _setExposureSettings:{
+        .autoExposure = true,
+    }];
     [self _setMDCDevice:std::nullopt];
     
     [NSThread detachNewThreadWithBlock:^{
@@ -548,6 +557,10 @@ static void _configureDevice(MDCDevice& dev) {
     [[_mainView imageLayer] setNeedsDisplay];
 }
 
+static float intTimeClamp(float t) {
+    return std::clamp(t, 10.f, (float)Img::CoarseIntTimeMax);
+}
+
 - (void)_threadStreamImages {
     assert(_mdcDevice);
     MDCDevice& dev = *_mdcDevice;
@@ -569,14 +582,19 @@ static void _configureDevice(MDCDevice& dev) {
 //        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
 //        auto tmpPixels = std::make_unique<MDC::Pixel[]>(tmpPixelsCap);
         
-        std::optional<MDCDevice::ImgExposure> exp;
-//        uint32_t saveIdx = 1;
+        struct {
+            bool en = false;
+            float intTime = 1000;
+        } autoExposure;
+        
+        MDCDevice::ImgExposure exposure;
+        MDCDevice::ImgExposure lastExposure;
         for (uint32_t i=0;; i++) {
-            // Set the image exposure if the exposure changed
-            const bool setExp = exp.has_value();
-            if (exp) {
-                dev.imgSetExposure(*exp);
-                exp = std::nullopt;
+            // Set the image exposure if it changed
+            const bool setExp = memcmp(&exposure, &lastExposure, sizeof(exposure));
+            if (setExp) {
+                dev.imgSetExposure(exposure);
+                lastExposure = exposure;
                 printf("Set exposure\n");
 //                usleep(100000);
             }
@@ -601,12 +619,14 @@ static void _configureDevice(MDCDevice& dev) {
                 // Check if we've been cancelled
                 if (_streamImagesThread.cancel) break;
                 
-                // Copy the image into our persistent buffer
+                // Copy the image into the persistent buffer
                 memcpy(_streamImagesThread.pixels, img.get()+Img::HeaderLen, Img::PixelLen);
-                    
-                // While we have the lock, copy the exp that might be waiting
-                exp = _streamImagesThread.exp;
-                _streamImagesThread.exp = std::nullopt;
+                
+                // While we have the lock, copy the exposure settings
+                autoExposure.en = _streamImagesThread.exposureSettings.autoExposure;
+                if (!autoExposure.en) {
+                    exposure = _streamImagesThread.exposureSettings.exposure;
+                }
             }
             
             // Invoke -_handleStreamImage on the main thread.
@@ -617,7 +637,6 @@ static void _configureDevice(MDCDevice& dev) {
                 [weakSelf _handleStreamImage];
             });
             CFRunLoopWakeUp(CFRunLoopGetMain());
-            
             
 //            if (!(i % 10)) {
 //                NSString* imagePath = [dirPath stringByAppendingPathComponent:[NSString
@@ -630,73 +649,110 @@ static void _configureDevice(MDCDevice& dev) {
 //                printf("Saved %s\n", [imagePath UTF8String]);
 //            }
             
-            // Adjust exposure
-            const uint32_t highlightCount = imgStats.highlightCount*Img::StatsSubsampleFactor;
-            const uint32_t shadowCount = imgStats.shadowCount*Img::StatsSubsampleFactor;
-            const float highlightFraction = (float)highlightCount/Img::PixelCount;
-            const float shadowFraction = (float)shadowCount/Img::PixelCount;
-            printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
-            
-//            const float diff = shadowFraction-highlightFraction;
-//            const float absdiff = fabs(diff);
-//            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
-//            
-//            if (absdiff > .01) {
-//                bool updateIntTime = false;
-//                if (shadowFraction > highlightFraction) {
+            // Perform auto exposure
+            if (autoExposure.en) {
+                const uint32_t highlightCount = imgStats.highlightCount*Img::StatsSubsampleFactor;
+                const uint32_t shadowCount = imgStats.shadowCount*Img::StatsSubsampleFactor;
+                const float highlightFraction = (float)std::max((uint32_t)1,highlightCount)/Img::PixelCount;
+                const float shadowFraction = (float)std::max((uint32_t)1,shadowCount)/Img::PixelCount;
+                printf("Highlight fraction: %f\nShadow fraction: %f\n\n", highlightFraction, shadowFraction);
+//                printf("H/L: %f\n\n", highlightFraction/shadowFraction);
+                
+                CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
+                    [weakSelf _updateAutoExposureUI:exposure];
+                });
+                CFRunLoopWakeUp(CFRunLoopGetMain());
+                
+                constexpr float ShadowThreshold = 2;
+                constexpr float HighlightThreshold = 10;
+                constexpr float LogBase = 8192;
+                const float shadowBalance = shadowFraction/highlightFraction;
+                const float highlightBalance = highlightFraction/shadowFraction;
+                
+                if (shadowBalance >= ShadowThreshold) {
+                    // Increase exposure
+                    const float adjustment = 1.f+(std::log(shadowBalance)/std::log(LogBase));
+//                    const float adjustment = std::clamp(std::log10(shadowBalance), 1.01f, 2.f);
+                    printf("Increase exposure (balance: %f, adjustment: %f)\n", shadowBalance, adjustment);
+                    autoExposure.intTime *= adjustment;
+                    
+                } else if (highlightBalance >= HighlightThreshold) {
+//                    printf("Balance: %f\n\n", highlightBalance);
+                    
+                    // Decrease exposure
+                    const float adjustment = 1.f+(std::log(highlightBalance)/std::log(LogBase));
+//                    const float adjustment = std::clamp(std::log10(highlightBalance), 1.01f, 2.f);
+                    printf("Decrease exposure (balance: %f, adjustment: %f)\n", highlightBalance, adjustment);
+                    autoExposure.intTime /= adjustment;
+                }
+                
+                autoExposure.intTime = std::clamp(autoExposure.intTime, 10.f, (float)Img::CoarseIntTimeMax);
+                exposure.coarseIntTime = std::round(autoExposure.intTime);
+                
+    //            const float diff = shadowFraction-highlightFraction;
+    //            const float absdiff = fabs(diff);
+    //            const float adjust = 1.+((diff>0?1:-1)*pow(absdiff, .6));
+    //            
+    //            if (absdiff > .01) {
+    //                bool updateIntTime = false;
+    //                if (shadowFraction > highlightFraction) {
+    //                    // Increase exposure
+    //                    intTime *= adjust;
+    //                    updateIntTime = true;
+    //                
+    //                } else if (highlightFraction > shadowFraction) {
+    //                    // Decrease exposure
+    //                    intTime *= adjust;
+    //                    updateIntTime = true;
+    //                }
+    //                
+    //                intTime = std::clamp(intTime, 0.001f, 1.f);
+    //                const float gain = intTime/3;
+    //                
+    //                printf("adjust:%f\n"
+    //                       "shadowFraction:%f\n"
+    //                       "highlightFraction:%f\n"
+    //                       "intTime: %f\n\n",
+    //                       adjust,
+    //                       shadowFraction,
+    //                       highlightFraction,
+    //                       intTime
+    //                );
+    //                
+    //                if (updateIntTime) {
+    //                    mdc.pixI2CWrite(0x3012, intTime*16384);
+    //                    mdc.pixI2CWrite(0x3060, gain*63);
+    //                }
+    //            }
+                
+                
+                
+//                const float ShadowAdjustThreshold = 0.1;
+//                const float HighlightAdjustThreshold = 0.1;
+//                const float AdjustDelta = 1.1;
+//                if (shadowFraction > ShadowAdjustThreshold) {
 //                    // Increase exposure
-//                    intTime *= adjust;
-//                    updateIntTime = true;
+//                    float intTime = intTimeClamp(exposure.coarseIntTime);
+//                    intTime *= AdjustDelta;
+//                    intTime = intTimeClamp(intTime);
+//                    exposure.coarseIntTime = std::round(intTime);
+//                    
+//                    
+//                    std::clamp(t, 10.f, (float)Img::CoarseIntTimeMax);
 //                
-//                } else if (highlightFraction > shadowFraction) {
+//                } else if (highlightFraction > HighlightAdjustThreshold) {
 //                    // Decrease exposure
-//                    intTime *= adjust;
-//                    updateIntTime = true;
+//                    exposure.coarseIntTime = std::max(10.f, (float)exposure.coarseIntTime)/AdjustDelta;
 //                }
 //                
-//                intTime = std::clamp(intTime, 0.001f, 1.f);
+//                intTime = std::clamp(intTime, 0.f, 1.f);
 //                const float gain = intTime/3;
 //                
-//                printf("adjust:%f\n"
-//                       "shadowFraction:%f\n"
-//                       "highlightFraction:%f\n"
-//                       "intTime: %f\n\n",
-//                       adjust,
-//                       shadowFraction,
-//                       highlightFraction,
-//                       intTime
-//                );
-//                
 //                if (updateIntTime) {
-//                    mdc.pixI2CWrite(0x3012, intTime*16384);
-//                    mdc.pixI2CWrite(0x3060, gain*63);
+//                    device.pixI2CWrite(0x3012, intTime*16384);
+//                    device.pixI2CWrite(0x3060, gain*63);
 //                }
-//            }
-            
-            
-            
-//            const float ShadowAdjustThreshold = 0.1;
-//            const float HighlightAdjustThreshold = 0.1;
-//            const float AdjustDelta = 1.1;
-//            bool updateIntTime = false;
-//            if (shadowFraction > ShadowAdjustThreshold) {
-//                // Increase exposure
-//                intTime *= AdjustDelta;
-//                updateIntTime = true;
-//            
-//            } else if (highlightFraction > HighlightAdjustThreshold) {
-//                // Decrease exposure
-//                intTime /= AdjustDelta;
-//                updateIntTime = true;
-//            }
-//            
-//            intTime = std::clamp(intTime, 0.f, 1.f);
-//            const float gain = intTime/3;
-//            
-//            if (updateIntTime) {
-//                device.pixI2CWrite(0x3012, intTime*16384);
-//                device.pixI2CWrite(0x3060, gain*63);
-//            }
+            }
         }
     
     } catch (const std::exception& e) {
@@ -980,10 +1036,13 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 }
 
 - (IBAction)_streamSettingsAction:(id)sender {
-    [self _setImageExposure:{
-        .coarseIntTime  = (uint16_t)([_coarseIntegrationTimeSlider doubleValue] * Img::CoarseIntTimeMax),
-        .fineIntTime    = (uint16_t)([_fineIntegrationTimeSlider doubleValue]   * Img::FineIntTimeMax),
-        .analogGain     = (uint16_t)([_analogGainSlider doubleValue]            * Img::AnalogGainMax),
+    [self _setExposureSettings:{
+        .autoExposure = [_autoExposureCheckbox state]==NSControlStateValueOn,
+        .exposure = {
+            .coarseIntTime  = (uint16_t)([_coarseIntegrationTimeSlider doubleValue] * Img::CoarseIntTimeMax),
+            .fineIntTime    = (uint16_t)([_fineIntegrationTimeSlider doubleValue]   * Img::FineIntTimeMax),
+            .analogGain     = (uint16_t)([_analogGainSlider doubleValue]            * Img::AnalogGainMax),
+        },
     }];
     
 //    _imgExp.coarseIntTime = [_coarseIntegrationTimeSlider doubleValue]*65535;
@@ -994,24 +1053,37 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 //    _streamImagesThread.exp = _imgExp;
 }
 
-
-- (void)_setImageExposure:(const MDCDevice::ImgExposure&)exp {
-    _imgExp = exp;
+- (void)_setExposureSettings:(const ExposureSettings&)settings {
+    _exposureSettings = settings;
+    
+    [_autoExposureCheckbox setState:(_exposureSettings.autoExposure ? NSControlStateValueOn : NSControlStateValueOff)];
     
     [_coarseIntegrationTimeSlider setDoubleValue:
-        (double)exp.coarseIntTime/Img::CoarseIntTimeMax];
-    [_coarseIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)exp.coarseIntTime]];
+        (double)settings.exposure.coarseIntTime/Img::CoarseIntTimeMax];
+    [_coarseIntegrationTimeSlider setEnabled:!_exposureSettings.autoExposure];
+    [_coarseIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)settings.exposure.coarseIntTime]];
     
     [_fineIntegrationTimeSlider setDoubleValue:
-        (double)exp.fineIntTime/Img::FineIntTimeMax];
-    [_fineIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)exp.fineIntTime]];
+        (double)settings.exposure.fineIntTime/Img::FineIntTimeMax];
+    [_fineIntegrationTimeSlider setEnabled:!_exposureSettings.autoExposure];
+    [_fineIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)settings.exposure.fineIntTime]];
     
     [_analogGainSlider setDoubleValue:
-        (double)exp.analogGain/Img::AnalogGainMax];
-    [_analogGainLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)exp.analogGain]];
+        (double)settings.exposure.analogGain/Img::AnalogGainMax];
+    [_analogGainSlider setEnabled:!_exposureSettings.autoExposure];
+    [_analogGainLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)settings.exposure.analogGain]];
     
     auto lock = std::unique_lock(_streamImagesThread.lock);
-    _streamImagesThread.exp = _imgExp;
+    _streamImagesThread.exposureSettings = _exposureSettings;
+}
+
+- (void)_updateAutoExposureUI:(const MDCDevice::ImgExposure&)exposure {
+    // Bail if auto exposure is disabled
+    if (!_exposureSettings.autoExposure) return;
+    [self _setExposureSettings:{
+        .autoExposure = _exposureSettings.autoExposure,
+        .exposure = exposure,
+    }];
 }
 
 //- (void)_setCoarseIntegrationTime:(double)intTime {
