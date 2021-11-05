@@ -34,7 +34,7 @@ args=(
     --package                   "$pkg"
     --json                      "$rootDir/$proj/Synth/Top.json"
     --pcf                       "$rootDir/Pins.pcf"
-    --randomize-seed
+    # --randomize-seed
     --pcf-allow-unconstrained
     
     # --placer-heap-alpha         0.4
@@ -58,12 +58,8 @@ args=(
     
     --placer-heap-alpha         0.025
     --placer-heap-beta          0.5
-    --placer-heap-critexp       3
+    --placer-heap-critexp       1
     --placer-heap-timingweight  16
-
-
-
-
 )
 
 if [ ! -z "$outputASCFilePath" ]; then
