@@ -13,18 +13,21 @@ public:
         
         constexpr int32_t ShadowThreshold       = 2;
         constexpr int32_t HighlightThreshold    = 8;
+        constexpr int32_t QuantumDenom          = 16;
         
-        if ((shadows >= ShadowThreshold*highlights) ||
-            (highlights >= HighlightThreshold*shadows)) {
-            
-            constexpr int32_t QuantumDenom = 2;
-            const int32_t quantum = _tint / QuantumDenom;
-            const int32_t adjMin = std::min((int32_t)-16, -_tint/2);
-            const int32_t adjMax = std::max((int32_t)16, (Img::CoarseIntTimeMax-_tint)/2);
-            const int32_t adj = std::clamp((_Log2(shadows)-_Log2(highlights))*quantum, adjMin, adjMax);
-            
+        if (shadows >= ShadowThreshold*highlights) {
+            const int32_t quantum = (Img::CoarseIntTimeMax - _tint) / QuantumDenom;
+            const int32_t adj = (_Log2(shadows)-_Log2(highlights))*quantum;
             _tint += adj;
-            printf("Adjust exposure (adj=%jd range=[%jd %jd] %s)\n", (intmax_t)adj, (intmax_t)adjMin, (intmax_t)adjMax, (adj==adjMin || adj==adjMax ? "### MAXXED ###" : ""));
+            
+            printf("Increase exposure (adj=%jd)\n", (intmax_t)adj);
+        
+        } else if (highlights >= HighlightThreshold*shadows) {
+            const int32_t quantum = (_tint - 0) / QuantumDenom;
+            const int32_t adj = (_Log2(highlights)-_Log2(shadows))*quantum;
+            _tint -= adj;
+            
+            printf("Decrease exposure (adj=%jd)\n", (intmax_t)adj);
         }
         
         _tint = std::clamp(_tint, (int32_t)1, (int32_t)Img::CoarseIntTimeMax);
