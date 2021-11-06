@@ -557,8 +557,10 @@ static void _configureDevice(MDCDevice& dev) {
     [[_mainView imageLayer] setNeedsDisplay];
 }
 
-static float intTimeClamp(float t) {
-    return std::clamp(t, 10.f, (float)Img::CoarseIntTimeMax);
+template <typename I>
+static I Log2(I x) {
+    if (x == 0) return 0;
+    return flsll(x)-1;
 }
 
 - (void)_threadStreamImages {
@@ -660,22 +662,24 @@ static float intTimeClamp(float t) {
                 CFRunLoopWakeUp(CFRunLoopGetMain());
                 
                 constexpr uint32_t ShadowThreshold      = 2;
-                constexpr uint32_t HighlightThreshold   = 2;
-                constexpr uint32_t LogDenom             = 4;
+                constexpr uint32_t HighlightThreshold   = 8;
+                constexpr uint32_t QuantumDenom         = 4;
                 
                 if (shadowCount >= ShadowThreshold*highlightCount) {
                     // Increase exposure
-                    const uint32_t adjMax = autoExposure.intTime + autoExposure.intTime/2;
-                    const uint32_t adj = ((std::log((float)shadowCount) - std::log((float)highlightCount))/LogDenom) * autoExposure.intTime;
-                    autoExposure.intTime += std::min(adjMax, adj);
+                    const uint32_t adjMax = 3*autoExposure.intTime/2;
+                    const uint32_t adj = Log2(shadowCount)-Log2(highlightCount);
+                    const uint32_t quantum = autoExposure.intTime / QuantumDenom;
+                    autoExposure.intTime += std::min(adjMax, quantum*adj);
                     
                     printf("Increase exposure (adjustment: %ju)\n", (uintmax_t)adj);
                     
                 } else if (highlightCount >= HighlightThreshold*shadowCount) {
                     // Decrease exposure
                     const uint32_t adjMax = autoExposure.intTime/2;
-                    const uint32_t adj = ((std::log((float)highlightCount) - std::log((float)shadowCount))/LogDenom) * autoExposure.intTime;
-                    autoExposure.intTime -= std::min(adjMax, adj);
+                    const uint32_t adj = Log2(highlightCount)-Log2(shadowCount);
+                    const uint32_t quantum = autoExposure.intTime / QuantumDenom;
+                    autoExposure.intTime -= std::min(adjMax, quantum*adj);
                     
                     printf("Decrease exposure (adjustment: %ju)\n", (uintmax_t)adj);
                 }
