@@ -666,7 +666,8 @@ static float intTimeClamp(float t) {
                 if (shadowCount >= ShadowThreshold*highlightCount) {
                     // Increase exposure
                     const uint32_t shadowBalance = shadowCount / highlightCount;
-                    const uint32_t adjustment = std::min(1.5f, (std::log((float)shadowBalance)/LogDenom)) * autoExposure.intTime;
+                    const uint32_t adjustmentMax = autoExposure.intTime + autoExposure.intTime/2;
+                    const uint32_t adjustment = std::min(adjustmentMax, (uint32_t)((std::log((float)shadowBalance)/LogDenom) * autoExposure.intTime));
                     autoExposure.intTime += adjustment;
                     
                     printf("Increase exposure (balance: %ju, adjustment: %ju)\n", (uintmax_t)shadowBalance, (uintmax_t)adjustment);
@@ -674,7 +675,8 @@ static float intTimeClamp(float t) {
                 } else if (highlightCount >= HighlightThreshold*shadowCount) {
                     // Decrease exposure
                     const uint32_t highlightBalance = highlightCount / shadowCount;
-                    const uint32_t adjustment = std::min(.5f, (std::log((float)highlightBalance)/LogDenom)) * autoExposure.intTime;
+                    const uint32_t adjustmentMax = autoExposure.intTime/2;
+                    const uint32_t adjustment = std::min(adjustmentMax, (uint32_t)((std::log((float)highlightBalance)/LogDenom) * autoExposure.intTime));
                     autoExposure.intTime -= adjustment;
                     
                     printf("Decrease exposure (balance: %ju, adjustment: %ju)\n", (uintmax_t)highlightBalance, (uintmax_t)adjustment);
