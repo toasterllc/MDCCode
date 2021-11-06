@@ -665,21 +665,19 @@ static float intTimeClamp(float t) {
                 
                 if (shadowCount >= ShadowThreshold*highlightCount) {
                     // Increase exposure
-                    const uint32_t shadowBalance = shadowCount / highlightCount;
-                    const uint32_t adjustmentMax = autoExposure.intTime + autoExposure.intTime/2;
-                    const uint32_t adjustment = std::min(adjustmentMax, (uint32_t)((std::log((float)shadowBalance)/LogDenom) * autoExposure.intTime));
-                    autoExposure.intTime += adjustment;
+                    const uint32_t adjMax = autoExposure.intTime + autoExposure.intTime/2;
+                    const uint32_t adj = ((std::log((float)shadowCount) - std::log((float)highlightCount))/LogDenom) * autoExposure.intTime;
+                    autoExposure.intTime += std::min(adjMax, adj);
                     
-                    printf("Increase exposure (balance: %ju, adjustment: %ju)\n", (uintmax_t)shadowBalance, (uintmax_t)adjustment);
+                    printf("Increase exposure (adjustment: %ju)\n", (uintmax_t)adj);
                     
                 } else if (highlightCount >= HighlightThreshold*shadowCount) {
                     // Decrease exposure
-                    const uint32_t highlightBalance = highlightCount / shadowCount;
-                    const uint32_t adjustmentMax = autoExposure.intTime/2;
-                    const uint32_t adjustment = std::min(adjustmentMax, (uint32_t)((std::log((float)highlightBalance)/LogDenom) * autoExposure.intTime));
-                    autoExposure.intTime -= adjustment;
+                    const uint32_t adjMax = autoExposure.intTime/2;
+                    const uint32_t adj = ((std::log((float)highlightCount) - std::log((float)shadowCount))/LogDenom) * autoExposure.intTime;
+                    autoExposure.intTime -= std::min(adjMax, adj);
                     
-                    printf("Decrease exposure (balance: %ju, adjustment: %ju)\n", (uintmax_t)highlightBalance, (uintmax_t)adjustment);
+                    printf("Decrease exposure (adjustment: %ju)\n", (uintmax_t)adj);
                 }
                 
                 autoExposure.intTime = std::clamp(autoExposure.intTime, 10.f, (float)Img::CoarseIntTimeMax);
