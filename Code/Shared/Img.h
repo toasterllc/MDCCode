@@ -35,7 +35,7 @@ namespace Img {
     constexpr uint32_t ChecksumOffset   = Len-ChecksumLen;
     
     // StatsSubsampleFactor: We only sample 1/16 of pixels for highlights/shadows
-    const uint32_t StatsSubsampleFactor = 16;
+    const uint16_t StatsSubsampleFactor = 16;
     
     const uint16_t CoarseIntTimeMax     = 16383;
     const uint16_t FineIntTimeMax       = 16383;
