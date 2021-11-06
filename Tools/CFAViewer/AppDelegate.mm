@@ -665,22 +665,21 @@ static I Log2(I x) {
                 constexpr int32_t HighlightThreshold    = 8;
                 constexpr int32_t QuantumDenom          = 4;
                 const int32_t quantum = autoExposure.intTime / QuantumDenom;
+                const int32_t adj = Log2(shadowCount)-Log2(highlightCount);
                 
                 if (shadowCount >= ShadowThreshold*highlightCount) {
                     // Increase exposure
                     const int32_t adjMax = 3*autoExposure.intTime/2;
-                    const int32_t adj = Log2(shadowCount)-Log2(highlightCount);
-                    autoExposure.intTime += std::min(adjMax, quantum*adj);
+                    autoExposure.intTime += std::min(adjMax, adj*quantum);
                     
-                    printf("Increase exposure (adjustment: %ju)\n", (uintmax_t)adj);
+                    printf("Increase exposure (adjustment: %jd)\n", (intmax_t)adj);
                     
                 } else if (highlightCount >= HighlightThreshold*shadowCount) {
                     // Decrease exposure
-                    const int32_t adjMax = autoExposure.intTime/2;
-                    const int32_t adj = Log2(highlightCount)-Log2(shadowCount);
-                    autoExposure.intTime -= std::min(adjMax, quantum*adj);
+                    const int32_t adjMax = -autoExposure.intTime/2;
+                    autoExposure.intTime += std::max(adjMax, adj*quantum);
                     
-                    printf("Decrease exposure (adjustment: %ju)\n", (uintmax_t)adj);
+                    printf("Decrease exposure (adjustment: %jd)\n", (intmax_t)adj);
                 }
                 
                 autoExposure.intTime = std::clamp(autoExposure.intTime, 10.f, (float)Img::CoarseIntTimeMax);
