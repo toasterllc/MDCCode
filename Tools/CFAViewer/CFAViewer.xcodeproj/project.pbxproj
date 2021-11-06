@@ -70,6 +70,7 @@
 		556E45FF26B13CBD006681FA /* SendRight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		556E460126B1562F006681FA /* Uniqued.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Uniqued.h; sourceTree = "<group>"; };
 		558328AF25FE15E800730B6A /* Defringe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defringe.h; sourceTree = "<group>"; };
+		5588910D2736258A0004458F /* ImgAutoExposure.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgAutoExposure.h; sourceTree = "<group>"; };
 		559C33D02613C111001903FD /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
 		559C33D12613C111001903FD /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		559C33E826165B4C001903FD /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
@@ -285,6 +286,7 @@
 				55D0820F27092A8200B9BB97 /* Assert.h */,
 				55D08211270BACA600B9BB97 /* ChecksumFletcher32.h */,
 				55B66B4327168D5D00AD39A5 /* Img.h */,
+				5588910D2736258A0004458F /* ImgAutoExposure.h */,
 				55B66B482717696B00AD39A5 /* STM.h */,
 			);
 			name = Shared;
