@@ -6,6 +6,7 @@
 #include "SDCard.h"
 #include "ICE.h"
 #include "ImgSensor.h"
+#include "ImgAutoExposure.h"
 
 constexpr uint64_t MCLKFreqHz = 16000000;
 
@@ -231,6 +232,8 @@ void Img::Sensor::SetPowerEnabled(bool en) {
 }
 
 #pragma mark - Main
+
+Img::AutoExposure _imgAutoExp;
 
 int main() {
     // Init system (clock, pins, etc)
