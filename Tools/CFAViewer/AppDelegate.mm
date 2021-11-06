@@ -676,8 +676,8 @@ static I Log2(I x) {
                     
                 } else if (highlightCount >= HighlightThreshold*shadowCount) {
                     // Decrease exposure
-                    const int32_t adjMax = -autoExposure.intTime/2;
-                    autoExposure.intTime += std::max(adjMax, adj*quantum);
+                    const int32_t adjMax = autoExposure.intTime/2;
+                    autoExposure.intTime -= std::min(adjMax, -adj*quantum);
                     
                     printf("Decrease exposure (adjustment: %jd)\n", (intmax_t)adj);
                 }
