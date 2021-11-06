@@ -29,6 +29,7 @@
 #import "ImagePipelineManager.h"
 #import "PixelSampler.h"
 #import "Img.h"
+#import "ImgAutoExposure.h"
 #import "ChecksumFletcher32.h"
 #import "ELF32Binary.h"
 using namespace CFAViewer;
@@ -44,7 +45,7 @@ using ImagePaths = std::vector<fs::path>;
 using ImagePathsIter = ImagePaths::iterator;
 
 struct ExposureSettings {
-    bool autoExposure = false;
+    bool autoExposureEnabled = false;
     MDCDevice::ImgExposure exposure;
 };
 
@@ -221,7 +222,7 @@ struct ExposureSettings {
     }
     
     [self _setExposureSettings:{
-        .autoExposure = true,
+        .autoExposureEnabled = true,
     }];
     [self _setMDCDevice:std::nullopt];
     
@@ -584,10 +585,7 @@ static I Log2(I x) {
 //        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
 //        auto tmpPixels = std::make_unique<MDC::Pixel[]>(tmpPixelsCap);
         
-        struct {
-            bool en = false;
-            uint16_t intTime = 1000;
-        } autoExposure;
+        std::optional<Img::AutoExposure> autoExp;
         
         MDCDevice::ImgExposure exposure;
         MDCDevice::ImgExposure lastExposure;
@@ -625,8 +623,13 @@ static I Log2(I x) {
                 memcpy(_streamImagesThread.pixels, img.get()+Img::HeaderLen, Img::PixelLen);
                 
                 // While we have the lock, copy the exposure settings
-                autoExposure.en = _streamImagesThread.exposureSettings.autoExposure;
-                if (!autoExposure.en) {
+                if (_streamImagesThread.exposureSettings.autoExposureEnabled && !autoExp) {
+                    autoExp.emplace();
+                } else if (!_streamImagesThread.exposureSettings.autoExposureEnabled && autoExp) {
+                    autoExp = std::nullopt;
+                }
+                
+                if (!autoExp) {
                     exposure = _streamImagesThread.exposureSettings.exposure;
                 }
             }
@@ -652,38 +655,14 @@ static I Log2(I x) {
 //            }
             
             // Perform auto exposure
-            if (autoExposure.en) {
-                const int32_t highlightCount = std::max((int32_t)128, (int32_t)(imgStats.highlightCount*Img::StatsSubsampleFactor));
-                const int32_t shadowCount = std::max((int32_t)128, (int32_t)(imgStats.shadowCount*Img::StatsSubsampleFactor));
+            if (autoExp) {
+                autoExp->update(imgStats.highlightCount, imgStats.shadowCount);
+                exposure.coarseIntTime = autoExp->integrationTime();
                 
                 CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
                     [weakSelf _updateAutoExposureUI:exposure];
                 });
                 CFRunLoopWakeUp(CFRunLoopGetMain());
-                
-                constexpr int32_t ShadowThreshold       = 2;
-                constexpr int32_t HighlightThreshold    = 8;
-                constexpr int32_t QuantumDenom          = 4;
-                const int32_t quantum = autoExposure.intTime / QuantumDenom;
-                const int32_t adj = Log2(shadowCount)-Log2(highlightCount);
-                
-                if (shadowCount >= ShadowThreshold*highlightCount) {
-                    // Increase exposure
-                    const int32_t adjMax = 3*autoExposure.intTime/2;
-                    autoExposure.intTime += std::min(adjMax, adj*quantum);
-                    
-                    printf("Increase exposure (adjustment: %jd)\n", (intmax_t)adj);
-                    
-                } else if (highlightCount >= HighlightThreshold*shadowCount) {
-                    // Decrease exposure
-                    const int32_t adjMax = autoExposure.intTime/2;
-                    autoExposure.intTime -= std::min(adjMax, -adj*quantum);
-                    
-                    printf("Decrease exposure (adjustment: %jd)\n", (intmax_t)adj);
-                }
-                
-                autoExposure.intTime = std::clamp(autoExposure.intTime, (uint16_t)10, Img::CoarseIntTimeMax);
-                exposure.coarseIntTime = autoExposure.intTime;
             }
         }
     
@@ -969,7 +948,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 
 - (IBAction)_streamSettingsAction:(id)sender {
     [self _setExposureSettings:{
-        .autoExposure = [_autoExposureCheckbox state]==NSControlStateValueOn,
+        .autoExposureEnabled = [_autoExposureCheckbox state]==NSControlStateValueOn,
         .exposure = {
             .coarseIntTime  = (uint16_t)([_coarseIntegrationTimeSlider doubleValue] * Img::CoarseIntTimeMax),
             .fineIntTime    = (uint16_t)([_fineIntegrationTimeSlider doubleValue]   * Img::FineIntTimeMax),
@@ -988,21 +967,21 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 - (void)_setExposureSettings:(const ExposureSettings&)settings {
     _exposureSettings = settings;
     
-    [_autoExposureCheckbox setState:(_exposureSettings.autoExposure ? NSControlStateValueOn : NSControlStateValueOff)];
+    [_autoExposureCheckbox setState:(_exposureSettings.autoExposureEnabled ? NSControlStateValueOn : NSControlStateValueOff)];
     
     [_coarseIntegrationTimeSlider setDoubleValue:
         (double)settings.exposure.coarseIntTime/Img::CoarseIntTimeMax];
-    [_coarseIntegrationTimeSlider setEnabled:!_exposureSettings.autoExposure];
+    [_coarseIntegrationTimeSlider setEnabled:!_exposureSettings.autoExposureEnabled];
     [_coarseIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)settings.exposure.coarseIntTime]];
     
     [_fineIntegrationTimeSlider setDoubleValue:
         (double)settings.exposure.fineIntTime/Img::FineIntTimeMax];
-    [_fineIntegrationTimeSlider setEnabled:!_exposureSettings.autoExposure];
+    [_fineIntegrationTimeSlider setEnabled:!_exposureSettings.autoExposureEnabled];
     [_fineIntegrationTimeLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)settings.exposure.fineIntTime]];
     
     [_analogGainSlider setDoubleValue:
         (double)settings.exposure.analogGain/Img::AnalogGainMax];
-    [_analogGainSlider setEnabled:!_exposureSettings.autoExposure];
+    [_analogGainSlider setEnabled:!_exposureSettings.autoExposureEnabled];
     [_analogGainLabel setStringValue:[NSString stringWithFormat:@"%ju", (uintmax_t)settings.exposure.analogGain]];
     
     auto lock = std::unique_lock(_streamImagesThread.lock);
@@ -1011,9 +990,9 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 
 - (void)_updateAutoExposureUI:(const MDCDevice::ImgExposure&)exposure {
     // Bail if auto exposure is disabled
-    if (!_exposureSettings.autoExposure) return;
+    if (!_exposureSettings.autoExposureEnabled) return;
     [self _setExposureSettings:{
-        .autoExposure = _exposureSettings.autoExposure,
+        .autoExposureEnabled = _exposureSettings.autoExposureEnabled,
         .exposure = exposure,
     }];
 }
