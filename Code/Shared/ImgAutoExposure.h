@@ -8,39 +8,36 @@ namespace Img {
 class AutoExposure {
 public:
     void update(uint32_t highlightCount, uint32_t shadowCount) {
-        const int32_t highlights = std::max((int32_t)128, (int32_t)(highlightCount*Img::StatsSubsampleFactor));
-        const int32_t shadows = std::max((int32_t)128, (int32_t)(shadowCount*Img::StatsSubsampleFactor));
-        
         constexpr int32_t ShadowThreshold       = 2;
         constexpr int32_t HighlightThreshold    = 8;
         constexpr int32_t QuantumDenom          = 16;
         
+        const int32_t highlights = std::max((int32_t)128, (int32_t)(highlightCount*Img::StatsSubsampleFactor));
+        const int32_t shadows = std::max((int32_t)128, (int32_t)(shadowCount*Img::StatsSubsampleFactor));
+        
+        int32_t quantum = 0;
         if (shadows >= ShadowThreshold*highlights) {
-            const int32_t quantum = (Img::CoarseIntTimeMax - _tint) / QuantumDenom;
-            const int32_t adj = (_Log2(shadows)-_Log2(highlights))*quantum;
-            _tint += adj;
-            
-            printf("Increase exposure (adj=%jd)\n", (intmax_t)adj);
+            quantum = (Img::CoarseIntTimeMax - _tint) / QuantumDenom;
         
         } else if (highlights >= HighlightThreshold*shadows) {
-            const int32_t quantum = (_tint - 0) / QuantumDenom;
-            const int32_t adj = (_Log2(highlights)-_Log2(shadows))*quantum;
-            _tint -= adj;
-            
-            printf("Decrease exposure (adj=%jd)\n", (intmax_t)adj);
+            quantum = (_tint - 0) / QuantumDenom;
         }
         
-        _tint = std::clamp(_tint, (int32_t)1, (int32_t)Img::CoarseIntTimeMax);
+        const int32_t adj = ((int32_t)_Log2(shadows)-(int32_t)_Log2(highlights))*quantum;
+        if (adj) {
+            _tint += adj;
+            _tint = std::clamp(_tint, (int32_t)1, (int32_t)Img::CoarseIntTimeMax);
+            printf("Adjust exposure: %jd\n", (intmax_t)adj);
+        }
     }
     
     uint16_t integrationTime() const { return _tint; }
     
 private:
-    
-    template <typename I>
-    static I _Log2(I x) {
-        if (x == 0) return 0;
-        return flsll(x)-1;
+    static uint32_t _Log2(uint32_t x) {
+        uint32_t r = 0;
+        while (x >>= 1) r++;
+        return r;
     }
     
     int32_t _tint = 1024;
