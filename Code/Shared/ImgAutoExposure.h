@@ -26,8 +26,8 @@ public:
         const int32_t adj = ((int32_t)_Log2(shadows)-(int32_t)_Log2(highlights))*quantum;
         if (adj) {
             _tint += adj;
-            _tint = std::clamp(_tint, (int32_t)1, (int32_t)Img::CoarseIntTimeMax);
-            printf("Adjust exposure: %jd\n", (intmax_t)adj);
+            _tint = std::max((int32_t)1, std::min((int32_t)Img::CoarseIntTimeMax, _tint));
+            //printf("Adjust exposure: %jd\n", (intmax_t)adj);
         }
     }
     

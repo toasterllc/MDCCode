@@ -251,7 +251,14 @@ int main() {
         ICE::Transfer(ICE::LEDSetMsg(i));
         
         // Capture an image to RAM
-        ICE::ImgCapture(0, 0);
+        bool ok = false;
+        ICE::ImgCaptureStatusResp resp;
+        std::tie(ok, resp) = ICE::ImgCapture(0, 0);
+        Assert(ok);
+        
+        _imgAutoExp.update(resp.highlightCount(), resp.shadowCount());
+        Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+        
         // Write the image to the SD card
         _sd.writeImage(i);
         _sleepMs(1000);
