@@ -586,7 +586,7 @@ static I Log2(I x) {
         
         struct {
             bool en = false;
-            float intTime = 1000;
+            uint16_t intTime = 1000;
         } autoExposure;
         
         MDCDevice::ImgExposure exposure;
@@ -682,8 +682,8 @@ static I Log2(I x) {
                     printf("Decrease exposure (adjustment: %jd)\n", (intmax_t)adj);
                 }
                 
-                autoExposure.intTime = std::clamp(autoExposure.intTime, 10.f, (float)Img::CoarseIntTimeMax);
-                exposure.coarseIntTime = std::round(autoExposure.intTime);
+                autoExposure.intTime = std::clamp(autoExposure.intTime, (uint16_t)10, Img::CoarseIntTimeMax);
+                exposure.coarseIntTime = autoExposure.intTime;
             }
         }
     
