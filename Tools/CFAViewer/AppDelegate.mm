@@ -653,31 +653,31 @@ static I Log2(I x) {
             
             // Perform auto exposure
             if (autoExposure.en) {
-                const uint32_t highlightCount = std::max((uint32_t)128, imgStats.highlightCount*Img::StatsSubsampleFactor);
-                const uint32_t shadowCount = std::max((uint32_t)128, imgStats.shadowCount*Img::StatsSubsampleFactor);
+                const int32_t highlightCount = std::max((int32_t)128, (int32_t)(imgStats.highlightCount*Img::StatsSubsampleFactor));
+                const int32_t shadowCount = std::max((int32_t)128, (int32_t)(imgStats.shadowCount*Img::StatsSubsampleFactor));
                 
                 CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
                     [weakSelf _updateAutoExposureUI:exposure];
                 });
                 CFRunLoopWakeUp(CFRunLoopGetMain());
                 
-                constexpr uint32_t ShadowThreshold      = 2;
-                constexpr uint32_t HighlightThreshold   = 8;
-                constexpr uint32_t QuantumDenom         = 4;
-                const uint32_t quantum = autoExposure.intTime / QuantumDenom;
+                constexpr int32_t ShadowThreshold       = 2;
+                constexpr int32_t HighlightThreshold    = 8;
+                constexpr int32_t QuantumDenom          = 4;
+                const int32_t quantum = autoExposure.intTime / QuantumDenom;
                 
                 if (shadowCount >= ShadowThreshold*highlightCount) {
                     // Increase exposure
-                    const uint32_t adjMax = 3*autoExposure.intTime/2;
-                    const uint32_t adj = Log2(shadowCount)-Log2(highlightCount);
+                    const int32_t adjMax = 3*autoExposure.intTime/2;
+                    const int32_t adj = Log2(shadowCount)-Log2(highlightCount);
                     autoExposure.intTime += std::min(adjMax, quantum*adj);
                     
                     printf("Increase exposure (adjustment: %ju)\n", (uintmax_t)adj);
                     
                 } else if (highlightCount >= HighlightThreshold*shadowCount) {
                     // Decrease exposure
-                    const uint32_t adjMax = autoExposure.intTime/2;
-                    const uint32_t adj = Log2(highlightCount)-Log2(shadowCount);
+                    const int32_t adjMax = autoExposure.intTime/2;
+                    const int32_t adj = Log2(highlightCount)-Log2(shadowCount);
                     autoExposure.intTime -= std::min(adjMax, quantum*adj);
                     
                     printf("Decrease exposure (adjustment: %ju)\n", (uintmax_t)adj);
