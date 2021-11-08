@@ -250,14 +250,37 @@ int main() {
     for (int i=0; i<10; i++) {
         ICE::Transfer(ICE::LEDSetMsg(i));
         
-        // Capture an image to RAM
-        bool ok = false;
-        ICE::ImgCaptureStatusResp resp;
-        std::tie(ok, resp) = ICE::ImgCapture(0, 0);
-        Assert(ok);
-        
-        _imgAutoExp.update(resp.highlightCount(), resp.shadowCount());
-        Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+        // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
+        constexpr uint8_t CaptureAttemptCount = 3;
+        uint8_t bestExpBlock = 0;
+        uint8_t bestExpScore = 0;
+        for (uint8_t i=0; i<CaptureAttemptCount; i++) {
+            constexpr uint8_t SkipCount = 1;
+            const uint8_t block = !bestExpBlock; // Store images in the block belonging to the worst-exposed image captured so far
+            
+//            // skipCount:
+//            // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
+//            // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
+//            // image since the first image after setting the exposure is invalid.
+//            const uint8_t skipCount = (!i ? 0 : 1);
+            
+            // Capture an image to RAM
+            bool ok = false;
+            ICE::ImgCaptureStatusResp resp;
+            std::tie(ok, resp) = ICE::ImgCapture(block, SkipCount);
+            Assert(ok);
+            
+            _imgAutoExp.update(resp.highlightCount(), resp.shadowCount());
+            const uint8_t score = _imgAutoExp.score();
+            if (score > bestExpScore) {
+                bestExpBlock = block;
+                bestExpScore = score;
+            }
+            
+            // We're done if we don't have any exposure changes
+            if (!_imgAutoExp.changed()) break;
+            Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+        }
         
         // Write the image to the SD card
         _sd.writeImage(i);

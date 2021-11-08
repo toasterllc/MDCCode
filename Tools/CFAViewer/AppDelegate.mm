@@ -558,12 +558,6 @@ static void _configureDevice(MDCDevice& dev) {
     [[_mainView imageLayer] setNeedsDisplay];
 }
 
-template <typename I>
-static I Log2(I x) {
-    if (x == 0) return 0;
-    return flsll(x)-1;
-}
-
 - (void)_threadStreamImages {
     assert(_mdcDevice);
     MDCDevice& dev = *_mdcDevice;
@@ -657,7 +651,9 @@ static I Log2(I x) {
             // Perform auto exposure
             if (autoExp) {
                 autoExp->update(imgStats.highlightCount, imgStats.shadowCount);
-                exposure.coarseIntTime = autoExp->integrationTime();
+                if (autoExp->score() < 253) {
+                    exposure.coarseIntTime = autoExp->integrationTime();
+                }
                 
                 CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
                     [weakSelf _updateAutoExposureUI:exposure];
