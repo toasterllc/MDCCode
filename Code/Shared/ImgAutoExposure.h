@@ -10,18 +10,18 @@ public:
     static constexpr uint8_t ScoreBest = 0xFF;
     
     uint8_t update(uint32_t highlightCount, uint32_t shadowCount) {
-        constexpr int8_t DeltaThreshold = 2;
+        constexpr int8_t AdjustThreshold = 3;
         const int32_t highlights = std::max((int32_t)1024, (int32_t)(highlightCount*Img::StatsSubsampleFactor));
         const int32_t shadows = std::max((int32_t)1024, (int32_t)(shadowCount*Img::StatsSubsampleFactor));
         const int8_t delta = _Log2(shadows)-_Log2(highlights);
         const uint16_t tprev = _t;
         
         int32_t quantum = 0;
-        if (delta > DeltaThreshold) {
-            constexpr int32_t QuantumDenom = 32;
+        if (delta > AdjustThreshold) {
+            constexpr int32_t QuantumDenom = 16;
             quantum = ((int32_t)Img::CoarseIntTimeMax - (int32_t)_t) / QuantumDenom;
         
-        } else if (delta < -DeltaThreshold) {
+        } else if (delta < -AdjustThreshold) {
             constexpr int32_t QuantumDenom = 16;
             quantum = ((int32_t)_t - 0) / QuantumDenom;
         }
