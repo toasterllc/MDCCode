@@ -1,9 +1,10 @@
 #include "System.h"
+#include <string.h>
+#include <algorithm>
 #include "Assert.h"
 #include "SystemClock.h"
 #include "Startup.h"
-#include <string.h>
-#include <algorithm>
+#include "Toastbox/IRQState.h"
 
 using namespace STM;
 
@@ -28,11 +29,11 @@ void System::init() {
 }
 
 void System::run() {
-    Task::Run(_tasks);
+    Toastbox::Task::Run(_tasks);
 }
 
 void System::_resetTasks() {
-    for (Task& t : _tasks) {
+    for (Toastbox::Task& t : _tasks) {
         if (&t == &_usb_cmdTask) continue; // Never pause the USB command task
         t.pause();
     }
@@ -48,7 +49,7 @@ void System::_usb_cmdTaskFn() {
         TaskWait(_usb.state()==USB::State::Connecting || _usb.cmdRecv());
         
         // Disable interrupts so we can inspect+modify _usb atomically
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         
         // Reset all tasks
         // This needs to happen before we call `_usb.connect()` so that any tasks that
@@ -577,14 +578,14 @@ bool System::_msp_debugHandleCmd(const MSPDebugCmd& cmd) {
 
 System Sys;
 
-bool IRQState::SetInterruptsEnabled(bool en) {
+bool Toastbox::IRQState::SetInterruptsEnabled(bool en) {
     const bool prevEn = !__get_PRIMASK();
     if (en) __enable_irq();
     else __disable_irq();
     return prevEn;
 }
 
-void IRQState::WaitForInterrupt() {
+void Toastbox::IRQState::WaitForInterrupt() {
     __WFI();
 }
 

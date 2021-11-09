@@ -8,6 +8,7 @@
 #include "ImgSensor.h"
 #include "ImgAutoExposure.h"
 #include "Toastbox/IRQState.h"
+using namespace Toastbox;
 
 constexpr uint64_t MCLKFreqHz = 16000000;
 
@@ -148,7 +149,7 @@ void _ISR_Port2() {
     switch (__even_in_range(P2IV, P2IV__P2IFG7)) {
     case P2IV__P2IFG5:
         // Wake ourself
-        __bic_SR_register_on_exit(LPM1_bits);
+        __bic_SR_register_on_exit(GIE | LPM1_bits);
         break;
     default:
         break;
@@ -276,85 +277,91 @@ bool IRQState::SetInterruptsEnabled(bool en) {
 #pragma mark - Main
 
 Img::AutoExposure _imgAutoExp;
+uint16_t _imgDstIdx = 0;
+
+static void _handleMotion() {
+    // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
+    constexpr uint8_t CaptureAttemptCount = 3;
+    uint8_t bestExpBlock = 0;
+    uint8_t bestExpScore = 0;
+    for (uint8_t i=0; i<CaptureAttemptCount; i++) {
+//            // skipCount:
+//            // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
+//            // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
+//            // image since the first image after setting the exposure is invalid.
+//            const uint8_t skipCount = (!i ? 0 : 1);
+        constexpr uint8_t SkipCount = 1;
+        
+        // expBlock: Store images in the block belonging to the worst-exposed image captured so far
+        const uint8_t expBlock = !bestExpBlock;
+        
+        // Capture an image to RAM
+        bool ok = false;
+        ICE::ImgCaptureStatusResp resp;
+        std::tie(ok, resp) = ICE::ImgCapture(expBlock, SkipCount);
+        Assert(ok);
+        
+        const uint8_t expScore = _imgAutoExp.update(resp.highlightCount(), resp.shadowCount());
+        if (!bestExpScore || (expScore > bestExpScore)) {
+            bestExpBlock = expBlock;
+            bestExpScore = expScore;
+        }
+        
+        // We're done if we don't have any exposure changes
+        if (!_imgAutoExp.changed()) break;
+        
+        // Update the exposure
+        Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+    }
+    
+    // Write the best-exposed image to the SD card
+    _sd.writeImage(bestExpBlock, _imgDstIdx);
+    _imgDstIdx++;
+
+    ICE::Transfer(ICE::LEDSetMsg(_imgDstIdx));
+}
 
 int main() {
     // Init system (clock, pins, etc)
     _sys_init();
     // Init ICE40
     ICE::Init();
+    
+//    ICE::Transfer(ICE::LEDSetMsg(0));
+    
     // Initialize image sensor
     Img::Sensor::Init();
+    
     // Initialize SD card
     _sd.init();
+    
     // Enable image streaming
     Img::Sensor::SetStreamEnabled(true);
     
-    // Set exposure to the last exposure that we used
+    // Set the initial exposure
     Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
     
-    for (uint8_t i=0;; i++) {
-        ICE::Transfer(ICE::LEDSetMsg(i));
-        P2IFG &= ~BIT5;
-        while (!(P2IFG & BIT5));
-        _sleepMs(500);
-    }
+//    ICE::Transfer(ICE::LEDSetMsg(~0));
     
-//    // Enable interrupts
-//    IRQState irq = IRQState::Enabled();
-//    
-//    for (;;) {
-//        // Go to sleep
-//        __bis_SR_register(LPM1_bits);
+//    for (uint8_t i=0;; i=~i) {
+//        // Go to sleep until we detect motion
+//        __bis_SR_register(GIE | LPM1_bits);
 //        
 //        // We woke up
-//        for (uint8_t i=0;; i++) {
-//            ICE::Transfer(ICE::LEDSetMsg(i));
-//        }
-//    }
-    
-//    for (int i=0; i<10; i++) {
 //        ICE::Transfer(ICE::LEDSetMsg(i));
 //        
-//        // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
-//        constexpr uint8_t CaptureAttemptCount = 3;
-//        uint8_t bestExpBlock = 0;
-//        uint8_t bestExpScore = 0;
-//        for (uint8_t i=0; i<CaptureAttemptCount; i++) {
-////            // skipCount:
-////            // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
-////            // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
-////            // image since the first image after setting the exposure is invalid.
-////            const uint8_t skipCount = (!i ? 0 : 1);
-//            constexpr uint8_t SkipCount = 1;
-//            
-//            // expBlock: Store images in the block belonging to the worst-exposed image captured so far
-//            const uint8_t expBlock = !bestExpBlock;
-//            
-//            // Capture an image to RAM
-//            bool ok = false;
-//            ICE::ImgCaptureStatusResp resp;
-//            std::tie(ok, resp) = ICE::ImgCapture(expBlock, SkipCount);
-//            Assert(ok);
-//            
-//            const uint8_t expScore = _imgAutoExp.update(resp.highlightCount(), resp.shadowCount());
-//            if (!bestExpScore || (expScore > bestExpScore)) {
-//                bestExpBlock = expBlock;
-//                bestExpScore = expScore;
-//            }
-//            
-//            // We're done if we don't have any exposure changes
-//            if (!_imgAutoExp.changed()) break;
-//            
-//            // Update the exposure
-//            Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
-//        }
-//        
-//        // Write the best-exposed image to the SD card
-//        _sd.writeImage(bestExpBlock, i);
 //        _sleepMs(500);
 //    }
-//    
-//    for (;;);
+    
+    for (uint16_t dstIdx = 0;; dstIdx++) {
+        // Go to sleep until we detect motion
+        __bis_SR_register(GIE | LPM1_bits);
+        
+        // We woke up
+        _handleMotion();
+    }
+    
+    for (;;);
     
     return 0;
 }

@@ -298,12 +298,15 @@ public:
     }
     
     void readStart(uint32_t addr) {
+        // Verify that `addr` is a multiple of the SD block length
+        AssertArg(!(addr % SD::BlockLen));
+        
         // ====================
         // CMD18 | READ_MULTIPLE_BLOCK
         //   State: Transfer -> Send Data
         //   Read blocks of data (1 block == 512 bytes)
         // ====================
-        auto status = ICE::SDSendCmd(_CMD18, addr, _RespType::Len48, _DatInType::Len4096xN);
+        auto status = ICE::SDSendCmd(_CMD18, addr/SD::BlockLen, _RespType::Len48, _DatInType::Len4096xN);
         Assert(!status.respCRCErr());
     }
     
@@ -315,6 +318,9 @@ public:
     // optimization. More data can be written than `lenEst`, but performance may suffer if the actual length
     // is longer than the estimate.
     void writeStart(uint32_t addr, uint32_t lenEst=0) {
+        // Verify that `addr` is a multiple of the SD block length
+        AssertArg(!(addr % SD::BlockLen));
+        
         // ====================
         // ACMD23 | SET_WR_BLK_ERASE_COUNT
         //   State: Transfer -> Transfer
@@ -343,7 +349,7 @@ public:
         //   Write blocks of data
         // ====================
         {
-            auto status = ICE::SDSendCmd(_CMD25, addr);
+            auto status = ICE::SDSendCmd(_CMD25, addr/SD::BlockLen);
             Assert(!status.respCRCErr());
         }
     }
@@ -352,10 +358,10 @@ public:
         _readWriteStop();
     }
     
-    void writeImage(uint8_t srcBlock, uint16_t idx) {
+    void writeImage(uint8_t srcBlock, uint16_t dstIdx) {
         // Confirm that Img::PaddedLen is a multiple of the SD block length
         static_assert((Img::PaddedLen % SD::BlockLen) == 0, "");
-        const uint32_t addr = idx*Img::PaddedLen;
+        const uint32_t addr = dstIdx*Img::PaddedLen;
         
         writeStart(addr, Img::Len);
         

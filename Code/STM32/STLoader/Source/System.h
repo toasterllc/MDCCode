@@ -75,20 +75,20 @@ private:
         } read;
     } _mspDebug;
     
-    Task _usb_cmdTask           = Task([&] {    _usb_cmdTaskFn();           });
-    Task _usb_dataOutTask       = Task([&] {    _usb_dataOutTaskFn();       });
-    Task _usb_dataInTask        = Task([&] {    _usb_dataInTaskFn();        });
-    Task _endpointsFlush_task   = Task([&] {    _endpointsFlush_taskFn();   });
-    Task _statusGet_task        = Task([&] {    _statusGet_taskFn();        });
-    Task _bootloaderInvoke_task = Task([&] {    _bootloaderInvoke_taskFn(); });
-    Task _stm_writeTask         = Task([&] {    _stm_writeTaskFn();         });
-    Task _stm_resetTask         = Task([&] {    _stm_resetTaskFn();         });
-    Task _ice_writeTask         = Task([&] {    _ice_writeTaskFn();         });
-    Task _msp_readTask          = Task([&] {    _msp_readTaskFn();          });
-    Task _msp_writeTask         = Task([&] {    _msp_writeTaskFn();         });
-    Task _msp_debugTask         = Task([&] {    _msp_debugTaskFn();         });
+    Toastbox::Task _usb_cmdTask             = Toastbox::Task([&] {  _usb_cmdTaskFn();           });
+    Toastbox::Task _usb_dataOutTask         = Toastbox::Task([&] {  _usb_dataOutTaskFn();       });
+    Toastbox::Task _usb_dataInTask          = Toastbox::Task([&] {  _usb_dataInTaskFn();        });
+    Toastbox::Task _endpointsFlush_task     = Toastbox::Task([&] {  _endpointsFlush_taskFn();   });
+    Toastbox::Task _statusGet_task          = Toastbox::Task([&] {  _statusGet_taskFn();        });
+    Toastbox::Task _bootloaderInvoke_task   = Toastbox::Task([&] {  _bootloaderInvoke_taskFn(); });
+    Toastbox::Task _stm_writeTask           = Toastbox::Task([&] {  _stm_writeTaskFn();         });
+    Toastbox::Task _stm_resetTask           = Toastbox::Task([&] {  _stm_resetTaskFn();         });
+    Toastbox::Task _ice_writeTask           = Toastbox::Task([&] {  _ice_writeTaskFn();         });
+    Toastbox::Task _msp_readTask            = Toastbox::Task([&] {  _msp_readTaskFn();          });
+    Toastbox::Task _msp_writeTask           = Toastbox::Task([&] {  _msp_writeTaskFn();         });
+    Toastbox::Task _msp_debugTask           = Toastbox::Task([&] {  _msp_debugTaskFn();         });
     
-    std::reference_wrapper<Task> _tasks[12] = {
+    std::reference_wrapper<Toastbox::Task> _tasks[12] = {
         _usb_cmdTask,
         _usb_dataOutTask,
         _usb_dataInTask,

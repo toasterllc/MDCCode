@@ -242,19 +242,19 @@ public:
     
     // Accessors
     State state() const {
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         return _state;
     }
     
     // Methods
     void connect() {
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         if (_state != State::Connecting) return; // Short-circuit if we're not Connecting
         _state = State::Connected;
     }
     
     void endpointReset(uint8_t ep) {
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         if (_state != State::Connected) return; // Short-circuit if we're not Connected
         
         if (EndpointOut(ep)) {
@@ -270,7 +270,7 @@ public:
     }
     
     bool endpointReady(uint8_t ep) {
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         if (_state != State::Connected) return false; // Short-circuit if we're not Connected
         
         if (EndpointOut(ep))    return _ready(_outEndpoint(ep));
@@ -278,13 +278,13 @@ public:
     }
     
     std::optional<Cmd> cmdRecv() {
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         if (_state != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
         return _cmd;
     }
     
     void cmdAccept(bool accept) {
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         if (_state != State::Connected) return; // Short-circuit if we're not Connected
         
         if (accept) USBD_CtlSendStatus(&_device);
@@ -296,7 +296,7 @@ public:
     void recv(uint8_t ep, void* data, size_t len) {
         AssertArg(EndpointOut(ep));
         
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         if (_state != State::Connected) return; // Short-circuit if we're not Connected
         
         _OutEndpoint& outep = _outEndpoint(ep);
@@ -310,7 +310,7 @@ public:
     size_t recvLen(uint8_t ep) const {
         AssertArg(EndpointOut(ep));
         
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         if (_state != State::Connected) return 0; // Short-circuit if we're not Connected
         return _recvLen(_outEndpoint(ep));
     }
@@ -318,7 +318,7 @@ public:
     void send(uint8_t ep, const void* data, size_t len) {
         AssertArg(EndpointIn(ep));
         
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         if (_state != State::Connected) return; // Short-circuit if we're not Connected
         
         _InEndpoint& inep = _inEndpoint(ep);

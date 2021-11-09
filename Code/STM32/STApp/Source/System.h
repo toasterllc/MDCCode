@@ -59,16 +59,16 @@ private:
     } _img;
     
     // Tasks
-    Task _usb_cmdTask           = Task([&] {    _usb_cmdTaskFn();           });
-    Task _usb_dataInTask        = Task([&] {    _usb_dataInTaskFn();        });
-    Task _endpointsFlush_task   = Task([&] {    _endpointsFlush_taskFn();   });
-    Task _statusGet_task        = Task([&] {    _statusGet_taskFn();        });
-    Task _bootloaderInvoke_task = Task([&] {    _bootloaderInvoke_taskFn(); });
-    Task _readout_task          = Task([&] {    _readout_taskFn();          });
-    Task _sd_readTask           = Task([&] {    _sd_readTaskFn();           });
-    Task _img_captureTask       = Task([&] {    _img_captureTaskFn();       });
+    Toastbox::Task _usb_cmdTask           = Toastbox::Task([&] {    _usb_cmdTaskFn();           });
+    Toastbox::Task _usb_dataInTask        = Toastbox::Task([&] {    _usb_dataInTaskFn();        });
+    Toastbox::Task _endpointsFlush_task   = Toastbox::Task([&] {    _endpointsFlush_taskFn();   });
+    Toastbox::Task _statusGet_task        = Toastbox::Task([&] {    _statusGet_taskFn();        });
+    Toastbox::Task _bootloaderInvoke_task = Toastbox::Task([&] {    _bootloaderInvoke_taskFn(); });
+    Toastbox::Task _readout_task          = Toastbox::Task([&] {    _readout_taskFn();          });
+    Toastbox::Task _sd_readTask           = Toastbox::Task([&] {    _sd_readTaskFn();           });
+    Toastbox::Task _img_captureTask       = Toastbox::Task([&] {    _img_captureTaskFn();       });
     
-    std::reference_wrapper<Task> _tasks[8] = {
+    std::reference_wrapper<Toastbox::Task> _tasks[8] = {
         _usb_cmdTask,
         _usb_dataInTask,
         _endpointsFlush_task,
