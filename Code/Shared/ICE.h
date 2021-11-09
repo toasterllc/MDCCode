@@ -291,25 +291,7 @@ public:
         Transfer(ImgResetMsg(1));
     }
     
-    static std::pair<bool,ImgCaptureStatusResp> ImgCapture(uint8_t dstBlock, uint8_t skipCount) {
-        const Img::Header header = {
-            // Section idx=0
-            .version        = 0x4242,
-            .imageWidth     = 2304,
-            .imageHeight    = 1296,
-            ._pad0          = 0,
-            // Section idx=1
-            .counter        = 0xCAFEBABE,
-            ._pad1          = 0,
-            // Section idx=2
-            .timestamp      = 0xDEADBEEF,
-            ._pad2          = 0,
-            // Section idx=3
-            .coarseIntTime  = 0x1111,
-            .analogGain     = 0x2222,
-            ._pad3          = 0,
-        };
-        
+    static std::pair<bool,ImgCaptureStatusResp> ImgCapture(const Img::Header& header, uint8_t dstBlock, uint8_t skipCount) {
         // Set the header of the image
         for (uint8_t i=0, off=0; i<4; i++, off+=8) {
             Transfer(ImgSetHeaderMsg(i, (const uint8_t*)&header+off));
