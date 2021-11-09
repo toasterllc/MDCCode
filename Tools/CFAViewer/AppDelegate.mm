@@ -651,9 +651,7 @@ static void _configureDevice(MDCDevice& dev) {
             // Perform auto exposure
             if (autoExp) {
                 autoExp->update(imgStats.highlightCount, imgStats.shadowCount);
-                if (autoExp->score() < 253) {
-                    exposure.coarseIntTime = autoExp->integrationTime();
-                }
+                exposure.coarseIntTime = autoExp->integrationTime();
                 
                 CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
                     [weakSelf _updateAutoExposureUI:exposure];
