@@ -29,7 +29,7 @@ public:
         if (quantum) {
             const int32_t adj = delta*quantum;
             _t = std::max((int32_t)1, std::min((int32_t)Img::CoarseIntTimeMax, (int32_t)_t + adj));
-             printf("Adjust exposure adj=%jd (delta=%jd)\n", (intmax_t)adj, (intmax_t)delta);
+//             printf("Adjust exposure adj=%jd (delta=%jd)\n", (intmax_t)adj, (intmax_t)delta);
         }
         
         _changed = (_t != tprev);
