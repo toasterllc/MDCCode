@@ -352,7 +352,7 @@ public:
         _readWriteStop();
     }
     
-    void writeImage(uint16_t idx) {
+    void writeImage(uint8_t srcBlock, uint16_t idx) {
         // Confirm that Img::PaddedLen is a multiple of the SD block length
         static_assert((Img::PaddedLen % SD::BlockLen) == 0, "");
         const uint32_t addr = idx*Img::PaddedLen;
@@ -360,7 +360,7 @@ public:
         writeStart(addr, Img::Len);
         
         // Clock out the image on the DAT lines
-        ICE::Transfer(ICE::ImgReadoutMsg(0));
+        ICE::Transfer(ICE::ImgReadoutMsg(srcBlock));
         
         // Wait for writing to finish
         for (;;) {
