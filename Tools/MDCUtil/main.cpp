@@ -63,7 +63,7 @@ struct Args {
     } MSPLoad = {};
     
     struct {
-        uint8_t idx = 0;
+        uint32_t idx = 0;
         std::string filePath;
     } SDImgRead = {};
     

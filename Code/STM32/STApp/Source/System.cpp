@@ -5,6 +5,7 @@
 #include "MSP430.h"
 #include "SleepMs.h"
 #include "ICE.h"
+#include "Toastbox/IRQState.h"
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -35,7 +36,7 @@ void System::init() {
 }
 
 void System::run() {
-    Task::Run(_tasks);
+    Toastbox::Task::Run(_tasks);
 }
 
 void System::_resetTasks() {
@@ -44,7 +45,7 @@ void System::_resetTasks() {
     // but has no way to deassert it, because it continues indefinitely
     _ICE_ST_SPI_CS_::Write(1);
     
-    for (Task& t : _tasks) {
+    for (Toastbox::Task& t : _tasks) {
         if (&t == &_usb_cmdTask) continue; // Never pause the USB command task
         t.pause();
     }
@@ -60,7 +61,7 @@ void System::_usb_cmdTaskFn() {
         TaskWait(_usb.state()==USB::State::Connecting || _usb.cmdRecv());
         
         // Disable interrupts so we can inspect+modify _usb atomically
-        IRQState irq = IRQState::Disabled();
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         
         // Reset all tasks
         // This needs to happen before we call `_usb.connect()` so that any tasks that
@@ -384,6 +385,12 @@ void System::_sd_readTaskFn() {
         reading = false;
     }
     
+    // Verify that the address is a multiple of the SD block length
+    if (arg.addr % SD::BlockLen) {
+        _usb_dataInSendStatus(false);
+        return;
+    }
+    
     // Send status
     _usb_dataInSendStatus(true);
     
@@ -479,14 +486,14 @@ void System::_img_captureTaskFn() {
 
 System Sys;
 
-bool IRQState::SetInterruptsEnabled(bool en) {
+bool Toastbox::IRQState::SetInterruptsEnabled(bool en) {
     const bool prevEn = !__get_PRIMASK();
     if (en) __enable_irq();
     else __disable_irq();
     return prevEn;
 }
 
-void IRQState::WaitForInterrupt() {
+void Toastbox::IRQState::WaitForInterrupt() {
     __WFI();
 }
 

@@ -28,7 +28,9 @@ public:
                     devs.push_back(std::move(usbDev));
                 
                 // Suppress failures to create a MDCDevice
-                } catch (...) {}
+                } catch (const std::exception& e) {
+                    printf("Failed to create MDCDevice: %s\n", e.what());
+                }
             }
         }
         return devs;
