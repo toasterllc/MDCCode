@@ -12,6 +12,7 @@
 		556E45EF26B12023006681FA /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		556E45F126B1204A006681FA /* Lib */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Lib; path = ../../Lib; sourceTree = "<group>"; };
 		556E45F226B12050006681FA /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
+		55889121273B3D360004458F /* GPIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GPIO.h; sourceTree = "<group>"; };
 		55B2150B26FA7A99001423C1 /* msp430fr2422.h.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2422.h.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -23,6 +24,7 @@
 				556E45F126B1204A006681FA /* Lib */,
 				556E45ED26B12023006681FA /* lnk_msp430fr2422.cmd */,
 				55B2150B26FA7A99001423C1 /* msp430fr2422.h.txt */,
+				55889121273B3D360004458F /* GPIO.h */,
 				556E45EF26B12023006681FA /* main.cpp */,
 				556E45EE26B12023006681FA /* Makefile */,
 			);
