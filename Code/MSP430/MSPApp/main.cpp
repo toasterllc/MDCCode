@@ -9,10 +9,14 @@
 #include "ImgAutoExposure.h"
 #include "Toastbox/IRQState.h"
 #include "GPIO.h"
+#include "Clock.h"
+#include "RTC.h"
+#include "SPI.h"
 using namespace Toastbox;
 
-constexpr uint64_t MCLKFreqHz = 16000000;
-constexpr uint16_t SRSleepBits = GIE | LPM1_bits;
+static constexpr uint64_t MCLKFreqHz = 16000000;
+static constexpr uint32_t XT1FreqHz = 32768;
+static constexpr uint16_t SRSleepBits = GIE | LPM1_bits;
 
 #define _sleepUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
 #define _sleepMs(ms) __delay_cycles((((uint64_t)ms)*MCLKFreqHz) / 1000)
@@ -31,105 +35,28 @@ struct Pin {
     using ICE_MSP_SPI_AUX_DIR               = GPIOA<0xA, GPIOOption::Output1>;
     using VDD_SD_EN                         = GPIOA<0xB, GPIOOption::Output0>;
     using VDD_B_EN_                         = GPIOA<0xC, GPIOOption::Output1>;
-    using MOTION_SIGNAL                     = GPIOA<0xD, GPIOOption::Interrupt01>;
+    using MOTION_SIGNAL                     = GPIOA<0xD, GPIOOption::Input>;
+//    using MOTION_SIGNAL                     = GPIOA<0xD, GPIOOption::Interrupt01>;
+    
+//    using DEBUG_OUT                         = GPIOA<0xE, GPIOOption::Output0>;
     
     // Alternate versions of above GPIOs
     using ICE_MSP_SPI_DATA_UCA0SIMO         = GPIOA<0x4, GPIOOption::Sel01>;
     using ICE_MSP_SPI_CLK_UCA0CLK           = GPIOA<0x6, GPIOOption::Sel01>;
 };
 
+using Clock = ClockType<XT1FreqHz, MCLKFreqHz>;
+using RTC = RTCType<XT1FreqHz>;
+using SPI = SPIType<MCLKFreqHz, Pin::ICE_MSP_SPI_CLK_MANUAL, Pin::ICE_MSP_SPI_CLK_UCA0CLK>;
+
 SD::Card _sd;
 Img::AutoExposure _imgAutoExp;
 uint16_t _imgDstIdx = 0;
 
-#pragma mark - Clock
+#pragma mark - RTC
 
-static void _clock_init() {
-    constexpr uint32_t XT1FreqHz = 32768;
-    
-    // Configure one FRAM wait state, as required by the device datasheet for MCLK > 8MHz.
-    // This must happen before configuring the clock system.
-    FRCTL0 = FRCTLPW | NWAITS_1;
-    
-    do {
-        CSCTL7 &= ~(XT1OFFG | DCOFFG); // Clear XT1 and DCO fault flag
-        SFRIFG1 &= ~OFIFG;
-    } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
-    
-    // Disable FLL
-    __bis_SR_register(SCG0);
-        // Set XT1 as FLL reference source
-        CSCTL3 |= SELREF__XT1CLK;
-        // Clear DCO and MOD registers
-        CSCTL0 = 0;
-        // Clear DCO frequency select bits first
-        CSCTL1 &= ~(DCORSEL_7);
-        // Set DCO = 16MHz
-        CSCTL1 |= DCORSEL_5;
-        // DCOCLKDIV = 16MHz
-        CSCTL2 = FLLD_0 | ((MCLKFreqHz/XT1FreqHz)-1);
-        // Wait 3 cycles to take effect
-        __delay_cycles(3);
-    // Enable FLL
-    __bic_SR_register(SCG0);
-    
-    // Wait until FLL locks
-    while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
-    
-    // MCLK / SMCLK source = DCOCLKDIV
-    // ACLK source = XT1
-    CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
-}
-
-#pragma mark - SPI
-
-static void _spi_init() {
-    // Reset the ICE40 SPI state machine by asserting ICE_MSP_SPI_CLK for some period
-    {
-        constexpr uint64_t ICE40SPIResetDurationUs = 18;
-        Pin::ICE_MSP_SPI_CLK_MANUAL::Write(1);
-        _sleepUs(ICE40SPIResetDurationUs);
-        Pin::ICE_MSP_SPI_CLK_MANUAL::Write(0);
-    }
-    
-    // Configure SPI peripheral
-    {
-        // Turn over control of ICE_MSP_SPI_CLK to the SPI peripheral (PA.6 = UCA0CLK)
-        Pin::ICE_MSP_SPI_CLK_UCA0CLK::Init();
-        
-        // Assert USCI reset
-        UCA0CTLW0 |= UCSWRST;
-        
-        UCA0CTLW0 |=
-            // phase=1, polarity=0, MSB first, width=8-bit
-            UCCKPH_1 | UCCKPL__LOW | UCMSB_1 | UC7BIT__8BIT |
-            // mode=master, mode=3-pin SPI, mode=synchronous, clock=SMCLK
-            UCMST__MASTER | UCMODE_0 | UCSYNC__SYNC | UCSSEL__SMCLK;
-        
-        // fBitClock = fBRCLK / 1;
-        UCA0BRW = 0;
-        // No modulation
-        UCA0MCTLW = 0;
-        
-        // De-assert USCI reset
-        UCA0CTLW0 &= ~UCSWRST;
-    }
-}
-
-static uint8_t _spi_txrx(uint8_t b) {
-    // Wait until `UCA0TXBUF` can accept more data
-    while (!(UCA0IFG & UCTXIFG));
-    // Clear UCRXIFG so we can tell when tx/rx is complete
-    UCA0IFG &= ~UCRXIFG;
-    // Start the SPI transaction
-    UCA0TXBUF = b;
-    // Wait for tx completion
-    // Wait for UCRXIFG, not UCTXIFG! UCTXIFG signifies that UCA0TXBUF
-    // can accept more data, not transfer completion. UCRXIFG signifies
-    // rx completion, which implies tx completion.
-    while (!(UCA0IFG & UCRXIFG));
-    return UCA0RXBUF;
-}
+__attribute__((interrupt(RTC_VECTOR)))
+static void _isr_rtc() { RTC::ISR(); }
 
 #pragma mark - Motion
 
@@ -170,6 +97,7 @@ static void _motion_handle() {
         const uint8_t expBlock = !bestExpBlock;
         
         // Update the header
+        _imgHeader.timestamp = RTC::CurrentTime();
         _imgHeader.coarseIntTime = _imgAutoExp.integrationTime();
         
         // Capture an image to RAM
@@ -203,48 +131,18 @@ static void _motion_handle() {
 
 #pragma mark - Interrupts
 
-__interrupt __attribute__((interrupt(PORT2_VECTOR)))
+__attribute__((interrupt(PORT2_VECTOR)))
 void _isr_port2() {
-    // Accessing `P2IV` automatically clears the highest-priority interrupt,
-    // so we don't have to clear bits in P2IFG manually.
-    // If there are multiple interrupts pending, then this ISR is called
-    // multiple times.
+    // Accessing `P2IV` automatically clears the highest-priority interrupt
     switch (__even_in_range(P2IV, P2IV__P2IFG7)) {
     case P2IV__P2IFG5:
         // Wake ourself
         __bic_SR_register_on_exit(SRSleepBits);
         break;
+    
     default:
         break;
     }
-}
-
-static void _sys_init() {
-    // Stop watchdog timer
-    WDTCTL = WDTPW | WDTHOLD;
-    
-    // Init GPIOs
-    GPIOInit<
-        Pin::VDD_1V9_IMG_EN,
-        Pin::VDD_2V8_IMG_EN,
-        Pin::ICE_MSP_SPI_DATA_DIR,
-        Pin::ICE_MSP_SPI_DATA_IN,
-        Pin::ICE_MSP_SPI_DATA_UCA0SOMI,
-        Pin::ICE_MSP_SPI_CLK_MANUAL,
-        Pin::ICE_MSP_SPI_AUX,
-        Pin::XOUT,
-        Pin::XIN,
-        Pin::ICE_MSP_SPI_AUX_DIR,
-        Pin::VDD_SD_EN,
-        Pin::VDD_B_EN_,
-        Pin::MOTION_SIGNAL
-    >();
-    
-    // Configure clock system
-    _clock_init();
-    
-    // Init SPI
-    _spi_init();
 }
 
 #pragma mark - ICE40
@@ -258,10 +156,10 @@ void ICE::Transfer(const Msg& msg, Resp* resp) {
     // PA.4 level shifter direction = MSP->ICE
     Pin::ICE_MSP_SPI_DATA_DIR::Write(1);
     
-    _spi_txrx(msg.type);
+    SPI::TxRx(msg.type);
     
     for (uint8_t b : msg.payload) {
-        _spi_txrx(b);
+        SPI::TxRx(b);
     }
     
     // PA.4 = GPIO input
@@ -271,12 +169,12 @@ void ICE::Transfer(const Msg& msg, Resp* resp) {
     Pin::ICE_MSP_SPI_DATA_DIR::Write(0);
     
     // 8-cycle turnaround
-    _spi_txrx(0);
+    SPI::TxRx(0);
     
     // Clock in the response
     if (resp) {
         for (uint8_t& b : resp->payload) {
-            b = _spi_txrx(0);
+            b = SPI::TxRx(0);
         }
     }
 }
@@ -323,36 +221,62 @@ void Toastbox::IRQState::WaitForInterrupt() {
 #pragma mark - Main
 
 int main() {
-    // Init system (clock, pins, etc)
-    _sys_init();
+    // Stop watchdog timer
+    WDTCTL = WDTPW | WDTHOLD;
+    
+    // Init GPIOs
+    GPIOInit<
+        Pin::VDD_1V9_IMG_EN,
+        Pin::VDD_2V8_IMG_EN,
+        Pin::ICE_MSP_SPI_DATA_DIR,
+        Pin::ICE_MSP_SPI_DATA_IN,
+        Pin::ICE_MSP_SPI_DATA_UCA0SOMI,
+        Pin::ICE_MSP_SPI_CLK_MANUAL,
+        Pin::ICE_MSP_SPI_AUX,
+        Pin::XOUT,
+        Pin::XIN,
+        Pin::ICE_MSP_SPI_AUX_DIR,
+        Pin::VDD_SD_EN,
+        Pin::VDD_B_EN_,
+        Pin::MOTION_SIGNAL
+    >();
+    
+    // Init clock
+    Clock::Init();
+    
+    // Init real-time clock
+    RTC::Init();
+    
+    // Init SPI
+    SPI::Init();
     
     // Init ICE40
     ICE::Init();
     
-//    for (int i=0;; i++) {
-//        ICE::Transfer(ICE::LEDSetMsg(i));
-//        _sleepMs(500);
-//    }
-    
-    // Initialize image sensor
-    Img::Sensor::Init();
-    
-    // Initialize SD card
-    _sd.init();
-    
-    // Enable image streaming
-    Img::Sensor::SetStreamEnabled(true);
-    
-    // Set the initial exposure
-    Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
-    
-    for (;;) {
-        // Go to sleep until we detect motion
-        IRQState::WaitForInterrupt();
-        
-        // We woke up
-        _motion_handle();
+    for (int i=0;; i++) {
+        ICE::Transfer(ICE::LEDSetMsg(i));
+        _sleepMs(500);
     }
+    
+//    // Initialize image sensor
+//    Img::Sensor::Init();
+//    
+//    // Initialize SD card
+//    _sd.init();
+//    
+//    // Enable image streaming
+//    Img::Sensor::SetStreamEnabled(true);
+//    
+//    // Set the initial exposure
+//    Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+//    
+//    for (;;) {
+//        // Go to sleep until we detect motion
+//        IRQState::WaitForInterrupt();
+//        
+//        // We woke up
+//        _motion_handle();
+//    }
     
     return 0;
 }
