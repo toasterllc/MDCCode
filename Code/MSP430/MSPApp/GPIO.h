@@ -182,3 +182,6 @@ private:
 
 template <uint16_t Pin, GPIOOption... Opts>
 using GPIOA = GPIO<GPIOPort::A, Pin, Opts...>;
+
+template <uint16_t Pin, GPIOOption... Opts>
+using GPIOB = GPIO<GPIOPort::B, Pin, Opts...>;
