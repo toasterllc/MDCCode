@@ -19,23 +19,23 @@ constexpr uint16_t SRSleepBits = GIE | LPM1_bits;
 
 struct Pin {
     // Default GPIOs
-    using VDD_1V9_IMG_EN                    = GPIOA<0x0, GPIOOption::Dir>;
-    using VDD_2V8_IMG_EN                    = GPIOA<0x2, GPIOOption::Dir>;
-    using ICE_MSP_SPI_DATA_DIR              = GPIOA<0x3, GPIOOption::Dir>;
-    using ICE_MSP_SPI_DATA_IN               = GPIOA<0x4>;
-    using ICE_MSP_SPI_DATA_UCA0SOMI         = GPIOA<0x5, GPIOOption::Sel0>;
-    using ICE_MSP_SPI_CLK_MANUAL            = GPIOA<0x6, GPIOOption::Out, GPIOOption::Dir>;
-    using ICE_MSP_SPI_AUX                   = GPIOA<0x7, GPIOOption::Dir>;
-    using XOUT                              = GPIOA<0x8, GPIOOption::Sel1>;
-    using XIN                               = GPIOA<0x9, GPIOOption::Sel1>;
-    using ICE_MSP_SPI_AUX_DIR               = GPIOA<0xA, GPIOOption::Out, GPIOOption::Dir>;
-    using VDD_SD_EN                         = GPIOA<0xB, GPIOOption::Dir>;
-    using VDD_B_EN_                         = GPIOA<0xC, GPIOOption::Out, GPIOOption::Dir>;
-    using MOTION_SIGNAL                     = GPIOA<0xD, GPIOOption::IE>;
+    using VDD_1V9_IMG_EN                    = GPIOA<0x0, GPIOOption::Output0>;
+    using VDD_2V8_IMG_EN                    = GPIOA<0x2, GPIOOption::Output0>;
+    using ICE_MSP_SPI_DATA_DIR              = GPIOA<0x3, GPIOOption::Output1>;
+    using ICE_MSP_SPI_DATA_IN               = GPIOA<0x4, GPIOOption::Input>;
+    using ICE_MSP_SPI_DATA_UCA0SOMI         = GPIOA<0x5, GPIOOption::Sel01>;
+    using ICE_MSP_SPI_CLK_MANUAL            = GPIOA<0x6, GPIOOption::Output1>;
+    using ICE_MSP_SPI_AUX                   = GPIOA<0x7, GPIOOption::Output0>;
+    using XOUT                              = GPIOA<0x8, GPIOOption::Sel10>;
+    using XIN                               = GPIOA<0x9, GPIOOption::Sel10>;
+    using ICE_MSP_SPI_AUX_DIR               = GPIOA<0xA, GPIOOption::Output1>;
+    using VDD_SD_EN                         = GPIOA<0xB, GPIOOption::Output0>;
+    using VDD_B_EN_                         = GPIOA<0xC, GPIOOption::Output1>;
+    using MOTION_SIGNAL                     = GPIOA<0xD, GPIOOption::Interrupt01>;
     
     // Alternate versions of above GPIOs
-    using ICE_MSP_SPI_DATA_UCA0SIMO         = GPIOA<0x4, GPIOOption::Sel0>;
-    using ICE_MSP_SPI_CLK_UCA0CLK           = GPIOA<0x6, GPIOOption::Sel0>;
+    using ICE_MSP_SPI_DATA_UCA0SIMO         = GPIOA<0x4, GPIOOption::Sel01>;
+    using ICE_MSP_SPI_CLK_UCA0CLK           = GPIOA<0x6, GPIOOption::Sel01>;
 };
 
 SD::Card _sd;
@@ -87,9 +87,9 @@ static void _spi_init() {
     // Reset the ICE40 SPI state machine by asserting ICE_MSP_SPI_CLK for some period
     {
         constexpr uint64_t ICE40SPIResetDurationUs = 18;
-        Pin::ICE_MSP_SPI_CLK_MANUAL::Out(1);
+        Pin::ICE_MSP_SPI_CLK_MANUAL::Write(1);
         _sleepUs(ICE40SPIResetDurationUs);
-        Pin::ICE_MSP_SPI_CLK_MANUAL::Out(0);
+        Pin::ICE_MSP_SPI_CLK_MANUAL::Write(0);
     }
     
     // Configure SPI peripheral
@@ -256,7 +256,7 @@ void ICE::Transfer(const Msg& msg, Resp* resp) {
     Pin::ICE_MSP_SPI_DATA_UCA0SIMO::Init();
     
     // PA.4 level shifter direction = MSP->ICE
-    Pin::ICE_MSP_SPI_DATA_DIR::Out(1);
+    Pin::ICE_MSP_SPI_DATA_DIR::Write(1);
     
     _spi_txrx(msg.type);
     
@@ -268,7 +268,7 @@ void ICE::Transfer(const Msg& msg, Resp* resp) {
     Pin::ICE_MSP_SPI_DATA_IN::Init();
     
     // PA.4 level shifter direction = MSP<-ICE
-    Pin::ICE_MSP_SPI_DATA_DIR::Out(0);
+    Pin::ICE_MSP_SPI_DATA_DIR::Write(0);
     
     // 8-cycle turnaround
     _spi_txrx(0);
@@ -287,7 +287,7 @@ const uint8_t SD::Card::ClkDelaySlow = 7;
 const uint8_t SD::Card::ClkDelayFast = 0;
 
 void SD::Card::SetPowerEnabled(bool en) {
-    Pin::VDD_SD_EN::Out(en);
+    Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _sleepMs(2);
 }
@@ -296,13 +296,13 @@ void SD::Card::SetPowerEnabled(bool en) {
 
 void Img::Sensor::SetPowerEnabled(bool en) {
     if (en) {
-        Pin::VDD_2V8_IMG_EN::Out(1);
+        Pin::VDD_2V8_IMG_EN::Write(1);
         _sleepUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
-        Pin::VDD_1V9_IMG_EN::Out(1);
+        Pin::VDD_1V9_IMG_EN::Write(1);
     } else {
         // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
-        Pin::VDD_1V9_IMG_EN::Out(0);
-        Pin::VDD_2V8_IMG_EN::Out(0);
+        Pin::VDD_1V9_IMG_EN::Write(0);
+        Pin::VDD_2V8_IMG_EN::Write(0);
     }
 }
 
