@@ -8,6 +8,7 @@
 #include "ImgSensor.h"
 #include "ImgAutoExposure.h"
 #include "Toastbox/IRQState.h"
+#include "GPIO.h"
 using namespace Toastbox;
 
 constexpr uint64_t MCLKFreqHz = 16000000;
@@ -15,6 +16,25 @@ constexpr uint16_t SRSleepBits = GIE | LPM1_bits;
 
 #define _sleepUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
 #define _sleepMs(ms) __delay_cycles((((uint64_t)ms)*MCLKFreqHz) / 1000)
+
+// Default GPIOs
+using GPIO_VDD_1V9_IMG_EN                   = GPIOA<0x0, GPIOOption::Dir>;
+using GPIO_VDD_2V8_IMG_EN                   = GPIOA<0x2, GPIOOption::Dir>;
+using GPIO_ICE_MSP_SPI_DATA_DIR             = GPIOA<0x3, GPIOOption::Dir>;
+using GPIO_ICE_MSP_SPI_DATA_IN              = GPIOA<0x4>;
+using GPIO_ICE_MSP_SPI_DATA_UCA0SOMI        = GPIOA<0x5, GPIOOption::Sel0>;
+using GPIO_ICE_MSP_SPI_CLK_MANUAL           = GPIOA<0x6, GPIOOption::Out, GPIOOption::Dir>;
+using GPIO_ICE_MSP_SPI_AUX                  = GPIOA<0x7, GPIOOption::Dir>;
+using GPIO_XOUT                             = GPIOA<0x8, GPIOOption::Sel1>;
+using GPIO_XIN                              = GPIOA<0x9, GPIOOption::Sel1>;
+using GPIO_ICE_MSP_SPI_AUX_DIR              = GPIOA<0xA, GPIOOption::Out, GPIOOption::Dir>;
+using GPIO_VDD_SD_EN                        = GPIOA<0xB, GPIOOption::Dir>;
+using GPIO_VDD_B_EN_                        = GPIOA<0xC, GPIOOption::Out, GPIOOption::Dir>;
+using GPIO_MOTION_SIGNAL                    = GPIOA<0xD, GPIOOption::IE>;
+
+// Alternate versions of above GPIOs
+using GPIO_ICE_MSP_SPI_DATA_UCA0SIMO        = GPIOA<0x4, GPIOOption::Sel0>;
+using GPIO_ICE_MSP_SPI_CLK_UCA0CLK          = GPIOA<0x6, GPIOOption::Sel0>;
 
 SD::Card _sd;
 Img::AutoExposure _imgAutoExp;
@@ -28,10 +48,6 @@ static void _clock_init() {
     // Configure one FRAM wait state, as required by the device datasheet for MCLK > 8MHz.
     // This must happen before configuring the clock system.
     FRCTL0 = FRCTLPW | NWAITS_1;
-    
-    // Make PA.8 and PA.9 XOUT/XIN
-    PASEL1 |=  (BIT8 | BIT9);
-    PASEL0 &= ~(BIT8 | BIT9);
     
     do {
         CSCTL7 &= ~(XT1OFFG | DCOFFG); // Clear XT1 and DCO fault flag
@@ -66,41 +82,18 @@ static void _clock_init() {
 #pragma mark - SPI
 
 static void _spi_init() {
-    // Reset the ICE40 SPI state machine by asserting ice_msp_spi_clk for some period
+    // Reset the ICE40 SPI state machine by asserting ICE_MSP_SPI_CLK for some period
     {
         constexpr uint64_t ICE40SPIResetDurationUs = 18;
-        
-        // PA.6 = GPIO output
-        PAOUT  &= ~BIT6;
-        PADIR  |=  BIT6;
-        PASEL1 &= ~BIT6;
-        PASEL0 &= ~BIT6;
-        
-        PAOUT  |=  BIT6;
+        GPIO_ICE_MSP_SPI_CLK_MANUAL::Out(1);
         _sleepUs(ICE40SPIResetDurationUs);
-        PAOUT  &= ~BIT6;
+        GPIO_ICE_MSP_SPI_CLK_MANUAL::Out(0);
     }
     
     // Configure SPI peripheral
     {
-        // PA.3 = GPIO output
-        PAOUT  &= ~BIT3;
-        PADIR  |=  BIT3;
-        PASEL1 &= ~BIT3;
-        PASEL0 &= ~BIT3;
-        
-        // PA.4 = GPIO input
-        PADIR  &= ~BIT4;
-        PASEL1 &= ~BIT4;
-        PASEL0 &= ~BIT4;
-        
-        // PA.5 = UCA0SOMI
-        PASEL1 &= ~BIT5;
-        PASEL0 |=  BIT5;
-        
-        // PA.6 = UCA0CLK
-        PASEL1 &= ~BIT6;
-        PASEL0 |=  BIT6;
+        // Turn over control of ICE_MSP_SPI_CLK to the SPI peripheral (PA.6 = UCA0CLK)
+        GPIO_ICE_MSP_SPI_CLK_UCA0CLK::Init();
         
         // Assert USCI reset
         UCA0CTLW0 |= UCSWRST;
@@ -137,17 +130,6 @@ static uint8_t _spi_txrx(uint8_t b) {
 }
 
 #pragma mark - Motion
-
-static void _motion_init() {
-    // Disable interrupts since modifying P2IES can trigger an interrupt
-    IRQState irq = IRQState::Disabled();
-    
-    P2IES   &=  ~BIT5; // 0->1 transition triggers interrupt
-    P2IE    |=   BIT5; // Enable interrupt for pin P2.5
-    
-    // Clear interrupt that may have been triggered by modifying P2IES
-    P2IFG   &=  ~BIT5;
-}
 
 static constexpr uint16_t ImgHeaderVersion = 0x4242;
 
@@ -237,38 +219,30 @@ void _isr_port2() {
 
 static void _sys_init() {
     // Stop watchdog timer
-    {
-        WDTCTL = WDTPW | WDTHOLD;
-    }
+    WDTCTL = WDTPW | WDTHOLD;
     
-    // Reset pin states
-    {
-        PAOUT   = 0x0000;
-        PADIR   = 0x0000;
-        PASEL0  = 0x0000;
-        PASEL1  = 0x0000;
-        PAREN   = 0x0000;
-    }
+    // Init GPIOs
+    GPIOInit<
+        GPIO_VDD_1V9_IMG_EN,
+        GPIO_VDD_2V8_IMG_EN,
+        GPIO_ICE_MSP_SPI_DATA_DIR,
+        GPIO_ICE_MSP_SPI_DATA_IN,
+        GPIO_ICE_MSP_SPI_DATA_UCA0SOMI,
+        GPIO_ICE_MSP_SPI_CLK_MANUAL,
+        GPIO_ICE_MSP_SPI_AUX,
+        GPIO_XOUT,
+        GPIO_XIN,
+        GPIO_ICE_MSP_SPI_AUX_DIR,
+        GPIO_VDD_SD_EN,
+        GPIO_VDD_B_EN_,
+        GPIO_MOTION_SIGNAL
+    >();
     
     // Configure clock system
-    {
-        _clock_init();
-    }
-    
-    // Unlock GPIOs
-    {
-        PM5CTL0 &= ~LOCKLPM5;
-    }
+    _clock_init();
     
     // Init SPI
-    {
-        _spi_init();
-    }
-    
-    // Init motion sensor
-    {
-        _motion_init();
-    }
+    _spi_init();
 }
 
 #pragma mark - ICE40
@@ -276,12 +250,10 @@ static void _sys_init() {
 void ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & ICE::MsgType::Resp));
     
-    // PA.4 = UCA0SIMO
-    PASEL1 &= ~BIT4;
-    PASEL0 |=  BIT4;
+    GPIO_ICE_MSP_SPI_DATA_UCA0SIMO::Init();
     
     // PA.4 level shifter direction = MSP->ICE
-    PAOUT |= BIT3;
+    GPIO_ICE_MSP_SPI_DATA_DIR::Out(1);
     
     _spi_txrx(msg.type);
     
@@ -290,11 +262,10 @@ void ICE::Transfer(const Msg& msg, Resp* resp) {
     }
     
     // PA.4 = GPIO input
-    PASEL1 &= ~BIT4;
-    PASEL0 &= ~BIT4;
+    GPIO_ICE_MSP_SPI_DATA_IN::Init();
     
     // PA.4 level shifter direction = MSP<-ICE
-    PAOUT &= ~BIT3;
+    GPIO_ICE_MSP_SPI_DATA_DIR::Out(0);
     
     // 8-cycle turnaround
     _spi_txrx(0);
@@ -313,15 +284,7 @@ const uint8_t SD::Card::ClkDelaySlow = 7;
 const uint8_t SD::Card::ClkDelayFast = 0;
 
 void SD::Card::SetPowerEnabled(bool en) {
-    constexpr uint16_t VDD_SD_EN = BITB;
-    if (en) {
-        PADIR |=  VDD_SD_EN;
-        PAOUT |=  VDD_SD_EN;
-    } else {
-        PADIR |=  VDD_SD_EN;
-        PAOUT &= ~VDD_SD_EN;
-    }
-    
+    GPIO_VDD_SD_EN::Out(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _sleepMs(2);
 }
@@ -329,17 +292,14 @@ void SD::Card::SetPowerEnabled(bool en) {
 #pragma mark - Image Sensor
 
 void Img::Sensor::SetPowerEnabled(bool en) {
-    constexpr uint16_t VDD_1V9_IMG_EN = BIT0;
-    constexpr uint16_t VDD_2V8_IMG_EN = BIT2;
-    PADIR |=  VDD_2V8_IMG_EN|VDD_1V9_IMG_EN;
-    
     if (en) {
-        PAOUT |=  VDD_2V8_IMG_EN;
+        GPIO_VDD_2V8_IMG_EN::Out(1);
         _sleepUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
-        PAOUT |=  VDD_1V9_IMG_EN;
+        GPIO_VDD_1V9_IMG_EN::Out(1);
     } else {
         // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
-        PAOUT &= ~(VDD_2V8_IMG_EN|VDD_1V9_IMG_EN);
+        GPIO_VDD_1V9_IMG_EN::Out(0);
+        GPIO_VDD_2V8_IMG_EN::Out(0);
     }
 }
 
@@ -362,8 +322,14 @@ void Toastbox::IRQState::WaitForInterrupt() {
 int main() {
     // Init system (clock, pins, etc)
     _sys_init();
+    
     // Init ICE40
     ICE::Init();
+    
+    for (int i=0;; i++) {
+        ICE::Transfer(ICE::LEDSetMsg(i));
+        _sleepMs(500);
+    }
     
     // Initialize image sensor
     Img::Sensor::Init();

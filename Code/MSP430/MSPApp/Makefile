@@ -8,7 +8,7 @@ CXX      = $(GCC_DIR)/msp430-elf-g++
 GDB      = $(GCC_DIR)/msp430-elf-gdb
 MSPDEBUG = ~/repos/mspdebug/mspdebug
 
-CXXFLAGS = -I $(SUPPORT_FILE_DIRECTORY) -mmcu=$(DEVICE) -Os -g -Wall -std=c++17 $(IDIRS)
+CXXFLAGS = -I $(SUPPORT_FILE_DIRECTORY) -mmcu=$(DEVICE) -Os -Wall -std=c++17 $(IDIRS)
 LFLAGS   = -L $(SUPPORT_FILE_DIRECTORY) -T $(DEVICE).ld -Wl,-Map=$(DEVICE).map
 IDIRS    = -iquote ../../Shared     \
            -iquote ../../Lib
