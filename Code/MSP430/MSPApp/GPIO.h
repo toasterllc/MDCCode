@@ -5,6 +5,7 @@
 
 enum class GPIOPort {
     A,
+    B,
 };
 
 enum class GPIOOption : uint8_t {
@@ -17,40 +18,28 @@ enum class GPIOOption : uint8_t {
     IES,
 };
 
-template<typename GPIO>
-static constexpr void _GPIOInitLoad(uint16_t& out, uint16_t& dir, uint16_t& sel0, uint16_t& sel1, uint16_t& ren, uint16_t& ie, uint16_t& ies) {
-    // Clear the bit for the GPIO
-    out     &= ~GPIO::Bit;
-    dir     &= ~GPIO::Bit;
-    sel0    &= ~GPIO::Bit;
-    sel1    &= ~GPIO::Bit;
-    ren     &= ~GPIO::Bit;
-    ie      &= ~GPIO::Bit;
-    ies     &= ~GPIO::Bit;
-    
-    // Set the bit for the GPIO, if it's set
-    out     |= (GPIO::InitConfig::Out()  ? GPIO::Bit : 0);
-    dir     |= (GPIO::InitConfig::Dir()  ? GPIO::Bit : 0);
-    sel0    |= (GPIO::InitConfig::Sel0() ? GPIO::Bit : 0);
-    sel1    |= (GPIO::InitConfig::Sel1() ? GPIO::Bit : 0);
-    ren     |= (GPIO::InitConfig::REn()  ? GPIO::Bit : 0);
-    ie      |= (GPIO::InitConfig::IE()   ? GPIO::Bit : 0);
-    ies     |= (GPIO::InitConfig::IES()  ? GPIO::Bit : 0);
-}
+struct _GPIORegs {
+    uint16_t out  = 0;
+    uint16_t dir  = 0;
+    uint16_t sel0 = 0;
+    uint16_t sel1 = 0;
+    uint16_t ren  = 0;
+    uint16_t ie   = 0;
+    uint16_t ies  = 0;
+};
 
 template <GPIOPort Port>
-static constexpr void _GPIOInit(uint16_t out, uint16_t dir, uint16_t sel0, uint16_t sel1, uint16_t ren, uint16_t ie, uint16_t ies) {
+static constexpr void _GPIOInit(_GPIORegs regs) {
     static_assert(Port == GPIOPort::A, "");
     
-    // Base case: set register values
     #warning modifying PAIE / PAIES can trigger an interrupt, so if we do that we should: disable interrupts, update regs, clear relevent interrupts, enable interrupts
-    PAOUT   = out;
-    PADIR   = dir;
-    PASEL0  = sel0;
-    PASEL1  = sel1;
-    PAREN   = ren;
-    PAIE    = ie;
-    PAIES   = ies;
+    PAOUT   = regs.out;
+    PADIR   = regs.dir;
+    PASEL0  = regs.sel0;
+    PASEL1  = regs.sel1;
+    PAREN   = regs.ren;
+    PAIE    = regs.ie;
+    PAIES   = regs.ies;
     
 //    PAOUT   = 0xAAAA;
 //    PADIR   = 0xBBBB;
@@ -58,41 +47,59 @@ static constexpr void _GPIOInit(uint16_t out, uint16_t dir, uint16_t sel0, uint1
 //    PASEL1  = 0xDDDD;
 //    PAREN   = 0xEEEE;
 //    PAIE    = 0xFFFF;
-//    PAIES   = 0x4242;
+//    PAIES   = 0x4243;
     
-//    printf("PAOUT   = 0x%04x\n", out);
-//    printf("PADIR   = 0x%04x\n", dir);
-//    printf("PASEL0  = 0x%04x\n", sel0);
-//    printf("PASEL1  = 0x%04x\n", sel1);
-//    printf("PAREN   = 0x%04x\n", ren);
-//    printf("PAIE    = 0x%04x\n", ie);
-//    printf("PAIES   = 0x%04x\n", ies);
+//    printf("PAOUT   = 0x%04x\n", regs.out);
+//    printf("PADIR   = 0x%04x\n", regs.dir);
+//    printf("PASEL0  = 0x%04x\n", regs.sel0);
+//    printf("PASEL1  = 0x%04x\n", regs.sel1);
+//    printf("PAREN   = 0x%04x\n", regs.ren);
+//    printf("PAIE    = 0x%04x\n", regs.ie);
+//    printf("PAIES   = 0x%04x\n", regs.ies);
 }
 
-template<typename GPIO>
-static constexpr void _GPIOInit(uint16_t out, uint16_t dir, uint16_t sel0, uint16_t sel1, uint16_t ren, uint16_t ie, uint16_t ies) {
-    _GPIOInitLoad<GPIO>(out, dir, sel0, sel1, ren, ie, ies);
-    _GPIOInit<GPIO::Port>(out, dir, sel0, sel1, ren, ie, ies);
+template<GPIOPort Port, typename GPIO, typename... GPIOs>
+static constexpr void _GPIOInit(_GPIORegs regs) {
+    static_assert(Port == GPIO::Port, "");
+    
+    // Clear the bit for the GPIO
+    regs.out    &= ~GPIO::Bit;
+    regs.dir    &= ~GPIO::Bit;
+    regs.sel0   &= ~GPIO::Bit;
+    regs.sel1   &= ~GPIO::Bit;
+    regs.ren    &= ~GPIO::Bit;
+    regs.ie     &= ~GPIO::Bit;
+    regs.ies    &= ~GPIO::Bit;
+    
+    // Set the bit for the GPIO, if it's set
+    regs.out    |= (GPIO::InitConfig::Out()  ? GPIO::Bit : 0);
+    regs.dir    |= (GPIO::InitConfig::Dir()  ? GPIO::Bit : 0);
+    regs.sel0   |= (GPIO::InitConfig::Sel0() ? GPIO::Bit : 0);
+    regs.sel1   |= (GPIO::InitConfig::Sel1() ? GPIO::Bit : 0);
+    regs.ren    |= (GPIO::InitConfig::REn()  ? GPIO::Bit : 0);
+    regs.ie     |= (GPIO::InitConfig::IE()   ? GPIO::Bit : 0);
+    regs.ies    |= (GPIO::InitConfig::IES()  ? GPIO::Bit : 0);
+    
+    _GPIOInit<Port, GPIOs...>(regs);
 }
 
-template<typename GPIO, typename GPIO2, typename... GPIOs>
-static constexpr void _GPIOInit(uint16_t out, uint16_t dir, uint16_t sel0, uint16_t sel1, uint16_t ren, uint16_t ie, uint16_t ies) {
-    static_assert(GPIO::Port == GPIO2::Port, "");
-    _GPIOInitLoad<GPIO>(out, dir, sel0, sel1, ren, ie, ies);
-    _GPIOInit<GPIO2, GPIOs...>(out, dir, sel0, sel1, ren, ie, ies);
+template<typename GPIO, typename... GPIOs>
+static constexpr void _GPIOInit(_GPIORegs regs) {
+    _GPIOInit<GPIO::Port, GPIO, GPIOs...>(regs);
 }
 
 template<typename... GPIOs>
 static constexpr void GPIOInit() {
     // Default state for all pins: output strong 0
-    constexpr uint16_t out  = 0x0000;
-    constexpr uint16_t dir  = 0xFFFF;
-    constexpr uint16_t sel0 = 0x0000;
-    constexpr uint16_t sel1 = 0x0000;
-    constexpr uint16_t ren  = 0x0000;
-    constexpr uint16_t ie   = 0x0000;
-    constexpr uint16_t ies  = 0x0000;
-    _GPIOInit<GPIOs...>(out, dir, sel0, sel1, ren, ie, ies);
+    _GPIOInit<GPIOs...>(_GPIORegs{
+        .out  = 0x0000,
+        .dir  = 0xFFFF,
+        .sel0 = 0x0000,
+        .sel1 = 0x0000,
+        .ren  = 0x0000,
+        .ie   = 0x0000,
+        .ies  = 0x0000,
+    });
     
     // Unlock GPIOs
     PM5CTL0 &= ~LOCKLPM5;

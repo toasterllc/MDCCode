@@ -326,10 +326,10 @@ int main() {
     // Init ICE40
     ICE::Init();
     
-    for (int i=0;; i++) {
-        ICE::Transfer(ICE::LEDSetMsg(i));
-        _sleepMs(500);
-    }
+//    for (int i=0;; i++) {
+//        ICE::Transfer(ICE::LEDSetMsg(i));
+//        _sleepMs(500);
+//    }
     
     // Initialize image sensor
     Img::Sensor::Init();
