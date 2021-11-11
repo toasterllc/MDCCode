@@ -1,8 +1,11 @@
 #include <msp430.h>
 
+#define LED_BIT     BITE
+#define INT_BIT     BITC
+
 static void ledFlash() {
     for (;;) {
-        PAOUT ^= BITE;
+        PAOUT ^= LED_BIT;
         __delay_cycles(100000);
     }
 }
@@ -12,16 +15,16 @@ int main() {
     WDTCTL = WDTPW | WDTHOLD;
     
     // Cold start
-    PAOUT   = BITE;
-    PADIR   = BITE;
+    PAOUT   = LED_BIT;
+    PADIR   = LED_BIT;
     PASEL0  = 0;
     PASEL1  = 0;
-    PAREN   = BITC;
+    PAREN   = INT_BIT;
     PAIES   = 0;
     
     PM5CTL0 &= ~LOCKLPM5;
     
-    PAIE    = BITC;
+    PAIE    = INT_BIT;
     
     if (SYSRSTIV == SYSRSTIV_LPM5WU) {
         ledFlash();
