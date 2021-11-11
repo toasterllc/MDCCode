@@ -30,7 +30,7 @@ int main() {
         ledFlash();
     }
     
-    PAIFG   = 0;
+    PAIFG = 0;
     
     // Disable regulator so we enter LPM3.5 (instead of just LPM3)
     PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
