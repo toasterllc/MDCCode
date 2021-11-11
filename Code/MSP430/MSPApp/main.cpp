@@ -94,7 +94,7 @@ int main() {
 //    __bis_SR_register(GIE);
     
     for (;;) {
-//        _sleepMs(50);
+        _sleepMs(50);
 //        __bic_SR_register(GIE);
         
         P1IFG |= (1<<4);
