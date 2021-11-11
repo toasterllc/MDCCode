@@ -48,25 +48,6 @@ void _isr_port2() {
     }
 }
 
-
-//__attribute__((interrupt(PORT1_VECTOR)))
-//void _isr_port1() {
-//    
-//    for (int i=0;; i++) {
-//        Pin::DEBUG_OUT::Write(i&1);
-//    }
-//    
-//    // Accessing `P1IV` automatically clears the highest-priority interrupt
-//    switch (__even_in_range(P1IV, P1IV__P1IFG7)) {
-//    case P1IV__P1IFG4:
-//        Event = true;
-//        __bic_SR_register_on_exit(LPM3_bits);
-//        break;
-//    default:
-//        break;
-//    }
-//}
-
 #pragma mark - Main
 
 int main() {
@@ -94,24 +75,14 @@ int main() {
     // Init clock
     Clock::Init();
     
-    SYSCFG0 = FRWPPW; // Enable FRAM writes
-    
-//    P1IFG = 0;
-//    P2IFG = 0;
-    
     if (SYSRSTIV == SYSRSTIV_LPM5WU) {
         for (int i=0;; i++) {
             Pin::DEBUG_OUT::Write(i&1);
         }
-    
-    } else {
-        // Cold start
-//        _sleepMs(3000);
-        
-        P2IFG = 0;
-        
-        __bis_SR_register(GIE);
     }
+    
+    P2IFG = 0;
+    __bis_SR_register(GIE);
     
     // Disable regulator so we enter LPM3.5 (instead of just LPM3)
     PMMCTL0_H = PMMPW_H; // Open PMM Registers for write

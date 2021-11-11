@@ -24,11 +24,11 @@ public:
             // Clear DCO frequency select bits first
             CSCTL1 &= ~(DCORSEL_7);
             
-//            // Set DCO = 16MHz
-//            CSCTL1 |= DCORSEL_5;
+            // Set DCO = 16MHz
+            CSCTL1 |= DCORSEL_5;
             
-            // Set DCO = 1MHz
-            CSCTL1 |= DCORSEL_0;
+//            // Set DCO = 1MHz
+//            CSCTL1 |= DCORSEL_0;
             
             // DCOCLKDIV = 16MHz
             CSCTL2 = FLLD_0 | ((MCLKFreqHz/XT1FreqHz)-1);
