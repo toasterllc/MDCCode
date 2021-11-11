@@ -19,7 +19,8 @@ struct Pin {
     using VDD_2V8_IMG_EN                    = GPIOA<0x2, GPIOOption::Output0>;
     using ICE_MSP_SPI_DATA_DIR              = GPIOA<0x3, GPIOOption::Output1>;
     using ICE_MSP_SPI_DATA_IN               = GPIOA<0x4, GPIOOption::Interrupt01>;
-    using ICE_MSP_SPI_DATA_UCA0SOMI         = GPIOA<0x5, GPIOOption::Output0>;
+//    using ICE_MSP_SPI_DATA_UCA0SOMI         = GPIOA<0x5, GPIOOption::Output0>;
+    using ICE_MSP_SPI_DATA_UCA0SOMI         = GPIOA<0x5, GPIOOption::Input, GPIOOption::Resistor0>;
     using ICE_MSP_SPI_CLK_MANUAL            = GPIOA<0x6, GPIOOption::Output1>;
     using ICE_MSP_SPI_AUX                   = GPIOA<0x7, GPIOOption::Output0>;
     using XOUT                              = GPIOA<0x8, GPIOOption::Sel10>;
@@ -28,13 +29,8 @@ struct Pin {
     using VDD_SD_EN                         = GPIOA<0xB, GPIOOption::Output0>;
     using VDD_B_EN_                         = GPIOA<0xC, GPIOOption::Output1>;
     using MOTION_SIGNAL                     = GPIOA<0xD, GPIOOption::Input>;
-//    using MOTION_SIGNAL                     = GPIOA<0xD, GPIOOption::Interrupt01>;
     
     using DEBUG_OUT                         = GPIOA<0xE, GPIOOption::Output0>;
-    
-    // Alternate versions of above GPIOs
-    using ICE_MSP_SPI_DATA_UCA0SIMO         = GPIOA<0x4, GPIOOption::Sel01>;
-    using ICE_MSP_SPI_CLK_UCA0CLK           = GPIOA<0x6, GPIOOption::Sel01>;
 };
 
 using Clock = ClockType<XT1FreqHz, MCLKFreqHz>;
@@ -43,12 +39,14 @@ using Clock = ClockType<XT1FreqHz, MCLKFreqHz>;
 
 static volatile bool Event = false;
 
-__attribute__((section(".persistent")))
-static volatile bool Debug = 0;
-
-__interrupt
 __attribute__((interrupt(PORT1_VECTOR)))
 void _isr_port1() {
+    
+    // Cold start
+    for (int i=0;; i++) {
+        Pin::DEBUG_OUT::Write(i&1);
+    }
+    
     // Accessing `P1IV` automatically clears the highest-priority interrupt
     switch (__even_in_range(P1IV, P1IV__P1IFG7)) {
     case P1IV__P1IFG4:
@@ -92,9 +90,24 @@ int main() {
 //    P1IFG = 0;
 //    P2IFG = 0;
     
-    __bis_SR_register(GIE);
+    if (SYSRSTIV == SYSRSTIV_LPM5WU) {
+        // Wake from LPM3.5
+        for (int i=0; i<1000; i++) {
+            _sleepMs(5);
+            Pin::DEBUG_OUT::Write(i&1);
+        }
     
-    _sleepMs(50);
+    } else {
+        // Cold start
+        for (int i=0; i<500; i++) {
+            _sleepMs(10);
+            Pin::DEBUG_OUT::Write(i&1);
+        }
+        
+        P1IFG = 0;
+    }
+    
+    __bis_SR_register(GIE);
     
 //    bool first = true;
     for (;;) {
@@ -111,13 +124,13 @@ int main() {
             
 //            P1IFG |= (1<<4);
             
-            // Artificially trigger an interrupt
-            Pin::ICE_MSP_SPI_DATA_UCA0SOMI::Write(1);
-            Pin::ICE_MSP_SPI_DATA_UCA0SOMI::Write(0);
+//            // Artificially trigger an interrupt
+//            Pin::ICE_MSP_SPI_DATA_UCA0SOMI::Write(1);
+//            Pin::ICE_MSP_SPI_DATA_UCA0SOMI::Write(0);
             
-            // Disable regulator so we enter LPM3.5 (instead of just LPM3)
-            PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-            PMMCTL0_L |= PMMREGOFF;
+//            // Disable regulator so we enter LPM3.5 (instead of just LPM3)
+//            PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+//            PMMCTL0_L |= PMMREGOFF;
             
             // Go to sleep in LPM3.5
             __bis_SR_register(GIE | LPM3_bits);
@@ -134,13 +147,7 @@ int main() {
         // Re-enable interrupts while we handle the event
         __bis_SR_register(GIE);
         
-        // Handle event
-        for (int i=0; i<1000; i++) {
-            Pin::DEBUG_OUT::Write(i&1);
-        }
-        
 //        Pin::DEBUG_OUT::Write(Debug);
-        Debug = !Debug;
         
 //        do {
 //            // Disable ints while we check for events
