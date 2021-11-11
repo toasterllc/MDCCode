@@ -7,7 +7,7 @@
 #include "Clock.h"
 #include "Assert.h"
 
-static constexpr uint64_t MCLKFreqHz = 16000000;
+static constexpr uint64_t MCLKFreqHz = 1000000;
 static constexpr uint32_t XT1FreqHz = 32768;
 
 #define _sleepUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
@@ -50,6 +50,13 @@ void _isr_port2() {
 
 #pragma mark - Main
 
+__attribute__((section(".data")))
+void _sleep() {
+    GCCTL0 &= ~(FRPWR+FRLPMPWR); //clear FRPWR and FRLPMPWR
+    // Go to sleep in LPM3.5
+    __bis_SR_register(GIE | LPM3_bits);
+}
+
 int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
@@ -81,6 +88,8 @@ int main() {
         }
     }
     
+    _sleepMs(5000);
+    
     P2IFG = 0;
     __bis_SR_register(GIE);
     
@@ -89,7 +98,8 @@ int main() {
     PMMCTL0_L |= PMMREGOFF;
     
     // Go to sleep in LPM3.5
-    __bis_SR_register(GIE | LPM3_bits);
+    _sleep();
+//    __bis_SR_register(GIE | LPM3_bits);
     
     return 0;
 }
