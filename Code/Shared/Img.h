@@ -9,21 +9,23 @@ namespace Img {
     
     struct Header {
         // Section idx=0
-        uint16_t version        = 0;    // 0x4242
-        uint16_t imageWidth     = 0;    // 0x0900
-        uint16_t imageHeight    = 0;    // 0x0510
-        uint16_t _pad0          = 0;    // 0x0000
+        uint16_t version;       // 0x4242
+        uint16_t imageWidth;    // 0x0900
+        uint16_t imageHeight;   // 0x0510
+        uint16_t _pad0;         // 0x0000
         // Section idx=1
-        uint32_t counter        = 0;    // 0xCAFEBABE
-        uint32_t _pad1          = 0;    // 0x00000000
+        uint32_t counter;       // 0xCAFEBABE
+        uint32_t _pad1;         // 0x00000000
         // Section idx=2
-        uint32_t timestamp      = 0;    // 0xDEADBEEF
-        uint32_t _pad2          = 0;    // 0x00000000
+        uint32_t timestamp;     // 0xDEADBEEF
+        uint32_t _pad2;         // 0x00000000
         // Section idx=3
-        uint16_t coarseIntTime  = 0;    // 0x1111
-        uint16_t analogGain     = 0;    // 0x2222
-        uint32_t _pad3          = 0;    // 0x00000000
+        uint16_t coarseIntTime; // 0x1111
+        uint16_t analogGain;    // 0x2222
+        uint32_t _pad3;         // 0x00000000
     } __attribute__((packed));
+    
+    constexpr uint16_t HeaderVersion    = 0x4242;
     
     constexpr uint32_t HeaderLen        = sizeof(Header);
     constexpr uint32_t PixelWidth       = 2304;

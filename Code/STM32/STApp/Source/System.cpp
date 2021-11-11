@@ -456,7 +456,13 @@ void System::_img_captureTaskFn() {
     TaskBegin();
     _img_init();
     
-    auto [ok, resp] = ICE::ImgCapture(arg.dstBlock, arg.skipCount);
+    const Img::Header header = {
+        .version        = Img::HeaderVersion,
+        .imageWidth     = Img::PixelWidth,
+        .imageHeight    = Img::PixelHeight,
+    };
+    
+    auto [ok, resp] = ICE::ImgCapture(header, arg.dstBlock, arg.skipCount);
     if (!ok) {
         _usb_dataInSendStatus(false);
         return;

@@ -73,6 +73,14 @@ private:
     size_t _crcLen = 0;
     bool _crcStarted = false;
     
+    void _pinsReset() {
+        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        
+        Test::Write(0);
+        Rst_::Write(1);
+    }
+    
     void _tapReset() {
         // Reset JTAG state machine
         // TMS=1 for 6 clocks
@@ -627,11 +635,7 @@ private:
         
         // Reset pin states
         {
-            Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
-            Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
-            
-            Test::Write(0);
-            Rst_::Write(1);
+            _pinsReset();
             _DelayMs(10);
         }
         
@@ -692,7 +696,9 @@ public:
         JTAGDisabled,
     };
     
-    MSP430() {}
+    void init() {
+        _pinsReset();
+    }
     
     Status connect() {
         for (int i=0; i<3; i++) {
