@@ -50,9 +50,9 @@ void _isr_port2() {
 
 #pragma mark - Main
 
-__attribute__((section(".data")))
-void _sleep() {
-    GCCTL0 &= ~(FRPWR+FRLPMPWR); //clear FRPWR and FRLPMPWR
+__attribute__((section(".data;"), used))
+static void _sleep() {
+    GCCTL0 &= ~(FRPWR|FRLPMPWR); //clear FRPWR and FRLPMPWR
     // Go to sleep in LPM3.5
     __bis_SR_register(GIE | LPM3_bits);
 }
@@ -88,7 +88,7 @@ int main() {
         }
     }
     
-    _sleepMs(5000);
+    _sleepMs(7000);
     
     P2IFG = 0;
     __bis_SR_register(GIE);
