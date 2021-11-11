@@ -40,21 +40,19 @@ using Clock = ClockType<XT1FreqHz, MCLKFreqHz>;
 
 #pragma mark - Interrupts
 
+static volatile bool Event = false;
+
+__attribute__((section(".persistent")))
+static volatile bool Debug = 0;
+
 __interrupt
 __attribute__((interrupt(PORT1_VECTOR)))
 void _isr_port1() {
-    __attribute__((section(".persistent")))
-    static bool debug = 0;
-    
     // Accessing `P1IV` automatically clears the highest-priority interrupt
     switch (__even_in_range(P1IV, P1IV__P1IFG7)) {
     case P1IV__P1IFG4:
-        Pin::DEBUG_OUT::Write(debug);
-        
-        SYSCFG0 = FRWPPW; // Enable FRAM writes
-        debug = !debug;
-        
-        __bic_SR_register_on_exit(LPM1_bits);
+        Event = true;
+        __bic_SR_register_on_exit(LPM3_bits);
         break;
     default:
         break;
@@ -88,55 +86,72 @@ int main() {
     // Init clock
     Clock::Init();
     
+    SYSCFG0 = FRWPPW; // Enable FRAM writes
+    
 //    P1IFG = 0;
 //    P2IFG = 0;
-//    
-//    __bis_SR_register(GIE);
+    
+    __bis_SR_register(GIE);
     
     for (;;) {
-        _sleepMs(50);
-//        __bic_SR_register(GIE);
+        // Disable ints while we check for events
+        __bic_SR_register(GIE);
         
-        P1IFG |= (1<<4);
+        if (!Event) {
+            // Atomically enable interrupts and go to sleep
+            
+            P1IFG |= (1<<4);
+            
+            // Disable regulator so we enter LPM3.5 (instead of just LPM3)
+            PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+            PMMCTL0_L |= PMMREGOFF;
+            
+            // Go to sleep in LPM3.5
+            __bis_SR_register(GIE | LPM3_bits);
+        }
         
-//        // Disable regulator so we enter LPM3.5 (instead of just LPM3)
-//        PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-//        PMMCTL0_L |= PMMREGOFF;
+        // Clear event flag
+        Event = false;
+        // Re-enable interrupts while we handle the event
+        __bis_SR_register(GIE);
         
-        // Go to sleep in LPM3.5
-        __bis_SR_register(GIE | LPM1_bits);
-    }
-    
-    
-//    __bis_SR_register(GIE);
-    
-//    P1IFG |= (1<<4);
-//    
-//    for (;;);
-    
-    // Enable interrupts
-//    __bis_SR_register(GIE);
-    
-//    Pin::DEBUG_OUT::Write(1);
-//    P1IFG |= 0xFF;
-//    for (;;);
-    
-//    _sleepMs(1);
-    
-//    for (;;) {
-////        _sleepMs(50);
+        // Handle event
+        Pin::DEBUG_OUT::Write(Debug);
+        Debug = !Debug;
+        
+//        do {
+//            // Disable ints while we check for events
+//            __bic_SR_register(GIE);
+//            
+//            if (!Event)
+//            
+//            // Check for events
+//            if (Event) {
+//                // Enable ints while we handle the event
+//                __bis_SR_register(GIE);
+//                
+//                Pin::DEBUG_OUT::Write(Debug);
+//                Debug = !Debug;
+//                Event = false;
+//            }
+//            
+//            // Enable ints while we check for events
+//            __bis_SR_register(GIE);
+//        }
+//        
+//        _sleepMs(50);
 ////        __bic_SR_register(GIE);
 //        
 //        P1IFG |= (1<<4);
-//        for (;;);
 //        
-////        // Disable regulator so we enter LPM3.5 (instead of just LPM3)
-////        PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-////        PMMCTL0_L |= PMMREGOFF;
+//        
+//        // Disable regulator so we enter LPM3.5 (instead of just LPM3)
+//        PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+//        PMMCTL0_L |= PMMREGOFF;
 //        
 //        // Go to sleep in LPM3.5
 //        __bis_SR_register(GIE | LPM3_bits);
-//    }
+    }
     
     return 0;
 }
