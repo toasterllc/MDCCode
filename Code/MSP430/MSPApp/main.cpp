@@ -7,7 +7,7 @@
 #include "Clock.h"
 #include "Assert.h"
 
-static constexpr uint64_t MCLKFreqHz = 1000000;
+static constexpr uint64_t MCLKFreqHz = 16000000;
 static constexpr uint32_t XT1FreqHz = 32768;
 
 #define _sleepUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
@@ -17,7 +17,7 @@ struct Pin {
     // Default GPIOs
     using VDD_1V9_IMG_EN                    = GPIOA<0x0, GPIOOption::Output0>;
     using VDD_2V8_IMG_EN                    = GPIOA<0x2, GPIOOption::Output0>;
-    using ICE_MSP_SPI_DATA_DIR              = GPIOA<0x3, GPIOOption::Output1>;
+    using ICE_MSP_SPI_DATA_DIR              = GPIOA<0x3, GPIOOption::Output0, GPIOOption::Sel10>;
     using ICE_MSP_SPI_DATA_IN               = GPIOA<0x4, GPIOOption::Input>;
 //    using ICE_MSP_SPI_DATA_IN               = GPIOA<0x4, GPIOOption::Interrupt01>;
 //    using ICE_MSP_SPI_DATA_UCA0SOMI         = GPIOA<0x5, GPIOOption::Output0>;
