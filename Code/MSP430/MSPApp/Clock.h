@@ -22,10 +22,26 @@ public:
             CSCTL0 = 0;
             // Clear DCO frequency select bits first
             CSCTL1 &= ~(DCORSEL_7);
-            // Set DCO = 16MHz
-            CSCTL1 |= DCORSEL_5;
+            
+            if constexpr (MCLKFreqHz == 16000000) {
+                CSCTL1 |= DCORSEL_5;
+            } else if constexpr (MCLKFreqHz == 12000000) {
+                CSCTL1 |= DCORSEL_4;
+            } else if constexpr (MCLKFreqHz == 8000000) {
+                CSCTL1 |= DCORSEL_3;
+            } else if constexpr (MCLKFreqHz == 4000000) {
+                CSCTL1 |= DCORSEL_2;
+            } else if constexpr (MCLKFreqHz == 2000000) {
+                CSCTL1 |= DCORSEL_1;
+            } else if constexpr (MCLKFreqHz == 1000000) {
+                CSCTL1 |= DCORSEL_0;
+            } else {
+                static_assert(_AlwaysFalse<MCLKFreqHz>);
+            }
+            
             // DCOCLKDIV = 16MHz
             CSCTL2 = FLLD_0 | ((MCLKFreqHz/XT1FreqHz)-1);
+            
             // Wait 3 cycles to take effect
             __delay_cycles(3);
         // Enable FLL
@@ -38,4 +54,7 @@ public:
         // ACLK source = XT1
         CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
     }
+
+private:
+    template <class...> static constexpr std::false_type _AlwaysFalse = {};
 };
