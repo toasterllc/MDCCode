@@ -50,7 +50,7 @@ void _isr_port2() {
 
 #pragma mark - Main
 
-__attribute__((section(".data;"), used))
+__attribute__((section(".data;"), noinline)) // Trailing semicolon is a hack to silence an assembler warning
 static void _sleep() {
     GCCTL0 &= ~(FRPWR|FRLPMPWR); //clear FRPWR and FRLPMPWR
     // Go to sleep in LPM3.5
