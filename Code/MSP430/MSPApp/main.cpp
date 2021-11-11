@@ -99,33 +99,23 @@ int main() {
 //    P1IFG = 0;
 //    P2IFG = 0;
     
-    const bool wokeFromLPM35 = (SYSRSTIV == SYSRSTIV_LPM5WU);
-    
-    if (wokeFromLPM35) {
-//        for (int i=0; i<1000/5; i++) {
-//            _sleepMs(5);
-//            Pin::DEBUG_OUT::Write(i&1);
-//        }
-        
-        __bis_SR_register(GIE);
+    if (SYSRSTIV == SYSRSTIV_LPM5WU) {
+        for (int i=0;; i++) {
+            Pin::DEBUG_OUT::Write(i&1);
+        }
     
     } else {
         // Cold start
-        _sleepMs(3000);
-        
-//        for (int i=0; i<500/5; i++) {
-//            _sleepMs(10);
-//            Pin::DEBUG_OUT::Write(i&1);
-//        }
+//        _sleepMs(3000);
         
         P2IFG = 0;
         
         __bis_SR_register(GIE);
     }
     
-//    // Disable regulator so we enter LPM3.5 (instead of just LPM3)
-//    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-//    PMMCTL0_L |= PMMREGOFF;
+    // Disable regulator so we enter LPM3.5 (instead of just LPM3)
+    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+    PMMCTL0_L |= PMMREGOFF;
     
     // Go to sleep in LPM3.5
     __bis_SR_register(GIE | LPM3_bits);

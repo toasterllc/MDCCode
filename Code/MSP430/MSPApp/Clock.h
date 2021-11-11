@@ -7,6 +7,7 @@ public:
     static void Init() {
         // Configure one FRAM wait state, as required by the device datasheet for MCLK > 8MHz.
         // This must happen before configuring the clock system.
+        #warning should we do this in 2 stages?
         FRCTL0 = FRCTLPW | NWAITS_1;
         
         do {
@@ -22,10 +23,16 @@ public:
             CSCTL0 = 0;
             // Clear DCO frequency select bits first
             CSCTL1 &= ~(DCORSEL_7);
-            // Set DCO = 16MHz
-            CSCTL1 |= DCORSEL_5;
+            
+//            // Set DCO = 16MHz
+//            CSCTL1 |= DCORSEL_5;
+            
+            // Set DCO = 1MHz
+            CSCTL1 |= DCORSEL_0;
+            
             // DCOCLKDIV = 16MHz
             CSCTL2 = FLLD_0 | ((MCLKFreqHz/XT1FreqHz)-1);
+            
             // Wait 3 cycles to take effect
             __delay_cycles(3);
         // Enable FLL
