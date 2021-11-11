@@ -7,7 +7,8 @@ class RTCType {
 public:
     using Sec = uint32_t;
     
-    static constexpr Sec InterruptInterval = 2048;
+    #warning switch InterruptInterval back to 2048
+    static constexpr Sec InterruptInterval = 1;
     static constexpr uint32_t Predivider = 1024;
     static constexpr uint32_t FreqHz = XT1FreqHz/Predivider;
     static_assert((XT1FreqHz % Predivider) == 0); // Confirm that XT1FreqHz is evenly divisible by Predivider
@@ -17,6 +18,7 @@ public:
     static void Init() {
         RTCMOD = InterruptCount;
         static_assert(Predivider == 1024); // Make sure we're using the right RTCPS flag (RTCPS__1024)
+        #warning TODO: clear IFG!
         RTCCTL = RTCSS__XT1CLK | RTCPS__1024 | RTCSR | RTCIE;
     }
     
@@ -55,5 +57,7 @@ private:
         return _Time + (RTCCNT/FreqHz);
     }
     
+    #warning move `_Time` to the backup RAM that's retained in LPM3.5, but cleared on a reset
+    __attribute__((section(".persistent")))
     static volatile inline Sec _Time = 0; // Marked volatile since it's updated with an interrupt
 };
