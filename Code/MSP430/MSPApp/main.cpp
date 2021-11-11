@@ -5,6 +5,7 @@
 #include <cstddef>
 #include "GPIO.h"
 #include "Clock.h"
+#include "Assert.h"
 
 static constexpr uint64_t MCLKFreqHz = 16000000;
 static constexpr uint32_t XT1FreqHz = 32768;
@@ -93,13 +94,20 @@ int main() {
     
     __bis_SR_register(GIE);
     
+    bool first = true;
     for (;;) {
         // Disable ints while we check for events
         __bic_SR_register(GIE);
         
         if (!Event) {
-            // Atomically enable interrupts and go to sleep
+            if (first) {
+                // We don't have an event, so this should be a cold start (ie we
+                // didn't wake up from LPM3.5)
+                Assert(SYSRSTIV != SYSRSTIV_LPM5WU);
+                first = false;
+            }
             
+            // Artificially trigger an interrupt
             P1IFG |= (1<<4);
             
             // Disable regulator so we enter LPM3.5 (instead of just LPM3)
@@ -108,6 +116,12 @@ int main() {
             
             // Go to sleep in LPM3.5
             __bis_SR_register(GIE | LPM3_bits);
+        }
+        
+        if (first) {
+            // We do have an event, so we should have woken up from LPM3.5
+            Assert(SYSRSTIV == SYSRSTIV_LPM5WU);
+            first = false;
         }
         
         // Clear event flag
