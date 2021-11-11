@@ -53,11 +53,6 @@ SD::Card _sd;
 Img::AutoExposure _imgAutoExp;
 uint16_t _imgDstIdx = 0;
 
-#pragma mark - RTC
-
-__attribute__((interrupt(RTC_VECTOR)))
-static void _isr_rtc() { RTC::ISR(); }
-
 #pragma mark - Motion
 
 static constexpr uint16_t ImgHeaderVersion = 0x4242;
@@ -131,10 +126,15 @@ static void _motion_handle() {
 
 #pragma mark - Interrupts
 
+__attribute__((interrupt(RTC_VECTOR)))
+static void _isr_rtc() {
+    RTC::ISR();
+}
+
 __attribute__((interrupt(PORT2_VECTOR)))
 void _isr_port2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
-    switch (__even_in_range(P2IV, P2IV__P2IFG7)) {
+    switch (__even_in_range(P2IV, P2IV__P2IFG5)) {
     case P2IV__P2IFG5:
         // Wake ourself
         __bic_SR_register_on_exit(SRSleepBits);
@@ -218,6 +218,23 @@ void Toastbox::IRQState::WaitForInterrupt() {
     __bis_SR_register(SRSleepBits);
 }
 
+static void _sleep() {
+    // Ensure that interrupts are enabled before going to sleep:
+    // > It is not possible to wake up from a port interrupt if its respective
+    // > port interrupt flag is already asserted. TI recommends clearing the
+    // > flags before entering LPMx.5. TI also recommends setting GIE = 1
+    // > before entry into LPMx.5. This allows any pending flags to be serviced
+    // > before LPMx.5 entry.
+    Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
+    
+    // Disable regulator so we enter LPM3.5 (instead of just LPM3)
+    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+    PMMCTL0_L |= PMMREGOFF;
+    
+    // Go to sleep in LPM3.5
+    __bis_SR_register(LPM3_bits);
+}
+
 #pragma mark - Main
 
 int main() {
@@ -253,9 +270,27 @@ int main() {
     // Init ICE40
     ICE::Init();
     
-    for (int i=0;; i++) {
+    // Enable interrupts
+    Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
+    
+    // Check if we're waking from LPM3.5
+    if (SYSRSTIV == SYSRSTIV__LPM5WU) {
+        __attribute__((section(".persistent")))
+        static int i = 0;
+        
         ICE::Transfer(ICE::LEDSetMsg(i));
-        _sleepMs(500);
+        i++;
+        _sleep();
+    
+    } else {
+        
+    }
+    
+    for (int i=0;; i++) {
+//        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+        __bis_SR_register(GIE | LPM1_bits);
+        
+        ICE::Transfer(ICE::LEDSetMsg(i));
     }
     
 //    // Initialize image sensor
