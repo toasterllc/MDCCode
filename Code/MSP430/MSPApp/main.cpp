@@ -19,7 +19,7 @@ struct Pin {
     using VDD_2V8_IMG_EN                    = GPIOA<0x2, GPIOOption::Output0>;
     using ICE_MSP_SPI_DATA_DIR              = GPIOA<0x3, GPIOOption::Output1>;
     using ICE_MSP_SPI_DATA_IN               = GPIOA<0x4, GPIOOption::Interrupt01>;
-    using ICE_MSP_SPI_DATA_UCA0SOMI         = GPIOA<0x5, GPIOOption::Sel01>;
+    using ICE_MSP_SPI_DATA_UCA0SOMI         = GPIOA<0x5, GPIOOption::Output0>;
     using ICE_MSP_SPI_CLK_MANUAL            = GPIOA<0x6, GPIOOption::Output1>;
     using ICE_MSP_SPI_AUX                   = GPIOA<0x7, GPIOOption::Output0>;
     using XOUT                              = GPIOA<0x8, GPIOOption::Sel10>;
@@ -94,21 +94,26 @@ int main() {
     
     __bis_SR_register(GIE);
     
-    bool first = true;
+    _sleepMs(50);
+    
+//    bool first = true;
     for (;;) {
         // Disable ints while we check for events
         __bic_SR_register(GIE);
         
         if (!Event) {
-            if (first) {
-                // We don't have an event, so this should be a cold start (ie we
-                // didn't wake up from LPM3.5)
-                Assert(SYSRSTIV != SYSRSTIV_LPM5WU);
-                first = false;
-            }
+//            if (first) {
+//                // We don't have an event, so this should be a cold start (ie we
+//                // didn't wake up from LPM3.5)
+//                Assert(SYSRSTIV != SYSRSTIV_LPM5WU);
+//                first = false;
+//            }
+            
+//            P1IFG |= (1<<4);
             
             // Artificially trigger an interrupt
-            P1IFG |= (1<<4);
+            Pin::ICE_MSP_SPI_DATA_UCA0SOMI::Write(1);
+            Pin::ICE_MSP_SPI_DATA_UCA0SOMI::Write(0);
             
             // Disable regulator so we enter LPM3.5 (instead of just LPM3)
             PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
@@ -118,11 +123,11 @@ int main() {
             __bis_SR_register(GIE | LPM3_bits);
         }
         
-        if (first) {
-            // We do have an event, so we should have woken up from LPM3.5
-            Assert(SYSRSTIV == SYSRSTIV_LPM5WU);
-            first = false;
-        }
+//        if (first) {
+//            // We do have an event, so we should have woken up from LPM3.5
+//            Assert(SYSRSTIV == SYSRSTIV_LPM5WU);
+//            first = false;
+//        }
         
         // Clear event flag
         Event = false;
@@ -130,7 +135,11 @@ int main() {
         __bis_SR_register(GIE);
         
         // Handle event
-        Pin::DEBUG_OUT::Write(Debug);
+        for (int i=0; i<1000; i++) {
+            Pin::DEBUG_OUT::Write(i&1);
+        }
+        
+//        Pin::DEBUG_OUT::Write(Debug);
         Debug = !Debug;
         
 //        do {
