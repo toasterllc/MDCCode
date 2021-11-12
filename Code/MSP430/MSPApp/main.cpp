@@ -17,11 +17,7 @@ using namespace GPIO;
 
 static constexpr uint64_t MCLKFreqHz = 16000000;
 static constexpr uint32_t XT1FreqHz = 32768;
-
-struct Sleep {
-    static constexpr uint16_t LPMBits = LPM3_bits;
-    static constexpr uint16_t SRBits = GIE | LPMBits;
-};
+static constexpr uint16_t LPMBits = LPM3_bits;
 
 #define _sleepUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
 #define _sleepMs(ms) __delay_cycles((((uint64_t)ms)*MCLKFreqHz) / 1000)
@@ -41,10 +37,6 @@ struct Pin {
     using VDD_SD_EN                         = PortA::Pin<0xB, Option::Output0>;
     using VDD_B_EN_                         = PortA::Pin<0xC, Option::Output1>;
     using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Interrupt01>;
-    
-    #warning remove
-    using DEBUG_INT                         = PortA::Pin<0xC, Option::Interrupt01, Option::Resistor0>;
-    using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
 
 using Clock = ClockType<XT1FreqHz, MCLKFreqHz, Pin::XOUT, Pin::XIN>;
@@ -140,7 +132,7 @@ void _isr_port2() {
     case P2IV__P2IFG5:
         _Motion = true;
         // Wake ourself
-        __bic_SR_register_on_exit(Sleep::LPMBits);
+        __bic_SR_register_on_exit(LPMBits);
         break;
     
     default:
@@ -194,9 +186,18 @@ bool Toastbox::IRQState::SetInterruptsEnabled(bool en) {
 }
 
 void Toastbox::IRQState::WaitForInterrupt() {
+    // Put ourself to sleep until an interrupt occurs. This function may or may not return:
+    // - This function returns if an interrupt was already pending and the ISR
+    //   wakes us (via `__bic_SR_register_on_exit(LPMBits)`). In this case we
+    //   never enter LPM3.5.
+    // - This function doesn't return if an interrupt wasn't pending and
+    //   therefore we enter LPM3.5. The next time we wake will be due to a
+    //   reset and execution will start from main().
+    
     // Disable regulator so we enter LPM3.5 (instead of just LPM3)
     PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
     PMMCTL0_L |= PMMREGOFF;
+    
     // Atomically enable interrupts and go to sleep
     const bool prevEn = _InterruptsEnabled();
     __bis_SR_register(GIE | LPMBits);
@@ -234,39 +235,27 @@ int main() {
         // Other
         Pin::ICE_MSP_SPI_AUX,
         Pin::ICE_MSP_SPI_AUX_DIR
-        
-//        Pin::DEBUG_INT,
-//        Pin::DEBUG_OUT
-    >();
-    
-    // Init GPIOs
-    GPIOInit<
-//        Pin::VDD_1V9_IMG_EN,
-//        Pin::VDD_2V8_IMG_EN,
-//        Pin::ICE_MSP_SPI_DATA_DIR,
-//        Pin::ICE_MSP_SPI_DATA_IN,
-//        Pin::ICE_MSP_SPI_DATA_UCA0SOMI,
-//        Pin::ICE_MSP_SPI_CLK_MANUAL,
-//        Pin::ICE_MSP_SPI_AUX,
-//        Pin::XOUT,
-//        Pin::XIN,
-//        Pin::ICE_MSP_SPI_AUX_DIR,
-//        Pin::VDD_SD_EN,
-//        Pin::VDD_B_EN_,
-        Pin::MOTION_SIGNAL
     >();
     
     // Init clock
     Clock::Init();
     
+    #warning do we want to reconfigure RTC when waking from LPM3.5?
     // Init real-time clock
     RTC::Init();
     
-//    // Init SPI
-//    SPI::Init();
-//    
-//    // Init ICE40
-//    ICE::Init();
+    #warning when waking due to only RTC, we don't need to initialize SPI or talk to ICE40. we just need to service the RTC int and go back to sleep
+    
+    // Init SPI
+    SPI::Init();
+    
+    // Init ICE40
+    ICE::Init();
+    
+    for (int i=0;; i++) {
+        ICE::Transfer(ICE::LEDSetMsg(i));
+        _sleepMs(100);
+    }
     
     // Enable interrupts
     Toastbox::IRQState irq = Toastbox::IRQState::Enabled();

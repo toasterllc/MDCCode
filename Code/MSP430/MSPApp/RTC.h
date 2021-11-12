@@ -18,6 +18,7 @@ public:
     static void Init() {
         RTCMOD = InterruptCount;
         #warning TODO: clear IFG!
+        #warning TODO: actually do we want to do that? we may have woken from LPM3.5 due to the RTC interrupt...
         RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR | RTCIE;
     }
     
