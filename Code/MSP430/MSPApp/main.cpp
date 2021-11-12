@@ -303,7 +303,7 @@ int main() {
             
         } else {
             // Go to sleep
-            Toastbox::IRQState::WaitForInterrupt();
+            _sleep();
         }
     }
     
