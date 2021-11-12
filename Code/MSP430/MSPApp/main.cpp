@@ -13,6 +13,7 @@
 #include "RTC.h"
 #include "SPI.h"
 using namespace Toastbox;
+using namespace GPIO;
 
 static constexpr uint64_t MCLKFreqHz = 16000000;
 static constexpr uint32_t XT1FreqHz = 32768;
@@ -23,31 +24,28 @@ static constexpr uint16_t SRSleepBits = GIE | LPM1_bits;
 
 struct Pin {
     // Default GPIOs
-    using VDD_1V9_IMG_EN                    = GPIOA<0x0, GPIOOption::Output0>;
-    using VDD_2V8_IMG_EN                    = GPIOA<0x2, GPIOOption::Output0>;
-    using ICE_MSP_SPI_DATA_DIR              = GPIOA<0x3, GPIOOption::Output1>;
-    using ICE_MSP_SPI_DATA_IN               = GPIOA<0x4, GPIOOption::Input>;
-    using ICE_MSP_SPI_DATA_UCA0SOMI         = GPIOA<0x5, GPIOOption::Sel01>;
-    using ICE_MSP_SPI_CLK_MANUAL            = GPIOA<0x6, GPIOOption::Output1>;
-    using ICE_MSP_SPI_AUX                   = GPIOA<0x7, GPIOOption::Output0>;
-    using XOUT                              = GPIOA<0x8, GPIOOption::Sel10>;
-    using XIN                               = GPIOA<0x9, GPIOOption::Sel10>;
-    using ICE_MSP_SPI_AUX_DIR               = GPIOA<0xA, GPIOOption::Output1>;
-    using VDD_SD_EN                         = GPIOA<0xB, GPIOOption::Output0>;
-    using VDD_B_EN_                         = GPIOA<0xC, GPIOOption::Output1>;
-    using MOTION_SIGNAL                     = GPIOA<0xD, GPIOOption::Input>;
-//    using MOTION_SIGNAL                     = GPIOA<0xD, GPIOOption::Interrupt01>;
+    using VDD_1V9_IMG_EN                    = PortA::Pin<0x0, Option::Output0>;
+    using VDD_2V8_IMG_EN                    = PortA::Pin<0x2, Option::Output0>;
+    using ICE_MSP_SPI_DATA_DIR              = PortA::Pin<0x3>;
+    using ICE_MSP_SPI_DATA_OUT              = PortA::Pin<0x4>;
+    using ICE_MSP_SPI_DATA_IN               = PortA::Pin<0x5>;
+    using ICE_MSP_SPI_CLK                   = PortA::Pin<0x6>;
+    using ICE_MSP_SPI_AUX                   = PortA::Pin<0x7, Option::Output0>;
+    using XOUT                              = PortA::Pin<0x8>;
+    using XIN                               = PortA::Pin<0x9>;
+    using ICE_MSP_SPI_AUX_DIR               = PortA::Pin<0xA, Option::Output1>;
+    using VDD_SD_EN                         = PortA::Pin<0xB, Option::Output0>;
+    using VDD_B_EN_                         = PortA::Pin<0xC, Option::Output1>;
+    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Interrupt01>;
     
-//    using DEBUG_OUT                         = GPIOA<0xE, GPIOOption::Output0>;
-    
-    // Alternate versions of above GPIOs
-    using ICE_MSP_SPI_DATA_UCA0SIMO         = GPIOA<0x4, GPIOOption::Sel01>;
-    using ICE_MSP_SPI_CLK_UCA0CLK           = GPIOA<0x6, GPIOOption::Sel01>;
+    #warning remove
+    using DEBUG_INT                         = PortA::Pin<0xC, Option::Interrupt01, Option::Resistor0>;
+    using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
 
-using Clock = ClockType<XT1FreqHz, MCLKFreqHz>;
+using Clock = ClockType<XT1FreqHz, MCLKFreqHz, Pin::XOUT, Pin::XIN>;
 using RTC = RTCType<XT1FreqHz>;
-using SPI = SPIType<MCLKFreqHz, Pin::ICE_MSP_SPI_CLK_MANUAL, Pin::ICE_MSP_SPI_CLK_UCA0CLK>;
+using SPI = SPIType<MCLKFreqHz, Pin::ICE_MSP_SPI_CLK, Pin::ICE_MSP_SPI_DATA_OUT, Pin::ICE_MSP_SPI_DATA_IN, Pin::ICE_MSP_SPI_DATA_DIR>;
 
 SD::Card _sd;
 Img::AutoExposure _imgAutoExp;
@@ -149,34 +147,7 @@ void _isr_port2() {
 
 void ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & ICE::MsgType::Resp));
-    
-    // PA.4 = UCA0SIMO
-    Pin::ICE_MSP_SPI_DATA_UCA0SIMO::Init();
-    
-    // PA.4 level shifter direction = MSP->ICE
-    Pin::ICE_MSP_SPI_DATA_DIR::Write(1);
-    
-    SPI::TxRx(msg.type);
-    
-    for (uint8_t b : msg.payload) {
-        SPI::TxRx(b);
-    }
-    
-    // PA.4 = GPIO input
-    Pin::ICE_MSP_SPI_DATA_IN::Init();
-    
-    // PA.4 level shifter direction = MSP<-ICE
-    Pin::ICE_MSP_SPI_DATA_DIR::Write(0);
-    
-    // 8-cycle turnaround
-    SPI::TxRx(0);
-    
-    // Clock in the response
-    if (resp) {
-        for (uint8_t& b : resp->payload) {
-            b = SPI::TxRx(0);
-        }
-    }
+    SPI::WriteRead(msg, resp);
 }
 
 #pragma mark - SD Card
@@ -219,20 +190,12 @@ void Toastbox::IRQState::WaitForInterrupt() {
 }
 
 static void _sleep() {
-    // Ensure that interrupts are enabled before going to sleep:
-    // > It is not possible to wake up from a port interrupt if its respective
-    // > port interrupt flag is already asserted. TI recommends clearing the
-    // > flags before entering LPMx.5. TI also recommends setting GIE = 1
-    // > before entry into LPMx.5. This allows any pending flags to be serviced
-    // > before LPMx.5 entry.
-    Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
-    
     // Disable regulator so we enter LPM3.5 (instead of just LPM3)
     PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
     PMMCTL0_L |= PMMREGOFF;
     
     // Go to sleep in LPM3.5
-    __bis_SR_register(LPM3_bits);
+    __bis_SR_register(GIE | LPM3_bits);
 }
 
 #pragma mark - Main
@@ -242,33 +205,54 @@ int main() {
     WDTCTL = WDTPW | WDTHOLD;
     
     // Init GPIOs
-    GPIOInit<
-        Pin::VDD_1V9_IMG_EN,
-        Pin::VDD_2V8_IMG_EN,
-        Pin::ICE_MSP_SPI_DATA_DIR,
-        Pin::ICE_MSP_SPI_DATA_IN,
-        Pin::ICE_MSP_SPI_DATA_UCA0SOMI,
-        Pin::ICE_MSP_SPI_CLK_MANUAL,
-        Pin::ICE_MSP_SPI_AUX,
-        Pin::XOUT,
-        Pin::XIN,
-        Pin::ICE_MSP_SPI_AUX_DIR,
-        Pin::VDD_SD_EN,
-        Pin::VDD_B_EN_,
-        Pin::MOTION_SIGNAL
+    PortA::Init<
+        // SPI peripheral determines initial state of SPI GPIOs
+        SPI::Pin::Clk,
+        SPI::Pin::DataOut,
+        SPI::Pin::DataIn,
+        SPI::Pin::DataDir,
+        // Clock peripheral determines initial state of clock GPIOs
+        Clock::Pin::XOUT,
+        Clock::Pin::XIN,
+        
+        Pin::DEBUG_INT,
+        Pin::DEBUG_OUT
     >();
     
-    // Init clock
-    Clock::Init();
+//    // Init GPIOs
+//    GPIOInit<
+//        Pin::VDD_1V9_IMG_EN,
+//        Pin::VDD_2V8_IMG_EN,
+//        Pin::ICE_MSP_SPI_DATA_DIR,
+//        Pin::ICE_MSP_SPI_DATA_IN,
+//        Pin::ICE_MSP_SPI_DATA_UCA0SOMI,
+//        Pin::ICE_MSP_SPI_CLK_MANUAL,
+//        Pin::ICE_MSP_SPI_AUX,
+//        Pin::XOUT,
+//        Pin::XIN,
+//        Pin::ICE_MSP_SPI_AUX_DIR,
+//        Pin::VDD_SD_EN,
+//        Pin::VDD_B_EN_,
+//        Pin::MOTION_SIGNAL
+//    >();
     
-    // Init real-time clock
-    RTC::Init();
+//    // Init clock
+//    Clock::Init();
+//    
+//    // Init real-time clock
+//    RTC::Init();
+//    
+//    // Init SPI
+//    SPI::Init();
+//    
+//    // Init ICE40
+//    ICE::Init();
     
-    // Init SPI
-    SPI::Init();
-    
-    // Init ICE40
-    ICE::Init();
+    for (;;) {
+        static bool a = 0;
+        Pin::DEBUG_OUT::Write(a);
+        a = !a;
+    }
     
     // Enable interrupts
     Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
