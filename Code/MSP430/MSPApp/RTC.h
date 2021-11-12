@@ -17,9 +17,8 @@ public:
     
     static void Init() {
         RTCMOD = InterruptCount;
-        static_assert(Predivider == 1024); // Make sure we're using the right RTCPS flag (RTCPS__1024)
         #warning TODO: clear IFG!
-        RTCCTL = RTCSS__XT1CLK | RTCPS__1024 | RTCSR | RTCIE;
+        RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR | RTCIE;
     }
     
     static Sec CurrentTime() {
@@ -48,6 +47,21 @@ public:
     }
     
 private:
+    template <class...>
+    static constexpr std::false_type _AlwaysFalse = {};
+    
+    template <uint16_t T_Predivider>
+    static constexpr uint16_t _RTCPSForPredivider() {
+             if constexpr (T_Predivider == 1)       return RTCPS__1;
+        else if constexpr (T_Predivider == 10)      return RTCPS__10;
+        else if constexpr (T_Predivider == 100)     return RTCPS__100;
+        else if constexpr (T_Predivider == 1000)    return RTCPS__1000;
+        else if constexpr (T_Predivider == 16)      return RTCPS__16;
+        else if constexpr (T_Predivider == 64)      return RTCPS__64;
+        else if constexpr (T_Predivider == 256)     return RTCPS__256;
+        else if constexpr (T_Predivider == 1024)    return RTCPS__1024;
+        else static_assert(_AlwaysFalse<T_Predivider>);
+    }
     
     static Sec _ReadTime() {
         // Disable interrupts so we can read _Time and RTCCNT atomically.

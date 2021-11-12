@@ -17,7 +17,11 @@ using namespace GPIO;
 
 static constexpr uint64_t MCLKFreqHz = 16000000;
 static constexpr uint32_t XT1FreqHz = 32768;
-static constexpr uint16_t SRSleepBits = GIE | LPM1_bits;
+
+struct Sleep {
+    static constexpr uint16_t LPMBits = LPM3_bits;
+    static constexpr uint16_t SRBits = GIE | LPMBits;
+};
 
 #define _sleepUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
 #define _sleepMs(ms) __delay_cycles((((uint64_t)ms)*MCLKFreqHz) / 1000)
@@ -53,11 +57,9 @@ uint16_t _imgDstIdx = 0;
 
 #pragma mark - Motion
 
-static constexpr uint16_t ImgHeaderVersion = 0x4242;
-
 static Img::Header _imgHeader = {
     // Section idx=0
-    .version        = ImgHeaderVersion,
+    .version        = Img::HeaderVersion,
     .imageWidth     = Img::PixelWidth,
     .imageHeight    = Img::PixelHeight,
     ._pad0          = 0,
@@ -129,27 +131,16 @@ static void _isr_rtc() {
     RTC::ISR();
 }
 
-static bool _Event = false;
+static bool _Motion = false;
 
 __attribute__((interrupt(PORT2_VECTOR)))
 void _isr_port2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
     switch (__even_in_range(P2IV, P2IV__P2IFG5)) {
-    case P2IV__P2IFG4:
-        _Event = true;
-        __bic_SR_register_on_exit(LPM3_bits);
-        
-//        for (;;) {
-//            static bool a = 0;
-//            Pin::DEBUG_OUT::Write(a);
-//            _sleepMs(2);
-//            a = !a;
-//        }
-        break;
-    
     case P2IV__P2IFG5:
+        _Motion = true;
         // Wake ourself
-        __bic_SR_register_on_exit(SRSleepBits);
+        __bic_SR_register_on_exit(Sleep::LPMBits);
         break;
     
     default:
@@ -191,25 +182,26 @@ void Img::Sensor::SetPowerEnabled(bool en) {
 
 #pragma mark - IRQState
 
+static bool _InterruptsEnabled() {
+    return __get_SR_register() & GIE;
+}
+
 bool Toastbox::IRQState::SetInterruptsEnabled(bool en) {
-    const bool prevEn = __get_SR_register() & GIE;
+    const bool prevEn = _InterruptsEnabled();
     if (en) __bis_SR_register(GIE);
     else    __bic_SR_register(GIE);
     return prevEn;
 }
 
 void Toastbox::IRQState::WaitForInterrupt() {
-    // Go to sleep
-    __bis_SR_register(SRSleepBits);
-}
-
-static void _sleep() {
     // Disable regulator so we enter LPM3.5 (instead of just LPM3)
     PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
     PMMCTL0_L |= PMMREGOFF;
-    
-    // Go to sleep in LPM3.5
-    __bis_SR_register(GIE | LPM3_bits);
+    // Atomically enable interrupts and go to sleep
+    const bool prevEn = _InterruptsEnabled();
+    __bis_SR_register(GIE | LPMBits);
+    // If interrupts were disabled previously, disable them again
+    if (!prevEn) Toastbox::IRQState::SetInterruptsEnabled(false);
 }
 
 #pragma mark - Main
@@ -220,21 +212,35 @@ int main() {
     
     // Init GPIOs
     PortA::Init<
+        // Power control
+        Pin::VDD_1V9_IMG_EN,
+        Pin::VDD_2V8_IMG_EN,
+        Pin::VDD_SD_EN,
+        Pin::VDD_B_EN_,
+        
         // SPI peripheral determines initial state of SPI GPIOs
         SPI::Pin::Clk,
         SPI::Pin::DataOut,
         SPI::Pin::DataIn,
         SPI::Pin::DataDir,
+        
         // Clock peripheral determines initial state of clock GPIOs
         Clock::Pin::XOUT,
         Clock::Pin::XIN,
         
-        Pin::DEBUG_INT,
-        Pin::DEBUG_OUT
+        // Motion
+        Pin::MOTION_SIGNAL,
+        
+        // Other
+        Pin::ICE_MSP_SPI_AUX,
+        Pin::ICE_MSP_SPI_AUX_DIR
+        
+//        Pin::DEBUG_INT,
+//        Pin::DEBUG_OUT
     >();
     
-//    // Init GPIOs
-//    GPIOInit<
+    // Init GPIOs
+    GPIOInit<
 //        Pin::VDD_1V9_IMG_EN,
 //        Pin::VDD_2V8_IMG_EN,
 //        Pin::ICE_MSP_SPI_DATA_DIR,
@@ -247,57 +253,73 @@ int main() {
 //        Pin::ICE_MSP_SPI_AUX_DIR,
 //        Pin::VDD_SD_EN,
 //        Pin::VDD_B_EN_,
-//        Pin::MOTION_SIGNAL
-//    >();
+        Pin::MOTION_SIGNAL
+    >();
     
     // Init clock
     Clock::Init();
     
-//    // Init real-time clock
-//    RTC::Init();
-//    
+    // Init real-time clock
+    RTC::Init();
+    
 //    // Init SPI
 //    SPI::Init();
 //    
 //    // Init ICE40
 //    ICE::Init();
     
-//    // Enable interrupts
-//    Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
-    
-    // Check if we're waking from LPM3.5
-    if (SYSRSTIV == SYSRSTIV__LPM5WU) {
-        // Enable interrupts
-//        Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
-        
-        for (;;) {
-            static bool a = 0;
-            Pin::DEBUG_OUT::Write(a);
-            _sleepMs(1);
-            a = !a;
-        }
-//        __attribute__((section(".persistent")))
-//        static int i = 0;
-//        
-//        ICE::Transfer(ICE::LEDSetMsg(i));
-//        i++;
-//        _sleep();
-    }
-    
-    PAIFG = 0;
-    
-    Pin::DEBUG_OUT::Write(0);
-    _sleepMs(5000);
-    Pin::DEBUG_OUT::Write(1);
-    
-    _sleep();
+    // Enable interrupts
+    Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
     
     for (;;) {
-        static bool a = 0;
-        Pin::DEBUG_OUT::Write(a);
-        _sleepMs(3);
-        a = !a;
+        // Disable interrupts while we check for events
+        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+        if (_Motion) {
+            _Motion = false;
+            // Enable ints while we handle motion
+            irq.restore();
+            
+            _motion_handle();
+            
+        } else {
+            // Go to sleep
+            Toastbox::IRQState::WaitForInterrupt();
+        }
     }
+    
+//    // Check if we're waking from LPM3.5
+//    if (SYSRSTIV == SYSRSTIV__LPM5WU) {
+//        // Enable interrupts
+////        Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
+//        
+//        for (;;) {
+//            static bool a = 0;
+//            Pin::DEBUG_OUT::Write(a);
+//            _sleepMs(1);
+//            a = !a;
+//        }
+////        __attribute__((section(".persistent")))
+////        static int i = 0;
+////        
+////        ICE::Transfer(ICE::LEDSetMsg(i));
+////        i++;
+////        _sleep();
+//    }
+//    
+//    PAIFG = 0;
+//    
+//    Pin::DEBUG_OUT::Write(0);
+//    _sleepMs(5000);
+//    Pin::DEBUG_OUT::Write(1);
+//    
+//    Toastbox::IRQState::WaitForInterrupt();
+//    
+//    for (;;) {
+//        static bool a = 0;
+//        Pin::DEBUG_OUT::Write(a);
+//        _sleepMs(3);
+//        a = !a;
+//    }
     
     
 //    for (int i=0;; i++) {
