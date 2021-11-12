@@ -19,8 +19,8 @@ static constexpr uint64_t MCLKFreqHz = 16000000;
 static constexpr uint32_t XT1FreqHz = 32768;
 static constexpr uint16_t LPMBits = LPM3_bits;
 
-#define _sleepUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
-#define _sleepMs(ms) __delay_cycles((((uint64_t)ms)*MCLKFreqHz) / 1000)
+#define _delayUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
+#define _delayMs(ms) __delay_cycles((((uint64_t)ms)*MCLKFreqHz) / 1000)
 
 struct Pin {
     // Default GPIOs
@@ -44,7 +44,11 @@ using RTC = RTCType<XT1FreqHz>;
 using SPI = SPIType<MCLKFreqHz, Pin::ICE_MSP_SPI_CLK, Pin::ICE_MSP_SPI_DATA_OUT, Pin::ICE_MSP_SPI_DATA_IN, Pin::ICE_MSP_SPI_DATA_DIR>;
 
 SD::Card _sd;
+
+#warning _imgAutoExp needs to be stored in FRAM
 Img::AutoExposure _imgAutoExp;
+
+#warning _imgDstIdx needs to be stored in FRAM
 uint16_t _imgDstIdx = 0;
 
 #pragma mark - Motion
@@ -68,6 +72,18 @@ static Img::Header _imgHeader = {
 };
 
 static void _motion_handle() {
+    // Initialize image sensor
+    Img::Sensor::Init();
+    
+    // Initialize SD card
+    _sd.init();
+    
+    // Enable image streaming
+    Img::Sensor::SetStreamEnabled(true);
+    
+    // Set the initial exposure
+    Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+    
     // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
     constexpr uint8_t CaptureAttemptCount = 3;
     uint8_t bestExpBlock = 0;
@@ -112,8 +128,6 @@ static void _motion_handle() {
     
     // Update the image counter
     _imgHeader.counter++;
-    
-    ICE::Transfer(ICE::LEDSetMsg(_imgDstIdx));
 }
 
 #pragma mark - Interrupts
@@ -155,7 +169,7 @@ const uint8_t SD::Card::ClkDelayFast = 0;
 void SD::Card::SetPowerEnabled(bool en) {
     Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    _sleepMs(2);
+    _delayMs(2);
 }
 
 #pragma mark - Image Sensor
@@ -163,7 +177,7 @@ void SD::Card::SetPowerEnabled(bool en) {
 void Img::Sensor::SetPowerEnabled(bool en) {
     if (en) {
         Pin::VDD_2V8_IMG_EN::Write(1);
-        _sleepUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        _delayUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         Pin::VDD_1V9_IMG_EN::Write(1);
     } else {
         // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
@@ -206,6 +220,14 @@ void Toastbox::IRQState::WaitForInterrupt() {
 }
 
 #pragma mark - Main
+
+static void _sleep() {
+    SD::Card::SetPowerEnabled(false);
+    Img::Sensor::SetPowerEnabled(false);
+    
+    // Go to sleep
+    Toastbox::IRQState::WaitForInterrupt();
+}
 
 int main() {
     // Stop watchdog timer
@@ -252,9 +274,18 @@ int main() {
     // Init ICE40
     ICE::Init();
     
-    for (int i=0;; i++) {
+    #warning TODO: keep the `SYSCFG0 = FRWPPW` or not? we need persistence for:
+    #warning TODO: - image counter (in image header)
+    #warning TODO: - image ring buffer write/read indexes
+    #warning TODO: - RTC time (but we should put that in the backup RAM right?)
+    // Enable FRAM writing
+    SYSCFG0 = FRWPPW;
+    
+    {
+        __attribute__((section(".persistent")))
+        static int i = 0;
         ICE::Transfer(ICE::LEDSetMsg(i));
-        _sleepMs(100);
+        i++;
     }
     
     // Enable interrupts
@@ -276,67 +307,9 @@ int main() {
         }
     }
     
-//    // Check if we're waking from LPM3.5
-//    if (SYSRSTIV == SYSRSTIV__LPM5WU) {
-//        // Enable interrupts
-////        Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
-//        
-//        for (;;) {
-//            static bool a = 0;
-//            Pin::DEBUG_OUT::Write(a);
-//            _sleepMs(1);
-//            a = !a;
-//        }
-////        __attribute__((section(".persistent")))
-////        static int i = 0;
-////        
-////        ICE::Transfer(ICE::LEDSetMsg(i));
-////        i++;
-////        _sleep();
-//    }
-//    
-//    PAIFG = 0;
-//    
-//    Pin::DEBUG_OUT::Write(0);
-//    _sleepMs(5000);
-//    Pin::DEBUG_OUT::Write(1);
-//    
-//    Toastbox::IRQState::WaitForInterrupt();
-//    
-//    for (;;) {
-//        static bool a = 0;
-//        Pin::DEBUG_OUT::Write(a);
-//        _sleepMs(3);
-//        a = !a;
-//    }
-    
-    
-//    for (int i=0;; i++) {
-////        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
-//        __bis_SR_register(GIE | LPM1_bits);
-//        
-//        ICE::Transfer(ICE::LEDSetMsg(i));
-//    }
-    
-//    // Initialize image sensor
-//    Img::Sensor::Init();
-//    
-//    // Initialize SD card
-//    _sd.init();
-//    
-//    // Enable image streaming
-//    Img::Sensor::SetStreamEnabled(true);
-//    
-//    // Set the initial exposure
-//    Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
-//    
-//    for (;;) {
-//        // Go to sleep until we detect motion
-//        IRQState::WaitForInterrupt();
-//        
-//        // We woke up
-//        _motion_handle();
-//    }
-    
     return 0;
+}
+
+[[noreturn]] void abort() {
+    for (;;);
 }

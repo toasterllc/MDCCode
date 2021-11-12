@@ -47,8 +47,6 @@ public:
     
     template <typename T_DataOut, typename T_DataIn>
     static void WriteRead(const T_DataOut& dataOut, T_DataIn* dataIn=nullptr) {
-        static_assert(sizeof(size_t) == 2);
-        
         // PA.4 level shifter direction = MSP->ICE
         Pin::DataDir::Write(1);
         
@@ -77,55 +75,7 @@ public:
             }
         }
     }
-//    
-//    void Read(void* data, size_t len) {
-//        static_assert(sizeof(size_t) == 2);
-//        
-//        // PA.4 = UCA0SIMO
-//        _DataOutEnabled::Init();
-//        
-//        // PA.4 level shifter direction = MSP->ICE
-//        Pin::ICE_MSP_SPI_DATA_DIR::Write(1);
-//        
-//        SPI::TxRx(msg.type);
-//        
-//        for (uint8_t b : msg.payload) {
-//            SPI::TxRx(b);
-//        }
-//    }
-//    
-//    void ICE::Transfer(const Msg& msg, Resp* resp) {
-//        AssertArg((bool)resp == (bool)(msg.type & ICE::MsgType::Resp));
-//        
-//        // PA.4 = UCA0SIMO
-//        Pin::ICE_MSP_SPI_DATA_UCA0SIMO::Init();
-//        
-//        // PA.4 level shifter direction = MSP->ICE
-//        Pin::ICE_MSP_SPI_DATA_DIR::Write(1);
-//        
-//        SPI::TxRx(msg.type);
-//        
-//        for (uint8_t b : msg.payload) {
-//            SPI::TxRx(b);
-//        }
-//        
-//        // PA.4 = GPIO input
-//        Pin::ICE_MSP_SPI_DATA_IN::Init();
-//        
-//        // PA.4 level shifter direction = MSP<-ICE
-//        Pin::ICE_MSP_SPI_DATA_DIR::Write(0);
-//        
-//        // 8-cycle turnaround
-//        SPI::TxRx(0);
-//        
-//        // Clock in the response
-//        if (resp) {
-//            for (uint8_t& b : resp->payload) {
-//                b = SPI::TxRx(0);
-//            }
-//        }
-//    }
-
+    
 private:
     using _ClkManual = typename Pin::Clk::template Opts<GPIO::Option::Output1>;
     using _ClkPeriph = typename Pin::Clk::template Opts<GPIO::Option::Sel01>;
