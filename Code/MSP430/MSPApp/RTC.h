@@ -7,8 +7,8 @@ class RTCType {
 public:
     using Sec = uint32_t;
     
-    #warning switch InterruptInterval back to 2048
-    static constexpr Sec InterruptInterval = 1;
+//    #warning switch InterruptInterval back to 2048
+    static constexpr Sec InterruptInterval = 2048;
     static constexpr uint32_t Predivider = 1024;
     static constexpr uint32_t FreqHz = XT1FreqHz/Predivider;
     static_assert((XT1FreqHz % Predivider) == 0); // Confirm that XT1FreqHz is evenly divisible by Predivider
@@ -72,6 +72,7 @@ private:
         return _Time + (RTCCNT/FreqHz);
     }
     
+    #warning actually, make this class a non-singleton, so we can put the whole thing inside non-volatile memory
     #warning move `_Time` to the backup RAM that's retained in LPM3.5, but cleared on a reset
     __attribute__((section(".persistent")))
     static volatile inline Sec _Time = 0; // Marked volatile since it's updated with an interrupt

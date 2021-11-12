@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <utility>
 #include "Assert.h"
-#include "SleepMs.h"
+#include "DelayMs.h"
 #include "Img.h"
 
 class ICE {
@@ -287,7 +287,7 @@ public:
     
     static void ImgReset() {
         Transfer(ImgResetMsg(0));
-        SleepMs(1);
+        DelayMs(1);
         Transfer(ImgResetMsg(1));
     }
     
@@ -303,7 +303,7 @@ public:
         // Wait for image to be captured
         constexpr uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) SleepMs(1);
+            if (i >= 10) DelayMs(1);
             auto status = ImgCaptureStatus();
             // Try again if the image hasn't been captured yet
             if (!status.done()) continue;
@@ -328,7 +328,7 @@ public:
         // Wait for the I2C transaction to complete
         const uint32_t MaxAttempts = 1000;
         for (uint32_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) SleepMs(1);
+            if (i >= 10) DelayMs(1);
             const ImgI2CStatusResp status = ImgI2CStatus();
             if (status.err() || status.done()) return status;
         }
@@ -367,7 +367,7 @@ public:
         // Wait for command to be sent
         const uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) SleepMs(1);
+            if (i >= 10) DelayMs(1);
             auto s = SDStatus();
             // Try again if the command hasn't been sent yet
             if (!s.cmdDone()) continue;
