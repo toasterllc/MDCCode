@@ -1,9 +1,14 @@
 #pragma once
 #include <msp430.h>
 
-template <uint32_t XT1FreqHz, uint32_t MCLKFreqHz>
+template <uint32_t XT1FreqHz, uint32_t MCLKFreqHz, typename T_XOUTPin, typename T_XINPin>
 class ClockType {
 public:
+    struct Pin {
+        using XOUT  = typename T_XOUTPin::template Opts<GPIO::Option::Sel10>;
+        using XIN   = typename T_XINPin::template Opts<GPIO::Option::Sel10>;
+    };
+    
     static void Init() {
         // Configure one FRAM wait state, as required by the device datasheet for MCLK > 8MHz.
         // This must happen before configuring the clock system.
