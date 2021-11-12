@@ -129,10 +129,24 @@ static void _isr_rtc() {
     RTC::ISR();
 }
 
+static bool _Event = false;
+
 __attribute__((interrupt(PORT2_VECTOR)))
 void _isr_port2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
     switch (__even_in_range(P2IV, P2IV__P2IFG5)) {
+    case P2IV__P2IFG4:
+        _Event = true;
+        __bic_SR_register_on_exit(LPM3_bits);
+        
+//        for (;;) {
+//            static bool a = 0;
+//            Pin::DEBUG_OUT::Write(a);
+//            _sleepMs(2);
+//            a = !a;
+//        }
+        break;
+    
     case P2IV__P2IFG5:
         // Wake ourself
         __bic_SR_register_on_exit(SRSleepBits);
@@ -236,9 +250,9 @@ int main() {
 //        Pin::MOTION_SIGNAL
 //    >();
     
-//    // Init clock
-//    Clock::Init();
-//    
+    // Init clock
+    Clock::Init();
+    
 //    // Init real-time clock
 //    RTC::Init();
 //    
@@ -248,34 +262,50 @@ int main() {
 //    // Init ICE40
 //    ICE::Init();
     
-    for (;;) {
-        static bool a = 0;
-        Pin::DEBUG_OUT::Write(a);
-        a = !a;
-    }
-    
-    // Enable interrupts
-    Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
+//    // Enable interrupts
+//    Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
     
     // Check if we're waking from LPM3.5
     if (SYSRSTIV == SYSRSTIV__LPM5WU) {
-        __attribute__((section(".persistent")))
-        static int i = 0;
+        // Enable interrupts
+//        Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
         
-        ICE::Transfer(ICE::LEDSetMsg(i));
-        i++;
-        _sleep();
-    
-    } else {
-        
+        for (;;) {
+            static bool a = 0;
+            Pin::DEBUG_OUT::Write(a);
+            _sleepMs(1);
+            a = !a;
+        }
+//        __attribute__((section(".persistent")))
+//        static int i = 0;
+//        
+//        ICE::Transfer(ICE::LEDSetMsg(i));
+//        i++;
+//        _sleep();
     }
     
-    for (int i=0;; i++) {
-//        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
-        __bis_SR_register(GIE | LPM1_bits);
-        
-        ICE::Transfer(ICE::LEDSetMsg(i));
+    PAIFG = 0;
+    
+    Pin::DEBUG_OUT::Write(0);
+    _sleepMs(5000);
+    Pin::DEBUG_OUT::Write(1);
+    
+    _sleep();
+    
+    for (;;) {
+        static bool a = 0;
+        Pin::DEBUG_OUT::Write(a);
+        _sleepMs(3);
+        a = !a;
     }
+    
+    
+//    for (int i=0;; i++) {
+////        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+//        __bis_SR_register(GIE | LPM1_bits);
+//        
+//        ICE::Transfer(ICE::LEDSetMsg(i));
+//    }
     
 //    // Initialize image sensor
 //    Img::Sensor::Init();
