@@ -37,6 +37,8 @@ struct Pin {
     using VDD_SD_EN                         = PortA::Pin<0xB, Option::Output0>;
     using VDD_B_EN_                         = PortA::Pin<0xC, Option::Output1>;
     using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Interrupt01>;
+    
+    using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
 
 using Clock = ClockType<XT1FreqHz, MCLKFreqHz, Pin::XOUT, Pin::XIN>;
@@ -72,17 +74,17 @@ static Img::Header _imgHeader = {
 };
 
 static void _motion_handle() {
-    // Initialize image sensor
-    Img::Sensor::Init();
-    
-    // Initialize SD card
-    _sd.init();
-    
-    // Enable image streaming
-    Img::Sensor::SetStreamEnabled(true);
-    
-    // Set the initial exposure
-    Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+//    // Initialize image sensor
+//    Img::Sensor::Init();
+//    
+//    // Initialize SD card
+//    _sd.init();
+//    
+//    // Enable image streaming
+//    Img::Sensor::SetStreamEnabled(true);
+//    
+//    // Set the initial exposure
+//    Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
     
     // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
     constexpr uint8_t CaptureAttemptCount = 3;
@@ -137,7 +139,7 @@ static void _isr_rtc() {
     RTC::ISR();
 }
 
-static bool _Motion = false;
+static volatile bool _Motion = false;
 
 __attribute__((interrupt(PORT2_VECTOR)))
 void _isr_port2() {
@@ -183,6 +185,9 @@ void Img::Sensor::SetPowerEnabled(bool en) {
         // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
         Pin::VDD_1V9_IMG_EN::Write(0);
         Pin::VDD_2V8_IMG_EN::Write(0);
+        
+        #warning determine actual delay
+        _delayMs(100);
     }
 }
 
@@ -208,13 +213,14 @@ void Toastbox::IRQState::WaitForInterrupt() {
     //   therefore we enter LPM3.5. The next time we wake will be due to a
     //   reset and execution will start from main().
     
-    // Disable regulator so we enter LPM3.5 (instead of just LPM3)
-    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-    PMMCTL0_L |= PMMREGOFF;
+//    // Disable regulator so we enter LPM3.5 (instead of just LPM3)
+//    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+//    PMMCTL0_L |= PMMREGOFF;
     
     // Atomically enable interrupts and go to sleep
     const bool prevEn = _InterruptsEnabled();
     __bis_SR_register(GIE | LPMBits);
+    while (!_Motion);
     // If interrupts were disabled previously, disable them again
     if (!prevEn) Toastbox::IRQState::SetInterruptsEnabled(false);
 }
@@ -222,12 +228,11 @@ void Toastbox::IRQState::WaitForInterrupt() {
 #pragma mark - Main
 
 static void _sleep() {
-    SD::Card::SetPowerEnabled(false);
-    Img::Sensor::SetPowerEnabled(false);
-    
     // Go to sleep
     Toastbox::IRQState::WaitForInterrupt();
 }
+
+bool _imgSDInit = false;
 
 int main() {
     // Stop watchdog timer
@@ -281,13 +286,6 @@ int main() {
     // Enable FRAM writing
     SYSCFG0 = FRWPPW;
     
-    {
-        __attribute__((section(".persistent")))
-        static int i = 0;
-        ICE::Transfer(ICE::LEDSetMsg(i));
-        i++;
-    }
-    
     // Enable interrupts
     Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
     
@@ -299,9 +297,38 @@ int main() {
             // Enable ints while we handle motion
             irq.restore();
             
+            if (!_imgSDInit) {
+                // Initialize image sensor
+                Img::Sensor::Init();
+                
+                // Initialize SD card
+                _sd.init();
+                
+                // Enable image streaming
+                Img::Sensor::SetStreamEnabled(true);
+                
+                // Set the initial exposure
+                Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+                
+                _imgSDInit = true;
+            }
+            
             _motion_handle();
             
+            {
+                __attribute__((section(".persistent")))
+                static int i = 0;
+                ICE::Transfer(ICE::LEDSetMsg(i));
+                i++;
+            }
+            
         } else {
+            if (_imgSDInit) {
+                SD::Card::SetPowerEnabled(false);
+                Img::Sensor::SetPowerEnabled(false);
+                _imgSDInit = false;
+            }
+            
             // Go to sleep
             _sleep();
         }
@@ -311,5 +338,8 @@ int main() {
 }
 
 [[noreturn]] void abort() {
-    for (;;);
+    Pin::DEBUG_OUT::Init();
+    for (bool x=0;; x=!x) {
+        Pin::DEBUG_OUT::Write(x);
+    }
 }

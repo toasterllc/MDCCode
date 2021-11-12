@@ -12,7 +12,7 @@ public:
     static void Init() {
         // Configure one FRAM wait state, as required by the device datasheet for MCLK > 8MHz.
         // This must happen before configuring the clock system.
-        FRCTL0 = FRCTLPW | NWAITS_1;
+//        FRCTL0 = FRCTLPW | NWAITS_1;
         
         do {
             CSCTL7 &= ~(XT1OFFG | DCOFFG); // Clear XT1 and DCO fault flag
