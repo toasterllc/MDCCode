@@ -81,7 +81,7 @@ using namespace MetalUtil;
     [self reset];
 }
 
-#pragma mark - Public Methods
+// MARK: - Public Methods
 
 - (void)reset {
     [_sampleLayer setFrame:CGRectNull];
@@ -178,7 +178,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     }
 }
 
-#pragma mark - Private Methods
+// MARK: - Private Methods
 
 - (void)_setZoomScale:(CGFloat)zoomScale anchor:(CGPoint)anchor {
     const CGFloat MinScale = .5;
@@ -226,7 +226,7 @@ static void setCircleRadius(CAShapeLayer* c, CGFloat r) {
     return nil;
 }
 
-#pragma mark - Overrides
+// MARK: - Overrides
 
 static CGPoint eventPositionInLayer(NSWindow* win, CALayer* layer, NSEvent* ev) {
     // The mouse appears to be offset by 1/2 a pixel, so adjust for that
@@ -302,7 +302,7 @@ static CGPoint eventPositionInLayer(NSWindow* win, CALayer* layer, NSEvent* ev) 
     }
 }
 
-#pragma mark - Drag & Drop
+// MARK: - Drag & Drop
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
     return [_delegate mainViewDraggingEntered:sender];

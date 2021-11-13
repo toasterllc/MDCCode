@@ -385,7 +385,7 @@ static bool isCFAFile(const fs::path& path) {
     [self _loadImage:*_imagePathIter];
 }
 
-#pragma mark - MDCDevice
+// MARK: - MDCDevice
 
 static void _nop(void* ctx, io_iterator_t iter) {}
 
@@ -751,7 +751,7 @@ static void _configureDevice(MDCDevice& dev) {
     }
 }
 
-#pragma mark - Color Matrix
+// MARK: - Color Matrix
 
 template<size_t H, size_t W>
 Mat<double,H,W> _matrixFromString(const std::string& str) {
@@ -798,14 +798,14 @@ Mat<double,H,W> _matFromString(const std::string& str) {
     }
 }
 
-#pragma mark - Histograms
+// MARK: - Histograms
 
 - (void)_updateHistograms {
 //    [[_inputHistogramView histogramLayer] setHistogram:[[_mainView imageLayer] inputHistogram]];
 //    [[_outputHistogramView histogramLayer] setHistogram:[[_mainView imageLayer] outputHistogram]];
 }
 
-#pragma mark - Sample
+// MARK: - Sample
 
 static Mat<double,3,1> _averageRaw(const SampleRect& rect, const CFADesc& cfaDesc, id<MTLBuffer> buf) {
     const simd::float3* vals = (simd::float3*)[buf contents];
@@ -887,7 +887,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     return r;
 }
 
-#pragma mark - UI
+// MARK: - UI
 
 - (void)_saveImage:(NSString*)path {
     const std::string ext([[[path pathExtension] lowercaseString] UTF8String]);
@@ -1219,7 +1219,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     [self _updateSampleColorsUI];
 }
 
-#pragma mark - MainViewDelegate
+// MARK: - MainViewDelegate
 
 - (void)mainViewSampleRectChanged:(MainView*)v {
     CGRect rect = [_mainView sampleRect];
@@ -1329,7 +1329,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     [self _prefsSetColorCheckerPositions:points];
 }
 
-#pragma mark - Prefs
+// MARK: - Prefs
 
 - (std::vector<CGPoint>)_prefsColorCheckerPositions {
     NSArray* nspoints = [[NSUserDefaults standardUserDefaults] objectForKey:ColorCheckerPositionsKey];
@@ -1358,7 +1358,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 }
 
 
-#pragma mark - Drag & Drop
+// MARK: - Drag & Drop
 static ImagePaths getPathsFromPasteboard(NSPasteboard* pb, const std::vector<std::string>& types) {
     NSCParameterAssert(pb);
     const std::set<fs::path> exts(types.begin(), types.end());

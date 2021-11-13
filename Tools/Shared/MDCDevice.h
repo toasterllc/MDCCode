@@ -51,11 +51,11 @@ public:
     
     USBDevice& usbDevice() { return _dev; }
     
-    #pragma mark - Accessors
+    // MARK: - Accessors
     
     const std::string& serial() const { return _serial; }
     
-    #pragma mark - Common Commands
+    // MARK: - Common Commands
     void endpointsFlush() {
         const STM::Cmd cmd = { .op = STM::Op::EndpointsFlush };
         // Send command
@@ -126,7 +126,7 @@ public:
         _waitOrThrow("LEDSet command failed");
     }
     
-    #pragma mark - STMLoader Commands
+    // MARK: - STMLoader Commands
     void stmWrite(uint32_t addr, const void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMLoader);
         const STM::Cmd cmd = {
@@ -264,7 +264,7 @@ public:
         _waitOrThrow("MSPDebug DataOut/DataIn command failed");
     }
     
-    #pragma mark - STMApp Commands
+    // MARK: - STMApp Commands
     void sdRead(uint32_t addr) {
         assert(_mode == STM::Status::Modes::STMApp);
         const STM::Cmd cmd = {
