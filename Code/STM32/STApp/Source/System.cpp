@@ -3,7 +3,7 @@
 #include "SystemClock.h"
 #include "Startup.h"
 #include "MSP430.h"
-#include "SleepMs.h"
+#include "DelayMs.h"
 #include "ICE.h"
 #include "Toastbox/IRQState.h"
 
@@ -513,8 +513,8 @@ int main() {
     Sys.abort();
 }
 
-// SleepMs implementation, declared in SleepMs.h
+// DelayMs implementation, declared in DelayMs.h
 // Used by ICE40, Img::Sensor, SD::Card
-void SleepMs(uint32_t ms) {
+void DelayMs(uint32_t ms) {
     HAL_Delay(ms);
 }
