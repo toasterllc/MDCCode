@@ -1260,10 +1260,10 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
     const Mat<double,3,1> whiteBalance(factor/illum[0], factor/illum[1], factor/illum[2]);
     
-    constexpr size_t H = ColorChecker::Count;
-    Mat<double,H,3> A; // Colors that we have
+    constexpr size_t W = ColorChecker::Count;
+    Mat<double,3,W> x; // Colors that we have
     {
-        size_t y = 0;
+        size_t i = 0;
         for (const CGPoint& p : points) {
             const Color<ColorSpace::Raw> rawColor = sampleImageCircle(
                 _rawImage.img,
@@ -1273,29 +1273,29 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
             );
             const Color<ColorSpace::Raw> c = whiteBalance.elmMul(rawColor.m);
             
-            A.at(y,0) = c[0];
-            A.at(y,1) = c[1];
-            A.at(y,2) = c[2];
-            y++;
+            x.at(0,i) = c[0];
+            x.at(1,i) = c[1];
+            x.at(2,i) = c[2];
+            i++;
         }
     }
     
-    Mat<double,H,3> b; // Colors that we want
+    Mat<double,3,W> b; // Colors that we want
     {
-        size_t y = 0;
+        size_t i = 0;
         for (const auto& c : ColorChecker::Colors) {
             const Color<ColorSpace::ProPhotoRGB> ppc(c);
-            b.at(y,0) = ppc[0];
-            b.at(y,1) = ppc[1];
-            b.at(y,2) = ppc[2];
-            y++;
+            b.at(0,i) = ppc[0];
+            b.at(1,i) = ppc[1];
+            b.at(2,i) = ppc[2];
+            i++;
         }
     }
     
-//    // Constrain the least squares regression so that each row sums to 1
+//    // Constrain the least squares regression so that each column sums to 1
 //    // in the resulting 3x3 color matrix.
 //    //
-//    // How: Use the same large number in a single row of `A` and `b`
+//    // How: Use the same large number in a single column of `x` and `b`
 //    // Why: We don't want the CCM, which is applied after white balancing,
 //    //      to disturb the white balance. (Ie, a neutral color before
 //    //      applying the CCM should be neutral after applying the CCM.)
@@ -1303,16 +1303,21 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 //    //      sums to 1.
 //    for (int i=0; i<3; i++) {
 //        const double λ = 1e8;
-//        A.at(H-1,i) = λ;
-//        b.at(H-1,i) = λ;
+//        x.at(i,W-1) = λ;
+//        b.at(i,W-1) = λ;
 //    }
     
-    std::cout << A.str() << "\n\n";
+    std::cout << x.str() << "\n\n";
     std::cout << b.str() << "\n\n";
     
-    // Solve `Ax=b` for `x`, which is the color matrix
+    // Solve for the color matrix A in the standard matrix equation Ax=b.
+    // In the standard equation, `x` is normally solved for, but we want to solve
+    // for A instead. To do so, we manipulate the equation as follows:
+    //   Ax=b  =>  (Ax)'=b'  =>  x'A'=b'
+    // and solve for A' (which is now in the position that x is in, in the standard
+    // matrix equation Ax=b), and finally transpose A' to get A (since (A')' = A).
     auto& opts = _imagePipelineManager->options;
-    Mat<double,3,3> colorMatrix = A.solve(b).trans();
+    Mat<double,3,3> colorMatrix = x.trans().solve(b.trans()).trans();
     
     // Force each row of `colorMatrix` sums to 1. See comment above.
     const Mat<double,3,1> rowSum = colorMatrix.sumRows();
