@@ -362,7 +362,7 @@ void SD::Card::SetPowerEnabled(bool en) {
     HAL_Delay(2);
 }
 
-const uint8_t SD::Card::ClkDelaySlow = 7;
+const uint8_t SD::Card::ClkDelaySlow = 1; // Odd values invert the clock
 const uint8_t SD::Card::ClkDelayFast = 0;
 
 void System::_sd_readTaskFn() {
