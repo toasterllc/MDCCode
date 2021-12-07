@@ -17,9 +17,11 @@ public:
     
     static void Init() {
         RTCMOD = InterruptCount;
-        #warning TODO: clear IFG!
-        #warning TODO: actually do we want to do that? we may have woken from LPM3.5 due to the RTC interrupt...
-        RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR | RTCIE;
+        RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
+        // "TI recommends clearing the RTCIFG bit by reading the RTCIV register
+        // before enabling the RTC counter interrupt."
+        RTCIV;
+        RTCCTL |= RTCIE;
     }
     
     static Sec CurrentTime() {
