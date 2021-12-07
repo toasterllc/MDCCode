@@ -11,9 +11,9 @@ public:
         using DataDir   = typename T_DataDirPin::template Opts<GPIO::Option::Output0>;
     };
     
-    static void Init() {
+    static void Init(bool iceReset) {
         // Reset the ICE40 SPI state machine by asserting ICE_MSP_SPI_CLK for some period
-        {
+        if (iceReset) {
             constexpr uint64_t ICE40SPIResetDurationUs = 18;
             _ClkManual::Write(1);
             #warning don't busy wait

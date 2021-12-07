@@ -9,7 +9,7 @@
 
 class ICE {
 public:
-    #pragma mark - Types
+    // MARK: - Types
     
     struct MsgType {
         static constexpr uint8_t StartBit   = 0x80;
@@ -270,10 +270,10 @@ public:
         }
     };
     
-    #pragma mark - Functions Provided By Client
+    // MARK: - Functions Provided By Client
     static void Transfer(const Msg& msg, Resp* resp=nullptr);
     
-    #pragma mark - Methods
+    // MARK: - Methods
     
     static void Init() {
         // Confirm that we can communicate with ICE40
@@ -283,7 +283,7 @@ public:
         Assert(!memcmp((char*)resp.payload, str, sizeof(str)));
     }
     
-    #pragma mark - Img
+    // MARK: - Img
     
     static void ImgReset() {
         Transfer(ImgResetMsg(0));
@@ -354,7 +354,7 @@ public:
         return resp;
     }
     
-    #pragma mark - SD
+    // MARK: - SD
     
     static SDStatusResp SDSendCmd(
         uint8_t sdCmd,
