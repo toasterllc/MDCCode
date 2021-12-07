@@ -2,20 +2,20 @@
 #include <msp430.h>
 #include "Toastbox/IRQState.h"
 
-template <uint32_t XT1FreqHz>
-class RTCType {
+template <uint32_t T_XT1FreqHz>
+class RTC {
 public:
     using Sec = uint32_t;
     
 //    #warning switch InterruptInterval back to 2048
     static constexpr Sec InterruptInterval = 2048;
     static constexpr uint32_t Predivider = 1024;
-    static constexpr uint32_t FreqHz = XT1FreqHz/Predivider;
-    static_assert((XT1FreqHz % Predivider) == 0); // Confirm that XT1FreqHz is evenly divisible by Predivider
+    static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
+    static_assert((T_XT1FreqHz % Predivider) == 0); // Confirm that T_XT1FreqHz is evenly divisible by Predivider
     static constexpr uint16_t InterruptCount = (InterruptInterval*FreqHz)-1;
     static_assert(InterruptCount == ((InterruptInterval*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
     
-    static void Init() {
+    void init() {
         RTCMOD = InterruptCount;
         RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
         // "TI recommends clearing the RTCIFG bit by reading the RTCIV register
@@ -24,24 +24,24 @@ public:
         RTCCTL |= RTCIE;
     }
     
-    static Sec CurrentTime() {
+    Sec currentTime() {
         // This 2x _ReadTime() loop is necessary to handle the race related to RTCCNT overflowing:
-        // When we read _Time and RTCCNT, we don't know if _Time has been updated for the most
+        // When we read _time and RTCCNT, we don't know if _time has been updated for the most
         // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
         // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
         for (;;) {
-            const Sec t1 = _ReadTime();
-            const Sec t2 = _ReadTime();
+            const Sec t1 = _readTime();
+            const Sec t2 = _readTime();
             if (t2 >= t1) return t2;
         }
     }
     
-    static void ISR() {
+    void isr() {
         // Accessing `RTCIV` automatically clears the highest-priority interrupt
         switch (__even_in_range(RTCIV, RTCIV__RTCIFG)) {
         case RTCIV__RTCIFG:
             // Update our time
-            _Time += InterruptInterval;
+            _time += InterruptInterval;
             break;
         
         default:
@@ -66,16 +66,13 @@ private:
         else static_assert(_AlwaysFalse<T_Predivider>);
     }
     
-    static Sec _ReadTime() {
-        // Disable interrupts so we can read _Time and RTCCNT atomically.
-        // This is especially necessary because reading _Time isn't atomic
+    Sec _readTime() {
+        // Disable interrupts so we can read _time and RTCCNT atomically.
+        // This is especially necessary because reading _time isn't atomic
         // since it's 32 bits.
         Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
-        return _Time + (RTCCNT/FreqHz);
+        return _time + (RTCCNT/FreqHz);
     }
     
-    #warning actually, make this class a non-singleton, so we can put the whole thing inside non-volatile memory
-    #warning move `_Time` to the backup RAM that's retained in LPM3.5, but cleared on a reset
-    __attribute__((section(".persistent")))
-    static volatile inline Sec _Time = 0; // Marked volatile since it's updated with an interrupt
+    volatile Sec _time = 0; // volatile since it's updated from an interrupt
 };

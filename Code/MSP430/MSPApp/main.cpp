@@ -42,15 +42,19 @@ struct Pin {
 };
 
 using Clock = ClockType<XT1FreqHz, MCLKFreqHz, Pin::XOUT, Pin::XIN>;
-using RTC = RTCType<XT1FreqHz>;
 using SPI = SPIType<MCLKFreqHz, Pin::ICE_MSP_SPI_CLK, Pin::ICE_MSP_SPI_DATA_OUT, Pin::ICE_MSP_SPI_DATA_IN, Pin::ICE_MSP_SPI_DATA_DIR>;
 
 SD::Card _sd;
 
-#warning _imgAutoExp needs to be stored in FRAM
+__attribute__((section(".persistent")))
+uint32_t _newTime = 0;
+
+__attribute__((section(".bakmem")))
+RTC<XT1FreqHz> _rtc;
+
+__attribute__((section(".persistent")))
 Img::AutoExposure _imgAutoExp;
 
-#warning _imgDstIdx needs to be stored in FRAM
 __attribute__((section(".persistent")))
 uint16_t _imgDstIdx = 0;
 
@@ -103,7 +107,7 @@ static void _motion_handle() {
         const uint8_t expBlock = !bestExpBlock;
         
         // Update the header
-        _imgHeader.timestamp = RTC::CurrentTime();
+        _imgHeader.timestamp = _rtc.currentTime();
         _imgHeader.coarseIntTime = _imgAutoExp.integrationTime();
         
         // Capture an image to RAM
@@ -137,7 +141,7 @@ static void _motion_handle() {
 
 __attribute__((interrupt(RTC_VECTOR)))
 static void _isr_rtc() {
-    RTC::ISR();
+    _rtc.isr();
 }
 
 static volatile bool _Motion = false;
@@ -287,7 +291,7 @@ int main() {
     const bool coldStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
     if (coldStart) {
         // Init real-time clock
-        RTC::Init();
+        _rtc.init();
     }
     
 //    #warning when waking due to only RTC, we don't need to initialize SPI or talk to ICE40. we just need to service the RTC int and go back to sleep
@@ -308,7 +312,6 @@ int main() {
         // Disable interrupts while we check for events
         Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
         
-        #warning eventually, our delay function will
         if (_Motion) {
             _Motion = false;
             
@@ -321,7 +324,7 @@ int main() {
                 
                 // Init SPI
                 // Reset the ICE40 SPI state machine if this is a cold start.
-                // Otherwise, we can assume our comms with ICE40 are ready to go
+                // Otherwise, we can assume our comms with ICE40 are set up.
                 const bool iceReset = coldStart;
                 SPI::Init(iceReset);
                 

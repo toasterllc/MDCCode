@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		556E45ED26B12023006681FA /* lnk_msp430fr2422.cmd */ = {isa = PBXFileReference; lastKnownFileType = text; path = lnk_msp430fr2422.cmd; sourceTree = "<group>"; };
 		556E45EE26B12023006681FA /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		556E45EF26B12023006681FA /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		556E45F126B1204A006681FA /* Lib */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Lib; path = ../../Lib; sourceTree = "<group>"; };
@@ -17,6 +16,7 @@
 		5588914D273C79540004458F /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
 		5588914E273C7DEB0004458F /* SPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SPI.h; sourceTree = "<group>"; };
 		55B2150B26FA7A99001423C1 /* msp430fr2422.h.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2422.h.txt; sourceTree = "<group>"; };
+		55FD016B275F25BA005505B5 /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -25,7 +25,7 @@
 			children = (
 				556E45F226B12050006681FA /* Shared */,
 				556E45F126B1204A006681FA /* Lib */,
-				556E45ED26B12023006681FA /* lnk_msp430fr2422.cmd */,
+				55FD016B275F25BA005505B5 /* Linker.ld */,
 				55B2150B26FA7A99001423C1 /* msp430fr2422.h.txt */,
 				55889121273B3D360004458F /* GPIO.h */,
 				5588914D273C79540004458F /* Clock.h */,
