@@ -51,9 +51,10 @@ SD::Card _sd;
 Img::AutoExposure _imgAutoExp;
 
 #warning _imgDstIdx needs to be stored in FRAM
+__attribute__((section(".persistent")))
 uint16_t _imgDstIdx = 0;
 
-#pragma mark - Motion
+// MARK: - Motion
 
 static Img::Header _imgHeader = {
     // Section idx=0
@@ -132,7 +133,7 @@ static void _motion_handle() {
     _imgHeader.counter++;
 }
 
-#pragma mark - Interrupts
+// MARK: - Interrupts
 
 __attribute__((interrupt(RTC_VECTOR)))
 static void _isr_rtc() {
@@ -156,14 +157,14 @@ void _isr_port2() {
     }
 }
 
-#pragma mark - ICE40
+// MARK: - ICE40
 
 void ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & ICE::MsgType::Resp));
     SPI::WriteRead(msg, resp);
 }
 
-#pragma mark - SD Card
+// MARK: - SD Card
 
 const uint8_t SD::Card::ClkDelaySlow = 1; // Odd values invert the clock
 const uint8_t SD::Card::ClkDelayFast = 0;
@@ -174,7 +175,7 @@ void SD::Card::SetPowerEnabled(bool en) {
     _delayMs(2);
 }
 
-#pragma mark - Image Sensor
+// MARK: - Image Sensor
 
 void Img::Sensor::SetPowerEnabled(bool en) {
     if (en) {
@@ -186,12 +187,12 @@ void Img::Sensor::SetPowerEnabled(bool en) {
         Pin::VDD_1V9_IMG_EN::Write(0);
         Pin::VDD_2V8_IMG_EN::Write(0);
         
-        #warning determine actual delay
-        _delayMs(100);
+//        #warning determine actual delay
+//        _delayMs(100);
     }
 }
 
-#pragma mark - IRQState
+// MARK: - IRQState
 
 static bool _InterruptsEnabled() {
     return __get_SR_register() & GIE;
@@ -213,26 +214,42 @@ void Toastbox::IRQState::WaitForInterrupt() {
     //   therefore we enter LPM3.5. The next time we wake will be due to a
     //   reset and execution will start from main().
     
-//    // Disable regulator so we enter LPM3.5 (instead of just LPM3)
-//    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-//    PMMCTL0_L |= PMMREGOFF;
+    // Disable regulator so we enter LPM3.5 (instead of just LPM3)
+    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+    PMMCTL0_L |= PMMREGOFF;
     
     // Atomically enable interrupts and go to sleep
     const bool prevEn = _InterruptsEnabled();
     __bis_SR_register(GIE | LPMBits);
-    while (!_Motion);
     // If interrupts were disabled previously, disable them again
     if (!prevEn) Toastbox::IRQState::SetInterruptsEnabled(false);
 }
 
-#pragma mark - Main
+// MARK: - Main
 
-static void _sleep() {
-    // Go to sleep
-    Toastbox::IRQState::WaitForInterrupt();
+static void _setSDImgEnabled(bool en) {
+    static bool _sdImgPowerEnabled = false;
+    if (_sdImgPowerEnabled == en) return; // Short circuit if state didn't change
+    _sdImgPowerEnabled = en;
+    
+    if (_sdImgPowerEnabled) {
+        // Initialize image sensor
+        Img::Sensor::Init();
+        
+        // Initialize SD card
+        _sd.init();
+        
+        // Enable image streaming
+        Img::Sensor::SetStreamEnabled(true);
+        
+        // Set the initial exposure
+        Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+    
+    } else {
+        SD::Card::SetPowerEnabled(false);
+        Img::Sensor::SetPowerEnabled(false);
+    }
 }
-
-bool _imgSDInit = false;
 
 int main() {
     // Stop watchdog timer
@@ -267,70 +284,66 @@ int main() {
     // Init clock
     Clock::Init();
     
-    #warning do we want to reconfigure RTC when waking from LPM3.5?
-    // Init real-time clock
-    RTC::Init();
+    const bool coldStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
+    if (coldStart) {
+        // Init real-time clock
+        RTC::Init();
+    }
     
-    #warning when waking due to only RTC, we don't need to initialize SPI or talk to ICE40. we just need to service the RTC int and go back to sleep
-    
-    // Init SPI
-    SPI::Init();
-    
-    // Init ICE40
-    ICE::Init();
+//    #warning when waking due to only RTC, we don't need to initialize SPI or talk to ICE40. we just need to service the RTC int and go back to sleep
     
     #warning TODO: keep the `SYSCFG0 = FRWPPW` or not? we need persistence for:
     #warning TODO: - image counter (in image header)
     #warning TODO: - image ring buffer write/read indexes
     #warning TODO: - RTC time (but we should put that in the backup RAM right?)
+    
     // Enable FRAM writing
     SYSCFG0 = FRWPPW;
     
     // Enable interrupts
     Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
     
+    bool iceInit = false;
     for (;;) {
         // Disable interrupts while we check for events
         Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+        
+        #warning eventually, our delay function will
         if (_Motion) {
             _Motion = false;
+            
             // Enable ints while we handle motion
             irq.restore();
             
-            if (!_imgSDInit) {
-                // Initialize image sensor
-                Img::Sensor::Init();
+            // Init ICE40 if we haven't done so yet
+            if (!iceInit) {
+                iceInit = true;
                 
-                // Initialize SD card
-                _sd.init();
+                // Init SPI
+                // Reset the ICE40 SPI state machine if this is a cold start.
+                // Otherwise, we can assume our comms with ICE40 are ready to go
+                const bool iceReset = coldStart;
+                SPI::Init(iceReset);
                 
-                // Enable image streaming
-                Img::Sensor::SetStreamEnabled(true);
-                
-                // Set the initial exposure
-                Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
-                
-                _imgSDInit = true;
+                // Init ICE40
+                ICE::Init();
             }
+            
+            ICE::Transfer(ICE::LEDSetMsg(0xFF));
+            _setSDImgEnabled(true);
             
             _motion_handle();
-            
-            {
-                __attribute__((section(".persistent")))
-                static int i = 0;
-                ICE::Transfer(ICE::LEDSetMsg(i));
-                i++;
-            }
-            
+        
         } else {
-            if (_imgSDInit) {
-                SD::Card::SetPowerEnabled(false);
-                Img::Sensor::SetPowerEnabled(false);
-                _imgSDInit = false;
-            }
+            // No events, go to sleep
+            ICE::Transfer(ICE::LEDSetMsg(0x00));
+            _setSDImgEnabled(false);
             
             // Go to sleep
-            _sleep();
+            // WaitForInterrupt() may or may not return!
+            //   An interrupt was pending -> function returns after ISR executes
+            //   An interrupt wasn't pending -> function doesn't return (we go to sleep, and chip resets upon wake)
+            Toastbox::IRQState::WaitForInterrupt();
         }
     }
     
