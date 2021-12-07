@@ -1,7 +1,7 @@
 #pragma once
 #include <msp430.h>
 
-template <uint32_t XT1FreqHz, uint32_t MCLKFreqHz, typename T_XOUTPin, typename T_XINPin>
+template <uint32_t T_XT1FreqHz, uint32_t T_MCLKFreqHz, typename T_XOUTPin, typename T_XINPin>
 class ClockType {
 public:
     struct Pin {
@@ -10,9 +10,11 @@ public:
     };
     
     static void Init() {
-        // Configure one FRAM wait state, as required by the device datasheet for MCLK > 8MHz.
+        // Configure one FRAM wait state if MCLK > 8MHz.
         // This must happen before configuring the clock system.
-//        FRCTL0 = FRCTLPW | NWAITS_1;
+        if constexpr (T_MCLKFreqHz > 8000000) {
+            FRCTL0 = FRCTLPW | NWAITS_1;
+        }
         
         do {
             CSCTL7 &= ~(XT1OFFG | DCOFFG); // Clear XT1 and DCO fault flag
@@ -28,24 +30,24 @@ public:
             // Clear DCO frequency select bits first
             CSCTL1 &= ~(DCORSEL_7);
             
-            if constexpr (MCLKFreqHz == 16000000) {
+            if constexpr (T_MCLKFreqHz == 16000000) {
                 CSCTL1 |= DCORSEL_5;
-            } else if constexpr (MCLKFreqHz == 12000000) {
+            } else if constexpr (T_MCLKFreqHz == 12000000) {
                 CSCTL1 |= DCORSEL_4;
-            } else if constexpr (MCLKFreqHz == 8000000) {
+            } else if constexpr (T_MCLKFreqHz == 8000000) {
                 CSCTL1 |= DCORSEL_3;
-            } else if constexpr (MCLKFreqHz == 4000000) {
+            } else if constexpr (T_MCLKFreqHz == 4000000) {
                 CSCTL1 |= DCORSEL_2;
-            } else if constexpr (MCLKFreqHz == 2000000) {
+            } else if constexpr (T_MCLKFreqHz == 2000000) {
                 CSCTL1 |= DCORSEL_1;
-            } else if constexpr (MCLKFreqHz == 1000000) {
+            } else if constexpr (T_MCLKFreqHz == 1000000) {
                 CSCTL1 |= DCORSEL_0;
             } else {
-                static_assert(_AlwaysFalse<MCLKFreqHz>);
+                static_assert(_AlwaysFalse<T_MCLKFreqHz>);
             }
             
-            // DCOCLKDIV = 16MHz
-            CSCTL2 = FLLD_0 | ((MCLKFreqHz/XT1FreqHz)-1);
+            // Set DCOCLKDIV based on T_MCLKFreqHz and T_XT1FreqHz
+            CSCTL2 = FLLD_0 | ((T_MCLKFreqHz/T_XT1FreqHz)-1);
             
             // Wait 3 cycles to take effect
             __delay_cycles(3);
