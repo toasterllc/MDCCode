@@ -8,6 +8,7 @@
 #include "ImgSensor.h"
 #include "ImgAutoExposure.h"
 #include "Toastbox/IRQState.h"
+#include "Startup.h"
 #include "GPIO.h"
 #include "Clock.h"
 #include "RTC.h"
@@ -44,19 +45,28 @@ struct Pin {
 using Clock = ClockType<XT1FreqHz, MCLKFreqHz, Pin::XOUT, Pin::XIN>;
 using SPI = SPIType<MCLKFreqHz, Pin::ICE_MSP_SPI_CLK, Pin::ICE_MSP_SPI_DATA_OUT, Pin::ICE_MSP_SPI_DATA_IN, Pin::ICE_MSP_SPI_DATA_DIR>;
 
-SD::Card _sd;
+static SD::Card _sd;
 
+// `_startTime` is the time set by STM32 (seconds since reference date),
+// which we need to use upon the next cold start.
 __attribute__((section(".persistent")))
-uint32_t _newTime = 0;
+static volatile struct {
+    uint16_t valid = false; // uint16_t (instead of bool) for alignment
+    uint32_t time = 0;
+} _startTime;
 
+// `_rtc` is stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// time is maintained during sleep, but reset upon a cold start.
 __attribute__((section(".bakmem")))
-RTC<XT1FreqHz> _rtc;
+static RTC<XT1FreqHz> _rtc;
+
+// `_imgAutoExp` is stored in BAKMEM (RAM that's retained in LPM3.5) because
+// we want it to be maintained during sleep, but reset upon a cold start.
+__attribute__((section(".bakmem")))
+static Img::AutoExposure _imgAutoExp;
 
 __attribute__((section(".persistent")))
-Img::AutoExposure _imgAutoExp;
-
-__attribute__((section(".persistent")))
-uint16_t _imgDstIdx = 0;
+static uint16_t _imgDstIdx = 0;
 
 // MARK: - Motion
 
@@ -288,10 +298,20 @@ int main() {
     // Init clock
     Clock::Init();
     
-    const bool coldStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
-    if (coldStart) {
-        // Init real-time clock
-        _rtc.init();
+    if (Startup::ColdStart()) {
+        // - If we do have a valid startTime:
+        //   Consume _startTime and hand it off to RTC
+        // 
+        // - If we don't have a valid startTime:
+        //   Don't bother initializing/starting RTC since we don't have a valid time to increment.
+        //   In this case, RTC interrupts won't fire, and RTC::currentTime() will always return 0.
+        if (_startTime.valid) {
+            // Mark the time as invalid before consuming it, so that if we lose power,
+            // the time won't be reused again
+            _startTime.valid = false;
+            // Init real-time clock
+            _rtc.init(_startTime.time);
+        }
     }
     
 //    #warning when waking due to only RTC, we don't need to initialize SPI or talk to ICE40. we just need to service the RTC int and go back to sleep
@@ -322,14 +342,16 @@ int main() {
             if (!iceInit) {
                 iceInit = true;
                 
-                // Init SPI
-                // Reset the ICE40 SPI state machine if this is a cold start.
-                // Otherwise, we can assume our comms with ICE40 are set up.
-                const bool iceReset = coldStart;
-                SPI::Init(iceReset);
+                // Init SPI/ICE40
+                if (Startup::ColdStart()) {
+                    constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
+                    SPI::Init(iceReset);
+                    ICE::Init(); // Cold start -> init ICE necessary to verify comms are working
                 
-                // Init ICE40
-                ICE::Init();
+                } else {
+                    constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
+                    SPI::Init(iceReset);
+                }
             }
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));

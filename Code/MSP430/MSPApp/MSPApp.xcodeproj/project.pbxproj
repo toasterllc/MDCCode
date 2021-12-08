@@ -17,6 +17,7 @@
 		5588914E273C7DEB0004458F /* SPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SPI.h; sourceTree = "<group>"; };
 		55B2150B26FA7A99001423C1 /* msp430fr2422.h.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2422.h.txt; sourceTree = "<group>"; };
 		55FD016B275F25BA005505B5 /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
+		55FD016C27605D4F005505B5 /* Startup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Startup.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -31,6 +32,7 @@
 				5588914D273C79540004458F /* Clock.h */,
 				5588914C273C6BCD0004458F /* RTC.h */,
 				5588914E273C7DEB0004458F /* SPI.h */,
+				55FD016C27605D4F005505B5 /* Startup.h */,
 				556E45EF26B12023006681FA /* main.cpp */,
 				556E45EE26B12023006681FA /* Makefile */,
 			);

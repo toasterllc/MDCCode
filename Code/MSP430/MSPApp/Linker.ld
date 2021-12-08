@@ -3,5 +3,14 @@ MEMORY {
 }
 
 SECTIONS {
-    .bakmem : {} > BAKMEM     /* Backup memory */
+    /* Backup memory (RAM maintained during LPM3.5) */
+    .bakmem : {
+        . = ALIGN(2);
+        _sbakmem_fram = LOADADDR(.bakmem);
+        _sbakmem_ram = .;
+        *(.bakmem)
+        *(.bakmem*)
+        . = ALIGN(2);
+        _ebakmem_ram = .;
+    } >BAKMEM AT> FRAM
 }
