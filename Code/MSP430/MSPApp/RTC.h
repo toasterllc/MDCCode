@@ -7,7 +7,6 @@ class RTC {
 public:
     using Sec = uint32_t;
     
-//    #warning switch InterruptInterval back to 2048
     static constexpr Sec InterruptInterval = 2048;
     static constexpr uint32_t Predivider = 1024;
     static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
