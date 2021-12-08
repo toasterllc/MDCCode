@@ -16,14 +16,14 @@
 using namespace Toastbox;
 using namespace GPIO;
 
-static constexpr uint64_t MCLKFreqHz = 16000000;
-static constexpr uint32_t XT1FreqHz = 32768;
-static constexpr uint16_t LPMBits = LPM3_bits;
+static constexpr uint64_t _MCLKFreqHz = 16000000;
+static constexpr uint32_t _XT1FreqHz = 32768;
+static constexpr uint16_t _LPMBits = LPM3_bits;
 
-#define _delayUs(us) __delay_cycles((((uint64_t)us)*MCLKFreqHz) / 1000000)
-#define _delayMs(ms) __delay_cycles((((uint64_t)ms)*MCLKFreqHz) / 1000)
+#define _delayUs(us) __delay_cycles((((uint64_t)us)*_MCLKFreqHz) / 1000000)
+#define _delayMs(ms) __delay_cycles((((uint64_t)ms)*_MCLKFreqHz) / 1000)
 
-struct Pin {
+struct _Pin {
     // Default GPIOs
     using VDD_1V9_IMG_EN                    = PortA::Pin<0x0, Option::Output0>;
     using VDD_2V8_IMG_EN                    = PortA::Pin<0x2, Option::Output0>;
@@ -42,10 +42,10 @@ struct Pin {
     using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
 
-using Clock = ClockType<XT1FreqHz, MCLKFreqHz, Pin::XOUT, Pin::XIN>;
-using SPI = SPIType<MCLKFreqHz, Pin::ICE_MSP_SPI_CLK, Pin::ICE_MSP_SPI_DATA_OUT, Pin::ICE_MSP_SPI_DATA_IN, Pin::ICE_MSP_SPI_DATA_DIR>;
+using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
+using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
-static SD::Card _sd;
+static SD::Card _SD;
 
 // `_startTime` is the time set by STM32 (seconds since reference date),
 // which we need to use upon the next cold start.
@@ -53,24 +53,24 @@ __attribute__((section(".persistent")))
 static volatile struct {
     uint16_t valid = false; // uint16_t (instead of bool) for alignment
     uint32_t time = 0;
-} _startTime;
+} _StartTime;
 
-// `_rtc` is stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// `_RTC` is stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // time is maintained during sleep, but reset upon a cold start.
 __attribute__((section(".bakmem")))
-static RTC<XT1FreqHz> _rtc;
+static RTC<_XT1FreqHz> _RTC;
 
-// `_imgAutoExp` is stored in BAKMEM (RAM that's retained in LPM3.5) because
+// `_ImgAutoExp` is stored in BAKMEM (RAM that's retained in LPM3.5) because
 // we want it to be maintained during sleep, but reset upon a cold start.
 __attribute__((section(".bakmem")))
-static Img::AutoExposure _imgAutoExp;
+static Img::AutoExposure _ImgAutoExp;
 
 __attribute__((section(".persistent")))
-static uint16_t _imgDstIdx = 0;
+static uint16_t _ImgDstIdx = 0;
 
 // MARK: - Motion
 
-static Img::Header _imgHeader = {
+static Img::Header _ImgHeader = {
     // Section idx=0
     .version        = Img::HeaderVersion,
     .imageWidth     = Img::PixelWidth,
@@ -88,18 +88,18 @@ static Img::Header _imgHeader = {
     ._pad3          = 0,
 };
 
-static void _motion_handle() {
+static void _Motion_Handle() {
 //    // Initialize image sensor
 //    Img::Sensor::Init();
 //    
 //    // Initialize SD card
-//    _sd.init();
+//    _SD.init();
 //    
 //    // Enable image streaming
 //    Img::Sensor::SetStreamEnabled(true);
 //    
 //    // Set the initial exposure
-//    Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+//    Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
     
     // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
     constexpr uint8_t CaptureAttemptCount = 3;
@@ -117,53 +117,53 @@ static void _motion_handle() {
         const uint8_t expBlock = !bestExpBlock;
         
         // Update the header
-        _imgHeader.timestamp = _rtc.currentTime();
-        _imgHeader.coarseIntTime = _imgAutoExp.integrationTime();
+        _ImgHeader.timestamp = _RTC.currentTime();
+        _ImgHeader.coarseIntTime = _ImgAutoExp.integrationTime();
         
         // Capture an image to RAM
         bool ok = false;
         ICE::ImgCaptureStatusResp resp;
-        std::tie(ok, resp) = ICE::ImgCapture(_imgHeader, expBlock, SkipCount);
+        std::tie(ok, resp) = ICE::ImgCapture(_ImgHeader, expBlock, SkipCount);
         Assert(ok);
         
-        const uint8_t expScore = _imgAutoExp.update(resp.highlightCount(), resp.shadowCount());
+        const uint8_t expScore = _ImgAutoExp.update(resp.highlightCount(), resp.shadowCount());
         if (!bestExpScore || (expScore > bestExpScore)) {
             bestExpBlock = expBlock;
             bestExpScore = expScore;
         }
         
         // We're done if we don't have any exposure changes
-        if (!_imgAutoExp.changed()) break;
+        if (!_ImgAutoExp.changed()) break;
         
         // Update the exposure
-        Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+        Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
     }
     
     // Write the best-exposed image to the SD card
-    _sd.writeImage(bestExpBlock, _imgDstIdx);
-    _imgDstIdx++;
+    _SD.writeImage(bestExpBlock, _ImgDstIdx);
+    _ImgDstIdx++;
     
     // Update the image counter
-    _imgHeader.counter++;
+    _ImgHeader.counter++;
 }
 
 // MARK: - Interrupts
 
 __attribute__((interrupt(RTC_VECTOR)))
-static void _isr_rtc() {
-    _rtc.isr();
+static void _ISR_RTC() {
+    _RTC.isr();
 }
 
 static volatile bool _Motion = false;
 
 __attribute__((interrupt(PORT2_VECTOR)))
-void _isr_port2() {
+void _ISR_Port2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
     switch (__even_in_range(P2IV, P2IV__P2IFG5)) {
     case P2IV__P2IFG5:
         _Motion = true;
         // Wake ourself
-        __bic_SR_register_on_exit(LPMBits);
+        __bic_SR_register_on_exit(_LPMBits);
         break;
     
     default:
@@ -175,7 +175,7 @@ void _isr_port2() {
 
 void ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & ICE::MsgType::Resp));
-    SPI::WriteRead(msg, resp);
+    _SPI::WriteRead(msg, resp);
 }
 
 // MARK: - SD Card
@@ -184,7 +184,7 @@ const uint8_t SD::Card::ClkDelaySlow = 1; // Odd values invert the clock
 const uint8_t SD::Card::ClkDelayFast = 0;
 
 void SD::Card::SetPowerEnabled(bool en) {
-    Pin::VDD_SD_EN::Write(en);
+    _Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _delayMs(2);
 }
@@ -193,13 +193,13 @@ void SD::Card::SetPowerEnabled(bool en) {
 
 void Img::Sensor::SetPowerEnabled(bool en) {
     if (en) {
-        Pin::VDD_2V8_IMG_EN::Write(1);
+        _Pin::VDD_2V8_IMG_EN::Write(1);
         _delayUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
-        Pin::VDD_1V9_IMG_EN::Write(1);
+        _Pin::VDD_1V9_IMG_EN::Write(1);
     } else {
         // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
-        Pin::VDD_1V9_IMG_EN::Write(0);
-        Pin::VDD_2V8_IMG_EN::Write(0);
+        _Pin::VDD_1V9_IMG_EN::Write(0);
+        _Pin::VDD_2V8_IMG_EN::Write(0);
         
 //        #warning determine actual delay
 //        _delayMs(100);
@@ -222,7 +222,7 @@ bool Toastbox::IRQState::SetInterruptsEnabled(bool en) {
 void Toastbox::IRQState::WaitForInterrupt() {
     // Put ourself to sleep until an interrupt occurs. This function may or may not return:
     // - This function returns if an interrupt was already pending and the ISR
-    //   wakes us (via `__bic_SR_register_on_exit(LPMBits)`). In this case we
+    //   wakes us (via `__bic_SR_register_on_exit(_LPMBits)`). In this case we
     //   never enter LPM3.5.
     // - This function doesn't return if an interrupt wasn't pending and
     //   therefore we enter LPM3.5. The next time we wake will be due to a
@@ -234,30 +234,30 @@ void Toastbox::IRQState::WaitForInterrupt() {
     
     // Atomically enable interrupts and go to sleep
     const bool prevEn = _InterruptsEnabled();
-    __bis_SR_register(GIE | LPMBits);
+    __bis_SR_register(GIE | _LPMBits);
     // If interrupts were disabled previously, disable them again
     if (!prevEn) Toastbox::IRQState::SetInterruptsEnabled(false);
 }
 
 // MARK: - Main
 
-static void _setSDImgEnabled(bool en) {
-    static bool _sdImgPowerEnabled = false;
-    if (_sdImgPowerEnabled == en) return; // Short circuit if state didn't change
-    _sdImgPowerEnabled = en;
+static void _SetSDImgEnabled(bool en) {
+    static bool _SDImgPowerEnabled = false;
+    if (_SDImgPowerEnabled == en) return; // Short circuit if state didn't change
+    _SDImgPowerEnabled = en;
     
-    if (_sdImgPowerEnabled) {
+    if (_SDImgPowerEnabled) {
         // Initialize image sensor
         Img::Sensor::Init();
         
         // Initialize SD card
-        _sd.init();
+        _SD.init();
         
         // Enable image streaming
         Img::Sensor::SetStreamEnabled(true);
         
         // Set the initial exposure
-        Img::Sensor::SetCoarseIntTime(_imgAutoExp.integrationTime());
+        Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
     
     } else {
         SD::Card::SetPowerEnabled(false);
@@ -272,31 +272,31 @@ int main() {
     // Init GPIOs
     PortA::Init<
         // Power control
-        Pin::VDD_1V9_IMG_EN,
-        Pin::VDD_2V8_IMG_EN,
-        Pin::VDD_SD_EN,
-        Pin::VDD_B_EN_,
+        _Pin::VDD_1V9_IMG_EN,
+        _Pin::VDD_2V8_IMG_EN,
+        _Pin::VDD_SD_EN,
+        _Pin::VDD_B_EN_,
         
         // SPI peripheral determines initial state of SPI GPIOs
-        SPI::Pin::Clk,
-        SPI::Pin::DataOut,
-        SPI::Pin::DataIn,
-        SPI::Pin::DataDir,
+        _SPI::Pin::Clk,
+        _SPI::Pin::DataOut,
+        _SPI::Pin::DataIn,
+        _SPI::Pin::DataDir,
         
         // Clock peripheral determines initial state of clock GPIOs
-        Clock::Pin::XOUT,
-        Clock::Pin::XIN,
+        _Clock::Pin::XOUT,
+        _Clock::Pin::XIN,
         
         // Motion
-        Pin::MOTION_SIGNAL,
+        _Pin::MOTION_SIGNAL,
         
         // Other
-        Pin::ICE_MSP_SPI_AUX,
-        Pin::ICE_MSP_SPI_AUX_DIR
+        _Pin::ICE_MSP_SPI_AUX,
+        _Pin::ICE_MSP_SPI_AUX_DIR
     >();
     
     // Init clock
-    Clock::Init();
+    _Clock::Init();
     
     if (Startup::ColdStart()) {
         // - If we do have a valid startTime:
@@ -305,12 +305,12 @@ int main() {
         // - If we don't have a valid startTime:
         //   Don't bother initializing/starting RTC since we don't have a valid time to increment.
         //   In this case, RTC interrupts won't fire, and RTC::currentTime() will always return 0.
-        if (_startTime.valid) {
+        if (_StartTime.valid) {
             // Mark the time as invalid before consuming it, so that if we lose power,
             // the time won't be reused again
-            _startTime.valid = false;
+            _StartTime.valid = false;
             // Init real-time clock
-            _rtc.init(_startTime.time);
+            _RTC.init(_StartTime.time);
         }
     }
     
@@ -319,7 +319,6 @@ int main() {
     #warning TODO: keep the `SYSCFG0 = FRWPPW` or not? we need persistence for:
     #warning TODO: - image counter (in image header)
     #warning TODO: - image ring buffer write/read indexes
-    #warning TODO: - RTC time (but we should put that in the backup RAM right?)
     
     // Enable FRAM writing
     SYSCFG0 = FRWPPW;
@@ -345,24 +344,24 @@ int main() {
                 // Init SPI/ICE40
                 if (Startup::ColdStart()) {
                     constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
-                    SPI::Init(iceReset);
+                    _SPI::Init(iceReset);
                     ICE::Init(); // Cold start -> init ICE necessary to verify comms are working
                 
                 } else {
                     constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
-                    SPI::Init(iceReset);
+                    _SPI::Init(iceReset);
                 }
             }
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
-            _setSDImgEnabled(true);
+            _SetSDImgEnabled(true);
             
-            _motion_handle();
+            _Motion_Handle();
         
         } else {
             // No events, go to sleep
             ICE::Transfer(ICE::LEDSetMsg(0x00));
-            _setSDImgEnabled(false);
+            _SetSDImgEnabled(false);
             
             // Go to sleep
             // WaitForInterrupt() may or may not return!
@@ -376,8 +375,8 @@ int main() {
 }
 
 [[noreturn]] void abort() {
-    Pin::DEBUG_OUT::Init();
+    _Pin::DEBUG_OUT::Init();
     for (bool x=0;; x=!x) {
-        Pin::DEBUG_OUT::Write(x);
+        _Pin::DEBUG_OUT::Write(x);
     }
 }
