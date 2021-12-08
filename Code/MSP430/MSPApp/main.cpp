@@ -335,13 +335,6 @@ int main() {
         }
     }
     
-    #warning TODO: keep the `SYSCFG0 = FRWPPW` or not? we need persistence for:
-    #warning TODO: - image header
-    #warning TODO: - image ring buffer write/read indexes
-    
-    // Enable FRAM writing
-    SYSCFG0 = FRWPPW;
-    
     // Enable interrupts
     Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
     
