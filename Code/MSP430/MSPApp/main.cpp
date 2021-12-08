@@ -13,6 +13,7 @@
 #include "Clock.h"
 #include "RTC.h"
 #include "SPI.h"
+#include "FRAMWriteEn.h"
 using namespace Toastbox;
 using namespace GPIO;
 
@@ -47,46 +48,37 @@ using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_
 
 static SD::Card _SD;
 
-// `_startTime` is the time set by STM32 (seconds since reference date),
-// which we need to use upon the next cold start.
-__attribute__((section(".persistent")))
+// _StartTime: the time set by STM32 (seconds since reference date)
+// Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
+__attribute__((section(".infomem")))
 static volatile struct {
     uint16_t valid = false; // uint16_t (instead of bool) for alignment
     uint32_t time = 0;
 } _StartTime;
 
-// `_RTC` is stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// time is maintained during sleep, but reset upon a cold start.
+// _RTC: real time clock
+// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// it's maintained during sleep, but reset upon a cold start.
 __attribute__((section(".bakmem")))
 static RTC<_XT1FreqHz> _RTC;
 
-// `_ImgAutoExp` is stored in BAKMEM (RAM that's retained in LPM3.5) because
-// we want it to be maintained during sleep, but reset upon a cold start.
+// _ImgAutoExp: auto exposure algorithm object
+// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// it's maintained during sleep, but reset upon a cold start.
 __attribute__((section(".bakmem")))
 static Img::AutoExposure _ImgAutoExp;
 
-__attribute__((section(".persistent")))
-static uint16_t _ImgDstIdx = 0;
+// _ImgIndexes: values tracking captured images
+// Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely.
+__attribute__((section(".infomem")))
+static struct {
+    uint32_t counter = 0;
+    uint16_t write = 0;
+    uint16_t read = 0;
+    bool full = false;
+} _ImgIndexes;
 
 // MARK: - Motion
-
-static Img::Header _ImgHeader = {
-    // Section idx=0
-    .version        = Img::HeaderVersion,
-    .imageWidth     = Img::PixelWidth,
-    .imageHeight    = Img::PixelHeight,
-    ._pad0          = 0,
-    // Section idx=1
-    .counter        = 0,
-    ._pad1          = 0,
-    // Section idx=2
-    .timestamp      = 0,
-    ._pad2          = 0,
-    // Section idx=3
-    .coarseIntTime  = 0,
-    .analogGain     = 0,
-    ._pad3          = 0,
-};
 
 static void _Motion_Handle() {
 //    // Initialize image sensor
@@ -116,14 +108,33 @@ static void _Motion_Handle() {
         // expBlock: Store images in the block belonging to the worst-exposed image captured so far
         const uint8_t expBlock = !bestExpBlock;
         
-        // Update the header
-        _ImgHeader.timestamp = _RTC.currentTime();
-        _ImgHeader.coarseIntTime = _ImgAutoExp.integrationTime();
+        // Populate the header
+        static Img::Header header = {
+            // Section idx=0
+            .version        = Img::HeaderVersion,
+            .imageWidth     = Img::PixelWidth,
+            .imageHeight    = Img::PixelHeight,
+            ._pad0          = 0,
+            // Section idx=1
+            .counter        = 0,
+            ._pad1          = 0,
+            // Section idx=2
+            .timestamp      = 0,
+            ._pad2          = 0,
+            // Section idx=3
+            .coarseIntTime  = 0,
+            .analogGain     = 0,
+            ._pad3          = 0,
+        };
+        
+        header.counter = _ImgIndexes.counter;
+        header.timestamp = _RTC.currentTime();
+        header.coarseIntTime = _ImgAutoExp.integrationTime();
         
         // Capture an image to RAM
         bool ok = false;
         ICE::ImgCaptureStatusResp resp;
-        std::tie(ok, resp) = ICE::ImgCapture(_ImgHeader, expBlock, SkipCount);
+        std::tie(ok, resp) = ICE::ImgCapture(header, expBlock, SkipCount);
         Assert(ok);
         
         const uint8_t expScore = _ImgAutoExp.update(resp.highlightCount(), resp.shadowCount());
@@ -140,11 +151,14 @@ static void _Motion_Handle() {
     }
     
     // Write the best-exposed image to the SD card
-    _SD.writeImage(bestExpBlock, _ImgDstIdx);
-    _ImgDstIdx++;
+    _SD.writeImage(bestExpBlock, _ImgIndexes.write);
     
-    // Update the image counter
-    _ImgHeader.counter++;
+    // Update _ImgIndexes
+    {
+        FRAMWriteEn writeEn; // Enable FRAM writing
+        _ImgIndexes.write++;
+        _ImgIndexes.counter++;
+    }
 }
 
 // MARK: - Interrupts
@@ -196,13 +210,15 @@ void Img::Sensor::SetPowerEnabled(bool en) {
         _Pin::VDD_2V8_IMG_EN::Write(1);
         _delayUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         _Pin::VDD_1V9_IMG_EN::Write(1);
+        
+        #warning measure actual delay that we need for the rails to rise
+    
     } else {
         // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
         _Pin::VDD_1V9_IMG_EN::Write(0);
         _Pin::VDD_2V8_IMG_EN::Write(0);
         
-//        #warning determine actual delay
-//        _delayMs(100);
+        #warning measure actual delay that we need for the rails to fall
     }
 }
 
@@ -295,6 +311,9 @@ int main() {
         _Pin::ICE_MSP_SPI_AUX_DIR
     >();
     
+    // Unlock GPIOs
+    PM5CTL0 &= ~LOCKLPM5;
+    
     // Init clock
     _Clock::Init();
     
@@ -306,6 +325,8 @@ int main() {
         //   Don't bother initializing/starting RTC since we don't have a valid time to increment.
         //   In this case, RTC interrupts won't fire, and RTC::currentTime() will always return 0.
         if (_StartTime.valid) {
+            FRAMWriteEn writeEn; // Enable FRAM writing
+            
             // Mark the time as invalid before consuming it, so that if we lose power,
             // the time won't be reused again
             _StartTime.valid = false;
@@ -314,10 +335,8 @@ int main() {
         }
     }
     
-//    #warning when waking due to only RTC, we don't need to initialize SPI or talk to ICE40. we just need to service the RTC int and go back to sleep
-    
     #warning TODO: keep the `SYSCFG0 = FRWPPW` or not? we need persistence for:
-    #warning TODO: - image counter (in image header)
+    #warning TODO: - image header
     #warning TODO: - image ring buffer write/read indexes
     
     // Enable FRAM writing

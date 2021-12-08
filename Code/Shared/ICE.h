@@ -293,6 +293,7 @@ public:
     
     static std::pair<bool,ImgCaptureStatusResp> ImgCapture(const Img::Header& header, uint8_t dstBlock, uint8_t skipCount) {
         // Set the header of the image
+        static_assert(sizeof(header) == 4*8);
         for (uint8_t i=0, off=0; i<4; i++, off+=8) {
             Transfer(ImgSetHeaderMsg(i, (const uint8_t*)&header+off));
         }
