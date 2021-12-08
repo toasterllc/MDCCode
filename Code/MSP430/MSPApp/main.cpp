@@ -355,7 +355,7 @@ int main() {
                 if (Startup::ColdStart()) {
                     constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
                     _SPI::Init(iceReset);
-                    ICE::Init(); // Cold start -> init ICE necessary to verify comms are working
+                    ICE::Init(); // Cold start -> init ICE40 to verify that comms are working
                 
                 } else {
                     constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
