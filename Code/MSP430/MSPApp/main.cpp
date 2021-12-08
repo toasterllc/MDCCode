@@ -284,7 +284,7 @@ int main() {
     WDTCTL = WDTPW | WDTHOLD;
     
     // Init GPIOs
-    PortA::Init<
+    GPIO::Init<
         // Power control
         _Pin::VDD_1V9_IMG_EN,
         _Pin::VDD_2V8_IMG_EN,
@@ -308,9 +308,6 @@ int main() {
         _Pin::ICE_MSP_SPI_AUX,
         _Pin::ICE_MSP_SPI_AUX_DIR
     >();
-    
-    // Unlock GPIOs
-    PM5CTL0 &= ~LOCKLPM5;
     
     // Init clock
     _Clock::Init();
