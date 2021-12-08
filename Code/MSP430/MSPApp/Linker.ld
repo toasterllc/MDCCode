@@ -4,19 +4,19 @@ MEMORY {
 
 SECTIONS {
     /* Info FRAM */
-    .infomem : {
+    .fram_info : {
         . = ALIGN(2);
-        *(.infomem)
+        *(.fram_info)
         . = ALIGN(2);
     } >INFOMEM
     
-    /* Backup memory (RAM maintained during LPM3.5) */
-    .bakmem : {
+    /* Backup RAM (RAM maintained during LPM3.5) */
+    .ram_backup : {
         . = ALIGN(2);
-        _sbakmem_fram = LOADADDR(.bakmem);
-        _sbakmem_ram = .;
-        *(.bakmem)
+        _ram_backup_src = LOADADDR(.ram_backup);
+        _ram_backup_dststart = .;
+        *(.ram_backup)
         . = ALIGN(2);
-        _ebakmem_ram = .;
+        _ram_backup_dstend = .;
     } >BAKMEM AT> FRAM
 }

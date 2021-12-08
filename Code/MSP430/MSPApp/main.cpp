@@ -50,7 +50,7 @@ static SD::Card _SD;
 
 // _StartTime: the time set by STM32 (seconds since reference date)
 // Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
-__attribute__((section(".infomem")))
+__attribute__((section(".fram_info")))
 static volatile struct {
     uint16_t valid = false; // uint16_t (instead of bool) for alignment
     uint32_t time = 0;
@@ -59,18 +59,18 @@ static volatile struct {
 // _RTC: real time clock
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-__attribute__((section(".bakmem")))
+__attribute__((section(".ram_backup")))
 static RTC<_XT1FreqHz> _RTC;
 
 // _ImgAutoExp: auto exposure algorithm object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-__attribute__((section(".bakmem")))
+__attribute__((section(".ram_backup")))
 static Img::AutoExposure _ImgAutoExp;
 
-// _ImgIndexes: values tracking captured images
+// _ImgIndexes: stats to track captured images
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely.
-__attribute__((section(".infomem")))
+__attribute__((section(".fram_info")))
 static struct {
     uint32_t counter = 0;
     uint16_t write = 0;

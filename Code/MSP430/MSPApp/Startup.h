@@ -24,10 +24,10 @@ private:
         
         // Only copy the data into BAKMEM if this is a cold start
         if (_ColdStart) {
-            extern uint8_t _sbakmem_fram[];
-            extern uint8_t _sbakmem_ram[];
-            extern uint8_t _ebakmem_ram[];
-            memcpy(_sbakmem_ram, _sbakmem_fram, _ebakmem_ram-_sbakmem_ram);
+            extern uint8_t _ram_backup_src[];
+            extern uint8_t _ram_backup_dststart[];
+            extern uint8_t _ram_backup_dstend[];
+            memcpy(_ram_backup_dststart, _ram_backup_src, _ram_backup_dstend-_ram_backup_dststart);
         }
     }
 };
