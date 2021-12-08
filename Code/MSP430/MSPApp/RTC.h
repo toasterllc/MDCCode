@@ -15,7 +15,9 @@ public:
     static constexpr uint16_t InterruptCount = (InterruptInterval*FreqHz)-1;
     static_assert(InterruptCount == ((InterruptInterval*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
     
-    void init() {
+    void init(Sec startTime) {
+        _time = startTime;
+        
         RTCMOD = InterruptCount;
         RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
         // "TI recommends clearing the RTCIFG bit by reading the RTCIV register
