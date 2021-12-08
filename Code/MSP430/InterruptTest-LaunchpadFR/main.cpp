@@ -3,6 +3,23 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
+class MyClass {
+public:
+    MyClass() {
+        for (volatile int i=0; i<100; i++);
+    }
+    
+private:
+    static inline bool _ColdStart = false;
+    
+    __attribute__((section(".crt_0401_startup"), naked, used))
+    static void _startup() {
+        _ColdStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
+    }
+    
+    uint32_t _testVar = 0xCAFEBABE;
+};
+
 __attribute__((interrupt(PORT2_VECTOR)))
 void _isr_port2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
@@ -15,6 +32,11 @@ void _isr_port2() {
         break;
     }
 }
+
+volatile int myInt = 0;
+
+__attribute__((section(".bakmem")))
+MyClass myClass;
 
 int main() {
     WDTCTL = WDTPW | WDTHOLD;
@@ -38,8 +60,8 @@ int main() {
     //     __bic_SR_register(GIE);
     // }
     
-    // Enable interrupts + go to sleep
-    __bis_SR_register(GIE | LPM1_bits);
+    // // Enable interrupts + go to sleep
+    __bis_SR_register(GIE);
     
-    return 0;
+    for (volatile int i=0;; i++);
 }
