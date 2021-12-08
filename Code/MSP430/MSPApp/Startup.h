@@ -14,9 +14,10 @@ private:
     //
     // We chose 0401 because 0400 is the `move_highdata` crt function (which copies data
     // into memory), while 0500 is the `run_preinit_array` crt function (which
-    // calls C++ constructors). We need the correct values stored in BAKMEM before C++
-    // constructors are called, but after other data is copied, so 0401 makes sense.
-    ///
+    // calls C++ constructors). We need the correct values stored in BAKMEM after other
+    // data is copied into memory, but before C++ constructors are called, so 0401 makes
+    // sense.
+    //
     // See the `crt0.S` file in the newlib project for more info.
     __attribute__((section(".crt_0401_startup"), naked, used))
     static void _startup() {
