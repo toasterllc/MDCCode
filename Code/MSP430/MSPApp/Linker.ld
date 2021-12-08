@@ -3,7 +3,7 @@ MEMORY {
 }
 
 SECTIONS {
-    /* Backup memory (RAM maintained during LPM3.5) */
+    /* Info FRAM */
     .infomem : {
         . = ALIGN(2);
         *(.infomem)
