@@ -132,12 +132,10 @@ static void _Motion_Handle() {
         header.coarseIntTime = _ImgAutoExp.integrationTime();
         
         // Capture an image to RAM
-        bool ok = false;
-        ICE::ImgCaptureStatusResp resp;
-        std::tie(ok, resp) = ICE::ImgCapture(header, expBlock, SkipCount);
-        Assert(ok);
+        auto resp = ICE::ImgCapture(header, expBlock, SkipCount);
+        Assert((bool)resp);
         
-        const uint8_t expScore = _ImgAutoExp.update(resp.highlightCount(), resp.shadowCount());
+        const uint8_t expScore = _ImgAutoExp.update((*resp).highlightCount(), (*resp).shadowCount());
         if (!bestExpScore || (expScore > bestExpScore)) {
             bestExpBlock = expBlock;
             bestExpScore = expScore;

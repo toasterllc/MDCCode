@@ -3,9 +3,12 @@
 #include <cstring>
 #include <algorithm>
 #include <utility>
+#include <optional>
 #include "Assert.h"
 #include "DelayMs.h"
 #include "Img.h"
+
+#warning upon errors, call out to a client-supplied error handler, instead of using Assert() or returning optionals
 
 class ICE {
 public:
@@ -291,7 +294,7 @@ public:
         Transfer(ImgResetMsg(1));
     }
     
-    static std::pair<bool,ImgCaptureStatusResp> ImgCapture(const Img::Header& header, uint8_t dstBlock, uint8_t skipCount) {
+    static std::optional<ImgCaptureStatusResp> ImgCapture(const Img::Header& header, uint8_t dstBlock, uint8_t skipCount) {
         // Set the header of the image
         static_assert(sizeof(header) == 4*8);
         for (uint8_t i=0, off=0; i<4; i++, off+=8) {
@@ -310,11 +313,11 @@ public:
             if (!status.done()) continue;
             const uint32_t imgWordCount = status.wordCount();
             Assert(imgWordCount == Img::Len/sizeof(Img::Word));
-            return {true, status};
+            return status;
         }
         // Timeout capturing image
         // This should never happen, since it indicates a Verilog error or a hardware failure.
-        return {false, {}};
+        return std::nullopt;
     }
     
     static ImgCaptureStatusResp ImgCaptureStatus() {

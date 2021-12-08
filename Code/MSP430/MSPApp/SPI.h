@@ -84,7 +84,7 @@ private:
     using _DataOutEnabled = typename Pin::DataOut::template Opts<GPIO::Option::Sel01>;
     
     static uint8_t _TxRx(uint8_t b) {
-        #warning stop polling, use interrupts to wake ourself
+        #warning how many cycles do we busy wait here? if it's a lot, stop polling and use interrupts to wake ourself.
         // Wait until `UCA0TXBUF` can accept more data
         while (!(UCA0IFG & UCTXIFG));
         // Clear UCRXIFG so we can tell when tx/rx is complete
