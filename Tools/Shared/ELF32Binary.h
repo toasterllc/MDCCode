@@ -3,7 +3,7 @@
 #include <sys/mman.h>
 #include <vector>
 #include "Mmap.h"
-#include "RuntimeError.h"
+#include "Toastbox/RuntimeError.h"
 
 class ELF32Binary {
 public:

@@ -128,96 +128,35 @@ void _enumerateSections(const ELF32Binary& elf, T_Fn fn) {
     
     for (const auto& seg : segments) {
         for (const auto& sec : seg.sections) {
-//            if (sec.type != ELF32Binary::SectionType::SHT_PROGBITS &&
-//                sec.type != ELF32Binary::SectionType::SHT_INIT_ARRAY &&
-//                sec.type != ELF32Binary::SectionType::SHT_FINI_ARRAY) continue;
-//            if (!((uint32_t)sec.flags & (uint32_t)ELF32Binary::SectionFlags::SHF_ALLOC)) continue;
-            
             // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
             if (sec.type == ELF32Binary::SectionType::SHT_NOBITS) continue;
             // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
             if (!((uint32_t)sec.flags & (uint32_t)ELF32Binary::SectionFlags::SHF_ALLOC)) continue;
             const size_t secSize = sec.size;
             if (!secSize) continue; // Ignore sections with zero length
-            const uint32_t secAddr = sec.paddr;
+            const uint32_t secPAddr = sec.paddr;
+            const uint32_t secVAddr = sec.vaddr;
             const void* secData = elf.sectionData(sec);
             
-//            std::string sections;
-//            for (const auto& sec : seg.sections) {
-//                if (!sec.size) continue; // Ignore empty sections
-//                if (!sections.empty()) sections += ",";
-//                sections += sec.name;
-//            }
-//            
-//            if (sections.empty()) sections = "[unknown]";
-            
-            fn(secAddr, secData, secSize, sec.name.c_str());
+            fn(secPAddr, secVAddr, secData, secSize, sec.name.c_str());
         }
-        
-//        // Only consider loadable segments
-//        if (seg.type != ELF32Binary::SegmentType::PT_LOAD) continue;
-//        const size_t segSize = seg.size;
-//        if (!segSize) continue;
-//        const uint32_t segAddr = seg.paddr;
-//        const auto segData = elf.segmentData(seg);
-//        if (!segSize) continue; // Ignore segments with zero length
-//        
-//        std::string sections;
-//        for (const auto& sec : seg.sections) {
-//            if (!sec.size) continue; // Ignore empty sections
-//            if (!sections.empty()) sections += ",";
-//            sections += sec.name;
-//        }
-//        
-//        if (sections.empty()) sections = "[unknown]";
-//        
-//        fn(segAddr, segData.get(), segSize, sections.c_str());
     }
 }
-
-
-
-
-//template<typename T_Fn>
-//void _enumerateSegments(const ELF32Binary& elf, T_Fn fn) {
-//    auto segments = elf.segments();
-//    
-//    for (const auto& seg : segments) {
-//        // Only consider loadable segments
-//        if (seg.type != ELF32Binary::SegmentType::PT_LOAD) continue;
-//        const size_t segSize = seg.size;
-//        if (!segSize) continue;
-//        const uint32_t segAddr = seg.paddr;
-//        const auto segData = elf.segmentData(seg);
-//        if (!segSize) continue; // Ignore segments with zero length
-//        
-//        std::string sections;
-//        for (const auto& sec : seg.sections) {
-//            if (!sec.size) continue; // Ignore empty sections
-//            if (!sections.empty()) sections += ",";
-//            sections += sec.name;
-//        }
-//        
-//        if (sections.empty()) sections = "[unknown]";
-//        
-//        fn(segAddr, segData.get(), segSize, sections.c_str());
-//    }
-//}
 
 static void STMLoad(const Args& args, MDCDevice& device) {
     ELF32Binary elf(args.STMLoad.filePath.c_str());
     
-    _enumerateSections(elf, [&](uint32_t secAddr, const void* secData,
+    _enumerateSections(elf, [&](uint32_t secPAddr, uint32_t secVAddr, const void* secData,
     size_t secSize, const char* secName) {
-        printf("STLoad: Writing %s @ 0x%jx [size: 0x%jx]\n",
-            secName, (uintmax_t)secAddr, (uintmax_t)secSize);
+        printf("STMLoad: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
+            secName, (uintmax_t)secPAddr, (uintmax_t)secSize, (uintmax_t)secVAddr);
         
-//        device.stmWrite(secAddr, secData, secSize);
+        device.stmWrite(secPAddr, secData, secSize);
     });
     
     // Reset the device, triggering it to load the program we just wrote
     printf("STLoad: Resetting device\n");
-//    device.stmReset(elf.entryPointAddr());
+    device.stmReset(elf.entryPointAddr());
 }
 
 static void ICELoad(const Args& args, MDCDevice& device) {
@@ -231,15 +170,15 @@ static void ICELoad(const Args& args, MDCDevice& device) {
 static void MSPLoad(const Args& args, MDCDevice& device) {
     ELF32Binary elf(args.MSPLoad.filePath.c_str());
     
-//    device.mspConnect();
+    device.mspConnect();
     
     // Write the data
-    _enumerateSections(elf, [&](uint32_t secAddr, const void* secData,
+    _enumerateSections(elf, [&](uint32_t secPAddr, uint32_t secVAddr, const void* secData,
     size_t secSize, const char* secName) {
-        printf("MSPLoad: Writing %s @ 0x%jx [size: 0x%jx]\n",
-            secName, (uintmax_t)secAddr, (uintmax_t)secSize);
+        printf("MSPLoad: Writing %22s @ 0x%04jx    size: 0x%04jx    vaddr: 0x%04jx\n",
+            secName, (uintmax_t)secPAddr, (uintmax_t)secSize, (uintmax_t)secVAddr);
         
-//        device.mspWrite(segAddr, segData, segSize);
+        device.mspWrite(secPAddr, secData, secSize);
     });
     
 //    // Read back data and compare with what we expect
@@ -256,7 +195,7 @@ static void MSPLoad(const Args& args, MDCDevice& device) {
 //        }
 //    });
     
-//    device.mspDisconnect();
+    device.mspDisconnect();
 }
 
 static void SDImgRead(const Args& args, MDCDevice& device) {
@@ -338,17 +277,17 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-//    if (devices.empty()) {
-//        fprintf(stderr, "No matching MDC devices\n\n");
-//        return 1;
-//    } else if (devices.size() > 1) {
-//        fprintf(stderr, "Too many matching MDC devices\n\n");
-//        return 1;
-//    }
+    if (devices.empty()) {
+        fprintf(stderr, "No matching MDC devices\n\n");
+        return 1;
+    } else if (devices.size() > 1) {
+        fprintf(stderr, "Too many matching MDC devices\n\n");
+        return 1;
+    }
     
     MDCDevice& device = devices[0];
     try {
-//        device.endpointsFlush();
+        device.endpointsFlush();
         if (args.cmd == lower(LEDSetCmd))           LEDSet(args, device);
         else if (args.cmd == lower(STMLoadCmd))     STMLoad(args, device);
         else if (args.cmd == lower(ICELoadCmd))     ICELoad(args, device);
