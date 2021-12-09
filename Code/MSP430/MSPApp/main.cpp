@@ -314,27 +314,26 @@ int main() {
     
     _SPI::Init(true);
     
+//    const bool coldStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
+//    
 //    for (;;) {
 //        ICE::Transfer(ICE::LEDSetMsg(0xFF));
 //        for (volatile uint32_t i=0; i<10000; i++);
 //        ICE::Transfer(ICE::LEDSetMsg(0x00));
-//        
 //        Toastbox::IntState::WaitForInterrupt();
 //    }
     
     // Enable interrupts
     // If we were awoke due to an RTC interrupt or a motion interrupt, the handler will fire now
-    Toastbox::IntState ints(true);
-    bool iceInit = false;
     for (;;) {
+        __bis_SR_register(GIE);
         // Disable interrupts while we check for events
-        Toastbox::IntState ints(false);
+        __bic_SR_register(GIE);
         
         if (_Motion) {
             _Motion = false;
             
-            // Enable ints while we handle motion
-            Toastbox::IntState ints(true);
+            __bis_SR_register(GIE);
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
             for (volatile uint32_t i=0; i<10000; i++);

@@ -3,7 +3,9 @@
 
 class Startup {
 public:
-    static bool ColdStart() { return _ColdStart; }
+    static bool ColdStart() {
+        return !(PMMIFG & PMMLPM5IFG);
+    }
     
 private:
     static inline bool _ColdStart = false;
@@ -21,14 +23,9 @@ private:
     // See the `crt0.S` file in the newlib project for more info.
     __attribute__((section(".crt_0401_startup"), naked, used))
     static void _startup() {
-        _ColdStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
-        
-        // Only copy the data into BAKMEM if this is a cold start
-        if (_ColdStart) {
-            extern uint8_t _ram_backup_src[];
-            extern uint8_t _ram_backup_dststart[];
-            extern uint8_t _ram_backup_dstend[];
-            memcpy(_ram_backup_dststart, _ram_backup_src, _ram_backup_dstend-_ram_backup_dststart);
-        }
+        extern uint8_t _ram_backup_src[];
+        extern uint8_t _ram_backup_dststart[];
+        extern uint8_t _ram_backup_dstend[];
+        memcpy(_ram_backup_dststart, _ram_backup_src, _ram_backup_dstend-_ram_backup_dststart);
     }
 };
