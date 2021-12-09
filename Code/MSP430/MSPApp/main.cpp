@@ -329,17 +329,18 @@ int main() {
     }
     
     // Enable interrupts
-    Toastbox::IntState ints;
+    // If we were awoke due to an RTC interrupt or a motion interrupt, the handler will fire now
+    Toastbox::IntState ints(true);
     bool iceInit = false;
     for (;;) {
         // Disable interrupts while we check for events
-        ints.disable();
+        Toastbox::IntState ints(false);
         
         if (_Motion) {
             _Motion = false;
             
             // Enable ints while we handle motion
-            ints.enable();
+            Toastbox::IntState ints(true);
             
             // Init ICE40 if we haven't done so yet
             if (!iceInit) {
