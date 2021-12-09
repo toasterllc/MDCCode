@@ -329,8 +329,7 @@ int main() {
     }
     
     // Enable interrupts
-    Toastbox::IntState ints(true);
-    
+    Toastbox::IntState ints;
     bool iceInit = false;
     for (;;) {
         // Disable interrupts while we check for events
