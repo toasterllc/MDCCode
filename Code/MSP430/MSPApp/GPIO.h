@@ -162,7 +162,7 @@ static void Init() {
     //   "Note that the PxIFG flag cannot be cleared until the LOCKLPM5 bit has been cleared."
     
     // Disable interrupts
-    Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+    Toastbox::IntState ints(false);
     
     // Config pins
     constexpr _Regs regsA = _GetRegs<PortIndex::A, T_Pins...>(_Regs{});

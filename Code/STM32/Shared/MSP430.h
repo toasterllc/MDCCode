@@ -55,8 +55,7 @@ private:
     }
     
     static void _DelayMs(uint32_t ms) {
-        Toastbox::IRQState irq;
-        irq.enable();
+        Toastbox::IntState ints(true);
         HAL_Delay(ms);
     }
     
@@ -122,7 +121,7 @@ private:
         // We have strict timing requirements, so disable interrupts.
         // Specifically, the low cycle of TCK can't be longer than 7us,
         // otherwise SBW will be disabled.
-        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+        Toastbox::IntState ints(false);
         
         // Write TMS
         {
@@ -631,7 +630,7 @@ private:
         // We have strict timing requirements, so disable interrupts.
         // Specifically, the low cycle of TCK can't be longer than 7us,
         // otherwise SBW will be disabled.
-        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+        Toastbox::IntState ints(false);
         
         // Reset pin states
         {
@@ -823,7 +822,7 @@ public:
     }
     
     void debugTestPulse() {
-        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+        Toastbox::IntState ints(false);
         // Write before configuring. If we configured before writing, we could drive the
         // wrong value momentarily before writing the correct value.
         Test::Write(0);

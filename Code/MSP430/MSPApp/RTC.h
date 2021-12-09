@@ -1,6 +1,6 @@
 #pragma once
 #include <msp430.h>
-#include "Toastbox/IRQState.h"
+#include "Toastbox/IntState.h"
 
 template <uint32_t T_XT1FreqHz>
 class RTC {
@@ -26,7 +26,7 @@ public:
     }
     
     Sec currentTime() {
-        // This 2x _ReadTime() loop is necessary to handle the race related to RTCCNT overflowing:
+        // This 2x _readTime() loop is necessary to handle the race related to RTCCNT overflowing:
         // When we read _time and RTCCNT, we don't know if _time has been updated for the most
         // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
         // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
@@ -71,7 +71,7 @@ private:
         // Disable interrupts so we can read _time and RTCCNT atomically.
         // This is especially necessary because reading _time isn't atomic
         // since it's 32 bits.
-        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+        Toastbox::IntState ints(false);
         return _time + (RTCCNT/FreqHz);
     }
     

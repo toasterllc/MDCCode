@@ -1,6 +1,6 @@
 #include "QSPI.h"
 #include "Assert.h"
-#include "Toastbox/IRQState.h"
+#include "Toastbox/IntState.h"
 
 QSPI::QSPI(Mode mode, uint8_t clkDivider, Align align, ChipSelect chipSelect) :
 _mode(mode),
@@ -80,7 +80,7 @@ void QSPI::config() {
 
 void QSPI::reset() {
     // Disable interrupts so that resetting is atomic
-    Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+    Toastbox::IntState ints(false);
     
     // Abort whatever is underway (if anything)
     HAL_QSPI_Abort(&_device);
@@ -202,9 +202,9 @@ void QSPI::wait() const {
     for (;;) {
         // Disable interrupts to prevent a race between checking ready() and going to sleep,
         // between which we may have become ready, had we not disabled interrupts.
-        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+        Toastbox::IntState ints(false);
         if (ready()) return;
-        Toastbox::IRQState::WaitForInterrupt();
+        Toastbox::IntState::WaitForInterrupt();
     }
 }
 
