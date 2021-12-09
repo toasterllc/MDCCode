@@ -20,6 +20,8 @@ public:
         SHT_REL		        = 0x00000009,
         SHT_SHLIB	        = 0x0000000A,
         SHT_DYNSYM	        = 0x0000000B,
+        SHT_INIT_ARRAY      = 0x0000000E,
+        SHT_FINI_ARRAY      = 0x0000000F,
         SHT_LOPROC	        = 0x70000000,
         SHT_HIPROC	        = 0x7FFFFFFF,
         SHT_LOUSER	        = 0x80000000,
@@ -50,7 +52,8 @@ public:
         std::string name    = {};
         SectionType type    = (SectionType)0;
         SectionFlags flags  = (SectionFlags)0;
-        uint32_t addr       = 0;
+        uint32_t vaddr      = 0;
+        uint32_t paddr      = 0;
         uint32_t off        = 0;
         uint32_t size       = 0;
         uint32_t align      = 0;
@@ -61,8 +64,8 @@ public:
         uint32_t vaddr                  = 0;
         uint32_t paddr                  = 0;
         uint32_t off                    = 0;
-        uint32_t size                   = 0;
         uint32_t filesize               = 0;
+        uint32_t memsize                = 0;
         uint32_t align                  = 0;
         std::vector<Section> sections   = {};
     };
@@ -114,8 +117,8 @@ public:
                 .vaddr      = seghdr.p_vaddr,
                 .paddr      = seghdr.p_paddr,
                 .off        = seghdr.p_offset,
-                .size       = seghdr.p_memsz,
                 .filesize   = seghdr.p_filesz,
+                .memsize    = seghdr.p_memsz,
                 .align      = seghdr.p_align,
             };
             
@@ -130,7 +133,8 @@ public:
                     .name   = _readString(strhdr.sh_offset + sechdr.sh_name),
                     .type   = (SectionType)sechdr.sh_type,
                     .flags  = (SectionFlags)sechdr.sh_flags,
-                    .addr   = sechdr.sh_addr,
+                    .vaddr  = sechdr.sh_addr,
+                    .paddr  = seghdr.p_paddr + (sechdr.sh_offset-seghdr.p_offset),
                     .off    = sechdr.sh_offset,
                     .size   = sechdr.sh_size,
                     .align  = sechdr.sh_addralign,
@@ -142,6 +146,84 @@ public:
         
         return segs;
     }
+    
+//    // Throws on error
+//    std::vector<Section> sections() const {
+//        const _Header hdr = _read<_Header>(0);
+//        if (hdr.e_phentsize != sizeof(_SegmentHeader)) {
+//            throw Toastbox::RuntimeError("invalid e_phentsize (expected: %ju, got %ju)",
+//                (uintmax_t)sizeof(_SegmentHeader), (uintmax_t)hdr.e_phentsize);
+//        }
+//        
+//        std::vector<Section> secs;
+//        const _SectionHeader strhdr = _read<_SectionHeader>(hdr.e_shoff + hdr.e_shstrndx*sizeof(_SectionHeader));
+//        const size_t sectionCount = hdr.e_shnum;
+//        for (size_t i=0; i<sectionCount; i++) {
+//            const _SectionHeader sechdr = _read<_SectionHeader>(hdr.e_shoff + i*sizeof(_SectionHeader));
+//            
+//            secs.push_back(Section{
+//                .idx    = i,
+//                .name   = _readString(strhdr.sh_offset + sechdr.sh_name),
+//                .type   = (SectionType)sechdr.sh_type,
+//                .flags  = (SectionFlags)sechdr.sh_flags,
+//                .vaddr  = sechdr.sh_addr,
+//                .paddr  = seghdr.p_paddr + (sechdr.sh_offset-seghdr.p_offset),
+//                .off    = sechdr.sh_offset,
+//                .size   = sechdr.sh_size,
+//                .align  = sechdr.sh_addralign,
+//            });
+//        }
+//        
+//        return secs;
+//        
+//        
+//        
+//        std::vector<Segment> segs;
+//        const _SectionHeader strhdr = _read<_SectionHeader>(hdr.e_shoff + hdr.e_shstrndx*sizeof(_SectionHeader));
+//        const size_t segmentCount = hdr.e_phnum;
+//        const size_t sectionCount = hdr.e_shnum;
+//        for (size_t i=0; i<segmentCount; i++) {
+//            const _SegmentHeader seghdr = _read<_SegmentHeader>(hdr.e_phoff + i*sizeof(_SegmentHeader));
+//            
+//            if (seghdr.p_filesz > seghdr.p_memsz) {
+//                throw Toastbox::RuntimeError("segment p_filesz (%ju) > p_memsz (%ju)",
+//                    (uintmax_t)seghdr.p_filesz, (uintmax_t)seghdr.p_memsz);
+//            }
+//            
+//            Segment seg = {
+//                .type       = (SegmentType)seghdr.p_type,
+//                .vaddr      = seghdr.p_vaddr,
+//                .paddr      = seghdr.p_paddr,
+//                .off        = seghdr.p_offset,
+//                .filesize   = seghdr.p_filesz,
+//                .memsize    = seghdr.p_memsz,
+//                .align      = seghdr.p_align,
+//            };
+//            
+//            // Find all sections that lie in this segment
+//            for (size_t i=0; i<sectionCount; i++) {
+//                const _SectionHeader sechdr = _read<_SectionHeader>(hdr.e_shoff + i*sizeof(_SectionHeader));
+//                // Ignore sections that aren't within the current segment
+//                if (!(sechdr.sh_addr>=seg.vaddr && sechdr.sh_addr<(seg.vaddr+seghdr.p_memsz))) continue;
+//                
+//                seg.sections.push_back(Section{
+//                    .idx    = i,
+//                    .name   = _readString(strhdr.sh_offset + sechdr.sh_name),
+//                    .type   = (SectionType)sechdr.sh_type,
+//                    .flags  = (SectionFlags)sechdr.sh_flags,
+//                    .vaddr  = sechdr.sh_addr,
+//                    .paddr  = _physAddrForFileOffset(hdr, sechdr.sh_offset),
+//                    .off    = sechdr.sh_offset,
+//                    .size   = sechdr.sh_size,
+//                    .align  = sechdr.sh_addralign,
+//                });
+//            }
+//            
+//            segs.push_back(seg);
+//        }
+//        
+//        return segs;
+//    }
     
 //    // Throws on error
 //    std::vector<Section> sections() {
@@ -164,24 +246,24 @@ public:
 //        }
 //        return sections;
 //    }
-//    
-//    void* sectionData(const Section& s) {
-//        _assertCanRead(s.off, s.size);
-//        return _mmap.data()+s.off;
-//    }
     
-    std::unique_ptr<uint8_t[]> segmentData(const Segment& seg) const {
-        // We can't just return a pointer to the mmap'd data because the ELF32 spec
-        // allows a segment's p_filesz < p_memsz, in which case the 'extra' p_memsz
-        // bytes must be zero.
-        // In this case, we need to read `p_memsz` bytes but only `p_filesz` bytes
-        // are valid in the mmap'd data, so we have to create our own allocation
-        // with the remaining bytes zeroed.
-        _assertCanRead(seg.off, seg.filesize);
-        auto data = std::make_unique<uint8_t[]>(seg.size); // automatically zeroes entire array, which we require!
-        memcpy(data.get(), _mmap.data()+seg.off, seg.filesize);
-        return data;
+    const void* sectionData(const Section& s) const {
+        _assertCanRead(s.off, s.size);
+        return _mmap.data()+s.off;
     }
+    
+//    std::unique_ptr<uint8_t[]> segmentData(const Segment& seg) const {
+//        // We can't just return a pointer to the mmap'd data because the ELF32 spec
+//        // allows a segment's p_filesz < p_memsz, in which case the 'extra' p_memsz
+//        // bytes must be zero.
+//        // In this case, we need to read `p_memsz` bytes but only `p_filesz` bytes
+//        // are valid in the mmap'd data, so we have to create our own allocation
+//        // with the remaining bytes zeroed.
+//        _assertCanRead(seg.off, seg.filesize);
+//        auto data = std::make_unique<uint8_t[]>(seg.size); // automatically zeroes entire array, which we require!
+//        memcpy(data.get(), _mmap.data()+seg.off, seg.filesize);
+//        return data;
+//    }
     
     
 private:
@@ -268,6 +350,19 @@ private:
         }
         return str;
     }
+    
+//    // _physAddrForFileOffset: find the segment that contains `off`,
+//    // and calculate the physical address
+//    uint32_t _physAddrForFileOffset(const _Header& hdr, uint32_t off) const {
+//        const size_t segmentCount = hdr.e_phnum;
+//        for (size_t i=0; i<segmentCount; i++) {
+//            const _SegmentHeader seghdr = _read<_SegmentHeader>(hdr.e_phoff + i*sizeof(_SegmentHeader));
+//            if (off>=seghdr.p_offset && off<(seghdr.p_offset+seghdr.p_filesz)) {
+//                return p.p_paddr + (off - seghdr.p_offset);
+//            }
+//        }
+//        throw Toastbox::RuntimeError("failed to get physical address for file offset 0x%jx", (uintmax_t)off);
+//    }
     
     Mmap<uint8_t> _mmap;
     uint32_t _entryPointAddr = 0;
