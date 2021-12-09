@@ -8,7 +8,6 @@
 #include "Toastbox/RuntimeError.h"
 #include "ChecksumFletcher32.h"
 #include "Img.h"
-#include "ImgSensor.h"
 #include "SD.h"
 #include "ELF32Binary.h"
 
@@ -123,30 +122,47 @@ static void LEDSet(const Args& args, MDCDevice& device) {
     device.ledSet(args.LEDSet.idx, args.LEDSet.on);
 }
 
-static void STMLoad(const Args& args, MDCDevice& device) {
-    ELF32Binary bin(args.STMLoad.filePath.c_str());
-    auto sections = bin.sections();
+template<typename T_Fn>
+void _enumerateSegments(const ELF32Binary& elf, T_Fn fn) {
+    auto segments = elf.segments();
     
-    uint32_t entryPointAddr = bin.entryPointAddr();
+    uint32_t entryPointAddr = elf.entryPointAddr();
     if (!entryPointAddr) throw std::runtime_error("no entry point");
     
-    for (const auto& s : sections) {
-        // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
-        if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
-        // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
-        if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
-        const void*const data = bin.sectionData(s);
-        const size_t dataLen = s.size;
-        const uint32_t dataAddr = s.addr;
-        if (!dataLen) continue; // Ignore sections with zero length
+    for (const auto& seg : segments) {
+        // Only consider loadable segments
+        if (seg.type != ELF32Binary::SegmentType::PT_LOAD) continue;
+        const uint32_t segAddr = seg.paddr;
+        const auto segData = elf.segmentData(seg);
+        const size_t segSize = seg.size;
+        if (!segSize) continue; // Ignore segments with zero length
         
-        printf("STLoad: Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
-        device.stmWrite(dataAddr, data, dataLen);
+        std::string sections;
+        for (const auto& sec : seg.sections) {
+            if (!sections.empty()) sections += ",";
+            sections += sec.name;
+        }
+        
+        if (sections.empty()) sections = "[unknown]";
+        
+        fn(segAddr, segData.get(), segSize, sections.c_str());
     }
+}
+
+static void STMLoad(const Args& args, MDCDevice& device) {
+    ELF32Binary elf(args.STMLoad.filePath.c_str());
+    
+    _enumerateSegments(elf, [&](uint32_t segAddr, const uint8_t* segData,
+    size_t segSize, const char* sections) {
+        printf("STLoad: Writing %s @ 0x%jx [size: 0x%jx]\n",
+            sections, (uintmax_t)segAddr, (uintmax_t)segSize);
+        
+        device.stmWrite(segAddr, segData, segSize);
+    });
     
     // Reset the device, triggering it to load the program we just wrote
     printf("STLoad: Resetting device\n");
-    device.stmReset(entryPointAddr);
+    device.stmReset(elf.entryPointAddr());
 }
 
 static void ICELoad(const Args& args, MDCDevice& device) {
@@ -158,45 +174,32 @@ static void ICELoad(const Args& args, MDCDevice& device) {
 }
 
 static void MSPLoad(const Args& args, MDCDevice& device) {
-    ELF32Binary bin(args.MSPLoad.filePath.c_str());
-    auto sections = bin.sections();
+    ELF32Binary elf(args.MSPLoad.filePath.c_str());
     
     device.mspConnect();
     
-    for (const auto& s : sections) {
-        // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
-        if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
-        // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
-        if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
-        const void*const data = bin.sectionData(s);
-        const size_t dataLen = s.size;
-        const uint32_t dataAddr = s.addr;
-        if (!dataLen) continue; // Ignore sections with zero length
+    // Write the data
+    _enumerateSegments(elf, [&](uint32_t segAddr, const uint8_t* segData,
+    size_t segSize, const char* sections) {
+        printf("MSPLoad: Writing %s @ 0x%jx [size: 0x%jx]\n",
+            sections, (uintmax_t)segAddr, (uintmax_t)segSize);
         
-        printf("MSPLoad: Writing %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
-        device.mspWrite(dataAddr, data, dataLen);
-    }
+        device.mspWrite(segAddr, segData, segSize);
+    });
     
     // Read back data and compare with what we expect
-//    for (const auto& s : sections) {
-//        // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
-//        if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
-//        // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
-//        if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
-//        const void*const data = bin.sectionData(s);
-//        const size_t dataLen = s.size;
-//        const uint32_t dataAddr = s.addr;
-//        if (!dataLen) continue; // Ignore sections with zero length
-//        
-//        printf("MSPLoad: Verifying %s @ 0x%jx [length: 0x%jx]\n", s.name.c_str(), (uintmax_t)dataAddr, (uintmax_t)dataLen);
-//        
-//        auto buf = std::make_unique<uint8_t[]>(dataLen);
-//        device.mspRead(dataAddr, buf.get(), dataLen);
-//        
-//        if (memcmp(data, buf.get(), dataLen)) {
-//            throw RuntimeError("section %s doesn't match", s.name.c_str());
-//        }
-//    }
+    _enumerateSegments(elf, [&](uint32_t segAddr, const uint8_t* segData,
+    size_t segSize, const char* sections) {
+        printf("MSPLoad: Verifying %s @ 0x%jx [size: 0x%jx]\n",
+            sections, (uintmax_t)segAddr, (uintmax_t)segSize);
+        
+        auto buf = std::make_unique<uint8_t[]>(segSize);
+        device.mspRead(segAddr, buf.get(), segSize);
+        
+        if (memcmp(segData, buf.get(), segSize)) {
+            throw Toastbox::RuntimeError("section doesn't match: %s", sections);
+        }
+    });
     
     device.mspDisconnect();
 }
