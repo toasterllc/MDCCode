@@ -7,7 +7,7 @@
 #include "ICE.h"
 #include "ImgSensor.h"
 #include "ImgAutoExposure.h"
-#include "Toastbox/IRQState.h"
+#include "Toastbox/IntState.h"
 #include "Startup.h"
 #include "GPIO.h"
 #include "Clock.h"
@@ -220,20 +220,18 @@ void Img::Sensor::SetPowerEnabled(bool en) {
     }
 }
 
-// MARK: - IRQState
+// MARK: - IntState
 
-static bool _InterruptsEnabled() {
+inline bool Toastbox::IntState::InterruptsEnabled() {
     return __get_SR_register() & GIE;
 }
 
-bool Toastbox::IRQState::SetInterruptsEnabled(bool en) {
-    const bool prevEn = _InterruptsEnabled();
+inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
     if (en) __bis_SR_register(GIE);
     else    __bic_SR_register(GIE);
-    return prevEn;
 }
 
-void Toastbox::IRQState::WaitForInterrupt() {
+void Toastbox::IntState::WaitForInterrupt() {
     // Put ourself to sleep until an interrupt occurs. This function may or may not return:
     // - This function returns if an interrupt was already pending and the ISR
     //   wakes us (via `__bic_SR_register_on_exit(_LPMBits)`). In this case we
@@ -247,10 +245,10 @@ void Toastbox::IRQState::WaitForInterrupt() {
     PMMCTL0_L |= PMMREGOFF;
     
     // Atomically enable interrupts and go to sleep
-    const bool prevEn = _InterruptsEnabled();
+    const bool prevEn = Toastbox::IntState::InterruptsEnabled();
     __bis_SR_register(GIE | _LPMBits);
     // If interrupts were disabled previously, disable them again
-    if (!prevEn) Toastbox::IRQState::SetInterruptsEnabled(false);
+    if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
 }
 
 // MARK: - Main
@@ -331,18 +329,18 @@ int main() {
     }
     
     // Enable interrupts
-    Toastbox::IRQState irq = Toastbox::IRQState::Enabled();
+    Toastbox::IntState ints(true);
     
     bool iceInit = false;
     for (;;) {
         // Disable interrupts while we check for events
-        Toastbox::IRQState irq = Toastbox::IRQState::Disabled();
+        ints.disable();
         
         if (_Motion) {
             _Motion = false;
             
             // Enable ints while we handle motion
-            irq.restore();
+            ints.enable();
             
             // Init ICE40 if we haven't done so yet
             if (!iceInit) {
@@ -374,7 +372,7 @@ int main() {
             // WaitForInterrupt() may or may not return!
             //   An interrupt was pending -> function returns after ISR executes
             //   An interrupt wasn't pending -> function doesn't return (we go to sleep, and chip resets upon wake)
-            Toastbox::IRQState::WaitForInterrupt();
+            Toastbox::IntState::WaitForInterrupt();
         }
     }
     
