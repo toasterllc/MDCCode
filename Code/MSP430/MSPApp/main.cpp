@@ -38,7 +38,7 @@ struct _Pin {
     using ICE_MSP_SPI_AUX_DIR               = PortA::Pin<0xA, Option::Output1>;
     using VDD_SD_EN                         = PortA::Pin<0xB, Option::Output0>;
     using VDD_B_EN_                         = PortA::Pin<0xC, Option::Output1>;
-    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Interrupt01>;
+    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Resistor0, Option::Interrupt01>; // Motion sensor can only pull up, so it requires a pulldown resistor
     
     using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
@@ -187,6 +187,24 @@ void _ISR_Port2() {
 
 void ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & ICE::MsgType::Resp));
+    
+    static bool iceInit = false;
+    // Init ICE40 if we haven't done so yet
+    if (!iceInit) {
+        iceInit = true;
+        
+        // Init SPI/ICE40
+        if (Startup::ColdStart()) {
+            constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
+            _SPI::Init(iceReset);
+            ICE::Init(); // Cold start -> init ICE40 to verify that comms are working
+        
+        } else {
+            constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
+            _SPI::Init(iceReset);
+        }
+    }
+    
     _SPI::WriteRead(msg, resp);
 }
 
@@ -241,8 +259,10 @@ void Toastbox::IntState::WaitForInterrupt() {
     //   reset and execution will start from main().
     
     // Disable regulator so we enter LPM3.5 (instead of just LPM3)
-    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-    PMMCTL0_L |= PMMREGOFF;
+    if constexpr (_LPMBits == LPM3_bits) {
+        PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+        PMMCTL0_L |= PMMREGOFF;
+    }
     
     // Atomically enable interrupts and go to sleep
     const bool prevEn = Toastbox::IntState::InterruptsEnabled();
@@ -341,22 +361,6 @@ int main() {
             
             // Enable ints while we handle motion
             Toastbox::IntState ints(true);
-            
-            // Init ICE40 if we haven't done so yet
-            if (!iceInit) {
-                iceInit = true;
-                
-                // Init SPI/ICE40
-                if (Startup::ColdStart()) {
-                    constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
-                    _SPI::Init(iceReset);
-                    ICE::Init(); // Cold start -> init ICE40 to verify that comms are working
-                
-                } else {
-                    constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
-                    _SPI::Init(iceReset);
-                }
-            }
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
             _SetSDImgEnabled(true);
