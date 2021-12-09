@@ -241,8 +241,10 @@ void Toastbox::IntState::WaitForInterrupt() {
     //   reset and execution will start from main().
     
     // Disable regulator so we enter LPM3.5 (instead of just LPM3)
-    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-    PMMCTL0_L |= PMMREGOFF;
+    if constexpr (_LPMBits == LPM3_bits) {
+        PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+        PMMCTL0_L |= PMMREGOFF;
+    }
     
     // Atomically enable interrupts and go to sleep
     const bool prevEn = Toastbox::IntState::InterruptsEnabled();
@@ -312,6 +314,14 @@ int main() {
     
     _SPI::Init(true);
     
+//    for (;;) {
+//        ICE::Transfer(ICE::LEDSetMsg(0xFF));
+//        for (volatile uint32_t i=0; i<10000; i++);
+//        ICE::Transfer(ICE::LEDSetMsg(0x00));
+//        
+//        Toastbox::IntState::WaitForInterrupt();
+//    }
+    
     // Enable interrupts
     // If we were awoke due to an RTC interrupt or a motion interrupt, the handler will fire now
     Toastbox::IntState ints(true);
@@ -328,15 +338,9 @@ int main() {
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
             for (volatile uint32_t i=0; i<10000; i++);
-//            _SetSDImgEnabled(true);
-            
-//            _Motion_Handle();
+            ICE::Transfer(ICE::LEDSetMsg(0x00));
         
         } else {
-            // No events, go to sleep
-            ICE::Transfer(ICE::LEDSetMsg(0x00));
-//            _SetSDImgEnabled(false);
-            
             // Go to sleep
             // WaitForInterrupt() may or may not return!
             //   An interrupt was pending -> function returns after ISR executes
