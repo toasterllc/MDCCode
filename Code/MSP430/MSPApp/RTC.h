@@ -7,7 +7,10 @@ class RTC {
 public:
     using Sec = uint32_t;
     
-    static constexpr Sec InterruptInterval = 2048;
+    #warning revert InterruptInterval back to 2048
+    static constexpr Sec InterruptInterval = 1;
+    
+//    static constexpr Sec InterruptInterval = 2048;
     static constexpr uint32_t Predivider = 1024;
     static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
     static_assert((T_XT1FreqHz % Predivider) == 0); // Confirm that T_XT1FreqHz is evenly divisible by Predivider

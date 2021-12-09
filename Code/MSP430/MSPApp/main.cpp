@@ -38,7 +38,8 @@ struct _Pin {
     using ICE_MSP_SPI_AUX_DIR               = PortA::Pin<0xA, Option::Output1>;
     using VDD_SD_EN                         = PortA::Pin<0xB, Option::Output0>;
     using VDD_B_EN_                         = PortA::Pin<0xC, Option::Output1>;
-    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Interrupt01>;
+//    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Interrupt01>;
+    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Input>;
     
     using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
@@ -164,6 +165,7 @@ static void _Motion_Handle() {
 __attribute__((interrupt(RTC_VECTOR)))
 static void _ISR_RTC() {
     _RTC.isr();
+    __bic_SR_register_on_exit(_LPMBits);
 }
 
 static volatile bool _Motion = false;
@@ -277,103 +279,40 @@ static void _SetSDImgEnabled(bool en) {
     }
 }
 
+__attribute__((section(".ram_backup")))
+static uint8_t _led = 0;
+
 int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
     
-    // Init GPIOs
-    GPIO::Init<
-        // Power control
-        _Pin::VDD_1V9_IMG_EN,
-        _Pin::VDD_2V8_IMG_EN,
-        _Pin::VDD_SD_EN,
-        _Pin::VDD_B_EN_,
-        
-        // SPI peripheral determines initial state of SPI GPIOs
-        _SPI::Pin::Clk,
-        _SPI::Pin::DataOut,
-        _SPI::Pin::DataIn,
-        _SPI::Pin::DataDir,
-        
-        // Clock peripheral determines initial state of clock GPIOs
-        _Clock::Pin::XOUT,
-        _Clock::Pin::XIN,
-        
-        // Motion
-        _Pin::MOTION_SIGNAL,
-        
-        // Other
-        _Pin::ICE_MSP_SPI_AUX,
-        _Pin::ICE_MSP_SPI_AUX_DIR
-    >();
+    PAOUT   = 0x1440;
+    PADIR   = 0xDCCF;
+    PASEL0  = 0x0020;
+    PASEL1  = 0x0300;
+    PAREN   = 0x0000;
+    PAIES   = 0x0000;
+    
+    PM5CTL0 &= ~LOCKLPM5;
+    
+    PAIFG = 0;
+    PAIE = 0;
     
     // Init clock
     _Clock::Init();
     
     if (Startup::ColdStart()) {
-        // - If we do have a valid startTime:
-        //   Consume _startTime and hand it off to RTC
-        // 
-        // - If we don't have a valid startTime:
-        //   Don't bother initializing/starting RTC since we don't have a valid time to increment.
-        //   In this case, RTC interrupts won't fire, and RTC::currentTime() will always return 0.
-        if (_StartTime.valid) {
-            FRAMWriteEn writeEn; // Enable FRAM writing
-            
-            // Mark the time as invalid before consuming it, so that if we lose power,
-            // the time won't be reused again
-            _StartTime.valid = false;
-            // Init real-time clock
-            _RTC.init(_StartTime.time);
-        }
+        _RTC.init(0);
+        _SPI::Init(true);
     }
     
-    // Enable interrupts
-    // If we were awoke due to an RTC interrupt or a motion interrupt, the handler will fire now
-    Toastbox::IntState ints(true);
-    bool iceInit = false;
+    __bis_SR_register(GIE);
+    
     for (;;) {
-        // Disable interrupts while we check for events
-        Toastbox::IntState ints(false);
+        _led = ~_led;
         
-        if (_Motion) {
-            _Motion = false;
-            
-            // Enable ints while we handle motion
-            Toastbox::IntState ints(true);
-            
-            // Init ICE40 if we haven't done so yet
-            if (!iceInit) {
-                iceInit = true;
-                
-                // Init SPI/ICE40
-                if (Startup::ColdStart()) {
-                    constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
-                    _SPI::Init(iceReset);
-                    ICE::Init(); // Cold start -> init ICE40 to verify that comms are working
-                
-                } else {
-                    constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
-                    _SPI::Init(iceReset);
-                }
-            }
-            
-            ICE::Transfer(ICE::LEDSetMsg(0xFF));
-            _SetSDImgEnabled(true);
-            
-            _Motion_Handle();
-        
-        } else {
-            // No events, go to sleep
-            ICE::Transfer(ICE::LEDSetMsg(0x00));
-            _SetSDImgEnabled(false);
-            
-            // Go to sleep
-            // WaitForInterrupt() may or may not return!
-            //   An interrupt was pending -> function returns after ISR executes
-            //   An interrupt wasn't pending -> function doesn't return (we go to sleep, and chip resets upon wake)
-            Toastbox::IntState::WaitForInterrupt();
-        }
+        ICE::Transfer(ICE::LEDSetMsg(_led));
+        Toastbox::IntState::WaitForInterrupt();
     }
     
     return 0;
