@@ -147,6 +147,26 @@ public:
         return segs;
     }
     
+    template<typename T_Fn>
+    void enumerateLoadableSections(T_Fn fn) {
+        auto segs = segments();
+        for (const auto& seg : segs) {
+            for (const auto& sec : seg.sections) {
+                // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
+                if (sec.type == SectionType::SHT_NOBITS) continue;
+                // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
+                if (!((uint32_t)sec.flags & (uint32_t)SectionFlags::SHF_ALLOC)) continue;
+                const size_t size = sec.size;
+                if (!size) continue; // Ignore sections with zero length
+                const uint32_t paddr = sec.paddr;
+                const uint32_t vaddr = sec.vaddr;
+                const void* data = sectionData(sec);
+                
+                fn(paddr, vaddr, data, size, sec.name.c_str());
+            }
+        }
+    }
+    
 //    // Throws on error
 //    std::vector<Section> sections() const {
 //        const _Header hdr = _read<_Header>(0);
