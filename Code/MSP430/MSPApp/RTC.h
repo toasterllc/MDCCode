@@ -22,7 +22,13 @@ public:
         // "TI recommends clearing the RTCIFG bit by reading the RTCIV register
         // before enabling the RTC counter interrupt."
         RTCIV;
-        RTCCTL |= RTCIE;
+        
+        // Only enable interrupts if the given startTime is valid.
+        // Otherwise, if startTime==0, we still want to enable RTC (because it's necessary
+        // to prevent going into LPM4.5), but we want currentTime() to always return 0.
+        if (startTime) {
+            RTCCTL |= RTCIE;
+        }
     }
     
     Sec currentTime() {

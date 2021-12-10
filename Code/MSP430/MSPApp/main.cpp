@@ -342,12 +342,16 @@ int main() {
         >();
     
     } else {
+        using VDD_1V9_IMG_EN_1 = typename _Pin::VDD_1V9_IMG_EN::template Opts<GPIO::Option::Output1>;
+        using VDD_2V8_IMG_EN_1 = typename _Pin::VDD_2V8_IMG_EN::template Opts<GPIO::Option::Output1>;
+        using VDD_SD_EN_1 = typename _Pin::VDD_SD_EN::template Opts<GPIO::Option::Output1>;
+        
         // Init GPIOs
         GPIO::Init<
             // Power control
-            _Pin::VDD_1V9_IMG_EN,
-            _Pin::VDD_2V8_IMG_EN,
-            _Pin::VDD_SD_EN,
+            VDD_1V9_IMG_EN_1,
+            VDD_2V8_IMG_EN_1,
+            VDD_SD_EN_1,
             _Pin::VDD_B_EN_,
             
             // SPI peripheral determines initial state of SPI GPIOs
@@ -373,12 +377,9 @@ int main() {
     _Clock::Init();
     
     if (Startup::ColdStart()) {
-        // - If we do have a valid startTime:
-        //   Consume _startTime and hand it off to RTC
-        // 
-        // - If we don't have a valid startTime:
-        //   Don't bother initializing/starting RTC since we don't have a valid time to increment.
-        //   In this case, RTC interrupts won't fire, and RTC::currentTime() will always return 0.
+        // If we do have a valid startTime, consume _startTime and hand it off to _RTC.
+        // Otherwise, initialize _RTC with 0. This will enable RTC, but it won't
+        // enable the interrupt, so _RTC.currentTime() will always return 0.
         if (_StartTime.valid) {
             FRAMWriteEn writeEn; // Enable FRAM writing
             
@@ -386,8 +387,10 @@ int main() {
             // the time won't be reused again
             _StartTime.valid = false;
             // Init real-time clock
-            #warning we may have to enable RTC regardless, to prevent entering LPM4.5 and losing BAKMEM
             _RTC.init(_StartTime.time);
+        
+        } else {
+            _RTC.init(0);
         }
         
         _SetSDImgEnabled(false);
@@ -399,7 +402,6 @@ int main() {
     // Enable interrupts
     // If we were awoke due to an RTC interrupt or a motion interrupt, the handler will fire now
     Toastbox::IntState ints(true);
-    bool iceInit = false;
     for (;;) {
         // Disable interrupts while we check for events
         Toastbox::IntState ints(false);

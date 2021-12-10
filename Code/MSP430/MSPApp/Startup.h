@@ -1,24 +1,30 @@
 #pragma once
 #include <msp430.h>
-#include "GPIO.h"
 #include "FRAMWriteEn.h"
 
 class Startup {
 public:
     static bool ColdStart() {
-        __attribute__((section(".fram_info.startup")))
-        static bool _Init = false;
-        
-        if (!_Init) {
-            FRAMWriteEn writeEn; // Enable FRAM writing
-            _Init = true;
-            return true;
-        }
-        
-        return !(PMMIFG & PMMLPM5IFG);
+        static bool coldStart = _ColdStart();
+        return coldStart;
     }
     
 private:
+    static bool _ColdStart() {
+        // We're using this technique so that the first run always trigger _ColdStart()==true,
+        // regardless of the state of PMMIFG.PMMLPM5IFG. We want that behavior so that the
+        // first time we load the program, it runs as if it's a cold start, even though it's
+        // actually a warm start.
+        __attribute__((section(".fram_info.startup")))
+        static bool init = false;
+        
+        FRAMWriteEn writeEn; // Enable FRAM writing
+        bool initPrev = init;
+        init = true;
+        return !initPrev || !(PMMIFG & PMMLPM5IFG);
+    }
+    
+    
     // _startup() is called before main() via the crt machinery, because it's placed in
     // a .crt_NNNN_xxx section. The NNNN part of the section name defines the order that
     // this function is called relative to the other crt functions.
@@ -32,7 +38,7 @@ private:
     // See the `crt0.S` file in the newlib project for more info.
     __attribute__((section(".crt_0401.startup"), naked, used))
     static void _startup() {
-        // Toggle pin A.E to signal that _startup() was called
+        // Debug code to signal that _startup() was called by toggling pin A.E
 //        {
 //            WDTCTL = WDTPW | WDTHOLD;
 //            PM5CTL0 &= ~LOCKLPM5;
