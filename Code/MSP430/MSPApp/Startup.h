@@ -1,8 +1,10 @@
 #pragma once
 #include <msp430.h>
+#include "GPIO.h"
 
 class Startup {
 public:
+//    __attribute__((noinline))
     static bool ColdStart() {
         return !(PMMIFG & PMMLPM5IFG);
     }
@@ -21,6 +23,15 @@ private:
     // See the `crt0.S` file in the newlib project for more info.
     __attribute__((section(".crt_0401_startup"), naked, used))
     static void _startup() {
+        using DEBUG_OUT = GPIO::PortA::Pin<0xE, GPIO::Option::Output0>;
+        DEBUG_OUT::Init();
+        for (int i=0; i<10; i++) {
+            DEBUG_OUT::Write(0);
+            for (volatile uint16_t i=0; i<10000; i++);
+            DEBUG_OUT::Write(1);
+            for (volatile uint16_t i=0; i<10000; i++);
+        }
+        
         extern uint8_t _ram_backup_src[];
         extern uint8_t _ram_backup_dststart[];
         extern uint8_t _ram_backup_dstend[];

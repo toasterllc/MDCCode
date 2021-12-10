@@ -46,7 +46,8 @@ struct _Pin {
 using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
-static SD::Card _SD;
+__attribute__((section(".ram_backup")))
+static volatile SD::Card _SD;
 
 // _StartTime: the time set by STM32 (seconds since reference date)
 // Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
@@ -60,13 +61,13 @@ static volatile struct {
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
 __attribute__((section(".ram_backup")))
-static RTC<_XT1FreqHz> _RTC;
+static volatile RTC<_XT1FreqHz> _RTC;
 
 // _ImgAutoExp: auto exposure algorithm object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
 __attribute__((section(".ram_backup")))
-static Img::AutoExposure _ImgAutoExp;
+static volatile Img::AutoExposure _ImgAutoExp;
 
 // _ImgIndexes: stats to track captured images
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely.
@@ -274,11 +275,11 @@ void Toastbox::IntState::WaitForInterrupt() {
 // MARK: - Main
 
 static void _SetSDImgEnabled(bool en) {
-    static bool _SDImgPowerEnabled = false;
-    if (_SDImgPowerEnabled == en) return; // Short circuit if state didn't change
-    _SDImgPowerEnabled = en;
+    static bool powerEn = false;
+//    if (powerEn == en) return; // Short circuit if state didn't change
+    powerEn = en;
     
-    if (_SDImgPowerEnabled) {
+    if (powerEn) {
         // Initialize image sensor
         Img::Sensor::Init();
         
@@ -296,6 +297,19 @@ static void _SetSDImgEnabled(bool en) {
         Img::Sensor::SetPowerEnabled(false);
     }
 }
+
+static void debugSignal() {
+    _Pin::DEBUG_OUT::Init();
+    for (int i=0; i<10; i++) {
+        _Pin::DEBUG_OUT::Write(0);
+        _delayMs(10);
+        _Pin::DEBUG_OUT::Write(1);
+        _delayMs(10);
+    }
+}
+
+__attribute__((section(".ram_backup")))
+static volatile bool poweredSDImg = false;
 
 int main() {
     // Stop watchdog timer
@@ -330,47 +344,72 @@ int main() {
     // Init clock
     _Clock::Init();
     
-    if (Startup::ColdStart()) {
-        // - If we do have a valid startTime:
-        //   Consume _startTime and hand it off to RTC
-        // 
-        // - If we don't have a valid startTime:
-        //   Don't bother initializing/starting RTC since we don't have a valid time to increment.
-        //   In this case, RTC interrupts won't fire, and RTC::currentTime() will always return 0.
-        if (_StartTime.valid) {
-            FRAMWriteEn writeEn; // Enable FRAM writing
-            
-            // Mark the time as invalid before consuming it, so that if we lose power,
-            // the time won't be reused again
-            _StartTime.valid = false;
-            // Init real-time clock
-            _RTC.init(_StartTime.time);
-        }
+//    if (Startup::ColdStart()) {
+//        // - If we do have a valid startTime:
+//        //   Consume _startTime and hand it off to RTC
+//        // 
+//        // - If we don't have a valid startTime:
+//        //   Don't bother initializing/starting RTC since we don't have a valid time to increment.
+//        //   In this case, RTC interrupts won't fire, and RTC::currentTime() will always return 0.
+//        if (_StartTime.valid) {
+//            FRAMWriteEn writeEn; // Enable FRAM writing
+//            
+//            // Mark the time as invalid before consuming it, so that if we lose power,
+//            // the time won't be reused again
+//            _StartTime.valid = false;
+//            // Init real-time clock
+//            _RTC.init(_StartTime.time);
+//        }
+//    }
+    
+    if (!poweredSDImg) {
+        debugSignal();
+        
+        poweredSDImg = true;
+        
+        _SetSDImgEnabled(false);
+        _delayMs(1000);
+        
+        _SetSDImgEnabled(true);
+        _delayMs(1000);
     }
+    
+//    ICE::Transfer(ICE::LEDSetMsg(0xFF));
+//    for (volatile uint32_t i=0; i<10000; i++);
+//    ICE::Transfer(ICE::LEDSetMsg(0x00));
+    
+//    {
+//        _SetSDImgEnabled(false);
+//        _delayMs(1000);
+//        
+//        _SetSDImgEnabled(true);
+//        _delayMs(1000);
+//    }
     
     // Enable interrupts
     // If we were awoke due to an RTC interrupt or a motion interrupt, the handler will fire now
     Toastbox::IntState ints(true);
-    bool iceInit = false;
     for (;;) {
         // Disable interrupts while we check for events
         Toastbox::IntState ints(false);
         
         if (_Motion) {
+//            debugSignal();
+            
             _Motion = false;
             
             // Enable ints while we handle motion
             Toastbox::IntState ints(true);
             
-            ICE::Transfer(ICE::LEDSetMsg(0xFF));
-            _SetSDImgEnabled(true);
+//            ICE::Transfer(ICE::LEDSetMsg(0xFF));
+//            _SetSDImgEnabled(true);
             
             _Motion_Handle();
         
         } else {
             // No events, go to sleep
-            ICE::Transfer(ICE::LEDSetMsg(0x00));
-            _SetSDImgEnabled(false);
+//            ICE::Transfer(ICE::LEDSetMsg(0x00));
+//            _SetSDImgEnabled(false);
             
             // Go to sleep
             // WaitForInterrupt() may or may not return!
