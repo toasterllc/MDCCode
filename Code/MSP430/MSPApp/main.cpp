@@ -46,32 +46,33 @@ struct _Pin {
 using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
+__attribute__((section(".ram_backup.main")))
 static SD::Card _SD;
 
 // _StartTime: the time set by STM32 (seconds since reference date)
 // Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
-__attribute__((section(".fram_info")))
+__attribute__((section(".fram_info.main")))
 static volatile struct {
-    uint16_t valid = false; // uint16_t (instead of bool) for alignment
-    uint32_t time = 0;
+    uint32_t time   = 0;
+    uint16_t valid  = false; // uint16_t (instead of bool) for alignment
 } _StartTime;
 
 // _RTC: real time clock
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-__attribute__((section(".ram_backup")))
+__attribute__((section(".ram_backup.main")))
 static RTC<_XT1FreqHz> _RTC;
 
 // _ImgAutoExp: auto exposure algorithm object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-__attribute__((section(".ram_backup")))
+__attribute__((section(".ram_backup.main")))
 static Img::AutoExposure _ImgAutoExp;
 
 // _ImgIndexes: stats to track captured images
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely.
-__attribute__((section(".fram_info")))
-static struct {
+__attribute__((section(".fram_info.main")))
+static volatile struct {
     uint32_t counter = 0;
     uint16_t write = 0;
     uint16_t read = 0;
@@ -274,11 +275,13 @@ void Toastbox::IntState::WaitForInterrupt() {
 // MARK: - Main
 
 static void _SetSDImgEnabled(bool en) {
-    static bool _SDImgPowerEnabled = false;
-    if (_SDImgPowerEnabled == en) return; // Short circuit if state didn't change
-    _SDImgPowerEnabled = en;
+//    __attribute__((section(".ram_backup.main")))
+//    static bool powerEn = false;
+//    
+//    if (powerEn == en) return; // Short circuit if state didn't change
+//    powerEn = en;
     
-    if (_SDImgPowerEnabled) {
+    if (en) {
         // Initialize image sensor
         Img::Sensor::Init();
         
@@ -297,35 +300,74 @@ static void _SetSDImgEnabled(bool en) {
     }
 }
 
+//static void debugSignal() {
+//    _Pin::DEBUG_OUT::Init();
+//    for (int i=0; i<10; i++) {
+//        _Pin::DEBUG_OUT::Write(0);
+//        _delayMs(10);
+//        _Pin::DEBUG_OUT::Write(1);
+//        _delayMs(10);
+//    }
+//}
+
 int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
     
-    // Init GPIOs
-    GPIO::Init<
-        // Power control
-        _Pin::VDD_1V9_IMG_EN,
-        _Pin::VDD_2V8_IMG_EN,
-        _Pin::VDD_SD_EN,
-        _Pin::VDD_B_EN_,
-        
-        // SPI peripheral determines initial state of SPI GPIOs
-        _SPI::Pin::Clk,
-        _SPI::Pin::DataOut,
-        _SPI::Pin::DataIn,
-        _SPI::Pin::DataDir,
-        
-        // Clock peripheral determines initial state of clock GPIOs
-        _Clock::Pin::XOUT,
-        _Clock::Pin::XIN,
-        
-        // Motion
-        _Pin::MOTION_SIGNAL,
-        
-        // Other
-        _Pin::ICE_MSP_SPI_AUX,
-        _Pin::ICE_MSP_SPI_AUX_DIR
-    >();
+    if (Startup::ColdStart()) {
+        // Init GPIOs
+        GPIO::Init<
+            // Power control
+            _Pin::VDD_1V9_IMG_EN,
+            _Pin::VDD_2V8_IMG_EN,
+            _Pin::VDD_SD_EN,
+            _Pin::VDD_B_EN_,
+            
+            // SPI peripheral determines initial state of SPI GPIOs
+            _SPI::Pin::Clk,
+            _SPI::Pin::DataOut,
+            _SPI::Pin::DataIn,
+            _SPI::Pin::DataDir,
+            
+            // Clock peripheral determines initial state of clock GPIOs
+            _Clock::Pin::XOUT,
+            _Clock::Pin::XIN,
+            
+            // Motion
+            _Pin::MOTION_SIGNAL,
+            
+            // Other
+            _Pin::ICE_MSP_SPI_AUX,
+            _Pin::ICE_MSP_SPI_AUX_DIR
+        >();
+    
+    } else {
+        // Init GPIOs
+        GPIO::Init<
+            // Power control
+            _Pin::VDD_1V9_IMG_EN,
+            _Pin::VDD_2V8_IMG_EN,
+            _Pin::VDD_SD_EN,
+            _Pin::VDD_B_EN_,
+            
+            // SPI peripheral determines initial state of SPI GPIOs
+            _SPI::Pin::Clk,
+            _SPI::Pin::DataOut,
+            _SPI::Pin::DataIn,
+            _SPI::Pin::DataDir,
+            
+            // Clock peripheral determines initial state of clock GPIOs
+            _Clock::Pin::XOUT,
+            _Clock::Pin::XIN,
+            
+            // Motion
+            _Pin::MOTION_SIGNAL,
+            
+            // Other
+            _Pin::ICE_MSP_SPI_AUX,
+            _Pin::ICE_MSP_SPI_AUX_DIR
+        >();
+    }
     
     // Init clock
     _Clock::Init();
@@ -344,8 +386,14 @@ int main() {
             // the time won't be reused again
             _StartTime.valid = false;
             // Init real-time clock
+            #warning we may have to enable RTC regardless, to prevent entering LPM4.5 and losing BAKMEM
             _RTC.init(_StartTime.time);
         }
+        
+        _SetSDImgEnabled(false);
+        _delayMs(1000);
+        _SetSDImgEnabled(true);
+        _delayMs(1000);
     }
     
     // Enable interrupts
@@ -363,14 +411,15 @@ int main() {
             Toastbox::IntState ints(true);
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
-            _SetSDImgEnabled(true);
+            _delayMs(10);
+//            _SetSDImgEnabled(true);
             
             _Motion_Handle();
         
         } else {
             // No events, go to sleep
             ICE::Transfer(ICE::LEDSetMsg(0x00));
-            _SetSDImgEnabled(false);
+//            _SetSDImgEnabled(false);
             
             // Go to sleep
             // WaitForInterrupt() may or may not return!

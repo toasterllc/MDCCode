@@ -176,12 +176,13 @@ static void Init() {
     // Unlock GPIOs
     PM5CTL0 &= ~LOCKLPM5;
     
-    // Clear PxIFG (but only if this was a cold start)
-    // We don't want to do this when waking from LPMx.5, because PxIFG contains
-    // the reason for waking (eg RTC interrupt or regular IO interrupt).
-    if (Startup::ColdStart()) {
-        PAIFG = 0;
-    }
+    #warning uncomment and make sure interrupts still work!
+//    // Clear PxIFG (but only if this was a cold start)
+//    // We don't want to do this when waking from LPMx.5, because PxIFG contains
+//    // the reason for waking (eg RTC interrupt or regular IO interrupt).
+//    if (Startup::ColdStart()) {
+//        PAIFG = 0;
+//    }
     
     // Enable interrupts
     PAIE = regsA.IE;
