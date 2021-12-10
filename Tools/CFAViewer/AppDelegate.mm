@@ -588,12 +588,9 @@ static void _configureDevice(MDCDevice& dev) {
                 throw Toastbox::RuntimeError("invalid image length (expected: %ju, got: %ju)", (uintmax_t)Img::Len, (uintmax_t)imgStats.len);
             }
             
-            std::unique_ptr<uint8_t[]> img = dev.imgReadout();
+            printf("Highlights: %ju   Shadows: %ju\n", (uintmax_t)imgStats.highlightCount, (uintmax_t)imgStats.shadowCount);
             
-//            // Capture an image, timing-out after 1s so we can check the device status,
-//            // in case it reports a streaming error
-//            const MDC::ImgHeader pixStatus = dev.imgCapture(tmpPixels.get(), tmpPixelsCap, 1000ms);
-//            const size_t pixelCount = pixStatus.width*pixStatus.height;
+            std::unique_ptr<uint8_t[]> img = dev.imgReadout();
             
             {
                 auto lock = std::unique_lock(_streamImagesThread.lock);
@@ -650,17 +647,6 @@ static void _configureDevice(MDCDevice& dev) {
     
     } catch (const std::exception& e) {
         printf("Streaming failed: %s\n", e.what());
-        
-//        PixState pixState = PixState::Idle;
-//        try {
-//            pixState = mdc.pixStatus().state;
-//        } catch (const std::exception& e) {
-//            printf("pixStatus() failed: %s\n", e.what());
-//        }
-//        
-//        if (pixState != PixState::Capturing) {
-//            printf("pixStatus.state != PixState::Capturing\n");
-//        }
     }
     
     // Notify that our thread has exited
