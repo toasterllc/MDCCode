@@ -1,5 +1,16 @@
 - Rev4 Todo
     
+    - MSPApp: Move initial exposure setting to _Motion_Handle() instead of _SetSDImgEnabled()
+    
+    - MSPApp: Set initial exposure before we start streaming, so we don't need to skip a frame on the first one
+    
+    - MSPApp: use skipCount=0 for the first frame, assuming setting the exposure before streaming starts is kosher
+    
+    - MSPApp: can we use the 'restart' facility of reset_register to speed up integration time changes?
+        - 'restart' triggers a bad frame, so experiment with the 'restart_bad' and 'mask_bad' flags too
+    
+    - MSPApp: Implement power-saving version of delayUs/delayMs that uses the timer peripheral, and makes the CPU go to sleep
+    
     - Fix bug: Without STLink connected, sometimes STApp crashes when plugging in
         - One cause is because Img::Sensor::Init() failed, because of an IMG I2C error
             - Might be because we're not waiting long enough after turning on the power rails to do I2C comms
