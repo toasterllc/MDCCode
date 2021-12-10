@@ -38,7 +38,8 @@ struct _Pin {
     using ICE_MSP_SPI_AUX_DIR               = PortA::Pin<0xA, Option::Output1>;
     using VDD_SD_EN                         = PortA::Pin<0xB, Option::Output0>;
     using VDD_B_EN_                         = PortA::Pin<0xC, Option::Output1>;
-    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Resistor0, Option::Interrupt01>; // Motion sensor can only pull up, so it requires a pulldown resistor
+//    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Resistor0, Option::Interrupt01>; // Motion sensor can only pull up, so it requires a pulldown resistor
+    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Input>;
     
     using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
@@ -308,9 +309,6 @@ static void debugSignal() {
     }
 }
 
-__attribute__((section(".ram_backup.main")))
-static volatile bool poweredSDImg = false;
-
 int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
@@ -344,34 +342,22 @@ int main() {
     // Init clock
     _Clock::Init();
     
-    const bool coldStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
     if (Startup::ColdStart()) {
         _RTC.init(0);
     }
     
-//    if (Startup::ColdStart()) {
-//        // - If we do have a valid startTime:
-//        //   Consume _startTime and hand it off to RTC
-//        // 
-//        // - If we don't have a valid startTime:
-//        //   Don't bother initializing/starting RTC since we don't have a valid time to increment.
-//        //   In this case, RTC interrupts won't fire, and RTC::currentTime() will always return 0.
-//        if (_StartTime.valid) {
-//            FRAMWriteEn writeEn; // Enable FRAM writing
-//            
-//            // Mark the time as invalid before consuming it, so that if we lose power,
-//            // the time won't be reused again
-//            _StartTime.valid = false;
-//            // Init real-time clock
-//            _RTC.init(_StartTime.time);
-//        }
-//    }
-    
-    if (!BAKMEM0) {
+    __attribute__((section(".ram_backup.main")))
+    static volatile bool poweredSDImg = false;
+    if (!poweredSDImg) {
         debugSignal();
         
-        BAKMEM0 = true;
+        poweredSDImg = true;
+        if (!poweredSDImg) {
+            abort();
+        }
     }
+    
+    __bis_SR_register(GIE);
     
     for (;;) {
         Toastbox::IntState::WaitForInterrupt();

@@ -6,7 +6,7 @@ SECTIONS {
     /* Info FRAM */
     .fram_info : {
         . = ALIGN(2);
-        *(.fram_info*)
+        *(.fram_info.*)
         . = ALIGN(2);
     } >INFOMEM
     
@@ -15,7 +15,7 @@ SECTIONS {
         . = ALIGN(2);
         _ram_backup_src = LOADADDR(.ram_backup);
         _ram_backup_dststart = .;
-        *(.ram_backup*)
+        *(.ram_backup.*)
         . = ALIGN(2);
         _ram_backup_dstend = .;
     } >BAKMEM AT> FRAM
