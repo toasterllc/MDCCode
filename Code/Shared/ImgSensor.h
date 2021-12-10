@@ -54,20 +54,7 @@ public:
         // Enable parallel interface (R0x301A[7]=1), disable serial interface to save power (R0x301A[12]=1)
         // (Default value of 0x301A is 0x0058)
         {
-            constexpr uint16_t DefaultValue             = 0x0058;
-            constexpr uint16_t EnableParallelInterface  = 1<<7;
-//            constexpr uint16_t MaskBadFrames            = 1<<9;
-//            constexpr uint16_t RestartBadFrames         = 1<<10;
-            constexpr uint16_t DisableSerialInterface   = 1<<12;
-            ICE::ImgI2CWrite(0x301A,
-                DefaultValue                |
-                EnableParallelInterface     |
-                
-//                MaskBadFrames               |
-//                RestartBadFrames            |
-                
-                DisableSerialInterface
-            );
+            ICE::ImgI2CWrite(_ResetRegister::Address, _ResetRegister::Init);
         }
         
         // Set pre_pll_clk_div
@@ -221,7 +208,8 @@ public:
     }
     
     static void SetStreamEnabled(bool en) {
-        ICE::ImgI2CWrite(0x301A, (en ? 0x10DC : 0x10D8));
+        ICE::ImgI2CWrite(_ResetRegister::Address,
+            _ResetRegister::Init | (en ? _ResetRegister::StreamEnable : 0));
     }
     
     static void SetCoarseIntTime(uint16_t coarseIntTime) {
@@ -238,7 +226,21 @@ public:
         // Set analog_gain
         ICE::ImgI2CWrite(0x3060, analogGain);
     }
-
+    
+private:
+    struct _ResetRegister {
+        static constexpr uint16_t Address                   = 0x301A;
+        
+        static constexpr uint16_t SerialInterfaceDisable    = 1<<12;
+        static constexpr uint16_t BadFrameRestart           = 1<<10;
+        static constexpr uint16_t BadFrameMask              = 1<<9;
+        static constexpr uint16_t ParallelInterfaceEnable   = 1<<7;
+        static constexpr uint16_t StreamEnable              = 1<<2;
+        
+        static constexpr uint16_t Init                      = 0x0058                    |   // Default register value
+                                                              ParallelInterfaceEnable   |
+                                                              SerialInterfaceDisable    ;
+    };
 };
 
 } // namespace Img
