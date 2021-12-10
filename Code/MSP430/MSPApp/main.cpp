@@ -46,33 +46,33 @@ struct _Pin {
 using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
-__attribute__((section(".ram_backup")))
-static volatile SD::Card _SD;
+__attribute__((section(".ram_backup.main")))
+static SD::Card _SD;
 
 // _StartTime: the time set by STM32 (seconds since reference date)
 // Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
-__attribute__((section(".fram_info")))
+__attribute__((section(".fram_info.main")))
 static volatile struct {
-    uint16_t valid = false; // uint16_t (instead of bool) for alignment
-    uint32_t time = 0;
+    uint32_t time   = 0;
+    uint16_t valid  = false; // uint16_t (instead of bool) for alignment
 } _StartTime;
 
 // _RTC: real time clock
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-__attribute__((section(".ram_backup")))
-static volatile RTC<_XT1FreqHz> _RTC;
+__attribute__((section(".ram_backup.main")))
+static RTC<_XT1FreqHz> _RTC;
 
 // _ImgAutoExp: auto exposure algorithm object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-__attribute__((section(".ram_backup")))
-static volatile Img::AutoExposure _ImgAutoExp;
+__attribute__((section(".ram_backup.main")))
+static Img::AutoExposure _ImgAutoExp;
 
 // _ImgIndexes: stats to track captured images
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely.
-__attribute__((section(".fram_info")))
-static struct {
+__attribute__((section(".fram_info.main")))
+static volatile struct {
     uint32_t counter = 0;
     uint16_t write = 0;
     uint16_t read = 0;
@@ -308,7 +308,7 @@ static void debugSignal() {
     }
 }
 
-__attribute__((section(".ram_backup")))
+__attribute__((section(".ram_backup.main")))
 static volatile bool poweredSDImg = false;
 
 int main() {
@@ -344,6 +344,11 @@ int main() {
     // Init clock
     _Clock::Init();
     
+    const bool coldStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
+    if (Startup::ColdStart()) {
+        _RTC.init(0);
+    }
+    
 //    if (Startup::ColdStart()) {
 //        // - If we do have a valid startTime:
 //        //   Consume _startTime and hand it off to RTC
@@ -362,61 +367,14 @@ int main() {
 //        }
 //    }
     
-    if (!poweredSDImg) {
+    if (!BAKMEM0) {
         debugSignal();
         
-        poweredSDImg = true;
-        
-        _SetSDImgEnabled(false);
-        _delayMs(1000);
-        
-        _SetSDImgEnabled(true);
-        _delayMs(1000);
+        BAKMEM0 = true;
     }
     
-//    ICE::Transfer(ICE::LEDSetMsg(0xFF));
-//    for (volatile uint32_t i=0; i<10000; i++);
-//    ICE::Transfer(ICE::LEDSetMsg(0x00));
-    
-//    {
-//        _SetSDImgEnabled(false);
-//        _delayMs(1000);
-//        
-//        _SetSDImgEnabled(true);
-//        _delayMs(1000);
-//    }
-    
-    // Enable interrupts
-    // If we were awoke due to an RTC interrupt or a motion interrupt, the handler will fire now
-    Toastbox::IntState ints(true);
     for (;;) {
-        // Disable interrupts while we check for events
-        Toastbox::IntState ints(false);
-        
-        if (_Motion) {
-//            debugSignal();
-            
-            _Motion = false;
-            
-            // Enable ints while we handle motion
-            Toastbox::IntState ints(true);
-            
-//            ICE::Transfer(ICE::LEDSetMsg(0xFF));
-//            _SetSDImgEnabled(true);
-            
-            _Motion_Handle();
-        
-        } else {
-            // No events, go to sleep
-//            ICE::Transfer(ICE::LEDSetMsg(0x00));
-//            _SetSDImgEnabled(false);
-            
-            // Go to sleep
-            // WaitForInterrupt() may or may not return!
-            //   An interrupt was pending -> function returns after ISR executes
-            //   An interrupt wasn't pending -> function doesn't return (we go to sleep, and chip resets upon wake)
-            Toastbox::IntState::WaitForInterrupt();
-        }
+        Toastbox::IntState::WaitForInterrupt();
     }
     
     return 0;
