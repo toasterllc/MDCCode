@@ -1,5 +1,4 @@
 #include "USB.h"
-#include "Toastbox/Enum.h"
 #include <algorithm>
 
 uint8_t USB::_usbd_Init(uint8_t cfgidx) {

@@ -1,5 +1,4 @@
 #include "USB.h"
-#include "Toastbox/Enum.h"
 #include "Assert.h"
 #include <string.h>
 #include <algorithm>
