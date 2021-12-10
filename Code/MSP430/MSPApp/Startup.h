@@ -24,7 +24,6 @@ private:
         return !initPrev || !(PMMIFG & PMMLPM5IFG);
     }
     
-    
     // _startup() is called before main() via the crt machinery, because it's placed in
     // a .crt_NNNN_xxx section. The NNNN part of the section name defines the order that
     // this function is called relative to the other crt functions.
