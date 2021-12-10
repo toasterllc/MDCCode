@@ -5,21 +5,27 @@
 
 class Startup {
 public:
-    __attribute__((noinline))
     static bool ColdStart() {
-        __attribute__((section(".fram_info.startup")))
-        static bool _Init = false;
-        
-        if (!_Init) {
-            FRAMWriteEn writeEn; // Enable FRAM writing
-            _Init = true;
-            return true;
-        }
-        
-        return !(PMMIFG & PMMLPM5IFG);
+        static bool coldStart = _ColdStart();
+        return coldStart;
     }
     
 private:
+    static bool _ColdStart() {
+        // We're using this technique so that the first run always trigger _ColdStart()==true,
+        // regardless of the state of PMMIFG.PMMLPM5IFG. We want that behavior so that the
+        // first time we load the program, it runs as if it's a cold start, even though it's
+        // actually a warm start.
+        __attribute__((section(".fram_info.startup")))
+        static bool init = false;
+        
+        FRAMWriteEn writeEn; // Enable FRAM writing
+        bool initPrev = init;
+        init = true;
+        return !initPrev || !(PMMIFG & PMMLPM5IFG);
+    }
+    
+    
     // _startup() is called before main() via the crt machinery, because it's placed in
     // a .crt_NNNN_xxx section. The NNNN part of the section name defines the order that
     // this function is called relative to the other crt functions.

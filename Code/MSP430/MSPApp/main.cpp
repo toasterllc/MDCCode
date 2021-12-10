@@ -343,19 +343,22 @@ int main() {
     _Clock::Init();
     
     if (Startup::ColdStart()) {
+//        for (;;);
         _RTC.init(0);
     }
     
     __attribute__((section(".ram_backup.main")))
     static volatile bool poweredSDImg = false;
     if (!poweredSDImg) {
-        debugSignal();
+//        debugSignal();
         
         poweredSDImg = true;
         if (!poweredSDImg) {
             abort();
         }
     }
+    
+    debugSignal();
     
     __bis_SR_register(GIE);
     
