@@ -287,9 +287,6 @@ static void _SetSDImgEnabled(bool en) {
         
         // Enable image streaming
         Img::Sensor::SetStreamEnabled(true);
-        
-        // Set the initial exposure
-        Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
     
     } else {
         SD::Card::SetPowerEnabled(false);
@@ -375,10 +372,12 @@ int main() {
             _SetSDImgEnabled(true);
             
             _Motion_Handle();
+            
+            ICE::Transfer(ICE::LEDSetMsg(0x00));
+            _delayMs(100);
         
         } else {
             // No events, go to sleep
-            ICE::Transfer(ICE::LEDSetMsg(0x00));
             _SetSDImgEnabled(false);
             
             // Go to sleep
