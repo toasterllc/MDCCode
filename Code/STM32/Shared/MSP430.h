@@ -18,6 +18,8 @@ private:
     static constexpr uint8_t _IR_CNTRL_SIG_RELEASE  = _Reverse(0x15);
     static constexpr uint8_t _IR_COREIP_ID          = _Reverse(0x17);
     
+    static constexpr uint8_t _IR_TEST_REG           = _Reverse(0x2A);
+    
     static constexpr uint8_t _IR_DATA_16BIT         = _Reverse(0x41);
     static constexpr uint8_t _IR_DATA_CAPTURE       = _Reverse(0x42);
     static constexpr uint8_t _IR_DATA_QUICK         = _Reverse(0x43);
@@ -668,12 +670,11 @@ private:
     }
     
     void _jtagEnd() {
-        // Release device from JTAG control
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        // Perform a reset
-        _drShift<16>(0x0C01);
-        _drShift<16>(0x0401);
-        _irShift(_IR_CNTRL_SIG_RELEASE);
+        // Perform a BOR (brownout reset), which resets the device and causes us to lose JTAG control
+        // Note that this still doesn't reset some modules (like RTC and PMM), but it's as close as
+        // we can get to a full reset without power cycling the device.
+        _irShift(_IR_TEST_REG);
+        _drShift<16>(0x0200);
         
         // TODO: use only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
         {
@@ -686,6 +687,52 @@ private:
 //            Test::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
 //            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         }
+        
+//        // Release device from JTAG control
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        // Perform a reset
+//        _drShift<16>(0x0C01);
+//        _drShift<16>(0x0401);
+//        _irShift(_IR_CNTRL_SIG_RELEASE);
+        
+//        // Assert reset before we deactivate SBW
+//        Rst_::Write(0);
+//        
+//        // De-assert TEST long enough for SBW to deactivate
+//        Test::Write(0);
+//        _DelayUs(50);
+        
+//        {
+//            // Assert reset before we deactivate SBW
+//            Rst_::Write(0);
+//            
+//            // De-assert TEST long enough for SBW to deactivate
+//            Test::Write(0);
+//            _DelayUs(50);
+//            
+//            // De-assert reset to start the chip
+//            Rst_::Write(1);
+//            
+//            
+//            
+//            // Assert reset before we deactivate SBW
+//            _DelayMs(100);
+//            Rst_::Write(0);
+//            _DelayMs(100);
+//            Rst_::Write(1);
+//            _DelayMs(100);
+//            
+//            
+//            
+//            
+//            // Let go of TEST/RST_
+//            // TODO: use this only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
+//            Test::Write(0);
+//            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//            // TODO: use this for Rev5, when we have real level shifting
+////            Test::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+////            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//        }
     }
     
 public:
