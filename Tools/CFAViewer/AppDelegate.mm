@@ -400,27 +400,15 @@ static void _configureDevice(MDCDevice& dev) {
     
     {
         const char* STMBinPath = "/Users/dave/repos/MDC/Code/STM32/STApp/Release/STApp.elf";
-        ELF32Binary bin(STMBinPath);
-        auto sections = bin.sections();
+        ELF32Binary elf(STMBinPath);
         
-        uint32_t entryPointAddr = bin.entryPointAddr();
-        if (!entryPointAddr) throw std::runtime_error("no entry point");
-        
-        for (const auto& s : sections) {
-            // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
-            if (s.type == ELF32Binary::SectionTypes::NOBITS) continue;
-            // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
-            if (!(s.flags & ELF32Binary::SectionFlags::ALLOC)) continue;
-            const void*const data = bin.sectionData(s);
-            const size_t dataLen = s.size;
-            const uint32_t dataAddr = s.addr;
-            if (!dataLen) continue; // Ignore sections with zero length
-            
-            dev.stmWrite(dataAddr, data, dataLen);
-        }
+        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+        size_t size, const char* name) {
+            dev.stmWrite(paddr, data, size);
+        });
         
         // Reset the device, triggering it to load the program we just wrote
-        dev.stmReset(entryPointAddr);
+        dev.stmReset(elf.entryPointAddr());
     }
 }
 

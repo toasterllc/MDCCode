@@ -122,36 +122,15 @@ static void LEDSet(const Args& args, MDCDevice& device) {
     device.ledSet(args.LEDSet.idx, args.LEDSet.on);
 }
 
-template<typename T_Fn>
-void _enumerateSections(const ELF32Binary& elf, T_Fn fn) {
-    auto segments = elf.segments();
-    
-    for (const auto& seg : segments) {
-        for (const auto& sec : seg.sections) {
-            // Ignore NOBITS sections (NOBITS = "occupies no space in the file"),
-            if (sec.type == ELF32Binary::SectionType::SHT_NOBITS) continue;
-            // Ignore non-ALLOC sections (ALLOC = "occupies memory during process execution")
-            if (!((uint32_t)sec.flags & (uint32_t)ELF32Binary::SectionFlags::SHF_ALLOC)) continue;
-            const size_t secSize = sec.size;
-            if (!secSize) continue; // Ignore sections with zero length
-            const uint32_t secPAddr = sec.paddr;
-            const uint32_t secVAddr = sec.vaddr;
-            const void* secData = elf.sectionData(sec);
-            
-            fn(secPAddr, secVAddr, secData, secSize, sec.name.c_str());
-        }
-    }
-}
-
 static void STMLoad(const Args& args, MDCDevice& device) {
     ELF32Binary elf(args.STMLoad.filePath.c_str());
     
-    _enumerateSections(elf, [&](uint32_t secPAddr, uint32_t secVAddr, const void* secData,
-    size_t secSize, const char* secName) {
+    elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+    size_t size, const char* name) {
         printf("STMLoad: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
-            secName, (uintmax_t)secPAddr, (uintmax_t)secSize, (uintmax_t)secVAddr);
+            name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
-        device.stmWrite(secPAddr, secData, secSize);
+        device.stmWrite(paddr, data, size);
     });
     
     // Reset the device, triggering it to load the program we just wrote
@@ -173,27 +152,27 @@ static void MSPLoad(const Args& args, MDCDevice& device) {
     device.mspConnect();
     
     // Write the data
-    _enumerateSections(elf, [&](uint32_t secPAddr, uint32_t secVAddr, const void* secData,
-    size_t secSize, const char* secName) {
+    elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+    size_t size, const char* name) {
         printf("MSPLoad: Writing %22s @ 0x%04jx    size: 0x%04jx    vaddr: 0x%04jx\n",
-            secName, (uintmax_t)secPAddr, (uintmax_t)secSize, (uintmax_t)secVAddr);
+            name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
-        device.mspWrite(secPAddr, secData, secSize);
+        device.mspWrite(paddr, data, size);
     });
     
-//    // Read back data and compare with what we expect
-//    _enumerateSegments(elf, [&](uint32_t segAddr, const uint8_t* segData,
-//    size_t segSize, const char* sections) {
-//        printf("MSPLoad: Verifying %s @ 0x%jx [size: 0x%jx]\n",
-//            sections, (uintmax_t)segAddr, (uintmax_t)segSize);
-//        
-//        auto buf = std::make_unique<uint8_t[]>(segSize);
-//        device.mspRead(segAddr, buf.get(), segSize);
-//        
-//        if (memcmp(segData, buf.get(), segSize)) {
-//            throw Toastbox::RuntimeError("section doesn't match: %s", sections);
-//        }
-//    });
+    // Read back data and compare with what we expect
+    elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+    size_t size, const char* name) {
+        printf("MSPLoad: Verifying %s @ 0x%jx [size: 0x%jx]\n",
+            name, (uintmax_t)paddr, (uintmax_t)size);
+        
+        auto buf = std::make_unique<uint8_t[]>(size);
+        device.mspRead(paddr, buf.get(), size);
+        
+        if (memcmp(data, buf.get(), size)) {
+            throw Toastbox::RuntimeError("section doesn't match: %s", name);
+        }
+    });
     
     device.mspDisconnect();
 }
