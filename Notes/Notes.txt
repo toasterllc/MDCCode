@@ -11,6 +11,17 @@
     
     - MSPApp: Implement power-saving version of delayUs/delayMs that uses the timer peripheral, and makes the CPU go to sleep
     
+    - MSPApp: is there a way to make MDCUtil cause a full MSP430 reset when doing a mspload?
+        - Currently after doing a mspload, PMMIFG.PMMLPM5IFG=1, so it's not a full reset
+        - Also, the RTC peripheral doesn't get reset, so if it was previously running, it continues running
+        - ReleaseDevice_430Xv2() mentions BOR, does our MSP430 support it?
+        - Remove ColdStart() FRAM check if this works
+    
+    - MSPApp: when an error occurs, trigger a BOR
+        - "In an application, it may be desired to cause a BOR in software. Setting PMMSWBOR
+           causes a softwaredriven BOR. PMMBORIFG is set accordingly. Note that a BOR also initiates a POR and PUC.
+           PMMBORIFG can be cleared by software or by reading SYSRSTIV."
+    
     - Fix bug: Without STLink connected, sometimes STApp crashes when plugging in
         - One cause is because Img::Sensor::Init() failed, because of an IMG I2C error
             - Might be because we're not waiting long enough after turning on the power rails to do I2C comms
