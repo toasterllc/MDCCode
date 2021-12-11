@@ -79,32 +79,44 @@ static volatile struct {
     bool full = false;
 } _ImgIndexes;
 
+static void _SetSDImgEnabled(bool en) {
+    static bool powerEn = false;
+    if (powerEn == en) return; // Short circuit if state didn't change
+    
+    powerEn = en;
+    if (powerEn) {
+        // Initialize image sensor
+        Img::Sensor::Init();
+        
+        // Initialize SD card
+        _SD.init();
+        
+        // Set the initial exposure _before_ we enable streaming, so that the very first frame
+        // has the correct exposure, so we don't have to skip any frames on the first capture.
+        Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
+        
+        // Enable image streaming
+        Img::Sensor::SetStreamEnabled(true);
+    
+    } else {
+        SD::Card::SetPowerEnabled(false);
+        Img::Sensor::SetPowerEnabled(false);
+    }
+}
+
 // MARK: - Motion
 
 static void _Motion_Handle() {
-//    // Initialize image sensor
-//    Img::Sensor::Init();
-//    
-//    // Initialize SD card
-//    _SD.init();
-//    
-//    // Enable image streaming
-//    Img::Sensor::SetStreamEnabled(true);
-//    
-//    // Set the initial exposure
-//    Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
-    
     // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
     constexpr uint8_t CaptureAttemptCount = 3;
     uint8_t bestExpBlock = 0;
     uint8_t bestExpScore = 0;
     for (uint8_t i=0; i<CaptureAttemptCount; i++) {
-//            // skipCount:
-//            // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
-//            // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
-//            // image since the first image after setting the exposure is invalid.
-//            const uint8_t skipCount = (!i ? 0 : 1);
-        constexpr uint8_t SkipCount = 1;
+        // skipCount:
+        // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
+        // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
+        // image since the first image after setting the exposure is invalid.
+        const uint8_t skipCount = (!i ? 0 : 1);
         
         // expBlock: Store images in the block belonging to the worst-exposed image captured so far
         const uint8_t expBlock = !bestExpBlock;
@@ -133,7 +145,7 @@ static void _Motion_Handle() {
         header.coarseIntTime = _ImgAutoExp.integrationTime();
         
         // Capture an image to RAM
-        auto resp = ICE::ImgCapture(header, expBlock, SkipCount);
+        auto resp = ICE::ImgCapture(header, expBlock, skipCount);
         Assert((bool)resp);
         
         const uint8_t expScore = _ImgAutoExp.update((*resp).highlightCount(), (*resp).shadowCount());
@@ -274,26 +286,6 @@ void Toastbox::IntState::WaitForInterrupt() {
 
 // MARK: - Main
 
-static void _SetSDImgEnabled(bool en) {
-    static bool powerEn = false;
-    if (powerEn == en) return; // Short circuit if state didn't change
-    powerEn = en;
-    if (powerEn) {
-        // Initialize image sensor
-        Img::Sensor::Init();
-        
-        // Initialize SD card
-        _SD.init();
-        
-        // Enable image streaming
-        Img::Sensor::SetStreamEnabled(true);
-    
-    } else {
-        SD::Card::SetPowerEnabled(false);
-        Img::Sensor::SetPowerEnabled(false);
-    }
-}
-
 //static void debugSignal() {
 //    _Pin::DEBUG_OUT::Init();
 //    for (int i=0; i<10; i++) {
@@ -369,15 +361,20 @@ int main() {
             Toastbox::IntState ints(true);
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
+            
+            // Turn everything on
             _SetSDImgEnabled(true);
             
+            // Handle motion
             _Motion_Handle();
             
             ICE::Transfer(ICE::LEDSetMsg(0x00));
             _delayMs(100);
         
         } else {
-            // No events, go to sleep
+            // No events
+            
+            // Turn everything off
             _SetSDImgEnabled(false);
             
             // Go to sleep

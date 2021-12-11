@@ -1,26 +1,17 @@
 - Rev4 Todo
     
-    - MSPApp: Move initial exposure setting to _Motion_Handle() instead of _SetSDImgEnabled()
-    
-    - MSPApp: Set initial exposure before we start streaming, so we don't need to skip a frame on the first one
-    
-    - MSPApp: use skipCount=0 for the first frame, assuming setting the exposure before streaming starts is kosher
-    
     - MSPApp: can we use the 'restart' facility of reset_register to speed up integration time changes?
         - 'restart' triggers a bad frame, so experiment with the 'restart_bad' and 'mask_bad' flags too
     
     - MSPApp: Implement power-saving version of delayUs/delayMs that uses the timer peripheral, and makes the CPU go to sleep
     
-    - MSPApp: is there a way to make MDCUtil cause a full MSP430 reset when doing a mspload?
-        - Currently after doing a mspload, PMMIFG.PMMLPM5IFG=1, so it's not a full reset
-        - Also, the RTC peripheral doesn't get reset, so if it was previously running, it continues running
-        - ReleaseDevice_430Xv2() mentions BOR, does our MSP430 support it?
-        - Remove ColdStart() FRAM check if this works
-    
     - MSPApp: when an error occurs, trigger a BOR
         - "In an application, it may be desired to cause a BOR in software. Setting PMMSWBOR
            causes a softwaredriven BOR. PMMBORIFG is set accordingly. Note that a BOR also initiates a POR and PUC.
            PMMBORIFG can be cleared by software or by reading SYSRSTIV."
+    
+    - MSPApp: we should initialize the image sensor and SD card in parallel to save time
+        - protothreads? cooperative threads?
     
     - Fix bug: Without STLink connected, sometimes STApp crashes when plugging in
         - One cause is because Img::Sensor::Init() failed, because of an IMG I2C error
@@ -37,6 +28,18 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MSPApp: Set initial exposure before we start streaming, so we don't need to skip a frame on the first one
+    
+    √ MSPApp: use skipCount=0 for the first frame, assuming setting the exposure before streaming starts is kosher
+    
+    X MSPApp: is there a way to make MDCUtil cause a full MSP430 reset when doing a mspload?
+        - Currently after doing a mspload, PMMIFG.PMMLPM5IFG=1, so it's not a full reset
+        - Also, the RTC peripheral doesn't get reset, so if it was previously running, it continues running
+        - ReleaseDevice_430Xv2() mentions BOR, does our MSP430 support it?
+        - Remove ColdStart() FRAM check if this works
+        X No way to issue a full reset, since some RTC/PMM registers are only reset on an actual brownout, not a BOR
+            - https://e2e.ti.com/support/microcontrollers/msp-low-power-microcontrollers-group/msp430/f/msp-low-power-microcontroller-forum/1061452/msp430fr2422-full-reset-including-rtc
     
     √ STLoader: cleanup tasks the way we did for STApp
     
