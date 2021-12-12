@@ -1,3 +1,5 @@
+#pragma once
+
 #define _SPSave(dst)                                                                \
          if constexpr (sizeof(void*) == 2)  asm("mov  r1, %0" : "=m" (dst) : : );   \
     else if constexpr (sizeof(void*) == 4)  asm("mova r1, %0" : "=m" (dst) : : )
@@ -6,95 +8,102 @@
          if constexpr (sizeof(void*) == 2)  asm("mov  %0, r1" : : "m" (src) : );    \
     else if constexpr (sizeof(void*) == 4)  asm("mova %0, r1" : : "m" (src) : )
 
-static void _Resume();
-static void _Nop();
-
-using _VoidFn = void(*)();
-
 struct _TaskState {
-    const _VoidFn run;
+    using VoidFn = void(*)();
+    
+    const VoidFn run;
     void* sp;
-    _VoidFn go;
-};
-
-static _TaskState* _CurrentTaskState = nullptr;
-static void* _SP = nullptr; // Saved stack pointer
-
-[[gnu::noinline]]
-static void _Start() {
-    // Future invocations should execute _Resume
-    _CurrentTaskState->go = _Resume;
+    VoidFn go;
     
-    // Save scheduler's stack pointer
-    _SPSave(_SP);
-    // Restore thread's stack pointer
-    _SPRestore(_CurrentTaskState->sp);
-    
-    // Invoke thread's Run()
-    _CurrentTaskState->run();
-    // The thread finished
-    // Future invocations should execute _nop
-    _CurrentTaskState->go = _Nop;
-    
-    // Restore scheduler stack pointer
-    _SPRestore(_SP);
-    // Return to scheduler
-    return;
-}
-
-[[gnu::noinline]]
-static void _Yield() {
-    // Save stack pointer
-    _SPSave(_CurrentTaskState->sp);
-    // Restore scheduler's stack pointer
-    _SPRestore(_SP);
-    // Return to scheduler
-    return;
-}
-
-[[gnu::noinline]]
-static void _Resume() {
-    // Save scheduler's stack pointer
-    _SPSave(_SP);
-    // Restore thread's stack pointer
-    _SPRestore(_CurrentTaskState->sp);
-    // Return to thread, to whatever function called _Yield()
-    return;
-}
-
-[[gnu::noinline]]
-static void _Nop() {
-    // Return to scheduler
-    return;
-}
-
-template <typename T_Subclass>
-class Task {
-public:
-    static void Start() {
-        _State.go = _Start;
-    }
-    
-    static inline _TaskState _State = {
-        .run = T_Subclass::Run,
-        .sp = T_Subclass::Stack + sizeof(T_Subclass::Stack),
-        .go = _Nop,
-    };
+    static inline _TaskState* Current = nullptr; // Current task's _TaskState
+    static inline void* SP = nullptr; // Saved stack pointer
 };
 
 class Scheduler {
 public:
-    template <typename T_Task, typename... T_Tasks>
-    static void _Run() {
-        _CurrentTaskState = &T_Task::_State;
-        _CurrentTaskState->go();
-        if constexpr (sizeof...(T_Tasks)) _Run<T_Tasks...>();
-    }
-    
     template <typename... T_Tasks>
     static void Run() {
         for (;;) {
             _Run<T_Tasks...>();
         }
     }
+    
+    [[gnu::noinline]]
+    static void Yield() {
+        // Save stack pointer
+        _SPSave(_TaskState::Current->sp);
+        // Restore scheduler's stack pointer
+        _SPRestore(_TaskState::SP);
+        // Return to scheduler
+        return;
+    }
+    
+private:
+    template <typename T_Task, typename... T_Tasks>
+    static void _Run() {
+        _TaskState::Current = &T_Task::_State;
+        _TaskState::Current->go();
+        if constexpr (sizeof...(T_Tasks)) _Run<T_Tasks...>();
+    }
+    
+    [[gnu::noinline]]
+    static void _Start() {
+        // Future invocations should execute _Resume
+        _TaskState::Current->go = _Resume;
+        
+        // Save scheduler's stack pointer
+        _SPSave(_TaskState::SP);
+        // Restore task's stack pointer
+        _SPRestore(_TaskState::Current->sp);
+        
+        // Invoke task's Run()
+        _TaskState::Current->run();
+        // The task finished
+        // Future invocations should execute _nop
+        _TaskState::Current->go = _Nop;
+        
+        // Restore scheduler stack pointer
+        _SPRestore(_TaskState::SP);
+        // Return to scheduler
+        return;
+    }
+    
+    [[gnu::noinline]]
+    static void _Resume() {
+        // Save scheduler's stack pointer
+        _SPSave(_TaskState::SP);
+        // Restore task's stack pointer
+        _SPRestore(_TaskState::Current->sp);
+        // Return to task, to whatever function called Yield()
+        return;
+    }
+    
+    [[gnu::noinline]]
+    static void _Nop() {
+        // Return to scheduler
+        return;
+    }
+    
+    class Task;
+    friend Task;
+    
+//    template <typename T_Subclass>
+//    friend Task<T_Subclass>;
+};
+
+template <typename T_Subclass>
+class Task {
+public:
+    static void Start() {
+        _State.go = Scheduler::_Start;
+    }
+    
+private:
+    static inline _TaskState _State = {
+        .run = T_Subclass::Run,
+        .sp = T_Subclass::Stack + sizeof(T_Subclass::Stack),
+        .go = Scheduler::_Nop,
+    };
+    
+    friend Scheduler;
 };

@@ -11,12 +11,12 @@ public:
         for (;;) {
             i++;
             puts("[SDTask]\n");
-            _Yield();
+            Scheduler::Yield();
         }
     }
     
     __attribute__((section(".stack.sdtask")))
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[1024];
 };
 
 class ImgTask : public Task<ImgTask> {
@@ -26,12 +26,12 @@ public:
         for (;;) {
             i++;
             puts("[ImgTask]\n");
-            _Yield();
+            Scheduler::Yield();
         }
     }
     
     __attribute__((section(".stack.imgtask")))
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[1024];
 };
 
 #define _Stringify(s) #s
