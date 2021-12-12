@@ -1,1 +1,0 @@
-"./main.o" -Wl,--start-group -lgcc -lc -Wl,--end-group 
