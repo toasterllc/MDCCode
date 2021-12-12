@@ -25,6 +25,7 @@
 /* Begin PBXFileReference section */
 		55FD01B227656881005505B5 /* ThreadTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ThreadTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		55FD01BC27656899005505B5 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		55FD01C22765CE1C005505B5 /* msp430fr2433.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.ld; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +42,7 @@
 		55FD01A927656881005505B5 = {
 			isa = PBXGroup;
 			children = (
+				55FD01C22765CE1C005505B5 /* msp430fr2433.ld */,
 				55FD01BC27656899005505B5 /* main.cpp */,
 				55FD01B327656881005505B5 /* Products */,
 			);

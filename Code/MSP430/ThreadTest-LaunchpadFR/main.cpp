@@ -4,27 +4,24 @@
 
 #include <cstddef>
 #include <cstdint>
-
-#ifdef __x86_64__
 #include <stdio.h>
-#endif
 
 #ifdef __x86_64__
 
-#define _SPGet(dst)
-#define _SPSet(src)
+#define _SPSave(dst)
+#define _SPRestore(src)
 
 #else
 
-#define _SPGet(dst) asm("mov r1, %0" : "=m" (dst) :           : )
-#define _SPSet(src) asm("mov %0, r1" :            : "m" (src) : )
+#define _SPSave(dst) asm("mov r1, %0" : "=m" (dst) :           : )
+#define _SPRestore(src) asm("mov %0, r1" :            : "m" (src) : )
 
 #endif
 
 static void _start();
 static void _yield();
 static void _resume();
-static void _done();
+static void _nop();
 
 using _VoidFn = void(*)();
 
@@ -37,7 +34,7 @@ public:
     
     static void Run() {}
     
-    _VoidFn _go = _done;
+    _VoidFn _go = _nop;
     void* _sp = _stack + sizeof(_stack);
     uint8_t _stack[T_StackSize];
 };
@@ -55,20 +52,20 @@ static void _start() {
     _CurrentTask->_go = _resume;
     
     // Save scheduler's stack pointer
-    _SPGet(_SP);
+    _SPSave(_SP);
     
     // Restore thread's stack pointer
-    _SPSet(_CurrentTask->_sp);
+    _SPRestore(_CurrentTask->_sp);
     
     // Invoke thread's Run()
     _CurrentTaskRunFn();
     
     // The thread finished
-    // Future invocations should execute _done
-    _CurrentTask->_go = _done;
+    // Future invocations should execute _nop
+    _CurrentTask->_go = _nop;
     
     // Restore scheduler stack pointer
-    _SPSet(_SP);
+    _SPRestore(_SP);
     
     // Return to scheduler
     return;
@@ -80,18 +77,18 @@ static void _yield() {
 //    pushm.a #7, r10;
     
     // Save stack pointer
-    _SPGet(_CurrentTask->_sp);
+    _SPSave(_CurrentTask->_sp);
     // Restore scheduler's stack pointer
-    _SPSet(_SP);
+    _SPRestore(_SP);
     // Return to scheduler
     return;
 }
 
 static void _resume() {
     // Save scheduler's stack pointer
-    _SPGet(_SP);
+    _SPSave(_SP);
     // Restore thread's stack pointer
-    _SPSet(_CurrentTask->_sp);
+    _SPRestore(_CurrentTask->_sp);
     
     // TODO: do we need to explicitly save registers if _yield/_resume are regular functions?
 //    // Pop all callee-saved registers (R4-R10)
@@ -101,7 +98,7 @@ static void _resume() {
     return;
 }
 
-static void _done() {
+static void _nop() {
     // Return to scheduler
     return;
 }
@@ -130,34 +127,33 @@ protected:
 };
 
 
+void myfun() {
+    static volatile int meowmix = 0;
+    meowmix++;
+}
 
-class SDTask : public Task<128> {
+
+class SDTask : public Task<1024> {
 public:
     static void Run() {
         volatile int i = 0;
         for (;;) {
             i++;
-            
-#ifdef __x86_64__
-            printf("[SDTask] %d\n", i);
-#endif
-            
+            myfun();
+            puts("[SDTask]\n");
             _yield();
         }
     }
 };
 
-class ImgTask : public Task<128> {
+class ImgTask : public Task<1024> {
 public:
     static void Run() {
         volatile int i = 0;
         for (;;) {
             i++;
-            
-#ifdef __x86_64__
-            printf("[ImgTask] %d\n", i);
-#endif
-            
+            myfun();
+            puts("[ImgTask]\n");
             _yield();
         }
     }
@@ -169,13 +165,9 @@ ImgTask _imgTask;
 int main() {
     _sdTask.start();
     _imgTask.start();
-    
-//    printf("%p\n", _sdTask._run);
-//    printf("%p\n", _imgTask._run);
-//    
-//    printf("%p\n", &SDTask::run);
-//    printf("%p\n", &ImgTask::run);
-    
+//    for (;;) {
+//        puts("[hello]\n");
+//    }
     Scheduler::Run(_sdTask, _imgTask);
     return 0;
 }
