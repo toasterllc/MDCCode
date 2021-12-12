@@ -1,13 +1,5 @@
 #pragma once
 
-#define _SPSave(dst)                                                                \
-         if constexpr (sizeof(void*) == 2)  asm("mov  r1, %0" : "=m" (dst) : : );   \
-    else if constexpr (sizeof(void*) == 4)  asm("mova r1, %0" : "=m" (dst) : : )
-
-#define _SPRestore(src)                                                             \
-         if constexpr (sizeof(void*) == 2)  asm("mov  %0, r1" : : "m" (src) : );    \
-    else if constexpr (sizeof(void*) == 4)  asm("mova %0, r1" : : "m" (src) : )
-
 struct _TaskState {
     using VoidFn = void(*)();
     
@@ -20,6 +12,14 @@ struct _TaskState {
 };
 
 class Scheduler {
+#define _SPSave(dst)                                                                \
+         if constexpr (sizeof(void*) == 2)  asm("mov  r1, %0" : "=m" (dst) : : );   \
+    else if constexpr (sizeof(void*) == 4)  asm("mova r1, %0" : "=m" (dst) : : )
+
+#define _SPRestore(src)                                                             \
+         if constexpr (sizeof(void*) == 2)  asm("mov  %0, r1" : : "m" (src) : );    \
+    else if constexpr (sizeof(void*) == 4)  asm("mova %0, r1" : : "m" (src) : )
+
 public:
     template <typename... T_Tasks>
     static void Run() {
@@ -86,6 +86,9 @@ private:
     
     class Task;
     friend Task;
+
+#undef _SPSave
+#undef _SPRestore
 };
 
 template <typename T_Subclass>
