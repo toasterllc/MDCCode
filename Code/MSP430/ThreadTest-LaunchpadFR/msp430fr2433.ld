@@ -343,23 +343,16 @@ SECTIONS
     __heap_end__ = .;
     __HeapLimit = __heap_end__;
   } > RAM
+  
   /* WARNING: Do not place anything in RAM here.
      The heap section must be the last section in RAM and the stack
      section must be placed at the very end of the RAM region.  */
 
   .stack :
   {
-    . = ALIGN(2);
-    PROVIDE (__stack = .);
     *(.stack)
-    . = ALIGN(2);
+    *(.stack.*)
   } > RAM
-  
-  .meow : {
-    . = ALIGN(2);
-    *(.meow)
-    . = ALIGN(2);
-  } >RAM
 
   .infoA (NOLOAD) : {} > INFOA              /* MSP430 INFO FLASH MEMORY SEGMENTS */
 

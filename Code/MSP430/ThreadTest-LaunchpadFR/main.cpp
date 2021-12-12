@@ -2,17 +2,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <stdio.h>
-
 #include "Task.h"
 
-
-__attribute__((section(".meow")))
-uint8_t MyVal[128] __attribute__((used));
-
-class SDTask : public Task<SDTask, 1024> {
+class SDTask : public Task<SDTask> {
 public:
     static void Run() {
-        MyVal[0] = 0;
         volatile int i = 0;
         for (;;) {
             i++;
@@ -20,9 +14,12 @@ public:
             _Yield();
         }
     }
+    
+    __attribute__((section(".stack.sdtask")))
+    static inline uint8_t Stack[128];
 };
 
-class ImgTask : public Task<ImgTask, 1024> {
+class ImgTask : public Task<ImgTask> {
 public:
     static void Run() {
         volatile int i = 0;
@@ -32,19 +29,20 @@ public:
             _Yield();
         }
     }
+    
+    __attribute__((section(".stack.imgtask")))
+    static inline uint8_t Stack[128];
 };
 
-//template <typename T_Subclass, size_t T_StackSize>
-//uint8_t Task<T_Subclass, T_StackSize>::_Stack[T_StackSize];
+#define _Stringify(s) #s
+#define Stringify(s) _Stringify(s)
 
-//// Prevent system from thinking we've overflowed the stack
-//// TODO: how do we fix this for real? look at actual sbrk() code in newlib. 
-//// move stacks into .stack region?
-//// look at current task sp and compare to _sbrk_heap?
-//extern "C" char* sbrk(int) {
-//    extern char* _sbrk_heap;
-//    return _sbrk_heap;
-//}
+#define StackMainSize 128
+__attribute__((section(".stack.main")))
+uint8_t StackMain[StackMainSize];
+
+asm(".global __stack");
+asm(".equ __stack, StackMain+" Stringify(StackMainSize));
 
 int main() {
     // Stop watchdog timer
