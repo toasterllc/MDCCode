@@ -1,0 +1,1082 @@
+Archive member included to satisfy reference by file (symbol)
+
+/home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_bss.o)
+                              main.o (__crt0_init_bss)
+/home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_main.o)
+                              /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/crt0.o (__crt0_call_main)
+/home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_init_array.o)
+                              main.o (__crt0_run_init_array)
+/home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_array.o)
+                              main.o (__crt0_run_array)
+/home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libc.a(lib_a-memset.o)
+                              /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_bss.o) (memset)
+
+Discarded input sections
+
+ .group         0x0000000000000000        0xc main.o
+ .group         0x0000000000000000        0xc main.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+SFR              0x0000000000000000 0x0000000000000010
+BSL              0x0000000000001000 0x0000000000000800
+RAM              0x0000000000002000 0x0000000000001000
+INFOMEM          0x0000000000001800 0x0000000000000200
+INFOA            0x0000000000001800 0x0000000000000200
+FRAM             0x000000000000c400 0x0000000000003b80 xr
+JTAGSIGNATURE    0x000000000000ff80 0x0000000000000004
+BSLSIGNATURE     0x000000000000ff84 0x0000000000000004
+VECT1            0x000000000000ff88 0x0000000000000002
+VECT2            0x000000000000ff8a 0x0000000000000002
+VECT3            0x000000000000ff8c 0x0000000000000002
+VECT4            0x000000000000ff8e 0x0000000000000002
+VECT5            0x000000000000ff90 0x0000000000000002
+VECT6            0x000000000000ff92 0x0000000000000002
+VECT7            0x000000000000ff94 0x0000000000000002
+VECT8            0x000000000000ff96 0x0000000000000002
+VECT9            0x000000000000ff98 0x0000000000000002
+VECT10           0x000000000000ff9a 0x0000000000000002
+VECT11           0x000000000000ff9c 0x0000000000000002
+VECT12           0x000000000000ff9e 0x0000000000000002
+VECT13           0x000000000000ffa0 0x0000000000000002
+VECT14           0x000000000000ffa2 0x0000000000000002
+VECT15           0x000000000000ffa4 0x0000000000000002
+VECT16           0x000000000000ffa6 0x0000000000000002
+VECT17           0x000000000000ffa8 0x0000000000000002
+VECT18           0x000000000000ffaa 0x0000000000000002
+VECT19           0x000000000000ffac 0x0000000000000002
+VECT20           0x000000000000ffae 0x0000000000000002
+VECT21           0x000000000000ffb0 0x0000000000000002
+VECT22           0x000000000000ffb2 0x0000000000000002
+VECT23           0x000000000000ffb4 0x0000000000000002
+VECT24           0x000000000000ffb6 0x0000000000000002
+VECT25           0x000000000000ffb8 0x0000000000000002
+VECT26           0x000000000000ffba 0x0000000000000002
+VECT27           0x000000000000ffbc 0x0000000000000002
+VECT28           0x000000000000ffbe 0x0000000000000002
+VECT29           0x000000000000ffc0 0x0000000000000002
+VECT30           0x000000000000ffc2 0x0000000000000002
+VECT31           0x000000000000ffc4 0x0000000000000002
+VECT32           0x000000000000ffc6 0x0000000000000002
+VECT33           0x000000000000ffc8 0x0000000000000002
+VECT34           0x000000000000ffca 0x0000000000000002
+VECT35           0x000000000000ffcc 0x0000000000000002
+VECT36           0x000000000000ffce 0x0000000000000002
+VECT37           0x000000000000ffd0 0x0000000000000002
+VECT38           0x000000000000ffd2 0x0000000000000002
+VECT39           0x000000000000ffd4 0x0000000000000002
+VECT40           0x000000000000ffd6 0x0000000000000002
+VECT41           0x000000000000ffd8 0x0000000000000002
+VECT42           0x000000000000ffda 0x0000000000000002
+VECT43           0x000000000000ffdc 0x0000000000000002
+VECT44           0x000000000000ffde 0x0000000000000002
+VECT45           0x000000000000ffe0 0x0000000000000002
+VECT46           0x000000000000ffe2 0x0000000000000002
+VECT47           0x000000000000ffe4 0x0000000000000002
+VECT48           0x000000000000ffe6 0x0000000000000002
+VECT49           0x000000000000ffe8 0x0000000000000002
+VECT50           0x000000000000ffea 0x0000000000000002
+VECT51           0x000000000000ffec 0x0000000000000002
+VECT52           0x000000000000ffee 0x0000000000000002
+VECT53           0x000000000000fff0 0x0000000000000002
+VECT54           0x000000000000fff2 0x0000000000000002
+VECT55           0x000000000000fff4 0x0000000000000002
+VECT56           0x000000000000fff6 0x0000000000000002
+VECT57           0x000000000000fff8 0x0000000000000002
+VECT58           0x000000000000fffa 0x0000000000000002
+VECT59           0x000000000000fffc 0x0000000000000002
+RESETVEC         0x000000000000fffe 0x0000000000000002
+*default*        0x0000000000000000 0xffffffffffffffff
+BAKMEM           0x0000000000000660 0x0000000000000020
+
+Linker script and memory map
+
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/crt0.o
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtbegin_no_eh.o
+LOAD main.o
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libstdc++.a
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libm.a
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/libgcc.a
+START GROUP
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/libmul_f5.a
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libc.a
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/libgcc.a
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libnosys.a
+END GROUP
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/libgcc.a
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtend_no_eh.o
+LOAD /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/libgcc.a
+
+.jtagsignature
+
+.bslsignature
+
+__interrupt_vector_1
+ *(__interrupt_vector_1)
+
+__interrupt_vector_2
+ *(__interrupt_vector_2)
+
+__interrupt_vector_3
+ *(__interrupt_vector_3)
+
+__interrupt_vector_4
+ *(__interrupt_vector_4)
+
+__interrupt_vector_5
+ *(__interrupt_vector_5)
+
+__interrupt_vector_6
+ *(__interrupt_vector_6)
+
+__interrupt_vector_7
+ *(__interrupt_vector_7)
+
+__interrupt_vector_8
+ *(__interrupt_vector_8)
+
+__interrupt_vector_9
+ *(__interrupt_vector_9)
+
+__interrupt_vector_10
+ *(__interrupt_vector_10)
+
+__interrupt_vector_11
+ *(__interrupt_vector_11)
+
+__interrupt_vector_12
+ *(__interrupt_vector_12)
+
+__interrupt_vector_13
+ *(__interrupt_vector_13)
+
+__interrupt_vector_14
+ *(__interrupt_vector_14)
+
+__interrupt_vector_15
+ *(__interrupt_vector_15)
+
+__interrupt_vector_16
+ *(__interrupt_vector_16)
+
+__interrupt_vector_17
+ *(__interrupt_vector_17)
+
+__interrupt_vector_18
+ *(__interrupt_vector_18)
+
+__interrupt_vector_19
+ *(__interrupt_vector_19)
+
+__interrupt_vector_20
+ *(__interrupt_vector_20)
+
+__interrupt_vector_21
+ *(__interrupt_vector_21)
+
+__interrupt_vector_22
+ *(__interrupt_vector_22)
+
+__interrupt_vector_23
+ *(__interrupt_vector_23)
+
+__interrupt_vector_24
+ *(__interrupt_vector_24)
+
+__interrupt_vector_25
+ *(__interrupt_vector_25)
+
+__interrupt_vector_26
+ *(__interrupt_vector_26)
+
+__interrupt_vector_27
+ *(__interrupt_vector_27)
+
+__interrupt_vector_28
+ *(__interrupt_vector_28)
+
+__interrupt_vector_29
+ *(__interrupt_vector_29)
+
+__interrupt_vector_30
+ *(__interrupt_vector_30)
+
+__interrupt_vector_31
+ *(__interrupt_vector_31)
+
+__interrupt_vector_32
+ *(__interrupt_vector_32)
+
+__interrupt_vector_33
+ *(__interrupt_vector_33)
+
+__interrupt_vector_34
+ *(__interrupt_vector_34)
+
+__interrupt_vector_35
+ *(__interrupt_vector_35)
+
+__interrupt_vector_36
+ *(__interrupt_vector_36)
+
+__interrupt_vector_37
+ *(__interrupt_vector_37)
+
+__interrupt_vector_38
+ *(__interrupt_vector_38)
+
+__interrupt_vector_39
+ *(__interrupt_vector_39)
+
+__interrupt_vector_40
+ *(__interrupt_vector_40)
+
+__interrupt_vector_41
+ *(__interrupt_vector_41)
+
+__interrupt_vector_42
+ *(__interrupt_vector_42)
+ *(__interrupt_vector_port2)
+
+__interrupt_vector_43
+ *(__interrupt_vector_43)
+ *(__interrupt_vector_port1)
+
+__interrupt_vector_44
+ *(__interrupt_vector_44)
+ *(__interrupt_vector_adc)
+
+__interrupt_vector_45
+ *(__interrupt_vector_45)
+ *(__interrupt_vector_usci_b0)
+
+__interrupt_vector_46
+ *(__interrupt_vector_46)
+ *(__interrupt_vector_usci_a1)
+
+__interrupt_vector_47
+ *(__interrupt_vector_47)
+ *(__interrupt_vector_usci_a0)
+
+__interrupt_vector_48
+ *(__interrupt_vector_48)
+ *(__interrupt_vector_wdt)
+
+__interrupt_vector_49
+ *(__interrupt_vector_49)
+ *(__interrupt_vector_rtc)
+
+__interrupt_vector_50
+ *(__interrupt_vector_50)
+ *(__interrupt_vector_timer3_a1)
+
+__interrupt_vector_51
+ *(__interrupt_vector_51)
+ *(__interrupt_vector_timer3_a0)
+
+__interrupt_vector_52
+ *(__interrupt_vector_52)
+ *(__interrupt_vector_timer2_a1)
+
+__interrupt_vector_53
+ *(__interrupt_vector_53)
+ *(__interrupt_vector_timer2_a0)
+
+__interrupt_vector_54
+ *(__interrupt_vector_54)
+ *(__interrupt_vector_timer1_a1)
+
+__interrupt_vector_55
+ *(__interrupt_vector_55)
+ *(__interrupt_vector_timer1_a0)
+
+__interrupt_vector_56
+ *(__interrupt_vector_56)
+ *(__interrupt_vector_timer0_a1)
+
+__interrupt_vector_57
+ *(__interrupt_vector_57)
+ *(__interrupt_vector_timer0_a0)
+
+__interrupt_vector_58
+ *(__interrupt_vector_58)
+ *(__interrupt_vector_unmi)
+
+__interrupt_vector_59
+ *(__interrupt_vector_59)
+ *(__interrupt_vector_sysnmi)
+
+__reset_vector  0x000000000000fffe        0x2
+ *(__interrupt_vector_60)
+ *(__interrupt_vector_reset)
+ *(.resetvec)
+ .resetvec      0x000000000000fffe        0x2 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/crt0.o
+
+.rodata         0x000000000000c400        0x0
+                0x000000000000c400                . = ALIGN (0x2)
+ *(.plt)
+ *(.rodata .rodata.* .gnu.linkonce.r.* .const .const:*)
+ *(.rodata1)
+ *(.gcc_except_table)
+ *(.gcc_except_table.*)
+
+.rodata2        0x000000000000c400        0x2
+                0x000000000000c400                . = ALIGN (0x2)
+                [!provide]                        PROVIDE (__preinit_array_start = .)
+ *(.preinit_array)
+                [!provide]                        PROVIDE (__preinit_array_end = .)
+                0x000000000000c400                . = ALIGN (0x2)
+                0x000000000000c400                PROVIDE (__init_array_start = .)
+ *(SORT_BY_NAME(.init_array.*))
+ *(.init_array)
+ .init_array    0x000000000000c400        0x2 main.o
+                0x000000000000c402                PROVIDE (__init_array_end = .)
+                0x000000000000c402                . = ALIGN (0x2)
+                [!provide]                        PROVIDE (__fini_array_start = .)
+ *(.fini_array)
+ *(SORT_BY_NAME(.fini_array.*))
+                [!provide]                        PROVIDE (__fini_array_end = .)
+                0x000000000000c402                . = ALIGN (0x2)
+ *(.eh_frame_hdr)
+ *(.eh_frame)
+ *crtbegin*.o(.ctors)
+ *(EXCLUDE_FILE(*crtend*.o) .ctors)
+ *(SORT_BY_NAME(.ctors.*))
+ *(.ctors)
+ *crtbegin*.o(.dtors)
+ *(EXCLUDE_FILE(*crtend*.o) .dtors)
+ *(SORT_BY_NAME(.dtors.*))
+ *(.dtors)
+
+.persistent     0x000000000000c402        0x0
+                0x000000000000c402                . = ALIGN (0x2)
+                [!provide]                        PROVIDE (__persistent_start = .)
+ *(.persistent)
+                0x000000000000c402                . = ALIGN (0x2)
+                [!provide]                        PROVIDE (__persistent_end = .)
+
+.text           0x000000000000c402      0x102
+                0x000000000000c402                . = ALIGN (0x2)
+                0x000000000000c402                PROVIDE (_start = .)
+ *(SORT_BY_NAME(.crt_*))
+ .crt_0000start
+                0x000000000000c402        0x4 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/crt0.o
+                0x000000000000c402                __crt0_start
+ .crt_0100init_bss
+                0x000000000000c406        0xe /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_bss.o)
+                0x000000000000c406                __crt0_init_bss
+ .crt_0600run_init_array
+                0x000000000000c414        0xe /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_init_array.o)
+                0x000000000000c414                __crt0_run_init_array
+ .crt_0800call_main
+                0x000000000000c422        0x6 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_main.o)
+                0x000000000000c422                __crt0_call_main
+ .crt_1100run_array
+                0x000000000000c428        0xe /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_array.o)
+                0x000000000000c428                __crt0_run_array
+ *(.lowtext .text .stub .text.* .gnu.linkonce.t.* .text:*)
+ .text          0x000000000000c436        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/crt0.o
+ .text          0x000000000000c436        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtbegin_no_eh.o
+ .text          0x000000000000c436       0x8c main.o
+                0x000000000000c46e                main
+ .text._ZN7ImgTask3RunEv
+                0x000000000000c4c2       0x18 main.o
+                0x000000000000c4c2                _ZN7ImgTask3RunEv
+ .text._ZN6SDTask3RunEv
+                0x000000000000c4da       0x18 main.o
+                0x000000000000c4da                _ZN6SDTask3RunEv
+ .text          0x000000000000c4f2        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_bss.o)
+ .text          0x000000000000c4f2        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_main.o)
+ .text          0x000000000000c4f2        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_init_array.o)
+ .text          0x000000000000c4f2        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_array.o)
+ .text          0x000000000000c4f2        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libc.a(lib_a-memset.o)
+ .text.memset   0x000000000000c4f2       0x12 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libc.a(lib_a-memset.o)
+                0x000000000000c4f2                memset
+ .text          0x000000000000c504        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtend_no_eh.o
+ *(.text.*personality*)
+ *(.gnu.warning)
+ *(.interp .hash .dynsym .dynstr .gnu.version*)
+                [!provide]                        PROVIDE (__etext = .)
+                [!provide]                        PROVIDE (_etext = .)
+                [!provide]                        PROVIDE (etext = .)
+                0x000000000000c504                . = ALIGN (0x2)
+ *(.init)
+ *(.fini)
+ *(.tm_clone_table)
+
+.data           0x0000000000002000        0x0 load address 0x000000000000c504
+                0x0000000000002000                . = ALIGN (0x2)
+                [!provide]                        PROVIDE (__datastart = .)
+ *(.jcr)
+ *(.data.rel.ro.local)
+ *(.data.rel.ro*)
+ *(.dynamic)
+ *(.data .data.* .gnu.linkonce.d.*)
+ .data          0x0000000000002000        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/crt0.o
+ .data          0x0000000000002000        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtbegin_no_eh.o
+ .data          0x0000000000002000        0x0 main.o
+ .data          0x0000000000002000        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_bss.o)
+ .data          0x0000000000002000        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_main.o)
+ .data          0x0000000000002000        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_init_array.o)
+ .data          0x0000000000002000        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_array.o)
+ .data          0x0000000000002000        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libc.a(lib_a-memset.o)
+ .data          0x0000000000002000        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtend_no_eh.o
+ *(.gnu.linkonce.d.*personality*)
+ *(.data1)
+ *(.got.plt)
+ *(.got)
+                0x0000000000002000                . = ALIGN (0x2)
+ *(.sdata .sdata.* .gnu.linkonce.s.* D_2 D_1)
+                0x0000000000002000                . = ALIGN (0x2)
+                0x0000000000002000                _edata = .
+                [!provide]                        PROVIDE (edata = .)
+                [!provide]                        PROVIDE (__dataend = .)
+                [!provide]                        PROVIDE (__romdatastart = LOADADDR (.data))
+                [!provide]                        PROVIDE (__romdatacopysize = SIZEOF (.data))
+
+.bss            0x0000000000002000      0x10e load address 0x000000000000c504
+                0x0000000000002000                . = ALIGN (0x2)
+                0x0000000000002000                PROVIDE (__bssstart = .)
+ *(.dynbss)
+ *(.sbss .sbss.*)
+ *(.bss .bss.* .gnu.linkonce.b.*)
+ .bss           0x0000000000002000        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/crt0.o
+ .bss           0x0000000000002000        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtbegin_no_eh.o
+ .bss           0x0000000000002000      0x10e main.o
+                0x0000000000002000                _imgTask
+                0x0000000000002084                _sdTask
+ .bss           0x000000000000210e        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_bss.o)
+ .bss           0x000000000000210e        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_main.o)
+ .bss           0x000000000000210e        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_init_array.o)
+ .bss           0x000000000000210e        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_array.o)
+ .bss           0x000000000000210e        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libc.a(lib_a-memset.o)
+ .bss           0x000000000000210e        0x0 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtend_no_eh.o
+                0x000000000000210e                . = ALIGN (0x2)
+ *(COMMON)
+                [!provide]                        PROVIDE (__bssend = .)
+                0x000000000000010e                PROVIDE (__bsssize = SIZEOF (.bss))
+
+.noinit         0x000000000000210e        0x0 load address 0x000000000000c504
+                0x000000000000210e                . = ALIGN (0x2)
+                [!provide]                        PROVIDE (__noinit_start = .)
+ *(.noinit)
+                0x000000000000210e                . = ALIGN (0x2)
+                [!provide]                        PROVIDE (__noinit_end = .)
+                0x000000000000210e                end = .
+
+.heap           0x000000000000210e        0x4 load address 0x000000000000c504
+                0x000000000000210e                . = ALIGN (0x2)
+                0x000000000000210e                __heap_start__ = .
+                0x000000000000210e                _end = __heap_start__
+                [!provide]                        PROVIDE (end = .)
+ *(.heap)
+                0x000000000000210e                _end = .
+                [!provide]                        PROVIDE (end = .)
+                0x000000000000210e        0x4 LONG 0x0
+                0x0000000000002112                __heap_end__ = .
+                0x0000000000002112                __HeapLimit = __heap_end__
+
+.stack          0x0000000000003000        0x0
+                0x0000000000003000                PROVIDE (__stack = .)
+ *(.stack)
+
+.infoA
+
+.MSP430.attributes
+                0x0000000000000000       0x17
+ *(.MSP430.attributes)
+ .MSP430.attributes
+                0x0000000000000000       0x17 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/crt0.o
+ .MSP430.attributes
+                0x0000000000000017       0x17 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtbegin_no_eh.o
+ .MSP430.attributes
+                0x000000000000002e       0x17 main.o
+ .MSP430.attributes
+                0x0000000000000045       0x17 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_bss.o)
+ .MSP430.attributes
+                0x000000000000005c       0x17 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_main.o)
+ .MSP430.attributes
+                0x0000000000000073       0x17 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_init_array.o)
+ .MSP430.attributes
+                0x000000000000008a       0x17 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libcrt.a(crt_run_array.o)
+ .MSP430.attributes
+                0x00000000000000a1       0x17 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libc.a(lib_a-memset.o)
+ .MSP430.attributes
+                0x00000000000000b8       0x17 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtend_no_eh.o
+ *(.gnu.attributes)
+ *(__TI_build_attributes)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment        0x0000000000000000       0x39
+ *(.comment)
+ .comment       0x0000000000000000       0x39 /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtbegin_no_eh.o
+                                         0x3a (size before relaxing)
+ .comment       0x0000000000000039       0x3a main.o
+ .comment       0x0000000000000039       0x3a /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/../../../../msp430-elf/lib/libc.a(lib_a-memset.o)
+ .comment       0x0000000000000039       0x3a /home/dave/ti/msp430-gcc/bin/../lib/gcc/msp430-elf/9.3.1/crtend_no_eh.o
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges  0x0000000000000000       0x30
+ *(.debug_aranges)
+ .debug_aranges
+                0x0000000000000000       0x30 main.o
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info     0x0000000000000000     0x221e
+ *(.debug_info .gnu.linkonce.wi.*)
+ .debug_info    0x0000000000000000     0x221e main.o
+
+.debug_abbrev   0x0000000000000000      0x3d1
+ *(.debug_abbrev)
+ .debug_abbrev  0x0000000000000000      0x3d1 main.o
+
+.debug_line     0x0000000000000000      0x49b
+ *(.debug_line .debug_line.* .debug_line_end)
+ .debug_line    0x0000000000000000      0x49b main.o
+
+.debug_frame    0x0000000000000000       0x94
+ *(.debug_frame)
+ .debug_frame   0x0000000000000000       0x94 main.o
+
+.debug_str      0x0000000000000000     0x15cc
+ *(.debug_str)
+ .debug_str     0x0000000000000000     0x15cc main.o
+                                       0x1742 (size before relaxing)
+
+.debug_loc      0x0000000000000000       0x29
+ *(.debug_loc)
+ .debug_loc     0x0000000000000000       0x29 main.o
+
+.debug_macinfo
+ *(.debug_macinfo)
+
+.debug_weaknames
+ *(.debug_weaknames)
+
+.debug_funcnames
+ *(.debug_funcnames)
+
+.debug_typenames
+ *(.debug_typenames)
+
+.debug_varnames
+ *(.debug_varnames)
+
+.debug_pubtypes
+ *(.debug_pubtypes)
+
+.debug_ranges   0x0000000000000000       0x20
+ *(.debug_ranges)
+ .debug_ranges  0x0000000000000000       0x20 main.o
+
+.debug_macro
+ *(.debug_macro)
+
+/DISCARD/
+ *(.note.GNU-stack)
+                [!provide]                        PROVIDE (ADCCTL0 = 0x700)
+                [!provide]                        PROVIDE (ADCCTL0_L = 0x700)
+                [!provide]                        PROVIDE (ADCCTL0_H = 0x701)
+                [!provide]                        PROVIDE (ADCCTL1 = 0x702)
+                [!provide]                        PROVIDE (ADCCTL1_L = 0x702)
+                [!provide]                        PROVIDE (ADCCTL1_H = 0x703)
+                [!provide]                        PROVIDE (ADCCTL2 = 0x704)
+                [!provide]                        PROVIDE (ADCCTL2_L = 0x704)
+                [!provide]                        PROVIDE (ADCCTL2_H = 0x705)
+                [!provide]                        PROVIDE (ADCLO = 0x706)
+                [!provide]                        PROVIDE (ADCLO_L = 0x706)
+                [!provide]                        PROVIDE (ADCLO_H = 0x707)
+                [!provide]                        PROVIDE (ADCHI = 0x708)
+                [!provide]                        PROVIDE (ADCHI_L = 0x708)
+                [!provide]                        PROVIDE (ADCHI_H = 0x709)
+                [!provide]                        PROVIDE (ADCMCTL0 = 0x70a)
+                [!provide]                        PROVIDE (ADCMCTL0_L = 0x70a)
+                [!provide]                        PROVIDE (ADCMCTL0_H = 0x70b)
+                [!provide]                        PROVIDE (ADCMEM0 = 0x712)
+                [!provide]                        PROVIDE (ADCMEM0_L = 0x712)
+                [!provide]                        PROVIDE (ADCMEM0_H = 0x713)
+                [!provide]                        PROVIDE (ADCIE = 0x71a)
+                [!provide]                        PROVIDE (ADCIE_L = 0x71a)
+                [!provide]                        PROVIDE (ADCIE_H = 0x71b)
+                [!provide]                        PROVIDE (ADCIFG = 0x71c)
+                [!provide]                        PROVIDE (ADCIFG_L = 0x71c)
+                [!provide]                        PROVIDE (ADCIFG_H = 0x71d)
+                [!provide]                        PROVIDE (ADCIV = 0x71e)
+                [!provide]                        PROVIDE (ADCIV_L = 0x71e)
+                [!provide]                        PROVIDE (ADCIV_H = 0x71f)
+                [!provide]                        PROVIDE (BAKMEM0 = 0x660)
+                [!provide]                        PROVIDE (BAKMEM0_L = 0x660)
+                [!provide]                        PROVIDE (BAKMEM0_H = 0x661)
+                [!provide]                        PROVIDE (BAKMEM1 = 0x662)
+                [!provide]                        PROVIDE (BAKMEM1_L = 0x662)
+                [!provide]                        PROVIDE (BAKMEM1_H = 0x663)
+                [!provide]                        PROVIDE (BAKMEM2 = 0x664)
+                [!provide]                        PROVIDE (BAKMEM2_L = 0x664)
+                [!provide]                        PROVIDE (BAKMEM2_H = 0x665)
+                [!provide]                        PROVIDE (BAKMEM3 = 0x666)
+                [!provide]                        PROVIDE (BAKMEM3_L = 0x666)
+                [!provide]                        PROVIDE (BAKMEM3_H = 0x667)
+                [!provide]                        PROVIDE (BAKMEM4 = 0x668)
+                [!provide]                        PROVIDE (BAKMEM4_L = 0x668)
+                [!provide]                        PROVIDE (BAKMEM4_H = 0x669)
+                [!provide]                        PROVIDE (BAKMEM5 = 0x66a)
+                [!provide]                        PROVIDE (BAKMEM5_L = 0x66a)
+                [!provide]                        PROVIDE (BAKMEM5_H = 0x66b)
+                [!provide]                        PROVIDE (BAKMEM6 = 0x66c)
+                [!provide]                        PROVIDE (BAKMEM6_L = 0x66c)
+                [!provide]                        PROVIDE (BAKMEM6_H = 0x66d)
+                [!provide]                        PROVIDE (BAKMEM7 = 0x66e)
+                [!provide]                        PROVIDE (BAKMEM7_L = 0x66e)
+                [!provide]                        PROVIDE (BAKMEM7_H = 0x66f)
+                [!provide]                        PROVIDE (BAKMEM8 = 0x670)
+                [!provide]                        PROVIDE (BAKMEM8_L = 0x670)
+                [!provide]                        PROVIDE (BAKMEM8_H = 0x671)
+                [!provide]                        PROVIDE (BAKMEM9 = 0x672)
+                [!provide]                        PROVIDE (BAKMEM9_L = 0x672)
+                [!provide]                        PROVIDE (BAKMEM9_H = 0x673)
+                [!provide]                        PROVIDE (BAKMEM10 = 0x674)
+                [!provide]                        PROVIDE (BAKMEM10_L = 0x674)
+                [!provide]                        PROVIDE (BAKMEM10_H = 0x675)
+                [!provide]                        PROVIDE (BAKMEM11 = 0x676)
+                [!provide]                        PROVIDE (BAKMEM11_L = 0x676)
+                [!provide]                        PROVIDE (BAKMEM11_H = 0x677)
+                [!provide]                        PROVIDE (BAKMEM12 = 0x678)
+                [!provide]                        PROVIDE (BAKMEM12_L = 0x678)
+                [!provide]                        PROVIDE (BAKMEM12_H = 0x679)
+                [!provide]                        PROVIDE (BAKMEM13 = 0x67a)
+                [!provide]                        PROVIDE (BAKMEM13_L = 0x67a)
+                [!provide]                        PROVIDE (BAKMEM13_H = 0x67b)
+                [!provide]                        PROVIDE (BAKMEM14 = 0x67c)
+                [!provide]                        PROVIDE (BAKMEM14_L = 0x67c)
+                [!provide]                        PROVIDE (BAKMEM14_H = 0x67d)
+                [!provide]                        PROVIDE (BAKMEM15 = 0x67e)
+                [!provide]                        PROVIDE (BAKMEM15_L = 0x67e)
+                [!provide]                        PROVIDE (BAKMEM15_H = 0x67f)
+                [!provide]                        PROVIDE (CRCDI = 0x1c0)
+                [!provide]                        PROVIDE (CRCDI_L = 0x1c0)
+                [!provide]                        PROVIDE (CRCDI_H = 0x1c1)
+                [!provide]                        PROVIDE (CRCDIRB = 0x1c2)
+                [!provide]                        PROVIDE (CRCDIRB_L = 0x1c2)
+                [!provide]                        PROVIDE (CRCDIRB_H = 0x1c3)
+                [!provide]                        PROVIDE (CRCINIRES = 0x1c4)
+                [!provide]                        PROVIDE (CRCINIRES_L = 0x1c4)
+                [!provide]                        PROVIDE (CRCINIRES_H = 0x1c5)
+                [!provide]                        PROVIDE (CRCRESR = 0x1c6)
+                [!provide]                        PROVIDE (CRCRESR_L = 0x1c6)
+                [!provide]                        PROVIDE (CRCRESR_H = 0x1c7)
+                [!provide]                        PROVIDE (CSCTL0 = 0x180)
+                [!provide]                        PROVIDE (CSCTL0_L = 0x180)
+                [!provide]                        PROVIDE (CSCTL0_H = 0x181)
+                [!provide]                        PROVIDE (CSCTL1 = 0x182)
+                [!provide]                        PROVIDE (CSCTL1_L = 0x182)
+                [!provide]                        PROVIDE (CSCTL1_H = 0x183)
+                [!provide]                        PROVIDE (CSCTL2 = 0x184)
+                [!provide]                        PROVIDE (CSCTL2_L = 0x184)
+                [!provide]                        PROVIDE (CSCTL2_H = 0x185)
+                [!provide]                        PROVIDE (CSCTL3 = 0x186)
+                [!provide]                        PROVIDE (CSCTL3_L = 0x186)
+                [!provide]                        PROVIDE (CSCTL3_H = 0x187)
+                [!provide]                        PROVIDE (CSCTL4 = 0x188)
+                [!provide]                        PROVIDE (CSCTL4_L = 0x188)
+                [!provide]                        PROVIDE (CSCTL4_H = 0x189)
+                [!provide]                        PROVIDE (CSCTL5 = 0x18a)
+                [!provide]                        PROVIDE (CSCTL5_L = 0x18a)
+                [!provide]                        PROVIDE (CSCTL5_H = 0x18b)
+                [!provide]                        PROVIDE (CSCTL6 = 0x18c)
+                [!provide]                        PROVIDE (CSCTL6_L = 0x18c)
+                [!provide]                        PROVIDE (CSCTL6_H = 0x18d)
+                [!provide]                        PROVIDE (CSCTL7 = 0x18e)
+                [!provide]                        PROVIDE (CSCTL7_L = 0x18e)
+                [!provide]                        PROVIDE (CSCTL7_H = 0x18f)
+                [!provide]                        PROVIDE (CSCTL8 = 0x190)
+                [!provide]                        PROVIDE (CSCTL8_L = 0x190)
+                [!provide]                        PROVIDE (CSCTL8_H = 0x191)
+                [!provide]                        PROVIDE (FRCTL0 = 0x1a0)
+                [!provide]                        PROVIDE (FRCTL0_L = 0x1a0)
+                [!provide]                        PROVIDE (FRCTL0_H = 0x1a1)
+                [!provide]                        PROVIDE (GCCTL0 = 0x1a4)
+                [!provide]                        PROVIDE (GCCTL0_L = 0x1a4)
+                [!provide]                        PROVIDE (GCCTL0_H = 0x1a5)
+                [!provide]                        PROVIDE (GCCTL1 = 0x1a6)
+                [!provide]                        PROVIDE (GCCTL1_L = 0x1a6)
+                [!provide]                        PROVIDE (GCCTL1_H = 0x1a7)
+                [!provide]                        PROVIDE (MPY = 0x4c0)
+                [!provide]                        PROVIDE (MPY_L = 0x4c0)
+                [!provide]                        PROVIDE (MPY_H = 0x4c1)
+                [!provide]                        PROVIDE (MPYS = 0x4c2)
+                [!provide]                        PROVIDE (MPYS_L = 0x4c2)
+                [!provide]                        PROVIDE (MPYS_H = 0x4c3)
+                [!provide]                        PROVIDE (MAC = 0x4c4)
+                [!provide]                        PROVIDE (MAC_L = 0x4c4)
+                [!provide]                        PROVIDE (MAC_H = 0x4c5)
+                [!provide]                        PROVIDE (MACS = 0x4c6)
+                [!provide]                        PROVIDE (MACS_L = 0x4c6)
+                [!provide]                        PROVIDE (MACS_H = 0x4c7)
+                [!provide]                        PROVIDE (OP2 = 0x4c8)
+                [!provide]                        PROVIDE (OP2_L = 0x4c8)
+                [!provide]                        PROVIDE (OP2_H = 0x4c9)
+                [!provide]                        PROVIDE (RESLO = 0x4ca)
+                [!provide]                        PROVIDE (RESLO_L = 0x4ca)
+                [!provide]                        PROVIDE (RESLO_H = 0x4cb)
+                [!provide]                        PROVIDE (RESHI = 0x4cc)
+                [!provide]                        PROVIDE (RESHI_L = 0x4cc)
+                [!provide]                        PROVIDE (RESHI_H = 0x4cd)
+                [!provide]                        PROVIDE (SUMEXT = 0x4ce)
+                [!provide]                        PROVIDE (SUMEXT_L = 0x4ce)
+                [!provide]                        PROVIDE (SUMEXT_H = 0x4cf)
+                [!provide]                        PROVIDE (MPY32L = 0x4d0)
+                [!provide]                        PROVIDE (MPY32L_L = 0x4d0)
+                [!provide]                        PROVIDE (MPY32L_H = 0x4d1)
+                [!provide]                        PROVIDE (MPY32H = 0x4d2)
+                [!provide]                        PROVIDE (MPY32H_L = 0x4d2)
+                [!provide]                        PROVIDE (MPY32H_H = 0x4d3)
+                [!provide]                        PROVIDE (MPYS32L = 0x4d4)
+                [!provide]                        PROVIDE (MPYS32L_L = 0x4d4)
+                [!provide]                        PROVIDE (MPYS32L_H = 0x4d5)
+                [!provide]                        PROVIDE (MPYS32H = 0x4d6)
+                [!provide]                        PROVIDE (MPYS32H_L = 0x4d6)
+                [!provide]                        PROVIDE (MPYS32H_H = 0x4d7)
+                [!provide]                        PROVIDE (MAC32L = 0x4d8)
+                [!provide]                        PROVIDE (MAC32L_L = 0x4d8)
+                [!provide]                        PROVIDE (MAC32L_H = 0x4d9)
+                [!provide]                        PROVIDE (MAC32H = 0x4da)
+                [!provide]                        PROVIDE (MAC32H_L = 0x4da)
+                [!provide]                        PROVIDE (MAC32H_H = 0x4db)
+                [!provide]                        PROVIDE (MACS32L = 0x4dc)
+                [!provide]                        PROVIDE (MACS32L_L = 0x4dc)
+                [!provide]                        PROVIDE (MACS32L_H = 0x4dd)
+                [!provide]                        PROVIDE (MACS32H = 0x4de)
+                [!provide]                        PROVIDE (MACS32H_L = 0x4de)
+                [!provide]                        PROVIDE (MACS32H_H = 0x4df)
+                [!provide]                        PROVIDE (OP2L = 0x4e0)
+                [!provide]                        PROVIDE (OP2L_L = 0x4e0)
+                [!provide]                        PROVIDE (OP2L_H = 0x4e1)
+                [!provide]                        PROVIDE (OP2H = 0x4e2)
+                [!provide]                        PROVIDE (OP2H_L = 0x4e2)
+                [!provide]                        PROVIDE (OP2H_H = 0x4e3)
+                [!provide]                        PROVIDE (RES0 = 0x4e4)
+                [!provide]                        PROVIDE (RES0_L = 0x4e4)
+                [!provide]                        PROVIDE (RES0_H = 0x4e5)
+                [!provide]                        PROVIDE (RES1 = 0x4e6)
+                [!provide]                        PROVIDE (RES1_L = 0x4e6)
+                [!provide]                        PROVIDE (RES1_H = 0x4e7)
+                [!provide]                        PROVIDE (RES2 = 0x4e8)
+                [!provide]                        PROVIDE (RES2_L = 0x4e8)
+                [!provide]                        PROVIDE (RES2_H = 0x4e9)
+                [!provide]                        PROVIDE (RES3 = 0x4ea)
+                [!provide]                        PROVIDE (RES3_L = 0x4ea)
+                [!provide]                        PROVIDE (RES3_H = 0x4eb)
+                [!provide]                        PROVIDE (MPY32CTL0 = 0x4ec)
+                [!provide]                        PROVIDE (MPY32CTL0_L = 0x4ec)
+                [!provide]                        PROVIDE (MPY32CTL0_H = 0x4ed)
+                [!provide]                        PROVIDE (PMMCTL0 = 0x120)
+                [!provide]                        PROVIDE (PMMCTL0_L = 0x120)
+                [!provide]                        PROVIDE (PMMCTL0_H = 0x121)
+                [!provide]                        PROVIDE (PMMCTL1 = 0x122)
+                [!provide]                        PROVIDE (PMMCTL1_L = 0x122)
+                [!provide]                        PROVIDE (PMMCTL1_H = 0x123)
+                [!provide]                        PROVIDE (PMMCTL2 = 0x124)
+                [!provide]                        PROVIDE (PMMCTL2_L = 0x124)
+                [!provide]                        PROVIDE (PMMCTL2_H = 0x125)
+                [!provide]                        PROVIDE (PMMIFG = 0x12a)
+                [!provide]                        PROVIDE (PMMIFG_L = 0x12a)
+                [!provide]                        PROVIDE (PMMIFG_H = 0x12b)
+                [!provide]                        PROVIDE (PMMIE = 0x12e)
+                [!provide]                        PROVIDE (PMMIE_L = 0x12e)
+                [!provide]                        PROVIDE (PMMIE_H = 0x12f)
+                [!provide]                        PROVIDE (PM5CTL0 = 0x130)
+                [!provide]                        PROVIDE (PM5CTL0_L = 0x130)
+                [!provide]                        PROVIDE (PM5CTL0_H = 0x131)
+                [!provide]                        PROVIDE (PAIN = 0x200)
+                [!provide]                        PROVIDE (PAIN_L = 0x200)
+                [!provide]                        PROVIDE (PAIN_H = 0x201)
+                [!provide]                        PROVIDE (PAOUT = 0x202)
+                [!provide]                        PROVIDE (PAOUT_L = 0x202)
+                [!provide]                        PROVIDE (PAOUT_H = 0x203)
+                [!provide]                        PROVIDE (PADIR = 0x204)
+                [!provide]                        PROVIDE (PADIR_L = 0x204)
+                [!provide]                        PROVIDE (PADIR_H = 0x205)
+                [!provide]                        PROVIDE (PAREN = 0x206)
+                [!provide]                        PROVIDE (PAREN_L = 0x206)
+                [!provide]                        PROVIDE (PAREN_H = 0x207)
+                [!provide]                        PROVIDE (PASEL0 = 0x20a)
+                [!provide]                        PROVIDE (PASEL0_L = 0x20a)
+                [!provide]                        PROVIDE (PASEL0_H = 0x20b)
+                [!provide]                        PROVIDE (PASEL1 = 0x20c)
+                [!provide]                        PROVIDE (PASEL1_L = 0x20c)
+                [!provide]                        PROVIDE (PASEL1_H = 0x20d)
+                [!provide]                        PROVIDE (PAIES = 0x218)
+                [!provide]                        PROVIDE (PAIES_L = 0x218)
+                [!provide]                        PROVIDE (PAIES_H = 0x219)
+                [!provide]                        PROVIDE (PAIE = 0x21a)
+                [!provide]                        PROVIDE (PAIE_L = 0x21a)
+                [!provide]                        PROVIDE (PAIE_H = 0x21b)
+                [!provide]                        PROVIDE (PAIFG = 0x21c)
+                [!provide]                        PROVIDE (PAIFG_L = 0x21c)
+                [!provide]                        PROVIDE (PAIFG_H = 0x21d)
+                [!provide]                        PROVIDE (P1IV = 0x20e)
+                [!provide]                        PROVIDE (P2IV = 0x21e)
+                [!provide]                        PROVIDE (PBIN = 0x220)
+                [!provide]                        PROVIDE (PBIN_L = 0x220)
+                [!provide]                        PROVIDE (PBIN_H = 0x221)
+                [!provide]                        PROVIDE (PBOUT = 0x222)
+                [!provide]                        PROVIDE (PBOUT_L = 0x222)
+                [!provide]                        PROVIDE (PBOUT_H = 0x223)
+                [!provide]                        PROVIDE (PBDIR = 0x224)
+                [!provide]                        PROVIDE (PBDIR_L = 0x224)
+                [!provide]                        PROVIDE (PBDIR_H = 0x225)
+                [!provide]                        PROVIDE (PBREN = 0x226)
+                [!provide]                        PROVIDE (PBREN_L = 0x226)
+                [!provide]                        PROVIDE (PBREN_H = 0x227)
+                [!provide]                        PROVIDE (PBSEL0 = 0x22a)
+                [!provide]                        PROVIDE (PBSEL0_L = 0x22a)
+                [!provide]                        PROVIDE (PBSEL0_H = 0x22b)
+                [!provide]                        PROVIDE (PBSEL1 = 0x22c)
+                [!provide]                        PROVIDE (PBSEL1_L = 0x22c)
+                [!provide]                        PROVIDE (PBSEL1_H = 0x22d)
+                [!provide]                        PROVIDE (RTCCTL = 0x300)
+                [!provide]                        PROVIDE (RTCCTL_L = 0x300)
+                [!provide]                        PROVIDE (RTCCTL_H = 0x301)
+                [!provide]                        PROVIDE (RTCIV = 0x304)
+                [!provide]                        PROVIDE (RTCIV_L = 0x304)
+                [!provide]                        PROVIDE (RTCIV_H = 0x305)
+                [!provide]                        PROVIDE (RTCMOD = 0x308)
+                [!provide]                        PROVIDE (RTCMOD_L = 0x308)
+                [!provide]                        PROVIDE (RTCMOD_H = 0x309)
+                [!provide]                        PROVIDE (RTCCNT = 0x30c)
+                [!provide]                        PROVIDE (RTCCNT_L = 0x30c)
+                [!provide]                        PROVIDE (RTCCNT_H = 0x30d)
+                [!provide]                        PROVIDE (SFRIE1 = 0x100)
+                [!provide]                        PROVIDE (SFRIE1_L = 0x100)
+                [!provide]                        PROVIDE (SFRIE1_H = 0x101)
+                [!provide]                        PROVIDE (SFRIFG1 = 0x102)
+                [!provide]                        PROVIDE (SFRIFG1_L = 0x102)
+                [!provide]                        PROVIDE (SFRIFG1_H = 0x103)
+                [!provide]                        PROVIDE (SFRRPCR = 0x104)
+                [!provide]                        PROVIDE (SFRRPCR_L = 0x104)
+                [!provide]                        PROVIDE (SFRRPCR_H = 0x105)
+                [!provide]                        PROVIDE (SYSCTL = 0x140)
+                [!provide]                        PROVIDE (SYSCTL_L = 0x140)
+                [!provide]                        PROVIDE (SYSCTL_H = 0x141)
+                [!provide]                        PROVIDE (SYSBSLC = 0x142)
+                [!provide]                        PROVIDE (SYSBSLC_L = 0x142)
+                [!provide]                        PROVIDE (SYSBSLC_H = 0x143)
+                [!provide]                        PROVIDE (SYSJMBC = 0x146)
+                [!provide]                        PROVIDE (SYSJMBC_L = 0x146)
+                [!provide]                        PROVIDE (SYSJMBC_H = 0x147)
+                [!provide]                        PROVIDE (SYSJMBI0 = 0x148)
+                [!provide]                        PROVIDE (SYSJMBI0_L = 0x148)
+                [!provide]                        PROVIDE (SYSJMBI0_H = 0x149)
+                [!provide]                        PROVIDE (SYSJMBI1 = 0x14a)
+                [!provide]                        PROVIDE (SYSJMBI1_L = 0x14a)
+                [!provide]                        PROVIDE (SYSJMBI1_H = 0x14b)
+                [!provide]                        PROVIDE (SYSJMBO0 = 0x14c)
+                [!provide]                        PROVIDE (SYSJMBO0_L = 0x14c)
+                [!provide]                        PROVIDE (SYSJMBO0_H = 0x14d)
+                [!provide]                        PROVIDE (SYSJMBO1 = 0x14e)
+                [!provide]                        PROVIDE (SYSJMBO1_L = 0x14e)
+                [!provide]                        PROVIDE (SYSJMBO1_H = 0x14f)
+                [!provide]                        PROVIDE (SYSBERRIV = 0x158)
+                [!provide]                        PROVIDE (SYSBERRIV_L = 0x158)
+                [!provide]                        PROVIDE (SYSBERRIV_H = 0x159)
+                [!provide]                        PROVIDE (SYSUNIV = 0x15a)
+                [!provide]                        PROVIDE (SYSUNIV_L = 0x15a)
+                [!provide]                        PROVIDE (SYSUNIV_H = 0x15b)
+                [!provide]                        PROVIDE (SYSSNIV = 0x15c)
+                [!provide]                        PROVIDE (SYSSNIV_L = 0x15c)
+                [!provide]                        PROVIDE (SYSSNIV_H = 0x15d)
+                [!provide]                        PROVIDE (SYSRSTIV = 0x15e)
+                [!provide]                        PROVIDE (SYSRSTIV_L = 0x15e)
+                [!provide]                        PROVIDE (SYSRSTIV_H = 0x15f)
+                [!provide]                        PROVIDE (SYSCFG0 = 0x160)
+                [!provide]                        PROVIDE (SYSCFG0_L = 0x160)
+                [!provide]                        PROVIDE (SYSCFG0_H = 0x161)
+                [!provide]                        PROVIDE (SYSCFG1 = 0x162)
+                [!provide]                        PROVIDE (SYSCFG1_L = 0x162)
+                [!provide]                        PROVIDE (SYSCFG1_H = 0x163)
+                [!provide]                        PROVIDE (SYSCFG2 = 0x164)
+                [!provide]                        PROVIDE (SYSCFG2_L = 0x164)
+                [!provide]                        PROVIDE (SYSCFG2_H = 0x165)
+                [!provide]                        PROVIDE (TA0CTL = 0x380)
+                [!provide]                        PROVIDE (TA0CCTL0 = 0x382)
+                [!provide]                        PROVIDE (TA0CCTL1 = 0x384)
+                [!provide]                        PROVIDE (TA0CCTL2 = 0x386)
+                [!provide]                        PROVIDE (TA0R = 0x390)
+                [!provide]                        PROVIDE (TA0CCR0 = 0x392)
+                [!provide]                        PROVIDE (TA0CCR1 = 0x394)
+                [!provide]                        PROVIDE (TA0CCR2 = 0x396)
+                [!provide]                        PROVIDE (TA0IV = 0x3ae)
+                [!provide]                        PROVIDE (TA0EX0 = 0x3a0)
+                [!provide]                        PROVIDE (TA1CTL = 0x3c0)
+                [!provide]                        PROVIDE (TA1CCTL0 = 0x3c2)
+                [!provide]                        PROVIDE (TA1CCTL1 = 0x3c4)
+                [!provide]                        PROVIDE (TA1CCTL2 = 0x3c6)
+                [!provide]                        PROVIDE (TA1R = 0x3d0)
+                [!provide]                        PROVIDE (TA1CCR0 = 0x3d2)
+                [!provide]                        PROVIDE (TA1CCR1 = 0x3d4)
+                [!provide]                        PROVIDE (TA1CCR2 = 0x3d6)
+                [!provide]                        PROVIDE (TA1IV = 0x3ee)
+                [!provide]                        PROVIDE (TA1EX0 = 0x3e0)
+                [!provide]                        PROVIDE (TA2CTL = 0x400)
+                [!provide]                        PROVIDE (TA2CCTL0 = 0x402)
+                [!provide]                        PROVIDE (TA2CCTL1 = 0x404)
+                [!provide]                        PROVIDE (TA2R = 0x410)
+                [!provide]                        PROVIDE (TA2CCR0 = 0x412)
+                [!provide]                        PROVIDE (TA2CCR1 = 0x414)
+                [!provide]                        PROVIDE (TA2IV = 0x42e)
+                [!provide]                        PROVIDE (TA2EX0 = 0x420)
+                [!provide]                        PROVIDE (TA3CTL = 0x440)
+                [!provide]                        PROVIDE (TA3CCTL0 = 0x442)
+                [!provide]                        PROVIDE (TA3CCTL1 = 0x444)
+                [!provide]                        PROVIDE (TA3R = 0x450)
+                [!provide]                        PROVIDE (TA3CCR0 = 0x452)
+                [!provide]                        PROVIDE (TA3CCR1 = 0x454)
+                [!provide]                        PROVIDE (TA3IV = 0x46e)
+                [!provide]                        PROVIDE (TA3EX0 = 0x460)
+                [!provide]                        PROVIDE (UCA0CTLW0 = 0x500)
+                [!provide]                        PROVIDE (UCA0CTLW0_L = 0x500)
+                [!provide]                        PROVIDE (UCA0CTLW0_H = 0x501)
+                [!provide]                        PROVIDE (UCA0CTLW1 = 0x502)
+                [!provide]                        PROVIDE (UCA0CTLW1_L = 0x502)
+                [!provide]                        PROVIDE (UCA0CTLW1_H = 0x503)
+                [!provide]                        PROVIDE (UCA0BRW = 0x506)
+                [!provide]                        PROVIDE (UCA0BRW_L = 0x506)
+                [!provide]                        PROVIDE (UCA0BRW_H = 0x507)
+                [!provide]                        PROVIDE (UCA0MCTLW = 0x508)
+                [!provide]                        PROVIDE (UCA0MCTLW_L = 0x508)
+                [!provide]                        PROVIDE (UCA0MCTLW_H = 0x509)
+                [!provide]                        PROVIDE (UCA0STATW = 0x50a)
+                [!provide]                        PROVIDE (UCA0RXBUF = 0x50c)
+                [!provide]                        PROVIDE (UCA0RXBUF_L = 0x50c)
+                [!provide]                        PROVIDE (UCA0RXBUF_H = 0x50d)
+                [!provide]                        PROVIDE (UCA0TXBUF = 0x50e)
+                [!provide]                        PROVIDE (UCA0TXBUF_L = 0x50e)
+                [!provide]                        PROVIDE (UCA0TXBUF_H = 0x50f)
+                [!provide]                        PROVIDE (UCA0ABCTL = 0x510)
+                [!provide]                        PROVIDE (UCA0IRCTL = 0x512)
+                [!provide]                        PROVIDE (UCA0IRCTL_L = 0x512)
+                [!provide]                        PROVIDE (UCA0IRCTL_H = 0x513)
+                [!provide]                        PROVIDE (UCA0IE = 0x51a)
+                [!provide]                        PROVIDE (UCA0IE_L = 0x51a)
+                [!provide]                        PROVIDE (UCA0IE_H = 0x51b)
+                [!provide]                        PROVIDE (UCA0IFG = 0x51c)
+                [!provide]                        PROVIDE (UCA0IFG_L = 0x51c)
+                [!provide]                        PROVIDE (UCA0IFG_H = 0x51d)
+                [!provide]                        PROVIDE (UCA0IV = 0x51e)
+                [!provide]                        PROVIDE (UCA1CTLW0 = 0x520)
+                [!provide]                        PROVIDE (UCA1CTLW0_L = 0x520)
+                [!provide]                        PROVIDE (UCA1CTLW0_H = 0x521)
+                [!provide]                        PROVIDE (UCA1CTLW1 = 0x522)
+                [!provide]                        PROVIDE (UCA1CTLW1_L = 0x522)
+                [!provide]                        PROVIDE (UCA1CTLW1_H = 0x523)
+                [!provide]                        PROVIDE (UCA1BRW = 0x526)
+                [!provide]                        PROVIDE (UCA1BRW_L = 0x526)
+                [!provide]                        PROVIDE (UCA1BRW_H = 0x527)
+                [!provide]                        PROVIDE (UCA1MCTLW = 0x528)
+                [!provide]                        PROVIDE (UCA1MCTLW_L = 0x528)
+                [!provide]                        PROVIDE (UCA1MCTLW_H = 0x529)
+                [!provide]                        PROVIDE (UCA1STATW = 0x52a)
+                [!provide]                        PROVIDE (UCA1RXBUF = 0x52c)
+                [!provide]                        PROVIDE (UCA1RXBUF_L = 0x52c)
+                [!provide]                        PROVIDE (UCA1RXBUF_H = 0x52d)
+                [!provide]                        PROVIDE (UCA1TXBUF = 0x52e)
+                [!provide]                        PROVIDE (UCA1TXBUF_L = 0x52e)
+                [!provide]                        PROVIDE (UCA1TXBUF_H = 0x52f)
+                [!provide]                        PROVIDE (UCA1ABCTL = 0x530)
+                [!provide]                        PROVIDE (UCA1IRCTL = 0x532)
+                [!provide]                        PROVIDE (UCA1IRCTL_L = 0x532)
+                [!provide]                        PROVIDE (UCA1IRCTL_H = 0x533)
+                [!provide]                        PROVIDE (UCA1IE = 0x53a)
+                [!provide]                        PROVIDE (UCA1IE_L = 0x53a)
+                [!provide]                        PROVIDE (UCA1IE_H = 0x53b)
+                [!provide]                        PROVIDE (UCA1IFG = 0x53c)
+                [!provide]                        PROVIDE (UCA1IFG_L = 0x53c)
+                [!provide]                        PROVIDE (UCA1IFG_H = 0x53d)
+                [!provide]                        PROVIDE (UCA1IV = 0x53e)
+                [!provide]                        PROVIDE (UCB0CTLW0 = 0x540)
+                [!provide]                        PROVIDE (UCB0CTLW0_L = 0x540)
+                [!provide]                        PROVIDE (UCB0CTLW0_H = 0x541)
+                [!provide]                        PROVIDE (UCB0CTLW1 = 0x542)
+                [!provide]                        PROVIDE (UCB0CTLW1_L = 0x542)
+                [!provide]                        PROVIDE (UCB0CTLW1_H = 0x543)
+                [!provide]                        PROVIDE (UCB0BRW = 0x546)
+                [!provide]                        PROVIDE (UCB0BRW_L = 0x546)
+                [!provide]                        PROVIDE (UCB0BRW_H = 0x547)
+                [!provide]                        PROVIDE (UCB0STATW = 0x548)
+                [!provide]                        PROVIDE (UCB0STATW_L = 0x548)
+                [!provide]                        PROVIDE (UCB0STATW_H = 0x549)
+                [!provide]                        PROVIDE (UCB0TBCNT = 0x54a)
+                [!provide]                        PROVIDE (UCB0TBCNT_L = 0x54a)
+                [!provide]                        PROVIDE (UCB0TBCNT_H = 0x54b)
+                [!provide]                        PROVIDE (UCB0RXBUF = 0x54c)
+                [!provide]                        PROVIDE (UCB0RXBUF_L = 0x54c)
+                [!provide]                        PROVIDE (UCB0RXBUF_H = 0x54d)
+                [!provide]                        PROVIDE (UCB0TXBUF = 0x54e)
+                [!provide]                        PROVIDE (UCB0TXBUF_L = 0x54e)
+                [!provide]                        PROVIDE (UCB0TXBUF_H = 0x54f)
+                [!provide]                        PROVIDE (UCB0I2COA0 = 0x554)
+                [!provide]                        PROVIDE (UCB0I2COA0_L = 0x554)
+                [!provide]                        PROVIDE (UCB0I2COA0_H = 0x555)
+                [!provide]                        PROVIDE (UCB0I2COA1 = 0x556)
+                [!provide]                        PROVIDE (UCB0I2COA1_L = 0x556)
+                [!provide]                        PROVIDE (UCB0I2COA1_H = 0x557)
+                [!provide]                        PROVIDE (UCB0I2COA2 = 0x558)
+                [!provide]                        PROVIDE (UCB0I2COA2_L = 0x558)
+                [!provide]                        PROVIDE (UCB0I2COA2_H = 0x559)
+                [!provide]                        PROVIDE (UCB0I2COA3 = 0x55a)
+                [!provide]                        PROVIDE (UCB0I2COA3_L = 0x55a)
+                [!provide]                        PROVIDE (UCB0I2COA3_H = 0x55b)
+                [!provide]                        PROVIDE (UCB0ADDRX = 0x55c)
+                [!provide]                        PROVIDE (UCB0ADDRX_L = 0x55c)
+                [!provide]                        PROVIDE (UCB0ADDRX_H = 0x55d)
+                [!provide]                        PROVIDE (UCB0ADDMASK = 0x55e)
+                [!provide]                        PROVIDE (UCB0ADDMASK_L = 0x55e)
+                [!provide]                        PROVIDE (UCB0ADDMASK_H = 0x55f)
+                [!provide]                        PROVIDE (UCB0I2CSA = 0x560)
+                [!provide]                        PROVIDE (UCB0I2CSA_L = 0x560)
+                [!provide]                        PROVIDE (UCB0I2CSA_H = 0x561)
+                [!provide]                        PROVIDE (UCB0IE = 0x56a)
+                [!provide]                        PROVIDE (UCB0IE_L = 0x56a)
+                [!provide]                        PROVIDE (UCB0IE_H = 0x56b)
+                [!provide]                        PROVIDE (UCB0IFG = 0x56c)
+                [!provide]                        PROVIDE (UCB0IFG_L = 0x56c)
+                [!provide]                        PROVIDE (UCB0IFG_H = 0x56d)
+                [!provide]                        PROVIDE (UCB0IV = 0x56e)
+                [!provide]                        PROVIDE (WDTCTL = 0x1cc)
+                [!provide]                        PROVIDE (WDTCTL_L = 0x1cc)
+                [!provide]                        PROVIDE (WDTCTL_H = 0x1cd)
+
+.bakmem
+OUTPUT(msp430fr2433.elf elf32-msp430)

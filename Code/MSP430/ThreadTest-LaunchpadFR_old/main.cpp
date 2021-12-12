@@ -2,24 +2,22 @@
 #include <msp430.h>
 #endif
 
-#include <cstddef>
-#include <cstdint>
-
-#ifdef __x86_64__
+#include <unistd.h>
 #include <stdio.h>
-#endif
+#include <stdint.h>
+
+//call instruction
+//    SP -= 2
+//    *SP = PC
+//    jmp dst
 
 #ifdef __x86_64__
 
-#define _SPGet(dst)
-#define _SPSet(src)
-
-#else
-
-#define _SPGet(dst) asm("mov r1, %0" : "=m" (dst) :           : )
-#define _SPSet(src) asm("mov %0, r1" :            : "m" (src) : )
+void* SP = nullptr;
+#define reta
 
 #endif
+
 
 static void _start();
 static void _yield();
@@ -46,9 +44,12 @@ using _Task = Task<0>;
 
 using _TaskRunFn = void(*)(void*);
 
-static _Task* _CurrentTask = nullptr;
-static _VoidFn _CurrentTaskRunFn = nullptr;
-static void* _SP = nullptr; // Saved stack pointer
+static inline _Task* _CurrentTask = nullptr;
+static inline _VoidFn _CurrentTaskRunFn = nullptr;
+static inline void* _SP = nullptr; // Saved stack pointer
+
+#define _SPGet(dst) asm("mov r1, %0" : "=m" (dst) :           : )
+#define _SPSet(src) asm("mov %0, r1" :            : "m" (src) : )
 
 static void _start() {
     // Future invocations should execute _resume
