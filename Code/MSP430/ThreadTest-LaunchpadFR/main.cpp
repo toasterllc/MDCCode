@@ -44,6 +44,28 @@ uint8_t StackMain[StackMainSize];
 asm(".global __stack");
 asm(".equ __stack, StackMain+" Stringify(StackMainSize));
 
+
+
+// sbrk: custom implementation that accounts for our heap/stack layout.
+// With our custom layout, we know the limit for the heap is `_heap_end`,
+// so abort if we try to expand the heap beyond that.
+extern "C" char* sbrk(int adj) {
+    extern uint8_t _heap_start[];
+    extern uint8_t _heap_end[];
+    
+    static uint8_t* heap = _heap_start;
+    const size_t rem = _heap_end-heap;
+    
+    if (rem < (size_t)adj) {
+        extern void abort();
+        abort();
+    }
+    
+    heap += adj;
+    return (char*)heap;
+}
+
+
 int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;

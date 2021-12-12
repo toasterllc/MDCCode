@@ -21,7 +21,4 @@ OBJS__QUOTED += \
 CPP_DEPS__QUOTED += \
 "main.d" 
 
-CPP_SRCS__QUOTED += \
-"../main.cpp" 
-
 

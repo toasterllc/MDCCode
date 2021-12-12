@@ -321,7 +321,12 @@ SECTIONS
     *(.noinit)
     . = ALIGN(2);
     PROVIDE (__noinit_end = .);
-    end = .;
+  } > RAM
+
+  .stack (NOLOAD) :
+  {
+    *(.stack)
+    *(.stack.*)
   } > RAM
 
   /* We create this section so that "end" will always be in the
@@ -330,29 +335,15 @@ SECTIONS
   .heap (NOLOAD) :
   {
     . = ALIGN(2);
-    __heap_start__ = .;
-    _end = __heap_start__;
-    PROVIDE (end = .);
-    KEEP (*(.heap))
-    _end = .;
-    PROVIDE (end = .);
-    /* This word is here so that the section is not empty, and thus
-       not discarded by the linker.  The actual value does not matter
-       and is ignored.  */
-    LONG(0);
-    __heap_end__ = .;
-    __HeapLimit = __heap_end__;
+    _heap_start = .;
+    . = ORIGIN (RAM) + LENGTH(RAM);
+    . = ALIGN(2);
+    _heap_end = .;
   } > RAM
   
   /* WARNING: Do not place anything in RAM here.
      The heap section must be the last section in RAM and the stack
      section must be placed at the very end of the RAM region.  */
-
-  .stack :
-  {
-    *(.stack)
-    *(.stack.*)
-  } > RAM
 
   .infoA (NOLOAD) : {} > INFOA              /* MSP430 INFO FLASH MEMORY SEGMENTS */
 

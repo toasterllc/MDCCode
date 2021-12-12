@@ -28,7 +28,7 @@ public:
         }
     }
     
-    [[gnu::noinline]]
+    [[gnu::noinline]] // Disable inlining because PC must be pushed onto the stack when called
     static void Yield() {
         // Save stack pointer
         _SPSave(_TaskState::Current->sp);
@@ -46,7 +46,7 @@ private:
         if constexpr (sizeof...(T_Tasks)) _Run<T_Tasks...>();
     }
     
-    [[gnu::noinline]]
+    [[gnu::noinline]] // Disable inlining because PC must be pushed onto the stack when called
     static void _Start() {
         // Future invocations should execute _Resume
         _TaskState::Current->go = _Resume;
@@ -68,7 +68,7 @@ private:
         return;
     }
     
-    [[gnu::noinline]]
+    [[gnu::noinline]] // Disable inlining because PC must be pushed onto the stack when called
     static void _Resume() {
         // Save scheduler's stack pointer
         _SPSave(_TaskState::SP);
@@ -78,7 +78,7 @@ private:
         return;
     }
     
-    [[gnu::noinline]]
+    [[gnu::noinline]] // Disable inlining because PC must be pushed onto the stack when called
     static void _Nop() {
         // Return to scheduler
         return;
