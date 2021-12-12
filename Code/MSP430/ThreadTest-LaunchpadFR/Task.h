@@ -1,5 +1,7 @@
 #pragma once
 
+namespace Toastbox {
+
 struct _TaskState {
     using VoidFn = void(*)();
     
@@ -107,3 +109,5 @@ private:
     
     friend Scheduler;
 };
+
+} // namespace Toastbox

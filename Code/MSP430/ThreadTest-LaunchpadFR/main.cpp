@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <stdio.h>
 #include "Task.h"
+using namespace Toastbox;
 
 class SDTask : public Task<SDTask> {
 public:
