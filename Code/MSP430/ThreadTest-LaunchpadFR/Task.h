@@ -86,9 +86,6 @@ private:
     
     class Task;
     friend Task;
-    
-//    template <typename T_Subclass>
-//    friend Task<T_Subclass>;
 };
 
 template <typename T_Subclass>
