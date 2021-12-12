@@ -6,8 +6,8 @@
 CPP_SRCS += \
 ../main.cpp 
 
-LD_SRCS += \
-../msp430fr2433.ld 
+ELF_SRCS += \
+../msp430fr2433.elf 
 
 OBJS += \
 ./main.o 
@@ -23,5 +23,8 @@ CPP_DEPS__QUOTED += \
 
 CPP_SRCS__QUOTED += \
 "../main.cpp" 
+
+ELF_SRCS__QUOTED += \
+"../msp430fr2433.elf" 
 
 

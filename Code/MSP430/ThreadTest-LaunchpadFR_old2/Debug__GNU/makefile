@@ -9,10 +9,6 @@ GEN_CMDS__FLAG :=
 
 ORDERED_OBJS += \
 "./main.o" \
-"../main.o" \
--T"../Linker.ld" \
--T"../lnk_msp430fr2433.cmd" \
--T"../msp430fr2433.ld" \
 $(GEN_CMDS__FLAG) \
 -Wl,--start-group \
 -lgcc \
@@ -137,11 +133,11 @@ BIN_OUTPUTS__QUOTED += \
 
 
 # All Target
-all: $(OBJS) $(LD_SRCS) $(CMD_SRCS) $(GEN_CMDS)
+all: $(OBJS) $(GEN_CMDS)
 	@$(MAKE) --no-print-directory -Onone "ThreadTest-LaunchpadFR.out"
 
 # Tool invocations
-ThreadTest-LaunchpadFR.out: $(OBJS) $(LD_SRCS) $(CMD_SRCS) $(GEN_CMDS)
+ThreadTest-LaunchpadFR.out: $(OBJS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: GNU Linker'
 	"/home/dave/ti/ccs1040/ccs/tools/compiler/msp430-gcc-9.3.1.11_linux64/bin/msp430-elf-gcc-9.3.1" -mhwmult=f5series -fno-exceptions -Og -g -gdwarf-3 -gstrict-dwarf -Wall -mmcu=msp430fr2433 -Wl,-Map,"ThreadTest-LaunchpadFR.map" -Wl,--gc-sections -L"/home/dave/ti/ccs1040/ccs/ccs_base/msp430/include_gcc" -mmcu=msp430fr2433 -o"ThreadTest-LaunchpadFR.out" $(ORDERED_OBJS)

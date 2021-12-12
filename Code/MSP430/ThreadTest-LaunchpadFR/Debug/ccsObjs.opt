@@ -1,1 +1,1 @@
-"./main.obj" "../main.o" "../Linker.ld" "../lnk_msp430fr2433.cmd" -llibmath.a -llibc.a 
+"./main.o" -T"../msp430fr2433.ld" -Wl,--start-group -lgcc -lc -Wl,--end-group 

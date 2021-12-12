@@ -5,12 +5,13 @@
 	<deviceVariant value="MSP430FR2433"/>
 	<deviceFamily value="MSP430"/>
 	<deviceEndianness value="little"/>
-	<codegenToolVersion value="GNU_9.3.1.11:Mitto Systems Limited"/>
+	<codegenToolVersion value="20.2.5.LTS"/>
 	<isElfFormat value="true"/>
 	<connection value="common/targetdb/connections/TIMSP430-USB.xml"/>
-	<linkerCommandFile value="msp430fr2433.ld"/>
+	<linkerCommandFile value="lnk_msp430fr2433.cmd"/>
 	<rts value="libc.a"/>
 	<createSlaveProjects value=""/>
-	<templateProperties value="id=com.ti.common.project.core.emptyProjectWithMainTemplate_gnu_msp430"/>
+	<templateProperties value="id=com.ti.common.project.core.emptyProjectWithMainTemplate_msp430"/>
 	<filesToOpen value="main.c"/>
+	<isTargetManual value="false"/>
 </projectOptions>

@@ -2,19 +2,19 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-CG_TOOL_ROOT := /home/dave/ti/ccs1040/ccs/tools/compiler/msp430-gcc-9.3.1.11_linux64
+CG_TOOL_ROOT := /home/dave/ti/ccs1040/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS
 
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
-"./main.o" \
--T"../msp430fr2433.ld" \
+"./main.obj" \
+"../main.o" \
+"../Linker.ld" \
+"../lnk_msp430fr2433.cmd" \
 $(GEN_CMDS__FLAG) \
--Wl,--start-group \
--lgcc \
--lc \
--Wl,--end-group \
+-llibmath.a \
+-llibc.a \
 
 -include ../makefile.init
 
@@ -134,28 +134,28 @@ BIN_OUTPUTS__QUOTED += \
 
 
 # All Target
-all: $(OBJS) $(LD_SRCS) $(GEN_CMDS)
+all: $(OBJS) $(LD_SRCS) $(CMD_SRCS) $(GEN_CMDS)
 	@$(MAKE) --no-print-directory -Onone "ThreadTest-LaunchpadFR.out"
 
 # Tool invocations
-ThreadTest-LaunchpadFR.out: $(OBJS) $(LD_SRCS) $(GEN_CMDS)
+ThreadTest-LaunchpadFR.out: $(OBJS) $(LD_SRCS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
-	@echo 'Invoking: GNU Linker'
-	"/home/dave/ti/ccs1040/ccs/tools/compiler/msp430-gcc-9.3.1.11_linux64/bin/msp430-elf-gcc-9.3.1" -mhwmult=f5series -fno-exceptions -Og -g -gdwarf-3 -gstrict-dwarf -Wall -mmcu=msp430fr2433 -Wl,-Map,"ThreadTest-LaunchpadFR.map" -Wl,--gc-sections -L"/home/dave/ti/ccs1040/ccs/ccs_base/msp430/include_gcc" -mmcu=msp430fr2433 -o"ThreadTest-LaunchpadFR.out" $(ORDERED_OBJS)
+	@echo 'Invoking: MSP430 Linker'
+	"/home/dave/ti/ccs1040/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/bin/cl430" -vmspx --use_hw_mpy=F5 --advice:power=all --advice:hw_config=all --define=__MSP430FR2433__ -g --printf_support=minimal --diag_warning=225 --diag_wrap=off --display_error_number --silicon_errata=CPU21 --silicon_errata=CPU22 --silicon_errata=CPU40 -z -m"ThreadTest-LaunchpadFR.map" --heap_size=160 --stack_size=160 --cinit_hold_wdt=on -i"/home/dave/ti/ccs1040/ccs/ccs_base/msp430/include" -i"/home/dave/ti/ccs1040/ccs/ccs_base/msp430/lib/5xx_6xx_FRxx" -i"/home/dave/ti/ccs1040/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/lib" -i"/home/dave/ti/ccs1040/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="ThreadTest-LaunchpadFR_linkInfo.xml" --use_hw_mpy=F5 --rom_model -o "ThreadTest-LaunchpadFR.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
 ThreadTest-LaunchpadFR.hex: $(EXE_OUTPUTS)
 	@echo 'Building secondary target: "$@"'
-	@echo 'Invoking: GNU Objcopy Utility'
-	"/home/dave/ti/ccs1040/ccs/tools/compiler/msp430-gcc-9.3.1.11_linux64/bin/msp430-elf-objcopy"  $(EXE_OUTPUTS__QUOTED) "ThreadTest-LaunchpadFR.hex"
+	@echo 'Invoking: MSP430 Hex Utility'
+	"/home/dave/ti/ccs1040/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/bin/hex430" --memwidth=8 --romwidth=8 --diag_wrap=off -o "ThreadTest-LaunchpadFR.hex" $(EXE_OUTPUTS__QUOTED)
 	@echo 'Finished building secondary target: "$@"'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main.o" 
+	-$(RM) "main.obj" 
 	-$(RM) "main.d" 
 	-@echo 'Finished clean'
 	-@echo ' '

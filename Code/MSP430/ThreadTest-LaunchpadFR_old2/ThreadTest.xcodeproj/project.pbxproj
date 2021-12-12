@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		55FD01BD27656899005505B5 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55FD01BC27656899005505B5 /* main.cpp */; };
+		55FD01C02765BB28005505B5 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 55FD01BF2765BB28005505B5 /* Makefile */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,8 @@
 /* Begin PBXFileReference section */
 		55FD01B227656881005505B5 /* ThreadTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ThreadTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		55FD01BC27656899005505B5 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		55FD01BF2765BB28005505B5 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		55FD01C12765BFF0005505B5 /* lnk_msp430fr2433.cmd */ = {isa = PBXFileReference; lastKnownFileType = text; path = lnk_msp430fr2433.cmd; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,7 +44,9 @@
 		55FD01A927656881005505B5 = {
 			isa = PBXGroup;
 			children = (
+				55FD01C12765BFF0005505B5 /* lnk_msp430fr2433.cmd */,
 				55FD01BC27656899005505B5 /* main.cpp */,
+				55FD01BF2765BB28005505B5 /* Makefile */,
 				55FD01B327656881005505B5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -132,6 +137,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55FD01C02765BB28005505B5 /* Makefile in Sources */,
 				55FD01BD27656899005505B5 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

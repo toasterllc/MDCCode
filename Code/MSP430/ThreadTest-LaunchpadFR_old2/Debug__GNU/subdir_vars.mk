@@ -6,18 +6,8 @@
 CPP_SRCS += \
 ../main.cpp 
 
-CMD_SRCS += \
-../lnk_msp430fr2433.cmd 
-
-O_SRCS += \
-../main.o 
-
 ELF_SRCS += \
 ../msp430fr2433.elf 
-
-LD_SRCS += \
-../Linker.ld \
-../msp430fr2433.ld 
 
 OBJS += \
 ./main.o 
