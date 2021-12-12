@@ -347,11 +347,19 @@ SECTIONS
      The heap section must be the last section in RAM and the stack
      section must be placed at the very end of the RAM region.  */
 
-  .stack (ORIGIN (RAM) + LENGTH(RAM)) :
+  .stack :
   {
+    . = ALIGN(2);
     PROVIDE (__stack = .);
     *(.stack)
-  }
+    . = ALIGN(2);
+  } > RAM
+  
+  .meow : {
+    . = ALIGN(2);
+    *(.meow)
+    . = ALIGN(2);
+  } >RAM
 
   .infoA (NOLOAD) : {} > INFOA              /* MSP430 INFO FLASH MEMORY SEGMENTS */
 
