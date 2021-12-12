@@ -54,6 +54,17 @@ static inline void* _SP = nullptr; // Saved stack pointer
 static void _start() {
     // Future invocations should execute _resume
     _CurrentTask->_go = _resume;
+    
+    
+    asm("mov R1, _SP");
+    
+//    asm(
+//        "mov %src, %dst"    :   // assembly instruction
+//        [dst] "=r" (dst)    :   // ouputs
+//        [src] "m" (src)     :   // inputs
+//                                // clobbered registers
+//    );
+    
     // Save scheduler's stack pointer
     _SP = SP;
     // Restore thread's stack pointer
