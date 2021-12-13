@@ -1,7 +1,7 @@
 #include <msp430.h>
 #include <cstddef>
 #include <cstdint>
-#include <stdio.h>
+//#include <stdio.h>
 #include "Task.h"
 using namespace Toastbox;
 
@@ -18,7 +18,7 @@ class SDTask : public Task<SDTask> {
 public:
     static void Run() {
         for (;;) {
-            puts("[SDTask]\n");
+//            puts("[SDTask]\n");
             _sd.i++;
             Scheduler::Yield();
         }
@@ -34,7 +34,7 @@ public:
         for (;;) {
             Scheduler::Wait([&] { return !(_sd.i % 0x4); });
             _img.i++;
-            puts("[ImgTask]\n");
+//            puts("[ImgTask]\n");
             // Force a yield, otherwise our Wait() expression will never return false and we'll never yield
             Scheduler::Yield();
         }
@@ -90,6 +90,12 @@ void Toastbox::IntState::WaitForInterrupt() {
     const bool prevEn = Toastbox::IntState::InterruptsEnabled();
     __bis_SR_register(GIE | LPM1_bits);
     if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
+}
+
+extern "C"
+[[noreturn]]
+void abort() {
+    for (;;);
 }
 
 int main() {
