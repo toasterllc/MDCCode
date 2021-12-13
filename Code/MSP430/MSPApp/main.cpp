@@ -388,7 +388,8 @@ int main() {
     return 0;
 }
 
-[[noreturn]] void abort() {
+extern "C" [[noreturn]]
+void abort() {
     _Pin::DEBUG_OUT::Init();
     for (bool x=0;; x=!x) {
         _Pin::DEBUG_OUT::Write(x);

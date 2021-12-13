@@ -92,8 +92,7 @@ void Toastbox::IntState::WaitForInterrupt() {
     if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
 }
 
-extern "C"
-[[noreturn]]
+extern "C" [[noreturn]]
 void abort() {
     for (;;);
 }
