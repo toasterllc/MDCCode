@@ -125,10 +125,8 @@ private:
     
     template <typename T_Task, typename... T_Tasks>
     static void _Run() {
-        if (_CurrentTask->go) {
-            _CurrentTask = &T_Task::_Task;
-            _CurrentTask->go();
-        }
+        _CurrentTask = &T_Task::_Task;
+        if (_CurrentTask->go) _CurrentTask->go();
         if constexpr (sizeof...(T_Tasks)) _Run<T_Tasks...>();
     }
     
