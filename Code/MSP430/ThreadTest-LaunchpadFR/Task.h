@@ -54,6 +54,10 @@ public:
         return r;
     }
     
+    static void Sleep() {
+        
+    }
+    
 private:
     template <typename T_Task, typename... T_Tasks>
     static void _Run() {
@@ -69,14 +73,14 @@ private:
         // Restore task stack pointer
         _SPRestore(_TaskState::Current->sp);
         
-        // Future invocations should execute `_Resume`
+        // Future invocations should execute _Resume()
         _TaskState::Current->go = _Resume;
         // Signal that we did work
         _StartWork();
         // Invoke task Run()
         _TaskState::Current->run();
         // The task finished
-        // Future invocations should execute _nop
+        // Future invocations should execute _Nop()
         _TaskState::Current->go = _Nop;
         
         // Restore scheduler stack pointer
@@ -127,7 +131,12 @@ template <typename T_Subclass>
 class Task {
 public:
     static void Start() {
+        _State.sp = T_Subclass::Stack + sizeof(T_Subclass::Stack);
         _State.go = Scheduler::_Start;
+    }
+    
+    static void Stop() {
+        _State.go = Scheduler::_Nop;
     }
     
 private:

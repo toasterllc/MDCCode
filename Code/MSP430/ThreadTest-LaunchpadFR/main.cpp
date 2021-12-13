@@ -35,7 +35,7 @@ public:
             Scheduler::Wait([&] { return !(_sd.i % 0x4); });
             _img.i++;
             puts("[ImgTask]\n");
-            // Force a yield, otherwise our Wait() expression will never return false
+            // Force a yield, otherwise our Wait() expression will never return false and we'll never yield
             Scheduler::Yield();
         }
     }
