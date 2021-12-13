@@ -20,7 +20,7 @@ public:
         for (;;) {
             puts("[SDTask]\n");
             _sd.i++;
-            Scheduler::Sleep(100);
+            Scheduler::Sleep(500);
 //            Scheduler::Yield();
         }
     }
