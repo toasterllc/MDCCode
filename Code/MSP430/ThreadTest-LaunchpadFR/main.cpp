@@ -1,7 +1,7 @@
 #include <msp430.h>
 #include <cstddef>
 #include <cstdint>
-//#include <stdio.h>
+#include <stdio.h>
 #include "Task.h"
 using namespace Toastbox;
 
@@ -18,9 +18,10 @@ class SDTask : public Task<SDTask> {
 public:
     static void Run() {
         for (;;) {
-//            puts("[SDTask]\n");
+            puts("[SDTask]\n");
             _sd.i++;
-            Scheduler::Yield();
+            Scheduler::Sleep(100);
+//            Scheduler::Yield();
         }
     }
     
@@ -32,11 +33,12 @@ class ImgTask : public Task<ImgTask> {
 public:
     static void Run() {
         for (;;) {
-            Scheduler::Wait([&] { return !(_sd.i % 0x4); });
+//            Scheduler::Wait([&] { return !(_sd.i % 0x4); });
+            puts("[ImgTask]\n");
             _img.i++;
-//            puts("[ImgTask]\n");
-            // Force a yield, otherwise our Wait() expression will never return false and we'll never yield
-            Scheduler::Yield();
+            Scheduler::Sleep(1000);
+//            // Force a yield, otherwise our Wait() expression will never return false and we'll never yield
+//            Scheduler::Yield();
         }
     }
     
@@ -94,7 +96,10 @@ void Toastbox::IntState::WaitForInterrupt() {
 
 __attribute__((interrupt(WDT_VECTOR)))
 static void _ISR_WDT() {
-    Scheduler::Tick();
+    const bool woke = Scheduler::Tick();
+    if (woke) {
+        __bic_SR_register_on_exit(LPM1_bits);
+    }
 }
 
 int main() {
@@ -106,9 +111,6 @@ int main() {
     //   WDTIS__8192:       interval = SMCLK / 8192 Hz = 16MHz / 8192 = 1953.125 Hz => period=512 us
     WDTCTL = WDTPW | WDTSSEL__SMCLK | WDTTMSEL | WDTCNTCL | WDTIS__8192;
     SFRIE1 |= WDTIE; // Enable WDT interrupt
-    
-    // Enable interrupt
-    IntState ints(true);
     
     // TODO: make tasks have an initial state so we don't need a runtime component to set their initial state
     SDTask::Start();
