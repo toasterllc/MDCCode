@@ -39,14 +39,15 @@ public:
     }
     
     static void Yield() {
-        _Yield(_ResumeWork1);
+        _Yield();
+        _StartWork();
     }
     
     template <typename T_Fn>
     static auto Wait(T_Fn&& fn) {
         auto r = fn();
         while (!r) {
-            _Yield(_ResumeWork0);
+            _Yield();
             r = fn();
         }
         _StartWork();
@@ -68,6 +69,10 @@ private:
         // Restore task stack pointer
         _SPRestore(_TaskState::Current->sp);
         
+        // Future invocations should execute `_Resume`
+        _TaskState::Current->go = _Resume;
+        // Signal that we did work
+        _StartWork();
         // Invoke task Run()
         _TaskState::Current->run();
         // The task finished
@@ -81,9 +86,7 @@ private:
     }
     
     [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
-    static void _Yield(_TaskState::VoidFn resume) {
-        // Future invocations should execute `resume`
-        _TaskState::Current->go = resume;
+    static void _Yield() {
         // Save stack pointer
         _SPSave(_TaskState::Current->sp);
         // Restore scheduler stack pointer
@@ -93,23 +96,11 @@ private:
     }
     
     [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
-    static void _ResumeWork0() {
+    static void _Resume() {
         // Save scheduler stack pointer
         _SPSave(_TaskState::SP);
         // Restore task stack pointer
         _SPRestore(_TaskState::Current->sp);
-        // Return to task, to whatever function called _Yield()
-        return;
-    }
-    
-    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
-    static void _ResumeWork1() {
-        // Save scheduler stack pointer
-        _SPSave(_TaskState::SP);
-        // Restore task stack pointer
-        _SPRestore(_TaskState::Current->sp);
-        // Notify scheduler that we did work
-        _StartWork();
         // Return to task, to whatever function called _Yield()
         return;
     }

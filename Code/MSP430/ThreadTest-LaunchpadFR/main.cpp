@@ -31,10 +31,11 @@ public:
 class ImgTask : public Task<ImgTask> {
 public:
     static void Run() {
-        volatile int i = 0;
         for (;;) {
-            i++;
+            Scheduler::Wait([&] { return !(_sd.i % 0x4); });
+            _img.i++;
             puts("[ImgTask]\n");
+            // Force a yield, otherwise our Wait() expression will never return false
             Scheduler::Yield();
         }
     }
