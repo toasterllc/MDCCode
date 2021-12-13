@@ -27,6 +27,7 @@
 		55FD01BC27656899005505B5 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		55FD01C22765CE1C005505B5 /* msp430fr2433.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.ld; sourceTree = "<group>"; };
 		55FD01C32765E56B005505B5 /* Task.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Task.h; sourceTree = "<group>"; };
+		55FD01D72766CA7F005505B5 /* Lib */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Lib; path = ../../Lib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -43,6 +44,7 @@
 		55FD01A927656881005505B5 = {
 			isa = PBXGroup;
 			children = (
+				55FD01D72766CA7F005505B5 /* Lib */,
 				55FD01C22765CE1C005505B5 /* msp430fr2433.ld */,
 				55FD01C32765E56B005505B5 /* Task.h */,
 				55FD01BC27656899005505B5 /* main.cpp */,

@@ -5,13 +5,21 @@
 #include "Task.h"
 using namespace Toastbox;
 
+struct {
+    volatile int i = 0;
+} _sd;
+
+struct {
+    volatile int i = 0;
+} _img;
+
+
 class SDTask : public Task<SDTask> {
 public:
     static void Run() {
-        volatile int i = 0;
         for (;;) {
-            i++;
             puts("[SDTask]\n");
+            _sd.i++;
             Scheduler::Yield();
         }
     }
@@ -66,6 +74,22 @@ extern "C" char* sbrk(int adj) {
     return (char*)heap;
 }
 
+// MARK: - IntState
+
+inline bool Toastbox::IntState::InterruptsEnabled() {
+    return __get_SR_register() & GIE;
+}
+
+inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
+    if (en) __bis_SR_register(GIE);
+    else    __bic_SR_register(GIE);
+}
+
+void Toastbox::IntState::WaitForInterrupt() {
+    const bool prevEn = Toastbox::IntState::InterruptsEnabled();
+    __bis_SR_register(GIE | LPM1_bits);
+    if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
+}
 
 int main() {
     // Stop watchdog timer

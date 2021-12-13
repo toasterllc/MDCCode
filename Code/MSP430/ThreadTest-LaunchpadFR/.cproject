@@ -37,6 +37,8 @@
 									<listOptionValue builtIn="false" value="${CCS_BASE_ROOT}/msp430/include_gcc"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}"/>
 									<listOptionValue builtIn="false" value="${CG_TOOL_INCLUDE_PATH}"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Shared"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Lib"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.MHWMULT.952809820" name="Hardware multiply (-mhwmult)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.MHWMULT" useByScannerDiscovery="false" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.MHWMULT.AUTO" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DEBUG.1258713270" name="Generate debug information (-g)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DEBUG" useByScannerDiscovery="false" value="true" valueType="boolean"/>

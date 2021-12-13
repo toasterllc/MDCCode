@@ -1,4 +1,5 @@
 #pragma once
+#include "Toastbox/IntState.h"
 
 namespace Toastbox {
 
@@ -9,7 +10,8 @@ struct _TaskState {
     void* sp;
     VoidFn go;
     
-    static inline _TaskState* Current = nullptr; // Current task's _TaskState
+    static inline bool DidWork = false;
+    static inline _TaskState* Current = nullptr; // Current task _TaskState
     static inline void* SP = nullptr; // Saved stack pointer
 };
 
@@ -21,23 +23,34 @@ class Scheduler {
 #define _SPRestore(src)                                                             \
          if constexpr (sizeof(void*) == 2)  asm("mov  %0, r1" : : "m" (src) : );    \
     else if constexpr (sizeof(void*) == 4)  asm("mova %0, r1" : : "m" (src) : )
-
+    
 public:
     template <typename... T_Tasks>
     static void Run() {
         for (;;) {
-            _Run<T_Tasks...>();
+            do {
+                IntState::SetInterruptsEnabled(false);
+                _TaskState::DidWork = false;
+                _Run<T_Tasks...>();
+            } while (_TaskState::DidWork);
+            IntState::WaitForInterrupt();
+            IntState::SetInterruptsEnabled(true);
         }
     }
     
-    [[gnu::noinline]] // Disable inlining because PC must be pushed onto the stack when called
     static void Yield() {
-        // Save stack pointer
-        _SPSave(_TaskState::Current->sp);
-        // Restore scheduler's stack pointer
-        _SPRestore(_TaskState::SP);
-        // Return to scheduler
-        return;
+        _Yield(_ResumeWork1);
+    }
+    
+    template <typename T_Fn>
+    static auto Wait(T_Fn&& fn) {
+        auto r = fn();
+        while (!r) {
+            _Yield(_ResumeWork0);
+            r = fn();
+        }
+        _StartWork();
+        return r;
     }
     
 private:
@@ -48,17 +61,14 @@ private:
         if constexpr (sizeof...(T_Tasks)) _Run<T_Tasks...>();
     }
     
-    [[gnu::noinline]] // Disable inlining because PC must be pushed onto the stack when called
+    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
     static void _Start() {
-        // Future invocations should execute _Resume
-        _TaskState::Current->go = _Resume;
-        
-        // Save scheduler's stack pointer
+        // Save scheduler stack pointer
         _SPSave(_TaskState::SP);
-        // Restore task's stack pointer
+        // Restore task stack pointer
         _SPRestore(_TaskState::Current->sp);
         
-        // Invoke task's Run()
+        // Invoke task Run()
         _TaskState::Current->run();
         // The task finished
         // Future invocations should execute _nop
@@ -70,25 +80,54 @@ private:
         return;
     }
     
-    [[gnu::noinline]] // Disable inlining because PC must be pushed onto the stack when called
-    static void _Resume() {
-        // Save scheduler's stack pointer
-        _SPSave(_TaskState::SP);
-        // Restore task's stack pointer
-        _SPRestore(_TaskState::Current->sp);
-        // Return to task, to whatever function called Yield()
+    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
+    static void _Yield(_TaskState::VoidFn resume) {
+        // Future invocations should execute `resume`
+        _TaskState::Current->go = resume;
+        // Save stack pointer
+        _SPSave(_TaskState::Current->sp);
+        // Restore scheduler stack pointer
+        _SPRestore(_TaskState::SP);
+        // Return to scheduler
         return;
     }
     
-    [[gnu::noinline]] // Disable inlining because PC must be pushed onto the stack when called
+    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
+    static void _ResumeWork0() {
+        // Save scheduler stack pointer
+        _SPSave(_TaskState::SP);
+        // Restore task stack pointer
+        _SPRestore(_TaskState::Current->sp);
+        // Return to task, to whatever function called _Yield()
+        return;
+    }
+    
+    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
+    static void _ResumeWork1() {
+        // Save scheduler stack pointer
+        _SPSave(_TaskState::SP);
+        // Restore task stack pointer
+        _SPRestore(_TaskState::Current->sp);
+        // Notify scheduler that we did work
+        _StartWork();
+        // Return to task, to whatever function called _Yield()
+        return;
+    }
+    
+    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
     static void _Nop() {
         // Return to scheduler
         return;
     }
     
+    static void _StartWork() {
+        _TaskState::DidWork = true;
+        IntState::SetInterruptsEnabled(true);
+    }
+    
     class Task;
     friend Task;
-
+    
 #undef _SPSave
 #undef _SPRestore
 };
