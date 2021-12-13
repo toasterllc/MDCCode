@@ -92,14 +92,23 @@ void Toastbox::IntState::WaitForInterrupt() {
     if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
 }
 
-extern "C" [[noreturn]]
-void abort() {
-    for (;;);
+__attribute__((interrupt(WDT_VECTOR)))
+static void _ISR_WDT() {
+    Scheduler::Tick();
 }
 
 int main() {
-    // Stop watchdog timer
-    WDTCTL = WDTPW | WDTHOLD;
+    // Config watchdog timer:
+    //   WDTPW:             password
+    //   WDTSSEL__SMCLK:    watchdog source = SMCLK
+    //   WDTTMSEL:          interval timer mode
+    //   WDTCNTCL:          clear counter
+    //   WDTIS__8192:       interval = SMCLK / 8192 Hz = 16MHz / 8192 = 1953.125 Hz => period=512 us
+    WDTCTL = WDTPW | WDTSSEL__SMCLK | WDTTMSEL | WDTCNTCL | WDTIS__8192;
+    SFRIE1 |= WDTIE; // Enable WDT interrupt
+    
+    // Enable interrupt
+    IntState ints(true);
     
     // TODO: make tasks have an initial state so we don't need a runtime component to set their initial state
     SDTask::Start();
@@ -107,4 +116,9 @@ int main() {
     
     Scheduler::Run<SDTask, ImgTask>();
     return 0;
+}
+
+extern "C" [[noreturn]]
+void abort() {
+    for (;;);
 }
