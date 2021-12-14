@@ -43,6 +43,16 @@ public:
     static void Run() {
         for (;;) {
             do {
+                // Disable interrupts at the beginning of every iteration, so that if _DidWork=false
+                // at the end of our loop, we know that:
+                // 
+                //   1. no task had work to do, and
+                //   2. interrupts were disabled for the duration of every task checking for work.
+                // 
+                // therefore we can safely go to sleep since we've verified that there's no work to
+                // do in a race-free manner.
+                
+                IntState::SetInterruptsEnabled(false);
                 _DidWork = false;
                 for (_Task& task : _Tasks) {
                     _CurrentTask = &task;
@@ -50,6 +60,12 @@ public:
                 }
             } while (_DidWork);
             
+            // Reset _Wake now that we're assured that every task has been able to observe
+            // _Wake=true while interrupts were disabled during the entire process.
+            _Wake = false;
+            
+            // No work to do
+            // Go to sleep!
             IntState::WaitForInterrupt();
             
 //            // Update _SleepTask
