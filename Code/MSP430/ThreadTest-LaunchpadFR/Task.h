@@ -30,6 +30,7 @@ public:
     template <typename T_Task>
     static void Start() {
         _Task& task = _GetTask<T_Task>();
+        task.sp = _CurrentTask->spInit;
         task.go = _Start;
     }
     
@@ -67,7 +68,7 @@ public:
                     if (!taskWakeTime) continue;
                     
                     // If this task needs waking at the current tick, wake it
-                    if (*taskWakeTime == _WakeTime) {
+                    if (*taskWakeTime == _CurrentTime) {
                         taskWakeTime = std::nullopt;
                         task.go = _Resume;
                     
@@ -140,9 +141,8 @@ public:
         _CurrentTime++;
         if (_WakeTime == _CurrentTime) {
             _Wake = true;
-            return true;
         }
-        return false;
+        return _Wake;
     }
     
 private:
@@ -153,6 +153,10 @@ private:
 #define _SPRestore(src)                                                             \
          if constexpr (sizeof(void*) == 2)  asm("mov  %0, r1" : : "m" (src) : );    \
     else if constexpr (sizeof(void*) == 4)  asm("mova %0, r1" : : "m" (src) : )
+
+#define _Return()                                                                   \
+         if constexpr (sizeof(void*) == 2)  asm("ret" : : : );                      \
+    else if constexpr (sizeof(void*) == 4)  asm("reta" : : : )
     
     struct _Task {
         using _VoidFn = void(*)();
@@ -165,20 +169,29 @@ private:
         std::optional<Ticks> wakeTime;
     };
     
-    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
+    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
     static void _Start() {
-        // Prepare the task for execution
-        _CurrentTask->sp = _CurrentTask->spInit;
-        _CurrentTask->go = _Resume;
-        // Clear the task's wakeTime since it's no longer sleeping.
-        // Ideally we would re-calculate _WakeTime, but we don't to minimize the emitted code
-        _CurrentTask->wakeTime = std::nullopt;
-        
         // Save scheduler stack pointer
         _SPSave(_SP);
         // Restore task stack pointer
         _SPRestore(_CurrentTask->sp);
         
+        _RunCurrentTask();
+        
+        // Restore scheduler stack pointer
+        _SPRestore(_SP);
+        // Return to scheduler
+        _Return();
+    }
+    
+    static void _RunCurrentTask() {
+        // Future invocations should execute _Resume
+        _CurrentTask->go = _Resume;
+        // Clear the task's wakeTime since it's no longer sleeping.
+        // Ideally we'd re-calculate the global _WakeTime, but we don't in order to minimize
+        // the emitted code, and just accept that a wake can occur with no tasks that need
+        // waking.
+        _CurrentTask->wakeTime = std::nullopt;
         // Signal that we did work
         _StartWork();
         // Invoke task Run()
@@ -186,37 +199,60 @@ private:
         // The task finished
         // Future invocations should do nothing
         _CurrentTask->go = _Nop;
-        
-        // Restore scheduler stack pointer
-        _SPRestore(_SP);
-        // Return to scheduler
-        return;
     }
     
-    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
+//    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
+//    static void _Start() {
+//        // Prepare the task for execution
+//        _CurrentTask->sp = _CurrentTask->spInit;
+//        _CurrentTask->go = _Resume;
+//        // Clear the task's wakeTime since it's no longer sleeping.
+//        // Ideally we would re-calculate _WakeTime, but we don't to minimize the emitted code
+//        _CurrentTask->wakeTime = std::nullopt;
+//        
+//        // Save scheduler stack pointer
+//        _SPSave(_SP);
+//        // Restore task stack pointer
+//        _SPRestore(_CurrentTask->sp);
+//        
+//        // Signal that we did work
+//        _StartWork();
+//        // Invoke task Run()
+//        _CurrentTask->run();
+//        // The task finished
+//        // Future invocations should do nothing
+//        _CurrentTask->go = _Nop;
+//        
+//        // Restore scheduler stack pointer
+//        _SPRestore(_SP);
+//        // Return to scheduler
+//        _Return();
+//    }
+    
+    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
     static void _Yield() {
         // Save stack pointer
         _SPSave(_CurrentTask->sp);
         // Restore scheduler stack pointer
         _SPRestore(_SP);
         // Return to scheduler
-        return;
+        _Return();
     }
     
-    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
+    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
     static void _Resume() {
         // Save scheduler stack pointer
         _SPSave(_SP);
         // Restore task stack pointer
         _SPRestore(_CurrentTask->sp);
         // Return to task, to whatever function called _Yield()
-        return;
+        _Return();
     }
     
-    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
+    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
     static void _Nop() {
         // Return to scheduler
-        return;
+        _Return();
     }
     
     static void _StartWork() {
@@ -244,6 +280,7 @@ private:
     static inline _Task _Tasks[] = {_Task{
         .run    = T_Tasks::Run,
         .spInit = T_Tasks::Stack + sizeof(T_Tasks::Stack),
+        .sp     = T_Tasks::Stack + sizeof(T_Tasks::Stack),
         .go     = _TaskHasOption<T_Tasks, typename Option::Start>() ? _Start : _Nop,
     }...};
     

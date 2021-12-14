@@ -18,12 +18,12 @@ public:
         for (;;) {
             PAOUT ^= BIT0;
             puts("TaskA\n");
-            Scheduler::Sleep(500);
+            Scheduler::Sleep(100);
         }
     }
     
     __attribute__((section(".stack.taska")))
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[1024];
 };
 
 class TaskB {
@@ -41,7 +41,7 @@ public:
     }
     
     __attribute__((section(".stack.taskb")))
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[1024];
 };
 
 #define _Stringify(s) #s
@@ -96,7 +96,7 @@ __attribute__((interrupt(WDT_VECTOR)))
 static void _ISR_WDT() {
     const bool woke = Scheduler::Tick();
     if (woke) {
-        __bic_SR_register_on_exit(LPM1_bits);
+        __bic_SR_register_on_exit(GIE | LPM1_bits);
     }
 }
 
