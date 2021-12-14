@@ -12,25 +12,25 @@ public:
     #warning we should make Start/Stop usable from ISRs right? for example, if we have a motion task, perhaps it would be started by the ISR? alternatively it could Wait() on a boolean set by an ISR...
     
     
-    template <typename T_Task>
-    static void Start() {
-        for (_Task& task : _Tasks) {
-            if (task.run == T_Task::Run) {
-                task.go = _Start;
-                break;
-            }
-        }
-    }
-    
-    template <typename T_Task>
-    static void Stop() {
-        for (_Task& task : _Tasks) {
-            if (task.run == T_Task::Run) {
-                task.go = nullptr;
-                break;
-            }
-        }
-    }
+//    template <typename T_Task>
+//    static void Start() {
+//        for (_Task& task : _Tasks) {
+//            if (task.run == T_Task::Run) {
+//                task.go = _Start;
+//                break;
+//            }
+//        }
+//    }
+//    
+//    template <typename T_Task>
+//    static void Stop() {
+//        for (_Task& task : _Tasks) {
+//            if (task.run == T_Task::Run) {
+//                task.go = nullptr;
+//                break;
+//            }
+//        }
+//    }
     
     // Run(): run the tasks indefinitely
     static void Run() {
@@ -162,33 +162,12 @@ private:
         std::optional<Ticks> wakeTime;
     };
     
-    static inline _Task _Tasks[] = {_Task{
-        .run    = T_Tasks::Run,
-        .spInit = T_Tasks::Stack + sizeof(T_Tasks::Stack),
-    }...};
-    
-    static inline bool _DidWork = false;
-    static inline _Task* _CurrentTask = nullptr;
-    static inline void* _SP = nullptr; // Saved stack pointer
-    
-    static inline Ticks _CurrentTime = 0;
-    #warning formalize whether _WakeTime needs to be an optional
-    static inline bool _Wake = false;
-    static inline Ticks _WakeTime = 0;
-    
     [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
     static void _Start() {
         // Prepare the task for execution
         _CurrentTask->sp = _CurrentTask->spInit;
         _CurrentTask->go = _Resume;
-        
-        // If the task was sleeping, we need to reset its `wakeTime`,
-        // and also update the global _WakeTime.
-        if (_CurrentTask->wakeTime) {
-            _CurrentTask->wakeTime = std::nullopt;
-            #warning interrupts must be disabled when calling this!
-            _UpdateWakeTime();
-        }
+        _CurrentTask->wakeTime = std::nullopt;
         
         // Save scheduler stack pointer
         _SPSave(_SP);
@@ -253,6 +232,22 @@ private:
         // Update the next wake time
         _WakeTime = newWakeTime;
     }
+    
+    static inline _Task _Tasks[] = {_Task{
+        .run    = T_Tasks::Run,
+        .spInit = T_Tasks::Stack + sizeof(T_Tasks::Stack),
+        #warning make the initial state of the task configurable
+        .go     = _Start,
+    }...};
+    
+    static inline bool _DidWork = false;
+    static inline _Task* _CurrentTask = nullptr;
+    static inline void* _SP = nullptr; // Saved stack pointer
+    
+    static inline Ticks _CurrentTime = 0;
+    #warning formalize whether _WakeTime needs to be an optional
+    static inline bool _Wake = false;
+    static inline Ticks _WakeTime = 0;
     
     class Task;
     friend Task;

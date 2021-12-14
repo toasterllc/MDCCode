@@ -111,7 +111,8 @@ int main() {
     // Unlock GPIOs
     PM5CTL0 &= ~LOCKLPM5;
     
-    Scheduler::Start<TaskA>();
+//    Scheduler::Start<TaskA>();
+//    Scheduler::Start<TaskB>();
     
 //    // TODO: make tasks have an initial state so we don't need a runtime component to set their initial state
 //    TaskA::Start();
