@@ -33,6 +33,7 @@ public:
 //    }
     
     // Run(): run the tasks indefinitely
+    [[noreturn]]
     static void Run() {
         for (;;) {
             do {
@@ -46,6 +47,8 @@ public:
             IntState::WaitForInterrupt();
             #warning interrupts need to be disabled while we inspect them for wakeup eligibility 
             #warning for this to work completely reliably, we should exit WaitForInterrupt/LPM with interrupts disabled
+            
+            // Check if tasks need to be woken / _WakeTime needs to be updated
             if (_Wake) {
                 _Wake = false;
                 
@@ -109,18 +112,13 @@ public:
          // Disable interrupts while we update globals
          IntState::SetInterruptsEnabled(false);
          
-         const Ticks currentWakeDelay = _WakeTime-_CurrentTime;
-         const Ticks taskWakeTime = _CurrentTime + ticks + 1;
-         const Ticks taskWakeDelay = taskWakeTime-_CurrentTime;
-         
          // Update task state
-         _CurrentTask->wakeTime = taskWakeTime;
+         _CurrentTask->wakeTime = _CurrentTime + ticks + 1;
          _CurrentTask->go = nullptr;
-         
-         // Update the global wake time if the task's wake time occurs before the global wake time
-         if (taskWakeDelay < currentWakeDelay) {
-            _WakeTime = taskWakeTime;
-         }
+         // Wake immediately so that Run() updates `_WakeTime` properly.
+         // This is a cheap hack to minimize the code we emit by keeping the
+         // _WakeTime-updating code in one place (Run())
+         _Wake = true;
          
          _Yield();
     }
@@ -135,30 +133,6 @@ public:
             return true;
         }
         return false;
-        
-//        #warning formalize whether _WakeTime needs to be an optional.
-//        #warning we can have 1 false positive every time _CurrentTime wraps, as long as no sleeping task is actually woken when the scheduler runs, right?
-//        _Wake = (_WakeTime == _CurrentTime);
-//        return _Wake;
-        
-//        // Iterate over the sleeping tasks and wake the appropriate ones
-//        _Task** tprevNext = &_SleepTasks;
-//        for (_Task* t=_SleepTasks; t; t=t->nextSleepTask) {
-//            if (*t->wakeTime == _CurrentTime) {
-//                // Current task should wake, so:
-//                //   - Clear wakeTime to signal the wake to Sleep()
-//                //   - Remove current task from _SleepTasks linked list
-//                t->wakeTime = std::nullopt;
-//                *tprevNext = t->nextSleepTask;
-//                woke = true;
-//            } else {
-//                // Current task shouldn't wake; just remember its `nextSleepTask` linked list 
-//                // slot in case the next task needs to be removed from the linked list
-//                tprevNext = &t->nextSleepTask;
-//            }
-//        }
-//        // Return whether we woke any tasks
-//        return woke;
     }
     
 private:
@@ -186,6 +160,8 @@ private:
         // Prepare the task for execution
         _CurrentTask->sp = _CurrentTask->spInit;
         _CurrentTask->go = _Resume;
+        // Clear the task's wakeTime since it's no longer sleeping.
+        // Ideally we would re-calculate _WakeTime, but we don't to minimize the emitted code
         _CurrentTask->wakeTime = std::nullopt;
         
         // Save scheduler stack pointer
@@ -231,26 +207,6 @@ private:
         _DidWork = true;
         IntState::SetInterruptsEnabled(true);
     }
-    
-//    #warning interrupts must be disabled when calling this!
-//    static void _UpdateWakeTime() {
-//        Ticks newWakeTime = 0;
-//        Ticks newWakeDelay = std::numeric_limits<Ticks>::max();
-//        for (const _Task& task : _Tasks) {
-//            // Only consider sleeping tasks
-//            if (!task.wakeTime) continue;
-//            
-//            const Ticks taskWakeTime = *task.wakeTime;
-//            const Ticks taskWakeDelay = taskWakeTime-_CurrentTime;
-//            if (taskWakeDelay < newWakeDelay) {
-//                newWakeTime = taskWakeTime;
-//                newWakeDelay = taskWakeDelay;
-//            }
-//        }
-//        
-//        // Update the next wake time
-//        _WakeTime = newWakeTime;
-//    }
     
     static inline _Task _Tasks[] = {_Task{
         .run    = T_Tasks::Run,
