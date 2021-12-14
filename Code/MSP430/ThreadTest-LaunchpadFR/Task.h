@@ -60,6 +60,7 @@ public:
             
             // Check if tasks need to be woken on the current tick
             if (_WakeTime == _CurrentTime) goto wakeTasks;
+            continue;
             
             wakeTasks: {
                 _WakeTimeUpdate = false;
