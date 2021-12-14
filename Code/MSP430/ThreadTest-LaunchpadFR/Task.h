@@ -11,7 +11,6 @@ public:
     
     #warning we should make Start/Stop usable from ISRs right? for example, if we have a motion task, perhaps it would be started by the ISR? alternatively it could Wait() on a boolean set by an ISR...
     
-    
 //    template <typename T_Task>
 //    static void Start() {
 //        for (_Task& task : _Tasks) {
@@ -86,6 +85,9 @@ public:
     }
     
     // Wait(fn): sleep current task until `fn` returns true
+    // `fn` must not cause side-effects that cause any task to become runnable.
+    // If it does, Scheduler may not know that the task needs to be run and
+    // could go to sleep instead of running the task.
     template <typename T_Fn>
     static auto Wait(T_Fn&& fn) {
         for (;;) {
