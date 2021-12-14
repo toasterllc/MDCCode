@@ -3,9 +3,12 @@
 #include <cstdint>
 #include <stdio.h>
 #include "Task.h"
-using namespace Toastbox;
 
-class TaskA : public Task<TaskA> {
+class TaskA;
+class TaskB;
+using Scheduler = Toastbox::Scheduler<TaskA,TaskB>;
+
+class TaskA {
 public:
     static void Run() {
         for (;;) {
@@ -18,7 +21,7 @@ public:
     static inline uint8_t Stack[128];
 };
 
-class TaskB : public Task<TaskB> {
+class TaskB {
 public:
     static void Run() {
         for (;;) {
@@ -108,11 +111,13 @@ int main() {
     // Unlock GPIOs
     PM5CTL0 &= ~LOCKLPM5;
     
-    // TODO: make tasks have an initial state so we don't need a runtime component to set their initial state
-    TaskA::Start();
-    TaskB::Start();
+    Scheduler::Start<TaskA>();
     
-    Scheduler::Run<TaskA, TaskB>();
+//    // TODO: make tasks have an initial state so we don't need a runtime component to set their initial state
+//    TaskA::Start();
+//    TaskB::Start();
+    
+    Scheduler::Run();
     return 0;
 }
 

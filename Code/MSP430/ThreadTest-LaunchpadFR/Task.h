@@ -4,19 +4,62 @@
 
 namespace Toastbox {
 
+template <typename... T_Tasks>
 class Scheduler {
 public:
     using Ticks = unsigned int;
     
-    // Run<T_Tasks>(): run the `T_Tasks` list of tasks indefinitely
-    template <typename... T_Tasks>
+    #warning we should make Start/Stop usable from ISRs right? for example, if we have a motion task, perhaps it would be started by the ISR? alternatively it could Wait() on a boolean set by an ISR...
+    
+    
+    template <typename T_Task>
+    static void Start() {
+        for (_Task& task : _Tasks) {
+            if (task.run == T_Task::Run) {
+                task.go = _Start;
+                break;
+            }
+        }
+    }
+    
+    template <typename T_Task>
+    static void Stop() {
+        for (_Task& task : _Tasks) {
+            if (task.run == T_Task::Run) {
+                task.go = nullptr;
+                break;
+            }
+        }
+    }
+    
+    // Run(): run the tasks indefinitely
     static void Run() {
         for (;;) {
             do {
                 _DidWork = false;
-                _Run<T_Tasks...>();
+                for (_Task& task : _Tasks) {
+                    _CurrentTask = &task;
+                    if (task.go) task.go();
+                }
             } while (_DidWork);
+            
             IntState::WaitForInterrupt();
+            #warning interrupts need to be disabled while we inspect them for wakeup eligibility 
+            #warning for this to work completely reliably, we should exit WaitForInterrupt/LPM with interrupts disabled
+            if (_Wake) {
+                _Wake = false;
+                
+                for (_Task& task : _Tasks) {
+                    // If this task needs waking at the current tick, wake it
+                    if (task.wakeTime && *task.wakeTime==_WakeTime) {
+                        task.wakeTime = std::nullopt;
+                        task.go = _Resume;
+                    }
+                }
+                
+                #warning interrupts must be disabled when calling this!
+                _UpdateWakeTime();
+            }
         }
     }
     
@@ -52,50 +95,51 @@ public:
     static void Sleep(Ticks ticks) {
          // Disable interrupts while we update globals
          IntState::SetInterruptsEnabled(false);
-         // Calculate when we should wake up
-         _CurrentTask->wakeTime = _CurrentTime + ticks + 1;
-         // Put the current task at the front of the _SleepTasks linked list
-         _CurrentTask->nextSleepTask = _SleepTasks;
-         _SleepTasks = _CurrentTask;
          
-         for (;;) {
-            // Disable interrupts while we check for work.
-            // See explanation in Wait().
-            IntState::SetInterruptsEnabled(false);
-            // We're done sleeping when `wakeTime` is cleared by the ISR
-            if (!_CurrentTask->wakeTime) {
-                _StartWork();
-                return;
-            }
-            
-            _Yield();
+         const Ticks currentWakeDelay = _WakeTime-_CurrentTime;
+         const Ticks taskWakeTime = _CurrentTime + ticks + 1;
+         const Ticks taskWakeDelay = taskWakeTime-_CurrentTime;
+         
+         // Update task state
+         _CurrentTask->wakeTime = taskWakeTime;
+         _CurrentTask->go = nullptr;
+         
+         // Update the global wake time if the task's wake time occurs before the global wake time
+         if (taskWakeDelay < currentWakeDelay) {
+            _WakeTime = taskWakeTime;
          }
+         
+         _Yield();
     }
     
     // Tick(): notify scheduler that a tick has passed
-    // Returns whether any tasks were woken up
+    // Returns whether the scheduler needs to run
     static bool Tick() {
-        bool woke = false;
         // Update current time
         _CurrentTime++;
-        // Iterate over the sleeping tasks and wake the appropriate ones
-        _Task** tprevNext = &_SleepTasks;
-        for (_Task* t=_SleepTasks; t; t=t->nextSleepTask) {
-            if (*t->wakeTime == _CurrentTime) {
-                // Current task should wake, so:
-                //   - Clear wakeTime to signal the wake to Sleep()
-                //   - Remove current task from _SleepTasks linked list
-                t->wakeTime = std::nullopt;
-                *tprevNext = t->nextSleepTask;
-                woke = true;
-            } else {
-                // Current task shouldn't wake; just remember its `nextSleepTask` linked list 
-                // slot in case the next task needs to be removed from the linked list
-                tprevNext = &t->nextSleepTask;
-            }
-        }
-        // Return whether we woke any tasks
-        return woke;
+        #warning formalize whether _WakeTime needs to be an optional.
+        #warning we can have 1 false positive every time _CurrentTime wraps, as long as no sleeping task is actually woken when the scheduler runs, right?
+        _Wake = (_WakeTime == _CurrentTime);
+        return _Wake;
+        
+//        // Iterate over the sleeping tasks and wake the appropriate ones
+//        _Task** tprevNext = &_SleepTasks;
+//        for (_Task* t=_SleepTasks; t; t=t->nextSleepTask) {
+//            if (*t->wakeTime == _CurrentTime) {
+//                // Current task should wake, so:
+//                //   - Clear wakeTime to signal the wake to Sleep()
+//                //   - Remove current task from _SleepTasks linked list
+//                t->wakeTime = std::nullopt;
+//                *tprevNext = t->nextSleepTask;
+//                woke = true;
+//            } else {
+//                // Current task shouldn't wake; just remember its `nextSleepTask` linked list 
+//                // slot in case the next task needs to be removed from the linked list
+//                tprevNext = &t->nextSleepTask;
+//            }
+//        }
+//        // Return whether we woke any tasks
+//        return woke;
     }
     
 private:
@@ -111,34 +155,46 @@ private:
         using _VoidFn = void(*)();
         
         const _VoidFn run = nullptr;
+        void*const spInit = nullptr;
+        
         void* sp = nullptr;
         _VoidFn go = nullptr;
         std::optional<Ticks> wakeTime;
-        _Task* nextSleepTask = nullptr;
     };
+    
+    static inline _Task _Tasks[] = {_Task{
+        .run    = T_Tasks::Run,
+        .spInit = T_Tasks::Stack + sizeof(T_Tasks::Stack),
+    }...};
     
     static inline bool _DidWork = false;
     static inline _Task* _CurrentTask = nullptr;
-    static inline _Task* _SleepTasks = nullptr; // Linked list of sleeping tasks
-    static inline Ticks _CurrentTime = 0;
     static inline void* _SP = nullptr; // Saved stack pointer
     
-    template <typename T_Task, typename... T_Tasks>
-    static void _Run() {
-        _CurrentTask = &T_Task::_Task;
-        if (_CurrentTask->go) _CurrentTask->go();
-        if constexpr (sizeof...(T_Tasks)) _Run<T_Tasks...>();
-    }
+    static inline Ticks _CurrentTime = 0;
+    #warning formalize whether _WakeTime needs to be an optional
+    static inline bool _Wake = false;
+    static inline Ticks _WakeTime = 0;
     
     [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
     static void _Start() {
+        // Prepare the task for execution
+        _CurrentTask->sp = _CurrentTask->spInit;
+        _CurrentTask->go = _Resume;
+        
+        // If the task was sleeping, we need to reset its `wakeTime`,
+        // and also update the global _WakeTime.
+        if (_CurrentTask->wakeTime) {
+            _CurrentTask->wakeTime = std::nullopt;
+            #warning interrupts must be disabled when calling this!
+            _UpdateWakeTime();
+        }
+        
         // Save scheduler stack pointer
         _SPSave(_SP);
         // Restore task stack pointer
         _SPRestore(_CurrentTask->sp);
         
-        // Future invocations should execute _Resume()
-        _CurrentTask->go = _Resume;
         // Signal that we did work
         _StartWork();
         // Invoke task Run()
@@ -178,32 +234,31 @@ private:
         IntState::SetInterruptsEnabled(true);
     }
     
+    #warning interrupts must be disabled when calling this!
+    static Ticks _UpdateWakeTime() {
+        Ticks newWakeTime = 0;
+        Ticks newWakeDelay = std::numeric_limits<Ticks>::max();
+        for (const _Task& task : _Tasks) {
+            // Only consider sleeping tasks
+            if (!task.wakeTime) continue;
+            
+            const Ticks taskWakeTime = *task.wakeTime;
+            const Ticks taskWakeDelay = taskWakeTime-_CurrentTime;
+            if (taskWakeDelay < newWakeDelay) {
+                newWakeTime = taskWakeTime;
+                newWakeDelay = taskWakeDelay;
+            }
+        }
+        
+        // Update the next wake time
+        _WakeTime = newWakeTime;
+    }
+    
     class Task;
     friend Task;
     
 #undef _SPSave
 #undef _SPRestore
-};
-
-template <typename T_Subclass>
-class Task {
-public:
-    static void Start() {
-        _Task.sp = T_Subclass::Stack + sizeof(T_Subclass::Stack);
-        _Task.go = Scheduler::_Start;
-    }
-    
-    static void Stop() {
-        _Task.go = nullptr;
-    }
-    
-private:
-    static inline Scheduler::_Task _Task = {
-        .run = T_Subclass::Run,
-        .sp = T_Subclass::Stack + sizeof(T_Subclass::Stack),
-    };
-    
-    friend Scheduler;
 };
 
 } // namespace Toastbox
