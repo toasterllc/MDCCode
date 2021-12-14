@@ -9,6 +9,20 @@ class Scheduler {
 public:
     using Ticks = unsigned int;
     
+    struct Option {
+        struct Start; // Task should start
+    };
+    
+    using MeowFn = void(*)();
+    
+    template <typename... T_Options>
+    struct Options {
+        template <typename T_Option>
+        static constexpr bool Exists() {
+            return (std::is_same_v<T_Option, T_Options> || ...);
+        }
+    };
+    
     #warning make Start/Stop usable from ISRs? eg, if we have a motion task, it
     #warning could be started by the ISR. alternatively it could Wait() on a
     #warning boolean set by an ISR...
@@ -222,11 +236,15 @@ private:
         return std::is_same_v<T_1,T_2> ? 0 : 1 + _ElmIdx<T_1, T_s...>();
     }
     
+    template <typename T_Task, typename T_Option>
+    static constexpr bool _TaskHasOption() {
+        return T_Task::Options::template Exists<T_Option>();
+    }
+    
     static inline _Task _Tasks[] = {_Task{
         .run    = T_Tasks::Run,
         .spInit = T_Tasks::Stack + sizeof(T_Tasks::Stack),
-        #warning make the initial state of the task configurable
-        .go     = _Start,
+        .go     = _TaskHasOption<T_Tasks, typename Option::Start>() ? _Start : _Nop,
     }...};
     
     static inline bool _DidWork = false;
