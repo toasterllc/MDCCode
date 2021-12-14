@@ -22,7 +22,7 @@ public:
     template <typename T_Task>
     static void Stop() {
         _Task& task = _GetTask<T_Task>();
-        task.go = nullptr;
+        task.go = _Nop;
     }
     
     // Run(): run the tasks indefinitely
@@ -33,7 +33,7 @@ public:
                 _DidWork = false;
                 for (_Task& task : _Tasks) {
                     _CurrentTask = &task;
-                    if (task.go) task.go();
+                    task.go();
                 }
             } while (_DidWork);
             
@@ -110,7 +110,7 @@ public:
          
          // Update task state
          _CurrentTask->wakeTime = _CurrentTime + ticks + 1;
-         _CurrentTask->go = nullptr;
+         _CurrentTask->go = _Nop;
          // Wake immediately so that Run() updates `_WakeTime` properly.
          // This is a cheap hack to minimize the code we emit by keeping the
          // _WakeTime-updating code in one place (Run())
@@ -171,7 +171,7 @@ private:
         _CurrentTask->run();
         // The task finished
         // Future invocations should do nothing
-        _CurrentTask->go = nullptr;
+        _CurrentTask->go = _Nop;
         
         // Restore scheduler stack pointer
         _SPRestore(_SP);
@@ -196,6 +196,12 @@ private:
         // Restore task stack pointer
         _SPRestore(_CurrentTask->sp);
         // Return to task, to whatever function called _Yield()
+        return;
+    }
+    
+    [[gnu::noinline]] // Don't inline: PC must be pushed onto the stack when called
+    static void _Nop() {
+        // Return to scheduler
         return;
     }
     
