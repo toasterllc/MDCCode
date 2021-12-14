@@ -49,16 +49,29 @@ public:
             if (_Wake) {
                 _Wake = false;
                 
+                Ticks newWakeTime = 0;
+                Ticks newWakeDelay = std::numeric_limits<Ticks>::max();
+                
                 for (_Task& task : _Tasks) {
+                    auto& taskWakeTime = task.wakeTime;
+                    if (!taskWakeTime) continue;
+                    
                     // If this task needs waking at the current tick, wake it
-                    if (task.wakeTime && *task.wakeTime==_WakeTime) {
-                        task.wakeTime = std::nullopt;
+                    if (*taskWakeTime == _WakeTime) {
+                        taskWakeTime = std::nullopt;
                         task.go = _Resume;
+                    
+                    } else {
+                        const Ticks taskWakeDelay = *taskWakeTime-_CurrentTime;
+                        if (taskWakeDelay < newWakeDelay) {
+                            newWakeTime = *taskWakeTime;
+                            newWakeDelay = taskWakeDelay;
+                        }
                     }
                 }
                 
-                #warning interrupts must be disabled when calling this!
-                _UpdateWakeTime();
+                // Update the next wake time
+                _WakeTime = newWakeTime;
             }
         }
     }
@@ -219,25 +232,25 @@ private:
         IntState::SetInterruptsEnabled(true);
     }
     
-    #warning interrupts must be disabled when calling this!
-    static void _UpdateWakeTime() {
-        Ticks newWakeTime = 0;
-        Ticks newWakeDelay = std::numeric_limits<Ticks>::max();
-        for (const _Task& task : _Tasks) {
-            // Only consider sleeping tasks
-            if (!task.wakeTime) continue;
-            
-            const Ticks taskWakeTime = *task.wakeTime;
-            const Ticks taskWakeDelay = taskWakeTime-_CurrentTime;
-            if (taskWakeDelay < newWakeDelay) {
-                newWakeTime = taskWakeTime;
-                newWakeDelay = taskWakeDelay;
-            }
-        }
-        
-        // Update the next wake time
-        _WakeTime = newWakeTime;
-    }
+//    #warning interrupts must be disabled when calling this!
+//    static void _UpdateWakeTime() {
+//        Ticks newWakeTime = 0;
+//        Ticks newWakeDelay = std::numeric_limits<Ticks>::max();
+//        for (const _Task& task : _Tasks) {
+//            // Only consider sleeping tasks
+//            if (!task.wakeTime) continue;
+//            
+//            const Ticks taskWakeTime = *task.wakeTime;
+//            const Ticks taskWakeDelay = taskWakeTime-_CurrentTime;
+//            if (taskWakeDelay < newWakeDelay) {
+//                newWakeTime = taskWakeTime;
+//                newWakeDelay = taskWakeDelay;
+//            }
+//        }
+//        
+//        // Update the next wake time
+//        _WakeTime = newWakeTime;
+//    }
     
     static inline _Task _Tasks[] = {_Task{
         .run    = T_Tasks::Run,
