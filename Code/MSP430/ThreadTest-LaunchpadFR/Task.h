@@ -117,10 +117,16 @@ public:
     static bool Tick() {
         // Update current time
         _CurrentTime++;
-        #warning formalize whether _WakeTime needs to be an optional.
-        #warning we can have 1 false positive every time _CurrentTime wraps, as long as no sleeping task is actually woken when the scheduler runs, right?
-        _Wake = (_WakeTime == _CurrentTime);
-        return _Wake;
+        if (_WakeTime == _CurrentTime) {
+            _Wake = true;
+            return true;
+        }
+        return false;
+        
+//        #warning formalize whether _WakeTime needs to be an optional.
+//        #warning we can have 1 false positive every time _CurrentTime wraps, as long as no sleeping task is actually woken when the scheduler runs, right?
+//        _Wake = (_WakeTime == _CurrentTime);
+//        return _Wake;
         
 //        // Iterate over the sleeping tasks and wake the appropriate ones
 //        _Task** tprevNext = &_SleepTasks;
@@ -214,7 +220,7 @@ private:
     }
     
     #warning interrupts must be disabled when calling this!
-    static Ticks _UpdateWakeTime() {
+    static void _UpdateWakeTime() {
         Ticks newWakeTime = 0;
         Ticks newWakeDelay = std::numeric_limits<Ticks>::max();
         for (const _Task& task : _Tasks) {
