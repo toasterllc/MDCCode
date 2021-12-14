@@ -43,6 +43,7 @@ public:
     // Run(): run the tasks indefinitely
     [[noreturn]]
     static void Run() {
+        bool wakeTimeUpdate = false;
         for (;;) {
             do {
                 _DidWork = false;
@@ -52,13 +53,16 @@ public:
                 }
             } while (_DidWork);
             
-            IntState::WaitForInterrupt();
-            #warning interrupts need to be disabled while we inspect them for wakeup eligibility 
-            #warning for this to work completely reliably, we should exit WaitForInterrupt/LPM with interrupts disabled
+            // Skip sleeping if we know we need to update the wake time
+            if (_WakeTimeUpdate) goto wakeTasks;
             
-            // Check if tasks need to be woken / _WakeTime needs to be updated
-            if (_Wake) {
-                _Wake = false;
+            IntState::WaitForInterrupt();
+            
+            // Check if tasks need to be woken on the current tick
+            if (_WakeTime == _CurrentTime) goto wakeTasks;
+            
+            wakeTasks: {
+                _WakeTimeUpdate = false;
                 
                 Ticks newWakeTime = 0;
                 Ticks newWakeDelay = std::numeric_limits<Ticks>::max();
@@ -67,7 +71,7 @@ public:
                     auto& taskWakeTime = task.wakeTime;
                     if (!taskWakeTime) continue;
                     
-                    // If this task needs waking at the current tick, wake it
+                    // If this task needs to be woken on the current tick, wake it
                     if (*taskWakeTime == _CurrentTime) {
                         taskWakeTime = std::nullopt;
                         task.go = _Resume;
@@ -81,9 +85,10 @@ public:
                     }
                 }
                 
-                // Update the next wake time
                 _WakeTime = newWakeTime;
             }
+            #warning interrupts need to be disabled while we inspect them for wakeup eligibility 
+            #warning for this to work completely reliably, we should exit WaitForInterrupt/LPM with interrupts disabled
         }
     }
     
@@ -126,10 +131,10 @@ public:
          // Update task state
          _CurrentTask->wakeTime = _CurrentTime + ticks + 1;
          _CurrentTask->go = _Nop;
-         // Wake immediately so that Run() updates `_WakeTime` properly.
+         // Update  immediately so that Run() updates `_WakeTime` properly.
          // This is a cheap hack to minimize the code we emit by keeping the
          // _WakeTime-updating code in one place (Run())
-         _Wake = true;
+         _WakeTimeUpdate = true;
          
          _Yield();
     }
@@ -137,12 +142,8 @@ public:
     // Tick(): notify scheduler that a tick has passed
     // Returns whether the scheduler needs to run
     static bool Tick() {
-        // Update current time
         _CurrentTime++;
-        if (_WakeTime == _CurrentTime) {
-            _Wake = true;
-        }
-        return _Wake;
+        return (_WakeTime == _CurrentTime);
     }
     
 private:
@@ -200,34 +201,6 @@ private:
         // Future invocations should do nothing
         _CurrentTask->go = _Nop;
     }
-    
-//    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
-//    static void _Start() {
-//        // Prepare the task for execution
-//        _CurrentTask->sp = _CurrentTask->spInit;
-//        _CurrentTask->go = _Resume;
-//        // Clear the task's wakeTime since it's no longer sleeping.
-//        // Ideally we would re-calculate _WakeTime, but we don't to minimize the emitted code
-//        _CurrentTask->wakeTime = std::nullopt;
-//        
-//        // Save scheduler stack pointer
-//        _SPSave(_SP);
-//        // Restore task stack pointer
-//        _SPRestore(_CurrentTask->sp);
-//        
-//        // Signal that we did work
-//        _StartWork();
-//        // Invoke task Run()
-//        _CurrentTask->run();
-//        // The task finished
-//        // Future invocations should do nothing
-//        _CurrentTask->go = _Nop;
-//        
-//        // Restore scheduler stack pointer
-//        _SPRestore(_SP);
-//        // Return to scheduler
-//        _Return();
-//    }
     
     [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
     static void _Yield() {
@@ -289,8 +262,8 @@ private:
     static inline void* _SP = nullptr; // Saved stack pointer
     
     static inline Ticks _CurrentTime = 0;
-    static inline bool _Wake = false;
     static inline Ticks _WakeTime = 0;
+    static inline bool _WakeTimeUpdate = false;
     
     class Task;
     friend Task;
