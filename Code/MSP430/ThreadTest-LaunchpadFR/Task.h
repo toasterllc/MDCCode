@@ -53,10 +53,13 @@ public:
                 }
             } while (_DidWork);
             
-            // Skip sleeping if we know we need to update the wake time
+            // Skip sleeping if the wake time needs updating, and
+            // therefore we don't know when to wake up yet
             if (_WakeTimeUpdate) goto wakeTasks;
             
+            PAOUT &= ~BIT2;
             IntState::WaitForInterrupt();
+            PAOUT |= BIT2;
             
             // Check if tasks need to be woken on the current tick
             if (_WakeTime == _CurrentTime) goto wakeTasks;

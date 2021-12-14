@@ -18,7 +18,7 @@ public:
         for (;;) {
             PAOUT ^= BIT0;
 //            puts("TaskA\n");
-            Scheduler::Sleep(100);
+            Scheduler::Sleep(10000); // 5.12s
         }
     }
     
@@ -36,7 +36,7 @@ public:
         for (;;) {
             PAOUT ^= BIT1;
 //            puts("TaskB\n");
-            Scheduler::Sleep(1000);
+            Scheduler::Sleep(40000); // 20.48s
         }
     }
     
@@ -94,10 +94,12 @@ void Toastbox::IntState::WaitForInterrupt() {
 
 __attribute__((interrupt(WDT_VECTOR)))
 static void _ISR_WDT() {
+//    PAOUT |= BIT2;
     const bool woke = Scheduler::Tick();
     if (woke) {
         __bic_SR_register_on_exit(GIE | LPM1_bits);
     }
+//    PAOUT &= ~BIT2;
 }
 
 int main() {
@@ -111,7 +113,7 @@ int main() {
     SFRIE1 |= WDTIE; // Enable WDT interrupt
     
     PAOUT   = 0x0000;
-    PADIR   = BIT1 | BIT0;
+    PADIR   = BIT2 | BIT1 | BIT0;
     PASEL0  = 0x0000;
     PASEL1  = 0x0000;
     PAREN   = 0x0000;
@@ -120,6 +122,48 @@ int main() {
     
     // Unlock GPIOs
     PM5CTL0 &= ~LOCKLPM5;
+    
+    
+    
+    
+    
+    // Configure one FRAM wait state if MCLK > 8MHz.
+    // This must happen before configuring the clock system.
+    FRCTL0 = FRCTLPW | NWAITS_1;
+    
+//    do {
+//        CSCTL7 &= ~(DCOFFG); // Clear DCO fault flag
+//        SFRIFG1 &= ~OFIFG;
+//    } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
+    
+    // Disable FLL
+    __bis_SR_register(SCG0);
+        // Set REFOCLK as FLL reference source
+        CSCTL3 |= SELREF__REFOCLK;
+        // Clear DCO and MOD registers
+        CSCTL0 = 0;
+        // Clear DCO frequency select bits first
+        CSCTL1 &= ~(DCORSEL_7);
+        
+        CSCTL1 |= DCORSEL_5;
+        
+        // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLK frequency (32768)
+        CSCTL2 = FLLD_0 | ((16000000/32768)-1);
+        
+        // Wait 3 cycles to take effect
+        __delay_cycles(3);
+    // Enable FLL
+    __bic_SR_register(SCG0);
+    
+    // Wait until FLL locks
+    while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
+    
+    // MCLK / SMCLK source = DCOCLKDIV
+    // ACLK source = REFOCLK
+    CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
+    
+    
+    
     
 //    Scheduler::Start<TaskA>();
 //    Scheduler::Start<TaskB>();
