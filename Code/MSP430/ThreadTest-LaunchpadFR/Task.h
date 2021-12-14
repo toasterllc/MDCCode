@@ -9,27 +9,21 @@ class Scheduler {
 public:
     using Ticks = unsigned int;
     
-    #warning we should make Start/Stop usable from ISRs right? for example, if we have a motion task, perhaps it would be started by the ISR? alternatively it could Wait() on a boolean set by an ISR...
+    #warning make Start/Stop usable from ISRs? eg, if we have a motion task, it
+    #warning could be started by the ISR. alternatively it could Wait() on a
+    #warning boolean set by an ISR...
     
-//    template <typename T_Task>
-//    static void Start() {
-//        for (_Task& task : _Tasks) {
-//            if (task.run == T_Task::Run) {
-//                task.go = _Start;
-//                break;
-//            }
-//        }
-//    }
-//    
-//    template <typename T_Task>
-//    static void Stop() {
-//        for (_Task& task : _Tasks) {
-//            if (task.run == T_Task::Run) {
-//                task.go = nullptr;
-//                break;
-//            }
-//        }
-//    }
+    template <typename T_Task>
+    static void Start() {
+        _Task& task = _GetTask<T_Task>();
+        task.go = _Start;
+    }
+    
+    template <typename T_Task>
+    static void Stop() {
+        _Task& task = _GetTask<T_Task>();
+        task.go = nullptr;
+    }
     
     // Run(): run the tasks indefinitely
     [[noreturn]]
@@ -210,6 +204,18 @@ private:
         IntState::SetInterruptsEnabled(true);
     }
     
+    // _GetTask(): returns the _Task& for the given T_Task
+    template <typename T_Task>
+    static constexpr _Task& _GetTask() {
+        static_assert((std::is_same_v<T_Task, T_Tasks> || ...), "invalid task");
+        return _Tasks[_ElmIdx<T_Task, T_Tasks...>()];
+    }
+    
+    template <typename T_1, typename T_2=void, typename... T_s>
+    static constexpr size_t _ElmIdx() {
+        return std::is_same_v<T_1,T_2> ? 0 : 1 + _ElmIdx<T_1, T_s...>();
+    }
+    
     static inline _Task _Tasks[] = {_Task{
         .run    = T_Tasks::Run,
         .spInit = T_Tasks::Stack + sizeof(T_Tasks::Stack),
@@ -222,7 +228,6 @@ private:
     static inline void* _SP = nullptr; // Saved stack pointer
     
     static inline Ticks _CurrentTime = 0;
-    #warning formalize whether _WakeTime needs to be an optional
     static inline bool _Wake = false;
     static inline Ticks _WakeTime = 0;
     

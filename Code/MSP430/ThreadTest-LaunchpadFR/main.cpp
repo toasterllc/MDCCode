@@ -115,8 +115,8 @@ int main() {
 //    Scheduler::Start<TaskB>();
     
 //    // TODO: make tasks have an initial state so we don't need a runtime component to set their initial state
-//    TaskA::Start();
-//    TaskB::Start();
+//    Scheduler::Start<TaskA>();
+//    Scheduler::Start<TaskB>();
     
     Scheduler::Run();
     return 0;
