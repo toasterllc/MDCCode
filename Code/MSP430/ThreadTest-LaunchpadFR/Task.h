@@ -66,7 +66,7 @@ public:
     
     // Wait(fn): sleep current task until `fn` returns true
     // `fn` must not cause any task to become runnable.
-    // If it does, Scheduler may not notice that the task is runnable and
+    // If it does, the scheduler may not notice that the task is runnable and
     // could go to sleep instead of running the task.
     template <typename T_Fn>
     static auto Wait(T_Fn&& fn) {
