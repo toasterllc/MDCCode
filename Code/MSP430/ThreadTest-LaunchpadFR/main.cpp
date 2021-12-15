@@ -2,11 +2,17 @@
 #include <cstddef>
 #include <cstdint>
 //#include <cstdio>
+#include "Toastbox/IntState.h"
 #include "Toastbox/Task.h"
+#include "Util.h"
 
 class TaskA;
 class TaskB;
-using Scheduler = Toastbox::Scheduler<TaskA,TaskB>;
+using Scheduler = Toastbox::Scheduler<
+    Toastbox::IntState::WaitForInterrupt, // Sleep function
+    TaskA,
+    TaskB
+>;
 
 class TaskA {
 public:
@@ -44,15 +50,16 @@ public:
     static inline uint8_t Stack[1024];
 };
 
-#define _Stringify(s) #s
-#define Stringify(s) _Stringify(s)
-
 #define StackMainSize 128
+
 __attribute__((section(".stack.main")))
 uint8_t StackMain[StackMainSize];
 
 asm(".global __stack");
-asm(".equ __stack, StackMain+" Stringify(StackMainSize));
+asm("__stack = StackMain+" Stringify(StackMainSize));
+
+//asm(".global __stack");
+//asm(".equ __stack, StackMain+" Stringify(StackMainSize));
 
 
 
