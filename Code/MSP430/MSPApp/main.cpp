@@ -44,11 +44,11 @@ struct _Pin {
 using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
-class _MainTask;
+class _MotionTask;
 class _SDTask;
 class _ImgTask;
 using _Scheduler = Toastbox::Scheduler<
-    _MainTask,
+    _MotionTask,
     _SDTask,
     _ImgTask
 >;
@@ -411,7 +411,7 @@ void Toastbox::IntState::WaitForInterrupt() {
 //    }
 //}
 
-class _MainTask {
+class _MotionTask {
 public:
     using Options = _Scheduler::Options<
         _Scheduler::Option::Start // Task should start running
@@ -437,7 +437,7 @@ public:
         }
     }
     
-    __attribute__((section(".stack._MainTask")))
+    __attribute__((section(".stack._MotionTask")))
     static inline uint8_t Stack[128];
 };
 
@@ -459,8 +459,9 @@ void SleepUs(uint16_t us) {
     _Scheduler::Sleep(_TicksForUs(us));
 }
 
-#warning verify that _StackMainSize is large enough
+// MARK: - Main
 
+#warning verify that _StackMainSize is large enough
 #define _StackMainSize 32
 
 __attribute__((section(".stack.main")))
@@ -468,7 +469,6 @@ uint8_t _StackMain[_StackMainSize];
 
 asm(".global __stack");
 asm("__stack = _StackMain+" Stringify(_StackMainSize));
-
 
 int main() {
     // Stop watchdog timer
