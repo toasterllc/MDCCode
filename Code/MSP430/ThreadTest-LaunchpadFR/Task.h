@@ -54,7 +54,9 @@ public:
             
             // No work to do
             // Go to sleep!
+//            PAOUT &= ~BIT2;
             IntState::WaitForInterrupt();
+//            PAOUT |= BIT2;
         }
     }
     
