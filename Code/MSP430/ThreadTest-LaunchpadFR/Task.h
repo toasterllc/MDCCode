@@ -21,10 +21,6 @@ public:
         }
     };
     
-    #warning make Start/Stop usable from ISRs? eg, if we have a motion task, it
-    #warning could be started by the ISR. alternatively it could Wait() on a
-    #warning boolean set by an ISR...
-    
     template <typename T_Task>
     static void Start() {
         _Task& task = _GetTask<T_Task>();
@@ -59,98 +55,6 @@ public:
             // No work to do
             // Go to sleep!
             IntState::WaitForInterrupt();
-            
-//            // Update _SleepTask
-//            if (_SleepTask && !_SleepTask->sleepCount) {
-//                for (_Task& task : _Tasks) {
-//                    auto& taskWakeTime = task.wakeTime;
-//                    if (!taskWakeTime) continue;
-//                    
-//                    // If this task needs to be woken on the current tick, wake it
-//                    if (*taskWakeTime == _CurrentTime) {
-//                        taskWakeTime = std::nullopt;
-//                        task.go = _TaskResume;
-//                    
-//                    } else {
-//                        const Ticks taskWakeDelay = *taskWakeTime-_CurrentTime;
-//                        if (taskWakeDelay < newWakeDelay) {
-//                            newWakeTime = *taskWakeTime;
-//                            newWakeDelay = taskWakeDelay;
-//                        }
-//                    }
-//                }
-//            }
-            
-            
-            #warning try 2 different strategies to check whether a task woke:
-            #warning   - set _Wake flag in ISR
-            #warning   - check `_SleepTask && !_SleepTask->sleepCount`
-            
-//            // Update _SleepTask
-//            if (_SleepTask && !_SleepTask->sleepCount) {
-//                for (_Task& task : _Tasks) {
-//                    auto& taskWakeTime = task.wakeTime;
-//                    if (!taskWakeTime) continue;
-//                    
-//                    // If this task needs to be woken on the current tick, wake it
-//                    if (*taskWakeTime == _CurrentTime) {
-//                        taskWakeTime = std::nullopt;
-//                        task.go = _TaskResume;
-//                    
-//                    } else {
-//                        const Ticks taskWakeDelay = *taskWakeTime-_CurrentTime;
-//                        if (taskWakeDelay < newWakeDelay) {
-//                            newWakeTime = *taskWakeTime;
-//                            newWakeDelay = taskWakeDelay;
-//                        }
-//                    }
-//                }
-//            }
-            
-//            // Skip sleeping if the wake time needs updating, and
-//            // therefore we don't know when to wake up yet
-//            if (_WakeTimeUpdate) goto wakeTasks;
-//            
-//            #warning try 2 different strategies:
-//            #warning   - use _Wake flag for ISR to signal that WakeCounter hit 0
-//            #warning   - use local bool to detect WakeCounter 1->0
-//            
-//            PAOUT &= ~BIT2;
-//            IntState::WaitForInterrupt();
-//            PAOUT |= BIT2;
-//            
-//            // Check if tasks need to be woken on the current tick
-//            if (_WakeTime == _CurrentTime) goto wakeTasks;
-//            continue;
-//            
-//            wakeTasks: {
-//                _WakeTimeUpdate = false;
-//                
-//                Ticks newWakeTime = 0;
-//                Ticks newWakeDelay = std::numeric_limits<Ticks>::max();
-//                
-//                for (_Task& task : _Tasks) {
-//                    auto& taskWakeTime = task.wakeTime;
-//                    if (!taskWakeTime) continue;
-//                    
-//                    // If this task needs to be woken on the current tick, wake it
-//                    if (*taskWakeTime == _CurrentTime) {
-//                        taskWakeTime = std::nullopt;
-//                        task.go = _TaskResume;
-//                    
-//                    } else {
-//                        const Ticks taskWakeDelay = *taskWakeTime-_CurrentTime;
-//                        if (taskWakeDelay < newWakeDelay) {
-//                            newWakeTime = *taskWakeTime;
-//                            newWakeDelay = taskWakeDelay;
-//                        }
-//                    }
-//                }
-//                
-//                _WakeTime = newWakeTime;
-//            }
-//            #warning interrupts need to be disabled while we inspect them for wakeup eligibility 
-//            #warning for this to work completely reliably, we should exit WaitForInterrupt/LPM with interrupts disabled
         }
     }
     
@@ -249,6 +153,8 @@ private:
     
     [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
     static void _TaskStart() {
+        // Save scheduler regs
+        _RegsSave();
         // Save scheduler SP
         _SPSave(_SP);
         // Restore task SP
@@ -257,6 +163,8 @@ private:
         _TaskRun();
         // Restore scheduler SP
         _SPRestore(_SP);
+        // Restore scheduler regs
+        _RegsRestore();
         // Restore scheduler PC
         _PCRestore();
     }
@@ -285,12 +193,16 @@ private:
         IntState::SetInterruptsEnabled(false);
         // Restore scheduler SP
         _SPRestore(_SP);
+        // Restore scheduler regs
+        _RegsRestore();
         // Restore scheduler PC
         _PCRestore();
     }
     
     [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
     static void _TaskResume() {
+        // Save scheduler regs
+        _RegsSave();
         // Save scheduler SP
         _SPSave(_SP);
         // Restore task SP
