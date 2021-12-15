@@ -215,6 +215,14 @@ public:
     }
     
 private:
+#define _RegsSave()                                                                 \
+         if constexpr (sizeof(void*) == 2)  asm("pushm   #7, r10" : : : );          \
+    else if constexpr (sizeof(void*) == 4)  asm("pushm.a #7, r10" : : : )
+
+#define _RegsRestore()                                                              \
+         if constexpr (sizeof(void*) == 2)  asm("popm   #7, r10" : : : );           \
+    else if constexpr (sizeof(void*) == 4)  asm("popm.a #7, r10" : : : )
+
 #define _SPSave(dst)                                                                \
          if constexpr (sizeof(void*) == 2)  asm("mov  r1, %0" : "=m" (dst) : : );   \
     else if constexpr (sizeof(void*) == 4)  asm("mova r1, %0" : "=m" (dst) : : )
@@ -224,7 +232,7 @@ private:
     else if constexpr (sizeof(void*) == 4)  asm("mova %0, r1" : : "m" (src) : )
 
 #define _Return()                                                                   \
-         if constexpr (sizeof(void*) == 2)  asm("ret" : : : );                      \
+         if constexpr (sizeof(void*) == 2)  asm("ret " : : : );                     \
     else if constexpr (sizeof(void*) == 4)  asm("reta" : : : )
     
     struct _Task {
@@ -268,13 +276,16 @@ private:
     
     [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
     static void _ReturnToScheduler() {
+        // Save registers
+        _RegsSave();
         // Save stack pointer
         _SPSave(_CurrentTask->sp);
         // Restore scheduler stack pointer
         _SPRestore(_SP);
         // Disable interrupts
-        // This balances enabling interrupts in _StartWork(), which may or may not have been called.
-        // Regardless, when returning to the scheduler, interrupts need to be disabled.
+        // This balances enabling interrupts in _StartWork(), which may or may
+        // not have been called for the current task. Regardless, when
+        // returning to the scheduler, interrupts need to be disabled.
         IntState::SetInterruptsEnabled(false);
         // Return to scheduler
         _Return();
@@ -286,6 +297,8 @@ private:
         _SPSave(_SP);
         // Restore task stack pointer
         _SPRestore(_CurrentTask->sp);
+        // Restore registers
+        _RegsRestore();
         // Return to task, to whatever function called _ReturnToScheduler()
         _Return();
     }
