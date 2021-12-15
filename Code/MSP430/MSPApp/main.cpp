@@ -47,10 +47,12 @@ using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_
 class _MotionTask;
 class _SDTask;
 class _ImgTask;
+class _BusyTimeoutTask;
 using _Scheduler = Toastbox::Scheduler<
     _MotionTask,
     _SDTask,
-    _ImgTask
+    _ImgTask,
+    _BusyTimeoutTask
 >;
 
 static SD::Card _SD;
@@ -122,7 +124,7 @@ public:
     }
     
     __attribute__((section(".stack._SDTask")))
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[256];
     
     enum class Command {
         Enable,
@@ -167,7 +169,7 @@ public:
     }
     
     __attribute__((section(".stack._ImgTask")))
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[256];
     
     enum class Command {
         Enable,
@@ -185,6 +187,11 @@ public:
 static void _SetSDImgEnabled(bool en) {
     static bool powerEn = false;
     if (powerEn == en) return; // Short circuit if state didn't change
+    
+    // Wait for _SDTask/_ImgTask to be ready to accept commands
+    _Scheduler::Wait([&] {
+        return !_SDTask::Cmd && !_ImgTask::Cmd;
+    });
     
     powerEn = en;
     if (powerEn) {
@@ -207,6 +214,7 @@ static void _SetSDImgEnabled(bool en) {
 // MARK: - Motion
 
 static volatile bool _Motion = false;
+static volatile bool _Busy = false;
 
 static void _CaptureImage() {
     // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
@@ -383,12 +391,8 @@ void Toastbox::IntState::WaitForInterrupt() {
     
     // If we're currently handling motion, enter LPM1 sleep because a task is just delaying itself.
     // If we're not handling motion, enter the deep LPM3.5 sleep, where RAM content is lost.
-    const uint16_t LPMBits = (_Motion ? LPM1_bits : LPM3_bits);
-//    const uint16_t LPMBits = LPM1_bits;
-    
-    #warning TODO: call _SetSDImgEnabled(false) here if we're entering LPM3.5
-    #warning TODO: actually we can't invoke tasks from WaitForInterrupt() so we'll have to call
-    #warning TODO: _SetSDImgEnabled(false) from somewhere else...
+//    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
+    const uint16_t LPMBits = LPM1_bits;
     
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
@@ -433,6 +437,11 @@ public:
         for (;;) {
             // Wait for motion
             _Scheduler::Wait([&] { return _Motion; });
+            _Motion = false;
+            _Busy = true;
+            
+            // Stop the timeout task while we capture a new image
+            _Scheduler::Stop<_BusyTimeoutTask>();
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
             SleepMs(100);
@@ -446,12 +455,36 @@ public:
             ICE::Transfer(ICE::LEDSetMsg(0x00));
             SleepMs(100);
             
-            _Motion = false;
+            // Restart the timeout task, so that we turn off automatically if
+            // we're idle for a bit
+            _Scheduler::Start<_BusyTimeoutTask>();
         }
     }
     
+    #warning TODO: reduce stack sizes once we figure out the problem
     __attribute__((section(".stack._MotionTask")))
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[256];
+};
+
+class _BusyTimeoutTask {
+public:
+    using Options = _Scheduler::Options<>;
+    
+    static void Run() {
+        for (;;) {
+            // Stay on for 1 second waiting for motion
+            SleepMs(1000);
+            
+            // Turn everything off
+            _SetSDImgEnabled(false);
+            
+            // Update our state
+            _Busy = false;
+        }
+    }
+    
+    __attribute__((section(".stack._BusyTimeoutTask")))
+    static inline uint8_t Stack[256];
 };
 
 // MARK: - Sleep
@@ -475,7 +508,7 @@ void SleepUs(uint16_t us) {
 // MARK: - Main
 
 #warning verify that _StackMainSize is large enough
-#define _StackMainSize 32
+#define _StackMainSize 256
 
 __attribute__((section(".stack.main")))
 uint8_t _StackMain[_StackMainSize];
