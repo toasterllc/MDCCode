@@ -25,7 +25,7 @@ private:
         return !initPrev || (SYSRSTIV != SYSRSTIV__LPM5WU);
     }
     
-    // _startup() is called before main() via the crt machinery, because it's placed in
+    // _Startup() is called before main() via the crt machinery, because it's placed in
     // a .crt_NNNN_xxx section. The NNNN part of the section name defines the order that
     // this function is called relative to the other crt functions.
     //
@@ -36,9 +36,9 @@ private:
     // sense.
     //
     // See the `crt0.S` file in the newlib project for more info.
-    __attribute__((section(".crt_0401.startup"), naked, used))
-    static void _startup() {
-        // Debug code to signal that _startup() was called by toggling pin A.E
+    __attribute__((section(".crt_0401._Startup"), naked, used))
+    static void _Startup() {
+        // Debug code to signal that _Startup() was called by toggling pin A.E
 //        {
 //            WDTCTL = WDTPW | WDTHOLD;
 //            PM5CTL0 &= ~LOCKLPM5;
