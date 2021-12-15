@@ -21,10 +21,6 @@ using namespace GPIO;
 
 static constexpr uint64_t _MCLKFreqHz = 16000000;
 static constexpr uint32_t _XT1FreqHz = 32768;
-static constexpr uint16_t _LPMBits = LPM3_bits;
-
-#define _delayUs(us) __delay_cycles((((uint64_t)us)*_MCLKFreqHz) / 1000000)
-#define _delayMs(ms) __delay_cycles((((uint64_t)ms)*_MCLKFreqHz) / 1000)
 
 struct _Pin {
     // Default GPIOs
@@ -211,7 +207,9 @@ static void _SetSDImgEnabled(bool en) {
 
 // MARK: - Motion
 
-static void _MotionHandle() {
+static volatile bool _Motion = false;
+
+static void _CaptureImage() {
     // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
     constexpr uint8_t CaptureAttemptCount = 3;
     uint8_t bestExpBlock = 0;
@@ -279,14 +277,12 @@ static void _MotionHandle() {
 
 // MARK: - Interrupts
 
-__attribute__((interrupt(RTC_VECTOR)))
+[[gnu::interrupt(RTC_VECTOR)]]
 static void _ISR_RTC() {
     _RTC.isr();
 }
 
-static volatile bool _Motion = false;
-
-__attribute__((interrupt(PORT2_VECTOR)))
+[[gnu::interrupt(PORT2_VECTOR)]]
 void _ISR_Port2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
     switch (__even_in_range(P2IV, P2IV__P2IFG5)) {
@@ -301,7 +297,7 @@ void _ISR_Port2() {
     }
 }
 
-__attribute__((interrupt(WDT_VECTOR)))
+[[gnu::interrupt(WDT_VECTOR)]]
 static void _ISR_WDT() {
     const bool wake = _Scheduler::Tick();
     if (wake) {
@@ -343,7 +339,7 @@ const uint8_t SD::Card::ClkDelayFast = 0;
 void SD::Card::SetPowerEnabled(bool en) {
     _Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    _delayMs(2);
+    SleepMs(2);
 }
 
 // MARK: - Image Sensor
@@ -351,7 +347,7 @@ void SD::Card::SetPowerEnabled(bool en) {
 void Img::Sensor::SetPowerEnabled(bool en) {
     if (en) {
         _Pin::VDD_2V8_IMG_EN::Write(1);
-        _delayUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        SleepUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         _Pin::VDD_1V9_IMG_EN::Write(1);
         
         #warning measure actual delay that we need for the rails to rise
@@ -398,7 +394,7 @@ void Toastbox::IntState::WaitForInterrupt() {
     
     // Atomically enable interrupts and go to sleep
     const bool prevEn = Toastbox::IntState::InterruptsEnabled();
-    __bis_SR_register(GIE | _LPMBits);
+    __bis_SR_register(GIE | LPMBits);
     // If interrupts were disabled previously, disable them again
     if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
 }
@@ -409,9 +405,9 @@ void Toastbox::IntState::WaitForInterrupt() {
 //    _Pin::DEBUG_OUT::Init();
 //    for (int i=0; i<10; i++) {
 //        _Pin::DEBUG_OUT::Write(0);
-//        _delayMs(10);
+//        for (volatile int i=0; i<10000; i++);
 //        _Pin::DEBUG_OUT::Write(1);
-//        _delayMs(10);
+//        for (volatile int i=0; i<10000; i++);
 //    }
 //}
 
@@ -431,24 +427,41 @@ public:
             // Turn everything on
             _SetSDImgEnabled(true);
             
-            // Handle motion
-            _MotionHandle();
+            // Capture an image
+            _CaptureImage();
             
             ICE::Transfer(ICE::LEDSetMsg(0x00));
-            _delayMs(100);
+            SleepMs(100);
             
             _Motion = false;
         }
     }
     
-    __attribute__((section(".stack.MotionTask")))
+    __attribute__((section(".stack._MainTask")))
     static inline uint8_t Stack[128];
 };
 
+// MARK: - Sleep
 
+static constexpr uint16_t _UsPerTick = 512;
 
+static _Scheduler::Ticks _TicksForUs(uint16_t us) {
+    // We're intentionally not ceiling the result because _Scheduler::Sleep
+    // implicitly ceils by adding one tick (to prevent truncated sleeps)
+    return us / _UsPerTick;
+}
 
-#define _StackMainSize 128
+void SleepMs(uint16_t ms) {
+    SleepUs(1000*ms);
+}
+
+void SleepUs(uint16_t us) {
+    _Scheduler::Sleep(_TicksForUs(us));
+}
+
+#warning verify that _StackMainSize is large enough
+
+#define _StackMainSize 32
 
 __attribute__((section(".stack.main")))
 uint8_t _StackMain[_StackMainSize];
@@ -458,14 +471,8 @@ asm("__stack = _StackMain+" Stringify(_StackMainSize));
 
 
 int main() {
-    // Config watchdog timer:
-    //   WDTPW:             password
-    //   WDTSSEL__SMCLK:    watchdog source = SMCLK
-    //   WDTTMSEL:          interval timer mode
-    //   WDTCNTCL:          clear counter
-    //   WDTIS__8192:       interval = SMCLK / 8192 Hz = 16MHz / 8192 = 1953.125 Hz => period=512 us
-    WDTCTL = WDTPW | WDTSSEL__SMCLK | WDTTMSEL | WDTCNTCL | WDTIS__8192;
-    SFRIE1 |= WDTIE; // Enable WDT interrupt
+    // Stop watchdog timer
+    WDTCTL = WDTPW | WDTHOLD;
     
     // Init GPIOs
     GPIO::Init<
@@ -513,6 +520,15 @@ int main() {
             _RTC.init(0);
         }
     }
+    
+    // Config watchdog timer:
+    //   WDTPW:             password
+    //   WDTSSEL__SMCLK:    watchdog source = SMCLK
+    //   WDTTMSEL:          interval timer mode
+    //   WDTCNTCL:          clear counter
+    //   WDTIS__8192:       interval = SMCLK / 8192 Hz = 16MHz / 8192 = 1953.125 Hz => period=512 us
+    WDTCTL = WDTPW | WDTSSEL__SMCLK | WDTTMSEL | WDTCNTCL | WDTIS__8192;
+    SFRIE1 |= WDTIE; // Enable WDT interrupt
     
     _Scheduler::Run();
 }
