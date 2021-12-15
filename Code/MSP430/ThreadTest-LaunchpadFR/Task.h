@@ -156,7 +156,7 @@ public:
     
     // Yield(): yield current task to the scheduler
     static void Yield() {
-        _TaskReturnToScheduler();
+        _TaskPause();
         _TaskStartWork();
     }
     
@@ -169,7 +169,7 @@ public:
         for (;;) {
             const auto r = fn();
             if (!r) {
-                _TaskReturnToScheduler();
+                _TaskPause();
                 continue;
             }
             
@@ -190,7 +190,7 @@ public:
             }
             
             // Wait until some task wakes
-            do _TaskReturnToScheduler();
+            do _TaskPause();
             while (!_Wake);
         
         } while (_CurrentTime != wakeTime);
@@ -215,21 +215,25 @@ public:
     }
     
 private:
-#define _PCSave()                                                                                \
-         if constexpr (sizeof(void*) == 2)  asm("push   r0" : : : );                                \
-    else if constexpr (sizeof(void*) == 4)  asm("push.a r0" : : : )
+#define _RegsSave()                                                                         \
+         if constexpr (sizeof(void*) == 2)  asm("pushm   #7, r10" : : : );                  \
+    else if constexpr (sizeof(void*) == 4)  asm("pushm.a #7, r10" : : : )
 
-#define _PCRestore()                                                                             \
-         if constexpr (sizeof(void*) == 2)  asm("ret " : : : "r4","r5","r6","r7","r8","r9","r10");  \
-    else if constexpr (sizeof(void*) == 4)  asm("reta" : : : )
+#define _RegsRestore()                                                                      \
+         if constexpr (sizeof(void*) == 2)  asm("popm   #7, r10" : : : );                   \
+    else if constexpr (sizeof(void*) == 4)  asm("popm.a #7, r10" : : : )
 
-#define _SPSave(dst)                                                                                \
-         if constexpr (sizeof(void*) == 2)  asm("mov  r1, %0" : "=m" (dst) : : );                   \
-    else if constexpr (sizeof(void*) == 4)  asm("mova r1, %0" : "=m" (dst) : : )
+#define _PCRestore()                                                                        \
+         if constexpr (sizeof(void*) == 2)  asm volatile("ret " : : : );                    \
+    else if constexpr (sizeof(void*) == 4)  asm volatile("reta" : : : )
 
-#define _SPRestore(src)                                                                             \
-         if constexpr (sizeof(void*) == 2)  asm("mov  %0, r1" : : "m" (src) : );                    \
-    else if constexpr (sizeof(void*) == 4)  asm("mova %0, r1" : : "m" (src) : )
+#define _SPSave(dst)                                                                        \
+         if constexpr (sizeof(void*) == 2)  asm volatile("mov  r1, %0" : "=m" (dst) : : );  \
+    else if constexpr (sizeof(void*) == 4)  asm volatile("mova r1, %0" : "=m" (dst) : : )
+
+#define _SPRestore(src)                                                                     \
+         if constexpr (sizeof(void*) == 2)  asm volatile("mov  %0, r1" : : "m" (src) : );   \
+    else if constexpr (sizeof(void*) == 4)  asm volatile("mova %0, r1" : : "m" (src) : )
     
     struct _Task {
         using _VoidFn = void(*)();
@@ -243,10 +247,8 @@ private:
         Ticks sleepCount = 0;
     };
     
-    [[gnu::naked]]
+    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
     static void _TaskStart() {
-        // Save scheduler PC
-        _PCSave();
         // Save scheduler SP
         _SPSave(_SP);
         // Restore task SP
@@ -271,10 +273,10 @@ private:
         _CurrentTask->go = _TaskNop;
     }
     
-    [[gnu::naked]]
-    static void _TaskReturnToScheduler() {
-        // Save task PC
-        _PCSave();
+    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
+    static void _TaskPause() {
+        // Save task regs
+        _RegsSave();
         // Save task SP
         _SPSave(_CurrentTask->sp);
         // Disable interrupts
@@ -287,22 +289,19 @@ private:
         _PCRestore();
     }
     
-    [[gnu::naked]]
+    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
     static void _TaskResume() {
-        // Save scheduler PC
-        _PCSave();
         // Save scheduler SP
         _SPSave(_SP);
         // Restore task SP
         _SPRestore(_CurrentTask->sp);
+        // Restore task regs
+        _RegsRestore();
         // Restore task PC
         _PCRestore();
     }
     
     static void _TaskNop() {
-        // Save scheduler PC
-        _PCSave();
-        
         // Return to scheduler
         return;
     }
