@@ -45,13 +45,9 @@ using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
 class _MotionTask;
-class _SDTask;
-class _ImgTask;
 class _BusyTimeoutTask;
 using _Scheduler = Toastbox::Scheduler<
     _MotionTask,
-    _SDTask,
-    _ImgTask,
     _BusyTimeoutTask
 >;
 
@@ -86,130 +82,6 @@ static volatile struct {
     uint16_t read = 0;
     bool full = false;
 } _ImgIndexes;
-
-
-
-
-
-
-
-
-class _SDTask {
-public:
-    using Options = _Scheduler::Options<
-        _Scheduler::Option::Start // Task should start running
-    >;
-    
-    static void Run() {
-        for (;;) {
-            _Scheduler::Wait([&] {
-                return (bool)Cmd;
-            });
-            
-            switch (*Cmd) {
-            case Command::Enable:
-                // Power on + initialize SD card
-                _SD.init();
-                break;
-            
-            case Command::Disable:
-                #warning we should tell ICE40 to disable SD clock before powering off SD card
-                // Power off SD card
-                SD::Card::SetPowerEnabled(false);
-                break;
-            }
-            
-            Cmd = std::nullopt;
-        }
-    }
-    
-    __attribute__((section(".stack._SDTask")))
-    static inline uint8_t Stack[256];
-    
-    enum class Command {
-        Enable,
-        Disable,
-    };
-    
-    static inline std::optional<Command> Cmd;
-};
-
-class _ImgTask {
-public:
-    using Options = _Scheduler::Options<
-        _Scheduler::Option::Start // Task should start running
-    >;
-    
-    static void Run() {
-        for (;;) {
-            _Scheduler::Wait([&] {
-                return (bool)Cmd;
-            });
-            
-            switch (*Cmd) {
-            case Command::Enable:
-                // Initialize image sensor
-                Img::Sensor::Init();
-                
-                // Set the initial exposure _before_ we enable streaming, so that the very first frame
-                // has the correct exposure, so we don't have to skip any frames on the first capture.
-                Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
-                
-                // Enable image streaming
-                Img::Sensor::SetStreamEnabled(true);
-                break;
-            
-            case Command::Disable:
-                Img::Sensor::SetPowerEnabled(false);
-                break;
-            }
-            
-            Cmd = std::nullopt;
-        }
-    }
-    
-    __attribute__((section(".stack._ImgTask")))
-    static inline uint8_t Stack[256];
-    
-    enum class Command {
-        Enable,
-        Disable,
-    };
-    
-    static inline std::optional<Command> Cmd;
-};
-
-
-
-
-
-
-static void _SetSDImgEnabled(bool en) {
-    static bool powerEn = false;
-    if (powerEn == en) return; // Short circuit if state didn't change
-    
-    // Wait for _SDTask/_ImgTask to be ready to accept commands
-    _Scheduler::Wait([&] {
-        return !_SDTask::Cmd && !_ImgTask::Cmd;
-    });
-    
-    powerEn = en;
-    if (powerEn) {
-        // Initialize the SD card and image sensor in parallel
-        _SDTask::Cmd = _SDTask::Command::Enable;
-        _ImgTask::Cmd = _ImgTask::Command::Enable;
-    
-    } else {
-        // Initialize the SD card and image sensor in parallel
-        _SDTask::Cmd = _SDTask::Command::Disable;
-        _ImgTask::Cmd = _ImgTask::Command::Disable;
-    }
-    
-    // Wait until both the SD card and image sensor are initialized
-    _Scheduler::Wait([&] {
-        return !_SDTask::Cmd && !_ImgTask::Cmd;
-    });
-}
 
 // MARK: - Motion
 
@@ -446,12 +318,6 @@ public:
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
             SleepMs(100);
             
-//            // Turn everything on
-//            _SetSDImgEnabled(true);
-//            
-//            // Capture an image
-//            _CaptureImage();
-            
             ICE::Transfer(ICE::LEDSetMsg(0x00));
             SleepMs(100);
             
@@ -474,9 +340,6 @@ public:
         for (;;) {
             // Stay on for 1 second waiting for motion
             SleepMs(1000);
-            
-            // Turn everything off
-            _SetSDImgEnabled(false);
             
             // Update our state
             _Busy = false;
