@@ -88,20 +88,18 @@ inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
 
 void Toastbox::IntState::WaitForInterrupt() {
     const bool prevEn = Toastbox::IntState::InterruptsEnabled();
-    PAOUT &= ~BIT2;
     __bis_SR_register(GIE | LPM1_bits);
-    PAOUT |= BIT2;
     if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
 }
 
 __attribute__((interrupt(WDT_VECTOR)))
 static void _ISR_WDT() {
-    PAOUT |= BIT2;
+//    PAOUT |= BIT2;
     const bool woke = Scheduler::Tick();
     if (woke) {
         __bic_SR_register_on_exit(GIE | LPM1_bits);
     }
-    PAOUT &= ~BIT2;
+//    PAOUT &= ~BIT2;
 }
 
 int main() {
