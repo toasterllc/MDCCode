@@ -178,119 +178,24 @@ public:
         }
     }
     
-    static void _UpdateWakeTime(Ticks wakeTime) {
-        const Ticks wakeDelay = wakeTime-_CurrentTime;
-        const Ticks currentWakeDelay = _WakeTime-_CurrentTime;
-        if (wakeDelay < currentWakeDelay) {
-            _WakeTime = wakeTime;
-        }
-    }
-    
     // Sleep(ticks): sleep current task for `ticks`
     static void Sleep(Ticks ticks) {
-        #warning optimize this function to be smaller
-        
         const Ticks wakeTime = _CurrentTime+ticks+1;
-        _UpdateWakeTime(wakeTime);
-        
-        for (;;) {
+        do {
+            // Update _WakeTime
+            const Ticks wakeDelay = wakeTime-_CurrentTime;
+            const Ticks currentWakeDelay = _WakeTime-_CurrentTime;
+            if (!currentWakeDelay || wakeDelay < currentWakeDelay) {
+                _WakeTime = wakeTime;
+            }
+            
             // Wait until some task wakes
-            if (!_Wake) {
-                _ReturnToScheduler();
-                continue;
-            }
-            
-            // Wait until our wake time arrives.
-            // If it's not time for this task to wake, this task (and all other sleeping tasks)
-            // need to attempt to update _WakeTime, where the soonest wake time wins and
-            // determines _WakeTime.
-            if (_CurrentTime != wakeTime) {
-                _UpdateWakeTime(wakeTime);
-                _ReturnToScheduler();
-                continue;
-            }
-            
-            _StartWork();
-            return;
-            
-            
-//            if (_CurrentTask->sleepCount) {
-//                _ReturnToScheduler();
-//                continue;
-//            }
-//            
-//            // Update _SleepTask with the task that needs to be woken next
-//            Task* sleepTask = nullptr;
-//            for (_Task& task : _Tasks) {
-//                const Ticks taskSleepCount = task.sleepCount;
-//                if (!taskSleepCount) continue; // Ignore tasks that aren't sleeping
-//                if (!sleepTask || task.sleepCount<sleepTask->sleepCount) {
-//                    sleepTask = &task;
-//                }
-//            }
-//            
-//            #warning try this implementation with `sleepTaskSleepCount` to see if it's smaller
-////            for (_Task& task : _Tasks) {
-////                const Ticks taskSleepCount = task.sleepCount;
-////                if (taskSleepCount && taskSleepCount<=sleepTaskSleepCount) {
-////                    sleepTask = &task;
-////                    sleepTaskSleepCount = taskSleepCount;
-////                }
-////            }
-//            
-//            // Subtract the amount of time _CurrentTask was sleeping from the next sleeping task's
-//            if (sleepTask) {
-//                sleepTask->sleepCount -= sleepTotal;
-//            }
-//            
-//            _SleepTask = sleepTask;
-//            _StartWork();
-//            return;
-        }
+            do _ReturnToScheduler();
+            while (!_Wake);
         
-//         const Ticks taskWakeCounter = ticks + 1;
-//         _CurrentTask->wakeCounter = taskWakeCounter;
-//         if (!_WakeCounter || (taskWakeCounter < _WakeCounter)) {
-//            _WakeCounter = taskWakeCounter;
-//         }
-//         
-//         for (;;) {
-//            // Disable interrupts while we check for work.
-//            // See explanation in Wait().
-//            IntState::SetInterruptsEnabled(false);
-//            if (taskWakeTime == _CurrentTime) break;
-//            
-//            _ReturnToScheduler();
-//         }
-//         
-//         
-//         
-//         
-//         const Ticks taskWakeTime = _CurrentTime + ticks + 1;
-//         const Ticks taskWakeDelay = taskWakeTime-_CurrentTime;
-//         const Ticks currentWakeDelay = _WakeTime-_CurrentTime;
-//         if (taskWakeDelay < currentWakeDelay) {
-//            _WakeTime = taskWakeTime;
-//         }
-//         
-//         auto& taskWakeTime = _CurrentTask->wakeTime;
-//         taskWakeTime = _CurrentTime + ticks + 1;
-//         
-//         for (;;) {
-//            // Disable interrupts while we check for work.
-//            // See explanation in Wait().
-//            IntState::SetInterruptsEnabled(false);
-//            if (taskWakeTime == _CurrentTime) break;
-//            
-//            _ReturnToScheduler();
-//         }
-//         
-//         // Update  immediately so that Run() updates `_WakeTime` properly.
-//         // This is a cheap hack to minimize the code we emit by keeping the
-//         // _WakeTime-updating code in one place (Run())
-//         _WakeTimeUpdate = true;
-//         
-//         _ReturnToScheduler();
+        } while (_CurrentTime != wakeTime);
+        
+        _StartWork();
     }
     
     // Tick(): notify scheduler that a tick has passed
@@ -307,27 +212,6 @@ public:
         }
         
         return false;
-        
-        
-        
-//        if (!_SleepTask) return false;
-//        Ticks& sleepCount = _SleepTask->sleepCount;
-//        sleepCount--;
-//        return !sleepCount;
-        
-        
-        
-//        if (!sleepCount) {
-//            return true;
-//        }
-//        
-//        
-//        bool wake = false;
-//        for (Tick& taskWakeCounter : _WakeCounters) {
-//            taskWakeCounter--;
-//            wake |= !taskWakeCounter;
-//        }
-//        return wake;
     }
     
 private:
@@ -388,7 +272,9 @@ private:
         _SPSave(_CurrentTask->sp);
         // Restore scheduler stack pointer
         _SPRestore(_SP);
-        // Disable interrupts again
+        // Disable interrupts
+        // This balances enabling interrupts in _StartWork(), which may or may not have been called.
+        // Regardless, when returning to the scheduler, interrupts need to be disabled.
         IntState::SetInterruptsEnabled(false);
         // Return to scheduler
         _Return();
@@ -447,22 +333,6 @@ private:
     static inline Ticks _CurrentTime = 0;
     static inline bool _Wake = false;
     static inline Ticks _WakeTime = 0;
-    
-//    static inline struct {
-//        static inline Ticks _ISR_CurrentTime = 0;
-//        static inline bool _ISR_Wake = false;
-//        static inline Ticks _ISR_WakeTime = 0;
-//    } _ISR;
-//    
-//    static inline Ticks _CurrentTime = 0;
-//    static inline bool _Wake = false;
-//    static inline Ticks _WakeTime = 0;
-//    static inline _Task* _WakeTask = nullptr;
-    
-//    static inline Ticks _WakeCounter = 0;
-//    static inline Ticks _WakeCounter = 0;
-//    static inline bool _Wake = false;
-//    static inline bool _WakeTimeUpdate = false;
     
     class Task;
     friend Task;
