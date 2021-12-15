@@ -4,7 +4,6 @@
 #include <inttypes.h>
 #include <cstddef>
 #include "SDCard.h"
-#include "ICE.h"
 #include "ImgSensor.h"
 #include "ImgAutoExposure.h"
 #include "Startup.h"
@@ -88,72 +87,6 @@ static volatile struct {
 static volatile bool _Motion = false;
 static volatile bool _Busy = false;
 
-static void _CaptureImage() {
-    // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
-    constexpr uint8_t CaptureAttemptCount = 3;
-    uint8_t bestExpBlock = 0;
-    uint8_t bestExpScore = 0;
-    for (uint8_t i=0; i<CaptureAttemptCount; i++) {
-        // skipCount:
-        // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
-        // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
-        // image since the first image after setting the exposure is invalid.
-        const uint8_t skipCount = (!i ? 0 : 1);
-        
-        // expBlock: Store images in the block belonging to the worst-exposed image captured so far
-        const uint8_t expBlock = !bestExpBlock;
-        
-        // Populate the header
-        static Img::Header header = {
-            // Section idx=0
-            .version        = Img::HeaderVersion,
-            .imageWidth     = Img::PixelWidth,
-            .imageHeight    = Img::PixelHeight,
-            ._pad0          = 0,
-            // Section idx=1
-            .counter        = 0,
-            ._pad1          = 0,
-            // Section idx=2
-            .timestamp      = 0,
-            ._pad2          = 0,
-            // Section idx=3
-            .coarseIntTime  = 0,
-            .analogGain     = 0,
-            ._pad3          = 0,
-        };
-        
-        header.counter = _ImgIndexes.counter;
-        header.timestamp = _RTC.currentTime();
-        header.coarseIntTime = _ImgAutoExp.integrationTime();
-        
-        // Capture an image to RAM
-        auto resp = ICE::ImgCapture(header, expBlock, skipCount);
-        Assert((bool)resp);
-        
-        const uint8_t expScore = _ImgAutoExp.update((*resp).highlightCount(), (*resp).shadowCount());
-        if (!bestExpScore || (expScore > bestExpScore)) {
-            bestExpBlock = expBlock;
-            bestExpScore = expScore;
-        }
-        
-        // We're done if we don't have any exposure changes
-        if (!_ImgAutoExp.changed()) break;
-        
-        // Update the exposure
-        Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
-    }
-    
-    // Write the best-exposed image to the SD card
-    _SD.writeImage(bestExpBlock, _ImgIndexes.write);
-    
-    // Update _ImgIndexes
-    {
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        _ImgIndexes.write++;
-        _ImgIndexes.counter++;
-    }
-}
-
 // MARK: - Interrupts
 
 [[gnu::interrupt(RTC_VECTOR)]]
@@ -183,31 +116,6 @@ static void _ISR_WDT() {
         // Wake ourself
         __bic_SR_register_on_exit(GIE | LPM3_bits);
     }
-}
-
-// MARK: - ICE40
-
-void ICE::Transfer(const Msg& msg, Resp* resp) {
-    AssertArg((bool)resp == (bool)(msg.type & ICE::MsgType::Resp));
-    
-    static bool iceInit = false;
-    // Init ICE40 if we haven't done so yet
-    if (!iceInit) {
-        iceInit = true;
-        
-        // Init SPI/ICE40
-        if (Startup::ColdStart()) {
-            constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
-            _SPI::Init(iceReset);
-            ICE::Init(); // Cold start -> init ICE40 to verify that comms are working
-        
-        } else {
-            constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
-            _SPI::Init(iceReset);
-        }
-    }
-    
-    _SPI::WriteRead(msg, resp);
 }
 
 // MARK: - SD Card
@@ -298,14 +206,6 @@ public:
     >;
     
     static void Run() {
-//        for (;;) {
-//            ICE::Transfer(ICE::LEDSetMsg(0xFF));
-//            SleepMs(1000);
-//            ICE::Transfer(ICE::LEDSetMsg(0x00));
-//            SleepMs(1000);
-//        }
-//        
-//        
         for (;;) {
             // Wait for motion
             _Scheduler::Wait([&] { return _Motion; });
@@ -315,10 +215,7 @@ public:
             // Stop the timeout task while we capture a new image
             _Scheduler::Stop<_BusyTimeoutTask>();
             
-            ICE::Transfer(ICE::LEDSetMsg(0xFF));
             SleepMs(100);
-            
-            ICE::Transfer(ICE::LEDSetMsg(0x00));
             SleepMs(100);
             
             // Restart the timeout task, so that we turn off automatically if
@@ -411,28 +308,6 @@ int main() {
     
     // Init clock
     _Clock::Init();
-    
-    if (Startup::ColdStart()) {
-        // If we do have a valid startTime, consume _startTime and hand it off to _RTC.
-        // Otherwise, initialize _RTC with 0. This will enable RTC, but it won't
-        // enable the interrupt, so _RTC.currentTime() will always return 0.
-        // 
-        // *** We need RTC to be enabled because it keeps BAKMEM alive.
-        // *** If RTC is disabled, we enter LPM4.5 when we sleep
-        // *** (instead of LPM3.5), and BAKMEM is lost.
-        if (_StartTime.valid) {
-            FRAMWriteEn writeEn; // Enable FRAM writing
-            
-            // Mark the time as invalid before consuming it, so that if we lose power,
-            // the time won't be reused again
-            _StartTime.valid = false;
-            // Init real-time clock
-            _RTC.init(_StartTime.time);
-        
-        } else {
-            _RTC.init(0);
-        }
-    }
     
     // Config watchdog timer:
     //   WDTPW:             password
