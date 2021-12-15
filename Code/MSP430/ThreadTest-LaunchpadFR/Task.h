@@ -43,16 +43,10 @@ public:
     static void Run() {
         for (;;) {
             do {
-                // Disable interrupts at the beginning of every iteration, so that if _DidWork=false
-                // at the end of our loop, we know that:
-                // 
-                //   1. no task had work to do, and
-                //   2. interrupts were disabled for the duration of every task checking for work.
-                // 
-                // therefore we can safely go to sleep since we've verified that there's no work to
-                // do in a race-free manner.
-                
                 IntState::SetInterruptsEnabled(false);
+                _Time.CurrentTime = _TimeISR.CurrentTime;
+                _Time.Wake = _TimeISR.Wake;
+                
                 _DidWork = false;
                 for (_Task& task : _Tasks) {
                     _CurrentTask = &task;
@@ -62,7 +56,8 @@ public:
             
             // Reset _Wake now that we're assured that every task has been able to observe
             // _Wake=true while interrupts were disabled during the entire process.
-            _Wake = false;
+            _TimeISR.WakeTime = _Time.WakeTime;
+            _TimeISR.Wake = false;
             
             // No work to do
             // Go to sleep!
@@ -164,7 +159,7 @@ public:
     
     // Yield(): yield current task to the scheduler
     static void Yield() {
-        _Yield();
+        _ReturnToScheduler();
         _StartWork();
     }
     
@@ -175,17 +170,9 @@ public:
     template <typename T_Fn>
     static auto Wait(T_Fn&& fn) {
         for (;;) {
-            // Disable interrupts while we check for work.
-            // This is necessary because a previous task may have done work and therefore enabled interrupts.
-            // If we were to check for work with interrupts enabled, it's possible to observe WorkNeeded=0
-            // but then an interrupt fires immediately after that, generating pending work. But we'd go to
-            // sleep because we originally observed WorkNeeded=0, even though if we were to check again,
-            // we'd observe WorkNeeded=1. Thus without disabling interrupts, it's possible to go to sleep
-            // with pending work, which is bad.
-            IntState::SetInterruptsEnabled(false);
             const auto r = fn();
             if (!r) {
-                _Yield();
+                _ReturnToScheduler();
                 continue;
             }
             
@@ -195,29 +182,24 @@ public:
     }
     
     static void _UpdateWakeTime(Ticks wakeTime) {
-        const Ticks wakeDelay = wakeTime-_CurrentTime;
-        const Ticks currentWakeDelay = _WakeTime-_CurrentTime;
+        const Ticks wakeDelay = wakeTime-_Time.CurrentTime;
+        const Ticks currentWakeDelay = _Time.WakeTime-_Time.CurrentTime;
         if (wakeDelay < currentWakeDelay) {
-            _WakeTime = wakeTime;
+            _Time.WakeTime = wakeTime;
         }
     }
     
     // Sleep(ticks): sleep current task for `ticks`
     static void Sleep(Ticks ticks) {
-        // Disable interrupts while we update globals
-        IntState::SetInterruptsEnabled(false);
-        
         #warning optimize this function to be smaller
         
-        const Ticks wakeTime = _CurrentTime+ticks+1;
+        const Ticks wakeTime = _Time.CurrentTime+ticks+1;
         _UpdateWakeTime(wakeTime);
         
         for (;;) {
-            IntState::SetInterruptsEnabled(false);
-            
             // Wait until some task wakes
-            if (!_Wake) {
-                _Yield();
+            if (!_Time.Wake) {
+                _ReturnToScheduler();
                 continue;
             }
             
@@ -225,9 +207,9 @@ public:
             // If it's not time for this task to wake, this task (and all other sleeping tasks)
             // need to attempt to update _WakeTime, where the soonest wake time wins and
             // determines _WakeTime.
-            if (_CurrentTime != wakeTime) {
+            if (_Time.CurrentTime != wakeTime) {
                 _UpdateWakeTime(wakeTime);
-                _Yield();
+                _ReturnToScheduler();
                 continue;
             }
             
@@ -236,7 +218,7 @@ public:
             
             
 //            if (_CurrentTask->sleepCount) {
-//                _Yield();
+//                _ReturnToScheduler();
 //                continue;
 //            }
 //            
@@ -281,7 +263,7 @@ public:
 //            IntState::SetInterruptsEnabled(false);
 //            if (taskWakeTime == _CurrentTime) break;
 //            
-//            _Yield();
+//            _ReturnToScheduler();
 //         }
 //         
 //         
@@ -303,7 +285,7 @@ public:
 //            IntState::SetInterruptsEnabled(false);
 //            if (taskWakeTime == _CurrentTime) break;
 //            
-//            _Yield();
+//            _ReturnToScheduler();
 //         }
 //         
 //         // Update  immediately so that Run() updates `_WakeTime` properly.
@@ -311,7 +293,7 @@ public:
 //         // _WakeTime-updating code in one place (Run())
 //         _WakeTimeUpdate = true;
 //         
-//         _Yield();
+//         _ReturnToScheduler();
     }
     
     // Tick(): notify scheduler that a tick has passed
@@ -319,11 +301,11 @@ public:
     static bool Tick() {
         // Don't increment time if there's an existing _Wake signal that hasn't been consumed.
         // This is necessary so that we don't miss any ticks, which could cause a task wakeup to be missed.
-        if (_Wake) return true;
+        if (_TimeISR.Wake) return true;
         
-        _CurrentTime++;
-        if (_CurrentTime == _WakeTime) {
-            _Wake = true;
+        _TimeISR.CurrentTime++;
+        if (_TimeISR.CurrentTime == _TimeISR.WakeTime) {
+            _TimeISR.Wake = true;
             return true;
         }
         
@@ -404,11 +386,13 @@ private:
     }
     
     [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
-    static void _Yield() {
+    static void _ReturnToScheduler() {
         // Save stack pointer
         _SPSave(_CurrentTask->sp);
         // Restore scheduler stack pointer
         _SPRestore(_SP);
+        // Disable interrupts again
+        IntState::SetInterruptsEnabled(false);
         // Return to scheduler
         _Return();
     }
@@ -419,7 +403,7 @@ private:
         _SPSave(_SP);
         // Restore task stack pointer
         _SPRestore(_CurrentTask->sp);
-        // Return to task, to whatever function called _Yield()
+        // Return to task, to whatever function called _ReturnToScheduler()
         _Return();
     }
     
@@ -431,6 +415,7 @@ private:
     
     static void _StartWork() {
         _DidWork = true;
+        // Enable interrupts
         IntState::SetInterruptsEnabled(true);
     }
     
@@ -462,9 +447,24 @@ private:
     static inline _Task* _CurrentTask = nullptr;
     static inline void* _SP = nullptr; // Saved stack pointer
     
-    static inline Ticks _CurrentTime = 0;
-    static inline bool _Wake = false;
-    static inline Ticks _WakeTime = 0;
+    struct _TimeState {
+        Ticks CurrentTime = 0;
+        bool Wake = false;
+        Ticks WakeTime = 0;
+    };
+    
+    static inline _TimeState _TimeISR;
+    static inline _TimeState _Time;
+    
+//    static inline struct {
+//        static inline Ticks _ISR_CurrentTime = 0;
+//        static inline bool _ISR_Wake = false;
+//        static inline Ticks _ISR_WakeTime = 0;
+//    } _ISR;
+//    
+//    static inline Ticks _CurrentTime = 0;
+//    static inline bool _Wake = false;
+//    static inline Ticks _WakeTime = 0;
 //    static inline _Task* _WakeTask = nullptr;
     
 //    static inline Ticks _WakeCounter = 0;
