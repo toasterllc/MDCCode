@@ -520,6 +520,10 @@ int main() {
         // If we do have a valid startTime, consume _startTime and hand it off to _RTC.
         // Otherwise, initialize _RTC with 0. This will enable RTC, but it won't
         // enable the interrupt, so _RTC.currentTime() will always return 0.
+        // 
+        // *** We need RTC to be enabled because it keeps BAKMEM alive.
+        // *** If RTC is disabled, we enter LPM4.5 when we sleep
+        // *** (instead of LPM3.5), and BAKMEM is lost.
         if (_StartTime.valid) {
             FRAMWriteEn writeEn; // Enable FRAM writing
             
