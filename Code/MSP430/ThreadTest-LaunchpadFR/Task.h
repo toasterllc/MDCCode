@@ -29,13 +29,13 @@ public:
     static void Start() {
         _Task& task = _GetTask<T_Task>();
         task.sp = _CurrentTask->spInit;
-        task.go = _Start;
+        task.go = _TaskStart;
     }
     
     template <typename T_Task>
     static void Stop() {
         _Task& task = _GetTask<T_Task>();
-        task.go = _Nop;
+        task.go = _TaskNop;
     }
     
     // Run(): run the tasks indefinitely
@@ -69,7 +69,7 @@ public:
 //                    // If this task needs to be woken on the current tick, wake it
 //                    if (*taskWakeTime == _CurrentTime) {
 //                        taskWakeTime = std::nullopt;
-//                        task.go = _Resume;
+//                        task.go = _TaskResume;
 //                    
 //                    } else {
 //                        const Ticks taskWakeDelay = *taskWakeTime-_CurrentTime;
@@ -95,7 +95,7 @@ public:
 //                    // If this task needs to be woken on the current tick, wake it
 //                    if (*taskWakeTime == _CurrentTime) {
 //                        taskWakeTime = std::nullopt;
-//                        task.go = _Resume;
+//                        task.go = _TaskResume;
 //                    
 //                    } else {
 //                        const Ticks taskWakeDelay = *taskWakeTime-_CurrentTime;
@@ -136,7 +136,7 @@ public:
 //                    // If this task needs to be woken on the current tick, wake it
 //                    if (*taskWakeTime == _CurrentTime) {
 //                        taskWakeTime = std::nullopt;
-//                        task.go = _Resume;
+//                        task.go = _TaskResume;
 //                    
 //                    } else {
 //                        const Ticks taskWakeDelay = *taskWakeTime-_CurrentTime;
@@ -156,8 +156,8 @@ public:
     
     // Yield(): yield current task to the scheduler
     static void Yield() {
-        _ReturnToScheduler();
-        _StartWork();
+        _TaskReturnToScheduler();
+        _TaskStartWork();
     }
     
     // Wait(fn): sleep current task until `fn` returns true
@@ -169,11 +169,11 @@ public:
         for (;;) {
             const auto r = fn();
             if (!r) {
-                _ReturnToScheduler();
+                _TaskReturnToScheduler();
                 continue;
             }
             
-            _StartWork();
+            _TaskStartWork();
             return r;
         }
     }
@@ -190,12 +190,12 @@ public:
             }
             
             // Wait until some task wakes
-            do _ReturnToScheduler();
+            do _TaskReturnToScheduler();
             while (!_Wake);
         
         } while (_CurrentTime != wakeTime);
         
-        _StartWork();
+        _TaskStartWork();
     }
     
     // Tick(): notify scheduler that a tick has passed
@@ -215,25 +215,21 @@ public:
     }
     
 private:
-#define _RegsSave()                                                                 \
-         if constexpr (sizeof(void*) == 2)  asm("pushm   #7, r10" : : : );          \
-    else if constexpr (sizeof(void*) == 4)  asm("pushm.a #7, r10" : : : )
+#define _PCSave()                                                                                \
+         if constexpr (sizeof(void*) == 2)  asm("push   r0" : : : );                                \
+    else if constexpr (sizeof(void*) == 4)  asm("push.a r0" : : : )
 
-#define _RegsRestore()                                                              \
-         if constexpr (sizeof(void*) == 2)  asm("popm   #7, r10" : : : );           \
-    else if constexpr (sizeof(void*) == 4)  asm("popm.a #7, r10" : : : )
+#define _PCRestore()                                                                             \
+         if constexpr (sizeof(void*) == 2)  asm("ret " : : : "r4","r5","r6","r7","r8","r9","r10");  \
+    else if constexpr (sizeof(void*) == 4)  asm("reta" : : : )
 
-#define _SPSave(dst)                                                                \
-         if constexpr (sizeof(void*) == 2)  asm("mov  r1, %0" : "=m" (dst) : : );   \
+#define _SPSave(dst)                                                                                \
+         if constexpr (sizeof(void*) == 2)  asm("mov  r1, %0" : "=m" (dst) : : );                   \
     else if constexpr (sizeof(void*) == 4)  asm("mova r1, %0" : "=m" (dst) : : )
 
-#define _SPRestore(src)                                                             \
-         if constexpr (sizeof(void*) == 2)  asm("mov  %0, r1" : : "m" (src) : );    \
+#define _SPRestore(src)                                                                             \
+         if constexpr (sizeof(void*) == 2)  asm("mov  %0, r1" : : "m" (src) : );                    \
     else if constexpr (sizeof(void*) == 4)  asm("mova %0, r1" : : "m" (src) : )
-
-#define _Return()                                                                   \
-         if constexpr (sizeof(void*) == 2)  asm("ret " : : : );                     \
-    else if constexpr (sizeof(void*) == 4)  asm("reta" : : : )
     
     struct _Task {
         using _VoidFn = void(*)();
@@ -247,69 +243,71 @@ private:
         Ticks sleepCount = 0;
     };
     
-    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
-    static void _Start() {
-        // Save scheduler stack pointer
+    [[gnu::naked]]
+    static void _TaskStart() {
+        // Save scheduler PC
+        _PCSave();
+        // Save scheduler SP
         _SPSave(_SP);
-        // Restore task stack pointer
+        // Restore task SP
         _SPRestore(_CurrentTask->sp);
-        
-        _RunCurrentTask();
-        
-        // Restore scheduler stack pointer
+        // Run task
+        _TaskRun();
+        // Restore scheduler SP
         _SPRestore(_SP);
-        // Return to scheduler
-        _Return();
+        // Restore scheduler PC
+        _PCRestore();
     }
     
-    static void _RunCurrentTask() {
-        // Future invocations should execute _Resume
-        _CurrentTask->go = _Resume;
+    static void _TaskRun() {
+        // Future invocations should execute _TaskResume
+        _CurrentTask->go = _TaskResume;
         // Signal that we did work
-        _StartWork();
+        _TaskStartWork();
         // Invoke task Run()
         _CurrentTask->run();
         // The task finished
         // Future invocations should do nothing
-        _CurrentTask->go = _Nop;
+        _CurrentTask->go = _TaskNop;
     }
     
-    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
-    static void _ReturnToScheduler() {
-        // Save registers
-        _RegsSave();
-        // Save stack pointer
+    [[gnu::naked]]
+    static void _TaskReturnToScheduler() {
+        // Save task PC
+        _PCSave();
+        // Save task SP
         _SPSave(_CurrentTask->sp);
-        // Restore scheduler stack pointer
-        _SPRestore(_SP);
         // Disable interrupts
-        // This balances enabling interrupts in _StartWork(), which may or may
-        // not have been called for the current task. Regardless, when
-        // returning to the scheduler, interrupts need to be disabled.
+        // This balances enabling interrupts in _TaskStartWork(), which may or may not have been called.
+        // Regardless, when returning to the scheduler, interrupts need to be disabled.
         IntState::SetInterruptsEnabled(false);
-        // Return to scheduler
-        _Return();
+        // Restore scheduler SP
+        _SPRestore(_SP);
+        // Restore scheduler PC
+        _PCRestore();
     }
     
-    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
-    static void _Resume() {
-        // Save scheduler stack pointer
+    [[gnu::naked]]
+    static void _TaskResume() {
+        // Save scheduler PC
+        _PCSave();
+        // Save scheduler SP
         _SPSave(_SP);
-        // Restore task stack pointer
+        // Restore task SP
         _SPRestore(_CurrentTask->sp);
-        // Restore registers
-        _RegsRestore();
-        // Return to task, to whatever function called _ReturnToScheduler()
-        _Return();
+        // Restore task PC
+        _PCRestore();
     }
     
-    [[gnu::noinline, gnu::naked]] // Don't inline: PC must be pushed onto the stack when called
-    static void _Nop() {
+    static void _TaskNop() {
+        // Save scheduler PC
+        _PCSave();
+        
         // Return to scheduler
-        _Return();
+        return;
     }
     
-    static void _StartWork() {
+    static void _TaskStartWork() {
         _DidWork = true;
         // Enable interrupts
         IntState::SetInterruptsEnabled(true);
@@ -336,7 +334,7 @@ private:
         .run    = T_Tasks::Run,
         .spInit = T_Tasks::Stack + sizeof(T_Tasks::Stack),
         .sp     = T_Tasks::Stack + sizeof(T_Tasks::Stack),
-        .go     = _TaskHasOption<T_Tasks, typename Option::Start>() ? _Start : _Nop,
+        .go     = _TaskHasOption<T_Tasks, typename Option::Start>() ? _TaskStart : _TaskNop,
     }...};
     
     static inline bool _DidWork = false;
