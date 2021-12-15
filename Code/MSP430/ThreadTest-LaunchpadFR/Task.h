@@ -44,8 +44,6 @@ public:
         for (;;) {
             do {
                 IntState::SetInterruptsEnabled(false);
-                _Time.CurrentTime = _TimeISR.CurrentTime;
-                _Time.Wake = _TimeISR.Wake;
                 
                 _DidWork = false;
                 for (_Task& task : _Tasks) {
@@ -56,8 +54,7 @@ public:
             
             // Reset _Wake now that we're assured that every task has been able to observe
             // _Wake=true while interrupts were disabled during the entire process.
-            _TimeISR.WakeTime = _Time.WakeTime;
-            _TimeISR.Wake = false;
+            _Wake = false;
             
             // No work to do
             // Go to sleep!
@@ -182,10 +179,10 @@ public:
     }
     
     static void _UpdateWakeTime(Ticks wakeTime) {
-        const Ticks wakeDelay = wakeTime-_Time.CurrentTime;
-        const Ticks currentWakeDelay = _Time.WakeTime-_Time.CurrentTime;
+        const Ticks wakeDelay = wakeTime-_CurrentTime;
+        const Ticks currentWakeDelay = _WakeTime-_CurrentTime;
         if (wakeDelay < currentWakeDelay) {
-            _Time.WakeTime = wakeTime;
+            _WakeTime = wakeTime;
         }
     }
     
@@ -193,12 +190,12 @@ public:
     static void Sleep(Ticks ticks) {
         #warning optimize this function to be smaller
         
-        const Ticks wakeTime = _Time.CurrentTime+ticks+1;
+        const Ticks wakeTime = _CurrentTime+ticks+1;
         _UpdateWakeTime(wakeTime);
         
         for (;;) {
             // Wait until some task wakes
-            if (!_Time.Wake) {
+            if (!_Wake) {
                 _ReturnToScheduler();
                 continue;
             }
@@ -207,7 +204,7 @@ public:
             // If it's not time for this task to wake, this task (and all other sleeping tasks)
             // need to attempt to update _WakeTime, where the soonest wake time wins and
             // determines _WakeTime.
-            if (_Time.CurrentTime != wakeTime) {
+            if (_CurrentTime != wakeTime) {
                 _UpdateWakeTime(wakeTime);
                 _ReturnToScheduler();
                 continue;
@@ -301,11 +298,11 @@ public:
     static bool Tick() {
         // Don't increment time if there's an existing _Wake signal that hasn't been consumed.
         // This is necessary so that we don't miss any ticks, which could cause a task wakeup to be missed.
-        if (_TimeISR.Wake) return true;
+        if (_Wake) return true;
         
-        _TimeISR.CurrentTime++;
-        if (_TimeISR.CurrentTime == _TimeISR.WakeTime) {
-            _TimeISR.Wake = true;
+        _CurrentTime++;
+        if (_CurrentTime == _WakeTime) {
+            _Wake = true;
             return true;
         }
         
@@ -447,14 +444,9 @@ private:
     static inline _Task* _CurrentTask = nullptr;
     static inline void* _SP = nullptr; // Saved stack pointer
     
-    struct _TimeState {
-        Ticks CurrentTime = 0;
-        bool Wake = false;
-        Ticks WakeTime = 0;
-    };
-    
-    static inline _TimeState _TimeISR;
-    static inline _TimeState _Time;
+    static inline Ticks _CurrentTime = 0;
+    static inline bool _Wake = false;
+    static inline Ticks _WakeTime = 0;
     
 //    static inline struct {
 //        static inline Ticks _ISR_CurrentTime = 0;
