@@ -12,6 +12,7 @@
 #include "Clock.h"
 #include "RTC.h"
 #include "SPI.h"
+#include "WDT.h"
 #include "FRAMWriteEn.h"
 #include "Util.h"
 #include "Toastbox/IntState.h"
@@ -19,8 +20,9 @@
 using namespace Toastbox;
 using namespace GPIO;
 
-static constexpr uint64_t _MCLKFreqHz = 16000000;
-static constexpr uint32_t _XT1FreqHz = 32768;
+static constexpr uint64_t _MCLKFreqHz   = 16000000;
+static constexpr uint32_t _XT1FreqHz    = 32768;
+static constexpr uint32_t _WDTPeriodUs  = 512;
 
 struct _Pin {
     // Default GPIOs
@@ -42,6 +44,7 @@ struct _Pin {
 };
 
 using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
+using _WDT = WDTType<_MCLKFreqHz, _WDTPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
 class _MotionTask;
@@ -124,7 +127,7 @@ public:
     }
     
     __attribute__((section(".stack._SDTask")))
-    static inline uint8_t Stack[256];
+    static inline uint8_t Stack[128];
     
     enum class Command {
         Enable,
@@ -169,7 +172,7 @@ public:
     }
     
     __attribute__((section(".stack._ImgTask")))
-    static inline uint8_t Stack[256];
+    static inline uint8_t Stack[128];
     
     enum class Command {
         Enable,
@@ -290,7 +293,7 @@ static void _ISR_RTC() {
 }
 
 [[gnu::interrupt(PORT2_VECTOR)]]
-void _ISR_Port2() {
+static void _ISR_Port2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
     switch (__even_in_range(P2IV, P2IV__P2IFG5)) {
     case P2IV__P2IFG5:
@@ -391,8 +394,8 @@ void Toastbox::IntState::WaitForInterrupt() {
     
     // If we're currently handling motion, enter LPM1 sleep because a task is just delaying itself.
     // If we're not handling motion, enter the deep LPM3.5 sleep, where RAM content is lost.
-//    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
-    const uint16_t LPMBits = LPM1_bits;
+    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
+//    const uint16_t LPMBits = LPM1_bits;
     
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
@@ -444,16 +447,12 @@ public:
             _Scheduler::Stop<_BusyTimeoutTask>();
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
-            SleepMs(100);
             
 //            // Turn everything on
 //            _SetSDImgEnabled(true);
 //            
 //            // Capture an image
 //            _CaptureImage();
-            
-            ICE::Transfer(ICE::LEDSetMsg(0x00));
-            SleepMs(100);
             
             // Restart the timeout task, so that we turn off automatically if
             // we're idle for a bit
@@ -463,7 +462,7 @@ public:
     
     #warning TODO: reduce stack sizes once we figure out the problem
     __attribute__((section(".stack._MotionTask")))
-    static inline uint8_t Stack[256];
+    static inline uint8_t Stack[128];
 };
 
 class _BusyTimeoutTask {
@@ -475,8 +474,10 @@ public:
             // Stay on for 1 second waiting for motion
             SleepMs(1000);
             
-            // Turn everything off
-            _SetSDImgEnabled(false);
+//            // Turn everything off
+//            _SetSDImgEnabled(false);
+            
+            ICE::Transfer(ICE::LEDSetMsg(0x00));
             
             // Update our state
             _Busy = false;
@@ -484,12 +485,12 @@ public:
     }
     
     __attribute__((section(".stack._BusyTimeoutTask")))
-    static inline uint8_t Stack[256];
+    static inline uint8_t Stack[128];
 };
 
 // MARK: - Sleep
 
-static constexpr uint32_t _UsPerTick = 512;
+static constexpr uint32_t _UsPerTick = _WDTPeriodUs;
 
 static _Scheduler::Ticks _TicksForUs(uint32_t us) {
     // We're intentionally not ceiling the result because _Scheduler::Sleep
@@ -508,7 +509,7 @@ void SleepUs(uint16_t us) {
 // MARK: - Main
 
 #warning verify that _StackMainSize is large enough
-#define _StackMainSize 256
+#define _StackMainSize 128
 
 __attribute__((section(".stack.main")))
 uint8_t _StackMain[_StackMainSize];
@@ -571,14 +572,8 @@ int main() {
         }
     }
     
-    // Config watchdog timer:
-    //   WDTPW:             password
-    //   WDTSSEL__SMCLK:    watchdog source = SMCLK
-    //   WDTTMSEL:          interval timer mode
-    //   WDTCNTCL:          clear counter
-    //   WDTIS__8192:       interval = SMCLK / 8192 Hz = 16MHz / 8192 = 1953.125 Hz => period=512 us
-    WDTCTL = WDTPW | WDTSSEL__SMCLK | WDTTMSEL | WDTCNTCL | WDTIS__8192;
-    SFRIE1 |= WDTIE; // Enable WDT interrupt
+    // Init WDT
+    _WDT::Init();
     
     _Scheduler::Run();
 }
