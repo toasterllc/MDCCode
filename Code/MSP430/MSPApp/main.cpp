@@ -53,7 +53,6 @@ using _Scheduler = Toastbox::Scheduler<
     _ImgTask
 >;
 
-__attribute__((section(".ram_backup.main")))
 static SD::Card _SD;
 
 // _StartTime: the time set by STM32 (seconds since reference date)
@@ -385,6 +384,11 @@ void Toastbox::IntState::WaitForInterrupt() {
     // If we're currently handling motion, enter LPM1 sleep because a task is just delaying itself.
     // If we're not handling motion, enter the deep LPM3.5 sleep, where RAM content is lost.
     const uint16_t LPMBits = (_Motion ? LPM1_bits : LPM3_bits);
+//    const uint16_t LPMBits = LPM1_bits;
+    
+    #warning TODO: call _SetSDImgEnabled(false) here if we're entering LPM3.5
+    #warning TODO: actually we can't invoke tasks from WaitForInterrupt() so we'll have to call
+    #warning TODO: _SetSDImgEnabled(false) from somewhere else...
     
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
@@ -418,17 +422,26 @@ public:
     >;
     
     static void Run() {
+//        for (;;) {
+//            ICE::Transfer(ICE::LEDSetMsg(0xFF));
+//            SleepMs(1000);
+//            ICE::Transfer(ICE::LEDSetMsg(0x00));
+//            SleepMs(1000);
+//        }
+//        
+//        
         for (;;) {
             // Wait for motion
             _Scheduler::Wait([&] { return _Motion; });
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
+            SleepMs(100);
             
-            // Turn everything on
-            _SetSDImgEnabled(true);
-            
-            // Capture an image
-            _CaptureImage();
+//            // Turn everything on
+//            _SetSDImgEnabled(true);
+//            
+//            // Capture an image
+//            _CaptureImage();
             
             ICE::Transfer(ICE::LEDSetMsg(0x00));
             SleepMs(100);
@@ -443,16 +456,16 @@ public:
 
 // MARK: - Sleep
 
-static constexpr uint16_t _UsPerTick = 512;
+static constexpr uint32_t _UsPerTick = 512;
 
-static _Scheduler::Ticks _TicksForUs(uint16_t us) {
+static _Scheduler::Ticks _TicksForUs(uint32_t us) {
     // We're intentionally not ceiling the result because _Scheduler::Sleep
     // implicitly ceils by adding one tick (to prevent truncated sleeps)
     return us / _UsPerTick;
 }
 
 void SleepMs(uint16_t ms) {
-    SleepUs(1000*ms);
+    _Scheduler::Sleep(_TicksForUs(1000*(uint32_t)ms));
 }
 
 void SleepUs(uint16_t us) {
