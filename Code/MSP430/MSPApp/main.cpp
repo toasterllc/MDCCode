@@ -3,13 +3,9 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <cstddef>
-#include "SDCard.h"
-#include "ImgSensor.h"
-#include "ImgAutoExposure.h"
 #include "Startup.h"
 #include "GPIO.h"
 #include "Clock.h"
-#include "RTC.h"
 #include "SPI.h"
 #include "FRAMWriteEn.h"
 #include "Util.h"
@@ -50,37 +46,23 @@ using _Scheduler = Toastbox::Scheduler<
     _BusyTimeoutTask
 >;
 
-static SD::Card _SD;
+// MARK: - Sleep
 
-// _StartTime: the time set by STM32 (seconds since reference date)
-// Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
-__attribute__((section(".fram_info.main")))
-static volatile struct {
-    uint32_t time   = 0;
-    uint16_t valid  = false; // uint16_t (instead of bool) for alignment
-} _StartTime;
+static constexpr uint32_t _UsPerTick = 512;
 
-// _RTC: real time clock
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
-__attribute__((section(".ram_backup.main")))
-static RTC<_XT1FreqHz> _RTC;
+static _Scheduler::Ticks _TicksForUs(uint32_t us) {
+    // We're intentionally not ceiling the result because _Scheduler::Sleep
+    // implicitly ceils by adding one tick (to prevent truncated sleeps)
+    return us / _UsPerTick;
+}
 
-// _ImgAutoExp: auto exposure algorithm object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
-__attribute__((section(".ram_backup.main")))
-static Img::AutoExposure _ImgAutoExp;
+void SleepMs(uint16_t ms) {
+    _Scheduler::Sleep(_TicksForUs(1000*(uint32_t)ms));
+}
 
-// _ImgIndexes: stats to track captured images
-// Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely.
-__attribute__((section(".fram_info.main")))
-static volatile struct {
-    uint32_t counter = 0;
-    uint16_t write = 0;
-    uint16_t read = 0;
-    bool full = false;
-} _ImgIndexes;
+void SleepUs(uint16_t us) {
+    _Scheduler::Sleep(_TicksForUs(us));
+}
 
 // MARK: - Motion
 
@@ -88,11 +70,6 @@ static volatile bool _Motion = false;
 static volatile bool _Busy = false;
 
 // MARK: - Interrupts
-
-[[gnu::interrupt(RTC_VECTOR)]]
-static void _ISR_RTC() {
-    _RTC.isr();
-}
 
 [[gnu::interrupt(PORT2_VECTOR)]]
 void _ISR_Port2() {
@@ -115,36 +92,6 @@ static void _ISR_WDT() {
     if (wake) {
         // Wake ourself
         __bic_SR_register_on_exit(GIE | LPM3_bits);
-    }
-}
-
-// MARK: - SD Card
-
-const uint8_t SD::Card::ClkDelaySlow = 1; // Odd values invert the clock
-const uint8_t SD::Card::ClkDelayFast = 0;
-
-void SD::Card::SetPowerEnabled(bool en) {
-    _Pin::VDD_SD_EN::Write(en);
-    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    SleepMs(2);
-}
-
-// MARK: - Image Sensor
-
-void Img::Sensor::SetPowerEnabled(bool en) {
-    if (en) {
-        _Pin::VDD_2V8_IMG_EN::Write(1);
-        SleepUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
-        _Pin::VDD_1V9_IMG_EN::Write(1);
-        
-        #warning measure actual delay that we need for the rails to rise
-    
-    } else {
-        // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
-        _Pin::VDD_1V9_IMG_EN::Write(0);
-        _Pin::VDD_2V8_IMG_EN::Write(0);
-        
-        #warning measure actual delay that we need for the rails to fall
     }
 }
 
@@ -246,24 +193,6 @@ public:
     __attribute__((section(".stack._BusyTimeoutTask")))
     static inline uint8_t Stack[256];
 };
-
-// MARK: - Sleep
-
-static constexpr uint32_t _UsPerTick = 512;
-
-static _Scheduler::Ticks _TicksForUs(uint32_t us) {
-    // We're intentionally not ceiling the result because _Scheduler::Sleep
-    // implicitly ceils by adding one tick (to prevent truncated sleeps)
-    return us / _UsPerTick;
-}
-
-void SleepMs(uint16_t ms) {
-    _Scheduler::Sleep(_TicksForUs(1000*(uint32_t)ms));
-}
-
-void SleepUs(uint16_t us) {
-    _Scheduler::Sleep(_TicksForUs(us));
-}
 
 // MARK: - Main
 
