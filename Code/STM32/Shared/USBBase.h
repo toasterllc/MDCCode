@@ -1,12 +1,13 @@
 #pragma once
 #include <initializer_list>
+#include <optional>
 #include "Assert.h"
 #include "stm32f7xx.h"
 #include "usbd_def.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
-#include "Toastbox/Task.h"
 #include "Toastbox/USB.h"
+#include "Toastbox/IntState.h"
 
 extern "C" void ISR_OTG_HS();
 

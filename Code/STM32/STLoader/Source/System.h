@@ -3,6 +3,7 @@
 #include "USB.h"
 #include "QSPI.h"
 #include "BufQueue.h"
+#include "Toastbox/TaskOld.h"
 
 class System : public SystemBase<System> {
 public:
