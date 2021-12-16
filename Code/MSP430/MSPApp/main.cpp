@@ -448,11 +448,13 @@ public:
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
             
-//            // Turn everything on
-//            _SetSDImgEnabled(true);
-//            
-//            // Capture an image
-//            _CaptureImage();
+            // Turn everything on
+            _SetSDImgEnabled(true);
+            
+            // Capture an image
+            _CaptureImage();
+            
+            ICE::Transfer(ICE::LEDSetMsg(0x00));
             
             // Restart the timeout task, so that we turn off automatically if
             // we're idle for a bit
@@ -474,10 +476,8 @@ public:
             // Stay on for 1 second waiting for motion
             SleepMs(1000);
             
-//            // Turn everything off
-//            _SetSDImgEnabled(false);
-            
-            ICE::Transfer(ICE::LEDSetMsg(0x00));
+            // Turn everything off
+            _SetSDImgEnabled(false);
             
             // Update our state
             _Busy = false;
