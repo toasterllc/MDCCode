@@ -490,11 +490,11 @@ public:
 
 // MARK: - Sleep
 
-static constexpr uint32_t _UsPerTick = _WDTPeriodUs;
-
 static _Scheduler::Ticks _TicksForUs(uint32_t us) {
+    static constexpr uint32_t _UsPerTick = _WDTPeriodUs;
     // We're intentionally not ceiling the result because _Scheduler::Sleep
-    // implicitly ceils by adding one tick (to prevent truncated sleeps)
+    // implicitly ceils by adding one tick (to prevent truncated sleeps),
+    // so if we ceiled too, we'd always sleep one more tick than needed.
     return us / _UsPerTick;
 }
 
