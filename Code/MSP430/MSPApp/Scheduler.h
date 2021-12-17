@@ -1,11 +1,13 @@
 #pragma once
 #include <msp430.h>
+#include "Toastbox/Task.h"
 
 class _MotionTask;
-class SDTask;
-class _Img;
+class _SDTask;
+class _ImgTask;
 class _BusyTimeoutTask;
-using _Scheduler = Toastbox::Scheduler<
+
+using Scheduler = Toastbox::Scheduler<
     _MotionTask,
     _SDTask,
     _ImgTask,

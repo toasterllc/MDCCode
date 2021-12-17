@@ -207,6 +207,10 @@ public:
         }
     }
     
+    static void Disable() {
+        SetPowerEnabled(false);
+    }
+    
     static void SetStreamEnabled(bool en) {
         ICE::ImgI2CWrite(_ResetRegister::Address,
             _ResetRegister::Init | (en ? _ResetRegister::StreamEnable : 0));

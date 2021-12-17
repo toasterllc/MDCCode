@@ -4,6 +4,7 @@
 #include "Sleep.h"
 #include "SD.h"
 #include "Util.h"
+#include "Scheduler.h"
 
 namespace SD {
 
@@ -128,7 +129,7 @@ public:
             auto status = ICE::SDSendCmd(_CMD3, 0);
             Assert(!status.respCRCErr());
             // Get the card's RCA from the response
-            _rca = status.respGetBits(39,24);
+            _RCA = status.respGetBits(39,24);
         }
         
         // ====================
@@ -137,7 +138,7 @@ public:
         //   Select card
         // ====================
         {
-            auto status = ICE::SDSendCmd(_CMD7, ((uint32_t)_rca)<<16);
+            auto status = ICE::SDSendCmd(_CMD7, ((uint32_t)_RCA)<<16);
             Assert(!status.respCRCErr());
         }
         
@@ -149,7 +150,7 @@ public:
         {
             // CMD55
             {
-                auto status = ICE::SDSendCmd(_CMD55, ((uint32_t)_rca)<<16);
+                auto status = ICE::SDSendCmd(_CMD55, ((uint32_t)_RCA)<<16);
                 Assert(!status.respCRCErr());
             }
             
@@ -206,7 +207,7 @@ public:
         SetPowerEnabled(false);
     }
     
-    static void readStart(uint32_t addr) {
+    static void ReadStart(uint32_t addr) {
         // Verify that `addr` is a multiple of the SD block length
         AssertArg(!(addr % SD::BlockLen));
         
@@ -220,7 +221,7 @@ public:
     }
     
     static void ReadStop() {
-        _readWriteStop();
+        _ReadWriteStop();
     }
     
     // `lenEst`: the estimated byte count that will be written; used to pre-erase SD blocks as a performance
@@ -239,7 +240,7 @@ public:
         {
             // CMD55
             {
-                auto status = ICE::SDSendCmd(_CMD55, ((uint32_t)_rca)<<16);
+                auto status = ICE::SDSendCmd(_CMD55, ((uint32_t)_RCA)<<16);
                 Assert(!status.respCRCErr());
             }
             
@@ -263,16 +264,16 @@ public:
         }
     }
     
-    void WriteStop() {
-        _readWriteStop();
+    static void WriteStop() {
+        _ReadWriteStop();
     }
     
-    void WriteImage(uint8_t srcBlock, uint16_t dstIdx) {
+    static void WriteImage(uint8_t srcBlock, uint16_t dstIdx) {
         // Confirm that Img::PaddedLen is a multiple of the SD block length
         static_assert((Img::PaddedLen % SD::BlockLen) == 0, "");
         const uint32_t addr = dstIdx*Img::PaddedLen;
         
-        writeStart(addr, Img::Len);
+        WriteStart(addr, Img::Len);
         
         // Clock out the image on the DAT lines
         ICE::Transfer(ICE::ImgReadoutMsg(srcBlock));
@@ -287,7 +288,7 @@ public:
             // Busy
         }
         
-        writeStop();
+        WriteStop();
         
         // Wait for SD card to indicate that it's ready (DAT0=1)
         for (;;) {
@@ -314,7 +315,7 @@ private:
     static constexpr uint8_t _CMD41 = 41;
     static constexpr uint8_t _CMD55 = 55;
     
-    void _ReadWriteStop() {
+    static void _ReadWriteStop() {
         // ====================
         // CMD12 | STOP_TRANSMISSION
         //   State: Send Data -> Transfer

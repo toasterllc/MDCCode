@@ -17,7 +17,6 @@
 #include "Util.h"
 #include "Toastbox/IntState.h"
 #include "Toastbox/Task.h"
-using namespace Toastbox;
 using namespace GPIO;
 
 static constexpr uint64_t _MCLKFreqHz   = 16000000;
@@ -47,7 +46,8 @@ using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _WDT = WDTType<_MCLKFreqHz, _WDTPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
-using _SD = SD::Card<_Scheduler>
+using _ImgSensor = Img::Sensor;
+using _SDCard = SD::Card;
 
 // _StartTime: the time set by STM32 (seconds since reference date)
 // Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
@@ -79,72 +79,73 @@ static volatile struct {
     bool full = false;
 } _ImgIndexes;
 
-class _ImgTask {
-public:
-    using Options = _Scheduler::Options<
-        _Scheduler::Option::Start // Task should start running
-    >;
-    
-    static void Run() {
-        for (;;) {
-            _Scheduler::Wait([&] {
-                return (bool)Cmd;
-            });
-            
-            switch (*Cmd) {
-            case Command::Enable:
-                // Initialize image sensor
-                Img::Sensor::Init();
-                
-                // Set the initial exposure _before_ we enable streaming, so that the very first frame
-                // has the correct exposure, so we don't have to skip any frames on the first capture.
-                Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
-                
-                // Enable image streaming
-                Img::Sensor::SetStreamEnabled(true);
-                break;
-            
-            case Command::Disable:
-                Img::Sensor::SetPowerEnabled(false);
-                break;
-            }
-            
-            Cmd = std::nullopt;
-        }
+struct _SDTask {
+    static void Enable() {
+        Wait();
+        Scheduler::Start<_SDTask>(_SDCard::Enable);
     }
     
-    __attribute__((section(".stack._ImgTask")))
+    static void Disable() {
+        Wait();
+        Scheduler::Start<_SDTask>(_SDCard::Disable);
+    }
+    
+    static void Wait() {
+        Scheduler::Wait<_SDTask>();
+    }
+    
+    // Task options
+    using Options = Toastbox::TaskOptions<>;
+    
+    // Task stack
+    __attribute__((section(".stack._SDTask")))
     static inline uint8_t Stack[128];
-    
-    enum class Command {
-        Enable,
-        Disable,
-    };
-    
-    static inline std::optional<Command> Cmd;
 };
 
-static void _SetSDImgEnabled(bool en) {
-    static bool powerEn = false;
-    if (powerEn == en) return; // Short circuit if state didn't change
-    
-    // Wait for _SDTask/_ImgTask to be ready to accept commands
-    _Scheduler::Wait([&] {
-        return !_SDTask::Cmd && !_ImgTask::Cmd;
-    });
-    
-    powerEn = en;
-    if (powerEn) {
-        // Initialize the SD card and image sensor in parallel
-        _SDTask::Cmd = _SDTask::Command::Enable;
-        _ImgTask::Cmd = _ImgTask::Command::Enable;
-    
-    } else {
-        // Initialize the SD card and image sensor in parallel
-        _SDTask::Cmd = _SDTask::Command::Disable;
-        _ImgTask::Cmd = _ImgTask::Command::Disable;
+struct _ImgTask {
+    static void Enable() {
+        Wait();
+        Scheduler::Start<_ImgTask>(_ImgSensor::Enable);
     }
-}
+    
+    static void Disable() {
+        Wait();
+        Scheduler::Start<_ImgTask>(_ImgSensor::Disable);
+    }
+    
+    static void Wait() {
+        Scheduler::Wait<_ImgTask>();
+    }
+    
+    // Task options
+    using Options = Toastbox::TaskOptions<>;
+    
+    // Task stack
+    __attribute__((section(".stack._ImgTask")))
+    static inline uint8_t Stack[128];
+};
+
+//static void _SetSDImgEnabled(bool en) {
+//    static bool powerEn = false;
+//    if (powerEn == en) return; // Short circuit if state didn't change
+//    
+//    // Wait for _SDTask/_ImgTask to be ready to accept commands
+//    Scheduler::Wait([&] {
+//        return !_SDTask::Cmd && !_ImgTask::Cmd;
+//    });
+//    
+//    powerEn = en;
+//    if (powerEn) {
+//        // Initialize the SD card and image sensor in parallel
+//        _SDTask::Cmd = _SDTask::Command::Enable;
+//        _ImgTask::Cmd = _ImgTask::Command::Enable;
+//    
+//    } else {
+//        // Initialize the SD card and image sensor in parallel
+//        _SDTask::Cmd = _SDTask::Command::Disable;
+//        _ImgTask::Cmd = _ImgTask::Command::Disable;
+//    }
+//}
 
 // MARK: - Motion
 
@@ -152,8 +153,12 @@ static volatile bool _Motion = false;
 static volatile bool _Busy = false;
 
 static void _CaptureImage() {
+    // Asynchronously turn on the image sensor / SD card
+    _ImgTask::Enable();
+    _SDTask::Enable();
+    
     // Wait until the image sensor is ready
-    _Scheduler::Wait([&] { return !_ImgTask::Cmd; });
+    _ImgTask::Wait();
     
     // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
     constexpr uint8_t CaptureAttemptCount = 3;
@@ -208,10 +213,10 @@ static void _CaptureImage() {
     }
     
     // Wait until the SD card is ready
-    _Scheduler::Wait([&] { return !_SDTask::Cmd; });
+    _SDTask::Wait();
     
     // Write the best-exposed image to the SD card
-//    _SD.writeImage(bestExpBlock, _ImgIndexes.write);
+    _SDCard::WriteImage(bestExpBlock, _ImgIndexes.write);
     
     // Update _ImgIndexes
     {
@@ -245,7 +250,7 @@ static void _ISR_Port2() {
 
 [[gnu::interrupt(WDT_VECTOR)]]
 static void _ISR_WDT() {
-    const bool wake = _Scheduler::Tick();
+    const bool wake = Scheduler::Tick();
     if (wake) {
         // Wake ourself
         __bic_SR_register_on_exit(GIE | LPM3_bits);
@@ -330,8 +335,8 @@ void Toastbox::IntState::WaitForInterrupt() {
     
     // If we're currently handling motion, enter LPM1 sleep because a task is just delaying itself.
     // If we're not handling motion, enter the deep LPM3.5 sleep, where RAM content is lost.
-    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
-//    const uint16_t LPMBits = LPM1_bits;
+//    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
+    const uint16_t LPMBits = LPM1_bits;
     
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
@@ -358,26 +363,45 @@ void Toastbox::IntState::WaitForInterrupt() {
 //    }
 //}
 
-class _MotionTask {
-public:
-    using Options = _Scheduler::Options<
-        _Scheduler::Option::Start // Task should start running
-    >;
+struct _BusyTimeoutTask {
+    static void Run() {
+        for (;;) {
+            // Stay on for 1 second waiting for motion
+            SleepMs(1000);
+            
+            // Asynchronously turn off the image sensor / SD card
+            _ImgTask::Disable();
+            _SDTask::Disable();
+            
+            // Wait until the image sensor / SD card are ready
+            _ImgTask::Wait();
+            _SDTask::Wait();
+            
+            // Update our state
+            _Busy = false;
+        }
+    }
     
+    // Task options
+    using Options = Toastbox::TaskOptions<>;
+    
+    // Task stack
+    __attribute__((section(".stack._BusyTimeoutTask")))
+    static inline uint8_t Stack[128];
+};
+
+struct _MotionTask {
     static void Run() {
         for (;;) {
             // Wait for motion
-            _Scheduler::Wait([&] { return _Motion; });
+            Scheduler::Wait([&] { return _Motion; });
             _Motion = false;
             _Busy = true;
             
             // Stop the timeout task while we capture a new image
-            _Scheduler::Stop<_BusyTimeoutTask>();
+            Scheduler::Stop<_BusyTimeoutTask>();
             
             ICE::Transfer(ICE::LEDSetMsg(0xFF));
-            
-            // Turn everything on
-            _SetSDImgEnabled(true);
             
             // Capture an image
             _CaptureImage();
@@ -386,52 +410,36 @@ public:
             
             // Restart the timeout task, so that we turn off automatically if
             // we're idle for a bit
-            _Scheduler::Start<_BusyTimeoutTask>();
+            Scheduler::Start<_BusyTimeoutTask>(_BusyTimeoutTask::Run);
         }
     }
     
-    #warning TODO: reduce stack sizes once we figure out the problem
+    // Task options
+    using Options = Toastbox::TaskOptions<
+        Toastbox::TaskOption::AutoStart<Run> // Task should start running
+    >;
+    
+    // Task stack
     __attribute__((section(".stack._MotionTask")))
-    static inline uint8_t Stack[128];
-};
-
-class _BusyTimeoutTask {
-public:
-    using Options = _Scheduler::Options<>;
-    
-    static void Run() {
-        for (;;) {
-            // Stay on for 1 second waiting for motion
-            SleepMs(1000);
-            
-            // Turn everything off
-            _SetSDImgEnabled(false);
-            
-            // Update our state
-            _Busy = false;
-        }
-    }
-    
-    __attribute__((section(".stack._BusyTimeoutTask")))
     static inline uint8_t Stack[128];
 };
 
 // MARK: - Sleep
 
-static _Scheduler::Ticks _TicksForUs(uint32_t us) {
+static Scheduler::Ticks _TicksForUs(uint32_t us) {
     static constexpr uint32_t _UsPerTick = _WDTPeriodUs;
-    // We're intentionally not ceiling the result because _Scheduler::Sleep
+    // We're intentionally not ceiling the result because Scheduler::Sleep
     // implicitly ceils by adding one tick (to prevent truncated sleeps),
     // so if we ceiled too, we'd always sleep one more tick than needed.
     return us / _UsPerTick;
 }
 
 void SleepMs(uint16_t ms) {
-    _Scheduler::Sleep(_TicksForUs(1000*(uint32_t)ms));
+    Scheduler::Sleep(_TicksForUs(1000*(uint32_t)ms));
 }
 
 void SleepUs(uint16_t us) {
-    _Scheduler::Sleep(_TicksForUs(us));
+    Scheduler::Sleep(_TicksForUs(us));
 }
 
 // MARK: - Main
@@ -503,7 +511,7 @@ int main() {
     // Init WDT
     _WDT::Init();
     
-    _Scheduler::Run();
+    Scheduler::Run();
 }
 
 extern "C" [[noreturn]]

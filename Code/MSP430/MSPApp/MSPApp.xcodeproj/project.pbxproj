@@ -7,9 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		5514036D276C80F8004B9769 /* SDInitTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SDInitTask.h; sourceTree = "<group>"; };
 		5514036E276C816C004B9769 /* Scheduler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scheduler.h; sourceTree = "<group>"; };
-		5514036F276C82B4004B9769 /* ImgInitTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgInitTask.h; sourceTree = "<group>"; };
 		556E45EF26B12023006681FA /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		556E45F126B1204A006681FA /* Lib */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Lib; path = ../../Lib; sourceTree = "<group>"; };
 		556E45F226B12050006681FA /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = ../../Shared; sourceTree = "<group>"; };
@@ -36,8 +34,6 @@
 				55FD016B275F25BA005505B5 /* Linker.ld */,
 				55FD01ED27699E9D005505B5 /* msp430fr2422.ld */,
 				55B2150B26FA7A99001423C1 /* msp430fr2422.txt */,
-				5514036D276C80F8004B9769 /* SDInitTask.h */,
-				5514036F276C82B4004B9769 /* ImgInitTask.h */,
 				5514036E276C816C004B9769 /* Scheduler.h */,
 				55889121273B3D360004458F /* GPIO.h */,
 				5588914D273C79540004458F /* Clock.h */,
