@@ -22,7 +22,7 @@ public:
     __attribute__((section(".stack.TaskA")))
     static inline uint8_t Stack[1024];
     
-    using Options = Scheduler::Options<
-        Scheduler::Option::AutoStart<Run>
+    using Options = Toastbox::TaskOptions<
+        Toastbox::TaskOption::AutoStart<Run>
     >;
 };

@@ -1,10 +1,11 @@
 #include <msp430.h>
 #include <cstddef>
 #include <cstdint>
-////#include <cstdio>
+//#include <cstdio>
 #include "Toastbox/IntState.h"
 #include "Toastbox/Task.h"
 #include "Util.h"
+#include "Scheduler.h"
 #include "TaskA.h"
 #include "TaskB.h"
 
@@ -42,6 +43,73 @@ static void _ISR_WDT() {
     }
 //    PAOUT &= ~BIT2;
 }
+
+
+
+
+
+
+
+using VoidFn = void(*)();
+
+struct Option {
+    template <VoidFn T_Fn>
+    struct AutoStart;
+    
+    struct End;
+};
+
+
+//template<typename>
+//struct is_std_array : std::false_type {};
+//
+//template<typename T, std::size_t N>
+//struct is_std_array<std::array<T,N>> : std::true_type {};
+
+template <typename... T_Options>
+struct Options {
+    template <typename... Args>
+    struct _AutoStart : std::false_type {
+        static constexpr VoidFn Fn = nullptr;
+    };
+    
+    template <typename T, typename... Args>
+    struct _AutoStart<T, Args...> : _AutoStart<Args...> {};
+    
+    template <VoidFn T_Fn>
+    struct _AutoStart<typename Option::template AutoStart<T_Fn>> : std::true_type {
+        static constexpr VoidFn Fn = T_Fn;
+    };
+    
+    template <VoidFn T_Fn, typename... Args>
+    struct _AutoStart<typename Option::template AutoStart<T_Fn>, Args...> : std::true_type {
+        static constexpr VoidFn Fn = T_Fn;
+    };
+    
+    using AutoStart = _AutoStart<T_Options...>;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int main() {
     // Config watchdog timer:
@@ -95,6 +163,26 @@ int main() {
         // ACLK source = REFOCLK
         CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
     }
+    
+//    using Meow = Scheduler::Options<
+//        Scheduler::Option::AutoStart<_ISR_WDT>
+//    >;
+//    
+//    Meow::AutoStart::Fn;
+    
+//    {
+//        using Opts = Scheduler::Options<
+//            Scheduler::Option::AutoStart<_ISR_WDT>
+//        >;
+//        VoidFn fn = Opts::AutoStart::Fn;
+//        fn();
+//    }
+    
+//    {
+//        using Opts = Options<Option::AutoStart<_ISR_WDT>>;
+//        VoidFn fn = Opts::AutoStart::Fn;
+//        fn();
+//    }
     
     Scheduler::Run();
     return 0;
