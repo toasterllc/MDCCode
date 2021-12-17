@@ -1,7 +1,7 @@
 #pragma once
 #include "ICE.h"
 #include "Assert.h"
-#include "DelayMs.h"
+#include "Sleep.h"
 #include "SD.h"
 #include "Util.h"
 
@@ -19,11 +19,11 @@ public:
     void init() {
         // Disable SDController clock
         ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,         _SDInitMsg::ClkSpeed::Off,  ClkDelaySlow));
-        DelayMs(1);
+        SleepMs(1);
         
         // Enable slow SDController clock
         ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,         _SDInitMsg::ClkSpeed::Slow, ClkDelaySlow));
-        DelayMs(1);
+        SleepMs(1);
         
         // Enter the init mode of the SDController state machine
         ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Reset,       _SDInitMsg::ClkSpeed::Slow, ClkDelaySlow));
@@ -37,7 +37,7 @@ public:
         // Trigger the SD card low voltage signalling (LVS) init sequence
         ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Trigger,     _SDInitMsg::ClkSpeed::Slow, ClkDelaySlow));
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
-        DelayMs(6);
+        SleepMs(6);
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -46,7 +46,7 @@ public:
         // ====================
         {
             // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
-            DelayMs(1);
+            SleepMs(1);
             // Send CMD0
             ICE::SDSendCmd(_CMD0, 0, _RespType::None);
             // There's no response to CMD0

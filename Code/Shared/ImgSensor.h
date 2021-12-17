@@ -1,5 +1,5 @@
 #pragma once
-#include "DelayMs.h"
+#include "Sleep.h"
 #include "ICE.h"
 #include "Assert.h"
 
@@ -24,7 +24,7 @@ public:
         // Wait 150k EXTCLK (16MHz) periods
         // (150e3*(1/16e6)) == 9.375ms
         {
-            DelayMs(10);
+            SleepMs(10);
         }
         
         // Configure internal register initialization
@@ -40,7 +40,7 @@ public:
         // Wait 150k EXTCLK (16MHz) periods
         // (150e3*(1/16e6)) == 9.375ms
         {
-            DelayMs(10);
+            SleepMs(10);
         }
         
         // Sanity-check pix comms by reading a known register

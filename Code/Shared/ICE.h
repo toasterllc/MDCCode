@@ -5,7 +5,7 @@
 #include <utility>
 #include <optional>
 #include "Assert.h"
-#include "DelayMs.h"
+#include "Sleep.h"
 #include "Img.h"
 
 #warning upon errors, call out to a client-supplied error handler, instead of using Assert() or returning optionals
@@ -290,10 +290,12 @@ public:
     
     static void ImgReset() {
         Transfer(ImgResetMsg(0));
-        DelayMs(1);
+        SleepMs(1);
         Transfer(ImgResetMsg(1));
     }
     
+    #warning call some failure function if this fails, instead of returning an optional
+    #warning optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
     static std::optional<ImgCaptureStatusResp> ImgCapture(const Img::Header& header, uint8_t dstBlock, uint8_t skipCount) {
         // Set the header of the image
         static_assert(sizeof(header) == 4*8);
@@ -307,7 +309,7 @@ public:
         // Wait for image to be captured
         constexpr uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) DelayMs(1);
+            if (i >= 10) SleepMs(1);
             auto status = ImgCaptureStatus();
             // Try again if the image hasn't been captured yet
             if (!status.done()) continue;
@@ -326,13 +328,14 @@ public:
         return resp;
     }
     
+    #warning optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
     static ImgI2CStatusResp ImgI2C(bool write, uint16_t addr, uint16_t val) {
         Transfer(ImgI2CTransactionMsg(write, 2, addr, val));
         
         // Wait for the I2C transaction to complete
         const uint32_t MaxAttempts = 1000;
         for (uint32_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) DelayMs(1);
+            if (i >= 10) SleepMs(1);
             const ImgI2CStatusResp status = ImgI2CStatus();
             if (status.err() || status.done()) return status;
         }
@@ -359,7 +362,7 @@ public:
     }
     
     // MARK: - SD
-    
+    #warning optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
     static SDStatusResp SDSendCmd(
         uint8_t sdCmd,
         uint32_t sdArg,
@@ -371,7 +374,7 @@ public:
         // Wait for command to be sent
         const uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) DelayMs(1);
+            if (i >= 10) SleepMs(1);
             auto s = SDStatus();
             // Try again if the command hasn't been sent yet
             if (!s.cmdDone()) continue;

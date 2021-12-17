@@ -16,7 +16,8 @@ public:
         if (iceReset) {
             constexpr uint64_t ICE40SPIResetDurationUs = 18;
             _ClkManual::Write(1);
-            #warning don't busy wait
+            // We're busy-waiting here because sleeping one Tick (512us) is way longer
+            // than the time we need to wait (18us)
             __delay_cycles((((uint64_t)ICE40SPIResetDurationUs)*T_MCLKFreqHz) / 1000000);
             _ClkManual::Write(0);
         }
