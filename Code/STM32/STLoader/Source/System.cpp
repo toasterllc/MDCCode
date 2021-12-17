@@ -5,6 +5,7 @@
 #include "SystemClock.h"
 #include "Startup.h"
 #include "Toastbox/IntState.h"
+#include "Toastbox/TaskOld.h"
 
 using namespace STM;
 

@@ -1,5 +1,9 @@
 - Rev4 Todo
     
+    - STLoader: migrate to use real threads
+    
+    - STApp: migrate to use real threads
+    
     - MSPApp: can we use the 'restart' facility of reset_register to speed up integration time changes?
         - 'restart' triggers a bad frame, so experiment with the 'restart_bad' and 'mask_bad' flags too
     
@@ -28,6 +32,10 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MSPApp: migrate implementation to use real threads
+    
+    √ STLoader: fix issue where MDCUtil's 'mspload' can't get MSP430 to run program if CCS previously loaded a program that entered LPM3.5
     
     √ MSPApp: Set initial exposure before we start streaming, so we don't need to skip a frame on the first one
     

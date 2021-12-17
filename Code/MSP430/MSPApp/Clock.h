@@ -1,5 +1,6 @@
 #pragma once
 #include <msp430.h>
+#include "GPIO.h"
 
 template <uint32_t T_XT1FreqHz, uint32_t T_MCLKFreqHz, typename T_XOUTPin, typename T_XINPin>
 class ClockType {

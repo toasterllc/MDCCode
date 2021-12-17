@@ -2,8 +2,7 @@
 #include <string.h>
 #include <type_traits>
 #include "GPIO.h"
-#include "Assert.h"
-#include "Toastbox/Task.h"
+#include "Toastbox/IntState.h"
 
 template <typename Test, typename Rst_, uint8_t CPUFreqMHz>
 class MSP430 {
@@ -13,32 +12,32 @@ private:
                (x&(1<<3))<<1 | (x&(1<<2))<<3 | (x&(1<<1))<<5 | (x&(1<<0))<<7 ;
     }
     
-    static constexpr uint8_t _IR_CNTRL_SIG_16BIT    = _Reverse(0x13);
-    static constexpr uint8_t _IR_CNTRL_SIG_CAPTURE  = _Reverse(0x14);
-    static constexpr uint8_t _IR_CNTRL_SIG_RELEASE  = _Reverse(0x15);
-    static constexpr uint8_t _IR_COREIP_ID          = _Reverse(0x17);
+    static constexpr uint8_t _IR_CNTRL_SIG_16BIT    = _Reverse(0x13);       // 0xC8
+    static constexpr uint8_t _IR_CNTRL_SIG_CAPTURE  = _Reverse(0x14);       // 0x28
+    static constexpr uint8_t _IR_CNTRL_SIG_RELEASE  = _Reverse(0x15);       // 0xA8
+    static constexpr uint8_t _IR_COREIP_ID          = _Reverse(0x17);       // 0xE8
     
-    static constexpr uint8_t _IR_TEST_REG           = _Reverse(0x2A);
+    static constexpr uint8_t _IR_TEST_REG           = _Reverse(0x2A);       // 0x54
     
-    static constexpr uint8_t _IR_DATA_16BIT         = _Reverse(0x41);
-    static constexpr uint8_t _IR_DATA_CAPTURE       = _Reverse(0x42);
-    static constexpr uint8_t _IR_DATA_QUICK         = _Reverse(0x43);
+    static constexpr uint8_t _IR_DATA_16BIT         = _Reverse(0x41);       // 0x82
+    static constexpr uint8_t _IR_DATA_CAPTURE       = _Reverse(0x42);       // 0x42
+    static constexpr uint8_t _IR_DATA_QUICK         = _Reverse(0x43);       // 0xC2
+    static constexpr uint8_t _IR_DATA_PSA           = _Reverse(0x44);       // 0x22
+    static constexpr uint8_t _IR_SHIFT_OUT_PSA      = _Reverse(0x46);       // 0x62
     
-    static constexpr uint8_t _IR_DATA_PSA           = _Reverse(0x44);
-    static constexpr uint8_t _IR_SHIFT_OUT_PSA      = _Reverse(0x46);
+    static constexpr uint8_t _IR_JMB_EXCHANGE       = _Reverse(0x61);       // 0x86
     
-    static constexpr uint8_t _IR_JMB_EXCHANGE       = _Reverse(0x61);
+    static constexpr uint8_t _IR_ADDR_16BIT         = _Reverse(0x83);       // 0xC1
+    static constexpr uint8_t _IR_ADDR_CAPTURE       = _Reverse(0x84);       // 0x21
+    static constexpr uint8_t _IR_DATA_TO_ADDR       = _Reverse(0x85);       // 0xA1
+    static constexpr uint8_t _IR_DEVICE_ID          = _Reverse(0x87);       // 0xE1
     
-    static constexpr uint8_t _IR_ADDR_16BIT         = _Reverse(0x83);
-    static constexpr uint8_t _IR_ADDR_CAPTURE       = _Reverse(0x84);
-    static constexpr uint8_t _IR_DATA_TO_ADDR       = _Reverse(0x85);
-    static constexpr uint8_t _IR_DEVICE_ID          = _Reverse(0x87);
-    
-    static constexpr uint8_t _IR_BYPASS             = _Reverse(0xFF);
+    static constexpr uint8_t _IR_BYPASS             = _Reverse(0xFF);       // 0xFF
     
     static constexpr uint8_t _JTAGID                = 0x98;
     static constexpr uint16_t _DeviceID             = 0x8311;
     static constexpr uint32_t _SafePC               = 0x00000004;
+    static constexpr uint32_t _SYSRSTIVAddr         = 0x0000015E;
     static constexpr uint32_t _SYSCFG0Addr          = 0x00000160;
     
     static constexpr uint16_t JMBMailboxIn0Ready    = 0x0001;
@@ -75,11 +74,15 @@ private:
     bool _crcStarted = false;
     
     void _pinsReset() {
-        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        // De-assert RST_ before de-asserting TEST, because the MSP430 latches RST_
+        // as being asserted, if it's asserted when when TEST is de-asserted
+        Rst_::Write(1);
         Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        _DelayMs(10);
         
         Test::Write(0);
-        Rst_::Write(1);
+        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        _DelayMs(10);
     }
     
     void _tapReset() {
@@ -256,12 +259,10 @@ private:
         _tclkSet(0);
         _tclkSet(1);
         
-        // Prepare access to the JTAG CNTRL SIG register
+        // Reset CPU
         _irShift(_IR_CNTRL_SIG_16BIT);
-        // Release CPUSUSP signal and apply POR signal
-        _drShift<16>(0x0C01);
-        // Release POR signal again
-        _drShift<16>(0x0401);
+        _drShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
+        _drShift<16>(0x0401); // Deassert POR
         
         // Set PC to 'safe' memory location
         _irShift(_IR_DATA_16BIT);
@@ -637,7 +638,6 @@ private:
         // Reset pin states
         {
             _pinsReset();
-            _DelayMs(10);
         }
         
         // Reset the MSP430 so that it starts from a known state
@@ -670,69 +670,28 @@ private:
     }
     
     void _jtagEnd() {
-        // Perform a BOR (brownout reset), which resets the device and causes us to lose JTAG control
-        // Note that this still doesn't reset some modules (like RTC and PMM), but it's as close as
+        // Read the SYSRSTIV register to clear it, to emulate a real power-up
+        _read16(_SYSRSTIVAddr);
+        
+        // Perform a BOR (brownout reset)
+        // TI's code claims that this resets the device and causes us to lose JTAG control,
+        // but empirically we still need to execute the 'Reset CPU' and '_IR_CNTRL_SIG_RELEASE' stages below.
+        // 
+        // Note that a BOR still doesn't reset some modules (like RTC and PMM), but it's as close as
         // we can get to a full reset without power cycling the device.
         _irShift(_IR_TEST_REG);
         _drShift<16>(0x0200);
         
-        // TODO: use only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
-        {
-            Test::Write(0);
-            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        }
+        // Reset CPU
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
+        _drShift<16>(0x0401); // Deassert POR
         
-        // TODO: use for Rev5, when we have real level shifting
-        {
-//            Test::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        }
+        // Release JTAG control
+        _irShift(_IR_CNTRL_SIG_RELEASE);
         
-//        // Release device from JTAG control
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        // Perform a reset
-//        _drShift<16>(0x0C01);
-//        _drShift<16>(0x0401);
-//        _irShift(_IR_CNTRL_SIG_RELEASE);
-        
-//        // Assert reset before we deactivate SBW
-//        Rst_::Write(0);
-//        
-//        // De-assert TEST long enough for SBW to deactivate
-//        Test::Write(0);
-//        _DelayUs(50);
-        
-//        {
-//            // Assert reset before we deactivate SBW
-//            Rst_::Write(0);
-//            
-//            // De-assert TEST long enough for SBW to deactivate
-//            Test::Write(0);
-//            _DelayUs(50);
-//            
-//            // De-assert reset to start the chip
-//            Rst_::Write(1);
-//            
-//            
-//            
-//            // Assert reset before we deactivate SBW
-//            _DelayMs(100);
-//            Rst_::Write(0);
-//            _DelayMs(100);
-//            Rst_::Write(1);
-//            _DelayMs(100);
-//            
-//            
-//            
-//            
-//            // Let go of TEST/RST_
-//            // TODO: use this only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
-//            Test::Write(0);
-//            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//            // TODO: use this for Rev5, when we have real level shifting
-////            Test::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-////            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        }
+        // Return pins to default state
+        _pinsReset();
     }
     
 public:

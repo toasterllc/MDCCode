@@ -7,22 +7,22 @@
 #include "ICE.h"
 #include "ImgSensor.h"
 #include "ImgAutoExposure.h"
-#include "Toastbox/IntState.h"
 #include "Startup.h"
 #include "GPIO.h"
 #include "Clock.h"
 #include "RTC.h"
 #include "SPI.h"
+#include "WDT.h"
 #include "FRAMWriteEn.h"
+#include "Util.h"
+#include "Toastbox/IntState.h"
+#include "Toastbox/Task.h"
 using namespace Toastbox;
 using namespace GPIO;
 
-static constexpr uint64_t _MCLKFreqHz = 16000000;
-static constexpr uint32_t _XT1FreqHz = 32768;
-static constexpr uint16_t _LPMBits = LPM3_bits;
-
-#define _delayUs(us) __delay_cycles((((uint64_t)us)*_MCLKFreqHz) / 1000000)
-#define _delayMs(ms) __delay_cycles((((uint64_t)ms)*_MCLKFreqHz) / 1000)
+static constexpr uint64_t _MCLKFreqHz   = 16000000;
+static constexpr uint32_t _XT1FreqHz    = 32768;
+static constexpr uint32_t _WDTPeriodUs  = 512;
 
 struct _Pin {
     // Default GPIOs
@@ -44,9 +44,20 @@ struct _Pin {
 };
 
 using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
+using _WDT = WDTType<_MCLKFreqHz, _WDTPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
-__attribute__((section(".ram_backup.main")))
+class _MotionTask;
+class _SDTask;
+class _ImgTask;
+class _BusyTimeoutTask;
+using _Scheduler = Toastbox::Scheduler<
+    _MotionTask,
+    _SDTask,
+    _ImgTask,
+    _BusyTimeoutTask
+>;
+
 static SD::Card _SD;
 
 // _StartTime: the time set by STM32 (seconds since reference date)
@@ -79,34 +90,124 @@ static volatile struct {
     bool full = false;
 } _ImgIndexes;
 
+class _SDTask {
+public:
+    using Options = _Scheduler::Options<
+        _Scheduler::Option::Start // Task should start running
+    >;
+    
+    static void Run() {
+        for (;;) {
+            _Scheduler::Wait([&] {
+                return (bool)Cmd;
+            });
+            
+            switch (*Cmd) {
+            case Command::Enable:
+                // Power on + initialize SD card
+                _SD.init();
+                break;
+            
+            case Command::Disable:
+                #warning we should tell ICE40 to disable SD clock before powering off SD card
+                // Power off SD card
+                SD::Card::SetPowerEnabled(false);
+                break;
+            }
+            
+            Cmd = std::nullopt;
+        }
+    }
+    
+    __attribute__((section(".stack._SDTask")))
+    static inline uint8_t Stack[128];
+    
+    enum class Command {
+        Enable,
+        Disable,
+    };
+    
+    static inline std::optional<Command> Cmd;
+};
+
+class _ImgTask {
+public:
+    using Options = _Scheduler::Options<
+        _Scheduler::Option::Start // Task should start running
+    >;
+    
+    static void Run() {
+        for (;;) {
+            _Scheduler::Wait([&] {
+                return (bool)Cmd;
+            });
+            
+            switch (*Cmd) {
+            case Command::Enable:
+                // Initialize image sensor
+                Img::Sensor::Init();
+                
+                // Set the initial exposure _before_ we enable streaming, so that the very first frame
+                // has the correct exposure, so we don't have to skip any frames on the first capture.
+                Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
+                
+                // Enable image streaming
+                Img::Sensor::SetStreamEnabled(true);
+                break;
+            
+            case Command::Disable:
+                Img::Sensor::SetPowerEnabled(false);
+                break;
+            }
+            
+            Cmd = std::nullopt;
+        }
+    }
+    
+    __attribute__((section(".stack._ImgTask")))
+    static inline uint8_t Stack[128];
+    
+    enum class Command {
+        Enable,
+        Disable,
+    };
+    
+    static inline std::optional<Command> Cmd;
+};
+
 static void _SetSDImgEnabled(bool en) {
     static bool powerEn = false;
     if (powerEn == en) return; // Short circuit if state didn't change
     
+    // Wait for _SDTask/_ImgTask to be ready to accept commands
+    _Scheduler::Wait([&] {
+        return !_SDTask::Cmd && !_ImgTask::Cmd;
+    });
+    
     powerEn = en;
     if (powerEn) {
-        // Initialize image sensor
-        Img::Sensor::Init();
-        
-        // Initialize SD card
-        _SD.init();
-        
-        // Set the initial exposure _before_ we enable streaming, so that the very first frame
-        // has the correct exposure, so we don't have to skip any frames on the first capture.
-        Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
-        
-        // Enable image streaming
-        Img::Sensor::SetStreamEnabled(true);
+        // Initialize the SD card and image sensor in parallel
+        _SDTask::Cmd = _SDTask::Command::Enable;
+        _ImgTask::Cmd = _ImgTask::Command::Enable;
     
     } else {
-        SD::Card::SetPowerEnabled(false);
-        Img::Sensor::SetPowerEnabled(false);
+        // Initialize the SD card and image sensor in parallel
+        _SDTask::Cmd = _SDTask::Command::Disable;
+        _ImgTask::Cmd = _ImgTask::Command::Disable;
     }
+    
+    // Wait until both the SD card and image sensor are initialized
+    _Scheduler::Wait([&] {
+        return !_SDTask::Cmd && !_ImgTask::Cmd;
+    });
 }
 
 // MARK: - Motion
 
-static void _Motion_Handle() {
+static volatile bool _Motion = false;
+static volatile bool _Busy = false;
+
+static void _CaptureImage() {
     // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
     constexpr uint8_t CaptureAttemptCount = 3;
     uint8_t bestExpBlock = 0;
@@ -174,25 +275,32 @@ static void _Motion_Handle() {
 
 // MARK: - Interrupts
 
-__attribute__((interrupt(RTC_VECTOR)))
+[[gnu::interrupt(RTC_VECTOR)]]
 static void _ISR_RTC() {
     _RTC.isr();
 }
 
-static volatile bool _Motion = false;
-
-__attribute__((interrupt(PORT2_VECTOR)))
-void _ISR_Port2() {
+[[gnu::interrupt(PORT2_VECTOR)]]
+static void _ISR_Port2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
     switch (__even_in_range(P2IV, P2IV__P2IFG5)) {
     case P2IV__P2IFG5:
         _Motion = true;
         // Wake ourself
-        __bic_SR_register_on_exit(_LPMBits);
+        __bic_SR_register_on_exit(GIE | LPM3_bits);
         break;
     
     default:
         break;
+    }
+}
+
+[[gnu::interrupt(WDT_VECTOR)]]
+static void _ISR_WDT() {
+    const bool wake = _Scheduler::Tick();
+    if (wake) {
+        // Wake ourself
+        __bic_SR_register_on_exit(GIE | LPM3_bits);
     }
 }
 
@@ -229,7 +337,7 @@ const uint8_t SD::Card::ClkDelayFast = 0;
 void SD::Card::SetPowerEnabled(bool en) {
     _Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    _delayMs(2);
+    SleepMs(2);
 }
 
 // MARK: - Image Sensor
@@ -237,7 +345,7 @@ void SD::Card::SetPowerEnabled(bool en) {
 void Img::Sensor::SetPowerEnabled(bool en) {
     if (en) {
         _Pin::VDD_2V8_IMG_EN::Write(1);
-        _delayUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        SleepUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         _Pin::VDD_1V9_IMG_EN::Write(1);
         
         #warning measure actual delay that we need for the rails to rise
@@ -264,37 +372,130 @@ inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
 
 void Toastbox::IntState::WaitForInterrupt() {
     // Put ourself to sleep until an interrupt occurs. This function may or may not return:
+    // 
     // - This function returns if an interrupt was already pending and the ISR
-    //   wakes us (via `__bic_SR_register_on_exit(_LPMBits)`). In this case we
-    //   never enter LPM3.5.
+    //   wakes us (via `__bic_SR_register_on_exit`). In this case we never enter LPM3.5.
+    // 
     // - This function doesn't return if an interrupt wasn't pending and
     //   therefore we enter LPM3.5. The next time we wake will be due to a
     //   reset and execution will start from main().
     
-    // Disable regulator so we enter LPM3.5 (instead of just LPM3)
-    if constexpr (_LPMBits == LPM3_bits) {
+    // If we're currently handling motion, enter LPM1 sleep because a task is just delaying itself.
+    // If we're not handling motion, enter the deep LPM3.5 sleep, where RAM content is lost.
+    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
+//    const uint16_t LPMBits = LPM1_bits;
+    
+    // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
+    if (LPMBits == LPM3_bits) {
         PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
         PMMCTL0_L |= PMMREGOFF;
     }
     
     // Atomically enable interrupts and go to sleep
     const bool prevEn = Toastbox::IntState::InterruptsEnabled();
-    __bis_SR_register(GIE | _LPMBits);
+    __bis_SR_register(GIE | LPMBits);
     // If interrupts were disabled previously, disable them again
     if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
 }
 
-// MARK: - Main
+// MARK: - Tasks
 
 //static void debugSignal() {
 //    _Pin::DEBUG_OUT::Init();
 //    for (int i=0; i<10; i++) {
 //        _Pin::DEBUG_OUT::Write(0);
-//        _delayMs(10);
+//        for (volatile int i=0; i<10000; i++);
 //        _Pin::DEBUG_OUT::Write(1);
-//        _delayMs(10);
+//        for (volatile int i=0; i<10000; i++);
 //    }
 //}
+
+class _MotionTask {
+public:
+    using Options = _Scheduler::Options<
+        _Scheduler::Option::Start // Task should start running
+    >;
+    
+    static void Run() {
+        for (;;) {
+            // Wait for motion
+            _Scheduler::Wait([&] { return _Motion; });
+            _Motion = false;
+            _Busy = true;
+            
+            // Stop the timeout task while we capture a new image
+            _Scheduler::Stop<_BusyTimeoutTask>();
+            
+            ICE::Transfer(ICE::LEDSetMsg(0xFF));
+            
+            // Turn everything on
+            _SetSDImgEnabled(true);
+            
+            // Capture an image
+            _CaptureImage();
+            
+            ICE::Transfer(ICE::LEDSetMsg(0x00));
+            
+            // Restart the timeout task, so that we turn off automatically if
+            // we're idle for a bit
+            _Scheduler::Start<_BusyTimeoutTask>();
+        }
+    }
+    
+    #warning TODO: reduce stack sizes once we figure out the problem
+    __attribute__((section(".stack._MotionTask")))
+    static inline uint8_t Stack[128];
+};
+
+class _BusyTimeoutTask {
+public:
+    using Options = _Scheduler::Options<>;
+    
+    static void Run() {
+        for (;;) {
+            // Stay on for 1 second waiting for motion
+            SleepMs(1000);
+            
+            // Turn everything off
+            _SetSDImgEnabled(false);
+            
+            // Update our state
+            _Busy = false;
+        }
+    }
+    
+    __attribute__((section(".stack._BusyTimeoutTask")))
+    static inline uint8_t Stack[128];
+};
+
+// MARK: - Sleep
+
+static _Scheduler::Ticks _TicksForUs(uint32_t us) {
+    static constexpr uint32_t _UsPerTick = _WDTPeriodUs;
+    // We're intentionally not ceiling the result because _Scheduler::Sleep
+    // implicitly ceils by adding one tick (to prevent truncated sleeps),
+    // so if we ceiled too, we'd always sleep one more tick than needed.
+    return us / _UsPerTick;
+}
+
+void SleepMs(uint16_t ms) {
+    _Scheduler::Sleep(_TicksForUs(1000*(uint32_t)ms));
+}
+
+void SleepUs(uint16_t us) {
+    _Scheduler::Sleep(_TicksForUs(us));
+}
+
+// MARK: - Main
+
+#warning verify that _StackMainSize is large enough
+#define _StackMainSize 128
+
+__attribute__((section(".stack.main")))
+uint8_t _StackMain[_StackMainSize];
+
+asm(".global __stack");
+asm("__stack = _StackMain+" Stringify(_StackMainSize));
 
 int main() {
     // Stop watchdog timer
@@ -333,6 +534,10 @@ int main() {
         // If we do have a valid startTime, consume _startTime and hand it off to _RTC.
         // Otherwise, initialize _RTC with 0. This will enable RTC, but it won't
         // enable the interrupt, so _RTC.currentTime() will always return 0.
+        // 
+        // *** We need RTC to be enabled because it keeps BAKMEM alive.
+        // *** If RTC is disabled, we enter LPM4.5 when we sleep
+        // *** (instead of LPM3.5), and BAKMEM is lost.
         if (_StartTime.valid) {
             FRAMWriteEn writeEn; // Enable FRAM writing
             
@@ -347,48 +552,14 @@ int main() {
         }
     }
     
-    // Enable interrupts
-    // If we were awakened due to an RTC interrupt or a motion interrupt, the handler will fire now
-    Toastbox::IntState ints(true);
-    for (;;) {
-        // Disable interrupts while we check for events
-        Toastbox::IntState ints(false);
-        
-        if (_Motion) {
-            _Motion = false;
-            
-            // Enable ints while we handle motion
-            Toastbox::IntState ints(true);
-            
-            ICE::Transfer(ICE::LEDSetMsg(0xFF));
-            
-            // Turn everything on
-            _SetSDImgEnabled(true);
-            
-            // Handle motion
-            _Motion_Handle();
-            
-            ICE::Transfer(ICE::LEDSetMsg(0x00));
-            _delayMs(100);
-        
-        } else {
-            // No events
-            
-            // Turn everything off
-            _SetSDImgEnabled(false);
-            
-            // Go to sleep
-            // WaitForInterrupt() may or may not return!
-            //   An interrupt was pending -> function returns after ISR executes
-            //   An interrupt wasn't pending -> function doesn't return (we go to sleep, and chip resets upon wake)
-            Toastbox::IntState::WaitForInterrupt();
-        }
-    }
+    // Init WDT
+    _WDT::Init();
     
-    return 0;
+    _Scheduler::Run();
 }
 
-[[noreturn]] void abort() {
+extern "C" [[noreturn]]
+void abort() {
     _Pin::DEBUG_OUT::Init();
     for (bool x=0;; x=!x) {
         _Pin::DEBUG_OUT::Write(x);
