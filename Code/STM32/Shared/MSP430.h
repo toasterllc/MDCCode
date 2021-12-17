@@ -12,28 +12,59 @@ private:
                (x&(1<<3))<<1 | (x&(1<<2))<<3 | (x&(1<<1))<<5 | (x&(1<<0))<<7 ;
     }
     
-    static constexpr uint8_t _IR_CNTRL_SIG_16BIT    = _Reverse(0x13);
-    static constexpr uint8_t _IR_CNTRL_SIG_CAPTURE  = _Reverse(0x14);
-    static constexpr uint8_t _IR_CNTRL_SIG_RELEASE  = _Reverse(0x15);
-    static constexpr uint8_t _IR_COREIP_ID          = _Reverse(0x17);
+    static constexpr uint8_t _IR_EMEX_WRITE_CONTROL = _Reverse(0x0C);       // 0x30
+    static_assert(           _IR_EMEX_WRITE_CONTROL == 0x30);
     
-    static constexpr uint8_t _IR_TEST_REG           = _Reverse(0x2A);
+    static constexpr uint8_t _IR_CNTRL_SIG_16BIT    = _Reverse(0x13);       // 0xC8
+    static_assert(           _IR_CNTRL_SIG_16BIT    == 0xC8);
     
-    static constexpr uint8_t _IR_DATA_16BIT         = _Reverse(0x41);
-    static constexpr uint8_t _IR_DATA_CAPTURE       = _Reverse(0x42);
-    static constexpr uint8_t _IR_DATA_QUICK         = _Reverse(0x43);
+    static constexpr uint8_t _IR_CNTRL_SIG_CAPTURE  = _Reverse(0x14);       // 0x28
+    static_assert(           _IR_CNTRL_SIG_CAPTURE  == 0x28);
     
-    static constexpr uint8_t _IR_DATA_PSA           = _Reverse(0x44);
-    static constexpr uint8_t _IR_SHIFT_OUT_PSA      = _Reverse(0x46);
+    static constexpr uint8_t _IR_CNTRL_SIG_RELEASE  = _Reverse(0x15);       // 0xA8
+    static_assert(           _IR_CNTRL_SIG_RELEASE  == 0xA8);
     
-    static constexpr uint8_t _IR_JMB_EXCHANGE       = _Reverse(0x61);
+    static constexpr uint8_t _IR_COREIP_ID          = _Reverse(0x17);       // 0xE8
+    static_assert(           _IR_COREIP_ID          == 0xE8);
     
-    static constexpr uint8_t _IR_ADDR_16BIT         = _Reverse(0x83);
-    static constexpr uint8_t _IR_ADDR_CAPTURE       = _Reverse(0x84);
-    static constexpr uint8_t _IR_DATA_TO_ADDR       = _Reverse(0x85);
-    static constexpr uint8_t _IR_DEVICE_ID          = _Reverse(0x87);
+    static constexpr uint8_t _IR_TEST_REG           = _Reverse(0x2A);       // 0x54
+    static_assert(           _IR_TEST_REG           == 0x54);
     
-    static constexpr uint8_t _IR_BYPASS             = _Reverse(0xFF);
+    static constexpr uint8_t _IR_TEST_3V_REG        = _Reverse(0x2F);       // 0xF4
+    static_assert(           _IR_TEST_3V_REG        == 0xF4);
+    
+    static constexpr uint8_t _IR_DATA_16BIT         = _Reverse(0x41);       // 0x82
+    static_assert(           _IR_DATA_16BIT         == 0x82);
+    
+    static constexpr uint8_t _IR_DATA_CAPTURE       = _Reverse(0x42);       // 0x42
+    static_assert(           _IR_DATA_CAPTURE       == 0x42);
+    
+    static constexpr uint8_t _IR_DATA_QUICK         = _Reverse(0x43);       // 0xC2
+    static_assert(           _IR_DATA_QUICK         == 0xC2);
+    
+    static constexpr uint8_t _IR_DATA_PSA           = _Reverse(0x44);       // 0x22
+    static_assert(           _IR_DATA_PSA           == 0x22);
+    
+    static constexpr uint8_t _IR_SHIFT_OUT_PSA      = _Reverse(0x46);       // 0x62
+    static_assert(           _IR_SHIFT_OUT_PSA      == 0x62);
+    
+    static constexpr uint8_t _IR_JMB_EXCHANGE       = _Reverse(0x61);       // 0x86
+    static_assert(           _IR_JMB_EXCHANGE       == 0x86);
+    
+    static constexpr uint8_t _IR_ADDR_16BIT         = _Reverse(0x83);       // 0xC1
+    static_assert(           _IR_ADDR_16BIT         == 0xC1);
+    
+    static constexpr uint8_t _IR_ADDR_CAPTURE       = _Reverse(0x84);       // 0x21
+    static_assert(           _IR_ADDR_CAPTURE       == 0x21);
+    
+    static constexpr uint8_t _IR_DATA_TO_ADDR       = _Reverse(0x85);       // 0xA1
+    static_assert(           _IR_DATA_TO_ADDR       == 0xA1);
+    
+    static constexpr uint8_t _IR_DEVICE_ID          = _Reverse(0x87);       // 0xE1
+    static_assert(           _IR_DEVICE_ID          == 0xE1);
+    
+    static constexpr uint8_t _IR_BYPASS             = _Reverse(0xFF);       // 0xFF
+    static_assert(           _IR_BYPASS             == 0xFF);
     
     static constexpr uint8_t _JTAGID                = 0x98;
     static constexpr uint16_t _DeviceID             = 0x8311;
@@ -669,11 +700,60 @@ private:
     }
     
     void _jtagEnd() {
-        // Perform a BOR (brownout reset), which resets the device and causes us to lose JTAG control
-        // Note that this still doesn't reset some modules (like RTC and PMM), but it's as close as
-        // we can get to a full reset without power cycling the device.
-        _irShift(_IR_TEST_REG);
-        _drShift<16>(0x0200);
+//        _irShift(0xa8);
+//        _DelayMs(20);
+        
+        
+            
+        // Reset JTAG state machine (test access port, TAP)
+        _tapReset();
+        
+        // Validate the JTAG ID
+        if (_jtagID() != _JTAGID) {
+            for (;;);
+        }
+        
+        // Validate the Core ID
+        if (_coreID() == 0) {
+            for (;;);
+        }
+        
+        // Set device into JTAG mode + read
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x1501);
+        
+        // Wait until CPU is sync'd
+        if (!_waitForCPUSync()) {
+            for (;;);
+        }
+        
+        // Reset CPU
+        if (!_cpuReset()) {
+            for (;;);
+        }
+        
+        // Validate the Device ID
+        {
+            const uint16_t deviceID = _deviceID();
+            if (deviceID != _DeviceID) {
+                for (;;);
+            }
+        }
+        
+        _irShift(0xa8);
+        _DelayMs(20);
+        
+        
+        
+        
+        
+        
+        
+//        // Perform a BOR (brownout reset), which resets the device and causes us to lose JTAG control
+//        // Note that this still doesn't reset some modules (like RTC and PMM), but it's as close as
+//        // we can get to a full reset without power cycling the device.
+//        _irShift(_IR_TEST_REG);
+//        _drShift<16>(0x0200);
         
         // TODO: use only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
         {
@@ -788,6 +868,74 @@ public:
                 if (deviceID != _DeviceID) {
                     continue; // Try again
                 }
+            }
+            
+            _irShift(0xa8);
+            _DelayMs(20);
+            
+            {
+//                _irShift(0xc8);
+//                _drShift<16>(0x501);
+//                _DelayMs(20);
+//                
+//                _irShift(0x28);
+//                _drShift<16>(0x0);
+//                _DelayMs(20);
+//                
+//                _irShift(0x82);
+//                _drShift<16>(0x80);
+//                _DelayMs(20);
+//                
+//                _irShift(0xc8);
+//                _drShift<16>(0x1400);
+//                _DelayMs(20);
+//                
+//                _irShift(0x82);
+//                _drShift<16>(0xe300);
+//                _DelayMs(20);
+//                
+//                _drShift<16>(0x4303);
+//                _DelayMs(20);
+//                
+//                _irShift(0x21);
+//                _drShift<20>(0x0);
+//                _DelayMs(20);
+//                
+//                _irShift(0xc8);
+//                _drShift<16>(0x401);
+//                _DelayMs(20);
+//                
+//                _irShift(0x21);
+//                _irShift(0x28);
+//                _drShift<16>(0x0);
+//                _DelayMs(20);
+//                
+//                _irShift(0x30);
+//                _drShift<16>(0x7);
+//                _DelayMs(20);
+//                
+//                _irShift(0x28);
+//                _irShift(0xf4);
+//                _drShift<16>(0x0);
+//                _DelayMs(20);
+//                _drShift<16>(0x4020);
+//                _DelayMs(20);
+                
+//                _irShift(0x54);
+//                _drShift<32>(0x10000);
+//                _DelayMs(20);
+//                _drShift<32>(0x18);
+//                _DelayMs(20);
+//
+//                _irShift(0xa8);
+//                _DelayMs(20);
+//
+//                for (int i=0; i<200; i++) {
+////                    _irShift(0x28);
+//                    _irShift(0xd0);
+//                    _drShift<16>(0x0);
+//                    _DelayMs(20);
+//                }
             }
             
             // Disable MPU (so we can write to FRAM)
