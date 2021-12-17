@@ -705,55 +705,40 @@ private:
         
         
             
-        // Reset JTAG state machine (test access port, TAP)
-        _tapReset();
+//        // Reset JTAG state machine (test access port, TAP)
+//        _tapReset();
+//        
+//        // Validate the JTAG ID
+//        if (_jtagID() != _JTAGID) {
+//            for (;;);
+//        }
+//        
+//        // Validate the Core ID
+//        if (_coreID() == 0) {
+//            for (;;);
+//        }
         
-        // Validate the JTAG ID
-        if (_jtagID() != _JTAGID) {
-            for (;;);
-        }
+//        // Set device into JTAG mode + read
+//        _irShift(_IR_CNTRL_SIG_16BIT);
+//        _drShift<16>(0x1501);
+//        
+//        // Wait until CPU is sync'd
+//        if (!_waitForCPUSync()) {
+//            for (;;);
+//        }
         
-        // Validate the Core ID
-        if (_coreID() == 0) {
-            for (;;);
-        }
+//        // Reset CPU
+//        if (!_cpuReset()) {
+//            for (;;);
+//        }
         
-        // Set device into JTAG mode + read
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x1501);
+        _cpuReset();
         
-        // Wait until CPU is sync'd
-        if (!_waitForCPUSync()) {
-            for (;;);
-        }
-        
-        // Reset CPU
-        if (!_cpuReset()) {
-            for (;;);
-        }
-        
-        // Validate the Device ID
-        {
-            const uint16_t deviceID = _deviceID();
-            if (deviceID != _DeviceID) {
-                for (;;);
-            }
-        }
-        
-        _irShift(0xa8);
-        _DelayMs(20);
-        
-        
-        
-        
-        
-        
-        
-//        // Perform a BOR (brownout reset), which resets the device and causes us to lose JTAG control
-//        // Note that this still doesn't reset some modules (like RTC and PMM), but it's as close as
-//        // we can get to a full reset without power cycling the device.
-//        _irShift(_IR_TEST_REG);
-//        _drShift<16>(0x0200);
+        // Perform a BOR (brownout reset), which resets the device and causes us to lose JTAG control
+        // Note that this still doesn't reset some modules (like RTC and PMM), but it's as close as
+        // we can get to a full reset without power cycling the device.
+        _irShift(_IR_TEST_REG);
+        _drShift<16>(0x0200);
         
         // TODO: use only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
         {
