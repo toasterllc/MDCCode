@@ -69,6 +69,7 @@ private:
     static constexpr uint8_t _JTAGID                = 0x98;
     static constexpr uint16_t _DeviceID             = 0x8311;
     static constexpr uint32_t _SafePC               = 0x00000004;
+    static constexpr uint32_t _SYSRSTIVAddr         = 0x0000015E;
     static constexpr uint32_t _SYSCFG0Addr          = 0x00000160;
     
     static constexpr uint16_t JMBMailboxIn0Ready    = 0x0001;
@@ -105,11 +106,15 @@ private:
     bool _crcStarted = false;
     
     void _pinsReset() {
-        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        // De-assert RST_ before de-asserting TEST, because the MSP430 latches RST_
+        // as being asserted, if it's asserted when when TEST is de-asserted
+        Rst_::Write(1);
         Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        _DelayMs(10);
         
         Test::Write(0);
-        Rst_::Write(1);
+        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        _DelayMs(10);
     }
     
     void _tapReset() {
@@ -286,12 +291,10 @@ private:
         _tclkSet(0);
         _tclkSet(1);
         
-        // Prepare access to the JTAG CNTRL SIG register
+        // Reset CPU
         _irShift(_IR_CNTRL_SIG_16BIT);
-        // Release CPUSUSP signal and apply POR signal
-        _drShift<16>(0x0C01);
-        // Release POR signal again
-        _drShift<16>(0x0401);
+        _drShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
+        _drShift<16>(0x0401); // Deassert POR
         
         // Set PC to 'safe' memory location
         _irShift(_IR_DATA_16BIT);
@@ -667,7 +670,6 @@ private:
         // Reset pin states
         {
             _pinsReset();
-            _DelayMs(10);
         }
         
         // Reset the MSP430 so that it starts from a known state
@@ -704,60 +706,79 @@ private:
 //        _DelayMs(20);
         
         
-            
-        // Reset JTAG state machine (test access port, TAP)
-        _tapReset();
+//        {
+//            // Reset JTAG state machine (test access port, TAP)
+//            _tapReset();
+//            
+//            // Validate the JTAG ID
+//            if (_jtagID() != _JTAGID) {
+//                for (;;);
+//            }
+//            
+//            // Validate the Core ID
+//            if (_coreID() == 0) {
+//                for (;;);
+//            }
+//            
+//            // Set device into JTAG mode + read
+//            _irShift(_IR_CNTRL_SIG_16BIT);
+//            _drShift<16>(0x1501);
+//            
+//            // Wait until CPU is sync'd
+//            if (!_waitForCPUSync()) {
+//                for (;;);
+//            }
+//            
+//            // Reset CPU
+//            if (!_cpuReset()) {
+//                for (;;);
+//            }
+//            
+//            // Perform a BOR (brownout reset), which resets the device and causes us to lose JTAG control
+//            // Note that this still doesn't reset some modules (like RTC and PMM), but it's as close as
+//            // we can get to a full reset without power cycling the device.
+//            _irShift(_IR_TEST_REG);
+//            _drShift<16>(0x0200);
+//        }
         
-        // Validate the JTAG ID
-        if (_jtagID() != _JTAGID) {
-            for (;;);
-        }
+        // Read the SYSRSTIV register to clear it, to emulate a real power-up
+        _read16(_SYSRSTIVAddr);
         
-        // Validate the Core ID
-        if (_coreID() == 0) {
-            for (;;);
-        }
-        
-        // Set device into JTAG mode + read
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x1501);
-        
-        // Wait until CPU is sync'd
-        if (!_waitForCPUSync()) {
-            for (;;);
-        }
-        
-        // Reset CPU
-        if (!_cpuReset()) {
-            for (;;);
-        }
-        
-//        _cpuReset();
-        
-        // Perform a BOR (brownout reset), which resets the device and causes us to lose JTAG control
-        // Note that this still doesn't reset some modules (like RTC and PMM), but it's as close as
+        // Perform a BOR (brownout reset)
+        // TI's code claims that this resets the device and causes us to lose JTAG control,
+        // but empirically we still need to execute the 'Reset CPU' and '_IR_CNTRL_SIG_RELEASE' stages below.
+        // 
+        // Note that a BOR still doesn't reset some modules (like RTC and PMM), but it's as close as
         // we can get to a full reset without power cycling the device.
         _irShift(_IR_TEST_REG);
         _drShift<16>(0x0200);
         
-        // TODO: use only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
-        {
-            Test::Write(0);
-            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        }
+        // Reset CPU
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
+        _drShift<16>(0x0401); // Deassert POR
         
-        // TODO: use for Rev5, when we have real level shifting
-        {
-//            Test::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        // Release JTAG control
+        _irShift(_IR_CNTRL_SIG_RELEASE);
+        
+        // Return pins to default state
+        _pinsReset();
+        
+//        // De-assert RST_ before releasing TEST, otherwise RST_ will be latched low
+//        Rst_::Write(1);
+//        Test::Write(0);
+//        
+//        // TODO: use only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
+//        {
+//            Test::Write(0);
 //            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        }
-        
-//        // Release device from JTAG control
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        // Perform a reset
-//        _drShift<16>(0x0C01);
-//        _drShift<16>(0x0401);
-//        _irShift(_IR_CNTRL_SIG_RELEASE);
+//        }
+//        
+//        // TODO: use for Rev5, when we have real level shifting
+//        {
+////            Test::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+////            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//        }
         
 //        // Assert reset before we deactivate SBW
 //        Rst_::Write(0);
@@ -855,8 +876,8 @@ public:
                 }
             }
             
-            _irShift(0xa8);
-            _DelayMs(20);
+//            _irShift(_IR_CNTRL_SIG_RELEASE);
+//            _DelayMs(20);
             
             {
 //                _irShift(0xc8);

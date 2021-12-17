@@ -6,24 +6,24 @@
 class Startup {
 public:
     static bool ColdStart() {
-        static bool coldStart = _ColdStart();
+        static bool coldStart = (SYSRSTIV != SYSRSTIV__LPM5WU);
         return coldStart;
     }
     
 private:
-    static bool _ColdStart() {
-        // We're using this technique so that the first run always triggers _ColdStart()==true,
-        // regardless of the reset cause (SYSRSTIV). We want that behavior so that the first
-        // time we load the program via a debugger, it runs as if it's a cold start, even
-        // though it's actually a warm start.
-        __attribute__((section(".fram_info.startup")))
-        static bool init = false;
-        
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        bool initPrev = init;
-        init = true;
-        return !initPrev || (SYSRSTIV != SYSRSTIV__LPM5WU);
-    }
+//    static bool _ColdStart() {
+//        // We're using this technique so that the first run always triggers _ColdStart()==true,
+//        // regardless of the reset cause (SYSRSTIV). We want that behavior so that the first
+//        // time we load the program via a debugger, it runs as if it's a cold start, even
+//        // though it's actually a warm start.
+//        __attribute__((section(".fram_info.startup")))
+//        static bool init = false;
+//        
+//        FRAMWriteEn writeEn; // Enable FRAM writing
+//        bool initPrev = init;
+//        init = true;
+//        return !initPrev || (SYSRSTIV != SYSRSTIV__LPM5WU);
+//    }
     
     // _Startup() is called before main() via the crt machinery, because it's placed in
     // a .crt_NNNN_xxx section. The NNNN part of the section name defines the order that

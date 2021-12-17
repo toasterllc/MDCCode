@@ -524,12 +524,36 @@ int main() {
     PM5CTL0 &= ~LOCKLPM5;
     
     _Pin::DEBUG_OUT::Init();
-
-    for (int x=0; x<100; x++) {
-        _Pin::DEBUG_OUT::Write(x&1);
-        __delay_cycles(10000);
-    }
-
+    
+    const uint16_t iv = SYSRSTIV;
+    
+//    for (;;) {
+//        _Pin::DEBUG_OUT::Write(1);
+//        __delay_cycles(10000);
+//        _Pin::DEBUG_OUT::Write(0);
+//        __delay_cycles(10000);
+//
+//        for (int i=0; i<iv; i++) {
+//            _Pin::DEBUG_OUT::Write(1);
+//            __delay_cycles(1000);
+//            _Pin::DEBUG_OUT::Write(0);
+//            __delay_cycles(1000);
+//        }
+//        __delay_cycles(10000);
+//    }
+    
+//    if (iv == SYSRSTIV__LPM5WU) {
+//        for (int x=0;; x++) {
+//            _Pin::DEBUG_OUT::Write(x&1);
+//            __delay_cycles(10000);
+//        }
+//    }
+//
+//    for (int x=0;; x++) {
+//        _Pin::DEBUG_OUT::Write(x&1);
+//        __delay_cycles(1000000);
+//    }
+    
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
     PMMCTL0_L |= PMMREGOFF;
