@@ -12,59 +12,27 @@ private:
                (x&(1<<3))<<1 | (x&(1<<2))<<3 | (x&(1<<1))<<5 | (x&(1<<0))<<7 ;
     }
     
-    static constexpr uint8_t _IR_EMEX_WRITE_CONTROL = _Reverse(0x0C);       // 0x30
-    static_assert(           _IR_EMEX_WRITE_CONTROL == 0x30);
-    
     static constexpr uint8_t _IR_CNTRL_SIG_16BIT    = _Reverse(0x13);       // 0xC8
-    static_assert(           _IR_CNTRL_SIG_16BIT    == 0xC8);
-    
     static constexpr uint8_t _IR_CNTRL_SIG_CAPTURE  = _Reverse(0x14);       // 0x28
-    static_assert(           _IR_CNTRL_SIG_CAPTURE  == 0x28);
-    
     static constexpr uint8_t _IR_CNTRL_SIG_RELEASE  = _Reverse(0x15);       // 0xA8
-    static_assert(           _IR_CNTRL_SIG_RELEASE  == 0xA8);
-    
     static constexpr uint8_t _IR_COREIP_ID          = _Reverse(0x17);       // 0xE8
-    static_assert(           _IR_COREIP_ID          == 0xE8);
     
     static constexpr uint8_t _IR_TEST_REG           = _Reverse(0x2A);       // 0x54
-    static_assert(           _IR_TEST_REG           == 0x54);
-    
-    static constexpr uint8_t _IR_TEST_3V_REG        = _Reverse(0x2F);       // 0xF4
-    static_assert(           _IR_TEST_3V_REG        == 0xF4);
     
     static constexpr uint8_t _IR_DATA_16BIT         = _Reverse(0x41);       // 0x82
-    static_assert(           _IR_DATA_16BIT         == 0x82);
-    
     static constexpr uint8_t _IR_DATA_CAPTURE       = _Reverse(0x42);       // 0x42
-    static_assert(           _IR_DATA_CAPTURE       == 0x42);
-    
     static constexpr uint8_t _IR_DATA_QUICK         = _Reverse(0x43);       // 0xC2
-    static_assert(           _IR_DATA_QUICK         == 0xC2);
-    
     static constexpr uint8_t _IR_DATA_PSA           = _Reverse(0x44);       // 0x22
-    static_assert(           _IR_DATA_PSA           == 0x22);
-    
     static constexpr uint8_t _IR_SHIFT_OUT_PSA      = _Reverse(0x46);       // 0x62
-    static_assert(           _IR_SHIFT_OUT_PSA      == 0x62);
     
     static constexpr uint8_t _IR_JMB_EXCHANGE       = _Reverse(0x61);       // 0x86
-    static_assert(           _IR_JMB_EXCHANGE       == 0x86);
     
     static constexpr uint8_t _IR_ADDR_16BIT         = _Reverse(0x83);       // 0xC1
-    static_assert(           _IR_ADDR_16BIT         == 0xC1);
-    
     static constexpr uint8_t _IR_ADDR_CAPTURE       = _Reverse(0x84);       // 0x21
-    static_assert(           _IR_ADDR_CAPTURE       == 0x21);
-    
     static constexpr uint8_t _IR_DATA_TO_ADDR       = _Reverse(0x85);       // 0xA1
-    static_assert(           _IR_DATA_TO_ADDR       == 0xA1);
-    
     static constexpr uint8_t _IR_DEVICE_ID          = _Reverse(0x87);       // 0xE1
-    static_assert(           _IR_DEVICE_ID          == 0xE1);
     
     static constexpr uint8_t _IR_BYPASS             = _Reverse(0xFF);       // 0xFF
-    static_assert(           _IR_BYPASS             == 0xFF);
     
     static constexpr uint8_t _JTAGID                = 0x98;
     static constexpr uint16_t _DeviceID             = 0x8311;
