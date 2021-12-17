@@ -5,7 +5,7 @@
 
 class TaskB {
 public:
-    using Options = typename Scheduler::Options<>;
+    using Options = Scheduler::Options<>;
     
     static void Run() {
         for (;;) {
