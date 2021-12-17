@@ -602,7 +602,7 @@ protected:
     USBD_HandleTypeDef _device;
     
 private:
-    alignas(4) static const inline uint8_t _ResetSentinel = 0;
+    alignas(4) static const inline uint8_t _ResetSentinel = 0; // Aligned to send via USB
     
     // _DevNullAddr: address that throw-away data can be written to.
     // This must be a region that a packet can be written to without causing
@@ -613,7 +613,7 @@ private:
     static constexpr uint32_t _DevNullAddr = 0x08000000;
     
     std::optional<Cmd> _cmd;
-    alignas(4) uint8_t _cmdRecvBuf[MaxPacketSizeCtrl];
+    alignas(4) uint8_t _cmdRecvBuf[MaxPacketSizeCtrl]; // Aligned to send via USB
     _OutEndpoint _outEndpoints[EndpointCountOut()] = {};
     _InEndpoint _inEndpoints[EndpointCountIn()] = {};
     PCD_HandleTypeDef _pcd;

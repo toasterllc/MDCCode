@@ -48,7 +48,7 @@ uint8_t* USB::_usbd_GetHSConfigDescriptor(uint16_t* len) {
     
     // USB DFU device Configuration Descriptor
     constexpr size_t DescLen = 32;
-    static uint8_t Desc[] = {
+    alignas(4) static uint8_t Desc[] = { // Aligned to send via USB
         // Configuration descriptor
         0x09,                                       // bLength: configuration descriptor length
         USB_DESC_TYPE_CONFIGURATION,                // bDescriptorType: configuration descriptor
