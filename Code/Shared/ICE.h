@@ -296,7 +296,7 @@ public:
     
     #warning call some failure function if this fails, instead of returning an optional
     #warning optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
-    static std::optional<ImgCaptureStatusResp> ImgCapture(const Img::Header& header, uint8_t dstBlock, uint8_t skipCount) {
+    static ImgCaptureStatusResp ImgCapture(const Img::Header& header, uint8_t dstBlock, uint8_t skipCount) {
         // Set the header of the image
         static_assert(sizeof(header) == 4*8);
         for (uint8_t i=0, off=0; i<4; i++, off+=8) {
@@ -309,17 +309,19 @@ public:
         // Wait for image to be captured
         constexpr uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) SleepMs(1);
-            auto status = ImgCaptureStatus();
+            const auto status = ImgCaptureStatus();
             // Try again if the image hasn't been captured yet
-            if (!status.done()) continue;
+            if (!status.done()) {
+                SleepMs(1);
+                continue;
+            }
             const uint32_t imgWordCount = status.wordCount();
             Assert(imgWordCount == Img::Len/sizeof(Img::Word));
             return status;
         }
         // Timeout capturing image
         // This should never happen, since it indicates a Verilog error or a hardware failure.
-        return std::nullopt;
+        abort();
     }
     
     static ImgCaptureStatusResp ImgCaptureStatus() {
@@ -333,11 +335,14 @@ public:
         Transfer(ImgI2CTransactionMsg(write, 2, addr, val));
         
         // Wait for the I2C transaction to complete
-        const uint32_t MaxAttempts = 1000;
+        constexpr uint32_t MaxAttempts = 1000;
         for (uint32_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) SleepMs(1);
             const ImgI2CStatusResp status = ImgI2CStatus();
-            if (status.err() || status.done()) return status;
+            if (!status.err() && !status.done()) {
+                SleepMs(1);
+                continue;
+            }
+            return status;
         }
         // Timeout getting response from ICE40
         // This should never happen, since it indicates a Verilog error or a hardware failure.
@@ -372,16 +377,20 @@ public:
         Transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
         
         // Wait for command to be sent
-        const uint16_t MaxAttempts = 1000;
+        constexpr uint16_t MaxAttempts = 1000;
         for (uint16_t i=0; i<MaxAttempts; i++) {
-            if (i >= 10) SleepMs(1);
-            auto s = SDStatus();
-            // Try again if the command hasn't been sent yet
-            if (!s.cmdDone()) continue;
-            // Try again if we expect a response but it hasn't been received yet
-            if ((respType==SDSendCmdMsg::RespType::Len48||respType==SDSendCmdMsg::RespType::Len136) && !s.respDone()) continue;
-            // Try again if we expect DatIn but it hasn't been received yet
-            if (datInType==SDSendCmdMsg::DatInType::Len512x1 && !s.datInDone()) continue;
+            const auto s = SDStatus();
+            if (
+                // Try again if the command hasn't been sent yet
+                !s.cmdDone() ||
+                // Try again if we expect a response but it hasn't been received yet
+                ((respType==SDSendCmdMsg::RespType::Len48||respType==SDSendCmdMsg::RespType::Len136) && !s.respDone()) ||
+                // Try again if we expect DatIn but it hasn't been received yet
+                (datInType==SDSendCmdMsg::DatInType::Len512x1 && !s.datInDone())
+            ) {
+                SleepMs(1);
+                continue;
+            }
             return s;
         }
         // Timeout sending SD command

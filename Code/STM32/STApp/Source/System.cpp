@@ -289,7 +289,7 @@ void System::_statusGet_taskFn() {
     TaskWait(_usb.endpointReady(Endpoints::DataIn));
     
     // Send status struct
-    static const STM::Status status = {
+    alignas(4) static const STM::Status status = { // Aligned to send via USB
         .magic      = STM::Status::MagicNumber,
         .version    = STM::Version,
         .mode       = STM::Status::Modes::STMApp,

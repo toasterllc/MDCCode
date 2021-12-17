@@ -195,11 +195,6 @@ static void _SetSDImgEnabled(bool en) {
         _SDTask::Cmd = _SDTask::Command::Disable;
         _ImgTask::Cmd = _ImgTask::Command::Disable;
     }
-    
-    // Wait until both the SD card and image sensor are initialized
-    _Scheduler::Wait([&] {
-        return !_SDTask::Cmd && !_ImgTask::Cmd;
-    });
 }
 
 // MARK: - Motion
@@ -208,6 +203,9 @@ static volatile bool _Motion = false;
 static volatile bool _Busy = false;
 
 static void _CaptureImage() {
+    // Wait until the image sensor is ready
+    _Scheduler::Wait([&] { return !_ImgTask::Cmd; });
+    
     // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
     constexpr uint8_t CaptureAttemptCount = 3;
     uint8_t bestExpBlock = 0;
@@ -246,10 +244,8 @@ static void _CaptureImage() {
         header.coarseIntTime = _ImgAutoExp.integrationTime();
         
         // Capture an image to RAM
-        auto resp = ICE::ImgCapture(header, expBlock, skipCount);
-        Assert((bool)resp);
-        
-        const uint8_t expScore = _ImgAutoExp.update((*resp).highlightCount(), (*resp).shadowCount());
+        const ICE::ImgCaptureStatusResp resp = ICE::ImgCapture(header, expBlock, skipCount);
+        const uint8_t expScore = _ImgAutoExp.update(resp.highlightCount(), resp.shadowCount());
         if (!bestExpScore || (expScore > bestExpScore)) {
             bestExpBlock = expBlock;
             bestExpScore = expScore;
@@ -262,8 +258,11 @@ static void _CaptureImage() {
         Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
     }
     
+    // Wait until the SD card is ready
+    _Scheduler::Wait([&] { return !_SDTask::Cmd; });
+    
     // Write the best-exposed image to the SD card
-    _SD.writeImage(bestExpBlock, _ImgIndexes.write);
+//    _SD.writeImage(bestExpBlock, _ImgIndexes.write);
     
     // Update _ImgIndexes
     {

@@ -1,5 +1,7 @@
 - Rev4 Todo
     
+    - MSPApp: move _SDTask/_ImgTask into SDCard.h and ImgSensor.h
+    
     - MSPApp: don't wait for SD/IMG to be initialized in _SetSDImgEnabled(); only wait for them when we actually need to use them
     
     - STLoader: migrate to use real threads
