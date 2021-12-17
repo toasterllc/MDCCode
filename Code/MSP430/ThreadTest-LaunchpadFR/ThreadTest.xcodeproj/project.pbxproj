@@ -31,7 +31,6 @@
 		55FD01C22765CE1C005505B5 /* msp430fr2433.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.ld; sourceTree = "<group>"; };
 		55FD01D72766CA7F005505B5 /* Lib */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Lib; path = ../../Lib; sourceTree = "<group>"; };
 		55FD01D827671EFC005505B5 /* msp430fr2433.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.txt; sourceTree = "<group>"; };
-		55FD01EC276999E5005505B5 /* Task.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Task.h; path = ../../Lib/Toastbox/Task.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,7 +50,6 @@
 				55FD01D72766CA7F005505B5 /* Lib */,
 				55FD01C22765CE1C005505B5 /* msp430fr2433.ld */,
 				55FD01D827671EFC005505B5 /* msp430fr2433.txt */,
-				55FD01EC276999E5005505B5 /* Task.h */,
 				5514036C276C7C62004B9769 /* Scheduler.h */,
 				5514036A276C6406004B9769 /* TaskA.h */,
 				5514036B276C7C3B004B9769 /* TaskB.h */,

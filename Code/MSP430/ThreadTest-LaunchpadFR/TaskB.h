@@ -5,16 +5,18 @@
 
 class TaskB {
 public:
-    using Options = Scheduler::Options<>;
-    
     static void Run() {
         for (;;) {
-            PAOUT ^= BIT0;
+            PAOUT ^= BIT1;
 //            puts("TaskB\n");
-            Scheduler::Sleep(10000); // 5.12s
+            Scheduler::Sleep(40000); // 20.48s
         }
     }
     
     __attribute__((section(".stack.TaskB")))
     static inline uint8_t Stack[1024];
+    
+    using Options = Scheduler::Options<
+        Scheduler::Option::AutoStart<Run>
+    >;
 };
