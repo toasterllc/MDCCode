@@ -702,45 +702,6 @@ private:
     }
     
     void _jtagEnd() {
-//        _irShift(0xa8);
-//        _DelayMs(20);
-        
-        
-//        {
-//            // Reset JTAG state machine (test access port, TAP)
-//            _tapReset();
-//            
-//            // Validate the JTAG ID
-//            if (_jtagID() != _JTAGID) {
-//                for (;;);
-//            }
-//            
-//            // Validate the Core ID
-//            if (_coreID() == 0) {
-//                for (;;);
-//            }
-//            
-//            // Set device into JTAG mode + read
-//            _irShift(_IR_CNTRL_SIG_16BIT);
-//            _drShift<16>(0x1501);
-//            
-//            // Wait until CPU is sync'd
-//            if (!_waitForCPUSync()) {
-//                for (;;);
-//            }
-//            
-//            // Reset CPU
-//            if (!_cpuReset()) {
-//                for (;;);
-//            }
-//            
-//            // Perform a BOR (brownout reset), which resets the device and causes us to lose JTAG control
-//            // Note that this still doesn't reset some modules (like RTC and PMM), but it's as close as
-//            // we can get to a full reset without power cycling the device.
-//            _irShift(_IR_TEST_REG);
-//            _drShift<16>(0x0200);
-//        }
-        
         // Read the SYSRSTIV register to clear it, to emulate a real power-up
         _read16(_SYSRSTIVAddr);
         
@@ -763,61 +724,6 @@ private:
         
         // Return pins to default state
         _pinsReset();
-        
-//        // De-assert RST_ before releasing TEST, otherwise RST_ will be latched low
-//        Rst_::Write(1);
-//        Test::Write(0);
-//        
-//        // TODO: use only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
-//        {
-//            Test::Write(0);
-//            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        }
-//        
-//        // TODO: use for Rev5, when we have real level shifting
-//        {
-////            Test::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-////            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        }
-        
-//        // Assert reset before we deactivate SBW
-//        Rst_::Write(0);
-//        
-//        // De-assert TEST long enough for SBW to deactivate
-//        Test::Write(0);
-//        _DelayUs(50);
-        
-//        {
-//            // Assert reset before we deactivate SBW
-//            Rst_::Write(0);
-//            
-//            // De-assert TEST long enough for SBW to deactivate
-//            Test::Write(0);
-//            _DelayUs(50);
-//            
-//            // De-assert reset to start the chip
-//            Rst_::Write(1);
-//            
-//            
-//            
-//            // Assert reset before we deactivate SBW
-//            _DelayMs(100);
-//            Rst_::Write(0);
-//            _DelayMs(100);
-//            Rst_::Write(1);
-//            _DelayMs(100);
-//            
-//            
-//            
-//            
-//            // Let go of TEST/RST_
-//            // TODO: use this only for Rev4, where we don't have level shifting (and we're signalling with open-drain instead)
-//            Test::Write(0);
-//            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//            // TODO: use this for Rev5, when we have real level shifting
-////            Test::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-////            Rst_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        }
     }
     
 public:
@@ -874,74 +780,6 @@ public:
                 if (deviceID != _DeviceID) {
                     continue; // Try again
                 }
-            }
-            
-//            _irShift(_IR_CNTRL_SIG_RELEASE);
-//            _DelayMs(20);
-            
-            {
-//                _irShift(0xc8);
-//                _drShift<16>(0x501);
-//                _DelayMs(20);
-//                
-//                _irShift(0x28);
-//                _drShift<16>(0x0);
-//                _DelayMs(20);
-//                
-//                _irShift(0x82);
-//                _drShift<16>(0x80);
-//                _DelayMs(20);
-//                
-//                _irShift(0xc8);
-//                _drShift<16>(0x1400);
-//                _DelayMs(20);
-//                
-//                _irShift(0x82);
-//                _drShift<16>(0xe300);
-//                _DelayMs(20);
-//                
-//                _drShift<16>(0x4303);
-//                _DelayMs(20);
-//                
-//                _irShift(0x21);
-//                _drShift<20>(0x0);
-//                _DelayMs(20);
-//                
-//                _irShift(0xc8);
-//                _drShift<16>(0x401);
-//                _DelayMs(20);
-//                
-//                _irShift(0x21);
-//                _irShift(0x28);
-//                _drShift<16>(0x0);
-//                _DelayMs(20);
-//                
-//                _irShift(0x30);
-//                _drShift<16>(0x7);
-//                _DelayMs(20);
-//                
-//                _irShift(0x28);
-//                _irShift(0xf4);
-//                _drShift<16>(0x0);
-//                _DelayMs(20);
-//                _drShift<16>(0x4020);
-//                _DelayMs(20);
-                
-//                _irShift(0x54);
-//                _drShift<32>(0x10000);
-//                _DelayMs(20);
-//                _drShift<32>(0x18);
-//                _DelayMs(20);
-//
-//                _irShift(0xa8);
-//                _DelayMs(20);
-//
-//                for (int i=0; i<200; i++) {
-////                    _irShift(0x28);
-//                    _irShift(0xd0);
-//                    _drShift<16>(0x0);
-//                    _DelayMs(20);
-//                }
             }
             
             // Disable MPU (so we can write to FRAM)
