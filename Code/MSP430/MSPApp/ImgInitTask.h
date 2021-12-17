@@ -1,8 +1,9 @@
 #pragma once
 #include "ImgSensor.h"
+#include "Scheduler.h"
 
 template <typename T_SDCard>
-class ImgTask {
+class ImgInitTask {
     
     // Task options
     using Options = Scheduler::Options<>;

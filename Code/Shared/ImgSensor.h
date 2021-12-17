@@ -5,10 +5,12 @@
 
 namespace Img {
 
-template <void T_SetPowerEnabled(bool)>
 class Sensor {
 public:
-    static void enable() {
+    // Functions provided by client
+    static void SetPowerEnabled(bool en);
+    
+    static void Enable() {
         // Turn on power
         {
             SetPowerEnabled(true);

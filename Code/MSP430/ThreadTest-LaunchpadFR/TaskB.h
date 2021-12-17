@@ -2,16 +2,10 @@
 #include "Toastbox/IntState.h"
 #include "Toastbox/Task.h"
 #include "Scheduler.h"
-#include <vector>
 
 class TaskB {
 public:
     using Options = typename Scheduler::Options<>;
-    
-    template <typename T>
-    using MyVector = std::vector<T>;
-    
-    MyVector SomeVector;
     
     static void Run() {
         for (;;) {

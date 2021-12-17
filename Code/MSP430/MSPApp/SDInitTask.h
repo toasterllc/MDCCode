@@ -1,14 +1,14 @@
 #pragma once
 #include "SDCard.h"
+#include "Scheduler.h"
 
-template <typename T_SDCard>
-class SDTask {
+class SDInitTask {
     
     // Task options
     using Options = Scheduler::Options<>;
     
     // Task stack
-    __attribute__((section(".stack.SDTask")))
+    __attribute__((section(".stack.SDInitTask")))
     static inline uint8_t Stack[128];
     
     static void Enable() {

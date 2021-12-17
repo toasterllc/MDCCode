@@ -10,6 +10,9 @@ public:
     static void Run() {
         for (;;) {
             PAOUT ^= BIT0;
+            
+            Scheduler::Stop<TaskB>();
+            
 //            puts("TaskA\n");
             Scheduler::Sleep(10000); // 5.12s
         }

@@ -7,29 +7,35 @@
 
 namespace SD {
 
-template <void T_SetPowerEnabled(bool), uint8_t T_ClkDelaySlow, uint8_t T_ClkDelayFast>
 class Card {
 public:
-    void enable() {
+    // Functions provided by client
+    static void SetPowerEnabled(bool en);
+    
+    // Values provided by client
+    static const uint8_t ClkDelaySlow;
+    static const uint8_t ClkDelayFast;
+    
+    static void Enable() {
         // Disable SDController clock
-        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,         _SDInitMsg::ClkSpeed::Off,  T_ClkDelaySlow));
+        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,         _SDInitMsg::ClkSpeed::Off,  ClkDelaySlow));
         SleepMs(1);
         
         // Enable slow SDController clock
-        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,         _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow));
+        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,         _SDInitMsg::ClkSpeed::Slow, ClkDelaySlow));
         SleepMs(1);
         
         // Enter the init mode of the SDController state machine
-        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Reset,       _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow));
+        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Reset,       _SDInitMsg::ClkSpeed::Slow, ClkDelaySlow));
         
         // Turn off SD card power and wait for it to reach 0V
-        T_SetPowerEnabled(false);
+        SetPowerEnabled(false);
         
         // Turn on SD card power and wait for it to reach 2.8V
-        T_SetPowerEnabled(true);
+        SetPowerEnabled(true);
         
         // Trigger the SD card low voltage signalling (LVS) init sequence
-        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Trigger,     _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow));
+        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Trigger,     _SDInitMsg::ClkSpeed::Slow, ClkDelaySlow));
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
         SleepMs(6);
         
@@ -85,7 +91,7 @@ public:
                     continue;
                 }
                 
-                // TODO: determine if the wrong CRC in the ACMD41 response is because `T_ClkDelaySlow` needs tuning
+                // TODO: determine if the wrong CRC in the ACMD41 response is because `ClkDelaySlow` needs tuning
                 if (status.respGetBits(7,1) != 0x7F) {
                     for (volatile int i=0; i<10; i++);
                     continue;
@@ -177,30 +183,30 @@ public:
         
         // SDClock=Off
         {
-            ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,   _SDInitMsg::ClkSpeed::Off,      T_ClkDelaySlow));
+            ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,   _SDInitMsg::ClkSpeed::Off,      ClkDelaySlow));
         }
         
         // SDClockDelay=FastDelay
         {
-            ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,   _SDInitMsg::ClkSpeed::Off,      T_ClkDelayFast));
+            ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,   _SDInitMsg::ClkSpeed::Off,      ClkDelayFast));
         }
         
         // SDClock=FastClock
         {
-            ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,   _SDInitMsg::ClkSpeed::Fast,     T_ClkDelayFast));
+            ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,   _SDInitMsg::ClkSpeed::Fast,     ClkDelayFast));
         }
     }
     
-    void disable() {
+    static void Disable() {
         // Disable SDController clock
-        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop, _SDInitMsg::ClkSpeed::Off, T_ClkDelaySlow));
+        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop, _SDInitMsg::ClkSpeed::Off, ClkDelaySlow));
         SleepMs(1);
         
         // Turn off SD card power and wait for it to reach 0V
-        T_SetPowerEnabled(false);
+        SetPowerEnabled(false);
     }
     
-    void readStart(uint32_t addr) {
+    static void readStart(uint32_t addr) {
         // Verify that `addr` is a multiple of the SD block length
         AssertArg(!(addr % SD::BlockLen));
         
@@ -213,14 +219,14 @@ public:
         Assert(!status.respCRCErr());
     }
     
-    void readStop() {
+    static void ReadStop() {
         _readWriteStop();
     }
     
     // `lenEst`: the estimated byte count that will be written; used to pre-erase SD blocks as a performance
     // optimization. More data can be written than `lenEst`, but performance may suffer if the actual length
     // is longer than the estimate.
-    void writeStart(uint32_t addr, uint32_t lenEst=0) {
+    static void WriteStart(uint32_t addr, uint32_t lenEst=0) {
         // Verify that `addr` is a multiple of the SD block length
         AssertArg(!(addr % SD::BlockLen));
         
@@ -257,11 +263,11 @@ public:
         }
     }
     
-    void writeStop() {
+    void WriteStop() {
         _readWriteStop();
     }
     
-    void writeImage(uint8_t srcBlock, uint16_t dstIdx) {
+    void WriteImage(uint8_t srcBlock, uint16_t dstIdx) {
         // Confirm that Img::PaddedLen is a multiple of the SD block length
         static_assert((Img::PaddedLen % SD::BlockLen) == 0, "");
         const uint32_t addr = dstIdx*Img::PaddedLen;
@@ -308,7 +314,7 @@ private:
     static constexpr uint8_t _CMD41 = 41;
     static constexpr uint8_t _CMD55 = 55;
     
-    void _readWriteStop() {
+    void _ReadWriteStop() {
         // ====================
         // CMD12 | STOP_TRANSMISSION
         //   State: Send Data -> Transfer
@@ -318,7 +324,7 @@ private:
         Assert(!status.respCRCErr());
     }
     
-    uint16_t _rca = 0;
+    static inline uint16_t _RCA = 0;
 };
 
 } // namespace SD
