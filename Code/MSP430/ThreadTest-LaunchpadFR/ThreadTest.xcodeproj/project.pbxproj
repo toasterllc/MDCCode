@@ -23,6 +23,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5514036A276C6406004B9769 /* TaskA.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskA.h; sourceTree = "<group>"; };
+		5514036B276C7C3B004B9769 /* TaskB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskB.h; sourceTree = "<group>"; };
+		5514036C276C7C62004B9769 /* Scheduler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scheduler.h; sourceTree = "<group>"; };
 		55FD01B227656881005505B5 /* ThreadTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ThreadTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		55FD01BC27656899005505B5 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		55FD01C22765CE1C005505B5 /* msp430fr2433.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.ld; sourceTree = "<group>"; };
@@ -49,6 +52,9 @@
 				55FD01C22765CE1C005505B5 /* msp430fr2433.ld */,
 				55FD01D827671EFC005505B5 /* msp430fr2433.txt */,
 				55FD01EC276999E5005505B5 /* Task.h */,
+				5514036C276C7C62004B9769 /* Scheduler.h */,
+				5514036A276C6406004B9769 /* TaskA.h */,
+				5514036B276C7C3B004B9769 /* TaskB.h */,
 				55FD01BC27656899005505B5 /* main.cpp */,
 				55FD01B327656881005505B5 /* Products */,
 			);

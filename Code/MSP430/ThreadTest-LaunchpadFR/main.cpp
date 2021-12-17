@@ -5,50 +5,8 @@
 #include "Toastbox/IntState.h"
 #include "Toastbox/Task.h"
 #include "Util.h"
-
-class TaskA;
-class TaskB;
-using Scheduler = Toastbox::Scheduler<
-    Toastbox::IntState::WaitForInterrupt, // Sleep function
-    TaskA,
-    TaskB
->;
-
-class TaskA {
-public:
-    using Options = Scheduler::Options<
-        Scheduler::Option::Start // Task should start running
-    >;
-    
-    static void Run() {
-        for (;;) {
-            PAOUT ^= BIT0;
-//            puts("TaskA\n");
-            Scheduler::Sleep(10000); // 5.12s
-        }
-    }
-    
-    __attribute__((section(".stack.taska")))
-    static inline uint8_t Stack[1024];
-};
-
-class TaskB {
-public:
-    using Options = Scheduler::Options<
-        Scheduler::Option::Start // Task should start running
-    >;
-    
-    static void Run() {
-        for (;;) {
-            PAOUT ^= BIT1;
-//            puts("TaskB\n");
-            Scheduler::Sleep(40000); // 20.48s
-        }
-    }
-    
-    __attribute__((section(".stack.taskb")))
-    static inline uint8_t Stack[1024];
-};
+#include "TaskA.h"
+#include "TaskB.h"
 
 #define StackMainSize 128
 

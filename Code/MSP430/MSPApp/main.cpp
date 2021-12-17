@@ -47,18 +47,7 @@ using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _WDT = WDTType<_MCLKFreqHz, _WDTPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
-class _MotionTask;
-class _SDTask;
-class _ImgTask;
-class _BusyTimeoutTask;
-using _Scheduler = Toastbox::Scheduler<
-    _MotionTask,
-    _SDTask,
-    _ImgTask,
-    _BusyTimeoutTask
->;
-
-static SD::Card _SD;
+using _SD = SD::Card<_Scheduler>
 
 // _StartTime: the time set by STM32 (seconds since reference date)
 // Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
@@ -89,46 +78,6 @@ static volatile struct {
     uint16_t read = 0;
     bool full = false;
 } _ImgIndexes;
-
-class _SDTask {
-public:
-    using Options = _Scheduler::Options<
-        _Scheduler::Option::Start // Task should start running
-    >;
-    
-    static void Run() {
-        for (;;) {
-            _Scheduler::Wait([&] {
-                return (bool)Cmd;
-            });
-            
-            switch (*Cmd) {
-            case Command::Enable:
-                // Power on + initialize SD card
-                _SD.init();
-                break;
-            
-            case Command::Disable:
-                #warning we should tell ICE40 to disable SD clock before powering off SD card
-                // Power off SD card
-                SD::Card::SetPowerEnabled(false);
-                break;
-            }
-            
-            Cmd = std::nullopt;
-        }
-    }
-    
-    __attribute__((section(".stack._SDTask")))
-    static inline uint8_t Stack[128];
-    
-    enum class Command {
-        Enable,
-        Disable,
-    };
-    
-    static inline std::optional<Command> Cmd;
-};
 
 class _ImgTask {
 public:
