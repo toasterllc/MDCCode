@@ -1,7 +1,7 @@
 #include <msp430.h>
 #include <cstddef>
 #include <cstdint>
-//#include <cstdio>
+////#include <cstdio>
 #include "Toastbox/IntState.h"
 #include "Toastbox/Task.h"
 #include "Util.h"
@@ -10,35 +10,11 @@
 
 #define StackMainSize 128
 
-__attribute__((section(".stack.main")))
+[[gnu::section(".stack.main"), gnu::used]]
 uint8_t StackMain[StackMainSize];
 
 asm(".global __stack");
-asm("__stack = StackMain+" Stringify(StackMainSize));
-
-//asm(".global __stack");
-//asm(".equ __stack, StackMain+" Stringify(StackMainSize));
-
-
-
-//// sbrk: custom implementation that accounts for our heap/stack layout.
-//// With our custom layout, we know the limit for the heap is `_heap_end`,
-//// so abort if we try to expand the heap beyond that.
-//extern "C" char* sbrk(int adj) {
-//    extern uint8_t _heap_start[];
-//    extern uint8_t _heap_end[];
-//    
-//    static uint8_t* heap = _heap_start;
-//    const size_t rem = _heap_end-heap;
-//    
-//    if (rem < (size_t)adj) {
-//        extern void abort();
-//        abort();
-//    }
-//    
-//    heap += adj;
-//    return (char*)heap;
-//}
+asm(".equ __stack, StackMain+" Stringify(StackMainSize));
 
 // MARK: - IntState
 
@@ -88,54 +64,37 @@ int main() {
     // Unlock GPIOs
     PM5CTL0 &= ~LOCKLPM5;
     
-    
-    
-    
-    
-    // Configure one FRAM wait state if MCLK > 8MHz.
-    // This must happen before configuring the clock system.
-    FRCTL0 = FRCTLPW | NWAITS_1;
-    
-//    do {
-//        CSCTL7 &= ~(DCOFFG); // Clear DCO fault flag
-//        SFRIFG1 &= ~OFIFG;
-//    } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
-    
-    // Disable FLL
-    __bis_SR_register(SCG0);
-        // Set REFOCLK as FLL reference source
-        CSCTL3 |= SELREF__REFOCLK;
-        // Clear DCO and MOD registers
-        CSCTL0 = 0;
-        // Clear DCO frequency select bits first
-        CSCTL1 &= ~(DCORSEL_7);
+    {
+        // Configure one FRAM wait state if MCLK > 8MHz.
+        // This must happen before configuring the clock system.
+        FRCTL0 = FRCTLPW | NWAITS_1;
         
-        CSCTL1 |= DCORSEL_5;
+        // Disable FLL
+        __bis_SR_register(SCG0);
+            // Set REFOCLK as FLL reference source
+            CSCTL3 |= SELREF__REFOCLK;
+            // Clear DCO and MOD registers
+            CSCTL0 = 0;
+            // Clear DCO frequency select bits first
+            CSCTL1 &= ~(DCORSEL_7);
+            
+            CSCTL1 |= DCORSEL_5;
+            
+            // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLK frequency (32768)
+            CSCTL2 = FLLD_0 | ((16000000/32768)-1);
+            
+            // Wait 3 cycles to take effect
+            __delay_cycles(3);
+        // Enable FLL
+        __bic_SR_register(SCG0);
         
-        // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLK frequency (32768)
-        CSCTL2 = FLLD_0 | ((16000000/32768)-1);
+        // Wait until FLL locks
+        while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
-        // Wait 3 cycles to take effect
-        __delay_cycles(3);
-    // Enable FLL
-    __bic_SR_register(SCG0);
-    
-    // Wait until FLL locks
-    while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
-    
-    // MCLK / SMCLK source = DCOCLKDIV
-    // ACLK source = REFOCLK
-    CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
-    
-    
-    
-    
-//    Scheduler::Start<TaskA>();
-//    Scheduler::Start<TaskB>();
-    
-//    // TODO: make tasks have an initial state so we don't need a runtime component to set their initial state
-//    Scheduler::Start<TaskA>();
-//    Scheduler::Start<TaskB>();
+        // MCLK / SMCLK source = DCOCLKDIV
+        // ACLK source = REFOCLK
+        CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
+    }
     
     Scheduler::Run();
     return 0;

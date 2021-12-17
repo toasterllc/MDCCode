@@ -77,19 +77,24 @@
 								<listOptionValue builtIn="false" value="${CG_TOOL_INCLUDE_PATH}"/>
 								<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Shared"/>
 								<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../../Lib"/>
-								<listOptionValue builtIn="false" value="${PROJECT_ROOT}/../MSPApp"/>
 							</option>
-							<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.release.212771347" name="Optimization Level" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.release" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.0" valueType="enumerated"/>
+							<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.release.212771347" name="Optimization Level" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.release" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.OPT_LEVEL.OPT_FOR_SPACE" valueType="enumerated"/>
 							<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_C.159182750" name="C Language standard (-std)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_C" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_C.C11" valueType="enumerated"/>
 							<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_CPP.941663413" name="C++ Language standard (-std)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_CPP" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.STD_CPP.CPP17" valueType="enumerated"/>
 							<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FEXCEPTIONS.175331650" name="Enable exception handling" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FEXCEPTIONS" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FEXCEPTIONS.OFF" valueType="enumerated"/>
 							<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FRTTI.1423444221" name="Generate run-time type descriptor information [C++ source only]" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FRTTI" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.FRTTI.OFF" valueType="enumerated"/>
-							<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DEBUG.1137151596" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DEBUG" value="true" valueType="boolean"/>
-							<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DWARF_VERSION.1414500220" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DWARF_VERSION" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DWARF_VERSION.4" valueType="enumerated"/>
+							<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DEBUG.1137151596" name="Generate debug information (-g)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DEBUG" value="true" valueType="boolean"/>
+							<option id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DWARF_VERSION.1414500220" name="Generate debug information in DWARF version (-gdwarf-)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DWARF_VERSION" value="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compilerID.DWARF_VERSION.4" valueType="enumerated"/>
 							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compiler.inputType__C_SRCS.1108384443" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compiler.inputType__C_SRCS"/>
 							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compiler.inputType__CPP_SRCS.1254824341" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compiler.inputType__CPP_SRCS"/>
 							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compiler.inputType__ASM_SRCS.1693990186" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compiler.inputType__ASM_SRCS"/>
 							<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compiler.inputType__ASM2_SRCS.1802502296" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_GNU_9.0.compiler.inputType__ASM2_SRCS"/>
+						</tool>
+						<tool announcement="Invoking: Resource Custom Build Step" customBuildStep="true" id="org.eclipse.cdt.managedbuilder.ui.rcbs.1641578772" name="Resource Custom Build Step">
+							<inputType id="org.eclipse.cdt.managedbuilder.ui.rcbs.inputtype.1310918111" name="Resource Custom Build Step Input Type">
+								<additionalInput kind="additionalinputdependency" paths=""/>
+							</inputType>
+							<outputType id="org.eclipse.cdt.managedbuilder.ui.rcbs.outputtype.18391312" name="Resource Custom Build Step Output Type"/>
 						</tool>
 					</fileInfo>
 				</configuration>
