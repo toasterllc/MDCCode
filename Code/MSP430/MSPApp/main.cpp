@@ -521,107 +521,64 @@ int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
     
-    PM5CTL0 &= ~LOCKLPM5;
+    // Init GPIOs
+    GPIO::Init<
+        // Power control
+        _Pin::VDD_1V9_IMG_EN,
+        _Pin::VDD_2V8_IMG_EN,
+        _Pin::VDD_SD_EN,
+        _Pin::VDD_B_EN_,
+        
+        // SPI peripheral determines initial state of SPI GPIOs
+        _SPI::Pin::Clk,
+        _SPI::Pin::DataOut,
+        _SPI::Pin::DataIn,
+        _SPI::Pin::DataDir,
+        
+        // Clock peripheral determines initial state of clock GPIOs
+        _Clock::Pin::XOUT,
+        _Clock::Pin::XIN,
+        
+        // Motion
+        _Pin::MOTION_SIGNAL,
+        
+        // Other
+        _Pin::ICE_MSP_SPI_AUX,
+        _Pin::ICE_MSP_SPI_AUX_DIR
+    >();
     
-    _Pin::DEBUG_OUT::Init();
+    // Init clock
+    _Clock::Init();
     
-    const uint16_t iv = SYSRSTIV;
-    
-//    for (;;) {
-//        _Pin::DEBUG_OUT::Write(1);
-//        __delay_cycles(10000);
-//        _Pin::DEBUG_OUT::Write(0);
-//        __delay_cycles(10000);
-//
-//        for (int i=0; i<iv; i++) {
-//            _Pin::DEBUG_OUT::Write(1);
-//            __delay_cycles(1000);
-//            _Pin::DEBUG_OUT::Write(0);
-//            __delay_cycles(1000);
-//        }
-//        __delay_cycles(10000);
-//    }
-    
-//    if (iv == SYSRSTIV__LPM5WU) {
-//        for (int x=0;; x++) {
-//            _Pin::DEBUG_OUT::Write(x&1);
-//            __delay_cycles(10000);
-//        }
-//    }
-//
-//    for (int x=0;; x++) {
-//        _Pin::DEBUG_OUT::Write(x&1);
-//        __delay_cycles(1000000);
-//    }
-    
-    // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
-    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-    PMMCTL0_L |= PMMREGOFF;
-    __bis_SR_register(GIE | LPM3_bits);
-    
-    _Pin::DEBUG_OUT::Init();
-    for (bool x=0;; x=!x) {
-        _Pin::DEBUG_OUT::Write(x);
+    if (Startup::ColdStart()) {
+        // If we do have a valid startTime, consume _startTime and hand it off to _RTC.
+        // Otherwise, initialize _RTC with 0. This will enable RTC, but it won't
+        // enable the interrupt, so _RTC.currentTime() will always return 0.
+        // 
+        // *** We need RTC to be enabled because it keeps BAKMEM alive.
+        // *** If RTC is disabled, we enter LPM4.5 when we sleep
+        // *** (instead of LPM3.5), and BAKMEM is lost.
+        if (_StartTime.valid) {
+            FRAMWriteEn writeEn; // Enable FRAM writing
+            
+            // Mark the time as invalid before consuming it, so that if we lose power,
+            // the time won't be reused again
+            _StartTime.valid = false;
+            // Init real-time clock
+            _RTC.init(_StartTime.time);
+        
+        } else {
+            _RTC.init(0);
+        }
     }
     
-//    // Init GPIOs
-//    GPIO::Init<
-//        // Power control
-//        _Pin::VDD_1V9_IMG_EN,
-//        _Pin::VDD_2V8_IMG_EN,
-//        _Pin::VDD_SD_EN,
-//        _Pin::VDD_B_EN_,
-//        
-//        // SPI peripheral determines initial state of SPI GPIOs
-//        _SPI::Pin::Clk,
-//        _SPI::Pin::DataOut,
-//        _SPI::Pin::DataIn,
-//        _SPI::Pin::DataDir,
-//        
-//        // Clock peripheral determines initial state of clock GPIOs
-//        _Clock::Pin::XOUT,
-//        _Clock::Pin::XIN,
-//        
-//        // Motion
-//        _Pin::MOTION_SIGNAL,
-//        
-//        // Other
-//        _Pin::ICE_MSP_SPI_AUX,
-//        _Pin::ICE_MSP_SPI_AUX_DIR
-//    >();
-//    
-//    // Init clock
-//    _Clock::Init();
-//    
-//    if (Startup::ColdStart()) {
-//        // If we do have a valid startTime, consume _startTime and hand it off to _RTC.
-//        // Otherwise, initialize _RTC with 0. This will enable RTC, but it won't
-//        // enable the interrupt, so _RTC.currentTime() will always return 0.
-//        // 
-//        // *** We need RTC to be enabled because it keeps BAKMEM alive.
-//        // *** If RTC is disabled, we enter LPM4.5 when we sleep
-//        // *** (instead of LPM3.5), and BAKMEM is lost.
-//        if (_StartTime.valid) {
-//            FRAMWriteEn writeEn; // Enable FRAM writing
-//            
-//            // Mark the time as invalid before consuming it, so that if we lose power,
-//            // the time won't be reused again
-//            _StartTime.valid = false;
-//            // Init real-time clock
-//            _RTC.init(_StartTime.time);
-//        
-//        } else {
-//            _RTC.init(0);
-//        }
-//    }
-//    
-//    // Init WDT
-//    _WDT::Init();
-//    
-//    ICE::Transfer(ICE::LEDSetMsg(0xFF));
-//    for (;;);
-//    
-//    _Scheduler::Run();
+    // Init WDT
+    _WDT::Init();
+    
+    ICE::Transfer(ICE::LEDSetMsg(0xFF));
+    for (;;);
+    
+    _Scheduler::Run();
 }
 
 extern "C" [[noreturn]]

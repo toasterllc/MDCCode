@@ -294,6 +294,8 @@ public:
         Transfer(ImgResetMsg(1));
     }
     
+    #warning call some failure function if this fails, instead of returning an optional
+    #warning optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
     static std::optional<ImgCaptureStatusResp> ImgCapture(const Img::Header& header, uint8_t dstBlock, uint8_t skipCount) {
         // Set the header of the image
         static_assert(sizeof(header) == 4*8);
@@ -326,6 +328,7 @@ public:
         return resp;
     }
     
+    #warning optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
     static ImgI2CStatusResp ImgI2C(bool write, uint16_t addr, uint16_t val) {
         Transfer(ImgI2CTransactionMsg(write, 2, addr, val));
         
@@ -359,7 +362,7 @@ public:
     }
     
     // MARK: - SD
-    
+    #warning optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
     static SDStatusResp SDSendCmd(
         uint8_t sdCmd,
         uint32_t sdArg,
