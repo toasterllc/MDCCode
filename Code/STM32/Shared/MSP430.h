@@ -705,34 +705,34 @@ private:
         
         
             
-//        // Reset JTAG state machine (test access port, TAP)
-//        _tapReset();
-//        
-//        // Validate the JTAG ID
-//        if (_jtagID() != _JTAGID) {
-//            for (;;);
-//        }
-//        
-//        // Validate the Core ID
-//        if (_coreID() == 0) {
-//            for (;;);
-//        }
+        // Reset JTAG state machine (test access port, TAP)
+        _tapReset();
         
-//        // Set device into JTAG mode + read
-//        _irShift(_IR_CNTRL_SIG_16BIT);
-//        _drShift<16>(0x1501);
-//        
-//        // Wait until CPU is sync'd
-//        if (!_waitForCPUSync()) {
-//            for (;;);
-//        }
+        // Validate the JTAG ID
+        if (_jtagID() != _JTAGID) {
+            for (;;);
+        }
         
-//        // Reset CPU
-//        if (!_cpuReset()) {
-//            for (;;);
-//        }
+        // Validate the Core ID
+        if (_coreID() == 0) {
+            for (;;);
+        }
         
-        _cpuReset();
+        // Set device into JTAG mode + read
+        _irShift(_IR_CNTRL_SIG_16BIT);
+        _drShift<16>(0x1501);
+        
+        // Wait until CPU is sync'd
+        if (!_waitForCPUSync()) {
+            for (;;);
+        }
+        
+        // Reset CPU
+        if (!_cpuReset()) {
+            for (;;);
+        }
+        
+//        _cpuReset();
         
         // Perform a BOR (brownout reset), which resets the device and causes us to lose JTAG control
         // Note that this still doesn't reset some modules (like RTC and PMM), but it's as close as
