@@ -1,8 +1,8 @@
 - Rev4 Todo
     
-    - MSPApp: move _SDTask/_ImgTask into SDCard.h and ImgSensor.h
-    
-    - MSPApp: don't wait for SD/IMG to be initialized in _SetSDImgEnabled(); only wait for them when we actually need to use them
+    - MSPApp: add proper error handling to Img/SD
+        - Make error handler a template parameter
+        - Have error handler take a breadcrumb value
     
     - STLoader: migrate to use real threads
     
@@ -11,15 +11,10 @@
     - MSPApp: can we use the 'restart' facility of reset_register to speed up integration time changes?
         - 'restart' triggers a bad frame, so experiment with the 'restart_bad' and 'mask_bad' flags too
     
-    - MSPApp: Implement power-saving version of delayUs/delayMs that uses the timer peripheral, and makes the CPU go to sleep
-    
     - MSPApp: when an error occurs, trigger a BOR
         - "In an application, it may be desired to cause a BOR in software. Setting PMMSWBOR
            causes a softwaredriven BOR. PMMBORIFG is set accordingly. Note that a BOR also initiates a POR and PUC.
            PMMBORIFG can be cleared by software or by reading SYSRSTIV."
-    
-    - MSPApp: we should initialize the image sensor and SD card in parallel to save time
-        - protothreads? cooperative threads?
     
     - Fix bug: Without STLink connected, sometimes STApp crashes when plugging in
         - One cause is because Img::Sensor::Init() failed, because of an IMG I2C error
@@ -36,6 +31,22 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    
+    √ MSPApp: make SD::Card / Img::Sensor / ICE classes templated
+    
+    √ MSPApp: we should initialize the image sensor and SD card in parallel to save time
+        - protothreads? cooperative threads?
+    
+    √ MSPApp: Implement power-saving version of delayUs/delayMs that uses the timer peripheral, and makes the CPU go to sleep
+    
+    √ MSPApp: don't wait for SD/IMG to be initialized in _SetSDImgEnabled(); only wait for them when we actually need to use them
+    
+    X MSPApp: move _SDTask/_ImgTask into SDCard.h and ImgSensor.h
+    
+    √ MSPApp: add SleepMs/SleepUs functions to Scheduler
+    
+    √ MSPApp: Make SDCard/ImgSensor take a Scheduler template parameter
     
     √ MSPApp: migrate implementation to use real threads
     

@@ -5,82 +5,17 @@
 #include "Toastbox/IntState.h"
 #include "Toastbox/Task.h"
 #include "Util.h"
-
-class TaskA;
-class TaskB;
-using Scheduler = Toastbox::Scheduler<
-    Toastbox::IntState::WaitForInterrupt, // Sleep function
-    TaskA,
-    TaskB
->;
-
-class TaskA {
-public:
-    using Options = Scheduler::Options<
-        Scheduler::Option::Start // Task should start running
-    >;
-    
-    static void Run() {
-        for (;;) {
-            PAOUT ^= BIT0;
-//            puts("TaskA\n");
-            Scheduler::Sleep(10000); // 5.12s
-        }
-    }
-    
-    __attribute__((section(".stack.taska")))
-    static inline uint8_t Stack[1024];
-};
-
-class TaskB {
-public:
-    using Options = Scheduler::Options<
-        Scheduler::Option::Start // Task should start running
-    >;
-    
-    static void Run() {
-        for (;;) {
-            PAOUT ^= BIT1;
-//            puts("TaskB\n");
-            Scheduler::Sleep(40000); // 20.48s
-        }
-    }
-    
-    __attribute__((section(".stack.taskb")))
-    static inline uint8_t Stack[1024];
-};
+#include "Scheduler.h"
+#include "TaskA.h"
+#include "TaskB.h"
 
 #define StackMainSize 128
 
-__attribute__((section(".stack.main")))
+[[gnu::section(".stack.main"), gnu::used]]
 uint8_t StackMain[StackMainSize];
 
 asm(".global __stack");
-asm("__stack = StackMain+" Stringify(StackMainSize));
-
-//asm(".global __stack");
-//asm(".equ __stack, StackMain+" Stringify(StackMainSize));
-
-
-
-//// sbrk: custom implementation that accounts for our heap/stack layout.
-//// With our custom layout, we know the limit for the heap is `_heap_end`,
-//// so abort if we try to expand the heap beyond that.
-//extern "C" char* sbrk(int adj) {
-//    extern uint8_t _heap_start[];
-//    extern uint8_t _heap_end[];
-//    
-//    static uint8_t* heap = _heap_start;
-//    const size_t rem = _heap_end-heap;
-//    
-//    if (rem < (size_t)adj) {
-//        extern void abort();
-//        abort();
-//    }
-//    
-//    heap += adj;
-//    return (char*)heap;
-//}
+asm(".equ __stack, StackMain+" Stringify(StackMainSize));
 
 // MARK: - IntState
 
@@ -109,6 +44,73 @@ static void _ISR_WDT() {
 //    PAOUT &= ~BIT2;
 }
 
+
+
+
+
+
+
+using VoidFn = void(*)();
+
+struct Option {
+    template <VoidFn T_Fn>
+    struct AutoStart;
+    
+    struct End;
+};
+
+
+//template<typename>
+//struct is_std_array : std::false_type {};
+//
+//template<typename T, std::size_t N>
+//struct is_std_array<std::array<T,N>> : std::true_type {};
+
+template <typename... T_Options>
+struct Options {
+    template <typename... Args>
+    struct _AutoStart : std::false_type {
+        static constexpr VoidFn Fn = nullptr;
+    };
+    
+    template <typename T, typename... Args>
+    struct _AutoStart<T, Args...> : _AutoStart<Args...> {};
+    
+    template <VoidFn T_Fn>
+    struct _AutoStart<typename Option::template AutoStart<T_Fn>> : std::true_type {
+        static constexpr VoidFn Fn = T_Fn;
+    };
+    
+    template <VoidFn T_Fn, typename... Args>
+    struct _AutoStart<typename Option::template AutoStart<T_Fn>, Args...> : std::true_type {
+        static constexpr VoidFn Fn = T_Fn;
+    };
+    
+    using AutoStart = _AutoStart<T_Options...>;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int main() {
     // Config watchdog timer:
     //   WDTPW:             password
@@ -130,54 +132,57 @@ int main() {
     // Unlock GPIOs
     PM5CTL0 &= ~LOCKLPM5;
     
-    
-    
-    
-    
-    // Configure one FRAM wait state if MCLK > 8MHz.
-    // This must happen before configuring the clock system.
-    FRCTL0 = FRCTLPW | NWAITS_1;
-    
-//    do {
-//        CSCTL7 &= ~(DCOFFG); // Clear DCO fault flag
-//        SFRIFG1 &= ~OFIFG;
-//    } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
-    
-    // Disable FLL
-    __bis_SR_register(SCG0);
-        // Set REFOCLK as FLL reference source
-        CSCTL3 |= SELREF__REFOCLK;
-        // Clear DCO and MOD registers
-        CSCTL0 = 0;
-        // Clear DCO frequency select bits first
-        CSCTL1 &= ~(DCORSEL_7);
+    {
+        // Configure one FRAM wait state if MCLK > 8MHz.
+        // This must happen before configuring the clock system.
+        FRCTL0 = FRCTLPW | NWAITS_1;
         
-        CSCTL1 |= DCORSEL_5;
+        // Disable FLL
+        __bis_SR_register(SCG0);
+            // Set REFOCLK as FLL reference source
+            CSCTL3 |= SELREF__REFOCLK;
+            // Clear DCO and MOD registers
+            CSCTL0 = 0;
+            // Clear DCO frequency select bits first
+            CSCTL1 &= ~(DCORSEL_7);
+            
+            CSCTL1 |= DCORSEL_5;
+            
+            // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLK frequency (32768)
+            CSCTL2 = FLLD_0 | ((16000000/32768)-1);
+            
+            // Wait 3 cycles to take effect
+            __delay_cycles(3);
+        // Enable FLL
+        __bic_SR_register(SCG0);
         
-        // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLK frequency (32768)
-        CSCTL2 = FLLD_0 | ((16000000/32768)-1);
+        // Wait until FLL locks
+        while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
-        // Wait 3 cycles to take effect
-        __delay_cycles(3);
-    // Enable FLL
-    __bic_SR_register(SCG0);
+        // MCLK / SMCLK source = DCOCLKDIV
+        // ACLK source = REFOCLK
+        CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
+    }
     
-    // Wait until FLL locks
-    while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
+//    using Meow = Scheduler::Options<
+//        Scheduler::Option::AutoStart<_ISR_WDT>
+//    >;
+//    
+//    Meow::AutoStart::Fn;
     
-    // MCLK / SMCLK source = DCOCLKDIV
-    // ACLK source = REFOCLK
-    CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
+//    {
+//        using Opts = Scheduler::Options<
+//            Scheduler::Option::AutoStart<_ISR_WDT>
+//        >;
+//        VoidFn fn = Opts::AutoStart::Fn;
+//        fn();
+//    }
     
-    
-    
-    
-//    Scheduler::Start<TaskA>();
-//    Scheduler::Start<TaskB>();
-    
-//    // TODO: make tasks have an initial state so we don't need a runtime component to set their initial state
-//    Scheduler::Start<TaskA>();
-//    Scheduler::Start<TaskB>();
+//    {
+//        using Opts = Options<Option::AutoStart<_ISR_WDT>>;
+//        VoidFn fn = Opts::AutoStart::Fn;
+//        fn();
+//    }
     
     Scheduler::Run();
     return 0;
