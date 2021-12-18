@@ -367,8 +367,8 @@ private:
     }
     
     uint16_t _crcCalc(uint32_t addr, size_t len) {
-        AssertArg(!(addr % 2)); // Address must be 16-bit aligned
-        AssertArg(!(len % 2)); // Length must be 16-bit aligned
+        AssertArg(!(addr & 1)); // Address must be 16-bit aligned
+        AssertArg(!(len & 1)); // Length must be 16-bit aligned
         
         _pcSet(addr);
         _tclkSet(1);
@@ -428,7 +428,7 @@ private:
         _tclkSet(0);
         
         if constexpr (std::is_same_v<T,uint8_t>) {
-            if (addr % 2)   return _drShift<8>(0);
+            if (addr & 1)   return _drShift<8>(0);
             else            return _drShift<16>(0) & 0x00FF;
         } else {
             return _drShift<16>(0);
@@ -451,7 +451,7 @@ private:
     void _read(uint32_t addr, uint8_t* dst, size_t len) {
         while (len) {
             // Read first/last byte
-            if (addr%2 || len==1) {
+            if ((addr&1) || (len==1)) {
                 *dst = _read8(addr);
                 addr++;
                 dst++;
@@ -525,7 +525,7 @@ private:
     void _write(uint32_t addr, const uint8_t* src, size_t len) {
         while (len) {
             // Write first/last byte
-            if (addr%2 || len==1) {
+            if ((addr&1) || (len==1)) {
                 _write8(addr, *src);
                 addr++;
                 src++;
@@ -563,7 +563,7 @@ private:
     void _framWrite(uint32_t addr, const uint8_t* src, size_t len) {
         while (len) {
             // Write first/last byte
-            if (addr%2 || len==1) {
+            if ((addr&1) || (len==1)) {
                 _write8(addr, *src);
                 addr++;
                 src++;
