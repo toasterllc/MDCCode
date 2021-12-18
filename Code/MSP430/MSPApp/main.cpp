@@ -487,6 +487,15 @@ int main() {
     // Init clock
     _Clock::Init();
     
+    #warning if this is a cold start:
+    #warning   wait a few milliseconds to allow our outputs to settle so that our peripherals
+    #warning   (SD card, image sensor) fully turn off, because we may have restarted because
+    #warning   of an error
+    
+    #warning how do we handle turning off SD clock after an error occurs?
+    #warning   ? don't worry about that because in the final design,
+    #warning   we'll be powering off ICE40 anyway?
+    
     if (Startup::ColdStart()) {
         // If we do have a valid startTime, consume _startTime and hand it off to _RTC.
         // Otherwise, initialize _RTC with 0. This will enable RTC, but it won't
