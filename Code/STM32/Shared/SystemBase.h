@@ -59,8 +59,6 @@ public:
     using LED1 = GPIO<GPIOPortE, GPIO_PIN_7>;
     using LED2 = GPIO<GPIOPortE, GPIO_PIN_10>;
     using LED3 = GPIO<GPIOPortE, GPIO_PIN_12>;
-    
-    friend void abort();
 };
 
 extern "C" [[noreturn]]

@@ -9,8 +9,6 @@
 #include "Toastbox/USB.h"
 #include "Toastbox/IntState.h"
 
-extern "C" void ISR_OTG_HS();
-
 template <
 typename T,             // Subclass
 bool DMAEn,             // Whether DMA is enabled
@@ -595,8 +593,6 @@ private:
             break;
         }
     }
-    
-    friend void ISR_OTG_HS();
     
 protected:
     USBD_HandleTypeDef _device;
