@@ -383,7 +383,7 @@ struct _BusyTimeoutTask {
             _ImgTask::Disable();
             _SDTask::Disable();
             
-            // Wait until the image sensor / SD card are ready
+            // Wait until the image sensor / SD card are off
             _ImgTask::Wait();
             _SDTask::Wait();
             
