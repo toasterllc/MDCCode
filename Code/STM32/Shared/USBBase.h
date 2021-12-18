@@ -330,11 +330,11 @@ public:
         Assert(us == USBD_OK);
     }
     
-protected:
-    void _isr() {
+    void isr() {
         ISR_HAL_PCD(&_pcd);
     }
     
+protected:
     uint8_t _usbd_Init(uint8_t cfgidx) {
         // Open endpoints
         for (uint8_t ep : {Endpoints...}) {

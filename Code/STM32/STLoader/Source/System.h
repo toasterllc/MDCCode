@@ -5,7 +5,7 @@
 #include "BufQueue.h"
 #include "Toastbox/TaskOld.h"
 
-class System : public SystemBase<System> {
+class System : public SystemBase {
 public:
     System();
     void init();
@@ -109,8 +109,8 @@ private:
     friend void ISR_QUADSPI();
     friend void ISR_DMA2_Stream7();
     
-    using _super = SystemBase<System>;
-    friend class SystemBase<System>;
+    using _super = SystemBase;
+    friend class SystemBase;
 };
 
 extern System Sys;

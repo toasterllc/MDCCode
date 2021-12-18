@@ -208,11 +208,11 @@ void QSPI::wait() const {
     }
 }
 
-void QSPI::_isrQSPI() {
+void QSPI::isrQSPI() {
     ISR_HAL_QSPI(&_device);
 }
 
-void QSPI::_isrDMA() {
+void QSPI::isrDMA() {
     ISR_HAL_DMA(&_dma);
 }
 

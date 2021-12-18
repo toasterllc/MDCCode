@@ -33,9 +33,10 @@ public:
     void write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len);
     void wait() const;
     
+    void isrQSPI();
+    void isrDMA();
+    
 private:
-    void _isrQSPI();
-    void _isrDMA();
     void _handleCommandDone();
     void _handleReadDone();
     void _handleWriteDone();
