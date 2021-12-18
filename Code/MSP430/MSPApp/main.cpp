@@ -105,7 +105,15 @@ struct _SDTask {
 struct _ImgTask {
     static void Enable() {
         Wait();
-        Scheduler::Start<_ImgTask>(_ImgSensor::Enable);
+        Scheduler::Start<_ImgTask>([] {
+            // Initialize image sensor
+            _ImgSensor::Enable();
+            // Set the initial exposure _before_ we enable streaming, so that the very first frame
+            // has the correct exposure, so we don't have to skip any frames on the first capture.
+            _ImgSensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
+            // Enable image streaming
+            _ImgSensor::SetStreamEnabled(true);
+        });
     }
     
     static void Disable() {
@@ -240,7 +248,8 @@ static void _ISR_Port2() {
     case P2IV__P2IFG5:
         _Motion = true;
         // Wake ourself
-        __bic_SR_register_on_exit(GIE | LPM3_bits);
+        #warning figure out if we want to clear GIE here, especially wrt Scheduler. don't think we do because we may just be running a task, and we don't want to change the interrupt state out from under it
+        __bic_SR_register_on_exit(LPM3_bits);
         break;
     
     default:
@@ -253,7 +262,8 @@ static void _ISR_WDT() {
     const bool wake = Scheduler::Tick();
     if (wake) {
         // Wake ourself
-        __bic_SR_register_on_exit(GIE | LPM3_bits);
+        #warning figure out if we want to clear GIE here, especially wrt Scheduler. don't think we do because we may just be running a task, and we don't want to change the interrupt state out from under it
+        __bic_SR_register_on_exit(LPM3_bits);
     }
 }
 
