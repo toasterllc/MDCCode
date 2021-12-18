@@ -3,6 +3,7 @@
 #include "Assert.h"
 #include "SD.h"
 #include "Util.h"
+#include "Toastbox/Task.h"
 
 namespace SD {
 
@@ -18,11 +19,11 @@ public:
     static void Enable() {
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
-        T_Scheduler::SleepMs(1);
+        _SleepMs<1>();
         
         // Enable slow SDController clock
         T_ICE::Transfer(_ClocksSlowOn);
-        T_Scheduler::SleepMs(1);
+        _SleepMs<1>();
         
         // Enter the init mode of the SDController state machine
         T_ICE::Transfer(_InitReset);
@@ -36,7 +37,7 @@ public:
         // Trigger the SD card low voltage signalling (LVS) init sequence
         T_ICE::Transfer(_InitTrigger);
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
-        T_Scheduler::SleepMs(6);
+        _SleepMs<6>();
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -45,7 +46,7 @@ public:
         // ====================
         {
             // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
-            T_Scheduler::SleepMs(1);
+            _SleepMs<1>();
             // Send CMD0
             T_ICE::SDSendCmd(_CMD0, 0, _RespType::None);
             // There's no response to CMD0
@@ -199,7 +200,7 @@ public:
     static void Disable() {
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
-        T_Scheduler::SleepMs(1);
+        _SleepMs<1>();
         
         // Turn off SD card power and wait for it to reach 0V
         T_SetPowerEnabled(false);
@@ -297,7 +298,6 @@ public:
     }
     
 private:
-    
     using _SDInitMsg    = typename T_ICE::SDInitMsg;
     using _RespType     = typename T_ICE::SDSendCmdMsg::RespType;
     using _DatInType    = typename T_ICE::SDSendCmdMsg::DatInType;
@@ -308,6 +308,9 @@ private:
     static constexpr auto _ClocksFastOn     = _SDInitMsg(_SDInitMsg::Action::Nop,     _SDInitMsg::ClkSpeed::Fast, T_ClkDelayFast);
     static constexpr auto _InitReset        = _SDInitMsg(_SDInitMsg::Action::Reset,   _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow);
     static constexpr auto _InitTrigger      = _SDInitMsg(_SDInitMsg::Action::Trigger, _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow);
+    
+    template <uint16_t T_Ms>
+    static constexpr auto _SleepMs = T_Scheduler::template SleepMs<T_Ms>;
     
     static constexpr uint8_t _CMD0  = 0;
     static constexpr uint8_t _CMD2  = 2;

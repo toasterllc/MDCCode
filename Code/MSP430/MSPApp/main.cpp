@@ -309,7 +309,7 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 static void _SDSetPowerEnabled(bool en) {
     _Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    _Scheduler::SleepMs(2);
+    _Scheduler::SleepMs<2>();
 }
 
 // MARK: - Image Sensor
@@ -317,7 +317,7 @@ static void _SDSetPowerEnabled(bool en) {
 static void _ImgSetPowerEnabled(bool en) {
     if (en) {
         _Pin::VDD_2V8_IMG_EN::Write(1);
-        _Scheduler::SleepUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        _Scheduler::SleepUs<100>(); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         _Pin::VDD_1V9_IMG_EN::Write(1);
         
         #warning measure actual delay that we need for the rails to rise
@@ -386,7 +386,7 @@ struct _BusyTimeoutTask {
     static void Run() {
         for (;;) {
             // Stay on for 1 second waiting for motion
-            _Scheduler::SleepMs(1000);
+            _Scheduler::SleepMs<1000>();
             
             // Asynchronously turn off the image sensor / SD card
             _ImgTask::Disable();

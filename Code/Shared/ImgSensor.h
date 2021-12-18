@@ -25,7 +25,7 @@ public:
         // Wait 150k EXTCLK (16MHz) periods
         // (150e3*(1/16e6)) == 9.375ms
         {
-            T_Scheduler::SleepMs(10);
+            _SleepMs<10>();
         }
         
         // Configure internal register initialization
@@ -41,7 +41,7 @@ public:
         // Wait 150k EXTCLK (16MHz) periods
         // (150e3*(1/16e6)) == 9.375ms
         {
-            T_Scheduler::SleepMs(10);
+            _SleepMs<10>();
         }
         
         // Sanity-check pix comms by reading a known register
@@ -233,6 +233,9 @@ public:
     }
     
 private:
+    template <uint16_t T_Ms>
+    static constexpr auto _SleepMs = T_Scheduler::template SleepMs<T_Ms>;
+    
     struct _ResetRegister {
         static constexpr uint16_t Address                   = 0x301A;
         

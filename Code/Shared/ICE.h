@@ -6,6 +6,7 @@
 #include <optional>
 #include "Assert.h"
 #include "Img.h"
+#include "Toastbox/Task.h"
 
 #warning upon errors, call out to a client-supplied error handler, instead of using Assert() or returning optionals
 
@@ -262,7 +263,7 @@ public:
     
     static void ImgReset() {
         Transfer(ImgResetMsg(0));
-        T_Scheduler::SleepMs(1);
+        _SleepMs<1>();
         Transfer(ImgResetMsg(1));
     }
     
@@ -284,7 +285,7 @@ public:
             const auto status = ImgCaptureStatus();
             // Try again if the image hasn't been captured yet
             if (!status.done()) {
-                T_Scheduler::SleepMs(1);
+                _SleepMs<1>();
                 continue;
             }
             const uint32_t imgWordCount = status.wordCount();
@@ -311,7 +312,7 @@ public:
         for (uint32_t i=0; i<MaxAttempts; i++) {
             const ImgI2CStatusResp status = ImgI2CStatus();
             if (!status.err() && !status.done()) {
-                T_Scheduler::SleepMs(1);
+                _SleepMs<1>();
                 continue;
             }
             return status;
@@ -360,7 +361,7 @@ public:
                 // Try again if we expect DatIn but it hasn't been received yet
                 (datInType==SDSendCmdMsg::DatInType::Len512x1 && !s.datInDone())
             ) {
-                T_Scheduler::SleepMs(1);
+                _SleepMs<1>();
                 continue;
             }
             return s;
@@ -376,6 +377,9 @@ public:
     }
     
 private:
+    template <uint16_t T_Ms>
+    static constexpr auto _SleepMs = T_Scheduler::template SleepMs<T_Ms>;
+    
     static bool _GetBit(const uint8_t* bytes, size_t len, uint8_t idx) {
         AssertArg(idx < len*8);
         const uint8_t byteIdx = len-(idx/8)-1;
