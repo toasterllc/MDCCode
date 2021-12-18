@@ -46,8 +46,41 @@ using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _WDT = WDTType<_MCLKFreqHz, _WDTPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
-using _ImgSensor = Img::Sensor;
-using _SDCard = SD::Card;
+class _MotionTask;
+class _SDTask;
+class _ImgTask;
+class _BusyTimeoutTask;
+
+using _Scheduler = Toastbox::Scheduler<
+    // Microseconds per tick
+    _WDTPeriodUs,
+    // Tasks
+    _MotionTask,
+    _SDTask,
+    _ImgTask,
+    _BusyTimeoutTask
+>;
+
+using _ICE = ICE<
+    _Scheduler
+>;
+
+static void _SDSetPowerEnabled(bool en);
+static void _ImgSetPowerEnabled(bool en);
+
+using _ImgSensor = Img::Sensor<
+    _Scheduler,             // T_Scheduler
+    _ICE,                   // T_ICE
+    _ImgSetPowerEnabled     // T_SetPowerEnabled
+>;
+
+using _SDCard = SD::Card<
+    _Scheduler,         // T_Scheduler
+    _ICE,               // T_ICE
+    _SDSetPowerEnabled, // T_SetPowerEnabled
+    1,                  // T_ClkDelaySlow (odd values invert the clock)
+    0                   // T_ClkDelayFast (odd values invert the clock)
+>;
 
 // _StartTime: the time set by STM32 (seconds since reference date)
 // Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
@@ -82,16 +115,16 @@ static volatile struct {
 struct _SDTask {
     static void Enable() {
         Wait();
-        Scheduler::Start<_SDTask>(_SDCard::Enable);
+        _Scheduler::Start<_SDTask>(_SDCard::Enable);
     }
     
     static void Disable() {
         Wait();
-        Scheduler::Start<_SDTask>(_SDCard::Disable);
+        _Scheduler::Start<_SDTask>(_SDCard::Disable);
     }
     
     static void Wait() {
-        Scheduler::Wait<_SDTask>();
+        _Scheduler::Wait<_SDTask>();
     }
     
     // Task options
@@ -105,7 +138,7 @@ struct _SDTask {
 struct _ImgTask {
     static void Enable() {
         Wait();
-        Scheduler::Start<_ImgTask>([] {
+        _Scheduler::Start<_ImgTask>([] {
             // Initialize image sensor
             _ImgSensor::Enable();
             // Set the initial exposure _before_ we enable streaming, so that the very first frame
@@ -118,11 +151,11 @@ struct _ImgTask {
     
     static void Disable() {
         Wait();
-        Scheduler::Start<_ImgTask>(_ImgSensor::Disable);
+        _Scheduler::Start<_ImgTask>(_ImgSensor::Disable);
     }
     
     static void Wait() {
-        Scheduler::Wait<_ImgTask>();
+        _Scheduler::Wait<_ImgTask>();
     }
     
     // Task options
@@ -132,28 +165,6 @@ struct _ImgTask {
     __attribute__((section(".stack._ImgTask")))
     static inline uint8_t Stack[128];
 };
-
-//static void _SetSDImgEnabled(bool en) {
-//    static bool powerEn = false;
-//    if (powerEn == en) return; // Short circuit if state didn't change
-//    
-//    // Wait for _SDTask/_ImgTask to be ready to accept commands
-//    Scheduler::Wait([&] {
-//        return !_SDTask::Cmd && !_ImgTask::Cmd;
-//    });
-//    
-//    powerEn = en;
-//    if (powerEn) {
-//        // Initialize the SD card and image sensor in parallel
-//        _SDTask::Cmd = _SDTask::Command::Enable;
-//        _ImgTask::Cmd = _ImgTask::Command::Enable;
-//    
-//    } else {
-//        // Initialize the SD card and image sensor in parallel
-//        _SDTask::Cmd = _SDTask::Command::Disable;
-//        _ImgTask::Cmd = _ImgTask::Command::Disable;
-//    }
-//}
 
 // MARK: - Motion
 
@@ -206,7 +217,7 @@ static void _CaptureImage() {
         header.coarseIntTime = _ImgAutoExp.integrationTime();
         
         // Capture an image to RAM
-        const ICE::ImgCaptureStatusResp resp = ICE::ImgCapture(header, expBlock, skipCount);
+        const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
         const uint8_t expScore = _ImgAutoExp.update(resp.highlightCount(), resp.shadowCount());
         if (!bestExpScore || (expScore > bestExpScore)) {
             bestExpBlock = expBlock;
@@ -217,7 +228,7 @@ static void _CaptureImage() {
         if (!_ImgAutoExp.changed()) break;
         
         // Update the exposure
-        Img::Sensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
+        _ImgSensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
     }
     
     // Wait until the SD card is ready
@@ -248,7 +259,7 @@ static void _ISR_Port2() {
     case P2IV__P2IFG5:
         _Motion = true;
         // Wake ourself
-        #warning figure out if we want to clear GIE here, especially wrt Scheduler. don't think we do because we may just be running a task, and we don't want to change the interrupt state out from under it
+        #warning figure out if we want to clear GIE here, especially wrt _Scheduler. don't think we do because we may just be running a task, and we don't want to change the interrupt state out from under it
         __bic_SR_register_on_exit(LPM3_bits);
         break;
     
@@ -259,18 +270,19 @@ static void _ISR_Port2() {
 
 [[gnu::interrupt(WDT_VECTOR)]]
 static void _ISR_WDT() {
-    const bool wake = Scheduler::Tick();
+    const bool wake = _Scheduler::Tick();
     if (wake) {
         // Wake ourself
-        #warning figure out if we want to clear GIE here, especially wrt Scheduler. don't think we do because we may just be running a task, and we don't want to change the interrupt state out from under it
+        #warning figure out if we want to clear GIE here, especially wrt _Scheduler. don't think we do because we may just be running a task, and we don't want to change the interrupt state out from under it
         __bic_SR_register_on_exit(LPM3_bits);
     }
 }
 
 // MARK: - ICE40
 
-void ICE::Transfer(const Msg& msg, Resp* resp) {
-    AssertArg((bool)resp == (bool)(msg.type & ICE::MsgType::Resp));
+template<>
+void _ICE::Transfer(const Msg& msg, Resp* resp) {
+    AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
     
     static bool iceInit = false;
     // Init ICE40 if we haven't done so yet
@@ -281,7 +293,7 @@ void ICE::Transfer(const Msg& msg, Resp* resp) {
         if (Startup::ColdStart()) {
             constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
             _SPI::Init(iceReset);
-            ICE::Init(); // Cold start -> init ICE40 to verify that comms are working
+            _ICE::Init(); // Cold start -> init ICE40 to verify that comms are working
         
         } else {
             constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
@@ -294,21 +306,18 @@ void ICE::Transfer(const Msg& msg, Resp* resp) {
 
 // MARK: - SD Card
 
-const uint8_t SD::Card::ClkDelaySlow = 1; // Odd values invert the clock
-const uint8_t SD::Card::ClkDelayFast = 0;
-
-void SD::Card::SetPowerEnabled(bool en) {
+static void _SDSetPowerEnabled(bool en) {
     _Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    SleepMs(2);
+    _Scheduler::SleepMs(2);
 }
 
 // MARK: - Image Sensor
 
-void Img::Sensor::SetPowerEnabled(bool en) {
+static void _ImgSetPowerEnabled(bool en) {
     if (en) {
         _Pin::VDD_2V8_IMG_EN::Write(1);
-        SleepUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        _Scheduler::SleepUs(100); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         _Pin::VDD_1V9_IMG_EN::Write(1);
         
         #warning measure actual delay that we need for the rails to rise
@@ -377,7 +386,7 @@ struct _BusyTimeoutTask {
     static void Run() {
         for (;;) {
             // Stay on for 1 second waiting for motion
-            SleepMs(1000);
+            _Scheduler::SleepMs(1000);
             
             // Asynchronously turn off the image sensor / SD card
             _ImgTask::Disable();
@@ -404,23 +413,23 @@ struct _MotionTask {
     static void Run() {
         for (;;) {
             // Wait for motion
-            Scheduler::Wait([&] { return _Motion; });
+            _Scheduler::Wait([&] { return _Motion; });
             _Motion = false;
             _Busy = true;
             
             // Stop the timeout task while we capture a new image
-            Scheduler::Stop<_BusyTimeoutTask>();
+            _Scheduler::Stop<_BusyTimeoutTask>();
             
-            ICE::Transfer(ICE::LEDSetMsg(0xFF));
+            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
             
             // Capture an image
             _CaptureImage();
             
-            ICE::Transfer(ICE::LEDSetMsg(0x00));
+            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
             
             // Restart the timeout task, so that we turn off automatically if
             // we're idle for a bit
-            Scheduler::Start<_BusyTimeoutTask>(_BusyTimeoutTask::Run);
+            _Scheduler::Start<_BusyTimeoutTask>(_BusyTimeoutTask::Run);
         }
     }
     
@@ -433,24 +442,6 @@ struct _MotionTask {
     __attribute__((section(".stack._MotionTask")))
     static inline uint8_t Stack[128];
 };
-
-// MARK: - Sleep
-
-static Scheduler::Ticks _TicksForUs(uint32_t us) {
-    static constexpr uint32_t _UsPerTick = _WDTPeriodUs;
-    // We're intentionally not ceiling the result because Scheduler::Sleep
-    // implicitly ceils by adding one tick (to prevent truncated sleeps),
-    // so if we ceiled too, we'd always sleep one more tick than needed.
-    return us / _UsPerTick;
-}
-
-void SleepMs(uint16_t ms) {
-    Scheduler::Sleep(_TicksForUs(1000*(uint32_t)ms));
-}
-
-void SleepUs(uint16_t us) {
-    Scheduler::Sleep(_TicksForUs(us));
-}
 
 // MARK: - Main
 
@@ -521,7 +512,7 @@ int main() {
     // Init WDT
     _WDT::Init();
     
-    Scheduler::Run();
+    _Scheduler::Run();
 }
 
 extern "C" [[noreturn]]

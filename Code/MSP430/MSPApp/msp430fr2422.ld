@@ -186,6 +186,7 @@ SECTIONS
     *(.rodata1)
     *(.lower.rodata.* .lower.rodata)
     KEEP (*(.gcc_except_table)) *(.gcc_except_table.*)
+    . = ALIGN(2);
   } > FRAM
 
   /* Note: This is a separate .rodata section for sections which are
@@ -232,6 +233,7 @@ SECTIONS
     KEEP (*(EXCLUDE_FILE (*crtend*.o ) .dtors))
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors))
+    . = ALIGN(2);
   } > FRAM
 
 
@@ -293,6 +295,7 @@ SECTIONS
     *(.lower.bss.* .lower.bss)
     . = ALIGN(2);
     *(COMMON)
+    . = ALIGN(2);
     PROVIDE (__bssend = .);
   } > RAM
   PROVIDE (__bsssize = SIZEOF(.bss));
@@ -311,8 +314,11 @@ SECTIONS
 
   .stack (NOLOAD) :
   {
+    . = ALIGN(2);
     *(.stack)
+    . = ALIGN(2);
     *(.stack.*)
+    . = ALIGN(2);
   } > RAM
 
   /* We create this section so that "end" will always be in the

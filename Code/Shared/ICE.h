@@ -5,11 +5,11 @@
 #include <utility>
 #include <optional>
 #include "Assert.h"
-#include "Sleep.h"
 #include "Img.h"
 
 #warning upon errors, call out to a client-supplied error handler, instead of using Assert() or returning optionals
 
+template <typename T_Scheduler>
 class ICE {
 public:
     // MARK: - Types
@@ -22,6 +22,13 @@ public:
     struct Msg {
         uint8_t type = 0;
         uint8_t payload[7] = {};
+        
+        template <typename... T_Payload>
+        constexpr Msg(uint8_t t, T_Payload... p) :
+        type(t),
+        payload{static_cast<uint8_t>(p)...} {
+            static_assert(sizeof...(p)==0 || sizeof...(p)==sizeof(payload));
+        }
     } __attribute__((packed));
     
     struct Resp {
@@ -34,39 +41,31 @@ public:
         }
     };
     
-    struct EchoMsg : Msg {
-        EchoMsg(const char* msg) {
-            type = MsgType::StartBit | MsgType::Resp | 0x00;
-            memcpy(payload, msg, std::min(sizeof(payload), strlen(msg)));
+    struct EchoMsg : public Msg {
+        template <size_t T_N>
+        constexpr EchoMsg(const char (&str)[T_N]) :
+        Msg(MsgType::StartBit | MsgType::Resp | 0x00) {
+            static_assert(T_N == sizeof(Msg::payload));
+            memcpy(Msg::payload, str, sizeof(Msg::payload));
         }
     };
     
     struct EchoResp : Resp {
-        const char* msg() const {
-            // Verify that the string is null-terminated
-            bool nt = false;
-            for (uint8_t b : payload) {
-                if (!b) {
-                    nt = true;
-                    break;
-                }
-            }
-            if (!nt) return nullptr;
-            return (const char*)payload;
+        bool matches(const EchoMsg& msg) {
+            return !memcmp(Resp::payload, msg.payload, sizeof(msg.payload));
         }
     };
     
     struct LEDSetMsg : Msg {
-        LEDSetMsg(uint8_t val) {
-            type = MsgType::StartBit | 0x01;
-            payload[0] = 0;
-            payload[1] = 0;
-            payload[2] = 0;
-            payload[3] = 0;
-            payload[4] = 0;
-            payload[5] = 0;
-            payload[6] = val;
-        }
+        constexpr LEDSetMsg(uint8_t val) : Msg(MsgType::StartBit | 0x01,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            val
+        ) {}
     };
     
     struct SDInitMsg : Msg {
@@ -82,20 +81,18 @@ public:
             Fast    = 2,
         };
         
-        SDInitMsg(Action action, ClkSpeed speed, uint8_t clkDelay) {
-            AssertArg((clkDelay&0xF) == clkDelay); // Ensure delay fits in 4 bits
-            type = MsgType::StartBit | 0x02;
-            payload[0] = 0;
-            payload[1] = 0;
-            payload[2] = 0;
-            payload[3] = 0;
-            payload[4] = 0;
-            payload[5] = 0;
-            payload[6] = (((uint8_t)clkDelay                    &0xF)<<4) |
-                         (((uint8_t)speed                       &0x3)<<2) |
-                         (((uint8_t)(action==Action::Trigger)   &0x1)<<1) |
-                         (((uint8_t)(action==Action::Reset)     &0x1)<<0) ;
-        }
+        constexpr SDInitMsg(Action action, ClkSpeed clkSpeed, uint8_t clkDelay) : Msg(MsgType::StartBit | 0x02,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            (((uint8_t)clkDelay                   &0xF)<<4) |
+            (((uint8_t)clkSpeed                   &0x3)<<2) |
+            (((uint8_t)(action==Action::Trigger)  &0x1)<<1) |
+            (((uint8_t)(action==Action::Reset)    &0x1)<<0)
+        ) {}
     };
     
     struct SDSendCmdMsg : Msg {
@@ -111,143 +108,129 @@ public:
             Len4096xN   = 2,
         };
         
-        SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, RespType respType, DatInType datInType) {
-            AssertArg((sdCmd&0x3F) == sdCmd); // Ensure SD command fits in 6 bits
-            type = MsgType::StartBit | 0x03;
-            payload[0] = ((uint8_t)respType<<2)|(uint8_t)datInType;
-            payload[1] = 0x40|sdCmd; // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
-            payload[2] = (sdArg&0xFF000000)>>24;
-            payload[3] = (sdArg&0x00FF0000)>>16;
-            payload[4] = (sdArg&0x0000FF00)>> 8;
-            payload[5] = (sdArg&0x000000FF)>> 0;
-            payload[6] = 0x01; // SD command end bit (1'b1)
-        }
+        constexpr SDSendCmdMsg(uint8_t sdCmd, uint32_t sdArg, RespType respType, DatInType datInType) : Msg(MsgType::StartBit | 0x03,
+            ((uint8_t)respType<<2)|(uint8_t)datInType,
+            0x40|sdCmd, // SD command start bit (1'b0), transmission bit (1'b1), SD command (6 bits = sdCmd)
+            (sdArg&0xFF000000)>>24,
+            (sdArg&0x00FF0000)>>16,
+            (sdArg&0x0000FF00)>> 8,
+            (sdArg&0x000000FF)>> 0,
+            0x01 // SD command end bit (1'b1)
+        ) {}
     };
     
     struct SDStatusMsg : Msg {
-        SDStatusMsg() {
-            type = MsgType::StartBit | MsgType::Resp | 0x04;
-        }
+        constexpr SDStatusMsg() : Msg(MsgType::StartBit | MsgType::Resp | 0x04) {}
     };
     
     struct SDStatusResp : Resp {
         // Command
-        bool cmdDone() const                                    { return getBit(63);                            }
+        bool cmdDone() const                                    { return Resp::getBit(63);                              }
         
         // Response
-        bool respDone() const                                   { return getBit(62);                            }
-        bool respCRCErr() const                                 { return getBit(61);                            }
-        uint64_t resp() const                                   { return getBits(_RespIdx+48-1, _RespIdx);      }
+        bool respDone() const                                   { return Resp::getBit(62);                              }
+        bool respCRCErr() const                                 { return Resp::getBit(61);                              }
+        uint64_t resp() const                                   { return Resp::getBits(_RespIdx+48-1, _RespIdx);        }
         
         // DatOut
-        bool datOutDone() const                                 { return getBit(12);                            }
-        bool datOutCRCErr() const                               { return getBit(11);                            }
+        bool datOutDone() const                                 { return Resp::getBit(12);                              }
+        bool datOutCRCErr() const                               { return Resp::getBit(11);                              }
         
         // DatIn
-        bool datInDone() const                                  { return getBit(10);                            }
-        bool datInCRCErr() const                                { return getBit(9);                             }
-        uint8_t datInCMD6AccessMode() const                     { return getBits(8,5);                          }
+        bool datInDone() const                                  { return Resp::getBit(10);                              }
+        bool datInCRCErr() const                                { return Resp::getBit(9);                               }
+        uint8_t datInCMD6AccessMode() const                     { return Resp::getBits(8,5);                            }
         
         // Other
-        bool dat0Idle() const                                   { return getBit(4);                             }
+        bool dat0Idle() const                                   { return Resp::getBit(4);                               }
         
         // Helper methods
-        uint64_t respGetBit(uint8_t idx) const                  { return getBit(idx+_RespIdx);                  }
-        uint64_t respGetBits(uint8_t start, uint8_t end) const  { return getBits(start+_RespIdx, end+_RespIdx); }
+        uint64_t respGetBit(uint8_t idx) const                  { return Resp::getBit(idx+_RespIdx);                    }
+        uint64_t respGetBits(uint8_t start, uint8_t end) const  { return Resp::getBits(start+_RespIdx, end+_RespIdx);   }
         
     private:
         static constexpr size_t _RespIdx = 13;
     };
     
     struct ImgResetMsg : Msg {
-        ImgResetMsg(bool val) {
-            type = MsgType::StartBit | 0x05;
-            payload[0] = 0;
-            payload[1] = 0;
-            payload[2] = 0;
-            payload[3] = 0;
-            payload[4] = 0;
-            payload[5] = 0;
-            payload[6] = val;
-        }
+        constexpr ImgResetMsg(bool val) : Msg(MsgType::StartBit | 0x05,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            val
+        ) {}
     };
     
     struct ImgSetHeaderMsg : Msg {
-        ImgSetHeaderMsg(uint8_t idx, const uint8_t* h) {
-            type = MsgType::StartBit | 0x06;
-            payload[0] = h[0];
-            payload[1] = h[1];
-            payload[2] = h[2];
-            payload[3] = h[3];
-            payload[4] = h[4];
-            payload[5] = h[5];
-            payload[6] = idx;
-        }
+        constexpr ImgSetHeaderMsg(uint8_t idx, const uint8_t* h) : Msg(MsgType::StartBit | 0x06,
+            h[0],
+            h[1],
+            h[2],
+            h[3],
+            h[4],
+            h[5],
+            idx
+        ) {}
     };
     
     struct ImgCaptureMsg : Msg {
-        ImgCaptureMsg(uint8_t dstBlock, uint8_t skipCount) {
-            type = MsgType::StartBit | 0x07;
-            payload[0] = 0;
-            payload[1] = 0;
-            payload[2] = 0;
-            payload[3] = 0;
-            payload[4] = 0;
-            payload[5] = 0;
-            payload[6] = ((skipCount&0x7)<<3) | (dstBlock&0x7);
-        }
+        constexpr ImgCaptureMsg(uint8_t dstBlock, uint8_t skipCount) : Msg(MsgType::StartBit | 0x07,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            ((skipCount&0x7)<<3) | (dstBlock&0x7)
+        ) {}
     };
     
     struct ImgCaptureStatusMsg : Msg {
-        ImgCaptureStatusMsg() {
-            type = MsgType::StartBit | MsgType::Resp | 0x08;
-        }
+        constexpr ImgCaptureStatusMsg() : Msg(MsgType::StartBit | MsgType::Resp | 0x08) {}
     };
     
     struct ImgCaptureStatusResp : Resp {
-        bool done() const               { return getBit(63);                }
-        uint32_t wordCount() const      { return (uint32_t)getBits(62,39);  }
-        uint32_t highlightCount() const { return (uint32_t)getBits(38,21);  }
-        uint32_t shadowCount() const    { return (uint32_t)getBits(20,3);   }
+        bool done() const               { return Resp::getBit(63);                  }
+        uint32_t wordCount() const      { return (uint32_t)Resp::getBits(62,39);    }
+        uint32_t highlightCount() const { return (uint32_t)Resp::getBits(38,21);    }
+        uint32_t shadowCount() const    { return (uint32_t)Resp::getBits(20,3);     }
     };
     
     struct ImgReadoutMsg : Msg {
-        ImgReadoutMsg(uint8_t srcBlock) {
-            type = MsgType::StartBit | 0x09;
-            payload[0] = 0;
-            payload[1] = 0;
-            payload[2] = 0;
-            payload[3] = 0;
-            payload[4] = 0;
-            payload[5] = 0;
-            payload[6] = srcBlock&0x7;
-        }
+        constexpr ImgReadoutMsg(uint8_t srcBlock) : Msg(MsgType::StartBit | 0x09,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            srcBlock&0x7
+        ) {}
     };
     
     struct ImgI2CTransactionMsg : Msg {
-        ImgI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) {
-            AssertArg(len==1 || len==2);
-            type = MsgType::StartBit | 0x0A;
-            payload[0] = (write ? 0x80 : 0) | (len==2 ? 0x40 : 0);
-            payload[1] = 0;
-            payload[2] = 0;
-            payload[3] = (addr&0xFF00)>>8;
-            payload[4] = addr&0x00FF;
-            payload[5] = (val&0xFF00)>>8;
-            payload[6] = val&0x00FF;
-        }
+        constexpr ImgI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) : Msg(MsgType::StartBit | 0x0A,
+            (write ? 0x80 : 0) | (len==2 ? 0x40 : 0),
+            0,
+            0,
+            (addr&0xFF00)>>8,
+            addr&0x00FF,
+            (val&0xFF00)>>8,
+            val&0x00FF
+        ) {}
     };
     
     struct ImgI2CStatusMsg : Msg {
-        ImgI2CStatusMsg() {
-            type = MsgType::StartBit | MsgType::Resp | 0x0B;
-        }
+        constexpr ImgI2CStatusMsg() : Msg(MsgType::StartBit | MsgType::Resp | 0x0B) {}
     };
     
     struct ImgI2CStatusResp : Resp {
-        bool done() const               { return getBit(63);        }
-        bool err() const                { return getBit(62);        }
-        uint16_t readData() const       { return getBits(61,46);    }
+        bool done() const               { return Resp::getBit(63);      }
+        bool err() const                { return Resp::getBit(62);      }
+        uint16_t readData() const       { return Resp::getBits(61,46);  }
     };
     
     struct ReadoutMsg : Msg {
@@ -255,22 +238,11 @@ public:
         // After `ReadoutLen` bytes are read, the SPI master must wait
         // until ICE_ST_SPI_D_READY=1 to clock out more data
         static constexpr size_t ReadoutLen = 512*4;
-        ReadoutMsg() {
-            type = MsgType::StartBit | 0x0C;
-        }
+        constexpr ReadoutMsg() : Msg(MsgType::StartBit | 0x0C) {}
     };
     
     struct NopMsg : Msg {
-        NopMsg() {
-            type = 0x00;
-            payload[0] = 0x00;
-            payload[1] = 0x00;
-            payload[2] = 0x00;
-            payload[3] = 0x00;
-            payload[4] = 0x00;
-            payload[5] = 0x00;
-            payload[6] = 0x00;
-        }
+        constexpr NopMsg() : Msg(0x00) {}
     };
     
     // MARK: - Functions Provided By Client
@@ -280,17 +252,17 @@ public:
     
     static void Init() {
         // Confirm that we can communicate with ICE40
-        const char str[] = "halla";
+        EchoMsg msg("halla7");
         EchoResp resp;
-        Transfer(EchoMsg(str), &resp);
-        Assert(!memcmp((char*)resp.payload, str, sizeof(str)));
+        Transfer(msg, &resp);
+        Assert(resp.matches(msg));
     }
     
     // MARK: - Img
     
     static void ImgReset() {
         Transfer(ImgResetMsg(0));
-        SleepMs(1);
+        T_Scheduler::SleepMs(1);
         Transfer(ImgResetMsg(1));
     }
     
@@ -312,7 +284,7 @@ public:
             const auto status = ImgCaptureStatus();
             // Try again if the image hasn't been captured yet
             if (!status.done()) {
-                SleepMs(1);
+                T_Scheduler::SleepMs(1);
                 continue;
             }
             const uint32_t imgWordCount = status.wordCount();
@@ -339,7 +311,7 @@ public:
         for (uint32_t i=0; i<MaxAttempts; i++) {
             const ImgI2CStatusResp status = ImgI2CStatus();
             if (!status.err() && !status.done()) {
-                SleepMs(1);
+                T_Scheduler::SleepMs(1);
                 continue;
             }
             return status;
@@ -371,8 +343,8 @@ public:
     static SDStatusResp SDSendCmd(
         uint8_t sdCmd,
         uint32_t sdArg,
-        SDSendCmdMsg::RespType respType      = SDSendCmdMsg::RespType::Len48,
-        SDSendCmdMsg::DatInType datInType    = SDSendCmdMsg::DatInType::None
+        typename SDSendCmdMsg::RespType respType      = SDSendCmdMsg::RespType::Len48,
+        typename SDSendCmdMsg::DatInType datInType    = SDSendCmdMsg::DatInType::None
     ) {
         Transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
         
@@ -388,7 +360,7 @@ public:
                 // Try again if we expect DatIn but it hasn't been received yet
                 (datInType==SDSendCmdMsg::DatInType::Len512x1 && !s.datInDone())
             ) {
-                SleepMs(1);
+                T_Scheduler::SleepMs(1);
                 continue;
             }
             return s;

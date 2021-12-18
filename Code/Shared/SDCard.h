@@ -1,44 +1,42 @@
 #pragma once
 #include "ICE.h"
 #include "Assert.h"
-#include "Sleep.h"
 #include "SD.h"
 #include "Util.h"
-#include "Scheduler.h"
 
 namespace SD {
 
+template <
+    typename T_Scheduler,
+    typename T_ICE,
+    void T_SetPowerEnabled(bool),
+    uint8_t T_ClkDelaySlow,
+    uint8_t T_ClkDelayFast
+>
 class Card {
 public:
-    // Functions provided by client
-    static void SetPowerEnabled(bool en);
-    
-    // Values provided by client
-    static const uint8_t ClkDelaySlow;
-    static const uint8_t ClkDelayFast;
-    
     static void Enable() {
         // Disable SDController clock
-        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,         _SDInitMsg::ClkSpeed::Off,  ClkDelaySlow));
-        SleepMs(1);
+        T_ICE::Transfer(_ClocksSlowOff);
+        T_Scheduler::SleepMs(1);
         
         // Enable slow SDController clock
-        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,         _SDInitMsg::ClkSpeed::Slow, ClkDelaySlow));
-        SleepMs(1);
+        T_ICE::Transfer(_ClocksSlowOn);
+        T_Scheduler::SleepMs(1);
         
         // Enter the init mode of the SDController state machine
-        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Reset,       _SDInitMsg::ClkSpeed::Slow, ClkDelaySlow));
+        T_ICE::Transfer(_InitReset);
         
         // Turn off SD card power and wait for it to reach 0V
-        SetPowerEnabled(false);
+        T_SetPowerEnabled(false);
         
         // Turn on SD card power and wait for it to reach 2.8V
-        SetPowerEnabled(true);
+        T_SetPowerEnabled(true);
         
         // Trigger the SD card low voltage signalling (LVS) init sequence
-        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Trigger,     _SDInitMsg::ClkSpeed::Slow, ClkDelaySlow));
+        T_ICE::Transfer(_InitTrigger);
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
-        SleepMs(6);
+        T_Scheduler::SleepMs(6);
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -47,9 +45,9 @@ public:
         // ====================
         {
             // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
-            SleepMs(1);
+            T_Scheduler::SleepMs(1);
             // Send CMD0
-            ICE::SDSendCmd(_CMD0, 0, _RespType::None);
+            T_ICE::SDSendCmd(_CMD0, 0, _RespType::None);
             // There's no response to CMD0
         }
         
@@ -61,7 +59,7 @@ public:
         {
             constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
             constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
-            auto status = ICE::SDSendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
+            auto status = T_ICE::SDSendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
             Assert(!status.respCRCErr());
             const uint8_t replyVoltage = status.respGetBits(19,16);
             Assert(replyVoltage == Voltage);
@@ -77,13 +75,13 @@ public:
         for (;;) {
             // CMD55
             {
-                auto status = ICE::SDSendCmd(_CMD55, 0);
+                auto status = T_ICE::SDSendCmd(_CMD55, 0);
                 Assert(!status.respCRCErr());
             }
             
             // CMD41
             {
-                auto status = ICE::SDSendCmd(_CMD41, 0x51008000);
+                auto status = T_ICE::SDSendCmd(_CMD41, 0x51008000);
                 
                 // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
                 
@@ -92,7 +90,7 @@ public:
                     continue;
                 }
                 
-                // TODO: determine if the wrong CRC in the ACMD41 response is because `ClkDelaySlow` needs tuning
+                // TODO: determine if the wrong CRC in the ACMD41 response is because `T_ClkDelaySlow` needs tuning
                 if (status.respGetBits(7,1) != 0x7F) {
                     for (volatile int i=0; i<10; i++);
                     continue;
@@ -115,7 +113,7 @@ public:
         // ====================
         {
             // The response to CMD2 is 136 bits, instead of the usual 48 bits
-            ICE::SDSendCmd(_CMD2, 0, _RespType::Len136);
+            T_ICE::SDSendCmd(_CMD2, 0, _RespType::Len136);
             // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
             // so it'll be flagged as incorrect.
         }
@@ -126,7 +124,7 @@ public:
         //   Publish a new relative address (RCA)
         // ====================
         {
-            auto status = ICE::SDSendCmd(_CMD3, 0);
+            auto status = T_ICE::SDSendCmd(_CMD3, 0);
             Assert(!status.respCRCErr());
             // Get the card's RCA from the response
             _RCA = status.respGetBits(39,24);
@@ -138,7 +136,7 @@ public:
         //   Select card
         // ====================
         {
-            auto status = ICE::SDSendCmd(_CMD7, ((uint32_t)_RCA)<<16);
+            auto status = T_ICE::SDSendCmd(_CMD7, ((uint32_t)_RCA)<<16);
             Assert(!status.respCRCErr());
         }
         
@@ -150,13 +148,13 @@ public:
         {
             // CMD55
             {
-                auto status = ICE::SDSendCmd(_CMD55, ((uint32_t)_RCA)<<16);
+                auto status = T_ICE::SDSendCmd(_CMD55, ((uint32_t)_RCA)<<16);
                 Assert(!status.respCRCErr());
             }
             
             // CMD6
             {
-                auto status = ICE::SDSendCmd(_CMD6, 0x00000002);
+                auto status = T_ICE::SDSendCmd(_CMD6, 0x00000002);
                 Assert(!status.respCRCErr());
             }
         }
@@ -174,7 +172,7 @@ public:
             // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
             // Group 2 (Command System)    = 0xF (no change)
             // Group 1 (Access Mode)       = 0x3 (SDR104)
-            auto status = ICE::SDSendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
+            auto status = T_ICE::SDSendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
             Assert(!status.respCRCErr());
             Assert(!status.datInCRCErr());
             // Verify that the access mode was successfully changed
@@ -184,27 +182,27 @@ public:
         
         // SDClock=Off
         {
-            ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,   _SDInitMsg::ClkSpeed::Off,      ClkDelaySlow));
+            T_ICE::Transfer(_ClocksSlowOff);
         }
         
         // SDClockDelay=FastDelay
         {
-            ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,   _SDInitMsg::ClkSpeed::Off,      ClkDelayFast));
+            T_ICE::Transfer(_ClocksFastOff);
         }
         
         // SDClock=FastClock
         {
-            ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop,   _SDInitMsg::ClkSpeed::Fast,     ClkDelayFast));
+            T_ICE::Transfer(_ClocksFastOn);
         }
     }
     
     static void Disable() {
         // Disable SDController clock
-        ICE::Transfer(_SDInitMsg(_SDInitMsg::Action::Nop, _SDInitMsg::ClkSpeed::Off, ClkDelaySlow));
-        SleepMs(1);
+        T_ICE::Transfer(_ClocksSlowOff);
+        T_Scheduler::SleepMs(1);
         
         // Turn off SD card power and wait for it to reach 0V
-        SetPowerEnabled(false);
+        T_SetPowerEnabled(false);
     }
     
     static void ReadStart(uint32_t addr) {
@@ -216,7 +214,7 @@ public:
         //   State: Transfer -> Send Data
         //   Read blocks of data (1 block == 512 bytes)
         // ====================
-        auto status = ICE::SDSendCmd(_CMD18, addr/SD::BlockLen, _RespType::Len48, _DatInType::Len4096xN);
+        auto status = T_ICE::SDSendCmd(_CMD18, addr/SD::BlockLen, _RespType::Len48, _DatInType::Len4096xN);
         Assert(!status.respCRCErr());
     }
     
@@ -240,7 +238,7 @@ public:
         {
             // CMD55
             {
-                auto status = ICE::SDSendCmd(_CMD55, ((uint32_t)_RCA)<<16);
+                auto status = T_ICE::SDSendCmd(_CMD55, ((uint32_t)_RCA)<<16);
                 Assert(!status.respCRCErr());
             }
             
@@ -248,7 +246,7 @@ public:
             {
                 // Round up to the nearest block size, with a minimum of 1 block
                 const uint32_t blockCount = std::min(UINT32_C(1), Util::DivCeil(lenEst, SD::BlockLen));
-                auto status = ICE::SDSendCmd(_CMD23, blockCount);
+                auto status = T_ICE::SDSendCmd(_CMD23, blockCount);
                 Assert(!status.respCRCErr());
             }
         }
@@ -259,7 +257,7 @@ public:
         //   Write blocks of data
         // ====================
         {
-            auto status = ICE::SDSendCmd(_CMD25, addr/SD::BlockLen);
+            auto status = T_ICE::SDSendCmd(_CMD25, addr/SD::BlockLen);
             Assert(!status.respCRCErr());
         }
     }
@@ -276,11 +274,11 @@ public:
         WriteStart(addr, Img::Len);
         
         // Clock out the image on the DAT lines
-        ICE::Transfer(ICE::ImgReadoutMsg(srcBlock));
+        T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcBlock));
         
         // Wait for writing to finish
         for (;;) {
-            auto status = ICE::SDStatus();
+            auto status = T_ICE::SDStatus();
             if (status.datOutDone()) {
                 Assert(!status.datOutCRCErr());
                 break;
@@ -292,15 +290,23 @@ public:
         
         // Wait for SD card to indicate that it's ready (DAT0=1)
         for (;;) {
-            auto status = ICE::SDStatus();
+            auto status = T_ICE::SDStatus();
             if (status.dat0Idle()) break;
         }
     }
     
 private:
-    using _SDInitMsg    = ICE::SDInitMsg;
-    using _RespType     = ICE::SDSendCmdMsg::RespType;
-    using _DatInType    = ICE::SDSendCmdMsg::DatInType;
+    
+    using _SDInitMsg    = typename T_ICE::SDInitMsg;
+    using _RespType     = typename T_ICE::SDSendCmdMsg::RespType;
+    using _DatInType    = typename T_ICE::SDSendCmdMsg::DatInType;
+    
+    static constexpr auto _ClocksSlowOff    = _SDInitMsg(_SDInitMsg::Action::Nop,     _SDInitMsg::ClkSpeed::Off,  T_ClkDelaySlow);
+    static constexpr auto _ClocksSlowOn     = _SDInitMsg(_SDInitMsg::Action::Nop,     _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow);
+    static constexpr auto _ClocksFastOff    = _SDInitMsg(_SDInitMsg::Action::Nop,     _SDInitMsg::ClkSpeed::Off,  T_ClkDelayFast);
+    static constexpr auto _ClocksFastOn     = _SDInitMsg(_SDInitMsg::Action::Nop,     _SDInitMsg::ClkSpeed::Fast, T_ClkDelayFast);
+    static constexpr auto _InitReset        = _SDInitMsg(_SDInitMsg::Action::Reset,   _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow);
+    static constexpr auto _InitTrigger      = _SDInitMsg(_SDInitMsg::Action::Trigger, _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow);
     
     static constexpr uint8_t _CMD0  = 0;
     static constexpr uint8_t _CMD2  = 2;
@@ -321,7 +327,7 @@ private:
         //   State: Send Data -> Transfer
         //   Finish reading
         // ====================
-        auto status = ICE::SDSendCmd(_CMD12, 0);
+        auto status = T_ICE::SDSendCmd(_CMD12, 0);
         Assert(!status.respCRCErr());
     }
     
