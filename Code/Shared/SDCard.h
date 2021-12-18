@@ -276,6 +276,7 @@ public:
         // Clock out the image on the DAT lines
         T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcBlock));
         
+        #warning call error handler if this takes too long -- look at SD spec for max time
         // Wait for writing to finish
         for (;;) {
             auto status = T_ICE::SDStatus();

@@ -1,5 +1,8 @@
 - Rev4 Todo
     
+    - MSPApp: add proper error handling to Img/SD
+        - Make error handler a template parameter
+    
     - MSPApp: Make SDCard/ImgSensor take a Scheduler template parameter
     
     - MSPApp: add SleepMs/SleepUs functions to Scheduler
