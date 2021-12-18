@@ -2,6 +2,7 @@
     
     - MSPApp: add proper error handling to Img/SD
         - Make error handler a template parameter
+        - Have error handler take a breadcrumb value
     
     - MSPApp: Make SDCard/ImgSensor take a Scheduler template parameter
     
