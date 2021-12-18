@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <cstddef>
+#define TaskArchMSP430
+#include "Toastbox/Task.h"
 #include "SDCard.h"
 #include "ICE.h"
 #include "ImgSensor.h"
@@ -16,7 +18,6 @@
 #include "FRAMWriteEn.h"
 #include "Util.h"
 #include "Toastbox/IntState.h"
-#include "Toastbox/Task.h"
 using namespace GPIO;
 
 static constexpr uint64_t _MCLKFreqHz   = 16000000;

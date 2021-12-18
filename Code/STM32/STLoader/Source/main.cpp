@@ -1,10 +1,13 @@
 #include <string.h>
 #include <algorithm>
+
+#define TaskArchARM32
+#include "Toastbox/Task.h"
+
 #include "Assert.h"
 #include "SystemClock.h"
 #include "Startup.h"
 #include "Toastbox/IntState.h"
-#include "Toastbox/Task.h"
 #include "STM.h"
 #include "USB.h"
 #include "QSPI.h"
