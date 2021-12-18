@@ -354,8 +354,8 @@ void Toastbox::IntState::WaitForInterrupt() {
     
     // If we're currently handling motion, enter LPM1 sleep because a task is just delaying itself.
     // If we're not handling motion, enter the deep LPM3.5 sleep, where RAM content is lost.
-//    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
-    const uint16_t LPMBits = LPM1_bits;
+    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
+//    const uint16_t LPMBits = LPM1_bits;
     
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
