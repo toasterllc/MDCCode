@@ -185,6 +185,9 @@ int main() {
 //        fn();
 //    }
     
+    Scheduler::Start<TaskA>(TaskA::Run);
+    Scheduler::Start<TaskB>(TaskB::Run);
+    
     Scheduler::Run();
     return 0;
 }
