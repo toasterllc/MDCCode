@@ -2,7 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 //#include <cstdio>
-#define TaskArchMSP430
+#define TaskMSP430
 #include "Toastbox/Task.h"
 #include "Toastbox/IntState.h"
 #include "Util.h"
