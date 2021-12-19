@@ -1,7 +1,7 @@
 #include <string.h>
 #include <algorithm>
 
-#define TaskArchARM32
+#define TaskARM32
 #include "Toastbox/Task.h"
 
 #include "Assert.h"
