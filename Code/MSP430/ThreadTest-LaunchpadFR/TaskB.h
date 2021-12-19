@@ -10,7 +10,6 @@ public:
             PAOUT ^= BIT1;
 //            puts("TaskB\n");
             Scheduler::Sleep(40000); // 20.48s
-            break;
         }
     }
     
