@@ -123,8 +123,8 @@ int main() {
 //        fn();
 //    }
     
-    #define Subtasks TaskA, TaskB
-    _resetTasks<Subtasks>();
+//    #define Subtasks TaskA, TaskB
+//    _resetTasks<Subtasks>();
     
 //    Scheduler::Stop<Subtasks...>();
     
