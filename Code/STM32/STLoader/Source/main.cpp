@@ -788,7 +788,45 @@ void Toastbox::IntState::WaitForInterrupt() {
 
 // MARK: - Main
 
+
+#include "Startup.h"
+#include <string.h>
+#include "stm32f7xx.h"
+
+// The Startup class needs to exist in the `uninit` section,
+// so that its _appEntryPointAddr member doesn't get clobbered
+// on startup.
+using _AppEntryPointFn = void(*)();
+static volatile _AppEntryPointFn _AppEntryPoint [[noreturn, gnu::section(".uninit")]] = 0;
+
+static void _JumpToAppIfNeeded() {
+    // Stash and reset `_AppEntryPoint` so that we only attempt to start the app once
+    // after each software reset.
+    auto appEntryPoint = _AppEntryPoint;
+    _AppEntryPoint = nullptr;
+    
+    // Cache RCC_CSR since we're about to clear it
+    auto csr = READ_REG(RCC->CSR);
+    // Clear RCC_CSR by setting the RMVF bit
+    SET_BIT(RCC->CSR, RCC_CSR_RMVF);
+    // Check if we reset due to a software reset (SFTRSTF), and
+    // we have the app's vector table.
+    if (READ_BIT(csr, RCC_CSR_SFTRSTF) && appEntryPoint) {
+        // Start the application
+        appEntryPoint();
+        for (;;); // Loop forever if the app returns
+    }
+}
+
+
+
+
+
+
+
 int main() {
+    _JumpToAppIfNeeded();
+    
     SystemBase::Init();
     
     __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE

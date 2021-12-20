@@ -74,6 +74,6 @@ void abort() {
         SystemBase::LED1::Write(x);
         SystemBase::LED2::Write(x);
         SystemBase::LED3::Write(x);
-        for (volatile uint32_t i=0; i<(uint32_t)50000000; i++);
+        for (volatile uint32_t i=0; i<(uint32_t)5000000; i++);
     }
 }
