@@ -26,6 +26,8 @@ USB _USB;
 // QSPI alignment=byte, so we can transfer single bytes at a time
 QSPI _QSPI(QSPI::Mode::Single, 5, QSPI::Align::Byte, QSPI::ChipSelect::Controlled);
 
+constexpr auto& _MSP = SystemBase::MSP;
+
 using _ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
 using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
 using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
@@ -38,11 +40,6 @@ alignas(4) uint8_t _Buf1[1024]; // Aligned to send via USB
 BufQueue<2> _Bufs(_Buf0, _Buf1);
 
 struct {
-    size_t len = 0;
-    alignas(4) bool status = false; // Aligned to send via USB
-} _USBDataIn;
-
-struct {
     struct {
         uint8_t bits = 0;
         uint8_t bitsLen = 0;
@@ -50,15 +47,23 @@ struct {
     } read;
 } _MSPDebug;
 
+// The Startup class needs to exist in the `uninit` section,
+// so that its _appEntryPointAddr member doesn't get clobbered
+// on startup.
+using _VoidFn = void(*)();
+static volatile _VoidFn _AppEntryPoint [[noreturn, gnu::section(".uninit")]] = 0;
+
 static constexpr uint32_t _UsPerTick  = 1000;
 
 class _CmdRecvTask;
 class _CmdHandleTask;
 class _USBDataOutTask;
+class _USBDataInTask;
 
 #define _Subtasks       \
     _CmdHandleTask,     \
-    _USBDataOutTask
+    _USBDataOutTask,    \
+    _USBDataInTask
 
 using _Scheduler = Toastbox::Scheduler<
     // Microseconds per tick
@@ -67,39 +72,6 @@ using _Scheduler = Toastbox::Scheduler<
     _CmdRecvTask,
     _Subtasks
 >;
-
-//Toastbox::Task _usb_cmdTask             = Toastbox::Task([&] {  _usb_cmdTaskFn();           });
-//Toastbox::Task _usb_dataOutTask         = Toastbox::Task([&] {  _usb_dataOutTaskFn();       });
-//Toastbox::Task _usb_dataInTask          = Toastbox::Task([&] {  _usb_dataInTaskFn();        });
-//Toastbox::Task _endpointsFlush_task     = Toastbox::Task([&] {  _endpointsFlush_taskFn();   });
-//Toastbox::Task _statusGet_task          = Toastbox::Task([&] {  _statusGet_taskFn();        });
-//Toastbox::Task _bootloaderInvoke_task   = Toastbox::Task([&] {  _bootloaderInvoke_taskFn(); });
-//Toastbox::Task _stm_writeTask           = Toastbox::Task([&] {  _stm_writeTaskFn();         });
-//Toastbox::Task _stm_resetTask           = Toastbox::Task([&] {  _stm_resetTaskFn();         });
-//Toastbox::Task _ice_writeTask           = Toastbox::Task([&] {  _ice_writeTaskFn();         });
-//Toastbox::Task _msp_readTask            = Toastbox::Task([&] {  _msp_readTaskFn();          });
-//Toastbox::Task _msp_writeTask           = Toastbox::Task([&] {  _msp_writeTaskFn();         });
-//Toastbox::Task _msp_debugTask           = Toastbox::Task([&] {  _msp_debugTaskFn();         });
-//
-//std::reference_wrapper<Toastbox::Task> _tasks[12] = {
-//    _usb_cmdTask,
-//    _usb_dataOutTask,
-//    _usb_dataInTask,
-//    _endpointsFlush_task,
-//    _statusGet_task,
-//    _bootloaderInvoke_task,
-//    _stm_writeTask,
-//    _stm_resetTask,
-//    _ice_writeTask,
-//    _msp_readTask,
-//    _msp_writeTask,
-//    _msp_debugTask,
-//};
-
-
-
-
-
 
 
 
@@ -135,9 +107,10 @@ static size_t _ceilToMaxPacketSize(size_t len) {
     return len;
 }
 
-// _usb_dataOutTask: reads `_usbDataOut.len` bytes from the DataOut endpoint and writes it to _Bufs
-struct _USBDataOutTask {
-    static void Recv(size_t len) {
+// _USBDataOutTask: reads `len` bytes from the DataOut endpoint and writes them to _Bufs
+class _USBDataOutTask {
+public:
+    static void Start(size_t len) {
         // Make sure this task isn't busy
         Assert(!_Scheduler::Running<_USBDataOutTask>());
         
@@ -177,417 +150,46 @@ private:
     static inline size_t _Len = 0;
 };
 
+// _USBDataInTask: writes buffers from _Bufs to the DataIn endpoint, and pops them from _Bufs
+class _USBDataInTask {
+public:
+    static void Start() {
+        _Scheduler::Start<_USBDataInTask>([] {
+            for (;;) {
+                _Scheduler::Wait([] { return !_Bufs.empty(); });
+                
+                // Send the data and wait until the transfer is complete
+                auto& buf = _Bufs.front();
+                _USB.send(Endpoints::DataIn, buf.data, buf.len);
+                _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+                
+                buf.len = 0;
+                _Bufs.pop();
+            }
+        });
+    }
+    
+    // Task options
+    using Options = Toastbox::TaskOptions<>;
+    
+    // Task stack
+    [[gnu::section(".stack._USBDataInTask")]]
+    static inline uint8_t Stack[256];
+};
+
+
+
+
+
+
+
 static void _usb_dataInSendStatus(bool s) {
     alignas(4) static bool status = false; // Aligned to send via USB
     status = s;
     _USB.send(Endpoints::DataIn, &status, sizeof(status));
 }
 
-
-
-
-//// _usb_dataInTask: writes buffers from _Bufs to the DataIn endpoint, and pops them from _Bufs
-//void _usb_dataInTaskFn() {
-//    TaskBegin();
-//    
-//    for (;;) {
-//        TaskWait(!_Bufs.empty());
-//        
-//        // Send the data and wait until the transfer is complete
-//        _USB.send(Endpoints::DataIn, _Bufs.front().data, _Bufs.front().len);
-//        TaskWait(_USB.endpointReady(Endpoints::DataIn));
-//        
-//        _Bufs.front().len = 0;
-//        _Bufs.pop();
-//    }
-//}
-//
-//void _usb_dataInSendStatus(bool status) {
-//    _usbDataIn.status = status;
-//    _USB.send(Endpoints::DataIn, &_usbDataIn.status, sizeof(_usbDataIn.status));
-//}
-//
-//void _endpointsFlush_taskFn() {
-//    TaskBegin();
-//    // Reset endpoints
-//    _USB.endpointReset(Endpoints::DataOut);
-//    _USB.endpointReset(Endpoints::DataIn);
-//    TaskWait(_USB.endpointReady(Endpoints::DataOut) && _USB.endpointReady(Endpoints::DataIn));
-//    // Send status
-//    _usb_dataInSendStatus(true);
-//}
-//
-//void _statusGet_taskFn() {
-//    TaskBegin();
-//    // Send status
-//    _usb_dataInSendStatus(true);
-//    // Wait for host to receive status
-//    TaskWait(_USB.endpointReady(Endpoints::DataIn));
-//    
-//    // Send status struct
-//    alignas(4) static const STM::Status status = { // Aligned to send via USB
-//        .magic      = STM::Status::MagicNumber,
-//        .version    = STM::Version,
-//        .mode       = STM::Status::Modes::STMLoader,
-//    };
-//    
-//    _USB.send(Endpoints::DataIn, &status, sizeof(status));
-//}
-//
-//void _bootloaderInvoke_taskFn() {
-//    TaskBegin();
-//    // Send status
-//    _usb_dataInSendStatus(true);
-//    // Wait for host to receive status before resetting
-//    TaskWait(_USB.endpointReady(Endpoints::DataIn));
-//    
-//    // Perform software reset
-//    HAL_NVIC_SystemReset();
-//    // Unreachable
-//    abort();
-//}
-
-//static size_t _stm_regionCapacity(void* addr) {
-//    // Verify that `addr` is in one of the allowed RAM regions
-//    extern uint8_t _sitcm_ram[], _eitcm_ram[];
-//    extern uint8_t _sdtcm_ram[], _edtcm_ram[];
-//    extern uint8_t _ssram1[], _esram1[];
-//    size_t cap = 0;
-//    if (addr>=_sitcm_ram && addr<_eitcm_ram) {
-//        cap = (uintptr_t)_eitcm_ram-(uintptr_t)addr;
-//    } else if (addr>=_sdtcm_ram && addr<_edtcm_ram) {
-//        cap = (uintptr_t)_edtcm_ram-(uintptr_t)addr;
-//    } else if (addr>=_ssram1 && addr<_esram1) {
-//        cap = (uintptr_t)_esram1-(uintptr_t)addr;
-//    } else {
-//        // TODO: implement proper error handling on writing out of the allowed regions
-//        abort();
-//    }
-//    return cap;
-//}
-//
-//void _stm_writeTaskFn() {
-//    const auto& arg = _Cmd.arg.STMWrite;
-//    
-//    TaskBegin();
-//    
-//    // Bail if the region capacity is too small to hold the
-//    // incoming data length (ceiled to the packet length)
-//    static size_t len;
-//    len = _ceilToMaxPacketSize(arg.len);
-//    if (len > _stm_regionCapacity((void*)arg.addr)) {
-//        // Send preliminary status: error
-//        _usb_dataInSendStatus(false);
-//        return;
-//    }
-//    
-//    // Send preliminary status: OK
-//    _usb_dataInSendStatus(true);
-//    TaskWait(_USB.endpointReady(Endpoints::DataIn));
-//    
-//    // Receive USB data
-//    _USB.recv(Endpoints::DataOut, (void*)arg.addr, len);
-//    TaskWait(_USB.endpointReady(Endpoints::DataOut));
-//    
-//    // Send final status
-//    _usb_dataInSendStatus(true);
-//}
-//
-//void _stm_resetTaskFn() {
-//    TaskBegin();
-//    Start.setAppEntryPointAddr(_Cmd.arg.STMReset.entryPointAddr);
-//    
-//    // Send status
-//    _usb_dataInSendStatus(true);
-//    // Wait for host to receive status before resetting
-//    TaskWait(_USB.endpointReady(Endpoints::DataIn));
-//    
-//    // Perform software reset
-//    HAL_NVIC_SystemReset();
-//    // Unreachable
-//    abort();
-//}
-//
-//static void _ice_qspiWrite(QSPI& qspi, const void* data, size_t len) {
-//    QSPI_CommandTypeDef cmd = {
-//        .Instruction = 0,
-//        .InstructionMode = QSPI_INSTRUCTION_NONE,
-//        
-//        .Address = 0,
-//        .AddressSize = QSPI_ADDRESS_8_BITS,
-//        .AddressMode = QSPI_ADDRESS_NONE,
-//        
-//        .AlternateBytes = 0,
-//        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
-//        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
-//        
-//        .DummyCycles = 0,
-//        
-//        .NbData = (uint32_t)len,
-//        .DataMode = QSPI_DATA_1_LINE,
-//        
-//        .DdrMode = QSPI_DDR_MODE_DISABLE,
-//        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
-//        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
-//    };
-//    
-//    qspi.write(cmd, data, len);
-//}
-//
-//void _ice_writeTaskFn() {
-//    auto& arg = _Cmd.arg.ICEWrite;
-//    TaskBegin();
-//    
-//    // Configure ICE40 control GPIOs
-//    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    
-//    // Put ICE40 into configuration mode
-//    _ICE_ST_SPI_CLK::Write(1);
-//    
-//    _ICE_ST_SPI_CS_::Write(0);
-//    _ICE_CRST_::Write(0);
-//    HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
-//    
-//    _ICE_CRST_::Write(1);
-//    HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
-//    
-//    // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
-//    _ICE_ST_SPI_CS_::Write(1);
-//    
-//    // Have QSPI take over _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_
-//    _qspi.config();
-//    
-//    // Send 8 clocks and wait for them to complete
-//    static const uint8_t ff = 0xff;
-//    _ice_qspiWrite(_qspi, &ff, 1);
-//    TaskWait(_qspi.ready());
-//    
-//    // Reset state
-//    _Bufs.reset();
-//    // Trigger the USB DataOut task with the amount of data
-//    _usb_dataOutTask.start();
-//    _usbDataOut.len = arg.len;
-//    
-//    while (arg.len) {
-//        // Wait until we have data to consume, and QSPI is ready to write
-//        TaskWait(!_Bufs.empty() && _qspi.ready());
-//        
-//        // Write the data over QSPI and wait for completion
-//        _ice_qspiWrite(_qspi, _Bufs.front().data, _Bufs.front().len);
-//        TaskWait(_qspi.ready());
-//        
-//        // Update the remaining data and pop the buffer so it can be used again
-//        arg.len -= _Bufs.front().len;
-//        _Bufs.pop();
-//    }
-//    
-//    // Wait for CDONE to be asserted
-//    {
-//        bool ok = false;
-//        for (int i=0; i<10 && !ok; i++) {
-//            if (i) HAL_Delay(1); // Sleep 1 ms
-//            ok = _ICE_CDONE::Read();
-//        }
-//        
-//        if (!ok) {
-//            _usb_dataInSendStatus(false);
-//            return;
-//        }
-//    }
-//    
-//    // Finish
-//    {
-//        // Supply >=49 additional clocks (8*7=56 clocks), per the
-//        // "iCE40 Programming and Configuration" guide.
-//        // These clocks apparently reach the user application. Since this
-//        // appears unavoidable, prevent the clocks from affecting the user
-//        // application in two ways:
-//        //   1. write 0xFF, which the user application must consider as a NOP;
-//        //   2. write a byte at a time, causing chip-select to be de-asserted
-//        //      between bytes, which must cause the user application to reset
-//        //      itself.
-//        constexpr uint8_t ClockCount = 7;
-//        static int i;
-//        for (i=0; i<ClockCount; i++) {
-//            static const uint8_t ff = 0xff;
-//            _ice_qspiWrite(_qspi, &ff, sizeof(ff));
-//            TaskWait(_qspi.ready());
-//        }
-//    }
-//    
-//    _usb_dataInSendStatus(true);
-//}
-//
-//void _msp_connect() {
-//    const auto r = _MSP.connect();
-//    // Send status
-//    _usb_dataInSendStatus(r == _MSP.Status::OK);
-//}
-//
-//void _msp_disconnect() {
-//    _MSP.disconnect();
-//    // Send status
-//    _usb_dataInSendStatus(true);
-//}
-//
-//void _msp_readTaskFn() {
-//    auto& arg = _Cmd.arg.MSPRead;
-//    TaskBegin();
-//    
-//    // Reset state
-//    _Bufs.reset();
-//    
-//    // Start the USB DataIn task
-//    _usb_dataInTask.start();
-//    
-//    while (arg.len) {
-//        TaskWait(!_Bufs.full());
-//        
-//        auto& buf = _Bufs.back();
-//        // Prepare to receive either `arg.len` bytes or the
-//        // buffer capacity bytes, whichever is smaller.
-//        const size_t chunkLen = std::min((size_t)arg.len, buf.cap);
-//        _MSP.read(arg.addr, buf.data, chunkLen);
-//        arg.addr += chunkLen;
-//        arg.len -= chunkLen;
-//        // Enqueue the buffer
-//        buf.len = chunkLen;
-//        _Bufs.push();
-//    }
-//    
-//    // Wait for DataIn task to complete
-//    TaskWait(_Bufs.empty());
-//    // Send status
-//    _usb_dataInSendStatus(true);
-//}
-//
-//void _msp_writeTaskFn() {
-//    auto& arg = _Cmd.arg.MSPWrite;
-//    TaskBegin();
-//    
-//    // Reset state
-//    _Bufs.reset();
-//    _MSP.crcReset();
-//    
-//    // Trigger the USB DataOut task with the amount of data
-//    _usb_dataOutTask.start();
-//    _usbDataOut.len = arg.len;
-//    
-//    while (arg.len) {
-//        TaskWait(!_Bufs.empty());
-//        
-//        // Write the data over Spy-bi-wire
-//        auto& buf = _Bufs.front();
-//        _MSP.write(arg.addr, buf.data, buf.len);
-//        // Update the MSP430 address to write to
-//        arg.addr += buf.len;
-//        arg.len -= buf.len;
-//        // Pop the buffer, which we just finished sending over Spy-bi-wire
-//        _Bufs.pop();
-//    }
-//    
-//    // Verify the CRC of all the data we wrote
-//    const auto r = _MSP.crcVerify();
-//    // Send status
-//    _usb_dataInSendStatus(r == _MSP.Status::OK);
-//}
-//
-//void _msp_debugTaskFn() {
-//    auto& arg = _Cmd.arg.MSPDebug;
-//    TaskBegin();
-//    
-//    // Bail if more data was requested than the size of our buffer
-//    if (arg.respLen > sizeof(_buf1)) {
-//        // Send preliminary status: error
-//        _usb_dataInSendStatus(false);
-//        return;
-//    }
-//    
-//    // Send preliminary status: OK
-//    _usb_dataInSendStatus(true);
-//    TaskWait(_USB.endpointReady(Endpoints::DataIn));
-//    
-//    static bool ok;
-//    ok = true;
-//    
-//    // Handle debug commands
-//    {
-//        while (arg.cmdsLen) {
-//            // Receive debug commands into _buf0
-//            _USB.recv(Endpoints::DataOut, _buf0, sizeof(_buf0));
-//            TaskWait(_USB.endpointReady(Endpoints::DataOut));
-//            
-//            // Handle each MSPDebugCmd
-//            const MSPDebugCmd* cmds = (MSPDebugCmd*)_buf0;
-//            const size_t cmdsLen = _USB.recvLen(Endpoints::DataOut) / sizeof(MSPDebugCmd);
-//            for (size_t i=0; i<cmdsLen && ok; i++) {
-//                ok &= _msp_debugHandleCmd(cmds[i]);
-//            }
-//            
-//            arg.cmdsLen -= cmdsLen;
-//        }
-//    }
-//    
-//    // Reply with data generated from debug commands
-//    {
-//        // Push outstanding bits into the buffer
-//        // This is necessary for when the client reads a number of bits
-//        // that didn't fall on a byte boundary.
-//        if (_mspDebug.read.bitsLen) ok &= _msp_debugPushReadBits();
-//        _mspDebug.read = {};
-//        
-//        if (arg.respLen) {
-//            // Send the data and wait for it to be received
-//            _USB.send(Endpoints::DataIn, _buf1, arg.respLen);
-//            TaskWait(_USB.endpointReady(Endpoints::DataIn));
-//        }
-//    }
-//    
-//    // Send status
-//    _usb_dataInSendStatus(ok);
-//}
-//
-//bool _msp_debugPushReadBits() {
-//    if (_mspDebug.read.len >= sizeof(_buf1)) return false;
-//    // Enqueue the new byte into `_buf1`
-//    _buf1[_mspDebug.read.len] = _mspDebug.read.bits;
-//    _mspDebug.read.len++;
-//    // Reset our bits
-//    _mspDebug.read.bits = 0;
-//    _mspDebug.read.bitsLen = 0;
-//    return true;
-//}
-//
-//bool _msp_debugHandleSBWIO(const MSPDebugCmd& cmd) {
-//    const bool tdo = _MSP.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
-//    if (cmd.tdoReadGet()) {
-//        // Enqueue a new bit
-//        _mspDebug.read.bits <<= 1;
-//        _mspDebug.read.bits |= tdo;
-//        _mspDebug.read.bitsLen++;
-//        
-//        // Enqueue the byte if it's filled
-//        if (_mspDebug.read.bitsLen == 8) {
-//            return _msp_debugPushReadBits();
-//        }
-//    }
-//    return true;
-//}
-//
-//bool _msp_debugHandleCmd(const MSPDebugCmd& cmd) {
-//    switch (cmd.opGet()) {
-//    case MSPDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet()); return true;
-//    case MSPDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet());  return true;
-//    case MSPDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse();              return true;
-//    case MSPDebugCmd::Ops::SBWIO:       return _msp_debugHandleSBWIO(cmd);
-//    default:                            abort();
-//    }
-//}
-
-void _statusGet() {
+static void _statusGet() {
     // Send status
     _usb_dataInSendStatus(true);
     // Wait for host to receive status
@@ -603,6 +205,17 @@ void _statusGet() {
     _USB.send(Endpoints::DataIn, &status, sizeof(status));
 }
 
+static void _bootloaderInvoke() {
+    // Send status
+    _usb_dataInSendStatus(true);
+    // Wait for host to receive status before resetting
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    
+    // Perform software reset
+    HAL_NVIC_SystemReset();
+    // Unreachable
+    abort();
+}
 
 static void _ledSet() {
     switch (_Cmd.arg.LEDSet.idx) {
@@ -629,33 +242,345 @@ static void _endpointsFlush() {
     _usb_dataInSendStatus(true);
 }
 
-struct _CmdHandleTask {
-    static void CmdHandle() {
-        _Scheduler::Start<_CmdHandleTask>([] { _CmdHandle(); });
+static size_t _stm_regionCapacity(void* addr) {
+    // Verify that `addr` is in one of the allowed RAM regions
+    extern uint8_t _sitcm_ram[], _eitcm_ram[];
+    extern uint8_t _sdtcm_ram[], _edtcm_ram[];
+    extern uint8_t _ssram1[], _esram1[];
+    size_t cap = 0;
+    if (addr>=_sitcm_ram && addr<_eitcm_ram) {
+        cap = (uintptr_t)_eitcm_ram-(uintptr_t)addr;
+    } else if (addr>=_sdtcm_ram && addr<_edtcm_ram) {
+        cap = (uintptr_t)_edtcm_ram-(uintptr_t)addr;
+    } else if (addr>=_ssram1 && addr<_esram1) {
+        cap = (uintptr_t)_esram1-(uintptr_t)addr;
+    } else {
+        // TODO: implement proper error handling on writing out of the allowed regions
+        abort();
+    }
+    return cap;
+}
+
+static void _stm_write() {
+    const auto& arg = _Cmd.arg.STMWrite;
+    
+    // Bail if the region capacity is too small to hold the
+    // incoming data length (ceiled to the packet length)
+    const size_t len = _ceilToMaxPacketSize(arg.len);
+    if (len > _stm_regionCapacity((void*)arg.addr)) {
+        // Send preliminary status: error
+        _usb_dataInSendStatus(false);
+        return;
     }
     
-    static void _CmdHandle() {
-        switch (_Cmd.op) {
-        // Common Commands
-        case Op::EndpointsFlush:    _endpointsFlush();  break;
-        case Op::StatusGet:         _statusGet();       break;
-//            case Op::BootloaderInvoke:  _bootloaderInvoke_task.start(); break;
-        case Op::LEDSet:            _ledSet();          break;
-//            // STM32 Bootloader
-//            case Op::STMWrite:          _stm_writeTask.start();         break;
-//            case Op::STMReset:          _stm_resetTask.start();         break;
-//            // ICE40 Bootloader
-//            case Op::ICEWrite:          _ice_writeTask.start();         break;
-//            // MSP430 Bootloader
-//            case Op::MSPConnect:        _msp_connect();                 break;
-//            case Op::MSPDisconnect:     _msp_disconnect();              break;
-//            // MSP430 Debug
-//            case Op::MSPRead:           _msp_readTask.start();          break;
-//            case Op::MSPWrite:          _msp_writeTask.start();         break;
-//            case Op::MSPDebug:          _msp_debugTask.start();         break;
-        // Bad command
-        default:                    _usb_dataInSendStatus(false);   break;
+    // Send preliminary status: OK
+    _usb_dataInSendStatus(true);
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    
+    // Receive USB data
+    _USB.recv(Endpoints::DataOut, (void*)arg.addr, len);
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
+    
+    // Send final status
+    _usb_dataInSendStatus(true);
+}
+
+static void _stm_reset() {
+    _AppEntryPoint = (_VoidFn)_Cmd.arg.STMReset.entryPointAddr;
+    
+    // Send status
+    _usb_dataInSendStatus(true);
+    // Wait for host to receive status before resetting
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    
+    // Perform software reset
+    HAL_NVIC_SystemReset();
+    // Unreachable
+    abort();
+}
+
+static void _ice_qspiWrite(const void* data, size_t len) {
+    const QSPI_CommandTypeDef cmd = {
+        .Instruction = 0,
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        
+        .Address = 0,
+        .AddressSize = QSPI_ADDRESS_8_BITS,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        
+        .AlternateBytes = 0,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        
+        .DummyCycles = 0,
+        
+        .NbData = (uint32_t)len,
+        .DataMode = QSPI_DATA_1_LINE,
+        
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+    
+    _QSPI.write(cmd, data, len);
+}
+
+static void _ice_write() {
+    auto& arg = _Cmd.arg.ICEWrite;
+    
+    // Configure ICE40 control GPIOs
+    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Put ICE40 into configuration mode
+    _ICE_ST_SPI_CLK::Write(1);
+    
+    _ICE_ST_SPI_CS_::Write(0);
+    _ICE_CRST_::Write(0);
+    HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
+    
+    _ICE_CRST_::Write(1);
+    HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+    
+    // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
+    _ICE_ST_SPI_CS_::Write(1);
+    
+    // Have QSPI take over _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_
+    _QSPI.config();
+    
+    // Send 8 clocks and wait for them to complete
+    static const uint8_t ff = 0xff;
+    _ice_qspiWrite(&ff, 1);
+    _Scheduler::Wait([] { return _QSPI.ready(); });
+    
+    // Reset state
+    _Bufs.reset();
+    
+    size_t len = arg.len;
+    // Trigger the USB DataOut task with the amount of data
+    _USBDataOutTask::Start(len);
+    
+    while (len) {
+        // Wait until we have data to consume, and QSPI is ready to write
+        _Scheduler::Wait([] { return !_Bufs.empty() && _QSPI.ready(); });
+        
+        // Write the data over QSPI and wait for completion
+        _ice_qspiWrite(_Bufs.front().data, _Bufs.front().len);
+        _Scheduler::Wait([] { return _QSPI.ready(); });
+        
+        // Update the remaining data and pop the buffer so it can be used again
+        len -= _Bufs.front().len;
+        _Bufs.pop();
+    }
+    
+    // Wait for CDONE to be asserted
+    {
+        bool ok = false;
+        for (int i=0; i<10 && !ok; i++) {
+            if (i) HAL_Delay(1); // Sleep 1 ms
+            ok = _ICE_CDONE::Read();
         }
+        
+        if (!ok) {
+            _usb_dataInSendStatus(false);
+            return;
+        }
+    }
+    
+    // Finish
+    {
+        // Supply >=49 additional clocks (8*7=56 clocks), per the
+        // "iCE40 Programming and Configuration" guide.
+        // These clocks apparently reach the user application. Since this
+        // appears unavoidable, prevent the clocks from affecting the user
+        // application in two ways:
+        //   1. write 0xFF, which the user application must consider as a NOP;
+        //   2. write a byte at a time, causing chip-select to be de-asserted
+        //      between bytes, which must cause the user application to reset
+        //      itself.
+        constexpr uint8_t ClockCount = 7;
+        static int i;
+        for (i=0; i<ClockCount; i++) {
+            _ice_qspiWrite(&ff, sizeof(ff));
+            _Scheduler::Wait([] { return _QSPI.ready(); });
+        }
+    }
+    
+    _usb_dataInSendStatus(true);
+}
+
+static void _msp_connect() {
+    const auto r = _MSP.connect();
+    // Send status
+    _usb_dataInSendStatus(r == _MSP.Status::OK);
+}
+
+static void _msp_disconnect() {
+    _MSP.disconnect();
+    // Send status
+    _usb_dataInSendStatus(true);
+}
+
+static void _msp_read() {
+    auto& arg = _Cmd.arg.MSPRead;
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Start the USB DataIn task
+    _USBDataInTask::Start();
+    
+    uint32_t addr = arg.addr;
+    uint32_t len = arg.len;
+    while (len) {
+        _Scheduler::Wait([] { return !_Bufs.full(); });
+        
+        auto& buf = _Bufs.back();
+        // Prepare to receive either `len` bytes or the
+        // buffer capacity bytes, whichever is smaller.
+        const size_t chunkLen = std::min((size_t)len, buf.cap);
+        _MSP.read(addr, buf.data, chunkLen);
+        addr += chunkLen;
+        len -= chunkLen;
+        // Enqueue the buffer
+        buf.len = chunkLen;
+        _Bufs.push();
+    }
+    
+    // Wait for DataIn task to complete
+    _Scheduler::Wait([] { return _Bufs.empty(); });
+    // Send status
+    _usb_dataInSendStatus(true);
+}
+
+static void _msp_write() {
+    auto& arg = _Cmd.arg.MSPWrite;
+    
+    // Reset state
+    _Bufs.reset();
+    _MSP.crcReset();
+    
+    uint32_t addr = arg.addr;
+    uint32_t len = arg.len;
+    
+    // Trigger the USB DataOut task with the amount of data
+    _USBDataOutTask::Start(len);
+    
+    while (len) {
+        _Scheduler::Wait([] { return !_Bufs.empty(); });
+        
+        // Write the data over Spy-bi-wire
+        auto& buf = _Bufs.front();
+        _MSP.write(addr, buf.data, buf.len);
+        // Update the MSP430 address to write to
+        addr += buf.len;
+        len -= buf.len;
+        // Pop the buffer, which we just finished sending over Spy-bi-wire
+        _Bufs.pop();
+    }
+    
+    // Verify the CRC of all the data we wrote
+    const auto r = _MSP.crcVerify();
+    // Send status
+    _usb_dataInSendStatus(r == _MSP.Status::OK);
+}
+
+static bool _msp_debugPushReadBits() {
+    if (_MSPDebug.read.len >= sizeof(_Buf1)) return false;
+    // Enqueue the new byte into `_Buf1`
+    _Buf1[_MSPDebug.read.len] = _MSPDebug.read.bits;
+    _MSPDebug.read.len++;
+    // Reset our bits
+    _MSPDebug.read.bits = 0;
+    _MSPDebug.read.bitsLen = 0;
+    return true;
+}
+
+static bool _msp_debugHandleSBWIO(const MSPDebugCmd& cmd) {
+    const bool tdo = _MSP.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
+    if (cmd.tdoReadGet()) {
+        // Enqueue a new bit
+        _MSPDebug.read.bits <<= 1;
+        _MSPDebug.read.bits |= tdo;
+        _MSPDebug.read.bitsLen++;
+        
+        // Enqueue the byte if it's filled
+        if (_MSPDebug.read.bitsLen == 8) {
+            return _msp_debugPushReadBits();
+        }
+    }
+    return true;
+}
+
+static bool _msp_debugHandleCmd(const MSPDebugCmd& cmd) {
+    switch (cmd.opGet()) {
+    case MSPDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet()); return true;
+    case MSPDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet());  return true;
+    case MSPDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse();              return true;
+    case MSPDebugCmd::Ops::SBWIO:       return _msp_debugHandleSBWIO(cmd);
+    default:                            abort();
+    }
+}
+
+static void _msp_debug() {
+    auto& arg = _Cmd.arg.MSPDebug;
+    
+    // Bail if more data was requested than the size of our buffer
+    if (arg.respLen > sizeof(_Buf1)) {
+        // Send preliminary status: error
+        _usb_dataInSendStatus(false);
+        return;
+    }
+    
+    // Send preliminary status: OK
+    _usb_dataInSendStatus(true);
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    
+    bool ok = true;
+    
+    // Handle debug commands
+    {
+        while (arg.cmdsLen) {
+            // Receive debug commands into _Buf0
+            _USB.recv(Endpoints::DataOut, _Buf0, sizeof(_Buf0));
+            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
+            
+            // Handle each MSPDebugCmd
+            const MSPDebugCmd* cmds = (MSPDebugCmd*)_Buf0;
+            const size_t cmdsLen = _USB.recvLen(Endpoints::DataOut) / sizeof(MSPDebugCmd);
+            for (size_t i=0; i<cmdsLen && ok; i++) {
+                ok &= _msp_debugHandleCmd(cmds[i]);
+            }
+            
+            arg.cmdsLen -= cmdsLen;
+        }
+    }
+    
+    // Reply with data generated from debug commands
+    {
+        // Push outstanding bits into the buffer
+        // This is necessary for when the client reads a number of bits
+        // that didn't fall on a byte boundary.
+        if (_MSPDebug.read.bitsLen) ok &= _msp_debugPushReadBits();
+        _MSPDebug.read = {};
+        
+        if (arg.respLen) {
+            // Send the data and wait for it to be received
+            _USB.send(Endpoints::DataIn, _Buf1, arg.respLen);
+            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+        }
+    }
+    
+    // Send status
+    _usb_dataInSendStatus(ok);
+}
+
+class _CmdHandleTask {
+public:
+    static void CmdHandle() {
+        _Scheduler::Start<_CmdHandleTask>([] { _CmdHandle(); });
     }
     
     // Task options
@@ -664,6 +589,31 @@ struct _CmdHandleTask {
     // Task stack
     [[gnu::section(".stack._CmdHandleTask")]]
     static inline uint8_t Stack[256];
+    
+private:
+    static void _CmdHandle() {
+        switch (_Cmd.op) {
+        // Common Commands
+        case Op::EndpointsFlush:        _endpointsFlush();              break;
+        case Op::StatusGet:             _statusGet();                   break;
+        case Op::BootloaderInvoke:      _bootloaderInvoke();            break;
+        case Op::LEDSet:                _ledSet();                      break;
+        // STM32 Bootloader
+        case Op::STMWrite:              _stm_write();                   break;
+        case Op::STMReset:              _stm_reset();                   break;
+        // ICE40 Bootloader
+        case Op::ICEWrite:              _ice_write();                   break;
+        // MSP430 Bootloader
+        case Op::MSPConnect:            _msp_connect();                 break;
+        case Op::MSPDisconnect:         _msp_disconnect();              break;
+        // MSP430 Debug
+        case Op::MSPRead:               _msp_read();                    break;
+        case Op::MSPWrite:              _msp_write();                   break;
+        case Op::MSPDebug:              _msp_debug();                   break;
+        // Bad command
+        default:                        _usb_dataInSendStatus(false);   break;
+        }
+    }
 };
 
 struct _CmdRecvTask {
@@ -738,7 +688,7 @@ struct _CmdRecvTask {
 
 
 
-
+#warning TODO: remove this check in the future after we gain confidence that Task.h is appropriately causing MSP/PSP stacks to be swapped, and therefore the tasks' stacks are never used for interrupts
 #define CheckStack() Assert((void*)__get_MSP()>=_StackMain && (void*)__get_MSP()<=(_StackMain+sizeof(_StackMain)))
 
 // MARK: - ISRs
@@ -748,21 +698,6 @@ extern "C" [[gnu::section(".isr")]] void ISR_HardFault()    { abort(); }
 extern "C" [[gnu::section(".isr")]] void ISR_MemManage()    { abort(); }
 extern "C" [[gnu::section(".isr")]] void ISR_BusFault()     { abort(); }
 extern "C" [[gnu::section(".isr")]] void ISR_UsageFault()   { abort(); }
-
-//static volatile uint32_t _psp = 0;
-//
-//extern "C" [[gnu::section(".isr"), gnu::naked]] void ISR_SVC() {
-////    _psp = __get_PSP();
-//    // Exit to Thread mode, with SP using PSP (process SP)
-//    asm("mov lr, %0" : : "i" (0xFFFFFFE1) : );
-//    asm("bx lr");
-//    
-////    _psp = __get_PSP();
-////    // Exit to Thread mode, with SP using PSP (process SP)
-////    asm("mov lr, %0" : : "i" (EXC_RETURN_THREAD_PSP_FPU) : );
-////    asm("bx lr");
-//}
-
 extern "C" [[gnu::section(".isr")]] void ISR_SVC()          {}
 extern "C" [[gnu::section(".isr")]] void ISR_DebugMon()     {}
 extern "C" [[gnu::section(".isr")]] void ISR_PendSV()       {}
@@ -807,17 +742,11 @@ void Toastbox::IntState::WaitForInterrupt() {
 
 // MARK: - Main
 
-// The Startup class needs to exist in the `uninit` section,
-// so that its _appEntryPointAddr member doesn't get clobbered
-// on startup.
-using _AppEntryPointFn = void(*)();
-static volatile _AppEntryPointFn _AppEntryPoint [[noreturn, gnu::section(".uninit")]] = 0;
-
 static void _JumpToAppIfNeeded() {
     // Stash and reset `_AppEntryPoint` so that we only attempt to start the app once
     // after each software reset.
     #warning TODO: bring back
-	const _AppEntryPointFn appEntryPoint = nullptr;//_AppEntryPoint;
+	const _VoidFn appEntryPoint = nullptr;//_AppEntryPoint;
     _AppEntryPoint = nullptr;
     
     // Cache RCC_CSR since we're about to clear it
