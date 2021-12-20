@@ -11,6 +11,8 @@
 
 // Vector table
 .section .isr
+// VectorTable must be 128-byte aligned (1<<7), because only bits [31:7] of VTOR are valid
+.align 7
 .type VectorTable, %object
 VectorTable:
     .word _StackMainEnd

@@ -15,9 +15,6 @@ void Startup() {
     extern uint8_t _ebss[];
     extern uint8_t VectorTable[];
     
-    [[noreturn]]
-    extern int main();
-    
     // Copy .data section from flash to RAM
     memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);
     // Zero .bss section
@@ -35,5 +32,6 @@ void Startup() {
     __libc_init_array();
     
     // Call main function
+    [[noreturn]] extern int main();
     main();
 }

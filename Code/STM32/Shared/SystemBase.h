@@ -57,7 +57,7 @@ public:
 };
 
 #warning verify that _StackMainSize is large enough
-#define _StackMainSize 128
+#define _StackMainSize 1024
 
 [[gnu::section(".stack.main")]]
 uint8_t _StackMain[_StackMainSize];

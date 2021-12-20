@@ -6,7 +6,6 @@
 
 #include "Assert.h"
 #include "SystemClock.h"
-#include "Startup.h"
 #include "Toastbox/IntState.h"
 #include "STM.h"
 #include "USB.h"
@@ -53,31 +52,21 @@ struct {
 
 static constexpr uint32_t _UsPerTick  = 1000;
 
-class _CmdTask;
+class _CmdRecvTask;
+class _CmdHandleTask;
 class _USBDataOutTask;
-class _AsyncTask;
 
 #define _Subtasks       \
-    _USBDataOutTask,    \
-    _AsyncTask
+    _CmdHandleTask,     \
+    _USBDataOutTask
 
 using _Scheduler = Toastbox::Scheduler<
     // Microseconds per tick
     _UsPerTick,
     // Tasks
-    _CmdTask,
+    _CmdRecvTask,
     _Subtasks
 >;
-
-#warning debug symbols
-#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
-
-constexpr auto& _DidWork            = _Scheduler::_DidWork;
-constexpr auto& _CurrentTask        = _Scheduler::_CurrentTask;
-constexpr auto& _SP                 = _Scheduler::_SP;
-constexpr auto& _CurrentTime        = _Scheduler::_CurrentTime;
-constexpr auto& _Wake               = _Scheduler::_Wake;
-constexpr auto& _WakeTime           = _Scheduler::_WakeTime;
 
 //Toastbox::Task _usb_cmdTask             = Toastbox::Task([&] {  _usb_cmdTaskFn();           });
 //Toastbox::Task _usb_dataOutTask         = Toastbox::Task([&] {  _usb_dataOutTaskFn();       });
@@ -138,14 +127,6 @@ static void _ResetTasks() {
     (_Scheduler::Stop<T_Tasks>(), ...);
 }
 
-
-//void _ResetTasks() {
-//    #warning how can we iterate over every task?
-//    _Scheduler::Stop<_USBDataOutTask>();
-//    _Scheduler::Stop<_AsyncTask>();
-////    _Scheduler::Stop<>();
-//}
-
 static size_t _ceilToMaxPacketSize(size_t len) {
     // Round `len` up to the nearest packet size, since the USB hardware limits
     // the data received based on packets instead of bytes
@@ -190,7 +171,7 @@ struct _USBDataOutTask {
     
     // Task stack
     [[gnu::section(".stack._USBDataOutTask")]]
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[256];
     
 private:
     static inline size_t _Len = 0;
@@ -606,6 +587,23 @@ static void _usb_dataInSendStatus(bool s) {
 //    }
 //}
 
+void _statusGet() {
+    // Send status
+    _usb_dataInSendStatus(true);
+    // Wait for host to receive status
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    
+    // Send status struct
+    alignas(4) static const STM::Status status = { // Aligned to send via USB
+        .magic      = STM::Status::MagicNumber,
+        .version    = STM::Version,
+        .mode       = STM::Status::Modes::STMLoader,
+    };
+    
+    _USB.send(Endpoints::DataIn, &status, sizeof(status));
+}
+
+
 static void _ledSet() {
     switch (_Cmd.arg.LEDSet.idx) {
     case 0: _usb_dataInSendStatus(false); return;
@@ -618,31 +616,57 @@ static void _ledSet() {
     _usb_dataInSendStatus(true);
 }
 
-struct _AsyncTask {
+static void _endpointsFlush() {
+    // Reset endpoints
+    _USB.endpointReset(Endpoints::DataOut);
+    _USB.endpointReset(Endpoints::DataIn);
+    // Wait until both endpoints are ready
+    _Scheduler::Wait([] {
+        return _USB.endpointReady(Endpoints::DataOut) &&
+               _USB.endpointReady(Endpoints::DataIn);
+    });
+    // Send status
+    _usb_dataInSendStatus(true);
+}
+
+struct _CmdHandleTask {
+    static void CmdHandle() {
+        _Scheduler::Start<_CmdHandleTask>([] { _CmdHandle(); });
+    }
+    
+    static void _CmdHandle() {
+        switch (_Cmd.op) {
+        // Common Commands
+        case Op::EndpointsFlush:    _endpointsFlush();  break;
+        case Op::StatusGet:         _statusGet();       break;
+//            case Op::BootloaderInvoke:  _bootloaderInvoke_task.start(); break;
+        case Op::LEDSet:            _ledSet();          break;
+//            // STM32 Bootloader
+//            case Op::STMWrite:          _stm_writeTask.start();         break;
+//            case Op::STMReset:          _stm_resetTask.start();         break;
+//            // ICE40 Bootloader
+//            case Op::ICEWrite:          _ice_writeTask.start();         break;
+//            // MSP430 Bootloader
+//            case Op::MSPConnect:        _msp_connect();                 break;
+//            case Op::MSPDisconnect:     _msp_disconnect();              break;
+//            // MSP430 Debug
+//            case Op::MSPRead:           _msp_readTask.start();          break;
+//            case Op::MSPWrite:          _msp_writeTask.start();         break;
+//            case Op::MSPDebug:          _msp_debugTask.start();         break;
+        // Bad command
+        default:                    _usb_dataInSendStatus(false);   break;
+        }
+    }
+    
     // Task options
     using Options = Toastbox::TaskOptions<>;
     
     // Task stack
-    [[gnu::section(".stack._AsyncTask")]]
-    static inline uint8_t Stack[128];
+    [[gnu::section(".stack._CmdHandleTask")]]
+    static inline uint8_t Stack[256];
 };
 
-static void _endpointsFlush() {
-    _Scheduler::Start<_AsyncTask>([] {
-        // Reset endpoints
-        _USB.endpointReset(Endpoints::DataOut);
-        _USB.endpointReset(Endpoints::DataIn);
-        // Wait until both endpoints are ready
-        _Scheduler::Wait([&] {
-            return _USB.endpointReady(Endpoints::DataOut) &&
-                   _USB.endpointReady(Endpoints::DataIn);
-        });
-        // Send status
-        _usb_dataInSendStatus(true);
-    });
-}
-
-struct _CmdTask {
+struct _CmdRecvTask {
     static void Run() {
         for (;;) {
             // Wait for USB to be re-connected (`Connecting` state) so we can call _USB.connect(),
@@ -683,42 +707,16 @@ struct _CmdTask {
             
             memcpy(&_Cmd, usbCmd.data, usbCmd.len);
             
-            // Specially handle the EndpointsFlush command -- it's the only command that doesn't
-            // require the endpoints to be ready.
-            if (_Cmd.op == Op::EndpointsFlush) {
-                _USB.cmdAccept(true);
-                _endpointsFlush();
-                continue;
-            }
-            
-            // Reject command if the endpoints aren't ready
-            if (!_USB.endpointReady(Endpoints::DataOut) || !_USB.endpointReady(Endpoints::DataIn)) {
+            // Only accept command if it's a flush command (in which case the endpoints
+            // don't need to be ready), or it's not a flush command, but both endpoints
+            // are ready. Otherwise, reject the command.
+            if (!(_Cmd.op==Op::EndpointsFlush || (_USB.endpointReady(Endpoints::DataOut) && _USB.endpointReady(Endpoints::DataIn)))) {
                 _USB.cmdAccept(false);
                 continue;
             }
             
             _USB.cmdAccept(true);
-            
-            switch (_Cmd.op) {
-            // Common Commands
-//            case Op::StatusGet:         _statusGet_task.start();        break;
-//            case Op::BootloaderInvoke:  _bootloaderInvoke_task.start(); break;
-            case Op::LEDSet:            _ledSet();                      break;
-//            // STM32 Bootloader
-//            case Op::STMWrite:          _stm_writeTask.start();         break;
-//            case Op::STMReset:          _stm_resetTask.start();         break;
-//            // ICE40 Bootloader
-//            case Op::ICEWrite:          _ice_writeTask.start();         break;
-//            // MSP430 Bootloader
-//            case Op::MSPConnect:        _msp_connect();                 break;
-//            case Op::MSPDisconnect:     _msp_disconnect();              break;
-//            // MSP430 Debug
-//            case Op::MSPRead:           _msp_readTask.start();          break;
-//            case Op::MSPWrite:          _msp_writeTask.start();         break;
-//            case Op::MSPDebug:          _msp_debugTask.start();         break;
-            // Bad command
-            default:                    _usb_dataInSendStatus(false);   break;
-            }
+            _CmdHandleTask::CmdHandle();
         }
     }
     
@@ -728,8 +726,8 @@ struct _CmdTask {
     >;
     
     // Task stack
-    [[gnu::section(".stack._CmdTask")]]
-    static inline uint8_t Stack[128];
+    [[gnu::section(".stack._CmdRecvTask")]]
+    static inline uint8_t Stack[256];
 };
 
 
@@ -741,6 +739,8 @@ struct _CmdTask {
 
 
 
+#define CheckStack() Assert((void*)__get_MSP()>=_StackMain && (void*)__get_MSP()<=(_StackMain+sizeof(_StackMain)))
+
 // MARK: - ISRs
 
 extern "C" [[gnu::section(".isr")]] void ISR_NMI()          {}
@@ -748,23 +748,42 @@ extern "C" [[gnu::section(".isr")]] void ISR_HardFault()    { abort(); }
 extern "C" [[gnu::section(".isr")]] void ISR_MemManage()    { abort(); }
 extern "C" [[gnu::section(".isr")]] void ISR_BusFault()     { abort(); }
 extern "C" [[gnu::section(".isr")]] void ISR_UsageFault()   { abort(); }
+
+//static volatile uint32_t _psp = 0;
+//
+//extern "C" [[gnu::section(".isr"), gnu::naked]] void ISR_SVC() {
+////    _psp = __get_PSP();
+//    // Exit to Thread mode, with SP using PSP (process SP)
+//    asm("mov lr, %0" : : "i" (0xFFFFFFE1) : );
+//    asm("bx lr");
+//    
+////    _psp = __get_PSP();
+////    // Exit to Thread mode, with SP using PSP (process SP)
+////    asm("mov lr, %0" : : "i" (EXC_RETURN_THREAD_PSP_FPU) : );
+////    asm("bx lr");
+//}
+
 extern "C" [[gnu::section(".isr")]] void ISR_SVC()          {}
 extern "C" [[gnu::section(".isr")]] void ISR_DebugMon()     {}
 extern "C" [[gnu::section(".isr")]] void ISR_PendSV()       {}
 
 extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
+    CheckStack();
     HAL_IncTick();
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
+    CheckStack();
     _USB.isr();
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {
+    CheckStack();
     _QSPI.isrQSPI();
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
+    CheckStack();
     _QSPI.isrDMA();
 }
 
@@ -788,11 +807,6 @@ void Toastbox::IntState::WaitForInterrupt() {
 
 // MARK: - Main
 
-
-#include "Startup.h"
-#include <string.h>
-#include "stm32f7xx.h"
-
 // The Startup class needs to exist in the `uninit` section,
 // so that its _appEntryPointAddr member doesn't get clobbered
 // on startup.
@@ -802,7 +816,8 @@ static volatile _AppEntryPointFn _AppEntryPoint [[noreturn, gnu::section(".unini
 static void _JumpToAppIfNeeded() {
     // Stash and reset `_AppEntryPoint` so that we only attempt to start the app once
     // after each software reset.
-    auto appEntryPoint = _AppEntryPoint;
+    #warning TODO: bring back
+	const _AppEntryPointFn appEntryPoint = nullptr;//_AppEntryPoint;
     _AppEntryPoint = nullptr;
     
     // Cache RCC_CSR since we're about to clear it
@@ -823,6 +838,22 @@ static void _JumpToAppIfNeeded() {
 
 
 
+#warning debug symbols
+#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
+
+constexpr auto& _Tasks              = _Scheduler::_Tasks;
+constexpr auto& _DidWork            = _Scheduler::_DidWork;
+constexpr auto& _CurrentTask        = _Scheduler::_CurrentTask;
+constexpr auto& _SP                 = _Scheduler::_SP;
+constexpr auto& _CurrentTime        = _Scheduler::_CurrentTime;
+constexpr auto& _Wake               = _Scheduler::_Wake;
+constexpr auto& _WakeTime           = _Scheduler::_WakeTime;
+
+#include "stm32f7xx.h"
+const auto& _SCB                = *SCB;
+
+
+
 
 int main() {
     _JumpToAppIfNeeded();
@@ -834,8 +865,6 @@ int main() {
     _USB.init();
     _QSPI.init();
     
-    abort();
     _Scheduler::Run();
-    
     return 0;
 }
