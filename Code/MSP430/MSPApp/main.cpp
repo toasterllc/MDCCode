@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <cstddef>
-#define TaskArchMSP430
+#define TaskMSP430
 #include "Toastbox/Task.h"
 #include "SDCard.h"
 #include "ICE.h"
@@ -85,7 +85,7 @@ using _SDCard = SD::Card<
 
 // _StartTime: the time set by STM32 (seconds since reference date)
 // Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
-__attribute__((section(".fram_info.main")))
+[[gnu::section(".fram_info.main")]]
 static volatile struct {
     uint32_t time   = 0;
     uint16_t valid  = false; // uint16_t (instead of bool) for alignment
@@ -94,18 +94,18 @@ static volatile struct {
 // _RTC: real time clock
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-__attribute__((section(".ram_backup.main")))
+[[gnu::section(".ram_backup.main")]]
 static RTC<_XT1FreqHz> _RTC;
 
 // _ImgAutoExp: auto exposure algorithm object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-__attribute__((section(".ram_backup.main")))
+[[gnu::section(".ram_backup.main")]]
 static Img::AutoExposure _ImgAutoExp;
 
 // _ImgIndexes: stats to track captured images
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely.
-__attribute__((section(".fram_info.main")))
+[[gnu::section(".fram_info.main")]]
 static volatile struct {
     uint32_t counter = 0;
     uint16_t write = 0;
@@ -132,7 +132,7 @@ struct _SDTask {
     using Options = Toastbox::TaskOptions<>;
     
     // Task stack
-    __attribute__((section(".stack._SDTask")))
+    [[gnu::section(".stack._SDTask")]]
     static inline uint8_t Stack[128];
 };
 
@@ -163,7 +163,7 @@ struct _ImgTask {
     using Options = Toastbox::TaskOptions<>;
     
     // Task stack
-    __attribute__((section(".stack._ImgTask")))
+    [[gnu::section(".stack._ImgTask")]]
     static inline uint8_t Stack[128];
 };
 
@@ -406,7 +406,7 @@ struct _BusyTimeoutTask {
     using Options = Toastbox::TaskOptions<>;
     
     // Task stack
-    __attribute__((section(".stack._BusyTimeoutTask")))
+    [[gnu::section(".stack._BusyTimeoutTask")]]
     static inline uint8_t Stack[128];
 };
 
@@ -440,7 +440,7 @@ struct _MotionTask {
     >;
     
     // Task stack
-    __attribute__((section(".stack._MotionTask")))
+    [[gnu::section(".stack._MotionTask")]]
     static inline uint8_t Stack[128];
 };
 
@@ -449,11 +449,11 @@ struct _MotionTask {
 #warning verify that _StackMainSize is large enough
 #define _StackMainSize 128
 
-__attribute__((section(".stack.main")))
+[[gnu::section(".stack.main")]]
 uint8_t _StackMain[_StackMainSize];
 
 asm(".global __stack");
-asm("__stack = _StackMain+" Stringify(_StackMainSize));
+asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
 
 int main() {
     // Stop watchdog timer

@@ -55,14 +55,29 @@ static constexpr uint32_t _UsPerTick  = 1000;
 
 class _CmdTask;
 class _USBDataOutTask;
+class _AsyncTask;
+
+#define _Subtasks       \
+    _USBDataOutTask,    \
+    _AsyncTask
 
 using _Scheduler = Toastbox::Scheduler<
     // Microseconds per tick
     _UsPerTick,
     // Tasks
     _CmdTask,
-    _USBDataOutTask
+    _Subtasks
 >;
+
+#warning debug symbols
+#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
+
+constexpr auto& _DidWork            = _Scheduler::_DidWork;
+constexpr auto& _CurrentTask        = _Scheduler::_CurrentTask;
+constexpr auto& _SP                 = _Scheduler::_SP;
+constexpr auto& _CurrentTime        = _Scheduler::_CurrentTime;
+constexpr auto& _Wake               = _Scheduler::_Wake;
+constexpr auto& _WakeTime           = _Scheduler::_WakeTime;
 
 //Toastbox::Task _usb_cmdTask             = Toastbox::Task([&] {  _usb_cmdTaskFn();           });
 //Toastbox::Task _usb_dataOutTask         = Toastbox::Task([&] {  _usb_dataOutTaskFn();       });
@@ -118,12 +133,18 @@ using _Scheduler = Toastbox::Scheduler<
 
 
 
-
-void _ResetTasks() {
-    // TODO: implement
-    for (;;);
-//    _Scheduler::Stop<>();
+template <typename... T_Tasks>
+static void _ResetTasks() {
+    (_Scheduler::Stop<T_Tasks>(), ...);
 }
+
+
+//void _ResetTasks() {
+//    #warning how can we iterate over every task?
+//    _Scheduler::Stop<_USBDataOutTask>();
+//    _Scheduler::Stop<_AsyncTask>();
+////    _Scheduler::Stop<>();
+//}
 
 static size_t _ceilToMaxPacketSize(size_t len) {
     // Round `len` up to the nearest packet size, since the USB hardware limits
@@ -168,12 +189,18 @@ struct _USBDataOutTask {
     using Options = Toastbox::TaskOptions<>;
     
     // Task stack
-    __attribute__((section(".stack._USBDataOutTask")))
+    [[gnu::section(".stack._USBDataOutTask")]]
     static inline uint8_t Stack[128];
     
 private:
     static inline size_t _Len = 0;
 };
+
+static void _usb_dataInSendStatus(bool s) {
+    alignas(4) static bool status = false; // Aligned to send via USB
+    status = s;
+    _USB.send(Endpoints::DataIn, &status, sizeof(status));
+}
 
 
 
@@ -238,19 +265,7 @@ private:
 //    // Unreachable
 //    abort();
 //}
-//
-//void _ledSet() {
-//    switch (_Cmd.arg.LEDSet.idx) {
-//    case 0: _usb_dataInSendStatus(false); return;
-//    case 1: LED1::Write(_Cmd.arg.LEDSet.on); break;
-//    case 2: LED2::Write(_Cmd.arg.LEDSet.on); break;
-//    case 3: LED3::Write(_Cmd.arg.LEDSet.on); break;
-//    }
-//    
-//    // Send status
-//    _usb_dataInSendStatus(true);
-//}
-//
+
 //static size_t _stm_regionCapacity(void* addr) {
 //    // Verify that `addr` is in one of the allowed RAM regions
 //    extern uint8_t _sitcm_ram[], _eitcm_ram[];
@@ -591,12 +606,41 @@ private:
 //    }
 //}
 
+static void _ledSet() {
+    switch (_Cmd.arg.LEDSet.idx) {
+    case 0: _usb_dataInSendStatus(false); return;
+    case 1: SystemBase::LED1::Write(_Cmd.arg.LEDSet.on); break;
+    case 2: SystemBase::LED2::Write(_Cmd.arg.LEDSet.on); break;
+    case 3: SystemBase::LED3::Write(_Cmd.arg.LEDSet.on); break;
+    }
+    
+    // Send status
+    _usb_dataInSendStatus(true);
+}
 
+struct _AsyncTask {
+    // Task options
+    using Options = Toastbox::TaskOptions<>;
+    
+    // Task stack
+    [[gnu::section(".stack._AsyncTask")]]
+    static inline uint8_t Stack[128];
+};
 
-
-
-
-
+static void _endpointsFlush() {
+    _Scheduler::Start<_AsyncTask>([] {
+        // Reset endpoints
+        _USB.endpointReset(Endpoints::DataOut);
+        _USB.endpointReset(Endpoints::DataIn);
+        // Wait until both endpoints are ready
+        _Scheduler::Wait([&] {
+            return _USB.endpointReady(Endpoints::DataOut) &&
+                   _USB.endpointReady(Endpoints::DataIn);
+        });
+        // Send status
+        _usb_dataInSendStatus(true);
+    });
+}
 
 struct _CmdTask {
     static void Run() {
@@ -605,7 +649,7 @@ struct _CmdTask {
             // or for a new command to arrive so we can handle it.
             _Scheduler::Wait([&] { return _USB.state()==USB::State::Connecting || _USB.cmdRecv(); });
             
-            // TODO: do we still need to disable interrupts?
+            #warning TODO: do we still need to disable interrupts?
             // Disable interrupts so we can inspect+modify _usb atomically
             Toastbox::IntState ints(false);
             
@@ -613,7 +657,7 @@ struct _CmdTask {
             // This needs to happen before we call `_USB.connect()` so that any tasks that
             // were running in the previous USB session are stopped before we enable
             // USB again by calling _USB.connect().
-            _ResetTasks();
+            _ResetTasks<_Subtasks>();
             
             switch (_USB.state()) {
             case USB::State::Connecting:
@@ -639,27 +683,27 @@ struct _CmdTask {
             
             memcpy(&_Cmd, usbCmd.data, usbCmd.len);
             
-//            // Specially handle the EndpointsFlush command -- it's the only command that doesn't
-//            // require the endpoints to be ready.
-//            if (_Cmd.op == Op::EndpointsFlush) {
-//                _USB.cmdAccept(true);
-//                _endpointsFlush_task.start();
-//                continue;
-//            }
-//            
-//            // Reject command if the endpoints aren't ready
-//            if (!_USB.endpointReady(Endpoints::DataOut) || !_USB.endpointReady(Endpoints::DataIn)) {
-//                _USB.cmdAccept(false);
-//                continue;
-//            }
-//            
-//            _USB.cmdAccept(true);
-//            
-//            switch (_Cmd.op) {
-//            // Common Commands
+            // Specially handle the EndpointsFlush command -- it's the only command that doesn't
+            // require the endpoints to be ready.
+            if (_Cmd.op == Op::EndpointsFlush) {
+                _USB.cmdAccept(true);
+                _endpointsFlush();
+                continue;
+            }
+            
+            // Reject command if the endpoints aren't ready
+            if (!_USB.endpointReady(Endpoints::DataOut) || !_USB.endpointReady(Endpoints::DataIn)) {
+                _USB.cmdAccept(false);
+                continue;
+            }
+            
+            _USB.cmdAccept(true);
+            
+            switch (_Cmd.op) {
+            // Common Commands
 //            case Op::StatusGet:         _statusGet_task.start();        break;
 //            case Op::BootloaderInvoke:  _bootloaderInvoke_task.start(); break;
-//            case Op::LEDSet:            _ledSet();                      break;
+            case Op::LEDSet:            _ledSet();                      break;
 //            // STM32 Bootloader
 //            case Op::STMWrite:          _stm_writeTask.start();         break;
 //            case Op::STMReset:          _stm_resetTask.start();         break;
@@ -672,9 +716,9 @@ struct _CmdTask {
 //            case Op::MSPRead:           _msp_readTask.start();          break;
 //            case Op::MSPWrite:          _msp_writeTask.start();         break;
 //            case Op::MSPDebug:          _msp_debugTask.start();         break;
-//            // Bad command
-//            default:                    _usb_dataInSendStatus(false);   break;
-//            }
+            // Bad command
+            default:                    _usb_dataInSendStatus(false);   break;
+            }
         }
     }
     
@@ -684,7 +728,7 @@ struct _CmdTask {
     >;
     
     // Task stack
-    __attribute__((section(".stack._CmdTask")))
+    [[gnu::section(".stack._CmdTask")]]
     static inline uint8_t Stack[128];
 };
 
@@ -696,35 +740,36 @@ struct _CmdTask {
 
 
 
-// MARK: ISRs
 
-extern "C" __attribute__((section(".isr"))) void ISR_NMI() {}
-extern "C" __attribute__((section(".isr"))) void ISR_HardFault() { for (;;); }
-extern "C" __attribute__((section(".isr"))) void ISR_MemManage() { for (;;); }
-extern "C" __attribute__((section(".isr"))) void ISR_BusFault() { for (;;); }
-extern "C" __attribute__((section(".isr"))) void ISR_UsageFault() { for (;;); }
-extern "C" __attribute__((section(".isr"))) void ISR_SVC() {}
-extern "C" __attribute__((section(".isr"))) void ISR_DebugMon() {}
-extern "C" __attribute__((section(".isr"))) void ISR_PendSV() {}
+// MARK: - ISRs
 
-extern "C" __attribute__((section(".isr"))) void ISR_SysTick() {
+extern "C" [[gnu::section(".isr")]] void ISR_NMI()          {}
+extern "C" [[gnu::section(".isr")]] void ISR_HardFault()    { abort(); }
+extern "C" [[gnu::section(".isr")]] void ISR_MemManage()    { abort(); }
+extern "C" [[gnu::section(".isr")]] void ISR_BusFault()     { abort(); }
+extern "C" [[gnu::section(".isr")]] void ISR_UsageFault()   { abort(); }
+extern "C" [[gnu::section(".isr")]] void ISR_SVC()          {}
+extern "C" [[gnu::section(".isr")]] void ISR_DebugMon()     {}
+extern "C" [[gnu::section(".isr")]] void ISR_PendSV()       {}
+
+extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
     HAL_IncTick();
 }
 
-extern "C" __attribute__((section(".isr"))) void ISR_OTG_HS() {
+extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
     _USB.isr();
 }
 
-extern "C" __attribute__((section(".isr"))) void ISR_QUADSPI() {
+extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {
     _QSPI.isrQSPI();
 }
 
-extern "C" __attribute__((section(".isr"))) void ISR_DMA2_Stream7() {
+extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
     _QSPI.isrDMA();
 }
 
 
-// MARK: IntState
+// MARK: - IntState
 
 bool Toastbox::IntState::InterruptsEnabled() {
     return !__get_PRIMASK();
@@ -736,11 +781,12 @@ void Toastbox::IntState::SetInterruptsEnabled(bool en) {
 }
 
 void Toastbox::IntState::WaitForInterrupt() {
+    Toastbox::IntState ints(true);
     __WFI();
 }
 
 
-// MARK: Main
+// MARK: - Main
 
 int main() {
     SystemBase::Init();
@@ -750,6 +796,7 @@ int main() {
     _USB.init();
     _QSPI.init();
     
+    abort();
     _Scheduler::Run();
     
     return 0;

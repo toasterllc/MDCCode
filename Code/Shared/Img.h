@@ -25,25 +25,25 @@ namespace Img {
         uint32_t _pad3;         // 0x00000000
     } __attribute__((packed));
     
-    constexpr uint16_t HeaderVersion    = 0x4242;
+    constexpr uint16_t HeaderVersion        = 0x4242;
     
-    constexpr uint32_t HeaderLen        = sizeof(Header);
-    constexpr uint32_t PixelWidth       = 2304;
-    constexpr uint32_t PixelHeight      = 1296;
-    constexpr uint32_t PixelCount       = PixelWidth*PixelHeight;
-    constexpr uint32_t PixelLen         = PixelCount*sizeof(Pixel);
-    constexpr uint32_t ChecksumLen      = sizeof(uint32_t);
-    constexpr uint32_t Len              = HeaderLen + PixelLen + ChecksumLen;
-    constexpr uint32_t ChecksumOffset   = Len-ChecksumLen;
+    constexpr uint32_t HeaderLen            = sizeof(Header);
+    constexpr uint32_t PixelWidth           = 2304;
+    constexpr uint32_t PixelHeight          = 1296;
+    constexpr uint32_t PixelCount           = PixelWidth*PixelHeight;
+    constexpr uint32_t PixelLen             = PixelCount*sizeof(Pixel);
+    constexpr uint32_t ChecksumLen          = sizeof(uint32_t);
+    constexpr uint32_t Len                  = HeaderLen + PixelLen + ChecksumLen;
+    constexpr uint32_t ChecksumOffset       = Len-ChecksumLen;
     
     // StatsSubsampleFactor: We only sample 1/16 of pixels for highlights/shadows
-    const uint16_t StatsSubsampleFactor = 16;
+    constexpr uint16_t StatsSubsampleFactor = 16;
     
-    const uint16_t CoarseIntTimeMax     = 16383;
-    const uint16_t FineIntTimeMax       = 16383;
-    const uint16_t AnalogGainMax        = 63;
+    constexpr uint16_t CoarseIntTimeMax     = 16383;
+    constexpr uint16_t FineIntTimeMax       = 16383;
+    constexpr uint16_t AnalogGainMax        = 63;
     
     // PaddedLen: the length of the image padded to a multiple of 512 bytes
-    constexpr uint32_t PaddedLen        = Util::Ceil(Len, (uint32_t)512);
+    constexpr uint32_t PaddedLen            = Util::Ceil(Len, (uint32_t)512);
 
 } // namespace Img

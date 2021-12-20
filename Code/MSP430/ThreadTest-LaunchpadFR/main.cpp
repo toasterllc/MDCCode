@@ -45,6 +45,11 @@ static void _ISR_WDT() {
 //    PAOUT &= ~BIT2;
 }
 
+template <typename... T_Tasks>
+static void _resetTasks() {
+    (Scheduler::Stop<T_Tasks>(), ...);
+}
+
 int main() {
     // Config watchdog timer:
     //   WDTPW:             password
@@ -117,6 +122,16 @@ int main() {
 //        VoidFn fn = Opts::AutoStart::Fn;
 //        fn();
 //    }
+    
+    #define Subtasks TaskA, TaskB
+    _resetTasks<Subtasks>();
+    
+//    Scheduler::Stop<Subtasks...>();
+    
+//    (std::is_same_v<T, Forbidden> && ...);
+    
+    
+    
     
     Scheduler::Run();
     return 0;
