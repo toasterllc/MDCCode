@@ -68,6 +68,9 @@ class _USBDataInTask;
 using _Scheduler = Toastbox::Scheduler<
     // Microseconds per tick
     _UsPerTick,
+    #warning disable for production
+    // Enable stack guard to detect stack overflows
+    true,
     // Tasks
     _CmdRecvTask,
     _Subtasks

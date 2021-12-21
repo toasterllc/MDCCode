@@ -8,6 +8,8 @@ class TaskB;
 using Scheduler = Toastbox::Scheduler<
     // Microseconds per tick
     512,
+    // Stack Guard
+    false,
     // Tasks
     TaskA,
     TaskB
