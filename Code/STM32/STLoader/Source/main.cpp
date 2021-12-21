@@ -375,10 +375,10 @@ int main() {
     
     constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
     
-//    // DMA clock/IRQ
-//    __HAL_RCC_DMA2_CLK_ENABLE();
-//    HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, InterruptPriority, 0);
-//    HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+    // DMA clock/IRQ
+    __HAL_RCC_DMA2_CLK_ENABLE();
+    HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, InterruptPriority, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
     
     // QSPI clock/IRQ
     __HAL_RCC_QSPI_CLK_ENABLE();
@@ -404,25 +404,25 @@ int main() {
     HAL_StatusTypeDef hs = HAL_QSPI_Init(&_device);
     Assert(hs == HAL_OK);
     
-//    // Init DMA
-//    _dma.Instance = DMA2_Stream7;
-//    _dma.Init.Channel = DMA_CHANNEL_3;
-//    _dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
-//    _dma.Init.PeriphInc = DMA_PINC_DISABLE;
-//    _dma.Init.MemInc = DMA_MINC_ENABLE;
-//    _dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-//    _dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-//    _dma.Init.Mode = DMA_NORMAL;
-//    _dma.Init.Priority = DMA_PRIORITY_VERY_HIGH;
-//    _dma.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
-//    _dma.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
-//    _dma.Init.MemBurst = DMA_MBURST_SINGLE;
-//    _dma.Init.PeriphBurst = DMA_PBURST_SINGLE;
-//    
-//    hs = HAL_DMA_Init(&_dma);
-//    Assert(hs == HAL_OK);
-//    
-//    __HAL_LINKDMA(&_device, hdma, _dma);
+    // Init DMA
+    _dma.Instance = DMA2_Stream7;
+    _dma.Init.Channel = DMA_CHANNEL_3;
+    _dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    _dma.Init.PeriphInc = DMA_PINC_DISABLE;
+    _dma.Init.MemInc = DMA_MINC_ENABLE;
+    _dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    _dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    _dma.Init.Mode = DMA_NORMAL;
+    _dma.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+    _dma.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+    _dma.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    _dma.Init.MemBurst = DMA_MBURST_SINGLE;
+    _dma.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    
+    hs = HAL_DMA_Init(&_dma);
+    Assert(hs == HAL_OK);
+    
+    __HAL_LINKDMA(&_device, hdma, _dma);
     
     
     
@@ -474,11 +474,8 @@ int main() {
     hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
     Assert(hs == HAL_OK);
     
-    hs = HAL_QSPI_Transmit(&_device, (uint8_t*)&ff, HAL_MAX_DELAY);
+    hs = HAL_QSPI_Transmit_DMA(&_device, (uint8_t*)&ff);
     Assert(hs == HAL_OK);
-    
-//    hs = HAL_QSPI_Transmit_DMA(&_device, (uint8_t*)&ff);
-//    Assert(hs == HAL_OK);
     
     for (;;);
     return 0;
