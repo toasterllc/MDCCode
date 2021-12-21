@@ -21,6 +21,9 @@
             - Might be because we're not waiting long enough after turning on the power rails to do I2C comms
                 - "#warning TODO: measure how long it takes for IMG rails to rise"
     
+    - USB Throughput, revisted:
+        - Could we use the DMA "Double-buffer mode" to avoid CPU intervention between sending 64k chunks?
+    
     - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
         - Does the USB hub limit the data throughput?
         - Perf debugging tactic: check how often the DIEPINT.NAK interrupt occurs when sending mass data to the
