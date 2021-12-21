@@ -19,18 +19,164 @@ _bufs(_buf0, _buf1)
 {}
 
 void System::init() {
-    _super::init();
+}
+
+#pragma mark - ICE40 Bootloader
+static void _ice_qspiWrite(QSPI& qspi, const void* data, size_t len) {
+    QSPI_CommandTypeDef cmd = {
+        .Instruction = 0,
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        
+        .Address = 0,
+        .AddressSize = QSPI_ADDRESS_8_BITS,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        
+        .AlternateBytes = 0,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        
+        .DummyCycles = 0,
+        
+        .NbData = (uint32_t)len,
+        .DataMode = QSPI_DATA_1_LINE,
+        
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
     
-    __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
-    
-    _usb.init();
-    _qspi.init();
-    
-    _resetTasks();
+    qspi.write(cmd, data, len);
+}
+
+QSPI_HandleTypeDef _device;
+DMA_HandleTypeDef _dma;
+
+extern "C" __attribute__((section(".isr"))) void ISR_SysTick() {
+}
+
+extern "C" __attribute__((section(".isr"))) void ISR_QUADSPI() {
+    ISR_HAL_QSPI(&_device);
+}
+
+extern "C" __attribute__((section(".isr"))) void ISR_DMA2_Stream7() {
+    ISR_HAL_DMA(&_dma);
+}
+
+extern "C" __attribute__((section(".isr"))) void ISR_DMA2_Stream4() {
+    for (;;);
 }
 
 void System::run() {
-    Toastbox::Task::Run(_tasks);
+    static const uint8_t ff = 0xff;
+    
+    constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
+    
+    // Reset peripherals, initialize flash interface, initialize Systick
+    HAL_Init();
+    
+    // Configure the system clock
+    SystemClock::Init();
+    
+    // Allow debugging while we're asleep
+    HAL_DBGMCU_EnableDBGSleepMode();
+    HAL_DBGMCU_EnableDBGStopMode();
+    HAL_DBGMCU_EnableDBGStandbyMode();
+    
+    // TODO: move these to their respective peripherals? there'll be some redundency though, is that OK?
+    __HAL_RCC_GPIOB_CLK_ENABLE(); // USB, QSPI, LEDs
+    __HAL_RCC_GPIOC_CLK_ENABLE(); // QSPI
+    __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
+    __HAL_RCC_GPIOF_CLK_ENABLE(); // QSPI
+    __HAL_RCC_GPIOG_CLK_ENABLE(); // QSPI
+    __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
+    
+    __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
+    
+    // DMA clock/IRQ
+    __HAL_RCC_DMA2_CLK_ENABLE();
+    HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, InterruptPriority, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+    
+    // QSPI clock/IRQ
+    __HAL_RCC_QSPI_CLK_ENABLE();
+    __HAL_RCC_QSPI_FORCE_RESET();
+    __HAL_RCC_QSPI_RELEASE_RESET();
+    HAL_NVIC_SetPriority(QUADSPI_IRQn, InterruptPriority, 0);
+    HAL_NVIC_EnableIRQ(QUADSPI_IRQn);
+    
+    // Init QUADSPI
+    _device.Instance = QUADSPI;
+    _device.Init.ClockPrescaler = 5; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1)
+    _device.Init.FifoThreshold = 4;
+    _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
+//    _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
+    _device.Init.FlashSize = 31; // Flash size is 31+1 address bits => 2^(31+1) bytes
+    _device.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
+    _device.Init.ClockMode = QSPI_CLOCK_MODE_0; // Clock idles low
+//    _device.Init.ClockMode = QSPI_CLOCK_MODE_3; // Clock idles high
+    _device.Init.FlashID = QSPI_FLASH_ID_1;
+    _device.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
+    _device.Ctx = this;
+    
+    HAL_StatusTypeDef hs = HAL_QSPI_Init(&_device);
+    Assert(hs == HAL_OK);
+    
+    // Init DMA
+    _dma.Instance = DMA2_Stream7;
+    _dma.Init.Channel = DMA_CHANNEL_3;
+    _dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    _dma.Init.PeriphInc = DMA_PINC_DISABLE;
+    _dma.Init.MemInc = DMA_MINC_ENABLE;
+    _dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    _dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    _dma.Init.Mode = DMA_NORMAL;
+    _dma.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+    _dma.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+    _dma.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    _dma.Init.MemBurst = DMA_MBURST_SINGLE;
+    _dma.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    
+    hs = HAL_DMA_Init(&_dma);
+    Assert(hs == HAL_OK);
+    
+    __HAL_LINKDMA(&_device, hdma, _dma);
+    
+    
+    
+    
+    
+    
+    QSPI_CommandTypeDef cmd = {
+        .Instruction = 0,
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        
+        .Address = 0,
+        .AddressSize = QSPI_ADDRESS_8_BITS,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        
+        .AlternateBytes = 0,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        
+        .DummyCycles = 0,
+        
+        .NbData = (uint32_t)sizeof(ff),
+        .DataMode = QSPI_DATA_1_LINE,
+        
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+    
+    hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
+    Assert(hs == HAL_OK);
+    
+    hs = HAL_QSPI_Transmit_DMA(&_device, (uint8_t*)&ff);
+    Assert(hs == HAL_OK);
+    
+    for (;;);
+    
+    //Toastbox::Task::Run(_tasks);
 }
 
 void System::_resetTasks() {
@@ -294,33 +440,6 @@ void System::_stm_resetTaskFn() {
     HAL_NVIC_SystemReset();
     // Unreachable
     abort();
-}
-
-#pragma mark - ICE40 Bootloader
-static void _ice_qspiWrite(QSPI& qspi, const void* data, size_t len) {
-    QSPI_CommandTypeDef cmd = {
-        .Instruction = 0,
-        .InstructionMode = QSPI_INSTRUCTION_NONE,
-        
-        .Address = 0,
-        .AddressSize = QSPI_ADDRESS_8_BITS,
-        .AddressMode = QSPI_ADDRESS_NONE,
-        
-        .AlternateBytes = 0,
-        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
-        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
-        
-        .DummyCycles = 0,
-        
-        .NbData = (uint32_t)len,
-        .DataMode = QSPI_DATA_1_LINE,
-        
-        .DdrMode = QSPI_DDR_MODE_DISABLE,
-        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
-        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
-    };
-    
-    qspi.write(cmd, data, len);
 }
 
 void System::_ice_writeTaskFn() {
