@@ -33,7 +33,7 @@ public:
     void isrQSPI();
     void isrDMA();
     
-private:
+//private:
     void _handleCommandDone();
     void _handleReadDone();
     void _handleWriteDone();

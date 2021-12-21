@@ -1,21 +1,15 @@
-#include "QSPI.h"
-#include "Toastbox/IntState.h"
 #include "SystemClock.h"
 
-// QSPI clock divider=5 => run QSPI clock at 21.3 MHz
-// QSPI alignment=byte, so we can transfer single bytes at a time
-QSPI _QSPI(QSPI::Mode::Single, 5, QSPI::Align::Byte, QSPI::ChipSelect::Controlled);
+QSPI_HandleTypeDef _device;
+DMA_HandleTypeDef _dma;
 
 extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {
-    _QSPI.isrQSPI();
+    ISR_HAL_QSPI(&_device);
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
-    _QSPI.isrDMA();
+    ISR_HAL_DMA(&_dma);
 }
-
-
-
 
 
 
@@ -306,7 +300,155 @@ extern "C" [[gnu::section(".isr")]] void ISR_SDMMC2() {
 
 
 
-static void _ice_qspiWrite(const void* data, size_t len) {
+[[gnu::section(".stack.main")]] uint8_t _StackMain[1024];
+asm(".global _StackMainEnd");
+asm(".equ _StackMainEnd, _StackMain+1024");
+
+
+
+int main() {
+    // Reset peripherals, initialize flash interface, initialize Systick
+    HAL_Init();
+    
+    // Configure the main internal regulator output voltage
+    {
+        __HAL_RCC_PWR_CLK_ENABLE();
+        __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+    }
+    
+    // Initialize RCC oscillators
+    {
+        RCC_OscInitTypeDef cfg = {};
+        cfg.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+        cfg.HSEState = RCC_HSE_BYPASS;
+        cfg.PLL.PLLState = RCC_PLL_ON;
+        cfg.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+        cfg.PLL.PLLM = 8;
+        cfg.PLL.PLLN = 128;
+        cfg.PLL.PLLP = RCC_PLLP_DIV2;
+        cfg.PLL.PLLQ = 2;
+        
+        HAL_StatusTypeDef hr = HAL_RCC_OscConfig(&cfg);
+        Assert(hr == HAL_OK);
+    }
+    
+    // Initialize bus clocks for CPU, AHB, APB
+    {
+        RCC_ClkInitTypeDef cfg = {};
+        cfg.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+        cfg.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+        cfg.AHBCLKDivider = RCC_SYSCLK_DIV1;
+        cfg.APB1CLKDivider = RCC_HCLK_DIV4;
+        cfg.APB2CLKDivider = RCC_HCLK_DIV2;
+        
+        HAL_StatusTypeDef hr = HAL_RCC_ClockConfig(&cfg, FLASH_LATENCY_6);
+        Assert(hr == HAL_OK);
+    }
+    
+    {
+        RCC_PeriphCLKInitTypeDef cfg = {};
+        cfg.PeriphClockSelection = RCC_PERIPHCLK_CLK48;
+        cfg.PLLSAI.PLLSAIN = 96;
+        cfg.PLLSAI.PLLSAIQ = 2;
+        cfg.PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV4;
+        cfg.PLLSAIDivQ = 1;
+        cfg.Clk48ClockSelection = RCC_CLK48SOURCE_PLLSAIP;
+        
+        HAL_StatusTypeDef hr = HAL_RCCEx_PeriphCLKConfig(&cfg);
+        Assert(hr == HAL_OK);
+    }
+    
+    // TODO: move these to their respective peripherals? there'll be some redundency though, is that OK?
+    __HAL_RCC_GPIOB_CLK_ENABLE(); // USB, QSPI, LEDs
+    __HAL_RCC_GPIOC_CLK_ENABLE(); // QSPI
+    __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
+    __HAL_RCC_GPIOF_CLK_ENABLE(); // QSPI
+    __HAL_RCC_GPIOG_CLK_ENABLE(); // QSPI
+    __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
+    
+    
+    
+    
+    
+    
+    
+    
+    constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
+    
+//    // DMA clock/IRQ
+//    __HAL_RCC_DMA2_CLK_ENABLE();
+//    HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, InterruptPriority, 0);
+//    HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+    
+    // QSPI clock/IRQ
+    __HAL_RCC_QSPI_CLK_ENABLE();
+    __HAL_RCC_QSPI_FORCE_RESET();
+    __HAL_RCC_QSPI_RELEASE_RESET();
+    HAL_NVIC_SetPriority(QUADSPI_IRQn, InterruptPriority, 0);
+    HAL_NVIC_EnableIRQ(QUADSPI_IRQn);
+    
+    // Init QUADSPI
+    _device.Instance = QUADSPI;
+    _device.Init.ClockPrescaler = 5; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1)
+    _device.Init.FifoThreshold = 4;
+    _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
+//    _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
+    _device.Init.FlashSize = 31; // Flash size is 31+1 address bits => 2^(31+1) bytes
+    _device.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
+    _device.Init.ClockMode = QSPI_CLOCK_MODE_0; // Clock idles low
+//    _device.Init.ClockMode = QSPI_CLOCK_MODE_3; // Clock idles high
+    _device.Init.FlashID = QSPI_FLASH_ID_1;
+    _device.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
+    _device.Ctx = nullptr;
+    
+    HAL_StatusTypeDef hs = HAL_QSPI_Init(&_device);
+    Assert(hs == HAL_OK);
+    
+//    // Init DMA
+//    _dma.Instance = DMA2_Stream7;
+//    _dma.Init.Channel = DMA_CHANNEL_3;
+//    _dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
+//    _dma.Init.PeriphInc = DMA_PINC_DISABLE;
+//    _dma.Init.MemInc = DMA_MINC_ENABLE;
+//    _dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+//    _dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+//    _dma.Init.Mode = DMA_NORMAL;
+//    _dma.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+//    _dma.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+//    _dma.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+//    _dma.Init.MemBurst = DMA_MBURST_SINGLE;
+//    _dma.Init.PeriphBurst = DMA_PBURST_SINGLE;
+//    
+//    hs = HAL_DMA_Init(&_dma);
+//    Assert(hs == HAL_OK);
+//    
+//    __HAL_LINKDMA(&_device, hdma, _dma);
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // Send 8 clocks and wait for them to complete
+    alignas(64) static const uint8_t ff = 0xff;
+    
     const QSPI_CommandTypeDef cmd = {
         .Instruction = 0,
         .InstructionMode = QSPI_INSTRUCTION_NONE,
@@ -321,7 +463,7 @@ static void _ice_qspiWrite(const void* data, size_t len) {
         
         .DummyCycles = 0,
         
-        .NbData = (uint32_t)len,
+        .NbData = (uint32_t)sizeof(ff),
         .DataMode = QSPI_DATA_1_LINE,
         
         .DdrMode = QSPI_DDR_MODE_DISABLE,
@@ -329,64 +471,14 @@ static void _ice_qspiWrite(const void* data, size_t len) {
         .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
     };
     
-    _QSPI.write(cmd, data, len);
-}
-
-
-
-
-
-
-
-
-// MARK: - IntState
-
-bool Toastbox::IntState::InterruptsEnabled() {
-    return !__get_PRIMASK();
-}
-
-void Toastbox::IntState::SetInterruptsEnabled(bool en) {
-    if (en) __enable_irq();
-    else __disable_irq();
-}
-
-void Toastbox::IntState::WaitForInterrupt() {
-    Toastbox::IntState ints(true);
-    __WFI();
-}
-
-
-[[gnu::section(".stack.main")]] uint8_t _StackMain[1024];
-asm(".global _StackMainEnd");
-asm(".equ _StackMainEnd, _StackMain+1024");
-
-
-
-int main() {
-    // Reset peripherals, initialize flash interface, initialize Systick
-    HAL_Init();
+    hs = HAL_QSPI_Command(&_device, &cmd, HAL_MAX_DELAY);
+    Assert(hs == HAL_OK);
     
-    // Configure the system clock
-    SystemClock::Init();
+    hs = HAL_QSPI_Transmit(&_device, (uint8_t*)&ff, HAL_MAX_DELAY);
+    Assert(hs == HAL_OK);
     
-    // Allow debugging while we're asleep
-    HAL_DBGMCU_EnableDBGSleepMode();
-    HAL_DBGMCU_EnableDBGStopMode();
-    HAL_DBGMCU_EnableDBGStandbyMode();
-    
-    // TODO: move these to their respective peripherals? there'll be some redundency though, is that OK?
-    __HAL_RCC_GPIOB_CLK_ENABLE(); // USB, QSPI, LEDs
-    __HAL_RCC_GPIOC_CLK_ENABLE(); // QSPI
-    __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
-    __HAL_RCC_GPIOF_CLK_ENABLE(); // QSPI
-    __HAL_RCC_GPIOG_CLK_ENABLE(); // QSPI
-    __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
-    
-    _QSPI.init();
-    
-    // Send 8 clocks and wait for them to complete
-    alignas(64) static const uint32_t ff = 0xffffffff;
-    _ice_qspiWrite(&ff, 4);
+//    hs = HAL_QSPI_Transmit_DMA(&_device, (uint8_t*)&ff);
+//    Assert(hs == HAL_OK);
     
     for (;;);
     return 0;
