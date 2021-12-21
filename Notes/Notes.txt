@@ -3,8 +3,7 @@
     - Task.h: debug feature: stack traces
     
     - Task.h: debug feature: detecting stack overflows
-    
-    - Task.h: detecting stack overflows would be extremely helpful for debugging
+        - Include support for detecting stack overflows on the main stack too, due to interrupt handlers using lots of stack
     
     - MSPApp: add proper error handling to Img/SD
         - Make error handler a template parameter

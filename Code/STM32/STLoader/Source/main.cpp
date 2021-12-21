@@ -147,7 +147,7 @@ public:
     
     // Task stack
     [[gnu::section(".stack._USBDataOutTask")]]
-    static inline uint8_t Stack[512];
+    static inline uint8_t Stack[64];
     
 private:
     static inline size_t _Len = 0;
@@ -177,7 +177,7 @@ public:
     
     // Task stack
     [[gnu::section(".stack._USBDataInTask")]]
-    static inline uint8_t Stack[512];
+    static inline uint8_t Stack[64];
 };
 
 
@@ -680,7 +680,7 @@ struct _CmdRecvTask {
     
     // Task stack
     [[gnu::section(".stack._CmdRecvTask")]]
-    static inline uint8_t Stack[512];
+    static inline uint8_t Stack[256];
 };
 
 
