@@ -78,11 +78,11 @@ private:
         // as being asserted, if it's asserted when when TEST is de-asserted
         Rst_::Write(1);
         Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
-        _DelayMs(1);
+        _DelayMs(10);
         
         Test::Write(0);
         Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
-        _DelayMs(1);
+        _DelayMs(10);
     }
     
     void _tapReset() {

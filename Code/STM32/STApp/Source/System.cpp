@@ -511,8 +511,7 @@ int main() {
     return 0;
 }
 
-extern "C" [[noreturn]]
-void abort() {
+[[noreturn]] void abort() {
     Sys.abort();
 }
 
