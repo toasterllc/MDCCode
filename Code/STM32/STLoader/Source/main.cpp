@@ -65,12 +65,15 @@ class _USBDataInTask;
     _USBDataOutTask,    \
     _USBDataInTask
 
+//constexpr void* Meow = nullptr;
+
 using _Scheduler = Toastbox::Scheduler<
-    // Microseconds per tick
-    _UsPerTick,
-    #warning disable for production
-    // Enable stack guard to detect stack overflows
-    true,
+    _UsPerTick, // T_UsPerTick
+    
+    #warning TODO: stack guards for production
+    _StackMain, // T_MainStack
+    4,          // T_StackGuardSize
+    
     // Tasks
     _CmdRecvTask,
     _Subtasks
@@ -147,7 +150,7 @@ public:
     
     // Task stack
     [[gnu::section(".stack._USBDataOutTask")]]
-    static inline uint8_t Stack[64];
+    static inline uint8_t Stack[256];
     
 private:
     static inline size_t _Len = 0;
@@ -177,7 +180,7 @@ public:
     
     // Task stack
     [[gnu::section(".stack._USBDataInTask")]]
-    static inline uint8_t Stack[64];
+    static inline uint8_t Stack[256];
 };
 
 
@@ -691,8 +694,8 @@ struct _CmdRecvTask {
 
 
 
-#warning TODO: remove this check in the future after we gain confidence that Task.h is appropriately causing MSP/PSP stacks to be swapped, and therefore the tasks' stacks are never used for interrupts
-#define CheckStack() Assert((void*)__get_MSP()>=_StackMain && (void*)__get_MSP()<=(_StackMain+sizeof(_StackMain)))
+//#warning TODO: remove this check in the future after we gain confidence that Task.h is appropriately causing MSP/PSP stacks to be swapped, and therefore the tasks' stacks are never used for interrupts
+//#define CheckStack() Assert((void*)__get_MSP()>=_StackMain && (void*)__get_MSP()<=(_StackMain+sizeof(_StackMain)))
 
 // MARK: - ISRs
 
@@ -706,22 +709,22 @@ extern "C" [[gnu::section(".isr")]] void ISR_DebugMon()     {}
 extern "C" [[gnu::section(".isr")]] void ISR_PendSV()       {}
 
 extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
-    CheckStack();
+//    CheckStack();
     HAL_IncTick();
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
-    CheckStack();
+//    CheckStack();
     _USB.isr();
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {
-    CheckStack();
+//    CheckStack();
     _QSPI.isrQSPI();
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
-    CheckStack();
+//    CheckStack();
     _QSPI.isrDMA();
 }
 
@@ -779,6 +782,7 @@ constexpr auto& _CurrentTask        = _Scheduler::_CurrentTask;
 constexpr auto& _CurrentTime        = _Scheduler::_CurrentTime;
 constexpr auto& _Wake               = _Scheduler::_Wake;
 constexpr auto& _WakeTime           = _Scheduler::_WakeTime;
+constexpr auto& _MainStackGuard     = _Scheduler::_MainStackGuard;
 
 #include "stm32f7xx.h"
 const auto& _SCB                = *SCB;

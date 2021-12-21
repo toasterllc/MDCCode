@@ -9,7 +9,8 @@ using Scheduler = Toastbox::Scheduler<
     // Microseconds per tick
     512,
     // Stack guard
-    false,
+    nullptr,
+    0,
     // Tasks
     TaskA,
     TaskB
