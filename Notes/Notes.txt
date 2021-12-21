@@ -1,5 +1,11 @@
 - Rev4 Todo
     
+    - Task.h: debug feature: stack traces
+    
+    - Task.h: debug feature: detecting stack overflows
+    
+    - Task.h: detecting stack overflows would be extremely helpful for debugging
+    
     - MSPApp: add proper error handling to Img/SD
         - Make error handler a template parameter
         - Have error handler take a breadcrumb value
