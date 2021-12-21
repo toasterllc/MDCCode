@@ -1,315 +1,77 @@
-#include "SystemClock.h"
+#include <cstring>
+#include "stm32f7xx.h"
 
 QSPI_HandleTypeDef _device;
 DMA_HandleTypeDef _dma;
 
-extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {
+extern "C" __attribute__((section(".isr"))) void ISR_SysTick() {
+}
+
+extern "C" __attribute__((section(".isr"))) void ISR_QUADSPI() {
     ISR_HAL_QSPI(&_device);
 }
 
-extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
+extern "C" __attribute__((section(".isr"))) void ISR_DMA2_Stream7() {
     ISR_HAL_DMA(&_dma);
 }
 
-
-
-
-extern "C" [[gnu::section(".isr")]] void ISR_NMI() {
+extern "C" __attribute__((section(".isr"))) void ISR_DMA2_Stream4() {
     for (;;);
 }
-extern "C" [[gnu::section(".isr")]] void ISR_HardFault() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_MemManage() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_BusFault() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_UsageFault() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SVC() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DebugMon() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_PendSV() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
-//    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_WWDG() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_PVD() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TAMP_STAMP() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_RTC_WKUP() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_FLASH() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_RCC() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_EXTI0() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_EXTI1() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_EXTI2() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_EXTI3() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_EXTI4() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA1_Stream0() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA1_Stream1() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA1_Stream2() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA1_Stream3() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA1_Stream4() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA1_Stream5() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA1_Stream6() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_ADC() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_CAN1_TX() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_CAN1_RX0() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_CAN1_RX1() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_CAN1_SCE() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_EXTI9_5() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM1_BRK_TIM9() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM1_UP_TIM10() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM1_TRG_COM_TIM11() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM1_CC() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM2() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM3() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM4() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_I2C1_EV() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_I2C1_ER() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_I2C2_EV() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_I2C2_ER() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SPI1() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SPI2() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_USART1() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_USART2() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_USART3() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_EXTI15_10() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_RTC_Alarm() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_OTG_FS_WKUP() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM8_BRK_TIM12() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM8_UP_TIM13() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM8_TRG_COM_TIM14() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM8_CC() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA1_Stream7() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_FMC() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SDMMC1() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM5() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SPI3() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_UART4() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_UART5() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM6_DAC() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_TIM7() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream0() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream1() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream2() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream3() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream4() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_OTG_FS() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream5() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream6() {
-    for (;;);
-}
-//extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
-//    for (;;);
-//}
-extern "C" [[gnu::section(".isr")]] void ISR_USART6() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_I2C3_EV() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_I2C3_ER() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS_EP1_OUT() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS_EP1_IN() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS_WKUP() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_AES() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_RNG() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_FPU() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_UART7() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_UART8() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SPI4() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SPI5() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SAI1() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SAI2() {
-    for (;;);
-}
-//extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {
-//    for (;;);
-//}
-extern "C" [[gnu::section(".isr")]] void ISR_LPTIM1() {
-    for (;;);
-}
-extern "C" [[gnu::section(".isr")]] void ISR_SDMMC2() {
-    for (;;);
-}
-
-
-
-
-
-
 
 [[gnu::section(".stack.main")]] uint8_t _StackMain[1024];
 asm(".global _StackMainEnd");
 asm(".equ _StackMainEnd, _StackMain+1024");
 
 
+extern "C" void __libc_init_array();
+
+extern "C" void StartupRun() {
+    // Cache RCC_CSR since we're about to clear it
+    auto csr = READ_REG(RCC->CSR);
+    // Clear RCC_CSR by setting the RMVF bit
+    SET_BIT(RCC->CSR, RCC_CSR_RMVF);
+    
+    extern uint8_t _sdata_flash[];
+    extern uint8_t _sdata_ram[];
+    extern uint8_t _edata_ram[];
+    extern uint8_t _sbss[];
+    extern uint8_t _ebss[];
+    extern uint8_t VectorTable[];
+    extern int main() __attribute__((noreturn));
+    
+    // Copy .data section from flash to RAM
+    memcpy(_sdata_ram, _sdata_flash, _edata_ram-_sdata_ram);
+    // Zero .bss section
+    memset(_sbss, 0, _ebss-_sbss);
+    
+    // FPU settings
+    if (__FPU_PRESENT && __FPU_USED) {
+        SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  // Set CP10 and CP11 Full Access
+    }
+    
+    // Set the vector table address
+    SCB->VTOR = (uint32_t)VectorTable;
+    
+    // Call static constructors
+    __libc_init_array();
+    
+    // Call main function
+    main();
+    
+    // Loop forever if main returns
+    for (;;);
+}
 
 int main() {
+    static const uint8_t ff = 0xff;
+    
+    constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
+    
     // Reset peripherals, initialize flash interface, initialize Systick
     HAL_Init();
     
+    // Configure the system clock
     // Configure the main internal regulator output voltage
     {
         __HAL_RCC_PWR_CLK_ENABLE();
@@ -358,6 +120,11 @@ int main() {
         Assert(hr == HAL_OK);
     }
     
+    // Allow debugging while we're asleep
+    HAL_DBGMCU_EnableDBGSleepMode();
+    HAL_DBGMCU_EnableDBGStopMode();
+    HAL_DBGMCU_EnableDBGStandbyMode();
+    
     // TODO: move these to their respective peripherals? there'll be some redundency though, is that OK?
     __HAL_RCC_GPIOB_CLK_ENABLE(); // USB, QSPI, LEDs
     __HAL_RCC_GPIOC_CLK_ENABLE(); // QSPI
@@ -366,14 +133,7 @@ int main() {
     __HAL_RCC_GPIOG_CLK_ENABLE(); // QSPI
     __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
     
-    
-    
-    
-    
-    
-    
-    
-    constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
+    __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
     
     // DMA clock/IRQ
     __HAL_RCC_DMA2_CLK_ENABLE();
@@ -429,27 +189,7 @@ int main() {
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // Send 8 clocks and wait for them to complete
-    alignas(64) static const uint8_t ff = 0xff;
-    
-    const QSPI_CommandTypeDef cmd = {
+    QSPI_CommandTypeDef cmd = {
         .Instruction = 0,
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         
