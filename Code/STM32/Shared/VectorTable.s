@@ -15,7 +15,7 @@
 .align 7
 .type VectorTable, %object
 VectorTable:
-    .word _StackMainEnd
+    .word _estack
     .word ISR_Reset
 
     .word ISR_NMI
@@ -95,12 +95,12 @@ VectorTable:
     .word    ISR_DMA2_Stream2           // DMA2 Stream 2
     .word    ISR_DMA2_Stream3           // DMA2 Stream 3
     .word    ISR_DMA2_Stream4           // DMA2 Stream 4
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
     .word    ISR_OTG_FS                 // USB OTG FS
     .word    ISR_DMA2_Stream5           // DMA2 Stream 5
     .word    ISR_DMA2_Stream6           // DMA2 Stream 6
@@ -112,7 +112,7 @@ VectorTable:
     .word    ISR_OTG_HS_EP1_IN          // USB OTG HS End Point 1 In
     .word    ISR_OTG_HS_WKUP            // USB OTG HS Wakeup through EXTI
     .word    ISR_OTG_HS                 // USB OTG HS
-    .word    0                          // Reserved
+    .word    0                                 // Reserved
     .word    ISR_AES                    // AES
     .word    ISR_RNG                    // RNG
     .word    ISR_FPU                    // FPU
@@ -120,23 +120,23 @@ VectorTable:
     .word    ISR_UART8                  // UART8
     .word    ISR_SPI4                   // SPI4
     .word    ISR_SPI5                   // SPI5
-    .word    0                          // Reserved
+    .word    0                                 // Reserved
     .word    ISR_SAI1                   // SAI1
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
     .word    ISR_SAI2                   // SAI2
     .word    ISR_QUADSPI                // QUADSPI
     .word    ISR_LPTIM1                 // LPTIM1
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
-    .word    0                          // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
+    .word    0                                 // Reserved
     .word    ISR_SDMMC2                 // SDMMC2
 
 
@@ -354,6 +354,9 @@ VectorTable:
     .weak      ISR_DMA2_Stream4
     .thumb_set ISR_DMA2_Stream4,ISR_Default
 
+    .weak      ISR_DMA2_Stream4
+    .thumb_set ISR_DMA2_Stream4,ISR_Default
+
     .weak      ISR_OTG_FS
     .thumb_set ISR_OTG_FS,ISR_Default
 
@@ -429,9 +432,9 @@ VectorTable:
 .type ISR_Reset, %function
 ISR_Reset:
     // Set stack pointer
-    ldr sp, =_StackMainEnd
+    ldr sp, =_estack
     // Jump to init routine
-    b Startup
+    b StartupRun
 
 
 // Default ISR handler
