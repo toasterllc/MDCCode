@@ -27,6 +27,7 @@ void Startup() {
     
     // Set the vector table address
     SCB->VTOR = (uint32_t)VectorTable;
+    __DSB();
     
     // Call static constructors
     __libc_init_array();
