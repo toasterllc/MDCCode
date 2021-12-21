@@ -2,9 +2,6 @@
 #include "stm32f7xx.h"
 #include "GPIO.h"
 
-extern "C" void ISR_QUADSPI();
-extern "C" void ISR_DMA2_Stream7();
-
 class QSPI {
 public:
     enum class Mode {
@@ -33,9 +30,10 @@ public:
     void write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len);
     void wait() const;
     
-private:
-    void _isrQSPI();
-    void _isrDMA();
+    void isrQSPI();
+    void isrDMA();
+    
+//private:
     void _handleCommandDone();
     void _handleReadDone();
     void _handleWriteDone();
@@ -66,6 +64,4 @@ private:
     friend void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef* device);
     void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* device);
     friend void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* device);
-    friend void ISR_QUADSPI();
-    friend void ISR_DMA2_Stream7();
 };
