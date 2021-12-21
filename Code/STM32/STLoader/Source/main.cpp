@@ -773,7 +773,6 @@ static void _JumpToAppIfNeeded() {
 constexpr auto& _Tasks              = _Scheduler::_Tasks;
 constexpr auto& _DidWork            = _Scheduler::_DidWork;
 constexpr auto& _CurrentTask        = _Scheduler::_CurrentTask;
-constexpr auto& _SP                 = _Scheduler::_SP;
 constexpr auto& _CurrentTime        = _Scheduler::_CurrentTime;
 constexpr auto& _Wake               = _Scheduler::_Wake;
 constexpr auto& _WakeTime           = _Scheduler::_WakeTime;
