@@ -51,7 +51,10 @@ extern "C" void StartupRun() {
     }
     
     // Set the vector table address
+    __disable_irq();
     SCB->VTOR = (uint32_t)VectorTable;
+    __DSB();
+    __enable_irq();
     
     // Call static constructors
     __libc_init_array();
