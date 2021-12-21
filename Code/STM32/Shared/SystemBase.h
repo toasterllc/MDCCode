@@ -1,25 +1,14 @@
-#pragma once
 #include "GPIO.h"
 #include "SystemClock.h"
 #include "MSP430.h"
-#include "Util.h"
 
-#warning TODO: rename to System
+template <typename T>
 class SystemBase {
-private:
-    using _MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
-    using _MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
-    using _MSP430 = MSP430<_MSPTest,_MSPRst_,SystemClock::CPUFreqMHz>;
-
 public:
-    static void InitLED() {
-//        LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        LED3::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    }
+    SystemBase() {}
     
-    static void Init() {
+protected:
+    void init() {
         // Reset peripherals, initialize flash interface, initialize Systick
         HAL_Init();
         
@@ -40,40 +29,36 @@ public:
         __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
         
         // Configure our LEDs
-        InitLED();
+//        _LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _LED3::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         
         // Init MSP
-        MSP.init();
+        _msp.init();
     }
     
+    [[noreturn]] void abort() {
+        for (bool x=true;; x=!x) {
+//            _LED0::Write(x);
+            _LED1::Write(x);
+            _LED2::Write(x);
+            _LED3::Write(x);
+            HAL_Delay(500);
+        }
+    }
+    
+    using _MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
+    using _MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
+    using _MSP430 = MSP430<_MSPTest,_MSPRst_,SystemClock::CPUFreqMHz>;
     // TODO: we should also rename to MSPJTAG to make it clear that it's not for comms with the MSP app
-    static inline _MSP430 MSP;
+    _MSP430 _msp;
     
     // LEDs
-//    using LED0 = GPIO<GPIOPortF, GPIO_PIN_14>;
-    using LED1 = GPIO<GPIOPortE, GPIO_PIN_7>;
-    using LED2 = GPIO<GPIOPortE, GPIO_PIN_10>;
-    using LED3 = GPIO<GPIOPortE, GPIO_PIN_12>;
-};
-
-#warning verify that _StackMainSize is large enough
-#define _StackMainSize 1024
-
-[[gnu::section(".stack.main")]]
-uint8_t _StackMain[_StackMainSize];
-
-asm(".global _StackMainEnd");
-asm(".equ _StackMainEnd, _StackMain+" Stringify(_StackMainSize));
-
-extern "C" [[noreturn]]
-void abort() {
-    Toastbox::IntState ints(false);
+//    using _LED0 = GPIO<GPIOPortF, GPIO_PIN_14>;
+    using _LED1 = GPIO<GPIOPortE, GPIO_PIN_7>;
+    using _LED2 = GPIO<GPIOPortE, GPIO_PIN_10>;
+    using _LED3 = GPIO<GPIOPortE, GPIO_PIN_12>;
     
-    SystemBase::InitLED();
-    for (bool x=true;; x=!x) {
-        SystemBase::LED1::Write(x);
-        SystemBase::LED2::Write(x);
-        SystemBase::LED3::Write(x);
-        for (volatile uint32_t i=0; i<(uint32_t)5000000; i++);
-    }
-}
+    friend void abort();
+};
