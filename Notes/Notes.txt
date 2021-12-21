@@ -1,15 +1,12 @@
 - Rev4 Todo
     
-    - Task.h: debug feature: stack traces
+    - STLoader: cleanup
     
-    - Task.h: debug feature: detecting stack overflows
-        - Include support for detecting stack overflows on the main stack too, due to interrupt handlers using lots of stack
+    - Task.h: debug feature: stack traces
     
     - MSPApp: add proper error handling to Img/SD
         - Make error handler a template parameter
         - Have error handler take a breadcrumb value
-    
-    - STLoader: migrate to use real threads
     
     - STApp: migrate to use real threads
     
@@ -40,6 +37,11 @@
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
     
+    
+    √ STLoader: migrate to use real threads
+    
+    √ Task.h: debug feature: detecting stack overflows
+        √ Include support for detecting stack overflows on the main stack too, due to interrupt handlers using lots of stack
     
     √ MSPApp: make SD::Card / Img::Sensor / ICE classes templated
     

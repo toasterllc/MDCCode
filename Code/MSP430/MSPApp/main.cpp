@@ -53,10 +53,10 @@ class _ImgTask;
 class _BusyTimeoutTask;
 
 using _Scheduler = Toastbox::Scheduler<
-    // Microseconds per tick
-    _WDTPeriodUs,
-    // Tasks
-    _MotionTask,
+    _WDTPeriodUs,       // T_UsPerTick: microseconds per tick
+    nullptr,            // T_MainStack: main stack pointer
+    0,                  // T_StackGuardSize: number of stack guards to use
+    _MotionTask,        // T_Tasks
     _SDTask,
     _ImgTask,
     _BusyTimeoutTask

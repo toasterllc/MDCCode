@@ -1,9 +1,7 @@
 #include <string.h>
 #include <algorithm>
-
 #define TaskARM32
 #include "Toastbox/Task.h"
-
 #include "Assert.h"
 #include "SystemClock.h"
 #include "Toastbox/IntState.h"
@@ -15,11 +13,7 @@
 
 using namespace STM;
 
-
-
-
-
-// Peripherals
+// MARK: - Peripherals
 USB _USB;
 
 // QSPI clock divider=5 => run QSPI clock at 21.3 MHz
@@ -39,14 +33,6 @@ alignas(4) uint8_t _Buf0[1024]; // Aligned to send via USB
 alignas(4) uint8_t _Buf1[1024]; // Aligned to send via USB
 BufQueue<2> _Bufs(_Buf0, _Buf1);
 
-struct {
-    struct {
-        uint8_t bits = 0;
-        uint8_t bitsLen = 0;
-        size_t len = 0;
-    } read;
-} _MSPDebug;
-
 // The Startup class needs to exist in the `uninit` section,
 // so that its _appEntryPointAddr member doesn't get clobbered
 // on startup.
@@ -65,12 +51,10 @@ class _USBDataInTask;
     _USBDataOutTask,    \
     _USBDataInTask
 
-//constexpr void* Meow = nullptr;
-
 using _Scheduler = Toastbox::Scheduler<
     _UsPerTick, // T_UsPerTick
     
-    #warning TODO: stack guards for production
+    #warning TODO: remove stack guards for production
     _StackMain, // T_MainStack
     4,          // T_StackGuardSize
     
@@ -105,7 +89,7 @@ static void _ResetTasks() {
     (_Scheduler::Stop<T_Tasks>(), ...);
 }
 
-static size_t _ceilToMaxPacketSize(size_t len) {
+static size_t _USBCeilToMaxPacketSize(size_t len) {
     // Round `len` up to the nearest packet size, since the USB hardware limits
     // the data received based on packets instead of bytes
     const size_t rem = len%USB::MaxPacketSizeIn();
@@ -127,7 +111,7 @@ public:
                 
                 // Prepare to receive either `_Len` bytes or the
                 // buffer capacity bytes, whichever is smaller.
-                const size_t cap = _ceilToMaxPacketSize(std::min(_Len, _Bufs.back().cap));
+                const size_t cap = _USBCeilToMaxPacketSize(std::min(_Len, _Bufs.back().cap));
                 // Ensure that after rounding up to the nearest packet size, we don't
                 // exceed the buffer capacity. (This should always be safe as long as
                 // the buffer capacity is a multiple of the max packet size.)
@@ -189,15 +173,15 @@ public:
 
 
 
-static void _usb_dataInSendStatus(bool s) {
+static void _USBSendStatus(bool s) {
     alignas(4) static bool status = false; // Aligned to send via USB
     status = s;
     _USB.send(Endpoints::DataIn, &status, sizeof(status));
 }
 
-static void _statusGet() {
+static void _StatusGet() {
     // Send status
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
     // Wait for host to receive status
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
@@ -211,9 +195,9 @@ static void _statusGet() {
     _USB.send(Endpoints::DataIn, &status, sizeof(status));
 }
 
-static void _bootloaderInvoke() {
+static void _BootloaderInvoke() {
     // Send status
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
     // Wait for host to receive status before resetting
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
@@ -223,19 +207,19 @@ static void _bootloaderInvoke() {
     abort();
 }
 
-static void _ledSet() {
+static void _LEDSet() {
     switch (_Cmd.arg.LEDSet.idx) {
-    case 0: _usb_dataInSendStatus(false); return;
+    case 0: _USBSendStatus(false); return;
     case 1: SystemBase::LED1::Write(_Cmd.arg.LEDSet.on); break;
     case 2: SystemBase::LED2::Write(_Cmd.arg.LEDSet.on); break;
     case 3: SystemBase::LED3::Write(_Cmd.arg.LEDSet.on); break;
     }
     
     // Send status
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
 }
 
-static void _endpointsFlush() {
+static void _EndpointsFlush() {
     // Reset endpoints
     _USB.endpointReset(Endpoints::DataOut);
     _USB.endpointReset(Endpoints::DataIn);
@@ -245,10 +229,10 @@ static void _endpointsFlush() {
                _USB.endpointReady(Endpoints::DataIn);
     });
     // Send status
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
 }
 
-static size_t _stm_regionCapacity(void* addr) {
+static size_t _STMRegionCapacity(void* addr) {
     // Verify that `addr` is in one of the allowed RAM regions
     extern uint8_t _sitcm_ram[], _eitcm_ram[];
     extern uint8_t _sdtcm_ram[], _edtcm_ram[];
@@ -267,20 +251,20 @@ static size_t _stm_regionCapacity(void* addr) {
     return cap;
 }
 
-static void _stm_write() {
+static void _STMWrite() {
     const auto& arg = _Cmd.arg.STMWrite;
     
     // Bail if the region capacity is too small to hold the
     // incoming data length (ceiled to the packet length)
-    const size_t len = _ceilToMaxPacketSize(arg.len);
-    if (len > _stm_regionCapacity((void*)arg.addr)) {
+    const size_t len = _USBCeilToMaxPacketSize(arg.len);
+    if (len > _STMRegionCapacity((void*)arg.addr)) {
         // Send preliminary status: error
-        _usb_dataInSendStatus(false);
+        _USBSendStatus(false);
         return;
     }
     
     // Send preliminary status: OK
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
     // Receive USB data
@@ -288,14 +272,14 @@ static void _stm_write() {
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
     
     // Send final status
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
 }
 
-static void _stm_reset() {
+static void _STMReset() {
     _AppEntryPoint = (_VoidFn)_Cmd.arg.STMReset.entryPointAddr;
     
     // Send status
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
     // Wait for host to receive status before resetting
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
@@ -331,7 +315,7 @@ static void _ice_qspiWrite(const void* data, size_t len) {
     _QSPI.write(cmd, data, len);
 }
 
-static void _ice_write() {
+static void _ICEWrite() {
     auto& arg = _Cmd.arg.ICEWrite;
     
     // Configure ICE40 control GPIOs
@@ -390,7 +374,7 @@ static void _ice_write() {
         }
         
         if (!ok) {
-            _usb_dataInSendStatus(false);
+            _USBSendStatus(false);
             return;
         }
     }
@@ -414,22 +398,22 @@ static void _ice_write() {
         }
     }
     
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
 }
 
-static void _msp_connect() {
+static void _MSPConnect() {
     const auto r = _MSP.connect();
     // Send status
-    _usb_dataInSendStatus(r == _MSP.Status::OK);
+    _USBSendStatus(r == _MSP.Status::OK);
 }
 
-static void _msp_disconnect() {
+static void _MSPDisconnect() {
     _MSP.disconnect();
     // Send status
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
 }
 
-static void _msp_read() {
+static void _MSPRead() {
     auto& arg = _Cmd.arg.MSPRead;
     
     // Reset state
@@ -458,10 +442,10 @@ static void _msp_read() {
     // Wait for DataIn task to complete
     _Scheduler::Wait([] { return _Bufs.empty(); });
     // Send status
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
 }
 
-static void _msp_write() {
+static void _MSPWrite() {
     auto& arg = _Cmd.arg.MSPWrite;
     
     // Reset state
@@ -490,61 +474,70 @@ static void _msp_write() {
     // Verify the CRC of all the data we wrote
     const auto r = _MSP.crcVerify();
     // Send status
-    _usb_dataInSendStatus(r == _MSP.Status::OK);
+    _USBSendStatus(r == _MSP.Status::OK);
 }
 
-static bool _msp_debugPushReadBits() {
-    if (_MSPDebug.read.len >= sizeof(_Buf1)) return false;
+struct _MSPDebugState {
+    uint8_t bits = 0;
+    uint8_t bitsLen = 0;
+    size_t len = 0;
+    bool ok = true;
+};
+
+static void _MSPDebugPushReadBits(_MSPDebugState& state) {
+    if (state.len >= sizeof(_Buf1)) {
+        state.ok = false;
+        return;
+    }
+    
     // Enqueue the new byte into `_Buf1`
-    _Buf1[_MSPDebug.read.len] = _MSPDebug.read.bits;
-    _MSPDebug.read.len++;
+    _Buf1[state.len] = state.bits;
+    state.len++;
     // Reset our bits
-    _MSPDebug.read.bits = 0;
-    _MSPDebug.read.bitsLen = 0;
-    return true;
+    state.bits = 0;
+    state.bitsLen = 0;
 }
 
-static bool _msp_debugHandleSBWIO(const MSPDebugCmd& cmd) {
+static void _MSPDebugHandleSBWIO(const MSPDebugCmd& cmd, _MSPDebugState& state) {
     const bool tdo = _MSP.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
     if (cmd.tdoReadGet()) {
         // Enqueue a new bit
-        _MSPDebug.read.bits <<= 1;
-        _MSPDebug.read.bits |= tdo;
-        _MSPDebug.read.bitsLen++;
+        state.bits <<= 1;
+        state.bits |= tdo;
+        state.bitsLen++;
         
         // Enqueue the byte if it's filled
-        if (_MSPDebug.read.bitsLen == 8) {
-            return _msp_debugPushReadBits();
+        if (state.bitsLen == 8) {
+            _MSPDebugPushReadBits(state);
         }
     }
-    return true;
 }
 
-static bool _msp_debugHandleCmd(const MSPDebugCmd& cmd) {
+static void _MSPDebugHandleCmd(const MSPDebugCmd& cmd, _MSPDebugState& state) {
     switch (cmd.opGet()) {
-    case MSPDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet()); return true;
-    case MSPDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet());  return true;
-    case MSPDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse();              return true;
-    case MSPDebugCmd::Ops::SBWIO:       return _msp_debugHandleSBWIO(cmd);
+    case MSPDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet()); break;
+    case MSPDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet()); 	break;
+    case MSPDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse(); 				break;
+    case MSPDebugCmd::Ops::SBWIO:       _MSPDebugHandleSBWIO(cmd, state);	break;
     default:                            abort();
     }
 }
 
-static void _msp_debug() {
+static void _MSPDebug() {
     auto& arg = _Cmd.arg.MSPDebug;
     
     // Bail if more data was requested than the size of our buffer
     if (arg.respLen > sizeof(_Buf1)) {
         // Send preliminary status: error
-        _usb_dataInSendStatus(false);
+        _USBSendStatus(false);
         return;
     }
     
     // Send preliminary status: OK
-    _usb_dataInSendStatus(true);
+    _USBSendStatus(true);
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
-    bool ok = true;
+    _MSPDebugState state;
     
     // Handle debug commands
     {
@@ -556,8 +549,8 @@ static void _msp_debug() {
             // Handle each MSPDebugCmd
             const MSPDebugCmd* cmds = (MSPDebugCmd*)_Buf0;
             const size_t cmdsLen = _USB.recvLen(Endpoints::DataOut) / sizeof(MSPDebugCmd);
-            for (size_t i=0; i<cmdsLen && ok; i++) {
-                ok &= _msp_debugHandleCmd(cmds[i]);
+            for (size_t i=0; i<cmdsLen && state.ok; i++) {
+                _MSPDebugHandleCmd(cmds[i], state);
             }
             
             arg.cmdsLen -= cmdsLen;
@@ -569,8 +562,7 @@ static void _msp_debug() {
         // Push outstanding bits into the buffer
         // This is necessary for when the client reads a number of bits
         // that didn't fall on a byte boundary.
-        if (_MSPDebug.read.bitsLen) ok &= _msp_debugPushReadBits();
-        _MSPDebug.read = {};
+        if (state.bitsLen) _MSPDebugPushReadBits(state);
         
         if (arg.respLen) {
             // Send the data and wait for it to be received
@@ -580,7 +572,7 @@ static void _msp_debug() {
     }
     
     // Send status
-    _usb_dataInSendStatus(ok);
+    _USBSendStatus(state.ok);
 }
 
 class _CmdHandleTask {
@@ -600,24 +592,24 @@ private:
     static void _CmdHandle() {
         switch (_Cmd.op) {
         // Common Commands
-        case Op::EndpointsFlush:        _endpointsFlush();              break;
-        case Op::StatusGet:             _statusGet();                   break;
-        case Op::BootloaderInvoke:      _bootloaderInvoke();            break;
-        case Op::LEDSet:                _ledSet();                      break;
+        case Op::EndpointsFlush:        _EndpointsFlush();              break;
+        case Op::StatusGet:             _StatusGet();                   break;
+        case Op::BootloaderInvoke:      _BootloaderInvoke();            break;
+        case Op::LEDSet:                _LEDSet();                      break;
         // STM32 Bootloader
-        case Op::STMWrite:              _stm_write();                   break;
-        case Op::STMReset:              _stm_reset();                   break;
+        case Op::STMWrite:              _STMWrite();                    break;
+        case Op::STMReset:              _STMReset();                    break;
         // ICE40 Bootloader
-        case Op::ICEWrite:              _ice_write();                   break;
+        case Op::ICEWrite:              _ICEWrite();                    break;
         // MSP430 Bootloader
-        case Op::MSPConnect:            _msp_connect();                 break;
-        case Op::MSPDisconnect:         _msp_disconnect();              break;
+        case Op::MSPConnect:            _MSPConnect();                  break;
+        case Op::MSPDisconnect:         _MSPDisconnect();               break;
         // MSP430 Debug
-        case Op::MSPRead:               _msp_read();                    break;
-        case Op::MSPWrite:              _msp_write();                   break;
-        case Op::MSPDebug:              _msp_debug();                   break;
+        case Op::MSPRead:               _MSPRead();                     break;
+        case Op::MSPWrite:              _MSPWrite();                    break;
+        case Op::MSPDebug:              _MSPDebug();                    break;
         // Bad command
-        default:                        _usb_dataInSendStatus(false);   break;
+        default:                        _USBSendStatus(false);          break;
         }
     }
 };
