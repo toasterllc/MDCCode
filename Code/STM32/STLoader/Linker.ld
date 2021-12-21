@@ -93,12 +93,14 @@ SECTIONS {
         . = ALIGN(4);
     } >SRAM2
     
-    .stack (NOLOAD) :
-    {
+    .stack : {
         . = ALIGN(4);
+        _sstack = .;
+        . = . + StackSize;
         *(.stack)
         *(.stack.*)
         . = ALIGN(4);
+        _estack = .;
     } >SRAM2
     
     /* Remove information from the compiler libraries */
