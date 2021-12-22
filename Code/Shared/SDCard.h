@@ -16,7 +16,7 @@ template <
 >
 class Card {
 public:
-    static void Enable() {
+    void enable() {
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
         _SleepMs<1>();
@@ -128,7 +128,7 @@ public:
             auto status = T_ICE::SDSendCmd(_CMD3, 0);
             Assert(!status.respCRCErr());
             // Get the card's RCA from the response
-            _RCA = status.respGetBits(39,24);
+            _rca = status.respGetBits(39,24);
         }
         
         // ====================
@@ -137,7 +137,7 @@ public:
         //   Select card
         // ====================
         {
-            auto status = T_ICE::SDSendCmd(_CMD7, ((uint32_t)_RCA)<<16);
+            auto status = T_ICE::SDSendCmd(_CMD7, ((uint32_t)_rca)<<16);
             Assert(!status.respCRCErr());
         }
         
@@ -149,7 +149,7 @@ public:
         {
             // CMD55
             {
-                auto status = T_ICE::SDSendCmd(_CMD55, ((uint32_t)_RCA)<<16);
+                auto status = T_ICE::SDSendCmd(_CMD55, ((uint32_t)_rca)<<16);
                 Assert(!status.respCRCErr());
             }
             
@@ -197,7 +197,7 @@ public:
         }
     }
     
-    static void Disable() {
+    void disable() {
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
         _SleepMs<1>();
@@ -206,7 +206,7 @@ public:
         T_SetPowerEnabled(false);
     }
     
-    static void ReadStart(uint32_t addr) {
+    void readStart(uint32_t addr) {
         // Verify that `addr` is a multiple of the SD block length
         AssertArg(!(addr % SD::BlockLen));
         
@@ -219,14 +219,14 @@ public:
         Assert(!status.respCRCErr());
     }
     
-    static void ReadStop() {
-        _ReadWriteStop();
+    void readStop() {
+        _readWriteStop();
     }
     
     // `lenEst`: the estimated byte count that will be written; used to pre-erase SD blocks as a performance
     // optimization. More data can be written than `lenEst`, but performance may suffer if the actual length
     // is longer than the estimate.
-    static void WriteStart(uint32_t addr, uint32_t lenEst=0) {
+    void writeStart(uint32_t addr, uint32_t lenEst=0) {
         // Verify that `addr` is a multiple of the SD block length
         AssertArg(!(addr % SD::BlockLen));
         
@@ -239,7 +239,7 @@ public:
         {
             // CMD55
             {
-                auto status = T_ICE::SDSendCmd(_CMD55, ((uint32_t)_RCA)<<16);
+                auto status = T_ICE::SDSendCmd(_CMD55, ((uint32_t)_rca)<<16);
                 Assert(!status.respCRCErr());
             }
             
@@ -263,16 +263,16 @@ public:
         }
     }
     
-    static void WriteStop() {
-        _ReadWriteStop();
+    void writeStop() {
+        _readWriteStop();
     }
     
-    static void WriteImage(uint8_t srcBlock, uint16_t dstIdx) {
+    void writeImage(uint8_t srcBlock, uint16_t dstIdx) {
         // Confirm that Img::PaddedLen is a multiple of the SD block length
         static_assert((Img::PaddedLen % SD::BlockLen) == 0, "");
         const uint32_t addr = dstIdx*Img::PaddedLen;
         
-        WriteStart(addr, Img::Len);
+        writeStart(addr, Img::Len);
         
         // Clock out the image on the DAT lines
         T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcBlock));
@@ -288,7 +288,7 @@ public:
             // Busy
         }
         
-        WriteStop();
+        writeStop();
         
         // Wait for SD card to indicate that it's ready (DAT0=1)
         for (;;) {
@@ -325,7 +325,7 @@ private:
     static constexpr uint8_t _CMD41 = 41;
     static constexpr uint8_t _CMD55 = 55;
     
-    static void _ReadWriteStop() {
+    void _readWriteStop() {
         // ====================
         // CMD12 | STOP_TRANSMISSION
         //   State: Send Data -> Transfer
@@ -335,7 +335,7 @@ private:
         Assert(!status.respCRCErr());
     }
     
-    static inline uint16_t _RCA = 0;
+    uint16_t _rca = 0;
 };
 
 } // namespace SD

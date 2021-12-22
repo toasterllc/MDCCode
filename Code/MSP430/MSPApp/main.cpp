@@ -75,13 +75,13 @@ using _ImgSensor = Img::Sensor<
     _ImgSetPowerEnabled     // T_SetPowerEnabled
 >;
 
-using _SDCard = SD::Card<
+static SD::Card<
     _Scheduler,         // T_Scheduler
     _ICE,               // T_ICE
     _SDSetPowerEnabled, // T_SetPowerEnabled
     1,                  // T_ClkDelaySlow (odd values invert the clock)
     0                   // T_ClkDelayFast (odd values invert the clock)
->;
+> _SDCard;
 
 // _StartTime: the time set by STM32 (seconds since reference date)
 // Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
@@ -116,12 +116,16 @@ static volatile struct {
 struct _SDTask {
     static void Enable() {
         Wait();
-        _Scheduler::Start<_SDTask>(_SDCard::Enable);
+        _Scheduler::Start<_SDTask>([] {
+            _SDCard.enable();
+        });
     }
     
     static void Disable() {
         Wait();
-        _Scheduler::Start<_SDTask>(_SDCard::Disable);
+        _Scheduler::Start<_SDTask>([] {
+            _SDCard.disable();
+        });
     }
     
     static void Wait() {
@@ -236,7 +240,7 @@ static void _CaptureImage() {
     _SDTask::Wait();
     
     // Write the best-exposed image to the SD card
-    _SDCard::WriteImage(bestExpBlock, _ImgIndexes.write);
+    _SDCard.writeImage(bestExpBlock, _ImgIndexes.write);
     
     // Update _ImgIndexes
     {
