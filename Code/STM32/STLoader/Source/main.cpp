@@ -329,10 +329,10 @@ static void _ICEWrite() {
     
     _ICE_ST_SPI_CS_::Write(0);
     _ICE_CRST_::Write(0);
-    HAL_Delay(1); // Sleep 1 ms (ideally, 200 ns)
+    _Scheduler::SleepMs<1>(); // Sleep 1 ms (ideally, 200 ns)
     
     _ICE_CRST_::Write(1);
-    HAL_Delay(2); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+    _Scheduler::SleepMs<2>(); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
     
     // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
     _ICE_ST_SPI_CS_::Write(1);
@@ -369,7 +369,7 @@ static void _ICEWrite() {
     {
         bool ok = false;
         for (int i=0; i<10 && !ok; i++) {
-            if (i) HAL_Delay(1); // Sleep 1 ms
+            if (i) _Scheduler::SleepMs<1>(); // Sleep 1 ms
             ok = _ICE_CDONE::Read();
         }
         

@@ -1,5 +1,7 @@
 - Rev4 Todo
     
+    - STLoader: replace uses of HAL_Delay with Scheduler::Sleep
+    
     - STLoader: cleanup
     
     - Task.h: debug feature: stack traces
