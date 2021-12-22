@@ -7,8 +7,6 @@
     - STLoader/STApp: move target-specific USB.cpp into USBBase.h
         - We just need to supply the USB descriptor to USBBase right?
     
-    - STLoader/STApp: make BufQueue fully templated on the buffers themselves
-    
     - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?
     
     - STLoader: cleanup
@@ -49,6 +47,8 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ STLoader/STApp: make BufQueue fully templated on the buffers themselves
     
     √ STLoader/STApp: make QSPI a template
     

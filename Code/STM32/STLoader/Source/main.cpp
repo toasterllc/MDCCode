@@ -32,9 +32,8 @@ using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
 using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
 using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
 
-alignas(4) uint8_t _Buf0[1024]; // Aligned to send via USB
-alignas(4) uint8_t _Buf1[1024]; // Aligned to send via USB
-BufQueue<2> _Bufs(_Buf0, _Buf1);
+using _BufQueue = BufQueue<uint8_t,1024,2>;
+static _BufQueue _Bufs;
 
 // The Startup class needs to exist in the `uninit` section,
 // so that its _appEntryPointAddr member doesn't get clobbered
@@ -381,7 +380,7 @@ static void _MSPRead(const STM::Cmd& cmd) {
         auto& buf = _Bufs.back();
         // Prepare to receive either `len` bytes or the
         // buffer capacity bytes, whichever is smaller.
-        const size_t chunkLen = std::min((size_t)len, buf.cap);
+        const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
         _MSP.read(addr, buf.data, chunkLen);
         addr += chunkLen;
         len -= chunkLen;
@@ -435,21 +434,21 @@ struct _MSPDebugState {
     bool ok = true;
 };
 
-static void _MSPDebugPushReadBits(_MSPDebugState& state) {
-    if (state.len >= sizeof(_Buf1)) {
+static void _MSPDebugPushReadBits(_MSPDebugState& state, _BufQueue::Buf& buf) {
+    if (state.len >= sizeof(buf.data)) {
         state.ok = false;
         return;
     }
     
-    // Enqueue the new byte into `_Buf1`
-    _Buf1[state.len] = state.bits;
+    // Enqueue the new byte into `buf`
+    buf.data[state.len] = state.bits;
     state.len++;
     // Reset our bits
     state.bits = 0;
     state.bitsLen = 0;
 }
 
-static void _MSPDebugHandleSBWIO(const MSPDebugCmd& cmd, _MSPDebugState& state) {
+static void _MSPDebugHandleSBWIO(const MSPDebugCmd& cmd, _MSPDebugState& state, _BufQueue::Buf& buf) {
     const bool tdo = _MSP.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
     if (cmd.tdoReadGet()) {
         // Enqueue a new bit
@@ -459,17 +458,17 @@ static void _MSPDebugHandleSBWIO(const MSPDebugCmd& cmd, _MSPDebugState& state) 
         
         // Enqueue the byte if it's filled
         if (state.bitsLen == 8) {
-            _MSPDebugPushReadBits(state);
+            _MSPDebugPushReadBits(state, buf);
         }
     }
 }
 
-static void _MSPDebugHandleCmd(const MSPDebugCmd& cmd, _MSPDebugState& state) {
+static void _MSPDebugHandleCmd(const MSPDebugCmd& cmd, _MSPDebugState& state, _BufQueue::Buf& buf) {
     switch (cmd.opGet()) {
-    case MSPDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet()); break;
-    case MSPDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet()); 	break;
-    case MSPDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse(); 				break;
-    case MSPDebugCmd::Ops::SBWIO:       _MSPDebugHandleSBWIO(cmd, state);	break;
+    case MSPDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet());     break;
+    case MSPDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet()); 	    break;
+    case MSPDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse(); 				    break;
+    case MSPDebugCmd::Ops::SBWIO:       _MSPDebugHandleSBWIO(cmd, state, buf);	break;
     default:                            abort();
     }
 }
@@ -477,8 +476,14 @@ static void _MSPDebugHandleCmd(const MSPDebugCmd& cmd, _MSPDebugState& state) {
 static void _MSPDebug(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.MSPDebug;
     
+    // Reset state
+    _Bufs.reset();
+    auto& bufIn = _Bufs.back();
+    _Bufs.push();
+    auto& bufOut = _Bufs.back();
+    
     // Bail if more data was requested than the size of our buffer
-    if (arg.respLen > sizeof(_Buf1)) {
+    if (arg.respLen > sizeof(bufOut.data)) {
         // Send preliminary status: error
         _USBSendStatus(false);
         return;
@@ -494,15 +499,15 @@ static void _MSPDebug(const STM::Cmd& cmd) {
     {
         size_t cmdsLenRem = arg.cmdsLen;
         while (cmdsLenRem) {
-            // Receive debug commands into _Buf0
-            _USB.recv(Endpoints::DataOut, _Buf0, sizeof(_Buf0));
+            // Receive debug commands into buf
+            _USB.recv(Endpoints::DataOut, bufIn.data, sizeof(bufIn.data));
             _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
             
             // Handle each MSPDebugCmd
-            const MSPDebugCmd* cmds = (MSPDebugCmd*)_Buf0;
+            const MSPDebugCmd* cmds = (MSPDebugCmd*)bufIn.data;
             const size_t cmdsLen = _USB.recvLen(Endpoints::DataOut) / sizeof(MSPDebugCmd);
             for (size_t i=0; i<cmdsLen && state.ok; i++) {
-                _MSPDebugHandleCmd(cmds[i], state);
+                _MSPDebugHandleCmd(cmds[i], state, bufOut);
             }
             
             cmdsLenRem -= cmdsLen;
@@ -514,11 +519,11 @@ static void _MSPDebug(const STM::Cmd& cmd) {
         // Push outstanding bits into the buffer
         // This is necessary for when the client reads a number of bits
         // that didn't fall on a byte boundary.
-        if (state.bitsLen) _MSPDebugPushReadBits(state);
+        if (state.bitsLen) _MSPDebugPushReadBits(state, bufOut);
         
         if (arg.respLen) {
             // Send the data and wait for it to be received
-            _USB.send(Endpoints::DataIn, _Buf1, arg.respLen);
+            _USB.send(Endpoints::DataIn, bufOut.data, arg.respLen);
             _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
         }
     }
@@ -627,21 +632,22 @@ void _TaskUSBDataOut::Start(size_t l) {
         while (len) {
             _Scheduler::Wait([] { return !_Bufs.full(); });
             
+            auto& buf = _Bufs.back();
             // Prepare to receive either `len` bytes or the
             // buffer capacity bytes, whichever is smaller.
-            const size_t cap = _USBCeilToMaxPacketSize(std::min(len, _Bufs.back().cap));
+            const size_t cap = _USBCeilToMaxPacketSize(std::min(len, sizeof(buf.data)));
             // Ensure that after rounding up to the nearest packet size, we don't
             // exceed the buffer capacity. (This should always be safe as long as
             // the buffer capacity is a multiple of the max packet size.)
-            Assert(cap <= _Bufs.back().cap);
-            _USB.recv(Endpoints::DataOut, _Bufs.back().data, cap);
+            Assert(cap <= sizeof(buf.data));
+            _USB.recv(Endpoints::DataOut, buf.data, cap);
             _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
             
             // Never claim that we read more than the requested data, even if ceiling
             // to the max packet size caused us to read more than requested.
             const size_t recvLen = std::min(len, _USB.recvLen(Endpoints::DataOut));
             len -= recvLen;
-            _Bufs.back().len = recvLen;
+            buf.len = recvLen;
             _Bufs.push();
         }
     });

@@ -1,33 +1,24 @@
 #pragma once
 
 // BufQueue:
-//   BufQueue manages `Count` static buffers (supplied to the
-//   constructor) to facilitate producer-consumer schemes.
-//
-//   If the BufQueue is writable(), the writer writes into
-//   the buffer returned by writeBuf(), and when writing is
-//   complete, calls writeEnqueue().
-//
-//   If the BufQueue is readable(), the reader reads from the
-//   buffer returned by readBuf(), and when reading is
-//   complete, calls readDequeue().
+//   BufQueue manages `T_Count` buffers to facilitate
+//   producer-consumer schemes.
+//   
+//   If the BufQueue is !full(), the writer writes into
+//   the buffer returned by front(), and when writing is
+//   complete, calls push().
+//   
+//   If the BufQueue is !empty(), the reader reads from the
+//   buffer returned by back(), and when reading is
+//   complete, calls pop().
 
-template <size_t Count>
+template <typename T_Type, size_t T_Cap, size_t T_Count>
 class BufQueue {
-private:
+public:
     struct Buf {
-        template <typename T>
-        Buf(T& buf) : data(buf), cap(sizeof(buf)) {}
-        uint8_t*const data = nullptr;
-        const size_t cap = 0;
+        T_Type data[T_Cap];
         size_t len = 0;
     };
-    
-public:
-    template <typename... Ts>
-    BufQueue(Ts&... bufs) : _bufs{bufs...} {
-        static_assert(Count && sizeof...(bufs)==Count, "invalid number of buffers");
-    }
     
     // Read
     bool empty() const { return _w==_r && !_full; }
@@ -40,7 +31,7 @@ public:
     void pop() {
         Assert(!empty());
         _r++;
-        if (_r == Count) _r = 0;
+        if (_r == T_Count) _r = 0;
         _full = false;
     }
     
@@ -55,51 +46,9 @@ public:
     void push() {
         Assert(!full());
         _w++;
-        if (_w == Count) _w = 0;
+        if (_w == T_Count) _w = 0;
         if (_w == _r) _full = true;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-//    // Read
-//    bool readable() const { return _w!=_r || _full; }
-//    
-//    const Buf& readBuf() const {
-//        Assert(readable());
-//        return _bufs[_r];
-//    }
-//    
-//    void readDequeue() {
-//        Assert(readable());
-//        _r++;
-//        if (_r == Count) _r = 0;
-//        _full = false;
-//    }
-//    
-//    // Write
-//    bool writable() const { return !_full; }
-//    
-//    Buf& writeBuf() {
-//        Assert(writable());
-//        return _bufs[_w];
-//    }
-//    
-//    void writeEnqueue() {
-//        Assert(writable());
-//        _w++;
-//        if (_w == Count) _w = 0;
-//        if (_w == _r) _full = true;
-//    }
     
     // Reset
     void reset() {
@@ -111,7 +60,7 @@ public:
     }
     
 private:
-    Buf _bufs[Count];
+    Buf _bufs[T_Count];
     size_t _w = 0;
     size_t _r = 0;
     bool _full = false;
