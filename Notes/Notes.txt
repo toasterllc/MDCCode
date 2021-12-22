@@ -8,11 +8,9 @@
     
     - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?
     
-    - STLoader/STApp: make QSPI a template
-    
-    - STLoader: replace uses of HAL_Delay with Scheduler::Sleep
-    
     - STLoader: cleanup
+    
+    - STApp: replace uses of HAL_Delay with Scheduler::Sleep
     
     - Task.h: debug feature: stack traces
     
@@ -49,6 +47,9 @@
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
     
+    √ STLoader/STApp: make QSPI a template
+    
+    √ STLoader: replace uses of HAL_Delay with Scheduler::Sleep
     
     √ STLoader: migrate to use real threads
     

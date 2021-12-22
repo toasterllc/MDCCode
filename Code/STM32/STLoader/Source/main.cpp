@@ -14,11 +14,16 @@
 using namespace STM;
 
 // MARK: - Peripherals & Types
-USB _USB;
+static USB _USB;
 
 // QSPI clock divider=5 => run QSPI clock at 21.3 MHz
 // QSPI alignment=byte, so we can transfer single bytes at a time
-QSPI _QSPI(QSPI::Mode::Single, 5, QSPI::Align::Byte, QSPI::ChipSelect::Controlled);
+static QSPI<
+    QSPIMode::Single,           // T_Mode
+    5,                          // T_ClkDivider
+    QSPIAlign::Byte,            // T_Align
+    QSPIChipSelect::Controlled  // T_ChipSelect
+> _QSPI;
 
 constexpr auto& _MSP = SystemBase::MSP;
 
@@ -51,11 +56,9 @@ class _TaskUSBDataIn;
 
 using _Scheduler = Toastbox::Scheduler<
     _UsPerTick, // T_UsPerTick
-    
     #warning TODO: remove stack guards for production
     _StackMain, // T_MainStack
-    4,          // T_StackGuardSize
-    
+    4,          // T_StackGuardCount
     // Tasks
     _TaskCmdRecv,
     _Subtasks
@@ -110,10 +113,6 @@ struct _TaskCmdRecv {
     [[gnu::section(".stack._TaskCmdRecv")]]
     static inline uint8_t Stack[512];
 };
-
-
-
-
 
 // MARK: - Command Handlers
 
