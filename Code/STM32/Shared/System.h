@@ -2,11 +2,145 @@
 #include "GPIO.h"
 #include "MSP430.h"
 #include "Util.h"
+#include "STM.h"
+#include "USB.h"
+#include "QSPI.h"
+#include "ICE.h"
+#include "Toastbox/Task.h"
 
+// MARK: - Main Thread Stack
+
+#define _StackMainSize 1024
+
+[[gnu::section(".stack.main")]]
+uint8_t _StackMain[_StackMainSize];
+
+asm(".global _StackMainEnd");
+asm(".equ _StackMainEnd, _StackMain+" Stringify(_StackMainSize));
+
+// MARK: - System
+
+template <
+    typename T_USB,
+    typename T_QSPI,
+    void T_CmdHandle(const STM::Cmd&),
+    typename... T_Tasks
+>
 class System {
+private:
+    class _TaskCmdRecv;
+    class _TaskCmdHandle;
+    
 public:
     static constexpr uint8_t CPUFreqMHz = 128;
     static constexpr uint32_t UsPerSysTick = 1000;
+    
+    using Scheduler = Toastbox::Scheduler<
+        UsPerSysTick, // T_UsPerTick
+        #warning TODO: remove stack guards for production
+        _StackMain, // T_MainStack
+        4,          // T_StackGuardCount
+        // Tasks
+        _TaskCmdRecv,
+        _TaskCmdHandle,
+        T_Tasks...
+    >;
+    
+private:
+    // _TaskCmdRecv: receive commands over USB initiate handling them
+    struct _TaskCmdRecv {
+        static void Run() {
+            for (;;) {
+                // Wait for USB to be re-connected (`Connecting` state) so we can call USB.connect(),
+                // or for a new command to arrive so we can handle it.
+                Scheduler::Wait([] { return USB.state()==USB::State::Connecting || USB.cmdRecv(); });
+                
+                #warning TODO: do we still need to disable interrupts?
+                // Disable interrupts so we can inspect+modify `USB` atomically
+                Toastbox::IntState ints(false);
+                
+                // Reset all tasks
+                // This needs to happen before we call `USB.connect()` so that any tasks that
+                // were running in the previous USB session are stopped before we enable
+                // USB again by calling USB.connect().
+                _TasksReset();
+                
+                switch (USB.state()) {
+                case USB::State::Connecting:
+                    USB.connect();
+                    continue;
+                case USB::State::Connected:
+                    if (!USB.cmdRecv()) continue;
+                    break;
+                default:
+                    continue;
+                }
+                
+                auto usbCmd = *USB.cmdRecv();
+                
+                // Re-enable interrupts while we handle the command
+                ints.restore();
+                
+                // Reject command if the length isn't valid
+                STM::Cmd cmd;
+                if (usbCmd.len != sizeof(cmd)) {
+                    USB.cmdAccept(false);
+                    continue;
+                }
+                
+                memcpy(&cmd, usbCmd.data, usbCmd.len);
+                
+                // Only accept command if it's a flush command (in which case the endpoints
+                // don't need to be ready), or it's not a flush command, but all endpoints
+                // are ready. Otherwise, reject the command.
+                if (cmd.op!=STM::Op::EndpointsFlush && !USB.endpointsReady()) {
+                    USB.cmdAccept(false);
+                    continue;
+                }
+                
+                USB.cmdAccept(true);
+                _TaskCmdHandle::Start(cmd);
+            }
+        }
+        
+        // Task options
+        using Options = Toastbox::TaskOptions<
+            Toastbox::TaskOption::AutoStart<Run> // Task should start running
+        >;
+        
+        // Task stack
+        [[gnu::section(".stack._TaskCmdRecv")]]
+        static inline uint8_t Stack[512];
+    };
+    
+    // _TaskCmdHandle: handle command
+    struct _TaskCmdHandle {
+        static void Start(const STM::Cmd& c) {
+            using namespace STM;
+            static STM::Cmd cmd = {};
+            cmd = c;
+            
+            Scheduler::template Start<_TaskCmdHandle>([] {
+                switch (cmd.op) {
+                case Op::EndpointsFlush:    _EndpointsFlush(cmd);       break;
+                case Op::StatusGet:         _StatusGet(cmd);            break;
+                case Op::BootloaderInvoke:  _BootloaderInvoke(cmd);     break;
+                case Op::LEDSet:            _LEDSet(cmd);               break;
+                // Bad command
+                default:                    T_CmdHandle(cmd);           break;
+                }
+            });
+        }
+        
+        // Task options
+        using Options = Toastbox::TaskOptions<>;
+        
+        // Task stack
+        [[gnu::section(".stack._TaskCmdHandle")]]
+        static inline uint8_t Stack[512];
+    };
+
+public:
     
     static void InitLED() {
 //        LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -60,6 +194,17 @@ public:
     using LED2 = GPIO<GPIOPortE, GPIO_PIN_10>;
     using LED3 = GPIO<GPIOPortE, GPIO_PIN_12>;
     
+    static inline T_USB USB;
+    static inline T_QSPI QSPI;
+
+    using ICE = ::ICE<Scheduler>;
+    
+    static void USBSendStatus(bool s) {
+        alignas(4) static bool status = false; // Aligned to send via USB
+        status = s;
+        USB.send(STM::Endpoints::DataIn, &status, sizeof(status));
+    }
+    
 private:
     static void _ClockInit() {
         // Configure the main internal regulator output voltage
@@ -110,7 +255,64 @@ private:
             Assert(hr == HAL_OK);
         }
     }
-
+    
+    static void _TasksReset() {
+        // De-assert the SPI chip select
+        // This is necessary because the readout task asserts the SPI chip select,
+        // but has no way to deassert it, because it continues indefinitely
+        System::ICE_ST_SPI_CS_::Write(1);
+        Scheduler::template Stop<_TaskCmdHandle>();
+        (Scheduler::template Stop<T_Tasks>(), ...);
+    }
+    
+    static void _EndpointsFlush(const STM::Cmd& cmd) {
+        // Reset endpoints
+        USB.endpointsReset();
+        // Wait until endpoints are ready
+        Scheduler::Wait([] { return USB.endpointsReady(); });
+        // Send status
+        USBSendStatus(true);
+    }
+    
+    static void _StatusGet(const STM::Cmd& cmd) {
+        // Send status
+        USBSendStatus(true);
+        // Wait for host to receive status
+        Scheduler::Wait([] { return USB.endpointReady(STM::Endpoints::DataIn); });
+        
+        // Send status struct
+        alignas(4) static const STM::Status status = { // Aligned to send via USB
+            .magic      = STM::Status::MagicNumber,
+            .version    = STM::Version,
+            .mode       = STM::Status::Modes::STMApp,
+        };
+        
+        USB.send(STM::Endpoints::DataIn, &status, sizeof(status));
+    }
+    
+    static void _BootloaderInvoke(const STM::Cmd& cmd) {
+        // Send status
+        USBSendStatus(true);
+        // Wait for host to receive status before resetting
+        Scheduler::Wait([] { return USB.endpointReady(STM::Endpoints::DataIn); });
+        
+        // Perform software reset
+        HAL_NVIC_SystemReset();
+        // Unreachable
+        abort();
+    }
+    
+    static void _LEDSet(const STM::Cmd& cmd) {
+        switch (cmd.arg.LEDSet.idx) {
+        case 0: USBSendStatus(false); return;
+        case 1: System::LED1::Write(cmd.arg.LEDSet.on); break;
+        case 2: System::LED2::Write(cmd.arg.LEDSet.on); break;
+        case 3: System::LED3::Write(cmd.arg.LEDSet.on); break;
+        }
+        
+        // Send status
+        USBSendStatus(true);
+    }
 };
 
 // MARK: - IntState
@@ -127,29 +329,4 @@ void Toastbox::IntState::SetInterruptsEnabled(bool en) {
 void Toastbox::IntState::WaitForInterrupt() {
     Toastbox::IntState ints(true);
     __WFI();
-}
-
-// MARK: - Main Thread Stack
-
-#define _StackMainSize 1024
-
-[[gnu::section(".stack.main")]]
-uint8_t _StackMain[_StackMainSize];
-
-asm(".global _StackMainEnd");
-asm(".equ _StackMainEnd, _StackMain+" Stringify(_StackMainSize));
-
-// MARK: - Abort
-
-extern "C" [[noreturn]]
-void abort() {
-    Toastbox::IntState ints(false);
-    
-    System::InitLED();
-    for (bool x=true;; x=!x) {
-        System::LED1::Write(x);
-        System::LED2::Write(x);
-        System::LED3::Write(x);
-        for (volatile uint32_t i=0; i<(uint32_t)5000000; i++);
-    }
 }

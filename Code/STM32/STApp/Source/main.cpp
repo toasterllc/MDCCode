@@ -11,54 +11,26 @@
 #include "BufQueue.h"
 #include "SDCard.h"
 #include "ImgSensor.h"
+using namespace STM;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
 using _BufQueue = BufQueue<uint8_t,63*1024,2>;
 
-#warning TODO: we're not putting the _BufQueue code in .sram1 too are we?
-[[gnu::section(".sram1")]]
-static _BufQueue _Bufs;
+using _USBType = USB;
 
-constexpr auto& _MSP = System::MSP;
-
-using namespace STM;
-
-// MARK: - Peripherals & Types
-static USB _USB;
-
-static QSPI<
+using _QSPIType = QSPI<
     QSPIMode::Dual,               // T_Mode
     1,                            // T_ClkDivider (1 -> QSPI clock = 64 MHz)
     QSPIAlign::Word,              // T_Align
     QSPIChipSelect::Uncontrolled  // T_ChipSelect
-> _QSPI;
+>;
 
-// _TaskCmdRecv: receive commands over USB initiate handling them
-struct _TaskCmdRecv {
-    static void Run();
-    
-    // Task options
-    using Options = Toastbox::TaskOptions<
-        Toastbox::TaskOption::AutoStart<Run> // Task should start running
-    >;
-    
-    // Task stack
-    [[gnu::section(".stack._TaskCmdRecv")]]
-    static inline uint8_t Stack[512];
-};
+#warning TODO: we're not putting the _BufQueue code in .sram1 too are we?
+[[gnu::section(".sram1")]]
+static _BufQueue _Bufs;
 
-// _TaskCmdHandle: handle command
-struct _TaskCmdHandle {
-    static void Start(const STM::Cmd& c);
-    
-    // Task options
-    using Options = Toastbox::TaskOptions<>;
-    
-    // Task stack
-    [[gnu::section(".stack._TaskCmdHandle")]]
-    static inline uint8_t Stack[512];
-};
+// MARK: - Peripherals & Types
 
 // _TaskUSBDataIn: writes buffers from _Bufs to the DataIn endpoint, and pops them from _Bufs
 struct _TaskUSBDataIn {
@@ -84,49 +56,37 @@ struct _TaskReadout {
     static inline uint8_t Stack[256];
 };
 
-#define _Subtasks       \
-    _TaskCmdHandle,     \
-    _TaskUSBDataIn,     \
+static void _CmdHandle(const STM::Cmd& cmd);
+using _System = System<
+    _USBType,
+    _QSPIType,
+    _CmdHandle,
+    // Additional Tasks
+    _TaskUSBDataIn,
     _TaskReadout
-
-using _Scheduler = Toastbox::Scheduler<
-    System::UsPerSysTick, // T_UsPerTick
-    #warning TODO: remove stack guards for production
-    _StackMain, // T_MainStack
-    4,          // T_StackGuardCount
-    // Tasks
-    _TaskCmdRecv,
-    _Subtasks
 >;
 
-using _ICE = ICE<
-    _Scheduler
->;
+constexpr auto& _MSP = _System::MSP;
+using _ICE = _System::ICE;
+constexpr auto& _USB = _System::USB;
+constexpr auto& _QSPI = _System::QSPI;
+using _Scheduler = _System::Scheduler;
 
-static void _SDSetPowerEnabled(bool en);
 static void _ImgSetPowerEnabled(bool en);
-
 using _ImgSensor = Img::Sensor<
-    _Scheduler,             // T_Scheduler
-    _ICE,                   // T_ICE
+    _System::Scheduler,     // T_Scheduler
+    _System::ICE,           // T_ICE
     _ImgSetPowerEnabled     // T_SetPowerEnabled
 >;
 
+static void _SDSetPowerEnabled(bool en);
 static SD::Card<
-    _Scheduler,         // T_Scheduler
-    _ICE,               // T_ICE
+    _System::Scheduler, // T_Scheduler
+    _System::ICE,       // T_ICE
     _SDSetPowerEnabled, // T_SetPowerEnabled
     1,                  // T_ClkDelaySlow (odd values invert the clock)
     0                   // T_ClkDelayFast (odd values invert the clock)
 > _SDCard;
-
-// MARK: - USB
-
-static void _USBSendStatus(bool s) {
-    alignas(4) static bool status = false; // Aligned to send via USB
-    status = s;
-    _USB.send(Endpoints::DataIn, &status, sizeof(status));
-}
 
 // MARK: - ICE40
 
@@ -199,65 +159,14 @@ template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
     
-    System::ICE_ST_SPI_CS_::Write(0);
+    _System::ICE_ST_SPI_CS_::Write(0);
     if (resp) {
         _QSPI.read(_ICEQSPICmd(msg, sizeof(*resp)), resp, sizeof(*resp));
     } else {
         _QSPI.command(_ICEQSPICmd(msg, 0));
     }
     _QSPI.wait();
-    System::ICE_ST_SPI_CS_::Write(1);
-}
-
-// MARK: - Common Commands
-
-static void _EndpointsFlush(const STM::Cmd& cmd) {
-    // Reset endpoints
-    _USB.endpointReset(Endpoints::DataIn);
-    // Wait until endpoints are ready
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-    // Send status
-    _USBSendStatus(true);
-}
-
-static void _StatusGet(const STM::Cmd& cmd) {
-    // Send status
-    _USBSendStatus(true);
-    // Wait for host to receive status
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-    
-    // Send status struct
-    alignas(4) static const STM::Status status = { // Aligned to send via USB
-        .magic      = STM::Status::MagicNumber,
-        .version    = STM::Version,
-        .mode       = STM::Status::Modes::STMApp,
-    };
-    
-    _USB.send(Endpoints::DataIn, &status, sizeof(status));
-}
-
-static void _BootloaderInvoke(const STM::Cmd& cmd) {
-    // Send status
-    _USBSendStatus(true);
-    // Wait for host to receive status before resetting
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-    
-    // Perform software reset
-    HAL_NVIC_SystemReset();
-    // Unreachable
-    abort();
-}
-
-static void _LEDSet(const STM::Cmd& cmd) {
-    switch (cmd.arg.LEDSet.idx) {
-    case 0: _USBSendStatus(false); return;
-    case 1: System::LED1::Write(cmd.arg.LEDSet.on); break;
-    case 2: System::LED2::Write(cmd.arg.LEDSet.on); break;
-    case 3: System::LED3::Write(cmd.arg.LEDSet.on); break;
-    }
-    
-    // Send status
-    _USBSendStatus(true);
+    _System::ICE_ST_SPI_CS_::Write(1);
 }
 
 // MARK: - STMApp Commands
@@ -295,19 +204,19 @@ static void _SDRead(const STM::Cmd& cmd) {
     
     // Stop reading from the SD card if a read is in progress
     if (reading) {
-        System::ICE_ST_SPI_CS_::Write(1);
+        _System::ICE_ST_SPI_CS_::Write(1);
         _SDCard.readStop();
         reading = false;
     }
     
     // Verify that the address is a multiple of the SD block length
     if (arg.addr % SD::BlockLen) {
-        _USBSendStatus(false);
+        _System::USBSendStatus(false);
         return;
     }
     
     // Send status
-    _USBSendStatus(true);
+    _System::USBSendStatus(true);
     
     // Update state
     reading = true;
@@ -359,7 +268,7 @@ void _ImgSetExposure(const STM::Cmd& cmd) {
     _ImgSensor::SetFineIntTime(arg.fineIntTime);
     _ImgSensor::SetAnalogGain(arg.analogGain);
     // Send status
-    _USBSendStatus(true);
+    _System::USBSendStatus(true);
 }
 
 void _ImgCapture(const STM::Cmd& cmd) {
@@ -383,7 +292,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     };
     
     // Send status
-    _USBSendStatus(true);
+    _System::USBSendStatus(true);
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
     // Send ImgCaptureStats
@@ -416,89 +325,6 @@ static void _MSPInit() {
 
 // MARK: - Tasks
 
-template <typename... T_Tasks>
-static void _TasksReset() {
-    // De-assert the SPI chip select
-    // This is necessary because the readout task asserts the SPI chip select,
-    // but has no way to deassert it, because it continues indefinitely
-    System::ICE_ST_SPI_CS_::Write(1);
-    (_Scheduler::Stop<T_Tasks>(), ...);
-}
-
-
-void _TaskCmdRecv::Run() {
-    for (;;) {
-        // Wait for USB to be re-connected (`Connecting` state) so we can call _USB.connect(),
-        // or for a new command to arrive so we can handle it.
-        _Scheduler::Wait([] { return _USB.state()==USB::State::Connecting || _USB.cmdRecv(); });
-        
-        #warning TODO: do we still need to disable interrupts?
-        // Disable interrupts so we can inspect+modify _usb atomically
-        Toastbox::IntState ints(false);
-        
-        // Reset all tasks
-        // This needs to happen before we call `_USB.connect()` so that any tasks that
-        // were running in the previous USB session are stopped before we enable
-        // USB again by calling _USB.connect().
-        _TasksReset<_Subtasks>();
-        
-        switch (_USB.state()) {
-        case USB::State::Connecting:
-            _USB.connect();
-            continue;
-        case USB::State::Connected:
-            if (!_USB.cmdRecv()) continue;
-            break;
-        default:
-            continue;
-        }
-        
-        auto usbCmd = *_USB.cmdRecv();
-        
-        // Re-enable interrupts while we handle the command
-        ints.restore();
-        
-        // Reject command if the length isn't valid
-        STM::Cmd cmd;
-        if (usbCmd.len != sizeof(cmd)) {
-            _USB.cmdAccept(false);
-            continue;
-        }
-        
-        memcpy(&cmd, usbCmd.data, usbCmd.len);
-        
-        // Only accept command if it's a flush command (in which case the endpoints
-        // don't need to be ready), or it's not a flush command, but both endpoints
-        // are ready. Otherwise, reject the command.
-        if (!(cmd.op==Op::EndpointsFlush || _USB.endpointReady(Endpoints::DataIn))) {
-            _USB.cmdAccept(false);
-            continue;
-        }
-        
-        _USB.cmdAccept(true);
-        _TaskCmdHandle::Start(cmd);
-    }
-}
-
-void _TaskCmdHandle::Start(const STM::Cmd& c) {
-    static STM::Cmd cmd = {};
-    cmd = c;
-    
-    _Scheduler::Start<_TaskCmdHandle>([] {
-        switch (cmd.op) {
-        case Op::EndpointsFlush:    _EndpointsFlush(cmd);       break;
-        case Op::StatusGet:         _StatusGet(cmd);            break;
-        case Op::BootloaderInvoke:  _BootloaderInvoke(cmd);     break;
-        case Op::LEDSet:            _LEDSet(cmd);               break;
-        case Op::SDRead:            _SDRead(cmd);               break;
-        case Op::ImgCapture:        _ImgCapture(cmd);           break;
-        case Op::ImgSetExposure:    _ImgSetExposure(cmd);       break;
-        // Bad command
-        default:                    _USBSendStatus(false);      break;
-        }
-    });
-}
-
 void _TaskUSBDataIn::Start() {
     _Scheduler::Start<_TaskUSBDataIn>([] {
         for (;;) {
@@ -527,7 +353,7 @@ void _TaskReadout::Start(std::optional<size_t> len) {
         
         // Send the Readout message, which causes us to enter the readout mode until
         // we release the chip select
-        System::ICE_ST_SPI_CS_::Write(0);
+        _System::ICE_ST_SPI_CS_::Write(0);
         _QSPI.command(_ICEQSPICmd(_ICE::ReadoutMsg(), 0));
         
         // Read data over QSPI and write it to USB, indefinitely
@@ -554,7 +380,7 @@ void _TaskReadout::Start(std::optional<size_t> len) {
             
             // Wait until ICE40 signals that data is ready to be read
             #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
-            while (!System::ICE_ST_SPI_D_READY::Read());
+            while (!_System::ICE_ST_SPI_D_READY::Read());
             
             _QSPI.read(_ICEQSPICmdReadOnly(len), buf.data+buf.len, len);
             buf.len += len;
@@ -562,6 +388,16 @@ void _TaskReadout::Start(std::optional<size_t> len) {
             if (remLen) *remLen -= len;
         }
     });
+}
+
+static void _CmdHandle(const STM::Cmd& cmd) {
+    switch (cmd.op) {
+    case Op::SDRead:            _SDRead(cmd);                   break;
+    case Op::ImgCapture:        _ImgCapture(cmd);               break;
+    case Op::ImgSetExposure:    _ImgSetExposure(cmd);           break;
+    // Bad command
+    default:                    _System::USBSendStatus(false);  break;
+    }
 }
 
 // MARK: - ISRs
@@ -592,16 +428,31 @@ extern "C" __attribute__((section(".isr"))) void ISR_DMA2_Stream7() {
     _QSPI.isrDMA();
 }
 
+// MARK: - Abort
+
+extern "C" [[noreturn]]
+void abort() {
+    Toastbox::IntState ints(false);
+    
+    _System::InitLED();
+    for (bool x=true;; x=!x) {
+        _System::LED1::Write(x);
+        _System::LED2::Write(x);
+        _System::LED3::Write(x);
+        for (volatile uint32_t i=0; i<(uint32_t)5000000; i++);
+    }
+}
+
 // MARK: - Main
 
 int main() {
-    System::Init();
+    _System::Init();
     
     _USB.init();
     _QSPI.init();
     
-    System::ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-    System::ICE_ST_SPI_CS_::Write(1);
+    _System::ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+    _System::ICE_ST_SPI_CS_::Write(1);
     
     _ICE::Init();
     _MSPInit();
