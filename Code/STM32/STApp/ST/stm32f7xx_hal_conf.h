@@ -173,7 +173,7 @@
 #define USE_HAL_NAND_REGISTER_CALLBACKS        0U /* NAND register callback disabled      */
 #define USE_HAL_NOR_REGISTER_CALLBACKS         0U /* NOR register callback disabled       */
 #define USE_HAL_PCD_REGISTER_CALLBACKS         0U /* PCD register callback disabled       */
-#define USE_HAL_QSPI_REGISTER_CALLBACKS        0U /* QSPI register callback disabled      */
+#define USE_HAL_QSPI_REGISTER_CALLBACKS        1U /* QSPI register callback disabled      */
 #define USE_HAL_RNG_REGISTER_CALLBACKS         0U /* RNG register callback disabled       */
 #define USE_HAL_RTC_REGISTER_CALLBACKS         0U /* RTC register callback disabled       */
 #define USE_HAL_SAI_REGISTER_CALLBACKS         0U /* SAI register callback disabled       */

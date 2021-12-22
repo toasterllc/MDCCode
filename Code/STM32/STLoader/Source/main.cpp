@@ -16,11 +16,9 @@ using namespace STM;
 // MARK: - Peripherals & Types
 static USB _USB;
 
-// QSPI clock divider=5 => run QSPI clock at 21.3 MHz
-// QSPI alignment=byte, so we can transfer single bytes at a time
 static QSPI<
     QSPIMode::Single,           // T_Mode
-    5,                          // T_ClkDivider
+    5,                          // T_ClkDivider (5 -> QSPI clock = 21.3 MHz)
     QSPIAlign::Byte,            // T_Align
     QSPIChipSelect::Controlled  // T_ChipSelect
 > _QSPI;
@@ -43,25 +41,31 @@ static volatile _VoidFn _AppEntryPoint [[noreturn, gnu::section(".uninit")]] = 0
 
 static constexpr uint32_t _UsPerTick  = 1000;
 
-class _TaskCmdRecv;
-class _TaskCmdHandle;
-class _TaskUSBDataOut;
-class _TaskUSBDataIn;
+// _TaskCmdRecv: receive commands over USB initiate handling them
+struct _TaskCmdRecv {
+    static void Run();
+    
+    // Task options
+    using Options = Toastbox::TaskOptions<
+        Toastbox::TaskOption::AutoStart<Run> // Task should start running
+    >;
+    
+    // Task stack
+    [[gnu::section(".stack._TaskCmdRecv")]]
+    static inline uint8_t Stack[512];
+};
 
-#define _Subtasks       \
-    _TaskCmdHandle,     \
-    _TaskUSBDataOut,    \
-    _TaskUSBDataIn
-
-using _Scheduler = Toastbox::Scheduler<
-    _UsPerTick, // T_UsPerTick
-    #warning TODO: remove stack guards for production
-    _StackMain, // T_MainStack
-    4,          // T_StackGuardCount
-    // Tasks
-    _TaskCmdRecv,
-    _Subtasks
->;
+// _TaskCmdHandle: handle _Cmd
+struct _TaskCmdHandle {
+    static void Start(const STM::Cmd& c);
+    
+    // Task options
+    using Options = Toastbox::TaskOptions<>;
+    
+    // Task stack
+    [[gnu::section(".stack._TaskCmdHandle")]]
+    static inline uint8_t Stack[512];
+};
 
 // _TaskUSBDataOut: reads `len` bytes from the DataOut endpoint and writes them to _Bufs
 struct _TaskUSBDataOut {
@@ -87,33 +91,22 @@ struct _TaskUSBDataIn {
     static inline uint8_t Stack[256];
 };
 
-// _TaskCmdHandle: handle _Cmd
-struct _TaskCmdHandle {
-    static void Handle(const STM::Cmd& c);
-    
-    // Task options
-    using Options = Toastbox::TaskOptions<>;
-    
-    // Task stack
-    [[gnu::section(".stack._TaskCmdHandle")]]
-    static inline uint8_t Stack[512];
-};
+#define _Subtasks       \
+    _TaskCmdHandle,     \
+    _TaskUSBDataOut,    \
+    _TaskUSBDataIn
 
-// _TaskCmdRecv: receive commands over USB initiate handling them
-struct _TaskCmdRecv {
-    static void Run();
-    
-    // Task options
-    using Options = Toastbox::TaskOptions<
-        Toastbox::TaskOption::AutoStart<Run> // Task should start running
-    >;
-    
-    // Task stack
-    [[gnu::section(".stack._TaskCmdRecv")]]
-    static inline uint8_t Stack[512];
-};
+using _Scheduler = Toastbox::Scheduler<
+    _UsPerTick, // T_UsPerTick
+    #warning TODO: remove stack guards for production
+    _StackMain, // T_MainStack
+    4,          // T_StackGuardCount
+    // Tasks
+    _TaskCmdRecv,
+    _Subtasks
+>;
 
-// MARK: - Command Handlers
+// MARK: - Common Commands
 
 static size_t _USBCeilToMaxPacketSize(size_t len) {
     // Round `len` up to the nearest packet size, since the USB hardware limits
@@ -127,6 +120,19 @@ static void _USBSendStatus(bool s) {
     alignas(4) static bool status = false; // Aligned to send via USB
     status = s;
     _USB.send(Endpoints::DataIn, &status, sizeof(status));
+}
+
+static void _EndpointsFlush(const STM::Cmd& cmd) {
+    // Reset endpoints
+    _USB.endpointReset(Endpoints::DataOut);
+    _USB.endpointReset(Endpoints::DataIn);
+    // Wait until endpoints are ready
+    _Scheduler::Wait([] {
+        return _USB.endpointReady(Endpoints::DataOut) &&
+               _USB.endpointReady(Endpoints::DataIn);
+    });
+    // Send status
+    _USBSendStatus(true);
 }
 
 static void _StatusGet(const STM::Cmd& cmd) {
@@ -169,18 +175,7 @@ static void _LEDSet(const STM::Cmd& cmd) {
     _USBSendStatus(true);
 }
 
-static void _EndpointsFlush(const STM::Cmd& cmd) {
-    // Reset endpoints
-    _USB.endpointReset(Endpoints::DataOut);
-    _USB.endpointReset(Endpoints::DataIn);
-    // Wait until both endpoints are ready
-    _Scheduler::Wait([] {
-        return _USB.endpointReady(Endpoints::DataOut) &&
-               _USB.endpointReady(Endpoints::DataIn);
-    });
-    // Send status
-    _USBSendStatus(true);
-}
+// MARK: - STMLoader Commands
 
 static size_t _STMRegionCapacity(void* addr) {
     // Verify that `addr` is in one of the allowed RAM regions
@@ -589,11 +584,11 @@ void _TaskCmdRecv::Run() {
         }
         
         _USB.cmdAccept(true);
-        _TaskCmdHandle::Handle(cmd);
+        _TaskCmdHandle::Start(cmd);
     }
 }
 
-void _TaskCmdHandle::Handle(const STM::Cmd& c) {
+void _TaskCmdHandle::Start(const STM::Cmd& c) {
     static STM::Cmd cmd = {};
     cmd = c;
     
@@ -667,22 +662,6 @@ void _TaskUSBDataIn::Start() {
             _Bufs.pop();
         }
     });
-}
-
-// MARK: - IntState
-
-bool Toastbox::IntState::InterruptsEnabled() {
-    return !__get_PRIMASK();
-}
-
-void Toastbox::IntState::SetInterruptsEnabled(bool en) {
-    if (en) __enable_irq();
-    else __disable_irq();
-}
-
-void Toastbox::IntState::WaitForInterrupt() {
-    Toastbox::IntState ints(true);
-    __WFI();
 }
 
 // MARK: - ISRs

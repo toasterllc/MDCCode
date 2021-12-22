@@ -56,7 +56,24 @@ public:
     using LED3 = GPIO<GPIOPortE, GPIO_PIN_12>;
 };
 
-#warning verify that _StackMainSize is large enough
+// MARK: - IntState
+
+bool Toastbox::IntState::InterruptsEnabled() {
+    return !__get_PRIMASK();
+}
+
+void Toastbox::IntState::SetInterruptsEnabled(bool en) {
+    if (en) __enable_irq();
+    else __disable_irq();
+}
+
+void Toastbox::IntState::WaitForInterrupt() {
+    Toastbox::IntState ints(true);
+    __WFI();
+}
+
+// MARK: - Main Thread Stack
+
 #define _StackMainSize 1024
 
 [[gnu::section(".stack.main")]]
@@ -64,6 +81,8 @@ uint8_t _StackMain[_StackMainSize];
 
 asm(".global _StackMainEnd");
 asm(".equ _StackMainEnd, _StackMain+" Stringify(_StackMainSize));
+
+// MARK: - Abort
 
 extern "C" [[noreturn]]
 void abort() {

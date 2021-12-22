@@ -91,12 +91,11 @@ SECTIONS {
         . = ALIGN(4);
     } >DTCM_RAM
     
-    .stack : {
+    .stack (NOLOAD) : {
         . = ALIGN(4);
-        _sstack = .;
-        . = . + StackSize;
+        *(.stack)
+        *(.stack.*)
         . = ALIGN(4);
-        _estack = .;
     } >DTCM_RAM
     
     .sram1 : {

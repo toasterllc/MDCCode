@@ -1,12 +1,17 @@
 #pragma once
 #include <stdbool.h>
-#include <stdlib.h>
+
+#warning TODO: we need this forward decl because this file gets included from both C and C++,
+#warning TODO: and for some reason including stdlib.h doesn't get us abort()
+#ifdef __cplusplus
+extern "C"
+#endif
+void abort();
 
 inline void Assert(bool x) {
     if (!x) abort();
 }
 
-//#define AssertArg(x)
 inline void AssertArg(bool x) {
     if (!x) abort();
 }

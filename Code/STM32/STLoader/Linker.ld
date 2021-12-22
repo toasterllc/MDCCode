@@ -95,8 +95,7 @@ SECTIONS {
         . = ALIGN(4);
     } >SRAM2
     
-    .stack (NOLOAD) :
-    {
+    .stack (NOLOAD) : {
         . = ALIGN(4);
         *(.stack)
         *(.stack.*)
