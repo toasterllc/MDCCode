@@ -288,7 +288,7 @@ static void _SDSetPowerEnabled(bool en) {
     HAL_Delay(2);
 }
 
-void _SDRead(const STM::Cmd& cmd) {
+static void _SDRead(const STM::Cmd& cmd) {
     static bool init = false;
     static bool reading = false;
     const auto& arg = cmd.arg.SDRead;
@@ -405,7 +405,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
 
 // MARK: - MSP430
 
-void _MSPInit() {
+static void _MSPInit() {
     constexpr uint16_t PM5CTL0          = 0x0130;
     constexpr uint16_t PAOUT            = 0x0202;
     
@@ -569,16 +569,6 @@ void _TaskReadout::Start(std::optional<size_t> len) {
         }
     });
 }
-
-
-
-
-
-
-
-
-
-
 
 // MARK: - ISRs
 
