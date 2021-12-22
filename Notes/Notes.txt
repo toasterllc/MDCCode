@@ -1,12 +1,23 @@
 - Rev4 Todo
     
+    - STApp: migrate to use real threads
+    
+    - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?
+    
+    - STApp: replace uses of HAL_Delay with Scheduler::Sleep
+    
+    - STLoader/STApp: move target-specific USB.cpp into USBBase.h
+        - We just need to supply the USB descriptor to USBBase right?
+    
+    - Task.h: debug feature: stack traces
+    
+    - Buy TPS2116DRLR on Mouser?
+        1580 Expected 2/3/2022
+        3630 Expected 3/7/2022
+    
     - MSPApp: add proper error handling to Img/SD
         - Make error handler a template parameter
         - Have error handler take a breadcrumb value
-    
-    - STLoader: migrate to use real threads
-    
-    - STApp: migrate to use real threads
     
     - MSPApp: can we use the 'restart' facility of reset_register to speed up integration time changes?
         - 'restart' triggers a bad frame, so experiment with the 'restart_bad' and 'mask_bad' flags too
@@ -21,6 +32,9 @@
             - Might be because we're not waiting long enough after turning on the power rails to do I2C comms
                 - "#warning TODO: measure how long it takes for IMG rails to rise"
     
+    - USB Throughput, revisted:
+        - Could we use the DMA "Double-buffer mode" to avoid CPU intervention between sending 64k chunks?
+    
     - USB Throughput: Try to optimize USB throughput beyond 355e6 bits/sec
         - Does the USB hub limit the data throughput?
         - Perf debugging tactic: check how often the DIEPINT.NAK interrupt occurs when sending mass data to the
@@ -32,6 +46,18 @@
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
     
+    √ STLoader: cleanup
+    
+    √ STLoader/STApp: make BufQueue fully templated on the buffers themselves
+    
+    √ STLoader/STApp: make QSPI a template
+    
+    √ STLoader: replace uses of HAL_Delay with Scheduler::Sleep
+    
+    √ STLoader: migrate to use real threads
+    
+    √ Task.h: debug feature: detecting stack overflows
+        √ Include support for detecting stack overflows on the main stack too, due to interrupt handlers using lots of stack
     
     √ MSPApp: make SD::Card / Img::Sensor / ICE classes templated
     

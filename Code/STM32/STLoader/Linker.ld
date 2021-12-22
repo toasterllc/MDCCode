@@ -77,11 +77,13 @@ SECTIONS {
     .bss : {
         . = ALIGN(4);
         _sbss = .;
+        __bss_start__ = .;
         *(.bss)
         *(.bss*)
         *(COMMON)
         . = ALIGN(4);
         _ebss = .;
+        __bss_end__ = .;
     } >SRAM2
     
     .uninit (NOLOAD) : {
@@ -91,12 +93,12 @@ SECTIONS {
         . = ALIGN(4);
     } >SRAM2
     
-    .stack : {
+    .stack (NOLOAD) :
+    {
         . = ALIGN(4);
-        _sstack = .;
-        . = . + StackSize;
+        *(.stack)
+        *(.stack.*)
         . = ALIGN(4);
-        _estack = .;
     } >SRAM2
     
     /* Remove information from the compiler libraries */

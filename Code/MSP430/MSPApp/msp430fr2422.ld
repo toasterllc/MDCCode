@@ -316,7 +316,6 @@ SECTIONS
   {
     . = ALIGN(2);
     *(.stack)
-    . = ALIGN(2);
     *(.stack.*)
     . = ALIGN(2);
   } > RAM

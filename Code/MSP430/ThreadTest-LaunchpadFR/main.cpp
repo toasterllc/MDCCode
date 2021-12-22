@@ -2,8 +2,9 @@
 #include <cstddef>
 #include <cstdint>
 //#include <cstdio>
-#include "Toastbox/IntState.h"
+#define TaskMSP430
 #include "Toastbox/Task.h"
+#include "Toastbox/IntState.h"
 #include "Util.h"
 #include "Scheduler.h"
 #include "TaskA.h"
@@ -44,72 +45,10 @@ static void _ISR_WDT() {
 //    PAOUT &= ~BIT2;
 }
 
-
-
-
-
-
-
-using VoidFn = void(*)();
-
-struct Option {
-    template <VoidFn T_Fn>
-    struct AutoStart;
-    
-    struct End;
-};
-
-
-//template<typename>
-//struct is_std_array : std::false_type {};
-//
-//template<typename T, std::size_t N>
-//struct is_std_array<std::array<T,N>> : std::true_type {};
-
-template <typename... T_Options>
-struct Options {
-    template <typename... Args>
-    struct _AutoStart : std::false_type {
-        static constexpr VoidFn Fn = nullptr;
-    };
-    
-    template <typename T, typename... Args>
-    struct _AutoStart<T, Args...> : _AutoStart<Args...> {};
-    
-    template <VoidFn T_Fn>
-    struct _AutoStart<typename Option::template AutoStart<T_Fn>> : std::true_type {
-        static constexpr VoidFn Fn = T_Fn;
-    };
-    
-    template <VoidFn T_Fn, typename... Args>
-    struct _AutoStart<typename Option::template AutoStart<T_Fn>, Args...> : std::true_type {
-        static constexpr VoidFn Fn = T_Fn;
-    };
-    
-    using AutoStart = _AutoStart<T_Options...>;
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+template <typename... T_Tasks>
+static void _resetTasks() {
+    (Scheduler::Stop<T_Tasks>(), ...);
+}
 
 int main() {
     // Config watchdog timer:
@@ -183,6 +122,16 @@ int main() {
 //        VoidFn fn = Opts::AutoStart::Fn;
 //        fn();
 //    }
+    
+//    #define Subtasks TaskA, TaskB
+//    _resetTasks<Subtasks>();
+    
+//    Scheduler::Stop<Subtasks...>();
+    
+//    (std::is_same_v<T, Forbidden> && ...);
+    
+    
+    
     
     Scheduler::Run();
     return 0;
