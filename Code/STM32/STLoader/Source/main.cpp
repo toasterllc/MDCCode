@@ -713,8 +713,7 @@ extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
 static void _JumpToAppIfNeeded() {
     // Stash and reset `_AppEntryPoint` so that we only attempt to start the app once
     // after each software reset.
-    #warning TODO: bring back
-	const _VoidFn appEntryPoint = nullptr;//_AppEntryPoint;
+	const _VoidFn appEntryPoint = _AppEntryPoint;
     _AppEntryPoint = nullptr;
     
     // Cache RCC_CSR since we're about to clear it
