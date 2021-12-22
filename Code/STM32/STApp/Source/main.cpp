@@ -2,8 +2,7 @@
 #include "Toastbox/Task.h"
 #include "Toastbox/IntState.h"
 #include "Assert.h"
-#include "SystemClock.h"
-#include "SystemBase.h"
+#include "System.h"
 #include "MSP430.h"
 #include "ICE.h"
 #include "STM.h"
@@ -21,7 +20,7 @@ using _BufQueue = BufQueue<uint8_t,63*1024,2>;
 [[gnu::section(".sram1")]]
 static _BufQueue _Bufs;
 
-constexpr auto& _MSP = SystemBase::MSP;
+constexpr auto& _MSP = System::MSP;
 
 using namespace STM;
 
@@ -37,8 +36,6 @@ static QSPI<
 
 using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
 using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
-
-static constexpr uint32_t _UsPerTick  = 1000;
 
 // _TaskCmdRecv: receive commands over USB initiate handling them
 struct _TaskCmdRecv {
@@ -96,7 +93,7 @@ struct _TaskReadout {
     _TaskReadout
 
 using _Scheduler = Toastbox::Scheduler<
-    _UsPerTick, // T_UsPerTick
+    System::UsPerSysTick, // T_UsPerTick
     #warning TODO: remove stack guards for production
     _StackMain, // T_MainStack
     4,          // T_StackGuardCount
@@ -257,9 +254,9 @@ static void _BootloaderInvoke(const STM::Cmd& cmd) {
 static void _LEDSet(const STM::Cmd& cmd) {
     switch (cmd.arg.LEDSet.idx) {
     case 0: _USBSendStatus(false); return;
-    case 1: SystemBase::LED1::Write(cmd.arg.LEDSet.on); break;
-    case 2: SystemBase::LED2::Write(cmd.arg.LEDSet.on); break;
-    case 3: SystemBase::LED3::Write(cmd.arg.LEDSet.on); break;
+    case 1: System::LED1::Write(cmd.arg.LEDSet.on); break;
+    case 2: System::LED2::Write(cmd.arg.LEDSet.on); break;
+    case 3: System::LED3::Write(cmd.arg.LEDSet.on); break;
     }
     
     // Send status
@@ -406,8 +403,8 @@ void _ImgCapture(const STM::Cmd& cmd) {
 // MARK: - MSP430
 
 static void _MSPInit() {
-    constexpr uint16_t PM5CTL0          = 0x0130;
-    constexpr uint16_t PAOUT            = 0x0202;
+    constexpr uint16_t PM5CTL0  = 0x0130;
+    constexpr uint16_t PAOUT    = 0x0202;
     
     auto s = _MSP.connect();
     Assert(s == _MSP.Status::OK);
@@ -601,7 +598,7 @@ extern "C" __attribute__((section(".isr"))) void ISR_DMA2_Stream7() {
 // MARK: - Main
 
 int main() {
-    SystemBase::Init();
+    System::Init();
     
     _USB.init();
     _QSPI.init();

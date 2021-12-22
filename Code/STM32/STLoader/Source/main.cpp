@@ -3,13 +3,12 @@
 #define TaskARM32
 #include "Toastbox/Task.h"
 #include "Assert.h"
-#include "SystemClock.h"
 #include "Toastbox/IntState.h"
 #include "STM.h"
 #include "USB.h"
 #include "QSPI.h"
 #include "BufQueue.h"
-#include "SystemBase.h"
+#include "System.h"
 
 using namespace STM;
 
@@ -23,7 +22,7 @@ static QSPI<
     QSPIChipSelect::Controlled  // T_ChipSelect
 > _QSPI;
 
-constexpr auto& _MSP = SystemBase::MSP;
+constexpr auto& _MSP = System::MSP;
 
 using _ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
 using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
@@ -38,8 +37,6 @@ static _BufQueue _Bufs;
 // on startup.
 using _VoidFn = void(*)();
 static volatile _VoidFn _AppEntryPoint [[noreturn, gnu::section(".uninit")]] = 0;
-
-static constexpr uint32_t _UsPerTick  = 1000;
 
 // _TaskCmdRecv: receive commands over USB initiate handling them
 struct _TaskCmdRecv {
@@ -97,7 +94,7 @@ struct _TaskUSBDataIn {
     _TaskUSBDataIn
 
 using _Scheduler = Toastbox::Scheduler<
-    _UsPerTick, // T_UsPerTick
+    System::UsPerSysTick, // T_UsPerTick
     #warning TODO: remove stack guards for production
     _StackMain, // T_MainStack
     4,          // T_StackGuardCount
@@ -166,9 +163,9 @@ static void _BootloaderInvoke(const STM::Cmd& cmd) {
 static void _LEDSet(const STM::Cmd& cmd) {
     switch (cmd.arg.LEDSet.idx) {
     case 0: _USBSendStatus(false); return;
-    case 1: SystemBase::LED1::Write(cmd.arg.LEDSet.on); break;
-    case 2: SystemBase::LED2::Write(cmd.arg.LEDSet.on); break;
-    case 3: SystemBase::LED3::Write(cmd.arg.LEDSet.on); break;
+    case 1: System::LED1::Write(cmd.arg.LEDSet.on); break;
+    case 2: System::LED2::Write(cmd.arg.LEDSet.on); break;
+    case 3: System::LED3::Write(cmd.arg.LEDSet.on); break;
     }
     
     // Send status
@@ -716,7 +713,7 @@ static void _JumpToAppIfNeeded() {
 int main() {
     _JumpToAppIfNeeded();
     
-    SystemBase::Init();
+    System::Init();
     
     __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
     
