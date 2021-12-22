@@ -169,7 +169,7 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
     _System::ICE_ST_SPI_CS_::Write(1);
 }
 
-// MARK: - STMApp Commands
+// MARK: - Commands
 
 static void _SDSetPowerEnabled(bool en) {
     constexpr uint16_t BITB         = 1<<0xB;
@@ -306,6 +306,16 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _TaskReadout::Start(stats.len);
 }
 
+static void _CmdHandle(const STM::Cmd& cmd) {
+    switch (cmd.op) {
+    case Op::SDRead:            _SDRead(cmd);                   break;
+    case Op::ImgCapture:        _ImgCapture(cmd);               break;
+    case Op::ImgSetExposure:    _ImgSetExposure(cmd);           break;
+    // Bad command
+    default:                    _System::USBSendStatus(false);  break;
+    }
+}
+
 // MARK: - MSP430
 
 static void _MSPInit() {
@@ -390,16 +400,6 @@ void _TaskReadout::Start(std::optional<size_t> len) {
     });
 }
 
-static void _CmdHandle(const STM::Cmd& cmd) {
-    switch (cmd.op) {
-    case Op::SDRead:            _SDRead(cmd);                   break;
-    case Op::ImgCapture:        _ImgCapture(cmd);               break;
-    case Op::ImgSetExposure:    _ImgSetExposure(cmd);           break;
-    // Bad command
-    default:                    _System::USBSendStatus(false);  break;
-    }
-}
-
 // MARK: - ISRs
 
 extern "C" __attribute__((section(".isr"))) void ISR_NMI() {}
@@ -432,15 +432,7 @@ extern "C" __attribute__((section(".isr"))) void ISR_DMA2_Stream7() {
 
 extern "C" [[noreturn]]
 void abort() {
-    Toastbox::IntState ints(false);
-    
-    _System::InitLED();
-    for (bool x=true;; x=!x) {
-        _System::LED1::Write(x);
-        _System::LED2::Write(x);
-        _System::LED3::Write(x);
-        for (volatile uint32_t i=0; i<(uint32_t)5000000; i++);
-    }
+    _System::Abort();
 }
 
 // MARK: - Main

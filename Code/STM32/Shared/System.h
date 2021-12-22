@@ -205,6 +205,19 @@ public:
         USB.send(STM::Endpoints::DataIn, &status, sizeof(status));
     }
     
+    [[noreturn]]
+    static void Abort() {
+        Toastbox::IntState ints(false);
+        
+        InitLED();
+        for (bool x=true;; x=!x) {
+            LED1::Write(x);
+            LED2::Write(x);
+            LED3::Write(x);
+            for (volatile uint32_t i=0; i<(uint32_t)5000000; i++);
+        }
+    }
+    
 private:
     static void _ClockInit() {
         // Configure the main internal regulator output voltage
