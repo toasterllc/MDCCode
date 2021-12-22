@@ -47,6 +47,13 @@ public:
     using MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
     static inline MSP430<MSPTest, MSPRst_, CPUFreqMHz> MSP;
     
+    using ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
+    using ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
+    
+    using ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
+    using ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
+    using ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
+    
     // LEDs
 //    using LED0 = GPIO<GPIOPortF, GPIO_PIN_14>;
     using LED1 = GPIO<GPIOPortE, GPIO_PIN_7>;

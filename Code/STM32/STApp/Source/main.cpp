@@ -29,13 +29,10 @@ static USB _USB;
 
 static QSPI<
     QSPIMode::Dual,               // T_Mode
-    1,                              // T_ClkDivider (1 -> QSPI clock = 64 MHz)
+    1,                            // T_ClkDivider (1 -> QSPI clock = 64 MHz)
     QSPIAlign::Word,              // T_Align
     QSPIChipSelect::Uncontrolled  // T_ChipSelect
 > _QSPI;
-
-using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
-using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
 
 // _TaskCmdRecv: receive commands over USB initiate handling them
 struct _TaskCmdRecv {
@@ -202,14 +199,14 @@ template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
     
-    _ICE_ST_SPI_CS_::Write(0);
+    System::ICE_ST_SPI_CS_::Write(0);
     if (resp) {
         _QSPI.read(_ICEQSPICmd(msg, sizeof(*resp)), resp, sizeof(*resp));
     } else {
         _QSPI.command(_ICEQSPICmd(msg, 0));
     }
     _QSPI.wait();
-    _ICE_ST_SPI_CS_::Write(1);
+    System::ICE_ST_SPI_CS_::Write(1);
 }
 
 // MARK: - Common Commands
@@ -298,7 +295,7 @@ static void _SDRead(const STM::Cmd& cmd) {
     
     // Stop reading from the SD card if a read is in progress
     if (reading) {
-        _ICE_ST_SPI_CS_::Write(1);
+        System::ICE_ST_SPI_CS_::Write(1);
         _SDCard.readStop();
         reading = false;
     }
@@ -424,7 +421,7 @@ static void _TasksReset() {
     // De-assert the SPI chip select
     // This is necessary because the readout task asserts the SPI chip select,
     // but has no way to deassert it, because it continues indefinitely
-    _ICE_ST_SPI_CS_::Write(1);
+    System::ICE_ST_SPI_CS_::Write(1);
     (_Scheduler::Stop<T_Tasks>(), ...);
 }
 
@@ -530,7 +527,7 @@ void _TaskReadout::Start(std::optional<size_t> len) {
         
         // Send the Readout message, which causes us to enter the readout mode until
         // we release the chip select
-        _ICE_ST_SPI_CS_::Write(0);
+        System::ICE_ST_SPI_CS_::Write(0);
         _QSPI.command(_ICEQSPICmd(_ICE::ReadoutMsg(), 0));
         
         // Read data over QSPI and write it to USB, indefinitely
@@ -557,7 +554,7 @@ void _TaskReadout::Start(std::optional<size_t> len) {
             
             // Wait until ICE40 signals that data is ready to be read
             #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
-            while (!_ICE_ST_SPI_D_READY::Read());
+            while (!System::ICE_ST_SPI_D_READY::Read());
             
             _QSPI.read(_ICEQSPICmdReadOnly(len), buf.data+buf.len, len);
             buf.len += len;
@@ -603,8 +600,8 @@ int main() {
     _USB.init();
     _QSPI.init();
     
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-    _ICE_ST_SPI_CS_::Write(1);
+    System::ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+    System::ICE_ST_SPI_CS_::Write(1);
     
     _ICE::Init();
     _MSPInit();

@@ -24,11 +24,6 @@ static QSPI<
 
 constexpr auto& _MSP = System::MSP;
 
-using _ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
-using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
-using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
-using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
-
 using _BufQueue = BufQueue<uint8_t,1024,2>;
 static _BufQueue _Bufs;
 
@@ -261,23 +256,23 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.ICEWrite;
     
     // Configure ICE40 control GPIOs
-    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    System::ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    System::ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    System::ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    System::ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Put ICE40 into configuration mode
-    _ICE_ST_SPI_CLK::Write(1);
+    System::ICE_ST_SPI_CLK::Write(1);
     
-    _ICE_ST_SPI_CS_::Write(0);
-    _ICE_CRST_::Write(0);
+    System::ICE_ST_SPI_CS_::Write(0);
+    System::ICE_CRST_::Write(0);
     _Scheduler::SleepMs<1>(); // Sleep 1 ms (ideally, 200 ns)
     
-    _ICE_CRST_::Write(1);
+    System::ICE_CRST_::Write(1);
     _Scheduler::SleepMs<2>(); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
     
     // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
-    _ICE_ST_SPI_CS_::Write(1);
+    System::ICE_ST_SPI_CS_::Write(1);
     
     // Have QSPI take over _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_
     _QSPI.config();
@@ -312,7 +307,7 @@ static void _ICEWrite(const STM::Cmd& cmd) {
         bool ok = false;
         for (int i=0; i<10 && !ok; i++) {
             if (i) _Scheduler::SleepMs<1>(); // Sleep 1 ms
-            ok = _ICE_CDONE::Read();
+            ok = System::ICE_CDONE::Read();
         }
         
         if (!ok) {
