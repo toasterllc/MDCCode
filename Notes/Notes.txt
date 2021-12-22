@@ -1,5 +1,9 @@
 - Rev4 Todo
     
+    - Buy TPS2116DRLR on Mouser?
+        1580 Expected 2/3/2022
+        3630 Expected 3/7/2022
+    
     - STLoader/STApp: make BufQueue fully templated on the buffers themselves
     
     - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?
