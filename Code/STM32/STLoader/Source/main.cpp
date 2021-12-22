@@ -13,7 +13,7 @@
 
 using namespace STM;
 
-// MARK: - Peripherals
+// MARK: - Peripherals & Types
 USB _USB;
 
 // QSPI clock divider=5 => run QSPI clock at 21.3 MHz
@@ -26,8 +26,6 @@ using _ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
 using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
 using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
 using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
-
-STM::Cmd _Cmd = {};
 
 alignas(4) uint8_t _Buf0[1024]; // Aligned to send via USB
 alignas(4) uint8_t _Buf1[1024]; // Aligned to send via USB
@@ -63,71 +61,9 @@ using _Scheduler = Toastbox::Scheduler<
     _Subtasks
 >;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-template <typename... T_Tasks>
-static void _ResetTasks() {
-    (_Scheduler::Stop<T_Tasks>(), ...);
-}
-
-static size_t _USBCeilToMaxPacketSize(size_t len) {
-    // Round `len` up to the nearest packet size, since the USB hardware limits
-    // the data received based on packets instead of bytes
-    const size_t rem = len%USB::MaxPacketSizeIn();
-    len += (rem>0 ? USB::MaxPacketSizeIn()-rem : 0);
-    return len;
-}
-
 // _USBDataOutTask: reads `len` bytes from the DataOut endpoint and writes them to _Bufs
-class _USBDataOutTask {
-public:
-    static void Start(size_t len) {
-        // Make sure this task isn't busy
-        Assert(!_Scheduler::Running<_USBDataOutTask>());
-        
-        _Len = len;
-        _Scheduler::Start<_USBDataOutTask>([] {
-            while (_Len) {
-                _Scheduler::Wait([] { return !_Bufs.full(); });
-                
-                // Prepare to receive either `_Len` bytes or the
-                // buffer capacity bytes, whichever is smaller.
-                const size_t cap = _USBCeilToMaxPacketSize(std::min(_Len, _Bufs.back().cap));
-                // Ensure that after rounding up to the nearest packet size, we don't
-                // exceed the buffer capacity. (This should always be safe as long as
-                // the buffer capacity is a multiple of the max packet size.)
-                Assert(cap <= _Bufs.back().cap);
-                _USB.recv(Endpoints::DataOut, _Bufs.back().data, cap);
-                _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
-                
-                // Never claim that we read more than the requested data, even if ceiling
-                // to the max packet size caused us to read more than requested.
-                const size_t recvLen = std::min(_Len, _USB.recvLen(Endpoints::DataOut));
-                _Len -= recvLen;
-                _Bufs.back().len = recvLen;
-                _Bufs.push();
-            }
-        });
-    }
+struct _USBDataOutTask {
+    static void Start(size_t len);
     
     // Task options
     using Options = Toastbox::TaskOptions<>;
@@ -135,29 +71,11 @@ public:
     // Task stack
     [[gnu::section(".stack._USBDataOutTask")]]
     static inline uint8_t Stack[256];
-    
-private:
-    static inline size_t _Len = 0;
 };
 
 // _USBDataInTask: writes buffers from _Bufs to the DataIn endpoint, and pops them from _Bufs
-class _USBDataInTask {
-public:
-    static void Start() {
-        _Scheduler::Start<_USBDataInTask>([] {
-            for (;;) {
-                _Scheduler::Wait([] { return !_Bufs.empty(); });
-                
-                // Send the data and wait until the transfer is complete
-                auto& buf = _Bufs.front();
-                _USB.send(Endpoints::DataIn, buf.data, buf.len);
-                _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-                
-                buf.len = 0;
-                _Bufs.pop();
-            }
-        });
-    }
+struct _USBDataInTask {
+    static void Start();
     
     // Task options
     using Options = Toastbox::TaskOptions<>;
@@ -167,11 +85,45 @@ public:
     static inline uint8_t Stack[256];
 };
 
+// _CmdHandleTask: handle _Cmd
+struct _CmdHandleTask {
+    static void CmdHandle(const STM::Cmd& c);
+    
+    // Task options
+    using Options = Toastbox::TaskOptions<>;
+    
+    // Task stack
+    [[gnu::section(".stack._CmdHandleTask")]]
+    static inline uint8_t Stack[512];
+};
+
+// _CmdRecvTask: receive commands over USB initiate handling them
+struct _CmdRecvTask {
+    static void Run();
+    
+    // Task options
+    using Options = Toastbox::TaskOptions<
+        Toastbox::TaskOption::AutoStart<Run> // Task should start running
+    >;
+    
+    // Task stack
+    [[gnu::section(".stack._CmdRecvTask")]]
+    static inline uint8_t Stack[512];
+};
 
 
 
 
 
+// MARK: - Command Handlers
+
+static size_t _USBCeilToMaxPacketSize(size_t len) {
+    // Round `len` up to the nearest packet size, since the USB hardware limits
+    // the data received based on packets instead of bytes
+    const size_t rem = len%USB::MaxPacketSizeIn();
+    len += (rem>0 ? USB::MaxPacketSizeIn()-rem : 0);
+    return len;
+}
 
 static void _USBSendStatus(bool s) {
     alignas(4) static bool status = false; // Aligned to send via USB
@@ -179,7 +131,7 @@ static void _USBSendStatus(bool s) {
     _USB.send(Endpoints::DataIn, &status, sizeof(status));
 }
 
-static void _StatusGet() {
+static void _StatusGet(const STM::Cmd& cmd) {
     // Send status
     _USBSendStatus(true);
     // Wait for host to receive status
@@ -195,7 +147,7 @@ static void _StatusGet() {
     _USB.send(Endpoints::DataIn, &status, sizeof(status));
 }
 
-static void _BootloaderInvoke() {
+static void _BootloaderInvoke(const STM::Cmd& cmd) {
     // Send status
     _USBSendStatus(true);
     // Wait for host to receive status before resetting
@@ -207,19 +159,19 @@ static void _BootloaderInvoke() {
     abort();
 }
 
-static void _LEDSet() {
-    switch (_Cmd.arg.LEDSet.idx) {
+static void _LEDSet(const STM::Cmd& cmd) {
+    switch (cmd.arg.LEDSet.idx) {
     case 0: _USBSendStatus(false); return;
-    case 1: SystemBase::LED1::Write(_Cmd.arg.LEDSet.on); break;
-    case 2: SystemBase::LED2::Write(_Cmd.arg.LEDSet.on); break;
-    case 3: SystemBase::LED3::Write(_Cmd.arg.LEDSet.on); break;
+    case 1: SystemBase::LED1::Write(cmd.arg.LEDSet.on); break;
+    case 2: SystemBase::LED2::Write(cmd.arg.LEDSet.on); break;
+    case 3: SystemBase::LED3::Write(cmd.arg.LEDSet.on); break;
     }
     
     // Send status
     _USBSendStatus(true);
 }
 
-static void _EndpointsFlush() {
+static void _EndpointsFlush(const STM::Cmd& cmd) {
     // Reset endpoints
     _USB.endpointReset(Endpoints::DataOut);
     _USB.endpointReset(Endpoints::DataIn);
@@ -251,8 +203,8 @@ static size_t _STMRegionCapacity(void* addr) {
     return cap;
 }
 
-static void _STMWrite() {
-    const auto& arg = _Cmd.arg.STMWrite;
+static void _STMWrite(const STM::Cmd& cmd) {
+    const auto& arg = cmd.arg.STMWrite;
     
     // Bail if the region capacity is too small to hold the
     // incoming data length (ceiled to the packet length)
@@ -275,8 +227,8 @@ static void _STMWrite() {
     _USBSendStatus(true);
 }
 
-static void _STMReset() {
-    _AppEntryPoint = (_VoidFn)_Cmd.arg.STMReset.entryPointAddr;
+static void _STMReset(const STM::Cmd& cmd) {
+    _AppEntryPoint = (_VoidFn)cmd.arg.STMReset.entryPointAddr;
     
     // Send status
     _USBSendStatus(true);
@@ -289,7 +241,7 @@ static void _STMReset() {
     abort();
 }
 
-static void _ice_qspiWrite(const void* data, size_t len) {
+static void _ICEQSPIWrite(const void* data, size_t len) {
     const QSPI_CommandTypeDef cmd = {
         .Instruction = 0,
         .InstructionMode = QSPI_INSTRUCTION_NONE,
@@ -315,8 +267,8 @@ static void _ice_qspiWrite(const void* data, size_t len) {
     _QSPI.write(cmd, data, len);
 }
 
-static void _ICEWrite() {
-    auto& arg = _Cmd.arg.ICEWrite;
+static void _ICEWrite(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.ICEWrite;
     
     // Configure ICE40 control GPIOs
     _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -342,7 +294,7 @@ static void _ICEWrite() {
     
     // Send 8 clocks and wait for them to complete
     static const uint8_t ff = 0xff;
-    _ice_qspiWrite(&ff, 1);
+    _ICEQSPIWrite(&ff, 1);
     _Scheduler::Wait([] { return _QSPI.ready(); });
     
     // Reset state
@@ -357,7 +309,7 @@ static void _ICEWrite() {
         _Scheduler::Wait([] { return !_Bufs.empty() && _QSPI.ready(); });
         
         // Write the data over QSPI and wait for completion
-        _ice_qspiWrite(_Bufs.front().data, _Bufs.front().len);
+        _ICEQSPIWrite(_Bufs.front().data, _Bufs.front().len);
         _Scheduler::Wait([] { return _QSPI.ready(); });
         
         // Update the remaining data and pop the buffer so it can be used again
@@ -393,7 +345,7 @@ static void _ICEWrite() {
         constexpr uint8_t ClockCount = 7;
         static int i;
         for (i=0; i<ClockCount; i++) {
-            _ice_qspiWrite(&ff, sizeof(ff));
+            _ICEQSPIWrite(&ff, sizeof(ff));
             _Scheduler::Wait([] { return _QSPI.ready(); });
         }
     }
@@ -401,20 +353,20 @@ static void _ICEWrite() {
     _USBSendStatus(true);
 }
 
-static void _MSPConnect() {
+static void _MSPConnect(const STM::Cmd& cmd) {
     const auto r = _MSP.connect();
     // Send status
     _USBSendStatus(r == _MSP.Status::OK);
 }
 
-static void _MSPDisconnect() {
+static void _MSPDisconnect(const STM::Cmd& cmd) {
     _MSP.disconnect();
     // Send status
     _USBSendStatus(true);
 }
 
-static void _MSPRead() {
-    auto& arg = _Cmd.arg.MSPRead;
+static void _MSPRead(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPRead;
     
     // Reset state
     _Bufs.reset();
@@ -445,8 +397,8 @@ static void _MSPRead() {
     _USBSendStatus(true);
 }
 
-static void _MSPWrite() {
-    auto& arg = _Cmd.arg.MSPWrite;
+static void _MSPWrite(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPWrite;
     
     // Reset state
     _Bufs.reset();
@@ -523,8 +475,8 @@ static void _MSPDebugHandleCmd(const MSPDebugCmd& cmd, _MSPDebugState& state) {
     }
 }
 
-static void _MSPDebug() {
-    auto& arg = _Cmd.arg.MSPDebug;
+static void _MSPDebug(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPDebug;
     
     // Bail if more data was requested than the size of our buffer
     if (arg.respLen > sizeof(_Buf1)) {
@@ -541,7 +493,8 @@ static void _MSPDebug() {
     
     // Handle debug commands
     {
-        while (arg.cmdsLen) {
+        size_t cmdsLenRem = arg.cmdsLen;
+        while (cmdsLenRem) {
             // Receive debug commands into _Buf0
             _USB.recv(Endpoints::DataOut, _Buf0, sizeof(_Buf0));
             _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
@@ -553,7 +506,7 @@ static void _MSPDebug() {
                 _MSPDebugHandleCmd(cmds[i], state);
             }
             
-            arg.cmdsLen -= cmdsLen;
+            cmdsLenRem -= cmdsLen;
         }
     }
     
@@ -575,151 +528,141 @@ static void _MSPDebug() {
     _USBSendStatus(state.ok);
 }
 
-class _CmdHandleTask {
-public:
-    static void CmdHandle() {
-        _Scheduler::Start<_CmdHandleTask>([] { _CmdHandle(); });
+// MARK: - Tasks
+
+template <typename... T_Tasks>
+static void _ResetTasks() {
+    (_Scheduler::Stop<T_Tasks>(), ...);
+}
+
+void _CmdRecvTask::Run() {
+    for (;;) {
+        // Wait for USB to be re-connected (`Connecting` state) so we can call _USB.connect(),
+        // or for a new command to arrive so we can handle it.
+        _Scheduler::Wait([&] { return _USB.state()==USB::State::Connecting || _USB.cmdRecv(); });
+        
+        #warning TODO: do we still need to disable interrupts?
+        // Disable interrupts so we can inspect+modify _usb atomically
+        Toastbox::IntState ints(false);
+        
+        // Reset all tasks
+        // This needs to happen before we call `_USB.connect()` so that any tasks that
+        // were running in the previous USB session are stopped before we enable
+        // USB again by calling _USB.connect().
+        _ResetTasks<_Subtasks>();
+        
+        switch (_USB.state()) {
+        case USB::State::Connecting:
+            _USB.connect();
+            continue;
+        case USB::State::Connected:
+            if (!_USB.cmdRecv()) continue;
+            break;
+        default:
+            continue;
+        }
+        
+        auto usbCmd = *_USB.cmdRecv();
+        
+        // Re-enable interrupts while we handle the command
+        ints.restore();
+        
+        // Reject command if the length isn't valid
+        STM::Cmd cmd;
+        if (usbCmd.len != sizeof(cmd)) {
+            _USB.cmdAccept(false);
+            continue;
+        }
+        
+        memcpy(&cmd, usbCmd.data, usbCmd.len);
+        
+        // Only accept command if it's a flush command (in which case the endpoints
+        // don't need to be ready), or it's not a flush command, but both endpoints
+        // are ready. Otherwise, reject the command.
+        if (!(cmd.op==Op::EndpointsFlush || (_USB.endpointReady(Endpoints::DataOut) && _USB.endpointReady(Endpoints::DataIn)))) {
+            _USB.cmdAccept(false);
+            continue;
+        }
+        
+        _USB.cmdAccept(true);
+        _CmdHandleTask::CmdHandle(cmd);
     }
+}
+
+void _CmdHandleTask::CmdHandle(const STM::Cmd& c) {
+    static STM::Cmd cmd = {};
+    cmd = c;
     
-    // Task options
-    using Options = Toastbox::TaskOptions<>;
-    
-    // Task stack
-    [[gnu::section(".stack._CmdHandleTask")]]
-    static inline uint8_t Stack[512];
-    
-private:
-    static void _CmdHandle() {
-        switch (_Cmd.op) {
+    _Scheduler::Start<_CmdHandleTask>([] {
+        switch (cmd.op) {
         // Common Commands
-        case Op::EndpointsFlush:        _EndpointsFlush();              break;
-        case Op::StatusGet:             _StatusGet();                   break;
-        case Op::BootloaderInvoke:      _BootloaderInvoke();            break;
-        case Op::LEDSet:                _LEDSet();                      break;
+        case Op::EndpointsFlush:        _EndpointsFlush(cmd);           break;
+        case Op::StatusGet:             _StatusGet(cmd);                break;
+        case Op::BootloaderInvoke:      _BootloaderInvoke(cmd);         break;
+        case Op::LEDSet:                _LEDSet(cmd);                   break;
         // STM32 Bootloader
-        case Op::STMWrite:              _STMWrite();                    break;
-        case Op::STMReset:              _STMReset();                    break;
+        case Op::STMWrite:              _STMWrite(cmd);                 break;
+        case Op::STMReset:              _STMReset(cmd);                 break;
         // ICE40 Bootloader
-        case Op::ICEWrite:              _ICEWrite();                    break;
+        case Op::ICEWrite:              _ICEWrite(cmd);                 break;
         // MSP430 Bootloader
-        case Op::MSPConnect:            _MSPConnect();                  break;
-        case Op::MSPDisconnect:         _MSPDisconnect();               break;
+        case Op::MSPConnect:            _MSPConnect(cmd);               break;
+        case Op::MSPDisconnect:         _MSPDisconnect(cmd);            break;
         // MSP430 Debug
-        case Op::MSPRead:               _MSPRead();                     break;
-        case Op::MSPWrite:              _MSPWrite();                    break;
-        case Op::MSPDebug:              _MSPDebug();                    break;
+        case Op::MSPRead:               _MSPRead(cmd);                  break;
+        case Op::MSPWrite:              _MSPWrite(cmd);                 break;
+        case Op::MSPDebug:              _MSPDebug(cmd);                 break;
         // Bad command
         default:                        _USBSendStatus(false);          break;
         }
-    }
-};
+    });
+}
 
-struct _CmdRecvTask {
-    static void Run() {
-        for (;;) {
-            // Wait for USB to be re-connected (`Connecting` state) so we can call _USB.connect(),
-            // or for a new command to arrive so we can handle it.
-            _Scheduler::Wait([&] { return _USB.state()==USB::State::Connecting || _USB.cmdRecv(); });
+void _USBDataOutTask::Start(size_t l) {
+    // Make sure this task isn't busy
+    Assert(!_Scheduler::Running<_USBDataOutTask>());
+    
+    static size_t len = 0;
+    len = l;
+    _Scheduler::Start<_USBDataOutTask>([] {
+        while (len) {
+            _Scheduler::Wait([] { return !_Bufs.full(); });
             
-            #warning TODO: do we still need to disable interrupts?
-            // Disable interrupts so we can inspect+modify _usb atomically
-            Toastbox::IntState ints(false);
+            // Prepare to receive either `len` bytes or the
+            // buffer capacity bytes, whichever is smaller.
+            const size_t cap = _USBCeilToMaxPacketSize(std::min(len, _Bufs.back().cap));
+            // Ensure that after rounding up to the nearest packet size, we don't
+            // exceed the buffer capacity. (This should always be safe as long as
+            // the buffer capacity is a multiple of the max packet size.)
+            Assert(cap <= _Bufs.back().cap);
+            _USB.recv(Endpoints::DataOut, _Bufs.back().data, cap);
+            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
             
-            // Reset all tasks
-            // This needs to happen before we call `_USB.connect()` so that any tasks that
-            // were running in the previous USB session are stopped before we enable
-            // USB again by calling _USB.connect().
-            _ResetTasks<_Subtasks>();
-            
-            switch (_USB.state()) {
-            case USB::State::Connecting:
-                _USB.connect();
-                continue;
-            case USB::State::Connected:
-                if (!_USB.cmdRecv()) continue;
-                break;
-            default:
-                continue;
-            }
-            
-            auto usbCmd = *_USB.cmdRecv();
-            
-            // Re-enable interrupts while we handle the command
-            ints.restore();
-            
-            // Reject command if the length isn't valid
-            if (usbCmd.len != sizeof(_Cmd)) {
-                _USB.cmdAccept(false);
-                continue;
-            }
-            
-            memcpy(&_Cmd, usbCmd.data, usbCmd.len);
-            
-            // Only accept command if it's a flush command (in which case the endpoints
-            // don't need to be ready), or it's not a flush command, but both endpoints
-            // are ready. Otherwise, reject the command.
-            if (!(_Cmd.op==Op::EndpointsFlush || (_USB.endpointReady(Endpoints::DataOut) && _USB.endpointReady(Endpoints::DataIn)))) {
-                _USB.cmdAccept(false);
-                continue;
-            }
-            
-            _USB.cmdAccept(true);
-            _CmdHandleTask::CmdHandle();
+            // Never claim that we read more than the requested data, even if ceiling
+            // to the max packet size caused us to read more than requested.
+            const size_t recvLen = std::min(len, _USB.recvLen(Endpoints::DataOut));
+            len -= recvLen;
+            _Bufs.back().len = recvLen;
+            _Bufs.push();
         }
-    }
-    
-    // Task options
-    using Options = Toastbox::TaskOptions<
-        Toastbox::TaskOption::AutoStart<Run> // Task should start running
-    >;
-    
-    // Task stack
-    [[gnu::section(".stack._CmdRecvTask")]]
-    static inline uint8_t Stack[256];
-};
-
-
-
-
-
-
-
-
-
-//#warning TODO: remove this check in the future after we gain confidence that Task.h is appropriately causing MSP/PSP stacks to be swapped, and therefore the tasks' stacks are never used for interrupts
-//#define CheckStack() Assert((void*)__get_MSP()>=_StackMain && (void*)__get_MSP()<=(_StackMain+sizeof(_StackMain)))
-
-// MARK: - ISRs
-
-extern "C" [[gnu::section(".isr")]] void ISR_NMI()          {}
-extern "C" [[gnu::section(".isr")]] void ISR_HardFault()    { abort(); }
-extern "C" [[gnu::section(".isr")]] void ISR_MemManage()    { abort(); }
-extern "C" [[gnu::section(".isr")]] void ISR_BusFault()     { abort(); }
-extern "C" [[gnu::section(".isr")]] void ISR_UsageFault()   { abort(); }
-extern "C" [[gnu::section(".isr")]] void ISR_SVC()          {}
-extern "C" [[gnu::section(".isr")]] void ISR_DebugMon()     {}
-extern "C" [[gnu::section(".isr")]] void ISR_PendSV()       {}
-
-extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
-//    CheckStack();
-    HAL_IncTick();
+    });
 }
 
-extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
-//    CheckStack();
-    _USB.isr();
+void _USBDataInTask::Start() {
+    _Scheduler::Start<_USBDataInTask>([] {
+        for (;;) {
+            _Scheduler::Wait([] { return !_Bufs.empty(); });
+            
+            // Send the data and wait until the transfer is complete
+            auto& buf = _Bufs.front();
+            _USB.send(Endpoints::DataIn, buf.data, buf.len);
+            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+            
+            buf.len = 0;
+            _Bufs.pop();
+        }
+    });
 }
-
-extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {
-//    CheckStack();
-    _QSPI.isrQSPI();
-}
-
-extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
-//    CheckStack();
-    _QSPI.isrDMA();
-}
-
 
 // MARK: - IntState
 
@@ -737,6 +680,33 @@ void Toastbox::IntState::WaitForInterrupt() {
     __WFI();
 }
 
+// MARK: - ISRs
+
+extern "C" [[gnu::section(".isr")]] void ISR_NMI()          {}
+extern "C" [[gnu::section(".isr")]] void ISR_HardFault()    { abort(); }
+extern "C" [[gnu::section(".isr")]] void ISR_MemManage()    { abort(); }
+extern "C" [[gnu::section(".isr")]] void ISR_BusFault()     { abort(); }
+extern "C" [[gnu::section(".isr")]] void ISR_UsageFault()   { abort(); }
+extern "C" [[gnu::section(".isr")]] void ISR_SVC()          {}
+extern "C" [[gnu::section(".isr")]] void ISR_DebugMon()     {}
+extern "C" [[gnu::section(".isr")]] void ISR_PendSV()       {}
+
+extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
+    _Scheduler::Tick();
+    HAL_IncTick();
+}
+
+extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
+    _USB.isr();
+}
+
+extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {
+    _QSPI.isrQSPI();
+}
+
+extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
+    _QSPI.isrDMA();
+}
 
 // MARK: - Main
 
@@ -760,28 +730,6 @@ static void _JumpToAppIfNeeded() {
     }
 }
 
-
-
-
-
-
-#warning debug symbols
-#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
-
-constexpr auto& _Tasks              = _Scheduler::_Tasks;
-constexpr auto& _DidWork            = _Scheduler::_DidWork;
-constexpr auto& _CurrentTask        = _Scheduler::_CurrentTask;
-constexpr auto& _CurrentTime        = _Scheduler::_CurrentTime;
-constexpr auto& _Wake               = _Scheduler::_Wake;
-constexpr auto& _WakeTime           = _Scheduler::_WakeTime;
-constexpr auto& _MainStackGuard     = _Scheduler::_MainStackGuard;
-
-#include "stm32f7xx.h"
-const auto& _SCB                = *SCB;
-
-
-
-
 int main() {
     _JumpToAppIfNeeded();
     
@@ -795,3 +743,18 @@ int main() {
     _Scheduler::Run();
     return 0;
 }
+
+
+
+
+#warning debug symbols
+#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
+#include "stm32f7xx.h"
+constexpr auto& _Tasks              = _Scheduler::_Tasks;
+constexpr auto& _DidWork            = _Scheduler::_DidWork;
+constexpr auto& _CurrentTask        = _Scheduler::_CurrentTask;
+constexpr auto& _CurrentTime        = _Scheduler::_CurrentTime;
+constexpr auto& _Wake               = _Scheduler::_Wake;
+constexpr auto& _WakeTime           = _Scheduler::_WakeTime;
+constexpr auto& _MainStackGuard     = _Scheduler::_MainStackGuard;
+const auto& _SCB                    = *SCB;
