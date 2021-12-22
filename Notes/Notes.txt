@@ -4,6 +4,9 @@
         1580 Expected 2/3/2022
         3630 Expected 3/7/2022
     
+    - STLoader/STApp: move target-specific USB.cpp into USBBase.h
+        - We just need to supply the USB descriptor to USBBase right?
+    
     - STLoader/STApp: make BufQueue fully templated on the buffers themselves
     
     - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?

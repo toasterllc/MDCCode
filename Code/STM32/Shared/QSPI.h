@@ -282,11 +282,4 @@ private:
     using _D5 = GPIO<GPIOPortH, GPIO_PIN_3>;
     using _D6 = GPIO<GPIOPortG, GPIO_PIN_9>;
     using _D7 = GPIO<GPIOPortG, GPIO_PIN_14>;
-    
-    void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device);
-    friend void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef* device);
-    void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef* device);
-    friend void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef* device);
-    void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* device);
-    friend void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef* device);
 };
