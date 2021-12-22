@@ -270,10 +270,6 @@ private:
     }
     
     static void _TasksReset() {
-        // De-assert the SPI chip select
-        // This is necessary because the readout task asserts the SPI chip select,
-        // but has no way to deassert it, because it continues indefinitely
-        System::ICE_ST_SPI_CS_::Write(1);
         Scheduler::template Stop<_TaskCmdHandle>();
         (Scheduler::template Stop<T_Tasks>(), ...);
     }
@@ -318,9 +314,9 @@ private:
     static void _LEDSet(const STM::Cmd& cmd) {
         switch (cmd.arg.LEDSet.idx) {
         case 0: USBSendStatus(false); return;
-        case 1: System::LED1::Write(cmd.arg.LEDSet.on); break;
-        case 2: System::LED2::Write(cmd.arg.LEDSet.on); break;
-        case 3: System::LED3::Write(cmd.arg.LEDSet.on); break;
+        case 1: LED1::Write(cmd.arg.LEDSet.on); break;
+        case 2: LED2::Write(cmd.arg.LEDSet.on); break;
+        case 3: LED3::Write(cmd.arg.LEDSet.on); break;
         }
         
         // Send status
