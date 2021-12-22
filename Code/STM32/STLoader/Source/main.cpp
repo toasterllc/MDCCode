@@ -39,15 +39,15 @@ static volatile _VoidFn _AppEntryPoint [[noreturn, gnu::section(".uninit")]] = 0
 
 static constexpr uint32_t _UsPerTick  = 1000;
 
-class _CmdRecvTask;
-class _CmdHandleTask;
-class _USBDataOutTask;
-class _USBDataInTask;
+class _TaskCmdRecv;
+class _TaskCmdHandle;
+class _TaskUSBDataOut;
+class _TaskUSBDataIn;
 
 #define _Subtasks       \
-    _CmdHandleTask,     \
-    _USBDataOutTask,    \
-    _USBDataInTask
+    _TaskCmdHandle,     \
+    _TaskUSBDataOut,    \
+    _TaskUSBDataIn
 
 using _Scheduler = Toastbox::Scheduler<
     _UsPerTick, // T_UsPerTick
@@ -57,48 +57,48 @@ using _Scheduler = Toastbox::Scheduler<
     4,          // T_StackGuardSize
     
     // Tasks
-    _CmdRecvTask,
+    _TaskCmdRecv,
     _Subtasks
 >;
 
-// _USBDataOutTask: reads `len` bytes from the DataOut endpoint and writes them to _Bufs
-struct _USBDataOutTask {
+// _TaskUSBDataOut: reads `len` bytes from the DataOut endpoint and writes them to _Bufs
+struct _TaskUSBDataOut {
     static void Start(size_t len);
     
     // Task options
     using Options = Toastbox::TaskOptions<>;
     
     // Task stack
-    [[gnu::section(".stack._USBDataOutTask")]]
+    [[gnu::section(".stack._TaskUSBDataOut")]]
     static inline uint8_t Stack[256];
 };
 
-// _USBDataInTask: writes buffers from _Bufs to the DataIn endpoint, and pops them from _Bufs
-struct _USBDataInTask {
+// _TaskUSBDataIn: writes buffers from _Bufs to the DataIn endpoint, and pops them from _Bufs
+struct _TaskUSBDataIn {
     static void Start();
     
     // Task options
     using Options = Toastbox::TaskOptions<>;
     
     // Task stack
-    [[gnu::section(".stack._USBDataInTask")]]
+    [[gnu::section(".stack._TaskUSBDataIn")]]
     static inline uint8_t Stack[256];
 };
 
-// _CmdHandleTask: handle _Cmd
-struct _CmdHandleTask {
-    static void CmdHandle(const STM::Cmd& c);
+// _TaskCmdHandle: handle _Cmd
+struct _TaskCmdHandle {
+    static void Handle(const STM::Cmd& c);
     
     // Task options
     using Options = Toastbox::TaskOptions<>;
     
     // Task stack
-    [[gnu::section(".stack._CmdHandleTask")]]
+    [[gnu::section(".stack._TaskCmdHandle")]]
     static inline uint8_t Stack[512];
 };
 
-// _CmdRecvTask: receive commands over USB initiate handling them
-struct _CmdRecvTask {
+// _TaskCmdRecv: receive commands over USB initiate handling them
+struct _TaskCmdRecv {
     static void Run();
     
     // Task options
@@ -107,7 +107,7 @@ struct _CmdRecvTask {
     >;
     
     // Task stack
-    [[gnu::section(".stack._CmdRecvTask")]]
+    [[gnu::section(".stack._TaskCmdRecv")]]
     static inline uint8_t Stack[512];
 };
 
@@ -302,7 +302,7 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     
     size_t len = arg.len;
     // Trigger the USB DataOut task with the amount of data
-    _USBDataOutTask::Start(len);
+    _TaskUSBDataOut::Start(len);
     
     while (len) {
         // Wait until we have data to consume, and QSPI is ready to write
@@ -372,7 +372,7 @@ static void _MSPRead(const STM::Cmd& cmd) {
     _Bufs.reset();
     
     // Start the USB DataIn task
-    _USBDataInTask::Start();
+    _TaskUSBDataIn::Start();
     
     uint32_t addr = arg.addr;
     uint32_t len = arg.len;
@@ -408,7 +408,7 @@ static void _MSPWrite(const STM::Cmd& cmd) {
     uint32_t len = arg.len;
     
     // Trigger the USB DataOut task with the amount of data
-    _USBDataOutTask::Start(len);
+    _TaskUSBDataOut::Start(len);
     
     while (len) {
         _Scheduler::Wait([] { return !_Bufs.empty(); });
@@ -531,11 +531,11 @@ static void _MSPDebug(const STM::Cmd& cmd) {
 // MARK: - Tasks
 
 template <typename... T_Tasks>
-static void _ResetTasks() {
+static void _TasksReset() {
     (_Scheduler::Stop<T_Tasks>(), ...);
 }
 
-void _CmdRecvTask::Run() {
+void _TaskCmdRecv::Run() {
     for (;;) {
         // Wait for USB to be re-connected (`Connecting` state) so we can call _USB.connect(),
         // or for a new command to arrive so we can handle it.
@@ -549,7 +549,7 @@ void _CmdRecvTask::Run() {
         // This needs to happen before we call `_USB.connect()` so that any tasks that
         // were running in the previous USB session are stopped before we enable
         // USB again by calling _USB.connect().
-        _ResetTasks<_Subtasks>();
+        _TasksReset<_Subtasks>();
         
         switch (_USB.state()) {
         case USB::State::Connecting:
@@ -585,15 +585,15 @@ void _CmdRecvTask::Run() {
         }
         
         _USB.cmdAccept(true);
-        _CmdHandleTask::CmdHandle(cmd);
+        _TaskCmdHandle::Handle(cmd);
     }
 }
 
-void _CmdHandleTask::CmdHandle(const STM::Cmd& c) {
+void _TaskCmdHandle::Handle(const STM::Cmd& c) {
     static STM::Cmd cmd = {};
     cmd = c;
     
-    _Scheduler::Start<_CmdHandleTask>([] {
+    _Scheduler::Start<_TaskCmdHandle>([] {
         switch (cmd.op) {
         // Common Commands
         case Op::EndpointsFlush:        _EndpointsFlush(cmd);           break;
@@ -618,13 +618,13 @@ void _CmdHandleTask::CmdHandle(const STM::Cmd& c) {
     });
 }
 
-void _USBDataOutTask::Start(size_t l) {
+void _TaskUSBDataOut::Start(size_t l) {
     // Make sure this task isn't busy
-    Assert(!_Scheduler::Running<_USBDataOutTask>());
+    Assert(!_Scheduler::Running<_TaskUSBDataOut>());
     
     static size_t len = 0;
     len = l;
-    _Scheduler::Start<_USBDataOutTask>([] {
+    _Scheduler::Start<_TaskUSBDataOut>([] {
         while (len) {
             _Scheduler::Wait([] { return !_Bufs.full(); });
             
@@ -648,8 +648,8 @@ void _USBDataOutTask::Start(size_t l) {
     });
 }
 
-void _USBDataInTask::Start() {
-    _Scheduler::Start<_USBDataInTask>([] {
+void _TaskUSBDataIn::Start() {
+    _Scheduler::Start<_TaskUSBDataIn>([] {
         for (;;) {
             _Scheduler::Wait([] { return !_Bufs.empty(); });
             

@@ -1,5 +1,11 @@
 - Rev4 Todo
     
+    - STLoader/STApp: make BufQueue fully templated on the buffers themselves
+    
+    - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?
+    
+    - STLoader/STApp: make QSPI a template
+    
     - STLoader: replace uses of HAL_Delay with Scheduler::Sleep
     
     - STLoader: cleanup
