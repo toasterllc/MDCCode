@@ -1,5 +1,4 @@
 ENTRY(ISR_Reset)
-StackSize = 0x400;
 
 _sitcm_ram      = ORIGIN(ITCM_RAM);
 _eitcm_ram      = ORIGIN(ITCM_RAM) + LENGTH(ITCM_RAM);

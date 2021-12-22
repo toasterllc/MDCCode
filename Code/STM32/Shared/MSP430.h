@@ -50,14 +50,11 @@ private:
     static constexpr uint16_t JMBMagicNum           = 0xA55A;
     static constexpr uint16_t JMBEraseCmd           = 0x1A1A;
     
+    // _DelayUs: primitive delay implementation
+    // Assumes a simple for loop takes 1 clock cycle per iteration
     static void _DelayUs(uint32_t us) {
         const uint32_t cycles = CPUFreqMHz*us;
         for (volatile uint32_t i=0; i<cycles; i++);
-    }
-    
-    static void _DelayMs(uint32_t ms) {
-        Toastbox::IntState ints(true);
-        HAL_Delay(ms);
     }
     
     static bool _FRAMAddr(uint32_t addr) {
@@ -77,12 +74,16 @@ private:
         // De-assert RST_ before de-asserting TEST, because the MSP430 latches RST_
         // as being asserted, if it's asserted when when TEST is de-asserted
         Rst_::Write(1);
-        Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
-        _DelayMs(10);
+        #warning TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        #warning TODO: don't delay this long after switching to GPIO_MODE_OUTPUT_PP: "Exit the 4-wire JTAG mode by holding the TEST/SBWTCK low for more than 100 µs."
+        _DelayUs(1000);
         
         Test::Write(0);
-        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
-        _DelayMs(10);
+        #warning TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        #warning TODO: don't delay this long after switching to GPIO_MODE_OUTPUT_PP: "Exit the 4-wire JTAG mode by holding the TEST/SBWTCK low for more than 100 µs."
+        _DelayUs(1000);
     }
     
     void _tapReset() {
@@ -166,7 +167,8 @@ private:
             _DelayUs(0);
             
             // Start driving SBWTDIO again
-            _TDIO::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0); // TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+            #warning TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
+            _TDIO::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         }
         
         return tdo;
@@ -653,7 +655,7 @@ private:
             _DelayUs(0);
             // Assert TEST
             Test::Write(1);
-            _DelayMs(1);
+            _DelayUs(100);
         }
         
         // Choose 2-wire/Spy-bi-wire mode

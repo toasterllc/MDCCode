@@ -16,7 +16,7 @@ private:
 //        // regardless of the reset cause (SYSRSTIV). We want that behavior so that the first
 //        // time we load the program via a debugger, it runs as if it's a cold start, even
 //        // though it's actually a warm start.
-//        __attribute__((section(".fram_info.startup")))
+//        [[gnu::section(".fram_info.startup")]]
 //        static bool init = false;
 //        
 //        FRAMWriteEn writeEn; // Enable FRAM writing
@@ -36,7 +36,7 @@ private:
     // sense.
     //
     // See the `crt0.S` file in the newlib project for more info.
-    __attribute__((section(".crt_0401._Startup"), naked, used))
+    [[gnu::section(".crt_0401._Startup"), gnu::naked, gnu::used]]
     static void _Startup() {
         // Debug code to signal that _Startup() was called by toggling pin A.E
 //        {
