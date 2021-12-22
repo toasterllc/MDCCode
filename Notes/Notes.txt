@@ -1,25 +1,23 @@
 - Rev4 Todo
     
-    - Buy TPS2116DRLR on Mouser?
-        1580 Expected 2/3/2022
-        3630 Expected 3/7/2022
+    - STApp: migrate to use real threads
+    
+    - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?
+    
+    - STApp: replace uses of HAL_Delay with Scheduler::Sleep
     
     - STLoader/STApp: move target-specific USB.cpp into USBBase.h
         - We just need to supply the USB descriptor to USBBase right?
     
-    - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?
-    
-    - STLoader: cleanup
-    
-    - STApp: replace uses of HAL_Delay with Scheduler::Sleep
-    
     - Task.h: debug feature: stack traces
+    
+    - Buy TPS2116DRLR on Mouser?
+        1580 Expected 2/3/2022
+        3630 Expected 3/7/2022
     
     - MSPApp: add proper error handling to Img/SD
         - Make error handler a template parameter
         - Have error handler take a breadcrumb value
-    
-    - STApp: migrate to use real threads
     
     - MSPApp: can we use the 'restart' facility of reset_register to speed up integration time changes?
         - 'restart' triggers a bad frame, so experiment with the 'restart_bad' and 'mask_bad' flags too
@@ -47,6 +45,8 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ STLoader: cleanup
     
     √ STLoader/STApp: make BufQueue fully templated on the buffers themselves
     
