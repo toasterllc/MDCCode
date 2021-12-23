@@ -369,10 +369,7 @@ void Toastbox::IntState::WaitForInterrupt() {
     }
     
     // Atomically enable interrupts and go to sleep
-    const bool prevEn = Toastbox::IntState::InterruptsEnabled();
     __bis_SR_register(GIE | LPMBits);
-    // If interrupts were disabled previously, disable them again
-    if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
 }
 
 // MARK: - Tasks

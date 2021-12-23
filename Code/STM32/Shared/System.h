@@ -340,6 +340,11 @@ void Toastbox::IntState::SetInterruptsEnabled(bool en) {
 }
 
 void Toastbox::IntState::WaitForInterrupt() {
-    Toastbox::IntState ints(true);
+    // Sleep and then enable interrupts.
+    // It's important not to enable interrupts before we go to sleep. If
+    // we did that, there's a race window where an interrupt could fire
+    // and signal that work needs to be done by a task, but then we go
+    // to sleep instead of invoking the scheduler to run the tasks.
     __WFI();
+    Toastbox::IntState::SetInterruptsEnabled(true);
 }
