@@ -5,6 +5,8 @@ SECTIONS {
     .isr : {
         . = ALIGN(4);
         _sisr = .;
+        /* VectorTable needs to be at the beginning of .isr to ensure it's at 0x200000 */
+        KEEP(*(.isr.VectorTable))
         KEEP(*(.isr))
         . = ALIGN(4);
     } >ITCM_FLASH

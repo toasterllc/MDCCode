@@ -10,7 +10,7 @@
 
 
 // Vector table
-.section .isr
+.section .isr.VectorTable
 // VectorTable must be 512-byte aligned (1<<9), because the table
 // contains 120 words * 4 -> 480 bytes -> ceil power of 2 -> 512
 .align 9
