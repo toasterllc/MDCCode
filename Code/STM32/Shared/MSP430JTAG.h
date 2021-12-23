@@ -5,7 +5,7 @@
 #include "Toastbox/IntState.h"
 
 template <typename Test, typename Rst_, uint8_t CPUFreqMHz>
-class MSP430 {
+class MSP430JTAG {
 private:
     static constexpr uint8_t _Reverse(uint8_t x) {
         return (x&(1<<7))>>7 | (x&(1<<6))>>5 | (x&(1<<5))>>3 | (x&(1<<4))>>1 |

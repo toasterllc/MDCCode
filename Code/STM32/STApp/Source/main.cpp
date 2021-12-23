@@ -3,7 +3,6 @@
 #include "Toastbox/IntState.h"
 #include "Assert.h"
 #include "System.h"
-#include "MSP430.h"
 #include "ICE.h"
 #include "STM.h"
 #include "USB.h"

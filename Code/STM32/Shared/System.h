@@ -1,6 +1,6 @@
 #pragma once
 #include "GPIO.h"
-#include "MSP430.h"
+#include "MSP430JTAG.h"
 #include "Util.h"
 #include "STM.h"
 #include "USB.h"
@@ -180,7 +180,7 @@ public:
     // TODO: we should also rename to MSPJTAG to make it clear that it's not for comms with the MSP app
     using MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
     using MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
-    static inline MSP430<MSPTest, MSPRst_, CPUFreqMHz> MSP;
+    static inline MSP430JTAG<MSPTest, MSPRst_, CPUFreqMHz> MSP;
     
     using ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
     using ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
