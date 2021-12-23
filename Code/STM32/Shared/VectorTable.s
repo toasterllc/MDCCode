@@ -423,6 +423,9 @@ VectorTable:
 
     .weak      ISR_SDMMC2
     .thumb_set ISR_SDMMC2,ISR_Default
+    
+    .size VectorTable, .-VectorTable
+
 
 
 // Reset ISR handler

@@ -577,7 +577,7 @@ static void _configureDevice(MDCDevice& dev) {
             if (setExp) {
                 dev.imgSetExposure(exposure);
                 lastExposure = exposure;
-                printf("Set exposure\n");
+                printf("Set exposure %d\n", exposure.coarseIntTime);
 //                usleep(100000);
             }
             
