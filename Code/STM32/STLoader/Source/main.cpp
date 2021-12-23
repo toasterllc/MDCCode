@@ -162,9 +162,6 @@ static size_t _STMRegionCapacity(void* addr) {
         cap = (uintptr_t)_edtcm_ram-(uintptr_t)addr;
     } else if (addr>=_ssram1 && addr<_esram1) {
         cap = (uintptr_t)_esram1-(uintptr_t)addr;
-    } else {
-        // TODO: implement proper error handling on writing out of the allowed regions
-        abort();
     }
     return cap;
 }

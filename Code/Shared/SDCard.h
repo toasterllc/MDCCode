@@ -91,7 +91,6 @@ public:
                     continue;
                 }
                 
-                // TODO: determine if the wrong CRC in the ACMD41 response is because `T_ClkDelaySlow` needs tuning
                 if (status.respGetBits(7,1) != 0x7F) {
                     for (volatile int i=0; i<10; i++);
                     continue;
