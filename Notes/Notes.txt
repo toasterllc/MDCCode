@@ -1,5 +1,7 @@
 - Rev4 Todo
     
+    - STLoader/STApp: how can we get abort to blink the LEDs before we've initialized the system?
+    
     - STApp: migrate to use real threads
     
     - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?

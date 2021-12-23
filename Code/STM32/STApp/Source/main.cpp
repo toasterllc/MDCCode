@@ -147,7 +147,7 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
     } else {
         _QSPI.command(_ICEQSPICmd(msg, 0));
     }
-    _QSPI.wait();
+    _Scheduler::Wait([] { return _QSPI.ready(); });
     _System::ICE_ST_SPI_CS_::Write(1);
 }
 
@@ -298,16 +298,17 @@ struct _TaskReadout {
         // De-assert the SPI chip select when the _TaskReadout is stopped.
         // This is necessary because the _TaskReadout asserts the SPI chip select,
         // but never deasserts it because _TaskReadout continues indefinitely.
-        #warning TODO: we don't want to do this in the STLoader case, where do we put it?
         _System::ICE_ST_SPI_CS_::Write(1);
     }
     
     // Task options
-    static constexpr Toastbox::TaskOptions Options{};
+    static constexpr Toastbox::TaskOptions Options{
+        .DidStop = DidStop,
+    };
     
     // Task stack
     [[gnu::section(".stack._TaskReadout")]]
-    static inline uint8_t Stack[256];
+    static inline uint8_t Stack[512];
 };
 
 // MARK: - Commands
@@ -462,3 +463,16 @@ int main() {
     _Scheduler::Run();
     return 0;
 }
+
+
+#warning debug symbols
+#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
+#include "stm32f7xx.h"
+constexpr auto& _Tasks              = _Scheduler::_Tasks;
+constexpr auto& _DidWork            = _Scheduler::_DidWork;
+constexpr auto& _CurrentTask        = _Scheduler::_CurrentTask;
+constexpr auto& _CurrentTime        = _Scheduler::_CurrentTime;
+constexpr auto& _Wake               = _Scheduler::_Wake;
+constexpr auto& _WakeTime           = _Scheduler::_WakeTime;
+constexpr auto& _MainStackGuard     = _Scheduler::_MainStackGuard;
+const auto& _SCB                    = *SCB;

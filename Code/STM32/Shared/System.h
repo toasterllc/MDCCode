@@ -138,7 +138,7 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskCmdHandle")]]
-        static inline uint8_t Stack[512];
+        static inline uint8_t Stack[1024];
     };
 
 public:

@@ -562,8 +562,7 @@ void abort() {
 }
 
 int main() {
-    #warning TODO: bring back
-//    _JumpToAppIfNeeded();
+    _JumpToAppIfNeeded();
     
     _System::Init();
     
