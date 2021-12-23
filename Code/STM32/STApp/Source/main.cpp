@@ -14,18 +14,12 @@
 #include "USBConfigDesc.h"
 using namespace STM;
 
-// We're using 63K buffers instead of 64K, because the
-// max DMA transfer is 65535 bytes, not 65536.
-using _BufQueue = BufQueue<uint8_t,63*1024,2>;
-
 static const void* _USBConfigDesc(size_t& len);
 
 using _USBType = USBType<
-    // DMA=enabled
-    true,
-    _USBConfigDesc,
-    // Endpoints
-    STM::Endpoints::DataIn
+    true,                   // T_DMAEn
+    _USBConfigDesc,         // T_ConfigDesc
+    STM::Endpoints::DataIn  // T_Endpoints
 >;
 
 static const void* _USBConfigDesc(size_t& len) {
@@ -38,6 +32,10 @@ using _QSPIType = QSPIType<
     QSPIAlign::Word,              // T_Align
     QSPIChipSelect::Uncontrolled  // T_ChipSelect
 >;
+
+// We're using 63K buffers instead of 64K, because the
+// max DMA transfer is 65535 bytes, not 65536.
+using _BufQueue = BufQueue<uint8_t,63*1024,2>;
 
 #warning TODO: were not putting the _BufQueue code in .sram1 too are we?
 [[gnu::section(".sram1")]]

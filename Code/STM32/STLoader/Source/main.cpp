@@ -9,13 +9,27 @@
 #include "QSPI.h"
 #include "BufQueue.h"
 #include "System.h"
+#include "USBConfigDesc.h"
 
 using namespace STM;
 
 // MARK: - Peripherals & Types
-using _USBType = USB;
+static const void* _USBConfigDesc(size_t& len);
 
-using _QSPIType = QSPI<
+using _USBType = USBType<
+    false,                      // T_DMAEn: disabled because we want USB to be able to write to
+                                // ITCM RAM (because we write to that region as a part of
+                                // bootloading), but DMA masters can't access it.
+    _USBConfigDesc,             // T_ConfigDesc
+    STM::Endpoints::DataOut,    // T_Endpoints
+    STM::Endpoints::DataIn
+>;
+
+static const void* _USBConfigDesc(size_t& len) {
+    return USBConfigDesc<_USBType>(len);
+}
+
+using _QSPIType = QSPIType<
     QSPIMode::Single,           // T_Mode
     5,                          // T_ClkDivider (5 -> QSPI clock = 21.3 MHz)
     QSPIAlign::Byte,            // T_Align
@@ -80,8 +94,8 @@ struct _TaskUSBDataIn {
 static size_t _USBCeilToMaxPacketSize(size_t len) {
     // Round `len` up to the nearest packet size, since the USB hardware limits
     // the data received based on packets instead of bytes
-    const size_t rem = len%USB::MaxPacketSizeIn();
-    len += (rem>0 ? USB::MaxPacketSizeIn()-rem : 0);
+    const size_t rem = len%_USB.MaxPacketSizeIn();
+    len += (rem>0 ? _USB.MaxPacketSizeIn()-rem : 0);
     return len;
 }
 
