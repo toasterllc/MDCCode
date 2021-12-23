@@ -14,6 +14,8 @@
 #include "USBConfigDesc.h"
 using namespace STM;
 
+// MARK: - Peripherals & Types
+
 static const void* _USBConfigDesc(size_t& len);
 
 using _USBType = USBType<
@@ -40,8 +42,6 @@ using _BufQueue = BufQueue<uint8_t,63*1024,2>;
 #warning TODO: were not putting the _BufQueue code in .sram1 too are we?
 [[gnu::section(".sram1")]]
 static _BufQueue _Bufs;
-
-// MARK: - Peripherals & Types
 
 struct _TaskUSBDataIn;
 struct _TaskReadout;
