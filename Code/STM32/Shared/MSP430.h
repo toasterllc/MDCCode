@@ -76,13 +76,13 @@ private:
         Rst_::Write(1);
         #warning TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
         Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        #warning TODO: don't delay this long after switching to GPIO_MODE_OUTPUT_PP: "Exit the 4-wire JTAG mode by holding the TEST/SBWTCK low for more than 100 µs."
+        #warning TODO: dont delay this long after switching to GPIO_MODE_OUTPUT_PP: "Exit the 4-wire JTAG mode by holding the TEST/SBWTCK low for more than 100 µs."
         _DelayUs(1000);
         
         Test::Write(0);
         #warning TODO: switch GPIO_MODE_OUTPUT_OD -> GPIO_MODE_OUTPUT_PP on Rev5 (when we have level shifting instead of using a pull-up resistor)
         Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        #warning TODO: don't delay this long after switching to GPIO_MODE_OUTPUT_PP: "Exit the 4-wire JTAG mode by holding the TEST/SBWTCK low for more than 100 µs."
+        #warning TODO: dont delay this long after switching to GPIO_MODE_OUTPUT_PP: "Exit the 4-wire JTAG mode by holding the TEST/SBWTCK low for more than 100 µs."
         _DelayUs(1000);
     }
     

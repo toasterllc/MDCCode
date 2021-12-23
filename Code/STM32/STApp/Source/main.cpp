@@ -11,22 +11,35 @@
 #include "BufQueue.h"
 #include "SDCard.h"
 #include "ImgSensor.h"
+#include "USBConfigDesc.h"
 using namespace STM;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
 using _BufQueue = BufQueue<uint8_t,63*1024,2>;
 
-using _USBType = USB;
+static const void* _USBConfigDesc(size_t& len);
 
-using _QSPIType = QSPI<
+using _USBType = USBType<
+    // DMA=enabled
+    true,
+    _USBConfigDesc,
+    // Endpoints
+    STM::Endpoints::DataIn
+>;
+
+static const void* _USBConfigDesc(size_t& len) {
+    return USBConfigDesc<_USBType>(len);
+}
+
+using _QSPIType = QSPIType<
     QSPIMode::Dual,               // T_Mode
     1,                            // T_ClkDivider (1 -> QSPI clock = 64 MHz)
     QSPIAlign::Word,              // T_Align
     QSPIChipSelect::Uncontrolled  // T_ChipSelect
 >;
 
-#warning TODO: we're not putting the _BufQueue code in .sram1 too are we?
+#warning TODO: were not putting the _BufQueue code in .sram1 too are we?
 [[gnu::section(".sram1")]]
 static _BufQueue _Bufs;
 
@@ -465,7 +478,7 @@ int main() {
 }
 
 
-#warning debug symbols
+#warning TODO: remove these debug symbols
 #warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
 #include "stm32f7xx.h"
 constexpr auto& _Tasks              = _Scheduler::_Tasks;

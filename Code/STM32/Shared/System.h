@@ -54,7 +54,7 @@ private:
             for (;;) {
                 // Wait for USB to be re-connected (`Connecting` state) so we can call USB.connect(),
                 // or for a new command to arrive so we can handle it.
-                Scheduler::Wait([] { return USB.state()==USB::State::Connecting || USB.cmdRecv(); });
+                Scheduler::Wait([] { return USB.state()==T_USB::State::Connecting || USB.cmdRecv(); });
                 
                 #warning TODO: do we still need to disable interrupts?
                 // Disable interrupts so we can inspect+modify `USB` atomically
@@ -67,10 +67,10 @@ private:
                 _TasksReset();
                 
                 switch (USB.state()) {
-                case USB::State::Connecting:
+                case T_USB::State::Connecting:
                     USB.connect();
                     continue;
-                case USB::State::Connected:
+                case T_USB::State::Connected:
                     if (!USB.cmdRecv()) continue;
                     break;
                 default:

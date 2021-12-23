@@ -24,7 +24,7 @@ template <
     QSPIAlign T_Align,
     QSPIChipSelect T_ChipSelect
 >
-class QSPI {
+class QSPIType {
 public:
     void init() {
         constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
@@ -80,15 +80,15 @@ public:
         
         // Init callbacks
         _device.CmdCpltCallback = [] (QSPI_HandleTypeDef* me) {
-            ((QSPI*)me->Ctx)->_handleCommandDone();
+            ((QSPIType*)me->Ctx)->_handleCommandDone();
         };
         
         _device.RxCpltCallback = [] (QSPI_HandleTypeDef* me) {
-            ((QSPI*)me->Ctx)->_handleReadDone();
+            ((QSPIType*)me->Ctx)->_handleReadDone();
         };
         
         _device.TxCpltCallback = [] (QSPI_HandleTypeDef* me) {
-            ((QSPI*)me->Ctx)->_handleWriteDone();
+            ((QSPIType*)me->Ctx)->_handleWriteDone();
         };
         
         _device.ErrorCallback = [] (QSPI_HandleTypeDef* me) {
