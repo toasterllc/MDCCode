@@ -32,17 +32,31 @@ private:
     class _TaskCmdRecv;
     class _TaskCmdHandle;
     
+    static void _Sleep() {
+        // Sleep and then enable interrupts.
+        // It's important not to enable interrupts before we go to sleep. If
+        // we did that, there's a race window where an interrupt could fire
+        // and signal that work needs to be done by a task, but then we go
+        // to sleep instead of invoking the scheduler to run the tasks.
+        __WFI();
+        Toastbox::IntState::SetInterruptsEnabled(true);
+    }
+    
 public:
     static constexpr uint8_t CPUFreqMHz = 128;
     static constexpr uint32_t UsPerSysTick = 1000;
+        #warning TODO: remove stack guards for production
+
     
     using Scheduler = Toastbox::Scheduler<
-        UsPerSysTick, // T_UsPerTick
-        #warning TODO: remove stack guards for production
-        _StackMain, // T_MainStack
-        4,          // T_StackGuardCount
-        // Tasks
-        _TaskCmdRecv,
+        UsPerSysTick,                               // T_UsPerTick: microseconds per tick
+        Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
+        _Sleep,                                     // T_Sleep: function to put processor to sleep;
+                                                    //          invoked when no tasks have work to do
+        _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
+                                                    //              main stack for overflow; unused if T_StackGuardCount==0)
+        4,                                          // T_StackGuardCount: number of pointer-sized stack guard elements to use
+        _TaskCmdRecv,                               // T_Tasks: list of tasks
         _TaskCmdHandle,
         T_Tasks...
     >;
@@ -337,14 +351,4 @@ bool Toastbox::IntState::InterruptsEnabled() {
 void Toastbox::IntState::SetInterruptsEnabled(bool en) {
     if (en) __enable_irq();
     else __disable_irq();
-}
-
-void Toastbox::IntState::WaitForInterrupt() {
-    // Sleep and then enable interrupts.
-    // It's important not to enable interrupts before we go to sleep. If
-    // we did that, there's a race window where an interrupt could fire
-    // and signal that work needs to be done by a task, but then we go
-    // to sleep instead of invoking the scheduler to run the tasks.
-    __WFI();
-    Toastbox::IntState::SetInterruptsEnabled(true);
 }
