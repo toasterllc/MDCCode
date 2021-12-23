@@ -10,11 +10,11 @@
 #include "Toastbox/IntState.h"
 
 template <
-typename T,             // Subclass
-bool DMAEn,             // Whether DMA is enabled
-uint8_t... Endpoints    // List of endpoints
+bool T_DMAEn,                       // T_DMAEn: whether DMA is enabled
+const void* T_ConfigDesc(size_t&),  // T_ConfigDesc: returns USB configuration descriptor
+uint8_t... T_Endpoints              // T_Endpoints: list of endpoints
 >
-class USBBase {
+class USBType {
 public:
     struct Cmd {
         const uint8_t* data;
@@ -53,18 +53,18 @@ public:
     
     static constexpr size_t EndpointCountOut() {
         size_t count = 0;
-        for (uint8_t ep : {Endpoints...}) count += EndpointOut(ep);
+        for (uint8_t ep : {T_Endpoints...}) count += EndpointOut(ep);
         return count;
     }
     
     static constexpr size_t EndpointCountIn() {
         size_t count = 0;
-        for (uint8_t ep : {Endpoints...}) count += EndpointIn(ep);
+        for (uint8_t ep : {T_Endpoints...}) count += EndpointIn(ep);
         return count;
     }
     
     static constexpr size_t EndpointCount() {
-        return sizeof...(Endpoints);
+        return sizeof...(T_Endpoints);
     }
     
     static constexpr size_t MaxPacketSizeIn() {
@@ -116,7 +116,7 @@ public:
         _pcd.pData = &_device;
         _pcd.Instance = USB_OTG_HS;
         _pcd.Init.dev_endpoints = 9;
-        _pcd.Init.dma_enable = DMAEn;
+        _pcd.Init.dma_enable = T_DMAEn;
         _pcd.Init.phy_itface = USB_OTG_HS_EMBEDDED_PHY;
         _pcd.Init.sof_enable = false;
         _pcd.Init.low_power_enable = false;
@@ -133,9 +133,9 @@ public:
         HAL_StatusTypeDef hs = HAL_PCD_Init(&_pcd);
         Assert(hs == HAL_OK);
         
-#define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return ((T*)pdev->pCtx)->_usbd_##name(); }
-#define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return ((T*)pdev->pCtx)->_usbd_##name(t0); }
-#define Fwd2(name, T0, T1) [](USBD_HandleTypeDef* pdev, T0 t0, T1 t1) { return ((T*)pdev->pCtx)->_usbd_##name(t0, t1); }
+#define Fwd0(name) [](USBD_HandleTypeDef* pdev) { return ((USBType*)pdev->pCtx)->_usbd_##name(); }
+#define Fwd1(name, T0) [](USBD_HandleTypeDef* pdev, T0 t0) { return ((USBType*)pdev->pCtx)->_usbd_##name(t0); }
+#define Fwd2(name, T0, T1) [](USBD_HandleTypeDef* pdev, T0 t0, T1 t1) { return ((USBType*)pdev->pCtx)->_usbd_##name(t0, t1); }
         
         static const USBD_ClassTypeDef usbClass = {
             .Init                           = Fwd1(Init, uint8_t),
@@ -211,7 +211,7 @@ public:
         //             - Absolute address of FIFO RAM on STM32F7 is USB_OTG_HS+0x20000==0x40060000
         
         constexpr size_t FIFOCapTotal           = 4096;
-        constexpr size_t FIFOCapDMARegisters    = (DMAEn ? 128 : 0);
+        constexpr size_t FIFOCapDMARegisters    = (T_DMAEn ? 128 : 0);
         constexpr size_t FIFOCapUsable          = FIFOCapTotal-FIFOCapDMARegisters;
         constexpr size_t FIFOCapRx              = FIFORxSize();
         constexpr size_t FIFOCapTxCtrl          = MaxPacketSizeCtrl;
@@ -232,7 +232,7 @@ public:
         HAL_PCDEx_SetTxFiFo(&_pcd, 0, FIFOCapTxCtrl/sizeof(uint32_t));
         
         // # Set Tx FIFO size for bulk IN endpoints (DIEPTXFx register)
-        for (uint8_t ep : {Endpoints...}) {
+        for (uint8_t ep : {T_Endpoints...}) {
             if (EndpointIn(ep)) {
                 HAL_PCDEx_SetTxFiFo(&_pcd, EndpointIdx(ep), FIFOCapTxBulk/sizeof(uint32_t));
             }
@@ -259,7 +259,7 @@ public:
     
     void endpointsReset() {
         Toastbox::IntState ints(false);
-        for (uint8_t ep : {Endpoints...}) {
+        for (uint8_t ep : {T_Endpoints...}) {
             _endpointReset(ep);
         }
     }
@@ -271,7 +271,7 @@ public:
     
     bool endpointsReady() {
         Toastbox::IntState ints(false);
-        for (uint8_t ep : {Endpoints...}) {
+        for (uint8_t ep : {T_Endpoints...}) {
             if (!_endpointReady(ep)) return false;
         }
         return true;
@@ -336,7 +336,7 @@ public:
 protected:
     uint8_t _usbd_Init(uint8_t cfgidx) {
         // Open endpoints
-        for (uint8_t ep : {Endpoints...}) {
+        for (uint8_t ep : {T_Endpoints...}) {
             if (EndpointOut(ep)) {
                 USBD_LL_OpenEP(&_device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeOut());
                 _device.ep_out[EndpointIdx(ep)].is_used = 1U;
@@ -444,7 +444,10 @@ protected:
     }
     
     uint8_t* _usbd_GetHSConfigDescriptor(uint16_t* len) {
-        return nullptr;
+        size_t descLen = 0;
+        const void*const desc = T_ConfigDesc(descLen);
+        *len = descLen;
+        return (uint8_t*)desc;
     }
     
     uint8_t* _usbd_GetFSConfigDescriptor(uint16_t* len) {
