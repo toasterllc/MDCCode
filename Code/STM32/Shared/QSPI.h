@@ -29,6 +29,12 @@ public:
     void init() {
         constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
         
+        // Enable GPIO clocks
+        __HAL_RCC_GPIOB_CLK_ENABLE()
+        __HAL_RCC_GPIOC_CLK_ENABLE();
+        __HAL_RCC_GPIOF_CLK_ENABLE();
+        __HAL_RCC_GPIOG_CLK_ENABLE();
+        
         // DMA clock/IRQ
         __HAL_RCC_DMA2_CLK_ENABLE();
         HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, InterruptPriority, 0);

@@ -113,6 +113,9 @@ public:
     
     // Initialization
     void init() {
+        // Enable GPIO clocks
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+        
         _pcd.pData = &_device;
         _pcd.Instance = USB_OTG_HS;
         _pcd.Init.dev_endpoints = 9;

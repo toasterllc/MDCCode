@@ -45,9 +45,8 @@ private:
 public:
     static constexpr uint8_t CPUFreqMHz = 128;
     static constexpr uint32_t UsPerSysTick = 1000;
-        #warning TODO: remove stack guards for production
-
     
+    #warning TODO: remove stack guards for production
     using Scheduler = Toastbox::Scheduler<
         UsPerSysTick,                               // T_UsPerTick: microseconds per tick
         Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
@@ -70,7 +69,6 @@ private:
                 // or for a new command to arrive so we can handle it.
                 Scheduler::Wait([] { return USB.state()==T_USB::State::Connecting || USB.cmdRecv(); });
                 
-                #warning TODO: do we still need to disable interrupts?
                 // Disable interrupts so we can inspect+modify `USB` atomically
                 Toastbox::IntState ints(false);
                 
@@ -158,6 +156,10 @@ private:
 public:
     
     static void InitLED() {
+        // Enable GPIO clocks
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+        __HAL_RCC_GPIOE_CLK_ENABLE();
+        
 //        LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -175,14 +177,6 @@ public:
         HAL_DBGMCU_EnableDBGSleepMode();
         HAL_DBGMCU_EnableDBGStopMode();
         HAL_DBGMCU_EnableDBGStandbyMode();
-        
-        // TODO: move these to their respective peripherals? there'll be some redundency though, is that OK?
-        __HAL_RCC_GPIOB_CLK_ENABLE(); // USB, QSPI, LEDs
-        __HAL_RCC_GPIOC_CLK_ENABLE(); // QSPI
-        __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
-        __HAL_RCC_GPIOF_CLK_ENABLE(); // QSPI
-        __HAL_RCC_GPIOG_CLK_ENABLE(); // QSPI
-        __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
         
         // Configure our LEDs
         InitLED();
@@ -223,9 +217,6 @@ public:
     [[noreturn]]
     static void Abort() {
         Toastbox::IntState ints(false);
-        
-        __HAL_RCC_GPIOB_CLK_ENABLE(); // USB, QSPI, LEDs
-        __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
         
         InitLED();
         for (bool x=true;; x=!x) {
@@ -284,6 +275,11 @@ private:
             
             HAL_StatusTypeDef hr = HAL_RCCEx_PeriphCLKConfig(&cfg);
             Assert(hr == HAL_OK);
+        }
+        
+        // Enable GPIO clocks
+        {
+            __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
         }
     }
     
