@@ -1,13 +1,11 @@
 - Rev4 Todo
     
-    - STApp: migrate to use real threads
-    
-    - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?
-    
-    - STApp: replace uses of HAL_Delay with Scheduler::Sleep
+    - STLoader/STApp: how can we get abort to blink the LEDs before we've initialized the system?
     
     - STLoader/STApp: move target-specific USB.cpp into USBBase.h
         - We just need to supply the USB descriptor to USBBase right?
+    
+    - STLoader/STApp: rename MSP430 -> MSP430JTAG? MSPJTAG?
     
     - Task.h: debug feature: stack traces
     
@@ -45,6 +43,10 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ STApp: migrate to use real threads
+    
+    √ STApp: replace uses of HAL_Delay with Scheduler::Sleep
     
     √ STLoader: cleanup
     

@@ -254,26 +254,27 @@ public:
     
     void endpointReset(uint8_t ep) {
         Toastbox::IntState ints(false);
-        if (_state != State::Connected) return; // Short-circuit if we're not Connected
-        
-        if (EndpointOut(ep)) {
-            _OutEndpoint& outep = _outEndpoint(ep);
-            if (_ready(outep))  _endpointReset(ep, outep);
-            else                outep.needsReset = true;
-        
-        } else {
-            _InEndpoint& inep = _inEndpoint(ep);
-            if (_ready(inep))   _endpointReset(ep, inep);
-            else                inep.needsReset = true;
+        _endpointReset(ep);
+    }
+    
+    void endpointsReset() {
+        Toastbox::IntState ints(false);
+        for (uint8_t ep : {Endpoints...}) {
+            _endpointReset(ep);
         }
     }
     
     bool endpointReady(uint8_t ep) {
         Toastbox::IntState ints(false);
-        if (_state != State::Connected) return false; // Short-circuit if we're not Connected
-        
-        if (EndpointOut(ep))    return _ready(_outEndpoint(ep));
-        else                    return _ready(_inEndpoint(ep));
+        return _endpointReady(ep);
+    }
+    
+    bool endpointsReady() {
+        Toastbox::IntState ints(false);
+        for (uint8_t ep : {Endpoints...}) {
+            if (!_endpointReady(ep)) return false;
+        }
+        return true;
     }
     
     std::optional<Cmd> cmdRecv() {
@@ -491,6 +492,29 @@ private:
         }
         abort();
 //        return const_cast<const _InEndpoint&>(std::as_const(*this)._inEndpoint(ep));
+    }
+    
+    // Interrupts must be disabled
+    void _endpointReset(uint8_t ep) {
+        if (_state != State::Connected) return; // Short-circuit if we're not Connected
+        
+        if (EndpointOut(ep)) {
+            _OutEndpoint& outep = _outEndpoint(ep);
+            if (_ready(outep))  _endpointReset(ep, outep);
+            else                outep.needsReset = true;
+        
+        } else {
+            _InEndpoint& inep = _inEndpoint(ep);
+            if (_ready(inep))   _endpointReset(ep, inep);
+            else                inep.needsReset = true;
+        }
+    }
+    
+    // Interrupts must be disabled
+    bool _endpointReady(uint8_t ep) {
+        if (_state != State::Connected) return false; // Short-circuit if we're not Connected
+        if (EndpointOut(ep))    return _ready(_outEndpoint(ep));
+        else                    return _ready(_inEndpoint(ep));
     }
     
     // Interrupts must be disabled

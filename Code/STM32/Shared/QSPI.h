@@ -237,16 +237,6 @@ public:
         Assert(hs == HAL_OK);
     }
     
-    void wait() const {
-        for (;;) {
-            // Disable interrupts to prevent a race between checking ready() and going to sleep,
-            // between which we may have become ready, had we not disabled interrupts.
-            Toastbox::IntState ints(false);
-            if (ready()) return;
-            Toastbox::IntState::WaitForInterrupt();
-        }
-    }
-    
     void isrQSPI() {
         ISR_HAL_QSPI(&_device);
     }

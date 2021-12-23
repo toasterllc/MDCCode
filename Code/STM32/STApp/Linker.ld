@@ -5,6 +5,8 @@ SECTIONS {
     .isr : {
         . = ALIGN(4);
         _sisr = .;
+        /* VectorTable needs to be at the beginning of .isr to ensure it's at 0x200000 */
+        KEEP(*(.isr.VectorTable))
         KEEP(*(.isr))
         . = ALIGN(4);
     } >ITCM_RAM
@@ -91,12 +93,11 @@ SECTIONS {
         . = ALIGN(4);
     } >DTCM_RAM
     
-    .stack : {
+    .stack (NOLOAD) : {
         . = ALIGN(4);
-        _sstack = .;
-        . = . + StackSize;
+        *(.stack)
+        *(.stack.*)
         . = ALIGN(4);
-        _estack = .;
     } >DTCM_RAM
     
     .sram1 : {

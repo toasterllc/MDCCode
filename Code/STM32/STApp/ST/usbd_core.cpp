@@ -1,8 +1,6 @@
 #include "usbd_core.h"
 #include "stm32f7xx.h"
 #include "stm32f7xx_hal.h"
-#include "Assert.h"
-#include "SystemClock.h"
 
 USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status);
 
@@ -263,7 +261,8 @@ void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef msg)
 // Configures system clock after wake-up from USB resume callBack:
 // enable HSI, PLL and select PLL as system clock source.
 static void SystemClockConfig_Resume() {
-    SystemClock::Init();
+    // DKeck: unimplemented
+    abort();
 }
 
 // Retuns the USB status depending on the HAL status:
