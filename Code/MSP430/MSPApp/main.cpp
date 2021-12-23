@@ -55,7 +55,7 @@ class _BusyTimeoutTask;
 using _Scheduler = Toastbox::Scheduler<
     _WDTPeriodUs,       // T_UsPerTick: microseconds per tick
     nullptr,            // T_MainStack: main stack pointer
-    0,                  // T_StackGuardSize: number of pointer-sized stack guard elements to use
+    0,                  // T_StackGuardCount: number of pointer-sized stack guard elements to use
     _MotionTask,        // T_Tasks
     _SDTask,
     _ImgTask,
@@ -133,7 +133,7 @@ struct _SDTask {
     }
     
     // Task options
-    using Options = Toastbox::TaskOptions<>;
+    static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
     [[gnu::section(".stack._SDTask")]]
@@ -164,7 +164,7 @@ struct _ImgTask {
     }
     
     // Task options
-    using Options = Toastbox::TaskOptions<>;
+    static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
     [[gnu::section(".stack._ImgTask")]]
@@ -407,7 +407,7 @@ struct _BusyTimeoutTask {
     }
     
     // Task options
-    using Options = Toastbox::TaskOptions<>;
+    static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
     [[gnu::section(".stack._BusyTimeoutTask")]]
@@ -439,9 +439,9 @@ struct _MotionTask {
     }
     
     // Task options
-    using Options = Toastbox::TaskOptions<
-        Toastbox::TaskOption::AutoStart<Run> // Task should start running
-    >;
+    static constexpr Toastbox::TaskOptions Options{
+        .AutoStart = Run, // Task should start running
+    };
     
     // Task stack
     [[gnu::section(".stack._MotionTask")]]

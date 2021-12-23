@@ -23,6 +23,7 @@ asm(".equ _StackMainEnd, _StackMain+" Stringify(_StackMainSize));
 template <
     typename T_USB,
     typename T_QSPI,
+    STM::Status::Mode T_Mode,
     void T_CmdHandle(const STM::Cmd&),
     typename... T_Tasks
 >
@@ -104,9 +105,9 @@ private:
         }
         
         // Task options
-        using Options = Toastbox::TaskOptions<
-            Toastbox::TaskOption::AutoStart<Run> // Task should start running
-        >;
+        static constexpr Toastbox::TaskOptions Options{
+            .AutoStart = Run, // Task should start running
+        };
         
         // Task stack
         [[gnu::section(".stack._TaskCmdRecv")]]
@@ -133,7 +134,7 @@ private:
         }
         
         // Task options
-        using Options = Toastbox::TaskOptions<>;
+        static constexpr Toastbox::TaskOptions Options{};
         
         // Task stack
         [[gnu::section(".stack._TaskCmdHandle")]]
@@ -293,7 +294,7 @@ private:
         alignas(4) static const STM::Status status = { // Aligned to send via USB
             .magic      = STM::Status::MagicNumber,
             .version    = STM::Version,
-            .mode       = STM::Status::Modes::STMApp,
+            .mode       = T_Mode,
         };
         
         USB.send(STM::Endpoints::DataIn, &status, sizeof(status));

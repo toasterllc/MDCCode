@@ -39,6 +39,7 @@ static void _CmdHandle(const STM::Cmd& cmd);
 using _System = System<
     _USBType,
     _QSPIType,
+    STM::Status::Modes::STMApp,
     _CmdHandle,
     // Additional Tasks
     _TaskUSBDataIn,
@@ -235,7 +236,7 @@ struct _TaskUSBDataIn {
     }
     
     // Task options
-    using Options = Toastbox::TaskOptions<>;
+    static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataIn")]]
@@ -302,7 +303,7 @@ struct _TaskReadout {
     }
     
     // Task options
-    using Options = Toastbox::TaskOptions<>;
+    static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
     [[gnu::section(".stack._TaskReadout")]]
