@@ -185,7 +185,6 @@ public:
         MSP.init();
     }
     
-    // TODO: we should also rename to MSPJTAG to make it clear that it's not for comms with the MSP app
     using MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
     using MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
     static inline MSP430JTAG<MSPTest, MSPRst_, CPUFreqMHz> MSP;
