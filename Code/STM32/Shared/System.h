@@ -210,12 +210,15 @@ public:
     static void Abort() {
         Toastbox::IntState ints(false);
         
+        __HAL_RCC_GPIOB_CLK_ENABLE(); // USB, QSPI, LEDs
+        __HAL_RCC_GPIOE_CLK_ENABLE(); // LEDs
+        
         InitLED();
         for (bool x=true;; x=!x) {
             LED1::Write(x);
             LED2::Write(x);
             LED3::Write(x);
-            for (volatile uint32_t i=0; i<(uint32_t)5000000; i++);
+            for (volatile uint32_t i=0; i<(uint32_t)500000; i++);
         }
     }
     
