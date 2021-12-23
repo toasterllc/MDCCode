@@ -52,11 +52,18 @@ class _SDTask;
 class _ImgTask;
 class _BusyTimeoutTask;
 
+static void _Sleep();
+
+#warning enable stack guards for testing
 using _Scheduler = Toastbox::Scheduler<
-    _WDTPeriodUs,       // T_UsPerTick: microseconds per tick
-    nullptr,            // T_MainStack: main stack pointer
-    0,                  // T_StackGuardCount: number of pointer-sized stack guard elements to use
-    _MotionTask,        // T_Tasks
+    _WDTPeriodUs,                               // T_UsPerTick: microseconds per tick
+    Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
+    _Sleep,                                     // T_Sleep: function to put processor to sleep;
+                                                //          invoked when no tasks have work to do
+    nullptr,                                    // T_MainStack: main stack pointer (only used to monitor
+                                                //              main stack for overflow; unused if T_StackGuardCount==0)
+    0,                                          // T_StackGuardCount: number of pointer-sized stack guard elements to use
+    _MotionTask,                                // T_Tasks: list of tasks
     _SDTask,
     _ImgTask,
     _BusyTimeoutTask
@@ -347,7 +354,7 @@ inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
     else    __bic_SR_register(GIE);
 }
 
-void Toastbox::IntState::WaitForInterrupt() {
+static void _Sleep() {
     // Put ourself to sleep until an interrupt occurs. This function may or may not return:
     // 
     // - This function returns if an interrupt was already pending and the ISR
