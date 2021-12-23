@@ -554,8 +554,16 @@ static void _JumpToAppIfNeeded() {
     }
 }
 
+// MARK: - Abort
+
+extern "C" [[noreturn]]
+void abort() {
+    _System::Abort();
+}
+
 int main() {
-    _JumpToAppIfNeeded();
+    #warning TODO: bring back
+//    _JumpToAppIfNeeded();
     
     _System::Init();
     
