@@ -85,7 +85,7 @@ using namespace MetalUtil;
 
 - (void)reset {
     [_sampleLayer setFrame:CGRectNull];
-    [self _setZoomScale:.5 anchor:{0,0}];
+    [self _setZoomScale:[[NSScreen mainScreen] backingScaleFactor]*.75 anchor:{0,0}];
 }
 
 - (ImageLayer*)imageLayer {
