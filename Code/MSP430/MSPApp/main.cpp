@@ -54,15 +54,27 @@ class _BusyTimeoutTask;
 
 static void _Sleep();
 
-#warning enable stack guards for testing
+// MARK: - Main Stack
+
+#warning verify that _StackMainSize is large enough
+#define _StackMainSize 128
+
+[[gnu::section(".stack.main")]]
+uint8_t _StackMain[_StackMainSize];
+
+asm(".global __stack");
+asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
+
+#warning disable stack guard for production
+static constexpr size_t _StackGuardCount = 16;
 using _Scheduler = Toastbox::Scheduler<
     _WDTPeriodUs,                               // T_UsPerTick: microseconds per tick
     Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
     _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                 //          invoked when no tasks have work to do
-    nullptr,                                    // T_MainStack: main stack pointer (only used to monitor
+    _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
                                                 //              main stack for overflow; unused if T_StackGuardCount==0)
-    0,                                          // T_StackGuardCount: number of pointer-sized stack guard elements to use
+    _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
     _MotionTask,                                // T_Tasks: list of tasks
     _SDTask,
     _ImgTask,
@@ -366,8 +378,8 @@ static void _Sleep() {
     
     // If we're currently handling motion, enter LPM1 sleep because a task is just delaying itself.
     // If we're not handling motion, enter the deep LPM3.5 sleep, where RAM content is lost.
-    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
-//    const uint16_t LPMBits = LPM1_bits;
+//    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
+    const uint16_t LPMBits = LPM1_bits;
     
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
@@ -449,19 +461,10 @@ struct _MotionTask {
     
     // Task stack
     [[gnu::section(".stack._MotionTask")]]
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[256];
 };
 
 // MARK: - Main
-
-#warning verify that _StackMainSize is large enough
-#define _StackMainSize 128
-
-[[gnu::section(".stack.main")]]
-uint8_t _StackMain[_StackMainSize];
-
-asm(".global __stack");
-asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
 
 int main() {
     // Stop watchdog timer
@@ -540,3 +543,25 @@ void abort() {
         _Pin::DEBUG_OUT::Write(x);
     }
 }
+
+
+
+
+#warning TODO: remove these debug symbols
+#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
+constexpr auto& _Debug_Tasks              = _Scheduler::_Tasks;
+constexpr auto& _Debug_DidWork            = _Scheduler::_DidWork;
+constexpr auto& _Debug_CurrentTask        = _Scheduler::_CurrentTask;
+constexpr auto& _Debug_CurrentTime        = _Scheduler::_CurrentTime;
+constexpr auto& _Debug_Wake               = _Scheduler::_Wake;
+constexpr auto& _Debug_WakeTime           = _Scheduler::_WakeTime;
+
+struct _DebugStack {
+    uint16_t stack[_StackGuardCount];
+};
+
+const _DebugStack& _Debug_MainStack               = *(_DebugStack*)_StackMain;
+const _DebugStack& _Debug_MotionTaskStack         = *(_DebugStack*)_MotionTask::Stack;
+const _DebugStack& _Debug_SDTaskStack             = *(_DebugStack*)_SDTask::Stack;
+const _DebugStack& _Debug_ImgTaskStack            = *(_DebugStack*)_ImgTask::Stack;
+const _DebugStack& _Debug_BusyTimeoutTaskStack    = *(_DebugStack*)_BusyTimeoutTask::Stack;
