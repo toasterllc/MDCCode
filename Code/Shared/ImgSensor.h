@@ -1,15 +1,17 @@
 #pragma once
 #include "ICE.h"
-#include "Assert.h"
 
 namespace Img {
 
 template <
     typename T_Scheduler,
     typename T_ICE,
-    void T_SetPowerEnabled(bool)
+    void T_SetPowerEnabled(bool),
+    [[noreturn]] void T_Error(uint16_t)
 >
 class Sensor {
+#define Assert(x) if (!(x)) T_Error(__LINE__)
+
 public:
     static void Enable() {
         // Turn on power
@@ -249,6 +251,8 @@ private:
                                                               ParallelInterfaceEnable   |
                                                               SerialInterfaceDisable    ;
     };
+
+#undef Assert
 };
 
 } // namespace Img

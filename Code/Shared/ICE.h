@@ -8,10 +8,13 @@
 #include "Img.h"
 #include "Toastbox/Task.h"
 
-#warning TODO: upon errors, call out to a client-supplied error handler, instead of using Assert() or returning optionals
-
-template <typename T_Scheduler>
+template <
+    typename T_Scheduler,
+    [[noreturn]] void T_Error(uint16_t)
+>
 class ICE {
+#define Assert(x) if (!(x)) T_Error(__LINE__)
+
 public:
     // MARK: - Types
     
@@ -294,7 +297,7 @@ public:
         }
         // Timeout capturing image
         // This should never happen, since it indicates a Verilog error or a hardware failure.
-        abort();
+        Assert(false);
     }
     
     static ImgCaptureStatusResp ImgCaptureStatus() {
@@ -319,7 +322,7 @@ public:
         }
         // Timeout getting response from ICE40
         // This should never happen, since it indicates a Verilog error or a hardware failure.
-        abort();
+        Assert(false);
     }
     
     static uint16_t ImgI2CRead(uint16_t addr) {
@@ -367,7 +370,7 @@ public:
             return s;
         }
         // Timeout sending SD command
-        abort();
+        Assert(false);
     }
     
     static SDStatusResp SDStatus() {
@@ -414,4 +417,5 @@ private:
         return r;
     }
 
+#undef Assert
 };
