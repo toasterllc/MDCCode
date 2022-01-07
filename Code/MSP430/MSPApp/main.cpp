@@ -16,24 +16,17 @@
 #include "SPI.h"
 #include "WDT.h"
 #include "FRAMWriteEn.h"
+#include "AbortHistory.h"
 #include "Util.h"
 #include "Toastbox/IntState.h"
 using namespace GPIO;
 
-static constexpr uint64_t _MCLKFreqHz   = 16000000;
-static constexpr uint32_t _XT1FreqHz    = 32768;
-static constexpr uint32_t _WDTPeriodUs  = 512;
-
-enum class AbortDomain : uint8_t {
-    Unknown     = 1,
-    Scheduler   = 2,
-    ICE         = 3,
-    SD          = 4,
-    Img         = 5,
-};
+static constexpr uint64_t _MCLKFreqHz       = 16000000;
+static constexpr uint32_t _XT1FreqHz        = 32768;
+static constexpr uint32_t _SysTickPeriodUs  = 512;
 
 [[noreturn]]
-static void abort(AbortDomain domain, uint16_t line);
+static void abort(AbortHistory::Domain domain, uint16_t line);
 
 struct _Pin {
     // Default GPIOs
@@ -55,7 +48,7 @@ struct _Pin {
 };
 
 using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
-using _WDT = WDTType<_MCLKFreqHz, _WDTPeriodUs>;
+using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
 class _MotionTask;
@@ -86,7 +79,7 @@ static void _ImgError(uint16_t line);
 #warning disable stack guard for production
 static constexpr size_t _StackGuardCount = 16;
 using _Scheduler = Toastbox::Scheduler<
-    _WDTPeriodUs,                               // T_UsPerTick: microseconds per tick
+    _SysTickPeriodUs,                           // T_UsPerTick: microseconds per tick
     Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
     _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                 //          invoked when no tasks have work to do
@@ -121,19 +114,19 @@ static SD::Card<
     0                   // T_ClkDelayFast (odd values invert the clock)
 > _SDCard;
 
-// _StartTime: the time set by STM32 (seconds since reference date)
-// Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
-[[gnu::section(".fram_info.main")]]
-static volatile struct {
-    uint32_t time   = 0;
-    uint16_t valid  = false; // uint16_t (instead of bool) for alignment
-} _StartTime;
-
 // _RTC: real time clock
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
 [[gnu::section(".ram_backup.main")]]
-static RTC<_XT1FreqHz> _RTC;
+static RTC::Type<_XT1FreqHz> _RTC;
+
+// _StartTime: the time set by STM32 (seconds since reference date)
+// Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
+[[gnu::section(".fram_info.main")]]
+static volatile struct {
+    RTC::Sec time   = 0;
+    uint16_t valid  = false; // uint16_t (instead of bool) for alignment
+} _StartTime;
 
 // _ImgAutoExp: auto exposure algorithm object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
@@ -150,6 +143,10 @@ static volatile struct {
     uint16_t read = 0;
     bool full = false;
 } _ImgIndexes;
+
+// _AbortHistory: records aborts so they can be inspected for debugging
+[[gnu::section(".fram_info.main")]]
+static AbortHistory _AbortHistory;
 
 struct _SDTask {
     static void Enable() {
@@ -312,7 +309,7 @@ static void _ISR_Port2() {
 }
 
 [[gnu::interrupt(WDT_VECTOR)]]
-static void _ISR_WDT() {
+static void _ISR_SysTick() {
     const bool wake = _Scheduler::Tick();
     if (wake) {
         // Wake ourself
@@ -325,7 +322,7 @@ static void _ISR_WDT() {
 
 [[noreturn]]
 static void _ICEError(uint16_t line) {
-    abort(AbortDomain::ICE, line);
+    abort(AbortHistory::Domain::ICE, line);
 }
 
 template<>
@@ -362,7 +359,7 @@ static void _SDSetPowerEnabled(bool en) {
 
 [[noreturn]]
 static void _SDError(uint16_t line) {
-    abort(AbortDomain::SD, line);
+    abort(AbortHistory::Domain::SD, line);
 }
 
 // MARK: - Image Sensor
@@ -386,7 +383,7 @@ static void _ImgSetPowerEnabled(bool en) {
 
 [[noreturn]]
 static void _ImgError(uint16_t line) {
-    abort(AbortDomain::Img, line);
+    abort(AbortHistory::Domain::Img, line);
 }
 
 // MARK: - IntState
@@ -418,7 +415,7 @@ static void _Sleep() {
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
         PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-        PMMCTL0_L |= PMMREGOFF;
+        PMMCTL0_L |= PMMREGOFF_1_L;
     }
     
     // Atomically enable interrupts and go to sleep
@@ -502,12 +499,15 @@ struct _MotionTask {
 
 [[noreturn]]
 static void _SchedulerError(uint16_t line) {
-    abort(AbortDomain::Scheduler, line);
+    abort(AbortHistory::Domain::Scheduler, line);
 }
 
 int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
+    
+    volatile bool a = false;
+    while (!a);
     
     // Init GPIOs
     GPIO::Init<
@@ -569,36 +569,49 @@ int main() {
         }
     }
     
-    // Init WDT
-    _WDT::Init();
+    // Init SysTick
+    _SysTick::Init();
     
     _Scheduler::Run();
 }
 
 [[noreturn]]
-static void abort(AbortDomain domain, uint16_t line) {
-    _Pin::DEBUG_OUT::Init();
-    
-    for (;;) {
-        for (uint16_t i=0; i<(uint16_t)domain; i++) {
-            _Pin::DEBUG_OUT::Write(1);
-            _Pin::DEBUG_OUT::Write(0);
-        }
-        
-        for (volatile int i=0; i<100; i++) {}
-        
-        for (uint16_t i=0; i<(uint16_t)line; i++) {
-            _Pin::DEBUG_OUT::Write(1);
-            _Pin::DEBUG_OUT::Write(0);
-        }
-        
-        for (volatile int i=0; i<1000; i++) {}
+static void abort(AbortHistory::Domain domain, uint16_t line) {
+    {
+        FRAMWriteEn writeEn; // Enable FRAM writing
+        _AbortHistory.add(_RTC.currentTime(), domain, line);
     }
+    
+    // Trigger a BOR
+    PMMCTL0 = PMMPW | PMMSWBOR;
+    
+//    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+//    PMMCTL0_L |= PMMSWBOR_1_L;
+    
+    for (;;);
+    
+//    _Pin::DEBUG_OUT::Init();
+//    
+//    for (;;) {
+//        for (uint16_t i=0; i<(uint16_t)domain; i++) {
+//            _Pin::DEBUG_OUT::Write(1);
+//            _Pin::DEBUG_OUT::Write(0);
+//        }
+//        
+//        for (volatile int i=0; i<100; i++) {}
+//        
+//        for (uint16_t i=0; i<(uint16_t)line; i++) {
+//            _Pin::DEBUG_OUT::Write(1);
+//            _Pin::DEBUG_OUT::Write(0);
+//        }
+//        
+//        for (volatile int i=0; i<1000; i++) {}
+//    }
 }
 
 extern "C" [[noreturn]]
 void abort() {
-    abort(AbortDomain::Unknown, 0);
+    abort(AbortHistory::Domain::General, 0);
 }
 
 

@@ -2,11 +2,13 @@
 #include <msp430.h>
 #include "Toastbox/IntState.h"
 
+namespace RTC {
+
+using Sec = uint32_t;
+
 template <uint32_t T_XT1FreqHz>
-class RTC {
+class Type {
 public:
-    using Sec = uint32_t;
-    
     static constexpr Sec InterruptInterval = 2048;
     static constexpr uint32_t Predivider = 1024;
     static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
@@ -83,3 +85,5 @@ private:
     
     volatile Sec _time = 0; // volatile since it's updated from an interrupt
 };
+
+} // namespace RTC
