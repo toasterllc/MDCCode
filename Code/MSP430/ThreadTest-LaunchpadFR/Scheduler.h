@@ -5,13 +5,16 @@
 class TaskA;
 class TaskB;
 
+void _Sleep();
+
 using Scheduler = Toastbox::Scheduler<
-    // Microseconds per tick
-    512,
-    // Stack guard
-    nullptr,
-    0,
-    // Tasks
-    TaskA,
+    512,                                        // T_UsPerTick: microseconds per tick
+    Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
+    _Sleep,                                     // T_Sleep: function to put processor to sleep;
+                                                //          invoked when no tasks have work to do
+    nullptr,                                    // T_MainStack: main stack pointer (only used to monitor
+                                                //              main stack for overflow; unused if T_StackGuardCount==0)
+    0,                                          // T_StackGuardCount: number of pointer-sized stack guard elements to use
+    TaskA,                                      // T_Tasks: list of tasks
     TaskB
 >;
