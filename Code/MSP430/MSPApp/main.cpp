@@ -81,23 +81,29 @@ using _Scheduler = Toastbox::Scheduler<
     _BusyTimeoutTask
 >;
 
-using _ICE = ICE<
-    _Scheduler
->;
-
+static void _ICEError(uint16_t line);
 static void _SDSetPowerEnabled(bool en);
+static void _SDError(uint16_t line);
 static void _ImgSetPowerEnabled(bool en);
+static void _ImgError(uint16_t line);
+
+using _ICE = ICE<
+    _Scheduler,
+    _ICEError
+>;
 
 using _ImgSensor = Img::Sensor<
     _Scheduler,             // T_Scheduler
     _ICE,                   // T_ICE
-    _ImgSetPowerEnabled     // T_SetPowerEnabled
+    _ImgSetPowerEnabled,    // T_SetPowerEnabled
+    _ImgError               // T_Error
 >;
 
 static SD::Card<
     _Scheduler,         // T_Scheduler
     _ICE,               // T_ICE
     _SDSetPowerEnabled, // T_SetPowerEnabled
+    _SDError,           // T_Error
     1,                  // T_ClkDelaySlow (odd values invert the clock)
     0                   // T_ClkDelayFast (odd values invert the clock)
 > _SDCard;
@@ -304,6 +310,11 @@ static void _ISR_WDT() {
 
 // MARK: - ICE40
 
+[[noreturn]]
+static void _ICEError(uint16_t line) {
+    abort();
+}
+
 template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
@@ -336,6 +347,11 @@ static void _SDSetPowerEnabled(bool en) {
     _Scheduler::SleepMs<2>();
 }
 
+[[noreturn]]
+static void _SDError(uint16_t line) {
+    abort();
+}
+
 // MARK: - Image Sensor
 
 static void _ImgSetPowerEnabled(bool en) {
@@ -353,6 +369,11 @@ static void _ImgSetPowerEnabled(bool en) {
         
         #warning measure actual delay that we need for the rails to fall
     }
+}
+
+[[noreturn]]
+static void _ImgError(uint16_t line) {
+    abort();
 }
 
 // MARK: - IntState

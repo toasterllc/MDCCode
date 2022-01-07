@@ -1,6 +1,5 @@
 #pragma once
 #include "ICE.h"
-#include "Assert.h"
 #include "SD.h"
 #include "Util.h"
 #include "Toastbox/Task.h"
@@ -11,11 +10,15 @@ template <
     typename T_Scheduler,
     typename T_ICE,
     void T_SetPowerEnabled(bool),
+    [[noreturn]] void T_Error(uint16_t),
     uint8_t T_ClkDelaySlow,
     uint8_t T_ClkDelayFast
 >
 class Card {
+#define Assert(x) if (!(x)) T_Error(__LINE__)
+
 public:
+    
     void enable() {
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
@@ -335,6 +338,8 @@ private:
     }
     
     uint16_t _rca = 0;
+    
+#undef Assert
 };
 
 } // namespace SD
