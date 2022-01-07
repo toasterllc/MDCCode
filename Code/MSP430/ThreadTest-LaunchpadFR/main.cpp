@@ -29,10 +29,8 @@ inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
     else    __bic_SR_register(GIE);
 }
 
-void Toastbox::IntState::WaitForInterrupt() {
-    const bool prevEn = Toastbox::IntState::InterruptsEnabled();
+void _Sleep() {
     __bis_SR_register(GIE | LPM1_bits);
-    if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
 }
 
 __attribute__((interrupt(WDT_VECTOR)))
