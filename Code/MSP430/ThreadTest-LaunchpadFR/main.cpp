@@ -33,6 +33,10 @@ void _Sleep() {
     __bis_SR_register(GIE | LPM1_bits);
 }
 
+void _Error(uint16_t) {
+    abort();
+}
+
 __attribute__((interrupt(WDT_VECTOR)))
 static void _ISR_WDT() {
 //    PAOUT |= BIT2;
