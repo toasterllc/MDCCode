@@ -547,21 +547,21 @@ void abort() {
 
 
 
-#warning TODO: remove these debug symbols
-#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
-constexpr auto& _Debug_Tasks              = _Scheduler::_Tasks;
-constexpr auto& _Debug_DidWork            = _Scheduler::_DidWork;
-constexpr auto& _Debug_CurrentTask        = _Scheduler::_CurrentTask;
-constexpr auto& _Debug_CurrentTime        = _Scheduler::_CurrentTime;
-constexpr auto& _Debug_Wake               = _Scheduler::_Wake;
-constexpr auto& _Debug_WakeTime           = _Scheduler::_WakeTime;
-
-struct _DebugStack {
-    uint16_t stack[_StackGuardCount];
-};
-
-const _DebugStack& _Debug_MainStack               = *(_DebugStack*)_StackMain;
-const _DebugStack& _Debug_MotionTaskStack         = *(_DebugStack*)_MotionTask::Stack;
-const _DebugStack& _Debug_SDTaskStack             = *(_DebugStack*)_SDTask::Stack;
-const _DebugStack& _Debug_ImgTaskStack            = *(_DebugStack*)_ImgTask::Stack;
-const _DebugStack& _Debug_BusyTimeoutTaskStack    = *(_DebugStack*)_BusyTimeoutTask::Stack;
+//#warning TODO: remove these debug symbols
+//#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
+//constexpr auto& _Debug_Tasks              = _Scheduler::_Tasks;
+//constexpr auto& _Debug_DidWork            = _Scheduler::_DidWork;
+//constexpr auto& _Debug_CurrentTask        = _Scheduler::_CurrentTask;
+//constexpr auto& _Debug_CurrentTime        = _Scheduler::_CurrentTime;
+//constexpr auto& _Debug_Wake               = _Scheduler::_Wake;
+//constexpr auto& _Debug_WakeTime           = _Scheduler::_WakeTime;
+//
+//struct _DebugStack {
+//    uint16_t stack[_StackGuardCount];
+//};
+//
+//const _DebugStack& _Debug_MainStack               = *(_DebugStack*)_StackMain;
+//const _DebugStack& _Debug_MotionTaskStack         = *(_DebugStack*)_MotionTask::Stack;
+//const _DebugStack& _Debug_SDTaskStack             = *(_DebugStack*)_SDTask::Stack;
+//const _DebugStack& _Debug_ImgTaskStack            = *(_DebugStack*)_ImgTask::Stack;
+//const _DebugStack& _Debug_BusyTimeoutTaskStack    = *(_DebugStack*)_BusyTimeoutTask::Stack;
