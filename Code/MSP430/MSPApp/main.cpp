@@ -24,6 +24,17 @@ static constexpr uint64_t _MCLKFreqHz   = 16000000;
 static constexpr uint32_t _XT1FreqHz    = 32768;
 static constexpr uint32_t _WDTPeriodUs  = 512;
 
+enum class AbortDomain : uint8_t {
+    Unknown     = 1,
+    Scheduler   = 2,
+    ICE         = 3,
+    SD          = 4,
+    Img         = 5,
+};
+
+[[noreturn]]
+static void abort(AbortDomain domain, uint16_t line);
+
 struct _Pin {
     // Default GPIOs
     using VDD_1V9_IMG_EN                    = PortA::Pin<0x0, Option::Output0>;
@@ -65,6 +76,13 @@ uint8_t _StackMain[_StackMainSize];
 asm(".global __stack");
 asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
 
+static void _SchedulerError(uint16_t line);
+static void _ICEError(uint16_t line);
+static void _SDSetPowerEnabled(bool en);
+static void _SDError(uint16_t line);
+static void _ImgSetPowerEnabled(bool en);
+static void _ImgError(uint16_t line);
+
 #warning disable stack guard for production
 static constexpr size_t _StackGuardCount = 16;
 using _Scheduler = Toastbox::Scheduler<
@@ -72,6 +90,7 @@ using _Scheduler = Toastbox::Scheduler<
     Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
     _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                 //          invoked when no tasks have work to do
+    _SchedulerError,                            // T_Error: function to handle unrecoverable error
     _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
                                                 //              main stack for overflow; unused if T_StackGuardCount==0)
     _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
@@ -80,12 +99,6 @@ using _Scheduler = Toastbox::Scheduler<
     _ImgTask,
     _BusyTimeoutTask
 >;
-
-static void _ICEError(uint16_t line);
-static void _SDSetPowerEnabled(bool en);
-static void _SDError(uint16_t line);
-static void _ImgSetPowerEnabled(bool en);
-static void _ImgError(uint16_t line);
 
 using _ICE = ICE<
     _Scheduler,
@@ -162,7 +175,7 @@ struct _SDTask {
     
     // Task stack
     [[gnu::section(".stack._SDTask")]]
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[256];
 };
 
 struct _ImgTask {
@@ -312,7 +325,7 @@ static void _ISR_WDT() {
 
 [[noreturn]]
 static void _ICEError(uint16_t line) {
-    abort();
+    abort(AbortDomain::ICE, line);
 }
 
 template<>
@@ -349,7 +362,7 @@ static void _SDSetPowerEnabled(bool en) {
 
 [[noreturn]]
 static void _SDError(uint16_t line) {
-    abort();
+    abort(AbortDomain::SD, line);
 }
 
 // MARK: - Image Sensor
@@ -373,7 +386,7 @@ static void _ImgSetPowerEnabled(bool en) {
 
 [[noreturn]]
 static void _ImgError(uint16_t line) {
-    abort();
+    abort(AbortDomain::Img, line);
 }
 
 // MARK: - IntState
@@ -487,6 +500,11 @@ struct _MotionTask {
 
 // MARK: - Main
 
+[[noreturn]]
+static void _SchedulerError(uint16_t line) {
+    abort(AbortDomain::Scheduler, line);
+}
+
 int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
@@ -526,8 +544,8 @@ int main() {
     #warning   of an error
     
     #warning how do we handle turning off SD clock after an error occurs?
-    #warning   ? don't worry about that because in the final design,
-    #warning   we'll be powering off ICE40 anyway?
+    #warning   ? dont worry about that because in the final design,
+    #warning   well be powering off ICE40 anyway?
     
     if (Startup::ColdStart()) {
         // If we do have a valid startTime, consume _startTime and hand it off to _RTC.
@@ -557,32 +575,50 @@ int main() {
     _Scheduler::Run();
 }
 
+[[noreturn]]
+static void abort(AbortDomain domain, uint16_t line) {
+    _Pin::DEBUG_OUT::Init();
+    
+    for (;;) {
+        for (uint16_t i=0; i<(uint16_t)domain; i++) {
+            _Pin::DEBUG_OUT::Write(1);
+            _Pin::DEBUG_OUT::Write(0);
+        }
+        
+        for (volatile int i=0; i<100; i++) {}
+        
+        for (uint16_t i=0; i<(uint16_t)line; i++) {
+            _Pin::DEBUG_OUT::Write(1);
+            _Pin::DEBUG_OUT::Write(0);
+        }
+        
+        for (volatile int i=0; i<1000; i++) {}
+    }
+}
+
 extern "C" [[noreturn]]
 void abort() {
-    _Pin::DEBUG_OUT::Init();
-    for (bool x=0;; x=!x) {
-        _Pin::DEBUG_OUT::Write(x);
-    }
+    abort(AbortDomain::Unknown, 0);
 }
 
 
 
 
-//#warning TODO: remove these debug symbols
-//#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
-//constexpr auto& _Debug_Tasks              = _Scheduler::_Tasks;
-//constexpr auto& _Debug_DidWork            = _Scheduler::_DidWork;
-//constexpr auto& _Debug_CurrentTask        = _Scheduler::_CurrentTask;
-//constexpr auto& _Debug_CurrentTime        = _Scheduler::_CurrentTime;
-//constexpr auto& _Debug_Wake               = _Scheduler::_Wake;
-//constexpr auto& _Debug_WakeTime           = _Scheduler::_WakeTime;
-//
-//struct _DebugStack {
-//    uint16_t stack[_StackGuardCount];
-//};
-//
-//const _DebugStack& _Debug_MainStack               = *(_DebugStack*)_StackMain;
-//const _DebugStack& _Debug_MotionTaskStack         = *(_DebugStack*)_MotionTask::Stack;
-//const _DebugStack& _Debug_SDTaskStack             = *(_DebugStack*)_SDTask::Stack;
-//const _DebugStack& _Debug_ImgTaskStack            = *(_DebugStack*)_ImgTask::Stack;
-//const _DebugStack& _Debug_BusyTimeoutTaskStack    = *(_DebugStack*)_BusyTimeoutTask::Stack;
+#warning TODO: remove these debug symbols
+#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
+constexpr auto& _Debug_Tasks              = _Scheduler::_Tasks;
+constexpr auto& _Debug_DidWork            = _Scheduler::_DidWork;
+constexpr auto& _Debug_CurrentTask        = _Scheduler::_CurrentTask;
+constexpr auto& _Debug_CurrentTime        = _Scheduler::_ISR.CurrentTime;
+constexpr auto& _Debug_Wake               = _Scheduler::_ISR.Wake;
+constexpr auto& _Debug_WakeTime           = _Scheduler::_ISR.WakeTime;
+
+struct _DebugStack {
+    uint16_t stack[_StackGuardCount];
+};
+
+const _DebugStack& _Debug_MainStack               = *(_DebugStack*)_StackMain;
+const _DebugStack& _Debug_MotionTaskStack         = *(_DebugStack*)_MotionTask::Stack;
+const _DebugStack& _Debug_SDTaskStack             = *(_DebugStack*)_SDTask::Stack;
+const _DebugStack& _Debug_ImgTaskStack            = *(_DebugStack*)_ImgTask::Stack;
+const _DebugStack& _Debug_BusyTimeoutTaskStack    = *(_DebugStack*)_BusyTimeoutTask::Stack;
