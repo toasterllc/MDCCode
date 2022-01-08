@@ -6,12 +6,9 @@
 class Startup {
 public:
     static bool ColdStart() {
-        const uint16_t iv = SYSRSTIV;
-        // This is a warm start if we're waking from:
-        //   - an intentional reset (software BOR)
-        //   - LPM3.5
-        static bool warmStart = (iv==SYSRSTIV__PMMSWBOR || iv==SYSRSTIV__LPM5WU);
-        return !warmStart;
+        // This is a cold start if we're not waking from LPM3.5
+        static bool coldStart = (SYSRSTIV != SYSRSTIV__LPM5WU);
+        return coldStart;
     }
     
 private:

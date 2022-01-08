@@ -16,6 +16,10 @@ public:
     static constexpr uint16_t InterruptCount = (InterruptInterval*FreqHz)-1;
     static_assert(InterruptCount == ((InterruptInterval*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
     
+    bool enabled() const {
+        return RTCCTL != 0;
+    }
+    
     void init(Sec startTime) {
         _time = startTime;
         
@@ -83,7 +87,12 @@ private:
         return _time + (RTCCNT/FreqHz);
     }
     
-    volatile Sec _time = 0; // volatile since it's updated from an interrupt
+    // _time: tracks the current time
+    //   volatile:          since _time is updated from an interrupt
+    //   not initialized:   since _time should only be initialized via init(),
+    //                      which is only called in special circumstances
+    //                      (cold starts)
+    volatile Sec _time;
 };
 
 } // namespace RTC

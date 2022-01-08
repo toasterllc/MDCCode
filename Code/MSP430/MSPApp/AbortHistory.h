@@ -12,7 +12,7 @@ public:
         Img         = 5,
     };
     
-    void add(RTC::Sec time, Domain domain, uint16_t line) {
+    void record(RTC::Sec time, Domain domain, uint16_t line) {
         if (_count >= std::size(_items)) return;
         _items[_count].time = time;
         _items[_count].domain = domain;
