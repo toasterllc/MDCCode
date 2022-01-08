@@ -405,8 +405,10 @@ static void _Sleep() {
     //   therefore we enter LPM3.5. The next time we wake will be due to a
     //   reset and execution will start from main().
     
-    // If we're currently handling motion, enter LPM1 sleep because a task is just delaying itself.
-    // If we're not handling motion, enter the deep LPM3.5 sleep, where RAM content is lost.
+    #warning can we just inspect the state of the tasks to determine what kind of sleep to enter?
+    
+    // If we're currently handling motion (_Busy), enter LPM1 sleep because a task is just delaying itself.
+    // If we're not handling motion (!_Busy), enter the deep LPM3.5 sleep, where RAM content is lost.
 //    const uint16_t LPMBits = (_Busy ? LPM1_bits : LPM3_bits);
     const uint16_t LPMBits = LPM1_bits;
     
