@@ -58,23 +58,15 @@ class _BusyTimeoutTask;
 
 static void _Sleep();
 
-// MARK: - Main Stack
-
-#warning verify that _StackMainSize is large enough
-#define _StackMainSize 128
-
-[[gnu::section(".stack.main")]]
-uint8_t _StackMain[_StackMainSize];
-
-asm(".global __stack");
-asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
-
 static void _SchedulerError(uint16_t line);
 static void _ICEError(uint16_t line);
-static void _SDSetPowerEnabled(bool en);
 static void _SDError(uint16_t line);
-static void _ImgSetPowerEnabled(bool en);
 static void _ImgError(uint16_t line);
+
+static void _SDSetPowerEnabled(bool en);
+static void _ImgSetPowerEnabled(bool en);
+
+extern uint8_t _StackMain[];
 
 #warning disable stack guard for production
 static constexpr size_t _StackGuardCount = 16;
@@ -117,8 +109,18 @@ static SD::Card<
 // _RTC: real time clock
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-[[gnu::section(".ram_backup.main")]]
+// 
+// _RTC needs to live in the _noinit variant, so that RTC memory
+// is never automatically initialized, because we don't want it
+// to be reset when we abort.
+[[gnu::section(".ram_backup_noinit.main")]]
 static RTC::Type<_XT1FreqHz> _RTC;
+
+// _ImgAutoExp: auto exposure algorithm object
+// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// it's maintained during sleep, but reset upon a cold start.
+[[gnu::section(".ram_backup.main")]]
+static Img::AutoExposure _ImgAutoExp;
 
 // _StartTime: the time set by STM32 (seconds since reference date)
 // Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
@@ -127,12 +129,6 @@ static volatile struct {
     RTC::Sec time   = 0;
     uint16_t valid  = false; // uint16_t (instead of bool) for alignment
 } _StartTime;
-
-// _ImgAutoExp: auto exposure algorithm object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
-[[gnu::section(".ram_backup.main")]]
-static Img::AutoExposure _ImgAutoExp;
 
 // _ImgIndexes: stats to track captured images
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely.
@@ -320,49 +316,56 @@ static void _ISR_SysTick() {
 
 // MARK: - ICE40
 
-[[noreturn]]
-static void _ICEError(uint16_t line) {
-    abort(AbortHistory::Domain::ICE, line);
-}
-
 template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
     
+    // Init SPI peripheral
+    static bool spiInit = false;
+    if (!spiInit) {
+        spiInit = true;
+        _SPI::Init();
+    }
+    
+    // iceInit: Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+    // it's maintained during sleep, but reset upon a cold start.
+    [[gnu::section(".ram_backup.main")]]
     static bool iceInit = false;
-    // Init ICE40 if we haven't done so yet
+    
+    // Init ICE comms
     if (!iceInit) {
         iceInit = true;
-        
-        // Init SPI/ICE40
-        if (Startup::ColdStart()) {
-            constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
-            _SPI::Init(iceReset);
-            _ICE::Init(); // Cold start -> init ICE40 to verify that comms are working
-        
-        } else {
-            constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
-            _SPI::Init(iceReset);
-        }
+        // Reset ICE comms (by asserting SPI CLK for some length of time)
+        _SPI::ICEReset();
+        // Init ICE comms
+        _ICE::Init();
     }
+    
+//    // Init ICE40 if we haven't done so yet
+//    static bool iceInit = false;
+//    if (!iceInit) {
+//        // Init SPI/ICE40
+//        if (Startup::ColdStart()) {
+//            constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
+//            _SPI::Init(iceReset);
+//            _ICE::Init(); // Cold start -> init ICE40 to verify that comms are working
+//        
+//        } else {
+//            constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
+//            _SPI::Init(iceReset);
+//        }
+//    }
     
     _SPI::WriteRead(msg, resp);
 }
 
-// MARK: - SD Card
+// MARK: - Power
 
 static void _SDSetPowerEnabled(bool en) {
     _Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _Scheduler::SleepMs<2>();
 }
-
-[[noreturn]]
-static void _SDError(uint16_t line) {
-    abort(AbortHistory::Domain::SD, line);
-}
-
-// MARK: - Image Sensor
 
 static void _ImgSetPowerEnabled(bool en) {
     if (en) {
@@ -379,11 +382,6 @@ static void _ImgSetPowerEnabled(bool en) {
         
         #warning measure actual delay that we need for the rails to fall
     }
-}
-
-[[noreturn]]
-static void _ImgError(uint16_t line) {
-    abort(AbortHistory::Domain::Img, line);
 }
 
 // MARK: - IntState
@@ -495,12 +493,79 @@ struct _MotionTask {
     static inline uint8_t Stack[256];
 };
 
-// MARK: - Main
+// MARK: - Error Handlers
 
 [[noreturn]]
 static void _SchedulerError(uint16_t line) {
     abort(AbortHistory::Domain::Scheduler, line);
 }
+
+[[noreturn]]
+static void _ICEError(uint16_t line) {
+    abort(AbortHistory::Domain::ICE, line);
+}
+
+[[noreturn]]
+static void _SDError(uint16_t line) {
+    abort(AbortHistory::Domain::SD, line);
+}
+
+[[noreturn]]
+static void _ImgError(uint16_t line) {
+    abort(AbortHistory::Domain::Img, line);
+}
+
+// MARK: - Abort
+
+[[noreturn]]
+static void abort(AbortHistory::Domain domain, uint16_t line) {
+    {
+        FRAMWriteEn writeEn; // Enable FRAM writing
+        _AbortHistory.record(_RTC.currentTime(), domain, line);
+    }
+    
+    // Trigger a BOR
+    PMMCTL0 = PMMPW | PMMSWBOR;
+    
+//    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+//    PMMCTL0_L |= PMMSWBOR_1_L;
+    
+    for (;;);
+    
+//    _Pin::DEBUG_OUT::Init();
+//    
+//    for (;;) {
+//        for (uint16_t i=0; i<(uint16_t)domain; i++) {
+//            _Pin::DEBUG_OUT::Write(1);
+//            _Pin::DEBUG_OUT::Write(0);
+//        }
+//        
+//        for (volatile int i=0; i<100; i++) {}
+//        
+//        for (uint16_t i=0; i<(uint16_t)line; i++) {
+//            _Pin::DEBUG_OUT::Write(1);
+//            _Pin::DEBUG_OUT::Write(0);
+//        }
+//        
+//        for (volatile int i=0; i<1000; i++) {}
+//    }
+}
+
+extern "C" [[noreturn]]
+void abort() {
+    abort(AbortHistory::Domain::General, 0);
+}
+
+// MARK: - Main
+
+#warning verify that _StackMainSize is large enough
+#define _StackMainSize 128
+
+[[gnu::section(".stack.main")]]
+uint8_t _StackMain[_StackMainSize];
+
+asm(".global __stack");
+asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
 
 int main() {
     // Stop watchdog timer
@@ -547,71 +612,30 @@ int main() {
     #warning   ? dont worry about that because in the final design,
     #warning   well be powering off ICE40 anyway?
     
-    if (Startup::ColdStart()) {
-        // If we do have a valid startTime, consume _startTime and hand it off to _RTC.
-        // Otherwise, initialize _RTC with 0. This will enable RTC, but it won't
-        // enable the interrupt, so _RTC.currentTime() will always return 0.
-        // 
-        // *** We need RTC to be enabled because it keeps BAKMEM alive.
-        // *** If RTC is disabled, we enter LPM4.5 when we sleep
-        // *** (instead of LPM3.5), and BAKMEM is lost.
-        if (_StartTime.valid) {
-            FRAMWriteEn writeEn; // Enable FRAM writing
-            
-            // Mark the time as invalid before consuming it, so that if we lose power,
-            // the time won't be reused again
-            _StartTime.valid = false;
-            // Init real-time clock
-            _RTC.init(_StartTime.time);
-        
-        } else {
-            _RTC.init(0);
-        }
+    // Start RTC if it's not currently enabled.
+    // *** We need RTC to be unconditionally enabled because it keeps BAKMEM alive.
+    // *** If RTC is disabled, we enter LPM4.5 when we sleep (instead of LPM3.5),
+    // *** and BAKMEM is lost.
+    if (_StartTime.valid) {
+        // If _StartTime is valid, consume it and hand it off to _RTC.
+        FRAMWriteEn writeEn; // Enable FRAM writing
+        // Mark the time as invalid before consuming it, so that if we lose power,
+        // the time won't be reused again
+        _StartTime.valid = false;
+        // Init real-time clock
+        _RTC.init(_StartTime.time);
+    
+    // Otherwise, we don't have a valid _StartTime, so if _RTC isn't currently
+    // enabled, init _RTC with 0. This will enable RTC, but it won't enable
+    // the interrupt, so _RTC.currentTime() will always return 0.
+    } else if (!_RTC.enabled()) {
+        _RTC.init(0);
     }
     
     // Init SysTick
     _SysTick::Init();
     
     _Scheduler::Run();
-}
-
-[[noreturn]]
-static void abort(AbortHistory::Domain domain, uint16_t line) {
-    {
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        _AbortHistory.add(_RTC.currentTime(), domain, line);
-    }
-    
-    // Trigger a BOR
-    PMMCTL0 = PMMPW | PMMSWBOR;
-    
-//    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-//    PMMCTL0_L |= PMMSWBOR_1_L;
-    
-    for (;;);
-    
-//    _Pin::DEBUG_OUT::Init();
-//    
-//    for (;;) {
-//        for (uint16_t i=0; i<(uint16_t)domain; i++) {
-//            _Pin::DEBUG_OUT::Write(1);
-//            _Pin::DEBUG_OUT::Write(0);
-//        }
-//        
-//        for (volatile int i=0; i<100; i++) {}
-//        
-//        for (uint16_t i=0; i<(uint16_t)line; i++) {
-//            _Pin::DEBUG_OUT::Write(1);
-//            _Pin::DEBUG_OUT::Write(0);
-//        }
-//        
-//        for (volatile int i=0; i<1000; i++) {}
-//    }
-}
-
-extern "C" [[noreturn]]
-void abort() {
-    abort(AbortHistory::Domain::General, 0);
 }
 
 
