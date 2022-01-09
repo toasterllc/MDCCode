@@ -6,6 +6,7 @@
 #include "STM.h"
 #include "MDCDevice.h"
 #include "Toastbox/RuntimeError.h"
+#include "Toastbox/IntForStr.h"
 #include "ChecksumFletcher32.h"
 #include "Img.h"
 #include "SD.h"
@@ -17,23 +18,26 @@ using CmdStr = std::string;
 const CmdStr LEDSetCmd              = "LEDSet";
 
 // STMLoader Commands
-const CmdStr STMLoadCmd             = "STMLoad";
-const CmdStr ICELoadCmd             = "ICELoad";
-const CmdStr MSPLoadCmd             = "MSPLoad";
+const CmdStr STMWriteCmd            = "STMWrite";
+const CmdStr ICEWriteCmd            = "ICEWrite";
+const CmdStr MSPReadCmd             = "MSPRead";
+const CmdStr MSPWriteCmd            = "MSPWrite";
 
 // STMApp Commands
 const CmdStr SDImgReadCmd           = "SDImgRead";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
 
-void printUsage() {
+static void printUsage() {
     using namespace std;
     cout << "MDCUtil commands:\n";
     
     cout << "  " << LEDSetCmd       << " <idx> <0/1>\n";
     
-    cout << "  " << STMLoadCmd      << " <file>\n";
-    cout << "  " << ICELoadCmd      << " <file>\n";
-    cout << "  " << MSPLoadCmd      << " <file>\n";
+    cout << "  " << STMWriteCmd     << " <file>\n";
+    cout << "  " << ICEWriteCmd     << " <file>\n";
+    
+    cout << "  " << MSPReadCmd      << " <addr> <len>\n";
+    cout << "  " << MSPWriteCmd     << " <file>\n";
     
     cout << "  " << SDImgReadCmd    << " <idx> <output.cfa>\n";
     cout << "  " << ImgCaptureCmd   << " <output.cfa>\n";
@@ -51,15 +55,20 @@ struct Args {
     
     struct {
         std::string filePath;
-    } STMLoad = {};
+    } STMWrite = {};
     
     struct {
         std::string filePath;
-    } ICELoad = {};
+    } ICEWrite = {};
+    
+    struct {
+        uintptr_t addr = 0;
+        size_t len = 0;
+    } MSPRead = {};
     
     struct {
         std::string filePath;
-    } MSPLoad = {};
+    } MSPWrite = {};
     
     struct {
         uint32_t idx = 0;
@@ -78,6 +87,8 @@ static std::string lower(const std::string& str) {
 }
 
 static Args parseArgs(int argc, const char* argv[]) {
+    using namespace Toastbox;
+    
     std::vector<std::string> strs;
     for (int i=0; i<argc; i++) strs.push_back(argv[i]);
     
@@ -87,24 +98,29 @@ static Args parseArgs(int argc, const char* argv[]) {
     
     if (args.cmd == lower(LEDSetCmd)) {
         if (strs.size() < 3) throw std::runtime_error("LED index/state not specified");
-        args.LEDSet.idx = std::stoi(strs[1]);
-        args.LEDSet.on = std::stoi(strs[2]);
+        IntForStr(args.LEDSet.idx, strs[1]);
+        IntForStr(args.LEDSet.on, strs[2]);
     
-    } else if (args.cmd == lower(STMLoadCmd)) {
+    } else if (args.cmd == lower(STMWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
-        args.STMLoad.filePath = strs[1];
+        args.STMWrite.filePath = strs[1];
     
-    } else if (args.cmd == lower(ICELoadCmd)) {
+    } else if (args.cmd == lower(ICEWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
-        args.ICELoad.filePath = strs[1];
+        args.ICEWrite.filePath = strs[1];
     
-    } else if (args.cmd == lower(MSPLoadCmd)) {
+    } else if (args.cmd == lower(MSPReadCmd)) {
+        if (strs.size() < 3) throw std::runtime_error("address/length not specified");
+        IntForStr(args.MSPRead.addr, strs[1]);
+        IntForStr(args.MSPRead.len, strs[2]);
+    
+    } else if (args.cmd == lower(MSPWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
-        args.MSPLoad.filePath = strs[1];
+        args.MSPWrite.filePath = strs[1];
     
     } else if (args.cmd == lower(SDImgReadCmd)) {
         if (strs.size() < 3) throw std::runtime_error("index/file path not specified");
-        args.SDImgRead.idx = std::stoi(strs[1]);
+        IntForStr(args.SDImgRead.idx, strs[1]);
         args.SDImgRead.filePath = strs[2];
     
     } else if (args.cmd == lower(ImgCaptureCmd)) {
@@ -122,39 +138,59 @@ static void LEDSet(const Args& args, MDCDevice& device) {
     device.ledSet(args.LEDSet.idx, args.LEDSet.on);
 }
 
-static void STMLoad(const Args& args, MDCDevice& device) {
-    ELF32Binary elf(args.STMLoad.filePath.c_str());
+static void STMWrite(const Args& args, MDCDevice& device) {
+    ELF32Binary elf(args.STMWrite.filePath.c_str());
     
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
     size_t size, const char* name) {
-        printf("STMLoad: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
+        printf("STMWrite: Writing %12s @ 0x%08jx    size: 0x%08jx    vaddr: 0x%08jx\n",
             name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
         device.stmWrite(paddr, data, size);
     });
     
     // Reset the device, triggering it to load the program we just wrote
-    printf("STLoad: Resetting device\n");
+    printf("STMWrite: Resetting device\n");
     device.stmReset(elf.entryPointAddr());
 }
 
-static void ICELoad(const Args& args, MDCDevice& device) {
-    Mmap mmap(args.ICELoad.filePath.c_str());
+static void ICEWrite(const Args& args, MDCDevice& device) {
+    Mmap mmap(args.ICEWrite.filePath.c_str());
     
     // Send the ICE40 binary
-    printf("ICELoad: Writing %ju bytes\n", (uintmax_t)mmap.len());
+    printf("ICEWrite: Writing %ju bytes\n", (uintmax_t)mmap.len());
     device.iceWrite(mmap.data(), mmap.len());
 }
 
-static void MSPLoad(const Args& args, MDCDevice& device) {
-    ELF32Binary elf(args.MSPLoad.filePath.c_str());
+static void MSPRead(const Args& args, MDCDevice& device) {
+    device.mspConnect();
+    
+    printf("Reading [0x%08jx,0x%08jx):\n",
+        (uintmax_t)args.MSPRead.addr,
+        (uintmax_t)(args.MSPRead.addr+args.MSPRead.len)
+    );
+    
+    auto buf = std::make_unique<uint8_t[]>(args.MSPRead.len);
+    device.mspRead(args.MSPRead.addr, buf.get(), args.MSPRead.len);
+    
+    for (size_t i=0; i<args.MSPRead.len; i++) {
+        printf("%02jx ", (uintmax_t)buf[i]);
+    }
+    
+    printf("\n");
+    
+    device.mspDisconnect();
+}
+
+static void MSPWrite(const Args& args, MDCDevice& device) {
+    ELF32Binary elf(args.MSPWrite.filePath.c_str());
     
     device.mspConnect();
     
     // Write the data
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
     size_t size, const char* name) {
-        printf("MSPLoad: Writing %22s @ 0x%04jx    size: 0x%04jx    vaddr: 0x%04jx\n",
+        printf("MSPWrite: Writing %22s @ 0x%04jx    size: 0x%04jx    vaddr: 0x%04jx\n",
             name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
         device.mspWrite(paddr, data, size);
@@ -163,7 +199,7 @@ static void MSPLoad(const Args& args, MDCDevice& device) {
     // Read back data and compare with what we expect
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
     size_t size, const char* name) {
-        printf("MSPLoad: Verifying %s @ 0x%jx [size: 0x%jx]\n",
+        printf("MSPWrite: Verifying %s @ 0x%jx [size: 0x%jx]\n",
             name, (uintmax_t)paddr, (uintmax_t)size);
         
         auto buf = std::make_unique<uint8_t[]>(size);
@@ -268,9 +304,10 @@ int main(int argc, const char* argv[]) {
     try {
         device.endpointsFlush();
         if (args.cmd == lower(LEDSetCmd))           LEDSet(args, device);
-        else if (args.cmd == lower(STMLoadCmd))     STMLoad(args, device);
-        else if (args.cmd == lower(ICELoadCmd))     ICELoad(args, device);
-        else if (args.cmd == lower(MSPLoadCmd))     MSPLoad(args, device);
+        else if (args.cmd == lower(STMWriteCmd))    STMWrite(args, device);
+        else if (args.cmd == lower(ICEWriteCmd))    ICEWrite(args, device);
+        else if (args.cmd == lower(MSPReadCmd))     MSPRead(args, device);
+        else if (args.cmd == lower(MSPWriteCmd))    MSPWrite(args, device);
         else if (args.cmd == lower(SDImgReadCmd))   SDImgRead(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))  ImgCapture(args, device);
     } catch (const std::exception& e) {

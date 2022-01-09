@@ -1,14 +1,15 @@
 #pragma once
 #include <msp430.h>
 #include "Toastbox/IntState.h"
+#include "MSP.h"
 
 namespace RTC {
-
-using Sec = uint32_t;
 
 template <uint32_t T_XT1FreqHz>
 class Type {
 public:
+    using Sec = MSP::Sec;
+    
     static constexpr Sec InterruptInterval = 2048;
     static constexpr uint32_t Predivider = 1024;
     static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
@@ -38,6 +39,9 @@ public:
     }
     
     Sec currentTime() {
+        // If _time hasn't been initialized, always return 0
+        if (!_time) return 0;
+        
         // This 2x _readTime() loop is necessary to handle the race related to RTCCNT overflowing:
         // When we read _time and RTCCNT, we don't know if _time has been updated for the most
         // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,

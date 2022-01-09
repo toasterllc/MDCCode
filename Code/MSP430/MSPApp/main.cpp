@@ -16,8 +16,8 @@
 #include "SPI.h"
 #include "WDT.h"
 #include "FRAMWriteEn.h"
-#include "AbortHistory.h"
 #include "Util.h"
+#include "MSP.h"
 #include "Toastbox/IntState.h"
 using namespace GPIO;
 
@@ -26,7 +26,7 @@ static constexpr uint32_t _XT1FreqHz        = 32768;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
 
 [[noreturn]]
-static void abort(AbortHistory::Domain domain, uint16_t line);
+static void abort(uint16_t domain, uint16_t line);
 
 struct _Pin {
     // Default GPIOs
@@ -122,27 +122,10 @@ static RTC::Type<_XT1FreqHz> _RTC;
 [[gnu::section(".ram_backup.main")]]
 static Img::AutoExposure _ImgAutoExp;
 
-// _StartTime: the time set by STM32 (seconds since reference date)
-// Stored in 'Information Memory' (FRAM) because it needs to persist across a cold start.
+// _State: stores MSPApp persistent state, intended to be read/written by outside world
+// Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
 [[gnu::section(".fram_info.main")]]
-static volatile struct {
-    RTC::Sec time   = 0;
-    uint16_t valid  = false; // uint16_t (instead of bool) for alignment
-} _StartTime;
-
-// _ImgIndexes: stats to track captured images
-// Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely.
-[[gnu::section(".fram_info.main")]]
-static volatile struct {
-    uint32_t counter = 0;
-    uint16_t write = 0;
-    uint16_t read = 0;
-    bool full = false;
-} _ImgIndexes;
-
-// _AbortHistory: records aborts so they can be inspected for debugging
-[[gnu::section(".fram_info.main")]]
-static AbortHistory _AbortHistory;
+static volatile MSP::State _State;
 
 struct _SDTask {
     static void Enable() {
@@ -208,6 +191,8 @@ static volatile bool _Motion = false;
 static volatile bool _Busy = false;
 
 static void _CaptureImage() {
+    auto& img = _State.img;
+    
     // Asynchronously turn on the image sensor / SD card
     _ImgTask::Enable();
     _SDTask::Enable();
@@ -248,7 +233,7 @@ static void _CaptureImage() {
             ._pad3          = 0,
         };
         
-        header.counter = _ImgIndexes.counter;
+        header.counter = img.counter;
         header.timestamp = _RTC.currentTime();
         header.coarseIntTime = _ImgAutoExp.integrationTime();
         
@@ -271,13 +256,13 @@ static void _CaptureImage() {
     _SDTask::Wait();
     
     // Write the best-exposed image to the SD card
-    _SDCard.writeImage(bestExpBlock, _ImgIndexes.write);
+    _SDCard.writeImage(bestExpBlock, img.write);
     
-    // Update _ImgIndexes
+    // Update _State.img
     {
         FRAMWriteEn writeEn; // Enable FRAM writing
-        _ImgIndexes.write++;
-        _ImgIndexes.counter++;
+        img.write++;
+        img.counter++;
     }
 }
 
@@ -436,21 +421,19 @@ static void _Sleep() {
 
 struct _BusyTimeoutTask {
     static void Run() {
-        for (;;) {
-            // Stay on for 1 second waiting for motion
-            _Scheduler::SleepMs<1000>();
-            
-            // Asynchronously turn off the image sensor / SD card
-            _ImgTask::Disable();
-            _SDTask::Disable();
-            
-            // Wait until the image sensor / SD card are off
-            _ImgTask::Wait();
-            _SDTask::Wait();
-            
-            // Update our state
-            _Busy = false;
-        }
+        // Stay on for 1 second waiting for motion
+        _Scheduler::SleepMs<1000>();
+        
+        // Asynchronously turn off the image sensor / SD card
+        _ImgTask::Disable();
+        _SDTask::Disable();
+        
+        // Wait until the image sensor / SD card are off
+        _ImgTask::Wait();
+        _SDTask::Wait();
+        
+        // Update our state
+        _Busy = false;
     }
     
     // Task options
@@ -495,36 +478,56 @@ struct _MotionTask {
     static inline uint8_t Stack[256];
 };
 
-// MARK: - Error Handlers
+// MARK: - Abort
+
+namespace AbortDomain {
+    static constexpr uint16_t Invalid       = 0;
+    static constexpr uint16_t General       = 1;
+    static constexpr uint16_t Scheduler     = 2;
+    static constexpr uint16_t ICE           = 3;
+    static constexpr uint16_t SD            = 4;
+    static constexpr uint16_t Img           = 5;
+}
 
 [[noreturn]]
 static void _SchedulerError(uint16_t line) {
-    abort(AbortHistory::Domain::Scheduler, line);
+    abort(AbortDomain::Scheduler, line);
 }
 
 [[noreturn]]
 static void _ICEError(uint16_t line) {
-    abort(AbortHistory::Domain::ICE, line);
+    abort(AbortDomain::ICE, line);
 }
 
 [[noreturn]]
 static void _SDError(uint16_t line) {
-    abort(AbortHistory::Domain::SD, line);
+    abort(AbortDomain::SD, line);
 }
 
 [[noreturn]]
 static void _ImgError(uint16_t line) {
-    abort(AbortHistory::Domain::Img, line);
+    abort(AbortDomain::Img, line);
 }
 
-// MARK: - Abort
+static void _AbortRecord(MSP::Sec time, uint16_t domain, uint16_t line) {
+    FRAMWriteEn writeEn; // Enable FRAM writing
+    
+    auto& abort = _State.abort;
+    if (abort.count >= std::size(abort.events)) return;
+    
+    auto& event = abort.events[abort.count];
+    event.time = time;
+    event.domain = domain;
+    event.line = line;
+    
+    abort.count++;
+}
 
 [[noreturn]]
-static void abort(AbortHistory::Domain domain, uint16_t line) {
-    {
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        _AbortHistory.record(_RTC.currentTime(), domain, line);
-    }
+static void abort(uint16_t domain, uint16_t line) {
+    Toastbox::IntState ints(false);
+    
+    _AbortRecord(_RTC.currentTime(), domain, line);
     
     // Trigger a BOR
     PMMCTL0 = PMMPW | PMMSWBOR;
@@ -555,7 +558,7 @@ static void abort(AbortHistory::Domain domain, uint16_t line) {
 
 extern "C" [[noreturn]]
 void abort() {
-    abort(AbortHistory::Domain::General, 0);
+    abort(AbortDomain::General, 0);
 }
 
 // MARK: - Main
@@ -573,8 +576,8 @@ int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
     
-    volatile bool a = false;
-    while (!a);
+//    volatile bool a = false;
+//    while (!a);
     
     // Init GPIOs
     GPIO::Init<
@@ -618,16 +621,16 @@ int main() {
     // *** We need RTC to be unconditionally enabled because it keeps BAKMEM alive.
     // *** If RTC is disabled, we enter LPM4.5 when we sleep (instead of LPM3.5),
     // *** and BAKMEM is lost.
-    if (_StartTime.valid) {
+    if (_State.startTime.valid) {
         // If _StartTime is valid, consume it and hand it off to _RTC.
         FRAMWriteEn writeEn; // Enable FRAM writing
         // Mark the time as invalid before consuming it, so that if we lose power,
         // the time won't be reused again
-        _StartTime.valid = false;
+        _State.startTime.valid = false;
         // Init real-time clock
-        _RTC.init(_StartTime.time);
+        _RTC.init(_State.startTime.time);
     
-    // Otherwise, we don't have a valid _StartTime, so if _RTC isn't currently
+    // Otherwise, we don't have a valid _State.startTime, so if _RTC isn't currently
     // enabled, init _RTC with 0. This will enable RTC, but it won't enable
     // the interrupt, so _RTC.currentTime() will always return 0.
     } else if (!_RTC.enabled()) {

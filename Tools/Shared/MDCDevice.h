@@ -127,13 +127,20 @@ public:
     }
     
     // MARK: - STMLoader Commands
-    void stmWrite(uint32_t addr, const void* data, size_t len) {
+    void stmWrite(uintptr_t addr, const void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMLoader);
+        
+        if (addr >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
+        
+        if (len >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
+        
         const STM::Cmd cmd = {
             .op = STM::Op::STMWrite,
             .arg = {
                 .STMWrite = {
-                    .addr = addr,
+                    .addr = (uint32_t)addr,
                     .len = (uint32_t)len,
                 },
             },
@@ -147,13 +154,17 @@ public:
         _waitOrThrow("STMWrite DataOut failed");
     }
     
-    void stmReset(uint32_t entryPointAddr) {
+    void stmReset(uintptr_t entryPointAddr) {
         assert(_mode == STM::Status::Modes::STMLoader);
+        
+        if (entryPointAddr >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)entryPointAddr);
+        
         const STM::Cmd cmd = {
             .op = STM::Op::STMReset,
             .arg = {
                 .STMReset = {
-                    .entryPointAddr = entryPointAddr,
+                    .entryPointAddr = (uint32_t)entryPointAddr,
                 },
             },
         };
@@ -163,6 +174,9 @@ public:
     
     void iceWrite(const void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMLoader);
+        if (len >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
+        
         const STM::Cmd cmd = {
             .op = STM::Op::ICEWrite,
             .arg = {
@@ -198,13 +212,20 @@ public:
         _waitOrThrow("MSPDisconnect command failed");
     }
     
-    void mspWrite(uint32_t addr, const void* data, size_t len) {
+    void mspWrite(uintptr_t addr, const void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMLoader);
+        
+        if (addr >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
+        
+        if (len >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
+        
         const STM::Cmd cmd = {
             .op = STM::Op::MSPWrite,
             .arg = {
                 .MSPWrite = {
-                    .addr = addr,
+                    .addr = (uint32_t)addr,
                     .len = (uint32_t)len,
                 },
             },
@@ -216,13 +237,20 @@ public:
         _waitOrThrow("MSPWrite command failed");
     }
     
-    void mspRead(uint32_t addr, void* data, size_t len) {
+    void mspRead(uintptr_t addr, void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMLoader);
+        
+        if (addr >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
+        
+        if (len >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
+        
         const STM::Cmd cmd = {
             .op = STM::Op::MSPRead,
             .arg = {
                 .MSPRead = {
-                    .addr = addr,
+                    .addr = (uint32_t)addr,
                     .len = (uint32_t)len,
                 },
             },
@@ -236,6 +264,13 @@ public:
     
     void mspDebug(const STM::MSPDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
         assert(_mode == STM::Status::Modes::STMLoader);
+        
+        if (cmdsLen >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)cmdsLen);
+        
+        if (respLen >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)respLen);
+        
         const STM::Cmd cmd = {
             .op = STM::Op::MSPDebug,
             .arg = {
@@ -265,13 +300,17 @@ public:
     }
     
     // MARK: - STMApp Commands
-    void sdRead(uint32_t addr) {
+    void sdRead(uintptr_t addr) {
         assert(_mode == STM::Status::Modes::STMApp);
+        
+        if (addr >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
+        
         const STM::Cmd cmd = {
             .op = STM::Op::SDRead,
             .arg = {
                 .SDRead = {
-                    .addr = addr,
+                    .addr = (uint32_t)addr,
                 },
             },
         };

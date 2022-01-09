@@ -1,18 +1,17 @@
 - Rev4 Todo
     
-    - MSPApp: add proper error handling to Img/SD
-        - Make error handler a template parameter
-        - Have error handler take a breadcrumb value
+    - MSPApp: add ability to read FRAM regions
+        - necessary for:
+            - setting MSP time
+            - reading image ring buffer
+            - writing image ring buffer
+            - setting SD card size / ring buffer size
+        - have a shared header containing the data structures
     
     - Task.h: debug feature: stack traces
     
     - MSPApp: can we use the 'restart' facility of reset_register to speed up integration time changes?
         - 'restart' triggers a bad frame, so experiment with the 'restart_bad' and 'mask_bad' flags too
-    
-    - MSPApp: when an error occurs, trigger a BOR
-        - "In an application, it may be desired to cause a BOR in software. Setting PMMSWBOR
-           causes a softwaredriven BOR. PMMBORIFG is set accordingly. Note that a BOR also initiates a POR and PUC.
-           PMMBORIFG can be cleared by software or by reading SYSRSTIV."
     
     - Fix bug: Without STLink connected, sometimes STApp crashes when plugging in
         - One cause is because Img::Sensor::Init() failed, because of an IMG I2C error
@@ -32,6 +31,16 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MSPApp: when an error occurs, trigger a BOR
+        - "In an application, it may be desired to cause a BOR in software. Setting PMMSWBOR
+           causes a softwaredriven BOR. PMMBORIFG is set accordingly. Note that a BOR also initiates a POR and PUC.
+           PMMBORIFG can be cleared by software or by reading SYSRSTIV."
+    
+    √ MSPApp: add proper error handling to Img/SD
+        - Make error handler a template parameter
+        - Have error handler take a breadcrumb value
+        - Store abort history in a persistent data structure
     
     √ MSPApp: there's some bug where the LED stays lit for much longer than it should.
         √ is Task::Sleep() sleeping too long due to a race condition?
