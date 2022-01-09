@@ -25,6 +25,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		55496F23278944CF00BCA739 /* IntForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IntForStr.h; sourceTree = "<group>"; };
 		55B2151127090FD1001423C1 /* SystemBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SystemBase.h; sourceTree = "<group>"; };
 		55B2151227090FD2001423C1 /* BufQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BufQueue.h; sourceTree = "<group>"; };
 		55B2151327090FD2001423C1 /* VectorTable.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = VectorTable.s; sourceTree = "<group>"; };
@@ -160,6 +161,7 @@
 				55B66B4B271A261600AD39A5 /* Uniqued.h */,
 				55ECAFCD26B0DF0D00A339C7 /* USBDevice.h */,
 				55ECAFCE26B0DF1300A339C7 /* SendRight.h */,
+				55496F23278944CF00BCA739 /* IntForStr.h */,
 			);
 			name = Toastbox;
 			path = ../../Code/Lib/Toastbox;
