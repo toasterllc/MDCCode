@@ -8,7 +8,9 @@ namespace RTC {
 template <uint32_t T_XT1FreqHz>
 class Type {
 public:
+    
     using Sec = MSP::Sec;
+    using Time = MSP::Time;
     
     static constexpr Sec InterruptInterval = 2048;
     static constexpr uint32_t Predivider = 1024;
@@ -22,7 +24,8 @@ public:
     }
     
     void init(Sec startTime) {
-        _time = startTime;
+        _start = startTime;
+        _delta = 0;
         
         RTCMOD = InterruptCount;
         RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
@@ -30,27 +33,14 @@ public:
         // before enabling the RTC counter interrupt."
         RTCIV;
         
-        // Only enable interrupts if the given startTime is valid.
-        // Otherwise, if startTime==0, we still want to enable RTC (because it's necessary
-        // to prevent going into LPM4.5), but we want currentTime() to always return 0.
-        if (startTime) {
-            RTCCTL |= RTCIE;
-        }
+        // Enable RTC interrupts
+        RTCCTL |= RTCIE;
     }
     
-    Sec currentTime() {
-        // If _time hasn't been initialized, always return 0
-        if (!_time) return 0;
-        
-        // This 2x _readTime() loop is necessary to handle the race related to RTCCNT overflowing:
-        // When we read _time and RTCCNT, we don't know if _time has been updated for the most
-        // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
-        // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
-        for (;;) {
-            const Sec t1 = _readTime();
-            const Sec t2 = _readTime();
-            if (t2 >= t1) return t2;
-        }
+    // time(): returns the current time as a (timeStart,timeDelta) tuple
+    // Interrupts must be enabled when calling!
+    Time time() const {
+        return {_start, _deltaRead()};
     }
     
     void isr() {
@@ -58,7 +48,7 @@ public:
         switch (__even_in_range(RTCIV, RTCIV__RTCIFG)) {
         case RTCIV__RTCIFG:
             // Update our time
-            _time += InterruptInterval;
+            _delta += InterruptInterval;
             break;
         
         default:
@@ -83,20 +73,34 @@ private:
         else static_assert(_AlwaysFalse<T_Predivider>);
     }
     
-    Sec _readTime() {
-        // Disable interrupts so we can read _time and RTCCNT atomically.
-        // This is especially necessary because reading _time isn't atomic
-        // since it's 32 bits.
-        Toastbox::IntState ints(false);
-        return _time + (RTCCNT/FreqHz);
+    // _deltaRead(): reads _delta in an safe, overflow-aware manner
+    // Interrupts must be enabled when calling!
+    Sec _deltaRead() const {
+        // This 2x __deltaRead() loop is necessary to handle the race related to RTCCNT overflowing:
+        // When we read _delta and RTCCNT, we don't know if _delta has been updated for the most
+        // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
+        // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
+        for (;;) {
+            const Sec t1 = __deltaRead();
+            const Sec t2 = __deltaRead();
+            if (t2 >= t1) return t2;
+        }
     }
     
-    // _time: tracks the current time
-    //   volatile:          since _time is updated from an interrupt
-    //   not initialized:   since _time should only be initialized via init(),
-    //                      which is only called in special circumstances
-    //                      (cold starts)
-    volatile Sec _time;
+    Sec __deltaRead() const {
+        // Disable interrupts so we can read _delta and RTCCNT atomically.
+        // This is especially necessary because reading _delta isn't atomic
+        // since it's 32 bits.
+        Toastbox::IntState ints(false);
+        return _delta + (RTCCNT/FreqHz);
+    }
+    
+    // _start: the absolute time that the system started
+    Sec _start;
+    
+    // _delta: the current delta from `_start`. volatile because _delta is
+    // updated from the interrupt context
+    volatile Sec _delta;
 };
 
 } // namespace RTC

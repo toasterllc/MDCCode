@@ -27,17 +27,11 @@
 /* Begin PBXFileReference section */
 		55496F23278944CF00BCA739 /* IntForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IntForStr.h; sourceTree = "<group>"; };
 		55496F38278BAC5000BCA739 /* MSP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
-		55B2151127090FD1001423C1 /* SystemBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SystemBase.h; sourceTree = "<group>"; };
 		55B2151227090FD2001423C1 /* BufQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BufQueue.h; sourceTree = "<group>"; };
 		55B2151327090FD2001423C1 /* VectorTable.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = VectorTable.s; sourceTree = "<group>"; };
-		55B2151527090FD2001423C1 /* QSPI.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = QSPI.cpp; sourceTree = "<group>"; };
-		55B2151627090FD2001423C1 /* USBBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBBase.h; sourceTree = "<group>"; };
-		55B2151727090FD2001423C1 /* SystemClock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SystemClock.h; sourceTree = "<group>"; };
 		55B2151927090FD2001423C1 /* GPIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GPIO.h; sourceTree = "<group>"; };
 		55B2151B27090FD2001423C1 /* QSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QSPI.h; sourceTree = "<group>"; };
-		55B2151C27090FD2001423C1 /* MSP430.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP430.h; sourceTree = "<group>"; };
 		55B2151D27090FD2001423C1 /* LinkerBase.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = LinkerBase.ld; sourceTree = "<group>"; };
-		55B2151E27090FD2001423C1 /* StartupBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StartupBase.h; sourceTree = "<group>"; };
 		55B2152127091003001423C1 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		55B2152227091003001423C1 /* PixelSampler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PixelSampler.h; sourceTree = "<group>"; };
 		55B2152327091003001423C1 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
@@ -97,13 +91,7 @@
 				55B2151227090FD2001423C1 /* BufQueue.h */,
 				55B2151927090FD2001423C1 /* GPIO.h */,
 				55B2151D27090FD2001423C1 /* LinkerBase.ld */,
-				55B2151C27090FD2001423C1 /* MSP430.h */,
-				55B2151527090FD2001423C1 /* QSPI.cpp */,
 				55B2151B27090FD2001423C1 /* QSPI.h */,
-				55B2151E27090FD2001423C1 /* StartupBase.h */,
-				55B2151127090FD1001423C1 /* SystemBase.h */,
-				55B2151727090FD2001423C1 /* SystemClock.h */,
-				55B2151627090FD2001423C1 /* USBBase.h */,
 				55B2151327090FD2001423C1 /* VectorTable.s */,
 			);
 			name = Shared;

@@ -29,6 +29,8 @@
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
     
+    √ Let RTC run even if startTime is invalid? it would be nice if abort events have a non-zero time, even if it's not correct
+    
     √ MSPApp: make FRAM data structure resilient to power loss during modifications
         - Strategy:
             - Have 2 copies of the `img` data structure

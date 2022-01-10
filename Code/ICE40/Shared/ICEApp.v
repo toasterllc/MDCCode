@@ -718,10 +718,10 @@ module ICEApp(
                     );
                     
                     case (spi_msgArg[`Msg_Arg_ImgSetHeader_Idx_Bits])
-                    0: `LeftBits(imgctrl_cmd_header,0*64,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
-                    1: `LeftBits(imgctrl_cmd_header,1*64,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
-                    2: `LeftBits(imgctrl_cmd_header,2*64,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
-                    3: `LeftBits(imgctrl_cmd_header,3*64,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    0: `LeftBits(imgctrl_cmd_header,0*48,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    1: `LeftBits(imgctrl_cmd_header,1*48,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    2: `LeftBits(imgctrl_cmd_header,2*48,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    3: `LeftBits(imgctrl_cmd_header,3*48,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
                     endcase
                 end
                 
