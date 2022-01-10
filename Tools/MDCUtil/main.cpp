@@ -234,25 +234,37 @@ static void MSPStateRead(const Args& args, MDCDevice& device) {
     printf(     "\n");
     
     printf(     "startTime\n");
-    printf(     "  .time:           %u\n", state.startTime.time);
-    printf(     "  .valid:          %u\n", state.startTime.valid);
+    printf(     "  time:           %u\n", state.startTime.time);
+    printf(     "  valid:          %u\n", state.startTime.valid);
     printf(     "\n");
     
     printf(     "img\n");
-    printf(     "  .count:          %u\n", state.img.count);
-    printf(     "  .widx:           %u\n", state.img.widx);
-    printf(     "  .ridx:           %u\n", state.img.ridx);
-    printf(     "  .full:           %u\n", state.img.full);
-    printf(     "\n");
+    printf(     "  cap:            %u\n", state.img.cap);
+    
+    printf(     "  ringBuf\n");
+    printf(     "    magic:        0x%08x\n", state.img.ringBuf.magic);
+    printf(     "    buf\n");
+    printf(     "      count:      %u\n", state.img.ringBuf.buf.count);
+    printf(     "      widx:       %u\n", state.img.ringBuf.buf.widx);
+    printf(     "      ridx:       %u\n", state.img.ringBuf.buf.ridx);
+    printf(     "      full:       %u\n", state.img.ringBuf.buf.full);
+    
+    printf(     "  ringBuf2\n");
+    printf(     "    magic:        0x%08x\n", state.img.ringBuf2.magic);
+    printf(     "    buf\n");
+    printf(     "      count:      %u\n", state.img.ringBuf2.buf.count);
+    printf(     "      widx:       %u\n", state.img.ringBuf2.buf.widx);
+    printf(     "      ridx:       %u\n", state.img.ringBuf2.buf.ridx);
+    printf(     "      full:       %u\n", state.img.ringBuf2.buf.full);
     
     printf(     "abort\n");
-    printf(     "  .eventsCount:    %u\n", state.abort.eventsCount);
+    printf(     "  eventsCount:    %u\n", state.abort.eventsCount);
     for (size_t i=0; i<std::min(std::size(state.abort.events), (size_t)state.abort.eventsCount); i++) {
         const auto& event = state.abort.events[i];
-        printf( "  .events[%ju]\n", (uintmax_t)i);
-        printf( "    .time:         %u\n", event.time);
-        printf( "    .domain:       %u\n", event.domain);
-        printf( "    .line:         %u\n", event.line);
+        printf( "  events[%ju]\n", (uintmax_t)i);
+        printf( "    time:         %u\n", event.time);
+        printf( "    domain:       %u\n", event.domain);
+        printf( "    line:         %u\n", event.line);
     }
     printf(     "\n");
     
