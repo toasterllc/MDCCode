@@ -10,6 +10,7 @@
 #include "ChecksumFletcher32.h"
 #include "Img.h"
 #include "SD.h"
+#include "MSP.h"
 #include "ELF32Binary.h"
 
 using CmdStr = std::string;
@@ -22,6 +23,7 @@ const CmdStr STMWriteCmd            = "STMWrite";
 const CmdStr ICEWriteCmd            = "ICEWrite";
 const CmdStr MSPReadCmd             = "MSPRead";
 const CmdStr MSPWriteCmd            = "MSPWrite";
+const CmdStr MSPStateReadCmd        = "MSPStateRead";
 
 // STMApp Commands
 const CmdStr SDImgReadCmd           = "SDImgRead";
@@ -38,6 +40,7 @@ static void printUsage() {
     
     cout << "  " << MSPReadCmd      << " <addr> <len>\n";
     cout << "  " << MSPWriteCmd     << " <file>\n";
+    cout << "  " << MSPStateReadCmd << "\n";
     
     cout << "  " << SDImgReadCmd    << " <idx> <output.cfa>\n";
     cout << "  " << ImgCaptureCmd   << " <output.cfa>\n";
@@ -117,6 +120,8 @@ static Args parseArgs(int argc, const char* argv[]) {
     } else if (args.cmd == lower(MSPWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
         args.MSPWrite.filePath = strs[1];
+    
+    } else if (args.cmd == lower(MSPStateReadCmd)) {
     
     } else if (args.cmd == lower(SDImgReadCmd)) {
         if (strs.size() < 3) throw std::runtime_error("index/file path not specified");
@@ -213,6 +218,47 @@ static void MSPWrite(const Args& args, MDCDevice& device) {
     device.mspDisconnect();
 }
 
+static void MSPStateRead(const Args& args, MDCDevice& device) {
+    constexpr uintptr_t StateAddr = 0x1800;
+    
+    device.mspConnect();
+    
+    MSP::State state;
+    device.mspRead(StateAddr, &state, sizeof(state));
+    if (state.version != MSP::State::Version) {
+        throw Toastbox::RuntimeError("invalid version (expected: %04x, got: %04x)",
+            MSP::State::Version, state.version);
+    }
+    
+    printf(     "version:           0x%04x\n", state.version);
+    printf(     "\n");
+    
+    printf(     "startTime\n");
+    printf(     "  .time:           %u\n", state.startTime.time);
+    printf(     "  .valid:          %u\n", state.startTime.valid);
+    printf(     "\n");
+    
+    printf(     "img\n");
+    printf(     "  .counter:        %u\n", state.img.counter);
+    printf(     "  .write:          %u\n", state.img.write);
+    printf(     "  .read:           %u\n", state.img.read);
+    printf(     "  .full:           %u\n", state.img.full);
+    printf(     "\n");
+    
+    printf(     "abort\n");
+    printf(     "  .eventsCount:    %u\n", state.abort.eventsCount);
+    for (size_t i=0; i<std::min(std::size(state.abort.events), (size_t)state.abort.eventsCount); i++) {
+        const auto& event = state.abort.events[i];
+        printf( "  .events[%ju]\n", (uintmax_t)i);
+        printf( "    .time:         %u\n", event.time);
+        printf( "    .domain:       %u\n", event.domain);
+        printf( "    .line:         %u\n", event.line);
+    }
+    printf(     "\n");
+    
+    device.mspDisconnect();
+}
+
 static void SDImgRead(const Args& args, MDCDevice& device) {
     printf("Sending SDRead command...\n");
     device.sdRead(args.SDImgRead.idx*Img::PaddedLen);
@@ -303,13 +349,15 @@ int main(int argc, const char* argv[]) {
     MDCDevice& device = devices[0];
     try {
         device.endpointsFlush();
-        if (args.cmd == lower(LEDSetCmd))           LEDSet(args, device);
-        else if (args.cmd == lower(STMWriteCmd))    STMWrite(args, device);
-        else if (args.cmd == lower(ICEWriteCmd))    ICEWrite(args, device);
-        else if (args.cmd == lower(MSPReadCmd))     MSPRead(args, device);
-        else if (args.cmd == lower(MSPWriteCmd))    MSPWrite(args, device);
-        else if (args.cmd == lower(SDImgReadCmd))   SDImgRead(args, device);
-        else if (args.cmd == lower(ImgCaptureCmd))  ImgCapture(args, device);
+        if (args.cmd == lower(LEDSetCmd))               LEDSet(args, device);
+        else if (args.cmd == lower(STMWriteCmd))        STMWrite(args, device);
+        else if (args.cmd == lower(ICEWriteCmd))        ICEWrite(args, device);
+        else if (args.cmd == lower(MSPReadCmd))         MSPRead(args, device);
+        else if (args.cmd == lower(MSPWriteCmd))        MSPWrite(args, device);
+        else if (args.cmd == lower(MSPStateReadCmd))    MSPStateRead(args, device);
+        else if (args.cmd == lower(SDImgReadCmd))       SDImgRead(args, device);
+        else if (args.cmd == lower(ImgCaptureCmd))      ImgCapture(args, device);
+    
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;
