@@ -4,6 +4,11 @@ namespace MSP {
     
     using Sec = uint32_t;
     
+    struct [[gnu::packed]] Time {
+        Sec start = 0;
+        Sec delta = 0;
+    };
+    
     // img: stats to track captured images
     struct [[gnu::packed]] ImgRingBuf {
         static constexpr uint32_t MagicNumber = 0xCAFEBABE;
@@ -14,6 +19,12 @@ namespace MSP {
             uint16_t ridx   = 0;
             uint16_t full   = false; // uint16_t (instead of bool) for alignment
         } buf;
+    };
+    
+    struct [[gnu::packed]] AbortEvent {
+        Time time       = {};
+        uint16_t domain = 0;
+        uint16_t line   = 0;
     };
     
     struct [[gnu::packed]] State {
@@ -38,12 +49,7 @@ namespace MSP {
         // abort: records aborts that have occurred
         struct [[gnu::packed]] {
             uint16_t eventsCount    = 0;
-            
-            struct [[gnu::packed]] {
-                Sec time            = 0;
-                uint16_t domain     = 0;
-                uint16_t line       = 0;
-            } events[3] = {};
+            AbortEvent events[3]    = {};
         } abort = {};
     };
 

@@ -117,6 +117,8 @@ static SD::Card<
 [[gnu::section(".ram_backup_noinit.main")]]
 static RTC::Type<_XT1FreqHz> _RTC;
 
+
+
 // _ImgAutoExp: auto exposure algorithm object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
@@ -191,21 +193,24 @@ struct _ImgTask {
 static volatile bool _Motion = false;
 static volatile bool _Busy = false;
 
-template <typename T, typename U>
-static void _ImgRingBufSet(T& a, const U& b) {
-    a.magic = 0;
+template <typename T>
+static void _ImgRingBufSet(volatile MSP::ImgRingBuf& dst, const T& src) {
+    FRAMWriteEn writeEn; // Enable FRAM writing
+    
+    dst.magic = 0;
     atomic_thread_fence(std::memory_order_seq_cst);
     
-    (const_cast<MSP::ImgRingBuf&>(a)).buf = const_cast<MSP::ImgRingBuf&>(b).buf;
+    (const_cast<MSP::ImgRingBuf&>(dst)).buf = const_cast<MSP::ImgRingBuf&>(src).buf;
     atomic_thread_fence(std::memory_order_seq_cst);
     
-    a.magic = MSP::ImgRingBuf::MagicNumber;
+    dst.magic = MSP::ImgRingBuf::MagicNumber;
 }
 
+// _ImgRingBufInit: find the correct ring buffer (the one with the greatest count and a valid magic number)
+// and copy it into the other slot so that there are two copies. If neither slot contains a valid ring
+// buffer, reset them both so that they're both empty (and valid).
 static void _ImgRingBufInit() {
     using namespace MSP;
-    
-    FRAMWriteEn writeEn; // Enable FRAM writing
     
     auto& ringBuf = _State.img.ringBuf;
     auto& ringBuf2 = _State.img.ringBuf2;
@@ -237,7 +242,6 @@ static void _ImgRingBufInit() {
 
 static void _ImgRingBufIncrement() {
     using namespace MSP;
-    FRAMWriteEn writeEn; // Enable FRAM writing
     
     // Update _State.img.ringBuf
     {
@@ -296,26 +300,22 @@ static void _ImgCapture() {
         
         // Populate the header
         static Img::Header header = {
-            // Section idx=0
             .version        = Img::HeaderVersion,
             .imageWidth     = Img::PixelWidth,
             .imageHeight    = Img::PixelHeight,
-            ._pad0          = 0,
-            // Section idx=1
-            .count          = 0,
-            ._pad1          = 0,
-            // Section idx=2
-            .timestamp      = 0,
-            ._pad2          = 0,
-            // Section idx=3
             .coarseIntTime  = 0,
             .analogGain     = 0,
-            ._pad3          = 0,
+            .count          = 0,
+            .timeStart      = 0,
+            .timeDelta      = 0,
         };
         
-        header.count = ringBuf.count;
-        header.timestamp = _RTC.currentTime();
         header.coarseIntTime = _ImgAutoExp.integrationTime();
+        header.count = ringBuf.count;
+        
+        const MSP::Time t = _RTC.time();
+        header.timeStart = t.start;
+        header.timeDelta = t.delta;
         
         // Capture an image to RAM
         const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
@@ -585,25 +585,28 @@ static void _ImgError(uint16_t line) {
     _Abort(AbortDomain::Img, line);
 }
 
-static void _AbortRecord(MSP::Sec time, uint16_t domain, uint16_t line) {
+static void _AbortRecord(const MSP::Time& time, uint16_t domain, uint16_t line) {
     FRAMWriteEn writeEn; // Enable FRAM writing
     
     auto& abort = _State.abort;
     if (abort.eventsCount >= std::size(abort.events)) return;
     
-    auto& event = abort.events[abort.eventsCount];
-    event.time = time;
-    event.domain = domain;
-    event.line = line;
+    const_cast<MSP::AbortEvent&>(abort.events[abort.eventsCount]) = MSP::AbortEvent{
+        .time = time,
+        .domain = domain,
+        .line = line,
+    };
     
     abort.eventsCount++;
 }
 
 [[noreturn]]
 static void _Abort(uint16_t domain, uint16_t line) {
-    Toastbox::IntState ints(false);
+    // Get the time before disabling ints, because RTC.time() needs ints to be enabled
+    const MSP::Time time = _RTC.time();
     
-    _AbortRecord(_RTC.currentTime(), domain, line);
+    Toastbox::IntState ints(false);
+    _AbortRecord(time, domain, line);
     
     // Trigger a BOR
     PMMCTL0 = PMMPW | PMMSWBOR;
@@ -713,8 +716,7 @@ int main() {
         _RTC.init(_State.startTime.time);
     
     // Otherwise, we don't have a valid _State.startTime, so if _RTC isn't currently
-    // enabled, init _RTC with 0. This will enable RTC, but it won't enable
-    // the interrupt, so _RTC.currentTime() will always return 0.
+    // enabled, init _RTC with 0.
     } else if (!_RTC.enabled()) {
         _RTC.init(0);
     }

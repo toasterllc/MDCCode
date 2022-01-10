@@ -760,19 +760,19 @@ module ICEAppSim();
             });
             
             TestImgSetHeader(1, {
-                LittleFromHost32.Swap(32'hCAFEBABE) /* counter          */,
-                LittleFromHost16.Swap(16'b0)        /* padding          */
+                LittleFromHost16.Swap(16'h1111)     /* coarse int time  */,
+                LittleFromHost16.Swap(16'h2222)     /* analog gain      */,
+                LittleFromHost16.Swap(16'hBABE)     /* count (low)      */
             });
             
             TestImgSetHeader(2, {
-                LittleFromHost32.Swap(32'hDEADBEEF) /* timestamp        */,
-                LittleFromHost16.Swap(16'b0)        /* padding          */
+                LittleFromHost16.Swap(16'hCAFE)     /* count (high)     */,
+                LittleFromHost32.Swap(32'hDEADBEEF) /* time, start      */
             });
             
             TestImgSetHeader(3, {
-                LittleFromHost16.Swap(16'h1111)     /* coarse int time  */,
-                LittleFromHost16.Swap(16'h2222)     /* analog gain      */,
-                LittleFromHost16.Swap(16'b0)        /* padding          */
+                LittleFromHost32.Swap(32'hBEEFCAFE) /* time, delta      */,
+                LittleFromHost16.Swap(16'h0000)     /* padding          */
             });
             
             TestImgI2CWriteRead();
