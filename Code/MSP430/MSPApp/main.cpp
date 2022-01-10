@@ -207,14 +207,21 @@ static void _ImgRingBufInit() {
     
     FRAMWriteEn writeEn; // Enable FRAM writing
     
-    // Find the ring buffer with the larger count that also has a valid magic number.
-    // If neither ring buffer has a valid magic number, reset both ring buffers.
     auto& ringBuf = _State.img.ringBuf;
     auto& ringBuf2 = _State.img.ringBuf2;
-    if (ringBuf.magic==ImgRingBuf::MagicNumber && ringBuf.buf.count>=ringBuf2.buf.count) {
+    if (ringBuf.magic==ImgRingBuf::MagicNumber && ringBuf2.magic==ImgRingBuf::MagicNumber) {
+        if (ringBuf.buf.count >= ringBuf2.buf.count) {
+            // Copy ringBuf2 <- ringBuf
+            _ImgRingBufSet(ringBuf2, ringBuf);
+        } else {
+            // Copy ringBuf <- ringBuf2
+            _ImgRingBufSet(ringBuf, ringBuf2);
+        }
+    
+    } else if (ringBuf.magic == ImgRingBuf::MagicNumber) {
         // Copy ringBuf2 <- ringBuf
         _ImgRingBufSet(ringBuf2, ringBuf);
-        
+    
     } else if (ringBuf2.magic == ImgRingBuf::MagicNumber) {
         // Copy ringBuf <- ringBuf2
         _ImgRingBufSet(ringBuf, ringBuf2);
@@ -225,6 +232,68 @@ static void _ImgRingBufInit() {
         _ImgRingBufSet(ringBuf, MSP::ImgRingBuf{});
         _ImgRingBufSet(ringBuf2, MSP::ImgRingBuf{});
     }
+    
+//    volatile MSP::ImgRingBuf* src = _State.img.ringBuf;
+//    volatile MSP::ImgRingBuf* dst = _State.img.ringBuf2;
+//    
+//    
+//    
+//    // Find the ring buffer with the larger count that also has a valid magic number.
+//    // If neither ring buffer has a valid magic number, reset both ring buffers.
+//    volatile MSP::ImgRingBuf* ringBufs[] = {&_State.img.ringBuf, &_State.img.ringBuf2};
+//    if (ringBufs[1]->buf.count > ringBufs[0]->buf.count) {
+//        std::swap(ringBufs[0], ringBufs[1]);
+//    }
+//    
+//    for () {
+//        
+//    }
+    
+    
+    
+//    
+//    auto& ringBuf = _State.img.ringBuf;
+//    auto& ringBuf2 = _State.img.ringBuf2;
+//    if (ringBuf.magic==ImgRingBuf::MagicNumber && ringBuf2.magic==ImgRingBuf::MagicNumber) {
+//        if (ringBuf.buf.count >= ringBuf2.buf.count) {
+//            // Copy ringBuf2 <- ringBuf
+//            _ImgRingBufSet(ringBuf2, ringBuf);
+//        } else {
+//            // Copy ringBuf <- ringBuf2
+//            _ImgRingBufSet(ringBuf, ringBuf2);
+//        }
+//    
+//    } else if (ringBuf.magic == ImgRingBuf::MagicNumber) {
+//        // Copy ringBuf <- ringBuf2
+//        _ImgRingBufSet(ringBuf2, ringBuf);
+//    
+//    } else if (ringBuf2.magic == ImgRingBuf::MagicNumber) {
+//        // Copy ringBuf <- ringBuf2
+//        _ImgRingBufSet(ringBuf, ringBuf2);
+//    
+//    } else {
+//        // Both ringBuf and ringBuf2 are invalid
+//        // Reset them both
+//        _ImgRingBufSet(ringBuf, MSP::ImgRingBuf{});
+//        _ImgRingBufSet(ringBuf2, MSP::ImgRingBuf{});
+//    }
+    
+    
+    
+//    if (ringBuf.magic==ImgRingBuf::MagicNumber && ringBuf.buf.count>=ringBuf2.buf.count) {
+//        // Copy ringBuf2 <- ringBuf
+//        _ImgRingBufSet(ringBuf2, ringBuf);
+//        
+//    } else if (ringBuf2.magic == ImgRingBuf::MagicNumber) {
+//        // Copy ringBuf <- ringBuf2
+//        _ImgRingBufSet(ringBuf, ringBuf2);
+//    
+//    } else {
+//        // Both ringBuf and ringBuf2 are invalid
+//        // Reset them both
+//        _ImgRingBufSet(ringBuf, MSP::ImgRingBuf{});
+//        _ImgRingBufSet(ringBuf2, MSP::ImgRingBuf{});
+//    }
 }
 
 static void _ImgRingBufIncrement() {
