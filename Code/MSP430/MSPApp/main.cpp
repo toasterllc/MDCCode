@@ -513,14 +513,14 @@ static void _AbortRecord(MSP::Sec time, uint16_t domain, uint16_t line) {
     FRAMWriteEn writeEn; // Enable FRAM writing
     
     auto& abort = _State.abort;
-    if (abort.count >= std::size(abort.events)) return;
+    if (abort.eventsCount >= std::size(abort.events)) return;
     
-    auto& event = abort.events[abort.count];
+    auto& event = abort.events[abort.eventsCount];
     event.time = time;
     event.domain = domain;
     event.line = line;
     
-    abort.count++;
+    abort.eventsCount++;
 }
 
 [[noreturn]]
@@ -607,6 +607,12 @@ int main() {
     
     // Init clock
     _Clock::Init();
+    
+//    _Pin::DEBUG_OUT::Init();
+//    for (uint32_t i=0; i<1000000; i++) {
+//        _Pin::DEBUG_OUT::Write(1);
+//        _Pin::DEBUG_OUT::Write(0);
+//    }
     
     #warning if this is a cold start:
     #warning   wait a few milliseconds to allow our outputs to settle so that our peripherals

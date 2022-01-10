@@ -26,6 +26,7 @@
 
 /* Begin PBXFileReference section */
 		55496F23278944CF00BCA739 /* IntForStr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IntForStr.h; sourceTree = "<group>"; };
+		55496F38278BAC5000BCA739 /* MSP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
 		55B2151127090FD1001423C1 /* SystemBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SystemBase.h; sourceTree = "<group>"; };
 		55B2151227090FD2001423C1 /* BufQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BufQueue.h; sourceTree = "<group>"; };
 		55B2151327090FD2001423C1 /* VectorTable.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = VectorTable.s; sourceTree = "<group>"; };
@@ -142,6 +143,7 @@
 				55B66B422715286A00AD39A5 /* SDCard.h */,
 				55B66B472717691200AD39A5 /* STM.h */,
 				55B66B4A27176EC700AD39A5 /* ICE.h */,
+				55496F38278BAC5000BCA739 /* MSP.h */,
 			);
 			name = Shared;
 			path = ../../Code/Shared;

@@ -13,7 +13,7 @@ namespace MSP {
         struct [[gnu::packed]] {
             Sec time        = 0;
             uint16_t valid  = false; // uint16_t (instead of bool) for alignment
-        } startTime;
+        } startTime = {};
         
         // img: stats to track captured images
         struct [[gnu::packed]] {
@@ -21,18 +21,18 @@ namespace MSP {
             uint16_t write      = 0;
             uint16_t read       = 0;
             uint16_t full       = false; // uint16_t (instead of bool) for alignment
-        } img;
+        } img = {};
         
         // abort: records aborts that have occurred
         struct [[gnu::packed]] {
-            uint16_t count = 0;
+            uint16_t eventsCount = 0;
             
             struct [[gnu::packed]] {
                 Sec time        = 0;
                 uint16_t domain = 0;
                 uint16_t line   = 0;
             } events[3] = {};
-        } abort;
+        } abort = {};
     };
 
 } // namespace MSP
