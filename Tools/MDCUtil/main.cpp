@@ -239,9 +239,9 @@ static void MSPStateRead(const Args& args, MDCDevice& device) {
     printf(     "\n");
     
     printf(     "img\n");
-    printf(     "  .counter:        %u\n", state.img.counter);
-    printf(     "  .write:          %u\n", state.img.write);
-    printf(     "  .read:           %u\n", state.img.read);
+    printf(     "  .count:          %u\n", state.img.count);
+    printf(     "  .widx:           %u\n", state.img.widx);
+    printf(     "  .ridx:           %u\n", state.img.ridx);
     printf(     "  .full:           %u\n", state.img.full);
     printf(     "\n");
     

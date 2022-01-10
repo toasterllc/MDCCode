@@ -4,9 +4,20 @@ namespace MSP {
     
     using Sec = uint32_t;
     
+    // img: stats to track captured images
+    struct [[gnu::packed]] ImgRingBuf {
+        static constexpr uint32_t MagicNumber = 0xCAFEBABE;
+        uint32_t magic = 0;
+        struct [[gnu::packed]] {
+            uint32_t count  = 0;
+            uint16_t widx   = 0;
+            uint16_t ridx   = 0;
+            uint16_t full   = false; // uint16_t (instead of bool) for alignment
+        } buf;
+    };
+    
     struct [[gnu::packed]] State {
         static constexpr uint16_t Version = 0x4242;
-        
         const uint16_t version = Version;
         
         // startTime: the time set by the outside world (seconds since reference date)
@@ -15,22 +26,23 @@ namespace MSP {
             uint16_t valid  = false; // uint16_t (instead of bool) for alignment
         } startTime = {};
         
-        // img: stats to track captured images
         struct [[gnu::packed]] {
-            uint32_t counter    = 0;
-            uint16_t write      = 0;
-            uint16_t read       = 0;
-            uint16_t full       = false; // uint16_t (instead of bool) for alignment
+            // cap: image capacity
+            uint32_t cap        = 0;
+            // ringBuf: tracks captured images
+            ImgRingBuf ringBuf  = {};
+            // ringBuf2: copy of `ringBuf` in case there's a power failure
+            ImgRingBuf ringBuf2 = {};
         } img = {};
         
         // abort: records aborts that have occurred
         struct [[gnu::packed]] {
-            uint16_t eventsCount = 0;
+            uint16_t eventsCount    = 0;
             
             struct [[gnu::packed]] {
-                Sec time        = 0;
-                uint16_t domain = 0;
-                uint16_t line   = 0;
+                Sec time            = 0;
+                uint16_t domain     = 0;
+                uint16_t line       = 0;
             } events[3] = {};
         } abort = {};
     };

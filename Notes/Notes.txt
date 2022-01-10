@@ -1,12 +1,12 @@
 - Rev4 Todo
     
-    - MSPApp: add ability to read FRAM regions
-        - necessary for:
-            - setting MSP time
-            - reading image ring buffer
-            - writing image ring buffer
-            - setting SD card size / ring buffer size
-        - have a shared header containing the data structures
+    - We need to handle swapping the SD card
+        - Need to reset the Img ring buffer data structure from host app
+    
+    - MSPApp: make FRAM data structure resiliant to power loss during modifications
+        - Strategy:
+            - Have 2 copies of the `img` data structure
+            - Use a checksum, and use the one with the greatest `count` that also has a valid checksum
     
     - Task.h: debug feature: stack traces
     
@@ -31,6 +31,16 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MSPApp: update img ring buffer data structure properly when captuing image
+    
+    √ MSPApp: add ability to read FRAM regions
+        - necessary for:
+            - setting MSP time
+            - reading image ring buffer
+            - writing image ring buffer
+            - setting SD card size / ring buffer size
+        - have a shared header containing the data structures
     
     √ MSPApp: when an error occurs, trigger a BOR
         - "In an application, it may be desired to cause a BOR in software. Setting PMMSWBOR
