@@ -3,7 +3,7 @@
     - We need to handle swapping the SD card
         - Need to reset the Img ring buffer data structure from host app
     
-    - MSPApp: make FRAM data structure resiliant to power loss during modifications
+    - MSPApp: make FRAM data structure resilient to power loss during modifications
         - Strategy:
             - Have 2 copies of the `img` data structure
             - Use a checksum, and use the one with the greatest `count` that also has a valid checksum
