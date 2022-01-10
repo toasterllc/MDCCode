@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <cstddef>
+#include <atomic>
 #define TaskMSP430
 #include "Toastbox/Task.h"
 #include "SDCard.h"
@@ -26,7 +27,7 @@ static constexpr uint32_t _XT1FreqHz        = 32768;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
 
 [[noreturn]]
-static void abort(uint16_t domain, uint16_t line);
+static void _Abort(uint16_t domain, uint16_t line);
 
 struct _Pin {
     // Default GPIOs
@@ -190,8 +191,119 @@ struct _ImgTask {
 static volatile bool _Motion = false;
 static volatile bool _Busy = false;
 
-static void _CaptureImage() {
-    auto& img = _State.img;
+static void _ImgRingBufInit() {
+    using namespace MSP;
+    
+    FRAMWriteEn writeEn; // Enable FRAM writing
+    
+    // Find the ring buffer with the larger count that also has a valid magic number.
+    // If neither ring buffer has a valid magic number, reset both ring buffers.
+    auto& ringBuf = _State.img.ringBuf;
+    auto& ringBuf2 = _State.img.ringBuf2;
+    if (ringBuf.magic==ImgRingBuf::MagicNumber && ringBuf.buf.count>=ringBuf2.buf.count) {
+        // Copy ringBuf -> ringBuf2
+        ringBuf2.magic = 0;
+        atomic_thread_fence(std::memory_order_seq_cst);
+        
+        memcpy((void*)&ringBuf2.buf, (void*)&ringBuf.buf, sizeof(ringBuf2.buf));
+        atomic_thread_fence(std::memory_order_seq_cst);
+        
+        ringBuf2.magic = ImgRingBuf::MagicNumber;
+        
+    } else if (ringBuf2.magic == ImgRingBuf::MagicNumber) {
+        // Copy ringBuf2 -> ringBuf
+        ringBuf.magic = 0;
+        atomic_thread_fence(std::memory_order_seq_cst);
+        
+        memcpy((void*)&ringBuf.buf, (void*)&ringBuf2.buf, sizeof(ringBuf.buf));
+        atomic_thread_fence(std::memory_order_seq_cst);
+        
+        ringBuf.magic = ImgRingBuf::MagicNumber;
+    
+    } else {
+        // Both ringBuf and ringBuf2 are invalid
+        // Reset them both
+        
+        // Copy ringBuf2 -> ringBuf
+        ringBuf.magic = 0;
+        ringBuf2.magic = 0;
+        atomic_thread_fence(std::memory_order_seq_cst);
+        
+        memset((void*)&ringBuf.buf, 0, sizeof(ringBuf.buf));
+        memset((void*)&ringBuf2.buf, 0, sizeof(ringBuf2.buf));
+        atomic_thread_fence(std::memory_order_seq_cst);
+        
+        ringBuf.magic = ImgRingBuf::MagicNumber;
+        ringBuf2.magic = ImgRingBuf::MagicNumber;
+    }
+}
+
+static void _ImgRingBufIncrement() {
+    using namespace MSP;
+    FRAMWriteEn writeEn; // Enable FRAM writing
+    
+    // Update _State.img.ringBuf
+    {
+        auto& ringBuf = _State.img.ringBuf;
+        
+        // Clear the magic number while we modify `ringBuf`, so that if there's
+        // a power failure while we modify it, the backup copy will be used on
+        // the next startup.
+        {
+            ringBuf.magic = 0;
+            atomic_thread_fence(std::memory_order_seq_cst);
+        }
+        
+        // Update write index
+        ringBuf.buf.widx++;
+        // Wrap widx
+        if (ringBuf.buf.widx >= _State.img.cap) ringBuf.buf.widx = 0;
+        
+        // Update read index (if we're currently full)
+        if (ringBuf.buf.full) {
+            ringBuf.buf.ridx++;
+            // Wrap ridx
+            if (ringBuf.buf.ridx >= _State.img.cap) ringBuf.buf.ridx = 0;
+        }
+        
+        if (ringBuf.buf.widx == ringBuf.buf.ridx) ringBuf.buf.full = true;
+        
+        // Update the absolute image count
+        ringBuf.buf.count++;
+        
+        // Restore the magic number now that we're done modifying `ringBuf`
+        {
+            atomic_thread_fence(std::memory_order_seq_cst);
+            ringBuf.magic = ImgRingBuf::MagicNumber;
+        }
+    }
+    
+    // Update _State.img.ringBuf2
+    {
+        auto& ringBuf = _State.img.ringBuf;
+        auto& ringBuf2 = _State.img.ringBuf2;
+        
+        // Clear the magic number while we modify `ringBuf2`, so that if there's
+        // a power failure while we modify it, the backup copy will be used on
+        // the next startup.
+        {
+            ringBuf2.magic = 0;
+            atomic_thread_fence(std::memory_order_seq_cst);
+        }
+        
+        // Copy ringBuf -> ringBuf2
+        memcpy((void*)&ringBuf2.buf, (void*)&ringBuf.buf, sizeof(ringBuf2.buf));
+        
+        // Restore the magic number now that we're done modifying `ringBuf2`
+        {
+            atomic_thread_fence(std::memory_order_seq_cst);
+            ringBuf2.magic = ImgRingBuf::MagicNumber;
+        }
+    }
+}
+
+static void _ImgCapture() {
+    const auto& ringBuf = _State.img.ringBuf.buf;
     
     // Asynchronously turn on the image sensor / SD card
     _ImgTask::Enable();
@@ -222,7 +334,7 @@ static void _CaptureImage() {
             .imageHeight    = Img::PixelHeight,
             ._pad0          = 0,
             // Section idx=1
-            .counter        = 0,
+            .count          = 0,
             ._pad1          = 0,
             // Section idx=2
             .timestamp      = 0,
@@ -233,7 +345,7 @@ static void _CaptureImage() {
             ._pad3          = 0,
         };
         
-        header.counter = img.counter;
+        header.count = ringBuf.count;
         header.timestamp = _RTC.currentTime();
         header.coarseIntTime = _ImgAutoExp.integrationTime();
         
@@ -256,14 +368,10 @@ static void _CaptureImage() {
     _SDTask::Wait();
     
     // Write the best-exposed image to the SD card
-    _SDCard.writeImage(bestExpBlock, img.write);
+    _SDCard.writeImage(bestExpBlock, ringBuf.widx);
     
     // Update _State.img
-    {
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        img.write++;
-        img.counter++;
-    }
+    _ImgRingBufIncrement();
 }
 
 // MARK: - Interrupts
@@ -458,7 +566,7 @@ struct _MotionTask {
             _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
             
             // Capture an image
-            _CaptureImage();
+            _ImgCapture();
             
             _ICE::Transfer(_ICE::LEDSetMsg(0x00));
             
@@ -491,22 +599,22 @@ namespace AbortDomain {
 
 [[noreturn]]
 static void _SchedulerError(uint16_t line) {
-    abort(AbortDomain::Scheduler, line);
+    _Abort(AbortDomain::Scheduler, line);
 }
 
 [[noreturn]]
 static void _ICEError(uint16_t line) {
-    abort(AbortDomain::ICE, line);
+    _Abort(AbortDomain::ICE, line);
 }
 
 [[noreturn]]
 static void _SDError(uint16_t line) {
-    abort(AbortDomain::SD, line);
+    _Abort(AbortDomain::SD, line);
 }
 
 [[noreturn]]
 static void _ImgError(uint16_t line) {
-    abort(AbortDomain::Img, line);
+    _Abort(AbortDomain::Img, line);
 }
 
 static void _AbortRecord(MSP::Sec time, uint16_t domain, uint16_t line) {
@@ -524,7 +632,7 @@ static void _AbortRecord(MSP::Sec time, uint16_t domain, uint16_t line) {
 }
 
 [[noreturn]]
-static void abort(uint16_t domain, uint16_t line) {
+static void _Abort(uint16_t domain, uint16_t line) {
     Toastbox::IntState ints(false);
     
     _AbortRecord(_RTC.currentTime(), domain, line);
@@ -558,7 +666,7 @@ static void abort(uint16_t domain, uint16_t line) {
 
 extern "C" [[noreturn]]
 void abort() {
-    abort(AbortDomain::General, 0);
+    _Abort(AbortDomain::General, 0);
 }
 
 // MARK: - Main
@@ -641,6 +749,11 @@ int main() {
     // the interrupt, so _RTC.currentTime() will always return 0.
     } else if (!_RTC.enabled()) {
         _RTC.init(0);
+    }
+    
+    // Initialize our image ring buffers on the first start
+    if (Startup::ColdStart()) {
+        _ImgRingBufInit();
     }
     
     // Init SysTick

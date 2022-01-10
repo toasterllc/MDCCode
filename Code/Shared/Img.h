@@ -14,7 +14,7 @@ namespace Img {
         uint16_t imageHeight;   // 0x0510
         uint16_t _pad0;         // 0x0000
         // Section idx=1
-        uint32_t counter;       // 0xCAFEBABE
+        uint32_t count;         // 0xCAFEBABE
         uint32_t _pad1;         // 0x00000000
         // Section idx=2
         uint32_t timestamp;     // 0xDEADBEEF
