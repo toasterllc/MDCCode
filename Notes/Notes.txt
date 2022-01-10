@@ -1,12 +1,9 @@
 - Rev4 Todo
     
     - We need to handle swapping the SD card
-        - Need to reset the Img ring buffer data structure from host app
+        - Need to reset _State.img.ringBuf/_State.img.ringBuf2 from host app
     
-    - MSPApp: make FRAM data structure resilient to power loss during modifications
-        - Strategy:
-            - Have 2 copies of the `img` data structure
-            - Use a checksum, and use the one with the greatest `count` that also has a valid checksum
+    - Test _State.img.ringBuf/_State.img.ringBuf2 resiliency to power loss
     
     - Task.h: debug feature: stack traces
     
@@ -31,6 +28,11 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MSPApp: make FRAM data structure resilient to power loss during modifications
+        - Strategy:
+            - Have 2 copies of the `img` data structure
+            - Use a checksum, and use the one with the greatest `count` that also has a valid checksum
     
     √ MSPApp: update img ring buffer data structure properly when captuing image
     
