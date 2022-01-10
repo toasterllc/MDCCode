@@ -191,6 +191,17 @@ struct _ImgTask {
 static volatile bool _Motion = false;
 static volatile bool _Busy = false;
 
+template <typename T, typename U>
+static void _ImgRingBufSet(T& a, const U& b) {
+    a.magic = 0;
+    atomic_thread_fence(std::memory_order_seq_cst);
+    
+    (const_cast<MSP::ImgRingBuf&>(a)).buf = const_cast<MSP::ImgRingBuf&>(b).buf;
+    atomic_thread_fence(std::memory_order_seq_cst);
+    
+    a.magic = MSP::ImgRingBuf::MagicNumber;
+}
+
 static void _ImgRingBufInit() {
     using namespace MSP;
     
@@ -201,40 +212,18 @@ static void _ImgRingBufInit() {
     auto& ringBuf = _State.img.ringBuf;
     auto& ringBuf2 = _State.img.ringBuf2;
     if (ringBuf.magic==ImgRingBuf::MagicNumber && ringBuf.buf.count>=ringBuf2.buf.count) {
-        // Copy ringBuf -> ringBuf2
-        ringBuf2.magic = 0;
-        atomic_thread_fence(std::memory_order_seq_cst);
-        
-        memcpy((void*)&ringBuf2.buf, (void*)&ringBuf.buf, sizeof(ringBuf2.buf));
-        atomic_thread_fence(std::memory_order_seq_cst);
-        
-        ringBuf2.magic = ImgRingBuf::MagicNumber;
+        // Copy ringBuf2 <- ringBuf
+        _ImgRingBufSet(ringBuf2, ringBuf);
         
     } else if (ringBuf2.magic == ImgRingBuf::MagicNumber) {
-        // Copy ringBuf2 -> ringBuf
-        ringBuf.magic = 0;
-        atomic_thread_fence(std::memory_order_seq_cst);
-        
-        memcpy((void*)&ringBuf.buf, (void*)&ringBuf2.buf, sizeof(ringBuf.buf));
-        atomic_thread_fence(std::memory_order_seq_cst);
-        
-        ringBuf.magic = ImgRingBuf::MagicNumber;
+        // Copy ringBuf <- ringBuf2
+        _ImgRingBufSet(ringBuf, ringBuf2);
     
     } else {
         // Both ringBuf and ringBuf2 are invalid
         // Reset them both
-        
-        // Copy ringBuf2 -> ringBuf
-        ringBuf.magic = 0;
-        ringBuf2.magic = 0;
-        atomic_thread_fence(std::memory_order_seq_cst);
-        
-        memset((void*)&ringBuf.buf, 0, sizeof(ringBuf.buf));
-        memset((void*)&ringBuf2.buf, 0, sizeof(ringBuf2.buf));
-        atomic_thread_fence(std::memory_order_seq_cst);
-        
-        ringBuf.magic = ImgRingBuf::MagicNumber;
-        ringBuf2.magic = ImgRingBuf::MagicNumber;
+        _ImgRingBufSet(ringBuf, MSP::ImgRingBuf{});
+        _ImgRingBufSet(ringBuf2, MSP::ImgRingBuf{});
     }
 }
 
@@ -244,15 +233,7 @@ static void _ImgRingBufIncrement() {
     
     // Update _State.img.ringBuf
     {
-        auto& ringBuf = _State.img.ringBuf;
-        
-        // Clear the magic number while we modify `ringBuf`, so that if there's
-        // a power failure while we modify it, the backup copy will be used on
-        // the next startup.
-        {
-            ringBuf.magic = 0;
-            atomic_thread_fence(std::memory_order_seq_cst);
-        }
+        ImgRingBuf ringBuf = const_cast<ImgRingBuf&>(_State.img.ringBuf);
         
         // Update write index
         ringBuf.buf.widx++;
@@ -271,34 +252,13 @@ static void _ImgRingBufIncrement() {
         // Update the absolute image count
         ringBuf.buf.count++;
         
-        // Restore the magic number now that we're done modifying `ringBuf`
-        {
-            atomic_thread_fence(std::memory_order_seq_cst);
-            ringBuf.magic = ImgRingBuf::MagicNumber;
-        }
+        _ImgRingBufSet(_State.img.ringBuf, ringBuf);
     }
     
     // Update _State.img.ringBuf2
     {
-        auto& ringBuf = _State.img.ringBuf;
-        auto& ringBuf2 = _State.img.ringBuf2;
-        
-        // Clear the magic number while we modify `ringBuf2`, so that if there's
-        // a power failure while we modify it, the backup copy will be used on
-        // the next startup.
-        {
-            ringBuf2.magic = 0;
-            atomic_thread_fence(std::memory_order_seq_cst);
-        }
-        
-        // Copy ringBuf -> ringBuf2
-        memcpy((void*)&ringBuf2.buf, (void*)&ringBuf.buf, sizeof(ringBuf2.buf));
-        
-        // Restore the magic number now that we're done modifying `ringBuf2`
-        {
-            atomic_thread_fence(std::memory_order_seq_cst);
-            ringBuf2.magic = ImgRingBuf::MagicNumber;
-        }
+        // Copy ringBuf2 <- ringBuf
+        _ImgRingBufSet(_State.img.ringBuf2, _State.img.ringBuf);
     }
 }
 
