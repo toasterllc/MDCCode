@@ -703,9 +703,10 @@ int main() {
     #warning   well be powering off ICE40 anyway?
     
     // Start RTC if it's not currently enabled.
-    // *** We need RTC to be unconditionally enabled because it keeps BAKMEM alive.
-    // *** If RTC is disabled, we enter LPM4.5 when we sleep (instead of LPM3.5),
-    // *** and BAKMEM is lost.
+    // We need RTC to be unconditionally enabled for 2 reasons:
+    //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
+    //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
+    //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
     if (_State.startTime.valid) {
         // If _StartTime is valid, consume it and hand it off to _RTC.
         FRAMWriteEn writeEn; // Enable FRAM writing
