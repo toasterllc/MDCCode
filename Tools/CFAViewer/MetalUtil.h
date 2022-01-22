@@ -13,9 +13,11 @@
 #if MetalShaderContext
 #define MetalConst constant
 #define MetalDevice device
+#define MetalThread thread
 #else
 #define MetalConst const
 #define MetalDevice
+#define MetalThread
 #endif
 
 namespace CFAViewer {

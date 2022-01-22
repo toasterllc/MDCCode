@@ -15,7 +15,7 @@ namespace Img {
         uint16_t coarseIntTime; // 0x1111
         uint16_t analogGain;    // 0x2222
         
-        uint32_t count;         // 0xCAFEBABE
+        uint32_t id;            // 0xCAFEBABE
         uint32_t timeStart;     // 0xDEADBEEF
         uint32_t timeDelta;     // 0xBEEFCAFE
         

@@ -73,6 +73,7 @@ public:
         case MTLPixelFormatR8Unorm:     return 1;
         case MTLPixelFormatR16Unorm:    return 1;
         case MTLPixelFormatR32Float:    return 1;
+        case MTLPixelFormatRGBA8Unorm:  return 4;
         case MTLPixelFormatBGRA8Unorm:  return 4;
         case MTLPixelFormatRGBA16Unorm: return 4;
         case MTLPixelFormatRGBA16Float: return 4;
@@ -86,6 +87,7 @@ public:
         case MTLPixelFormatR8Unorm:     return 1;
         case MTLPixelFormatR16Unorm:    return 2;
         case MTLPixelFormatR32Float:    return 4;
+        case MTLPixelFormatRGBA8Unorm:  return 1;
         case MTLPixelFormatBGRA8Unorm:  return 1;
         case MTLPixelFormatRGBA16Unorm: return 2;
         case MTLPixelFormatRGBA16Float: return 2;
@@ -103,7 +105,7 @@ public:
     void render(
         const std::string& name,
         id<MTLTexture> txt,
-        Args&... args
+        Args&&... args
     ) {
         assert(txt);
         
@@ -133,7 +135,7 @@ public:
         const std::string& name,
         NSUInteger width,
         NSUInteger height,
-        Args&... args
+        Args&&... args
     ) {
         MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor new];
         [desc setRenderTargetWidth:width];
@@ -524,7 +526,7 @@ private:
     void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
     
     template <typename T, typename... Ts>
-    void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
+    void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&&... ts) {
         using U = typename std::remove_cv<T>::type;
         if constexpr (!std::is_same<U,Txt>::value &&
                       !std::is_same<U,id<MTLTexture>>::value) {
@@ -545,7 +547,7 @@ private:
     void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
     
     template <typename T, typename... Ts>
-    void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&... ts) {
+    void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&&... ts) {
         using U = typename std::remove_cv<T>::type;
         if constexpr (std::is_same<U,Txt>::value) {
             [enc setFragmentTexture:(id<MTLTexture>)t atIndex:idx];

@@ -206,7 +206,7 @@ static void _ImgRingBufSet(volatile MSP::ImgRingBuf& dst, const T& src) {
     dst.magic = MSP::ImgRingBuf::MagicNumber;
 }
 
-// _ImgRingBufInit: find the correct ring buffer (the one with the greatest count and a valid magic number)
+// _ImgRingBufInit: find the correct ring buffer (the one with the greatest id and a valid magic number)
 // and copy it into the other slot so that there are two copies. If neither slot contains a valid ring
 // buffer, reset them both so that they're both empty (and valid).
 static void _ImgRingBufInit() {
@@ -216,7 +216,7 @@ static void _ImgRingBufInit() {
     auto& ringBuf2 = _State.img.ringBuf2;
     
     if (ringBuf.magic==ImgRingBuf::MagicNumber && ringBuf2.magic==ImgRingBuf::MagicNumber) {
-        if (ringBuf.buf.count >= ringBuf2.buf.count) {
+        if (ringBuf.buf.id >= ringBuf2.buf.id) {
             // Copy ringBuf2 <- ringBuf
             _ImgRingBufSet(ringBuf2, ringBuf);
         } else {
@@ -261,8 +261,8 @@ static void _ImgRingBufIncrement() {
         
         if (ringBuf.buf.widx == ringBuf.buf.ridx) ringBuf.buf.full = true;
         
-        // Update the absolute image count
-        ringBuf.buf.count++;
+        // Update the image id
+        ringBuf.buf.id++;
         
         _ImgRingBufSet(_State.img.ringBuf, ringBuf);
     }
@@ -305,13 +305,13 @@ static void _ImgCapture() {
             .imageHeight    = Img::PixelHeight,
             .coarseIntTime  = 0,
             .analogGain     = 0,
-            .count          = 0,
+            .id             = 0,
             .timeStart      = 0,
             .timeDelta      = 0,
         };
         
         header.coarseIntTime = _ImgAutoExp.integrationTime();
-        header.count = ringBuf.count;
+        header.id = ringBuf.id;
         
         const MSP::Time t = _RTC.time();
         header.timeStart = t.start;
