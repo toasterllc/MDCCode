@@ -762,11 +762,11 @@ module ICEAppSim();
             TestImgSetHeader(1, {
                 LittleFromHost16.Swap(16'h1111)     /* coarse int time  */,
                 LittleFromHost16.Swap(16'h2222)     /* analog gain      */,
-                LittleFromHost16.Swap(16'hBABE)     /* count (low)      */
+                LittleFromHost16.Swap(16'hBABE)     /* id (low)         */
             });
             
             TestImgSetHeader(2, {
-                LittleFromHost16.Swap(16'hCAFE)     /* count (high)     */,
+                LittleFromHost16.Swap(16'hCAFE)     /* id (high)        */,
                 LittleFromHost32.Swap(32'hDEADBEEF) /* time, start      */
             });
             

@@ -14,7 +14,7 @@ namespace MSP {
         static constexpr uint32_t MagicNumber = 0xCAFEBABE;
         uint32_t magic = 0;
         struct [[gnu::packed]] {
-            uint32_t count  = 0;
+            uint32_t id     = 0;
             uint16_t widx   = 0;
             uint16_t ridx   = 0;
             uint16_t full   = false; // uint16_t (instead of bool) for alignment
