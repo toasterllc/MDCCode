@@ -589,14 +589,11 @@ int main() {
 
 
 
-#warning debug symbols
+#warning TODO: remove these debug symbols
 #warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
-#include "stm32f7xx.h"
-constexpr auto& _Tasks              = _Scheduler::_Tasks;
-constexpr auto& _DidWork            = _Scheduler::_DidWork;
-constexpr auto& _CurrentTask        = _Scheduler::_CurrentTask;
-constexpr auto& _CurrentTime        = _Scheduler::_CurrentTime;
-constexpr auto& _Wake               = _Scheduler::_Wake;
-constexpr auto& _WakeTime           = _Scheduler::_WakeTime;
-constexpr auto& _MainStackGuard     = _Scheduler::_MainStackGuard;
-const auto& _SCB                    = *SCB;
+constexpr auto& _Debug_Tasks              = _Scheduler::_Tasks;
+constexpr auto& _Debug_DidWork            = _Scheduler::_DidWork;
+constexpr auto& _Debug_CurrentTask        = _Scheduler::_CurrentTask;
+constexpr auto& _Debug_CurrentTime        = _Scheduler::_ISR.CurrentTime;
+constexpr auto& _Debug_Wake               = _Scheduler::_ISR.Wake;
+constexpr auto& _Debug_WakeTime           = _Scheduler::_ISR.WakeTime;

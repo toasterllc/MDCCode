@@ -9,7 +9,7 @@
 #include "ChecksumFletcher32.h"
 #include "TimeInstant.h"
 
-class MDCDevice {
+class MDCUSBDevice {
 public:
     using USBDevice = Toastbox::USBDevice;
     
@@ -19,24 +19,24 @@ public:
         return desc.idVendor==1155 && desc.idProduct==57105;
     }
     
-    static std::vector<MDCDevice> GetDevices() {
-        std::vector<MDCDevice> devs;
+    static std::vector<MDCUSBDevice> GetDevices() {
+        std::vector<MDCUSBDevice> devs;
         auto usbDevs = USBDevice::GetDevices();
         for (USBDevice& usbDev : usbDevs) {
             if (USBDeviceMatches(usbDev)) {
                 try {
                     devs.push_back(std::move(usbDev));
                 
-                // Suppress failures to create a MDCDevice
+                // Suppress failures to create a MDCUSBDevice
                 } catch (const std::exception& e) {
-                    printf("Failed to create MDCDevice: %s\n", e.what());
+                    printf("Failed to create MDCUSBDevice: %s\n", e.what());
                 }
             }
         }
         return devs;
     }
     
-    MDCDevice(USBDevice&& dev) : _dev(std::move(dev)) {
+    MDCUSBDevice(USBDevice&& dev) : _dev(std::move(dev)) {
         // We don't know what state the device was left in, so flush the endpoints
         endpointsFlush();
         
@@ -45,7 +45,7 @@ public:
         _mode = status.mode;
     }
     
-    bool operator==(const MDCDevice& x) const {
+    bool operator==(const MDCUSBDevice& x) const {
         return _dev == x._dev;
     }
     
@@ -95,12 +95,12 @@ public:
 //        _dev.vendorRequestOut(0, cmd);
 //        _waitOrThrow("BootloaderInvoke command failed");
 //        
-//        // Wait for a new MDCDevice that's not equal to `this` (ie the underlying USB
+//        // Wait for a new MDCUSBDevice that's not equal to `this` (ie the underlying USB
 //        // device is different), but has the same serial number
 //        TimeInstant startTime;
 //        do {
-//            std::vector<MDCDevice> devs = GetDevices();
-//            for (MDCDevice& dev : devs) {
+//            std::vector<MDCUSBDevice> devs = GetDevices();
+//            for (MDCUSBDevice& dev : devs) {
 //                if (dev == *this) continue;
 //                if (_serial == dev.serial()) {
 //                    *this = std::move(dev);

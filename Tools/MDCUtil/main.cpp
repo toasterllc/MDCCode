@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cstring>
 #include "STM.h"
-#include "MDCDevice.h"
+#include "MDCUSBDevice.h"
 #include "Toastbox/RuntimeError.h"
 #include "Toastbox/IntForStr.h"
 #include "ChecksumFletcher32.h"
@@ -139,11 +139,11 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
-static void LEDSet(const Args& args, MDCDevice& device) {
+static void LEDSet(const Args& args, MDCUSBDevice& device) {
     device.ledSet(args.LEDSet.idx, args.LEDSet.on);
 }
 
-static void STMWrite(const Args& args, MDCDevice& device) {
+static void STMWrite(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.STMWrite.filePath.c_str());
     
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
@@ -159,7 +159,7 @@ static void STMWrite(const Args& args, MDCDevice& device) {
     device.stmReset(elf.entryPointAddr());
 }
 
-static void ICEWrite(const Args& args, MDCDevice& device) {
+static void ICEWrite(const Args& args, MDCUSBDevice& device) {
     Mmap mmap(args.ICEWrite.filePath.c_str());
     
     // Send the ICE40 binary
@@ -167,7 +167,7 @@ static void ICEWrite(const Args& args, MDCDevice& device) {
     device.iceWrite(mmap.data(), mmap.len());
 }
 
-static void MSPRead(const Args& args, MDCDevice& device) {
+static void MSPRead(const Args& args, MDCUSBDevice& device) {
     device.mspConnect();
     
     printf("Reading [0x%08jx,0x%08jx):\n",
@@ -187,7 +187,7 @@ static void MSPRead(const Args& args, MDCDevice& device) {
     device.mspDisconnect();
 }
 
-static void MSPWrite(const Args& args, MDCDevice& device) {
+static void MSPWrite(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.MSPWrite.filePath.c_str());
     
     device.mspConnect();
@@ -218,7 +218,7 @@ static void MSPWrite(const Args& args, MDCDevice& device) {
     device.mspDisconnect();
 }
 
-static void MSPStateRead(const Args& args, MDCDevice& device) {
+static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     constexpr uintptr_t StateAddr = 0x1800;
     
     device.mspConnect();
@@ -275,7 +275,7 @@ static void MSPStateRead(const Args& args, MDCDevice& device) {
     device.mspDisconnect();
 }
 
-static void SDImgRead(const Args& args, MDCDevice& device) {
+static void SDImgRead(const Args& args, MDCUSBDevice& device) {
     printf("Sending SDRead command...\n");
     device.sdRead(args.SDImgRead.idx*Img::PaddedLen);
     printf("-> OK\n\n");
@@ -293,7 +293,7 @@ static void SDImgRead(const Args& args, MDCDevice& device) {
     printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Len);
 }
 
-static void ImgCapture(const Args& args, MDCDevice& device) {
+static void ImgCapture(const Args& args, MDCUSBDevice& device) {
     printf("Sending ImgCapture command...\n");
     STM::ImgCaptureStats stats = device.imgCapture(0, 0);
     printf("-> OK (len: %ju)\n\n", (uintmax_t)stats.len);
@@ -346,9 +346,9 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    std::vector<MDCDevice> devices;
+    std::vector<MDCUSBDevice> devices;
     try {
-        devices = MDCDevice::GetDevices();
+        devices = MDCUSBDevice::GetDevices();
     } catch (const std::exception& e) {
         fprintf(stderr, "Failed to get MDC loader devices: %s\n\n", e.what());
         return 1;
@@ -362,7 +362,7 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     
-    MDCDevice& device = devices[0];
+    MDCUSBDevice& device = devices[0];
     try {
         device.endpointsFlush();
         if (args.cmd == lower(LEDSetCmd))               LEDSet(args, device);

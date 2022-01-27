@@ -32,6 +32,16 @@ private:
     class _TaskCmdRecv;
     class _TaskCmdHandle;
     
+    [[noreturn]]
+    static void _SchedulerError(uint16_t line) {
+        Abort();
+    }
+    
+    [[noreturn]]
+    static void _ICEError(uint16_t line) {
+        Abort();
+    }
+    
     static void _Sleep() {
         // Sleep and then enable interrupts.
         // It's important not to enable interrupts before we go to sleep. If
@@ -52,6 +62,7 @@ public:
         Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
         _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                     //          invoked when no tasks have work to do
+        _SchedulerError,                            // T_Error: function to call upon an unrecoverable error (eg stack overflow)
         _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
                                                     //              main stack for overflow; unused if T_StackGuardCount==0)
         4,                                          // T_StackGuardCount: number of pointer-sized stack guard elements to use
@@ -205,7 +216,7 @@ public:
     static inline T_USB USB;
     static inline T_QSPI QSPI;
 
-    using ICE = ::ICE<Scheduler>;
+    using ICE = ::ICE<Scheduler, _ICEError>;
     
     static void USBSendStatus(bool s) {
         alignas(4) static bool status = false; // Aligned to send via USB
@@ -213,6 +224,7 @@ public:
         USB.send(STM::Endpoints::DataIn, &status, sizeof(status));
     }
     
+    #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
     [[noreturn]]
     static void Abort() {
         Toastbox::IntState ints(false);
