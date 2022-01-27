@@ -36,7 +36,7 @@
 		55B2152227091003001423C1 /* PixelSampler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PixelSampler.h; sourceTree = "<group>"; };
 		55B2152327091003001423C1 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
 		55B2152427091003001423C1 /* BitmapImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BitmapImage.h; sourceTree = "<group>"; };
-		55B2152527091003001423C1 /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
+		55B2152527091003001423C1 /* MDCUSBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUSBDevice.h; sourceTree = "<group>"; };
 		55B2152627091003001423C1 /* TimeInstant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
 		55B2152727091003001423C1 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
 		55B2152927091003001423C1 /* IOServiceWatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
@@ -109,7 +109,7 @@
 				55B2152B27091003001423C1 /* IOServiceMatcher.h */,
 				55B2152927091003001423C1 /* IOServiceWatcher.h */,
 				55B2152127091003001423C1 /* Mat.h */,
-				55B2152527091003001423C1 /* MDCDevice.h */,
+				55B2152527091003001423C1 /* MDCUSBDevice.h */,
 				55B2152C27091003001423C1 /* Mmap.h */,
 				55B2152D27091004001423C1 /* Mod.h */,
 				55B2152227091003001423C1 /* PixelSampler.h */,

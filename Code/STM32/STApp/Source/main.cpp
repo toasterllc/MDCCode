@@ -65,17 +65,21 @@ using _Scheduler = _System::Scheduler;
 static QSPI_CommandTypeDef _ICEQSPICmd(const _ICE::Msg& msg, size_t respLen);
 
 static void _ImgSetPowerEnabled(bool en);
+[[noreturn]] static void _ImgError(uint16_t line);
 using _ImgSensor = Img::Sensor<
     _System::Scheduler,     // T_Scheduler
     _System::ICE,           // T_ICE
-    _ImgSetPowerEnabled     // T_SetPowerEnabled
+    _ImgSetPowerEnabled,    // T_SetPowerEnabled
+    _ImgError               // T_Error
 >;
 
 static void _SDSetPowerEnabled(bool en);
+[[noreturn]] static void _SDError(uint16_t line);
 static SD::Card<
     _System::Scheduler, // T_Scheduler
     _System::ICE,       // T_ICE
     _SDSetPowerEnabled, // T_SetPowerEnabled
+    _SDError,           // T_Error
     1,                  // T_ClkDelaySlow (odd values invert the clock)
     0                   // T_ClkDelayFast (odd values invert the clock)
 > _SDCard;
@@ -198,6 +202,11 @@ static void _SDSetPowerEnabled(bool en) {
     _Scheduler::SleepMs<2>();
 }
 
+[[noreturn]]
+static void _SDError(uint16_t line) {
+    _System::Abort();
+}
+
 static void _ImgSetPowerEnabled(bool en) {
     constexpr uint16_t BIT0             = 1<<0;
     constexpr uint16_t BIT2             = 1<<2;
@@ -223,6 +232,11 @@ static void _ImgSetPowerEnabled(bool en) {
     #warning TODO: measure how long it takes for IMG rails to rise
     // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
     _Scheduler::SleepMs<2>();
+}
+
+[[noreturn]]
+static void _ImgError(uint16_t line) {
+    _System::Abort();
 }
 
 // MARK: - Tasks
@@ -477,12 +491,9 @@ int main() {
 
 #warning TODO: remove these debug symbols
 #warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
-#include "stm32f7xx.h"
-constexpr auto& _Tasks              = _Scheduler::_Tasks;
-constexpr auto& _DidWork            = _Scheduler::_DidWork;
-constexpr auto& _CurrentTask        = _Scheduler::_CurrentTask;
-constexpr auto& _CurrentTime        = _Scheduler::_CurrentTime;
-constexpr auto& _Wake               = _Scheduler::_Wake;
-constexpr auto& _WakeTime           = _Scheduler::_WakeTime;
-constexpr auto& _MainStackGuard     = _Scheduler::_MainStackGuard;
-const auto& _SCB                    = *SCB;
+constexpr auto& _Debug_Tasks              = _Scheduler::_Tasks;
+constexpr auto& _Debug_DidWork            = _Scheduler::_DidWork;
+constexpr auto& _Debug_CurrentTask        = _Scheduler::_CurrentTask;
+constexpr auto& _Debug_CurrentTime        = _Scheduler::_ISR.CurrentTime;
+constexpr auto& _Debug_Wake               = _Scheduler::_ISR.Wake;
+constexpr auto& _Debug_WakeTime           = _Scheduler::_ISR.WakeTime;
