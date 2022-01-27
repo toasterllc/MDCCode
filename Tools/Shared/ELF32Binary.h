@@ -2,7 +2,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <vector>
-#include "Mmap.h"
+#include "Toastbox/Mmap.h"
 #include "Toastbox/RuntimeError.h"
 
 class ELF32Binary {
@@ -384,6 +384,6 @@ private:
 //        throw Toastbox::RuntimeError("failed to get physical address for file offset 0x%jx", (uintmax_t)off);
 //    }
     
-    Mmap<uint8_t> _mmap;
+    Mmap _mmap;
     uint32_t _entryPointAddr = 0;
 };
