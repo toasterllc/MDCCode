@@ -436,7 +436,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     ImageLibrary& il = *_imgLib;
     auto lock = std::unique_lock(il.lock);
     
-    _grid.setElementCount((int32_t)il.imageCount);
+//    _grid.setElementCount((int32_t)il.imageCount);
+    _grid.setElementCount((int32_t)il.recordCount());
     _grid.recompute();
     
     // Update our drawable size
