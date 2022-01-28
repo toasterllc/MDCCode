@@ -28,7 +28,6 @@
 
 /* Begin PBXFileReference section */
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
-		5533A2B327916CD400EF4614 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../../../repos/MDC/Tools/CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* MDCStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		55496F48278CFC0600BCA739 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -45,7 +44,7 @@
 		557ECAEC2794358100440E4B /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		557ECAED2794358100440E4B /* Mask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Mask.png; sourceTree = "<group>"; };
 		557ECB1B279BD72400440E4B /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordStore.h; sourceTree = "<group>"; };
-		557ECB1D279C0F0900440E4B /* ImgStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgStore.h; sourceTree = "<group>"; };
+		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
 		55A36A8E27A2951900FD0181 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevicesManager.h; sourceTree = "<group>"; };
 		55A36AB727A35ABD00FD0181 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -154,14 +153,13 @@
 			children = (
 				55A36A8E27A2951900FD0181 /* MDCDevice.h */,
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
-				557ECB1D279C0F0900440E4B /* ImgStore.h */,
+				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,
 				551B22382790245000D62121 /* ImageGridLayerTypes.h */,
 				55C6C841278FE35C005ABD39 /* ImageGridLayer.h */,
 				55C6C844278FFE60005ABD39 /* ImageGridLayer.mm */,
 				55C6C846279001CA005ABD39 /* ImageGridLayer.metal */,
-				5533A2B327916CD400EF4614 /* MetalUtil.h */,
 				55496F46278CFC0400BCA739 /* AppDelegate.mm */,
 				55496F4E278CFC0600BCA739 /* main.mm */,
 			);

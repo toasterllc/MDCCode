@@ -7,7 +7,7 @@
 #import <filesystem>
 #import "Grid.h"
 #import "ImageGridLayer.h"
-#import "ImgStore.h"
+#import "ImageLibrary.h"
 #import "MDCDevicesManager.h"
 namespace fs = std::filesystem;
 
@@ -137,14 +137,14 @@ static NSDictionary* LayerNullActions = @{
     _imageGridLayer = [ImageGridLayer new];
     [_rootLayer addSublayer:_imageGridLayer];
     
-    const char* ImgStorePath = "/Users/dave/Desktop/ImageStore-Chunk-5k";
-//    const char* ImgStorePath = "/Users/dave/Desktop/ImageStore-Chunk-40k";
-    auto imgStore = std::make_shared<ImgStore>(ImgStorePath);
+    const char* ImageLibraryPath = "/Users/dave/Desktop/ImageStore-Chunk-5k";
+//    const char* ImageLibraryPath = "/Users/dave/Desktop/ImageStore-Chunk-40k";
+    auto imgLib = std::make_shared<ImageLibrary>(ImageLibraryPath);
     
 //    printf("Reading every page START\n");
 //    const size_t pageSize = getpagesize();
-//    const auto chunkBegin = imgStore->getImageChunk(0);
-//    const auto chunkEnd = std::next(imgStore->getImageChunk(imgStore->imageCount()-1));
+//    const auto chunkBegin = imgLib->getImageChunk(0);
+//    const auto chunkEnd = std::next(imgLib->getImageChunk(imgLib->imageCount()-1));
 //    for (auto it=chunkBegin; it!=chunkEnd; it++) {
 //        const Mmap& mmap = it->mmap;
 //        const volatile uint8_t* data = mmap.data<const volatile uint8_t>();
@@ -155,7 +155,7 @@ static NSDictionary* LayerNullActions = @{
 //    }
 //    printf("Reading every page END\n");
     
-    [_imageGridLayer setImgStore:imgStore];
+    [_imageGridLayer setImageLibrary:imgLib];
     
 //    [_rootLayer addSublayer:_imageGridLayer];
 //    [self setLayer:_imageGridLayer];
