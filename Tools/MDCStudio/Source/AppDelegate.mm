@@ -137,7 +137,8 @@ static NSDictionary* LayerNullActions = @{
     _imageGridLayer = [ImageGridLayer new];
     [_rootLayer addSublayer:_imageGridLayer];
     
-    const char* ImageLibraryPath = "/Users/dave/Desktop/ImageStore-Chunk-5k";
+    const char* ImageLibraryPath = "/Users/dave/Desktop/ImgLib";
+//    const char* ImageLibraryPath = "/Users/dave/Desktop/ImageStore-Chunk-5k";
 //    const char* ImageLibraryPath = "/Users/dave/Desktop/ImageStore-Chunk-40k";
     auto imgLib = std::make_shared<ImageLibrary>(ImageLibraryPath);
     

@@ -43,7 +43,6 @@
 		5533A2AF2791613500EF4614 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		5533A2B12791614300EF4614 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
 		55A36A7F27A2377300FD0181 /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RecordStore.h; path = ../MDCStudio/Source/RecordStore.h; sourceTree = "<group>"; };
-		55A36AEA27A36A5F00FD0181 /* ImgStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImgStore.h; path = ../MDCStudio/Source/ImgStore.h; sourceTree = "<group>"; };
 		55A36AEB27A36A7400FD0181 /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../CFAViewer/Renderer.h; sourceTree = "<group>"; };
 		55A36AEC27A36A7400FD0181 /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Renderer.metal; path = ../CFAViewer/Renderer.metal; sourceTree = "<group>"; };
 		55A36AF027A36A9200FD0181 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
@@ -78,6 +77,7 @@
 		55A36B0E27A36AEB00FD0181 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mod.h; sourceTree = "<group>"; };
 		55A36B0F27A36AEB00FD0181 /* Interp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Interp.h; sourceTree = "<group>"; };
 		55A36B1027A36AEB00FD0181 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
+		55A36B1127A3C46A00FD0181 /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImageLibrary.h; path = ../MDCStudio/Source/ImageLibrary.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,7 +102,7 @@
 			children = (
 				55A36B0327A36AEB00FD0181 /* Shared */,
 				55A36AEE27A36A9200FD0181 /* Lib */,
-				55A36AEA27A36A5F00FD0181 /* ImgStore.h */,
+				55A36B1127A3C46A00FD0181 /* ImageLibrary.h */,
 				55A36A7F27A2377300FD0181 /* RecordStore.h */,
 				55A36B0227A36AAD00FD0181 /* MetalUtil.h */,
 				5533A2AC2791568100EF4614 /* RenderThumbTypes.h */,

@@ -5,7 +5,7 @@
 #import "Renderer.h"
 #import "Toastbox/Mmap.h"
 #import "RenderThumbTypes.h"
-#import "ImgStore.h"
+#import "ImageLibrary.h"
 namespace fs = std::filesystem;
 using namespace CFAViewer;
 using namespace Toastbox;
@@ -77,7 +77,7 @@ int main(int argc, const char* argv[]) {
         }
     }
     
-    ImgStore imgStore("/Users/dave/Desktop/ImgStore");
+    ImageLibrary imgLib("/Users/dave/Desktop/ImgLib");
     auto startTime = std::chrono::steady_clock::now();
     {
         Renderer renderer(dev, lib, commandQueue);
@@ -90,14 +90,18 @@ int main(int argc, const char* argv[]) {
             printf("Loading %ju textures...\n", (uintmax_t)batchLen);
             NSArray<id<MTLTexture>>* txts = [txtLoader newTexturesWithContentsOfURLs:batchURLs options:nil error:nil];
             
+            const size_t beginOff = imgLib.recordCount();
+            imgLib.add([txts count]);
+            auto imageRefIter = imgLib.begin()+beginOff;
+            
             printf("Writing %ju thumbnails...\n", (uintmax_t)batchLen);
             for (id<MTLTexture> txt : txts) @autoreleasepool {
-                ImgRef* image = imgStore.add();
+                ImageRef* image = imgLib.getRecord(imageRefIter);
                 
                 const uintptr_t start = _FloorToPageSize((uintptr_t)image);
-                const uintptr_t end = _CeilToPageSize((uintptr_t)(image)+sizeof(ImgRef));
+                const uintptr_t end = _CeilToPageSize((uintptr_t)(image)+sizeof(ImageRef));
                 const size_t len = end-start;
-                const size_t off = ((uintptr_t)image + offsetof(ImgRef, thumbData)) - start;
+                const size_t off = ((uintptr_t)image + offsetof(ImageRef, thumbData)) - start;
                 
                 constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
                 id<MTLBuffer> thumbBuf = [dev newBufferWithBytesNoCopy:(void*)start length:len options:BufOpts deallocator:nil];
@@ -105,17 +109,19 @@ int main(int argc, const char* argv[]) {
                 
                 const RenderContext ctx = {
                     .thumbOff = (uint32_t)off,
-                    .width = ImgRef::ThumbWidth,
-                    .height = ImgRef::ThumbHeight,
+                    .width = ImageRef::ThumbWidth,
+                    .height = ImageRef::ThumbHeight,
                 };
                 
-                renderer.render("RenderThumb", ImgRef::ThumbWidth, ImgRef::ThumbHeight,
+                renderer.render("RenderThumb", ImageRef::ThumbWidth, ImageRef::ThumbHeight,
                     // Buffer args
                     ctx,
                     thumbBuf,
                     // Texture args
                     txt
                 );
+                
+                imageRefIter++;
             }
             
             renderer.commitAndWait();
@@ -129,7 +135,7 @@ int main(int argc, const char* argv[]) {
 //        imgStore.removeImage(rand() % imgStore.imageCount());
 //    }
     
-    imgStore.sync();
+    imgLib.sync();
     
     return 0;
 }

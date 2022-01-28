@@ -101,6 +101,10 @@ public:
         _recordRefs.erase(begin, end);
     }
     
+    T_Record* getRecord(RecordRefConstIter iter) {
+        return (T_Record*)(iter->chunk->mmap.data() + iter->idx*sizeof(T_Record));
+    }
+    
     RecordRefConstIter begin() const { return _recordRefs.begin(); }
     RecordRefConstIter end() const { return _recordRefs.end(); }
     
@@ -123,9 +127,9 @@ public:
             });
     }
     
-    ChunkConstIter getRecordChunk(size_t idx) const {
-        return _recordRefs.at(idx).chunk;
-    }
+//    ChunkConstIter getRecordChunk(size_t idx) const {
+//        return _recordRefs.at(idx).chunk;
+//    }
     
     size_t recordCount() const {
         return _recordRefs.size();
