@@ -1,6 +1,6 @@
 #import "RecordStore.h"
 
-struct [[gnu::packed]] ImgRef {
+struct [[gnu::packed]] ImageRef {
     static constexpr uint32_t Version       = 0;
     static constexpr size_t ThumbWidth      = 256;
     static constexpr size_t ThumbHeight     = 256;
@@ -20,10 +20,13 @@ struct [[gnu::packed]] ImgRef {
     uint8_t thumbData[ThumbWidth*ThumbHeight*ThumbPixelSize];
 };
 
-using ImgStore = RecordStore<
-    ImgRef::Version,
-    ImgRef,
-    512
->;
+class ImageLibrary : public RecordStore<ImageRef::Version, ImageRef, 512> {
+public:
+    using RecordStore::RecordStore;
+    std::mutex lock;
+    // imageCount: the number of valid images; RecordStore::recordCount() returns a
+    // premature count while images are still being written
+    size_t imageCount = 0;
+};
 
-using ImgStorePtr = std::shared_ptr<ImgStore>;
+using ImageLibraryPtr = std::shared_ptr<ImageLibrary>;

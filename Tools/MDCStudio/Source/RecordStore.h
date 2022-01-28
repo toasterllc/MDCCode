@@ -52,26 +52,53 @@ public:
         }
     }
     
-    T_Record* add() {
-        _ChunkIter chunk = _writableChunk();
-        const size_t idx = chunk->recordIdx;
-        const size_t off = sizeof(T_Record)*idx;
-        _recordRefs.push_back({
-            .chunk = chunk,
-            .idx = idx,
-        });
+//    T_Record* add() {
+//        _ChunkIter chunk = _writableChunk();
+//        const size_t idx = chunk->recordIdx;
+//        const size_t off = sizeof(T_Record)*idx;
+//        _recordRefs.push_back({
+//            .chunk = chunk,
+//            .idx = idx,
+//        });
+//        
+//        chunk->recordCount++;
+//        chunk->recordIdx++;
+//        
+//        return chunk->mmap.template data<T_Record>(off);
+//    }
+    
+//    void remove(size_t idx) {
+//        const RecordRef& ref = _recordRefs.at(idx);
+//        ref.chunk->recordCount--;
+//        
+//        _recordRefs.erase(_recordRefs.begin()+idx);
+//    }
+    
+    void add(size_t count) {
+        const size_t offStart = _recordRefs.size();
+        const size_t offEnd = _recordRefs.size()+count;
+        _recordRefs.resize(offEnd);
         
-        chunk->recordCount++;
-        chunk->recordIdx++;
-        
-        return chunk->mmap.template data<T_Record>(off);
+        for (size_t i=offStart; i<offEnd; i++) {
+            const _ChunkIter chunk = _writableChunk();
+            
+            _recordRefs[i] = {
+                .chunk = chunk,
+                .idx = chunk->recordIdx,
+            };
+            
+            chunk->recordCount++;
+            chunk->recordIdx++;
+        }
     }
     
-    void remove(size_t idx) {
-        const RecordRef& ref = _recordRefs.at(idx);
-        ref.chunk->recordCount--;
+    void remove(RecordRefConstIter begin, RecordRefConstIter end) {
+        for (auto it=begin; it!=end; it++) {
+            Chunk& chunk = const_cast<Chunk&>(*it->chunk);
+            chunk.recordCount--;
+        }
         
-        _recordRefs.erase(_recordRefs.begin()+idx);
+        _recordRefs.erase(begin, end);
     }
     
     RecordRefConstIter begin() const { return _recordRefs.begin(); }
@@ -164,6 +191,7 @@ public:
     
 private:
     using _ChunkIter = typename Chunks::iterator;
+    using _RecordRefIter = typename RecordRefs::iterator;
     
     struct [[gnu::packed]] _SerializedHeader {
         uint32_t version    = 0; // T_Version

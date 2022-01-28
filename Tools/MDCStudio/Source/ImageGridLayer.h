@@ -2,11 +2,11 @@
 #import <Metal/Metal.h>
 #import <memory>
 #import "Grid.h"
-#import "ImgStore.h"
+#import "ImageLibrary.h"
 
 @interface ImageGridLayer : CAMetalLayer
 
-- (void)setImgStore:(ImgStorePtr)imgStore;
+- (void)setImageLibrary:(ImageLibraryPtr)imgLib;
 
 - (void)setContainerWidth:(CGFloat)width;
 - (CGFloat)containerHeight;

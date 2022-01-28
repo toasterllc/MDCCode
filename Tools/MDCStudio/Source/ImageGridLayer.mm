@@ -57,7 +57,7 @@ using ThumbFile = Mmap;
     
     Grid _grid;
     uint32_t _cellSize;
-    ImgStorePtr _imgStore;
+    ImageLibraryPtr _imgLib;
 //    uint32_t _thumbInset;
 }
 
@@ -231,7 +231,7 @@ using ThumbFile = Mmap;
 //        NSLog(@"_thumbBuf: %p", self->_thumbBuf);
 //    }];
     
-    constexpr int32_t ThumbSize = ImgRef::ThumbWidth;
+    constexpr int32_t ThumbSize = ImageRef::ThumbWidth;
     const uint32_t shadowExcess = (uint32_t)([_shadowTexture width]-[_maskTexture width]);
     _cellSize = ThumbSize+shadowExcess;
     
@@ -322,7 +322,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //
 //// _RangeMemCalc(): returns the span of memory that `range` references,
 //// both page-aligned and non-page-aligned
-//static RangeMem _RangeMemCalc(const ImgStore& ic, const ImgStore::Range& range) {
+//static RangeMem _RangeMemCalc(const ImageLibrary& ic, const ImageLibrary::Range& range) {
 //    if (!range.len) return {};
 //    const uintptr_t start = (uintptr_t)ic.getImage(range.idx);
 //    const uintptr_t end = (uintptr_t)ic.getImage(range.idx+range.len-1)+ImgSize;
@@ -356,10 +356,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 ////     ([0,2], [2,7])
 //// Note that the span of the first region is 10 images (10-1+1),
 //// and the span of the second region is 7 images (19-13+1).
-//std::tuple<ImgStore::Range,ImgStore::Range> _RangeHalve(const ImgStore& ic, const ImgStore::Range& range) {
-//    if (!range.len) return std::make_tuple(ImgStore::Range{}, ImgStore::Range{});
-//    const ImgStore::ImageRef first = ic.getImageRef(range.idx);
-//    const ImgStore::ImageRef last  = ic.getImageRef(range.idx+range.len-1);
+//std::tuple<ImageLibrary::Range,ImageLibrary::Range> _RangeHalve(const ImageLibrary& ic, const ImageLibrary::Range& range) {
+//    if (!range.len) return std::make_tuple(ImageLibrary::Range{}, ImageLibrary::Range{});
+//    const ImageLibrary::ImageRef first = ic.getImageRef(range.idx);
+//    const ImageLibrary::ImageRef last  = ic.getImageRef(range.idx+range.len-1);
 //    
 //    size_t left = range.idx;
 //    size_t right = range.idx+range.len; // Exclusive
@@ -381,14 +381,14 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //        else left = mid+1;
 //    }
 //    
-//    return ImgStore::Split(range, best);
+//    return ImageLibrary::Split(range, best);
 //}
 //
 //// _RangeSubdivide(): recursively divides `ranges[idx]` until all resulting subranges
 //// reference <= T_MaxBufLen bytes in _imagesMmap
 //template <size_t T_MaxBufLen>
-//void _RangeSubdivide(const ImgStore& ic, std::vector<ImgStore::Range>& ranges, size_t idx) {
-//    const ImgStore::Range& range = ranges[idx];
+//void _RangeSubdivide(const ImageLibrary& ic, std::vector<ImageLibrary::Range>& ranges, size_t idx) {
+//    const ImageLibrary::Range& range = ranges[idx];
 //    assert(range.len > 0);
 //    
 //    // Short-circuit if subdivision isn't necessary
@@ -407,9 +407,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //// _RangeSegments(): segments the input range such that every returned range spans no more
 //// than `T_MaxBufLen` bytes within the images buffer
 //template <size_t T_MaxBufLen>
-//std::vector<ImgStore::Range> _RangeSegments(const ImgStore& ic, const ImgStore::Range& range) {
+//std::vector<ImageLibrary::Range> _RangeSegments(const ImageLibrary& ic, const ImageLibrary::Range& range) {
 //    if (!range.len) return {};
-//    std::vector<ImgStore::Range> ranges;
+//    std::vector<ImageLibrary::Range> ranges;
 //    
 //    // Conditionally split `range` into 2 parts, in case the ImageRefs that it references wraps
 //    // around to the beginning of `_imagesMmap`
@@ -432,10 +432,11 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 - (void)display {
     auto startTime = std::chrono::steady_clock::now();
     
-    if (!_imgStore) return;
-    ImgStore& ic = *_imgStore;
+    if (!_imgLib) return;
+    ImageLibrary& il = *_imgLib;
+    auto lock = std::unique_lock(il.lock);
     
-    _grid.setElementCount((int32_t)ic.recordCount());
+    _grid.setElementCount((int32_t)il.imageCount);
     _grid.recompute();
     
     // Update our drawable size
@@ -492,20 +493,20 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         const matrix_float4x4 unityFromRasterMatrix = matrix_invert(rasterFromUnityMatrix);
         
 //        constexpr size_t MaxBufLen = 1024*1024*1024; // 1 GB
-//        const std::vector<ImgStore::Range> ranges = _RangeSegments<MaxBufLen>(ic, {(size_t)indexRange.start, (size_t)indexRange.count});
+//        const std::vector<ImageLibrary::Range> ranges = _RangeSegments<MaxBufLen>(ic, {(size_t)indexRange.start, (size_t)indexRange.count});
         
         const int32_t offsetX = -round(frame.origin.x*_contentsScale);
         const int32_t offsetY = -round(frame.origin.y*_contentsScale);
         
-        const uintptr_t imageRefsBegin = (uintptr_t)&*ic.begin();
-        const uintptr_t imageRefsEnd = (uintptr_t)&*ic.end();
+        const uintptr_t imageRefsBegin = (uintptr_t)&*il.begin();
+        const uintptr_t imageRefsEnd = (uintptr_t)&*il.end();
         id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
             length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeManaged];
         
 //        printf("Range count: %zu\n", ranges.size());
         
-        const auto imageRefFirst = ic.begin()+indexRange.start;
-        const auto imageRefLast = ic.begin()+indexRange.start+indexRange.count-1;
+        const auto imageRefFirst = il.begin()+indexRange.start;
+        const auto imageRefLast = il.begin()+indexRange.start+indexRange.count-1;
         
         const auto imageRefBegin = imageRefFirst;
         const auto imageRefEnd = std::next(imageRefLast);
@@ -517,7 +518,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //        const auto chunkEnd = std::next(chunkLast);
         for (auto it=imageRefBegin; it<imageRefEnd;) {
             const auto& chunk = *(it->chunk);
-            const auto nextChunkStart = ic.findNextChunk(it);
+            const auto nextChunkStart = il.findNextChunk(it);
             
             const auto chunkImageRefBegin = it;
             const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
@@ -548,8 +549,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //                offEnd = sizeof(Img)*(imageRefLast.idx+1);
 //            }
 //            printf("AAA\n");
-            const uintptr_t addrBegin = (uintptr_t)(chunk.mmap.data()+(sizeof(ImgRef)*chunkImageRefFirst->idx));
-            const uintptr_t addrEnd = (uintptr_t)(chunk.mmap.data()+(sizeof(ImgRef)*(chunkImageRefLast->idx+1)));
+            const uintptr_t addrBegin = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageRef)*chunkImageRefFirst->idx));
+            const uintptr_t addrEnd = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageRef)*(chunkImageRefLast->idx+1)));
             
             const uintptr_t addrAlignedBegin = _FloorToPageSize(addrBegin);
             const uintptr_t addrAlignedEnd = _CeilToPageSize(addrEnd);
@@ -571,17 +572,17 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 ImageGridLayerTypes::RenderContext ctx = {
                     .grid = _grid,
 //                    .chunk = ImageGridLayerTypes::UInt2FromType(it),
-                    .idxOff = (uint32_t)(chunkImageRefFirst-ic.begin()),
+                    .idxOff = (uint32_t)(chunkImageRefFirst-il.begin()),
                     .imagesOff = (uint32_t)(addrBegin-addrAlignedBegin),
 //                    .imageRefOff = (uint32_t)ic.getImageRef(range.idx),
-                    .imageSize = (uint32_t)sizeof(ImgRef),
+                    .imageSize = (uint32_t)sizeof(ImageRef),
                     .viewOffset = {offsetX, offsetY},
                     .viewMatrix = unityFromRasterMatrix,
                     .thumb = {
-                        .width  = ImgRef::ThumbWidth,
-                        .height = ImgRef::ThumbHeight,
-                        .pxSize = ImgRef::ThumbPixelSize,
-                        .off    = (uint32_t)(offsetof(ImgRef, thumbData)),
+                        .width  = ImageRef::ThumbWidth,
+                        .height = ImageRef::ThumbHeight,
+                        .pxSize = ImageRef::ThumbPixelSize,
+                        .off    = (uint32_t)(offsetof(ImageRef, thumbData)),
                     },
                     .cellSize = _cellSize,
                 };
@@ -627,8 +628,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     [self setNeedsDisplay];
 }
 
-- (void)setImgStore:(ImgStorePtr)imgStore {
-    _imgStore = imgStore;
+- (void)setImageLibrary:(ImageLibraryPtr)imgLib {
+    _imgLib = imgLib;
     [self setNeedsDisplay];
 }
 
