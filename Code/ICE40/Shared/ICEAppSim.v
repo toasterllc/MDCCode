@@ -441,6 +441,17 @@ module ICEAppSim();
         end
     end endtask
     
+    task TestSDResp(input[`Msg_Arg_SDResp_Idx_Len-1:0] val); begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        
+        $display("\n[ICEAppSim] ========== TestSDResp ==========");
+        arg[`Msg_Arg_SDResp_Idx_Bits] = val;
+        
+        SendMsg(`Msg_Type_SDResp, arg);
+        
+        $display("[ICEAppSim] SDResp: 0x%x", spi_resp[`Resp_Arg_SDResp_Resp_Bits]);
+    end endtask
+    
     task TestSDConfig(
         input[`Msg_Arg_SDInit_Clk_Delay_Len-1:0] delay,
         input[`Msg_Arg_SDInit_Clk_Speed_Len-1:0] speed,
@@ -520,6 +531,9 @@ module ICEAppSim();
         $display("[ICEAppSim] ====================================================");
         $display("[ICEAppSim] ^^^ WE EXPECT CRC ERRORS IN THE SD CARD RESPONSE ^^^");
         $display("[ICEAppSim] ====================================================");
+        
+        TestSDResp(0);
+        TestSDResp(1);
     end endtask
     
     task TestSDCMD6; begin
@@ -766,7 +780,7 @@ module ICEAppSim();
             
             TestImgSetHeader(2, {
                 LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
-                LittleFromHost16.Swap(16'hBEEF)     /* start time  (low)    */
+                LittleFromHost16.Swap(16'hBEEF)     /* start time (low)     */
             });
             
             TestImgSetHeader(3, {
