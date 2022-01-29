@@ -47,8 +47,7 @@ public:
     
     struct EchoMsg : public Msg {
         template <size_t T_N>
-        constexpr EchoMsg(const char (&str)[T_N]) :
-        Msg(MsgType::StartBit | MsgType::Resp | 0x00) {
+        constexpr EchoMsg(const char (&str)[T_N]) : Msg(MsgType::StartBit | MsgType::Resp | 0x00) {
             static_assert(T_N == sizeof(Msg::payload));
             memcpy(Msg::payload, str, sizeof(Msg::payload));
         }
@@ -156,8 +155,24 @@ public:
         static constexpr size_t _RespIdx = 13;
     };
     
+    struct SDRespMsg : public Msg {
+        template <size_t T_N>
+        constexpr SDRespMsg(uint8_t idx) : Msg(MsgType::StartBit | MsgType::Resp | 0x05,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            idx
+        ) {}
+    };
+    
+    struct SDRespResp : Resp {
+    };
+    
     struct ImgResetMsg : Msg {
-        constexpr ImgResetMsg(bool val) : Msg(MsgType::StartBit | 0x05,
+        constexpr ImgResetMsg(bool val) : Msg(MsgType::StartBit | 0x06,
             0,
             0,
             0,
@@ -170,7 +185,7 @@ public:
     
     struct ImgSetHeaderMsg : Msg {
         static constexpr size_t ChunkLen = 6;
-        constexpr ImgSetHeaderMsg(uint8_t idx, const uint8_t* h) : Msg(MsgType::StartBit | 0x06,
+        constexpr ImgSetHeaderMsg(uint8_t idx, const uint8_t* h) : Msg(MsgType::StartBit | 0x07,
             h[0],
             h[1],
             h[2],
@@ -182,7 +197,7 @@ public:
     };
     
     struct ImgCaptureMsg : Msg {
-        constexpr ImgCaptureMsg(uint8_t dstBlock, uint8_t skipCount) : Msg(MsgType::StartBit | 0x07,
+        constexpr ImgCaptureMsg(uint8_t dstBlock, uint8_t skipCount) : Msg(MsgType::StartBit | 0x08,
             0,
             0,
             0,
@@ -194,7 +209,7 @@ public:
     };
     
     struct ImgCaptureStatusMsg : Msg {
-        constexpr ImgCaptureStatusMsg() : Msg(MsgType::StartBit | MsgType::Resp | 0x08) {}
+        constexpr ImgCaptureStatusMsg() : Msg(MsgType::StartBit | MsgType::Resp | 0x09) {}
     };
     
     struct ImgCaptureStatusResp : Resp {
@@ -205,7 +220,7 @@ public:
     };
     
     struct ImgReadoutMsg : Msg {
-        constexpr ImgReadoutMsg(uint8_t srcBlock) : Msg(MsgType::StartBit | 0x09,
+        constexpr ImgReadoutMsg(uint8_t srcBlock) : Msg(MsgType::StartBit | 0x0A,
             0,
             0,
             0,
@@ -217,7 +232,7 @@ public:
     };
     
     struct ImgI2CTransactionMsg : Msg {
-        constexpr ImgI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) : Msg(MsgType::StartBit | 0x0A,
+        constexpr ImgI2CTransactionMsg(bool write, uint8_t len, uint16_t addr, uint16_t val) : Msg(MsgType::StartBit | 0x0B,
             (write ? 0x80 : 0) | (len==2 ? 0x40 : 0),
             0,
             0,
@@ -229,7 +244,7 @@ public:
     };
     
     struct ImgI2CStatusMsg : Msg {
-        constexpr ImgI2CStatusMsg() : Msg(MsgType::StartBit | MsgType::Resp | 0x0B) {}
+        constexpr ImgI2CStatusMsg() : Msg(MsgType::StartBit | MsgType::Resp | 0x0C) {}
     };
     
     struct ImgI2CStatusResp : Resp {
@@ -243,7 +258,7 @@ public:
         // After `ReadoutLen` bytes are read, the SPI master must wait
         // until ICE_ST_SPI_D_READY=1 to clock out more data
         static constexpr size_t ReadoutLen = 512*4;
-        constexpr ReadoutMsg() : Msg(MsgType::StartBit | 0x0C) {}
+        constexpr ReadoutMsg() : Msg(MsgType::StartBit | 0x0D) {}
     };
     
     struct NopMsg : Msg {
