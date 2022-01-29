@@ -307,7 +307,7 @@ module ICEApp(
     reg[1:0]    sd_cmd_datInType        = 0;
     wire        sd_cmd_done;
     wire        sd_resp_done;
-    wire[47:0]  sd_resp_data;
+    wire[135:0] sd_resp_data;
     wire        sd_resp_crcErr;
     wire        sd_datOut_trigger;
     wire        sd_datOut_ready;
@@ -702,6 +702,15 @@ module ICEApp(
                         spi_resp[`Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits] <= sd_cmd6_accessMode;
                     spi_resp[`Resp_Arg_SDStatus_Dat0Idle_Bits] <= spi_sdDat0Idle;
                     spi_resp[`Resp_Arg_SDStatus_Resp_Bits] <= sd_resp_data;
+                end
+                
+                // Get SD status / response
+                `Msg_Type_SDResp: begin
+                    $display("[SPI] Got Msg_Type_SDResp");
+                    case (spi_msgArg[`Msg_Arg_SDResp_Idx_Bits])
+                    0: spi_resp[`Resp_Arg_SDResp_Resp_Bits] <= sd_resp_data[127:64];
+                    1: spi_resp[`Resp_Arg_SDResp_Resp_Bits] <= sd_resp_data[63:0];
+                    endcase
                 end
 `endif // _ICEApp_SD_En
                 

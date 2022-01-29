@@ -50,7 +50,7 @@ module SDController #(
     
     // Response port (clock domain: `clk`)
     output reg          resp_done = 0,      // Toggle signal
-    output reg[47:0]    resp_data = 0,
+    output reg[135:0]   resp_data = 0,
     output reg          resp_crcErr = 0,
     
     // DatOut port (clock domain: `clk`)
@@ -154,7 +154,7 @@ module SDController #(
     reg resp_staged = 0;
     wire resp_crc;
     
-    reg[47:0] cmdresp_shiftReg = 0;
+    reg[135:0] cmdresp_shiftReg = 0;
     
     reg[3:0] datOut_state = 0;
     reg[2:0] datOut_active = 0; // 3 bits -- see explanation where assigned
