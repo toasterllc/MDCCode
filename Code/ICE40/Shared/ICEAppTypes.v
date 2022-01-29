@@ -60,6 +60,7 @@
 `define     Resp_Arg_SDStatus_Dat0Idle_Bits                     4:4
 
 `define Msg_Type_SDResp                                         `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h05
+`define     Msg_Arg_SDResp_Idx_Len                              1
 `define     Msg_Arg_SDResp_Idx_Bits                             0:0
 `define     Resp_Arg_SDResp_Resp_Bits                           63:0
 
