@@ -24,9 +24,6 @@ class ImageLibrary : public RecordStore<ImageRef::Version, ImageRef, 512> {
 public:
     using RecordStore::RecordStore;
     std::mutex lock;
-    // imageCount: the number of valid images; RecordStore::recordCount() returns a
-    // premature count while images are still being written
-    size_t imageCount = 0;
 };
 
 using ImageLibraryPtr = std::shared_ptr<ImageLibrary>;

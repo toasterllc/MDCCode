@@ -1,4 +1,5 @@
 #pragma once
+#include "Img.h"
 
 namespace MSP {
     
@@ -9,16 +10,49 @@ namespace MSP {
         Sec delta = 0;
     };
     
-    // img: stats to track captured images
+    // ImgRingBuf: stats to track captured images
     struct [[gnu::packed]] ImgRingBuf {
         static constexpr uint32_t MagicNumber = 0xCAFEBABE;
         uint32_t magic = 0;
         struct [[gnu::packed]] {
-            uint32_t id     = 0;
-            uint16_t widx   = 0;
-            uint16_t ridx   = 0;
-            uint16_t full   = false; // uint16_t (instead of bool) for alignment
+            Img::Id idBegin     = 0;
+            Img::Id idEnd       = 0;
+            uint16_t widx       = 0;
+            uint16_t ridx       = 0;
+            uint16_t full       = false; // uint16_t (instead of bool) for alignment
         } buf;
+        
+        template <typename T> // Templated so that FindLatest() works with or without const/volatile
+        static bool FindLatest(T*& newest, T*& oldest) {
+            T* ringBuf = newest;
+            T* ringBuf2 = oldest;
+            
+            if (ringBuf->magic==ImgRingBuf::MagicNumber && ringBuf2->magic==ImgRingBuf::MagicNumber) {
+                if (ringBuf->buf.idEnd >= ringBuf2->buf.idEnd) {
+                    newest = ringBuf;
+                    oldest = ringBuf2;
+                    return true;
+                    
+                } else {
+                    newest = ringBuf2;
+                    oldest = ringBuf;
+                    return true;
+                }
+            
+            } else if (ringBuf->magic == ImgRingBuf::MagicNumber) {
+                newest = ringBuf;
+                oldest = ringBuf2;
+                return true;
+            
+            } else if (ringBuf2->magic == ImgRingBuf::MagicNumber) {
+                newest = ringBuf2;
+                oldest = ringBuf;
+                return true;
+            
+            } else {
+                return false;
+            }
+        }
     };
     
     struct [[gnu::packed]] AbortEvent {
@@ -27,9 +61,14 @@ namespace MSP {
         uint16_t line   = 0;
     };
     
+    static constexpr uint32_t StateAddr = 0x1800;
+    
     struct [[gnu::packed]] State {
-        static constexpr uint16_t Version = 0x4242;
-        const uint16_t version = Version;
+        static constexpr uint32_t MagicNumber   = 0xDECAFBAD;
+        static constexpr uint32_t Version       = 0;
+        static constexpr uint32_t MagicVersion  = MagicNumber+Version;
+        
+        const uint32_t magicVersion = MagicVersion;
         
         // startTime: the time set by the outside world (seconds since reference date)
         struct [[gnu::packed]] {

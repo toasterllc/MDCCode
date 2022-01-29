@@ -244,7 +244,8 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(     "  ringBuf\n");
     printf(     "    magic:         0x%08x\n",   state.img.ringBuf.magic);
     printf(     "    buf\n");
-    printf(     "      id:          %u\n",       state.img.ringBuf.buf.id);
+    printf(     "      idBegin:     %u\n",       state.img.ringBuf.buf.idBegin);
+    printf(     "      idEnd:       %u\n",       state.img.ringBuf.buf.idEnd);
     printf(     "      widx:        %u\n",       state.img.ringBuf.buf.widx);
     printf(     "      ridx:        %u\n",       state.img.ringBuf.buf.ridx);
     printf(     "      full:        %u\n",       state.img.ringBuf.buf.full);
@@ -252,7 +253,8 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(     "  ringBuf2\n");
     printf(     "    magic:         0x%08x\n",   state.img.ringBuf2.magic);
     printf(     "    buf\n");
-    printf(     "      id:          %u\n",       state.img.ringBuf2.buf.id);
+    printf(     "      idBegin:     %u\n",       state.img.ringBuf2.buf.idBegin);
+    printf(     "      idEnd:       %u\n",       state.img.ringBuf2.buf.idEnd);
     printf(     "      widx:        %u\n",       state.img.ringBuf2.buf.widx);
     printf(     "      ridx:        %u\n",       state.img.ringBuf2.buf.ridx);
     printf(     "      full:        %u\n",       state.img.ringBuf2.buf.full);

@@ -211,32 +211,17 @@ static void _ImgRingBufSet(volatile MSP::ImgRingBuf& dst, const T& src) {
 // buffer, reset them both so that they're both empty (and valid).
 static void _ImgRingBufInit() {
     using namespace MSP;
-    
-    auto& ringBuf = _State.img.ringBuf;
-    auto& ringBuf2 = _State.img.ringBuf2;
-    
-    if (ringBuf.magic==ImgRingBuf::MagicNumber && ringBuf2.magic==ImgRingBuf::MagicNumber) {
-        if (ringBuf.buf.id >= ringBuf2.buf.id) {
-            // Copy ringBuf2 <- ringBuf
-            _ImgRingBufSet(ringBuf2, ringBuf);
-        } else {
-            // Copy ringBuf <- ringBuf2
-            _ImgRingBufSet(ringBuf, ringBuf2);
-        }
-    
-    } else if (ringBuf.magic == ImgRingBuf::MagicNumber) {
-        // Copy ringBuf2 <- ringBuf
-        _ImgRingBufSet(ringBuf2, ringBuf);
-    
-    } else if (ringBuf2.magic == ImgRingBuf::MagicNumber) {
-        // Copy ringBuf <- ringBuf2
-        _ImgRingBufSet(ringBuf, ringBuf2);
+    auto newest = &_State.img.ringBuf;
+    auto oldest = &_State.img.ringBuf2;
+    const bool br = ImgRingBuf::FindLatest(newest, oldest);
+    if (br) {
+        _ImgRingBufSet(*oldest, *newest);
     
     } else {
         // Both ringBuf and ringBuf2 are invalid
         // Reset them both
-        _ImgRingBufSet(ringBuf, MSP::ImgRingBuf{});
-        _ImgRingBufSet(ringBuf2, MSP::ImgRingBuf{});
+        _ImgRingBufSet(_State.img.ringBuf, MSP::ImgRingBuf{});
+        _ImgRingBufSet(_State.img.ringBuf2, MSP::ImgRingBuf{});
     }
 }
 
@@ -245,31 +230,34 @@ static void _ImgRingBufIncrement() {
     
     // Update _State.img.ringBuf
     {
-        ImgRingBuf ringBuf = const_cast<ImgRingBuf&>(_State.img.ringBuf);
+        ImgRingBuf ringBufCopy = const_cast<ImgRingBuf&>(_State.img.ringBuf);
         
         // Update write index
-        ringBuf.buf.widx++;
+        ringBufCopy.buf.widx++;
         // Wrap widx
-        if (ringBuf.buf.widx >= _State.img.cap) ringBuf.buf.widx = 0;
+        if (ringBufCopy.buf.widx >= _State.img.cap) ringBufCopy.buf.widx = 0;
         
         // Update read index (if we're currently full)
-        if (ringBuf.buf.full) {
-            ringBuf.buf.ridx++;
+        if (ringBufCopy.buf.full) {
+            ringBufCopy.buf.ridx++;
             // Wrap ridx
-            if (ringBuf.buf.ridx >= _State.img.cap) ringBuf.buf.ridx = 0;
+            if (ringBufCopy.buf.ridx >= _State.img.cap) ringBufCopy.buf.ridx = 0;
+            
+            // Update the beginning image id (which only gets incremented if we're full)
+            ringBufCopy.buf.idBegin++;
         }
         
-        if (ringBuf.buf.widx == ringBuf.buf.ridx) ringBuf.buf.full = true;
+        // Update the end image id (the next image id that'll be used)
+        ringBufCopy.buf.idEnd++;
         
-        // Update the image id
-        ringBuf.buf.id++;
+        if (ringBufCopy.buf.widx == ringBufCopy.buf.ridx) ringBufCopy.buf.full = true;
         
-        _ImgRingBufSet(_State.img.ringBuf, ringBuf);
+        _ImgRingBufSet(_State.img.ringBuf, ringBufCopy);
     }
     
     // Update _State.img.ringBuf2
     {
-        // Copy ringBuf2 <- ringBuf
+        // Set ringBuf2 = ringBuf
         _ImgRingBufSet(_State.img.ringBuf2, _State.img.ringBuf);
     }
 }
@@ -300,7 +288,7 @@ static void _ImgCapture() {
         
         // Populate the header
         static Img::Header header = {
-            .version        = Img::HeaderVersion,
+            .magicVersion   = Img::Header::MagicVersion,
             .imageWidth     = Img::PixelWidth,
             .imageHeight    = Img::PixelHeight,
             .coarseIntTime  = 0,
@@ -311,7 +299,7 @@ static void _ImgCapture() {
         };
         
         header.coarseIntTime = _ImgAutoExp.integrationTime();
-        header.id = ringBuf.id;
+        header.id = ringBuf.idEnd;
         
         const MSP::Time t = _RTC.time();
         header.timeStart = t.start;

@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <filesystem>
+#import "MSP.h"
 #import "MDCUSBDevice.h"
 #import "ImageLibrary.h"
 
@@ -13,6 +14,7 @@ public:
     
     ~MDCDevice() {
         auto lock = std::unique_lock(_state.lock);
+        #warning this will deadlock if the thread tries to acquire the lock...
         if (_state.updateImageLibraryThread.joinable()) {
             _state.updateImageLibraryThread.join();
         }
@@ -34,6 +36,7 @@ public:
     
     void updateImageLibrary() {
         auto lock = std::unique_lock(_state.lock);
+        #warning TODO: what should we do if the thread's already running?
         _state.updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
         _state.updateImageLibraryThread.detach();
     }
@@ -41,8 +44,99 @@ public:
 private:
     using _Path = std::filesystem::path;
     
+//    static MSP::ImgRingBuf _ReadImgRingBuf(MDCUSBDevice& dev) {
+//        dev.mspConnect();
+//        
+//        MSP::State state;
+//        dev.mspRead(MSP::StateAddr, &state, sizeof(state));
+//        
+//        if (state.magicVersion != MSP::State::MagicVersion) {
+//            throw Toastbox::RuntimeError("invalid MSP state magicVersion (expected: 0x%jx, got: 0x%jx)",
+//                (uintmax_t)MSP::State::MagicVersion,
+//                (uintmax_t)state.magicVersion
+//            );
+//        }
+//        
+//        dev.mspDisconnect();
+//        
+//        const MSP::ImgRingBuf* imgRingBuf = &state.img.ringBuf;
+//        const MSP::ImgRingBuf* imgRingBuf2 = &state.img.ringBuf2;
+//        const bool br = MSP::ImgRingBuf::FindLatest(imgRingBuf, imgRingBuf2);
+//        if (!br) throw Toastbox::RuntimeError("both image ring buffers are invalid");
+//    }
+    
+    static const MSP::ImgRingBuf& _GetImgRingBuf(const MSP::State& state) {
+        const MSP::ImgRingBuf* imgRingBuf = &state.img.ringBuf;
+        const MSP::ImgRingBuf* imgRingBuf2 = &state.img.ringBuf2;
+        const bool br = MSP::ImgRingBuf::FindLatest(imgRingBuf, imgRingBuf2);
+        if (!br) throw Toastbox::RuntimeError("both image ring buffers are invalid");
+        return *imgRingBuf;
+    }
+    
     void _threadUpdateImageLibrary() {
+        try {
+            mspConnect();
+            
+            MSP::State state;
+            mspRead(MSP::StateAddr, &state, sizeof(state));
+            
+            if (state.magicVersion != MSP::State::MagicVersion) {
+                throw Toastbox::RuntimeError("invalid MSP state magicVersion (expected: 0x%jx, got: 0x%jx)",
+                    (uintmax_t)MSP::State::MagicVersion,
+                    (uintmax_t)state.magicVersion
+                );
+            }
+            
+            mspDisconnect();
+            
+            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(state);
+            
+            #warning TODO: if the user keeps deleting images from the end of the local library, we'll unnecessarily
+            #warning TODO: re-download those images every time this function runs, since the library.back() will
+            #warning TODO: no longer reference the 'most recent' image.
+            #warning TODO: to fix this, we should keep track of the most recent image downloaded from
+            #warning TODO: the device, and use that to determine which images should be downloaded
+            {
+                ImageLibrary& il = *imgLib();
+                auto ilLock = std::unique_lock(il.lock);
+                
+                // Remove images: lib has, device doesn't
+                if (il.recordCount()) {
+                    const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
+                    
+                    const auto removeBegin = il.begin();
+                    
+                    // Find the first image >= `deviceImgIdBegin`
+                    const auto removeEnd = std::lower_bound(il.begin(), il.end(), 0,
+                        [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
+                            return il.getRecord(sample)->id < deviceImgIdBegin;
+                        });
+                    
+                    printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
+                    il.remove(removeBegin, removeEnd);
+                }
+                
+                // Add images: device has, lib doesn't
+                {
+                    const Img::Id libImgIdEnd = (!il.empty() ? il.getRecord(il.back())->id+1 : 0);
+                    const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
+                    
+                    if (libImgIdEnd > deviceImgIdEnd) {
+                        throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImgIdEnd: %ju)",
+                            (uintmax_t)libImgIdEnd,
+                            (uintmax_t)deviceImgIdEnd
+                        );
+                    }
+                    
+                    const size_t addCount = deviceImgIdEnd-libImgIdEnd;
+                    
+                    
+                }
+            }
         
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Failed to update image library: %s", e.what());
+        }
     }
     
     struct {
