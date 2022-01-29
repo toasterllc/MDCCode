@@ -109,7 +109,7 @@ private:
                     // Find the first image >= `deviceImgIdBegin`
                     const auto removeEnd = std::lower_bound(il.begin(), il.end(), 0,
                         [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                            return il.getRecord(sample)->id < deviceImgIdBegin;
+                            return il.recordGet(sample)->id < deviceImgIdBegin;
                         });
                     
                     printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
@@ -118,7 +118,7 @@ private:
                 
                 // Add images: device has, lib doesn't
                 {
-                    const Img::Id libImgIdEnd = (!il.empty() ? il.getRecord(il.back())->id+1 : 0);
+                    const Img::Id libImgIdEnd = (!il.empty() ? il.recordGet(il.back())->id+1 : 0);
                     const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
                     
                     if (libImgIdEnd > deviceImgIdEnd) {
@@ -129,6 +129,12 @@ private:
                     }
                     
                     const size_t addCount = deviceImgIdEnd-libImgIdEnd;
+                    
+                    const size_t region1Idx     = imgRingBuf.buf.widx - std::min((size_t)imgRingBuf.buf.widx, addCount);
+                    const size_t region1Count   = imgRingBuf.buf.widx - region1Idx;
+                    
+                    const size_t region0Count   = addCount - region1Count;
+                    const size_t region0Idx     = state.img.cap - region0Count;
                     
                     
                 }

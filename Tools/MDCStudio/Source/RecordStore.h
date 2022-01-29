@@ -34,6 +34,25 @@ public:
     using RecordRefs = std::vector<RecordRef>;
     using RecordRefConstIter = typename RecordRefs::const_iterator;
     
+    // FindNextChunk(): finds the first RecordRef for the next chunk after the given RecordRef's chunk
+    static RecordRefConstIter FindNextChunk(RecordRefConstIter iter, RecordRefConstIter end) {
+        if (iter == end) return end;
+        const ChunkConstIter startChunk = iter->chunk;
+        
+        return std::lower_bound(iter, end, 0,
+            [&](const RecordRef& sample, auto) -> bool {
+                if (sample.chunk == startChunk) {
+                    // If `sample`'s chunk is the same chunk as `iter`,
+                    // then `sample` is less than the target
+                    return true;
+                }
+                
+                // Otherwise, `sample`'s chunk is neither the same chunk as `iter`,
+                // nor the target chunk, so it's greater than the target
+                return false;
+            });
+    }
+    
     RecordStore(const Path& path) : _path(path) {
         std::filesystem::create_directory(path);
         std::filesystem::create_directory(_ChunksPath(_path));
@@ -74,22 +93,32 @@ public:
 //        _recordRefs.erase(_recordRefs.begin()+idx);
 //    }
     
-    void add(size_t count) {
-        const size_t offStart = _recordRefs.size();
-        const size_t offEnd = _recordRefs.size()+count;
-        _recordRefs.resize(offEnd);
+    // reserve(): reserves space for `count` additional records, but does not actually add them
+    // to the store. add() must be called after reserve() to add the records to the store.
+    void reserve(size_t count) {
+        assert(_reserved.empty());
+        _reserved.resize(count);
         
-        for (size_t i=offStart; i<offEnd; i++) {
+        for (RecordRef& ref : _reserved) {
             const _ChunkIter chunk = _writableChunk();
             
-            _recordRefs[i] = {
+            ref = {
                 .chunk = chunk,
                 .idx = chunk->recordIdx,
             };
             
-            chunk->recordCount++;
             chunk->recordIdx++;
         }
+    }
+    
+    // Adds the records previously reserved via reserve()
+    void add() {
+        for (const RecordRef& ref : _reserved) {
+            ref.chunk->recordCount++;
+        }
+        
+        _recordRefs.insert(_recordRefs.end(), _reserved.begin(), _reserved.end());
+        _reserved.clear();
     }
     
     void remove(RecordRefConstIter begin, RecordRefConstIter end) {
@@ -101,40 +130,27 @@ public:
         _recordRefs.erase(begin, end);
     }
     
-    T_Record* getRecord(const RecordRef& ref) {
+    T_Record* recordGet(const RecordRef& ref) {
         return (T_Record*)(ref.chunk->mmap.data() + ref.idx*sizeof(T_Record));
     }
     
-    T_Record* getRecord(RecordRefConstIter iter) {
-        return getRecord(*iter);
+    T_Record* recordGet(RecordRefConstIter iter) {
+        return recordGet(*iter);
     }
     
     bool empty() const { return _recordRefs.empty(); }
     
-    const RecordRef& front() const { return _recordRefs.front(); }
-    const RecordRef& back() const { return _recordRefs.back(); }
+    const RecordRef& front() const          { return _recordRefs.front(); }
+    const RecordRef& reservedFront() const  { return _reserved.front(); }
     
-    RecordRefConstIter begin() const { return _recordRefs.begin(); }
-    RecordRefConstIter end() const { return _recordRefs.end(); }
+    const RecordRef& back() const           { return _recordRefs.back(); }
+    const RecordRef& reservedBack() const   { return _reserved.back(); }
     
-    // findNextChunk(): finds the first RecordRef for the next chunk after the given RecordRef's chunk
-    RecordRefConstIter findNextChunk(RecordRefConstIter iter) const {
-        if (iter == _recordRefs.end()) return _recordRefs.end();
-        const ChunkConstIter startChunk = iter->chunk;
-        
-        return std::lower_bound(iter, _recordRefs.end(), 0,
-            [&](const RecordRef& sample, auto) -> bool {
-                if (sample.chunk == startChunk) {
-                    // If `sample`'s chunk is the same chunk as `iter`,
-                    // then `sample` is less than the target
-                    return true;
-                }
-                
-                // Otherwise, `sample`'s chunk is neither the same chunk as `iter`,
-                // nor the target chunk, so it's greater than the target
-                return false;
-            });
-    }
+    RecordRefConstIter begin() const            { return _recordRefs.begin(); }
+    RecordRefConstIter reservedBegin() const    { return _reserved.begin(); }
+    
+    RecordRefConstIter end() const          { return _recordRefs.end(); }
+    RecordRefConstIter reservedEnd() const  { return _reserved.end(); }
     
 //    ChunkConstIter getRecordChunk(size_t idx) const {
 //        return _recordRefs.at(idx).chunk;
@@ -218,7 +234,7 @@ private:
         uint32_t idx = 0;
     };
     
-    static constexpr size_t _ChunkLen = sizeof(T_Record)*T_ChunkRecordCap;
+    static constexpr size_t _ChunkCap = sizeof(T_Record)*T_ChunkRecordCap;
     
     static std::tuple<RecordRefs,Chunks> _IndexRead(const Path& path) {
         const Mmap mmap(_IndexPath(path));
@@ -350,14 +366,14 @@ private:
         if (fdi < 0) throw Toastbox::RuntimeError("failed to create chunk file: %s", strerror(errno));
         
         const FileDescriptor fd(fdi);
-        const int ir = ftruncate(fd, _ChunkLen);
+        const int ir = ftruncate(fd, _ChunkCap);
         if (ir) throw Toastbox::RuntimeError("ftruncate failed: %s", strerror(errno));
         
-        // Explicitly give `_ChunkLen` to Mmap, otherwise a race is possible where the file gets truncated
+        // Explicitly give `_ChunkCap` to Mmap, otherwise a race is possible where the file gets truncated
         // on disk by another process, and our resulting mapping is shorter than we expect. By supplying
         // the length explicitly, we ensure that the resulting mapping is the expected length, regardless
         // of the file size on disk.
-        return Mmap(fd, _ChunkLen, MAP_SHARED);
+        return Mmap(fd, _ChunkCap, MAP_SHARED);
     }
     
     _ChunkIter _writableChunk() {
@@ -378,7 +394,7 @@ private:
         } else {
             // Last chunk can fit more records
             // Resize the last chunk if it's too small to fit more records
-            if (lastChunk->mmap.len() < _ChunkLen) {
+            if (lastChunk->mmap.len() < _ChunkCap) {
                 lastChunk->mmap = _CreateChunk(_chunkPath(_chunks.size()-1));
             }
             
@@ -388,5 +404,6 @@ private:
     
     const Path _path;
     RecordRefs _recordRefs;
+    RecordRefs _reserved;
     Chunks _chunks;
 };

@@ -519,7 +519,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //        const auto chunkEnd = std::next(chunkLast);
         for (auto it=imageRefBegin; it<imageRefEnd;) {
             const auto& chunk = *(it->chunk);
-            const auto nextChunkStart = il.findNextChunk(it);
+            const auto nextChunkStart = ImageLibrary::FindNextChunk(it, il.end());
             
             const auto chunkImageRefBegin = it;
             const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
