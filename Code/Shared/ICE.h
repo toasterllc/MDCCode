@@ -169,6 +169,7 @@ public:
     };
     
     struct ImgSetHeaderMsg : Msg {
+        static constexpr size_t ChunkLen = 6;
         constexpr ImgSetHeaderMsg(uint8_t idx, const uint8_t* h) : Msg(MsgType::StartBit | 0x06,
             h[0],
             h[1],
@@ -274,8 +275,9 @@ public:
     #warning TODO: optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
     static ImgCaptureStatusResp ImgCapture(const Img::Header& header, uint8_t dstBlock, uint8_t skipCount) {
         // Set the header of the image
-        static_assert(sizeof(header) == 4*8);
-        for (uint8_t i=0, off=0; i<4; i++, off+=8) {
+        constexpr size_t ChunkCount = 4; // The number of 6-byte header chunks to write
+        static_assert(sizeof(header) >= (ChunkCount * ImgSetHeaderMsg::ChunkLen));
+        for (uint8_t i=0, off=0; i<ChunkCount; i++, off+=ImgSetHeaderMsg::ChunkLen) {
             Transfer(ImgSetHeaderMsg(i, (const uint8_t*)&header+off));
         }
         

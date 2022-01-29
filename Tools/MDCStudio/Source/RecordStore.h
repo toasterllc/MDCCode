@@ -101,9 +101,18 @@ public:
         _recordRefs.erase(begin, end);
     }
     
-    T_Record* getRecord(RecordRefConstIter iter) {
-        return (T_Record*)(iter->chunk->mmap.data() + iter->idx*sizeof(T_Record));
+    T_Record* getRecord(const RecordRef& ref) {
+        return (T_Record*)(ref.chunk->mmap.data() + ref.idx*sizeof(T_Record));
     }
+    
+    T_Record* getRecord(RecordRefConstIter iter) {
+        return getRecord(*iter);
+    }
+    
+    bool empty() const { return _recordRefs.empty(); }
+    
+    const RecordRef& front() const { return _recordRefs.front(); }
+    const RecordRef& back() const { return _recordRefs.back(); }
     
     RecordRefConstIter begin() const { return _recordRefs.begin(); }
     RecordRefConstIter end() const { return _recordRefs.end(); }

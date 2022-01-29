@@ -754,25 +754,24 @@ module ICEAppSim();
             // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
             TestImgReset();
             TestImgSetHeader(0, {
-                LittleFromHost16.Swap(16'h4242)     /* version          */,
-                LittleFromHost16.Swap(16'd2304)     /* image width      */,
-                LittleFromHost16.Swap(16'd1296)     /* image height     */
+                LittleFromHost32.Swap(32'hDECAFBAD) /* magic number/version */,
+                LittleFromHost16.Swap(16'd2304)     /* image width          */
             });
             
             TestImgSetHeader(1, {
-                LittleFromHost16.Swap(16'h1111)     /* coarse int time  */,
-                LittleFromHost16.Swap(16'h2222)     /* analog gain      */,
-                LittleFromHost16.Swap(16'hBABE)     /* id (low)         */
+                LittleFromHost16.Swap(16'd1296)     /* image height         */,
+                LittleFromHost16.Swap(16'h1111)     /* coarse int time      */,
+                LittleFromHost16.Swap(16'h2222)     /* analog gain          */
             });
             
             TestImgSetHeader(2, {
-                LittleFromHost16.Swap(16'hCAFE)     /* id (high)        */,
-                LittleFromHost32.Swap(32'hDEADBEEF) /* time, start      */
+                LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
+                LittleFromHost16.Swap(16'hBEEF)     /* start time  (low)    */
             });
             
             TestImgSetHeader(3, {
-                LittleFromHost32.Swap(32'hBEEFCAFE) /* time, delta      */,
-                LittleFromHost16.Swap(16'h0000)     /* padding          */
+                LittleFromHost16.Swap(16'hDEAD)     /* start time (high)    */,
+                LittleFromHost32.Swap(32'hBEEFCAFE) /* delta time           */
             });
             
             TestImgI2CWriteRead();

@@ -7,19 +7,25 @@ namespace Img {
     using Word  = uint16_t;
     using Pixel = Word;
     
+    using Id = uint32_t;
+    
     struct [[gnu::packed]] Header {
-        uint16_t version;       // 16'h4242
+        static constexpr uint32_t MagicNumber   = 0xDECAFBAD;
+        static constexpr uint32_t Version       = 0;
+        static constexpr uint32_t MagicVersion  = MagicNumber+Version;
+        
+        uint32_t magicVersion;  // 32'hDECAFBAD
         uint16_t imageWidth;    // 16'd2304 == 0x0900
         uint16_t imageHeight;   // 16'd1296 == 0x0510
         
         uint16_t coarseIntTime; // 0x1111
         uint16_t analogGain;    // 0x2222
         
-        uint32_t id;            // 0xCAFEBABE
+        Id id;                  // 0xCAFEBABE
         uint32_t timeStart;     // 0xDEADBEEF
         uint32_t timeDelta;     // 0xBEEFCAFE
         
-        uint8_t _pad[10];
+        uint8_t _pad[8];
     };
     static_assert(sizeof(Header) == 32);
     
@@ -41,15 +47,12 @@ namespace Img {
 //        uint32_t _pad3;         // 0x00000000
 //    } __attribute__((packed));
     
-    constexpr uint16_t HeaderVersion        = 0x4242;
-    
-    constexpr uint32_t HeaderLen            = sizeof(Header);
     constexpr uint32_t PixelWidth           = 2304;
     constexpr uint32_t PixelHeight          = 1296;
     constexpr uint32_t PixelCount           = PixelWidth*PixelHeight;
     constexpr uint32_t PixelLen             = PixelCount*sizeof(Pixel);
     constexpr uint32_t ChecksumLen          = sizeof(uint32_t);
-    constexpr uint32_t Len                  = HeaderLen + PixelLen + ChecksumLen;
+    constexpr uint32_t Len                  = sizeof(Header) + PixelLen + ChecksumLen;
     constexpr uint32_t ChecksumOffset       = Len-ChecksumLen;
     
     // StatsSubsampleFactor: We only sample 1/16 of pixels for highlights/shadows
