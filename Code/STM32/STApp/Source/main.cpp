@@ -19,9 +19,10 @@ using namespace STM;
 static const void* _USBConfigDesc(size_t& len);
 
 using _USBType = USBType<
-    true,                   // T_DMAEn
-    _USBConfigDesc,         // T_ConfigDesc
-    STM::Endpoints::DataIn  // T_Endpoints
+    true,                       // T_DMAEn
+    _USBConfigDesc,             // T_ConfigDesc
+    STM::Endpoints::DataOut,    // T_Endpoints
+    STM::Endpoints::DataIn
 >;
 
 static const void* _USBConfigDesc(size_t& len) {
@@ -430,6 +431,9 @@ static void _ICEQSPIWrite(const void* data, size_t len) {
 static void _ICEWrite(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.ICEWrite;
     
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
     // Configure ICE40 control GPIOs
     _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -514,12 +518,18 @@ static void _ICEWrite(const STM::Cmd& cmd) {
 }
 
 static void _MSPConnect(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
     const auto r = _MSP.connect();
     // Send status
     _System::USBSendStatus(r == _MSP.Status::OK);
 }
 
 static void _MSPDisconnect(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
     _MSP.disconnect();
     // Send status
     _System::USBSendStatus(true);
@@ -527,6 +537,9 @@ static void _MSPDisconnect(const STM::Cmd& cmd) {
 
 static void _MSPRead(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.MSPRead;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
     
     // Reset state
     _Bufs.reset();
@@ -553,12 +566,13 @@ static void _MSPRead(const STM::Cmd& cmd) {
     
     // Wait for DataIn task to complete
     _Scheduler::Wait([] { return _Bufs.empty(); });
-    // Send status
-    _System::USBSendStatus(true);
 }
 
 static void _MSPWrite(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.MSPWrite;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
     
     // Reset state
     _Bufs.reset();
@@ -638,22 +652,21 @@ static void _MSPDebugHandleCmd(const MSPDebugCmd& cmd, _MSPDebugState& state, _B
 static void _MSPDebug(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.MSPDebug;
     
+    // Bail if more data was requested than the size of our buffer
+    if (arg.respLen > sizeof(_BufQueue::Buf::data)) {
+        // Reject command
+        _System::USBAcceptCommand(false);
+        return;
+    }
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
     // Reset state
     _Bufs.reset();
     auto& bufIn = _Bufs.back();
     _Bufs.push();
     auto& bufOut = _Bufs.back();
-    
-    // Bail if more data was requested than the size of our buffer
-    if (arg.respLen > sizeof(bufOut.data)) {
-        // Send preliminary status: error
-        _System::USBSendStatus(false);
-        return;
-    }
-    
-    // Send preliminary status: OK
-    _System::USBSendStatus(true);
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
     _MSPDebugState state;
     
@@ -706,11 +719,11 @@ static void _SDCardIdGet(const STM::Cmd& cmd) {
     // cardId: aligned to send via USB
     alignas(4) static SD::CardId cardId;
     
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
     // Initialize the SD card if we haven't done so
     _SDInit();
-    
-    // Send status
-    _System::USBSendStatus(true);
     
     // Send SD card id
     cardId = _SDCard.cardIdGet();
@@ -722,13 +735,13 @@ static void _SDCardDataGet(const STM::Cmd& cmd) {
     // cardData: aligned to send via USB
     alignas(4) static SD::CardData cardData;
     
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
     // Initialize the SD card if we haven't done so
     _SDInit();
     
-    // Send status
-    _System::USBSendStatus(true);
-    
-    // Send SD card id
+    // Send SD card data
     cardData = _SDCard.cardDataGet();
     _USB.send(Endpoints::DataIn, &cardData, sizeof(cardData));
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
@@ -737,6 +750,16 @@ static void _SDCardDataGet(const STM::Cmd& cmd) {
 static void _SDRead(const STM::Cmd& cmd) {
     static bool reading = false;
     const auto& arg = cmd.arg.SDRead;
+    
+    // Verify that the address is a multiple of the SD block length
+    if (arg.addr % SD::BlockLen) {
+        // Reject command
+        _System::USBAcceptCommand(false);
+        return;
+    }
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
     
     // Initialize the SD card if we haven't done so
     _SDInit();
@@ -747,15 +770,6 @@ static void _SDRead(const STM::Cmd& cmd) {
         _SDCard.readStop();
         reading = false;
     }
-    
-    // Verify that the address is a multiple of the SD block length
-    if (arg.addr % SD::BlockLen) {
-        _System::USBSendStatus(false);
-        return;
-    }
-    
-    // Send status
-    _System::USBSendStatus(true);
     
     // Update state
     reading = true;
@@ -775,6 +789,10 @@ void _ImgInit() {
 
 void _ImgExposureSet(const STM::Cmd& cmd) {
     const auto& arg = cmd.arg.ImgExposureSet;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
     _ImgInit();
     _ImgSensor::SetCoarseIntTime(arg.coarseIntTime);
     _ImgSensor::SetFineIntTime(arg.fineIntTime);
@@ -785,6 +803,9 @@ void _ImgExposureSet(const STM::Cmd& cmd) {
 
 void _ImgCapture(const STM::Cmd& cmd) {
     const auto& arg = cmd.arg.ImgCapture;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
     
     _ImgInit();
     
@@ -803,10 +824,6 @@ void _ImgCapture(const STM::Cmd& cmd) {
         .shadowCount    = resp.shadowCount(),
     };
     
-    // Send status
-    _System::USBSendStatus(true);
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-    
     // Send ImgCaptureStats
     _USB.send(Endpoints::DataIn, &stats, sizeof(stats));
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
@@ -821,23 +838,23 @@ void _ImgCapture(const STM::Cmd& cmd) {
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     // ICE40 Bootloader
-    case Op::ICEWrite:          _ICEWrite(cmd);                 break;
+    case Op::ICEWrite:          _ICEWrite(cmd);                     break;
     // MSP430 Bootloader
-    case Op::MSPConnect:        _MSPConnect(cmd);               break;
-    case Op::MSPDisconnect:     _MSPDisconnect(cmd);            break;
+    case Op::MSPConnect:        _MSPConnect(cmd);                   break;
+    case Op::MSPDisconnect:     _MSPDisconnect(cmd);                break;
     // MSP430 Debug
-    case Op::MSPRead:           _MSPRead(cmd);                  break;
-    case Op::MSPWrite:          _MSPWrite(cmd);                 break;
-    case Op::MSPDebug:          _MSPDebug(cmd);                 break;
+    case Op::MSPRead:           _MSPRead(cmd);                      break;
+    case Op::MSPWrite:          _MSPWrite(cmd);                     break;
+    case Op::MSPDebug:          _MSPDebug(cmd);                     break;
     // SD Card
-    case Op::SDCardIdGet:       _SDCardIdGet(cmd);              break;
-    case Op::SDCardDataGet:     _SDCardDataGet(cmd);            break;
-    case Op::SDRead:            _SDRead(cmd);                   break;
+    case Op::SDCardIdGet:       _SDCardIdGet(cmd);                  break;
+    case Op::SDCardDataGet:     _SDCardDataGet(cmd);                break;
+    case Op::SDRead:            _SDRead(cmd);                       break;
     // Img
-    case Op::ImgCapture:        _ImgCapture(cmd);               break;
-    case Op::ImgExposureSet:    _ImgExposureSet(cmd);           break;
+    case Op::ImgCapture:        _ImgCapture(cmd);                   break;
+    case Op::ImgExposureSet:    _ImgExposureSet(cmd);               break;
     // Bad command
-    default:                    _System::USBSendStatus(false);  break;
+    default:                    _System::USBAcceptCommand(false);   break;
     }
 }
 
@@ -879,6 +896,9 @@ void abort() {
 // MARK: - Main
 
 int main() {
+//    volatile bool a = false;
+//    while (!a);
+    
     _System::Init();
     
     __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
@@ -889,7 +909,7 @@ int main() {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     _ICE_ST_SPI_CS_::Write(1);
     
-    _ICE::Init();
+//    _ICE::Init();
     _MSPInit();
     
     _Scheduler::Run();

@@ -36,16 +36,12 @@ using _QSPIType = QSPIType<
     QSPIChipSelect::Controlled  // T_ChipSelect
 >;
 
-struct _TaskUSBDataIn;
-
 static void _CmdHandle(const STM::Cmd& cmd);
 using _System = System<
     _USBType,
     _QSPIType,
     STM::Status::Modes::STMLoader,
-    _CmdHandle,
-    // Additional Tasks
-    _TaskUSBDataIn
+    _CmdHandle
 >;
 
 constexpr auto& _USB = _System::USB;
@@ -60,36 +56,6 @@ static _BufQueue _Bufs;
 // on startup.
 using _VoidFn = void(*)();
 static volatile _VoidFn _AppEntryPoint [[noreturn, gnu::section(".uninit")]] = 0;
-
-// _TaskUSBDataIn: writes buffers from _Bufs to the DataIn endpoint, and pops them from _Bufs
-struct _TaskUSBDataIn {
-    static void Start();
-    
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
-    
-    // Task stack
-    [[gnu::section(".stack._TaskUSBDataIn")]]
-    static inline uint8_t Stack[256];
-};
-
-// MARK: - Tasks
-
-void _TaskUSBDataIn::Start() {
-    _Scheduler::Start<_TaskUSBDataIn>([] {
-        for (;;) {
-            _Scheduler::Wait([] { return !_Bufs.empty(); });
-            
-            // Send the data and wait until the transfer is complete
-            auto& buf = _Bufs.front();
-            _USB.send(Endpoints::DataIn, buf.data, buf.len);
-            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-            
-            buf.len = 0;
-            _Bufs.pop();
-        }
-    });
-}
 
 // MARK: - Commands
 
@@ -117,13 +83,12 @@ static void _STMWrite(const STM::Cmd& cmd) {
     const size_t len = _USB.CeilToMaxPacketSize(_USB.MaxPacketSizeOut(), arg.len);
     if (len > _STMRegionCapacity((void*)arg.addr)) {
         // Send preliminary status: error
-        _System::USBSendStatus(false);
+        _System::USBAcceptCommand(false);
         return;
     }
     
-    // Send preliminary status: OK
-    _System::USBSendStatus(true);
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    // Accept command
+    _System::USBAcceptCommand(true);
     
     // Receive USB data
     _USB.recv(Endpoints::DataOut, (void*)arg.addr, len);
@@ -134,12 +99,10 @@ static void _STMWrite(const STM::Cmd& cmd) {
 }
 
 static void _STMReset(const STM::Cmd& cmd) {
-    _AppEntryPoint = (_VoidFn)cmd.arg.STMReset.entryPointAddr;
+    // Accept command
+    _System::USBAcceptCommand(true);
     
-    // Send status
-    _System::USBSendStatus(true);
-    // Wait for host to receive status before resetting
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    _AppEntryPoint = (_VoidFn)cmd.arg.STMReset.entryPointAddr;
     
     // Perform software reset
     HAL_NVIC_SystemReset();
@@ -200,6 +163,9 @@ static void _JumpToAppIfNeeded() {
     // Check if we reset due to a software reset (SFTRSTF), and
     // we have the app's vector table.
     if (READ_BIT(csr, RCC_CSR_SFTRSTF) && appEntryPoint) {
+//        volatile bool a = false;
+//        while (!a);
+        
         // Start the application
         appEntryPoint();
         for (;;); // Loop forever if the app returns

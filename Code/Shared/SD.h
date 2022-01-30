@@ -16,7 +16,7 @@ namespace SD {
     };
 
     struct [[gnu::packed]] CardData {
-        uint8_t data[15];
-        uint8_t crc;
+        uint8_t data[15]    = {};
+        uint8_t crc         = 0;
     };
 };

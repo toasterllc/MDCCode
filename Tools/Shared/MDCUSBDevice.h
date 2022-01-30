@@ -72,8 +72,7 @@ public:
     
     STM::Status statusGet() {
         const STM::Cmd cmd = { .op = STM::Op::StatusGet };
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("StatusGet command failed");
+        _sendCmd(cmd);
         
         STM::Status status;
         _dev.read(STM::Endpoints::DataIn, status);
@@ -86,8 +85,7 @@ public:
     
     void bootloaderInvoke() {
         const STM::Cmd cmd = { .op = STM::Op::BootloaderInvoke };
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("BootloaderInvoke command failed");
+        _sendCmd(cmd);
     }
     
     // bootloaderInvoke version that replaces `this` with the newly-enumerated USB device
@@ -114,7 +112,7 @@ public:
 //    }
     
     void ledSet(uint8_t idx, bool on) {
-        STM::Cmd cmd = {
+        const STM::Cmd cmd = {
             .op = STM::Op::LEDSet,
             .arg = {
                 .LEDSet = {
@@ -123,8 +121,7 @@ public:
                 },
             },
         };
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("LEDSet command failed");
+        _sendCmd(cmd);
     }
     
     // MARK: - STMLoader Commands
@@ -146,10 +143,7 @@ public:
                 },
             },
         };
-        // Send command
-        _dev.vendorRequestOut(0, cmd);
-        // Check preliminary status
-        _waitOrThrow("STMWrite command failed");
+        _sendCmd(cmd);
         // Send data
         _dev.write(STM::Endpoints::DataOut, data, len);
         _waitOrThrow("STMWrite DataOut failed");
@@ -169,12 +163,12 @@ public:
                 },
             },
         };
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("STMReset command failed");
+        _sendCmd(cmd);
     }
     
+    // MARK: - STMApp Commands
     void iceWrite(const void* data, size_t len) {
-        assert(_mode == STM::Status::Modes::STMLoader);
+        assert(_mode == STM::Status::Modes::STMApp);
         if (len >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
         
@@ -186,60 +180,29 @@ public:
                 },
             },
         };
-        // Send command
-        _dev.vendorRequestOut(0, cmd);
+        _sendCmd(cmd);
+        
         // Send data
         _dev.write(STM::Endpoints::DataOut, data, len);
         _waitOrThrow("ICEWrite command failed");
     }
     
     void mspConnect() {
-        assert(_mode == STM::Status::Modes::STMLoader);
-        const STM::Cmd cmd = {
-            .op = STM::Op::MSPConnect,
-        };
-        // Send command
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("MSPConnect command failed");
+        assert(_mode == STM::Status::Modes::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPConnect };
+        _sendCmd(cmd);
+        _waitOrThrow("MSPConnect failed");
     }
     
     void mspDisconnect() {
-        assert(_mode == STM::Status::Modes::STMLoader);
-        const STM::Cmd cmd = {
-            .op = STM::Op::MSPDisconnect,
-        };
-        // Send command
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("MSPDisconnect command failed");
-    }
-    
-    void mspWrite(uintptr_t addr, const void* data, size_t len) {
-        assert(_mode == STM::Status::Modes::STMLoader);
-        
-        if (addr >= std::numeric_limits<uint32_t>::max())
-            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
-        
-        if (len >= std::numeric_limits<uint32_t>::max())
-            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
-        
-        const STM::Cmd cmd = {
-            .op = STM::Op::MSPWrite,
-            .arg = {
-                .MSPWrite = {
-                    .addr = (uint32_t)addr,
-                    .len = (uint32_t)len,
-                },
-            },
-        };
-        // Send command
-        _dev.vendorRequestOut(0, cmd);
-        // Send data
-        _dev.write(STM::Endpoints::DataOut, data, len);
-        _waitOrThrow("MSPWrite command failed");
+        assert(_mode == STM::Status::Modes::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPDisconnect };
+        _sendCmd(cmd);
+        _waitOrThrow("MSPDisconnect failed");
     }
     
     void mspRead(uintptr_t addr, void* data, size_t len) {
-        assert(_mode == STM::Status::Modes::STMLoader);
+        assert(_mode == STM::Status::Modes::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -256,15 +219,38 @@ public:
                 },
             },
         };
-        // Send command
-        _dev.vendorRequestOut(0, cmd);
+        _sendCmd(cmd);
         // Read data
         _dev.read(STM::Endpoints::DataIn, data, len);
         _waitOrThrow("MSPRead command failed");
     }
     
+    void mspWrite(uintptr_t addr, const void* data, size_t len) {
+        assert(_mode == STM::Status::Modes::STMApp);
+        
+        if (addr >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
+        
+        if (len >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPWrite,
+            .arg = {
+                .MSPWrite = {
+                    .addr = (uint32_t)addr,
+                    .len = (uint32_t)len,
+                },
+            },
+        };
+        _sendCmd(cmd);
+        // Send data
+        _dev.write(STM::Endpoints::DataOut, data, len);
+        _waitOrThrow("MSPWrite command failed");
+    }
+    
     void mspDebug(const STM::MSPDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
-        assert(_mode == STM::Status::Modes::STMLoader);
+        assert(_mode == STM::Status::Modes::STMApp);
         
         if (cmdsLen >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)cmdsLen);
@@ -281,11 +267,7 @@ public:
                 },
             },
         };
-        
-        // Send command
-        _dev.vendorRequestOut(0, cmd);
-        // Check preliminary status
-        _waitOrThrow("MSPDebug command failed");
+        _sendCmd(cmd);
         
         // Write the MSPDebugCmds
         if (cmdsLen) {
@@ -300,13 +282,11 @@ public:
         _waitOrThrow("MSPDebug DataOut/DataIn command failed");
     }
     
-    // MARK: - STMApp Commands
     SD::CardId sdCardIdGet() {
         assert(_mode == STM::Status::Modes::STMApp);
         
         const STM::Cmd cmd = { .op = STM::Op::SDCardIdGet };
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("SDCardIdGet command failed");
+        _sendCmd(cmd);
         
         SD::CardId cardId;
         _dev.read(STM::Endpoints::DataIn, cardId);
@@ -317,8 +297,7 @@ public:
         assert(_mode == STM::Status::Modes::STMApp);
         
         const STM::Cmd cmd = { .op = STM::Op::SDCardDataGet };
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("SDCardDataGet command failed");
+        _sendCmd(cmd);
         
         SD::CardData cardData;
         _dev.read(STM::Endpoints::DataIn, cardData);
@@ -339,8 +318,7 @@ public:
                 },
             },
         };
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("SDRead command failed");
+        _sendCmd(cmd);
     }
     
     STM::ImgCaptureStats imgCapture(uint8_t dstBlock, uint8_t skipCount) {
@@ -355,9 +333,7 @@ public:
                 },
             },
         };
-        
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("ImgCapture command failed");
+        _sendCmd(cmd);
         
         STM::ImgCaptureStats stats;
         _dev.read(STM::Endpoints::DataIn, stats);
@@ -382,8 +358,7 @@ public:
                 },
             },
         };
-        _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("ImgExposureSet command failed");
+        _sendCmd(cmd);
     }
     
     std::unique_ptr<uint8_t[]> imgReadout() {
@@ -430,6 +405,11 @@ private:
                 if (len == sizeof(sentinel)) break;
             }
         }
+    }
+    
+    void _sendCmd(const STM::Cmd& cmd) {
+        _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("command rejected");
     }
     
     void _waitOrThrow(const char* errMsg) {

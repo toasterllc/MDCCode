@@ -200,6 +200,11 @@ public:
         alignas(4) static bool status = false; // Aligned to send via USB
         status = s;
         USB.send(STM::Endpoints::DataIn, &status, sizeof(status));
+        Scheduler::Wait([] { return USB.endpointReady(STM::Endpoints::DataIn); });
+    }
+    
+    static void USBAcceptCommand(bool s) {
+        USBSendStatus(s);
     }
     
     #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
@@ -287,10 +292,8 @@ private:
     }
     
     static void _StatusGet(const STM::Cmd& cmd) {
-        // Send status
-        USBSendStatus(true);
-        // Wait for host to receive status
-        Scheduler::Wait([] { return USB.endpointReady(STM::Endpoints::DataIn); });
+        // Accept command
+        USBAcceptCommand(true);
         
         // Send status struct
         alignas(4) static const STM::Status status = { // Aligned to send via USB
@@ -303,10 +306,8 @@ private:
     }
     
     static void _BootloaderInvoke(const STM::Cmd& cmd) {
-        // Send status
-        USBSendStatus(true);
-        // Wait for host to receive status before resetting
-        Scheduler::Wait([] { return USB.endpointReady(STM::Endpoints::DataIn); });
+        // Accept command
+        USBAcceptCommand(true);
         
         // Perform software reset
         HAL_NVIC_SystemReset();
@@ -316,14 +317,14 @@ private:
     
     static void _LEDSet(const STM::Cmd& cmd) {
         switch (cmd.arg.LEDSet.idx) {
-        case 0: USBSendStatus(false); return;
+        case 0: USBAcceptCommand(false); return;
         case 1: LED1::Write(cmd.arg.LEDSet.on); break;
         case 2: LED2::Write(cmd.arg.LEDSet.on); break;
         case 3: LED3::Write(cmd.arg.LEDSet.on); break;
         }
         
         // Send status
-        USBSendStatus(true);
+        USBAcceptCommand(true);
     }
 };
 
