@@ -8,6 +8,7 @@
 #include "Img.h"
 #include "ChecksumFletcher32.h"
 #include "TimeInstant.h"
+#include "SD.h"
 
 class MDCUSBDevice {
 public:
@@ -300,6 +301,30 @@ public:
     }
     
     // MARK: - STMApp Commands
+    SD::CardId sdCardIdGet() {
+        assert(_mode == STM::Status::Modes::STMApp);
+        
+        const STM::Cmd cmd = { .op = STM::Op::SDCardIdGet };
+        _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("SDCardIdGet command failed");
+        
+        SD::CardId cardId;
+        _dev.read(STM::Endpoints::DataIn, cardId);
+        return cardId;
+    }
+    
+    SD::CardData sdCardDataGet() {
+        assert(_mode == STM::Status::Modes::STMApp);
+        
+        const STM::Cmd cmd = { .op = STM::Op::SDCardDataGet };
+        _dev.vendorRequestOut(0, cmd);
+        _waitOrThrow("SDCardDataGet command failed");
+        
+        SD::CardData cardData;
+        _dev.read(STM::Endpoints::DataIn, cardData);
+        return cardData;
+    }
+    
     void sdRead(uintptr_t addr) {
         assert(_mode == STM::Status::Modes::STMApp);
         

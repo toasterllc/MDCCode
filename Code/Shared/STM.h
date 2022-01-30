@@ -39,6 +39,7 @@ namespace STM {
         
         // # STMApp
         SDCardIdGet,
+        SDCardDataGet,
         SDRead,
         ImgCapture,
         ImgExposureSet,
