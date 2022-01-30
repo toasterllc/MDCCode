@@ -41,7 +41,7 @@ namespace STM {
         SDCardIdGet,
         SDRead,
         ImgCapture,
-        ImgSetExposure,
+        ImgExposureSet,
     };
     
     struct Cmd {
@@ -95,7 +95,7 @@ namespace STM {
                 uint16_t coarseIntTime;
                 uint16_t fineIntTime;
                 uint16_t analogGain;
-            } ImgSetExposure;
+            } ImgExposureSet;
         } arg;
         
     } __attribute__((packed));

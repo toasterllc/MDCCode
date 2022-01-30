@@ -400,8 +400,8 @@ void _ImgInit() {
     init = true;
 }
 
-void _ImgSetExposure(const STM::Cmd& cmd) {
-    const auto& arg = cmd.arg.ImgSetExposure;
+void _ImgExposureSet(const STM::Cmd& cmd) {
+    const auto& arg = cmd.arg.ImgExposureSet;
     _ImgInit();
     _ImgSensor::SetCoarseIntTime(arg.coarseIntTime);
     _ImgSensor::SetFineIntTime(arg.fineIntTime);
@@ -450,7 +450,7 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::SDCardIdGet:       _SDCardIdGet(cmd);              break;
     case Op::SDRead:            _SDRead(cmd);                   break;
     case Op::ImgCapture:        _ImgCapture(cmd);               break;
-    case Op::ImgSetExposure:    _ImgSetExposure(cmd);           break;
+    case Op::ImgExposureSet:    _ImgExposureSet(cmd);           break;
     // Bad command
     default:                    _System::USBSendStatus(false);  break;
     }
