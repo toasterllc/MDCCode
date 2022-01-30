@@ -14,7 +14,7 @@ public:
     
     ~MDCDevice() {
         auto lock = std::unique_lock(_state.lock);
-        #warning this will deadlock if the thread tries to acquire the lock...
+        #warning TODO: this will deadlock if the thread tries to acquire the lock...
         if (_state.updateImageLibraryThread.joinable()) {
             _state.updateImageLibraryThread.join();
         }
@@ -36,6 +36,7 @@ public:
     
     void updateImageLibrary() {
         auto lock = std::unique_lock(_state.lock);
+        assert(!_state.updateImageLibraryThread.joinable());
         #warning TODO: what should we do if the thread's already running?
         _state.updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
         _state.updateImageLibraryThread.detach();
@@ -88,6 +89,21 @@ private:
             }
             
             mspDisconnect();
+            
+            const SD::CardId cardId = sdCardIdGet();
+            
+            printf("cardId: ");
+            for (size_t i=0; i<sizeof(cardId); i++) {
+                printf("%x ", ((uint8_t*)&cardId)[i]);
+            }
+            printf("\n");
+            
+            const SD::CardData cardData = sdCardDataGet();
+            printf("cardData: ");
+            for (size_t i=0; i<sizeof(cardId); i++) {
+                printf("%x ", ((uint8_t*)&cardId)[i]);
+            }
+            printf("\n");
             
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(state);
             
