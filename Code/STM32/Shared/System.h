@@ -1,11 +1,10 @@
 #pragma once
+#include <cstring>
 #include "GPIO.h"
-#include "MSP430JTAG.h"
 #include "Util.h"
 #include "STM.h"
 #include "USB.h"
 #include "QSPI.h"
-#include "ICE.h"
 #include "Toastbox/Task.h"
 
 // MARK: - Main Thread Stack
@@ -34,11 +33,6 @@ private:
     
     [[noreturn]]
     static void _SchedulerError(uint16_t line) {
-        Abort();
-    }
-    
-    [[noreturn]]
-    static void _ICEError(uint16_t line) {
         Abort();
     }
     
@@ -191,21 +185,7 @@ public:
         
         // Configure our LEDs
         InitLED();
-        
-        // Init MSP
-        MSP.init();
     }
-    
-    using MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
-    using MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
-    static inline MSP430JTAG<MSPTest, MSPRst_, CPUFreqMHz> MSP;
-    
-    using ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
-    using ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
-    
-    using ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
-    using ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
-    using ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
     
     // LEDs
 //    using LED0 = GPIO<GPIOPortF, GPIO_PIN_14>;
@@ -215,8 +195,6 @@ public:
     
     static inline T_USB USB;
     static inline T_QSPI QSPI;
-
-    using ICE = ::ICE<Scheduler, _ICEError>;
     
     static void USBSendStatus(bool s) {
         alignas(4) static bool status = false; // Aligned to send via USB

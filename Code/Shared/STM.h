@@ -17,30 +17,30 @@ namespace STM {
     );
     
     enum class Op : uint8_t {
-        // # Common command set
+        // Common command set
         None,
         EndpointsFlush,
         StatusGet,
         BootloaderInvoke,
         LEDSet,
         
-        // # STMLoader
-        // STM32 Bootloader
+        // STMLoader
         STMWrite,
         STMReset,
-        // ICE40 Bootloader
+        
+        // STMApp
         ICEWrite,
-        // MSP430 Bootloader
+        
         MSPConnect,
         MSPDisconnect,
         MSPRead,
         MSPWrite,
         MSPDebug,
         
-        // # STMApp
         SDCardIdGet,
         SDCardDataGet,
         SDRead,
+        
         ImgCapture,
         ImgExposureSet,
     };
