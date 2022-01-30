@@ -11,6 +11,7 @@
 #include "SDCard.h"
 #include "ImgSensor.h"
 #include "USBConfigDesc.h"
+#include "MSP430JTAG.h"
 using namespace STM;
 
 // MARK: - Peripherals & Types
@@ -42,6 +43,7 @@ using _BufQueue = BufQueue<uint8_t,63*1024,2>;
 [[gnu::section(".sram1")]]
 static _BufQueue _Bufs;
 
+struct _TaskUSBDataOut;
 struct _TaskUSBDataIn;
 struct _TaskReadout;
 
@@ -52,23 +54,30 @@ using _System = System<
     STM::Status::Modes::STMApp,
     _CmdHandle,
     // Additional Tasks
+    _TaskUSBDataOut,
     _TaskUSBDataIn,
     _TaskReadout
 >;
 
-constexpr auto& _MSP = _System::MSP;
-using _ICE = _System::ICE;
 constexpr auto& _USB = _System::USB;
 constexpr auto& _QSPI = _System::QSPI;
 using _Scheduler = _System::Scheduler;
 
-static QSPI_CommandTypeDef _ICEQSPICmd(const _ICE::Msg& msg, size_t respLen);
+using _ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
+using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
+
+using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
+using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
+using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
+
+[[noreturn]] static void _ICEError(uint16_t line);
+using _ICE = ::ICE<_Scheduler, _ICEError>;
 
 static void _ImgSetPowerEnabled(bool en);
 [[noreturn]] static void _ImgError(uint16_t line);
 using _ImgSensor = Img::Sensor<
     _System::Scheduler,     // T_Scheduler
-    _System::ICE,           // T_ICE
+    _ICE,                   // T_ICE
     _ImgSetPowerEnabled,    // T_SetPowerEnabled
     _ImgError               // T_Error
 >;
@@ -77,7 +86,7 @@ static void _SDSetPowerEnabled(bool en);
 [[noreturn]] static void _SDError(uint16_t line);
 static SD::Card<
     _System::Scheduler, // T_Scheduler
-    _System::ICE,       // T_ICE
+    _ICE,               // T_ICE
     _SDSetPowerEnabled, // T_SetPowerEnabled
     _SDError,           // T_Error
     1,                  // T_ClkDelaySlow (odd values invert the clock)
@@ -155,21 +164,33 @@ template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
     
-    _System::ICE_ST_SPI_CS_::Write(0);
+    _ICE_ST_SPI_CS_::Write(0);
     if (resp) {
         _QSPI.read(_ICEQSPICmd(msg, sizeof(*resp)), resp, sizeof(*resp));
     } else {
         _QSPI.command(_ICEQSPICmd(msg, 0));
     }
     _Scheduler::Wait([] { return _QSPI.ready(); });
-    _System::ICE_ST_SPI_CS_::Write(1);
+    _ICE_ST_SPI_CS_::Write(1);
+}
+
+[[noreturn]]
+static void _ICEError(uint16_t line) {
+    _System::Abort();
 }
 
 // MARK: - MSP430
 
+using _MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
+using _MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
+static MSP430JTAG<_MSPTest, _MSPRst_, _System::CPUFreqMHz> _MSP;
+
 static void _MSPInit() {
     constexpr uint16_t PM5CTL0  = 0x0130;
     constexpr uint16_t PAOUT    = 0x0202;
+    
+    // Init MSP
+    _MSP.init();
     
     auto s = _MSP.connect();
     Assert(s == _MSP.Status::OK);
@@ -181,6 +202,8 @@ static void _MSPInit() {
     // Clear PAOUT so everything is driven to 0 by default
     _MSP.write(PAOUT, 0x0000);
 }
+
+// MARK: - SD Card
 
 static void _SDSetPowerEnabled(bool en) {
     constexpr uint16_t BITB         = 1<<0xB;
@@ -241,6 +264,47 @@ static void _ImgError(uint16_t line) {
 
 // MARK: - Tasks
 
+// _TaskUSBDataOut: reads `len` bytes from the DataOut endpoint and writes them to _Bufs
+struct _TaskUSBDataOut {
+    static void Start(size_t l) {
+        // Make sure this task isn't busy
+        Assert(!_Scheduler::Running<_TaskUSBDataOut>());
+        
+        static size_t len = 0;
+        len = l;
+        _Scheduler::Start<_TaskUSBDataOut>([] {
+            while (len) {
+                _Scheduler::Wait([] { return !_Bufs.full(); });
+                
+                auto& buf = _Bufs.back();
+                // Prepare to receive either `len` bytes or the
+                // buffer capacity bytes, whichever is smaller.
+                const size_t cap = _USB.CeilToMaxPacketSize(_USB.MaxPacketSizeOut(), std::min(len, sizeof(buf.data)));
+                // Ensure that after rounding up to the nearest packet size, we don't
+                // exceed the buffer capacity. (This should always be safe as long as
+                // the buffer capacity is a multiple of the max packet size.)
+                Assert(cap <= sizeof(buf.data));
+                _USB.recv(Endpoints::DataOut, buf.data, cap);
+                _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
+                
+                // Never claim that we read more than the requested data, even if ceiling
+                // to the max packet size caused us to read more than requested.
+                const size_t recvLen = std::min(len, _USB.recvLen(Endpoints::DataOut));
+                len -= recvLen;
+                buf.len = recvLen;
+                _Bufs.push();
+            }
+        });
+    }
+    
+    // Task options
+    static constexpr Toastbox::TaskOptions Options{};
+    
+    // Task stack
+    [[gnu::section(".stack._TaskUSBDataOut")]]
+    static inline uint8_t Stack[256];
+};
+
 // _TaskUSBDataIn: writes buffers from _Bufs to the DataIn endpoint, and pops them from _Bufs
 struct _TaskUSBDataIn {
     static void Start() {
@@ -281,7 +345,7 @@ struct _TaskReadout {
             
             // Send the Readout message, which causes us to enter the readout mode until
             // we release the chip select
-            _System::ICE_ST_SPI_CS_::Write(0);
+            _ICE_ST_SPI_CS_::Write(0);
             _QSPI.command(_ICEQSPICmd(_ICE::ReadoutMsg(), 0));
             
             // Read data over QSPI and write it to USB, indefinitely
@@ -308,7 +372,7 @@ struct _TaskReadout {
                 
                 // Wait until ICE40 signals that data is ready to be read
                 #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
-                while (!_System::ICE_ST_SPI_D_READY::Read());
+                while (!_ICE_ST_SPI_D_READY::Read());
                 
                 _QSPI.read(_ICEQSPICmdReadOnly(len), buf.data+buf.len, len);
                 buf.len += len;
@@ -322,7 +386,7 @@ struct _TaskReadout {
         // De-assert the SPI chip select when the _TaskReadout is stopped.
         // This is necessary because the _TaskReadout asserts the SPI chip select,
         // but never deasserts it because _TaskReadout continues indefinitely.
-        _System::ICE_ST_SPI_CS_::Write(1);
+        _ICE_ST_SPI_CS_::Write(1);
     }
     
     // Task options
@@ -336,6 +400,299 @@ struct _TaskReadout {
 };
 
 // MARK: - Commands
+
+static void _ICEQSPIWrite(const void* data, size_t len) {
+    const QSPI_CommandTypeDef cmd = {
+        .Instruction = 0,
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        
+        .Address = 0,
+        .AddressSize = QSPI_ADDRESS_8_BITS,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        
+        .AlternateBytes = 0,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        
+        .DummyCycles = 0,
+        
+        .NbData = (uint32_t)len,
+        .DataMode = QSPI_DATA_1_LINE,
+        
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+    
+    _QSPI.write(cmd, data, len);
+}
+
+static void _ICEWrite(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.ICEWrite;
+    
+    // Configure ICE40 control GPIOs
+    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Put ICE40 into configuration mode
+    _ICE_ST_SPI_CLK::Write(1);
+    
+    _ICE_ST_SPI_CS_::Write(0);
+    _ICE_CRST_::Write(0);
+    _Scheduler::SleepMs<1>(); // Sleep 1 ms (ideally, 200 ns)
+    
+    _ICE_CRST_::Write(1);
+    _Scheduler::SleepMs<2>(); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+    
+    // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
+    _ICE_ST_SPI_CS_::Write(1);
+    
+    // Have QSPI take over _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_
+    _QSPI.config();
+    
+    // Send 8 clocks and wait for them to complete
+    static const uint8_t ff = 0xff;
+    _ICEQSPIWrite(&ff, 1);
+    _Scheduler::Wait([] { return _QSPI.ready(); });
+    
+    // Reset state
+    _Bufs.reset();
+    
+    size_t len = arg.len;
+    // Trigger the USB DataOut task with the amount of data
+    _TaskUSBDataOut::Start(len);
+    
+    while (len) {
+        // Wait until we have data to consume, and QSPI is ready to write
+        _Scheduler::Wait([] { return !_Bufs.empty() && _QSPI.ready(); });
+        
+        // Write the data over QSPI and wait for completion
+        _ICEQSPIWrite(_Bufs.front().data, _Bufs.front().len);
+        _Scheduler::Wait([] { return _QSPI.ready(); });
+        
+        // Update the remaining data and pop the buffer so it can be used again
+        len -= _Bufs.front().len;
+        _Bufs.pop();
+    }
+    
+    // Wait for CDONE to be asserted
+    {
+        bool ok = false;
+        for (int i=0; i<10 && !ok; i++) {
+            if (i) _Scheduler::SleepMs<1>(); // Sleep 1 ms
+            ok = _ICE_CDONE::Read();
+        }
+        
+        if (!ok) {
+            _System::USBSendStatus(false);
+            return;
+        }
+    }
+    
+    // Finish
+    {
+        // Supply >=49 additional clocks (8*7=56 clocks), per the
+        // "iCE40 Programming and Configuration" guide.
+        // These clocks apparently reach the user application. Since this
+        // appears unavoidable, prevent the clocks from affecting the user
+        // application in two ways:
+        //   1. write 0xFF, which the user application must consider as a NOP;
+        //   2. write a byte at a time, causing chip-select to be de-asserted
+        //      between bytes, which must cause the user application to reset
+        //      itself.
+        constexpr uint8_t ClockCount = 7;
+        static int i;
+        for (i=0; i<ClockCount; i++) {
+            _ICEQSPIWrite(&ff, sizeof(ff));
+            _Scheduler::Wait([] { return _QSPI.ready(); });
+        }
+    }
+    
+    _System::USBSendStatus(true);
+}
+
+static void _MSPConnect(const STM::Cmd& cmd) {
+    const auto r = _MSP.connect();
+    // Send status
+    _System::USBSendStatus(r == _MSP.Status::OK);
+}
+
+static void _MSPDisconnect(const STM::Cmd& cmd) {
+    _MSP.disconnect();
+    // Send status
+    _System::USBSendStatus(true);
+}
+
+static void _MSPRead(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPRead;
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Start the USB DataIn task
+    _TaskUSBDataIn::Start();
+    
+    uint32_t addr = arg.addr;
+    uint32_t len = arg.len;
+    while (len) {
+        _Scheduler::Wait([] { return !_Bufs.full(); });
+        
+        auto& buf = _Bufs.back();
+        // Prepare to receive either `len` bytes or the
+        // buffer capacity bytes, whichever is smaller.
+        const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
+        _MSP.read(addr, buf.data, chunkLen);
+        addr += chunkLen;
+        len -= chunkLen;
+        // Enqueue the buffer
+        buf.len = chunkLen;
+        _Bufs.push();
+    }
+    
+    // Wait for DataIn task to complete
+    _Scheduler::Wait([] { return _Bufs.empty(); });
+    // Send status
+    _System::USBSendStatus(true);
+}
+
+static void _MSPWrite(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPWrite;
+    
+    // Reset state
+    _Bufs.reset();
+    _MSP.crcReset();
+    
+    uint32_t addr = arg.addr;
+    uint32_t len = arg.len;
+    
+    // Trigger the USB DataOut task with the amount of data
+    _TaskUSBDataOut::Start(len);
+    
+    while (len) {
+        _Scheduler::Wait([] { return !_Bufs.empty(); });
+        
+        // Write the data over Spy-bi-wire
+        auto& buf = _Bufs.front();
+        _MSP.write(addr, buf.data, buf.len);
+        // Update the MSP430 address to write to
+        addr += buf.len;
+        len -= buf.len;
+        // Pop the buffer, which we just finished sending over Spy-bi-wire
+        _Bufs.pop();
+    }
+    
+    // Verify the CRC of all the data we wrote
+    const auto r = _MSP.crcVerify();
+    // Send status
+    _System::USBSendStatus(r == _MSP.Status::OK);
+}
+
+struct _MSPDebugState {
+    uint8_t bits = 0;
+    uint8_t bitsLen = 0;
+    size_t len = 0;
+    bool ok = true;
+};
+
+static void _MSPDebugPushReadBits(_MSPDebugState& state, _BufQueue::Buf& buf) {
+    if (state.len >= sizeof(buf.data)) {
+        state.ok = false;
+        return;
+    }
+    
+    // Enqueue the new byte into `buf`
+    buf.data[state.len] = state.bits;
+    state.len++;
+    // Reset our bits
+    state.bits = 0;
+    state.bitsLen = 0;
+}
+
+static void _MSPDebugHandleSBWIO(const MSPDebugCmd& cmd, _MSPDebugState& state, _BufQueue::Buf& buf) {
+    const bool tdo = _MSP.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
+    if (cmd.tdoReadGet()) {
+        // Enqueue a new bit
+        state.bits <<= 1;
+        state.bits |= tdo;
+        state.bitsLen++;
+        
+        // Enqueue the byte if it's filled
+        if (state.bitsLen == 8) {
+            _MSPDebugPushReadBits(state, buf);
+        }
+    }
+}
+
+static void _MSPDebugHandleCmd(const MSPDebugCmd& cmd, _MSPDebugState& state, _BufQueue::Buf& buf) {
+    switch (cmd.opGet()) {
+    case MSPDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet());     break;
+    case MSPDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet()); 	    break;
+    case MSPDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse(); 				    break;
+    case MSPDebugCmd::Ops::SBWIO:       _MSPDebugHandleSBWIO(cmd, state, buf);	break;
+    default:                            abort();
+    }
+}
+
+static void _MSPDebug(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPDebug;
+    
+    // Reset state
+    _Bufs.reset();
+    auto& bufIn = _Bufs.back();
+    _Bufs.push();
+    auto& bufOut = _Bufs.back();
+    
+    // Bail if more data was requested than the size of our buffer
+    if (arg.respLen > sizeof(bufOut.data)) {
+        // Send preliminary status: error
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Send preliminary status: OK
+    _System::USBSendStatus(true);
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    
+    _MSPDebugState state;
+    
+    // Handle debug commands
+    {
+        size_t cmdsLenRem = arg.cmdsLen;
+        while (cmdsLenRem) {
+            // Receive debug commands into buf
+            _USB.recv(Endpoints::DataOut, bufIn.data, sizeof(bufIn.data));
+            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
+            
+            // Handle each MSPDebugCmd
+            const MSPDebugCmd* cmds = (MSPDebugCmd*)bufIn.data;
+            const size_t cmdsLen = _USB.recvLen(Endpoints::DataOut) / sizeof(MSPDebugCmd);
+            for (size_t i=0; i<cmdsLen && state.ok; i++) {
+                _MSPDebugHandleCmd(cmds[i], state, bufOut);
+            }
+            
+            cmdsLenRem -= cmdsLen;
+        }
+    }
+    
+    // Reply with data generated from debug commands
+    {
+        // Push outstanding bits into the buffer
+        // This is necessary for when the client reads a number of bits
+        // that didn't fall on a byte boundary.
+        if (state.bitsLen) _MSPDebugPushReadBits(state, bufOut);
+        
+        if (arg.respLen) {
+            // Send the data and wait for it to be received
+            _USB.send(Endpoints::DataIn, bufOut.data, arg.respLen);
+            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+        }
+    }
+    
+    // Send status
+    _System::USBSendStatus(state.ok);
+}
 
 static void _SDInit() {
     static bool init = false;
@@ -386,7 +743,7 @@ static void _SDRead(const STM::Cmd& cmd) {
     
     // Stop reading from the SD card if a read is in progress
     if (reading) {
-        _System::ICE_ST_SPI_CS_::Write(1);
+        _ICE_ST_SPI_CS_::Write(1);
         _SDCard.readStop();
         reading = false;
     }
@@ -463,9 +820,20 @@ void _ImgCapture(const STM::Cmd& cmd) {
 
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
+    // ICE40 Bootloader
+    case Op::ICEWrite:          _ICEWrite(cmd);                 break;
+    // MSP430 Bootloader
+    case Op::MSPConnect:        _MSPConnect(cmd);               break;
+    case Op::MSPDisconnect:     _MSPDisconnect(cmd);            break;
+    // MSP430 Debug
+    case Op::MSPRead:           _MSPRead(cmd);                  break;
+    case Op::MSPWrite:          _MSPWrite(cmd);                 break;
+    case Op::MSPDebug:          _MSPDebug(cmd);                 break;
+    // SD Card
     case Op::SDCardIdGet:       _SDCardIdGet(cmd);              break;
     case Op::SDCardDataGet:     _SDCardDataGet(cmd);            break;
     case Op::SDRead:            _SDRead(cmd);                   break;
+    // Img
     case Op::ImgCapture:        _ImgCapture(cmd);               break;
     case Op::ImgExposureSet:    _ImgExposureSet(cmd);           break;
     // Bad command
@@ -513,11 +881,13 @@ void abort() {
 int main() {
     _System::Init();
     
+    __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
+    
     _USB.init();
     _QSPI.init();
     
-    _System::ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-    _System::ICE_ST_SPI_CS_::Write(1);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+    _ICE_ST_SPI_CS_::Write(1);
     
     _ICE::Init();
     _MSPInit();

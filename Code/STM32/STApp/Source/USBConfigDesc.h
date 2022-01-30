@@ -10,6 +10,7 @@ static const void* USBConfigDesc(size_t& len) {
     struct USBConfigDescType {
         USB::ConfigurationDescriptor configDesc;
         USB::InterfaceDescriptor iface0Desc;
+            USB::EndpointDescriptor epOut1Desc;
             USB::EndpointDescriptor epIn1Desc;
     } __attribute__((packed));
     
@@ -37,6 +38,15 @@ static const void* USBConfigDesc(size_t& len) {
                 .iInterface                 = LFH_U8(0x00),                                     // iInterface: string descriptor index
             },
             
+                .epOut1Desc = {
+                    .bLength                = LFH_U8(sizeof(USB::EndpointDescriptor)),          // bLength: Endpoint Descriptor size
+                    .bDescriptorType        = LFH_U8(USB::DescriptorType::Endpoint),            // bDescriptorType: Endpoint
+                    .bEndpointAddress       = LFH_U8(STM::Endpoints::DataOut),                  // bEndpointAddress
+                    .bmAttributes           = LFH_U8(USB::EndpointAttributes::TransferBulk),    // bmAttributes: Bulk
+                    .wMaxPacketSize         = LFH_U16(T_USB::MaxPacketSizeOut()),               // wMaxPacketSize
+                    .bInterval              = LFH_U8(0x00),                                     // bInterval: ignore for Bulk transfer
+                },
+                
                 .epIn1Desc = {
                     .bLength                = LFH_U8(sizeof(USB::EndpointDescriptor)),          // bLength: Endpoint Descriptor size
                     .bDescriptorType        = LFH_U8(USB::DescriptorType::Endpoint),            // bDescriptorType: Endpoint
