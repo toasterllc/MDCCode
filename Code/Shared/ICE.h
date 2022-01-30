@@ -156,7 +156,6 @@ public:
     };
     
     struct SDRespMsg : public Msg {
-        template <size_t T_N>
         constexpr SDRespMsg(uint8_t idx) : Msg(MsgType::StartBit | MsgType::Resp | 0x05,
             0,
             0,

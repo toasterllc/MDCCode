@@ -337,16 +337,36 @@ struct _TaskReadout {
 
 // MARK: - Commands
 
-static void _SDRead(const STM::Cmd& cmd) {
+static void _SDInit() {
     static bool init = false;
+    if (init) return; // Short-circuit if we've already initialized
+    
+    _SDCard.enable();
+    init = true;
+}
+
+static void _SDCardIdGet(const STM::Cmd& cmd) {
+    // cardId: aligned to send via USB
+    alignas(4) static SD::CardId cardId;
+    
+    // Initialize the SD card if we haven't done so
+    _SDInit();
+    
+    // Send status
+    _System::USBSendStatus(true);
+    
+    // Send SD card id
+    cardId = _SDCard.cardId();
+    _USB.send(Endpoints::DataIn, &cardId, sizeof(cardId));
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+}
+
+static void _SDRead(const STM::Cmd& cmd) {
     static bool reading = false;
     const auto& arg = cmd.arg.SDRead;
     
     // Initialize the SD card if we haven't done so
-    if (!init) {
-        _SDCard.enable();
-        init = true;
-    }
+    _SDInit();
     
     // Stop reading from the SD card if a read is in progress
     if (reading) {
@@ -396,7 +416,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _ImgInit();
     
     const Img::Header header = {
-        .version        = Img::HeaderVersion,
+        .magicVersion   = Img::Header::MagicVersion,
         .imageWidth     = Img::PixelWidth,
         .imageHeight    = Img::PixelHeight,
     };
@@ -427,6 +447,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
 
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
+    case Op::SDCardIdGet:       _SDCardIdGet(cmd);              break;
     case Op::SDRead:            _SDRead(cmd);                   break;
     case Op::ImgCapture:        _ImgCapture(cmd);               break;
     case Op::ImgSetExposure:    _ImgSetExposure(cmd);           break;
