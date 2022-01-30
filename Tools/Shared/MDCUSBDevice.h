@@ -345,12 +345,12 @@ public:
         uint16_t analogGain     = 0;
     };
     
-    void imgSetExposure(const ImgExposure& exp) {
+    void imgExposureSet(const ImgExposure& exp) {
         assert(_mode == STM::Status::Modes::STMApp);
         const STM::Cmd cmd = {
-            .op = STM::Op::ImgSetExposure,
+            .op = STM::Op::ImgExposureSet,
             .arg = {
-                .ImgSetExposure = {
+                .ImgExposureSet = {
                     .coarseIntTime  = exp.coarseIntTime,
                     .fineIntTime    = exp.fineIntTime,
                     .analogGain     = exp.analogGain,
@@ -358,7 +358,7 @@ public:
             },
         };
         _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("ImgSetExposure command failed");
+        _waitOrThrow("ImgExposureSet command failed");
     }
     
     std::unique_ptr<uint8_t[]> imgReadout() {
