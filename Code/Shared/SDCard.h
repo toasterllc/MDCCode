@@ -6,16 +6,6 @@
 
 namespace SD {
 
-struct [[gnu::packed]] CardId {
-    uint8_t manufacturerId          = 0;
-    uint16_t oemId                  = 0;
-    uint8_t productName[5]          = {};
-    uint8_t productRevision         = 0;
-    uint32_t productSerialNumber    = 0;
-    uint16_t manufactureDate        = 0;
-    uint8_t crc                     = 0;
-};
-
 template <
     typename T_Scheduler,
     typename T_ICE,
@@ -129,13 +119,12 @@ public:
             T_ICE::SDSendCmd(_CMD2, 0, _RespType::Len136);
             // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
             // so it'll be flagged as incorrect.
-            
-            // Get the 128-bit card ID (CID) response
-            _SDRespResp resp;
-            T_ICE::Transfer(_SDRespMsg(0), &resp);
-            memcpy(((uint8_t*)&_cardId)+0, resp.payload, 8);
-            T_ICE::Transfer(_SDRespMsg(1), &resp);
-            memcpy(((uint8_t*)&_cardId)+8, resp.payload, 8);
+//            // Get the 128-bit card ID (CID) response
+//            _SDRespResp resp;
+//            T_ICE::Transfer(_SDRespMsg(0), &resp);
+//            memcpy(((uint8_t*)&_cardId)+0, resp.payload, 8);
+//            T_ICE::Transfer(_SDRespMsg(1), &resp);
+//            memcpy(((uint8_t*)&_cardId)+8, resp.payload, 8);
         }
         
         // ====================
@@ -225,7 +214,7 @@ public:
         T_SetPowerEnabled(false);
     }
     
-    const CardId& cardId() const { return _cardId; }
+//    const CardId& cardId() const { return _cardId; }
     
     void readStart(uint32_t addr) {
         // Verify that `addr` is a multiple of the SD block length
@@ -318,6 +307,16 @@ public:
         }
     }
     
+    CardId cardIdGet() {
+        T_ICE::SDSendCmd(_CMD10, ((uint32_t)_rca)<<16, _RespType::Len136);
+        return _sdResp128Get<CardId>();
+    }
+    
+    CardData cardDataGet() {
+        T_ICE::SDSendCmd(_CMD9, ((uint32_t)_rca)<<16, _RespType::Len136);
+        return _sdResp128Get<CardData>();
+    }
+    
 private:
     using _SDInitMsg    = typename T_ICE::SDInitMsg;
     using _SDRespMsg    = typename T_ICE::SDRespMsg;
@@ -341,6 +340,8 @@ private:
     static constexpr uint8_t _CMD6  = 6;
     static constexpr uint8_t _CMD7  = 7;
     static constexpr uint8_t _CMD8  = 8;
+    static constexpr uint8_t _CMD9  = 9;
+    static constexpr uint8_t _CMD10 = 10;
     static constexpr uint8_t _CMD12 = 12;
     static constexpr uint8_t _CMD18 = 18;
     static constexpr uint8_t _CMD23 = 23;
@@ -358,8 +359,21 @@ private:
         Assert(!status.respCRCErr());
     }
     
+    template <typename T>
+    T _sdResp128Get() {
+        // Get the 128-bit response
+        T dst;
+        _SDRespResp resp;
+        static_assert((sizeof(T) % sizeof(resp.payload)) == 0);
+        for (size_t i=0; i<sizeof(T)/sizeof(resp); i++) {
+            T_ICE::Transfer(_SDRespMsg(i), &resp);
+            memcpy(((uint8_t*)&dst) + sizeof(resp.payload)*i, resp.payload, sizeof(resp.payload));
+        }
+        return dst;
+    }
+    
     uint16_t _rca = 0;
-    CardId _cardId;
+//    CardId _cardId;
     
 #undef Assert
 };

@@ -356,8 +356,24 @@ static void _SDCardIdGet(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
     
     // Send SD card id
-    cardId = _SDCard.cardId();
+    cardId = _SDCard.cardIdGet();
     _USB.send(Endpoints::DataIn, &cardId, sizeof(cardId));
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+}
+
+static void _SDCardDataGet(const STM::Cmd& cmd) {
+    // cardData: aligned to send via USB
+    alignas(4) static SD::CardData cardData;
+    
+    // Initialize the SD card if we haven't done so
+    _SDInit();
+    
+    // Send status
+    _System::USBSendStatus(true);
+    
+    // Send SD card id
+    cardData = _SDCard.cardDataGet();
+    _USB.send(Endpoints::DataIn, &cardData, sizeof(cardData));
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
 }
 
@@ -448,6 +464,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     case Op::SDCardIdGet:       _SDCardIdGet(cmd);              break;
+    case Op::SDCardDataGet:     _SDCardDataGet(cmd);            break;
     case Op::SDRead:            _SDRead(cmd);                   break;
     case Op::ImgCapture:        _ImgCapture(cmd);               break;
     case Op::ImgExposureSet:    _ImgExposureSet(cmd);           break;
