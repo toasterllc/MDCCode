@@ -53,7 +53,7 @@ private:
         CFRunLoopSourceRef rls = IONotificationPortGetRunLoopSource(notePort);
         CFRunLoopAddSource(CFRunLoopGetCurrent(), rls, kCFRunLoopCommonModes);
         
-        std::set<std::string> configuredDeviceSerials;
+        std::set<std::string> bootloadedDeviceSerials;
         for (;;) {
             // Drain all services from the iterator
             for (;;) {
@@ -76,14 +76,17 @@ private:
                     const STM::Status status = dev->statusGet();
                     switch (status.mode) {
                     case STM::Status::Modes::STMLoader:
-                        _ConfigureDevice(dev);
-                        configuredDeviceSerials.insert(dev->serial());
+                        _DeviceBootload(dev);
+                        bootloadedDeviceSerials.insert(dev->serial());
                         break;
                     
                     case STM::Status::Modes::STMApp:
                         // If we previously configured this device, this device is ready!
-                        if (configuredDeviceSerials.find(dev->serial()) != configuredDeviceSerials.end()) {
-                            configuredDeviceSerials.erase(dev->serial());
+                        if (bootloadedDeviceSerials.find(dev->serial()) != bootloadedDeviceSerials.end()) {
+                            bootloadedDeviceSerials.erase(dev->serial());
+                            
+                            // Load ICE40 with our app
+                            _ICEConfigure(dev);
                             
                             // Watch the service so we know when it goes away
                             io_object_t ioObj = MACH_PORT_NULL;
@@ -109,7 +112,7 @@ private:
                         break;
                     
                     default:
-                        configuredDeviceSerials.erase(dev->serial());
+                        bootloadedDeviceSerials.erase(dev->serial());
                         dev->bootloaderInvoke();
                         break;
                     }
@@ -140,27 +143,25 @@ private:
         });
     }
     
-    static void _ConfigureDevice(MDCDevicePtr dev) {
-        {
-            const char* ICEBinPath = "/Users/dave/repos/MDC/Code/ICE40/ICEAppImgCaptureSTM/Synth/Top.bin";
-            Mmap mmap(ICEBinPath);
-            
-            // Write the ICE40 binary
-            dev->iceWrite(mmap.data(), mmap.len());
-        }
+    static void _DeviceBootload(MDCDevicePtr dev) {
+        const char* STMBinPath = "/Users/dave/repos/MDC/Code/STM32/STApp/Release/STApp.elf";
+        ELF32Binary elf(STMBinPath);
         
-        {
-            const char* STMBinPath = "/Users/dave/repos/MDC/Code/STM32/STApp/Release/STApp.elf";
-            ELF32Binary elf(STMBinPath);
-            
-            elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-            size_t size, const char* name) {
-                dev->stmWrite(paddr, data, size);
-            });
-            
-            // Reset the device, triggering it to load the program we just wrote
-            dev->stmReset(elf.entryPointAddr());
-        }
+        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+        size_t size, const char* name) {
+            dev->stmWrite(paddr, data, size);
+        });
+        
+        // Reset the device, triggering it to load the program we just wrote
+        dev->stmReset(elf.entryPointAddr());
+    }
+    
+    static void _ICEConfigure(MDCDevicePtr dev) {
+        const char* ICEBinPath = "/Users/dave/repos/MDC/Code/ICE40/ICEAppSDReadoutSTM/Synth/Top.bin";
+        Mmap mmap(ICEBinPath);
+        
+        // Write the ICE40 binary
+        dev->iceWrite(mmap.data(), mmap.len());
     }
     
     static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* msgArg) {
