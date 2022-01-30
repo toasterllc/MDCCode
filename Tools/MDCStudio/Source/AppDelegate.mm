@@ -292,11 +292,20 @@ static NSDictionary* LayerNullActions = @{
 @implementation AppDelegate
 
 - (void)awakeFromNib {
-    MDCDevicesManager::AddObserver([] {
-        printf("Devices changed\n");
+    __weak auto weakSelf = self;
+    MDCDevicesManager::AddObserver([=] {
+        [weakSelf _handleDevicesChanged];
     });
     
     MDCDevicesManager::Start();
+}
+
+- (void)_handleDevicesChanged {
+    printf("_handleDevicesChanged\n");
+    std::vector<MDCDevicePtr> devices = MDCDevicesManager::Devices();
+    for (MDCDevicePtr dev : devices) {
+        dev->updateImageLibrary();
+    }
 }
 
 @end
