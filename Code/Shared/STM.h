@@ -38,6 +38,7 @@ namespace STM {
         MSPDebug,
         
         // # STMApp
+        SDCardIdGet,
         SDRead,
         ImgCapture,
         ImgSetExposure,

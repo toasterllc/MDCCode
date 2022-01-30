@@ -6,6 +6,16 @@
 
 namespace SD {
 
+struct [[gnu::packed]] CardId {
+    uint8_t manufacturerId          = 0;
+    uint16_t oemId                  = 0;
+    uint8_t productName[5]          = {};
+    uint8_t productRevision         = 0;
+    uint32_t productSerialNumber    = 0;
+    uint16_t manufactureDate        = 0;
+    uint8_t crc                     = 0;
+};
+
 template <
     typename T_Scheduler,
     typename T_ICE,
@@ -119,6 +129,13 @@ public:
             T_ICE::SDSendCmd(_CMD2, 0, _RespType::Len136);
             // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
             // so it'll be flagged as incorrect.
+            
+            // Get the 128-bit card ID (CID) response
+            _SDRespResp resp;
+            T_ICE::Transfer(_SDRespMsg(0), &resp);
+            memcpy(((uint8_t*)&_cardId)+0, resp.payload, 8);
+            T_ICE::Transfer(_SDRespMsg(1), &resp);
+            memcpy(((uint8_t*)&_cardId)+8, resp.payload, 8);
         }
         
         // ====================
@@ -207,6 +224,8 @@ public:
         // Turn off SD card power and wait for it to reach 0V
         T_SetPowerEnabled(false);
     }
+    
+    const CardId& cardId() const { return _cardId; }
     
     void readStart(uint32_t addr) {
         // Verify that `addr` is a multiple of the SD block length
@@ -301,6 +320,8 @@ public:
     
 private:
     using _SDInitMsg    = typename T_ICE::SDInitMsg;
+    using _SDRespMsg    = typename T_ICE::SDRespMsg;
+    using _SDRespResp   = typename T_ICE::SDRespResp;
     using _RespType     = typename T_ICE::SDSendCmdMsg::RespType;
     using _DatInType    = typename T_ICE::SDSendCmdMsg::DatInType;
     
@@ -338,6 +359,7 @@ private:
     }
     
     uint16_t _rca = 0;
+    CardId _cardId;
     
 #undef Assert
 };
