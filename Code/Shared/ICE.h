@@ -359,36 +359,6 @@ public:
     }
     
     // MARK: - SD
-    #warning TODO: optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
-    static SDStatusResp SDSendCmd(
-        uint8_t sdCmd,
-        uint32_t sdArg,
-        typename SDSendCmdMsg::RespType respType      = SDSendCmdMsg::RespType::Len48,
-        typename SDSendCmdMsg::DatInType datInType    = SDSendCmdMsg::DatInType::None
-    ) {
-        Transfer(SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
-        
-        // Wait for command to be sent
-        constexpr uint16_t MaxAttempts = 1000;
-        for (uint16_t i=0; i<MaxAttempts; i++) {
-            const auto s = SDStatus();
-            if (
-                // Try again if the command hasn't been sent yet
-                !s.cmdDone() ||
-                // Try again if we expect a response but it hasn't been received yet
-                ((respType==SDSendCmdMsg::RespType::Len48||respType==SDSendCmdMsg::RespType::Len136) && !s.respDone()) ||
-                // Try again if we expect DatIn but it hasn't been received yet
-                (datInType==SDSendCmdMsg::DatInType::Len512x1 && !s.datInDone())
-            ) {
-                _SleepMs<1>();
-                continue;
-            }
-            return s;
-        }
-        // Timeout sending SD command
-        Assert(false);
-    }
-    
     static SDStatusResp SDStatus() {
         SDStatusResp resp;
         Transfer(SDStatusMsg(), &resp);
