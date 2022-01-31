@@ -29,12 +29,21 @@ static const void* _USBConfigDesc(size_t& len) {
     return USBConfigDesc<_USBType>(len);
 }
 
-using _QSPIType = QSPIType<
-    QSPIMode::Dual,               // T_Mode
-    1,                            // T_ClkDivider (1 -> QSPI clock = 64 MHz)
-    QSPIAlign::Word,              // T_Align
-    QSPIChipSelect::Uncontrolled  // T_ChipSelect
->;
+static QSPI _QSPI_ICEConfig(
+    QSPIMode::Single,
+    5, // clkDivider: 5 -> QSPI clock = 21.3 MHz
+    QSPIAlign::Byte,
+    QSPIChipSelect::Controlled
+);
+
+static QSPI _QSPI_ICEApp(
+    QSPIMode::Dual,
+    1, // clkDivider: 1 -> QSPI clock = 64 MHz)
+    QSPIAlign::Word,
+    QSPIChipSelect::Uncontrolled
+);
+
+static QSPI* _QSPI_Current = nullptr;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -51,7 +60,6 @@ struct _TaskReadout;
 static void _CmdHandle(const STM::Cmd& cmd);
 using _System = System<
     _USBType,
-    _QSPIType,
     STM::Status::Modes::STMApp,
     _CmdHandle,
     // Additional Tasks
@@ -61,7 +69,6 @@ using _System = System<
 >;
 
 constexpr auto& _USB = _System::USB;
-constexpr auto& _QSPI = _System::QSPI;
 using _Scheduler = _System::Scheduler;
 
 using _ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
@@ -96,7 +103,40 @@ static SD::Card<
 
 // MARK: - ICE40
 
-static QSPI_CommandTypeDef _ICEQSPICmd(const _ICE::Msg& msg, size_t respLen) {
+static void _QSPISetActive(QSPI& qspi) {
+    // Short-circuit if the given QSPI is already active
+    if (_QSPI_Current == &qspi) {
+        return;
+    }
+    
+    
+}
+
+static QSPI_CommandTypeDef _QSPICmd_ICEConfig(size_t len) {
+    return QSPI_CommandTypeDef{
+        .Instruction = 0,
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        
+        .Address = 0,
+        .AddressSize = QSPI_ADDRESS_8_BITS,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        
+        .AlternateBytes = 0,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        
+        .DummyCycles = 0,
+        
+        .NbData = (uint32_t)len,
+        .DataMode = QSPI_DATA_1_LINE,
+        
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+}
+
+static QSPI_CommandTypeDef _QSPICmd_ICEApp(const _ICE::Msg& msg, size_t respLen) {
     uint8_t b[8];
     static_assert(sizeof(msg) == sizeof(b));
     memcpy(b, &msg, sizeof(b));
@@ -147,7 +187,7 @@ static QSPI_CommandTypeDef _ICEQSPICmd(const _ICE::Msg& msg, size_t respLen) {
     };
 }
 
-static QSPI_CommandTypeDef _ICEQSPICmdReadOnly(size_t len) {
+static QSPI_CommandTypeDef _QSPICmd_ICEAppReadOnly(size_t len) {
     return QSPI_CommandTypeDef{
         .InstructionMode = QSPI_INSTRUCTION_NONE,
         .AddressMode = QSPI_ADDRESS_NONE,
@@ -167,11 +207,11 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
     
     _ICE_ST_SPI_CS_::Write(0);
     if (resp) {
-        _QSPI.read(_ICEQSPICmd(msg, sizeof(*resp)), resp, sizeof(*resp));
+        _QSPI_ICEApp.read(_QSPI_ICEAppCmd(msg, sizeof(*resp)), resp);
     } else {
-        _QSPI.command(_ICEQSPICmd(msg, 0));
+        _QSPI_ICEApp.command(_QSPI_ICEAppCmd(msg, 0));
     }
-    _Scheduler::Wait([] { return _QSPI.ready(); });
+    _Scheduler::Wait([] { return _QSPI_ICEApp.ready(); });
     _ICE_ST_SPI_CS_::Write(1);
 }
 
@@ -347,12 +387,12 @@ struct _TaskReadout {
             // Send the Readout message, which causes us to enter the readout mode until
             // we release the chip select
             _ICE_ST_SPI_CS_::Write(0);
-            _QSPI.command(_ICEQSPICmd(_ICE::ReadoutMsg(), 0));
+            _QSPI_ICEApp.command(_QSPI_ICEAppCmd(_ICE::ReadoutMsg(), 0));
             
             // Read data over QSPI and write it to USB, indefinitely
             for (;;) {
                 // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
-                _Scheduler::Wait([] { return !_Bufs.full() && _QSPI.ready(); });
+                _Scheduler::Wait([] { return !_Bufs.full() && _QSPI_ICEApp.ready(); });
                 
                 const size_t len = std::min(remLen.value_or(SIZE_MAX), _ICE::ReadoutMsg::ReadoutLen);
                 auto& buf = _Bufs.back();
@@ -375,7 +415,7 @@ struct _TaskReadout {
                 #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
                 while (!_ICE_ST_SPI_D_READY::Read());
                 
-                _QSPI.read(_ICEQSPICmdReadOnly(len), buf.data+buf.len, len);
+                _QSPI_ICEApp.read(_QSPI_ICEAppCmdReadOnly(len), buf.data+buf.len);
                 buf.len += len;
                 
                 if (remLen) *remLen -= len;
@@ -401,32 +441,6 @@ struct _TaskReadout {
 };
 
 // MARK: - Commands
-
-static void _ICEQSPIWrite(const void* data, size_t len) {
-    const QSPI_CommandTypeDef cmd = {
-        .Instruction = 0,
-        .InstructionMode = QSPI_INSTRUCTION_NONE,
-        
-        .Address = 0,
-        .AddressSize = QSPI_ADDRESS_8_BITS,
-        .AddressMode = QSPI_ADDRESS_NONE,
-        
-        .AlternateBytes = 0,
-        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
-        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
-        
-        .DummyCycles = 0,
-        
-        .NbData = (uint32_t)len,
-        .DataMode = QSPI_DATA_1_LINE,
-        
-        .DdrMode = QSPI_DDR_MODE_DISABLE,
-        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
-        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
-    };
-    
-    _QSPI.write(cmd, data, len);
-}
 
 static void _ICEWrite(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.ICEWrite;
@@ -454,12 +468,12 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     _ICE_ST_SPI_CS_::Write(1);
     
     // Have QSPI take over _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_
-    _QSPI.config();
+    _QSPI_ICEConfig.config();
     
     // Send 8 clocks and wait for them to complete
     static const uint8_t ff = 0xff;
-    _ICEQSPIWrite(&ff, 1);
-    _Scheduler::Wait([] { return _QSPI.ready(); });
+    _QSPI_ICEConfig.write(_QSPI_ICEConfigCmd(sizeof(ff)), &ff);
+    _Scheduler::Wait([] { return _QSPI_ICEConfig.ready(); });
     
     // Reset state
     _Bufs.reset();
@@ -470,11 +484,11 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     
     while (len) {
         // Wait until we have data to consume, and QSPI is ready to write
-        _Scheduler::Wait([] { return !_Bufs.empty() && _QSPI.ready(); });
+        _Scheduler::Wait([] { return !_Bufs.empty() && _QSPI_ICEConfig.ready(); });
         
         // Write the data over QSPI and wait for completion
-        _ICEQSPIWrite(_Bufs.front().data, _Bufs.front().len);
-        _Scheduler::Wait([] { return _QSPI.ready(); });
+        _QSPI_ICEConfig.write(_QSPI_ICEConfigCmd(_Bufs.front().len), _Bufs.front().data);
+        _Scheduler::Wait([] { return _QSPI_ICEConfig.ready(); });
         
         // Update the remaining data and pop the buffer so it can be used again
         len -= _Bufs.front().len;
@@ -509,8 +523,8 @@ static void _ICEWrite(const STM::Cmd& cmd) {
         constexpr uint8_t ClockCount = 7;
         static int i;
         for (i=0; i<ClockCount; i++) {
-            _ICEQSPIWrite(&ff, sizeof(ff));
-            _Scheduler::Wait([] { return _QSPI.ready(); });
+            _QSPI_ICEConfig.write(_QSPI_ICEConfigCmd(sizeof(ff)), &ff);
+            _Scheduler::Wait([] { return _QSPI_ICEConfig.ready(); });
         }
     }
     
@@ -860,29 +874,29 @@ static void _CmdHandle(const STM::Cmd& cmd) {
 
 // MARK: - ISRs
 
-extern "C" __attribute__((section(".isr"))) void ISR_NMI() {}
-extern "C" __attribute__((section(".isr"))) void ISR_HardFault() { for (;;); }
-extern "C" __attribute__((section(".isr"))) void ISR_MemManage() { for (;;); }
-extern "C" __attribute__((section(".isr"))) void ISR_BusFault() { for (;;); }
-extern "C" __attribute__((section(".isr"))) void ISR_UsageFault() { for (;;); }
-extern "C" __attribute__((section(".isr"))) void ISR_SVC() {}
-extern "C" __attribute__((section(".isr"))) void ISR_DebugMon() {}
-extern "C" __attribute__((section(".isr"))) void ISR_PendSV() {}
+extern "C" [[gnu::section(".isr")]] void ISR_NMI() {}
+extern "C" [[gnu::section(".isr")]] void ISR_HardFault() { for (;;); }
+extern "C" [[gnu::section(".isr")]] void ISR_MemManage() { for (;;); }
+extern "C" [[gnu::section(".isr")]] void ISR_BusFault() { for (;;); }
+extern "C" [[gnu::section(".isr")]] void ISR_UsageFault() { for (;;); }
+extern "C" [[gnu::section(".isr")]] void ISR_SVC() {}
+extern "C" [[gnu::section(".isr")]] void ISR_DebugMon() {}
+extern "C" [[gnu::section(".isr")]] void ISR_PendSV() {}
 
-extern "C" __attribute__((section(".isr"))) void ISR_SysTick() {
+extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
     _Scheduler::Tick();
     HAL_IncTick();
 }
 
-extern "C" __attribute__((section(".isr"))) void ISR_OTG_HS() {
+extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
     _USB.isr();
 }
 
-extern "C" __attribute__((section(".isr"))) void ISR_QUADSPI() {
+extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {
     _QSPI.isrQSPI();
 }
 
-extern "C" __attribute__((section(".isr"))) void ISR_DMA2_Stream7() {
+extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
     _QSPI.isrDMA();
 }
 
@@ -903,8 +917,7 @@ int main() {
     
     __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
     
-    _USB.init();
-    _QSPI.init();
+//    _QSPI.init();
     
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     _ICE_ST_SPI_CS_::Write(1);
