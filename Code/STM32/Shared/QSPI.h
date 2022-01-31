@@ -18,14 +18,11 @@ enum class QSPIChipSelect {
     Uncontrolled,
 };
 
-template <
-    QSPIMode T_Mode,
-    uint8_t T_ClkDivider,
-    QSPIAlign T_Align,
-    QSPIChipSelect T_ChipSelect
->
-class QSPIType {
+class QSPI {
 public:
+    QSPI(QSPIMode mode, uint8_t clkDivider, QSPIAlign align, QSPIChipSelect chipSelect) :
+    _mode(mode), _clkDivider(clkDivider), _align(align), _chipSelect(chipSelect) {}
+    
     void init() {
         constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
         
@@ -86,15 +83,15 @@ public:
         
         // Init callbacks
         _device.CmdCpltCallback = [] (QSPI_HandleTypeDef* me) {
-            ((QSPIType*)me->Ctx)->_handleCommandDone();
+            ((QSPI*)me->Ctx)->_handleCommandDone();
         };
         
         _device.RxCpltCallback = [] (QSPI_HandleTypeDef* me) {
-            ((QSPIType*)me->Ctx)->_handleReadDone();
+            ((QSPI*)me->Ctx)->_handleReadDone();
         };
         
         _device.TxCpltCallback = [] (QSPI_HandleTypeDef* me) {
-            ((QSPIType*)me->Ctx)->_handleWriteDone();
+            ((QSPI*)me->Ctx)->_handleWriteDone();
         };
         
         _device.ErrorCallback = [] (QSPI_HandleTypeDef* me) {
@@ -178,7 +175,7 @@ public:
             readCmd.NbData = readLen;
             readCmd.DataMode = QSPI_DATA_4_LINES;
             readCmd.DummyCycles = 0;
-            read(readCmd, buf, readLen);
+            read(readCmd, buf);
         
         } else {
             Assert(ready());
@@ -197,7 +194,8 @@ public:
         }
     }
     
-    void read(const QSPI_CommandTypeDef& cmd, void* data, size_t len) {
+    void read(const QSPI_CommandTypeDef& cmd, void* data) {
+        const size_t len = cmd.NbData;
         AssertArg(cmd.DataMode != QSPI_DATA_NONE);
         AssertArg(cmd.NbData == len);
         AssertArg(data);
@@ -220,9 +218,9 @@ public:
         Assert(hs == HAL_OK);
     }
     
-    void write(const QSPI_CommandTypeDef& cmd, const void* data, size_t len) {
+    void write(const QSPI_CommandTypeDef& cmd, const void* data) {
+        const size_t len = cmd.NbData;
         AssertArg(cmd.DataMode != QSPI_DATA_NONE);
-        AssertArg(cmd.NbData == len);
         AssertArg(data);
         AssertArg(len);
         // Validate `len` alignment
@@ -252,6 +250,14 @@ public:
     }
     
 private:
+    const QSPIMode _mode = QSPIMode::Single;
+    const uint8_t _clkDivider = 0;
+    const QSPIAlign _align = QSPIAlign::Byte;
+    const QSPIChipSelect _chipSelect = QSPIChipSelect::Controlled;
+    QSPI_HandleTypeDef _device = nullptr;
+    DMA_HandleTypeDef _dma = nullptr;
+    bool _busy = false;
+    
     void _handleCommandDone() {
         _busy = false;
     }
@@ -263,10 +269,6 @@ private:
     void _handleWriteDone() {
         _busy = false;
     }
-    
-    QSPI_HandleTypeDef _device;
-    DMA_HandleTypeDef _dma;
-    bool _busy = false;
     
     using _Clk = GPIO<GPIOPortB, GPIO_PIN_2>;
     using _CS = GPIO<GPIOPortB, GPIO_PIN_6>;
