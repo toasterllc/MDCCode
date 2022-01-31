@@ -150,6 +150,7 @@ module SDController #(
     reg[7:0] resp_counter = 0;
     reg resp_crcRst = 0;
     reg resp_crcEn = 0;
+    reg[2:0] resp_crcEnCounter = 0;
     reg resp_trigger = 0;
     reg resp_staged = 0;
     wire resp_crc;
@@ -218,6 +219,7 @@ module SDController #(
         resp_counter <= resp_counter-1;
         resp_crcRst <= 0;
         resp_crcEn <= 0;
+        if (resp_crcEnCounter) resp_crcEnCounter <= resp_crcEnCounter-1;
         
         datOut_counter <= datOut_counter-1;
         datOut_readCounter <= datOut_readCounter-1;
@@ -270,6 +272,9 @@ module SDController #(
             // safe because the cmd_ domain isn't allowed to modify it until we
             // signal `resp_done`
             resp_counter <= (cmd_respType===`SDController_RespType_48 ? 48-8-1 : 136-8-1);
+            // The first 8 bits are exempt from the CRC for 136-bit responses,
+            // because the SD protocol is brain dead
+            resp_crcEnCounter <= (cmd_respType===`SDController_RespType_136 ? 8-1 : 0);
             // Wait for response to start
             if (!resp_staged) begin
                 $display("[SDController:Resp] Triggered");
@@ -278,7 +283,9 @@ module SDController #(
         end
         
         2: begin
-            resp_crcEn <= 1;
+            if (!resp_crcEnCounter) begin
+                resp_crcEn <= 1;
+            end
             if (!resp_counter) begin
                 resp_state <= 3;
             end

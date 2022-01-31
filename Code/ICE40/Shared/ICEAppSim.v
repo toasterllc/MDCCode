@@ -528,9 +528,10 @@ module ICEAppSim();
         
         // Send SD command CMD2 (ALL_SEND_CID)
         SendSDCmdResp(CMD2, `SDController_RespType_136, `SDController_DatInType_None, 0);
-        $display("[ICEAppSim] ====================================================");
-        $display("[ICEAppSim] ^^^ WE EXPECT CRC ERRORS IN THE SD CARD RESPONSE ^^^");
-        $display("[ICEAppSim] ====================================================");
+        if (spi_resp[`Resp_Arg_SDStatus_RespCRCErr_Bits] !== 1'b0) begin
+            $display("[ICEAppSim] CRC error ❌");
+            `Finish;
+        end
         
         TestSDResp(0);
         TestSDResp(1);
@@ -815,7 +816,7 @@ module ICEAppSim();
             TestLEDSet(4'b1010);
             TestSDReadoutToSPI();
         `endif // ICEApp_SDReadoutToSPI_En
-
+        
         `ifdef ICEApp_ImgReadoutToSPI_En
             TestImgReadoutToSPI();
         `endif // ICEApp_ImgReadoutToSPI_En
