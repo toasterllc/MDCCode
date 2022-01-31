@@ -273,8 +273,18 @@ module SDCardSim #(
                 end
                 
                 CMD2: begin
-                    respOut=136'h3f0353445352313238808bb79d66014677; // Real CMD2 response
-                    // respOut=136'h3f400e0032db790003b8ab7f800a40405f; // Alternative R2 response (actually a CMD9 response)
+                    // respOut = 136'h3f_f353445352313238808bb79d660146_01;
+                    // respOut = 136'h3f_fffe0032db790003b8ab7f800a4041_e3;
+                    
+                    // respOut = 136'h3f_7ffe0032db790003b8ab7f800a4041_6b;
+                    
+                    // respOut = 136'h3f_7ffe0032db790003b8ab7f800a4040_79; // good
+                    // respOut = 136'h3f_7ffe0032db790003b8ab7f800a4040_x9; // incorrectly affects SDController's calculated crc
+                    
+                    // respOut = 136'h3f_fffe0032db790003b8ab7f800a4040_f1;
+                    
+                    respOut=136'h3f_0353445352313238808bb79d660146_77; // Real CMD2 response
+                    // respOut=136'h3f_400e0032db790003b8ab7f800a4040_5f; // Alternative R2 response (actually a CMD9 response)
                     respLen=136;
                 end
                 

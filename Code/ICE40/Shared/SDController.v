@@ -271,7 +271,7 @@ module SDController #(
             // We're accessing `cmd_respType` without synchronization, but that's
             // safe because the cmd_ domain isn't allowed to modify it until we
             // signal `resp_done`
-            resp_counter <= (cmd_respType===`SDController_RespType_48 ? 48-8-1 : 136-8-1);
+            resp_counter <= (cmd_respType===`SDController_RespType_48 ? 48-8-2 : 136-8-2);
             // The first 8 bits are exempt from the CRC for 136-bit responses,
             // because the SD protocol is brain dead
             resp_crcEnCounter <= (cmd_respType===`SDController_RespType_136 ? 8-1 : 0);
@@ -292,37 +292,36 @@ module SDController #(
         end
         
         3: begin
-            resp_counter <= 6;
             resp_state <= 4;
         end
         
         4: begin
+            resp_counter <= 6;
+            resp_state <= 5;
+        end
+        
+        5: begin
             if (resp_crc == cmdresp_shiftReg[1]) begin
                 $display("[SDController:Resp] Response: Good CRC bit (ours: %b, theirs: %b) ✅", resp_crc, cmdresp_shiftReg[1]);
             end else begin
 `ifdef SIM
-                if (cmd_data[45:40] !== 6'd2) begin
-                    $display("[SDController:Resp] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", resp_crc, cmdresp_shiftReg[1]);
-                    `Finish;
-                end else begin
-                    $display("[SDController:Resp] Response: Bad CRC bit (ours: %b, theirs: %b); ignoring because it's a CMD2 response",
-                        resp_crc, cmdresp_shiftReg[1]);
-                end
+                $display("[SDController:Resp] Response: Bad CRC bit (ours: %b, theirs: %b) ❌", resp_crc, cmdresp_shiftReg[1]);
+                `Finish;
 `endif
                 resp_crcErr <= 1;
             end
             
             if (!resp_counter) begin
                 resp_data <= cmdresp_shiftReg;
-                resp_state <= 5;
+                resp_state <= 6;
             end
         end
         
-        5: begin
-            if (cmdresp_shiftReg[1]) begin
-                $display("[SDController:Resp] Response: Good end bit ✅");
+        6: begin
+            if (cmdresp_shiftReg[1] === 1'b1) begin
+                $display("[SDController:Resp] Response: Good end bit (%b) ✅", cmdresp_shiftReg[1]);
             end else begin
-                $display("[SDController:Resp] Response: Bad end bit ❌");
+                $display("[SDController:Resp] Response: Bad end bit (%b) ❌", cmdresp_shiftReg[1]);
                 `Finish;
                 resp_crcErr <= 1;
             end
