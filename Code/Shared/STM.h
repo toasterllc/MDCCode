@@ -45,64 +45,63 @@ namespace STM {
         ImgExposureSet,
     };
     
-    struct Cmd {
+    struct [[gnu::packed]] Cmd {
         Op op;
         union {
-            struct __attribute__((packed)) {
+            struct [[gnu::packed]] {
                 uint8_t idx;
                 uint8_t on;
             } LEDSet;
             
             // # STMLoader
-            struct __attribute__((packed)) {
+            struct [[gnu::packed]] {
                 uint32_t addr;
                 uint32_t len;
             } STMWrite;
             
-            struct __attribute__((packed)) {
+            struct [[gnu::packed]] {
                 uint32_t entryPointAddr;
             } STMReset;
             
-            struct __attribute__((packed)) {
+            struct [[gnu::packed]] {
                 uint32_t len;
             } ICEWrite;
             
-            struct __attribute__((packed)) {
+            struct [[gnu::packed]] {
                 uint32_t addr;
                 uint32_t len;
             } MSPRead;
             
-            struct __attribute__((packed)) {
+            struct [[gnu::packed]] {
                 uint32_t addr;
                 uint32_t len;
             } MSPWrite;
             
-            struct __attribute__((packed)) {
+            struct [[gnu::packed]] {
                 uint32_t cmdsLen;
                 uint32_t respLen;
             } MSPDebug;
             
             // # STMApp
-            struct __attribute__((packed)) {
+            struct [[gnu::packed]] {
                 uint32_t addr;
             } SDRead;
             
-            struct __attribute__((packed)) {
+            struct [[gnu::packed]] {
                 uint8_t dstBlock;
                 uint8_t skipCount;
             } ImgCapture;
             
-            struct __attribute__((packed)) {
+            struct [[gnu::packed]] {
                 uint16_t coarseIntTime;
                 uint16_t fineIntTime;
                 uint16_t analogGain;
             } ImgExposureSet;
         } arg;
-        
-    } __attribute__((packed));
+    };
     static_assert(sizeof(Cmd)<=64, "Cmd: invalid size"); // Verify that Cmd will fit in a single EP0 packet
     
-    struct Status {
+    struct [[gnu::packed]] Status {
         static constexpr uint32_t MagicNumber = 0xCAFEBABE;
         
         Enum(uint32_t, Mode, Modes,
@@ -114,9 +113,9 @@ namespace STM {
         uint32_t magic;
         uint32_t version;
         Mode mode;
-    } __attribute__((packed));
+    };
     
-    struct MSPDebugCmd {
+    struct [[gnu::packed]] MSPDebugCmd {
         Enum(uint8_t, Op, Ops,
             TestSet,
             RstSet,
@@ -170,13 +169,13 @@ namespace STM {
         void tdoReadSet(bool x)     { data = (data&(~(0x01<<5)))|(x<<5); }
         
         uint8_t data = 0;
-    } __attribute__((packed));
+    };
     
-    struct ImgCaptureStats {
+    struct [[gnu::packed]] ImgCaptureStats {
         uint32_t len;
         uint32_t highlightCount;
         uint32_t shadowCount;
-    } __attribute__((packed));
+    };
     
     // Confirm that `Img::PaddedLen` is a multiple of the USB max packet size.
     // This is necessary so that when multiple images are streamed, the
