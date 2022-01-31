@@ -63,7 +63,7 @@ public:
             // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
             _SleepMs<1>();
             // Send CMD0
-            T_ICE::SDSendCmd(_CMD0, 0, _RespType::None);
+            _SendCmd(_CMD0, 0, _RespType::None);
             // There's no response to CMD0
         }
         
@@ -75,8 +75,7 @@ public:
         {
             constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
             constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
-            auto status = T_ICE::SDSendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
-            Assert(!status.respCRCErr());
+            auto status = _SendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
             const uint8_t replyVoltage = status.respGetBits(19,16);
             Assert(replyVoltage == Voltage);
             const uint8_t replyCheckPattern = status.respGetBits(15,8);
@@ -91,26 +90,13 @@ public:
         for (;;) {
             // CMD55
             {
-                auto status = T_ICE::SDSendCmd(_CMD55, 0);
-                Assert(!status.respCRCErr());
+                _SendCmd(_CMD55, 0);
             }
             
             // CMD41
             {
-                auto status = T_ICE::SDSendCmd(_CMD41, 0x51008000);
-                
+                auto status = _SendCmd(_CMD41, 0x51008000);
                 // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
-                
-                if (status.respGetBits(45,40) != 0x3F) {
-                    for (volatile int i=0; i<10; i++);
-                    continue;
-                }
-                
-                if (status.respGetBits(7,1) != 0x7F) {
-                    for (volatile int i=0; i<10; i++);
-                    continue;
-                }
-                
                 // Check if card is ready. If it's not, retry ACMD41.
                 const bool ready = status.respGetBit(39);
                 if (!ready) continue;
@@ -128,9 +114,7 @@ public:
         // ====================
         {
             // The response to CMD2 is 136 bits, instead of the usual 48 bits
-            T_ICE::SDSendCmd(_CMD2, 0, _RespType::Len136);
-            // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
-            // so it'll be flagged as incorrect.
+            _SendCmd(_CMD2, 0, _RespType::Len136);
             if constexpr (T_CacheCardId) {
                 _CardBaseCachedCardId::_cardId = _sdResp128Get<CardId>();
             }
@@ -142,8 +126,7 @@ public:
         //   Publish a new relative address (RCA)
         // ====================
         {
-            auto status = T_ICE::SDSendCmd(_CMD3, 0);
-            Assert(!status.respCRCErr());
+            auto status = _SendCmd(_CMD3, 0);
             // Get the card's RCA from the response
             _rca = status.respGetBits(39,24);
         }
@@ -153,10 +136,10 @@ public:
         //   State: Standby -> Standby
         //   Get card-specific data (CSD)
         // ====================
+        // We do this here because CMD9 is only valid in the standby state,
+        // and this is the only time we're in the standby state.
         if constexpr (T_CacheCardId) {
-            T_ICE::SDSendCmd(_CMD9, ((uint32_t)_rca)<<16, _RespType::Len136);
-            // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
-            // so it'll be flagged as incorrect.
+            _SendCmd(_CMD9, ((uint32_t)_rca)<<16, _RespType::Len136);
             _CardBaseCachedCardId::_cardData = _sdResp128Get<CardData>();
         }
         
@@ -166,8 +149,7 @@ public:
         //   Select card
         // ====================
         {
-            auto status = T_ICE::SDSendCmd(_CMD7, ((uint32_t)_rca)<<16);
-            Assert(!status.respCRCErr());
+            _SendCmd(_CMD7, ((uint32_t)_rca)<<16);
         }
         
         // ====================
@@ -178,14 +160,12 @@ public:
         {
             // CMD55
             {
-                auto status = T_ICE::SDSendCmd(_CMD55, ((uint32_t)_rca)<<16);
-                Assert(!status.respCRCErr());
+                _SendCmd(_CMD55, ((uint32_t)_rca)<<16);
             }
             
             // CMD6
             {
-                auto status = T_ICE::SDSendCmd(_CMD6, 0x00000002);
-                Assert(!status.respCRCErr());
+                _SendCmd(_CMD6, 0x00000002);
             }
         }
         
@@ -202,8 +182,7 @@ public:
             // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
             // Group 2 (Command System)    = 0xF (no change)
             // Group 1 (Access Mode)       = 0x3 (SDR104)
-            auto status = T_ICE::SDSendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
-            Assert(!status.respCRCErr());
+            auto status = _SendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
             Assert(!status.datInCRCErr());
             // Verify that the access mode was successfully changed
             // TODO: properly handle this failing, see CMD6 docs
@@ -246,8 +225,7 @@ public:
         //   State: Transfer -> Send Data
         //   Read blocks of data (1 block == 512 bytes)
         // ====================
-        auto status = T_ICE::SDSendCmd(_CMD18, addr/SD::BlockLen, _RespType::Len48, _DatInType::Len4096xN);
-        Assert(!status.respCRCErr());
+        _SendCmd(_CMD18, addr/SD::BlockLen, _RespType::Len48, _DatInType::Len4096xN);
     }
     
     void readStop() {
@@ -270,16 +248,14 @@ public:
         {
             // CMD55
             {
-                auto status = T_ICE::SDSendCmd(_CMD55, ((uint32_t)_rca)<<16);
-                Assert(!status.respCRCErr());
+                _SendCmd(_CMD55, ((uint32_t)_rca)<<16);
             }
             
             // CMD23
             {
                 // Round up to the nearest block size, with a minimum of 1 block
                 const uint32_t blockCount = std::min(UINT32_C(1), Util::DivCeil(lenEst, SD::BlockLen));
-                auto status = T_ICE::SDSendCmd(_CMD23, blockCount);
-                Assert(!status.respCRCErr());
+                _SendCmd(_CMD23, blockCount);
             }
         }
         
@@ -289,8 +265,7 @@ public:
         //   Write blocks of data
         // ====================
         {
-            auto status = T_ICE::SDSendCmd(_CMD25, addr/SD::BlockLen);
-            Assert(!status.respCRCErr());
+            _SendCmd(_CMD25, addr/SD::BlockLen);
         }
     }
     
@@ -330,8 +305,10 @@ public:
     
 private:
     using _SDInitMsg    = typename T_ICE::SDInitMsg;
+    using _SDSendCmdMsg = typename T_ICE::SDSendCmdMsg;
     using _SDRespMsg    = typename T_ICE::SDRespMsg;
     using _SDRespResp   = typename T_ICE::SDRespResp;
+    using _SDStatusResp = typename T_ICE::SDStatusResp;
     using _RespType     = typename T_ICE::SDSendCmdMsg::RespType;
     using _DatInType    = typename T_ICE::SDSendCmdMsg::DatInType;
     
@@ -360,14 +337,53 @@ private:
     static constexpr uint8_t _CMD41 = 41;
     static constexpr uint8_t _CMD55 = 55;
     
+    #warning TODO: optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
+    static _SDStatusResp _SendCmd(
+        uint8_t sdCmd,
+        uint32_t sdArg,
+        _RespType respType   = _RespType::Len48,
+        _DatInType datInType = _DatInType::None
+    ) {
+        T_ICE::Transfer(_SDSendCmdMsg(sdCmd, sdArg, respType, datInType));
+        
+        // Wait for command to be sent
+        constexpr uint16_t MaxAttempts = 1000;
+        for (uint16_t i=0; i<MaxAttempts; i++) {
+            const auto s = T_ICE::SDStatus();
+            if (
+                // Try again if the command hasn't been sent yet
+                !s.cmdDone() ||
+                // Try again if we expect a response but it hasn't been received yet
+                ((respType==_RespType::Len48||respType==_RespType::Len136) && !s.respDone()) ||
+                // Try again if we expect DatIn but it hasn't been received yet
+                (datInType==_DatInType::Len512x1 && !s.datInDone())
+            ) {
+                _SleepMs<1>();
+                continue;
+            }
+            
+            // Verify CRC for all commands, except CMD0 and CMD41
+            switch (sdCmd) {
+            case _CMD0:
+            case _CMD41:
+                break;
+            default:
+                Assert(!s.respCRCErr());
+                break;
+            }
+            return s;
+        }
+        // Timeout sending SD command
+        Assert(false);
+    }
+    
     void _readWriteStop() {
         // ====================
         // CMD12 | STOP_TRANSMISSION
         //   State: Send Data -> Transfer
         //   Finish reading
         // ====================
-        auto status = T_ICE::SDSendCmd(_CMD12, 0);
-        Assert(!status.respCRCErr());
+        _SendCmd(_CMD12, 0);
     }
     
     template <typename T>
