@@ -3,27 +3,46 @@
 #include "GPIO.h"
 #include "Toastbox/IntState.h"
 
-enum class QSPIMode {
-    Single,
-    Dual,
-};
-
-enum class QSPIAlign {
-    Byte,
-    Word, // Best performance for large transfers
-};
-
-enum class QSPIChipSelect {
-    Controlled,
-    Uncontrolled,
-};
-
 class QSPI {
 public:
-    QSPI(QSPIMode mode, uint8_t clkDivider, QSPIAlign align, QSPIChipSelect chipSelect) :
-    _mode(mode), _clkDivider(clkDivider), _align(align), _chipSelect(chipSelect) {}
+    enum class Mode {
+        Single,
+        Dual,
+    };
+
+    enum class Align {
+        Byte,
+        Word, // Best performance for large transfers
+    };
+
+    enum class ChipSelect {
+        Controlled,
+        Uncontrolled,
+    };
     
-    void init() {
+    struct Config {
+        Mode mode = Mode::Single;
+        uint8_t clkDivider = 0;
+        Align align = Align::Byte;
+        ChipSelect chipSelect = ChipSelect::Controlled;
+    };
+    
+    QSPI() {}
+    
+    void config(const Config& config) {
+        // Short-circuit if we're already configured for the given `config`
+        if (_config == &config) return;
+        
+        if (_config) {
+            HAL_StatusTypeDef hs = HAL_DMA_DeInit(&_dma);
+            Assert(hs == HAL_OK);
+            
+            hs = HAL_QSPI_DeInit(&_device);
+            Assert(hs == HAL_OK);
+        }
+        
+        _config = &config;
+        
         constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
         
         // Enable GPIO clocks
@@ -46,7 +65,7 @@ public:
         
         // Init QUADSPI
         _device.Instance = QUADSPI;
-        _device.Init.ClockPrescaler = T_ClkDivider; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1)
+        _device.Init.ClockPrescaler = _config->clkDivider; // HCLK=128MHz -> QSPI clock = HCLK/(Prescalar+1)
         _device.Init.FifoThreshold = 4;
         _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
 //        _device.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
@@ -55,7 +74,7 @@ public:
         _device.Init.ClockMode = QSPI_CLOCK_MODE_0; // Clock idles low
 //        _device.Init.ClockMode = QSPI_CLOCK_MODE_3; // Clock idles high
         _device.Init.FlashID = QSPI_FLASH_ID_1;
-        _device.Init.DualFlash = (T_Mode==QSPIMode::Single ? QSPI_DUALFLASH_DISABLE : QSPI_DUALFLASH_ENABLE);
+        _device.Init.DualFlash = (_config->mode==Mode::Single ? QSPI_DUALFLASH_DISABLE : QSPI_DUALFLASH_ENABLE);
         _device.Ctx = this;
         
         HAL_StatusTypeDef hs = HAL_QSPI_Init(&_device);
@@ -67,8 +86,8 @@ public:
         _dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
         _dma.Init.PeriphInc = DMA_PINC_DISABLE;
         _dma.Init.MemInc = DMA_MINC_ENABLE;
-        _dma.Init.PeriphDataAlignment = (T_Align==QSPIAlign::Byte ? DMA_PDATAALIGN_BYTE : DMA_PDATAALIGN_WORD);
-        _dma.Init.MemDataAlignment = (T_Align==QSPIAlign::Byte ? DMA_MDATAALIGN_BYTE : DMA_MDATAALIGN_WORD);
+        _dma.Init.PeriphDataAlignment = (_config->align==Align::Byte ? DMA_PDATAALIGN_BYTE : DMA_PDATAALIGN_WORD);
+        _dma.Init.MemDataAlignment = (_config->align==Align::Byte ? DMA_MDATAALIGN_BYTE : DMA_MDATAALIGN_WORD);
         _dma.Init.Mode = DMA_NORMAL;
         _dma.Init.Priority = DMA_PRIORITY_VERY_HIGH;
         _dma.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
@@ -98,13 +117,13 @@ public:
             abort();
         };
         
-        config();
+        configPins();
     }
     
-    // config(): reconfigures GPIOs, in case they're reused for some other purpose
-    void config() {
+    // configPins(): reconfigures GPIOs, in case they're reused for some other purpose
+    void configPins() {
         _Clk::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        if constexpr (T_ChipSelect == QSPIChipSelect::Controlled) {
+        if (_config->chipSelect == ChipSelect::Controlled) {
             _CS::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
         }
         _D0::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
@@ -119,6 +138,8 @@ public:
     
     // reset(): aborts whatever is in progress and resets state
     void reset() {
+        AssertArg(_config);
+        
         // Disable interrupts so that resetting is atomic
         Toastbox::IntState ints(false);
         
@@ -134,6 +155,7 @@ public:
     }
     
     void command(const QSPI_CommandTypeDef& cmd) {
+        AssertArg(_config);
         AssertArg(cmd.DataMode == QSPI_DATA_NONE);
         AssertArg(!cmd.NbData);
         
@@ -161,7 +183,7 @@ public:
             static uint8_t buf[32]; // Dummy cycles (DCYC) register is 5 bits == up to 31 cycles
             size_t readLen = 0;
             
-            if constexpr (T_Mode == QSPIMode::Single) {
+            if (_config->mode == Mode::Single) {
                 // In single mode, we can only fake even values for the number of dummy cycles.
                 // This is because we can only read whole bytes, and each byte requires 2 cycles
                 // when using 4 lines (QSPI_DATA_4_LINES).
@@ -196,12 +218,12 @@ public:
     
     void read(const QSPI_CommandTypeDef& cmd, void* data) {
         const size_t len = cmd.NbData;
+        AssertArg(_config);
         AssertArg(cmd.DataMode != QSPI_DATA_NONE);
-        AssertArg(cmd.NbData == len);
         AssertArg(data);
         AssertArg(len);
         // Validate `len` alignment
-        if constexpr (T_Align == QSPIAlign::Word) {
+        if (_config->align == Align::Word) {
             AssertArg(!(len % sizeof(uint32_t)));
         }
         Assert(ready());
@@ -220,11 +242,12 @@ public:
     
     void write(const QSPI_CommandTypeDef& cmd, const void* data) {
         const size_t len = cmd.NbData;
+        AssertArg(_config);
         AssertArg(cmd.DataMode != QSPI_DATA_NONE);
         AssertArg(data);
         AssertArg(len);
         // Validate `len` alignment
-        if constexpr (T_Align == QSPIAlign::Word) {
+        if (_config->align == Align::Word) {
             AssertArg(!(len % sizeof(uint32_t)));
         }
         Assert(ready());
@@ -250,12 +273,9 @@ public:
     }
     
 private:
-    const QSPIMode _mode = QSPIMode::Single;
-    const uint8_t _clkDivider = 0;
-    const QSPIAlign _align = QSPIAlign::Byte;
-    const QSPIChipSelect _chipSelect = QSPIChipSelect::Controlled;
-    QSPI_HandleTypeDef _device = nullptr;
-    DMA_HandleTypeDef _dma = nullptr;
+    const Config* _config = nullptr;
+    QSPI_HandleTypeDef _device;
+    DMA_HandleTypeDef _dma;
     bool _busy = false;
     
     void _handleCommandDone() {
