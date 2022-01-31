@@ -24,8 +24,11 @@ module Top();
     // reg[135:0] crc_din = 136'h3f0353445352313238808bb79d66014677;
     // reg[135:0] crc_din = 136'h3f400e0032db790003b8ab7f800a40405f;
     
-    reg[135:0] crc_din = 136'h000353445352313238808bb79d66014677;
-    // reg[135:0] crc_din = 136'h00400e0032db790003b8ab7f800a40405f;
+    // reg[135:0] crc_din = 136'h00_F353445352313238808bb79d660146_01;
+    // reg[135:0] crc_din = 136'h00_7ffe0032db790003b8ab7f800a4040_71;
+    
+    // reg[135:0] crc_din = 136'h00_f353445352313238808bb79d660146_01;
+    reg[135:0] crc_din = 136'h00_7ffe0032db790003b8ab7f800a4040_79;
     
     
     // reg[47:0] crc_din = 48'h03aaaa0520d1;
@@ -59,10 +62,12 @@ module Top();
         
         crc_en = 1;
         
+        
+        
         repeat ($size(crc_din)-8) begin
             wait(clk);
             wait(!clk);
-            $display("CRC: %h", (crc.d<<1) | 1'b1); // Printing in the format that allows comparison to the last byte of the raw SD byte stream
+            $display("CRC: %h", {crc.d, 1'b1}); // Printing in the format that allows comparison to the last byte of the raw SD byte stream
             crc_din = crc_din<<1;
         end
         
