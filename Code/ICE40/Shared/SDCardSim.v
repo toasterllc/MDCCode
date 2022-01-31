@@ -273,7 +273,8 @@ module SDCardSim #(
                 end
                 
                 CMD2: begin
-                    respOut=136'h3f0353445352313238808bb79d66014677;
+                    respOut=136'h3f0353445352313238808bb79d66014677; // Real CMD2 response
+                    // respOut=136'h3f400e0032db790003b8ab7f800a40405f; // Alternative R2 response (actually a CMD9 response)
                     respLen=136;
                 end
                 
