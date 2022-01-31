@@ -142,7 +142,7 @@ private:
                 case Op::StatusGet:         _StatusGet(cmd);            break;
                 case Op::BootloaderInvoke:  _BootloaderInvoke(cmd);     break;
                 case Op::LEDSet:            _LEDSet(cmd);               break;
-                // Bad command
+                // Unknown command
                 default:                    T_CmdHandle(cmd);           break;
                 }
             });
@@ -303,11 +303,17 @@ private:
         };
         
         USB.send(STM::Endpoints::DataIn, &status, sizeof(status));
+        Scheduler::Wait([] { return USB.endpointReady(STM::Endpoints::DataIn); });
+        
+        // Send status
+        USBSendStatus(true);
     }
     
     static void _BootloaderInvoke(const STM::Cmd& cmd) {
         // Accept command
         USBAcceptCommand(true);
+        // Send status
+        USBSendStatus(true);
         
         // Perform software reset
         HAL_NVIC_SystemReset();
@@ -318,13 +324,13 @@ private:
     static void _LEDSet(const STM::Cmd& cmd) {
         switch (cmd.arg.LEDSet.idx) {
         case 0: USBAcceptCommand(false); return;
-        case 1: LED1::Write(cmd.arg.LEDSet.on); break;
-        case 2: LED2::Write(cmd.arg.LEDSet.on); break;
-        case 3: LED3::Write(cmd.arg.LEDSet.on); break;
+        case 1: USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
+        case 2: USBAcceptCommand(true); LED2::Write(cmd.arg.LEDSet.on); break;
+        case 3: USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;
         }
         
         // Send status
-        USBAcceptCommand(true);
+        USBSendStatus(true);
     }
 };
 

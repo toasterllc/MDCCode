@@ -95,6 +95,9 @@ static void _STMReset(const STM::Cmd& cmd) {
     
     _AppEntryPoint = (_VoidFn)cmd.arg.STMReset.entryPointAddr;
     
+    // Send final status
+    _System::USBSendStatus(true);
+    
     // Perform software reset
     HAL_NVIC_SystemReset();
     // Unreachable

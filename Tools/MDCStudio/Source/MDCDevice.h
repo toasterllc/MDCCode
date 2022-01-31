@@ -92,16 +92,16 @@ private:
             
             const SD::CardId cardId = sdCardIdGet();
             
-            printf("cardId: ");
+            printf("cardId:     ");
             for (size_t i=0; i<sizeof(cardId); i++) {
-                printf("%x ", ((uint8_t*)&cardId)[i]);
+                printf("%02x ", ((uint8_t*)&cardId)[i]);
             }
             printf("\n");
             
             const SD::CardData cardData = sdCardDataGet();
-            printf("cardData: ");
-            for (size_t i=0; i<sizeof(cardId); i++) {
-                printf("%x ", ((uint8_t*)&cardId)[i]);
+            printf("cardData:   ");
+            for (size_t i=0; i<sizeof(cardData); i++) {
+                printf("%02x ", ((uint8_t*)&cardData)[i]);
             }
             printf("\n");
             
