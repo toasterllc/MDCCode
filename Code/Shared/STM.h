@@ -41,8 +41,8 @@ namespace STM {
         SDCardDataGet,
         SDRead,
         
-        ImgCapture,
         ImgExposureSet,
+        ImgCapture,
     };
     
     struct [[gnu::packed]] Cmd {

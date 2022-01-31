@@ -279,7 +279,7 @@ public:
             _dev.read(STM::Endpoints::DataIn, resp, respLen);
         }
         
-        _waitOrThrow("MSPDebug DataOut/DataIn command failed");
+        _waitOrThrow("MSPDebug command failed");
     }
     
     SD::CardId sdCardIdGet() {
@@ -290,6 +290,7 @@ public:
         
         SD::CardId cardId;
         _dev.read(STM::Endpoints::DataIn, cardId);
+        _waitOrThrow("SDCardIdGet command failed");
         return cardId;
     }
     
@@ -298,6 +299,7 @@ public:
         
         const STM::Cmd cmd = { .op = STM::Op::SDCardDataGet };
         _sendCmd(cmd);
+        _waitOrThrow("SDCardDataGet command failed");
         
         SD::CardData cardData;
         _dev.read(STM::Endpoints::DataIn, cardData);
@@ -319,25 +321,7 @@ public:
             },
         };
         _sendCmd(cmd);
-    }
-    
-    STM::ImgCaptureStats imgCapture(uint8_t dstBlock, uint8_t skipCount) {
-        assert(_mode == STM::Status::Modes::STMApp);
-        
-        const STM::Cmd cmd = {
-            .op = STM::Op::ImgCapture,
-            .arg = {
-                .ImgCapture = {
-                    .dstBlock = 0,
-                    .skipCount = skipCount,
-                },
-            },
-        };
-        _sendCmd(cmd);
-        
-        STM::ImgCaptureStats stats;
-        _dev.read(STM::Endpoints::DataIn, stats);
-        return stats;
+        _waitOrThrow("SDRead command failed");
     }
     
     struct ImgExposure {
@@ -359,6 +343,28 @@ public:
             },
         };
         _sendCmd(cmd);
+        _waitOrThrow("ImgExposureSet command failed");
+    }
+    
+    STM::ImgCaptureStats imgCapture(uint8_t dstBlock, uint8_t skipCount) {
+        assert(_mode == STM::Status::Modes::STMApp);
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::ImgCapture,
+            .arg = {
+                .ImgCapture = {
+                    .dstBlock = 0,
+                    .skipCount = skipCount,
+                },
+            },
+        };
+        
+        _sendCmd(cmd);
+        _waitOrThrow("ImgCapture command failed");
+        
+        STM::ImgCaptureStats stats;
+        _dev.read(STM::Endpoints::DataIn, stats);
+        return stats;
     }
     
     std::unique_ptr<uint8_t[]> imgReadout() {
