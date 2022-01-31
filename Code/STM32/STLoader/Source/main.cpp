@@ -6,7 +6,6 @@
 #include "Toastbox/IntState.h"
 #include "STM.h"
 #include "USB.h"
-#include "QSPI.h"
 #include "BufQueue.h"
 #include "System.h"
 #include "USBConfigDesc.h"
@@ -29,23 +28,15 @@ static const void* _USBConfigDesc(size_t& len) {
     return USBConfigDesc<_USBType>(len);
 }
 
-using _QSPIType = QSPIType<
-    QSPIMode::Single,           // T_Mode
-    5,                          // T_ClkDivider (5 -> QSPI clock = 21.3 MHz)
-    QSPIAlign::Byte,            // T_Align
-    QSPIChipSelect::Controlled  // T_ChipSelect
->;
-
 static void _CmdHandle(const STM::Cmd& cmd);
 using _System = System<
     _USBType,
-    _QSPIType,
     STM::Status::Modes::STMLoader,
     _CmdHandle
 >;
 
 constexpr auto& _USB = _System::USB;
-constexpr auto& _QSPI = _System::QSPI;
+
 using _Scheduler = _System::Scheduler;
 
 using _BufQueue = BufQueue<uint8_t,1024,2>;
@@ -113,10 +104,10 @@ static void _STMReset(const STM::Cmd& cmd) {
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     // STM32 Bootloader
-    case Op::STMWrite:              _STMWrite(cmd);                 break;
-    case Op::STMReset:              _STMReset(cmd);                 break;
+    case Op::STMWrite:              _STMWrite(cmd);                     break;
+    case Op::STMReset:              _STMReset(cmd);                     break;
     // Bad command
-    default:                        _System::USBSendStatus(false);  break;
+    default:                        _System::USBAcceptCommand(false);   break;
     }
 }
 
@@ -138,14 +129,6 @@ extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
 
 extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
     _USB.isr();
-}
-
-extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {
-    _QSPI.isrQSPI();
-}
-
-extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
-    _QSPI.isrDMA();
 }
 
 // MARK: - Main
@@ -181,12 +164,7 @@ void abort() {
 
 int main() {
     _JumpToAppIfNeeded();
-    
     _System::Init();
-    
-    _USB.init();
-    _QSPI.init();
-    
     _Scheduler::Run();
     return 0;
 }
