@@ -4,7 +4,6 @@
 #include "Util.h"
 #include "STM.h"
 #include "USB.h"
-#include "QSPI.h"
 #include "Toastbox/Task.h"
 
 // MARK: - Main Thread Stack
@@ -21,7 +20,6 @@ asm(".equ _StackMainEnd, _StackMain+" Stringify(_StackMainSize));
 
 template <
     typename T_USB,
-    typename T_QSPI,
     STM::Status::Mode T_Mode,
     void T_CmdHandle(const STM::Cmd&),
     typename... T_Tasks
@@ -185,6 +183,9 @@ public:
         
         // Configure our LEDs
         InitLED();
+        
+        // Configure USB
+        USB.init();
     }
     
     // LEDs
@@ -194,7 +195,6 @@ public:
     using LED3 = GPIO<GPIOPortE, GPIO_PIN_12>;
     
     static inline T_USB USB;
-    static inline T_QSPI QSPI;
     
     static void USBSendStatus(bool s) {
         alignas(4) static bool status = false; // Aligned to send via USB
