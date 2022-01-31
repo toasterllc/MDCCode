@@ -67,7 +67,7 @@ public:
         for (const uint8_t ep : eps) {
             _flushEndpoint(ep);
         }
-        _waitOrThrow("EndpointsFlush command failed");
+        _checkStatus("EndpointsFlush command failed");
     }
     
     STM::Status statusGet() {
@@ -80,19 +80,22 @@ public:
             throw Toastbox::RuntimeError("invalid magic number (expected:0x%08jx got:0x%08jx)",
                 (uintmax_t)STM::Status::MagicNumber, (uintmax_t)status.magic);
         }
+        
+        _checkStatus("StatusGet command failed");
         return status;
     }
     
     void bootloaderInvoke() {
         const STM::Cmd cmd = { .op = STM::Op::BootloaderInvoke };
         _sendCmd(cmd);
+        _checkStatus("BootloaderInvoke command failed");
     }
     
     // bootloaderInvoke version that replaces `this` with the newly-enumerated USB device
 //    void bootloaderInvoke() {
 //        const STM::Cmd cmd = { .op = STM::Op::BootloaderInvoke };
 //        _dev.vendorRequestOut(0, cmd);
-//        _waitOrThrow("BootloaderInvoke command failed");
+//        _checkStatus("BootloaderInvoke command failed");
 //        
 //        // Wait for a new MDCUSBDevice that's not equal to `this` (ie the underlying USB
 //        // device is different), but has the same serial number
@@ -122,6 +125,7 @@ public:
             },
         };
         _sendCmd(cmd);
+        _checkStatus("LEDSet command failed");
     }
     
     // MARK: - STMLoader Commands
@@ -146,7 +150,7 @@ public:
         _sendCmd(cmd);
         // Send data
         _dev.write(STM::Endpoints::DataOut, data, len);
-        _waitOrThrow("STMWrite DataOut failed");
+        _checkStatus("STMWrite command failed");
     }
     
     void stmReset(uintptr_t entryPointAddr) {
@@ -164,6 +168,7 @@ public:
             },
         };
         _sendCmd(cmd);
+        _checkStatus("STMReset command failed");
     }
     
     // MARK: - STMApp Commands
@@ -181,24 +186,23 @@ public:
             },
         };
         _sendCmd(cmd);
-        
         // Send data
         _dev.write(STM::Endpoints::DataOut, data, len);
-        _waitOrThrow("ICEWrite command failed");
+        _checkStatus("ICEWrite command failed");
     }
     
     void mspConnect() {
         assert(_mode == STM::Status::Modes::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPConnect };
         _sendCmd(cmd);
-        _waitOrThrow("MSPConnect failed");
+        _checkStatus("MSPConnect command failed");
     }
     
     void mspDisconnect() {
         assert(_mode == STM::Status::Modes::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPDisconnect };
         _sendCmd(cmd);
-        _waitOrThrow("MSPDisconnect failed");
+        _checkStatus("MSPDisconnect command failed");
     }
     
     void mspRead(uintptr_t addr, void* data, size_t len) {
@@ -222,7 +226,7 @@ public:
         _sendCmd(cmd);
         // Read data
         _dev.read(STM::Endpoints::DataIn, data, len);
-        _waitOrThrow("MSPRead command failed");
+        _checkStatus("MSPRead command failed");
     }
     
     void mspWrite(uintptr_t addr, const void* data, size_t len) {
@@ -246,7 +250,7 @@ public:
         _sendCmd(cmd);
         // Send data
         _dev.write(STM::Endpoints::DataOut, data, len);
-        _waitOrThrow("MSPWrite command failed");
+        _checkStatus("MSPWrite command failed");
     }
     
     void mspDebug(const STM::MSPDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
@@ -279,7 +283,7 @@ public:
             _dev.read(STM::Endpoints::DataIn, resp, respLen);
         }
         
-        _waitOrThrow("MSPDebug command failed");
+        _checkStatus("MSPDebug command failed");
     }
     
     SD::CardId sdCardIdGet() {
@@ -290,7 +294,7 @@ public:
         
         SD::CardId cardId;
         _dev.read(STM::Endpoints::DataIn, cardId);
-        _waitOrThrow("SDCardIdGet command failed");
+        _checkStatus("SDCardIdGet command failed");
         return cardId;
     }
     
@@ -299,10 +303,10 @@ public:
         
         const STM::Cmd cmd = { .op = STM::Op::SDCardDataGet };
         _sendCmd(cmd);
-        _waitOrThrow("SDCardDataGet command failed");
         
         SD::CardData cardData;
         _dev.read(STM::Endpoints::DataIn, cardData);
+        _checkStatus("SDCardDataGet command failed");
         return cardData;
     }
     
@@ -321,7 +325,7 @@ public:
             },
         };
         _sendCmd(cmd);
-        _waitOrThrow("SDRead command failed");
+        _checkStatus("SDRead command failed");
     }
     
     struct ImgExposure {
@@ -343,7 +347,7 @@ public:
             },
         };
         _sendCmd(cmd);
-        _waitOrThrow("ImgExposureSet command failed");
+        _checkStatus("ImgExposureSet command failed");
     }
     
     STM::ImgCaptureStats imgCapture(uint8_t dstBlock, uint8_t skipCount) {
@@ -360,10 +364,10 @@ public:
         };
         
         _sendCmd(cmd);
-        _waitOrThrow("ImgCapture command failed");
         
         STM::ImgCaptureStats stats;
         _dev.read(STM::Endpoints::DataIn, stats);
+        _checkStatus("ImgCapture command failed");
         return stats;
     }
     
@@ -415,10 +419,10 @@ private:
     
     void _sendCmd(const STM::Cmd& cmd) {
         _dev.vendorRequestOut(0, cmd);
-        _waitOrThrow("command rejected");
+        _checkStatus("command rejected");
     }
     
-    void _waitOrThrow(const char* errMsg) {
+    void _checkStatus(const char* errMsg) {
         // Wait for completion and throw on failure
         bool s = false;
         _dev.read(STM::Endpoints::DataIn, s);

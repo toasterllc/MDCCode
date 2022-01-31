@@ -6,19 +6,31 @@
 
 namespace SD {
 
+class _CardBaseCachedCardId {
+public:
+    CardId cardId() const { return _cardId; }
+    CardData cardData() const { return _cardData; }
+    
+protected:
+    CardId _cardId;
+    CardData _cardData;
+};
+
+class _CardBase {};
+
 template <
     typename T_Scheduler,
     typename T_ICE,
     void T_SetPowerEnabled(bool),
     [[noreturn]] void T_Error(uint16_t),
     uint8_t T_ClkDelaySlow,
-    uint8_t T_ClkDelayFast
+    uint8_t T_ClkDelayFast,
+    bool T_CacheCardId
 >
-class Card {
+class Card : public std::conditional_t<T_CacheCardId, _CardBaseCachedCardId, _CardBase> {
 #define Assert(x) if (!(x)) T_Error(__LINE__)
 
 public:
-    
     void enable() {
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
@@ -119,12 +131,9 @@ public:
             T_ICE::SDSendCmd(_CMD2, 0, _RespType::Len136);
             // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
             // so it'll be flagged as incorrect.
-//            // Get the 128-bit card ID (CID) response
-//            _SDRespResp resp;
-//            T_ICE::Transfer(_SDRespMsg(0), &resp);
-//            memcpy(((uint8_t*)&_cardId)+0, resp.payload, 8);
-//            T_ICE::Transfer(_SDRespMsg(1), &resp);
-//            memcpy(((uint8_t*)&_cardId)+8, resp.payload, 8);
+            if constexpr (T_CacheCardId) {
+                _CardBaseCachedCardId::_cardId = _sdResp128Get<CardId>();
+            }
         }
         
         // ====================
@@ -137,6 +146,18 @@ public:
             Assert(!status.respCRCErr());
             // Get the card's RCA from the response
             _rca = status.respGetBits(39,24);
+        }
+        
+        // ====================
+        // CMD9 | SEND_CSD
+        //   State: Standby -> Standby
+        //   Get card-specific data (CSD)
+        // ====================
+        if constexpr (T_CacheCardId) {
+            T_ICE::SDSendCmd(_CMD9, ((uint32_t)_rca)<<16, _RespType::Len136);
+            // Don't check the CRC because the R2 CRC isn't calculated in the typical manner,
+            // so it'll be flagged as incorrect.
+            _CardBaseCachedCardId::_cardData = _sdResp128Get<CardData>();
         }
         
         // ====================
@@ -307,16 +328,6 @@ public:
         }
     }
     
-    CardId cardIdGet() {
-        T_ICE::SDSendCmd(_CMD10, ((uint32_t)_rca)<<16, _RespType::Len136);
-        return _sdResp128Get<CardId>();
-    }
-    
-    CardData cardDataGet() {
-        T_ICE::SDSendCmd(_CMD9, ((uint32_t)_rca)<<16, _RespType::Len136);
-        return _sdResp128Get<CardData>();
-    }
-    
 private:
     using _SDInitMsg    = typename T_ICE::SDInitMsg;
     using _SDRespMsg    = typename T_ICE::SDRespMsg;
@@ -373,8 +384,6 @@ private:
     }
     
     uint16_t _rca = 0;
-//    CardId _cardId;
-    
 #undef Assert
 };
 

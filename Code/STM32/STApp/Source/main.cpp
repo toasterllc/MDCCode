@@ -100,7 +100,8 @@ static SD::Card<
     _SDSetPowerEnabled, // T_SetPowerEnabled
     _SDError,           // T_Error
     1,                  // T_ClkDelaySlow (odd values invert the clock)
-    0                   // T_ClkDelayFast (odd values invert the clock)
+    0,                  // T_ClkDelayFast (odd values invert the clock)
+    true                // T_CacheCardId
 > _SDCard;
 
 // MARK: - ICE40
@@ -751,7 +752,7 @@ static void _SDCardIdGet(const STM::Cmd& cmd) {
     // Send SD card id
     // cardId: aligned to send via USB
     alignas(4) static SD::CardId cardId;
-    cardId = _SDCard.cardIdGet();
+    cardId = _SDCard.cardId();
     _USB.send(Endpoints::DataIn, &cardId, sizeof(cardId));
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
@@ -772,7 +773,7 @@ static void _SDCardDataGet(const STM::Cmd& cmd) {
     // Send SD card data
     // cardData: aligned to send via USB
     alignas(4) static SD::CardData cardData;
-    cardData = _SDCard.cardDataGet();
+    cardData = _SDCard.cardData();
     _USB.send(Endpoints::DataIn, &cardData, sizeof(cardData));
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
@@ -877,11 +878,11 @@ void _ImgCapture(const STM::Cmd& cmd) {
     // Arrange for the image to be read out
     _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstBlock));
     
-    // Start the Readout task
-    _TaskReadout::Start(stats.len);
-    
     // Send status
     _System::USBSendStatus(true);
+    
+    // Start the Readout task
+    _TaskReadout::Start(stats.len);
 }
 
 static void _CmdHandle(const STM::Cmd& cmd) {
