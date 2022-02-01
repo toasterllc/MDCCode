@@ -1,5 +1,6 @@
 #pragma once
 #include "Img.h"
+#include "SD.h"
 
 namespace MSP {
     
@@ -76,14 +77,17 @@ namespace MSP {
             uint16_t valid  = false; // uint16_t (instead of bool) for alignment
         } startTime = {};
         
-        struct [[gnu::packed]] {
-            // cap: image capacity
-            uint32_t cap        = 0;
-            // ringBuf: tracks captured images
-            ImgRingBuf ringBuf  = {};
-            // ringBuf2: copy of `ringBuf` in case there's a power failure
-            ImgRingBuf ringBuf2 = {};
-        } img = {};
+        struct {
+            // cardId: the SD card's CID, used to determine when the SD card has been
+            // changed, and therefore we need to update `imgCap` and reset `ringBufs`
+            SD::CardId cardId;
+            // imgCap: image capacity; the number of images that bounds the ring buffer
+            uint32_t imgCap = 0;
+            // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
+            // power failure
+            ImgRingBuf ringBufs[2] = {};
+            uint16_t valid = false; // uint16_t (instead of bool) for alignment
+        } sd = {};
         
         // abort: records aborts that have occurred
         struct [[gnu::packed]] {
