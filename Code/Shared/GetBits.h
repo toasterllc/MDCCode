@@ -1,26 +1,30 @@
+#pragma once
 #include <cstdint>
 
-template<uint8_t T_Idx, size_t T_Len>
-static bool GetBit(const uint8_t(&bytes)[T_Len]) {
-    static_assert(T_Idx < T_Len*8);
-    const uint8_t byteIdx = T_Len-(T_Idx/8)-1;
+template<uint8_t T_Idx, typename T>
+bool GetBit(const T& bytes) {
+    static_assert(T_Idx < sizeof(T)*8);
+    
+    const uint8_t* b = (const uint8_t*)&bytes;
+    const uint8_t byteIdx = sizeof(T)-(T_Idx/8)-1;
     const uint8_t bitIdx = T_Idx%8;
     const uint8_t bitMask = 1<<bitIdx;
-    return bytes[byteIdx] & bitMask;
+    return b[byteIdx] & bitMask;
 }
 
-template<uint8_t T_Start, uint8_t T_End, size_t T_Len>
-static uint64_t GetBits(const uint8_t(&bytes)[T_Len]) {
-    static_assert(T_Start < T_Len*8);
+template<uint8_t T_Start, uint8_t T_End, typename T>
+uint64_t GetBits(const T& bytes) {
+    static_assert(T_Start < sizeof(T)*8);
     static_assert(T_Start >= T_End);
     
-    const uint8_t leftByteIdx = T_Len-(T_Start/8)-1;
+    const uint8_t* b = (const uint8_t*)&bytes;
+    const uint8_t leftByteIdx = sizeof(T)-(T_Start/8)-1;
     const uint8_t leftByteMask = (1<<((T_Start%8)+1))-1;
-    const uint8_t rightByteIdx = T_Len-(T_End/8)-1;
+    const uint8_t rightByteIdx = sizeof(T)-(T_End/8)-1;
     const uint8_t rightByteMask = ~((1<<(T_End%8))-1);
     uint64_t r = 0;
     for (uint8_t i=leftByteIdx; i<=rightByteIdx; i++) {
-        uint8_t tmp = bytes[i];
+        uint8_t tmp = b[i];
         // Mask-out bits we don't want
         if (i == leftByteIdx)   tmp &= leftByteMask;
         if (i == rightByteIdx)  tmp &= rightByteMask;
