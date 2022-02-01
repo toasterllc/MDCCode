@@ -65,10 +65,10 @@ namespace MSP {
     
     struct [[gnu::packed]] State {
         static constexpr uint32_t MagicNumber   = 0xDECAFBAD;
-        static constexpr uint32_t Version       = 0;
-        static constexpr uint32_t MagicVersion  = MagicNumber+Version;
+        static constexpr uint16_t Version       = 0;
         
-        const uint32_t magicVersion = MagicVersion;
+        const uint32_t magic = MagicNumber;
+        const uint16_t version = Version;
         
         // startTime: the time set by the outside world (seconds since reference date)
         struct [[gnu::packed]] {

@@ -289,7 +289,8 @@ static void _ImgCapture() {
         
         // Populate the header
         static Img::Header header = {
-            .magicVersion   = Img::Header::MagicVersion,
+            .magic          = Img::Header::MagicNumber,
+            .version        = Img::Header::Version,
             .imageWidth     = Img::PixelWidth,
             .imageHeight    = Img::PixelHeight,
             .coarseIntTime  = 0,
