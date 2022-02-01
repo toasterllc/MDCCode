@@ -118,8 +118,6 @@ static SD::Card<
 [[gnu::section(".ram_backup_noinit.main")]]
 static RTC::Type<_XT1FreqHz> _RTC;
 
-
-
 // _ImgAutoExp: auto exposure algorithm object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
@@ -346,7 +344,6 @@ static void _ISR_Port2() {
     case P2IV__P2IFG5:
         _Motion = true;
         // Wake ourself
-        #warning figure out if we want to clear GIE here, especially wrt _Scheduler. don't think we do because we may just be running a task, and we don't want to change the interrupt state out from under it
         __bic_SR_register_on_exit(LPM3_bits);
         break;
     
@@ -360,7 +357,6 @@ static void _ISR_SysTick() {
     const bool wake = _Scheduler::Tick();
     if (wake) {
         // Wake ourself
-        #warning figure out if we want to clear GIE here, especially wrt _Scheduler. don't think we do because we may just be running a task, and we don't want to change the interrupt state out from under it
         __bic_SR_register_on_exit(LPM3_bits);
     }
 }
@@ -470,7 +466,10 @@ static void _Sleep() {
     }
     
     // Atomically enable interrupts and go to sleep
+    const bool prevEn = Toastbox::IntState::InterruptsEnabled();
     __bis_SR_register(GIE | LPMBits);
+    // If interrupts were disabled previously, disable them again
+    if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
 }
 
 // MARK: - Tasks
@@ -592,12 +591,11 @@ static void _AbortRecord(const MSP::Time& time, uint16_t domain, uint16_t line) 
 
 [[noreturn]]
 static void _Abort(uint16_t domain, uint16_t line) {
-    // Get the time before disabling ints, because RTC.time() needs ints to be enabled
     const MSP::Time time = _RTC.time();
-    
-    Toastbox::IntState ints(false);
+    // Record the abort
     _AbortRecord(time, domain, line);
-    
+    // Rate-limit aborting by simply sleeping for 3s
+    _Scheduler::DelayMs<3000>();
     // Trigger a BOR
     PMMCTL0 = PMMPW | PMMSWBOR;
     
