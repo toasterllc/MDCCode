@@ -6,6 +6,7 @@
 #include <optional>
 #include "Assert.h"
 #include "Img.h"
+#include "GetBits.h"
 #include "Toastbox/Task.h"
 
 template <
@@ -37,11 +38,15 @@ public:
     
     struct Resp {
         uint8_t payload[8];
-        bool getBit(uint8_t idx) const {
-            return _GetBit(payload, sizeof(payload), idx);
+        
+        template<uint8_t T_Idx>
+        bool getBit() const {
+            return GetBit<T_Idx>(payload);
         }
-        uint64_t getBits(uint8_t start, uint8_t end) const {
-            return _GetBits(payload, sizeof(payload), start, end);
+        
+        template<uint8_t T_Start, uint8_t T_End>
+        uint64_t getBits() const {
+            return GetBits<T_Start, T_End>(payload);
         }
     };
     
@@ -128,28 +133,35 @@ public:
     
     struct SDStatusResp : Resp {
         // Command
-        bool cmdDone() const                                    { return Resp::getBit(63);                              }
+        bool cmdDone() const                                    { return Resp::template getBit<63>();                            }
         
         // Response
-        bool respDone() const                                   { return Resp::getBit(62);                              }
-        bool respCRCErr() const                                 { return Resp::getBit(61);                              }
-        uint64_t resp() const                                   { return Resp::getBits(_RespIdx+48-1, _RespIdx);        }
+        bool respDone() const                                   { return Resp::template getBit<62>();                            }
+        bool respCRCErr() const                                 { return Resp::template getBit<61>();                            }
+        uint64_t resp() const                                   { return Resp::template getBits<_RespIdx+48-1, _RespIdx>();      }
         
         // DatOut
-        bool datOutDone() const                                 { return Resp::getBit(12);                              }
-        bool datOutCRCErr() const                               { return Resp::getBit(11);                              }
+        bool datOutDone() const                                 { return Resp::template getBit<12>();                            }
+        bool datOutCRCErr() const                               { return Resp::template getBit<11>();                            }
         
         // DatIn
-        bool datInDone() const                                  { return Resp::getBit(10);                              }
-        bool datInCRCErr() const                                { return Resp::getBit(9);                               }
-        uint8_t datInCMD6AccessMode() const                     { return Resp::getBits(8,5);                            }
+        bool datInDone() const                                  { return Resp::template getBit<10>();                            }
+        bool datInCRCErr() const                                { return Resp::template getBit<9>();                             }
+        uint8_t datInCMD6AccessMode() const                     { return Resp::template getBits<8,5>();                          }
         
         // Other
-        bool dat0Idle() const                                   { return Resp::getBit(4);                               }
+        bool dat0Idle() const                                   { return Resp::template getBit<4>();                             }
         
         // Helper methods
-        uint64_t respGetBit(uint8_t idx) const                  { return Resp::getBit(idx+_RespIdx);                    }
-        uint64_t respGetBits(uint8_t start, uint8_t end) const  { return Resp::getBits(start+_RespIdx, end+_RespIdx);   }
+        template<uint8_t T_Idx>
+        bool respGetBit() const {
+            return Resp::template getBit<T_Idx+_RespIdx>();
+        }
+        
+        template<uint8_t T_Start, uint8_t T_End>
+        uint64_t respGetBits() const {
+            return Resp::template getBits<T_Start+_RespIdx, T_End+_RespIdx>();
+        }
         
     private:
         static constexpr size_t _RespIdx = 13;
@@ -212,10 +224,10 @@ public:
     };
     
     struct ImgCaptureStatusResp : Resp {
-        bool done() const               { return Resp::getBit(63);                  }
-        uint32_t wordCount() const      { return (uint32_t)Resp::getBits(62,39);    }
-        uint32_t highlightCount() const { return (uint32_t)Resp::getBits(38,21);    }
-        uint32_t shadowCount() const    { return (uint32_t)Resp::getBits(20,3);     }
+        bool done() const               { return Resp::template getBit<63>();                  }
+        uint32_t wordCount() const      { return (uint32_t)Resp::template getBits<62,39>();    }
+        uint32_t highlightCount() const { return (uint32_t)Resp::template getBits<38,21>();    }
+        uint32_t shadowCount() const    { return (uint32_t)Resp::template getBits<20,3>();     }
     };
     
     struct ImgReadoutMsg : Msg {
@@ -247,9 +259,9 @@ public:
     };
     
     struct ImgI2CStatusResp : Resp {
-        bool done() const               { return Resp::getBit(63);      }
-        bool err() const                { return Resp::getBit(62);      }
-        uint16_t readData() const       { return Resp::getBits(61,46);  }
+        bool done() const               { return Resp::template getBit<63>();        }
+        bool err() const                { return Resp::template getBit<62>();        }
+        uint16_t readData() const       { return Resp::template getBits<61,46>();    }
     };
     
     struct ReadoutMsg : Msg {
@@ -368,40 +380,6 @@ public:
 private:
     template <uint16_t T_Ms>
     static constexpr auto _SleepMs = T_Scheduler::template SleepMs<T_Ms>;
-    
-    static bool _GetBit(const uint8_t* bytes, size_t len, uint8_t idx) {
-        AssertArg(idx < len*8);
-        const uint8_t byteIdx = len-(idx/8)-1;
-        const uint8_t bitIdx = idx%8;
-        const uint8_t bitMask = 1<<bitIdx;
-        return bytes[byteIdx] & bitMask;
-    }
-    
-    static uint64_t _GetBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t end) {
-        AssertArg(start < len*8);
-        AssertArg(start >= end);
-        const uint8_t leftByteIdx = len-(start/8)-1;
-        const uint8_t leftByteMask = (1<<((start%8)+1))-1;
-        const uint8_t rightByteIdx = len-(end/8)-1;
-        const uint8_t rightByteMask = ~((1<<(end%8))-1);
-        uint64_t r = 0;
-        for (uint8_t i=leftByteIdx; i<=rightByteIdx; i++) {
-            uint8_t tmp = bytes[i];
-            // Mask-out bits we don't want
-            if (i == leftByteIdx)   tmp &= leftByteMask;
-            if (i == rightByteIdx)  tmp &= rightByteMask;
-            // Make space for the incoming bits
-            if (i == rightByteIdx) {
-                tmp >>= end%8; // Shift right the number of unused bits
-                r <<= 8-(end%8); // Shift left the number of used bits
-            } else {
-                r <<= 8;
-            }
-            // Or the bits into place
-            r |= tmp;
-        }
-        return r;
-    }
 
 #undef Assert
 };
