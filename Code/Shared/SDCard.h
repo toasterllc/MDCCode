@@ -6,32 +6,19 @@
 
 namespace SD {
 
-class _CardBaseCachedCardId {
-public:
-    CardId cardId() const { return _cardId; }
-    CardData cardData() const { return _cardData; }
-    
-protected:
-    CardId _cardId;
-    CardData _cardData;
-};
-
-class _CardBase {};
-
 template <
     typename T_Scheduler,
     typename T_ICE,
     void T_SetPowerEnabled(bool),
     [[noreturn]] void T_Error(uint16_t),
     uint8_t T_ClkDelaySlow,
-    uint8_t T_ClkDelayFast,
-    bool T_CacheCardId
+    uint8_t T_ClkDelayFast
 >
-class Card : public std::conditional_t<T_CacheCardId, _CardBaseCachedCardId, _CardBase> {
+class Card {
 #define Assert(x) if (!(x)) T_Error(__LINE__)
 
 public:
-    void enable() {
+    void enable(CardId* cardId=nullptr, CardData* cardData=nullptr) {
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
         _SleepMs<1>();
@@ -115,9 +102,7 @@ public:
         {
             // The response to CMD2 is 136 bits, instead of the usual 48 bits
             _SendCmd(_CMD2, 0, _RespType::Len136);
-            if constexpr (T_CacheCardId) {
-                _CardBaseCachedCardId::_cardId = _sdResp128Get<CardId>();
-            }
+            if (cardId) *cardId = _sdResp128Get<CardId>();
         }
         
         // ====================
@@ -138,9 +123,9 @@ public:
         // ====================
         // We do this here because CMD9 is only valid in the standby state,
         // and this is the only time we're in the standby state.
-        if constexpr (T_CacheCardId) {
+        if (cardData) {
             _SendCmd(_CMD9, ((uint32_t)_rca)<<16, _RespType::Len136);
-            _CardBaseCachedCardId::_cardData = _sdResp128Get<CardData>();
+            *cardData = _sdResp128Get<CardData>();
         }
         
         // ====================

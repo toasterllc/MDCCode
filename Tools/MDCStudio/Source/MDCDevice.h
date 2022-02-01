@@ -82,18 +82,29 @@ private:
             mspRead(MSP::StateAddr, &state, sizeof(state));
             
             if (state.magic != MSP::State::MagicNumber) {
-                throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
-                    (uintmax_t)MSP::State::MagicNumber,
-                    (uintmax_t)state.magic
-                );
+                // Program MSPApp
             }
             
-            if (state.version != MSP::State::Version) {
-                throw Toastbox::RuntimeError("unrecognized MSP::State version (expected: 0x%02jx, got: 0x%02jx)",
-                    (uintmax_t)MSP::State::Version,
-                    (uintmax_t)state.version
-                );
+            if (state.version > MSP::State::Version) {
+                // Newer version than we understand -- tell user to upgrade or re-program
             }
+            
+            
+            
+            
+//            if (state.magic != MSP::State::MagicNumber) {
+//                throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
+//                    (uintmax_t)MSP::State::MagicNumber,
+//                    (uintmax_t)state.magic
+//                );
+//            }
+//            
+//            if (state.version != MSP::State::Version) {
+//                throw Toastbox::RuntimeError("unrecognized MSP::State version (expected: 0x%02jx, got: 0x%02jx)",
+//                    (uintmax_t)MSP::State::Version,
+//                    (uintmax_t)state.version
+//                );
+//            }
             
             mspDisconnect();
             

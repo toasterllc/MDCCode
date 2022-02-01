@@ -129,19 +129,22 @@ static Img::AutoExposure _ImgAutoExp;
 [[gnu::section(".fram_info.main")]]
 static volatile MSP::State _State;
 
+// _CardIdVerified: whether we've verified that _State.sd.cardId
+// matches the current SD card
+// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// it's maintained during sleep, but reset upon a cold start.
+[[gnu::section(".ram_backup.main")]]
+static bool _CardIdVerified = false;
+
 struct _SDTask {
     static void Enable() {
         Wait();
-        _Scheduler::Start<_SDTask>([] {
-            _SDCard.enable();
-        });
+        _Scheduler::Start<_SDTask>(_Enable);
     }
     
     static void Disable() {
         Wait();
-        _Scheduler::Start<_SDTask>([] {
-            _SDCard.disable();
-        });
+        _Scheduler::Start<_SDTask>([] { _SDCard.disable(); });
     }
     
     static void Wait() {
@@ -154,7 +157,65 @@ struct _SDTask {
     // Task stack
     [[gnu::section(".stack._SDTask")]]
     static inline uint8_t Stack[256];
+
+private:
+    static void _Enable() {
+        if (!_State.sd.valid || !_CardIdVerified) {
+            
+        }
+    }
 };
+
+static void _SDInit() {
+    SD::CardId cardId;
+    SD::CardData cardData;
+    SD::CardId*const cardIdPtr = (!_State.sd.valid || !_CardIdVerified ? &cardId : nullptr);
+    SD::CardData*const cardDataPtr = (!_State.sd.valid ? &cardData : nullptr);
+    
+    _SDTask::Wait();
+    
+    if (!_State.sd.valid || !_CardIdVerified) {
+        SD::CardId cardId;
+        SD::CardData cardData;
+        
+        _Scheduler::Start<_SDTask>([] { _SDCard.enable(&cardId, &cardData); });
+        _SDTask::Wait();
+        
+        if (!_State.sd.valid) {
+            _State.sd.cardId = cardId;
+            _State.sd.imgCap = ;
+//            // cardId: the SD card's CID, used to determine when the SD card has been
+//            // changed, and therefore we need to update `imgCap` and reset `ringBufs`
+//            SD::CardId cardId;
+//            // imgCap: image capacity; the number of images that bounds the ring buffer
+//            uint32_t imgCap = 0;
+//            // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
+//            // power failure
+//            ImgRingBuf ringBufs[2] = {};
+//            uint16_t valid = false; // uint16_t (instead of bool) for alignment
+        }
+    
+    } else {
+        _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
+    }
+    
+    if (cardIdPtr || cardDataPtr) {
+        _SDCard.enable(cardIdPtr, cardDataPtr);
+    } else {
+        _SDTask::Wait();
+        _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
+    }
+    
+    
+    _SDCard.enable(cardIdPtr, cardDataPtr);
+    
+    
+    if (!_State.sd.valid || !_CardIdVerified) {
+        
+    }
+    
+    
+}
 
 struct _ImgTask {
     static void Enable() {
@@ -711,7 +772,9 @@ int main() {
     }
     
     // Initialize our image ring buffers on the first start
-    if (Startup::ColdStart()) {
+    if (Startup::ColdStart() || !_State.sd.valid) {
+        
+        
         _ImgRingBufInit();
     }
     
