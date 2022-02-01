@@ -1,7 +1,8 @@
 - Rev4 Todo
     
-    - We need to handle swapping the SD card
-        - Need to reset _State.img.ringBuf/_State.img.ringBuf2 from host app
+    - MSPApp: delay before actual abort, so we don't restart too quickly if too many aborts happen too quickly
+    
+    - MSPApp: upon a cold start (which includes aborts), refresh the SD card ID (CID). If the CID doesn't match the one stored in MSP::State, reset the ring buffers / capacity
     
     - Test _State.img.ringBuf/_State.img.ringBuf2 resiliency to power loss
     
