@@ -1,8 +1,6 @@
 - Rev4 Todo
     
-    - MSPApp: delay before actual abort, so we don't restart too quickly if too many aborts happen too quickly
-    
-    - MSPApp: upon a cold start (which includes aborts), refresh the SD card ID (CID). If the CID doesn't match the one stored in MSP::State, reset the ring buffers / capacity
+    - MSPApp: upon a cold start (which includes aborts) or if _state.sd.valid==false, refresh the SD card ID (CID). If the CID doesn't match the one stored in MSP::State, reset the ring buffers / capacity
     
     - Test _State.img.ringBuf/_State.img.ringBuf2 resiliency to power loss
     
@@ -29,6 +27,8 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MSPApp: delay before actual abort, so we don't restart too quickly if too many aborts happen too quickly
     
     √ Let RTC run even if startTime is invalid? it would be nice if abort events have a non-zero time, even if it's not correct
     
