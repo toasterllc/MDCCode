@@ -10,11 +10,18 @@ namespace Img {
     using Id = uint32_t;
     
     struct [[gnu::packed]] Header {
-        static constexpr uint32_t MagicNumber   = 0xDECAFBAD;
-        static constexpr uint32_t Version       = 0;
-        static constexpr uint32_t MagicVersion  = MagicNumber+Version;
+        union [[gnu::packed]] MagicNumber24 {
+            uint32_t u24:24;
+            uint8_t b3[3] = {};
+        };
+        static_assert(sizeof(MagicNumber24) == 3);
         
-        uint32_t magicVersion;  // 32'hDECAFBAD
+        static constexpr MagicNumber24 MagicNumber  = { 0xC0FFEE };
+        static constexpr uint8_t Version            = 0;
+        
+        MagicNumber24 magic;
+        uint8_t version;
+        
         uint16_t imageWidth;    // 16'd2304 == 0x0900
         uint16_t imageHeight;   // 16'd1296 == 0x0510
         

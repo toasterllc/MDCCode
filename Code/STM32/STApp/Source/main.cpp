@@ -857,7 +857,8 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _ImgInit();
     
     const Img::Header header = {
-        .magicVersion   = Img::Header::MagicVersion,
+        .magic          = Img::Header::MagicNumber,
+        .version        = Img::Header::Version,
         .imageWidth     = Img::PixelWidth,
         .imageHeight    = Img::PixelHeight,
     };

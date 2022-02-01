@@ -225,12 +225,23 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     
     MSP::State state;
     device.mspRead(StateAddr, &state, sizeof(state));
-    if (state.magicVersion != MSP::State::MagicVersion) {
-        throw Toastbox::RuntimeError("invalid magicVersion (expected: %04x, got: %04x)",
-            MSP::State::MagicVersion, state.magicVersion);
+    
+    if (state.magic != MSP::State::MagicNumber) {
+        throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
+            (uintmax_t)MSP::State::MagicNumber,
+            (uintmax_t)state.magic
+        );
     }
     
-    printf(     "magicVersion:      0x%08x\n",   state.magicVersion);
+    if (state.version != MSP::State::Version) {
+        throw Toastbox::RuntimeError("unrecognized MSP::State version (expected: 0x%02jx, got: 0x%02jx)",
+            (uintmax_t)MSP::State::Version,
+            (uintmax_t)state.version
+        );
+    }
+    
+    printf(     "magic:             0x%08x\n",   state.magic);
+    printf(     "version:           0x%04x\n",   state.version);
     printf(     "\n");
     
     printf(     "startTime\n");
