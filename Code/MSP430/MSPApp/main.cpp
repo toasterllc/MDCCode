@@ -19,6 +19,7 @@
 #include "FRAMWriteEn.h"
 #include "Util.h"
 #include "MSP.h"
+#include "GetBits.h"
 #include "Toastbox/IntState.h"
 using namespace GPIO;
 
