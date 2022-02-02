@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include "Img.h"
 #include "SD.h"
 
@@ -13,47 +14,80 @@ namespace MSP {
     
     // ImgRingBuf: stats to track captured images
     struct [[gnu::packed]] ImgRingBuf {
-        static constexpr uint32_t MagicNumber = 0xCAFEBABE;
-        uint32_t magic = 0;
         struct [[gnu::packed]] {
             Img::Id idBegin     = 0;
             Img::Id idEnd       = 0;
             uint16_t widx       = 0;
             uint16_t ridx       = 0;
-            uint16_t full       = false; // uint16_t (instead of bool) for alignment
+            bool full           = false;
         } buf;
+        volatile bool valid = false;
         
-        template <typename T> // Templated so that FindLatest() works with or without const/volatile
-        static bool FindLatest(T*& newest, T*& oldest) {
-            T* ringBuf = newest;
-            T* ringBuf2 = oldest;
+//        ImgRingBuf& operator=(const ImgRingBuf& x) {
+//            valid = false;
+//            buf = x.buf;
+//            valid = true;
+//            return *this;
+//        }
+//        
+//        template <typename T>
+//        static void _ImgRingBufSet(volatile MSP::ImgRingBuf& dst, const T& src) {
+//            FRAMWriteEn writeEn; // Enable FRAM writing
+//            
+//            dst.valid = false;
+//            atomic_thread_fence(std::memory_order_seq_cst);
+//            
+//            (const_cast<MSP::ImgRingBuf&>(dst)).buf = const_cast<MSP::ImgRingBuf&>(src).buf;
+//            atomic_thread_fence(std::memory_order_seq_cst);
+//            
+//            dst.valid = true;
+//        }
+        
+        static std::optional<int> Compare(const ImgRingBuf& a, const ImgRingBuf& b) {
+            if (a.valid && b.valid) {
+                if (a.buf.idEnd > b.buf.idEnd) return 1;
+                else if (a.buf.idEnd < b.buf.idEnd) return -1;
+                else return 0;
             
-            if (ringBuf->magic==ImgRingBuf::MagicNumber && ringBuf2->magic==ImgRingBuf::MagicNumber) {
-                if (ringBuf->buf.idEnd >= ringBuf2->buf.idEnd) {
-                    newest = ringBuf;
-                    oldest = ringBuf2;
-                    return true;
-                    
-                } else {
-                    newest = ringBuf2;
-                    oldest = ringBuf;
-                    return true;
-                }
+            } else if (a.valid) {
+                return 1;
             
-            } else if (ringBuf->magic == ImgRingBuf::MagicNumber) {
-                newest = ringBuf;
-                oldest = ringBuf2;
-                return true;
-            
-            } else if (ringBuf2->magic == ImgRingBuf::MagicNumber) {
-                newest = ringBuf2;
-                oldest = ringBuf;
-                return true;
-            
-            } else {
-                return false;
+            } else if (b.valid) {
+                return -1;
             }
+            return std::nullopt;
         }
+        
+//        static bool FindLatest(const ImgRingBuf*& newest, const ImgRingBuf*& oldest) {
+//            const ImgRingBuf*const ringBuf = newest;
+//            const ImgRingBuf*const ringBuf2 = oldest;
+//            
+//            if (ringBuf->valid && ringBuf2->valid) {
+//                if (ringBuf->buf.idEnd >= ringBuf2->buf.idEnd) {
+//                    newest = ringBuf;
+//                    oldest = ringBuf2;
+//                    return true;
+//                    
+//                } else {
+//                    newest = ringBuf2;
+//                    oldest = ringBuf;
+//                    return true;
+//                }
+//            
+//            } else if (ringBuf->valid) {
+//                newest = ringBuf;
+//                oldest = ringBuf2;
+//                return true;
+//            
+//            } else if (ringBuf2->valid) {
+//                newest = ringBuf2;
+//                oldest = ringBuf;
+//                return true;
+//            
+//            } else {
+//                return false;
+//            }
+//        }
     };
     
     struct [[gnu::packed]] AbortEvent {
@@ -74,10 +108,11 @@ namespace MSP {
         // startTime: the time set by the outside world (seconds since reference date)
         struct [[gnu::packed]] {
             Sec time        = 0;
-            uint16_t valid  = false; // uint16_t (instead of bool) for alignment
+            volatile bool valid = false;
+            uint8_t _pad = 0;
         } startTime = {};
         
-        struct {
+        struct [[gnu::packed]] {
             // cardId: the SD card's CID, used to determine when the SD card has been
             // changed, and therefore we need to update `imgCap` and reset `ringBufs`
             SD::CardId cardId;
@@ -86,13 +121,14 @@ namespace MSP {
             // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
             // power failure
             ImgRingBuf ringBufs[2] = {};
-            uint16_t valid = false; // uint16_t (instead of bool) for alignment
+            volatile bool valid = false;
+            uint8_t _pad = 0;
         } sd = {};
         
         // abort: records aborts that have occurred
         struct [[gnu::packed]] {
-            uint16_t eventsCount    = 0;
-            AbortEvent events[3]    = {};
+            AbortEvent events[3]            = {};
+            volatile uint16_t eventsCount   = 0;
         } abort = {};
     };
 

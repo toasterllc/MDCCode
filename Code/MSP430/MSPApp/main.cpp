@@ -105,8 +105,7 @@ static SD::Card<
     _SDSetPowerEnabled, // T_SetPowerEnabled
     _SDError,           // T_Error
     1,                  // T_ClkDelaySlow (odd values invert the clock)
-    0,                  // T_ClkDelayFast (odd values invert the clock)
-    false               // T_CacheCardId
+    0                   // T_ClkDelayFast (odd values invert the clock)
 > _SDCard;
 
 // _RTC: real time clock
@@ -128,22 +127,32 @@ static Img::AutoExposure _ImgAutoExp;
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
 [[gnu::section(".fram_info.main")]]
-static volatile MSP::State _State;
+static MSP::State _State;
 
-// _CardIdVerified: whether we've verified that _State.sd.cardId
+// _SDCardIdVerified: whether we've verified that _State.sd.cardId
 // matches the current SD card
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
 [[gnu::section(".ram_backup.main")]]
-static bool _CardIdVerified = false;
+static bool _SDCardIdVerified = false;
 
 struct _SDTask {
-    static void Enable() {
+    static void Enable(SD::CardId* cardId, SD::CardData* cardData) {
         Wait();
-        _Scheduler::Start<_SDTask>(_Enable);
+        static SD::CardId* CardId = nullptr;
+        static SD::CardData* CardData = nullptr;
+        CardId = cardId;
+        CardData = cardData;
+        _Scheduler::Start<_SDTask>([] { _SDCard.enable(CardId, CardData); });
+        Wait();
     }
     
-    static void Disable() {
+    static void EnableAsync() {
+        Wait();
+        _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
+    }
+    
+    static void DisableAsync() {
         Wait();
         _Scheduler::Start<_SDTask>([] { _SDCard.disable(); });
     }
@@ -158,68 +167,114 @@ struct _SDTask {
     // Task stack
     [[gnu::section(".stack._SDTask")]]
     static inline uint8_t Stack[256];
-
-private:
-    static void _Enable() {
-        if (!_State.sd.valid || !_CardIdVerified) {
-            
-        }
-    }
 };
 
-static void _SDInit() {
-    SD::CardId cardId;
-    SD::CardData cardData;
-    SD::CardId*const cardIdPtr = (!_State.sd.valid || !_CardIdVerified ? &cardId : nullptr);
-    SD::CardData*const cardDataPtr = (!_State.sd.valid ? &cardData : nullptr);
+static void _SDStateReset(const SD::CardId& cardId, const SD::CardData& cardData) {
+    FRAMWriteEn writeEn; // Enable FRAM writing
     
+    // Mark the _State as invalid in case we lose power in the middle of modifying it
+    _State.sd.valid = false;
+    
+    // Set .cardId
+    {
+        _State.sd.cardId = cardId;
+    }
+    
+    // Set .imgCap
+    {
+        // ImgBlockLen: the length of an image in SD blocks
+        constexpr uint32_t ImgBlockLen = Img::PaddedLen / SD::BlockLen;
+        // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
+        const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
+        // cardImgCap: the capacity of the SD card in number of images
+        const uint32_t cardImgCap = cardBlockCap / ImgBlockLen;
+        
+        _State.sd.imgCap = cardImgCap;
+    }
+    
+    // Set .ringBufs
+    {
+        _State.sd.ringBufs[0] = {};
+        _State.sd.ringBufs[1] = {};
+    }
+    
+    _State.sd.valid = true;
+}
+
+static void _SDInit() {
     _SDTask::Wait();
     
-    if (!_State.sd.valid || !_CardIdVerified) {
-        SD::CardId cardId;
-        SD::CardData cardData;
-        
-        _Scheduler::Start<_SDTask>([] { _SDCard.enable(&cardId, &cardData); });
-        _SDTask::Wait();
-        
-        if (!_State.sd.valid) {
-            _State.sd.cardId = cardId;
-            _State.sd.imgCap = ;
-//            // cardId: the SD card's CID, used to determine when the SD card has been
-//            // changed, and therefore we need to update `imgCap` and reset `ringBufs`
-//            SD::CardId cardId;
-//            // imgCap: image capacity; the number of images that bounds the ring buffer
-//            uint32_t imgCap = 0;
-//            // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
-//            // power failure
-//            ImgRingBuf ringBufs[2] = {};
-//            uint16_t valid = false; // uint16_t (instead of bool) for alignment
-        }
-    
-    } else {
-        _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
+    // If the SD state is valid, and we've already verified the SD card ID,
+    // enable the SD card asynchronously
+    if (_State.sd.valid && _SDCardIdVerified) {
+        _SDTask::EnableAsync();
+        return;
     }
     
-    if (cardIdPtr || cardDataPtr) {
-        _SDCard.enable(cardIdPtr, cardDataPtr);
-    } else {
-        _SDTask::Wait();
-        _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
+    // Otherwise, enable the SD card synchronously because we need the card id / card data
+    SD::CardId cardId;
+    SD::CardData cardData;
+    _SDTask::Enable(&cardId, &cardData);
+    
+    // If the SD state isn't valid, or the existing SD card id doesn't
+    // match the current card id, then reset the SD state
+    if (!_State.sd.valid || memcmp(&_State.sd.cardId, &cardId, sizeof(cardId))) {
+        _SDStateReset(cardId, cardData);
     }
     
+    _SDCardIdVerified = true;
     
-    _SDCard.enable(cardIdPtr, cardDataPtr);
-    
-    
-    if (!_State.sd.valid || !_CardIdVerified) {
-        
-    }
-    
-    
+//    if (!_State.sd.valid || !_SDCardIdVerified) {
+//        SD::CardId cardId;
+//        SD::CardData cardData;
+//        
+//        _Scheduler::Start<_SDTask>([] { _SDCard.enable(&cardId, &cardData); });
+//        _SDTask::Wait();
+//        
+//        if (!_State.sd.valid) {
+//            _State.sd.cardId = cardId;
+//            
+//            // ImgBlockLen: the length of an image in 
+//            constexpr uint32_t ImgBlockLen = Img::PaddedLen / SD::BlockLen;
+//            // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
+//            const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
+//            // cardImgCap: the capacity of the SD card in number of images
+//            const uint32_t cardImgCap = cardBlockCap / ImgBlockLen;
+//            
+//            _State.sd.imgCap = cardImgCap;
+////            // cardId: the SD card's CID, used to determine when the SD card has been
+////            // changed, and therefore we need to update `imgCap` and reset `ringBufs`
+////            SD::CardId cardId;
+////            // imgCap: image capacity; the number of images that bounds the ring buffer
+////            uint32_t imgCap = 0;
+////            // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
+////            // power failure
+////            ImgRingBuf ringBufs[2] = {};
+////            uint16_t valid = false; // uint16_t (instead of bool) for alignment
+//        }
+//    
+//    } else {
+//        _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
+//    }
+//    
+//    if (cardIdPtr || cardDataPtr) {
+//        _SDCard.enable(cardIdPtr, cardDataPtr);
+//    } else {
+//        _SDTask::Wait();
+//        _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
+//    }
+//    
+//    
+//    _SDCard.enable(cardIdPtr, cardDataPtr);
+//    
+//    
+//    if (!_State.sd.valid || !_SDCardIdVerified) {
+//        
+//    }
 }
 
 struct _ImgTask {
-    static void Enable() {
+    static void EnableAsync() {
         Wait();
         _Scheduler::Start<_ImgTask>([] {
             // Initialize image sensor
@@ -232,7 +287,7 @@ struct _ImgTask {
         });
     }
     
-    static void Disable() {
+    static void DisableAsync() {
         Wait();
         _Scheduler::Start<_ImgTask>(_ImgSensor::Disable);
     }
@@ -254,81 +309,96 @@ struct _ImgTask {
 static volatile bool _Motion = false;
 static volatile bool _Busy = false;
 
-template <typename T>
-static void _ImgRingBufSet(volatile MSP::ImgRingBuf& dst, const T& src) {
-    FRAMWriteEn writeEn; // Enable FRAM writing
-    
-    dst.magic = 0;
-    atomic_thread_fence(std::memory_order_seq_cst);
-    
-    (const_cast<MSP::ImgRingBuf&>(dst)).buf = const_cast<MSP::ImgRingBuf&>(src).buf;
-    atomic_thread_fence(std::memory_order_seq_cst);
-    
-    dst.magic = MSP::ImgRingBuf::MagicNumber;
-}
+//template <typename T>
+//static void _ImgRingBufSet(volatile MSP::ImgRingBuf& dst, const T& src) {
+//    FRAMWriteEn writeEn; // Enable FRAM writing
+//    
+//    dst.valid = false;
+//    atomic_thread_fence(std::memory_order_seq_cst);
+//    
+//    (const_cast<MSP::ImgRingBuf&>(dst)).buf = const_cast<MSP::ImgRingBuf&>(src).buf;
+//    atomic_thread_fence(std::memory_order_seq_cst);
+//    
+//    dst.valid = true;
+//}
 
-// _ImgRingBufInit: find the correct ring buffer (the one with the greatest id and a valid magic number)
+// _ImgRingBufInit: find the correct ring buffer (the one with the greatest id that's valid)
 // and copy it into the other slot so that there are two copies. If neither slot contains a valid ring
 // buffer, reset them both so that they're both empty (and valid).
 static void _ImgRingBufInit() {
     using namespace MSP;
-    auto newest = &_State.img.ringBuf;
-    auto oldest = &_State.img.ringBuf2;
-    const bool br = ImgRingBuf::FindLatest(newest, oldest);
-    if (br) {
-        _ImgRingBufSet(*oldest, *newest);
     
-    } else {
-        // Both ringBuf and ringBuf2 are invalid
-        // Reset them both
-        _ImgRingBufSet(_State.img.ringBuf, MSP::ImgRingBuf{});
-        _ImgRingBufSet(_State.img.ringBuf2, MSP::ImgRingBuf{});
+    FRAMWriteEn writeEn; // Enable FRAM writing
+    MSP::ImgRingBuf& a = _State.sd.ringBufs[0];
+    MSP::ImgRingBuf& b = _State.sd.ringBufs[1];
+    const std::optional<int> comp = ImgRingBuf::Compare(a, b);
+    if (comp && *comp>0) {
+        // a>b (a is newer), so set b=a
+        b = a;
+    
+    } else if (comp && *comp<0) {
+        // b>a (b is newer), so set a=b
+        a = b;
+    
+    } else if (!comp) {
+        // Both a and b are invalid; reset them both
+        a = {};
+        b = {};
     }
 }
 
 static void _ImgRingBufIncrement() {
     using namespace MSP;
     
-    // Update _State.img.ringBuf
+    // Update .ringBufs[0]
     {
-        ImgRingBuf ringBufCopy = const_cast<ImgRingBuf&>(_State.img.ringBuf);
+        ImgRingBuf& ringBuf = _State.sd.ringBufs[0];
+        ringBuf.valid = false;
         
         // Update write index
-        ringBufCopy.buf.widx++;
+        ringBuf.buf.widx++;
         // Wrap widx
-        if (ringBufCopy.buf.widx >= _State.img.cap) ringBufCopy.buf.widx = 0;
+        if (ringBuf.buf.widx >= _State.sd.imgCap) ringBuf.buf.widx = 0;
         
         // Update read index (if we're currently full)
-        if (ringBufCopy.buf.full) {
-            ringBufCopy.buf.ridx++;
+        if (ringBuf.buf.full) {
+            ringBuf.buf.ridx++;
             // Wrap ridx
-            if (ringBufCopy.buf.ridx >= _State.img.cap) ringBufCopy.buf.ridx = 0;
+            if (ringBuf.buf.ridx >= _State.sd.imgCap) ringBuf.buf.ridx = 0;
             
             // Update the beginning image id (which only gets incremented if we're full)
-            ringBufCopy.buf.idBegin++;
+            ringBuf.buf.idBegin++;
         }
         
         // Update the end image id (the next image id that'll be used)
-        ringBufCopy.buf.idEnd++;
+        ringBuf.buf.idEnd++;
         
-        if (ringBufCopy.buf.widx == ringBufCopy.buf.ridx) ringBufCopy.buf.full = true;
+        if (ringBuf.buf.widx == ringBuf.buf.ridx) ringBuf.buf.full = true;
         
-        _ImgRingBufSet(_State.img.ringBuf, ringBufCopy);
+        ringBuf.valid = true;
     }
     
-    // Update _State.img.ringBuf2
+    // Update .ringBufs[1]
     {
-        // Set ringBuf2 = ringBuf
-        _ImgRingBufSet(_State.img.ringBuf2, _State.img.ringBuf);
+        // Set .ringBufs[1] = .ringBufs[0]
+        _State.sd.ringBufs[1].valid = false;
+        _State.sd.ringBufs[1].buf = _State.sd.ringBufs[0].buf;
+        _State.sd.ringBufs[1].valid = true;
     }
 }
 
 static void _ImgCapture() {
-    const auto& ringBuf = _State.img.ringBuf.buf;
+    const auto& ringBuf = _State.sd.ringBufs[0].buf;
     
-    // Asynchronously turn on the image sensor / SD card
-    _ImgTask::Enable();
-    _SDTask::Enable();
+    // Asynchronously turn on the image sensor
+    _ImgTask::EnableAsync();
+    
+    // Init SD card
+    // This should come after we kick off Img initialization, because sometimes (after a cold start)
+    // _SDInit needs to synchronously wait for the SD card (to verify the SD card id, and get its
+    // capacity if we haven't seen the SD card before). So while that's happening, we want the image
+    // sensor to be initializing in parallel.
+    _SDInit();
     
     // Wait until the image sensor is ready
     _ImgTask::Wait();
@@ -552,8 +622,8 @@ struct _BusyTimeoutTask {
         _Scheduler::SleepMs<1000>();
         
         // Asynchronously turn off the image sensor / SD card
-        _ImgTask::Disable();
-        _SDTask::Disable();
+        _ImgTask::DisableAsync();
+        _SDTask::DisableAsync();
         
         // Wait until the image sensor / SD card are off
         _ImgTask::Wait();
@@ -642,7 +712,7 @@ static void _AbortRecord(const MSP::Time& time, uint16_t domain, uint16_t line) 
     auto& abort = _State.abort;
     if (abort.eventsCount >= std::size(abort.events)) return;
     
-    const_cast<MSP::AbortEvent&>(abort.events[abort.eventsCount]) = MSP::AbortEvent{
+    abort.events[abort.eventsCount] = MSP::AbortEvent{
         .time = time,
         .domain = domain,
         .line = line,
@@ -773,9 +843,7 @@ int main() {
     }
     
     // Initialize our image ring buffers on the first start
-    if (Startup::ColdStart() || !_State.sd.valid) {
-        
-        
+    if (Startup::ColdStart()) {
         _ImgRingBufInit();
     }
     
