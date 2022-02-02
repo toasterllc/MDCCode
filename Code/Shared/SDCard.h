@@ -103,7 +103,7 @@ public:
         {
             // The response to CMD2 is 136 bits, instead of the usual 48 bits
             _SendCmd(_CMD2, 0, _RespType::Len136);
-            if (cardId) *cardId = _SDResp128Get<CardId>();
+            if (cardId) _SDRespGet<sizeof(*cardId)>(cardId);
         }
         
         // ====================
@@ -126,7 +126,7 @@ public:
         // and this is the only time we're in the standby state.
         if (cardData) {
             _SendCmd(_CMD9, ((uint32_t)rca)<<16, _RespType::Len136);
-            *cardData = _SDResp128Get<CardData>();
+            _SDRespGet<sizeof(*cardData)>(cardData);
         }
         
         // ====================
@@ -371,18 +371,42 @@ private:
         _SendCmd(_CMD12, 0);
     }
     
-    template <typename T>
-    static T _SDResp128Get() {
-        // Get the 128-bit response
-        T dst;
-        _SDRespResp resp;
-        static_assert((sizeof(T) % sizeof(resp.payload)) == 0);
-        for (size_t i=0; i<sizeof(T)/sizeof(resp); i++) {
-            T_ICE::Transfer(_SDRespMsg(i), &resp);
-            memcpy(((uint8_t*)&dst) + sizeof(resp.payload)*i, resp.payload, sizeof(resp.payload));
+    template <size_t T_Len>
+    static void _SDRespGet(void* dst) {
+        using Resp = typename T_ICE::Resp;
+        static_assert((T_Len % sizeof(Resp)) == 0);
+        
+        Resp* resp = (Resp*)dst;
+        for (size_t i=0; i<(T_Len/sizeof(Resp)); i++) {
+            T_ICE::Transfer(_SDRespMsg(i), resp);
+            resp++;
         }
-        return dst;
     }
+    
+//    template <size_t T_Len>
+//    static void _SDRespGet(void* dst) {
+//        using Resp = typename T_ICE::Resp;
+//        static_assert((T_Len % sizeof(Resp)) == 0);
+//        
+//        Resp* resp = (Resp*)dst;
+//        for (size_t i=0; i<(T_Len/sizeof(Resp)); i++) {
+//            T_ICE::Transfer(_SDRespMsg(i), resp);
+//            resp++;
+//        }
+//    }
+    
+//    template <typename T>
+//    static T _SDResp128Get() {
+//        // Get the 128-bit response
+//        T dst;
+//        _SDRespResp resp;
+//        static_assert((sizeof(T) % sizeof(resp.payload)) == 0);
+//        for (size_t i=0; i<sizeof(T)/sizeof(resp); i++) {
+//            T_ICE::Transfer(_SDRespMsg(i), &resp);
+//            memcpy(((uint8_t*)&dst) + sizeof(resp.payload)*i, resp.payload, sizeof(resp.payload));
+//        }
+//        return dst;
+//    }
     
 //    bool _enabled = false;
 //    uint16_t _rca = 0;
