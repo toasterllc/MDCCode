@@ -305,38 +305,30 @@ static volatile bool _Busy = false;
 static void _SDImgRingBufIncrement() {
     using namespace MSP;
     FRAMWriteEn writeEn; // Enable FRAM writing
+    ImgRingBuf ringBufCopy = _State.sd.imgRingBufs[0];
     
-    // Update .imgRingBufs[0]
-    {
-        ImgRingBuf ringBufCopy = _State.sd.imgRingBufs[0];
+    // Update write index
+    ringBufCopy.buf.widx++;
+    // Wrap widx
+    if (ringBufCopy.buf.widx >= _State.sd.imgCap) ringBufCopy.buf.widx = 0;
+    
+    // Update read index (if we're currently full)
+    if (ringBufCopy.buf.full) {
+        ringBufCopy.buf.ridx++;
+        // Wrap ridx
+        if (ringBufCopy.buf.ridx >= _State.sd.imgCap) ringBufCopy.buf.ridx = 0;
         
-        // Update write index
-        ringBufCopy.buf.widx++;
-        // Wrap widx
-        if (ringBufCopy.buf.widx >= _State.sd.imgCap) ringBufCopy.buf.widx = 0;
-        
-        // Update read index (if we're currently full)
-        if (ringBufCopy.buf.full) {
-            ringBufCopy.buf.ridx++;
-            // Wrap ridx
-            if (ringBufCopy.buf.ridx >= _State.sd.imgCap) ringBufCopy.buf.ridx = 0;
-            
-            // Update the beginning image id (which only gets incremented if we're full)
-            ringBufCopy.buf.idBegin++;
-        }
-        
-        // Update the end image id (the next image id that'll be used)
-        ringBufCopy.buf.idEnd++;
-        
-        if (ringBufCopy.buf.widx == ringBufCopy.buf.ridx) ringBufCopy.buf.full = true;
-        
-        _State.sd.imgRingBufs[0] = ringBufCopy;
+        // Update the beginning image id (which only gets incremented if we're full)
+        ringBufCopy.buf.idBegin++;
     }
     
-    // Update .imgRingBufs[1]
-    {
-        _State.sd.imgRingBufs[1] = _State.sd.imgRingBufs[0];
-    }
+    // Update the end image id (the next image id that'll be used)
+    ringBufCopy.buf.idEnd++;
+    
+    if (ringBufCopy.buf.widx == ringBufCopy.buf.ridx) ringBufCopy.buf.full = true;
+    
+    _State.sd.imgRingBufs[0] = ringBufCopy;
+    _State.sd.imgRingBufs[1] = ringBufCopy;
 }
 
 static void _ImgCapture() {
