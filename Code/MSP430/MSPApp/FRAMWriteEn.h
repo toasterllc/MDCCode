@@ -14,6 +14,10 @@ public:
         SYSCFG0 = FRWPPW | _prevSYSCFG0;
     }
     
+    // Copy/move: illegal
+    FRAMWriteEn(const FRAMWriteEn& x)   = delete;
+    FRAMWriteEn(FRAMWriteEn&& x)        = delete;
+    
 private:
     uint16_t _prevSYSCFG0 = 0;
 };

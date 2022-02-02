@@ -669,10 +669,6 @@ static void _Abort(uint16_t domain, uint16_t line) {
     const MSP::Time time = _RTC.time();
     // Record the abort
     _AbortRecord(time, domain, line);
-    // Rate-limit aborting by simply sleeping for 3s
-    #warning TODO: move this delay to main() so that this delay not only rate-limits, but gives the outputs a chance to settle in the off position.
-    #warning TODO: wrap the delay with _Busy=true so we don't enter LPM3.5
-    _Scheduler::DelayMs<3000>();
     // Trigger a BOR
     PMMCTL0 = PMMPW | PMMSWBOR;
     
@@ -791,6 +787,15 @@ int main() {
     
     // Init SysTick
     _SysTick::Init();
+    
+    if (Startup::ColdStart()) {
+        _Scheduler::DelayMs<3000>();
+    }
+    
+    // Rate-limit aborting by simply sleeping for 3s
+    #warning TODO: move this delay to main() so that this delay not only rate-limits, but gives the outputs a chance to settle in the off position.
+    #warning TODO: wrap the delay with _Busy=true so we don't enter LPM3.5
+    _Scheduler::DelayMs<3000>();
     
     _Scheduler::Run();
 }
