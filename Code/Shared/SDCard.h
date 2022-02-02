@@ -66,9 +66,9 @@ public:
             constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
             constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
             const _SDStatusResp status = _SendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
-            const uint8_t replyVoltage = status.template respGetBits<19,16>();
+            const uint8_t replyVoltage = status.respGetBits(19,16);
             Assert(replyVoltage == Voltage);
-            const uint8_t replyCheckPattern = status.template respGetBits<15,8>();
+            const uint8_t replyCheckPattern = status.respGetBits(15,8);
             Assert(replyCheckPattern == CheckPattern);
         }
         
@@ -86,10 +86,10 @@ public:
                 const _SDStatusResp status = _SendCmd(_CMD41, 0x51008000);
                 // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
                 // Check if card is ready. If it's not, retry ACMD41.
-                const bool ready = status.template respGetBit<39>();
+                const bool ready = status.respGetBit(39);
                 if (!ready) continue;
                 // Check S18A; for LVS initialization, it's expected to be 0
-                const bool S18A = status.template respGetBit<32>();
+                const bool S18A = status.respGetBit(32);
                 Assert(S18A == 0);
                 break;
             }
@@ -114,7 +114,7 @@ public:
         {
             const _SDStatusResp status = _SendCmd(_CMD3, 0);
             // Get the card's RCA from the response
-            rca = status.template respGetBits<39,24>();
+            rca = status.respGetBits(39,24);
         }
         
         // ====================

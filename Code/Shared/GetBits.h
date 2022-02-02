@@ -1,37 +1,35 @@
 #pragma once
 #include <cstdint>
 
-template<uint8_t T_Idx, typename T>
-bool GetBit(const T& bytes) {
-    static_assert(T_Idx < sizeof(T)*8);
-    
-    const uint8_t* b = (const uint8_t*)&bytes;
-    const uint8_t byteIdx = sizeof(T)-(T_Idx/8)-1;
-    const uint8_t bitIdx = T_Idx%8;
+//[[gnu::noinline]]
+static bool GetBit(const uint8_t* bytes, size_t len, uint8_t idx) {
+//    return false;
+    AssertArg(idx < len*8);
+    const uint8_t byteIdx = len-(idx/8)-1;
+    const uint8_t bitIdx = idx%8;
     const uint8_t bitMask = 1<<bitIdx;
-    return b[byteIdx] & bitMask;
+    return bytes[byteIdx] & bitMask;
 }
 
-template<uint8_t T_Start, uint8_t T_End, typename T>
-uint64_t GetBits(const T& bytes) {
-    static_assert(T_Start < sizeof(T)*8);
-    static_assert(T_Start >= T_End);
-    
-    const uint8_t* b = (const uint8_t*)&bytes;
-    const uint8_t leftByteIdx = sizeof(T)-(T_Start/8)-1;
-    const uint8_t leftByteMask = (1<<((T_Start%8)+1))-1;
-    const uint8_t rightByteIdx = sizeof(T)-(T_End/8)-1;
-    const uint8_t rightByteMask = ~((1<<(T_End%8))-1);
+//[[gnu::noinline]]
+static uint64_t GetBits(const uint8_t* bytes, size_t len, uint8_t start, uint8_t end) {
+//    return 0;
+    AssertArg(start < len*8);
+    AssertArg(start >= end);
+    const uint8_t leftByteIdx = len-(start/8)-1;
+    const uint8_t leftByteMask = (1<<((start%8)+1))-1;
+    const uint8_t rightByteIdx = len-(end/8)-1;
+    const uint8_t rightByteMask = ~((1<<(end%8))-1);
     uint64_t r = 0;
     for (uint8_t i=leftByteIdx; i<=rightByteIdx; i++) {
-        uint8_t tmp = b[i];
+        uint8_t tmp = bytes[i];
         // Mask-out bits we don't want
         if (i == leftByteIdx)   tmp &= leftByteMask;
         if (i == rightByteIdx)  tmp &= rightByteMask;
         // Make space for the incoming bits
         if (i == rightByteIdx) {
-            tmp >>= T_End%8; // Shift right the number of unused bits
-            r <<= 8-(T_End%8); // Shift left the number of used bits
+            tmp >>= end%8; // Shift right the number of unused bits
+            r <<= 8-(end%8); // Shift left the number of used bits
         } else {
             r <<= 8;
         }

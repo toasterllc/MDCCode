@@ -221,7 +221,7 @@ private:
             // ImgBlockLen: the length of an image in SD blocks
             constexpr uint32_t ImgBlockLen = Img::PaddedLen / SD::BlockLen;
             // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
-            const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
+            const uint32_t cardBlockCap = ((uint32_t)GetBits((const uint8_t*)&cardData, sizeof(cardData), 69, 48)+1) * (uint32_t)1024;
             // cardImgCap: the capacity of the SD card in number of images
             const uint32_t cardImgCap = cardBlockCap / ImgBlockLen;
             
