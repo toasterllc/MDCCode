@@ -190,10 +190,10 @@ static void _SDStateReset() {
         _State.sd.imgCap = cardImgCap;
     }
     
-    // Set .ringBufs
+    // Set .imgRingBufs
     {
-        _State.sd.ringBufs[0] = {};
-        _State.sd.ringBufs[1] = {};
+        _State.sd.imgRingBufs[0] = {};
+        _State.sd.imgRingBufs[1] = {};
     }
     
     _State.sd.valid = true;
@@ -224,6 +224,7 @@ struct _ImgTask {
     static void EnableAsync() {
         Wait();
         if (_ImgSensor.enabled()) return; // Short-circuit
+        
         _Scheduler::Start<_ImgTask>([] {
             // Initialize image sensor
             _ImgSensor.enable();
@@ -270,15 +271,15 @@ static volatile bool _Busy = false;
 //    dst.valid = true;
 //}
 
-// _ImgRingBufInit: find the correct ring buffer (the one with the greatest id that's valid)
+// _SDImgRingBufInit(): find the correct image ring buffer (the one with the greatest id that's valid)
 // and copy it into the other slot so that there are two copies. If neither slot contains a valid ring
 // buffer, reset them both so that they're both empty (and valid).
-static void _ImgRingBufInit() {
+static void _SDImgRingBufInit() {
     using namespace MSP;
     
     FRAMWriteEn writeEn; // Enable FRAM writing
-    MSP::ImgRingBuf& a = _State.sd.ringBufs[0];
-    MSP::ImgRingBuf& b = _State.sd.ringBufs[1];
+    MSP::ImgRingBuf& a = _State.sd.imgRingBufs[0];
+    MSP::ImgRingBuf& b = _State.sd.imgRingBufs[1];
     const std::optional<int> comp = ImgRingBuf::Compare(a, b);
     if (comp && *comp>0) {
         // a>b (a is newer), so set b=a
@@ -295,12 +296,12 @@ static void _ImgRingBufInit() {
     }
 }
 
-static void _ImgRingBufIncrement() {
+static void _SDImgRingBufIncrement() {
     using namespace MSP;
     
-    // Update .ringBufs[0]
+    // Update .imgRingBufs[0]
     {
-        ImgRingBuf& ringBuf = _State.sd.ringBufs[0];
+        ImgRingBuf& ringBuf = _State.sd.imgRingBufs[0];
         ringBuf.valid = false;
         
         // Update write index
@@ -326,17 +327,17 @@ static void _ImgRingBufIncrement() {
         ringBuf.valid = true;
     }
     
-    // Update .ringBufs[1]
+    // Update .imgRingBufs[1]
     {
-        // Set .ringBufs[1] = .ringBufs[0]
-        _State.sd.ringBufs[1].valid = false;
-        _State.sd.ringBufs[1].buf = _State.sd.ringBufs[0].buf;
-        _State.sd.ringBufs[1].valid = true;
+        // Set .imgRingBufs[1] = .imgRingBufs[0]
+        _State.sd.imgRingBufs[1].valid = false;
+        _State.sd.imgRingBufs[1].buf = _State.sd.imgRingBufs[0].buf;
+        _State.sd.imgRingBufs[1].valid = true;
     }
 }
 
 static void _ImgCapture() {
-    const auto& ringBuf = _State.sd.ringBufs[0].buf;
+    const auto& ringBuf = _State.sd.imgRingBufs[0].buf;
     
     // Asynchronously turn on the image sensor
     _ImgTask::EnableAsync();
@@ -397,7 +398,7 @@ static void _ImgCapture() {
         if (!_ImgAutoExp.changed()) break;
         
         // Update the exposure
-        _ImgSensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
+        _ImgSensor.setCoarseIntTime(_ImgAutoExp.integrationTime());
     }
     
     // Wait until the SD card is ready
@@ -407,7 +408,7 @@ static void _ImgCapture() {
     _SDCard.writeImage(bestExpBlock, ringBuf.widx);
     
     // Update _State.img
-    _ImgRingBufIncrement();
+    _SDImgRingBufIncrement();
 }
 
 // MARK: - Interrupts
@@ -675,6 +676,8 @@ static void _Abort(uint16_t domain, uint16_t line) {
     // Record the abort
     _AbortRecord(time, domain, line);
     // Rate-limit aborting by simply sleeping for 3s
+    #warning TODO: move this delay to main() so that this delay not only rate-limits, but gives the outputs a chance to settle in the off position.
+    #warning TODO: wrap the delay with _Busy=true so we don't enter LPM3.5
     _Scheduler::DelayMs<3000>();
     // Trigger a BOR
     PMMCTL0 = PMMPW | PMMSWBOR;
@@ -766,6 +769,8 @@ int main() {
     #warning   (SD card, image sensor) fully turn off, because we may have restarted because
     #warning   of an error
     
+    #warning we're currently sleeping before we abort -- move that sleep here instead.
+    
     #warning how do we handle turning off SD clock after an error occurs?
     #warning   ? dont worry about that because in the final design,
     #warning   well be powering off ICE40 anyway?
@@ -792,7 +797,7 @@ int main() {
     
     // Initialize our image ring buffers on the first start
     if (Startup::ColdStart()) {
-        _ImgRingBufInit();
+        _SDImgRingBufInit();
     }
     
     // Init SysTick
