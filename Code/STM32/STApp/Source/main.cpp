@@ -100,8 +100,7 @@ static SD::Card<
     _SDSetPowerEnabled, // T_SetPowerEnabled
     _SDError,           // T_Error
     1,                  // T_ClkDelaySlow (odd values invert the clock)
-    0,                  // T_ClkDelayFast (odd values invert the clock)
-    true                // T_CacheCardId
+    0                   // T_ClkDelayFast (odd values invert the clock)
 > _SDCard;
 
 // MARK: - ICE40
