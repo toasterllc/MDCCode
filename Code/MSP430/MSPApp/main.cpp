@@ -54,7 +54,7 @@ using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
 class _MotionTask;
-class _SDTask;
+class _SD;
 class _ImgTask;
 class _BusyTimeoutTask;
 
@@ -82,7 +82,7 @@ using _Scheduler = Toastbox::Scheduler<
                                                 //              main stack for overflow; unused if T_StackGuardCount==0)
     _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
     _MotionTask,                                // T_Tasks: list of tasks
-    _SDTask,
+    _SD,
     _ImgTask,
     _BusyTimeoutTask
 >;
@@ -135,19 +135,41 @@ static Img::AutoExposure _ImgAutoExp;
 [[gnu::section(".fram_info.main")]]
 static MSP::State _State;
 
-struct _SDTask {
+struct _SD {
+    static void Enable() {
+        Wait();
+        if (_enabled) return; // Short-circuit
+        
+        _Scheduler::Start<_SD>([] { _SDCard.enable(); });
+        
+        // If the SD state is valid, and this is a warm start (therefore we've already verified the SD card ID),
+        // there's nothing left to do.
+        if (_State.sd.valid && !Startup::ColdStart()) {
+            return;
+        }
+        
+        // Otherwise, wait for the SD card to be initialized because we need the card id / card data
+        _SD::Wait();
+        
+        // If the SD state isn't valid, or the existing SD card id doesn't
+        // match the current card id, then reset the SD state
+        if (!_State.sd.valid || memcmp(&_State.sd.cardId, &_SDCard.cardId(), sizeof(_SDCard.cardId()))) {
+            _SDStateReset();
+        }
+    }
+    
     static void EnableAsync() {
         Wait();
-        _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
+        _Scheduler::Start<_SD>([] { _SDCard.enable(); });
     }
     
     static void DisableAsync() {
         Wait();
-        _Scheduler::Start<_SDTask>([] { _SDCard.disable(); });
+        _Scheduler::Start<_SD>([] { _SDCard.disable(); });
     }
     
     static void Wait() {
-        _Scheduler::Wait<_SDTask>();
+        _Scheduler::Wait<_SD>();
     }
     
     // Task options
@@ -156,6 +178,9 @@ struct _SDTask {
     // Task stack
     [[gnu::section(".stack._SDTask")]]
     static inline uint8_t Stack[256];
+
+private:
+    static inline bool _enabled = false;
 };
 
 static void _SDStateReset() {
@@ -188,25 +213,6 @@ static void _SDStateReset() {
     }
     
     _State.sd.valid = true;
-}
-
-static void _SDInit() {
-    _SDTask::EnableAsync();
-    
-    // If the SD state is valid, and we've already verified the SD card ID,
-    // there's nothing left to do.
-    if (_State.sd.valid && !Startup::ColdStart()) {
-        return;
-    }
-    
-    // Otherwise, wait for the SD card to be initialized because we need the card id / card data
-    _SDTask::Wait();
-    
-    // If the SD state isn't valid, or the existing SD card id doesn't
-    // match the current card id, then reset the SD state
-    if (!_State.sd.valid || memcmp(&_State.sd.cardId, &_SDCard.cardId(), sizeof(_SDCard.cardId()))) {
-        _SDStateReset();
-    }
 }
 
 struct _ImgTask {

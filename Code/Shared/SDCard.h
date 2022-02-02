@@ -19,7 +19,7 @@ class Card {
 #define AssertArg(x) if (!(x)) T_Error(__LINE__)
 
 public:
-    void enable() {
+    void enable(bool ) {
         // Short-circuit if we're already enabled
         if (_enabled) return;
         
@@ -394,8 +394,8 @@ private:
     
     bool _enabled = false;
     uint16_t _rca = 0;
-    std::optional<CardId> _cardId;
-    std::optional<CardData> _cardData;
+    CardId _cardId;
+    CardData _cardData;
 #undef Assert
 #undef AssertArg
 };
