@@ -301,19 +301,6 @@ private:
 static volatile bool _Motion = false;
 static volatile bool _Busy = false;
 
-//template <typename T>
-//static void _ImgRingBufSet(volatile MSP::ImgRingBuf& dst, const T& src) {
-//    FRAMWriteEn writeEn; // Enable FRAM writing
-//    
-//    dst.valid = false;
-//    atomic_thread_fence(std::memory_order_seq_cst);
-//    
-//    (const_cast<MSP::ImgRingBuf&>(dst)).buf = const_cast<MSP::ImgRingBuf&>(src).buf;
-//    atomic_thread_fence(std::memory_order_seq_cst);
-//    
-//    dst.valid = true;
-//}
-
 static void _SDImgRingBufIncrement() {
     using namespace MSP;
     FRAMWriteEn writeEn; // Enable FRAM writing
@@ -359,9 +346,9 @@ static void _ImgCapture() {
     
     // Init SD card
     // This should come after we kick off Img initialization, because sometimes (after a cold start)
-    // _SD::Enable needs to synchronously wait for the SD card (to verify the SD card id, and get its
-    // capacity if we haven't seen the SD card before). So while that's happening, we want the image
-    // sensor to be initializing in parallel.
+    // _SD::EnableAsync needs to synchronously wait for the SD card (to verify the SD card id, and
+    // get its capacity if we haven't seen the SD card before). So while that's happening, we want
+    // the image sensor to be initializing in parallel.
     _SD::EnableAsync();
     
     // Wait until the image sensor is ready
