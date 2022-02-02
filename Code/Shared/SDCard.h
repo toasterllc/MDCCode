@@ -104,7 +104,7 @@ public:
         {
             // The response to CMD2 is 136 bits, instead of the usual 48 bits
             _SendCmd(_CMD2, 0, _RespType::Len136);
-            if (!_cardId) cardId = _sdResp128Get<CardId>();
+            if (!_cardId) _cardId = _sdResp128Get<CardId>();
         }
         
         // ====================

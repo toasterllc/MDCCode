@@ -120,7 +120,7 @@ namespace MSP {
             uint32_t imgCap = 0;
             // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
             // power failure
-            ImgRingBuf ringBufs[2] = {};
+            ImgRingBuf imgRingBufs[2] = {};
             volatile bool valid = false;
             uint8_t _pad = 0;
         } sd = {};

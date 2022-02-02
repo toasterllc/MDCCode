@@ -2,6 +2,8 @@
     
     - MSPApp: upon a cold start (which includes aborts) or if _state.sd.valid==false, refresh the SD card ID (CID). If the CID doesn't match the one stored in MSP::State, reset the ring buffers / capacity
     
+    - MSPApp: make sure SysTick (WDT) doesn't wake us from LPM3.5
+    
     - Test _State.img.ringBuf/_State.img.ringBuf2 resiliency to power loss
     
     - Task.h: debug feature: stack traces
