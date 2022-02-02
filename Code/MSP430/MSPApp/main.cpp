@@ -150,8 +150,7 @@ struct _ImgTask {
     
     // Task stack
     [[gnu::section(".stack._ImgTask")]]
-    #warning did we accidentally increase the Img stack size when we didn't need to?
-    static inline uint8_t Stack[256];
+    static inline uint8_t Stack[128];
 };
 
 class _SD {
