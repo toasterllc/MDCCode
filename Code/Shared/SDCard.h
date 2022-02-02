@@ -19,9 +19,8 @@ class Card {
 #define AssertArg(x) if (!(x)) T_Error(__LINE__)
 
 public:
-    void enable(bool ) {
-        // Short-circuit if we're already enabled
-        if (_enabled) return;
+    static uint16_t Enable(CardId* cardId=nullptr, CardData* cardData=nullptr) {
+        uint16_t rca = 0;
         
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
@@ -104,7 +103,7 @@ public:
         {
             // The response to CMD2 is 136 bits, instead of the usual 48 bits
             _SendCmd(_CMD2, 0, _RespType::Len136);
-            if (!_cardId) _cardId = _sdResp128Get<CardId>();
+            if (cardId) *cardId = _SDResp128Get<CardId>();
         }
         
         // ====================
@@ -115,7 +114,7 @@ public:
         {
             const _SDStatusResp status = _SendCmd(_CMD3, 0);
             // Get the card's RCA from the response
-            _rca = status.template respGetBits<39,24>();
+            rca = status.template respGetBits<39,24>();
         }
         
         // ====================
@@ -125,9 +124,9 @@ public:
         // ====================
         // We do this here because CMD9 is only valid in the standby state,
         // and this is the only time we're in the standby state.
-        if (!_cardData) {
-            _SendCmd(_CMD9, ((uint32_t)_rca)<<16, _RespType::Len136);
-            _cardData = _sdResp128Get<CardData>();
+        if (cardData) {
+            _SendCmd(_CMD9, ((uint32_t)rca)<<16, _RespType::Len136);
+            *cardData = _SDResp128Get<CardData>();
         }
         
         // ====================
@@ -136,7 +135,7 @@ public:
         //   Select card
         // ====================
         {
-            _SendCmd(_CMD7, ((uint32_t)_rca)<<16);
+            _SendCmd(_CMD7, ((uint32_t)rca)<<16);
         }
         
         // ====================
@@ -147,7 +146,7 @@ public:
         {
             // CMD55
             {
-                _SendCmd(_CMD55, ((uint32_t)_rca)<<16);
+                _SendCmd(_CMD55, ((uint32_t)rca)<<16);
             }
             
             // CMD6
@@ -185,31 +184,24 @@ public:
         // SDClock=FastClock
         T_ICE::Transfer(_ClocksFastOn);
         
-        // Update state
-        _enabled = true;
+        return rca;
     }
     
-    void disable() {
-        // Short-circuit if we're already disabled
-        if (!_enabled) return;
-        
+    static void Disable() {
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
         _SleepMs<1>();
         
         // Turn off SD card power and wait for it to reach 0V
         T_SetPowerEnabled(false);
-        
-        // Update state
-        _enabled = false;
     }
     
-    bool enabled() const { return _enabled; }
+//    bool enabled() const { return _enabled; }
+//    
+//    const CardId& cardId() const { return *_cardId; }
+//    const CardData& cardData() const { return *_cardData; }
     
-    const CardId& cardId() const { return *_cardId; }
-    const CardData& cardData() const { return *_cardData; }
-    
-    void readStart(uint32_t addr) {
+    static void ReadStart(uint32_t addr) {
         // Verify that `addr` is a multiple of the SD block length
         AssertArg(!(addr % SD::BlockLen));
         
@@ -221,14 +213,14 @@ public:
         _SendCmd(_CMD18, addr/SD::BlockLen, _RespType::Len48, _DatInType::Len4096xN);
     }
     
-    void readStop() {
-        _readWriteStop();
+    static void ReadStop() {
+        _ReadWriteStop();
     }
     
     // `lenEst`: the estimated byte count that will be written; used to pre-erase SD blocks as a performance
     // optimization. More data can be written than `lenEst`, but performance may suffer if the actual length
     // is longer than the estimate.
-    void writeStart(uint32_t addr, uint32_t lenEst=0) {
+    static void WriteStart(uint16_t rca, uint32_t addr, uint32_t lenEst=0) {
         // Verify that `addr` is a multiple of the SD block length
         AssertArg(!(addr % SD::BlockLen));
         
@@ -241,7 +233,7 @@ public:
         {
             // CMD55
             {
-                _SendCmd(_CMD55, ((uint32_t)_rca)<<16);
+                _SendCmd(_CMD55, ((uint32_t)rca)<<16);
             }
             
             // CMD23
@@ -262,16 +254,16 @@ public:
         }
     }
     
-    void writeStop() {
-        _readWriteStop();
+    static void WriteStop() {
+        _ReadWriteStop();
     }
     
-    void writeImage(uint8_t srcBlock, uint16_t dstIdx) {
+    static void WriteImage(uint16_t rca, uint8_t srcBlock, uint16_t dstIdx) {
         // Confirm that Img::PaddedLen is a multiple of the SD block length
         static_assert((Img::PaddedLen % SD::BlockLen) == 0, "");
         const uint32_t addr = dstIdx*Img::PaddedLen;
         
-        writeStart(addr, Img::Len);
+        WriteStart(rca, addr, Img::Len);
         
         // Clock out the image on the DAT lines
         T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcBlock));
@@ -287,7 +279,7 @@ public:
             // Busy
         }
         
-        writeStop();
+        WriteStop();
         
         // Wait for SD card to indicate that it's ready (DAT0=1)
         for (;;) {
@@ -370,7 +362,7 @@ private:
         Assert(false);
     }
     
-    void _readWriteStop() {
+    static void _ReadWriteStop() {
         // ====================
         // CMD12 | STOP_TRANSMISSION
         //   State: Send Data -> Transfer
@@ -380,7 +372,7 @@ private:
     }
     
     template <typename T>
-    T _sdResp128Get() {
+    static T _SDResp128Get() {
         // Get the 128-bit response
         T dst;
         _SDRespResp resp;
@@ -392,10 +384,10 @@ private:
         return dst;
     }
     
-    bool _enabled = false;
-    uint16_t _rca = 0;
-    CardId _cardId;
-    CardData _cardData;
+//    bool _enabled = false;
+//    uint16_t _rca = 0;
+//    CardId _cardId;
+//    CardData _cardData;
 #undef Assert
 #undef AssertArg
 };

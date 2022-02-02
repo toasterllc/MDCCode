@@ -23,13 +23,13 @@ namespace MSP {
         } buf;
         volatile bool valid = false;
         
-//        ImgRingBuf& operator=(const ImgRingBuf& x) {
-//            valid = false;
-//            buf = x.buf;
-//            valid = true;
-//            return *this;
-//        }
-//        
+        ImgRingBuf& operator=(const ImgRingBuf& x) {
+            valid = false;
+            buf = x.buf;
+            valid = true;
+            return *this;
+        }
+        
 //        template <typename T>
 //        static void _ImgRingBufSet(volatile MSP::ImgRingBuf& dst, const T& src) {
 //            FRAMWriteEn writeEn; // Enable FRAM writing
