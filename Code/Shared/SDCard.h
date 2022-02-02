@@ -16,9 +16,13 @@ template <
 >
 class Card {
 #define Assert(x) if (!(x)) T_Error(__LINE__)
+#define AssertArg(x) if (!(x)) T_Error(__LINE__)
 
 public:
-    void enable(CardId* cardId=nullptr, CardData* cardData=nullptr) {
+    void enable() {
+        // Short-circuit if we're already enabled
+        if (_enabled) return;
+        
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
         _SleepMs<1>();
@@ -62,7 +66,7 @@ public:
         {
             constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
             constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
-            auto status = _SendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
+            const _SDStatusResp status = _SendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
             const uint8_t replyVoltage = status.template respGetBits<19,16>();
             Assert(replyVoltage == Voltage);
             const uint8_t replyCheckPattern = status.template respGetBits<15,8>();
@@ -76,13 +80,11 @@ public:
         // ====================
         for (;;) {
             // CMD55
-            {
-                _SendCmd(_CMD55, 0);
-            }
+            _SendCmd(_CMD55, 0);
             
             // CMD41
             {
-                auto status = _SendCmd(_CMD41, 0x51008000);
+                const _SDStatusResp status = _SendCmd(_CMD41, 0x51008000);
                 // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
                 // Check if card is ready. If it's not, retry ACMD41.
                 const bool ready = status.template respGetBit<39>();
@@ -102,7 +104,7 @@ public:
         {
             // The response to CMD2 is 136 bits, instead of the usual 48 bits
             _SendCmd(_CMD2, 0, _RespType::Len136);
-            if (cardId) *cardId = _sdResp128Get<CardId>();
+            if (!_cardId) cardId = _sdResp128Get<CardId>();
         }
         
         // ====================
@@ -111,7 +113,7 @@ public:
         //   Publish a new relative address (RCA)
         // ====================
         {
-            auto status = _SendCmd(_CMD3, 0);
+            const _SDStatusResp status = _SendCmd(_CMD3, 0);
             // Get the card's RCA from the response
             _rca = status.template respGetBits<39,24>();
         }
@@ -123,9 +125,9 @@ public:
         // ====================
         // We do this here because CMD9 is only valid in the standby state,
         // and this is the only time we're in the standby state.
-        if (cardData) {
+        if (!_cardData) {
             _SendCmd(_CMD9, ((uint32_t)_rca)<<16, _RespType::Len136);
-            *cardData = _sdResp128Get<CardData>();
+            _cardData = _sdResp128Get<CardData>();
         }
         
         // ====================
@@ -167,7 +169,7 @@ public:
             // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
             // Group 2 (Command System)    = 0xF (no change)
             // Group 1 (Access Mode)       = 0x3 (SDR104)
-            auto status = _SendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
+            const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
             Assert(!status.datInCRCErr());
             // Verify that the access mode was successfully changed
             // TODO: properly handle this failing, see CMD6 docs
@@ -175,31 +177,37 @@ public:
         }
         
         // SDClock=Off
-        {
-            T_ICE::Transfer(_ClocksSlowOff);
-        }
+        T_ICE::Transfer(_ClocksSlowOff);
         
         // SDClockDelay=FastDelay
-        {
-            T_ICE::Transfer(_ClocksFastOff);
-        }
+        T_ICE::Transfer(_ClocksFastOff);
         
         // SDClock=FastClock
-        {
-            T_ICE::Transfer(_ClocksFastOn);
-        }
+        T_ICE::Transfer(_ClocksFastOn);
+        
+        // Update state
+        _enabled = true;
     }
     
     void disable() {
+        // Short-circuit if we're already disabled
+        if (!_enabled) return;
+        
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
         _SleepMs<1>();
         
         // Turn off SD card power and wait for it to reach 0V
         T_SetPowerEnabled(false);
+        
+        // Update state
+        _enabled = false;
     }
     
-//    const CardId& cardId() const { return _cardId; }
+    bool enabled() const { return _enabled; }
+    
+    const CardId& cardId() const { return *_cardId; }
+    const CardData& cardData() const { return *_cardData; }
     
     void readStart(uint32_t addr) {
         // Verify that `addr` is a multiple of the SD block length
@@ -271,7 +279,7 @@ public:
         #warning TODO: call error handler if this takes too long -- look at SD spec for max time
         // Wait for writing to finish
         for (;;) {
-            auto status = T_ICE::SDStatus();
+            const _SDStatusResp status = T_ICE::SDStatus();
             if (status.datOutDone()) {
                 Assert(!status.datOutCRCErr());
                 break;
@@ -283,7 +291,7 @@ public:
         
         // Wait for SD card to indicate that it's ready (DAT0=1)
         for (;;) {
-            auto status = T_ICE::SDStatus();
+            const _SDStatusResp status = T_ICE::SDStatus();
             if (status.dat0Idle()) break;
         }
     }
@@ -384,8 +392,12 @@ private:
         return dst;
     }
     
+    bool _enabled = false;
     uint16_t _rca = 0;
+    std::optional<CardId> _cardId;
+    std::optional<CardData> _cardData;
 #undef Assert
+#undef AssertArg
 };
 
 } // namespace SD
