@@ -13,10 +13,7 @@ class Sensor {
 #define Assert(x) if (!(x)) T_Error(__LINE__)
 
 public:
-    void enable() {
-        // Short-circuit if we're already enabled
-        if (_enabled) return;
-        
+    static void Enable() {
         // Turn on power
         {
             T_SetPowerEnabled(true);
@@ -211,39 +208,30 @@ public:
     //            T_ICE::ImgI2CWrite(0x3064, 0x1902);  // Stats enabled (default)
             T_ICE::ImgI2CWrite(0x3064, 0x1802);  // Stats disabled
         }
-        
-        // Update state
-        _enabled = true;
     }
     
-    void disable() {
-        // Short-circuit if we're already disabled
-        if (!_enabled) return;
-        
+    static void Disable() {
         T_SetPowerEnabled(false);
-        
-        // Update state
-        _enabled = false;
     }
     
-    bool enabled() const { return _enabled; }
+//    bool enabled() const { return _enabled; }
     
-    void setStreamEnabled(bool en) {
+    static void SetStreamEnabled(bool en) {
         T_ICE::ImgI2CWrite(_ResetRegister::Address,
             _ResetRegister::Init | (en ? _ResetRegister::StreamEnable : 0));
     }
     
-    void setCoarseIntTime(uint16_t coarseIntTime) {
+    static void SetCoarseIntTime(uint16_t coarseIntTime) {
         // Set coarse_integration_time
         T_ICE::ImgI2CWrite(0x3012, coarseIntTime);
     }
     
-    void setFineIntTime(uint16_t fineIntTime) {
+    static void SetFineIntTime(uint16_t fineIntTime) {
         // Set fine_integration_time
         T_ICE::ImgI2CWrite(0x3014, fineIntTime);
     }
     
-    void setAnalogGain(uint16_t analogGain) {
+    static void SetAnalogGain(uint16_t analogGain) {
         // Set analog_gain
         T_ICE::ImgI2CWrite(0x3060, analogGain);
     }
@@ -265,8 +253,6 @@ private:
                                                               ParallelInterfaceEnable   |
                                                               SerialInterfaceDisable    ;
     };
-    
-    bool _enabled = false;
 
 #undef Assert
 };
