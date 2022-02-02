@@ -92,13 +92,21 @@ using _ICE = ICE<
     _ICEError
 >;
 
-using _ImgSensor = Img::Sensor<
+// _ImgSensor: image sensor object
+// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// it's maintained during sleep, but reset upon a cold start.
+[[gnu::section(".ram_backup.main")]]
+static Img::Sensor<
     _Scheduler,             // T_Scheduler
     _ICE,                   // T_ICE
     _ImgSetPowerEnabled,    // T_SetPowerEnabled
     _ImgError               // T_Error
->;
+> _ImgSensor;
 
+// _SDCard: SD card object
+// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+// it's maintained during sleep, but reset upon a cold start.
+[[gnu::section(".ram_backup.main")]]
 static SD::Card<
     _Scheduler,         // T_Scheduler
     _ICE,               // T_ICE
@@ -137,16 +145,6 @@ static MSP::State _State;
 static bool _SDCardIdVerified = false;
 
 struct _SDTask {
-    static void Enable(SD::CardId* cardId, SD::CardData* cardData) {
-        Wait();
-        static SD::CardId* CardId = nullptr;
-        static SD::CardData* CardData = nullptr;
-        CardId = cardId;
-        CardData = cardData;
-        _Scheduler::Start<_SDTask>([] { _SDCard.enable(CardId, CardData); });
-        Wait();
-    }
-    
     static void EnableAsync() {
         Wait();
         _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
@@ -169,7 +167,7 @@ struct _SDTask {
     static inline uint8_t Stack[256];
 };
 
-static void _SDStateReset(const SD::CardId& cardId, const SD::CardData& cardData) {
+static void _SDStateReset() {
     FRAMWriteEn writeEn; // Enable FRAM writing
     
     // Mark the _State as invalid in case we lose power in the middle of modifying it
@@ -177,7 +175,7 @@ static void _SDStateReset(const SD::CardId& cardId, const SD::CardData& cardData
     
     // Set .cardId
     {
-        _State.sd.cardId = cardId;
+        _State.sd.cardId = _SDCard.cardId();
     }
     
     // Set .imgCap
@@ -185,7 +183,7 @@ static void _SDStateReset(const SD::CardId& cardId, const SD::CardData& cardData
         // ImgBlockLen: the length of an image in SD blocks
         constexpr uint32_t ImgBlockLen = Img::PaddedLen / SD::BlockLen;
         // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
-        const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
+        const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(_SDCard.cardData())+1) * (uint32_t)1024;
         // cardImgCap: the capacity of the SD card in number of images
         const uint32_t cardImgCap = cardBlockCap / ImgBlockLen;
         
@@ -202,94 +200,44 @@ static void _SDStateReset(const SD::CardId& cardId, const SD::CardData& cardData
 }
 
 static void _SDInit() {
-    _SDTask::Wait();
+    _SDTask::EnableAsync();
     
     // If the SD state is valid, and we've already verified the SD card ID,
-    // enable the SD card asynchronously
+    // there's nothing left to do.
     if (_State.sd.valid && _SDCardIdVerified) {
-        _SDTask::EnableAsync();
         return;
     }
     
-    // Otherwise, enable the SD card synchronously because we need the card id / card data
-    SD::CardId cardId;
-    SD::CardData cardData;
-    _SDTask::Enable(&cardId, &cardData);
+    // Otherwise, wait for the SD card to be initialized because we need the card id / card data
+    _SDTask::Wait();
     
     // If the SD state isn't valid, or the existing SD card id doesn't
     // match the current card id, then reset the SD state
-    if (!_State.sd.valid || memcmp(&_State.sd.cardId, &cardId, sizeof(cardId))) {
-        _SDStateReset(cardId, cardData);
+    if (!_State.sd.valid || memcmp(&_State.sd.cardId, &_SDCard.cardId(), sizeof(_SDCard.cardId()))) {
+        _SDStateReset();
     }
     
     _SDCardIdVerified = true;
-    
-//    if (!_State.sd.valid || !_SDCardIdVerified) {
-//        SD::CardId cardId;
-//        SD::CardData cardData;
-//        
-//        _Scheduler::Start<_SDTask>([] { _SDCard.enable(&cardId, &cardData); });
-//        _SDTask::Wait();
-//        
-//        if (!_State.sd.valid) {
-//            _State.sd.cardId = cardId;
-//            
-//            // ImgBlockLen: the length of an image in 
-//            constexpr uint32_t ImgBlockLen = Img::PaddedLen / SD::BlockLen;
-//            // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
-//            const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
-//            // cardImgCap: the capacity of the SD card in number of images
-//            const uint32_t cardImgCap = cardBlockCap / ImgBlockLen;
-//            
-//            _State.sd.imgCap = cardImgCap;
-////            // cardId: the SD card's CID, used to determine when the SD card has been
-////            // changed, and therefore we need to update `imgCap` and reset `ringBufs`
-////            SD::CardId cardId;
-////            // imgCap: image capacity; the number of images that bounds the ring buffer
-////            uint32_t imgCap = 0;
-////            // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
-////            // power failure
-////            ImgRingBuf ringBufs[2] = {};
-////            uint16_t valid = false; // uint16_t (instead of bool) for alignment
-//        }
-//    
-//    } else {
-//        _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
-//    }
-//    
-//    if (cardIdPtr || cardDataPtr) {
-//        _SDCard.enable(cardIdPtr, cardDataPtr);
-//    } else {
-//        _SDTask::Wait();
-//        _Scheduler::Start<_SDTask>([] { _SDCard.enable(); });
-//    }
-//    
-//    
-//    _SDCard.enable(cardIdPtr, cardDataPtr);
-//    
-//    
-//    if (!_State.sd.valid || !_SDCardIdVerified) {
-//        
-//    }
 }
 
 struct _ImgTask {
     static void EnableAsync() {
         Wait();
+        if (_ImgSensor.enabled()) return; // Short-circuit
         _Scheduler::Start<_ImgTask>([] {
             // Initialize image sensor
-            _ImgSensor::Enable();
+            _ImgSensor.enable();
             // Set the initial exposure _before_ we enable streaming, so that the very first frame
             // has the correct exposure, so we don't have to skip any frames on the first capture.
-            _ImgSensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
+            _ImgSensor.setCoarseIntTime(_ImgAutoExp.integrationTime());
             // Enable image streaming
-            _ImgSensor::SetStreamEnabled(true);
+            _ImgSensor.setStreamEnabled(true);
         });
     }
     
     static void DisableAsync() {
         Wait();
-        _Scheduler::Start<_ImgTask>(_ImgSensor::Disable);
+        _Scheduler::Start<_ImgTask>([] { _ImgSensor.disable(); });
     }
     
     static void Wait() {
