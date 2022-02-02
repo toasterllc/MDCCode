@@ -95,7 +95,6 @@ using _ICE = ICE<
 // _ImgSensor: image sensor object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-[[gnu::section(".ram_backup.main")]]
 static Img::Sensor<
     _Scheduler,             // T_Scheduler
     _ICE,                   // T_ICE
@@ -106,7 +105,6 @@ static Img::Sensor<
 // _SDCard: SD card object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
-[[gnu::section(".ram_backup.main")]]
 static SD::Card<
     _Scheduler,         // T_Scheduler
     _ICE,               // T_ICE
@@ -136,13 +134,6 @@ static Img::AutoExposure _ImgAutoExp;
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
 [[gnu::section(".fram_info.main")]]
 static MSP::State _State;
-
-// _SDCardIdVerified: whether we've verified that _State.sd.cardId
-// matches the current SD card
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
-[[gnu::section(".ram_backup.main")]]
-static bool _SDCardIdVerified = false;
 
 struct _SDTask {
     static void EnableAsync() {
@@ -204,7 +195,7 @@ static void _SDInit() {
     
     // If the SD state is valid, and we've already verified the SD card ID,
     // there's nothing left to do.
-    if (_State.sd.valid && _SDCardIdVerified) {
+    if (_State.sd.valid && !Startup::ColdStart()) {
         return;
     }
     
@@ -216,8 +207,6 @@ static void _SDInit() {
     if (!_State.sd.valid || memcmp(&_State.sd.cardId, &_SDCard.cardId(), sizeof(_SDCard.cardId()))) {
         _SDStateReset();
     }
-    
-    _SDCardIdVerified = true;
 }
 
 struct _ImgTask {
