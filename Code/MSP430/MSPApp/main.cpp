@@ -57,7 +57,6 @@ using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_
 class _MotionTask;
 class _SDTask;
 class _ImgTask;
-class _BusyTimeoutTask;
 
 static void _Sleep();
 
@@ -84,8 +83,7 @@ using _Scheduler = Toastbox::Scheduler<
     _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
     _MotionTask,                                // T_Tasks: list of tasks
     _SDTask,
-    _ImgTask,
-    _BusyTimeoutTask
+    _ImgTask
 >;
 
 using _ICE = ICE<
@@ -204,6 +202,10 @@ public:
         _Scheduler::Wait<_SDTask>();
     }
     
+    static bool Done() {
+        return !_Scheduler::Running<_SDTask>();
+    }
+    
     static void WriteImage(uint8_t srcBlock, uint16_t dstIdx) {
         _SDCard::WriteImage(_RCA, srcBlock, dstIdx);
     }
@@ -299,6 +301,10 @@ public:
     
     static void Wait() {
         _Scheduler::Wait<_ImgTask>();
+    }
+    
+    static bool Done() {
+        return !_Scheduler::Running<_ImgTask>();
     }
     
 private:
@@ -565,51 +571,14 @@ static void _Sleep() {
 //    }
 //}
 
-class _BusyTimeoutTask {
-public:
-    static void Run() {
-        for (;;) {
-//            _Scheduler::Wait<_BusyTimeoutTask>([] { return _Busy.has_value(); });
-            
-            while (_Scheduler::Wait<_BusyTimeoutTask,1000>([] { return (bool)_Busy; })) {
-                _Busy = std::nullopt;
-            }
-            
-            // Asynchronously turn off the image sensor / SD card
-            _Img::DisableAsync();
-            _SD::DisableAsync();
-            
-            // Wait until the image sensor / SD card are off
-            _Img::Wait();
-            _SD::Wait();
-            
-//            // Wait to be tickled
-//            _Scheduler::Wait<_BusyTimeoutTask>([] { return _Tickled; });
-//
-//            // Assert that we're busy until we stop getting tickled + 1s
-//            _BusyAssertion busy;
-//            do {
-//                _Tickled = false;
-//            } while ();
-//
-//            // Asynchronously turn off the image sensor / SD card
-//            _Img::DisableAsync();
-//            _SD::DisableAsync();
-//
-//            // Wait until the image sensor / SD card are off
-//            _Img::Wait();
-//            _SD::Wait();
-        }
-        
-        _Scheduler::Yield();
-    }
-    
-    
+//class _BusyTimeoutTask {
+//public:
 //    static void Run() {
 //        for (;;) {
-//            _BusyAssertion busy;
-//            while (_Scheduler::Wait<_BusyTimeoutTask,1000>([] { return _Tickled; })) {
-//                _Tickled = false;
+////            _Scheduler::Wait<_BusyTimeoutTask>([] { return _Busy.has_value(); });
+//            
+//            while (_Scheduler::Wait<_BusyTimeoutTask,1000>([] { return (bool)_Busy; })) {
+//                _Busy = std::nullopt;
 //            }
 //            
 //            // Asynchronously turn off the image sensor / SD card
@@ -640,25 +609,62 @@ public:
 //        
 //        _Scheduler::Yield();
 //    }
-    
-//    static void Stop() {
-//        _Scheduler::Stop<_BusyTimeoutTask>();
+//    
+//    
+////    static void Run() {
+////        for (;;) {
+////            _BusyAssertion busy;
+////            while (_Scheduler::Wait<_BusyTimeoutTask,1000>([] { return _Tickled; })) {
+////                _Tickled = false;
+////            }
+////            
+////            // Asynchronously turn off the image sensor / SD card
+////            _Img::DisableAsync();
+////            _SD::DisableAsync();
+////            
+////            // Wait until the image sensor / SD card are off
+////            _Img::Wait();
+////            _SD::Wait();
+////            
+//////            // Wait to be tickled
+//////            _Scheduler::Wait<_BusyTimeoutTask>([] { return _Tickled; });
+//////
+//////            // Assert that we're busy until we stop getting tickled + 1s
+//////            _BusyAssertion busy;
+//////            do {
+//////                _Tickled = false;
+//////            } while ();
+//////
+//////            // Asynchronously turn off the image sensor / SD card
+//////            _Img::DisableAsync();
+//////            _SD::DisableAsync();
+//////
+//////            // Wait until the image sensor / SD card are off
+//////            _Img::Wait();
+//////            _SD::Wait();
+////        }
+////        
+////        _Scheduler::Yield();
+////    }
+//    
+////    static void Stop() {
+////        _Scheduler::Stop<_BusyTimeoutTask>();
+////    }
+//    
+//    static void Tickle() {
+//        _Busy.emplace();
 //    }
-    
-    static void Tickle() {
-        _Busy.emplace();
-    }
-    
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
-    
-    // Task stack
-    [[gnu::section(".stack._BusyTimeoutTask")]]
-    static inline uint8_t Stack[128];
-    
-private:
-    static inline std::optional<_BusyAssertion> _Busy;
-};
+//    
+//    // Task options
+//    static constexpr Toastbox::TaskOptions Options{};
+//    
+//    // Task stack
+//    [[gnu::section(".stack._BusyTimeoutTask")]]
+//    static inline uint8_t Stack[128];
+//    
+//private:
+//    static inline std::optional<_BusyAssertion> _Busy;
+//};
 
 struct _MotionTask {
     static void Run() {
@@ -674,91 +680,97 @@ struct _MotionTask {
                 _ImgCapture();
                 _ICE::Transfer(_ICE::LEDSetMsg(0x00));
                 
-                // Wait for motion
-                const bool motion = _Scheduler::WaitTimeout<1000>([&] { return _Motion; });
+                // Wait up to 1s for further motion
+                const bool motion = _Scheduler::Wait([] { return _Motion; });
+//                const bool motion = _Scheduler::WaitTimeout<1000>([] { return _Motion; });
+                _Motion = false;
+                
                 if (!motion) {
-                    // Asynchronously turn off the image sensor / SD card
+                    // Asynchronously disable Img / SD
                     _Img::DisableAsync();
                     _SD::DisableAsync();
                     
-                    // Wait until Img and SD are disabled
-                    _Scheduler::Wait([&] { return (_Img && _SD) || _Motion; });
-                    if (!_Motion) break;
+                    // Wait until both Img and SD are disabled
+                    _Scheduler::Wait([] { return _Img::Done() && _SD::Done(); });
+                    break;
+                    
+//                    // Wait until both Img and SD are disabled, but allow motion to interrupt us
+//                    _Scheduler::Wait([&] { return _Motion || (!_Img::Running() && !_SD::Running()); });
+//                    if (!_Motion) break;
                 }
-                _Motion = false;
             }
             
-            // Asynchronously turn off the image sensor / SD card
-            _Img::DisableAsync();
-            _SD::DisableAsync();
-            
-            _Scheduler::Wait([&] { return (_Img && _SD) || _Motion; });
-            
-            // Wait until the image sensor / SD card are off
-            _Img::Wait();
-            _SD::Wait();
-            
-            // Wait for motion
-            const bool motion = _Scheduler::WaitTimeout<1000>([&] { return _Motion; });
-            
-            if (motion) {
-                _Motion = false;
-                
-                // Capture an image
-                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-                _ImgCapture();
-                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-            
-            } else {
-                // Asynchronously turn off the image sensor / SD card
-                _Img::DisableAsync();
-                _SD::DisableAsync();
-                
-                // Wait until the image sensor / SD card are off
-                _Img::Wait();
-                _SD::Wait();
-                
-                break;
-            }
-            
-            
-            
-//            // Stop the timeout task while we capture a new image
-//            _Scheduler::Stop<_BusyTimeoutTask>();
-            
-            
-            // Wait for motion
-            _Scheduler::Wait([&] { return _Motion; });
-            _Motion = false;
-            
-            _BusyAssertion busy;
-            
-//            // Stop the timeout task while we capture a new image
-//            _Scheduler::Stop<_BusyTimeoutTask>();
-            
-            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-            
-            // Capture an image
-            _ImgCapture();
-            
-            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-            
-            // wait for motion or 1s to elapse
-            // if motion:
-            //   capture another image
-            // if 1s elapses:
-            //   disable SD/Img
-            //   wait for: [1] _Motion or [2] (SD && Img)
-            //   if [1]: capture another image
-            //   if [2]: drop busy assertion and yield
-            
-            
-            // Tickle the busy task
-            _BusyTimeoutTask::Tickle();
-            
-//            // Restart the timeout task, so that we turn off automatically if
-//            // we're idle for a bit
-//            _Scheduler::Start<_BusyTimeoutTask>(_BusyTimeoutTask::Run);
+//            // Asynchronously turn off the image sensor / SD card
+//            _Img::DisableAsync();
+//            _SD::DisableAsync();
+//            
+//            _Scheduler::Wait([&] { return (_Img && _SD) || _Motion; });
+//            
+//            // Wait until the image sensor / SD card are off
+//            _Img::Wait();
+//            _SD::Wait();
+//            
+//            // Wait for motion
+//            const bool motion = _Scheduler::WaitTimeout<1000>([&] { return _Motion; });
+//            
+//            if (motion) {
+//                _Motion = false;
+//                
+//                // Capture an image
+//                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+//                _ImgCapture();
+//                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//            
+//            } else {
+//                // Asynchronously turn off the image sensor / SD card
+//                _Img::DisableAsync();
+//                _SD::DisableAsync();
+//                
+//                // Wait until the image sensor / SD card are off
+//                _Img::Wait();
+//                _SD::Wait();
+//                
+//                break;
+//            }
+//            
+//            
+//            
+////            // Stop the timeout task while we capture a new image
+////            _Scheduler::Stop<_BusyTimeoutTask>();
+//            
+//            
+//            // Wait for motion
+//            _Scheduler::Wait([&] { return _Motion; });
+//            _Motion = false;
+//            
+//            _BusyAssertion busy;
+//            
+////            // Stop the timeout task while we capture a new image
+////            _Scheduler::Stop<_BusyTimeoutTask>();
+//            
+//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+//            
+//            // Capture an image
+//            _ImgCapture();
+//            
+//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//            
+//            // wait for motion or 1s to elapse
+//            // if motion:
+//            //   capture another image
+//            // if 1s elapses:
+//            //   disable SD/Img
+//            //   wait for: [1] _Motion or [2] (SD && Img)
+//            //   if [1]: capture another image
+//            //   if [2]: drop busy assertion and yield
+//            
+//            
+//            // Tickle the busy task
+//            _BusyTimeoutTask::Tickle();
+//            
+////            // Restart the timeout task, so that we turn off automatically if
+////            // we're idle for a bit
+////            _Scheduler::Start<_BusyTimeoutTask>(_BusyTimeoutTask::Run);
         }
     }
     
