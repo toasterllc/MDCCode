@@ -293,7 +293,7 @@ public:
     
     static void ImgReset() {
         Transfer(ImgResetMsg(0));
-        _SleepMs<1>();
+        _Sleep(_Ms(1));
         Transfer(ImgResetMsg(1));
     }
     
@@ -316,7 +316,7 @@ public:
             const auto status = ImgCaptureStatus();
             // Try again if the image hasn't been captured yet
             if (!status.done()) {
-                _SleepMs<1>();
+                _Sleep(_Ms(1));
                 continue;
             }
             const uint32_t imgWordCount = status.wordCount();
@@ -343,7 +343,7 @@ public:
         for (uint32_t i=0; i<MaxAttempts; i++) {
             const ImgI2CStatusResp status = ImgI2CStatus();
             if (!status.err() && !status.done()) {
-                _SleepMs<1>();
+                _Sleep(_Ms(1));
                 continue;
             }
             return status;
@@ -378,8 +378,8 @@ public:
     }
     
 private:
-    template <uint16_t T_Ms>
-    static constexpr auto _SleepMs = T_Scheduler::template SleepMs<T_Ms>;
+    static constexpr auto _Ms = T_Scheduler::Ms;
+    static constexpr auto _Sleep = T_Scheduler::Sleep;
 
 #undef Assert
 };

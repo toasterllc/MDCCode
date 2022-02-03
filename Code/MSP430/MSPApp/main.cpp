@@ -498,13 +498,13 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 static void _SDSetPowerEnabled(bool en) {
     _Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    _Scheduler::SleepMs<2>();
+    _Scheduler::Sleep(_Scheduler::Ms(2));
 }
 
 static void _ImgSetPowerEnabled(bool en) {
     if (en) {
         _Pin::VDD_2V8_IMG_EN::Write(1);
-        _Scheduler::SleepUs<100>(); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         _Pin::VDD_1V9_IMG_EN::Write(1);
         
         #warning measure actual delay that we need for the rails to rise
@@ -691,7 +691,7 @@ struct _MotionTask {
                     _SD::DisableAsync();
                     
                     // Wait until both Img and SD are disabled
-                    _Scheduler::Wait([] { return _Img::Done() && _SD::Done(); });
+                    _Scheduler::Wait<_ImgTask, _SDTask>();
                     break;
                     
 //                    // Wait until both Img and SD are disabled, but allow motion to interrupt us
@@ -954,14 +954,14 @@ int main() {
     // Init SysTick
     _SysTick::Init();
     
+    // If this is a cold start, sleep 3s before beginning.
+    // This is in case we restarted due to an abort, and serves 2 purposes:
+    //   1. it rate-limits aborts, in case there's a persistent issue
+    //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
     if (Startup::ColdStart()) {
-        _Scheduler::DelayMs<3000>();
+        _BusyAssertion busy; // Prevent LPM3.5 sleep
+        _Scheduler::Delay(_Scheduler::Ms(3000));
     }
-    
-    // Rate-limit aborting by simply sleeping for 3s
-    #warning TODO: move this delay to main() so that this delay not only rate-limits, but gives the outputs a chance to settle in the off position.
-    #warning TODO: wrap the delay with _Busy=true so we don't enter LPM3.5
-    _Scheduler::DelayMs<3000>();
     
     _Scheduler::Run();
 }
