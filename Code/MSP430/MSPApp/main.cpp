@@ -681,23 +681,20 @@ struct _MotionTask {
                 _ICE::Transfer(_ICE::LEDSetMsg(0x00));
                 
                 // Wait up to 1s for further motion
-                const bool motion = _Scheduler::Wait([] { return _Motion; });
-//                const bool motion = _Scheduler::WaitTimeout<1000>([] { return _Motion; });
-                _Motion = false;
-                
-                if (!motion) {
-                    // Asynchronously disable Img / SD
-                    _Img::DisableAsync();
-                    _SD::DisableAsync();
-                    
-                    // Wait until both Img and SD are disabled
-                    _Scheduler::Wait<_ImgTask, _SDTask>();
-                    break;
-                    
-//                    // Wait until both Img and SD are disabled, but allow motion to interrupt us
-//                    _Scheduler::Wait([&] { return _Motion || (!_Img::Running() && !_SD::Running()); });
-//                    if (!_Motion) break;
+//                const bool motion = _Scheduler::Wait([] { return _Motion; });
+                const std::optional<bool> motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return _Motion; });
+                if (motion) {
+                    _Motion = false;
+                    continue;
                 }
+                
+                // Asynchronously disable Img / SD
+                _Img::DisableAsync();
+                _SD::DisableAsync();
+                
+                // Wait until both Img and SD are disabled
+                _Scheduler::Wait<_ImgTask, _SDTask>();
+                break;
             }
             
 //            // Asynchronously turn off the image sensor / SD card
