@@ -539,8 +539,6 @@ static void _Sleep() {
     //   therefore we enter LPM3.5. The next time we wake will be due to a
     //   reset and execution will start from main().
     
-    #warning can we just inspect the state of the tasks to determine what kind of sleep to enter?
-    
     // If we're currently busy (_BusyCount > 0), enter LPM1 sleep because some tasks are running.
     // If we're not busy (!_BusyCount), enter the deep LPM3.5 sleep, where RAM content is lost.
 //    const uint16_t LPMBits = (_BusyCount ? LPM1_bits : LPM3_bits);
@@ -956,12 +954,13 @@ int main() {
     // Init SysTick
     _SysTick::Init();
     
-    // If this is a cold start, sleep 3s before beginning.
-    // This is in case we restarted due to an abort, and serves 2 purposes:
+    // If this is a cold start, delay 3s before beginning.
+    // This delay is meant for the case where we restarted due to an abort, and
+    // serves 2 purposes:
     //   1. it rate-limits aborts, in case there's a persistent issue
     //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
     if (Startup::ColdStart()) {
-        _BusyAssertion busy; // Prevent LPM3.5 sleep
+        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
         _Scheduler::Delay(_Scheduler::Ms(3000));
     }
     
