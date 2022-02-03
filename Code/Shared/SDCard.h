@@ -24,11 +24,11 @@ public:
         
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
-        _SleepMs<1>();
+        _Sleep(_Ms<1>());
         
         // Enable slow SDController clock
         T_ICE::Transfer(_ClocksSlowOn);
-        _SleepMs<1>();
+        _Sleep(_Ms<1>());
         
         // Enter the init mode of the SDController state machine
         T_ICE::Transfer(_InitReset);
@@ -42,7 +42,7 @@ public:
         // Trigger the SD card low voltage signalling (LVS) init sequence
         T_ICE::Transfer(_InitTrigger);
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
-        _SleepMs<6>();
+        _Sleep(_Ms<6>());
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -51,7 +51,7 @@ public:
         // ====================
         {
             // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
-            _SleepMs<1>();
+            _Sleep(_Ms<1>());
             // Send CMD0
             _SendCmd(_CMD0, 0, _RespType::None);
             // There's no response to CMD0
@@ -190,7 +190,7 @@ public:
     static void Disable() {
         // Disable SDController clock
         T_ICE::Transfer(_ClocksSlowOff);
-        _SleepMs<1>();
+        _Sleep(_Ms<1>());
         
         // Turn off SD card power and wait for it to reach 0V
         T_SetPowerEnabled(false);
@@ -305,7 +305,8 @@ private:
     static constexpr auto _InitTrigger      = _SDInitMsg(_SDInitMsg::Action::Trigger, _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow);
     
     template <uint16_t T_Ms>
-    static constexpr auto _SleepMs = T_Scheduler::template SleepMs<T_Ms>;
+    static constexpr auto _Ms = T_Scheduler::template Ms<T_Ms>;
+    static constexpr auto _Sleep = T_Scheduler::Sleep;
     
     static constexpr uint8_t _CMD0  = 0;
     static constexpr uint8_t _CMD2  = 2;
@@ -343,7 +344,7 @@ private:
                 // Try again if we expect DatIn but it hasn't been received yet
                 (datInType==_DatInType::Len512x1 && !s.datInDone())
             ) {
-                _SleepMs<1>();
+                _Sleep(_Ms<1>());
                 continue;
             }
             
