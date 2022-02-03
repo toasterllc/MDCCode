@@ -7,8 +7,6 @@
 #include "Toastbox/IntState.h"
 #include "Util.h"
 #include "Scheduler.h"
-#include "TaskA.h"
-#include "TaskB.h"
 
 #define StackMainSize 128
 
@@ -17,6 +15,62 @@ uint8_t StackMain[StackMainSize];
 
 asm(".global __stack");
 asm(".equ __stack, StackMain+" Stringify(StackMainSize));
+
+static bool Flag = false;
+
+class TaskA {
+public:
+    static void Run() {
+        for (;;) {
+//            PAOUT ^= BIT0;
+            
+//            Scheduler::Start<TaskA,MyFun>();
+//            Scheduler::Start<TaskA>(MyFun);
+//            Scheduler::Start<TaskB>(MyFun);
+//            Scheduler::Wait<TaskB>();
+            
+//            puts("TaskA\n");
+//            Scheduler::Sleep(10000); // 5.12s
+            
+            Scheduler::Sleep(Scheduler::Ms(2000));
+            Flag = true;
+//            Flag = !Flag;
+        }
+    }
+    
+    __attribute__((section(".stack.TaskA")))
+    static inline uint8_t Stack[1024];
+    
+    static constexpr Toastbox::TaskOptions Options{
+        .AutoStart = Run,
+    };
+};
+
+class TaskB {
+public:
+    static void Run() {
+        for (;;) {
+//            PAOUT ^= BIT1;
+//            puts("TaskB\n");
+//            auto ok = Scheduler::Sleep(Scheduler::Ms(1000));
+            const auto ok = Scheduler::Wait(Scheduler::Ms(100), [] { return Flag; });
+            
+            if (ok) {
+                Flag = false;
+                PAOUT ^= BIT0;
+            } else {
+                PAOUT ^= BIT1;
+            }
+        }
+    }
+    
+    __attribute__((section(".stack.TaskB")))
+    static inline uint8_t Stack[1024];
+    
+    static constexpr Toastbox::TaskOptions Options{
+        .AutoStart = Run,
+    };
+};
 
 // MARK: - IntState
 
