@@ -681,20 +681,25 @@ struct _MotionTask {
                 _ICE::Transfer(_ICE::LEDSetMsg(0x00));
                 
                 // Wait up to 1s for further motion
-//                const bool motion = _Scheduler::Wait([] { return _Motion; });
-                const std::optional<bool> motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return _Motion; });
-                if (motion) {
-                    _Motion = false;
-                    continue;
+                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return _Motion; });
+                if (!motion) {
+                    // We timed-out
+                    // Asynchronously disable Img / SD
+                    _Img::DisableAsync();
+                    _SD::DisableAsync();
+                    
+                    // Wait until both Img and SD are disabled
+                    _Scheduler::Wait<_ImgTask, _SDTask>();
+                    // Relinquish our busy assertion by breaking out of scope,
+                    // allowing us to enter LPM3.5 sleep
+                    break;
                 }
                 
-                // Asynchronously disable Img / SD
-                _Img::DisableAsync();
-                _SD::DisableAsync();
-                
-                // Wait until both Img and SD are disabled
-                _Scheduler::Wait<_ImgTask, _SDTask>();
-                break;
+                // Only reset _Motion if we've observed motion; otherwise, if we always reset
+                // _Motion, there'd be a race window where we could first observe
+                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
+                // the true value by resetting it to false.
+                _Motion = false;
             }
             
 //            // Asynchronously turn off the image sensor / SD card
