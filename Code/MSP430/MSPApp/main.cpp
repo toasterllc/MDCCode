@@ -202,10 +202,6 @@ public:
         _Scheduler::Wait<_SDTask>();
     }
     
-    static bool Done() {
-        return !_Scheduler::Running<_SDTask>();
-    }
-    
     static void WriteImage(uint8_t srcBlock, uint16_t dstIdx) {
         _SDCard::WriteImage(_RCA, srcBlock, dstIdx);
     }
@@ -301,10 +297,6 @@ public:
     
     static void Wait() {
         _Scheduler::Wait<_ImgTask>();
-    }
-    
-    static bool Done() {
-        return !_Scheduler::Running<_ImgTask>();
     }
     
 private:
