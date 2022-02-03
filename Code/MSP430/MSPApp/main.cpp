@@ -498,13 +498,13 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 static void _SDSetPowerEnabled(bool en) {
     _Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    _Scheduler::Sleep(_Scheduler::Ms<2>());
+    _Scheduler::Sleep(_Scheduler::Ms(2));
 }
 
 static void _ImgSetPowerEnabled(bool en) {
     if (en) {
         _Pin::VDD_2V8_IMG_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Us<100>()); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         _Pin::VDD_1V9_IMG_EN::Write(1);
         
         #warning measure actual delay that we need for the rails to rise
@@ -960,7 +960,7 @@ int main() {
     //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
     if (Startup::ColdStart()) {
         _BusyAssertion busy; // Prevent LPM3.5 sleep
-        _Scheduler::Delay(_Scheduler::Ms<3000>());
+        _Scheduler::Delay(_Scheduler::Ms(3000));
     }
     
     _Scheduler::Run();
