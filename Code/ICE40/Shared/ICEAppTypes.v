@@ -29,47 +29,13 @@
 `define     Msg_Arg_LEDSet_Val_Len                              4
 `define     Msg_Arg_LEDSet_Val_Bits                             3:0
 
-`define Msg_Type_SDInit                                         `Msg_Type_StartBit | `Msg_Type_Len'h02
-`define     Msg_Arg_SDInit_Clk_Delay_Len                        4
-`define     Msg_Arg_SDInit_Clk_Delay_Bits                       7:4
-`define     Msg_Arg_SDInit_Clk_Speed_Len                        2
-`define     Msg_Arg_SDInit_Clk_Speed_Bits                       3:2
-
-
-
-`define     Msg_Arg_SDInit_ActionSetClkDelay_Len                1
-`define     Msg_Arg_SDInit_ActionSetClkDelay_Bits               3:3
-
-`define     Msg_Arg_SDInit_ActionSetClkSpeed_Len                1
-`define     Msg_Arg_SDInit_ActionSetClkSpeed_Bits               2:2
-
-`define     Msg_Arg_SDInit_ActionInit_Len                       1
-`define     Msg_Arg_SDInit_ActionInit_Bits                      1:1
-
-`define     Msg_Arg_SDInit_ActionReset_Len                      1
-`define     Msg_Arg_SDInit_ActionReset_Bits                     0:0
-
-
-
-
-`define     Msg_Arg_SDInit_Action_SetClkDelay                   3
-`define     Msg_Arg_SDInit_Action_SetClkSpeed                   2
-`define     Msg_Arg_SDInit_Action_Init                          1
-`define     Msg_Arg_SDInit_Action_Reset                         0
-
-`define     Msg_Arg_SDInit_Action_Len                           2
-`define     Msg_Arg_SDInit_Action_Bits                          1:0
-
-
-
-
-
-
-
-`define     Msg_Arg_SDInit_Trigger_Len                          1
-`define     Msg_Arg_SDInit_Trigger_Bits                         1:1
-`define     Msg_Arg_SDInit_Reset_Len                            1
-`define     Msg_Arg_SDInit_Reset_Bits                           0:0
+`define Msg_Type_SDConfig                                       `Msg_Type_StartBit | `Msg_Type_Len'h02
+`define     Msg_Arg_SDConfig_ClkDelay_Len                       4
+`define     Msg_Arg_SDConfig_ClkDelay_Bits                      7:4
+`define     Msg_Arg_SDConfig_ClkSpeed_Len                       2
+`define     Msg_Arg_SDConfig_ClkSpeed_Bits                      3:2
+`define     Msg_Arg_SDConfig_Action_Len                         2
+`define     Msg_Arg_SDConfig_Action_Bits                        1:0
 
 `define Msg_Type_SDSendCmd                                      `Msg_Type_StartBit | `Msg_Type_Len'h03
 `define     Msg_Arg_SDSendCmd_RespType_Len                      2
