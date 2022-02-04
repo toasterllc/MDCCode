@@ -37,10 +37,11 @@ namespace STM {
         MSPWrite,
         MSPDebug,
         
+        SDInit,
         SDCardIdGet,
-        SDCardDataGet,
         SDRead,
         
+        ImgInit,
         ImgExposureSet,
         ImgCapture,
     };
