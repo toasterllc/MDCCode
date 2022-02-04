@@ -29,24 +29,30 @@
 `define     Msg_Arg_LEDSet_Val_Len                              4
 `define     Msg_Arg_LEDSet_Val_Bits                             3:0
 
-`define Msg_Type_SDInit                                         `Msg_Type_StartBit | `Msg_Type_Len'h02
-`define     Msg_Arg_SDInit_Clk_Delay_Len                        4
-`define     Msg_Arg_SDInit_Clk_Delay_Bits                       7:4
-`define     Msg_Arg_SDInit_Clk_Speed_Len                        2
-`define     Msg_Arg_SDInit_Clk_Speed_Bits                       3:2
-`define     Msg_Arg_SDInit_Trigger_Len                          1
-`define     Msg_Arg_SDInit_Trigger_Bits                         1:1
-`define     Msg_Arg_SDInit_Reset_Len                            1
-`define     Msg_Arg_SDInit_Reset_Bits                           0:0
 
-`define Msg_Type_SDSendCmd                                      `Msg_Type_StartBit | `Msg_Type_Len'h03
+
+
+`define Msg_Type_SDSetClkDelay                                  `Msg_Type_StartBit | `Msg_Type_Len'h02
+`define     Msg_Arg_SDSetClkDelay_Val_Len                       4
+`define     Msg_Arg_SDSetClkDelay_Val_Bits                      3:0
+
+`define Msg_Type_SDSetClkSpeed                                  `Msg_Type_StartBit | `Msg_Type_Len'h03
+`define     Msg_Arg_SDSetClkSpeed_Val_Len                       2
+`define     Msg_Arg_SDSetClkSpeed_Val_Bits                      1:0
+
+`define Msg_Type_SDReset                                        `Msg_Type_StartBit | `Msg_Type_Len'h04
+`define Msg_Type_SDInit                                         `Msg_Type_StartBit | `Msg_Type_Len'h05
+
+
+
+`define Msg_Type_SDSendCmd                                      `Msg_Type_StartBit | `Msg_Type_Len'h06
 `define     Msg_Arg_SDSendCmd_RespType_Len                      2
 `define     Msg_Arg_SDSendCmd_RespType_Bits                     51:50
 `define     Msg_Arg_SDSendCmd_DatInType_Len                     2
 `define     Msg_Arg_SDSendCmd_DatInType_Bits                    49:48
 `define     Msg_Arg_SDSendCmd_CmdData_Bits                      47:0
 
-`define Msg_Type_SDStatus                                       `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h04
+`define Msg_Type_SDStatus                                       `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h07
 `define     Resp_Arg_SDStatus_CmdDone_Bits                      63:63
 `define     Resp_Arg_SDStatus_RespDone_Bits                     62:62
 `define         Resp_Arg_SDStatus_RespCRCErr_Bits               61:61
@@ -59,34 +65,34 @@
 `define         Resp_Arg_SDStatus_DatInCMD6AccessMode_Bits      8:5
 `define     Resp_Arg_SDStatus_Dat0Idle_Bits                     4:4
 
-`define Msg_Type_SDResp                                         `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h05
+`define Msg_Type_SDResp                                         `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h08
 `define     Msg_Arg_SDResp_Idx_Len                              1
 `define     Msg_Arg_SDResp_Idx_Bits                             0:0
 `define     Resp_Arg_SDResp_Resp_Bits                           63:0
 
-`define Msg_Type_ImgReset                                       `Msg_Type_StartBit | `Msg_Type_Len'h06
+`define Msg_Type_ImgReset                                       `Msg_Type_StartBit | `Msg_Type_Len'h09
 `define     Msg_Arg_ImgReset_Val_Bits                           0:0
 
-`define Msg_Type_ImgSetHeader                                   `Msg_Type_StartBit | `Msg_Type_Len'h07
+`define Msg_Type_ImgSetHeader                                   `Msg_Type_StartBit | `Msg_Type_Len'h0A
 `define     Msg_Arg_ImgSetHeader_Header_Bits                    55:8
 `define     Msg_Arg_ImgSetHeader_Header_Len                     48
 `define     Msg_Arg_ImgSetHeader_Idx_Bits                       1:0
 `define     Msg_Arg_ImgSetHeader_Idx_Len                        2
 
-`define Msg_Type_ImgCapture                                     `Msg_Type_StartBit | `Msg_Type_Len'h08
+`define Msg_Type_ImgCapture                                     `Msg_Type_StartBit | `Msg_Type_Len'h0B
 `define     Msg_Arg_ImgCapture_SkipCount_Bits                   5:3 // Wider than currently necessary to future-proof
 `define     Msg_Arg_ImgCapture_DstBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
-`define Msg_Type_ImgCaptureStatus                               `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h09
+`define Msg_Type_ImgCaptureStatus                               `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h0C
 `define     Resp_Arg_ImgCaptureStatus_Done_Bits                 63:63
 `define     Resp_Arg_ImgCaptureStatus_WordCount_Bits            62:39
 `define     Resp_Arg_ImgCaptureStatus_HighlightCount_Bits       38:21
 `define     Resp_Arg_ImgCaptureStatus_ShadowCount_Bits          20:3
 
-`define Msg_Type_ImgReadout                                     `Msg_Type_StartBit | `Msg_Type_Len'h0A
+`define Msg_Type_ImgReadout                                     `Msg_Type_StartBit | `Msg_Type_Len'h0D
 `define     Msg_Arg_ImgReadout_SrcBlock_Bits                    2:0 // Wider than currently necessary to future-proof
 
-`define Msg_Type_ImgI2CTransaction                              `Msg_Type_StartBit | `Msg_Type_Len'h0B
+`define Msg_Type_ImgI2CTransaction                              `Msg_Type_StartBit | `Msg_Type_Len'h0E
 `define     Msg_Arg_ImgI2CTransaction_Write_Bits                55:55
 `define     Msg_Arg_ImgI2CTransaction_DataLen_Bits              54:54
 `define         Msg_Arg_ImgI2CTransaction_DataLen_1             1'b0
@@ -94,12 +100,12 @@
 `define     Msg_Arg_ImgI2CTransaction_RegAddr_Bits              31:16
 `define     Msg_Arg_ImgI2CTransaction_WriteData_Bits            15:0
 
-`define Msg_Type_ImgI2CStatus                                   `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h0C
+`define Msg_Type_ImgI2CStatus                                   `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h0F
 `define     Resp_Arg_ImgI2CStatus_Done_Bits                     63:63
 `define     Resp_Arg_ImgI2CStatus_Err_Bits                      62:62
 `define     Resp_Arg_ImgI2CStatus_ReadData_Bits                 61:46
 
-`define Msg_Type_Readout                                        `Msg_Type_StartBit | `Msg_Type_Len'h0D
+`define Msg_Type_Readout                                        `Msg_Type_StartBit | `Msg_Type_Len'h10
 
 `define Msg_Type_Nop                                            `Msg_Type_Len'h00
 
