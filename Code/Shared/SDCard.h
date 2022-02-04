@@ -9,7 +9,7 @@ namespace SD {
 template <
     typename T_Scheduler,
     typename T_ICE,
-    void T_SetPowerEnabled(bool),
+    bool T_SetPowerEnabled(bool),
     [[noreturn]] void T_Error(uint16_t),
     uint8_t T_ClkDelaySlow,
     uint8_t T_ClkDelayFast
@@ -22,22 +22,37 @@ public:
     static uint16_t Enable(CardId* cardId=nullptr, CardData* cardData=nullptr) {
         uint16_t rca = 0;
         
-        // Disable SDController clock
-        T_ICE::Transfer(_ClocksSlowOff);
-        _Sleep(_Ms(1));
+//        // Disable SDController clock
+//        T_ICE::Transfer(_ClocksSlowOff);
+//        _Sleep(_Ms(1));
+//        
+//        // Enable slow SDController clock
+//        T_ICE::Transfer(_ClocksSlowOn);
+//        _Sleep(_Ms(1));
+//        
+//        // Enter the init mode of the SDController state machine
+//        T_ICE::Transfer(_InitReset);
+//        
+//        // Turn off SD card power and wait for it to reach 0V
+//        bool br = T_SetPowerEnabled(false);
+//        Assert(br);
+//        
+//        // Turn on SD card power and wait for it to reach 2.8V
+//        br = T_SetPowerEnabled(true);
+//        Assert(br);
+        
+        // Return SDController to its reset state
+        // This assumes
+        // Enter the init mode of the SDController state machine
+//        T_ICE::Transfer(_InitReset);
+        
+        // Turn on SD card power and wait for it to reach 2.8V
+        br = T_SetPowerEnabled(true);
+        Assert(br);
         
         // Enable slow SDController clock
         T_ICE::Transfer(_ClocksSlowOn);
         _Sleep(_Ms(1));
-        
-        // Enter the init mode of the SDController state machine
-        T_ICE::Transfer(_InitReset);
-        
-        // Turn off SD card power and wait for it to reach 0V
-        T_SetPowerEnabled(false);
-        
-        // Turn on SD card power and wait for it to reach 2.8V
-        T_SetPowerEnabled(true);
         
         // Trigger the SD card low voltage signalling (LVS) init sequence
         T_ICE::Transfer(_InitTrigger);
@@ -188,12 +203,16 @@ public:
     }
     
     static void Disable() {
-        // Disable SDController clock
-        T_ICE::Transfer(_ClocksSlowOff);
-        _Sleep(_Ms(1));
+        T_ICE::Transfer(_InitReset);
+        
+//        T_ICE::Transfer(_ClocksFastOff);
+//        T_ICE::Transfer(_ClocksFastOn);
+//        T_ICE::Transfer(_InitReset);
+//        T_ICE::Transfer(_ClocksFastOff);
         
         // Turn off SD card power and wait for it to reach 0V
-        T_SetPowerEnabled(false);
+        const bool br = T_SetPowerEnabled(false);
+        Assert(br);
     }
     
 //    bool enabled() const { return _enabled; }
