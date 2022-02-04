@@ -57,13 +57,14 @@ private:
         for (volatile uint32_t i=0; i<cycles; i++);
     }
     
-    static bool _FRAMAddr(uint32_t addr) {
+    static constexpr bool _FRAMAddr(uint32_t addr) {
         return addr>=0xE300 && addr<=0xFFFF;
     }
     
     using _TCK = Test;
     using _TDIO = Rst_;
     
+    bool _connected = false;
     bool _tclkSaved = 1;
     uint16_t _crc = 0;
     uint32_t _crcAddr = 0;
@@ -708,6 +709,8 @@ public:
     }
     
     Status connect() {
+        if (_connected) return Status::OK; // Short-circuit
+        
         for (int i=0; i<3; i++) {
             // Perform JTAG entry sequence with RST_=1
             _jtagStart(1);
@@ -758,6 +761,7 @@ public:
             }
             
             // Nothing failed!
+            _connected = true;
             return Status::OK;
         }
         
@@ -766,7 +770,9 @@ public:
     }
     
     void disconnect() {
+        if (!_connected) return; // Short-circuit
         _jtagEnd();
+        _connected = false;
     }
     
     Status erase() {

@@ -223,27 +223,27 @@ using _MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
 using _MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
 static MSP430JTAG<_MSPTest, _MSPRst_, _System::CPUFreqMHz> _MSP;
 
-static void _MSPInit() {
-//    static bool init = false;
-//    if (init) return; // Short-circuit if we're already initialized
-//    init = true;
-    
-    constexpr uint16_t PM5CTL0  = 0x0130;
-    constexpr uint16_t PAOUT    = 0x0202;
-    
-    // Init MSP
-    _MSP.init();
-    
-    auto s = _MSP.connect();
-    Assert(s == _MSP.Status::OK);
-    
-    // Clear LOCKLPM5 in the PM5CTL0 register
-    // This is necessary to be able to control the GPIOs
-    _MSP.write(PM5CTL0, 0x0010);
-    
-    // Clear PAOUT so everything is driven to 0 by default
-    _MSP.write(PAOUT, 0x0000);
-}
+//static void _MSPInit() {
+////    static bool init = false;
+////    if (init) return; // Short-circuit if we're already initialized
+////    init = true;
+//    
+//    constexpr uint16_t PM5CTL0  = 0x0130;
+//    constexpr uint16_t PAOUT    = 0x0202;
+//    
+//    // Init MSP
+//    _MSP.init();
+//    
+//    auto s = _MSP.connect();
+//    Assert(s == _MSP.Status::OK);
+//    
+//    // Clear LOCKLPM5 in the PM5CTL0 register
+//    // This is necessary to be able to control the GPIOs
+//    _MSP.write(PM5CTL0, 0x0010);
+//    
+//    // Clear PAOUT so everything is driven to 0 by default
+//    _MSP.write(PAOUT, 0x0000);
+//}
 
 // MARK: - SD Card
 
@@ -264,7 +264,7 @@ static void _SDSetPowerEnabled(bool en) {
     }
     
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    _Scheduler::SleepMs<2>();
+    _Scheduler::Sleep(_Scheduler::Ms(2));
 }
 
 [[noreturn]]
@@ -286,7 +286,7 @@ static void _ImgSetPowerEnabled(bool en) {
     
     if (en) {
         _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
-        _Scheduler::SleepMs<1>(); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
+        _Scheduler::Sleep(_Scheduler::Ms(1)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
         _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V9_IMG_EN));
     
     } else {
@@ -296,7 +296,7 @@ static void _ImgSetPowerEnabled(bool en) {
     
     #warning TODO: measure how long it takes for IMG rails to rise
     // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
-    _Scheduler::SleepMs<2>();
+    _Scheduler::Sleep(_Scheduler::Ms(2));
 }
 
 [[noreturn]]
@@ -460,10 +460,10 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     
     _ICE_ST_SPI_CS_::Write(0);
     _ICE_CRST_::Write(0);
-    _Scheduler::SleepMs<1>(); // Sleep 1 ms (ideally, 200 ns)
+    _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms (ideally, 200 ns)
     
     _ICE_CRST_::Write(1);
-    _Scheduler::SleepMs<2>(); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+    _Scheduler::Sleep(_Scheduler::Ms(2)); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
     
     // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
     _ICE_ST_SPI_CS_::Write(1);
@@ -500,7 +500,7 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     {
         bool ok = false;
         for (int i=0; i<10 && !ok; i++) {
-            if (i) _Scheduler::SleepMs<1>(); // Sleep 1 ms
+            if (i) _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms
             ok = _ICE_CDONE::Read();
         }
         
@@ -536,24 +536,18 @@ static void _MSPConnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    #warning TODO: figure out how this should work now that we call _MSPInit in main(); just return success for now
-    _System::USBSendStatus(true);
-    
-//    const auto r = _MSP.connect();
-//    // Send status
-//    _System::USBSendStatus(r == _MSP.Status::OK);
+    const auto r = _MSP.connect();
+    // Send status
+    _System::USBSendStatus(r == _MSP.Status::OK);
 }
 
 static void _MSPDisconnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    #warning TODO: figure out how this should work now that we call _MSPInit in main(); just return success for now
+    _MSP.disconnect();
+    // Send status
     _System::USBSendStatus(true);
-    
-//    _MSP.disconnect();
-//    // Send status
-//    _System::USBSendStatus(true);
 }
 
 static void _MSPRead(const STM::Cmd& cmd) {
@@ -730,11 +724,52 @@ static void _MSPDebug(const STM::Cmd& cmd) {
     _System::USBSendStatus(state.ok);
 }
 
-static void _SDInit() {
-    static bool init = false;
-    if (init) return; // Short-circuit if we've already initialized
+class _SD {
+public:
+    static void Enable() {
+        if (_Enabled) return; // Short-circuit
+        _Enabled = true;
+        _RCA = _SDCard::Enable(&_CardId, nullptr);
+    }
     
-    _SDCard.enable();
+    static void Disable() {
+        if (!_Enabled) return; // Short-circuit
+        _Enabled = false;
+        _SDCard::Disable();
+    }
+    
+    static const SD::CardId& CardId() {
+        return _CardId;
+    }
+    
+private:
+    static inline bool _Enabled = false;
+    static inline uint16_t _RCA = 0;
+    alignas(4) static inline SD::CardId _CardId; // Aligned to send via USB
+};
+
+void _SDInit(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    auto s = _MSP.connect();
+    if (s != _MSP.Status::OK) {
+        // Bail if we fail to connect to MSP
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Clear LOCKLPM5 in the PM5CTL0 register
+    // This is necessary to be able to control the GPIOs
+    _MSP.write(PM5CTL0, 0x0010);
+    
+    // Clear PAOUT so everything is driven to 0 by default
+    _MSP.write(PAOUT, 0x0000);
+    
+    static bool init = false;
+    if (init) return;
+    _ImgSensor::Enable();
+    _ImgSensor::SetStreamEnabled(true);
     init = true;
 }
 
@@ -745,8 +780,8 @@ static void _SDCardIdGet(const STM::Cmd& cmd) {
     // Configure QSPI for comms with ICEApp
     _QSPI.config(_QSPIConfig.ICEApp);
     
-    // Initialize the SD card if we haven't done so
-    _SDInit();
+    // Enable the SD card
+    _SD::Enable();
     
     // Send SD card id
     // cardId: aligned to send via USB
@@ -759,26 +794,23 @@ static void _SDCardIdGet(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static void _SDCardDataGet(const STM::Cmd& cmd) {
-    // Accept command
-    _System::USBAcceptCommand(true);
-    
-    // Configure QSPI for comms with ICEApp
-    _QSPI.config(_QSPIConfig.ICEApp);
-    
-    // Initialize the SD card if we haven't done so
-    _SDInit();
-    
-    // Send SD card data
-    // cardData: aligned to send via USB
-    alignas(4) static SD::CardData cardData;
-    cardData = _SDCard.cardData();
-    _USB.send(Endpoints::DataIn, &cardData, sizeof(cardData));
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-    
-    // Send status
-    _System::USBSendStatus(true);
-}
+//static void _SDCardDataGet(const STM::Cmd& cmd) {
+//    // Accept command
+//    _System::USBAcceptCommand(true);
+//    
+//    // Configure QSPI for comms with ICEApp
+//    _QSPI.config(_QSPIConfig.ICEApp);
+//    
+//    // Enable the SD card
+//    _SD::Enable();
+//    
+//    // Send SD card data
+//    _USB.send(Endpoints::DataIn, &_SD.CardId(), sizeof(_SD.CardId()));
+//    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+//    
+//    // Send status
+//    _System::USBSendStatus(true);
+//}
 
 static void _SDRead(const STM::Cmd& cmd) {
     static bool reading = false;
@@ -797,8 +829,8 @@ static void _SDRead(const STM::Cmd& cmd) {
     // Configure QSPI for comms with ICEApp
     _QSPI.config(_QSPIConfig.ICEApp);
     
-    // Initialize the SD card if we haven't done so
-    _SDInit();
+    // Enable the SD card
+    _SD::Enable();
     
     // Stop reading from the SD card if a read is in progress
     if (reading) {
@@ -818,7 +850,25 @@ static void _SDRead(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-void _ImgInit() {
+void _ImgInit(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    auto s = _MSP.connect();
+    if (s != _MSP.Status::OK) {
+        // Bail if we fail to connect to MSP
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Clear LOCKLPM5 in the PM5CTL0 register
+    // This is necessary to be able to control the GPIOs
+    _MSP.write(PM5CTL0, 0x0010);
+    
+    // Clear PAOUT so everything is driven to 0 by default
+    _MSP.write(PAOUT, 0x0000);
+    
+    
     static bool init = false;
     if (init) return;
     _ImgSensor::Enable();
@@ -897,12 +947,14 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::MSPWrite:          _MSPWrite(cmd);                     break;
     case Op::MSPDebug:          _MSPDebug(cmd);                     break;
     // SD Card
+    case Op::SDInit:            _SDInit(cmd);                       break;
     case Op::SDCardIdGet:       _SDCardIdGet(cmd);                  break;
-    case Op::SDCardDataGet:     _SDCardDataGet(cmd);                break;
+//    case Op::SDCardDataGet:     _SDCardDataGet(cmd);                break;
     case Op::SDRead:            _SDRead(cmd);                       break;
     // Img
-    case Op::ImgCapture:        _ImgCapture(cmd);                   break;
+    case Op::ImgInit:           _ImgInit(cmd);                      break;
     case Op::ImgExposureSet:    _ImgExposureSet(cmd);               break;
+    case Op::ImgCapture:        _ImgCapture(cmd);                   break;
     // Bad command
     default:                    _System::USBAcceptCommand(false);   break;
     }
@@ -956,8 +1008,8 @@ int main() {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     _ICE_ST_SPI_CS_::Write(1);
     
-//    _ICE::Init();
-    _MSPInit();
+    // Init MSP
+    _MSP.init();
     
     _Scheduler::Run();
     return 0;
