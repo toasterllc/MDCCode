@@ -10,10 +10,16 @@
 
 `define SDController_BlockLen                       512
 
-`define SDController_Init_ClkSpeed_Off              2'b00
-`define SDController_Init_ClkSpeed_Slow             2'b01
-`define SDController_Init_ClkSpeed_Fast             2'b10
-`define SDController_Init_ClkDelay_Width            4
+`define SDController_Config_Action_Reset            2'b00
+`define SDController_Config_Action_Init             2'b01
+`define SDController_Config_Action_SetClk           2'b10
+`define SDController_Config_Action_Width            2
+
+`define SDController_Config_ClkSpeed_Off            2'b00
+`define SDController_Config_ClkSpeed_Slow           2'b01
+`define SDController_Config_ClkSpeed_Fast           2'b10
+`define SDController_Config_ClkSpeed_Width          2
+`define SDController_Config_ClkDelay_Width          4
 
 `define SDController_RespType_None                  2'b00
 `define SDController_RespType_48                    2'b01
@@ -34,12 +40,14 @@ module SDController #(
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat,
     
-    // Init port (clock domain: async)
-    input wire          init_reset,         // Toggle signal
-    input wire          init_trigger,       // Toggle signal
-    input wire[1:0]     init_clkSpeed,
-    input wire[`SDController_Init_ClkDelay_Width-1:0]
-                        init_clkDelay,
+    // Config port (clock domain: async)
+    input wire          config_trigger,     // Toggle signal
+    input wire[`SDController_Config_Action_Width-1:0]
+                        config_action,
+    input wire[`SDController_Config_ClkSpeed_Width-1:0]
+                        config_clkSpeed,
+    input wire[`SDController_Config_ClkDelay_Width-1:0]
+                        config_clkDelay,
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger,        // Toggle signal
@@ -98,27 +106,97 @@ module SDController #(
     end
     
     // ====================
+    // Config State Machine
+    // ====================
+    reg[2:0] cfg_state = 0;
+    reg [`SDController_Config_ClkSpeed_Width-1:0] cfg_clkSpeed = 0;
+    reg [`SDController_Config_ClkSpeed_Width-1:0] cfg_clkSpeedNext = 0;
+    wire cfg_clkSpeed_slow = cfg_clkSpeed[0];
+    wire cfg_clkSpeed_fast = cfg_clkSpeed[1];
+    reg [`SDController_Config_ClkDelay_Width-1:0] cfg_clkDelay = 0;
+    reg cfg_resetTrigger = 0;
+    reg cfg_initTrigger = 0;
+    reg[1:0] cfg_delayCounter = 0;
+    
+    `TogglePulse(cfg_triggerPulse, config_trigger, posedge, clk_slow);
+    
+    always @(posedge clk_slow) begin
+        if (cfg_delayCounter) begin
+            cfg_delayCounter <= cfg_delayCounter-1;
+        
+        end else begin
+            case (cfg_state)
+            0: begin
+            end
+            
+            1: begin
+                // Disable clock
+                cfg_clkSpeed <= `SDController_Config_ClkSpeed_Off;
+                // Delay to ensure clock is stopped
+                cfg_delayCounter <= 2;
+                cfg_state <= 2;
+            end
+            
+            2: begin
+                case (cfg_action)
+                `SDController_Config_Action_Reset: begin
+                    cfg_resetTrigger <= !cfg_resetTrigger;
+                    cfg_clkSpeedNext <= `SDController_Config_ClkSpeed_Slow;
+                    cfg_clkDelay <= 0;
+                end
+                
+                `SDController_Config_Action_Init: begin
+                    cfg_initTrigger <= !cfg_initTrigger;
+                end
+                
+                `SDController_Config_Action_SetClk: begin
+                    cfg_clkSpeedNext <= config_clkSpeed;
+                    cfg_clkDelay <= config_clkDelay;
+                end
+                endcase
+                
+                // Delay to let registers settle (particularly cfg_clkDelay) before re-enabling clock
+                cfg_delayCounter <= 2;
+                cfg_state <= 3;
+            end
+            
+            3: begin
+                // Enable clock
+                cfg_clkSpeed <= cfg_clkSpeedNext;
+                cfg_state <= 0;
+            end
+            endcase
+        end
+        
+        if (cfg_triggerPulse) begin
+            $display("[SDController:Config] Trigger");
+            cfg_state <= 1;
+        end
+    end
+    
+    
+    
+    
+    // ====================
     // clk_int
     // ====================
-    wire init_clkSlow = init_clkSpeed[0];
-    wire init_clkFast = init_clkSpeed[1];
-    `Sync(clk_slowEn, init_clkSlow, negedge, clk_slow);
-    `Sync(clk_fastEn, init_clkFast, negedge, clk_fast);
+    `Sync(clk_slowEn, cfg_clkSpeed_slow, negedge, clk_slow);
+    `Sync(clk_fastEn, cfg_clkSpeed_fast, negedge, clk_fast);
     wire clk_int = (clk_slowEn ? clk_slow : (clk_fastEn ? clk_fast : 0));
     assign datOutRead_clk = clk_int;
     assign datInWrite_clk = clk_int;
     
     // ====================
-    // clk_int_delayed / init_clkDelay
+    // clk_int_delayed / cfg_clkDelay
     //   Delay `clk_int_delayed` relative to `clk_int` to correct the phase from the SD card's perspective
-    //   `init_clkDelay` should only be set while `clk_int` is stopped
+    //   `cfg_clkDelay` should only be set while `clk_int` is stopped
     // ====================
     wire clk_int_delayed;
     VariableDelay #(
         .Count(1<<`SDController_Init_ClkDelay_Width)
     ) VariableDelay (
         .in(clk_int),
-        .sel(init_clkDelay),
+        .sel(cfg_clkDelay),
         .out(clk_int_delayed)
     );
     
@@ -134,7 +212,7 @@ module SDController #(
     `Sync(man_enSynced_, man_en_, negedge, clk_int);
     
     // ====================
-    // State Machine
+    // Main State Machine
     // ====================
     reg[2:0] cmd_state = 0;
     reg cmd_crcRst = 0;
@@ -197,8 +275,8 @@ module SDController #(
     localparam Init_FinishDelay = Clocks(Clk_SlowFreq, Init_FinishUs*1000, 1);
     localparam Init_DelayCounterWidth = `RegWidth3(Init_ClockPulseDelay,Init_HoldDelay,Init_FinishDelay);
     reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
-    `TogglePulse(init_resetPulse, init_reset, posedge, clk_int);
-    `TogglePulse(init_triggerPulse, init_trigger, posedge, clk_int);
+    `TogglePulse(init_cfgResetTrigger, cfg_resetTrigger, posedge, clk_int);
+    `TogglePulse(init_cfgInitTrigger, cfg_initTrigger, posedge, clk_int);
     reg[2:0] init_state = 0;
     
     always @(posedge clk_int) begin
@@ -688,11 +766,11 @@ module SDController #(
         end
         endcase
         
-        // Reset init state machine when init_enSynced_ transitions 1->0
-        if (init_resetPulse) begin
+        if (init_cfgResetTrigger) begin
             $display("[SDController:Init] Reset");
             init_state <= 0;
-        end else if (init_triggerPulse) begin
+        
+        end else if (init_cfgInitTrigger) begin
             $display("[SDController:Init] Trigger");
             init_state <= 1;
         end
