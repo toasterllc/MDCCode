@@ -297,10 +297,15 @@ module ICEApp(
     // ====================
     // SDController
     // ====================
-    reg         sd_init_reset           = 0;
-    reg         sd_init_trigger         = 0;
-    reg[1:0]    sd_init_clkSpeed        = 0;
-    reg[3:0]    sd_init_clkDelay        = 0;
+    
+    // Config port (clock domain: async)
+    reg sd_config_trigger = 0;
+    reg[`SDController_Config_Action_Width-1:0]
+        sd_config_action = 0;
+    reg[`SDController_Config_ClkSpeed_Width-1:0]
+        sd_config_clkSpeed = 0;
+    reg[`SDController_Config_ClkDelay_Width-1:0]
+        sd_config_clkDelay = 0;
     reg         sd_cmd_trigger          = 0;
     reg[47:0]   sd_cmd_data             = 0;
     reg[1:0]    sd_cmd_respType         = 0;
@@ -335,10 +340,10 @@ module ICEApp(
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat),
         
-        .init_reset(sd_init_reset),
-        .init_trigger(sd_init_trigger),
-        .init_clkSpeed(sd_init_clkSpeed),
-        .init_clkDelay(sd_init_clkDelay),
+        .config_trigger(sd_config_trigger),
+        .config_action(sd_config_action),
+        .config_clkSpeed(sd_config_clkSpeed),
+        .config_clkDelay(sd_config_clkDelay),
         
         .cmd_trigger(sd_cmd_trigger),
         .cmd_data(sd_cmd_data),
@@ -648,27 +653,17 @@ module ICEApp(
                 
 `ifdef _ICEApp_SD_En
                 // Set SD clock source
-                `Msg_Type_SDInit: begin
-                    $display("[SPI] Got Msg_Type_SDInit: delay=%0d speed=%0d trigger=%b reset=%b",
-                        spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits],
-                        spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits],
-                        spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits],
-                        spi_msgArg[`Msg_Arg_SDInit_Reset_Bits],
+                `Msg_Type_SDConfig: begin
+                    $display("[SPI] Got Msg_Type_SDConfig: delay=%0d speed=%0d action=%0d",
+                        spi_msgArg[`Msg_Arg_SDConfig_ClkDelay_Bits],
+                        spi_msgArg[`Msg_Arg_SDConfig_ClkSpeed_Bits],
+                        spi_msgArg[`Msg_Arg_SDConfig_Action_Bits],
                     );
                     
-                    // We don't need to synchronize `sd_clk_delay` into the sd_ domain,
-                    // because it should only be set while the sd_ clock is disabled.
-                    sd_init_clkDelay <= spi_msgArg[`Msg_Arg_SDInit_Clk_Delay_Bits];
-                    
-                    sd_init_clkSpeed <= spi_msgArg[`Msg_Arg_SDInit_Clk_Speed_Bits];
-                    
-                    if (spi_msgArg[`Msg_Arg_SDInit_Trigger_Bits]) begin
-                        sd_init_trigger <= !sd_init_trigger;
-                    end
-                    
-                    if (spi_msgArg[`Msg_Arg_SDInit_Reset_Bits]) begin
-                        sd_init_reset <= !sd_init_reset;
-                    end
+                    sd_config_clkDelay  <= spi_msgArg[`Msg_Arg_SDConfig_ClkDelay_Bits];
+                    sd_config_clkSpeed  <= spi_msgArg[`Msg_Arg_SDConfig_ClkSpeed_Bits];
+                    sd_config_action    <= spi_msgArg[`Msg_Arg_SDConfig_Action_Bits];
+                    sd_config_trigger   <= !sd_config_trigger;
                 end
                 
                 // Clock out SD command
