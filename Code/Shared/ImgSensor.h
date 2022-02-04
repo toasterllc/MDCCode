@@ -6,7 +6,7 @@ namespace Img {
 template <
     typename T_Scheduler,
     typename T_ICE,
-    void T_SetPowerEnabled(bool),
+    bool T_SetPowerEnabled(bool),
     [[noreturn]] void T_Error(uint16_t)
 >
 class Sensor {
@@ -16,7 +16,8 @@ public:
     static void Enable() {
         // Turn on power
         {
-            T_SetPowerEnabled(true);
+            const bool br = T_SetPowerEnabled(true);
+            Assert(br);
         }
         
         // Toggle IMG_RST_
@@ -211,7 +212,8 @@ public:
     }
     
     static void Disable() {
-        T_SetPowerEnabled(false);
+        const bool br = T_SetPowerEnabled(false);
+        Assert(br);
     }
     
 //    bool enabled() const { return _enabled; }

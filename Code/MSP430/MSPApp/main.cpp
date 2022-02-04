@@ -488,12 +488,16 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 // MARK: - Power
 
 static void _SDSetPowerEnabled(bool en) {
+    #warning TODO: short-circuit if the pin state isn't changing, to save time
+    
     _Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _Scheduler::Sleep(_Scheduler::Ms(2));
 }
 
 static void _ImgSetPowerEnabled(bool en) {
+    #warning TODO: short-circuit if the pin state isn't changing, to save time
+    
     if (en) {
         _Pin::VDD_2V8_IMG_EN::Write(1);
         _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
