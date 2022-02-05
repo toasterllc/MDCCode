@@ -985,4 +985,3 @@ int main() {
 //const _DebugStack& _Debug_MotionTaskStack         = *(_DebugStack*)_MotionTask::Stack;
 //const _DebugStack& _Debug_SDTaskStack             = *(_DebugStack*)_SDTask::Stack;
 //const _DebugStack& _Debug_ImgTaskStack            = *(_DebugStack*)_ImgTask::Stack;
-//const _DebugStack& _Debug_BusyTimeoutTaskStack    = *(_DebugStack*)_BusyTimeoutTask::Stack;
