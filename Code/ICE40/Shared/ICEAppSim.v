@@ -798,6 +798,12 @@ module ICEAppSim();
         TestNop();
         TestRst();
         
+        `ifdef _ICEApp_SD_En
+            // Test SDController reset at the beginning, which should have no effect
+            // because SDController should already be in the reset state
+            TestSDReset();
+        `endif
+        
         `ifdef _ICEApp_Img_En
             // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
             TestImgReset();
