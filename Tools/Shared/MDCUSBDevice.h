@@ -286,28 +286,16 @@ public:
         _checkStatus("MSPDebug command failed");
     }
     
-    SD::CardId sdCardIdGet() {
+    STM::SDCardInfo sdInit() {
         assert(_mode == STM::Status::Modes::STMApp);
         
-        const STM::Cmd cmd = { .op = STM::Op::SDCardIdGet };
+        const STM::Cmd cmd = { .op = STM::Op::SDInit };
         _sendCmd(cmd);
+        _checkStatus("SDInit command failed");
         
-        SD::CardId cardId;
-        _dev.read(STM::Endpoints::DataIn, cardId);
-        _checkStatus("SDCardIdGet command failed");
-        return cardId;
-    }
-    
-    SD::CardData sdCardDataGet() {
-        assert(_mode == STM::Status::Modes::STMApp);
-        
-        const STM::Cmd cmd = { .op = STM::Op::SDCardDataGet };
-        _sendCmd(cmd);
-        
-        SD::CardData cardData;
-        _dev.read(STM::Endpoints::DataIn, cardData);
-        _checkStatus("SDCardDataGet command failed");
-        return cardData;
+        STM::SDCardInfo cardInfo = {};
+        _dev.read(STM::Endpoints::DataIn, cardInfo);
+        return cardInfo;
     }
     
     void sdRead(uintptr_t addr) {
@@ -326,6 +314,14 @@ public:
         };
         _sendCmd(cmd);
         _checkStatus("SDRead command failed");
+    }
+    
+    void imgInit() {
+        assert(_mode == STM::Status::Modes::STMApp);
+        
+        const STM::Cmd cmd = { .op = STM::Op::ImgInit };
+        _sendCmd(cmd);
+        _checkStatus("ImgInit command failed");
     }
     
     struct ImgExposure {
