@@ -83,7 +83,7 @@ using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
 
-static void _ImgSetPowerEnabled(bool en);
+static bool _ImgSetPowerEnabled(bool en);
 [[noreturn]] static void _ImgError(uint16_t line);
 using _ImgSensor = Img::Sensor<
     _System::Scheduler,     // T_Scheduler
@@ -92,16 +92,16 @@ using _ImgSensor = Img::Sensor<
     _ImgError               // T_Error
 >;
 
-static void _SDSetPowerEnabled(bool en);
+static bool _SDSetPowerEnabled(bool en);
 [[noreturn]] static void _SDError(uint16_t line);
-static SD::Card<
+using _SDCard = SD::Card<
     _System::Scheduler, // T_Scheduler
     _ICE,               // T_ICE
     _SDSetPowerEnabled, // T_SetPowerEnabled
     _SDError,           // T_Error
     1,                  // T_ClkDelaySlow (odd values invert the clock)
     0                   // T_ClkDelayFast (odd values invert the clock)
-> _SDCard;
+>;
 
 // MARK: - ICE40
 
@@ -247,7 +247,7 @@ static MSP430JTAG<_MSPTest, _MSPRst_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
 
-static void _SDSetPowerEnabled(bool en) {
+static bool _SDSetPowerEnabled(bool en) {
     constexpr uint16_t BITB         = 1<<0xB;
     constexpr uint16_t VDD_SD_EN    = BITB;
     constexpr uint16_t PADIRAddr    = 0x0204;
@@ -265,6 +265,7 @@ static void _SDSetPowerEnabled(bool en) {
     
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _Scheduler::Sleep(_Scheduler::Ms(2));
+    return true;
 }
 
 [[noreturn]]
@@ -272,7 +273,7 @@ static void _SDError(uint16_t line) {
     _System::Abort();
 }
 
-static void _ImgSetPowerEnabled(bool en) {
+static bool _ImgSetPowerEnabled(bool en) {
     constexpr uint16_t BIT0             = 1<<0;
     constexpr uint16_t BIT2             = 1<<2;
     constexpr uint16_t VDD_1V9_IMG_EN   = BIT0;
@@ -297,6 +298,8 @@ static void _ImgSetPowerEnabled(bool en) {
     #warning TODO: measure how long it takes for IMG rails to rise
     // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
     _Scheduler::Sleep(_Scheduler::Ms(2));
+    
+    return true;
 }
 
 [[noreturn]]
@@ -749,6 +752,9 @@ private:
 };
 
 void _SDInit(const STM::Cmd& cmd) {
+    constexpr uint16_t PM5CTL0  = 0x0130;
+    constexpr uint16_t PAOUT    = 0x0202;
+    
     // Accept command
     _System::USBAcceptCommand(true);
     
@@ -785,9 +791,7 @@ static void _SDCardIdGet(const STM::Cmd& cmd) {
     
     // Send SD card id
     // cardId: aligned to send via USB
-    alignas(4) static SD::CardId cardId;
-    cardId = _SDCard.cardId();
-    _USB.send(Endpoints::DataIn, &cardId, sizeof(cardId));
+    _USB.send(Endpoints::DataIn, &_SD.CardId(), sizeof(_SD.CardId()));
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
     // Send status
@@ -851,6 +855,9 @@ static void _SDRead(const STM::Cmd& cmd) {
 }
 
 void _ImgInit(const STM::Cmd& cmd) {
+    constexpr uint16_t PM5CTL0  = 0x0130;
+    constexpr uint16_t PAOUT    = 0x0202;
+    
     // Accept command
     _System::USBAcceptCommand(true);
     

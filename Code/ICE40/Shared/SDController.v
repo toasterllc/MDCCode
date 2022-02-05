@@ -12,7 +12,7 @@
 
 `define SDController_Config_Action_Reset            2'b00
 `define SDController_Config_Action_Init             2'b01
-`define SDController_Config_Action_SetClk           2'b10
+`define SDController_Config_Action_ClkSet           2'b10
 `define SDController_Config_Action_Width            2
 
 `define SDController_Config_ClkSpeed_Slow           1'b0
@@ -152,7 +152,7 @@ module SDController #(
                     cfg_initTrigger <= !cfg_initTrigger;
                 end
                 
-                `SDController_Config_Action_SetClk: begin
+                `SDController_Config_Action_ClkSet: begin
                     cfg_clkSpeedNext <= (config_clkSpeed===`SDController_Config_ClkSpeed_Slow ? Cfg_ClkSpeed_Slow : Cfg_ClkSpeed_Fast);
                     cfg_clkDelay <= config_clkDelay;
                 end

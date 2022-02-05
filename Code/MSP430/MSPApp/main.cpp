@@ -65,8 +65,8 @@ static void _ICEError(uint16_t line);
 static void _SDError(uint16_t line);
 static void _ImgError(uint16_t line);
 
-static void _SDSetPowerEnabled(bool en);
-static void _ImgSetPowerEnabled(bool en);
+static bool _SDSetPowerEnabled(bool en);
+static bool _ImgSetPowerEnabled(bool en);
 
 extern uint8_t _StackMain[];
 
@@ -487,15 +487,16 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 
 // MARK: - Power
 
-static void _SDSetPowerEnabled(bool en) {
+static bool _SDSetPowerEnabled(bool en) {
     #warning TODO: short-circuit if the pin state isn't changing, to save time
     
     _Pin::VDD_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _Scheduler::Sleep(_Scheduler::Ms(2));
+    return true;
 }
 
-static void _ImgSetPowerEnabled(bool en) {
+static bool _ImgSetPowerEnabled(bool en) {
     #warning TODO: short-circuit if the pin state isn't changing, to save time
     
     if (en) {
@@ -512,6 +513,7 @@ static void _ImgSetPowerEnabled(bool en) {
         
         #warning measure actual delay that we need for the rails to fall
     }
+    return true;
 }
 
 // MARK: - IntState

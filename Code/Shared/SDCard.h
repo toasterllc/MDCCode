@@ -22,40 +22,15 @@ public:
     static uint16_t Enable(CardId* cardId=nullptr, CardData* cardData=nullptr) {
         uint16_t rca = 0;
         
-//        // Disable SDController clock
-//        T_ICE::Transfer(_ClocksSlowOff);
-//        _Sleep(_Ms(1));
-//        
-//        // Enable slow SDController clock
-//        T_ICE::Transfer(_ClocksSlowOn);
-//        _Sleep(_Ms(1));
-//        
-//        // Enter the init mode of the SDController state machine
-//        T_ICE::Transfer(_InitReset);
-//        
-//        // Turn off SD card power and wait for it to reach 0V
-//        bool br = T_SetPowerEnabled(false);
-//        Assert(br);
-//        
-//        // Turn on SD card power and wait for it to reach 2.8V
-//        br = T_SetPowerEnabled(true);
-//        Assert(br);
-        
-        // Return SDController to its reset state
-        // This assumes
-        // Enter the init mode of the SDController state machine
-//        T_ICE::Transfer(_InitReset);
-        
         // Turn on SD card power and wait for it to reach 2.8V
-        br = T_SetPowerEnabled(true);
+        const bool br = T_SetPowerEnabled(true);
         Assert(br);
         
         // Enable slow SDController clock
-        T_ICE::Transfer(_ClocksSlowOn);
-        _Sleep(_Ms(1));
+        T_ICE::Transfer(_ConfigClkSetSlow);
         
         // Trigger the SD card low voltage signalling (LVS) init sequence
-        T_ICE::Transfer(_InitTrigger);
+        T_ICE::Transfer(_ConfigInit);
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
         _Sleep(_Ms(6));
         
@@ -190,25 +165,14 @@ public:
             Assert(status.datInCMD6AccessMode() == 0x03);
         }
         
-        // SDClock=Off
-        T_ICE::Transfer(_ClocksSlowOff);
-        
-        // SDClockDelay=FastDelay
-        T_ICE::Transfer(_ClocksFastOff);
-        
-        // SDClock=FastClock
-        T_ICE::Transfer(_ClocksFastOn);
+        // SDClock=Fast
+        T_ICE::Transfer(_ConfigClkSetFast);
         
         return rca;
     }
     
     static void Disable() {
-        T_ICE::Transfer(_InitReset);
-        
-//        T_ICE::Transfer(_ClocksFastOff);
-//        T_ICE::Transfer(_ClocksFastOn);
-//        T_ICE::Transfer(_InitReset);
-//        T_ICE::Transfer(_ClocksFastOff);
+        T_ICE::Transfer(_ConfigReset);
         
         // Turn off SD card power and wait for it to reach 0V
         const bool br = T_SetPowerEnabled(false);
@@ -308,7 +272,7 @@ public:
     }
     
 private:
-    using _SDInitMsg    = typename T_ICE::SDInitMsg;
+    using _SDConfigMsg  = typename T_ICE::SDConfigMsg;
     using _SDSendCmdMsg = typename T_ICE::SDSendCmdMsg;
     using _SDRespMsg    = typename T_ICE::SDRespMsg;
     using _SDRespResp   = typename T_ICE::SDRespResp;
@@ -316,12 +280,10 @@ private:
     using _RespType     = typename T_ICE::SDSendCmdMsg::RespType;
     using _DatInType    = typename T_ICE::SDSendCmdMsg::DatInType;
     
-    static constexpr auto _ClocksSlowOff    = _SDInitMsg(_SDInitMsg::Action::Nop,     _SDInitMsg::ClkSpeed::Off,  T_ClkDelaySlow);
-    static constexpr auto _ClocksSlowOn     = _SDInitMsg(_SDInitMsg::Action::Nop,     _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow);
-    static constexpr auto _ClocksFastOff    = _SDInitMsg(_SDInitMsg::Action::Nop,     _SDInitMsg::ClkSpeed::Off,  T_ClkDelayFast);
-    static constexpr auto _ClocksFastOn     = _SDInitMsg(_SDInitMsg::Action::Nop,     _SDInitMsg::ClkSpeed::Fast, T_ClkDelayFast);
-    static constexpr auto _InitReset        = _SDInitMsg(_SDInitMsg::Action::Reset,   _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow);
-    static constexpr auto _InitTrigger      = _SDInitMsg(_SDInitMsg::Action::Trigger, _SDInitMsg::ClkSpeed::Slow, T_ClkDelaySlow);
+    static constexpr auto _ConfigClkSetSlow = _SDConfigMsg(_SDConfigMsg::Action::ClkSet,    _SDConfigMsg::ClkSpeed::Slow,   T_ClkDelaySlow);
+    static constexpr auto _ConfigClkSetFast = _SDConfigMsg(_SDConfigMsg::Action::ClkSet,    _SDConfigMsg::ClkSpeed::Fast,   T_ClkDelayFast);
+    static constexpr auto _ConfigReset      = _SDConfigMsg(_SDConfigMsg::Action::Reset,     _SDConfigMsg::ClkSpeed::Slow,   0);
+    static constexpr auto _ConfigInit       = _SDConfigMsg(_SDConfigMsg::Action::Init,      _SDConfigMsg::ClkSpeed::Slow,   0);
     
     static constexpr auto _Ms = T_Scheduler::Ms;
     static constexpr auto _Sleep = T_Scheduler::Sleep;
