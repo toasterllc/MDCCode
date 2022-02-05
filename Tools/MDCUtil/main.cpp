@@ -16,16 +16,17 @@
 using CmdStr = std::string;
 
 // Common Commands
+const CmdStr BootloaderInvokeCmd    = "BootloaderInvoke";
 const CmdStr LEDSetCmd              = "LEDSet";
 
 // STMLoader Commands
 const CmdStr STMWriteCmd            = "STMWrite";
+
+// STMApp Commands
 const CmdStr ICEWriteCmd            = "ICEWrite";
 const CmdStr MSPReadCmd             = "MSPRead";
 const CmdStr MSPWriteCmd            = "MSPWrite";
 const CmdStr MSPStateReadCmd        = "MSPStateRead";
-
-// STMApp Commands
 const CmdStr SDImgReadCmd           = "SDImgRead";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
 
@@ -33,17 +34,18 @@ static void printUsage() {
     using namespace std;
     cout << "MDCUtil commands:\n";
     
-    cout << "  " << LEDSetCmd       << " <idx> <0/1>\n";
+    cout << "  " << BootloaderInvokeCmd << "\n";
+    cout << "  " << LEDSetCmd           << " <idx> <0/1>\n";
     
-    cout << "  " << STMWriteCmd     << " <file>\n";
-    cout << "  " << ICEWriteCmd     << " <file>\n";
+    cout << "  " << STMWriteCmd         << " <file>\n";
+    cout << "  " << ICEWriteCmd         << " <file>\n";
     
-    cout << "  " << MSPReadCmd      << " <addr> <len>\n";
-    cout << "  " << MSPWriteCmd     << " <file>\n";
-    cout << "  " << MSPStateReadCmd << "\n";
+    cout << "  " << MSPReadCmd          << " <addr> <len>\n";
+    cout << "  " << MSPWriteCmd         << " <file>\n";
+    cout << "  " << MSPStateReadCmd     << "\n";
     
-    cout << "  " << SDImgReadCmd    << " <idx> <output.cfa>\n";
-    cout << "  " << ImgCaptureCmd   << " <output.cfa>\n";
+    cout << "  " << SDImgReadCmd        << " <idx> <output.cfa>\n";
+    cout << "  " << ImgCaptureCmd       << " <output.cfa>\n";
     
     cout << "\n";
 }
@@ -99,7 +101,9 @@ static Args parseArgs(int argc, const char* argv[]) {
     if (strs.size() < 1) throw std::runtime_error("no command specified");
     args.cmd = lower(strs[0]);
     
-    if (args.cmd == lower(LEDSetCmd)) {
+    if (args.cmd == lower(BootloaderInvokeCmd)) {
+    
+    } else if (args.cmd == lower(LEDSetCmd)) {
         if (strs.size() < 3) throw std::runtime_error("LED index/state not specified");
         IntForStr(args.LEDSet.idx, strs[1]);
         IntForStr(args.LEDSet.on, strs[2]);
@@ -137,6 +141,10 @@ static Args parseArgs(int argc, const char* argv[]) {
     }
     
     return args;
+}
+
+static void BootloaderInvoke(const Args& args, MDCUSBDevice& device) {
+    device.bootloaderInvoke();
 }
 
 static void LEDSet(const Args& args, MDCUSBDevice& device) {
@@ -240,48 +248,62 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         );
     }
     
-    printf(     "magic:             0x%08x\n",   state.magic);
-    printf(     "version:           0x%04x\n",   state.version);
+    printf(     "magic:                     0x%08x\n",      state.magic);
+    printf(     "version:                   0x%04x\n",      state.version);
     printf(     "\n");
     
     printf(     "startTime\n");
-    printf(     "  time:            %u\n",       state.startTime.time);
-    printf(     "  valid:           %u\n",       state.startTime.valid);
+    printf(     "  time:                    %u\n",          state.startTime.time);
+    printf(     "  valid:                   %u\n",          state.startTime.valid);
     printf(     "\n");
     
-    printf(     "img\n");
-    printf(     "  cap:             %u\n",       state.img.cap);
+    printf(     "sd\n");
+    printf(     "  cardId\n");
+    printf(     "    manufacturerId:        0x%02x\n",      state.sd.cardId.manufacturerId);
+    printf(     "    oemId:                 0x%02x\n",      state.sd.cardId.oemId);
+    printf(     "    productName:           %c%c%c%c%c\n",  state.sd.cardId.productName[0],
+                                                            state.sd.cardId.productName[1],
+                                                            state.sd.cardId.productName[2],
+                                                            state.sd.cardId.productName[3],
+                                                            state.sd.cardId.productName[4]);
+    printf(     "    productRevision:       0x%02x\n",      state.sd.cardId.productRevision);
+    printf(     "    productSerialNumber:   0x%08x\n",      state.sd.cardId.productSerialNumber);
+    printf(     "    manufactureDate:       0x%04x\n",      state.sd.cardId.manufactureDate);
+    printf(     "    crc:                   0x%02x\n",      state.sd.cardId.crc);
     
-    printf(     "  ringBuf\n");
-    printf(     "    magic:         0x%08x\n",   state.img.ringBuf.magic);
-    printf(     "    buf\n");
-    printf(     "      idBegin:     %u\n",       state.img.ringBuf.buf.idBegin);
-    printf(     "      idEnd:       %u\n",       state.img.ringBuf.buf.idEnd);
-    printf(     "      widx:        %u\n",       state.img.ringBuf.buf.widx);
-    printf(     "      ridx:        %u\n",       state.img.ringBuf.buf.ridx);
-    printf(     "      full:        %u\n",       state.img.ringBuf.buf.full);
+    printf(     "  imgCap:                  %u\n",          state.sd.imgCap);
     
-    printf(     "  ringBuf2\n");
-    printf(     "    magic:         0x%08x\n",   state.img.ringBuf2.magic);
+    printf(     "  imgRingBufs[0]\n");
     printf(     "    buf\n");
-    printf(     "      idBegin:     %u\n",       state.img.ringBuf2.buf.idBegin);
-    printf(     "      idEnd:       %u\n",       state.img.ringBuf2.buf.idEnd);
-    printf(     "      widx:        %u\n",       state.img.ringBuf2.buf.widx);
-    printf(     "      ridx:        %u\n",       state.img.ringBuf2.buf.ridx);
-    printf(     "      full:        %u\n",       state.img.ringBuf2.buf.full);
+    printf(     "      idBegin:             %u\n",          state.sd.imgRingBufs[0].buf.idBegin);
+    printf(     "      idEnd:               %u\n",          state.sd.imgRingBufs[0].buf.idEnd);
+    printf(     "      widx:                %u\n",          state.sd.imgRingBufs[0].buf.widx);
+    printf(     "      ridx:                %u\n",          state.sd.imgRingBufs[0].buf.ridx);
+    printf(     "      full:                %u\n",          state.sd.imgRingBufs[0].buf.full);
+    printf(     "    valid:                 %u\n",          state.sd.imgRingBufs[0].valid);
+
+    printf(     "  imgRingBufs[1]\n");
+    printf(     "    buf\n");
+    printf(     "      idBegin:             %u\n",          state.sd.imgRingBufs[1].buf.idBegin);
+    printf(     "      idEnd:               %u\n",          state.sd.imgRingBufs[1].buf.idEnd);
+    printf(     "      widx:                %u\n",          state.sd.imgRingBufs[1].buf.widx);
+    printf(     "      ridx:                %u\n",          state.sd.imgRingBufs[1].buf.ridx);
+    printf(     "      full:                %u\n",          state.sd.imgRingBufs[1].buf.full);
+    printf(     "    valid:                 %u\n",          state.sd.imgRingBufs[1].valid);
     printf(     "\n");
     
     printf(     "abort\n");
-    printf(     "  eventsCount:     %u\n",       state.abort.eventsCount);
+    printf(     "  eventsCount:             %u\n",          state.abort.eventsCount);
+    
     for (size_t i=0; i<std::min(std::size(state.abort.events), (size_t)state.abort.eventsCount); i++) {
         const auto& event = state.abort.events[i];
         printf( "  events[%ju]\n", (uintmax_t)i);
         printf( "    time\n");
-        printf( "      start:       %u\n",       event.time.start);
-        printf( "      delta:       %u\n",       event.time.delta);
+        printf( "      start:               %u\n",          event.time.start);
+        printf( "      delta:               %u\n",          event.time.delta);
         
-        printf( "    domain:        %u\n",       event.domain);
-        printf( "    line:          %u\n",       event.line);
+        printf( "    domain:                %u\n",          event.domain);
+        printf( "    line:                  %u\n",          event.line);
     }
     printf(     "\n");
     
@@ -289,6 +311,10 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
 }
 
 static void SDImgRead(const Args& args, MDCUSBDevice& device) {
+    printf("Sending SDInit command...\n");
+    device.sdInit();
+    printf("-> OK\n\n");
+    
     printf("Sending SDRead command...\n");
     device.sdRead(args.SDImgRead.idx*Img::PaddedLen);
     printf("-> OK\n\n");
@@ -307,6 +333,10 @@ static void SDImgRead(const Args& args, MDCUSBDevice& device) {
 }
 
 static void ImgCapture(const Args& args, MDCUSBDevice& device) {
+    printf("Sending ImgInit command...\n");
+    device.imgInit();
+    printf("-> OK\n\n");
+    
     printf("Sending ImgCapture command...\n");
     STM::ImgCaptureStats stats = device.imgCapture(0, 0);
     printf("-> OK (len: %ju)\n\n", (uintmax_t)stats.len);
@@ -378,7 +408,8 @@ int main(int argc, const char* argv[]) {
     MDCUSBDevice& device = devices[0];
     try {
         device.endpointsFlush();
-        if (args.cmd == lower(LEDSetCmd))               LEDSet(args, device);
+        if (args.cmd == lower(BootloaderInvokeCmd))     BootloaderInvoke(args, device);
+        else if (args.cmd == lower(LEDSetCmd))          LEDSet(args, device);
         else if (args.cmd == lower(STMWriteCmd))        STMWrite(args, device);
         else if (args.cmd == lower(ICEWriteCmd))        ICEWrite(args, device);
         else if (args.cmd == lower(MSPReadCmd))         MSPRead(args, device);
