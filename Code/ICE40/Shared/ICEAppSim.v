@@ -482,7 +482,7 @@ module ICEAppSim();
         
         //           delay, speed,                                  action
         // Set SD clock source (=slow) and delay (=0)
-        TestSDConfig(0,     `SDController_Config_ClkSpeed_Slow,     `SDController_Config_Action_SetClk);
+        TestSDConfig(0,     `SDController_Config_ClkSpeed_Slow,     `SDController_Config_Action_ClkSet);
         #((10*1e9)/400e3); // Wait 10 400kHz cycles
         // <-- Turn on power to SD card
         // Trigger LVS init sequence
@@ -834,7 +834,7 @@ module ICEAppSim();
             TestSDCMD6();
             
             //           delay, speed,                                  action
-            TestSDConfig(0,     `SDController_Config_ClkSpeed_Fast,     `SDController_Config_Action_SetClk);
+            TestSDConfig(0,     `SDController_Config_ClkSpeed_Fast,     `SDController_Config_Action_ClkSet);
             
             TestSDRespRecovery();
         `endif // _ICEApp_SD_En

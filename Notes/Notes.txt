@@ -1,6 +1,11 @@
 - Rev4 Todo
     
-    - MSPApp: upon a cold start (which includes aborts) or if _state.sd.valid==false, refresh the SD card ID (CID). If the CID doesn't match the one stored in MSP::State, reset the ring buffers / capacity
+    - STMApp: reconsider whether we should be using Task::Stop() to abort tasks that are in progress.
+      for example, a task might be in the middle of executing SDCard::Disable(), which isn't designed to be aborted half way through
+    
+    - STMApp: get compiling again after Task/SDCard/etc changes
+    
+    - MSPApp: test capturing images / get working again
     
     - MSPApp: make sure SysTick (WDT) doesn't wake us from LPM3.5
     
@@ -29,6 +34,8 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MSPApp: upon a cold start (which includes aborts) or if _state.sd.valid==false, refresh the SD card ID (CID). If the CID doesn't match the one stored in MSP::State, reset the ring buffers / capacity
     
     √ MSPApp: delay before actual abort, so we don't restart too quickly if too many aborts happen too quickly
     

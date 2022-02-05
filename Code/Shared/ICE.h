@@ -76,30 +76,26 @@ public:
         ) {}
     };
     
-    struct SDInitMsg : Msg {
-        enum class Action {
-            Nop,
-            Reset,
-            Trigger,
+    struct SDConfigMsg : Msg {
+        enum class Action : uint8_t {
+            Reset   = 0,
+            Init    = 1,
+            ClkSet  = 2,
         };
         
         enum class ClkSpeed : uint8_t {
-            Off     = 0,
-            Slow    = 1,
-            Fast    = 2,
+            Slow    = 0,
+            Fast    = 1,
         };
         
-        constexpr SDInitMsg(Action action, ClkSpeed clkSpeed, uint8_t clkDelay) : Msg(MsgType::StartBit | 0x02,
+        constexpr SDConfigMsg(Action action, ClkSpeed clkSpeed, uint8_t clkDelay) : Msg(MsgType::StartBit | 0x02,
             0,
             0,
             0,
             0,
-            0,
-            0,
-            (((uint8_t)clkDelay                   &0xF)<<4) |
-            (((uint8_t)clkSpeed                   &0x3)<<2) |
-            (((uint8_t)(action==Action::Trigger)  &0x1)<<1) |
-            (((uint8_t)(action==Action::Reset)    &0x1)<<0)
+            clkDelay,
+            (uint8_t)clkSpeed,
+            (uint8_t)action
         ) {}
     };
     
