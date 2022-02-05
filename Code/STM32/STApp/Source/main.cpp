@@ -279,14 +279,26 @@ static MSP430JTAG<_MSPTest, _MSPRst_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
 
+static bool _MSPConnectAndUnlockPins() {
+    constexpr uint16_t PM5CTL0Addr  = 0x0130;
+    
+    const auto mspr = _MSP.connect();
+    if (mspr != _MSP.Status::OK) return false;
+    
+    // Clear LOCKLPM5 in the PM5CTL0 register
+    // This is necessary to be able to control the GPIOs
+    _MSP.write(PM5CTL0Addr, 0x0010);
+    return true;
+}
+
 static bool _SDSetPowerEnabled(bool en) {
     constexpr uint16_t BITB         = 1<<0xB;
     constexpr uint16_t VDD_SD_EN    = BITB;
     constexpr uint16_t PADIRAddr    = 0x0204;
     constexpr uint16_t PAOUTAddr    = 0x0202;
     
-    const auto mspr = _MSP.connect();
-    if (mspr != _MSP.Status::OK) return false;
+    const bool br = _MSPConnectAndUnlockPins();
+    if (!br) return false;
     
     const uint16_t PADIR = _MSP.read(PADIRAddr);
     const uint16_t PAOUT = _MSP.read(PAOUTAddr);
@@ -301,7 +313,6 @@ static bool _SDSetPowerEnabled(bool en) {
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _Scheduler::Sleep(_Scheduler::Ms(2));
     
-    _MSP.disconnect();
     return true;
 }
 
@@ -318,8 +329,8 @@ static bool _ImgSetPowerEnabled(bool en) {
     constexpr uint16_t PADIRAddr        = 0x0204;
     constexpr uint16_t PAOUTAddr        = 0x0202;
     
-    const auto mspr = _MSP.connect();
-    if (mspr != _MSP.Status::OK) return false;
+    const bool br = _MSPConnectAndUnlockPins();
+    if (!br) return false;
     
     const uint16_t PADIR = _MSP.read(PADIRAddr);
     const uint16_t PAOUT = _MSP.read(PAOUTAddr);
@@ -339,7 +350,6 @@ static bool _ImgSetPowerEnabled(bool en) {
     // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
     _Scheduler::Sleep(_Scheduler::Ms(2));
     
-    _MSP.disconnect();
     return true;
 }
 
