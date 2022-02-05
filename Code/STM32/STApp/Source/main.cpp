@@ -745,6 +745,14 @@ public:
         return _CardId;
     }
     
+    static void ReadStart(uint32_t addr) {
+        _SDCard::ReadStart(addr);
+    }
+    
+    static void ReadStop() {
+        _SDCard::ReadStop();
+    }
+    
 private:
     static inline bool _Enabled = false;
     static inline uint16_t _RCA = 0;
@@ -791,7 +799,7 @@ static void _SDCardIdGet(const STM::Cmd& cmd) {
     
     // Send SD card id
     // cardId: aligned to send via USB
-    _USB.send(Endpoints::DataIn, &_SD.CardId(), sizeof(_SD.CardId()));
+    _USB.send(Endpoints::DataIn, &_SD::CardId(), sizeof(_SD::CardId()));
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
     // Send status
@@ -839,13 +847,13 @@ static void _SDRead(const STM::Cmd& cmd) {
     // Stop reading from the SD card if a read is in progress
     if (reading) {
         _ICE_ST_SPI_CS_::Write(1);
-        _SDCard.readStop();
+        _SD::ReadStop();
         reading = false;
     }
     
     // Update state
     reading = true;
-    _SDCard.readStart(arg.addr);
+    _SD::ReadStart(arg.addr);
     
     // Start the Readout task
     _TaskReadout::Start(std::nullopt);
@@ -892,7 +900,6 @@ void _ImgExposureSet(const STM::Cmd& cmd) {
     // Configure QSPI for comms with ICEApp
     _QSPI.config(_QSPIConfig.ICEApp);
     
-    _ImgInit();
     _ImgSensor::SetCoarseIntTime(arg.coarseIntTime);
     _ImgSensor::SetFineIntTime(arg.fineIntTime);
     _ImgSensor::SetAnalogGain(arg.analogGain);
@@ -909,8 +916,6 @@ void _ImgCapture(const STM::Cmd& cmd) {
     
     // Configure QSPI for comms with ICEApp
     _QSPI.config(_QSPIConfig.ICEApp);
-    
-    _ImgInit();
     
     const Img::Header header = {
         .magic          = Img::Header::MagicNumber,
