@@ -31,9 +31,9 @@
 
 `define Msg_Type_SDConfig                                       `Msg_Type_StartBit | `Msg_Type_Len'h02
 `define     Msg_Arg_SDConfig_ClkDelay_Len                       4
-`define     Msg_Arg_SDConfig_ClkDelay_Bits                      7:4
-`define     Msg_Arg_SDConfig_ClkSpeed_Len                       2
-`define     Msg_Arg_SDConfig_ClkSpeed_Bits                      3:2
+`define     Msg_Arg_SDConfig_ClkDelay_Bits                      6:3
+`define     Msg_Arg_SDConfig_ClkSpeed_Len                       1
+`define     Msg_Arg_SDConfig_ClkSpeed_Bits                      2:2
 `define     Msg_Arg_SDConfig_Action_Len                         2
 `define     Msg_Arg_SDConfig_Action_Bits                        1:0
 
