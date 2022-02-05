@@ -2,6 +2,7 @@
 #include "Toastbox/Enum.h"
 #include "Util.h"
 #include "Img.h"
+#include "SD.h"
 #include "Toastbox/USB.h"
 
 namespace STM {
@@ -38,7 +39,6 @@ namespace STM {
         MSPDebug,
         
         SDInit,
-        SDCardIdGet,
         SDRead,
         
         ImgInit,
@@ -170,6 +170,11 @@ namespace STM {
         void tdoReadSet(bool x)     { data = (data&(~(0x01<<5)))|(x<<5); }
         
         uint8_t data = 0;
+    };
+    
+    struct [[gnu::packed]] SDCardInfo {
+        SD::CardId cardId;
+        SD::CardData cardData;
     };
     
     struct [[gnu::packed]] ImgCaptureStats {
