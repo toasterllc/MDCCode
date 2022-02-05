@@ -56,18 +56,15 @@ using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
 
 class _MotionTask;
-class _SDTask;
-class _ImgTask;
 
 static void _Sleep();
 
 static void _SchedulerError(uint16_t line);
 static void _ICEError(uint16_t line);
 static void _SDError(uint16_t line);
-static void _ImgError(uint16_t line);
+//static void _ImgError(uint16_t line);
 
 static bool _SDSetPowerEnabled(bool en);
-static bool _ImgSetPowerEnabled(bool en);
 
 extern uint8_t _StackMain[];
 
@@ -82,24 +79,12 @@ using _Scheduler = Toastbox::Scheduler<
     _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
                                                 //              main stack for overflow; unused if T_StackGuardCount==0)
     _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
-    _MotionTask,                                // T_Tasks: list of tasks
-    _SDTask,
-    _ImgTask
+    _MotionTask                                 // T_Tasks: list of tasks
 >;
 
 using _ICE = ICE<
     _Scheduler,
     _ICEError
->;
-
-// _ImgSensor: image sensor object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
-using _ImgSensor = Img::Sensor<
-    _Scheduler,             // T_Scheduler
-    _ICE,                   // T_ICE
-    _ImgSetPowerEnabled,    // T_SetPowerEnabled
-    _ImgError               // T_Error
 >;
 
 // _SDCard: SD card object
@@ -124,12 +109,6 @@ using _SDCard = SD::Card<
 [[gnu::section(".ram_backup_noinit.main")]]
 static RTC::Type<_XT1FreqHz> _RTC;
 
-// _ImgAutoExp: auto exposure algorithm object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
-[[gnu::section(".ram_backup.main")]]
-static Img::AutoExposure _ImgAutoExp;
-
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
 [[gnu::section(".fram_info.main")]]
@@ -143,272 +122,7 @@ static volatile bool _Motion = false;
 static uint8_t _BusyCount = 0;
 using _BusyAssertion = BusyAssertionType<_BusyCount>;
 
-struct _SDTask {
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
-    
-    // Task stack
-    [[gnu::section(".stack._SDTask")]]
-    static inline uint8_t Stack[256];
-};
-
-struct _ImgTask {
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
-    
-    // Task stack
-    [[gnu::section(".stack._ImgTask")]]
-    static inline uint8_t Stack[128];
-};
-
-class _SD {
-public:
-    static void EnableAsync() {
-        Wait();
-        if (_Enabled) return; // Short-circuit
-        _Enabled = true;
-        
-        // If the SD state is valid, and this is a warm start (therefore we've already
-        // verified the SD card ID), then enable the SD card asynchronously.
-        if (_State.sd.valid && !Startup::ColdStart()) {
-            _Scheduler::Start<_SDTask>([] { _RCA = _SDCard::Enable(); });
-            return;
-        }
-        
-        // Otherwise, enable the SD card synchronously because we need the card id / card data
-        SD::CardId cardId;
-        SD::CardData cardData;
-        _RCA = _SDCard::Enable(&cardId, &cardData);
-        
-        // If the SD state is valid and the SD card id matches, just init the ring buffers
-        if (_State.sd.valid && !memcmp(&_State.sd.cardId, &cardId, sizeof(cardId))) {
-            _ImgRingBufInit();
-        
-        // Otherwise, either the SD state isn't valid, or the existing SD card id doesn't
-        // match the current card id. Either way, we need to reset the SD state.
-        } else {
-            _ResetState(cardId, cardData);
-        }
-    }
-    
-    static void DisableAsync() {
-        Wait();
-        if (!_Enabled) return; // Short-circuit
-        _Enabled = false;
-        
-        _Scheduler::Start<_SDTask>([] { _SDCard::Disable(); });
-    }
-    
-    static void Wait() {
-        _Scheduler::Wait<_SDTask>();
-    }
-    
-    static void WriteImage(uint8_t srcBlock, uint16_t dstIdx) {
-        _SDCard::WriteImage(_RCA, srcBlock, dstIdx);
-    }
-    
-private:
-    static inline bool _Enabled = false;
-    static inline uint16_t _RCA = 0;
-    
-    // _ResetState(): resets the _State.sd struct
-    static void _ResetState(const SD::CardId& cardId, const SD::CardData& cardData) {
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        
-        // Mark the _State as invalid in case we lose power in the middle of modifying it
-        _State.sd.valid = false;
-        
-        // Set .cardId
-        {
-            _State.sd.cardId = cardId;
-        }
-        
-        // Set .imgCap
-        {
-            // ImgBlockLen: the length of an image in SD blocks
-            constexpr uint32_t ImgBlockLen = Img::PaddedLen / SD::BlockLen;
-            // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
-            const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
-            // cardImgCap: the capacity of the SD card in number of images
-            const uint32_t cardImgCap = cardBlockCap / ImgBlockLen;
-            
-            _State.sd.imgCap = cardImgCap;
-        }
-        
-        // Set .imgRingBufs
-        {
-            _State.sd.imgRingBufs[0] = {};
-            _State.sd.imgRingBufs[1] = {};
-        }
-        
-        _State.sd.valid = true;
-    }
-    
-    // _ImgRingBufInit(): find the correct image ring buffer (the one with the greatest id that's valid)
-    // and copy it into the other slot so that there are two copies. If neither slot contains a valid ring
-    // buffer, reset them both so that they're both empty (and valid).
-    static void _ImgRingBufInit() {
-        using namespace MSP;
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        
-        MSP::ImgRingBuf& a = _State.sd.imgRingBufs[0];
-        MSP::ImgRingBuf& b = _State.sd.imgRingBufs[1];
-        const std::optional<int> comp = ImgRingBuf::Compare(a, b);
-        if (comp && *comp>0) {
-            // a>b (a is newer), so set b=a
-            b = a;
-        
-        } else if (comp && *comp<0) {
-            // b>a (b is newer), so set a=b
-            a = b;
-        
-        } else if (!comp) {
-            // Both a and b are invalid; reset them both
-            a = {};
-            b = {};
-        }
-    }
-};
-
-class _Img {
-public:
-    static void EnableAsync() {
-        Wait();
-        if (_Enabled) return; // Short-circuit
-        _Enabled = true;
-        
-        _Scheduler::Start<_ImgTask>([] {
-            // Initialize image sensor
-            _ImgSensor::Enable();
-            // Set the initial exposure _before_ we enable streaming, so that the very first frame
-            // has the correct exposure, so we don't have to skip any frames on the first capture.
-            _ImgSensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
-            // Enable image streaming
-            _ImgSensor::SetStreamEnabled(true);
-        });
-    }
-    
-    static void DisableAsync() {
-        Wait();
-        if (!_Enabled) return; // Short-circuit
-        _Enabled = false;
-        
-        _Scheduler::Start<_ImgTask>([] { _ImgSensor::Disable(); });
-    }
-    
-    static void Wait() {
-        _Scheduler::Wait<_ImgTask>();
-    }
-    
-private:
-    static inline bool _Enabled = false;
-};
-
 // MARK: - Motion
-
-static void _SDImgRingBufIncrement() {
-    using namespace MSP;
-    FRAMWriteEn writeEn; // Enable FRAM writing
-    ImgRingBuf ringBufCopy = _State.sd.imgRingBufs[0];
-    
-    // Update write index
-    ringBufCopy.buf.widx++;
-    // Wrap widx
-    if (ringBufCopy.buf.widx >= _State.sd.imgCap) ringBufCopy.buf.widx = 0;
-    
-    // Update read index (if we're currently full)
-    if (ringBufCopy.buf.full) {
-        ringBufCopy.buf.ridx++;
-        // Wrap ridx
-        if (ringBufCopy.buf.ridx >= _State.sd.imgCap) ringBufCopy.buf.ridx = 0;
-        
-        // Update the beginning image id (which only gets incremented if we're full)
-        ringBufCopy.buf.idBegin++;
-    }
-    
-    // Update the end image id (the next image id that'll be used)
-    ringBufCopy.buf.idEnd++;
-    
-    if (ringBufCopy.buf.widx == ringBufCopy.buf.ridx) ringBufCopy.buf.full = true;
-    
-    _State.sd.imgRingBufs[0] = ringBufCopy;
-    _State.sd.imgRingBufs[1] = ringBufCopy;
-}
-
-static void _ImgCapture() {
-    const auto& ringBuf = _State.sd.imgRingBufs[0].buf;
-    
-    // Asynchronously turn on the image sensor
-    _Img::EnableAsync();
-    
-    // Init SD card
-    // This should come after we kick off Img initialization, because sometimes (after a cold start)
-    // _SD::EnableAsync needs to synchronously wait for the SD card (to verify the SD card id, and
-    // get its capacity if we haven't seen the SD card before). So while that's happening, we want
-    // the image sensor to be initializing in parallel.
-    _SD::EnableAsync();
-    
-    // Wait until the image sensor is ready
-    _Img::Wait();
-    
-    // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
-    constexpr uint8_t CaptureAttemptCount = 3;
-    uint8_t bestExpBlock = 0;
-    uint8_t bestExpScore = 0;
-    for (uint8_t i=0; i<CaptureAttemptCount; i++) {
-        // skipCount:
-        // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
-        // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
-        // image since the first image after setting the exposure is invalid.
-        const uint8_t skipCount = (!i ? 0 : 1);
-        
-        // expBlock: Store images in the block belonging to the worst-exposed image captured so far
-        const uint8_t expBlock = !bestExpBlock;
-        
-        // Populate the header
-        static Img::Header header = {
-            .magic          = Img::Header::MagicNumber,
-            .version        = Img::Header::Version,
-            .imageWidth     = Img::PixelWidth,
-            .imageHeight    = Img::PixelHeight,
-            .coarseIntTime  = 0,
-            .analogGain     = 0,
-            .id             = 0,
-            .timeStart      = 0,
-            .timeDelta      = 0,
-        };
-        
-        header.coarseIntTime = _ImgAutoExp.integrationTime();
-        header.id = ringBuf.idEnd;
-        
-        const MSP::Time t = _RTC.time();
-        header.timeStart = t.start;
-        header.timeDelta = t.delta;
-        
-        // Capture an image to RAM
-        const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
-        const uint8_t expScore = _ImgAutoExp.update(resp.highlightCount(), resp.shadowCount());
-        if (!bestExpScore || (expScore > bestExpScore)) {
-            bestExpBlock = expBlock;
-            bestExpScore = expScore;
-        }
-        
-        // We're done if we don't have any exposure changes
-        if (!_ImgAutoExp.changed()) break;
-        
-        // Update the exposure
-        _ImgSensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
-    }
-    
-    // Wait until the SD card is ready
-    _SD::Wait();
-    
-    // Write the best-exposed image to the SD card
-    _SD::WriteImage(bestExpBlock, ringBuf.widx);
-    
-    // Update _State.img
-    _SDImgRingBufIncrement();
-}
 
 // MARK: - Interrupts
 
@@ -497,26 +211,6 @@ static bool _SDSetPowerEnabled(bool en) {
     return true;
 }
 
-static bool _ImgSetPowerEnabled(bool en) {
-    #warning TODO: short-circuit if the pin state isn't changing, to save time
-    
-    if (en) {
-        _Pin::VDD_2V8_IMG_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
-        _Pin::VDD_1V9_IMG_EN::Write(1);
-        
-        #warning measure actual delay that we need for the rails to rise
-    
-    } else {
-        // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
-        _Pin::VDD_1V9_IMG_EN::Write(0);
-        _Pin::VDD_2V8_IMG_EN::Write(0);
-        
-        #warning measure actual delay that we need for the rails to fall
-    }
-    return true;
-}
-
 // MARK: - IntState
 
 inline bool Toastbox::IntState::InterruptsEnabled() {
@@ -558,221 +252,32 @@ static void _Sleep() {
 
 // MARK: - Tasks
 
-//static void debugSignal() {
-//    _Pin::DEBUG_OUT::Init();
-//    for (int i=0; i<10; i++) {
-//        _Pin::DEBUG_OUT::Write(0);
-//        for (volatile int i=0; i<10000; i++);
-//        _Pin::DEBUG_OUT::Write(1);
-//        for (volatile int i=0; i<10000; i++);
-//    }
-//}
-
-//class _BusyTimeoutTask {
-//public:
-//    static void Run() {
-//        for (;;) {
-////            _Scheduler::Wait<_BusyTimeoutTask>([] { return _Busy.has_value(); });
-//            
-//            while (_Scheduler::Wait<_BusyTimeoutTask,1000>([] { return (bool)_Busy; })) {
-//                _Busy = std::nullopt;
-//            }
-//            
-//            // Asynchronously turn off the image sensor / SD card
-//            _Img::DisableAsync();
-//            _SD::DisableAsync();
-//            
-//            // Wait until the image sensor / SD card are off
-//            _Img::Wait();
-//            _SD::Wait();
-//            
-////            // Wait to be tickled
-////            _Scheduler::Wait<_BusyTimeoutTask>([] { return _Tickled; });
-////
-////            // Assert that we're busy until we stop getting tickled + 1s
-////            _BusyAssertion busy;
-////            do {
-////                _Tickled = false;
-////            } while ();
-////
-////            // Asynchronously turn off the image sensor / SD card
-////            _Img::DisableAsync();
-////            _SD::DisableAsync();
-////
-////            // Wait until the image sensor / SD card are off
-////            _Img::Wait();
-////            _SD::Wait();
-//        }
-//        
-//        _Scheduler::Yield();
-//    }
-//    
-//    
-////    static void Run() {
-////        for (;;) {
-////            _BusyAssertion busy;
-////            while (_Scheduler::Wait<_BusyTimeoutTask,1000>([] { return _Tickled; })) {
-////                _Tickled = false;
-////            }
-////            
-////            // Asynchronously turn off the image sensor / SD card
-////            _Img::DisableAsync();
-////            _SD::DisableAsync();
-////            
-////            // Wait until the image sensor / SD card are off
-////            _Img::Wait();
-////            _SD::Wait();
-////            
-//////            // Wait to be tickled
-//////            _Scheduler::Wait<_BusyTimeoutTask>([] { return _Tickled; });
-//////
-//////            // Assert that we're busy until we stop getting tickled + 1s
-//////            _BusyAssertion busy;
-//////            do {
-//////                _Tickled = false;
-//////            } while ();
-//////
-//////            // Asynchronously turn off the image sensor / SD card
-//////            _Img::DisableAsync();
-//////            _SD::DisableAsync();
-//////
-//////            // Wait until the image sensor / SD card are off
-//////            _Img::Wait();
-//////            _SD::Wait();
-////        }
-////        
-////        _Scheduler::Yield();
-////    }
-//    
-////    static void Stop() {
-////        _Scheduler::Stop<_BusyTimeoutTask>();
-////    }
-//    
-//    static void Tickle() {
-//        _Busy.emplace();
-//    }
-//    
-//    // Task options
-//    static constexpr Toastbox::TaskOptions Options{};
-//    
-//    // Task stack
-//    [[gnu::section(".stack._BusyTimeoutTask")]]
-//    static inline uint8_t Stack[128];
-//    
-//private:
-//    static inline std::optional<_BusyAssertion> _Busy;
-//};
-
 struct _MotionTask {
     static void Run() {
         for (;;) {
-//            _Scheduler::Wait([&] { return _Motion; });
-//            _Motion = false;
-            
             volatile bool a = false;
             while (!a);
             
-            for (;;) {
-                _BusyAssertion busy;
-                
-                // Capture an image
-                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-                _ImgCapture();
-                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-                
-                // Wait up to 1s for further motion
-                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return _Motion; });
-                if (!motion) {
-                    // We timed-out
-                    // Asynchronously disable Img / SD
-                    _Img::DisableAsync();
-                    _SD::DisableAsync();
-                    
-                    // Wait until both Img and SD are disabled
-                    _Scheduler::Wait<_ImgTask, _SDTask>();
-                    // Relinquish our busy assertion by breaking out of scope,
-                    // allowing us to enter LPM3.5 sleep
-                    break;
-                }
-                
-                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-                // _Motion, there'd be a race window where we could first observe
-                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-                // the true value by resetting it to false.
-                _Motion = false;
-            }
+//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
             
-//            // Asynchronously turn off the image sensor / SD card
-//            _Img::DisableAsync();
-//            _SD::DisableAsync();
-//            
-//            _Scheduler::Wait([&] { return (_Img && _SD) || _Motion; });
-//            
-//            // Wait until the image sensor / SD card are off
-//            _Img::Wait();
-//            _SD::Wait();
-//            
-//            // Wait for motion
-//            const bool motion = _Scheduler::WaitTimeout<1000>([&] { return _Motion; });
-//            
-//            if (motion) {
-//                _Motion = false;
+            _SDCard::Disable();
+            
+            _SDCard::Enable();
+//            for (;;) {
+//                _BusyAssertion busy;
+//                
+//                volatile bool a = false;
+//                while (!a);
 //                
 //                // Capture an image
 //                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//                _ImgCapture();
-//                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            
-//            } else {
-//                // Asynchronously turn off the image sensor / SD card
-//                _Img::DisableAsync();
-//                _SD::DisableAsync();
 //                
-//                // Wait until the image sensor / SD card are off
-//                _Img::Wait();
+//                _SD::EnableAsync();
 //                _SD::Wait();
+//                _SD::WriteImage(0, 0);
 //                
-//                break;
+//                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
 //            }
-//            
-//            
-//            
-////            // Stop the timeout task while we capture a new image
-////            _Scheduler::Stop<_BusyTimeoutTask>();
-//            
-//            
-//            // Wait for motion
-//            _Scheduler::Wait([&] { return _Motion; });
-//            _Motion = false;
-//            
-//            _BusyAssertion busy;
-//            
-////            // Stop the timeout task while we capture a new image
-////            _Scheduler::Stop<_BusyTimeoutTask>();
-//            
-//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//            
-//            // Capture an image
-//            _ImgCapture();
-//            
-//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            
-//            // wait for motion or 1s to elapse
-//            // if motion:
-//            //   capture another image
-//            // if 1s elapses:
-//            //   disable SD/Img
-//            //   wait for: [1] _Motion or [2] (SD && Img)
-//            //   if [1]: capture another image
-//            //   if [2]: drop busy assertion and yield
-//            
-//            
-//            // Tickle the busy task
-//            _BusyTimeoutTask::Tickle();
-//            
-////            // Restart the timeout task, so that we turn off automatically if
-////            // we're idle for a bit
-////            _Scheduler::Start<_BusyTimeoutTask>(_BusyTimeoutTask::Run);
         }
     }
     
@@ -812,11 +317,6 @@ static void _SDError(uint16_t line) {
     _Abort(AbortDomain::SD, line);
 }
 
-[[noreturn]]
-static void _ImgError(uint16_t line) {
-    _Abort(AbortDomain::Img, line);
-}
-
 static void _AbortRecord(const MSP::Time& time, uint16_t domain, uint16_t line) {
     FRAMWriteEn writeEn; // Enable FRAM writing
     
@@ -839,29 +339,7 @@ static void _Abort(uint16_t domain, uint16_t line) {
     _AbortRecord(time, domain, line);
     // Trigger a BOR
     PMMCTL0 = PMMPW | PMMSWBOR;
-    
-//    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-//    PMMCTL0_L |= PMMSWBOR_1_L;
-    
     for (;;);
-    
-//    _Pin::DEBUG_OUT::Init();
-//    
-//    for (;;) {
-//        for (uint16_t i=0; i<(uint16_t)domain; i++) {
-//            _Pin::DEBUG_OUT::Write(1);
-//            _Pin::DEBUG_OUT::Write(0);
-//        }
-//        
-//        for (volatile int i=0; i<100; i++) {}
-//        
-//        for (uint16_t i=0; i<(uint16_t)line; i++) {
-//            _Pin::DEBUG_OUT::Write(1);
-//            _Pin::DEBUG_OUT::Write(0);
-//        }
-//        
-//        for (volatile int i=0; i<1000; i++) {}
-//    }
 }
 
 extern "C" [[noreturn]]
@@ -956,15 +434,15 @@ int main() {
     // Init SysTick
     _SysTick::Init();
     
-    // If this is a cold start, delay 3s before beginning.
-    // This delay is meant for the case where we restarted due to an abort, and
-    // serves 2 purposes:
-    //   1. it rate-limits aborts, in case there's a persistent issue
-    //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-    if (Startup::ColdStart()) {
-        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
-        _Scheduler::Delay(_Scheduler::Ms(3000));
-    }
+//    // If this is a cold start, delay 3s before beginning.
+//    // This delay is meant for the case where we restarted due to an abort, and
+//    // serves 2 purposes:
+//    //   1. it rate-limits aborts, in case there's a persistent issue
+//    //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
+//    if (Startup::ColdStart()) {
+//        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
+//        _Scheduler::Delay(_Scheduler::Ms(3000));
+//    }
     
     _Scheduler::Run();
 }

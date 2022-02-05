@@ -660,6 +660,8 @@ module ICEApp(
                         spi_msgArg[`Msg_Arg_SDConfig_Action_Bits],
                     );
                     
+                    ice_led[0] <= spi_msgArg[`Msg_Arg_SDConfig_ClkSpeed_Bits];
+                    
                     sd_config_clkDelay  <= spi_msgArg[`Msg_Arg_SDConfig_ClkDelay_Bits];
                     sd_config_clkSpeed  <= spi_msgArg[`Msg_Arg_SDConfig_ClkSpeed_Bits];
                     sd_config_action    <= spi_msgArg[`Msg_Arg_SDConfig_Action_Bits];

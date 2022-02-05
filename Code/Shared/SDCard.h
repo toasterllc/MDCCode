@@ -34,136 +34,136 @@ public:
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
         _Sleep(_Ms(6));
         
-        // ====================
-        // CMD0 | GO_IDLE_STATE
-        //   State: X -> Idle
-        //   Go to idle state
-        // ====================
-        {
-            // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
-            _Sleep(_Ms(1));
-            // Send CMD0
-            _SendCmd(_CMD0, 0, _RespType::None);
-            // There's no response to CMD0
-        }
-        
-        // ====================
-        // CMD8 | SEND_IF_COND
-        //   State: Idle -> Idle
-        //   Send interface condition
-        // ====================
-        {
-            constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
-            constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
-            const _SDStatusResp status = _SendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
-            const uint8_t replyVoltage = status.template respGetBits<19,16>();
-            Assert(replyVoltage == Voltage);
-            const uint8_t replyCheckPattern = status.template respGetBits<15,8>();
-            Assert(replyCheckPattern == CheckPattern);
-        }
-        
-        // ====================
-        // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
-        //   State: Idle -> Ready
-        //   Initialize
-        // ====================
-        for (;;) {
-            // CMD55
-            _SendCmd(_CMD55, 0);
-            
-            // CMD41
-            {
-                const _SDStatusResp status = _SendCmd(_CMD41, 0x51008000);
-                // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
-                // Check if card is ready. If it's not, retry ACMD41.
-                const bool ready = status.template respGetBit<39>();
-                if (!ready) continue;
-                // Check S18A; for LVS initialization, it's expected to be 0
-                const bool S18A = status.template respGetBit<32>();
-                Assert(S18A == 0);
-                break;
-            }
-        }
-        
-        // ====================
-        // CMD2 | ALL_SEND_CID
-        //   State: Ready -> Identification
-        //   Get card identification number (CID)
-        // ====================
-        {
-            // The response to CMD2 is 136 bits, instead of the usual 48 bits
-            _SendCmd(_CMD2, 0, _RespType::Len136);
-            if (cardId) _SDRespGet<sizeof(*cardId)>(cardId);
-        }
-        
-        // ====================
-        // CMD3 | SEND_RELATIVE_ADDR
-        //   State: Identification -> Standby
-        //   Publish a new relative address (RCA)
-        // ====================
-        {
-            const _SDStatusResp status = _SendCmd(_CMD3, 0);
-            // Get the card's RCA from the response
-            rca = status.template respGetBits<39,24>();
-        }
-        
-        // ====================
-        // CMD9 | SEND_CSD
-        //   State: Standby -> Standby
-        //   Get card-specific data (CSD)
-        // ====================
-        // We do this here because CMD9 is only valid in the standby state,
-        // and this is the only time we're in the standby state.
-        if (cardData) {
-            _SendCmd(_CMD9, ((uint32_t)rca)<<16, _RespType::Len136);
-            _SDRespGet<sizeof(*cardData)>(cardData);
-        }
-        
-        // ====================
-        // CMD7 | SELECT_CARD/DESELECT_CARD
-        //   State: Standby -> Transfer
-        //   Select card
-        // ====================
-        {
-            _SendCmd(_CMD7, ((uint32_t)rca)<<16);
-        }
-        
-        // ====================
-        // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
-        //   State: Transfer -> Transfer
-        //   Set bus width to 4 bits
-        // ====================
-        {
-            // CMD55
-            {
-                _SendCmd(_CMD55, ((uint32_t)rca)<<16);
-            }
-            
-            // CMD6
-            {
-                _SendCmd(_CMD6, 0x00000002);
-            }
-        }
-        
-        // ====================
-        // CMD6 | SWITCH_FUNC
-        //   State: Transfer -> Data -> Transfer (automatically returns to Transfer state after sending 512 bits of data)
-        //   Switch to SDR104
-        // ====================
-        {
-            // Mode = 1 (switch function)  = 0x80
-            // Group 6 (Reserved)          = 0xF (no change)
-            // Group 5 (Reserved)          = 0xF (no change)
-            // Group 4 (Current Limit)     = 0xF (no change)
-            // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
-            // Group 2 (Command System)    = 0xF (no change)
-            // Group 1 (Access Mode)       = 0x3 (SDR104)
-            const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
-            Assert(!status.datInCRCErr());
-            // Verify that the access mode was successfully changed
-            // TODO: properly handle this failing, see CMD6 docs
-            Assert(status.datInCMD6AccessMode() == 0x03);
-        }
+//        // ====================
+//        // CMD0 | GO_IDLE_STATE
+//        //   State: X -> Idle
+//        //   Go to idle state
+//        // ====================
+//        {
+//            // SD "Initialization sequence": wait max(1ms, 74 cycles @ 400 kHz) == 1ms
+//            _Sleep(_Ms(1));
+//            // Send CMD0
+//            _SendCmd(_CMD0, 0, _RespType::None);
+//            // There's no response to CMD0
+//        }
+//        
+//        // ====================
+//        // CMD8 | SEND_IF_COND
+//        //   State: Idle -> Idle
+//        //   Send interface condition
+//        // ====================
+//        {
+//            constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
+//            constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
+//            const _SDStatusResp status = _SendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
+//            const uint8_t replyVoltage = status.template respGetBits<19,16>();
+//            Assert(replyVoltage == Voltage);
+//            const uint8_t replyCheckPattern = status.template respGetBits<15,8>();
+//            Assert(replyCheckPattern == CheckPattern);
+//        }
+//        
+//        // ====================
+//        // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
+//        //   State: Idle -> Ready
+//        //   Initialize
+//        // ====================
+//        for (;;) {
+//            // CMD55
+//            _SendCmd(_CMD55, 0);
+//            
+//            // CMD41
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD41, 0x51008000);
+//                // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
+//                // Check if card is ready. If it's not, retry ACMD41.
+//                const bool ready = status.template respGetBit<39>();
+//                if (!ready) continue;
+//                // Check S18A; for LVS initialization, it's expected to be 0
+//                const bool S18A = status.template respGetBit<32>();
+//                Assert(S18A == 0);
+//                break;
+//            }
+//        }
+//        
+//        // ====================
+//        // CMD2 | ALL_SEND_CID
+//        //   State: Ready -> Identification
+//        //   Get card identification number (CID)
+//        // ====================
+//        {
+//            // The response to CMD2 is 136 bits, instead of the usual 48 bits
+//            _SendCmd(_CMD2, 0, _RespType::Len136);
+//            if (cardId) _SDRespGet<sizeof(*cardId)>(cardId);
+//        }
+//        
+//        // ====================
+//        // CMD3 | SEND_RELATIVE_ADDR
+//        //   State: Identification -> Standby
+//        //   Publish a new relative address (RCA)
+//        // ====================
+//        {
+//            const _SDStatusResp status = _SendCmd(_CMD3, 0);
+//            // Get the card's RCA from the response
+//            rca = status.template respGetBits<39,24>();
+//        }
+//        
+//        // ====================
+//        // CMD9 | SEND_CSD
+//        //   State: Standby -> Standby
+//        //   Get card-specific data (CSD)
+//        // ====================
+//        // We do this here because CMD9 is only valid in the standby state,
+//        // and this is the only time we're in the standby state.
+//        if (cardData) {
+//            _SendCmd(_CMD9, ((uint32_t)rca)<<16, _RespType::Len136);
+//            _SDRespGet<sizeof(*cardData)>(cardData);
+//        }
+//        
+//        // ====================
+//        // CMD7 | SELECT_CARD/DESELECT_CARD
+//        //   State: Standby -> Transfer
+//        //   Select card
+//        // ====================
+//        {
+//            _SendCmd(_CMD7, ((uint32_t)rca)<<16);
+//        }
+//        
+//        // ====================
+//        // ACMD6 (CMD55, CMD6) | SET_BUS_WIDTH
+//        //   State: Transfer -> Transfer
+//        //   Set bus width to 4 bits
+//        // ====================
+//        {
+//            // CMD55
+//            {
+//                _SendCmd(_CMD55, ((uint32_t)rca)<<16);
+//            }
+//            
+//            // CMD6
+//            {
+//                _SendCmd(_CMD6, 0x00000002);
+//            }
+//        }
+//        
+//        // ====================
+//        // CMD6 | SWITCH_FUNC
+//        //   State: Transfer -> Data -> Transfer (automatically returns to Transfer state after sending 512 bits of data)
+//        //   Switch to SDR104
+//        // ====================
+//        {
+//            // Mode = 1 (switch function)  = 0x80
+//            // Group 6 (Reserved)          = 0xF (no change)
+//            // Group 5 (Reserved)          = 0xF (no change)
+//            // Group 4 (Current Limit)     = 0xF (no change)
+//            // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
+//            // Group 2 (Command System)    = 0xF (no change)
+//            // Group 1 (Access Mode)       = 0x3 (SDR104)
+//            const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
+//            Assert(!status.datInCRCErr());
+//            // Verify that the access mode was successfully changed
+//            // TODO: properly handle this failing, see CMD6 docs
+//            Assert(status.datInCMD6AccessMode() == 0x03);
+//        }
         
         // SDClock=Fast
         T_ICE::Transfer(_ConfigClkSetFast);

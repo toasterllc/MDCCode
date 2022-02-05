@@ -1,5 +1,7 @@
 - Rev4 Todo
     
+    - ICEAppSim: implement `sdClkObserved` without killing performance
+    
     - STMApp: reconsider whether we should be using Task::Stop() to abort tasks that are in progress.
       for example, a task might be in the middle of executing SDCard::Disable(), which isn't designed to be aborted half way through
     

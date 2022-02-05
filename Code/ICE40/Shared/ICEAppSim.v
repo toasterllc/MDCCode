@@ -15,11 +15,11 @@
 `include "ImgSim.v"
 `include "ImgI2CSlaveSim.v"
 
-// MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
-// beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
-// when that happens
-`define MOBILE_SDR_INIT_VAL 16'hCAFE
-`include "mt48h32m16lf/mobile_sdr.v"
+// // MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
+// // beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
+// // when that happens
+// `define MOBILE_SDR_INIT_VAL 16'hCAFE
+// `include "mt48h32m16lf/mobile_sdr.v"
 
 `endif // _ICEApp_Img_En
 
@@ -77,23 +77,26 @@ module ICEAppSim();
     localparam Sim_ImgWordDelta         = -1;
     
     reg sdClkObserved = 0;
-    always @(posedge sd_clk) begin
-        sdClkObserved = 1;
-    end
+    // initial begin
+    //     forever begin
+    //         wait(sd_clk);
+    //         sdClkObserved = 1;
+    //     end
+    // end
     
     `ifdef _ICEApp_Img_En
-        mobile_sdr mobile_sdr(
-            .clk(ram_clk),
-            .cke(ram_cke),
-            .addr(ram_a),
-            .ba(ram_ba),
-            .cs_n(ram_cs_),
-            .ras_n(ram_ras_),
-            .cas_n(ram_cas_),
-            .we_n(ram_we_),
-            .dq(ram_dq),
-            .dqm(ram_dqm)
-        );
+        // mobile_sdr mobile_sdr(
+        //     .clk(ram_clk),
+        //     .cke(ram_cke),
+        //     .addr(ram_a),
+        //     .ba(ram_ba),
+        //     .cs_n(ram_cs_),
+        //     .ras_n(ram_ras_),
+        //     .cas_n(ram_cas_),
+        //     .we_n(ram_we_),
+        //     .dq(ram_dq),
+        //     .dqm(ram_dqm)
+        // );
         
         ImgSim #(
             .ImgWidth(`Img_Width),
@@ -491,11 +494,13 @@ module ICEAppSim();
     
     `ifdef SIM
         // Wait 50us, because waiting 5ms takes forever in simulation
-        $display("[ICEAppSim] Waiting 50us (and pretending it's 5ms)...");
+        $display("[ICEAppSim] Waiting 50us (and pretending it's 5ms)");
+        $display("[ICEAppSim] Current time: %0d", $time);
         #(50_000);
     `else
         // Wait 5ms
         $display("[ICEAppSim] Waiting 5ms...");
+        $display("[ICEAppSim] Current time: %0d", $time);
         #(5_000_000);
     `endif
         $display("[ICEAppSim] 5ms elapsed");
@@ -786,17 +791,17 @@ module ICEAppSim();
     
     initial begin
         TestRst();
-        TestEcho(56'h00000000000000);
-        TestEcho(56'h00000000000000);
+        // TestEcho(56'h00000000000000);
+        // TestEcho(56'h00000000000000);
         TestEcho(56'hCAFEBABEFEEDAA);
-        TestNop();
-        TestEcho(56'hCAFEBABEFEEDAA);
-        TestEcho(56'h123456789ABCDE);
-        TestLEDSet(4'b1010);
-        TestLEDSet(4'b0101);
-        TestEcho(56'h123456789ABCDE);
-        TestNop();
-        TestRst();
+        // TestNop();
+        // TestEcho(56'hCAFEBABEFEEDAA);
+        // TestEcho(56'h123456789ABCDE);
+        // TestLEDSet(4'b1010);
+        // TestLEDSet(4'b0101);
+        // TestEcho(56'h123456789ABCDE);
+        // TestNop();
+        // TestRst();
         
         `ifdef _ICEApp_SD_En
             // Test SDController reset at the beginning, which should have no effect
@@ -804,33 +809,33 @@ module ICEAppSim();
             TestSDReset();
         `endif
         
-        `ifdef _ICEApp_Img_En
-            // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
-            TestImgReset();
-            TestImgSetHeader(0, {
-                LittleFromHost32.Swap(32'hDECAFBAD) /* magic number/version */,
-                LittleFromHost16.Swap(16'd2304)     /* image width          */
-            });
-
-            TestImgSetHeader(1, {
-                LittleFromHost16.Swap(16'd1296)     /* image height         */,
-                LittleFromHost16.Swap(16'h1111)     /* coarse int time      */,
-                LittleFromHost16.Swap(16'h2222)     /* analog gain          */
-            });
-
-            TestImgSetHeader(2, {
-                LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
-                LittleFromHost16.Swap(16'hBEEF)     /* start time (low)     */
-            });
-
-            TestImgSetHeader(3, {
-                LittleFromHost16.Swap(16'hDEAD)     /* start time (high)    */,
-                LittleFromHost32.Swap(32'hBEEFCAFE) /* delta time           */
-            });
-
-            TestImgI2CWriteRead();
-            TestImgCapture();
-        `endif // _ICEApp_Img_En
+        // `ifdef _ICEApp_Img_En
+        //     // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
+        //     TestImgReset();
+        //     TestImgSetHeader(0, {
+        //         LittleFromHost32.Swap(32'hDECAFBAD) /* magic number/version */,
+        //         LittleFromHost16.Swap(16'd2304)     /* image width          */
+        //     });
+        //
+        //     TestImgSetHeader(1, {
+        //         LittleFromHost16.Swap(16'd1296)     /* image height         */,
+        //         LittleFromHost16.Swap(16'h1111)     /* coarse int time      */,
+        //         LittleFromHost16.Swap(16'h2222)     /* analog gain          */
+        //     });
+        //
+        //     TestImgSetHeader(2, {
+        //         LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
+        //         LittleFromHost16.Swap(16'hBEEF)     /* start time (low)     */
+        //     });
+        //
+        //     TestImgSetHeader(3, {
+        //         LittleFromHost16.Swap(16'hDEAD)     /* start time (high)    */,
+        //         LittleFromHost32.Swap(32'hBEEFCAFE) /* delta time           */
+        //     });
+        //
+        //     TestImgI2CWriteRead();
+        //     TestImgCapture();
+        // `endif // _ICEApp_Img_En
         
         `ifdef _ICEApp_SD_En
             TestSDInit();
@@ -845,24 +850,24 @@ module ICEAppSim();
             TestSDRespRecovery();
         `endif // _ICEApp_SD_En
         
-        `ifdef ICEApp_ImgReadoutToSD_En
-            TestImgReadoutToSD();
-            TestImgReadoutToSDRecovery();
-        `endif // ICEApp_ImgReadoutToSD_En
-
-        `ifdef ICEApp_SDReadoutToSPI_En
-            TestSDReadoutToSPI();
-            TestLEDSet(4'b1010);
-            TestSDReadoutToSPI();
-        `endif // ICEApp_SDReadoutToSPI_En
-
-        `ifdef ICEApp_ImgReadoutToSPI_En
-            TestImgReadoutToSPI();
-        `endif // ICEApp_ImgReadoutToSPI_En
-        
-        `ifdef _ICEApp_SD_En
-            TestSDReset();
-        `endif
+        // `ifdef ICEApp_ImgReadoutToSD_En
+        //     TestImgReadoutToSD();
+        //     TestImgReadoutToSDRecovery();
+        // `endif // ICEApp_ImgReadoutToSD_En
+        //
+        // `ifdef ICEApp_SDReadoutToSPI_En
+        //     TestSDReadoutToSPI();
+        //     TestLEDSet(4'b1010);
+        //     TestSDReadoutToSPI();
+        // `endif // ICEApp_SDReadoutToSPI_En
+        //
+        // `ifdef ICEApp_ImgReadoutToSPI_En
+        //     TestImgReadoutToSPI();
+        // `endif // ICEApp_ImgReadoutToSPI_En
+        //
+        // `ifdef _ICEApp_SD_En
+        //     TestSDReset();
+        // `endif
         
         `Finish;
     end
