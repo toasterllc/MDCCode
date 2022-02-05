@@ -107,11 +107,11 @@ module SDController #(
     // ====================
     // Config State Machine
     // ====================
-    localparam Cfg_ClkSpeed_Slow = 2'b00; // Default
-    localparam Cfg_ClkSpeed_Off = 2'b01;
-    localparam Cfg_ClkSpeed_Fast = 2'b11;
+    localparam Cfg_ClkSpeed_Slow    = 2'b00; // Default
+    localparam Cfg_ClkSpeed_Off     = 2'b01;
+    localparam Cfg_ClkSpeed_Fast    = 2'b11;
     
-    reg[2:0] cfg_state = 0;
+    reg[1:0] cfg_state = 0;
     reg[1:0] cfg_clkSpeed = Cfg_ClkSpeed_Slow;
     reg[1:0] cfg_clkSpeedNext = Cfg_ClkSpeed_Slow;
     wire cfg_clkSpeed_slow = !cfg_clkSpeed[0];
