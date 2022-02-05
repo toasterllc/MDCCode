@@ -45,7 +45,8 @@ struct _Pin {
     using ICE_MSP_SPI_AUX_DIR               = PortA::Pin<0xA, Option::Output1>;
     using VDD_SD_EN                         = PortA::Pin<0xB, Option::Output0>;
     using VDD_B_EN_                         = PortA::Pin<0xC, Option::Output1>;
-    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Resistor0, Option::Interrupt01>; // Motion sensor can only pull up, so it requires a pulldown resistor
+    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
+//    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Resistor0, Option::Interrupt01>; // Motion sensor can only pull up, so it requires a pulldown resistor
     
     using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
@@ -665,8 +666,11 @@ static void _Sleep() {
 struct _MotionTask {
     static void Run() {
         for (;;) {
-            _Scheduler::Wait([&] { return _Motion; });
-            _Motion = false;
+//            _Scheduler::Wait([&] { return _Motion; });
+//            _Motion = false;
+            
+            volatile bool a = false;
+            while (!a);
             
             for (;;) {
                 _BusyAssertion busy;
