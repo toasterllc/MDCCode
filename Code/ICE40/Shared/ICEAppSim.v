@@ -453,20 +453,18 @@ module ICEAppSim();
     end endtask
     
     task TestSDConfig(
-        input[`Msg_Arg_SDInit_Clk_Delay_Len-1:0] delay,
-        input[`Msg_Arg_SDInit_Clk_Speed_Len-1:0] speed,
-        input[`Msg_Arg_SDInit_Trigger_Len-1:0] trigger,
-        input[`Msg_Arg_SDInit_Reset_Len-1:0] reset
+        input[`Msg_Arg_SDConfig_ClkDelay_Len-1:0] clkDelay,
+        input[`Msg_Arg_SDConfig_ClkSpeed_Len-1:0] clkSpeed,
+        input[`Msg_Arg_SDConfig_Action_Len-1:0] action
     ); begin
         reg[`Msg_Arg_Len-1:0] arg;
         
-        // $display("\n[ICEAppSim] ========== TestSDConfig ==========");
-        arg[`Msg_Arg_SDInit_Clk_Delay_Bits] = delay;
-        arg[`Msg_Arg_SDInit_Clk_Speed_Bits] = speed;
-        arg[`Msg_Arg_SDInit_Trigger_Bits] = trigger;
-        arg[`Msg_Arg_SDInit_Reset_Bits] = reset;
+        $display("\n[ICEAppSim] ========== TestSDConfig ==========");
+        arg[`Msg_Arg_SDConfig_ClkDelay_Bits] = clkDelay;
+        arg[`Msg_Arg_SDConfig_ClkSpeed_Bits] = clkSpeed;
+        arg[`Msg_Arg_SDConfig_Action_Bits] = action;
         
-        SendMsg(`Msg_Type_SDInit, arg);
+        SendMsg(`Msg_Type_SDConfig, arg);
     end endtask
     
     task TestSDInit; begin
@@ -476,15 +474,14 @@ module ICEAppSim();
         
         $display("\n[ICEAppSim] ========== TestSDInit ==========");
         
-        //           delay, speed,                            trigger, reset
-        TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
-        #((10*1e9)/400e3); // Wait 10 400kHz cycles
-        TestSDConfig(0,     `SDController_Init_ClkSpeed_Slow, 0,       0);
-        #((10*1e9)/400e3); // Wait 10 400kHz cycles
-        TestSDConfig(0,     `SDController_Init_ClkSpeed_Slow, 0,       1);
+        //           delay, speed,                                  action
+        // Set SD clock source (=slow) and delay (=0)
+        TestSDConfig(0,     `SDController_Config_ClkSpeed_Slow,     `SDController_Config_Action_SetClk);
         #((10*1e9)/400e3); // Wait 10 400kHz cycles
         // <-- Turn on power to SD card
-        TestSDConfig(0,     `SDController_Init_ClkSpeed_Slow, 1,       0);
+        // Trigger LVS init sequence
+        TestSDConfig(0,     0,                                      `SDController_Config_Action_Init);
+        #((10*1e9)/400e3); // Wait 10 400kHz cycles
     
     `ifdef SIM
         // Wait 50us, because waiting 5ms takes forever in simulation
@@ -799,9 +796,9 @@ module ICEAppSim();
             TestSDCMD8();
             TestSDCMD2();
             TestSDCMD6();
-            //           delay, speed,                            trigger, reset
-            TestSDConfig(0,     `SDController_Init_ClkSpeed_Off,  0,       0);
-            TestSDConfig(0,     `SDController_Init_ClkSpeed_Fast, 0,       0);
+            
+            //           delay, speed,                                  action
+            TestSDConfig(0,     `SDController_Config_ClkSpeed_Fast,     `SDController_Config_Action_SetClk);
             
             TestSDRespRecovery();
         `endif // _ICEApp_SD_En
