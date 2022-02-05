@@ -682,100 +682,100 @@ struct _MSPDebugState {
 };
 
 static void _MSPDebugPushReadBits(_MSPDebugState& state, _BufQueue::Buf& buf) {
-//    if (state.len >= sizeof(buf.data)) {
-//        state.ok = false;
-//        return;
-//    }
-//    
-//    // Enqueue the new byte into `buf`
-//    buf.data[state.len] = state.bits;
-//    state.len++;
-//    // Reset our bits
-//    state.bits = 0;
-//    state.bitsLen = 0;
+    if (state.len >= sizeof(buf.data)) {
+        state.ok = false;
+        return;
+    }
+    
+    // Enqueue the new byte into `buf`
+    buf.data[state.len] = state.bits;
+    state.len++;
+    // Reset our bits
+    state.bits = 0;
+    state.bitsLen = 0;
 }
 
 static void _MSPDebugHandleSBWIO(const MSPDebugCmd& cmd, _MSPDebugState& state, _BufQueue::Buf& buf) {
-//    const bool tdo = _MSP.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
-//    if (cmd.tdoReadGet()) {
-//        // Enqueue a new bit
-//        state.bits <<= 1;
-//        state.bits |= tdo;
-//        state.bitsLen++;
-//        
-//        // Enqueue the byte if it's filled
-//        if (state.bitsLen == 8) {
-//            _MSPDebugPushReadBits(state, buf);
-//        }
-//    }
+    const bool tdo = _MSP.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
+    if (cmd.tdoReadGet()) {
+        // Enqueue a new bit
+        state.bits <<= 1;
+        state.bits |= tdo;
+        state.bitsLen++;
+        
+        // Enqueue the byte if it's filled
+        if (state.bitsLen == 8) {
+            _MSPDebugPushReadBits(state, buf);
+        }
+    }
 }
 
 static void _MSPDebugHandleCmd(const MSPDebugCmd& cmd, _MSPDebugState& state, _BufQueue::Buf& buf) {
-//    switch (cmd.opGet()) {
-//    case MSPDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet());     break;
-//    case MSPDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet()); 	    break;
-//    case MSPDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse(); 				    break;
-//    case MSPDebugCmd::Ops::SBWIO:       _MSPDebugHandleSBWIO(cmd, state, buf);	break;
-//    default:                            abort();
-//    }
+    switch (cmd.opGet()) {
+    case MSPDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet());     break;
+    case MSPDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet()); 	    break;
+    case MSPDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse(); 				    break;
+    case MSPDebugCmd::Ops::SBWIO:       _MSPDebugHandleSBWIO(cmd, state, buf);	break;
+    default:                            abort();
+    }
 }
 
 static void _MSPDebug(const STM::Cmd& cmd) {
-//    auto& arg = cmd.arg.MSPDebug;
-//    
-//    // Bail if more data was requested than the size of our buffer
-//    if (arg.respLen > sizeof(_BufQueue::Buf::data)) {
-//        // Reject command
-//        _System::USBAcceptCommand(false);
-//        return;
-//    }
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Reset state
-//    _Bufs.reset();
-//    auto& bufIn = _Bufs.back();
-//    _Bufs.push();
-//    auto& bufOut = _Bufs.back();
-//    
-//    _MSPDebugState state;
-//    
-//    // Handle debug commands
-//    {
-//        size_t cmdsLenRem = arg.cmdsLen;
-//        while (cmdsLenRem) {
-//            // Receive debug commands into buf
-//            _USB.recv(Endpoints::DataOut, bufIn.data, sizeof(bufIn.data));
-//            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
-//            
-//            // Handle each MSPDebugCmd
-//            const MSPDebugCmd* cmds = (MSPDebugCmd*)bufIn.data;
-//            const size_t cmdsLen = _USB.recvLen(Endpoints::DataOut) / sizeof(MSPDebugCmd);
-//            for (size_t i=0; i<cmdsLen && state.ok; i++) {
-//                _MSPDebugHandleCmd(cmds[i], state, bufOut);
-//            }
-//            
-//            cmdsLenRem -= cmdsLen;
-//        }
-//    }
-//    
-//    // Reply with data generated from debug commands
-//    {
-//        // Push outstanding bits into the buffer
-//        // This is necessary for when the client reads a number of bits
-//        // that didn't fall on a byte boundary.
-//        if (state.bitsLen) _MSPDebugPushReadBits(state, bufOut);
-//        
-//        if (arg.respLen) {
-//            // Send the data and wait for it to be received
-//            _USB.send(Endpoints::DataIn, bufOut.data, arg.respLen);
-//            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-//        }
-//    }
-//    
-//    // Send status
-//    _System::USBSendStatus(state.ok);
+    auto& arg = cmd.arg.MSPDebug;
+    
+    // Bail if more data was requested than the size of our buffer
+    if (arg.respLen > sizeof(_BufQueue::Buf::data)) {
+        // Reject command
+        _System::USBAcceptCommand(false);
+        return;
+    }
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Reset state
+    _Bufs.reset();
+    auto& bufIn = _Bufs.back();
+    _Bufs.push();
+    auto& bufOut = _Bufs.back();
+    
+    _MSPDebugState state;
+    
+    // Handle debug commands
+    {
+        size_t cmdsLenRem = arg.cmdsLen;
+        while (cmdsLenRem) {
+            // Receive debug commands into buf
+            _USB.recv(Endpoints::DataOut, bufIn.data, sizeof(bufIn.data));
+            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
+            
+            // Handle each MSPDebugCmd
+            const MSPDebugCmd* cmds = (MSPDebugCmd*)bufIn.data;
+            const size_t cmdsLen = _USB.recvLen(Endpoints::DataOut) / sizeof(MSPDebugCmd);
+            for (size_t i=0; i<cmdsLen && state.ok; i++) {
+                _MSPDebugHandleCmd(cmds[i], state, bufOut);
+            }
+            
+            cmdsLenRem -= cmdsLen;
+        }
+    }
+    
+    // Reply with data generated from debug commands
+    {
+        // Push outstanding bits into the buffer
+        // This is necessary for when the client reads a number of bits
+        // that didn't fall on a byte boundary.
+        if (state.bitsLen) _MSPDebugPushReadBits(state, bufOut);
+        
+        if (arg.respLen) {
+            // Send the data and wait for it to be received
+            _USB.send(Endpoints::DataIn, bufOut.data, arg.respLen);
+            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+        }
+    }
+    
+    // Send status
+    _System::USBSendStatus(state.ok);
 }
 
 void _SDInit(const STM::Cmd& cmd) {
@@ -836,72 +836,72 @@ static void _SDRead(const STM::Cmd& cmd) {
 }
 
 void _ImgInit(const STM::Cmd& cmd) {
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Configure QSPI for comms with ICEApp
-//    _QSPI.config(_QSPIConfig.ICEApp);
-//    
-//    _ImgSensor::Disable();
-//    _ImgSensor::Enable();
-//    
-//    _System::USBSendStatus(true);
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Configure QSPI for comms with ICEApp
+    _QSPI.config(_QSPIConfig.ICEApp);
+    
+    _ImgSensor::Disable();
+    _ImgSensor::Enable();
+    
+    _System::USBSendStatus(true);
 }
 
 void _ImgExposureSet(const STM::Cmd& cmd) {
-//    const auto& arg = cmd.arg.ImgExposureSet;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Configure QSPI for comms with ICEApp
-//    _QSPI.config(_QSPIConfig.ICEApp);
-//    
-//    _ImgSensor::SetCoarseIntTime(arg.coarseIntTime);
-//    _ImgSensor::SetFineIntTime(arg.fineIntTime);
-//    _ImgSensor::SetAnalogGain(arg.analogGain);
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
+    const auto& arg = cmd.arg.ImgExposureSet;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Configure QSPI for comms with ICEApp
+    _QSPI.config(_QSPIConfig.ICEApp);
+    
+    _ImgSensor::SetCoarseIntTime(arg.coarseIntTime);
+    _ImgSensor::SetFineIntTime(arg.fineIntTime);
+    _ImgSensor::SetAnalogGain(arg.analogGain);
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 void _ImgCapture(const STM::Cmd& cmd) {
-//    const auto& arg = cmd.arg.ImgCapture;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Configure QSPI for comms with ICEApp
-//    _QSPI.config(_QSPIConfig.ICEApp);
-//    
-//    const Img::Header header = {
-//        .magic          = Img::Header::MagicNumber,
-//        .version        = Img::Header::Version,
-//        .imageWidth     = Img::PixelWidth,
-//        .imageHeight    = Img::PixelHeight,
-//    };
-//    
-//    const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, arg.dstBlock, arg.skipCount);
-//    
-//    // stats: aligned to send via USB
-//    alignas(4) const ImgCaptureStats stats = {
-//        .len            = resp.wordCount()*sizeof(Img::Word),
-//        .highlightCount = resp.highlightCount(),
-//        .shadowCount    = resp.shadowCount(),
-//    };
-//    
-//    // Send ImgCaptureStats
-//    _USB.send(Endpoints::DataIn, &stats, sizeof(stats));
-//    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-//    
-//    // Arrange for the image to be read out
-//    _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstBlock));
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
-//    
-//    // Start the Readout task
-//    _TaskReadout::Start(stats.len);
+    const auto& arg = cmd.arg.ImgCapture;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Configure QSPI for comms with ICEApp
+    _QSPI.config(_QSPIConfig.ICEApp);
+    
+    const Img::Header header = {
+        .magic          = Img::Header::MagicNumber,
+        .version        = Img::Header::Version,
+        .imageWidth     = Img::PixelWidth,
+        .imageHeight    = Img::PixelHeight,
+    };
+    
+    const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, arg.dstBlock, arg.skipCount);
+    
+    // stats: aligned to send via USB
+    alignas(4) const ImgCaptureStats stats = {
+        .len            = resp.wordCount()*sizeof(Img::Word),
+        .highlightCount = resp.highlightCount(),
+        .shadowCount    = resp.shadowCount(),
+    };
+    
+    // Send ImgCaptureStats
+    _USB.send(Endpoints::DataIn, &stats, sizeof(stats));
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    
+    // Arrange for the image to be read out
+    _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstBlock));
+    
+    // Send status
+    _System::USBSendStatus(true);
+    
+    // Start the Readout task
+    _TaskReadout::Start(stats.len);
 }
 
 static void _CmdHandle(const STM::Cmd& cmd) {
