@@ -28,6 +28,7 @@ public:
         
         // Enable slow SDController clock
         T_ICE::Transfer(_ConfigClkSetSlow);
+        _Sleep(_Us(1));
         
         // Trigger the SD card low voltage signalling (LVS) init sequence
         T_ICE::Transfer(_ConfigInit);
@@ -167,12 +168,14 @@ public:
         
         // SDClock=Fast
         T_ICE::Transfer(_ConfigClkSetFast);
+        _Sleep(_Us(1));
         
         return rca;
     }
     
     static void Disable() {
         T_ICE::Transfer(_ConfigReset);
+        _Sleep(_Us(1));
         
         // Turn off SD card power and wait for it to reach 0V
         const bool br = T_SetPowerEnabled(false);
@@ -285,6 +288,7 @@ private:
     static constexpr auto _ConfigReset      = _SDConfigMsg(_SDConfigMsg::Action::Reset,     _SDConfigMsg::ClkSpeed::Slow,   0);
     static constexpr auto _ConfigInit       = _SDConfigMsg(_SDConfigMsg::Action::Init,      _SDConfigMsg::ClkSpeed::Slow,   0);
     
+    static constexpr auto _Us = T_Scheduler::Us;
     static constexpr auto _Ms = T_Scheduler::Ms;
     static constexpr auto _Sleep = T_Scheduler::Sleep;
     
