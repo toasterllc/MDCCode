@@ -109,12 +109,15 @@ def opt():
         '--placer-heap-timingweight',   str(best['timingweight']),
     ]
 
+def commentedStr(s):
+    return "# " + "\n# ".join(s.splitlines())
+
 argsp = argparse.ArgumentParser()
 argsp.add_argument('--dev', required=True, type=str, help="Device")
 argsp.add_argument('--pkg', required=True, type=str, help="Package")
 argsp.add_argument('--proj', required=True, type=str, help="Project")
 argsp.add_argument('--nosynth', action='store_true', help="Skip synthesis")
-argsp.add_argument('--opt', action='store_true', help="Optimize place and route by performing simulated annealing")
+argsp.add_argument('--opt', action='store_true', help="Optimize place and route")
 args = argsp.parse_args()
 
 rootDir = os.path.dirname(os.path.realpath(__file__))
@@ -129,7 +132,7 @@ nextpnrArgsFile = os.path.join(projDir, 'NextpnrArgs.py')
 
 # Synthesize the Veriog design with `yosys` (Top.v -> Top.json)
 if not args.nosynth:
-    print('\n# Synthesizing design\n')
+    print('\n# [Synth.py] Synthesizing design\n')
     
     # Re-create 'Synth' directory
     shutil.rmtree(synthDir, ignore_errors=True)
@@ -139,77 +142,43 @@ if not args.nosynth:
 
 # Optimize the design
 if args.opt:
-    print('\n# Optimizing design\n')
+    print('\n# [Synth.py] Optimizing design\n')
     
     clocks = evalFile(clocksFile)
     if not clocks:
-        print(f"{clocksFile} doesn't exist or doesn't contain any clocks")
+        print(f"[Synth.py] {clocksFile} doesn't exist or doesn't contain any clocks")
         sys.exit(1)
     
-    bestArgs = opt()
-    
-    # Write the 'NextpnrArgs.py' file
-    with open(nextpnrArgsFile, 'w') as f:
-        f.write(pprint.pformat(bestArgs))
+    nextpnrProjArgs = opt()
+
+# If we didn't optimize the design, load nextpnr args from the project
+else:
+    nextpnrProjArgs = evalFile(nextpnrArgsFile)
 
 # Place and Route with `nextpnr` ({Top.json, Pins.pcf} -> Top.asc)
-print('\n# Placing/routing design\n')
-nextpnrArgs = [ '--asc', topAscFile ] + evalFile(nextpnrArgsFile)
+print('\n# [Synth.py] Placing/routing design\n')
+nextpnrArgs = [ '--asc', topAscFile ] + nextpnrProjArgs
 lines = nextpnr(nextpnrArgs)
 clkFreqs = nextpnrParseClkFreqs(lines)
-
-print('')
-print('')
-print(args.proj)
-print('')
-print('==========================================================')
-print('Clk                                                   Freq')
-print('----------------------------------------------------------')
+clkStatsStr = f"""* {args.proj}
+----------------------------------------------------------
+Clk                                                   Freq
+----------------------------------------------------------
+"""
 
 for clkName in sorted(clkFreqs):
-    print(f'{clkName:50} {clkFreqs[clkName]:8.2f}')
+    clkStatsStr += f'{clkName:50} {clkFreqs[clkName]:8.2f}\n'
+
+print('')
+print(clkStatsStr)
+
+# Write the 'NextpnrArgs.py' file (if we optimized the design)
+if args.opt:
+    with open(nextpnrArgsFile, 'w') as f:
+        f.write(commentedStr(clkStatsStr))
+        f.write('\n\n')
+        f.write(pprint.pformat(nextpnrProjArgs))
 
 # Generate bitstream file with `icepack` (Top.asc -> Top.bin)
-print('\n# Packing design\n')
+print('\n# [Synth.py] Packing design\n')
 subprocess.run([ 'icepack', topAscFile, topBinFile ])
-
-# Place and route the design ({Top.json, Pins.pcf} -> .asc)
-# outputASCFilePath="$4"
-#
-# args=(
-#     "--$dev"
-#     --package                   "$pkg"
-#     --json                      "$rootDir/$proj/Synth/Top.json"
-#     --pcf                       "$rootDir/Pins.pcf"
-#     # --randomize-seed
-#     --pcf-allow-unconstrained
-#
-#     ${projNextpnrArgs[@]}
-# )
-#
-# if [ ! -z "$outputASCFilePath" ]; then
-#     args+=(--asc "$outputASCFilePath")
-# fi
-#
-# nextpnr-ice40 "${args[@]}"
-
-
-
-# # Synthesize the design from Verilog (.v -> .json)
-# pushd "$proj"
-# yosys -s "$rootDir/Synth.ys"
-# popd
-#
-# # Place and route the design ({Top.json, Pins.pcf} -> .asc)
-# $rootDir/Nextpnr.sh "$dev" "$pkg" "$proj" "$synthDir/Top.asc"
-#
-# # Generate the bitstream file (.asc -> .bin)
-# icepack "$synthDir/Top.asc" "$synthDir/Top.bin"
-
-
-
-
-
-
-# rm -Rf "$synthDir"
-# mkdir -p "$synthDir"
