@@ -74,7 +74,7 @@ def nextpnrOptTrial(alpha, beta, critexp, timingweight):
     
     # Delete clocks that we don't care about
     for clkName in list(clkFreqs.keys()):
-        if clkName not in clocks:
+        if clkName not in projClocks:
             del clkFreqs[clkName]
     
     clkMin = 130.0
@@ -127,7 +127,7 @@ topAscFile = os.path.join(synthDir, 'Top.asc')
 topBinFile = os.path.join(synthDir, 'Top.bin')
 topJsonFile = os.path.join(synthDir, 'Top.json')
 pinsFile = os.path.join(rootDir, 'Pins.pcf')
-clocksFile = os.path.join(projDir, 'Clocks.py')
+projClocksFile = os.path.join(projDir, 'Clocks.py')
 nextpnrArgsFile = os.path.join(projDir, 'NextpnrArgs.py')
 
 # Synthesize the Veriog design with `yosys` (Top.v -> Top.json)
@@ -141,12 +141,11 @@ if not args.nosynth:
     subprocess.run(['yosys', '-s', os.path.join(rootDir, 'Synth.ys')], cwd=projDir)
 
 # Optimize the design
+projClocks = evalFile(projClocksFile)
 if args.opt:
     print('\n# [Synth.py] Optimizing design\n')
-    
-    clocks = evalFile(clocksFile)
-    if not clocks:
-        print(f"[Synth.py] {clocksFile} doesn't exist or doesn't contain any clocks")
+    if not projClocks:
+        print(f"[Synth.py] {projClocksFile} doesn't exist or doesn't contain any clocks")
         sys.exit(1)
     
     nextpnrProjArgs = opt()
@@ -161,13 +160,14 @@ nextpnrArgs = [ '--asc', topAscFile ] + nextpnrProjArgs
 lines = nextpnr(nextpnrArgs)
 clkFreqs = nextpnrParseClkFreqs(lines)
 clkStatsStr = f"""* {args.proj}
-----------------------------------------------------------
-Clk                                                   Freq
-----------------------------------------------------------
+-----------------------------------------------------------
+Clk                                                    Freq
+-----------------------------------------------------------
 """
 
 for clkName in sorted(clkFreqs):
-    clkStatsStr += f'{clkName:50} {clkFreqs[clkName]:8.2f}\n'
+    marking = "*" if clkName in projClocks else ""
+    clkStatsStr += f'{clkName:50} {clkFreqs[clkName]:8.2f} {marking}\n'
 
 print('')
 print(clkStatsStr)
