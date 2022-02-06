@@ -36,6 +36,31 @@ def evalFile(path):
     except OSError:
         return []
 
+def nextpnrParseClkFreq(line):
+    if "Info: Max frequency for clock" in line:
+        clkName = line.split()[5].replace('\'','').replace(':','')
+        clkFreq = float(line.split()[6])
+        return (clkName, clkFreq)
+    return None
+
+def nextpnrParseClkFreqs(lines):
+    parsed = []
+    for line in lines:
+        clkNameFreq = nextpnrParseClkFreq(line)
+        if clkNameFreq is None:
+            continue
+        parsed.append(clkNameFreq)
+    
+    assert (len(parsed) % 2) == 0 # There should be 2 matching lines for each clock
+    parsed = parsed[int(len(parsed)/2):] # We want the second set of matching lines
+    
+    clkFreqs = {}
+    for clkNameFreq in parsed:
+        clkName, freq = clkNameFreq
+        clkFreqs[clkName] = freq
+    
+    return clkFreqs
+
 @scheduler.parallel(n_jobs=-1)
 def nextpnrOptTrial(alpha, beta, critexp, timingweight):
     lines = nextpnr([
@@ -45,25 +70,22 @@ def nextpnrOptTrial(alpha, beta, critexp, timingweight):
         '--placer-heap-timingweight',   str(timingweight),
     ], stdoutSuppress=True)
     
-    clk = {}
-    for line in lines:
-        if "Info: Max frequency for clock" in line:
-            # Check if this line contains any of `clocks`
-            if any([("'"+clkName+"'" in line) for clkName in clocks]):
-                clkName = line.split()[5].replace('\'','').replace(':','')
-                # This will get called twice for each clock (because nextpnr repeats the 'Max frequency for clock'
-                # line before and after routing). The second (after-routing) one wins, which is what we want.
-                clk[clkName] = float(line.split()[6])
+    clkFreqs = nextpnrParseClkFreqs(lines)
+    
+    # Delete clocks that we don't care about
+    for clkName in list(clkFreqs.keys()):
+        if clkName not in clocks:
+            del clkFreqs[clkName]
     
     clkMin = 130.0
     
     # Subtract the minimum clock
-    for key in clk:
-        clk[key] -= clkMin
+    for clkName in clkFreqs:
+        clkFreqs[clkName] -= clkMin
     
     loss = 0.0
-    for key in clk:
-        loss += clk[key]
+    for clkName in clkFreqs:
+        loss += clkFreqs[clkName]
     
     return loss
 
@@ -106,15 +128,19 @@ clocksFile = os.path.join(projDir, 'Clocks.py')
 nextpnrArgsFile = os.path.join(projDir, 'NextpnrArgs.py')
 
 # Synthesize the Veriog design with `yosys` (Top.v -> Top.json)
-# if not args.nosynth:
-#     # Re-create 'Synth' directory
-#     shutil.rmtree(synthDir, ignore_errors=True)
-#     os.mkdir(synthDir)
-#
-#     subprocess.run(['yosys', '-s', os.path.join(rootDir, 'Synth.ys')], cwd=projDir)
+if not args.nosynth:
+    print('\n# Synthesizing design\n')
+    
+    # Re-create 'Synth' directory
+    shutil.rmtree(synthDir, ignore_errors=True)
+    os.mkdir(synthDir)
+
+    subprocess.run(['yosys', '-s', os.path.join(rootDir, 'Synth.ys')], cwd=projDir)
 
 # Optimize the design
 if args.opt:
+    print('\n# Optimizing design\n')
+    
     clocks = evalFile(clocksFile)
     if not clocks:
         print(f"{clocksFile} doesn't exist or doesn't contain any clocks")
@@ -127,11 +153,24 @@ if args.opt:
         f.write(pprint.pformat(bestArgs))
 
 # Place and Route with `nextpnr` ({Top.json, Pins.pcf} -> Top.asc)
+print('\n# Placing/routing design\n')
 nextpnrArgs = [ '--asc', topAscFile ] + evalFile(nextpnrArgsFile)
 lines = nextpnr(nextpnrArgs)
+clkFreqs = nextpnrParseClkFreqs(lines)
 
+print('')
+print('')
+print(args.proj)
+print('')
+print('==========================================================')
+print('Clk                                                   Freq')
+print('----------------------------------------------------------')
+
+for clkName in sorted(clkFreqs):
+    print(f'{clkName:50} {clkFreqs[clkName]:8.2f}')
 
 # Generate bitstream file with `icepack` (Top.asc -> Top.bin)
+print('\n# Packing design\n')
 subprocess.run([ 'icepack', topAscFile, topBinFile ])
 
 # Place and route the design ({Top.json, Pins.pcf} -> .asc)
