@@ -76,11 +76,6 @@ module ICEAppSim();
     localparam Sim_ImgWordInitialValue  = 16'h0FFF;
     localparam Sim_ImgWordDelta         = -1;
     
-    reg sdClkObserved = 0;
-    always @(posedge sd_clk) begin
-        sdClkObserved = 1;
-    end
-    
     `ifdef _ICEApp_Img_En
         mobile_sdr mobile_sdr(
             .clk(ram_clk),
@@ -471,6 +466,8 @@ module ICEAppSim();
         arg[`Msg_Arg_SDConfig_Action_Bits] = action;
         
         SendMsg(`Msg_Type_SDConfig, arg);
+        
+        #(100_000); // Wait 100us for the change to take effect
     end endtask
     
     task TestSDInit; begin
@@ -483,11 +480,9 @@ module ICEAppSim();
         //           delay, speed,                                  action
         // Set SD clock source (=slow) and delay (=0)
         TestSDConfig(0,     `SDController_Config_ClkSpeed_Slow,     `SDController_Config_Action_ClkSet);
-        #((10*1e9)/400e3); // Wait 10 400kHz cycles
         // <-- Turn on power to SD card
         // Trigger LVS init sequence
         TestSDConfig(0,     0,                                      `SDController_Config_Action_Init);
-        #((10*1e9)/400e3); // Wait 10 400kHz cycles
     
     `ifdef SIM
         // Wait 50us, because waiting 5ms takes forever in simulation
@@ -513,13 +508,35 @@ module ICEAppSim();
     end endtask
     
     task TestSDReset; begin
+        reg[15:0] sdClkObserved;
         $display("\n[ICEAppSim] ========== TestSDReset ==========");
         
         //           delay, speed,  action
         TestSDConfig(0,     0,      `SDController_Config_Action_Reset);
-        #((100*1e9)/400e3); // Wait 100 400kHz cycles
+        
+        $display("[ICEAppSim] Verifying that sd_clk is disabled...");
+        // Verify that sd_clk is disabled
+        // (Wait for sd_clk, or for our timeout to expire, whichever comes first.)
         sdClkObserved = 0;
-        #((100*1e9)/400e3); // Wait 100 400kHz cycles
+        fork
+            begin
+                wait(sd_clk);
+                sdClkObserved = 1;
+            end
+            begin
+                #(100_000); // Wait 100us to observe sd_clk
+            end
+        join_any
+        disable fork;
+        
+        if (sdClkObserved) begin
+            $display("[ICEAppSim] sd_clk occurred after SDController reset ❌");
+            `Finish;
+        end
+        
+        $display("[ICEAppSim] sd_clk disabled ✅");
+        
+        $display("[ICEAppSim] Checking sd_clk/sd_cmd/sd_dat...");
         
         if (sd_clk !== 1'b0) begin
             $display("[ICEAppSim] sd_clk invalid after SDController reset: %b ❌", sd_clk);
@@ -531,15 +548,12 @@ module ICEAppSim();
             `Finish;
         end
         
-        if (sd_dat!==4'b0) begin
+        if (sd_dat !== 4'b0) begin
             $display("[ICEAppSim] sd_dat invalid after SDController reset: %b ❌", sd_dat);
             `Finish;
         end
         
-        if (sdClkObserved) begin
-            $display("[ICEAppSim] sd_clk occurred after SDController reset ❌");
-            `Finish;
-        end
+        $display("[ICEAppSim] sd_clk/sd_cmd/sd_dat OK ✅");
     end endtask
     
     task TestSDCMD0; begin
@@ -831,20 +845,20 @@ module ICEAppSim();
             TestImgI2CWriteRead();
             TestImgCapture();
         `endif // _ICEApp_Img_En
-        
+
         `ifdef _ICEApp_SD_En
             TestSDInit();
             TestSDCMD0();
             TestSDCMD8();
             TestSDCMD2();
             TestSDCMD6();
-            
+
             //           delay, speed,                                  action
             TestSDConfig(0,     `SDController_Config_ClkSpeed_Fast,     `SDController_Config_Action_ClkSet);
-            
+
             TestSDRespRecovery();
         `endif // _ICEApp_SD_En
-        
+
         `ifdef ICEApp_ImgReadoutToSD_En
             TestImgReadoutToSD();
             TestImgReadoutToSDRecovery();
