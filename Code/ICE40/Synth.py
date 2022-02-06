@@ -150,7 +150,7 @@ if args.opt:
     
     nextpnrProjArgs = opt()
 
-# If we didn't optimize the design, load nextpnr args from the project
+# If we didn't optimize the design, load nextpnr args from the project's NextpnrArgs.py file
 else:
     nextpnrProjArgs = evalFile(nextpnrArgsFile)
 
@@ -178,6 +178,7 @@ if args.opt:
         f.write(commentedStr(clkStatsStr))
         f.write('\n\n')
         f.write(pprint.pformat(nextpnrProjArgs))
+        f.write('\n')
 
 # Generate bitstream file with `icepack` (Top.asc -> Top.bin)
 print('\n# [Synth.py] Packing design\n')
