@@ -223,10 +223,10 @@ private:
     using _RecordRefIter = typename RecordRefs::iterator;
     
     struct [[gnu::packed]] _SerializedHeader {
-        uint32_t version    = 0; // T_Version
+        uint32_t version     = 0; // T_Version
         uint32_t recordSize  = 0; // sizeof(T_Record)
         uint32_t recordCount = 0; // Count of RecordRef structs in Index file
-        uint32_t chunkCount = 0; // Count of _Chunk structs in Index file
+        uint32_t chunkCount  = 0; // Count of _Chunk structs in Index file
     };
     
     struct [[gnu::packed]] _SerializedRecordRef {
