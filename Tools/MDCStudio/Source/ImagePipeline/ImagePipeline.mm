@@ -11,6 +11,7 @@
 #import "Saturation.h"
 #import "Mat.h"
 #import "EstimateIlluminantFFCC.h"
+using namespace MDCTools;
 
 struct CCM {
     double cct = 0;
@@ -125,9 +126,9 @@ static simd::float3x3 simdForMat(const Mat<double,3,3>& m) {
     };
 }
 
-namespace CFAViewer::ImagePipeline {
+namespace MDCStudio::ImagePipeline {
 
-Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const Options& opts) {
+Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts) {
     const uint32_t w = rawImg.width;
     const uint32_t h = rawImg.height;
     
@@ -137,7 +138,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
     {
         constexpr size_t SamplesPerPixel = 1;
         constexpr size_t BytesPerSample = sizeof(*rawImg.pixels);
-        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, MetalUtil::ImagePixelMax);
+        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
     }
     
     const size_t sampleBufLen = sizeof(simd::float3) * std::max(1, opts.sampleRect.count());
@@ -147,7 +148,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
     
     // Sample: fill `sampleBufRaw`
     {
-        renderer.render("CFAViewer::Shader::ImagePipeline::SampleRaw",
+        renderer.render("MDCStudio::Shader::ImagePipeline::SampleRaw",
             w, h,
             // Buffer args
             rawImg.cfaDesc,
@@ -164,7 +165,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
     // Raw mode (bilinear debayer only)
     if (opts.rawMode) {
         // De-bayer
-        renderer.render("CFAViewer::Shader::DebayerBilinear::Debayer", rgb,
+        renderer.render("MDCStudio::Shader::DebayerBilinear::Debayer", rgb,
             // Buffer args
             rawImg.cfaDesc,
             // Texture args
@@ -191,7 +192,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
             const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
             const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
             const simd::float3 simdWB = simdForMat(wb);
-            renderer.render("CFAViewer::Shader::ImagePipeline::WhiteBalance", raw,
+            renderer.render("MDCStudio::Shader::ImagePipeline::WhiteBalance", raw,
                 // Buffer args
                 rawImg.cfaDesc,
                 simdWB,
@@ -216,7 +217,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
             const simd::float3x3 colorMatrix = simdForMat(ccm.m);
             
 //            const simd::float3x3 colorMatrix = simdForMat(opts.colorMatrix);
-            renderer.render("CFAViewer::Shader::ImagePipeline::ApplyColorMatrix", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::ApplyColorMatrix", rgb,
                 // Buffer args
                 colorMatrix,
                 // Texture args
@@ -226,7 +227,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // ProPhotoRGB -> XYZ.D50
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::XYZD50FromProPhotoRGB", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::XYZD50FromProPhotoRGB", rgb,
                 // Texture args
                 rgb
             );
@@ -234,7 +235,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // XYZ.D50 -> XYY.D50
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::XYYFromXYZ", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::XYYFromXYZ", rgb,
                 // Texture args
                 rgb
             );
@@ -243,7 +244,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         // Exposure
         {
             const float exposure = pow(2, opts.exposure);
-            renderer.render("CFAViewer::Shader::ImagePipeline::Exposure", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::Exposure", rgb,
                 // Buffer args
                 exposure,
                 // Texture args
@@ -253,7 +254,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // XYY.D50 -> XYZ.D50
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::XYZFromXYY", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::XYZFromXYY", rgb,
                 // Texture args
                 rgb
             );
@@ -261,7 +262,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // XYZ.D50 -> Lab.D50
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::LabD50FromXYZD50", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::LabD50FromXYZD50", rgb,
                 // Texture args
                 rgb
             );
@@ -269,7 +270,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // Brightness
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::Brightness", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::Brightness", rgb,
                 // Buffer args
                 opts.brightness,
                 // Texture args
@@ -279,7 +280,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // Contrast
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::Contrast", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::Contrast", rgb,
                 // Buffer args
                 opts.contrast,
                 // Texture args
@@ -295,7 +296,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // Lab.D50 -> XYZ.D50
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::XYZD50FromLabD50", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::XYZD50FromLabD50", rgb,
                 // Texture args
                 rgb
             );
@@ -306,7 +307,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // Sample: fill `sampleBufXYZD50`
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
+            renderer.render("MDCStudio::Shader::ImagePipeline::SampleRGB",
                 w, h,
                 // Buffer args
                 rawImg.cfaDesc,
@@ -319,7 +320,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // XYZ.D50 -> XYZ.D65
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::BradfordXYZD65FromXYZD50", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::BradfordXYZD65FromXYZD50", rgb,
                 // Texture args
                 rgb
             );
@@ -327,7 +328,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // XYZ.D65 -> LSRGB.D65
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::LSRGBD65FromXYZD65", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::LSRGBD65FromXYZD65", rgb,
                 // Texture args
                 rgb
             );
@@ -335,7 +336,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // Apply SRGB gamma
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::SRGBGamma", rgb,
+            renderer.render("MDCStudio::Shader::ImagePipeline::SRGBGamma", rgb,
                 // Texture args
                 rgb
             );
@@ -343,7 +344,7 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
         
         // Sample: fill `sampleBufSRGB`
         {
-            renderer.render("CFAViewer::Shader::ImagePipeline::SampleRGB",
+            renderer.render("MDCStudio::Shader::ImagePipeline::SampleRGB",
                 w, h,
                 // Buffer args
                 rawImg.cfaDesc,
@@ -366,4 +367,4 @@ Pipeline::Result Pipeline::Run(Renderer& renderer, const RawImage& rawImg, const
     };
 }
 
-} // namespace CFAViewer::ImagePipeline
+} // namespace MDCStudio::ImagePipeline

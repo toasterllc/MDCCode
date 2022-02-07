@@ -4,8 +4,9 @@
 #import "Defringe.h"
 #import "Mat.h"
 #import "Color.h"
+#import "ImagePipelineTypes.h"
 
-namespace CFAViewer::ImagePipeline {
+namespace MDCStudio::ImagePipeline {
 
 class Pipeline {
 public:
@@ -13,7 +14,7 @@ public:
         CFADesc cfaDesc;
         uint32_t width = 0;
         uint32_t height = 0;
-        MetalUtil::ImagePixel* pixels = nullptr;
+        ImagePixel* pixels = nullptr;
     };
     
     struct Options {
@@ -55,16 +56,16 @@ public:
     };
     
     struct Result {
-        Renderer::Txt txt;
+        MDCTools::Renderer::Txt txt;
         Color<ColorSpace::Raw> illumEst; // Estimated illuminant
         struct {
-            Renderer::Buf raw;
-            Renderer::Buf xyzD50;
-            Renderer::Buf srgb;
+            MDCTools::Renderer::Buf raw;
+            MDCTools::Renderer::Buf xyzD50;
+            MDCTools::Renderer::Buf srgb;
         } sampleBufs;
     };
     
-    static Result Run(Renderer& renderer, const RawImage& rawImg, const Options& opts);
+    static Result Run(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts);
 };
 
-} // namespace CFAViewer::ImagePipeline
+} // namespace MDCStudio::ImagePipeline

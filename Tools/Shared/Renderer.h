@@ -11,11 +11,12 @@
 #import "MetalUtil.h"
 #import "HashInts.h"
 
-namespace CFAViewer {
+namespace MDCTools {
 
 // Renderer is a wrapper for Metal APIs to make them more convenient.
 // Renderer particularly improves executing multiple fragment render passes.
 class Renderer {
+#define _ShaderNamespace "MDCTools::RendererShader::"
 public:
     template <typename T>
     class Resource {
@@ -123,7 +124,7 @@ public:
         Renderer::_SetBufferArgs(enc, 0, args...);
         
         [enc drawPrimitives:MTLPrimitiveTypeTriangle
-            vertexStart:0 vertexCount:CFAViewer::MetalUtil::SquareVertIdxCount];
+            vertexStart:0 vertexCount:MDCTools::MetalUtil::SquareVertIdxCount];
         
         [enc endEncoding];
     }
@@ -153,7 +154,7 @@ public:
         Renderer::_SetBufferArgs(enc, 0, args...);
         
         [enc drawPrimitives:MTLPrimitiveTypeTriangle
-            vertexStart:0 vertexCount:CFAViewer::MetalUtil::SquareVertIdxCount];
+            vertexStart:0 vertexCount:MDCTools::MetalUtil::SquareVertIdxCount];
         
         [enc endEncoding];
     }
@@ -204,11 +205,11 @@ public:
             const size_t dstSamples = SamplesPerPixel(dstFmt);
             const char* fnName = nullptr;
             if (srcSamples==1 && dstSamples==1) {
-                fnName = "CFAViewer::Shader::Renderer::Copy1To1";
+                fnName = _ShaderNamespace "Copy1To1";
             } else if (srcSamples==1 && dstSamples==4) {
-                fnName = "CFAViewer::Shader::Renderer::Copy1To4";
+                fnName = _ShaderNamespace "Copy1To4";
             } else if (srcSamples==4 && dstSamples==4) {
-                fnName = "CFAViewer::Shader::Renderer::Copy4To4";
+                fnName = _ShaderNamespace "Copy4To4";
             } else {
                 throw std::runtime_error("invalid source/destination combination");
             }
@@ -339,11 +340,11 @@ public:
         
         const char* fnName = nullptr;
         if (inBytesPerSample == 1) {
-            if (outSamplesPerPixel == 1)         fnName = "CFAViewer::Shader::Renderer::LoadFloatFromU8";
-            else if (outSamplesPerPixel == 4)    fnName = "CFAViewer::Shader::Renderer::LoadFloat4FromU8";
+            if (outSamplesPerPixel == 1)         fnName = _ShaderNamespace "LoadFloatFromU8";
+            else if (outSamplesPerPixel == 4)    fnName = _ShaderNamespace "LoadFloat4FromU8";
         } else if (inBytesPerSample == 2) {
-            if (outSamplesPerPixel == 1)         fnName = "CFAViewer::Shader::Renderer::LoadFloatFromU16";
-            else if (outSamplesPerPixel == 4)    fnName = "CFAViewer::Shader::Renderer::LoadFloat4FromU16";
+            if (outSamplesPerPixel == 1)         fnName = _ShaderNamespace "LoadFloatFromU16";
+            else if (outSamplesPerPixel == 4)    fnName = _ShaderNamespace "LoadFloat4FromU16";
         }
         if (!fnName) throw std::runtime_error("invalid input/output data format");
         
@@ -456,7 +457,7 @@ public:
         if (premulAlpha) {
             // Load pixel data into `txt`
             Txt tmp = textureCreate(fmt, w, h);
-            render("CFAViewer::Shader::Renderer::PremulAlpha", tmp,
+            render(_ShaderNamespace "PremulAlpha", tmp,
                 // Texture args
                 txt
             );
@@ -583,7 +584,7 @@ private:
         auto find = _pipelineStates.find(key);
         if (find != _pipelineStates.end()) return find->second;
         
-        id<MTLFunction> vertexShader = [_lib newFunctionWithName:@"CFAViewer::Shader::Renderer::VertexShader"];
+        id<MTLFunction> vertexShader = [_lib newFunctionWithName:@(_ShaderNamespace "VertexShader")];
         Assert(vertexShader, return nil);
         id<MTLFunction> fragmentShader = [_lib newFunctionWithName:@(name.c_str())];
         Assert(fragmentShader, return nil);
@@ -665,6 +666,7 @@ private:
     
     friend class Resource<id<MTLTexture>>;
     friend class Resource<id<MTLBuffer>>;
+#undef ShaderNamespace
 }; // class Renderer
 
-}; // namespace CFAViewer
+}; // namespace MDCTools

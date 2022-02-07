@@ -6,8 +6,9 @@
 #import "ImagePipelineTypes.h"
 #import "PixelSampler.h"
 #import "MetalUtil.h"
-using namespace CFAViewer;
-using namespace ImagePipeline;
+using namespace MDCStudio;
+using namespace MDCTools;
+using namespace MDCStudio::ImagePipeline;
 
 using Poly = Poly2D<double,4>;
 
@@ -324,7 +325,7 @@ static void _defringe(Renderer& renderer,
         }
     }
     
-    renderer.render("CFAViewer::Shader::Defringe::GenerateShiftTxts",
+    renderer.render("MDCStudio::Shader::Defringe::GenerateShiftTxts",
         ShiftTextureWidth, ShiftTextureWidth,
         // Buffer args
         cfaDesc,
@@ -344,7 +345,7 @@ static void _defringe(Renderer& renderer,
     // ApplyCorrection() samples pixels in `raw` outside the render target pixel,
     // which would introduce a data race if we rendered to `raw` while also sampling it.
     Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-    renderer.render("CFAViewer::Shader::Defringe::ApplyCorrection", tmp,
+    renderer.render("MDCStudio::Shader::Defringe::ApplyCorrection", tmp,
         // Buffer args
         cfaDesc,
         opts.αthresh,
@@ -363,7 +364,7 @@ static void _defringe(Renderer& renderer,
     renderer.copy(tmp, raw);
 }
 
-namespace CFAViewer::ImagePipeline {
+namespace MDCStudio::ImagePipeline {
 
 void Defringe::Run(Renderer& renderer, const CFADesc& cfaDesc,
     const Options& opts, id<MTLTexture> raw) {
@@ -372,7 +373,7 @@ void Defringe::Run(Renderer& renderer, const CFADesc& cfaDesc,
     const NSUInteger h = [raw height];
     
     Renderer::Txt gInterp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-    renderer.render("CFAViewer::Shader::Defringe::InterpolateG", gInterp,
+    renderer.render("MDCStudio::Shader::Defringe::InterpolateG", gInterp,
         // Buffer args
         cfaDesc,
         // Texture args
@@ -384,4 +385,4 @@ void Defringe::Run(Renderer& renderer, const CFADesc& cfaDesc,
     }
 }
 
-}; // CFAViewer::ImagePipeline
+}; // MDCStudio::ImagePipeline

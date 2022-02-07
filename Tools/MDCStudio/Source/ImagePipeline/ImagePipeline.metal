@@ -2,22 +2,12 @@
 #import "MetalUtil.h"
 #import "ImagePipelineTypes.h"
 using namespace metal;
-using namespace CFAViewer::MetalUtil;
-using namespace CFAViewer::MetalUtil::Standard;
-using namespace CFAViewer::ImagePipeline;
+using namespace MDCTools::MetalUtil;
+using namespace MDCStudio::ImagePipeline;
 
-namespace CFAViewer {
-namespace Shader {
+namespace MDCStudio {
 namespace ImagePipeline {
-
-uint3 binFromColor(float3 color) {
-    const uint32_t maxBin = (uint32_t)(sizeof(Histogram::r)/sizeof(*Histogram::r))-1;
-    return {
-        clamp((uint32_t)round(color.r*maxBin), (uint32_t)0, maxBin),
-        clamp((uint32_t)round(color.g*maxBin), (uint32_t)0, maxBin),
-        clamp((uint32_t)round(color.b*maxBin), (uint32_t)0, maxBin),
-    };
-}
+namespace Shader {
 
 float3 XYYFromXYZ(const float3 xyz) {
     const float denom = xyz[0] + xyz[1] + xyz[2];
@@ -504,6 +494,6 @@ fragment float4 DebayerDownsample(
     return 0;
 }
 
-} // namespace ImagePipeline
 } // namespace Shader
-} // namespace CFAViewer
+} // namespace ImagePipeline
+} // namespace MDCStudio
