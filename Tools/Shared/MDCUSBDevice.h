@@ -301,7 +301,7 @@ public:
     void sdRead(uintptr_t addr) {
         assert(_mode == STM::Status::Modes::STMApp);
         
-        if (addr >= std::numeric_limits<uint32_t>::max())
+        if (addr > std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
         
         const STM::Cmd cmd = {
@@ -384,6 +384,34 @@ public:
         }
         
         return buf;
+    }
+    
+    void readout(void* dst, size_t len) {
+        assert(_mode == STM::Status::Modes::STMApp);
+        if (!len) return; // Short-circuit if there's no data to read
+        
+        const size_t mps = _dev.maxPacketSize(STM::Endpoints::DataIn);
+        if (len % mps) {
+            throw Toastbox::RuntimeError("len isn't a multiple of max packet size (len: %ju, max packet size: %ju)", (uintmax_t)len, (uintmax_t)mps);
+        }
+        
+        _dev.read(STM::Endpoints::DataIn, dst, len);
+        
+//        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(Img::PaddedLen);
+//        const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), Img::PaddedLen);
+//        if (lenGot < Img::Len) {
+//            throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)Img::PaddedLen, (uintmax_t)lenGot);
+//        }
+//        
+//        // Validate checksum
+//        const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), Img::ChecksumOffset);
+//        uint32_t checksumGot = 0;
+//        memcpy(&checksumGot, (uint8_t*)buf.get()+Img::ChecksumOffset, Img::ChecksumLen);
+//        if (checksumGot != checksumExpected) {
+//            throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+//        }
+//        
+//        return buf;
     }
     
 private:
