@@ -3,11 +3,11 @@
 #import "ImagePipelineTypes.h"
 #import "Mod.h"
 using namespace metal;
-using namespace CFAViewer::MetalUtil;
-using namespace CFAViewer::MetalUtil::Standard;
-using namespace CFAViewer::ImagePipeline;
+using namespace MDCTools::MetalUtil;
+using namespace MDCStudio::ImagePipeline;
 
-namespace CFAViewer {
+namespace MDCStudio {
+namespace ImagePipeline {
 namespace Shader {
 namespace FFCC {
 
@@ -171,4 +171,5 @@ fragment float Transpose(
 
 } // namespace EstimateIlluminantFFCC
 } // namespace Shader
-} // namespace ImageLayer
+} // namespace ImagePipeline
+} // namespace MDCStudio

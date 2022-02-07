@@ -20,34 +20,8 @@
 #define MetalThread
 #endif
 
-namespace CFAViewer {
+namespace MDCTools {
 namespace MetalUtil {
-
-using ImagePixel = uint16_t;
-MetalConst ImagePixel ImagePixelMax = 0x0FFF; // 12 bit values
-
-struct Histogram {
-    static MetalConst size_t Count = 1<<12;
-    uint32_t r[Count];
-    uint32_t g[Count];
-    uint32_t b[Count];
-    
-    Histogram() : r{}, g{}, b{} {}
-};
-
-struct HistogramFloat {
-    float r[Histogram::Count];
-    float g[Histogram::Count];
-    float b[Histogram::Count];
-    
-    HistogramFloat() : r{}, g{}, b{} {}
-};
-
-struct Vals3 {
-    uint32_t x = 0;
-    uint32_t y = 0;
-    uint32_t z = 0;
-};
 
 // Unique vertexes (defines a unit square)
 MetalConst vector_float4 SquareVert[4] = {
@@ -67,24 +41,20 @@ MetalConst size_t SquareVertIdxCount = sizeof(SquareVertIdx)/sizeof(*SquareVertI
 
 #if MetalShaderContext
 
-namespace Standard {
-    using namespace metal;
-    
-    struct VertexOutput {
-        float4 pos [[position]];
-        float2 posUnit;
+struct VertexOutput {
+    float4 pos [[position]];
+    float2 posUnit;
+};
+
+inline VertexOutput VertexShader(uint vidx) {
+    VertexOutput r = {
+        .pos = SquareVert[SquareVertIdx[vidx]],
+        .posUnit = SquareVert[SquareVertIdx[vidx]].xy,
     };
-    
-    inline VertexOutput VertexShader(uint vidx) {
-        VertexOutput r = {
-            .pos = SquareVert[SquareVertIdx[vidx]],
-            .posUnit = SquareVert[SquareVertIdx[vidx]].xy,
-        };
-        r.posUnit += 1;
-        r.posUnit /= 2;
-        r.posUnit.y = 1-r.posUnit.y;
-        return r;
-    }
+    r.posUnit += 1;
+    r.posUnit /= 2;
+    r.posUnit.y = 1-r.posUnit.y;
+    return r;
 }
 
 namespace Clamp {
@@ -164,5 +134,5 @@ namespace Sample {
 
 #endif // MetalShaderContext
 
-} // MetalUtil
-} // CFAViewer
+} // namespace MetalUtil
+} // namespace MDCTools

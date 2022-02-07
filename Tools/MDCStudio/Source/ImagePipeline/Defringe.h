@@ -4,7 +4,7 @@
 #import "Renderer.h"
 #import "Mat.h"
 
-namespace CFAViewer::ImagePipeline {
+namespace MDCStudio::ImagePipeline {
 
 class Defringe {
 public:
@@ -17,8 +17,8 @@ public:
                                 // computing derivative, when solving for tile shift
     };
     
-    static void Run(Renderer& renderer, const CFADesc& cfaDesc,
+    static void Run(MDCTools::Renderer& renderer, const CFADesc& cfaDesc,
         const Options& opts, id<MTLTexture> raw);
 };
 
-}; // CFAViewer::ImagePipeline
+}; // MDCStudio::ImagePipeline

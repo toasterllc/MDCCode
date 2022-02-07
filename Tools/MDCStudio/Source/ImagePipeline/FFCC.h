@@ -28,8 +28,8 @@ public:
     
     static Vec3 Run(
         const Model& model,
-        CFAViewer::Renderer& renderer,
-        const CFAViewer::ImagePipeline::CFADesc& cfaDesc,
+        MDCTools::Renderer& renderer,
+        const MDCStudio::ImagePipeline::CFADesc& cfaDesc,
         id<MTLTexture> raw
     );
 };

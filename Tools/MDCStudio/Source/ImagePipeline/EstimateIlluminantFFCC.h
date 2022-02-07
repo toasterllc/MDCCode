@@ -4,11 +4,11 @@
 #import "Renderer.h"
 #import "FFCC.h"
 
-namespace CFAViewer::ImagePipeline {
+namespace MDCStudio::ImagePipeline {
 
 class EstimateIlluminantFFCC {
 public:
-    static Color<ColorSpace::Raw> Run(Renderer& renderer, const CFADesc& cfaDesc, id<MTLTexture> raw) {
+    static Color<ColorSpace::Raw> Run(MDCTools::Renderer& renderer, const CFADesc& cfaDesc, id<MTLTexture> raw) {
         return FFCC::Run(_Model, renderer, cfaDesc, raw);
     }
     
@@ -19,4 +19,4 @@ private:
     static const uint64_t _BVals[4096];
 };
 
-}; // namespace CFAViewer::ImagePipeline
+}; // namespace MDCStudio::ImagePipeline

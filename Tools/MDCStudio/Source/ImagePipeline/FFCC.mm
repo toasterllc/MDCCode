@@ -4,15 +4,16 @@
 #import "Color.h"
 #import "Renderer.h"
 #import "Mod.h"
-using namespace CFAViewer;
-using namespace ImagePipeline;
+using namespace MDCStudio;
+using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools;
 
 using Mat64     = FFCC::Mat64;
 using Mat64c    = FFCC::Mat64c;
 using Vec2      = FFCC::Vec2;
 using Vec3      = FFCC::Vec3;
 
-#define ShaderNamespace "CFAViewer::Shader::FFCC::"
+#define ShaderNamespace "MDCStudio::Shader::FFCC::"
 
 static Renderer::Txt _createMaskedImage(Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
     Renderer::Txt maskedImg = renderer.textureCreate(img);
@@ -222,7 +223,7 @@ FFCC::Vec3 FFCC::Run(
     const uint32_t w = 384;
     const uint32_t h = (uint32_t)((w*[raw height])/[raw width]);
     Renderer::Txt img = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
-    renderer.render("CFAViewer::Shader::ImagePipeline::DebayerDownsample", img,
+    renderer.render("MDCStudio::Shader::ImagePipeline::DebayerDownsample", img,
         cfaDesc,
         raw,
         img

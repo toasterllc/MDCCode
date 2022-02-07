@@ -23,6 +23,7 @@
 //    };
 //#endif
 
+namespace MDCStudio {
 namespace ImageGridLayerTypes {
 
 //using ChunkRef = vector_uint2;
@@ -65,3 +66,4 @@ struct RenderContext {
 };
 
 } // namespace ImageGridLayerTypes
+} // namespace MDCStudio

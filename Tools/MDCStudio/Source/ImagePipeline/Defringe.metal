@@ -2,12 +2,12 @@
 #import "MetalUtil.h"
 #import "ImagePipelineTypes.h"
 using namespace metal;
-using namespace CFAViewer;
-using namespace CFAViewer::MetalUtil;
-using namespace CFAViewer::MetalUtil::Standard;
-using namespace CFAViewer::ImagePipeline;
+using namespace MDCStudio;
+using namespace MDCTools::MetalUtil;
+using namespace MDCStudio::ImagePipeline;
 
-namespace CFAViewer {
+namespace MDCStudio {
+namespace ImagePipeline {
 namespace Shader {
 namespace Defringe {
 
@@ -272,4 +272,5 @@ fragment float ApplyCorrection(
 
 } // namespace Defringe
 } // namespace Shader
-} // namespace CFAViewer
+} // namespace ImagePipeline
+} // namespace MDCStudio

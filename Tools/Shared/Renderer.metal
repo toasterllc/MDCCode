@@ -1,15 +1,13 @@
 #import <metal_stdlib>
 #import "MetalUtil.h"
 using namespace metal;
-using namespace CFAViewer::MetalUtil;
-using namespace CFAViewer::MetalUtil::Standard;
+using namespace MDCTools::MetalUtil;
 
-namespace CFAViewer {
-namespace Shader {
-namespace Renderer {
+namespace MDCTools {
+namespace RendererShader {
 
 vertex VertexOutput VertexShader(uint vidx [[vertex_id]]) {
-    return Standard::VertexShader(vidx);
+    return MDCTools::MetalUtil::VertexShader(vidx);
 }
 
 template <typename T>
@@ -102,6 +100,5 @@ fragment float4 Copy4To4(
     return Sample::RGBA(txt, int2(in.pos.xy));
 }
 
-} // namespace Renderer
-} // namespace Shader
-} // namespace CFAViewer
+} // namespace RendererShader
+} // namespace MDCTools

@@ -2,10 +2,11 @@
 #import "ImageGridLayerTypes.h"
 #import "MetalUtil.h"
 using namespace metal;
-using namespace CFAViewer::MetalUtil;
-using namespace CFAViewer::MetalUtil::Standard;
+using namespace MDCTools::MetalUtil;
+using namespace MDCStudio::ImageGridLayerTypes;
 
-namespace ImageGridLayerTypes {
+namespace MDCStudio {
+namespace ImageGridLayerShader {
 
 template <typename... Ts>
 static uint32_t _HashInts(Ts... ts) {
@@ -277,4 +278,5 @@ fragment float4 FragmentShader(
         ))), shadow);
 }
 
-} // namespace ImageGridLayerTypes
+} // namespace ImageGridLayerShader
+} // namespace MDCStudio

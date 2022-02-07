@@ -5,6 +5,7 @@
 #import "ImageGridLayerTypes.h"
 #import "Mmap.h"
 #import "RecordStore.h"
+using namespace MDCStudio;
 namespace fs = std::filesystem;
 
 static matrix_float4x4 _Scale(float x, float y, float z) {
@@ -157,10 +158,10 @@ using ThumbFile = Mmap;
         [NSBundle bundleForClass:[self class]] error:nil];
     assert(library);
     
-    id<MTLFunction> vertexShader = [library newFunctionWithName:@"ImageGridLayerTypes::VertexShader"];
+    id<MTLFunction> vertexShader = [library newFunctionWithName:@"MDCStudio::ImageGridLayerShader::VertexShader"];
     assert(vertexShader);
     
-    id<MTLFunction> fragmentShader = [library newFunctionWithName:@"ImageGridLayerTypes::FragmentShader"];
+    id<MTLFunction> fragmentShader = [library newFunctionWithName:@"MDCStudio::ImageGridLayerShader::FragmentShader"];
     assert(fragmentShader);
     
     MTLRenderPipelineDescriptor* pipelineDescriptor = [MTLRenderPipelineDescriptor new];

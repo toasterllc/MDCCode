@@ -4,15 +4,17 @@
 #import "ImagePipelineTypes.h"
 #import "MetalUtil.h"
 
-namespace CFAViewer::ImagePipeline {
+namespace MDCStudio::ImagePipeline {
     class LocalContrast {
     public:
-        static void Run(Renderer& renderer, float amount, float radius, id<MTLTexture> rgb) {
+        static void Run(MDCTools::Renderer& renderer, float amount, float radius, id<MTLTexture> rgb) {
+            using namespace MDCTools;
+            
             const NSUInteger w = [rgb width];
             const NSUInteger h = [rgb height];
             // Extract L
             Renderer::Txt lTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-            renderer.render("CFAViewer::Shader::LocalContrast::ExtractL", lTxt,
+            renderer.render("MDCStudio::Shader::LocalContrast::ExtractL", lTxt,
                 rgb
             );
             
@@ -26,7 +28,7 @@ namespace CFAViewer::ImagePipeline {
                 sourceTexture:lTxt destinationTexture:blurredLTxt];
             
             // Local contrast
-            renderer.render("CFAViewer::Shader::LocalContrast::LocalContrast", rgb,
+            renderer.render("MDCStudio::Shader::LocalContrast::LocalContrast", rgb,
                 amount,
                 rgb,
                 blurredLTxt
