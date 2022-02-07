@@ -3,10 +3,6 @@
     - STMApp: reconsider whether we should be using Task::Stop() to abort tasks that are in progress.
       for example, a task might be in the middle of executing SDCard::Disable(), which isn't designed to be aborted half way through
     
-    - STMApp: get compiling again after Task/SDCard/etc changes
-    
-    - MSPApp: test capturing images / get working again
-    
     - MSPApp: make sure SysTick (WDT) doesn't wake us from LPM3.5
     
     - Test _State.img.ringBuf/_State.img.ringBuf2 resiliency to power loss
@@ -34,6 +30,15 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MSPApp: if MSPApp aborts, ICE40 will be in an unknown state. so when cold-starting,
+      we should explicitly disable both Img and SD.
+        - This is only necessary for the current design where ICE40 needs to keep running.
+          In the future ICE40 power will be controlled by MSP430 and therefore will automatically reset.
+    
+    √ STMApp: get compiling again after Task/SDCard/etc changes
+    
+    √ MSPApp: test capturing images / get working again
     
     √ ICEAppSim: implement `sdClkObserved` without killing performance
     
