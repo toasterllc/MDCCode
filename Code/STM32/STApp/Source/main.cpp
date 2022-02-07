@@ -29,22 +29,6 @@ static const void* _USBConfigDesc(size_t& len) {
     return USBConfigDesc<_USBType>(len);
 }
 
-static struct {
-    QSPI::Config ICEWrite = {
-        .mode       = QSPI::Mode::Single,
-        .clkDivider = 5, // clkDivider: 5 -> QSPI clock = 21.3 MHz
-        .align      = QSPI::Align::Byte,
-        .chipSelect = QSPI::ChipSelect::Controlled,
-    };
-    
-    QSPI::Config ICEApp = {
-        .mode       = QSPI::Mode::Dual,
-        .clkDivider = 1, // clkDivider: 1 -> QSPI clock = 64 MHz)
-        .align      = QSPI::Align::Word,
-        .chipSelect = QSPI::ChipSelect::Uncontrolled,
-    };
-} _QSPIConfig;
-
 static QSPI _QSPI;
 
 // We're using 63K buffers instead of 64K, because the
@@ -230,6 +214,34 @@ static QSPI_CommandTypeDef ICEAppReadOnly(size_t len) {
 
 } // namespace _QSPICmd
 
+static struct {
+    QSPI::Config ICEWrite = {
+        .mode       = QSPI::Mode::Single,
+        .clkDivider = 5, // clkDivider: 5 -> QSPI clock = 21.3 MHz
+        .align      = QSPI::Align::Byte,
+        .chipSelect = QSPI::ChipSelect::Controlled,
+    };
+    
+    QSPI::Config ICEApp = {
+        .mode       = QSPI::Mode::Dual,
+        .clkDivider = 1, // clkDivider: 1 -> QSPI clock = 64 MHz)
+        .align      = QSPI::Align::Word,
+        .chipSelect = QSPI::ChipSelect::Uncontrolled,
+    };
+} _QSPIConfigs;
+
+void _QSPISetConfig(const QSPI::Config& config) {
+    if (_QSPI.getConfig() == &config) return; // Short-circuit if the config isn't changing
+    
+    _QSPI.setConfig(config);
+    
+    // If QSPI isn't controlling chip-select, manually configure it
+    if (config.chipSelect == QSPI::ChipSelect::Uncontrolled) {
+        _ICE_ST_SPI_CS_::Write(1);
+        _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+    }
+}
+
 template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
@@ -254,28 +266,6 @@ static void _ICEError(uint16_t line) {
 using _MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
 using _MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
 static MSP430JTAG<_MSPTest, _MSPRst_, _System::CPUFreqMHz> _MSP;
-
-//static void _MSPInit() {
-////    static bool init = false;
-////    if (init) return; // Short-circuit if we're already initialized
-////    init = true;
-//    
-//    constexpr uint16_t PM5CTL0  = 0x0130;
-//    constexpr uint16_t PAOUT    = 0x0202;
-//    
-//    // Init MSP
-//    _MSP.init();
-//    
-//    auto s = _MSP.connect();
-//    Assert(s == _MSP.Status::OK);
-//    
-//    // Clear LOCKLPM5 in the PM5CTL0 register
-//    // This is necessary to be able to control the GPIOs
-//    _MSP.write(PM5CTL0, 0x0010);
-//    
-//    // Clear PAOUT so everything is driven to 0 by default
-//    _MSP.write(PAOUT, 0x0000);
-//}
 
 // MARK: - SD Card
 
@@ -523,7 +513,7 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     _ICE_ST_SPI_CS_::Write(1);
     
     // Configure QSPI for writing the ICE40 configuration
-    _QSPI.config(_QSPIConfig.ICEWrite);
+    _QSPISetConfig(_QSPIConfigs.ICEWrite);
     
     // Send 8 clocks and wait for them to complete
     static const uint8_t ff = 0xff;
@@ -783,7 +773,7 @@ void _SDInit(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Configure QSPI for comms with ICEApp
-    _QSPI.config(_QSPIConfig.ICEApp);
+    _QSPISetConfig(_QSPIConfigs.ICEApp);
     
     _SD::Disable();
     _SD::Enable();
@@ -815,7 +805,7 @@ static void _SDRead(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Configure QSPI for comms with ICEApp
-    _QSPI.config(_QSPIConfig.ICEApp);
+    _QSPISetConfig(_QSPIConfigs.ICEApp);
     
     // Stop reading from the SD card if a read is in progress
     if (reading) {
@@ -828,11 +818,11 @@ static void _SDRead(const STM::Cmd& cmd) {
     reading = true;
     _SD::ReadStart(arg.addr);
     
-    // Start the Readout task
-    _TaskReadout::Start(std::nullopt);
-    
     // Send status
     _System::USBSendStatus(true);
+    
+    // Start the Readout task
+    _TaskReadout::Start(std::nullopt);
 }
 
 void _ImgInit(const STM::Cmd& cmd) {
@@ -840,7 +830,7 @@ void _ImgInit(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Configure QSPI for comms with ICEApp
-    _QSPI.config(_QSPIConfig.ICEApp);
+    _QSPISetConfig(_QSPIConfigs.ICEApp);
     
     _ImgSensor::Disable();
     _ImgSensor::Enable();
@@ -855,7 +845,7 @@ void _ImgExposureSet(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Configure QSPI for comms with ICEApp
-    _QSPI.config(_QSPIConfig.ICEApp);
+    _QSPISetConfig(_QSPIConfigs.ICEApp);
     
     _ImgSensor::SetCoarseIntTime(arg.coarseIntTime);
     _ImgSensor::SetFineIntTime(arg.fineIntTime);
@@ -872,7 +862,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Configure QSPI for comms with ICEApp
-    _QSPI.config(_QSPIConfig.ICEApp);
+    _QSPISetConfig(_QSPIConfigs.ICEApp);
     
     const Img::Header header = {
         .magic          = Img::Header::MagicNumber,
@@ -965,15 +955,9 @@ void abort() {
 // MARK: - Main
 
 int main() {
-//    volatile bool a = false;
-//    while (!a);
-    
     _System::Init();
     
     __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
-    
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-    _ICE_ST_SPI_CS_::Write(1);
     
     // Init MSP
     _MSP.init();
