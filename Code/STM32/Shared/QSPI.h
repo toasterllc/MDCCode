@@ -29,10 +29,9 @@ public:
     
     QSPI() {}
     
-    void config(const Config& config) {
-        // Short-circuit if we're already configured for the given `config`
-        if (_config == &config) return;
-        
+    const Config* getConfig() const { return _config; }
+    
+    void setConfig(const Config& config) {
         if (_config) {
             HAL_StatusTypeDef hs = HAL_DMA_DeInit(&_dma);
             Assert(hs == HAL_OK);
