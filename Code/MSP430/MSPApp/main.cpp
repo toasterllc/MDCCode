@@ -190,9 +190,9 @@ public:
         }
     }
     
-    static void DisableAsync() {
+    static void DisableAsync(bool force=false) {
         Wait();
-        if (!_Enabled) return; // Short-circuit
+        if (!_Enabled && !force) return; // Short-circuit
         _Enabled = false;
         
         _Scheduler::Start<_SDTask>([] { _SDCard::Disable(); });
@@ -287,9 +287,9 @@ public:
         });
     }
     
-    static void DisableAsync() {
+    static void DisableAsync(bool force=false) {
         Wait();
-        if (!_Enabled) return; // Short-circuit
+        if (!_Enabled && !force) return; // Short-circuit
         _Enabled = false;
         
         _Scheduler::Start<_ImgTask>([] { _ImgSensor::Disable(); });
@@ -336,6 +336,21 @@ static void _SDImgRingBufIncrement() {
 
 static void _ImgCapture() {
     const auto& ringBuf = _State.sd.imgRingBufs[0].buf;
+    
+    #warning TODO: remove this cold-start disabling once MSP controls ICE40, since ICE40 will be in a known state when MSP applies power
+    // If this is a cold start, ensure SD/Img are disabled
+    // This is necessary because ICE40 can be in an unknown state when MSP
+    // restarts, because MSP may have aborted, or restarted due to STM
+    // Spy-Bi-Wire debug access
+    if (Startup::ColdStart()) {
+        static bool disabled = false;
+        if (!disabled) {
+            _Img::DisableAsync(true);
+            _SD::DisableAsync(true);
+            _Scheduler::Wait<_ImgTask, _SDTask>();
+            disabled = true;
+        }
+    }
     
     // Asynchronously turn on the image sensor
     _Img::EnableAsync();
