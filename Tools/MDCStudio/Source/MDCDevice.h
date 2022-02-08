@@ -5,6 +5,7 @@
 #import "ImageLibrary.h"
 #import "Mmap.h"
 #import "ImagePipeline.h"
+#import "ImgSD.h"
 
 class MDCDevice : public MDCUSBDevice {
 public:
@@ -80,8 +81,8 @@ private:
     };
     
     struct _Range {
-        size_t idx  = 0;
-        size_t len = 0;
+        uint32_t idx  = 0;
+        uint32_t len = 0;
     };
     
     static _Path _StatePath(const _Path& devDir) { return devDir / "State"; }
@@ -252,10 +253,10 @@ private:
                         );
                     }
                     
-                    const size_t addCount = deviceImgIdEnd-libImgIdEnd;
+                    const uint32_t addCount = deviceImgIdEnd-libImgIdEnd;
                     
                     _Range newest;
-                    newest.idx = imgRingBuf.buf.widx - std::min((size_t)imgRingBuf.buf.widx, addCount);
+                    newest.idx = imgRingBuf.buf.widx - std::min((uint32_t)imgRingBuf.buf.widx, addCount);
                     newest.len = imgRingBuf.buf.widx - newest.idx;
                     
                     _Range oldest;
@@ -283,15 +284,16 @@ private:
         if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
         Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
         
-        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(ImageChunkSize * Img::PaddedLen);
-        sdRead(range.idx * Img::PaddedLen);
+        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(ImageChunkSize * ImgSD::ImgPaddedLen);
+        sdRead(range.idx * ImgSD::ImgPaddedLen);
+        
         for (size_t i=0; i<range.len;) {
             const size_t chunkLen = std::min(ImageChunkSize, range.len-i);
-            readout(buf.get(), chunkLen*Img::PaddedLen);
+            readout(buf.get(), chunkLen*ImgSD::ImgPaddedLen);
             printf("Read %ju images\n", (uintmax_t)chunkLen);
             
             for (size_t idx=0; idx<chunkLen; idx++) {
-                const uint8_t* imgData = buf.get()+idx*Img::PaddedLen;
+                const uint8_t* imgData = buf.get()+idx*ImgSD::ImgPaddedLen;
                 
                 // Validate checksum
                 const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::ChecksumOffset);

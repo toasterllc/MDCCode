@@ -105,8 +105,8 @@ public:
         return _CardData;
     }
     
-    static void ReadStart(uint32_t addr) {
-        _SDCard::ReadStart(addr);
+    static void ReadStart(uint32_t blockIdx) {
+        _SDCard::ReadStart(blockIdx);
     }
     
     static void ReadStop() {
@@ -794,13 +794,6 @@ static void _SDRead(const STM::Cmd& cmd) {
     static bool reading = false;
     const auto& arg = cmd.arg.SDRead;
     
-    // Verify that the address is a multiple of the SD block length
-    if (arg.addr % SD::BlockLen) {
-        // Reject command
-        _System::USBAcceptCommand(false);
-        return;
-    }
-    
     // Accept command
     _System::USBAcceptCommand(true);
     
@@ -816,7 +809,7 @@ static void _SDRead(const STM::Cmd& cmd) {
     
     // Update state
     reading = true;
-    _SD::ReadStart(arg.addr);
+    _SD::ReadStart(arg.blockIdx);
     
     // Send status
     _System::USBSendStatus(true);

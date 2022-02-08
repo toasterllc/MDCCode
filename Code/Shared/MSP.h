@@ -15,11 +15,11 @@ namespace MSP {
     // ImgRingBuf: stats to track captured images
     struct [[gnu::packed]] ImgRingBuf {
         struct [[gnu::packed]] {
-            Img::Id idBegin     = 0;
-            Img::Id idEnd       = 0;
-            uint16_t widx       = 0;
-            uint16_t ridx       = 0;
-            bool full           = false;
+            Img::Id idBegin = 0;
+            Img::Id idEnd   = 0;
+            uint32_t widx   = 0;
+            uint32_t ridx   = 0;
+            bool full       = false;
         } buf;
         volatile bool valid = false;
         

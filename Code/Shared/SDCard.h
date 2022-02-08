@@ -3,6 +3,8 @@
 #include "SD.h"
 #include "Util.h"
 #include "Toastbox/Task.h"
+#include "Img.h"
+#include "ImgSD.h"
 
 namespace SD {
 
@@ -187,29 +189,23 @@ public:
 //    const CardId& cardId() const { return *_cardId; }
 //    const CardData& cardData() const { return *_cardData; }
     
-    static void ReadStart(uint32_t addr) {
-        // Verify that `addr` is a multiple of the SD block length
-        AssertArg(!(addr % SD::BlockLen));
-        
+    static void ReadStart(uint32_t blockIdx) {
         // ====================
         // CMD18 | READ_MULTIPLE_BLOCK
         //   State: Transfer -> Send Data
         //   Read blocks of data (1 block == 512 bytes)
         // ====================
-        _SendCmd(_CMD18, addr/SD::BlockLen, _RespType::Len48, _DatInType::Len4096xN);
+        _SendCmd(_CMD18, blockIdx, _RespType::Len48, _DatInType::Len4096xN);
     }
     
     static void ReadStop() {
         _ReadWriteStop();
     }
     
-    // `lenEst`: the estimated byte count that will be written; used to pre-erase SD blocks as a performance
-    // optimization. More data can be written than `lenEst`, but performance may suffer if the actual length
+    // `blockCountEst`: the estimated block count that will be written; used to pre-erase SD blocks as a performance
+    // optimization. More data can be written than `blockCountEst`, but performance may suffer if the actual count
     // is longer than the estimate.
-    static void WriteStart(uint16_t rca, uint32_t addr, uint32_t lenEst=0) {
-        // Verify that `addr` is a multiple of the SD block length
-        AssertArg(!(addr % SD::BlockLen));
-        
+    static void WriteStart(uint16_t rca, uint32_t blockIdx, uint32_t blockCountEst=0) {
         // ====================
         // ACMD23 | SET_WR_BLK_ERASE_COUNT
         //   State: Transfer -> Transfer
@@ -224,8 +220,8 @@ public:
             
             // CMD23
             {
-                // Round up to the nearest block size, with a minimum of 1 block
-                const uint32_t blockCount = std::min(UINT32_C(1), Util::DivCeil(lenEst, SD::BlockLen));
+                // Min block count = 1
+                const uint32_t blockCount = std::min(UINT32_C(1), blockCountEst);
                 _SendCmd(_CMD23, blockCount);
             }
         }
@@ -236,7 +232,7 @@ public:
         //   Write blocks of data
         // ====================
         {
-            _SendCmd(_CMD25, addr/SD::BlockLen);
+            _SendCmd(_CMD25, blockIdx);
         }
     }
     
@@ -244,12 +240,8 @@ public:
         _ReadWriteStop();
     }
     
-    static void WriteImage(uint16_t rca, uint8_t srcBlock, uint16_t dstIdx) {
-        // Confirm that Img::PaddedLen is a multiple of the SD block length
-        static_assert((Img::PaddedLen % SD::BlockLen) == 0, "");
-        const uint32_t addr = dstIdx*Img::PaddedLen;
-        
-        WriteStart(rca, addr, Img::Len);
+    static void WriteImage(uint16_t rca, uint8_t srcBlock, uint32_t dstBlockIdx) {
+        WriteStart(rca, dstBlockIdx, ImgSD::ImgBlockCount);
         
         // Clock out the image on the DAT lines
         T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcBlock));
@@ -267,6 +259,7 @@ public:
         
         WriteStop();
         
+        #warning TODO: call error handler if this takes too long -- look at SD spec for max time
         // Wait for SD card to indicate that it's ready (DAT0=1)
         for (;;) {
             const _SDStatusResp status = T_ICE::SDStatus();

@@ -22,6 +22,7 @@
 #include "GetBits.h"
 #include "BusyAssertion.h"
 #include "Toastbox/IntState.h"
+#include "ImgSD.h"
 using namespace GPIO;
 
 static constexpr uint64_t _MCLKFreqHz       = 16000000;
@@ -202,8 +203,8 @@ public:
         _Scheduler::Wait<_SDTask>();
     }
     
-    static void WriteImage(uint8_t srcBlock, uint16_t dstIdx) {
-        _SDCard::WriteImage(_RCA, srcBlock, dstIdx);
+    static void WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
+        _SDCard::WriteImage(_RCA, srcBlock, dstBlockIdx);
     }
     
 private:
@@ -224,12 +225,10 @@ private:
         
         // Set .imgCap
         {
-            // ImgBlockLen: the length of an image in SD blocks
-            constexpr uint32_t ImgBlockLen = Img::PaddedLen / SD::BlockLen;
             // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
             const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
             // cardImgCap: the capacity of the SD card in number of images
-            const uint32_t cardImgCap = cardBlockCap / ImgBlockLen;
+            const uint32_t cardImgCap = cardBlockCap / ImgSD::ImgBlockCount;
             
             _State.sd.imgCap = cardImgCap;
         }
@@ -418,7 +417,8 @@ static void _ImgCapture() {
     _SD::Wait();
     
     // Write the best-exposed image to the SD card
-    _SD::WriteImage(bestExpBlock, ringBuf.widx);
+    const uint32_t dstBlockIdx = ringBuf.widx * ImgSD::ImgBlockCount;
+    _SD::WriteImage(bestExpBlock, dstBlockIdx);
     
     // Update _State.img
     _SDImgRingBufIncrement();

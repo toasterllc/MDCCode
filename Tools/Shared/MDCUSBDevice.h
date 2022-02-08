@@ -6,9 +6,10 @@
 #include "Toastbox/RuntimeError.h"
 #include "STM.h"
 #include "Img.h"
+#include "SD.h"
+#include "ImgSD.h"
 #include "ChecksumFletcher32.h"
 #include "TimeInstant.h"
-#include "SD.h"
 
 class MDCUSBDevice {
 public:
@@ -298,17 +299,14 @@ public:
         return cardInfo;
     }
     
-    void sdRead(uintptr_t addr) {
+    void sdRead(uint32_t blockIdx) {
         assert(_mode == STM::Status::Modes::STMApp);
-        
-        if (addr > std::numeric_limits<uint32_t>::max())
-            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
         
         const STM::Cmd cmd = {
             .op = STM::Op::SDRead,
             .arg = {
                 .SDRead = {
-                    .addr = (uint32_t)addr,
+                    .blockIdx = blockIdx,
                 },
             },
         };
@@ -369,10 +367,10 @@ public:
     
     std::unique_ptr<uint8_t[]> imgReadout() {
         assert(_mode == STM::Status::Modes::STMApp);
-        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(Img::PaddedLen);
-        const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), Img::PaddedLen);
+        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(ImgSD::ImgPaddedLen);
+        const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), ImgSD::ImgPaddedLen);
         if (lenGot < Img::Len) {
-            throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)Img::PaddedLen, (uintmax_t)lenGot);
+            throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)ImgSD::ImgPaddedLen, (uintmax_t)lenGot);
         }
         
         // Validate checksum

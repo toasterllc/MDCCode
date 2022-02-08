@@ -135,6 +135,7 @@
 		55D4AAA527B1D80C0052EFEE /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		55D4AAA627B1D80C0052EFEE /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
 		55D4AAA827B1D8660052EFEE /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
+		55D4AAA927B2375C0052EFEE /* ImgSD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgSD.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -252,17 +253,18 @@
 		55A36AC827A3694F00FD0181 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				55A36AC927A3694F00FD0181 /* ImgAutoExposure.h */,
-				55A36ACA27A3694F00FD0181 /* ChecksumFletcher32.h */,
-				55A36ACB27A3694F00FD0181 /* SDCard.h */,
-				55A36ACC27A3694F00FD0181 /* Img.h */,
-				55A36ACD27A3694F00FD0181 /* MSP.h */,
-				55A36ACE27A3694F00FD0181 /* ImgSensor.h */,
-				55A36ACF27A3694F00FD0181 /* ICE.h */,
-				55A36AD027A3694F00FD0181 /* Util.h */,
-				55A36AD127A3694F00FD0181 /* STM.h */,
-				55A36AD227A3694F00FD0181 /* SD.h */,
 				55A36AD327A3694F00FD0181 /* Assert.h */,
+				55A36ACA27A3694F00FD0181 /* ChecksumFletcher32.h */,
+				55A36ACF27A3694F00FD0181 /* ICE.h */,
+				55A36ACC27A3694F00FD0181 /* Img.h */,
+				55A36AC927A3694F00FD0181 /* ImgAutoExposure.h */,
+				55D4AAA927B2375C0052EFEE /* ImgSD.h */,
+				55A36ACE27A3694F00FD0181 /* ImgSensor.h */,
+				55A36ACD27A3694F00FD0181 /* MSP.h */,
+				55A36AD227A3694F00FD0181 /* SD.h */,
+				55A36ACB27A3694F00FD0181 /* SDCard.h */,
+				55A36AD127A3694F00FD0181 /* STM.h */,
+				55A36AD027A3694F00FD0181 /* Util.h */,
 			);
 			name = Shared;
 			path = ../../Code/Shared;
