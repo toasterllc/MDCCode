@@ -303,23 +303,23 @@ private:
                     throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
                 }
                 
-//                Pipeline::RawImage rawImage = {
-//                    .cfaDesc = {
-//                        CFAColor::Green, CFAColor::Red,
-//                        CFAColor::Blue, CFAColor::Green,
-//                    },
-//                    .width = Img::PixelWidth,
-//                    .height = Img::PixelHeight,
-//                    .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
-//                };
-//                
-//                const Pipeline::Options opts = {
-//                    .reconstructHighlights  = { .en = true, },
-//                    .debayerLMMSE           = { .applyGamma = true, },
-//                    .defringe               = { .en = false, },
-//                };
-//                
-//                Pipeline::Run(renderer, rawImage, opts);
+                Pipeline::RawImage rawImage = {
+                    .cfaDesc = {
+                        CFAColor::Green, CFAColor::Red,
+                        CFAColor::Blue, CFAColor::Green,
+                    },
+                    .width = Img::PixelWidth,
+                    .height = Img::PixelHeight,
+                    .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
+                };
+                
+                const Pipeline::Options opts = {
+                    .reconstructHighlights  = { .en = true, },
+                    .debayerLMMSE           = { .applyGamma = true, },
+                    .defringe               = { .en = false, },
+                };
+                
+                Pipeline::Result pres = Pipeline::Run(renderer, rawImage, opts);
             }
             
             i += chunkLen;
