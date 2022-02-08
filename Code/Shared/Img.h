@@ -60,6 +60,7 @@ namespace Img {
     constexpr uint32_t PixelLen             = PixelCount*sizeof(Pixel);
     constexpr uint32_t ChecksumLen          = sizeof(uint32_t);
     constexpr uint32_t Len                  = sizeof(Header) + PixelLen + ChecksumLen;
+    constexpr uint32_t PixelsOffset         = sizeof(Header);
     constexpr uint32_t ChecksumOffset       = Len-ChecksumLen;
     // PaddedLen: the length of the image padded to a multiple of 512 bytes
     constexpr uint32_t PaddedLen            = Util::Ceil(Len, (uint32_t)512);

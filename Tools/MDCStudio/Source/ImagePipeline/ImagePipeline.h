@@ -14,7 +14,7 @@ public:
         CFADesc cfaDesc;
         uint32_t width = 0;
         uint32_t height = 0;
-        ImagePixel* pixels = nullptr;
+        const ImagePixel* pixels = nullptr;
     };
     
     struct Options {
