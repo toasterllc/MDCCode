@@ -4,6 +4,7 @@
 #import "MDCUSBDevice.h"
 #import "ImageLibrary.h"
 #import "Mmap.h"
+#import "ImagePipeline.h"
 
 class MDCDevice : public MDCUSBDevice {
 public:
@@ -272,8 +273,15 @@ private:
     }
     
     void _loadImages(const _Range& range) {
+        using namespace MDCTools;
+        using namespace MDCStudio::ImagePipeline;
+        
         constexpr size_t ImageChunkSize = 16; // Number of images to read at a time
         if (!range.len) return; // Short-circuit if there are no images to read in this range
+        
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
+        Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
         
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(ImageChunkSize * Img::PaddedLen);
         sdRead(range.idx * Img::PaddedLen);
@@ -281,6 +289,37 @@ private:
             const size_t chunkLen = std::min(ImageChunkSize, range.len-i);
             readout(buf.get(), chunkLen*Img::PaddedLen);
             printf("Read %ju images\n", (uintmax_t)chunkLen);
+            
+            for (size_t idx=0; idx<chunkLen; idx++) {
+                const uint8_t* imgData = buf.get()+idx*Img::PaddedLen;
+                
+                // Validate checksum
+                const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::ChecksumOffset);
+                uint32_t checksumGot = 0;
+                memcpy(&checksumGot, imgData+Img::ChecksumOffset, Img::ChecksumLen);
+                if (checksumGot != checksumExpected) {
+                    throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+                }
+                
+//                Pipeline::RawImage rawImage = {
+//                    .cfaDesc = {
+//                        CFAColor::Green, CFAColor::Red,
+//                        CFAColor::Blue, CFAColor::Green,
+//                    },
+//                    .width = Img::PixelWidth,
+//                    .height = Img::PixelHeight,
+//                    .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
+//                };
+//                
+//                const Pipeline::Options opts = {
+//                    .reconstructHighlights  = { .en = true, },
+//                    .debayerLMMSE           = { .applyGamma = true, },
+//                    .defringe               = { .en = false, },
+//                };
+//                
+//                Pipeline::Run(renderer, rawImage, opts);
+            }
+            
             i += chunkLen;
         }
     }
