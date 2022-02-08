@@ -3,6 +3,7 @@
 #include "Util.h"
 #include "Img.h"
 #include "SD.h"
+#include "ImgSD.h"
 #include "Toastbox/USB.h"
 
 namespace STM {
@@ -85,7 +86,7 @@ namespace STM {
             
             // # STMApp
             struct [[gnu::packed]] {
-                uint32_t addr;
+                uint32_t blockIdx;
             } SDRead;
             
             struct [[gnu::packed]] {
@@ -183,11 +184,11 @@ namespace STM {
         uint32_t shadowCount;
     };
     
-    // Confirm that `Img::PaddedLen` is a multiple of the USB max packet size.
+    // Confirm that `Img::ImgPaddedLen` is a multiple of the USB max packet size.
     // This is necessary so that when multiple images are streamed, the
     // transfer continues indefinitely and isn't cut short by a short packet
     // (ie a packet < the MPS).
-    static_assert((Img::PaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
+    static_assert((ImgSD::ImgPaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
     
 //    // ImgPaddedLen: Ceil the image size to the SD block size
 //    // This is the amount of data that's sent from device -> host, for each image.

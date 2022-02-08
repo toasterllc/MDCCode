@@ -62,8 +62,6 @@ namespace Img {
     constexpr uint32_t Len                  = sizeof(Header) + PixelLen + ChecksumLen;
     constexpr uint32_t PixelsOffset         = sizeof(Header);
     constexpr uint32_t ChecksumOffset       = Len-ChecksumLen;
-    // PaddedLen: the length of the image padded to a multiple of 512 bytes
-    constexpr uint32_t PaddedLen            = Util::Ceil(Len, (uint32_t)512);
     
     // StatsSubsampleFactor: We only sample 1/16 of pixels for highlights/shadows
     constexpr uint16_t StatsSubsampleFactor = 16;

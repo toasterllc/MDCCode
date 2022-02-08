@@ -10,6 +10,7 @@
 #include "ChecksumFletcher32.h"
 #include "Img.h"
 #include "SD.h"
+#include "ImgSD.h"
 #include "MSP.h"
 #include "ELF32Binary.h"
 
@@ -316,7 +317,7 @@ static void SDImgRead(const Args& args, MDCUSBDevice& device) {
     printf("-> OK\n\n");
     
     printf("Sending SDRead command...\n");
-    device.sdRead(args.SDImgRead.idx*Img::PaddedLen);
+    device.sdRead(args.SDImgRead.idx * ImgSD::ImgPaddedLen);
     printf("-> OK\n\n");
     
     printf("Reading image...\n");
