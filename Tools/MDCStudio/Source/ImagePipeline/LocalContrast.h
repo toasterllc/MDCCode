@@ -14,7 +14,7 @@ namespace MDCStudio::ImagePipeline {
             const NSUInteger h = [rgb height];
             // Extract L
             Renderer::Txt lTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-            renderer.render("MDCStudio::Shader::LocalContrast::ExtractL", lTxt,
+            renderer.render(ImagePipelineShaderNamespace "LocalContrast::ExtractL", lTxt,
                 rgb
             );
             
@@ -28,7 +28,7 @@ namespace MDCStudio::ImagePipeline {
                 sourceTexture:lTxt destinationTexture:blurredLTxt];
             
             // Local contrast
-            renderer.render("MDCStudio::Shader::LocalContrast::LocalContrast", rgb,
+            renderer.render(ImagePipelineShaderNamespace "LocalContrast::LocalContrast", rgb,
                 amount,
                 rgb,
                 blurredLTxt

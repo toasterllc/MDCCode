@@ -13,7 +13,7 @@ public:
         const size_t w = [raw width];
         const size_t h = [raw height];
         Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w/2, h/2);
-        renderer.render("MDCStudio::Shader::ImagePipeline::DebayerDownsample", rgb,
+        renderer.render(ImagePipelineShaderNamespace "Base::DebayerDownsample", rgb,
             // Buffer args
             cfaDesc,
             // Texture args
@@ -31,7 +31,7 @@ public:
         const Mat<double,3,1> illumMin1 = illum/illumMin;
         const simd::float3 simdIllumMin1 = {(float)illumMin1[0], (float)illumMin1[1], (float)illumMin1[2]};
         Renderer::Txt highlightMap = renderer.textureCreate(MTLPixelFormatRG32Float, w, h);
-        renderer.render("MDCStudio::Shader::ReconstructHighlights::CreateHighlightMap", highlightMap,
+        renderer.render(ImagePipelineShaderNamespace "ReconstructHighlights::CreateHighlightMap", highlightMap,
             // Buffer args
             Scale,
             Thresh,
@@ -42,14 +42,14 @@ public:
         
         for (int i=0; i<1; i++) {
             Renderer::Txt tmp = renderer.textureCreate(highlightMap);
-            renderer.render("MDCStudio::Shader::ReconstructHighlights::Blur", tmp,
+            renderer.render(ImagePipelineShaderNamespace "ReconstructHighlights::Blur", tmp,
                 // Texture args
                 highlightMap
             );
             highlightMap = std::move(tmp);
         }
         
-        renderer.render("MDCStudio::Shader::ReconstructHighlights::ReconstructHighlights", raw,
+        renderer.render(ImagePipelineShaderNamespace "ReconstructHighlights::ReconstructHighlights", raw,
             // Buffer args
             cfaDesc,
             simdIllumMin1,

@@ -325,7 +325,7 @@ static void _defringe(Renderer& renderer,
         }
     }
     
-    renderer.render("MDCStudio::Shader::Defringe::GenerateShiftTxts",
+    renderer.render(ImagePipelineShaderNamespace "Defringe::GenerateShiftTxts",
         ShiftTextureWidth, ShiftTextureWidth,
         // Buffer args
         cfaDesc,
@@ -345,7 +345,7 @@ static void _defringe(Renderer& renderer,
     // ApplyCorrection() samples pixels in `raw` outside the render target pixel,
     // which would introduce a data race if we rendered to `raw` while also sampling it.
     Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-    renderer.render("MDCStudio::Shader::Defringe::ApplyCorrection", tmp,
+    renderer.render(ImagePipelineShaderNamespace "Defringe::ApplyCorrection", tmp,
         // Buffer args
         cfaDesc,
         opts.αthresh,
@@ -373,7 +373,7 @@ void Defringe::Run(Renderer& renderer, const CFADesc& cfaDesc,
     const NSUInteger h = [raw height];
     
     Renderer::Txt gInterp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-    renderer.render("MDCStudio::Shader::Defringe::InterpolateG", gInterp,
+    renderer.render(ImagePipelineShaderNamespace "Defringe::InterpolateG", gInterp,
         // Buffer args
         cfaDesc,
         // Texture args
