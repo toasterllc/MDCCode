@@ -666,7 +666,7 @@ private:
     
     friend class Resource<id<MTLTexture>>;
     friend class Resource<id<MTLBuffer>>;
-#undef ShaderNamespace
+#undef _ShaderNamespace
 }; // class Renderer
 
 }; // namespace MDCTools

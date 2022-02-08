@@ -148,7 +148,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     
     // Sample: fill `sampleBufRaw`
     {
-        renderer.render("MDCStudio::Shader::ImagePipeline::SampleRaw",
+        renderer.render(ImagePipelineShaderNamespace "Base::SampleRaw",
             w, h,
             // Buffer args
             rawImg.cfaDesc,
@@ -165,7 +165,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     // Raw mode (bilinear debayer only)
     if (opts.rawMode) {
         // De-bayer
-        renderer.render("MDCStudio::Shader::DebayerBilinear::Debayer", rgb,
+        renderer.render(ImagePipelineShaderNamespace "DebayerBilinear::Debayer", rgb,
             // Buffer args
             rawImg.cfaDesc,
             // Texture args
@@ -192,7 +192,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
             const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
             const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
             const simd::float3 simdWB = simdForMat(wb);
-            renderer.render("MDCStudio::Shader::ImagePipeline::WhiteBalance", raw,
+            renderer.render(ImagePipelineShaderNamespace "Base::WhiteBalance", raw,
                 // Buffer args
                 rawImg.cfaDesc,
                 simdWB,
@@ -217,7 +217,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
             const simd::float3x3 colorMatrix = simdForMat(ccm.m);
             
 //            const simd::float3x3 colorMatrix = simdForMat(opts.colorMatrix);
-            renderer.render("MDCStudio::Shader::ImagePipeline::ApplyColorMatrix", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::ApplyColorMatrix", rgb,
                 // Buffer args
                 colorMatrix,
                 // Texture args
@@ -227,7 +227,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // ProPhotoRGB -> XYZ.D50
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::XYZD50FromProPhotoRGB", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGB", rgb,
                 // Texture args
                 rgb
             );
@@ -235,7 +235,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // XYZ.D50 -> XYY.D50
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::XYYFromXYZ", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::XYYFromXYZ", rgb,
                 // Texture args
                 rgb
             );
@@ -244,7 +244,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         // Exposure
         {
             const float exposure = pow(2, opts.exposure);
-            renderer.render("MDCStudio::Shader::ImagePipeline::Exposure", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::Exposure", rgb,
                 // Buffer args
                 exposure,
                 // Texture args
@@ -254,7 +254,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // XYY.D50 -> XYZ.D50
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::XYZFromXYY", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::XYZFromXYY", rgb,
                 // Texture args
                 rgb
             );
@@ -262,7 +262,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // XYZ.D50 -> Lab.D50
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::LabD50FromXYZD50", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50", rgb,
                 // Texture args
                 rgb
             );
@@ -270,7 +270,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // Brightness
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::Brightness", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::Brightness", rgb,
                 // Buffer args
                 opts.brightness,
                 // Texture args
@@ -280,7 +280,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // Contrast
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::Contrast", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::Contrast", rgb,
                 // Buffer args
                 opts.contrast,
                 // Texture args
@@ -296,7 +296,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // Lab.D50 -> XYZ.D50
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::XYZD50FromLabD50", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50", rgb,
                 // Texture args
                 rgb
             );
@@ -307,7 +307,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // Sample: fill `sampleBufXYZD50`
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::SampleRGB",
+            renderer.render(ImagePipelineShaderNamespace "Base::SampleRGB",
                 w, h,
                 // Buffer args
                 rawImg.cfaDesc,
@@ -320,7 +320,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // XYZ.D50 -> XYZ.D65
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::BradfordXYZD65FromXYZD50", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::BradfordXYZD65FromXYZD50", rgb,
                 // Texture args
                 rgb
             );
@@ -328,7 +328,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // XYZ.D65 -> LSRGB.D65
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::LSRGBD65FromXYZD65", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::LSRGBD65FromXYZD65", rgb,
                 // Texture args
                 rgb
             );
@@ -336,7 +336,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // Apply SRGB gamma
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::SRGBGamma", rgb,
+            renderer.render(ImagePipelineShaderNamespace "Base::SRGBGamma", rgb,
                 // Texture args
                 rgb
             );
@@ -344,7 +344,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // Sample: fill `sampleBufSRGB`
         {
-            renderer.render("MDCStudio::Shader::ImagePipeline::SampleRGB",
+            renderer.render(ImagePipelineShaderNamespace "Base::SampleRGB",
                 w, h,
                 // Buffer args
                 rawImg.cfaDesc,

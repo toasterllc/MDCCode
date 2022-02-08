@@ -22,7 +22,7 @@ public:
         
         // Gamma before (improves quality of edges)
         if (applyGamma) {
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::GammaForward", raw,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::GammaForward", raw,
                 // Texture args
                 raw
             );
@@ -32,7 +32,7 @@ public:
         Renderer::Txt filteredHTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
         {
             const bool h = true;
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::Interp5", filteredHTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::Interp5", filteredHTxt,
                 // Buffer args
                 h,
                 // Texture args
@@ -44,7 +44,7 @@ public:
         Renderer::Txt filteredVTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
         {
             const bool h = false;
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::Interp5", filteredVTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::Interp5", filteredVTxt,
                 // Buffer args
                 h,
                 // Texture args
@@ -55,7 +55,7 @@ public:
         // Calculate DiffH
         Renderer::Txt diffHTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
         {
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::NoiseEst", diffHTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::NoiseEst", diffHTxt,
                 // Buffer args
                 cfaDesc,
                 // Texture args
@@ -67,7 +67,7 @@ public:
         // Calculate DiffV
         Renderer::Txt diffVTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
         {
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::NoiseEst", diffVTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::NoiseEst", diffVTxt,
                 // Buffer args
                 cfaDesc,
                 // Texture args
@@ -79,7 +79,7 @@ public:
         // Smooth DiffH
         {
             const bool h = true;
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::Smooth9", filteredHTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::Smooth9", filteredHTxt,
                 // Buffer args
                 h,
                 // Texture args
@@ -90,7 +90,7 @@ public:
         // Smooth DiffV
         {
             const bool h = false;
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::Smooth9", filteredVTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::Smooth9", filteredVTxt,
                 // Buffer args
                 h,
                 // Texture args
@@ -100,7 +100,7 @@ public:
         
         // Calculate rgb.g
         {
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::CalcG", rgb,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcG", rgb,
                 // Buffer args
                 cfaDesc,
                 // Texture args
@@ -116,7 +116,7 @@ public:
         Renderer::Txt diffGRTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
         {
             const bool modeGR = true;
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::CalcDiffGRGB", diffGRTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcDiffGRGB", diffGRTxt,
                 // Buffer args
                 cfaDesc,
                 modeGR,
@@ -130,7 +130,7 @@ public:
         Renderer::Txt diffGBTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
         {
             const bool modeGR = false;
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::CalcDiffGRGB", diffGBTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcDiffGRGB", diffGBTxt,
                 // Buffer args
                 cfaDesc,
                 modeGR,
@@ -143,7 +143,7 @@ public:
         // Calculate diffGRTxt.b
         {
             const bool modeGR = true;
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGRTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGRTxt,
                 // Buffer args
                 cfaDesc,
                 modeGR,
@@ -157,7 +157,7 @@ public:
         // Calculate diffGBTxt.r
         {
             const bool modeGR = false;
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGBTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcDiagAvgDiffGRGB", diffGBTxt,
                 // Buffer args
                 cfaDesc,
                 modeGR,
@@ -170,7 +170,7 @@ public:
         
         // Calculate diffGRTxt.g
         {
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGRTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGRTxt,
                 // Buffer args
                 cfaDesc,
                 // Texture args
@@ -182,7 +182,7 @@ public:
         
         // Calculate diffGBTxt.g
         {
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGBTxt,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcAxialAvgDiffGRGB", diffGBTxt,
                 // Buffer args
                 cfaDesc,
                 // Texture args
@@ -194,7 +194,7 @@ public:
         
         // Calculate rgb.rb
         {
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::CalcRB", rgb,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcRB", rgb,
                 // Texture args
                 rgb,
                 diffGRTxt,
@@ -204,7 +204,7 @@ public:
         
         // Gamma after (improves quality of edges)
         if (applyGamma) {
-            renderer.render("MDCStudio::Shader::DebayerLMMSE::GammaReverse", rgb,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::GammaReverse", rgb,
                 // Texture args
                 rgb
             );

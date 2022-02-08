@@ -8,6 +8,7 @@ using namespace MDCStudio::ImagePipeline;
 namespace MDCStudio {
 namespace ImagePipeline {
 namespace Shader {
+namespace Base {
 
 float3 XYYFromXYZ(const float3 xyz) {
     const float denom = xyz[0] + xyz[1] + xyz[2];
@@ -494,6 +495,7 @@ fragment float4 DebayerDownsample(
     return 0;
 }
 
+} // namespace Base
 } // namespace Shader
 } // namespace ImagePipeline
 } // namespace MDCStudio
