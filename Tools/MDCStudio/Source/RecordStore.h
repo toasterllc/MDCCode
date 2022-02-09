@@ -53,29 +53,93 @@ public:
             });
     }
     
-    RecordStore(const Path& path) : _path(path) {
-        std::filesystem::create_directory(path);
+    RecordStore(const Path& path) : _path(path) {}
+    
+    std::ifstream read() {
+        // Reset ourself in case an exception occurs later
+        _state = {};
+        
+        std::filesystem::create_directory(_path);
         std::filesystem::create_directory(_ChunksPath(_path));
         
-        // Attempt to load the existing database on disk
-        try {
-            // Load /Index file
-            auto [recordRefs, chunks] = _IndexRead(_path);
-            
-            // If we get here, everything succeeded so we can use the on-disk database
-            _recordRefs = recordRefs;
-            _chunks = std::move(chunks);
-        
-        } catch (const std::exception& e) {
-            fprintf(stderr, "RecordStore: recreating records database (cause: %s)\n", e.what());
-        }
+        auto [recordRefs, chunks, f] = _IndexRead(_path);
+        // If we get here, everything succeeded so we can use the on-disk database
+        _state.recordRefs = recordRefs;
+        _state.chunks = std::move(chunks);
+        return std::move(f);
     }
     
+    std::ofstream write() {
+        namespace fs = std::filesystem;
+        
+        // Prohibit syncing between reserve() / add() calls.
+        // This isn't allowed because _state.reserved may be referencing chunks whose recordCount==0,
+        // and those chunks get deleted below. When add() is called to commit the reserved records,
+        // recordCount will be incremented appropriately and sync() can be called safely.
+        assert(_state.reserved.empty());
+        
+        #warning TODO: optionally (based on argument) peform 'compaction' to move records into smallest number of chunks as possible
+        #warning TODO: truncate each chunk file on disk to have the minimum size to contain its last record
+        #warning TODO: delete unreferenced chunk files in Chunks dir
+        
+        // Ensure that all chunks are written to disk
+        for (const Chunk& chunk : _state.chunks) {
+            chunk.mmap.sync();
+        }
+        
+        // Rename chunk filenames to be in the range [0,chunkCount)
+        // This needs to happen before we prune empty chunks! Otherwise we won't know the `oldName`,
+        // since it depends on a chunk's index in `_state.chunks`
+        {
+            size_t oldName = 0;
+            size_t newName = 0;
+            for (const Chunk& chunk : _state.chunks) {
+                if (chunk.recordCount) {
+                    if (newName != oldName) {
+                        fs::rename(_chunkPath(oldName), _chunkPath(newName));
+                    }
+                    newName++;
+                }
+                oldName++;
+            }
+        }
+        
+        // Prune chunks (in memory) that have 0 records
+        {
+            _state.chunks.remove_if([] (const Chunk& chunk) {
+                return chunk.recordCount==0;
+            });
+        }
+        
+        // Delete unreferenced chunk files
+        for (const fs::path& p : fs::directory_iterator(_ChunksPath(_path))) {
+            // Delete the chunk file if it's beyond the new count of chunks (therefore
+            // it's an old chunk file that's no longer needed).
+            std::optional<size_t> deleteName;
+            try {
+                deleteName = Toastbox::IntForStr<size_t>(p.filename().string());
+                if (*deleteName < _state.chunks.size()) {
+                    deleteName = std::nullopt; // Chunk file is in-range; don't delete it
+                }
+            // Don't do anything if we can't convert the filename to an integer;
+            // assume the file is supposed to be there.
+            } catch (...) {}
+            
+            if (deleteName) {
+                fs::remove(_chunkPath(*deleteName));
+            }
+        }
+        
+        return _IndexWrite(_path, _state.recordRefs, _state.chunks);
+    }
+    
+//    const Path& path() { return _path; }
+//    
 //    T_Record* add() {
 //        _ChunkIter chunk = _writableChunk();
 //        const size_t idx = chunk->recordIdx;
 //        const size_t off = sizeof(T_Record)*idx;
-//        _recordRefs.push_back({
+//        _state.recordRefs.push_back({
 //            .chunk = chunk,
 //            .idx = idx,
 //        });
@@ -87,19 +151,19 @@ public:
 //    }
     
 //    void remove(size_t idx) {
-//        const RecordRef& ref = _recordRefs.at(idx);
+//        const RecordRef& ref = _state.recordRefs.at(idx);
 //        ref.chunk->recordCount--;
 //        
-//        _recordRefs.erase(_recordRefs.begin()+idx);
+//        _state.recordRefs.erase(_state.recordRefs.begin()+idx);
 //    }
     
     // reserve(): reserves space for `count` additional records, but does not actually add them
     // to the store. add() must be called after reserve() to add the records to the store.
     void reserve(size_t count) {
-        assert(_reserved.empty());
-        _reserved.resize(count);
+        assert(_state.reserved.empty());
+        _state.reserved.resize(count);
         
-        for (RecordRef& ref : _reserved) {
+        for (RecordRef& ref : _state.reserved) {
             const _ChunkIter chunk = _writableChunk();
             
             ref = {
@@ -113,13 +177,13 @@ public:
     
     // add(): adds the records previously reserved via reserve()
     void add() {
-        for (auto it=_reserved.begin(); it!=_reserved.end(); it++) {
+        for (auto it=_state.reserved.begin(); it!=_state.reserved.end(); it++) {
             Chunk& chunk = const_cast<Chunk&>(*it->chunk);
             chunk.recordCount++;
         }
         
-        _recordRefs.insert(_recordRefs.end(), _reserved.begin(), _reserved.end());
-        _reserved.clear();
+        _state.recordRefs.insert(_state.recordRefs.end(), _state.reserved.begin(), _state.reserved.end());
+        _state.reserved.clear();
     }
     
     void remove(RecordRefConstIter begin, RecordRefConstIter end) {
@@ -128,7 +192,7 @@ public:
             chunk.recordCount--;
         }
         
-        _recordRefs.erase(begin, end);
+        _state.recordRefs.erase(begin, end);
     }
     
     T_Record* recordGet(const RecordRef& ref) {
@@ -139,88 +203,24 @@ public:
         return recordGet(*iter);
     }
     
-    bool empty() const { return _recordRefs.empty(); }
+    bool empty() const { return _state.recordRefs.empty(); }
     
-    const RecordRef& front() const      { return _recordRefs.front(); }
-    const RecordRef& back() const       { return _recordRefs.back(); }
-    RecordRefConstIter begin() const    { return _recordRefs.begin(); }
-    RecordRefConstIter end() const      { return _recordRefs.end(); }
+    const RecordRef& front() const      { return _state.recordRefs.front(); }
+    const RecordRef& back() const       { return _state.recordRefs.back(); }
+    RecordRefConstIter begin() const    { return _state.recordRefs.begin(); }
+    RecordRefConstIter end() const      { return _state.recordRefs.end(); }
     
-    const RecordRef& reservedFront() const      { return _reserved.front(); }
-    const RecordRef& reservedBack() const       { return _reserved.back(); }
-    RecordRefConstIter reservedBegin() const    { return _reserved.begin(); }
-    RecordRefConstIter reservedEnd() const      { return _reserved.end(); }
+    const RecordRef& reservedFront() const      { return _state.reserved.front(); }
+    const RecordRef& reservedBack() const       { return _state.reserved.back(); }
+    RecordRefConstIter reservedBegin() const    { return _state.reserved.begin(); }
+    RecordRefConstIter reservedEnd() const      { return _state.reserved.end(); }
     
 //    ChunkConstIter getRecordChunk(size_t idx) const {
-//        return _recordRefs.at(idx).chunk;
+//        return _state.recordRefs.at(idx).chunk;
 //    }
     
     size_t recordCount() const {
-        return _recordRefs.size();
-    }
-    
-    void sync() {
-        namespace fs = std::filesystem;
-        
-        // Prohibit syncing between reserve() / add() calls.
-        // This isn't allowed because _reserved may be referencing chunks whose recordCount==0,
-        // and those chunks get deleted below. When add() is called to commit the reserved records,
-        // recordCount will be incremented appropriately and sync() can be called safely.
-        assert(_reserved.empty());
-        
-        #warning TODO: optionally (based on argument) peform 'compaction' to move records into smallest number of chunks as possible
-        #warning TODO: truncate each chunk file on disk to have the minimum size to contain its last record
-        #warning TODO: delete unreferenced chunk files in Chunks dir
-        
-        // Ensure that all chunks are written to disk
-        for (const Chunk& chunk : _chunks) {
-            chunk.mmap.sync();
-        }
-        
-        // Rename chunk filenames to be in the range [0,chunkCount)
-        // This needs to happen before we prune empty chunks! Otherwise we won't know the `oldName`,
-        // since it depends on a chunk's index in `_chunks`
-        {
-            size_t oldName = 0;
-            size_t newName = 0;
-            for (const Chunk& chunk : _chunks) {
-                if (chunk.recordCount) {
-                    if (newName != oldName) {
-                        fs::rename(_chunkPath(oldName), _chunkPath(newName));
-                    }
-                    newName++;
-                }
-                oldName++;
-            }
-        }
-        
-        // Prune chunks (in memory) that have 0 records
-        {
-            _chunks.remove_if([] (const Chunk& chunk) {
-                return chunk.recordCount==0;
-            });
-        }
-        
-        // Delete unreferenced chunk files
-        for (const fs::path& p : fs::directory_iterator(_ChunksPath(_path))) {
-            // Delete the chunk file if it's beyond the new count of chunks (therefore
-            // it's an old chunk file that's no longer needed).
-            std::optional<size_t> deleteName;
-            try {
-                deleteName = Toastbox::IntForStr<size_t>(p.filename().string());
-                if (*deleteName < _chunks.size()) {
-                    deleteName = std::nullopt; // Chunk file is in-range; don't delete it
-                }
-            // Don't do anything if we can't convert the filename to an integer;
-            // assume the file is supposed to be there.
-            } catch (...) {}
-            
-            if (deleteName) {
-                fs::remove(_chunkPath(*deleteName));
-            }
-        }
-        
-        _IndexWrite(_path, _recordRefs, _chunks);
+        return _state.recordRefs.size();
     }
     
 private:
@@ -241,12 +241,13 @@ private:
     
     static constexpr size_t _ChunkCap = sizeof(T_Record)*T_ChunkRecordCap;
     
-    static std::tuple<RecordRefs,Chunks> _IndexRead(const Path& path) {
-        const Mmap mmap(_IndexPath(path));
-        size_t off = 0;
+    static std::tuple<RecordRefs,Chunks,std::ifstream> _IndexRead(const Path& path) {
+        std::ifstream f;
+        f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+        f.open(_IndexPath(path));
         
-        const _SerializedHeader& header = *mmap.data<_SerializedHeader>(off);
-        off += sizeof(_SerializedHeader);
+        _SerializedHeader header;
+        f.read((char*)&header, sizeof(header));
         
         if (header.version != T_Version) {
             throw Toastbox::RuntimeError("invalid header version (expected: 0x%jx, got: 0x%jx)",
@@ -277,15 +278,17 @@ private:
         RecordRefs recordRefs;
         recordRefs.resize(header.recordCount);
         
-        const _SerializedRecordRef* serializedRecordRefs = mmap.data<_SerializedRecordRef>(off);
-        off += sizeof(_SerializedRecordRef)*(header.recordCount);
-        const _SerializedRecordRef* serializedRecordRefsLast = mmap.data<_SerializedRecordRef>(off-sizeof(_SerializedRecordRef));
-        (void)serializedRecordRefsLast; // Silence warning; just using variable to bounds-check
+//        const _SerializedRecordRef* serializedRecordRefs = mmap.data<_SerializedRecordRef>(off);
+//        off += sizeof(_SerializedRecordRef)*(header.recordCount);
+//        const _SerializedRecordRef* serializedRecordRefsLast = mmap.data<_SerializedRecordRef>(off-sizeof(_SerializedRecordRef));
+//        (void)serializedRecordRefsLast; // Silence warning; just using variable to bounds-check
         
         std::optional<size_t> chunkIdxPrev;
         std::optional<size_t> idxPrev;
         for (size_t i=0; i<header.recordCount; i++) {
-            const _SerializedRecordRef& ref = serializedRecordRefs[i];
+            _SerializedRecordRef ref;
+            f.read((char*)&ref, sizeof(ref));
+            
             const size_t chunkIdx = ref.chunkIdx;
             Chunk& chunk = *chunkIters.at(chunkIdx);
             
@@ -315,10 +318,10 @@ private:
             idxPrev = ref.idx;
         }
         
-        return std::make_tuple(recordRefs, std::move(chunks));
+        return std::make_tuple(recordRefs, std::move(chunks), std::move(f));
     }
     
-    static void _IndexWrite(const Path& path, const RecordRefs& recordRefs, const Chunks& chunks) {
+    static std::ofstream _IndexWrite(const Path& path, const RecordRefs& recordRefs, const Chunks& chunks) {
         std::ofstream f;
         f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
         f.open(_IndexPath(path));
@@ -346,6 +349,8 @@ private:
             
             chunkPrev = ref.chunk;
         }
+        
+        return f;
     }
     
     static Path _IndexPath(const Path& path) {
@@ -382,25 +387,25 @@ private:
     }
     
     _ChunkIter _writableChunk() {
-        _ChunkIter lastChunk = std::prev(_chunks.end());
-        if (lastChunk==_chunks.end() || lastChunk->recordIdx>=T_ChunkRecordCap) {
+        _ChunkIter lastChunk = std::prev(_state.chunks.end());
+        if (lastChunk==_state.chunks.end() || lastChunk->recordIdx>=T_ChunkRecordCap) {
             // We don't have any chunks, or the last chunk is full
             // Create a new chunk
-            Mmap mmap = _CreateChunk(_chunkPath(_chunks.size()));
+            Mmap mmap = _CreateChunk(_chunkPath(_state.chunks.size()));
             
-            _chunks.push_back(Chunk{
+            _state.chunks.push_back(Chunk{
                 .recordCount = 0,
                 .recordIdx = 0,
                 .mmap = std::move(mmap),
             });
             
-            return std::prev(_chunks.end());
+            return std::prev(_state.chunks.end());
         
         } else {
             // Last chunk can fit more records
             // Resize the last chunk if it's too small to fit more records
             if (lastChunk->mmap.len() < _ChunkCap) {
-                lastChunk->mmap = _CreateChunk(_chunkPath(_chunks.size()-1));
+                lastChunk->mmap = _CreateChunk(_chunkPath(_state.chunks.size()-1));
             }
             
             return lastChunk;
@@ -408,7 +413,10 @@ private:
     }
     
     const Path _path;
-    RecordRefs _recordRefs;
-    RecordRefs _reserved;
-    Chunks _chunks;
+    
+    struct {
+        RecordRefs recordRefs;
+        RecordRefs reserved;
+        Chunks chunks;
+    } _state;
 };
