@@ -444,9 +444,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     if (!_imgLib) return;
     auto il = _imgLib->vend();
     
-//    _grid.setElementCount((int32_t)il.imageCount);
-    _grid.setElementCount((int32_t)il->recordCount());
-    _grid.recompute();
+    [self _recomputeGrid:il];
     
     // Update our drawable size
     const CGRect frame = [self frame];
@@ -647,8 +645,14 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     [self setNeedsDisplay];
 }
 
-- (CGFloat)containerHeight {
+- (void)_recomputeGrid:(ImageLibrary&)imgLib {
+    _grid.setElementCount((int32_t)imgLib.recordCount());
     _grid.recompute();
+}
+
+- (CGFloat)containerHeight {
+    if (!_imgLib) return 0;
+    [self _recomputeGrid:_imgLib->vend()];
     return _grid.containerHeight() / _contentsScale;
 }
 

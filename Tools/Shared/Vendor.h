@@ -18,10 +18,12 @@ class Vendor : public std::enable_shared_from_this<Vendor<T>> {
 private:
     class Vended {
     public:
-        const T* operator->() const { return &_vendor->_t; }
         T* operator->() { return &_vendor->_t; }
-        const T& operator*() const { return _vendor->_t; }
+        const T* operator->() const { return &_vendor->_t; }
         T& operator*() { return _vendor->_t; }
+        const T& operator*() const { return _vendor->_t; }
+        operator T&() { return _vendor->_t; }
+        operator const T&() const { return _vendor->_t; }
         
     private:
         Vended(std::shared_ptr<Vendor<T>> vendor) : _vendor(vendor), _lock(_vendor->_lock) {}
