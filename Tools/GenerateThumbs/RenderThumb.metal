@@ -1,19 +1,18 @@
 #import <metal_stdlib>
 #import "MetalUtil.h"
-#import "RenderThumbTypes.h"
 using namespace metal;
-using namespace CFAViewer::MetalUtil;
-using namespace CFAViewer::MetalUtil::Standard;
+using namespace MDCTools::MetalUtil;
 
 fragment void RenderThumb(
-    constant RenderContext& ctx [[buffer(0)]],
-    device uint8_t* dst [[buffer(1)]],
+    constant uint32_t& dstOff [[buffer(0)]],
+    constant uint32_t& thumbWidth [[buffer(1)]],
+    device uint8_t* dst [[buffer(2)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const uint pxIdx = (pos.y*ctx.width + pos.x);
-    const uint32_t off = ctx.thumbOff + (RenderContext::BytesPerPixel * pxIdx);
+    const uint pxIdx = (pos.y*thumbWidth + pos.x);
+    const uint32_t off = dstOff + (3*pxIdx);
     const float3 s = Sample::RGB(txt, pos);
     dst[off+0] = s.r*255;
     dst[off+1] = s.g*255;

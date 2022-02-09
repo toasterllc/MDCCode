@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5513289327B378BF00CD823B /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5513289127B378BF00CD823B /* Renderer.metal */; };
 		551B22472791391400D62121 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551B22462791391400D62121 /* main.mm */; };
 		551B224F279139DE00D62121 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 551B224E279139DE00D62121 /* Foundation.framework */; };
 		551B2251279139E400D62121 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 551B2250279139E400D62121 /* CoreGraphics.framework */; };
@@ -15,7 +16,6 @@
 		5533A2AB2791532200EF4614 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5533A2AA2791532200EF4614 /* MetalKit.framework */; };
 		5533A2B02791613500EF4614 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5533A2AF2791613500EF4614 /* ImageIO.framework */; };
 		5533A2B22791614300EF4614 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5533A2B12791614300EF4614 /* CoreServices.framework */; };
-		55A36AED27A36A7400FD0181 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55A36AEC27A36A7400FD0181 /* Renderer.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -31,6 +31,22 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5513289027B378BF00CD823B /* MetalUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../Shared/MetalUtil.h; sourceTree = "<group>"; };
+		5513289127B378BF00CD823B /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Renderer.metal; path = ../Shared/Renderer.metal; sourceTree = "<group>"; };
+		5513289227B378BF00CD823B /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../Shared/Renderer.h; sourceTree = "<group>"; };
+		5513289527B3793100CD823B /* ImgAutoExposure.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgAutoExposure.h; sourceTree = "<group>"; };
+		5513289627B3793100CD823B /* GetBits.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GetBits.h; sourceTree = "<group>"; };
+		5513289727B3793100CD823B /* ChecksumFletcher32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChecksumFletcher32.h; sourceTree = "<group>"; };
+		5513289827B3793100CD823B /* SDCard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SDCard.h; sourceTree = "<group>"; };
+		5513289927B3793100CD823B /* Img.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Img.h; sourceTree = "<group>"; };
+		5513289A27B3793100CD823B /* MSP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSP.h; sourceTree = "<group>"; };
+		5513289B27B3793100CD823B /* ImgSD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgSD.h; sourceTree = "<group>"; };
+		5513289C27B3793100CD823B /* ImgSensor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgSensor.h; sourceTree = "<group>"; };
+		5513289D27B3793100CD823B /* ICE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ICE.h; sourceTree = "<group>"; };
+		5513289E27B3793100CD823B /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
+		5513289F27B3793100CD823B /* STM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STM.h; sourceTree = "<group>"; };
+		551328A027B3793100CD823B /* SD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SD.h; sourceTree = "<group>"; };
+		551328A127B3793100CD823B /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
 		551B22432791391400D62121 /* GenerateThumbs */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = GenerateThumbs; sourceTree = BUILT_PRODUCTS_DIR; };
 		551B22462791391400D62121 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		551B224E279139DE00D62121 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -38,13 +54,10 @@
 		5533A290279141C700EF4614 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		5533A2942791426600EF4614 /* RenderThumb.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
 		5533A2AA2791532200EF4614 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
-		5533A2AC2791568100EF4614 /* RenderThumbTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderThumbTypes.h; sourceTree = "<group>"; };
 		5533A2AD2791612700EF4614 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		5533A2AF2791613500EF4614 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		5533A2B12791614300EF4614 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
 		55A36A7F27A2377300FD0181 /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RecordStore.h; path = ../MDCStudio/Source/RecordStore.h; sourceTree = "<group>"; };
-		55A36AEB27A36A7400FD0181 /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../CFAViewer/Renderer.h; sourceTree = "<group>"; };
-		55A36AEC27A36A7400FD0181 /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Renderer.metal; path = ../CFAViewer/Renderer.metal; sourceTree = "<group>"; };
 		55A36AF027A36A9200FD0181 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		55A36AF127A36A9200FD0181 /* Task.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Task.h; sourceTree = "<group>"; };
 		55A36AF227A36A9200FD0181 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
@@ -63,7 +76,6 @@
 		55A36AFF27A36A9200FD0181 /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
 		55A36B0027A36A9200FD0181 /* IntState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IntState.h; sourceTree = "<group>"; };
 		55A36B0127A36A9200FD0181 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
-		55A36B0227A36AAD00FD0181 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
 		55A36B0427A36AEB00FD0181 /* MDCUSBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUSBDevice.h; sourceTree = "<group>"; };
 		55A36B0527A36AEB00FD0181 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		55A36B0627A36AEB00FD0181 /* PixelSampler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PixelSampler.h; sourceTree = "<group>"; };
@@ -97,18 +109,39 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5513289427B3793100CD823B /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				5513289527B3793100CD823B /* ImgAutoExposure.h */,
+				5513289627B3793100CD823B /* GetBits.h */,
+				5513289727B3793100CD823B /* ChecksumFletcher32.h */,
+				5513289827B3793100CD823B /* SDCard.h */,
+				5513289927B3793100CD823B /* Img.h */,
+				5513289A27B3793100CD823B /* MSP.h */,
+				5513289B27B3793100CD823B /* ImgSD.h */,
+				5513289C27B3793100CD823B /* ImgSensor.h */,
+				5513289D27B3793100CD823B /* ICE.h */,
+				5513289E27B3793100CD823B /* Util.h */,
+				5513289F27B3793100CD823B /* STM.h */,
+				551328A027B3793100CD823B /* SD.h */,
+				551328A127B3793100CD823B /* Assert.h */,
+			);
+			name = Shared;
+			path = ../../Code/Shared;
+			sourceTree = "<group>";
+		};
 		551B223A2791391400D62121 = {
 			isa = PBXGroup;
 			children = (
 				55A36B0327A36AEB00FD0181 /* Shared */,
+				5513289427B3793100CD823B /* Shared */,
 				55A36AEE27A36A9200FD0181 /* Lib */,
 				55A36B1127A3C46A00FD0181 /* ImageLibrary.h */,
 				55A36A7F27A2377300FD0181 /* RecordStore.h */,
-				55A36B0227A36AAD00FD0181 /* MetalUtil.h */,
-				5533A2AC2791568100EF4614 /* RenderThumbTypes.h */,
 				5533A2942791426600EF4614 /* RenderThumb.metal */,
-				55A36AEB27A36A7400FD0181 /* Renderer.h */,
-				55A36AEC27A36A7400FD0181 /* Renderer.metal */,
+				5513289027B378BF00CD823B /* MetalUtil.h */,
+				5513289227B378BF00CD823B /* Renderer.h */,
+				5513289127B378BF00CD823B /* Renderer.metal */,
 				551B22462791391400D62121 /* main.mm */,
 				551B22442791391400D62121 /* Products */,
 				551B224D279139DE00D62121 /* Frameworks */,
@@ -250,8 +283,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				5533A2952791426600EF4614 /* RenderThumb.metal in Sources */,
-				55A36AED27A36A7400FD0181 /* Renderer.metal in Sources */,
 				551B22472791391400D62121 /* main.mm in Sources */,
+				5513289327B378BF00CD823B /* Renderer.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -372,7 +405,7 @@
 		551B224B2791391400D62121 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				MTL_HEADER_SEARCH_PATHS = /Users/dave/repos/MDC/Tools/CFAViewer/;
+				MTL_HEADER_SEARCH_PATHS = /Users/dave/repos/MDC/Tools/Shared/;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -380,7 +413,7 @@
 		551B224C2791391400D62121 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				MTL_HEADER_SEARCH_PATHS = /Users/dave/repos/MDC/Tools/CFAViewer/;
+				MTL_HEADER_SEARCH_PATHS = /Users/dave/repos/MDC/Tools/Shared/;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
