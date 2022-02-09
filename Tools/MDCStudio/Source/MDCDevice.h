@@ -244,6 +244,7 @@ private:
                 
                 // Add images to end of library: device has, lib doesn't
                 {
+                    #warning TODO: what if _imgIdEnd() < il.recordGet(il.back())->id+1, because the ImageLibrary was sync'd, but we crashed before we wrote imgIdEnd?
                     const Img::Id libImgIdEnd = _imgIdEnd();
                     const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
                     
@@ -388,7 +389,6 @@ private:
         std::mutex lock; // Protects this struct
         ImageLibraryPtr imgLib;
         std::thread updateImageLibraryThread;
-        Img::Id imgIdEnd = 0;
     } _state;
 };
 

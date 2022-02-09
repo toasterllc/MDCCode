@@ -26,7 +26,6 @@ struct [[gnu::packed]] ImageRef {
 
 class ImageLibrary : private RecordStore<ImageRef::Version, ImageRef, 512> {
 public:
-//    using Path = std::filesystem::path;
     using RecordStore::RecordStore;
     
     void read() {
