@@ -2,11 +2,20 @@
 
 namespace MDCTools {
 
+// Vendor: provides a convenient locking and smart-pointer mechanism
+// For example:
+//   auto vendor = std::make_shared<Vendor<Obj>>();
+//   {
+//     auto obj = vendor->vend();
+//     obj->func();
+//   }
+// Other threads are prevented from acquiring the vended object until the
+// above scope has ended. Further, within that scope, the vended object
+// `obj` is guaranteed to be valid, even if `vendor` is destroyed.
+
 template <typename T>
 class Vendor : public std::enable_shared_from_this<Vendor<T>> {
 private:
-    using _Super = std::enable_shared_from_this<Vendor<T>>;
-    
     class Vended {
     public:
         const T* operator->() const { return &_vendor->_t; }
@@ -25,17 +34,17 @@ private:
         friend class Vendor;
     };
     
+    std::shared_ptr<Vendor<T>> _getShared() {
+        using super = std::enable_shared_from_this<Vendor<T>>;
+        return super::shared_from_this();
+    }
+    
     std::mutex _lock;
     T _t;
     
     friend class Vended;
     
 public:
-//    template<typename... Args>
-//    static std::shared_ptr<Vendor<T>> MakeShared(Args&&... args) {
-//        return std::make_shared<Vendor<T>>(args...);
-//    }
-    
     template<typename... Args>
     Vendor(Args&&... args) : _t(std::forward<Args>(args)...) {}
     
@@ -43,13 +52,6 @@ public:
     
     const Vended operator->() const { return Vended(_getShared()); }
     Vended operator->() { return Vended(_getShared()); }
-    
-private:
-    std::shared_ptr<Vendor<T>> _getShared() {
-        return _Super::shared_from_this();
-    }
-//    const T& operator*() const { return _vendor->_t; }
-//    T& operator*() { return _vendor->_t; }
 };
 
 } // namespace MDCTools
