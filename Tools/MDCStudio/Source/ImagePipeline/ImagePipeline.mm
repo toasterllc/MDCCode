@@ -144,7 +144,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     const size_t sampleBufLen = sizeof(simd::float3) * std::max(1, opts.sampleRect.count());
     Renderer::Buf sampleBufRaw = renderer.bufferCreate(sampleBufLen);
     Renderer::Buf sampleBufXYZD50 = renderer.bufferCreate(sampleBufLen);
-    Renderer::Buf sampleBufSRGB = renderer.bufferCreate(sampleBufLen);
+    Renderer::Buf sampleBufLSRGB = renderer.bufferCreate(sampleBufLen);
     
     // Sample: fill `sampleBufRaw`
     {
@@ -334,22 +334,23 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
             );
         }
         
-        // Apply SRGB gamma
-        {
-            renderer.render(ImagePipelineShaderNamespace "Base::SRGBGamma", rgb,
-                // Texture args
-                rgb
-            );
-        }
+        // We changed our semantics to explicitly output LSRGB, so we no longer apply the SRGB gamma ourselves
+//        // Apply SRGB gamma
+//        {
+//            renderer.render(ImagePipelineShaderNamespace "Base::SRGBGamma", rgb,
+//                // Texture args
+//                rgb
+//            );
+//        }
         
-        // Sample: fill `sampleBufSRGB`
+        // Sample: fill `sampleBufLSRGB`
         {
             renderer.render(ImagePipelineShaderNamespace "Base::SampleRGB",
                 w, h,
                 // Buffer args
                 rawImg.cfaDesc,
                 opts.sampleRect,
-                sampleBufSRGB,
+                sampleBufLSRGB,
                 // Texture args
                 rgb
             );
@@ -362,7 +363,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         .sampleBufs = {
             .raw = std::move(sampleBufRaw),
             .xyzD50 = std::move(sampleBufXYZD50),
-            .srgb = std::move(sampleBufSRGB),
+            .lsrgb = std::move(sampleBufLSRGB),
         },
     };
 }

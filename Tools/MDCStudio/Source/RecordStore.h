@@ -111,10 +111,11 @@ public:
         }
     }
     
-    // Adds the records previously reserved via reserve()
+    // add(): adds the records previously reserved via reserve()
     void add() {
-        for (const RecordRef& ref : _reserved) {
-            ref.chunk->recordCount++;
+        for (auto it=_reserved.begin(); it!=_reserved.end(); it++) {
+            Chunk& chunk = const_cast<Chunk&>(*it->chunk);
+            chunk.recordCount++;
         }
         
         _recordRefs.insert(_recordRefs.end(), _reserved.begin(), _reserved.end());
@@ -140,17 +141,15 @@ public:
     
     bool empty() const { return _recordRefs.empty(); }
     
-    const RecordRef& front() const          { return _recordRefs.front(); }
-    const RecordRef& reservedFront() const  { return _reserved.front(); }
+    const RecordRef& front() const      { return _recordRefs.front(); }
+    const RecordRef& back() const       { return _recordRefs.back(); }
+    RecordRefConstIter begin() const    { return _recordRefs.begin(); }
+    RecordRefConstIter end() const      { return _recordRefs.end(); }
     
-    const RecordRef& back() const           { return _recordRefs.back(); }
-    const RecordRef& reservedBack() const   { return _reserved.back(); }
-    
-    RecordRefConstIter begin() const            { return _recordRefs.begin(); }
+    const RecordRef& reservedFront() const      { return _reserved.front(); }
+    const RecordRef& reservedBack() const       { return _reserved.back(); }
     RecordRefConstIter reservedBegin() const    { return _reserved.begin(); }
-    
-    RecordRefConstIter end() const          { return _recordRefs.end(); }
-    RecordRefConstIter reservedEnd() const  { return _reserved.end(); }
+    RecordRefConstIter reservedEnd() const      { return _reserved.end(); }
     
 //    ChunkConstIter getRecordChunk(size_t idx) const {
 //        return _recordRefs.at(idx).chunk;

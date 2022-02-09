@@ -61,7 +61,8 @@ struct RenderContext {
         uint32_t off    = 0; // Offset of thumbnail from image base
     } thumb;
     
-    uint32_t cellSize = 0;
+    uint32_t cellWidth = 0;
+    uint32_t cellHeight = 0;
 //    uint32_t thumbInset = 0;
 };
 

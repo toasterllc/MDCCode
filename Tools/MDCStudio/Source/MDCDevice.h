@@ -1,10 +1,12 @@
 #import <Foundation/Foundation.h>
 #import <filesystem>
+#import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "MSP.h"
 #import "MDCUSBDevice.h"
 #import "ImageLibrary.h"
 #import "Mmap.h"
 #import "ImagePipeline.h"
+#import "RenderThumb.h"
 #import "ImgSD.h"
 
 class MDCDevice : public MDCUSBDevice {
@@ -222,13 +224,12 @@ private:
             #warning TODO: to fix this, we should keep track of the most recent image downloaded from
             #warning TODO: the device, and use that to determine which images should be downloaded
             {
-                ImageLibrary& il = *imgLib();
-                auto ilLock = std::unique_lock(il.lock);
-                
                 // Remove images from beginning of library: lib has, device doesn't
-                if (il.recordCount()) {
+                {
                     const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
                     
+                    ImageLibrary& il = *imgLib();
+                    auto ilLock = std::unique_lock(il.lock);
                     const auto removeBegin = il.begin();
                     
                     // Find the first image >= `deviceImgIdBegin`
@@ -266,6 +267,16 @@ private:
                     _loadImages(oldest);
                     _loadImages(newest);
                 }
+                
+                // Update _state.imgIdEnd
+                {
+                    ImageLibrary& il = *imgLib();
+                    auto ilLock = std::unique_lock(il.lock);
+                    _state.imgIdEnd = (!il.empty() ? il.recordGet(il.back())->id+1 : 0);
+                }
+                
+                // Save the library
+                sync();
             }
         
         } catch (const std::exception& e) {
@@ -275,33 +286,64 @@ private:
     
     void _loadImages(const _Range& range) {
         using namespace MDCTools;
-        using namespace MDCStudio::ImagePipeline;
         
-        constexpr size_t ImageChunkSize = 16; // Number of images to read at a time
+        constexpr size_t ChunkImgCount = 16; // Number of images to read at a time
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
         id<MTLDevice> device = MTLCreateSystemDefaultDevice();
         if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
         Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
         
-        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(ImageChunkSize * ImgSD::ImgPaddedLen);
+        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(ChunkImgCount * ImgSD::ImgPaddedLen);
         sdRead(range.idx * ImgSD::ImgPaddedLen);
         
         for (size_t i=0; i<range.len;) {
-            const size_t chunkLen = std::min(ImageChunkSize, range.len-i);
-            readout(buf.get(), chunkLen*ImgSD::ImgPaddedLen);
-            printf("Read %ju images\n", (uintmax_t)chunkLen);
+            const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
+            readout(buf.get(), chunkImgCount*ImgSD::ImgPaddedLen);
+            printf("Read %ju images\n", (uintmax_t)chunkImgCount);
             
-            for (size_t idx=0; idx<chunkLen; idx++) {
-                const uint8_t* imgData = buf.get()+idx*ImgSD::ImgPaddedLen;
-                
-                // Validate checksum
-                const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::ChecksumOffset);
-                uint32_t checksumGot = 0;
-                memcpy(&checksumGot, imgData+Img::ChecksumOffset, Img::ChecksumLen);
-                if (checksumGot != checksumExpected) {
-                    throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
-                }
+            _addImages(renderer, buf.get(), chunkImgCount);
+            i += chunkImgCount;
+        }
+        
+        // Make sure all rendering is complete
+        renderer.commitAndWait();
+    }
+    
+    void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount) {
+        using namespace MDCTools;
+        using namespace MDCStudio::ImagePipeline;
+        
+        ImageLibrary& il = *imgLib();
+        
+        // We only need to hold the lock while we reserve space, but not while writing to the reserved space
+        {
+            auto ilLock = std::unique_lock(il.lock);
+            il.reserve(imgCount);
+        }
+        
+        for (size_t idx=0; idx<imgCount; idx++) {
+            const uint8_t* imgData = data+idx*ImgSD::ImgPaddedLen;
+            const Img::Header& imgHeader = *(const Img::Header*)imgData;
+            const auto recordRefIter = il.reservedBegin()+idx;
+            ImageRef& imageRef = *il.recordGet(recordRefIter);
+            
+            // Validate checksum
+            const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::ChecksumOffset);
+            uint32_t checksumGot = 0;
+            memcpy(&checksumGot, imgData+Img::ChecksumOffset, Img::ChecksumLen);
+            if (checksumGot != checksumExpected) {
+                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+            }
+            
+            // Populate ImageRef fields
+            {
+                imageRef.id = imgHeader.id;
+            }
+            
+            // Render the thumbnail into the ImageLibrary
+            {
+                const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
                 
                 Pipeline::RawImage rawImage = {
                     .cfaDesc = {
@@ -313,16 +355,30 @@ private:
                     .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
                 };
                 
-                const Pipeline::Options opts = {
+                const Pipeline::Options pipelineOpts = {
                     .reconstructHighlights  = { .en = true, },
                     .debayerLMMSE           = { .applyGamma = true, },
-                    .defringe               = { .en = false, },
                 };
                 
-                Pipeline::Result pres = Pipeline::Run(renderer, rawImage, opts);
+                Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
+                const size_t thumbDataOff = (uintptr_t)&imageRef.thumbData - (uintptr_t)chunk.mmap.data();
+                
+                RenderThumb::Options thumbOpts = {
+                    .thumbWidth = ImageRef::ThumbWidth,
+                    .thumbHeight = ImageRef::ThumbHeight,
+                    .dst = (void*)chunk.mmap.data(),
+                    .dstOff = thumbDataOff,
+                    .dstCap = chunk.mmap.len(),
+                };
+                
+                RenderThumb::Run(renderer, thumbOpts, renderResult.txt);
             }
-            
-            i += chunkLen;
+        }
+        
+        // Add the records that we previously reserved
+        {
+            auto ilLock = std::unique_lock(il.lock);
+            il.add();
         }
     }
     

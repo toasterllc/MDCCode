@@ -10,8 +10,8 @@ namespace MDCStudio::ImagePipeline {
         static void Run(MDCTools::Renderer& renderer, float amount, float radius, id<MTLTexture> rgb) {
             using namespace MDCTools;
             
-            const NSUInteger w = [rgb width];
-            const NSUInteger h = [rgb height];
+            const size_t w = [rgb width];
+            const size_t h = [rgb height];
             // Extract L
             Renderer::Txt lTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
             renderer.render(ImagePipelineShaderNamespace "LocalContrast::ExtractL", lTxt,
