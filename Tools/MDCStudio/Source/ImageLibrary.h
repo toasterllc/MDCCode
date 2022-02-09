@@ -6,8 +6,6 @@ struct [[gnu::packed]] ImageRef {
     static constexpr uint32_t Version       = 0;
     static constexpr size_t ThumbWidth      = Img::PixelWidth/8;
     static constexpr size_t ThumbHeight     = Img::PixelHeight/8;
-//    static constexpr size_t ThumbWidth      = 288;
-//    static constexpr size_t ThumbHeight     = 162;
     static constexpr size_t ThumbPixelSize  = 3;
     
     enum Rotation : uint8_t {
@@ -81,45 +79,6 @@ private:
     struct {
         Img::Id imgIdEnd = 0;
     } _state;
-    
-//    ImageLibrary(const Path& path) : RecordStore(path) {
-//        
-//    }
-//    
-//private:
-//    static constexpr uint32_t _Version = 0;
-//    
-//    std::mutex _lock; // Protects this object
-//    Img::Id _imgIdEnd = 0;
-//    
-//    struct [[gnu::packed]] _SerializedState {
-//        uint32_t version = 0;
-//        Img::Id imgIdEnd = 0;
-//    };
-//    
-//    static Path _StatePath(const Path& path) { return Path(path).replace_extension(".state"); }
-//    
-//    static _SerializedState _SerializedStateRead(const Path& path) {
-//        const Mmap mmap(_StatePath(path));
-//        
-//        const _SerializedState& state = *mmap.data<_SerializedState>(0);
-//        
-//        if (state.version != _Version) {
-//            throw Toastbox::RuntimeError("invalid state version (expected: 0x%jx, got: 0x%jx)",
-//                (uintmax_t)_Version,
-//                (uintmax_t)state.version
-//            );
-//        }
-//        
-//        return state;
-//    }
-//    
-//    static void _SerializedStateWrite(const Path& path, const _SerializedState& state) {
-//        std::ofstream f;
-//        f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-//        f.open(_StatePath(path));
-//        f.write((char*)&state, sizeof(state));
-//    }
 };
 
 using ImageLibraryPtr = std::shared_ptr<MDCTools::Vendor<ImageLibrary>>;
