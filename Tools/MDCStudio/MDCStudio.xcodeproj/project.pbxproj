@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		5513287C27B3304100CD823B /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5513287B27B3304100CD823B /* RenderThumb.metal */; };
+		551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551328B827B45D7C00CD823B /* ImageGridView.mm */; };
 		55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55496F46278CFC0400BCA739 /* AppDelegate.mm */; };
 		55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55496F48278CFC0600BCA739 /* Assets.xcassets */; };
 		55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55496F4A278CFC0600BCA739 /* MainMenu.xib */; };
@@ -46,6 +47,8 @@
 		5513287927B326CF00CD823B /* RenderThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderThumb.h; sourceTree = "<group>"; };
 		5513287B27B3304100CD823B /* RenderThumb.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
 		551328B527B3A02100CD823B /* Vendor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Vendor.h; sourceTree = "<group>"; };
+		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
+		551328B827B45D7C00CD823B /* ImageGridView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridView.mm; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* MDCStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
@@ -161,6 +164,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		551328BA27B45E6200CD823B /* ImageGrid */ = {
+			isa = PBXGroup;
+			children = (
+				551B22382790245000D62121 /* ImageGridLayerTypes.h */,
+				55C6C841278FE35C005ABD39 /* ImageGridLayer.h */,
+				55C6C844278FFE60005ABD39 /* ImageGridLayer.mm */,
+				55C6C846279001CA005ABD39 /* ImageGridLayer.metal */,
+				551328B727B45D7C00CD823B /* ImageGridView.h */,
+				551328B827B45D7C00CD823B /* ImageGridView.mm */,
+			);
+			path = ImageGrid;
+			sourceTree = "<group>";
+		};
 		55496F39278CFC0400BCA739 = {
 			isa = PBXGroup;
 			children = (
@@ -200,15 +216,12 @@
 			isa = PBXGroup;
 			children = (
 				55D4AA7A27B1D3100052EFEE /* ImagePipeline */,
+				551328BA27B45E6200CD823B /* ImageGrid */,
 				55A36A8E27A2951900FD0181 /* MDCDevice.h */,
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,
-				551B22382790245000D62121 /* ImageGridLayerTypes.h */,
-				55C6C841278FE35C005ABD39 /* ImageGridLayer.h */,
-				55C6C844278FFE60005ABD39 /* ImageGridLayer.mm */,
-				55C6C846279001CA005ABD39 /* ImageGridLayer.metal */,
 				55496F46278CFC0400BCA739 /* AppDelegate.mm */,
 				55496F4E278CFC0600BCA739 /* main.mm */,
 			);
@@ -412,6 +425,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */,
 				55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */,
 				55496F4F278CFC0600BCA739 /* main.mm in Sources */,
 				55D4AA9127B1D3100052EFEE /* LocalContrast.metal in Sources */,
@@ -571,7 +585,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/../Shared $PROJECT_DIR/../../Code/Shared";
+				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/../Shared $PROJECT_DIR/../../Code/Shared $PROJECT_DIR/Source";
 				PRODUCT_BUNDLE_IDENTIFIER = com.heytoaster.MDCStudio;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -588,7 +602,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/../Shared $PROJECT_DIR/../../Code/Shared";
+				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/../Shared $PROJECT_DIR/../../Code/Shared $PROJECT_DIR/Source";
 				PRODUCT_BUNDLE_IDENTIFIER = com.heytoaster.MDCStudio;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
