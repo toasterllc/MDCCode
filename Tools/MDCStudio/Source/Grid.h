@@ -13,6 +13,7 @@ namespace std = metal;
 #endif
 
 #warning TODO: migrate int32_t to uint32_t where it makes sense (eg: containerWidth, elementCount). currently everything is int32_t.
+#warning TODO: can we de-metalify this class but still use it from Metal?
 
 class Grid {
 public:

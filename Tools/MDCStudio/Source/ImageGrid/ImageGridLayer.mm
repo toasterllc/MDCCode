@@ -82,8 +82,6 @@ using ThumbFile = Mmap;
     
     [self setActions:_LayerNullActions];
     [self setNeedsDisplayOnBoundsChange:true];
-    #warning TODO: we need PresentsWithTransaction=1 while window is resizing (to prevent artifacts), and PresentsWithTransaction=0 while scrolling (to prevent stutters)
-//    [self setPresentsWithTransaction:true]; // Necessary to prevent artifacts when resizing window
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);

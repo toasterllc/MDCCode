@@ -14,7 +14,7 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customObject id="Voe-Tx-rLC" customClass="AppDelegate">
             <connections>
-                <outlet property="_mainView" destination="umK-OI-d0T" id="pdF-up-xxL"/>
+                <outlet property="_imageGridView" destination="umK-OI-d0T" id="L3Y-fV-ANU"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
@@ -691,13 +691,13 @@
                 <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="A0L-bA-GT0" customClass="MyScrollView">
+                    <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="A0L-bA-GT0" customClass="ImageGridScrollView">
                         <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                        <clipView key="contentView" id="CIl-4V-GIA" customClass="MyClipView">
+                        <clipView key="contentView" id="CIl-4V-GIA">
                             <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <view id="umK-OI-d0T" customClass="MainView">
+                                <view id="umK-OI-d0T" customClass="ImageGridView">
                                     <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 </view>
