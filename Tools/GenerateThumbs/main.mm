@@ -4,10 +4,9 @@
 #import <MetalKit/MetalKit.h>
 #import "Renderer.h"
 #import "Toastbox/Mmap.h"
-#import "RenderThumbTypes.h"
 #import "ImageLibrary.h"
 namespace fs = std::filesystem;
-using namespace CFAViewer;
+using namespace MDCTools;
 using namespace Toastbox;
 
 const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022:1:26/TestImages-5k";
@@ -78,6 +77,12 @@ int main(int argc, const char* argv[]) {
     }
     
     ImageLibrary imgLib("/Users/dave/Desktop/ImgLib");
+    try {
+        imgLib.read();
+    } catch (const std::exception& e) {
+        printf("Recreating ImageLibrary, cause: %s\n", e.what());
+    }
+    
     auto startTime = std::chrono::steady_clock::now();
     {
         Renderer renderer(dev, lib, commandQueue);
@@ -91,12 +96,13 @@ int main(int argc, const char* argv[]) {
             NSArray<id<MTLTexture>>* txts = [txtLoader newTexturesWithContentsOfURLs:batchURLs options:nil error:nil];
             
             const size_t beginOff = imgLib.recordCount();
-            imgLib.add([txts count]);
+            imgLib.reserve([txts count]);
+            imgLib.add();
             auto imageRefIter = imgLib.begin()+beginOff;
             
             printf("Writing %ju thumbnails...\n", (uintmax_t)batchLen);
             for (id<MTLTexture> txt : txts) @autoreleasepool {
-                ImageRef* image = imgLib.getRecord(imageRefIter);
+                ImageRef* image = imgLib.recordGet(imageRefIter);
                 
                 const uintptr_t start = _FloorToPageSize((uintptr_t)image);
                 const uintptr_t end = _CeilToPageSize((uintptr_t)(image)+sizeof(ImageRef));
@@ -107,15 +113,10 @@ int main(int argc, const char* argv[]) {
                 id<MTLBuffer> thumbBuf = [dev newBufferWithBytesNoCopy:(void*)start length:len options:BufOpts deallocator:nil];
                 assert(thumbBuf);
                 
-                const RenderContext ctx = {
-                    .thumbOff = (uint32_t)off,
-                    .width = ImageRef::ThumbWidth,
-                    .height = ImageRef::ThumbHeight,
-                };
-                
                 renderer.render("RenderThumb", ImageRef::ThumbWidth, ImageRef::ThumbHeight,
                     // Buffer args
-                    ctx,
+                    (uint32_t)off,
+                    (uint32_t)ImageRef::ThumbWidth,
                     thumbBuf,
                     // Texture args
                     txt
@@ -135,7 +136,7 @@ int main(int argc, const char* argv[]) {
 //        imgStore.removeImage(rand() % imgStore.imageCount());
 //    }
     
-    imgLib.sync();
+    imgLib.write();
     
     return 0;
 }
