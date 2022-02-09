@@ -225,8 +225,8 @@ static ColorDir<Poly> _solveForPolys(Renderer& renderer,
     id<MTLTexture> raw, id<MTLTexture> gInterp
 ) {
     
-    const NSUInteger w = [raw width];
-    const NSUInteger h = [raw height];
+    const size_t w = [raw width];
+    const size_t h = [raw height];
     const size_t bufLen = w*h*sizeof(float);
     Renderer::Buf rawBuf = renderer.bufferCreate(bufLen);
     Renderer::Buf gInterpBuf = renderer.bufferCreate(bufLen);
@@ -301,8 +301,8 @@ static void _defringe(Renderer& renderer,
     id<MTLTexture> raw, id<MTLTexture> gInterp
 ) {
     
-    const NSUInteger w = [raw width];
-    const NSUInteger h = [raw height];
+    const size_t w = [raw width];
+    const size_t h = [raw height];
     
     // Solve for the 2D polynomials that minimize the g-r/b difference
     ColorDir<Poly> polys = _solveForPolys(renderer, cfaDesc, opts, raw, gInterp);
@@ -369,8 +369,8 @@ namespace MDCStudio::ImagePipeline {
 void Defringe::Run(Renderer& renderer, const CFADesc& cfaDesc,
     const Options& opts, id<MTLTexture> raw) {
     
-    const NSUInteger w = [raw width];
-    const NSUInteger h = [raw height];
+    const size_t w = [raw width];
+    const size_t h = [raw height];
     
     Renderer::Txt gInterp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
     renderer.render(ImagePipelineShaderNamespace "Defringe::InterpolateG", gInterp,

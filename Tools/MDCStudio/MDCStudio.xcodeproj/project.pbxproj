@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5513287C27B3304100CD823B /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5513287B27B3304100CD823B /* RenderThumb.metal */; };
 		55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55496F46278CFC0400BCA739 /* AppDelegate.mm */; };
 		55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55496F48278CFC0600BCA739 /* Assets.xcassets */; };
 		55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55496F4A278CFC0600BCA739 /* MainMenu.xib */; };
@@ -42,6 +43,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5513287927B326CF00CD823B /* RenderThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderThumb.h; sourceTree = "<group>"; };
+		5513287B27B3304100CD823B /* RenderThumb.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* MDCStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
@@ -318,16 +321,18 @@
 				55D4AA8227B1D3100052EFEE /* FFCC.h */,
 				55D4AA8127B1D3100052EFEE /* FFCC.metal */,
 				55D4AA8F27B1D3100052EFEE /* FFCC.mm */,
-				55D4AA7B27B1D3100052EFEE /* ImagePipeline.h */,
-				55D4AA8927B1D3100052EFEE /* ImagePipeline.metal */,
-				55D4AA8427B1D3100052EFEE /* ImagePipeline.mm */,
-				55D4AA8627B1D3100052EFEE /* ImagePipelineTypes.h */,
 				55D4AA7F27B1D3100052EFEE /* LocalContrast.h */,
 				55D4AA7D27B1D3100052EFEE /* LocalContrast.metal */,
 				55D4AA8C27B1D3100052EFEE /* ReconstructHighlights.h */,
 				55D4AA8827B1D3100052EFEE /* ReconstructHighlights.metal */,
 				55D4AA8E27B1D3100052EFEE /* Saturation.h */,
 				55D4AA8027B1D3100052EFEE /* Saturation.metal */,
+				5513287927B326CF00CD823B /* RenderThumb.h */,
+				5513287B27B3304100CD823B /* RenderThumb.metal */,
+				55D4AA7B27B1D3100052EFEE /* ImagePipeline.h */,
+				55D4AA8927B1D3100052EFEE /* ImagePipeline.metal */,
+				55D4AA8427B1D3100052EFEE /* ImagePipeline.mm */,
+				55D4AA8627B1D3100052EFEE /* ImagePipelineTypes.h */,
 			);
 			path = ImagePipeline;
 			sourceTree = "<group>";
@@ -411,6 +416,7 @@
 				55D4AA9527B1D3100052EFEE /* ImagePipeline.mm in Sources */,
 				55D4AA9227B1D3100052EFEE /* Saturation.metal in Sources */,
 				55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */,
+				5513287C27B3304100CD823B /* RenderThumb.metal in Sources */,
 				55D4AA9427B1D3100052EFEE /* Defringe.metal in Sources */,
 				55D4AA9327B1D3100052EFEE /* FFCC.metal in Sources */,
 				55D4AAA727B1D80C0052EFEE /* Renderer.metal in Sources */,
@@ -537,6 +543,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;

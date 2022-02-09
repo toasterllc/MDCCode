@@ -7,18 +7,17 @@ namespace MDCStudio::ImagePipeline {
 
 class DebayerLMMSE {
 public:
-    static void Run(MDCTools::Renderer& renderer, const CFADesc& cfaDesc, bool applyGamma,
-        id<MTLTexture> rawOriginal, id<MTLTexture> rgb) {
+    static void Run(MDCTools::Renderer& renderer, const CFADesc& cfaDesc, bool applyGamma, id<MTLTexture> srcRaw, id<MTLTexture> dstRGB) {
         
         using namespace MDCTools;
         
-        const NSUInteger w = [rawOriginal width];
-        const NSUInteger h = [rawOriginal height];
+        const size_t w = [srcRaw width];
+        const size_t h = [srcRaw height];
         
         Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
         
-        // Copy `rawOriginal` so we can modify it
-        renderer.copy(rawOriginal, raw);
+        // Copy `srcRaw` so we can modify it
+        renderer.copy(srcRaw, raw);
         
         // Gamma before (improves quality of edges)
         if (applyGamma) {
@@ -98,9 +97,9 @@ public:
             );
         }
         
-        // Calculate rgb.g
+        // Calculate dstRGB.g
         {
-            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcG", rgb,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcG", dstRGB,
                 // Buffer args
                 cfaDesc,
                 // Texture args
@@ -122,7 +121,7 @@ public:
                 modeGR,
                 // Texture args
                 raw,
-                rgb
+                dstRGB
             );
         }
         
@@ -136,7 +135,7 @@ public:
                 modeGR,
                 // Texture args
                 raw,
-                rgb
+                dstRGB
             );
         }
         
@@ -149,7 +148,7 @@ public:
                 modeGR,
                 // Texture args
                 raw,
-                rgb,
+                dstRGB,
                 diffGRTxt
             );
         }
@@ -163,7 +162,7 @@ public:
                 modeGR,
                 // Texture args
                 raw,
-                rgb,
+                dstRGB,
                 diffGBTxt
             );
         }
@@ -175,7 +174,7 @@ public:
                 cfaDesc,
                 // Texture args
                 raw,
-                rgb,
+                dstRGB,
                 diffGRTxt
             );
         }
@@ -187,16 +186,16 @@ public:
                 cfaDesc,
                 // Texture args
                 raw,
-                rgb,
+                dstRGB,
                 diffGBTxt
             );
         }
         
-        // Calculate rgb.rb
+        // Calculate dstRGB.rb
         {
-            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcRB", rgb,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::CalcRB", dstRGB,
                 // Texture args
-                rgb,
+                dstRGB,
                 diffGRTxt,
                 diffGBTxt
             );
@@ -204,9 +203,9 @@ public:
         
         // Gamma after (improves quality of edges)
         if (applyGamma) {
-            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::GammaReverse", rgb,
+            renderer.render(ImagePipelineShaderNamespace "DebayerLMMSE::GammaReverse", dstRGB,
                 // Texture args
-                rgb
+                dstRGB
             );
         }
     }

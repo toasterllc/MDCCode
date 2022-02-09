@@ -8,6 +8,13 @@
 using namespace MDCStudio;
 namespace fs = std::filesystem;
 
+static constexpr auto _ThumbWidth = ImageRef::ThumbWidth;
+static constexpr auto _ThumbHeight = ImageRef::ThumbHeight;
+
+// _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
+// so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+
 static matrix_float4x4 _Scale(float x, float y, float z) {
     return matrix_float4x4{
         .columns[0] = { x, 0, 0, 0 },
@@ -57,7 +64,8 @@ using ThumbFile = Mmap;
     CGFloat _contentsScale;
     
     Grid _grid;
-    uint32_t _cellSize;
+    uint32_t _cellWidth;
+    uint32_t _cellHeight;
     ImageLibraryPtr _imgLib;
 //    uint32_t _thumbInset;
 }
@@ -67,6 +75,8 @@ using ThumbFile = Mmap;
 //    CreateThumbBuf();
     
     if (!(self = [super init])) return nil;
+    
+    [self setOpaque:false];
     
     _contentsScale = 1;
     
@@ -78,7 +88,7 @@ using ThumbFile = Mmap;
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
     [self setDevice:_device];
-    [self setPixelFormat:MTLPixelFormatBGRA8Unorm];
+    [self setPixelFormat:_PixelFormat];
     
     MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:_device];
     // TODO: supply scaleFactor properly
@@ -169,7 +179,7 @@ using ThumbFile = Mmap;
     [pipelineDescriptor setFragmentFunction:fragmentShader];
     
     [pipelineDescriptor setDepthAttachmentPixelFormat:MTLPixelFormatDepth32Float];
-    [[pipelineDescriptor colorAttachments][0] setPixelFormat:MTLPixelFormatBGRA8Unorm];
+    [[pipelineDescriptor colorAttachments][0] setPixelFormat:_PixelFormat];
     [[pipelineDescriptor colorAttachments][0] setBlendingEnabled:true];
     
     [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
@@ -232,19 +242,19 @@ using ThumbFile = Mmap;
 //        NSLog(@"_thumbBuf: %p", self->_thumbBuf);
 //    }];
     
-    constexpr int32_t ThumbSize = ImageRef::ThumbWidth;
     const uint32_t shadowExcess = (uint32_t)([_shadowTexture width]-[_maskTexture width]);
-    _cellSize = ThumbSize+shadowExcess;
+    _cellWidth = _ThumbWidth+shadowExcess;
+    _cellHeight = _ThumbHeight+shadowExcess;
     
     _grid.setBorderSize({
-        .left   = (int32_t)_cellSize/5,
-        .right  = (int32_t)_cellSize/5,
-        .top    = (int32_t)_cellSize/5,
-        .bottom = (int32_t)_cellSize/5,
+        .left   = (int32_t)_cellWidth/5,
+        .right  = (int32_t)_cellWidth/5,
+        .top    = (int32_t)_cellHeight/5,
+        .bottom = (int32_t)_cellHeight/5,
     });
     
-    _grid.setCellSize({(int32_t)_cellSize, (int32_t)_cellSize});
-    _grid.setCellSpacing({(int32_t)_cellSize/10, (int32_t)_cellSize/10});
+    _grid.setCellSize({(int32_t)_cellWidth, (int32_t)_cellHeight});
+    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
     
     return self;
 }
@@ -261,8 +271,8 @@ using ThumbFile = Mmap;
 - (MTLRenderPassDepthAttachmentDescriptor*)_depthAttachmentForDrawableTexture:(id<MTLTexture>)drawableTexture {
     NSParameterAssert(drawableTexture);
     
-    const NSUInteger width = [drawableTexture width];
-    const NSUInteger height = [drawableTexture height];
+    const size_t width = [drawableTexture width];
+    const size_t height = [drawableTexture height];
     if (!_depthTexture || width!=[_depthTexture width] || height!=[_depthTexture height]) {
         // The _depthTexture doesn't exist or our size changed, so re-create the depth texture
         MTLTextureDescriptor* desc =
@@ -463,7 +473,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{40./255, 40./255, 40./255, 1}];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
@@ -480,8 +490,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{40./255, 40./255, 40./255, 1}];
-    //    [[renderPassDescriptor colorAttachments][0] setClearColor:{40./255, 40./255, 40./255, 1}];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         // rasterFromUnityMatrix: converts unity coordinates [-1,1] -> rasterized coordinates [0,pixel width/height]
@@ -586,7 +595,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                         .pxSize = ImageRef::ThumbPixelSize,
                         .off    = (uint32_t)(offsetof(ImageRef, thumbData)),
                     },
-                    .cellSize = _cellSize,
+                    .cellWidth = _cellWidth,
+                    .cellHeight = _cellHeight,
                 };
                 
                 [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];

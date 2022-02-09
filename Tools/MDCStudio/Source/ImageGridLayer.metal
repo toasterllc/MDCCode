@@ -255,8 +255,8 @@ fragment float4 FragmentShader(
         const int shadowHeight = shadowTxt.get_height();
         const int shadowWidth2 = shadowWidth/2;
         const int shadowHeight2 = shadowHeight/2;
-        const int2 marginX = int2(shadowWidth2, (ctx.cellSize-shadowWidth2));
-        const int2 marginY = int2(shadowHeight2, (ctx.cellSize-shadowHeight2));
+        const int2 marginX = int2(shadowWidth2, (ctx.cellWidth-shadowWidth2));
+        const int2 marginY = int2(shadowHeight2, (ctx.cellHeight-shadowHeight2));
         
         int2 shadowPos = pos;
         if (pos.x <= marginX[0])        shadowPos.x = pos.x;

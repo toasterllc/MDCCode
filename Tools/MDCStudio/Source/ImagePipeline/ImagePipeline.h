@@ -56,12 +56,12 @@ public:
     };
     
     struct Result {
-        MDCTools::Renderer::Txt txt;
+        MDCTools::Renderer::Txt txt; // LSRGB colorspace
         Color<ColorSpace::Raw> illumEst; // Estimated illuminant
         struct {
             MDCTools::Renderer::Buf raw;
             MDCTools::Renderer::Buf xyzD50;
-            MDCTools::Renderer::Buf srgb;
+            MDCTools::Renderer::Buf lsrgb;
         } sampleBufs;
     };
     

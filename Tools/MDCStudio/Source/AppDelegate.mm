@@ -112,7 +112,6 @@ static NSDictionary* LayerNullActions = @{
 @end
 
 @implementation MainView {
-@public
     CALayer* _rootLayer;
     ImageGridLayer* _imageGridLayer;
 }
@@ -137,26 +136,26 @@ static NSDictionary* LayerNullActions = @{
     _imageGridLayer = [ImageGridLayer new];
     [_rootLayer addSublayer:_imageGridLayer];
     
-    const char* ImageLibraryPath = "/Users/dave/Desktop/ImgLib";
-//    const char* ImageLibraryPath = "/Users/dave/Desktop/ImageStore-Chunk-5k";
-//    const char* ImageLibraryPath = "/Users/dave/Desktop/ImageStore-Chunk-40k";
-    auto imgLib = std::make_shared<ImageLibrary>(ImageLibraryPath);
-    
-//    printf("Reading every page START\n");
-//    const size_t pageSize = getpagesize();
-//    const auto chunkBegin = imgLib->getImageChunk(0);
-//    const auto chunkEnd = std::next(imgLib->getImageChunk(imgLib->imageCount()-1));
-//    for (auto it=chunkBegin; it!=chunkEnd; it++) {
-//        const Mmap& mmap = it->mmap;
-//        const volatile uint8_t* data = mmap.data<const volatile uint8_t>();
-//        const size_t mmapLen = mmap.len();
-//        for (size_t off=0; off<mmapLen; off+=pageSize) {
-//            data[off];
-//        }
-//    }
-//    printf("Reading every page END\n");
-    
-    [_imageGridLayer setImageLibrary:imgLib];
+//    const char* ImageLibraryPath = "/Users/dave/Desktop/ImgLib";
+////    const char* ImageLibraryPath = "/Users/dave/Desktop/ImageStore-Chunk-5k";
+////    const char* ImageLibraryPath = "/Users/dave/Desktop/ImageStore-Chunk-40k";
+//    auto imgLib = std::make_shared<ImageLibrary>(ImageLibraryPath);
+//    
+////    printf("Reading every page START\n");
+////    const size_t pageSize = getpagesize();
+////    const auto chunkBegin = imgLib->getImageChunk(0);
+////    const auto chunkEnd = std::next(imgLib->getImageChunk(imgLib->imageCount()-1));
+////    for (auto it=chunkBegin; it!=chunkEnd; it++) {
+////        const Mmap& mmap = it->mmap;
+////        const volatile uint8_t* data = mmap.data<const volatile uint8_t>();
+////        const size_t mmapLen = mmap.len();
+////        for (size_t off=0; off<mmapLen; off+=pageSize) {
+////            data[off];
+////        }
+////    }
+////    printf("Reading every page END\n");
+//    
+//    [_imageGridLayer setImageLibrary:imgLib];
     
 //    [_rootLayer addSublayer:_imageGridLayer];
 //    [self setLayer:_imageGridLayer];
@@ -177,6 +176,10 @@ static NSDictionary* LayerNullActions = @{
 //    NSLog(@"setBounds:");
 //    [super setBounds:bounds];
 //}
+
+- (ImageGridLayer*)imageGridLayer {
+    return _imageGridLayer;
+}
 
 - (void)setFrame:(NSRect)frame {
     [_imageGridLayer setContainerWidth:frame.size.width];
@@ -217,7 +220,7 @@ static NSDictionary* LayerNullActions = @{
     [super reflectScrolledClipView:clipView];
     
     const CGRect visibleRect = [self documentVisibleRect];
-    ImageGridLayer*const imageGridLayer = ((MainView*)[self documentView])->_imageGridLayer;
+    ImageGridLayer*const imageGridLayer = [((MainView*)[self documentView]) imageGridLayer];
     [imageGridLayer setFrame:visibleRect];
 //    [gridLayer setFrame:CGRectInset(visibleRect, 10, 10)];
 //    NSLog(@"%@", NSStringFromRect(visibleRect));
@@ -289,7 +292,9 @@ static NSDictionary* LayerNullActions = @{
 @property(weak) IBOutlet NSWindow* window;
 @end
 
-@implementation AppDelegate
+@implementation AppDelegate {
+    IBOutlet MainView* _mainView;
+}
 
 - (void)awakeFromNib {
     __weak auto weakSelf = self;
@@ -303,8 +308,15 @@ static NSDictionary* LayerNullActions = @{
 - (void)_handleDevicesChanged {
     printf("_handleDevicesChanged\n");
     std::vector<MDCDevicePtr> devices = MDCDevicesManager::Devices();
+    bool first = true;
     for (MDCDevicePtr dev : devices) {
         dev->updateImageLibrary();
+        
+        if (first) {
+            [[_mainView imageGridLayer] setImageLibrary:dev->imgLib()];
+        }
+        
+        first = false;
     }
 }
 

@@ -134,8 +134,8 @@ public:
     template <typename... Args>
     void render(
         const std::string& name,
-        NSUInteger width,
-        NSUInteger height,
+        size_t width,
+        size_t height,
         Args&&... args
     ) {
         MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor new];
@@ -160,11 +160,11 @@ public:
     }
     
     void copy(id<MTLTexture> src, id<MTLBuffer> dst) {
-        const NSUInteger w = [src width];
-        const NSUInteger h = [src height];
-        const NSUInteger bytesPerPixel = BytesPerPixel([src pixelFormat]);
-        const NSUInteger bytesPerRow = w*bytesPerPixel;
-        const NSUInteger bytesPerImage = h*bytesPerRow;
+        const size_t w = [src width];
+        const size_t h = [src height];
+        const size_t bytesPerPixel = BytesPerPixel([src pixelFormat]);
+        const size_t bytesPerRow = w*bytesPerPixel;
+        const size_t bytesPerImage = h*bytesPerRow;
         id<MTLBlitCommandEncoder> blit = [cmdBuf() blitCommandEncoder];
         [blit copyFromTexture:src sourceSlice:0 sourceLevel:0 sourceOrigin:{}
             sourceSize:{w,h,1} toBuffer:dst destinationOffset:0
@@ -174,11 +174,11 @@ public:
     }
     
     void copy(id<MTLBuffer> src, id<MTLTexture> dst) {
-        const NSUInteger w = [dst width];
-        const NSUInteger h = [dst height];
-        const NSUInteger bytesPerPixel = BytesPerPixel([dst pixelFormat]);
-        const NSUInteger bytesPerRow = w*bytesPerPixel;
-        const NSUInteger bytesPerImage = h*bytesPerRow;
+        const size_t w = [dst width];
+        const size_t h = [dst height];
+        const size_t bytesPerPixel = BytesPerPixel([dst pixelFormat]);
+        const size_t bytesPerRow = w*bytesPerPixel;
+        const size_t bytesPerImage = h*bytesPerRow;
         id<MTLBlitCommandEncoder> blit = [cmdBuf() blitCommandEncoder];
         [blit copyFromBuffer:src sourceOffset:0
             sourceBytesPerRow:bytesPerRow
@@ -251,7 +251,7 @@ public:
     
     Txt textureCreate(
         MTLPixelFormat fmt,
-        NSUInteger width, NSUInteger height,
+        size_t width, size_t height,
         MTLTextureUsage usage=(MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead)
     ) {
         // Check if we already have a texture matching the given criteria
@@ -281,12 +281,12 @@ public:
         return textureCreate([txt pixelFormat], [txt width], [txt height], [txt usage]);
     }
     
-    Buf bufferCreate(NSUInteger len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
+    Buf bufferCreate(size_t len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
         // Return an existing buffer if its length is between len and 2*len,
         // and its options match `opts`
         for (auto it=_bufs.begin(); it!=_bufs.end(); it++) {
             id<MTLBuffer> buf = *it;
-            const NSUInteger bufLen = [buf length];
+            const size_t bufLen = [buf length];
             const MTLResourceOptions bufOpts = [buf resourceOptions];
             if (bufLen>=len && bufLen<=2*len && bufOpts==opts) {
                 Buf b(*this, buf);
@@ -400,7 +400,7 @@ public:
     }
     
     void bufferClear(id<MTLBuffer> buf) {
-        const NSUInteger len = [buf length];
+        const size_t len = [buf length];
         memset([buf contents], 0, len);
         [buf didModifyRange:{0,len}];
     }
@@ -471,7 +471,7 @@ public:
             if (samplesPerPixel == 1) {
                 colorSpace = _GrayColorSpace();
             } else if (samplesPerPixel == 4) {
-                colorSpace = _SRGBColorSpace();
+                colorSpace = _LSRGBColorSpace();
             } else {
                 throw std::runtime_error("invalid texture format");
             }
@@ -566,8 +566,8 @@ private:
         return (__bridge id)cs;
     }
     
-    static id _SRGBColorSpace() {
-        static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    static id _LSRGBColorSpace() {
+        static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
         return (__bridge id)cs;
     }
     
@@ -628,7 +628,7 @@ private:
         TxtKey(id<MTLTexture> txt) :
         _fmt([txt pixelFormat]), _width([txt width]), _height([txt height]), _usage([txt usage]) {}
         
-        TxtKey(MTLPixelFormat fmt, NSUInteger width, NSUInteger height, MTLTextureUsage usage) :
+        TxtKey(MTLPixelFormat fmt, size_t width, size_t height, MTLTextureUsage usage) :
         _fmt(fmt), _width(width), _height(height), _usage(usage) {}
         
         bool operator==(const TxtKey& x) const {
@@ -649,8 +649,8 @@ private:
     
     private:
         MTLPixelFormat _fmt = MTLPixelFormatInvalid;
-        NSUInteger _width = 0;
-        NSUInteger _height = 0;
+        size_t _width = 0;
+        size_t _height = 0;
         MTLTextureUsage _usage = MTLTextureUsageUnknown;
     };
     
