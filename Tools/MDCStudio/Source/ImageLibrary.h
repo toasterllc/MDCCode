@@ -1,5 +1,6 @@
 #import "RecordStore.h"
 #import "Img.h"
+#import "Vendor.h"
 
 struct [[gnu::packed]] ImageRef {
     static constexpr uint32_t Version       = 0;
@@ -24,13 +25,11 @@ struct [[gnu::packed]] ImageRef {
     uint8_t thumbData[ThumbWidth*ThumbHeight*ThumbPixelSize];
 };
 
-class ImageLibrary : private RecordStore<ImageRef::Version, ImageRef, 512> {
+class ImageLibrary : public RecordStore<ImageRef::Version, ImageRef, 512> {
 public:
     using RecordStore::RecordStore;
     
     void read() {
-        auto lock = std::unique_lock(_lock);
-        
         // Reset our state, as RecordStore::read() does
         _state = {};
         
@@ -55,7 +54,6 @@ public:
     }
     
     void write() {
-        auto lock = std::unique_lock(_lock);
         std::ofstream f = RecordStore::write();
         const _SerializedState state {
             .version = _Version,
@@ -64,54 +62,13 @@ public:
         f.write((char*)&state, sizeof(state));
     }
     
-    size_t recordCount() {
-        auto lock = std::unique_lock(_lock);
-        return RecordStore::recordCount();
-    }
-    
-    void reserve(size_t count) {
-        auto lock = std::unique_lock(_lock);
-        RecordStore::reserve(count);
-    }
-    
-    // add(): adds the records previously reserved via reserve()
     void add() {
-        auto lock = std::unique_lock(_lock);
         RecordStore::add();
-        
         // Update imgIdEnd
         _state.imgIdEnd = (!RecordStore::empty() ? RecordStore::recordGet(RecordStore::back())->id+1 : 0);
     }
     
-    void remove(RecordRefConstIter begin, RecordRefConstIter end) {
-        auto lock = std::unique_lock(_lock);
-        RecordStore::remove(begin, end);
-    }
-    
-    RecordRefConstIter begin() {
-        auto lock = std::unique_lock(_lock);
-        return RecordStore::begin();
-    }
-    
-    RecordRefConstIter end() {
-        auto lock = std::unique_lock(_lock);
-        return RecordStore::end();
-    }
-    
-    ImageRef* recordGet(const RecordRef& ref) {
-        auto lock = std::unique_lock(_lock);
-        return RecordStore::recordGet(ref);
-    }
-    
-    ImageRef* recordGet(RecordRefConstIter iter) {
-        auto lock = std::unique_lock(_lock);
-        return RecordStore::recordGet(iter);
-    }
-    
-    Img::Id imgIdEnd() {
-        auto lock = std::unique_lock(_lock);
-        return _state.imgIdEnd;
-    }
+    Img::Id imgIdEnd() const { return _state.imgIdEnd; }
     
 private:
     static constexpr uint32_t _Version = 0;
@@ -121,7 +78,6 @@ private:
         Img::Id imgIdEnd = 0;
     };
     
-    std::mutex _lock;
     struct {
         Img::Id imgIdEnd = 0;
     } _state;
@@ -166,4 +122,4 @@ private:
 //    }
 };
 
-using ImageLibraryPtr = std::shared_ptr<ImageLibrary>;
+using ImageLibraryPtr = std::shared_ptr<MDCTools::Vendor<ImageLibrary>>;

@@ -45,6 +45,7 @@
 /* Begin PBXFileReference section */
 		5513287927B326CF00CD823B /* RenderThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderThumb.h; sourceTree = "<group>"; };
 		5513287B27B3304100CD823B /* RenderThumb.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
+		551328B527B3A02100CD823B /* Vendor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Vendor.h; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* MDCStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
@@ -248,6 +249,7 @@
 				55D4AAA527B1D80C0052EFEE /* Renderer.h */,
 				55D4AAA627B1D80C0052EFEE /* Renderer.metal */,
 				55D4AAA827B1D8660052EFEE /* MetalUtil.h */,
+				551328B527B3A02100CD823B /* Vendor.h */,
 			);
 			name = Shared;
 			path = ../Shared;

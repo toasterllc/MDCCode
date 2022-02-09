@@ -444,11 +444,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     auto startTime = std::chrono::steady_clock::now();
     
     if (!_imgLib) return;
-    ImageLibrary& il = *_imgLib;
-    auto lock = std::unique_lock(il.lock);
+    auto il = _imgLib->vend();
     
 //    _grid.setElementCount((int32_t)il.imageCount);
-    _grid.setElementCount((int32_t)il.recordCount());
+    _grid.setElementCount((int32_t)il->recordCount());
     _grid.recompute();
     
     // Update our drawable size
@@ -509,15 +508,15 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         const int32_t offsetX = -round(frame.origin.x*_contentsScale);
         const int32_t offsetY = -round(frame.origin.y*_contentsScale);
         
-        const uintptr_t imageRefsBegin = (uintptr_t)&*il.begin();
-        const uintptr_t imageRefsEnd = (uintptr_t)&*il.end();
+        const uintptr_t imageRefsBegin = (uintptr_t)&*il->begin();
+        const uintptr_t imageRefsEnd = (uintptr_t)&*il->end();
         id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
             length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeManaged];
         
 //        printf("Range count: %zu\n", ranges.size());
         
-        const auto imageRefFirst = il.begin()+indexRange.start;
-        const auto imageRefLast = il.begin()+indexRange.start+indexRange.count-1;
+        const auto imageRefFirst = il->begin()+indexRange.start;
+        const auto imageRefLast = il->begin()+indexRange.start+indexRange.count-1;
         
         const auto imageRefBegin = imageRefFirst;
         const auto imageRefEnd = std::next(imageRefLast);
@@ -529,7 +528,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //        const auto chunkEnd = std::next(chunkLast);
         for (auto it=imageRefBegin; it<imageRefEnd;) {
             const auto& chunk = *(it->chunk);
-            const auto nextChunkStart = ImageLibrary::FindNextChunk(it, il.end());
+            const auto nextChunkStart = ImageLibrary::FindNextChunk(it, il->end());
             
             const auto chunkImageRefBegin = it;
             const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
@@ -583,7 +582,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 ImageGridLayerTypes::RenderContext ctx = {
                     .grid = _grid,
 //                    .chunk = ImageGridLayerTypes::UInt2FromType(it),
-                    .idxOff = (uint32_t)(chunkImageRefFirst-il.begin()),
+                    .idxOff = (uint32_t)(chunkImageRefFirst-il->begin()),
                     .imagesOff = (uint32_t)(addrBegin-addrAlignedBegin),
 //                    .imageRefOff = (uint32_t)ic.getImageRef(range.idx),
                     .imageSize = (uint32_t)sizeof(ImageRef),
