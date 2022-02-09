@@ -8,6 +8,7 @@
 #import "ImagePipeline.h"
 #import "RenderThumb.h"
 #import "ImgSD.h"
+#import "Vendor.h"
 
 class MDCDevice : public MDCUSBDevice {
 public:
@@ -15,17 +16,6 @@ public:
     
     MDCDevice(USBDevice&& dev) : MDCUSBDevice(std::move(dev)), _devDir(_DevDirForSerial(serial())) {
         printf("MDCDevice()\n");
-        
-        std::filesystem::create_directories(_devDir);
-        
-        // Read state
-        try {
-            const _SerializedState state = _SerializedStateRead(_devDir);
-            auto lock = std::unique_lock(_state.lock);
-            _state.imgIdEnd = state.imgIdEnd;
-        } catch (const std::exception& e) {
-            fprintf(stderr, "Failed to read state file: %s\n", e.what());
-        }
     }
     
     ~MDCDevice() {
@@ -39,7 +29,9 @@ public:
     ImageLibraryPtr imgLib() {
         auto lock = std::unique_lock(_state.lock);
         if (!_state.imgLib) {
-            _state.imgLib = std::make_shared<ImageLibrary>(_devDir / "ImageLibrary");
+            _state.imgLib = std::make_shared<MDCTools::Vendor<ImageLibrary>>(_devDir / "ImageLibrary");
+            // Load the library
+            _state.imgLib->vend()->read();
         }
         return _state.imgLib;
     }
@@ -50,27 +42,6 @@ public:
         #warning TODO: what should we do if the thread's already running?
         _state.updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
         _state.updateImageLibraryThread.detach();
-    }
-    
-    void sync() {
-        #warning TODO: there's a race here where we write ImageLibrary, _state.imgIdEnd gets updated, and then we write _state.imgIdEnd.
-        #warning TODO: in which case it's possible that ImageLibrary on disk doesn't contain the images reflected by _state.imgIdEnd
-        #warning TODO: (which is supposed to represent the last image downloaded)
-        // Write ImageLibrary
-        {
-            ImageLibrary& il = *imgLib();
-            auto ilLock = std::unique_lock(il.lock);
-            il.sync();
-        }
-        
-        // Write our state
-        {
-            auto lock = std::unique_lock(_state.lock);
-            _SerializedStateWrite(_devDir, {
-                .version = _Version,
-                .imgIdEnd = _state.imgIdEnd,
-            });
-        }
     }
     
 private:
@@ -148,11 +119,6 @@ private:
         return *comp>=0 ? imgRingBuf0 : imgRingBuf1;
     }
     
-    Img::Id _imgIdEnd() {
-        auto lock = std::unique_lock(_state.lock);
-        return _state.imgIdEnd;
-    }
-    
     void _threadUpdateImageLibrary() {
         try {
             mspConnect();
@@ -226,26 +192,24 @@ private:
             {
                 // Remove images from beginning of library: lib has, device doesn't
                 {
+                    auto il = imgLib()->vend();
                     const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
-                    
-                    ImageLibrary& il = *imgLib();
-                    auto ilLock = std::unique_lock(il.lock);
-                    const auto removeBegin = il.begin();
+                    const auto removeBegin = il->begin();
                     
                     // Find the first image >= `deviceImgIdBegin`
-                    const auto removeEnd = std::lower_bound(il.begin(), il.end(), 0,
+                    const auto removeEnd = std::lower_bound(il->begin(), il->end(), 0,
                         [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                            return il.recordGet(sample)->id < deviceImgIdBegin;
+                            return il->recordGet(sample)->id < deviceImgIdBegin;
                         });
                     
                     printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
-                    il.remove(removeBegin, removeEnd);
+                    il->remove(removeBegin, removeEnd);
                 }
                 
                 // Add images to end of library: device has, lib doesn't
                 {
-                    #warning TODO: what if _imgIdEnd() < il.recordGet(il.back())->id+1, because the ImageLibrary was sync'd, but we crashed before we wrote imgIdEnd?
-                    const Img::Id libImgIdEnd = _imgIdEnd();
+                    #warning TODO: what if _imgIdEnd() < il->recordGet(il->back())->id+1, because the ImageLibrary was sync'd, but we crashed before we wrote imgIdEnd?
+                    const Img::Id libImgIdEnd = imgLib()->vend()->imgIdEnd();
                     const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
                     
                     if (libImgIdEnd > deviceImgIdEnd) {
@@ -269,15 +233,8 @@ private:
                     _loadImages(newest);
                 }
                 
-                // Update _state.imgIdEnd
-                {
-                    ImageLibrary& il = *imgLib();
-                    auto ilLock = std::unique_lock(il.lock);
-                    _state.imgIdEnd = (!il.empty() ? il.recordGet(il.back())->id+1 : 0);
-                }
-                
-                // Save the library
-                sync();
+                // Write the library
+                imgLib()->vend()->write();
             }
         
         } catch (const std::exception& e) {
@@ -315,19 +272,21 @@ private:
         using namespace MDCTools;
         using namespace MDCStudio::ImagePipeline;
         
-        ImageLibrary& il = *imgLib();
+        // We're intentionally not holding onto the vended library (imgLib()->vend()) because
+        // we don't want to hold the library lock while we process images, since that would
+        // block the main thread.
+        // Instead we access methods via imgLibVendor->method(), which only acquires the
+        // image library lock for the duration of the function call.
+        auto& imgLibVendor = *imgLib();
         
-        // We only need to hold the lock while we reserve space, but not while writing to the reserved space
-        {
-            auto ilLock = std::unique_lock(il.lock);
-            il.reserve(imgCount);
-        }
+        // Reserve space for `imgCount` additional images
+        imgLibVendor->reserve(imgCount);
         
         for (size_t idx=0; idx<imgCount; idx++) {
             const uint8_t* imgData = data+idx*ImgSD::ImgPaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
-            const auto recordRefIter = il.reservedBegin()+idx;
-            ImageRef& imageRef = *il.recordGet(recordRefIter);
+            const auto recordRefIter = imgLibVendor->reservedBegin()+idx;
+            ImageRef& imageRef = *imgLibVendor->recordGet(recordRefIter);
             
             // Validate checksum
             const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::ChecksumOffset);
@@ -377,10 +336,7 @@ private:
         }
         
         // Add the records that we previously reserved
-        {
-            auto ilLock = std::unique_lock(il.lock);
-            il.add();
-        }
+        imgLibVendor->add();
     }
     
     const _Path _devDir;
