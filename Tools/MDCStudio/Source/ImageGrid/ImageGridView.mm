@@ -26,7 +26,7 @@
     _imageGridLayer = [ImageGridLayer new];
     [_rootLayer addSublayer:_imageGridLayer];
     
-    [self setFrame:[self frame]];
+    [self _updateFrame];
 }
 
 - (ImageGridLayer*)imageGridLayer {
@@ -59,6 +59,27 @@
 
 - (void)setImageLibrary:(ImageLibraryPtr)imgLib {
     [_imageGridLayer setImageLibrary:imgLib];
+    [self _updateFrame];
+    
+    __weak auto weakSelf = self;
+    imgLib->vend()->addObserver([=] {
+        auto strongSelf = weakSelf;
+        if (!strongSelf) return false;
+        dispatch_async(dispatch_get_main_queue(), ^{ [strongSelf _handleImageLibraryChanged]; });
+        return true;
+    });
+}
+
+- (void)_updateFrame {
+    [self setFrame:[self frame]];
+}
+
+- (void)_handleScroll {
+    [_imageGridLayer setFrame:[[self enclosingScrollView] documentVisibleRect]];
+}
+
+- (void)_handleImageLibraryChanged {
+    [self _updateFrame];
 }
 
 @end
@@ -72,12 +93,7 @@
 
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
     [super reflectScrolledClipView:clipView];
-    
-//    NSLog(@"reflectScrolledClipView: %@", NSStringFromRect([self documentVisibleRect]));
-    
-    const CGRect visibleRect = [self documentVisibleRect];
-    ImageGridLayer*const imageGridLayer = [((ImageGridView*)[self documentView]) imageGridLayer];
-    [imageGridLayer setFrame:visibleRect];
+    [(ImageGridView*)[self documentView] _handleScroll];
 }
 
 @end

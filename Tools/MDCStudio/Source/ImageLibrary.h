@@ -1,3 +1,4 @@
+#import <forward_list>
 #import "RecordStore.h"
 #import "Img.h"
 #import "Vendor.h"
@@ -26,6 +27,7 @@ struct [[gnu::packed]] ImageRef {
 class ImageLibrary : public RecordStore<ImageRef::Version, ImageRef, 512> {
 public:
     using RecordStore::RecordStore;
+    using Observer = std::function<bool()>;
     
     void read() {
         // Reset our state, as RecordStore::read() does
@@ -64,6 +66,18 @@ public:
         RecordStore::add();
         // Update imgIdEnd
         _state.imgIdEnd = (!RecordStore::empty() ? RecordStore::recordGet(RecordStore::back())->id+1 : 0);
+        // Notify observers that we changed
+        _notifyObservers();
+    }
+    
+    void remove(RecordRefConstIter begin, RecordRefConstIter end) {
+        RecordStore::remove(begin, end);
+        // Notify observers that we changed
+        _notifyObservers();
+    }
+    
+    void addObserver(Observer&& observer) {
+        _state.observers.push_front(std::move(observer));
     }
     
     Img::Id imgIdEnd() const { return _state.imgIdEnd; }
@@ -78,7 +92,21 @@ private:
     
     struct {
         Img::Id imgIdEnd = 0;
+        std::forward_list<Observer> observers;
     } _state;
+    
+    void _notifyObservers() {
+        auto prev = _state.observers.before_begin();
+        for (auto it=_state.observers.begin(); it!=_state.observers.end(); prev++) {
+            // Notify the observer; it returns whether it's still valid
+            // If it's not valid (it returned false), remove it from the list
+            if (!(*it)()) {
+                it = _state.observers.erase_after(prev);
+            } else {
+                it++;
+            }
+        }
+    }
 };
 
 using ImageLibraryPtr = std::shared_ptr<MDCTools::Vendor<ImageLibrary>>;
