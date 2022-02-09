@@ -11,4 +11,7 @@
 - (void)setContainerWidth:(CGFloat)width;
 - (CGFloat)containerHeight;
 
+// -setResizingUnderway: is necessary to prevent artifacts when resizing
+- (void)setResizingUnderway:(bool)resizing;
+
 @end
