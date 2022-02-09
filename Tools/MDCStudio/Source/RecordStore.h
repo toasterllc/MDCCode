@@ -162,6 +162,12 @@ public:
     void sync() {
         namespace fs = std::filesystem;
         
+        // Prohibit syncing between reserve() / add() calls.
+        // This isn't allowed because _reserved may be referencing chunks whose recordCount==0,
+        // and those chunks get deleted below. When add() is called to commit the reserved records,
+        // recordCount will be incremented appropriately and sync() can be called safely.
+        assert(_reserved.empty());
+        
         #warning TODO: optionally (based on argument) peform 'compaction' to move records into smallest number of chunks as possible
         #warning TODO: truncate each chunk file on disk to have the minimum size to contain its last record
         #warning TODO: delete unreferenced chunk files in Chunks dir
