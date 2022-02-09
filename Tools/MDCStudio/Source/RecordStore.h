@@ -75,6 +75,7 @@ public:
         // This isn't allowed because _state.reserved may be referencing chunks whose recordCount==0,
         // and those chunks get deleted below. When add() is called to commit the reserved records,
         // recordCount will be incremented appropriately and sync() can be called safely.
+        #warning TODO: we could actually save between reserve() / add() calls, as long as we don't perform the chunk removal. this would be useful if the main thread removes images (and saves after removing them) while the background thread adds images
         assert(_state.reserved.empty());
         
         #warning TODO: optionally (based on argument) peform 'compaction' to move records into smallest number of chunks as possible
