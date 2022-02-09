@@ -272,6 +272,8 @@ private:
             }
         }
         
+        renderer.commitAndWait();
+        
         // Add the records that we previously reserved
         imgLibVendor->add();
     }

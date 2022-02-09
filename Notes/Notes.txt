@@ -1,9 +1,5 @@
 - Rev4 Todo
     
-    - MDCStudio: fix artifacts when resizing window
-    
-    - MDCStudio: first draw of grid layer is weird
-    
     - MDCStudio: ImageLibrary.h: add ability to observe changes, so that we can update the grid
     
     - STMApp: reconsider whether we should be using Task::Stop() to abort tasks that are in progress.
@@ -36,6 +32,10 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MDCStudio: fix artifacts when resizing window
+    
+    √ MDCStudio: first draw of grid layer is weird
     
     X MDCStudio: MDCDevice.h: make sure we sync _imgLib _before_ writing imgIdEnd, to guarantee _imgLib.back.id >= imgIdEnd,
       so if we crash between writing the IL and writing imgIdEnd, we can recover if we see that imgIdEnd < _imgLib.back.id
