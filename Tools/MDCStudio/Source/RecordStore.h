@@ -59,8 +59,7 @@ public:
         // Reset ourself in case an exception occurs later
         _state = {};
         
-        std::filesystem::create_directory(_path);
-        std::filesystem::create_directory(_ChunksPath(_path));
+        std::filesystem::create_directories(_ChunksPath(_path));
         
         auto [recordRefs, chunks, f] = _IndexRead(_path);
         // If we get here, everything succeeded so we can use the on-disk database
