@@ -1,12 +1,5 @@
 - Rev4 Todo
     
-    - MDCStudio: MDCDevice.h: make sure we sync _imgLib _before_ writing imgIdEnd, to guarantee _imgLib.back.id >= imgIdEnd,
-      so if we crash between writing the IL and writing imgIdEnd, we can recover if we see that imgIdEnd < _imgLib.back.id
-    
-    - MDCStudio: MDCDevice.h: if imgIdEnd < _imgLib.back.id, update imgIdEnd = _imgLib.back.id
-    
-    - MDCStudio: figure out a locking scheme so that MDCDevice.h and ImageLibrary.h share a lock
-    
     - STMApp: reconsider whether we should be using Task::Stop() to abort tasks that are in progress.
       for example, a task might be in the middle of executing SDCard::Disable(), which isn't designed to be aborted half way through
     
@@ -37,6 +30,16 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    X MDCStudio: MDCDevice.h: make sure we sync _imgLib _before_ writing imgIdEnd, to guarantee _imgLib.back.id >= imgIdEnd,
+      so if we crash between writing the IL and writing imgIdEnd, we can recover if we see that imgIdEnd < _imgLib.back.id
+        √ We ended up closely coupling ImageLibrary with RecordStore -- they now both write their state to the same file
+    
+    X MDCStudio: MDCDevice.h: if imgIdEnd < _imgLib.back.id, update imgIdEnd = _imgLib.back.id
+        √ We shouldn't need to worry about this anymore now that ImageLibrary and RecordStore are closely coupled
+    
+    X MDCStudio: figure out a locking scheme so that MDCDevice.h and ImageLibrary.h share a lock
+        √ They shouldn't need to share a lock anymore, now that we've closely coupled ImageLibrary and RecordStore
     
     √ ImageLibrary: what happens if: Thread2: reserve() ; Thread1: remove(), sync() ; Thread2: add()
         - We now forbid calling sync() between the reserve() / add() calls

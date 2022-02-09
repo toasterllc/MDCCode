@@ -83,34 +83,6 @@ private:
         return state;
     }
     
-    static void _SerializedStateWrite(const _Path& devDir, const _SerializedState& state) {
-        std::ofstream f;
-        f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-        f.open(_StatePath(devDir));
-        f.write((char*)&state, sizeof(state));
-    }
-    
-//    static MSP::ImgRingBuf _ReadImgRingBuf(MDCUSBDevice& dev) {
-//        dev.mspConnect();
-//        
-//        MSP::State state;
-//        dev.mspRead(MSP::StateAddr, &state, sizeof(state));
-//        
-//        if (state.magicVersion != MSP::State::MagicVersion) {
-//            throw Toastbox::RuntimeError("invalid MSP state magicVersion (expected: 0x%jx, got: 0x%jx)",
-//                (uintmax_t)MSP::State::MagicVersion,
-//                (uintmax_t)state.magicVersion
-//            );
-//        }
-//        
-//        dev.mspDisconnect();
-//        
-//        const MSP::ImgRingBuf* imgRingBuf = &state.img.ringBuf;
-//        const MSP::ImgRingBuf* imgRingBuf2 = &state.img.ringBuf2;
-//        const bool br = MSP::ImgRingBuf::FindLatest(imgRingBuf, imgRingBuf2);
-//        if (!br) throw Toastbox::RuntimeError("both image ring buffers are invalid");
-//    }
-    
     static const MSP::ImgRingBuf& _GetImgRingBuf(const MSP::State& state) {
         const MSP::ImgRingBuf& imgRingBuf0 = state.sd.imgRingBufs[0];
         const MSP::ImgRingBuf& imgRingBuf1 = state.sd.imgRingBufs[1];
@@ -151,44 +123,8 @@ private:
                 throw Toastbox::RuntimeError("TODO: implement");
             }
             
-//            if (state.magic != MSP::State::MagicNumber) {
-//                throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
-//                    (uintmax_t)MSP::State::MagicNumber,
-//                    (uintmax_t)state.magic
-//                );
-//            }
-//            
-//            if (state.version != MSP::State::Version) {
-//                throw Toastbox::RuntimeError("unrecognized MSP::State version (expected: 0x%02jx, got: 0x%02jx)",
-//                    (uintmax_t)MSP::State::Version,
-//                    (uintmax_t)state.version
-//                );
-//            }
-            
-//            mspDisconnect();
-//            
-//            const SD::CardId cardId = sdCardIdGet();
-//            
-//            printf("cardId:     ");
-//            for (size_t i=0; i<sizeof(cardId); i++) {
-//                printf("%02x ", ((uint8_t*)&cardId)[i]);
-//            }
-//            printf("\n");
-//            
-//            const SD::CardData cardData = sdCardDataGet();
-//            printf("cardData:   ");
-//            for (size_t i=0; i<sizeof(cardData); i++) {
-//                printf("%02x ", ((uint8_t*)&cardData)[i]);
-//            }
-//            printf("\n");
-            
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(state);
             
-            #warning TODO: if the user keeps deleting images from the end of the local library, we'll unnecessarily
-            #warning TODO: re-download those images every time this function runs, since the library.back() will
-            #warning TODO: no longer reference the 'most recent' image.
-            #warning TODO: to fix this, we should keep track of the most recent image downloaded from
-            #warning TODO: the device, and use that to determine which images should be downloaded
             {
                 // Remove images from beginning of library: lib has, device doesn't
                 {
@@ -208,7 +144,6 @@ private:
                 
                 // Add images to end of library: device has, lib doesn't
                 {
-                    #warning TODO: what if _imgIdEnd() < il->recordGet(il->back())->id+1, because the ImageLibrary was sync'd, but we crashed before we wrote imgIdEnd?
                     const Img::Id libImgIdEnd = imgLib()->vend()->imgIdEnd();
                     const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
                     
@@ -220,6 +155,7 @@ private:
                     }
                     
                     const uint32_t addCount = deviceImgIdEnd-libImgIdEnd;
+                    printf("Adding %ju images\n", (uintmax_t)addCount);
                     
                     _Range newest;
                     newest.idx = imgRingBuf.buf.widx - std::min((uint32_t)imgRingBuf.buf.widx, addCount);
@@ -233,6 +169,7 @@ private:
                     _loadImages(newest);
                 }
                 
+                printf("Writing library\n");
                 // Write the library
                 imgLib()->vend()->write();
             }
