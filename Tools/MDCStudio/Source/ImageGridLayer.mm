@@ -654,6 +654,12 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     return _grid.containerHeight() / _contentsScale;
 }
 
+- (void)setResizingUnderway:(bool)resizing {
+    // We need PresentsWithTransaction=1 while window is resizing (to prevent artifacts),
+    // and PresentsWithTransaction=0 while scrolling (to prevent stutters)
+    [self setPresentsWithTransaction:resizing];
+}
+
 @end
 
 

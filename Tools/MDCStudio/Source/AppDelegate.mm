@@ -197,6 +197,14 @@ static NSDictionary* LayerNullActions = @{
     return true;
 }
 
+- (void)viewWillStartLiveResize {
+    [_imageGridLayer setResizingUnderway:true];
+}
+
+- (void)viewDidEndLiveResize {
+    [_imageGridLayer setResizingUnderway:false];
+}
+
 //- (BOOL)isOpaque {
 //    return true;
 //}
