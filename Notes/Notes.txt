@@ -1,5 +1,11 @@
 - Rev4 Todo
     
+    - MDCStudio: fix artifacts when resizing window
+    
+    - MDCStudio: first draw of grid layer is weird
+    
+    - MDCStudio: ImageLibrary.h: add ability to observe changes, so that we can update the grid
+    
     - STMApp: reconsider whether we should be using Task::Stop() to abort tasks that are in progress.
       for example, a task might be in the middle of executing SDCard::Disable(), which isn't designed to be aborted half way through
     
