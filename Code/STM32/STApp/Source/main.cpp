@@ -232,8 +232,6 @@ static struct {
 } _QSPIConfigs;
 
 void _QSPISetConfig(const QSPI::Config& config) {
-    if (_QSPI.getConfig() == &config) return; // Short-circuit if the config isn't changing
-    
     _QSPI.setConfig(config);
     
     // If QSPI isn't controlling chip-select, manually configure it
@@ -799,9 +797,6 @@ static void _SDRead(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Configure QSPI for comms with ICEApp
-    _QSPISetConfig(_QSPIConfigs.ICEApp);
-    
     // Stop reading from the SD card if a read is in progress
     if (reading) {
         _ICE_ST_SPI_CS_::Write(1);
@@ -839,9 +834,6 @@ void _ImgExposureSet(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Configure QSPI for comms with ICEApp
-    _QSPISetConfig(_QSPIConfigs.ICEApp);
-    
     _ImgSensor::SetCoarseIntTime(arg.coarseIntTime);
     _ImgSensor::SetFineIntTime(arg.fineIntTime);
     _ImgSensor::SetAnalogGain(arg.analogGain);
@@ -855,9 +847,6 @@ void _ImgCapture(const STM::Cmd& cmd) {
     
     // Accept command
     _System::USBAcceptCommand(true);
-    
-    // Configure QSPI for comms with ICEApp
-    _QSPISetConfig(_QSPIConfigs.ICEApp);
     
     const Img::Header header = {
         .magic          = Img::Header::MagicNumber,
