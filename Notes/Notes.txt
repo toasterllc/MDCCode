@@ -1,5 +1,11 @@
 - Rev4 Todo
     
+    - MDCStudio: implement device list sidebar
+    
+    - MDCStudio: implement inspector
+    
+    - MDCStudio: implement image view
+    
     - STMApp: reconsider whether we should be using Task::Stop() to abort tasks that are in progress.
       for example, a task might be in the middle of executing SDCard::Disable(), which isn't designed to be aborted half way through
     
