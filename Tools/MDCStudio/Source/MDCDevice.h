@@ -9,6 +9,7 @@
 #import "RenderThumb.h"
 #import "ImgSD.h"
 #import "Vendor.h"
+#import "BufQueue.h"
 
 class MDCDevice : public MDCUSBDevice {
 public:
@@ -56,6 +57,39 @@ private:
     struct _Range {
         uint32_t idx  = 0;
         uint32_t len = 0;
+    };
+    
+    template <size_t T_BufCap>
+    class _BufQueue {
+    public:
+        auto& rget() {
+            auto lock = std::unique_lock(_lock);
+            while (!_bufs.rok()) _signal.wait(lock);
+            return _bufs.rget();
+        }
+        
+        void rpop() {
+            auto lock = std::unique_lock(_lock);
+            _bufs.rpop();
+            _signal.notify_all();
+        }
+        
+        auto& wget() {
+            auto lock = std::unique_lock(_lock);
+            while (!_bufs.wok()) _signal.wait(lock);
+            return _bufs.wget();
+        }
+        
+        void wpush() {
+            auto lock = std::unique_lock(_lock);
+            _bufs.wpush();
+            _signal.notify_all();
+        }
+        
+    private:
+        std::mutex _lock;
+        std::condition_variable _signal;
+        BufQueue<uint8_t, T_BufCap, 2> _bufs;
     };
     
     static _Path _StatePath(const _Path& devDir) { return devDir / "State"; }
@@ -182,27 +216,50 @@ private:
     void _loadImages(const _Range& range) {
         using namespace MDCTools;
         
-        constexpr size_t ChunkImgCount = 16; // Number of images to read at a time
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
         id<MTLDevice> device = MTLCreateSystemDefaultDevice();
         if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
         Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
         
-        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(ChunkImgCount * ImgSD::ImgPaddedLen);
+        constexpr size_t ChunkImgCount = 16; // Number of images to read at a time
+        constexpr size_t BufCap = ChunkImgCount * ImgSD::ImgPaddedLen;
+        auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
+        auto& bufQueue = *bufQueuePtr;
+        
         sdRead(range.idx * ImgSD::ImgPaddedLen);
         
+        // Consumer
+        std::thread consumerThread([&] {
+            for (;;) {
+                auto& buf = bufQueue.rget();
+                if (!buf.len) break; // We're done when we get an empty buffer
+                _addImages(renderer, buf.data, buf.len);
+                bufQueue.rpop();
+            }
+        });
+        
+        // Producer
         for (size_t i=0; i<range.len;) {
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
-            readout(buf.get(), chunkImgCount*ImgSD::ImgPaddedLen);
-            printf("Read %ju images\n", (uintmax_t)chunkImgCount);
-            
-            _addImages(renderer, buf.get(), chunkImgCount);
+            auto& buf = bufQueue.wget();
+            buf.len = chunkImgCount; // Use the buffer length for the count of images, rather than the byte count
+            readout(buf.data, chunkImgCount*ImgSD::ImgPaddedLen);
+            bufQueue.wpush();
             i += chunkImgCount;
+            
+            printf("Read %ju images\n", (uintmax_t)chunkImgCount);
         }
         
-        // Make sure all rendering is complete
-        renderer.commitAndWait();
+        // Wait until we're complete
+        {
+            // Tell consumerThread to bail by sending an empty buf
+            auto& buf = bufQueue.wget();
+            buf.len = 0;
+            bufQueue.wpush();
+            // Wait for thread to exit...
+            consumerThread.join();
+        }
     }
     
     void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount) {
@@ -272,6 +329,7 @@ private:
             }
         }
         
+        // Make sure all rendering is complete before adding the images to the library
         renderer.commitAndWait();
         
         // Add the records that we previously reserved
