@@ -1,9 +1,5 @@
 - Rev4 Todo
     
-    - MDCStudio: corrupt images appear after: initial load ; exit MDCStudio ; icewrite ; mspreadstate ; take more photos ; relaunch MDCStudio
-    
-    - MDCStudio: ImageLibrary.h: add ability to observe changes, so that we can update the grid
-    
     - STMApp: reconsider whether we should be using Task::Stop() to abort tasks that are in progress.
       for example, a task might be in the middle of executing SDCard::Disable(), which isn't designed to be aborted half way through
     
@@ -36,6 +32,10 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MDCStudio: ImageLibrary.h: add ability to observe changes, so that we can update the grid
+    
+    √ MDCStudio: corrupt images appear after: initial load ; exit MDCStudio ; icewrite ; mspreadstate ; take more photos ; relaunch MDCStudio
     
     √ STMApp: ICEWrite fails on the second invocation
     

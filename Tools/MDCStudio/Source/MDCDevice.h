@@ -227,16 +227,24 @@ private:
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
         
-        sdRead(range.idx * ImgSD::ImgPaddedLen);
+        sdRead(range.idx * ImgSD::ImgBlockCount);
         
         // Consumer
         std::thread consumerThread([&] {
+            auto startTime = std::chrono::steady_clock::now();
+            size_t addedImageCount = 0;
+            
             for (;;) {
                 auto& buf = bufQueue.rget();
                 if (!buf.len) break; // We're done when we get an empty buffer
                 _addImages(renderer, buf.data, buf.len);
                 bufQueue.rpop();
+                
+                addedImageCount += buf.len;
             }
+            
+            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+            printf("Consumer took %ju ms for %ju images (avg %ju ms / img)\n", (uintmax_t)durationMs, (uintmax_t)addedImageCount, ((uintmax_t)durationMs/addedImageCount));
         });
         
         // Producer
