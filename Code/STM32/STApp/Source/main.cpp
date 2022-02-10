@@ -33,7 +33,8 @@ static QSPI _QSPI;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
-using _BufQueue = BufQueue<uint8_t,63*1024,2>;
+static void _BufQueueAssert(bool c) { Assert(c); }
+using _BufQueue = BufQueue<uint8_t, 63*1024, 2, _BufQueueAssert>;
 
 #warning TODO: were not putting the _BufQueue code in .sram1 too are we?
 [[gnu::section(".sram1")]]
@@ -360,9 +361,9 @@ struct _TaskUSBDataOut {
         len = l;
         _Scheduler::Start<_TaskUSBDataOut>([] {
             while (len) {
-                _Scheduler::Wait([] { return !_Bufs.full(); });
+                _Scheduler::Wait([] { return _Bufs.wok(); });
                 
-                auto& buf = _Bufs.back();
+                auto& buf = _Bufs.wget();
                 // Prepare to receive either `len` bytes or the
                 // buffer capacity bytes, whichever is smaller.
                 const size_t cap = _USB.CeilToMaxPacketSize(_USB.MaxPacketSizeOut(), std::min(len, sizeof(buf.data)));
@@ -378,7 +379,7 @@ struct _TaskUSBDataOut {
                 const size_t recvLen = std::min(len, _USB.recvLen(Endpoints::DataOut));
                 len -= recvLen;
                 buf.len = recvLen;
-                _Bufs.push();
+                _Bufs.wpush();
             }
         });
     }
@@ -396,15 +397,15 @@ struct _TaskUSBDataIn {
     static void Start() {
         _Scheduler::Start<_TaskUSBDataIn>([] {
             for (;;) {
-                _Scheduler::Wait([] { return !_Bufs.empty(); });
+                _Scheduler::Wait([] { return _Bufs.rok(); });
                 
                 // Send the data and wait until the transfer is complete
-                auto& buf = _Bufs.front();
+                auto& buf = _Bufs.rget();
                 _USB.send(Endpoints::DataIn, buf.data, buf.len);
                 _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
                 
                 buf.len = 0;
-                _Bufs.pop();
+                _Bufs.rpop();
             }
         });
     }
@@ -437,22 +438,22 @@ struct _TaskReadout {
             // Read data over QSPI and write it to USB, indefinitely
             for (;;) {
                 // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
-                _Scheduler::Wait([] { return !_Bufs.full() && _QSPI.ready(); });
+                _Scheduler::Wait([] { return _Bufs.wok() && _QSPI.ready(); });
                 
                 const size_t len = std::min(remLen.value_or(SIZE_MAX), _ICE::ReadoutMsg::ReadoutLen);
-                auto& buf = _Bufs.back();
+                auto& buf = _Bufs.wget();
                 
                 // If there's no more data to read, bail
                 if (!len) {
                     // Before bailing, push the final buffer if it holds data
-                    if (buf.len) _Bufs.push();
+                    if (buf.len) _Bufs.wpush();
                     break;
                 }
                 
                 // If we can't read any more data into the producer buffer,
                 // push it so the data will be sent over USB
                 if (sizeof(buf.data)-buf.len < len) {
-                    _Bufs.push();
+                    _Bufs.wpush();
                     continue;
                 }
                 
@@ -529,15 +530,16 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     
     while (len) {
         // Wait until we have data to consume, and QSPI is ready to write
-        _Scheduler::Wait([] { return !_Bufs.empty() && _QSPI.ready(); });
+        _Scheduler::Wait([] { return _Bufs.rok() && _QSPI.ready(); });
         
         // Write the data over QSPI and wait for completion
-        _QSPI.write(_QSPICmd::ICEWrite(_Bufs.front().len), _Bufs.front().data);
+        auto& buf = _Bufs.rget();
+        _QSPI.write(_QSPICmd::ICEWrite(buf.len), buf.data);
         _Scheduler::Wait([] { return _QSPI.ready(); });
         
         // Update the remaining data and pop the buffer so it can be used again
-        len -= _Bufs.front().len;
-        _Bufs.pop();
+        len -= buf.len;
+        _Bufs.rpop();
     }
     
     // Wait for CDONE to be asserted
@@ -609,9 +611,9 @@ static void _MSPRead(const STM::Cmd& cmd) {
     uint32_t addr = arg.addr;
     uint32_t len = arg.len;
     while (len) {
-        _Scheduler::Wait([] { return !_Bufs.full(); });
+        _Scheduler::Wait([] { return _Bufs.wok(); });
         
-        auto& buf = _Bufs.back();
+        auto& buf = _Bufs.wget();
         // Prepare to receive either `len` bytes or the
         // buffer capacity bytes, whichever is smaller.
         const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
@@ -620,11 +622,11 @@ static void _MSPRead(const STM::Cmd& cmd) {
         len -= chunkLen;
         // Enqueue the buffer
         buf.len = chunkLen;
-        _Bufs.push();
+        _Bufs.wpush();
     }
     
     // Wait for DataIn task to complete
-    _Scheduler::Wait([] { return _Bufs.empty(); });
+    _Scheduler::Wait([] { return !_Bufs.rok(); });
     // Send status
     _System::USBSendStatus(true);
 }
@@ -646,16 +648,16 @@ static void _MSPWrite(const STM::Cmd& cmd) {
     _TaskUSBDataOut::Start(len);
     
     while (len) {
-        _Scheduler::Wait([] { return !_Bufs.empty(); });
+        _Scheduler::Wait([] { return _Bufs.rok(); });
         
         // Write the data over Spy-bi-wire
-        auto& buf = _Bufs.front();
+        auto& buf = _Bufs.rget();
         _MSP.write(addr, buf.data, buf.len);
         // Update the MSP430 address to write to
         addr += buf.len;
         len -= buf.len;
         // Pop the buffer, which we just finished sending over Spy-bi-wire
-        _Bufs.pop();
+        _Bufs.rpop();
     }
     
     // Verify the CRC of all the data we wrote
@@ -725,9 +727,9 @@ static void _MSPDebug(const STM::Cmd& cmd) {
     
     // Reset state
     _Bufs.reset();
-    auto& bufIn = _Bufs.back();
-    _Bufs.push();
-    auto& bufOut = _Bufs.back();
+    auto& bufIn = _Bufs.wget();
+    _Bufs.wpush();
+    auto& bufOut = _Bufs.wget();
     
     _MSPDebugState state;
     
