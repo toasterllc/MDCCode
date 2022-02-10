@@ -63,6 +63,7 @@
 		55496F60278E88B800BCA739 /* Grid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Grid.h; sourceTree = "<group>"; };
 		55496F62278FCDD000BCA739 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		5562353A27B5086E0008074C /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		557ECAEB2794358100440E4B /* Outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Outline.png; sourceTree = "<group>"; };
 		557ECAEC2794358100440E4B /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		557ECAED2794358100440E4B /* Mask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Mask.png; sourceTree = "<group>"; };
@@ -224,6 +225,7 @@
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,
 				55496F46278CFC0400BCA739 /* AppDelegate.mm */,
+				5562353A27B5086E0008074C /* Util.h */,
 				55496F4E278CFC0600BCA739 /* main.mm */,
 			);
 			path = Source;
