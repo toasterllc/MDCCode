@@ -49,6 +49,7 @@
 		551328B527B3A02100CD823B /* Vendor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Vendor.h; sourceTree = "<group>"; };
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
 		551328B827B45D7C00CD823B /* ImageGridView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridView.mm; sourceTree = "<group>"; };
+		551328E327B48D5200CD823B /* BufQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BufQueue.h; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* MDCStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
@@ -271,6 +272,7 @@
 		55A36AC827A3694F00FD0181 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				551328E327B48D5200CD823B /* BufQueue.h */,
 				55A36AD327A3694F00FD0181 /* Assert.h */,
 				55A36ACA27A3694F00FD0181 /* ChecksumFletcher32.h */,
 				55A36ACF27A3694F00FD0181 /* ICE.h */,
