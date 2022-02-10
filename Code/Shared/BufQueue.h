@@ -66,7 +66,7 @@ private:
     bool _full = false;
     
     static void _Assert(bool c) {
-        if constexpr (T_Assert != nullptr) {
+        if constexpr (!std::is_same<decltype(T_Assert), std::nullptr_t>::value) {
             T_Assert(c);
         }
     }
