@@ -36,11 +36,11 @@
                                 </textFieldCell>
                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                 <prototypeCellViews>
-                                    <tableCellView identifier="Row" translatesAutoresizingMaskIntoConstraints="NO" id="wGH-6D-BJs" customClass="SourceListRowView">
+                                    <tableCellView identifier="SourceListView_RowView" translatesAutoresizingMaskIntoConstraints="NO" id="wGH-6D-BJs" customClass="SourceListView_RowView">
                                         <rect key="frame" x="1" y="1" width="197" height="17"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                     </tableCellView>
-                                    <tableCellView identifier="SourceListSpacer" translatesAutoresizingMaskIntoConstraints="NO" id="xVL-Ng-GMo" customClass="SourceListSpacer">
+                                    <tableCellView identifier="SourceListView_Spacer" translatesAutoresizingMaskIntoConstraints="NO" id="xVL-Ng-GMo" customClass="SourceListView_Spacer">
                                         <rect key="frame" x="0.0" y="0.0" width="197" height="20"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="20" id="wWk-M5-Tlg"/>
@@ -49,7 +49,7 @@
                                             <outlet property="_height" destination="wWk-M5-Tlg" id="tIp-Ea-ZT4"/>
                                         </connections>
                                     </tableCellView>
-                                    <tableCellView identifier="SourceListSection" translatesAutoresizingMaskIntoConstraints="NO" id="PcM-y8-dqV" customClass="SourceListSection">
+                                    <tableCellView identifier="SourceListView_Section" translatesAutoresizingMaskIntoConstraints="NO" id="PcM-y8-dqV" customClass="SourceListView_Section">
                                         <rect key="frame" x="0.0" y="0.0" width="197" height="20"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aQl-zt-mX6">
@@ -73,7 +73,7 @@
                                             <outlet property="textField" destination="aQl-zt-mX6" id="94H-o3-xPX"/>
                                         </connections>
                                     </tableCellView>
-                                    <tableCellView identifier="SourceListLibrary" translatesAutoresizingMaskIntoConstraints="NO" id="NqZ-ff-YXV" customClass="SourceListLibrary">
+                                    <tableCellView identifier="SourceListView_Library" translatesAutoresizingMaskIntoConstraints="NO" id="NqZ-ff-YXV" customClass="SourceListView_Library">
                                         <rect key="frame" x="0.0" y="0.0" width="197" height="20"/>
                                         <subviews>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="Zpc-jG-CaC">
@@ -108,7 +108,7 @@
                                             <outlet property="textField" destination="aB1-av-7PN" id="bKq-nj-BZi"/>
                                         </connections>
                                     </tableCellView>
-                                    <tableCellView identifier="SourceListDevice" translatesAutoresizingMaskIntoConstraints="NO" id="08g-eg-N7V" customClass="SourceListDevice">
+                                    <tableCellView identifier="SourceListView_Device" translatesAutoresizingMaskIntoConstraints="NO" id="08g-eg-N7V" customClass="SourceListView_Device">
                                         <rect key="frame" x="0.0" y="0.0" width="197" height="20"/>
                                         <subviews>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY">

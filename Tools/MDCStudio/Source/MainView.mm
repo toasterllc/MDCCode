@@ -1,6 +1,9 @@
 #import "MainView.h"
 #import "SourceList/SourceListView.h"
 
+@interface MainView_ResizerView
+@end
+
 @implementation MainView {
     SourceListView* _sourceListView;
     NSLayoutConstraint* _sourceListWidth;
