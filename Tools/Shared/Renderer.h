@@ -8,8 +8,8 @@
 #import <functional>
 #import <assert.h>
 #import "Assert.h"
-#import "MetalUtil.h"
-#import "HashInts.h"
+#import "Tools/Shared/MetalUtil.h"
+#import "Toastbox/HashInts.h"
 
 namespace MDCTools {
 

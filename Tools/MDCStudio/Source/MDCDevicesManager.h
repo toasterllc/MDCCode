@@ -5,8 +5,8 @@
 #import "Toastbox/RuntimeError.h"
 #import "Toastbox/SendRight.h"
 #import "Toastbox/USBDevice.h"
+#import "Tools/Shared/ELF32Binary.h"
 #import "MDCDevice.h"
-#import "ELF32Binary.h"
 
 class MDCDevicesManager {
 public:

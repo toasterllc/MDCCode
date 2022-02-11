@@ -1,7 +1,7 @@
 #pragma once
 #include <optional>
-#include "Img.h"
-#include "SD.h"
+#include "Code/Shared/Img.h"
+#include "Code/Shared/SD.h"
 
 namespace MSP {
     

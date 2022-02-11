@@ -1,7 +1,7 @@
 #import <forward_list>
 #import "RecordStore.h"
-#import "Img.h"
-#import "Vendor.h"
+#import "Code/Shared/Img.h"
+#import "Tools/Shared/Vendor.h"
 
 struct [[gnu::packed]] ImageRef {
     static constexpr uint32_t Version       = 0;

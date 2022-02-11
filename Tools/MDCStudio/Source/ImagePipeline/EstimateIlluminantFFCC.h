@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#import "Color.h"
-#import "Renderer.h"
+#import "Tools/Shared/Color.h"
+#import "Tools/Shared/Renderer.h"
 #import "FFCC.h"
 
 namespace MDCStudio::ImagePipeline {

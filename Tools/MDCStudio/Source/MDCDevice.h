@@ -1,15 +1,15 @@
 #import <Foundation/Foundation.h>
 #import <filesystem>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
-#import "MSP.h"
-#import "MDCUSBDevice.h"
+#import "Toastbox/Mmap.h"
+#import "Code/Shared/MSP.h"
+#import "Code/Shared/ImgSD.h"
+#import "Code/Shared/BufQueue.h"
+#import "Tools/Shared/Vendor.h"
+#import "Tools/Shared/MDCUSBDevice.h"
 #import "ImageLibrary.h"
-#import "Mmap.h"
-#import "ImagePipeline.h"
-#import "RenderThumb.h"
-#import "ImgSD.h"
-#import "Vendor.h"
-#import "BufQueue.h"
+#import "ImagePipeline/ImagePipeline.h"
+#import "ImagePipeline/RenderThumb.h"
 
 class MDCDevice : public MDCUSBDevice {
 public:
