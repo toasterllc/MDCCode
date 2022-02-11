@@ -12,7 +12,7 @@ namespace SourceListWidth {
 }
 
 namespace ContentWidth {
-    static constexpr CGFloat Min = 100;
+    static constexpr CGFloat Min = 200;
 }
 
 #define ResizerView MainView_ResizerView
@@ -177,8 +177,10 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 }
 
 - (void)_sourceListTrackResize:(NSEvent*)event {
+    ImageGridView* imageGridView = CastOrNil<ImageGridView>(_contentView);
     _dragging = true;
     [[self window] invalidateCursorRectsForView:self];
+    [imageGridView setResizingUnderway:true];
     
     TrackMouse([self window], event, [&](NSEvent* event, bool done) {
         const CGPoint position = [self convertPoint:[event locationInWindow] fromView:nil];
@@ -202,6 +204,7 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     
     _dragging = false;
     [[self window] invalidateCursorRectsForView:self];
+    [imageGridView setResizingUnderway:false];
 }
 
 - (void)_sourceListHandleSelectionChanged {
