@@ -3,12 +3,18 @@
 #import <vector>
 using namespace MDCStudio;
 
-#define X(x) SourceListView_##x
+#define Device          SourceListView_Device
+#define Item            SourceListView_Item
+#define Library         SourceListView_Library
+#define RowView         SourceListView_RowView
+#define Section         SourceListView_Section
+#define SectionItem     SourceListView_SectionItem
+#define Spacer          SourceListView_Spacer
 
-@interface SourceListView_Item : NSTableCellView
+@interface Item : NSTableCellView
 @end
 
-@implementation SourceListView_Item {
+@implementation Item {
     IBOutlet NSLayoutConstraint* _indent;
     IBOutlet NSLayoutConstraint* _height;
 }
@@ -26,13 +32,13 @@ using namespace MDCStudio;
 
 @end
 
-@interface SourceListView_Section : SourceListView_Item
+@interface Section : Item
 @end
 
-@implementation SourceListView_Section {
+@implementation Section {
 @public
     NSString* name;
-    std::vector<SourceListView_Item*> items;
+    std::vector<Item*> items;
 }
 
 - (NSString*)name { return [name uppercaseString]; }
@@ -41,7 +47,7 @@ using namespace MDCStudio;
 
 - (void)update {
     [super update];
-    for (SourceListView_Item* it : items) {
+    for (Item* it : items) {
         [it update];
     }
 }
@@ -51,10 +57,10 @@ using namespace MDCStudio;
 
 
 
-@interface SourceListView_SectionItem : SourceListView_Item
+@interface SectionItem : Item
 @end
 
-@implementation SourceListView_SectionItem {
+@implementation SectionItem {
 @public
     NSString* name;
 }
@@ -66,16 +72,16 @@ using namespace MDCStudio;
 
 
 
-@interface SourceListView_Library : SourceListView_SectionItem
+@interface Library : SectionItem
 @end
 
-@implementation SourceListView_Library
+@implementation Library
 @end
 
-@interface SourceListView_Device : SourceListView_SectionItem
+@interface Device : SectionItem
 @end
 
-@implementation SourceListView_Device
+@implementation Device
 @end
 
 
@@ -83,10 +89,10 @@ using namespace MDCStudio;
 
 
 
-@interface SourceListView_Spacer : SourceListView_Item
+@interface Spacer : Item
 @end
 
-@implementation SourceListView_Spacer {
+@implementation Spacer {
 @public
     CGFloat height;
 }
@@ -97,10 +103,10 @@ using namespace MDCStudio;
 
 
 
-@interface SourceListView_RowView : NSTableRowView
+@interface RowView : NSTableRowView
 @end
 
-@implementation SourceListView_RowView
+@implementation RowView
 - (BOOL)isEmphasized { return false; }
 @end
 
@@ -109,7 +115,7 @@ using namespace MDCStudio;
 @implementation SourceListView {
     IBOutlet NSScrollView* _scrollView;
     IBOutlet NSOutlineView* _outlineView;
-    std::vector<SourceListView_Item*> _outlineItems;
+    std::vector<Item*> _outlineItems;
 }
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
@@ -134,29 +140,29 @@ using namespace MDCStudio;
 
 - (id)_itemForClass:(Class)itemClass {
     NSParameterAssert(itemClass);
-    SourceListView_Item* view = DynamicCast<SourceListView_Item>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
+    Item* view = DynamicCast<Item>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
     assert(view);
     return view;
 }
 
 - (void)_load {
-    SourceListView_Spacer* spacer1 = [self _itemForClass:[SourceListView_Spacer class]];
+    Spacer* spacer1 = [self _itemForClass:[Spacer class]];
     spacer1->height = 3;
     
-    SourceListView_Device* device = [self _itemForClass:[SourceListView_Device class]];
+    Device* device = [self _itemForClass:[Device class]];
     device->name = @"MDC Device 123457";
     
-    SourceListView_Section* devicesSection = [self _itemForClass:[SourceListView_Section class]];
+    Section* devicesSection = [self _itemForClass:[Section class]];
     devicesSection->name = @"Devices";
     devicesSection->items = { device };
     
-    SourceListView_Spacer* spacer2 = [self _itemForClass:[SourceListView_Spacer class]];
+    Spacer* spacer2 = [self _itemForClass:[Spacer class]];
     spacer2->height = 10;
     
-    SourceListView_Library* library = [self _itemForClass:[SourceListView_Library class]];
+    Library* library = [self _itemForClass:[Library class]];
     library->name = @"New Library";
     
-    SourceListView_Section* librariesSection = [self _itemForClass:[SourceListView_Section class]];
+    Section* librariesSection = [self _itemForClass:[Section class]];
     librariesSection->name = @"Libraries";
     librariesSection->items = { library };
     
@@ -167,7 +173,7 @@ using namespace MDCStudio;
         librariesSection,
     };
     
-    for (SourceListView_Item* it : _outlineItems) {
+    for (Item* it : _outlineItems) {
         [it update];
     }
     
@@ -186,7 +192,7 @@ using namespace MDCStudio;
     if (item == nullptr) {
         return _outlineItems.size();
     
-    } else if (auto it = DynamicCast<SourceListView_Section>(item)) {
+    } else if (auto it = DynamicCast<Section>(item)) {
         return it->items.size();
     
     } else {
@@ -198,7 +204,7 @@ using namespace MDCStudio;
     if (item == nullptr) {
         return _outlineItems[index];
     
-    } else if (auto section = DynamicCast<SourceListView_Section>(item)) {
+    } else if (auto section = DynamicCast<Section>(item)) {
         return section->items.at(index);
     
     } else {
@@ -207,14 +213,14 @@ using namespace MDCStudio;
 }
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView isItemExpandable:(id)item {
-    if (auto it = DynamicCast<SourceListView_Section>(item)) {
+    if (auto it = DynamicCast<Section>(item)) {
         return true;
     }
     return false;
 }
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView shouldSelectItem:(id)item {
-    if (auto it = DynamicCast<SourceListView_Item>(item)) {
+    if (auto it = DynamicCast<Item>(item)) {
         return [it selectable];
     }
     return false;
@@ -225,7 +231,7 @@ using namespace MDCStudio;
 }
 
 - (NSTableRowView*)outlineView:(NSOutlineView*)outlineView rowViewForItem:(id)item {
-    return [_outlineView makeViewWithIdentifier:NSStringFromClass([SourceListView_RowView class]) owner:nil];
+    return [_outlineView makeViewWithIdentifier:NSStringFromClass([RowView class]) owner:nil];
 }
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
