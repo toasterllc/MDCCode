@@ -124,10 +124,12 @@ using namespace MDCStudio;
 @implementation SourceListView {
     IBOutlet NSView* _nibView;
     IBOutlet NSOutlineView* _outlineView;
+    
     Section* _devicesSection;
     Section* _librariesSection;
-    
     std::vector<Item*> _outlineItems;
+    
+    SourceListViewSelectionChangedHandler _selectionChangedHandler;
 }
 
 // MARK: - Creation
@@ -208,6 +210,23 @@ using namespace MDCStudio;
 }
 
 // MARK: - Methods
+
+- (void)setSelectionChangedHandler:(SourceListViewSelectionChangedHandler)handler {
+    _selectionChangedHandler = handler;
+}
+
+- (SourceListViewSelection)selection {
+    const NSInteger selectedRow = [_outlineView selectedRow];
+    if (selectedRow < 0) return {};
+    
+    if (Device* dev = CastOrNil<Device>([_outlineView itemAtRow:selectedRow])) {
+        return SourceListViewSelection{
+            .device = dev->device,
+        };
+    }
+    
+    return {};
+}
 
 - (id)_createItemWithClass:(Class)itemClass {
     NSParameterAssert(itemClass);
@@ -358,5 +377,11 @@ using namespace MDCStudio;
 //- (void)outlineView:(NSOutlineView*)outlineView willDisplayCell:(id)cell forTableColumn:(NSTableColumn*)tableColumn item:(id)item {
 //    NSLog(@"AAA %@", NSStringFromSelector(_cmd));
 //}
+
+- (void)outlineViewSelectionDidChange:(NSNotification*)note {
+    if (_selectionChangedHandler) {
+        _selectionChangedHandler(self);
+    }
+}
 
 @end

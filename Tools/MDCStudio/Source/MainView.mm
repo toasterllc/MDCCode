@@ -2,6 +2,7 @@
 #import <algorithm>
 #import "SourceList/SourceListView.h"
 #import "Util.h"
+#import "ImageGrid/ImageGridView.h"
 using namespace MDCStudio;
 
 namespace SourceListWidth {
@@ -69,7 +70,11 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     
     // Source list
     {
+        __weak auto weakSelf = self;
         _sourceListView = [[SourceListView alloc] initWithFrame:{}];
+        [_sourceListView setSelectionChangedHandler:^(SourceListView*) {
+            [weakSelf _sourceListHandleSelectionChanged];
+        }];
         [self addSubview:_sourceListView];
         
         _sourceListWidth = [NSLayoutConstraint constraintWithItem:_sourceListView attribute:NSLayoutAttributeWidth
@@ -106,7 +111,7 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         [_resizerView setWantsLayer:true];
         [[_resizerView layer] setBackgroundColor:[[[NSColor blueColor] colorWithAlphaComponent:.2] CGColor]];
         
-        _resizerView->handler = ^(NSEvent* event) { [weakSelf _trackResizeSourceList:event]; };
+        _resizerView->handler = ^(NSEvent* event) { [weakSelf _sourceListTrackResize:event]; };
         _resizerView->cursor = [NSCursor resizeLeftRightCursor];
         
         [self addSubview:_resizerView];
@@ -144,7 +149,7 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_contentView)]];
 }
 
-- (void)_trackResizeSourceList:(NSEvent*)event {
+- (void)_sourceListTrackResize:(NSEvent*)event {
     _dragging = true;
     [[self window] invalidateCursorRectsForView:self];
     
@@ -168,6 +173,15 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     
     _dragging = false;
     [[self window] invalidateCursorRectsForView:self];
+}
+
+- (void)_sourceListHandleSelectionChanged {
+    auto selection = [_sourceListView selection];
+    if (selection.device) {
+        ImageGridView* imageGridView = [[ImageGridView alloc] initWithFrame:{}];
+        [imageGridView setImageLibrary:selection.device->imgLib()];
+        [self setContentView:imageGridView];
+    }
 }
 
 - (void)resetCursorRects {

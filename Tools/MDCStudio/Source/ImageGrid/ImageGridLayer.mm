@@ -441,6 +441,11 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 - (void)display {
     auto startTime = std::chrono::steady_clock::now();
     
+    // Bail if we have zero width/height; the Metal drawable APIs will fail below
+    // if we don't short-circuit here.
+    const CGRect frame = [self frame];
+    if (CGRectIsEmpty(frame)) return;
+    
     if (!_imgLib) return;
     auto il = _imgLib->vend();
     
@@ -448,7 +453,6 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     _grid.recompute();
     
     // Update our drawable size
-    const CGRect frame = [self frame];
     [self setDrawableSize:{frame.size.width*_contentsScale, frame.size.height*_contentsScale}];
     
     // Get our drawable and its texture

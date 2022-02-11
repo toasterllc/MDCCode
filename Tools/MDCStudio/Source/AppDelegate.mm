@@ -33,8 +33,8 @@ static std::vector<id> _Images;
     
     MDCDevicesManager::Start();
     
-    ImageGridView* imageGridView = [[ImageGridView alloc] initWithFrame:{}];
-    [_mainView setContentView:imageGridView];
+//    ImageGridView* imageGridView = [[ImageGridView alloc] initWithFrame:{}];
+//    [_mainView setContentView:imageGridView];
 }
 
 - (void)_handleDevicesChanged {
