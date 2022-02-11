@@ -12,6 +12,7 @@
 		5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544A7EA27B5E011006AB473 /* SourceListView.xib */; };
 		5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544A7EC27B5E011006AB473 /* SourceListView.mm */; };
 		5544AE2927B5E595006AB473 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5544ADFD27B5E57A006AB473 /* Renderer.metal */; };
+		5544AE3327B5F98C006AB473 /* MainView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE3227B5F98C006AB473 /* MainView.mm */; };
 		55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55496F46278CFC0400BCA739 /* AppDelegate.mm */; };
 		55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55496F48278CFC0600BCA739 /* Assets.xcassets */; };
 		55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55496F4A278CFC0600BCA739 /* MainMenu.xib */; };
@@ -101,6 +102,8 @@
 		5544AE2627B5E58F006AB473 /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
 		5544AE2727B5E58F006AB473 /* IntState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IntState.h; sourceTree = "<group>"; };
 		5544AE2827B5E58F006AB473 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
+		5544AE3127B5F98C006AB473 /* MainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainView.h; sourceTree = "<group>"; };
+		5544AE3227B5F98C006AB473 /* MainView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainView.mm; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* MDCStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		55496F48278CFC0600BCA739 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -329,6 +332,8 @@
 				55D4AA7A27B1D3100052EFEE /* ImagePipeline */,
 				551328BA27B45E6200CD823B /* ImageGrid */,
 				5544A7E927B5E011006AB473 /* SourceList */,
+				5544AE3127B5F98C006AB473 /* MainView.h */,
+				5544AE3227B5F98C006AB473 /* MainView.mm */,
 				55A36A8E27A2951900FD0181 /* MDCDevice.h */,
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
@@ -472,6 +477,7 @@
 				55D4AA9A27B1D3100052EFEE /* DebayerBilinear.metal in Sources */,
 				55D4AA9B27B1D3100052EFEE /* FFCC.mm in Sources */,
 				55496F61278E88B800BCA739 /* Grid.h in Sources */,
+				5544AE3327B5F98C006AB473 /* MainView.mm in Sources */,
 				55D4AA9927B1D3100052EFEE /* EstimateIlluminantFFCC.mm in Sources */,
 				55D4AA9627B1D3100052EFEE /* DebayerLMMSE.metal in Sources */,
 				55C6C845278FFE60005ABD39 /* ImageGridLayer.mm in Sources */,

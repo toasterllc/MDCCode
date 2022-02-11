@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -14,7 +14,6 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customObject id="Voe-Tx-rLC" customClass="AppDelegate">
             <connections>
-                <outlet property="_imageGridView" destination="umK-OI-d0T" id="L3Y-fV-ANU"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
@@ -682,42 +681,24 @@
             </items>
             <point key="canvasLocation" x="140" y="154"/>
         </menu>
-        <window title="MDCStudio" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" animationBehavior="default" id="QvC-M9-y7g">
+        <window title="MDCStudio" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" animationBehavior="default" id="QvC-M9-y7g">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="335" y="390" width="480" height="360"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1792" height="1097"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="EiT-Mj-1SZ">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="A0L-bA-GT0" customClass="ImageGridScrollView">
+                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="jaM-N4-64C" customClass="MainView">
                         <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                        <clipView key="contentView" id="CIl-4V-GIA">
-                            <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                            <subviews>
-                                <view id="umK-OI-d0T" customClass="ImageGridView">
-                                    <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                </view>
-                            </subviews>
-                        </clipView>
-                        <scroller key="horizontalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="VD5-Vg-zMr">
-                            <rect key="frame" x="0.0" y="344" width="480" height="16"/>
-                            <autoresizingMask key="autoresizingMask"/>
-                        </scroller>
-                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="ln5-Kh-BUy">
-                            <rect key="frame" x="464" y="0.0" width="16" height="360"/>
-                            <autoresizingMask key="autoresizingMask"/>
-                        </scroller>
-                    </scrollView>
+                    </customView>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="A0L-bA-GT0" firstAttribute="top" secondItem="EiT-Mj-1SZ" secondAttribute="top" id="BpT-X9-qpR"/>
-                    <constraint firstAttribute="bottom" secondItem="A0L-bA-GT0" secondAttribute="bottom" id="YIC-3U-aXC"/>
-                    <constraint firstItem="A0L-bA-GT0" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" id="cau-az-9l8"/>
-                    <constraint firstAttribute="trailing" secondItem="A0L-bA-GT0" secondAttribute="trailing" id="z1n-9x-Yxp"/>
+                    <constraint firstItem="jaM-N4-64C" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" id="12g-tn-1Gg"/>
+                    <constraint firstItem="jaM-N4-64C" firstAttribute="top" secondItem="EiT-Mj-1SZ" secondAttribute="top" id="VeO-3J-TPV"/>
+                    <constraint firstAttribute="bottom" secondItem="jaM-N4-64C" secondAttribute="bottom" id="aYY-nf-hdt"/>
+                    <constraint firstAttribute="trailing" secondItem="jaM-N4-64C" secondAttribute="trailing" id="vAG-eK-dyg"/>
                 </constraints>
             </view>
             <point key="canvasLocation" x="139" y="-120"/>
