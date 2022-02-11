@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="16096" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16096"/>
-        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -11,13 +10,10 @@
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
-        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <customObject id="Voe-Tx-rLC" customClass="AppDelegate">
-            <connections>
-                <outlet property="window" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
-            </connections>
-        </customObject>
+        <customObject id="-3" userLabel="Application"/>
+        <customObject id="Voe-Tx-rLC" customClass="AppDelegate"/>
         <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
+        <customObject id="UrQ-J3-YzG" customClass="DocumentController"/>
         <menu title="Main Menu" systemMenu="main" id="AYu-sK-qS6">
             <items>
                 <menuItem title="MDCStudio" id="1Xt-HY-uBw">
@@ -122,7 +118,7 @@
                             <menuItem title="Print…" keyEquivalent="p" id="aTl-1u-JFS">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" option="YES" command="YES"/>
                                 <connections>
-                                    <action selector="print:" target="-1" id="qaZ-4w-aoO"/>
+                                    <action selector="printDocument:" target="-1" id="qaZ-4w-aoO"/>
                                 </connections>
                             </menuItem>
                         </items>
@@ -681,27 +677,5 @@
             </items>
             <point key="canvasLocation" x="140" y="154"/>
         </menu>
-        <window title="MDCStudio" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" animationBehavior="default" id="QvC-M9-y7g">
-            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
-            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="335" y="390" width="480" height="360"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
-            <view key="contentView" id="EiT-Mj-1SZ">
-                <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                <autoresizingMask key="autoresizingMask"/>
-                <subviews>
-                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="jaM-N4-64C" customClass="MainView">
-                        <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                    </customView>
-                </subviews>
-                <constraints>
-                    <constraint firstItem="jaM-N4-64C" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" id="12g-tn-1Gg"/>
-                    <constraint firstItem="jaM-N4-64C" firstAttribute="top" secondItem="EiT-Mj-1SZ" secondAttribute="top" id="VeO-3J-TPV"/>
-                    <constraint firstAttribute="bottom" secondItem="jaM-N4-64C" secondAttribute="bottom" id="aYY-nf-hdt"/>
-                    <constraint firstAttribute="trailing" secondItem="jaM-N4-64C" secondAttribute="trailing" id="vAG-eK-dyg"/>
-                </constraints>
-            </view>
-            <point key="canvasLocation" x="139" y="-120"/>
-        </window>
     </objects>
 </document>

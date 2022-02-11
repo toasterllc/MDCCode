@@ -222,6 +222,12 @@ using namespace MDCStudio;
         for (auto item : _outlineItems) {
             [_outlineView expandItem:item];
         }
+        
+        // Select first device by default
+        const NSInteger selectedRow = [_outlineView selectedRow];
+        if (selectedRow<0 && !_devicesSection->items.empty()) {
+            [_outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:[_outlineView rowForItem:_devicesSection->items.at(0)]] byExtendingSelection:false];
+        }
     }
 }
 
