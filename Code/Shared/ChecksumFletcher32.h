@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <cassert>
 
-uint32_t ChecksumFletcher32(const void* data, size_t len) {
+inline uint32_t ChecksumFletcher32(const void* data, size_t len) {
     // TODO: optimize so we don't perform a division each iteration
     assert(!(len % sizeof(uint16_t)));
     const uint16_t* words = (const uint16_t*)data;

@@ -3,12 +3,18 @@
 namespace MDCStudio {
 
 template <typename T>
-T* DynamicCast(id obj) {
+T* Cast(id obj) {
+    assert([obj isKindOfClass:[T class]]);
+    return obj;
+}
+
+template <typename T>
+T* CastOrNil(id obj) {
     if ([obj isKindOfClass:[T class]]) return obj;
     return nil;
 }
 
-#define DynamicCastProtocol(proto, obj) (id<proto>)([obj conformsToProtocol:@protocol(proto)] ? obj : nil)
+#define CastProtocol(proto, obj) (id<proto>)([obj conformsToProtocol:@protocol(proto)] ? obj : nil)
 
 template <typename Fn>
 inline void TrackMouse(NSWindow* win, NSEvent* ev, Fn fn) {

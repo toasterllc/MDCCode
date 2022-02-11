@@ -9,6 +9,7 @@
 #import "ImageLibrary.h"
 #import "MDCDevicesManager.h"
 #import "ImageGrid/ImageGridView.h"
+#import "MainView.h"
 namespace fs = std::filesystem;
 
 static std::vector<id> _Images;
@@ -21,31 +22,34 @@ static std::vector<id> _Images;
 @end
 
 @implementation AppDelegate {
-    IBOutlet ImageGridView* _imageGridView;
+    IBOutlet MainView* _mainView;
 }
 
 - (void)awakeFromNib {
-    __weak auto weakSelf = self;
-    MDCDevicesManager::AddObserver([=] {
-        [weakSelf _handleDevicesChanged];
-    });
+//    __weak auto weakSelf = self;
+//    MDCDevicesManager::AddObserver([=] {
+//        [weakSelf _handleDevicesChanged];
+//    });
     
     MDCDevicesManager::Start();
+    
+    ImageGridView* imageGridView = [[ImageGridView alloc] initWithFrame:{}];
+    [_mainView setContentView:imageGridView];
 }
 
 - (void)_handleDevicesChanged {
-    printf("_handleDevicesChanged\n");
-    std::vector<MDCDevicePtr> devices = MDCDevicesManager::Devices();
-    bool first = true;
-    for (MDCDevicePtr dev : devices) {
-        dev->updateImageLibrary();
-        
-        if (first) {
-            [_imageGridView setImageLibrary:dev->imgLib()];
-        }
-        
-        first = false;
-    }
+//    printf("_handleDevicesChanged\n");
+//    std::vector<MDCDevicePtr> devices = MDCDevicesManager::Devices();
+//    bool first = true;
+//    for (MDCDevicePtr dev : devices) {
+//        dev->updateImageLibrary();
+//        
+//        if (first) {
+//            [_imageGridView setImageLibrary:dev->imgLib()];
+//        }
+//        
+//        first = false;
+//    }
 }
 
 @end
