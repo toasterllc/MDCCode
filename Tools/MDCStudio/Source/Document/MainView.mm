@@ -149,6 +149,11 @@ using ResizerViewHandler = void(^)(NSEvent* event);
             relatedBy:NSLayoutRelationEqual toItem:_sourceListView attribute:NSLayoutAttributeRight
             multiplier:1 constant:0]];
     }
+    
+    // Handle whatever is first selected
+    {
+        [self _sourceListHandleSelectionChanged];
+    }
 }
 
 - (SourceListView*)sourceListView {

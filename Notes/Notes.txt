@@ -1,7 +1,5 @@
 - Rev4 Todo
     
-    - MDCStudio: make document based
-    
     - MDCStudio: make device names editable
     
     - MDCStudio: implement grid view selection
@@ -42,6 +40,8 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MDCStudio: make document based
     
     √ MDCStudio: implement device list sidebar
     

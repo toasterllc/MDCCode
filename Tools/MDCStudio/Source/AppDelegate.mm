@@ -9,16 +9,11 @@
 #import "ImageLibrary.h"
 #import "MDCDevicesManager.h"
 #import "ImageGrid/ImageGridView.h"
-#import "MainView.h"
 namespace fs = std::filesystem;
 
 static std::vector<id> _Images;
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
-@end
-
-@interface AppDelegate ()
-@property(weak) IBOutlet NSWindow* window;
 @end
 
 @implementation AppDelegate
