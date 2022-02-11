@@ -106,6 +106,8 @@ private:
                                 });
                             }
                             
+                            dev->updateImageLibrary();
+                            
                             printf("Device connected\n");
                             changed = true;
                             
