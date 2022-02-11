@@ -16,7 +16,7 @@
         <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="Kgd-90-okP" customClass="ImageGridScrollView">
             <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-            <clipView key="contentView" id="cZy-bz-q00">
+            <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="cZy-bz-q00">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>

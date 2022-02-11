@@ -160,7 +160,7 @@ using namespace MDCStudio;
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
     }
     
-    // Observe device connecting/disconnecting
+    // Observe devices connecting/disconnecting
     {
         __weak auto weakSelf = self;
         MDCDevicesManager::AddObserver([=] {
@@ -174,7 +174,20 @@ using namespace MDCStudio;
         });
     }
     
-    // Create sections
+    // Add a divider line
+    {
+        NSView* dividerLine = [[NSView alloc] initWithFrame:{}];
+        [dividerLine setTranslatesAutoresizingMaskIntoConstraints:false];
+        [dividerLine setWantsLayer:true];
+        [[dividerLine layer] setBackgroundColor:[[NSColor colorWithWhite:0 alpha:1] CGColor]];
+        [self addSubview:dividerLine];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[dividerLine(==1)]|"
+            options:0 metrics:nil views:NSDictionaryOfVariableBindings(dividerLine)]];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[dividerLine]|"
+            options:0 metrics:nil views:NSDictionaryOfVariableBindings(dividerLine)]];
+    }
+    
+    // Populate NSOutlineView
     {
         Spacer* spacer1 = [self _createItemWithClass:[Spacer class]];
         spacer1->height = 3;
@@ -191,10 +204,10 @@ using namespace MDCStudio;
     //    Device* device = [self _createItemWithClass:[Device class]];
     //    device->name = @"MDC Device 123456";
     //    _devicesSection->items.push_back(device);
-    //    
-    //    Library* library = [self _createItemWithClass:[Library class]];
-    //    library->name = @"New Library";
-    //    _librariesSection->items.push_back(library);
+        
+        Library* library = [self _createItemWithClass:[Library class]];
+        library->name = @"New Library";
+        _librariesSection->items.push_back(library);
         
         _outlineItems = {
             spacer1,
@@ -202,13 +215,13 @@ using namespace MDCStudio;
             spacer2,
             _librariesSection,
         };
-    }
-    
-    [self _updateDevices];
-    [_outlineView reloadData];
-    
-    for (auto item : _outlineItems) {
-        [_outlineView expandItem:item];
+        
+        [self _updateDevices];
+        [_outlineView reloadData];
+        
+        for (auto item : _outlineItems) {
+            [_outlineView expandItem:item];
+        }
     }
 }
 

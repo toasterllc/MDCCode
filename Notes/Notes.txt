@@ -1,5 +1,11 @@
 - Rev4 Todo
     
+    - MDCStudio: draw line between source list and content view
+    
+    - MDCStudio: make document based
+    
+    - MDCStudio: make device names editable
+    
     - MDCStudio: implement device list sidebar
     
     - MDCStudio: implement inspector
