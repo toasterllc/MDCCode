@@ -4,12 +4,11 @@
 #include "Toastbox/USB.h"
 #include "Toastbox/USBDevice.h"
 #include "Toastbox/RuntimeError.h"
-#include "STM.h"
-#include "Img.h"
-#include "SD.h"
-#include "ImgSD.h"
-#include "ChecksumFletcher32.h"
-#include "TimeInstant.h"
+#include "Code/Shared/STM.h"
+#include "Code/Shared/Img.h"
+#include "Code/Shared/SD.h"
+#include "Code/Shared/ImgSD.h"
+#include "Code/Shared/ChecksumFletcher32.h"
 
 class MDCUSBDevice {
 public:

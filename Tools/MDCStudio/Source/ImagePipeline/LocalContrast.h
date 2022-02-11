@@ -2,7 +2,7 @@
 #import <Metal/Metal.h>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "ImagePipelineTypes.h"
-#import "MetalUtil.h"
+#import "Tools/Shared/MetalUtil.h"
 
 namespace MDCStudio::ImagePipeline {
     class LocalContrast {

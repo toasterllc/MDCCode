@@ -1,7 +1,7 @@
 #pragma once
 #import <simd/simd.h>
 #import "Grid.h"
-//#import "MetalUtil.h"
+//#import "Tools/Shared/MetalUtil.h"
 
 //#ifdef __METAL_VERSION__ // Only allow the code below in non-shader contexts
 //#define METAL_CONSTANT constant

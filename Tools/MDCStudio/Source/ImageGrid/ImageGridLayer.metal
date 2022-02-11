@@ -1,6 +1,6 @@
 #import <metal_stdlib>
 #import "ImageGridLayerTypes.h"
-#import "MetalUtil.h"
+#import "Tools/Shared/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools::MetalUtil;
 using namespace MDCStudio::ImageGridLayerTypes;

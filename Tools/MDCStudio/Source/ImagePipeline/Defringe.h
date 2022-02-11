@@ -1,8 +1,8 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import "ImagePipelineTypes.h"
-#import "Renderer.h"
-#import "Mat.h"
+#import "Tools/Shared/Renderer.h"
+#import "Tools/Shared/Mat.h"
 
 namespace MDCStudio::ImagePipeline {
 
