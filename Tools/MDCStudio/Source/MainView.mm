@@ -79,10 +79,9 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 - (void)initCommon {
     // Configure `self`
     {
-        constexpr CGFloat BackgroundColorSRGB = 40./255;
         [self setTranslatesAutoresizingMaskIntoConstraints:false];
         [self setWantsLayer:true];
-        [[self layer] setBackgroundColor:[[NSColor colorWithSRGBRed:BackgroundColorSRGB green:BackgroundColorSRGB blue:BackgroundColorSRGB alpha:1] CGColor]];
+        [[self layer] setBackgroundColor:[[NSColor colorWithSRGBRed:.118 green:.122 blue:.129 alpha:1] CGColor]];
     }
     
     // Create source list
