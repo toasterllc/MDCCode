@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <filesystem>
+#import <thread>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "Toastbox/Mmap.h"
 #import "Code/Shared/MSP.h"
