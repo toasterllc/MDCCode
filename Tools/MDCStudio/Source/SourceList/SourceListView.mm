@@ -135,13 +135,18 @@ using namespace MDCStudio;
 // MARK: - Creation
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
-    abort();
-    return [super initWithCoder:coder]; // Silence warning
+    if (!(self = [super initWithCoder:coder])) return nil;
+    [self initCommon];
+    return self;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
-    
+    [self initCommon];
+    return self;
+}
+
+- (void)initCommon {
     // Load view from nib
     {
         [self setTranslatesAutoresizingMaskIntoConstraints:false];
@@ -205,8 +210,6 @@ using namespace MDCStudio;
     for (auto item : _outlineItems) {
         [_outlineView expandItem:item];
     }
-    
-    return self;
 }
 
 // MARK: - Methods

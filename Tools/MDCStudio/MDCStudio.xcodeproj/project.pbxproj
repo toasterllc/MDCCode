@@ -13,6 +13,7 @@
 		5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544A7EC27B5E011006AB473 /* SourceListView.mm */; };
 		5544AE2927B5E595006AB473 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5544ADFD27B5E57A006AB473 /* Renderer.metal */; };
 		5544AE3327B5F98C006AB473 /* MainView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE3227B5F98C006AB473 /* MainView.mm */; };
+		5544AE3527B646C3006AB473 /* ImageGridView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544AE3427B646C3006AB473 /* ImageGridView.xib */; };
 		55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55496F46278CFC0400BCA739 /* AppDelegate.mm */; };
 		55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55496F48278CFC0600BCA739 /* Assets.xcassets */; };
 		55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55496F4A278CFC0600BCA739 /* MainMenu.xib */; };
@@ -104,6 +105,7 @@
 		5544AE2827B5E58F006AB473 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		5544AE3127B5F98C006AB473 /* MainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainView.h; sourceTree = "<group>"; };
 		5544AE3227B5F98C006AB473 /* MainView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainView.mm; sourceTree = "<group>"; };
+		5544AE3427B646C3006AB473 /* ImageGridView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageGridView.xib; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* MDCStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		55496F48278CFC0600BCA739 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -182,6 +184,7 @@
 				55C6C846279001CA005ABD39 /* ImageGridLayer.metal */,
 				551328B727B45D7C00CD823B /* ImageGridView.h */,
 				551328B827B45D7C00CD823B /* ImageGridView.mm */,
+				5544AE3427B646C3006AB473 /* ImageGridView.xib */,
 			);
 			path = ImageGrid;
 			sourceTree = "<group>";
@@ -449,6 +452,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
+				5544AE3527B646C3006AB473 /* ImageGridView.xib in Resources */,
 				557ECAEE2794358100440E4B /* Outline.png in Resources */,
 				557ECAF02794358100440E4B /* Mask.png in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,

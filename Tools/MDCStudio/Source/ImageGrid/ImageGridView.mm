@@ -1,19 +1,23 @@
 #import "ImageGridView.h"
 #import "ImageGridLayer.h"
 
-@implementation ImageGridView {
+@interface ImageGridDocumentView : NSView
+@end
+
+@implementation ImageGridDocumentView {
+@public
     CALayer* _rootLayer;
     ImageGridLayer* _imageGridLayer;
 }
 
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
+- (instancetype)initWithCoder:(NSCoder*)coder {
+    if (!(self = [super initWithCoder:coder])) return nil;
     [self initCommon];
     return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder*)coder {
-    if (!(self = [super initWithCoder:coder])) return nil;
+- (instancetype)initWithFrame:(NSRect)frame {
+    if (!(self = [super initWithFrame:frame])) return nil;
     [self initCommon];
     return self;
 }
@@ -27,10 +31,6 @@
     [_rootLayer addSublayer:_imageGridLayer];
     
     [self _updateFrame];
-}
-
-- (ImageGridLayer*)imageGridLayer {
-    return _imageGridLayer;
 }
 
 - (void)setFrame:(NSRect)frame {
@@ -57,9 +57,66 @@
     [_imageGridLayer setResizingUnderway:false];
 }
 
+- (void)_updateFrame {
+    [self setFrame:[self frame]];
+}
+
+- (void)_handleScroll {
+    [_imageGridLayer setFrame:[[self enclosingScrollView] documentVisibleRect]];
+}
+
+@end
+
+@interface ImageGridScrollView : NSScrollView
+@end
+
+@implementation ImageGridScrollView
+
+- (void)reflectScrolledClipView:(NSClipView*)clipView {
+    [super reflectScrolledClipView:clipView];
+    [(ImageGridDocumentView*)[self documentView] _handleScroll];
+}
+
+@end
+
+
+
+
+@implementation ImageGridView {
+    IBOutlet NSView* _nibView;
+    IBOutlet ImageGridDocumentView* _documentView;
+}
+
+// MARK: - Creation
+
+- (instancetype)initWithCoder:(NSCoder*)coder {
+    if (!(self = [super initWithCoder:coder])) return nil;
+    [self initCommon];
+    return self;
+}
+
+- (instancetype)initWithFrame:(NSRect)frame {
+    if (!(self = [super initWithFrame:frame])) return nil;
+    [self initCommon];
+    return self;
+}
+
+- (void)initCommon {
+    // Load from nib
+    [self setTranslatesAutoresizingMaskIntoConstraints:false];
+    
+    bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
+    assert(br);
+    
+    [_nibView setTranslatesAutoresizingMaskIntoConstraints:false];
+    [self addSubview:_nibView];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
+}
+
 - (void)setImageLibrary:(ImageLibraryPtr)imgLib {
-    [_imageGridLayer setImageLibrary:imgLib];
-    [self _updateFrame];
+    [_documentView->_imageGridLayer setImageLibrary:imgLib];
+    [_documentView _updateFrame];
     
     __weak auto weakSelf = self;
     imgLib->vend()->addObserver([=] {
@@ -70,30 +127,8 @@
     });
 }
 
-- (void)_updateFrame {
-    [self setFrame:[self frame]];
-}
-
-- (void)_handleScroll {
-    [_imageGridLayer setFrame:[[self enclosingScrollView] documentVisibleRect]];
-}
-
 - (void)_handleImageLibraryChanged {
-    [self _updateFrame];
-}
-
-@end
-
-
-
-@interface ImageGridScrollView : NSScrollView
-@end
-
-@implementation ImageGridScrollView
-
-- (void)reflectScrolledClipView:(NSClipView*)clipView {
-    [super reflectScrolledClipView:clipView];
-    [(ImageGridView*)[self documentView] _handleScroll];
+    [_documentView _updateFrame];
 }
 
 @end

@@ -60,12 +60,18 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 }
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
-    abort();
-    return [super initWithCoder:coder]; // Silence warning
+    if (!(self = [super initWithCoder:coder])) return nil;
+    [self initCommon];
+    return self;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
+    [self initCommon];
+    return self;
+}
+
+- (void)initCommon {
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
     // Source list
@@ -123,8 +129,6 @@ using ResizerViewHandler = void(^)(NSEvent* event);
             relatedBy:NSLayoutRelationEqual toItem:_sourceListView attribute:NSLayoutAttributeRight
             multiplier:1 constant:0]];
     }
-    
-    return self;
 }
 
 - (SourceListView*)sourceListView {
