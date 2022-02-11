@@ -21,35 +21,10 @@ static std::vector<id> _Images;
 @property(weak) IBOutlet NSWindow* window;
 @end
 
-@implementation AppDelegate {
-    IBOutlet MainView* _mainView;
-}
+@implementation AppDelegate
 
-- (void)awakeFromNib {
-//    __weak auto weakSelf = self;
-//    MDCDevicesManager::AddObserver([=] {
-//        [weakSelf _handleDevicesChanged];
-//    });
-    
+- (void)applicationDidFinishLaunching:(NSNotification*)note {
     MDCDevicesManager::Start();
-    
-//    ImageGridView* imageGridView = [[ImageGridView alloc] initWithFrame:{}];
-//    [_mainView setContentView:imageGridView];
-}
-
-- (void)_handleDevicesChanged {
-//    printf("_handleDevicesChanged\n");
-//    std::vector<MDCDevicePtr> devices = MDCDevicesManager::Devices();
-//    bool first = true;
-//    for (MDCDevicePtr dev : devices) {
-//        dev->updateImageLibrary();
-//        
-//        if (first) {
-//            [_imageGridView setImageLibrary:dev->imgLib()];
-//        }
-//        
-//        first = false;
-//    }
 }
 
 @end
