@@ -1,7 +1,10 @@
 #import "SourceListView.h"
-#import "Util.h"
 #import <vector>
+#import "Util.h"
+#import "MDCDevicesManager.h"
 using namespace MDCStudio;
+
+// MARK: - Outline View Items
 
 #define Device          SourceListView_Device
 #define Item            SourceListView_Item
@@ -81,7 +84,13 @@ using namespace MDCStudio;
 @interface Device : SectionItem
 @end
 
-@implementation Device
+@implementation Device {
+@public
+    MDCDevicePtr device;
+}
+
+- (NSString*)name { return [NSString stringWithFormat:@"MDC Device %s", device->serial().c_str()]; }
+
 @end
 
 
@@ -110,13 +119,18 @@ using namespace MDCStudio;
 - (BOOL)isEmphasized { return false; }
 @end
 
-
+// MARK: - SourceListView
 
 @implementation SourceListView {
-    IBOutlet NSScrollView* _scrollView;
+    IBOutlet NSView* _nibView;
     IBOutlet NSOutlineView* _outlineView;
+    Section* _devicesSection;
+    Section* _librariesSection;
+    
     std::vector<Item*> _outlineItems;
 }
+
+// MARK: - Creation
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
     abort();
@@ -125,74 +139,176 @@ using namespace MDCStudio;
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
-    [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
-    bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
-    assert(br);
-    
-    [_scrollView setTranslatesAutoresizingMaskIntoConstraints:false];
-    [self addSubview:_scrollView];
-    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_scrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
-    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_scrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
-    
-    return self;
-}
-
-- (id)_itemForClass:(Class)itemClass {
-    NSParameterAssert(itemClass);
-    Item* view = DynamicCast<Item>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
-    assert(view);
-    return view;
-}
-
-- (void)_load {
-    Spacer* spacer1 = [self _itemForClass:[Spacer class]];
-    spacer1->height = 3;
-    
-    Device* device = [self _itemForClass:[Device class]];
-    device->name = @"MDC Device 123457";
-    
-    Section* devicesSection = [self _itemForClass:[Section class]];
-    devicesSection->name = @"Devices";
-    devicesSection->items = { device };
-    
-    Spacer* spacer2 = [self _itemForClass:[Spacer class]];
-    spacer2->height = 10;
-    
-    Library* library = [self _itemForClass:[Library class]];
-    library->name = @"New Library";
-    
-    Section* librariesSection = [self _itemForClass:[Section class]];
-    librariesSection->name = @"Libraries";
-    librariesSection->items = { library };
-    
-    _outlineItems = {
-        spacer1,
-        devicesSection,
-        spacer2,
-        librariesSection,
-    };
-    
-    for (Item* it : _outlineItems) {
-        [it update];
+    // Load view from nib
+    {
+        [self setTranslatesAutoresizingMaskIntoConstraints:false];
+        
+        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
+        assert(br);
+        
+        [_nibView setTranslatesAutoresizingMaskIntoConstraints:false];
+        [self addSubview:_nibView];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
     }
     
+    // Observe device connecting/disconnecting
+    {
+        __weak auto weakSelf = self;
+        MDCDevicesManager::AddObserver([=] {
+            auto strongSelf = weakSelf;
+            if (!strongSelf) return false;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [strongSelf _updateDevices];
+                [strongSelf->_outlineView reloadData];
+            });
+            return true;
+        });
+    }
+    
+    // Create sections
+    {
+        Spacer* spacer1 = [self _createItemWithClass:[Spacer class]];
+        spacer1->height = 3;
+        
+        _devicesSection = [self _createItemWithClass:[Section class]];
+        _devicesSection->name = @"Devices";
+        
+        Spacer* spacer2 = [self _createItemWithClass:[Spacer class]];
+        spacer2->height = 10;
+        
+        _librariesSection = [self _createItemWithClass:[Section class]];
+        _librariesSection->name = @"Libraries";
+        
+    //    Device* device = [self _createItemWithClass:[Device class]];
+    //    device->name = @"MDC Device 123456";
+    //    _devicesSection->items.push_back(device);
+    //    
+    //    Library* library = [self _createItemWithClass:[Library class]];
+    //    library->name = @"New Library";
+    //    _librariesSection->items.push_back(library);
+        
+        _outlineItems = {
+            spacer1,
+            _devicesSection,
+            spacer2,
+            _librariesSection,
+        };
+    }
+    
+    [self _updateDevices];
     [_outlineView reloadData];
-}
-
-- (void)awakeFromNib {
-    [self _load];
     
     for (auto item : _outlineItems) {
         [_outlineView expandItem:item];
     }
+    
+    return self;
 }
+
+// MARK: - Methods
+
+- (id)_createItemWithClass:(Class)itemClass {
+    NSParameterAssert(itemClass);
+    Item* view = Cast<Item>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
+    assert(view);
+    return view;
+}
+
+
+- (void)_updateDevices {
+    // Collect the old and new device sets
+    std::set<MDCDevicePtr> oldDevices;
+    std::set<MDCDevicePtr> newDevices;
+    {
+        for (Item* it : _devicesSection->items) {
+            oldDevices.insert(Cast<Device>(it)->device);
+        }
+        
+        std::vector<MDCDevicePtr> newDevicesVec = MDCDevicesManager::Devices();
+        newDevices.insert(newDevicesVec.begin(), newDevicesVec.end());
+    }
+    
+    // Remove disconnected devices
+    for (auto it=_devicesSection->items.begin(); it!=_devicesSection->items.end();) {
+        MDCDevicePtr dev = Cast<Device>(*it)->device;
+        if (newDevices.find(dev) == newDevices.end()) {
+            it = _devicesSection->items.erase(it);
+        } else {
+            it++;
+        }
+    }
+    
+    // Add connected devices
+    for (const MDCDevicePtr& dev : newDevices) {
+        if (oldDevices.find(dev) == oldDevices.end()) {
+            Device* item = [self _createItemWithClass:[Device class]];
+            item->device = dev;
+            _devicesSection->items.push_back(item);
+        }
+    }
+    
+    // Sort devices
+    std::sort(_devicesSection->items.begin(), _devicesSection->items.end(), [](Item* a, Item* b) {
+        return [Cast<Device>(a)->name compare:Cast<Device>(b)->name] == NSOrderedDescending;
+    });
+}
+
+
+//- (void)_handleDevicesChanged {
+//    std::set<MDCDevicePtr> connected;
+//    std::set<MDCDevicePtr> disconnected;
+//    
+//    // Determine which devices were connected/disconnected
+//    {
+//        std::set<MDCDevicePtr> oldDevices;
+//        for (Item* it : _devicesSection->items) {
+//            oldDevices.insert(Cast<Device>(it)->device);
+//        }
+//        
+//        std::vector<MDCDevicePtr> newDevicesVec = MDCDevicesManager::Devices();
+//        std::set<MDCDevicePtr> newDevices(newDevicesVec.begin(), newDevicesVec.end());
+//        
+//        for (const MDCDevicePtr& dev : newDevices) {
+//            if (oldDevices.find(dev) == oldDevices.end()) {
+//                connected.insert(dev);
+//            }
+//        }
+//        
+//        for (const MDCDevicePtr& dev : oldDevices) {
+//            if (newDevices.find(dev) == newDevices.end()) {
+//                disconnected.insert(dev);
+//            }
+//        }
+//    }
+//    
+//    // Handle disconnected devices
+//    for (auto it=_devicesSection->items.rend(); it!=_devicesSection->items.rbegin(); it++) {
+//        
+//    }
+//    
+//    for (Item* it : _devicesSection->items) {
+//        oldDevices.insert(Cast<Device>(it)->device);
+//    }
+//    
+//    for (const MDCDevicePtr& dev : disconnected) {
+//        
+//    }
+//    
+//    // Handle connected devices
+//    for (const MDCDevicePtr& dev : connected) {
+//        
+//    }
+//}
+
+// MARK: - Outline View Data Source / Delegate
 
 - (NSInteger)outlineView:(NSOutlineView*)outlineView numberOfChildrenOfItem:(id)item {
     if (item == nullptr) {
         return _outlineItems.size();
     
-    } else if (auto it = DynamicCast<Section>(item)) {
+    } else if (auto it = CastOrNil<Section>(item)) {
         return it->items.size();
     
     } else {
@@ -204,7 +320,7 @@ using namespace MDCStudio;
     if (item == nullptr) {
         return _outlineItems[index];
     
-    } else if (auto section = DynamicCast<Section>(item)) {
+    } else if (auto section = CastOrNil<Section>(item)) {
         return section->items.at(index);
     
     } else {
@@ -213,14 +329,14 @@ using namespace MDCStudio;
 }
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView isItemExpandable:(id)item {
-    if (auto it = DynamicCast<Section>(item)) {
+    if (auto it = CastOrNil<Section>(item)) {
         return true;
     }
     return false;
 }
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView shouldSelectItem:(id)item {
-    if (auto it = DynamicCast<Item>(item)) {
+    if (auto it = CastOrNil<Item>(item)) {
         return [it selectable];
     }
     return false;
@@ -235,7 +351,12 @@ using namespace MDCStudio;
 }
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
+    [Cast<Item>(item) update];
     return item;
 }
+
+//- (void)outlineView:(NSOutlineView*)outlineView willDisplayCell:(id)cell forTableColumn:(NSTableColumn*)tableColumn item:(id)item {
+//    NSLog(@"AAA %@", NSStringFromSelector(_cmd));
+//}
 
 @end

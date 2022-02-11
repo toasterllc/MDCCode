@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <thread>
+#import <forward_list>
 #import <IOKit/IOKitLib.h>
 #import <IOKit/IOMessage.h>
 #import "Toastbox/RuntimeError.h"
@@ -10,7 +11,7 @@
 
 class MDCDevicesManager {
 public:
-    using Observer = std::function<void()>;
+    using Observer = std::function<bool()>;
     
     static void Start() {
         std::thread thread(_ThreadHandleDevices);
@@ -26,9 +27,9 @@ public:
         return devs;
     }
     
-    static void AddObserver(const Observer& obs) {
+    static void AddObserver(Observer&& observer) {
         auto lock = std::unique_lock(_State.lock);
-        _State.observers.push_back(obs);
+        _State.observers.push_front(std::move(observer));
     }
     
 private:
@@ -54,8 +55,10 @@ private:
         CFRunLoopAddSource(CFRunLoopGetCurrent(), rls, kCFRunLoopCommonModes);
         
         std::set<std::string> bootloadedDeviceSerials;
-        for (;;) {
-            // Drain all services from the iterator
+        for (;;) @autoreleasepool {
+            bool changed = false;
+            
+            // Handle connected devices
             for (;;) {
                 _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
                 if (!service) break;
@@ -103,7 +106,8 @@ private:
                                 });
                             }
                             
-                            _HandleDeviceConnected(dev);
+                            printf("Device connected\n");
+                            changed = true;
                             
                         // If we didn't previously configure this device, trigger the bootloader so we can configure it
                         } else {
@@ -123,24 +127,33 @@ private:
                 }
             }
             
+            // Handle disconnected devices
+            {
+                for (const _SendRight& service : _TerminatedServices) {
+                    auto lock = std::unique_lock(_State.lock);
+                    for (auto it=_State.devices.begin(); it!=_State.devices.end(); it++) {
+                        if (it->dev->usbDevice().service() == service) {
+                            MDCDevicePtr dev = it->dev;
+                            _State.devices.erase(it);
+                            changed = true;
+                            printf("Device disconnected\n");
+                            break;
+                        }
+                    }
+                }
+                
+                _TerminatedServices.clear();
+            }
+            
+            // Notify observers that something changed
+            if (changed) {
+                _NotifyObservers();
+            }
+            
             // Wait for matching services to appear
             CFRunLoopRunResult r = CFRunLoopRunInMode(kCFRunLoopDefaultMode, INFINITY, true);
             assert(r == kCFRunLoopRunHandledSource);
         }
-    }
-    
-    static void _HandleDeviceConnected(MDCDevicePtr dev) {
-        printf("_HandleDeviceConnected\n");
-        dispatch_async(dispatch_get_main_queue(), ^{
-            _NotifyObservers();
-        });
-    }
-    
-    static void _HandleDeviceDisconnected(MDCDevicePtr dev) {
-        printf("_HandleDeviceDisconnected\n");
-        dispatch_async(dispatch_get_main_queue(), ^{
-            _NotifyObservers();
-        });
     }
     
     static void _DeviceBootload(MDCDevicePtr dev) {
@@ -166,28 +179,21 @@ private:
     
     static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* msgArg) {
         if (msgType == kIOMessageServiceIsTerminated) {
-            auto lock = std::unique_lock(_State.lock);
-            
-            for (auto it=_State.devices.begin(); it!=_State.devices.end(); it++) {
-                if (it->dev->usbDevice().service() == service) {
-                    MDCDevicePtr dev = it->dev;
-                    _State.devices.erase(it);
-                    _HandleDeviceDisconnected(dev);
-                    break;
-                }
-            }
+            _TerminatedServices.emplace_back(_SendRight::Retain, service);
         }
     }
     
     static void _NotifyObservers() {
-        std::vector<Observer> observersCopy;
-        {
-            auto lock = std::unique_lock(_State.lock);
-            observersCopy = _State.observers;
-        }
-        
-        for (const Observer& obs : observersCopy) {
-            obs();
+        auto lock = std::unique_lock(_State.lock);
+        auto prev = _State.observers.before_begin();
+        for (auto it=_State.observers.begin(); it!=_State.observers.end(); prev++) {
+            // Notify the observer; it returns whether it's still valid
+            // If it's not valid (it returned false), remove it from the list
+            if (!(*it)()) {
+                it = _State.observers.erase_after(prev);
+            } else {
+                it++;
+            }
         }
     }
     
@@ -198,9 +204,12 @@ private:
         _SendRight note;
     };
     
+    // _TerminatedServices: no locking required because it's only accessed by the thread
+    static inline std::vector<_SendRight> _TerminatedServices;
+    
     static inline struct {
         std::mutex lock; // Protects this struct
         std::vector<_Device> devices;
-        std::vector<Observer> observers;
+        std::forward_list<Observer> observers;
     } _State = {};
 };

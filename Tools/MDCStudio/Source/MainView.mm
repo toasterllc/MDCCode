@@ -7,7 +7,7 @@ using namespace MDCStudio;
 namespace SourceListWidth {
     static constexpr CGFloat HideThreshold  = 50;
     static constexpr CGFloat Min            = 150;
-    static constexpr CGFloat Default        = 300;
+    static constexpr CGFloat Default        = 220;
 }
 
 #define ResizerView MainView_ResizerView
