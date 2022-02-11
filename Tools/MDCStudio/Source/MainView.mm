@@ -11,6 +11,10 @@ namespace SourceListWidth {
     static constexpr CGFloat Default        = 220;
 }
 
+namespace ContentWidth {
+    static constexpr CGFloat Min = 100;
+}
+
 #define ResizerView MainView_ResizerView
 
 using ResizerViewHandler = void(^)(NSEvent* event);
@@ -50,7 +54,6 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 @implementation MainView {
     SourceListView* _sourceListView;
     NSLayoutConstraint* _sourceListWidth;
-    bool _sourceListVisible;
     
     NSView* _contentContainerView;
     NSView* _contentView;
@@ -72,9 +75,15 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 }
 
 - (void)initCommon {
-    [self setTranslatesAutoresizingMaskIntoConstraints:false];
+    // Configure `self`
+    {
+        constexpr CGFloat BackgroundColorSRGB = 40./255;
+        [self setTranslatesAutoresizingMaskIntoConstraints:false];
+        [self setWantsLayer:true];
+        [[self layer] setBackgroundColor:[[NSColor colorWithSRGBRed:BackgroundColorSRGB green:BackgroundColorSRGB blue:BackgroundColorSRGB alpha:1] CGColor]];
+    }
     
-    // Source list
+    // Create source list
     {
         __weak auto weakSelf = self;
         _sourceListView = [[SourceListView alloc] initWithFrame:{}];
@@ -86,16 +95,20 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         _sourceListWidth = [NSLayoutConstraint constraintWithItem:_sourceListView attribute:NSLayoutAttributeWidth
             relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
             multiplier:0 constant:SourceListWidth::Default];
-        [_sourceListWidth setPriority:NSLayoutPriorityDefaultHigh];
+        [_sourceListWidth setPriority:NSLayoutPriorityDragThatCannotResizeWindow];
         [self addConstraint:_sourceListWidth];
+        
+        [self addConstraint:[NSLayoutConstraint constraintWithItem:_sourceListView attribute:NSLayoutAttributeWidth
+            relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+            multiplier:0 constant:SourceListWidth::Min]];
     }
     
-    // Content container view
+    // Create content container view
     {
         _contentContainerView = [[NSView alloc] initWithFrame:{}];
         
-        [_contentContainerView setWantsLayer:true];
-        [[_contentContainerView layer] setBackgroundColor:[[[NSColor redColor] colorWithAlphaComponent:.2] CGColor]];
+//        [_contentContainerView setWantsLayer:true];
+//        [[_contentContainerView layer] setBackgroundColor:[[[NSColor redColor] colorWithAlphaComponent:.2] CGColor]];
         
         [_contentContainerView setTranslatesAutoresizingMaskIntoConstraints:false];
         [self addSubview:_contentContainerView];
@@ -106,6 +119,11 @@ using ResizerViewHandler = void(^)(NSEvent* event);
             options:0 metrics:nil views:NSDictionaryOfVariableBindings(_sourceListView)]];
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_contentContainerView]|"
             options:0 metrics:nil views:NSDictionaryOfVariableBindings(_contentContainerView)]];
+        
+        [self addConstraint:[NSLayoutConstraint constraintWithItem:_contentContainerView attribute:NSLayoutAttributeWidth
+            relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+            multiplier:0 constant:ContentWidth::Min]];
+        
     }
     
     // Resizer
@@ -114,8 +132,8 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         __weak auto weakSelf = self;
         _resizerView = [[ResizerView alloc] initWithFrame:NSZeroRect];
         
-        [_resizerView setWantsLayer:true];
-        [[_resizerView layer] setBackgroundColor:[[[NSColor blueColor] colorWithAlphaComponent:.2] CGColor]];
+//        [_resizerView setWantsLayer:true];
+//        [[_resizerView layer] setBackgroundColor:[[[NSColor blueColor] colorWithAlphaComponent:.2] CGColor]];
         
         _resizerView->handler = ^(NSEvent* event) { [weakSelf _sourceListTrackResize:event]; };
         _resizerView->cursor = [NSCursor resizeLeftRightCursor];
@@ -145,6 +163,8 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     }
     
     _contentView = contentView;
+    if (!_contentView) return;
+    
     [_contentView setTranslatesAutoresizingMaskIntoConstraints:false];
     [_contentContainerView addSubview:contentView];
     [_contentContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_contentView]|"
@@ -162,17 +182,15 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         const CGFloat desiredWidth = position.x;
         const CGFloat width = std::max(SourceListWidth::Min, desiredWidth);
         
-        if (desiredWidth<SourceListWidth::HideThreshold && _sourceListVisible) {
+        if (desiredWidth<SourceListWidth::HideThreshold && ![_sourceListView isHidden]) {
             NSLog(@"HIDE");
-            [_sourceListWidth setConstant:0];
-            _sourceListVisible = false;
-        } else if (desiredWidth>=SourceListWidth::HideThreshold && !_sourceListVisible) {
+            [_sourceListView setHidden:true];
+        } else if (desiredWidth>=SourceListWidth::HideThreshold && [_sourceListView isHidden]) {
             NSLog(@"SHOW");
-            [_sourceListWidth setConstant:width];
-            _sourceListVisible = true;
-        } else if (_sourceListVisible) {
-            [_sourceListWidth setConstant:width];
+            [_sourceListView setHidden:false];
         }
+        
+        [_sourceListWidth setConstant:width];
     });
     
     _dragging = false;
@@ -185,6 +203,9 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithFrame:{}];
         [imageGridView setImageLibrary:selection.device->imgLib()];
         [self setContentView:imageGridView];
+    
+    } else {
+        [self setContentView:nil];
     }
 }
 
