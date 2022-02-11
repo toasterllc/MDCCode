@@ -31,6 +31,11 @@
     [_rootLayer addSublayer:_imageGridLayer];
     
     [self _updateFrame];
+    
+    NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer* timer) {
+        NSLog(@"%@", (__bridge id)CFRunLoopCopyCurrentMode(CFRunLoopGetCurrent()));
+    }];
+    [[NSRunLoop currentRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
 }
 
 - (void)setFrame:(NSRect)frame {
@@ -50,10 +55,14 @@
 }
 
 - (void)viewWillStartLiveResize {
+    [super viewWillStartLiveResize];
+//    NSLog(@"viewWillStartLiveResize");
     [_imageGridLayer setResizingUnderway:true];
 }
 
 - (void)viewDidEndLiveResize {
+    [super viewDidEndLiveResize];
+//    NSLog(@"viewWillStartLiveResize");
     [_imageGridLayer setResizingUnderway:false];
 }
 
@@ -85,6 +94,7 @@
 @implementation ImageGridView {
     IBOutlet NSView* _nibView;
     IBOutlet ImageGridDocumentView* _documentView;
+    id _runLoopObserver;
 }
 
 // MARK: - Creation
@@ -112,6 +122,18 @@
     [self addSubview:_nibView];
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
+    
+    __weak auto weakSelf = self;
+    _runLoopObserver = CFBridgingRelease(CFRunLoopObserverCreateWithHandler(nil, kCFRunLoopEntry, true, 0, ^(CFRunLoopObserverRef observer, CFRunLoopActivity activity) {
+        auto strongSelf = weakSelf;
+        if (!strongSelf) {
+            NSLog(@"REMOVING RUNLOOP OBSERVER");
+            CFRunLoopRemoveObserver(CFRunLoopGetMain(), observer, kCFRunLoopCommonModes);
+            return;
+        }
+        [strongSelf _handleRunLoopEntry];
+    }));
+    CFRunLoopAddObserver(CFRunLoopGetMain(), (__bridge CFRunLoopObserverRef)_runLoopObserver, kCFRunLoopCommonModes);
 }
 
 - (void)setImageLibrary:(ImageLibraryPtr)imgLib {
@@ -129,6 +151,13 @@
 
 - (void)_handleImageLibraryChanged {
     [_documentView _updateFrame];
+}
+
+- (void)_handleRunLoopEntry {
+    [_documentView->_imageGridLayer setResizingUnderway:[[[NSRunLoop currentRunLoop] currentMode] isEqualToString:NSEventTrackingRunLoopMode]];
+//    if ([[NSRunLoop currentRunLoop] currentMode])
+//    if ([[[NSRunLoop currentRunLoop] currentMode] isEqualToString:NSEventTrackingRunLoopMode])
+//    NSLog(@"_handleRunLoopEntry: %@", [[NSRunLoop currentRunLoop] currentMode]);
 }
 
 @end

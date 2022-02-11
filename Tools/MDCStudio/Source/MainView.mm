@@ -54,6 +54,8 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 @implementation MainView {
     SourceListView* _sourceListView;
     NSLayoutConstraint* _sourceListWidth;
+    NSLayoutConstraint* _sourceListMinWidth;
+    bool _sourceListVisible;
     
     NSView* _contentContainerView;
     NSView* _contentView;
@@ -98,9 +100,10 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         [_sourceListWidth setPriority:NSLayoutPriorityDragThatCannotResizeWindow];
         [self addConstraint:_sourceListWidth];
         
-        [self addConstraint:[NSLayoutConstraint constraintWithItem:_sourceListView attribute:NSLayoutAttributeWidth
+        _sourceListMinWidth = [NSLayoutConstraint constraintWithItem:_sourceListView attribute:NSLayoutAttributeWidth
             relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
-            multiplier:0 constant:SourceListWidth::Min]];
+            multiplier:0 constant:SourceListWidth::Min];
+        [self addConstraint:_sourceListMinWidth];
     }
     
     // Create content container view
@@ -182,15 +185,19 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         const CGFloat desiredWidth = position.x;
         const CGFloat width = std::max(SourceListWidth::Min, desiredWidth);
         
-        if (desiredWidth<SourceListWidth::HideThreshold && ![_sourceListView isHidden]) {
+        if (desiredWidth<SourceListWidth::HideThreshold && _sourceListVisible) {
             NSLog(@"HIDE");
-            [_sourceListView setHidden:true];
-        } else if (desiredWidth>=SourceListWidth::HideThreshold && [_sourceListView isHidden]) {
+            [_sourceListWidth setConstant:0];
+            _sourceListVisible = false;
+        } else if (desiredWidth>=SourceListWidth::HideThreshold && !_sourceListVisible) {
             NSLog(@"SHOW");
-            [_sourceListView setHidden:false];
+            [_sourceListWidth setConstant:width];
+            _sourceListVisible = true;
+        } else if (_sourceListVisible) {
+            [_sourceListWidth setConstant:width];
         }
         
-        [_sourceListWidth setConstant:width];
+        [_sourceListMinWidth setActive:_sourceListVisible];
     });
     
     _dragging = false;
