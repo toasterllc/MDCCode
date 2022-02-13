@@ -188,12 +188,13 @@ private:
     static void _NotifyObservers() {
         auto lock = std::unique_lock(_State.lock);
         auto prev = _State.observers.before_begin();
-        for (auto it=_State.observers.begin(); it!=_State.observers.end(); prev++) {
+        for (auto it=_State.observers.begin(); it!=_State.observers.end();) {
             // Notify the observer; it returns whether it's still valid
             // If it's not valid (it returned false), remove it from the list
             if (!(*it)()) {
                 it = _State.observers.erase_after(prev);
             } else {
+                prev = it;
                 it++;
             }
         }

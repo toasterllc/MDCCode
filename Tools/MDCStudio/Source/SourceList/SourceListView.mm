@@ -78,6 +78,22 @@ using namespace MDCStudio;
 
 - (NSString*)name { return @(device->name().c_str()); }
 
+- (void)setDevice:(MDCDevicePtr)dev {
+    assert(!device); // We're one-time use since MDCDevice observers can't be removed
+    device = dev;
+    __weak auto weakSelf = self;
+    dev->addObserver([=] {
+        auto strongSelf = weakSelf;
+        if (!strongSelf) return false;
+        dispatch_async(dispatch_get_main_queue(), ^{ [strongSelf update]; });
+        return true;
+    });
+}
+
+- (IBAction)textFieldAction:(id)sender {
+    device->setName([[[self textField] stringValue] UTF8String]);
+}
+
 @end
 
 @interface SourceListView_Spacer : SourceListView_Item
@@ -273,7 +289,7 @@ using namespace MDCStudio;
     for (const MDCDevicePtr& dev : newDevices) {
         if (oldDevices.find(dev) == oldDevices.end()) {
             Device* item = [self _createItemWithClass:[Device class]];
-            item->device = dev;
+            [item setDevice:dev];
             _devicesSection->items.push_back(item);
         }
     }

@@ -85,12 +85,15 @@
                                                 <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="NSActionTemplate" id="KoV-V9-mVz"/>
                                             </imageView>
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="MZn-BH-IiQ" userLabel="Text Field">
-                                                <rect key="frame" x="19" y="2" width="180" height="16"/>
-                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="aUI-KD-Hqx">
+                                                <rect key="frame" x="19" y="2" width="172" height="16"/>
+                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="aUI-KD-Hqx">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
+                                                <connections>
+                                                    <action selector="textFieldAction:" target="08g-eg-N7V" id="rvh-zP-hHo"/>
+                                                </connections>
                                             </textField>
                                         </subviews>
                                         <constraints>
@@ -98,7 +101,7 @@
                                             <constraint firstItem="7cJ-fN-hbY" firstAttribute="leading" secondItem="08g-eg-N7V" secondAttribute="leading" id="Kje-qB-Fxx"/>
                                             <constraint firstAttribute="height" constant="20" id="T60-bh-CJV"/>
                                             <constraint firstItem="MZn-BH-IiQ" firstAttribute="centerY" secondItem="7cJ-fN-hbY" secondAttribute="centerY" id="YM3-H9-fNG"/>
-                                            <constraint firstAttribute="trailing" secondItem="MZn-BH-IiQ" secondAttribute="trailing" id="dJQ-Hj-a6v"/>
+                                            <constraint firstAttribute="trailing" secondItem="MZn-BH-IiQ" secondAttribute="trailing" constant="8" id="dJQ-Hj-a6v"/>
                                             <constraint firstItem="MZn-BH-IiQ" firstAttribute="centerY" secondItem="08g-eg-N7V" secondAttribute="centerY" id="yPg-nX-57Q"/>
                                         </constraints>
                                         <connections>
@@ -120,8 +123,8 @@
                                                 <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="NSActionTemplate" id="aDA-Vo-LUw"/>
                                             </imageView>
                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="aB1-av-7PN" userLabel="Text Field">
-                                                <rect key="frame" x="19" y="2" width="180" height="16"/>
-                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="eAY-rM-mOq">
+                                                <rect key="frame" x="19" y="2" width="172" height="16"/>
+                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="eAY-rM-mOq">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -129,7 +132,7 @@
                                             </textField>
                                         </subviews>
                                         <constraints>
-                                            <constraint firstAttribute="trailing" secondItem="aB1-av-7PN" secondAttribute="trailing" id="2kr-Yd-rFO"/>
+                                            <constraint firstAttribute="trailing" secondItem="aB1-av-7PN" secondAttribute="trailing" constant="8" id="2kr-Yd-rFO"/>
                                             <constraint firstItem="Zpc-jG-CaC" firstAttribute="leading" secondItem="NqZ-ff-YXV" secondAttribute="leading" id="ECd-5J-lAX"/>
                                             <constraint firstItem="aB1-av-7PN" firstAttribute="centerY" secondItem="Zpc-jG-CaC" secondAttribute="centerY" id="JX1-Fv-OOu"/>
                                             <constraint firstAttribute="height" constant="20" id="mXu-IO-l8D"/>
