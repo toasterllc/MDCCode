@@ -186,9 +186,11 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     [[self window] invalidateCursorRectsForView:self];
     [imageGridView setResizingUnderway:true];
     
+    const CGFloat offsetX =
+        [_resizerView bounds].size.width/2 - [_resizerView convertPoint:[event locationInWindow] fromView:nil].x;
+    
     TrackMouse([self window], event, [&](NSEvent* event, bool done) {
-        const CGPoint position = [self convertPoint:[event locationInWindow] fromView:nil];
-        const CGFloat desiredWidth = position.x;
+        const CGFloat desiredWidth = [self convertPoint:[event locationInWindow] fromView:nil].x + offsetX;
         const CGFloat width = std::max(SourceListWidth::Min, desiredWidth);
         
         if (desiredWidth<SourceListWidth::HideThreshold && _sourceListVisible) {
