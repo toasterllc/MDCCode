@@ -73,43 +73,8 @@
                                             <outlet property="textField" destination="aQl-zt-mX6" id="94H-o3-xPX"/>
                                         </connections>
                                     </tableCellView>
-                                    <tableCellView identifier="SourceListView_Library" translatesAutoresizingMaskIntoConstraints="NO" id="NqZ-ff-YXV" customClass="SourceListView_Library">
-                                        <rect key="frame" x="1" y="64" width="197" height="20"/>
-                                        <subviews>
-                                            <imageView translatesAutoresizingMaskIntoConstraints="NO" id="Zpc-jG-CaC">
-                                                <rect key="frame" x="0.0" y="3" width="14" height="14"/>
-                                                <constraints>
-                                                    <constraint firstAttribute="width" constant="14" id="Ch7-G8-gpn"/>
-                                                    <constraint firstAttribute="height" constant="14" id="jXA-XF-UKB"/>
-                                                </constraints>
-                                                <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="NSActionTemplate" id="aDA-Vo-LUw"/>
-                                            </imageView>
-                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="aB1-av-7PN" userLabel="Text Field">
-                                                <rect key="frame" x="19" y="2" width="180" height="16"/>
-                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="eAY-rM-mOq">
-                                                    <font key="font" metaFont="system"/>
-                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
-                                        </subviews>
-                                        <constraints>
-                                            <constraint firstAttribute="trailing" secondItem="aB1-av-7PN" secondAttribute="trailing" id="2kr-Yd-rFO"/>
-                                            <constraint firstItem="Zpc-jG-CaC" firstAttribute="leading" secondItem="NqZ-ff-YXV" secondAttribute="leading" id="ECd-5J-lAX"/>
-                                            <constraint firstItem="aB1-av-7PN" firstAttribute="centerY" secondItem="Zpc-jG-CaC" secondAttribute="centerY" id="JX1-Fv-OOu"/>
-                                            <constraint firstAttribute="height" constant="20" id="mXu-IO-l8D"/>
-                                            <constraint firstItem="aB1-av-7PN" firstAttribute="centerY" secondItem="NqZ-ff-YXV" secondAttribute="centerY" id="oka-fK-RBm"/>
-                                            <constraint firstItem="aB1-av-7PN" firstAttribute="leading" secondItem="Zpc-jG-CaC" secondAttribute="trailing" constant="7" id="xie-pv-vDf"/>
-                                        </constraints>
-                                        <connections>
-                                            <outlet property="_height" destination="mXu-IO-l8D" id="zFt-y9-j18"/>
-                                            <outlet property="_indent" destination="ECd-5J-lAX" id="YUt-I8-co5"/>
-                                            <outlet property="imageView" destination="Zpc-jG-CaC" id="r69-Gi-zSn"/>
-                                            <outlet property="textField" destination="aB1-av-7PN" id="bKq-nj-BZi"/>
-                                        </connections>
-                                    </tableCellView>
                                     <tableCellView identifier="SourceListView_Device" translatesAutoresizingMaskIntoConstraints="NO" id="08g-eg-N7V" customClass="SourceListView_Device">
-                                        <rect key="frame" x="1" y="86" width="197" height="20"/>
+                                        <rect key="frame" x="1" y="64" width="197" height="20"/>
                                         <subviews>
                                             <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7cJ-fN-hbY">
                                                 <rect key="frame" x="0.0" y="3" width="14" height="14"/>
@@ -141,6 +106,41 @@
                                             <outlet property="_indent" destination="Kje-qB-Fxx" id="nLI-Er-4lu"/>
                                             <outlet property="imageView" destination="7cJ-fN-hbY" id="U5o-92-vYm"/>
                                             <outlet property="textField" destination="MZn-BH-IiQ" id="mUE-hG-002"/>
+                                        </connections>
+                                    </tableCellView>
+                                    <tableCellView identifier="SourceListView_Library" translatesAutoresizingMaskIntoConstraints="NO" id="NqZ-ff-YXV" customClass="SourceListView_Library">
+                                        <rect key="frame" x="1" y="86" width="197" height="20"/>
+                                        <subviews>
+                                            <imageView translatesAutoresizingMaskIntoConstraints="NO" id="Zpc-jG-CaC">
+                                                <rect key="frame" x="0.0" y="3" width="14" height="14"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="width" constant="14" id="Ch7-G8-gpn"/>
+                                                    <constraint firstAttribute="height" constant="14" id="jXA-XF-UKB"/>
+                                                </constraints>
+                                                <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="NSActionTemplate" id="aDA-Vo-LUw"/>
+                                            </imageView>
+                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="aB1-av-7PN" userLabel="Text Field">
+                                                <rect key="frame" x="19" y="2" width="180" height="16"/>
+                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" alignment="left" title="Table View Cell" id="eAY-rM-mOq">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                        </subviews>
+                                        <constraints>
+                                            <constraint firstAttribute="trailing" secondItem="aB1-av-7PN" secondAttribute="trailing" id="2kr-Yd-rFO"/>
+                                            <constraint firstItem="Zpc-jG-CaC" firstAttribute="leading" secondItem="NqZ-ff-YXV" secondAttribute="leading" id="ECd-5J-lAX"/>
+                                            <constraint firstItem="aB1-av-7PN" firstAttribute="centerY" secondItem="Zpc-jG-CaC" secondAttribute="centerY" id="JX1-Fv-OOu"/>
+                                            <constraint firstAttribute="height" constant="20" id="mXu-IO-l8D"/>
+                                            <constraint firstItem="aB1-av-7PN" firstAttribute="centerY" secondItem="NqZ-ff-YXV" secondAttribute="centerY" id="oka-fK-RBm"/>
+                                            <constraint firstItem="aB1-av-7PN" firstAttribute="leading" secondItem="Zpc-jG-CaC" secondAttribute="trailing" constant="7" id="xie-pv-vDf"/>
+                                        </constraints>
+                                        <connections>
+                                            <outlet property="_height" destination="mXu-IO-l8D" id="zFt-y9-j18"/>
+                                            <outlet property="_indent" destination="ECd-5J-lAX" id="YUt-I8-co5"/>
+                                            <outlet property="imageView" destination="Zpc-jG-CaC" id="r69-Gi-zSn"/>
+                                            <outlet property="textField" destination="aB1-av-7PN" id="bKq-nj-BZi"/>
                                         </connections>
                                     </tableCellView>
                                 </prototypeCellViews>
