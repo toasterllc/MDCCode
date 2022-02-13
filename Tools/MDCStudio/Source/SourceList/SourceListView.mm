@@ -6,18 +6,10 @@ using namespace MDCStudio;
 
 // MARK: - Outline View Items
 
-#define Device          SourceListView_Device
-#define Item            SourceListView_Item
-#define Library         SourceListView_Library
-#define RowView         SourceListView_RowView
-#define Section         SourceListView_Section
-#define SectionItem     SourceListView_SectionItem
-#define Spacer          SourceListView_Spacer
-
-@interface Item : NSTableCellView
+@interface SourceListView_Item : NSTableCellView
 @end
 
-@implementation Item {
+@implementation SourceListView_Item {
     IBOutlet NSLayoutConstraint* _indent;
     IBOutlet NSLayoutConstraint* _height;
 }
@@ -35,13 +27,13 @@ using namespace MDCStudio;
 
 @end
 
-@interface Section : Item
+@interface SourceListView_Section : SourceListView_Item
 @end
 
-@implementation Section {
+@implementation SourceListView_Section {
 @public
     NSString* name;
-    std::vector<Item*> items;
+    std::vector<SourceListView_Item*> items;
 }
 
 - (NSString*)name { return [name uppercaseString]; }
@@ -50,20 +42,17 @@ using namespace MDCStudio;
 
 - (void)update {
     [super update];
-    for (Item* it : items) {
+    for (SourceListView_Item* it : items) {
         [it update];
     }
 }
 
 @end
 
-
-
-
-@interface SectionItem : Item
+@interface SourceListView_SectionItem : SourceListView_Item
 @end
 
-@implementation SectionItem {
+@implementation SourceListView_SectionItem {
 @public
     NSString* name;
 }
@@ -73,35 +62,28 @@ using namespace MDCStudio;
 - (CGFloat)indent { return [super indent]+5; }
 @end
 
-
-
-@interface Library : SectionItem
+@interface SourceListView_Library : SourceListView_SectionItem
 @end
 
-@implementation Library
+@implementation SourceListView_Library
 @end
 
-@interface Device : SectionItem
+@interface SourceListView_Device : SourceListView_SectionItem
 @end
 
-@implementation Device {
+@implementation SourceListView_Device {
 @public
     MDCDevicePtr device;
 }
 
-- (NSString*)name { return [NSString stringWithFormat:@"MDC Device %s", device->serial().c_str()]; }
+- (NSString*)name { return @(device->name().c_str()); }
 
 @end
 
-
-
-
-
-
-@interface Spacer : Item
+@interface SourceListView_Spacer : SourceListView_Item
 @end
 
-@implementation Spacer {
+@implementation SourceListView_Spacer {
 @public
     CGFloat height;
 }
@@ -110,14 +92,20 @@ using namespace MDCStudio;
 - (CGFloat)height { return height; }
 @end
 
-
-
-@interface RowView : NSTableRowView
+@interface SourceListView_RowView : NSTableRowView
 @end
 
-@implementation RowView
+@implementation SourceListView_RowView
 - (BOOL)isEmphasized { return false; }
 @end
+
+#define Device          SourceListView_Device
+#define Item            SourceListView_Item
+#define Library         SourceListView_Library
+#define RowView         SourceListView_RowView
+#define Section         SourceListView_Section
+#define SectionItem     SourceListView_SectionItem
+#define Spacer          SourceListView_Spacer
 
 // MARK: - SourceListView
 

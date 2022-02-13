@@ -18,6 +18,18 @@ public:
     
     MDCDevice(USBDevice&& dev) : MDCUSBDevice(std::move(dev)), _devDir(_DevDirForSerial(serial())) {
         printf("MDCDevice()\n");
+        
+        auto lock = std::unique_lock(_state.lock);
+        
+        // Give device a default name
+        char name[256];
+        snprintf(name, sizeof(name), "MDC Device %s", serial().c_str());
+        _state.name = std::string(name);
+        
+        try {
+            _SerializedState state = _SerializedStateRead(_devDir);
+            _state.name = std::string(state.name);
+        } catch (const std::exception& e) {}
     }
     
     ~MDCDevice() {
@@ -26,6 +38,17 @@ public:
         if (_state.updateImageLibraryThread.joinable()) {
             _state.updateImageLibraryThread.join();
         }
+    }
+    
+    const std::string& name() {
+        auto lock = std::unique_lock(_state.lock);
+        return _state.name;
+    }
+    
+    void setName(const std::string_view& name) {
+        auto lock = std::unique_lock(_state.lock);
+        _state.name = name;
+        _write();
     }
     
     ImageLibraryPtr imgLib() {
@@ -46,13 +69,18 @@ public:
         _state.updateImageLibraryThread.detach();
     }
     
+    void write() {
+        auto lock = std::unique_lock(_state.lock);
+        _write();
+    }
+    
 private:
     using _Path = std::filesystem::path;
     static constexpr uint32_t _Version = 0;
     
     struct [[gnu::packed]] _SerializedState {
         uint32_t version = 0;
-        Img::Id imgIdEnd = 0;
+        char name[128] = {}; // UTF-8 with NULL byte
     };
     
     struct _Range {
@@ -104,9 +132,13 @@ private:
     }
     
     static _SerializedState _SerializedStateRead(const _Path& devDir) {
-        const Mmap mmap(_StatePath(devDir));
+        std::ifstream f;
+        f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+        f.open(_StatePath(devDir));
         
-        const _SerializedState& state = *mmap.data<_SerializedState>(0);
+        _SerializedState state;
+        f.read((char*)&state, sizeof(state));
+        state.name[sizeof(state.name)-1] = 0; // Ensure that state.name has a null byte
         
         if (state.version != _Version) {
             throw Toastbox::RuntimeError("invalid state version (expected: 0x%jx, got: 0x%jx)",
@@ -118,12 +150,32 @@ private:
         return state;
     }
     
+    static void _SerializedStateWrite(const _Path& devDir, const _SerializedState& state) {
+        std::ofstream f;
+        f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+        f.open(_StatePath(devDir));
+        f.write((char*)&state, sizeof(state));
+    }
+    
     static const MSP::ImgRingBuf& _GetImgRingBuf(const MSP::State& state) {
         const MSP::ImgRingBuf& imgRingBuf0 = state.sd.imgRingBufs[0];
         const MSP::ImgRingBuf& imgRingBuf1 = state.sd.imgRingBufs[1];
         const std::optional<int> comp = MSP::ImgRingBuf::Compare(imgRingBuf0, imgRingBuf1);
         if (!comp) throw Toastbox::RuntimeError("both image ring buffers are invalid");
         return *comp>=0 ? imgRingBuf0 : imgRingBuf1;
+    }
+    
+    // _state.lock must be held
+    void _write() {
+        _SerializedState state;
+        state.version = _Version;
+        // Copy UTF8 device name into state.name
+        // state.name is initialized with zeroes, so we don't need to explicitly set a
+        // null byte, but we do need to limit the number of copied bytes to
+        // `sizeof(state.name)-1` to ensure that the null byte isn't overwritten
+        _state.name.copy(state.name, sizeof(state.name)-1);
+        
+        _SerializedStateWrite(_devDir, state);
     }
     
     void _threadUpdateImageLibrary() {
@@ -349,6 +401,7 @@ private:
     
     struct {
         std::mutex lock; // Protects this struct
+        std::string name;
         ImageLibraryPtr imgLib;
         std::thread updateImageLibraryThread;
     } _state;
