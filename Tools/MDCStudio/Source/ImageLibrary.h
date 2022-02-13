@@ -97,12 +97,13 @@ private:
     
     void _notifyObservers() {
         auto prev = _state.observers.before_begin();
-        for (auto it=_state.observers.begin(); it!=_state.observers.end(); prev++) {
+        for (auto it=_state.observers.begin(); it!=_state.observers.end();) {
             // Notify the observer; it returns whether it's still valid
             // If it's not valid (it returned false), remove it from the list
             if (!(*it)()) {
                 it = _state.observers.erase_after(prev);
             } else {
+                prev = it;
                 it++;
             }
         }

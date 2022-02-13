@@ -15,6 +15,7 @@
 class MDCDevice : public MDCUSBDevice {
 public:
     using MDCUSBDevice::MDCUSBDevice;
+    using Observer = std::function<bool()>;
     
     MDCDevice(USBDevice&& dev) : MDCUSBDevice(std::move(dev)), _devDir(_DevDirForSerial(serial())) {
         printf("MDCDevice()\n");
@@ -49,6 +50,7 @@ public:
         auto lock = std::unique_lock(_state.lock);
         _state.name = name;
         _write();
+        _notifyObservers();
     }
     
     ImageLibraryPtr imgLib() {
@@ -67,6 +69,11 @@ public:
         #warning TODO: what should we do if the thread's already running?
         _state.updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
         _state.updateImageLibraryThread.detach();
+    }
+    
+    void addObserver(Observer&& observer) {
+        auto lock = std::unique_lock(_state.lock);
+        _state.observers.push_front(std::move(observer));
     }
     
     void write() {
@@ -397,12 +404,28 @@ private:
         imgLibVendor->add();
     }
     
+    // _state.lock must be held
+    void _notifyObservers() {
+        auto prev = _state.observers.before_begin();
+        for (auto it=_state.observers.begin(); it!=_state.observers.end();) {
+            // Notify the observer; it returns whether it's still valid
+            // If it's not valid (it returned false), remove it from the list
+            if (!(*it)()) {
+                it = _state.observers.erase_after(prev);
+            } else {
+                prev = it;
+                it++;
+            }
+        }
+    }
+    
     const _Path _devDir;
     
     struct {
         std::mutex lock; // Protects this struct
         std::string name;
         ImageLibraryPtr imgLib;
+        std::forward_list<Observer> observers;
         std::thread updateImageLibraryThread;
     } _state;
 };
