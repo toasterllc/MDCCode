@@ -296,6 +296,14 @@ using namespace MDCStudio;
     });
 }
 
+- (void)setFrameSize:(NSSize)size {
+    [super setFrameSize:size];
+    // Fix intermittent issue where our sole column can be sized a few points too large,
+    // causing the enclosing scroll view to be able to scroll horizontally (which
+    // we don't want)
+    CGFloat usableWidth = [self bounds].size.width-4;
+    [[_outlineView tableColumns][0] setWidth:usableWidth];
+}
 
 //- (void)_handleDevicesChanged {
 //    std::set<MDCDevicePtr> connected;
