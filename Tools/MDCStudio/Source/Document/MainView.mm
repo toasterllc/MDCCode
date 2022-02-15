@@ -216,8 +216,7 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 - (void)_sourceListHandleSelectionChanged {
     auto selection = [_sourceListView selection];
     if (selection.device) {
-        ImageGridView* imageGridView = [[ImageGridView alloc] initWithFrame:{}];
-        [imageGridView setImageLibrary:selection.device->imgLib()];
+        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imgLib()];
         [self setContentView:imageGridView];
     
     } else {

@@ -16,7 +16,7 @@ struct [[gnu::packed]] ImageRef {
         Clockwise270
     };
     
-    uint32_t id = 0;
+    Img::Id id = 0;
     Rotation rotation = Rotation::None;
     uint8_t _pad[3] = {};
     uint8_t _reserved[64] = {}; // For future use, so we can add fields without doing a big data migration

@@ -32,4 +32,19 @@ inline void TrackMouse(NSWindow* win, NSEvent* ev, Fn fn) {
     }
 }
 
+inline NSDictionary* LayerNullActions = @{
+    kCAOnOrderIn: [NSNull null],
+    kCAOnOrderOut: [NSNull null],
+    @"bounds": [NSNull null],
+    @"frame": [NSNull null],
+    @"position": [NSNull null],
+    @"sublayers": [NSNull null],
+    @"transform": [NSNull null],
+    @"contents": [NSNull null],
+    @"contentsScale": [NSNull null],
+    @"hidden": [NSNull null],
+    @"fillColor": [NSNull null],
+    @"fontSize": [NSNull null],
+};
+
 } // namespace MDCStudio

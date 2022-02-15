@@ -40,7 +40,7 @@ namespace ImageGridLayerTypes {
 //    return reinterpret_cast<MetalThread T&>(x);
 //}
 
-struct ImageRef {
+struct ImageRecordRef {
     uint32_t _pad[2];
     uint32_t idx;
 };
@@ -55,11 +55,20 @@ struct RenderContext {
     matrix_float4x4 viewMatrix = {};
     
     struct {
+        uint32_t id = 0; // Offset of image id from image base
+        uint32_t thumbData = 0; // Offset of thumbnail from image base
+    } off;
+    
+    struct {
         uint32_t width  = 0;
         uint32_t height = 0;
         uint32_t pxSize = 0; // Bytes per pixel
-        uint32_t off    = 0; // Offset of thumbnail from image base
     } thumb;
+    
+    struct {
+        uint32_t first = 0;
+        uint32_t count = 0;
+    } selection;
     
     uint32_t cellWidth = 0;
     uint32_t cellHeight = 0;
