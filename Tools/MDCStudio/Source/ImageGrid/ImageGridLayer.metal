@@ -93,7 +93,7 @@ static int2 _VertexOffsetForVertexIndex(const thread Grid::Rect& rect, uint vidx
 
 vertex VertexOutput VertexShader(
     constant RenderContext& ctx [[buffer(0)]],
-    constant ImageRef* imageRefs [[buffer(1)]],
+    constant ImageRecordRef* imageRecordRefs [[buffer(1)]],
     uint vidx [[vertex_id]],
     uint iidx [[instance_id]]
 ) {
@@ -173,6 +173,7 @@ static float4 blendMask(float mask, float4 a) {
 fragment float4 FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
     device uint8_t* images [[buffer(1)]],
+    device bool* selectedImageIds [[buffer(2)]],
     texture2d<float> maskTxt [[texture(0)]],
     texture2d<float> outlineTxt [[texture(1)]],
     texture2d<float> shadowTxt [[texture(2)]],
@@ -181,11 +182,22 @@ fragment float4 FragmentShader(
 //    return float4(0,0,0,1);
     
     device uint8_t* imageBuf = images+ctx.imagesOff+(ctx.imageSize*in.idx);
-    device uint8_t* thumbBuf = imageBuf+ctx.thumb.off;
+    const uint32_t imageId = *((device uint32_t*)(imageBuf+ctx.off.id));
+    device uint8_t* thumbData = imageBuf+ctx.off.thumbData;
     
     const uint32_t thumbInset = (shadowTxt.get_width()-maskTxt.get_width())/2;
     const int2 pos = int2(in.posPx)-int2(thumbInset);
     const uint pxIdx = (pos.y*ctx.thumb.width + pos.x);
+    
+    const bool selected = (
+        imageId>=ctx.selection.first &&
+        imageId<ctx.selection.first+ctx.selection.count &&
+        selectedImageIds[imageId-ctx.selection.first]
+    );
+    
+    if (selected) {
+        return float4(0,0,1,1);
+    }
     
     const int maskWidth = maskTxt.get_width();
     const int maskHeight = maskTxt.get_height();
@@ -196,9 +208,9 @@ fragment float4 FragmentShader(
     
     const uint32_t pxOff = pxIdx*ctx.thumb.pxSize;
     const float4 thumb = float4(
-        ((float)thumbBuf[pxOff+0] / 255),
-        ((float)thumbBuf[pxOff+1] / 255),
-        ((float)thumbBuf[pxOff+2] / 255),
+        ((float)thumbData[pxOff+0] / 255),
+        ((float)thumbData[pxOff+1] / 255),
+        ((float)thumbData[pxOff+2] / 255),
         1
     );
     

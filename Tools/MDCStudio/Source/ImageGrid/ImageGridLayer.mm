@@ -5,6 +5,8 @@
 #import "ImageGridLayerTypes.h"
 #import "Toastbox/Mmap.h"
 #import "RecordStore.h"
+#import "Util.h"
+#import "Grid.h"
 using namespace MDCStudio;
 namespace fs = std::filesystem;
 
@@ -33,21 +35,6 @@ static matrix_float4x4 _Translate(float x, float y, float z) {
     };
 }
 
-static NSDictionary* _LayerNullActions = @{
-    kCAOnOrderIn: [NSNull null],
-    kCAOnOrderOut: [NSNull null],
-    @"bounds": [NSNull null],
-    @"frame": [NSNull null],
-    @"position": [NSNull null],
-    @"sublayers": [NSNull null],
-    @"transform": [NSNull null],
-    @"contents": [NSNull null],
-    @"contentsScale": [NSNull null],
-    @"hidden": [NSNull null],
-    @"fillColor": [NSNull null],
-    @"fontSize": [NSNull null],
-};
-
 using ThumbFile = Mmap;
 
 @implementation ImageGridLayer {
@@ -67,20 +54,30 @@ using ThumbFile = Mmap;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
     ImageLibraryPtr _imgLib;
+    
+    struct {
+        Img::Id first = 0;
+        size_t count = 0;
+        id<MTLBuffer> buf;
+    } _selection;
+    
 //    uint32_t _thumbInset;
 }
 
-- (instancetype)init {
+- (instancetype)initWithImageLibrary:(ImageLibraryPtr)imgLib {
 //    extern void CreateThumbBuf();
 //    CreateThumbBuf();
+    NSParameterAssert(imgLib);
     
     if (!(self = [super init])) return nil;
+    
+    _imgLib = imgLib;
     
     [self setOpaque:false];
     
     _contentsScale = 1;
     
-    [self setActions:_LayerNullActions];
+    [self setActions:LayerNullActions];
     [self setNeedsDisplayOnBoundsChange:true];
     
     _device = MTLCreateSystemDefaultDevice();
@@ -266,6 +263,19 @@ using ThumbFile = Mmap;
     [self setNeedsDisplay];
 }
 
+- (void)recomputeGrid {
+    _grid.setElementCount((int32_t)_imgLib->vend()->recordCount());
+    _grid.recompute();
+}
+
+- (void)setContainerWidth:(CGFloat)width {
+    _grid.setContainerWidth((int32_t)lround(width*_contentsScale));
+}
+
+- (CGFloat)containerHeight {
+    return _grid.containerHeight() / _contentsScale;
+}
+
 - (MTLRenderPassDepthAttachmentDescriptor*)_depthAttachmentForDrawableTexture:(id<MTLTexture>)drawableTexture {
     NSParameterAssert(drawableTexture);
     
@@ -436,8 +446,6 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //    return ranges;
 //}
 
-
-
 - (void)display {
     auto startTime = std::chrono::steady_clock::now();
     
@@ -446,11 +454,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     const CGRect frame = [self frame];
     if (CGRectIsEmpty(frame)) return;
     
-    if (!_imgLib) return;
     auto il = _imgLib->vend();
-    
-    _grid.setElementCount((int32_t)il->recordCount());
-    _grid.recompute();
     
     // Update our drawable size
     [self setDrawableSize:{frame.size.width*_contentsScale, frame.size.height*_contentsScale}];
@@ -512,7 +516,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         const uintptr_t imageRefsBegin = (uintptr_t)&*il->begin();
         const uintptr_t imageRefsEnd = (uintptr_t)&*il->end();
         id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
-            length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeManaged];
+            length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
         
 //        printf("Range count: %zu\n", ranges.size());
         
@@ -567,7 +571,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
             const uintptr_t addrAlignedEnd = _CeilToPageSize(addrEnd);
             
 //            const RangeMem mem = _RangeMemCalc(ic, range);
-            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
+            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
             id<MTLBuffer> imageBuf = [_device newBufferWithBytesNoCopy:(void*)addrAlignedBegin
                 length:(addrAlignedEnd-addrAlignedBegin) options:BufOpts deallocator:nil];
             
@@ -575,6 +579,14 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
             
             if (imageBuf) {
                 assert(imageBuf);
+                
+                // Ensure that Img::Id can be casted to uint32_t
+                static_assert(sizeof(Img::Id) == sizeof(uint32_t));
+                
+                // Make sure _selection.buf != nil
+                if (!_selection.buf) {
+                    _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
+                }
                 
 //                static_assert(sizeof(it)==9);
             //    NSLog(@"%@", NSStringFromRect(frame));
@@ -589,11 +601,18 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     .imageSize = (uint32_t)sizeof(ImageRef),
                     .viewOffset = {offsetX, offsetY},
                     .viewMatrix = unityFromRasterMatrix,
+                    .off = {
+                        .id         = (uint32_t)(offsetof(ImageRef, id)),
+                        .thumbData  = (uint32_t)(offsetof(ImageRef, thumbData)),
+                    },
                     .thumb = {
                         .width  = ImageRef::ThumbWidth,
                         .height = ImageRef::ThumbHeight,
                         .pxSize = ImageRef::ThumbPixelSize,
-                        .off    = (uint32_t)(offsetof(ImageRef, thumbData)),
+                    },
+                    .selection = {
+                        .first = _selection.first,
+                        .count = (uint32_t)_selection.count,
                     },
                     .cellWidth = _cellWidth,
                     .cellHeight = _cellHeight,
@@ -604,6 +623,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 
                 [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
                 [renderEncoder setFragmentBuffer:imageBuf offset:0 atIndex:1];
+                [renderEncoder setFragmentBuffer:_selection.buf offset:0 atIndex:2];
                 [renderEncoder setFragmentTexture:_maskTexture atIndex:0];
                 [renderEncoder setFragmentTexture:_outlineTexture atIndex:1];
                 [renderEncoder setFragmentTexture:_shadowTexture atIndex:2];
@@ -635,26 +655,13 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 - (void)setContentsScale:(CGFloat)scale {
     _contentsScale = scale;
     [super setContentsScale:scale];
-    // We need to redraw ourself when our scale changes
-    // Assume we're on the main thread so we don't need to use -setNeedsDisplayAsync
     [self setNeedsDisplay];
 }
 
-- (void)setImageLibrary:(ImageLibraryPtr)imgLib {
-    _imgLib = imgLib;
-    [self setNeedsDisplay];
-}
-
-- (void)setContainerWidth:(CGFloat)width {
-    _grid.setContainerWidth((int32_t)lround(width*_contentsScale));
-    [self setNeedsDisplay];
-}
-
-- (CGFloat)containerHeight {
-    if (_imgLib) _grid.setElementCount((int32_t)_imgLib->vend()->recordCount());
-    _grid.recompute();
-    return _grid.containerHeight() / _contentsScale;
-}
+//- (void)setImageLibrary:(ImageLibraryPtr)imgLib {
+//    _imgLib = imgLib;
+//    [self setNeedsDisplay];
+//}
 
 - (void)setResizingUnderway:(bool)resizing {
     NSLog(@"setResizingUnderway: %d", resizing);
@@ -662,6 +669,54 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     // and PresentsWithTransaction=0 while scrolling (to prevent stutters)
     [self setPresentsWithTransaction:resizing];
 }
+
+- (ImageGridLayerImageIds)imageIdsForRect:(CGRect)rect {
+    auto il = _imgLib->vend();
+    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectForCGRect(rect, _contentsScale));
+    ImageGridLayerImageIds imageIds;
+    for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
+        for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
+            const int32_t idx = _grid.columnCount()*y + x;
+            if (idx >= il->recordCount()) goto done;
+            const ImageRef& imageRef = *il->recordGet(il->begin()+idx);
+            imageIds.insert(imageRef.id);
+        }
+    }
+done:
+    return imageIds;
+}
+
+- (void)setSelectedImageIds:(const ImageGridLayerImageIds&)imageIds {
+    if (!imageIds.empty()) {
+        _selection.first = *imageIds.begin();
+        _selection.count = *std::prev(imageIds.end())-*imageIds.begin()+1;
+        
+        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
+        _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
+        bool* bools = (bool*)[_selection.buf contents];
+        for (Img::Id imgId : imageIds) {
+            bools[imgId-_selection.first] = true;
+        }
+    
+    } else {
+        _selection = {};
+    }
+    
+    [self setNeedsDisplay];
+}
+
+//- (void)_gridRecompute:(ImageLibrary&)imgLib {
+//    _grid.setElementCount(imgLib.recordCount());
+//    _grid.recompute();
+//}
+
+//- (const ImageGridLayerSelectionIndexes&)selectionIndexes {
+//    
+//}
+//
+//- (void)setSelectionIndexes:(const ImageGridLayerSelectionIndexes&)indexes {
+//    
+//}
 
 @end
 

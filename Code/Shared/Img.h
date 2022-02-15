@@ -6,7 +6,6 @@ namespace Img {
     
     using Word  = uint16_t;
     using Pixel = Word;
-    
     using Id = uint32_t;
     
     struct [[gnu::packed]] Header {
