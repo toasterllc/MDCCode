@@ -15,7 +15,7 @@ static constexpr auto _ThumbHeight = ImageRef::ThumbHeight;
 
 // _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
 // so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
 static matrix_float4x4 _Scale(float x, float y, float z) {
     return matrix_float4x4{
@@ -46,6 +46,7 @@ using ThumbFile = Mmap;
     id<MTLTexture> _outlineTexture;
     id<MTLTexture> _maskTexture;
     id<MTLTexture> _shadowTexture;
+    id<MTLTexture> _selectionTexture;
     MTLRenderPassDepthAttachmentDescriptor* _depthAttachment;
     
     CGFloat _contentsScale;
@@ -101,11 +102,19 @@ using ThumbFile = Mmap;
     assert(_maskTexture);
     
 //    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:@{
-//        MTKTextureLoaderOptionSRGB: @NO,
+//        MTKTextureLoaderOptionSRGB: @YES,
 //    } error:nil];
-    
-    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:nil error:nil];
+//    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:nil error:nil];
+    _shadowTexture = [loader newTextureWithName:@"Shadow" scaleFactor:2 bundle:nil options:nil error:nil];
     assert(_shadowTexture);
+    
+//    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:@{ MTKTextureLoaderOptionSRGB: @YES } error:nil];
+//    assert(_shadowTexture);
+    
+    
+    
+    _selectionTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Selection"] options:nil error:nil];
+    assert(_selectionTexture);
     
 //    _outlineTexture = [loader newTextureWithName:@"Outline.png" scaleFactor:2 bundle:nil options:nil error:nil];
 //    _maskTexture = [loader newTextureWithName:@"Mask.png" scaleFactor:2 bundle:nil options:nil error:nil];
@@ -174,15 +183,37 @@ using ThumbFile = Mmap;
     [pipelineDescriptor setFragmentFunction:fragmentShader];
     
     [pipelineDescriptor setDepthAttachmentPixelFormat:MTLPixelFormatDepth32Float];
-    [[pipelineDescriptor colorAttachments][0] setPixelFormat:_PixelFormat];
-    [[pipelineDescriptor colorAttachments][0] setBlendingEnabled:true];
     
-    [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
-    [[pipelineDescriptor colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
-    [[pipelineDescriptor colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorSourceAlpha];
-    [[pipelineDescriptor colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorSourceAlpha];
-    [[pipelineDescriptor colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
-    [[pipelineDescriptor colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+    [[pipelineDescriptor colorAttachments][0] setPixelFormat:_PixelFormat];
+    [[pipelineDescriptor colorAttachments][0] setBlendingEnabled:false];
+    
+//static float4 blendOverPremul(float4 a, float4 b) {
+//    const float oa = (1.0)*a.a + (1-a.a)*b.a;
+//    const float3 oc = (1.0)*a.rgb + (1-a.a)*b.rgb;
+//    return float4(oc, oa);
+//}
+    
+//    [[pipelineDescriptor colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
+//    [[pipelineDescriptor colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorOne];
+//    [[pipelineDescriptor colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+//    
+//    [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
+//    [[pipelineDescriptor colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorOne];
+//    [[pipelineDescriptor colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+    
+//static float4 blendOver(float4 a, float4 b) {
+//    const float oa = a.a + b.a*(1-a.a);
+//    const float3 oc = (a.rgb*a.a + b.rgb*b.a*(1-a.a)) / oa;
+//    return float4(oc, oa);
+//}
+    
+//    [[pipelineDescriptor colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
+//    [[pipelineDescriptor colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorSourceAlpha];
+//    [[pipelineDescriptor colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+//
+//    [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
+//    [[pipelineDescriptor colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorSourceAlpha];
+//    [[pipelineDescriptor colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
     
     _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
     assert(_pipelineState);
@@ -237,9 +268,9 @@ using ThumbFile = Mmap;
 //        NSLog(@"_thumbBuf: %p", self->_thumbBuf);
 //    }];
     
-    const uint32_t shadowExcess = (uint32_t)([_shadowTexture width]-[_maskTexture width]);
-    _cellWidth = _ThumbWidth+shadowExcess;
-    _cellHeight = _ThumbHeight+shadowExcess;
+    const uint32_t excess = (uint32_t)([_selectionTexture width]-[_maskTexture width]);
+    _cellWidth = _ThumbWidth+excess;
+    _cellHeight = _ThumbHeight+excess;
     
     _grid.setBorderSize({
         .left   = (int32_t)_cellWidth/5,
@@ -477,7 +508,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
@@ -493,8 +524,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
         [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
-        [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
+        [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         // rasterFromUnityMatrix: converts unity coordinates [-1,1] -> rasterized coordinates [0,pixel width/height]
@@ -627,6 +658,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 [renderEncoder setFragmentTexture:_maskTexture atIndex:0];
                 [renderEncoder setFragmentTexture:_outlineTexture atIndex:1];
                 [renderEncoder setFragmentTexture:_shadowTexture atIndex:2];
+                [renderEncoder setFragmentTexture:_selectionTexture atIndex:3];
                 
             //    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3 instanceCount:1];
                 

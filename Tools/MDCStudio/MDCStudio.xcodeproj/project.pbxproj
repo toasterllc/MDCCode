@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		5513287C27B3304100CD823B /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5513287B27B3304100CD823B /* RenderThumb.metal */; };
 		551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551328B827B45D7C00CD823B /* ImageGridView.mm */; };
+		553031FC27BC45A100BEFFEA /* Selection.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F827BC45A100BEFFEA /* Selection.png */; };
+		553031FD27BC45A100BEFFEA /* Outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F927BC45A100BEFFEA /* Outline.png */; };
+		553031FE27BC45A100BEFFEA /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031FA27BC45A100BEFFEA /* Shadow.png */; };
+		553031FF27BC45A100BEFFEA /* Mask.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031FB27BC45A100BEFFEA /* Mask.png */; };
 		5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544A7EA27B5E011006AB473 /* SourceListView.xib */; };
 		5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544A7EC27B5E011006AB473 /* SourceListView.mm */; };
 		5544AE2927B5E595006AB473 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5544ADFD27B5E57A006AB473 /* Renderer.metal */; };
@@ -26,10 +30,6 @@
 		55496F61278E88B800BCA739 /* Grid.h in Sources */ = {isa = PBXBuildFile; fileRef = 55496F60278E88B800BCA739 /* Grid.h */; };
 		55496F63278FCDD000BCA739 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F62278FCDD000BCA739 /* MetalKit.framework */; };
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
-		557ECAEE2794358100440E4B /* Outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 557ECAEB2794358100440E4B /* Outline.png */; };
-		557ECAEF2794358100440E4B /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 557ECAEC2794358100440E4B /* Shadow.png */; };
-		557ECAF02794358100440E4B /* Mask.png in Resources */ = {isa = PBXBuildFile; fileRef = 557ECAED2794358100440E4B /* Mask.png */; };
-		559E88A927BAF29700FFAB9A /* Selection.png in Resources */ = {isa = PBXBuildFile; fileRef = 559E88A827BAF29700FFAB9A /* Selection.png */; };
 		55A36AB827A35ABD00FD0181 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55A36AB727A35ABD00FD0181 /* IOKit.framework */; };
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
 		55C6C845278FFE60005ABD39 /* ImageGridLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C844278FFE60005ABD39 /* ImageGridLayer.mm */; };
@@ -56,6 +56,10 @@
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
 		551328B827B45D7C00CD823B /* ImageGridView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridView.mm; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
+		553031F827BC45A100BEFFEA /* Selection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Selection.png; sourceTree = "<group>"; };
+		553031F927BC45A100BEFFEA /* Outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Outline.png; sourceTree = "<group>"; };
+		553031FA27BC45A100BEFFEA /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
+		553031FB27BC45A100BEFFEA /* Mask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Mask.png; sourceTree = "<group>"; };
 		5544A7EA27B5E011006AB473 /* SourceListView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SourceListView.xib; sourceTree = "<group>"; };
 		5544A7EB27B5E011006AB473 /* SourceListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SourceListView.h; sourceTree = "<group>"; };
 		5544A7EC27B5E011006AB473 /* SourceListView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SourceListView.mm; sourceTree = "<group>"; };
@@ -128,12 +132,8 @@
 		55496F62278FCDD000BCA739 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		5562353A27B5086E0008074C /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
-		557ECAEB2794358100440E4B /* Outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Outline.png; sourceTree = "<group>"; };
-		557ECAEC2794358100440E4B /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
-		557ECAED2794358100440E4B /* Mask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Mask.png; sourceTree = "<group>"; };
 		557ECB1B279BD72400440E4B /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordStore.h; sourceTree = "<group>"; };
 		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
-		559E88A827BAF29700FFAB9A /* Selection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Selection.png; sourceTree = "<group>"; };
 		55A36A8E27A2951900FD0181 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevicesManager.h; sourceTree = "<group>"; };
 		55A36AB727A35ABD00FD0181 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -343,10 +343,10 @@
 			isa = PBXGroup;
 			children = (
 				55496F48278CFC0600BCA739 /* Assets.xcassets */,
-				557ECAED2794358100440E4B /* Mask.png */,
-				557ECAEB2794358100440E4B /* Outline.png */,
-				557ECAEC2794358100440E4B /* Shadow.png */,
-				559E88A827BAF29700FFAB9A /* Selection.png */,
+				553031FB27BC45A100BEFFEA /* Mask.png */,
+				553031F927BC45A100BEFFEA /* Outline.png */,
+				553031F827BC45A100BEFFEA /* Selection.png */,
+				553031FA27BC45A100BEFFEA /* Shadow.png */,
 				55496F4A278CFC0600BCA739 /* MainMenu.xib */,
 				55496F4D278CFC0600BCA739 /* Info.plist */,
 				55496F50278CFC0600BCA739 /* MDCStudio.entitlements */,
@@ -476,13 +476,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
+				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
 				5544AE3527B646C3006AB473 /* ImageGridView.xib in Resources */,
-				559E88A927BAF29700FFAB9A /* Selection.png in Resources */,
-				557ECAEE2794358100440E4B /* Outline.png in Resources */,
-				557ECAF02794358100440E4B /* Mask.png in Resources */,
+				553031FF27BC45A100BEFFEA /* Mask.png in Resources */,
+				553031FE27BC45A100BEFFEA /* Shadow.png in Resources */,
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,
-				557ECAEF2794358100440E4B /* Shadow.png in Resources */,
+				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
