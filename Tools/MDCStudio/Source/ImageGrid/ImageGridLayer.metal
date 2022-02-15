@@ -162,12 +162,30 @@ static float4 blendOver(float4 a, float4 b) {
 }
 
 static float4 blendColorDodge(float4 a, float4 b) {
-//    if (a.a == 0) return b;
+    if (a.a == 0) return b;
     return float4(b.rgb / (float3(1)-a.rgb), a.a);
 }
 
 static float4 blendMask(float mask, float4 a) {
     return float4(a.rgb, a.a*mask);
+}
+
+float SRGBGammaForward(float x) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    if (x <= 0.0031308) return 12.92*x;
+    return 1.055*pow(x, 1/2.4)-.055;
+}
+
+float SRGBGammaReverse(float x) {
+    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    if (x <= 0.04045) return x/12.92;
+    return pow((x+.055)/1.055, 2.4);
+}
+
+static float4 blendOverPremul(float4 a, float4 b) {
+    const float oa = (1.0)*a.a + (1-a.a)*b.a;
+    const float3 oc = (1.0)*a.rgb + (1-a.a)*b.rgb;
+    return float4(oc, oa);
 }
 
 fragment float4 FragmentShader(
@@ -177,8 +195,30 @@ fragment float4 FragmentShader(
     texture2d<float> maskTxt [[texture(0)]],
     texture2d<float> outlineTxt [[texture(1)]],
     texture2d<float> shadowTxt [[texture(2)]],
+    texture2d<float> selectionTxt [[texture(3)]],
     VertexOutput in [[stage_in]]
 ) {
+    #warning TODO: adding +.5 to the pixel coordinates supplied to shadowTxt.sample() causes incorrect results. does that mean that the Sample::RGBA() implementation is incorrect? or are we getting bad pixel coords via `VertexOutput in`?
+    
+    if (in.posPx.x >= shadowTxt.get_width() || in.posPx.y >= shadowTxt.get_height()) {
+        return float4(.1,0,0,1);
+    }
+//    return float4(1,0,0,1);
+    
+    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y));
+//    return c;
+//    return float4(0,0,0, c.a);
+    return blendOver(c, float4(1,1,1,1));
+//    return blendOver(c, float4(1,1,1,1));
+    
+//    return float4(0, 0, 0, c.a);
+//    return float4(.482,.482,.482,1);
+    
+    
+//    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y));
+//    return c;
+//    return float4(c.r, c.g, c.b, SRGBGammaForward(c.a));
+//    return float4(c.r, c.g, c.b, c.a);
 //    return float4(0,0,0,1);
     
     device uint8_t* imageBuf = images+ctx.imagesOff+(ctx.imageSize*in.idx);
@@ -195,9 +235,9 @@ fragment float4 FragmentShader(
         selectedImageIds[imageId-ctx.selection.first]
     );
     
-    if (selected) {
-        return float4(0,0,1,1);
-    }
+//    if (selected) {
+//        return float4(0,0,1,1);
+//    }
     
     const int maskWidth = maskTxt.get_width();
     const int maskHeight = maskTxt.get_height();
@@ -259,7 +299,7 @@ fragment float4 FragmentShader(
     }
     
     // Calculate shadow value
-    float4 shadow = 0;
+    float4 shadow = float4(0,0,0,0);
     {
         const int2 pos = int2(in.posPx);
         
@@ -282,12 +322,43 @@ fragment float4 FragmentShader(
         shadow = Sample::RGBA(shadowTxt, shadowPos);
     }
     
-    return
-        blendOver(
-            blendMask(mask,
-            blendColorDodge(outlineColorDodge,
-            blendOver(outlineOver, thumb
-        ))), shadow);
+    // Calculate selection value
+    float4 selection = float4(0,1,0,1);
+//    {
+//        const int2 pos = int2(in.posPx);
+//        
+//        const int selectionWidth = selectionTxt.get_width();
+//        const int selectionHeight = selectionTxt.get_height();
+//        const int selectionWidth2 = selectionWidth/2;
+//        const int selectionHeight2 = selectionHeight/2;
+//        const int2 marginX = int2(selectionWidth2, (ctx.cellWidth-selectionWidth2));
+//        const int2 marginY = int2(selectionHeight2, (ctx.cellHeight-selectionHeight2));
+//        
+//        int2 selectionPos = pos;
+//        if (pos.x <= marginX[0])        selectionPos.x = pos.x;
+//        else if (pos.x >= marginX[1])   selectionPos.x = selectionWidth2+(pos.x-marginX[1]);
+//        else                            selectionPos.x = selectionWidth2;
+//        
+//        if (pos.y <= marginY[0])        selectionPos.y = pos.y;
+//        else if (pos.y >= marginY[1])   selectionPos.y = selectionHeight2+(pos.y-marginY[1]);
+//        else                            selectionPos.y = selectionHeight2;
+//        
+//        selection = Sample::RGBA(selectionTxt, selectionPos);
+//    }
+    
+//    return blendOver(float4(1,1,1,.1), selection);
+    
+    return shadow;
+//    return float4(SRGBGammaForward(shadow.r), SRGBGammaForward(shadow.g), SRGBGammaForward(shadow.b), SRGBGammaForward(shadow.a));
+    
+    
+//        blendOver(
+//            blendOver(
+//                blendMask(mask,
+//                blendColorDodge(outlineColorDodge,
+//                blendOver(outlineOver, thumb
+//            ))), shadow);
+//        selection);
 }
 
 } // namespace ImageGridLayerShader
