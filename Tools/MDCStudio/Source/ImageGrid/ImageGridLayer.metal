@@ -200,19 +200,23 @@ fragment float4 FragmentShader(
 ) {
     #warning TODO: adding +.5 to the pixel coordinates supplied to shadowTxt.sample() causes incorrect results. does that mean that the Sample::RGBA() implementation is incorrect? or are we getting bad pixel coords via `VertexOutput in`?
     
-    if (in.posPx.x >= shadowTxt.get_width() || in.posPx.y >= shadowTxt.get_height()) {
-        return float4(.1,0,0,1);
-    }
-//    return float4(1,0,0,1);
+//    if (in.posPx.x >= shadowTxt.get_width() || in.posPx.y >= shadowTxt.get_height()) {
+//        return float4(.1,0,0,1);
+//    }
+////    return float4(1,0,0,1);
+//    
+////    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y));
+////    auto c2 = blendOver(c, float4(1,1,1,1));
+////    return c2;
+//    
     
-//    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y));
-//    auto c2 = blendOver(c, float4(1,1,1,1));
+//    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y)).r;
+//    return float4(0,0,0,1-c);
+    
+//    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y)).r;
+//    auto c2 = blendOver(float4(0,0,0,1-c), float4(1,1,1,1));
 //    return c2;
-    
-//    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y));
-    auto c = float4(0,0,0,.9);
-    auto c2 = blendOver(c, float4(1,1,1,1));
-    return c2;
+//    return c;
     
     
 //    return c;
@@ -330,8 +334,10 @@ fragment float4 FragmentShader(
         else if (pos.y >= marginY[1])   shadowPos.y = shadowHeight2+(pos.y-marginY[1]);
         else                            shadowPos.y = shadowHeight2;
         
-        shadow = Sample::RGBA(shadowTxt, shadowPos);
+        shadow = float4(0, 0, 0, shadowTxt.sample(coord::pixel, float2(shadowPos.x, shadowPos.y)).a);
+//        shadow = float4(0, 0, 0, 1-shadowTxt.sample(coord::pixel, float2(shadowPos.x, shadowPos.y)).r);
     }
+    return shadow;
     
     // Calculate selection value
     float4 selection = float4(0,1,0,1);
@@ -359,16 +365,16 @@ fragment float4 FragmentShader(
     
 //    return blendOver(float4(1,1,1,.1), selection);
     
-    return shadow;
+//    return shadow;
 //    return float4(SRGBGammaForward(shadow.r), SRGBGammaForward(shadow.g), SRGBGammaForward(shadow.b), SRGBGammaForward(shadow.a));
     
-    
+    return
 //        blendOver(
-//            blendOver(
-//                blendMask(mask,
-//                blendColorDodge(outlineColorDodge,
-//                blendOver(outlineOver, thumb
-//            ))), shadow);
+            blendOver(
+                blendMask(mask,
+                blendColorDodge(outlineColorDodge,
+                blendOver(outlineOver, thumb
+            ))), shadow);
 //        selection);
 }
 

@@ -185,7 +185,7 @@ using ThumbFile = Mmap;
     [pipelineDescriptor setDepthAttachmentPixelFormat:MTLPixelFormatDepth32Float];
     
     [[pipelineDescriptor colorAttachments][0] setPixelFormat:_PixelFormat];
-    [[pipelineDescriptor colorAttachments][0] setBlendingEnabled:false];
+    [[pipelineDescriptor colorAttachments][0] setBlendingEnabled:true];
     
 //static float4 blendOverPremul(float4 a, float4 b) {
 //    const float oa = (1.0)*a.a + (1-a.a)*b.a;
@@ -193,13 +193,13 @@ using ThumbFile = Mmap;
 //    return float4(oc, oa);
 //}
     
-//    [[pipelineDescriptor colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
-//    [[pipelineDescriptor colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorOne];
-//    [[pipelineDescriptor colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
-//    
-//    [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
-//    [[pipelineDescriptor colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorOne];
-//    [[pipelineDescriptor colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+    [[pipelineDescriptor colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
+    [[pipelineDescriptor colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorOne];
+    [[pipelineDescriptor colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+    
+    [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
+    [[pipelineDescriptor colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorOne];
+    [[pipelineDescriptor colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
     
 //static float4 blendOver(float4 a, float4 b) {
 //    const float oa = a.a + b.a*(1-a.a);
@@ -508,7 +508,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.013047, 0.013783, 0.015127, 1}];
         [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
@@ -519,13 +521,17 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderEncoder endEncoding];
     }
     
+    
+    
     const Grid::IndexRange indexRange = _grid.indexRangeForIndexRect(_grid.indexRectForRect(_GridRectForCGRect(frame, _contentsScale)));
     if (indexRange.count) {
         MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
         [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.013047, 0.013783, 0.015127, 1}];
         [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         // rasterFromUnityMatrix: converts unity coordinates [-1,1] -> rasterized coordinates [0,pixel width/height]
