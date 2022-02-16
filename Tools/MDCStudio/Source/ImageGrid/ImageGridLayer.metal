@@ -205,13 +205,24 @@ fragment float4 FragmentShader(
     }
 //    return float4(1,0,0,1);
     
-    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y));
+//    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y));
+//    auto c2 = blendOver(c, float4(1,1,1,1));
+//    return c2;
+    
+//    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y));
+    auto c = float4(0,0,0,.9);
+    auto c2 = blendOver(c, float4(1,1,1,1));
+    return c2;
+    
+    
 //    return c;
 //    return float4(0,0,0, c.a);
-    return blendOver(c, float4(1,1,1,1));
 //    return blendOver(c, float4(1,1,1,1));
+//    return blendOver(c, float4(1,1,1,1));
+//    return float4(SRGBGammaReverse(c2.r), SRGBGammaReverse(c2.g), SRGBGammaReverse(c2.b), 1);
     
 //    return float4(0, 0, 0, c.a);
+//    return float4(SRGBGammaReverse(.482),SRGBGammaReverse(.482),SRGBGammaReverse(.482),1);
 //    return float4(.482,.482,.482,1);
     
     
