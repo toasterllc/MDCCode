@@ -80,7 +80,7 @@ using namespace MDCStudio;
     {
         CALayer* rootLayer = [CALayer new];
         
-        ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:imgLib];
+        ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:nullptr];
         [rootLayer addSublayer:imageGridLayer];
         
         CALayer* selectionRectLayer = [CALayer new];
@@ -99,16 +99,16 @@ using namespace MDCStudio;
         [self _handleImageLibraryChanged];
     }
     
-    // Observe image library changes so that we update the image grid
-    {
-        __weak auto weakSelf = self;
-        imgLib->vend()->addObserver([=] {
-            auto strongSelf = weakSelf;
-            if (!strongSelf) return false;
-            dispatch_async(dispatch_get_main_queue(), ^{ [strongSelf _handleImageLibraryChanged]; });
-            return true;
-        });
-    }
+//    // Observe image library changes so that we update the image grid
+//    {
+//        __weak auto weakSelf = self;
+//        imgLib->vend()->addObserver([=] {
+//            auto strongSelf = weakSelf;
+//            if (!strongSelf) return false;
+//            dispatch_async(dispatch_get_main_queue(), ^{ [strongSelf _handleImageLibraryChanged]; });
+//            return true;
+//        });
+//    }
     
 //    ImageGridLayerImageIds imageIds;
 //    imageIds.insert(88);

@@ -47,6 +47,10 @@ using ThumbFile = Mmap;
     id<MTLTexture> _maskTexture;
     id<MTLTexture> _shadowTexture;
     id<MTLTexture> _selectionTexture;
+    
+    id<MTLTexture> _topTexture;
+    id<MTLTexture> _bottomTexture;
+    
     MTLRenderPassDepthAttachmentDescriptor* _depthAttachment;
     
     CGFloat _contentsScale;
@@ -68,7 +72,7 @@ using ThumbFile = Mmap;
 - (instancetype)initWithImageLibrary:(ImageLibraryPtr)imgLib {
 //    extern void CreateThumbBuf();
 //    CreateThumbBuf();
-    NSParameterAssert(imgLib);
+//    NSParameterAssert(imgLib);
     
     if (!(self = [super init])) return nil;
     
@@ -115,6 +119,14 @@ using ThumbFile = Mmap;
     
     _selectionTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Selection"] options:nil error:nil];
     assert(_selectionTexture);
+    
+    
+    _topTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Top"] options:nil error:nil];
+    assert(_topTexture);
+    
+    _bottomTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Bottom"] options:nil error:nil];
+    assert(_bottomTexture);
+    
     
 //    _outlineTexture = [loader newTextureWithName:@"Outline.png" scaleFactor:2 bundle:nil options:nil error:nil];
 //    _maskTexture = [loader newTextureWithName:@"Mask.png" scaleFactor:2 bundle:nil options:nil error:nil];
@@ -295,8 +307,8 @@ using ThumbFile = Mmap;
 }
 
 - (void)recomputeGrid {
-    _grid.setElementCount((int32_t)_imgLib->vend()->recordCount());
-    _grid.recompute();
+//    _grid.setElementCount((int32_t)_imgLib->vend()->recordCount());
+//    _grid.recompute();
 }
 
 - (void)setContainerWidth:(CGFloat)width {
@@ -304,7 +316,7 @@ using ThumbFile = Mmap;
 }
 
 - (CGFloat)containerHeight {
-    return _grid.containerHeight() / _contentsScale;
+    return 800;
 }
 
 - (MTLRenderPassDepthAttachmentDescriptor*)_depthAttachmentForDrawableTexture:(id<MTLTexture>)drawableTexture {
@@ -485,8 +497,6 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     const CGRect frame = [self frame];
     if (CGRectIsEmpty(frame)) return;
     
-    auto il = _imgLib->vend();
-    
     // Update our drawable size
     [self setDrawableSize:{frame.size.width*_contentsScale, frame.size.height*_contentsScale}];
     
@@ -519,162 +529,34 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderEncoder endEncoding];
     }
     
-    const Grid::IndexRange indexRange = _grid.indexRangeForIndexRect(_grid.indexRectForRect(_GridRectForCGRect(frame, _contentsScale)));
-    if (indexRange.count) {
-        MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
-        [renderPassDescriptor setDepthAttachment:depthAttachment];
-        [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
-        [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
-        [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
-        
-        // rasterFromUnityMatrix: converts unity coordinates [-1,1] -> rasterized coordinates [0,pixel width/height]
-        const matrix_float4x4 rasterFromUnityMatrix = matrix_multiply(matrix_multiply(
-            _Scale(.5*frame.size.width*_contentsScale, .5*frame.size.height*_contentsScale, 1), // Divide by 2, multiply by view width/height
-            _Translate(1, 1, 0)),                                                               // Add 1
-            _Scale(1, -1, 1)                                                                    // Flip Y
-        );
-        
-        // unityFromRasterMatrix: converts rasterized coordinates -> unity coordinates
-        const matrix_float4x4 unityFromRasterMatrix = matrix_invert(rasterFromUnityMatrix);
-        
-//        constexpr size_t MaxBufLen = 1024*1024*1024; // 1 GB
-//        const std::vector<ImageLibrary::Range> ranges = _RangeSegments<MaxBufLen>(ic, {(size_t)indexRange.start, (size_t)indexRange.count});
-        
-        const int32_t offsetX = -round(frame.origin.x*_contentsScale);
-        const int32_t offsetY = -round(frame.origin.y*_contentsScale);
-        
-        const uintptr_t imageRefsBegin = (uintptr_t)&*il->begin();
-        const uintptr_t imageRefsEnd = (uintptr_t)&*il->end();
-        id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
-            length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
-        
-//        printf("Range count: %zu\n", ranges.size());
-        
-        const auto imageRefFirst = il->begin()+indexRange.start;
-        const auto imageRefLast = il->begin()+indexRange.start+indexRange.count-1;
-        
-        const auto imageRefBegin = imageRefFirst;
-        const auto imageRefEnd = std::next(imageRefLast);
-        
-//        const auto chunkFirst = imageRefFirst->chunk;
-//        const auto chunkLast = imageRefLast->chunk;
-//        
-//        const auto chunkBegin = chunkFirst;
-//        const auto chunkEnd = std::next(chunkLast);
-        for (auto it=imageRefBegin; it<imageRefEnd;) {
-            const auto& chunk = *(it->chunk);
-            const auto nextChunkStart = ImageLibrary::FindNextChunk(it, il->end());
-            
-            const auto chunkImageRefBegin = it;
-            const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
-            
-            const auto chunkImageRefFirst = chunkImageRefBegin;
-            const auto chunkImageRefLast = std::prev(chunkImageRefEnd);
-            
-//            const auto& chunk = *it;
-//            
-//            const auto imageRefFirst = ic.imageRefsBegin()+indexRange.start;
-//            const auto imageRefLast = ic.imageRefsBegin()+indexRange.start+indexRange.count-1;
-            
-//            printf("Chunk count: %ju\n", std::distance(chunkStart, chunkEnd));
-            
-            id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-            [renderEncoder setRenderPipelineState:_pipelineState];
-            [renderEncoder setDepthStencilState:_depthStencilState];
-            [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
-            [renderEncoder setCullMode:MTLCullModeNone];
-            
-//            uintptr_t offBegin = 0;
-//            uintptr_t offEnd = chunk.mmap.alignedLen();
-//            if (it == chunkFirst) {
-//                offBegin = sizeof(Img)*imageRefFirst.idx;
-//            }
-//            
-//            if (it == chunkLast) {
-//                offEnd = sizeof(Img)*(imageRefLast.idx+1);
-//            }
-//            printf("AAA\n");
-            const uintptr_t addrBegin = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageRef)*chunkImageRefFirst->idx));
-            const uintptr_t addrEnd = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageRef)*(chunkImageRefLast->idx+1)));
-            
-            const uintptr_t addrAlignedBegin = _FloorToPageSize(addrBegin);
-            const uintptr_t addrAlignedEnd = _CeilToPageSize(addrEnd);
-            
-//            const RangeMem mem = _RangeMemCalc(ic, range);
-            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
-            id<MTLBuffer> imageBuf = [_device newBufferWithBytesNoCopy:(void*)addrAlignedBegin
-                length:(addrAlignedEnd-addrAlignedBegin) options:BufOpts deallocator:nil];
-            
-//            printf("length: %zu\n", addrAlignedEnd-addrAlignedBegin);
-            
-            if (imageBuf) {
-                assert(imageBuf);
-                
-                // Ensure that Img::Id can be casted to uint32_t
-                static_assert(sizeof(Img::Id) == sizeof(uint32_t));
-                
-                // Make sure _selection.buf != nil
-                if (!_selection.buf) {
-                    _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
-                }
-                
-//                static_assert(sizeof(it)==9);
-            //    NSLog(@"%@", NSStringFromRect(frame));
-            //    NSLog(@"Offset: %d", lround(frame.origin.y)-cell0Rect.point.y);
-            //    NSLog(@"indexRange: [%d %d]", indexRange.start, indexRange.start+indexRange.count-1);
-                ImageGridLayerTypes::RenderContext ctx = {
-                    .grid = _grid,
-//                    .chunk = ImageGridLayerTypes::UInt2FromType(it),
-                    .idxOff = (uint32_t)(chunkImageRefFirst-il->begin()),
-                    .imagesOff = (uint32_t)(addrBegin-addrAlignedBegin),
-//                    .imageRefOff = (uint32_t)ic.getImageRef(range.idx),
-                    .imageSize = (uint32_t)sizeof(ImageRef),
-                    .viewOffset = {offsetX, offsetY},
-                    .viewMatrix = unityFromRasterMatrix,
-                    .off = {
-                        .id         = (uint32_t)(offsetof(ImageRef, id)),
-                        .thumbData  = (uint32_t)(offsetof(ImageRef, thumbData)),
-                    },
-                    .thumb = {
-                        .width  = ImageRef::ThumbWidth,
-                        .height = ImageRef::ThumbHeight,
-                        .pxSize = ImageRef::ThumbPixelSize,
-                    },
-                    .selection = {
-                        .first = _selection.first,
-                        .count = (uint32_t)_selection.count,
-                    },
-                    .cellWidth = _cellWidth,
-                    .cellHeight = _cellHeight,
-                };
-                
-                [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
-                [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
-                
-                [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-                [renderEncoder setFragmentBuffer:imageBuf offset:0 atIndex:1];
-                [renderEncoder setFragmentBuffer:_selection.buf offset:0 atIndex:2];
-                [renderEncoder setFragmentTexture:_maskTexture atIndex:0];
-                [renderEncoder setFragmentTexture:_outlineTexture atIndex:1];
-                [renderEncoder setFragmentTexture:_shadowTexture atIndex:2];
-                [renderEncoder setFragmentTexture:_selectionTexture atIndex:3];
-                
-            //    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3 instanceCount:1];
-                
-            //    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectForCGRect(frame));
-                const size_t chunkImageCount = chunkImageRefEnd-chunkImageRefBegin;
-//                printf("chunkImageCount: %zu\n", chunkImageCount);
-                [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6 instanceCount:chunkImageCount];
-            }
-            
-            [renderEncoder endEncoding];
-            
-            it = chunkImageRefEnd;
-            
-//            break;
-        }
-    }
+    MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
+    [renderPassDescriptor setDepthAttachment:depthAttachment];
+    [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
+    [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
+    [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
+    [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
+    
+    id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+    [renderEncoder setRenderPipelineState:_pipelineState];
+    [renderEncoder setDepthStencilState:_depthStencilState];
+    [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
+    [renderEncoder setCullMode:MTLCullModeNone];
+    
+//                [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
+//                [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
+//                
+//                [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
+//                [renderEncoder setFragmentBuffer:imageBuf offset:0 atIndex:1];
+//                [renderEncoder setFragmentBuffer:_selection.buf offset:0 atIndex:2];
+//                [renderEncoder setFragmentTexture:_outlineTexture atIndex:1];
+//                [renderEncoder setFragmentTexture:_shadowTexture atIndex:2];
+//                [renderEncoder setFragmentTexture:_selectionTexture atIndex:3];
+    
+    [renderEncoder setFragmentTexture:_topTexture atIndex:0];
+    [renderEncoder setFragmentTexture:_bottomTexture atIndex:1];
+    
+    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6 instanceCount:1];
+    [renderEncoder endEncoding];
     
     [commandBuffer presentDrawable:drawable];
     [commandBuffer commit];

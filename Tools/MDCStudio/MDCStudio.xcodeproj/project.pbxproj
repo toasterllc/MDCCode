@@ -30,6 +30,8 @@
 		55496F61278E88B800BCA739 /* Grid.h in Sources */ = {isa = PBXBuildFile; fileRef = 55496F60278E88B800BCA739 /* Grid.h */; };
 		55496F63278FCDD000BCA739 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F62278FCDD000BCA739 /* MetalKit.framework */; };
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
+		555AA51027BCBEE600D75C11 /* Bottom.png in Resources */ = {isa = PBXBuildFile; fileRef = 555AA50E27BCBEE600D75C11 /* Bottom.png */; };
+		555AA51127BCBEE600D75C11 /* Top.png in Resources */ = {isa = PBXBuildFile; fileRef = 555AA50F27BCBEE600D75C11 /* Top.png */; };
 		55A36AB827A35ABD00FD0181 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55A36AB727A35ABD00FD0181 /* IOKit.framework */; };
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
 		55C6C845278FFE60005ABD39 /* ImageGridLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C844278FFE60005ABD39 /* ImageGridLayer.mm */; };
@@ -131,6 +133,8 @@
 		55496F60278E88B800BCA739 /* Grid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Grid.h; sourceTree = "<group>"; };
 		55496F62278FCDD000BCA739 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		55496F64278FCDD300BCA739 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		555AA50E27BCBEE600D75C11 /* Bottom.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Bottom.png; sourceTree = "<group>"; };
+		555AA50F27BCBEE600D75C11 /* Top.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Top.png; sourceTree = "<group>"; };
 		5562353A27B5086E0008074C /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		557ECB1B279BD72400440E4B /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordStore.h; sourceTree = "<group>"; };
 		557ECB1D279C0F0900440E4B /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageLibrary.h; sourceTree = "<group>"; };
@@ -343,6 +347,8 @@
 			isa = PBXGroup;
 			children = (
 				55496F48278CFC0600BCA739 /* Assets.xcassets */,
+				555AA50E27BCBEE600D75C11 /* Bottom.png */,
+				555AA50F27BCBEE600D75C11 /* Top.png */,
 				553031FB27BC45A100BEFFEA /* Mask.png */,
 				553031F927BC45A100BEFFEA /* Outline.png */,
 				553031F827BC45A100BEFFEA /* Selection.png */,
@@ -483,7 +489,9 @@
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,
 				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
+				555AA51027BCBEE600D75C11 /* Bottom.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
+				555AA51127BCBEE600D75C11 /* Top.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

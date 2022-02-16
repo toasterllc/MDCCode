@@ -214,14 +214,17 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 }
 
 - (void)_sourceListHandleSelectionChanged {
-    auto selection = [_sourceListView selection];
-    if (selection.device) {
-        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imgLib()];
-        [self setContentView:imageGridView];
+    ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:nullptr];
+    [self setContentView:imageGridView];
     
-    } else {
-        [self setContentView:nil];
-    }
+//    auto selection = [_sourceListView selection];
+//    if (selection.device) {
+//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imgLib()];
+//        [self setContentView:imageGridView];
+//    
+//    } else {
+//        [self setContentView:nil];
+//    }
 }
 
 - (void)resetCursorRects {
