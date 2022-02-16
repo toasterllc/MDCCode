@@ -15,7 +15,7 @@ static constexpr auto _ThumbHeight = ImageRef::ThumbHeight;
 
 // _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
 // so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 static matrix_float4x4 _Scale(float x, float y, float z) {
     return matrix_float4x4{
@@ -104,8 +104,8 @@ using ThumbFile = Mmap;
 //    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:@{
 //        MTKTextureLoaderOptionSRGB: @YES,
 //    } error:nil];
-//    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:nil error:nil];
-    _shadowTexture = [loader newTextureWithName:@"Shadow" scaleFactor:2 bundle:nil options:nil error:nil];
+    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:nil error:nil];
+//    _shadowTexture = [loader newTextureWithName:@"Shadow" scaleFactor:2 bundle:nil options:nil error:nil];
     assert(_shadowTexture);
     
 //    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:@{ MTKTextureLoaderOptionSRGB: @YES } error:nil];
