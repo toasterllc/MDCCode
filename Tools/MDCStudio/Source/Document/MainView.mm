@@ -3,6 +3,7 @@
 #import "SourceList/SourceListView.h"
 #import "Util.h"
 #import "ImageGrid/ImageGridView.h"
+#import "ImageView/ImageView.h"
 using namespace MDCStudio;
 
 namespace SourceListWidth {
@@ -81,7 +82,8 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     {
         [self setTranslatesAutoresizingMaskIntoConstraints:false];
         [self setWantsLayer:true];
-        [[self layer] setBackgroundColor:[[NSColor colorWithSRGBRed:.118 green:.122 blue:.129 alpha:1] CGColor]];
+        [[self layer] setBackgroundColor:[[NSColor colorWithSRGBRed:WindowBackgroundColor.srgb[0]
+            green:WindowBackgroundColor.srgb[1] blue:WindowBackgroundColor.srgb[2] alpha:1] CGColor]];
     }
     
     // Create source list
@@ -214,11 +216,17 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 }
 
 - (void)_sourceListHandleSelectionChanged {
-    auto imgLib = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
-    imgLib->vend()->read();
+    {
+        ImageView* imageView = [[ImageView alloc] initWithFrame:{}];
+        [self setContentView:imageView];
+    }
     
-    ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:imgLib];
-    [self setContentView:imageGridView];
+//    {
+//        auto imgLib = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
+//        imgLib->vend()->read();
+//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:imgLib];
+//        [self setContentView:imageGridView];
+//    }
     
 //    auto selection = [_sourceListView selection];
 //    if (selection.device) {

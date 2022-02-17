@@ -20,7 +20,7 @@ public:
     struct Options {
         bool rawMode = false;
         
-        std::optional<Color<ColorSpace::Raw>> illum;
+        std::optional<MDCTools::Color<MDCTools::ColorSpace::Raw>> illum;
         
         struct {
             bool en = false;
@@ -57,7 +57,7 @@ public:
     
     struct Result {
         MDCTools::Renderer::Txt txt; // LSRGB colorspace
-        Color<ColorSpace::Raw> illumEst; // Estimated illuminant
+        MDCTools::Color<MDCTools::ColorSpace::Raw> illumEst; // Estimated illuminant
         struct {
             MDCTools::Renderer::Buf raw;
             MDCTools::Renderer::Buf xyzD50;
