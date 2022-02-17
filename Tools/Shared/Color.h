@@ -1,6 +1,8 @@
 #pragma once
 #import "Tools/Shared/Mat.h"
 
+namespace MDCTools {
+
 namespace White {
     struct D50 {
         static inline const Mat<double,3,1> XYZ = {0.96422, 1.00000, 0.82521};
@@ -247,3 +249,5 @@ public:
     
     Mat<double,3,1> m;
 };
+
+} // namespace MDCTools
