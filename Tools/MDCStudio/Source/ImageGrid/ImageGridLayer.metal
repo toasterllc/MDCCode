@@ -311,8 +311,15 @@ fragment float4 FragmentShader(
         else                            outlinePos.y = maskHeight2;
         
         const float outline = Sample::R(outlineTxt, outlinePos);
-        outlineOver = float4(float3(1), .03*outline);
-        outlineColorDodge = float4(float3(.7*outline), 1);
+        
+        if (!selected) {
+            outlineOver = float4(float3(1), .03*outline);
+            outlineColorDodge = float4(float3(.7*outline), 1);
+        
+        } else {
+            outlineOver = float4(float3(1), 0*outline);
+            outlineColorDodge = float4(float3(.5*outline), 1);
+        }
     }
     
     // Calculate shadow value
@@ -363,6 +370,7 @@ fragment float4 FragmentShader(
         selection = selectionTxt.sample(coord::pixel, float2(selectionPos.x, selectionPos.y));
 //        selection.a = 1;
     }
+//    return selection;
 //    return blendOver(selection, float4(0,0,0,1));
     
 //    return blendOver(float4(1,1,1,.1), selection);
