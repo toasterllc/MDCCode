@@ -5,7 +5,7 @@
             √ Scroll view focus should follow selection
         √ Select-all
         √ Shift/command selection to add/remove selected items
-        - Drag-select should autoscroll the scroll view
+        √ Drag-select should autoscroll the scroll view
     
     - MDCStudio: implement inspector
     
