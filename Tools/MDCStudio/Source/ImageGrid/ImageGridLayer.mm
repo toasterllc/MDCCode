@@ -45,7 +45,8 @@ using ThumbFile = Mmap;
     id<MTLTexture> _depthTexture;
     id<MTLTexture> _outlineTexture;
     id<MTLTexture> _maskTexture;
-    id<MTLTexture> _shadowTexture;
+    id<MTLTexture> _shadowUnselectedTexture;
+    id<MTLTexture> _shadowSelectedTexture;
     id<MTLTexture> _selectionTexture;
     MTLRenderPassDepthAttachmentDescriptor* _depthAttachment;
     
@@ -104,9 +105,13 @@ using ThumbFile = Mmap;
 //    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:@{
 //        MTKTextureLoaderOptionSRGB: @YES,
 //    } error:nil];
-    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:nil error:nil];
+    _shadowUnselectedTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"ShadowUnselected"] options:nil error:nil];
 //    _shadowTexture = [loader newTextureWithName:@"Shadow" scaleFactor:2 bundle:nil options:nil error:nil];
-    assert(_shadowTexture);
+    assert(_shadowUnselectedTexture);
+    
+    _shadowSelectedTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"ShadowSelected"] options:nil error:nil];
+//    _shadowTexture = [loader newTextureWithName:@"Shadow" scaleFactor:2 bundle:nil options:nil error:nil];
+    assert(_shadowSelectedTexture);
     
 //    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:@{ MTKTextureLoaderOptionSRGB: @YES } error:nil];
 //    assert(_shadowTexture);
@@ -193,13 +198,13 @@ using ThumbFile = Mmap;
 //    return float4(oc, oa);
 //}
     
-    [[pipelineDescriptor colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
-    [[pipelineDescriptor colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorOne];
-    [[pipelineDescriptor colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
-    
-    [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
-    [[pipelineDescriptor colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorOne];
-    [[pipelineDescriptor colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+//    [[pipelineDescriptor colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
+//    [[pipelineDescriptor colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorOne];
+//    [[pipelineDescriptor colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+//    
+//    [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
+//    [[pipelineDescriptor colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorOne];
+//    [[pipelineDescriptor colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
     
 //static float4 blendOver(float4 a, float4 b) {
 //    const float oa = a.a + b.a*(1-a.a);
@@ -207,13 +212,13 @@ using ThumbFile = Mmap;
 //    return float4(oc, oa);
 //}
     
-//    [[pipelineDescriptor colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
-//    [[pipelineDescriptor colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorSourceAlpha];
-//    [[pipelineDescriptor colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
-//
-//    [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
-//    [[pipelineDescriptor colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorSourceAlpha];
-//    [[pipelineDescriptor colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+    [[pipelineDescriptor colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
+    [[pipelineDescriptor colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorSourceAlpha];
+    [[pipelineDescriptor colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+
+    [[pipelineDescriptor colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
+    [[pipelineDescriptor colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorSourceAlpha];
+    [[pipelineDescriptor colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
     
     _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
     assert(_pipelineState);
@@ -268,7 +273,7 @@ using ThumbFile = Mmap;
 //        NSLog(@"_thumbBuf: %p", self->_thumbBuf);
 //    }];
     
-    const uint32_t excess = (uint32_t)([_selectionTexture width]-[_maskTexture width]);
+    const uint32_t excess = (uint32_t)([_shadowUnselectedTexture width]-[_maskTexture width]);
     _cellWidth = _ThumbWidth+excess;
     _cellHeight = _ThumbHeight+excess;
     
@@ -508,9 +513,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.013047, 0.013783, 0.015127, 1}];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
-//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.118, 0.122, 0.129, 1}];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
@@ -529,9 +534,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.013047, 0.013783, 0.015127, 1}];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
-//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.118, 0.122, 0.129, 1}];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         // rasterFromUnityMatrix: converts unity coordinates [-1,1] -> rasterized coordinates [0,pixel width/height]
@@ -663,8 +668,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 [renderEncoder setFragmentBuffer:_selection.buf offset:0 atIndex:2];
                 [renderEncoder setFragmentTexture:_maskTexture atIndex:0];
                 [renderEncoder setFragmentTexture:_outlineTexture atIndex:1];
-                [renderEncoder setFragmentTexture:_shadowTexture atIndex:2];
-                [renderEncoder setFragmentTexture:_selectionTexture atIndex:3];
+                [renderEncoder setFragmentTexture:_shadowUnselectedTexture atIndex:2];
+                [renderEncoder setFragmentTexture:_shadowSelectedTexture atIndex:3];
+                [renderEncoder setFragmentTexture:_selectionTexture atIndex:4];
                 
             //    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3 instanceCount:1];
                 
