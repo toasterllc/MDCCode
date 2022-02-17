@@ -8,7 +8,7 @@
 #import "Grid.h"
 #import "ImageLibrary.h"
 #import "MDCDevicesManager.h"
-#import "ImageGrid/ImageGridView.h"
+#import "ImageGridView/ImageGridView.h"
 namespace fs = std::filesystem;
 
 static std::vector<id> _Images;

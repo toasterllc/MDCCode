@@ -194,7 +194,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		551328BA27B45E6200CD823B /* ImageGrid */ = {
+		551328BA27B45E6200CD823B /* ImageGridView */ = {
 			isa = PBXGroup;
 			children = (
 				551B22382790245000D62121 /* ImageGridLayerTypes.h */,
@@ -205,17 +205,17 @@
 				551328B827B45D7C00CD823B /* ImageGridView.mm */,
 				5544AE3427B646C3006AB473 /* ImageGridView.xib */,
 			);
-			path = ImageGrid;
+			path = ImageGridView;
 			sourceTree = "<group>";
 		};
-		5544A7E927B5E011006AB473 /* SourceList */ = {
+		5544A7E927B5E011006AB473 /* SourceListView */ = {
 			isa = PBXGroup;
 			children = (
 				5544A7EB27B5E011006AB473 /* SourceListView.h */,
 				5544A7EC27B5E011006AB473 /* SourceListView.mm */,
 				5544A7EA27B5E011006AB473 /* SourceListView.xib */,
 			);
-			path = SourceList;
+			path = SourceListView;
 			sourceTree = "<group>";
 		};
 		5544A7F127B5E3B3006AB473 /* Tools */ = {
@@ -367,9 +367,9 @@
 			isa = PBXGroup;
 			children = (
 				55D4AA7A27B1D3100052EFEE /* ImagePipeline */,
-				551328BA27B45E6200CD823B /* ImageGrid */,
+				551328BA27B45E6200CD823B /* ImageGridView */,
 				55F8D01127BEF3E500757165 /* ImageView */,
-				5544A7E927B5E011006AB473 /* SourceList */,
+				5544A7E927B5E011006AB473 /* SourceListView */,
 				5544AE5927B6EE04006AB473 /* Document */,
 				55A36A8E27A2951900FD0181 /* MDCDevice.h */,
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
