@@ -298,9 +298,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.013047, 0.013783, 0.015127, 1}];
 //        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.118, 0.122, 0.129, 1}];
 //        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
@@ -319,9 +320,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.013047, 0.013783, 0.015127, 1}];
 //        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.118, 0.122, 0.129, 1}];
 //        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         // rasterFromUnityMatrix: converts unity coordinates [-1,1] -> rasterized coordinates [0,pixel width/height]
