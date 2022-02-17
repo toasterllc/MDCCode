@@ -154,28 +154,30 @@ public:
         int32_t maxYIndex = _DivFloor(maxY, combinedCellHeight);
         
         const bool minXInCell = _InRangeExclusive(minX%combinedCellWidth, 0, _cellSize.x) && _InRange(minXIndex, 0, _computed.columnCount-1);
-        const bool maxXInCell = _InRangeExclusive(maxX%combinedCellWidth, 0, _cellSize.x) && _InRange(maxXIndex, 0, _computed.columnCount-1);
         const bool minYInCell = _InRangeExclusive(minY%combinedCellHeight, 0, _cellSize.y) && _InRange(minYIndex, 0, _computed.rowCount-1);
-        const bool maxYInCell = _InRangeExclusive(maxY%combinedCellHeight, 0, _cellSize.y) && _InRange(maxYIndex, 0, _computed.rowCount-1);
-        
-        // Check if we're entirely within spacing
-        if ((!minXInCell && !maxXInCell && minXIndex == maxXIndex) ||
-            (!minYInCell && !maxYInCell && minYIndex == maxYIndex)) {
-            return IndexRect{};
-        }
         
         if (!minXInCell) minXIndex++;
         if (!minYInCell) minYIndex++;
-        
-        minXIndex = std::clamp(minXIndex, 0, _computed.columnCount-1);
-        maxXIndex = std::clamp(maxXIndex, 0, _computed.columnCount-1);
-        minYIndex = std::clamp(minYIndex, 0, _computed.rowCount-1);
-        maxYIndex = std::clamp(maxYIndex, 0, _computed.rowCount-1);
         
         // Sanity-check our result
         if (minXIndex>maxXIndex || minYIndex>maxYIndex) {
             return IndexRect{};
         }
+        
+        if ((minXIndex<0 && maxXIndex<0) ||
+            (minXIndex>=_computed.columnCount && maxXIndex>=_computed.columnCount)) {
+            return IndexRect{};
+        }
+        
+        if ((minYIndex<0 && maxYIndex<0) ||
+            (minYIndex>=_computed.rowCount && maxYIndex>=_computed.rowCount)) {
+            return IndexRect{};
+        }
+        
+        minXIndex = std::clamp(minXIndex, 0, _computed.columnCount-1);
+        maxXIndex = std::clamp(maxXIndex, 0, _computed.columnCount-1);
+        minYIndex = std::clamp(minYIndex, 0, _computed.rowCount-1);
+        maxYIndex = std::clamp(maxYIndex, 0, _computed.rowCount-1);
         
         return IndexRect{
             .x = {minXIndex, maxXIndex-minXIndex+1},

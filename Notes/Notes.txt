@@ -1,6 +1,11 @@
 - Rev4 Todo
     
     - MDCStudio: implement grid view selection
+        - Shift/command selection to add/remove selected items
+        - Arrow key selection modification
+        - Drag-select should autoscroll the scroll view
+    
+    - MDCStudio: prevent selection layer from being clipped
     
     - MDCStudio: implement inspector
     

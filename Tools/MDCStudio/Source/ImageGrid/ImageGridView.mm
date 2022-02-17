@@ -16,7 +16,9 @@ using namespace MDCStudio;
 - (void)setFrame:(NSRect)frame {
     [imageGridLayer setContainerWidth:frame.size.width];
     [imageGridLayer recomputeGrid];
-    frame.size.height = [imageGridLayer containerHeight];
+    // Don't let our frame.height be smaller than our superview's height
+    // This is so `selectionRectLayer` doesn't get clipped by the bottom of our view
+    frame.size.height = std::max([[self superview] bounds].size.height, [imageGridLayer containerHeight]);
     [super setFrame:frame];
 }
 
@@ -79,6 +81,7 @@ using namespace MDCStudio;
     // Configure ImageGridDocumentView
     {
         CALayer* rootLayer = [CALayer new];
+//        [rootLayer setBackgroundColor:[[NSColor redColor] CGColor]];
         
         ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:imgLib];
         [rootLayer addSublayer:imageGridLayer];
@@ -180,19 +183,130 @@ using namespace MDCStudio;
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
     [[self window] makeFirstResponder:self];
     
-    CALayer* layer = _documentView->selectionRectLayer;
+    CALayer* rectLayer = _documentView->selectionRectLayer;
     NSWindow* win = [mouseDownEvent window];
     
     const CGPoint startPoint = [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
-    [layer setHidden:false];
+    [rectLayer setHidden:false];
     TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
         const CGPoint curPoint = [_documentView convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
         [_documentView->imageGridLayer setSelectedImageIds:[_documentView->imageGridLayer imageIdsForRect:rect]];
-        [layer setFrame:rect];
+        [rectLayer setFrame:rect];
 //        NSLog(@"mouseDown:");
     });
-    [layer setHidden:true];
+    [rectLayer setHidden:true];
 }
+
+- (void)moveDown:(id)sender {
+    
+}
+
+- (void)moveUp:(id)sender {
+    
+}
+
+- (void)moveLeft:(id)sender {
+    
+}
+
+- (void)moveRight:(id)sender {
+    
+}
+
+//- (void)moveForward:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveRight:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveBackward:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveLeft:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveUp:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveDown:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveWordForward:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveWordBackward:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToBeginningOfLine:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToEndOfLine:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToBeginningOfParagraph:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToEndOfParagraph:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToEndOfDocument:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToBeginningOfDocument:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)pageDown:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)pageUp:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)centerSelectionInVisibleArea:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveBackwardAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveForwardAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveWordForwardAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveWordBackwardAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveUpAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveDownAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToBeginningOfLineAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToEndOfLineAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToBeginningOfParagraphAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToEndOfParagraphAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToEndOfDocumentAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToBeginningOfDocumentAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)pageDownAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)pageUpAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveParagraphForwardAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveParagraphBackwardAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveWordRight:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveWordLeft:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveRightAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveLeftAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveWordRightAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveWordLeftAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToLeftEndOfLine:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToRightEndOfLine:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToLeftEndOfLineAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)moveToRightEndOfLineAndModifySelection:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)scrollPageUp:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)scrollPageDown:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)scrollLineUp:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)scrollLineDown:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)scrollToBeginningOfDocument:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)scrollToEndOfDocument:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)transpose:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)transposeWords:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)selectAll:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)selectParagraph:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)selectLine:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)selectWord:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)indent:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)insertTab:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)insertBacktab:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)insertNewline:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)insertParagraphSeparator:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)insertNewlineIgnoringFieldEditor:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)insertTabIgnoringFieldEditor:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)insertLineBreak:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)insertContainerBreak:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)insertSingleQuoteIgnoringSubstitution:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)insertDoubleQuoteIgnoringSubstitution:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)changeCaseOfLetter:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)uppercaseWord:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)lowercaseWord:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)capitalizeWord:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)deleteForward:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)deleteBackward:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)deleteBackwardByDecomposingPreviousCharacter:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)deleteWordForward:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)deleteWordBackward:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)deleteToBeginningOfLine:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)deleteToEndOfLine:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)deleteToBeginningOfParagraph:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)deleteToEndOfParagraph:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)yank:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)complete:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)setMark:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)deleteToMark:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)selectToMark:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)swapWithMark:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)cancelOperation:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)makeBaseWritingDirectionNatural:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)makeBaseWritingDirectionLeftToRight:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)makeBaseWritingDirectionRightToLeft:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)makeTextWritingDirectionNatural:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)makeTextWritingDirectionLeftToRight:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)makeTextWritingDirectionRightToLeft:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+//- (void)quickLookPreviewItems:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }
+
 
 @end

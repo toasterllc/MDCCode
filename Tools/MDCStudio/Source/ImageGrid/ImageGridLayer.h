@@ -20,4 +20,6 @@ using ImageGridLayerImageIds = std::set<Img::Id>;
 - (ImageGridLayerImageIds)imageIdsForRect:(CGRect)rect;
 - (void)setSelectedImageIds:(const ImageGridLayerImageIds&)imageIds;
 
+
+
 @end
