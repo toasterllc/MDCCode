@@ -45,8 +45,7 @@ using ThumbFile = Mmap;
     id<MTLTexture> _depthTexture;
     id<MTLTexture> _outlineTexture;
     id<MTLTexture> _maskTexture;
-    id<MTLTexture> _shadowUnselectedTexture;
-    id<MTLTexture> _shadowSelectedTexture;
+    id<MTLTexture> _shadowTexture;
     id<MTLTexture> _selectionTexture;
     MTLRenderPassDepthAttachmentDescriptor* _depthAttachment;
     
@@ -105,13 +104,9 @@ using ThumbFile = Mmap;
 //    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:@{
 //        MTKTextureLoaderOptionSRGB: @YES,
 //    } error:nil];
-    _shadowUnselectedTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"ShadowUnselected"] options:nil error:nil];
+    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:nil error:nil];
 //    _shadowTexture = [loader newTextureWithName:@"Shadow" scaleFactor:2 bundle:nil options:nil error:nil];
-    assert(_shadowUnselectedTexture);
-    
-    _shadowSelectedTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"ShadowSelected"] options:nil error:nil];
-//    _shadowTexture = [loader newTextureWithName:@"Shadow" scaleFactor:2 bundle:nil options:nil error:nil];
-    assert(_shadowSelectedTexture);
+    assert(_shadowTexture);
     
 //    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:@{ MTKTextureLoaderOptionSRGB: @YES } error:nil];
 //    assert(_shadowTexture);
@@ -273,7 +268,7 @@ using ThumbFile = Mmap;
 //        NSLog(@"_thumbBuf: %p", self->_thumbBuf);
 //    }];
     
-    const uint32_t excess = (uint32_t)([_shadowUnselectedTexture width]-[_maskTexture width]);
+    const uint32_t excess = (uint32_t)([_shadowTexture width]-[_maskTexture width]);
     _cellWidth = _ThumbWidth+excess;
     _cellHeight = _ThumbHeight+excess;
     
@@ -668,8 +663,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 [renderEncoder setFragmentBuffer:_selection.buf offset:0 atIndex:2];
                 [renderEncoder setFragmentTexture:_maskTexture atIndex:0];
                 [renderEncoder setFragmentTexture:_outlineTexture atIndex:1];
-                [renderEncoder setFragmentTexture:_shadowUnselectedTexture atIndex:2];
-                [renderEncoder setFragmentTexture:_shadowSelectedTexture atIndex:3];
+                [renderEncoder setFragmentTexture:_shadowTexture atIndex:2];
                 [renderEncoder setFragmentTexture:_selectionTexture atIndex:4];
                 
             //    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3 instanceCount:1];
