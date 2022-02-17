@@ -58,12 +58,15 @@ using namespace MDCStudio;
 @implementation ImageGridView {
     IBOutlet NSView* _nibView;
     IBOutlet ImageGridDocumentView* _documentView;
+    ImageLibraryPtr _imgLib;
 }
 
 // MARK: - Creation
 
 - (instancetype)initWithImageLibrary:(ImageLibraryPtr)imgLib {
     if (!(self = [super initWithFrame:{}])) return nil;
+    
+    _imgLib = imgLib;
     
     // Load from nib
     {
@@ -83,7 +86,7 @@ using namespace MDCStudio;
         CALayer* rootLayer = [CALayer new];
 //        [rootLayer setBackgroundColor:[[NSColor redColor] CGColor]];
         
-        ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:imgLib];
+        ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:_imgLib];
         [rootLayer addSublayer:imageGridLayer];
         
         CALayer* selectionRectLayer = [CALayer new];
@@ -105,7 +108,7 @@ using namespace MDCStudio;
     // Observe image library changes so that we update the image grid
     {
         __weak auto weakSelf = self;
-        imgLib->vend()->addObserver([=] {
+        _imgLib->vend()->addObserver([=] {
             auto strongSelf = weakSelf;
             if (!strongSelf) return false;
             dispatch_async(dispatch_get_main_queue(), ^{ [strongSelf _handleImageLibraryChanged]; });
@@ -180,38 +183,147 @@ using namespace MDCStudio;
 //    return true;
 //}
 
+//- (size_t)_indexForImageId:(Img::Id)imgId {
+//    
+//}
+
+static ImageGridLayerImageIds xorImageIds(const ImageGridLayerImageIds& a, const ImageGridLayerImageIds& b) {
+    ImageGridLayerImageIds r;
+    for (Img::Id x : a) {
+        if (b.find(x) == b.end()) {
+            r.insert(x);
+        }
+    }
+    
+    for (Img::Id x : b) {
+        if (a.find(x) == a.end()) {
+            r.insert(x);
+        }
+    }
+    
+    return r;
+}
+
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
+    auto imageGridLayer = _documentView->imageGridLayer;
+    
     [[self window] makeFirstResponder:self];
     
     CALayer* rectLayer = _documentView->selectionRectLayer;
     NSWindow* win = [mouseDownEvent window];
-    
     const CGPoint startPoint = [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
     [rectLayer setHidden:false];
+    
+    const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
+    const ImageGridLayerImageIds oldSelection = [imageGridLayer selectedImageIds];
     TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
         const CGPoint curPoint = [_documentView convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
-        [_documentView->imageGridLayer setSelectedImageIds:[_documentView->imageGridLayer imageIdsForRect:rect]];
+        const ImageGridLayerImageIds newSelection = [imageGridLayer imageIdsForRect:rect];
+        if (extend) {
+            [imageGridLayer setSelectedImageIds:xorImageIds(oldSelection, newSelection)];
+        } else {
+            [imageGridLayer setSelectedImageIds:newSelection];
+        }
         [rectLayer setFrame:rect];
 //        NSLog(@"mouseDown:");
     });
     [rectLayer setHidden:true];
 }
 
-- (void)moveDown:(id)sender {
+struct SelectionDelta {
+    int x = 0;
+    int y = 0;
+};
+
+- (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
+    auto imageGridLayer = _documentView->imageGridLayer;
+    auto il = _imgLib->vend();
     
+    const size_t imgCount = il->recordCount();
+    if (!imgCount) return;
+    
+    ImageGridLayerImageIds selectedImageIds = [imageGridLayer selectedImageIds];
+    if (selectedImageIds.empty()) return;
+    
+    const Img::Id lastSelectedImgId = *std::prev(selectedImageIds.end());
+    const auto iter = il->find(lastSelectedImgId);
+    if (iter == il->end()) {
+        NSLog(@"Image no longer in library");
+        return;
+    }
+    
+    const size_t idx = std::distance(il->begin(), iter);
+    const size_t colCount = [imageGridLayer columnCount];
+    const size_t rem = (imgCount % colCount);
+    const size_t lastRowCount = (rem ? rem : colCount);
+    const bool firstRow = (idx < colCount);
+    const bool lastRow = (idx >= (imgCount-lastRowCount));
+    const bool firstCol = !(idx % colCount);
+    const bool lastCol = ((idx % colCount) == (colCount-1));
+    const bool lastElm = (idx == (imgCount-1));
+    
+    ssize_t newIdx = idx;
+    if (delta.x > 0) {
+        // Right
+        if (lastCol || lastElm) return;
+        newIdx += 1;
+    
+    } else if (delta.x < 0) {
+        // Left
+        if (firstCol) return;
+        newIdx -= 1;
+    
+    } else if (delta.y > 0) {
+        // Down
+        if (lastRow) return;
+        newIdx += colCount;
+    
+    } else if (delta.y < 0) {
+        // Up
+        if (firstRow) return;
+        newIdx -= colCount;
+    }
+    
+    newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
+    
+//    const size_t newIdx = std::min(imgCount-1, idx+[imageGridLayer columnCount]);
+    const Img::Id newImgId = il->recordGet(il->begin()+newIdx)->id;
+    [_documentView scrollRectToVisible:[imageGridLayer rectForImageAtIndex:newIdx]];
+    
+    if (!extend) selectedImageIds.clear();
+    selectedImageIds.insert(newImgId);
+    [imageGridLayer setSelectedImageIds:selectedImageIds];
+}
+
+- (void)moveDown:(id)sender {
+    const bool extend = false;//[[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
+    [self _moveSelection:{0,1} extend:extend];
 }
 
 - (void)moveUp:(id)sender {
-    
+    const bool extend = false;//[[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
+    [self _moveSelection:{0,-1} extend:extend];
 }
 
 - (void)moveLeft:(id)sender {
-    
+    const bool extend = false;//[[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
+    [self _moveSelection:{-1,0} extend:extend];
 }
 
 - (void)moveRight:(id)sender {
-    
+    const bool extend = false;//[[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
+    [self _moveSelection:{1,0} extend:extend];
+}
+
+- (void)selectAll:(id)sender {
+    auto imageGridLayer = _documentView->imageGridLayer;
+    auto il = _imgLib->vend();
+    ImageGridLayerImageIds ids;
+    for (auto it=il->begin(); it!=il->end(); it++) {
+        ids.insert(il->recordGet(it)->id);
+    }
+    [imageGridLayer setSelectedImageIds:ids];
 }
 
 //- (void)moveForward:(nullable id)sender { NSLog(@"%@", NSStringFromSelector(_cmd)); }

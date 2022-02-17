@@ -57,7 +57,9 @@ using ThumbFile = Mmap;
     ImageLibraryPtr _imgLib;
     
     struct {
+        ImageGridLayerImageIds imageIds;
         Img::Id first = 0;
+//        size_t first = 0;
         size_t count = 0;
         id<MTLBuffer> buf;
     } _selection;
@@ -101,70 +103,11 @@ using ThumbFile = Mmap;
     _maskTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Mask"] options:nil error:nil];
     assert(_maskTexture);
     
-//    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:@{
-//        MTKTextureLoaderOptionSRGB: @YES,
-//    } error:nil];
     _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:nil error:nil];
-//    _shadowTexture = [loader newTextureWithName:@"Shadow" scaleFactor:2 bundle:nil options:nil error:nil];
     assert(_shadowTexture);
-    
-//    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:@{ MTKTextureLoaderOptionSRGB: @YES } error:nil];
-//    assert(_shadowTexture);
-    
-    
     
     _selectionTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Selection"] options:nil error:nil];
     assert(_selectionTexture);
-    
-//    _outlineTexture = [loader newTextureWithName:@"Outline.png" scaleFactor:2 bundle:nil options:nil error:nil];
-//    _maskTexture = [loader newTextureWithName:@"Mask.png" scaleFactor:2 bundle:nil options:nil error:nil];
-//    _shadowTexture = [loader newTextureWithName:@"Shadow.png" scaleFactor:2 bundle:nil options:nil error:nil];
-//    assert(_outlineTexture && _maskTexture && _shadowTexture);
-    
-//    _shadowTexture = [loader newTextureWithContentsOfURL:[NSURL fileURLWithPath:@"/Users/dave/Desktop/MDCStudio/Resources/Shadow.png"] options:nil error:nil];
-//    [loader newTextureWith]
-    
-//    _shadowTexture = [loader newTextureWithName:@"Shadow" scaleFactor:2 displayGamut:NSDisplayGamutSRGB bundle:nil options:nil error:nil];
-//    assert(_shadowTexture);
-    
-//    _shadowTexture = [loader newTextureWithName:@"Shadow" scaleFactor:2 displayGamut:NSDisplayGamutSRGB bundle:nil options:nil error:nil];
-//    assert(_shadowTexture);
-    
-//    {
-//        using ThumbFile = Mmap<uint8_t>;
-//        auto dev = MTLCreateSystemDefaultDevice();
-//        auto thumbFile = ThumbFile("/Users/dave/Desktop/Thumbs", MAP_PRIVATE);
-//        
-//        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
-//        auto thumbBuf = [dev newBufferWithBytesNoCopy:thumbFile.data() length:thumbFile.byteLen() options:BufOpts deallocator:nil];
-//        assert(thumbBuf);
-//        
-//        NSLog(@"thumbBuf: %p", thumbBuf);
-//    }
-    
-//    // WORKS
-//    {
-//        using ThumbFile = Mmap<uint8_t>;
-//        _thumbFile = ThumbFile("/Users/dave/Desktop/Thumbs", MAP_PRIVATE);
-//        
-//        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
-//        auto thumbBuf = [_device newBufferWithBytesNoCopy:_thumbFile.data() length:_thumbFile.byteLen() options:BufOpts deallocator:nil];
-//        assert(thumbBuf);
-//        
-//        NSLog(@"thumbBuf: %p", thumbBuf);
-//    }
-    
-    
-    // FAILS
-//    {
-//        const fs::path ThumbFilePath = "/Users/dave/Desktop/Thumbs";
-//        
-//        _thumbFile = ThumbFile(ThumbFilePath, MAP_PRIVATE);
-//        
-//        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
-//        _thumbBuf = [_device newBufferWithBytesNoCopy:_thumbFile.data() length:_thumbFile.byteLen() options:BufOpts deallocator:nil];
-//        assert(_thumbBuf);
-//    }
     
     _commandQueue = [_device newCommandQueue];
     
@@ -228,46 +171,6 @@ using ThumbFile = Mmap;
     [_depthAttachment setStoreAction:MTLStoreActionDontCare];
     [_depthAttachment setClearDepth:1];
     
-//    for (;;) {
-//        _thumbFile = ThumbFile(ThumbFilePath, MAP_PRIVATE);
-//        
-//        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-//        _thumbBuf = [_device newBufferWithBytesNoCopy:_thumbFile.data() length:_thumbFile.byteLen() options:BufOpts deallocator:nil];
-//        if (_thumbBuf) break;
-//    }
-    
-//    const fs::path ThumbFilePath = "/Users/dave/Desktop/Thumbs";
-//    const int fdi = open(ThumbFilePath.c_str(), O_RDWR|O_CREAT /* |O_EXCL */ |O_CLOEXEC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
-//    assert(fdi >= 0);
-//    FileDescriptor fd(fdi);
-//    _thumbFile = ThumbFile(std::move(fd), MAP_PRIVATE);
-    
-//    NSLog(@"_thumbFile.data() == %p, 4096 aligned = %lu\n", _thumbFile.data(), ((uintptr_t)_thumbFile.data() % 4096));
-    
-//    uint32_t thumbBufLen = (uint32_t)_thumbFile.byteLen();
-//    for (;;) {
-//        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-//        _thumbBuf = [_device newBufferWithBytesNoCopy:_thumbFile.data() length:thumbBufLen options:BufOpts deallocator:nil];
-//        if (_thumbBuf) break;
-//        usleep(1000);
-//        NSLog(@"trying again...");
-////        thumbBufLen /= 2;
-//    }
-    
-//    constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-//    _thumbBuf = [_device newBufferWithBytesNoCopy:_thumbFile.data() length:_thumbFile.byteLen() options:BufOpts deallocator:nil];
-//    assert(_thumbBuf);
-//    
-//    _thumbBuf = [_device newBufferWithBytesNoCopy:_thumbFile.data() length:_thumbFile.byteLen() options:BufOpts deallocator:nil];
-//    _thumbBuf = [_device newBufferWithBytesNoCopy:_thumbFile.data() length:4096 options:BufOpts deallocator:nil];
-//    assert(_thumbBuf);
-//    [NSTimer scheduledTimerWithTimeInterval:2 repeats:true block:^(NSTimer * _Nonnull timer) {
-//        NSLog(@"Creating _thumbBuf...");
-//        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-//        self->_thumbBuf = [self->_device newBufferWithBytesNoCopy:self->_thumbFile.data() length:(240000/1)*4096 options:BufOpts deallocator:nil];
-//        NSLog(@"_thumbBuf: %p", self->_thumbBuf);
-//    }];
-    
     const uint32_t excess = (uint32_t)([_shadowTexture width]-[_maskTexture width]);
     _cellWidth = _ThumbWidth+excess;
     _cellHeight = _ThumbHeight+excess;
@@ -294,17 +197,21 @@ using ThumbFile = Mmap;
     [self setNeedsDisplay];
 }
 
-- (void)recomputeGrid {
-    _grid.setElementCount((int32_t)_imgLib->vend()->recordCount());
-    _grid.recompute();
-}
-
 - (void)setContainerWidth:(CGFloat)width {
     _grid.setContainerWidth((int32_t)lround(width*_contentsScale));
 }
 
 - (CGFloat)containerHeight {
     return _grid.containerHeight() / _contentsScale;
+}
+
+- (size_t)columnCount {
+    return _grid.columnCount();
+}
+
+- (void)recomputeGrid {
+    _grid.setElementCount((int32_t)_imgLib->vend()->recordCount());
+    _grid.recompute();
 }
 
 - (MTLRenderPassDepthAttachmentDescriptor*)_depthAttachmentForDrawableTexture:(id<MTLTexture>)drawableTexture {
@@ -329,7 +236,7 @@ using ThumbFile = Mmap;
     return _depthAttachment;
 }
 
-static Grid::Rect _GridRectForCGRect(CGRect rect, CGFloat scale) {
+static Grid::Rect _GridRectFromCGRect(CGRect rect, CGFloat scale) {
     const CGRect irect = CGRectIntegral({
         rect.origin.x*scale,
         rect.origin.y*scale,
@@ -343,6 +250,13 @@ static Grid::Rect _GridRectForCGRect(CGRect rect, CGFloat scale) {
     };
 }
 
+static CGRect _CGRectFromGridRect(Grid::Rect rect, CGFloat scale) {
+    return CGRect{
+        .origin = {rect.point.x / scale, rect.point.y / scale},
+        .size = {rect.size.x / scale, rect.size.y / scale},
+    };
+}
+
 static uintptr_t _FloorToPageSize(uintptr_t x) {
     const uintptr_t s = getpagesize();
     return (x/s)*s;
@@ -352,130 +266,6 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     const uintptr_t s = getpagesize();
     return ((x+s-1)/s)*s;
 }
-
-//template <typename T>
-//static T _Distance(T a, T b) {
-//    if (a > b) return a-b;
-//    return b-a;
-//}
-//
-//struct RangeMem {
-//    uintptr_t start = 0;
-//    uintptr_t end = 0;
-//    size_t len = 0;
-//    struct {
-//        uintptr_t start = 0;
-//        uintptr_t end = 0;
-//        size_t len = 0;
-//    } aligned;
-//};
-//
-//// _RangeMemCalc(): returns the span of memory that `range` references,
-//// both page-aligned and non-page-aligned
-//static RangeMem _RangeMemCalc(const ImageLibrary& ic, const ImageLibrary::Range& range) {
-//    if (!range.len) return {};
-//    const uintptr_t start = (uintptr_t)ic.getImage(range.idx);
-//    const uintptr_t end = (uintptr_t)ic.getImage(range.idx+range.len-1)+ImgSize;
-//    const uintptr_t alignedStart = _FloorToPageSize(start);
-//    const uintptr_t alignedEnd = _CeilToPageSize(end);
-//    const size_t alignedLen = alignedEnd-alignedStart;
-//    return {
-//        .start = start,
-//        .end = end,
-//        .aligned = {
-//            .start = alignedStart,
-//            .end = alignedEnd,
-//            .len = alignedLen,
-//        },
-//    };
-//}
-//
-//// _RangeHalve(): splits `range` into 2 subranges, such that both subranges
-//// span equally-sized regions in `_imagesMmap` (as equal as possible, that is).
-////
-//// To expand: `range` references indexes in _imageRefs, while the values in
-//// _imageRefs serve as indexes into _imagesMmap. So we're not halving `range`
-//// in the naive way, but rather halving it by considering the length that the
-//// two subranges represent in _imagesMmap, and getting those two lengths as
-//// equal as possible.
-////
-//// For example, with these values:
-////     _imageRefs = [1,10,13,14,15,16,17,18,19]
-////     range      = [0,9]
-//// _RangeHalve() returns:
-////     ([0,2], [2,7])
-//// Note that the span of the first region is 10 images (10-1+1),
-//// and the span of the second region is 7 images (19-13+1).
-//std::tuple<ImageLibrary::Range,ImageLibrary::Range> _RangeHalve(const ImageLibrary& ic, const ImageLibrary::Range& range) {
-//    if (!range.len) return std::make_tuple(ImageLibrary::Range{}, ImageLibrary::Range{});
-//    const ImageLibrary::ImageRef first = ic.getImageRef(range.idx);
-//    const ImageLibrary::ImageRef last  = ic.getImageRef(range.idx+range.len-1);
-//    
-//    size_t left = range.idx;
-//    size_t right = range.idx+range.len; // Exclusive
-//    size_t best = 0;
-//    size_t bestDist = SIZE_MAX;
-//    while (left < right) {
-//        const size_t mid = (left+right)/2;
-//        const size_t leftLen = (mid>range.idx ? ic.getImageRef(mid-1)-first+1 : 0);
-//        const size_t rightLen = last-ic.getImageRef(mid)+1;
-//        const size_t dist = _Distance(leftLen, rightLen);
-//        if (dist < bestDist) {
-//            best = mid;
-//            bestDist = dist;
-//        }
-//        
-//        // Continue with left chunk
-//        if (leftLen > rightLen) right = mid;
-//        // Continue with right chunk
-//        else left = mid+1;
-//    }
-//    
-//    return ImageLibrary::Split(range, best);
-//}
-//
-//// _RangeSubdivide(): recursively divides `ranges[idx]` until all resulting subranges
-//// reference <= T_MaxBufLen bytes in _imagesMmap
-//template <size_t T_MaxBufLen>
-//void _RangeSubdivide(const ImageLibrary& ic, std::vector<ImageLibrary::Range>& ranges, size_t idx) {
-//    const ImageLibrary::Range& range = ranges[idx];
-//    assert(range.len > 0);
-//    
-//    // Short-circuit if subdivision isn't necessary
-//    if (_RangeMemCalc(ic, range).aligned.len <= T_MaxBufLen) return;
-//    
-//    // If the region is larger than `T_MaxBufLen`, halve it
-//    const auto [l, r] = _RangeHalve(ic, range);
-//    ranges.insert(ranges.begin()+idx, range);
-//    ranges[idx+1] = r;
-//    ranges[idx] = l;
-//    
-//    _RangeSubdivide<T_MaxBufLen>(ic, ranges, idx+1); // Higher indexes must happen first, to preserve lower indexes
-//    _RangeSubdivide<T_MaxBufLen>(ic, ranges, idx);
-//}
-//
-//// _RangeSegments(): segments the input range such that every returned range spans no more
-//// than `T_MaxBufLen` bytes within the images buffer
-//template <size_t T_MaxBufLen>
-//std::vector<ImageLibrary::Range> _RangeSegments(const ImageLibrary& ic, const ImageLibrary::Range& range) {
-//    if (!range.len) return {};
-//    std::vector<ImageLibrary::Range> ranges;
-//    
-//    // Conditionally split `range` into 2 parts, in case the ImageRefs that it references wraps
-//    // around to the beginning of `_imagesMmap`
-//    const auto [l,r] = ic.splitRangeMonotonic(range);
-//    ranges.push_back(l);
-//    if (r.len) ranges.push_back(r);
-//    
-//    // Subdivide each range (recursively) so that none of them are larger than `T_MaxBufLen`
-//    // This is done backwards so that the next element in `ranges` isn't affected by the
-//    // splitting of the current element.
-//    for (size_t i=ranges.size(); i; i--) {
-//        _RangeSubdivide<T_MaxBufLen>(ic, ranges, i-1);
-//    }
-//    
-//    return ranges;
-//}
 
 - (void)display {
     auto startTime = std::chrono::steady_clock::now();
@@ -523,7 +313,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     
     
     
-    const Grid::IndexRange indexRange = _grid.indexRangeForIndexRect(_grid.indexRectForRect(_GridRectForCGRect(frame, _contentsScale)));
+    const Grid::IndexRange indexRange = _grid.indexRangeForIndexRect(_grid.indexRectForRect(_GridRectFromCGRect(frame, _contentsScale)));
     if (indexRange.count) {
         MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
         [renderPassDescriptor setDepthAttachment:depthAttachment];
@@ -649,6 +439,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     },
                     .selection = {
                         .first = _selection.first,
+//                        .first = (uint32_t)_selection.first,
                         .count = (uint32_t)_selection.count,
                     },
                     .cellWidth = _cellWidth,
@@ -668,7 +459,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 
             //    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3 instanceCount:1];
                 
-            //    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectForCGRect(frame));
+            //    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(frame));
                 const size_t chunkImageCount = chunkImageRefEnd-chunkImageRefBegin;
 //                printf("chunkImageCount: %zu\n", chunkImageCount);
                 [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6 instanceCount:chunkImageCount];
@@ -710,7 +501,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 
 - (ImageGridLayerImageIds)imageIdsForRect:(CGRect)rect {
     auto il = _imgLib->vend();
-    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectForCGRect(rect, _contentsScale));
+    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, _contentsScale));
     ImageGridLayerImageIds imageIds;
     for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
@@ -724,8 +515,21 @@ done:
     return imageIds;
 }
 
+- (CGRect)rectForImageAtIndex:(size_t)idx {
+    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), _contentsScale);
+}
+
+//- (size_t)indexForImageId:(Img::Id)imgId {
+//    _imgLib->vend()->
+//}
+
+- (const ImageGridLayerImageIds&)selectedImageIds {
+    return _selection.imageIds;
+}
+
 - (void)setSelectedImageIds:(const ImageGridLayerImageIds&)imageIds {
     if (!imageIds.empty()) {
+        _selection.imageIds = imageIds;
         _selection.first = *imageIds.begin();
         _selection.count = *std::prev(imageIds.end())-*imageIds.begin()+1;
         
@@ -743,401 +547,35 @@ done:
     [self setNeedsDisplay];
 }
 
-//- (void)_gridRecompute:(ImageLibrary&)imgLib {
-//    _grid.setElementCount(imgLib.recordCount());
-//    _grid.recompute();
-//}
-
-//- (const ImageGridLayerSelectionIndexes&)selectionIndexes {
-//    
+//- (ImageGridLayerIndexes)indexesForRect:(CGRect)rect {
+//    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, _contentsScale));
+//    ImageGridLayerIndexes indexes;
+//    for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
+//        for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
+//            const size_t idx = _grid.columnCount()*y + x;
+//            indexes.insert(idx);
+//        }
+//    }
+//    return indexes;
 //}
 //
-//- (void)setSelectionIndexes:(const ImageGridLayerSelectionIndexes&)indexes {
+//- (void)setSelectedIndexes:(const ImageGridLayerIndexes&)indexes {
+//    if (!indexes.empty()) {
+//        _selection.first = *indexes.begin();
+//        _selection.count = *std::prev(indexes.end())-*indexes.begin()+1;
+//        
+//        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
+//        _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
+//        bool* bools = (bool*)[_selection.buf contents];
+//        for (size_t idx : indexes) {
+//            bools[idx-_selection.first] = true;
+//        }
 //    
+//    } else {
+//        _selection = {};
+//    }
+//    
+//    [self setNeedsDisplay];
 //}
 
 @end
-
-
-
-
-
-
-
-
-
-
-
-
-//constexpr size_t SublayerCount = 500000;
-//
-//@interface ImageGridLayer : CALayer
-//@end
-//
-//@implementation ImageGridLayer {
-//@public
-//    Grid grid;
-//@private
-//    CGRect _visibleRect;
-//    Grid::IndexRange _indexRangePrev;
-////    Grid::Indexes _visibleIndexes;
-////    CALayer* overlay;
-//    
-//@private
-//    std::vector<CellLayer*> _layers;
-//    std::vector<CellLayer*> _layersPool;
-//}
-//
-//- (CellLayer*)_createLayerForIdx:(size_t)idx {
-//    CellLayer* layer = _layers[idx];
-//    if (layer) return layer;
-//    
-//    if (!_layersPool.empty()) {
-//        layer = _layersPool.back();
-//        _layersPool.pop_back();
-//    } else {
-//        layer = [CellLayer new];
-//        
-////        const uint32_t pixelFormat = 'BGRA';
-////        IOSurface* surface = [[IOSurface alloc] initWithProperties:@{
-////            IOSurfacePropertyKeyWidth: @(256),
-////            IOSurfacePropertyKeyHeight: @(256),
-////            IOSurfacePropertyKeyBytesPerElement: @(4),
-////            IOSurfacePropertyKeyPixelFormat: @(pixelFormat),
-////            (id)kIOSurfaceIsGlobal: @YES,
-////        }];
-////        
-////        [surface lockWithOptions:0 seed:nullptr];
-////        const size_t allocSize = [surface allocationSize];
-////        uint32_t* data = (uint32_t*)[surface baseAddress];
-////        for (size_t i=0; i<allocSize/sizeof(*data); i++) {
-////            data[i] = rand() % RAND_MAX;
-////        }
-////        [surface unlockWithOptions:0 seed:nullptr];
-////        
-////        [surface lockWithOptions:0 seed:nullptr];
-////        memset([surface baseAddress], 0, [surface allocationSize]);
-////        [surface unlockWithOptions:0 seed:nullptr];
-////        
-////        [layer setContents:surface];
-//    }
-//    
-//    _layers[idx] = layer;
-//    [self addSublayer:layer];
-//    return layer;
-//}
-//
-//- (void)_destroyLayerForIdx:(size_t)idx {
-//    CellLayer* layer = _layers[idx];
-//    if (!layer) return; // Short-circuit if there's no layer for the given index
-//    
-//    [layer removeFromSuperlayer];
-//    _layers[idx] = nil;
-//    _layersPool.push_back(layer);
-//}
-//
-//- (instancetype)init {
-//    _LoadImages();
-//    
-//    if (!(self = [super init])) return nil;
-////    [self setBackgroundColor:[[NSColor blackColor] CGColor]];
-//    [self setActions:LayerNullActions];
-////    [self setGeometryFlipped:true];
-//    
-////    for (size_t i=0; i<SublayerCount; i++) {
-////        CellLayer* layer = [CellLayer new];
-//////        [self addSublayer:layer];
-////        _layers.push_back(layer);
-////    }
-//    
-//    _layers.resize(SublayerCount);
-//    
-//    grid.border = {
-//        .left   = 20,
-//        .right  = 20,
-//        .top    = 20,
-//        .bottom = 20,
-//    };
-//    
-//    grid.cell.size      = { 32, 32 };
-//    grid.cell.spacing   = { 10, 10 };
-//    grid.elementCount = SublayerCount;
-//    
-////    overlay = [CALayer new];
-////    [overlay setBackgroundColor:[[NSColor redColor] CGColor]];
-////    [self addSublayer:overlay];
-////    [overlay setFrame:{0,0,100,100}];
-////    [overlay setActions:LayerNullActions];
-//    
-//    return self;
-//}
-//
-//static Grid::Rect _GridRectForCGRect(CGRect rect) {
-//    return {rect.origin.x, rect.origin.y, rect.size.width, rect.size.height};
-//}
-//
-//- (void)setVisibleRect:(CGRect)rect {
-////    NSLog(@"setVisibleRect: %@", NSStringFromRect(rect));
-//    
-////    const CGRect bounds = [self bounds];
-//    
-//    _visibleRect = rect;
-////    grid.containerWidth = bounds.size.width;
-////    grid.recompute();
-////    
-////    NSLog(@"setVisibleRect: %@ (bounds:%@)", NSStringFromRect(rect), NSStringFromRect(bounds));
-////    
-////    _visibleIndexes = grid.indexesForRect(_GridRectForCGRect(rect));
-////    
-////    [self setSublayers:@[]];
-////    
-////    for (size_t y=_visibleIndexes.y.start; y<_visibleIndexes.y.start+_visibleIndexes.y.count; y++) {
-////        for (size_t x=_visibleIndexes.x.start; x<_visibleIndexes.x.start+_visibleIndexes.x.count; x++) {
-////            const size_t idx = y*grid.computed.columnCount + x;
-////            [self addSublayer:_layers[idx]];
-////        }
-////    }
-//    
-//    [self setNeedsLayout];
-//}
-//
-//struct IndexRangeDiff {
-//    Grid::IndexRange oldRange[2];
-//    Grid::IndexRange newRange[2];
-//};
-//
-//static IndexRangeDiff _Diff(const Grid::IndexRange& oldRange, const Grid::IndexRange& newRange) {
-//    const size_t overlapStart = std::max(oldRange.start, newRange.start);
-//    const size_t overlapEnd = std::min(oldRange.start+oldRange.count, newRange.start+newRange.count);
-//    
-//    if (overlapEnd > overlapStart) {
-//        const size_t old0Start = oldRange.start;
-//        const size_t old0End = overlapStart;
-//        
-//        const size_t new0Start = newRange.start;
-//        const size_t new0End = overlapStart;
-//        
-//        const size_t new1Start = overlapEnd;
-//        const size_t new1End = newRange.start+newRange.count;
-//        
-//        const size_t old1Start = overlapEnd;
-//        const size_t old1End = oldRange.start+oldRange.count;
-//        
-//        IndexRangeDiff r;
-//        if (old0End > old0Start) {
-//            r.oldRange[0].start = old0Start;
-//            r.oldRange[0].count = old0End-old0Start;
-//        }
-//        
-//        if (new0End > new0Start) {
-//            r.newRange[0].start = new0Start;
-//            r.newRange[0].count = new0End-new0Start;
-//        }
-//        
-//        if (old1End > old1Start) {
-//            r.oldRange[1].start = old1Start;
-//            r.oldRange[1].count = old1End-old1Start;
-//        }
-//        
-//        if (new1End > new1Start) {
-//            r.newRange[1].start = new1Start;
-//            r.newRange[1].count = new1End-new1Start;
-//        }
-//        
-//        return r;
-//    }
-//    
-//    // If we get here, there's no overlap between `oldRange` and `newRange`
-//    return IndexRangeDiff{
-//        .oldRange = {oldRange},
-//        .newRange = {newRange},
-//    };
-//    
-//    
-////    const Grid::IndexRange overlap = {
-////        .start = overlapMin,
-////        .count = ,
-////    };
-////    
-////    const size_t oldMin = oldRange.start;
-////    const size_t oldMax = oldRange.start+oldRange.count-1; // TODO: handle count==0
-////    
-////    const size_t newMin = newRange.start;
-////    const size_t newMax = newRange.start+newRange.count-1; // TODO: handle count==0
-////    
-////    IndexRangeDiff r;
-////    
-////    if (oldMin < newMin) {
-////        r.oldRange[0].start = oldMin;
-////        r.oldRange[0].count = newMin-oldMin;
-////    } else if (oldMin > newMin) {
-////        r.newRange[0].start = newMin;
-////        r.newRange[0].count = oldMin-newMin;
-////    }
-////    
-////    if (oldMax < newMax) {
-////        r.oldRange[1].start = oldMax;
-////        r.oldRange[1].count = newMax-oldMax;
-////    } else if (oldMax > newMax) {
-////        r.newRange[1].start = newMax;
-////        r.newRange[1].count = oldMax-newMax;
-////    }
-////    
-////    return r;
-//}
-//
-//- (void)layoutSublayers {
-////    NSLog(@"layoutSublayers");
-//    const CGRect bounds = [self bounds];
-//    
-////    NSLog(@"layoutSublayers: %@", NSStringFromRect(bounds));
-//    
-//    grid.containerWidth = bounds.size.width;
-//    grid.recompute();
-//    
-//    const Grid::IndexRange indexRange = grid.indexRangeForIndexRect(grid.indexRectForRect(_GridRectForCGRect(_visibleRect)));
-//    const IndexRangeDiff diff = _Diff(_indexRangePrev, indexRange);
-//    
-////    if (diff.oldRange[0].count) {
-////        NSLog(@"oldRange[0]: [%zu,%zu]", diff.oldRange[0].start, diff.oldRange[0].start+diff.oldRange[0].count-1);
-////    }
-////    
-////    if (diff.oldRange[1].count) {
-////        NSLog(@"oldRange[1]: [%zu,%zu]", diff.oldRange[1].start, diff.oldRange[1].start+diff.oldRange[1].count-1);
-////    }
-////    
-////    if (diff.newRange[0].count) {
-////        NSLog(@"newRange[0]: [%zu,%zu]", diff.newRange[0].start, diff.newRange[0].start+diff.newRange[0].count-1);
-////    }
-////    
-////    if (diff.newRange[1].count) {
-////        NSLog(@"newRange[1]: [%zu,%zu]", diff.newRange[1].start, diff.newRange[1].start+diff.newRange[1].count-1);
-////    }
-//    
-////    const Grid::IndexRange oldRange;
-////    const Grid::IndexRange oldRange2;
-////    
-////    const Grid::IndexRange newRange;
-////    const Grid::IndexRange newRange2;
-////    
-////    if () {
-////        
-////    }
-//    
-//    
-////    const Grid::IndexRect indexRect = grid.indexesForRect(_GridRectForCGRect(_visibleRect));
-//    
-//    for (const Grid::IndexRange& oldRange : diff.oldRange) {
-//        if (oldRange.count) {
-////            NSLog(@"Destroying %zu layers", oldRange.count);
-//        }
-//        for (size_t i=oldRange.start; i<oldRange.start+oldRange.count; i++) {
-//            [self _destroyLayerForIdx:i];
-//        }
-//    }
-//    
-//    for (const Grid::IndexRange& newRange : diff.newRange) {
-//        if (newRange.count) {
-////            NSLog(@"Adding %zu layers", newRange.count);
-//        }
-//        for (size_t i=newRange.start; i<newRange.start+newRange.count; i++) {
-//            CellLayer*const layer = [self _createLayerForIdx:i];
-//            
-////            uint32_t color = ((uint32_t)rand()) << 8;
-////            color |= 0xFF;
-////            
-////            IOSurface* surface = layer->surface;
-////            [surface lockWithOptions:0 seed:nullptr];
-////            const size_t allocSize = [surface allocationSize];
-////            uint32_t* data = (uint32_t*)[surface baseAddress];
-////            memset(data, color, allocSize);
-////            [surface unlockWithOptions:0 seed:nullptr];
-//            
-//            
-////            NSLog(@"SET LAYER CONTENTS: %@", _Images[i%_Images.size()]);
-//            [layer setContents:_Images[i%_Images.size()]];
-////            [layer setContents:[NSNull null]];
-//        }
-//    }
-//    
-//    for (size_t i=indexRange.start; i<indexRange.start+indexRange.count; i++) {
-//        CellLayer*const layer = _layers[i];
-//        assert(layer); // Logic error if it doesn't exist
-//        const Grid::Rect rect = grid.rectForCellIndex(i);
-//        [layer setFrame:{
-//            rect.point.x,
-//            rect.point.y,
-//            rect.size.x,
-//            rect.size.y,
-//        }];
-//    }
-//    
-////    NSLog(@"%@", @([[self sublayers] count]));
-//    
-//    
-////    [self setSublayers:@[]];
-////    
-////    for (size_t i=indexRange.start; i<indexRange.start+indexRange.count; i++) {
-////        CALayer*const layer = _layers[i];
-////        const Grid::Rect rect = grid.rectForCellIndex(i);
-////        [self addSublayer:layer];
-////        [layer setFrame:{
-////            rect.point.x,
-////            rect.point.y,
-////            rect.size.x,
-////            rect.size.y,
-////        }];
-////        
-////        [layer setContents:_Images[i%_Images.size()]];
-////    }
-//    
-////    for (size_t y=indexRange.y.start; y<indexRange.y.start+indexRange.y.count; y++) {
-////        for (size_t x=indexRange.x.start; x<indexRange.x.start+indexRange.x.count; x++) {
-////            const size_t idx = y*grid.computed.columnCount + x;
-////            CALayer*const layer = _layers[idx];
-////            const Grid::Rect rect = grid.rectForCellIndex(idx);
-////            [self addSublayer:layer];
-////            [layer setFrame:{
-////                rect.point.x,
-////                rect.point.y,
-////                rect.size.x,
-////                rect.size.y,
-////            }];
-////            
-////            [layer setContents:_Images[idx%_Images.size()]];
-////        }
-////    }
-//    
-//    _indexRangePrev = indexRange;
-//    
-////    for (size_t y=_visibleIndexes.y.start; y<_visibleIndexes.y.start+_visibleIndexes.y.count; y++) {
-////        for (size_t x=_visibleIndexes.x.start; x<_visibleIndexes.x.start+_visibleIndexes.x.count; x++) {
-////            const size_t idx = y*grid.computed.columnCount + x;
-////            auto rect = grid.rectForCellIndex(idx);
-////            CALayer*const layer = _layers[idx];
-////            [layer setFrame:{
-////                rect.point.x,
-////                rect.point.y,
-////                rect.size.x,
-////                rect.size.y,
-////            }];
-////        }
-////    }
-//    
-//    
-//    
-//    
-////    for (size_t i=0; i<SublayerCount; i++) {
-////        if (i >= _layers.size()) break;
-////        auto rect = grid.rectForCellIndex(i);
-////        CALayer*const layer = _layers[i];
-////        [layer setFrame:{
-////            rect.point.x,
-////            rect.point.y,
-////            rect.size.x,
-////            rect.size.y,
-////        }];
-////    }
-//}
-//
-//@end

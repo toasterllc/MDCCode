@@ -1,11 +1,11 @@
 - Rev4 Todo
     
     - MDCStudio: implement grid view selection
-        - Shift/command selection to add/remove selected items
-        - Arrow key selection modification
+        √ Arrow key selection modification
+            √ Scroll view focus should follow selection
+        √ Select-all
+        √ Shift/command selection to add/remove selected items
         - Drag-select should autoscroll the scroll view
-    
-    - MDCStudio: prevent selection layer from being clipped
     
     - MDCStudio: implement inspector
     
@@ -43,6 +43,8 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MDCStudio: prevent selection layer from being clipped
     
     √ MDCStudio: make device names editable
     
