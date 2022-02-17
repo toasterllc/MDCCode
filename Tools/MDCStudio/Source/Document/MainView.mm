@@ -214,14 +214,20 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 }
 
 - (void)_sourceListHandleSelectionChanged {
-    auto selection = [_sourceListView selection];
-    if (selection.device) {
-        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imgLib()];
-        [self setContentView:imageGridView];
+    auto imgLib = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
+    imgLib->vend()->read();
     
-    } else {
-        [self setContentView:nil];
-    }
+    ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:imgLib];
+    [self setContentView:imageGridView];
+    
+//    auto selection = [_sourceListView selection];
+//    if (selection.device) {
+//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imgLib()];
+//        [self setContentView:imageGridView];
+//    
+//    } else {
+//        [self setContentView:nil];
+//    }
 }
 
 - (void)resetCursorRects {
