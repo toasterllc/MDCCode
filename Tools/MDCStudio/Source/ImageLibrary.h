@@ -76,6 +76,13 @@ public:
         _notifyObservers();
     }
     
+    RecordRefConstIter find(Img::Id id) {
+        return std::lower_bound(RecordStore::begin(), RecordStore::end(), 0,
+        [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
+            return RecordStore::recordGet(sample)->id < id;
+        });
+    }
+    
     void addObserver(Observer&& observer) {
         _state.observers.push_front(std::move(observer));
     }
