@@ -311,8 +311,8 @@ fragment float4 FragmentShader(
         else                            outlinePos.y = maskHeight2;
         
         const float outline = Sample::R(outlineTxt, outlinePos);
-        outlineOver = float4(float3(1), .08*outline);
-        outlineColorDodge = float4(float3(.59*outline), 1);
+        outlineOver = float4(float3(1), .03*outline);
+        outlineColorDodge = float4(float3(.7*outline), 1);
     }
     
     // Calculate shadow value
