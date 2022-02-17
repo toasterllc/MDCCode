@@ -196,8 +196,7 @@ fragment float4 FragmentShader(
     device bool* selectedImageIds [[buffer(2)]],
     texture2d<float> maskTxt [[texture(0)]],
     texture2d<float> outlineTxt [[texture(1)]],
-    texture2d<float> shadowUnselectedTxt [[texture(2)]],
-    texture2d<float> shadowSelectedTxt [[texture(3)]],
+    texture2d<float> shadowTxt [[texture(2)]],
     texture2d<float> selectionTxt [[texture(4)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -243,7 +242,7 @@ fragment float4 FragmentShader(
     const uint32_t imageId = *((device uint32_t*)(imageBuf+ctx.off.id));
     device uint8_t* thumbData = imageBuf+ctx.off.thumbData;
     
-    const uint32_t thumbInset = (shadowUnselectedTxt.get_width()-maskTxt.get_width())/2;
+    const uint32_t thumbInset = (shadowTxt.get_width()-maskTxt.get_width())/2;
     const int2 pos = int2(in.posPx)-int2(thumbInset);
     const uint pxIdx = (pos.y*ctx.thumb.width + pos.x);
     
@@ -318,11 +317,11 @@ fragment float4 FragmentShader(
     
     // Calculate shadow value
     float4 shadow = 0;
-    {
+    if (!selected) {
         const int2 pos = int2(in.posPx);
         
-        const int shadowWidth = shadowUnselectedTxt.get_width();
-        const int shadowHeight = shadowUnselectedTxt.get_height();
+        const int shadowWidth = shadowTxt.get_width();
+        const int shadowHeight = shadowTxt.get_height();
         const int shadowWidth2 = shadowWidth/2;
         const int shadowHeight2 = shadowHeight/2;
         const int2 marginX = int2(shadowWidth2, (ctx.cellWidth-shadowWidth2));
@@ -337,11 +336,7 @@ fragment float4 FragmentShader(
         else if (pos.y >= marginY[1])   shadowPos.y = shadowHeight2+(pos.y-marginY[1]);
         else                            shadowPos.y = shadowHeight2;
         
-        if (!selected) {
-            shadow = float4(0, 0, 0, shadowUnselectedTxt.sample(coord::pixel, float2(shadowPos.x, shadowPos.y)).a);
-        } else {
-            shadow = float4(0, 0, 0, shadowSelectedTxt.sample(coord::pixel, float2(shadowPos.x, shadowPos.y)).a);
-        }
+        shadow = float4(0, 0, 0, shadowTxt.sample(coord::pixel, float2(shadowPos.x, shadowPos.y)).a);
     }
     
     // Calculate selection value
