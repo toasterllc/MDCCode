@@ -1,15 +1,13 @@
 - Rev4 Todo
     
-    - MDCStudio: implement grid view selection
-        √ Arrow key selection modification
-            √ Scroll view focus should follow selection
-        √ Select-all
-        √ Shift/command selection to add/remove selected items
-        √ Drag-select should autoscroll the scroll view
+    - MDCStudio: implement image view
+    
+    - MDCStudio: allow arrow keys to extend the current selection when holding shift/command
+        - We need sophisticated handling similar to the Finder, but we should be able to do better
+    
+    - MDCStudio: implement zoom animation when entering image view
     
     - MDCStudio: implement inspector
-    
-    - MDCStudio: implement image view
     
     - STMApp: reconsider whether we should be using Task::Stop() to abort tasks that are in progress.
       for example, a task might be in the middle of executing SDCard::Disable(), which isn't designed to be aborted half way through
@@ -43,6 +41,13 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MDCStudio: implement grid view selection
+        √ Arrow key selection modification
+            √ Scroll view focus should follow selection
+        √ Select-all
+        √ Shift/command selection to add/remove selected items
+        √ Drag-select should autoscroll the scroll view
     
     √ MDCStudio: prevent selection layer from being clipped
     
