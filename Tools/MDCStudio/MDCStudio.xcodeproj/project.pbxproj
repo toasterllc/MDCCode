@@ -11,7 +11,6 @@
 		551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 551328B827B45D7C00CD823B /* ImageGridView.mm */; };
 		553031FC27BC45A100BEFFEA /* Selection.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F827BC45A100BEFFEA /* Selection.png */; };
 		553031FD27BC45A100BEFFEA /* Outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F927BC45A100BEFFEA /* Outline.png */; };
-		553031FE27BC45A100BEFFEA /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031FA27BC45A100BEFFEA /* Shadow.png */; };
 		553031FF27BC45A100BEFFEA /* Mask.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031FB27BC45A100BEFFEA /* Mask.png */; };
 		5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544A7EA27B5E011006AB473 /* SourceListView.xib */; };
 		5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544A7EC27B5E011006AB473 /* SourceListView.mm */; };
@@ -48,6 +47,8 @@
 		55D4AA9B27B1D3100052EFEE /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55D4AA8F27B1D3100052EFEE /* FFCC.mm */; };
 		55D4AAA127B1D3E70052EFEE /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */; };
 		55D4AAA327B1D3F20052EFEE /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA227B1D3F20052EFEE /* Accelerate.framework */; };
+		55F8D00D27BDCCD200757165 /* ShadowUnselected.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00B27BDCCD100757165 /* ShadowUnselected.png */; };
+		55F8D00E27BDCCD200757165 /* ShadowSelected.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00C27BDCCD200757165 /* ShadowSelected.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -58,7 +59,6 @@
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
 		553031F827BC45A100BEFFEA /* Selection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Selection.png; sourceTree = "<group>"; };
 		553031F927BC45A100BEFFEA /* Outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Outline.png; sourceTree = "<group>"; };
-		553031FA27BC45A100BEFFEA /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		553031FB27BC45A100BEFFEA /* Mask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Mask.png; sourceTree = "<group>"; };
 		5544A7EA27B5E011006AB473 /* SourceListView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SourceListView.xib; sourceTree = "<group>"; };
 		5544A7EB27B5E011006AB473 /* SourceListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SourceListView.h; sourceTree = "<group>"; };
@@ -164,6 +164,8 @@
 		55D4AA8F27B1D3100052EFEE /* FFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FFCC.mm; sourceTree = "<group>"; };
 		55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 		55D4AAA227B1D3F20052EFEE /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		55F8D00B27BDCCD100757165 /* ShadowUnselected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ShadowUnselected.png; sourceTree = "<group>"; };
+		55F8D00C27BDCCD200757165 /* ShadowSelected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ShadowSelected.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -346,7 +348,8 @@
 				553031FB27BC45A100BEFFEA /* Mask.png */,
 				553031F927BC45A100BEFFEA /* Outline.png */,
 				553031F827BC45A100BEFFEA /* Selection.png */,
-				553031FA27BC45A100BEFFEA /* Shadow.png */,
+				55F8D00C27BDCCD200757165 /* ShadowSelected.png */,
+				55F8D00B27BDCCD100757165 /* ShadowUnselected.png */,
 				55496F4A278CFC0600BCA739 /* MainMenu.xib */,
 				55496F4D278CFC0600BCA739 /* Info.plist */,
 				55496F50278CFC0600BCA739 /* MDCStudio.entitlements */,
@@ -476,13 +479,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
+				55F8D00D27BDCCD200757165 /* ShadowUnselected.png in Resources */,
 				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
 				5544AE3527B646C3006AB473 /* ImageGridView.xib in Resources */,
 				553031FF27BC45A100BEFFEA /* Mask.png in Resources */,
-				553031FE27BC45A100BEFFEA /* Shadow.png in Resources */,
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,
 				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
+				55F8D00E27BDCCD200757165 /* ShadowSelected.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
