@@ -226,6 +226,8 @@ static ImageGridLayerImageIds xorImageIds(const ImageGridLayerImageIds& a, const
             [imageGridLayer setSelectedImageIds:newSelection];
         }
         [rectLayer setFrame:rect];
+        
+        [_documentView autoscroll:event];
 //        NSLog(@"mouseDown:");
     });
     [rectLayer setHidden:true];
