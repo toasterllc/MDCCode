@@ -5,6 +5,8 @@
     - MDCStudio: allow arrow keys to extend the current selection when holding shift/command
         - We need sophisticated handling similar to the Finder, but we should be able to do better
     
+    - MDCStudio: allow enter key to open ImageView
+    
     - MDCStudio: implement zoom animation when entering image view
     
     - MDCStudio: implement inspector

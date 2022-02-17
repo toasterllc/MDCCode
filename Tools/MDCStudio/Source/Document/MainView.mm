@@ -1,8 +1,8 @@
 #import "MainView.h"
 #import <algorithm>
-#import "SourceList/SourceListView.h"
+#import "SourceListView/SourceListView.h"
 #import "Util.h"
-#import "ImageGrid/ImageGridView.h"
+#import "ImageGridView/ImageGridView.h"
 #import "ImageView/ImageView.h"
 using namespace MDCStudio;
 
