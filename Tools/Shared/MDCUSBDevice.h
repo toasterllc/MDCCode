@@ -298,7 +298,7 @@ public:
         return cardInfo;
     }
     
-    void sdRead(uint32_t blockIdx) {
+    void sdRead(SD::BlockIdx blockIdx) {
         assert(_mode == STM::Status::Modes::STMApp);
         
         const STM::Cmd cmd = {

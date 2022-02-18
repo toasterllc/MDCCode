@@ -3,12 +3,12 @@
 #import <set>
 #import "ImageLibrary.h"
 
-using ImageGridLayerImageIds = std::set<Img::Id>;
+using ImageGridLayerImageIds = std::set<MDCStudio::ImageId>;
 //using ImageGridLayerIndexes = std::set<size_t>;
 
 @interface ImageGridLayer : CAMetalLayer
 
-- (instancetype)initWithImageLibrary:(ImageLibraryPtr)imgLib;
+- (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib;
 
 - (void)setContainerWidth:(CGFloat)width;
 - (CGFloat)containerHeight;

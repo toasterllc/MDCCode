@@ -173,29 +173,15 @@ using namespace MDCStudio;
 
 // MARK: - Event Handling
 
-//- (BOOL)acceptsFirstResponder {
-//    NSLog(@"acceptsFirstResponder");
-//    return true;
-//}
-//
-//- (BOOL)becomeFirstResponder {
-//    NSLog(@"becomeFirstResponder");
-//    return true;
-//}
-
-//- (size_t)_indexForImageId:(Img::Id)imgId {
-//    
-//}
-
 static ImageGridLayerImageIds xorImageIds(const ImageGridLayerImageIds& a, const ImageGridLayerImageIds& b) {
     ImageGridLayerImageIds r;
-    for (Img::Id x : a) {
+    for (ImageId x : a) {
         if (b.find(x) == b.end()) {
             r.insert(x);
         }
     }
     
-    for (Img::Id x : b) {
+    for (ImageId x : b) {
         if (a.find(x) == a.end()) {
             r.insert(x);
         }
@@ -248,7 +234,7 @@ struct SelectionDelta {
     ImageGridLayerImageIds selectedImageIds = [imageGridLayer selectedImageIds];
     if (selectedImageIds.empty()) return;
     
-    const Img::Id lastSelectedImgId = *std::prev(selectedImageIds.end());
+    const ImageId lastSelectedImgId = *std::prev(selectedImageIds.end());
     const auto iter = il->find(lastSelectedImgId);
     if (iter == il->end()) {
         NSLog(@"Image no longer in library");
@@ -290,7 +276,7 @@ struct SelectionDelta {
     newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
     
 //    const size_t newIdx = std::min(imgCount-1, idx+[imageGridLayer columnCount]);
-    const Img::Id newImgId = il->recordGet(il->begin()+newIdx)->id;
+    const ImageId newImgId = il->recordGet(il->begin()+newIdx)->id;
     [_documentView scrollRectToVisible:[imageGridLayer rectForImageAtIndex:newIdx]];
     
     if (!extend) selectedImageIds.clear();

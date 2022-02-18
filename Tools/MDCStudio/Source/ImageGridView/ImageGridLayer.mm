@@ -58,7 +58,7 @@ using ThumbFile = Mmap;
     
     struct {
         ImageGridLayerImageIds imageIds;
-        Img::Id first = 0;
+        MDCStudio::ImageId first = 0;
 //        size_t first = 0;
         size_t count = 0;
         id<MTLBuffer> buf;
@@ -400,9 +400,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
             
             if (imageBuf) {
                 assert(imageBuf);
-                
-                // Ensure that Img::Id can be casted to uint32_t
-                static_assert(sizeof(Img::Id) == sizeof(uint32_t));
+                assert(_selection.first <= UINT32_MAX);
+                assert(_selection.count <= UINT32_MAX);
                 
                 // Make sure _selection.buf != nil
                 if (!_selection.buf) {
@@ -432,7 +431,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                         .pxSize = ImageRef::ThumbPixelSize,
                     },
                     .selection = {
-                        .first = _selection.first,
+                        .first = (uint32_t)_selection.first,
 //                        .first = (uint32_t)_selection.first,
                         .count = (uint32_t)_selection.count,
                     },
@@ -513,10 +512,6 @@ done:
     return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), _contentsScale);
 }
 
-//- (size_t)indexForImageId:(Img::Id)imgId {
-//    _imgLib->vend()->
-//}
-
 - (const ImageGridLayerImageIds&)selectedImageIds {
     return _selection.imageIds;
 }
@@ -530,8 +525,8 @@ done:
         constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
         _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
         bool* bools = (bool*)[_selection.buf contents];
-        for (Img::Id imgId : imageIds) {
-            bools[imgId-_selection.first] = true;
+        for (ImageId imageId : imageIds) {
+            bools[imageId-_selection.first] = true;
         }
     
     } else {

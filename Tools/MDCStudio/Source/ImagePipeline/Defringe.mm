@@ -7,8 +7,8 @@
 #import "Tools/Shared/MetalUtil.h"
 #import "ImagePipelineTypes.h"
 using namespace MDCStudio;
-using namespace MDCTools;
 using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools;
 
 using Poly = Poly2D<double,4>;
 

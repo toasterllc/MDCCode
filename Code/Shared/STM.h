@@ -86,7 +86,7 @@ namespace STM {
             
             // # STMApp
             struct [[gnu::packed]] {
-                uint32_t blockIdx;
+                SD::BlockIdx blockIdx;
             } SDRead;
             
             struct [[gnu::packed]] {

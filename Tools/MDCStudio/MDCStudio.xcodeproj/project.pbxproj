@@ -49,8 +49,7 @@
 		55D4AAA327B1D3F20052EFEE /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA227B1D3F20052EFEE /* Accelerate.framework */; };
 		55F8D01027BDF26400757165 /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00F27BDF26400757165 /* Shadow.png */; };
 		55F8D01427BEF3E500757165 /* ImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* ImageView.mm */; };
-		55F8D01927BEF97200757165 /* ImageLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* ImageLayer.metal */; };
-		55F8D01A27BEF97200757165 /* ImageLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01727BEF97200757165 /* ImageLayer.mm */; };
+		55F8D01927BEF97200757165 /* ImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* ImageView.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -169,10 +168,11 @@
 		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		55F8D01227BEF3E500757165 /* ImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageView.h; sourceTree = "<group>"; };
 		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
-		55F8D01527BEF97200757165 /* ImageLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLayer.h; sourceTree = "<group>"; };
-		55F8D01627BEF97200757165 /* ImageLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageLayer.metal; sourceTree = "<group>"; };
-		55F8D01727BEF97200757165 /* ImageLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageLayer.mm; sourceTree = "<group>"; };
-		55F8D01827BEF97200757165 /* ImageLayerTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLayerTypes.h; sourceTree = "<group>"; };
+		55F8D01627BEF97200757165 /* ImageView.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageView.metal; sourceTree = "<group>"; };
+		55F8D01827BEF97200757165 /* ImageViewTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageViewTypes.h; sourceTree = "<group>"; };
+		55F8D01B27BF5F0700757165 /* Image.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Image.h; sourceTree = "<group>"; };
+		55F8D01C27BF642900757165 /* CFA.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFA.h; sourceTree = "<group>"; };
+		55F8D03027BF9F8000757165 /* ImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageCache.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -373,8 +373,11 @@
 				5544AE5927B6EE04006AB473 /* Document */,
 				55A36A8E27A2951900FD0181 /* MDCDevice.h */,
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
+				55F8D01B27BF5F0700757165 /* Image.h */,
+				55F8D03027BF9F8000757165 /* ImageCache.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
+				55F8D01C27BF642900757165 /* CFA.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,
 				5562353A27B5086E0008074C /* Util.h */,
 				55496F46278CFC0400BCA739 /* AppDelegate.mm */,
@@ -431,10 +434,8 @@
 		55F8D01127BEF3E500757165 /* ImageView */ = {
 			isa = PBXGroup;
 			children = (
-				55F8D01527BEF97200757165 /* ImageLayer.h */,
-				55F8D01727BEF97200757165 /* ImageLayer.mm */,
-				55F8D01627BEF97200757165 /* ImageLayer.metal */,
-				55F8D01827BEF97200757165 /* ImageLayerTypes.h */,
+				55F8D01627BEF97200757165 /* ImageView.metal */,
+				55F8D01827BEF97200757165 /* ImageViewTypes.h */,
 				55F8D01227BEF3E500757165 /* ImageView.h */,
 				55F8D01327BEF3E500757165 /* ImageView.mm */,
 			);
@@ -521,7 +522,6 @@
 				55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */,
 				55496F4F278CFC0600BCA739 /* main.mm in Sources */,
 				5544AE5D27B6EE04006AB473 /* Document.m in Sources */,
-				55F8D01A27BEF97200757165 /* ImageLayer.mm in Sources */,
 				55D4AA9127B1D3100052EFEE /* LocalContrast.metal in Sources */,
 				55D4AA9527B1D3100052EFEE /* ImagePipeline.mm in Sources */,
 				55D4AA9227B1D3100052EFEE /* Saturation.metal in Sources */,
@@ -539,7 +539,7 @@
 				55C6C845278FFE60005ABD39 /* ImageGridLayer.mm in Sources */,
 				55D4AA9827B1D3100052EFEE /* ImagePipeline.metal in Sources */,
 				5544AE2927B5E595006AB473 /* Renderer.metal in Sources */,
-				55F8D01927BEF97200757165 /* ImageLayer.metal in Sources */,
+				55F8D01927BEF97200757165 /* ImageView.metal in Sources */,
 				5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */,
 				55D4AA9727B1D3100052EFEE /* ReconstructHighlights.metal in Sources */,
 				55D4AA9027B1D3100052EFEE /* Defringe.mm in Sources */,

@@ -2,10 +2,10 @@
 #import <simd/simd.h>
 
 namespace MDCStudio {
-namespace ImageLayerTypes {
+namespace ImageViewTypes {
 
 struct RenderContext {
 };
 
-} // namespace ImageLayerTypes
+} // namespace ImageViewTypes
 } // namespace MDCStudio

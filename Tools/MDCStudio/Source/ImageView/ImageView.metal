@@ -1,12 +1,12 @@
 #import <metal_stdlib>
-#import "ImageLayerTypes.h"
+#import "ImageViewTypes.h"
 #import "Tools/Shared/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools::MetalUtil;
-using namespace MDCStudio::ImageLayerTypes;
+using namespace MDCStudio::ImageViewTypes;
 
 namespace MDCStudio {
-namespace ImageLayerShader {
+namespace ImageViewShader {
 
 struct VertexOutput {
     float4 posView [[position]];
@@ -30,5 +30,5 @@ fragment float4 FragmentShader(
     return 1;
 }
 
-} // namespace ImageLayerShader
+} // namespace ImageViewShader
 } // namespace MDCStudio

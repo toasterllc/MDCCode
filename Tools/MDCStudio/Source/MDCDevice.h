@@ -12,6 +12,8 @@
 #import "ImagePipeline/ImagePipeline.h"
 #import "ImagePipeline/RenderThumb.h"
 
+namespace MDCStudio {
+
 class MDCDevice : public MDCUSBDevice {
 public:
     using MDCUSBDevice::MDCUSBDevice;
@@ -84,6 +86,7 @@ public:
 private:
     using _Path = std::filesystem::path;
     static constexpr uint32_t _Version = 0;
+    static constexpr uint64_t _UnixTimeOffset = 1640995200; // 2022-01-01 00:00:00 +0000
     
     struct [[gnu::packed]] _SerializedState {
         uint32_t version = 0;
@@ -238,7 +241,7 @@ private:
                 
                 // Add images to end of library: device has, lib doesn't
                 {
-                    const Img::Id libImgIdEnd = imgLib()->vend()->imgIdEnd();
+                    const Img::Id libImgIdEnd = imgLib()->vend()->deviceImgIdEnd();
                     const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
                     
                     if (libImgIdEnd > deviceImgIdEnd) {
@@ -286,38 +289,40 @@ private:
         constexpr size_t BufCap = ChunkImgCount * ImgSD::ImgPaddedLen;
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
-        
-        sdRead(range.idx * ImgSD::ImgBlockCount);
-        
-        // Consumer
-        std::thread consumerThread([&] {
-            auto startTime = std::chrono::steady_clock::now();
-            size_t addedImageCount = 0;
-            
-            for (;;) {
-                auto& buf = bufQueue.rget();
-                if (!buf.len) break; // We're done when we get an empty buffer
-                _addImages(renderer, buf.data, buf.len);
-                bufQueue.rpop();
-                
-                addedImageCount += buf.len;
-            }
-            
-            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-            printf("Consumer took %ju ms for %ju images (avg %ju ms / img)\n", (uintmax_t)durationMs, (uintmax_t)addedImageCount, ((uintmax_t)durationMs/addedImageCount));
-        });
+        const SD::BlockIdx blockIdxStart = range.idx * ImgSD::ImgBlockCount;
+        sdRead(blockIdxStart);
         
         // Producer
         for (size_t i=0; i<range.len;) {
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
             auto& buf = bufQueue.wget();
-            buf.len = chunkImgCount; // Use the buffer length for the count of images, rather than the byte count
+            buf.len = chunkImgCount; // buffer length = count of images (not byte count)
             readout(buf.data, chunkImgCount*ImgSD::ImgPaddedLen);
             bufQueue.wpush();
             i += chunkImgCount;
             
             printf("Read %ju images\n", (uintmax_t)chunkImgCount);
         }
+        
+        // Consumer
+        std::thread consumerThread([&] {
+            auto startTime = std::chrono::steady_clock::now();
+            SD::BlockIdx blockIdx = blockIdxStart;
+            size_t addedImageCount = 0;
+            
+            for (;;) {
+                auto& buf = bufQueue.rget();
+                if (!buf.len) break; // We're done when we get an empty buffer
+                _addImages(renderer, buf.data, buf.len, blockIdx);
+                bufQueue.rpop();
+                
+                blockIdx += buf.len * ImgSD::ImgBlockCount;
+                addedImageCount += buf.len;
+            }
+            
+            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+            printf("Consumer took %ju ms for %ju images (avg %ju ms / img)\n", (uintmax_t)durationMs, (uintmax_t)addedImageCount, ((uintmax_t)durationMs/addedImageCount));
+        });
         
         // Wait until we're complete
         {
@@ -330,7 +335,7 @@ private:
         }
     }
     
-    void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount) {
+    void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount, SD::BlockIdx blockIdx) {
         using namespace MDCTools;
         using namespace MDCStudio::ImagePipeline;
         
@@ -341,14 +346,24 @@ private:
         // image library lock for the duration of the function call.
         auto& imgLibVendor = *imgLib();
         
+        // Load `imageId` by looking at the last record's image id +1
+        ImageId imageId = 0;
+        {
+            auto il = imgLibVendor.vend();
+            if (il->recordCount()) {
+                imageId = il->recordGet(il->back())->id+1;
+            }
+        }
+        
         // Reserve space for `imgCount` additional images
         imgLibVendor->reserve(imgCount);
         
+        Img::Id deviceImgIdLast = 0;
         for (size_t idx=0; idx<imgCount; idx++) {
             const uint8_t* imgData = data+idx*ImgSD::ImgPaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
             const auto recordRefIter = imgLibVendor->reservedBegin()+idx;
-            ImageRef& imageRef = *imgLibVendor->recordGet(recordRefIter);
+            ImageRef& imageRef = *imgLibVendor->recordGet(recordRefIter); // Safe without a lock because we're the only entity using the image library's reserved space
             
             // Validate checksum
             const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::ChecksumOffset);
@@ -360,10 +375,25 @@ private:
             
             // Populate ImageRef fields
             {
-                imageRef.id = imgHeader.id;
+                imageRef.id = imageId;
+                
+                if (imgHeader.timeStart) {
+                    imageRef.timestamp = _UnixTimeOffset + imgHeader.timeStart + imgHeader.timeDelta;
+                }
+                
+                imageRef.addr           = blockIdx;
+                
+                imageRef.imageWidth     = imgHeader.imageWidth;
+                imageRef.imageHeight    = imgHeader.imageHeight;
+                
+                imageRef.coarseIntTime  = imgHeader.coarseIntTime;
+                imageRef.analogGain     = imgHeader.analogGain;
+                
+                imageId++;
+                blockIdx += ImgSD::ImgBlockCount;
             }
             
-            // Render the thumbnail into the ImageLibrary
+            // Render the thumbnail into imageRef.thumbData
             {
                 const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
                 
@@ -395,6 +425,8 @@ private:
                 
                 RenderThumb::Run(renderer, thumbOpts, renderResult.txt);
             }
+            
+            deviceImgIdLast = imgHeader.id;
         }
         
         // Make sure all rendering is complete before adding the images to the library
@@ -402,6 +434,8 @@ private:
         
         // Add the records that we previously reserved
         imgLibVendor->add();
+        // Update the device's image id 'end' == last image id that we've observed from the device +1
+        imgLibVendor->setDeviceImgIdEnd(deviceImgIdLast+1);
     }
     
     // _state.lock must be held
@@ -431,3 +465,5 @@ private:
 };
 
 using MDCDevicePtr = std::shared_ptr<MDCDevice>;
+
+} // namespace MDCStudio

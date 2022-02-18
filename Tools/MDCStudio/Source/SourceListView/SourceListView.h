@@ -5,7 +5,7 @@
 using SourceListViewSelectionChangedHandler = void(^)(SourceListView*);
 
 struct SourceListViewSelection {
-    MDCDevicePtr device;
+    MDCStudio::MDCDevicePtr device;
     // library
 };
 
