@@ -33,6 +33,7 @@ public:
     
     using RecordRefs = std::vector<RecordRef>;
     using RecordRefConstIter = typename RecordRefs::const_iterator;
+    using RecordRefConstReverseIter = typename RecordRefs::const_reverse_iterator;
     
     // FindNextChunk(): finds the first RecordRef for the next chunk after the given RecordRef's chunk
     static RecordRefConstIter FindNextChunk(RecordRefConstIter iter, RecordRefConstIter end) {
@@ -203,17 +204,25 @@ public:
         return recordGet(*iter);
     }
     
+    T_Record* recordGet(RecordRefConstReverseIter iter) {
+        return recordGet(*iter);
+    }
+    
     bool empty() const { return _state.recordRefs.empty(); }
     
-    const RecordRef& front() const      { return _state.recordRefs.front(); }
-    const RecordRef& back() const       { return _state.recordRefs.back(); }
-    RecordRefConstIter begin() const    { return _state.recordRefs.begin(); }
-    RecordRefConstIter end() const      { return _state.recordRefs.end(); }
+    const RecordRef& front() const              { return _state.recordRefs.front(); }
+    const RecordRef& back() const               { return _state.recordRefs.back(); }
+    RecordRefConstIter begin() const            { return _state.recordRefs.begin(); }
+    RecordRefConstIter end() const              { return _state.recordRefs.end(); }
+    RecordRefConstReverseIter rbegin() const    { return _state.recordRefs.rbegin(); }
+    RecordRefConstReverseIter rend() const      { return _state.recordRefs.rend(); }
     
-    const RecordRef& reservedFront() const      { return _state.reserved.front(); }
-    const RecordRef& reservedBack() const       { return _state.reserved.back(); }
-    RecordRefConstIter reservedBegin() const    { return _state.reserved.begin(); }
-    RecordRefConstIter reservedEnd() const      { return _state.reserved.end(); }
+    const RecordRef& reservedFront() const              { return _state.reserved.front(); }
+    const RecordRef& reservedBack() const               { return _state.reserved.back(); }
+    RecordRefConstIter reservedBegin() const            { return _state.reserved.begin(); }
+    RecordRefConstIter reservedEnd() const              { return _state.reserved.end(); }
+    RecordRefConstReverseIter reservedRBegin() const    { return _state.reserved.rbegin(); }
+    RecordRefConstReverseIter reservedREnd() const      { return _state.reserved.rend(); }
     
 //    ChunkConstIter getRecordChunk(size_t idx) const {
 //        return _state.recordRefs.at(idx).chunk;

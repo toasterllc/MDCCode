@@ -98,9 +98,9 @@ public:
     
     RecordRefConstIter find(ImageId id) {
         return std::lower_bound(RecordStore::begin(), RecordStore::end(), 0,
-        [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-            return RecordStore::recordGet(sample)->ref.id < id;
-        });
+            [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
+                return RecordStore::recordGet(sample)->ref.id < id;
+            });
     }
     
     void addObserver(Observer&& observer) {
