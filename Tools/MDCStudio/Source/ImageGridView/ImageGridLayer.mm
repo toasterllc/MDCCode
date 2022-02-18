@@ -10,8 +10,8 @@
 using namespace MDCStudio;
 namespace fs = std::filesystem;
 
-static constexpr auto _ThumbWidth = ImageRef::ThumbWidth;
-static constexpr auto _ThumbHeight = ImageRef::ThumbHeight;
+static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
+static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 
 // _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
 // so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
@@ -422,13 +422,13 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     .viewOffset = {offsetX, offsetY},
                     .viewMatrix = unityFromRasterMatrix,
                     .off = {
-                        .id         = (uint32_t)(offsetof(ImageRef, id)),
-                        .thumbData  = (uint32_t)(offsetof(ImageRef, thumbData)),
+                        .id         = (uint32_t)(offsetof(ImageThumb, ref.id)),
+                        .thumbData  = (uint32_t)(offsetof(ImageThumb, thumb)),
                     },
                     .thumb = {
-                        .width  = ImageRef::ThumbWidth,
-                        .height = ImageRef::ThumbHeight,
-                        .pxSize = ImageRef::ThumbPixelSize,
+                        .width  = ImageThumb::ThumbWidth,
+                        .height = ImageThumb::ThumbHeight,
+                        .pxSize = ImageThumb::ThumbPixelSize,
                     },
                     .selection = {
                         .first = (uint32_t)_selection.first,
@@ -500,7 +500,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
             const int32_t idx = _grid.columnCount()*y + x;
             if (idx >= il->recordCount()) goto done;
-            const ImageRef& imageRef = *il->recordGet(il->begin()+idx);
+            const ImageRef& imageRef = il->recordGet(il->begin()+idx)->ref;
             imageIds.insert(imageRef.id);
         }
     }

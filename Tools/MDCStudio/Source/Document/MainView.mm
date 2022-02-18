@@ -221,7 +221,7 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         auto imgLib = imgLibPtr->vend();
         imgLib->read();
         
-        const ImageRef& imageRef = *imgLib->recordGet(imgLib->begin());
+        const ImageRef& imageRef = imgLib->recordGet(imgLib->begin())->ref;
         ImageView* imageView = [[ImageView alloc] initWithImageRef:imageRef cache:nullptr];
         [self setContentView:imageView];
     }

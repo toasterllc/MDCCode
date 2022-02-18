@@ -276,7 +276,7 @@ struct SelectionDelta {
     newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
     
 //    const size_t newIdx = std::min(imgCount-1, idx+[imageGridLayer columnCount]);
-    const ImageId newImgId = il->recordGet(il->begin()+newIdx)->id;
+    const ImageId newImgId = il->recordGet(il->begin()+newIdx)->ref.id;
     [_documentView scrollRectToVisible:[imageGridLayer rectForImageAtIndex:newIdx]];
     
     if (!extend) selectedImageIds.clear();
@@ -309,7 +309,7 @@ struct SelectionDelta {
     auto il = _imgLib->vend();
     ImageGridLayerImageIds ids;
     for (auto it=il->begin(); it!=il->end(); it++) {
-        ids.insert(il->recordGet(it)->id);
+        ids.insert(il->recordGet(it)->ref.id);
     }
     [imageGridLayer setSelectedImageIds:ids];
 }
