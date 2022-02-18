@@ -232,7 +232,7 @@ private:
                     // Find the first image >= `deviceImgIdBegin`
                     const auto removeEnd = std::lower_bound(il->begin(), il->end(), 0,
                         [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                            return il->recordGet(sample)->id < deviceImgIdBegin;
+                            return il->recordGet(sample)->ref.id < deviceImgIdBegin;
                         });
                     
                     printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
@@ -351,7 +351,7 @@ private:
         {
             auto il = imgLibVendor.vend();
             if (il->recordCount()) {
-                imageId = il->recordGet(il->back())->id+1;
+                imageId = il->recordGet(il->back())->ref.id+1;
             }
         }
         
@@ -363,7 +363,8 @@ private:
             const uint8_t* imgData = data+idx*ImgSD::ImgPaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
             const auto recordRefIter = imgLibVendor->reservedBegin()+idx;
-            ImageRef& imageRef = *imgLibVendor->recordGet(recordRefIter); // Safe without a lock because we're the only entity using the image library's reserved space
+            ImageThumb& imageThumb = *imgLibVendor->recordGet(recordRefIter); // Safe without a lock because we're the only entity using the image library's reserved space
+            ImageRef& imageRef = imageThumb.ref; // Safe without a lock because we're the only entity using the image library's reserved space
             
             // Validate checksum
             const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::ChecksumOffset);
@@ -413,11 +414,11 @@ private:
                 };
                 
                 Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
-                const size_t thumbDataOff = (uintptr_t)&imageRef.thumbData - (uintptr_t)chunk.mmap.data();
+                const size_t thumbDataOff = (uintptr_t)&imageThumb.thumb - (uintptr_t)chunk.mmap.data();
                 
                 RenderThumb::Options thumbOpts = {
-                    .thumbWidth = ImageRef::ThumbWidth,
-                    .thumbHeight = ImageRef::ThumbHeight,
+                    .thumbWidth = ImageThumb::ThumbWidth,
+                    .thumbHeight = ImageThumb::ThumbHeight,
                     .dst = (void*)chunk.mmap.data(),
                     .dstOff = thumbDataOff,
                     .dstCap = chunk.mmap.len(),

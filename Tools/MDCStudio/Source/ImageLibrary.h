@@ -9,10 +9,7 @@ namespace MDCStudio {
 using ImageId = uint64_t;
 
 struct [[gnu::packed]] ImageRef {
-    static constexpr uint32_t Version       = 0;
-    static constexpr size_t ThumbWidth      = 288;
-    static constexpr size_t ThumbHeight     = 162;
-    static constexpr size_t ThumbPixelSize  = 3;
+    static constexpr uint32_t Version = 0;
     
     enum Rotation : uint8_t {
         None,
@@ -38,11 +35,18 @@ struct [[gnu::packed]] ImageRef {
     uint8_t _pad2[7] = {};
     
     uint8_t _reserved[64] = {}; // So we can add fields without doing a big data migration
-    
-    uint8_t thumbData[ThumbWidth*ThumbHeight*ThumbPixelSize];
 };
 
-class ImageLibrary : public RecordStore<ImageRef::Version, ImageRef, 512> {
+struct [[gnu::packed]] ImageThumb {
+    static constexpr size_t ThumbWidth      = 288;
+    static constexpr size_t ThumbHeight     = 162;
+    static constexpr size_t ThumbPixelSize  = 3;
+    
+    ImageRef ref;
+    uint8_t thumb[ThumbWidth*ThumbHeight*ThumbPixelSize];
+};
+
+class ImageLibrary : public RecordStore<ImageRef::Version, ImageThumb, 512> {
 public:
     using RecordStore::RecordStore;
     using Observer = std::function<bool()>;
@@ -95,7 +99,7 @@ public:
     RecordRefConstIter find(ImageId id) {
         return std::lower_bound(RecordStore::begin(), RecordStore::end(), 0,
         [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-            return RecordStore::recordGet(sample)->id < id;
+            return RecordStore::recordGet(sample)->ref.id < id;
         });
     }
     
