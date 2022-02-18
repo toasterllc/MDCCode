@@ -3,6 +3,7 @@
 #import "ImagePipelineTypes.h"
 #import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/Mat.h"
+#import "CFA.h"
 
 namespace MDCStudio::ImagePipeline {
 

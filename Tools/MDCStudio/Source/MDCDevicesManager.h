@@ -9,6 +9,8 @@
 #import "Tools/Shared/ELF32Binary.h"
 #import "MDCDevice.h"
 
+namespace MDCStudio {
+
 class MDCDevicesManager {
 public:
     using Observer = std::function<bool()>;
@@ -216,3 +218,5 @@ private:
         std::forward_list<Observer> observers;
     } _State = {};
 };
+
+} // namespace MDCStudio

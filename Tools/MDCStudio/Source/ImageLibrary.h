@@ -1,12 +1,17 @@
-#import <forward_list>
-#import "RecordStore.h"
-#import "Code/Shared/Img.h"
-#import "Tools/Shared/Vendor.h"
+#pragma once
+#include <forward_list>
+#include "RecordStore.h"
+#include "Code/Shared/Img.h"
+#include "Tools/Shared/Vendor.h"
+
+namespace MDCStudio {
+
+using ImageId = uint64_t;
 
 struct [[gnu::packed]] ImageRef {
     static constexpr uint32_t Version       = 0;
-    static constexpr size_t ThumbWidth      = Img::PixelWidth/8;
-    static constexpr size_t ThumbHeight     = Img::PixelHeight/8;
+    static constexpr size_t ThumbWidth      = 288;
+    static constexpr size_t ThumbHeight     = 162;
     static constexpr size_t ThumbPixelSize  = 3;
     
     enum Rotation : uint8_t {
@@ -16,10 +21,23 @@ struct [[gnu::packed]] ImageRef {
         Clockwise270
     };
     
-    Img::Id id = 0;
+    ImageId id = 0;
+    
+    uint64_t timestamp = 0; // Unix time
+    
+    uint64_t addr = 0;
+    
+    uint16_t imageWidth = 0;
+    uint16_t imageHeight = 0;
+    uint8_t _pad[4] = {};
+    
+    uint32_t coarseIntTime = 0;
+    uint32_t analogGain = 0;
+    
     Rotation rotation = Rotation::None;
-    uint8_t _pad[3] = {};
-    uint8_t _reserved[64] = {}; // For future use, so we can add fields without doing a big data migration
+    uint8_t _pad2[7] = {};
+    
+    uint8_t _reserved[64] = {}; // So we can add fields without doing a big data migration
     
     uint8_t thumbData[ThumbWidth*ThumbHeight*ThumbPixelSize];
 };
@@ -46,7 +64,7 @@ public:
                 );
             }
             
-            _state.imgIdEnd = state.imgIdEnd;
+            _state.deviceImgIdEnd = state.deviceImgIdEnd;
             
         } catch (const std::exception& e) {
             printf("Recreating ImageLibrary; cause: %s\n", e.what());
@@ -57,15 +75,13 @@ public:
         std::ofstream f = RecordStore::write();
         const _SerializedState state {
             .version = _Version,
-            .imgIdEnd = _state.imgIdEnd,
+            .deviceImgIdEnd = _state.deviceImgIdEnd,
         };
         f.write((char*)&state, sizeof(state));
     }
     
     void add() {
         RecordStore::add();
-        // Update imgIdEnd
-        _state.imgIdEnd = (!RecordStore::empty() ? RecordStore::recordGet(RecordStore::back())->id+1 : 0);
         // Notify observers that we changed
         _notifyObservers();
     }
@@ -76,7 +92,7 @@ public:
         _notifyObservers();
     }
     
-    RecordRefConstIter find(Img::Id id) {
+    RecordRefConstIter find(ImageId id) {
         return std::lower_bound(RecordStore::begin(), RecordStore::end(), 0,
         [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
             return RecordStore::recordGet(sample)->id < id;
@@ -87,18 +103,24 @@ public:
         _state.observers.push_front(std::move(observer));
     }
     
-    Img::Id imgIdEnd() const { return _state.imgIdEnd; }
+    Img::Id deviceImgIdEnd() const {
+        return _state.deviceImgIdEnd;
+    }
+    
+    void setDeviceImgIdEnd(Img::Id id) {
+        _state.deviceImgIdEnd = id;
+    }
     
 private:
     static constexpr uint32_t _Version = 0;
     
     struct [[gnu::packed]] _SerializedState {
         uint32_t version = 0;
-        Img::Id imgIdEnd = 0;
+        Img::Id deviceImgIdEnd = 0;
     };
     
     struct {
-        Img::Id imgIdEnd = 0;
+        Img::Id deviceImgIdEnd = 0;
         std::forward_list<Observer> observers;
     } _state;
     
@@ -118,3 +140,5 @@ private:
 };
 
 using ImageLibraryPtr = std::shared_ptr<MDCTools::Vendor<ImageLibrary>>;
+
+} // namespace MDCStudio

@@ -9,6 +9,7 @@
 #import "ImageLibrary.h"
 #import "MDCDevicesManager.h"
 #import "ImageGridView/ImageGridView.h"
+using namespace MDCStudio;
 namespace fs = std::filesystem;
 
 static std::vector<id> _Images;

@@ -1,9 +1,9 @@
 #pragma once
 #include "ICE.h"
-#include "Code/Shared/SD.h"
 #include "Util.h"
 #include "Toastbox/Task.h"
 #include "Code/Shared/Img.h"
+#include "Code/Shared/SD.h"
 #include "Code/Shared/ImgSD.h"
 
 namespace SD {
@@ -189,7 +189,7 @@ public:
 //    const CardId& cardId() const { return *_cardId; }
 //    const CardData& cardData() const { return *_cardData; }
     
-    static void ReadStart(uint32_t blockIdx) {
+    static void ReadStart(SD::BlockIdx blockIdx) {
         // ====================
         // CMD18 | READ_MULTIPLE_BLOCK
         //   State: Transfer -> Send Data
@@ -205,7 +205,7 @@ public:
     // `blockCountEst`: the estimated block count that will be written; used to pre-erase SD blocks as a performance
     // optimization. More data can be written than `blockCountEst`, but performance may suffer if the actual count
     // is longer than the estimate.
-    static void WriteStart(uint16_t rca, uint32_t blockIdx, uint32_t blockCountEst=0) {
+    static void WriteStart(uint16_t rca, SD::BlockIdx blockIdx, uint32_t blockCountEst=0) {
         // ====================
         // ACMD23 | SET_WR_BLK_ERASE_COUNT
         //   State: Transfer -> Transfer
@@ -240,7 +240,7 @@ public:
         _ReadWriteStop();
     }
     
-    static void WriteImage(uint16_t rca, uint8_t srcBlock, uint32_t dstBlockIdx) {
+    static void WriteImage(uint16_t rca, uint8_t srcBlock, SD::BlockIdx dstBlockIdx) {
         WriteStart(rca, dstBlockIdx, ImgSD::ImgBlockCount);
         
         // Clock out the image on the DAT lines
