@@ -2,31 +2,29 @@
 #include <map>
 #include <set>
 #include <thread>
+#import "Image.h"
+#import "ImageLibrary.h"
 
 namespace MDCStudio {
 
-class ImageProvider {
-public:
-    
-};
+//class ImageProvider {
+//public:
+//    
+//};
 
 class ImageCache {
 public:
     using ImageProvider = std::function<ImagePtr(const ImageRef&)>;
     using ImageLoadedHandler = std::function<void(ImagePtr)>;
     
-    ImageCache(ImageLibraryPtr imageLibrary, ImageProvider&& imageProvider) {
+    ImageCache(ImageLibraryPtr imageLibrary, ImageProvider&& imageProvider) : _imageLibrary(imageLibrary), _imageProvider(imageProvider) {
         auto lock = std::unique_lock(_stateLock);
-        
-        _imageProvider = std::move(imageProvider);
-        
-        _state.thread = std::thread([=] {
-            _thread();
-        });
+        _state.thread = std::thread([=] { _thread(); });
     }
     
     ~ImageCache() {
         auto lock = std::unique_lock(_stateLock);
+        #warning TODO: need to signal thread to exit
         _state.thread.join();
     }
     
@@ -62,46 +60,6 @@ private:
         bool loadImage = false;
         bool loadNeighbors = false;
     };
-    
-//    void _loadNeighbors(ImageId imageId) {
-//        auto imgLib = _imageLibrary->vend();
-//        
-//        auto find = imgLib->find(imageId);
-//        if (find == imgLib->end()) return; // Image is no longer in library
-//        
-//        auto it = std::next(find);
-//        auto rit = std::next(std::make_reverse_iterator(find));
-//        
-//        for (size_t i=0; i<_NeighborImageLoadCount; i++) {
-//            if (it != imgLib->end()) {
-//                
-//                it++;
-//            }
-//            
-//            if (rit != imgLib->rend()) {
-//                
-//                rit++;
-//            }
-//            
-//            
-//            rightIt++;
-//            
-//            if ()
-//            
-//            auto lock = std::unique_lock(_stateLock);
-//                // Bail if more work appears
-//                if (!_state.work.empty()) break;
-//            lock.unlock();
-//        }
-//    }
-    
-//    _Work _waitForWork() {
-//        auto lock = std::unique_lock(_stateLock);
-//        while (_state.work.empty()) _state.workSignal.wait(lock);
-//        const _Work work = _state.work.front();
-//        _state.work.pop_front();
-//        return work;
-//    }
     
     void _thread() {
         std::set<ImageId> inserted;

@@ -65,11 +65,11 @@ private:
                 _SendRight service(_SendRight::NoRetain, IOIteratorNext(serviceIter));
                 if (!service) break;
                 
-                MDCDevicePtr dev;
+                std::unique_ptr<MDCUSBDevice> dev;
                 try {
                     _USBDevice usbDev(service);
-                    if (!MDCDevice::USBDeviceMatches(usbDev)) continue;
-                    dev = std::make_shared<MDCDevice>(std::move(usbDev));
+                    if (!MDCUSBDevice::USBDeviceMatches(usbDev)) continue;
+                    dev = std::make_unique<MDCUSBDevice>(std::move(usbDev));
                 
                 } catch (const std::exception& e) {
                     // Ignore failures to create USBDevice
@@ -81,17 +81,23 @@ private:
                     const STM::Status status = dev->statusGet();
                     switch (status.mode) {
                     case STM::Status::Modes::STMLoader:
-                        _DeviceBootload(dev);
+                        _DeviceBootload(*dev);
                         bootloadedDeviceSerials.insert(dev->serial());
                         break;
                     
                     case STM::Status::Modes::STMApp:
+                        // If we didn't previously configure this device, trigger the bootloader so we can configure it
+                        if (bootloadedDeviceSerials.find(dev->serial()) == bootloadedDeviceSerials.end()) {
+                            dev->bootloaderInvoke();
+                        
                         // If we previously configured this device, this device is ready!
-                        if (bootloadedDeviceSerials.find(dev->serial()) != bootloadedDeviceSerials.end()) {
+                        } else {
                             bootloadedDeviceSerials.erase(dev->serial());
                             
+                            // Create our final MDCDevice instance
+                            MDCDevicePtr mdc = std::make_shared<MDCDevice>(service);
                             // Load ICE40 with our app
-                            _ICEConfigure(dev);
+                            _ICEConfigure(*mdc);
                             
                             // Watch the service so we know when it goes away
                             io_object_t ioObj = MACH_PORT_NULL;
@@ -103,19 +109,15 @@ private:
                             {
                                 auto lock = std::unique_lock(_State.lock);
                                 _State.devices.push_back(_Device{
-                                    .dev = dev,
+                                    .dev = mdc,
                                     .note = _SendRight(_SendRight::NoRetain, ioObj),
                                 });
                             }
                             
-                            dev->updateImageLibrary();
+                            mdc->updateImageLibrary();
                             
                             printf("Device connected\n");
                             changed = true;
-                            
-                        // If we didn't previously configure this device, trigger the bootloader so we can configure it
-                        } else {
-                            dev->bootloaderInvoke();
                         }
                         break;
                     
@@ -160,25 +162,25 @@ private:
         }
     }
     
-    static void _DeviceBootload(MDCDevicePtr dev) {
+    static void _DeviceBootload(MDCUSBDevice& dev) {
         const char* STMBinPath = "/Users/dave/repos/MDC/Code/STM32/STApp/Release/STApp.elf";
         ELF32Binary elf(STMBinPath);
         
         elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
         size_t size, const char* name) {
-            dev->stmWrite(paddr, data, size);
+            dev.stmWrite(paddr, data, size);
         });
         
         // Reset the device, triggering it to load the program we just wrote
-        dev->stmReset(elf.entryPointAddr());
+        dev.stmReset(elf.entryPointAddr());
     }
     
-    static void _ICEConfigure(MDCDevicePtr dev) {
+    static void _ICEConfigure(MDCUSBDevice& dev) {
         const char* ICEBinPath = "/Users/dave/repos/MDC/Code/ICE40/ICEAppSDReadoutSTM/Synth/Top.bin";
         Mmap mmap(ICEBinPath);
         
         // Write the ICE40 binary
-        dev->iceWrite(mmap.data(), mmap.len());
+        dev.iceWrite(mmap.data(), mmap.len());
     }
     
     static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* msgArg) {
