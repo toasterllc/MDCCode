@@ -208,7 +208,8 @@ using ThumbFile = Mmap;
 }
 
 - (void)recomputeGrid {
-    _grid.setElementCount((int32_t)_imgLib->vend()->recordCount());
+    auto lock = std::unique_lock(*_imgLib);
+    _grid.setElementCount((int32_t)_imgLib->recordCount());
     _grid.recompute();
 }
 
@@ -273,7 +274,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     const CGRect frame = [self frame];
     if (CGRectIsEmpty(frame)) return;
     
-    auto il = _imgLib->vend();
+    auto lock = std::unique_lock(*_imgLib);
     
     // Update our drawable size
     [self setDrawableSize:{frame.size.width*_contentsScale, frame.size.height*_contentsScale}];
@@ -334,15 +335,15 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         const int32_t offsetX = -round(frame.origin.x*_contentsScale);
         const int32_t offsetY = -round(frame.origin.y*_contentsScale);
         
-        const uintptr_t imageRefsBegin = (uintptr_t)&*il->begin();
-        const uintptr_t imageRefsEnd = (uintptr_t)&*il->end();
+        const uintptr_t imageRefsBegin = (uintptr_t)&*_imgLib->begin();
+        const uintptr_t imageRefsEnd = (uintptr_t)&*_imgLib->end();
         id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
             length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
         
 //        printf("Range count: %zu\n", ranges.size());
         
-        const auto imageRefFirst = il->begin()+indexRange.start;
-        const auto imageRefLast = il->begin()+indexRange.start+indexRange.count-1;
+        const auto imageRefFirst = _imgLib->begin()+indexRange.start;
+        const auto imageRefLast = _imgLib->begin()+indexRange.start+indexRange.count-1;
         
         const auto imageRefBegin = imageRefFirst;
         const auto imageRefEnd = std::next(imageRefLast);
@@ -354,7 +355,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //        const auto chunkEnd = std::next(chunkLast);
         for (auto it=imageRefBegin; it<imageRefEnd;) {
             const auto& chunk = *(it->chunk);
-            const auto nextChunkStart = ImageLibrary::FindNextChunk(it, il->end());
+            const auto nextChunkStart = ImageLibrary::FindNextChunk(it, _imgLib->end());
             
             const auto chunkImageRefBegin = it;
             const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
@@ -416,7 +417,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 ImageGridLayerTypes::RenderContext ctx = {
                     .grid = _grid,
 //                    .chunk = ImageGridLayerTypes::UInt2FromType(it),
-                    .idxOff = (uint32_t)(chunkImageRefFirst-il->begin()),
+                    .idxOff = (uint32_t)(chunkImageRefFirst-_imgLib->begin()),
                     .imagesOff = (uint32_t)(addrBegin-addrAlignedBegin),
 //                    .imageRefOff = (uint32_t)ic.getImageRef(range.idx),
                     .imageSize = (uint32_t)sizeof(ImageLibrary::Record),
@@ -494,14 +495,14 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 }
 
 - (ImageGridLayerImageIds)imageIdsForRect:(CGRect)rect {
-    auto il = _imgLib->vend();
+    auto lock = std::unique_lock(*_imgLib);
     const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, _contentsScale));
     ImageGridLayerImageIds imageIds;
     for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
             const int32_t idx = _grid.columnCount()*y + x;
-            if (idx >= il->recordCount()) goto done;
-            const ImageRef& imageRef = il->recordGet(il->begin()+idx)->ref;
+            if (idx >= _imgLib->recordCount()) goto done;
+            const ImageRef& imageRef = _imgLib->recordGet(_imgLib->begin()+idx)->ref;
             imageIds.insert(imageRef.id);
         }
     }

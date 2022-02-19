@@ -77,7 +77,6 @@
 		5544AE0027B5E57A006AB473 /* ELF32Binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		5544AE0127B5E57A006AB473 /* IOServiceMatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceMatcher.h; sourceTree = "<group>"; };
 		5544AE0227B5E57A006AB473 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mod.h; sourceTree = "<group>"; };
-		5544AE0327B5E57A006AB473 /* Vendor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Vendor.h; sourceTree = "<group>"; };
 		5544AE0427B5E57A006AB473 /* Interp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Interp.h; sourceTree = "<group>"; };
 		5544AE0527B5E57A006AB473 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
 		5544AE0727B5E585006AB473 /* BufQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BufQueue.h; sourceTree = "<group>"; };
@@ -173,6 +172,7 @@
 		55F8D01B27BF5F0700757165 /* Image.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Image.h; sourceTree = "<group>"; };
 		55F8D01C27BF642900757165 /* CFA.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFA.h; sourceTree = "<group>"; };
 		55F8D03027BF9F8000757165 /* ImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageCache.h; sourceTree = "<group>"; };
+		55F8D05827C0E07900757165 /* Lockable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lockable.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -240,6 +240,7 @@
 		5544ADF527B5E57A006AB473 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				55F8D05827C0E07900757165 /* Lockable.h */,
 				5544ADF627B5E57A006AB473 /* MDCUSBDevice.h */,
 				5544ADF727B5E57A006AB473 /* Mat.h */,
 				5544ADF827B5E57A006AB473 /* PixelSampler.h */,
@@ -253,7 +254,6 @@
 				5544AE0027B5E57A006AB473 /* ELF32Binary.h */,
 				5544AE0127B5E57A006AB473 /* IOServiceMatcher.h */,
 				5544AE0227B5E57A006AB473 /* Mod.h */,
-				5544AE0327B5E57A006AB473 /* Vendor.h */,
 				5544AE0427B5E57A006AB473 /* Interp.h */,
 				5544AE0527B5E57A006AB473 /* Assert.h */,
 			);

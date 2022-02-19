@@ -6,7 +6,6 @@
 #import "Code/Shared/MSP.h"
 #import "Code/Shared/ImgSD.h"
 #import "Code/Shared/BufQueue.h"
-#import "Tools/Shared/Vendor.h"
 #import "Tools/Shared/MDCUSBDevice.h"
 #import "ImageLibrary.h"
 #import "ImagePipeline/ImagePipeline.h"
@@ -20,17 +19,17 @@ public:
     using Observer = std::function<bool()>;
     
     MDCDevice(MDCUSBDevice&& dev) :
-    _dev(std::make_shared<MDCTools::Vendor<MDCUSBDevice>>(std::move(dev))),
-    _dir(_DirForSerial((*_dev)->serial())),
-    _imageLibrary(std::make_shared<MDCTools::Vendor<ImageLibrary>>(_dir / "ImageLibrary")),
-    _imageCache(_imageLibrary, _ImageProvider(shared_from_this())) {
+    _dev(std::make_shared<MDCTools::Lockable<MDCUSBDevice>>(std::move(dev))),
+    _dir(_DirForSerial(_dev->serial())),
+    _imageLibrary(std::make_shared<MDCTools::Lockable<ImageLibrary>>(_dir / "ImageLibrary")) {
+    
         auto lock = std::unique_lock(_state.lock);
         
         printf("MDCDevice()\n");
         
         // Give device a default name
         char name[256];
-        snprintf(name, sizeof(name), "MDC Device %s", (*_dev)->serial().c_str());
+        snprintf(name, sizeof(name), "MDC Device %s", _dev->serial().c_str());
         _state.name = std::string(name);
         
         // Read state from disk
@@ -41,10 +40,13 @@ public:
         
         // Init SD card
         #warning TODO: how should we handle sdInit() failing (throwing)?
-        _sdCardInfo = (*_dev)->sdInit();
+        _sdCardInfo = _dev->sdInit();
         
         // Load the library
-        _imageLibrary->vend()->read();
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            _imageLibrary->read();
+        }
         
         // Start updating image library
         _state.updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
@@ -71,8 +73,25 @@ public:
         _notifyObservers();
     }
     
-    ImageLibraryPtr imageLibrary() const { return _imageLibrary; }
     MDCUSBDevicePtr device() { return _dev; }
+    ImageLibraryPtr imageLibrary() const { return _imageLibrary; }
+    
+    ImageCachePtr imageCache() {
+        // We're implementing this lazily because shared_from_this()
+        // can't be called from the constructor
+        auto lock = std::unique_lock(_state.lock);
+        if (!_state.imageCache) {
+            std::weak_ptr<MDCDevice> weakThis = shared_from_this();
+            ImageCache::ImageProvider imageProvider = [=] (const ImageRef& imageRef) -> ImagePtr {
+                auto strongThis = weakThis.lock();
+                if (!strongThis) return nullptr;
+                return strongThis->_imageProvider(imageRef);
+            };
+            
+            _state.imageCache = std::make_shared<ImageCache>(_imageLibrary, std::move(imageProvider));
+        }
+        return _state.imageCache;
+    }
     
     void addObserver(Observer&& observer) {
         auto lock = std::unique_lock(_state.lock);
@@ -181,23 +200,14 @@ private:
         return *comp>=0 ? imgRingBuf0 : imgRingBuf1;
     }
     
-    static ImageCache::ImageProvider _ImageProvider(std::shared_ptr<MDCDevice> t) {
-        std::weak_ptr<MDCDevice> weakThis = t;
-        return [=] (const ImageRef& imageRef) -> ImagePtr {
-            auto strongThis = weakThis.lock();
-            if (!strongThis) return nullptr;
-            return strongThis->_imageProvider(imageRef);
-        };
-    }
-    
     ImagePtr _imageProvider(const ImageRef& imageRef) {
         // Lock the device for the duration of this function
-        auto dev = _dev->vend();
+        auto lock = std::unique_lock(*_dev);
         
         auto imageData = std::make_unique<uint8_t[]>(ImgSD::ImgPaddedLen);
-        dev->endpointsFlush();
-        dev->sdRead((SD::BlockIdx)imageRef.addr);
-        dev->readout(imageData.get(), ImgSD::ImgPaddedLen);
+        _dev->endpointsFlush();
+        _dev->sdRead((SD::BlockIdx)imageRef.addr);
+        _dev->readout(imageData.get(), ImgSD::ImgPaddedLen);
         
         const Img::Header& header = *(const Img::Header*)imageData.get();
         ImagePtr image = std::make_shared<Image>(Image{
@@ -225,10 +235,12 @@ private:
     
     void _threadUpdateImageLibrary() {
         try {
-            (*_dev)->mspConnect();
-            
             MSP::State state;
-            (*_dev)->mspRead(MSP::StateAddr, &state, sizeof(state));
+            {
+                auto lock = std::unique_lock(*_dev);
+                _dev->mspConnect();
+                _dev->mspRead(MSP::StateAddr, &state, sizeof(state));
+            }
             
             if (state.magic != MSP::State::MagicNumber) {
                 // Program MSPApp onto MSP
@@ -259,23 +271,28 @@ private:
             {
                 // Remove images from beginning of library: lib has, device doesn't
                 {
-                    auto il = _imageLibrary->vend();
+                    auto lock = std::unique_lock(*_imageLibrary);
                     const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
-                    const auto removeBegin = il->begin();
+                    const auto removeBegin = _imageLibrary->begin();
                     
                     // Find the first image >= `deviceImgIdBegin`
-                    const auto removeEnd = std::lower_bound(il->begin(), il->end(), 0,
+                    const auto removeEnd = std::lower_bound(_imageLibrary->begin(), _imageLibrary->end(), 0,
                         [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                            return il->recordGet(sample)->ref.id < deviceImgIdBegin;
+                            return _imageLibrary->recordGet(sample)->ref.id < deviceImgIdBegin;
                         });
                     
                     printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
-                    il->remove(removeBegin, removeEnd);
+                    _imageLibrary->remove(removeBegin, removeEnd);
                 }
                 
                 // Add images to end of library: device has, lib doesn't
                 {
-                    const Img::Id libImgIdEnd = _imageLibrary->vend()->deviceImgIdEnd();
+                    Img::Id libImgIdEnd = 0;
+                    {
+                        auto lock = std::unique_lock(*_imageLibrary);
+                        libImgIdEnd = _imageLibrary->deviceImgIdEnd();
+                    }
+                    
                     const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
                     
                     if (libImgIdEnd > deviceImgIdEnd) {
@@ -300,9 +317,12 @@ private:
                     _loadImages(newest);
                 }
                 
-                printf("Writing library\n");
                 // Write the library
-                _imageLibrary->vend()->write();
+                {
+                    printf("Writing library\n");
+                    auto lock = std::unique_lock(*_imageLibrary);
+                    _imageLibrary->write();
+                }
             }
         
         } catch (const std::exception& e) {
@@ -313,7 +333,7 @@ private:
     void _loadImages(const _Range& range) {
         using namespace MDCTools;
         // Lock the device for the duration of this function
-        auto dev = _dev->vend();
+        auto lock = std::unique_lock(*_dev);
         
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
@@ -327,8 +347,8 @@ private:
         auto& bufQueue = *bufQueuePtr;
         const SD::BlockIdx blockIdxStart = range.idx * ImgSD::ImgBlockCount;
         
-        dev->endpointsFlush();
-        dev->sdRead(blockIdxStart);
+        _dev->endpointsFlush();
+        _dev->sdRead(blockIdxStart);
         
         // Consumer
         std::thread consumerThread([&] {
@@ -355,7 +375,7 @@ private:
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
             auto& buf = bufQueue.wget();
             buf.len = chunkImgCount; // buffer length = count of images (not byte count)
-            dev->readout(buf.data, chunkImgCount*ImgSD::ImgPaddedLen);
+            _dev->readout(buf.data, chunkImgCount*ImgSD::ImgPaddedLen);
             bufQueue.wpush();
             i += chunkImgCount;
             
@@ -377,31 +397,26 @@ private:
         using namespace MDCTools;
         using namespace MDCStudio::ImagePipeline;
         
-        // We're intentionally not holding onto the vended library (_imageLibrary->vend()) because
-        // we don't want to hold the library lock while we process images, since that would
-        // block the main thread.
-        // Instead we access methods via imgLibVendor->method(), which only acquires the
-        // image library lock for the duration of the function call.
-        auto& imgLibVendor = *_imageLibrary;
-        
-        // Load `imageId` by looking at the last record's image id +1
         ImageId imageId = 0;
         {
-            auto il = imgLibVendor.vend();
-            if (il->recordCount()) {
-                imageId = il->recordGet(il->back())->ref.id+1;
+            auto lock = std::unique_lock(*_imageLibrary);
+            
+            // Reserve space for `imgCount` additional images
+            _imageLibrary->reserve(imgCount);
+            
+            // Load `imageId` by looking at the last record's image id +1, and reserve space
+            if (_imageLibrary->recordCount()) {
+                imageId = _imageLibrary->recordGet(_imageLibrary->back())->ref.id+1;
             }
         }
-        
-        // Reserve space for `imgCount` additional images
-        imgLibVendor->reserve(imgCount);
         
         Img::Id deviceImgIdLast = 0;
         for (size_t idx=0; idx<imgCount; idx++) {
             const uint8_t* imgData = data+idx*ImgSD::ImgPaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
-            const auto recordRefIter = imgLibVendor->reservedBegin()+idx;
-            ImageThumb& imageThumb = *imgLibVendor->recordGet(recordRefIter); // Safe without a lock because we're the only entity using the image library's reserved space
+            // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
+            const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
+            ImageThumb& imageThumb = *_imageLibrary->recordGet(recordRefIter);
             ImageRef& imageRef = imageThumb.ref; // Safe without a lock because we're the only entity using the image library's reserved space
             
             // Validate checksum
@@ -470,10 +485,13 @@ private:
         // Make sure all rendering is complete before adding the images to the library
         renderer.commitAndWait();
         
-        // Add the records that we previously reserved
-        imgLibVendor->add();
-        // Update the device's image id 'end' == last image id that we've observed from the device +1
-        imgLibVendor->setDeviceImgIdEnd(deviceImgIdLast+1);
+        {
+            auto lock = std::unique_lock(*_imageLibrary);
+            // Add the records that we previously reserved
+            _imageLibrary->add();
+            // Update the device's image id 'end' == last image id that we've observed from the device +1
+            _imageLibrary->setDeviceImgIdEnd(deviceImgIdLast+1);
+        }
     }
     
     // _state.lock must be held
@@ -493,10 +511,7 @@ private:
     
     MDCUSBDevicePtr _dev;
     const _Path _dir;
-    
     ImageLibraryPtr _imageLibrary;
-    ImageCache _imageCache;
-    
     STM::SDCardInfo _sdCardInfo;
     
     struct {
@@ -504,6 +519,7 @@ private:
         std::string name;
         std::forward_list<Observer> observers;
         std::thread updateImageLibraryThread;
+        ImageCachePtr imageCache;
     } _state;
 };
 

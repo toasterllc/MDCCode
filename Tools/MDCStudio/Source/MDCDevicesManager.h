@@ -138,7 +138,7 @@ private:
                     for (auto it=_State.devices.begin(); it!=_State.devices.end(); it++) {
                         #warning TODO: cleanup these function names
                         MDCUSBDevicePtr mdcUSBDevPtr = it->dev->device();
-                        const _USBDevice& usbDev = (*mdcUSBDevPtr)->dev();
+                        const _USBDevice& usbDev = mdcUSBDevPtr->dev();
                         if (usbDev.service() == service) {
                             _State.devices.erase(it);
                             changed = true;
