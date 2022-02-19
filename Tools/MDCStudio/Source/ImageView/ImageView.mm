@@ -15,7 +15,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 @implementation ImageLayer {
 @public
     ImageRef imageRef;
-    Image image;
+    ImagePtr image;
 
 @private
     ImageCachePtr _imageCache;
@@ -189,10 +189,6 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 - (const ImageRef&)imageRef {
     return _layer->imageRef;
-}
-
-- (void)setImage:(Image&&)image {
-    _layer->image = std::move(image);
 }
 
 @end
