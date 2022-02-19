@@ -9,6 +9,7 @@
 #include "Code/Shared/SD.h"
 #include "Code/Shared/ImgSD.h"
 #include "Code/Shared/ChecksumFletcher32.h"
+#include "Vendor.h"
 
 class MDCUSBDevice {
 public:
@@ -455,3 +456,5 @@ private:
     STM::Status::Mode _mode = STM::Status::Modes::None;
     uint8_t _buf[16*1024];
 };
+
+using MDCUSBDevicePtr = std::shared_ptr<MDCTools::Vendor<MDCUSBDevice>>;

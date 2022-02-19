@@ -15,15 +15,15 @@
 
 namespace MDCStudio {
 
-class MDCDevice {
+class MDCDevice : public std::enable_shared_from_this<MDCDevice> {
 public:
     using Observer = std::function<bool()>;
     
     MDCDevice(MDCUSBDevice&& dev) :
-    _dev(std::move(dev)),
-    _devDir(_DevDirForSerial(_dev.serial())),
-    _imageLibrary(std::make_shared<MDCTools::Vendor<ImageLibrary>>(_devDir / "ImageLibrary")),
-    _imageCache(_imageLibrary, [] (const ImageRef&) { return nullptr; }) {
+    _dev(std::make_shared<MDCTools::Vendor<MDCUSBDevice>>(std::move(dev))),
+    _dir(_DirForSerial((*_dev)->serial())),
+    _imageLibrary(std::make_shared<MDCTools::Vendor<ImageLibrary>>(_dir / "ImageLibrary")),
+    _imageCache(_imageLibrary, _ImageProvider(shared_from_this())) {
         
         printf("MDCDevice()\n");
         
@@ -31,16 +31,25 @@ public:
         
         // Give device a default name
         char name[256];
-        snprintf(name, sizeof(name), "MDC Device %s", _dev.serial().c_str());
+        snprintf(name, sizeof(name), "MDC Device %s", (*_dev)->serial().c_str());
         _state.name = std::string(name);
         
+        // Read state from disk
         try {
-            _SerializedState state = _SerializedStateRead(_devDir);
+            _SerializedState state = _SerializedStateRead(_dir);
             _state.name = std::string(state.name);
         } catch (const std::exception& e) {}
         
+        // Init SD card
+        #warning TODO: how should we handle sdInit() failing (throwing)?
+        _sdCardInfo = (*_dev)->sdInit();
+        
         // Load the library
         _imageLibrary->vend()->read();
+        
+        // 
+        _state.updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
+        _state.updateImageLibraryThread.detach();
     }
     
     ~MDCDevice() {
@@ -63,8 +72,8 @@ public:
         _notifyObservers();
     }
     
-    ImageLibraryPtr imgLib() const { return _imageLibrary; }
-    MDCUSBDevice& dev() { return _dev; }
+    ImageLibraryPtr imageLibrary() const { return _imageLibrary; }
+    MDCUSBDevicePtr device() { return _dev; }
     
     void updateImageLibrary() {
         auto lock = std::unique_lock(_state.lock);
@@ -132,9 +141,9 @@ private:
         BufQueue<uint8_t, T_BufCap, 2> _bufs;
     };
     
-    static _Path _StatePath(const _Path& devDir) { return devDir / "State"; }
+    static _Path _StatePath(const _Path& dir) { return dir / "State"; }
     
-    static _Path _DevDirForSerial(const std::string_view& serial) {
+    static _Path _DirForSerial(const std::string_view& serial) {
         auto urls = [[NSFileManager defaultManager] URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask];
         if (![urls count]) throw Toastbox::RuntimeError("failed to get NSApplicationSupportDirectory");
         
@@ -142,10 +151,10 @@ private:
         return appSupportDir / "Devices" / serial;
     }
     
-    static _SerializedState _SerializedStateRead(const _Path& devDir) {
+    static _SerializedState _SerializedStateRead(const _Path& dir) {
         std::ifstream f;
         f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-        f.open(_StatePath(devDir));
+        f.open(_StatePath(dir));
         
         _SerializedState state;
         f.read((char*)&state, sizeof(state));
@@ -161,10 +170,10 @@ private:
         return state;
     }
     
-    static void _SerializedStateWrite(const _Path& devDir, const _SerializedState& state) {
+    static void _SerializedStateWrite(const _Path& dir, const _SerializedState& state) {
         std::ofstream f;
         f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-        f.open(_StatePath(devDir));
+        f.open(_StatePath(dir));
         f.write((char*)&state, sizeof(state));
     }
     
@@ -174,6 +183,19 @@ private:
         const std::optional<int> comp = MSP::ImgRingBuf::Compare(imgRingBuf0, imgRingBuf1);
         if (!comp) throw Toastbox::RuntimeError("both image ring buffers are invalid");
         return *comp>=0 ? imgRingBuf0 : imgRingBuf1;
+    }
+    
+    static ImageCache::ImageProvider _ImageProvider(std::shared_ptr<MDCDevice> t) {
+        std::weak_ptr<MDCDevice> weakThis = t;
+        return [=] (const ImageRef& imageRef) -> ImagePtr {
+            auto strongThis = weakThis.lock();
+            if (!strongThis) return nullptr;
+            return strongThis->_imageProvider(imageRef);
+        };
+    }
+    
+    ImagePtr _imageProvider(const ImageRef& imageRef) {
+        return nullptr;
     }
     
     // _state.lock must be held
@@ -186,15 +208,15 @@ private:
         // `sizeof(state.name)-1` to ensure that the null byte isn't overwritten
         _state.name.copy(state.name, sizeof(state.name)-1);
         
-        _SerializedStateWrite(_devDir, state);
+        _SerializedStateWrite(_dir, state);
     }
     
     void _threadUpdateImageLibrary() {
         try {
-            _dev.mspConnect();
+            (*_dev)->mspConnect();
             
             MSP::State state;
-            _dev.mspRead(MSP::StateAddr, &state, sizeof(state));
+            (*_dev)->mspRead(MSP::StateAddr, &state, sizeof(state));
             
             if (state.magic != MSP::State::MagicNumber) {
                 // Program MSPApp onto MSP
@@ -214,8 +236,7 @@ private:
                 throw Toastbox::RuntimeError("TODO: implement");
             }
             
-            const STM::SDCardInfo sdCardInfo = _dev.sdInit();
-            if (memcmp(&sdCardInfo.cardId, &state.sd.cardId, sizeof(state.sd.cardId))) {
+            if (memcmp(&_sdCardInfo.cardId, &state.sd.cardId, sizeof(state.sd.cardId))) {
                 // Current SD card id doesn't match MSP's card id
                 #warning TODO: implement
                 throw Toastbox::RuntimeError("TODO: implement");
@@ -279,6 +300,8 @@ private:
     
     void _loadImages(const _Range& range) {
         using namespace MDCTools;
+        // Lock the device for the duration of this function
+        auto dev = _dev->vend();
         
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
@@ -291,7 +314,7 @@ private:
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
         const SD::BlockIdx blockIdxStart = range.idx * ImgSD::ImgBlockCount;
-        _dev.sdRead(blockIdxStart);
+        dev->sdRead(blockIdxStart);
         
         // Consumer
         std::thread consumerThread([&] {
@@ -318,7 +341,7 @@ private:
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
             auto& buf = bufQueue.wget();
             buf.len = chunkImgCount; // buffer length = count of images (not byte count)
-            _dev.readout(buf.data, chunkImgCount*ImgSD::ImgPaddedLen);
+            dev->readout(buf.data, chunkImgCount*ImgSD::ImgPaddedLen);
             bufQueue.wpush();
             i += chunkImgCount;
             
@@ -457,8 +480,11 @@ private:
         }
     }
     
-    MDCUSBDevice _dev;
-    const _Path _devDir;
+    MDCUSBDevicePtr _dev;
+    const _Path _dir;
+    
+    STM::SDCardInfo _sdCardInfo;
+    
     ImageLibraryPtr _imageLibrary;
     ImageCache _imageCache;
     
