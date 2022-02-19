@@ -114,8 +114,6 @@ private:
                                 });
                             }
                             
-                            mdc->updateImageLibrary();
-                            
                             printf("Device connected\n");
                             changed = true;
                         }
