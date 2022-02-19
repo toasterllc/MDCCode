@@ -127,11 +127,13 @@ private:
                 // Load the image without the lock held
                 ImagePtr image = _imageProvider(imageRef);
                 
-                lock.lock();
-                    // `find` stays valid after relinquishing the lock because this thread
-                    // is the only thread that modifies `_state.images`
-                    _state.images.insert_or_assign(find, work.imageRef.id, image);
-                lock.unlock();
+                if (image) {
+                    lock.lock();
+                        // `find` stays valid after relinquishing the lock because this thread
+                        // is the only thread that modifies `_state.images`
+                        _state.images.insert_or_assign(find, work.imageRef.id, image);
+                    lock.unlock();
+                }
             }
         }
         
