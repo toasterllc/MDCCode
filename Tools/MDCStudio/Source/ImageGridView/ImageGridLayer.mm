@@ -385,8 +385,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //                offEnd = sizeof(Img)*(imageRefLast.idx+1);
 //            }
 //            printf("AAA\n");
-            const uintptr_t addrBegin = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageRef)*chunkImageRefFirst->idx));
-            const uintptr_t addrEnd = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageRef)*(chunkImageRefLast->idx+1)));
+            
+            const uintptr_t addrBegin = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageLibrary::Record)*chunkImageRefFirst->idx));
+            const uintptr_t addrEnd = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageLibrary::Record)*(chunkImageRefLast->idx+1)));
             
             const uintptr_t addrAlignedBegin = _FloorToPageSize(addrBegin);
             const uintptr_t addrAlignedEnd = _CeilToPageSize(addrEnd);
@@ -418,7 +419,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     .idxOff = (uint32_t)(chunkImageRefFirst-il->begin()),
                     .imagesOff = (uint32_t)(addrBegin-addrAlignedBegin),
 //                    .imageRefOff = (uint32_t)ic.getImageRef(range.idx),
-                    .imageSize = (uint32_t)sizeof(ImageRef),
+                    .imageSize = (uint32_t)sizeof(ImageLibrary::Record),
                     .viewOffset = {offsetX, offsetY},
                     .viewMatrix = unityFromRasterMatrix,
                     .off = {

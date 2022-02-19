@@ -15,14 +15,13 @@
 
 namespace MDCStudio {
 
-class MDCDevice : public MDCUSBDevice {
+class MDCDevice {
 public:
-    using MDCUSBDevice::MDCUSBDevice;
     using Observer = std::function<bool()>;
     
-    MDCDevice(USBDevice&& dev) :
-    MDCUSBDevice(std::move(dev)),
-    _devDir(_DevDirForSerial(serial())),
+    MDCDevice(MDCUSBDevice&& dev) :
+    _dev(std::move(dev)),
+    _devDir(_DevDirForSerial(_dev.serial())),
     _imageLibrary(std::make_shared<MDCTools::Vendor<ImageLibrary>>(_devDir / "ImageLibrary")),
     _imageCache(_imageLibrary, [] (const ImageRef&) { return nullptr; }) {
         
@@ -32,7 +31,7 @@ public:
         
         // Give device a default name
         char name[256];
-        snprintf(name, sizeof(name), "MDC Device %s", serial().c_str());
+        snprintf(name, sizeof(name), "MDC Device %s", _dev.serial().c_str());
         _state.name = std::string(name);
         
         try {
@@ -65,6 +64,7 @@ public:
     }
     
     ImageLibraryPtr imgLib() const { return _imageLibrary; }
+    MDCUSBDevice& dev() { return _dev; }
     
     void updateImageLibrary() {
         auto lock = std::unique_lock(_state.lock);
@@ -191,10 +191,10 @@ private:
     
     void _threadUpdateImageLibrary() {
         try {
-            mspConnect();
+            _dev.mspConnect();
             
             MSP::State state;
-            mspRead(MSP::StateAddr, &state, sizeof(state));
+            _dev.mspRead(MSP::StateAddr, &state, sizeof(state));
             
             if (state.magic != MSP::State::MagicNumber) {
                 // Program MSPApp onto MSP
@@ -214,7 +214,7 @@ private:
                 throw Toastbox::RuntimeError("TODO: implement");
             }
             
-            const STM::SDCardInfo sdCardInfo = sdInit();
+            const STM::SDCardInfo sdCardInfo = _dev.sdInit();
             if (memcmp(&sdCardInfo.cardId, &state.sd.cardId, sizeof(state.sd.cardId))) {
                 // Current SD card id doesn't match MSP's card id
                 #warning TODO: implement
@@ -291,19 +291,7 @@ private:
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
         const SD::BlockIdx blockIdxStart = range.idx * ImgSD::ImgBlockCount;
-        sdRead(blockIdxStart);
-        
-        // Producer
-        for (size_t i=0; i<range.len;) {
-            const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
-            auto& buf = bufQueue.wget();
-            buf.len = chunkImgCount; // buffer length = count of images (not byte count)
-            readout(buf.data, chunkImgCount*ImgSD::ImgPaddedLen);
-            bufQueue.wpush();
-            i += chunkImgCount;
-            
-            printf("Read %ju images\n", (uintmax_t)chunkImgCount);
-        }
+        _dev.sdRead(blockIdxStart);
         
         // Consumer
         std::thread consumerThread([&] {
@@ -324,6 +312,18 @@ private:
             auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
             printf("Consumer took %ju ms for %ju images (avg %ju ms / img)\n", (uintmax_t)durationMs, (uintmax_t)addedImageCount, ((uintmax_t)durationMs/addedImageCount));
         });
+        
+        // Producer
+        for (size_t i=0; i<range.len;) {
+            const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
+            auto& buf = bufQueue.wget();
+            buf.len = chunkImgCount; // buffer length = count of images (not byte count)
+            _dev.readout(buf.data, chunkImgCount*ImgSD::ImgPaddedLen);
+            bufQueue.wpush();
+            i += chunkImgCount;
+            
+            printf("Read %ju images\n", (uintmax_t)chunkImgCount);
+        }
         
         // Wait until we're complete
         {
@@ -373,6 +373,8 @@ private:
             memcpy(&checksumGot, imgData+Img::ChecksumOffset, Img::ChecksumLen);
             if (checksumGot != checksumExpected) {
                 throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+            } else {
+                printf("Checksum OK\n");
             }
             
             // Populate ImageRef fields
@@ -455,6 +457,7 @@ private:
         }
     }
     
+    MDCUSBDevice _dev;
     const _Path _devDir;
     ImageLibraryPtr _imageLibrary;
     ImageCache _imageCache;
