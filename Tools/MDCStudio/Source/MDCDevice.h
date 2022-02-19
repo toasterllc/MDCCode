@@ -11,6 +11,7 @@
 #import "ImageLibrary.h"
 #import "ImagePipeline/ImagePipeline.h"
 #import "ImagePipeline/RenderThumb.h"
+#import "ImageCache.h"
 
 namespace MDCStudio {
 
@@ -19,7 +20,12 @@ public:
     using MDCUSBDevice::MDCUSBDevice;
     using Observer = std::function<bool()>;
     
-    MDCDevice(USBDevice&& dev) : MDCUSBDevice(std::move(dev)), _devDir(_DevDirForSerial(serial())) {
+    MDCDevice(USBDevice&& dev) :
+    MDCUSBDevice(std::move(dev)),
+    _devDir(_DevDirForSerial(serial())),
+    _imageLibrary(std::make_shared<MDCTools::Vendor<ImageLibrary>>(_devDir / "ImageLibrary")),
+    _imageCache(_imageLibrary, [] (const ImageRef&) { return nullptr; }) {
+        
         printf("MDCDevice()\n");
         
         auto lock = std::unique_lock(_state.lock);
@@ -33,6 +39,9 @@ public:
             _SerializedState state = _SerializedStateRead(_devDir);
             _state.name = std::string(state.name);
         } catch (const std::exception& e) {}
+        
+        // Load the library
+        _imageLibrary->vend()->read();
     }
     
     ~MDCDevice() {
@@ -55,15 +64,7 @@ public:
         _notifyObservers();
     }
     
-    ImageLibraryPtr imgLib() {
-        auto lock = std::unique_lock(_state.lock);
-        if (!_state.imgLib) {
-            _state.imgLib = std::make_shared<MDCTools::Vendor<ImageLibrary>>(_devDir / "ImageLibrary");
-            // Load the library
-            _state.imgLib->vend()->read();
-        }
-        return _state.imgLib;
-    }
+    ImageLibraryPtr imgLib() const { return _imageLibrary; }
     
     void updateImageLibrary() {
         auto lock = std::unique_lock(_state.lock);
@@ -225,7 +226,7 @@ private:
             {
                 // Remove images from beginning of library: lib has, device doesn't
                 {
-                    auto il = imgLib()->vend();
+                    auto il = _imageLibrary->vend();
                     const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
                     const auto removeBegin = il->begin();
                     
@@ -241,7 +242,7 @@ private:
                 
                 // Add images to end of library: device has, lib doesn't
                 {
-                    const Img::Id libImgIdEnd = imgLib()->vend()->deviceImgIdEnd();
+                    const Img::Id libImgIdEnd = _imageLibrary->vend()->deviceImgIdEnd();
                     const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
                     
                     if (libImgIdEnd > deviceImgIdEnd) {
@@ -268,7 +269,7 @@ private:
                 
                 printf("Writing library\n");
                 // Write the library
-                imgLib()->vend()->write();
+                _imageLibrary->vend()->write();
             }
         
         } catch (const std::exception& e) {
@@ -339,12 +340,12 @@ private:
         using namespace MDCTools;
         using namespace MDCStudio::ImagePipeline;
         
-        // We're intentionally not holding onto the vended library (imgLib()->vend()) because
+        // We're intentionally not holding onto the vended library (_imageLibrary->vend()) because
         // we don't want to hold the library lock while we process images, since that would
         // block the main thread.
         // Instead we access methods via imgLibVendor->method(), which only acquires the
         // image library lock for the duration of the function call.
-        auto& imgLibVendor = *imgLib();
+        auto& imgLibVendor = *_imageLibrary;
         
         // Load `imageId` by looking at the last record's image id +1
         ImageId imageId = 0;
@@ -455,11 +456,12 @@ private:
     }
     
     const _Path _devDir;
+    ImageLibraryPtr _imageLibrary;
+    ImageCache _imageCache;
     
     struct {
         std::mutex lock; // Protects this struct
         std::string name;
-        ImageLibraryPtr imgLib;
         std::forward_list<Observer> observers;
         std::thread updateImageLibraryThread;
     } _state;

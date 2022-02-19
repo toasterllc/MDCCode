@@ -216,15 +216,15 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 }
 
 - (void)_sourceListHandleSelectionChanged {
-    {
-        auto imgLibPtr = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
-        auto imgLib = imgLibPtr->vend();
-        imgLib->read();
-        
-        const ImageRef& imageRef = imgLib->recordGet(imgLib->begin())->ref;
-        ImageView* imageView = [[ImageView alloc] initWithImageRef:imageRef cache:nullptr];
-        [self setContentView:imageView];
-    }
+//    {
+//        auto imgLibPtr = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
+//        auto imgLib = imgLibPtr->vend();
+//        imgLib->read();
+//        
+//        const ImageRef& imageRef = imgLib->recordGet(imgLib->begin())->ref;
+//        ImageView* imageView = [[ImageView alloc] initWithImageRef:imageRef cache:nullptr];
+//        [self setContentView:imageView];
+//    }
     
 //    {
 //        auto imgLib = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
@@ -233,14 +233,14 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 //        [self setContentView:imageGridView];
 //    }
     
-//    auto selection = [_sourceListView selection];
-//    if (selection.device) {
-//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imgLib()];
-//        [self setContentView:imageGridView];
-//    
-//    } else {
-//        [self setContentView:nil];
-//    }
+    auto selection = [_sourceListView selection];
+    if (selection.device) {
+        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imgLib()];
+        [self setContentView:imageGridView];
+    
+    } else {
+        [self setContentView:nil];
+    }
 }
 
 - (void)resetCursorRects {
