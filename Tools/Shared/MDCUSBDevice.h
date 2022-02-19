@@ -50,7 +50,7 @@ public:
         return _dev == x._dev;
     }
     
-    USBDevice& usbDevice() { return _dev; }
+    USBDevice& dev() { return _dev; }
     
     // MARK: - Accessors
     

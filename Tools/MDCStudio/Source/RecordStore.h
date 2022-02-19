@@ -16,6 +16,7 @@ template <
 class RecordStore {
 public:
     using Path = std::filesystem::path;
+    using Record = T_Record;
     
     struct Chunk {
         size_t recordCount = 0; // Count of records currently stored in chunk

@@ -93,11 +93,11 @@ private:
                         // If we previously configured this device, this device is ready!
                         } else {
                             bootloadedDeviceSerials.erase(dev->serial());
+                            // Load ICE40 with our app
+                            _ICEConfigure(*dev);
                             
                             // Create our final MDCDevice instance
-                            MDCDevicePtr mdc = std::make_shared<MDCDevice>(service);
-                            // Load ICE40 with our app
-                            _ICEConfigure(*mdc);
+                            MDCDevicePtr mdc = std::make_shared<MDCDevice>(std::move(*dev));
                             
                             // Watch the service so we know when it goes away
                             io_object_t ioObj = MACH_PORT_NULL;
@@ -138,7 +138,7 @@ private:
                 for (const _SendRight& service : _TerminatedServices) {
                     auto lock = std::unique_lock(_State.lock);
                     for (auto it=_State.devices.begin(); it!=_State.devices.end(); it++) {
-                        if (it->dev->usbDevice().service() == service) {
+                        if (it->dev->dev().dev().service() == service) {
                             MDCDevicePtr dev = it->dev;
                             _State.devices.erase(it);
                             changed = true;
