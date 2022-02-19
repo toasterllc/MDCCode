@@ -24,10 +24,9 @@ public:
     _dir(_DirForSerial((*_dev)->serial())),
     _imageLibrary(std::make_shared<MDCTools::Vendor<ImageLibrary>>(_dir / "ImageLibrary")),
     _imageCache(_imageLibrary, _ImageProvider(shared_from_this())) {
+        auto lock = std::unique_lock(_state.lock);
         
         printf("MDCDevice()\n");
-        
-        auto lock = std::unique_lock(_state.lock);
         
         // Give device a default name
         char name[256];
@@ -47,7 +46,7 @@ public:
         // Load the library
         _imageLibrary->vend()->read();
         
-        // 
+        // Start updating image library
         _state.updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
         _state.updateImageLibraryThread.detach();
     }
@@ -75,14 +74,6 @@ public:
     ImageLibraryPtr imageLibrary() const { return _imageLibrary; }
     MDCUSBDevicePtr device() { return _dev; }
     
-    void updateImageLibrary() {
-        auto lock = std::unique_lock(_state.lock);
-        assert(!_state.updateImageLibraryThread.joinable());
-        #warning TODO: what should we do if the thread's already running?
-        _state.updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
-        _state.updateImageLibraryThread.detach();
-    }
-    
     void addObserver(Observer&& observer) {
         auto lock = std::unique_lock(_state.lock);
         _state.observers.push_front(std::move(observer));
@@ -97,6 +88,11 @@ private:
     using _Path = std::filesystem::path;
     static constexpr uint32_t _Version = 0;
     static constexpr uint64_t _UnixTimeOffset = 1640995200; // 2022-01-01 00:00:00 +0000
+    
+    static constexpr CFADesc _CFADesc = {
+        CFAColor::Green, CFAColor::Red,
+        CFAColor::Blue, CFAColor::Green,
+    };
     
     struct [[gnu::packed]] _SerializedState {
         uint32_t version = 0;
@@ -195,7 +191,23 @@ private:
     }
     
     ImagePtr _imageProvider(const ImageRef& imageRef) {
-        return nullptr;
+        // Lock the device for the duration of this function
+        auto dev = _dev->vend();
+        
+        auto imageData = std::make_unique<uint8_t[]>(ImgSD::ImgPaddedLen);
+        dev->endpointsFlush();
+        dev->sdRead((SD::BlockIdx)imageRef.addr);
+        dev->readout(imageData.get(), ImgSD::ImgPaddedLen);
+        
+        const Img::Header& header = *(const Img::Header*)imageData.get();
+        ImagePtr image = std::make_shared<Image>(Image{
+            .width      = header.imageWidth,
+            .height     = header.imageHeight,
+            .cfaDesc    = _CFADesc,
+            .data       = std::move(imageData),
+            .off        = sizeof(header),
+        });
+        return image;
     }
     
     // _state.lock must be held
@@ -314,6 +326,8 @@ private:
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
         const SD::BlockIdx blockIdxStart = range.idx * ImgSD::ImgBlockCount;
+        
+        dev->endpointsFlush();
         dev->sdRead(blockIdxStart);
         
         // Consumer
@@ -425,10 +439,7 @@ private:
                 const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
                 
                 Pipeline::RawImage rawImage = {
-                    .cfaDesc = {
-                        CFAColor::Green, CFAColor::Red,
-                        CFAColor::Blue, CFAColor::Green,
-                    },
+                    .cfaDesc = _CFADesc,
                     .width = Img::PixelWidth,
                     .height = Img::PixelHeight,
                     .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
@@ -483,10 +494,10 @@ private:
     MDCUSBDevicePtr _dev;
     const _Path _dir;
     
-    STM::SDCardInfo _sdCardInfo;
-    
     ImageLibraryPtr _imageLibrary;
     ImageCache _imageCache;
+    
+    STM::SDCardInfo _sdCardInfo;
     
     struct {
         std::mutex lock; // Protects this struct

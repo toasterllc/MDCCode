@@ -9,22 +9,14 @@ enum class CFAColor : uint8_t {
     Blue    = 2,
 };
 
-class CFADesc {
-public:
-    CFADesc() {}
-    CFADesc(CFAColor tl, CFAColor tr, CFAColor bl, CFAColor br) : desc{{tl,tr},{bl,br}} {}
-    
+struct CFADesc {
     CFAColor desc[2][2] = {};
     
     template <typename T>
-    CFAColor color(T x, T y) MetalConst {
-        return desc[y&1][x&1];
-    }
+    CFAColor color(T x, T y) MetalConst { return desc[y&1][x&1]; }
     
     template <typename T>
-    CFAColor color(T pos) MetalConst {
-        return color(pos.x, pos.y);
-    }
+    CFAColor color(T pos) MetalConst { return color(pos.x, pos.y); }
 };
 
 } // namespace MDCStudio
