@@ -93,21 +93,21 @@ private:
             
             // Collect the neighboring ImageRefs in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
             {
-                auto imgLib = _imageLibrary->vend();
-                auto find = imgLib->find(work.imageRef.id);
+                auto lock = std::unique_lock(*_imageLibrary);
+                auto find = _imageLibrary->find(work.imageRef.id);
                 auto it = find;
                 auto rit = std::make_reverse_iterator(find);
                 
                 for (size_t i=0; i<_NeighborImageLoadCount; i++) {
-                    if (it != imgLib->end()) it++;
-                    if (rit != imgLib->rend()) rit++;
+                    if (it != _imageLibrary->end()) it++;
+                    if (rit != _imageLibrary->rend()) rit++;
                     
-                    if (it != imgLib->end()) {
-                        imageRefs.push_back(imgLib->recordGet(it)->ref);
+                    if (it != _imageLibrary->end()) {
+                        imageRefs.push_back(_imageLibrary->recordGet(it)->ref);
                     }
                     
-                    if (rit != imgLib->rend()) {
-                        imageRefs.push_back(imgLib->recordGet(rit)->ref);
+                    if (rit != _imageLibrary->rend()) {
+                        imageRefs.push_back(_imageLibrary->recordGet(rit)->ref);
                     }
                 }
             }

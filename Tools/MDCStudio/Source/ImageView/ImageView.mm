@@ -18,6 +18,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     Image image;
 
 @private
+    ImageCachePtr _imageCache;
     CGFloat _contentsScale;
     
     id<MTLDevice> _device;
@@ -28,10 +29,11 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     MTLRenderPassDepthAttachmentDescriptor* _depthAttachment;
 }
 
-- (instancetype)initWithImageRef:(const ImageRef&)imageRefArg {
+- (instancetype)initWithImageRef:(const ImageRef&)imageRefArg imageCache:(ImageCachePtr)imageCache {
     if (!(self = [super init])) return nil;
     
     imageRef = imageRefArg;
+    _imageCache = imageCache;
     _contentsScale = 1;
     
     [self setOpaque:true];
@@ -49,10 +51,10 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
         [NSBundle bundleForClass:[self class]] error:nil];
     assert(library);
     
-    id<MTLFunction> vertexShader = [library newFunctionWithName:@"MDCStudio::ImageLayerShader::VertexShader"];
+    id<MTLFunction> vertexShader = [library newFunctionWithName:@"MDCStudio::ImageViewShader::VertexShader"];
     assert(vertexShader);
     
-    id<MTLFunction> fragmentShader = [library newFunctionWithName:@"MDCStudio::ImageLayerShader::FragmentShader"];
+    id<MTLFunction> fragmentShader = [library newFunctionWithName:@"MDCStudio::ImageViewShader::FragmentShader"];
     assert(fragmentShader);
     
     MTLRenderPipelineDescriptor* pipelineDescriptor = [MTLRenderPipelineDescriptor new];
@@ -172,9 +174,9 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     ImageLayer* _layer;
 }
 
-- (instancetype)initWithImageRef:(const ImageRef&)imageRef cache:(ImageCachePtr)cache {
+- (instancetype)initWithImageRef:(const ImageRef&)imageRef imageCache:(ImageCachePtr)imageCache {
     if (!(self = [super initWithFrame:{}])) return nil;
-    _layer = [[ImageLayer alloc] initWithImageRef:imageRef];
+    _layer = [[ImageLayer alloc] initWithImageRef:imageRef imageCache:imageCache];
     [self setLayer:_layer];
     [self setWantsLayer:true];
     return self;

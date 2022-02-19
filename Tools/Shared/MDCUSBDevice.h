@@ -1,6 +1,7 @@
 #pragma once
 #include <cassert>
 #include <chrono>
+#include "Lockable.h"
 #include "Toastbox/USB.h"
 #include "Toastbox/USBDevice.h"
 #include "Toastbox/RuntimeError.h"
@@ -9,7 +10,6 @@
 #include "Code/Shared/SD.h"
 #include "Code/Shared/ImgSD.h"
 #include "Code/Shared/ChecksumFletcher32.h"
-#include "Vendor.h"
 
 class MDCUSBDevice {
 public:
@@ -46,6 +46,8 @@ public:
         const STM::Status status = statusGet();
         _mode = status.mode;
     }
+    
+    MDCUSBDevice(MDCUSBDevice&&) = default;
     
     bool operator==(const MDCUSBDevice& x) const {
         return _dev == x._dev;
@@ -457,4 +459,4 @@ private:
     uint8_t _buf[16*1024];
 };
 
-using MDCUSBDevicePtr = std::shared_ptr<MDCTools::Vendor<MDCUSBDevice>>;
+using MDCUSBDevicePtr = std::shared_ptr<MDCTools::Lockable<MDCUSBDevice>>;

@@ -108,7 +108,8 @@ using namespace MDCStudio;
     // Observe image library changes so that we update the image grid
     {
         __weak auto weakSelf = self;
-        _imgLib->vend()->addObserver([=] {
+        auto lock = std::unique_lock(*_imgLib);
+        _imgLib->addObserver([=] {
             auto strongSelf = weakSelf;
             if (!strongSelf) return false;
             dispatch_async(dispatch_get_main_queue(), ^{ [strongSelf _handleImageLibraryChanged]; });
@@ -226,22 +227,22 @@ struct SelectionDelta {
 
 - (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
     auto imageGridLayer = _documentView->imageGridLayer;
-    auto il = _imgLib->vend();
+    auto lock = std::unique_lock(*_imgLib);
     
-    const size_t imgCount = il->recordCount();
+    const size_t imgCount = _imgLib->recordCount();
     if (!imgCount) return;
     
     ImageGridLayerImageIds selectedImageIds = [imageGridLayer selectedImageIds];
     if (selectedImageIds.empty()) return;
     
     const ImageId lastSelectedImgId = *std::prev(selectedImageIds.end());
-    const auto iter = il->find(lastSelectedImgId);
-    if (iter == il->end()) {
+    const auto iter = _imgLib->find(lastSelectedImgId);
+    if (iter == _imgLib->end()) {
         NSLog(@"Image no longer in library");
         return;
     }
     
-    const size_t idx = std::distance(il->begin(), iter);
+    const size_t idx = std::distance(_imgLib->begin(), iter);
     const size_t colCount = [imageGridLayer columnCount];
     const size_t rem = (imgCount % colCount);
     const size_t lastRowCount = (rem ? rem : colCount);
@@ -276,7 +277,7 @@ struct SelectionDelta {
     newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
     
 //    const size_t newIdx = std::min(imgCount-1, idx+[imageGridLayer columnCount]);
-    const ImageId newImgId = il->recordGet(il->begin()+newIdx)->ref.id;
+    const ImageId newImgId = _imgLib->recordGet(_imgLib->begin()+newIdx)->ref.id;
     [_documentView scrollRectToVisible:[imageGridLayer rectForImageAtIndex:newIdx]];
     
     if (!extend) selectedImageIds.clear();
@@ -306,10 +307,10 @@ struct SelectionDelta {
 
 - (void)selectAll:(id)sender {
     auto imageGridLayer = _documentView->imageGridLayer;
-    auto il = _imgLib->vend();
+    auto lock = std::unique_lock(*_imgLib);
     ImageGridLayerImageIds ids;
-    for (auto it=il->begin(); it!=il->end(); it++) {
-        ids.insert(il->recordGet(it)->ref.id);
+    for (auto it=_imgLib->begin(); it!=_imgLib->end(); it++) {
+        ids.insert(_imgLib->recordGet(it)->ref.id);
     }
     [imageGridLayer setSelectedImageIds:ids];
 }

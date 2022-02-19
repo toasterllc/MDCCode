@@ -2,7 +2,7 @@
 #include <forward_list>
 #include "RecordStore.h"
 #include "Code/Shared/Img.h"
-#include "Tools/Shared/Vendor.h"
+#include "Tools/Shared/Lockable.h"
 
 namespace MDCStudio {
 
@@ -143,6 +143,6 @@ private:
     }
 };
 
-using ImageLibraryPtr = std::shared_ptr<MDCTools::Vendor<ImageLibrary>>;
+using ImageLibraryPtr = std::shared_ptr<MDCTools::Lockable<ImageLibrary>>;
 
 } // namespace MDCStudio

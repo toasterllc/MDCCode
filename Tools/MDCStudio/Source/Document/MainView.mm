@@ -216,6 +216,21 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 }
 
 - (void)_sourceListHandleSelectionChanged {
+//    auto selection = [_sourceListView selection];
+//    if (selection.device) {
+//        auto imgLib = selection.device->imageLibrary();
+//        auto lock = std::unique_lock(*imgLib);
+//        const ImageRef& imageRef = imgLib->recordGet(imgLib->begin())->ref;
+//        
+//        ImageView* imageView = [[ImageView alloc] initWithImageRef:imageRef
+//            imageCache:selection.device->imageCache()];
+//        
+//        [self setContentView:imageView];
+//    
+//    } else {
+//        [self setContentView:nil];
+//    }
+    
 //    {
 //        auto imgLibPtr = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
 //        auto imgLib = imgLibPtr->vend();
