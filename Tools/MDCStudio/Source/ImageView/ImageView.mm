@@ -77,10 +77,10 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     id<CAMetalDrawable> drawable = [self nextDrawable];
     assert(drawable);
     
-    id<MTLTexture> drawableTexture = [drawable texture];
-    assert(drawableTexture);
+    id<MTLTexture> drawableTxt = [drawable texture];
+    assert(drawableTxt);
     
-    auto thumb = _renderer.textureCreate(MTLPixelFormatBGRA8Unorm, [drawableTexture width], [drawableTexture height],
+    auto thumbTxt = _renderer.textureCreate(MTLPixelFormatBGRA8Unorm, [drawableTxt width], [drawableTxt height],
         MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
     
     constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
@@ -90,8 +90,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
         .thumbHeight = ImageThumb::ThumbHeight,
         .dataOff = 0,
     };
-    RenderThumb::TextureFromRGB3(_renderer, thumbOpts, thumbBuf, thumb);
-    _renderer.copy(thumb, drawableTexture);
+    RenderThumb::TextureFromRGB3(_renderer, thumbOpts, thumbBuf, thumbTxt);
+    _renderer.copy(thumbTxt, drawableTxt);
     _renderer.present(drawable);
     _renderer.commitAndWait();
     

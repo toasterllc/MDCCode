@@ -41,13 +41,10 @@ using ThumbFile = Mmap;
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
     id<MTLRenderPipelineState> _pipelineState;
-    id<MTLDepthStencilState> _depthStencilState;
-    id<MTLTexture> _depthTexture;
     id<MTLTexture> _outlineTexture;
     id<MTLTexture> _maskTexture;
     id<MTLTexture> _shadowTexture;
     id<MTLTexture> _selectionTexture;
-    MTLRenderPassDepthAttachmentDescriptor* _depthAttachment;
     
     CGFloat _contentsScale;
     
@@ -123,8 +120,6 @@ using ThumbFile = Mmap;
     [pipelineDescriptor setVertexFunction:vertexShader];
     [pipelineDescriptor setFragmentFunction:fragmentShader];
     
-    [pipelineDescriptor setDepthAttachmentPixelFormat:MTLPixelFormatDepth32Float];
-    
     [[pipelineDescriptor colorAttachments][0] setPixelFormat:_PixelFormat];
     [[pipelineDescriptor colorAttachments][0] setBlendingEnabled:true];
     
@@ -158,16 +153,6 @@ using ThumbFile = Mmap;
     
     _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
     assert(_pipelineState);
-    
-    MTLDepthStencilDescriptor* depthStencilDescriptor = [MTLDepthStencilDescriptor new];
-    [depthStencilDescriptor setDepthCompareFunction:MTLCompareFunctionLess];
-    [depthStencilDescriptor setDepthWriteEnabled:true];
-    _depthStencilState = [_device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
-    
-    _depthAttachment = [MTLRenderPassDepthAttachmentDescriptor new];
-    [_depthAttachment setLoadAction:MTLLoadActionClear];
-    [_depthAttachment setStoreAction:MTLStoreActionDontCare];
-    [_depthAttachment setClearDepth:1];
     
     const uint32_t excess = (uint32_t)([_shadowTexture width]-[_maskTexture width]);
     _cellWidth = _ThumbWidth+excess;
@@ -211,28 +196,6 @@ using ThumbFile = Mmap;
     auto lock = std::unique_lock(*_imgLib);
     _grid.setElementCount((int32_t)_imgLib->recordCount());
     _grid.recompute();
-}
-
-- (MTLRenderPassDepthAttachmentDescriptor*)_depthAttachmentForDrawableTexture:(id<MTLTexture>)drawableTexture {
-    NSParameterAssert(drawableTexture);
-    
-    const size_t width = [drawableTexture width];
-    const size_t height = [drawableTexture height];
-    if (!_depthTexture || width!=[_depthTexture width] || height!=[_depthTexture height]) {
-        // The _depthTexture doesn't exist or our size changed, so re-create the depth texture
-        MTLTextureDescriptor* desc =
-            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
-            width:width height:height mipmapped:false];
-        [desc setTextureType:MTLTextureType2D];
-        [desc setSampleCount:1];
-        [desc setUsage:MTLTextureUsageUnknown];
-        [desc setStorageMode:MTLStorageModePrivate];
-        
-        _depthTexture = [_device newTextureWithDescriptor:desc];
-        [_depthAttachment setTexture:_depthTexture];
-    }
-    
-    return _depthAttachment;
 }
 
 static Grid::Rect _GridRectFromCGRect(CGRect rect, CGFloat scale) {
@@ -286,15 +249,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     id<MTLTexture> drawableTexture = [drawable texture];
     assert(drawableTexture);
     
-    // Get/update our depth attachment
-    MTLRenderPassDepthAttachmentDescriptor* depthAttachment = [self _depthAttachmentForDrawableTexture:drawableTexture];
-    assert(depthAttachment);
-    
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     
     {
         MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
-        [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
         [[renderPassDescriptor colorAttachments][0] setClearColor:{WindowBackgroundColor.lsrgb[0], WindowBackgroundColor.lsrgb[1], WindowBackgroundColor.lsrgb[2], 1}];
@@ -305,7 +263,6 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         [renderEncoder setRenderPipelineState:_pipelineState];
-        [renderEncoder setDepthStencilState:_depthStencilState];
         [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
         [renderEncoder setCullMode:MTLCullModeNone];
         [renderEncoder endEncoding];
@@ -314,7 +271,6 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     const Grid::IndexRange indexRange = _grid.indexRangeForIndexRect(_grid.indexRectForRect(_GridRectFromCGRect(frame, _contentsScale)));
     if (indexRange.count) {
         MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
-        [renderPassDescriptor setDepthAttachment:depthAttachment];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
@@ -372,7 +328,6 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
             
             id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
             [renderEncoder setRenderPipelineState:_pipelineState];
-            [renderEncoder setDepthStencilState:_depthStencilState];
             [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
             [renderEncoder setCullMode:MTLCullModeNone];
             
