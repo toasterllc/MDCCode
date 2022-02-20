@@ -9,6 +9,12 @@ using namespace MDCStudio;
 // _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
 // so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+static const simd::float4 _BackgroundColor = {
+    (float)WindowBackgroundColor.lsrgb[0],
+    (float)WindowBackgroundColor.lsrgb[1],
+    (float)WindowBackgroundColor.lsrgb[2],
+    1
+};
 
 @interface ImageLayer : CAMetalLayer
 @end
@@ -17,13 +23,16 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 @public
     ImageThumb imageThumb;
     ImagePtr image;
+    
+    // visibleBounds: for handling NSWindow 'full size' content, where the window
+    // content is positioned below the transparent window titlebar for aesthetics
+    CGRect visibleBounds;
 
 @private
     ImageCachePtr _imageCache;
     CGFloat _contentsScale;
     
     id<MTLDevice> _device;
-    id<MTLCommandQueue> _commandQueue;
     
     MDCTools::Renderer _renderer;
 }
@@ -44,18 +53,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     [self setDevice:_device];
     [self setPixelFormat:_PixelFormat];
     
-    _commandQueue = [_device newCommandQueue];
-    
-    id<MTLLibrary> library = [_device newDefaultLibrary];
-    assert(library);
-    
-    id<MTLFunction> vertexShader = [library newFunctionWithName:@"MDCStudio::ImageViewShader::VertexShader"];
-    assert(vertexShader);
-    
-    id<MTLFunction> fragmentShader = [library newFunctionWithName:@"MDCStudio::ImageViewShader::FragmentShader"];
-    assert(fragmentShader);
-    
-    _renderer = MDCTools::Renderer(_device, library, _commandQueue);
+    _renderer = MDCTools::Renderer(_device, [_device newDefaultLibrary], [_device newCommandQueue]);
     return self;
 }
 
@@ -80,7 +78,24 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     id<MTLTexture> drawableTxt = [drawable texture];
     assert(drawableTxt);
     
-    auto thumbTxt = _renderer.textureCreate(MTLPixelFormatBGRA8Unorm, [drawableTxt width], [drawableTxt height],
+    // See visibleBounds comment above
+    const size_t dstWidth = std::min((size_t)lround(visibleBounds.size.width*_contentsScale), (size_t)[drawableTxt width]);
+    const size_t dstHeight = std::min((size_t)lround(visibleBounds.size.height*_contentsScale), (size_t)[drawableTxt height]);
+    
+    const float srcAspect = (float)ImageThumb::ThumbWidth/ImageThumb::ThumbHeight;
+    const float dstAspect = (float)dstWidth/dstHeight;
+    
+    size_t imageWidth = dstWidth;
+    size_t imageHeight = dstHeight;
+    if (srcAspect > dstAspect) {
+        // Destination width determines size
+        imageHeight = lround(imageWidth/srcAspect);
+    } else {
+        // Destination height determines size
+        imageWidth = lround(imageHeight*srcAspect);
+    }
+    
+    auto imageTxt = _renderer.textureCreate(MTLPixelFormatBGRA8Unorm, imageWidth, imageHeight,
         MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
     
     constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
@@ -90,8 +105,24 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
         .thumbHeight = ImageThumb::ThumbHeight,
         .dataOff = 0,
     };
-    RenderThumb::TextureFromRGB3(_renderer, thumbOpts, thumbBuf, thumbTxt);
-    _renderer.copy(thumbTxt, drawableTxt);
+    RenderThumb::TextureFromRGB3(_renderer, thumbOpts, thumbBuf, imageTxt);
+    
+    // topInset is for handling NSWindow 'full size' content; see visibleBounds comment above
+    const size_t topInset = [drawableTxt height]-dstHeight;
+    
+    const simd::int2 off = {
+        (simd::int1)((dstWidth-imageWidth)/2),
+        (simd::int1)topInset+(simd::int1)((dstHeight-imageHeight)/2)
+    };
+    
+    _renderer.render("MDCStudio::ImageViewShader::FragmentShader", drawableTxt,
+        // Buffer args
+        off,
+        _BackgroundColor,
+        // Texture args
+        imageTxt
+    );
+    
     _renderer.present(drawable);
     _renderer.commitAndWait();
     
@@ -118,7 +149,22 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     _layer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageCache:imageCache];
     [self setLayer:_layer];
     [self setWantsLayer:true];
+    
+    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
+        NSLog(@"ImageView: %f", [self frame].size.height);
+    }];
+    
     return self;
+}
+
+- (void)setFrame:(NSRect)frame {
+    [super setFrame:frame];
+    
+    const CGRect bounds = [self bounds];
+    const CGRect contentLayoutRect = [self convertRect:[[self window] contentLayoutRect] fromView:nil];
+//    NSLog(@"contentLayoutRect: %@", NSStringFromRect([[self window] contentLayoutRect]));
+//    NSLog(@"contentView frame: %@", NSStringFromRect([[[self window] contentView] frame]));
+    _layer->visibleBounds = CGRectIntersection(bounds, contentLayoutRect);
 }
 
 - (void)viewDidChangeBackingProperties {
