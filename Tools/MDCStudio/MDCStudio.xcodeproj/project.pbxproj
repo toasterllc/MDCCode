@@ -173,6 +173,7 @@
 		55F8D01C27BF642900757165 /* CFA.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFA.h; sourceTree = "<group>"; };
 		55F8D03027BF9F8000757165 /* ImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageCache.h; sourceTree = "<group>"; };
 		55F8D05827C0E07900757165 /* Lockable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lockable.h; sourceTree = "<group>"; };
+		55F8D09227C2EE9D00757165 /* ImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageSource.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -376,6 +377,7 @@
 				55F8D01B27BF5F0700757165 /* Image.h */,
 				55F8D03027BF9F8000757165 /* ImageCache.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
+				55F8D09227C2EE9D00757165 /* ImageSource.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
 				55F8D01C27BF642900757165 /* CFA.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,

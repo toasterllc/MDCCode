@@ -73,9 +73,9 @@ using namespace MDCStudio;
 //        [self setContentView:imageGridView];
 //    }
     
-    auto selection = [_sourceListView selection];
-    if (selection.device) {
-        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imageLibrary()];
+    ImageSourcePtr selection = [_sourceListView selection];
+    if (selection) {
+        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
         [imageGridView setDelegate:self];
         [_mainView setContentView:imageGridView];
     
@@ -84,34 +84,12 @@ using namespace MDCStudio;
     }
 }
 
-- (ImageLibraryPtr)_currentImageLibrary {
-    #warning TODO: figure out a better way to get the ImageCache so we don't have to do different things for a MDCDevicePtr and a local image library. should ImageLibrary contain the ImageCache?
-    auto selection = [_sourceListView selection];
-    if (MDCDevicePtr device = selection.device) {
-        return selection.device->imageLibrary();
-    
-    } else {
-        // TODO: implement
-        abort();
-    }
-}
-
-- (ImageCachePtr)_currentImageCache {
-    #warning TODO: figure out a better way to get the ImageCache so we don't have to do different things for a MDCDevicePtr and a local image library. should ImageLibrary contain the ImageCache?
-    auto selection = [_sourceListView selection];
-    if (MDCDevicePtr device = selection.device) {
-        return selection.device->imageCache();
-    
-    } else {
-        // TODO: implement
-        abort();
-    }
-}
-
 // _openImage: open a particular image id, or an image offset from a particular image id
 - (void)_openImage:(ImageId)imageId delta:(ssize_t)delta {
-    ImageLibraryPtr imageLibrary = [self _currentImageLibrary];
-    ImageCachePtr imageCache = [self _currentImageCache];
+    ImageSourcePtr imageSource = [_sourceListView selection];
+    if (!imageSource) return;
+    
+    ImageLibraryPtr imageLibrary = imageSource->imageLibrary();
     {
         auto lock = std::unique_lock(*imageLibrary);
         if (imageLibrary->empty()) return;
@@ -124,7 +102,7 @@ using namespace MDCStudio;
         delta = std::clamp(delta, deltaMin, deltaMax);
         
         const ImageThumb& imageThumb = *imageLibrary->recordGet(find+delta);
-        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageCache:imageCache];
+        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageSource:imageSource];
         [imageView setDelegate:self];
         [_mainView setContentView:imageView];
     }
@@ -133,8 +111,6 @@ using namespace MDCStudio;
 // MARK: - ImageGridViewDelegate
 
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
-    ImageLibraryPtr imageLibrary = [self _currentImageLibrary];
-    ImageCachePtr imageCache = [self _currentImageCache];
     const ImageGridViewImageIds& selectedImageIds = [imageGridView selectedImageIds];
     if (selectedImageIds.empty()) return;
     const ImageId imageId = *selectedImageIds.begin();

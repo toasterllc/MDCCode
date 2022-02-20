@@ -1,7 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "Image.h"
-#import "ImageLibrary.h"
-#import "ImageCache.h"
+#import "ImageSource.h"
 @class ImageView;
 
 @protocol ImageViewDelegate
@@ -12,7 +11,7 @@
 
 @interface ImageView : NSView
 - (instancetype)initWithImageThumb:(const MDCStudio::ImageThumb&)imageThumb
-    imageCache:(MDCStudio::ImageCachePtr)imageCache;
+    imageSource:(MDCStudio::ImageSourcePtr)imageSource;
 
 - (const MDCStudio::ImageThumb&)imageThumb;
 

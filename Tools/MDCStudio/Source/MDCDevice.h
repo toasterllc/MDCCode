@@ -11,10 +11,11 @@
 #import "ImagePipeline/ImagePipeline.h"
 #import "ImagePipeline/RenderThumb.h"
 #import "ImageCache.h"
+#import "ImageSource.h"
 
 namespace MDCStudio {
 
-class MDCDevice : public std::enable_shared_from_this<MDCDevice> {
+class MDCDevice : public std::enable_shared_from_this<MDCDevice>, public ImageSource {
 public:
     using Observer = std::function<bool()>;
     
@@ -74,9 +75,9 @@ public:
     }
     
     MDCUSBDevicePtr device() { return _dev; }
-    ImageLibraryPtr imageLibrary() const { return _imageLibrary; }
+    ImageLibraryPtr imageLibrary() override { return _imageLibrary; }
     
-    ImageCachePtr imageCache() {
+    ImageCachePtr imageCache() override {
         // We're implementing this lazily because shared_from_this()
         // can't be called from the constructor
         auto lock = std::unique_lock(_state.lock);
