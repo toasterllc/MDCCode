@@ -7,11 +7,6 @@
 
 namespace MDCStudio {
 
-//class ImageProvider {
-//public:
-//    
-//};
-
 class ImageCache {
 public:
     using ImageProvider = std::function<ImagePtr(const ImageRef&)>;
