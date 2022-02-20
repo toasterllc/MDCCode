@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "MDCDevice.h"
+#import "ImageSource.h"
 @class SourceListView;
 
 @protocol SourceListViewDelegate
@@ -7,12 +8,7 @@
 - (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView;
 @end
 
-struct SourceListViewSelection {
-    MDCStudio::MDCDevicePtr device;
-    // library
-};
-
 @interface SourceListView : NSView
 - (void)setDelegate:(id<SourceListViewDelegate>)delegate;
-- (SourceListViewSelection)selection;
+- (MDCStudio::ImageSourcePtr)selection;
 @end

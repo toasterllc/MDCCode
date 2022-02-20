@@ -58,16 +58,16 @@ using namespace MDCStudio;
 @implementation ImageGridView {
     IBOutlet NSView* _nibView;
     IBOutlet ImageGridDocumentView* _documentView;
-    ImageLibraryPtr _imageLibrary;
+    ImageSourcePtr _imageSource;
     __weak id<ImageGridViewDelegate> _delegate;
 }
 
 // MARK: - Creation
 
-- (instancetype)initWithImageLibrary:(ImageLibraryPtr)imgLib {
+- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
     if (!(self = [super initWithFrame:{}])) return nil;
     
-    _imageLibrary = imgLib;
+    _imageSource = imageSource;
     
     // Load from nib
     {
@@ -87,7 +87,7 @@ using namespace MDCStudio;
         CALayer* rootLayer = [CALayer new];
 //        [rootLayer setBackgroundColor:[[NSColor redColor] CGColor]];
         
-        ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:_imageLibrary];
+        ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:_imageSource->imageLibrary()];
         [rootLayer addSublayer:imageGridLayer];
         
         CALayer* selectionRectLayer = [CALayer new];
@@ -109,8 +109,9 @@ using namespace MDCStudio;
     // Observe image library changes so that we update the image grid
     {
         __weak auto weakSelf = self;
-        auto lock = std::unique_lock(*_imageLibrary);
-        _imageLibrary->addObserver([=] {
+        ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
+        auto lock = std::unique_lock(*imageLibrary);
+        imageLibrary->addObserver([=] {
             auto strongSelf = weakSelf;
             if (!strongSelf) return false;
             dispatch_async(dispatch_get_main_queue(), ^{ [strongSelf _handleImageLibraryChanged]; });
@@ -175,8 +176,8 @@ using namespace MDCStudio;
     _delegate = delegate;
 }
 
-- (ImageLibraryPtr)imageLibrary {
-    return _imageLibrary;
+- (ImageSourcePtr)imageSource {
+    return _imageSource;
 }
 
 - (const ImageGridViewImageIds&)selectedImageIds {
@@ -250,22 +251,23 @@ struct SelectionDelta {
 
 - (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
     auto imageGridLayer = _documentView->imageGridLayer;
-    auto lock = std::unique_lock(*_imageLibrary);
+    ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
+    auto lock = std::unique_lock(*imageLibrary);
     
-    const size_t imgCount = _imageLibrary->recordCount();
+    const size_t imgCount = imageLibrary->recordCount();
     if (!imgCount) return;
     
     ImageGridLayerImageIds selectedImageIds = [imageGridLayer selectedImageIds];
     if (selectedImageIds.empty()) return;
     
     const ImageId lastSelectedImgId = *std::prev(selectedImageIds.end());
-    const auto iter = _imageLibrary->find(lastSelectedImgId);
-    if (iter == _imageLibrary->end()) {
+    const auto iter = imageLibrary->find(lastSelectedImgId);
+    if (iter == imageLibrary->end()) {
         NSLog(@"Image no longer in library");
         return;
     }
     
-    const size_t idx = std::distance(_imageLibrary->begin(), iter);
+    const size_t idx = std::distance(imageLibrary->begin(), iter);
     const size_t colCount = [imageGridLayer columnCount];
     const size_t rem = (imgCount % colCount);
     const size_t lastRowCount = (rem ? rem : colCount);
@@ -300,7 +302,7 @@ struct SelectionDelta {
     newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
     
 //    const size_t newIdx = std::min(imgCount-1, idx+[imageGridLayer columnCount]);
-    const ImageId newImgId = _imageLibrary->recordGet(_imageLibrary->begin()+newIdx)->ref.id;
+    const ImageId newImgId = imageLibrary->recordGet(imageLibrary->begin()+newIdx)->ref.id;
     [_documentView scrollRectToVisible:[imageGridLayer rectForImageAtIndex:newIdx]];
     
     if (!extend) selectedImageIds.clear();
@@ -329,11 +331,12 @@ struct SelectionDelta {
 }
 
 - (void)selectAll:(id)sender {
-    auto imageGridLayer = _documentView->imageGridLayer;
-    auto lock = std::unique_lock(*_imageLibrary);
+    ImageGridLayer* imageGridLayer = _documentView->imageGridLayer;
+    ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
+    auto lock = std::unique_lock(*imageLibrary);
     ImageGridLayerImageIds ids;
-    for (auto it=_imageLibrary->begin(); it!=_imageLibrary->end(); it++) {
-        ids.insert(_imageLibrary->recordGet(it)->ref.id);
+    for (auto it=imageLibrary->begin(); it!=imageLibrary->end(); it++) {
+        ids.insert(imageLibrary->recordGet(it)->ref.id);
     }
     [imageGridLayer setSelectedImageIds:ids];
 }

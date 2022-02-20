@@ -30,17 +30,17 @@ static const simd::float4 _BackgroundColor = {
 
 @private
     ImagePtr _image;
-    ImageCachePtr _imageCache;
+    ImageSourcePtr _imageSource;
     CGFloat _contentsScale;
     
     MDCTools::Renderer _renderer;
 }
 
-- (instancetype)initWithImageThumb:(const ImageThumb&)imageThumbArg imageCache:(ImageCachePtr)imageCache {
+- (instancetype)initWithImageThumb:(const ImageThumb&)imageThumbArg imageSource:(ImageSourcePtr)imageSource {
     if (!(self = [super init])) return nil;
     
     imageThumb = imageThumbArg;
-    _imageCache = imageCache;
+    _imageSource = imageSource;
     _contentsScale = 1;
     
     [self setOpaque:true];
@@ -98,7 +98,7 @@ static const simd::float4 _BackgroundColor = {
     // Fetch the image from the cache, if we don't have _image yet
     if (!_image) {
         __weak auto weakSelf = self;
-        _image = _imageCache->imageForImageRef(imageThumb.ref, [=] (ImagePtr image) {
+        _image = _imageSource->imageCache()->imageForImageRef(imageThumb.ref, [=] (ImagePtr image) {
             dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf _handleImageLoaded:image]; });
         });
     }
@@ -176,10 +176,10 @@ static const simd::float4 _BackgroundColor = {
 }
 
 - (instancetype)initWithImageThumb:(const MDCStudio::ImageThumb&)imageThumb
-    imageCache:(MDCStudio::ImageCachePtr)imageCache {
+    imageSource:(MDCStudio::ImageSourcePtr)imageSource {
     
     if (!(self = [super initWithFrame:{}])) return nil;
-    _layer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageCache:imageCache];
+    _layer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
     [self setLayer:_layer];
     [self setWantsLayer:true];
     

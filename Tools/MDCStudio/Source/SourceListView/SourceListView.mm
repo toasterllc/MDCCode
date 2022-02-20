@@ -241,14 +241,12 @@ using namespace MDCStudio;
     _delegate = delegate;
 }
 
-- (SourceListViewSelection)selection {
+- (ImageSourcePtr)selection {
     const NSInteger selectedRow = [_outlineView selectedRow];
     if (selectedRow < 0) return {};
     
     if (Device* dev = CastOrNil<Device>([_outlineView itemAtRow:selectedRow])) {
-        return SourceListViewSelection{
-            .device = dev->device,
-        };
+        return dev->device;
     }
     
     return {};

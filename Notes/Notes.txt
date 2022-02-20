@@ -1,11 +1,8 @@
 - Rev4 Todo
     
-    - MDCStudio: switch to delegate model:
-        - SourceListView
-        - ImageGridView
-        - ResizerView
-    
     - MDCStudio: move image cache to image library?
+    
+    - MDCStudio: create ImageSource that wraps ImageCache+ImageLibrary, and pass that around
     
     - MDCStudio: merge ImageGridLayer into ImageGridView, the same as we did for ImageView
     
@@ -68,6 +65,11 @@
         √ Select-all
         √ Shift/command selection to add/remove selected items
         √ Drag-select should autoscroll the scroll view
+    
+    √ MDCStudio: switch to delegate model:
+        √ SourceListView
+        √ ImageGridView
+        X ResizerView
     
     √ MDCStudio: prevent selection layer from being clipped
     
