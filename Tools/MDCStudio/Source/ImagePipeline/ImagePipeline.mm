@@ -129,8 +129,8 @@ static simd::float3x3 simdForMat(const Mat<double,3,3>& m) {
 namespace MDCStudio::ImagePipeline {
 
 Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts) {
-    const uint32_t w = rawImg.width;
-    const uint32_t h = rawImg.height;
+    const size_t w = rawImg.width;
+    const size_t h = rawImg.height;
     
     Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
     

@@ -4,6 +4,7 @@
 #import <MetalKit/MetalKit.h>
 #import "Util.h"
 #import "ImagePipeline/RenderThumb.h"
+#import "ImagePipeline/ImagePipeline.h"
 using namespace MDCStudio;
 
 // _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
@@ -22,17 +23,15 @@ static const simd::float4 _BackgroundColor = {
 @implementation ImageLayer {
 @public
     ImageThumb imageThumb;
-    ImagePtr image;
     
     // visibleBounds: for handling NSWindow 'full size' content, where the window
     // content is positioned below the transparent window titlebar for aesthetics
     CGRect visibleBounds;
 
 @private
+    ImagePtr _image;
     ImageCachePtr _imageCache;
     CGFloat _contentsScale;
-    
-    id<MTLDevice> _device;
     
     MDCTools::Renderer _renderer;
 }
@@ -48,12 +47,12 @@ static const simd::float4 _BackgroundColor = {
     [self setActions:LayerNullActions];
     [self setNeedsDisplayOnBoundsChange:true];
     
-    _device = MTLCreateSystemDefaultDevice();
-    assert(_device);
-    [self setDevice:_device];
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    assert(device);
+    [self setDevice:device];
     [self setPixelFormat:_PixelFormat];
     
-    _renderer = MDCTools::Renderer(_device, [_device newDefaultLibrary], [_device newCommandQueue]);
+    _renderer = MDCTools::Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     return self;
 }
 
@@ -87,29 +86,57 @@ static const simd::float4 _BackgroundColor = {
     
     size_t imageWidth = dstWidth;
     size_t imageHeight = dstHeight;
-    if (srcAspect > dstAspect) {
-        // Destination width determines size
-        imageHeight = lround(imageWidth/srcAspect);
-    } else {
-        // Destination height determines size
-        imageWidth = lround(imageHeight*srcAspect);
-    }
+    
+    // Destination width determines size
+    if (srcAspect > dstAspect) imageHeight = lround(imageWidth/srcAspect);
+    // Destination height determines size
+    else imageWidth = lround(imageHeight*srcAspect);
     
     auto imageTxt = _renderer.textureCreate(MTLPixelFormatBGRA8Unorm, imageWidth, imageHeight,
         MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
     
-    constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
-    id<MTLBuffer> thumbBuf = [_device newBufferWithBytes:imageThumb.thumb length:sizeof(imageThumb.thumb) options:BufOpts];
-    const RenderThumb::Options thumbOpts = {
-        .thumbWidth = ImageThumb::ThumbWidth,
-        .thumbHeight = ImageThumb::ThumbHeight,
-        .dataOff = 0,
-    };
-    RenderThumb::TextureFromRGB3(_renderer, thumbOpts, thumbBuf, imageTxt);
+    // Fetch the image from the cache, if we don't have _image yet
+    if (!_image) {
+        __weak auto weakSelf = self;
+        _image = _imageCache->imageForImageRef(imageThumb.ref, [=] (ImagePtr image) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf _handleImageLoaded:image]; });
+        });
+    }
+    
+    // Render the actual image if we have it
+    if (_image) {
+        Pipeline::RawImage rawImage = {
+            .cfaDesc    = _image->cfaDesc,
+            .width      = _image->width,
+            .height     = _image->height,
+            .pixels     = (ImagePixel*)(_image->data.get() + _image->off),
+        };
+        
+        const Pipeline::Options pipelineOpts = {
+            .reconstructHighlights  = { .en = true, },
+            .debayerLMMSE           = { .applyGamma = true, },
+        };
+        
+        Pipeline::Result renderResult = Pipeline::Run(_renderer, rawImage, pipelineOpts);
+        
+        // Resample
+        MPSImageLanczosScale* resample = [[MPSImageLanczosScale alloc] initWithDevice:_renderer.dev];
+        [resample encodeToCommandBuffer:_renderer.cmdBuf() sourceTexture:renderResult.txt destinationTexture:imageTxt];
+    
+    // Otherwise, render the thumbnail
+    } else {
+        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
+        id<MTLBuffer> thumbBuf = [_renderer.dev newBufferWithBytes:imageThumb.thumb length:sizeof(imageThumb.thumb) options:BufOpts];
+        const RenderThumb::Options thumbOpts = {
+            .thumbWidth = ImageThumb::ThumbWidth,
+            .thumbHeight = ImageThumb::ThumbHeight,
+            .dataOff = 0,
+        };
+        RenderThumb::TextureFromRGB3(_renderer, thumbOpts, thumbBuf, imageTxt);
+    }
     
     // topInset is for handling NSWindow 'full size' content; see visibleBounds comment above
     const size_t topInset = [drawableTxt height]-dstHeight;
-    
     const simd::int2 off = {
         (simd::int1)((dstWidth-imageWidth)/2),
         (simd::int1)topInset+(simd::int1)((dstHeight-imageHeight)/2)
@@ -128,6 +155,11 @@ static const simd::float4 _BackgroundColor = {
     
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
     printf("Took %ju ms\n", (uintmax_t)durationMs);
+}
+
+- (void)_handleImageLoaded:(ImagePtr)image {
+    _image = image;
+    [self setNeedsDisplay];
 }
 
 - (void)setContentsScale:(CGFloat)scale {
@@ -150,9 +182,9 @@ static const simd::float4 _BackgroundColor = {
     [self setLayer:_layer];
     [self setWantsLayer:true];
     
-    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
-        NSLog(@"ImageView: %f", [self frame].size.height);
-    }];
+//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
+//        NSLog(@"ImageView: %f", [self frame].size.height);
+//    }];
     
     return self;
 }
@@ -162,8 +194,6 @@ static const simd::float4 _BackgroundColor = {
     
     const CGRect bounds = [self bounds];
     const CGRect contentLayoutRect = [self convertRect:[[self window] contentLayoutRect] fromView:nil];
-//    NSLog(@"contentLayoutRect: %@", NSStringFromRect([[self window] contentLayoutRect]));
-//    NSLog(@"contentView frame: %@", NSStringFromRect([[[self window] contentView] frame]));
     _layer->visibleBounds = CGRectIntersection(bounds, contentLayoutRect);
 }
 
