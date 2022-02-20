@@ -2,7 +2,10 @@
 #import "MDCDevice.h"
 @class SourceListView;
 
-using SourceListViewSelectionChangedHandler = void(^)(SourceListView*);
+@protocol SourceListViewDelegate
+@required
+- (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView;
+@end
 
 struct SourceListViewSelection {
     MDCStudio::MDCDevicePtr device;
@@ -10,6 +13,6 @@ struct SourceListViewSelection {
 };
 
 @interface SourceListView : NSView
-- (void)setSelectionChangedHandler:(SourceListViewSelectionChangedHandler)handler;
+- (void)setDelegate:(id<SourceListViewDelegate>)delegate;
 - (SourceListViewSelection)selection;
 @end

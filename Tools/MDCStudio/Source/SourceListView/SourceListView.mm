@@ -133,7 +133,7 @@ using namespace MDCStudio;
     Section* _librariesSection;
     std::vector<Item*> _outlineItems;
     
-    SourceListViewSelectionChangedHandler _selectionChangedHandler;
+    __weak id<SourceListViewDelegate> _delegate;
 }
 
 // MARK: - Creation
@@ -237,8 +237,8 @@ using namespace MDCStudio;
 
 // MARK: - Methods
 
-- (void)setSelectionChangedHandler:(SourceListViewSelectionChangedHandler)handler {
-    _selectionChangedHandler = handler;
+- (void)setDelegate:(id<SourceListViewDelegate>)delegate {
+    _delegate = delegate;
 }
 
 - (SourceListViewSelection)selection {
@@ -413,9 +413,7 @@ using namespace MDCStudio;
 //}
 
 - (void)outlineViewSelectionDidChange:(NSNotification*)note {
-    if (_selectionChangedHandler) {
-        _selectionChangedHandler(self);
-    }
+    [_delegate sourceListViewSelectionChanged:self];
 }
 
 @end

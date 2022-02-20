@@ -5,7 +5,7 @@
 #import "ImageView/ImageView.h"
 using namespace MDCStudio;
 
-@interface Document () <ImageViewDelegate>
+@interface Document () <SourceListViewDelegate, ImageViewDelegate>
 @end
 
 @implementation Document {
@@ -19,14 +19,10 @@ using namespace MDCStudio;
 
 - (void)awakeFromNib {
     _sourceListView = [_mainView sourceListView];
-    
-    __weak auto weakSelf = self;
-    [_sourceListView setSelectionChangedHandler:^(SourceListView*) {
-        [weakSelf _sourceListHandleSelectionChanged];
-    }];
+    [_sourceListView setDelegate:self];
     
     // Handle whatever is first selected
-    [self _sourceListHandleSelectionChanged];
+    [self sourceListViewSelectionChanged:_sourceListView];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)item {
@@ -44,7 +40,7 @@ using namespace MDCStudio;
     return @"MDCStudio";
 }
 
-- (void)_sourceListHandleSelectionChanged {
+- (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
 //    auto selection = [_sourceListView selection];
 //    if (selection.device) {
 //        auto imgLib = selection.device->imageLibrary();
@@ -117,56 +113,45 @@ using namespace MDCStudio;
     }
 }
 
+// _openImage: open a particular image id, or an image offset from a particular image id
+- (void)_openImage:(ImageId)imageId delta:(ssize_t)delta {
+    ImageLibraryPtr imageLibrary = [self _currentImageLibrary];
+    ImageCachePtr imageCache = [self _currentImageCache];
+    {
+        auto lock = std::unique_lock(*imageLibrary);
+        if (imageLibrary->empty()) return;
+        
+        auto find = imageLibrary->find(imageId);
+        if (find == imageLibrary->end()) return;
+        
+        const ssize_t deltaMin = std::distance(find, imageLibrary->begin());
+        const ssize_t deltaMax = std::distance(find, std::prev(imageLibrary->end()));
+        delta = std::clamp(delta, deltaMin, deltaMax);
+        
+        const ImageThumb& imageThumb = *imageLibrary->recordGet(find+delta);
+        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageCache:imageCache];
+        [imageView setDelegate:self];
+        [_mainView setContentView:imageView];
+    }
+}
+
 - (void)_imageGridHandleOpenImage:(ImageGridView*)imageGridView {
     ImageLibraryPtr imageLibrary = [self _currentImageLibrary];
     ImageCachePtr imageCache = [self _currentImageCache];
     const ImageGridViewImageIds& selectedImageIds = [imageGridView selectedImageIds];
     if (selectedImageIds.empty()) return;
     const ImageId imageId = *selectedImageIds.begin();
-    {
-        auto lock = std::unique_lock(*imageLibrary);
-        auto find = imageLibrary->find(imageId);
-        if (find == imageLibrary->end()) return;
-        const ImageThumb& imageThumb = *imageLibrary->recordGet(find);
-        
-        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageCache:imageCache];
-        [imageView setDelegate:self];
-        [_mainView setContentView:imageView];
-    }
+    [self _openImage:imageId delta:0];
 }
 
 // MARK: - ImageViewDelegate
 
 - (void)imageViewPreviousImage:(ImageView*)imageView {
-    ImageLibraryPtr imageLibrary = [self _currentImageLibrary];
-    ImageCachePtr imageCache = [self _currentImageCache];
-    {
-        auto lock = std::unique_lock(*imageLibrary);
-        auto find = imageLibrary->find([imageView imageThumb].ref.id);
-        if (find==imageLibrary->end() || find==imageLibrary->begin()) return;
-        
-        const ImageThumb& imageThumb = *imageLibrary->recordGet(std::prev(find));
-        NSLog(@"Showing image %d", (int)imageThumb.ref.id);
-        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageCache:imageCache];
-        [imageView setDelegate:self];
-        [_mainView setContentView:imageView];
-    }
+    [self _openImage:[imageView imageThumb].ref.id delta:-1];
 }
 
 - (void)imageViewNextImage:(ImageView*)imageView {
-    ImageLibraryPtr imageLibrary = [self _currentImageLibrary];
-    ImageCachePtr imageCache = [self _currentImageCache];
-    {
-        auto lock = std::unique_lock(*imageLibrary);
-        auto find = imageLibrary->find([imageView imageThumb].ref.id);
-        if (find==imageLibrary->end() || find==std::prev(imageLibrary->end())) return;
-        
-        const ImageThumb& imageThumb = *imageLibrary->recordGet(std::next(find));
-        NSLog(@"Showing image %d", (int)imageThumb.ref.id);
-        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageCache:imageCache];
-        [imageView setDelegate:self];
-        [_mainView setContentView:imageView];
-    }
+    [self _openImage:[imageView imageThumb].ref.id delta:1];
 }
 
 @end

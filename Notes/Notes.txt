@@ -5,6 +5,8 @@
         - ImageGridView
         - ResizerView
     
+    - MDCStudio: move image cache to image library?
+    
     - MDCStudio: merge ImageGridLayer into ImageGridView, the same as we did for ImageView
     
     - MDCStudio: implement image view
