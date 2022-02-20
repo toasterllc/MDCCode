@@ -71,29 +71,31 @@ public:
     
     static size_t SamplesPerPixel(MTLPixelFormat fmt) {
         switch (fmt) {
-        case MTLPixelFormatR8Unorm:     return 1;
-        case MTLPixelFormatR16Unorm:    return 1;
-        case MTLPixelFormatR32Float:    return 1;
-        case MTLPixelFormatRGBA8Unorm:  return 4;
-        case MTLPixelFormatBGRA8Unorm:  return 4;
-        case MTLPixelFormatRGBA16Unorm: return 4;
-        case MTLPixelFormatRGBA16Float: return 4;
-        case MTLPixelFormatRGBA32Float: return 4;
-        default:                        throw std::runtime_error("invalid pixel format");
+        case MTLPixelFormatR8Unorm:         return 1;
+        case MTLPixelFormatR16Unorm:        return 1;
+        case MTLPixelFormatR32Float:        return 1;
+        case MTLPixelFormatRGBA8Unorm:      return 4;
+        case MTLPixelFormatBGRA8Unorm:      return 4;
+        case MTLPixelFormatBGRA8Unorm_sRGB: return 4;
+        case MTLPixelFormatRGBA16Unorm:     return 4;
+        case MTLPixelFormatRGBA16Float:     return 4;
+        case MTLPixelFormatRGBA32Float:     return 4;
+        default:                            throw std::runtime_error("invalid pixel format");
         }
     }
     
     static size_t BytesPerSample(MTLPixelFormat fmt) {
         switch (fmt) {
-        case MTLPixelFormatR8Unorm:     return 1;
-        case MTLPixelFormatR16Unorm:    return 2;
-        case MTLPixelFormatR32Float:    return 4;
-        case MTLPixelFormatRGBA8Unorm:  return 1;
-        case MTLPixelFormatBGRA8Unorm:  return 1;
-        case MTLPixelFormatRGBA16Unorm: return 2;
-        case MTLPixelFormatRGBA16Float: return 2;
-        case MTLPixelFormatRGBA32Float: return 4;
-        default:                        throw std::runtime_error("invalid pixel format");
+        case MTLPixelFormatR8Unorm:         return 1;
+        case MTLPixelFormatR16Unorm:        return 2;
+        case MTLPixelFormatR32Float:        return 4;
+        case MTLPixelFormatRGBA8Unorm:      return 1;
+        case MTLPixelFormatBGRA8Unorm:      return 1;
+        case MTLPixelFormatBGRA8Unorm_sRGB: return 1;
+        case MTLPixelFormatRGBA16Unorm:     return 2;
+        case MTLPixelFormatRGBA16Float:     return 2;
+        case MTLPixelFormatRGBA32Float:     return 4;
+        default:                            throw std::runtime_error("invalid pixel format");
         }
     }
     
