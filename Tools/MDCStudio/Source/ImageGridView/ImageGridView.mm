@@ -59,7 +59,7 @@ using namespace MDCStudio;
     IBOutlet NSView* _nibView;
     IBOutlet ImageGridDocumentView* _documentView;
     ImageLibraryPtr _imageLibrary;
-    ImageGridViewOpenImageHandler _openImageHandler;
+    __weak id<ImageGridViewDelegate> _delegate;
 }
 
 // MARK: - Creation
@@ -171,8 +171,8 @@ using namespace MDCStudio;
     [_documentView->imageGridLayer setResizingUnderway:resizing];
 }
 
-- (void)setOpenImageHandler:(ImageGridViewOpenImageHandler)handler {
-    _openImageHandler = handler;
+- (void)setDelegate:(id<ImageGridViewDelegate>)delegate {
+    _delegate = delegate;
 }
 
 - (ImageLibraryPtr)imageLibrary {
@@ -239,9 +239,7 @@ static ImageGridLayerImageIds xorImageIds(const ImageGridLayerImageIds& a, const
 
 - (void)mouseUp:(NSEvent*)event {
     if ([event clickCount] == 2) {
-        if (_openImageHandler) {
-            _openImageHandler(self);
-        }
+        [_delegate imageGridViewOpenSelectedImage:self];
     }
 }
 
