@@ -39,12 +39,12 @@ public:
         }
         
         // Schedule the image/neighbors to be loaded asynchronously
-        _state.work.push_front({
+        _state.work = _Work{
             .imageRef = imageRef,
             .handler = handler,
             .loadImage = !image,
             .loadNeighbors = true,
-        });
+        };
         
         _state.workSignal.notify_all();
         return image;
@@ -67,13 +67,11 @@ private:
             
             // Wait for work
             _Work work;
-            bool moreWork = false;
             {
                 auto lock = std::unique_lock(_stateLock);
-                while (_state.work.empty()) _state.workSignal.wait(lock);
-                work = _state.work.front();
-                _state.work.pop_front();
-                moreWork = !_state.work.empty();
+                while (!_state.work) _state.workSignal.wait(lock);
+                work = *_state.work;
+                _state.work = std::nullopt;
             }
             
             // Load the image itself, if instructed to do so
@@ -88,7 +86,7 @@ private:
             }
             
             // Load the image neighbors, if instructed to do so and there's no further work to do
-            if (work.loadNeighbors && !moreWork) {
+            if (work.loadNeighbors) {
                 std::vector<ImageRef> imageRefs;
                 imageRefs.reserve(_NeighborImageLoadCount);
                 
@@ -97,11 +95,10 @@ private:
                     auto lock = std::unique_lock(*_imageLibrary);
                     auto find = _imageLibrary->find(work.imageRef.id);
                     auto it = find;
-                    auto rit = std::make_reverse_iterator(find);
+                    auto rit = std::make_reverse_iterator(find); // Points to element before `find`
                     
-                    for (size_t i=0; i<_NeighborImageLoadCount; i++) {
+                    for (size_t i=0; i<_NeighborImageLoadCount/2; i++) {
                         if (it != _imageLibrary->end()) it++;
-                        if (rit != _imageLibrary->rend()) rit++;
                         
                         if (it != _imageLibrary->end()) {
                             imageRefs.push_back(_imageLibrary->recordGet(it)->ref);
@@ -110,17 +107,23 @@ private:
                         if (rit != _imageLibrary->rend()) {
                             imageRefs.push_back(_imageLibrary->recordGet(rit)->ref);
                         }
+                        
+                        // make_reverse_iterator() returns an iterator that points to the element _before_ the
+                        // forward iterator (`find`), so we increment `rit` at the end of the loop, instead of
+                        // at the beginning (where we increment the forward iterator `it`)
+                        if (rit != _imageLibrary->rend()) rit++;
                     }
                 }
                 
                 // Load the neighboring images, bailing if additional work appears
                 for (const ImageRef& imageRef : imageRefs) {
                     inserted.insert(imageRef.id);
+                    NSLog(@"Loading neighbor %d", (int)imageRef.id);
                     
                     auto lock = std::unique_lock(_stateLock);
                         // Bail if more work appears
-                        if (!_state.work.empty()) break;
-                        const auto find = _state.images.find(work.imageRef.id);
+                        if (_state.work) break;
+                        const auto find = _state.images.find(imageRef.id);
                         // Move on if this image is already loaded
                         if (find != _state.images.end()) continue;
                     lock.unlock();
@@ -132,7 +135,7 @@ private:
                         lock.lock();
                             // `find` stays valid after relinquishing the lock because this thread
                             // is the only thread that modifies `_state.images`
-                            _state.images.insert_or_assign(find, work.imageRef.id, image);
+                            _state.images.insert_or_assign(find, imageRef.id, image);
                         lock.unlock();
                     }
                 }
@@ -158,7 +161,7 @@ private:
     struct {
         std::map<ImageId,ImagePtr> images;
         std::thread thread;
-        std::list<_Work> work;
+        std::optional<_Work> work;
         std::condition_variable workSignal;
     } _state;
     

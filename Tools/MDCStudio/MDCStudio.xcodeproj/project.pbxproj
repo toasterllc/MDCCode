@@ -17,9 +17,9 @@
 		5544AE2927B5E595006AB473 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5544ADFD27B5E57A006AB473 /* Renderer.metal */; };
 		5544AE3327B5F98C006AB473 /* MainView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE3227B5F98C006AB473 /* MainView.mm */; };
 		5544AE3527B646C3006AB473 /* ImageGridView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544AE3427B646C3006AB473 /* ImageGridView.xib */; };
-		5544AE5D27B6EE04006AB473 /* Document.m in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE5A27B6EE04006AB473 /* Document.m */; };
+		5544AE5D27B6EE04006AB473 /* Document.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE5A27B6EE04006AB473 /* Document.mm */; };
 		5544AE5E27B6EE04006AB473 /* Document.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544AE5B27B6EE04006AB473 /* Document.xib */; };
-		5544AE6127B6F16F006AB473 /* DocumentController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE6027B6F16F006AB473 /* DocumentController.m */; };
+		5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE6027B6F16F006AB473 /* DocumentController.mm */; };
 		55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55496F46278CFC0400BCA739 /* AppDelegate.mm */; };
 		55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55496F48278CFC0600BCA739 /* Assets.xcassets */; };
 		55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55496F4A278CFC0600BCA739 /* MainMenu.xib */; };
@@ -114,11 +114,11 @@
 		5544AE3127B5F98C006AB473 /* MainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainView.h; sourceTree = "<group>"; };
 		5544AE3227B5F98C006AB473 /* MainView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainView.mm; sourceTree = "<group>"; };
 		5544AE3427B646C3006AB473 /* ImageGridView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageGridView.xib; sourceTree = "<group>"; };
-		5544AE5A27B6EE04006AB473 /* Document.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Document.m; sourceTree = "<group>"; };
+		5544AE5A27B6EE04006AB473 /* Document.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Document.mm; sourceTree = "<group>"; };
 		5544AE5B27B6EE04006AB473 /* Document.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Document.xib; sourceTree = "<group>"; };
 		5544AE5C27B6EE04006AB473 /* Document.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Document.h; sourceTree = "<group>"; };
 		5544AE5F27B6F16E006AB473 /* DocumentController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentController.h; sourceTree = "<group>"; };
-		5544AE6027B6F16F006AB473 /* DocumentController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DocumentController.m; sourceTree = "<group>"; };
+		5544AE6027B6F16F006AB473 /* DocumentController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DocumentController.mm; sourceTree = "<group>"; };
 		55496F42278CFC0400BCA739 /* MDCStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MDCStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55496F46278CFC0400BCA739 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		55496F48278CFC0600BCA739 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -318,9 +318,9 @@
 			isa = PBXGroup;
 			children = (
 				5544AE5F27B6F16E006AB473 /* DocumentController.h */,
-				5544AE6027B6F16F006AB473 /* DocumentController.m */,
+				5544AE6027B6F16F006AB473 /* DocumentController.mm */,
 				5544AE5C27B6EE04006AB473 /* Document.h */,
-				5544AE5A27B6EE04006AB473 /* Document.m */,
+				5544AE5A27B6EE04006AB473 /* Document.mm */,
 				5544AE3127B5F98C006AB473 /* MainView.h */,
 				5544AE3227B5F98C006AB473 /* MainView.mm */,
 				5544AE5B27B6EE04006AB473 /* Document.xib */,
@@ -521,14 +521,14 @@
 				551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */,
 				55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */,
 				55496F4F278CFC0600BCA739 /* main.mm in Sources */,
-				5544AE5D27B6EE04006AB473 /* Document.m in Sources */,
+				5544AE5D27B6EE04006AB473 /* Document.mm in Sources */,
 				55D4AA9127B1D3100052EFEE /* LocalContrast.metal in Sources */,
 				55D4AA9527B1D3100052EFEE /* ImagePipeline.mm in Sources */,
 				55D4AA9227B1D3100052EFEE /* Saturation.metal in Sources */,
 				55496F47278CFC0400BCA739 /* AppDelegate.mm in Sources */,
 				5513287C27B3304100CD823B /* RenderThumb.metal in Sources */,
 				55D4AA9427B1D3100052EFEE /* Defringe.metal in Sources */,
-				5544AE6127B6F16F006AB473 /* DocumentController.m in Sources */,
+				5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */,
 				55D4AA9327B1D3100052EFEE /* FFCC.metal in Sources */,
 				55D4AA9A27B1D3100052EFEE /* DebayerBilinear.metal in Sources */,
 				55D4AA9B27B1D3100052EFEE /* FFCC.mm in Sources */,

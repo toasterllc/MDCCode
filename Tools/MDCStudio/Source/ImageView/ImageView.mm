@@ -172,6 +172,7 @@ static const simd::float4 _BackgroundColor = {
 
 @implementation ImageView {
     ImageLayer* _layer;
+    __weak id<ImageViewDelegate> _delegate;
 }
 
 - (instancetype)initWithImageThumb:(const MDCStudio::ImageThumb&)imageThumb
@@ -204,6 +205,24 @@ static const simd::float4 _BackgroundColor = {
 
 - (const ImageThumb&)imageThumb {
     return _layer->imageThumb;
+}
+
+- (void)setDelegate:(id<ImageViewDelegate>)delegate {
+    _delegate = delegate;
+}
+
+// MARK: - Event Handling
+
+- (void)mouseDown:(NSEvent*)mouseDownEvent {
+    [[self window] makeFirstResponder:self];
+}
+
+- (void)moveLeft:(id)sender {
+    [_delegate imageViewPreviousImage:self];
+}
+
+- (void)moveRight:(id)sender {
+    [_delegate imageViewNextImage:self];
 }
 
 @end
