@@ -97,10 +97,14 @@ public:
     }
     
     RecordRefConstIter find(ImageId id) {
-        return std::lower_bound(RecordStore::begin(), RecordStore::end(), 0,
+        RecordRefConstIter iter = std::lower_bound(begin(), end(), 0,
             [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                return RecordStore::recordGet(sample)->ref.id < id;
+                return recordGet(sample)->ref.id < id;
             });
+        
+        if (iter == end()) return end();
+        if (recordGet(iter)->ref.id != id) return end();
+        return iter;
     }
     
     void addObserver(Observer&& observer) {

@@ -88,11 +88,7 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     
     // Create source list
     {
-        __weak auto weakSelf = self;
         _sourceListView = [[SourceListView alloc] initWithFrame:{}];
-        [_sourceListView setSelectionChangedHandler:^(SourceListView*) {
-            [weakSelf _sourceListHandleSelectionChanged];
-        }];
         [self addSubview:_sourceListView];
         
         _sourceListWidth = [NSLayoutConstraint constraintWithItem:_sourceListView attribute:NSLayoutAttributeWidth
@@ -151,11 +147,6 @@ using ResizerViewHandler = void(^)(NSEvent* event);
             relatedBy:NSLayoutRelationEqual toItem:_sourceListView attribute:NSLayoutAttributeRight
             multiplier:1 constant:0]];
     }
-    
-    // Handle whatever is first selected
-    {
-        [self _sourceListHandleSelectionChanged];
-    }
 }
 
 - (SourceListView*)sourceListView {
@@ -180,6 +171,10 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_contentView)]];
     [_contentContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_contentView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_contentView)]];
+    
+    if (_contentView) {
+        [[self window] makeFirstResponder:_contentView];
+    }
 }
 
 - (void)_sourceListTrackResize:(NSEvent*)event {
@@ -213,49 +208,6 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     _dragging = false;
     [[self window] invalidateCursorRectsForView:self];
     [imageGridView setResizingUnderway:false];
-}
-
-- (void)_sourceListHandleSelectionChanged {
-    auto selection = [_sourceListView selection];
-    if (selection.device) {
-        auto imgLib = selection.device->imageLibrary();
-        auto lock = std::unique_lock(*imgLib);
-        const ImageThumb& imageThumb = *imgLib->recordGet(imgLib->begin());
-        
-        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb
-            imageCache:selection.device->imageCache()];
-        
-        [self setContentView:imageView];
-    
-    } else {
-        [self setContentView:nil];
-    }
-    
-//    {
-//        auto imgLibPtr = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
-//        auto imgLib = imgLibPtr->vend();
-//        imgLib->read();
-//        
-//        const ImageRef& imageRef = imgLib->recordGet(imgLib->begin())->ref;
-//        ImageView* imageView = [[ImageView alloc] initWithImageRef:imageRef cache:nullptr];
-//        [self setContentView:imageView];
-//    }
-    
-//    {
-//        auto imgLib = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
-//        imgLib->vend()->read();
-//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:imgLib];
-//        [self setContentView:imageGridView];
-//    }
-    
-//    auto selection = [_sourceListView selection];
-//    if (selection.device) {
-//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imageLibrary()];
-//        [self setContentView:imageGridView];
-//    
-//    } else {
-//        [self setContentView:nil];
-//    }
 }
 
 - (void)resetCursorRects {
