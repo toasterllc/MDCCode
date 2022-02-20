@@ -121,6 +121,10 @@ using namespace MDCStudio;
 //    imageIds.insert(88);
 //    [_documentView->imageGridLayer setSelectedImageIds:imageIds];
     
+//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
+//        NSLog(@"ImageGridView height: %f", [self frame].size.height);
+//    }];
+    
     return self;
 }
 //

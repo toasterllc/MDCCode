@@ -216,20 +216,20 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 }
 
 - (void)_sourceListHandleSelectionChanged {
-//    auto selection = [_sourceListView selection];
-//    if (selection.device) {
-//        auto imgLib = selection.device->imageLibrary();
-//        auto lock = std::unique_lock(*imgLib);
-//        const ImageThumb& imageThumb = *imgLib->recordGet(imgLib->begin());
-//        
-//        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb
-//            imageCache:selection.device->imageCache()];
-//        
-//        [self setContentView:imageView];
-//    
-//    } else {
-//        [self setContentView:nil];
-//    }
+    auto selection = [_sourceListView selection];
+    if (selection.device) {
+        auto imgLib = selection.device->imageLibrary();
+        auto lock = std::unique_lock(*imgLib);
+        const ImageThumb& imageThumb = *imgLib->recordGet(imgLib->begin());
+        
+        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb
+            imageCache:selection.device->imageCache()];
+        
+        [self setContentView:imageView];
+    
+    } else {
+        [self setContentView:nil];
+    }
     
 //    {
 //        auto imgLibPtr = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
@@ -248,14 +248,14 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 //        [self setContentView:imageGridView];
 //    }
     
-    auto selection = [_sourceListView selection];
-    if (selection.device) {
-        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imageLibrary()];
-        [self setContentView:imageGridView];
-    
-    } else {
-        [self setContentView:nil];
-    }
+//    auto selection = [_sourceListView selection];
+//    if (selection.device) {
+//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imageLibrary()];
+//        [self setContentView:imageGridView];
+//    
+//    } else {
+//        [self setContentView:nil];
+//    }
 }
 
 - (void)resetCursorRects {
