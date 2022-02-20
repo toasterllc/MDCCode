@@ -5,7 +5,7 @@
 #import "ImageView/ImageView.h"
 using namespace MDCStudio;
 
-@interface Document () <SourceListViewDelegate, ImageViewDelegate>
+@interface Document () <SourceListViewDelegate, ImageGridViewDelegate, ImageViewDelegate>
 @end
 
 @implementation Document {
@@ -76,12 +76,7 @@ using namespace MDCStudio;
     auto selection = [_sourceListView selection];
     if (selection.device) {
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:selection.device->imageLibrary()];
-        
-        __weak auto weakSelf = self;
-        [imageGridView setOpenImageHandler:^(ImageGridView* imageGridView) {
-            [weakSelf _imageGridHandleOpenImage:imageGridView];
-        }];
-        
+        [imageGridView setDelegate:self];
         [_mainView setContentView:imageGridView];
     
     } else {
@@ -135,7 +130,9 @@ using namespace MDCStudio;
     }
 }
 
-- (void)_imageGridHandleOpenImage:(ImageGridView*)imageGridView {
+// MARK: - ImageGridViewDelegate
+
+- (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
     ImageLibraryPtr imageLibrary = [self _currentImageLibrary];
     ImageCachePtr imageCache = [self _currentImageCache];
     const ImageGridViewImageIds& selectedImageIds = [imageGridView selectedImageIds];

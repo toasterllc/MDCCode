@@ -4,7 +4,10 @@
 @class ImageGridView;
 
 using ImageGridViewImageIds = std::set<MDCStudio::ImageId>;
-using ImageGridViewOpenImageHandler = void(^)(ImageGridView*);
+
+@protocol ImageGridViewDelegate
+- (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView;
+@end
 
 @interface ImageGridView : NSView
 
@@ -13,7 +16,7 @@ using ImageGridViewOpenImageHandler = void(^)(ImageGridView*);
 // -setResizingUnderway: is necessary to prevent artifacts when resizing
 - (void)setResizingUnderway:(bool)resizing;
 
-- (void)setOpenImageHandler:(ImageGridViewOpenImageHandler)handler;
+- (void)setDelegate:(id<ImageGridViewDelegate>)delegate;
 
 - (MDCStudio::ImageLibraryPtr)imageLibrary;
 - (const ImageGridViewImageIds&)selectedImageIds;
