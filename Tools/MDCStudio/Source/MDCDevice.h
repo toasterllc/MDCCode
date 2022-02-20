@@ -468,15 +468,16 @@ private:
                 Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
                 const size_t thumbDataOff = (uintptr_t)&imageThumb.thumb - (uintptr_t)chunk.mmap.data();
                 
-                RenderThumb::Options thumbOpts = {
+                constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
+                id<MTLBuffer> buf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:chunk.mmap.len() options:BufOpts deallocator:nil];
+                
+                const RenderThumb::Options thumbOpts = {
                     .thumbWidth = ImageThumb::ThumbWidth,
                     .thumbHeight = ImageThumb::ThumbHeight,
-                    .dst = (void*)chunk.mmap.data(),
-                    .dstOff = thumbDataOff,
-                    .dstCap = chunk.mmap.len(),
+                    .dataOff = thumbDataOff,
                 };
                 
-                RenderThumb::Run(renderer, thumbOpts, renderResult.txt);
+                RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, buf);
             }
             
             deviceImgIdLast = imgHeader.id;

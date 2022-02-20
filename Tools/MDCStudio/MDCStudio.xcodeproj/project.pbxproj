@@ -434,8 +434,8 @@
 		55F8D01127BEF3E500757165 /* ImageView */ = {
 			isa = PBXGroup;
 			children = (
-				55F8D01627BEF97200757165 /* ImageView.metal */,
 				55F8D01827BEF97200757165 /* ImageViewTypes.h */,
+				55F8D01627BEF97200757165 /* ImageView.metal */,
 				55F8D01227BEF3E500757165 /* ImageView.h */,
 				55F8D01327BEF3E500757165 /* ImageView.mm */,
 			);

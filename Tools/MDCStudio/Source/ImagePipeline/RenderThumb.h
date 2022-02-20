@@ -1,4 +1,6 @@
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
+#import "ImagePipelineTypes.h"
+#import "Tools/Shared/Renderer.h"
 
 namespace MDCStudio::ImagePipeline {
 
@@ -7,38 +9,74 @@ public:
     struct Options {
         size_t thumbWidth = 0;
         size_t thumbHeight = 0;
-        void* dst = nullptr;
-        size_t dstOff = 0;
-        size_t dstCap = 0;
+        size_t dataOff = 0;
     };
     
-    static void Run(MDCTools::Renderer& renderer, const Options& opts, id<MTLTexture> srcRGB) {
+    static void RGB3FromTexture(MDCTools::Renderer& renderer, const Options& opts, id<MTLTexture> src, id<MTLBuffer> dst) {
         using namespace MDCTools;
         
-        assert(opts.dstOff <= opts.dstCap);
+        assert(opts.dataOff <= [dst length]);
         
         // Ensure that the destination is large enough
         const size_t capNeeded = opts.thumbWidth*opts.thumbHeight*3;
-        assert(opts.dstCap-opts.dstOff >= capNeeded);
+        assert([dst length]-opts.dataOff >= capNeeded);
         
-        Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm, opts.thumbWidth, opts.thumbHeight,
-            MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
-        MPSImageLanczosScale* downsample = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
-        [downsample encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:srcRGB destinationTexture:thumbTxt];
+        Renderer::Txt thumbTxtRef;
+        id<MTLTexture> thumbTxt = src;
+        const bool resize = (opts.thumbWidth!=[src width] || opts.thumbHeight!=[src height]);
+        if (resize) {
+            thumbTxtRef = renderer.textureCreate(MTLPixelFormatRGBA8Unorm, opts.thumbWidth, opts.thumbHeight,
+                MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
+            thumbTxt = thumbTxtRef;
+            
+            MPSImageLanczosScale* resample = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
+            [resample encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:src destinationTexture:thumbTxt];
+        }
         
-        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-        id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytesNoCopy:opts.dst length:opts.dstCap options:BufOpts deallocator:nil];
-        if (!thumbBuf) throw Toastbox::RuntimeError("failed to create MTLBuffer");
-        
-        renderer.render(ImagePipelineShaderNamespace "RenderThumb::RenderThumb", opts.thumbWidth, opts.thumbHeight,
+        renderer.render(ImagePipelineShaderNamespace "RenderThumb::RGB3FromTexture", opts.thumbWidth, opts.thumbHeight,
             // Buffer args
-            (uint32_t)opts.dstOff,
+            (uint32_t)opts.dataOff,
             (uint32_t)opts.thumbWidth,
-            thumbBuf,
+            dst,
             // Texture args
             thumbTxt
         );
     }
+    
+    static void TextureFromRGB3(MDCTools::Renderer& renderer, const Options& opts, id<MTLBuffer> src, id<MTLTexture> dst) {
+        using namespace MDCTools;
+        
+        assert(opts.dataOff <= [src length]);
+        
+        // Ensure that the destination is large enough
+        const size_t capNeeded = opts.thumbWidth*opts.thumbHeight*3;
+        assert([src length]-opts.dataOff >= capNeeded);
+        
+        Renderer::Txt thumbTxtRef;
+        id<MTLTexture> thumbTxt = dst;
+        const bool resize = (opts.thumbWidth!=[dst width] || opts.thumbHeight!=[dst height]);
+        if (resize) {
+            thumbTxtRef = renderer.textureCreate(MTLPixelFormatRGBA8Unorm, opts.thumbWidth, opts.thumbHeight,
+                MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
+            thumbTxt = thumbTxtRef;
+        }
+        
+        renderer.render(ImagePipelineShaderNamespace "RenderThumb::TextureFromRGB3", thumbTxt,
+            // Buffer args
+            (uint32_t)opts.dataOff,
+            (uint32_t)opts.thumbWidth,
+            src
+        );
+        
+        if (resize) {
+            // Resample
+            MPSImageLanczosScale* resample = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
+            [resample encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:thumbTxt destinationTexture:dst];
+        }
+    }
+//
+//private:
+//    constexpr MTLResourceOptions _BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
 };
 
 } // namespace MDCStudio::ImagePipeline

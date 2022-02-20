@@ -4,8 +4,8 @@
 #import "ImageCache.h"
 
 @interface ImageView : NSView
-- (instancetype)initWithImageRef:(const MDCStudio::ImageRef&)imageRef
-    imageCache:(MDCStudio::ImageCachePtr)cache;
+- (instancetype)initWithImageThumb:(const MDCStudio::ImageThumb&)imageThumb
+    imageCache:(MDCStudio::ImageCachePtr)imageCache;
 
-- (const MDCStudio::ImageRef&)imageRef;
+- (const MDCStudio::ImageThumb&)imageThumb;
 @end
