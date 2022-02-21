@@ -9,7 +9,10 @@
             √ eg: when user quickly flips through full-size images, lots of work would be enqueued, but we may not need the work at the end
                 √ Priority: required, high, low
         √ allow arrow keys to be used to navigate to the previous/next image
-            - use animation
+            X use animation
+                X animation is too distracting
+        - implement zooming
+        - implement panning
         - optimize draw performance by caching full-size image texture
         - draw shadow behind image
     
@@ -18,9 +21,22 @@
     - MDCStudio: allow arrow keys to extend the current selection when holding shift/command
         - We need sophisticated handling similar to the Finder, but we should be able to do better
     
+    - MDCStudio: image rotation
+        - from grid view
+        - from image view
+    
     - MDCStudio: allow enter key to open ImageView
     
-    - MDCStudio: implement zoom animation when entering image view
+    - MDCStudio: zoom animation when entering image view
+    
+    - MDCStudio: image exporting
+    
+    - MDCStudio: image drag/drop
+        - to Finder
+        - to new library
+    
+    - MDCStudio: deleting images
+        - show per-device trash can when images are deleted
     
     - MDCStudio: implement inspector
     

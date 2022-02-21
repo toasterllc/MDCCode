@@ -30,6 +30,7 @@ static const simd::float4 _BackgroundColor = {
 
 @private
     ImagePtr _image;
+    id<MTLTexture> _imageTexture;
     ImageSourcePtr _imageSource;
     CGFloat _contentsScale;
     
@@ -103,8 +104,8 @@ static const simd::float4 _BackgroundColor = {
         });
     }
     
-    // Render the actual image if we have it
-    if (_image) {
+    // Render _imageTexture if it doesn't exist yet and we have the image
+    if (!_imageTexture && _image) {
         Pipeline::RawImage rawImage = {
             .cfaDesc    = _image->cfaDesc,
             .width      = _image->width,
@@ -118,10 +119,13 @@ static const simd::float4 _BackgroundColor = {
         };
         
         Pipeline::Result renderResult = Pipeline::Run(_renderer, rawImage, pipelineOpts);
-        
+        _imageTexture = renderResult.txt;
+    }
+    
+    if (_imageTexture) {
         // Resample
         MPSImageLanczosScale* resample = [[MPSImageLanczosScale alloc] initWithDevice:_renderer.dev];
-        [resample encodeToCommandBuffer:_renderer.cmdBuf() sourceTexture:renderResult.txt destinationTexture:imageTxt];
+        [resample encodeToCommandBuffer:_renderer.cmdBuf() sourceTexture:_imageTexture destinationTexture:imageTxt];
     
     // Otherwise, render the thumbnail
     } else {
