@@ -77,34 +77,46 @@ using namespace MDCStudio;
     if (selection) {
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
         [imageGridView setDelegate:self];
-        [_mainView setContentView:imageGridView];
+        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
     
     } else {
-        [_mainView setContentView:nil];
+        [_mainView setContentView:nil animation:MainViewAnimation::None];
     }
 }
 
 // _openImage: open a particular image id, or an image offset from a particular image id
-- (void)_openImage:(ImageId)imageId delta:(ssize_t)delta {
+- (bool)_openImage:(ImageId)imageId delta:(ssize_t)delta {
     ImageSourcePtr imageSource = [_sourceListView selection];
-    if (!imageSource) return;
+    if (!imageSource) return false;
     
     ImageLibraryPtr imageLibrary = imageSource->imageLibrary();
     {
         auto lock = std::unique_lock(*imageLibrary);
-        if (imageLibrary->empty()) return;
+        if (imageLibrary->empty()) return false;
         
         auto find = imageLibrary->find(imageId);
-        if (find == imageLibrary->end()) return;
+        if (find == imageLibrary->end()) return false;
         
         const ssize_t deltaMin = std::distance(find, imageLibrary->begin());
         const ssize_t deltaMax = std::distance(find, std::prev(imageLibrary->end()));
-        delta = std::clamp(delta, deltaMin, deltaMax);
+        if (delta<deltaMin || delta>deltaMax) return false;
         
         const ImageThumb& imageThumb = *imageLibrary->recordGet(find+delta);
         ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageSource:imageSource];
         [imageView setDelegate:self];
-        [_mainView setContentView:imageView];
+        
+//        if (delta) {
+//            [_mainView setContentView:imageView animation:(delta>0 ? MainViewAnimation::SlideToLeft : MainViewAnimation::SlideToRight)];
+//        } else {
+//            [_mainView setContentView:imageView animation:MainViewAnimation::None];
+//        }
+        
+        [_mainView setContentView:imageView animation:MainViewAnimation::None];
+        
+        
+        
+        
+        return true;
     }
 }
 
@@ -120,11 +132,13 @@ using namespace MDCStudio;
 // MARK: - ImageViewDelegate
 
 - (void)imageViewPreviousImage:(ImageView*)imageView {
-    [self _openImage:[imageView imageThumb].ref.id delta:-1];
+    const bool ok = [self _openImage:[imageView imageThumb].ref.id delta:-1];
+    if (!ok) NSBeep();
 }
 
 - (void)imageViewNextImage:(ImageView*)imageView {
-    [self _openImage:[imageView imageThumb].ref.id delta:1];
+    const bool ok = [self _openImage:[imageView imageThumb].ref.id delta:1];
+    if (!ok) NSBeep();
 }
 
 @end

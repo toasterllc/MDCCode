@@ -50,7 +50,23 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 
 @end
 
+@interface AnimationStoppedDelegate : NSObject <CAAnimationDelegate>
+@end
 
+@implementation AnimationStoppedDelegate {
+@public
+    void (^animationStoppedBlock)();
+}
+- (void)animationDidStop:(CAAnimation*)anim finished:(BOOL)flag {
+    if (animationStoppedBlock) {
+        animationStoppedBlock();
+    }
+}
+@end
+
+
+@interface MainView ()
+@end
 
 @implementation MainView {
     SourceListView* _sourceListView;
@@ -106,6 +122,7 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     // Create content container view
     {
         _contentContainerView = [[NSView alloc] initWithFrame:{}];
+        [_contentContainerView setWantsLayer:true];
         
 //        [_contentContainerView setWantsLayer:true];
 //        [[_contentContainerView layer] setBackgroundColor:[[[NSColor redColor] colorWithAlphaComponent:.2] CGColor]];
@@ -157,8 +174,57 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     return _contentView;
 }
 
-- (void)setContentView:(NSView*)contentView {
-    if (_contentView) {
+- (void)setContentView:(NSView*)contentView animation:(MainViewAnimation)animation {
+    constexpr CFTimeInterval AnimationDuration = .2;
+    const CAMediaTimingFunctionName AnimationTimingFunction = kCAMediaTimingFunctionEaseOut;
+    NSString*const AnimationName = @"slide";
+    const CGFloat slideWidth = [_contentContainerView bounds].size.width;
+    
+//    if (_contentView && animation!=MainViewAnimation::None) {
+////        __weak NSView* contentViewWeak = _contentView;
+////        
+////        CABasicAnimation* anim = [[_contentView layer] animationForKey:AnimationName];
+////        if (anim) {
+////            [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer* timer) {
+////                [contentViewWeak removeFromSuperview];
+////            }];
+////        
+////        } else {
+////            AnimationStoppedDelegate* delegate = [AnimationStoppedDelegate new];
+////            delegate->animationStoppedBlock = ^{
+////                [contentViewWeak removeFromSuperview];
+////            };
+////            
+////            const CGFloat posStart = [[[_contentView layer] presentationLayer] position].x;
+////            const CGFloat posEnd = (animation==MainViewAnimation::SlideToLeft ? -slideWidth : slideWidth);
+//////            const float progressRemaining = (std::abs(posStart-posEnd) / containerWidth);
+////            
+////            CABasicAnimation* slide = [CABasicAnimation animationWithKeyPath:@"position.x"];
+////            [slide setTimingFunction:[CAMediaTimingFunction functionWithName:AnimationTimingFunction]];
+////            [slide setDelegate:delegate];
+////            [slide setFromValue:@(posStart)];
+////            [slide setToValue:@(posEnd)];
+////            [slide setDuration:AnimationDuration];
+////            [[_contentView layer] addAnimation:slide forKey:AnimationName];
+////            [[_contentView layer] setValue:@(posEnd) forKeyPath:@"position.x"];
+////            
+////            
+//////            CABasicAnimation* fade = [CABasicAnimation animationWithKeyPath:@"opacity"];
+//////            [fade setTimingFunction:[CAMediaTimingFunction functionWithName:AnimationTimingFunction]];
+//////            [fade setFromValue:@0];
+//////            [fade setToValue:@1];
+//////            [fade setDuration:AnimationDuration];
+//////            [[_contentView layer] addAnimation:fade forKey:AnimationName];
+//////            [[_contentView layer] setValue:@1 forKeyPath:@"opacity"];
+////            
+////        }
+//    
+//    } else {
+//        [_contentView removeFromSuperview];
+//    }
+    
+    NSView* oldContentView = _contentView;
+    if (_contentView && animation==MainViewAnimation::None) {
         [_contentView removeFromSuperview];
     }
     
@@ -174,6 +240,37 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     
     if (_contentView) {
         [[self window] makeFirstResponder:_contentView];
+    }
+    
+    if (_contentView && animation!=MainViewAnimation::None) {
+        const CGFloat posStart = (animation==MainViewAnimation::SlideToLeft ? slideWidth : -slideWidth);
+        const CGFloat posEnd = 0;
+        
+        AnimationStoppedDelegate* delegate = [AnimationStoppedDelegate new];
+        delegate->animationStoppedBlock = ^{
+            [oldContentView removeFromSuperview];
+        };
+        
+        CABasicAnimation* slide = [CABasicAnimation animationWithKeyPath:@"position.x"];
+        [slide setDelegate:delegate];
+        [slide setTimingFunction:[CAMediaTimingFunction functionWithName:AnimationTimingFunction]];
+        [slide setFromValue:@(posStart)];
+        [slide setToValue:@(posEnd)];
+        [slide setDuration:AnimationDuration];
+        [[_contentView layer] addAnimation:slide forKey:AnimationName];
+        [[_contentView layer] setValue:@(posEnd) forKeyPath:@"position.x"];
+        
+        
+        
+        CABasicAnimation* fade = [CABasicAnimation animationWithKeyPath:@"opacity"];
+        [fade setTimingFunction:[CAMediaTimingFunction functionWithName:AnimationTimingFunction]];
+        [fade setFromValue:@0];
+        [fade setToValue:@1];
+        [fade setDuration:AnimationDuration];
+        [[_contentView layer] addAnimation:fade forKey:nil];
+        [[_contentView layer] setValue:@1 forKeyPath:@"opacity"];
+        
+        
     }
 }
 
@@ -214,6 +311,10 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     if (_dragging) {
         [self addCursorRect:[self bounds] cursor:_resizerView->cursor];
     }
+}
+
+- (void)animationDidStop:(CAAnimation*)anim finished:(BOOL)flag {
+    
 }
 
 @end
