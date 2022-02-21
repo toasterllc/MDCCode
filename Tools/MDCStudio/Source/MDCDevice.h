@@ -320,8 +320,8 @@ private:
                 
                 // Write the library
                 {
-                    printf("Writing library\n");
                     auto lock = std::unique_lock(*_imageLibrary);
+                    printf("Writing library (%ju images)\n", (uintmax_t)_imageLibrary->recordCount());
                     _imageLibrary->write();
                 }
             }
