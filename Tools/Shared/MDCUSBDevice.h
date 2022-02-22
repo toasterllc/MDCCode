@@ -39,8 +39,10 @@ public:
     }
     
     MDCUSBDevice(USBDevice&& dev) : _dev(std::move(dev)) {
+        printf("[MDCUSBDevice] endpointsFlush START\n");
         // We don't know what state the device was left in, so flush the endpoints
         endpointsFlush();
+        printf("[MDCUSBDevice] endpointsFlush END\n");
         
         _serial = _dev.serialNumber();
         const STM::Status status = statusGet();
