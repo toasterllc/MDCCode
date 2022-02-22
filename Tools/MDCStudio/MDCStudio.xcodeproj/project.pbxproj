@@ -50,6 +50,7 @@
 		55F8D01027BDF26400757165 /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00F27BDF26400757165 /* Shadow.png */; };
 		55F8D01427BEF3E500757165 /* ImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* ImageView.mm */; };
 		55F8D01927BEF97200757165 /* ImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* ImageView.metal */; };
+		55F8D09427C442CA00757165 /* ImageView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D09327C442CA00757165 /* ImageView.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -174,6 +175,7 @@
 		55F8D03027BF9F8000757165 /* ImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageCache.h; sourceTree = "<group>"; };
 		55F8D05827C0E07900757165 /* Lockable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lockable.h; sourceTree = "<group>"; };
 		55F8D09227C2EE9D00757165 /* ImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageSource.h; sourceTree = "<group>"; };
+		55F8D09327C442CA00757165 /* ImageView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageView.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -440,6 +442,7 @@
 				55F8D01627BEF97200757165 /* ImageView.metal */,
 				55F8D01227BEF3E500757165 /* ImageView.h */,
 				55F8D01327BEF3E500757165 /* ImageView.mm */,
+				55F8D09327C442CA00757165 /* ImageView.xib */,
 			);
 			path = ImageView;
 			sourceTree = "<group>";
@@ -507,6 +510,7 @@
 				553031FF27BC45A100BEFFEA /* Mask.png in Resources */,
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,
+				55F8D09427C442CA00757165 /* ImageView.xib in Resources */,
 				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
 				55F8D01027BDF26400757165 /* Shadow.png in Resources */,

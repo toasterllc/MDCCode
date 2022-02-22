@@ -17,6 +17,26 @@ static const simd::float4 _BackgroundColor = {
     1
 };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @interface ImageLayer : CAMetalLayer
 @end
 
@@ -174,18 +194,153 @@ static const simd::float4 _BackgroundColor = {
 
 @end
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@interface ImageDocumentView : NSView
+@end
+
+@implementation ImageDocumentView {
+@public
+    CALayer* rootLayer;
+    ImageLayer* imageLayer;
+}
+
+- (void)setFrame:(NSRect)frame {
+    frame.size = {2304/2, 1296/2};
+    [super setFrame:frame];
+}
+
+- (void)viewDidChangeBackingProperties {
+    [super viewDidChangeBackingProperties];
+    [imageLayer setContentsScale:[[self window] backingScaleFactor]];
+}
+
+//- (void)viewWillStartLiveResize {
+//    [super viewWillStartLiveResize];
+//    [imageLayer setResizingUnderway:true];
+//}
+//
+//- (void)viewDidEndLiveResize {
+//    [super viewDidEndLiveResize];
+//    [imageLayer setResizingUnderway:false];
+//}
+
+- (BOOL)isFlipped {
+    return true;
+}
+
+@end
+
+@interface ImageScrollView : NSScrollView
+@end
+
+@implementation ImageScrollView
+
+- (void)reflectScrolledClipView:(NSClipView*)clipView {
+    [super reflectScrolledClipView:clipView];
+//    NSLog(@"%@", NSStringFromRect([self documentVisibleRect]));
+//    NSLog(@"%f", [self magnification]);
+    NSLog(@"%@", NSStringFromPoint([self documentVisibleRect].origin));
+    [((ImageDocumentView*)[self documentView])->imageLayer setFrame:[self documentVisibleRect]];
+}
+
+@end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @implementation ImageView {
-    ImageLayer* _layer;
+    IBOutlet NSView* _nibView;
+    IBOutlet ImageDocumentView* _documentView;
+    CALayer* _rootLayer;
+    ImageLayer* _imageLayer;
     __weak id<ImageViewDelegate> _delegate;
 }
+
+
 
 - (instancetype)initWithImageThumb:(const MDCStudio::ImageThumb&)imageThumb
     imageSource:(MDCStudio::ImageSourcePtr)imageSource {
     
     if (!(self = [super initWithFrame:{}])) return nil;
-    _layer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
-    [self setLayer:_layer];
-    [self setWantsLayer:true];
+    
+    // Make ourself layer-backed (not layer-hosted because we have to add subviews -- _nibView -- to ourself,
+    // which isn't allowed when layer-hosted: "Similarly, do not add subviews to a layer-hosting view.")
+    {
+        [self setWantsLayer:true];
+        _rootLayer = [self layer];
+        
+        _imageLayer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
+//        [_imageLayer setActions:LayerNullActions];
+//        [_imageLayer setBackgroundColor:[[[NSColor redColor] colorWithAlphaComponent:.1] CGColor]];
+        [_rootLayer addSublayer:_imageLayer];
+    }
+    
+    // Load from nib
+    {
+        [self setTranslatesAutoresizingMaskIntoConstraints:false];
+        
+        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
+        assert(br);
+        
+        [_nibView setTranslatesAutoresizingMaskIntoConstraints:false];
+        [self addSubview:_nibView];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
+    }
+    
+//    [_documentView setWantsLayer:true];
+//    [[_documentView layer] setBackgroundColor:[[[NSColor redColor] colorWithAlphaComponent:.1] CGColor]];
+    
+//    // Configure ImageDocumentView
+//    {
+//        CALayer* rootLayer = [CALayer new];
+//        [rootLayer setBackgroundColor:[[[NSColor redColor] colorWithAlphaComponent:.1] CGColor]];
+//        
+////        ImageLayer* imageLayer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
+////        [rootLayer addSublayer:imageLayer];
+//        
+//        _documentView->rootLayer = rootLayer;
+////        _documentView->imageLayer = imageLayer;
+//        [_documentView setLayer:_documentView->rootLayer];
+//        [_documentView setWantsLayer:true];
+//    }
+    
+//    _layer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
+//    [self setLayer:_layer];
+//    [self setWantsLayer:true];
     
 //    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
 //        NSLog(@"ImageView: %f", [self frame].size.height);
@@ -196,19 +351,20 @@ static const simd::float4 _BackgroundColor = {
 
 - (void)setFrame:(NSRect)frame {
     [super setFrame:frame];
+    [_imageLayer setFrame:[_rootLayer bounds]];
     
     const CGRect bounds = [self bounds];
     const CGRect contentLayoutRect = [self convertRect:[[self window] contentLayoutRect] fromView:nil];
-    _layer->visibleBounds = CGRectIntersection(bounds, contentLayoutRect);
+    _imageLayer->visibleBounds = CGRectIntersection(bounds, contentLayoutRect);
 }
 
 - (void)viewDidChangeBackingProperties {
     [super viewDidChangeBackingProperties];
-    [_layer setContentsScale:[[self window] backingScaleFactor]];
+    [_imageLayer setContentsScale:[[self window] backingScaleFactor]];
 }
 
 - (const ImageThumb&)imageThumb {
-    return _layer->imageThumb;
+    return _imageLayer->imageThumb;
 }
 
 - (void)setDelegate:(id<ImageViewDelegate>)delegate {
