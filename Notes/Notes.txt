@@ -13,7 +13,7 @@
                 X animation is too distracting
         - implement zooming
         - implement panning
-        - optimize draw performance by caching full-size image texture
+        √ optimize draw performance by caching full-size image texture
         - draw shadow behind image
     
     - MDCStudio: merge ImageGridLayer into ImageGridView, the same as we did for ImageView
@@ -39,6 +39,9 @@
         - show per-device trash can when images are deleted
     
     - MDCStudio: implement inspector
+    
+    - STMApp: occasionally aborts in _SDInit -> USBSendStatus() because the endpoint isn't ready
+        - Haven't been able to determine cause yet
     
     - STMApp: reconsider whether we should be using Task::Stop() to abort tasks that are in progress.
       for example, a task might be in the middle of executing SDCard::Disable(), which isn't designed to be aborted half way through
