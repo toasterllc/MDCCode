@@ -2,9 +2,9 @@
 #include "ICE.h"
 #include "Util.h"
 #include "Toastbox/Task.h"
-#include "Code/Shared/Img.h"
-#include "Code/Shared/SD.h"
-#include "Code/Shared/ImgSD.h"
+#include "Img.h"
+#include "SD.h"
+#include "ImgSD.h"
 
 namespace SD {
 

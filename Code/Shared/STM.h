@@ -1,10 +1,10 @@
 #pragma once
 #include "Toastbox/Enum.h"
-#include "Util.h"
-#include "Code/Shared/Img.h"
-#include "Code/Shared/SD.h"
-#include "Code/Shared/ImgSD.h"
 #include "Toastbox/USB.h"
+#include "Util.h"
+#include "Img.h"
+#include "SD.h"
+#include "ImgSD.h"
 
 namespace STM {
     static constexpr uint32_t Version = 0;
