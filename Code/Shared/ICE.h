@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <utility>
 #include <optional>
-#include "Assert.h"
-#include "Code/Shared/Img.h"
-#include "GetBits.h"
 #include "Toastbox/Task.h"
+#include "Assert.h"
+#include "Img.h"
+#include "GetBits.h"
 
 template <
     typename T_Scheduler,

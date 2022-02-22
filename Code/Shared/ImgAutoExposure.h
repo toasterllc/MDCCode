@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <algorithm>
-#include "Code/Shared/Img.h"
+#include "Img.h"
 
 namespace Img {
 

@@ -358,12 +358,19 @@ struct _TaskUSBDataOut {
         static size_t len = 0;
         len = l;
         _Scheduler::Start<_TaskUSBDataOut>([] {
-            while (len) {
+            for (;;) {
                 _Scheduler::Wait([] { return _Bufs.wok(); });
                 
                 auto& buf = _Bufs.wget();
-                // Prepare to receive either `len` bytes or the
-                // buffer capacity bytes, whichever is smaller.
+                if (!len) {
+                    // Signal EOF when there's no more data to receive
+                    buf.len = 0;
+                    _Bufs.wpush();
+                    break;
+                }
+                
+                // Prepare to receive either `len` bytes or the buffer capacity bytes,
+                // whichever is smaller.
                 const size_t cap = _USB.CeilToMaxPacketSize(_USB.MaxPacketSizeOut(), std::min(len, sizeof(buf.data)));
                 // Ensure that after rounding up to the nearest packet size, we don't
                 // exceed the buffer capacity. (This should always be safe as long as
@@ -522,22 +529,21 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     // Reset state
     _Bufs.reset();
     
-    size_t len = arg.len;
     // Trigger the USB DataOut task with the amount of data
-    _TaskUSBDataOut::Start(len);
+    _TaskUSBDataOut::Start(arg.len);
     
-    while (len) {
+    for (;;) {
         // Wait until we have data to consume, and QSPI is ready to write
         _Scheduler::Wait([] { return _Bufs.rok() && _QSPI.ready(); });
         
         // Write the data over QSPI and wait for completion
         auto& buf = _Bufs.rget();
-        _QSPI.write(_QSPICmd::ICEWrite(buf.len), buf.data);
-        _Scheduler::Wait([] { return _QSPI.ready(); });
-        
-        // Update the remaining data and pop the buffer so it can be used again
-        len -= buf.len;
+        if (buf.len) {
+            _QSPI.write(_QSPICmd::ICEWrite(buf.len), buf.data);
+            _Scheduler::Wait([] { return _QSPI.ready(); });
+        }
         _Bufs.rpop();
+        if (!buf.len) break; // We're done when we receive an empty buffer
     }
     
     // Wait for CDONE to be asserted
@@ -639,23 +645,21 @@ static void _MSPWrite(const STM::Cmd& cmd) {
     _Bufs.reset();
     _MSP.crcReset();
     
-    uint32_t addr = arg.addr;
-    uint32_t len = arg.len;
-    
     // Trigger the USB DataOut task with the amount of data
-    _TaskUSBDataOut::Start(len);
+    _TaskUSBDataOut::Start(arg.len);
     
-    while (len) {
+    uint32_t addr = arg.addr;
+    for (;;) {
         _Scheduler::Wait([] { return _Bufs.rok(); });
         
         // Write the data over Spy-bi-wire
         auto& buf = _Bufs.rget();
-        _MSP.write(addr, buf.data, buf.len);
-        // Update the MSP430 address to write to
-        addr += buf.len;
-        len -= buf.len;
-        // Pop the buffer, which we just finished sending over Spy-bi-wire
+        if (buf.len) {
+            _MSP.write(addr, buf.data, buf.len);
+            addr += buf.len; // Update the MSP430 address to write to
+        }
         _Bufs.rpop();
+        if (!buf.len) break; // We're done when we receive an empty buffer
     }
     
     // Verify the CRC of all the data we wrote

@@ -1,6 +1,6 @@
 #pragma once
-#include "Code/Shared/Img.h"
-#include "Code/Shared/SD.h"
+#include "Img.h"
+#include "SD.h"
 
 // ImgSD: constants that require information from both Img and SD
 // We want to keep the Img and SD namespaces isolated (ie they shouldn't depend
