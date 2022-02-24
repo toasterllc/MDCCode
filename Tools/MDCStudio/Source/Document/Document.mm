@@ -56,15 +56,33 @@ using namespace MDCStudio;
 //        [self setContentView:nil];
 //    }
     
-//    {
-//        auto imgLibPtr = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
-//        auto imgLib = imgLibPtr->vend();
-//        imgLib->read();
-//        
-//        const ImageRef& imageRef = imgLib->recordGet(imgLib->begin())->ref;
-//        ImageView* imageView = [[ImageView alloc] initWithImageRef:imageRef cache:nullptr];
-//        [self setContentView:imageView];
-//    }
+    {
+        class FakeImageSource : public ImageSource {
+        public:
+            ImageLibraryPtr imageLibrary() override {
+                return il;
+            }
+            
+            ImageCachePtr imageCache() override {
+                return ic;
+            }
+            
+            ImageLibraryPtr il;
+            ImageCachePtr ic;
+        };
+        
+        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
+        il->read();
+        
+        ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (const ImageRef& imageRef) { return nullptr; });
+        
+        auto imageSource = std::make_shared<FakeImageSource>();
+        imageSource->il = il;
+        imageSource->ic = ic;
+        
+        ImageView* imageView = [[ImageView alloc] initWithImageThumb:*il->recordGet(il->begin()) imageSource:imageSource];
+        [_mainView setContentView:imageView animation:MainViewAnimation::None];
+    }
     
 //    {
 //        auto imgLib = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
@@ -73,15 +91,15 @@ using namespace MDCStudio;
 //        [self setContentView:imageGridView];
 //    }
     
-    ImageSourcePtr selection = [_sourceListView selection];
-    if (selection) {
-        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
-        [imageGridView setDelegate:self];
-        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
-    
-    } else {
-        [_mainView setContentView:nil animation:MainViewAnimation::None];
-    }
+//    ImageSourcePtr selection = [_sourceListView selection];
+//    if (selection) {
+//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
+//        [imageGridView setDelegate:self];
+//        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
+//    
+//    } else {
+//        [_mainView setContentView:nil animation:MainViewAnimation::None];
+//    }
 }
 
 // _openImage: open a particular image id, or an image offset from a particular image id
