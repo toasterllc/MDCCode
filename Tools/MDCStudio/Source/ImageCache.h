@@ -13,18 +13,24 @@ public:
     using ImageLoadedHandler = std::function<void(ImagePtr)>;
     
     ImageCache(ImageLibraryPtr imageLibrary, ImageProvider&& imageProvider) : _imageLibrary(imageLibrary), _imageProvider(imageProvider) {
-        auto lock = std::unique_lock(_stateLock);
+        auto lock = std::unique_lock(_state.lock);
         _state.thread = std::thread([=] { _thread(); });
     }
     
     ~ImageCache() {
-        auto lock = std::unique_lock(_stateLock);
-        #warning TODO: need to signal thread to exit
+        // Signal thread to exit
+        {
+            auto lock = std::unique_lock(_state.lock);
+            _state.threadStop = true;
+            _state.threadSignal.notify_all();
+        }
+        
         _state.thread.join();
+        printf("~ImageCache()\n");
     }
     
     ImagePtr imageForImageRef(const ImageRef& imageRef, ImageLoadedHandler handler) {
-        auto lock = std::unique_lock(_stateLock);
+        auto lock = std::unique_lock(_state.lock);
         
         // If the image is already in the cache, return it
         ImagePtr image;
@@ -41,7 +47,7 @@ public:
             .loadNeighbors = true,
         };
         
-        _state.workSignal.notify_all();
+        _state.threadSignal.notify_all();
         return image;
     }
     
@@ -63,8 +69,12 @@ private:
             // Wait for work
             _Work work;
             {
-                auto lock = std::unique_lock(_stateLock);
-                while (!_state.work) _state.workSignal.wait(lock);
+                auto lock = std::unique_lock(_state.lock);
+                for (;;) {
+                    _state.threadSignal.wait(lock);
+                    if (_state.threadStop) return;
+                    if (_state.work) break;
+                }
                 work = *_state.work;
                 _state.work = std::nullopt;
             }
@@ -73,9 +83,11 @@ private:
             if (work.loadImage) {
                 // Load the image
                 ImagePtr image = _imageProvider(work.imageRef);
-                // Put the image in the cache
-                _state.images[work.imageRef.id] = image;
-                inserted.insert(work.imageRef.id);
+                if (image) {
+                    // Put the image in the cache
+                    _state.images[work.imageRef.id] = image;
+                    inserted.insert(work.imageRef.id);
+                }
                 // Notify the handler
                 work.handler(image);
             }
@@ -113,9 +125,9 @@ private:
                 // Load the neighboring images, bailing if additional work appears
                 for (const ImageRef& imageRef : imageRefs) {
                     inserted.insert(imageRef.id);
-                    NSLog(@"Loading neighbor %d", (int)imageRef.id);
+                    printf("[ImageCache] Loading neighbor %ju\n", (uintmax_t)imageRef.id);
                     
-                    auto lock = std::unique_lock(_stateLock);
+                    auto lock = std::unique_lock(_state.lock);
                         // Bail if more work appears
                         if (_state.work) break;
                         const auto find = _state.images.find(imageRef.id);
@@ -138,7 +150,7 @@ private:
             
             // Prune the cache, ensuring that we don't remove any of the images that we just added (`inserted`)
             {
-                auto lock = std::unique_lock(_stateLock);
+                auto lock = std::unique_lock(_state.lock);
                 for (auto it=_state.images.begin(); it!=_state.images.end() && _state.images.size()>_CacheImageCount;) {
                     const ImageId imageId = it->first;
                     const auto itPrev = it;
@@ -152,12 +164,13 @@ private:
         }
     }
     
-    std::mutex _stateLock;
     struct {
+        std::mutex lock; // Protects this struct
         std::map<ImageId,ImagePtr> images;
         std::thread thread;
+        bool threadStop = false;
+        std::condition_variable threadSignal;
         std::optional<_Work> work;
-        std::condition_variable workSignal;
     } _state;
     
     ImageLibraryPtr _imageLibrary;

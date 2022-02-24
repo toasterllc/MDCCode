@@ -423,6 +423,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         }
     }
     
+    #warning we're doing this wrong! we should call [drawable present] after -waitUntilCompleted, which works correctly when `presentsWithTransaction=1`: https://developer.apple.com/documentation/quartzcore/cametallayer/1478157-presentswithtransaction?language=objc
     [commandBuffer presentDrawable:drawable];
     [commandBuffer commit];
     [commandBuffer waitUntilCompleted]; // Necessary to prevent artifacts when resizing window

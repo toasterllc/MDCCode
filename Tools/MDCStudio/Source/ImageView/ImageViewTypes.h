@@ -5,6 +5,7 @@ namespace MDCStudio {
 namespace ImageViewTypes {
 
 struct RenderContext {
+    matrix_float4x4 viewMatrix = {};
 };
 
 } // namespace ImageViewTypes
