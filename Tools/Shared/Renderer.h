@@ -17,6 +17,20 @@ namespace MDCTools {
 // Renderer particularly improves executing multiple fragment render passes.
 class Renderer {
 #define _ShaderNamespace "MDCTools::RendererShader::"
+#define _DefaultVertexShader _ShaderNamespace "VertexShader"
+private:
+    template <typename... T_Args>
+    struct _VertexShader {
+        const std::string_view& fn;
+        std::tuple<T_Args...> args;
+    };
+    
+    template <typename... T_Args>
+    struct _FragmentShader {
+        const std::string_view& fn;
+        std::tuple<T_Args...> args;
+    };
+    
 public:
     template <typename T>
     class Resource {
@@ -64,6 +78,11 @@ public:
     using Txt = Resource<id<MTLTexture>>;
     using Buf = Resource<id<MTLBuffer>>;
     
+    enum class BlendType {
+        None,
+        Over,
+    };
+    
     Renderer() {}
     Renderer(id<MTLDevice> dev, id<MTLLibrary> lib, id<MTLCommandQueue> commandQueue) :
     dev(dev), _lib(lib), _commandQueue(commandQueue) {
@@ -75,6 +94,7 @@ public:
         case MTLPixelFormatR16Unorm:        return 1;
         case MTLPixelFormatR32Float:        return 1;
         case MTLPixelFormatRGBA8Unorm:      return 4;
+        case MTLPixelFormatRGBA8Unorm_sRGB: return 4;
         case MTLPixelFormatBGRA8Unorm:      return 4;
         case MTLPixelFormatBGRA8Unorm_sRGB: return 4;
         case MTLPixelFormatRGBA16Unorm:     return 4;
@@ -90,6 +110,7 @@ public:
         case MTLPixelFormatR16Unorm:        return 2;
         case MTLPixelFormatR32Float:        return 4;
         case MTLPixelFormatRGBA8Unorm:      return 1;
+        case MTLPixelFormatRGBA8Unorm_sRGB: return 1;
         case MTLPixelFormatBGRA8Unorm:      return 1;
         case MTLPixelFormatBGRA8Unorm_sRGB: return 1;
         case MTLPixelFormatRGBA16Unorm:     return 2;
@@ -103,12 +124,53 @@ public:
         return SamplesPerPixel(fmt)*BytesPerSample(fmt);
     }
     
+    void clear(id<MTLTexture> txt, const MTLClearColor& color) {
+        assert(txt);
+        MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor new];
+        [[desc colorAttachments][0] setTexture:txt];
+        [[desc colorAttachments][0] setClearColor:color];
+        [[desc colorAttachments][0] setLoadAction:MTLLoadActionClear];
+        [[desc colorAttachments][0] setStoreAction:MTLStoreActionStore];
+        id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:desc];
+        [enc endEncoding];
+    }
+    
+    template <typename... T_Args>
+    _VertexShader<T_Args...> VertexShader(const std::string_view& fn, T_Args&&... args) {
+        return _VertexShader<T_Args...>{
+            .fn = fn,
+            .args = std::forward_as_tuple(args...),
+        };
+    }
+    
+    template <typename... T_Args>
+    _FragmentShader<T_Args...> FragmentShader(const std::string_view& fn, T_Args&&... args) {
+        return _FragmentShader<T_Args...>{
+            .fn = fn,
+            .args = std::forward_as_tuple(args...),
+        };
+    }
+    
     // Render pass to a target texture
-    template <typename... Args>
+    template <typename... T_FragArgs>
     void render(
-        const std::string& name,
         id<MTLTexture> txt,
-        Args&&... args
+        BlendType blendType,
+        const _FragmentShader<T_FragArgs...>& frag
+    ) {
+        render(txt, blendType,
+            VertexShader(_DefaultVertexShader),
+            frag
+        );
+    }
+    
+    // Render pass to a target texture
+    template <typename... T_VertArgs, typename... T_FragArgs>
+    void render(
+        id<MTLTexture> txt,
+        BlendType blendType,
+        const _VertexShader<T_VertArgs...>& vert,
+        const _FragmentShader<T_FragArgs...>& frag
     ) {
         assert(txt);
         
@@ -119,11 +181,17 @@ public:
         [[desc colorAttachments][0] setStoreAction:MTLStoreActionStore];
         id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:desc];
         
-        [enc setRenderPipelineState:_pipelineState(name, [txt pixelFormat])];
+        [enc setRenderPipelineState:_pipelineState(vert.fn, frag.fn, [txt pixelFormat], blendType)];
         [enc setFrontFacingWinding:MTLWindingCounterClockwise];
         [enc setCullMode:MTLCullModeNone];
         
-        Renderer::_SetBufferArgs(enc, 0, args...);
+        std::apply([=] (const auto&... args) {
+            _SetBufferArgs(_ShaderType::Vertex, enc, 0, args...);
+        }, vert.args);
+        
+        std::apply([=] (const auto&... args) {
+            _SetBufferArgs(_ShaderType::Fragment, enc, 0, args...);
+        }, frag.args);
         
         [enc drawPrimitives:MTLPrimitiveTypeTriangle
             vertexStart:0 vertexCount:MDCTools::MetalUtil::SquareVertIdxCount];
@@ -133,12 +201,28 @@ public:
     
     // Render pass with no target texture
     // (Fragment shaders typically use texture.write() in this case)
-    template <typename... Args>
+    template <typename... T_FragArgs>
     void render(
-        const std::string& name,
         size_t width,
         size_t height,
-        Args&&... args
+        BlendType blendType,
+        const _FragmentShader<T_FragArgs...>& frag
+    ) {
+        render(width, height, blendType,
+            VertexShader(_DefaultVertexShader),
+            frag
+        );
+    }
+    
+    // Render pass with no target texture
+    // (Fragment shaders typically use texture.write() in this case)
+    template <typename... T_VertArgs, typename... T_FragArgs>
+    void render(
+        size_t width,
+        size_t height,
+        BlendType blendType,
+        const _VertexShader<T_VertArgs...>& vert,
+        const _FragmentShader<T_FragArgs...>& frag
     ) {
         MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor new];
         [desc setRenderTargetWidth:width];
@@ -149,11 +233,17 @@ public:
         [[desc colorAttachments][0] setStoreAction:MTLStoreActionDontCare];
         id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:desc];
         
-        [enc setRenderPipelineState:_pipelineState(name, MTLPixelFormatInvalid)];
+        [enc setRenderPipelineState:_pipelineState(vert.fn, frag.fn, MTLPixelFormatInvalid)];
         [enc setFrontFacingWinding:MTLWindingCounterClockwise];
         [enc setCullMode:MTLCullModeNone];
         
-        Renderer::_SetBufferArgs(enc, 0, args...);
+        std::apply([=] (const auto&... args) {
+            _SetBufferArgs(_ShaderType::Vertex, enc, 0, args...);
+        }, vert.args);
+        
+        std::apply([=] (const auto&... args) {
+            _SetBufferArgs(_ShaderType::Fragment, enc, 0, args...);
+        }, frag.args);
         
         [enc drawPrimitives:MTLPrimitiveTypeTriangle
             vertexStart:0 vertexCount:MDCTools::MetalUtil::SquareVertIdxCount];
@@ -216,9 +306,12 @@ public:
                 throw std::runtime_error("invalid source/destination combination");
             }
             
-            render(fnName, dst,
-                // Texture args
-                src
+            render(dst, BlendType::None,
+                // Fragment shader
+                FragmentShader(fnName,
+                    // Texture arguments
+                    src
+                )
             );
         }
     }
@@ -247,9 +340,10 @@ public:
         [blit endEncoding];
     }
     
-    void present(id<CAMetalDrawable> drawable) {
-        [cmdBuf() presentDrawable:drawable];
-    }
+//    void present(id<CAMetalDrawable> drawable) {
+//        #warning we're doing this wrong! we should call [drawable present], which works correctly when `presentsWithTransaction=1`: https://developer.apple.com/documentation/quartzcore/cametallayer/1478157-presentswithtransaction?language=objc
+//        [cmdBuf() presentDrawable:drawable];
+//    }
     
     Txt textureCreate(
         MTLPixelFormat fmt,
@@ -355,14 +449,17 @@ public:
         const uint32_t inSamplesPerPixel32 = (uint32_t)inSamplesPerPixel;
         const uint32_t maxValue32 = (uint32_t)maxValue;
         // Load pixel data into `txt`
-        render(fnName, txt,
-            // Buffer args
-            w32,
-            h32,
-            inSamplesPerPixel32,
-            maxValue32,
-            buf
-            // Texture args
+        render(txt, BlendType::None,
+            FragmentShader(
+                fnName,
+                // Buffer args
+                w32,
+                h32,
+                inSamplesPerPixel32,
+                maxValue32,
+                buf
+                // Texture args
+            )
         );
     }
     
@@ -408,7 +505,7 @@ public:
     }
     
     // Create a CGImage from a texture
-    id /* CGImageRef */ createCGImage(id<MTLTexture> txt, id /* CGColorSpaceRef */ colorSpace=nil) {
+    id /* CGImageRef */ imageCreate(id<MTLTexture> txt, id /* CGColorSpaceRef */ colorSpace=nil) {
         const size_t w = [txt width];
         const size_t h = [txt height];
         const MTLPixelFormat fmt = [txt pixelFormat];
@@ -459,9 +556,12 @@ public:
         if (premulAlpha) {
             // Load pixel data into `txt`
             Txt tmp = textureCreate(fmt, w, h);
-            render(_ShaderNamespace "PremulAlpha", tmp,
-                // Texture args
-                txt
+            render(tmp, BlendType::None,
+                FragmentShader(
+                    _ShaderNamespace "PremulAlpha",
+                    // Texture args
+                    txt
+                )
             );
             sync(tmp);
             commitAndWait();
@@ -498,7 +598,7 @@ public:
         sync(txt);
         commitAndWait();
         
-        id img = createCGImage(txt, colorSpace);
+        id img = imageCreate(txt, colorSpace);
         assert(img);
         NSURL* outputURL = [NSURL fileURLWithPath:@(outputPath)];
         CGImageDestinationRef imageDest = CGImageDestinationCreateWithURL((CFURLRef)outputURL, kUTTypePNG, 1, nullptr);
@@ -526,41 +626,65 @@ public:
     id<MTLDevice> dev = nil;
 
 private:
-    void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
+    enum class _ShaderType {
+        Vertex,
+        Fragment,        
+    };
+    
+    void _SetBufferArgs(_ShaderType type, id<MTLRenderCommandEncoder> enc, size_t idx) {}
     
     template <typename T, typename... Ts>
-    void _SetBufferArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&&... ts) {
+    void _SetBufferArgs(_ShaderType type, id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&&... ts) {
         using U = typename std::remove_cv<T>::type;
-        if constexpr (!std::is_same<U,Txt>::value &&
-                      !std::is_same<U,id<MTLTexture>>::value) {
+        if constexpr (!std::is_same<U,Txt>::value && !std::is_same<U,id<MTLTexture>>::value) {
             if constexpr (std::is_same<U,Buf>::value) {
-                [enc setFragmentBuffer:(id<MTLBuffer>)t offset:0 atIndex:idx];
+                switch (type) {
+                case _ShaderType::Vertex:   [enc setVertexBuffer:(id<MTLBuffer>)t offset:0 atIndex:idx]; break;
+                case _ShaderType::Fragment: [enc setFragmentBuffer:(id<MTLBuffer>)t offset:0 atIndex:idx]; break;
+                default:                    abort();
+                }
             } else if constexpr (std::is_same<U,id<MTLBuffer>>::value) {
-                [enc setFragmentBuffer:t offset:0 atIndex:idx];
+                switch (type) {
+                case _ShaderType::Vertex:   [enc setVertexBuffer:t offset:0 atIndex:idx]; break;
+                case _ShaderType::Fragment: [enc setFragmentBuffer:t offset:0 atIndex:idx]; break;
+                default:                    abort();
+                }
             } else {
-                [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx];
+                switch (type) {
+                case _ShaderType::Vertex:   [enc setVertexBytes:&t length:sizeof(t) atIndex:idx]; break;
+                case _ShaderType::Fragment: [enc setFragmentBytes:&t length:sizeof(t) atIndex:idx]; break;
+                default:                    abort();
+                }
             }
-            _SetBufferArgs(enc, idx+1, ts...);
+            _SetBufferArgs(type, enc, idx+1, std::forward<Ts>(ts)...);
         } else {
             // Start of texture arguments
-            _SetTextureArgs(enc, 0, t, ts...);
+            _SetTextureArgs(type, enc, 0, t, std::forward<Ts>(ts)...);
         }
     }
     
-    void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx) {}
+    void _SetTextureArgs(_ShaderType type, id<MTLRenderCommandEncoder> enc, size_t idx) {}
     
     template <typename T, typename... Ts>
-    void _SetTextureArgs(id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&&... ts) {
+    void _SetTextureArgs(_ShaderType type, id<MTLRenderCommandEncoder> enc, size_t idx, T& t, Ts&&... ts) {
         using U = typename std::remove_cv<T>::type;
         if constexpr (std::is_same<U,Txt>::value) {
-            [enc setFragmentTexture:(id<MTLTexture>)t atIndex:idx];
+            switch (type) {
+            case _ShaderType::Vertex:   [enc setVertexTexture:(id<MTLTexture>)t atIndex:idx]; break;
+            case _ShaderType::Fragment: [enc setFragmentTexture:(id<MTLTexture>)t atIndex:idx]; break;
+            default:                    abort();
+            }
         } else if constexpr (std::is_same<U,id<MTLTexture>>::value) {
-            [enc setFragmentTexture:t atIndex:idx];
+            switch (type) {
+            case _ShaderType::Vertex:   [enc setVertexTexture:t atIndex:idx]; break;
+            case _ShaderType::Fragment: [enc setFragmentTexture:t atIndex:idx]; break;
+            default:                    abort();
+            }
         } else {
             static_assert(_AlwaysFalse<U>);
         }
         
-        _SetTextureArgs(enc, idx+1, ts...);
+        _SetTextureArgs(type, enc, idx+1, std::forward<Ts>(ts)...);
     }
     
     static id _GrayColorSpace() {
@@ -581,20 +705,32 @@ private:
         _bufs.push_back(buf);
     }
     
-    id<MTLRenderPipelineState> _pipelineState(const std::string& name, MTLPixelFormat fmt) {
-        PipelineStateKey key(name, fmt);
+    id<MTLRenderPipelineState> _pipelineState(const std::string_view& vertName, const std::string_view& fragName, MTLPixelFormat fmt, BlendType blendType) {
+        PipelineStateKey key(vertName, fragName, fmt, blendType);
         auto find = _pipelineStates.find(key);
         if (find != _pipelineStates.end()) return find->second;
         
-        id<MTLFunction> vertexShader = [_lib newFunctionWithName:@(_ShaderNamespace "VertexShader")];
-        Assert(vertexShader, return nil);
-        id<MTLFunction> fragmentShader = [_lib newFunctionWithName:@(name.c_str())];
-        Assert(fragmentShader, return nil);
+        id<MTLFunction> vertShader = [_lib newFunctionWithName:@(vertName.data())];
+        assert(vertShader);
+        id<MTLFunction> fragShader = [_lib newFunctionWithName:@(fragName.data())];
+        assert(fragShader);
         
         MTLRenderPipelineDescriptor* desc = [MTLRenderPipelineDescriptor new];
-        [desc setVertexFunction:vertexShader];
-        [desc setFragmentFunction:fragmentShader];
+        [desc setVertexFunction:vertShader];
+        [desc setFragmentFunction:fragShader];
         [[desc colorAttachments][0] setPixelFormat:fmt];
+        
+        if (blendType == BlendType::Over) {
+            [[desc colorAttachments][0] setBlendingEnabled:true];
+            [[desc colorAttachments][0] setAlphaBlendOperation:MTLBlendOperationAdd];
+            [[desc colorAttachments][0] setSourceAlphaBlendFactor:MTLBlendFactorSourceAlpha];
+            [[desc colorAttachments][0] setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+
+            [[desc colorAttachments][0] setRgbBlendOperation:MTLBlendOperationAdd];
+            [[desc colorAttachments][0] setSourceRGBBlendFactor:MTLBlendFactorSourceAlpha];
+            [[desc colorAttachments][0] setDestinationRGBBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
+        }
+        
         id<MTLRenderPipelineState> ps = [dev newRenderPipelineStateWithDescriptor:desc error:nil];
         Assert(ps, return nil);
         _pipelineStates.insert(find, {key, ps});
@@ -603,17 +739,19 @@ private:
     
     class PipelineStateKey {
     public:
-        PipelineStateKey(const std::string& name, MTLPixelFormat fmt) :
-        _name(name), _fmt(fmt) {}
+        PipelineStateKey(const std::string_view& vertName, const std::string_view& fragName, MTLPixelFormat fmt, BlendType blendType) :
+        _vertName(vertName), _fragName(fragName), _fmt(fmt), _blendType(blendType) {}
         
         bool operator==(const PipelineStateKey& x) const {
             return
-                _name==x._name      &&
-                _fmt==x._fmt        ;
+                _vertName==x._vertName      &&
+                _fragName==x._fragName      &&
+                _fmt==x._fmt                &&
+                _blendType==x._blendType    ;
         }
         
         size_t hash() const {
-            return std::hash<std::string>{}(_name) ^ Toastbox::HashInts(_fmt);
+            return Toastbox::HashInts(std::hash<std::string>{}(_vertName), std::hash<std::string>{}(_fragName), _fmt, _blendType);
         }
         
         struct Hash {
@@ -621,8 +759,10 @@ private:
         };
     
     private:
-        std::string _name;
+        std::string _vertName;
+        std::string _fragName;
         MTLPixelFormat _fmt = MTLPixelFormatInvalid;
+        BlendType _blendType = BlendType::None;
     };
     
     class TxtKey {
@@ -668,6 +808,7 @@ private:
     
     friend class Resource<id<MTLTexture>>;
     friend class Resource<id<MTLBuffer>>;
+#undef _DefaultVertexShader
 #undef _ShaderNamespace
 }; // class Renderer
 
