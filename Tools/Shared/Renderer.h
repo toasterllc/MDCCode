@@ -403,6 +403,11 @@ public:
         return textureCreate([txt pixelFormat], [txt width], [txt height], [txt usage]);
     }
     
+    Txt textureCreate(id<MTLTexture> txt, MTLTextureUsage usage) {
+        assert(txt);
+        return textureCreate([txt pixelFormat], [txt width], [txt height], usage);
+    }
+    
     Buf bufferCreate(size_t len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
         // Return an existing buffer if its length is between len and 2*len,
         // and its options match `opts`
