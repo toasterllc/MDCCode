@@ -11,10 +11,17 @@
         √ allow arrow keys to be used to navigate to the previous/next image
             X use animation
                 X animation is too distracting
-        - implement zooming
-        - implement panning
+        √ implement zooming
+        √ implement panning
         √ optimize draw performance by caching full-size image texture
-        - draw shadow behind image
+        √ draw shadow behind image
+        - 'size-to-fit' mode; stay in this mode until zooming manually
+        - keyboard zooming (cmd+, cmd-)
+        - mouse zooming (command-scroll)
+    
+    - MDCStudio: grid view thumbnail resize
+    
+    - MDCStudio: use LayerScrollView / MetalScrollLayer for ImageGridView
     
     - MDCStudio: merge ImageGridLayer into ImageGridView, the same as we did for ImageView
     

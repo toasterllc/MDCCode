@@ -80,13 +80,13 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     id<MTLTexture> drawableTxt = [drawable texture];
     assert(drawableTxt);
     
-//    // Fetch the image from the cache, if we don't have _image yet
-//    if (!_image) {
-//        __weak auto weakSelf = self;
-//        _image = _imageSource->imageCache()->imageForImageRef(imageThumb.ref, [=] (ImagePtr image) {
-//            dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf _handleImageLoaded:image]; });
-//        });
-//    }
+    // Fetch the image from the cache, if we don't have _image yet
+    if (!_image) {
+        __weak auto weakSelf = self;
+        _image = _imageSource->imageCache()->imageForImageRef(imageThumb.ref, [=] (ImagePtr image) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf _handleImageLoaded:image]; });
+        });
+    }
     
     Renderer renderer(_device, _library, _commandQueue);
     
