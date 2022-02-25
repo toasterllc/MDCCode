@@ -5,6 +5,7 @@
     CALayer<LayerScrollViewLayer>* _layer;
     CGRect _layerFrame;
     CGFloat _layerMagnification;
+    CGPoint _anchorPoint;
 }
 
 // MARK: - Methods
@@ -32,11 +33,39 @@
     }
 }
 
+- (void)setFrame:(NSRect)frame {
+    const CGPoint anchorBefore = [[self window] convertPointToScreen:
+        [[self documentView] convertPoint:[self documentVisibleRect].origin toView:nil]];
+    [super setFrame:frame];
+    const CGPoint anchorAfter = [[self window] convertPointToScreen:
+        [[self documentView] convertPoint:[self documentVisibleRect].origin toView:nil]];
+    
+    if (!CGPointEqualToPoint(anchorBefore, anchorAfter)) {
+        NSLog(@"anchorBefore: %@, anchorAfter: %@", NSStringFromPoint(anchorBefore), NSStringFromPoint(anchorAfter));
+    }
+    
+    
+    
+    CGRect docRect = [self documentVisibleRect];
+    [super scrollClipView:[self contentView] toPoint:[[self contentView] constrainScrollPoint:{_anchorPoint.x, _anchorPoint.y-docRect.size.height}]];
+//    [[self contentView] scrollToPoint:{_anchorPoint.x, _anchorPoint.y-docRect.size.height}];
+    [self reflectScrolledClipView:[self contentView]];
+//    [self tile];
+}
+
 // MARK: - NSView Overrides
 
 - (void)viewDidChangeBackingProperties {
     [super viewDidChangeBackingProperties];
     [_layer setContentsScale:[[self window] backingScaleFactor]];
+}
+
+- (void)viewWillStartLiveResize {
+    NSEvent* currentEvent = [NSApp currentEvent];
+    NSLog(@"viewWillStartLiveResize %@", [NSApp currentEvent]);
+    CGRect docRect = [self documentVisibleRect];
+    _anchorPoint = docRect.origin;
+    _anchorPoint.y += docRect.size.height;
 }
 
 // MARK: - NSScrollView Overrides
