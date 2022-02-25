@@ -17,10 +17,12 @@ using Vec3      = FFCC::Vec3;
 
 static Renderer::Txt _createMaskedImage(Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
     Renderer::Txt maskedImg = renderer.textureCreate(img);
-    renderer.render(_ShaderNamespace "ApplyMask", maskedImg,
-        // Texture args
-        img,
-        mask
+    renderer.render(maskedImg,
+        renderer.FragmentShader(_ShaderNamespace "ApplyMask",
+            // Texture args
+            img,
+            mask
+        )
     );
     
     return maskedImg;
@@ -28,15 +30,19 @@ static Renderer::Txt _createMaskedImage(Renderer& renderer, id<MTLTexture> img, 
 
 static Renderer::Txt _createAbsDevImage(Renderer& renderer, id<MTLTexture> img, id<MTLTexture> mask) {
     Renderer::Txt coeff = renderer.textureCreate(MTLPixelFormatR32Float, [img width], [img height]);
-    renderer.render(_ShaderNamespace "LocalAbsoluteDeviationCoeff", coeff,
-        mask
+    renderer.render(coeff,
+        renderer.FragmentShader(_ShaderNamespace "LocalAbsoluteDeviationCoeff",
+            mask
+        )
     );
     
     Renderer::Txt absDevImage = renderer.textureCreate(img);
-    renderer.render(_ShaderNamespace "LocalAbsoluteDeviation", absDevImage,
-        img,
-        mask,
-        coeff
+    renderer.render(absDevImage,
+        renderer.FragmentShader(_ShaderNamespace "LocalAbsoluteDeviation",
+            img,
+            mask,
+            coeff
+        )
     );
     
     return absDevImage;
@@ -47,15 +53,19 @@ static Mat64 _calcXFromImage(const FFCC::Model& model, Renderer& renderer, id<MT
     const uint32_t h = (uint32_t)[img height];
     
     Renderer::Txt u = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-    renderer.render(_ShaderNamespace "CalcU", u,
-        // Texture args
-        img
+    renderer.render(u,
+        renderer.FragmentShader(_ShaderNamespace "CalcU",
+            // Texture args
+            img
+        )
     );
     
     Renderer::Txt v = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-    renderer.render(_ShaderNamespace "CalcV", v,
-        // Texture args
-        img
+    renderer.render(v,
+        renderer.FragmentShader(_ShaderNamespace "CalcV",
+            // Texture args
+            img
+        )
     );
     
     using ValidPixelCount = uint32_t;
@@ -64,35 +74,41 @@ static Mat64 _calcXFromImage(const FFCC::Model& model, Renderer& renderer, id<MT
     Renderer::Txt maskUV = renderer.textureCreate(MTLPixelFormatR8Unorm, w, h);
     {
         const float thresh = model.params.histogram.minIntensity;
-        renderer.render(_ShaderNamespace "CalcMaskUV", maskUV,
-            // Buffer args
-            thresh,
-            validPixelCountBuf,
-            // Texture args
-            img,
-            mask
+        renderer.render(maskUV,
+            renderer.FragmentShader(_ShaderNamespace "CalcMaskUV",
+                // Buffer args
+                thresh,
+                validPixelCountBuf,
+                // Texture args
+                img,
+                mask
+            )
         );
     }
     
     const uint32_t binCount = (uint32_t)model.params.histogram.binCount;
     const float binSize = model.params.histogram.binSize;
     const float binMin = model.params.histogram.startingUV;
-    renderer.render(_ShaderNamespace "CalcBinUV", u,
-        // Buffer args
-        binCount,
-        binSize,
-        binMin,
-        // Texture args
-        u
+    renderer.render(u,
+        renderer.FragmentShader(_ShaderNamespace "CalcBinUV",
+            // Buffer args
+            binCount,
+            binSize,
+            binMin,
+            // Texture args
+            u
+        )
     );
     
-    renderer.render(_ShaderNamespace "CalcBinUV", v,
-        // Buffer args
-        binCount,
-        binSize,
-        binMin,
-        // Texture args
-        v
+    renderer.render(v,
+        renderer.FragmentShader(_ShaderNamespace "CalcBinUV",
+            // Buffer args
+            binCount,
+            binSize,
+            binMin,
+            // Texture args
+            v
+        )
     );
     
     const size_t binsBufCount = binCount*binCount;
@@ -100,34 +116,42 @@ static Mat64 _calcXFromImage(const FFCC::Model& model, Renderer& renderer, id<MT
     Renderer::Buf binsBuf = renderer.bufferCreate(binsBufLen, MTLResourceStorageModeManaged);
     renderer.bufferClear(binsBuf);
     
-    renderer.render(_ShaderNamespace "CalcHistogram", w, h,
-        // Buffer args
-        binCount,
-        binsBuf,
-        // Texture args
-        u,
-        v,
-        maskUV
+    renderer.render(w, h,
+        renderer.FragmentShader(_ShaderNamespace "CalcHistogram",
+            // Buffer args
+            binCount,
+            binsBuf,
+            // Texture args
+            u,
+            v,
+            maskUV
+        )
     );
     
     Renderer::Txt Xc = renderer.textureCreate(MTLPixelFormatR32Float, binCount, binCount);
-    renderer.render(_ShaderNamespace "LoadHistogram", Xc,
-        // Buffer args
-        binCount,
-        binsBuf
+    renderer.render(Xc,
+        renderer.FragmentShader(_ShaderNamespace "LoadHistogram",
+            // Buffer args
+            binCount,
+            binsBuf
+        )
     );
     
-    renderer.render(_ShaderNamespace "NormalizeHistogram", Xc,
-        // Buffer args
-        validPixelCountBuf,
-        // Texture args
-        Xc
+    renderer.render(Xc,
+        renderer.FragmentShader(_ShaderNamespace "NormalizeHistogram",
+            // Buffer args
+            validPixelCountBuf,
+            // Texture args
+            Xc
+        )
     );
     
     Renderer::Txt XcTransposed = renderer.textureCreate(MTLPixelFormatR32Float, binCount, binCount);
-    renderer.render(_ShaderNamespace "Transpose", XcTransposed,
-        // Texture args
-        Xc
+    renderer.render(XcTransposed,
+        renderer.FragmentShader(_ShaderNamespace "Transpose",
+            // Texture args
+            Xc
+        )
     );
     
     renderer.sync(XcTransposed);
@@ -223,16 +247,20 @@ FFCC::Vec3 FFCC::Run(
     const uint32_t w = 384;
     const uint32_t h = (uint32_t)((w*[raw height])/[raw width]);
     Renderer::Txt img = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
-    renderer.render(ImagePipelineShaderNamespace "Base::DebayerDownsample", img,
-        cfaDesc,
-        raw,
-        img
+    renderer.render(img,
+        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::DebayerDownsample",
+            cfaDesc,
+            raw,
+            img
+        )
     );
     
     Renderer::Txt mask = renderer.textureCreate(MTLPixelFormatR8Unorm, w, h);
-    renderer.render(_ShaderNamespace "CreateMask", mask,
-        // Texture args
-        img
+    renderer.render(mask,
+        renderer.FragmentShader(_ShaderNamespace "CreateMask",
+            // Texture args
+            img
+        )
     );
     
     const Renderer::Txt maskedImg = _createMaskedImage(renderer, img, mask);

@@ -33,13 +33,15 @@ public:
             [resample encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:src destinationTexture:thumbTxt];
         }
         
-        renderer.render(ImagePipelineShaderNamespace "RenderThumb::RGB3FromTexture", opts.thumbWidth, opts.thumbHeight,
-            // Buffer args
-            (uint32_t)opts.dataOff,
-            (uint32_t)opts.thumbWidth,
-            dst,
-            // Texture args
-            thumbTxt
+        renderer.render(opts.thumbWidth, opts.thumbHeight,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "RenderThumb::RGB3FromTexture",
+                // Buffer args
+                (uint32_t)opts.dataOff,
+                (uint32_t)opts.thumbWidth,
+                dst,
+                // Texture args
+                thumbTxt
+            )
         );
     }
     
@@ -61,11 +63,13 @@ public:
             thumbTxt = thumbTxtRef;
         }
         
-        renderer.render(ImagePipelineShaderNamespace "RenderThumb::TextureFromRGB3", thumbTxt,
-            // Buffer args
-            (uint32_t)opts.dataOff,
-            (uint32_t)opts.thumbWidth,
-            src
+        renderer.render(thumbTxt,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "RenderThumb::TextureFromRGB3",
+                // Buffer args
+                (uint32_t)opts.dataOff,
+                (uint32_t)opts.thumbWidth,
+                src
+            )
         );
         
         if (resize) {

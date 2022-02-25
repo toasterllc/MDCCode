@@ -14,8 +14,10 @@ namespace MDCStudio::ImagePipeline {
             const size_t h = [rgb height];
             // Extract L
             Renderer::Txt lTxt = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-            renderer.render(ImagePipelineShaderNamespace "LocalContrast::ExtractL", lTxt,
-                rgb
+            renderer.render(lTxt,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "LocalContrast::ExtractL",
+                    rgb
+                )
             );
             
             // Blur L channel
@@ -28,10 +30,12 @@ namespace MDCStudio::ImagePipeline {
                 sourceTexture:lTxt destinationTexture:blurredLTxt];
             
             // Local contrast
-            renderer.render(ImagePipelineShaderNamespace "LocalContrast::LocalContrast", rgb,
-                amount,
-                rgb,
-                blurredLTxt
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "LocalContrast::LocalContrast",
+                    amount,
+                    rgb,
+                    blurredLTxt
+                )
             );
         }
     };

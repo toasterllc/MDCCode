@@ -366,7 +366,7 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
 //        (simd::int1)topInset+(simd::int1)((dstHeight-imageHeight)/2)
 //    };
 //    
-//    _renderer.render("MDCStudio::ImageViewShader::FragmentShader", drawableTxt,
+//    _renderer.render(drawableTxt, renderer.FragmentShader("MDCStudio::ImageViewShader::FragmentShader",
 //        // Buffer args
 //        off,
 //        _BackgroundColor,
@@ -374,8 +374,8 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
 //        imageTxt
 //    );
     
-    _renderer.present(drawable);
     _renderer.commitAndWait();
+    [drawable present];
     
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
     printf("Took %ju ms\n", (uintmax_t)durationMs);
@@ -390,7 +390,7 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
 //        (simd::int1)topInset+(simd::int1)((dstHeight-imageHeight)/2)
 //    };
 //    
-//    _renderer.render("MDCStudio::ImageViewShader::FragmentShader", drawableTxt,
+//    _renderer.render(drawableTxt, renderer.FragmentShader("MDCStudio::ImageViewShader::FragmentShader",
 //        // Buffer args
 //        off,
 //        _BackgroundColor,

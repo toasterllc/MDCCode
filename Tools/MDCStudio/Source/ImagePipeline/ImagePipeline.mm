@@ -148,14 +148,15 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     
     // Sample: fill `sampleBufRaw`
     {
-        renderer.render(ImagePipelineShaderNamespace "Base::SampleRaw",
-            w, h,
-            // Buffer args
-            rawImg.cfaDesc,
-            opts.sampleRect,
-            sampleBufRaw,
-            // Texture args
-            raw
+        renderer.render(w, h,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::SampleRaw",
+                // Buffer args
+                rawImg.cfaDesc,
+                opts.sampleRect,
+                sampleBufRaw,
+                // Texture args
+                raw
+            )
         );
     }
     
@@ -165,11 +166,13 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     // Raw mode (bilinear debayer only)
     if (opts.rawMode) {
         // De-bayer
-        renderer.render(ImagePipelineShaderNamespace "DebayerBilinear::Debayer", rgb,
-            // Buffer args
-            rawImg.cfaDesc,
-            // Texture args
-            raw
+        renderer.render(rgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "DebayerBilinear::Debayer",
+                // Buffer args
+                rawImg.cfaDesc,
+                // Texture args
+                raw
+            )
         );
     
     } else {
@@ -192,12 +195,14 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
             const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
             const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
             const simd::float3 simdWB = simdForMat(wb);
-            renderer.render(ImagePipelineShaderNamespace "Base::WhiteBalance", raw,
-                // Buffer args
-                rawImg.cfaDesc,
-                simdWB,
-                // Texture args
-                raw
+            renderer.render(raw,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
+                    // Buffer args
+                    rawImg.cfaDesc,
+                    simdWB,
+                    // Texture args
+                    raw
+                )
             );
         }
         
@@ -217,74 +222,90 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
             const simd::float3x3 colorMatrix = simdForMat(ccm.m);
             
 //            const simd::float3x3 colorMatrix = simdForMat(opts.colorMatrix);
-            renderer.render(ImagePipelineShaderNamespace "Base::ApplyColorMatrix", rgb,
-                // Buffer args
-                colorMatrix,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
+                    // Buffer args
+                    colorMatrix,
+                    // Texture args
+                    rgb
+                )
             );
         }
         
         // ProPhotoRGB -> XYZ.D50
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGB", rgb,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGB",
+                    // Texture args
+                    rgb
+                )
             );
         }
         
         // XYZ.D50 -> XYY.D50
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::XYYFromXYZ", rgb,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYYFromXYZ",
+                    // Texture args
+                    rgb
+                )
             );
         }
         
         // Exposure
         {
             const float exposure = pow(2, opts.exposure);
-            renderer.render(ImagePipelineShaderNamespace "Base::Exposure", rgb,
-                // Buffer args
-                exposure,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Exposure",
+                    // Buffer args
+                    exposure,
+                    // Texture args
+                    rgb
+                )
             );
         }
         
         // XYY.D50 -> XYZ.D50
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::XYZFromXYY", rgb,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZFromXYY",
+                    // Texture args
+                    rgb
+                )
             );
         }
         
         // XYZ.D50 -> Lab.D50
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50", rgb,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
+                    // Texture args
+                    rgb
+                )
             );
         }
         
         // Brightness
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::Brightness", rgb,
-                // Buffer args
-                opts.brightness,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Brightness",
+                    // Buffer args
+                    opts.brightness,
+                    // Texture args
+                    rgb
+                )
             );
         }
         
         // Contrast
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::Contrast", rgb,
-                // Buffer args
-                opts.contrast,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Contrast",
+                    // Buffer args
+                    opts.contrast,
+                    // Texture args
+                    rgb
+                )
             );
         }
         
@@ -296,9 +317,11 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // Lab.D50 -> XYZ.D50
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50", rgb,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
+                    // Texture args
+                    rgb
+                )
             );
         }
         
@@ -307,37 +330,42 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // Sample: fill `sampleBufXYZD50`
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::SampleRGB",
-                w, h,
-                // Buffer args
-                rawImg.cfaDesc,
-                opts.sampleRect,
-                sampleBufXYZD50,
-                // Texture args
-                rgb
+            renderer.render(w, h,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::SampleRGB",
+                    // Buffer args
+                    rawImg.cfaDesc,
+                    opts.sampleRect,
+                    sampleBufXYZD50,
+                    // Texture args
+                    rgb
+                )
             );
         }
         
         // XYZ.D50 -> XYZ.D65
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::BradfordXYZD65FromXYZD50", rgb,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::BradfordXYZD65FromXYZD50",
+                    // Texture args
+                    rgb
+                )
             );
         }
         
         // XYZ.D65 -> LSRGB.D65
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::LSRGBD65FromXYZD65", rgb,
-                // Texture args
-                rgb
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LSRGBD65FromXYZD65",
+                    // Texture args
+                    rgb
+                )
             );
         }
         
         // We changed our semantics to explicitly output LSRGB, so we no longer apply the SRGB gamma ourselves
 //        // Apply SRGB gamma
 //        {
-//            renderer.render(ImagePipelineShaderNamespace "Base::SRGBGamma", rgb,
+//            renderer.render(rgb, ImagePipelineShaderNamespace "Base::SRGBGamma",
 //                // Texture args
 //                rgb
 //            );
@@ -345,14 +373,15 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         // Sample: fill `sampleBufLSRGB`
         {
-            renderer.render(ImagePipelineShaderNamespace "Base::SampleRGB",
-                w, h,
-                // Buffer args
-                rawImg.cfaDesc,
-                opts.sampleRect,
-                sampleBufLSRGB,
-                // Texture args
-                rgb
+            renderer.render(w, h,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::SampleRGB",
+                    // Buffer args
+                    rawImg.cfaDesc,
+                    opts.sampleRect,
+                    sampleBufLSRGB,
+                    // Texture args
+                    rgb
+                )
             );
         }
     }

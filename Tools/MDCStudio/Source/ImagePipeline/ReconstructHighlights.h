@@ -13,12 +13,14 @@ public:
         const size_t w = [raw width];
         const size_t h = [raw height];
         Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w/2, h/2);
-        renderer.render(ImagePipelineShaderNamespace "Base::DebayerDownsample", rgb,
-            // Buffer args
-            cfaDesc,
-            // Texture args
-            raw,
-            rgb
+        renderer.render(rgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::DebayerDownsample",
+                // Buffer args
+                cfaDesc,
+                // Texture args
+                raw,
+                rgb
+            )
         );
         
         // `Scale` balances the raw colors from the sensor for the purpose
@@ -31,32 +33,38 @@ public:
         const Mat<double,3,1> illumMin1 = illum/illumMin;
         const simd::float3 simdIllumMin1 = {(float)illumMin1[0], (float)illumMin1[1], (float)illumMin1[2]};
         Renderer::Txt highlightMap = renderer.textureCreate(MTLPixelFormatRG32Float, w, h);
-        renderer.render(ImagePipelineShaderNamespace "ReconstructHighlights::CreateHighlightMap", highlightMap,
-            // Buffer args
-            Scale,
-            Thresh,
-            simdIllumMin1,
-            // Texture args
-            rgb
+        renderer.render(highlightMap,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "ReconstructHighlights::CreateHighlightMap",
+                // Buffer args
+                Scale,
+                Thresh,
+                simdIllumMin1,
+                // Texture args
+                rgb
+            )
         );
         
         for (int i=0; i<1; i++) {
             Renderer::Txt tmp = renderer.textureCreate(highlightMap);
-            renderer.render(ImagePipelineShaderNamespace "ReconstructHighlights::Blur", tmp,
-                // Texture args
-                highlightMap
+            renderer.render(tmp,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "ReconstructHighlights::Blur",
+                    // Texture args
+                    highlightMap
+                )
             );
             highlightMap = std::move(tmp);
         }
         
-        renderer.render(ImagePipelineShaderNamespace "ReconstructHighlights::ReconstructHighlights", raw,
-            // Buffer args
-            cfaDesc,
-            simdIllumMin1,
-            // Texture args
-            raw,
-            rgb,
-            highlightMap
+        renderer.render(raw,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "ReconstructHighlights::ReconstructHighlights",
+                // Buffer args
+                cfaDesc,
+                simdIllumMin1,
+                // Texture args
+                raw,
+                rgb,
+                highlightMap
+            )
         );
     }
 };

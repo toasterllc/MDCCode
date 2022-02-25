@@ -325,19 +325,20 @@ static void _defringe(Renderer& renderer,
         }
     }
     
-    renderer.render(ImagePipelineShaderNamespace "Defringe::GenerateShiftTxts",
-        ShiftTextureWidth, ShiftTextureWidth,
-        // Buffer args
-        cfaDesc,
-        polyCoeffs(CFAColor::Red,Dir::X),
-        polyCoeffs(CFAColor::Red,Dir::Y),
-        polyCoeffs(CFAColor::Blue,Dir::X),
-        polyCoeffs(CFAColor::Blue,Dir::Y),
-        // Texture args
-        shiftTxts(CFAColor::Red,Dir::X),
-        shiftTxts(CFAColor::Red,Dir::Y),
-        shiftTxts(CFAColor::Blue,Dir::X),
-        shiftTxts(CFAColor::Blue,Dir::Y)
+    renderer.render(ShiftTextureWidth, ShiftTextureWidth,
+        renderer.FragmentShader(ImagePipelineShaderNamespace "Defringe::GenerateShiftTxts",
+            // Buffer args
+            cfaDesc,
+            polyCoeffs(CFAColor::Red,Dir::X),
+            polyCoeffs(CFAColor::Red,Dir::Y),
+            polyCoeffs(CFAColor::Blue,Dir::X),
+            polyCoeffs(CFAColor::Blue,Dir::Y),
+            // Texture args
+            shiftTxts(CFAColor::Red,Dir::X),
+            shiftTxts(CFAColor::Red,Dir::Y),
+            shiftTxts(CFAColor::Blue,Dir::X),
+            shiftTxts(CFAColor::Blue,Dir::Y)
+        )
     );
     
     // Apply the defringe correction.
@@ -345,20 +346,22 @@ static void _defringe(Renderer& renderer,
     // ApplyCorrection() samples pixels in `raw` outside the render target pixel,
     // which would introduce a data race if we rendered to `raw` while also sampling it.
     Renderer::Txt tmp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-    renderer.render(ImagePipelineShaderNamespace "Defringe::ApplyCorrection", tmp,
-        // Buffer args
-        cfaDesc,
-        opts.αthresh,
-        opts.γthresh,
-        opts.γfactor,
-        opts.δfactor,
-        // Texture args
-        raw,
-        gInterp,
-        shiftTxts(CFAColor::Red,Dir::X),
-        shiftTxts(CFAColor::Red,Dir::Y),
-        shiftTxts(CFAColor::Blue,Dir::X),
-        shiftTxts(CFAColor::Blue,Dir::Y)
+    renderer.render(tmp,
+        renderer.FragmentShader(ImagePipelineShaderNamespace "Defringe::ApplyCorrection",
+            // Buffer args
+            cfaDesc,
+            opts.αthresh,
+            opts.γthresh,
+            opts.γfactor,
+            opts.δfactor,
+            // Texture args
+            raw,
+            gInterp,
+            shiftTxts(CFAColor::Red,Dir::X),
+            shiftTxts(CFAColor::Red,Dir::Y),
+            shiftTxts(CFAColor::Blue,Dir::X),
+            shiftTxts(CFAColor::Blue,Dir::Y)
+        )
     );
     
     renderer.copy(tmp, raw);
@@ -373,11 +376,13 @@ void Defringe::Run(Renderer& renderer, const CFADesc& cfaDesc,
     const size_t h = [raw height];
     
     Renderer::Txt gInterp = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-    renderer.render(ImagePipelineShaderNamespace "Defringe::InterpolateG", gInterp,
-        // Buffer args
-        cfaDesc,
-        // Texture args
-        raw
+    renderer.render(gInterp,
+        renderer.FragmentShader(ImagePipelineShaderNamespace "Defringe::InterpolateG",
+            // Buffer args
+            cfaDesc,
+            // Texture args
+            raw
+        )
     );
     
     for (uint32_t i=0; i<opts.rounds; i++) {

@@ -217,6 +217,20 @@ public:
     void render(
         size_t width,
         size_t height,
+        const _FragmentShader<T_FragArgs...>& frag
+    ) {
+        render(width, height, BlendType::None,
+            VertexShader(_DefaultVertexShader),
+            frag
+        );
+    }
+    
+    // Render pass with no target texture
+    // (Fragment shaders typically use texture.write() in this case)
+    template <typename... T_FragArgs>
+    void render(
+        size_t width,
+        size_t height,
         BlendType blendType,
         const _FragmentShader<T_FragArgs...>& frag
     ) {
@@ -245,7 +259,7 @@ public:
         [[desc colorAttachments][0] setStoreAction:MTLStoreActionDontCare];
         id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:desc];
         
-        [enc setRenderPipelineState:_pipelineState(vert.fn, frag.fn, MTLPixelFormatInvalid)];
+        [enc setRenderPipelineState:_pipelineState(vert.fn, frag.fn, MTLPixelFormatInvalid, blendType)];
         [enc setFrontFacingWinding:MTLWindingCounterClockwise];
         [enc setCullMode:MTLCullModeNone];
         
