@@ -71,9 +71,9 @@ private:
             {
                 auto lock = std::unique_lock(_state.lock);
                 for (;;) {
-                    _state.threadSignal.wait(lock);
                     if (_state.threadStop) return;
                     if (_state.work) break;
+                    _state.threadSignal.wait(lock);
                 }
                 work = *_state.work;
                 _state.work = std::nullopt;
