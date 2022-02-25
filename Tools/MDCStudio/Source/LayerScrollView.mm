@@ -5,7 +5,8 @@
     CALayer<LayerScrollViewLayer>* _layer;
     CGRect _layerFrame;
     CGFloat _layerMagnification;
-    CGPoint _anchorPoint;
+    CGPoint _anchorPointDocument;
+    CGPoint _anchorPointScreen;
 }
 
 // MARK: - Methods
@@ -34,23 +35,28 @@
 }
 
 - (void)setFrame:(NSRect)frame {
-    const CGPoint anchorBefore = [[self window] convertPointToScreen:
-        [[self documentView] convertPoint:[self documentVisibleRect].origin toView:nil]];
     [super setFrame:frame];
-    const CGPoint anchorAfter = [[self window] convertPointToScreen:
-        [[self documentView] convertPoint:[self documentVisibleRect].origin toView:nil]];
     
-    if (!CGPointEqualToPoint(anchorBefore, anchorAfter)) {
-        NSLog(@"anchorBefore: %@, anchorAfter: %@", NSStringFromPoint(anchorBefore), NSStringFromPoint(anchorAfter));
-    }
+    // Keep the content anchored
+    // This keeps the content in place when resizing the containing window, which looks better
+    NSWindow* win = [self window];
+    NSView* doc = [self documentView];
+    NSClipView* clip = [self contentView];
     
+    const CGPoint anchorPointWant = _anchorPointDocument;
+    const CGPoint anchorPointHave = [doc convertPoint:[win convertPointFromScreen:_anchorPointScreen] fromView:nil];
+    const CGPoint delta = {
+        anchorPointWant.x-anchorPointHave.x,
+        anchorPointWant.y-anchorPointHave.y,
+    };
     
+    CGRect bounds = [clip bounds];
+    bounds.origin.x += delta.x;
+    bounds.origin.y += delta.y;
+    bounds = [clip constrainBoundsRect:bounds];
     
-    CGRect docRect = [self documentVisibleRect];
-    [super scrollClipView:[self contentView] toPoint:[[self contentView] constrainScrollPoint:{_anchorPoint.x, _anchorPoint.y-docRect.size.height}]];
-//    [[self contentView] scrollToPoint:{_anchorPoint.x, _anchorPoint.y-docRect.size.height}];
-    [self reflectScrolledClipView:[self contentView]];
-//    [self tile];
+    [super scrollClipView:clip toPoint:bounds.origin];
+    [self reflectScrolledClipView:clip];
 }
 
 // MARK: - NSView Overrides
@@ -61,11 +67,10 @@
 }
 
 - (void)viewWillStartLiveResize {
-    NSEvent* currentEvent = [NSApp currentEvent];
-    NSLog(@"viewWillStartLiveResize %@", [NSApp currentEvent]);
-    CGRect docRect = [self documentVisibleRect];
-    _anchorPoint = docRect.origin;
-    _anchorPoint.y += docRect.size.height;
+    [super viewWillStartLiveResize];
+    _anchorPointDocument = [self documentVisibleRect].origin;
+    _anchorPointScreen = [[self window] convertPointToScreen:
+        [[self documentView] convertPoint:_anchorPointDocument toView:nil]];
 }
 
 // MARK: - NSScrollView Overrides
