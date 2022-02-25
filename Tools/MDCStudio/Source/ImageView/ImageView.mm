@@ -6,46 +6,15 @@
 #import "ImagePipeline/RenderThumb.h"
 #import "ImagePipeline/ImagePipeline.h"
 #import "ImageViewTypes.h"
+#import "LayerScrollView.h"
+#import "MetalScrollLayer.h"
 using namespace MDCStudio;
 using namespace MDCStudio::ImageViewTypes;
+using namespace MDCTools;
 
 // _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
 // so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
-static const simd::float4 _BackgroundColor = {
-    (float)WindowBackgroundColor.lsrgb[0],
-    (float)WindowBackgroundColor.lsrgb[1],
-    (float)WindowBackgroundColor.lsrgb[2],
-    1
-};
-
-
-static Mat<float,4,4> _Scale(float x, float y, float z) {
-    return {
-        x,   0.f, 0.f, 0.f,
-        0.f, y,   0.f, 0.f,
-        0.f, 0.f, z,   0.f,
-        0.f, 0.f, 0.f, 1.f,
-    };
-}
-
-static Mat<float,4,4> _Translate(float x, float y, float z) {
-    return {
-        1.f, 0.f, 0.f, x,
-        0.f, 1.f, 0.f, y,
-        0.f, 0.f, 1.f, z,
-        0.f, 0.f, 0.f, 1.f,
-    };
-}
-
-static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
-    return {
-        simd::float4{m.at(0,0), m.at(1,0), m.at(2,0), m.at(3,0)},
-        simd::float4{m.at(0,1), m.at(1,1), m.at(2,1), m.at(3,1)},
-        simd::float4{m.at(0,2), m.at(1,2), m.at(2,2), m.at(3,2)},
-        simd::float4{m.at(0,3), m.at(1,3), m.at(2,3), m.at(3,3)},
-    };
-}
 
 
 
@@ -64,30 +33,22 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
 
 
 
-@interface ImageLayer : CAMetalLayer
+@interface ImageLayer : MetalScrollLayer
 @end
 
 @implementation ImageLayer {
 @public
     ImageThumb imageThumb;
     
-    // visibleBounds: for handling NSWindow 'full size' content, where the window
-    // content is positioned below the transparent window titlebar for aesthetics
-    CGRect visibleBounds;
-    CGPoint scroll;
-    CGFloat magnification;
-    
 @private
     id<MTLDevice> _device;
+    id<MTLLibrary> _library;
     id<MTLCommandQueue> _commandQueue;
-    id<MTLRenderPipelineState> _pipelineState;
     
     ImagePtr _image;
+    id<MTLTexture> _thumbTxt;
     id<MTLTexture> _imageTxt;
     ImageSourcePtr _imageSource;
-    CGFloat _contentsScale;
-    
-    MDCTools::Renderer _renderer;
 }
 
 - (instancetype)initWithImageThumb:(const ImageThumb&)imageThumbArg imageSource:(ImageSourcePtr)imageSource {
@@ -95,39 +56,16 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
     
     imageThumb = imageThumbArg;
     _imageSource = imageSource;
-    _contentsScale = 1;
     
-    [self setOpaque:true];
-    [self setActions:LayerNullActions];
-    [self setNeedsDisplayOnBoundsChange:true];
+    [self setPresentsWithTransaction:true];
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
     [self setDevice:_device];
     [self setPixelFormat:_PixelFormat];
     
-    id<MTLLibrary> library = [_device newDefaultLibraryWithBundle:[NSBundle bundleForClass:[self class]] error:nil];
-    assert(library);
-    id<MTLFunction> vertexShader = [library newFunctionWithName:@"MDCStudio::ImageViewShader::VertexShader"];
-    assert(vertexShader);
-    id<MTLFunction> fragmentShader = [library newFunctionWithName:@"MDCStudio::ImageViewShader::FragmentShader"];
-    assert(fragmentShader);
-    
+    _library = [_device newDefaultLibrary];
     _commandQueue = [_device newCommandQueue];
-    
-    MTLRenderPipelineDescriptor* pipelineDescriptor = [MTLRenderPipelineDescriptor new];
-    [pipelineDescriptor setVertexFunction:vertexShader];
-    [pipelineDescriptor setFragmentFunction:fragmentShader];
-    [[pipelineDescriptor colorAttachments][0] setPixelFormat:_PixelFormat];
-    
-    _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
-    assert(_pipelineState);
-    
-    
-    
-    
-    
-    _renderer = MDCTools::Renderer(_device, library, _commandQueue);
     return self;
 }
 
@@ -135,45 +73,12 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
     using namespace MDCTools;
     using namespace MDCStudio::ImagePipeline;
     
-    auto startTime = std::chrono::steady_clock::now();
+    [super display];
     
-    // Bail if we have zero width/height; the Metal drawable APIs will fail below
-    // if we don't short-circuit here.
-    const CGRect frame = [self frame];
-    if (CGRectIsEmpty(frame)) return;
-    
-    // Update our drawable size
-    const size_t drawableWidth = lround(frame.size.width*_contentsScale);
-    const size_t drawableHeight = lround(frame.size.height*_contentsScale);
-    [self setDrawableSize:{(CGFloat)drawableWidth, (CGFloat)drawableHeight}];
-    
-    // Get our drawable and its texture
     id<CAMetalDrawable> drawable = [self nextDrawable];
     assert(drawable);
-    
     id<MTLTexture> drawableTxt = [drawable texture];
     assert(drawableTxt);
-    
-    // See visibleBounds comment above
-    const size_t dstWidth = std::min((size_t)lround(visibleBounds.size.width*_contentsScale), (size_t)[drawableTxt width]);
-    const size_t dstHeight = std::min((size_t)lround(visibleBounds.size.height*_contentsScale), (size_t)[drawableTxt height]);
-    
-    const float srcAspect = (float)ImageThumb::ThumbWidth/ImageThumb::ThumbHeight;
-    const float dstAspect = (float)dstWidth/dstHeight;
-    
-    size_t imageWidth = 2304;//dstWidth;
-    size_t imageHeight = 1296;//dstHeight;
-    
-//    // Destination width determines size
-//    if (srcAspect > dstAspect) imageHeight = lround(imageWidth/srcAspect);
-//    // Destination height determines size
-//    else imageWidth = lround(imageHeight*srcAspect);
-    
-//    float imageAspect = (imageWidth>imageHeight ? ((float)imageWidth/imageHeight) : ((float)imageWidth/imageHeight));
-//    if (imageAspect < 1)
-    
-    auto imageTxt = _renderer.textureCreate(MTLPixelFormatBGRA8Unorm, imageWidth, imageHeight,
-        MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
     
 //    // Fetch the image from the cache, if we don't have _image yet
 //    if (!_image) {
@@ -183,7 +88,9 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
 //        });
 //    }
     
-    // Render _imageTxt if it doesn't exist yet and we have the image
+    Renderer renderer(_device, _library, _commandQueue);
+    
+    // Create _imageTxt if it doesn't exist yet and we have the image
     if (!_imageTxt && _image) {
         Pipeline::RawImage rawImage = {
             .cfaDesc    = _image->cfaDesc,
@@ -197,212 +104,49 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
             .debayerLMMSE           = { .applyGamma = true, },
         };
         
-        Pipeline::Result renderResult = Pipeline::Run(_renderer, rawImage, pipelineOpts);
+        Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
         _imageTxt = renderResult.txt;
     }
     
-    if (_imageTxt) {
-        // Resample
-        MPSImageLanczosScale* resample = [[MPSImageLanczosScale alloc] initWithDevice:_renderer.dev];
-        [resample encodeToCommandBuffer:_renderer.cmdBuf() sourceTexture:_imageTxt destinationTexture:imageTxt];
-    
-    // Otherwise, render the thumbnail
-    } else {
+    // If we don't have the thumbnail texture yet, create it
+    if (!_imageTxt && !_thumbTxt) {
+        #warning TODO: try removing the Write usage flag
+        _thumbTxt = renderer.textureCreate(MTLPixelFormatBGRA8Unorm, [drawableTxt width], [drawableTxt height],
+            MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
+        
         constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
-        id<MTLBuffer> thumbBuf = [_renderer.dev newBufferWithBytes:imageThumb.thumb length:sizeof(imageThumb.thumb) options:BufOpts];
+        id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytes:imageThumb.thumb length:sizeof(imageThumb.thumb) options:BufOpts];
         const RenderThumb::Options thumbOpts = {
             .thumbWidth = ImageThumb::ThumbWidth,
             .thumbHeight = ImageThumb::ThumbHeight,
             .dataOff = 0,
         };
-        RenderThumb::TextureFromRGB3(_renderer, thumbOpts, thumbBuf, imageTxt);
+        RenderThumb::TextureFromRGB3(renderer, thumbOpts, thumbBuf, _thumbTxt);
     }
     
-//    {
-//        MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
-//        [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
-//        [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-//        [[renderPassDescriptor colorAttachments][0] setClearColor:{WindowBackgroundColor.lsrgb[0], WindowBackgroundColor.lsrgb[1], WindowBackgroundColor.lsrgb[2], 1}];
-//        [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
-//        
-//        id<MTLRenderCommandEncoder> renderEncoder = [_renderer.cmdBuf() renderCommandEncoderWithDescriptor:renderPassDescriptor];
-//        [renderEncoder setRenderPipelineState:_pipelineState];
-//        [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
-//        [renderEncoder setCullMode:MTLCullModeNone];
-//        [renderEncoder endEncoding];
-//    }
-    
+    // Finally render into `drawableTxt`, from the full-size image if it
+    // exists, or the thumbnail otherwise.
     {
-        MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
-        [[renderPassDescriptor colorAttachments][0] setTexture:drawableTxt];
-        [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{WindowBackgroundColor.lsrgb[0], WindowBackgroundColor.lsrgb[1], WindowBackgroundColor.lsrgb[2], 1}];
-        [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
+        id<MTLTexture> srcTxt = (_imageTxt ? _imageTxt : _thumbTxt);
         
-        id<MTLRenderCommandEncoder> renderEncoder = [_renderer.cmdBuf() renderCommandEncoderWithDescriptor:renderPassDescriptor];
-        [renderEncoder setRenderPipelineState:_pipelineState];
-        [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
-        [renderEncoder setCullMode:MTLCullModeNone];
+        renderer.clear(drawableTxt, {0,0,0,0});
         
-//        const matrix_float4x4 scale = (srcAspect>dstAspect ? _Scale(1, (float)imageHeight/dstHeight, 1) : _Scale((float)imageWidth/dstWidth, 1, 1));
+        const simd_float4x4 transform = [self transform];
+        renderer.render(drawableTxt, Renderer::BlendType::None,
+            renderer.VertexShader("MDCStudio::ImageViewShader::VertexShader", transform),
+            renderer.FragmentShader("MDCStudio::ImageViewShader::FragmentShader", srcTxt)
+        );
         
-//        // rasterFromUnityMatrix: converts unity coordinates [-1,1] -> rasterized coordinates [0,pixel width/height]
-//        const matrix_float4x4 rasterFromUnityMatrix = matrix_multiply(matrix_multiply(
-//            _Scale(.5*frame.size.width*_contentsScale, .5*frame.size.height*_contentsScale, 1), // Divide by 2, multiply by view width/height
-//            _Translate(1, 1, 0)),                                                               // Add 1
-//            _Scale(1, -1, 1)                                                                    // Flip Y
-//        );
-//        
-//        // unityFromRasterMatrix: converts rasterized coordinates -> unity coordinates
-//        const matrix_float4x4 unityFromRasterMatrix = matrix_invert(rasterFromUnityMatrix);
-//        
-//        const matrix_float4x4 matrix = matrix_multiply(matrix_multiply(
-//            unityFromRasterMatrix,
-//            _Translate(scroll.x, scroll.y, 0)),
-//            scale
-//        );
-        
-//        const matrix_float4x4 scale = _Scale((float)imageWidth/drawableWidth, (float)imageHeight/drawableHeight, 1);
-//        const matrix_float4x4 matrix = matrix_multiply(
-//            _Translate((scroll.x*_contentsScale) / drawableWidth, (scroll.y*_contentsScale) / drawableHeight, 0),
-//            scale
-//        );
-        
-//        const matrix_float4x4 scale = _Scale((float)imageWidth/drawableWidth, (float)imageHeight/drawableHeight, 1);
-        
-        // rasterFromUnityMatrix: converts unity coordinates [-1,1] -> rasterized coordinates [0,pixel width/height]
-        const Mat<float,4,4> rasterFromUnityMatrix =
-            _Scale(.5*frame.size.width*_contentsScale, .5*frame.size.height*_contentsScale, 1) *    // Divide by 2, multiply by view width/height
-            _Translate(1, 1, 0) *                                                                   // Add 1
-            _Scale(1, -1, 1);                                                                       // Flip Y
-        
-        
-        // unityFromRasterMatrix: converts rasterized coordinates -> unity coordinates
-        const Mat<float,4,4> unityFromRasterMatrix = rasterFromUnityMatrix.inv();
-        
-        Mat<float,4,4> offset;
-        
-        const float magImageWidth = magnification*imageWidth;
-        const float magImageHeight = magnification*imageHeight;
-        const float offX = (drawableWidth>magImageWidth ? (float)(drawableWidth-magImageWidth)/2 : 0);
-        const float offY = (drawableHeight>magImageHeight ? (float)(drawableHeight-magImageHeight)/2 : 0);
-        const Mat<float,4,4> mat =
-            unityFromRasterMatrix *
-            _Translate(offX, offY, 0) *
-            _Scale(magnification, magnification, 1) *
-            _Translate(-scroll.x*_contentsScale, -scroll.y*_contentsScale, 0);
-//        
-////        matrix_multiply(unityFromRasterMatrix, );
-//        
-//        const matrix_float4x4 matrix = matrix_identity_float4x4;
-//        Mat<float,4,4> scale = _Scale((float)imageWidth/drawableWidth, (float)imageHeight/drawableHeight, 1);
-        
-        RenderContext ctx = {
-            .viewMatrix = simdForMat(mat),
-        };
-        
-        [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
-        
-        [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-        [renderEncoder setFragmentTexture:imageTxt atIndex:0];
-        
-//        [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
-//        [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
-//        
-//        [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-//        [renderEncoder setFragmentBuffer:imageBuf offset:0 atIndex:1];
-//        [renderEncoder setFragmentBuffer:_selection.buf offset:0 atIndex:2];
-//        [renderEncoder setFragmentTexture:_maskTexture atIndex:0];
-//        [renderEncoder setFragmentTexture:_outlineTexture atIndex:1];
-//        [renderEncoder setFragmentTexture:_shadowTexture atIndex:2];
-//        [renderEncoder setFragmentTexture:_selectionTexture atIndex:4];
-        
-        [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
-        
-        [renderEncoder endEncoding];
+        renderer.commitAndWait();
+        [drawable present];
     }
-    
-    
-    
-    
-    
-    
-    
-    
-//    {
-//        MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor new];
-//        [[desc colorAttachments][0] setTexture:drawableTxt];
-//        [[desc colorAttachments][0] setClearColor:{0,0,0,1}];
-//        [[desc colorAttachments][0] setLoadAction:MTLLoadActionLoad];
-//        [[desc colorAttachments][0] setStoreAction:MTLStoreActionStore];
-//        id<MTLRenderCommandEncoder> enc = [_renderer.cmdBuf() renderCommandEncoderWithDescriptor:desc];
-//        
-//        [enc setRenderPipelineState:_pipelineState];
-//        [enc setFrontFacingWinding:MTLWindingCounterClockwise];
-//        [enc setCullMode:MTLCullModeNone];
-//        
-//        const RenderContext ctx = {
-//            .viewMatrix = _Scale(.5, .5, 1),
-//        };
-//        
-//        [enc setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
-//        
-//        [enc setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-//        [enc setFragmentTexture:imageTxt atIndex:1];
-//        
-//        [enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
-//        
-//        [enc endEncoding];
-//    }
-    
-    
-    
-    
-    
-//    // topInset is for handling NSWindow 'full size' content; see visibleBounds comment above
-//    const size_t topInset = [drawableTxt height]-dstHeight;
-//    const simd::int2 off = {
-//        (simd::int1)((dstWidth-imageWidth)/2),
-//        (simd::int1)topInset+(simd::int1)((dstHeight-imageHeight)/2)
-//    };
-//    
-//    _renderer.render(drawableTxt, renderer.FragmentShader("MDCStudio::ImageViewShader::FragmentShader",
-//        // Buffer args
-//        off,
-//        _BackgroundColor,
-//        // Texture args
-//        imageTxt
-//    );
-    
-    _renderer.commitAndWait();
-    [drawable present];
-    
-    auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-    printf("Took %ju ms\n", (uintmax_t)durationMs);
-    
-    
-    
-    
-//    // topInset is for handling NSWindow 'full size' content; see visibleBounds comment above
-//    const size_t topInset = [drawableTxt height]-dstHeight;
-//    const simd::int2 off = {
-//        (simd::int1)((dstWidth-imageWidth)/2),
-//        (simd::int1)topInset+(simd::int1)((dstHeight-imageHeight)/2)
-//    };
-//    
-//    _renderer.render(drawableTxt, renderer.FragmentShader("MDCStudio::ImageViewShader::FragmentShader",
-//        // Buffer args
-//        off,
-//        _BackgroundColor,
-//        // Texture args
-//        imageTxt
-//    );
-//    
-//    _renderer.present(drawable);
-//    _renderer.commitAndWait();
-//    
-//    auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-//    printf("Took %ju ms\n", (uintmax_t)durationMs);
+}
+
+- (CGSize)preferredFrameSize {
+    return {
+        (CGFloat)imageThumb.ref.imageWidth*2,
+        (CGFloat)imageThumb.ref.imageHeight*2
+    };
 }
 
 - (void)_handleImageLoaded:(ImagePtr)image {
@@ -410,10 +154,37 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
     [self setNeedsDisplay];
 }
 
-- (void)setContentsScale:(CGFloat)scale {
-    _contentsScale = scale;
-    [super setContentsScale:scale];
-    [self setNeedsDisplay];
+@end
+
+
+
+
+
+
+
+
+
+
+
+
+@interface ImageClipView : NSClipView
+@end
+
+@implementation ImageClipView
+
+// -constrainBoundsRect override:
+// Center the document view when it's smaller than the scroll view's bounds
+- (NSRect)constrainBoundsRect:(NSRect)bounds {
+    bounds = [super constrainBoundsRect:bounds];
+    
+    const CGSize docSize = [[self documentView] frame].size;
+    if (bounds.size.width >= docSize.width) {
+        bounds.origin.x = (docSize.width-bounds.size.width)/2;
+    }
+    if (bounds.size.height >= docSize.height) {
+        bounds.origin.y = (docSize.height-bounds.size.height)/2;
+    }
+    return bounds;
 }
 
 @end
@@ -432,73 +203,123 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
 
 
 
-@interface ImageDocumentView : NSView
-@end
 
-@implementation ImageDocumentView {
-@public
-    CALayer* rootLayer;
-    ImageLayer* imageLayer;
-}
 
-- (void)setFrame:(NSRect)frame {
-    frame.size = {2304/2, 1296/2};
-//    frame.origin = {0,0};
-    [super setFrame:frame];
-}
 
-//- (void)viewDidChangeBackingProperties {
-//    [super viewDidChangeBackingProperties];
-//    [imageLayer setContentsScale:[[self window] backingScaleFactor]];
-//}
-//
-//- (void)viewWillStartLiveResize {
-//    [super viewWillStartLiveResize];
-//    [imageLayer setResizingUnderway:true];
-//}
-//
-//- (void)viewDidEndLiveResize {
-//    [super viewDidEndLiveResize];
-//    [imageLayer setResizingUnderway:false];
-//}
 
-- (BOOL)isFlipped {
-    return true;
-}
 
-@end
 
-@protocol ImageScrollViewDelegate
-- (void)scrollViewScrolled;
-@end
 
-@interface ImageScrollView : NSScrollView
+
+
+
+
+constexpr CGFloat ShadowCenterOffset = 45;
+
+@interface ImageScrollView : LayerScrollView
 @end
 
 @implementation ImageScrollView {
-@public
-    __weak id delegate;
+    NSView* _shadowView;
+    CALayer* _shadowLayer;
+}
+
+- (instancetype)initWithCoder:(NSCoder*)coder {
+    if (!(self = [super initWithCoder:coder])) return nil;
+    [self initCommon];
+    return self;
+}
+
+- (instancetype)initWithFrame:(NSRect)frame {
+    if (!(self = [super initWithFrame:frame])) return nil;
+    [self initCommon];
+    return self;
+}
+
+- (void)initCommon {
+//    constexpr uint32_t BackgroundTileSize = 256;
+//    constexpr uint32_t BackgroundTileLen = BackgroundTileSize*BackgroundTileSize*3;
+//    
+//    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+//    MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+//    auto backgroundTxt = renderer.textureCreate(MTLPixelFormatRGBA16Float, BackgroundTileSize, BackgroundTileSize);
+//    id<MTLBuffer> noiseDataBuf = [device newBufferWithLength:BackgroundTileLen options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeManaged];
+//    uint8_t* noiseData = (uint8_t*)[noiseDataBuf contents];
+//    for (size_t i=0; i<BackgroundTileLen; i++) {
+//        noiseData[i] = rand() & 0xFF;
+//    }
+//    [noiseDataBuf didModifyRange:NSMakeRange(0, BackgroundTileLen)];
+//    
+//    renderer.clear(backgroundTxt, {0.0130468225, 0.0137825618, 0.015127142, 1});
+//    renderer.render(backgroundTxt, Renderer::BlendType::Over,
+//        renderer.FragmentShader("RenderNoise",
+//            // Buffer args
+//            BackgroundTileSize,
+//            noiseDataBuf
+//        )
+//    );
+//    renderer.commitAndWait();
+//    
+//    id image = renderer.imageCreate(backgroundTxt);
+//    assert(image);
+//    [self setBackgroundColor:[NSColor colorWithPatternImage:[[NSImage alloc] initWithCGImage:(__bridge CGImageRef)image size:{BackgroundTileSize/2, BackgroundTileSize/2}]]];
+//
+//    
+//    
+//    
+    
+    [self setBackgroundColor:[NSColor colorWithSRGBRed:WindowBackgroundColor.srgb[0]
+        green:WindowBackgroundColor.srgb[1] blue:WindowBackgroundColor.srgb[2] alpha:1]];
+}
+
+
+- (void)tile {
+    [super tile];
+    if (!_shadowView) {
+        _shadowLayer = [CALayer new];
+        [_shadowLayer setActions:LayerNullActions];
+        NSImage* shadow = [NSImage imageNamed:@"ImageView-Shadow"];
+        assert(shadow);
+        [_shadowLayer setContents:shadow];
+        [_shadowLayer setContentsScale:[[self window] backingScaleFactor]];
+        
+        CGSize shadowSize = [shadow size];
+        CGRect center = { ShadowCenterOffset, ShadowCenterOffset, shadowSize.width-2*ShadowCenterOffset, shadowSize.height-2*ShadowCenterOffset };
+        center.origin.x /= shadowSize.width;
+        center.origin.y /= shadowSize.height;
+        center.size.width /= shadowSize.width;
+        center.size.height /= shadowSize.height;
+        [_shadowLayer setContentsCenter:center];
+        
+        _shadowView = [[NSView alloc] initWithFrame:{}];
+        [_shadowView setTranslatesAutoresizingMaskIntoConstraints:false];
+        [_shadowView setLayer:_shadowLayer];
+        [_shadowView setWantsLayer:true];
+        [self addSubview:_shadowView positioned:NSWindowBelow relativeTo:[self contentView]];
+    }
+    
+    [self _updateShadowFrame];
+}
+
+- (void)_updateShadowFrame {
+    NSView* docView = [self documentView];
+    CGRect shadowFrame = [self convertRect:[docView visibleRect] fromView:docView];
+    shadowFrame = CGRectInset(shadowFrame, -ShadowCenterOffset/[_shadowLayer contentsScale], -ShadowCenterOffset/[_shadowLayer contentsScale]);
+    [_shadowView setFrame:shadowFrame];
 }
 
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
     [super reflectScrolledClipView:clipView];
-    [delegate scrollViewScrolled];
+    [self _updateShadowFrame];
+}
+
+
+- (void)viewDidChangeBackingProperties {
+    [super viewDidChangeBackingProperties];
+    [_shadowLayer setContentsScale:[[self window] backingScaleFactor]];
 }
 
 @end
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -511,31 +332,15 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
 
 
 @implementation ImageView {
-    IBOutlet ImageScrollView* _nibView;
-    IBOutlet ImageDocumentView* _documentView;
-    CALayer* _rootLayer;
+    IBOutlet ImageScrollView* _imageScrollView;
     ImageLayer* _imageLayer;
     __weak id<ImageViewDelegate> _delegate;
 }
-
-
 
 - (instancetype)initWithImageThumb:(const MDCStudio::ImageThumb&)imageThumb
     imageSource:(MDCStudio::ImageSourcePtr)imageSource {
     
     if (!(self = [super initWithFrame:{}])) return nil;
-    
-    // Make ourself layer-backed (not layer-hosted because we have to add subviews -- _nibView -- to ourself,
-    // which isn't allowed when layer-hosted: "Similarly, do not add subviews to a layer-hosting view.")
-    {
-        [self setWantsLayer:true];
-        _rootLayer = [self layer];
-        
-        _imageLayer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
-//        [_imageLayer setActions:LayerNullActions];
-//        [_imageLayer setBackgroundColor:[[[NSColor redColor] colorWithAlphaComponent:.1] CGColor]];
-        [_rootLayer addSublayer:_imageLayer];
-    }
     
     // Load from nib
     {
@@ -544,58 +349,25 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
         bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
         assert(br);
         
-        [_nibView setTranslatesAutoresizingMaskIntoConstraints:false];
-        [self addSubview:_nibView];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
-        
-        _nibView->delegate = self;
+        [self addSubview:_imageScrollView];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_imageScrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_imageScrollView)]];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_imageScrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_imageScrollView)]];
     }
     
-    [NSTimer scheduledTimerWithTimeInterval:1 repeats:false block:^(NSTimer * _Nonnull timer) {
-        [_nibView setMagnification:1];
-    }];
-    
-//    [_documentView setWantsLayer:true];
-//    [[_documentView layer] setBackgroundColor:[[[NSColor redColor] colorWithAlphaComponent:.1] CGColor]];
-    
-//    // Configure ImageDocumentView
-//    {
-//        CALayer* rootLayer = [CALayer new];
-//        [rootLayer setBackgroundColor:[[[NSColor redColor] colorWithAlphaComponent:.1] CGColor]];
-//        
-////        ImageLayer* imageLayer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
-////        [rootLayer addSublayer:imageLayer];
-//        
-//        _documentView->rootLayer = rootLayer;
-////        _documentView->imageLayer = imageLayer;
-//        [_documentView setLayer:_documentView->rootLayer];
-//        [_documentView setWantsLayer:true];
-//    }
-    
-//    _layer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
-//    [self setLayer:_layer];
 //    [self setWantsLayer:true];
+//    [[self layer] setBackgroundColor:[[NSColor redColor] CGColor]];
     
-//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
-//        NSLog(@"ImageView: %f", [self frame].size.height);
+    _imageLayer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
+    [_imageScrollView setScrollLayer:_imageLayer];
+    
+//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer* timer) {
+//        NSLog(@"[self bounds]: %@", NSStringFromRect([self bounds]));
+//        NSLog(@"[_imageScrollView bounds]: %@", NSStringFromRect([_imageScrollView bounds]));
+//        NSLog(@"[_imageScrollView contentView]: %@", NSStringFromRect([[_imageScrollView contentView] bounds]));
+//        
 //    }];
     
     return self;
-}
-
-- (void)setFrame:(NSRect)frame {
-    [super setFrame:frame];
-    [_imageLayer setFrame:[_rootLayer bounds]];
-    
-    const CGRect bounds = [self bounds];
-    const CGRect contentLayoutRect = [self convertRect:[[self window] contentLayoutRect] fromView:nil];
-    _imageLayer->visibleBounds = CGRectIntersection(bounds, contentLayoutRect);
-}
-
-- (void)viewDidChangeBackingProperties {
-    [super viewDidChangeBackingProperties];
-    [_imageLayer setContentsScale:[[self window] backingScaleFactor]];
 }
 
 - (const ImageThumb&)imageThumb {
@@ -618,13 +390,6 @@ static simd::float4x4 simdForMat(const Mat<float,4,4>& m) {
 
 - (void)moveRight:(id)sender {
     [_delegate imageViewNextImage:self];
-}
-
-- (void)scrollViewScrolled {
-    _imageLayer->scroll = [_nibView documentVisibleRect].origin;
-    _imageLayer->magnification = [_nibView magnification];
-    [_imageLayer setNeedsDisplay];
-    NSLog(@"%@ %f", NSStringFromPoint([_nibView documentVisibleRect].origin), [_nibView magnification]);
 }
 
 @end
