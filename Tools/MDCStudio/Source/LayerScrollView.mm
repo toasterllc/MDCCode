@@ -101,4 +101,9 @@
     }
 }
 
+// Disable NSScrollView responsive scrolling by overriding -scrollWheel
+- (void)scrollWheel:(NSEvent*)event {
+    [super scrollWheel:event];
+}
+
 @end

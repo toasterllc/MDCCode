@@ -272,7 +272,6 @@ constexpr CGFloat ShadowCenterOffset = 45;
         green:WindowBackgroundColor.srgb[1] blue:WindowBackgroundColor.srgb[2] alpha:1]];
 }
 
-
 - (void)tile {
     [super tile];
     if (!_shadowView) {
@@ -312,7 +311,6 @@ constexpr CGFloat ShadowCenterOffset = 45;
     [super reflectScrolledClipView:clipView];
     [self _updateShadowFrame];
 }
-
 
 - (void)viewDidChangeBackingProperties {
     [super viewDidChangeBackingProperties];
