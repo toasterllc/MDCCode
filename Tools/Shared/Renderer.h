@@ -155,6 +155,18 @@ public:
     template <typename... T_FragArgs>
     void render(
         id<MTLTexture> txt,
+        const _FragmentShader<T_FragArgs...>& frag
+    ) {
+        render(txt, BlendType::None,
+            VertexShader(_DefaultVertexShader),
+            frag
+        );
+    }
+    
+    // Render pass to a target texture
+    template <typename... T_FragArgs>
+    void render(
+        id<MTLTexture> txt,
         BlendType blendType,
         const _FragmentShader<T_FragArgs...>& frag
     ) {
