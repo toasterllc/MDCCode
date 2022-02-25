@@ -11,30 +11,40 @@ public:
         id<MTLTexture> txt = xyz_d50;
         
         // XYZ.D50 -> Luv.D50
-        renderer.render(ImagePipelineShaderNamespace "Saturation::LuvD50FromXYZD50", txt,
-            txt
+        renderer.render(txt,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Saturation::LuvD50FromXYZD50",
+                txt
+            )
         );
         
         // Luv.D50 -> LCHuv.D50
-        renderer.render(ImagePipelineShaderNamespace "Saturation::LCHuvFromLuv", txt,
-            txt
+        renderer.render(txt,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Saturation::LCHuvFromLuv",
+                txt
+            )
         );
         
         // Saturation
         const float satpow = pow(2, 2*sat);
-        renderer.render(ImagePipelineShaderNamespace "Saturation::Saturation", txt,
-            satpow,
-            txt
+        renderer.render(txt,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Saturation::Saturation",
+                satpow,
+                txt
+            )
         );
         
         // LCHuv.D50 -> Luv.D50
-        renderer.render(ImagePipelineShaderNamespace "Saturation::LuvFromLCHuv", txt,
-            txt
+        renderer.render(txt,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Saturation::LuvFromLCHuv",
+                txt
+            )
         );
         
         // Luv.D50 -> XYZ.D50
-        renderer.render(ImagePipelineShaderNamespace "Saturation::XYZD50FromLuvD50", txt,
-            txt
+        renderer.render(txt,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Saturation::XYZD50FromLuvD50",
+                txt
+            )
         );
     }
 };
