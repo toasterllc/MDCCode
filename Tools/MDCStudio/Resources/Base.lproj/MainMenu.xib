@@ -10,7 +10,7 @@
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
-        <customObject id="-3" userLabel="Application"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customObject id="Voe-Tx-rLC" customClass="AppDelegate"/>
         <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
         <customObject id="UrQ-J3-YzG" customClass="DocumentController"/>
@@ -372,12 +372,14 @@
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="5gT-KC-WSO"/>
-                                        <menuItem title="Bigger" tag="3" keyEquivalent="+" id="Ptp-SP-VEL">
+                                        <menuItem title="Bigger" tag="3" id="Ptp-SP-VEL">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="modifyFont:" target="YLy-65-1bz" id="Uc7-di-UnL"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Smaller" tag="4" keyEquivalent="-" id="i1d-Er-qST">
+                                        <menuItem title="Smaller" tag="4" id="i1d-Er-qST">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="modifyFont:" target="YLy-65-1bz" id="HcX-Lf-eNd"/>
                                             </connections>
@@ -622,6 +624,22 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="hB3-LF-h0Y"/>
+                            <menuItem title="Zoom In" keyEquivalent="+" id="kWG-ZS-fSb">
+                                <connections>
+                                    <action selector="zoomIn:" target="-1" id="3n1-cA-4v7"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom Out" keyEquivalent="-" id="snF-hZ-Qp1">
+                                <connections>
+                                    <action selector="zoomOut:" target="-1" id="UIi-9F-sbt"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom to Fit" keyEquivalent="0" id="fQh-2t-qzh">
+                                <connections>
+                                    <action selector="zoomToFit:" target="-1" id="sF2-sI-hmg"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="r2t-gp-ECe"/>
                             <menuItem title="Show Sidebar" keyEquivalent="s" id="kIP-vf-haE">
                                 <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                 <connections>

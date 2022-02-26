@@ -16,4 +16,7 @@
 - (const MDCStudio::ImageThumb&)imageThumb;
 
 - (void)setDelegate:(id<ImageViewDelegate>)delegate;
+
+- (NSResponder*)initialFirstResponder;
+
 @end
