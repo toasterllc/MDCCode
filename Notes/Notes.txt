@@ -17,7 +17,7 @@
         √ draw shadow behind image
         √ 'size-to-fit' mode; stay in this mode until zooming manually
         √ keyboard zooming (cmd+, cmd-)
-        - mouse zooming (command-scroll)
+        √ mouse zooming (command-scroll)
         - implement:
             - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)location inRect:(NSRect)visibleRect API_AVAILABLE(macos(10.8));
     
