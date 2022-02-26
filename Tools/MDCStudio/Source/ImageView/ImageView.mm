@@ -280,7 +280,7 @@ constexpr CGFloat ShadowCenterOffset = 45;
         NSImage* shadow = [NSImage imageNamed:@"ImageView-Shadow"];
         assert(shadow);
         [_shadowLayer setContents:shadow];
-        [_shadowLayer setContentsScale:[[self window] backingScaleFactor]];
+        [_shadowLayer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
         
         CGSize shadowSize = [shadow size];
         CGRect center = { ShadowCenterOffset, ShadowCenterOffset, shadowSize.width-2*ShadowCenterOffset, shadowSize.height-2*ShadowCenterOffset };
@@ -314,7 +314,7 @@ constexpr CGFloat ShadowCenterOffset = 45;
 
 - (void)viewDidChangeBackingProperties {
     [super viewDidChangeBackingProperties];
-    [_shadowLayer setContentsScale:[[self window] backingScaleFactor]];
+    [_shadowLayer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
 }
 
 @end
@@ -388,6 +388,18 @@ constexpr CGFloat ShadowCenterOffset = 45;
 
 - (void)moveRight:(id)sender {
     [_delegate imageViewNextImage:self];
+}
+
+- (void)viewWillStartLiveResize {
+    // Forward this message from MainView
+    [super viewWillStartLiveResize];
+    [_imageScrollView viewWillStartLiveResize];
+}
+
+- (void)viewDidEndLiveResize {
+    // Forward this message from MainView
+    [super viewDidEndLiveResize];
+    [_imageScrollView viewDidEndLiveResize];
 }
 
 @end

@@ -24,7 +24,7 @@ using namespace MDCStudio;
 
 - (void)viewDidChangeBackingProperties {
     [super viewDidChangeBackingProperties];
-    [imageGridLayer setContentsScale:[[self window] backingScaleFactor]];
+    [imageGridLayer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
 }
 
 - (void)viewWillStartLiveResize {
