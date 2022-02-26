@@ -7,8 +7,6 @@
 
 @interface LayerScrollView : NSScrollView
 - (void)setScrollLayer:(CALayer<LayerScrollViewLayer>*)layer;
+- (void)magnifyToFit;
+- (void)magnifyToFitIfNeeded;
 @end
-
-
-// TODO: MetalScrollLayer should implement method to get transformation matrix
-// TODO: LayerScrollView/MetalScrollLayer should use -[CALayer preferredFrameSize] to set document view size

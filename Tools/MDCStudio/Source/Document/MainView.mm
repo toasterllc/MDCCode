@@ -278,6 +278,8 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     ImageGridView* imageGridView = CastOrNil<ImageGridView>(_contentView);
     _dragging = true;
     [[self window] invalidateCursorRectsForView:self];
+    [_contentView viewWillStartLiveResize];
+    #warning TODO: switch ImageGridView over to use viewWillStartLiveResize/viewDidEndLiveResize, or remove that stuff entirely if can switch presentsWithTransaction=1 all the time, like we did with ImageView
     [imageGridView setResizingUnderway:true];
     
     const CGFloat offsetX =
@@ -304,6 +306,7 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     
     _dragging = false;
     [[self window] invalidateCursorRectsForView:self];
+    [_contentView viewDidEndLiveResize];
     [imageGridView setResizingUnderway:false];
 }
 
