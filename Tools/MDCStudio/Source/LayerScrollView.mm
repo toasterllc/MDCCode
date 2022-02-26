@@ -1,5 +1,7 @@
 #import "LayerScrollView.h"
 #import <algorithm>
+#import <cmath>
+#import <optional>
 
 @implementation LayerScrollView {
     CALayer<LayerScrollViewLayer>* _layer;
@@ -8,6 +10,7 @@
     CGPoint _anchorPointDocument;
     CGPoint _anchorPointScreen;
     bool _magnifyToFit;
+    std::optional<CGFloat> _animatedMagnification;
 }
 
 static void _initCommon(LayerScrollView* self) {
@@ -35,22 +38,19 @@ static void _initCommon(LayerScrollView* self) {
     _layer = layer;
     CALayer* rootLayer = [CALayer new];
     [rootLayer addSublayer:_layer];
-//    [rootLayer setBackgroundColor:[[[NSColor redColor] colorWithAlphaComponent:.1] CGColor]];
     
     NSView* documentView = [self documentView];
     [documentView setTranslatesAutoresizingMaskIntoConstraints:false];
-//    [documentView addConstraint:[NSLayoutConstraint constraintWithItem:documentView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:100]];
-//    [documentView addConstraint:[NSLayoutConstraint constraintWithItem:documentView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:100]];
     [documentView setLayer:rootLayer];
     [documentView setWantsLayer:true];
     [documentView setFrameSize:[_layer preferredFrameSize]];
     
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-    [self magnifyToFit];
+    [self _setMagnifyToFit:true animate:false];
 }
 
 - (void)magnifyToFit {
-    [self _setMagnifyToFit:true];
+    [self _setMagnifyToFit:true animate:true];
 }
 
 - (void)magnifyToFitIfNeeded {
@@ -74,8 +74,22 @@ static void _initCommon(LayerScrollView* self) {
     }
 }
 
-- (void)_setMagnifyToFit:(bool)magnifyToFit {
-    [self _setMagnifyToFit:magnifyToFit animate:false];
+- (IBAction)zoomIn:(id)sender {
+    const CGFloat curMag = _animatedMagnification.value_or([self magnification]);
+    const CGFloat mag = std::clamp(std::pow(2, floor(std::log2(curMag)+1)), [self minMagnification], [self maxMagnification]);
+    if (mag == curMag) { return; } // Short-circuit if the magnification hasn't changed
+    [self _setAnimatedMagnification:mag];
+}
+
+- (IBAction)zoomOut:(id)sender {
+    const CGFloat curMag = _animatedMagnification.value_or([self magnification]);
+    const CGFloat mag = std::clamp(std::pow(2, ceil(std::log2(curMag)-1)), [self minMagnification], [self maxMagnification]);
+    if (mag == curMag) { return; } // Short-circuit if the magnification hasn't changed
+    [self _setAnimatedMagnification:mag];
+}
+
+- (IBAction)zoomToFit:(id)sender {
+    [self _setMagnifyToFit:true animate:true];
 }
 
 - (void)_setMagnifyToFit:(bool)magnifyToFit animate:(bool)animate {
@@ -86,12 +100,23 @@ static void _initCommon(LayerScrollView* self) {
     if (_magnifyToFit) {
         NSClipView* clip = [self contentView];
         NSView* doc = [self documentView];
+        
         if (animate) {
             [[self animator] magnifyToFitRect:[clip convertRect:[doc bounds] fromView:doc]];
         } else {
             [self magnifyToFitRect:[clip convertRect:[doc bounds] fromView:doc]];
         }
     }
+}
+
+- (void)_setAnimatedMagnification:(CGFloat)mag {
+    _animatedMagnification = mag;
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext* ctx) {
+        [[self animator] setMagnification:mag];
+    } completionHandler:^{
+        if (!self->_animatedMagnification || self->_animatedMagnification!=mag) return;
+        self->_animatedMagnification = std::nullopt;
+    }];
 }
 
 - (void)_liveMagnifyEnded {
@@ -121,8 +146,8 @@ static void _initCommon(LayerScrollView* self) {
     bounds.origin.y += delta.y;
     bounds = [clip constrainBoundsRect:bounds];
     
-    [super scrollClipView:clip toPoint:bounds.origin];
-    [self _setMagnifyToFit:_magnifyToFit];
+    [self scrollClipView:clip toPoint:bounds.origin];
+    [self _setMagnifyToFit:_magnifyToFit animate:false];
     [self reflectScrolledClipView:clip];
 }
 
@@ -139,43 +164,37 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (void)viewDidEndLiveResize {
+    [super viewDidEndLiveResize];
     [self magnifyToFitIfNeeded];
 }
 
 // MARK: - NSScrollView Overrides
 
 - (void)setMagnification:(CGFloat)mag {
-    [self _setMagnifyToFit:false];
+    [self _setMagnifyToFit:false animate:false];
     [super setMagnification:mag];
 }
 
 - (void)setMagnification:(CGFloat)mag centeredAtPoint:(NSPoint)point {
-    [self _setMagnifyToFit:false];
+    [self _setMagnifyToFit:false animate:false];
     [super setMagnification:mag centeredAtPoint:point];
 }
 
 - (void)magnifyWithEvent:(NSEvent*)event {
-    [self _setMagnifyToFit:false];
+    [self _setMagnifyToFit:false animate:false];
     [super magnifyWithEvent:event];
 }
 
 - (void)smartMagnifyWithEvent:(NSEvent*)event {
-    [self _setMagnifyToFit:false];
+    [self _setMagnifyToFit:false animate:false];
     [super smartMagnifyWithEvent:event];
 }
 
-// Disable NSScrollView responsive scrolling by merely overriding -scrollWheel
+// Disable NSScrollView legacy 'responsive scrolling' by merely overriding -scrollWheel
+// We don't want this behavior because it causes strange flashes and artifacts when
+// scroll quickly, especially when scrolling near the margin
 - (void)scrollWheel:(NSEvent*)event {
     [super scrollWheel:event];
-}
-
-- (void)scrollClipView:(NSClipView*)clipView toPoint:(NSPoint)point {
-    // If we're live-resize is underway, prevent the scroll elasticity animation from scrolling,
-    // otherwise we get a very jittery animation.
-    // This doesn't fully fix the problem, because the live resize can end before the elasticity
-    // animation ends, but it works well enough.
-    if ([self inLiveResize]) return;
-    [super scrollClipView:clipView toPoint:point];
 }
 
 - (void)reflectScrolledClipView:(NSClipView*)clipView {

@@ -239,7 +239,9 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_contentView)]];
     
     if (_contentView) {
-        [[self window] makeFirstResponder:_contentView];
+        if ([_contentView respondsToSelector:@selector(initialFirstResponder)]) {
+            [[self window] makeFirstResponder:[_contentView initialFirstResponder]];
+        }
     }
     
     if (_contentView && animation!=MainViewAnimation::None) {

@@ -166,7 +166,6 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 
 
-
 @interface ImageClipView : NSClipView
 @end
 
@@ -378,10 +377,6 @@ constexpr CGFloat ShadowCenterOffset = 45;
 
 // MARK: - Event Handling
 
-- (void)mouseDown:(NSEvent*)mouseDownEvent {
-    [[self window] makeFirstResponder:self];
-}
-
 - (void)moveLeft:(id)sender {
     [_delegate imageViewPreviousImage:self];
 }
@@ -391,6 +386,7 @@ constexpr CGFloat ShadowCenterOffset = 45;
 }
 
 - (void)viewWillStartLiveResize {
+    #warning TODO: can we find a better way to do this? what if the scroll view observes the window's live resize notifications, and we post that from MainView?
     // Forward this message from MainView
     [super viewWillStartLiveResize];
     [_imageScrollView viewWillStartLiveResize];
@@ -400,6 +396,10 @@ constexpr CGFloat ShadowCenterOffset = 45;
     // Forward this message from MainView
     [super viewDidEndLiveResize];
     [_imageScrollView viewDidEndLiveResize];
+}
+
+- (NSResponder*)initialFirstResponder {
+    return [_imageScrollView documentView];
 }
 
 @end

@@ -184,6 +184,10 @@ using namespace MDCStudio;
     return [_documentView->imageGridLayer selectedImageIds];
 }
 
+- (NSResponder*)initialFirstResponder {
+    return self;
+}
+
 - (void)_handleImageLibraryChanged {
     // Update the frame because the library's image count likely changed, which affects the document view's height
     [_documentView setFrame:[_documentView frame]];
@@ -211,8 +215,6 @@ static ImageGridLayerImageIds xorImageIds(const ImageGridLayerImageIds& a, const
 
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
     auto imageGridLayer = _documentView->imageGridLayer;
-    
-    [[self window] makeFirstResponder:self];
     
     CALayer* rectLayer = _documentView->selectionRectLayer;
     NSWindow* win = [mouseDownEvent window];
@@ -258,48 +260,60 @@ struct SelectionDelta {
     if (!imgCount) return;
     
     ImageGridLayerImageIds selectedImageIds = [imageGridLayer selectedImageIds];
-    if (selectedImageIds.empty()) return;
+    ssize_t newIdx = 0;
+    if (!selectedImageIds.empty()) {
+        const ImageId lastSelectedImgId = *std::prev(selectedImageIds.end());
+        const auto iter = imageLibrary->find(lastSelectedImgId);
+        if (iter == imageLibrary->end()) {
+            NSLog(@"Image no longer in library");
+            return;
+        }
+        
+        const size_t idx = std::distance(imageLibrary->begin(), iter);
+        const size_t colCount = [imageGridLayer columnCount];
+        const size_t rem = (imgCount % colCount);
+        const size_t lastRowCount = (rem ? rem : colCount);
+        const bool firstRow = (idx < colCount);
+        const bool lastRow = (idx >= (imgCount-lastRowCount));
+        const bool firstCol = !(idx % colCount);
+        const bool lastCol = ((idx % colCount) == (colCount-1));
+        const bool lastElm = (idx == (imgCount-1));
+        
+        newIdx = idx;
+        if (delta.x > 0) {
+            // Right
+            if (lastCol || lastElm) return;
+            newIdx += 1;
+        
+        } else if (delta.x < 0) {
+            // Left
+            if (firstCol) return;
+            newIdx -= 1;
+        
+        } else if (delta.y > 0) {
+            // Down
+            if (lastRow) return;
+            newIdx += colCount;
+        
+        } else if (delta.y < 0) {
+            // Up
+            if (firstRow) return;
+            newIdx -= colCount;
+        }
+        
+        newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
     
-    const ImageId lastSelectedImgId = *std::prev(selectedImageIds.end());
-    const auto iter = imageLibrary->find(lastSelectedImgId);
-    if (iter == imageLibrary->end()) {
-        NSLog(@"Image no longer in library");
-        return;
+    } else {
+        if (delta.x>0 || delta.y>0) {
+            // Select first element
+            newIdx = 0;
+        } else if (delta.x<0 || delta.y<0) {
+            // Select last element
+            newIdx = imgCount-1;
+        } else {
+            return;
+        }
     }
-    
-    const size_t idx = std::distance(imageLibrary->begin(), iter);
-    const size_t colCount = [imageGridLayer columnCount];
-    const size_t rem = (imgCount % colCount);
-    const size_t lastRowCount = (rem ? rem : colCount);
-    const bool firstRow = (idx < colCount);
-    const bool lastRow = (idx >= (imgCount-lastRowCount));
-    const bool firstCol = !(idx % colCount);
-    const bool lastCol = ((idx % colCount) == (colCount-1));
-    const bool lastElm = (idx == (imgCount-1));
-    
-    ssize_t newIdx = idx;
-    if (delta.x > 0) {
-        // Right
-        if (lastCol || lastElm) return;
-        newIdx += 1;
-    
-    } else if (delta.x < 0) {
-        // Left
-        if (firstCol) return;
-        newIdx -= 1;
-    
-    } else if (delta.y > 0) {
-        // Down
-        if (lastRow) return;
-        newIdx += colCount;
-    
-    } else if (delta.y < 0) {
-        // Up
-        if (firstRow) return;
-        newIdx -= colCount;
-    }
-    
-    newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
     
 //    const size_t newIdx = std::min(imgCount-1, idx+[imageGridLayer columnCount]);
     const ImageId newImgId = imageLibrary->recordGet(imageLibrary->begin()+newIdx)->ref.id;
