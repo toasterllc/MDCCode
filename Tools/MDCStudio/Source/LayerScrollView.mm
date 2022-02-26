@@ -47,35 +47,6 @@ static void _initCommon(LayerScrollView* self) {
     
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
     [self magnifyToFit];
-    
-//    NSClipView* clip = [self contentView];
-//    CGRect bounds = [clip bounds];
-//    [super scrollClipView:clip toPoint:bounds.origin];
-//    [self reflectScrolledClipView:clip];
-//    
-////    [self setFrame:[self frame]];
-//    
-////    [self tile];
-////    [self setMagnification:.75];
-////    [self setMagnification:1.5];
-//    [self setMagnification:.75];
-//    [self setFrame:[self frame]];
-    
-//    [self reflectScrolledClipView:[self contentView]];
-//    [self scrollClipView:[self contentView] toPoint:{}];
-    
-//    [self magnifyToFit];
-    
-//    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer * _Nonnull timer) {
-//        [self magnifyToFit];
-////        [self setMagnification:2];
-//    }];
-    
-//    [[self contentView] scrollToPoint:{}];
-//    [self setMagnification:2];
-//    
-//    [self sizeToFit];
-//    [self magnifyToFit];
 }
 
 - (void)magnifyToFit {
@@ -127,13 +98,6 @@ static void _initCommon(LayerScrollView* self) {
     [self magnifyToFitIfNeeded];
 }
 
-//- (void)_magnifyToFit {
-//    NSClipView* clip = [self contentView];
-//    NSView* doc = [self documentView];
-////    NSLog(@"magnifyToFitRect: %@ ", NSStringFromRect([clip convertRect:[doc bounds] fromView:doc]));
-//    [self magnifyToFitRect:[clip convertRect:[doc bounds] fromView:doc]];
-//}
-
 // MARK: - NSView Overrides
 
 - (void)setFrame:(NSRect)frame {
@@ -162,25 +126,10 @@ static void _initCommon(LayerScrollView* self) {
     [self reflectScrolledClipView:clip];
 }
 
-//- (void)layout {
-//    [super layout];
-//    [[self documentView] setFrameSize:[_layer preferredFrameSize]];
-////    NSLog(@"MEOWMIX LAYOUT");
-//}
-
 - (void)viewDidChangeBackingProperties {
     [super viewDidChangeBackingProperties];
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
 }
-
-//- (void)viewDidMoveToSuperview {
-//    NSLog(@"viewDidMoveToSuperview");
-//}
-//
-//- (void)viewDidMoveToWindow {
-//    [self magnifyToFit];
-//    NSLog(@"viewDidMoveToWindow");
-//}
 
 - (void)viewWillStartLiveResize {
     [super viewWillStartLiveResize];
@@ -194,17 +143,6 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 // MARK: - NSScrollView Overrides
-
-//- (void)tile {
-//    [super tile];
-//    if (_layer) {
-//        const CGSize frameSize = [_layer preferredFrameSize];
-//        if (frameSize.width>1 && frameSize.height>1) {
-//            printf("MEOWMIX setFrameSize: %f %f\n", frameSize.width, frameSize.height);
-//            [[self documentView] setFrameSize:frameSize];
-//        }
-//    }
-//}
 
 - (void)setMagnification:(CGFloat)mag {
     [self _setMagnifyToFit:false];
@@ -226,7 +164,7 @@ static void _initCommon(LayerScrollView* self) {
     [super smartMagnifyWithEvent:event];
 }
 
-// Disable NSScrollView responsive scrolling by overriding -scrollWheel
+// Disable NSScrollView responsive scrolling by merely overriding -scrollWheel
 - (void)scrollWheel:(NSEvent*)event {
     [super scrollWheel:event];
 }
@@ -241,7 +179,6 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
-    NSLog(@"reflectScrolledClipView");
     [super reflectScrolledClipView:clipView];
     
     const CGFloat mag = [self magnification];
