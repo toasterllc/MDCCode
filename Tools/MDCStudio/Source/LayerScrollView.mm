@@ -194,7 +194,18 @@ static void _initCommon(LayerScrollView* self) {
 // We don't want this behavior because it causes strange flashes and artifacts when
 // scroll quickly, especially when scrolling near the margin
 - (void)scrollWheel:(NSEvent*)event {
-    [super scrollWheel:event];
+    if (!([event modifierFlags]&NSEventModifierFlagCommand)) {
+        [super scrollWheel:event];
+        return;
+    }
+    
+    const CGPoint anchor = [[self contentView] convertPoint:[event locationInWindow] fromView:nil];
+    const CGFloat mag = [self magnification];
+    [self setMagnification:mag*(1-[event scrollingDeltaY]/250) centeredAtPoint:anchor];
+    
+    if ([event phase] & (NSEventPhaseEnded|NSEventPhaseCancelled)) {
+        [self magnifyToFitIfNeeded];
+    }
 }
 
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
