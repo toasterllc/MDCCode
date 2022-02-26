@@ -12,7 +12,7 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" allowsMagnification="YES" maxMagnification="16" minMagnification="0.0625" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Dxu-gZ-SCx" customClass="ImageScrollView">
+        <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" allowsMagnification="YES" maxMagnification="16" minMagnification="0.03125" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Dxu-gZ-SCx" customClass="ImageScrollView">
             <rect key="frame" x="0.0" y="0.0" width="640" height="480"/>
             <clipView key="contentView" copiesOnScroll="NO" id="TBk-6j-7dT" customClass="ImageClipView">
                 <rect key="frame" x="0.0" y="0.0" width="640" height="480"/>
