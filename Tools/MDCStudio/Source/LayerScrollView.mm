@@ -54,16 +54,10 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (void)setMagnifyToFit:(bool)magnifyToFit animate:(bool)animate {
-    NSLog(@"setMagnifyToFit:%d animate:%d", magnifyToFit, animate);
     _magnifyToFit = magnifyToFit;
+    // Setting the alpha because -setHidden: has no effect
     [[self verticalScroller] setAlphaValue:(!magnifyToFit ? 1 : 0)];
     [[self horizontalScroller] setAlphaValue:(!magnifyToFit ? 1 : 0)];
-    
-//    [[self verticalScroller] setHidden:_magnifyToFit];
-//    [[self horizontalScroller] setHidden:_magnifyToFit];
-    
-//    [self setHasVerticalScroller:!_magnifyToFit];
-//    [self setHasHorizontalScroller:!_magnifyToFit];
     
     if (_magnifyToFit) {
         NSClipView* clip = [self contentView];
@@ -78,7 +72,6 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (void)magnifySnapToFit {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     NSView* doc = [self documentView];
     
     const CGSize contentSize = [self convertRect:[[self documentView] bounds] fromView:doc].size;
@@ -97,7 +90,6 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (IBAction)zoomIn:(id)sender {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     const CGFloat curMag = _animatedMagnification.value_or([self magnification]);
     const CGFloat mag = std::clamp(std::pow(2, floor(std::log2(curMag)+1)), [self minMagnification], [self maxMagnification]);
     if (mag == curMag) { return; } // Short-circuit if the magnification hasn't changed
@@ -105,7 +97,6 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (IBAction)zoomOut:(id)sender {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     const CGFloat curMag = _animatedMagnification.value_or([self magnification]);
     const CGFloat mag = std::clamp(std::pow(2, ceil(std::log2(curMag)-1)), [self minMagnification], [self maxMagnification]);
     if (mag == curMag) { return; } // Short-circuit if the magnification hasn't changed
@@ -113,12 +104,10 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (IBAction)zoomToFit:(id)sender {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     [self setMagnifyToFit:true animate:true];
 }
 
 - (void)_setAnimatedMagnification:(CGFloat)mag {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     _animatedMagnification = mag;
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext* ctx) {
         [[self animator] setMagnification:mag];
@@ -129,14 +118,12 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (void)_liveMagnifyEnded {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     [self magnifySnapToFit];
 }
 
 // MARK: - NSView Overrides
 
 - (void)setFrame:(NSRect)frame {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     [super setFrame:frame];
     
     // Keep the content anchored
@@ -163,13 +150,11 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (void)viewDidChangeBackingProperties {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     [super viewDidChangeBackingProperties];
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
 }
 
 - (void)viewWillStartLiveResize {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     [super viewWillStartLiveResize];
     _anchorPointDocument = [self documentVisibleRect].origin;
     _anchorPointScreen = [[self window] convertPointToScreen:
@@ -177,7 +162,6 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (void)viewDidEndLiveResize {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     [super viewDidEndLiveResize];
     [self magnifySnapToFit];
 }
@@ -185,7 +169,6 @@ static void _initCommon(LayerScrollView* self) {
 // MARK: - NSScrollView Overrides
 
 - (void)smartMagnifyWithEvent:(NSEvent*)event {
-    NSLog(@"smartMagnifyWithEvent:");
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context) {
         [super smartMagnifyWithEvent:event];
     } completionHandler:^{
@@ -197,7 +180,6 @@ static void _initCommon(LayerScrollView* self) {
 // We don't want this behavior because it causes strange flashes and artifacts when
 // scroll quickly, especially when scrolling near the margin
 - (void)scrollWheel:(NSEvent*)event {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
     if (!([event modifierFlags]&NSEventModifierFlagCommand)) {
         [super scrollWheel:event];
         return;
@@ -213,7 +195,6 @@ static void _initCommon(LayerScrollView* self) {
 }
 
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
-//    NSLog(@"%@", NSStringFromSelector(_cmd));
     [super reflectScrolledClipView:clipView];
     
     const CGFloat mag = [self magnification];
