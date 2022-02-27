@@ -14,7 +14,7 @@ struct VertexOutput {
     float2 posPx;
 };
 
-static constexpr constant int2 _Verts[6] = {
+static constexpr constant float2 _Verts[6] = {
     {0, 0},
     {0, 1},
     {1, 0},
@@ -32,13 +32,13 @@ vertex VertexOutput VertexShader(
     const uint relIdx = iidx; // Index within chunk
     const uint absIdx = ctx.idxOff + relIdx;
     const Grid::Rect rect = ctx.grid.rectForCellIndex(absIdx);
-    const int2 vorigin = int2(rect.point.x, rect.point.y);
-    const int2 voff = int2(rect.size.x, rect.size.y) * _Verts[vidx];
-    const int2 vabs = vorigin + voff + ctx.viewOffset;
+    const int2 voff = int2(rect.size.x, rect.size.y) * int2(_Verts[vidx]);
+    const int2 vabs = int2(rect.point.x, rect.point.y) + voff;
+    const float2 vnorm = float2(vabs) / ctx.viewSize;
     
     return VertexOutput{
         .idx = relIdx,
-        .posView = ctx.viewMatrix * float4(vabs.x, vabs.y, 0, 1),
+        .posView = ctx.transform * float4(vnorm, 0, 1),
         .posPx = float2(voff),
     };
 }

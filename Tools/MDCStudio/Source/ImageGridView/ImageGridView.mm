@@ -6,12 +6,7 @@ using namespace MDCStudio;
 @interface ImageGridDocumentView : NSView
 @end
 
-@implementation ImageGridDocumentView {
-@public
-    CALayer* rootLayer;
-    ImageGridLayer* imageGridLayer;
-    CALayer* selectionRectLayer;
-}
+@implementation ImageGridDocumentView
 
 //- (void)setFrameSize:(NSSize)size {
 ////    CGSize superSize = [[self superview] bounds].size;
@@ -35,6 +30,7 @@ using namespace MDCStudio;
 //    [imageGridLayer setResizingUnderway:false];
 //}
 
+// We need to be flipped so that NSEvent coordinates match the coordinates of the ImageGridLayer's grid
 - (BOOL)isFlipped {
     return true;
 }
@@ -46,6 +42,7 @@ using namespace MDCStudio;
     IBOutlet ImageGridDocumentView* _documentView;
     IBOutlet NSLayoutConstraint* _documentHeight;
     ImageGridLayer* _imageGridLayer;
+    CALayer* _selectionRectLayer;
     ImageSourcePtr _imageSource;
     __weak id<ImageGridViewDelegate> _delegate;
 }
@@ -70,38 +67,23 @@ using namespace MDCStudio;
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_scrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
     }
     
-    // Configure ImageGridDocumentView
-//    {
-//        CALayer* rootLayer = [CALayer new];
-////        [rootLayer setBackgroundColor:[[NSColor redColor] CGColor]];
-//        
-//        ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:_imageSource->imageLibrary()];
-//        [rootLayer addSublayer:imageGridLayer];
-//        
-//        CALayer* selectionRectLayer = [CALayer new];
-//        [selectionRectLayer setActions:LayerNullActions];
-//        [selectionRectLayer setBackgroundColor:[[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:.2] CGColor]];
-//        [selectionRectLayer setBorderColor:[[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1] CGColor]];
-//        [selectionRectLayer setHidden:true];
-//        [selectionRectLayer setBorderWidth:1];
-//        [rootLayer addSublayer:selectionRectLayer];
-//        
-//        _documentView->rootLayer = rootLayer;
-//        _documentView->imageGridLayer = imageGridLayer;
-//        _documentView->selectionRectLayer = selectionRectLayer;
-//        [_documentView setLayer:_documentView->rootLayer];
-//        [_documentView setWantsLayer:true];
-//        [self _handleImageLibraryChanged];
-//    }
-    
+    // Create ImageGridLayer
     {
         _imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:_imageSource->imageLibrary()];
-        _documentView->imageGridLayer = _imageGridLayer;
         [_scrollView setScrollLayer:_imageGridLayer];
         [self _handleImageLibraryChanged];
     }
     
-    
+    // Create _selectionRectLayer
+    {
+        _selectionRectLayer = [CALayer new];
+        [_selectionRectLayer setActions:LayerNullActions];
+        [_selectionRectLayer setBackgroundColor:[[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:.2] CGColor]];
+        [_selectionRectLayer setBorderColor:[[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1] CGColor]];
+        [_selectionRectLayer setHidden:true];
+        [_selectionRectLayer setBorderWidth:1];
+        [[_imageGridLayer superlayer] addSublayer:_selectionRectLayer];
+    }
     
     // Observe image library changes so that we update the image grid
     {
@@ -120,7 +102,7 @@ using namespace MDCStudio;
 }
 
 - (void)setResizingUnderway:(bool)resizing {
-    [_documentView->imageGridLayer setResizingUnderway:resizing];
+    [_imageGridLayer setResizingUnderway:resizing];
 }
 
 - (void)setDelegate:(id<ImageGridViewDelegate>)delegate {
@@ -132,7 +114,7 @@ using namespace MDCStudio;
 }
 
 - (const ImageGridViewImageIds&)selectedImageIds {
-    return [_documentView->imageGridLayer selectedImageIds];
+    return [_imageGridLayer selectedImageIds];
 }
 
 - (NSResponder*)initialFirstResponder {
@@ -152,7 +134,7 @@ using namespace MDCStudio;
 //    [_documentView setFrame:[_documentView frame]];
 //    _documentHeight
     
-    [_documentView->imageGridLayer setNeedsDisplay];
+    [_imageGridLayer setNeedsDisplay];
 }
 
 // MARK: - Event Handling
@@ -175,30 +157,27 @@ static ImageGridLayerImageIds _XORImageIds(const ImageGridLayerImageIds& a, cons
 }
 
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
-    auto imageGridLayer = _documentView->imageGridLayer;
-    
-    CALayer* rectLayer = _documentView->selectionRectLayer;
     NSWindow* win = [mouseDownEvent window];
     const CGPoint startPoint = [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
-    [rectLayer setHidden:false];
+    [_selectionRectLayer setHidden:false];
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
-    const ImageGridLayerImageIds oldSelection = [imageGridLayer selectedImageIds];
+    const ImageGridLayerImageIds oldSelection = [_imageGridLayer selectedImageIds];
     TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
         const CGPoint curPoint = [_documentView convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
-        const ImageGridLayerImageIds newSelection = [imageGridLayer imageIdsForRect:rect];
+        const ImageGridLayerImageIds newSelection = [_imageGridLayer imageIdsForRect:rect];
         if (extend) {
-            [imageGridLayer setSelectedImageIds:_XORImageIds(oldSelection, newSelection)];
+            [_imageGridLayer setSelectedImageIds:_XORImageIds(oldSelection, newSelection)];
         } else {
-            [imageGridLayer setSelectedImageIds:newSelection];
+            [_imageGridLayer setSelectedImageIds:newSelection];
         }
-        [rectLayer setFrame:rect];
+        [_selectionRectLayer setFrame:rect];
         
         [_documentView autoscroll:event];
 //        NSLog(@"mouseDown:");
     });
-    [rectLayer setHidden:true];
+    [_selectionRectLayer setHidden:true];
 }
 
 - (void)mouseUp:(NSEvent*)event {
@@ -213,14 +192,13 @@ struct SelectionDelta {
 };
 
 - (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
-    auto imageGridLayer = _documentView->imageGridLayer;
     ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
     auto lock = std::unique_lock(*imageLibrary);
     
     const size_t imgCount = imageLibrary->recordCount();
     if (!imgCount) return;
     
-    ImageGridLayerImageIds selectedImageIds = [imageGridLayer selectedImageIds];
+    ImageGridLayerImageIds selectedImageIds = [_imageGridLayer selectedImageIds];
     ssize_t newIdx = 0;
     if (!selectedImageIds.empty()) {
         const ImageId lastSelectedImgId = *std::prev(selectedImageIds.end());
@@ -231,7 +209,7 @@ struct SelectionDelta {
         }
         
         const size_t idx = std::distance(imageLibrary->begin(), iter);
-        const size_t colCount = [imageGridLayer columnCount];
+        const size_t colCount = [_imageGridLayer columnCount];
         const size_t rem = (imgCount % colCount);
         const size_t lastRowCount = (rem ? rem : colCount);
         const bool firstRow = (idx < colCount);
@@ -276,13 +254,13 @@ struct SelectionDelta {
         }
     }
     
-//    const size_t newIdx = std::min(imgCount-1, idx+[imageGridLayer columnCount]);
+//    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
     const ImageId newImgId = imageLibrary->recordGet(imageLibrary->begin()+newIdx)->ref.id;
-    [_documentView scrollRectToVisible:[imageGridLayer rectForImageAtIndex:newIdx]];
+    [_documentView scrollRectToVisible:[_imageGridLayer rectForImageAtIndex:newIdx]];
     
     if (!extend) selectedImageIds.clear();
     selectedImageIds.insert(newImgId);
-    [imageGridLayer setSelectedImageIds:selectedImageIds];
+    [_imageGridLayer setSelectedImageIds:selectedImageIds];
 }
 
 - (void)moveDown:(id)sender {
@@ -306,14 +284,13 @@ struct SelectionDelta {
 }
 
 - (void)selectAll:(id)sender {
-    ImageGridLayer* imageGridLayer = _documentView->imageGridLayer;
     ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
     auto lock = std::unique_lock(*imageLibrary);
     ImageGridLayerImageIds ids;
     for (auto it=imageLibrary->begin(); it!=imageLibrary->end(); it++) {
         ids.insert(imageLibrary->recordGet(it)->ref.id);
     }
-    [imageGridLayer setSelectedImageIds:ids];
+    [_imageGridLayer setSelectedImageIds:ids];
 }
 
 @end

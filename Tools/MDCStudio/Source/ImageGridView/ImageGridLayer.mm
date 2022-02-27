@@ -17,24 +17,6 @@ static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 // so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
-static matrix_float4x4 _Scale(float x, float y, float z) {
-    return matrix_float4x4{
-        .columns[0] = { x, 0, 0, 0 },
-        .columns[1] = { 0, y, 0, 0 },
-        .columns[2] = { 0, 0, z, 0 },
-        .columns[3] = { 0, 0, 0, 1 },
-    };
-}
-
-static matrix_float4x4 _Translate(float x, float y, float z) {
-    return {
-        .columns[0] = { 1, 0, 0, 0},
-        .columns[1] = { 0, 1, 0, 0},
-        .columns[2] = { 0, 0, 1, 0},
-        .columns[3] = { x, y, z, 1},
-    };
-}
-
 using ThumbFile = Mmap;
 
 @implementation ImageGridLayer {
@@ -168,15 +150,21 @@ using ThumbFile = Mmap;
     return _grid;
 }
 
-- (CGSize)preferredFrameSize {
-    const CGFloat w = [[self superlayer] bounds].size.width;
-    const CGFloat contentsScale = [self contentsScale];
-    Grid grid = _grid;
-    grid.setContainerWidth(w * contentsScale);
-    grid.recompute();
-    const CGFloat h = grid.containerHeight()/contentsScale;
-    return {w, h};
-}
+//- (CGSize)preferredFrameSize {
+//    const CGFloat w = _grid.containerWidth() / [self contentsScale];
+//    const CGFloat h = _grid.containerHeight() / [self contentsScale];
+//    return {w,h};
+//}
+
+//- (CGSize)preferredFrameSize {
+//    const CGFloat w = [[self superlayer] bounds].size.width;
+//    const CGFloat contentsScale = [self contentsScale];
+//    Grid grid = _grid;
+//    grid.setContainerWidth(w * contentsScale);
+//    grid.recompute();
+//    const CGFloat h = grid.containerHeight()/contentsScale;
+//    return {w, h};
+//}
 
 - (void)setContainerWidth:(CGFloat)width {
     _grid.setContainerWidth((int32_t)lround(width*[self contentsScale]));
@@ -238,6 +226,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     
     const CGRect frame = [self frame];
     const CGFloat contentsScale = [self contentsScale];
+    const CGSize superlayerSize = [[self superlayer] bounds].size;
+    const CGSize viewSize = {superlayerSize.width*contentsScale, superlayerSize.height*contentsScale};
     
     auto lock = std::unique_lock(*_imageLibrary);
     
@@ -247,10 +237,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{WindowBackgroundColor.lsrgb[0]+1, WindowBackgroundColor.lsrgb[1], WindowBackgroundColor.lsrgb[2], 1}];
-//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.118, 0.122, 0.129, 1}];
-//        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
-//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{WindowBackgroundColor.lsrgb[0], WindowBackgroundColor.lsrgb[1], WindowBackgroundColor.lsrgb[2], 1}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
@@ -267,28 +254,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         
-        // rasterFromUnityMatrix: converts unity coordinates [-1,1] -> rasterized coordinates [0,pixel width/height]
-        const matrix_float4x4 rasterFromUnityMatrix = matrix_multiply(matrix_multiply(
-            _Scale(.5*frame.size.width*contentsScale, .5*frame.size.height*contentsScale, 1), // Divide by 2, multiply by view width/height
-            _Translate(1, 1, 0)),                                                               // Add 1
-            _Scale(1, -1, 1)                                                                    // Flip Y
-        );
-        
-        // unityFromRasterMatrix: converts rasterized coordinates -> unity coordinates
-        const matrix_float4x4 unityFromRasterMatrix = matrix_invert(rasterFromUnityMatrix);
-        
-//        constexpr size_t MaxBufLen = 1024*1024*1024; // 1 GB
-//        const std::vector<ImageLibrary::Range> ranges = _RangeSegments<MaxBufLen>(ic, {(size_t)indexRange.start, (size_t)indexRange.count});
-        
-        const int32_t offsetX = -round(frame.origin.x*contentsScale);
-        const int32_t offsetY = -round(frame.origin.y*contentsScale);
-        
         const uintptr_t imageRefsBegin = (uintptr_t)&*_imageLibrary->begin();
         const uintptr_t imageRefsEnd = (uintptr_t)&*_imageLibrary->end();
         id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
             length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
-        
-//        printf("Range count: %zu\n", ranges.size());
         
         const auto imageRefFirst = _imageLibrary->begin()+indexRange.start;
         const auto imageRefLast = _imageLibrary->begin()+indexRange.start+indexRange.count-1;
@@ -296,11 +265,6 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         const auto imageRefBegin = imageRefFirst;
         const auto imageRefEnd = std::next(imageRefLast);
         
-//        const auto chunkFirst = imageRefFirst->chunk;
-//        const auto chunkLast = imageRefLast->chunk;
-//        
-//        const auto chunkBegin = chunkFirst;
-//        const auto chunkEnd = std::next(chunkLast);
         for (auto it=imageRefBegin; it<imageRefEnd;) {
             const auto& chunk = *(it->chunk);
             const auto nextChunkStart = ImageLibrary::FindNextChunk(it, _imageLibrary->end());
@@ -311,28 +275,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
             const auto chunkImageRefFirst = chunkImageRefBegin;
             const auto chunkImageRefLast = std::prev(chunkImageRefEnd);
             
-//            const auto& chunk = *it;
-//            
-//            const auto imageRefFirst = ic.imageRefsBegin()+indexRange.start;
-//            const auto imageRefLast = ic.imageRefsBegin()+indexRange.start+indexRange.count-1;
-            
-//            printf("Chunk count: %ju\n", std::distance(chunkStart, chunkEnd));
-            
             id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
             [renderEncoder setRenderPipelineState:_pipelineState];
             [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
             [renderEncoder setCullMode:MTLCullModeNone];
-            
-//            uintptr_t offBegin = 0;
-//            uintptr_t offEnd = chunk.mmap.alignedLen();
-//            if (it == chunkFirst) {
-//                offBegin = sizeof(Img)*imageRefFirst.idx;
-//            }
-//            
-//            if (it == chunkLast) {
-//                offEnd = sizeof(Img)*(imageRefLast.idx+1);
-//            }
-//            printf("AAA\n");
             
             const uintptr_t addrBegin = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageLibrary::Record)*chunkImageRefFirst->idx));
             const uintptr_t addrEnd = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageLibrary::Record)*(chunkImageRefLast->idx+1)));
@@ -340,12 +286,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
             const uintptr_t addrAlignedBegin = _FloorToPageSize(addrBegin);
             const uintptr_t addrAlignedEnd = _CeilToPageSize(addrEnd);
             
-//            const RangeMem mem = _RangeMemCalc(ic, range);
             constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
             id<MTLBuffer> imageBuf = [_device newBufferWithBytesNoCopy:(void*)addrAlignedBegin
                 length:(addrAlignedEnd-addrAlignedBegin) options:BufOpts deallocator:nil];
-            
-//            printf("length: %zu\n", addrAlignedEnd-addrAlignedBegin);
             
             if (imageBuf) {
                 assert(imageBuf);
@@ -357,19 +300,13 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
                 }
                 
-//                static_assert(sizeof(it)==9);
-            //    NSLog(@"%@", NSStringFromRect(frame));
-            //    NSLog(@"Offset: %d", lround(frame.origin.y)-cell0Rect.point.y);
-            //    NSLog(@"indexRange: [%d %d]", indexRange.start, indexRange.start+indexRange.count-1);
                 ImageGridLayerTypes::RenderContext ctx = {
                     .grid = _grid,
-//                    .chunk = ImageGridLayerTypes::UInt2FromType(it),
                     .idxOff = (uint32_t)(chunkImageRefFirst-_imageLibrary->begin()),
                     .imagesOff = (uint32_t)(addrBegin-addrAlignedBegin),
-//                    .imageRefOff = (uint32_t)ic.getImageRef(range.idx),
                     .imageSize = (uint32_t)sizeof(ImageLibrary::Record),
-                    .viewOffset = {offsetX, offsetY},
-                    .viewMatrix = unityFromRasterMatrix,
+                    .viewSize = {(float)viewSize.width, (float)viewSize.height},
+                    .transform = [self transform],
                     .off = {
                         .id         = (uint32_t)(offsetof(ImageThumb, ref.id)),
                         .thumbData  = (uint32_t)(offsetof(ImageThumb, thumb)),
@@ -381,7 +318,6 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     },
                     .selection = {
                         .first = (uint32_t)_selection.first,
-//                        .first = (uint32_t)_selection.first,
                         .count = (uint32_t)_selection.count,
                     },
                     .cellWidth = _cellWidth,
@@ -399,11 +335,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 [renderEncoder setFragmentTexture:_shadowTexture atIndex:2];
                 [renderEncoder setFragmentTexture:_selectionTexture atIndex:4];
                 
-            //    [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3 instanceCount:1];
-                
-            //    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(frame));
                 const size_t chunkImageCount = chunkImageRefEnd-chunkImageRefBegin;
-//                printf("chunkImageCount: %zu\n", chunkImageCount);
                 [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6 instanceCount:chunkImageCount];
             }
             
@@ -415,10 +347,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         }
     }
     
-    #warning we're doing this wrong! we should call [drawable present] after -waitUntilCompleted, which works correctly when `presentsWithTransaction=1`: https://developer.apple.com/documentation/quartzcore/cametallayer/1478157-presentswithtransaction?language=objc
-    [commandBuffer presentDrawable:drawable];
     [commandBuffer commit];
     [commandBuffer waitUntilCompleted]; // Necessary to prevent artifacts when resizing window
+    [drawable present];
     
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
     printf("Took %ju ms\n", (uintmax_t)durationMs);

@@ -366,11 +366,6 @@ public:
         [blit endEncoding];
     }
     
-//    void present(id<CAMetalDrawable> drawable) {
-//        #warning we're doing this wrong! we should call [drawable present], which works correctly when `presentsWithTransaction=1`: https://developer.apple.com/documentation/quartzcore/cametallayer/1478157-presentswithtransaction?language=objc
-//        [cmdBuf() presentDrawable:drawable];
-//    }
-    
     Txt textureCreate(
         MTLPixelFormat fmt,
         size_t width, size_t height,
