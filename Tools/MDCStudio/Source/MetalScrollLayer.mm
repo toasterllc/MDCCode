@@ -70,9 +70,22 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
 //        _Translate(-.5, -.5, 0)                                 ;   // 1. Normalized [0,1] -> Normalized [-.5,.5]
 //                                                                    // 0. Start: Normalized [0,1] coordinates
     
+    // GOOD when isFlipped=1
+//    const Mat<float,4,4> transform =
+//        _Translate(-1, 1, 1)                                *
+//        _Scale(2, -2, 1)                                    *
+//        _Scale(1/frame.size.width, 1/frame.size.height, 1)  *
+//        _Translate(-frame.origin.x, -frame.origin.y, 0)     *
+//        _Scale(contentSize.width, contentSize.height, 1)    ;
+    
+    NSLog(@"isGeometryFlipped: %d %d %d", [self isGeometryFlipped], [[self superlayer] isGeometryFlipped], [[[self superlayer] superlayer] isGeometryFlipped]);
+    
+    NSLog(@"contentsAreFlipped: %d %d %d", [self contentsAreFlipped], [[self superlayer] contentsAreFlipped], [[[self superlayer] superlayer] contentsAreFlipped]);
+    
+    const int flip = [self isGeometryFlipped] ? -1 : 1;
     const Mat<float,4,4> transform =
-        _Translate(-1, 1, 1)                                *
-        _Scale(2, -2, 1)                                    *
+        _Translate(-1, -1*flip, 1)                          *
+        _Scale(2, 2*flip, 1)                                *
         _Scale(1/frame.size.width, 1/frame.size.height, 1)  *
         _Translate(-frame.origin.x, -frame.origin.y, 0)     *
         _Scale(contentSize.width, contentSize.height, 1)    ;
