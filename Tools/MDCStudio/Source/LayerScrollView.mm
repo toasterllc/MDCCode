@@ -54,20 +54,6 @@ static void _initCommon(LayerScrollView* self) {
     return _magnifyToFit;
 }
 
-- (CGFloat)_fitMagnification {
-    const CGSize contentSize = [[self documentView] frame].size;
-    const CGSize containerSize = [self bounds].size;
-    
-    const CGFloat contentAspect = contentSize.width/contentSize.height;
-    const CGFloat containerAspect = containerSize.width/containerSize.height;
-    
-    const CGFloat contentAxisSize = (contentAspect>containerAspect ? contentSize.width : contentSize.height);
-    const CGFloat containerAxisSize = (contentAspect>containerAspect ? containerSize.width : containerSize.height);
-    
-    const CGFloat fitMag = containerAxisSize/contentAxisSize;
-    return fitMag;
-}
-
 static bool _ShouldSnapToFitMagnification(CGFloat mag, CGFloat fitMag) {
     constexpr CGFloat Thresh = 0.15;
     return std::abs(1-(mag/fitMag)) < Thresh;
@@ -150,6 +136,28 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
     [self magnifySnapToFit];
 }
 
+- (CGFloat)_modelMagnification {
+    return _modelMagnification.value_or([self magnification]);
+}
+
+- (CGFloat)_presentationMagnification {
+    return [self magnification];
+}
+
+- (CGFloat)_fitMagnification {
+    const CGSize contentSize = [[self documentView] frame].size;
+    const CGSize containerSize = [self bounds].size;
+    
+    const CGFloat contentAspect = contentSize.width/contentSize.height;
+    const CGFloat containerAspect = containerSize.width/containerSize.height;
+    
+    const CGFloat contentAxisSize = (contentAspect>containerAspect ? contentSize.width : contentSize.height);
+    const CGFloat containerAxisSize = (contentAspect>containerAspect ? containerSize.width : containerSize.height);
+    
+    const CGFloat fitMag = containerAxisSize/contentAxisSize;
+    return fitMag;
+}
+
 // MARK: - NSView Overrides
 
 - (void)setFrame:(NSRect)frame {
@@ -195,8 +203,6 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
     [self magnifySnapToFit];
 }
 
-// MARK: - NSScrollView Overrides
-
 - (void)smartMagnifyWithEvent:(NSEvent*)event {
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context) {
         [super smartMagnifyWithEvent:event];
@@ -204,6 +210,8 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
         [self magnifySnapToFit];
     }];
 }
+
+// MARK: - NSScrollView Overrides
 
 // Disable NSScrollView legacy 'responsive scrolling' by merely overriding -scrollWheel
 // We don't want this behavior because it causes strange flashes and artifacts when
@@ -239,7 +247,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
     [super reflectScrolledClipView:clipView];
     
-    const CGFloat mag = [self magnification];
+    const CGFloat mag = [self _presentationMagnification];
     const CGFloat heightExtra = 22/mag; // Expand the height to get the NSWindow titlebar mirror effect
     const CGRect visibleRect = [[self documentView] visibleRect];
     const CGRect frame = {visibleRect.origin, {visibleRect.size.width, visibleRect.size.height+heightExtra}};
@@ -251,10 +259,6 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
         [_layer setTranslation:_layerFrame.origin magnification:_layerMagnification];
         [_layer setNeedsDisplay];
     }
-}
-
-- (CGFloat)_modelMagnification {
-    return _modelMagnification.value_or([self magnification]);
 }
 
 @end
