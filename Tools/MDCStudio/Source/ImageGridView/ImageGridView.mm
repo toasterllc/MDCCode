@@ -156,14 +156,23 @@ static ImageGridLayerImageIds _XORImageIds(const ImageGridLayerImageIds& a, cons
     return r;
 }
 
+//static CGPoint _ConvertPoint(CALayer* dst, NSView* src, CGPoint x) {
+//    CALayer* srcLayer = [src layer];
+//    x = [src convertPointToLayer:x];
+//    return [dst convertPoint:x fromLayer:srcLayer];
+//}
+
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
     NSWindow* win = [mouseDownEvent window];
+//    const CGPoint startPoint = _ConvertPoint(_imageGridLayer, _documentView,
+//        [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil]);
     const CGPoint startPoint = [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
     [_selectionRectLayer setHidden:false];
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
     const ImageGridLayerImageIds oldSelection = [_imageGridLayer selectedImageIds];
     TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
+//        const CGPoint curPoint = _ConvertPoint(_imageGridLayer, _documentView, [_documentView convertPoint:[event locationInWindow] fromView:nil]);
         const CGPoint curPoint = [_documentView convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
         const ImageGridLayerImageIds newSelection = [_imageGridLayer imageIdsForRect:rect];
