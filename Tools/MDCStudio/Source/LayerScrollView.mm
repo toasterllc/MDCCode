@@ -53,28 +53,8 @@ static void _initCommon(LayerScrollView* self) {
     return _magnifyToFit;
 }
 
-- (void)setMagnifyToFit:(bool)magnifyToFit animate:(bool)animate {
-    _magnifyToFit = magnifyToFit;
-    // Setting the alpha because -setHidden: has no effect
-    [[self verticalScroller] setAlphaValue:(!magnifyToFit ? 1 : 0)];
-    [[self horizontalScroller] setAlphaValue:(!magnifyToFit ? 1 : 0)];
-    
-    if (_magnifyToFit) {
-        NSClipView* clip = [self contentView];
-        NSView* doc = [self documentView];
-        
-        if (animate) {
-            [[self animator] magnifyToFitRect:[clip convertRect:[doc bounds] fromView:doc]];
-        } else {
-            [self magnifyToFitRect:[clip convertRect:[doc bounds] fromView:doc]];
-        }
-    }
-}
-
-- (void)magnifySnapToFit {
-    NSView* doc = [self documentView];
-    
-    const CGSize contentSize = [self convertRect:[[self documentView] bounds] fromView:doc].size;
+- (CGFloat)_fitMagnification {
+    const CGSize contentSize = [[self documentView] frame].size;
     const CGSize containerSize = [self bounds].size;
     
     const CGFloat contentAspect = contentSize.width/contentSize.height;
@@ -83,24 +63,56 @@ static void _initCommon(LayerScrollView* self) {
     const CGFloat contentAxisSize = (contentAspect>containerAspect ? contentSize.width : contentSize.height);
     const CGFloat containerAxisSize = (contentAspect>containerAspect ? containerSize.width : containerSize.height);
     
-    constexpr CGFloat Thresh = 80;
-    const bool magnifyToFit = std::abs(contentAxisSize-containerAxisSize) < Thresh;
+    const CGFloat fitMag = containerAxisSize/contentAxisSize;
+    return fitMag;
+}
+
+- (void)setMagnifyToFit:(bool)magnifyToFit animate:(bool)animate {
+    _magnifyToFit = magnifyToFit;
+    // Setting the alpha because -setHidden: has no effect
+    [[self verticalScroller] setAlphaValue:(!magnifyToFit ? 1 : 0)];
+    [[self horizontalScroller] setAlphaValue:(!magnifyToFit ? 1 : 0)];
     
+    if (_magnifyToFit) {
+        const CGFloat fitMag = [self _fitMagnification];
+        if (animate) {
+            [[self animator] setMagnification:fitMag];
+        } else {
+            [self setMagnification:fitMag];
+        }
+    }
+}
+
+- (void)magnifySnapToFit {
+    const CGFloat mag = [self magnification];
+    const CGFloat fitMag = [self _fitMagnification];
+    constexpr CGFloat Thresh = 0.15;
+    const bool magnifyToFit = std::abs(1-(mag/fitMag)) < Thresh;
     [self setMagnifyToFit:magnifyToFit animate:true];
+}
+
+static CGFloat _NextMagnification(CGFloat mag, int direction) {
+    // Thresh: if `mag` is within this threshold of the next magnification, we'll skip to the next-next magnification
+    constexpr CGFloat Thresh = 0.25;
+    if (direction > 0) {
+        return std::pow(2, std::floor((std::ceil(std::log2(mag)/Thresh)*Thresh)+1));
+    } else {
+        return std::pow(2, std::ceil((std::floor(std::log2(mag)/Thresh)*Thresh)-1));
+    }
 }
 
 - (IBAction)zoomIn:(id)sender {
     const CGFloat curMag = _animatedMagnification.value_or([self magnification]);
-    const CGFloat mag = std::clamp(std::pow(2, floor(std::log2(curMag)+1)), [self minMagnification], [self maxMagnification]);
-    if (mag == curMag) { return; } // Short-circuit if the magnification hasn't changed
-    [self _setAnimatedMagnification:mag];
+    const CGFloat nextMag = std::clamp(_NextMagnification(curMag, 1), [self minMagnification], [self maxMagnification]);
+    if (nextMag == curMag) return; // Short-circuit if the magnification hasn't changed
+    [self _setAnimatedMagnification:nextMag];
 }
 
 - (IBAction)zoomOut:(id)sender {
     const CGFloat curMag = _animatedMagnification.value_or([self magnification]);
-    const CGFloat mag = std::clamp(std::pow(2, ceil(std::log2(curMag)-1)), [self minMagnification], [self maxMagnification]);
-    if (mag == curMag) { return; } // Short-circuit if the magnification hasn't changed
-    [self _setAnimatedMagnification:mag];
+    const CGFloat nextMag = std::clamp(_NextMagnification(curMag, -1), [self minMagnification], [self maxMagnification]);
+    if (nextMag == curMag) return; // Short-circuit if the magnification hasn't changed
+    [self _setAnimatedMagnification:nextMag];
 }
 
 - (IBAction)zoomToFit:(id)sender {
@@ -114,6 +126,7 @@ static void _initCommon(LayerScrollView* self) {
     } completionHandler:^{
         if (!self->_animatedMagnification || self->_animatedMagnification!=mag) return;
         self->_animatedMagnification = std::nullopt;
+        [self magnifySnapToFit];
     }];
 }
 

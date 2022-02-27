@@ -164,6 +164,22 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 
 
+@interface ImageDocumentView : NSView
+@end
+
+@implementation ImageDocumentView
+
+- (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
+    const bool fit = [(LayerScrollView*)[self enclosingScrollView] magnifyToFit];
+    if (fit) {
+        return CGRectInset({point, {0,0}}, -500, -500);
+    } else {
+        return [self bounds];
+    }
+}
+
+@end
+
 
 
 @interface ImageClipView : NSClipView
