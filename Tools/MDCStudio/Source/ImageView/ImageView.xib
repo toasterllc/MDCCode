@@ -18,7 +18,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="640" height="480"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <view fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VTC-h1-o9e">
+                    <view fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VTC-h1-o9e" customClass="ImageDocumentView">
                         <rect key="frame" x="0.0" y="0.0" width="640" height="480"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </view>
