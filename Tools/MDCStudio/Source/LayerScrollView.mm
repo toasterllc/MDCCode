@@ -11,8 +11,11 @@
     CGPoint _anchorPointScreen;
     bool _magnifyToFit;
     std::optional<CGFloat> _modelMagnification;
-    NSTimer* _scrollWheelMagnifyToFitTimer;
-    bool _scrollWheelZoom;
+    struct {
+        NSTimer* magnifyToFitTimer;
+        bool zoom;
+    } _scrollWheel;
+    id _documentViewFrameChangedObserver;
 }
 
 static void _initCommon(LayerScrollView* self) {
@@ -39,17 +42,22 @@ static void _initCommon(LayerScrollView* self) {
     
     _layer = layer;
     CALayer* rootLayer = [CALayer new];
-    [rootLayer setBackgroundColor:[[[NSColor blueColor] colorWithAlphaComponent:.2] CGColor]];
     [rootLayer addSublayer:_layer];
     
     NSView* documentView = [self documentView];
-    [documentView setTranslatesAutoresizingMaskIntoConstraints:false];
     [documentView setLayer:rootLayer];
     [documentView setWantsLayer:true];
     
+    // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
+    __weak auto weakSelf = self;
+    _documentViewFrameChangedObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSViewFrameDidChangeNotification
+        object:documentView queue:nil usingBlock:^(NSNotification*) {
+        [weakSelf _documentViewFrameChanged];
+    }];
+    
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
     [_layer setGeometryFlipped:[documentView isFlipped]];
-//    [self setMagnifyToFit:true animate:false];
+    [self setMagnifyToFit:true animate:false];
 }
 
 - (bool)magnifyToFit {
@@ -144,6 +152,11 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
     [self magnifySnapToFit];
 }
 
+- (void)_documentViewFrameChanged {
+    // Update our magnification if we're in magnify-to-fit mode
+    [self setMagnifyToFit:_magnifyToFit animate:false];
+}
+
 - (CGFloat)_modelMagnification {
     return _modelMagnification.value_or([self magnification]);
 }
@@ -227,10 +240,10 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 - (void)scrollWheel:(NSEvent*)event {
     const NSEventPhase phase = [event phase];
     if ((phase & NSEventPhaseBegan) && [self allowsMagnification]) {
-        _scrollWheelZoom = [event modifierFlags] & NSEventModifierFlagCommand;
+        _scrollWheel.zoom = [event modifierFlags] & NSEventModifierFlagCommand;
     }
     
-    if (_scrollWheelZoom) {
+    if (_scrollWheel.zoom) {
         [self _handleScrollWheelZoom:event];
     } else {
         [super scrollWheel:event];
@@ -238,15 +251,15 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 }
 
 - (void)_handleScrollWheelZoom:(NSEvent*)event {
-    [_scrollWheelMagnifyToFitTimer invalidate];
-    _scrollWheelMagnifyToFitTimer = nil;
+    [_scrollWheel.magnifyToFitTimer invalidate];
+    _scrollWheel.magnifyToFitTimer = nil;
     
+    const NSEventPhase phase = [event phase];
+    const NSEventPhase momentumPhase = [event momentumPhase];
     const CGPoint anchor = [[self contentView] convertPoint:[event locationInWindow] fromView:nil];
     const CGFloat mag = [self _modelMagnification];
     [self setMagnification:mag*(1-[event scrollingDeltaY]/250) centeredAtPoint:anchor];
     
-    const NSEventPhase phase = [event phase];
-    const NSEventPhase momentumPhase = [event momentumPhase];
     if (momentumPhase != NSEventPhaseNone) {
         if (momentumPhase & (NSEventPhaseEnded|NSEventPhaseCancelled)) {
             [self magnifySnapToFit];
@@ -255,46 +268,19 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
     } else if (phase & (NSEventPhaseEnded|NSEventPhaseCancelled)) {
         // We need a timer because momentum-scroll events come after the regular scroll wheel phase ends,
         // so we only want to start the snap-to-fit animation if the momentum events aren't coming
-        _scrollWheelMagnifyToFitTimer = [NSTimer scheduledTimerWithTimeInterval:.01 repeats:false block:^(NSTimer*) {
+        _scrollWheel.magnifyToFitTimer = [NSTimer scheduledTimerWithTimeInterval:.01 repeats:false block:^(NSTimer*) {
             [self magnifySnapToFit];
         }];
     }
 }
 
-inline NSDictionary* LayerNullActions = @{
-    kCAOnOrderIn: [NSNull null],
-    kCAOnOrderOut: [NSNull null],
-    @"bounds": [NSNull null],
-    @"frame": [NSNull null],
-    @"position": [NSNull null],
-    @"sublayers": [NSNull null],
-    @"transform": [NSNull null],
-    @"contents": [NSNull null],
-    @"contentsScale": [NSNull null],
-    @"hidden": [NSNull null],
-    @"fillColor": [NSNull null],
-    @"fontSize": [NSNull null],
-};
-
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
     [super reflectScrolledClipView:clipView];
     
     NSView* doc = [self documentView];
-    CALayer* docLayer = [doc layer];
     const CGFloat mag = [self _presentationMagnification];
     const CGFloat heightExtra = 22/mag; // Expand the height to get the NSWindow titlebar mirror effect
     const CGRect visibleRect = [doc visibleRect];//[doc convertRectToLayer:[doc visibleRect]];
-    
-//    {
-//        CGRect topExtension = {};
-//        if ([doc isFlipped]) {
-//            topExtension = {0, -heightExtra, 1, heightExtra};
-//        } else {
-//            topExtension = {0, visibleRect.size.height, 1, heightExtra};
-//        }
-//        const CGRect frame = CGRectUnion(topExtension, visibleRect);
-//        NSLog(@"AAA %@", NSStringFromRect(frame));
-//    }
     
     CGRect frame = visibleRect;
     if ([doc isFlipped]) {
@@ -304,27 +290,6 @@ inline NSDictionary* LayerNullActions = @{
         frame.size.height += heightExtra;
     }
     
-//    frame.origin.y -= 22;
-//    frame.size.height += 22;
-    
-//    frame.origin.y -= 22;
-    frame.size.height += heightExtra;
-    
-    NSLog(@"BBB %@", NSStringFromRect(frame));
-    
-//    NSLog(@"ORIGIN: %@", NSStringFromPoint(origin));
-    
-//    constexpr CGFloat TopExtensionHeight = 22;
-//    const CGFloat winContentHeight = [[[self window] contentView] frame].size.height;
-//    CGRect topExtension = [_layer convertRect:[doc convertRect:{0,winContentHeight,100,TopExtensionHeight+100} fromView:nil] fromLayer:docLayer];
-    
-//    NSLog(@"topExtension: %@", NSStringFromRect(topExtension));
-    
-//    NSLog(@"flipped: %d %d %d", [_layer isGeometryFlipped], [[_layer superlayer] isGeometryFlipped], [[[_layer superlayer] superlayer] isGeometryFlipped]);
-    
-//    const CGRect frame = CGRectUnion(topExtension, visibleRect);
-//    const CGRect frame = visibleRect;
-    
     if (!CGRectEqualToRect(frame, _layerFrame) || mag!=_layerMagnification) {
         _layerFrame = frame;
         _layerMagnification = mag;
@@ -332,20 +297,6 @@ inline NSDictionary* LayerNullActions = @{
         [_layer setTranslation:_layerFrame.origin magnification:_layerMagnification];
         [_layer setNeedsDisplay];
     }
-    
-//    CGFloat winContentHeight = [[[self window] contentView] frame].size.height;
-//    CGRect topExtension = [_layer convertRect:[doc convertRectToLayer:[doc convertRect:{0,winContentHeight-5,0,22+5} fromView:nil]] fromLayer:docLayer];
-//    
-//    static CALayer* redLayer = nil;
-//    if (!redLayer) {
-//        redLayer = [CALayer new];
-//        [redLayer setBackgroundColor:[[NSColor redColor] CGColor]];
-//        [redLayer setActions:LayerNullActions];
-//        [_layer addSublayer:redLayer];
-//    }
-//    
-//    topExtension.size.width = 100;
-//    [redLayer setFrame:topExtension];
 }
 
 @end
