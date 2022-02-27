@@ -2,11 +2,12 @@
 #import <Metal/Metal.h>
 #import <set>
 #import "ImageLibrary.h"
+#import "MetalScrollLayer.h"
 
 using ImageGridLayerImageIds = std::set<MDCStudio::ImageId>;
 //using ImageGridLayerIndexes = std::set<size_t>;
 
-@interface ImageGridLayer : CAMetalLayer
+@interface ImageGridLayer : MetalScrollLayer
 
 - (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib;
 
