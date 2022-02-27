@@ -48,6 +48,7 @@ static void _initCommon(LayerScrollView* self) {
     [documentView setWantsLayer:true];
     
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
+    [_layer setGeometryFlipped:[documentView isFlipped]];
 //    [self setMagnifyToFit:true animate:false];
 }
 
@@ -282,33 +283,47 @@ inline NSDictionary* LayerNullActions = @{
     CALayer* docLayer = [doc layer];
     const CGFloat mag = [self _presentationMagnification];
     const CGFloat heightExtra = 22/mag; // Expand the height to get the NSWindow titlebar mirror effect
-    const CGRect visibleRect = [doc convertRectToLayer:[doc visibleRect]];
-//    CGRect topExtension = {0, -heightExtra, [_layer bounds].size.width, heightExtra+5};
-    CGRect topExtension = {0, [_layer bounds].size.height-5, [_layer bounds].size.width, heightExtra+5};
+    const CGRect visibleRect = [doc visibleRect];//[doc convertRectToLayer:[doc visibleRect]];
     
+//    {
+//        CGRect topExtension = {};
+//        if ([doc isFlipped]) {
+//            topExtension = {0, -heightExtra, 1, heightExtra};
+//        } else {
+//            topExtension = {0, visibleRect.size.height, 1, heightExtra};
+//        }
+//        const CGRect frame = CGRectUnion(topExtension, visibleRect);
+//        NSLog(@"AAA %@", NSStringFromRect(frame));
+//    }
     
-//    [self window] titlebar
-    
-//    CGRectUnion(visibleRect, topExtension);
-    
-//    CGPoint origin = {};//[docLayer convertPoint:{} fromLayer:_layer];
-    
-    static CALayer* redLayer = nil;
-    if (!redLayer) {
-        redLayer = [CALayer new];
-        [redLayer setBackgroundColor:[[NSColor redColor] CGColor]];
-        [redLayer setActions:LayerNullActions];
-        [_layer addSublayer:redLayer];
+    CGRect frame = visibleRect;
+    if ([doc isFlipped]) {
+        frame.origin.y -= heightExtra;
+        frame.size.height += heightExtra;
+    } else {
+        frame.size.height += heightExtra;
     }
     
-    [redLayer setFrame:topExtension];
+//    frame.origin.y -= 22;
+//    frame.size.height += 22;
+    
+//    frame.origin.y -= 22;
+    frame.size.height += heightExtra;
+    
+    NSLog(@"BBB %@", NSStringFromRect(frame));
     
 //    NSLog(@"ORIGIN: %@", NSStringFromPoint(origin));
     
-    NSLog(@"flipped: %d %d %d", [_layer isGeometryFlipped], [[_layer superlayer] isGeometryFlipped], [[[_layer superlayer] superlayer] isGeometryFlipped]);
+//    constexpr CGFloat TopExtensionHeight = 22;
+//    const CGFloat winContentHeight = [[[self window] contentView] frame].size.height;
+//    CGRect topExtension = [_layer convertRect:[doc convertRect:{0,winContentHeight,100,TopExtensionHeight+100} fromView:nil] fromLayer:docLayer];
+    
+//    NSLog(@"topExtension: %@", NSStringFromRect(topExtension));
+    
+//    NSLog(@"flipped: %d %d %d", [_layer isGeometryFlipped], [[_layer superlayer] isGeometryFlipped], [[[_layer superlayer] superlayer] isGeometryFlipped]);
     
 //    const CGRect frame = CGRectUnion(topExtension, visibleRect);
-    const CGRect frame = visibleRect;
+//    const CGRect frame = visibleRect;
     
     if (!CGRectEqualToRect(frame, _layerFrame) || mag!=_layerMagnification) {
         _layerFrame = frame;
@@ -317,6 +332,20 @@ inline NSDictionary* LayerNullActions = @{
         [_layer setTranslation:_layerFrame.origin magnification:_layerMagnification];
         [_layer setNeedsDisplay];
     }
+    
+//    CGFloat winContentHeight = [[[self window] contentView] frame].size.height;
+//    CGRect topExtension = [_layer convertRect:[doc convertRectToLayer:[doc convertRect:{0,winContentHeight-5,0,22+5} fromView:nil]] fromLayer:docLayer];
+//    
+//    static CALayer* redLayer = nil;
+//    if (!redLayer) {
+//        redLayer = [CALayer new];
+//        [redLayer setBackgroundColor:[[NSColor redColor] CGColor]];
+//        [redLayer setActions:LayerNullActions];
+//        [_layer addSublayer:redLayer];
+//    }
+//    
+//    topExtension.size.width = 100;
+//    [redLayer setFrame:topExtension];
 }
 
 @end
