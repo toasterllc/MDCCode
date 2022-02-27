@@ -8,88 +8,20 @@ using namespace MDCStudio::ImageGridLayerTypes;
 namespace MDCStudio {
 namespace ImageGridLayerShader {
 
-template <typename... Ts>
-static uint32_t _HashInts(Ts... ts) {
-    // FNV-1 hash
-    const uint32_t v[] = {(uint32_t)ts...};
-    const thread uint8_t* b = (thread uint8_t*)&v;
-    uint32_t hash = (uint32_t)0x811c9dc5;
-    for (size_t i=0; i<sizeof(v); i++) {
-        hash *= (uint32_t)0x1000193;
-        hash ^= b[i];
-    }
-    return hash;
-}
-
-//static float3 _ColorFromInt(uint32_t x) {
-//    const uint32_t hash = _HashInts(x);
-//    const uint8_t r = (hash&0x0000FF)>> 0;
-//    const uint8_t g = (hash&0x00FF00)>> 8;
-//    const uint8_t b = (hash&0xFF0000)>>16;
-//    return float3((float)r/255, (float)g/255, (float)b/255);
-//}
-
 struct VertexOutput {
     uint idx;
     float4 posView [[position]];
     float2 posPx;
-//    uint32_t thumbOff;
 };
 
-static int2 _VertexOffsetForVertexIndex(const thread Grid::Rect& rect, uint vidx) {
-    int w = rect.size.x;
-    int h = rect.size.y;
-    switch (vidx) {
-    case 0:     return int2(0, 0);
-    
-    case 1:
-    case 4:     return int2(0, h);
-    
-    case 2:
-    case 3:     return int2(w, 0);
-    
-    case 5:
-    default:    return int2(w, h);
-    }
-}
-
-//static int2 _GetVertex(const thread Grid::Rect& rect, uint vidx) {
-//    int x = rect.point.x;
-//    int y = rect.point.y;
-//    int w = rect.size.x;
-//    int h = rect.size.y;
-//    switch (vidx) {
-//    case 0:     return int2(x, y);
-//    
-//    case 1:
-//    case 4:     return int2(x, y+h);
-//    
-//    case 2:
-//    case 3:     return int2(x+w, y);
-//    
-//    case 5:
-//    default:    return int2(x+w, y+h);
-//    }
-//}
-
-//static float4 _GetVertex(const thread Grid::Rect& rect, uint vidx) {
-//    int x = rect.point.x;
-//    int y = rect.point.y;
-//    int w = rect.size.x;
-//    int h = rect.size.y;
-//    switch (vidx) {
-//    case 0:     return float4(x, y, 0, 1);
-//    
-//    case 1:
-//    case 4:     return float4(x, y+h, 0, 1);
-//    
-//    case 2:
-//    case 3:     return float4(x+w, y, 0, 1);
-//    
-//    case 5:
-//    default:    return float4(x+w, y+h, 0, 1);
-//    }
-//}
+static constexpr constant int2 _Verts[6] = {
+    {0, 0},
+    {0, 1},
+    {1, 0},
+    {1, 0},
+    {0, 1},
+    {1, 1},
+};
 
 vertex VertexOutput VertexShader(
     constant RenderContext& ctx [[buffer(0)]],
@@ -97,61 +29,17 @@ vertex VertexOutput VertexShader(
     uint vidx [[vertex_id]],
     uint iidx [[instance_id]]
 ) {
-//    const Grid::Rect rect = ctx.grid.rectForCellIndex(ctx.startIdx + iidx);
-    
-//    float px = 100;
-//    
-//    float4 pos = 0;
-//    if (vidx == 0) {
-//        pos = float4(px,0,0,1);
-//    } else if (vidx == 1) {
-//        pos = float4(0,px,0,1);
-//    } else if (vidx == 2) {
-//        pos = float4(0,0,0,1);
-//    } else if (vidx == 3) {
-//        pos = float4(px,px,0,1);
-//    } else if (vidx == 4) {
-//        pos = float4(0,px,0,1);
-//    } else if (vidx == 5) {
-//        pos = float4(px,0,0,1);
-//    }
-//    return VertexOutput{
-//        .position = ctx.viewMatrix*pos,
-//    };
-//    
-//    float x = 100;
-//    float y = 100;
-//    float w = 100;
-//    float h = 100;
-//    
-//    float4 pos = 0;
-//    if (vidx == 0) {
-//        pos = float4(   x,   y,  0,  1);
-//    } else if (vidx == 1) {
-//        pos = float4(   x, y+h,  0,  1);
-//    } else if (vidx == 2) {
-//        pos = float4( x+w,   y,  0,  1);
-//    }
-    
     const uint relIdx = iidx; // Index within chunk
     const uint absIdx = ctx.idxOff + relIdx;
-    
-    // Ignore ImageRefs that aren't for our intended chunk
-//    if (any(imageRef.chunk != ctx.chunk)) return Nan;
-    
-//    if (idx >= ctx.grid.elementCount()) return Nan;
-    
     const Grid::Rect rect = ctx.grid.rectForCellIndex(absIdx);
     const int2 vorigin = int2(rect.point.x, rect.point.y);
-    const int2 voff = _VertexOffsetForVertexIndex(rect, vidx);
+    const int2 voff = int2(rect.size.x, rect.size.y) * _Verts[vidx];
     const int2 vabs = vorigin + voff + ctx.viewOffset;
     
     return VertexOutput{
         .idx = relIdx,
         .posView = ctx.viewMatrix * float4(vabs.x, vabs.y, 0, 1),
         .posPx = float2(voff),
-//        .thumbOff = 0,
-//        .color = _ColorFromInt(idx),
     };
 }
 
@@ -172,24 +60,6 @@ static float4 blendMask(float mask, float4 a) {
     return float4(a.rgb, a.a*mask);
 }
 
-float SRGBGammaForward(float x) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    if (x <= 0.0031308) return 12.92*x;
-    return 1.055*pow(x, 1/2.4)-.055;
-}
-
-float SRGBGammaReverse(float x) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    if (x <= 0.04045) return x/12.92;
-    return pow((x+.055)/1.055, 2.4);
-}
-
-static float4 blendOverPremul(float4 a, float4 b) {
-    const float oa = (1.0)*a.a + (1-a.a)*b.a;
-    const float3 oc = (1.0)*a.rgb + (1-a.a)*b.rgb;
-    return float4(oc, oa);
-}
-
 fragment float4 FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
     device uint8_t* images [[buffer(1)]],
@@ -201,42 +71,6 @@ fragment float4 FragmentShader(
     VertexOutput in [[stage_in]]
 ) {
     #warning TODO: adding +.5 to the pixel coordinates supplied to shadowTxt.sample() causes incorrect results. does that mean that the Sample::RGBA() implementation is incorrect? or are we getting bad pixel coords via `VertexOutput in`?
-    
-//    if (in.posPx.x >= shadowTxt.get_width() || in.posPx.y >= shadowTxt.get_height()) {
-//        return float4(.1,0,0,1);
-//    }
-////    return float4(1,0,0,1);
-//    
-////    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y));
-////    auto c2 = blendOver(c, float4(1,1,1,1));
-////    return c2;
-//    
-    
-//    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y)).r;
-//    return float4(0,0,0,1-c);
-    
-//    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y)).r;
-//    auto c2 = blendOver(float4(0,0,0,1-c), float4(1,1,1,1));
-//    return c2;
-//    return c;
-    
-    
-//    return c;
-//    return float4(0,0,0, c.a);
-//    return blendOver(c, float4(1,1,1,1));
-//    return blendOver(c, float4(1,1,1,1));
-//    return float4(SRGBGammaReverse(c2.r), SRGBGammaReverse(c2.g), SRGBGammaReverse(c2.b), 1);
-    
-//    return float4(0, 0, 0, c.a);
-//    return float4(SRGBGammaReverse(.482),SRGBGammaReverse(.482),SRGBGammaReverse(.482),1);
-//    return float4(.482,.482,.482,1);
-    
-    
-//    auto c = shadowTxt.sample(coord::pixel, float2(in.posPx.x, in.posPx.y));
-//    return c;
-//    return float4(c.r, c.g, c.b, SRGBGammaForward(c.a));
-//    return float4(c.r, c.g, c.b, c.a);
-//    return float4(0,0,0,1);
     
     device uint8_t* imageBuf = images+ctx.imagesOff+(ctx.imageSize*in.idx);
     const uint32_t imageId = *((device uint32_t*)(imageBuf+ctx.off.id));
@@ -251,10 +85,6 @@ fragment float4 FragmentShader(
         imageId<ctx.selection.first+ctx.selection.count &&
         selectedImageIds[imageId-ctx.selection.first]
     );
-    
-//    if (selected) {
-//        return float4(0,0,1,1);
-//    }
     
     const int maskWidth = maskTxt.get_width();
     const int maskHeight = maskTxt.get_height();
@@ -368,31 +198,7 @@ fragment float4 FragmentShader(
         else                            selectionPos.y = selectionHeight2;
         
         selection = selectionTxt.sample(coord::pixel, float2(selectionPos.x, selectionPos.y));
-//        selection.a = 1;
     }
-//    return selection;
-//    return blendOver(selection, float4(0,0,0,1));
-    
-//    return blendOver(float4(1,1,1,.1), selection);
-    
-//    return shadow;
-//    return float4(SRGBGammaForward(shadow.r), SRGBGammaForward(shadow.g), SRGBGammaForward(shadow.b), SRGBGammaForward(shadow.a));
-    
-//    return
-//            blendOver(
-//                blendMask(mask,
-//                blendColorDodge(outlineColorDodge,
-//                blendOver(outlineOver, thumb
-//            ))), shadow);
-    
-//    shadow = float4(0,0,0,1);
-//    return
-//        blendOver(
-//            blendOver(
-//                float4(thumb.rgb, mask/2),
-//            shadow),
-//        selection);
-    
     
     return
         blendOver(

@@ -46,8 +46,6 @@ using ThumbFile = Mmap;
     id<MTLTexture> _shadowTexture;
     id<MTLTexture> _selectionTexture;
     
-    CGFloat _contentsScale;
-    
     Grid _grid;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
@@ -72,11 +70,6 @@ using ThumbFile = Mmap;
     if (!(self = [super init])) return nil;
     
     _imageLibrary = imageLibrary;
-    _contentsScale = 1;
-    
-    [self setOpaque:true];
-    [self setActions:LayerNullActions];
-    [self setNeedsDisplayOnBoundsChange:true];
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
@@ -175,17 +168,22 @@ using ThumbFile = Mmap;
     return _grid;
 }
 
-- (void)setFrame:(CGRect)frame {
-    [super setFrame:frame];
-    [self setNeedsDisplay];
+- (CGSize)preferredFrameSize {
+    const CGFloat w = [[self superlayer] bounds].size.width;
+    const CGFloat contentsScale = [self contentsScale];
+    Grid grid = _grid;
+    grid.setContainerWidth(w * contentsScale);
+    grid.recompute();
+    const CGFloat h = grid.containerHeight()/contentsScale;
+    return {w, h};
 }
 
 - (void)setContainerWidth:(CGFloat)width {
-    _grid.setContainerWidth((int32_t)lround(width*_contentsScale));
+    _grid.setContainerWidth((int32_t)lround(width*[self contentsScale]));
 }
 
 - (CGFloat)containerHeight {
-    return _grid.containerHeight() / _contentsScale;
+    return _grid.containerHeight() / [self contentsScale];
 }
 
 - (size_t)columnCount {
@@ -231,23 +229,17 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 
 - (void)display {
     auto startTime = std::chrono::steady_clock::now();
+    [super display];
     
-    // Bail if we have zero width/height; the Metal drawable APIs will fail below
-    // if we don't short-circuit here.
-    const CGRect frame = [self frame];
-    if (CGRectIsEmpty(frame)) return;
-    
-    auto lock = std::unique_lock(*_imageLibrary);
-    
-    // Update our drawable size
-    [self setDrawableSize:{frame.size.width*_contentsScale, frame.size.height*_contentsScale}];
-    
-    // Get our drawable and its texture
     id<CAMetalDrawable> drawable = [self nextDrawable];
     assert(drawable);
+    id<MTLTexture> drawableTxt = [drawable texture];
+    assert(drawableTxt);
     
-    id<MTLTexture> drawableTexture = [drawable texture];
-    assert(drawableTexture);
+    const CGRect frame = [self frame];
+    const CGFloat contentsScale = [self contentsScale];
+    
+    auto lock = std::unique_lock(*_imageLibrary);
     
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     
@@ -255,7 +247,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
-        [[renderPassDescriptor colorAttachments][0] setClearColor:{WindowBackgroundColor.lsrgb[0], WindowBackgroundColor.lsrgb[1], WindowBackgroundColor.lsrgb[2], 1}];
+        [[renderPassDescriptor colorAttachments][0] setClearColor:{WindowBackgroundColor.lsrgb[0]+1, WindowBackgroundColor.lsrgb[1], WindowBackgroundColor.lsrgb[2], 1}];
 //        [[renderPassDescriptor colorAttachments][0] setClearColor:{0.118, 0.122, 0.129, 1}];
 //        [[renderPassDescriptor colorAttachments][0] setClearColor:{1,1,1,1}];
 //        [[renderPassDescriptor colorAttachments][0] setClearColor:{0,0,0,0}];
@@ -268,7 +260,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         [renderEncoder endEncoding];
     }
     
-    const Grid::IndexRange indexRange = _grid.indexRangeForIndexRect(_grid.indexRectForRect(_GridRectFromCGRect(frame, _contentsScale)));
+    const Grid::IndexRange indexRange = _grid.indexRangeForIndexRect(_grid.indexRectForRect(_GridRectFromCGRect(frame, contentsScale)));
     if (indexRange.count) {
         MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawable.texture];
@@ -277,7 +269,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         
         // rasterFromUnityMatrix: converts unity coordinates [-1,1] -> rasterized coordinates [0,pixel width/height]
         const matrix_float4x4 rasterFromUnityMatrix = matrix_multiply(matrix_multiply(
-            _Scale(.5*frame.size.width*_contentsScale, .5*frame.size.height*_contentsScale, 1), // Divide by 2, multiply by view width/height
+            _Scale(.5*frame.size.width*contentsScale, .5*frame.size.height*contentsScale, 1), // Divide by 2, multiply by view width/height
             _Translate(1, 1, 0)),                                                               // Add 1
             _Scale(1, -1, 1)                                                                    // Flip Y
         );
@@ -288,8 +280,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //        constexpr size_t MaxBufLen = 1024*1024*1024; // 1 GB
 //        const std::vector<ImageLibrary::Range> ranges = _RangeSegments<MaxBufLen>(ic, {(size_t)indexRange.start, (size_t)indexRange.count});
         
-        const int32_t offsetX = -round(frame.origin.x*_contentsScale);
-        const int32_t offsetY = -round(frame.origin.y*_contentsScale);
+        const int32_t offsetX = -round(frame.origin.x*contentsScale);
+        const int32_t offsetY = -round(frame.origin.y*contentsScale);
         
         const uintptr_t imageRefsBegin = (uintptr_t)&*_imageLibrary->begin();
         const uintptr_t imageRefsEnd = (uintptr_t)&*_imageLibrary->end();
@@ -432,12 +424,6 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     printf("Took %ju ms\n", (uintmax_t)durationMs);
 }
 
-- (void)setContentsScale:(CGFloat)scale {
-    _contentsScale = scale;
-    [super setContentsScale:scale];
-    [self setNeedsDisplay];
-}
-
 - (void)setResizingUnderway:(bool)resizing {
     NSLog(@"setResizingUnderway: %d", resizing);
     // We need PresentsWithTransaction=1 while window is resizing (to prevent artifacts),
@@ -447,7 +433,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 
 - (ImageGridLayerImageIds)imageIdsForRect:(CGRect)rect {
     auto lock = std::unique_lock(*_imageLibrary);
-    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, _contentsScale));
+    const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, [self contentsScale]));
     ImageGridLayerImageIds imageIds;
     for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
@@ -462,7 +448,7 @@ done:
 }
 
 - (CGRect)rectForImageAtIndex:(size_t)idx {
-    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), _contentsScale);
+    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
 }
 
 - (const ImageGridLayerImageIds&)selectedImageIds {

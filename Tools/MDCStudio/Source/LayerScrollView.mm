@@ -39,13 +39,14 @@ static void _initCommon(LayerScrollView* self) {
     
     _layer = layer;
     CALayer* rootLayer = [CALayer new];
+    [rootLayer setBackgroundColor:[[[NSColor blueColor] colorWithAlphaComponent:.2] CGColor]];
     [rootLayer addSublayer:_layer];
     
     NSView* documentView = [self documentView];
     [documentView setTranslatesAutoresizingMaskIntoConstraints:false];
     [documentView setLayer:rootLayer];
     [documentView setWantsLayer:true];
-    [documentView setFrameSize:[_layer preferredFrameSize]];
+//    [documentView setFrameSize:[_layer preferredFrameSize]];
     
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
     [self setMagnifyToFit:true animate:false];
@@ -74,6 +75,8 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 }
 
 - (void)setMagnifyToFit:(bool)magnifyToFit animate:(bool)animate {
+    if (![self allowsMagnification]) return;
+    
     _magnifyToFit = magnifyToFit;
     // Setting the alpha because -setHidden: has no effect
     [[self verticalScroller] setAlphaValue:(!magnifyToFit ? 1 : 0)];
@@ -94,12 +97,14 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 }
 
 - (void)magnifySnapToFit {
+    if (![self allowsMagnification]) return;
     const CGFloat mag = [self _modelMagnification];
     const CGFloat fitMag = [self _fitMagnification];
     [self setMagnifyToFit:_ShouldSnapToFitMagnification(mag, fitMag) animate:true];
 }
 
 - (IBAction)zoomIn:(id)sender {
+    if (![self allowsMagnification]) return;
     const CGFloat fitMag = [self _fitMagnification];
     const CGFloat curMag = [self _modelMagnification];
     const CGFloat nextMag = std::clamp(_NextMagnification(curMag, fitMag, 1), [self minMagnification], [self maxMagnification]);
@@ -107,6 +112,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 }
 
 - (IBAction)zoomOut:(id)sender {
+    if (![self allowsMagnification]) return;
     const CGFloat fitMag = [self _fitMagnification];
     const CGFloat curMag = [self _modelMagnification];
     const CGFloat nextMag = std::clamp(_NextMagnification(curMag, fitMag, -1), [self minMagnification], [self maxMagnification]);
@@ -114,6 +120,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 }
 
 - (IBAction)zoomToFit:(id)sender {
+    if (![self allowsMagnification]) return;
     [self setMagnifyToFit:true animate:true];
 }
 
@@ -219,7 +226,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 // scroll quickly, especially when scrolling near the margin
 - (void)scrollWheel:(NSEvent*)event {
     const NSEventPhase phase = [event phase];
-    if (phase & NSEventPhaseBegan) {
+    if ((phase & NSEventPhaseBegan) && [self allowsMagnification]) {
         _scrollWheelZoom = [event modifierFlags] & NSEventModifierFlagCommand;
     }
     
