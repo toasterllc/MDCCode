@@ -150,22 +150,6 @@ using ThumbFile = Mmap;
     return _grid;
 }
 
-//- (CGSize)preferredFrameSize {
-//    const CGFloat w = _grid.containerWidth() / [self contentsScale];
-//    const CGFloat h = _grid.containerHeight() / [self contentsScale];
-//    return {w,h};
-//}
-
-//- (CGSize)preferredFrameSize {
-//    const CGFloat w = [[self superlayer] bounds].size.width;
-//    const CGFloat contentsScale = [self contentsScale];
-//    Grid grid = _grid;
-//    grid.setContainerWidth(w * contentsScale);
-//    grid.recompute();
-//    const CGFloat h = grid.containerHeight()/contentsScale;
-//    return {w, h};
-//}
-
 - (void)setContainerWidth:(CGFloat)width {
     _grid.setContainerWidth((int32_t)lround(width*[self contentsScale]));
 }

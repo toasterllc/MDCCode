@@ -18,9 +18,12 @@
                 <rect key="frame" x="0.0" y="0.0" width="640" height="480"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <view fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VTC-h1-o9e" customClass="ImageDocumentView">
+                    <view ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VTC-h1-o9e" customClass="ImageDocumentView">
                         <rect key="frame" x="0.0" y="0.0" width="640" height="480"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="640" id="Wz5-gz-7vm"/>
+                            <constraint firstAttribute="height" constant="480" id="c4P-xh-Bca"/>
+                        </constraints>
                     </view>
                 </subviews>
             </clipView>

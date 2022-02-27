@@ -46,10 +46,9 @@ static void _initCommon(LayerScrollView* self) {
     [documentView setTranslatesAutoresizingMaskIntoConstraints:false];
     [documentView setLayer:rootLayer];
     [documentView setWantsLayer:true];
-//    [documentView setFrameSize:[_layer preferredFrameSize]];
     
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-    [self setMagnifyToFit:true animate:false];
+//    [self setMagnifyToFit:true animate:false];
 }
 
 - (bool)magnifyToFit {
@@ -261,13 +260,55 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
     }
 }
 
+inline NSDictionary* LayerNullActions = @{
+    kCAOnOrderIn: [NSNull null],
+    kCAOnOrderOut: [NSNull null],
+    @"bounds": [NSNull null],
+    @"frame": [NSNull null],
+    @"position": [NSNull null],
+    @"sublayers": [NSNull null],
+    @"transform": [NSNull null],
+    @"contents": [NSNull null],
+    @"contentsScale": [NSNull null],
+    @"hidden": [NSNull null],
+    @"fillColor": [NSNull null],
+    @"fontSize": [NSNull null],
+};
+
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
     [super reflectScrolledClipView:clipView];
     
+    NSView* doc = [self documentView];
+    CALayer* docLayer = [doc layer];
     const CGFloat mag = [self _presentationMagnification];
     const CGFloat heightExtra = 22/mag; // Expand the height to get the NSWindow titlebar mirror effect
-    const CGRect visibleRect = [[self documentView] visibleRect];
-    const CGRect frame = {visibleRect.origin, {visibleRect.size.width, visibleRect.size.height+heightExtra}};
+    const CGRect visibleRect = [doc convertRectToLayer:[doc visibleRect]];
+//    CGRect topExtension = {0, -heightExtra, [_layer bounds].size.width, heightExtra+5};
+    CGRect topExtension = {0, [_layer bounds].size.height-5, [_layer bounds].size.width, heightExtra+5};
+    
+    
+//    [self window] titlebar
+    
+//    CGRectUnion(visibleRect, topExtension);
+    
+//    CGPoint origin = {};//[docLayer convertPoint:{} fromLayer:_layer];
+    
+    static CALayer* redLayer = nil;
+    if (!redLayer) {
+        redLayer = [CALayer new];
+        [redLayer setBackgroundColor:[[NSColor redColor] CGColor]];
+        [redLayer setActions:LayerNullActions];
+        [_layer addSublayer:redLayer];
+    }
+    
+    [redLayer setFrame:topExtension];
+    
+//    NSLog(@"ORIGIN: %@", NSStringFromPoint(origin));
+    
+    NSLog(@"flipped: %d %d %d", [_layer isGeometryFlipped], [[_layer superlayer] isGeometryFlipped], [[[_layer superlayer] superlayer] isGeometryFlipped]);
+    
+//    const CGRect frame = CGRectUnion(topExtension, visibleRect);
+    const CGRect frame = visibleRect;
     
     if (!CGRectEqualToRect(frame, _layerFrame) || mag!=_layerMagnification) {
         _layerFrame = frame;
