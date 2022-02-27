@@ -20,7 +20,7 @@
         √ mouse zooming (command-scroll)
         √ implement:
             - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)location inRect:(NSRect)visibleRect API_AVAILABLE(macos(10.8));
-        - latch pan/zoom mode when -scrollWheel: starts, so we can't flip between scrolling and zooming
+        √ latch pan/zoom mode when -scrollWheel: starts, so we can't flip between scrolling and zooming
     
     - MDCStudio: grid view thumbnail resize
     
