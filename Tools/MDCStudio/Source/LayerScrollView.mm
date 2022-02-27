@@ -12,6 +12,7 @@
     bool _magnifyToFit;
     std::optional<CGFloat> _modelMagnification;
     NSTimer* _scrollWheelMagnifyToFitTimer;
+    bool _scrollWheelZoom;
 }
 
 static void _initCommon(LayerScrollView* self) {
@@ -217,13 +218,21 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 // We don't want this behavior because it causes strange flashes and artifacts when
 // scroll quickly, especially when scrolling near the margin
 - (void)scrollWheel:(NSEvent*)event {
+    const NSEventPhase phase = [event phase];
+    if (phase & NSEventPhaseBegan) {
+        _scrollWheelZoom = [event modifierFlags] & NSEventModifierFlagCommand;
+    }
+    
+    if (_scrollWheelZoom) {
+        [self _handleScrollWheelZoom:event];
+    } else {
+        [super scrollWheel:event];
+    }
+}
+
+- (void)_handleScrollWheelZoom:(NSEvent*)event {
     [_scrollWheelMagnifyToFitTimer invalidate];
     _scrollWheelMagnifyToFitTimer = nil;
-    
-    if (!([event modifierFlags]&NSEventModifierFlagCommand)) {
-        [super scrollWheel:event];
-        return;
-    }
     
     const CGPoint anchor = [[self contentView] convertPoint:[event locationInWindow] fromView:nil];
     const CGFloat mag = [self _modelMagnification];
@@ -235,6 +244,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
         if (momentumPhase & (NSEventPhaseEnded|NSEventPhaseCancelled)) {
             [self magnifySnapToFit];
         }
+    
     } else if (phase & (NSEventPhaseEnded|NSEventPhaseCancelled)) {
         // We need a timer because momentum-scroll events come after the regular scroll wheel phase ends,
         // so we only want to start the snap-to-fit animation if the momentum events aren't coming
