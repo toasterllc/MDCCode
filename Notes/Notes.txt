@@ -18,7 +18,7 @@
         √ 'size-to-fit' mode; stay in this mode until zooming manually
         √ keyboard zooming (cmd+, cmd-)
         √ mouse zooming (command-scroll)
-        - implement:
+        √ implement:
             - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)location inRect:(NSRect)visibleRect API_AVAILABLE(macos(10.8));
         - latch pan/zoom mode when -scrollWheel: starts, so we can't flip between scrolling and zooming
     
