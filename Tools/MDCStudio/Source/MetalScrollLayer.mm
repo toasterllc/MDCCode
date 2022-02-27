@@ -48,7 +48,6 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     const CGFloat contentsScale = [self contentsScale];
     const size_t drawableWidth = std::max(1., std::round(frame.size.width*_magnification*contentsScale));
     const size_t drawableHeight = std::max(1., std::round(frame.size.height*_magnification*contentsScale));
-    NSLog(@"drawableWidth/drawableHeight %@ %@", @(drawableWidth), @(drawableHeight));
     [self setDrawableSize:{(CGFloat)drawableWidth, (CGFloat)drawableHeight}];
 }
 
@@ -78,9 +77,9 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
 //        _Translate(-frame.origin.x, -frame.origin.y, 0)     *
 //        _Scale(contentSize.width, contentSize.height, 1)    ;
     
-    NSLog(@"isGeometryFlipped: %d %d %d", [self isGeometryFlipped], [[self superlayer] isGeometryFlipped], [[[self superlayer] superlayer] isGeometryFlipped]);
-    
-    NSLog(@"contentsAreFlipped: %d %d %d", [self contentsAreFlipped], [[self superlayer] contentsAreFlipped], [[[self superlayer] superlayer] contentsAreFlipped]);
+//    NSLog(@"isGeometryFlipped: %d %d %d", [self isGeometryFlipped], [[self superlayer] isGeometryFlipped], [[[self superlayer] superlayer] isGeometryFlipped]);
+//    
+//    NSLog(@"contentsAreFlipped: %d %d %d", [self contentsAreFlipped], [[self superlayer] contentsAreFlipped], [[[self superlayer] superlayer] contentsAreFlipped]);
     
     const int flip = [self isGeometryFlipped] ? -1 : 1;
     const Mat<float,4,4> transform =
