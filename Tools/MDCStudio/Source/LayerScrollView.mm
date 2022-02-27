@@ -75,8 +75,12 @@ static void _initCommon(LayerScrollView* self) {
     
     if (_magnifyToFit) {
         const CGFloat fitMag = [self _fitMagnification];
+        // We're using -setMagnification: here, and not -magnifyToFitRect:, because a single mechanism
+        // must be used set the magnification, because future animations must cancel previous ones. If
+        // we mix -setMagnification: with -magnifyToFitRect:, the animations don't cancel each other,
+        // so they run simultaneously and conflict, and the effects are clearly visible to the user.
         if (animate) {
-            [[self animator] setMagnification:fitMag];
+            [self _setAnimatedMagnification:fitMag];
         } else {
             [self setMagnification:fitMag];
         }
