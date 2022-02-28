@@ -163,9 +163,6 @@ using namespace MDCStudio;
         
         [_mainView setContentView:imageView animation:MainViewAnimation::None];
         
-        
-        
-        
         return true;
     }
 }

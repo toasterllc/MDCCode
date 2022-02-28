@@ -137,6 +137,8 @@ static ImageGridLayerImageIds _XORImageIds(const ImageGridLayerImageIds& a, cons
 //}
 
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
+    [[self window] makeFirstResponder:self];
+    
     NSWindow* win = [mouseDownEvent window];
 //    const CGPoint startPoint = _ConvertPoint(_imageGridLayer, _documentView,
 //        [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil]);
