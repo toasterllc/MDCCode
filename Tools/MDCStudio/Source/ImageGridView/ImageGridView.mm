@@ -91,7 +91,7 @@ using namespace MDCStudio;
     return [_imageGridLayer selectedImageIds];
 }
 
-- (NSResponder*)initialFirstResponder {
+- (NSView*)initialFirstResponder {
     return [_scrollView documentView];
 }
 

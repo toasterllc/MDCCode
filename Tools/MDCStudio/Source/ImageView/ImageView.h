@@ -17,6 +17,6 @@
 
 - (void)setDelegate:(id<ImageViewDelegate>)delegate;
 
-- (NSResponder*)initialFirstResponder;
+- (NSView*)initialFirstResponder;
 
 @end
