@@ -320,7 +320,6 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
         _layerMagnification = mag;
         [_layer setFrame:_layerFrame];
         [_layer setTranslation:_layerFrame.origin magnification:_layerMagnification];
-        [_layer setNeedsDisplay];
     }
 }
 
