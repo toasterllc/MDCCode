@@ -6,6 +6,7 @@
 #import "Toastbox/Mmap.h"
 #import "ImageLibrary.h"
 namespace fs = std::filesystem;
+using namespace MDCStudio;
 using namespace MDCTools;
 using namespace Toastbox;
 
@@ -83,12 +84,13 @@ int main(int argc, const char* argv[]) {
         printf("Recreating ImageLibrary, cause: %s\n", e.what());
     }
     
+    ImageId imageId = 0;
     auto startTime = std::chrono::steady_clock::now();
     {
-        Renderer renderer(dev, lib, commandQueue);
-        
-        constexpr size_t MaxBatchLen = 4096;
+        constexpr size_t MaxBatchLen = 512;
         for (size_t i=0; i<[urls count]; i+=MaxBatchLen) @autoreleasepool {
+            Renderer renderer(dev, lib, commandQueue);
+            
             const size_t batchLen = std::min((size_t)([urls count]-i), MaxBatchLen);
             NSArray* batchURLs = [urls subarrayWithRange:{i, batchLen}];
             
@@ -98,31 +100,37 @@ int main(int argc, const char* argv[]) {
             const size_t beginOff = imgLib.recordCount();
             imgLib.reserve([txts count]);
             imgLib.add();
-            auto imageRefIter = imgLib.begin()+beginOff;
+            auto imageThumbIter = imgLib.begin()+beginOff;
             
             printf("Writing %ju thumbnails...\n", (uintmax_t)batchLen);
             for (id<MTLTexture> txt : txts) @autoreleasepool {
-                ImageRef* image = imgLib.recordGet(imageRefIter);
+                ImageThumb* thumb = imgLib.recordGet(imageThumbIter);
                 
-                const uintptr_t start = _FloorToPageSize((uintptr_t)image);
-                const uintptr_t end = _CeilToPageSize((uintptr_t)(image)+sizeof(ImageRef));
+                thumb->ref.id = imageId;
+                imageId++;
+                
+                const uintptr_t start = _FloorToPageSize((uintptr_t)thumb);
+                const uintptr_t end = _CeilToPageSize((uintptr_t)(thumb)+sizeof(ImageLibrary::Record));
                 const size_t len = end-start;
-                const size_t off = ((uintptr_t)image + offsetof(ImageRef, thumbData)) - start;
+                const size_t off = ((uintptr_t)thumb + offsetof(ImageLibrary::Record, thumb)) - start;
                 
                 constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
                 id<MTLBuffer> thumbBuf = [dev newBufferWithBytesNoCopy:(void*)start length:len options:BufOpts deallocator:nil];
                 assert(thumbBuf);
                 
-                renderer.render("RenderThumb", ImageRef::ThumbWidth, ImageRef::ThumbHeight,
-                    // Buffer args
-                    (uint32_t)off,
-                    (uint32_t)ImageRef::ThumbWidth,
-                    thumbBuf,
-                    // Texture args
-                    txt
+                renderer.render(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
+                    renderer.FragmentShader("RenderThumb",
+                        // Buffer args
+                        (uint32_t)off,
+                        (uint32_t)ImageThumb::ThumbWidth,
+                        thumbBuf,
+                        // Texture args
+                        txt
+                    )
                 );
                 
-                imageRefIter++;
+                imageId++;
+                imageThumbIter++;
             }
             
             renderer.commitAndWait();
