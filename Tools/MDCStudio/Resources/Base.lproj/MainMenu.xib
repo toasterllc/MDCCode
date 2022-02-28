@@ -626,17 +626,17 @@
                             <menuItem isSeparatorItem="YES" id="hB3-LF-h0Y"/>
                             <menuItem title="Zoom In" keyEquivalent="+" id="kWG-ZS-fSb">
                                 <connections>
-                                    <action selector="zoomIn:" target="-1" id="3n1-cA-4v7"/>
+                                    <action selector="magnifyIncrease:" target="-1" id="qWU-kG-Z73"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Zoom Out" keyEquivalent="-" id="snF-hZ-Qp1">
                                 <connections>
-                                    <action selector="zoomOut:" target="-1" id="UIi-9F-sbt"/>
+                                    <action selector="magnifyDecrease:" target="-1" id="H6E-PE-deJ"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Zoom to Fit" keyEquivalent="0" id="fQh-2t-qzh">
                                 <connections>
-                                    <action selector="zoomToFit:" target="-1" id="sF2-sI-hmg"/>
+                                    <action selector="magnifyToFit:" target="-1" id="Tqg-dk-BM4"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="r2t-gp-ECe"/>

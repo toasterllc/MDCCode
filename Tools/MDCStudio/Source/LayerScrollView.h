@@ -18,8 +18,8 @@
 - (void)magnifySnapToFit;
 
 // Menu actions
-- (void)zoomIn:(id)sender;
-- (void)zoomOut:(id)sender;
-- (void)zoomToFit:(id)sender;
+- (void)magnifyIncrease:(id)sender;
+- (void)magnifyDecrease:(id)sender;
+- (void)magnifyToFit:(id)sender;
 
 @end
