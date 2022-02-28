@@ -145,10 +145,6 @@ static void _init(MyDocumentView* self) {
     }
 }
 
-//#warning TODO: fix weird appearance when isFlipped==false
-#warning TODO: fix app not starting with view magnified to fit
-//#warning TODO: fix window titlebar mirror effect not working
-
 - (BOOL)isFlipped {
     return true;
 }
