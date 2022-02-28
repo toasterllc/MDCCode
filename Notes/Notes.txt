@@ -1,48 +1,25 @@
 - Rev4 Todo
     
-    - MDCStudio: implement image view
-        √ cache: responsible for returning image if already loaded, and fetching it if not
-        √ image provider: responsible for loading images from SD card or disk
-        √ cache or image provider needs to handle dropping work
-        √ when neighbor loading, new neighbor loading works should occur before existing neighbor loading, and a neighbor loading that happens later shouldn't cause an earlier cache entry to be evicted
-        √ cache or image provider should queue work, and drop the work that's no longer needed
-            √ eg: when user quickly flips through full-size images, lots of work would be enqueued, but we may not need the work at the end
-                √ Priority: required, high, low
-        √ allow arrow keys to be used to navigate to the previous/next image
-            X use animation
-                X animation is too distracting
-        √ implement zooming
-        √ implement panning
-        √ optimize draw performance by caching full-size image texture
-        √ draw shadow behind image
-        √ 'size-to-fit' mode; stay in this mode until zooming manually
-        √ keyboard zooming (cmd+, cmd-)
-        √ mouse zooming (command-scroll)
-        √ implement:
-            - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)location inRect:(NSRect)visibleRect API_AVAILABLE(macos(10.8));
-        √ latch pan/zoom mode when -scrollWheel: starts, so we can't flip between scrolling and zooming
+    - MDCStudio: ImageGridView: thumbnail resize
+        - Use LayerScrollView -magnifyIncrease: / -magnifyDecrease: interface
+        - Add slider somewhere?
     
-    - MDCStudio: grid view thumbnail resize
-    
-    - MDCStudio: use LayerScrollView / MetalScrollLayer for ImageGridView
-    
-    - MDCStudio: merge ImageGridLayer into ImageGridView, the same as we did for ImageView
-    
-    - MDCStudio: allow arrow keys to extend the current selection when holding shift/command
+    - MDCStudio: ImageGridView: allow arrow keys to extend the current selection when holding shift/command
         - We need sophisticated handling similar to the Finder, but we should be able to do better
     
     - MDCStudio: image rotation
         - from grid view
         - from image view
     
-    - MDCStudio: allow enter key to open ImageView
+    - MDCStudio: ImageGridView: allow enter key to open image
     
-    - MDCStudio: zoom animation when entering image view
+    - MDCStudio: ImageGridView: zoom animation when entering image view
     
     - MDCStudio: image exporting
     
     - MDCStudio: image drag/drop
-        - to Finder
+        - to other apps
+        - to existing library
         - to new library
     
     - MDCStudio: deleting images
@@ -85,6 +62,32 @@
             - Not sure if this can be improved when DMA=1, since we can only send data from a single address at a time?
             - When DMA=0, couldn't this be improved, since we can get an interrupt when the TXFIFO is half-full,
               and start enqueueing more data from an arbitrary address?
+    
+    √ MDCStudio: implement image view
+        √ cache: responsible for returning image if already loaded, and fetching it if not
+        √ image provider: responsible for loading images from SD card or disk
+        √ cache or image provider needs to handle dropping work
+        √ when neighbor loading, new neighbor loading works should occur before existing neighbor loading, and a neighbor loading that happens later shouldn't cause an earlier cache entry to be evicted
+        √ cache or image provider should queue work, and drop the work that's no longer needed
+            √ eg: when user quickly flips through full-size images, lots of work would be enqueued, but we may not need the work at the end
+                √ Priority: required, high, low
+        √ allow arrow keys to be used to navigate to the previous/next image
+            X use animation
+                X animation is too distracting
+        √ implement zooming
+        √ implement panning
+        √ optimize draw performance by caching full-size image texture
+        √ draw shadow behind image
+        √ 'size-to-fit' mode; stay in this mode until zooming manually
+        √ keyboard zooming (cmd+, cmd-)
+        √ mouse zooming (command-scroll)
+        √ implement:
+            - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)location inRect:(NSRect)visibleRect API_AVAILABLE(macos(10.8));
+        √ latch pan/zoom mode when -scrollWheel: starts, so we can't flip between scrolling and zooming
+    
+    √ MDCStudio: use LayerScrollView / MetalScrollLayer for ImageGridView
+    
+    √ MDCStudio: merge ImageGridLayer into ImageGridView, the same as we did for ImageView
     
     √ MDCStudio: create ImageSource that wraps ImageCache+ImageLibrary, and pass that around
     
