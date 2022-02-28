@@ -57,31 +57,6 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     // We expect our superlayer's size to be the full content size,
     // which LayerScrollView ensures
     const CGSize contentSize = [[self superlayer] bounds].size;
-//    NSLog(@"superlayerSize %@", NSStringFromSize([[self superlayer] bounds].size));
-//    NSLog(@"contentSize %@", NSStringFromSize(contentSize));
-//    const Mat<float,4,4> transform =
-//        _Translate(-1, -1, 0)                                   *   // 8. Normalized [0,2] -> Normalized [-1,1]
-//        _Scale(2, 2, 1)                                         *   // 7. Normalized [0,1] -> Normalized [0,2]
-//        _Scale(1/(frame.size.width), 1/(frame.size.height), 1)  *   // 6. Points [0,W/H] -> Normalized [0,1]
-//        _Translate(-frame.origin.x, -frame.origin.y, 0)         *   // 5. Translate
-//        _Scale(contentSize.width, contentSize.height, 1)        *   // 4. Normalized [0,1] -> Points [0,W/H]
-//        _Translate(.5, .5, 0)                                   *   // 3. Normalized [-.5,.5] -> Normalized [0,1]
-//        _Scale(1, -1, 1)                                        *   // 2. Flip Y
-//        _Translate(-.5, -.5, 0)                                 ;   // 1. Normalized [0,1] -> Normalized [-.5,.5]
-//                                                                    // 0. Start: Normalized [0,1] coordinates
-    
-    // GOOD when isFlipped=1
-//    const Mat<float,4,4> transform =
-//        _Translate(-1, 1, 1)                                *
-//        _Scale(2, -2, 1)                                    *
-//        _Scale(1/frame.size.width, 1/frame.size.height, 1)  *
-//        _Translate(-frame.origin.x, -frame.origin.y, 0)     *
-//        _Scale(contentSize.width, contentSize.height, 1)    ;
-    
-//    NSLog(@"isGeometryFlipped: %d %d %d", [self isGeometryFlipped], [[self superlayer] isGeometryFlipped], [[[self superlayer] superlayer] isGeometryFlipped]);
-//    
-//    NSLog(@"contentsAreFlipped: %d %d %d", [self contentsAreFlipped], [[self superlayer] contentsAreFlipped], [[[self superlayer] superlayer] contentsAreFlipped]);
-    
     const int flip = [self isGeometryFlipped] ? -1 : 1;
     const Mat<float,4,4> transform =
         _Translate(-1, -1*flip, 1)                          *
@@ -109,7 +84,7 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
 
 - (void)setTranslation:(CGPoint)t magnification:(CGFloat)m {
     _magnification = m;
-    #warning should we set ourself as needing display? or is that LayerScrollView's responsibility
+    [self setNeedsDisplay];
 }
 
 @end
