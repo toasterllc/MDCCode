@@ -31,7 +31,6 @@
 		55496F65278FCDD300BCA739 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55496F64278FCDD300BCA739 /* Metal.framework */; };
 		55A36AB827A35ABD00FD0181 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55A36AB727A35ABD00FD0181 /* IOKit.framework */; };
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
-		55C6C845278FFE60005ABD39 /* ImageGridLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C844278FFE60005ABD39 /* ImageGridLayer.mm */; };
 		55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C846279001CA005ABD39 /* ImageGridLayer.metal */; };
 		55D4AA9027B1D3100052EFEE /* Defringe.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55D4AA7C27B1D3100052EFEE /* Defringe.mm */; };
 		55D4AA9127B1D3100052EFEE /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55D4AA7D27B1D3100052EFEE /* LocalContrast.metal */; };
@@ -141,9 +140,7 @@
 		55A36A8E27A2951900FD0181 /* MDCDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
 		55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MDCDevicesManager.h; sourceTree = "<group>"; };
 		55A36AB727A35ABD00FD0181 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
-		55C6C841278FE35C005ABD39 /* ImageGridLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayer.h; sourceTree = "<group>"; };
 		55C6C842278FE5CB005ABD39 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
-		55C6C844278FFE60005ABD39 /* ImageGridLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridLayer.mm; sourceTree = "<group>"; };
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
 		55D4AA7B27B1D3100052EFEE /* ImagePipeline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImagePipeline.h; sourceTree = "<group>"; };
 		55D4AA7C27B1D3100052EFEE /* Defringe.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Defringe.mm; sourceTree = "<group>"; };
@@ -209,8 +206,6 @@
 			isa = PBXGroup;
 			children = (
 				551B22382790245000D62121 /* ImageGridLayerTypes.h */,
-				55C6C841278FE35C005ABD39 /* ImageGridLayer.h */,
-				55C6C844278FFE60005ABD39 /* ImageGridLayer.mm */,
 				55C6C846279001CA005ABD39 /* ImageGridLayer.metal */,
 				551328B727B45D7C00CD823B /* ImageGridView.h */,
 				551328B827B45D7C00CD823B /* ImageGridView.mm */,
@@ -556,7 +551,6 @@
 				5544AE3327B5F98C006AB473 /* MainView.mm in Sources */,
 				55D4AA9927B1D3100052EFEE /* EstimateIlluminantFFCC.mm in Sources */,
 				55D4AA9627B1D3100052EFEE /* DebayerLMMSE.metal in Sources */,
-				55C6C845278FFE60005ABD39 /* ImageGridLayer.mm in Sources */,
 				55D4AA9827B1D3100052EFEE /* ImagePipeline.metal in Sources */,
 				5544AE2927B5E595006AB473 /* Renderer.metal in Sources */,
 				55F8D01927BEF97200757165 /* ImageView.metal in Sources */,
