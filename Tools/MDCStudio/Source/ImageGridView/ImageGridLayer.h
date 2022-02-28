@@ -16,9 +16,6 @@ using ImageGridLayerImageIds = std::set<MDCStudio::ImageId>;
 - (size_t)columnCount;
 - (void)recomputeGrid;
 
-// -setResizingUnderway: is necessary to prevent artifacts when resizing
-- (void)setResizingUnderway:(bool)resizing;
-
 - (ImageGridLayerImageIds)imageIdsForRect:(CGRect)rect;
 - (CGRect)rectForImageAtIndex:(size_t)idx;
 

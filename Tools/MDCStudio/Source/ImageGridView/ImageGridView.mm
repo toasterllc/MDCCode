@@ -79,10 +79,6 @@ using namespace MDCStudio;
     return self;
 }
 
-- (void)setResizingUnderway:(bool)resizing {
-    [_imageGridLayer setResizingUnderway:resizing];
-}
-
 - (void)setDelegate:(id<ImageGridViewDelegate>)delegate {
     _delegate = delegate;
 }

@@ -57,8 +57,6 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     imageThumb = imageThumbArg;
     _imageSource = imageSource;
     
-    [self setPresentsWithTransaction:true];
-    
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
     [self setDevice:_device];
@@ -380,14 +378,13 @@ static void _InitCommon(ImageScrollView* self) {
 }
 
 - (void)viewWillStartLiveResize {
-    #warning TODO: can we find a better way to do this? what if the scroll view observes the window's live resize notifications, and we post that from MainView?
-    // Forward this message from MainView
+    // MainView sends this message explicitly when resizing using the divider; forward it to _scrollView
     [super viewWillStartLiveResize];
     [_scrollView viewWillStartLiveResize];
 }
 
 - (void)viewDidEndLiveResize {
-    // Forward this message from MainView
+    // MainView sends this message explicitly when resizing using the divider; forward it to _scrollView
     [super viewDidEndLiveResize];
     [_scrollView viewDidEndLiveResize];
 }
