@@ -8,28 +8,6 @@ using namespace MDCStudio;
 
 @implementation ImageGridDocumentView
 
-//- (void)setFrameSize:(NSSize)size {
-////    CGSize superSize = [[self superview] bounds].size;
-////    size.width = superSize.width;
-//    [imageGridLayer setContainerWidth:size.width];
-//    [imageGridLayer recomputeGrid];
-//    // Don't let our frame.height be smaller than our superview's height
-//    // This is so `selectionRectLayer` doesn't get clipped by the bottom of our view
-////    size.height = std::max(superSize.height, [imageGridLayer containerHeight]);
-//    [super setFrameSize:size];
-////    NSLog(@"setFrameSize: %@", NSStringFromSize(size));
-//}
-
-//- (void)viewWillStartLiveResize {
-//    [super viewWillStartLiveResize];
-//    [imageGridLayer setResizingUnderway:true];
-//}
-//
-//- (void)viewDidEndLiveResize {
-//    [super viewDidEndLiveResize];
-//    [imageGridLayer setResizingUnderway:false];
-//}
-
 // We need to be flipped so that NSEvent coordinates match the coordinates of the ImageGridLayer's grid
 - (BOOL)isFlipped {
     return true;
@@ -123,17 +101,17 @@ using namespace MDCStudio;
 
 - (void)setFrameSize:(NSSize)size {
     [super setFrameSize:size];
-    [_imageGridLayer setContainerWidth:size.width];
+    [self _updateDocumentHeight];
+}
+
+- (void)_updateDocumentHeight {
+    [_imageGridLayer setContainerWidth:[self bounds].size.width];
     [_imageGridLayer recomputeGrid];
     [_documentHeight setConstant:[_imageGridLayer containerHeight]];
 }
 
 - (void)_handleImageLibraryChanged {
-    #warning TODO: how do we update the document view's frame size?
-    // Update the frame because the library's image count likely changed, which affects the document view's height
-//    [_documentView setFrame:[_documentView frame]];
-//    _documentHeight
-    
+    [self _updateDocumentHeight];
     [_imageGridLayer setNeedsDisplay];
 }
 
