@@ -292,8 +292,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     .viewSize = {(float)viewSize.width, (float)viewSize.height},
                     .transform = [self transform],
                     .off = {
-                        .id         = (uint32_t)(offsetof(ImageThumb, ref.id)),
-                        .thumbData  = (uint32_t)(offsetof(ImageThumb, thumb)),
+                        .id         = (uint32_t)(offsetof(ImageLibrary::Record, ref.id)),
+                        .thumbData  = (uint32_t)(offsetof(ImageLibrary::Record, thumb)),
                     },
                     .thumb = {
                         .width  = ImageThumb::ThumbWidth,

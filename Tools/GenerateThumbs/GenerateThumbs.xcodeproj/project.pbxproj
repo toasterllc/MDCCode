@@ -343,10 +343,13 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				MTL_HEADER_SEARCH_PATHS = "/Users/dave/repos/MDC/Tools/CFAViewer/ /Users/dave/repos/MDC/Code/Lib";
+				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/../.. $PROJECT_DIR/../../Tools/Shared $PROJECT_DIR/../../Code/Lib";
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = /Users/dave/repos/MDC/Code/Lib;
+				USER_HEADER_SEARCH_PATHS = (
+					$PROJECT_DIR/../..,
+					$PROJECT_DIR/../../Code/Lib,
+				);
 			};
 			name = Debug;
 		};
@@ -396,16 +399,18 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				MTL_HEADER_SEARCH_PATHS = "/Users/dave/repos/MDC/Tools/CFAViewer/ /Users/dave/repos/MDC/Code/Lib";
+				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/../.. $PROJECT_DIR/../../Tools/Shared $PROJECT_DIR/../../Code/Lib";
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = /Users/dave/repos/MDC/Code/Lib;
+				USER_HEADER_SEARCH_PATHS = (
+					$PROJECT_DIR/../..,
+					$PROJECT_DIR/../../Code/Lib,
+				);
 			};
 			name = Release;
 		};
 		551B224B2791391400D62121 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				MTL_HEADER_SEARCH_PATHS = /Users/dave/repos/MDC/Tools/Shared/;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -413,7 +418,6 @@
 		551B224C2791391400D62121 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				MTL_HEADER_SEARCH_PATHS = /Users/dave/repos/MDC/Tools/Shared/;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
