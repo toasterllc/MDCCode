@@ -13,9 +13,6 @@ using ImageGridViewImageIds = std::set<MDCStudio::ImageId>;
 
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
 
-// -setResizingUnderway: is necessary to prevent artifacts when resizing
-- (void)setResizingUnderway:(bool)resizing;
-
 - (void)setDelegate:(id<ImageGridViewDelegate>)delegate;
 
 - (MDCStudio::ImageSourcePtr)imageSource;

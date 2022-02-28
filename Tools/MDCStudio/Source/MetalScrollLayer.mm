@@ -40,6 +40,7 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     [self setOpaque:true];
     [self setNeedsDisplayOnBoundsChange:true];
     [self setAllowsNextDrawableTimeout:false];
+    [self setPresentsWithTransaction:true];
     return self;
 }
 

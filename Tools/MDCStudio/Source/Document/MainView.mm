@@ -277,12 +277,9 @@ using ResizerViewHandler = void(^)(NSEvent* event);
 }
 
 - (void)_sourceListTrackResize:(NSEvent*)event {
-    ImageGridView* imageGridView = CastOrNil<ImageGridView>(_contentView);
     _dragging = true;
     [[self window] invalidateCursorRectsForView:self];
     [_contentView viewWillStartLiveResize];
-    #warning TODO: switch ImageGridView over to use viewWillStartLiveResize/viewDidEndLiveResize, or remove that stuff entirely if can switch presentsWithTransaction=1 all the time, like we did with ImageView
-    [imageGridView setResizingUnderway:true];
     
     const CGFloat offsetX =
         [_resizerView bounds].size.width/2 - [_resizerView convertPoint:[event locationInWindow] fromView:nil].x;
@@ -292,13 +289,13 @@ using ResizerViewHandler = void(^)(NSEvent* event);
         const CGFloat width = std::max(SourceListWidth::Min, desiredWidth);
         
         if (desiredWidth<SourceListWidth::HideThreshold && _sourceListVisible) {
-            NSLog(@"HIDE");
             [_sourceListWidth setConstant:0];
             _sourceListVisible = false;
+        
         } else if (desiredWidth>=SourceListWidth::HideThreshold && !_sourceListVisible) {
-            NSLog(@"SHOW");
             [_sourceListWidth setConstant:width];
             _sourceListVisible = true;
+        
         } else if (_sourceListVisible) {
             [_sourceListWidth setConstant:width];
         }
@@ -307,9 +304,8 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     });
     
     _dragging = false;
-    [[self window] invalidateCursorRectsForView:self];
     [_contentView viewDidEndLiveResize];
-    [imageGridView setResizingUnderway:false];
+    [[self window] invalidateCursorRectsForView:self];
 }
 
 - (void)resetCursorRects {

@@ -76,7 +76,7 @@ int main(int argc, const char* argv[]) {
         }
     }
     
-    ImageLibrary imgLib("/Users/dave/Desktop/ImgLib");
+    ImageLibrary imgLib("/Users/dave/Desktop/ImageLibrary");
     try {
         imgLib.read();
     } catch (const std::exception& e) {
