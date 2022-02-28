@@ -240,6 +240,7 @@ using ResizerViewHandler = void(^)(NSEvent* event);
     
     if (_contentView) {
         if ([_contentView respondsToSelector:@selector(initialFirstResponder)]) {
+            [[self window] setInitialFirstResponder:[_contentView initialFirstResponder]];
             [[self window] makeFirstResponder:[_contentView initialFirstResponder]];
         }
     }
