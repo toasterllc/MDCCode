@@ -10,8 +10,8 @@ using namespace MDCStudio;
 using namespace MDCTools;
 using namespace Toastbox;
 
-const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022:1:26/TestImages-5k";
-//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022:1:26/TestImages-40k";
+//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022:1:26/TestImages-5k";
+const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022:1:26/TestImages-40k";
 
 static bool _IsJPGFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".jpg";
@@ -65,11 +65,6 @@ int main(int argc, const char* argv[]) {
 //    DebugShowThumb(40000-1);
 //    return 0;
     
-    id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
-    id<MTLLibrary> lib = [dev newDefaultLibrary];
-    id<MTLCommandQueue> commandQueue = [dev newCommandQueue];
-    MTKTextureLoader* txtLoader = [[MTKTextureLoader alloc] initWithDevice:dev];
-    
     NSMutableArray* urls = [NSMutableArray new];
     for (const fs::path& p : fs::directory_iterator(ImagesDirPath)) {
         if (_IsJPGFile(p)) {
@@ -89,13 +84,20 @@ int main(int argc, const char* argv[]) {
     {
         constexpr size_t MaxBatchLen = 512;
         for (size_t i=0; i<[urls count]; i+=MaxBatchLen) @autoreleasepool {
-            Renderer renderer(dev, lib, commandQueue);
+            id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
+            MTKTextureLoader* txtLoader = [[MTKTextureLoader alloc] initWithDevice:dev];
+            id<MTLLibrary> lib = [dev newDefaultLibrary];
+            Renderer renderer(dev, lib, [dev newCommandQueue]);
             
             const size_t batchLen = std::min((size_t)([urls count]-i), MaxBatchLen);
             NSArray* batchURLs = [urls subarrayWithRange:{i, batchLen}];
             
             printf("Loading %ju textures...\n", (uintmax_t)batchLen);
             NSArray<id<MTLTexture>>* txts = [txtLoader newTexturesWithContentsOfURLs:batchURLs options:nil error:nil];
+//            NSMutableArray* txts = [NSMutableArray new];
+//            for (int i=0; i<MaxBatchLen; i++) {
+//                [txts addObject:@0];
+//            }
             
             const size_t beginOff = imgLib.recordCount();
             imgLib.reserve([txts count]);
@@ -132,6 +134,8 @@ int main(int argc, const char* argv[]) {
                 imageId++;
                 imageThumbIter++;
             }
+            
+//            sleep(2);
             
             renderer.commitAndWait();
         }
