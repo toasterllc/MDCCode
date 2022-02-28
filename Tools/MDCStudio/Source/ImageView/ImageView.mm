@@ -142,13 +142,6 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     }
 }
 
-- (CGSize)preferredFrameSize {
-    return {
-        (CGFloat)imageThumb.ref.imageWidth*2,
-        (CGFloat)imageThumb.ref.imageHeight*2
-    };
-}
-
 - (void)_handleImageLoaded:(ImagePtr)image {
     _image = image;
     [self setNeedsDisplay];
@@ -171,11 +164,11 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
     const bool fit = [(LayerScrollView*)[self enclosingScrollView] magnifyToFit];
-    if (fit) {
-        return CGRectInset({point, {0,0}}, -500, -500);
-    } else {
-        return [self bounds];
-    }
+    return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
+}
+
+- (BOOL)isFlipped {
+    return true;
 }
 
 @end
@@ -239,52 +232,21 @@ constexpr CGFloat ShadowCenterOffset = 45;
     CALayer* _shadowLayer;
 }
 
+static void _InitCommon(ImageScrollView* self) {
+    [self setBackgroundColor:[NSColor colorWithSRGBRed:WindowBackgroundColor.srgb[0]
+        green:WindowBackgroundColor.srgb[1] blue:WindowBackgroundColor.srgb[2] alpha:1]];
+}
+
 - (instancetype)initWithCoder:(NSCoder*)coder {
     if (!(self = [super initWithCoder:coder])) return nil;
-    [self initCommon];
+    _InitCommon(self);
     return self;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
-    [self initCommon];
+    _InitCommon(self);
     return self;
-}
-
-- (void)initCommon {
-//    constexpr uint32_t BackgroundTileSize = 256;
-//    constexpr uint32_t BackgroundTileLen = BackgroundTileSize*BackgroundTileSize*3;
-//    
-//    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-//    MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
-//    auto backgroundTxt = renderer.textureCreate(MTLPixelFormatRGBA16Float, BackgroundTileSize, BackgroundTileSize);
-//    id<MTLBuffer> noiseDataBuf = [device newBufferWithLength:BackgroundTileLen options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeManaged];
-//    uint8_t* noiseData = (uint8_t*)[noiseDataBuf contents];
-//    for (size_t i=0; i<BackgroundTileLen; i++) {
-//        noiseData[i] = rand() & 0xFF;
-//    }
-//    [noiseDataBuf didModifyRange:NSMakeRange(0, BackgroundTileLen)];
-//    
-//    renderer.clear(backgroundTxt, {0.0130468225, 0.0137825618, 0.015127142, 1});
-//    renderer.render(backgroundTxt, Renderer::BlendType::Over,
-//        renderer.FragmentShader("RenderNoise",
-//            // Buffer args
-//            BackgroundTileSize,
-//            noiseDataBuf
-//        )
-//    );
-//    renderer.commitAndWait();
-//    
-//    id image = renderer.imageCreate(backgroundTxt);
-//    assert(image);
-//    [self setBackgroundColor:[NSColor colorWithPatternImage:[[NSImage alloc] initWithCGImage:(__bridge CGImageRef)image size:{BackgroundTileSize/2, BackgroundTileSize/2}]]];
-//
-//    
-//    
-//    
-    
-    [self setBackgroundColor:[NSColor colorWithSRGBRed:WindowBackgroundColor.srgb[0]
-        green:WindowBackgroundColor.srgb[1] blue:WindowBackgroundColor.srgb[2] alpha:1]];
 }
 
 - (void)tile {
@@ -345,7 +307,9 @@ constexpr CGFloat ShadowCenterOffset = 45;
 
 
 @implementation ImageView {
-    IBOutlet ImageScrollView* _imageScrollView;
+    IBOutlet ImageScrollView* _scrollView;
+    IBOutlet NSLayoutConstraint* _docWidth;
+    IBOutlet NSLayoutConstraint* _docHeight;
     ImageLayer* _imageLayer;
     __weak id<ImageViewDelegate> _delegate;
 }
@@ -362,21 +326,35 @@ constexpr CGFloat ShadowCenterOffset = 45;
         bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
         assert(br);
         
-        [self addSubview:_imageScrollView];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_imageScrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_imageScrollView)]];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_imageScrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_imageScrollView)]];
+        [self addSubview:_scrollView];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_scrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_scrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
     }
     
 //    [self setWantsLayer:true];
 //    [[self layer] setBackgroundColor:[[NSColor redColor] CGColor]];
     
     _imageLayer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
-    [_imageScrollView setScrollLayer:_imageLayer];
+    [_scrollView setScrollLayer:_imageLayer];
+    
+    // Set document view's size
+    {
+        [_docWidth setConstant:imageThumb.ref.imageWidth*2];
+        [_docHeight setConstant:imageThumb.ref.imageHeight*2];
+//        NSView* doc = [_scrollView documentView];
+//        [doc setTranslatesAutoresizingMaskIntoConstraints:false];
+//        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeWidth
+//            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+//            constant:imageThumb.ref.imageWidth*2]];
+//        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeHeight
+//            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+//            constant:imageThumb.ref.imageHeight*2]];
+    }
     
 //    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer* timer) {
 //        NSLog(@"[self bounds]: %@", NSStringFromRect([self bounds]));
-//        NSLog(@"[_imageScrollView bounds]: %@", NSStringFromRect([_imageScrollView bounds]));
-//        NSLog(@"[_imageScrollView contentView]: %@", NSStringFromRect([[_imageScrollView contentView] bounds]));
+//        NSLog(@"[_scrollView bounds]: %@", NSStringFromRect([_scrollView bounds]));
+//        NSLog(@"[_scrollView contentView]: %@", NSStringFromRect([[_scrollView contentView] bounds]));
 //        
 //    }];
     
@@ -405,17 +383,17 @@ constexpr CGFloat ShadowCenterOffset = 45;
     #warning TODO: can we find a better way to do this? what if the scroll view observes the window's live resize notifications, and we post that from MainView?
     // Forward this message from MainView
     [super viewWillStartLiveResize];
-    [_imageScrollView viewWillStartLiveResize];
+    [_scrollView viewWillStartLiveResize];
 }
 
 - (void)viewDidEndLiveResize {
     // Forward this message from MainView
     [super viewDidEndLiveResize];
-    [_imageScrollView viewDidEndLiveResize];
+    [_scrollView viewDidEndLiveResize];
 }
 
 - (NSResponder*)initialFirstResponder {
-    return [_imageScrollView documentView];
+    return [_scrollView documentView];
 }
 
 @end

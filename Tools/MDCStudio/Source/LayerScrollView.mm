@@ -12,30 +12,50 @@
     bool _magnifyToFit;
     std::optional<CGFloat> _modelMagnification;
     struct {
-        NSTimer* magnifyToFitTimer;
-        bool zoom;
+        NSTimer* magnifyToFitTimer = nil;
+        bool magnify = false;
+        bool pan = false;
     } _scrollWheel;
     id _documentViewFrameChangedObserver;
 }
 
-static void _initCommon(LayerScrollView* self) {
+static void _InitCommon(LayerScrollView* self) {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_liveMagnifyEnded)
         name:NSScrollViewDidEndLiveMagnifyNotification object:nil];
 }
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
     if (!(self = [super initWithCoder:coder])) return nil;
-    _initCommon(self);
+    _InitCommon(self);
     return self;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
-    _initCommon(self);
+    _InitCommon(self);
     return self;
 }
 
 // MARK: - Methods
+
+static bool _ShouldSnapToFitMagnification(CGFloat mag, CGFloat fitMag) {
+    constexpr CGFloat Thresh = 0.15;
+    return std::abs(1-(mag/fitMag)) < Thresh;
+}
+
+static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFloat max, int direction) {
+    // Thresh: if `mag` is within this threshold of the next magnification, we'll skip to the next-next magnification
+    constexpr CGFloat Thresh = 0.25;
+    if (direction > 0) {
+        mag = std::pow(2, std::floor((std::ceil(std::log2(mag)/Thresh)*Thresh)+1));
+    } else {
+        mag = std::pow(2, std::ceil((std::floor(std::log2(mag)/Thresh)*Thresh)-1));
+    }
+    
+    mag = _ShouldSnapToFitMagnification(mag, fitMag) ? fitMag : mag;
+    mag = std::clamp(mag, min, max);
+    return mag;
+}
 
 - (void)setScrollLayer:(CALayer<LayerScrollViewLayer>*)layer {
     [_layer removeFromSuperlayer];
@@ -64,26 +84,9 @@ static void _initCommon(LayerScrollView* self) {
     return _magnifyToFit;
 }
 
-static bool _ShouldSnapToFitMagnification(CGFloat mag, CGFloat fitMag) {
-    constexpr CGFloat Thresh = 0.15;
-    return std::abs(1-(mag/fitMag)) < Thresh;
-}
-
-static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
-    // Thresh: if `mag` is within this threshold of the next magnification, we'll skip to the next-next magnification
-    constexpr CGFloat Thresh = 0.25;
-    if (direction > 0) {
-        mag = std::pow(2, std::floor((std::ceil(std::log2(mag)/Thresh)*Thresh)+1));
-    } else {
-        mag = std::pow(2, std::ceil((std::floor(std::log2(mag)/Thresh)*Thresh)-1));
-    }
-    
-    if (_ShouldSnapToFitMagnification(mag, fitMag)) return fitMag;
-    return mag;
-}
-
 - (void)setMagnifyToFit:(bool)magnifyToFit animate:(bool)animate {
     if (![self allowsMagnification]) return;
+    [self _scrollWheelReset]; // Prevent further momentum scrolls from affecting us (until the start of the next scroll)
     
     _magnifyToFit = magnifyToFit;
     // Setting the alpha because -setHidden: has no effect
@@ -106,29 +109,37 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 
 - (void)magnifySnapToFit {
     if (![self allowsMagnification]) return;
+    [self _scrollWheelReset]; // Prevent further momentum scrolls from affecting us (until the start of the next scroll)
+    
     const CGFloat mag = [self _modelMagnification];
     const CGFloat fitMag = [self _fitMagnification];
     [self setMagnifyToFit:_ShouldSnapToFitMagnification(mag, fitMag) animate:true];
 }
 
-- (IBAction)zoomIn:(id)sender {
+- (IBAction)magnifyIncrease:(id)sender {
     if (![self allowsMagnification]) return;
+    [self _scrollWheelReset]; // Prevent further momentum scrolls from affecting us (until the start of the next scroll)
+    
     const CGFloat fitMag = [self _fitMagnification];
     const CGFloat curMag = [self _modelMagnification];
-    const CGFloat nextMag = std::clamp(_NextMagnification(curMag, fitMag, 1), [self minMagnification], [self maxMagnification]);
+    const CGFloat nextMag = _NextMagnification(curMag, fitMag, [self minMagnification], [self maxMagnification], 1);
     [self _setAnimatedMagnification:nextMag snapToFit:true];
 }
 
-- (IBAction)zoomOut:(id)sender {
+- (IBAction)magnifyDecrease:(id)sender {
     if (![self allowsMagnification]) return;
+    [self _scrollWheelReset]; // Prevent further momentum scrolls from affecting us (until the start of the next scroll)
+    
     const CGFloat fitMag = [self _fitMagnification];
     const CGFloat curMag = [self _modelMagnification];
-    const CGFloat nextMag = std::clamp(_NextMagnification(curMag, fitMag, -1), [self minMagnification], [self maxMagnification]);
+    const CGFloat nextMag = _NextMagnification(curMag, fitMag, [self minMagnification], [self maxMagnification], -1);
     [self _setAnimatedMagnification:nextMag snapToFit:true];
 }
 
-- (IBAction)zoomToFit:(id)sender {
+- (IBAction)magnifyToFit:(id)sender {
     if (![self allowsMagnification]) return;
+    [self _scrollWheelReset]; // Prevent further momentum scrolls from affecting us (until the start of the next scroll)
+    
     [self setMagnifyToFit:true animate:true];
 }
 
@@ -139,6 +150,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
     _modelMagnification = mag;
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext*) {
         [[self animator] setMagnification:mag];
+    
     } completionHandler:^{
         if (!self->_modelMagnification || self->_modelMagnification!=mag) return;
         self->_modelMagnification = std::nullopt;
@@ -234,23 +246,36 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, int direction) {
 
 // MARK: - NSScrollView Overrides
 
+- (void)_scrollWheelReset {
+    [_scrollWheel.magnifyToFitTimer invalidate];
+    _scrollWheel = {};
+}
+
 // Disable NSScrollView legacy 'responsive scrolling' by merely overriding -scrollWheel
 // We don't want this behavior because it causes strange flashes and artifacts when
-// scroll quickly, especially when scrolling near the margin
+// scrolling quickly, especially when scrolling near the margin
 - (void)scrollWheel:(NSEvent*)event {
     const NSEventPhase phase = [event phase];
-    if ((phase & NSEventPhaseBegan) && [self allowsMagnification]) {
-        _scrollWheel.zoom = [event modifierFlags] & NSEventModifierFlagCommand;
+    
+    if (phase & NSEventPhaseBegan) {
+        [self _scrollWheelReset];
+        
+        if (([event modifierFlags]&NSEventModifierFlagCommand) && ([self allowsMagnification])) {
+            _scrollWheel.magnify = true;
+        } else {
+            _scrollWheel.pan = true;
+        }
     }
     
-    if (_scrollWheel.zoom) {
-        [self _handleScrollWheelZoom:event];
-    } else {
+    if (_scrollWheel.magnify) {
+        [self _scrollWheelMagnify:event];
+    
+    } else if (_scrollWheel.pan) {
         [super scrollWheel:event];
     }
 }
 
-- (void)_handleScrollWheelZoom:(NSEvent*)event {
+- (void)_scrollWheelMagnify:(NSEvent*)event {
     [_scrollWheel.magnifyToFitTimer invalidate];
     _scrollWheel.magnifyToFitTimer = nil;
     

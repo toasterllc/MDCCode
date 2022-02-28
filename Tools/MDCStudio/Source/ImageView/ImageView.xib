@@ -7,7 +7,9 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="ImageView">
             <connections>
-                <outlet property="_imageScrollView" destination="Dxu-gZ-SCx" id="2Hc-YC-scS"/>
+                <outlet property="_docHeight" destination="c4P-xh-Bca" id="zIp-ss-zM7"/>
+                <outlet property="_docWidth" destination="Wz5-gz-7vm" id="aPv-Wr-VLb"/>
+                <outlet property="_scrollView" destination="Dxu-gZ-SCx" id="eLS-je-zVN"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
