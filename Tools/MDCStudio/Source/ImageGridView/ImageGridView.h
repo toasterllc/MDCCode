@@ -18,6 +18,6 @@ using ImageGridViewImageIds = std::set<MDCStudio::ImageId>;
 - (MDCStudio::ImageSourcePtr)imageSource;
 - (const ImageGridViewImageIds&)selectedImageIds;
 
-- (NSResponder*)initialFirstResponder;
+- (NSView*)initialFirstResponder;
 
 @end

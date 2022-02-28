@@ -389,7 +389,7 @@ static void _InitCommon(ImageScrollView* self) {
     [_scrollView viewDidEndLiveResize];
 }
 
-- (NSResponder*)initialFirstResponder {
+- (NSView*)initialFirstResponder {
     return [_scrollView documentView];
 }
 
