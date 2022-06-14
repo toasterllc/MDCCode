@@ -1,0 +1,12 @@
+Time tracking options
+
+When reconnecting battery, we:
+
+- Lose track of time and don't realize it
+    
+
+- Lose track of time but detect it
+    
+
+- Don't lose track of time
+    
