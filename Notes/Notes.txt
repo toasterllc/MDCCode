@@ -2,6 +2,10 @@
     
     - Replace TPS63805 power supply with TPS62802, outputting 2.8V
     
+    - Buy more TPS62802 if needed
+    
+    - Add bypass caps to all new components
+    
     - Add TPS2116 power mux to switch between USB power and battery power
     
     - Add reverse polarity protection in case the battery is inserted backwards:
