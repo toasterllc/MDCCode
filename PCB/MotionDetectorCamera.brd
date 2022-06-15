@@ -7594,7 +7594,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="15.019021875" y="4.62788125"/>
 </polygon>
 </signal>
-<signal name="VDD_SD_EN">
+<signal name="VDD_B_SD_EN">
 <contactref element="U8" pad="3"/>
 <contactref element="U12" pad="12"/>
 <via x="15.939840625" y="15.6565625" extent="1-16" drill="0.254"/>
@@ -7615,7 +7615,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-2.6705125" y1="12.0685125" x2="-2.6705125" y2="14.466728125" width="0.127" layer="1"/>
 <wire x1="-2.6705125" y1="14.466728125" x2="-2.670509375" y2="14.46673125" width="0.127" layer="1"/>
 </signal>
-<signal name="VDD_2V8_IMG_EN">
+<signal name="VDD_B_2V8_IMG_EN">
 <contactref element="U12" pad="20"/>
 <contactref element="U7" pad="3"/>
 <wire x1="-1.6662375" y1="8.9814375" x2="-5.3975" y2="12.7127" width="0.127" layer="1"/>
@@ -7636,7 +7636,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="10.149840625" y1="14.2367" x2="9.8196375" y2="13.906496875" width="0.127" layer="1"/>
 <wire x1="9.8196375" y1="13.906496875" x2="9.8196375" y2="10.04061875" width="0.127" layer="1"/>
 </signal>
-<signal name="VDD_1V8_IMG_EN">
+<signal name="VDD_B_1V8_IMG_EN">
 <contactref element="U6" pad="3"/>
 <contactref element="U12" pad="2"/>
 <wire x1="-5.737859375" y1="12.523659375" x2="-5.737859375" y2="37.9308875" width="0.127" layer="1"/>
