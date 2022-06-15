@@ -4587,6 +4587,8 @@ Charger</text>
 <attribute name="PN" value="RMCF0402JT100K"/>
 </part>
 <part name="J13" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
+<part name="J14" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
+<part name="J15" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
 </parts>
 <sheets>
 <sheet>
@@ -4643,17 +4645,17 @@ polarity protection</text>
 <text x="180.594" y="-4.826" size="1.016" layer="95" align="top-left">STM32's VDDUSB is supposed to rise
 after its VDD (VDD_1V8_STM)</text>
 <wire x1="189.992" y1="-4.318" x2="195.326" y2="1.778" width="0.1524" layer="95"/>
-<text x="409.956" y="394.462" size="1.016" layer="95" align="top-left">NOR gate ensures that VDD_B is
+<text x="521.716" y="287.782" size="1.016" layer="95" align="top-left">NOR gate ensures that VDD_B is
 unconditionally powered in USB
 mode</text>
 <text x="172.974" y="412.496" size="1.016" layer="95" align="top-left">Pulldown ensures that VDD_USB can
 be safely used as a binary signal</text>
-<wire x1="383.54" y1="411.48" x2="383.54" y2="363.22" width="0.1524" layer="95"/>
-<wire x1="383.54" y1="363.22" x2="431.8" y2="363.22" width="0.1524" layer="95"/>
-<wire x1="431.8" y1="363.22" x2="431.8" y2="411.48" width="0.1524" layer="95"/>
-<wire x1="431.8" y1="411.48" x2="383.54" y2="411.48" width="0.1524" layer="95"/>
-<text x="383.794" y="361.696" size="2.54" layer="95" align="top-left">VDD_B Control</text>
-<text x="405.892" y="382.524" size="1.016" layer="95" align="top-left">Limits drive strength to dampen
+<wire x1="487.68" y1="304.8" x2="487.68" y2="256.54" width="0.1524" layer="95"/>
+<wire x1="487.68" y1="256.54" x2="543.56" y2="256.54" width="0.1524" layer="95"/>
+<wire x1="543.56" y1="256.54" x2="543.56" y2="304.8" width="0.1524" layer="95"/>
+<wire x1="543.56" y1="304.8" x2="487.68" y2="304.8" width="0.1524" layer="95"/>
+<text x="495.554" y="255.016" size="2.54" layer="95" align="top-left">VDD_B Control</text>
+<text x="517.652" y="275.844" size="1.016" layer="95" align="top-left">Limits drive strength to dampen
 ringing on the PFET's gate</text>
 <text x="350.774" y="413.258" size="0.508" layer="95" align="top-left">Diode requirements:
 
@@ -4664,12 +4666,18 @@ ringing on the PFET's gate</text>
 - Ir (reverse leakage) &lt; 1µA
    (to minimize leakage when in battery-mode,
    since this leakage will be constant)</text>
-<text x="397.002" y="215.138" size="1.016" layer="95" align="top-left">From Linear Tech Application Note 171 </text>
+<text x="397.002" y="215.138" size="1.524" layer="95" align="top-left">From Linear Tech Application Note 171 </text>
 <wire x1="393.7" y1="261.62" x2="393.7" y2="220.98" width="0.1524" layer="95"/>
 <wire x1="393.7" y1="220.98" x2="447.04" y2="220.98" width="0.1524" layer="95"/>
 <wire x1="447.04" y1="220.98" x2="447.04" y2="261.62" width="0.1524" layer="95"/>
 <wire x1="447.04" y1="261.62" x2="393.7" y2="261.62" width="0.1524" layer="95"/>
 <text x="396.494" y="219.456" size="2.54" layer="95" align="top-left">Battery reverse polarity protection</text>
+<text x="366.776" y="282.194" size="1.016" layer="95" align="top-left">Resistor sets battery
+charge current:
+
+I = 1000 / R
+I = 1000 / 2.7k
+I = 370 mA</text>
 </plain>
 <instances>
 <instance part="C6" gate="G$1" x="167.64" y="309.88" smashed="yes">
@@ -4909,19 +4917,19 @@ ringing on the PFET's gate</text>
 <attribute name="PN" x="215.9" y="383.54" size="1.778" layer="96" display="off"/>
 <attribute name="MFG" x="215.9" y="383.54" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="Q10" gate="G$1" x="408.94" y="368.3" smashed="yes" rot="MR0">
-<attribute name="NAME" x="407.67" y="371.602" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
-<attribute name="PN" x="408.94" y="368.3" size="1.778" layer="96" rot="MR0" display="off"/>
+<instance part="Q10" gate="G$1" x="520.7" y="261.62" smashed="yes" rot="MR0">
+<attribute name="NAME" x="519.43" y="264.922" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<attribute name="PN" x="487.68" y="474.98" size="1.778" layer="96" rot="MR0" display="off"/>
 </instance>
 <instance part="J11" gate="G$1" x="447.04" y="421.64" smashed="yes">
 <attribute name="NAME" x="445.77" y="424.18" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="J12" gate="G$1" x="447.04" y="373.38" smashed="yes">
-<attribute name="NAME" x="445.77" y="375.92" size="1.778" layer="95" align="top-left"/>
+<instance part="J12" gate="G$1" x="558.8" y="266.7" smashed="yes">
+<attribute name="NAME" x="557.53" y="269.24" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="U28" gate="G$1" x="398.78" y="401.32" smashed="yes" rot="MR270">
-<attribute name="NAME" x="398.78" y="391.16" size="1.778" layer="95" rot="MR0"/>
-<attribute name="PN" x="398.78" y="401.32" size="1.778" layer="96" rot="MR270" display="off"/>
+<instance part="U28" gate="G$1" x="510.54" y="294.64" smashed="yes" rot="MR270">
+<attribute name="NAME" x="510.54" y="284.48" size="1.778" layer="95" rot="MR0"/>
+<attribute name="PN" x="477.52" y="508" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
 <instance part="C91" gate="G$1" x="271.78" y="414.02" smashed="yes">
 <attribute name="NAME" x="274.574" y="413.639" size="1.778" layer="95"/>
@@ -4955,11 +4963,11 @@ ringing on the PFET's gate</text>
 <attribute name="VALUE" x="171.704" y="-0.127" size="1.778" layer="96" align="bottom-right"/>
 <attribute name="MFG" x="157.48" y="7.62" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="R11" gate="G$1" x="403.86" y="381" smashed="yes" rot="R270">
-<attribute name="NAME" x="401.828" y="381.508" size="1.778" layer="95" align="bottom-right"/>
-<attribute name="VALUE" x="401.828" y="378.968" size="1.778" layer="96" align="bottom-right"/>
-<attribute name="MFG" x="403.86" y="381" size="1.778" layer="96" rot="R270" display="off"/>
-<attribute name="PN" x="403.86" y="381" size="1.778" layer="96" rot="R270" display="off"/>
+<instance part="R11" gate="G$1" x="515.62" y="274.32" smashed="yes" rot="R270">
+<attribute name="NAME" x="513.588" y="274.828" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="513.588" y="272.288" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="482.6" y="487.68" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="482.6" y="487.68" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="J1" gate="G$1" x="238.76" y="317.5" smashed="yes">
 <attribute name="NAME" x="237.49" y="320.04" size="1.778" layer="95" align="top-left"/>
@@ -4976,9 +4984,9 @@ ringing on the PFET's gate</text>
 <attribute name="MFG" x="314.96" y="403.86" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="314.96" y="403.86" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="U2" gate="G$1" x="487.68" y="330.2" smashed="yes">
-<attribute name="PN" x="487.68" y="314.96" size="1.778" layer="95"/>
-<attribute name="NAME" x="487.68" y="330.962" size="1.778" layer="95"/>
+<instance part="U2" gate="G$1" x="505.46" y="330.2" smashed="yes">
+<attribute name="PN" x="505.46" y="314.96" size="1.778" layer="95"/>
+<attribute name="NAME" x="505.46" y="330.962" size="1.778" layer="95"/>
 </instance>
 <instance part="U11" gate="G$1" x="449.58" y="330.2" smashed="yes">
 <attribute name="NAME" x="449.655" y="331.0919" size="1.778" layer="95" ratio="10" rot="SR0"/>
@@ -4988,13 +4996,13 @@ ringing on the PFET's gate</text>
 <attribute name="NAME" x="294.715" y="206.6319" size="1.778" layer="95" ratio="10" rot="SR0"/>
 <attribute name="PN" x="294.715" y="175.1359" size="1.778" layer="95" ratio="10" rot="SR0"/>
 </instance>
-<instance part="U16" gate="G$1" x="398.78" y="287.02" smashed="yes">
-<attribute name="NAME" x="398.855" y="287.9119" size="1.778" layer="95" ratio="10" rot="SR0"/>
-<attribute name="PN" x="398.855" y="266.5759" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<instance part="U16" gate="G$1" x="398.78" y="292.1" smashed="yes">
+<attribute name="NAME" x="398.855" y="292.9919" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN" x="398.855" y="271.6559" size="1.778" layer="95" ratio="10" rot="SR0"/>
 </instance>
-<instance part="R2" gate="G$1" x="383.54" y="274.32" smashed="yes" rot="R90">
-<attribute name="NAME" x="381.508" y="274.32" size="1.778" layer="95" align="top-right"/>
-<attribute name="VALUE" x="381.508" y="271.78" size="1.778" layer="96" align="top-right"/>
+<instance part="R2" gate="G$1" x="383.54" y="279.4" smashed="yes" rot="R90">
+<attribute name="NAME" x="381.508" y="279.4" size="1.778" layer="95" align="top-right"/>
+<attribute name="VALUE" x="381.508" y="276.86" size="1.778" layer="96" align="top-right"/>
 </instance>
 <instance part="Q2" gate="G$1" x="436.88" y="241.3" smashed="yes" rot="R90">
 <attribute name="NAME" x="435.864" y="250.444" size="1.778" layer="95" align="bottom-right"/>
@@ -5045,6 +5053,12 @@ ringing on the PFET's gate</text>
 </instance>
 <instance part="J13" gate="G$1" x="363.22" y="332.74" smashed="yes">
 <attribute name="NAME" x="361.95" y="335.28" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="J14" gate="G$1" x="363.22" y="294.64" smashed="yes">
+<attribute name="NAME" x="361.95" y="297.18" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="J15" gate="G$1" x="558.8" y="332.74" smashed="yes">
+<attribute name="NAME" x="557.53" y="335.28" size="1.778" layer="95" align="top-left"/>
 </instance>
 </instances>
 <busses>
@@ -5097,8 +5111,8 @@ ringing on the PFET's gate</text>
 </segment>
 <segment>
 <pinref part="J12" gate="G$1" pin="2"/>
-<wire x1="449.58" y1="368.3" x2="452.12" y2="368.3" width="0.1524" layer="91"/>
-<label x="452.12" y="368.3" size="1.778" layer="95"/>
+<wire x1="561.34" y1="261.62" x2="563.88" y2="261.62" width="0.1524" layer="91"/>
+<label x="563.88" y="261.62" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_1V8" class="0">
@@ -5265,8 +5279,8 @@ ringing on the PFET's gate</text>
 </segment>
 <segment>
 <pinref part="U28" gate="G$1" pin="GND"/>
-<wire x1="411.48" y1="398.78" x2="414.02" y2="398.78" width="0.1524" layer="91"/>
-<label x="414.02" y="398.78" size="1.778" layer="95"/>
+<wire x1="523.24" y1="292.1" x2="525.78" y2="292.1" width="0.1524" layer="91"/>
+<label x="525.78" y="292.1" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C91" gate="G$1" pin="2"/>
@@ -5325,8 +5339,8 @@ ringing on the PFET's gate</text>
 </segment>
 <segment>
 <pinref part="U2" gate="G$1" pin="GND"/>
-<wire x1="485.14" y1="320.04" x2="482.6" y2="320.04" width="0.1524" layer="91"/>
-<label x="482.6" y="320.04" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="502.92" y1="320.04" x2="500.38" y2="320.04" width="0.1524" layer="91"/>
+<label x="500.38" y="320.04" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="U11" gate="G$1" pin="GND"/>
@@ -5340,18 +5354,26 @@ ringing on the PFET's gate</text>
 </segment>
 <segment>
 <pinref part="U16" gate="G$1" pin="GND"/>
-<wire x1="396.24" y1="274.32" x2="393.7" y2="274.32" width="0.1524" layer="91"/>
-<label x="393.7" y="274.32" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="396.24" y1="279.4" x2="393.7" y2="279.4" width="0.1524" layer="91"/>
+<label x="393.7" y="279.4" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="R2" gate="G$1" pin="1"/>
-<wire x1="383.54" y1="269.24" x2="383.54" y2="266.7" width="0.1524" layer="91"/>
-<label x="383.54" y="266.7" size="1.778" layer="95"/>
+<wire x1="383.54" y1="274.32" x2="383.54" y2="271.78" width="0.1524" layer="91"/>
+<label x="383.54" y="271.78" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R3" gate="G$1" pin="2"/>
 <wire x1="436.88" y1="226.06" x2="436.88" y2="223.52" width="0.1524" layer="91"/>
 <label x="436.88" y="223.52" size="1.778" layer="95" rot="MR0"/>
+</segment>
+<segment>
+<pinref part="J14" gate="G$1" pin="1"/>
+<wire x1="363.22" y1="289.56" x2="360.68" y2="289.56" width="0.1524" layer="91"/>
+<pinref part="J14" gate="G$1" pin="2"/>
+<wire x1="365.76" y1="289.56" x2="363.22" y2="289.56" width="0.1524" layer="91"/>
+<junction x="363.22" y="289.56"/>
+<label x="360.68" y="289.56" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -5501,8 +5523,8 @@ ringing on the PFET's gate</text>
 <label x="170.18" y="441.96" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="401.32" y1="403.86" x2="401.32" y2="406.4" width="0.1524" layer="91"/>
-<label x="401.32" y="406.4" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="513.08" y1="297.18" x2="513.08" y2="299.72" width="0.1524" layer="91"/>
+<label x="513.08" y="299.72" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U28" gate="G$1" pin="IN1"/>
 </segment>
 <segment>
@@ -5512,8 +5534,8 @@ ringing on the PFET's gate</text>
 <junction x="447.04" y="327.66"/>
 <wire x1="447.04" y1="327.66" x2="378.46" y2="327.66" width="0.1524" layer="91"/>
 <pinref part="U16" gate="G$1" pin="VDD"/>
-<wire x1="396.24" y1="284.48" x2="378.46" y2="284.48" width="0.1524" layer="91"/>
-<wire x1="378.46" y1="284.48" x2="378.46" y2="317.5" width="0.1524" layer="91"/>
+<wire x1="396.24" y1="289.56" x2="378.46" y2="289.56" width="0.1524" layer="91"/>
+<wire x1="378.46" y1="289.56" x2="378.46" y2="317.5" width="0.1524" layer="91"/>
 <pinref part="R5" gate="G$1" pin="1"/>
 <wire x1="378.46" y1="317.5" x2="378.46" y2="327.66" width="0.1524" layer="91"/>
 <wire x1="386.08" y1="317.5" x2="378.46" y2="317.5" width="0.1524" layer="91"/>
@@ -5597,7 +5619,7 @@ ringing on the PFET's gate</text>
 <junction x="228.6" y="93.98"/>
 </segment>
 </net>
-<net name="VDD_A" class="0">
+<net name="VDD_A_3V3" class="0">
 <segment>
 <pinref part="J11" gate="G$1" pin="2"/>
 <wire x1="449.58" y1="416.56" x2="452.12" y2="416.56" width="0.1524" layer="91"/>
@@ -5605,8 +5627,13 @@ ringing on the PFET's gate</text>
 </segment>
 <segment>
 <pinref part="U28" gate="G$1" pin="VDD"/>
-<wire x1="396.24" y1="398.78" x2="393.7" y2="398.78" width="0.1524" layer="91"/>
-<label x="393.7" y="398.78" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="508" y1="292.1" x2="505.46" y2="292.1" width="0.1524" layer="91"/>
+<label x="505.46" y="292.1" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="J15" gate="G$1" pin="2"/>
+<wire x1="561.34" y1="327.66" x2="563.88" y2="327.66" width="0.1524" layer="91"/>
+<label x="563.88" y="327.66" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_3V3_STM" class="0">
@@ -5661,13 +5688,13 @@ ringing on the PFET's gate</text>
 <wire x1="403.86" y1="256.54" x2="411.48" y2="256.54" width="0.1524" layer="91"/>
 <junction x="411.48" y="256.54"/>
 <pinref part="U16" gate="G$1" pin="VBAT"/>
-<wire x1="421.64" y1="284.48" x2="436.88" y2="284.48" width="0.1524" layer="91"/>
-<wire x1="436.88" y1="284.48" x2="436.88" y2="256.54" width="0.1524" layer="91"/>
+<wire x1="421.64" y1="289.56" x2="436.88" y2="289.56" width="0.1524" layer="91"/>
+<wire x1="436.88" y1="289.56" x2="436.88" y2="256.54" width="0.1524" layer="91"/>
 <junction x="436.88" y="256.54"/>
-<wire x1="436.88" y1="284.48" x2="439.42" y2="284.48" width="0.1524" layer="91"/>
-<junction x="436.88" y="284.48"/>
-<label x="439.42" y="284.48" size="1.778" layer="95"/>
-<wire x1="436.88" y1="284.48" x2="436.88" y2="312.42" width="0.1524" layer="91"/>
+<wire x1="436.88" y1="289.56" x2="441.96" y2="289.56" width="0.1524" layer="91"/>
+<junction x="436.88" y="289.56"/>
+<label x="441.96" y="289.56" size="1.778" layer="95"/>
+<wire x1="436.88" y1="289.56" x2="436.88" y2="312.42" width="0.1524" layer="91"/>
 <pinref part="U11" gate="G$1" pin="VIN2"/>
 <wire x1="436.88" y1="312.42" x2="447.04" y2="312.42" width="0.1524" layer="91"/>
 </segment>
@@ -5696,21 +5723,6 @@ ringing on the PFET's gate</text>
 <pinref part="Q1" gate="G$1" pin="S"/>
 <pinref part="Q5" gate="G$1" pin="S"/>
 <wire x1="190.5" y1="368.3" x2="218.44" y2="368.3" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$46" class="0">
-<segment>
-<pinref part="Q6" gate="G$1" pin="S"/>
-<wire x1="243.84" y1="368.3" x2="370.84" y2="368.3" width="0.1524" layer="91"/>
-<pinref part="D1" gate="G$1" pin="C"/>
-<wire x1="370.84" y1="368.3" x2="370.84" y2="416.56" width="0.1524" layer="91"/>
-<wire x1="370.84" y1="416.56" x2="363.22" y2="416.56" width="0.1524" layer="91"/>
-<pinref part="J11" gate="G$1" pin="1"/>
-<wire x1="370.84" y1="416.56" x2="447.04" y2="416.56" width="0.1524" layer="91"/>
-<junction x="370.84" y="416.56"/>
-<pinref part="Q10" gate="G$1" pin="S"/>
-<wire x1="398.78" y1="368.3" x2="370.84" y2="368.3" width="0.1524" layer="91"/>
-<junction x="370.84" y="368.3"/>
 </segment>
 </net>
 <net name="N$38" class="0">
@@ -5780,8 +5792,8 @@ ringing on the PFET's gate</text>
 </net>
 <net name="VDD_B_EN" class="0">
 <segment>
-<wire x1="406.4" y1="403.86" x2="406.4" y2="406.4" width="0.1524" layer="91"/>
-<label x="406.4" y="406.4" size="1.778" layer="95"/>
+<wire x1="518.16" y1="297.18" x2="518.16" y2="299.72" width="0.1524" layer="91"/>
+<label x="518.16" y="299.72" size="1.778" layer="95"/>
 <pinref part="U28" gate="G$1" pin="IN2"/>
 </segment>
 </net>
@@ -5789,7 +5801,7 @@ ringing on the PFET's gate</text>
 <segment>
 <pinref part="Q10" gate="G$1" pin="D"/>
 <pinref part="J12" gate="G$1" pin="1"/>
-<wire x1="408.94" y1="368.3" x2="447.04" y2="368.3" width="0.1524" layer="91"/>
+<wire x1="520.7" y1="261.62" x2="558.8" y2="261.62" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$52" class="0">
@@ -5847,20 +5859,30 @@ ringing on the PFET's gate</text>
 <pinref part="Q10" gate="G$1" pin="G"/>
 </segment>
 </net>
-<net name="N$3" class="0">
+<net name="VDD_A" class="0">
 <segment>
 <pinref part="U2" gate="G$1" pin="VIN"/>
 <pinref part="U2" gate="G$1" pin="EN"/>
-<wire x1="485.14" y1="327.66" x2="485.14" y2="325.12" width="0.1524" layer="91"/>
-<junction x="485.14" y="327.66"/>
+<wire x1="502.92" y1="327.66" x2="502.92" y2="325.12" width="0.1524" layer="91"/>
+<junction x="502.92" y="327.66"/>
 <pinref part="U11" gate="G$1" pin="VOUT"/>
-<wire x1="472.44" y1="327.66" x2="485.14" y2="327.66" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$6" class="0">
-<segment>
-<pinref part="U2" gate="G$1" pin="VOUT"/>
-<wire x1="508" y1="327.66" x2="510.54" y2="327.66" width="0.1524" layer="91"/>
+<wire x1="472.44" y1="327.66" x2="477.52" y2="327.66" width="0.1524" layer="91"/>
+<wire x1="477.52" y1="327.66" x2="502.92" y2="327.66" width="0.1524" layer="91"/>
+<wire x1="477.52" y1="327.66" x2="477.52" y2="332.74" width="0.1524" layer="91"/>
+<junction x="477.52" y="327.66"/>
+<label x="477.52" y="332.74" size="1.778" layer="95"/>
+<pinref part="Q6" gate="G$1" pin="S"/>
+<wire x1="243.84" y1="368.3" x2="370.84" y2="368.3" width="0.1524" layer="91"/>
+<pinref part="D1" gate="G$1" pin="C"/>
+<wire x1="370.84" y1="368.3" x2="370.84" y2="416.56" width="0.1524" layer="91"/>
+<wire x1="370.84" y1="416.56" x2="363.22" y2="416.56" width="0.1524" layer="91"/>
+<pinref part="J11" gate="G$1" pin="1"/>
+<wire x1="370.84" y1="416.56" x2="447.04" y2="416.56" width="0.1524" layer="91"/>
+<junction x="370.84" y="416.56"/>
+<pinref part="Q10" gate="G$1" pin="S"/>
+<wire x1="510.54" y1="261.62" x2="477.52" y2="261.62" width="0.1524" layer="91"/>
+<junction x="370.84" y="368.3"/>
+<wire x1="477.52" y1="327.66" x2="477.52" y2="261.62" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$42" class="0">
@@ -5877,7 +5899,7 @@ ringing on the PFET's gate</text>
 <segment>
 <pinref part="R2" gate="G$1" pin="2"/>
 <pinref part="U16" gate="G$1" pin="PROG"/>
-<wire x1="383.54" y1="279.4" x2="396.24" y2="279.4" width="0.1524" layer="91"/>
+<wire x1="383.54" y1="284.48" x2="396.24" y2="284.48" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$32" class="0">
@@ -5919,6 +5941,13 @@ ringing on the PFET's gate</text>
 <pinref part="R6" gate="G$1" pin="2"/>
 <pinref part="R7" gate="G$1" pin="1"/>
 <wire x1="408.94" y1="317.5" x2="411.48" y2="317.5" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$3" class="0">
+<segment>
+<pinref part="J15" gate="G$1" pin="1"/>
+<wire x1="525.78" y1="327.66" x2="558.8" y2="327.66" width="0.1524" layer="91"/>
+<pinref part="U2" gate="G$1" pin="VOUT"/>
 </segment>
 </net>
 </nets>
@@ -6033,7 +6062,7 @@ away with a smaller capacitor.</text>
 <busses>
 </busses>
 <nets>
-<net name="VDD_A" class="0">
+<net name="VDD_A_3V3" class="0">
 <segment>
 <pinref part="U12" gate="A" pin="VDD"/>
 <wire x1="-33.02" y1="76.2" x2="-35.56" y2="76.2" width="0.1524" layer="91"/>
@@ -6298,7 +6327,7 @@ away with a smaller capacitor.</text>
 <busses>
 </busses>
 <nets>
-<net name="VDD_A" class="0">
+<net name="VDD_A_3V3" class="0">
 <segment>
 <pinref part="U14" gate="G$1" pin="VDD"/>
 <wire x1="-2.54" y1="-2.54" x2="-5.08" y2="-2.54" width="0.1524" layer="91"/>
