@@ -4849,7 +4849,7 @@ be safely used as a binary signal</text>
 <label x="347.98" y="396.24" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_1V8" class="0">
+<net name="VDD_B_1V8" class="0">
 <segment>
 <wire x1="241.3" y1="266.7" x2="243.84" y2="266.7" width="0.1524" layer="91"/>
 <label x="243.84" y="266.7" size="1.778" layer="95"/>
@@ -5072,7 +5072,7 @@ be safely used as a binary signal</text>
 <pinref part="L1" gate="G$1" pin="1"/>
 </segment>
 </net>
-<net name="VDD_1V2" class="0">
+<net name="VDD_B_1V2" class="0">
 <segment>
 <wire x1="241.3" y1="312.42" x2="243.84" y2="312.42" width="0.1524" layer="91"/>
 <label x="243.84" y="312.42" size="1.778" layer="95"/>
@@ -5086,7 +5086,7 @@ be safely used as a binary signal</text>
 <pinref part="L2" gate="G$1" pin="1"/>
 </segment>
 </net>
-<net name="VDD_2V8" class="0">
+<net name="VDD_B_2V8" class="0">
 <segment>
 <wire x1="241.3" y1="205.74" x2="243.84" y2="205.74" width="0.1524" layer="91"/>
 <label x="243.84" y="205.74" size="1.778" layer="95"/>
@@ -5223,7 +5223,7 @@ be safely used as a binary signal</text>
 <junction x="231.14" y="462.28"/>
 </segment>
 </net>
-<net name="VDD_1V8_STM" class="0">
+<net name="VDD_B_1V8_STM" class="0">
 <segment>
 <wire x1="228.6" y1="35.56" x2="231.14" y2="35.56" width="0.1524" layer="91"/>
 <label x="231.14" y="35.56" size="1.778" layer="95"/>
@@ -5238,7 +5238,7 @@ be safely used as a binary signal</text>
 <label x="203.2" y="2.54" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="VDD_1V8_IMG" class="0">
+<net name="VDD_B_1V8_IMG" class="0">
 <segment>
 <wire x1="228.6" y1="154.94" x2="231.14" y2="154.94" width="0.1524" layer="91"/>
 <label x="231.14" y="154.94" size="1.778" layer="95"/>
@@ -5248,7 +5248,7 @@ be safely used as a binary signal</text>
 <junction x="228.6" y="154.94"/>
 </segment>
 </net>
-<net name="VDD_2V8_IMG" class="0">
+<net name="VDD_B_2V8_IMG" class="0">
 <segment>
 <wire x1="228.6" y1="124.46" x2="231.14" y2="124.46" width="0.1524" layer="91"/>
 <label x="231.14" y="124.46" size="1.778" layer="95"/>
@@ -5284,7 +5284,7 @@ be safely used as a binary signal</text>
 <pinref part="U6" gate="G$1" pin="EN"/>
 </segment>
 </net>
-<net name="VDD_2V8_SD" class="0">
+<net name="VDD_B_2V8_SD" class="0">
 <segment>
 <wire x1="228.6" y1="93.98" x2="231.14" y2="93.98" width="0.1524" layer="91"/>
 <label x="231.14" y="93.98" size="1.778" layer="95"/>
@@ -5316,7 +5316,7 @@ be safely used as a binary signal</text>
 <label x="175.26" y="7.62" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="VDD_3V3_STM" class="0">
+<net name="VDD_B_3V3_STM" class="0">
 <segment>
 <pinref part="U30" gate="G$1" pin="VOUT"/>
 <pinref part="U30" gate="G$1" pin="QOD"/>
@@ -5333,7 +5333,7 @@ be safely used as a binary signal</text>
 <label x="137.16" y="462.28" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="VDD_1V8_SD" class="0">
+<net name="VDD_B_1V8_SD" class="0">
 <segment>
 <pinref part="U9" gate="G$1" pin="QOD"/>
 <pinref part="U9" gate="G$1" pin="VOUT"/>
@@ -5735,7 +5735,7 @@ away with a smaller capacitor.</text>
 <label x="88.9" y="17.78" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_1V8" class="0">
+<net name="VDD_B_1V8" class="0">
 <segment>
 <pinref part="U21" gate="G$1" pin="VCCA"/>
 <wire x1="86.36" y1="35.56" x2="88.9" y2="35.56" width="0.1524" layer="91"/>
@@ -5811,7 +5811,7 @@ away with a smaller capacitor.</text>
 <pinref part="U12" gate="C" pin="PA.B/P2.3/TA1.2/UCB0STE/A5"/>
 </segment>
 </net>
-<net name="VDD_1V8_STM" class="0">
+<net name="VDD_B_1V8_STM" class="0">
 <segment>
 <wire x1="-5.08" y1="35.56" x2="-2.54" y2="35.56" width="0.1524" layer="91"/>
 <label x="-2.54" y="35.56" size="1.778" layer="95"/>
@@ -6105,7 +6105,7 @@ below the chip.</text>
 <busses>
 </busses>
 <nets>
-<net name="VDD_1V8" class="0">
+<net name="VDD_B_1V8" class="0">
 <segment>
 <pinref part="C36" gate="G$1" pin="1"/>
 <pinref part="C37" gate="G$1" pin="1"/>
@@ -6297,7 +6297,7 @@ below the chip.</text>
 <junction x="190.5" y="-86.36"/>
 </segment>
 </net>
-<net name="VDD_1V2" class="0">
+<net name="VDD_B_1V2" class="0">
 <segment>
 <pinref part="U15" gate="E" pin="VCC_D4"/>
 <wire x1="86.36" y1="-27.94" x2="81.28" y2="-27.94" width="0.1524" layer="91"/>
@@ -6337,7 +6337,7 @@ below the chip.</text>
 <pinref part="C33" gate="G$1" pin="1"/>
 </segment>
 </net>
-<net name="VDD_2V8" class="0">
+<net name="VDD_B_2V8" class="0">
 <segment>
 <pinref part="C40" gate="G$1" pin="1"/>
 <pinref part="C41" gate="G$1" pin="1"/>
@@ -7169,7 +7169,7 @@ between input and output when its VDD=0.</text>
 </bus>
 </busses>
 <nets>
-<net name="VDD_1V8_IMG" class="0">
+<net name="VDD_B_1V8_IMG" class="0">
 <segment>
 <pinref part="U17" gate="A" pin="VDD_IO"/>
 <wire x1="71.12" y1="45.72" x2="71.12" y2="48.26" width="0.1524" layer="91"/>
@@ -7301,7 +7301,7 @@ between input and output when its VDD=0.</text>
 <pinref part="U1" gate="G$1" pin="GND"/>
 </segment>
 </net>
-<net name="VDD_2V8_IMG" class="0">
+<net name="VDD_B_2V8_IMG" class="0">
 <segment>
 <pinref part="C48" gate="G$1" pin="1"/>
 <pinref part="C49" gate="G$1" pin="1"/>
@@ -7543,7 +7543,7 @@ between input and output when its VDD=0.</text>
 </bus>
 </busses>
 <nets>
-<net name="VDD_1V8" class="0">
+<net name="VDD_B_1V8" class="0">
 <segment>
 <pinref part="C64" gate="G$1" pin="1"/>
 <pinref part="C63" gate="G$1" pin="1"/>
@@ -7915,7 +7915,7 @@ between input and output when its VDD=0.</text>
 </bus>
 </busses>
 <nets>
-<net name="VDD_1V8_SD" class="0">
+<net name="VDD_B_1V8_SD" class="0">
 <segment>
 <pinref part="R22" gate="G$1" pin="2"/>
 <wire x1="-20.32" y1="-55.88" x2="-20.32" y2="-53.34" width="0.1524" layer="91"/>
@@ -7955,7 +7955,7 @@ between input and output when its VDD=0.</text>
 <label x="35.56" y="-17.78" size="1.778" layer="95" align="top-left"/>
 </segment>
 </net>
-<net name="VDD_2V8_SD" class="0">
+<net name="VDD_B_2V8_SD" class="0">
 <segment>
 <pinref part="J7" gate="G$1" pin="VDD"/>
 <wire x1="5.08" y1="-10.16" x2="2.54" y2="-10.16" width="0.1524" layer="91"/>
@@ -8568,7 +8568,7 @@ between input and output when its VDD=0.</text>
 <label x="0" y="-281.94" size="1.778" layer="95" align="top-left"/>
 </segment>
 </net>
-<net name="VDD_1V8_STM" class="0">
+<net name="VDD_B_1V8_STM" class="0">
 <segment>
 <pinref part="U19" gate="K" pin="VDD_C5"/>
 <pinref part="U19" gate="K" pin="VDD_N9"/>
@@ -8905,7 +8905,7 @@ between input and output when its VDD=0.</text>
 <label x="30.48" y="-154.94" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_3V3_STM" class="0">
+<net name="VDD_B_3V3_STM" class="0">
 <segment>
 <pinref part="U19" gate="K" pin="VDDUSB_H13"/>
 <wire x1="121.92" y1="-248.92" x2="124.46" y2="-248.92" width="0.1524" layer="91"/>
