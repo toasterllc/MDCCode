@@ -3749,7 +3749,7 @@ Charger</text>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="MG" value="Texas Instruments"/>
+<attribute name="MFG" value="Diodes Incorporated"/>
 </technology>
 </technologies>
 </device>

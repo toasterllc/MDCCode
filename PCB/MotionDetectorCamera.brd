@@ -2503,7 +2503,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="CR0402-FX-4223GLF" x="120.5" y="8.5" size="1.778" layer="27" display="off"/>
 </element>
 <element name="U2" library="EagleLibrary" package="DIODESINC-AP7350" value="DIODESINC-AP7350" x="71.7" y="8.3" smashed="yes">
-<attribute name="MG" value="Texas Instruments" x="71.7" y="8.3" size="1.778" layer="27" display="off"/>
+<attribute name="MFG" value="Diodes Incorporated" x="71.7" y="8.3" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="71.32661875" y="8.8135" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="AP7350-33CF4-7" x="71.7" y="8.3" size="1.778" layer="27" display="off"/>
 </element>
