@@ -1,5 +1,7 @@
 - Rev5 Todo
     
+    - Replace TPS63805 power supply with TPS62802, outputting 2.8V
+    
     - Add TPS2116 power mux to switch between USB power and battery power
     
     - Add reverse polarity protection in case the battery is inserted backwards:
@@ -9,6 +11,9 @@
     - Add battery
     
     - Add LIPO charger circuit
+        √ MCP73831
+        - DIO5518B
+        - DIO5508CD10
     
     - Add LDO to provide VDD_A
         - Consider case: input power is instantly disconnected, so Vout>Vin. Do we need to protect LDO from reverse current?
@@ -19,6 +24,7 @@
             - Iq = .25µA
     
     - Add flash for ICE40 (instead of using NVCM)
+        - W25Q40EWUXIE looks good (DigiKey)
     
     - Create new connection:
         - Name:     ICE_ST_SPI_D_READY

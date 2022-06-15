@@ -1395,7 +1395,119 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.85" y="0.4"/>
 </polygon>
 </package>
+<package name="DIODESINC-AP7350">
+<wire x1="0.405" y1="-0.405" x2="-0.405" y2="-0.405" width="0.05" layer="21"/>
+<wire x1="-0.405" y1="-0.405" x2="-0.405" y2="0.405" width="0.05" layer="21"/>
+<wire x1="-0.405" y1="0.405" x2="0.405" y2="0.405" width="0.05" layer="21"/>
+<wire x1="0.405" y1="0.405" x2="0.405" y2="-0.405" width="0.05" layer="21"/>
+<smd name="1" x="-0.175" y="0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no"/>
+<smd name="4" x="0.175" y="0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no"/>
+<smd name="2" x="-0.175" y="-0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no"/>
+<smd name="3" x="0.175" y="-0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no"/>
+<text x="-0.37338125" y="0.5135" size="0.508" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="39">
+<vertex x="0.405" y="-0.405"/>
+<vertex x="-0.405" y="-0.405"/>
+<vertex x="-0.405" y="0.405"/>
+<vertex x="0.405" y="0.405"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-0.4" y="0.4"/>
+<vertex x="-0.4" y="-0.4"/>
+<vertex x="0.4" y="0.4"/>
+</polygon>
+</package>
+<package name="TI-TPS2116DRLR">
+<description>6-SON (DFN), 0.50 mm pitch, 1.45 X 1.00 X 0.60 mm body
+&lt;p&gt;6-pin SON (DFN) package with 0.50 mm pitch with body size 1.45 X 1.00 X 0.60 mm&lt;/p&gt;</description>
+<wire x1="0.75" y1="-1" x2="-0.75" y2="-1" width="0.05" layer="21"/>
+<wire x1="-0.75" y1="-1" x2="-0.75" y2="1" width="0.05" layer="21"/>
+<wire x1="-0.75" y1="1" x2="0.75" y2="1" width="0.05" layer="21"/>
+<wire x1="0.75" y1="1" x2="0.75" y2="-1" width="0.05" layer="21"/>
+<smd name="1" x="-0.74" y="0.75" dx="0.67" dy="0.3" layer="1" roundness="25"/>
+<smd name="2" x="-0.74" y="0.25" dx="0.67" dy="0.3" layer="1" roundness="25"/>
+<smd name="3" x="-0.74" y="-0.25" dx="0.67" dy="0.3" layer="1" roundness="25"/>
+<smd name="4" x="-0.74" y="-0.75" dx="0.67" dy="0.3" layer="1" roundness="25"/>
+<smd name="5" x="0.74" y="-0.75" dx="0.67" dy="0.3" layer="1" roundness="25"/>
+<smd name="6" x="0.74" y="-0.25" dx="0.67" dy="0.3" layer="1" roundness="25"/>
+<text x="-0.743559375" y="1.115640625" size="0.508" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="39">
+<vertex x="0.75" y="-1"/>
+<vertex x="-0.75" y="-1"/>
+<vertex x="-0.75" y="1"/>
+<vertex x="0.75" y="1"/>
+</polygon>
+<smd name="7" x="0.74" y="0.25" dx="0.67" dy="0.3" layer="1" roundness="25"/>
+<smd name="8" x="0.74" y="0.75" dx="0.67" dy="0.3" layer="1" roundness="25"/>
+<polygon width="0.05" layer="21">
+<vertex x="-0.724" y="0.972"/>
+<vertex x="-0.724" y="0.372"/>
+<vertex x="-0.124" y="0.972"/>
+</polygon>
+</package>
+<package name="WINBOND-W25Q40EWUXIE" urn="urn:adsk.eagle:footprint:36180720/1" locally_modified="yes">
+<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.80 mm body
+&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.80 mm&lt;/p&gt;</description>
+<smd name="1" x="-1.4346" y="0.75" dx="0.86" dy="0.27" layer="1" roundness="100"/>
+<smd name="2" x="-1.4346" y="0.25" dx="0.86" dy="0.27" layer="1" roundness="100"/>
+<smd name="3" x="-1.4346" y="-0.25" dx="0.86" dy="0.27" layer="1" roundness="100"/>
+<smd name="4" x="-1.4346" y="-0.75" dx="0.86" dy="0.27" layer="1" roundness="100"/>
+<smd name="5" x="1.4346" y="-0.75" dx="0.86" dy="0.27" layer="1" roundness="100"/>
+<smd name="6" x="1.4346" y="-0.25" dx="0.86" dy="0.27" layer="1" roundness="100"/>
+<smd name="7" x="1.4346" y="0.25" dx="0.86" dy="0.27" layer="1" roundness="100"/>
+<smd name="8" x="1.4346" y="0.75" dx="0.86" dy="0.27" layer="1" roundness="100"/>
+<text x="-1.8" y="1.274" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<wire x1="1.55" y1="-1.05" x2="-1.55" y2="-1.05" width="0.05" layer="21"/>
+<wire x1="-1.55" y1="-1.05" x2="-1.55" y2="1.05" width="0.05" layer="21"/>
+<wire x1="-1.55" y1="1.05" x2="1.55" y2="1.05" width="0.05" layer="21"/>
+<wire x1="1.55" y1="1.05" x2="1.55" y2="-1.05" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="1.55" y="-1.05"/>
+<vertex x="-1.55" y="-1.05"/>
+<vertex x="-1.55" y="1.05"/>
+<vertex x="1.55" y="1.05"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-1.525" y="1.025"/>
+<vertex x="-1.525" y="0.325"/>
+<vertex x="-0.925" y="1.025"/>
+</polygon>
+</package>
+<package name="MICROCHIP-MIC550X-SOT23-5" urn="urn:adsk.eagle:footprint:28687037/1" locally_modified="yes">
+<description>5-SOT23, 0.95 mm pitch, 2.80 mm span, 2.90 X 1.60 X 1.30 mm body
+&lt;p&gt;5-pin SOT23 package with 0.95 mm pitch, 2.80 mm span with body size 2.90 X 1.60 X 1.30 mm&lt;/p&gt;</description>
+<wire x1="0.85" y1="-1.5" x2="-0.85" y2="-1.5" width="0.05" layer="21"/>
+<wire x1="-0.85" y1="-1.5" x2="-0.85" y2="1.5" width="0.05" layer="21"/>
+<wire x1="-0.85" y1="1.5" x2="0.85" y2="1.5" width="0.05" layer="21"/>
+<wire x1="0.85" y1="1.5" x2="0.85" y2="-1.5" width="0.05" layer="21"/>
+<smd name="1" x="-1.2644" y="0.95" dx="1.1864" dy="0.5839" layer="1"/>
+<smd name="2" x="-1.2644" y="0" dx="1.1864" dy="0.5839" layer="1"/>
+<smd name="3" x="-1.2644" y="-0.95" dx="1.1864" dy="0.5839" layer="1"/>
+<smd name="4" x="1.2644" y="-0.95" dx="1.1864" dy="0.5839" layer="1"/>
+<smd name="5" x="1.2644" y="0.95" dx="1.1864" dy="0.5839" layer="1"/>
+<text x="-0.889" y="1.7419" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<polygon width="0.05" layer="39">
+<vertex x="0.85" y="-1.5"/>
+<vertex x="-0.85" y="-1.5"/>
+<vertex x="-0.85" y="1.5"/>
+<vertex x="0.85" y="1.5"/>
+</polygon>
+<polygon width="0.05" layer="21">
+<vertex x="-0.83" y="1.476"/>
+<vertex x="-0.83" y="0.376"/>
+<vertex x="0.17" y="1.476"/>
+</polygon>
+</package>
 </packages>
+<packages3d>
+<package3d name="SON50P300X200X80-8N" urn="urn:adsk.eagle:package:36180302/1" type="model">
+<description>8-SON (DFN), 0.50 mm pitch, 2.00 X 3.00 X 0.80 mm body
+&lt;p&gt;8-pin SON (DFN) package with 0.50 mm pitch with body size 2.00 X 3.00 X 0.80 mm&lt;/p&gt;</description>
+<packageinstances>
+<packageinstance name="WINBOND-W25Q40EWUXIE"/>
+</packageinstances>
+</package3d>
+</packages3d>
 <symbols>
 <symbol name="CAPACITOR">
 <rectangle x1="-2.032" y1="-2.032" x2="2.032" y2="-1.524" layer="94"/>
@@ -2378,6 +2490,68 @@ tolerant of VDDUSB</text>
 <wire x1="-2.54" y1="-2.54" x2="-0.508" y2="-2.54" width="0.1524" layer="94"/>
 <wire x1="3.048" y1="-2.54" x2="5.08" y2="-2.54" width="0.1524" layer="94"/>
 <pin name="B" x="5.08" y="-2.54" visible="off" length="point"/>
+</symbol>
+<symbol name="DIODESINC-AP7350">
+<wire x1="0" y1="0" x2="0" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="0" y1="-12.7" x2="17.78" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="17.78" y1="-12.7" x2="17.78" y2="0" width="0.254" layer="94"/>
+<wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="VIN" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<pin name="VOUT" x="20.32" y="-2.54" visible="pin" length="short" rot="R180"/>
+<pin name="EN" x="-2.54" y="-5.08" visible="pin" length="short"/>
+<text x="0" y="-15.24" size="1.778" layer="95">&gt;PN</text>
+<text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
+<pin name="GND" x="-2.54" y="-10.16" visible="pin" length="short"/>
+<text x="11.43" y="-11.684" size="1.778" layer="94">LDO</text>
+</symbol>
+<symbol name="TI-TPS2116">
+<wire x1="0" y1="0" x2="0" y2="-25.4" width="0.254" layer="94"/>
+<wire x1="0" y1="-25.4" x2="20.32" y2="-25.4" width="0.254" layer="94"/>
+<wire x1="20.32" y1="-25.4" x2="20.32" y2="0" width="0.254" layer="94"/>
+<wire x1="20.32" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="MODE" x="-2.54" y="-7.62" visible="pin" length="short"/>
+<pin name="VIN1" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<pin name="VOUT" x="22.86" y="-2.54" visible="pin" length="short" rot="R180"/>
+<text x="0.075" y="0.8919" size="1.778" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
+<text x="0.075" y="-28.0641" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
+<pin name="ST" x="22.86" y="-7.62" visible="pin" length="short" rot="R180"/>
+<pin name="GND" x="-2.54" y="-22.86" visible="pin" length="short"/>
+<pin name="PR1" x="-2.54" y="-12.7" visible="pin" length="short"/>
+<pin name="VIN2" x="-2.54" y="-17.78" visible="pin" length="short"/>
+<text x="10.668" y="-24.384" size="1.27" layer="94">Power Mux</text>
+</symbol>
+<symbol name="WINBOND-W25Q40EW">
+<wire x1="0" y1="0" x2="0" y2="-27.94" width="0.254" layer="94"/>
+<wire x1="0" y1="-27.94" x2="20.32" y2="-27.94" width="0.254" layer="94"/>
+<wire x1="20.32" y1="-27.94" x2="20.32" y2="0" width="0.254" layer="94"/>
+<wire x1="20.32" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="VCC" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<pin name="CS_" x="-2.54" y="-7.62" visible="pin" length="short"/>
+<text x="0.075" y="0.8919" size="1.778" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
+<text x="0.075" y="-30.6041" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
+<pin name="DI" x="-2.54" y="-12.7" visible="pin" length="short"/>
+<pin name="GND" x="-2.54" y="-25.4" visible="pin" length="short"/>
+<pin name="DO" x="22.86" y="-2.54" visible="pin" length="short" rot="R180"/>
+<pin name="WP_" x="-2.54" y="-17.78" visible="pin" length="short"/>
+<pin name="HOLD_" x="-2.54" y="-20.32" visible="pin" length="short"/>
+<pin name="CLK" x="-2.54" y="-10.16" visible="pin" length="short"/>
+<text x="19.304" y="-26.924" size="1.778" layer="94" align="bottom-right">SPI
+Flash</text>
+</symbol>
+<symbol name="MICROCHIP-MCP7383X">
+<wire x1="0" y1="0" x2="0" y2="-17.78" width="0.254" layer="94"/>
+<wire x1="0" y1="-17.78" x2="20.32" y2="-17.78" width="0.254" layer="94"/>
+<wire x1="20.32" y1="-17.78" x2="20.32" y2="0" width="0.254" layer="94"/>
+<wire x1="20.32" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="STAT" x="22.86" y="-7.62" visible="pin" length="short" rot="R180"/>
+<pin name="VBAT" x="22.86" y="-2.54" visible="pin" length="short" rot="R180"/>
+<pin name="GND" x="-2.54" y="-12.7" visible="pin" length="short"/>
+<pin name="VDD" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<text x="0.075" y="0.8919" size="1.778" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
+<text x="0.075" y="-20.4441" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
+<pin name="PROG" x="-2.54" y="-7.62" visible="pin" length="short"/>
+<text x="10.668" y="-16.51" size="1.778" layer="94">Battery
+Charger</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -3561,6 +3735,97 @@ tolerant of VDDUSB</text>
 </device>
 </devices>
 </deviceset>
+<deviceset name="DIODESINC-AP7350" prefix="U">
+<gates>
+<gate name="G$1" symbol="DIODESINC-AP7350" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="DIODESINC-AP7350">
+<connects>
+<connect gate="G$1" pin="EN" pad="1"/>
+<connect gate="G$1" pin="GND" pad="2"/>
+<connect gate="G$1" pin="VIN" pad="4"/>
+<connect gate="G$1" pin="VOUT" pad="3"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MG" value="Texas Instruments"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="TI-TPS2116" prefix="U">
+<gates>
+<gate name="G$1" symbol="TI-TPS2116" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="TI-TPS2116DRLR">
+<connects>
+<connect gate="G$1" pin="GND" pad="1"/>
+<connect gate="G$1" pin="MODE" pad="5"/>
+<connect gate="G$1" pin="PR1" pad="4"/>
+<connect gate="G$1" pin="ST" pad="8"/>
+<connect gate="G$1" pin="VIN1" pad="3"/>
+<connect gate="G$1" pin="VIN2" pad="6"/>
+<connect gate="G$1" pin="VOUT" pad="2 7"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Texas Instruments"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="WINBOND-W25Q40EW" prefix="U">
+<gates>
+<gate name="G$1" symbol="WINBOND-W25Q40EW" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="WINBOND-W25Q40EWUXIE">
+<connects>
+<connect gate="G$1" pin="CLK" pad="6"/>
+<connect gate="G$1" pin="CS_" pad="1"/>
+<connect gate="G$1" pin="DI" pad="5"/>
+<connect gate="G$1" pin="DO" pad="2"/>
+<connect gate="G$1" pin="GND" pad="4"/>
+<connect gate="G$1" pin="HOLD_" pad="7"/>
+<connect gate="G$1" pin="VCC" pad="8"/>
+<connect gate="G$1" pin="WP_" pad="3"/>
+</connects>
+<package3dinstances>
+<package3dinstance package3d_urn="urn:adsk.eagle:package:36180302/1"/>
+</package3dinstances>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Winbond"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="MICROCHIP-MCP7383X" prefix="U">
+<gates>
+<gate name="G$1" symbol="MICROCHIP-MCP7383X" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="MICROCHIP-MIC550X-SOT23-5">
+<connects>
+<connect gate="G$1" pin="GND" pad="2"/>
+<connect gate="G$1" pin="PROG" pad="5"/>
+<connect gate="G$1" pin="STAT" pad="1"/>
+<connect gate="G$1" pin="VBAT" pad="3"/>
+<connect gate="G$1" pin="VDD" pad="4"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Microchip"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 </libraries>
@@ -4277,6 +4542,51 @@ tolerant of VDDUSB</text>
 <attribute name="MFG" value="Bourns"/>
 <attribute name="PN" value="CR0402-FX-4223GLF"/>
 </part>
+<part name="U2" library="EagleLibrary" deviceset="DIODESINC-AP7350" device="">
+<attribute name="PN" value="AP7350-33CF4-7"/>
+</part>
+<part name="U11" library="EagleLibrary" deviceset="TI-TPS2116" device="">
+<attribute name="PN" value="TPS2116DRLR"/>
+</part>
+<part name="U13" library="EagleLibrary" deviceset="WINBOND-W25Q40EW" device="" package3d_urn="urn:adsk.eagle:package:36180302/1">
+<attribute name="PN" value="W25Q40EWUXIE"/>
+</part>
+<part name="U16" library="EagleLibrary" deviceset="MICROCHIP-MCP7383X" device="">
+<attribute name="PN" value="MCP73831T-2ACI/OT"/>
+</part>
+<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="2.7k"/>
+<part name="Q2" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
+<attribute name="PN" value="PMPB10UPX"/>
+</part>
+<part name="Q3" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
+<attribute name="PN" value="PMPB10UPX"/>
+</part>
+<part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100K"/>
+</part>
+<part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100K"/>
+</part>
+<part name="J4" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
+<part name="R5" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100K"/>
+</part>
+<part name="R6" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100K"/>
+</part>
+<part name="R7" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100K"/>
+</part>
+<part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100K"/>
+</part>
+<part name="J13" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
 </parts>
 <sheets>
 <sheet>
@@ -4354,6 +4664,12 @@ ringing on the PFET's gate</text>
 - Ir (reverse leakage) &lt; 1µA
    (to minimize leakage when in battery-mode,
    since this leakage will be constant)</text>
+<text x="397.002" y="215.138" size="1.016" layer="95" align="top-left">From Linear Tech Application Note 171 </text>
+<wire x1="393.7" y1="261.62" x2="393.7" y2="220.98" width="0.1524" layer="95"/>
+<wire x1="393.7" y1="220.98" x2="447.04" y2="220.98" width="0.1524" layer="95"/>
+<wire x1="447.04" y1="220.98" x2="447.04" y2="261.62" width="0.1524" layer="95"/>
+<wire x1="447.04" y1="261.62" x2="393.7" y2="261.62" width="0.1524" layer="95"/>
+<text x="396.494" y="219.456" size="2.54" layer="95" align="top-left">Battery reverse polarity protection</text>
 </plain>
 <instances>
 <instance part="C6" gate="G$1" x="167.64" y="309.88" smashed="yes">
@@ -4660,6 +4976,76 @@ ringing on the PFET's gate</text>
 <attribute name="MFG" x="314.96" y="403.86" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="314.96" y="403.86" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
+<instance part="U2" gate="G$1" x="487.68" y="330.2" smashed="yes">
+<attribute name="PN" x="487.68" y="314.96" size="1.778" layer="95"/>
+<attribute name="NAME" x="487.68" y="330.962" size="1.778" layer="95"/>
+</instance>
+<instance part="U11" gate="G$1" x="449.58" y="330.2" smashed="yes">
+<attribute name="NAME" x="449.655" y="331.0919" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN" x="449.655" y="302.1359" size="1.778" layer="95" ratio="10" rot="SR0"/>
+</instance>
+<instance part="U13" gate="G$1" x="294.64" y="205.74" smashed="yes">
+<attribute name="NAME" x="294.715" y="206.6319" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN" x="294.715" y="175.1359" size="1.778" layer="95" ratio="10" rot="SR0"/>
+</instance>
+<instance part="U16" gate="G$1" x="398.78" y="287.02" smashed="yes">
+<attribute name="NAME" x="398.855" y="287.9119" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN" x="398.855" y="266.5759" size="1.778" layer="95" ratio="10" rot="SR0"/>
+</instance>
+<instance part="R2" gate="G$1" x="383.54" y="274.32" smashed="yes" rot="R90">
+<attribute name="NAME" x="381.508" y="274.32" size="1.778" layer="95" align="top-right"/>
+<attribute name="VALUE" x="381.508" y="271.78" size="1.778" layer="96" align="top-right"/>
+</instance>
+<instance part="Q2" gate="G$1" x="436.88" y="241.3" smashed="yes" rot="R90">
+<attribute name="NAME" x="435.864" y="250.444" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="PN" x="436.88" y="241.3" size="1.778" layer="96" rot="R90" display="off"/>
+</instance>
+<instance part="Q3" gate="G$1" x="411.48" y="241.3" smashed="yes" rot="MR90">
+<attribute name="NAME" x="412.496" y="250.444" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<attribute name="PN" x="411.48" y="241.3" size="1.778" layer="96" rot="MR90" display="off"/>
+</instance>
+<instance part="R3" gate="G$1" x="436.88" y="231.14" smashed="yes" rot="MR270">
+<attribute name="NAME" x="439.166" y="232.918" size="1.778" layer="95" rot="MR180"/>
+<attribute name="VALUE" x="439.166" y="230.378" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MFG" x="436.88" y="231.14" size="1.778" layer="96" rot="MR270" display="off"/>
+<attribute name="PN" x="436.88" y="231.14" size="1.778" layer="96" rot="MR270" display="off"/>
+</instance>
+<instance part="R4" gate="G$1" x="403.86" y="246.38" smashed="yes" rot="MR90">
+<attribute name="NAME" x="401.574" y="247.142" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="401.574" y="244.602" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MFG" x="403.86" y="246.38" size="1.778" layer="96" rot="MR90" display="off"/>
+<attribute name="PN" x="403.86" y="246.38" size="1.778" layer="96" rot="MR90" display="off"/>
+</instance>
+<instance part="J4" gate="G$1" x="363.22" y="241.3" smashed="yes">
+<attribute name="NAME" x="361.95" y="243.84" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="R5" gate="G$1" x="391.16" y="317.5" smashed="yes" rot="MR180">
+<attribute name="NAME" x="394.462" y="322.326" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="394.462" y="319.786" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MFG" x="391.16" y="317.5" size="1.778" layer="96" rot="MR180" display="off"/>
+<attribute name="PN" x="391.16" y="317.5" size="1.778" layer="96" rot="MR180" display="off"/>
+</instance>
+<instance part="R6" gate="G$1" x="403.86" y="317.5" smashed="yes" rot="MR180">
+<attribute name="NAME" x="407.162" y="322.326" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="407.162" y="319.786" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MFG" x="403.86" y="317.5" size="1.778" layer="96" rot="MR180" display="off"/>
+<attribute name="PN" x="403.86" y="317.5" size="1.778" layer="96" rot="MR180" display="off"/>
+</instance>
+<instance part="R7" gate="G$1" x="416.56" y="317.5" smashed="yes" rot="MR180">
+<attribute name="NAME" x="419.862" y="322.326" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="419.862" y="319.786" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MFG" x="416.56" y="317.5" size="1.778" layer="96" rot="MR180" display="off"/>
+<attribute name="PN" x="416.56" y="317.5" size="1.778" layer="96" rot="MR180" display="off"/>
+</instance>
+<instance part="R8" gate="G$1" x="421.64" y="309.88" smashed="yes" rot="MR270">
+<attribute name="NAME" x="423.926" y="311.658" size="1.778" layer="95" rot="MR180"/>
+<attribute name="VALUE" x="423.926" y="309.118" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MFG" x="421.64" y="309.88" size="1.778" layer="96" rot="MR270" display="off"/>
+<attribute name="PN" x="421.64" y="309.88" size="1.778" layer="96" rot="MR270" display="off"/>
+</instance>
+<instance part="J13" gate="G$1" x="363.22" y="332.74" smashed="yes">
+<attribute name="NAME" x="361.95" y="335.28" size="1.778" layer="95" align="top-left"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -4937,6 +5323,36 @@ ringing on the PFET's gate</text>
 <wire x1="208.28" y1="261.62" x2="210.82" y2="261.62" width="0.1524" layer="91"/>
 <label x="210.82" y="261.62" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="U2" gate="G$1" pin="GND"/>
+<wire x1="485.14" y1="320.04" x2="482.6" y2="320.04" width="0.1524" layer="91"/>
+<label x="482.6" y="320.04" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U11" gate="G$1" pin="GND"/>
+<wire x1="447.04" y1="307.34" x2="444.5" y2="307.34" width="0.1524" layer="91"/>
+<label x="444.5" y="307.34" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<wire x1="421.64" y1="304.8" x2="421.64" y2="302.26" width="0.1524" layer="91"/>
+<label x="421.64" y="302.26" size="1.778" layer="95"/>
+<pinref part="R8" gate="G$1" pin="2"/>
+</segment>
+<segment>
+<pinref part="U16" gate="G$1" pin="GND"/>
+<wire x1="396.24" y1="274.32" x2="393.7" y2="274.32" width="0.1524" layer="91"/>
+<label x="393.7" y="274.32" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="R2" gate="G$1" pin="1"/>
+<wire x1="383.54" y1="269.24" x2="383.54" y2="266.7" width="0.1524" layer="91"/>
+<label x="383.54" y="266.7" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="R3" gate="G$1" pin="2"/>
+<wire x1="436.88" y1="226.06" x2="436.88" y2="223.52" width="0.1524" layer="91"/>
+<label x="436.88" y="223.52" size="1.778" layer="95" rot="MR0"/>
+</segment>
 </net>
 <net name="N$5" class="0">
 <segment>
@@ -5089,6 +5505,26 @@ ringing on the PFET's gate</text>
 <label x="401.32" y="406.4" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U28" gate="G$1" pin="IN1"/>
 </segment>
+<segment>
+<pinref part="U11" gate="G$1" pin="VIN1"/>
+<pinref part="U11" gate="G$1" pin="MODE"/>
+<wire x1="447.04" y1="327.66" x2="447.04" y2="322.58" width="0.1524" layer="91"/>
+<junction x="447.04" y="327.66"/>
+<wire x1="447.04" y1="327.66" x2="378.46" y2="327.66" width="0.1524" layer="91"/>
+<pinref part="U16" gate="G$1" pin="VDD"/>
+<wire x1="396.24" y1="284.48" x2="378.46" y2="284.48" width="0.1524" layer="91"/>
+<wire x1="378.46" y1="284.48" x2="378.46" y2="317.5" width="0.1524" layer="91"/>
+<pinref part="R5" gate="G$1" pin="1"/>
+<wire x1="378.46" y1="317.5" x2="378.46" y2="327.66" width="0.1524" layer="91"/>
+<wire x1="386.08" y1="317.5" x2="378.46" y2="317.5" width="0.1524" layer="91"/>
+<junction x="378.46" y="317.5"/>
+<pinref part="J13" gate="G$1" pin="2"/>
+<wire x1="365.76" y1="327.66" x2="378.46" y2="327.66" width="0.1524" layer="91"/>
+<junction x="378.46" y="327.66"/>
+<label x="378.46" y="332.74" size="1.778" layer="95"/>
+<wire x1="378.46" y1="327.66" x2="378.46" y2="332.74" width="0.1524" layer="91"/>
+<junction x="378.46" y="327.66"/>
+</segment>
 </net>
 <net name="VDD_1V8_STM" class="0">
 <segment>
@@ -5189,6 +5625,11 @@ ringing on the PFET's gate</text>
 <wire x1="154.94" y1="416.56" x2="152.4" y2="416.56" width="0.1524" layer="91"/>
 <label x="152.4" y="416.56" size="1.778" layer="95" align="bottom-right"/>
 </segment>
+<segment>
+<pinref part="J13" gate="G$1" pin="1"/>
+<wire x1="363.22" y1="327.66" x2="360.68" y2="327.66" width="0.1524" layer="91"/>
+<label x="360.68" y="327.66" size="1.778" layer="95" align="bottom-right"/>
+</segment>
 </net>
 <net name="VDD_1V8_SD" class="0">
 <segment>
@@ -5209,12 +5650,38 @@ ringing on the PFET's gate</text>
 <wire x1="170.18" y1="368.3" x2="170.18" y2="393.7" width="0.1524" layer="91"/>
 <label x="170.18" y="393.7" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="Q2" gate="G$1" pin="S"/>
+<wire x1="436.88" y1="251.46" x2="436.88" y2="256.54" width="0.1524" layer="91"/>
+<wire x1="436.88" y1="256.54" x2="411.48" y2="256.54" width="0.1524" layer="91"/>
+<pinref part="Q3" gate="G$1" pin="S"/>
+<wire x1="411.48" y1="256.54" x2="411.48" y2="251.46" width="0.1524" layer="91"/>
+<pinref part="R4" gate="G$1" pin="2"/>
+<wire x1="403.86" y1="251.46" x2="403.86" y2="256.54" width="0.1524" layer="91"/>
+<wire x1="403.86" y1="256.54" x2="411.48" y2="256.54" width="0.1524" layer="91"/>
+<junction x="411.48" y="256.54"/>
+<pinref part="U16" gate="G$1" pin="VBAT"/>
+<wire x1="421.64" y1="284.48" x2="436.88" y2="284.48" width="0.1524" layer="91"/>
+<wire x1="436.88" y1="284.48" x2="436.88" y2="256.54" width="0.1524" layer="91"/>
+<junction x="436.88" y="256.54"/>
+<wire x1="436.88" y1="284.48" x2="439.42" y2="284.48" width="0.1524" layer="91"/>
+<junction x="436.88" y="284.48"/>
+<label x="439.42" y="284.48" size="1.778" layer="95"/>
+<wire x1="436.88" y1="284.48" x2="436.88" y2="312.42" width="0.1524" layer="91"/>
+<pinref part="U11" gate="G$1" pin="VIN2"/>
+<wire x1="436.88" y1="312.42" x2="447.04" y2="312.42" width="0.1524" layer="91"/>
+</segment>
 </net>
 <net name="VDD_BAT_IN" class="0">
 <segment>
 <pinref part="J9" gate="G$1" pin="1"/>
 <wire x1="154.94" y1="368.3" x2="152.4" y2="368.3" width="0.1524" layer="91"/>
 <label x="152.4" y="368.3" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="J4" gate="G$1" pin="1"/>
+<wire x1="363.22" y1="236.22" x2="360.68" y2="236.22" width="0.1524" layer="91"/>
+<label x="360.68" y="236.22" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="N$37" class="0">
@@ -5378,6 +5845,80 @@ ringing on the PFET's gate</text>
 <segment>
 <pinref part="R11" gate="G$1" pin="2"/>
 <pinref part="Q10" gate="G$1" pin="G"/>
+</segment>
+</net>
+<net name="N$3" class="0">
+<segment>
+<pinref part="U2" gate="G$1" pin="VIN"/>
+<pinref part="U2" gate="G$1" pin="EN"/>
+<wire x1="485.14" y1="327.66" x2="485.14" y2="325.12" width="0.1524" layer="91"/>
+<junction x="485.14" y="327.66"/>
+<pinref part="U11" gate="G$1" pin="VOUT"/>
+<wire x1="472.44" y1="327.66" x2="485.14" y2="327.66" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$6" class="0">
+<segment>
+<pinref part="U2" gate="G$1" pin="VOUT"/>
+<wire x1="508" y1="327.66" x2="510.54" y2="327.66" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$42" class="0">
+<segment>
+<wire x1="421.64" y1="317.5" x2="421.64" y2="314.96" width="0.1524" layer="91"/>
+<pinref part="U11" gate="G$1" pin="PR1"/>
+<wire x1="421.64" y1="317.5" x2="447.04" y2="317.5" width="0.1524" layer="91"/>
+<pinref part="R7" gate="G$1" pin="2"/>
+<junction x="421.64" y="317.5"/>
+<pinref part="R8" gate="G$1" pin="1"/>
+</segment>
+</net>
+<net name="N$21" class="0">
+<segment>
+<pinref part="R2" gate="G$1" pin="2"/>
+<pinref part="U16" gate="G$1" pin="PROG"/>
+<wire x1="383.54" y1="279.4" x2="396.24" y2="279.4" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$32" class="0">
+<segment>
+<pinref part="Q2" gate="G$1" pin="D"/>
+<wire x1="436.88" y1="241.3" x2="436.88" y2="236.22" width="0.1524" layer="91"/>
+<wire x1="436.88" y1="236.22" x2="429.26" y2="236.22" width="0.1524" layer="91"/>
+<pinref part="Q3" gate="G$1" pin="G"/>
+<wire x1="429.26" y1="236.22" x2="419.1" y2="246.38" width="0.1524" layer="91"/>
+<pinref part="R3" gate="G$1" pin="1"/>
+<junction x="436.88" y="236.22"/>
+</segment>
+</net>
+<net name="N$35" class="0">
+<segment>
+<pinref part="Q2" gate="G$1" pin="G"/>
+<wire x1="429.26" y1="246.38" x2="419.1" y2="236.22" width="0.1524" layer="91"/>
+<wire x1="419.1" y1="236.22" x2="411.48" y2="236.22" width="0.1524" layer="91"/>
+<pinref part="Q3" gate="G$1" pin="D"/>
+<wire x1="411.48" y1="236.22" x2="411.48" y2="241.3" width="0.1524" layer="91"/>
+<wire x1="411.48" y1="236.22" x2="403.86" y2="236.22" width="0.1524" layer="91"/>
+<junction x="411.48" y="236.22"/>
+<pinref part="R4" gate="G$1" pin="1"/>
+<wire x1="403.86" y1="236.22" x2="403.86" y2="241.3" width="0.1524" layer="91"/>
+<pinref part="J4" gate="G$1" pin="2"/>
+<wire x1="403.86" y1="236.22" x2="365.76" y2="236.22" width="0.1524" layer="91"/>
+<junction x="403.86" y="236.22"/>
+</segment>
+</net>
+<net name="N$36" class="0">
+<segment>
+<pinref part="R5" gate="G$1" pin="2"/>
+<pinref part="R6" gate="G$1" pin="1"/>
+<wire x1="396.24" y1="317.5" x2="398.78" y2="317.5" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$39" class="0">
+<segment>
+<pinref part="R6" gate="G$1" pin="2"/>
+<pinref part="R7" gate="G$1" pin="1"/>
+<wire x1="408.94" y1="317.5" x2="411.48" y2="317.5" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
@@ -9003,6 +9544,11 @@ which will not be processed correctly with this version.
 Since Version 8.3, EAGLE supports URNs for individual library
 assets (packages, symbols, and devices). The URNs of those assets
 will not be understood (or retained) with this version.
+</note>
+<note version="8.3" severity="warning">
+Since Version 8.3, EAGLE supports the association of 3D packages
+with devices in libraries, schematics, and board files. Those 3D
+packages will not be understood (or retained) with this version.
 </note>
 <note version="8.4" severity="warning">
 Since Version 8.4, EAGLE supports properties for SPICE simulation. 
