@@ -1,11 +1,17 @@
 - Rev5 Todo
     
+    - Connect MCP73831 STAT to STM32
+        - So STM32 can monitor charging status
+    
+    - Connect VDD_BAT to STM32
+        - So STM32 it can measure the voltage
+    
     - Add bypass caps to all new components
-        - Flash: W25Q40EWUXIE
+        √ Flash: W25Q40EWUXIE
         - Battery charger: MCP73831
         - Power mux: TPS2116
         - LDO: AP7350-33CF4-7
-        - Level shifters: NXP-NTB0102
+        √ Level shifters: NXP-NTB0102
     
     - Add battery terminal
     
