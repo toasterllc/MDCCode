@@ -1,5 +1,9 @@
 - Rev5 Todo
     
+    - Measure inrush current to see if it's in-spec
+        - We have several 10u capacitors on VDD_USB, which is more than the USB spec allows (max 10uF),
+          but that's OK if the inrush current isn't exceeded
+    
     - Connect MCP73831 STAT to STM32
         - So STM32 can monitor charging status
     
