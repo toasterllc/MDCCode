@@ -1,34 +1,17 @@
 - Rev5 Todo
     
-    - Replace TPS63805 power supply with TPS62802, outputting 2.8V
-    
-    - Buy more TPS62802 if needed
+    - Add reverse current protection for VDD_A_3V3 LDO
+        - Consider case: input power is instantly disconnected, so Vout>Vin. Do we need to protect LDO from reverse current?
+            - From TPS7A02 datasheet: "This reverse current flow can cause damage to the device."
     
     - Add bypass caps to all new components
     
-    - Add TPS2116 power mux to switch between USB power and battery power
+    - Add battery terminal
     
-    - Add reverse polarity protection in case the battery is inserted backwards:
-        https://www.analog.com/media/en/technical-documentation/application-notes/an-171_an-1568.pdf
-        Use PMOS design
+    - Cancel order for TPS63805 if we no longer need it
     
-    - Add battery
-    
-    - Add LIPO charger circuit
-        √ MCP73831
-        - DIO5518B
-        - DIO5508CD10
-    
-    - Add LDO to provide VDD_A
-        - Consider case: input power is instantly disconnected, so Vout>Vin. Do we need to protect LDO from reverse current?
-            - From TPS7A02 datasheet: "This reverse current flow can cause damage to the device."
-        - AP7350-33CF4-7 looks like a good option
-            - Vout = 3.3V
-            - Iout,max = 150mA
-            - Iq = .25µA
-    
-    - Add flash for ICE40 (instead of using NVCM)
-        - W25Q40EWUXIE looks good (DigiKey)
+    - Buy more TPS62802 if needed
+        - Don' think we do -- we already have 2 outstanding orders for 225 total
     
     - Create new connection:
         - Name:     ICE_ST_SPI_D_READY
@@ -63,6 +46,30 @@
     - Replace uses of RefCounted with just std::shared_ptr with a custom deleter?
       For example, there's no need to make syscalls to retain/release an io_service_t,
       when we can just use regular memory management right?
+    
+    √ Add flash for ICE40 (instead of using NVCM)
+        - W25Q40EWUXIE looks good (DigiKey)
+    
+    √ Add LDO to provide VDD_A_3V3
+        - AP7350-33CF4-7 looks like a good option
+            - Vout = 3.3V
+            - Iout,max = 150mA
+            - Iq = .25µA
+    
+    √ Add LIPO charger circuit
+        √ MCP73831
+        - DIO5518B
+        - DIO5508CD10
+    
+    √ Add reverse polarity protection in case the battery is inserted backwards:
+        https://www.analog.com/media/en/technical-documentation/application-notes/an-171_an-1568.pdf
+        Use PMOS design
+    
+    √ Add TPS2116 power mux to switch between USB power and battery power
+    
+    √ Replace TPS63805 power supply with TPS62802, outputting 2.8V
+    
+    √ Remove ICE_MSP_SPI_DATA_DIR now that we have the direction-sensing level shifters
     
     √ For VDD_A, is it more efficient to use an LDO or a buck (TPS62802)?
         - LDO!

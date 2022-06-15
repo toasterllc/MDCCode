@@ -5626,13 +5626,6 @@ away with a smaller capacitor.</text>
 <label x="58.42" y="22.86" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_DATA_DIR" class="0">
-<segment>
-<wire x1="35.56" y1="71.12" x2="33.02" y2="71.12" width="0.1524" layer="91"/>
-<label x="33.02" y="71.12" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U12" gate="B" pin="PA.3/P1.3/UCB0SOMI/UCB0SCL/MCLK/A3"/>
-</segment>
-</net>
 <net name="ICE_MSP_SPI_CLK" class="0">
 <segment>
 <pinref part="U21" gate="G$1" pin="A1"/>
