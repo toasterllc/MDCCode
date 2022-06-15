@@ -2442,6 +2442,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-15.447321875" y="-75.300821875" size="1.27" layer="25" font="vector"/>
 <attribute name="PN" value="10129380-902002ALF" x="-20.2" y="-70.6" size="1.778" layer="27" display="off"/>
 </element>
+<element name="R36" library="EagleLibrary" package="0402" value="100k" x="-14.7" y="-82.5" smashed="yes">
+<attribute name="MFG" value="Stackpole" x="-14.7" y="-82.5" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.454" y="-81.944" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="RMCF0402JT100K" x="-14.7" y="-82.5" size="1.778" layer="27" display="off"/>
+</element>
 </elements>
 <signals>
 <signal name="VDD_B">
@@ -3487,6 +3492,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R8" pad="2"/>
 <contactref element="J14" pad="1"/>
 <contactref element="J14" pad="2"/>
+<contactref element="R36" pad="2"/>
 <wire x1="121.9325" y1="35.3" x2="120.9377" y2="37.7" width="0" layer="19" extent="1-1"/>
 <wire x1="119.8296" y1="29.5" x2="121.9325" y2="35.3" width="0" layer="19" extent="1-1"/>
 <wire x1="119.8296" y1="28.85" x2="119.8296" y2="29.5" width="0" layer="19" extent="1-1"/>
@@ -3828,6 +3834,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-14.2675" y1="-57" x2="-14.2675" y2="-37.3" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.77" y1="-68.885" x2="-14.2675" y2="-57" width="0" layer="19" extent="1-1"/>
 <wire x1="-12.23" y1="-72.315" x2="-14.77" y2="-68.885" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.2675" y1="-82.5" x2="-12.23" y2="-72.315" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="ICE_IMG_CLK16MHZ">
 <contactref element="U15" pad="C11"/>
@@ -6989,11 +6996,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="30.48" y="6.35"/>
 </polygon>
 <contactref element="U28" pad="1"/>
-<contactref element="U11" pad="3"/>
-<contactref element="U11" pad="5"/>
 <contactref element="U16" pad="4"/>
 <contactref element="R5" pad="1"/>
 <contactref element="J13" pad="2"/>
+<contactref element="R36" pad="1"/>
+<contactref element="U11" pad="3"/>
+<contactref element="U11" pad="5"/>
 <wire x1="102.6644" y1="4.25" x2="102.8296" y2="17.65" width="0" layer="19" extent="1-1"/>
 <wire x1="72.74" y1="4.65" x2="102.6644" y2="4.25" width="0" layer="19" extent="1-1"/>
 <wire x1="71.26" y1="5.15" x2="72.74" y2="4.65" width="0" layer="19" extent="1-1"/>
@@ -7004,6 +7012,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="23.368" y1="5.5626" x2="24.13" y2="5.5626" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.1325" y1="-49.8" x2="23.368" y2="5.5626" width="0" layer="19" extent="1-1"/>
 <wire x1="-12.23" y1="-64.615" x2="-15.1325" y2="-49.8" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.1325" y1="-82.5" x2="-12.23" y2="-64.615" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_1V8_STM">
 <contactref element="U19" pad="C5"/>
@@ -7802,6 +7811,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U28" pad="5"/>
 <contactref element="U28" pad="3"/>
 <contactref element="J15" pad="2"/>
+<contactref element="U30" pad="1"/>
+<contactref element="C20" pad="1"/>
+<wire x1="121.0675" y1="35.3" x2="120.9377" y2="38.35" width="0" layer="19" extent="1-1"/>
+<wire x1="104.7704" y1="17" x2="121.0675" y2="35.3" width="0" layer="19" extent="1-1"/>
 <wire x1="102.8296" y1="16.35" x2="104.7704" y2="17" width="0" layer="19" extent="1-1"/>
 <wire x1="64.343" y1="38.215" x2="102.8296" y2="16.35" width="0" layer="19" extent="1-1"/>
 <wire x1="64.343" y1="41.009" x2="64.343" y2="38.215" width="0" layer="19" extent="1-1"/>
@@ -8092,11 +8105,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="Q10" pad="6" route="any" routetag="G$1.D"/>
 <contactref element="J12" pad="1"/>
 <wire x1="90.165" y1="10.4" x2="103.43" y2="23.915" width="0" layer="19" extent="1-1"/>
-</signal>
-<signal name="VDD_USB_3V3">
-<contactref element="U30" pad="1"/>
-<contactref element="C20" pad="1"/>
-<wire x1="121.0675" y1="35.3" x2="120.9377" y2="38.35" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$33">
 <contactref element="R11" pad="1"/>

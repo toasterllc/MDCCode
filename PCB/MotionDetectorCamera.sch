@@ -4464,6 +4464,10 @@ Charger</text>
 <part name="J13" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
 <part name="J14" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
 <part name="J15" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
+<part name="R36" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
+<attribute name="MFG" value="Stackpole"/>
+<attribute name="PN" value="RMCF0402JT100K"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -4516,6 +4520,8 @@ charge current:
 I = 1000 / R
 I = 1000 / 2.7k
 I = 370 mA</text>
+<text x="149.606" y="453.136" size="1.016" layer="95" rot="MR0" align="top-left">Pulldown ensures that VDD_USB can
+be safely used as a binary signal</text>
 </plain>
 <instances>
 <instance part="C6" gate="G$1" x="167.64" y="309.88" smashed="yes">
@@ -4746,8 +4752,8 @@ I = 370 mA</text>
 <attribute name="MFG" x="187.96" y="381" size="1.778" layer="96" rot="MR90" display="off"/>
 <attribute name="PN" x="187.96" y="381" size="1.778" layer="96" rot="MR90" display="off"/>
 </instance>
-<instance part="J4" gate="G$1" x="147.32" y="375.92" smashed="yes">
-<attribute name="NAME" x="146.05" y="378.46" size="1.778" layer="95" align="top-left"/>
+<instance part="J4" gate="G$1" x="142.24" y="375.92" smashed="yes">
+<attribute name="NAME" x="140.97" y="378.46" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="R5" gate="G$1" x="175.26" y="452.12" smashed="yes" rot="MR180">
 <attribute name="NAME" x="178.562" y="456.946" size="1.778" layer="95" rot="MR0"/>
@@ -4773,14 +4779,20 @@ I = 370 mA</text>
 <attribute name="MFG" x="205.74" y="444.5" size="1.778" layer="96" rot="MR270" display="off"/>
 <attribute name="PN" x="205.74" y="444.5" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
-<instance part="J13" gate="G$1" x="147.32" y="467.36" smashed="yes">
-<attribute name="NAME" x="146.05" y="469.9" size="1.778" layer="95" align="top-left"/>
+<instance part="J13" gate="G$1" x="139.7" y="467.36" smashed="yes">
+<attribute name="NAME" x="138.43" y="469.9" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="J14" gate="G$1" x="147.32" y="429.26" smashed="yes">
-<attribute name="NAME" x="146.05" y="431.8" size="1.778" layer="95" align="top-left"/>
+<instance part="J14" gate="G$1" x="142.24" y="429.26" smashed="yes">
+<attribute name="NAME" x="140.97" y="431.8" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="J15" gate="G$1" x="342.9" y="467.36" smashed="yes">
 <attribute name="NAME" x="341.63" y="469.9" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="R36" gate="G$1" x="152.4" y="452.12" smashed="yes" rot="MR270">
+<attribute name="NAME" x="154.686" y="453.898" size="1.778" layer="95" rot="MR180"/>
+<attribute name="VALUE" x="154.686" y="451.358" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MFG" x="152.4" y="452.12" size="1.778" layer="96" rot="MR270" display="off"/>
+<attribute name="PN" x="152.4" y="452.12" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -5041,11 +5053,16 @@ I = 370 mA</text>
 </segment>
 <segment>
 <pinref part="J14" gate="G$1" pin="1"/>
-<wire x1="147.32" y1="424.18" x2="144.78" y2="424.18" width="0.1524" layer="91"/>
+<wire x1="142.24" y1="424.18" x2="139.7" y2="424.18" width="0.1524" layer="91"/>
 <pinref part="J14" gate="G$1" pin="2"/>
-<wire x1="149.86" y1="424.18" x2="147.32" y2="424.18" width="0.1524" layer="91"/>
-<junction x="147.32" y="424.18"/>
-<label x="144.78" y="424.18" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="144.78" y1="424.18" x2="142.24" y2="424.18" width="0.1524" layer="91"/>
+<junction x="142.24" y="424.18"/>
+<label x="139.7" y="424.18" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="R36" gate="G$1" pin="2"/>
+<wire x1="152.4" y1="447.04" x2="152.4" y2="444.5" width="0.1524" layer="91"/>
+<label x="152.4" y="444.5" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -5183,11 +5200,6 @@ I = 370 mA</text>
 <pinref part="U28" gate="G$1" pin="IN1"/>
 </segment>
 <segment>
-<pinref part="U11" gate="G$1" pin="VIN1"/>
-<pinref part="U11" gate="G$1" pin="MODE"/>
-<wire x1="231.14" y1="462.28" x2="231.14" y2="457.2" width="0.1524" layer="91"/>
-<junction x="231.14" y="462.28"/>
-<wire x1="231.14" y1="462.28" x2="162.56" y2="462.28" width="0.1524" layer="91"/>
 <pinref part="U16" gate="G$1" pin="VDD"/>
 <wire x1="180.34" y1="424.18" x2="162.56" y2="424.18" width="0.1524" layer="91"/>
 <wire x1="162.56" y1="424.18" x2="162.56" y2="452.12" width="0.1524" layer="91"/>
@@ -5196,11 +5208,19 @@ I = 370 mA</text>
 <wire x1="170.18" y1="452.12" x2="162.56" y2="452.12" width="0.1524" layer="91"/>
 <junction x="162.56" y="452.12"/>
 <pinref part="J13" gate="G$1" pin="2"/>
-<wire x1="149.86" y1="462.28" x2="162.56" y2="462.28" width="0.1524" layer="91"/>
+<wire x1="142.24" y1="462.28" x2="152.4" y2="462.28" width="0.1524" layer="91"/>
+<label x="152.4" y="467.36" size="1.778" layer="95"/>
+<wire x1="152.4" y1="462.28" x2="162.56" y2="462.28" width="0.1524" layer="91"/>
+<pinref part="R36" gate="G$1" pin="1"/>
+<wire x1="152.4" y1="457.2" x2="152.4" y2="462.28" width="0.1524" layer="91"/>
+<junction x="152.4" y="462.28"/>
+<wire x1="152.4" y1="462.28" x2="152.4" y2="467.36" width="0.1524" layer="91"/>
+<pinref part="U11" gate="G$1" pin="MODE"/>
+<pinref part="U11" gate="G$1" pin="VIN1"/>
+<wire x1="231.14" y1="462.28" x2="231.14" y2="457.2" width="0.1524" layer="91"/>
+<wire x1="162.56" y1="462.28" x2="231.14" y2="462.28" width="0.1524" layer="91"/>
 <junction x="162.56" y="462.28"/>
-<label x="162.56" y="467.36" size="1.778" layer="95"/>
-<wire x1="162.56" y1="462.28" x2="162.56" y2="467.36" width="0.1524" layer="91"/>
-<junction x="162.56" y="462.28"/>
+<junction x="231.14" y="462.28"/>
 </segment>
 </net>
 <net name="VDD_1V8_STM" class="0">
@@ -5285,6 +5305,16 @@ I = 370 mA</text>
 <wire x1="345.44" y1="462.28" x2="347.98" y2="462.28" width="0.1524" layer="91"/>
 <label x="347.98" y="462.28" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="U30" gate="G$1" pin="VIN"/>
+<wire x1="205.74" y1="5.08" x2="203.2" y2="5.08" width="0.1524" layer="91"/>
+<label x="203.2" y="5.08" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="C20" gate="G$1" pin="1"/>
+<wire x1="175.26" y1="5.08" x2="175.26" y2="7.62" width="0.1524" layer="91"/>
+<label x="175.26" y="7.62" size="1.778" layer="95" align="bottom-right"/>
+</segment>
 </net>
 <net name="VDD_3V3_STM" class="0">
 <segment>
@@ -5299,8 +5329,8 @@ I = 370 mA</text>
 <net name="VDD_USB_IN" class="0">
 <segment>
 <pinref part="J13" gate="G$1" pin="1"/>
-<wire x1="147.32" y1="462.28" x2="144.78" y2="462.28" width="0.1524" layer="91"/>
-<label x="144.78" y="462.28" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="139.7" y1="462.28" x2="137.16" y2="462.28" width="0.1524" layer="91"/>
+<label x="137.16" y="462.28" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="VDD_1V8_SD" class="0">
@@ -5339,8 +5369,8 @@ I = 370 mA</text>
 <net name="VDD_BAT_IN" class="0">
 <segment>
 <pinref part="J4" gate="G$1" pin="1"/>
-<wire x1="147.32" y1="370.84" x2="144.78" y2="370.84" width="0.1524" layer="91"/>
-<label x="144.78" y="370.84" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="142.24" y1="370.84" x2="139.7" y2="370.84" width="0.1524" layer="91"/>
+<label x="139.7" y="370.84" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="VDD_B_EN" class="0">
@@ -5355,18 +5385,6 @@ I = 370 mA</text>
 <pinref part="Q10" gate="G$1" pin="D"/>
 <pinref part="J12" gate="G$1" pin="1"/>
 <wire x1="304.8" y1="396.24" x2="342.9" y2="396.24" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="VDD_USB_3V3" class="0">
-<segment>
-<pinref part="U30" gate="G$1" pin="VIN"/>
-<wire x1="205.74" y1="5.08" x2="203.2" y2="5.08" width="0.1524" layer="91"/>
-<label x="203.2" y="5.08" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
-<pinref part="C20" gate="G$1" pin="1"/>
-<wire x1="175.26" y1="5.08" x2="175.26" y2="7.62" width="0.1524" layer="91"/>
-<label x="175.26" y="7.62" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="N$33" class="0">
@@ -5438,7 +5456,7 @@ I = 370 mA</text>
 <pinref part="R4" gate="G$1" pin="1"/>
 <wire x1="187.96" y1="370.84" x2="187.96" y2="375.92" width="0.1524" layer="91"/>
 <pinref part="J4" gate="G$1" pin="2"/>
-<wire x1="187.96" y1="370.84" x2="149.86" y2="370.84" width="0.1524" layer="91"/>
+<wire x1="187.96" y1="370.84" x2="144.78" y2="370.84" width="0.1524" layer="91"/>
 <junction x="187.96" y="370.84"/>
 </segment>
 </net>
