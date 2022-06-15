@@ -1442,6 +1442,29 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.17" y="1.476"/>
 </polygon>
 </package>
+<package name="ROHM-SOD-123FL" urn="urn:adsk.eagle:footprint:28823522/1" locally_modified="yes">
+<description>SODFL, 3.50 mm span, 2.60 X 1.60 X 0.90 mm body
+&lt;p&gt;SODFL package with 3.50 mm span with body size 2.60 X 1.60 X 0.90 mm&lt;/p&gt;</description>
+<wire x1="2.3364" y1="0.9699" x2="-2.3364" y2="0.9699" width="0.12" layer="21"/>
+<wire x1="-2.3364" y1="0.9699" x2="-2.3364" y2="-0.9699" width="0.12" layer="21"/>
+<wire x1="-2.3364" y1="-0.9699" x2="2.3364" y2="-0.9699" width="0.12" layer="21"/>
+<smd name="1" x="-1.525" y="0" dx="1.1948" dy="1.3118" layer="1"/>
+<smd name="2" x="1.525" y="0" dx="1.1948" dy="1.3118" layer="1"/>
+<text x="-2.41" y="1.2219" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<wire x1="2.3364" y1="0.9699" x2="2.3364" y2="-0.9699" width="0.12" layer="21"/>
+<polygon width="0.12" layer="39">
+<vertex x="2.3364" y="-0.9699"/>
+<vertex x="-2.3364" y="-0.9699"/>
+<vertex x="-2.3364" y="0.9699"/>
+<vertex x="2.3364" y="0.9699"/>
+</polygon>
+<polygon width="0.127" layer="21">
+<vertex x="2.24" y="0.9"/>
+<vertex x="2.24" y="-0.9"/>
+<vertex x="0.24" y="-0.9"/>
+<vertex x="0.24" y="0.9"/>
+</polygon>
+</package>
 </packages>
 <packages3d>
 <package3d name="SON50P300X200X80-8N" urn="urn:adsk.eagle:package:36180302/1" type="model">
@@ -2484,6 +2507,16 @@ Charger</text>
 <text x="2.032" y="-9.652" size="0.508" layer="94">GND</text>
 <circle x="1.651" y="-2.54" radius="0.762" width="0.254" layer="94"/>
 <wire x1="-2.54" y1="-2.54" x2="0.8382" y2="-2.54" width="0.1524" layer="94"/>
+</symbol>
+<symbol name="DIODE">
+<pin name="A" x="0" y="0" visible="off" length="short"/>
+<pin name="C" x="7.62" y="0" visible="off" length="short" rot="R180"/>
+<wire x1="2.54" y1="1.905" x2="2.54" y2="-1.905" width="0.254" layer="94"/>
+<wire x1="2.54" y1="-1.905" x2="5.08" y2="0" width="0.254" layer="94"/>
+<wire x1="5.08" y1="0" x2="2.54" y2="1.905" width="0.254" layer="94"/>
+<wire x1="5.08" y1="1.524" x2="5.08" y2="0" width="0.254" layer="94"/>
+<wire x1="5.08" y1="0" x2="5.08" y2="-1.524" width="0.254" layer="94"/>
+<text x="2.032" y="3.556" size="1.778" layer="95">&gt;NAME</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -3732,6 +3765,25 @@ Charger</text>
 </device>
 </devices>
 </deviceset>
+<deviceset name="ROHM-RB168MM-40" prefix="D">
+<gates>
+<gate name="G$1" symbol="DIODE" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="ROHM-SOD-123FL">
+<connects>
+<connect gate="G$1" pin="A" pad="1"/>
+<connect gate="G$1" pin="C" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="ROHM"/>
+<attribute name="PN" value="RB168MM-40"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 </libraries>
@@ -4425,6 +4477,7 @@ Charger</text>
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402JR-0710KL"/>
 </part>
+<part name="D1" library="EagleLibrary" deviceset="ROHM-RB168MM-40" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -4474,6 +4527,22 @@ I = 370 mA</text>
 be safely used as a binary signal</text>
 <text x="213.106" y="207.01" size="1.27" layer="95" align="top-left">≤ 1%
 ≤ 200 ppm/°C </text>
+<text x="293.624" y="487.934" size="0.508" layer="95" align="top-left">Schottky diode prevents reverse
+current through LDO when battery
+is disconnected.
+
+(When the battery is disconnected,
+it could be the case that the LDO's
+VOUT &gt; VIN, causing reverse current.)
+
+Diode requirements:
+
+- Low Vf (forward voltage)
+    so that it activates on a small VOUT-VIN delta
+
+- Ir (reverse leakage) &lt; 1µA
+    to minimize leakage when in battery-mode,
+    since this leakage will be constant</text>
 </plain>
 <instances>
 <instance part="C6" gate="G$1" x="167.64" y="309.88" smashed="yes">
@@ -4729,6 +4798,9 @@ be safely used as a binary signal</text>
 <attribute name="VALUE" x="212.852" y="209.55" size="1.778" layer="96" align="top-left"/>
 <attribute name="MFG" x="210.82" y="208.28" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="210.82" y="208.28" size="1.778" layer="96" rot="R90" display="off"/>
+</instance>
+<instance part="D1" gate="G$1" x="302.26" y="472.44" smashed="yes" rot="MR0">
+<attribute name="NAME" x="302.768" y="468.376" size="1.778" layer="95" rot="MR0"/>
 </instance>
 </instances>
 <busses>
@@ -5297,6 +5369,9 @@ be safely used as a binary signal</text>
 <pinref part="Q10" gate="G$1" pin="S"/>
 <wire x1="294.64" y1="396.24" x2="261.62" y2="396.24" width="0.1524" layer="91"/>
 <wire x1="261.62" y1="462.28" x2="261.62" y2="396.24" width="0.1524" layer="91"/>
+<pinref part="D1" gate="G$1" pin="C"/>
+<wire x1="294.64" y1="472.44" x2="287.02" y2="472.44" width="0.1524" layer="91"/>
+<wire x1="287.02" y1="472.44" x2="287.02" y2="462.28" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$42" class="0">
@@ -5362,6 +5437,10 @@ be safely used as a binary signal</text>
 <pinref part="J15" gate="G$1" pin="1"/>
 <wire x1="309.88" y1="462.28" x2="342.9" y2="462.28" width="0.1524" layer="91"/>
 <pinref part="U2" gate="G$1" pin="VOUT"/>
+<wire x1="309.88" y1="462.28" x2="309.88" y2="472.44" width="0.1524" layer="91"/>
+<junction x="309.88" y="462.28"/>
+<pinref part="D1" gate="G$1" pin="A"/>
+<wire x1="309.88" y1="472.44" x2="302.26" y2="472.44" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$6" class="0">

@@ -1376,6 +1376,29 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.17" y="1.476"/>
 </polygon>
 </package>
+<package name="ROHM-SOD-123FL" urn="urn:adsk.eagle:footprint:28823522/1" locally_modified="yes">
+<description>SODFL, 3.50 mm span, 2.60 X 1.60 X 0.90 mm body
+&lt;p&gt;SODFL package with 3.50 mm span with body size 2.60 X 1.60 X 0.90 mm&lt;/p&gt;</description>
+<wire x1="2.3364" y1="0.9699" x2="-2.3364" y2="0.9699" width="0.12" layer="21"/>
+<wire x1="-2.3364" y1="0.9699" x2="-2.3364" y2="-0.9699" width="0.12" layer="21"/>
+<wire x1="-2.3364" y1="-0.9699" x2="2.3364" y2="-0.9699" width="0.12" layer="21"/>
+<smd name="1" x="-1.525" y="0" dx="1.1948" dy="1.3118" layer="1"/>
+<smd name="2" x="1.525" y="0" dx="1.1948" dy="1.3118" layer="1"/>
+<text x="-2.41" y="1.2219" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<wire x1="2.3364" y1="0.9699" x2="2.3364" y2="-0.9699" width="0.12" layer="21"/>
+<polygon width="0.12" layer="39">
+<vertex x="2.3364" y="-0.9699"/>
+<vertex x="-2.3364" y="-0.9699"/>
+<vertex x="-2.3364" y="0.9699"/>
+<vertex x="2.3364" y="0.9699"/>
+</polygon>
+<polygon width="0.127" layer="21">
+<vertex x="2.24" y="0.9"/>
+<vertex x="2.24" y="-0.9"/>
+<vertex x="0.24" y="-0.9"/>
+<vertex x="0.24" y="0.9"/>
+</polygon>
+</package>
 </packages>
 <packages3d>
 <package3d name="SON50P300X200X80-8N" urn="urn:adsk.eagle:package:36180302/1" type="model">
@@ -2412,6 +2435,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="MFG" value="Yageo" x="-14.7" y="-110.1" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-15.454" y="-109.544" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="RC0402JR-0710KL" x="-14.7" y="-110.1" size="1.778" layer="27" display="off"/>
+</element>
+<element name="D1" library="EagleLibrary" package="ROHM-SOD-123FL" value="ROHM-RB168MM-40" x="-13" y="-114.2" smashed="yes">
+<attribute name="MFG" value="ROHM" x="-13" y="-114.2" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.41" y="-112.9781" size="1.27" layer="25" font="vector"/>
+<attribute name="PN" value="RB168MM-40" x="-13" y="-114.2" size="1.778" layer="27" display="off"/>
 </element>
 </elements>
 <signals>
@@ -8085,11 +8113,13 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U11" pad="7"/>
 <contactref element="Q10" pad="4"/>
 <contactref element="Q10" pad="8"/>
-<wire x1="91.1" y1="9.625" x2="92.035" y2="9.75" width="0" layer="19" extent="1-1"/>
-<wire x1="72.74" y1="5.65" x2="91.1" y2="9.625" width="0" layer="19" extent="1-1"/>
-<wire x1="71.26" y1="5.65" x2="72.74" y2="5.65" width="0" layer="19" extent="1-1"/>
+<contactref element="D1" pad="2"/>
+<wire x1="71.26" y1="5.65" x2="-11.475" y2="-114.2" width="0" layer="19" extent="1-1"/>
+<wire x1="72.74" y1="5.65" x2="71.26" y2="5.65" width="0" layer="19" extent="1-1"/>
 <wire x1="71.525" y1="8.475" x2="71.26" y2="5.65" width="0" layer="19" extent="1-1"/>
 <wire x1="71.875" y1="8.475" x2="71.525" y2="8.475" width="0" layer="19" extent="1-1"/>
+<wire x1="91.1" y1="9.625" x2="72.74" y2="5.65" width="0" layer="19" extent="1-1"/>
+<wire x1="92.035" y1="9.75" x2="91.1" y2="9.625" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$42">
 <contactref element="U11" pad="4"/>
@@ -8140,6 +8170,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <signal name="N$3">
 <contactref element="J15" pad="1"/>
 <contactref element="U2" pad="3"/>
+<contactref element="D1" pad="1"/>
+<wire x1="-14.77" y1="-76.585" x2="-14.525" y2="-114.2" width="0" layer="19" extent="1-1"/>
 <wire x1="71.875" y1="8.125" x2="-14.77" y2="-76.585" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$6">

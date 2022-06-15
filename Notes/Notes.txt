@@ -1,9 +1,5 @@
 - Rev5 Todo
     
-    - Add reverse current protection for VDD_A_3V3 LDO
-        - Consider case: input power is instantly disconnected, so Vout>Vin. Do we need to protect LDO from reverse current?
-            - From TPS7A02 datasheet: "This reverse current flow can cause damage to the device."
-    
     - Add bypass caps to all new components
     
     - Add battery terminal
@@ -46,6 +42,10 @@
     - Replace uses of RefCounted with just std::shared_ptr with a custom deleter?
       For example, there's no need to make syscalls to retain/release an io_service_t,
       when we can just use regular memory management right?
+    
+    √ Add reverse current protection for VDD_A_3V3 LDO
+        - Consider case: input power is instantly disconnected, so Vout>Vin. Do we need to protect LDO from reverse current?
+            - From TPS7A02 datasheet: "This reverse current flow can cause damage to the device."
     
     √ Add flash for ICE40 (instead of using NVCM)
         - W25Q40EWUXIE looks good (DigiKey)
