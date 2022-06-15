@@ -11,7 +11,7 @@
     - Cancel order for TPS63805 if we no longer need it
     
     - Buy more TPS62802 if needed
-        - Don' think we do -- we already have 2 outstanding orders for 225 total
+        - Don't think we do -- we already have 2 outstanding orders for 225 total
     
     - Create new connection:
         - Name:     ICE_ST_SPI_D_READY
