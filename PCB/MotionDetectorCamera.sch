@@ -4388,21 +4388,21 @@ Charger</text>
 <sheet>
 <description>VDD</description>
 <plain>
-<text x="12.7" y="38.1" size="3.81" layer="95" align="top-left">VDD_1V8_STM
-- Battery:  VDD_1V8_STM = HiZ
-- USB:      VDD_1V8_STM = VDD_1V8</text>
+<text x="12.7" y="38.1" size="3.81" layer="95" align="top-left">VDD_B_1V8_STM
+- Battery:  VDD_B_1V8_STM = HiZ
+- USB:      VDD_B_1V8_STM = VDD_B_1V8</text>
 <text x="12.7" y="457.2" size="3.81" layer="95" align="top-left">VDD_A</text>
 <text x="12.7" y="401.32" size="3.81" layer="95" align="top-left">VDD_B</text>
-<text x="12.7" y="317.5" size="3.81" layer="95" align="top-left">VDD_1V2</text>
-<text x="12.7" y="269.24" size="3.81" layer="95" align="top-left">VDD_1V8</text>
-<text x="12.7" y="218.44" size="3.81" layer="95" align="top-left">VDD_2V8</text>
-<text x="12.7" y="160.02" size="3.81" layer="95" align="top-left">VDD_1V8_IMG</text>
-<text x="12.7" y="129.54" size="3.81" layer="95" align="top-left">VDD_2V8_IMG</text>
-<text x="12.7" y="99.06" size="3.81" layer="95" align="top-left">VDD_2V8_SD</text>
-<text x="12.7" y="7.62" size="3.81" layer="95" align="top-left">VDD_3V3_STM
-- Battery:  VDD_3V3_STM = HiZ
-- USB:      VDD_3V3_STM = VDD_USB_3V3</text>
-<text x="12.7" y="71.12" size="3.81" layer="95" align="top-left">VDD_2V8_SD</text>
+<text x="12.7" y="317.5" size="3.81" layer="95" align="top-left">VDD_B_1V2</text>
+<text x="12.7" y="269.24" size="3.81" layer="95" align="top-left">VDD_B_1V8</text>
+<text x="12.7" y="218.44" size="3.81" layer="95" align="top-left">VDD_B_2V8</text>
+<text x="12.7" y="160.02" size="3.81" layer="95" align="top-left">VDD_B_1V8_IMG</text>
+<text x="12.7" y="129.54" size="3.81" layer="95" align="top-left">VDD_B_2V8_IMG</text>
+<text x="12.7" y="99.06" size="3.81" layer="95" align="top-left">VDD_B_2V8_SD</text>
+<text x="12.7" y="7.62" size="3.81" layer="95" align="top-left">VDD_B_3V3_STM
+- Battery:  VDD_B_3V3_STM = HiZ
+- USB:      VDD_B_3V3_STM = VDD_A_3V3</text>
+<text x="12.7" y="71.12" size="3.81" layer="95" align="top-left">VDD_B_2V8_SD</text>
 <text x="180.594" y="-4.826" size="1.016" layer="95" align="top-left">STM32's VDDUSB is supposed to rise
 after its VDD (VDD_1V8_STM)</text>
 <wire x1="189.992" y1="-4.318" x2="195.326" y2="1.778" width="0.1524" layer="95"/>
