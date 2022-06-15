@@ -4575,6 +4575,12 @@ Diode requirements:
 - Ir (reverse leakage) &lt; 1µA
     to minimize leakage when in battery-mode,
     since this leakage will be constant</text>
+<text x="178.816" y="448.056" size="1.016" layer="95" align="top-left">Voltage divider sets VIN2 -&gt; VIN1
+switch voltage to 4V.
+
+That is, when VDD_USB reaches 4V,
+PR1=1V=VREF, so TPS2116 switches
+its VOUT to be sourced by VDD_USB.</text>
 </plain>
 <instances>
 <instance part="C6" gate="G$1" x="167.64" y="309.88" smashed="yes">
