@@ -1,6 +1,11 @@
 - Rev5 Todo
     
     - Add bypass caps to all new components
+        - Flash: W25Q40EWUXIE
+        - Battery charger: MCP73831
+        - Power mux: TPS2116
+        - LDO: AP7350-33CF4-7
+        - Level shifters: NXP-NTB0102
     
     - Add battery terminal
     

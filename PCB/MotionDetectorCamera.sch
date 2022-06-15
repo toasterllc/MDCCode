@@ -5886,6 +5886,18 @@ below the chip.</text>
 <text x="-30.48" y="-98.298" size="0.508" layer="95">Keep these RC filter components
 small so they can be mounted
 below the chip.</text>
+<text x="72.644" y="-164.846" size="0.508" layer="95" align="top-left">From W25Q40EWUXIE datasheet:
+
+"Note that the chip select pin (/CS) must track the VCC
+supply level at power-up until the VCC-min level and
+tVSL time delay is reached. If needed a pull-up resister
+on /CS can be used to accomplish this."
+
+We accomplish this because ICE40 has an internal
+pullup on its SPI_SS_B, which is connected to
+ICE_ST_SPI_CS_, so the output of the OR gate
+should be a high voltage during power up.</text>
+<wire x1="76.2" y1="-162.56" x2="78.994" y2="-150.876" width="0.1524" layer="95"/>
 </plain>
 <instances>
 <instance part="C34" gate="G$1" x="-25.4" y="-43.18" smashed="yes">
