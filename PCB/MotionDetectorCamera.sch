@@ -4568,7 +4568,9 @@ Charger</text>
 <attribute name="MFG" value="Stackpole"/>
 <attribute name="PN" value="RMCF0402JT100K"/>
 </part>
-<part name="U13" library="EagleLibrary" deviceset="EATON-STN101" device=""/>
+<part name="U13" library="EagleLibrary" deviceset="EATON-STN101" device="">
+<attribute name="PN" value="STN101050B101"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -4977,7 +4979,8 @@ Requirements:
 <attribute name="PN" x="287.02" y="365.76" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
 <instance part="U13" gate="G$1" x="147.32" y="345.44" smashed="yes" rot="MR270">
-<attribute name="NAME" x="147.32" y="345.44" size="1.778" layer="95" align="top-right"/>
+<attribute name="NAME" x="146.558" y="345.44" size="1.778" layer="95" align="top-right"/>
+<attribute name="PN" x="147.32" y="345.44" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
 </instances>
 <busses>

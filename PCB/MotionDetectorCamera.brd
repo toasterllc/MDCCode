@@ -2522,6 +2522,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="U13" library="EagleLibrary" package="EATON-STN101" value="EATON-STN101" x="-15" y="-173.7" smashed="yes">
 <attribute name="MFG" value="Eaton" x="-15" y="-173.7" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-15.645559375" y="-173.24761875" size="0.762" layer="25" font="vector"/>
+<attribute name="PN" value="STN101050B101" x="-15" y="-173.7" size="1.778" layer="27" display="off"/>
 </element>
 </elements>
 <signals>

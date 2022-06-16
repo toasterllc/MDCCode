@@ -1,16 +1,5 @@
 - Rev5 Board
     
-    - Consider moving ICE_MSP_SPI_DATA to K3
-        - On Rev4, ICE_MSP_SPI_DATA is assigned to K1, which is a PIO pair with J1,
-          forcing them to share the same clock. J1 is ram_dq[15], which uses `ram_clk`,
-          which clearly can't be used for ICE_MSP_SPI_DATA.
-          
-        - We can move ICE_MSP_SPI_DATA to K3 if we don't need ICE_MSP_SPI_AUX
-            - K3 doesn't share a PIO with anything -- it's independent
-    
-    - Move ICE_MSP_SPI_CLK to K2 to be closer to ICE_MSP_SPI_DATA, also free up K1
-      (which is high-value since it's on the edge)
-    
     - Add battery terminal
     
     - Switch USB receptacle to USB-C
@@ -49,6 +38,17 @@
 
 
 - Rev5 Done
+    
+    √ Consider moving ICE_MSP_SPI_DATA to K3
+        - On Rev4, ICE_MSP_SPI_DATA is assigned to K1, which is a PIO pair with J1,
+          forcing them to share the same clock. J1 is ram_dq[15], which uses `ram_clk`,
+          which clearly can't be used for ICE_MSP_SPI_DATA.
+          
+        - We can move ICE_MSP_SPI_DATA to K3 if we don't need ICE_MSP_SPI_AUX
+            - K3 doesn't share a PIO with anything -- it's independent
+    
+    √ Move ICE_MSP_SPI_CLK to K2 to be closer to ICE_MSP_SPI_DATA, also free up K1
+      (which is high-value since it's on the edge)
     
     √ Create new connection:
         - Name:     ICE_ST_SPI_D_READY
