@@ -7014,23 +7014,19 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="64.343" y1="41.359" x2="13.712" y2="14.8926" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="ICE_MSP_SPI_CLK">
-<contactref element="U15" pad="K1"/>
 <via x="12.941303125" y="23.708359375" extent="1-16" drill="0.254"/>
-<wire x1="13.2744" y1="24.113" x2="13.2744" y2="24.04145625" width="0.127" layer="1"/>
-<wire x1="13.2744" y1="24.04145625" x2="12.941303125" y2="23.708359375" width="0.127" layer="1"/>
 <wire x1="13.42588125" y1="19.01245625" x2="13.01241875" y2="19.42591875" width="0.127" layer="1"/>
 <via x="13.01241875" y="19.42591875" extent="1-16" drill="0.254"/>
 <wire x1="13.42588125" y1="19.01245625" x2="13.42588125" y2="18.42698125" width="0.127" layer="1"/>
 <wire x1="13.01241875" y1="19.42591875" x2="13.01241875" y2="23.63724375" width="0.127" layer="16"/>
 <wire x1="13.01241875" y1="23.63724375" x2="12.941303125" y2="23.708359375" width="0.127" layer="16"/>
 <contactref element="U21" pad="5"/>
-<wire x1="64.343" y1="40.309" x2="13.42588125" y2="18.42698125" width="0" layer="19" extent="1-1"/>
+<contactref element="U15" pad="K2"/>
+<wire x1="14.0744" y1="24.113" x2="64.343" y2="40.309" width="0" layer="19" extent="1-1"/>
+<wire x1="12.941303125" y1="23.708359375" x2="14.0744" y2="24.113" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="ICE_MSP_SPI_DATA">
-<contactref element="U15" pad="K2"/>
 <via x="13.716" y="23.713440625" extent="1-16" drill="0.254"/>
-<wire x1="14.0744" y1="24.113" x2="14.0744" y2="24.071840625" width="0.127" layer="1"/>
-<wire x1="14.0744" y1="24.071840625" x2="13.716" y2="23.713440625" width="0.127" layer="1"/>
 <wire x1="13.82841875" y1="19.20261875" x2="13.59661875" y2="19.43441875" width="0.127" layer="1"/>
 <via x="13.59661875" y="19.43441875" extent="1-16" drill="0.254"/>
 <wire x1="13.82841875" y1="19.20261875" x2="13.82841875" y2="18.42951875" width="0.127" layer="1"/>
@@ -7038,7 +7034,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="13.716" y1="19.5605125" x2="13.59661875" y2="19.44113125" width="0.127" layer="16"/>
 <wire x1="13.716" y1="19.5605125" x2="13.716" y2="23.713440625" width="0.127" layer="16"/>
 <contactref element="U21" pad="4"/>
-<wire x1="63.793" y1="40.309" x2="13.82841875" y2="18.42951875" width="0" layer="19" extent="1-1"/>
+<contactref element="U15" pad="K3"/>
+<wire x1="14.8744" y1="24.113" x2="63.793" y2="40.309" width="0" layer="19" extent="1-1"/>
+<wire x1="13.716" y1="23.713440625" x2="14.8744" y2="24.113" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_USB">
 <contactref element="U10" pad="3"/>

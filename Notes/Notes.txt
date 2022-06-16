@@ -8,13 +8,16 @@
         - We can move ICE_MSP_SPI_DATA to K3 if we don't need ICE_MSP_SPI_AUX
             - K3 doesn't share a PIO with anything -- it's independent
     
+    - Move ICE_MSP_SPI_CLK to K2 to be closer to ICE_MSP_SPI_DATA, also free up K1
+      (which is high-value since it's on the edge)
+    
     - Add battery terminal
-
+    
     - Switch USB receptacle to USB-C
-
+    
     - Connect ICE40 VPP_2V5 to 3V3 instead of 2V8 if it helps us, since we're no longer
       going to be doing NVCM Programming we're not limited by the 3V max voltage anymore
-
+    
     - Make board left/right borders smaller
     
     - When complete, make sure board origin is at 0,0
