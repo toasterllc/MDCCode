@@ -7461,6 +7461,13 @@ should be a high voltage during power up.</text>
 <wire x1="78.74" y1="-149.86" x2="104.14" y2="-149.86" width="0.1524" layer="91"/>
 </segment>
 </net>
+<net name="ICE_ST_SPI_D_READY" class="0">
+<segment>
+<pinref part="U15" gate="C" pin="L5"/>
+<wire x1="149.86" y1="55.88" x2="152.4" y2="55.88" width="0.1524" layer="91"/>
+<label x="152.4" y="55.88" size="1.778" layer="95"/>
+</segment>
+</net>
 </nets>
 </sheet>
 <sheet>
@@ -8487,9 +8494,9 @@ between input and output when its VDD=0.</text>
 <text x="67.056" y="-220.218" size="1.016" layer="95" align="top-left">Ceff&gt;1uF @ 1.8V bias</text>
 </plain>
 <instances>
-<instance part="U19" gate="A" x="-5.08" y="-10.16" smashed="yes">
-<attribute name="NAME" x="-4.826" y="-7.62" size="1.778" layer="95" align="top-left"/>
-<attribute name="PN" x="-5.08" y="-55.88" size="1.778" layer="95"/>
+<instance part="U19" gate="A" x="-17.78" y="-10.16" smashed="yes">
+<attribute name="NAME" x="-17.526" y="-7.62" size="1.778" layer="95" align="top-left"/>
+<attribute name="PN" x="-17.78" y="-55.88" size="1.778" layer="95"/>
 </instance>
 <instance part="U19" gate="B" x="48.26" y="-10.16" smashed="yes">
 <attribute name="NAME" x="48.514" y="-7.62" size="1.778" layer="95" align="top-left"/>
@@ -8503,9 +8510,9 @@ between input and output when its VDD=0.</text>
 <attribute name="NAME" x="150.114" y="-7.62" size="1.778" layer="95" align="top-left"/>
 <attribute name="PN" x="149.86" y="-55.88" size="1.778" layer="95"/>
 </instance>
-<instance part="U19" gate="E" x="7.62" y="-71.12" smashed="yes">
-<attribute name="NAME" x="7.874" y="-68.58" size="1.778" layer="95" align="top-left"/>
-<attribute name="PN" x="7.62" y="-116.84" size="1.778" layer="95"/>
+<instance part="U19" gate="E" x="-17.78" y="-71.12" smashed="yes">
+<attribute name="NAME" x="-17.526" y="-68.58" size="1.778" layer="95" align="top-left"/>
+<attribute name="PN" x="-17.78" y="-116.84" size="1.778" layer="95"/>
 </instance>
 <instance part="U19" gate="F" x="48.26" y="-71.12" smashed="yes">
 <attribute name="NAME" x="48.514" y="-68.58" size="1.778" layer="95" align="top-left"/>
@@ -8519,9 +8526,9 @@ between input and output when its VDD=0.</text>
 <attribute name="NAME" x="150.114" y="-68.58" size="1.778" layer="95" align="top-left"/>
 <attribute name="PN" x="149.86" y="-116.84" size="1.778" layer="95"/>
 </instance>
-<instance part="U19" gate="I" x="7.62" y="-137.16" smashed="yes">
-<attribute name="NAME" x="7.874" y="-134.62" size="1.778" layer="95" align="top-left"/>
-<attribute name="PN" x="7.62" y="-172.72" size="1.778" layer="95"/>
+<instance part="U19" gate="I" x="-17.78" y="-137.16" smashed="yes">
+<attribute name="NAME" x="-17.526" y="-134.62" size="1.778" layer="95" align="top-left"/>
+<attribute name="PN" x="-17.78" y="-172.72" size="1.778" layer="95"/>
 </instance>
 <instance part="U19" gate="J" x="48.26" y="-137.16" smashed="yes">
 <attribute name="NAME" x="48.514" y="-134.62" size="1.778" layer="95" align="top-left"/>
@@ -9196,8 +9203,8 @@ between input and output when its VDD=0.</text>
 <net name="STM_SWDIO" class="0">
 <segment>
 <pinref part="U19" gate="A" pin="PA13_A15"/>
-<wire x1="27.94" y1="-45.72" x2="30.48" y2="-45.72" width="0.1524" layer="91"/>
-<label x="30.48" y="-45.72" size="1.778" layer="95"/>
+<wire x1="15.24" y1="-45.72" x2="17.78" y2="-45.72" width="0.1524" layer="91"/>
+<label x="17.78" y="-45.72" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="H1" gate="G$1" pin="1"/>
@@ -9208,8 +9215,8 @@ between input and output when its VDD=0.</text>
 <net name="STM_SWCLK" class="0">
 <segment>
 <pinref part="U19" gate="A" pin="PA14_A14"/>
-<wire x1="27.94" y1="-48.26" x2="30.48" y2="-48.26" width="0.1524" layer="91"/>
-<label x="30.48" y="-48.26" size="1.778" layer="95"/>
+<wire x1="15.24" y1="-48.26" x2="17.78" y2="-48.26" width="0.1524" layer="91"/>
+<label x="17.78" y="-48.26" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="H1" gate="G$1" pin="2"/>
@@ -9325,15 +9332,15 @@ between input and output when its VDD=0.</text>
 <net name="ICE_CDONE" class="0">
 <segment>
 <pinref part="U19" gate="I" pin="PI7_C2"/>
-<wire x1="27.94" y1="-157.48" x2="30.48" y2="-157.48" width="0.1524" layer="91"/>
-<label x="30.48" y="-157.48" size="1.778" layer="95"/>
+<wire x1="2.54" y1="-157.48" x2="5.08" y2="-157.48" width="0.1524" layer="91"/>
+<label x="5.08" y="-157.48" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_CRST_" class="0">
 <segment>
 <pinref part="U19" gate="I" pin="PI6_C3"/>
-<wire x1="27.94" y1="-154.94" x2="30.48" y2="-154.94" width="0.1524" layer="91"/>
-<label x="30.48" y="-154.94" size="1.778" layer="95"/>
+<wire x1="2.54" y1="-154.94" x2="5.08" y2="-154.94" width="0.1524" layer="91"/>
+<label x="5.08" y="-154.94" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_B_3V3_STM" class="0">
@@ -9384,8 +9391,8 @@ between input and output when its VDD=0.</text>
 <label x="231.14" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="27.94" y1="-91.44" x2="30.48" y2="-91.44" width="0.1524" layer="91"/>
-<label x="30.48" y="-91.44" size="1.778" layer="95"/>
+<wire x1="2.54" y1="-91.44" x2="5.08" y2="-91.44" width="0.1524" layer="91"/>
+<label x="5.08" y="-91.44" size="1.778" layer="95"/>
 <pinref part="U19" gate="E" pin="PE7_R8"/>
 </segment>
 </net>
@@ -9396,8 +9403,8 @@ between input and output when its VDD=0.</text>
 <label x="215.9" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="27.94" y1="-99.06" x2="30.48" y2="-99.06" width="0.1524" layer="91"/>
-<label x="30.48" y="-99.06" size="1.778" layer="95"/>
+<wire x1="2.54" y1="-99.06" x2="5.08" y2="-99.06" width="0.1524" layer="91"/>
+<label x="5.08" y="-99.06" size="1.778" layer="95"/>
 <pinref part="U19" gate="E" pin="PE10_R9"/>
 </segment>
 </net>
@@ -9408,8 +9415,8 @@ between input and output when its VDD=0.</text>
 <label x="200.66" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="27.94" y1="-104.14" x2="30.48" y2="-104.14" width="0.1524" layer="91"/>
-<label x="30.48" y="-104.14" size="1.778" layer="95"/>
+<wire x1="2.54" y1="-104.14" x2="5.08" y2="-104.14" width="0.1524" layer="91"/>
+<label x="5.08" y="-104.14" size="1.778" layer="95"/>
 <pinref part="U19" gate="E" pin="PE12_R10"/>
 </segment>
 </net>
@@ -9453,6 +9460,13 @@ between input and output when its VDD=0.</text>
 <pinref part="U19" gate="C" pin="PC3_M5"/>
 <wire x1="119.38" y1="-20.32" x2="121.92" y2="-20.32" width="0.1524" layer="91"/>
 <label x="121.92" y="-20.32" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D_READY" class="0">
+<segment>
+<pinref part="U19" gate="A" pin="PA7_R3"/>
+<wire x1="15.24" y1="-30.48" x2="17.78" y2="-30.48" width="0.1524" layer="91"/>
+<label x="17.78" y="-30.48" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>

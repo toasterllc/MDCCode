@@ -1,10 +1,5 @@
 - Rev5 Board
     
-    - Create new connection:
-        - Name:     ICE_ST_SPI_D_READY
-        - Between:  ICE40.L5 <-> STM32.R3
-        - Purpose:  Signals that SD data is ready to be read from ICE40
-    
     - Consider moving ICE_MSP_SPI_DATA to K3
         - On Rev4, ICE_MSP_SPI_DATA is assigned to K1, which is a PIO pair with J1,
           forcing them to share the same clock. J1 is ram_dq[15], which uses `ram_clk`,
@@ -12,17 +7,17 @@
           
         - We can move ICE_MSP_SPI_DATA to K3 if we don't need ICE_MSP_SPI_AUX
             - K3 doesn't share a PIO with anything -- it's independent
-
+    
     - Add battery terminal
 
     - Switch USB receptacle to USB-C
-
-    - Cancel order for TPS63805 if we no longer need it
 
     - Connect ICE40 VPP_2V5 to 3V3 instead of 2V8 if it helps us, since we're no longer
       going to be doing NVCM Programming we're not limited by the 3V max voltage anymore
 
     - Make board left/right borders smaller
+    
+    - When complete, make sure board origin is at 0,0
 
 
 
@@ -30,25 +25,32 @@
 
 - Rev5
     
+    - Cancel order for TPS63805 if we no longer need it
+    
     - Buy more TPS62802 if needed
         - Don't think we do -- we already have 2 outstanding orders for 225 total
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
     
-    - Layout: when complete, make sure board origin is at 0,0
-    
     - Make sure that IMG i2c lines are 0V while IMG power is off
         - On Rev4, ImgI2CMaster.v writes clkOut<=1 in its Idle state, so it's being driven when IMG is powered off
-
+    
     - Patch icepack to specify frequency=high in bitstream
         - Doesn't look like there's a way to specify that in the command line options
     
     - Replace uses of RefCounted with just std::shared_ptr with a custom deleter?
       For example, there's no need to make syscalls to retain/release an io_service_t,
       when we can just use regular memory management right?
+
+
+
+
+- Rev5 Done
     
-    
-    
+    √ Create new connection:
+        - Name:     ICE_ST_SPI_D_READY
+        - Between:  ICE40.L5 <-> STM32.R3
+        - Purpose:  Signals that SD data is ready to be read from ICE40
     
     √ Connect to STM32: BAT_CHRG_STAT, BAT_CHRG_LVL, BAT_CHRG_LVL_EN_
         - So STM32 can monitor charging status

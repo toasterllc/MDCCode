@@ -8361,6 +8361,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-15.635" y1="-166.95" x2="-14.4675" y2="-171.1" width="0" layer="19" extent="1-1"/>
 <wire x1="23.4754" y1="13.4124" x2="-15.635" y2="-166.95" width="0" layer="19" extent="1-1"/>
 </signal>
+<signal name="ICE_ST_SPI_D_READY">
+<contactref element="U15" pad="L5"/>
+<contactref element="U19" pad="R3"/>
+<wire x1="22.1754" y1="12.1124" x2="16.4744" y2="23.313" width="0" layer="19" extent="1-1"/>
+</signal>
 </signals>
 <mfgpreviewcolors>
 <mfgpreviewcolor name="soldermaskcolor" color="0xC8008000"/>
