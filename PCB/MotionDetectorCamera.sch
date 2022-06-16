@@ -9434,6 +9434,27 @@ between input and output when its VDD=0.</text>
 <label x="71.12" y="-30.48" size="1.778" layer="95"/>
 </segment>
 </net>
+<net name="BAT_CHRG_LVL" class="0">
+<segment>
+<pinref part="U19" gate="C" pin="PC5_P5"/>
+<wire x1="119.38" y1="-25.4" x2="121.92" y2="-25.4" width="0.1524" layer="91"/>
+<label x="121.92" y="-25.4" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="BAT_CHRG_LVL_EN_" class="0">
+<segment>
+<pinref part="U19" gate="C" pin="PC4_N5"/>
+<wire x1="119.38" y1="-22.86" x2="121.92" y2="-22.86" width="0.1524" layer="91"/>
+<label x="121.92" y="-22.86" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="BAT_CHRG_STAT" class="0">
+<segment>
+<pinref part="U19" gate="C" pin="PC3_M5"/>
+<wire x1="119.38" y1="-20.32" x2="121.92" y2="-20.32" width="0.1524" layer="91"/>
+<label x="121.92" y="-20.32" size="1.778" layer="95"/>
+</segment>
+</net>
 </nets>
 </sheet>
 <sheet>
