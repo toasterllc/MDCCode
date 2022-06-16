@@ -1,21 +1,10 @@
 - Rev5 Todo
     
-    - Measure inrush current to see if it's in-spec
-        - We have several 10u capacitors on VDD_USB, which is more than the USB spec allows (max 10uF),
-          but that's OK if the inrush current isn't exceeded
-    
     - Connect MCP73831 STAT to STM32
         - So STM32 can monitor charging status
     
     - Connect VDD_BAT to STM32
         - So STM32 it can measure the voltage
-    
-    - Add bypass caps to all new components
-        √ Flash: W25Q40EWUXIE
-        - Battery charger: MCP73831
-        - Power mux: TPS2116
-        - LDO: AP7350-33CF4-7
-        √ Level shifters: NXP-NTB0102
     
     - Add battery terminal
     
@@ -57,6 +46,23 @@
     - Replace uses of RefCounted with just std::shared_ptr with a custom deleter?
       For example, there's no need to make syscalls to retain/release an io_service_t,
       when we can just use regular memory management right?
+    
+    
+    
+    
+    √ Add bypass caps to all new components
+        √ Flash: W25Q40EWUXIE
+        √ Battery charger: MCP73831
+        √ Power mux: TPS2116
+        √ LDO: AP7350-33CF4-7
+        √ Level shifters: NXP-NTB0102
+    
+    X Measure inrush current to see if it's in-spec since we're using multiple 10uF capacitors on VDD_USB
+        X Nevermind, after reading the following, 10uF limit makes sense:
+            https://electronics.stackexchange.com/questions/36375/understanding-usb-inrush-current-requirements
+        
+        - We have several 10u capacitors on VDD_USB, which is more than the USB spec allows (max 10uF),
+          but that's OK if the inrush current isn't exceeded
     
     √ Add reverse current protection for VDD_A_3V3 LDO
         - Consider case: input power is instantly disconnected, so Vout>Vin. Do we need to protect LDO from reverse current?
