@@ -1399,6 +1399,23 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.24" y="0.9"/>
 </polygon>
 </package>
+<package name="EATON-STN101">
+<description>SODFL, 3.50 mm span, 2.60 X 1.60 X 0.90 mm body
+&lt;p&gt;SODFL package with 3.50 mm span with body size 2.60 X 1.60 X 0.90 mm&lt;/p&gt;</description>
+<wire x1="0.6" y1="0.4" x2="-0.6" y2="0.4" width="0.05" layer="21"/>
+<wire x1="-0.6" y1="0.4" x2="-0.6" y2="-0.4" width="0.05" layer="21"/>
+<wire x1="-0.6" y1="-0.4" x2="0.6" y2="-0.4" width="0.05" layer="21"/>
+<smd name="1" x="-0.325" y="0" dx="0.35" dy="0.6" layer="1"/>
+<smd name="2" x="0.325" y="0" dx="0.35" dy="0.6" layer="1"/>
+<text x="-0.645559375" y="0.45238125" size="0.762" layer="25" font="vector">&gt;NAME</text>
+<wire x1="0.6" y1="0.4" x2="0.6" y2="-0.4" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="0.6" y="-0.4"/>
+<vertex x="-0.6" y="-0.4"/>
+<vertex x="-0.6" y="0.4"/>
+<vertex x="0.6" y="0.4"/>
+</polygon>
+</package>
 </packages>
 <packages3d>
 <package3d name="SON50P300X200X80-8N" urn="urn:adsk.eagle:package:36180302/1" type="model">
@@ -2502,6 +2519,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-15.654" y="-170.544" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="RMCF0402JT100K" x="-14.9" y="-171.1" size="1.778" layer="27" display="off"/>
 </element>
+<element name="U13" library="EagleLibrary" package="EATON-STN101" value="EATON-STN101" x="-15" y="-173.7" smashed="yes">
+<attribute name="MFG" value="Eaton" x="-15" y="-173.7" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.645559375" y="-173.24761875" size="0.762" layer="25" font="vector"/>
+</element>
 </elements>
 <signals>
 <signal name="VDD_B">
@@ -3559,6 +3580,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C92" pad="2"/>
 <contactref element="C88" pad="2"/>
 <contactref element="R35" pad="2"/>
+<contactref element="U13" pad="2"/>
+<wire x1="-12.1675" y1="-163" x2="-14.675" y2="-173.7" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.1246" y1="-158.2" x2="-12.1675" y2="-163" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-155" x2="-13.1246" y2="-158.2" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-152.6" x2="-14.2675" y2="-155" width="0" layer="19" extent="1-1"/>
@@ -8264,6 +8287,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="Q3" pad="6" route="any" routetag="G$1.D"/>
 <contactref element="R4" pad="1"/>
 <contactref element="J4" pad="2"/>
+<contactref element="U13" pad="1"/>
+<wire x1="-12.23" y1="-47.315" x2="-15.325" y2="-173.7" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.1325" y1="-39.7" x2="-12.23" y2="-47.315" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.435" y1="-34.9" x2="-15.1325" y2="-39.7" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.435" y1="-32.25" x2="-15.435" y2="-34.25" width="0" layer="19" extent="1-1"/>

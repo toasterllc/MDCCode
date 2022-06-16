@@ -1465,6 +1465,23 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.24" y="0.9"/>
 </polygon>
 </package>
+<package name="EATON-STN101">
+<description>SODFL, 3.50 mm span, 2.60 X 1.60 X 0.90 mm body
+&lt;p&gt;SODFL package with 3.50 mm span with body size 2.60 X 1.60 X 0.90 mm&lt;/p&gt;</description>
+<wire x1="0.6" y1="0.4" x2="-0.6" y2="0.4" width="0.05" layer="21"/>
+<wire x1="-0.6" y1="0.4" x2="-0.6" y2="-0.4" width="0.05" layer="21"/>
+<wire x1="-0.6" y1="-0.4" x2="0.6" y2="-0.4" width="0.05" layer="21"/>
+<smd name="1" x="-0.325" y="0" dx="0.35" dy="0.6" layer="1"/>
+<smd name="2" x="0.325" y="0" dx="0.35" dy="0.6" layer="1"/>
+<text x="-0.645559375" y="0.45238125" size="0.762" layer="25" font="vector">&gt;NAME</text>
+<wire x1="0.6" y1="0.4" x2="0.6" y2="-0.4" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="0.6" y="-0.4"/>
+<vertex x="-0.6" y="-0.4"/>
+<vertex x="-0.6" y="0.4"/>
+<vertex x="0.6" y="0.4"/>
+</polygon>
+</package>
 </packages>
 <packages3d>
 <package3d name="SON50P300X200X80-8N" urn="urn:adsk.eagle:package:36180302/1" type="model">
@@ -2517,6 +2534,16 @@ Charger</text>
 <wire x1="5.08" y1="1.524" x2="5.08" y2="0" width="0.254" layer="94"/>
 <wire x1="5.08" y1="0" x2="5.08" y2="-1.524" width="0.254" layer="94"/>
 <text x="2.032" y="3.556" size="1.778" layer="95">&gt;NAME</text>
+</symbol>
+<symbol name="EATON-STN101">
+<wire x1="0" y1="0" x2="10.16" y2="0" width="0.1524" layer="94"/>
+<wire x1="10.16" y1="0" x2="10.16" y2="-5.08" width="0.1524" layer="94"/>
+<wire x1="10.16" y1="-5.08" x2="0" y2="-5.08" width="0.1524" layer="94"/>
+<wire x1="0" y1="-5.08" x2="0" y2="0" width="0.1524" layer="94"/>
+<pin name="1" x="-2.54" y="-2.54" visible="off" length="short"/>
+<text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
+<pin name="2" x="12.7" y="-2.54" visible="off" length="short" rot="R180"/>
+<text x="2.54" y="-3.302" size="1.778" layer="94">ESD</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -3784,6 +3811,24 @@ Charger</text>
 </device>
 </devices>
 </deviceset>
+<deviceset name="EATON-STN101" prefix="U">
+<gates>
+<gate name="G$1" symbol="EATON-STN101" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="EATON-STN101">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Eaton"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 </libraries>
@@ -4523,6 +4568,7 @@ Charger</text>
 <attribute name="MFG" value="Stackpole"/>
 <attribute name="PN" value="RMCF0402JT100K"/>
 </part>
+<part name="U13" library="EagleLibrary" deviceset="EATON-STN101" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -4533,9 +4579,9 @@ Charger</text>
 - USB:      VDD_B_1V8_STM = VDD_B_1V8</text>
 <text x="12.7" y="457.2" size="3.81" layer="95" align="top-left">VDD_A</text>
 <text x="12.7" y="401.32" size="3.81" layer="95" align="top-left">VDD_B</text>
-<text x="12.7" y="317.5" size="3.81" layer="95" align="top-left">VDD_B_1V2</text>
-<text x="12.7" y="269.24" size="3.81" layer="95" align="top-left">VDD_B_1V8</text>
-<text x="12.7" y="218.44" size="3.81" layer="95" align="top-left">VDD_B_2V8</text>
+<text x="12.7" y="302.26" size="3.81" layer="95" align="top-left">VDD_B_1V2</text>
+<text x="12.7" y="254" size="3.81" layer="95" align="top-left">VDD_B_1V8</text>
+<text x="12.7" y="203.2" size="3.81" layer="95" align="top-left">VDD_B_2V8</text>
 <text x="12.7" y="160.02" size="3.81" layer="95" align="top-left">VDD_B_1V8_IMG</text>
 <text x="12.7" y="129.54" size="3.81" layer="95" align="top-left">VDD_B_2V8_IMG</text>
 <text x="12.7" y="99.06" size="3.81" layer="95" align="top-left">VDD_B_2V8_SD</text>
@@ -4570,7 +4616,7 @@ I = 1000 / 2.7k
 I = 370 mA</text>
 <text x="136.906" y="453.136" size="1.016" layer="95" rot="MR0" align="top-left">Pulldown ensures that VDD_USB can
 be safely used as a binary signal</text>
-<text x="213.106" y="207.01" size="1.27" layer="95" align="top-left">≤ 1%
+<text x="213.106" y="191.77" size="1.27" layer="95" align="top-left">≤ 1%
 ≤ 200 ppm/°C </text>
 <text x="319.024" y="487.934" size="0.508" layer="95" align="top-left">Schottky diode prevents reverse
 current through LDO when battery
@@ -4620,63 +4666,72 @@ BAT_CHRG_LVL_EN_. STM32 is only running when
 we're connected to USB and therefore charging the
 battery, in which case we're not concerned with the
 small amount of battery drain of the voltage divider.</text>
+<text x="124.206" y="338.582" size="1.016" layer="95" align="top-left">ESD protection for MOSFETs
+
+Requirements:
+  - low reverse leakage current: &lt;= 100nA
+     since this current will be lost when
+     battery powered
+
+  - reverse working voltage ~= 5V
+     since battery will operate up to ~4.2V</text>
 </plain>
 <instances>
-<instance part="C6" gate="G$1" x="167.64" y="309.88" smashed="yes">
-<attribute name="NAME" x="169.926" y="309.753" size="1.778" layer="95"/>
-<attribute name="VALUE" x="169.926" y="307.213" size="1.778" layer="96"/>
-<attribute name="MFG" x="167.64" y="309.88" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="167.64" y="309.88" size="1.778" layer="96" display="off"/>
+<instance part="C6" gate="G$1" x="167.64" y="294.64" smashed="yes">
+<attribute name="NAME" x="169.926" y="294.513" size="1.778" layer="95"/>
+<attribute name="VALUE" x="169.926" y="291.973" size="1.778" layer="96"/>
+<attribute name="MFG" x="167.64" y="294.64" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="167.64" y="294.64" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="U3" gate="G$1" x="187.96" y="314.96" smashed="yes">
-<attribute name="NAME" x="188.035" y="317.5" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
-<attribute name="PN" x="188.035" y="302.26" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<instance part="U3" gate="G$1" x="187.96" y="299.72" smashed="yes">
+<attribute name="NAME" x="188.035" y="302.26" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
+<attribute name="PN" x="188.035" y="287.02" size="1.778" layer="95" ratio="10" rot="SR0"/>
 </instance>
-<instance part="C9" gate="G$1" x="167.64" y="264.16" smashed="yes">
-<attribute name="NAME" x="170.434" y="263.779" size="1.778" layer="95"/>
-<attribute name="VALUE" x="170.434" y="261.239" size="1.778" layer="96"/>
-<attribute name="MFG" x="167.64" y="264.16" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="167.64" y="264.16" size="1.778" layer="96" display="off"/>
+<instance part="C9" gate="G$1" x="167.64" y="248.92" smashed="yes">
+<attribute name="NAME" x="170.434" y="248.539" size="1.778" layer="95"/>
+<attribute name="VALUE" x="170.434" y="245.999" size="1.778" layer="96"/>
+<attribute name="MFG" x="167.64" y="248.92" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="167.64" y="248.92" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="U4" gate="G$1" x="187.96" y="269.24" smashed="yes">
-<attribute name="NAME" x="188.035" y="271.78" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
-<attribute name="PN" x="188.035" y="256.54" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<instance part="U4" gate="G$1" x="187.96" y="254" smashed="yes">
+<attribute name="NAME" x="188.035" y="256.54" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
+<attribute name="PN" x="188.035" y="241.3" size="1.778" layer="95" ratio="10" rot="SR0"/>
 </instance>
-<instance part="C7" gate="G$1" x="231.14" y="307.34" smashed="yes">
-<attribute name="NAME" x="232.664" y="310.261" size="1.778" layer="95"/>
-<attribute name="VALUE" x="232.664" y="307.721" size="1.778" layer="96"/>
-<attribute name="MFG" x="231.14" y="307.34" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="231.14" y="307.34" size="1.778" layer="96" display="off"/>
+<instance part="C7" gate="G$1" x="231.14" y="292.1" smashed="yes">
+<attribute name="NAME" x="232.664" y="295.021" size="1.778" layer="95"/>
+<attribute name="VALUE" x="232.664" y="292.481" size="1.778" layer="96"/>
+<attribute name="MFG" x="231.14" y="292.1" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="231.14" y="292.1" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C10" gate="G$1" x="231.14" y="261.62" smashed="yes">
-<attribute name="NAME" x="232.664" y="264.541" size="1.778" layer="95"/>
-<attribute name="VALUE" x="232.664" y="262.001" size="1.778" layer="96"/>
-<attribute name="MFG" x="231.14" y="261.62" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="231.14" y="261.62" size="1.778" layer="96" display="off"/>
+<instance part="C10" gate="G$1" x="231.14" y="246.38" smashed="yes">
+<attribute name="NAME" x="232.664" y="249.301" size="1.778" layer="95"/>
+<attribute name="VALUE" x="232.664" y="246.761" size="1.778" layer="96"/>
+<attribute name="MFG" x="231.14" y="246.38" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="231.14" y="246.38" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="L1" gate="G$1" x="210.82" y="312.42" smashed="yes">
-<attribute name="NAME" x="210.82" y="317.5" size="1.778" layer="95"/>
-<attribute name="VALUE" x="210.82" y="314.96" size="1.778" layer="96"/>
-<attribute name="PN" x="210.82" y="312.42" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="210.82" y="312.42" size="1.778" layer="96" display="off"/>
+<instance part="L1" gate="G$1" x="210.82" y="297.18" smashed="yes">
+<attribute name="NAME" x="210.82" y="302.26" size="1.778" layer="95"/>
+<attribute name="VALUE" x="210.82" y="299.72" size="1.778" layer="96"/>
+<attribute name="PN" x="210.82" y="297.18" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="210.82" y="297.18" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="L2" gate="G$1" x="210.82" y="266.7" smashed="yes">
-<attribute name="NAME" x="210.82" y="271.78" size="1.778" layer="95"/>
-<attribute name="VALUE" x="210.82" y="269.24" size="1.778" layer="96"/>
-<attribute name="PN" x="210.82" y="266.7" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="210.82" y="266.7" size="1.778" layer="96" display="off"/>
+<instance part="L2" gate="G$1" x="210.82" y="251.46" smashed="yes">
+<attribute name="NAME" x="210.82" y="256.54" size="1.778" layer="95"/>
+<attribute name="VALUE" x="210.82" y="254" size="1.778" layer="96"/>
+<attribute name="PN" x="210.82" y="251.46" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="210.82" y="251.46" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C5" gate="G$1" x="157.48" y="309.88" smashed="yes">
-<attribute name="NAME" x="159.766" y="309.753" size="1.778" layer="95"/>
-<attribute name="VALUE" x="159.766" y="307.213" size="1.778" layer="96"/>
-<attribute name="MFG" x="157.48" y="309.88" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="157.48" y="309.88" size="1.778" layer="96" display="off"/>
+<instance part="C5" gate="G$1" x="157.48" y="294.64" smashed="yes">
+<attribute name="NAME" x="159.766" y="294.513" size="1.778" layer="95"/>
+<attribute name="VALUE" x="159.766" y="291.973" size="1.778" layer="96"/>
+<attribute name="MFG" x="157.48" y="294.64" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="157.48" y="294.64" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C8" gate="G$1" x="157.48" y="264.16" smashed="yes">
-<attribute name="NAME" x="160.274" y="263.779" size="1.778" layer="95"/>
-<attribute name="VALUE" x="160.274" y="261.239" size="1.778" layer="96"/>
-<attribute name="MFG" x="157.48" y="264.16" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="157.48" y="264.16" size="1.778" layer="96" display="off"/>
+<instance part="C8" gate="G$1" x="157.48" y="248.92" smashed="yes">
+<attribute name="NAME" x="160.274" y="248.539" size="1.778" layer="95"/>
+<attribute name="VALUE" x="160.274" y="245.999" size="1.778" layer="96"/>
+<attribute name="MFG" x="157.48" y="248.92" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="157.48" y="248.92" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="U6" gate="G$1" x="208.28" y="157.48" smashed="yes">
 <attribute name="PN" x="208.28" y="144.78" size="1.778" layer="95"/>
@@ -4755,11 +4810,11 @@ small amount of battery drain of the voltage divider.</text>
 <attribute name="MFG" x="274.32" y="622.3" size="1.778" layer="96" rot="R270" display="off"/>
 <attribute name="PN" x="274.32" y="622.3" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
-<instance part="J1" gate="G$1" x="238.76" y="317.5" smashed="yes">
-<attribute name="NAME" x="237.49" y="320.04" size="1.778" layer="95" align="top-left"/>
+<instance part="J1" gate="G$1" x="238.76" y="302.26" smashed="yes">
+<attribute name="NAME" x="237.49" y="304.8" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="J2" gate="G$1" x="238.76" y="271.78" smashed="yes">
-<attribute name="NAME" x="237.49" y="274.32" size="1.778" layer="95" align="top-left"/>
+<instance part="J2" gate="G$1" x="238.76" y="256.54" smashed="yes">
+<attribute name="NAME" x="237.49" y="259.08" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="U2" gate="G$1" x="314.96" y="464.82" smashed="yes">
 <attribute name="PN" x="314.96" y="449.58" size="1.778" layer="95"/>
@@ -4825,51 +4880,51 @@ small amount of battery drain of the voltage divider.</text>
 <attribute name="MFG" x="139.7" y="452.12" size="1.778" layer="96" rot="MR270" display="off"/>
 <attribute name="PN" x="139.7" y="452.12" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
-<instance part="C2" gate="G$1" x="167.64" y="215.9" smashed="yes">
-<attribute name="NAME" x="170.434" y="215.519" size="1.778" layer="95"/>
-<attribute name="VALUE" x="170.434" y="212.979" size="1.778" layer="96"/>
-<attribute name="MFG" x="167.64" y="215.9" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="167.64" y="215.9" size="1.778" layer="96" display="off"/>
+<instance part="C2" gate="G$1" x="167.64" y="200.66" smashed="yes">
+<attribute name="NAME" x="170.434" y="200.279" size="1.778" layer="95"/>
+<attribute name="VALUE" x="170.434" y="197.739" size="1.778" layer="96"/>
+<attribute name="MFG" x="167.64" y="200.66" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="167.64" y="200.66" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="U23" gate="G$1" x="187.96" y="220.98" smashed="yes">
-<attribute name="NAME" x="188.035" y="223.52" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
-<attribute name="PN" x="188.035" y="208.28" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<instance part="U23" gate="G$1" x="187.96" y="205.74" smashed="yes">
+<attribute name="NAME" x="188.035" y="208.28" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
+<attribute name="PN" x="188.035" y="193.04" size="1.778" layer="95" ratio="10" rot="SR0"/>
 </instance>
-<instance part="C3" gate="G$1" x="231.14" y="213.36" smashed="yes">
-<attribute name="NAME" x="232.664" y="216.281" size="1.778" layer="95"/>
-<attribute name="VALUE" x="232.664" y="213.741" size="1.778" layer="96"/>
-<attribute name="MFG" x="231.14" y="213.36" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="231.14" y="213.36" size="1.778" layer="96" display="off"/>
+<instance part="C3" gate="G$1" x="231.14" y="198.12" smashed="yes">
+<attribute name="NAME" x="232.664" y="201.041" size="1.778" layer="95"/>
+<attribute name="VALUE" x="232.664" y="198.501" size="1.778" layer="96"/>
+<attribute name="MFG" x="231.14" y="198.12" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="231.14" y="198.12" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="L4" gate="G$1" x="210.82" y="218.44" smashed="yes">
-<attribute name="NAME" x="210.82" y="223.52" size="1.778" layer="95"/>
-<attribute name="VALUE" x="210.82" y="220.98" size="1.778" layer="96"/>
-<attribute name="PN" x="210.82" y="218.44" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="210.82" y="218.44" size="1.778" layer="96" display="off"/>
+<instance part="L4" gate="G$1" x="210.82" y="203.2" smashed="yes">
+<attribute name="NAME" x="210.82" y="208.28" size="1.778" layer="95"/>
+<attribute name="VALUE" x="210.82" y="205.74" size="1.778" layer="96"/>
+<attribute name="PN" x="210.82" y="203.2" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="210.82" y="203.2" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C27" gate="G$1" x="157.48" y="215.9" smashed="yes">
-<attribute name="NAME" x="160.274" y="215.519" size="1.778" layer="95"/>
-<attribute name="VALUE" x="160.274" y="212.979" size="1.778" layer="96"/>
-<attribute name="MFG" x="157.48" y="215.9" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="157.48" y="215.9" size="1.778" layer="96" display="off"/>
+<instance part="C27" gate="G$1" x="157.48" y="200.66" smashed="yes">
+<attribute name="NAME" x="160.274" y="200.279" size="1.778" layer="95"/>
+<attribute name="VALUE" x="160.274" y="197.739" size="1.778" layer="96"/>
+<attribute name="MFG" x="157.48" y="200.66" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="157.48" y="200.66" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="J5" gate="G$1" x="238.76" y="223.52" smashed="yes">
-<attribute name="NAME" x="237.49" y="226.06" size="1.778" layer="95" align="top-left"/>
+<instance part="J5" gate="G$1" x="238.76" y="208.28" smashed="yes">
+<attribute name="NAME" x="237.49" y="210.82" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="R33" gate="G$1" x="210.82" y="208.28" smashed="yes" rot="R90">
-<attribute name="NAME" x="212.852" y="212.09" size="1.778" layer="95" align="top-left"/>
-<attribute name="VALUE" x="212.852" y="209.55" size="1.778" layer="96" align="top-left"/>
-<attribute name="MFG" x="210.82" y="208.28" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="210.82" y="208.28" size="1.778" layer="96" rot="R90" display="off"/>
+<instance part="R33" gate="G$1" x="210.82" y="193.04" smashed="yes" rot="R90">
+<attribute name="NAME" x="212.852" y="196.85" size="1.778" layer="95" align="top-left"/>
+<attribute name="VALUE" x="212.852" y="194.31" size="1.778" layer="96" align="top-left"/>
+<attribute name="MFG" x="210.82" y="193.04" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="210.82" y="193.04" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="D1" gate="G$1" x="327.66" y="472.44" smashed="yes" rot="MR0">
 <attribute name="NAME" x="328.168" y="468.376" size="1.778" layer="95" rot="MR0"/>
 </instance>
-<instance part="C91" gate="G$1" x="264.16" y="459.74" smashed="yes">
-<attribute name="NAME" x="266.954" y="459.359" size="1.778" layer="95"/>
-<attribute name="VALUE" x="266.954" y="456.819" size="1.778" layer="96"/>
-<attribute name="MFG" x="264.16" y="459.74" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="264.16" y="459.74" size="1.778" layer="96" display="off"/>
+<instance part="C91" gate="G$1" x="289.56" y="459.74" smashed="yes">
+<attribute name="NAME" x="287.274" y="459.359" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="287.274" y="456.819" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="289.56" y="459.74" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="289.56" y="459.74" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C89" gate="G$1" x="160.02" y="421.64" smashed="yes">
 <attribute name="PN" x="142.24" y="426.72" size="1.778" layer="96" display="off"/>
@@ -4921,6 +4976,9 @@ small amount of battery drain of the voltage divider.</text>
 <attribute name="MFG" x="287.02" y="365.76" size="1.778" layer="96" rot="MR270" display="off"/>
 <attribute name="PN" x="287.02" y="365.76" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
+<instance part="U13" gate="G$1" x="147.32" y="345.44" smashed="yes" rot="MR270">
+<attribute name="NAME" x="147.32" y="345.44" size="1.778" layer="95" align="top-right"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -4928,31 +4986,31 @@ small amount of battery drain of the voltage divider.</text>
 <net name="VDD_B" class="0">
 <segment>
 <pinref part="U3" gate="G$1" pin="VIN"/>
-<wire x1="185.42" y1="312.42" x2="167.64" y2="312.42" width="0.1524" layer="91"/>
+<wire x1="185.42" y1="297.18" x2="167.64" y2="297.18" width="0.1524" layer="91"/>
 <pinref part="C6" gate="G$1" pin="1"/>
-<wire x1="147.32" y1="312.42" x2="157.48" y2="312.42" width="0.1524" layer="91"/>
-<junction x="167.64" y="312.42"/>
-<label x="147.32" y="312.42" size="1.778" layer="95" rot="MR0"/>
+<wire x1="147.32" y1="297.18" x2="157.48" y2="297.18" width="0.1524" layer="91"/>
+<junction x="167.64" y="297.18"/>
+<label x="147.32" y="297.18" size="1.778" layer="95" rot="MR0"/>
 <pinref part="C5" gate="G$1" pin="1"/>
-<wire x1="157.48" y1="312.42" x2="167.64" y2="312.42" width="0.1524" layer="91"/>
-<junction x="157.48" y="312.42"/>
+<wire x1="157.48" y1="297.18" x2="167.64" y2="297.18" width="0.1524" layer="91"/>
+<junction x="157.48" y="297.18"/>
 <pinref part="U3" gate="G$1" pin="EN"/>
-<wire x1="185.42" y1="309.88" x2="185.42" y2="312.42" width="0.1524" layer="91"/>
-<junction x="185.42" y="312.42"/>
+<wire x1="185.42" y1="294.64" x2="185.42" y2="297.18" width="0.1524" layer="91"/>
+<junction x="185.42" y="297.18"/>
 </segment>
 <segment>
 <pinref part="U4" gate="G$1" pin="EN"/>
 <pinref part="U4" gate="G$1" pin="VIN"/>
-<wire x1="185.42" y1="266.7" x2="167.64" y2="266.7" width="0.1524" layer="91"/>
+<wire x1="185.42" y1="251.46" x2="167.64" y2="251.46" width="0.1524" layer="91"/>
 <pinref part="C9" gate="G$1" pin="1"/>
-<wire x1="147.32" y1="266.7" x2="157.48" y2="266.7" width="0.1524" layer="91"/>
-<junction x="167.64" y="266.7"/>
-<label x="147.32" y="266.7" size="1.778" layer="95" rot="MR0"/>
+<wire x1="147.32" y1="251.46" x2="157.48" y2="251.46" width="0.1524" layer="91"/>
+<junction x="167.64" y="251.46"/>
+<label x="147.32" y="251.46" size="1.778" layer="95" rot="MR0"/>
 <pinref part="C8" gate="G$1" pin="1"/>
-<wire x1="157.48" y1="266.7" x2="167.64" y2="266.7" width="0.1524" layer="91"/>
-<junction x="157.48" y="266.7"/>
-<wire x1="185.42" y1="264.16" x2="185.42" y2="266.7" width="0.1524" layer="91"/>
-<junction x="185.42" y="266.7"/>
+<wire x1="157.48" y1="251.46" x2="167.64" y2="251.46" width="0.1524" layer="91"/>
+<junction x="157.48" y="251.46"/>
+<wire x1="185.42" y1="248.92" x2="185.42" y2="251.46" width="0.1524" layer="91"/>
+<junction x="185.42" y="251.46"/>
 </segment>
 <segment>
 <pinref part="J12" gate="G$1" pin="2"/>
@@ -4962,22 +5020,22 @@ small amount of battery drain of the voltage divider.</text>
 <segment>
 <pinref part="U23" gate="G$1" pin="EN"/>
 <pinref part="U23" gate="G$1" pin="VIN"/>
-<wire x1="185.42" y1="218.44" x2="167.64" y2="218.44" width="0.1524" layer="91"/>
+<wire x1="185.42" y1="203.2" x2="167.64" y2="203.2" width="0.1524" layer="91"/>
 <pinref part="C2" gate="G$1" pin="1"/>
-<wire x1="147.32" y1="218.44" x2="157.48" y2="218.44" width="0.1524" layer="91"/>
-<junction x="167.64" y="218.44"/>
-<label x="147.32" y="218.44" size="1.778" layer="95" rot="MR0"/>
+<wire x1="147.32" y1="203.2" x2="157.48" y2="203.2" width="0.1524" layer="91"/>
+<junction x="167.64" y="203.2"/>
+<label x="147.32" y="203.2" size="1.778" layer="95" rot="MR0"/>
 <pinref part="C27" gate="G$1" pin="1"/>
-<wire x1="157.48" y1="218.44" x2="167.64" y2="218.44" width="0.1524" layer="91"/>
-<junction x="157.48" y="218.44"/>
-<wire x1="185.42" y1="215.9" x2="185.42" y2="218.44" width="0.1524" layer="91"/>
-<junction x="185.42" y="218.44"/>
+<wire x1="157.48" y1="203.2" x2="167.64" y2="203.2" width="0.1524" layer="91"/>
+<junction x="157.48" y="203.2"/>
+<wire x1="185.42" y1="200.66" x2="185.42" y2="203.2" width="0.1524" layer="91"/>
+<junction x="185.42" y="203.2"/>
 </segment>
 </net>
 <net name="VDD_B_1V8" class="0">
 <segment>
-<wire x1="241.3" y1="266.7" x2="243.84" y2="266.7" width="0.1524" layer="91"/>
-<label x="243.84" y="266.7" size="1.778" layer="95"/>
+<wire x1="241.3" y1="251.46" x2="243.84" y2="251.46" width="0.1524" layer="91"/>
+<label x="243.84" y="251.46" size="1.778" layer="95"/>
 <pinref part="J2" gate="G$1" pin="2"/>
 </segment>
 <segment>
@@ -5014,15 +5072,15 @@ small amount of battery drain of the voltage divider.</text>
 <net name="GND" class="0">
 <segment>
 <pinref part="C6" gate="G$1" pin="2"/>
-<label x="157.48" y="304.8" size="1.778" layer="95" align="top-left"/>
+<label x="157.48" y="289.56" size="1.778" layer="95" align="top-left"/>
 <pinref part="C5" gate="G$1" pin="2"/>
-<wire x1="167.64" y1="304.8" x2="157.48" y2="304.8" width="0.1524" layer="91"/>
+<wire x1="167.64" y1="289.56" x2="157.48" y2="289.56" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="C9" gate="G$1" pin="2"/>
-<label x="157.48" y="259.08" size="1.778" layer="95" align="top-left"/>
+<label x="157.48" y="243.84" size="1.778" layer="95" align="top-left"/>
 <pinref part="C8" gate="G$1" pin="2"/>
-<wire x1="157.48" y1="259.08" x2="167.64" y2="259.08" width="0.1524" layer="91"/>
+<wire x1="157.48" y1="243.84" x2="167.64" y2="243.84" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <wire x1="205.74" y1="30.48" x2="203.2" y2="30.48" width="0.1524" layer="91"/>
@@ -5046,8 +5104,8 @@ small amount of battery drain of the voltage divider.</text>
 </segment>
 <segment>
 <pinref part="C10" gate="G$1" pin="2"/>
-<wire x1="231.14" y1="256.54" x2="231.14" y2="254" width="0.1524" layer="91"/>
-<label x="231.14" y="254" size="1.778" layer="95"/>
+<wire x1="231.14" y1="241.3" x2="231.14" y2="238.76" width="0.1524" layer="91"/>
+<label x="231.14" y="238.76" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C15" gate="G$1" pin="2"/>
@@ -5086,23 +5144,23 @@ small amount of battery drain of the voltage divider.</text>
 </segment>
 <segment>
 <pinref part="U3" gate="G$1" pin="MODE"/>
-<wire x1="208.28" y1="307.34" x2="210.82" y2="307.34" width="0.1524" layer="91"/>
-<label x="210.82" y="307.34" size="1.778" layer="95"/>
+<wire x1="208.28" y1="292.1" x2="210.82" y2="292.1" width="0.1524" layer="91"/>
+<label x="210.82" y="292.1" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C7" gate="G$1" pin="2"/>
-<wire x1="231.14" y1="302.26" x2="231.14" y2="299.72" width="0.1524" layer="91"/>
-<label x="231.14" y="299.72" size="1.778" layer="95"/>
+<wire x1="231.14" y1="287.02" x2="231.14" y2="284.48" width="0.1524" layer="91"/>
+<label x="231.14" y="284.48" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U3" gate="G$1" pin="GND"/>
-<wire x1="185.42" y1="307.34" x2="182.88" y2="307.34" width="0.1524" layer="91"/>
-<label x="182.88" y="307.34" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="185.42" y1="292.1" x2="182.88" y2="292.1" width="0.1524" layer="91"/>
+<label x="182.88" y="292.1" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="U4" gate="G$1" pin="GND"/>
-<wire x1="185.42" y1="261.62" x2="182.88" y2="261.62" width="0.1524" layer="91"/>
-<label x="182.88" y="261.62" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="185.42" y1="246.38" x2="182.88" y2="246.38" width="0.1524" layer="91"/>
+<label x="182.88" y="246.38" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <wire x1="205.74" y1="0" x2="203.2" y2="0" width="0.1524" layer="91"/>
@@ -5116,8 +5174,8 @@ small amount of battery drain of the voltage divider.</text>
 </segment>
 <segment>
 <pinref part="U4" gate="G$1" pin="MODE"/>
-<wire x1="208.28" y1="261.62" x2="210.82" y2="261.62" width="0.1524" layer="91"/>
-<label x="210.82" y="261.62" size="1.778" layer="95"/>
+<wire x1="208.28" y1="246.38" x2="210.82" y2="246.38" width="0.1524" layer="91"/>
+<label x="210.82" y="246.38" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U2" gate="G$1" pin="GND"/>
@@ -5164,23 +5222,23 @@ small amount of battery drain of the voltage divider.</text>
 </segment>
 <segment>
 <pinref part="C2" gate="G$1" pin="2"/>
-<label x="157.48" y="210.82" size="1.778" layer="95" align="top-left"/>
+<label x="157.48" y="195.58" size="1.778" layer="95" align="top-left"/>
 <pinref part="C27" gate="G$1" pin="2"/>
-<wire x1="157.48" y1="210.82" x2="167.64" y2="210.82" width="0.1524" layer="91"/>
+<wire x1="157.48" y1="195.58" x2="167.64" y2="195.58" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="C3" gate="G$1" pin="2"/>
-<wire x1="231.14" y1="208.28" x2="231.14" y2="205.74" width="0.1524" layer="91"/>
-<label x="231.14" y="205.74" size="1.778" layer="95"/>
+<wire x1="231.14" y1="193.04" x2="231.14" y2="190.5" width="0.1524" layer="91"/>
+<label x="231.14" y="190.5" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U23" gate="G$1" pin="GND"/>
-<wire x1="185.42" y1="213.36" x2="182.88" y2="213.36" width="0.1524" layer="91"/>
-<label x="182.88" y="213.36" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="185.42" y1="198.12" x2="182.88" y2="198.12" width="0.1524" layer="91"/>
+<label x="182.88" y="198.12" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<wire x1="210.82" y1="203.2" x2="210.82" y2="200.66" width="0.1524" layer="91"/>
-<label x="210.82" y="200.66" size="1.778" layer="95" align="top-left"/>
+<wire x1="210.82" y1="187.96" x2="210.82" y2="185.42" width="0.1524" layer="91"/>
+<label x="210.82" y="185.42" size="1.778" layer="95" align="top-left"/>
 <pinref part="R33" gate="G$1" pin="1"/>
 </segment>
 <segment>
@@ -5195,8 +5253,8 @@ small amount of battery drain of the voltage divider.</text>
 </segment>
 <segment>
 <pinref part="C91" gate="G$1" pin="2"/>
-<wire x1="264.16" y1="454.66" x2="264.16" y2="452.12" width="0.1524" layer="91"/>
-<label x="264.16" y="452.12" size="1.778" layer="95"/>
+<wire x1="289.56" y1="454.66" x2="289.56" y2="452.12" width="0.1524" layer="91"/>
+<label x="289.56" y="452.12" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="C93" gate="G$1" pin="2"/>
@@ -5218,25 +5276,30 @@ small amount of battery drain of the voltage divider.</text>
 <pinref part="R35" gate="G$1" pin="2"/>
 <label x="307.34" y="332.74" size="1.778" layer="95" align="top-left"/>
 </segment>
+<segment>
+<pinref part="U13" gate="G$1" pin="2"/>
+<wire x1="149.86" y1="332.74" x2="149.86" y2="330.2" width="0.1524" layer="91"/>
+<label x="149.86" y="330.2" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="N$5" class="0">
 <segment>
 <pinref part="U3" gate="G$1" pin="SW"/>
-<wire x1="208.28" y1="312.42" x2="210.82" y2="312.42" width="0.1524" layer="91"/>
+<wire x1="208.28" y1="297.18" x2="210.82" y2="297.18" width="0.1524" layer="91"/>
 <pinref part="L1" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="VDD_B_1V2" class="0">
 <segment>
-<wire x1="241.3" y1="312.42" x2="243.84" y2="312.42" width="0.1524" layer="91"/>
-<label x="243.84" y="312.42" size="1.778" layer="95"/>
+<wire x1="241.3" y1="297.18" x2="243.84" y2="297.18" width="0.1524" layer="91"/>
+<label x="243.84" y="297.18" size="1.778" layer="95"/>
 <pinref part="J1" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="N$4" class="0">
 <segment>
 <pinref part="U4" gate="G$1" pin="SW"/>
-<wire x1="208.28" y1="266.7" x2="210.82" y2="266.7" width="0.1524" layer="91"/>
+<wire x1="208.28" y1="251.46" x2="210.82" y2="251.46" width="0.1524" layer="91"/>
 <pinref part="L2" gate="G$1" pin="1"/>
 </segment>
 </net>
@@ -5263,36 +5326,36 @@ small amount of battery drain of the voltage divider.</text>
 </segment>
 <segment>
 <pinref part="J5" gate="G$1" pin="2"/>
-<wire x1="241.3" y1="218.44" x2="243.84" y2="218.44" width="0.1524" layer="91"/>
-<label x="243.84" y="218.44" size="1.778" layer="95"/>
+<wire x1="241.3" y1="203.2" x2="243.84" y2="203.2" width="0.1524" layer="91"/>
+<label x="243.84" y="203.2" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$16" class="0">
 <segment>
 <pinref part="U3" gate="G$1" pin="VOS"/>
 <pinref part="C7" gate="G$1" pin="1"/>
-<wire x1="231.14" y1="312.42" x2="223.52" y2="312.42" width="0.1524" layer="91"/>
-<wire x1="208.28" y1="309.88" x2="231.14" y2="309.88" width="0.1524" layer="91"/>
-<wire x1="231.14" y1="312.42" x2="231.14" y2="309.88" width="0.1524" layer="91"/>
-<junction x="231.14" y="312.42"/>
-<junction x="231.14" y="309.88"/>
-<junction x="231.14" y="312.42"/>
-<wire x1="238.76" y1="312.42" x2="231.14" y2="312.42" width="0.1524" layer="91"/>
+<wire x1="231.14" y1="297.18" x2="223.52" y2="297.18" width="0.1524" layer="91"/>
+<wire x1="208.28" y1="294.64" x2="231.14" y2="294.64" width="0.1524" layer="91"/>
+<wire x1="231.14" y1="297.18" x2="231.14" y2="294.64" width="0.1524" layer="91"/>
+<junction x="231.14" y="297.18"/>
+<junction x="231.14" y="294.64"/>
+<junction x="231.14" y="297.18"/>
+<wire x1="238.76" y1="297.18" x2="231.14" y2="297.18" width="0.1524" layer="91"/>
 <pinref part="L1" gate="G$1" pin="2"/>
 <pinref part="J1" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$8" class="0">
 <segment>
-<junction x="231.14" y="266.7"/>
+<junction x="231.14" y="251.46"/>
 <pinref part="C10" gate="G$1" pin="1"/>
-<wire x1="231.14" y1="266.7" x2="223.52" y2="266.7" width="0.1524" layer="91"/>
-<wire x1="231.14" y1="266.7" x2="231.14" y2="264.16" width="0.1524" layer="91"/>
-<junction x="231.14" y="266.7"/>
+<wire x1="231.14" y1="251.46" x2="223.52" y2="251.46" width="0.1524" layer="91"/>
+<wire x1="231.14" y1="251.46" x2="231.14" y2="248.92" width="0.1524" layer="91"/>
+<junction x="231.14" y="251.46"/>
 <pinref part="U4" gate="G$1" pin="VOS"/>
-<wire x1="231.14" y1="264.16" x2="208.28" y2="264.16" width="0.1524" layer="91"/>
-<junction x="231.14" y="264.16"/>
-<wire x1="238.76" y1="266.7" x2="231.14" y2="266.7" width="0.1524" layer="91"/>
+<wire x1="231.14" y1="248.92" x2="208.28" y2="248.92" width="0.1524" layer="91"/>
+<junction x="231.14" y="248.92"/>
+<wire x1="238.76" y1="251.46" x2="231.14" y2="251.46" width="0.1524" layer="91"/>
 <pinref part="L2" gate="G$1" pin="2"/>
 <pinref part="J2" gate="G$1" pin="1"/>
 </segment>
@@ -5540,8 +5603,8 @@ small amount of battery drain of the voltage divider.</text>
 <wire x1="312.42" y1="462.28" x2="312.42" y2="459.74" width="0.1524" layer="91"/>
 <junction x="312.42" y="462.28"/>
 <pinref part="U11" gate="G$1" pin="VOUT"/>
-<wire x1="256.54" y1="462.28" x2="264.16" y2="462.28" width="0.1524" layer="91"/>
-<wire x1="264.16" y1="462.28" x2="274.32" y2="462.28" width="0.1524" layer="91"/>
+<wire x1="256.54" y1="462.28" x2="289.56" y2="462.28" width="0.1524" layer="91"/>
+<wire x1="289.56" y1="462.28" x2="274.32" y2="462.28" width="0.1524" layer="91"/>
 <wire x1="274.32" y1="462.28" x2="302.26" y2="462.28" width="0.1524" layer="91"/>
 <wire x1="302.26" y1="462.28" x2="312.42" y2="462.28" width="0.1524" layer="91"/>
 <wire x1="274.32" y1="462.28" x2="274.32" y2="467.36" width="0.1524" layer="91"/>
@@ -5554,7 +5617,7 @@ small amount of battery drain of the voltage divider.</text>
 <wire x1="320.04" y1="472.44" x2="312.42" y2="472.44" width="0.1524" layer="91"/>
 <wire x1="312.42" y1="472.44" x2="312.42" y2="462.28" width="0.1524" layer="91"/>
 <pinref part="C91" gate="G$1" pin="1"/>
-<junction x="264.16" y="462.28"/>
+<junction x="289.56" y="462.28"/>
 <pinref part="C93" gate="G$1" pin="1"/>
 <junction x="302.26" y="462.28"/>
 </segment>
@@ -5600,8 +5663,12 @@ small amount of battery drain of the voltage divider.</text>
 <pinref part="R4" gate="G$1" pin="1"/>
 <wire x1="187.96" y1="350.52" x2="187.96" y2="355.6" width="0.1524" layer="91"/>
 <pinref part="J4" gate="G$1" pin="2"/>
-<wire x1="187.96" y1="350.52" x2="132.08" y2="350.52" width="0.1524" layer="91"/>
+<wire x1="187.96" y1="350.52" x2="149.86" y2="350.52" width="0.1524" layer="91"/>
 <junction x="187.96" y="350.52"/>
+<pinref part="U13" gate="G$1" pin="1"/>
+<wire x1="149.86" y1="350.52" x2="132.08" y2="350.52" width="0.1524" layer="91"/>
+<wire x1="149.86" y1="347.98" x2="149.86" y2="350.52" width="0.1524" layer="91"/>
+<junction x="149.86" y="350.52"/>
 </segment>
 </net>
 <net name="N$3" class="0">
@@ -5621,21 +5688,21 @@ small amount of battery drain of the voltage divider.</text>
 <net name="N$6" class="0">
 <segment>
 <pinref part="U23" gate="G$1" pin="SW"/>
-<wire x1="208.28" y1="218.44" x2="210.82" y2="218.44" width="0.1524" layer="91"/>
+<wire x1="208.28" y1="203.2" x2="210.82" y2="203.2" width="0.1524" layer="91"/>
 <pinref part="L4" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$37" class="0">
 <segment>
-<junction x="231.14" y="218.44"/>
+<junction x="231.14" y="203.2"/>
 <pinref part="C3" gate="G$1" pin="1"/>
-<wire x1="231.14" y1="218.44" x2="223.52" y2="218.44" width="0.1524" layer="91"/>
-<wire x1="231.14" y1="218.44" x2="231.14" y2="215.9" width="0.1524" layer="91"/>
-<junction x="231.14" y="218.44"/>
+<wire x1="231.14" y1="203.2" x2="223.52" y2="203.2" width="0.1524" layer="91"/>
+<wire x1="231.14" y1="203.2" x2="231.14" y2="200.66" width="0.1524" layer="91"/>
+<junction x="231.14" y="203.2"/>
 <pinref part="U23" gate="G$1" pin="VOS"/>
-<wire x1="231.14" y1="215.9" x2="208.28" y2="215.9" width="0.1524" layer="91"/>
-<junction x="231.14" y="215.9"/>
-<wire x1="238.76" y1="218.44" x2="231.14" y2="218.44" width="0.1524" layer="91"/>
+<wire x1="231.14" y1="200.66" x2="208.28" y2="200.66" width="0.1524" layer="91"/>
+<junction x="231.14" y="200.66"/>
+<wire x1="238.76" y1="203.2" x2="231.14" y2="203.2" width="0.1524" layer="91"/>
 <pinref part="L4" gate="G$1" pin="2"/>
 <pinref part="J5" gate="G$1" pin="1"/>
 </segment>
@@ -5643,7 +5710,7 @@ small amount of battery drain of the voltage divider.</text>
 <net name="N$38" class="0">
 <segment>
 <pinref part="U23" gate="G$1" pin="MODE"/>
-<wire x1="208.28" y1="213.36" x2="210.82" y2="213.36" width="0.1524" layer="91"/>
+<wire x1="208.28" y1="198.12" x2="210.82" y2="198.12" width="0.1524" layer="91"/>
 <pinref part="R33" gate="G$1" pin="2"/>
 </segment>
 </net>

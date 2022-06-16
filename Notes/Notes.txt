@@ -1,7 +1,5 @@
 - Rev5 Todo
     
-    - Add ESD protection diode to MOSFET gate
-    
     - Connect to STM32: BAT_CHRG_STAT, BAT_CHRG_LVL, BAT_CHRG_LVL_EN_
         - So STM32 can monitor charging status
     
@@ -48,6 +46,8 @@
     
     
     
+    
+    √ Add ESD protection diode to MOSFET gate
     
     √ Add bypass caps to all new components
         √ Flash: W25Q40EWUXIE
