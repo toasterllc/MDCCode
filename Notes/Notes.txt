@@ -2,11 +2,8 @@
     
     - Add ESD protection diode to MOSFET gate
     
-    - Connect BAT_CHRG_STAT to STM32
+    - Connect to STM32: BAT_CHRG_STAT, BAT_CHRG_LVL, BAT_CHRG_LVL_EN_
         - So STM32 can monitor charging status
-    
-    - Connect VDD_BAT to STM32
-        - So STM32 it can measure the voltage
     
     - Add battery terminal
     
