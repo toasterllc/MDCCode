@@ -1,7 +1,5 @@
 - Rev5 Board
     
-    - Add battery terminal
-    
     - Switch USB receptacle to USB-C
     
     - Connect ICE40 VPP_2V5 to 3V3 instead of 2V8 if it helps us, since we're no longer
@@ -38,6 +36,8 @@
 
 
 - Rev5 Done
+    
+    √ Add battery terminal
     
     √ Consider moving ICE_MSP_SPI_DATA to K3
         - On Rev4, ICE_MSP_SPI_DATA is assigned to K1, which is a PIO pair with J1,

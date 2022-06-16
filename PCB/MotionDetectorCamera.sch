@@ -1482,6 +1482,50 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.6" y="0.4"/>
 </polygon>
 </package>
+<package name="JST-PH-2">
+<description>JST PH series
+2-pin
+SMD mount</description>
+<smd name="GND1" x="-3.35" y="5.75" dx="1.5" dy="3.4" layer="1" cream="no"/>
+<text x="-4.247321875" y="7.799178125" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<wire x1="-4.2" y1="7.6" x2="-4.2" y2="-1.9" width="0.05" layer="21"/>
+<wire x1="-4.2" y1="-1.9" x2="4.2" y2="-1.9" width="0.05" layer="21"/>
+<wire x1="4.2" y1="-1.9" x2="4.2" y2="7.6" width="0.05" layer="21"/>
+<wire x1="4.2" y1="7.6" x2="-4.2" y2="7.6" width="0.05" layer="21"/>
+<smd name="R" x="-1" y="0" dx="1" dy="3.5" layer="1" cream="no"/>
+<polygon width="0.05" layer="39">
+<vertex x="-4.2" y="7.6"/>
+<vertex x="-4.2" y="-1.9"/>
+<vertex x="4.2" y="-1.9"/>
+<vertex x="4.2" y="7.6"/>
+</polygon>
+<smd name="GND2" x="3.35" y="5.75" dx="1.5" dy="3.4" layer="1" cream="no"/>
+<smd name="L" x="1" y="0" dx="1" dy="3.5" layer="1" cream="no"/>
+<polygon width="0.05" layer="31">
+<vertex x="3" y="7.2"/>
+<vertex x="3" y="4.3"/>
+<vertex x="3.7" y="4.3"/>
+<vertex x="3.7" y="7.2"/>
+</polygon>
+<polygon width="0.05" layer="31">
+<vertex x="-3.7" y="7.2"/>
+<vertex x="-3.7" y="4.3"/>
+<vertex x="-3" y="4.3"/>
+<vertex x="-3" y="7.2"/>
+</polygon>
+<polygon width="0.05" layer="31">
+<vertex x="-1.25" y="1.4"/>
+<vertex x="-1.25" y="-1.5"/>
+<vertex x="-0.7" y="-1.5"/>
+<vertex x="-0.7" y="1.4"/>
+</polygon>
+<polygon width="0.05" layer="31">
+<vertex x="0.75" y="1.4"/>
+<vertex x="0.75" y="-1.5"/>
+<vertex x="1.3" y="-1.5"/>
+<vertex x="1.3" y="1.4"/>
+</polygon>
+</package>
 </packages>
 <packages3d>
 <package3d name="SON50P300X200X80-8N" urn="urn:adsk.eagle:package:36180302/1" type="model">
@@ -2544,6 +2588,17 @@ Charger</text>
 <text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <pin name="2" x="12.7" y="-2.54" visible="off" length="short" rot="R180"/>
 <text x="2.54" y="-3.302" size="1.778" layer="94">ESD</text>
+</symbol>
+<symbol name="JST-PH-2">
+<wire x1="0" y1="0" x2="0" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="0" y1="-10.16" x2="10.16" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="10.16" y1="-10.16" x2="10.16" y2="0" width="0.254" layer="94"/>
+<wire x1="10.16" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="L" x="12.7" y="-5.08" visible="pin" length="short" rot="R180"/>
+<pin name="R" x="12.7" y="-2.54" visible="pin" length="short" rot="R180"/>
+<text x="0" y="-12.7" size="1.778" layer="95">JST</text>
+<text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
+<pin name="GND" x="12.7" y="-7.62" visible="pin" length="short" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -3829,6 +3884,24 @@ Charger</text>
 </device>
 </devices>
 </deviceset>
+<deviceset name="JST-PH-2" prefix="J">
+<description>Mini USB Jack</description>
+<gates>
+<gate name="G$1" symbol="JST-PH-2" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="JST-PH-2">
+<connects>
+<connect gate="G$1" pin="GND" pad="GND1 GND2"/>
+<connect gate="G$1" pin="L" pad="L"/>
+<connect gate="G$1" pin="R" pad="R"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 </libraries>
@@ -4466,7 +4539,6 @@ Charger</text>
 <attribute name="MFG" value="Stackpole"/>
 <attribute name="PN" value="RMCF0402JT100K"/>
 </part>
-<part name="J4" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
 <part name="R5" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="300k"/>
 <part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
 <attribute name="MFG" value="Stackpole"/>
@@ -4571,6 +4643,12 @@ Charger</text>
 <part name="U13" library="EagleLibrary" deviceset="EATON-STN101" device="">
 <attribute name="PN" value="STN101050B101"/>
 </part>
+<part name="J3" library="EagleLibrary" deviceset="JST-PH-2" device="">
+<attribute name="MFG" value="HX (Zhejiang Yueqing Hongxing Elec)"/>
+<attribute name="MFG2" value="HDGC"/>
+<attribute name="PN" value="HX20007-2AWB"/>
+<attribute name="PN2" value="HDGC2001WR-S-2P"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -4668,7 +4746,7 @@ BAT_CHRG_LVL_EN_. STM32 is only running when
 we're connected to USB and therefore charging the
 battery, in which case we're not concerned with the
 small amount of battery drain of the voltage divider.</text>
-<text x="124.206" y="338.582" size="1.016" layer="95" align="top-left">ESD protection for MOSFETs
+<text x="129.286" y="338.582" size="1.016" layer="95" align="top-left">ESD protection for MOSFETs
 
 Requirements:
   - low reverse leakage current: &lt;= 100nA
@@ -4854,9 +4932,6 @@ Requirements:
 <attribute name="MFG" x="187.96" y="360.68" size="1.778" layer="96" rot="MR90" display="off"/>
 <attribute name="PN" x="187.96" y="360.68" size="1.778" layer="96" rot="MR90" display="off"/>
 </instance>
-<instance part="J4" gate="G$1" x="129.54" y="355.6" smashed="yes">
-<attribute name="NAME" x="128.27" y="358.14" size="1.778" layer="95" align="top-left"/>
-</instance>
 <instance part="R5" gate="G$1" x="200.66" y="452.12" smashed="yes" rot="MR180">
 <attribute name="NAME" x="203.962" y="456.946" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="203.962" y="454.406" size="1.778" layer="96" rot="MR0"/>
@@ -4978,9 +5053,16 @@ Requirements:
 <attribute name="MFG" x="287.02" y="365.76" size="1.778" layer="96" rot="MR270" display="off"/>
 <attribute name="PN" x="287.02" y="365.76" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
-<instance part="U13" gate="G$1" x="147.32" y="345.44" smashed="yes" rot="MR270">
-<attribute name="NAME" x="146.558" y="345.44" size="1.778" layer="95" align="top-right"/>
-<attribute name="PN" x="147.32" y="345.44" size="1.778" layer="96" rot="MR270" display="off"/>
+<instance part="U13" gate="G$1" x="154.94" y="345.44" smashed="yes" rot="MR270">
+<attribute name="NAME" x="154.178" y="345.44" size="1.778" layer="95" align="top-right"/>
+<attribute name="PN" x="154.94" y="345.44" size="1.778" layer="96" rot="MR270" display="off"/>
+</instance>
+<instance part="J3" gate="G$1" x="129.54" y="355.6" smashed="yes">
+<attribute name="NAME" x="129.54" y="358.14" size="1.778" layer="95" align="top-left"/>
+<attribute name="MFG" x="129.54" y="355.6" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="129.54" y="355.6" size="1.778" layer="96" display="off"/>
+<attribute name="MFG2" x="129.54" y="355.6" size="1.778" layer="96" display="off"/>
+<attribute name="PN2" x="129.54" y="355.6" size="1.778" layer="96" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -5281,8 +5363,18 @@ Requirements:
 </segment>
 <segment>
 <pinref part="U13" gate="G$1" pin="2"/>
-<wire x1="149.86" y1="332.74" x2="149.86" y2="330.2" width="0.1524" layer="91"/>
-<label x="149.86" y="330.2" size="1.778" layer="95"/>
+<wire x1="157.48" y1="332.74" x2="157.48" y2="330.2" width="0.1524" layer="91"/>
+<label x="157.48" y="330.2" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="J3" gate="G$1" pin="GND"/>
+<wire x1="142.24" y1="347.98" x2="144.78" y2="347.98" width="0.1524" layer="91"/>
+<label x="144.78" y="347.98" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="J3" gate="G$1" pin="R"/>
+<wire x1="142.24" y1="353.06" x2="144.78" y2="353.06" width="0.1524" layer="91"/>
+<label x="144.78" y="353.06" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -5566,13 +5658,6 @@ Requirements:
 <label x="287.02" y="373.38" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_BAT_IN" class="0">
-<segment>
-<pinref part="J4" gate="G$1" pin="1"/>
-<wire x1="129.54" y1="350.52" x2="127" y2="350.52" width="0.1524" layer="91"/>
-<label x="127" y="350.52" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-</net>
 <net name="VDD_B_EN" class="0">
 <segment>
 <wire x1="309.88" y1="431.8" x2="309.88" y2="434.34" width="0.1524" layer="91"/>
@@ -5665,13 +5750,13 @@ Requirements:
 <junction x="195.58" y="350.52"/>
 <pinref part="R4" gate="G$1" pin="1"/>
 <wire x1="187.96" y1="350.52" x2="187.96" y2="355.6" width="0.1524" layer="91"/>
-<pinref part="J4" gate="G$1" pin="2"/>
-<wire x1="187.96" y1="350.52" x2="149.86" y2="350.52" width="0.1524" layer="91"/>
+<wire x1="187.96" y1="350.52" x2="157.48" y2="350.52" width="0.1524" layer="91"/>
 <junction x="187.96" y="350.52"/>
 <pinref part="U13" gate="G$1" pin="1"/>
-<wire x1="149.86" y1="350.52" x2="132.08" y2="350.52" width="0.1524" layer="91"/>
-<wire x1="149.86" y1="347.98" x2="149.86" y2="350.52" width="0.1524" layer="91"/>
-<junction x="149.86" y="350.52"/>
+<wire x1="157.48" y1="350.52" x2="142.24" y2="350.52" width="0.1524" layer="91"/>
+<wire x1="157.48" y1="347.98" x2="157.48" y2="350.52" width="0.1524" layer="91"/>
+<junction x="157.48" y="350.52"/>
+<pinref part="J3" gate="G$1" pin="L"/>
 </segment>
 </net>
 <net name="N$3" class="0">
