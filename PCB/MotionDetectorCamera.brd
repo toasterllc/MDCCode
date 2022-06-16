@@ -2349,20 +2349,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-15.447321875" y="-42.600821875" size="1.27" layer="25" font="vector"/>
 <attribute name="PN" value="10129380-902002ALF" x="-20.2" y="-37.8" size="1.778" layer="27" display="off"/>
 </element>
-<element name="R5" library="EagleLibrary" package="0402" value="100k" x="-14.7" y="-49.8" smashed="yes">
-<attribute name="MFG" value="Stackpole" x="-14.7" y="-49.8" size="1.778" layer="27" display="off"/>
+<element name="R5" library="EagleLibrary" package="0402" value="300k" x="-14.7" y="-49.8" smashed="yes">
 <attribute name="NAME" x="-15.454" y="-49.244" size="0.508" layer="25" font="vector"/>
-<attribute name="PN" value="RMCF0402JT100K" x="-14.7" y="-49.8" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R6" library="EagleLibrary" package="0402" value="100k" x="-14.7" y="-52.2" smashed="yes">
-<attribute name="MFG" value="Stackpole" x="-14.7" y="-52.2" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-15.454" y="-51.644" size="0.508" layer="25" font="vector"/>
-<attribute name="PN" value="RMCF0402JT100K" x="-14.7" y="-52.2" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R7" library="EagleLibrary" package="0402" value="100k" x="-14.7" y="-54.6" smashed="yes">
-<attribute name="MFG" value="Stackpole" x="-14.7" y="-54.6" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-15.454" y="-54.044" size="0.508" layer="25" font="vector"/>
-<attribute name="PN" value="RMCF0402JT100K" x="-14.7" y="-54.6" size="1.778" layer="27" display="off"/>
 </element>
 <element name="R8" library="EagleLibrary" package="0402" value="100k" x="-14.7" y="-57" smashed="yes">
 <attribute name="MFG" value="Stackpole" x="-14.7" y="-57" size="1.778" layer="27" display="off"/>
@@ -2495,6 +2483,24 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="MFG" value="Samsung" x="-14" y="-158.2" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-15.469" y="-157.1993" size="0.762" layer="25" font="vector"/>
 <attribute name="PN" value="CL21A106KOQNNNE" x="-14" y="-158.2" size="1.778" layer="27" display="off"/>
+</element>
+<element name="R35" library="EagleLibrary" package="0402" value="100k" x="-12.6" y="-163" smashed="yes">
+<attribute name="MFG" value="Stackpole" x="-14.9" y="-167.8" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-13.354" y="-162.444" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="RMCF0402JT100K" x="-14.9" y="-167.8" size="1.778" layer="27" display="off"/>
+</element>
+<element name="Q1" library="EagleLibrary" package="NEXPERIA-SOT1220" value="PMOS-NEXPERIA-SOT1220" x="-14.7" y="-166.3" smashed="yes">
+<attribute name="MFG" value="Nexperia" x="-14.7" y="-166.3" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.652" y="-165.2056" size="0.762" layer="25" font="vector"/>
+<attribute name="PN" value="PMPB10UPX" x="-14.7" y="-166.3" size="1.778" layer="27" display="off"/>
+</element>
+<element name="R6" library="EagleLibrary" package="0402" value="300k" x="-14.9" y="-168.7" smashed="yes">
+<attribute name="NAME" x="-15.654" y="-168.144" size="0.508" layer="25" font="vector"/>
+</element>
+<element name="R7" library="EagleLibrary" package="0402" value="100k" x="-14.9" y="-171.1" smashed="yes">
+<attribute name="MFG" value="Stackpole" x="-14.9" y="-171.1" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.654" y="-170.544" size="0.508" layer="25" font="vector"/>
+<attribute name="PN" value="RMCF0402JT100K" x="-14.9" y="-171.1" size="1.778" layer="27" display="off"/>
 </element>
 </elements>
 <signals>
@@ -3552,6 +3558,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C93" pad="2"/>
 <contactref element="C92" pad="2"/>
 <contactref element="C88" pad="2"/>
+<contactref element="R35" pad="2"/>
+<wire x1="-13.1246" y1="-158.2" x2="-12.1675" y2="-163" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-155" x2="-13.1246" y2="-158.2" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-152.6" x2="-14.2675" y2="-155" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-147" x2="-14.2675" y2="-152.6" width="0" layer="19" extent="1-1"/>
@@ -8155,6 +8163,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R4" pad="2"/>
 <contactref element="U16" pad="3"/>
 <contactref element="C88" pad="1"/>
+<contactref element="Q1" pad="4"/>
+<contactref element="Q1" pad="8"/>
+<contactref element="R7" pad="1"/>
+<wire x1="-14.7" y1="-167.075" x2="-15.3325" y2="-171.1" width="0" layer="19" extent="1-1"/>
+<wire x1="-13.765" y1="-166.95" x2="-14.7" y2="-167.075" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.8754" y1="-158.2" x2="-13.765" y2="-166.95" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-39.7" x2="-14.8754" y2="-158.2" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.5" y1="-35.675" x2="-14.2675" y2="-39.7" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.565" y1="-35.55" x2="-14.5" y2="-35.675" width="0" layer="19" extent="1-1"/>
@@ -8220,10 +8234,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="N$42">
 <contactref element="U11" pad="4"/>
-<contactref element="R7" pad="2"/>
 <contactref element="R8" pad="1"/>
-<wire x1="-14.2675" y1="-54.6" x2="71.26" y2="4.65" width="0" layer="19" extent="1-1"/>
-<wire x1="-15.1325" y1="-57" x2="-14.2675" y2="-54.6" width="0" layer="19" extent="1-1"/>
+<contactref element="R5" pad="2"/>
+<wire x1="-14.2675" y1="-49.8" x2="71.26" y2="4.65" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.1325" y1="-57" x2="-14.2675" y2="-49.8" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$21">
 <contactref element="R2" pad="2"/>
@@ -8253,16 +8267,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-15.1325" y1="-39.7" x2="-12.23" y2="-47.315" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.435" y1="-34.9" x2="-15.1325" y2="-39.7" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.435" y1="-32.25" x2="-15.435" y2="-34.25" width="0" layer="19" extent="1-1"/>
-</signal>
-<signal name="N$36">
-<contactref element="R5" pad="2"/>
-<contactref element="R6" pad="1"/>
-<wire x1="-14.2675" y1="-49.8" x2="-15.1325" y2="-52.2" width="0" layer="19" extent="1-1"/>
-</signal>
-<signal name="N$39">
-<contactref element="R6" pad="2"/>
-<contactref element="R7" pad="1"/>
-<wire x1="-14.2675" y1="-52.2" x2="-15.1325" y2="-54.6" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$3">
 <contactref element="J15" pad="1"/>
@@ -8306,6 +8310,25 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="BAT_CHRG_STAT">
 <contactref element="U16" pad="1"/>
+</signal>
+<signal name="BAT_CHRG_LVL">
+<contactref element="R35" pad="1"/>
+<contactref element="R6" pad="2"/>
+<wire x1="-13.0325" y1="-163" x2="-14.4675" y2="-168.7" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$46">
+<contactref element="Q1" pad="2" route="any" routetag="G$1.D"/>
+<contactref element="Q1" pad="7" route="any" routetag="G$1.D"/>
+<contactref element="Q1" pad="5" route="any" routetag="G$1.D"/>
+<contactref element="Q1" pad="1" route="any" routetag="G$1.D"/>
+<contactref element="Q1" pad="6" route="any" routetag="G$1.D"/>
+<contactref element="R6" pad="1"/>
+<wire x1="-15.635" y1="-166.3" x2="-15.3325" y2="-168.7" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="BAT_CHRG_LVL_EN_">
+<contactref element="Q1" pad="3"/>
+<contactref element="R7" pad="2"/>
+<wire x1="-15.635" y1="-166.95" x2="-14.4675" y2="-171.1" width="0" layer="19" extent="1-1"/>
 </signal>
 </signals>
 <mfgpreviewcolors>
