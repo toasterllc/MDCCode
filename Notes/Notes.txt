@@ -1,6 +1,8 @@
 - Rev5 Todo
     
-    - Connect MCP73831 STAT to STM32
+    - Add ESD protection diode to MOSFET gate
+    
+    - Connect BAT_CHRG_STAT to STM32
         - So STM32 can monitor charging status
     
     - Connect VDD_BAT to STM32
@@ -837,10 +839,18 @@
 
 - Future
     
-    - Add a zener diode to VDD_BAT_IN to protect from over-voltage
-        - Zeners have significant leakage though. Use a mosfet instead?
-    
-    ? Add a zener diode to VDD_USB_IN to protect from over-voltage
+    - Consider switching to a different PMOS power transistor that has ESD protection
+        - Currently, our MOSFETs don't have ESD protection, so the ones that face external ports need discrete protection,
+          such as the ones in the reverse polarity protection subcircuit
+        
+        - For example:
+            - PMPB15XP
+                - 1.5 kV ESD protection
+                - rRDS = 19mΩ
+            
+            - PMPB20XPE
+                - 2.4 kV ESD protection
+                - rRDS = 23.5mΩ
     
     - Consider using a HyperRAM instead of SDRAM
         - Pros:
@@ -880,8 +890,6 @@
     - Length match traces going to RAM
     
     - Length match traces going to image sensor
-    
-    - Add MOSFET power transistors to define power domains
     
     - An eMMC (such as iNAND 7250, see datasheet in notes dir) might consume less power / be more reliable than an SD card. We can likely write to them faster (and maybe initialize them faster), so even if their current usage is higher, they may end up using less energy for the same operation if we can get the operation completed faster than with an SD card.
     

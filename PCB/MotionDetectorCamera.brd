@@ -2466,11 +2466,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-15.454" y="-125.644" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="-14.7" y="-126.2" size="1.778" layer="27" display="off"/>
 </element>
-<element name="C88" library="EagleLibrary" package="0805" value="10u" x="-14" y="-135.8" smashed="yes">
-<attribute name="MFG" value="Samsung" x="-14" y="-135.8" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-15.469" y="-134.7993" size="0.762" layer="25" font="vector"/>
-<attribute name="PN" value="CL21A106KOQNNNE" x="-14" y="-135.8" size="1.778" layer="27" display="off"/>
-</element>
 <element name="C91" library="EagleLibrary" package="0805" value="10u" x="-14" y="-142.2" smashed="yes">
 <attribute name="MFG" value="Samsung" x="-14" y="-142.2" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-15.469" y="-141.1993" size="0.762" layer="25" font="vector"/>
@@ -2495,6 +2490,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="MFG" value="Murata" x="-14.7" y="-155" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-15.454" y="-154.444" size="0.508" layer="25" font="vector"/>
 <attribute name="PN" value="GRM155R61H104KE19D" x="-14.7" y="-155" size="1.778" layer="27" display="off"/>
+</element>
+<element name="C88" library="EagleLibrary" package="0805" value="10u" x="-14" y="-158.2" smashed="yes">
+<attribute name="MFG" value="Samsung" x="-14" y="-158.2" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="-15.469" y="-157.1993" size="0.762" layer="25" font="vector"/>
+<attribute name="PN" value="CL21A106KOQNNNE" x="-14" y="-158.2" size="1.778" layer="27" display="off"/>
 </element>
 </elements>
 <signals>
@@ -3546,18 +3546,18 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C13" pad="2"/>
 <contactref element="C14" pad="2"/>
 <contactref element="C28" pad="2"/>
-<contactref element="C88" pad="2"/>
 <contactref element="C91" pad="2"/>
 <contactref element="C89" pad="2"/>
 <contactref element="C90" pad="2"/>
 <contactref element="C93" pad="2"/>
 <contactref element="C92" pad="2"/>
+<contactref element="C88" pad="2"/>
+<wire x1="-14.2675" y1="-155" x2="-13.1246" y2="-158.2" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-152.6" x2="-14.2675" y2="-155" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-147" x2="-14.2675" y2="-152.6" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-144.6" x2="-14.2675" y2="-147" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.1246" y1="-142.2" x2="-14.2675" y2="-144.6" width="0" layer="19" extent="1-1"/>
-<wire x1="-13.1246" y1="-135.8" x2="-13.1246" y2="-142.2" width="0" layer="19" extent="1-1"/>
-<wire x1="-14.2675" y1="-126.2" x2="-13.1246" y2="-135.8" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.2675" y1="-126.2" x2="-13.1246" y2="-142.2" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-123.8" x2="-14.2675" y2="-126.2" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-121.4" x2="-14.2675" y2="-123.8" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-119" x2="-14.2675" y2="-121.4" width="0" layer="19" extent="1-1"/>
@@ -8155,7 +8155,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R4" pad="2"/>
 <contactref element="U16" pad="3"/>
 <contactref element="C88" pad="1"/>
-<wire x1="-14.2675" y1="-39.7" x2="-14.8754" y2="-135.8" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.2675" y1="-39.7" x2="-14.8754" y2="-158.2" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.5" y1="-35.675" x2="-14.2675" y2="-39.7" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.565" y1="-35.55" x2="-14.5" y2="-35.675" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.5" y1="-32.375" x2="-14.5" y2="-35.675" width="0" layer="19" extent="1-1"/>
@@ -8303,6 +8303,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U24" pad="4"/>
 <contactref element="U5" pad="1"/>
 <wire x1="-15.0346" y1="-99.95" x2="-13.4296" y2="-108.25" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="BAT_CHRG_STAT">
+<contactref element="U16" pad="1"/>
 </signal>
 </signals>
 <mfgpreviewcolors>
