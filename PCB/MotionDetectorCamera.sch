@@ -9606,10 +9606,12 @@ Ferrite bead specs:
 <text x="7.112" y="-40.64" size="0.508" layer="97" align="top-left">5.1k resistor requirements:
 
     - Tolerance = 10%
-      20% is acceptable, but 10% is required if we want
-      to sense the source's current capability (by reading
-      the voltage on CC1/CC2), to potentially draw more
-      than 500mA if the source supports it.</text>
+
+      (20% is acceptable, but 10% is required if, in the
+      future, we want to sense the source's current
+      capability (by reading the voltage on CC1/CC2),
+      to potentially draw more than 500mA if the
+      source supports it.)</text>
 </plain>
 <instances>
 <instance part="FB1" gate="G$1" x="53.34" y="-7.62" smashed="yes">
