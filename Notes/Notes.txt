@@ -1,9 +1,5 @@
 - Rev5 Board
     
-    - Verify that slots for USB-C jack footprint are recognized by OSH-Park
-    
-    - USB C jack: figure out what to do with: CC1/CC2/SBU1/SBU1
-    
     - Connect ICE40 VPP_2V5 to 3V3 instead of 2V8 if it helps us, since we're no longer
       going to be doing NVCM Programming we're not limited by the 3V max voltage anymore
     
@@ -38,6 +34,12 @@
 
 
 - Rev5 Done
+    
+    √ USB C jack: figure out what to do with: CC1/CC2/SBU1/SBU2
+        - CC1/CC2: 5.1k pulldowns
+        - SBU1/SBU2: unconnected
+    
+    √ Verify that slots for USB-C jack footprint are recognized by OSH-Park
     
     √ Switch USB receptacle to USB-C
     

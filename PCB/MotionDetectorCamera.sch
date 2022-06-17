@@ -1482,10 +1482,9 @@ SMD mount</description>
 </package>
 <package name="GSWITCH-GT-USB-7010ASV">
 <text x="-5.018" y="5.7479" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<pad name="GND1" x="-4.32" y="4.18" drill="0.6" diameter="1" shape="long" rot="R90"/>
 <hole x="-2.89" y="3.68" drill="0.65"/>
 <hole x="2.89" y="3.68" drill="0.65"/>
-<smd name="A4B9" x="-2.4" y="4.8" dx="0.6" dy="1.24" layer="1"/>
+<smd name="A4B9" x="-2.4" y="4.92" dx="0.6" dy="1" layer="1"/>
 <smd name="A6" x="-0.25" y="4.8" dx="0.3" dy="1.24" layer="1"/>
 <smd name="A7" x="0.25" y="4.8" dx="0.3" dy="1.24" layer="1"/>
 <smd name="B6" x="0.75" y="4.8" dx="0.3" dy="1.24" layer="1"/>
@@ -1494,16 +1493,9 @@ SMD mount</description>
 <smd name="A5" x="-1.25" y="4.8" dx="0.3" dy="1.24" layer="1"/>
 <smd name="B5" x="1.75" y="4.8" dx="0.3" dy="1.24" layer="1"/>
 <smd name="B8" x="-1.75" y="4.8" dx="0.3" dy="1.24" layer="1"/>
-<smd name="B4A9" x="2.4" y="4.8" dx="0.6" dy="1.24" layer="1"/>
-<smd name="B1A12" x="3.2" y="4.8" dx="0.6" dy="1.24" layer="1"/>
-<smd name="A1B12" x="-3.2" y="4.8" dx="0.6" dy="1.24" layer="1"/>
-<wire x1="-4.32" y1="5" x2="-4.32" y2="3.3" width="0.6" layer="46"/>
-<pad name="GND2" x="4.32" y="4.18" drill="0.6" diameter="1" shape="long" rot="R90"/>
-<wire x1="4.32" y1="5" x2="4.32" y2="3.3" width="0.6" layer="46"/>
-<pad name="GND4" x="-4.32" y="0" drill="0.6" diameter="1" shape="long" rot="R90"/>
-<wire x1="-4.32" y1="0.7" x2="-4.32" y2="-0.7" width="0.6" layer="46"/>
-<pad name="GND3" x="4.32" y="0" drill="0.6" diameter="1" shape="long" rot="R90"/>
-<wire x1="4.32" y1="0.7" x2="4.32" y2="-0.7" width="0.6" layer="46"/>
+<smd name="B4A9" x="2.4" y="4.92" dx="0.6" dy="1" layer="1"/>
+<smd name="B1A12" x="3.2" y="4.92" dx="0.6" dy="1" layer="1"/>
+<smd name="A1B12" x="-3.2" y="4.92" dx="0.6" dy="1" layer="1"/>
 <wire x1="-4.32" y1="5.5" x2="-4.32" y2="-2.25" width="0.05" layer="21"/>
 <wire x1="-4.32" y1="-2.25" x2="4.32" y2="-2.25" width="0.05" layer="21"/>
 <wire x1="4.32" y1="-2.25" x2="4.32" y2="5.5" width="0.05" layer="21"/>
@@ -1514,6 +1506,42 @@ SMD mount</description>
 <vertex x="4.32" y="-2.25"/>
 <vertex x="4.32" y="5.5"/>
 </polygon>
+<wire x1="-4.32" y1="4.73" x2="-4.32" y2="3.63" width="1" layer="1"/>
+<pad name="GND1" x="-4.32" y="4.73" drill="0.6" diameter="1" rot="R90"/>
+<wire x1="-4.32" y1="4.73" x2="-4.32" y2="3.63" width="1" layer="30"/>
+<pad name="GND2" x="-4.32" y="3.63" drill="0.6" diameter="1" rot="R90"/>
+<wire x1="-4.32" y1="4.73" x2="-4.32" y2="3.63" width="0.6" layer="46"/>
+<wire x1="-4.32" y1="4.73" x2="-4.32" y2="3.63" width="1" layer="29"/>
+<wire x1="-4.32" y1="4.73" x2="-4.32" y2="3.63" width="1" layer="16"/>
+<wire x1="-4.32" y1="4.73" x2="-4.32" y2="3.63" width="1" layer="2"/>
+<wire x1="-4.32" y1="4.73" x2="-4.32" y2="3.63" width="1" layer="15"/>
+<wire x1="4.32" y1="4.73" x2="4.32" y2="3.63" width="1" layer="1"/>
+<pad name="GND3" x="4.32" y="4.73" drill="0.6" diameter="1" rot="R90"/>
+<wire x1="4.32" y1="4.73" x2="4.32" y2="3.63" width="1" layer="30"/>
+<pad name="GND4" x="4.32" y="3.63" drill="0.6" diameter="1" rot="R90"/>
+<wire x1="4.32" y1="4.73" x2="4.32" y2="3.63" width="0.6" layer="46"/>
+<wire x1="4.32" y1="4.73" x2="4.32" y2="3.63" width="1" layer="29"/>
+<wire x1="4.32" y1="4.73" x2="4.32" y2="3.63" width="1" layer="16"/>
+<wire x1="4.32" y1="4.73" x2="4.32" y2="3.63" width="1" layer="2"/>
+<wire x1="4.32" y1="4.73" x2="4.32" y2="3.63" width="1" layer="15"/>
+<pad name="GND7" x="-4.32" y="0.4" drill="0.6" diameter="1" rot="R90"/>
+<wire x1="-4.32" y1="0.4" x2="-4.32" y2="-0.4" width="1" layer="30"/>
+<pad name="GND8" x="-4.32" y="-0.4" drill="0.6" diameter="1" rot="R90"/>
+<wire x1="-4.32" y1="0.4" x2="-4.32" y2="-0.4" width="0.6" layer="46"/>
+<wire x1="-4.32" y1="0.4" x2="-4.32" y2="-0.4" width="1" layer="29"/>
+<wire x1="-4.32" y1="0.4" x2="-4.32" y2="-0.4" width="1" layer="16"/>
+<wire x1="-4.32" y1="0.4" x2="-4.32" y2="-0.4" width="1" layer="2"/>
+<wire x1="-4.32" y1="0.4" x2="-4.32" y2="-0.4" width="1" layer="1"/>
+<pad name="GND5" x="4.32" y="0.4" drill="0.6" diameter="1" rot="R90"/>
+<wire x1="4.32" y1="0.4" x2="4.32" y2="-0.4" width="1" layer="30"/>
+<pad name="GND6" x="4.32" y="-0.4" drill="0.6" diameter="1" rot="R90"/>
+<wire x1="4.32" y1="0.4" x2="4.32" y2="-0.4" width="0.6" layer="46"/>
+<wire x1="4.32" y1="0.4" x2="4.32" y2="-0.4" width="1" layer="29"/>
+<wire x1="4.32" y1="0.4" x2="4.32" y2="-0.4" width="1" layer="16"/>
+<wire x1="4.32" y1="0.4" x2="4.32" y2="-0.4" width="1" layer="2"/>
+<wire x1="4.32" y1="0.4" x2="4.32" y2="-0.4" width="1" layer="1"/>
+<wire x1="-4.32" y1="0.4" x2="-4.32" y2="-0.4" width="1" layer="15"/>
+<wire x1="4.32" y1="0.4" x2="4.32" y2="-0.4" width="1" layer="15"/>
 </package>
 </packages>
 <packages3d>
@@ -3889,7 +3917,7 @@ Connector</text>
 <connect gate="G$1" pin="CC2" pad="B5"/>
 <connect gate="G$1" pin="D+" pad="A6 B6"/>
 <connect gate="G$1" pin="D-" pad="A7 B7"/>
-<connect gate="G$1" pin="GND" pad="A1B12 B1A12 GND1 GND2 GND3 GND4"/>
+<connect gate="G$1" pin="GND" pad="A1B12 B1A12 GND1 GND2 GND3 GND4 GND5 GND6 GND7 GND8"/>
 <connect gate="G$1" pin="SBU1" pad="A8"/>
 <connect gate="G$1" pin="SBU2" pad="B8"/>
 <connect gate="G$1" pin="VBUS" pad="A4B9 B4A9"/>
@@ -4650,6 +4678,8 @@ Connector</text>
 <attribute name="PN2" value="HDGC2001WR-S-2P"/>
 </part>
 <part name="J4" library="EagleLibrary" deviceset="USB-C-JACK" device=""/>
+<part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="5.1k"/>
+<part name="R10" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="5.1k"/>
 </parts>
 <sheets>
 <sheet>
@@ -9573,6 +9603,13 @@ Ferrite bead specs:
     - Rated current &gt;&gt; actual current (to prevent bead saturation)
     - Low DC resistance
     - Low resonant peaking</text>
+<text x="7.112" y="-40.64" size="0.508" layer="97" align="top-left">5.1k resistor requirements:
+
+    - Tolerance = 10%
+      20% is acceptable, but 10% is required if we want
+      to sense the source's current capability (by reading
+      the voltage on CC1/CC2), to potentially draw more
+      than 500mA if the source supports it.</text>
 </plain>
 <instances>
 <instance part="FB1" gate="G$1" x="53.34" y="-7.62" smashed="yes">
@@ -9583,9 +9620,17 @@ Ferrite bead specs:
 <instance part="U20" gate="G$1" x="45.72" y="-35.56" smashed="yes">
 <attribute name="NAME" x="45.72" y="-33.02" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="J4" gate="G$1" x="5.08" y="-5.08" smashed="yes">
-<attribute name="NAME" x="5.08" y="-4.572" size="1.778" layer="95"/>
-<attribute name="PN" x="5.08" y="-40.64" size="1.778" layer="95"/>
+<instance part="J4" gate="G$1" x="-17.78" y="-5.08" smashed="yes">
+<attribute name="NAME" x="-17.78" y="-4.572" size="1.778" layer="95"/>
+<attribute name="PN" x="-17.78" y="-40.64" size="1.778" layer="95"/>
+</instance>
+<instance part="R9" gate="G$1" x="15.24" y="-27.94" smashed="yes" rot="MR270">
+<attribute name="NAME" x="17.526" y="-26.162" size="1.778" layer="95" rot="MR180"/>
+<attribute name="VALUE" x="17.526" y="-28.702" size="1.778" layer="96" rot="MR180"/>
+</instance>
+<instance part="R10" gate="G$1" x="5.08" y="-30.48" smashed="yes" rot="MR270">
+<attribute name="NAME" x="7.366" y="-28.702" size="1.778" layer="95" rot="MR180"/>
+<attribute name="VALUE" x="7.366" y="-31.242" size="1.778" layer="96" rot="MR180"/>
 </instance>
 </instances>
 <busses>
@@ -9593,7 +9638,7 @@ Ferrite bead specs:
 <nets>
 <net name="GND" class="0">
 <segment>
-<wire x1="22.86" y1="-10.16" x2="40.64" y2="-10.16" width="0.1524" layer="91"/>
+<wire x1="0" y1="-10.16" x2="40.64" y2="-10.16" width="0.1524" layer="91"/>
 <label x="45.72" y="-10.16" size="1.778" layer="95"/>
 <wire x1="40.64" y1="-10.16" x2="45.72" y2="-10.16" width="0.1524" layer="91"/>
 <wire x1="43.18" y1="-40.64" x2="40.64" y2="-40.64" width="0.1524" layer="91"/>
@@ -9602,11 +9647,21 @@ Ferrite bead specs:
 <pinref part="U20" gate="G$1" pin="GND"/>
 <pinref part="J4" gate="G$1" pin="GND"/>
 </segment>
+<segment>
+<pinref part="R10" gate="G$1" pin="2"/>
+<wire x1="5.08" y1="-35.56" x2="5.08" y2="-38.1" width="0.1524" layer="91"/>
+<label x="5.08" y="-38.1" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="R9" gate="G$1" pin="2"/>
+<wire x1="15.24" y1="-33.02" x2="15.24" y2="-35.56" width="0.1524" layer="91"/>
+<label x="15.24" y="-35.56" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="USB_D+" class="0">
 <segment>
 <label x="45.72" y="-15.24" size="1.778" layer="95"/>
-<wire x1="22.86" y1="-15.24" x2="35.56" y2="-15.24" width="0.1524" layer="91"/>
+<wire x1="0" y1="-15.24" x2="35.56" y2="-15.24" width="0.1524" layer="91"/>
 <pinref part="U20" gate="G$1" pin="IO2"/>
 <wire x1="35.56" y1="-15.24" x2="45.72" y2="-15.24" width="0.1524" layer="91"/>
 <wire x1="35.56" y1="-48.26" x2="43.18" y2="-48.26" width="0.1524" layer="91"/>
@@ -9618,7 +9673,7 @@ Ferrite bead specs:
 <net name="USB_D-" class="0">
 <segment>
 <label x="45.72" y="-17.78" size="1.778" layer="95"/>
-<wire x1="22.86" y1="-17.78" x2="38.1" y2="-17.78" width="0.1524" layer="91"/>
+<wire x1="0" y1="-17.78" x2="38.1" y2="-17.78" width="0.1524" layer="91"/>
 <wire x1="38.1" y1="-17.78" x2="45.72" y2="-17.78" width="0.1524" layer="91"/>
 <junction x="38.1" y="-17.78"/>
 <pinref part="U20" gate="G$1" pin="IO1"/>
@@ -9630,7 +9685,7 @@ Ferrite bead specs:
 <net name="N$54" class="0">
 <segment>
 <pinref part="FB1" gate="G$1" pin="P$1"/>
-<wire x1="22.86" y1="-7.62" x2="30.48" y2="-7.62" width="0.1524" layer="91"/>
+<wire x1="0" y1="-7.62" x2="30.48" y2="-7.62" width="0.1524" layer="91"/>
 <wire x1="30.48" y1="-7.62" x2="33.02" y2="-7.62" width="0.1524" layer="91"/>
 <wire x1="33.02" y1="-7.62" x2="43.18" y2="-7.62" width="0.1524" layer="91"/>
 <wire x1="43.18" y1="-7.62" x2="53.34" y2="-7.62" width="0.1524" layer="91"/>
@@ -9653,6 +9708,20 @@ Ferrite bead specs:
 <pinref part="FB1" gate="G$1" pin="P$2"/>
 <wire x1="60.96" y1="-7.62" x2="63.5" y2="-7.62" width="0.1524" layer="91"/>
 <label x="63.5" y="-7.62" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="N$35" class="0">
+<segment>
+<pinref part="J4" gate="G$1" pin="CC1"/>
+<pinref part="R9" gate="G$1" pin="1"/>
+<wire x1="0" y1="-22.86" x2="15.24" y2="-22.86" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$36" class="0">
+<segment>
+<pinref part="R10" gate="G$1" pin="1"/>
+<pinref part="J4" gate="G$1" pin="CC2"/>
+<wire x1="5.08" y1="-25.4" x2="0" y2="-25.4" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
