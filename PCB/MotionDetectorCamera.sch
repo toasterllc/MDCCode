@@ -969,52 +969,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="1.651" y="-0.254"/>
 </polygon>
 </package>
-<package name="AMPHENOL-10033526-N3222MLF">
-<smd name="GND2" x="-4.45" y="2.725" dx="2" dy="2.5" layer="1" roundness="50" cream="no"/>
-<smd name="GND3" x="-4.45" y="-2.725" dx="2" dy="2.5" layer="1" roundness="50" cream="no"/>
-<smd name="GND4" x="4.45" y="-2.725" dx="2" dy="2.5" layer="1" roundness="50" cream="no"/>
-<smd name="GND5" x="4.45" y="2.725" dx="2" dy="2.5" layer="1" roundness="50" cream="no"/>
-<smd name="VCC" x="-1.6" y="2.85" dx="0.5" dy="2.25" layer="1" roundness="100"/>
-<smd name="D-" x="-0.8" y="2.85" dx="0.5" dy="2.25" layer="1" roundness="100"/>
-<smd name="D+" x="0" y="2.85" dx="0.5" dy="2.25" layer="1" roundness="100"/>
-<smd name="ID" x="0.8" y="2.85" dx="0.5" dy="2.25" layer="1" roundness="100"/>
-<smd name="GND" x="1.6" y="2.85" dx="0.5" dy="2.25" layer="1" roundness="100"/>
-<wire x1="-3.85" y1="4" x2="-3.85" y2="-5.2" width="0.05" layer="21"/>
-<wire x1="-3.85" y1="-5.2" x2="3.85" y2="-5.2" width="0.05" layer="21"/>
-<wire x1="3.85" y1="-5.2" x2="3.85" y2="4" width="0.05" layer="21"/>
-<wire x1="3.85" y1="4" x2="-3.85" y2="4" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="-3.85" y="4"/>
-<vertex x="-3.85" y="-5.2"/>
-<vertex x="3.85" y="-5.2"/>
-<vertex x="3.85" y="4"/>
-</polygon>
-<text x="-3.858" y="4.3879" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<polygon width="0.127" layer="31">
-<vertex x="-4.953" y="3.429"/>
-<vertex x="-4.953" y="1.905"/>
-<vertex x="-3.937" y="1.905"/>
-<vertex x="-3.937" y="3.429"/>
-</polygon>
-<polygon width="0.127" layer="31">
-<vertex x="-4.953" y="-1.905"/>
-<vertex x="-4.953" y="-3.429"/>
-<vertex x="-3.937" y="-3.429"/>
-<vertex x="-3.937" y="-1.905"/>
-</polygon>
-<polygon width="0.127" layer="31">
-<vertex x="3.937" y="3.429"/>
-<vertex x="3.937" y="1.905"/>
-<vertex x="4.953" y="1.905"/>
-<vertex x="4.953" y="3.429"/>
-</polygon>
-<polygon width="0.127" layer="31">
-<vertex x="3.937" y="-1.905"/>
-<vertex x="3.937" y="-3.429"/>
-<vertex x="4.953" y="-3.429"/>
-<vertex x="4.953" y="-1.905"/>
-</polygon>
-</package>
 <package name="TI-MSP430FR2422IRHL" urn="urn:adsk.eagle:footprint:28409573/1" locally_modified="yes">
 <description>20-QFN, 0.50 mm pitch, 4.50 X 3.50 X 1.00 mm body, 3.05 X 2.05 mm thermal pad
 &lt;p&gt;20-pin QFN package with 0.50 mm pitch with body size 4.50 X 3.50 X 1.00 mm and thermal pad size 3.05 X 2.05 mm&lt;/p&gt;</description>
@@ -1524,6 +1478,41 @@ SMD mount</description>
 <vertex x="0.75" y="-1.5"/>
 <vertex x="1.3" y="-1.5"/>
 <vertex x="1.3" y="1.4"/>
+</polygon>
+</package>
+<package name="GSWITCH-GT-USB-7010ASV">
+<text x="-5.018" y="5.7479" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<pad name="GND1" x="-4.32" y="4.18" drill="0.6" diameter="1" shape="long" rot="R90"/>
+<hole x="-2.89" y="3.68" drill="0.65"/>
+<hole x="2.89" y="3.68" drill="0.65"/>
+<smd name="A4B9" x="-2.4" y="4.8" dx="0.6" dy="1.24" layer="1"/>
+<smd name="A6" x="-0.25" y="4.8" dx="0.3" dy="1.24" layer="1"/>
+<smd name="A7" x="0.25" y="4.8" dx="0.3" dy="1.24" layer="1"/>
+<smd name="B6" x="0.75" y="4.8" dx="0.3" dy="1.24" layer="1"/>
+<smd name="B7" x="-0.75" y="4.8" dx="0.3" dy="1.24" layer="1"/>
+<smd name="A8" x="1.25" y="4.8" dx="0.3" dy="1.24" layer="1"/>
+<smd name="A5" x="-1.25" y="4.8" dx="0.3" dy="1.24" layer="1"/>
+<smd name="B5" x="1.75" y="4.8" dx="0.3" dy="1.24" layer="1"/>
+<smd name="B8" x="-1.75" y="4.8" dx="0.3" dy="1.24" layer="1"/>
+<smd name="B4A9" x="2.4" y="4.8" dx="0.6" dy="1.24" layer="1"/>
+<smd name="B1A12" x="3.2" y="4.8" dx="0.6" dy="1.24" layer="1"/>
+<smd name="A1B12" x="-3.2" y="4.8" dx="0.6" dy="1.24" layer="1"/>
+<wire x1="-4.32" y1="5" x2="-4.32" y2="3.3" width="0.6" layer="46"/>
+<pad name="GND2" x="4.32" y="4.18" drill="0.6" diameter="1" shape="long" rot="R90"/>
+<wire x1="4.32" y1="5" x2="4.32" y2="3.3" width="0.6" layer="46"/>
+<pad name="GND4" x="-4.32" y="0" drill="0.6" diameter="1" shape="long" rot="R90"/>
+<wire x1="-4.32" y1="0.7" x2="-4.32" y2="-0.7" width="0.6" layer="46"/>
+<pad name="GND3" x="4.32" y="0" drill="0.6" diameter="1" shape="long" rot="R90"/>
+<wire x1="4.32" y1="0.7" x2="4.32" y2="-0.7" width="0.6" layer="46"/>
+<wire x1="-4.32" y1="5.5" x2="-4.32" y2="-2.25" width="0.05" layer="21"/>
+<wire x1="-4.32" y1="-2.25" x2="4.32" y2="-2.25" width="0.05" layer="21"/>
+<wire x1="4.32" y1="-2.25" x2="4.32" y2="5.5" width="0.05" layer="21"/>
+<wire x1="4.32" y1="5.5" x2="-4.32" y2="5.5" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="-4.32" y="5.5"/>
+<vertex x="-4.32" y="-2.25"/>
+<vertex x="4.32" y="-2.25"/>
+<vertex x="4.32" y="5.5"/>
 </polygon>
 </package>
 </packages>
@@ -2289,19 +2278,6 @@ tolerant of VDDUSB</text>
 <pin name="P$2" x="7.62" y="0" visible="off" length="short" rot="R180"/>
 <text x="0" y="2.54" size="1.778" layer="95">&gt;NAME</text>
 </symbol>
-<symbol name="AMPHENOLFCI-10033526-N3222MLF">
-<wire x1="0" y1="0" x2="0" y2="-17.78" width="0.254" layer="94"/>
-<wire x1="0" y1="-17.78" x2="15.24" y2="-17.78" width="0.254" layer="94"/>
-<wire x1="15.24" y1="-17.78" x2="15.24" y2="0" width="0.254" layer="94"/>
-<wire x1="15.24" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<pin name="VCC" x="17.78" y="-2.54" visible="pin" length="short" rot="R180"/>
-<pin name="GND" x="17.78" y="-5.08" visible="pin" length="short" rot="R180"/>
-<pin name="D+" x="17.78" y="-12.7" visible="pin" length="short" rot="R180"/>
-<pin name="D-" x="17.78" y="-15.24" visible="pin" length="short" rot="R180"/>
-<pin name="ID" x="17.78" y="-7.62" visible="pin" length="short" rot="R180"/>
-<text x="0" y="-20.32" size="1.778" layer="95">MINI USB JACK</text>
-<text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
-</symbol>
 <symbol name="TI-MSP430FR2422IRHL-A">
 <description>16 MHz MCU with 8KB FRAM, 2KB SRAM, 10-bit ADC, UART/SPI/I2C, timer</description>
 <wire x1="0" y1="-17.78" x2="0" y2="0" width="0.254" layer="94"/>
@@ -2605,6 +2581,23 @@ Charger</text>
 <pin name="GND" x="17.78" y="-7.62" visible="pin" length="short" rot="R180"/>
 <text x="1.27" y="-13.716" size="1.778" layer="94">JST
 Connector</text>
+</symbol>
+<symbol name="USB-C-JACK">
+<wire x1="0" y1="0" x2="0" y2="-33.02" width="0.254" layer="94"/>
+<wire x1="0" y1="-33.02" x2="15.24" y2="-33.02" width="0.254" layer="94"/>
+<wire x1="15.24" y1="-33.02" x2="15.24" y2="0" width="0.254" layer="94"/>
+<wire x1="15.24" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="VBUS" x="17.78" y="-2.54" visible="pin" length="short" rot="R180"/>
+<pin name="GND" x="17.78" y="-5.08" visible="pin" length="short" rot="R180"/>
+<pin name="D+" x="17.78" y="-10.16" visible="pin" length="short" rot="R180"/>
+<pin name="D-" x="17.78" y="-12.7" visible="pin" length="short" rot="R180"/>
+<text x="0" y="0.508" size="1.778" layer="95">&gt;NAME</text>
+<text x="0.762" y="-32.258" size="1.778" layer="94">USB-C Jack</text>
+<text x="0" y="-35.56" size="1.778" layer="95">&gt;PN</text>
+<pin name="SBU1" x="17.78" y="-25.4" visible="pin" length="short" rot="R180"/>
+<pin name="SBU2" x="17.78" y="-27.94" visible="pin" length="short" rot="R180"/>
+<pin name="CC1" x="17.78" y="-17.78" visible="pin" length="short" rot="R180"/>
+<pin name="CC2" x="17.78" y="-20.32" visible="pin" length="short" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -3472,29 +3465,6 @@ Connector</text>
 </device>
 </devices>
 </deviceset>
-<deviceset name="MINI-USB-JACK" prefix="J">
-<description>Mini USB Jack</description>
-<gates>
-<gate name="G$1" symbol="AMPHENOLFCI-10033526-N3222MLF" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="AMPHENOL-10033526-N3222MLF">
-<connects>
-<connect gate="G$1" pin="D+" pad="D+"/>
-<connect gate="G$1" pin="D-" pad="D-"/>
-<connect gate="G$1" pin="GND" pad="GND GND2 GND3 GND4 GND5"/>
-<connect gate="G$1" pin="ID" pad="ID"/>
-<connect gate="G$1" pin="VCC" pad="VCC"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="Amphenol FCI"/>
-<attribute name="PN" value="10033526-N3222MLF"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="TI-MSP430FR2422IRHL" prefix="U">
 <gates>
 <gate name="A" symbol="TI-MSP430FR2422IRHL-A" x="0" y="0"/>
@@ -3904,6 +3874,31 @@ Connector</text>
 </connects>
 <technologies>
 <technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="USB-C-JACK" prefix="J">
+<gates>
+<gate name="G$1" symbol="USB-C-JACK" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="GSWITCH-GT-USB-7010ASV">
+<connects>
+<connect gate="G$1" pin="CC1" pad="A5"/>
+<connect gate="G$1" pin="CC2" pad="B5"/>
+<connect gate="G$1" pin="D+" pad="A6 B6"/>
+<connect gate="G$1" pin="D-" pad="A7 B7"/>
+<connect gate="G$1" pin="GND" pad="A1B12 B1A12 GND1 GND2 GND3 GND4"/>
+<connect gate="G$1" pin="SBU1" pad="A8"/>
+<connect gate="G$1" pin="SBU2" pad="B8"/>
+<connect gate="G$1" pin="VBUS" pad="A4B9 B4A9"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="G-Switch"/>
+<attribute name="PN" value="GT-USB-7010ASV"/>
+</technology>
 </technologies>
 </device>
 </devices>
@@ -4350,7 +4345,6 @@ Connector</text>
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402JR-0710KL"/>
 </part>
-<part name="J8" library="EagleLibrary" deviceset="MINI-USB-JACK" device=""/>
 <part name="FB1" library="EagleLibrary" deviceset="FERRITE-BEAD" device="0402" value="FERRITE-BEAD0402">
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="BKP1005EM100-T"/>
@@ -4655,6 +4649,7 @@ Connector</text>
 <attribute name="PN" value="HX20007-2AWB"/>
 <attribute name="PN2" value="HDGC2001WR-S-2P"/>
 </part>
+<part name="J4" library="EagleLibrary" deviceset="USB-C-JACK" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -9580,9 +9575,6 @@ Ferrite bead specs:
     - Low resonant peaking</text>
 </plain>
 <instances>
-<instance part="J8" gate="G$1" x="5.08" y="-5.08" smashed="yes">
-<attribute name="NAME" x="5.08" y="-2.54" size="1.778" layer="95" align="top-left"/>
-</instance>
 <instance part="FB1" gate="G$1" x="53.34" y="-7.62" smashed="yes">
 <attribute name="NAME" x="53.34" y="-5.08" size="1.778" layer="95"/>
 <attribute name="MFG" x="53.34" y="-7.62" size="1.778" layer="96" display="off"/>
@@ -9591,13 +9583,16 @@ Ferrite bead specs:
 <instance part="U20" gate="G$1" x="45.72" y="-35.56" smashed="yes">
 <attribute name="NAME" x="45.72" y="-33.02" size="1.778" layer="95" align="top-left"/>
 </instance>
+<instance part="J4" gate="G$1" x="5.08" y="-5.08" smashed="yes">
+<attribute name="NAME" x="5.08" y="-4.572" size="1.778" layer="95"/>
+<attribute name="PN" x="5.08" y="-40.64" size="1.778" layer="95"/>
+</instance>
 </instances>
 <busses>
 </busses>
 <nets>
 <net name="GND" class="0">
 <segment>
-<pinref part="J8" gate="G$1" pin="GND"/>
 <wire x1="22.86" y1="-10.16" x2="40.64" y2="-10.16" width="0.1524" layer="91"/>
 <label x="45.72" y="-10.16" size="1.778" layer="95"/>
 <wire x1="40.64" y1="-10.16" x2="45.72" y2="-10.16" width="0.1524" layer="91"/>
@@ -9605,35 +9600,35 @@ Ferrite bead specs:
 <wire x1="40.64" y1="-40.64" x2="40.64" y2="-10.16" width="0.1524" layer="91"/>
 <junction x="40.64" y="-10.16"/>
 <pinref part="U20" gate="G$1" pin="GND"/>
+<pinref part="J4" gate="G$1" pin="GND"/>
 </segment>
 </net>
 <net name="USB_D+" class="0">
 <segment>
-<pinref part="J8" gate="G$1" pin="D+"/>
-<label x="45.72" y="-17.78" size="1.778" layer="95"/>
-<wire x1="22.86" y1="-17.78" x2="35.56" y2="-17.78" width="0.1524" layer="91"/>
+<label x="45.72" y="-15.24" size="1.778" layer="95"/>
+<wire x1="22.86" y1="-15.24" x2="35.56" y2="-15.24" width="0.1524" layer="91"/>
 <pinref part="U20" gate="G$1" pin="IO2"/>
-<wire x1="35.56" y1="-17.78" x2="45.72" y2="-17.78" width="0.1524" layer="91"/>
+<wire x1="35.56" y1="-15.24" x2="45.72" y2="-15.24" width="0.1524" layer="91"/>
 <wire x1="35.56" y1="-48.26" x2="43.18" y2="-48.26" width="0.1524" layer="91"/>
-<wire x1="35.56" y1="-48.26" x2="35.56" y2="-17.78" width="0.1524" layer="91"/>
-<junction x="35.56" y="-17.78"/>
+<wire x1="35.56" y1="-48.26" x2="35.56" y2="-15.24" width="0.1524" layer="91"/>
+<junction x="35.56" y="-15.24"/>
+<pinref part="J4" gate="G$1" pin="D+"/>
 </segment>
 </net>
 <net name="USB_D-" class="0">
 <segment>
-<pinref part="J8" gate="G$1" pin="D-"/>
-<label x="45.72" y="-20.32" size="1.778" layer="95"/>
-<wire x1="22.86" y1="-20.32" x2="38.1" y2="-20.32" width="0.1524" layer="91"/>
-<wire x1="38.1" y1="-20.32" x2="45.72" y2="-20.32" width="0.1524" layer="91"/>
-<junction x="38.1" y="-20.32"/>
+<label x="45.72" y="-17.78" size="1.778" layer="95"/>
+<wire x1="22.86" y1="-17.78" x2="38.1" y2="-17.78" width="0.1524" layer="91"/>
+<wire x1="38.1" y1="-17.78" x2="45.72" y2="-17.78" width="0.1524" layer="91"/>
+<junction x="38.1" y="-17.78"/>
 <pinref part="U20" gate="G$1" pin="IO1"/>
-<wire x1="38.1" y1="-45.72" x2="38.1" y2="-20.32" width="0.1524" layer="91"/>
+<wire x1="38.1" y1="-45.72" x2="38.1" y2="-17.78" width="0.1524" layer="91"/>
 <wire x1="38.1" y1="-45.72" x2="43.18" y2="-45.72" width="0.1524" layer="91"/>
+<pinref part="J4" gate="G$1" pin="D-"/>
 </segment>
 </net>
 <net name="N$54" class="0">
 <segment>
-<pinref part="J8" gate="G$1" pin="VCC"/>
 <pinref part="FB1" gate="G$1" pin="P$1"/>
 <wire x1="22.86" y1="-7.62" x2="30.48" y2="-7.62" width="0.1524" layer="91"/>
 <wire x1="30.48" y1="-7.62" x2="33.02" y2="-7.62" width="0.1524" layer="91"/>
@@ -9650,6 +9645,7 @@ Ferrite bead specs:
 <wire x1="43.18" y1="-53.34" x2="30.48" y2="-53.34" width="0.1524" layer="91"/>
 <wire x1="30.48" y1="-53.34" x2="30.48" y2="-7.62" width="0.1524" layer="91"/>
 <junction x="30.48" y="-7.62"/>
+<pinref part="J4" gate="G$1" pin="VBUS"/>
 </segment>
 </net>
 <net name="VDD_USB_IN" class="0">

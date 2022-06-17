@@ -1,6 +1,8 @@
 - Rev5 Board
     
-    - Switch USB receptacle to USB-C
+    - USB C jack: figure out what to do with: CC1/CC2/SBU1/SBU1
+    
+    - Verify that slots for USB-C jack footprint are recognized by OSH-Park
     
     - Connect ICE40 VPP_2V5 to 3V3 instead of 2V8 if it helps us, since we're no longer
       going to be doing NVCM Programming we're not limited by the 3V max voltage anymore
@@ -36,6 +38,8 @@
 
 
 - Rev5 Done
+    
+    √ Switch USB receptacle to USB-C
     
     √ Add battery terminal
     
