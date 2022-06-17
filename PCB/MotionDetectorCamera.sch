@@ -1767,9 +1767,9 @@ the design uses this PLL</text>
 </polygon>
 </symbol>
 <symbol name="TI-TPS6280XYKA">
-<wire x1="0" y1="0" x2="0" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="0" y1="-10.16" x2="17.78" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="17.78" y1="-10.16" x2="17.78" y2="0" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="0" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="0" y1="-12.7" x2="17.78" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="17.78" y1="-12.7" x2="17.78" y2="0" width="0.254" layer="94"/>
 <wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
 <pin name="EN" x="-2.54" y="-5.08" visible="pin" length="short"/>
 <pin name="GND" x="-2.54" y="-7.62" visible="pin" length="short"/>
@@ -1777,8 +1777,9 @@ the design uses this PLL</text>
 <pin name="SW" x="20.32" y="-2.54" visible="pin" length="short" rot="R180"/>
 <pin name="VIN" x="-2.54" y="-2.54" visible="pin" length="short"/>
 <pin name="VOS" x="20.32" y="-5.08" visible="pin" length="short" rot="R180"/>
-<text x="0.075" y="2.54" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left">&gt;NAME</text>
-<text x="0.075" y="-12.7" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
+<text x="0" y="2.54" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left">&gt;NAME</text>
+<text x="0" y="-15.24" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
+<text x="11.43" y="-11.938" size="1.778" layer="94">Buck</text>
 </symbol>
 <symbol name="ALLIANCE-AS4C8M16MSA-6BIN-B">
 <description>128M Low Power SDRAM</description>
@@ -2372,17 +2373,19 @@ tolerant of VDDUSB</text>
 <wire x1="5.842" y1="-1.27" x2="7.62" y2="-1.27" width="0.254" layer="94"/>
 </symbol>
 <symbol name="TI-TPS22919">
-<wire x1="0" y1="0" x2="0" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="0" y1="-10.16" x2="17.78" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="17.78" y1="-10.16" x2="17.78" y2="0" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="0" y2="-15.24" width="0.254" layer="94"/>
+<wire x1="0" y1="-15.24" x2="17.78" y2="-15.24" width="0.254" layer="94"/>
+<wire x1="17.78" y1="-15.24" x2="17.78" y2="0" width="0.254" layer="94"/>
 <wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
 <pin name="VIN" x="-2.54" y="-2.54" visible="pin" length="short"/>
 <pin name="VOUT" x="20.32" y="-2.54" visible="pin" length="short" rot="R180"/>
 <pin name="EN" x="-2.54" y="-5.08" visible="pin" length="short"/>
-<text x="0" y="-12.7" size="1.778" layer="95">&gt;PN</text>
+<text x="0" y="-17.78" size="1.778" layer="95">&gt;PN</text>
 <text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
 <pin name="GND" x="-2.54" y="-7.62" visible="pin" length="short"/>
 <pin name="QOD" x="20.32" y="-5.08" visible="pin" length="short" rot="R180"/>
+<text x="9.652" y="-13.97" size="1.778" layer="94">Load
+Switch</text>
 </symbol>
 <symbol name="DIODESINC-DT1446-04V-7">
 <wire x1="0" y1="0" x2="10.16" y2="0" width="0.1524" layer="94"/>
@@ -2518,7 +2521,8 @@ tolerant of VDDUSB</text>
 <pin name="GND" x="-2.54" y="-22.86" visible="pin" length="short"/>
 <pin name="PR1" x="-2.54" y="-12.7" visible="pin" length="short"/>
 <pin name="VIN2" x="-2.54" y="-17.78" visible="pin" length="short"/>
-<text x="10.668" y="-24.384" size="1.27" layer="94">Power Mux</text>
+<text x="12.192" y="-24.384" size="1.778" layer="94">Power
+Mux</text>
 </symbol>
 <symbol name="WINBOND-W25Q40EW">
 <wire x1="0" y1="0" x2="0" y2="-27.94" width="0.254" layer="94"/>
@@ -2590,15 +2594,17 @@ Charger</text>
 <text x="2.54" y="-3.302" size="1.778" layer="94">ESD</text>
 </symbol>
 <symbol name="JST-PH-2">
-<wire x1="0" y1="0" x2="0" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="0" y1="-10.16" x2="10.16" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-10.16" x2="10.16" y2="0" width="0.254" layer="94"/>
-<wire x1="10.16" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<pin name="L" x="12.7" y="-5.08" visible="pin" length="short" rot="R180"/>
-<pin name="R" x="12.7" y="-2.54" visible="pin" length="short" rot="R180"/>
-<text x="0" y="-12.7" size="1.778" layer="95">JST</text>
+<wire x1="0" y1="0" x2="0" y2="-15.24" width="0.254" layer="94"/>
+<wire x1="0" y1="-15.24" x2="15.24" y2="-15.24" width="0.254" layer="94"/>
+<wire x1="15.24" y1="-15.24" x2="15.24" y2="0" width="0.254" layer="94"/>
+<wire x1="15.24" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<pin name="L" x="17.78" y="-5.08" visible="pin" length="short" rot="R180"/>
+<pin name="R" x="17.78" y="-2.54" visible="pin" length="short" rot="R180"/>
+<text x="0" y="-17.78" size="1.778" layer="95">&gt;PN</text>
 <text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
-<pin name="GND" x="12.7" y="-7.62" visible="pin" length="short" rot="R180"/>
+<pin name="GND" x="17.78" y="-7.62" visible="pin" length="short" rot="R180"/>
+<text x="1.27" y="-13.716" size="1.778" layer="94">JST
+Connector</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -4746,7 +4752,7 @@ BAT_CHRG_LVL_EN_. STM32 is only running when
 we're connected to USB and therefore charging the
 battery, in which case we're not concerned with the
 small amount of battery drain of the voltage divider.</text>
-<text x="129.286" y="338.582" size="1.016" layer="95" align="top-left">ESD protection for MOSFETs
+<text x="123.952" y="335.026" size="1.016" layer="95" align="top-left">ESD protection for MOSFETs
 
 Requirements:
   - low reverse leakage current: &lt;= 100nA
@@ -4765,7 +4771,7 @@ Requirements:
 </instance>
 <instance part="U3" gate="G$1" x="187.96" y="299.72" smashed="yes">
 <attribute name="NAME" x="188.035" y="302.26" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
-<attribute name="PN" x="188.035" y="287.02" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN" x="188.035" y="284.48" size="1.778" layer="95" ratio="10" rot="SR0"/>
 </instance>
 <instance part="C9" gate="G$1" x="167.64" y="248.92" smashed="yes">
 <attribute name="NAME" x="170.434" y="248.539" size="1.778" layer="95"/>
@@ -4775,7 +4781,7 @@ Requirements:
 </instance>
 <instance part="U4" gate="G$1" x="187.96" y="254" smashed="yes">
 <attribute name="NAME" x="188.035" y="256.54" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
-<attribute name="PN" x="188.035" y="241.3" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN" x="188.035" y="238.76" size="1.778" layer="95" ratio="10" rot="SR0"/>
 </instance>
 <instance part="C7" gate="G$1" x="231.14" y="292.1" smashed="yes">
 <attribute name="NAME" x="232.664" y="295.021" size="1.778" layer="95"/>
@@ -4814,19 +4820,19 @@ Requirements:
 <attribute name="PN" x="157.48" y="248.92" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="U6" gate="G$1" x="208.28" y="157.48" smashed="yes">
-<attribute name="PN" x="208.28" y="144.78" size="1.778" layer="95"/>
+<attribute name="PN" x="208.28" y="139.7" size="1.778" layer="95"/>
 <attribute name="NAME" x="208.28" y="158.242" size="1.778" layer="95"/>
 </instance>
 <instance part="U7" gate="G$1" x="208.28" y="127" smashed="yes">
-<attribute name="PN" x="208.28" y="114.3" size="1.778" layer="95"/>
+<attribute name="PN" x="208.28" y="109.22" size="1.778" layer="95"/>
 <attribute name="NAME" x="208.28" y="127.762" size="1.778" layer="95"/>
 </instance>
 <instance part="U8" gate="G$1" x="208.28" y="96.52" smashed="yes">
-<attribute name="PN" x="208.28" y="83.82" size="1.778" layer="95"/>
+<attribute name="PN" x="208.28" y="78.74" size="1.778" layer="95"/>
 <attribute name="NAME" x="208.28" y="97.282" size="1.778" layer="95"/>
 </instance>
 <instance part="U10" gate="G$1" x="208.28" y="38.1" smashed="yes">
-<attribute name="PN" x="208.28" y="25.4" size="1.778" layer="95"/>
+<attribute name="PN" x="208.28" y="20.32" size="1.778" layer="95"/>
 <attribute name="NAME" x="208.28" y="38.862" size="1.778" layer="95"/>
 </instance>
 <instance part="C15" gate="G$1" x="175.26" y="152.4" smashed="yes">
@@ -4854,7 +4860,7 @@ Requirements:
 <attribute name="MFG" x="157.48" y="38.1" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="U9" gate="G$1" x="208.28" y="68.58" smashed="yes">
-<attribute name="PN" x="208.28" y="55.88" size="1.778" layer="95"/>
+<attribute name="PN" x="208.28" y="50.8" size="1.778" layer="95"/>
 <attribute name="NAME" x="208.28" y="69.342" size="1.778" layer="95"/>
 </instance>
 <instance part="C18" gate="G$1" x="175.26" y="63.5" smashed="yes">
@@ -4875,7 +4881,7 @@ Requirements:
 <attribute name="PN" x="269.24" y="642.62" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
 <instance part="U30" gate="G$1" x="208.28" y="7.62" smashed="yes">
-<attribute name="PN" x="208.28" y="-5.08" size="1.778" layer="95"/>
+<attribute name="PN" x="208.28" y="-10.16" size="1.778" layer="95"/>
 <attribute name="NAME" x="208.28" y="8.382" size="1.778" layer="95"/>
 </instance>
 <instance part="C20" gate="G$1" x="175.26" y="2.54" smashed="yes">
@@ -4965,7 +4971,7 @@ Requirements:
 </instance>
 <instance part="U23" gate="G$1" x="187.96" y="205.74" smashed="yes">
 <attribute name="NAME" x="188.035" y="208.28" size="1.778" layer="95" ratio="10" rot="SR0" align="top-left"/>
-<attribute name="PN" x="188.035" y="193.04" size="1.778" layer="95" ratio="10" rot="SR0"/>
+<attribute name="PN" x="188.035" y="190.5" size="1.778" layer="95" ratio="10" rot="SR0"/>
 </instance>
 <instance part="C3" gate="G$1" x="231.14" y="198.12" smashed="yes">
 <attribute name="NAME" x="232.664" y="201.041" size="1.778" layer="95"/>
@@ -5057,12 +5063,12 @@ Requirements:
 <attribute name="NAME" x="154.178" y="345.44" size="1.778" layer="95" align="top-right"/>
 <attribute name="PN" x="154.94" y="345.44" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
-<instance part="J3" gate="G$1" x="129.54" y="355.6" smashed="yes">
-<attribute name="NAME" x="129.54" y="358.14" size="1.778" layer="95" align="top-left"/>
-<attribute name="MFG" x="129.54" y="355.6" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="129.54" y="355.6" size="1.778" layer="96" display="off"/>
-<attribute name="MFG2" x="129.54" y="355.6" size="1.778" layer="96" display="off"/>
-<attribute name="PN2" x="129.54" y="355.6" size="1.778" layer="96" display="off"/>
+<instance part="J3" gate="G$1" x="124.46" y="355.6" smashed="yes">
+<attribute name="MFG" x="124.46" y="355.6" size="1.778" layer="96" display="off"/>
+<attribute name="MFG2" x="124.46" y="355.6" size="1.778" layer="96" display="off"/>
+<attribute name="PN2" x="124.46" y="355.6" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="124.46" y="337.82" size="1.778" layer="95"/>
+<attribute name="NAME" x="124.46" y="358.14" size="1.778" layer="95" align="top-left"/>
 </instance>
 </instances>
 <busses>
@@ -5739,7 +5745,7 @@ Requirements:
 <junction x="220.98" y="350.52"/>
 </segment>
 </net>
-<net name="N$35" class="0">
+<net name="VDD_BAT_IN" class="0">
 <segment>
 <pinref part="Q2" gate="G$1" pin="G"/>
 <wire x1="213.36" y1="360.68" x2="203.2" y2="350.52" width="0.1524" layer="91"/>
@@ -5757,6 +5763,8 @@ Requirements:
 <wire x1="157.48" y1="347.98" x2="157.48" y2="350.52" width="0.1524" layer="91"/>
 <junction x="157.48" y="350.52"/>
 <pinref part="J3" gate="G$1" pin="L"/>
+<wire x1="157.48" y1="350.52" x2="157.48" y2="355.6" width="0.1524" layer="91"/>
+<label x="157.48" y="355.6" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$3" class="0">

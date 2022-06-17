@@ -8326,7 +8326,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="-15.1325" y1="-37.3" x2="-15.435" y2="-35.55" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.435" y1="-31.6" x2="-15.435" y2="-35.55" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="N$35">
+<signal name="VDD_BAT_IN">
 <contactref element="Q2" pad="3"/>
 <contactref element="Q3" pad="2" route="any" routetag="G$1.D"/>
 <contactref element="Q3" pad="5" route="any" routetag="G$1.D"/>
