@@ -2575,17 +2575,17 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="-15.645559375" y="-173.24761875" size="0.762" layer="25" font="vector"/>
 <attribute name="PN" value="STN101050B101" x="-15" y="-173.7" size="1.778" layer="27" display="off"/>
 </element>
-<element name="J3" library="EagleLibrary" package="JST-PH-2" value="JST-PH-2" x="-20.4" y="-172.7" smashed="yes">
-<attribute name="MFG" value="HX (Zhejiang Yueqing Hongxing Elec)" x="-20.4" y="-172.7" size="1.778" layer="27" display="off"/>
-<attribute name="MFG2" value="HDGC" x="-20.4" y="-172.7" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-24.647321875" y="-164.900821875" size="1.27" layer="25" font="vector"/>
-<attribute name="PN" value="HX20007-2AWB" x="-20.4" y="-172.7" size="1.778" layer="27" display="off"/>
-<attribute name="PN2" value="HDGC2001WR-S-2P" x="-20.4" y="-172.7" size="1.778" layer="27" display="off"/>
+<element name="J3" library="EagleLibrary" package="JST-PH-2" value="JST-PH-2" x="95.5" y="23.4" smashed="yes">
+<attribute name="MFG" value="HX (Zhejiang Yueqing Hongxing Elec)" x="95.5" y="23.4" size="1.778" layer="27" display="off"/>
+<attribute name="MFG2" value="HDGC" x="95.5" y="23.4" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="91.252678125" y="31.199178125" size="1.27" layer="25" font="vector"/>
+<attribute name="PN" value="HX20007-2AWB" x="95.5" y="23.4" size="1.778" layer="27" display="off"/>
+<attribute name="PN2" value="HDGC2001WR-S-2P" x="95.5" y="23.4" size="1.778" layer="27" display="off"/>
 </element>
-<element name="J4" library="EagleLibrary" package="GSWITCH-GT-USB-7010ASV" value="USB-C-JACK" x="-4.32" y="-195.8" smashed="yes">
-<attribute name="MFG" value="G-Switch" x="-4.32" y="-195.8" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="-9.338" y="-190.0521" size="1.27" layer="25" font="vector"/>
-<attribute name="PN" value="GT-USB-7010ASV" x="-4.32" y="-195.8" size="1.778" layer="27" display="off"/>
+<element name="J4" library="EagleLibrary" package="GSWITCH-GT-USB-7010ASV" value="USB-C-JACK" x="84.58" y="24.4" smashed="yes">
+<attribute name="MFG" value="G-Switch" x="84.58" y="24.4" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="79.562" y="30.1479" size="1.27" layer="25" font="vector"/>
+<attribute name="PN" value="GT-USB-7010ASV" x="84.58" y="24.4" size="1.778" layer="27" display="off"/>
 </element>
 <element name="R9" library="EagleLibrary" package="0402" value="5.1k" x="-23.8" y="-199.4" smashed="yes">
 <attribute name="NAME" x="-24.554" y="-198.844" size="0.508" layer="25" font="vector"/>
@@ -3662,21 +3662,21 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R10" pad="2"/>
 <contactref element="R9" pad="2"/>
 <wire x1="-23.3675" y1="-199.4" x2="-23.3675" y2="-201.8" width="0" layer="19" extent="1-1"/>
-<wire x1="-8.64" y1="-196.2" x2="-23.3675" y2="-199.4" width="0" layer="19" extent="1-1"/>
-<wire x1="-8.64" y1="-195.4" x2="-8.64" y2="-196.2" width="0" layer="19" extent="1-1"/>
-<wire x1="-8.64" y1="-192.17" x2="-8.64" y2="-195.4" width="0" layer="19" extent="1-1"/>
-<wire x1="-8.64" y1="-191.07" x2="-8.64" y2="-192.17" width="0" layer="19" extent="1-1"/>
-<wire x1="-7.52" y1="-190.88" x2="-8.64" y2="-191.07" width="0" layer="19" extent="1-1"/>
-<wire x1="-1.12" y1="-190.88" x2="-7.52" y2="-190.88" width="0" layer="19" extent="1-1"/>
-<wire x1="0" y1="-191.07" x2="-1.12" y2="-190.88" width="0" layer="19" extent="1-1"/>
-<wire x1="0" y1="-192.17" x2="0" y2="-191.07" width="0" layer="19" extent="1-1"/>
-<wire x1="0" y1="-195.4" x2="0" y2="-192.17" width="0" layer="19" extent="1-1"/>
-<wire x1="0" y1="-196.2" x2="0" y2="-195.4" width="0" layer="19" extent="1-1"/>
-<wire x1="-14.675" y1="-173.7" x2="-8.64" y2="-191.07" width="0" layer="19" extent="1-1"/>
-<wire x1="-21.4" y1="-172.7" x2="-14.675" y2="-173.7" width="0" layer="19" extent="1-1"/>
-<wire x1="-23.75" y1="-166.95" x2="-21.4" y2="-172.7" width="0" layer="19" extent="1-1"/>
-<wire x1="-17.05" y1="-166.95" x2="-23.75" y2="-166.95" width="0" layer="19" extent="1-1"/>
-<wire x1="-12.1675" y1="-163" x2="-17.05" y2="-166.95" width="0" layer="19" extent="1-1"/>
+<wire x1="80.26" y1="24" x2="-23.3675" y2="-199.4" width="0" layer="19" extent="1-1"/>
+<wire x1="80.26" y1="24.8" x2="80.26" y2="24" width="0" layer="19" extent="1-1"/>
+<wire x1="80.26" y1="28.03" x2="80.26" y2="24.8" width="0" layer="19" extent="1-1"/>
+<wire x1="80.26" y1="29.13" x2="80.26" y2="28.03" width="0" layer="19" extent="1-1"/>
+<wire x1="81.38" y1="29.32" x2="80.26" y2="29.13" width="0" layer="19" extent="1-1"/>
+<wire x1="87.78" y1="29.32" x2="81.38" y2="29.32" width="0" layer="19" extent="1-1"/>
+<wire x1="88.9" y1="29.13" x2="87.78" y2="29.32" width="0" layer="19" extent="1-1"/>
+<wire x1="88.9" y1="28.03" x2="88.9" y2="29.13" width="0" layer="19" extent="1-1"/>
+<wire x1="88.9" y1="24.8" x2="88.9" y2="28.03" width="0" layer="19" extent="1-1"/>
+<wire x1="88.9" y1="24" x2="88.9" y2="24.8" width="0" layer="19" extent="1-1"/>
+<wire x1="-14.675" y1="-173.7" x2="80.26" y2="29.13" width="0" layer="19" extent="1-1"/>
+<wire x1="94.5" y1="23.4" x2="-14.675" y2="-173.7" width="0" layer="19" extent="1-1"/>
+<wire x1="92.15" y1="29.15" x2="94.5" y2="23.4" width="0" layer="19" extent="1-1"/>
+<wire x1="98.85" y1="29.15" x2="92.15" y2="29.15" width="0" layer="19" extent="1-1"/>
+<wire x1="-12.1675" y1="-163" x2="98.85" y2="29.15" width="0" layer="19" extent="1-1"/>
 <wire x1="-13.1246" y1="-158.2" x2="-12.1675" y2="-163" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-155" x2="-13.1246" y2="-158.2" width="0" layer="19" extent="1-1"/>
 <wire x1="-14.2675" y1="-152.6" x2="-14.2675" y2="-155" width="0" layer="19" extent="1-1"/>
@@ -6690,8 +6690,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="33.54478125" y1="9.674859375" x2="31.26956875" y2="9.674859375" width="0.127" layer="1"/>
 <contactref element="J4" pad="B7"/>
 <contactref element="J4" pad="A7"/>
-<wire x1="-4.07" y1="-191" x2="-5.07" y2="-191" width="0" layer="19" extent="1-1"/>
-<wire x1="34.715921875" y1="5.751215625" x2="-4.07" y2="-191" width="0" layer="19" extent="1-16"/>
+<wire x1="84.83" y1="29.2" x2="83.83" y2="29.2" width="0" layer="19" extent="1-1"/>
+<wire x1="34.715921875" y1="5.751215625" x2="84.83" y2="29.2" width="0" layer="19" extent="1-16"/>
 <wire x1="34.757359375" y1="6.5024" x2="34.715921875" y2="5.751215625" width="0" layer="19" extent="16-16"/>
 <wire x1="34.76" y1="8.450875" x2="34.757359375" y2="6.5024" width="0" layer="19" extent="1-1"/>
 </signal>
@@ -6721,8 +6721,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="31.6773125" y1="10.10411875" x2="33.52405625" y2="10.10411875" width="0.127" layer="1"/>
 <contactref element="J4" pad="A6"/>
 <contactref element="J4" pad="B6"/>
-<wire x1="-3.57" y1="-191" x2="-4.57" y2="-191" width="0" layer="19" extent="1-1"/>
-<wire x1="34.715921875" y1="4.751215625" x2="-3.57" y2="-191" width="0" layer="19" extent="1-16"/>
+<wire x1="85.33" y1="29.2" x2="84.33" y2="29.2" width="0" layer="19" extent="1-1"/>
+<wire x1="34.715921875" y1="4.751215625" x2="85.33" y2="29.2" width="0" layer="19" extent="1-16"/>
 <wire x1="35.56" y1="6.5024" x2="34.715921875" y2="4.751215625" width="0" layer="19" extent="16-16"/>
 <wire x1="35.56" y1="8.254965625" x2="35.56" y2="6.5024" width="0" layer="19" extent="1-1"/>
 </signal>
@@ -7058,8 +7058,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U20" pad="6"/>
 <contactref element="J4" pad="B4A9"/>
 <contactref element="J4" pad="A4B9"/>
-<wire x1="-1.92" y1="-190.88" x2="-6.72" y2="-190.88" width="0" layer="19" extent="1-1"/>
-<wire x1="33.124321875" y1="4.751215625" x2="-1.92" y2="-190.88" width="0" layer="19" extent="1-16"/>
+<wire x1="86.98" y1="29.32" x2="82.18" y2="29.32" width="0" layer="19" extent="1-1"/>
+<wire x1="33.124321875" y1="4.751215625" x2="86.98" y2="29.32" width="0" layer="19" extent="1-16"/>
 <wire x1="33.124321875" y1="5.251215625" x2="33.124321875" y2="4.751215625" width="0" layer="19" extent="16-16"/>
 <wire x1="33.124321875" y1="5.751215625" x2="33.124321875" y2="5.251215625" width="0" layer="19" extent="16-16"/>
 <wire x1="33.152075" y1="9.0297" x2="33.124321875" y2="5.751215625" width="0" layer="19" extent="16-16"/>
@@ -8388,8 +8388,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R4" pad="1"/>
 <contactref element="U13" pad="1"/>
 <contactref element="J3" pad="L"/>
-<wire x1="-19.4" y1="-172.7" x2="-15.325" y2="-173.7" width="0" layer="19" extent="1-1"/>
-<wire x1="-15.1325" y1="-39.7" x2="-19.4" y2="-172.7" width="0" layer="19" extent="1-1"/>
+<wire x1="96.5" y1="23.4" x2="-15.325" y2="-173.7" width="0" layer="19" extent="1-1"/>
+<wire x1="-15.1325" y1="-39.7" x2="96.5" y2="23.4" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.435" y1="-34.9" x2="-15.1325" y2="-39.7" width="0" layer="19" extent="1-1"/>
 <wire x1="-15.435" y1="-32.25" x2="-15.435" y2="-34.25" width="0" layer="19" extent="1-1"/>
 </signal>
@@ -8469,12 +8469,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <signal name="N$35">
 <contactref element="J4" pad="A5"/>
 <contactref element="R9" pad="1"/>
-<wire x1="-5.57" y1="-191" x2="-24.2325" y2="-199.4" width="0" layer="19" extent="1-1"/>
+<wire x1="83.33" y1="29.2" x2="-24.2325" y2="-199.4" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$36">
 <contactref element="R10" pad="1"/>
 <contactref element="J4" pad="B5"/>
-<wire x1="-2.57" y1="-191" x2="-24.2325" y2="-201.8" width="0" layer="19" extent="1-1"/>
+<wire x1="86.33" y1="29.2" x2="-24.2325" y2="-201.8" width="0" layer="19" extent="1-1"/>
 </signal>
 </signals>
 <mfgpreviewcolors>

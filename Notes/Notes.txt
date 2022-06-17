@@ -1,5 +1,7 @@
 - Rev5 Board
     
+    - Layout!
+    
     - Make board left/right borders smaller
     
     - When complete, make sure board origin is at 0,0
