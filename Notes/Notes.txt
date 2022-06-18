@@ -34,6 +34,9 @@
 
 - Rev5 Done
     
+    √ Correct (swap) ICE SPI flash's data in/out pins so that by default, the flash is ready to
+      be read by ICE40, but STM32 can program it by bit-banging ICE_ST_SPI_D0 / ICE_ST_SPI_D1
+    
     X Connect ICE40 VPP_2V5 to 3V3 instead of 2V8 if it helps us, since we're no longer
       going to be doing NVCM Programming we're not limited by the 3V max voltage anymore
       

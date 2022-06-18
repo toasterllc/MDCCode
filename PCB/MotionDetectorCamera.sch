@@ -6667,6 +6667,16 @@ should be a high voltage during power up.</text>
 <wire x1="81.28" y1="-137.16" x2="81.28" y2="-134.62" width="0.1524" layer="91"/>
 <label x="81.28" y="-134.62" size="1.778" layer="95" align="bottom-right"/>
 </segment>
+<segment>
+<pinref part="U5" gate="G$1" pin="WP_"/>
+<wire x1="104.14" y1="-160.02" x2="101.6" y2="-160.02" width="0.1524" layer="91"/>
+<label x="101.6" y="-160.02" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<pinref part="U5" gate="G$1" pin="HOLD_"/>
+<wire x1="104.14" y1="-162.56" x2="101.6" y2="-162.56" width="0.1524" layer="91"/>
+<label x="101.6" y="-162.56" size="1.778" layer="95" align="bottom-right"/>
+</segment>
 </net>
 <net name="GND" class="0">
 <segment>
@@ -7046,9 +7056,9 @@ should be a high voltage during power up.</text>
 <label x="80.772" y="-83.82" size="1.778" layer="95" rot="MR0"/>
 </segment>
 <segment>
-<pinref part="U5" gate="G$1" pin="DO"/>
-<wire x1="129.54" y1="-144.78" x2="132.08" y2="-144.78" width="0.1524" layer="91"/>
-<label x="132.08" y="-144.78" size="1.778" layer="95"/>
+<pinref part="U5" gate="G$1" pin="DI"/>
+<wire x1="104.14" y1="-154.94" x2="101.6" y2="-154.94" width="0.1524" layer="91"/>
+<label x="101.6" y="-154.94" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="ICE_ST_SPI_D0" class="0">
@@ -7058,9 +7068,9 @@ should be a high voltage during power up.</text>
 <label x="80.772" y="-81.28" size="1.778" layer="95" rot="MR0"/>
 </segment>
 <segment>
-<pinref part="U5" gate="G$1" pin="DI"/>
-<wire x1="104.14" y1="-154.94" x2="101.6" y2="-154.94" width="0.1524" layer="91"/>
-<label x="101.6" y="-154.94" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U5" gate="G$1" pin="DO"/>
+<wire x1="129.54" y1="-144.78" x2="132.08" y2="-144.78" width="0.1524" layer="91"/>
+<label x="132.08" y="-144.78" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_ST_SPI_CLK" class="0">
