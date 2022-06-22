@@ -9316,20 +9316,6 @@ between input and output when its VDD=0.</text>
 <pinref part="H2" gate="G$1" pin="2"/>
 </segment>
 </net>
-<net name="ICE_ST_SPI_D0" class="0">
-<segment>
-<pinref part="U19" gate="C" pin="PC9_F14"/>
-<wire x1="119.38" y1="-35.56" x2="121.92" y2="-35.56" width="0.1524" layer="91"/>
-<label x="121.92" y="-35.56" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_ST_SPI_D1" class="0">
-<segment>
-<pinref part="U19" gate="C" pin="PC10_B14"/>
-<wire x1="119.38" y1="-38.1" x2="121.92" y2="-38.1" width="0.1524" layer="91"/>
-<label x="121.92" y="-38.1" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="ICE_ST_SPI_D2" class="0">
 <segment>
 <pinref part="U19" gate="F" pin="PF7_K1"/>
@@ -9349,34 +9335,6 @@ between input and output when its VDD=0.</text>
 <pinref part="U19" gate="F" pin="PF6_K2"/>
 <wire x1="68.58" y1="-88.9" x2="71.12" y2="-88.9" width="0.1524" layer="91"/>
 <label x="71.12" y="-88.9" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_ST_SPI_D4" class="0">
-<segment>
-<pinref part="U19" gate="H" pin="PH2_F4"/>
-<wire x1="170.18" y1="-78.74" x2="172.72" y2="-78.74" width="0.1524" layer="91"/>
-<label x="172.72" y="-78.74" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_ST_SPI_D5" class="0">
-<segment>
-<pinref part="U19" gate="H" pin="PH3_G4"/>
-<wire x1="170.18" y1="-81.28" x2="172.72" y2="-81.28" width="0.1524" layer="91"/>
-<label x="172.72" y="-81.28" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_ST_SPI_D6" class="0">
-<segment>
-<pinref part="U19" gate="G" pin="PG9_C10"/>
-<wire x1="119.38" y1="-91.44" x2="121.92" y2="-91.44" width="0.1524" layer="91"/>
-<label x="121.92" y="-91.44" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_ST_SPI_D7" class="0">
-<segment>
-<pinref part="U19" gate="G" pin="PG14_A7"/>
-<wire x1="119.38" y1="-104.14" x2="121.92" y2="-104.14" width="0.1524" layer="91"/>
-<label x="121.92" y="-104.14" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_ST_SPI_CLK" class="0">
@@ -9483,9 +9441,8 @@ between input and output when its VDD=0.</text>
 <label x="231.14" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="2.54" y1="-91.44" x2="5.08" y2="-91.44" width="0.1524" layer="91"/>
-<label x="5.08" y="-91.44" size="1.778" layer="95"/>
-<pinref part="U19" gate="E" pin="PE7_R8"/>
+<wire x1="10.16" y1="-86.36" x2="12.7" y2="-86.36" width="0.1524" layer="91"/>
+<label x="12.7" y="-86.36" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="STM_LED2" class="0">
@@ -9495,9 +9452,8 @@ between input and output when its VDD=0.</text>
 <label x="215.9" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="2.54" y1="-99.06" x2="5.08" y2="-99.06" width="0.1524" layer="91"/>
-<label x="5.08" y="-99.06" size="1.778" layer="95"/>
-<pinref part="U19" gate="E" pin="PE10_R9"/>
+<wire x1="10.16" y1="-83.82" x2="12.7" y2="-83.82" width="0.1524" layer="91"/>
+<label x="12.7" y="-83.82" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="STM_LED3" class="0">
@@ -9559,6 +9515,48 @@ between input and output when its VDD=0.</text>
 <pinref part="U19" gate="A" pin="PA7_R3"/>
 <wire x1="15.24" y1="-30.48" x2="17.78" y2="-30.48" width="0.1524" layer="91"/>
 <label x="17.78" y="-30.48" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D0" class="0">
+<segment>
+<wire x1="68.58" y1="-93.98" x2="71.12" y2="-93.98" width="0.1524" layer="91"/>
+<label x="71.12" y="-93.98" size="1.778" layer="95"/>
+<pinref part="U19" gate="F" pin="PF8_L3"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D1" class="0">
+<segment>
+<wire x1="68.58" y1="-96.52" x2="71.12" y2="-96.52" width="0.1524" layer="91"/>
+<label x="71.12" y="-96.52" size="1.778" layer="95"/>
+<pinref part="U19" gate="F" pin="PF9_L2"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D7" class="0">
+<segment>
+<wire x1="2.54" y1="-99.06" x2="5.08" y2="-99.06" width="0.1524" layer="91"/>
+<label x="5.08" y="-99.06" size="1.778" layer="95"/>
+<pinref part="U19" gate="E" pin="PE10_R9"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D6" class="0">
+<segment>
+<wire x1="2.54" y1="-96.52" x2="5.08" y2="-96.52" width="0.1524" layer="91"/>
+<label x="5.08" y="-96.52" size="1.778" layer="95"/>
+<pinref part="U19" gate="E" pin="PE9_P9"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D4" class="0">
+<segment>
+<wire x1="2.54" y1="-91.44" x2="5.08" y2="-91.44" width="0.1524" layer="91"/>
+<label x="5.08" y="-91.44" size="1.778" layer="95"/>
+<pinref part="U19" gate="E" pin="PE7_R8"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D5" class="0">
+<segment>
+<wire x1="2.54" y1="-93.98" x2="5.08" y2="-93.98" width="0.1524" layer="91"/>
+<label x="5.08" y="-93.98" size="1.778" layer="95"/>
+<pinref part="U19" gate="E" pin="PE8_P8"/>
 </segment>
 </net>
 </nets>
