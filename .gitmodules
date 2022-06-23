@@ -7,3 +7,9 @@
 [submodule "Code/Lib/Toastbox"]
 	path = Code/Lib/Toastbox
 	url = git@github.com:heytoaster/Toastbox.git
+[submodule "Tools/yosys"]
+	path = Tools/yosys
+	url = git@github.com:davekeck/yosys-MDC.git
+[submodule "Tools/nextpnr"]
+	path = Tools/nextpnr
+	url = git@github.com:davekeck/nextpnr-MDC.git

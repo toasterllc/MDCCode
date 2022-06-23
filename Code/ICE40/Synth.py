@@ -11,8 +11,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../Tools/Python"))
 from mango import Tuner, scheduler
 
 def nextpnr(cmdArgs, stdoutSuppress=False):
+    nextpnrPath = os.path.join(rootDir, '../../Tools/nextpnr/install/bin/nextpnr-ice40')
     cmdArgs = [
-        'nextpnr-ice40',
+        nextpnrPath,
         f'--{args.dev}',
         '--package', args.pkg,
         '--json', topJsonFile,
@@ -138,7 +139,8 @@ if not args.nosynth:
     shutil.rmtree(synthDir, ignore_errors=True)
     os.mkdir(synthDir)
 
-    subprocess.run(['yosys', '-s', os.path.join(rootDir, 'Synth.ys')], cwd=projDir)
+    yosysPath = os.path.join(rootDir, '../../Tools/yosys/install/bin/yosys')
+    subprocess.run([yosysPath, '-s', os.path.join(rootDir, 'Synth.ys')], cwd=projDir)
 
 # Optimize the design
 projClocks = evalFile(projClocksFile)
@@ -182,4 +184,5 @@ if args.opt:
 
 # Generate bitstream file with `icepack` (Top.asc -> Top.bin)
 print('\n# [Synth.py] Packing design\n')
-subprocess.run([ 'icepack', topAscFile, topBinFile ])
+icepackPath = os.path.join(rootDir, '../../Tools/icestorm/install/bin/icepack')
+subprocess.run([ icepackPath, topAscFile, topBinFile ])
