@@ -9374,9 +9374,8 @@ between input and output when its VDD=0.</text>
 <label x="246.38" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="68.58" y1="-109.22" x2="71.12" y2="-109.22" width="0.1524" layer="91"/>
-<label x="71.12" y="-109.22" size="1.778" layer="95"/>
-<pinref part="U19" gate="F" pin="PF14_R7"/>
+<wire x1="10.16" y1="-78.74" x2="12.7" y2="-78.74" width="0.1524" layer="91"/>
+<label x="12.7" y="-78.74" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_CDONE" class="0">
@@ -9441,8 +9440,8 @@ between input and output when its VDD=0.</text>
 <label x="231.14" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="10.16" y1="-86.36" x2="12.7" y2="-86.36" width="0.1524" layer="91"/>
-<label x="12.7" y="-86.36" size="1.778" layer="95"/>
+<wire x1="10.16" y1="-76.2" x2="12.7" y2="-76.2" width="0.1524" layer="91"/>
+<label x="12.7" y="-76.2" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="STM_LED2" class="0">
@@ -9452,8 +9451,8 @@ between input and output when its VDD=0.</text>
 <label x="215.9" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="10.16" y1="-83.82" x2="12.7" y2="-83.82" width="0.1524" layer="91"/>
-<label x="12.7" y="-83.82" size="1.778" layer="95"/>
+<wire x1="10.16" y1="-73.66" x2="12.7" y2="-73.66" width="0.1524" layer="91"/>
+<label x="12.7" y="-73.66" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="STM_LED3" class="0">
@@ -9463,9 +9462,8 @@ between input and output when its VDD=0.</text>
 <label x="200.66" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="2.54" y1="-104.14" x2="5.08" y2="-104.14" width="0.1524" layer="91"/>
-<label x="5.08" y="-104.14" size="1.778" layer="95"/>
-<pinref part="U19" gate="E" pin="PE12_R10"/>
+<wire x1="10.16" y1="-71.12" x2="12.7" y2="-71.12" width="0.1524" layer="91"/>
+<label x="12.7" y="-71.12" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="MSP_RST_X_" class="0">
