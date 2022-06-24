@@ -7137,13 +7137,6 @@ should be a high voltage during power up.</text>
 <label x="152.4" y="50.8" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_ST_SPI_D6" class="0">
-<segment>
-<pinref part="U15" gate="C" pin="H7"/>
-<wire x1="149.86" y1="22.86" x2="152.4" y2="22.86" width="0.1524" layer="91"/>
-<label x="152.4" y="22.86" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="ICE_ST_SPI_D4" class="0">
 <segment>
 <pinref part="U15" gate="C" pin="J7"/>
@@ -7568,6 +7561,13 @@ should be a high voltage during power up.</text>
 <pinref part="U15" gate="C" pin="K3"/>
 <wire x1="149.86" y1="48.26" x2="152.4" y2="48.26" width="0.1524" layer="91"/>
 <label x="152.4" y="48.26" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D6" class="0">
+<segment>
+<wire x1="149.86" y1="25.4" x2="152.4" y2="25.4" width="0.1524" layer="91"/>
+<label x="152.4" y="25.4" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="J8"/>
 </segment>
 </net>
 </nets>
@@ -9323,13 +9323,6 @@ between input and output when its VDD=0.</text>
 <label x="71.12" y="-91.44" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_ST_SPI_CS_" class="0">
-<segment>
-<pinref part="U19" gate="B" pin="PB6_B6"/>
-<wire x1="68.58" y1="-27.94" x2="71.12" y2="-27.94" width="0.1524" layer="91"/>
-<label x="71.12" y="-27.94" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="ICE_ST_SPI_D3" class="0">
 <segment>
 <pinref part="U19" gate="F" pin="PF6_K2"/>
@@ -9555,6 +9548,13 @@ between input and output when its VDD=0.</text>
 <wire x1="2.54" y1="-93.98" x2="5.08" y2="-93.98" width="0.1524" layer="91"/>
 <label x="5.08" y="-93.98" size="1.778" layer="95"/>
 <pinref part="U19" gate="E" pin="PE8_P8"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_CS_" class="0">
+<segment>
+<wire x1="68.58" y1="-109.22" x2="71.12" y2="-109.22" width="0.1524" layer="91"/>
+<label x="71.12" y="-109.22" size="1.778" layer="95"/>
+<pinref part="U19" gate="F" pin="PF14_R7"/>
 </segment>
 </net>
 </nets>
