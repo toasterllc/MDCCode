@@ -220,7 +220,7 @@ static struct {
         .mode       = QSPI::Mode::Single,
         .clkDivider = 5, // clkDivider: 5 -> QSPI clock = 21.3 MHz
         .align      = QSPI::Align::Byte,
-        .chipSelect = QSPI::ChipSelect::Controlled,
+        .chipSelect = QSPI::ChipSelect::Uncontrolled,
     };
     
     QSPI::Config ICEApp = {
@@ -515,9 +515,6 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     _ICE_CRST_::Write(1);
     _Scheduler::Sleep(_Scheduler::Ms(2)); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
     
-    // Release chip-select before we give control of _ICE_ST_SPI_CLK/_ICE_ST_SPI_CS_ to QSPI
-    _ICE_ST_SPI_CS_::Write(1);
-    
     // Configure QSPI for writing the ICE40 configuration
     _QSPISetConfig(_QSPIConfigs.ICEWrite);
     
@@ -566,11 +563,8 @@ static void _ICEWrite(const STM::Cmd& cmd) {
         // "iCE40 Programming and Configuration" guide.
         // These clocks apparently reach the user application. Since this
         // appears unavoidable, prevent the clocks from affecting the user
-        // application in two ways:
-        //   1. write 0xFF, which the user application must consider as a NOP;
-        //   2. write a byte at a time, causing chip-select to be de-asserted
-        //      between bytes, which must cause the user application to reset
-        //      itself.
+        // application by writing 0xFF, which the user application must
+        // consider as a NOP.
         constexpr uint8_t ClockCount = 7;
         static int i;
         for (i=0; i<ClockCount; i++) {
@@ -578,6 +572,9 @@ static void _ICEWrite(const STM::Cmd& cmd) {
             _Scheduler::Wait([] { return _QSPI.ready(); });
         }
     }
+    
+    // Release chip-select now that we're done
+    _ICE_ST_SPI_CS_::Write(1);
     
     _System::USBSendStatus(true);
 }
