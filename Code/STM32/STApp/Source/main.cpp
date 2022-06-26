@@ -518,7 +518,8 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     _Scheduler::Sleep(_Scheduler::Ms(2)); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
     
     // Configure QSPI for writing the ICE40 configuration
-    _QSPISetConfig(_QSPIConfigs.ICEWrite);
+    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
     
     // Send 8 clocks and wait for them to complete
     static const uint8_t ff = 0xff;
