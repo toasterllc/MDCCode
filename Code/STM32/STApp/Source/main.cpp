@@ -64,6 +64,7 @@ using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
 using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
 using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
 using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
+using _ICE_ST_SPI_D0 = GPIO<GPIOPortC, GPIO_PIN_9>;
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -517,6 +518,12 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     
     // Configure QSPI for writing the ICE40 configuration
     _QSPISetConfig(_QSPIConfigs.ICEWrite);
+    
+    _ICE_ST_SPI_D0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    for (;;) {
+        _ICE_ST_SPI_D0::Write(1);
+        _ICE_ST_SPI_D0::Write(0);
+    }
     
     // Send 8 clocks and wait for them to complete
     static const uint8_t ff = 0xff;
