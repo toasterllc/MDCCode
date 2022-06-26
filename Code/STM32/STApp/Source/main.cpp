@@ -63,6 +63,8 @@ using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
 
 using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
 using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
+using _ICE_ST_SPI_D0 = GPIO<GPIOPortC, GPIO_PIN_9>;
+using _ICE_ST_SPI_D1 = GPIO<GPIOPortC, GPIO_PIN_10>;
 using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
 
 [[noreturn]] static void _ICEError(uint16_t line);
@@ -543,6 +545,11 @@ static void _ICEWrite(const STM::Cmd& cmd) {
         if (!buf.len) break; // We're done when we receive an empty buffer
     }
     
+    _ICE_ST_SPI_D0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    for (bool x=false;; x=!x) {
+        _ICE_ST_SPI_D0::Write(x);
+    }
+    
     // Wait for CDONE to be asserted
     {
         bool ok = false;
@@ -578,6 +585,131 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     
     _System::USBSendStatus(true);
 }
+
+
+
+//static void _ICEWrite(const STM::Cmd& cmd) {
+//    auto& arg = cmd.arg.ICEWrite;
+//    
+//    // Accept command
+//    _System::USBAcceptCommand(true);
+//    
+//    // Configure ICE40 control GPIOs
+//    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//    
+//    _ICE_ST_SPI_D0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//    _ICE_ST_SPI_D1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//    
+//    // Put ICE40 into configuration mode
+//    _ICE_ST_SPI_CLK::Write(1);
+//    
+//    _ICE_ST_SPI_CS_::Write(0);
+//    _ICE_CRST_::Write(0);
+//    _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms (ideally, 200 ns)
+//    
+//    _ICE_CRST_::Write(1);
+//    _Scheduler::Sleep(_Scheduler::Ms(2)); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+//    
+////    _ICE_ST_SPI_D0::Write(1);
+////    for (bool x=false;; x=!x) {
+////        _ICE_ST_SPI_D0::Write(x);
+////        _ICE_ST_SPI_D1::Write(x);
+////    }
+//    
+//    // Send 8 clocks and wait for them to complete
+//    _ICE_ST_SPI_D0::Write(1);
+//    for (size_t i=0; i<8; i++) {
+//        _ICE_ST_SPI_CLK::Write(1);
+////        for (volatile int i=0; i<10; i++);
+////        _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms (ideally, 200 ns)
+//        _ICE_ST_SPI_CLK::Write(0);
+////        for (volatile int i=0; i<10; i++);
+////        _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms (ideally, 200 ns)
+//    }
+//    
+//    // Reset state
+//    _Bufs.reset();
+//    
+//    // Trigger the USB DataOut task with the amount of data
+//    _TaskUSBDataOut::Start(arg.len);
+//    
+//    for (;;) {
+//        _ICE_ST_SPI_D0::Write(1);
+//        _ICE_ST_SPI_D0::Write(0);
+//    }
+//    
+//    for (;;) {
+//        // Wait until we have data to consume, and QSPI is ready to write
+//        _Scheduler::Wait([] { return _Bufs.rok(); });
+//        
+//        // Write the data over QSPI and wait for completion
+//        auto& buf = _Bufs.rget();
+//        
+//        for (size_t i=0; i<buf.len; i++) {
+//            _ICE_ST_SPI_D0::Write(1);
+//            _ICE_ST_SPI_D0::Write(0);
+//        }
+//        
+////        if (buf.len) {
+////            _QSPI.write(_QSPICmd::ICEWrite(buf.len), buf.data);
+////            _Scheduler::Wait([] { return _QSPI.ready(); });
+////        }
+//        _Bufs.rpop();
+//        if (!buf.len) break; // We're done when we receive an empty buffer
+//    }
+//    
+//    // Wait for CDONE to be asserted
+//    {
+//        bool ok = false;
+//        for (int i=0; i<10 && !ok; i++) {
+//            if (i) _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms
+//            ok = _ICE_CDONE::Read();
+//        }
+//        
+//        if (!ok) {
+//            _System::USBSendStatus(false);
+//            return;
+//        }
+//    }
+//    
+//    // Finish
+//    _ICE_ST_SPI_D0::Write(1);
+//    for (size_t i=0; i<50; i++) {
+//        _ICE_ST_SPI_CLK::Write(1);
+//        _ICE_ST_SPI_CLK::Write(0);
+//    }
+//    
+//    // Release chip-select now that we're done
+//    _ICE_ST_SPI_CS_::Write(1);
+//    
+//    _System::USBSendStatus(true);
+//}
+
+
+//static void _ICEWrite(const STM::Cmd& cmd) {
+//    auto& arg = cmd.arg.ICEWrite;
+//    
+//    // Accept command
+//    _System::USBAcceptCommand(true);
+//    
+//    // Configure ICE40 control GPIOs
+//    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+//    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+//    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+//    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+//    
+//    _ICE_ST_SPI_D0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//    _ICE_ST_SPI_D1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//    
+//    for (bool x=false;; x=!x) {
+//        _ICE_ST_SPI_D0::Write(x);
+//        _ICE_ST_SPI_D1::Write(x);
+//        _ICE_CRST_::Write(x);
+//    }
+//}
 
 static void _MSPConnect(const STM::Cmd& cmd) {
     // Accept command
