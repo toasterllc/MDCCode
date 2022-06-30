@@ -7022,14 +7022,14 @@ should be a high voltage during power up.</text>
 </net>
 <net name="ICE_ST_SPI_D1" class="0">
 <segment>
-<pinref part="U15" gate="E" pin="SPI_SO_K9"/>
-<wire x1="86.36" y1="-83.82" x2="81.28" y2="-83.82" width="0.1524" layer="91"/>
-<label x="80.772" y="-83.82" size="1.778" layer="95" rot="MR0"/>
-</segment>
-<segment>
 <pinref part="U5" gate="G$1" pin="DI"/>
 <wire x1="104.14" y1="-154.94" x2="101.6" y2="-154.94" width="0.1524" layer="91"/>
 <label x="101.6" y="-154.94" size="1.778" layer="95" align="bottom-right"/>
+</segment>
+<segment>
+<wire x1="152.4" y1="53.34" x2="149.86" y2="53.34" width="0.1524" layer="91"/>
+<label x="151.892" y="53.34" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="L7"/>
 </segment>
 </net>
 <net name="ICE_ST_SPI_D0" class="0">
@@ -7123,39 +7123,11 @@ should be a high voltage during power up.</text>
 <pinref part="R15" gate="G$1" pin="1"/>
 </segment>
 </net>
-<net name="ICE_ST_SPI_D2" class="0">
-<segment>
-<wire x1="149.86" y1="53.34" x2="152.4" y2="53.34" width="0.1524" layer="91"/>
-<label x="152.4" y="53.34" size="1.778" layer="95"/>
-<pinref part="U15" gate="C" pin="L7"/>
-</segment>
-</net>
-<net name="ICE_ST_SPI_D7" class="0">
-<segment>
-<pinref part="U15" gate="C" pin="L8"/>
-<wire x1="149.86" y1="50.8" x2="152.4" y2="50.8" width="0.1524" layer="91"/>
-<label x="152.4" y="50.8" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="ICE_ST_SPI_D4" class="0">
 <segment>
 <pinref part="U15" gate="C" pin="J7"/>
 <wire x1="149.86" y1="27.94" x2="152.4" y2="27.94" width="0.1524" layer="91"/>
 <label x="152.4" y="27.94" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_ST_SPI_D5" class="0">
-<segment>
-<pinref part="U15" gate="C" pin="K7"/>
-<wire x1="149.86" y1="38.1" x2="152.4" y2="38.1" width="0.1524" layer="91"/>
-<label x="152.4" y="38.1" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_ST_SPI_D3" class="0">
-<segment>
-<wire x1="149.86" y1="40.64" x2="152.4" y2="40.64" width="0.1524" layer="91"/>
-<label x="152.4" y="40.64" size="1.778" layer="95"/>
-<pinref part="U15" gate="C" pin="K6"/>
 </segment>
 </net>
 <net name="RAM_DQ7" class="0">
@@ -7563,11 +7535,39 @@ should be a high voltage during power up.</text>
 <label x="152.4" y="48.26" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_ST_SPI_D6" class="0">
+<net name="ICE_ST_SPI_D2" class="0">
+<segment>
+<wire x1="149.86" y1="40.64" x2="152.4" y2="40.64" width="0.1524" layer="91"/>
+<label x="152.4" y="40.64" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="K6"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D3" class="0">
+<segment>
+<wire x1="149.86" y1="38.1" x2="152.4" y2="38.1" width="0.1524" layer="91"/>
+<label x="152.4" y="38.1" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="K7"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D5" class="0">
+<segment>
+<wire x1="149.86" y1="50.8" x2="152.4" y2="50.8" width="0.1524" layer="91"/>
+<label x="152.4" y="50.8" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="L8"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D7" class="0">
 <segment>
 <wire x1="149.86" y1="25.4" x2="152.4" y2="25.4" width="0.1524" layer="91"/>
 <label x="152.4" y="25.4" size="1.778" layer="95"/>
 <pinref part="U15" gate="C" pin="J8"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_D6" class="0">
+<segment>
+<wire x1="81.28" y1="-83.82" x2="86.36" y2="-83.82" width="0.1524" layer="91"/>
+<label x="80.772" y="-83.82" size="1.778" layer="95" rot="MR0"/>
+<pinref part="U15" gate="E" pin="SPI_SO_K9"/>
 </segment>
 </net>
 </nets>
@@ -9371,20 +9371,6 @@ between input and output when its VDD=0.</text>
 <label x="12.7" y="-78.74" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_CDONE" class="0">
-<segment>
-<pinref part="U19" gate="I" pin="PI7_C2"/>
-<wire x1="2.54" y1="-157.48" x2="5.08" y2="-157.48" width="0.1524" layer="91"/>
-<label x="5.08" y="-157.48" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_CRST_" class="0">
-<segment>
-<pinref part="U19" gate="I" pin="PI6_C3"/>
-<wire x1="2.54" y1="-154.94" x2="5.08" y2="-154.94" width="0.1524" layer="91"/>
-<label x="5.08" y="-154.94" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="VDD_B_3V3_STM" class="0">
 <segment>
 <pinref part="U19" gate="K" pin="VDDUSB_H13"/>
@@ -9459,20 +9445,6 @@ between input and output when its VDD=0.</text>
 <label x="12.7" y="-71.12" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="MSP_RST_X_" class="0">
-<segment>
-<wire x1="68.58" y1="-12.7" x2="71.12" y2="-12.7" width="0.1524" layer="91"/>
-<label x="71.12" y="-12.7" size="1.778" layer="95"/>
-<pinref part="U19" gate="B" pin="PB0_R5"/>
-</segment>
-</net>
-<net name="MSP_TEST_X" class="0">
-<segment>
-<wire x1="68.58" y1="-15.24" x2="71.12" y2="-15.24" width="0.1524" layer="91"/>
-<label x="71.12" y="-15.24" size="1.778" layer="95"/>
-<pinref part="U19" gate="B" pin="PB1_R4"/>
-</segment>
-</net>
 <net name="ICE_ST_FLASH_EN" class="0">
 <segment>
 <pinref part="U19" gate="B" pin="PB7_B5"/>
@@ -9543,18 +9515,44 @@ between input and output when its VDD=0.</text>
 <pinref part="U19" gate="E" pin="PE8_P8"/>
 </segment>
 </net>
-<net name="ICE_ST_SPI_CS_" class="0">
-<segment>
-<wire x1="68.58" y1="-109.22" x2="71.12" y2="-109.22" width="0.1524" layer="91"/>
-<label x="71.12" y="-109.22" size="1.778" layer="95"/>
-<pinref part="U19" gate="F" pin="PF14_R7"/>
-</segment>
-</net>
 <net name="ICE_ST_SPI_D_READY" class="0">
 <segment>
 <wire x1="15.24" y1="-20.32" x2="17.78" y2="-20.32" width="0.1524" layer="91"/>
 <label x="17.78" y="-20.32" size="1.778" layer="95"/>
 <pinref part="U19" gate="A" pin="PA3_R2"/>
+</segment>
+</net>
+<net name="ICE_ST_SPI_CS_" class="0">
+<segment>
+<wire x1="2.54" y1="-104.14" x2="5.08" y2="-104.14" width="0.1524" layer="91"/>
+<label x="5.08" y="-104.14" size="1.778" layer="95"/>
+<pinref part="U19" gate="E" pin="PE12_R10"/>
+</segment>
+</net>
+<net name="MSP_RST_X_" class="0">
+<segment>
+<wire x1="66.04" y1="2.54" x2="68.58" y2="2.54" width="0.1524" layer="91"/>
+<label x="68.58" y="2.54" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="MSP_TEST_X" class="0">
+<segment>
+<wire x1="66.04" y1="0" x2="68.58" y2="0" width="0.1524" layer="91"/>
+<label x="68.58" y="0" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_CDONE" class="0">
+<segment>
+<wire x1="68.58" y1="-15.24" x2="71.12" y2="-15.24" width="0.1524" layer="91"/>
+<label x="71.12" y="-15.24" size="1.778" layer="95"/>
+<pinref part="U19" gate="B" pin="PB1_R4"/>
+</segment>
+</net>
+<net name="ICE_CRST_" class="0">
+<segment>
+<wire x1="68.58" y1="-101.6" x2="71.12" y2="-101.6" width="0.1524" layer="91"/>
+<label x="71.12" y="-101.6" size="1.778" layer="95"/>
+<pinref part="U19" gate="F" pin="PF11_R6"/>
 </segment>
 </net>
 </nets>
