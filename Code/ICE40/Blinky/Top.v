@@ -21,7 +21,7 @@ module Top(
     ) ClockGen(.clkRef(clk16mhz), .clk(clk));
     
     // .95 Hz (assuming 32 MHz clock)
-    reg[24:0] counter = 0;
+    reg[26:0] counter = 0;
     always @(posedge clk) begin
         counter <= counter+1;
     end
