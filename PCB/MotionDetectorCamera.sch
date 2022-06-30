@@ -1340,6 +1340,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-1.525" y="0.325"/>
 <vertex x="-0.925" y="1.025"/>
 </polygon>
+<smd name="9" x="0" y="0" dx="0.2" dy="1.6" layer="1"/>
 </package>
 <package name="MICROCHIP-MIC550X-SOT23-5" urn="urn:adsk.eagle:footprint:28687037/1" locally_modified="yes">
 <description>5-SOT23, 0.95 mm pitch, 2.80 mm span, 2.90 X 1.60 X 1.30 mm body
@@ -3743,7 +3744,7 @@ Connector</text>
 <connect gate="G$1" pin="CS_" pad="1"/>
 <connect gate="G$1" pin="DI" pad="5"/>
 <connect gate="G$1" pin="DO" pad="2"/>
-<connect gate="G$1" pin="GND" pad="4"/>
+<connect gate="G$1" pin="GND" pad="4 9"/>
 <connect gate="G$1" pin="HOLD_" pad="7"/>
 <connect gate="G$1" pin="VCC" pad="8"/>
 <connect gate="G$1" pin="WP_" pad="3"/>
