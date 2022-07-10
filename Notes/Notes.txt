@@ -1,5 +1,9 @@
 - Rev5 Board
     
+    - Length-match IMG wires
+    
+    - Length-match SD wires
+    
     - Re-synthesize with new ICE40 pin locations to make sure everything works
     
     - Make sure y position of motion sensor and image sensor are equal
