@@ -4319,7 +4319,6 @@ Connector</text>
 <part name="X3" library="EagleLibrary" deviceset="SITIME-SIT8021" device="">
 <attribute name="PN" value="SIT8021AI-J4-18S-16.000000E"/>
 </part>
-<part name="TP3" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="L1" library="EagleLibrary" deviceset="INDUCTOR" device="0806" value="470n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="DFE201612E-R47M=P2"/>
@@ -4406,7 +4405,6 @@ Connector</text>
 <attribute name="MFG" value="Taiyo Yuden"/>
 <attribute name="PN" value="TMK105CBJ225KV-F"/>
 </part>
-<part name="TP1" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
 <part name="C29" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
@@ -4544,7 +4542,6 @@ Connector</text>
 <attribute name="PN" value="RMCF0402JT100K"/>
 </part>
 <part name="J13" library="EagleLibrary" deviceset="JUMPER" device="-SOLDER" value="JUMPER-SOLDER"/>
-<part name="J14" library="EagleLibrary" deviceset="JUMPER" device="-AMPHENOL-10129380-902002ALF"/>
 <part name="J15" library="EagleLibrary" deviceset="JUMPER" device="-SOLDER" value="JUMPER-SOLDER"/>
 <part name="R36" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
 <attribute name="MFG" value="Stackpole"/>
@@ -4948,9 +4945,6 @@ Requirements:
 <instance part="J13" gate="G$1" x="129.54" y="467.36" smashed="yes">
 <attribute name="NAME" x="128.27" y="469.9" size="1.778" layer="95" align="top-left"/>
 </instance>
-<instance part="J14" gate="G$1" x="129.54" y="416.56" smashed="yes">
-<attribute name="NAME" x="128.27" y="419.1" size="1.778" layer="95" align="top-left"/>
-</instance>
 <instance part="J15" gate="G$1" x="350.52" y="467.36" smashed="yes">
 <attribute name="NAME" x="349.25" y="469.9" size="1.778" layer="95" align="top-left"/>
 </instance>
@@ -5294,14 +5288,6 @@ Requirements:
 <pinref part="R3" gate="G$1" pin="2"/>
 <wire x1="220.98" y1="340.36" x2="220.98" y2="337.82" width="0.1524" layer="91"/>
 <label x="220.98" y="337.82" size="1.778" layer="95" rot="MR0"/>
-</segment>
-<segment>
-<pinref part="J14" gate="G$1" pin="1"/>
-<wire x1="129.54" y1="411.48" x2="127" y2="411.48" width="0.1524" layer="91"/>
-<pinref part="J14" gate="G$1" pin="2"/>
-<wire x1="132.08" y1="411.48" x2="129.54" y2="411.48" width="0.1524" layer="91"/>
-<junction x="129.54" y="411.48"/>
-<label x="127" y="411.48" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="R36" gate="G$1" pin="2"/>
@@ -5869,8 +5855,6 @@ Therefore, C = 22 pF</text>
 <text x="141.732" y="93.472" size="1.016" layer="95" align="top-left">Use NP0 dialectric capacitors to minimize
 capacitance variation due to temperature
 and DC bias</text>
-<text x="0.254" y="76.962" size="0.762" layer="95">ACLK
-test point</text>
 <text x="-35.56" y="32.512" size="1.016" layer="95" align="top-right">Use VCCB side for VDD_A because VCCB
 has a wider supply voltage range (1.65-5.5 V),
 giving us more flexibility in the battery
@@ -5936,11 +5920,7 @@ away with a smaller capacitor.</text>
 <attribute name="NAME" x="-65.786" y="83.439" size="1.778" layer="95"/>
 <attribute name="VALUE" x="-65.786" y="80.899" size="1.778" layer="96"/>
 </instance>
-<instance part="TP1" gate="G$1" x="5.08" y="76.2" smashed="yes" rot="R90">
-<attribute name="NAME" x="5.08" y="76.2" size="1.778" layer="95" rot="R180"/>
-</instance>
 <instance part="U21" gate="G$1" x="124.46" y="38.1" smashed="yes" rot="MR0">
-<attribute name="PN" x="124.46" y="12.7" size="1.778" layer="95" rot="MR0"/>
 <attribute name="NAME" x="124.46" y="40.64" size="1.778" layer="95" rot="MR0" align="top-left"/>
 </instance>
 <instance part="U22" gate="G$1" x="-12.7" y="38.1" smashed="yes" rot="MR0">
@@ -6113,9 +6093,9 @@ away with a smaller capacitor.</text>
 <label x="33.02" y="66.04" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="U21" gate="G$1" pin="B2"/>
-<wire x1="101.6" y1="17.78" x2="99.06" y2="17.78" width="0.1524" layer="91"/>
-<label x="99.06" y="17.78" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="101.6" y1="22.86" x2="99.06" y2="22.86" width="0.1524" layer="91"/>
+<label x="99.06" y="22.86" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U21" gate="G$1" pin="B1"/>
 </segment>
 </net>
 <net name="ICE_MSP_SPI_CLK_X" class="0">
@@ -6125,23 +6105,9 @@ away with a smaller capacitor.</text>
 <label x="33.02" y="63.5" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<pinref part="U21" gate="G$1" pin="B1"/>
-<wire x1="101.6" y1="22.86" x2="99.06" y2="22.86" width="0.1524" layer="91"/>
-<label x="99.06" y="22.86" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-</net>
-<net name="ICE_MSP_SPI_CLK" class="0">
-<segment>
-<pinref part="U21" gate="G$1" pin="A1"/>
-<wire x1="127" y1="22.86" x2="129.54" y2="22.86" width="0.1524" layer="91"/>
-<label x="129.54" y="22.86" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="ICE_MSP_SPI_DATA" class="0">
-<segment>
-<pinref part="U21" gate="G$1" pin="A2"/>
-<wire x1="127" y1="17.78" x2="129.54" y2="17.78" width="0.1524" layer="91"/>
-<label x="129.54" y="17.78" size="1.778" layer="95"/>
+<wire x1="101.6" y1="17.78" x2="99.06" y2="17.78" width="0.1524" layer="91"/>
+<label x="99.06" y="17.78" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U21" gate="G$1" pin="B2"/>
 </segment>
 </net>
 <net name="VDD_B_1V8" class="0">
@@ -6204,20 +6170,6 @@ away with a smaller capacitor.</text>
 <junction x="119.38" y="96.52"/>
 </segment>
 </net>
-<net name="MOTION_SIGNAL" class="0">
-<segment>
-<pinref part="U12" gate="C" pin="PA.D/P2.5/UCB0SIMO/UCB0SDA/A7"/>
-<wire x1="129.54" y1="66.04" x2="127" y2="66.04" width="0.1524" layer="91"/>
-<label x="127" y="66.04" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-</net>
-<net name="N$22" class="0">
-<segment>
-<pinref part="U12" gate="B" pin="PA.1/P1.1/UCB0CLK/ACLK/A1/VREF+"/>
-<pinref part="TP1" gate="G$1" pin="X"/>
-<wire x1="35.56" y1="76.2" x2="5.08" y2="76.2" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="VDD_B_SD_EN" class="0">
 <segment>
 <wire x1="129.54" y1="71.12" x2="127" y2="71.12" width="0.1524" layer="91"/>
@@ -6254,6 +6206,27 @@ away with a smaller capacitor.</text>
 <pinref part="U22" gate="G$1" pin="A2"/>
 <wire x1="-10.16" y1="17.78" x2="-7.62" y2="17.78" width="0.1524" layer="91"/>
 <label x="-7.62" y="17.78" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="ICE_MSP_SPI_CLK" class="0">
+<segment>
+<wire x1="127" y1="17.78" x2="129.54" y2="17.78" width="0.1524" layer="91"/>
+<label x="129.54" y="17.78" size="1.778" layer="95"/>
+<pinref part="U21" gate="G$1" pin="A2"/>
+</segment>
+</net>
+<net name="ICE_MSP_SPI_DATA" class="0">
+<segment>
+<wire x1="127" y1="22.86" x2="129.54" y2="22.86" width="0.1524" layer="91"/>
+<label x="129.54" y="22.86" size="1.778" layer="95"/>
+<pinref part="U21" gate="G$1" pin="A1"/>
+</segment>
+</net>
+<net name="MOTION_SIGNAL" class="0">
+<segment>
+<wire x1="35.56" y1="71.12" x2="33.02" y2="71.12" width="0.1524" layer="91"/>
+<label x="33.02" y="71.12" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U12" gate="B" pin="PA.3/P1.3/UCB0SOMI/UCB0SCL/MCLK/A3"/>
 </segment>
 </net>
 </nets>
@@ -7461,48 +7434,6 @@ should be a high voltage during power up.</text>
 <pinref part="U15" gate="B" pin="H10"/>
 </segment>
 </net>
-<net name="SD_DAT2" class="0">
-<segment>
-<wire x1="149.86" y1="66.04" x2="152.4" y2="66.04" width="0.1524" layer="91"/>
-<label x="152.4" y="66.04" size="1.778" layer="95"/>
-<pinref part="U15" gate="C" pin="L1"/>
-</segment>
-</net>
-<net name="SD_DAT1" class="0">
-<segment>
-<wire x1="149.86" y1="43.18" x2="152.4" y2="43.18" width="0.1524" layer="91"/>
-<label x="152.4" y="43.18" size="1.778" layer="95"/>
-<pinref part="U15" gate="C" pin="K5"/>
-</segment>
-</net>
-<net name="SD_DAT3" class="0">
-<segment>
-<wire x1="149.86" y1="63.5" x2="152.4" y2="63.5" width="0.1524" layer="91"/>
-<label x="152.4" y="63.5" size="1.778" layer="95"/>
-<pinref part="U15" gate="C" pin="L2"/>
-</segment>
-</net>
-<net name="SD_CMD" class="0">
-<segment>
-<wire x1="149.86" y1="60.96" x2="152.4" y2="60.96" width="0.1524" layer="91"/>
-<label x="152.4" y="60.96" size="1.778" layer="95"/>
-<pinref part="U15" gate="C" pin="L3"/>
-</segment>
-</net>
-<net name="SD_CLK" class="0">
-<segment>
-<wire x1="149.86" y1="45.72" x2="152.4" y2="45.72" width="0.1524" layer="91"/>
-<label x="152.4" y="45.72" size="1.778" layer="95"/>
-<pinref part="U15" gate="C" pin="K4"/>
-</segment>
-</net>
-<net name="SD_DAT0" class="0">
-<segment>
-<wire x1="149.86" y1="58.42" x2="152.4" y2="58.42" width="0.1524" layer="91"/>
-<label x="152.4" y="58.42" size="1.778" layer="95"/>
-<pinref part="U15" gate="C" pin="L4"/>
-</segment>
-</net>
 <net name="ICE_ST_FLASH_EN" class="0">
 <segment>
 <pinref part="U24" gate="G$1" pin="IN1"/>
@@ -7569,6 +7500,48 @@ should be a high voltage during power up.</text>
 <wire x1="81.28" y1="-83.82" x2="86.36" y2="-83.82" width="0.1524" layer="91"/>
 <label x="80.772" y="-83.82" size="1.778" layer="95" rot="MR0"/>
 <pinref part="U15" gate="E" pin="SPI_SO_K9"/>
+</segment>
+</net>
+<net name="SD_DAT2" class="0">
+<segment>
+<wire x1="149.86" y1="43.18" x2="152.4" y2="43.18" width="0.1524" layer="91"/>
+<label x="152.4" y="43.18" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="K5"/>
+</segment>
+</net>
+<net name="SD_DAT1" class="0">
+<segment>
+<wire x1="149.86" y1="66.04" x2="152.4" y2="66.04" width="0.1524" layer="91"/>
+<label x="152.4" y="66.04" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="L1"/>
+</segment>
+</net>
+<net name="SD_DAT0" class="0">
+<segment>
+<wire x1="149.86" y1="63.5" x2="152.4" y2="63.5" width="0.1524" layer="91"/>
+<label x="152.4" y="63.5" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="L2"/>
+</segment>
+</net>
+<net name="SD_DAT3" class="0">
+<segment>
+<wire x1="149.86" y1="58.42" x2="152.4" y2="58.42" width="0.1524" layer="91"/>
+<label x="152.4" y="58.42" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="L4"/>
+</segment>
+</net>
+<net name="SD_CLK" class="0">
+<segment>
+<wire x1="149.86" y1="60.96" x2="152.4" y2="60.96" width="0.1524" layer="91"/>
+<label x="152.4" y="60.96" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="L3"/>
+</segment>
+</net>
+<net name="SD_CMD" class="0">
+<segment>
+<wire x1="149.86" y1="45.72" x2="152.4" y2="45.72" width="0.1524" layer="91"/>
+<label x="152.4" y="45.72" size="1.778" layer="95"/>
+<pinref part="U15" gate="C" pin="K4"/>
 </segment>
 </net>
 </nets>
@@ -8787,9 +8760,6 @@ between input and output when its VDD=0.</text>
 <attribute name="NAME" x="241.3" y="-17.018" size="1.778" layer="95"/>
 <attribute name="PN" x="241.3" y="-30.48" size="1.778" layer="95"/>
 </instance>
-<instance part="TP3" gate="G$1" x="261.62" y="-20.32" smashed="yes" rot="R90">
-<attribute name="NAME" x="264.16" y="-10.16" size="1.778" layer="95" rot="R180"/>
-</instance>
 <instance part="LED8" gate="G$1" x="246.38" y="-48.26" smashed="yes">
 <attribute name="NAME" x="249.936" y="-52.832" size="1.778" layer="95" rot="R90"/>
 <attribute name="MFG" x="246.38" y="-48.26" size="1.778" layer="96" display="off"/>
@@ -9341,12 +9311,8 @@ between input and output when its VDD=0.</text>
 <net name="STM_CLK16MHZ" class="0">
 <segment>
 <pinref part="X3" gate="G$1" pin="OUT"/>
+<label x="261.62" y="-22.86" size="1.778" layer="95"/>
 <wire x1="259.08" y1="-22.86" x2="261.62" y2="-22.86" width="0.1524" layer="91"/>
-<label x="264.16" y="-22.86" size="1.778" layer="95"/>
-<pinref part="TP3" gate="G$1" pin="X"/>
-<wire x1="261.62" y1="-22.86" x2="264.16" y2="-22.86" width="0.1524" layer="91"/>
-<wire x1="261.62" y1="-22.86" x2="261.62" y2="-20.32" width="0.1524" layer="91"/>
-<junction x="261.62" y="-22.86"/>
 </segment>
 <segment>
 <pinref part="U19" gate="H" pin="PH0_G1"/>
@@ -9453,27 +9419,6 @@ between input and output when its VDD=0.</text>
 <label x="71.12" y="-30.48" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="BAT_CHRG_LVL" class="0">
-<segment>
-<pinref part="U19" gate="C" pin="PC5_P5"/>
-<wire x1="119.38" y1="-25.4" x2="121.92" y2="-25.4" width="0.1524" layer="91"/>
-<label x="121.92" y="-25.4" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="BAT_CHRG_LVL_EN_" class="0">
-<segment>
-<pinref part="U19" gate="C" pin="PC4_N5"/>
-<wire x1="119.38" y1="-22.86" x2="121.92" y2="-22.86" width="0.1524" layer="91"/>
-<label x="121.92" y="-22.86" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="BAT_CHRG_STAT" class="0">
-<segment>
-<pinref part="U19" gate="C" pin="PC3_M5"/>
-<wire x1="119.38" y1="-20.32" x2="121.92" y2="-20.32" width="0.1524" layer="91"/>
-<label x="121.92" y="-20.32" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="ICE_ST_SPI_D0" class="0">
 <segment>
 <wire x1="68.58" y1="-93.98" x2="71.12" y2="-93.98" width="0.1524" layer="91"/>
@@ -9530,18 +9475,6 @@ between input and output when its VDD=0.</text>
 <pinref part="U19" gate="E" pin="PE12_R10"/>
 </segment>
 </net>
-<net name="MSP_RST_X_" class="0">
-<segment>
-<wire x1="66.04" y1="2.54" x2="68.58" y2="2.54" width="0.1524" layer="91"/>
-<label x="68.58" y="2.54" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="MSP_TEST_X" class="0">
-<segment>
-<wire x1="66.04" y1="0" x2="68.58" y2="0" width="0.1524" layer="91"/>
-<label x="68.58" y="0" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="ICE_CDONE" class="0">
 <segment>
 <wire x1="68.58" y1="-15.24" x2="71.12" y2="-15.24" width="0.1524" layer="91"/>
@@ -9554,6 +9487,41 @@ between input and output when its VDD=0.</text>
 <wire x1="68.58" y1="-101.6" x2="71.12" y2="-101.6" width="0.1524" layer="91"/>
 <label x="71.12" y="-101.6" size="1.778" layer="95"/>
 <pinref part="U19" gate="F" pin="PF11_R6"/>
+</segment>
+</net>
+<net name="MSP_RST_X_" class="0">
+<segment>
+<wire x1="68.58" y1="-73.66" x2="71.12" y2="-73.66" width="0.1524" layer="91"/>
+<label x="71.12" y="-73.66" size="1.778" layer="95"/>
+<pinref part="U19" gate="F" pin="PF0_E2"/>
+</segment>
+</net>
+<net name="MSP_TEST_X" class="0">
+<segment>
+<wire x1="2.54" y1="-160.02" x2="5.08" y2="-160.02" width="0.1524" layer="91"/>
+<label x="5.08" y="-160.02" size="1.778" layer="95"/>
+<pinref part="U19" gate="I" pin="PI8_D2"/>
+</segment>
+</net>
+<net name="BAT_CHRG_LVL" class="0">
+<segment>
+<wire x1="68.58" y1="-81.28" x2="71.12" y2="-81.28" width="0.1524" layer="91"/>
+<label x="71.12" y="-81.28" size="1.778" layer="95"/>
+<pinref part="U19" gate="F" pin="PF3_J2"/>
+</segment>
+</net>
+<net name="BAT_CHRG_LVL_EN_" class="0">
+<segment>
+<wire x1="2.54" y1="-81.28" x2="5.08" y2="-81.28" width="0.1524" layer="91"/>
+<label x="5.08" y="-81.28" size="1.778" layer="95"/>
+<pinref part="U19" gate="E" pin="PE3_A1"/>
+</segment>
+</net>
+<net name="BAT_CHRG_STAT" class="0">
+<segment>
+<wire x1="68.58" y1="-40.64" x2="71.12" y2="-40.64" width="0.1524" layer="91"/>
+<label x="71.12" y="-40.64" size="1.778" layer="95"/>
+<pinref part="U19" gate="B" pin="PB11_R13"/>
 </segment>
 </net>
 </nets>
