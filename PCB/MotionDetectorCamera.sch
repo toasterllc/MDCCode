@@ -4308,10 +4308,6 @@ Connector</text>
 <attribute name="MFG" value="Murata"/>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
-<part name="R31" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
-<attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="RC0402JR-0710KL"/>
-</part>
 <part name="C67" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="10n">
 <attribute name="MFG" value="Samsung"/>
 <attribute name="PN" value="CL05B103KB5NNNC"/>
@@ -8744,12 +8740,6 @@ between input and output when its VDD=0.</text>
 <attribute name="VALUE" x="103.886" y="-150.241" size="1.778" layer="96"/>
 <attribute name="MFG" x="101.6" y="-147.32" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="R31" gate="G$1" x="119.38" y="-144.78" smashed="yes" rot="R90">
-<attribute name="NAME" x="120.904" y="-142.748" size="1.778" layer="95" align="top-left"/>
-<attribute name="VALUE" x="120.904" y="-145.288" size="1.778" layer="96" align="top-left"/>
-<attribute name="MFG" x="119.38" y="-144.78" size="1.778" layer="96" rot="R90" display="off"/>
-<attribute name="PN" x="119.38" y="-144.78" size="1.778" layer="96" rot="R90" display="off"/>
-</instance>
 <instance part="C67" gate="G$1" x="213.36" y="-22.86" smashed="yes">
 <attribute name="NAME" x="210.058" y="-22.987" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="210.058" y="-25.527" size="1.778" layer="96" align="bottom-right"/>
@@ -9022,11 +9012,6 @@ between input and output when its VDD=0.</text>
 <label x="101.6" y="-154.94" size="1.778" layer="95" align="top-left"/>
 </segment>
 <segment>
-<pinref part="R31" gate="G$1" pin="1"/>
-<wire x1="119.38" y1="-149.86" x2="119.38" y2="-152.4" width="0.1524" layer="91"/>
-<label x="119.38" y="-152.4" size="1.778" layer="95" align="top-left"/>
-</segment>
-<segment>
 <pinref part="X3" gate="G$1" pin="GND"/>
 <pinref part="X3" gate="G$1" pin="EN_"/>
 <wire x1="238.76" y1="-22.86" x2="238.76" y2="-25.4" width="0.1524" layer="91"/>
@@ -9077,6 +9062,11 @@ between input and output when its VDD=0.</text>
 <wire x1="233.68" y1="-88.9" x2="236.22" y2="-88.9" width="0.1524" layer="91"/>
 <label x="236.22" y="-88.9" size="1.778" layer="95"/>
 <pinref part="H2" gate="G$1" pin="4"/>
+</segment>
+<segment>
+<pinref part="U19" gate="J" pin="BOOT0_D6"/>
+<wire x1="78.74" y1="-139.7" x2="81.28" y2="-139.7" width="0.1524" layer="91"/>
+<label x="81.28" y="-139.7" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_B_1V8_STM" class="0">
@@ -9223,16 +9213,6 @@ between input and output when its VDD=0.</text>
 <wire x1="101.6" y1="-144.78" x2="104.14" y2="-144.78" width="0.1524" layer="91"/>
 <junction x="101.6" y="-144.78"/>
 <label x="104.14" y="-144.78" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="STM_BOOT" class="0">
-<segment>
-<pinref part="U19" gate="J" pin="BOOT0_D6"/>
-<pinref part="R31" gate="G$1" pin="2"/>
-<wire x1="78.74" y1="-139.7" x2="119.38" y2="-139.7" width="0.1524" layer="91"/>
-<label x="121.92" y="-139.7" size="1.778" layer="95"/>
-<wire x1="119.38" y1="-139.7" x2="121.92" y2="-139.7" width="0.1524" layer="91"/>
-<junction x="119.38" y="-139.7"/>
 </segment>
 </net>
 <net name="USB_D-" class="0">
