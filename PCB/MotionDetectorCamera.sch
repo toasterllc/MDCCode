@@ -4647,6 +4647,7 @@ Connector</text>
 <part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="5.1k"/>
 <part name="R10" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="5.1k"/>
 <part name="H2" library="EagleLibrary" deviceset="HEADER-2X2" device=""/>
+<part name="J8" library="EagleLibrary" deviceset="JUMPER" device="-SOLDER" value="JUMPER-SOLDER"/>
 </parts>
 <sheets>
 <sheet>
@@ -5058,6 +5059,9 @@ Requirements:
 <attribute name="PN2" x="124.46" y="355.6" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="124.46" y="337.82" size="1.778" layer="95"/>
 <attribute name="NAME" x="124.46" y="358.14" size="1.778" layer="95" align="top-left"/>
+</instance>
+<instance part="J8" gate="G$1" x="226.06" y="383.54" smashed="yes" rot="R270">
+<attribute name="NAME" x="228.6" y="384.81" size="1.778" layer="95" rot="R270" align="top-left"/>
 </instance>
 </instances>
 <busses>
@@ -5609,25 +5613,16 @@ Requirements:
 </net>
 <net name="VDD_BAT" class="0">
 <segment>
-<pinref part="Q2" gate="G$1" pin="S"/>
-<wire x1="220.98" y1="365.76" x2="220.98" y2="370.84" width="0.1524" layer="91"/>
-<wire x1="220.98" y1="370.84" x2="195.58" y2="370.84" width="0.1524" layer="91"/>
-<pinref part="Q3" gate="G$1" pin="S"/>
-<wire x1="195.58" y1="370.84" x2="195.58" y2="365.76" width="0.1524" layer="91"/>
-<pinref part="R4" gate="G$1" pin="2"/>
-<wire x1="187.96" y1="365.76" x2="187.96" y2="370.84" width="0.1524" layer="91"/>
-<wire x1="187.96" y1="370.84" x2="195.58" y2="370.84" width="0.1524" layer="91"/>
-<junction x="195.58" y="370.84"/>
 <pinref part="U16" gate="G$1" pin="VBAT"/>
 <wire x1="193.04" y1="411.48" x2="220.98" y2="411.48" width="0.1524" layer="91"/>
-<wire x1="220.98" y1="411.48" x2="220.98" y2="370.84" width="0.1524" layer="91"/>
-<junction x="220.98" y="370.84"/>
 <wire x1="220.98" y1="411.48" x2="226.06" y2="411.48" width="0.1524" layer="91"/>
 <junction x="220.98" y="411.48"/>
 <label x="226.06" y="411.48" size="1.778" layer="95"/>
 <wire x1="220.98" y1="411.48" x2="220.98" y2="447.04" width="0.1524" layer="91"/>
 <pinref part="U11" gate="G$1" pin="VIN2"/>
 <wire x1="220.98" y1="447.04" x2="231.14" y2="447.04" width="0.1524" layer="91"/>
+<pinref part="J8" gate="G$1" pin="1"/>
+<wire x1="220.98" y1="383.54" x2="220.98" y2="411.48" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="C88" gate="G$1" pin="1"/>
@@ -5825,6 +5820,22 @@ Requirements:
 <wire x1="287.02" y1="358.14" x2="289.56" y2="358.14" width="0.1524" layer="91"/>
 <junction x="287.02" y="358.14"/>
 <label x="289.56" y="358.14" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="N$1" class="0">
+<segment>
+<pinref part="Q3" gate="G$1" pin="S"/>
+<pinref part="Q2" gate="G$1" pin="S"/>
+<wire x1="220.98" y1="365.76" x2="220.98" y2="370.84" width="0.1524" layer="91"/>
+<wire x1="220.98" y1="370.84" x2="195.58" y2="370.84" width="0.1524" layer="91"/>
+<wire x1="195.58" y1="370.84" x2="195.58" y2="365.76" width="0.1524" layer="91"/>
+<junction x="195.58" y="370.84"/>
+<wire x1="187.96" y1="370.84" x2="195.58" y2="370.84" width="0.1524" layer="91"/>
+<pinref part="R4" gate="G$1" pin="2"/>
+<wire x1="187.96" y1="365.76" x2="187.96" y2="370.84" width="0.1524" layer="91"/>
+<pinref part="J8" gate="G$1" pin="2"/>
+<wire x1="220.98" y1="381" x2="220.98" y2="370.84" width="0.1524" layer="91"/>
+<junction x="220.98" y="370.84"/>
 </segment>
 </net>
 </nets>
