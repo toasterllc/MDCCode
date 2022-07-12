@@ -9327,8 +9327,9 @@ between input and output when its VDD=0.</text>
 <label x="246.38" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="10.16" y1="-78.74" x2="12.7" y2="-78.74" width="0.1524" layer="91"/>
-<label x="12.7" y="-78.74" size="1.778" layer="95"/>
+<wire x1="170.18" y1="-35.56" x2="172.72" y2="-35.56" width="0.1524" layer="91"/>
+<label x="172.72" y="-35.56" size="1.778" layer="95"/>
+<pinref part="U19" gate="D" pin="PD9_P14"/>
 </segment>
 </net>
 <net name="VDD_B_3V3_STM" class="0">
@@ -9379,8 +9380,9 @@ between input and output when its VDD=0.</text>
 <label x="231.14" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="10.16" y1="-76.2" x2="12.7" y2="-76.2" width="0.1524" layer="91"/>
-<label x="12.7" y="-76.2" size="1.778" layer="95"/>
+<wire x1="170.18" y1="-40.64" x2="172.72" y2="-40.64" width="0.1524" layer="91"/>
+<label x="172.72" y="-40.64" size="1.778" layer="95"/>
+<pinref part="U19" gate="D" pin="PD11_N14"/>
 </segment>
 </net>
 <net name="STM_LED2" class="0">
@@ -9390,8 +9392,9 @@ between input and output when its VDD=0.</text>
 <label x="215.9" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="10.16" y1="-73.66" x2="12.7" y2="-73.66" width="0.1524" layer="91"/>
-<label x="12.7" y="-73.66" size="1.778" layer="95"/>
+<wire x1="170.18" y1="-48.26" x2="172.72" y2="-48.26" width="0.1524" layer="91"/>
+<label x="172.72" y="-48.26" size="1.778" layer="95"/>
+<pinref part="U19" gate="D" pin="PD14_M14"/>
 </segment>
 </net>
 <net name="STM_LED3" class="0">
@@ -9401,8 +9404,9 @@ between input and output when its VDD=0.</text>
 <label x="200.66" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="10.16" y1="-71.12" x2="12.7" y2="-71.12" width="0.1524" layer="91"/>
-<label x="12.7" y="-71.12" size="1.778" layer="95"/>
+<wire x1="170.18" y1="-50.8" x2="172.72" y2="-50.8" width="0.1524" layer="91"/>
+<label x="172.72" y="-50.8" size="1.778" layer="95"/>
+<pinref part="U19" gate="D" pin="PD15_L14"/>
 </segment>
 </net>
 <net name="ICE_ST_SPI_D0" class="0">
