@@ -9394,13 +9394,6 @@ between input and output when its VDD=0.</text>
 <label x="12.7" y="-71.12" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_ST_FLASH_EN" class="0">
-<segment>
-<pinref part="U19" gate="B" pin="PB7_B5"/>
-<wire x1="68.58" y1="-30.48" x2="71.12" y2="-30.48" width="0.1524" layer="91"/>
-<label x="71.12" y="-30.48" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="ICE_ST_SPI_D0" class="0">
 <segment>
 <wire x1="68.58" y1="-93.98" x2="71.12" y2="-93.98" width="0.1524" layer="91"/>
@@ -9504,6 +9497,13 @@ between input and output when its VDD=0.</text>
 <wire x1="68.58" y1="-40.64" x2="71.12" y2="-40.64" width="0.1524" layer="91"/>
 <label x="71.12" y="-40.64" size="1.778" layer="95"/>
 <pinref part="U19" gate="B" pin="PB11_R13"/>
+</segment>
+</net>
+<net name="ICE_ST_FLASH_EN" class="0">
+<segment>
+<wire x1="68.58" y1="-86.36" x2="71.12" y2="-86.36" width="0.1524" layer="91"/>
+<label x="71.12" y="-86.36" size="1.778" layer="95"/>
+<pinref part="U19" gate="F" pin="PF5_K3"/>
 </segment>
 </net>
 </nets>
