@@ -9,7 +9,7 @@
 <grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
-<layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
+<layer number="2" name="Ground" color="16" fill="1" visible="yes" active="yes"/>
 <layer number="3" name="Route3" color="17" fill="1" visible="no" active="no"/>
 <layer number="4" name="Route4" color="18" fill="1" visible="no" active="no"/>
 <layer number="5" name="Route5" color="19" fill="1" visible="no" active="no"/>
@@ -22,40 +22,40 @@
 <layer number="12" name="Route12" color="20" fill="1" visible="no" active="no"/>
 <layer number="13" name="Route13" color="21" fill="1" visible="no" active="no"/>
 <layer number="14" name="Route14" color="22" fill="1" visible="no" active="no"/>
-<layer number="15" name="Power" color="42" fill="1" visible="no" active="yes"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
+<layer number="15" name="Power" color="42" fill="1" visible="yes" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="yes"/>
 <layer number="20" name="Dimension" color="24" fill="1" visible="yes" active="yes"/>
 <layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="yes"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="yes"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
 <layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
-<layer number="33" name="tFinish" color="6" fill="3" visible="yes" active="yes"/>
+<layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
-<layer number="35" name="tGlue" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
 <layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
-<layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
-<layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
+<layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
 <layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
 <layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
-<layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
+<layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="no" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
 <layer number="51" name="tDocu" color="7" fill="1" visible="no" active="yes"/>
@@ -2884,10 +2884,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="46.228" y="8.636"/>
 <vertex x="46.228" y="43.434"/>
 </polygon>
+<wire x1="27.015753125" y1="31.40523125" x2="38.953040625" y2="30.379078125" width="0" layer="19" extent="1-16"/>
 <wire x1="17.04158125" y1="18.256165625" x2="19.91078125" y2="18.756165625" width="0" layer="19" extent="1-1"/>
 <wire x1="17.6276" y1="25.3492" x2="20.0935" y2="22.35410625" width="0" layer="19" extent="1-1"/>
 <wire x1="13.9224" y1="22.575640625" x2="13.72971875" y2="18.692903125" width="0" layer="19" extent="1-16"/>
-<wire x1="38.953040625" y1="30.379078125" x2="27.015753125" y2="31.40523125" width="0" layer="19" extent="1-16"/>
+<wire x1="12.301221875" y1="33.42894375" x2="15.2781" y2="28.5242" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="GND">
 <contactref element="C64" pad="2"/>
@@ -3374,7 +3375,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <via x="23.8506" y="23.218140625" extent="1-16" drill="0.254"/>
 <via x="23.840440625" y="22.50948125" extent="1-16" drill="0.254"/>
-<via x="30.604459375" y="26.301696875" extent="1-16" drill="0.254"/>
+<via x="30.69335625" y="26.316934375" extent="1-16" drill="0.254"/>
 <via x="9.8552" y="18.8722" extent="1-16" drill="0.254"/>
 <polygon width="0.127" layer="1" thermals="no">
 <vertex x="9.86028125" y="19.812"/>
@@ -3396,7 +3397,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="13.9224" y1="22.225640625" x2="15.1895" y2="20.578603125" width="0" layer="19" extent="16-16"/>
 <wire x1="1.8896" y1="37.989" x2="3.92921875" y2="38.8164" width="0" layer="19" extent="16-16"/>
 <wire x1="-0.99966875" y1="15.04401875" x2="1.222225" y2="14.696978125" width="0" layer="19" extent="1-16"/>
-<wire x1="28.46681875" y1="25.041859375" x2="30.604459375" y2="26.301696875" width="0" layer="19" extent="16-16"/>
+<wire x1="28.46681875" y1="25.041859375" x2="30.69335625" y2="26.316934375" width="0" layer="19" extent="16-16"/>
 <wire x1="27.314921875" y1="10.580978125" x2="24.421515625" y2="11.908934375" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="ICE_IMG_CLK16MHZ">
@@ -3608,10 +3609,31 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="-0.3937" y="38.1"/>
 <vertex x="-0.3937" y="38.57751875"/>
 </polygon>
-<wire x1="-1.160778125" y1="17.642840625" x2="-0.721359375" y2="37.64788125" width="0" layer="19" extent="1-1"/>
-<wire x1="20.4744" y1="29.713" x2="0.278478125" y2="37.727040625" width="0" layer="19" extent="1-16"/>
-<wire x1="21.88971875" y1="30.18028125" x2="20.962653125" y2="30.1117" width="0" layer="19" extent="1-1"/>
-<wire x1="29.962" y1="33.02" x2="22.6815" y2="31.242" width="0" layer="19" extent="16-16"/>
+<wire x1="29.962" y1="33.782" x2="29.962" y2="33.02" width="0.635" layer="15"/>
+<wire x1="29.962" y1="33.02" x2="30.724" y2="33.02" width="0.635" layer="15"/>
+<wire x1="29.962" y1="33.782" x2="24.399240625" y2="33.782" width="0.635" layer="15"/>
+<wire x1="21.87448125" y1="31.257240625" x2="24.399240625" y2="33.782" width="0.635" layer="15"/>
+<wire x1="21.87448125" y1="31.257240625" x2="21.87448125" y2="30.19551875" width="0.635" layer="15"/>
+<wire x1="21.87448125" y1="30.19551875" x2="21.88971875" y2="30.18028125" width="0.635" layer="15"/>
+<wire x1="21.88971875" y1="30.18028125" x2="21.8211375" y2="30.1117" width="0.635" layer="15"/>
+<wire x1="21.8211375" y1="30.1117" x2="20.962653125" y2="30.1117" width="0.635" layer="15"/>
+<wire x1="24.399240625" y1="33.782" x2="24.399240625" y2="35.290759375" width="0.635" layer="15"/>
+<wire x1="24.399240625" y1="35.290759375" x2="20.828" y2="38.862" width="0.635" layer="15"/>
+<wire x1="20.828" y1="38.862" x2="17.272" y2="38.862" width="0.635" layer="15"/>
+<wire x1="14.478" y1="36.068" x2="14.478" y2="33.528" width="0.635" layer="15"/>
+<wire x1="14.478" y1="33.528" x2="11.684" y2="30.734" width="0.635" layer="15"/>
+<wire x1="11.684" y1="30.734" x2="4.064" y2="30.734" width="0.635" layer="15"/>
+<wire x1="4.064" y1="30.734" x2="-0.721359375" y2="35.519359375" width="0.635" layer="15"/>
+<wire x1="-0.721359375" y1="35.519359375" x2="-0.721359375" y2="37.64788125" width="0.635" layer="15"/>
+<wire x1="17.272" y1="38.862" x2="14.478" y2="36.068" width="0.635" layer="15"/>
+<wire x1="-0.721359375" y1="37.64788125" x2="-0.721359375" y2="38.287959375" width="0.635" layer="15"/>
+<wire x1="-0.721359375" y1="38.287959375" x2="-0.72898125" y2="38.29558125" width="0.635" layer="15"/>
+<wire x1="-0.721359375" y1="35.519359375" x2="-0.721359375" y2="21.722790625" width="0.635" layer="15"/>
+<wire x1="-0.721359375" y1="21.722790625" x2="-0.97031875" y2="21.47383125" width="0.635" layer="15"/>
+<wire x1="-0.97031875" y1="17.8333" x2="-1.160778125" y2="17.642840625" width="0.635" layer="15"/>
+<wire x1="-0.97031875" y1="21.47383125" x2="-0.97031875" y2="17.8333" width="0.635" layer="15"/>
+<wire x1="-1.160778125" y1="17.642840625" x2="-1.160778125" y2="16.852903125" width="0.635" layer="15"/>
+<wire x1="-1.160778125" y1="16.852903125" x2="-1.165859375" y2="16.847821875" width="0.635" layer="15"/>
 </signal>
 <signal name="GNDPLL1">
 <contactref element="C42" pad="2"/>
@@ -4761,7 +4783,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="31.96253125" y1="26.1665" x2="32.25303125" y2="26.457" width="0.127" layer="1"/>
 <wire x1="20.9339" y1="27.6535" x2="24.1062875" y2="27.6535" width="0.127" layer="1"/>
 <wire x1="24.1062875" y1="27.6535" x2="26.047946875" y2="25.711840625" width="0.127" layer="1"/>
-<wire x1="30.632403125" y1="25.711840625" x2="31.0870625" y2="26.1665" width="0.127" layer="1"/>
+<wire x1="30.68574375" y1="25.711840625" x2="31.140403125" y2="26.1665" width="0.127" layer="1"/>
 <wire x1="26.047946875" y1="25.711840625" x2="26.15360625" y2="25.711840625" width="0.127" layer="1"/>
 <wire x1="26.15360625" y1="25.711840625" x2="26.37585625" y2="25.934090625" width="0.127" layer="1" curve="90"/>
 <wire x1="26.37585625" y1="25.934090625" x2="26.37585625" y2="26.352040625" width="0.127" layer="1"/>
@@ -4794,8 +4816,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="29.5275" y1="26.574290625" x2="29.74975" y2="26.352040625" width="0.127" layer="1" curve="-90"/>
 <wire x1="29.74975" y1="26.352040625" x2="29.74975" y2="25.934090625" width="0.127" layer="1"/>
 <wire x1="29.74975" y1="25.934090625" x2="29.972" y2="25.711840625" width="0.127" layer="1" curve="90"/>
-<wire x1="29.972" y1="25.711840625" x2="30.632403125" y2="25.711840625" width="0.127" layer="1"/>
-<wire x1="31.0870625" y1="26.1665" x2="31.96253125" y2="26.1665" width="0.127" layer="1"/>
+<wire x1="29.972" y1="25.711840625" x2="30.68574375" y2="25.711840625" width="0.127" layer="1"/>
+<wire x1="31.140403125" y1="26.1665" x2="31.96253125" y2="26.1665" width="0.127" layer="1"/>
 </signal>
 <signal name="IMG_D11">
 <contactref element="U17" pad="E2"/>
@@ -5023,10 +5045,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="33.464659375" y="25.483821875" extent="1-16" drill="0.254"/>
 <wire x1="33.7922" y1="25.157" x2="33.79148125" y2="25.157" width="0.127" layer="1"/>
 <wire x1="33.79148125" y1="25.157" x2="33.464659375" y2="25.483821875" width="0.127" layer="1"/>
-<via x="30.03058125" y="25.28824375" extent="1-16" drill="0.254"/>
+<via x="30.00771875" y="25.255225" extent="1-16" drill="0.254"/>
 <wire x1="21.2744" y1="27.313" x2="24.087575" y2="27.313" width="0.127" layer="1"/>
-<wire x1="24.087575" y1="27.313" x2="26.11233125" y2="25.28824375" width="0.127" layer="1"/>
-<wire x1="30.03058125" y1="25.28824375" x2="26.11233125" y2="25.28824375" width="0.127" layer="1"/>
+<wire x1="24.087575" y1="27.313" x2="26.114865625" y2="25.285709375" width="0.127" layer="1"/>
+<wire x1="30.00771875" y1="25.255225" x2="29.977234375" y2="25.285709375" width="0.127" layer="1"/>
+<wire x1="29.977234375" y1="25.285709375" x2="26.114865625" y2="25.285709375" width="0.127" layer="1"/>
 <wire x1="33.464659375" y1="25.483821875" x2="33.774040625" y2="25.483821875" width="0.127" layer="16"/>
 <wire x1="33.774040625" y1="25.483821875" x2="33.8705625" y2="25.3873" width="0.127" layer="16"/>
 <wire x1="33.8705625" y1="25.3873" x2="33.8705625" y2="24.37236875" width="0.127" layer="16"/>
@@ -5034,11 +5057,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="32.326578125" y1="23.083521875" x2="32.1695375" y2="23.2405625" width="0.127" layer="16"/>
 <wire x1="32.1695375" y1="23.2405625" x2="32.1695375" y2="23.83984375" width="0.127" layer="16"/>
 <wire x1="32.83981875" y1="24.510125" x2="32.83981875" y2="24.857325" width="0.127" layer="16"/>
-<wire x1="30.306375" y1="25.2501375" x2="30.26826875" y2="25.28824375" width="0.127" layer="16"/>
-<wire x1="30.26826875" y1="25.28824375" x2="30.03058125" y2="25.28824375" width="0.127" layer="16"/>
+<wire x1="30.00771875" y1="25.255225" x2="30.01280625" y2="25.2501375" width="0.127" layer="16"/>
+<wire x1="32.44700625" y1="25.2501375" x2="30.01280625" y2="25.2501375" width="0.127" layer="16"/>
 <wire x1="32.1695375" y1="23.83984375" x2="32.83981875" y2="24.510125" width="0.127" layer="16"/>
 <wire x1="32.83981875" y1="24.857325" x2="32.44700625" y2="25.2501375" width="0.127" layer="16"/>
-<wire x1="32.44700625" y1="25.2501375" x2="30.306375" y2="25.2501375" width="0.127" layer="16"/>
 <wire x1="33.8705625" y1="24.37236875" x2="32.581715625" y2="23.083521875" width="0.127" layer="16"/>
 </signal>
 <signal name="IMG_D8">
@@ -5339,18 +5361,17 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U17" pad="B2"/>
 <contactref element="R21" pad="2"/>
 <wire x1="31.8422" y1="25.807" x2="31.52918125" y2="25.49398125" width="0.127" layer="1"/>
-<wire x1="31.52918125" y1="25.49398125" x2="30.83321875" y2="25.49398125" width="0.127" layer="1"/>
-<wire x1="30.83321875" y1="25.49398125" x2="30.208378125" y2="24.869140625" width="0.127" layer="1"/>
+<wire x1="31.52918125" y1="25.49398125" x2="30.843378125" y2="25.49398125" width="0.127" layer="1"/>
 <wire x1="24.02806875" y1="26.96971875" x2="20.81768125" y2="26.96971875" width="0.127" layer="1"/>
 <wire x1="24.02806875" y1="26.96971875" x2="25.44690625" y2="25.550884375" width="0.127" layer="1"/>
 <wire x1="20.81768125" y1="26.96971875" x2="20.4744" y2="27.313" width="0.127" layer="1"/>
 <contactref element="U15" pad="F10"/>
-<wire x1="30.208378125" y1="24.869140625" x2="29.72075" y2="24.869140625" width="0.127" layer="1"/>
-<wire x1="29.58105" y1="25.008840625" x2="29.72075" y2="24.869140625" width="0.127" layer="1"/>
 <wire x1="25.44690625" y1="25.550884375" x2="25.98895" y2="25.008840625" width="0.127" layer="1"/>
-<wire x1="25.98895" y1="25.008840625" x2="29.58105" y2="25.008840625" width="0.127" layer="1"/>
-<wire x1="29.58105" y1="24.37891875" x2="29.58105" y2="24.729440625" width="0.127" layer="1"/>
-<wire x1="29.58105" y1="24.729440625" x2="29.72075" y2="24.869140625" width="0.127" layer="1"/>
+<wire x1="29.07305" y1="25.008840625" x2="25.98895" y2="25.008840625" width="0.127" layer="1"/>
+<wire x1="29.728315625" y1="24.37891875" x2="29.58105" y2="24.37891875" width="0.127" layer="1"/>
+<wire x1="29.58105" y1="24.37891875" x2="29.58105" y2="24.500840625" width="0.127" layer="1"/>
+<wire x1="29.58105" y1="24.500840625" x2="29.07305" y2="25.008840625" width="0.127" layer="1"/>
+<wire x1="30.843378125" y1="25.49398125" x2="29.728315625" y2="24.37891875" width="0.127" layer="1"/>
 </signal>
 <signal name="SD_CLK">
 <contactref element="J7" pad="CLK"/>
@@ -5936,8 +5957,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="41.539159375" y1="41.010840625" x2="41.24451875" y2="41.010840625" width="0.127" layer="1"/>
 <wire x1="32.157178125" y1="21.269959375" x2="39.436040625" y2="21.269959375" width="0.127" layer="1"/>
 <wire x1="39.436040625" y1="21.269959375" x2="40.132" y2="20.574" width="0.127" layer="1"/>
-<wire x1="40.15914375" y1="14.777078125" x2="41.040525" y2="14.816359375" width="0" layer="19" extent="1-1"/>
-<wire x1="40.894" y1="20.574" x2="41.040525" y2="14.816359375" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_B_1V8_STM">
 <contactref element="U19" pad="C5"/>
@@ -6325,9 +6344,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="36.090859375" y="30.025340625" extent="1-16" drill="0.254"/>
 <via x="36.568384375" y="25.5041375" extent="1-16" drill="0.381"/>
 <wire x1="27.676" y1="24.384" x2="30.094078125" y2="24.384" width="0.635" layer="15"/>
-<wire x1="30.094078125" y1="24.384" x2="30.094078125" y2="24.150321875" width="0.635" layer="15"/>
-<wire x1="30.094078125" y1="24.150321875" x2="31.529178125" y2="24.150321875" width="0.635" layer="15"/>
-<wire x1="31.529178125" y1="24.150321875" x2="31.529178125" y2="24.823421875" width="0.635" layer="15"/>
+<wire x1="30.094078125" y1="24.384" x2="30.094078125" y2="24.094440625" width="0.635" layer="15"/>
+<wire x1="30.094078125" y1="24.094440625" x2="31.529178125" y2="24.094440625" width="0.635" layer="15"/>
+<wire x1="31.529178125" y1="23.98268125" x2="31.529178125" y2="24.094440625" width="0.635" layer="15"/>
+<wire x1="31.529178125" y1="24.094440625" x2="31.529178125" y2="24.823421875" width="0.635" layer="15"/>
 <wire x1="31.529178125" y1="24.823421875" x2="31.529178125" y2="27.4066" width="0.635" layer="15"/>
 <wire x1="31.49361875" y1="28.82391875" x2="30.693521875" y2="28.82391875" width="0.635" layer="15"/>
 <wire x1="31.529178125" y1="27.4066" x2="31.49361875" y2="27.4066" width="0.635" layer="15"/>
@@ -6348,14 +6368,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="32.766" y1="29.827221875" x2="32.8195" y2="29.827221875" width="0.508" layer="15"/>
 <wire x1="32.8195" y1="29.827221875" x2="32.8195" y2="28.084778125" width="0.508" layer="15"/>
 <wire x1="35.420459375" y1="25.48128125" x2="34.074259375" y2="25.48128125" width="0.508" layer="15"/>
-<wire x1="31.81111875" y1="24.074121875" x2="31.81111875" y2="24.150321875" width="0.508" layer="15"/>
-<wire x1="31.81111875" y1="24.150321875" x2="31.529178125" y2="24.150321875" width="0.508" layer="15"/>
-<wire x1="34.074259375" y1="25.48128125" x2="34.074259375" y2="24.074121875" width="0.508" layer="15"/>
-<wire x1="34.074259375" y1="24.074121875" x2="31.81111875" y2="24.074121875" width="0.508" layer="15"/>
-<wire x1="29.951684375" y1="34.5948" x2="30.027884375" y2="34.5186" width="0.635" layer="15"/>
-<wire x1="30.027884375" y1="34.5186" x2="30.2671125" y2="34.5186" width="0.635" layer="15"/>
-<wire x1="30.2671125" y1="34.5186" x2="32.766" y2="32.0197125" width="0.635" layer="15"/>
-<wire x1="32.766" y1="32.0197125" x2="32.766" y2="29.827221875" width="0.635" layer="15"/>
+<wire x1="34.074259375" y1="23.98268125" x2="31.529178125" y2="23.98268125" width="0.508" layer="15"/>
+<wire x1="34.074259375" y1="25.48128125" x2="34.074259375" y2="23.98268125" width="0.508" layer="15"/>
+<wire x1="30.627790625" y1="34.5948" x2="32.766" y2="32.456590625" width="0.635" layer="15"/>
+<wire x1="32.766" y1="32.456590625" x2="32.766" y2="29.827221875" width="0.635" layer="15"/>
+<wire x1="29.951684375" y1="34.5948" x2="30.627790625" y2="34.5948" width="0.635" layer="15"/>
 <wire x1="36.0935625" y1="27.429459375" x2="36.065621875" y2="27.429459375" width="0" layer="19" extent="1-15"/>
 </signal>
 <signal name="VDD_B_2V8_IMG">
@@ -6426,9 +6443,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="34.534" y="30.226"/>
 <vertex x="34.534" y="34.716721875"/>
 </polygon>
+<wire x1="36.068159375" y1="28.735021875" x2="36.068159375" y2="29.334465625" width="0.508" layer="15"/>
+<wire x1="36.068159375" y1="29.334465625" x2="36.0834" y2="29.34970625" width="0.508" layer="15"/>
+<wire x1="30.767178125" y1="24.823421875" x2="30.767178125" y2="25.364284375" width="0.508" layer="15"/>
+<wire x1="30.767178125" y1="25.364284375" x2="29.72308125" y2="26.40838125" width="0.508" layer="15"/>
+<wire x1="29.72308125" y1="26.40838125" x2="29.72308125" y2="27.045759375" width="0.508" layer="15"/>
+<wire x1="29.72308125" y1="27.045759375" x2="30.75448125" y2="28.077159375" width="0.508" layer="15"/>
 <wire x1="35.7422" y1="29.707" x2="34.4422" y2="29.707" width="0" layer="19" extent="1-1"/>
 <wire x1="31.1922" y1="28.407" x2="34.4422" y2="29.707" width="0" layer="19" extent="1-1"/>
-<wire x1="31.1922" y1="25.157" x2="31.1922" y2="27.757" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_B_SD_EN">
 <contactref element="U8" pad="3"/>
