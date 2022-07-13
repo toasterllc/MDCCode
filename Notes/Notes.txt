@@ -1,9 +1,5 @@
 - Rev5 Board
     
-    - Length-match IMG wires
-    
-    - Length-match SD wires
-    
     - Re-synthesize with new ICE40 pin locations to make sure everything works
     
     - Make sure y position of motion sensor and image sensor are equal
@@ -22,9 +18,6 @@
     
     - Cancel order for TPS62802YKAR / TPS63805YFFR if we no longer need it
     
-    - Buy more TPS62802 if needed
-        - Don't think we do -- we already have 2 outstanding orders for 225 total
-    
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
     
     - Make sure that IMG i2c lines are 0V while IMG power is off
@@ -41,6 +34,13 @@
 
 
 - Rev5 Done
+    
+    √ Buy more TPS62802 if needed
+        - Supposed to be delivered 10/2022
+    
+    √ Length-match IMG wires
+    
+    √ Length-match SD wires
     
     √ Correct (swap) ICE SPI flash's data in/out pins so that by default, the flash is ready to
       be read by ICE40, but STM32 can program it by bit-banging ICE_ST_SPI_D0 / ICE_ST_SPI_D1
