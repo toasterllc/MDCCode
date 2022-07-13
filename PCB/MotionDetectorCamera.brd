@@ -5874,7 +5874,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <via x="38.4302" y="16.093440625" extent="1-16" drill="0.381"/>
 <via x="38.3514625" y="13.903959375" extent="1-16" drill="0.381"/>
-<wire x1="38.3514625" y1="13.903959375" x2="37.171759375" y2="12.60348125" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="MSP_TEST">
 <contactref element="U12" pad="3"/>
@@ -6812,12 +6811,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="J13" pad="1"/>
 <contactref element="H2" pad="3"/>
 <polygon width="0.127" layer="1" thermals="no">
-<vertex x="37.505640625" y="13.39088125"/>
-<vertex x="37.505640625" y="12.7"/>
-<vertex x="40.294559375" y="12.7"/>
-<vertex x="40.294559375" y="13.39088125"/>
+<vertex x="39.029640625" y="13.2943625"/>
+<vertex x="39.029640625" y="10.16"/>
+<vertex x="40.294559375" y="10.16"/>
+<vertex x="40.294559375" y="13.2943625"/>
 </polygon>
-<via x="38.3946375" y="13.139415625" extent="1-16" drill="0.381"/>
 <via x="34.089340625" y="10.728959375" extent="1-16" drill="0.381"/>
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="31.496" y="11.176"/>
@@ -6825,10 +6823,17 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="34.544" y="10.16"/>
 <vertex x="34.544" y="11.176"/>
 </polygon>
-<wire x1="34.089340625" y1="10.728959375" x2="34.117275" y2="10.701025" width="0.635" layer="15"/>
-<wire x1="35.55185625" y1="10.701025" x2="34.117275" y2="10.701025" width="0.635" layer="15"/>
-<wire x1="38.3946375" y1="13.139415625" x2="37.990246875" y2="13.139415625" width="0.635" layer="15"/>
-<wire x1="37.990246875" y1="13.139415625" x2="35.55185625" y2="10.701025" width="0.635" layer="15"/>
+<via x="39.410640625" y="10.386059375" extent="1-16" drill="0.254"/>
+<via x="39.994840625" y="10.386059375" extent="1-16" drill="0.254"/>
+<wire x1="39.410640625" y1="10.386059375" x2="39.994840625" y2="10.386059375" width="0.508" layer="15"/>
+<wire x1="34.089340625" y1="10.728959375" x2="34.656353125" y2="10.728959375" width="0.635" layer="15"/>
+<wire x1="34.656353125" y1="10.728959375" x2="34.6842875" y2="10.701025" width="0.635" layer="15"/>
+<wire x1="34.6842875" y1="10.701025" x2="35.55185625" y2="10.701025" width="0.635" layer="15"/>
+<wire x1="35.55185625" y1="10.701025" x2="37.9878125" y2="13.13698125" width="0.635" layer="15"/>
+<wire x1="37.9878125" y1="13.13698125" x2="39.660259375" y2="13.13698125" width="0.635" layer="15"/>
+<wire x1="39.660259375" y1="10.922" x2="39.660259375" y2="13.13698125" width="0.635" layer="15"/>
+<wire x1="39.410640625" y1="10.386059375" x2="39.660259375" y2="10.635678125" width="0.508" layer="15"/>
+<wire x1="39.660259375" y1="10.635678125" x2="39.660259375" y2="10.922" width="0.508" layer="15"/>
 </signal>
 <signal name="N$20">
 <contactref element="LED3" pad="C"/>
