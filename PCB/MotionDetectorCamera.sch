@@ -1515,6 +1515,12 @@ SMD mount</description>
 <wire x1="4.32" y1="0.4" x2="4.32" y2="-0.4" width="1" layer="1"/>
 <wire x1="-4.32" y1="0.4" x2="-4.32" y2="-0.4" width="1" layer="15"/>
 <wire x1="4.32" y1="0.4" x2="4.32" y2="-0.4" width="1" layer="15"/>
+<polygon width="0.05" layer="41">
+<vertex x="-4.32" y="3.24"/>
+<vertex x="-4.32" y="-2.25"/>
+<vertex x="4.32" y="-2.25"/>
+<vertex x="4.32" y="3.24"/>
+</polygon>
 </package>
 <package name="WURTH-621004242921">
 <description>16-SOP, 0.64 mm pitch, 6.00 mm span, 4.91 X 3.90 X 1.75 mm body
