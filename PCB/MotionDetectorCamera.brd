@@ -3395,7 +3395,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <wire x1="19.725403125" y1="16.37901875" x2="18.425403125" y2="17.02901875" width="0" layer="19" extent="16-16"/>
 <wire x1="16.475403125" y1="17.67901875" x2="17.04158125" y2="17.756165625" width="0" layer="19" extent="1-16"/>
-<wire x1="14.896359375" y1="12.799159375" x2="14.4670375" y2="13.38286875" width="0" layer="19" extent="1-16"/>
 <wire x1="9.65033125" y1="13.89901875" x2="11.202559375" y2="14.071921875" width="0" layer="19" extent="1-16"/>
 <wire x1="31.597759375" y1="23.280940625" x2="32.42071875" y2="24.683721875" width="0" layer="19" extent="16-16"/>
 <wire x1="18.9655" y1="40.530128125" x2="20.716240625" y2="40.735625" width="0" layer="19" extent="1-16"/>
@@ -6081,10 +6080,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C21" pad="1"/>
 <contactref element="C13" pad="1"/>
 <polygon width="0.127" layer="16" thermals="no">
-<vertex x="15.143484375" y="14.145259375"/>
-<vertex x="15.143484375" y="12.070078125"/>
-<vertex x="15.499078125" y="12.070078125"/>
-<vertex x="15.499078125" y="13.22831875"/>
+<vertex x="15.201903125" y="14.145259375"/>
+<vertex x="15.201903125" y="12.103096875"/>
+<vertex x="15.2933375" y="12.103096875"/>
+<vertex x="15.2933375" y="13.22831875"/>
 <vertex x="15.745459375" y="13.22831875"/>
 <vertex x="15.745459375" y="14.145259375"/>
 </polygon>
@@ -6643,15 +6642,15 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C20" pad="1"/>
 <contactref element="C11" pad="1"/>
 <contactref element="C12" pad="1"/>
-<polygon width="0.127" layer="16" thermals="no" rank="2">
-<vertex x="14.7828" y="12.3952"/>
-<vertex x="14.7828" y="11.85671875"/>
+<polygon width="0.127" layer="16" thermals="no">
+<vertex x="14.8463" y="12.3952"/>
+<vertex x="14.8463" y="11.85671875"/>
 <vertex x="14.259559375" y="11.85671875"/>
 <vertex x="14.259559375" y="10.5181375"/>
 <vertex x="15.293340625" y="10.5181375"/>
-<vertex x="15.293340625" y="11.87958125"/>
-<vertex x="14.986" y="11.87958125"/>
-<vertex x="14.986" y="12.3952"/>
+<vertex x="15.293340625" y="11.838940625"/>
+<vertex x="14.9479" y="11.838940625"/>
+<vertex x="14.9479" y="12.3952"/>
 </polygon>
 <via x="10.77721875" y="13.223240625" extent="1-16" drill="0.381"/>
 <polygon width="0.127" layer="16" thermals="no">
@@ -6739,7 +6738,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="10.673671875" y1="20.060328125" x2="10.414" y2="20.32" width="0.635" layer="15"/>
 <wire x1="10.414" y1="26.277946875" x2="5.791653125" y2="26.277946875" width="0.635" layer="15"/>
 <wire x1="5.791653125" y1="26.277946875" x2="2.3876" y2="29.682" width="0.635" layer="15"/>
-<wire x1="14.5632375" y1="11.5144375" x2="14.896359375" y2="12.249159375" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="VDD_B_3V3_STM">
 <contactref element="U19" pad="H13"/>
