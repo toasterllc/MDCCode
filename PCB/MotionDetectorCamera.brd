@@ -3406,13 +3406,15 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="20.32" y="16.764"/>
 <vertex x="20.32" y="17.272"/>
 </polygon>
+<via x="26.799540625" y="11.3893625" extent="1-16" drill="0.254"/>
+<via x="27.555190625" y="11.3893625" extent="1-16" drill="0.254"/>
+<via x="28.310840625" y="11.3893625" extent="1-16" drill="0.254"/>
 <wire x1="11.202559375" y1="14.071921875" x2="9.65033125" y2="13.89901875" width="0" layer="19" extent="1-16"/>
 <wire x1="31.597759375" y1="23.280940625" x2="32.42071875" y2="24.683721875" width="0" layer="19" extent="16-16"/>
 <wire x1="18.9655" y1="40.530128125" x2="20.716240625" y2="40.735625" width="0" layer="19" extent="1-16"/>
 <wire x1="2.480828125" y1="14.685809375" x2="2.537434375" y2="16.661915625" width="0" layer="19" extent="1-1"/>
 <wire x1="13.9224" y1="22.225640625" x2="15.1895" y2="20.578603125" width="0" layer="19" extent="16-16"/>
 <wire x1="1.8896" y1="37.989" x2="3.92921875" y2="38.8164" width="0" layer="19" extent="16-16"/>
-<wire x1="27.314921875" y1="10.580978125" x2="26.159575" y2="12.895153125" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="ICE_IMG_CLK16MHZ">
 <contactref element="U15" pad="C11"/>
@@ -5735,10 +5737,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <signal name="STM_SWDIO">
 <contactref element="U19" pad="A15"/>
 <contactref element="H2" pad="1"/>
-<wire x1="25.575403125" y1="10.52901875" x2="25.575403125" y2="10.65145" width="0.127" layer="16"/>
-<wire x1="26.49856875" y1="11.574615625" x2="25.575403125" y2="10.65145" width="0.127" layer="16"/>
-<wire x1="32.614921875" y1="12.580978125" x2="31.608559375" y2="11.574615625" width="0.127" layer="16"/>
-<wire x1="31.608559375" y1="11.574615625" x2="26.49856875" y2="11.574615625" width="0.127" layer="16"/>
+<wire x1="31.890665625" y1="11.856721875" x2="32.614921875" y2="12.580978125" width="0.127" layer="16"/>
+<wire x1="25.575403125" y1="10.757921875" x2="26.674203125" y2="11.856721875" width="0.127" layer="16"/>
+<wire x1="25.575403125" y1="10.52901875" x2="25.575403125" y2="10.757921875" width="0.127" layer="16"/>
+<wire x1="26.674203125" y1="11.856721875" x2="31.890665625" y2="11.856721875" width="0.127" layer="16"/>
 </signal>
 <signal name="STM_SWCLK">
 <contactref element="U19" pad="A14"/>
@@ -6763,8 +6765,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U30" pad="6"/>
 <contactref element="U30" pad="5"/>
 <polygon width="0.127" layer="1" thermals="no">
-<vertex x="30.47238125" y="12.354559375"/>
-<vertex x="28.5242" y="12.354559375"/>
+<vertex x="30.47238125" y="12.804140625"/>
+<vertex x="28.5242" y="12.804140625"/>
 <vertex x="28.5242" y="11.153140625"/>
 <vertex x="30.47238125" y="11.153140625"/>
 </polygon>
@@ -6786,10 +6788,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="24.772621875" y="14.996159375"/>
 <vertex x="24.772621875" y="15.59051875"/>
 </polygon>
-<via x="28.844240625" y="12.09548125" extent="1-16" drill="0.381"/>
+<via x="28.8671" y="12.43584375" extent="1-16" drill="0.381"/>
 <wire x1="24.5991875" y1="15.401603125" x2="24.5991875" y2="14.7701" width="0.508" layer="15"/>
-<wire x1="28.844240625" y1="14.7701" x2="24.5991875" y2="14.7701" width="0.508" layer="15"/>
-<wire x1="28.844240625" y1="12.09548125" x2="28.844240625" y2="14.7701" width="0.508" layer="15"/>
+<wire x1="28.8671" y1="14.7701" x2="24.5991875" y2="14.7701" width="0.508" layer="15"/>
+<wire x1="28.8671" y1="12.43584375" x2="28.8671" y2="14.7701" width="0.508" layer="15"/>
 </signal>
 <signal name="N$14">
 <contactref element="U12" pad="8"/>
