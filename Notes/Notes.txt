@@ -1,5 +1,7 @@
 - Rev5 Board
     
+    - Confirm lengths of IMG_ and SD_ nets
+    
     - Re-synthesize with new ICE40 pin locations to make sure everything works
     
     - Make sure y position of motion sensor and image sensor are equal
