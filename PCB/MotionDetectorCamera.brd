@@ -7086,8 +7086,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="VDD_B_EN">
 <contactref element="U28" pad="6"/>
-<contactref element="U12" pad="11"/>
-<wire x1="13.137159375" y1="16.506521875" x2="40.2430375" y2="39.514359375" width="0" layer="19" extent="1-1"/>
+<contactref element="U12" pad="1"/>
+<wire x1="8.767959375" y1="15.006521875" x2="40.2430375" y2="39.514359375" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$43">
 <contactref element="Q10" pad="2" route="any" routetag="G$1.D"/>

@@ -5936,6 +5936,7 @@ away with a smaller capacitor.</text>
 <attribute name="VALUE" x="-65.786" y="80.899" size="1.778" layer="96"/>
 </instance>
 <instance part="U21" gate="G$1" x="124.46" y="38.1" smashed="yes" rot="MR0">
+<attribute name="PN" x="124.46" y="12.7" size="1.778" layer="95" rot="MR0"/>
 <attribute name="NAME" x="124.46" y="40.64" size="1.778" layer="95" rot="MR0" align="top-left"/>
 </instance>
 <instance part="U22" gate="G$1" x="-12.7" y="38.1" smashed="yes" rot="MR0">
@@ -6142,13 +6143,6 @@ away with a smaller capacitor.</text>
 <label x="157.48" y="35.56" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_B_EN" class="0">
-<segment>
-<wire x1="129.54" y1="68.58" x2="127" y2="68.58" width="0.1524" layer="91"/>
-<label x="127" y="68.58" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U12" gate="C" pin="PA.C/P2.4/TA1CLK/UCB0CLK/A6"/>
-</segment>
-</net>
 <net name="VDD_B_1V8_IMG_EN" class="0">
 <segment>
 <wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
@@ -6242,6 +6236,13 @@ away with a smaller capacitor.</text>
 <wire x1="35.56" y1="71.12" x2="33.02" y2="71.12" width="0.1524" layer="91"/>
 <label x="33.02" y="71.12" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U12" gate="B" pin="PA.3/P1.3/UCB0SOMI/UCB0SCL/MCLK/A3"/>
+</segment>
+</net>
+<net name="VDD_B_EN" class="0">
+<segment>
+<wire x1="35.56" y1="76.2" x2="33.02" y2="76.2" width="0.1524" layer="91"/>
+<label x="33.02" y="76.2" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U12" gate="B" pin="PA.1/P1.1/UCB0CLK/ACLK/A1/VREF+"/>
 </segment>
 </net>
 </nets>
