@@ -3423,9 +3423,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="32.512" y="23.55341875"/>
 </polygon>
 <via x="18.19401875" y="40.7797" extent="1-16" drill="0.254"/>
+<via x="-0.508" y="41.148" extent="1-16" drill="0.381"/>
+<via x="-0.508" y="39.878" extent="1-16" drill="0.381"/>
 <wire x1="2.480828125" y1="14.685809375" x2="2.537434375" y2="16.661915625" width="0" layer="19" extent="1-1"/>
 <wire x1="13.9224" y1="22.225640625" x2="15.1895" y2="20.578603125" width="0" layer="19" extent="16-16"/>
-<wire x1="1.8896" y1="37.989" x2="3.92921875" y2="38.8164" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="ICE_IMG_CLK16MHZ">
 <contactref element="U15" pad="C11"/>
