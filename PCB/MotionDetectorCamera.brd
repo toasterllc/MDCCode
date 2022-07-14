@@ -1654,10 +1654,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="25.494359375" y="33.556196875" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="CL05B103KB5NNNC" x="22.6822" y="33.185096875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="C6" library="EagleLibrary" package="0805" value="10u" x="23.203" y="41.15298125" smashed="yes" rot="MR0">
-<attribute name="MFG" value="Samsung" x="23.203" y="41.15298125" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="26.4881" y="40.8379625" size="0.762" layer="26" font="vector" rot="MR0"/>
-<attribute name="PN" value="CL21A106KOQNNNE" x="23.203" y="41.15298125" size="1.778" layer="28" rot="MR0" display="off"/>
+<element name="C6" library="EagleLibrary" package="0805" value="10u" x="25.549959375" y="39.4181625" smashed="yes" rot="MR180">
+<attribute name="MFG" value="Samsung" x="25.549959375" y="39.4181625" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="NAME" x="22.264859375" y="39.73318125" size="0.762" layer="26" font="vector" rot="MR180"/>
+<attribute name="PN" value="CL21A106KOQNNNE" x="25.549959375" y="39.4181625" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C30" library="EagleLibrary" package="0402" value="100n" x="10.9007375" y="23.64018125" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="10.9007375" y="23.64018125" size="1.778" layer="28" rot="MR0" display="off"/>
@@ -1711,7 +1711,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="U3" library="EagleLibrary" package="TI-TPS6280XYKAR" value="TI-TPS6280XYKAR" x="22.67458125" y="38.912803125" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Texas Instruments" x="22.67458125" y="38.912803125" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="NAME" x="24.352590625" y="38.383821875" size="0.508" layer="26" font="vector" rot="SMR0"/>
 <attribute name="PN" value="TPS62801YKAR" x="22.67458125" y="38.912803125" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="U4" library="EagleLibrary" package="TI-TPS6280XYKAR" value="TI-TPS6280XYKAR" x="28.21765625" y="34.1794" smashed="yes" rot="MR270">
@@ -2026,10 +2025,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="16.482603125" y="15.312334375" size="0.508" layer="26" font="vector" rot="MR270"/>
 <attribute name="PN" value="SIT8021AI-J4-18S-16.000000E" x="15.396340625" y="12.637896875" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="L1" library="EagleLibrary" package="0806" value="470n" x="22.26818125" y="37.211003125" smashed="yes" rot="MR0">
-<attribute name="MFG" value="Murata" x="22.26818125" y="37.211003125" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="24.9319625" y="36.224121875" size="0.762" layer="26" font="vector" rot="MR0"/>
-<attribute name="PN" value="DFE201612E-R47M=P2" x="22.26818125" y="37.211003125" size="1.778" layer="28" rot="MR0" display="off"/>
+<element name="L1" library="EagleLibrary" package="0806" value="470n" x="22.087840625" y="37.20338125" smashed="yes" rot="MR0">
+<attribute name="MFG" value="Murata" x="22.087840625" y="37.20338125" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="24.751621875" y="36.2165" size="0.762" layer="26" font="vector" rot="MR0"/>
+<attribute name="PN" value="DFE201612E-R47M=P2" x="22.087840625" y="37.20338125" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="L2" library="EagleLibrary" package="0806" value="470n" x="27.81125625" y="32.2236" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Murata" x="27.81125625" y="32.2236" size="1.778" layer="28" rot="MR0" display="off"/>
@@ -2061,10 +2060,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="39.713684375" y="14.206603125" size="0.508" layer="25" font="vector" rot="R270"/>
 <attribute name="PN" value="BKP1005EM100-T" x="48.047684375" y="32.502603125" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="C5" library="EagleLibrary" package="0805" value="10u" x="25.5244625" y="39.4081" smashed="yes" rot="MR180">
-<attribute name="MFG" value="Samsung" x="25.5244625" y="39.4081" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="22.23174375" y="39.74851875" size="0.762" layer="26" font="vector" rot="MR180"/>
-<attribute name="PN" value="CL21A106KOQNNNE" x="25.5244625" y="39.4081" size="1.778" layer="28" rot="MR180" display="off"/>
+<element name="C5" library="EagleLibrary" package="0805" value="10u" x="24.594821875" y="36.9443" smashed="yes" rot="MR270">
+<attribute name="MFG" value="Samsung" x="24.594821875" y="36.9443" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="24.935240625" y="40.23701875" size="0.762" layer="26" font="vector" rot="MR270"/>
+<attribute name="PN" value="CL21A106KOQNNNE" x="24.594821875" y="36.9443" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="C8" library="EagleLibrary" package="0805" value="10u" x="27.8392" y="37.664278125" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Samsung" x="27.8392" y="37.664278125" size="1.778" layer="28" rot="MR0" display="off"/>
@@ -2541,22 +2540,16 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="C2" pad="1"/>
 <contactref element="C27" pad="1"/>
 <polygon width="0.127" layer="16" thermals="no">
-<vertex x="23.495" y="41.8719"/>
-<vertex x="23.495" y="40.192959375"/>
-<vertex x="22.62378125" y="40.192959375"/>
+<vertex x="25.27554375" y="40.21581875"/>
+<vertex x="22.62378125" y="40.21581875"/>
 <vertex x="22.62378125" y="39.07028125"/>
 <vertex x="22.82951875" y="39.07028125"/>
-<vertex x="22.82951875" y="39.28871875"/>
-<vertex x="23.555959375" y="39.28871875"/>
-<vertex x="23.555959375" y="38.70198125"/>
-<vertex x="25.23998125" y="38.70198125"/>
-<vertex x="25.23998125" y="41.8719"/>
+<vertex x="22.82951875" y="39.215059375"/>
+<vertex x="23.916640625" y="39.215059375"/>
+<vertex x="23.916640625" y="37.238940625"/>
+<vertex x="25.27554375" y="37.238940625"/>
 </polygon>
-<wire x1="24.29626875" y1="38.35680625" x2="23.190196875" y2="38.35680625" width="0.127" layer="16"/>
-<wire x1="23.190196875" y1="38.35680625" x2="23.08098125" y2="38.466021875" width="0.127" layer="16"/>
-<wire x1="23.08098125" y1="38.737803125" x2="23.08098125" y2="38.466021875" width="0.127" layer="16"/>
-<wire x1="24.6490625" y1="38.7096" x2="24.6490625" y2="39.4081" width="0.127" layer="16"/>
-<wire x1="24.6490625" y1="38.7096" x2="24.29626875" y2="38.35680625" width="0.127" layer="16"/>
+<wire x1="23.08098125" y1="38.737803125" x2="23.08098125" y2="38.7352625" width="0.127" layer="16"/>
 <polygon width="0.127" layer="16" thermals="no" rank="2">
 <vertex x="2.20218125" y="41.620440625"/>
 <vertex x="2.20218125" y="37.912040625"/>
@@ -2618,6 +2611,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="6.56559375" y1="40.2082" x2="4.52628125" y2="40.2082" width="0.635" layer="15"/>
 <wire x1="10.743621875" y1="39.971978125" x2="9.7708" y2="40.9448" width="0.635" layer="15"/>
 <wire x1="9.7708" y1="40.9448" x2="7.30219375" y2="40.9448" width="0.635" layer="15"/>
+<wire x1="23.47153125" y1="38.3447125" x2="23.756475" y2="38.3447125" width="0.127" layer="16"/>
+<wire x1="24.2814875" y1="37.8197" x2="24.594821875" y2="37.8197" width="0.127" layer="16"/>
+<wire x1="23.756475" y1="38.3447125" x2="24.2814875" y2="37.8197" width="0.127" layer="16"/>
+<wire x1="23.08098125" y1="38.7352625" x2="23.47153125" y2="38.3447125" width="0.127" layer="16"/>
 </signal>
 <signal name="VDD_B_1V8">
 <contactref element="C64" pad="1"/>
@@ -3067,8 +3064,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="27.60805625" y="34.33688125"/>
 <vertex x="27.60805625" y="35.197940625"/>
-<vertex x="25.42365625" y="35.197940625"/>
-<vertex x="25.42365625" y="38.383103125"/>
+<vertex x="25.55065625" y="35.197940625"/>
+<vertex x="25.55065625" y="38.383103125"/>
 <vertex x="27.84961875" y="38.383103125"/>
 <vertex x="27.84961875" y="34.33688125"/>
 </polygon>
@@ -3387,12 +3384,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <via x="41.9989" y="27.54121875" extent="1-16" drill="0.381"/>
 <via x="11.952559375" y="10.4394" extent="1-16" drill="0.381"/>
-<polygon width="0.127" layer="16">
-<vertex x="22.0624375" y="41.8338"/>
-<vertex x="22.0624375" y="39.03218125"/>
-<vertex x="22.36978125" y="39.03218125"/>
-<vertex x="22.36978125" y="41.8338"/>
-</polygon>
 <via x="27.665678125" y="24.3814625" extent="1-16" drill="0.381"/>
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="15.24" y="18.542"/>
@@ -3428,6 +3419,12 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="13.08861875" y="20.24380625" extent="1-16" drill="0.381"/>
 <via x="13.9344375" y="13.5229625" extent="1-16" drill="0.254"/>
 <via x="13.947140625" y="16.055340625" extent="1-16" drill="0.254"/>
+<polygon width="0.127" layer="16">
+<vertex x="22.06498125" y="40.132"/>
+<vertex x="22.06498125" y="39.03218125"/>
+<vertex x="22.367240625" y="39.03218125"/>
+<vertex x="22.367240625" y="40.132"/>
+</polygon>
 </signal>
 <signal name="ICE_IMG_CLK16MHZ">
 <contactref element="U15" pad="C11"/>
@@ -3453,8 +3450,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="22.6187" y="38.81374375"/>
 <vertex x="22.7965" y="38.81374375"/>
 <vertex x="22.7965" y="38.087303125"/>
-<vertex x="23.6347" y="38.087303125"/>
-<vertex x="23.6347" y="36.385503125"/>
+<vertex x="23.50008125" y="38.087303125"/>
+<vertex x="23.50008125" y="36.385503125"/>
 </polygon>
 </signal>
 <signal name="VDD_B_1V2">
