@@ -1,6 +1,6 @@
 - Rev5 Board
     
-    - Confirm lengths of IMG_ and SD_ nets
+    - Verify lengths of IMG_ and SD_ nets
     
     - Re-synthesize with new ICE40 pin locations to make sure everything works
     
