@@ -1954,7 +1954,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="U19" library="EagleLibrary" package="STM-STM32F730I8" value="STM-STM32F730" x="21.025403125" y="15.07901875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="STMicroelectronics" x="21.025403125" y="15.07901875" size="1.778" layer="28" rot="MR180" display="off"/>
-<attribute name="NAME" x="22.709421875" y="21.3875" size="1.27" layer="26" font="vector" rot="MR180"/>
+<attribute name="NAME" x="22.74498125" y="21.4383" size="1.27" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="STM32F730I8K6" x="21.025403125" y="15.07901875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C70" library="EagleLibrary" package="0402" value="100n" x="22.119809375" y="15.20795" smashed="yes" rot="R270">
