@@ -1,8 +1,4 @@
 - Rev5 Board
-    
-    - Re-synthesize with new ICE40 pin locations to make sure everything works
-    
-    - When complete, make sure board origin is at 0,0
 
 
 
@@ -28,6 +24,10 @@
 
 
 - Rev5 Done
+    
+    √ Re-synthesize with new ICE40 pin locations to make sure everything works
+    
+    √ When complete, make sure board origin is at 0,0
     
     √ Make board left/right borders smaller
     
