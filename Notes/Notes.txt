@@ -1,14 +1,6 @@
 - Rev5 Board
     
-    - Verify lengths of IMG_ and SD_ nets
-    
     - Re-synthesize with new ICE40 pin locations to make sure everything works
-    
-    - Make sure y position of motion sensor and image sensor are equal
-    
-    - Layout!
-    
-    - Make board left/right borders smaller
     
     - When complete, make sure board origin is at 0,0
 
@@ -36,6 +28,14 @@
 
 
 - Rev5 Done
+    
+    √ Make board left/right borders smaller
+    
+    √ Layout!
+    
+    √ Make sure y position of motion sensor and image sensor are equal
+    
+    √ Verify lengths of IMG_ and SD_ nets
     
     √ Buy more TPS62802 if needed
         - Supposed to be delivered 10/2022
