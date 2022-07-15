@@ -1055,7 +1055,7 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-1.05" y="1.05"/>
 <vertex x="1.05" y="1.05"/>
 </polygon>
-<smd name="7" x="0" y="0.285" dx="1.1" dy="1.25" layer="1"/>
+<smd name="7" x="0" y="0.285" dx="1.1" dy="1.25" layer="1" cream="no"/>
 <smd name="2" x="-0.935" y="0" dx="0.43" dy="0.25" layer="1"/>
 <smd name="3" x="-0.935" y="-0.65" dx="0.43" dy="0.25" layer="1"/>
 <smd name="8" x="0" y="-0.775" dx="0.66" dy="0.35" layer="1"/>
@@ -1066,6 +1066,12 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="-1.025" y="1.024"/>
 <vertex x="-1.025" y="0.124"/>
 <vertex x="-0.125" y="1.024"/>
+</polygon>
+<polygon width="0.127" layer="31">
+<vertex x="-0.254" y="0.6604"/>
+<vertex x="-0.254" y="-0.1016"/>
+<vertex x="0.254" y="-0.1016"/>
+<vertex x="0.254" y="0.6604"/>
 </polygon>
 </package>
 <package name="TI-TPS22919DCK" urn="urn:adsk.eagle:footprint:28686815/1" locally_modified="yes">
@@ -3848,7 +3854,6 @@ Connector</text>
 </devices>
 </deviceset>
 <deviceset name="JST-PH-2" prefix="J">
-<description>Mini USB Jack</description>
 <gates>
 <gate name="G$1" symbol="JST-PH-2" x="0" y="0"/>
 </gates>
