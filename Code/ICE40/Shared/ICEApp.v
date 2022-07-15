@@ -48,7 +48,6 @@ module ICEApp(
     input wire          ice_st_spi_cs_,
     inout wire[7:0]     ice_st_spi_d,
     output wire         ice_st_spi_d_ready,
-    output wire         ice_st_spi_d_ready_rev4bodge,
 `endif // ICEApp_STM_En
     
 `ifdef _ICEApp_SD_En
@@ -939,8 +938,6 @@ module ICEApp(
     // driving spi_clk (AFIFOChain's r_clk), so `r_thresh` is never asserted. `async_r_thresh`
     // is driven by AFIFOChain's `w_clk`, so it can toggle while `r_clk` is halted.
     assign ice_st_spi_d_ready = readoutfifo_async_r_thresh;
-    // Rev4 bodge
-    assign ice_st_spi_d_ready_rev4bodge = ice_st_spi_d_ready;
 `endif // ICEApp_STM_En
     
 endmodule

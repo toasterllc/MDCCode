@@ -2,16 +2,16 @@
 # -----------------------------------------------------------
 # Clk                                                    Freq
 # -----------------------------------------------------------
-# ICEApp.SDController.clk_slow                         156.20 
-# ICEApp.readoutfifo_prop_clk_$glb_clk                 137.36 *
-# ICEApp.readoutfifo_r_clk_$glb_clk                     99.71 
-# ICEApp.sd_clk_int                                    271.52 
+# ICEApp.SDController.clk_slow                         166.78 
+# ICEApp.readoutfifo_prop_clk_$glb_clk                 136.31 *
+# ICEApp.readoutfifo_r_clk_$glb_clk                    106.41 
+# ICEApp.sd_clk_int                                    365.23 
 
 ['--placer-heap-alpha',
- '0.07500000000000001',
+ '0.025',
  '--placer-heap-beta',
- '0.65',
+ '0.5',
  '--placer-heap-critexp',
- '9',
+ '6',
  '--placer-heap-timingweight',
- '26']
+ '21']

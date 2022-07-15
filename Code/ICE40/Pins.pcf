@@ -2,23 +2,20 @@ set_io ice_img_clk16mhz                 C11
 set_io ice_led[0]                       C9
 set_io ice_led[1]                       A10
 set_io ice_led[2]                       A11
-# set_io ice_led[3]                     B11     # Sacrificed for bodge `ice_st_spi_d_ready_rev4bodge`
-set_io ice_msp_spi_aux                  K3
+set_io ice_led[3]                       B11
 set_io ice_msp_spi_clk                  K2
-set_io ice_msp_spi_data                 K1
+set_io ice_msp_spi_data                 K3
 set_io ice_st_spi_clk                   L10
 set_io ice_st_spi_cs_                   K10
 set_io ice_st_spi_d[0]                  J9
-set_io ice_st_spi_d[1]                  K9
-set_io ice_st_spi_d[2]                  L7
-set_io ice_st_spi_d[3]                  K6
+set_io ice_st_spi_d[1]                  L7
+set_io ice_st_spi_d[2]                  K6
+set_io ice_st_spi_d[3]                  K7
 set_io ice_st_spi_d[4]                  J7
-set_io ice_st_spi_d[5]                  K7
-set_io ice_st_spi_d[6]                  H7
-set_io ice_st_spi_d[7]                  L8
+set_io ice_st_spi_d[5]                  L8
+set_io ice_st_spi_d[6]                  K9
+set_io ice_st_spi_d[7]                  J8
 set_io ice_st_spi_d_ready               L5
-set_io ice_st_spi_d_ready_rev4bodge     B11     # Bodge for Rev4
-set_io img_dclk                         F11
 set_io img_d[0]                         E8
 set_io img_d[1]                         D10
 set_io img_d[2]                         G11
@@ -31,6 +28,7 @@ set_io img_d[8]                         J10
 set_io img_d[9]                         J11
 set_io img_d[10]                        H11
 set_io img_d[11]                        H10
+set_io img_dclk                         F11
 set_io img_fv                           E11
 set_io img_lv                           E10
 set_io img_rst_                         D11
@@ -54,8 +52,6 @@ set_io ram_cas_                         D7
 set_io ram_cke                          D3
 set_io ram_clk                          E1
 set_io ram_cs_                          A3
-set_io ram_dqm[0]                       B6
-set_io ram_dqm[1]                       E2
 set_io ram_dq[0]                        A9
 set_io ram_dq[1]                        A8
 set_io ram_dq[2]                        B9
@@ -72,14 +68,17 @@ set_io ram_dq[12]                       G1
 set_io ram_dq[13]                       J2
 set_io ram_dq[14]                       H1
 set_io ram_dq[15]                       J1
+set_io ram_dqm[0]                       B6
+set_io ram_dqm[1]                       E2
 set_io ram_ras_                         B5
 set_io ram_we_                          A4
-set_io sd_clk                           K4
-set_io sd_cmd                           L3
-set_io sd_dat[0]                        L4
-set_io sd_dat[1]                        K5
-set_io sd_dat[2]                        L1
-set_io sd_dat[3]                        L2
+set_io sd_clk                           L3
+set_io sd_cmd                           K4
+set_io sd_dat[0]                        L2
+set_io sd_dat[1]                        L1
+set_io sd_dat[2]                        K5
+set_io sd_dat[3]                        L4
+
 
 
 
