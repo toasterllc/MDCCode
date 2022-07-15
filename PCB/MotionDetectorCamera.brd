@@ -162,6 +162,7 @@
 <wire x1="21.777959375" y1="6.719359375" x2="21.544284375" y2="6.955578125" width="0.0762" layer="25"/>
 <wire x1="16.677640625" y1="10.15344375" x2="16.718284375" y2="10.57" width="0.0762" layer="25"/>
 <wire x1="15.05458125" y1="11.58091875" x2="14.762484375" y2="11.177059375" width="0.0762" layer="26"/>
+<text x="1.3716" y="1.0414" size="0.762" layer="25" font="vector" ratio="10">MDC Rev 5</text>
 </plain>
 <libraries>
 <library name="EagleLibrary">
