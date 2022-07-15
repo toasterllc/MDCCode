@@ -1,9 +1,3 @@
-- Rev5 Board
-
-
-
-
-
 - Rev5
     
     - Cancel order for TPS62802YKAR / TPS63805YFFR if we no longer need it
