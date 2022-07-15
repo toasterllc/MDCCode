@@ -2450,6 +2450,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="U21" library="EagleLibrary" package="NEXPERIA-SOT363" value="NEXPERIA-74LVC1G98-OR-INV-INPUT" x="16.60511875" y="8.942903125" smashed="yes" rot="R180">
 <attribute name="MFG" value="Nexperia" x="16.60511875" y="8.942903125" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="17.2731375" y="11.395365625" size="0.762" layer="25" font="vector" rot="R180"/>
+<attribute name="PN" value="74LVC1G98GW,125" x="16.60511875" y="8.942903125" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="R20" library="EagleLibrary" package="0402" value="10k" x="16.6149375" y="7.3813875" smashed="yes">
 <attribute name="MFG" value="Yageo" x="16.6149375" y="7.3813875" size="1.778" layer="27" display="off"/>

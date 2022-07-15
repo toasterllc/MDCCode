@@ -4578,7 +4578,9 @@ Connector</text>
 <part name="U20" library="EagleLibrary" deviceset="WINBOND-W25Q40EW" device="" package3d_urn="urn:adsk.eagle:package:36180302/1">
 <attribute name="PN" value="W25Q40EWUXIE"/>
 </part>
-<part name="U21" library="EagleLibrary" deviceset="NEXPERIA-74LVC1G98-OR-INV-INPUT" device=""/>
+<part name="U21" library="EagleLibrary" deviceset="NEXPERIA-74LVC1G98-OR-INV-INPUT" device="">
+<attribute name="PN" value="74LVC1G98GW,125"/>
+</part>
 <part name="R20" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402JR-0710KL"/>
@@ -6527,6 +6529,7 @@ should be a high voltage during power up.</text>
 </instance>
 <instance part="U21" gate="G$1" x="58.42" y="-167.64" smashed="yes">
 <attribute name="NAME" x="68.58" y="-177.8" size="1.778" layer="95"/>
+<attribute name="PN" x="58.42" y="-167.64" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="R20" gate="G$1" x="53.34" y="-165.1" smashed="yes" rot="R90">
 <attribute name="NAME" x="51.308" y="-161.798" size="1.778" layer="95" rot="R180"/>
