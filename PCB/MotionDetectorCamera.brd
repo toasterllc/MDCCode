@@ -8,7 +8,7 @@
 </settings>
 <grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
+<layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
 <layer number="3" name="Route3" color="17" fill="1" visible="no" active="no"/>
 <layer number="4" name="Route4" color="18" fill="1" visible="no" active="no"/>
@@ -23,33 +23,33 @@
 <layer number="13" name="Route13" color="21" fill="1" visible="no" active="no"/>
 <layer number="14" name="Route14" color="22" fill="1" visible="no" active="no"/>
 <layer number="15" name="Power" color="42" fill="1" visible="no" active="yes"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="yes"/>
 <layer number="20" name="Dimension" color="24" fill="1" visible="yes" active="yes"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="yes"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="yes"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
-<layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
-<layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
-<layer number="33" name="tFinish" color="6" fill="3" visible="yes" active="yes"/>
-<layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
-<layer number="35" name="tGlue" color="7" fill="4" visible="yes" active="yes"/>
-<layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="yes"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="yes"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
+<layer number="32" name="bCream" color="7" fill="5" visible="yes" active="yes"/>
+<layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
+<layer number="34" name="bFinish" color="6" fill="6" visible="yes" active="yes"/>
+<layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
+<layer number="36" name="bGlue" color="7" fill="5" visible="yes" active="yes"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
-<layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
-<layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
+<layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
@@ -121,7 +121,7 @@
 <wire x1="23.70835625" y1="1.5174375" x2="23.96235625" y2="2.350559375" width="0.0762" layer="25"/>
 <wire x1="23.401015625" y1="1.540296875" x2="23.507696875" y2="2.6706" width="0.0762" layer="25"/>
 <wire x1="22.397715625" y1="1.596178125" x2="22.36215625" y2="2.62488125" width="0.0762" layer="25"/>
-<wire x1="16.426178125" y1="2.822996875" x2="16.52015625" y2="2.45469375" width="0.0762" layer="25"/>
+<wire x1="16.426178125" y1="2.822996875" x2="16.459196875" y2="2.42929375" width="0.0762" layer="25"/>
 <wire x1="23.9776" y1="6.384078125" x2="24.084278125" y2="6.676178125" width="0.0762" layer="25"/>
 <wire x1="24.89708125" y1="6.104678125" x2="25.527" y2="6.6736375" width="0.0762" layer="25"/>
 <wire x1="26.367740625" y1="5.93195625" x2="27.32531875" y2="6.666015625" width="0.0762" layer="25"/>
@@ -164,6 +164,7 @@
 <text x="1.3716" y="1.0414" size="0.762" layer="25" font="vector" ratio="10">MDC Rev 5</text>
 <wire x1="17.589496875" y1="7.3569" x2="17.95525625" y2="7.41531875" width="0.0762" layer="25"/>
 <wire x1="21.62958125" y1="1.511296875" x2="21.5838625" y2="2.717796875" width="0.0762" layer="25"/>
+<wire x1="32.771640625" y1="26.965496875" x2="31.46100625" y2="26.284775" width="0.0762" layer="26"/>
 </plain>
 <libraries>
 <library name="EagleLibrary">
@@ -1739,7 +1740,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="C11" library="EagleLibrary" package="0805" value="10u" x="29.74175625" y="26.161678125" smashed="yes" rot="MR0">
 <attribute name="MFG" value="Samsung" x="29.74175625" y="26.161678125" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="33.118296875" y="25.973659375" size="0.762" layer="26" font="vector" rot="MR0"/>
+<attribute name="NAME" x="33.64915625" y="27.035378125" size="0.762" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="CL21A106KOQNNNE" x="29.74175625" y="26.161678125" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="C12" library="EagleLibrary" package="0805" value="10u" x="27.768175" y="24.41161875" smashed="yes" rot="MR0">
@@ -2211,7 +2212,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="U12" library="EagleLibrary" package="TI-TPS22919DCK" value="TI-TPS22919DCK" x="12.068240625" y="11.9141625" smashed="yes" rot="R90">
 <attribute name="MFG" value="Texas Instruments" x="12.068240625" y="11.9141625" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="NAME" x="10.872709375" y="11.30860625" size="1.016" layer="25" font="vector" rot="R90"/>
+<attribute name="NAME" x="13.28316875" y="14.691884375" size="1.016" layer="25" font="vector" rot="R180"/>
 <attribute name="PN" value="TPS22919DCK" x="12.068240625" y="11.9141625" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="C19" library="EagleLibrary" package="0402" value="2.2u" x="11.580625" y="9.83854375" smashed="yes">
@@ -2301,7 +2302,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </element>
 <element name="Q1" library="EagleLibrary" package="NEXPERIA-SOT1220" value="PMOS-NEXPERIA-SOT1220" x="38.180521875" y="30.7229375" smashed="yes" rot="R270">
 <attribute name="MFG" value="Nexperia" x="38.180521875" y="30.7229375" size="1.778" layer="27" rot="R270" display="off"/>
-<attribute name="NAME" x="35.259178125" y="30.85705625" size="0.762" layer="25" font="vector"/>
+<attribute name="NAME" x="35.995778125" y="30.75545625" size="0.762" layer="25" font="vector"/>
 <attribute name="PN" value="PMPB10UPX" x="38.180521875" y="30.7229375" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="J3" library="EagleLibrary" package="JUMPER-SOLDER" value="JUMPER-SOLDER" x="39.3004625" y="29.041278125" smashed="yes">
@@ -2559,7 +2560,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="GT-USB-7010ASV" x="43.996759375" y="5.25348125" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="R33" library="EagleLibrary" package="0402" value="5.1k" x="36.8706375" y="2.7966" smashed="yes" rot="R270">
-<attribute name="NAME" x="36.649396875" y="4.5285" size="0.508" layer="25" font="vector" rot="R270"/>
+<attribute name="NAME" x="37.38345625" y="3.161978125" size="0.508" layer="25" font="vector" rot="R270"/>
 </element>
 <element name="R34" library="EagleLibrary" package="0402" value="5.1k" x="38.892484375" y="3.010959375" smashed="yes" rot="R270">
 <attribute name="NAME" x="39.412925" y="3.904659375" size="0.508" layer="25" font="vector" rot="R270"/>
