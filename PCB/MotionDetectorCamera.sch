@@ -4372,6 +4372,8 @@ Connector</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM1555C1H220JA01D"/>
 </part>
 <part name="U9" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
 <part name="U10" library="EagleLibrary" deviceset="TI-TPS22919DCK" device=""/>
@@ -4385,8 +4387,13 @@ Connector</text>
 <pinmap gate="G$1" pin="2" pinorder="2"/>
 </pinmapping>
 </spice>
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM1555C1H220JA01D"/>
 </part>
-<part name="C23" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="22p"/>
+<part name="C23" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="22p">
+<attribute name="MFG" value="Murata"/>
+<attribute name="PN" value="GRM1555C1H220JA01D"/>
+</part>
 <part name="U18" library="EagleLibrary" deviceset="PANASONIC-EKMB110711X" device="">
 <attribute name="PN" value="EKMB1107112"/>
 </part>
@@ -4530,7 +4537,10 @@ Connector</text>
 <part name="U4" library="EagleLibrary" deviceset="MICROCHIP-MCP7383X" device="">
 <attribute name="PN" value="MCP73831T-2ACI/OT"/>
 </part>
-<part name="R5" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="2.7k"/>
+<part name="R5" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="2.7k">
+<attribute name="MFG" value="Bourns"/>
+<attribute name="PN" value="CR0402-JW-272GLF"/>
+</part>
 <part name="Q3" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
 </part>
@@ -4545,7 +4555,10 @@ Connector</text>
 <attribute name="MFG" value="Stackpole"/>
 <attribute name="PN" value="RMCF0402JT100K"/>
 </part>
-<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="300k"/>
+<part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="300k">
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X3003FTL"/>
+</part>
 <part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
 <attribute name="MFG" value="Stackpole"/>
 <attribute name="PN" value="RMCF0402JT100K"/>
@@ -4642,7 +4655,10 @@ Connector</text>
 <part name="Q4" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
 </part>
-<part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="300k"/>
+<part name="R8" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="300k">
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X3003FTL"/>
+</part>
 <part name="R6" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
 <attribute name="MFG" value="Stackpole"/>
 <attribute name="PN" value="RMCF0402JT100K"/>
@@ -4657,8 +4673,14 @@ Connector</text>
 <attribute name="PN2" value="HDGC2001WR-S-2P"/>
 </part>
 <part name="J11" library="EagleLibrary" deviceset="USB-C-JACK" device=""/>
-<part name="R33" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="5.1k"/>
-<part name="R34" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="5.1k"/>
+<part name="R33" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="5.1k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="AC0402FR-075K1L"/>
+</part>
+<part name="R34" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="5.1k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="AC0402FR-075K1L"/>
+</part>
 <part name="H1" library="EagleLibrary" deviceset="HEADER-2X2" device=""/>
 <part name="J4" library="EagleLibrary" deviceset="JUMPER" device="-SOLDER" value="JUMPER-SOLDER"/>
 </parts>
@@ -4923,6 +4945,8 @@ Requirements:
 <instance part="R5" gate="G$1" x="157.48" y="401.32" smashed="yes" rot="R90">
 <attribute name="NAME" x="155.448" y="401.32" size="1.778" layer="95" align="top-right"/>
 <attribute name="VALUE" x="155.448" y="398.78" size="1.778" layer="96" align="top-right"/>
+<attribute name="MFG" x="157.48" y="401.32" size="1.778" layer="96" rot="R90" display="off"/>
+<attribute name="PN" x="157.48" y="401.32" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="Q3" gate="G$1" x="220.98" y="355.6" smashed="yes" rot="R90">
 <attribute name="NAME" x="219.964" y="364.744" size="1.778" layer="95" align="bottom-right"/>
@@ -4947,6 +4971,8 @@ Requirements:
 <instance part="R2" gate="G$1" x="200.66" y="452.12" smashed="yes" rot="MR180">
 <attribute name="NAME" x="203.962" y="456.946" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="203.962" y="454.406" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MFG" x="200.66" y="452.12" size="1.778" layer="96" rot="MR180" display="off"/>
+<attribute name="PN" x="200.66" y="452.12" size="1.778" layer="96" rot="MR180" display="off"/>
 </instance>
 <instance part="R3" gate="G$1" x="210.82" y="444.5" smashed="yes" rot="MR270">
 <attribute name="NAME" x="213.106" y="446.278" size="1.778" layer="95" rot="MR180"/>
@@ -5055,6 +5081,8 @@ Requirements:
 <instance part="R8" gate="G$1" x="299.72" y="347.98" smashed="yes" rot="MR180">
 <attribute name="NAME" x="303.022" y="352.806" size="1.778" layer="95" rot="MR0"/>
 <attribute name="VALUE" x="303.022" y="350.266" size="1.778" layer="96" rot="MR0"/>
+<attribute name="MFG" x="299.72" y="347.98" size="1.778" layer="96" rot="MR180" display="off"/>
+<attribute name="PN" x="299.72" y="347.98" size="1.778" layer="96" rot="MR180" display="off"/>
 </instance>
 <instance part="R6" gate="G$1" x="287.02" y="365.76" smashed="yes" rot="MR270">
 <attribute name="NAME" x="289.306" y="367.538" size="1.778" layer="95" rot="MR180"/>
@@ -5921,14 +5949,20 @@ away with a smaller capacitor.</text>
 <instance part="C26" gate="G$1" x="-71.12" y="55.88" smashed="yes">
 <attribute name="NAME" x="-74.676" y="56.261" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="-74.676" y="53.721" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="-71.12" y="55.88" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="-71.12" y="55.88" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C22" gate="G$1" x="114.3" y="93.98" smashed="yes">
 <attribute name="NAME" x="111.506" y="93.599" size="1.778" layer="95" align="bottom-right"/>
 <attribute name="VALUE" x="111.506" y="91.059" size="1.778" layer="96" align="bottom-right"/>
+<attribute name="MFG" x="114.3" y="93.98" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="114.3" y="93.98" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C23" gate="G$1" x="132.08" y="93.98" smashed="yes">
 <attribute name="NAME" x="134.874" y="93.599" size="1.778" layer="95"/>
 <attribute name="VALUE" x="134.874" y="91.059" size="1.778" layer="96"/>
+<attribute name="MFG" x="132.08" y="93.98" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="132.08" y="93.98" size="1.778" layer="96" display="off"/>
 </instance>
 <instance part="C25" gate="G$1" x="-58.42" y="83.82" smashed="yes">
 <attribute name="MFG" x="-35.56" y="38.1" size="1.778" layer="96" display="off"/>
@@ -9575,10 +9609,14 @@ Ferrite bead specs:
 <instance part="R33" gate="G$1" x="15.24" y="-27.94" smashed="yes" rot="MR270">
 <attribute name="NAME" x="17.526" y="-26.162" size="1.778" layer="95" rot="MR180"/>
 <attribute name="VALUE" x="17.526" y="-28.702" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MFG" x="15.24" y="-27.94" size="1.778" layer="96" rot="MR270" display="off"/>
+<attribute name="PN" x="15.24" y="-27.94" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
 <instance part="R34" gate="G$1" x="5.08" y="-30.48" smashed="yes" rot="MR270">
 <attribute name="NAME" x="7.366" y="-28.702" size="1.778" layer="95" rot="MR180"/>
 <attribute name="VALUE" x="7.366" y="-31.242" size="1.778" layer="96" rot="MR180"/>
+<attribute name="MFG" x="5.08" y="-30.48" size="1.778" layer="96" rot="MR270" display="off"/>
+<attribute name="PN" x="5.08" y="-30.48" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
 </instances>
 <busses>

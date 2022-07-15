@@ -1,5 +1,11 @@
 - Rev5
     
+    - Make sure all capacitors / resistors have part numbers
+    
+    - Order parts
+    
+    - Order stencils
+    
     - Cancel order for TPS62802YKAR / TPS63805YFFR if we no longer need it
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
