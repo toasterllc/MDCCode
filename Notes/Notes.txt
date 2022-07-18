@@ -2,8 +2,6 @@
     
     - Make sure all capacitors / resistors have part numbers
     
-    - Order parts
-    
     - Order stencils
     
     - Cancel order for TPS62802YKAR / TPS63805YFFR if we no longer need it
@@ -24,6 +22,8 @@
 
 
 - Rev5 Done
+    
+    √ Order parts
     
     √ Re-synthesize with new ICE40 pin locations to make sure everything works
     
