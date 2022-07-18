@@ -4107,8 +4107,8 @@ Connector</text>
 <attribute name="PN" value="CL05B103KB5NNNC"/>
 </part>
 <part name="R17" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100">
-<attribute name="MFG" value="Stackpole"/>
-<attribute name="PN" value="RMCF0402JT100R"/>
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X1000FQL"/>
 </part>
 <part name="C47" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="Samsung"/>
@@ -4119,8 +4119,8 @@ Connector</text>
 <attribute name="PN" value="GRM155R61H104KE19D"/>
 </part>
 <part name="R16" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100">
-<attribute name="MFG" value="Stackpole"/>
-<attribute name="PN" value="RMCF0402JT100R"/>
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X1000FQL"/>
 </part>
 <part name="C44" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="Samsung"/>
@@ -4505,8 +4505,8 @@ Connector</text>
 <attribute name="PN" value="TMK105CBJ225KV-F"/>
 </part>
 <part name="R4" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100">
-<attribute name="MFG" value="Stackpole"/>
-<attribute name="PN" value="RMCF0402JT100R"/>
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X1000FQL"/>
 </part>
 <part name="U22" library="EagleLibrary" deviceset="NEXPERIA-74LVC1G98-BUFFER" device="">
 <attribute name="PN" value="74LVC1G98GW,125"/>
@@ -4548,26 +4548,26 @@ Connector</text>
 <attribute name="PN" value="PMPB10UPX"/>
 </part>
 <part name="R9" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
-<attribute name="MFG" value="Stackpole"/>
-<attribute name="PN" value="RMCF0402JT100K"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-07100KL"/>
 </part>
 <part name="R7" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
-<attribute name="MFG" value="Stackpole"/>
-<attribute name="PN" value="RMCF0402JT100K"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-07100KL"/>
 </part>
 <part name="R2" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="300k">
 <attribute name="MFG" value="Walsin"/>
 <attribute name="PN" value="WR04X3003FTL"/>
 </part>
 <part name="R3" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
-<attribute name="MFG" value="Stackpole"/>
-<attribute name="PN" value="RMCF0402JT100K"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-07100KL"/>
 </part>
 <part name="J1" library="EagleLibrary" deviceset="JUMPER" device="-SOLDER" value="JUMPER-SOLDER"/>
 <part name="J2" library="EagleLibrary" deviceset="JUMPER" device="-SOLDER" value="JUMPER-SOLDER"/>
 <part name="R1" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
-<attribute name="MFG" value="Stackpole"/>
-<attribute name="PN" value="RMCF0402JT100K"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-07100KL"/>
 </part>
 <part name="C14" library="EagleLibrary" deviceset="CAPACITOR" device="0805" value="10u">
 <attribute name="MFG" value="Samsung"/>
@@ -4649,8 +4649,8 @@ Connector</text>
 <attribute name="PN" value="CL21A106KOQNNNE"/>
 </part>
 <part name="R10" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
-<attribute name="MFG" value="Stackpole"/>
-<attribute name="PN" value="RMCF0402JT100K"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-07100KL"/>
 </part>
 <part name="Q4" library="EagleLibrary" deviceset="PMOS" device="-NEXPERIA-SOT1220">
 <attribute name="PN" value="PMPB10UPX"/>
@@ -4660,8 +4660,8 @@ Connector</text>
 <attribute name="PN" value="WR04X3003FTL"/>
 </part>
 <part name="R6" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
-<attribute name="MFG" value="Stackpole"/>
-<attribute name="PN" value="RMCF0402JT100K"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-07100KL"/>
 </part>
 <part name="U5" library="EagleLibrary" deviceset="EATON-STN101" device="">
 <attribute name="PN" value="STN101050B101"/>
