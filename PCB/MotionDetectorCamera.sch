@@ -1276,10 +1276,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="-0.405" y1="-0.405" x2="-0.405" y2="0.405" width="0.05" layer="21"/>
 <wire x1="-0.405" y1="0.405" x2="0.405" y2="0.405" width="0.05" layer="21"/>
 <wire x1="0.405" y1="0.405" x2="0.405" y2="-0.405" width="0.05" layer="21"/>
-<smd name="1" x="-0.175" y="0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no"/>
-<smd name="4" x="0.175" y="0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no"/>
-<smd name="2" x="-0.175" y="-0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no"/>
-<smd name="3" x="0.175" y="-0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no"/>
+<smd name="1" x="-0.175" y="0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="4" x="0.175" y="0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="2" x="-0.175" y="-0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="3" x="0.175" y="-0.175" dx="0.15" dy="0.15" layer="1" roundness="100" thermals="no" cream="no"/>
 <text x="-0.37338125" y="0.5135" size="0.508" layer="25" font="vector">&gt;NAME</text>
 <polygon width="0.05" layer="39">
 <vertex x="0.405" y="-0.405"/>
