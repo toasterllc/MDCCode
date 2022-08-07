@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <QuartzCore/QuartzCore.h>
 #import <Metal/Metal.h>
+#import <map>
 #import <unordered_map>
 #import <queue>
 #import <string>
@@ -27,6 +28,12 @@ private:
     
     template <typename... T_Args>
     struct _FragmentShader {
+        const std::string_view& fn;
+        std::tuple<T_Args...> args;
+    };
+    
+    template <typename... T_Args>
+    struct _ComputeKernel {
         const std::string_view& fn;
         std::tuple<T_Args...> args;
     };
@@ -151,6 +158,14 @@ public:
         };
     }
     
+    template <typename... T_Args>
+    _ComputeKernel<T_Args...> ComputeKernel(const std::string_view& fn, T_Args&&... args) {
+        return _ComputeKernel<T_Args...>{
+            .fn = fn,
+            .args = std::forward_as_tuple(args...),
+        };
+    }
+    
     // Render pass to a target texture
     template <typename... T_FragArgs>
     void render(
@@ -184,6 +199,23 @@ public:
         const _VertexShader<T_VertArgs...>& vert,
         const _FragmentShader<T_FragArgs...>& frag
     ) {
+        render(txt, blendType, MTLPrimitiveTypeTriangle, MDCTools::MetalUtil::SquareVertIdxCount, 1,
+            vert,
+            frag
+        );
+    }
+    
+    // Render pass to a target texture
+    template <typename... T_VertArgs, typename... T_FragArgs>
+    void render(
+        id<MTLTexture> txt,
+        BlendType blendType,
+        MTLPrimitiveType primitiveType,
+        size_t vertexCount,
+        size_t instanceCount,
+        const _VertexShader<T_VertArgs...>& vert,
+        const _FragmentShader<T_FragArgs...>& frag
+    ) {
         assert(txt);
         
         MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor new];
@@ -193,7 +225,9 @@ public:
         [[desc colorAttachments][0] setStoreAction:MTLStoreActionStore];
         id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:desc];
         
-        [enc setRenderPipelineState:_pipelineState(vert.fn, frag.fn, [txt pixelFormat], blendType)];
+//        [enc setTriangleFillMode:MTLTriangleFillModeLines];
+        
+        [enc setRenderPipelineState:_renderPipelineState(vert.fn, frag.fn, [txt pixelFormat], blendType)];
         [enc setFrontFacingWinding:MTLWindingCounterClockwise];
         [enc setCullMode:MTLCullModeNone];
         
@@ -205,8 +239,10 @@ public:
             _SetBufferArgs(_ShaderType::Fragment, enc, 0, args...);
         }, frag.args);
         
-        [enc drawPrimitives:MTLPrimitiveTypeTriangle
-            vertexStart:0 vertexCount:MDCTools::MetalUtil::SquareVertIdxCount];
+        [enc drawPrimitives:primitiveType
+            vertexStart:0
+            vertexCount:vertexCount
+            instanceCount:instanceCount];
         
         [enc endEncoding];
     }
@@ -259,7 +295,7 @@ public:
         [[desc colorAttachments][0] setStoreAction:MTLStoreActionDontCare];
         id<MTLRenderCommandEncoder> enc = [cmdBuf() renderCommandEncoderWithDescriptor:desc];
         
-        [enc setRenderPipelineState:_pipelineState(vert.fn, frag.fn, MTLPixelFormatInvalid, blendType)];
+        [enc setRenderPipelineState:_renderPipelineState(vert.fn, frag.fn, MTLPixelFormatInvalid, blendType)];
         [enc setFrontFacingWinding:MTLWindingCounterClockwise];
         [enc setCullMode:MTLCullModeNone];
         
@@ -274,6 +310,30 @@ public:
         [enc drawPrimitives:MTLPrimitiveTypeTriangle
             vertexStart:0 vertexCount:MDCTools::MetalUtil::SquareVertIdxCount];
         
+        [enc endEncoding];
+    }
+    
+    // Compute pass with compute kernel
+    template <typename... T_Args>
+    void compute(
+        size_t width,
+        size_t height,
+        const _ComputeKernel<T_Args...>& kernel
+    ) {
+        id<MTLComputeCommandEncoder> enc = [cmdBuf() computeCommandEncoder];
+        id<MTLComputePipelineState> ps = _computePipelineState(kernel.fn);
+        [enc setComputePipelineState:ps];
+        
+        std::apply([=] (const auto&... args) {
+            _SetBufferArgs(enc, 0, args...);
+        }, kernel.args);
+        
+        const NSUInteger w = [ps threadExecutionWidth];
+        const NSUInteger h = [ps maxTotalThreadsPerThreadgroup] / w;
+        const MTLSize threadgroupSize = {w, h, 1};
+        const MTLSize threadgroupCount = {((NSUInteger)width+w-1)/w, ((NSUInteger)height+h-1)/h, 1};
+        
+        [enc dispatchThreadgroups:threadgroupCount threadsPerThreadgroup:threadgroupSize];
         [enc endEncoding];
     }
     
@@ -403,6 +463,15 @@ public:
         return textureCreate([txt pixelFormat], [txt width], [txt height], usage);
     }
     
+    Buf bufferCreate(const void* data, size_t len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
+        Buf buf = bufferCreate(len, opts);
+        memcpy([buf contents], data, len);
+        if (opts & MTLResourceStorageModeManaged) {
+            [buf didModifyRange:{0,len}];
+        }
+        return buf;
+    }
+    
     Buf bufferCreate(size_t len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
         // Return an existing buffer if its length is between len and 2*len,
         // and its options match `opts`
@@ -527,7 +596,9 @@ public:
     void bufferClear(id<MTLBuffer> buf) {
         const size_t len = [buf length];
         memset([buf contents], 0, len);
-        [buf didModifyRange:{0,len}];
+        if ([buf resourceOptions] & MTLResourceStorageModeManaged) {
+            [buf didModifyRange:{0,len}];
+        }
     }
     
     // Create a CGImage from a texture
@@ -713,6 +784,58 @@ private:
         _SetTextureArgs(type, enc, idx+1, std::forward<Ts>(ts)...);
     }
     
+    
+    
+    
+    
+    
+    
+    
+    void _SetBufferArgs(id<MTLComputeCommandEncoder> enc, size_t idx) {}
+    
+    template <typename T, typename... Ts>
+    void _SetBufferArgs(id<MTLComputeCommandEncoder> enc, size_t idx, T& t, Ts&&... ts) {
+        using U = typename std::remove_cv<T>::type;
+        if constexpr (!std::is_same<U,Txt>::value && !std::is_same<U,id<MTLTexture>>::value) {
+            if constexpr (std::is_same<U,Buf>::value) {
+                [enc setBuffer:(id<MTLBuffer>)t offset:0 atIndex:idx];
+            } else if constexpr (std::is_same<U,id<MTLBuffer>>::value) {
+                [enc setBuffer:t offset:0 atIndex:idx];
+            } else {
+                [enc setBytes:&t length:sizeof(t) atIndex:idx];
+            }
+            _SetBufferArgs(enc, idx+1, std::forward<Ts>(ts)...);
+        } else {
+            // Start of texture arguments
+            _SetTextureArgs(enc, 0, t, std::forward<Ts>(ts)...);
+        }
+    }
+    
+    void _SetTextureArgs(id<MTLComputeCommandEncoder> enc, size_t idx) {}
+    
+    template <typename T, typename... Ts>
+    void _SetTextureArgs(id<MTLComputeCommandEncoder> enc, size_t idx, T& t, Ts&&... ts) {
+        using U = typename std::remove_cv<T>::type;
+        if constexpr (std::is_same<U,Txt>::value) {
+            [enc setTexture:(id<MTLTexture>)t atIndex:idx];
+        } else if constexpr (std::is_same<U,id<MTLTexture>>::value) {
+            [enc setTexture:t atIndex:idx];
+        } else {
+            static_assert(_AlwaysFalse<U>);
+        }
+        
+        _SetTextureArgs(enc, idx+1, std::forward<Ts>(ts)...);
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     static id _GrayColorSpace() {
         static CGColorSpaceRef cs = CGColorSpaceCreateDeviceGray();
         return (__bridge id)cs;
@@ -731,10 +854,10 @@ private:
         _bufs.push_back(buf);
     }
     
-    id<MTLRenderPipelineState> _pipelineState(const std::string_view& vertName, const std::string_view& fragName, MTLPixelFormat fmt, BlendType blendType) {
-        PipelineStateKey key(vertName, fragName, fmt, blendType);
-        auto find = _pipelineStates.find(key);
-        if (find != _pipelineStates.end()) return find->second;
+    id<MTLRenderPipelineState> _renderPipelineState(const std::string_view& vertName, const std::string_view& fragName, MTLPixelFormat fmt, BlendType blendType) {
+        RenderPipelineStateKey key(vertName, fragName, fmt, blendType);
+        auto find = _renderPipelineStates.find(key);
+        if (find != _renderPipelineStates.end()) return find->second;
         
         id<MTLFunction> vertShader = [_lib newFunctionWithName:@(vertName.data())];
         assert(vertShader);
@@ -759,30 +882,52 @@ private:
         
         id<MTLRenderPipelineState> ps = [dev newRenderPipelineStateWithDescriptor:desc error:nil];
         Assert(ps, return nil);
-        _pipelineStates.insert(find, {key, ps});
+        _renderPipelineStates.insert(find, {key, ps});
         return ps;
     }
     
-    class PipelineStateKey {
+    id<MTLComputePipelineState> _computePipelineState(const std::string_view& fnName) {
+        auto find = _computePipelineStates.find(fnName);
+        if (find != _computePipelineStates.end()) return find->second;
+        
+        id<MTLFunction> fn = [_lib newFunctionWithName:@(fnName.data())];
+        assert(fn);
+        
+        id<MTLComputePipelineState> ps = [dev newComputePipelineStateWithFunction:fn error:nil];
+        Assert(ps, return nil);
+        
+        _computePipelineStates.insert(find, {std::string(fnName), ps});
+        return ps;
+    }
+    
+    class RenderPipelineStateKey {
     public:
-        PipelineStateKey(const std::string_view& vertName, const std::string_view& fragName, MTLPixelFormat fmt, BlendType blendType) :
+        RenderPipelineStateKey(const std::string_view& vertName, const std::string_view& fragName, MTLPixelFormat fmt, BlendType blendType) :
         _vertName(vertName), _fragName(fragName), _fmt(fmt), _blendType(blendType) {}
         
-        bool operator==(const PipelineStateKey& x) const {
-            return
-                _vertName==x._vertName      &&
-                _fragName==x._fragName      &&
-                _fmt==x._fmt                &&
-                _blendType==x._blendType    ;
+        bool operator==(const RenderPipelineStateKey& x) const {
+            if (_vertName != x._vertName)   return false;
+            if (_fragName != x._fragName)   return false;
+            if (_fmt != x._fmt)             return false;
+            if (_blendType != x._blendType) return false;
+            return true;
         }
         
-        size_t hash() const {
-            return Toastbox::HashInts(std::hash<std::string>{}(_vertName), std::hash<std::string>{}(_fragName), _fmt, _blendType);
+        bool operator<(const RenderPipelineStateKey& x) const {
+            if (_vertName != x._vertName)   return _vertName < x._vertName;
+            if (_fragName != x._fragName)   return _fragName < x._fragName;
+            if (_fmt != x._fmt)             return _fmt < x._fmt;
+            if (_blendType != x._blendType) return _blendType < x._blendType;
+            return false;
         }
         
-        struct Hash {
-            size_t operator()(const PipelineStateKey& x) const { return x.hash(); }
-        };
+//        size_t hash() const {
+//            return Toastbox::HashInts(std::hash<std::string>{}(_vertName), std::hash<std::string>{}(_fragName), _fmt, _blendType);
+//        }
+//        
+//        struct Hash {
+//            size_t operator()(const RenderPipelineStateKey& x) const { return x.hash(); }
+//        };
     
     private:
         std::string _vertName;
@@ -800,20 +945,28 @@ private:
         _fmt(fmt), _width(width), _height(height), _usage(usage) {}
         
         bool operator==(const TxtKey& x) const {
-            return
-                _fmt==x._fmt        &&
-                _width==x._width    &&
-                _height==x._height  &&
-                _usage==x._usage    ;
+            if (_fmt != x._fmt)         return false;
+            if (_width != x._width)     return false;
+            if (_height != x._height)   return false;
+            if (_usage != x._usage)     return false;
+            return true;
         }
         
-        size_t hash() const {
-            return Toastbox::HashInts(_fmt, _width, _height, _usage);
+        bool operator<(const TxtKey& x) const {
+            if (_fmt != x._fmt)         return _fmt < x._fmt;
+            if (_width != x._width)     return _width < x._width;
+            if (_height != x._height)   return _height < x._height;
+            if (_usage != x._usage)     return _usage < x._usage;
+            return false;
         }
         
-        struct Hash {
-            size_t operator()(const TxtKey& x) const { return x.hash(); }
-        };
+//        size_t hash() const {
+//            return Toastbox::HashInts(_fmt, _width, _height, _usage);
+//        }
+//        
+//        struct Hash {
+//            size_t operator()(const TxtKey& x) const { return x.hash(); }
+//        };
     
     private:
         MTLPixelFormat _fmt = MTLPixelFormatInvalid;
@@ -825,8 +978,9 @@ private:
     using TxtQueue = std::queue<id<MTLTexture>>;
     id <MTLLibrary> _lib = nil;
     id <MTLCommandQueue> _commandQueue = nil;
-    std::unordered_map<PipelineStateKey,id<MTLRenderPipelineState>,PipelineStateKey::Hash> _pipelineStates;
-    std::unordered_map<TxtKey,TxtQueue,TxtKey::Hash> _txts;
+    std::map<RenderPipelineStateKey,id<MTLRenderPipelineState>> _renderPipelineStates;
+    std::map<std::string,id<MTLComputePipelineState>,std::less<>> _computePipelineStates;
+    std::map<TxtKey,TxtQueue> _txts;
     std::list<id<MTLBuffer>> _bufs;
     id<MTLCommandBuffer> _cmdBuf = nil;
     
@@ -838,4 +992,4 @@ private:
 #undef _ShaderNamespace
 }; // class Renderer
 
-}; // namespace MDCTools
+} // namespace MDCTools
