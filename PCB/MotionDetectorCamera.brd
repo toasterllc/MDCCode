@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
+<grid distance="0.1" unitdist="mm" unit="mm" style="lines" multiple="1" display="no" altdistance="0.001" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
@@ -2457,7 +2457,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="R11" library="EagleLibrary" package="0402" value="86.6k" x="5.83421875" y="28.6339" smashed="yes" rot="MR270">
 <attribute name="MFG" value="Yageo" x="5.83421875" y="28.6339" size="1.778" layer="28" rot="MR270" display="off"/>
 <attribute name="NAME" x="6.3247" y="27.5616375" size="0.508" layer="26" font="vector" rot="MR90"/>
-<attribute name="PN" value="AC0402FR-073KL" x="5.83421875" y="28.6339" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="PN" value="RC0402FR-0786K6L" x="5.83421875" y="28.6339" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="U20" library="EagleLibrary" package="WINBOND-W25Q40EWUXIE" package3d_urn="urn:adsk.eagle:package:36180302/1" value="WINBOND-W25Q40EW" x="20.38118125" y="8.756165625" smashed="yes">
 <attribute name="MFG" value="Winbond" x="20.38118125" y="8.756165625" size="1.778" layer="27" display="off"/>

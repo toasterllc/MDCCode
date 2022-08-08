@@ -4591,7 +4591,7 @@ Connector</text>
 <part name="J8" library="EagleLibrary" deviceset="JUMPER" device="-SOLDER"/>
 <part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="86.6k">
 <attribute name="MFG" value="Yageo"/>
-<attribute name="PN" value="AC0402FR-073KL"/>
+<attribute name="PN" value="RC0402FR-0786K6L"/>
 </part>
 <part name="U20" library="EagleLibrary" deviceset="WINBOND-W25Q40EW" device="" package3d_urn="urn:adsk.eagle:package:36180302/1">
 <attribute name="PN" value="W25Q40EWUXIE"/>
