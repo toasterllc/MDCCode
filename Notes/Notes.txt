@@ -1,10 +1,24 @@
 - Rev6
+    - Why is one of the ICE40 LEDs off?
+        - LED is bad
+    
+    - U8: picks the wrong voltage (2.9V instead of the correct 2.8V) when starting up cold after being
+      off for a long time. When starting warm, it picks the right voltage. It seems this is because of some
+      residual voltage in the VDD_B capacitors, because discharing them before plugging the device in causes the
+      cold behavior.
+    
     - U3: needs to be powered by VDD_A, not VDD_A_3V3, because the voltage on Q1's Vgate needs to reach its
       Vsource when Q1 is supposed to be off. But if U3 is powered by VDD_A_3V3, the max voltage that U3 can
       output is 3.3V, which is less than VDD_A. As currently implemented, Q1 can never be fully turned off.
+    
+    - Consider adding a pull-down to VDD_B_EN to ensure the input isn't floating when MSP430 isn't powered
+      (eg when it crashes and restarts, or when it hasn't been programmed)
+    
     - Fix: USB C connector mount point collides with lens holder plastic (see lens holder's keepout region)
+    
     - We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
       card sticks out the side of the board
+    
     - We should be able to make the board smaller by removing the footprint for the motion sensor, and just
       using through-hole wires to connect to it. The motion sensor will likely need to be raised up in the
       final product, since the lens is longer than the motion sensor, therefore we'll need wires to connect
