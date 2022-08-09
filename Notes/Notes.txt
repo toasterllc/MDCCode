@@ -1,4 +1,7 @@
 - Rev6
+    - U3: needs to be powered by VDD_A, not VDD_A_3V3, because the voltage on Q1's Vgate needs to reach its
+      Vsource when Q1 is supposed to be off. But if U3 is powered by VDD_A_3V3, the max voltage that U3 can
+      output is 3.3V, which is less than VDD_A. As currently implemented, Q1 can never be fully turned off.
     - Fix: USB C connector mount point collides with lens holder plastic (see lens holder's keepout region)
     - We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
       card sticks out the side of the board
