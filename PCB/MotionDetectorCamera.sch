@@ -7054,11 +7054,6 @@ should be a high voltage during power up.</text>
 </net>
 <net name="ICE_ST_SPI_D1" class="0">
 <segment>
-<pinref part="U20" gate="G$1" pin="DI"/>
-<wire x1="104.14" y1="-154.94" x2="101.6" y2="-154.94" width="0.1524" layer="91"/>
-<label x="101.6" y="-154.94" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
 <wire x1="152.4" y1="53.34" x2="149.86" y2="53.34" width="0.1524" layer="91"/>
 <label x="151.892" y="53.34" size="1.778" layer="95"/>
 <pinref part="U19" gate="C" pin="L7"/>
@@ -7558,6 +7553,11 @@ should be a high voltage during power up.</text>
 <wire x1="81.28" y1="-83.82" x2="86.36" y2="-83.82" width="0.1524" layer="91"/>
 <label x="80.772" y="-83.82" size="1.778" layer="95" rot="MR0"/>
 <pinref part="U19" gate="E" pin="SPI_SO_K9"/>
+</segment>
+<segment>
+<pinref part="U20" gate="G$1" pin="DI"/>
+<wire x1="104.14" y1="-154.94" x2="101.6" y2="-154.94" width="0.1524" layer="91"/>
+<label x="101.6" y="-154.94" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="SD_DAT2" class="0">
