@@ -260,8 +260,8 @@ static void _ICEError(uint16_t line) {
 
 // MARK: - MSP430
 
-using _MSPTest = GPIO<GPIOPortB, GPIO_PIN_1>;
-using _MSPRst_ = GPIO<GPIOPortB, GPIO_PIN_0>;
+using _MSPTest = GPIO<GPIOPortI, GPIO_PIN_8>;
+using _MSPRst_ = GPIO<GPIOPortF, GPIO_PIN_0>;
 static MSP430JTAG<_MSPTest, _MSPRst_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
@@ -948,6 +948,7 @@ int main() {
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOE_CLK_ENABLE();
+    __HAL_RCC_GPIOI_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
     
     // Init MSP
