@@ -58,8 +58,8 @@ using _System = System<
 constexpr auto& _USB = _System::USB;
 using _Scheduler = _System::Scheduler;
 
-using _ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
-using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
+using _ICE_CRST_ = GPIO<GPIOPortF, GPIO_PIN_11>;
+using _ICE_CDONE = GPIO<GPIOPortB, GPIO_PIN_1>;
 
 using _ICE_ST_SPI_CLK       = QSPI::Clk;
 using _ICE_ST_SPI_CS_       = QSPI::CS;
@@ -509,11 +509,11 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
-    // Put ICE40 into configuration mode
-    _ICE_ST_SPI_CLK::Write(1);
-    
     // Disable flash
     _ICE_ST_FLASH_EN::Write(0);
+    
+    // Put ICE40 into configuration mode
+    _ICE_ST_SPI_CLK::Write(1);
     
     _ICE_ST_SPI_CS_::Write(0);
     _ICE_CRST_::Write(0);
