@@ -1,3 +1,5 @@
+# Updated for board/Rev5 tag
+
 set_io ice_img_clk16mhz                 C11
 set_io ice_led[0]                       C9
 set_io ice_led[1]                       A10
@@ -16,6 +18,7 @@ set_io ice_st_spi_d[5]                  L8
 set_io ice_st_spi_d[6]                  K9
 set_io ice_st_spi_d[7]                  J8
 set_io ice_st_spi_d_ready               L5
+set_io img_dclk                         F11
 set_io img_d[0]                         E8
 set_io img_d[1]                         D10
 set_io img_d[2]                         G11
@@ -28,7 +31,6 @@ set_io img_d[8]                         J10
 set_io img_d[9]                         J11
 set_io img_d[10]                        H11
 set_io img_d[11]                        H10
-set_io img_dclk                         F11
 set_io img_fv                           E11
 set_io img_lv                           E10
 set_io img_rst_                         D11
@@ -52,6 +54,8 @@ set_io ram_cas_                         D7
 set_io ram_cke                          D3
 set_io ram_clk                          E1
 set_io ram_cs_                          A3
+set_io ram_dqm[0]                       B6
+set_io ram_dqm[1]                       E2
 set_io ram_dq[0]                        A9
 set_io ram_dq[1]                        A8
 set_io ram_dq[2]                        B9
@@ -68,8 +72,6 @@ set_io ram_dq[12]                       G1
 set_io ram_dq[13]                       J2
 set_io ram_dq[14]                       H1
 set_io ram_dq[15]                       J1
-set_io ram_dqm[0]                       B6
-set_io ram_dqm[1]                       E2
 set_io ram_ras_                         B5
 set_io ram_we_                          A4
 set_io sd_clk                           L3
@@ -78,55 +80,3 @@ set_io sd_dat[0]                        L2
 set_io sd_dat[1]                        L1
 set_io sd_dat[2]                        K5
 set_io sd_dat[3]                        L4
-
-
-
-
-
-
-
-
-
-
-
-# AFIFOChainTest
-
-set_io rst_                             D5
-set_io prop_w_ready                     B3
-set_io prop_r_ready                     B2
-set_io w_clk                            A1
-set_io w_trigger                        B1
-set_io w_data[0]                        C2
-set_io w_data[1]                        C4
-set_io w_data[2]                        D2
-set_io w_data[3]                        C1
-set_io w_data[4]                        C3
-set_io w_data[5]                        A2
-set_io w_data[6]                        D1
-set_io w_data[7]                        C7
-set_io w_data[8]                        B4
-set_io w_data[9]                        D7
-set_io w_data[10]                       D3
-set_io w_data[11]                       E1
-set_io w_data[12]                       A3
-set_io w_data[13]                       B6
-set_io w_data[14]                       E2
-set_io w_data[15]                       A9
-set_io r_data[0]                        A8
-set_io r_data[1]                        B9
-set_io r_data[2]                        A7
-set_io r_data[3]                        B8
-set_io r_data[4]                        A6
-set_io r_data[5]                        B7
-set_io r_data[6]                        A5
-set_io r_data[7]                        F2
-set_io r_data[8]                        G2
-set_io r_data[9]                        F1
-set_io r_data[10]                       H2
-set_io r_data[11]                       G1
-set_io r_data[12]                       J2
-set_io r_data[13]                       H1
-set_io r_data[14]                       J1
-set_io r_data[15]                       B5
-set_io r_clk                            A4
-set_io r_trigger                        C8
