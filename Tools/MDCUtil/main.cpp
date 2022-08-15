@@ -24,7 +24,8 @@ const CmdStr LEDSetCmd              = "LEDSet";
 const CmdStr STMWriteCmd            = "STMWrite";
 
 // STMApp Commands
-const CmdStr ICEWriteCmd            = "ICEWrite";
+const CmdStr ICEWriteRAMCmd         = "ICEWriteRAM";
+const CmdStr ICEWriteFlashCmd       = "ICEWriteFlash";
 const CmdStr MSPReadCmd             = "MSPRead";
 const CmdStr MSPWriteCmd            = "MSPWrite";
 const CmdStr MSPStateReadCmd        = "MSPStateRead";
@@ -39,7 +40,8 @@ static void printUsage() {
     cout << "  " << LEDSetCmd           << " <idx> <0/1>\n";
     
     cout << "  " << STMWriteCmd         << " <file>\n";
-    cout << "  " << ICEWriteCmd         << " <file>\n";
+    cout << "  " << ICEWriteRAMCmd      << " <file>\n";
+    cout << "  " << ICEWriteFlashCmd    << " <file>\n";
     
     cout << "  " << MSPReadCmd          << " <addr> <len>\n";
     cout << "  " << MSPWriteCmd         << " <file>\n";
@@ -65,7 +67,11 @@ struct Args {
     
     struct {
         std::string filePath;
-    } ICEWrite = {};
+    } ICEWriteRAM = {};
+    
+    struct {
+        std::string filePath;
+    } ICEWriteFlash = {};
     
     struct {
         uintptr_t addr = 0;
@@ -113,9 +119,13 @@ static Args parseArgs(int argc, const char* argv[]) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
         args.STMWrite.filePath = strs[1];
     
-    } else if (args.cmd == lower(ICEWriteCmd)) {
+    } else if (args.cmd == lower(ICEWriteRAMCmd)) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
-        args.ICEWrite.filePath = strs[1];
+        args.ICEWriteRAM.filePath = strs[1];
+    
+    } else if (args.cmd == lower(ICEWriteFlashCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("file path not specified");
+        args.ICEWriteFlash.filePath = strs[1];
     
     } else if (args.cmd == lower(MSPReadCmd)) {
         if (strs.size() < 3) throw std::runtime_error("address/length not specified");
@@ -168,12 +178,20 @@ static void STMWrite(const Args& args, MDCUSBDevice& device) {
     device.stmReset(elf.entryPointAddr());
 }
 
-static void ICEWrite(const Args& args, MDCUSBDevice& device) {
-    Mmap mmap(args.ICEWrite.filePath.c_str());
+static void ICEWriteRAM(const Args& args, MDCUSBDevice& device) {
+    Toastbox::Mmap mmap(args.ICEWriteRAM.filePath.c_str());
     
     // Send the ICE40 binary
-    printf("ICEWrite: Writing %ju bytes\n", (uintmax_t)mmap.len());
-    device.iceWrite(mmap.data(), mmap.len());
+    printf("ICEWriteRAM: Writing %ju bytes\n", (uintmax_t)mmap.len());
+    device.iceWriteRAM(mmap.data(), mmap.len());
+}
+
+static void ICEWriteFlash(const Args& args, MDCUSBDevice& device) {
+    Toastbox::Mmap mmap(args.ICEWriteFlash.filePath.c_str());
+    
+    // Send the ICE40 binary
+    printf("ICEWriteFlash: Writing %ju bytes\n", (uintmax_t)mmap.len());
+    device.iceWriteFlash(mmap.data(), mmap.len());
 }
 
 static void MSPRead(const Args& args, MDCUSBDevice& device) {
@@ -412,7 +430,8 @@ int main(int argc, const char* argv[]) {
         if (args.cmd == lower(BootloaderInvokeCmd))     BootloaderInvoke(args, device);
         else if (args.cmd == lower(LEDSetCmd))          LEDSet(args, device);
         else if (args.cmd == lower(STMWriteCmd))        STMWrite(args, device);
-        else if (args.cmd == lower(ICEWriteCmd))        ICEWrite(args, device);
+        else if (args.cmd == lower(ICEWriteRAMCmd))     ICEWriteRAM(args, device);
+        else if (args.cmd == lower(ICEWriteFlashCmd))   ICEWriteFlash(args, device);
         else if (args.cmd == lower(MSPReadCmd))         MSPRead(args, device);
         else if (args.cmd == lower(MSPWriteCmd))        MSPWrite(args, device);
         else if (args.cmd == lower(MSPStateReadCmd))    MSPStateRead(args, device);

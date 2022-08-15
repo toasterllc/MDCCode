@@ -21,7 +21,7 @@ static const void* _USBConfigDesc(size_t& len);
 using _USBType = USBType<
     true,                       // T_DMAEn
     _USBConfigDesc,             // T_ConfigDesc
-    STM::Endpoints::DataOut,    // T_Endpoints
+    STM::Endpoints::DataOut,     // T_Endpoints
     STM::Endpoints::DataIn
 >;
 
@@ -491,8 +491,8 @@ struct _TaskReadout {
 
 // MARK: - Commands
 
-static void _ICEWrite(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.ICEWrite;
+static void _ICEWriteRAM(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.ICEWriteRAM;
     
     // Accept command
     _System::USBAcceptCommand(true);
@@ -577,6 +577,162 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     
     // Release chip-select now that we're done
     _ICE_ST_SPI_CS_::Write(1);
+    
+    _System::USBSendStatus(true);
+}
+
+static void __ICEWriteFlashWrite(const uint8_t* d, size_t len) {
+    for (size_t i=0; i<len; i++) {
+        uint8_t b = d[i];
+        for (int ii=0; ii<8; ii++) {
+            _ICE_ST_SPI_D1::Write(b & 0x80);
+            b <<= 1;
+            
+            _ICE_ST_SPI_CLK::Write(1);
+            _ICE_ST_SPI_CLK::Write(0);
+        }
+    }
+}
+
+//static void __ICEWriteFlashWrite(uint8_t w, const uint8_t* d, size_t len) {
+//    for (int i=0; i<8; i++) {
+//        _ICE_ST_SPI_D1::Write(w & 0x80);
+//        w <<= 1;
+//        
+//        _ICE_ST_SPI_CLK::Write(1);
+//        _ICE_ST_SPI_CLK::Write(0);
+//    }
+//}
+
+static uint8_t __ICEWriteFlashRead() {
+    uint8_t r = 0;
+    for (int i=0; i<8; i++) {
+        _ICE_ST_SPI_CLK::Write(1);
+        
+        r <<= 1;
+        r |= _ICE_ST_SPI_D0::Read();
+        
+        _ICE_ST_SPI_CLK::Write(0);
+    }
+    return r;
+}
+
+static void _ICEWriteFlashWrite(const uint8_t* instr, size_t instrLen, const uint8_t* data=nullptr, size_t dataLen=0) {
+    _ICE_ST_SPI_CS_::Write(0);
+    __ICEWriteFlashWrite(instr, instrLen);
+    if (data) __ICEWriteFlashWrite(data, dataLen);
+    _ICE_ST_SPI_CS_::Write(1);
+}
+
+static void _ICEWriteFlashWrite(uint8_t w, const uint8_t* d=nullptr, size_t len=0) {
+    _ICEWriteFlashWrite(&w, 1, d, len);
+}
+
+static uint8_t _ICEWriteFlashWriteRead(uint8_t w) {
+    _ICE_ST_SPI_CS_::Write(0);
+    __ICEWriteFlashWrite(&w, 1);
+    const uint8_t r = __ICEWriteFlashRead();
+    _ICE_ST_SPI_CS_::Write(1);
+    return r;
+}
+
+static void _ICEWriteFlash(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.ICEWriteFlash;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Configure ICE40 control GPIOs
+    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D0::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Hold ICE40 in reset while we write to flash
+    _ICE_CRST_::Write(0);
+    
+    // Set default clock state before enabling flash
+    _ICE_ST_SPI_CLK::Write(0);
+    
+    // De-assert chip select before enabling flash
+    _ICE_ST_SPI_CS_::Write(1);
+    
+    // Enable flash
+    _ICE_ST_FLASH_EN::Write(1);
+    
+    // Reset flash
+    _ICEWriteFlashWrite(0x66);
+    _ICEWriteFlashWrite(0x99);
+    _Scheduler::Sleep(_Scheduler::Us(32)); // "the device will take approximately tRST=30us to reset"
+    
+    // Write enable
+    _ICEWriteFlashWrite(0x06);
+    // Mass erase
+    _ICEWriteFlashWrite(0xC7);
+    // Wait until erase is complete
+    for (;;) {
+        const uint8_t sr1 = _ICEWriteFlashWriteRead(0x05);
+        const bool busy = (sr1 & 1);
+        if (!busy) break;
+    }
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Trigger the USB DataOut task with the amount of data
+    _TaskUSBDataOut::Start(arg.len);
+    
+    constexpr size_t PageSize = 256;
+    uint32_t addr = 0;
+    for (;;) {
+        // Wait until we have data to consume, and QSPI is ready to write
+        _Scheduler::Wait([] { return _Bufs.rok(); });
+        
+        // Write the data over SPI and wait for completion
+        auto& buf = _Bufs.rget();
+        if (buf.len) {
+            // We only allow writing to addresses that are page-aligned
+            if (addr & (PageSize-1)) {
+                _System::USBSendStatus(false);
+                return;
+            }
+            
+            // Write enable
+            _ICEWriteFlashWrite(0x06);
+            
+            // Page program
+            {
+                const uint8_t instr[] = {
+                    0x02,
+                    (uint8_t)((addr&0xFF0000)>>16),
+                    (uint8_t)((addr&0x00FF00)>>8),
+                    (uint8_t)((addr&0x0000FF)>>0),
+                };
+                _ICEWriteFlashWrite(instr, sizeof(instr), buf.data, buf.len);
+            }
+            
+            // Wait until write is complete
+            for (;;) {
+                const uint8_t sr1 = _ICEWriteFlashWriteRead(0x05);
+                const bool busy = (sr1 & 1);
+                if (!busy) break;
+            }
+            
+            addr += buf.len;
+        }
+        
+        _Bufs.rpop();
+        if (!buf.len) break; // We're done when we receive an empty buffer
+    }
+    
+    // Stop driving CS, because ICE40 will drive it (to control the flash chip) once we release its reset
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Take ICE40 out of reset
+    _ICE_CRST_::Write(1);
     
     _System::USBSendStatus(true);
 }
@@ -884,7 +1040,8 @@ void _ImgCapture(const STM::Cmd& cmd) {
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     // ICE40 Bootloader
-    case Op::ICEWrite:          _ICEWrite(cmd);                     break;
+    case Op::ICEWriteRAM:       _ICEWriteRAM(cmd);                  break;
+    case Op::ICEWriteFlash:     _ICEWriteFlash(cmd);                break;
     // MSP430 Bootloader
     case Op::MSPConnect:        _MSPConnect(cmd);                   break;
     case Op::MSPDisconnect:     _MSPDisconnect(cmd);                break;

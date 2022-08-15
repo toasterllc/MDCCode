@@ -384,6 +384,6 @@ private:
 //        throw Toastbox::RuntimeError("failed to get physical address for file offset 0x%jx", (uintmax_t)off);
 //    }
     
-    Mmap _mmap;
+    Toastbox::Mmap _mmap;
     uint32_t _entryPointAddr = 0;
 };

@@ -177,15 +177,34 @@ public:
     }
     
     // MARK: - STMApp Commands
-    void iceWrite(const void* data, size_t len) {
+    void iceWriteRAM(const void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMApp);
         if (len >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
         
         const STM::Cmd cmd = {
-            .op = STM::Op::ICEWrite,
+            .op = STM::Op::ICEWriteRAM,
             .arg = {
-                .ICEWrite = {
+                .ICEWriteRAM = {
+                    .len = (uint32_t)len,
+                },
+            },
+        };
+        _sendCmd(cmd);
+        // Send data
+        _dev.write(STM::Endpoints::DataOut, data, len);
+        _checkStatus("ICEWrite command failed");
+    }
+    
+    void iceWriteFlash(const void* data, size_t len) {
+        assert(_mode == STM::Status::Modes::STMApp);
+        if (len >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::ICEWriteFlash,
+            .arg = {
+                .ICEWriteFlash = {
                     .len = (uint32_t)len,
                 },
             },
