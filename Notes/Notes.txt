@@ -1,5 +1,24 @@
 - Rev6
     
+    - Rev5 bug: ICE40.K9 needs to be connected to ICE40FLASH.DI so that ICE40 can send read commands to flash
+        - Constraints:
+            - STM32.D0 = ICE40FLASH.DO = ICE40.SI
+            - STM32.DX = ICE40FLASH.DI = ICE40.SO
+        
+        - Regimes:
+            - STM32 programs ICE40RAM
+                - STM32.D0 = ICE40.SI
+            - STM32 programs ICE40FLASH
+                - ICE40FLASH.DI = STM32.DX1
+                - ICE40FLASH.DO = STM32.DX2
+            - ICE40 boot
+                - ICE40.SI = ICE40FLASH.DO
+                - ICE40.SO = ICE40FLASH.DI
+        
+        - Therefore:
+            - ICE40.SI = ICE40FLASH.DO = STM32.DX2 = STM32.D0
+            - ICE40.SO = ICE40FLASH.DI = STM32.DX1 = STM32.D6
+    
     - Make STM nets consistently named 'STM', not ST; eg 'ICE_ST_FLASH_EN' needs renaming
     
     - U8: voltage selection is sporadic. It seems the 'R2D converter' can fail to choose the right voltage
