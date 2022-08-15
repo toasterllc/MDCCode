@@ -14,29 +14,22 @@ public:
         Byte,
         Word, // Best performance for large transfers
     };
-
-    enum class ChipSelect {
-        Controlled,
-        Uncontrolled,
-    };
     
     struct Config {
         Mode mode = Mode::Single;
         uint8_t clkDivider = 0;
         Align align = Align::Byte;
-        ChipSelect chipSelect = ChipSelect::Controlled;
     };
     
-    using Clk = GPIO<GPIOPortB, GPIO_PIN_2>;
-    using CS = GPIO<GPIOPortE, GPIO_PIN_12>;
-    using D0 = GPIO<GPIOPortF, GPIO_PIN_8>;
-    using D1 = GPIO<GPIOPortF, GPIO_PIN_9>;
-    using D2 = GPIO<GPIOPortF, GPIO_PIN_7>;
-    using D3 = GPIO<GPIOPortF, GPIO_PIN_6>;
-    using D4 = GPIO<GPIOPortE, GPIO_PIN_7>;
-    using D5 = GPIO<GPIOPortE, GPIO_PIN_8>;
-    using D6 = GPIO<GPIOPortE, GPIO_PIN_9>;
-    using D7 = GPIO<GPIOPortE, GPIO_PIN_10>;
+    using Clk = GPIO<GPIOPortB, GPIO_PIN_2>; // AF9
+    using D0 = GPIO<GPIOPortF, GPIO_PIN_8>;  // AF10
+    using D1 = GPIO<GPIOPortF, GPIO_PIN_9>;  // AF10
+    using D2 = GPIO<GPIOPortF, GPIO_PIN_7>;  // AF9
+    using D3 = GPIO<GPIOPortF, GPIO_PIN_6>;  // AF9
+    using D4 = GPIO<GPIOPortE, GPIO_PIN_7>;  // AF10
+    using D5 = GPIO<GPIOPortE, GPIO_PIN_8>;  // AF10
+    using D6 = GPIO<GPIOPortE, GPIO_PIN_9>;  // AF10
+    using D7 = GPIO<GPIOPortE, GPIO_PIN_10>; // AF10
     
     QSPI() {}
     
@@ -57,9 +50,8 @@ public:
         
         // Enable GPIO clocks
         __HAL_RCC_GPIOB_CLK_ENABLE();
-        __HAL_RCC_GPIOC_CLK_ENABLE();
         __HAL_RCC_GPIOF_CLK_ENABLE();
-        __HAL_RCC_GPIOG_CLK_ENABLE();
+        __HAL_RCC_GPIOE_CLK_ENABLE();
         
         // DMA clock/IRQ
         __HAL_RCC_DMA2_CLK_ENABLE();
@@ -133,17 +125,15 @@ public:
     // configPins(): reconfigures GPIOs, in case they're reused for some other purpose
     void configPins() {
         Clk::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        if (_config->chipSelect == ChipSelect::Controlled) {
-            CS::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-        }
-        D0::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        D1::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        
+        D0::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+        D1::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
         D2::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
         D3::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        D4::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        D5::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        D6::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        D7::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        D4::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+        D5::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+        D6::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+        D7::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
     }
     
     // reset(): aborts whatever is in progress and resets state

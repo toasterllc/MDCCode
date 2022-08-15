@@ -58,15 +58,14 @@ using _System = System<
 constexpr auto& _USB = _System::USB;
 using _Scheduler = _System::Scheduler;
 
-using _ICE_CRST_ = GPIO<GPIOPortF, GPIO_PIN_11>;
-using _ICE_CDONE = GPIO<GPIOPortB, GPIO_PIN_1>;
-
-using _ICE_ST_SPI_CLK       = QSPI::Clk;
-using _ICE_ST_SPI_CS_       = QSPI::CS;
-using _ICE_ST_SPI_D0        = QSPI::D0;
-using _ICE_ST_SPI_D1        = QSPI::D1;
+using _ICE_CRST_            = GPIO<GPIOPortF, GPIO_PIN_11>;
+using _ICE_CDONE            = GPIO<GPIOPortB, GPIO_PIN_1>;
+using _ICE_ST_SPI_CS_       = GPIO<GPIOPortE, GPIO_PIN_12>;
 using _ICE_ST_SPI_D_READY   = GPIO<GPIOPortA, GPIO_PIN_3>;
 using _ICE_ST_FLASH_EN      = GPIO<GPIOPortF, GPIO_PIN_5>;
+using _ICE_ST_SPI_CLK       = QSPI::Clk;
+using _ICE_ST_SPI_D0        = QSPI::D0;
+using _ICE_ST_SPI_D1        = QSPI::D1;
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -223,25 +222,21 @@ static struct {
         .mode       = QSPI::Mode::Single,
         .clkDivider = 5, // clkDivider: 5 -> QSPI clock = 21.3 MHz
         .align      = QSPI::Align::Byte,
-        .chipSelect = QSPI::ChipSelect::Uncontrolled,
     };
     
     QSPI::Config ICEApp = {
         .mode       = QSPI::Mode::Dual,
         .clkDivider = 1, // clkDivider: 1 -> QSPI clock = 64 MHz)
         .align      = QSPI::Align::Word,
-        .chipSelect = QSPI::ChipSelect::Uncontrolled,
     };
 } _QSPIConfigs;
 
 void _QSPISetConfig(const QSPI::Config& config) {
     _QSPI.setConfig(config);
     
-    // If QSPI isn't controlling chip-select, manually configure it
-    if (config.chipSelect == QSPI::ChipSelect::Uncontrolled) {
-        _ICE_ST_SPI_CS_::Write(1);
-        _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-    }
+    // We manually control chip-select
+    _ICE_ST_SPI_CS_::Write(1);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
 }
 
 template<>
@@ -952,8 +947,8 @@ int main() {
     // Enable GPIO clocks
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOE_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
-    __HAL_RCC_GPIOI_CLK_ENABLE();
     
     // Init MSP
     _MSP.init();
