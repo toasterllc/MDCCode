@@ -27,6 +27,17 @@ public:
         ChipSelect chipSelect = ChipSelect::Controlled;
     };
     
+    using Clk = GPIO<GPIOPortB, GPIO_PIN_2>;
+    using CS = GPIO<GPIOPortE, GPIO_PIN_12>;
+    using D0 = GPIO<GPIOPortF, GPIO_PIN_8>;
+    using D1 = GPIO<GPIOPortF, GPIO_PIN_9>;
+    using D2 = GPIO<GPIOPortF, GPIO_PIN_7>;
+    using D3 = GPIO<GPIOPortF, GPIO_PIN_6>;
+    using D4 = GPIO<GPIOPortE, GPIO_PIN_7>;
+    using D5 = GPIO<GPIOPortE, GPIO_PIN_8>;
+    using D6 = GPIO<GPIOPortE, GPIO_PIN_9>;
+    using D7 = GPIO<GPIOPortE, GPIO_PIN_10>;
+    
     QSPI() {}
     
     const Config* getConfig() const { return _config; }
@@ -121,18 +132,18 @@ public:
     
     // configPins(): reconfigures GPIOs, in case they're reused for some other purpose
     void configPins() {
-        _Clk::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        Clk::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
         if (_config->chipSelect == ChipSelect::Controlled) {
-            _CS::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+            CS::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
         }
-        _D0::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        _D1::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        _D2::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        _D3::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        _D4::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        _D5::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        _D6::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        _D7::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        D0::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        D1::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        D2::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        D3::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        D4::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        D5::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        D6::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+        D7::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
     }
     
     // reset(): aborts whatever is in progress and resets state
@@ -288,15 +299,4 @@ private:
     void _handleWriteDone() {
         _busy = false;
     }
-    
-    using _Clk = GPIO<GPIOPortB, GPIO_PIN_2>;
-    using _CS = GPIO<GPIOPortB, GPIO_PIN_6>;
-    using _D0 = GPIO<GPIOPortC, GPIO_PIN_9>;
-    using _D1 = GPIO<GPIOPortC, GPIO_PIN_10>;
-    using _D2 = GPIO<GPIOPortF, GPIO_PIN_7>;
-    using _D3 = GPIO<GPIOPortF, GPIO_PIN_6>;
-    using _D4 = GPIO<GPIOPortH, GPIO_PIN_2>;
-    using _D5 = GPIO<GPIOPortH, GPIO_PIN_3>;
-    using _D6 = GPIO<GPIOPortG, GPIO_PIN_9>;
-    using _D7 = GPIO<GPIOPortG, GPIO_PIN_14>;
 };

@@ -61,10 +61,11 @@ using _Scheduler = _System::Scheduler;
 using _ICE_CRST_ = GPIO<GPIOPortI, GPIO_PIN_6>;
 using _ICE_CDONE = GPIO<GPIOPortI, GPIO_PIN_7>;
 
-using _ICE_ST_SPI_CLK = GPIO<GPIOPortB, GPIO_PIN_2>;
-using _ICE_ST_SPI_CS_ = GPIO<GPIOPortB, GPIO_PIN_6>;
-using _ICE_ST_SPI_D_READY = GPIO<GPIOPortF, GPIO_PIN_14>;
-using _ICE_ST_SPI_D0 = GPIO<GPIOPortC, GPIO_PIN_9>;
+using _ICE_ST_SPI_CLK       = QSPI::Clk;
+using _ICE_ST_SPI_CS_       = QSPI::CS;
+using _ICE_ST_SPI_D0        = QSPI::D0;
+using _ICE_ST_SPI_D_READY   = GPIO<GPIOPortA, GPIO_PIN_3>;
+using _ICE_ST_FLASH_EN      = GPIO<GPIOPortF, GPIO_PIN_5>;
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -500,21 +501,19 @@ static void _ICEWrite(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Enable GPIO clocks
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOF_CLK_ENABLE();
-    __HAL_RCC_GPIOG_CLK_ENABLE();
-    
     // Configure ICE40 control GPIOs
     _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_SPI_D0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Put ICE40 into configuration mode
     _ICE_ST_SPI_CLK::Write(1);
+    
+    // Disable flash
+    _ICE_ST_FLASH_EN::Write(0);
     
     _ICE_ST_SPI_CS_::Write(0);
     _ICE_CRST_::Write(0);
@@ -949,7 +948,11 @@ void abort() {
 int main() {
     _System::Init();
     
-    __HAL_RCC_GPIOI_CLK_ENABLE(); // ICE_CRST_, ICE_CDONE
+    // Enable GPIO clocks
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOF_CLK_ENABLE();
+    __HAL_RCC_GPIOI_CLK_ENABLE();
     
     // Init MSP
     _MSP.init();
