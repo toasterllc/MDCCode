@@ -152,12 +152,11 @@ private:
 
 public:
     
-    static void InitLED() {
+    static void LEDInit() {
         // Enable GPIO clocks
-        __HAL_RCC_GPIOB_CLK_ENABLE();
-        __HAL_RCC_GPIOE_CLK_ENABLE();
+        __HAL_RCC_GPIOD_CLK_ENABLE();
         
-//        LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED3::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -176,17 +175,17 @@ public:
         HAL_DBGMCU_EnableDBGStandbyMode();
         
         // Configure our LEDs
-        InitLED();
+        LEDInit();
         
         // Configure USB
         USB.init();
     }
     
     // LEDs
-//    using LED0 = GPIO<GPIOPortF, GPIO_PIN_14>;
-    using LED1 = GPIO<GPIOPortE, GPIO_PIN_7>;
-    using LED2 = GPIO<GPIOPortE, GPIO_PIN_10>;
-    using LED3 = GPIO<GPIOPortE, GPIO_PIN_12>;
+    using LED0 = GPIO<GPIOPortD, GPIO_PIN_9>;
+    using LED1 = GPIO<GPIOPortD, GPIO_PIN_11>;
+    using LED2 = GPIO<GPIOPortD, GPIO_PIN_14>;
+    using LED3 = GPIO<GPIOPortD, GPIO_PIN_15>;
     
     static inline T_USB USB;
     
@@ -206,7 +205,7 @@ public:
     static void Abort() {
         Toastbox::IntState ints(false);
         
-        InitLED();
+        LEDInit();
         for (bool x=true;; x=!x) {
             LED1::Write(x);
             LED2::Write(x);
@@ -317,7 +316,7 @@ private:
     
     static void _LEDSet(const STM::Cmd& cmd) {
         switch (cmd.arg.LEDSet.idx) {
-        case 0: USBAcceptCommand(false); return;
+        case 0: USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
         case 1: USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
         case 2: USBAcceptCommand(true); LED2::Write(cmd.arg.LEDSet.on); break;
         case 3: USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;
