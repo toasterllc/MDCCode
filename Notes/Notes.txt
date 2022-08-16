@@ -2,6 +2,10 @@
     
     - Bug: MSP430 browns-out when asserting VDD_B_EN
         - Solution: make R4 a higher value to slow Q1 turn-on and decrease inrush current
+        - 100Ω: 1.21V droop
+        - 1kΩ: .77V droop
+        - 10kΩ: .074V droop
+            - 10k seems to work well
     
     - Bug: U16 level shifter that controls MSP_TEST / MSP_RST_ causes MSP_RST_ to be driven low when
       connecting device to USB power. It appears this is because the STM32 side, MSP_RST_X_, is
