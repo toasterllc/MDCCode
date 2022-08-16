@@ -65,7 +65,7 @@ using _ICE_ST_SPI_D_READY   = GPIO<GPIOPortA, GPIO_PIN_3>;
 using _ICE_ST_FLASH_EN      = GPIO<GPIOPortF, GPIO_PIN_5>;
 using _ICE_ST_SPI_CLK       = QSPI::Clk;
 using _ICE_ST_SPI_D0        = QSPI::D0;
-using _ICE_ST_SPI_D1        = QSPI::D1;
+using _ICE_ST_SPI_D6        = QSPI::D6;
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -599,7 +599,7 @@ static void __ICEFlashOut(const uint8_t* d, size_t len) {
     for (size_t i=0; i<len; i++) {
         uint8_t b = d[i];
         for (int ii=0; ii<8; ii++) {
-            _ICE_ST_SPI_D1::Write(b & 0x80);
+            _ICE_ST_SPI_D6::Write(b & 0x80);
             b <<= 1;
             
             _ICE_ST_SPI_CLK::Write(1);
@@ -642,7 +642,7 @@ static void _ICEFlashWait() {
 
 //static void __ICEFlashWriteWrite(uint8_t w, const uint8_t* d, size_t len) {
 //    for (int i=0; i<8; i++) {
-//        _ICE_ST_SPI_D1::Write(w & 0x80);
+//        _ICE_ST_SPI_D6::Write(w & 0x80);
 //        w <<= 1;
 //        
 //        _ICE_ST_SPI_CLK::Write(1);
@@ -682,7 +682,7 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_SPI_D0::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D6::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Hold ICE40 in reset while we write to flash
     _ICE_CRST_::Write(0);
@@ -738,10 +738,21 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
         _Bufs.wpush();
     }
     
-    _ICE_ST_SPI_CS_::Write(1);
-    
     // Wait for DataIn task to complete
     _Scheduler::Wait([] { return !_Bufs.rok(); });
+    
+    // Disable flash
+    _ICE_ST_FLASH_EN::Write(0);
+    
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_FLASH_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D0::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D6::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Take ICE40 out of reset
+    _ICE_CRST_::Write(1);
+    
     // Send status
     _System::USBSendStatus(true);
 }
@@ -759,7 +770,7 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_SPI_D0::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D6::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Hold ICE40 in reset while we write to flash
     _ICE_CRST_::Write(0);
@@ -845,12 +856,19 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
         if (!buf.len) break; // We're done when we receive an empty buffer
     }
     
-    // Stop driving CS, because ICE40 will drive it (to control the flash chip) once we release its reset
+    // Disable flash
+    _ICE_ST_FLASH_EN::Write(0);
+    
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_FLASH_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D0::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D6::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Take ICE40 out of reset
     _ICE_CRST_::Write(1);
     
+    // Send status
     _System::USBSendStatus(true);
 }
 

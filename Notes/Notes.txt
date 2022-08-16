@@ -2,25 +2,7 @@
     
     - Verify that the new ICE40 pin assignment meets our timing (since we moved the pins since Rev5 to
       account miswiring the flash chip)
-    
-    - Rev5 bug: ICE40.K9 needs to be connected to ICE40FLASH.DI so that ICE40 can send read commands to flash
-        - Constraints:
-            - STM32.D0 = ICE40FLASH.DO = ICE40.SI
-            - STM32.DX = ICE40FLASH.DI = ICE40.SO
-        
-        - Regimes:
-            - STM32 programs ICE40RAM
-                - STM32.D0 = ICE40.SI
-            - STM32 programs ICE40FLASH
-                - ICE40FLASH.DI = STM32.DX1
-                - ICE40FLASH.DO = STM32.DX2
-            - ICE40 boot
-                - ICE40.SI = ICE40FLASH.DO
-                - ICE40.SO = ICE40FLASH.DI
-        
-        - Therefore:
-            - ICE40.SI = ICE40FLASH.DO = STM32.DX2 = STM32.D0
-            - ICE40.SO = ICE40FLASH.DI = STM32.DX1 = STM32.D6
+          - Need to update Pins.pcf to do this testing
     
     - Make STM nets consistently named 'STM', not ST; eg 'ICE_ST_FLASH_EN' needs renaming
     
@@ -47,6 +29,25 @@
       using through-hole wires to connect to it. The motion sensor will likely need to be raised up in the
       final product, since the lens is longer than the motion sensor, therefore we'll need wires to connect
       to the board anyway.
+    
+    √ Rev5 bug: ICE40.K9 needs to be connected to ICE40FLASH.DI so that ICE40 can send read commands to flash
+        - Constraints:
+            - STM32.D0 = ICE40FLASH.DO = ICE40.SI
+            - STM32.DX = ICE40FLASH.DI = ICE40.SO
+        
+        - Regimes:
+            - STM32 programs ICE40RAM
+                - STM32.D0 = ICE40.SI
+            - STM32 programs ICE40FLASH
+                - ICE40FLASH.DI = STM32.DX1
+                - ICE40FLASH.DO = STM32.DX2
+            - ICE40 boot
+                - ICE40.SI = ICE40FLASH.DO
+                - ICE40.SO = ICE40FLASH.DI
+        
+        - Therefore:
+            - ICE40.SI = ICE40FLASH.DO = STM32.DX2 = STM32.D0
+            - ICE40.SO = ICE40FLASH.DI = STM32.DX1 = STM32.D6
     
     √ Why is one of the ICE40 LEDs off?
         - LED is bad
