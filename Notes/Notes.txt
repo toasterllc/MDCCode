@@ -1,5 +1,15 @@
 - Rev6
     
+    - U16: bug: level shifter that controls MSP_TEST / MSP_RST_ causes MSP_RST_ to be driven low when
+      connecting device to USB power. It appears this is because the STM32 side, MSP_RST_X_, is
+      floating before STM32 explicitly configures the GPIO, which the level shifter interprets as a
+      low value, and drives MSP_RST_ low, causing MSP430 to be reset until STM32 drives MSP_RST_X_ high.
+      This appears to happens despite MSP430's pull-up on its RST pin.
+      
+      - Solution: connect U16.OE to a STM32 GPIO (instead of VDD_B_1V8_STM), perhaps called 'MSP_SBW_EN',
+        and include a pull-down resistor. That way, U16 outputs will be disabled until STM32 explicitly
+        wants to talk to MSP430 (by asserting MSP_SBW_EN), and so MSP_RST_ won't be affected until then.
+    
     - Verify that the new ICE40 pin assignment meets our timing (since we moved the pins since Rev5 to
       account miswiring the flash chip)
           - Need to update Pins.pcf to do this testing
