@@ -676,12 +676,15 @@ static void _Sleep() {
 
 struct _MotionTask {
     static void Run() {
+        _Pin::VDD_B_EN::Write(1);
+        _Scheduler::Sleep(_Scheduler::Ms(500));
+        
         for (;;) {
-            _Pin::DEBUG_OUT::Write(0);
+            _Pin::DEBUG_OUT::Write(1);
             _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
             _Scheduler::Sleep(_Scheduler::Ms(500));
             
-            _Pin::DEBUG_OUT::Write(1);
+            _Pin::DEBUG_OUT::Write(0);
             _ICE::Transfer(_ICE::LEDSetMsg(0x00));
             _Scheduler::Sleep(_Scheduler::Ms(500));
         }
