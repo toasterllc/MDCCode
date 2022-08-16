@@ -1,6 +1,9 @@
 - Rev6
     
-    - U16: bug: level shifter that controls MSP_TEST / MSP_RST_ causes MSP_RST_ to be driven low when
+    - Bug: MSP430 browns-out when asserting VDD_B_EN
+        - Solution: make R4 a higher value to slow Q1 turn-on and decrease inrush current
+    
+    - Bug: U16 level shifter that controls MSP_TEST / MSP_RST_ causes MSP_RST_ to be driven low when
       connecting device to USB power. It appears this is because the STM32 side, MSP_RST_X_, is
       floating before STM32 explicitly configures the GPIO, which the level shifter interprets as a
       low value, and drives MSP_RST_ low, causing MSP430 to be reset until STM32 drives MSP_RST_X_ high.
