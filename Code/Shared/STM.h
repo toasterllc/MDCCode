@@ -77,6 +77,7 @@ namespace STM {
             } ICEFlashRead;
             
             struct [[gnu::packed]] {
+                uint32_t addr;
                 uint32_t len;
             } ICEFlashWrite;
             

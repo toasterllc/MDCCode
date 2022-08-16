@@ -177,15 +177,15 @@ public:
     }
     
     // MARK: - STMApp Commands
-    void iceWriteRAM(const void* data, size_t len) {
+    void iceRAMWrite(const void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMApp);
         if (len >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
         
         const STM::Cmd cmd = {
-            .op = STM::Op::ICEWriteRAM,
+            .op = STM::Op::ICERAMWrite,
             .arg = {
-                .ICEWriteRAM = {
+                .ICERAMWrite = {
                     .len = (uint32_t)len,
                 },
             },
@@ -193,18 +193,47 @@ public:
         _sendCmd(cmd);
         // Send data
         _dev.write(STM::Endpoints::DataOut, data, len);
-        _checkStatus("ICEWrite command failed");
+        _checkStatus("ICERAMWrite command failed");
     }
     
-    void iceWriteFlash(const void* data, size_t len) {
+    void iceFlashRead(uintptr_t addr, void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMApp);
+        
+        if (addr >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
+        
         if (len >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
         
         const STM::Cmd cmd = {
-            .op = STM::Op::ICEWriteFlash,
+            .op = STM::Op::ICEFlashRead,
             .arg = {
-                .ICEWriteFlash = {
+                .ICEFlashRead = {
+                    .addr = (uint32_t)addr,
+                    .len = (uint32_t)len,
+                },
+            },
+        };
+        _sendCmd(cmd);
+        // Read data
+        _dev.read(STM::Endpoints::DataIn, data, len);
+        _checkStatus("ICEFlashRead command failed");
+    }
+    
+    void iceFlashWrite(uintptr_t addr, const void* data, size_t len) {
+        assert(_mode == STM::Status::Modes::STMApp);
+        
+        if (addr >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
+        
+        if (len >= std::numeric_limits<uint32_t>::max())
+            throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::ICEFlashWrite,
+            .arg = {
+                .ICEFlashWrite = {
+                    .addr = (uint32_t)addr,
                     .len = (uint32_t)len,
                 },
             },
@@ -212,7 +241,7 @@ public:
         _sendCmd(cmd);
         // Send data
         _dev.write(STM::Endpoints::DataOut, data, len);
-        _checkStatus("ICEWrite command failed");
+        _checkStatus("ICEFlashWrite command failed");
     }
     
     void mspConnect() {

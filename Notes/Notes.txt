@@ -1,5 +1,8 @@
 - Rev6
     
+    - Verify that the new ICE40 pin assignment meets our timing (since we moved the pins since Rev5 to
+      account miswiring the flash chip)
+    
     - Rev5 bug: ICE40.K9 needs to be connected to ICE40FLASH.DI so that ICE40 can send read commands to flash
         - Constraints:
             - STM32.D0 = ICE40FLASH.DO = ICE40.SI

@@ -581,7 +581,21 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static void __ICEFlashWriteWrite(const uint8_t* d, size_t len) {
+static void __ICEFlashIn(uint8_t* d, size_t len) {
+    for (size_t i=0; i<len; i++) {
+        uint8_t& b = d[i];
+        for (int ii=0; ii<8; ii++) {
+            _ICE_ST_SPI_CLK::Write(1);
+            
+            b <<= 1;
+            b |= _ICE_ST_SPI_D0::Read();
+            
+            _ICE_ST_SPI_CLK::Write(0);
+        }
+    }
+}
+
+static void __ICEFlashOut(const uint8_t* d, size_t len) {
     for (size_t i=0; i<len; i++) {
         uint8_t b = d[i];
         for (int ii=0; ii<8; ii++) {
@@ -594,6 +608,38 @@ static void __ICEFlashWriteWrite(const uint8_t* d, size_t len) {
     }
 }
 
+//static uint8_t _ICEFlashIn() {
+//    _ICE_ST_SPI_CS_::Write(0);
+//    uint8_t d = 0;
+//    __ICEFlashIn(&d, 1);
+//    _ICE_ST_SPI_CS_::Write(1);
+//    return d;
+//}
+
+static void _ICEFlashOut(uint8_t out) {
+    _ICE_ST_SPI_CS_::Write(0);
+    __ICEFlashOut(&out, 1);
+    _ICE_ST_SPI_CS_::Write(1);
+}
+
+static uint8_t _ICEFlashOutIn(uint8_t out) {
+    uint8_t in = 0;
+    _ICE_ST_SPI_CS_::Write(0);
+    __ICEFlashOut(&out, 1);
+    __ICEFlashIn(&in, 1);
+    _ICE_ST_SPI_CS_::Write(1);
+    return in;
+}
+
+static void _ICEFlashWait() {
+    // Wait until erase is complete
+    for (;;) {
+        const uint8_t sr1 = _ICEFlashOutIn(0x05);
+        const bool busy = (sr1 & 1);
+        if (!busy) break;
+    }
+}
+
 //static void __ICEFlashWriteWrite(uint8_t w, const uint8_t* d, size_t len) {
 //    for (int i=0; i<8; i++) {
 //        _ICE_ST_SPI_D1::Write(w & 0x80);
@@ -603,38 +649,25 @@ static void __ICEFlashWriteWrite(const uint8_t* d, size_t len) {
 //        _ICE_ST_SPI_CLK::Write(0);
 //    }
 //}
-
-static uint8_t __ICEFlashWriteRead() {
-    uint8_t r = 0;
-    for (int i=0; i<8; i++) {
-        _ICE_ST_SPI_CLK::Write(1);
-        
-        r <<= 1;
-        r |= _ICE_ST_SPI_D0::Read();
-        
-        _ICE_ST_SPI_CLK::Write(0);
-    }
-    return r;
-}
-
-static void _ICEFlashWriteWrite(const uint8_t* instr, size_t instrLen, const uint8_t* data=nullptr, size_t dataLen=0) {
-    _ICE_ST_SPI_CS_::Write(0);
-    __ICEFlashWriteWrite(instr, instrLen);
-    if (data) __ICEFlashWriteWrite(data, dataLen);
-    _ICE_ST_SPI_CS_::Write(1);
-}
-
-static void _ICEFlashWriteWrite(uint8_t w, const uint8_t* d=nullptr, size_t len=0) {
-    _ICEFlashWriteWrite(&w, 1, d, len);
-}
-
-static uint8_t _ICEFlashWriteWriteRead(uint8_t w) {
-    _ICE_ST_SPI_CS_::Write(0);
-    __ICEFlashWriteWrite(&w, 1);
-    const uint8_t r = __ICEFlashWriteRead();
-    _ICE_ST_SPI_CS_::Write(1);
-    return r;
-}
+//
+//static void _ICEFlashCmd(const uint8_t* instr, size_t instrLen, const uint8_t* data=nullptr, size_t dataLen=0) {
+//    _ICE_ST_SPI_CS_::Write(0);
+//    __ICEFlashCmd(instr, instrLen);
+//    if (data) __ICEFlashCmd(data, dataLen);
+//    _ICE_ST_SPI_CS_::Write(1);
+//}
+//
+//static void _ICEFlashCmd(uint8_t w, const uint8_t* d=nullptr, size_t len=0) {
+//    _ICEFlashCmd(&w, 1, d, len);
+//}
+//
+//static uint8_t _ICEFlashCmd(uint8_t w) {
+//    _ICE_ST_SPI_CS_::Write(0);
+//    __ICEFlashCmd(&w, 1);
+//    const uint8_t r = __ICEFlashWriteRead();
+//    _ICE_ST_SPI_CS_::Write(1);
+//    return r;
+//}
 
 static void _ICEFlashRead(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.ICEFlashRead;
@@ -664,17 +697,29 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
     _ICE_ST_FLASH_EN::Write(1);
     
     // Reset flash
-    _ICEFlashWriteWrite(0x66);
-    _ICEFlashWriteWrite(0x99);
+    _ICEFlashOut(0x66);
+    _ICEFlashOut(0x99);
     _Scheduler::Sleep(_Scheduler::Us(32)); // "the device will take approximately tRST=30us to reset"
-    
-    
     
     // Reset state
     _Bufs.reset();
     
     // Start the USB DataIn task
     _TaskUSBDataIn::Start();
+    
+    _ICE_ST_SPI_CS_::Write(0);
+    
+    // Start flash read
+    {
+        const uint8_t instr[] = {
+            0x03,
+            (uint8_t)((arg.addr&0xFF0000)>>16),
+            (uint8_t)((arg.addr&0x00FF00)>>8),
+            (uint8_t)((arg.addr&0x0000FF)>>0),
+        };
+        
+        __ICEFlashOut(instr, sizeof(instr));
+    }
     
     uint32_t addr = arg.addr;
     uint32_t len = arg.len;
@@ -685,13 +730,15 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
         // Prepare to receive either `len` bytes or the
         // buffer capacity bytes, whichever is smaller.
         const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
-        _MSP.read(addr, buf.data, chunkLen);
+        __ICEFlashIn(buf.data, chunkLen);
         addr += chunkLen;
         len -= chunkLen;
         // Enqueue the buffer
         buf.len = chunkLen;
         _Bufs.wpush();
     }
+    
+    _ICE_ST_SPI_CS_::Write(1);
     
     // Wait for DataIn task to complete
     _Scheduler::Wait([] { return !_Bufs.rok(); });
@@ -727,20 +774,16 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     _ICE_ST_FLASH_EN::Write(1);
     
     // Reset flash
-    _ICEFlashWriteWrite(0x66);
-    _ICEFlashWriteWrite(0x99);
+    _ICEFlashOut(0x66);
+    _ICEFlashOut(0x99);
     _Scheduler::Sleep(_Scheduler::Us(32)); // "the device will take approximately tRST=30us to reset"
     
     // Write enable
-    _ICEFlashWriteWrite(0x06);
+    _ICEFlashOut(0x06);
     // Mass erase
-    _ICEFlashWriteWrite(0xC7);
+    _ICEFlashOut(0xC7);
     // Wait until erase is complete
-    for (;;) {
-        const uint8_t sr1 = _ICEFlashWriteWriteRead(0x05);
-        const bool busy = (sr1 & 1);
-        if (!busy) break;
-    }
+    _ICEFlashWait();
     
     // Reset state
     _Bufs.reset();
@@ -748,7 +791,7 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     // Trigger the USB DataOut task with the amount of data
     _TaskUSBDataOut::Start(arg.len);
     
-    constexpr size_t PageSize = 256;
+    constexpr size_t FlashPageSize = 256;
     uint32_t addr = 0;
     for (;;) {
         // Wait until we have data to consume, and QSPI is ready to write
@@ -757,34 +800,45 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
         // Write the data over SPI and wait for completion
         auto& buf = _Bufs.rget();
         if (buf.len) {
-            // We only allow writing to addresses that are page-aligned
-            if (addr & (PageSize-1)) {
+            // We only allow writing to addresses that are page-aligned.
+            // If we receive some data over USB that isn't a multiple of the flash's page size,
+            // then this check will fail. So data sent over USB must be a multiple of the flash
+            // page size, excepting the final/remainder piece of data if the entire data isn't
+            // a multiple of the flash's page size.
+            if (addr & (FlashPageSize-1)) {
                 _System::USBSendStatus(false);
                 return;
             }
             
-            // Write enable
-            _ICEFlashWriteWrite(0x06);
-            
-            // Page program
-            {
-                const uint8_t instr[] = {
-                    0x02,
-                    (uint8_t)((addr&0xFF0000)>>16),
-                    (uint8_t)((addr&0x00FF00)>>8),
-                    (uint8_t)((addr&0x0000FF)>>0),
-                };
-                _ICEFlashWriteWrite(instr, sizeof(instr), buf.data, buf.len);
-            }
-            
-            // Wait until write is complete
+            size_t chunkOff = 0;
             for (;;) {
-                const uint8_t sr1 = _ICEFlashWriteWriteRead(0x05);
-                const bool busy = (sr1 & 1);
-                if (!busy) break;
+                const size_t chunkLen = std::min(FlashPageSize, buf.len-chunkOff);
+                if (!chunkLen) break;
+                
+                // Write enable
+                _ICEFlashOut(0x06);
+                
+                // Page program
+                {
+                    const uint8_t instr[] = {
+                        0x02,
+                        (uint8_t)((addr&0xFF0000)>>16),
+                        (uint8_t)((addr&0x00FF00)>>8),
+                        (uint8_t)((addr&0x0000FF)>>0),
+                    };
+                    
+                    _ICE_ST_SPI_CS_::Write(0);
+                    __ICEFlashOut(instr, sizeof(instr));
+                    __ICEFlashOut(buf.data+chunkOff, chunkLen);
+                    _ICE_ST_SPI_CS_::Write(1);
+                }
+                
+                // Wait until write is complete
+                _ICEFlashWait();
+                
+                chunkOff += chunkLen;
+                addr += chunkLen;
             }
-            
-            addr += buf.len;
         }
         
         _Bufs.rpop();
