@@ -34,26 +34,23 @@ static void _Abort(uint16_t domain, uint16_t line);
 
 struct _Pin {
     // Default GPIOs
-    using VDD_1V9_IMG_EN                    = PortA::Pin<0x0, Option::Output0>;
+    using VDD_1V8_IMG_EN                    = PortA::Pin<0x0, Option::Output0>;
+    using VDD_B_EN                          = PortA::Pin<0x1, Option::Output0>;
     using VDD_2V8_IMG_EN                    = PortA::Pin<0x2, Option::Output0>;
-    using ICE_MSP_SPI_DATA_DIR              = PortA::Pin<0x3>;
+    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Resistor0, Option::Interrupt01>; // Motion sensor can only pull up, so it requires a pulldown resistor
     using ICE_MSP_SPI_DATA_OUT              = PortA::Pin<0x4>;
     using ICE_MSP_SPI_DATA_IN               = PortA::Pin<0x5>;
     using ICE_MSP_SPI_CLK                   = PortA::Pin<0x6>;
-    using ICE_MSP_SPI_AUX                   = PortA::Pin<0x7, Option::Output0>;
     using XOUT                              = PortA::Pin<0x8>;
     using XIN                               = PortA::Pin<0x9>;
-    using ICE_MSP_SPI_AUX_DIR               = PortA::Pin<0xA, Option::Output1>;
-    using VDD_SD_EN                         = PortA::Pin<0xB, Option::Output0>;
-    using VDD_B_EN_                         = PortA::Pin<0xC, Option::Output1>;
-    using MOTION_SIGNAL                     = PortA::Pin<0xD, Option::Resistor0, Option::Interrupt01>; // Motion sensor can only pull up, so it requires a pulldown resistor
+    using VDD_B_SD_EN                       = PortA::Pin<0xB, Option::Output0>;
     
     using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
 
 using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
-using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN, _Pin::ICE_MSP_SPI_DATA_DIR>;
+using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 
 class _MotionTask;
 class _SDTask;
@@ -505,7 +502,7 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 static bool _SDSetPowerEnabled(bool en) {
     #warning TODO: short-circuit if the pin state isn't changing, to save time
     
-    _Pin::VDD_SD_EN::Write(en);
+    _Pin::VDD_B_SD_EN::Write(en);
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _Scheduler::Sleep(_Scheduler::Ms(2));
     return true;
@@ -516,14 +513,14 @@ static bool _ImgSetPowerEnabled(bool en) {
     
     if (en) {
         _Pin::VDD_2V8_IMG_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
-        _Pin::VDD_1V9_IMG_EN::Write(1);
+        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+        _Pin::VDD_1V8_IMG_EN::Write(1);
         
         #warning measure actual delay that we need for the rails to rise
     
     } else {
-        // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
-        _Pin::VDD_1V9_IMG_EN::Write(0);
+        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+        _Pin::VDD_1V8_IMG_EN::Write(0);
         _Pin::VDD_2V8_IMG_EN::Write(0);
         
         #warning measure actual delay that we need for the rails to fall
@@ -679,6 +676,16 @@ static void _Sleep() {
 
 struct _MotionTask {
     static void Run() {
+        for (;;) {
+            _Pin::DEBUG_OUT::Write(0);
+            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+            _Scheduler::Sleep(_Scheduler::Ms(500));
+            
+            _Pin::DEBUG_OUT::Write(1);
+            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+            _Scheduler::Sleep(_Scheduler::Ms(500));
+        }
+        
         for (;;) {
             _Scheduler::Wait([&] { return _Motion; });
             _Motion = false;
@@ -901,27 +908,22 @@ int main() {
     // Init GPIOs
     GPIO::Init<
         // Power control
-        _Pin::VDD_1V9_IMG_EN,
+        _Pin::VDD_1V8_IMG_EN,
         _Pin::VDD_2V8_IMG_EN,
-        _Pin::VDD_SD_EN,
-        _Pin::VDD_B_EN_,
+        _Pin::VDD_B_SD_EN,
+        _Pin::VDD_B_EN,
         
         // SPI peripheral determines initial state of SPI GPIOs
         _SPI::Pin::Clk,
         _SPI::Pin::DataOut,
         _SPI::Pin::DataIn,
-        _SPI::Pin::DataDir,
         
         // Clock peripheral determines initial state of clock GPIOs
         _Clock::Pin::XOUT,
         _Clock::Pin::XIN,
         
         // Motion
-        _Pin::MOTION_SIGNAL,
-        
-        // Other
-        _Pin::ICE_MSP_SPI_AUX,
-        _Pin::ICE_MSP_SPI_AUX_DIR
+        _Pin::MOTION_SIGNAL
     >();
     
     // Init clock

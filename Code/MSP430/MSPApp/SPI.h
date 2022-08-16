@@ -1,14 +1,13 @@
 #pragma once
 #include <msp430.h>
 
-template <uint32_t T_MCLKFreqHz, typename T_ClkPin, typename T_DataOutPin, typename T_DataInPin, typename T_DataDirPin>
+template <uint32_t T_MCLKFreqHz, typename T_ClkPin, typename T_DataOutPin, typename T_DataInPin>
 class SPIType {
 public:
     struct Pin {
         using Clk       = typename T_ClkPin::template Opts<GPIO::Option::Output1>;
         using DataOut   = typename T_DataOutPin::template Opts<GPIO::Option::Input>;
         using DataIn    = typename T_DataInPin::template Opts<GPIO::Option::Sel01>;
-        using DataDir   = typename T_DataDirPin::template Opts<GPIO::Option::Output0>;
     };
     
     // ICEReset(): reset ICE comms by asserting `T_ClkPin` for some period
@@ -53,9 +52,6 @@ public:
     
     template <typename T_DataOut, typename T_DataIn>
     static void WriteRead(const T_DataOut& dataOut, T_DataIn* dataIn=nullptr) {
-        // PA.4 level shifter direction = MSP->ICE
-        Pin::DataDir::Write(1);
-        
         // PA.4 = UCA0SIMO
         _DataOutEnabled::Init();
         
@@ -66,9 +62,6 @@ public:
         
         // PA.4 = GPIO input
         _DataOutDisabled::Init();
-        
-        // PA.4 level shifter direction = MSP<-ICE
-        Pin::DataDir::Write(0);
         
         // 8-cycle turnaround
         _TxRx(0);
