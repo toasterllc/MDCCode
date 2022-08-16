@@ -31,8 +31,9 @@ namespace STM {
         STMReset,
         
         // STMApp
-        ICEWriteRAM,
-        ICEWriteFlash,
+        ICERAMWrite,
+        ICEFlashRead,
+        ICEFlashWrite,
         
         MSPConnect,
         MSPDisconnect,
@@ -68,11 +69,16 @@ namespace STM {
             
             struct [[gnu::packed]] {
                 uint32_t len;
-            } ICEWriteRAM;
+            } ICERAMWrite;
+            
+            struct [[gnu::packed]] {
+                uint32_t addr;
+                uint32_t len;
+            } ICEFlashRead;
             
             struct [[gnu::packed]] {
                 uint32_t len;
-            } ICEWriteFlash;
+            } ICEFlashWrite;
             
             struct [[gnu::packed]] {
                 uint32_t addr;
