@@ -311,7 +311,7 @@ static void _SDError(uint16_t line) {
 static bool _ImgSetPowerEnabled(bool en) {
     constexpr uint16_t BIT0             = 1<<0;
     constexpr uint16_t BIT2             = 1<<2;
-    constexpr uint16_t VDD_1V9_IMG_EN   = BIT0;
+    constexpr uint16_t VDD_1V8_IMG_EN   = BIT0;
     constexpr uint16_t VDD_2V8_IMG_EN   = BIT2;
     constexpr uint16_t PADIRAddr        = 0x0204;
     constexpr uint16_t PAOUTAddr        = 0x0202;
@@ -321,16 +321,16 @@ static bool _ImgSetPowerEnabled(bool en) {
     
     const uint16_t PADIR = _MSP.read(PADIRAddr);
     const uint16_t PAOUT = _MSP.read(PAOUTAddr);
-    _MSP.write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V9_IMG_EN));
+    _MSP.write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V8_IMG_EN));
     
     if (en) {
         _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
-        _Scheduler::Sleep(_Scheduler::Ms(1)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V9)
-        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V9_IMG_EN));
+        _Scheduler::Sleep(_Scheduler::Ms(1)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
     
     } else {
-        // No delay between 2V8/1V9 needed for power down (per AR0330CS datasheet)
-        _MSP.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V9_IMG_EN));
+        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+        _MSP.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
     }
     
     #warning TODO: measure how long it takes for IMG rails to rise
@@ -1118,6 +1118,9 @@ void _ImgInit(const STM::Cmd& cmd) {
     
     _ImgSensor::Disable();
     _ImgSensor::Enable();
+    
+    // Enable image streaming
+    _ImgSensor::SetStreamEnabled(true);
     
     _System::USBSendStatus(true);
 }
