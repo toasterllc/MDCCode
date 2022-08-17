@@ -21,7 +21,7 @@ public:
     struct Chunk {
         size_t recordCount = 0; // Count of records currently stored in chunk
         size_t recordIdx = 0; // Index of next record
-        Mmap mmap;
+        Toastbox::Mmap mmap;
     };
     
     using Chunks = std::list<Chunk>;
@@ -279,7 +279,7 @@ private:
             chunks.push_back(Chunk{
                 .recordCount = 0,
                 .recordIdx = 0,
-                .mmap = Mmap(_ChunkPath(path, i), SIZE_MAX, MAP_SHARED),
+                .mmap = Toastbox::Mmap(_ChunkPath(path, i), SIZE_MAX, MAP_SHARED),
             });
             chunkIters.push_back(std::prev(chunks.end()));
         }
@@ -379,13 +379,13 @@ private:
         return _ChunkPath(_path, idx);
     }
     
-    static Mmap _CreateChunk(const Path& path) {
+    static Toastbox::Mmap _CreateChunk(const Path& path) {
         constexpr int ChunkPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
         
         const int fdi = open(path.c_str(), O_RDWR|O_CREAT|O_CLOEXEC, ChunkPerm);
         if (fdi < 0) throw Toastbox::RuntimeError("failed to create chunk file: %s", strerror(errno));
         
-        const FileDescriptor fd(fdi);
+        const Toastbox::FileDescriptor fd(fdi);
         const int ir = ftruncate(fd, _ChunkCap);
         if (ir) throw Toastbox::RuntimeError("ftruncate failed: %s", strerror(errno));
         
@@ -393,7 +393,7 @@ private:
         // on disk by another process, and our resulting mapping is shorter than we expect. By supplying
         // the length explicitly, we ensure that the resulting mapping is the expected length, regardless
         // of the file size on disk.
-        return Mmap(fd, _ChunkCap, MAP_SHARED);
+        return Toastbox::Mmap(fd, _ChunkCap, MAP_SHARED);
     }
     
     _ChunkIter _writableChunk() {
@@ -401,7 +401,7 @@ private:
         if (lastChunk==_state.chunks.end() || lastChunk->recordIdx>=T_ChunkRecordCap) {
             // We don't have any chunks, or the last chunk is full
             // Create a new chunk
-            Mmap mmap = _CreateChunk(_chunkPath(_state.chunks.size()));
+            Toastbox::Mmap mmap = _CreateChunk(_chunkPath(_state.chunks.size()));
             
             _state.chunks.push_back(Chunk{
                 .recordCount = 0,

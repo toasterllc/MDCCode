@@ -177,10 +177,10 @@ private:
     
     static void _ICEConfigure(MDCUSBDevice& dev) {
         const char* ICEBinPath = "/Users/dave/repos/MDC/Code/ICE40/ICEAppSDReadoutSTM/Synth/Top.bin";
-        Mmap mmap(ICEBinPath);
+        Toastbox::Mmap mmap(ICEBinPath);
         
         // Write the ICE40 binary
-        dev.iceWrite(mmap.data(), mmap.len());
+        dev.iceRAMWrite(mmap.data(), mmap.len());
     }
     
     static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* msgArg) {
