@@ -1,8 +1,8 @@
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
 #import <mutex>
-#import "HistogramLayer.h"
-#import "HistogramLayerTypes.h"
+//#import "HistogramLayer.h"
+//#import "HistogramLayerTypes.h"
 #import "Assert.h"
 #import "Util.h"
 using namespace CFAViewer;

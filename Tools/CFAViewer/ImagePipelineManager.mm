@@ -1,6 +1,5 @@
 #import "ImagePipelineManager.h"
-using namespace CFAViewer;
-using namespace ImagePipeline;
+using namespace MDCStudio::ImagePipeline;
 
 @implementation ImagePipelineManager
 
@@ -9,7 +8,7 @@ using namespace ImagePipeline;
     
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
-    renderer = Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+    renderer = MDCTools::Renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
     
     return self;
 }
@@ -19,7 +18,7 @@ using namespace ImagePipeline;
     // it contains are destroyed before we render again, so they can be reused
     // for this render run.
     result = {};
-    result = ImagePipeline::Pipeline::Run(renderer, rawImage, options);
+    result = MDCStudio::ImagePipeline::Pipeline::Run(renderer, rawImage, options);
     if (renderCallback) renderCallback();
 }
 

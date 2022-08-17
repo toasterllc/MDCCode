@@ -1,12 +1,13 @@
 #import "MainView.h"
 #import <vector>
 #import "ImageLayer.h"
-#import "HistogramLayer.h"
+//#import "HistogramLayer.h"
 #import "Util.h"
 #import "ColorChecker.h"
+#import "MetalUtil.h"
 
 using namespace CFAViewer;
-using namespace MetalUtil;
+using namespace MDCTools::MetalUtil;
 
 @interface MainView () <CALayoutManager, NSGestureRecognizerDelegate>
 @end

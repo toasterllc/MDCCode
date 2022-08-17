@@ -2,11 +2,14 @@
 #import <Metal/Metal.h>
 #import "Assert.h"
 #import "Util.h"
-#import "TimeInstant.h"
 #import "ImagePipelineManager.h"
 using namespace CFAViewer;
-using namespace MetalUtil;
-using namespace ImagePipeline;
+using namespace MDCTools::MetalUtil;
+using namespace MDCStudio::ImagePipeline;
+
+// _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
+// so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 @implementation ImageLayer {
     ImagePipelineManager* _ipm;
@@ -15,6 +18,7 @@ using namespace ImagePipeline;
 - (instancetype)init {
     if (!(self = [super init])) return nil;
     [self setActions:LayerNullActions()];
+    [self setPixelFormat:_PixelFormat];
     return self;
 }
 
@@ -32,12 +36,12 @@ using namespace ImagePipeline;
     id<CAMetalDrawable> drawable = [self nextDrawable];
     Assert(drawable, return);
     
-    TimeInstant start;
     {
         [_ipm render];
         _ipm->renderer.copy(_ipm->result.txt, [drawable texture]);
-        _ipm->renderer.present(drawable);
-        _ipm->renderer.commit();
+        _ipm->renderer.commitAndWait();
+        [drawable present];
+        
     }
 //    printf("Display took %f\n", start.durationMs()/1000.);
 }

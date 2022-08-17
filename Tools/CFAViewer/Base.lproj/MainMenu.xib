@@ -23,8 +23,8 @@
                 <outlet property="_coarseIntegrationTimeSlider" destination="4YW-P1-qrT" id="X1l-jP-bx4"/>
                 <outlet property="_colorCheckersCheckbox" destination="lTd-T5-f7w" id="m4h-Uc-8uK"/>
                 <outlet property="_colorMatrixTextField" destination="rvZ-kB-DXu" id="p8n-9z-W1i"/>
+                <outlet property="_colorText_LSRGB" destination="wL3-uf-dpp" id="si5-64-W2A"/>
                 <outlet property="_colorText_Raw" destination="70j-FK-iLi" id="bFt-9x-167"/>
-                <outlet property="_colorText_SRGB" destination="wL3-uf-dpp" id="si5-64-W2A"/>
                 <outlet property="_colorText_XYZD50" destination="uWQ-FQ-fcu" id="Wnv-Uw-Fln"/>
                 <outlet property="_contrastLabel" destination="kzO-GG-ZYP" id="cv5-Pp-HCi"/>
                 <outlet property="_contrastSlider" destination="cXS-kH-qXh" id="yW4-N7-AJZ"/>
@@ -745,7 +745,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="400" height="1045"/>
                         <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="jUT-Pl-9aw">
                             <rect key="frame" x="0.0" y="0.0" width="400" height="1045"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Htl-ND-O3N">
                                     <rect key="frame" x="0.0" y="-775" width="400" height="1820"/>
@@ -1867,7 +1867,7 @@
                             <rect key="frame" x="0.0" y="1029" width="400" height="16"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="0.051612903225806472" horizontal="NO" id="9ve-T6-sMB">
+                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="9ve-T6-sMB">
                             <rect key="frame" x="384" y="0.0" width="16" height="1045"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>

@@ -1,5 +1,5 @@
 #import "HistogramView.h"
-#import "HistogramLayer.h"
+//#import "HistogramLayer.h"
 #import "Util.h"
 
 @implementation HistogramView {

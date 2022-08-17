@@ -3,7 +3,7 @@
 
 namespace ColorChecker {
     constexpr size_t Count = 24;
-    const Color<ColorSpace::SRGB> Colors[Count] {
+const MDCTools::Color<MDCTools::ColorSpace::SRGB> Colors[Count] {
         // Row 0
         {   0x73/255.   ,   0x52/255.   ,   0x44/255.   },
         {   0xc2/255.   ,   0x96/255.   ,   0x82/255.   },

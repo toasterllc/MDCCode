@@ -12,15 +12,14 @@
 #import <set>
 #import <chrono>
 #import "ImageLayer.h"
-#import "HistogramLayer.h"
-#import "Mmap.h"
+//#import "HistogramLayer.h"
+#import "Toastbox/Mmap.h"
 #import "Util.h"
 #import "Mat.h"
-#import "TimeInstant.h"
 #import "MainView.h"
 #import "HistogramView.h"
 #import "ColorChecker.h"
-#import "MDCDevice.h"
+#import "Tools/Shared/MDCUSBDevice.h"
 #import "IOServiceMatcher.h"
 #import "IOServiceWatcher.h"
 #import "Assert.h"
@@ -33,9 +32,11 @@
 #import "ChecksumFletcher32.h"
 #import "ELF32Binary.h"
 using namespace CFAViewer;
-using namespace MetalUtil;
-using namespace ImagePipeline;
+using namespace MDCTools::MetalUtil;
+using namespace MDCStudio::ImagePipeline;
 using namespace Toastbox;
+using namespace MDCStudio;
+using namespace MDCTools;
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
@@ -46,7 +47,7 @@ using ImagePathsIter = ImagePaths::iterator;
 
 struct ExposureSettings {
     bool autoExposureEnabled = false;
-    MDCDevice::ImgExposure exposure;
+    MDCUSBDevice::ImgExposure exposure;
 };
 
 @interface AppDelegate : NSObject <NSApplicationDelegate, MainViewDelegate>
@@ -112,7 +113,7 @@ struct ExposureSettings {
     
     IBOutlet NSTextField* _colorText_Raw;
     IBOutlet NSTextField* _colorText_XYZD50;
-    IBOutlet NSTextField* _colorText_SRGB;
+    IBOutlet NSTextField* _colorText_LSRGB;
     
     IBOutlet NSSlider*      _highlightFactorR0Slider;
     IBOutlet NSTextField*   _highlightFactorR0Label;
@@ -142,7 +143,7 @@ struct ExposureSettings {
     
 //    std::optional<IOServiceMatcher> _serviceAppearWatcher;
     std::optional<IOServiceWatcher> _serviceDisappearWatcher;
-    std::optional<MDCDevice> _mdcDevice;
+    std::unique_ptr<MDCUSBDevice> _mdcDevice;
     
     ImagePipelineManager* _imagePipelineManager;
     
@@ -161,8 +162,8 @@ struct ExposureSettings {
         Img::Pixel pixels[2200*2200];
         Pipeline::RawImage img = {
             .cfaDesc = {
-                CFAColor::Green, CFAColor::Red,
-                CFAColor::Blue, CFAColor::Green,
+                MDCStudio::CFAColor::Green, MDCStudio::CFAColor::Red,
+                MDCStudio::CFAColor::Blue, MDCStudio::CFAColor::Green,
             },
             .width = Img::PixelWidth,
             .height = Img::PixelHeight,
@@ -170,9 +171,9 @@ struct ExposureSettings {
         };
     } _rawImage;
     
-    Color<ColorSpace::Raw> _sampleRaw;
-    Color<ColorSpace::XYZD50> _sampleXYZD50;
-    Color<ColorSpace::SRGB> _sampleSRGB;
+    MDCTools::Color<MDCTools::ColorSpace::Raw> _sampleRaw;
+    MDCTools::Color<MDCTools::ColorSpace::XYZD50> _sampleXYZD50;
+    MDCTools::Color<MDCTools::ColorSpace::LSRGB> _sampleLSRGB;
     
     ImagePaths _imagePaths;
     ImagePathsIter _imagePathIter;
@@ -224,10 +225,10 @@ struct ExposureSettings {
     [self _setExposureSettings:{
         .autoExposureEnabled = true,
     }];
-    [self _setMDCDevice:std::nullopt];
+    [self _setMDCUSBDevice:nullptr];
     
     [NSThread detachNewThreadWithBlock:^{
-        [self _threadHandleNewMDCDevices];
+        [self _threadHandleNewMDCUSBDevices];
     }];
     
 //    static NSDictionary* MatchingDictionary() {
@@ -332,7 +333,7 @@ static bool isCFAFile(const fs::path& path) {
 - (void)_loadImage:(const fs::path&)path {
     std::cout << path.filename().string() << "\n";
     
-    const Mmap<uint8_t> imgData(path);
+    const Toastbox::Mmap imgData(path);
     
     // Support 2 different filetypes:
     // (1) solely raw pixel data
@@ -343,7 +344,7 @@ static bool isCFAFile(const fs::path& path) {
     // (2) header + raw pixel data + checksum
     } else if (imgData.len() == Img::Len) {
         // Copy the image data into _rawImage
-        memcpy(_rawImage.pixels, imgData.data()+Img::HeaderLen, Img::PixelLen);
+        memcpy(_rawImage.pixels, imgData.data()+sizeof(Img::Header), Img::PixelLen);
         
         const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), Img::ChecksumOffset);
         uint32_t checksumGot = 0;
@@ -385,34 +386,34 @@ static bool isCFAFile(const fs::path& path) {
     [self _loadImage:*_imagePathIter];
 }
 
-// MARK: - MDCDevice
+// MARK: - MDCUSBDevice
 
 static void _nop(void* ctx, io_iterator_t iter) {}
 
-static void _configureDevice(MDCDevice& dev) {
+static void _configureDevice(MDCUSBDevice& dev) {
     {
         const char* ICEBinPath = "/Users/dave/repos/MDC/Code/ICE40/ICEAppImgCaptureSTM/Synth/Top.bin";
         Mmap mmap(ICEBinPath);
         
         // Write the ICE40 binary
-        dev.iceWrite(mmap.data(), mmap.len());
+        dev.iceRAMWrite(mmap.data(), mmap.len());
     }
     
-    {
-        const char* STMBinPath = "/Users/dave/repos/MDC/Code/STM32/STApp/Release/STApp.elf";
-        ELF32Binary elf(STMBinPath);
-        
-        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-        size_t size, const char* name) {
-            dev.stmWrite(paddr, data, size);
-        });
-        
-        // Reset the device, triggering it to load the program we just wrote
-        dev.stmReset(elf.entryPointAddr());
-    }
+//    {
+//        const char* STMBinPath = "/Users/dave/repos/MDC/Code/STM32/STApp/Release/STApp.elf";
+//        ELF32Binary elf(STMBinPath);
+//        
+//        elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+//        size_t size, const char* name) {
+//            dev.stmWrite(paddr, data, size);
+//        });
+//        
+//        // Reset the device, triggering it to load the program we just wrote
+//        dev.stmReset(elf.entryPointAddr());
+//    }
 }
 
-- (void)_threadHandleNewMDCDevices {
+- (void)_threadHandleNewMDCUSBDevices {
     IONotificationPortRef p = IONotificationPortCreate(kIOMasterPortDefault);
     if (!p) throw Toastbox::RuntimeError("IONotificationPortCreate returned null");
     Defer(IONotificationPortDestroy(p));
@@ -429,7 +430,7 @@ static void _configureDevice(MDCDevice& dev) {
     CFRunLoopSourceRef rls = IONotificationPortGetRunLoopSource(p);
     CFRunLoopAddSource(CFRunLoopGetCurrent(), rls, kCFRunLoopCommonModes);
     
-    std::set<std::string> configuredDevices;
+//    std::set<std::string> configuredDevices;
     for (;;) {
         // Drain all services from the iterator
         for (;;) {
@@ -438,41 +439,48 @@ static void _configureDevice(MDCDevice& dev) {
             
             try {
                 USBDevice dev(service);
-                if (!MDCDevice::USBDeviceMatches(dev)) continue;
+                if (!MDCUSBDevice::USBDeviceMatches(dev)) continue;
                 
-                __block MDCDevice mdc(std::move(dev));
+                __block std::unique_ptr<MDCUSBDevice> mdc = std::make_unique<MDCUSBDevice>(std::move(dev));
                 
-                const STM::Status status = mdc.statusGet();
+                const STM::Status status = mdc->statusGet();
                 switch (status.mode) {
                 case STM::Status::Modes::STMLoader:
-                    _configureDevice(mdc);
-                    configuredDevices.insert(mdc.serial());
+                    abort();
                     break;
+//                    _configureDevice(*mdc);
+//                    configuredDevices.insert(mdc->serial());
+//                    break;
                 
                 case STM::Status::Modes::STMApp:
-                    // If we previously configured this device, this device is ready!
-                    if (configuredDevices.find(mdc.serial()) != configuredDevices.end()) {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [self _setMDCDevice:std::move(mdc)];
-                        });
-                        
-                        configuredDevices.erase(mdc.serial());
-                        
-                    // If we didn't previously configure this device, trigger the bootloader so we can configure it
-                    } else {
-                        mdc.bootloaderInvoke();
-                    }
+                    _configureDevice(*mdc);
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self _setMDCUSBDevice:std::move(mdc)];
+                    });
+                    
+//                    // If we previously configured this device, this device is ready!
+//                    if (configuredDevices.find(mdc->serial()) != configuredDevices.end()) {
+//                        dispatch_async(dispatch_get_main_queue(), ^{
+//                            [self _setMDCUSBDevice:std::move(mdc)];
+//                        });
+//                        
+//                        configuredDevices.erase(mdc->serial());
+//                        
+//                    // If we didn't previously configure this device, trigger the bootloader so we can configure it
+//                    } else {
+//                        mdc->bootloaderInvoke();
+//                    }
                     break;
                 
-                default:
-                    configuredDevices.erase(mdc.serial());
-                    mdc.bootloaderInvoke();
-                    break;
+//                default:
+////                    configuredDevices.erase(mdc->serial());
+////                    mdc->bootloaderInvoke();
+//                    break;
                 }
             
             } catch (const std::exception& e) {
                 // Ignore failures to create USBDevice
-                printf("Configure MDCDevice failed: %s\n", e.what());
+                printf("Configure MDCUSBDevice failed: %s\n", e.what());
             }
         }
         
@@ -485,9 +493,9 @@ static void _configureDevice(MDCDevice& dev) {
 //- (void)_handleNewUSBDevice:(SendRight&&)service {
 //    try {
 //        USBDevice dev(service);
-//        if (!MDCDevice::USBDeviceMatches(dev)) return;
+//        if (!MDCUSBDevice::USBDeviceMatches(dev)) return;
 //        
-//        MDCDevice mdc(std::move(dev));
+//        MDCUSBDevice mdc(std::move(dev));
 //        
 //        const STM::Status status = mdc.statusGet();
 //        // Return the MDC device to the bootloader, if it's not in the bootloader currently
@@ -498,14 +506,14 @@ static void _configureDevice(MDCDevice& dev) {
 //        
 //        // 
 //        
-//        [self _setMDCDevice:std::move(mdc)];
+//        [self _setMDCUSBDevice:std::move(mdc)];
 //    
 //    } catch (const std::exception& e) {
 //        // Ignore failures to create USBDevice
 //    }
 //}
 
-- (void)_setMDCDevice:(std::optional<MDCDevice>)dev {
+- (void)_setMDCUSBDevice:(std::unique_ptr<MDCUSBDevice>)dev {
     // Stop streaming, set switch to off, and enable or disable switch
     [self _streamImagesStop];
     
@@ -515,9 +523,9 @@ static void _configureDevice(MDCDevice& dev) {
     
     if (_mdcDevice) {
         __weak auto weakSelf = self;
-        _serviceDisappearWatcher = IOServiceWatcher(_mdcDevice->usbDevice().service(), dispatch_get_main_queue(),
+        _serviceDisappearWatcher = IOServiceWatcher(_mdcDevice->dev().service(), dispatch_get_main_queue(),
             ^(uint32_t msgType, void* msgArg) {
-                [weakSelf _handleMDCDeviceNotificationType:msgType arg:msgArg];
+                [weakSelf _handleMDCUSBDeviceNotificationType:msgType arg:msgArg];
             });
         
         [self _setStreamImagesEnabled:true];
@@ -526,9 +534,9 @@ static void _configureDevice(MDCDevice& dev) {
     }
 }
 
-- (void)_handleMDCDeviceNotificationType:(uint32_t)msgType arg:(void*)msgArg {
+- (void)_handleMDCUSBDeviceNotificationType:(uint32_t)msgType arg:(void*)msgArg {
     if (msgType == kIOMessageServiceIsTerminated) {
-        [self _setMDCDevice:std::nullopt];
+        [self _setMDCUSBDevice:nullptr];
     }
 }
 
@@ -548,7 +556,7 @@ static void _configureDevice(MDCDevice& dev) {
 
 - (void)_threadStreamImages {
     assert(_mdcDevice);
-    MDCDevice& dev = *_mdcDevice;
+    MDCUSBDevice& dev = *_mdcDevice;
     
     Defer(
         // Notify that our thread has exited
@@ -567,15 +575,17 @@ static void _configureDevice(MDCDevice& dev) {
 //        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
 //        auto tmpPixels = std::make_unique<MDC::Pixel[]>(tmpPixelsCap);
         
+        dev.imgInit();
+        
         std::optional<Img::AutoExposure> autoExp;
         
-        MDCDevice::ImgExposure exposure;
-        MDCDevice::ImgExposure lastExposure;
+        MDCUSBDevice::ImgExposure exposure;
+        MDCUSBDevice::ImgExposure lastExposure;
         for (uint32_t i=0;; i++) {
             // Set the image exposure if it changed
             const bool setExp = memcmp(&exposure, &lastExposure, sizeof(exposure));
             if (setExp) {
-                dev.imgSetExposure(exposure);
+                dev.imgExposureSet(exposure);
                 lastExposure = exposure;
                 printf("Set exposure %d\n", exposure.coarseIntTime);
 //                usleep(100000);
@@ -599,7 +609,7 @@ static void _configureDevice(MDCDevice& dev) {
                 if (_streamImagesThread.cancel) break;
                 
                 // Copy the image into the persistent buffer
-                memcpy(_streamImagesThread.pixels, img.get()+Img::HeaderLen, Img::PixelLen);
+                memcpy(_streamImagesThread.pixels, img.get()+sizeof(Img::Header), Img::PixelLen);
                 
                 // While we have the lock, copy the exposure settings
                 if (_streamImagesThread.exposureSettings.autoExposureEnabled && !autoExp) {
@@ -826,14 +836,14 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
     const auto& sampleBufs = _imagePipelineManager->result.sampleBufs;
     _sampleRaw = _averageRaw(rect, _rawImage.img.cfaDesc, sampleBufs.raw);
     _sampleXYZD50 = _averageRGB(rect, sampleBufs.xyzD50);
-    _sampleSRGB = _averageRGB(rect, sampleBufs.srgb);
+    _sampleLSRGB = _averageRGB(rect, sampleBufs.lsrgb);
     
     [_colorText_Raw setStringValue:
         [NSString stringWithFormat:@"%f %f %f", _sampleRaw[0], _sampleRaw[1], _sampleRaw[2]]];
     [_colorText_XYZD50 setStringValue:
         [NSString stringWithFormat:@"%f %f %f", _sampleXYZD50[0], _sampleXYZD50[1], _sampleXYZD50[2]]];
-    [_colorText_SRGB setStringValue:
-        [NSString stringWithFormat:@"%f %f %f", _sampleSRGB[0], _sampleSRGB[1], _sampleSRGB[2]]];
+    [_colorText_LSRGB setStringValue:
+        [NSString stringWithFormat:@"%f %f %f", _sampleLSRGB[0], _sampleLSRGB[1], _sampleLSRGB[2]]];
 }
 
 static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, int x, int y, int radius) {
@@ -873,7 +883,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
         f.write((char*)_rawImage.pixels, pixelCount*sizeof(*_rawImage.pixels));
     
     } else if (ext == "png") {
-        id img = _imagePipelineManager->renderer.createCGImage(_imagePipelineManager->result.txt);
+        id img = _imagePipelineManager->renderer.imageCreate(_imagePipelineManager->result.txt);
         Assert(img, return);
         
         id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
@@ -956,7 +966,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     _streamImagesThread.exposureSettings = _exposureSettings;
 }
 
-- (void)_updateAutoExposureUI:(const MDCDevice::ImgExposure&)exposure {
+- (void)_updateAutoExposureUI:(const MDCUSBDevice::ImgExposure&)exposure {
     // Bail if auto exposure is disabled
     if (!_exposureSettings.autoExposureEnabled) return;
     [self _setExposureSettings:{
