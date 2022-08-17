@@ -48,6 +48,9 @@ struct _Pin {
     using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
 
+// _MotionSignalIV: Keep in sync with MOTION_SIGNAL
+constexpr uint16_t _MotionSignalIV = P1IV__P1IFG3;
+
 using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
@@ -428,11 +431,11 @@ static void _ISR_RTC() {
     _RTC.isr();
 }
 
-[[gnu::interrupt(PORT2_VECTOR)]]
-static void _ISR_Port2() {
-    // Accessing `P2IV` automatically clears the highest-priority interrupt
-    switch (__even_in_range(P2IV, P2IV__P2IFG5)) {
-    case P2IV__P2IFG5:
+[[gnu::interrupt(PORT1_VECTOR)]]
+static void _ISR_Port1() {
+    // Accessing `P1IV` automatically clears the highest-priority interrupt
+    switch (__even_in_range(P1IV, _MotionSignalIV)) {
+    case _MotionSignalIV:
         _Motion = true;
         // Wake ourself
         __bic_SR_register_on_exit(LPM3_bits);
@@ -676,20 +679,30 @@ static void _Sleep() {
 
 struct _MotionTask {
     static void Run() {
-        _Pin::VDD_B_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Ms(500));
+//        for (;;) {
+//            _Pin::VDD_B_EN::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms(500));
+//            
+//            _Pin::VDD_B_EN::Write(0);
+//            _Scheduler::Sleep(_Scheduler::Ms(500));
+//        }
+//        
+//        _Pin::VDD_B_EN::Write(1);
+//        _Scheduler::Sleep(_Scheduler::Ms(500));
+//        
+//        for (;;) {
+//            _Pin::DEBUG_OUT::Write(1);
+//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+//            _Scheduler::Sleep(_Scheduler::Ms(500));
+//            
+//            _Pin::DEBUG_OUT::Write(0);
+//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//            _Scheduler::Sleep(_Scheduler::Ms(500));
+//        }
         
         for (;;) {
-            _Pin::DEBUG_OUT::Write(1);
-            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-            _Scheduler::Sleep(_Scheduler::Ms(500));
+//            _Scheduler::Sleep(_Scheduler::Ms(2000));
             
-            _Pin::DEBUG_OUT::Write(0);
-            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-            _Scheduler::Sleep(_Scheduler::Ms(500));
-        }
-        
-        for (;;) {
             _Scheduler::Wait([&] { return _Motion; });
             _Motion = false;
             
@@ -979,6 +992,8 @@ int main() {
     //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
     if (Startup::ColdStart()) {
         _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
+        // Turn on VDD_B
+        _Pin::VDD_B_EN::Write(1);
         _Scheduler::Delay(_Scheduler::Ms(3000));
     }
     
