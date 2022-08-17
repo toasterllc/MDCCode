@@ -11,7 +11,7 @@
       connecting device to USB power. It appears this is because the STM32 side, MSP_RST_X_, is
       floating before STM32 explicitly configures the GPIO, which the level shifter interprets as a
       low value, and drives MSP_RST_ low, causing MSP430 to be reset until STM32 drives MSP_RST_X_ high.
-      This appears to happens despite MSP430's pull-up on its RST pin.
+      This appears to happen despite MSP430's pull-up on its RST pin.
       
       - Solution: connect U16.OE to a STM32 GPIO (instead of VDD_B_1V8_STM), perhaps called 'MSP_SBW_EN',
         and include a pull-down resistor. That way, U16 outputs will be disabled until STM32 explicitly
@@ -77,6 +77,19 @@
         √ Solution: don't rapidly change the temp of the board eg by adding flux or rinsing in alcohol!
 
 - Rev5
+    
+    - Implement thumbnailing in ICEAppMSP / MSPApp
+        - Motivation: so MDCStudio can load thumbnails quickly
+    
+    - MSPApp: store oldest 3 aborts, and newest 3 aborts (currently we only store the oldest 3 aborts)
+    
+    - Implement time handling in MDCStudio
+        - MDCStudio needs to set MSP's time
+    
+    - Improve exposure/gain algs
+    
+    - Optimize battery usage of MSPApp
+        - Currently we keep VDD_B on all the time!
     
     - Cancel order for TPS62802YKAR / TPS63805YFFR if we no longer need it
     
