@@ -29,6 +29,8 @@
           - Adding a voltage divider (56k,20k) to the enable pins seems to fix it
               - Rationale: Ven = 3.8*(20/(56+20)) = 1V -> VDD_B needs to reach 3.8V before U8 turns on,
                 presumably because the added delay allows the R2D converter to function correctly
+                
+              X Nevermind, it's broken again after soldering the image sensor + motion sensor (now it's 3V instead of 2.8V)
     
     - U3: needs to be powered by VDD_A, not VDD_A_3V3, because the voltage on Q1's Vgate needs to reach its
       Vsource when Q1 is supposed to be off. But if U3 is powered by VDD_A_3V3, the max voltage that U3 can
