@@ -212,8 +212,6 @@ static void ICEFlashRead(const Args& args, MDCUSBDevice& device) {
     }
     
     printf("\n");
-    
-    device.mspDisconnect();
 }
 
 static void ICEFlashWrite(const Args& args, MDCUSBDevice& device) {
@@ -251,7 +249,7 @@ static void MSPRead(const Args& args, MDCUSBDevice& device) {
     
     printf("\n");
     
-    device.mspDisconnect();
+    device.mspDisconnect(true);
 }
 
 static void MSPWrite(const Args& args, MDCUSBDevice& device) {
@@ -282,7 +280,7 @@ static void MSPWrite(const Args& args, MDCUSBDevice& device) {
         }
     });
     
-    device.mspDisconnect();
+    device.mspDisconnect(true);
 }
 
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
@@ -366,7 +364,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     }
     printf(     "\n");
     
-    device.mspDisconnect();
+    device.mspDisconnect(true);
 }
 
 static void SDImgRead(const Args& args, MDCUSBDevice& device) {

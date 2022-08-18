@@ -82,6 +82,10 @@ namespace STM {
             } ICEFlashWrite;
             
             struct [[gnu::packed]] {
+                uint8_t run;
+            } MSPDisconnect;
+            
+            struct [[gnu::packed]] {
                 uint32_t addr;
                 uint32_t len;
             } MSPRead;

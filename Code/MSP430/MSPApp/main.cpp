@@ -37,14 +37,14 @@ struct _Pin {
     using VDD_1V8_IMG_EN                    = PortA::Pin<0x0, Option::Output0>;
     using VDD_B_EN                          = PortA::Pin<0x1, Option::Output0>;
     using VDD_2V8_IMG_EN                    = PortA::Pin<0x2, Option::Output0>;
-    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Resistor0, Option::Interrupt01>; // Motion sensor can only pull up, so it requires a pulldown resistor
+    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
     using ICE_MSP_SPI_DATA_OUT              = PortA::Pin<0x4>;
     using ICE_MSP_SPI_DATA_IN               = PortA::Pin<0x5>;
     using ICE_MSP_SPI_CLK                   = PortA::Pin<0x6>;
     using XOUT                              = PortA::Pin<0x8>;
     using XIN                               = PortA::Pin<0x9>;
     using VDD_B_SD_EN                       = PortA::Pin<0xB, Option::Output0>;
-    
+    using MSP_EN                            = PortA::Pin<0xD, Option::Input, Option::Resistor1>;
     using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
 
@@ -923,11 +923,13 @@ int main() {
     
     // Init GPIOs
     GPIO::Init<
-        // Power control
+        // Main Pins
         _Pin::VDD_1V8_IMG_EN,
         _Pin::VDD_2V8_IMG_EN,
         _Pin::VDD_B_SD_EN,
         _Pin::VDD_B_EN,
+        _Pin::MSP_EN,
+        _Pin::MOTION_SIGNAL
         
         // SPI peripheral determines initial state of SPI GPIOs
         _SPI::Pin::Clk,
@@ -937,9 +939,6 @@ int main() {
         // Clock peripheral determines initial state of clock GPIOs
         _Clock::Pin::XOUT,
         _Clock::Pin::XIN,
-        
-        // Motion
-        _Pin::MOTION_SIGNAL
     >();
     
     // Init clock
@@ -991,10 +990,22 @@ int main() {
     //   1. it rate-limits aborts, in case there's a persistent issue
     //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
     if (Startup::ColdStart()) {
-        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
+        #warning TODO: VDD_B_EN needs to be controlled elsewhere when we implement proper power rail control
         // Turn on VDD_B
         _Pin::VDD_B_EN::Write(1);
+        
+        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
         _Scheduler::Delay(_Scheduler::Ms(3000));
+        
+        // Don't run until MSP_EN is high.
+        // STM32 controls MSP_EN to control when we start executing, in order to implement mutual
+        // exclusion on controlling our power rails and talking to ICE40.
+        while (!MSP_EN::Read()) _Scheduler::Delay(_Scheduler::Ms(100));
+        
+        // Once we're enabled, disable the pullup on MSP_EN to prevent the leakage current (~80nA)
+        // through STM32's GPIO that controls MSP_EN
+        using MSP_EN_PULLDOWN = _Pin::MSP_EN::Opts<Option::Input, Option::Resistor0>;
+        MSP_EN_PULLDOWN::Init();
     }
     
     _Scheduler::Run();

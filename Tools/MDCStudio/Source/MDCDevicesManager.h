@@ -40,6 +40,14 @@ private:
     using _USBDevice = Toastbox::USBDevice;
     
     static void _ThreadHandleDevices() {
+        enum class _DeviceState {
+            STMLoaderInvoke,
+            STMLoaderCheck,
+            STMAppWrite,
+            STMAppCheck,
+            Finish,
+        };
+        
         IONotificationPortRef notePort = IONotificationPortCreate(kIOMasterPortDefault);
         if (!notePort) throw Toastbox::RuntimeError("IONotificationPortCreate returned null");
         Defer(IONotificationPortDestroy(notePort));
@@ -56,7 +64,7 @@ private:
         CFRunLoopSourceRef rls = IONotificationPortGetRunLoopSource(notePort);
         CFRunLoopAddSource(CFRunLoopGetCurrent(), rls, kCFRunLoopCommonModes);
         
-        std::set<std::string> bootloadedDeviceSerials;
+        std::map<std::string,_DeviceState> deviceStates;
         for (;;) @autoreleasepool {
             bool changed = false;
             
@@ -78,21 +86,42 @@ private:
                 }
                 
                 try {
-                    const STM::Status status = dev->statusGet();
-                    switch (status.mode) {
-                    case STM::Status::Modes::STMLoader:
-                        _DeviceBootload(*dev);
-                        bootloadedDeviceSerials.insert(dev->serial());
-                        break;
-                    
-                    case STM::Status::Modes::STMApp:
-                        // If we didn't previously configure this device, trigger the bootloader so we can configure it
-                        if (bootloadedDeviceSerials.find(dev->serial()) == bootloadedDeviceSerials.end()) {
+                    for (;;) {
+                        _DeviceState& state = deviceStates[dev->serial()];
+                        switch (state) {
+                        case _DeviceState::STMLoaderInvoke: {
                             dev->bootloaderInvoke();
+                            state = _DeviceState::STMLoaderCheck;
+                            break; // Device will re-enumerate; continue to the next device
+                        }
                         
-                        // If we previously configured this device, this device is ready!
-                        } else {
-                            bootloadedDeviceSerials.erase(dev->serial());
+                        case _DeviceState::STMLoaderCheck: {
+                            if (dev->statusGet().mode == STM::Status::Modes::STMLoader) {
+                                state = _DeviceState::STMAppWrite;
+                            } else {
+                                state = _DeviceState::STMLoaderInvoke; // Start over
+                            }
+                            continue;
+                        }
+                        
+                        case _DeviceState::STMAppWrite: {
+                            _DeviceBootload(*dev);
+                            state = _DeviceState::STMAppCheck;
+                            break; // Device will re-enumerate; continue to the next device
+                        }
+                        
+                        case _DeviceState::STMAppCheck: {
+                            if (dev->statusGet().mode == STM::Status::Modes::STMApp) {
+                                state = _DeviceState::Finish;
+                            } else {
+                                state = _DeviceState::STMLoaderInvoke; // Start over
+                            }
+                            continue;
+                        }
+                        
+                        case _DeviceState::Finish: {
+                            state = _DeviceState::STMLoaderInvoke; // Start over if this device appears again
+                            
                             // Load ICE40 with our app
                             _ICEConfigure(*dev);
                             
@@ -116,12 +145,9 @@ private:
                             
                             printf("Device connected\n");
                             changed = true;
-                        }
-                        break;
-                    
-                    default:
-                        bootloadedDeviceSerials.erase(dev->serial());
-                        dev->bootloaderInvoke();
+                            break; // Device is fully configured
+                        }}
+                        
                         break;
                     }
                 

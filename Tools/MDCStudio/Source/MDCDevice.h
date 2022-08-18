@@ -241,30 +241,33 @@ private:
                 auto lock = std::unique_lock(*_dev);
                 _dev->mspConnect();
                 _dev->mspRead(MSP::StateAddr, &state, sizeof(state));
-            }
-            
-            if (state.magic != MSP::State::MagicNumber) {
-                // Program MSPApp onto MSP
-                #warning TODO: implement
-                throw Toastbox::RuntimeError("TODO: implement");
-            }
-            
-            if (state.version > MSP::State::Version) {
-                // Newer version than we understand -- tell user to upgrade or re-program
-                #warning TODO: implement
-                throw Toastbox::RuntimeError("TODO: implement");
-            }
-            
-            if (!state.sd.valid) {
-                // MSPApp state isn't valid -- ignore
-                #warning TODO: implement
-                throw Toastbox::RuntimeError("TODO: implement");
-            }
-            
-            if (memcmp(&_sdCardInfo.cardId, &state.sd.cardId, sizeof(state.sd.cardId))) {
-                // Current SD card id doesn't match MSP's card id
-                #warning TODO: implement
-                throw Toastbox::RuntimeError("TODO: implement");
+                
+                if (state.magic != MSP::State::MagicNumber) {
+                    // Program MSPApp onto MSP
+                    #warning TODO: implement
+                    throw Toastbox::RuntimeError("TODO: implement");
+                }
+                
+                if (state.version > MSP::State::Version) {
+                    // Newer version than we understand -- tell user to upgrade or re-program
+                    #warning TODO: implement
+                    throw Toastbox::RuntimeError("TODO: implement");
+                }
+                
+                if (!state.sd.valid) {
+                    // MSPApp state isn't valid -- ignore
+                    #warning TODO: implement
+                    throw Toastbox::RuntimeError("TODO: implement");
+                }
+                
+                if (memcmp(&_sdCardInfo.cardId, &state.sd.cardId, sizeof(state.sd.cardId))) {
+                    // Current SD card id doesn't match MSP's card id
+                    #warning TODO: implement
+                    throw Toastbox::RuntimeError("TODO: implement");
+                }
+                
+                constexpr bool MSPRun = false; // Don't allow MSP to run
+                _dev->mspDisconnect(MSPRun);
             }
             
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(state);

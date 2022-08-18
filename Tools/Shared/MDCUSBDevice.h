@@ -251,9 +251,18 @@ public:
         _checkStatus("MSPConnect command failed");
     }
     
-    void mspDisconnect() {
+    void mspDisconnect(bool run) {
         assert(_mode == STM::Status::Modes::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::MSPDisconnect };
+        
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPDisconnect,
+            .arg = {
+                .MSPDisconnect = {
+                    .run = run,
+                },
+            },
+        };
+        
         _sendCmd(cmd);
         _checkStatus("MSPDisconnect command failed");
     }
