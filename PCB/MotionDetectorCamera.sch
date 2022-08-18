@@ -5905,10 +5905,16 @@ Therefore, C = 22 pF</text>
 <text x="141.732" y="93.472" size="1.016" layer="95" align="top-left">Use NP0 dialectric capacitors to minimize
 capacitance variation due to temperature
 and DC bias</text>
-<text x="-35.56" y="32.512" size="1.016" layer="95" align="top-right">Use VCCB side for VDD_A because VCCB
-has a wider supply voltage range (1.65-5.5 V),
-giving us more flexibility in the battery
-voltage.</text>
+<text x="-53.34" y="12.192" size="1.016" layer="95" align="top-right">Use NTB0102's VCC(B) for our VDD_A
+because the datasheet says:
+
+"During operation VCC(A) must
+never be higher than VCC(B)."
+
+Also, NTB0102's VCC(B) has a wider
+supply voltage range (1.65-5.5 V),
+giving us more flexibility in the
+battery voltage.</text>
 <text x="-112.268" y="61.214" size="1.016" layer="95" align="top-left">Don't use a pullup resistor on MSP_RST_!!
 
 MSP430FR* has an internal 20k-50k pullup, which
@@ -5918,10 +5924,6 @@ the level shifter, which requires weak pullups.
 Adding an external resistor lowers the pullup
 resistance further (parallel resistors), worsening
 the level shifter's VOL.</text>
-<text x="101.6" y="32.512" size="1.016" layer="95" align="top-right">Use VCCB side for VDD_A because VCCB
-has a wider supply voltage range (1.65-5.5 V),
-giving us more flexibility in the battery
-voltage.</text>
 <text x="-64.008" y="58.674" size="1.016" layer="95" align="top-left">Don't use the recommended 1nF capacitor!!
 
 For correct operation of the level shifter,
@@ -5932,6 +5934,16 @@ capacitive loads.
 Since the recommended 1nF capacitor is for
 noise suppression, we should be able to get
 away with a smaller capacitor.</text>
+<text x="83.82" y="17.272" size="1.016" layer="95" align="top-right">Use NTB0102's VCC(B) for our VDD_A
+because the datasheet says:
+
+"During operation VCC(A) must
+never be higher than VCC(B)."
+
+Also, NTB0102's VCC(B) has a wider
+supply voltage range (1.65-5.5 V),
+giving us more flexibility in the
+battery voltage.</text>
 </plain>
 <instances>
 <instance part="U15" gate="A" x="-30.48" y="78.74" smashed="yes">
@@ -5976,41 +5988,41 @@ away with a smaller capacitor.</text>
 <attribute name="NAME" x="-65.786" y="83.439" size="1.778" layer="95"/>
 <attribute name="VALUE" x="-65.786" y="80.899" size="1.778" layer="96"/>
 </instance>
-<instance part="U17" gate="G$1" x="124.46" y="38.1" smashed="yes" rot="MR0">
-<attribute name="PN" x="124.46" y="12.7" size="1.778" layer="95" rot="MR0"/>
-<attribute name="NAME" x="124.46" y="40.64" size="1.778" layer="95" rot="MR0" align="top-left"/>
+<instance part="U17" gate="G$1" x="124.46" y="15.24" smashed="yes" rot="MR0">
+<attribute name="PN" x="124.46" y="-10.16" size="1.778" layer="95" rot="MR0"/>
+<attribute name="NAME" x="124.46" y="17.78" size="1.778" layer="95" rot="MR0" align="top-left"/>
 </instance>
-<instance part="U16" gate="G$1" x="-12.7" y="38.1" smashed="yes" rot="MR0">
-<attribute name="PN" x="-12.7" y="12.7" size="1.778" layer="95" rot="MR0"/>
-<attribute name="NAME" x="-12.7" y="40.64" size="1.778" layer="95" rot="MR0" align="top-left"/>
+<instance part="U16" gate="G$1" x="-12.7" y="15.24" smashed="yes" rot="MR0">
+<attribute name="PN" x="-12.7" y="-10.16" size="1.778" layer="95" rot="MR0"/>
+<attribute name="NAME" x="-12.7" y="17.78" size="1.778" layer="95" rot="MR0" align="top-left"/>
 </instance>
 <instance part="X1" gate="G$1" x="121.92" y="99.06" smashed="yes">
 <attribute name="NAME" x="121.92" y="101.346" size="1.778" layer="95" align="top-left"/>
 <attribute name="PN" x="121.92" y="99.06" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="C27" gate="G$1" x="-71.12" y="30.48" smashed="yes">
-<attribute name="PN" x="-86.36" y="-27.94" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="-86.36" y="-27.94" size="1.778" layer="96" display="off"/>
-<attribute name="NAME" x="-74.168" y="30.099" size="1.778" layer="95" align="bottom-right"/>
-<attribute name="VALUE" x="-74.168" y="27.559" size="1.778" layer="96" align="bottom-right"/>
+<instance part="C27" gate="G$1" x="-35.56" y="25.4" smashed="yes">
+<attribute name="PN" x="-50.8" y="-33.02" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="-50.8" y="-33.02" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="-38.608" y="25.019" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="-38.608" y="22.479" size="1.778" layer="96" align="bottom-right"/>
 </instance>
-<instance part="C29" gate="G$1" x="68.58" y="30.48" smashed="yes">
-<attribute name="PN" x="53.34" y="-27.94" size="1.778" layer="96" display="off"/>
-<attribute name="MFG" x="53.34" y="-27.94" size="1.778" layer="96" display="off"/>
-<attribute name="NAME" x="65.532" y="30.099" size="1.778" layer="95" align="bottom-right"/>
-<attribute name="VALUE" x="65.532" y="27.559" size="1.778" layer="96" align="bottom-right"/>
+<instance part="C29" gate="G$1" x="101.6" y="25.4" smashed="yes">
+<attribute name="PN" x="86.36" y="-33.02" size="1.778" layer="96" display="off"/>
+<attribute name="MFG" x="86.36" y="-33.02" size="1.778" layer="96" display="off"/>
+<attribute name="NAME" x="98.552" y="25.019" size="1.778" layer="95" align="bottom-right"/>
+<attribute name="VALUE" x="98.552" y="22.479" size="1.778" layer="96" align="bottom-right"/>
 </instance>
-<instance part="C28" gate="G$1" x="17.78" y="30.48" smashed="yes" rot="MR0">
-<attribute name="PN" x="33.02" y="-27.94" size="1.778" layer="96" rot="MR0" display="off"/>
-<attribute name="MFG" x="33.02" y="-27.94" size="1.778" layer="96" rot="MR0" display="off"/>
-<attribute name="NAME" x="20.828" y="30.099" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
-<attribute name="VALUE" x="20.828" y="27.559" size="1.778" layer="96" rot="MR0" align="bottom-right"/>
+<instance part="C28" gate="G$1" x="-10.16" y="25.4" smashed="yes" rot="MR0">
+<attribute name="PN" x="5.08" y="-33.02" size="1.778" layer="96" rot="MR0" display="off"/>
+<attribute name="MFG" x="5.08" y="-33.02" size="1.778" layer="96" rot="MR0" display="off"/>
+<attribute name="NAME" x="-7.112" y="25.019" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<attribute name="VALUE" x="-7.112" y="22.479" size="1.778" layer="96" rot="MR0" align="bottom-right"/>
 </instance>
-<instance part="C30" gate="G$1" x="157.48" y="30.48" smashed="yes" rot="MR0">
-<attribute name="PN" x="172.72" y="-27.94" size="1.778" layer="96" rot="MR0" display="off"/>
-<attribute name="MFG" x="172.72" y="-27.94" size="1.778" layer="96" rot="MR0" display="off"/>
-<attribute name="NAME" x="160.528" y="30.099" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
-<attribute name="VALUE" x="160.528" y="27.559" size="1.778" layer="96" rot="MR0" align="bottom-right"/>
+<instance part="C30" gate="G$1" x="127" y="25.4" smashed="yes" rot="MR0">
+<attribute name="PN" x="142.24" y="-33.02" size="1.778" layer="96" rot="MR0" display="off"/>
+<attribute name="MFG" x="142.24" y="-33.02" size="1.778" layer="96" rot="MR0" display="off"/>
+<attribute name="NAME" x="130.048" y="25.019" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<attribute name="VALUE" x="130.048" y="22.479" size="1.778" layer="96" rot="MR0" align="bottom-right"/>
 </instance>
 </instances>
 <busses>
@@ -6030,23 +6042,23 @@ away with a smaller capacitor.</text>
 </segment>
 <segment>
 <pinref part="U17" gate="G$1" pin="VCCB"/>
-<wire x1="101.6" y1="35.56" x2="99.06" y2="35.56" width="0.1524" layer="91"/>
-<label x="99.06" y="35.56" size="1.778" layer="95" rot="MR0"/>
+<wire x1="101.6" y1="12.7" x2="99.06" y2="12.7" width="0.1524" layer="91"/>
+<label x="99.06" y="12.7" size="1.778" layer="95" rot="MR0"/>
 </segment>
 <segment>
 <pinref part="U16" gate="G$1" pin="VCCB"/>
-<wire x1="-35.56" y1="35.56" x2="-38.1" y2="35.56" width="0.1524" layer="91"/>
-<label x="-38.1" y="35.56" size="1.778" layer="95" rot="MR0"/>
+<wire x1="-35.56" y1="12.7" x2="-38.1" y2="12.7" width="0.1524" layer="91"/>
+<label x="-38.1" y="12.7" size="1.778" layer="95" rot="MR0"/>
 </segment>
 <segment>
 <pinref part="C27" gate="G$1" pin="1"/>
-<wire x1="-71.12" y1="33.02" x2="-71.12" y2="35.56" width="0.1524" layer="91"/>
-<label x="-71.12" y="35.56" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="-35.56" y1="27.94" x2="-35.56" y2="30.48" width="0.1524" layer="91"/>
+<label x="-35.56" y="30.48" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="C29" gate="G$1" pin="1"/>
-<wire x1="68.58" y1="33.02" x2="68.58" y2="35.56" width="0.1524" layer="91"/>
-<label x="68.58" y="35.56" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="101.6" y1="27.94" x2="101.6" y2="30.48" width="0.1524" layer="91"/>
+<label x="101.6" y="30.48" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -6081,33 +6093,33 @@ away with a smaller capacitor.</text>
 </segment>
 <segment>
 <pinref part="U17" gate="G$1" pin="GND"/>
-<wire x1="127" y1="33.02" x2="129.54" y2="33.02" width="0.1524" layer="91"/>
-<label x="129.54" y="33.02" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<wire x1="127" y1="10.16" x2="129.54" y2="10.16" width="0.1524" layer="91"/>
+<label x="129.54" y="10.16" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 </segment>
 <segment>
-<wire x1="-10.16" y1="33.02" x2="-7.62" y2="33.02" width="0.1524" layer="91"/>
-<label x="-7.62" y="33.02" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<wire x1="-10.16" y1="10.16" x2="-7.62" y2="10.16" width="0.1524" layer="91"/>
+<label x="-7.62" y="10.16" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 <pinref part="U16" gate="G$1" pin="GND"/>
 </segment>
 <segment>
 <pinref part="C27" gate="G$1" pin="2"/>
-<wire x1="-71.12" y1="25.4" x2="-71.12" y2="22.86" width="0.1524" layer="91"/>
-<label x="-71.12" y="22.86" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="-35.56" y1="20.32" x2="-35.56" y2="17.78" width="0.1524" layer="91"/>
+<label x="-35.56" y="17.78" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="C29" gate="G$1" pin="2"/>
-<wire x1="68.58" y1="25.4" x2="68.58" y2="22.86" width="0.1524" layer="91"/>
-<label x="68.58" y="22.86" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="101.6" y1="20.32" x2="101.6" y2="17.78" width="0.1524" layer="91"/>
+<label x="101.6" y="17.78" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="C28" gate="G$1" pin="2"/>
-<wire x1="17.78" y1="25.4" x2="17.78" y2="22.86" width="0.1524" layer="91"/>
-<label x="17.78" y="22.86" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<wire x1="-10.16" y1="20.32" x2="-10.16" y2="17.78" width="0.1524" layer="91"/>
+<label x="-10.16" y="17.78" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 </segment>
 <segment>
 <pinref part="C30" gate="G$1" pin="2"/>
-<wire x1="157.48" y1="25.4" x2="157.48" y2="22.86" width="0.1524" layer="91"/>
-<label x="157.48" y="22.86" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
+<wire x1="127" y1="20.32" x2="127" y2="17.78" width="0.1524" layer="91"/>
+<label x="127" y="17.78" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 </segment>
 </net>
 <net name="MSP_TEST" class="0">
@@ -6117,8 +6129,8 @@ away with a smaller capacitor.</text>
 <label x="-35.56" y="66.04" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<wire x1="-35.56" y1="22.86" x2="-38.1" y2="22.86" width="0.1524" layer="91"/>
-<label x="-38.1" y="22.86" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="-35.56" y1="0" x2="-38.1" y2="0" width="0.1524" layer="91"/>
+<label x="-38.1" y="0" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U16" gate="G$1" pin="B1"/>
 </segment>
 </net>
@@ -6135,8 +6147,8 @@ away with a smaller capacitor.</text>
 <label x="-68.58" y="60.96" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="-35.56" y1="17.78" x2="-38.1" y2="17.78" width="0.1524" layer="91"/>
-<label x="-38.1" y="17.78" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="-35.56" y1="-5.08" x2="-38.1" y2="-5.08" width="0.1524" layer="91"/>
+<label x="-38.1" y="-5.08" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U16" gate="G$1" pin="B2"/>
 </segment>
 </net>
@@ -6150,8 +6162,8 @@ away with a smaller capacitor.</text>
 <label x="33.02" y="66.04" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<wire x1="101.6" y1="22.86" x2="99.06" y2="22.86" width="0.1524" layer="91"/>
-<label x="99.06" y="22.86" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="101.6" y1="0" x2="99.06" y2="0" width="0.1524" layer="91"/>
+<label x="99.06" y="0" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U17" gate="G$1" pin="B1"/>
 </segment>
 </net>
@@ -6162,26 +6174,26 @@ away with a smaller capacitor.</text>
 <label x="33.02" y="63.5" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 <segment>
-<wire x1="101.6" y1="17.78" x2="99.06" y2="17.78" width="0.1524" layer="91"/>
-<label x="99.06" y="17.78" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="101.6" y1="-5.08" x2="99.06" y2="-5.08" width="0.1524" layer="91"/>
+<label x="99.06" y="-5.08" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U17" gate="G$1" pin="B2"/>
 </segment>
 </net>
 <net name="VDD_B_1V8" class="0">
 <segment>
 <pinref part="U17" gate="G$1" pin="VCCA"/>
-<wire x1="127" y1="35.56" x2="129.54" y2="35.56" width="0.1524" layer="91"/>
-<label x="129.54" y="35.56" size="1.778" layer="95"/>
+<wire x1="127" y1="12.7" x2="129.54" y2="12.7" width="0.1524" layer="91"/>
+<label x="129.54" y="12.7" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U17" gate="G$1" pin="OE"/>
-<wire x1="127" y1="27.94" x2="129.54" y2="27.94" width="0.1524" layer="91"/>
-<label x="129.54" y="27.94" size="1.778" layer="95"/>
+<wire x1="127" y1="5.08" x2="129.54" y2="5.08" width="0.1524" layer="91"/>
+<label x="129.54" y="5.08" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C30" gate="G$1" pin="1"/>
-<wire x1="157.48" y1="33.02" x2="157.48" y2="35.56" width="0.1524" layer="91"/>
-<label x="157.48" y="35.56" size="1.778" layer="95"/>
+<wire x1="127" y1="27.94" x2="127" y2="30.48" width="0.1524" layer="91"/>
+<label x="127" y="30.48" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VDD_B_1V8_IMG_EN" class="0">
@@ -6229,46 +6241,46 @@ away with a smaller capacitor.</text>
 </net>
 <net name="VDD_B_1V8_STM" class="0">
 <segment>
-<wire x1="-10.16" y1="35.56" x2="-7.62" y2="35.56" width="0.1524" layer="91"/>
-<label x="-7.62" y="35.56" size="1.778" layer="95"/>
+<wire x1="-10.16" y1="12.7" x2="-7.62" y2="12.7" width="0.1524" layer="91"/>
+<label x="-7.62" y="12.7" size="1.778" layer="95"/>
 <pinref part="U16" gate="G$1" pin="VCCA"/>
 </segment>
 <segment>
-<wire x1="-10.16" y1="27.94" x2="-7.62" y2="27.94" width="0.1524" layer="91"/>
-<label x="-7.62" y="27.94" size="1.778" layer="95"/>
+<wire x1="-10.16" y1="5.08" x2="-7.62" y2="5.08" width="0.1524" layer="91"/>
+<label x="-7.62" y="5.08" size="1.778" layer="95"/>
 <pinref part="U16" gate="G$1" pin="OE"/>
 </segment>
 <segment>
 <pinref part="C28" gate="G$1" pin="1"/>
-<wire x1="17.78" y1="33.02" x2="17.78" y2="35.56" width="0.1524" layer="91"/>
-<label x="17.78" y="35.56" size="1.778" layer="95"/>
+<wire x1="-10.16" y1="27.94" x2="-10.16" y2="30.48" width="0.1524" layer="91"/>
+<label x="-10.16" y="30.48" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="MSP_TEST_X" class="0">
 <segment>
 <pinref part="U16" gate="G$1" pin="A1"/>
-<wire x1="-10.16" y1="22.86" x2="-7.62" y2="22.86" width="0.1524" layer="91"/>
-<label x="-7.62" y="22.86" size="1.778" layer="95"/>
+<wire x1="-10.16" y1="0" x2="-7.62" y2="0" width="0.1524" layer="91"/>
+<label x="-7.62" y="0" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="MSP_RST_X_" class="0">
 <segment>
 <pinref part="U16" gate="G$1" pin="A2"/>
-<wire x1="-10.16" y1="17.78" x2="-7.62" y2="17.78" width="0.1524" layer="91"/>
-<label x="-7.62" y="17.78" size="1.778" layer="95"/>
+<wire x1="-10.16" y1="-5.08" x2="-7.62" y2="-5.08" width="0.1524" layer="91"/>
+<label x="-7.62" y="-5.08" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_MSP_SPI_CLK" class="0">
 <segment>
-<wire x1="127" y1="17.78" x2="129.54" y2="17.78" width="0.1524" layer="91"/>
-<label x="129.54" y="17.78" size="1.778" layer="95"/>
+<wire x1="127" y1="-5.08" x2="129.54" y2="-5.08" width="0.1524" layer="91"/>
+<label x="129.54" y="-5.08" size="1.778" layer="95"/>
 <pinref part="U17" gate="G$1" pin="A2"/>
 </segment>
 </net>
 <net name="ICE_MSP_SPI_DATA" class="0">
 <segment>
-<wire x1="127" y1="22.86" x2="129.54" y2="22.86" width="0.1524" layer="91"/>
-<label x="129.54" y="22.86" size="1.778" layer="95"/>
+<wire x1="127" y1="0" x2="129.54" y2="0" width="0.1524" layer="91"/>
+<label x="129.54" y="0" size="1.778" layer="95"/>
 <pinref part="U17" gate="G$1" pin="A1"/>
 </segment>
 </net>
