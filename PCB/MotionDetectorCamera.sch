@@ -6336,7 +6336,7 @@ battery voltage.</text>
 <pinref part="U15" gate="B" pin="PA.1/P1.1/UCB0CLK/ACLK/A1/VREF+"/>
 </segment>
 </net>
-<net name="MSP_EN" class="0">
+<net name="MSP_RUN" class="0">
 <segment>
 <pinref part="U15" gate="C" pin="PA.D/P2.5/UCB0SIMO/UCB0SDA/A7"/>
 <wire x1="129.54" y1="66.04" x2="127" y2="66.04" width="0.1524" layer="91"/>
@@ -9631,7 +9631,7 @@ between input and output when its VDD=0.</text>
 <pinref part="U25" gate="F" pin="PF5_K3"/>
 </segment>
 </net>
-<net name="MSP_EN" class="0">
+<net name="MSP_RUN" class="0">
 <segment>
 <pinref part="U25" gate="H" pin="PH1_H1"/>
 <wire x1="170.18" y1="-76.2" x2="172.72" y2="-76.2" width="0.1524" layer="91"/>
