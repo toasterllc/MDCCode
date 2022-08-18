@@ -4687,6 +4687,10 @@ Connector</text>
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="RC0402JR-0710KL"/>
 </part>
+<part name="R6" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-07100KL"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -4713,10 +4717,10 @@ after its VDD (VDD_1V8_STM)</text>
 <text x="313.436" y="422.402" size="1.016" layer="95" align="top-left">NOR gate ensures that VDD_B is
 unconditionally powered in USB
 mode</text>
-<wire x1="279.4" y1="439.42" x2="279.4" y2="391.16" width="0.1524" layer="95"/>
-<wire x1="279.4" y1="391.16" x2="340.36" y2="391.16" width="0.1524" layer="95"/>
-<wire x1="340.36" y1="391.16" x2="340.36" y2="439.42" width="0.1524" layer="95"/>
-<wire x1="340.36" y1="439.42" x2="279.4" y2="439.42" width="0.1524" layer="95"/>
+<wire x1="279.4" y1="444.5" x2="279.4" y2="391.16" width="0.1524" layer="95"/>
+<wire x1="279.4" y1="391.16" x2="347.98" y2="391.16" width="0.1524" layer="95"/>
+<wire x1="347.98" y1="391.16" x2="347.98" y2="444.5" width="0.1524" layer="95"/>
+<wire x1="347.98" y1="444.5" x2="279.4" y2="444.5" width="0.1524" layer="95"/>
 <text x="282.194" y="389.636" size="2.54" layer="95" align="top-left">VDD_B Control</text>
 <text x="309.372" y="410.464" size="1.016" layer="95" align="top-left">Limits drive strength to limit inrush current.
 If the gate resistance is too low, VDD_A will
@@ -4797,6 +4801,8 @@ due to the high resistance of the voltage divider.
 The capacitor acts as low-impedance charge storage
 that the ADC will draw from during its sampling.
 </text>
+<text x="325.628" y="435.61" size="1.016" layer="95" align="top-left">Pulldow prevents a floating
+input while MSP430 is resetting.</text>
 </plain>
 <instances>
 <instance part="C8" gate="G$1" x="167.64" y="294.64" smashed="yes">
@@ -4909,8 +4915,8 @@ that the ADC will draw from during its sampling.
 <attribute name="NAME" x="311.15" y="399.542" size="1.778" layer="95" rot="MR0" align="bottom-right"/>
 <attribute name="PN" x="279.4" y="609.6" size="1.778" layer="96" rot="MR0" display="off"/>
 </instance>
-<instance part="J3" gate="G$1" x="350.52" y="401.32" smashed="yes">
-<attribute name="NAME" x="349.25" y="403.86" size="1.778" layer="95" align="top-left"/>
+<instance part="J3" gate="G$1" x="353.06" y="401.32" smashed="yes">
+<attribute name="NAME" x="351.79" y="403.86" size="1.778" layer="95" align="top-left"/>
 </instance>
 <instance part="U3" gate="G$1" x="302.26" y="429.26" smashed="yes" rot="MR270">
 <attribute name="NAME" x="302.26" y="419.1" size="1.778" layer="95" rot="MR0"/>
@@ -5112,6 +5118,12 @@ that the ADC will draw from during its sampling.
 <attribute name="MFG" x="307.34" y="408.94" size="1.778" layer="96" rot="R90" display="off"/>
 <attribute name="PN" x="307.34" y="408.94" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
+<instance part="R6" gate="G$1" x="322.58" y="436.88" smashed="yes" rot="MR180">
+<attribute name="NAME" x="320.04" y="433.324" size="1.778" layer="95"/>
+<attribute name="VALUE" x="320.04" y="430.784" size="1.778" layer="96"/>
+<attribute name="MFG" x="322.58" y="436.88" size="1.778" layer="96" rot="MR180" display="off"/>
+<attribute name="PN" x="322.58" y="436.88" size="1.778" layer="96" rot="MR180" display="off"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -5147,8 +5159,8 @@ that the ADC will draw from during its sampling.
 </segment>
 <segment>
 <pinref part="J3" gate="G$1" pin="2"/>
-<wire x1="353.06" y1="396.24" x2="355.6" y2="396.24" width="0.1524" layer="91"/>
-<label x="355.6" y="396.24" size="1.778" layer="95"/>
+<wire x1="355.6" y1="396.24" x2="358.14" y2="396.24" width="0.1524" layer="91"/>
+<label x="358.14" y="396.24" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U8" gate="G$1" pin="EN"/>
@@ -5426,6 +5438,11 @@ that the ADC will draw from during its sampling.
 <wire x1="320.04" y1="350.52" x2="320.04" y2="347.98" width="0.1524" layer="91"/>
 <label x="320.04" y="347.98" size="1.778" layer="95" align="top-left"/>
 </segment>
+<segment>
+<pinref part="R6" gate="G$1" pin="2"/>
+<wire x1="327.66" y1="436.88" x2="330.2" y2="436.88" width="0.1524" layer="91"/>
+<label x="330.2" y="436.88" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="N$5" class="0">
 <segment>
@@ -5512,8 +5529,8 @@ that the ADC will draw from during its sampling.
 <pinref part="U13" gate="G$1" pin="EN"/>
 </segment>
 <segment>
-<wire x1="304.8" y1="431.8" x2="304.8" y2="434.34" width="0.1524" layer="91"/>
-<label x="304.8" y="434.34" size="1.778" layer="95" align="bottom-right"/>
+<wire x1="304.8" y1="431.8" x2="304.8" y2="439.42" width="0.1524" layer="91"/>
+<label x="304.8" y="439.42" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U3" gate="G$1" pin="IN1"/>
 </segment>
 <segment>
@@ -5628,11 +5645,6 @@ that the ADC will draw from during its sampling.
 </net>
 <net name="VDD_A_3V3" class="0">
 <segment>
-<pinref part="U3" gate="G$1" pin="VDD"/>
-<wire x1="299.72" y1="426.72" x2="297.18" y2="426.72" width="0.1524" layer="91"/>
-<label x="297.18" y="426.72" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
 <pinref part="J2" gate="G$1" pin="2"/>
 <wire x1="353.06" y1="462.28" x2="355.6" y2="462.28" width="0.1524" layer="91"/>
 <label x="355.6" y="462.28" size="1.778" layer="95"/>
@@ -5701,16 +5713,20 @@ that the ADC will draw from during its sampling.
 </net>
 <net name="VDD_B_EN" class="0">
 <segment>
-<wire x1="309.88" y1="431.8" x2="309.88" y2="434.34" width="0.1524" layer="91"/>
-<label x="309.88" y="434.34" size="1.778" layer="95"/>
+<wire x1="309.88" y1="431.8" x2="309.88" y2="436.88" width="0.1524" layer="91"/>
+<label x="309.88" y="439.42" size="1.778" layer="95"/>
 <pinref part="U3" gate="G$1" pin="IN2"/>
+<pinref part="R6" gate="G$1" pin="1"/>
+<wire x1="309.88" y1="436.88" x2="309.88" y2="439.42" width="0.1524" layer="91"/>
+<wire x1="317.5" y1="436.88" x2="309.88" y2="436.88" width="0.1524" layer="91"/>
+<junction x="309.88" y="436.88"/>
 </segment>
 </net>
 <net name="N$43" class="0">
 <segment>
 <pinref part="Q1" gate="G$1" pin="D"/>
 <pinref part="J3" gate="G$1" pin="1"/>
-<wire x1="312.42" y1="396.24" x2="350.52" y2="396.24" width="0.1524" layer="91"/>
+<wire x1="312.42" y1="396.24" x2="353.06" y2="396.24" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="VDD_A" class="0">
@@ -5737,6 +5753,11 @@ that the ADC will draw from during its sampling.
 <junction x="289.56" y="462.28"/>
 <pinref part="C3" gate="G$1" pin="1"/>
 <junction x="302.26" y="462.28"/>
+</segment>
+<segment>
+<pinref part="U3" gate="G$1" pin="VDD"/>
+<wire x1="299.72" y1="426.72" x2="297.18" y2="426.72" width="0.1524" layer="91"/>
+<label x="297.18" y="426.72" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="N$42" class="0">

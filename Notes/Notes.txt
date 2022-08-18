@@ -1,21 +1,8 @@
 - Rev6
     
-    - Bug: MSP430 browns-out when asserting VDD_B_EN
-        - Solution: make R4 a higher value to slow Q1 turn-on and decrease inrush current
-        - 100Ω: 1.21V droop
-        - 1kΩ: .77V droop
-        - 10kΩ: .074V droop
-            - 10k seems to work well
+    - Add soldermask markings for VDD / GND battery terminal leads
     
-    - Bug: U16 level shifter that controls MSP_TEST / MSP_RST_ causes MSP_RST_ to be driven low when
-      connecting device to USB power. It appears this is because the STM32 side, MSP_RST_X_, is
-      floating before STM32 explicitly configures the GPIO, which the level shifter interprets as a
-      low value, and drives MSP_RST_ low, causing MSP430 to be reset until STM32 drives MSP_RST_X_ high.
-      This appears to happen despite MSP430's pull-up on its RST pin.
-      
-      - Solution: connect U16.OE to a STM32 GPIO (instead of VDD_B_1V8_STM), perhaps called 'MSP_SBW_EN',
-        and include a pull-down resistor. That way, U16 outputs will be disabled until STM32 explicitly
-        wants to talk to MSP430 (by asserting MSP_SBW_EN), and so MSP_RST_ won't be affected until then.
+    - Add soldermask markings for STM32 header pins, if we keep the header (since we want to make backside thinner)
     
     - Verify that the new ICE40 pin assignment meets our timing (since we moved the pins since Rev5 to
       account miswiring the flash chip)
@@ -32,13 +19,6 @@
                 
               X Nevermind, it's broken again after soldering the image sensor + motion sensor (now it's 3V instead of 2.8V)
     
-    - U3: needs to be powered by VDD_A, not VDD_A_3V3, because the voltage on Q1's Vgate needs to reach its
-      Vsource when Q1 is supposed to be off. But if U3 is powered by VDD_A_3V3, the max voltage that U3 can
-      output is 3.3V, which is less than VDD_A. As currently implemented, Q1 can never be fully turned off.
-    
-    - Consider adding a pull-down to VDD_B_EN to ensure the input isn't floating when MSP430 isn't powered
-      (eg when it crashes and restarts, or when it hasn't been programmed)
-    
     - Fix: USB C connector mount point collides with lens holder plastic (see lens holder's keepout region)
     
     - We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
@@ -48,6 +28,47 @@
       using through-hole wires to connect to it. The motion sensor will likely need to be raised up in the
       final product, since the lens is longer than the motion sensor, therefore we'll need wires to connect
       to the board anyway.
+    
+    - We can make the whole package smaller by removing tall components from the backside, so the battery
+      can be as flush as possible against the PCB
+    
+    √ Consider adding a pull-down to VDD_B_EN to ensure the input isn't floating when MSP430 isn't powered
+      (eg when it crashes and restarts, or when it hasn't been programmed)
+    
+    √ U3: needs to be powered by VDD_A, not VDD_A_3V3, because the voltage on Q1's Vgate needs to reach its
+      Vsource when Q1 is supposed to be off. But if U3 is powered by VDD_A_3V3, the max voltage that U3 can
+      output is 3.3V, which is less than VDD_A. As currently implemented, Q1 can never be fully turned off.
+    
+    √ Bug: MSP430 browns-out when asserting VDD_B_EN
+        - Solution: make R4 a higher value to slow Q1 turn-on and decrease inrush current
+        - 100Ω: 1.21V droop
+        - 1kΩ: .77V droop
+        - 10kΩ: .074V droop
+            - 10k seems to work well
+        - We should use the same resistor value for Q4 right?
+            X Nevermind, Q4 no longer exists
+    
+    √ Bug: U16 level shifter that controls MSP_TEST / MSP_RST_ causes MSP_RST_ to be driven low when
+      connecting device to USB power. It appears this is because the STM32 side, MSP_RST_X_, is
+      floating before STM32 explicitly configures the GPIO, which the level shifter interprets as a
+      low value, and drives MSP_RST_ low, causing MSP430 to be reset until STM32 drives MSP_RST_X_ high.
+      This appears to happen despite MSP430's pull-up on its RST pin.
+      
+      √ Solution: connect U16.OE to a STM32 GPIO (instead of VDD_B_1V8_STM), perhaps called 'MSP_SBW_EN',
+        and include a pull-down resistor. That way, U16 outputs will be disabled until STM32 explicitly
+        wants to talk to MSP430 (by asserting MSP_SBW_EN), and so MSP_RST_ won't be affected until then.
+    
+    √ Add a open-drain signal from STM -> MSP, which MSP observes to prevent itself from running when STM32 asserts
+        √ Done: added MSP_EN signal
+        - MSP should use its internal pullup, and STM should drive to ground
+    
+    √ Bug: BAT_CHRG_LVL voltage divider resistance is too high for STM32 ADC input resistance
+        - STM32 datasheet says maximum R_AIN is 50kΩ
+        √ Fixed: added a capacitor at the ADC input to act as low impedance charge storage
+    
+    √ Bug: BAT_CHRG_LVL_EN_ is subjecting STM32 to the battery voltage when STM32 is off,
+      which is > the absolute maximum input voltage on FT pins of VDD+4.0
+        √ Fixed: replaced transistor with 74LVC1G98GW, acting as a buffer
     
     √ Rev5 bug: ICE40.K9 needs to be connected to ICE40FLASH.DI so that ICE40 can send read commands to flash
         - Constraints:
@@ -83,13 +104,18 @@
     
     - MSPApp: store oldest 3 aborts, and newest 3 aborts (currently we only store the oldest 3 aborts)
     
-    - Implement time handling in MDCStudio
+    - MDCStudio: add inspector sidebar
+    
+    - MDCStudio/MSPApp: implement time handling
         - MDCStudio needs to set MSP's time
     
-    - Improve exposure/gain algs
+    - MSPApp: Improve exposure/gain algs
     
-    - Optimize battery usage of MSPApp
+    - MSPApp: Optimize battery usage
+        - Measure current during with various rails enabled and make sure it's what we expect
         - Currently we keep VDD_B on all the time!
+    
+    - MDCStudio: Implement battery voltage monitoring
     
     - Cancel order for TPS62802YKAR / TPS63805YFFR if we no longer need it
     
