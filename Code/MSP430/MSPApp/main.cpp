@@ -34,9 +34,9 @@ static void _Abort(uint16_t domain, uint16_t line);
 
 struct _Pin {
     // Default GPIOs
-    using VDD_1V8_IMG_EN                    = PortA::Pin<0x0, Option::Output0>;
+    using VDD_B_1V8_IMG_EN                  = PortA::Pin<0x0, Option::Output0>;
     using VDD_B_EN                          = PortA::Pin<0x1, Option::Output0>;
-    using VDD_2V8_IMG_EN                    = PortA::Pin<0x2, Option::Output0>;
+    using VDD_B_2V8_IMG_EN                  = PortA::Pin<0x2, Option::Output0>;
     using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
     using ICE_MSP_SPI_DATA_OUT              = PortA::Pin<0x4>;
     using ICE_MSP_SPI_DATA_IN               = PortA::Pin<0x5>;
@@ -44,8 +44,8 @@ struct _Pin {
     using XOUT                              = PortA::Pin<0x8>;
     using XIN                               = PortA::Pin<0x9>;
     using VDD_B_SD_EN                       = PortA::Pin<0xB, Option::Output0>;
-    using MSP_RUN                           = PortA::Pin<0xD, Option::Input, Option::Resistor1>;
-    using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
+    using DEBUG_OUT                         = PortA::Pin<0xD, Option::Output0>;
+    using MSP_RUN                           = PortA::Pin<0xE, Option::Input, Option::Resistor1>;
 };
 
 // _MotionSignalIV: Keep in sync with MOTION_SIGNAL
@@ -338,20 +338,20 @@ static void _SDImgRingBufIncrement() {
 static void _ImgCapture() {
     const auto& ringBuf = _State.sd.imgRingBufs[0].buf;
     
-    #warning TODO: remove this cold-start disabling once MSP controls ICE40, since ICE40 will be in a known state when MSP applies power
-    // If this is a cold start, ensure SD/Img are disabled
-    // This is necessary because ICE40 can be in an unknown state when MSP
-    // restarts, because MSP may have aborted, or restarted due to STM
-    // Spy-Bi-Wire debug access
-    if (Startup::ColdStart()) {
-        static bool disabled = false;
-        if (!disabled) {
-            _Img::DisableAsync(true);
-            _SD::DisableAsync(true);
-            _Scheduler::Wait<_ImgTask, _SDTask>();
-            disabled = true;
-        }
-    }
+//    #warning TODO: remove this cold-start disabling once MSP controls ICE40, since ICE40 will be in a known state when MSP applies power
+//    // If this is a cold start, ensure SD/Img are disabled
+//    // This is necessary because ICE40 can be in an unknown state when MSP
+//    // restarts, because MSP may have aborted, or restarted due to STM
+//    // Spy-Bi-Wire debug access
+//    if (Startup::ColdStart()) {
+//        static bool disabled = false;
+//        if (!disabled) {
+//            _Img::DisableAsync(true);
+//            _SD::DisableAsync(true);
+//            _Scheduler::Wait<_ImgTask, _SDTask>();
+//            disabled = true;
+//        }
+//    }
     
     // Asynchronously turn on the image sensor
     _Img::EnableAsync();
@@ -513,16 +513,16 @@ static bool _ImgSetPowerEnabled(bool en) {
     #warning TODO: short-circuit if the pin state isn't changing, to save time
     
     if (en) {
-        _Pin::VDD_2V8_IMG_EN::Write(1);
+        _Pin::VDD_B_2V8_IMG_EN::Write(1);
         _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-        _Pin::VDD_1V8_IMG_EN::Write(1);
+        _Pin::VDD_B_1V8_IMG_EN::Write(1);
         
         #warning measure actual delay that we need for the rails to rise
     
     } else {
         // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-        _Pin::VDD_1V8_IMG_EN::Write(0);
-        _Pin::VDD_2V8_IMG_EN::Write(0);
+        _Pin::VDD_B_1V8_IMG_EN::Write(0);
+        _Pin::VDD_B_2V8_IMG_EN::Write(0);
         
         #warning measure actual delay that we need for the rails to fall
     }
@@ -550,6 +550,7 @@ static void _Sleep() {
     //   therefore we enter LPM3.5. The next time we wake will be due to a
     //   reset and execution will start from main().
     
+    #warning TODO: re-enable LPM3.5 sleep below
     // If we're currently busy (_BusyCount > 0), enter LPM1 sleep because some tasks are running.
     // If we're not busy (!_BusyCount), enter the deep LPM3.5 sleep, where RAM content is lost.
 //    const uint16_t LPMBits = (_BusyCount ? LPM1_bits : LPM3_bits);
@@ -570,15 +571,16 @@ static void _Sleep() {
 
 // MARK: - Tasks
 
-//static void debugSignal() {
-//    _Pin::DEBUG_OUT::Init();
+static void debugSignal() {
+    _Pin::DEBUG_OUT::Init();
+    for (;;) {
 //    for (int i=0; i<10; i++) {
-//        _Pin::DEBUG_OUT::Write(0);
-//        for (volatile int i=0; i<10000; i++);
-//        _Pin::DEBUG_OUT::Write(1);
-//        for (volatile int i=0; i<10000; i++);
-//    }
-//}
+        _Pin::DEBUG_OUT::Write(0);
+        for (volatile int i=0; i<10000; i++);
+        _Pin::DEBUG_OUT::Write(1);
+        for (volatile int i=0; i<10000; i++);
+    }
+}
 
 //class _BusyTimeoutTask {
 //public:
@@ -701,8 +703,11 @@ struct _MotionTask {
         for (;;) {
 //            _Scheduler::Sleep(_Scheduler::Ms(2000));
             
-            _Scheduler::Wait([&] { return _Motion.load(); });
+            _Scheduler::Wait([&] { return (bool)_Motion; });
             _Motion = false;
+            
+            _Pin::VDD_B_EN::Write(1);
+            _Scheduler::Sleep(_Scheduler::Ms(250));
             
             for (;;) {
                 _BusyAssertion busy;
@@ -713,7 +718,7 @@ struct _MotionTask {
                 _ICE::Transfer(_ICE::LEDSetMsg(0x00));
                 
                 // Wait up to 1s for further motion
-                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return _Motion.load(); });
+                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
                 if (!motion) {
                     // We timed-out
                     // Asynchronously disable Img / SD
@@ -733,6 +738,8 @@ struct _MotionTask {
                 // the true value by resetting it to false.
                 _Motion = false;
             }
+            
+            _Pin::VDD_B_EN::Write(0);
             
 //            // Asynchronously turn off the image sensor / SD card
 //            _Img::DisableAsync();
@@ -922,8 +929,8 @@ int main() {
     // Init GPIOs
     GPIO::Init<
         // Main Pins
-        _Pin::VDD_1V8_IMG_EN,
-        _Pin::VDD_2V8_IMG_EN,
+        _Pin::VDD_B_1V8_IMG_EN,
+        _Pin::VDD_B_2V8_IMG_EN,
         _Pin::VDD_B_SD_EN,
         _Pin::VDD_B_EN,
         _Pin::MSP_RUN,
@@ -939,8 +946,13 @@ int main() {
         _Clock::Pin::XIN
     >();
     
+//    debugSignal();
+    
     // Init clock
+    _Pin::DEBUG_OUT::Init();
+    _Pin::DEBUG_OUT::Write(1);
     _Clock::Init();
+    _Pin::DEBUG_OUT::Write(0);
     
 //    _Pin::DEBUG_OUT::Init();
 //    for (uint32_t i=0; i<1000000; i++) {
@@ -992,9 +1004,9 @@ int main() {
     //   1. it rate-limits aborts, in case there's a persistent issue
     //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
     if (Startup::ColdStart()) {
-        #warning TODO: VDD_B_EN needs to be controlled elsewhere when we implement proper power rail control
-        // Turn on VDD_B
-        _Pin::VDD_B_EN::Write(1);
+//        #warning TODO: VDD_B_EN needs to be controlled elsewhere when we implement proper power rail control
+//        // Turn on VDD_B
+//        _Pin::VDD_B_EN::Write(1);
         
         _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
         _Scheduler::Delay(_Scheduler::Ms(3000));
@@ -1006,6 +1018,14 @@ int main() {
     if (Startup::ColdStart()) {
         _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
         while (!_Pin::MSP_RUN::Read()) _Scheduler::Delay(_Scheduler::Ms(100));
+        
+//        _Pin::DEBUG_OUT::Init();
+//        while (!_Pin::MSP_RUN::Read()) {
+//            _Pin::DEBUG_OUT::Write(1);
+//            _Scheduler::Delay(_Scheduler::Ms(50));
+//            _Pin::DEBUG_OUT::Write(0);
+//            _Scheduler::Delay(_Scheduler::Ms(50));
+//        }
         
         // Once we're allowed to run, disable the pullup on MSP_RUN to prevent the leakage current (~80nA)
         // through STM32's GPIO that controls MSP_RUN.

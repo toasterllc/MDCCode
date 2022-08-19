@@ -99,6 +99,14 @@
 
 - Rev5
     
+    - Investigate: _Clock::Init() takes 173 ms -- is that due to our bodge wire?
+        - Can we speed it up? Is it necessary to do when exiting LPM3.5? The clock should already be running since it sources RTC...
+    
+    - Bug: discrepency between wall time and device time on images
+    
+    - Implement VDD_B rail handling.
+        - Turn on lazily when we need to talk to ICE / IMG / SD?
+    
     - Implement thumbnailing in ICEAppMSP / MSPApp
         - Motivation: so MDCStudio can load thumbnails quickly
     

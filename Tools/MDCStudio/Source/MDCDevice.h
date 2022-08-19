@@ -42,6 +42,7 @@ public:
         // Perform device IO
         {
             auto lock = std::unique_lock(*_dev);
+            auto startTime = std::chrono::steady_clock::now();
             
             // Update device time
             {
@@ -67,13 +68,24 @@ public:
                 // causing STM to stop driving MSP_RUN low, allowing MSP_RUN to be pulled high by MSP's pullup,
                 // thereby allowing MSP to run again.
                 constexpr bool MSPRun = false;
+                
+                startTime = std::chrono::steady_clock::now();
                 _dev->mspDisconnect(MSPRun);
                 
                 printf("Set MSP time to 0x%jx\n", (uintmax_t)_mspState.time);
             }
+//            
+//            sleep(15);
             
             // Load ICE40 with our app
             _ICEConfigure(*_dev);
+            
+//            usleep(180000);
+            
+//            exit(0);
+            
+            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+            printf("durationMs: %ju\n", (uintmax_t)durationMs);
             
             // Init SD card
             #warning TODO: how should we handle sdInit() failing (throwing)?
