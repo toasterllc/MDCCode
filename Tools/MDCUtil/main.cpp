@@ -309,9 +309,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(     "version:                   0x%04x\n",      state.version);
     printf(     "\n");
     
-    printf(     "startTime\n");
-    printf(     "  time:                    %u\n",          state.startTime.time);
-    printf(     "  valid:                   %u\n",          state.startTime.valid);
+    printf(     "time:                      %llu\n",        state.time);
     printf(     "\n");
     
     printf(     "sd\n");
@@ -338,7 +336,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(     "      ridx:                %u\n",          state.sd.imgRingBufs[0].buf.ridx);
     printf(     "      full:                %u\n",          state.sd.imgRingBufs[0].buf.full);
     printf(     "    valid:                 %u\n",          state.sd.imgRingBufs[0].valid);
-
+    
     printf(     "  imgRingBufs[1]\n");
     printf(     "    buf\n");
     printf(     "      idBegin:             %u\n",          state.sd.imgRingBufs[1].buf.idBegin);
@@ -355,10 +353,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     for (size_t i=0; i<std::min(std::size(state.abort.events), (size_t)state.abort.eventsCount); i++) {
         const auto& event = state.abort.events[i];
         printf( "  events[%ju]\n", (uintmax_t)i);
-        printf( "    time\n");
-        printf( "      start:               %u\n",          event.time.start);
-        printf( "      delta:               %u\n",          event.time.delta);
-        
+        printf( "    timestamp:             %llu\n",        event.timestamp);
         printf( "    domain:                %u\n",          event.domain);
         printf( "    line:                  %u\n",          event.line);
     }

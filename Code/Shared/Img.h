@@ -28,8 +28,7 @@ namespace Img {
         uint16_t analogGain;    // 0x2222
         
         Id id;                  // 0xCAFEBABE
-        uint32_t timeStart;     // 0xDEADBEEF
-        uint32_t timeDelta;     // 0xBEEFCAFE
+        uint64_t timestamp;     // 0xDEADBEEFBEEFCAFE
         
         uint8_t _pad[8];
     };

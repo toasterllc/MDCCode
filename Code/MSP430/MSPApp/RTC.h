@@ -9,23 +9,21 @@ template <uint32_t T_XT1FreqHz>
 class Type {
 public:
     
-    using Sec = MSP::Sec;
     using Time = MSP::Time;
     
-    static constexpr Sec InterruptInterval = 2048;
+    static constexpr uint32_t InterruptIntervalSec = 2048;
     static constexpr uint32_t Predivider = 1024;
     static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
     static_assert((T_XT1FreqHz % Predivider) == 0); // Confirm that T_XT1FreqHz is evenly divisible by Predivider
-    static constexpr uint16_t InterruptCount = (InterruptInterval*FreqHz)-1;
-    static_assert(InterruptCount == ((InterruptInterval*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
+    static constexpr uint16_t InterruptCount = (InterruptIntervalSec*FreqHz)-1;
+    static_assert(InterruptCount == ((InterruptIntervalSec*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
     
     bool enabled() const {
         return RTCCTL != 0;
     }
     
-    void init(Sec startTime) {
-        _start = startTime;
-        _delta = 0;
+    void init(Time time) {
+        _time = time;
         
         RTCMOD = InterruptCount;
         RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
@@ -37,10 +35,11 @@ public:
         RTCCTL |= RTCIE;
     }
     
-    // time(): returns the current time as a (timeStart,timeDelta) tuple
+    // time(): returns the current time, which is either absolute or relative (to the
+    // device start time), depending on the value supplied to init()
     // Interrupts must be enabled when calling!
     Time time() const {
-        return {_start, _deltaRead()};
+        return _timeRead();
     }
     
     void isr() {
@@ -48,7 +47,7 @@ public:
         switch (__even_in_range(RTCIV, RTCIV__RTCIFG)) {
         case RTCIV__RTCIFG:
             // Update our time
-            _delta += InterruptInterval;
+            _time += InterruptIntervalSec;
             break;
         
         default:
@@ -73,34 +72,31 @@ private:
         else static_assert(_AlwaysFalse<T_Predivider>);
     }
     
-    // _deltaRead(): reads _delta in an safe, overflow-aware manner
+    // _timeRead(): reads _time in an safe, overflow-aware manner
     // Interrupts must be enabled when calling!
-    Sec _deltaRead() const {
-        // This 2x __deltaRead() loop is necessary to handle the race related to RTCCNT overflowing:
-        // When we read _delta and RTCCNT, we don't know if _delta has been updated for the most
+    Time _timeRead() const {
+        // This 2x __timeRead() loop is necessary to handle the race related to RTCCNT overflowing:
+        // When we read _time and RTCCNT, we don't know if _time has been updated for the most
         // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
         // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
         for (;;) {
-            const Sec t1 = __deltaRead();
-            const Sec t2 = __deltaRead();
+            const Time t1 = __timeRead();
+            const Time t2 = __timeRead();
             if (t2 >= t1) return t2;
         }
     }
     
-    Sec __deltaRead() const {
-        // Disable interrupts so we can read _delta and RTCCNT atomically.
-        // This is especially necessary because reading _delta isn't atomic
+    Time __timeRead() const {
+        // Disable interrupts so we can read _time and RTCCNT atomically.
+        // This is especially necessary because reading _time isn't atomic
         // since it's 32 bits.
         Toastbox::IntState ints(false);
-        return _delta + (RTCCNT/FreqHz);
+        return _time + (RTCCNT/FreqHz);
     }
     
-    // _start: the absolute time that the system started
-    Sec _start;
-    
-    // _delta: the current delta from `_start`. volatile because _delta is
-    // updated from the interrupt context
-    volatile Sec _delta;
+    // _time: the current time (either absolute or relative, depending on the value supplied to init())
+    // volatile because _time is updated from the interrupt context
+    volatile Time _time;
 };
 
 } // namespace RTC

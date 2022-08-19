@@ -5,12 +5,22 @@
 
 namespace MSP {
     
-    using Sec = uint32_t;
+    using Time = uint64_t;
     
-    struct [[gnu::packed]] Time {
-        Sec start = 0;
-        Sec delta = 0;
-    };
+    static constexpr bool TimeIsAbsolute(const Time& t) {
+        return t&((uint64_t)1<<63);
+    }
+    
+    static constexpr Time TimeAbsoluteUnixReference = 1640995200; // 2022-01-01 00:00:00 +0000
+    static constexpr Time TimeAbsoluteBase = (Time)1<<63;
+    
+    static constexpr uint64_t UnixTimeFromTime(Time t) {
+        return (t&(~TimeAbsoluteBase)) + TimeAbsoluteUnixReference;
+    }
+    
+    static constexpr uint64_t TimeFromUnixTime(uint64_t t) {
+        return TimeAbsoluteBase | (t-TimeAbsoluteUnixReference);
+    }
     
     // ImgRingBuf: stats to track captured images
     struct [[gnu::packed]] ImgRingBuf {
@@ -21,27 +31,20 @@ namespace MSP {
             uint32_t ridx   = 0;
             bool full       = false;
         } buf;
-        volatile bool valid = false;
+        bool valid = false;
         
         ImgRingBuf& operator=(const ImgRingBuf& x) {
             valid = false;
+            
+            // Ensure that `valid` is reset before we modify `buf`
+            std::atomic_signal_fence(std::memory_order_seq_cst);
             buf = x.buf;
+            // Ensure that `buf` is valid before we set `valid`
+            std::atomic_signal_fence(std::memory_order_seq_cst);
+            
             valid = true;
             return *this;
         }
-        
-//        template <typename T>
-//        static void _ImgRingBufSet(volatile MSP::ImgRingBuf& dst, const T& src) {
-//            FRAMWriteEn writeEn; // Enable FRAM writing
-//            
-//            dst.valid = false;
-//            atomic_thread_fence(std::memory_order_seq_cst);
-//            
-//            (const_cast<MSP::ImgRingBuf&>(dst)).buf = const_cast<MSP::ImgRingBuf&>(src).buf;
-//            atomic_thread_fence(std::memory_order_seq_cst);
-//            
-//            dst.valid = true;
-//        }
         
         static std::optional<int> Compare(const ImgRingBuf& a, const ImgRingBuf& b) {
             if (a.valid && b.valid) {
@@ -57,41 +60,11 @@ namespace MSP {
             }
             return std::nullopt;
         }
-        
-//        static bool FindLatest(const ImgRingBuf*& newest, const ImgRingBuf*& oldest) {
-//            const ImgRingBuf*const ringBuf = newest;
-//            const ImgRingBuf*const ringBuf2 = oldest;
-//            
-//            if (ringBuf->valid && ringBuf2->valid) {
-//                if (ringBuf->buf.idEnd >= ringBuf2->buf.idEnd) {
-//                    newest = ringBuf;
-//                    oldest = ringBuf2;
-//                    return true;
-//                    
-//                } else {
-//                    newest = ringBuf2;
-//                    oldest = ringBuf;
-//                    return true;
-//                }
-//            
-//            } else if (ringBuf->valid) {
-//                newest = ringBuf;
-//                oldest = ringBuf2;
-//                return true;
-//            
-//            } else if (ringBuf2->valid) {
-//                newest = ringBuf2;
-//                oldest = ringBuf;
-//                return true;
-//            
-//            } else {
-//                return false;
-//            }
-//        }
+
     };
     
     struct [[gnu::packed]] AbortEvent {
-        Time time       = {};
+        Time timestamp  = {};
         uint16_t domain = 0;
         uint16_t line   = 0;
     };
@@ -105,12 +78,8 @@ namespace MSP {
         const uint32_t magic = MagicNumber;
         const uint16_t version = Version;
         
-        // startTime: the time set by the outside world (seconds since reference date)
-        struct [[gnu::packed]] {
-            Sec time        = 0;
-            volatile bool valid = false;
-            uint8_t _pad = 0;
-        } startTime = {};
+        // time: the absolute time set by the outside world (seconds since reference date)
+        Time time = 0;
         
         struct [[gnu::packed]] {
             // cardId: the SD card's CID, used to determine when the SD card has been
@@ -121,14 +90,14 @@ namespace MSP {
             // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
             // power failure
             ImgRingBuf imgRingBufs[2] = {};
-            volatile bool valid = false;
+            bool valid = false;
             uint8_t _pad = 0;
         } sd = {};
         
         // abort: records aborts that have occurred
         struct [[gnu::packed]] {
             AbortEvent events[3]            = {};
-            volatile uint16_t eventsCount   = 0;
+            uint16_t eventsCount   = 0;
         } abort = {};
     };
 

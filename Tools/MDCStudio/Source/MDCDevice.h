@@ -39,9 +39,57 @@ public:
             _state.name = std::string(state.name);
         } catch (const std::exception& e) {}
         
-        // Init SD card
-        #warning TODO: how should we handle sdInit() failing (throwing)?
-        _sdCardInfo = _dev->sdInit();
+        // Perform device IO
+        {
+            auto lock = std::unique_lock(*_dev);
+            
+            // Update device time
+            {
+                auto lock = std::unique_lock(*_dev);
+                _dev->mspConnect();
+                _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
+                
+                if (_mspState.magic != MSP::State::MagicNumber) {
+                    // Program MSPApp onto MSP
+                    #warning TODO: implement
+                    throw Toastbox::RuntimeError("TODO: implement");
+                }
+                
+                if (_mspState.version > MSP::State::Version) {
+                    // Newer version than we understand -- tell user to upgrade or re-program
+                    #warning TODO: implement
+                    throw Toastbox::RuntimeError("TODO: implement");
+                }
+                
+                if (!_mspState.sd.valid) {
+                    // MSPApp state isn't valid -- ignore
+                    #warning TODO: implement
+                    throw Toastbox::RuntimeError("TODO: implement");
+                }
+                
+                if (memcmp(&_sdCardInfo.cardId, &_mspState.sd.cardId, sizeof(_mspState.sd.cardId))) {
+                    // Current SD card id doesn't match MSP's card id
+                    #warning TODO: implement
+                    throw Toastbox::RuntimeError("TODO: implement");
+                }
+                
+                _mspState.time = MSP::TimeFromUnixTime(std::time(nullptr));
+                _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
+                
+                // MSPRun=false: don't allow MSP to run until the device is physically disconnected from USB,
+                // causing STM to stop driving MSP_RUN low, allowing MSP_RUN to be pulled high by MSP's pullup,
+                // thereby allowing MSP to run again.
+                constexpr bool MSPRun = false;
+                _dev->mspDisconnect(MSPRun);
+            }
+            
+            // Load ICE40 with our app
+            _ICEConfigure(*_dev);
+            
+            // Init SD card
+            #warning TODO: how should we handle sdInit() failing (throwing)?
+            _sdCardInfo = _dev->sdInit();
+        }
         
         // Load the library
         {
@@ -201,6 +249,20 @@ private:
         return *comp>=0 ? imgRingBuf0 : imgRingBuf1;
     }
     
+    static void _ICEConfigure(MDCUSBDevice& dev) {
+        const char* ICEBinPath = "/Users/dave/repos/MDC/Code/ICE40/ICEAppSDReadoutSTM/Synth/Top.bin";
+        Toastbox::Mmap mmap(ICEBinPath);
+        
+        // Write the ICE40 binary
+        dev.iceRAMWrite(mmap.data(), mmap.len());
+    }
+    
+//    static MSP::Time _MSPTimeCurrent() {
+//        return MSP::TimeFromUnixTime(std::time(nullptr));
+//        const std::time_t t = std::time(nullptr);
+//        return MSP::TimeAbsoluteBase | (t-MSP::TimeAbsoluteUnixReference);
+//    }
+    
     ImagePtr _imageProvider(const ImageRef& imageRef) {
         // Lock the device for the duration of this function
         auto lock = std::unique_lock(*_dev);
@@ -236,41 +298,7 @@ private:
     
     void _threadUpdateImageLibrary() {
         try {
-            MSP::State state;
-            {
-                auto lock = std::unique_lock(*_dev);
-                _dev->mspConnect();
-                _dev->mspRead(MSP::StateAddr, &state, sizeof(state));
-                
-                if (state.magic != MSP::State::MagicNumber) {
-                    // Program MSPApp onto MSP
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: implement");
-                }
-                
-                if (state.version > MSP::State::Version) {
-                    // Newer version than we understand -- tell user to upgrade or re-program
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: implement");
-                }
-                
-                if (!state.sd.valid) {
-                    // MSPApp state isn't valid -- ignore
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: implement");
-                }
-                
-                if (memcmp(&_sdCardInfo.cardId, &state.sd.cardId, sizeof(state.sd.cardId))) {
-                    // Current SD card id doesn't match MSP's card id
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: implement");
-                }
-                
-                constexpr bool MSPRun = false; // Don't allow MSP to run
-                _dev->mspDisconnect(MSPRun);
-            }
-            
-            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(state);
+            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(_mspState);
             
             {
                 // Remove images from beginning of library: lib has, device doesn't
@@ -315,7 +343,7 @@ private:
                     
                     _Range oldest;
                     oldest.len = addCount - newest.len;
-                    oldest.idx = state.sd.imgCap - oldest.len;
+                    oldest.idx = _mspState.sd.imgCap - oldest.len;
                     
                     _loadImages(oldest);
                     _loadImages(newest);
@@ -437,8 +465,10 @@ private:
             {
                 imageRef.id = imageId;
                 
-                if (imgHeader.timeStart) {
-                    imageRef.timestamp = _UnixTimeOffset + imgHeader.timeStart + imgHeader.timeDelta;
+                // If the image has an absolute time, use it
+                // If the image has a relative time (ie time since device boot), drop it
+                if (imgHeader.timestamp & MSP::TimeAbsoluteBase) {
+                    imageRef.timestamp = MSP::UnixTimeFromTime(imgHeader.timestamp);
                 }
                 
                 imageRef.addr           = blockIdx;
@@ -517,6 +547,7 @@ private:
     MDCUSBDevicePtr _dev;
     const _Path _dir;
     ImageLibraryPtr _imageLibrary;
+    MSP::State _mspState;
     STM::SDCardInfo _sdCardInfo;
     
     struct {

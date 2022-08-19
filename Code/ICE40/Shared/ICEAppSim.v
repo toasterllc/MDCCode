@@ -834,12 +834,17 @@ module ICEAppSim();
 
             TestImgSetHeader(2, {
                 LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
-                LittleFromHost16.Swap(16'hBEEF)     /* start time (low)     */
+                8'hAA,                              /* timestamp[b0]        */,
+                8'hBB                               /* timestamp[b1]        */
             });
 
             TestImgSetHeader(3, {
-                LittleFromHost16.Swap(16'hDEAD)     /* start time (high)    */,
-                LittleFromHost32.Swap(32'hBEEFCAFE) /* delta time           */
+                8'hCC                               /* timestamp[b2]        */,
+                8'hDD                               /* timestamp[b3]        */,
+                8'hEE                               /* timestamp[b4]        */,
+                8'hFF                               /* timestamp[b5]        */,
+                8'h42                               /* timestamp[b6]        */,
+                8'h43                               /* timestamp[b7]        */
             });
 
             TestImgI2CWriteRead();

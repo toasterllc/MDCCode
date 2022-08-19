@@ -122,9 +122,6 @@ private:
                         case _DeviceState::Finish: {
                             state = _DeviceState::STMLoaderInvoke; // Start over if this device appears again
                             
-                            // Load ICE40 with our app
-                            _ICEConfigure(*dev);
-                            
                             // Create our final MDCDevice instance
                             MDCDevicePtr mdc = std::make_shared<MDCDevice>(std::move(*dev));
                             
@@ -199,14 +196,6 @@ private:
         
         // Reset the device, triggering it to load the program we just wrote
         dev.stmReset(elf.entryPointAddr());
-    }
-    
-    static void _ICEConfigure(MDCUSBDevice& dev) {
-        const char* ICEBinPath = "/Users/dave/repos/MDC/Code/ICE40/ICEAppSDReadoutSTM/Synth/Top.bin";
-        Toastbox::Mmap mmap(ICEBinPath);
-        
-        // Write the ICE40 binary
-        dev.iceRAMWrite(mmap.data(), mmap.len());
     }
     
     static void _ServiceInterestCallback(void* ctx, io_service_t service, uint32_t msgType, void* msgArg) {

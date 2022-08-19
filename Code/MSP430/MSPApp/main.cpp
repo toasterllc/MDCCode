@@ -44,7 +44,7 @@ struct _Pin {
     using XOUT                              = PortA::Pin<0x8>;
     using XIN                               = PortA::Pin<0x9>;
     using VDD_B_SD_EN                       = PortA::Pin<0xB, Option::Output0>;
-    using MSP_EN                            = PortA::Pin<0xD, Option::Input, Option::Resistor1>;
+    using MSP_RUN                           = PortA::Pin<0xD, Option::Input, Option::Resistor1>;
     using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
 };
 
@@ -136,8 +136,8 @@ static Img::AutoExposure _ImgAutoExp;
 static MSP::State _State;
 
 // _Motion: announces that motion occurred
-// volatile because _Motion is modified from the interrupt context
-static volatile bool _Motion = false;
+// atomic because _Motion is modified from the interrupt context
+static std::atomic<bool> _Motion = false;
 
 // _BusyCount: counts the number of entities preventing LPM3.5 sleep
 static uint8_t _BusyCount = 0;
@@ -217,6 +217,7 @@ private:
         
         // Mark the _State as invalid in case we lose power in the middle of modifying it
         _State.sd.valid = false;
+        std::atomic_signal_fence(std::memory_order_seq_cst);
         
         // Set .cardId
         {
@@ -239,6 +240,7 @@ private:
             _State.sd.imgRingBufs[1] = {};
         }
         
+        std::atomic_signal_fence(std::memory_order_seq_cst);
         _State.sd.valid = true;
     }
     
@@ -387,16 +389,12 @@ static void _ImgCapture() {
             .coarseIntTime  = 0,
             .analogGain     = 0,
             .id             = 0,
-            .timeStart      = 0,
-            .timeDelta      = 0,
+            .timestamp      = 0,
         };
         
         header.coarseIntTime = _ImgAutoExp.integrationTime();
         header.id = ringBuf.idEnd;
-        
-        const MSP::Time t = _RTC.time();
-        header.timeStart = t.start;
-        header.timeDelta = t.delta;
+        header.timestamp = _RTC.time();
         
         // Capture an image to RAM
         const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
@@ -703,7 +701,7 @@ struct _MotionTask {
         for (;;) {
 //            _Scheduler::Sleep(_Scheduler::Ms(2000));
             
-            _Scheduler::Wait([&] { return _Motion; });
+            _Scheduler::Wait([&] { return _Motion.load(); });
             _Motion = false;
             
             for (;;) {
@@ -715,7 +713,7 @@ struct _MotionTask {
                 _ICE::Transfer(_ICE::LEDSetMsg(0x00));
                 
                 // Wait up to 1s for further motion
-                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return _Motion; });
+                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return _Motion.load(); });
                 if (!motion) {
                     // We timed-out
                     // Asynchronously disable Img / SD
@@ -851,14 +849,14 @@ static void _ImgError(uint16_t line) {
     _Abort(AbortDomain::Img, line);
 }
 
-static void _AbortRecord(const MSP::Time& time, uint16_t domain, uint16_t line) {
+static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t line) {
     FRAMWriteEn writeEn; // Enable FRAM writing
     
     auto& abort = _State.abort;
     if (abort.eventsCount >= std::size(abort.events)) return;
     
     abort.events[abort.eventsCount] = MSP::AbortEvent{
-        .time = time,
+        .timestamp = timestamp,
         .domain = domain,
         .line = line,
     };
@@ -868,9 +866,9 @@ static void _AbortRecord(const MSP::Time& time, uint16_t domain, uint16_t line) 
 
 [[noreturn]]
 static void _Abort(uint16_t domain, uint16_t line) {
-    const MSP::Time time = _RTC.time();
+    const MSP::Time timestamp = _RTC.time();
     // Record the abort
-    _AbortRecord(time, domain, line);
+    _AbortRecord(timestamp, domain, line);
     // Trigger a BOR
     PMMCTL0 = PMMPW | PMMSWBOR;
     
@@ -928,8 +926,8 @@ int main() {
         _Pin::VDD_2V8_IMG_EN,
         _Pin::VDD_B_SD_EN,
         _Pin::VDD_B_EN,
-        _Pin::MSP_EN,
-        _Pin::MOTION_SIGNAL
+        _Pin::MSP_RUN,
+        _Pin::MOTION_SIGNAL,
         
         // SPI peripheral determines initial state of SPI GPIOs
         _SPI::Pin::Clk,
@@ -938,7 +936,7 @@ int main() {
         
         // Clock peripheral determines initial state of clock GPIOs
         _Clock::Pin::XOUT,
-        _Clock::Pin::XIN,
+        _Clock::Pin::XIN
     >();
     
     // Init clock
@@ -966,16 +964,20 @@ int main() {
     //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
     //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
     //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
-    if (_State.startTime.valid) {
-        // If _StartTime is valid, consume it and hand it off to _RTC.
+    const MSP::Time time = _State.time;
+    if (time) {
+        // If `time` is valid, consume it and hand it off to _RTC.
         FRAMWriteEn writeEn; // Enable FRAM writing
-        // Mark the time as invalid before consuming it, so that if we lose power,
+        
+        // Reset `_State.time` before consuming it, so that if we lose power,
         // the time won't be reused again
-        _State.startTime.valid = false;
+        _State.time = 0;
+        std::atomic_signal_fence(std::memory_order_seq_cst);
+        
         // Init real-time clock
-        _RTC.init(_State.startTime.time);
+        _RTC.init(time);
     
-    // Otherwise, we don't have a valid _State.startTime, so if _RTC isn't currently
+    // Otherwise, we don't have a valid time, so if _RTC isn't currently
     // enabled, init _RTC with 0.
     } else if (!_RTC.enabled()) {
         _RTC.init(0);
@@ -996,16 +998,19 @@ int main() {
         
         _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
         _Scheduler::Delay(_Scheduler::Ms(3000));
+    }
+    
+    // If this is a cold start, wait until MSP_RUN is high.
+    // STM32 controls MSP_RUN to control when we start executing, in order to implement mutual
+    // exclusion on controlling the power rails and talking to ICE40.
+    if (Startup::ColdStart()) {
+        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
+        while (!_Pin::MSP_RUN::Read()) _Scheduler::Delay(_Scheduler::Ms(100));
         
-        // Don't run until MSP_EN is high.
-        // STM32 controls MSP_EN to control when we start executing, in order to implement mutual
-        // exclusion on controlling our power rails and talking to ICE40.
-        while (!MSP_EN::Read()) _Scheduler::Delay(_Scheduler::Ms(100));
-        
-        // Once we're enabled, disable the pullup on MSP_EN to prevent the leakage current (~80nA)
-        // through STM32's GPIO that controls MSP_EN
-        using MSP_EN_PULLDOWN = _Pin::MSP_EN::Opts<Option::Input, Option::Resistor0>;
-        MSP_EN_PULLDOWN::Init();
+        // Once we're allowed to run, disable the pullup on MSP_RUN to prevent the leakage current (~80nA)
+        // through STM32's GPIO that controls MSP_RUN.
+        using MSP_RUN_PULLDOWN = _Pin::MSP_RUN::Opts<Option::Input, Option::Resistor0>;
+        MSP_RUN_PULLDOWN::Init();
     }
     
     _Scheduler::Run();

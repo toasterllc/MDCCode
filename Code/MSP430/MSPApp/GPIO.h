@@ -79,7 +79,7 @@ public:
         static constexpr void IES(bool x)   { if constexpr (PortIdx == PortIndex::A) _Setter(PAIES, x);   }
         
         static bool Read() {
-            if (Port::Idx == PortIndex::A) return PAIN & Bit;
+            if constexpr (PortIdx == PortIndex::A) return PAIN & Bit;
         }
         
         static void Write(bool x) {

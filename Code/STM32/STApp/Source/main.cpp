@@ -66,7 +66,7 @@ using _ICE_ST_FLASH_EN      = GPIO<GPIOPortF, GPIO_PIN_5>;
 using _ICE_ST_SPI_CLK       = QSPI::Clk;
 using _ICE_ST_SPI_D0        = QSPI::D0;
 using _ICE_ST_SPI_D6        = QSPI::D6;
-using _MSP_EN               = GPIO<GPIOPortE, GPIO_PIN_3>;
+using _MSP_RUN              = GPIO<GPIOPortE, GPIO_PIN_3>;
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -888,9 +888,9 @@ static void _MSPDisconnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Update MSP_EN output which controls whether MSPApp runs once we disconnect SBW
-    _MSP_EN::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _MSP_EN::Write(arg.en);
+    // Update MSP_RUN output which controls whether MSPApp runs once we disconnect SBW
+    _MSP_RUN::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _MSP_RUN::Write(arg.run);
     
     _MSP.disconnect();
     // Send status
