@@ -45,7 +45,6 @@ public:
             
             // Update device time
             {
-                auto lock = std::unique_lock(*_dev);
                 _dev->mspConnect();
                 _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
                 
@@ -61,18 +60,6 @@ public:
                     throw Toastbox::RuntimeError("TODO: implement");
                 }
                 
-                if (!_mspState.sd.valid) {
-                    // MSPApp state isn't valid -- ignore
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: implement");
-                }
-                
-                if (memcmp(&_sdCardInfo.cardId, &_mspState.sd.cardId, sizeof(_mspState.sd.cardId))) {
-                    // Current SD card id doesn't match MSP's card id
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: implement");
-                }
-                
                 _mspState.time = MSP::TimeFromUnixTime(std::time(nullptr));
                 _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
                 
@@ -81,6 +68,8 @@ public:
                 // thereby allowing MSP to run again.
                 constexpr bool MSPRun = false;
                 _dev->mspDisconnect(MSPRun);
+                
+                printf("Set MSP time to 0x%jx\n", (uintmax_t)_mspState.time);
             }
             
             // Load ICE40 with our app
@@ -89,6 +78,18 @@ public:
             // Init SD card
             #warning TODO: how should we handle sdInit() failing (throwing)?
             _sdCardInfo = _dev->sdInit();
+            
+            if (!_mspState.sd.valid) {
+                // MSPApp state isn't valid -- ignore
+                #warning TODO: implement
+                throw Toastbox::RuntimeError("TODO: implement");
+            }
+            
+            if (memcmp(&_sdCardInfo.cardId, &_mspState.sd.cardId, sizeof(_mspState.sd.cardId))) {
+                // Current SD card id doesn't match MSP's card id
+                #warning TODO: implement
+                throw Toastbox::RuntimeError("TODO: implement");
+            }
         }
         
         // Load the library

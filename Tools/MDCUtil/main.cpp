@@ -309,7 +309,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(     "version:                   0x%04x\n",      state.version);
     printf(     "\n");
     
-    printf(     "time:                      %llu\n",        state.time);
+    printf(     "time:                      0x%jx\n",       (uintmax_t)state.time);
     printf(     "\n");
     
     printf(     "sd\n");
@@ -353,7 +353,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     for (size_t i=0; i<std::min(std::size(state.abort.events), (size_t)state.abort.eventsCount); i++) {
         const auto& event = state.abort.events[i];
         printf( "  events[%ju]\n", (uintmax_t)i);
-        printf( "    timestamp:             %llu\n",        event.timestamp);
+        printf( "    timestamp:             0x%jx\n",       (uintmax_t)event.timestamp);
         printf( "    domain:                %u\n",          event.domain);
         printf( "    line:                  %u\n",          event.line);
     }
