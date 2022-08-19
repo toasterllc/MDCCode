@@ -100,9 +100,13 @@
 - Rev5
     
     - Investigate: _Clock::Init() takes 173 ms -- is that due to our bodge wire?
+        - Not due to bodge wire; Rev4 takes 205ms!
         - Can we speed it up? Is it necessary to do when exiting LPM3.5? The clock should already be running since it sources RTC...
+        - We don't need MSP430's clock to be driven by the 32khz crystal right? Only RTC? Can we use that fact to speed it up?
     
     - Bug: discrepency between wall time and device time on images
+        - Problem: _Clock::Init() prevents MSP430 from consuming time sent by host before the host
+          stops MSP430 again via _MSPConnectAndUnlockPins() when trying to talk to the SD card
     
     - Implement VDD_B rail handling.
         - Turn on lazily when we need to talk to ICE / IMG / SD?
