@@ -5,10 +5,9 @@
 
 namespace RTC {
 
-template <uint32_t T_XT1FreqHz>
+template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin>
 class Type {
 public:
-    
     using Time = MSP::Time;
     
     static constexpr uint32_t InterruptIntervalSec = 2048;
@@ -17,6 +16,11 @@ public:
     static_assert((T_XT1FreqHz % Predivider) == 0); // Confirm that T_XT1FreqHz is evenly divisible by Predivider
     static constexpr uint16_t InterruptCount = (InterruptIntervalSec*FreqHz)-1;
     static_assert(InterruptCount == ((InterruptIntervalSec*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
+    
+    struct Pin {
+        using XOUT  = typename T_XOUTPin::template Opts<GPIO::Option::Sel10>;
+        using XIN   = typename T_XINPin::template Opts<GPIO::Option::Sel10>;
+    };
     
     bool enabled() const {
         return RTCCTL != 0;

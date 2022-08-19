@@ -48,10 +48,10 @@ struct _Pin {
     using MSP_RUN                           = PortA::Pin<0xE, Option::Input, Option::Resistor1>;
 };
 
-// _MotionSignalIV: Keep in sync with MOTION_SIGNAL
+// _MotionSignalIV: motion interrupt vector; keep in sync with the pin chosen for MOTION_SIGNAL
 constexpr uint16_t _MotionSignalIV = P1IV__P1IFG3;
 
-using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
+using _Clock = ClockType<_MCLKFreqHz>;
 using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 
@@ -122,7 +122,7 @@ using _SDCard = SD::Card<
 // is never automatically initialized, because we don't want it
 // to be reset when we abort.
 [[gnu::section(".ram_backup_noinit.main")]]
-static RTC::Type<_XT1FreqHz> _RTC;
+static RTC::Type<_XT1FreqHz, _Pin::XOUT, _Pin::XIN> _RTC;
 
 // _ImgAutoExp: auto exposure algorithm object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
@@ -978,13 +978,15 @@ int main() {
     //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
     const MSP::Time time = _State.time;
     if (time) {
-        // If `time` is valid, consume it and hand it off to _RTC.
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        
-        // Reset `_State.time` before consuming it, so that if we lose power,
-        // the time won't be reused again
-        _State.time = 0;
-        std::atomic_signal_fence(std::memory_order_seq_cst);
+        {
+            // If `time` is valid, consume it and hand it off to _RTC.
+            FRAMWriteEn writeEn; // Enable FRAM writing
+            
+            // Reset `_State.time` before consuming it, so that if we lose power,
+            // the time won't be reused again
+            _State.time = 0;
+            std::atomic_signal_fence(std::memory_order_seq_cst);
+        }
         
         // Init real-time clock
         _RTC.init(time);

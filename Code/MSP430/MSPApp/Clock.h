@@ -2,14 +2,9 @@
 #include <msp430.h>
 #include "GPIO.h"
 
-template <uint32_t T_XT1FreqHz, uint32_t T_MCLKFreqHz, typename T_XOUTPin, typename T_XINPin>
+template <uint32_t T_MCLKFreqHz>
 class ClockType {
 public:
-    struct Pin {
-        using XOUT  = typename T_XOUTPin::template Opts<GPIO::Option::Sel10>;
-        using XIN   = typename T_XINPin::template Opts<GPIO::Option::Sel10>;
-    };
-    
     static void Init() {
         // Configure one FRAM wait state if MCLK > 8MHz.
         // This must happen before configuring the clock system.
@@ -17,15 +12,10 @@ public:
             FRCTL0 = FRCTLPW | NWAITS_1;
         }
         
-        do {
-            CSCTL7 &= ~(XT1OFFG | DCOFFG); // Clear XT1 and DCO fault flag
-            SFRIFG1 &= ~OFIFG;
-        } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
-        
         // Disable FLL
         __bis_SR_register(SCG0);
-            // Set XT1 as FLL reference source
-            CSCTL3 |= SELREF__XT1CLK;
+            // Set REFO as FLL reference source
+            CSCTL3 |= SELREF__REFOCLK;
             // Clear DCO and MOD registers
             CSCTL0 = 0;
             // Clear DCO frequency select bits first
@@ -47,8 +37,8 @@ public:
                 static_assert(_AlwaysFalse<T_MCLKFreqHz>);
             }
             
-            // Set DCOCLKDIV based on T_MCLKFreqHz and T_XT1FreqHz
-            CSCTL2 = FLLD_0 | ((T_MCLKFreqHz/T_XT1FreqHz)-1);
+            // Set DCOCLKDIV based on T_MCLKFreqHz and REFOCLKFreqHz
+            CSCTL2 = FLLD_0 | ((T_MCLKFreqHz/REFOCLKFreqHz)-1);
             
             // Wait 3 cycles to take effect
             __delay_cycles(3);
@@ -59,10 +49,11 @@ public:
         while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
         // MCLK / SMCLK source = DCOCLKDIV
-        // ACLK source = XT1
-        CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
+        //         ACLK source = REFOCLK
+        CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
     }
 
 private:
+    static constexpr uint32_t REFOCLKFreqHz = 32768;
     template <class...> static constexpr std::false_type _AlwaysFalse = {};
 };
