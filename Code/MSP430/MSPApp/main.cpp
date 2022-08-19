@@ -44,8 +44,8 @@ struct _Pin {
     using XOUT                              = PortA::Pin<0x8>;
     using XIN                               = PortA::Pin<0x9>;
     using VDD_B_SD_EN                       = PortA::Pin<0xB, Option::Output0>;
-    using MSP_RUN                           = PortA::Pin<0xD, Option::Input, Option::Resistor1>;
-    using DEBUG_OUT                         = PortA::Pin<0xE, Option::Output0>;
+    using DEBUG_OUT                         = PortA::Pin<0xD, Option::Output0>;
+    using MSP_RUN                           = PortA::Pin<0xE, Option::Input, Option::Resistor1>;
 };
 
 // _MotionSignalIV: Keep in sync with MOTION_SIGNAL
@@ -570,15 +570,16 @@ static void _Sleep() {
 
 // MARK: - Tasks
 
-//static void debugSignal() {
-//    _Pin::DEBUG_OUT::Init();
+static void debugSignal() {
+    _Pin::DEBUG_OUT::Init();
+    for (;;) {
 //    for (int i=0; i<10; i++) {
-//        _Pin::DEBUG_OUT::Write(0);
-//        for (volatile int i=0; i<10000; i++);
-//        _Pin::DEBUG_OUT::Write(1);
-//        for (volatile int i=0; i<10000; i++);
-//    }
-//}
+        _Pin::DEBUG_OUT::Write(0);
+        for (volatile int i=0; i<10000; i++);
+        _Pin::DEBUG_OUT::Write(1);
+        for (volatile int i=0; i<10000; i++);
+    }
+}
 
 //class _BusyTimeoutTask {
 //public:
@@ -942,6 +943,8 @@ int main() {
     // Init clock
     _Clock::Init();
     
+    debugSignal();
+    
 //    _Pin::DEBUG_OUT::Init();
 //    for (uint32_t i=0; i<1000000; i++) {
 //        _Pin::DEBUG_OUT::Write(1);
@@ -1000,18 +1003,18 @@ int main() {
         _Scheduler::Delay(_Scheduler::Ms(3000));
     }
     
-    // If this is a cold start, wait until MSP_RUN is high.
-    // STM32 controls MSP_RUN to control when we start executing, in order to implement mutual
-    // exclusion on controlling the power rails and talking to ICE40.
-    if (Startup::ColdStart()) {
-        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
-        while (!_Pin::MSP_RUN::Read()) _Scheduler::Delay(_Scheduler::Ms(100));
-        
-        // Once we're allowed to run, disable the pullup on MSP_RUN to prevent the leakage current (~80nA)
-        // through STM32's GPIO that controls MSP_RUN.
-        using MSP_RUN_PULLDOWN = _Pin::MSP_RUN::Opts<Option::Input, Option::Resistor0>;
-        MSP_RUN_PULLDOWN::Init();
-    }
+//    // If this is a cold start, wait until MSP_RUN is high.
+//    // STM32 controls MSP_RUN to control when we start executing, in order to implement mutual
+//    // exclusion on controlling the power rails and talking to ICE40.
+//    if (Startup::ColdStart()) {
+//        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
+//        while (!_Pin::MSP_RUN::Read()) _Scheduler::Delay(_Scheduler::Ms(100));
+//        
+////        // Once we're allowed to run, disable the pullup on MSP_RUN to prevent the leakage current (~80nA)
+////        // through STM32's GPIO that controls MSP_RUN.
+////        using MSP_RUN_PULLDOWN = _Pin::MSP_RUN::Opts<Option::Input, Option::Resistor0>;
+////        MSP_RUN_PULLDOWN::Init();
+//    }
     
     _Scheduler::Run();
 }
