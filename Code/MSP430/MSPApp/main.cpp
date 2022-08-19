@@ -924,8 +924,12 @@ int main() {
         _Pin::ICE_MSP_SPI_AUX_DIR
     >();
     
+    _Pin::DEBUG_OUT::Init();
+    
     // Init clock
+    _Pin::DEBUG_OUT::Write(1);
     _Clock::Init();
+    _Pin::DEBUG_OUT::Write(0);
     
 //    _Pin::DEBUG_OUT::Init();
 //    for (uint32_t i=0; i<1000000; i++) {
