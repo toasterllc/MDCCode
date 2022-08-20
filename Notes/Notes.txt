@@ -99,6 +99,8 @@
 
 - Rev5
     
+    - MSPApp: are the rails properly reset to their default values when we abort?
+    
     - "The drive settings of XT1 can be increased with the XT1DRIVE bits. At power up, the XT1 starts with the
       highest drive settings for fast reliable startup. After startup, user software can reduce the drive strength to
       reduce power consumption."

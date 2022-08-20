@@ -573,16 +573,16 @@ static void _Sleep() {
 
 // MARK: - Tasks
 
-static void debugSignal() {
-    _Pin::DEBUG_OUT::Init();
-    for (;;) {
-//    for (int i=0; i<10; i++) {
-        _Pin::DEBUG_OUT::Write(0);
-        for (volatile int i=0; i<10000; i++);
-        _Pin::DEBUG_OUT::Write(1);
-        for (volatile int i=0; i<10000; i++);
-    }
-}
+//static void debugSignal() {
+//    _Pin::DEBUG_OUT::Init();
+//    for (;;) {
+////    for (int i=0; i<10; i++) {
+//        _Pin::DEBUG_OUT::Write(0);
+//        for (volatile int i=0; i<10000; i++);
+//        _Pin::DEBUG_OUT::Write(1);
+//        for (volatile int i=0; i<10000; i++);
+//    }
+//}
 
 //class _BusyTimeoutTask {
 //public:
@@ -951,16 +951,7 @@ int main() {
 //    debugSignal();
     
     // Init clock
-    _Pin::DEBUG_OUT::Init();
-    _Pin::DEBUG_OUT::Write(1);
     _Clock::Init();
-    _Pin::DEBUG_OUT::Write(0);
-    
-//    _Pin::DEBUG_OUT::Init();
-//    for (uint32_t i=0; i<1000000; i++) {
-//        _Pin::DEBUG_OUT::Write(1);
-//        _Pin::DEBUG_OUT::Write(0);
-//    }
     
     #warning if this is a cold start:
     #warning   wait a few milliseconds to allow our outputs to settle so that our peripherals

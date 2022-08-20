@@ -72,6 +72,18 @@ public:
                 startTime = std::chrono::steady_clock::now();
                 _dev->mspDisconnect(MSPRun);
                 
+                bool consumed = false;
+                for (int i=0; i<10 && !consumed; i++) {
+                    usleep(100000);
+                    
+                    MSP::State s;
+                    _dev->mspConnect();
+                    _dev->mspRead(MSP::StateAddr, &s, sizeof(s));
+                    _dev->mspDisconnect(MSPRun);
+                    consumed = !s.time;
+                }
+                
+                if (!consumed) throw Toastbox::RuntimeError("failed to set MSP time");
                 printf("Set MSP time to 0x%jx\n", (uintmax_t)_mspState.time);
             }
 //            
