@@ -27,16 +27,25 @@ public:
     }
     
     void init(Time time) {
-        _time = time;
+        // Clear XT1 fault flags
+        do {
+            CSCTL7 &= ~XT1OFFG; // Clear XT1 fault flag
+            SFRIFG1 &= ~OFIFG;
+        } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
         
-        RTCMOD = InterruptCount;
-        RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
-        // "TI recommends clearing the RTCIFG bit by reading the RTCIV register
-        // before enabling the RTC counter interrupt."
-        RTCIV;
-        
-        // Enable RTC interrupts
-        RTCCTL |= RTCIE;
+        // Start RTC if it's not yet running, or restart it if we were given a new time
+        if (!enabled() || time) {
+            _time = time;
+            
+            RTCMOD = InterruptCount;
+            RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
+            // "TI recommends clearing the RTCIFG bit by reading the RTCIV register
+            // before enabling the RTC counter interrupt."
+            RTCIV;
+            
+            // Enable RTC interrupts
+            RTCCTL |= RTCIE;
+        }
     }
     
     // time(): returns the current time, which is either absolute or relative (to the

@@ -114,6 +114,8 @@ using _SDCard = SD::Card<
     0                   // T_ClkDelayFast (odd values invert the clock)
 >;
 
+using _RTCType = RTC::Type<_XT1FreqHz, _Pin::XOUT, _Pin::XIN>;
+
 // _RTC: real time clock
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
@@ -122,7 +124,7 @@ using _SDCard = SD::Card<
 // is never automatically initialized, because we don't want it
 // to be reset when we abort.
 [[gnu::section(".ram_backup_noinit.main")]]
-static RTC::Type<_XT1FreqHz, _Pin::XOUT, _Pin::XIN> _RTC;
+static _RTCType _RTC;
 
 // _ImgAutoExp: auto exposure algorithm object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
@@ -942,8 +944,8 @@ int main() {
         _SPI::Pin::DataIn,
         
         // Clock peripheral determines initial state of clock GPIOs
-        _Clock::Pin::XOUT,
-        _Clock::Pin::XIN
+        _RTCType::Pin::XOUT,
+        _RTCType::Pin::XIN
     >();
     
 //    debugSignal();
@@ -976,26 +978,42 @@ int main() {
     //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
     //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
     //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
+//    const MSP::Time time = _State.time;
+//    if (time) {
+//        {
+//            // If `time` is valid, consume it and hand it off to _RTC.
+//            FRAMWriteEn writeEn; // Enable FRAM writing
+//            
+//            // Reset `_State.time` before consuming it, so that if we lose power,
+//            // the time won't be reused again
+//            _State.time = 0;
+//            std::atomic_signal_fence(std::memory_order_seq_cst);
+//        }
+//        
+//        // Init real-time clock
+//        _RTC.init(time);
+//    
+//    // Otherwise, we don't have a valid time, so if _RTC isn't currently
+//    // enabled, init _RTC with 0.
+//    } else if (!_RTC.enabled()) {
+//        _RTC.init(0);
+//    }
+    
+    // Init RTC
+    // We need RTC to be unconditionally enabled for 2 reasons:
+    //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
+    //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
+    //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
     const MSP::Time time = _State.time;
     if (time) {
-        {
-            // If `time` is valid, consume it and hand it off to _RTC.
-            FRAMWriteEn writeEn; // Enable FRAM writing
-            
-            // Reset `_State.time` before consuming it, so that if we lose power,
-            // the time won't be reused again
-            _State.time = 0;
-            std::atomic_signal_fence(std::memory_order_seq_cst);
-        }
-        
-        // Init real-time clock
-        _RTC.init(time);
-    
-    // Otherwise, we don't have a valid time, so if _RTC isn't currently
-    // enabled, init _RTC with 0.
-    } else if (!_RTC.enabled()) {
-        _RTC.init(0);
+        // If `time` is valid, consume it before handing it off to _RTC.
+        FRAMWriteEn writeEn; // Enable FRAM writing
+        // Reset `_State.time` before consuming it, so that if we lose power,
+        // the time won't be reused again
+        _State.time = 0;
+        std::atomic_signal_fence(std::memory_order_seq_cst);
     }
+    _RTC.init(time);
     
     // Init SysTick
     _SysTick::Init();
