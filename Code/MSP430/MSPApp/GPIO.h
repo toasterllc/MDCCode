@@ -49,7 +49,7 @@ public:
             static constexpr bool Sel1()    { return _InitGetter(Option::Sel10)         || _InitGetter(Option::Sel11);          }
             static constexpr bool REn()     { return _InitGetter(Option::Resistor0)     || _InitGetter(Option::Resistor1);      }
             static constexpr bool IE()      { return _InitGetter(Option::Interrupt01)   || _InitGetter(Option::Interrupt10);    }
-            static constexpr bool IES()     { return _InitGetter(Option::Interrupt10);                                              }
+            static constexpr bool IES()     { return _InitGetter(Option::Interrupt10);                                          }
         };
         
         static constexpr void Init() {
