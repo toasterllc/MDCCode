@@ -29,7 +29,7 @@ public:
     void init(Time time) {
         // Clear XT1 fault flags
         do {
-            CSCTL7 &= ~XT1OFFG; // Clear XT1 fault flag
+            CSCTL7 &= ~(XT1OFFG | DCOFFG); // Clear XT1 and DCO fault flag
             SFRIFG1 &= ~OFIFG;
         } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
         
