@@ -109,7 +109,7 @@
         - Problem: _Clock::Init() prevents MSP430 from consuming time sent by host before the host
           stops MSP430 again via _MSPConnectAndUnlockPins() when trying to talk to the SD card
     
-    - Implement VDD_B rail handling.
+    - MSPApp: Implement VDD_B rail handling.
         - Turn on lazily when we need to talk to ICE / IMG / SD?
     
     - Implement thumbnailing in ICEAppMSP / MSPApp
