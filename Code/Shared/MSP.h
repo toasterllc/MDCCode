@@ -78,8 +78,12 @@ namespace MSP {
         const uint32_t magic = MagicNumber;
         const uint16_t version = Version;
         
-        // time: the absolute time set by the outside world (seconds since reference date)
-        Time time = 0;
+        // startTime: the absolute time set by the outside world (seconds since reference date)
+        struct [[gnu::packed]] {
+            Time time = 0;
+            bool valid = false;
+            uint8_t _pad = 0;
+        } startTime;
         
         struct [[gnu::packed]] {
             // cardId: the SD card's CID, used to determine when the SD card has been
@@ -96,8 +100,8 @@ namespace MSP {
         
         // abort: records aborts that have occurred
         struct [[gnu::packed]] {
-            AbortEvent events[3]            = {};
-            uint16_t eventsCount   = 0;
+            AbortEvent events[3] = {};
+            uint16_t eventsCount = 0;
         } abort = {};
     };
 
