@@ -786,8 +786,7 @@ int main() {
         // Temporarily enable a pullup on HOST_MODE_ so that we can determine whether STM is driving it low.
         // We don't want the pullup to be permanent to prevent leakage current (~80nA) through STM32's GPIO
         // that controls HOST_MODE_.
-        using HOST_MODE_PULLUP = _Pin::HOST_MODE_::Opts<Option::Input, Option::Resistor1>;
-        HOST_MODE_PULLUP::Init();
+        _Pin::HOST_MODE_::Write(1);
         
         // Wait for the pullup to pull the rail up
         _Scheduler::Delay(_Scheduler::Ms(1));
@@ -797,8 +796,9 @@ int main() {
             _HostMode();
         }
         
-        // Return HOST_MODE_ config
-        _Pin::HOST_MODE_::Init();
+        // Return to default HOST_MODE_ config
+        // Not using GPIO::Init() here because it costs a lot more instructions.
+        _Pin::HOST_MODE_::Write(0);
         
         // Since this is a cold start, delay 3s before beginning.
         // This delay is meant for the case where we restarted due to an abort, and
