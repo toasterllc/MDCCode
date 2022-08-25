@@ -267,16 +267,26 @@ static MSP430JTAG<_MSPTest, _MSPRst_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
 
-static bool _MSPConnectAndUnlockPins() {
+static bool _MSPConnect(bool unlockPins) {
     constexpr uint16_t PM5CTL0Addr  = 0x0130;
     
     const auto mspr = _MSP.connect();
     if (mspr != _MSP.Status::OK) return false;
     
-    // Clear LOCKLPM5 in the PM5CTL0 register
-    // This is necessary to be able to control the GPIOs
-    _MSP.write(PM5CTL0Addr, 0x0010);
+    if (unlockPins) {
+        // Clear LOCKLPM5 in the PM5CTL0 register
+        // This is necessary to be able to control the GPIOs
+        _MSP.write(PM5CTL0Addr, 0x0010);
+    }
+    
     return true;
+}
+
+static void _MSPDisconnect(bool run) {
+    // Update MSP_RUN output which controls whether MSPApp runs once we disconnect SBW
+    _MSP_RUN::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _MSP_RUN::Write(run);
+    _MSP.disconnect();
 }
 
 static bool _SDSetPowerEnabled(bool en) {
@@ -285,7 +295,7 @@ static bool _SDSetPowerEnabled(bool en) {
     constexpr uint16_t PADIRAddr    = 0x0204;
     constexpr uint16_t PAOUTAddr    = 0x0202;
     
-    const bool br = _MSPConnectAndUnlockPins();
+    const bool br = _MSPConnect(true);
     if (!br) return false;
     
     const uint16_t PADIR = _MSP.read(PADIRAddr);
@@ -297,6 +307,8 @@ static bool _SDSetPowerEnabled(bool en) {
     } else {
         _MSP.write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
     }
+    
+    _MSPDisconnect(false); // Don't allow MSP to run
     
     // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
     _Scheduler::Sleep(_Scheduler::Ms(2));
@@ -317,7 +329,7 @@ static bool _ImgSetPowerEnabled(bool en) {
     constexpr uint16_t PADIRAddr        = 0x0204;
     constexpr uint16_t PAOUTAddr        = 0x0202;
     
-    const bool br = _MSPConnectAndUnlockPins();
+    const bool br = _MSPConnect(true);
     if (!br) return false;
     
     const uint16_t PADIR = _MSP.read(PADIRAddr);
@@ -333,6 +345,8 @@ static bool _ImgSetPowerEnabled(bool en) {
         // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
         _MSP.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
     }
+    
+    _MSPDisconnect(false); // Don't allow MSP to run
     
     #warning TODO: measure how long it takes for IMG rails to rise
     // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
@@ -877,9 +891,10 @@ static void _MSPConnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    const auto r = _MSP.connect();
+    const bool br = _MSPConnect(false);
+    
     // Send status
-    _System::USBSendStatus(r == _MSP.Status::OK);
+    _System::USBSendStatus(br);
 }
 
 static void _MSPDisconnect(const STM::Cmd& cmd) {
@@ -888,11 +903,8 @@ static void _MSPDisconnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Update MSP_RUN output which controls whether MSPApp runs once we disconnect SBW
-    _MSP_RUN::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _MSP_RUN::Write(arg.run);
+    _MSPDisconnect(arg.run);
     
-    _MSP.disconnect();
     // Send status
     _System::USBSendStatus(true);
 }

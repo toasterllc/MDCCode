@@ -45,7 +45,7 @@ struct _Pin {
     using XIN                               = PortA::Pin<0x9>;
     using VDD_B_SD_EN                       = PortA::Pin<0xB, Option::Output0>;
     using DEBUG_OUT                         = PortA::Pin<0xD, Option::Output0>;
-    using MSP_RUN                           = PortA::Pin<0xE, Option::Input, Option::Resistor1>;
+    using HOST_MODE_                        = PortA::Pin<0xE, Option::Input, Option::Resistor0>;
 };
 
 // _MotionSignalIV: motion interrupt vector; keep in sync with the pin chosen for MOTION_SIGNAL
@@ -575,8 +575,8 @@ static void _Sleep() {
 
 //static void debugSignal() {
 //    _Pin::DEBUG_OUT::Init();
-//    for (;;) {
-////    for (int i=0; i<10; i++) {
+////    for (;;) {
+//    for (int i=0; i<10; i++) {
 //        _Pin::DEBUG_OUT::Write(0);
 //        for (volatile int i=0; i<10000; i++);
 //        _Pin::DEBUG_OUT::Write(1);
@@ -873,6 +873,12 @@ static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t l
     abort.eventsCount++;
 }
 
+//[[noreturn]]
+//static void _BOR() {
+//    // Trigger a BOR
+//    PMMCTL0 = PMMPW | PMMSWBOR;
+//}
+
 [[noreturn]]
 static void _Abort(uint16_t domain, uint16_t line) {
     const MSP::Time timestamp = _RTC.time();
@@ -921,9 +927,112 @@ uint8_t _StackMain[_StackMainSize];
 asm(".global __stack");
 asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
 
+static void _hostMode() {
+    // Let power rails fully discharge before turning them on
+    _Scheduler::Delay(_Scheduler::Ms(100));
+    
+    _Pin::VDD_B_EN::Write(1);
+    _Pin::VDD_B_1V8_IMG_EN::Write(1);
+    _Pin::VDD_B_2V8_IMG_EN::Write(1);
+    _Pin::VDD_B_SD_EN::Write(1);
+    
+    while (!_Pin::HOST_MODE_::Read()) {
+        _Scheduler::Delay(_Scheduler::Ms(100));
+    }
+    
+    _Pin::VDD_B_EN::Write(0);
+    _Pin::VDD_B_1V8_IMG_EN::Write(0);
+    _Pin::VDD_B_2V8_IMG_EN::Write(0);
+    _Pin::VDD_B_SD_EN::Write(0);
+}
+
 int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
+    
+//    if (Startup::ColdStart()) {
+//        
+//        // Init GPIOs
+//        GPIO::Init<
+//            // Main Pins
+//            _Pin::HOST_MODE_,
+//            
+//            // Clock pins (config chosen by _RTCType)
+//            _RTCType::Pin::XOUT,
+//            _RTCType::Pin::XIN
+//            
+//    //        _Pin::DEBUG_OUT
+//        >();
+//        
+//        
+//        
+//        
+//        
+//        
+//        _Pin::HOST_MODE_::Init();
+//        _RTCType::Pin::XOUT::Init();
+//        _RTCType::Pin::XIN::Init();
+//        
+//        while (!_Pin::HOST_MODE_::Read()) {
+//            _Scheduler::Delay(_Scheduler::Ms(100));
+//        }
+//        
+//        GPIO::Init<
+//            _Pin::HOST_MODE_,
+//        >();
+//        
+//        GPIO::Init<_Pin::HOST_MODE_>
+//        
+//    }
+//    
+//    if (!_Pin::HOST_MODE_::Read()) {
+//        while (!_Pin::HOST_MODE_::Read()) {
+//            _Scheduler::Delay(_Scheduler::Ms(100));
+//        }
+//        _BOR();
+//    }
+//    
+//    // Init RTC
+//    // We need RTC to be unconditionally enabled for 2 reasons:
+//    //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
+//    //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
+//    //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
+//    const MSP::Time time = _State.time;
+//    if (time) {
+//        // If `time` is valid, consume it before handing it off to _RTC.
+//        FRAMWriteEn writeEn; // Enable FRAM writing
+//        // Reset `_State.time` before consuming it, so that if we lose power,
+//        // the time won't be reused again
+//        _State.time = 0;
+//        std::atomic_signal_fence(std::memory_order_seq_cst);
+//    }
+//    _RTC.init(time);
+//    
+//    // If this is a cold start, wait until HOST_MODE_ is high.
+//    // STM32 controls HOST_MODE_ to control when we start executing, in order to implement mutual
+//    // exclusion on controlling the power rails and talking to ICE40.
+//    if (Startup::ColdStart()) {
+//        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
+//        while (!_Pin::HOST_MODE_::Read()) {
+//            _Scheduler::Delay(_Scheduler::Ms(100));
+////            debugSignal();
+//        }
+//        
+////        _Pin::DEBUG_OUT::Init();
+////        while (!_Pin::HOST_MODE_::Read()) {
+////            _Pin::DEBUG_OUT::Write(1);
+////            _Scheduler::Delay(_Scheduler::Ms(50));
+////            _Pin::DEBUG_OUT::Write(0);
+////            _Scheduler::Delay(_Scheduler::Ms(50));
+////        }
+//        
+//        // Once we're allowed to run, disable the pullup on HOST_MODE_ to prevent the leakage current (~80nA)
+//        // through STM32's GPIO that controls HOST_MODE_.
+//        using HOST_MODE__PULLDOWN = _Pin::HOST_MODE_::Opts<Option::Input, Option::Resistor0>;
+//        HOST_MODE__PULLDOWN::Init();
+//    }
+    
+    
     
 //    volatile bool a = false;
 //    while (!a);
@@ -935,23 +1044,25 @@ int main() {
         _Pin::VDD_B_2V8_IMG_EN,
         _Pin::VDD_B_SD_EN,
         _Pin::VDD_B_EN,
-        _Pin::MSP_RUN,
         _Pin::MOTION_SIGNAL,
+        _Pin::HOST_MODE_,
         
-        // SPI peripheral determines initial state of SPI GPIOs
+        // SPI pins (config chosen by _SPI)
         _SPI::Pin::Clk,
         _SPI::Pin::DataOut,
         _SPI::Pin::DataIn,
         
-        // Clock peripheral determines initial state of clock GPIOs
+        // Clock pins (config chosen by _RTCType)
         _RTCType::Pin::XOUT,
         _RTCType::Pin::XIN
+        
+//        _Pin::DEBUG_OUT
     >();
-    
-//    debugSignal();
     
     // Init clock
     _Clock::Init();
+    
+//    debugSignal();
     
     #warning if this is a cold start:
     #warning   wait a few milliseconds to allow our outputs to settle so that our peripherals
@@ -995,55 +1106,63 @@ int main() {
     //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
     //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
     //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
-    const MSP::Time time = _State.time;
-    if (time) {
+    MSP::Time startTime = 0;
+    if (_State.startTime.valid) {
         // If `time` is valid, consume it before handing it off to _RTC.
         FRAMWriteEn writeEn; // Enable FRAM writing
-        // Reset `_State.time` before consuming it, so that if we lose power,
+        // Reset `valid` before consuming the start time, so that if we lose power,
         // the time won't be reused again
-        _State.time = 0;
+        _State.startTime.valid = false;
         std::atomic_signal_fence(std::memory_order_seq_cst);
     }
-    _RTC.init(time);
+    _RTC.init(startTime);
     
     // Init SysTick
     _SysTick::Init();
     
-    // If this is a cold start, delay 3s before beginning.
-    // This delay is meant for the case where we restarted due to an abort, and
-    // serves 2 purposes:
-    //   1. it rate-limits aborts, in case there's a persistent issue
-    //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
+    // Handle cold starts
     if (Startup::ColdStart()) {
-//        #warning TODO: VDD_B_EN needs to be controlled elsewhere when we implement proper power rail control
-//        // Turn on VDD_B
-//        _Pin::VDD_B_EN::Write(1);
-        
         _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
+        
+        // Temporarily enable a pullup on HOST_MODE_ so that we can determine whether STM is driving it low.
+        // We don't want the pullup to be permanent to prevent leakage current (~80nA) through STM32's GPIO
+        // that controls HOST_MODE_.
+        using HOST_MODE_PULLUP = _Pin::HOST_MODE_::Opts<Option::Input, Option::Resistor1>;
+        HOST_MODE_PULLUP::Init();
+        
+        // Wait for pullup to pull rail up
+        _Scheduler::Delay(_Scheduler::Ms(1));
+        
+        // Enter host mode if HOST_MODE_ is asserted
+        if (!_Pin::HOST_MODE_::Read()) {
+            _hostMode();
+        }
+        
+        _Pin::HOST_MODE_::Init();
+        
+        // Since this is a cold start, delay 3s before beginning.
+        // This delay is meant for the case where we restarted due to an abort, and
+        // serves 2 purposes:
+        //   1. it rate-limits aborts, in case there's a persistent issue
+        //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
         _Scheduler::Delay(_Scheduler::Ms(3000));
     }
     
-    // If this is a cold start, wait until MSP_RUN is high.
-    // STM32 controls MSP_RUN to control when we start executing, in order to implement mutual
-    // exclusion on controlling the power rails and talking to ICE40.
-    if (Startup::ColdStart()) {
-        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
-        while (!_Pin::MSP_RUN::Read()) _Scheduler::Delay(_Scheduler::Ms(100));
-        
-//        _Pin::DEBUG_OUT::Init();
-//        while (!_Pin::MSP_RUN::Read()) {
-//            _Pin::DEBUG_OUT::Write(1);
-//            _Scheduler::Delay(_Scheduler::Ms(50));
-//            _Pin::DEBUG_OUT::Write(0);
-//            _Scheduler::Delay(_Scheduler::Ms(50));
-//        }
-        
-        // Once we're allowed to run, disable the pullup on MSP_RUN to prevent the leakage current (~80nA)
-        // through STM32's GPIO that controls MSP_RUN.
-        using MSP_RUN_PULLDOWN = _Pin::MSP_RUN::Opts<Option::Input, Option::Resistor0>;
-        MSP_RUN_PULLDOWN::Init();
-    }
+//    // If this is a cold start, delay 3s before beginning.
+//    // This delay is meant for the case where we restarted due to an abort, and
+//    // serves 2 purposes:
+//    //   1. it rate-limits aborts, in case there's a persistent issue
+//    //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
+//    if (Startup::ColdStart()) {
+////        #warning TODO: VDD_B_EN needs to be controlled elsewhere when we implement proper power rail control
+////        // Turn on VDD_B
+////        _Pin::VDD_B_EN::Write(1);
+//        
+//        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
+//        _Scheduler::Delay(_Scheduler::Ms(3000));
+//    }
     
+//    debugSignal();
     _Scheduler::Run();
 }
 
