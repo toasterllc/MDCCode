@@ -134,77 +134,6 @@ static Img::AutoExposure _ImgAutoExp;
 static MSP::State _State;
 
 struct _SDTask {
-//    static void Run() {
-//        for (;;) {
-//            // wait for on signal
-//            
-//            if (!_State.rca) {
-//                // We haven't successfully enabled the SD card since the battery was connected;
-//                // enable the SD card and get the card id / card data.
-//                SD::CardId cardId;
-//                SD::CardData cardData;
-//                _State.rca = _SDCard::Enable(&cardId, &cardData);
-//                
-//                // If the SD state is valid and the SD card id matches, just init the ring buffers
-//                if (_State.sd.valid && !memcmp(&_State.sd.cardId, &cardId, sizeof(cardId))) {
-//                    _ImgRingBufInit();
-//                
-//                // Otherwise, either the SD state isn't valid, or the existing SD card id doesn't
-//                // match the current card id. Either way, we need to reset the SD state.
-//                } else {
-//                    _ResetState(cardId, cardData);
-//                }
-//            
-//            } else {
-//                // We've previously enabled the SD card successfully; enable it again
-//                _SDCard::Enable();
-//            }
-//            
-//            // wait for off signal or WriteImage signal
-//        }
-//        
-//        
-//
-//        
-//        
-//        
-//        
-//        
-//        
-//        
-//        
-//        if (!_State.init)
-//        
-//        for (;;) {
-//            switch (_State) {
-//            case _State::Uninit: {
-//                // Enable the SD card synchronously because we need the card id / card data
-//                SD::CardId cardId;
-//                SD::CardData cardData;
-//                _RCA = _SDCard::Init(&cardId, &cardData);
-//                
-//                // If the SD state is valid and the SD card id matches, just init the ring buffers
-//                if (_State.sd.valid && !memcmp(&_State.sd.cardId, &cardId, sizeof(cardId))) {
-//                    _ImgRingBufInit();
-//                
-//                // Otherwise, either the SD state isn't valid, or the existing SD card id doesn't
-//                // match the current card id. Either way, we need to reset the SD state.
-//                } else {
-//                    _ResetState(cardId, cardData);
-//                }
-//                
-//                _State = _State::Init;
-//                break;
-//            }
-//            
-//            case
-//            }
-//        }
-//        
-//        
-//    }
-    
-    
     static void DisableAsync() {
         Wait();
         // Short-circuit if the state didn't change
@@ -273,40 +202,6 @@ struct _SDTask {
         
         _State.enabled = true;
     }
-    
-//    static void _WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
-//        assert(_State.enabled);
-//        _SDCard::WriteImage(*_State.rca, srcBlock, dstBlockIdx);
-//        _ImgRingBufIncrement();
-//    }
-    
-    
-    
-    
-    
-    
-//    static void Disable() {
-//        
-//    }
-//    
-//    static void Enable() {
-//        
-//    }
-//    
-//    static void WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
-//        Wait();
-//        _State.request = Request{
-//            .type = Request::WriteImage,
-//            .arg.WriteImage = {
-//                .srcBlock = srcBlock,
-//                .dstBlockIdx = dstBlockIdx,
-//            },
-//        };
-//    }
-//    
-//    static void Wait() {
-//        _Scheduler::Wait<_SDTask>([] { return !_State.request; });
-//    }
     
     // _StateInit(): resets the _State.sd struct
     static void _StateInit(const SD::CardId& cardId, const SD::CardData& cardData) {
@@ -411,27 +306,10 @@ struct _SDTask {
     [[gnu::section(".stack._SDTask")]]
     static inline uint8_t Stack[256];
     
-//    struct Request {
-//        enum {
-//            Disable,
-//            Enable,
-//            WriteImage,
-//        } type;
-//        
-//        union {
-//            struct {
-//                uint8_t srcBlock = 0;
-//                uint32_t dstBlockIdx = 0;
-//            } WriteImage;
-//        } arg;
-//    };
-    
     [[gnu::section(".ram_backup.main")]]
     static inline struct {
         std::optional<uint16_t> rca;
         bool enabled = false;
-//        std::optional<Request> request;
-//        bool init = false;
     } _State;
 };
 
