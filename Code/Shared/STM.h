@@ -82,7 +82,7 @@ namespace STM {
             } ICEFlashWrite;
             
             struct [[gnu::packed]] {
-                uint8_t run;
+                uint8_t hostMode;
             } MSPDisconnect;
             
             struct [[gnu::packed]] {
