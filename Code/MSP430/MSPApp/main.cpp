@@ -78,7 +78,7 @@ using _Scheduler = Toastbox::Scheduler<
     _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
                                                 //              main stack for overflow; unused if T_StackGuardCount==0)
     _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
-    _MainTask,                                // T_Tasks: list of tasks
+    _MainTask,                                  // T_Tasks: list of tasks
     _SDTask,
     _ImgTask
 >;
@@ -205,101 +205,6 @@ static void _Sleep() {
 //    }
 //}
 
-//class _BusyTimeoutTask {
-//public:
-//    static void Run() {
-//        for (;;) {
-////            _Scheduler::Wait<_BusyTimeoutTask>([] { return _Busy.has_value(); });
-//            
-//            while (_Scheduler::Wait<_BusyTimeoutTask,1000>([] { return (bool)_Busy; })) {
-//                _Busy = std::nullopt;
-//            }
-//            
-//            // Asynchronously turn off the image sensor / SD card
-//            _Img::DisableAsync();
-//            _SD::DisableAsync();
-//            
-//            // Wait until the image sensor / SD card are off
-//            _Img::Wait();
-//            _SD::Wait();
-//            
-////            // Wait to be tickled
-////            _Scheduler::Wait<_BusyTimeoutTask>([] { return _Tickled; });
-////
-////            // Assert that we're busy until we stop getting tickled + 1s
-////            _BusyAssertion busy;
-////            do {
-////                _Tickled = false;
-////            } while ();
-////
-////            // Asynchronously turn off the image sensor / SD card
-////            _Img::DisableAsync();
-////            _SD::DisableAsync();
-////
-////            // Wait until the image sensor / SD card are off
-////            _Img::Wait();
-////            _SD::Wait();
-//        }
-//        
-//        _Scheduler::Yield();
-//    }
-//    
-//    
-////    static void Run() {
-////        for (;;) {
-////            _BusyAssertion busy;
-////            while (_Scheduler::Wait<_BusyTimeoutTask,1000>([] { return _Tickled; })) {
-////                _Tickled = false;
-////            }
-////            
-////            // Asynchronously turn off the image sensor / SD card
-////            _Img::DisableAsync();
-////            _SD::DisableAsync();
-////            
-////            // Wait until the image sensor / SD card are off
-////            _Img::Wait();
-////            _SD::Wait();
-////            
-//////            // Wait to be tickled
-//////            _Scheduler::Wait<_BusyTimeoutTask>([] { return _Tickled; });
-//////
-//////            // Assert that we're busy until we stop getting tickled + 1s
-//////            _BusyAssertion busy;
-//////            do {
-//////                _Tickled = false;
-//////            } while ();
-//////
-//////            // Asynchronously turn off the image sensor / SD card
-//////            _Img::DisableAsync();
-//////            _SD::DisableAsync();
-//////
-//////            // Wait until the image sensor / SD card are off
-//////            _Img::Wait();
-//////            _SD::Wait();
-////        }
-////        
-////        _Scheduler::Yield();
-////    }
-//    
-////    static void Stop() {
-////        _Scheduler::Stop<_BusyTimeoutTask>();
-////    }
-//    
-//    static void Tickle() {
-//        _Busy.emplace();
-//    }
-//    
-//    // Task options
-//    static constexpr Toastbox::TaskOptions Options{};
-//    
-//    // Task stack
-//    [[gnu::section(".stack._BusyTimeoutTask")]]
-//    static inline uint8_t Stack[128];
-//    
-//private:
-//    static inline std::optional<_BusyAssertion> _Busy;
-//};
-
 struct _SDTask {
     static void Enable() {
         Wait();
@@ -337,12 +242,6 @@ struct _SDTask {
     static void Wait() {
         _Scheduler::Wait<_SDTask>();
     }
-    
-//    // WaitForInit(): wait for the initial SD card initialization, which initializes
-//    // _State.sd (particularly _State.sd.imgRingBufs), which other entities need
-//    static void WaitForInit() {
-//        _Scheduler::Wait([&] { return _RCA.has_value(); });
-//    }
     
     static void _Enable() {
         Assert(!_Enabled);
@@ -584,30 +483,7 @@ struct _ImgTask {
 
 struct _MainTask {
     static void Run() {
-//        for (;;) {
-//            _Pin::VDD_B_EN::Write(1);
-//            _Scheduler::Sleep(_Scheduler::Ms(500));
-//            
-//            _Pin::VDD_B_EN::Write(0);
-//            _Scheduler::Sleep(_Scheduler::Ms(500));
-//        }
-//        
-//        _Pin::VDD_B_EN::Write(1);
-//        _Scheduler::Sleep(_Scheduler::Ms(500));
-//        
-//        for (;;) {
-//            _Pin::DEBUG_OUT::Write(1);
-//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//            _Scheduler::Sleep(_Scheduler::Ms(500));
-//            
-//            _Pin::DEBUG_OUT::Write(0);
-//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            _Scheduler::Sleep(_Scheduler::Ms(500));
-//        }
-        
         for (;;) {
-//            _Scheduler::Sleep(_Scheduler::Ms(2000));
-            
             // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
             {
                 _WaitingForMotion = true;
@@ -651,78 +527,6 @@ struct _MainTask {
             _SDTask::Disable();
             
             _Pin::VDD_B_EN::Write(0);
-            
-//            // Asynchronously turn off the image sensor / SD card
-//            _Img::DisableAsync();
-//            _SD::DisableAsync();
-//            
-//            _Scheduler::Wait([&] { return (_Img && _SD) || _Motion; });
-//            
-//            // Wait until the image sensor / SD card are off
-//            _Img::Wait();
-//            _SD::Wait();
-//            
-//            // Wait for motion
-//            const bool motion = _Scheduler::WaitTimeout<1000>([&] { return _Motion; });
-//            
-//            if (motion) {
-//                _Motion = false;
-//                
-//                // Capture an image
-//                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//                _ImgCapture();
-//                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            
-//            } else {
-//                // Asynchronously turn off the image sensor / SD card
-//                _Img::DisableAsync();
-//                _SD::DisableAsync();
-//                
-//                // Wait until the image sensor / SD card are off
-//                _Img::Wait();
-//                _SD::Wait();
-//                
-//                break;
-//            }
-//            
-//            
-//            
-////            // Stop the timeout task while we capture a new image
-////            _Scheduler::Stop<_BusyTimeoutTask>();
-//            
-//            
-//            // Wait for motion
-//            _Scheduler::Wait([&] { return _Motion; });
-//            _Motion = false;
-//            
-//            _BusyAssertion busy;
-//            
-////            // Stop the timeout task while we capture a new image
-////            _Scheduler::Stop<_BusyTimeoutTask>();
-//            
-//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//            
-//            // Capture an image
-//            _ImgCapture();
-//            
-//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            
-//            // wait for motion or 1s to elapse
-//            // if motion:
-//            //   capture another image
-//            // if 1s elapses:
-//            //   disable SD/Img
-//            //   wait for: [1] _Motion or [2] (SD && Img)
-//            //   if [1]: capture another image
-//            //   if [2]: drop busy assertion and yield
-//            
-//            
-//            // Tickle the busy task
-//            _BusyTimeoutTask::Tickle();
-//            
-////            // Restart the timeout task, so that we turn off automatically if
-////            // we're idle for a bit
-////            _Scheduler::Start<_BusyTimeoutTask>(_BusyTimeoutTask::Run);
         }
     }
     
@@ -896,31 +700,6 @@ static void _Abort(uint16_t domain, uint16_t line) {
     // Record the abort
     _AbortRecord(timestamp, domain, line);
     _BOR();
-//    // Trigger a BOR
-//    PMMCTL0 = PMMPW | PMMSWBOR;
-    
-//    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-//    PMMCTL0_L |= PMMSWBOR_1_L;
-    
-//    for (;;);
-    
-//    _Pin::DEBUG_OUT::Init();
-//    
-//    for (;;) {
-//        for (uint16_t i=0; i<(uint16_t)domain; i++) {
-//            _Pin::DEBUG_OUT::Write(1);
-//            _Pin::DEBUG_OUT::Write(0);
-//        }
-//        
-//        for (volatile int i=0; i<100; i++) {}
-//        
-//        for (uint16_t i=0; i<(uint16_t)line; i++) {
-//            _Pin::DEBUG_OUT::Write(1);
-//            _Pin::DEBUG_OUT::Write(0);
-//        }
-//        
-//        for (volatile int i=0; i<1000; i++) {}
-//    }
 }
 
 extern "C" [[noreturn]]
@@ -954,103 +733,11 @@ static void _HostMode() {
     }
     
     _BOR();
-    
-//    _Pin::VDD_B_EN::Write(0);
-//    _Pin::VDD_B_1V8_IMG_EN::Write(0);
-//    _Pin::VDD_B_2V8_IMG_EN::Write(0);
-//    _Pin::VDD_B_SD_EN::Write(0);
 }
 
 int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
-    
-//    if (Startup::ColdStart()) {
-//        
-//        // Init GPIOs
-//        GPIO::Init<
-//            // Main Pins
-//            _Pin::HOST_MODE_,
-//            
-//            // Clock pins (config chosen by _RTCType)
-//            _RTCType::Pin::XOUT,
-//            _RTCType::Pin::XIN
-//            
-//    //        _Pin::DEBUG_OUT
-//        >();
-//        
-//        
-//        
-//        
-//        
-//        
-//        _Pin::HOST_MODE_::Init();
-//        _RTCType::Pin::XOUT::Init();
-//        _RTCType::Pin::XIN::Init();
-//        
-//        while (!_Pin::HOST_MODE_::Read()) {
-//            _Scheduler::Delay(_Scheduler::Ms(100));
-//        }
-//        
-//        GPIO::Init<
-//            _Pin::HOST_MODE_,
-//        >();
-//        
-//        GPIO::Init<_Pin::HOST_MODE_>
-//        
-//    }
-//    
-//    if (!_Pin::HOST_MODE_::Read()) {
-//        while (!_Pin::HOST_MODE_::Read()) {
-//            _Scheduler::Delay(_Scheduler::Ms(100));
-//        }
-//        _BOR();
-//    }
-//    
-//    // Init RTC
-//    // We need RTC to be unconditionally enabled for 2 reasons:
-//    //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
-//    //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
-//    //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
-//    const MSP::Time time = _State.time;
-//    if (time) {
-//        // If `time` is valid, consume it before handing it off to _RTC.
-//        FRAMWriteEn writeEn; // Enable FRAM writing
-//        // Reset `_State.time` before consuming it, so that if we lose power,
-//        // the time won't be reused again
-//        _State.time = 0;
-//        std::atomic_signal_fence(std::memory_order_seq_cst);
-//    }
-//    _RTC.init(time);
-//    
-//    // If this is a cold start, wait until HOST_MODE_ is high.
-//    // STM32 controls HOST_MODE_ to control when we start executing, in order to implement mutual
-//    // exclusion on controlling the power rails and talking to ICE40.
-//    if (Startup::ColdStart()) {
-//        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
-//        while (!_Pin::HOST_MODE_::Read()) {
-//            _Scheduler::Delay(_Scheduler::Ms(100));
-////            debugSignal();
-//        }
-//        
-////        _Pin::DEBUG_OUT::Init();
-////        while (!_Pin::HOST_MODE_::Read()) {
-////            _Pin::DEBUG_OUT::Write(1);
-////            _Scheduler::Delay(_Scheduler::Ms(50));
-////            _Pin::DEBUG_OUT::Write(0);
-////            _Scheduler::Delay(_Scheduler::Ms(50));
-////        }
-//        
-//        // Once we're allowed to run, disable the pullup on HOST_MODE_ to prevent the leakage current (~80nA)
-//        // through STM32's GPIO that controls HOST_MODE_.
-//        using HOST_MODE__PULLDOWN = _Pin::HOST_MODE_::Opts<Option::Input, Option::Resistor0>;
-//        HOST_MODE__PULLDOWN::Init();
-//    }
-    
-    
-    
-//    volatile bool a = false;
-//    while (!a);
     
     // Init GPIOs
     GPIO::Init<
@@ -1070,51 +757,10 @@ int main() {
         // Clock pins (config chosen by _RTCType)
         _RTCType::Pin::XOUT,
         _RTCType::Pin::XIN
-        
-//        _Pin::DEBUG_OUT
     >();
     
     // Init clock
     _Clock::Init();
-    
-//    debugSignal();
-    
-    #warning if this is a cold start:
-    #warning   wait a few milliseconds to allow our outputs to settle so that our peripherals
-    #warning   (SD card, image sensor) fully turn off, because we may have restarted because
-    #warning   of an error
-    
-    #warning we're currently sleeping before we abort -- move that sleep here instead.
-    
-    #warning how do we handle turning off SD clock after an error occurs?
-    #warning   ? dont worry about that because in the final design,
-    #warning   well be powering off ICE40 anyway?
-    
-    // Start RTC if it's not currently enabled.
-    // We need RTC to be unconditionally enabled for 2 reasons:
-    //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
-    //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
-    //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
-//    const MSP::Time time = _State.time;
-//    if (time) {
-//        {
-//            // If `time` is valid, consume it and hand it off to _RTC.
-//            FRAMWriteEn writeEn; // Enable FRAM writing
-//            
-//            // Reset `_State.time` before consuming it, so that if we lose power,
-//            // the time won't be reused again
-//            _State.time = 0;
-//            std::atomic_signal_fence(std::memory_order_seq_cst);
-//        }
-//        
-//        // Init real-time clock
-//        _RTC.init(time);
-//    
-//    // Otherwise, we don't have a valid time, so if _RTC isn't currently
-//    // enabled, init _RTC with 0.
-//    } else if (!_RTC.enabled()) {
-//        _RTC.init(0);
-//    }
     
     // Init RTC
     // We need RTC to be unconditionally enabled for 2 reasons:
@@ -1162,21 +808,6 @@ int main() {
         _Scheduler::Delay(_Scheduler::Ms(3000));
     }
     
-//    // If this is a cold start, delay 3s before beginning.
-//    // This delay is meant for the case where we restarted due to an abort, and
-//    // serves 2 purposes:
-//    //   1. it rate-limits aborts, in case there's a persistent issue
-//    //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-//    if (Startup::ColdStart()) {
-////        #warning TODO: VDD_B_EN needs to be controlled elsewhere when we implement proper power rail control
-////        // Turn on VDD_B
-////        _Pin::VDD_B_EN::Write(1);
-//        
-//        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
-//        _Scheduler::Delay(_Scheduler::Ms(3000));
-//    }
-    
-//    debugSignal();
     _Scheduler::Run();
 }
 
