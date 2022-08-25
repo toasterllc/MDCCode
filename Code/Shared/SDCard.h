@@ -11,7 +11,6 @@ namespace SD {
 template <
     typename T_Scheduler,
     typename T_ICE,
-    bool T_SetPowerEnabled(bool),
     [[noreturn]] void T_Error(uint16_t),
     uint8_t T_ClkDelaySlow,
     uint8_t T_ClkDelayFast
@@ -21,12 +20,12 @@ class Card {
 #define AssertArg(x) if (!(x)) T_Error(__LINE__)
 
 public:
-    static uint16_t Enable(CardId* cardId=nullptr, CardData* cardData=nullptr) {
+    static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
         uint16_t rca = 0;
         
-        // Turn on SD card power and wait for it to reach 2.8V
-        const bool br = T_SetPowerEnabled(true);
-        Assert(br);
+        // Reset SDController
+        T_ICE::Transfer(_ConfigReset);
+        _Sleep(_Us(1));
         
         // Enable slow SDController clock
         T_ICE::Transfer(_ConfigClkSetSlow);
@@ -175,14 +174,10 @@ public:
         return rca;
     }
     
-    static void Disable() {
-        T_ICE::Transfer(_ConfigReset);
-        _Sleep(_Us(1));
-        
-        // Turn off SD card power and wait for it to reach 0V
-        const bool br = T_SetPowerEnabled(false);
-        Assert(br);
-    }
+//    static void Disable() {
+//        T_ICE::Transfer(_ConfigReset);
+//        _Sleep(_Us(1));
+//    }
     
 //    bool enabled() const { return _enabled; }
 //    
