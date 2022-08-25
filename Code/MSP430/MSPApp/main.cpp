@@ -20,7 +20,6 @@
 #include "Util.h"
 #include "MSP.h"
 #include "GetBits.h"
-#include "BusyAssertion.h"
 #include "Toastbox/IntState.h"
 #include "ImgSD.h"
 using namespace GPIO;
@@ -134,14 +133,6 @@ static Img::AutoExposure _ImgAutoExp;
 [[gnu::section(".fram_info.main")]]
 static MSP::State _State;
 
-// _Motion: announces that motion occurred
-// atomic because _Motion is modified from the interrupt context
-static std::atomic<bool> _Motion = false;
-
-// _BusyCount: counts the number of entities preventing LPM3.5 sleep
-static uint8_t _BusyCount = 0;
-using _BusyAssertion = BusyAssertionType<_BusyCount>;
-
 struct _SDTask {
 //    static void Run() {
 //        for (;;) {
@@ -246,19 +237,15 @@ struct _SDTask {
         _Scheduler::Wait<_SDTask>([] { return _State.rca.has_value(); });
     }
     
-    
-    
-    
-private:
     static void _Disable() {
-        assert(!_State.enabled);
+        assert(_State.enabled);
         
         _SetPowerEnabled(false);
         _State.enabled = false;
     }
     
     static void _Enable() {
-        assert(_State.enabled);
+        assert(!_State.enabled);
         
         _SetPowerEnabled(true);
         if (!_State.rca) {
@@ -596,7 +583,6 @@ public:
         _Scheduler::Wait<_ImgTask>();
     }
     
-private:
     static inline bool _Enabled = false;
 };
 
@@ -693,7 +679,7 @@ static void _ISR_Port1() {
     // Accessing `P1IV` automatically clears the highest-priority interrupt
     switch (__even_in_range(P1IV, _MotionSignalIV)) {
     case _MotionSignalIV:
-        _Motion = true;
+        _MotionTask::MotionSignal();
         // Wake ourself
         __bic_SR_register_on_exit(LPM3_bits);
         break;
@@ -806,6 +792,7 @@ static void _Sleep() {
     // If we're not busy (!_BusyCount), enter the deep LPM3.5 sleep, where RAM content is lost.
 //    const uint16_t LPMBits = (_BusyCount ? LPM1_bits : LPM3_bits);
     const uint16_t LPMBits = LPM1_bits;
+//    const uint16_t LPMBits = (_MotionTask::DeepSleepOK() ? LPM3_bits : LPM1_bits);
     
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
@@ -957,16 +944,18 @@ struct _MotionTask {
             #warning TODO: what if we only allow LPM3.5 sleep wrapping this _Scheduler::Wait?
             #warning TODO: that way we can get rid of BusyAssertion logic.
             #warning TODO: we'll need to wait until the tasks are idle though...
-            _Scheduler::Wait([&] { return (bool)_Motion; });
-            _Motion = false;
+            {
+                _WaitingForMotion = true;
+                _Scheduler::Wait([&] { return (bool)_Motion; });
+                _WaitingForMotion = false;
+                _Motion = false;
+            }
             
             _Pin::VDD_B_EN::Write(1);
             #warning TODO: this delay is needed for the ICE40 to start, but we need to speed to it, see notes
             _Scheduler::Sleep(_Scheduler::Ms(250));
             
             for (;;) {
-                _BusyAssertion busy;
-                
                 // Capture an image
                 _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
                 _ImgCapture();
@@ -974,18 +963,7 @@ struct _MotionTask {
                 
                 // Wait up to 1s for further motion
                 const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-                if (!motion) {
-                    // We timed-out
-                    // Asynchronously disable Img / SD
-                    _ImgTask::DisableAsync();
-                    _SDTask::DisableAsync();
-                    
-                    // Wait until both Img and SD are disabled
-                    _Scheduler::Wait<_ImgTask, _SDTask>();
-                    // Relinquish our busy assertion by breaking out of scope,
-                    // allowing us to enter LPM3.5 sleep
-                    break;
-                }
+                if (!motion) break;
                 
                 // Only reset _Motion if we've observed motion; otherwise, if we always reset
                 // _Motion, there'd be a race window where we could first observe
@@ -993,6 +971,10 @@ struct _MotionTask {
                 // the true value by resetting it to false.
                 _Motion = false;
             }
+            
+            // We haven't had motion in a while; power down
+            _ImgTask::DisableAsync();
+            _SDTask::DisableAsync();
             
             _Pin::VDD_B_EN::Write(0);
             
@@ -1069,6 +1051,25 @@ struct _MotionTask {
 ////            _Scheduler::Start<_BusyTimeoutTask>(_BusyTimeoutTask::Run);
         }
     }
+    
+    static bool DeepSleepOK() {
+        // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
+        // This logic works because if _WaitingForMotion==true, then we've disabled both _SDTask
+        // and _ImgTask, so if _WaitingForMotion==true and the tasks are idle, then everything's
+        // idle so we can enter deep sleep. (The case that we need to be careful of is going to
+        // sleep when either _SDTask or _ImgTask is idle but still powered on, and this logic
+        // takes care of that.)
+        return _WaitingForMotion && !_SDTask::Running() && !_ImgTask::Running();
+    }
+    
+    static void MotionSignal() {
+        _Motion = true;
+    }
+    
+    // _Motion: announces that motion occurred
+    // atomic because _Motion is modified from the interrupt context
+    static std::atomic<bool> _Motion = false;
+    static bool _WaitingForMotion = false;
     
     // Task options
     static constexpr Toastbox::TaskOptions Options{
@@ -1375,8 +1376,6 @@ int main() {
     
     // Handle cold starts
     if (Startup::ColdStart()) {
-        _BusyAssertion busy; // Prevent LPM3.5 sleep during the delay
-        
         // Temporarily enable a pullup on HOST_MODE_ so that we can determine whether STM is driving it low.
         // We don't want the pullup to be permanent to prevent leakage current (~80nA) through STM32's GPIO
         // that controls HOST_MODE_.
