@@ -65,8 +65,6 @@ static void _ICEError(uint16_t line);
 static void _SDError(uint16_t line);
 static void _ImgError(uint16_t line);
 
-static void _ImgSetPowerEnabled(bool en);
-
 extern uint8_t _StackMain[];
 
 #warning disable stack guard for production
@@ -122,30 +120,24 @@ using _RTCType = RTC::Type<_XT1FreqHz, _Pin::XOUT, _Pin::XIN>;
 [[gnu::section(".ram_backup_noinit.main")]]
 static _RTCType _RTC;
 
-// _ImgAutoExp: auto exposure algorithm object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
-[[gnu::section(".ram_backup.main")]]
-static Img::AutoExposure _ImgAutoExp;
-
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
 [[gnu::section(".fram_info.main")]]
 static MSP::State _State;
 
 struct _SDTask {
-    static void DisableAsync() {
-        Wait();
-        // Short-circuit if the state didn't change
-        if (!_Enabled) return;
-        _Scheduler::Start<_SDTask>([] { _Disable(); });
-    }
-    
     static void EnableAsync() {
         Wait();
         // Short-circuit if the state didn't change
         if (_Enabled) return;
         _Scheduler::Start<_SDTask>([] { _Enable(); });
+    }
+    
+    static void DisableAsync() {
+        Wait();
+        // Short-circuit if the state didn't change
+        if (!_Enabled) return;
+        _Scheduler::Start<_SDTask>([] { _Disable(); });
     }
     
     static void WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
@@ -164,13 +156,6 @@ struct _SDTask {
     // _State.sd (particularly _State.sd.imgRingBufs), which other entities need
     static void WaitForInit() {
         _Scheduler::Wait<_SDTask>([] { return _RCA.has_value(); });
-    }
-    
-    static void _Disable() {
-        assert(_Enabled);
-        
-        _SetPowerEnabled(false);
-        _Enabled = false;
     }
     
     static void _Enable() {
@@ -201,6 +186,22 @@ struct _SDTask {
         }
         
         _Enabled = true;
+    }
+    
+    static void _Disable() {
+        assert(_Enabled);
+        
+        _SetPowerEnabled(false);
+        _Enabled = false;
+    }
+    
+    static void _SetPowerEnabled(bool en) {
+        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
+        if (_Pin::VDD_B_SD_EN::Read() == en) return;
+        
+        _Pin::VDD_B_SD_EN::Write(en);
+        // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
+        _Scheduler::Sleep(_Scheduler::Ms(2));
     }
     
     // _StateInit(): resets the _State.sd struct
@@ -290,15 +291,11 @@ struct _SDTask {
         _State.sd.imgRingBufs[1] = ringBufCopy;
     }
     
-    static void _SetPowerEnabled(bool en) {
-        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-        if (_Pin::VDD_B_SD_EN::Read() == en) return;
-        
-        _Pin::VDD_B_SD_EN::Write(en);
-        // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-        _Scheduler::Sleep(_Scheduler::Ms(2));
-    }
-    
+    // _RCA: SD card 'relative card address'; needed for SD comms after initialization.
+    // As an optional, _RCA also signifies whether we've successfully initiated comms
+    // with the SD card since the battery was plugged in.
+    // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+    // it's maintained during sleep, but reset upon a cold start.
     [[gnu::section(".ram_backup.main")]]
     static inline std::optional<uint16_t> _RCA;
     
@@ -313,45 +310,82 @@ struct _SDTask {
 };
 
 struct _ImgTask {
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
-    
-    // Task stack
-    [[gnu::section(".stack._ImgTask")]]
-    static inline uint8_t Stack[128];
-};
-
-class _Img {
-public:
     static void EnableAsync() {
         Wait();
-        if (_Enabled) return; // Short-circuit
-        _Enabled = true;
-        
-        _Scheduler::Start<_ImgTask>([] {
-            // Initialize image sensor
-            _ImgSensor::Enable();
-            // Set the initial exposure _before_ we enable streaming, so that the very first frame
-            // has the correct exposure, so we don't have to skip any frames on the first capture.
-            _ImgSensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
-            // Enable image streaming
-            _ImgSensor::SetStreamEnabled(true);
-        });
+        // Short-circuit if the state didn't change
+        if (_Enabled) return;
+        _Scheduler::Start<_ImgTask>([] { _Enable(); });
     }
     
-    static void DisableAsync(bool force=false) {
+    static void DisableAsync() {
         Wait();
-        if (!_Enabled && !force) return; // Short-circuit
-        _Enabled = false;
-        
-        _Scheduler::Start<_ImgTask>([] { _ImgSensor::Disable(); });
+        // Short-circuit if the state didn't change
+        if (!_Enabled) return;
+        _Scheduler::Start<_ImgTask>([] { _Disable(); });
     }
     
     static void Wait() {
         _Scheduler::Wait<_ImgTask>();
     }
     
+    static void _Enable() {
+        assert(!_Enabled);
+        
+        // Enable the power rails
+        _SetPowerEnabled(true);
+        // Initialize image sensor
+        _ImgSensor::Init();
+        // Set the initial exposure _before_ we enable streaming, so that the very first frame
+        // has the correct exposure, so we don't have to skip any frames on the first capture.
+        _ImgSensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
+        // Enable image streaming
+        _ImgSensor::SetStreamEnabled(true);
+        
+        _Enabled = true;
+    }
+    
+    static void _Disable() {
+        assert(_Enabled);
+        
+        _SetPowerEnabled(false);
+        _Enabled = false;
+    }
+    
+    static void _SetPowerEnabled(bool en) {
+        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
+        if (_Pin::VDD_B_2V8_IMG_EN::Read()==en &&
+            _Pin::VDD_B_1V8_IMG_EN::Read()==en) return;
+        
+        if (en) {
+            _Pin::VDD_B_2V8_IMG_EN::Write(1);
+            _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+            _Pin::VDD_B_1V8_IMG_EN::Write(1);
+            
+            #warning measure actual delay that we need for the rails to rise
+        
+        } else {
+            // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+            _Pin::VDD_B_1V8_IMG_EN::Write(0);
+            _Pin::VDD_B_2V8_IMG_EN::Write(0);
+            
+            #warning measure actual delay that we need for the rails to fall
+        }
+    }
+    
+    // _ImgAutoExp: auto exposure algorithm object
+    // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+    // it's maintained during sleep, but reset upon a cold start.
+    [[gnu::section(".ram_backup.main")]]
+    static Img::AutoExposure _ImgAutoExp;
+    
     static inline bool _Enabled = false;
+    
+    // Task options
+    static constexpr Toastbox::TaskOptions Options{};
+    
+    // Task stack
+    [[gnu::section(".stack._ImgTask")]]
+    static inline uint8_t Stack[128];
 };
 
 // MARK: - Motion
@@ -479,9 +513,6 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
         _SPI::Init();
     }
     
-    // iceInit: Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-    // it's maintained during sleep, but reset upon a cold start.
-    [[gnu::section(".ram_backup.main")]]
     static bool iceInit = false;
     
     // Init ICE comms
@@ -493,45 +524,7 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
         _ICE::Init();
     }
     
-//    // Init ICE40 if we haven't done so yet
-//    static bool iceInit = false;
-//    if (!iceInit) {
-//        // Init SPI/ICE40
-//        if (Startup::ColdStart()) {
-//            constexpr bool iceReset = true; // Cold start -> reset ICE40 SPI state machine
-//            _SPI::Init(iceReset);
-//            _ICE::Init(); // Cold start -> init ICE40 to verify that comms are working
-//        
-//        } else {
-//            constexpr bool iceReset = false; // Warm start -> no need to reset ICE40 SPI state machine
-//            _SPI::Init(iceReset);
-//        }
-//    }
-    
     _SPI::WriteRead(msg, resp);
-}
-
-// MARK: - Power
-
-static void _ImgSetPowerEnabled(bool en) {
-    // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-    if (_Pin::VDD_B_2V8_IMG_EN::Read()==en &&
-        _Pin::VDD_B_1V8_IMG_EN::Read()==en) return;
-    
-    if (en) {
-        _Pin::VDD_B_2V8_IMG_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-        _Pin::VDD_B_1V8_IMG_EN::Write(1);
-        
-        #warning measure actual delay that we need for the rails to rise
-    
-    } else {
-        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-        _Pin::VDD_B_1V8_IMG_EN::Write(0);
-        _Pin::VDD_B_2V8_IMG_EN::Write(0);
-        
-        #warning measure actual delay that we need for the rails to fall
-    }
 }
 
 // MARK: - IntState
@@ -893,19 +886,20 @@ static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t l
     abort.eventsCount++;
 }
 
-//[[noreturn]]
-//static void _BOR() {
-//    // Trigger a BOR
-//    PMMCTL0 = PMMPW | PMMSWBOR;
-//}
+[[noreturn]]
+static void _BOR() {
+    // Trigger a BOR
+    PMMCTL0 = PMMPW | PMMSWBOR;
+}
 
 [[noreturn]]
 static void _Abort(uint16_t domain, uint16_t line) {
     const MSP::Time timestamp = _RTC.time();
     // Record the abort
     _AbortRecord(timestamp, domain, line);
-    // Trigger a BOR
-    PMMCTL0 = PMMPW | PMMSWBOR;
+    _BOR();
+//    // Trigger a BOR
+//    PMMCTL0 = PMMPW | PMMSWBOR;
     
 //    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
 //    PMMCTL0_L |= PMMSWBOR_1_L;
@@ -947,7 +941,8 @@ uint8_t _StackMain[_StackMainSize];
 asm(".global __stack");
 asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
 
-static void _hostMode() {
+[[noreturn]]
+static void _HostMode() {
     // Let power rails fully discharge before turning them on
     _Scheduler::Delay(_Scheduler::Ms(100));
     
@@ -960,10 +955,12 @@ static void _hostMode() {
         _Scheduler::Delay(_Scheduler::Ms(100));
     }
     
-    _Pin::VDD_B_EN::Write(0);
-    _Pin::VDD_B_1V8_IMG_EN::Write(0);
-    _Pin::VDD_B_2V8_IMG_EN::Write(0);
-    _Pin::VDD_B_SD_EN::Write(0);
+    _BOR();
+    
+//    _Pin::VDD_B_EN::Write(0);
+//    _Pin::VDD_B_1V8_IMG_EN::Write(0);
+//    _Pin::VDD_B_2V8_IMG_EN::Write(0);
+//    _Pin::VDD_B_SD_EN::Write(0);
 }
 
 int main() {
@@ -1148,14 +1145,15 @@ int main() {
         using HOST_MODE_PULLUP = _Pin::HOST_MODE_::Opts<Option::Input, Option::Resistor1>;
         HOST_MODE_PULLUP::Init();
         
-        // Wait for pullup to pull rail up
+        // Wait for the pullup to pull the rail up
         _Scheduler::Delay(_Scheduler::Ms(1));
         
         // Enter host mode if HOST_MODE_ is asserted
         if (!_Pin::HOST_MODE_::Read()) {
-            _hostMode();
+            _HostMode();
         }
         
+        // Return HOST_MODE_ config
         _Pin::HOST_MODE_::Init();
         
         // Since this is a cold start, delay 3s before beginning.
