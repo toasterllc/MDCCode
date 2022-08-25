@@ -941,18 +941,16 @@ struct _MotionTask {
         for (;;) {
 //            _Scheduler::Sleep(_Scheduler::Ms(2000));
             
-            #warning TODO: what if we only allow LPM3.5 sleep wrapping this _Scheduler::Wait?
-            #warning TODO: that way we can get rid of BusyAssertion logic.
-            #warning TODO: we'll need to wait until the tasks are idle though...
+            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
             {
                 _WaitingForMotion = true;
                 _Scheduler::Wait([&] { return (bool)_Motion; });
-                _WaitingForMotion = false;
                 _Motion = false;
+                _WaitingForMotion = false;
             }
             
             _Pin::VDD_B_EN::Write(1);
-            #warning TODO: this delay is needed for the ICE40 to start, but we need to speed to it, see notes
+            #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
             _Scheduler::Sleep(_Scheduler::Ms(250));
             
             for (;;) {
