@@ -1,5 +1,17 @@
 - Rev6
     
+    - Consider combining rails if they're always on at the same time:
+        - VDD_B_1V8_IMG & VDD_B_1V8_SD
+        - VDD_B_2V8_IMG & VDD_B_2V8_SD
+    
+    - Consider having STM control the VDD_B_X_EN rails directly, to clean up our host-mode logic
+        - MSP would control the VDD_B_X_EN rails with a weak pullup/pulldown. When STM is powered, it would control the rails with strong push/pull.
+        - Rationale: we have a complicated host mode based on conflicting facts:
+            1. MSP needs to be running to keep track of time,
+            2. MSP rails need to be controlled via SBW/JTAG
+            3. MSP rails are reset when connecting/disconnecting SBW/JTAG
+        - To validate this idea, make sure MSP430 can pull up a net while connected to a high-Z STM GPIO
+    
     - Add soldermask markings for VDD / GND battery terminal leads
     
     - Add soldermask markings for STM32 header pins, if we keep the header (since we want to make backside thinner)
@@ -31,6 +43,8 @@
     
     - We can make the whole package smaller by removing tall components from the backside, so the battery
       can be as flush as possible against the PCB
+    
+    - MDCStudio: Implement battery voltage monitoring
     
     √ Consider adding a pull-down to VDD_B_EN to ensure the input isn't floating when MSP430 isn't powered
       (eg when it crashes and restarts, or when it hasn't been programmed)
@@ -64,7 +78,7 @@
     
     √ Bug: BAT_CHRG_LVL voltage divider resistance is too high for STM32 ADC input resistance
         - STM32 datasheet says maximum R_AIN is 50kΩ
-        √ Fixed: added a capacitor at the ADC input to act as low impedance charge storage
+        √ Fixed: added a capacitor at the ADC input to act as low-impedance charge storage
     
     √ Bug: BAT_CHRG_LVL_EN_ is subjecting STM32 to the battery voltage when STM32 is off,
       which is > the absolute maximum input voltage on FT pins of VDD+4.0
@@ -99,18 +113,9 @@
 
 - Rev5
     
-    - MSPApp: are the rails properly reset to their default values when we abort?
-    
-    - "The drive settings of XT1 can be increased with the XT1DRIVE bits. At power up, the XT1 starts with the
-      highest drive settings for fast reliable startup. After startup, user software can reduce the drive strength to
-      reduce power consumption."
-    
-    - Bug: discrepency between wall time and device time on images
-        - Problem: _Clock::Init() prevents MSP430 from consuming time sent by host before the host
-          stops MSP430 again via _MSPConnectAndUnlockPins() when trying to talk to the SD card
-    
-    - MSPApp: Implement VDD_B rail handling.
-        - Turn on lazily when we need to talk to ICE / IMG / SD?
+    - MSPApp: while running on battery power with CurrentRanger monitoring, after some time the current
+      consumption jumped from ~8µA to ~150µA, apparently not due to motion. Was this due to RTC timer
+      waking us up? If so, why didn't we go back to sleep into LPM3.5?
     
     - Implement thumbnailing in ICEAppMSP / MSPApp
         - Motivation: so MDCStudio can load thumbnails quickly
@@ -119,16 +124,11 @@
     
     - MDCStudio: add inspector sidebar
     
-    - MDCStudio/MSPApp: implement time handling
-        - MDCStudio needs to set MSP's time
-    
     - MSPApp: Improve exposure/gain algs
     
     - MSPApp: Optimize battery usage
         - Measure current during with various rails enabled and make sure it's what we expect
         - Currently we keep VDD_B on all the time!
-    
-    - MDCStudio: Implement battery voltage monitoring
     
     - Cancel order for TPS62802YKAR / TPS63805YFFR if we no longer need it
     
@@ -148,6 +148,29 @@
 
 
 - Rev5 Done
+    
+    X "The drive settings of XT1 can be increased with the XT1DRIVE bits. At power up, the XT1 starts with the
+      highest drive settings for fast reliable startup. After startup, user software can reduce the drive strength to
+      reduce power consumption."
+          X Tried implementing this but the current saved isn't that much, and there's no clean way to implement it. See XT1DRIVE comments in RTC.h.
+    
+    √ MSPApp: are the rails properly reset to their default values when we abort?
+    
+    √ MSPApp: before turning on the AC to cool the room, MDC current was increasing and eventually hit ~20µA.
+        - This may have been due to floating inputs! Make sure we have a pulldown on everything.
+    
+    √ MSPApp: power: try putting all GPIOs in high-impedance with pulldown, and turn chip off. what is the current consumption?
+        - 2.8 µA
+    
+    √ MDCStudio/MSPApp: implement time handling
+        - MDCStudio needs to set MSP's time
+    
+    √ MSPApp: Implement VDD_B rail handling.
+        - Turn on lazily when we need to talk to ICE / IMG / SD?
+    
+    √ Bug: discrepency between wall time and device time on images
+        - Problem: _Clock::Init() prevents MSP430 from consuming time sent by host before the host
+          stops MSP430 again via _MSPConnectAndUnlockPins() when trying to talk to the SD card
     
     √ Investigate: _Clock::Init() takes 173 ms
         - Is that due to our bodge wire?

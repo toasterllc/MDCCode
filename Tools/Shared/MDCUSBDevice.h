@@ -177,6 +177,27 @@ public:
     }
     
     // MARK: - STMApp Commands
+    void hostModeInit() {
+        assert(_mode == STM::Status::Modes::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::HostModeInit };
+        _sendCmd(cmd);
+        _checkStatus("HostModeInit command failed");
+    }
+    
+    void hostModeEnter(STM::Peripheral periph) {
+        assert(_mode == STM::Status::Modes::STMApp);
+        const STM::Cmd cmd = {
+            .op = STM::Op::HostModeEnter,
+            .arg = {
+                .HostModeEnter = {
+                    .periph = periph,
+                },
+            },
+        };
+        _sendCmd(cmd);
+        _checkStatus("HostModeEnter command failed");
+    }
+    
     void iceRAMWrite(const void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMApp);
         if (len >= std::numeric_limits<uint32_t>::max())
@@ -251,18 +272,9 @@ public:
         _checkStatus("MSPConnect command failed");
     }
     
-    void mspDisconnect(bool run) {
+    void mspDisconnect() {
         assert(_mode == STM::Status::Modes::STMApp);
-        
-        const STM::Cmd cmd = {
-            .op = STM::Op::MSPDisconnect,
-            .arg = {
-                .MSPDisconnect = {
-                    .run = run,
-                },
-            },
-        };
-        
+        const STM::Cmd cmd = { .op = STM::Op::MSPDisconnect };
         _sendCmd(cmd);
         _checkStatus("MSPDisconnect command failed");
     }
@@ -348,12 +360,11 @@ public:
         _checkStatus("MSPDebug command failed");
     }
     
-    STM::SDCardInfo sdInit() {
+    STM::SDCardInfo sdCardInfo() {
         assert(_mode == STM::Status::Modes::STMApp);
         
-        const STM::Cmd cmd = { .op = STM::Op::SDInit };
+        const STM::Cmd cmd = { .op = STM::Op::SDCardInfo };
         _sendCmd(cmd);
-        _checkStatus("SDInit command failed");
         
         STM::SDCardInfo cardInfo = {};
         _dev.read(STM::Endpoints::DataIn, cardInfo);
@@ -373,14 +384,6 @@ public:
         };
         _sendCmd(cmd);
         _checkStatus("SDRead command failed");
-    }
-    
-    void imgInit() {
-        assert(_mode == STM::Status::Modes::STMApp);
-        
-        const STM::Cmd cmd = { .op = STM::Op::ImgInit };
-        _sendCmd(cmd);
-        _checkStatus("ImgInit command failed");
     }
     
     struct ImgExposure {

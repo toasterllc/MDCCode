@@ -42,77 +42,92 @@ public:
         // Perform device IO
         {
             auto lock = std::unique_lock(*_dev);
-            auto startTime = std::chrono::steady_clock::now();
             
-            // Update device time
             {
-                _dev->mspConnect();
+                _dev->hostModeInit();
                 _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
                 
                 if (_mspState.magic != MSP::State::MagicNumber) {
                     // Program MSPApp onto MSP
                     #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: implement");
+                    throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
                 }
                 
                 if (_mspState.version > MSP::State::Version) {
                     // Newer version than we understand -- tell user to upgrade or re-program
                     #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: implement");
+                    throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
                 }
                 
-                _mspState.time = MSP::TimeFromUnixTime(std::time(nullptr));
+                // Load ICE40 with our app
+                _ICEConfigure(*_dev);
+                
+                _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
+                _mspState.startTime.valid = true;
                 _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
                 
-                // MSPRun=false: don't allow MSP to run until the device is physically disconnected from USB,
-                // causing STM to stop driving MSP_RUN low, allowing MSP_RUN to be pulled high by MSP's pullup,
-                // thereby allowing MSP to run again.
-                constexpr bool MSPRun = false;
+                _dev->hostModeEnter(STM::Peripheral::SD);
                 
-                startTime = std::chrono::steady_clock::now();
-                _dev->mspDisconnect(MSPRun);
-                
-                bool consumed = false;
-                for (int i=0; i<10 && !consumed; i++) {
-                    usleep(100000);
-                    
-                    MSP::State s;
-                    _dev->mspConnect();
-                    _dev->mspRead(MSP::StateAddr, &s, sizeof(s));
-                    _dev->mspDisconnect(MSPRun);
-                    consumed = !s.time;
-                }
-                
-                if (!consumed) throw Toastbox::RuntimeError("failed to set MSP time");
-                printf("Set MSP time to 0x%jx\n", (uintmax_t)_mspState.time);
+                printf("Set device time to 0x%jx\n", (uintmax_t)_mspState.startTime.time);
             }
+            
+            sleep(1);
+            
 //            
 //            sleep(15);
             
-            // Load ICE40 with our app
-            _ICEConfigure(*_dev);
+//            // Update device time
+//            {
+//                _dev->mspConnect();
+//                _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
+//                
+//                if (_mspState.magic != MSP::State::MagicNumber) {
+//                    // Program MSPApp onto MSP
+//                    #warning TODO: implement
+//                    throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
+//                }
+//                
+//                if (_mspState.version > MSP::State::Version) {
+//                    // Newer version than we understand -- tell user to upgrade or re-program
+//                    #warning TODO: implement
+//                    throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
+//                }
+//                
+//                _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
+//                _mspState.startTime.valid = true;
+//                _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
+//                
+//                // MSPHostMode=true: make MSP enter host mode until physically disconnected from USB.
+//                // (When USB is disconnected, STM will lose power, causing STM to stop asserting
+//                // MSP_HOST_MODE_, allowing MSP_HOST_MODE_ to be pulled high by MSP's pullup, thereby
+//                // allowing MSP to run again.)
+//                constexpr bool MSPHostMode = true;
+//                
+//                startTime = std::chrono::steady_clock::now();
+//                _dev->mspDisconnect(MSPHostMode);
+//            }
             
 //            usleep(180000);
             
 //            exit(0);
             
-            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-            printf("durationMs: %ju\n", (uintmax_t)durationMs);
+//            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+//            printf("durationMs: %ju\n", (uintmax_t)durationMs);
             
             // Init SD card
             #warning TODO: how should we handle sdInit() failing (throwing)?
-            _sdCardInfo = _dev->sdInit();
+            _sdCardInfo = _dev->sdCardInfo();
             
             if (!_mspState.sd.valid) {
                 // MSPApp state isn't valid -- ignore
                 #warning TODO: implement
-                throw Toastbox::RuntimeError("TODO: implement");
+                throw Toastbox::RuntimeError("TODO: !_mspState.sd.valid");
             }
             
             if (memcmp(&_sdCardInfo.cardId, &_mspState.sd.cardId, sizeof(_mspState.sd.cardId))) {
                 // Current SD card id doesn't match MSP's card id
                 #warning TODO: implement
-                throw Toastbox::RuntimeError("TODO: implement");
+                throw Toastbox::RuntimeError("TODO: memcmp(...)");
             }
         }
         

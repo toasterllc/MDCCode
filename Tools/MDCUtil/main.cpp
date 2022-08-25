@@ -249,7 +249,7 @@ static void MSPRead(const Args& args, MDCUSBDevice& device) {
     
     printf("\n");
     
-    device.mspDisconnect(true);
+    device.mspDisconnect();
 }
 
 static void MSPWrite(const Args& args, MDCUSBDevice& device) {
@@ -280,7 +280,7 @@ static void MSPWrite(const Args& args, MDCUSBDevice& device) {
         }
     });
     
-    device.mspDisconnect(true);
+    device.mspDisconnect();
 }
 
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
@@ -309,7 +309,9 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(     "version:                   0x%04x\n",      state.version);
     printf(     "\n");
     
-    printf(     "time:                      0x%jx\n",       (uintmax_t)state.time);
+    printf(     "startTime\n");
+    printf(     "  time:                    0x%jx\n",       (uintmax_t)state.startTime.time);
+    printf(     "  valid:                   %d\n",          state.startTime.valid);
     printf(     "\n");
     
     printf(     "sd\n");
@@ -359,12 +361,16 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     }
     printf(     "\n");
     
-    device.mspDisconnect(true);
+    device.mspDisconnect();
 }
 
 static void SDImgRead(const Args& args, MDCUSBDevice& device) {
-    printf("Sending SDInit command...\n");
-    device.sdInit();
+    printf("Sending HostModeInit command...\n");
+    device.hostModeInit();
+    printf("-> OK\n\n");
+    
+    printf("Sending HostModeEnter command...\n");
+    device.hostModeEnter(STM::Peripheral::SD);
     printf("-> OK\n\n");
     
     printf("Sending SDRead command...\n");
@@ -385,8 +391,12 @@ static void SDImgRead(const Args& args, MDCUSBDevice& device) {
 }
 
 static void ImgCapture(const Args& args, MDCUSBDevice& device) {
-    printf("Sending ImgInit command...\n");
-    device.imgInit();
+    printf("Sending HostModeInit command...\n");
+    device.hostModeInit();
+    printf("-> OK\n\n");
+    
+    printf("Sending HostModeEnter command...\n");
+    device.hostModeEnter(STM::Peripheral::Img);
     printf("-> OK\n\n");
     
     printf("Sending ImgCapture command...\n");

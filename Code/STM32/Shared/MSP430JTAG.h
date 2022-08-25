@@ -298,7 +298,7 @@ private:
         return true;
     }
     
-    bool _waitForCPUSync() {
+    bool _cpuSyncWait() {
         for (int i=0; i<50; i++) {
             _irShift(_IR_CNTRL_SIG_CAPTURE);
             if (_drShift<16>(0) & 0x0200) return true;
@@ -733,7 +733,7 @@ public:
             _drShift<16>(0x1501);
             
             // Wait until CPU is sync'd
-            if (!_waitForCPUSync()) {
+            if (!_cpuSyncWait()) {
                 continue;
             }
             

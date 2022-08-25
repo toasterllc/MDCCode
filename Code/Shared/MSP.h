@@ -83,7 +83,7 @@ namespace MSP {
             Time time = 0;
             bool valid = false;
             uint8_t _pad = 0;
-        } startTime;
+        } startTime = {};
         
         struct [[gnu::packed]] {
             // cardId: the SD card's CID, used to determine when the SD card has been

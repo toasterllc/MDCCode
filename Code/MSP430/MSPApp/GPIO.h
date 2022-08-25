@@ -178,8 +178,8 @@ static void Init() {
     PM5CTL0 &= ~LOCKLPM5;
     
     // Clear PxIFG (but only if this was a cold start)
-    // We don't want to do this when waking from LPMx.5, because PxIFG contains
-    // the reason for waking (eg RTC interrupt or regular IO interrupt).
+    // We don't want to do this when waking from LPMx.5, because PxIFG may contain
+    // the reason for waking, if a GPIO woke us.
     if (Startup::ColdStart()) {
         PAIFG = 0;
     }

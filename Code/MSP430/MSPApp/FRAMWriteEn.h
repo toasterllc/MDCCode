@@ -1,9 +1,10 @@
 #pragma once
 #include <msp430.h>
+#include "Toastbox/IntState.h"
 
-class FRAMWriteEn {
+class FRAMWriteEn : Toastbox::IntState {
 public:
-    FRAMWriteEn() {
+    FRAMWriteEn() : IntState(false) {
         _prevSYSCFG0 = SYSCFG0 & 0x00FF; // Mask out the password field (FRWPPW)
         // Disable write protection
         // Assume FRWPOA=0 for now
