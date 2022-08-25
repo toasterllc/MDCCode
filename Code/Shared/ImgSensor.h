@@ -6,20 +6,13 @@ namespace Img {
 template <
     typename T_Scheduler,
     typename T_ICE,
-    bool T_SetPowerEnabled(bool),
     [[noreturn]] void T_Error(uint16_t)
 >
 class Sensor {
 #define Assert(x) if (!(x)) T_Error(__LINE__)
 
 public:
-    static void Enable() {
-        // Turn on power
-        {
-            const bool br = T_SetPowerEnabled(true);
-            Assert(br);
-        }
-        
+    static void Init() {
         // Toggle IMG_RST_
         {
             T_ICE::ImgReset();
@@ -209,11 +202,6 @@ public:
     //            T_ICE::ImgI2CWrite(0x3064, 0x1902);  // Stats enabled (default)
             T_ICE::ImgI2CWrite(0x3064, 0x1802);  // Stats disabled
         }
-    }
-    
-    static void Disable() {
-        const bool br = T_SetPowerEnabled(false);
-        Assert(br);
     }
     
 //    bool enabled() const { return _enabled; }
