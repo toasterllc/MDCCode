@@ -137,22 +137,22 @@ struct _SDTask {
     static void DisableAsync() {
         Wait();
         // Short-circuit if the state didn't change
-        if (!_State.enabled) return;
+        if (!_Enabled) return;
         _Scheduler::Start<_SDTask>([] { _Disable(); });
     }
     
     static void EnableAsync() {
         Wait();
         // Short-circuit if the state didn't change
-        if (_State.enabled) return;
+        if (_Enabled) return;
         _Scheduler::Start<_SDTask>([] { _Enable(); });
     }
     
     static void WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
         Wait();
-        assert(_State.enabled);
+        assert(_Enabled);
         
-        _SDCard::WriteImage(*_State.rca, srcBlock, dstBlockIdx);
+        _SDCard::WriteImage(*_RCA, srcBlock, dstBlockIdx);
         _ImgRingBufIncrement();
     }
     
@@ -163,26 +163,26 @@ struct _SDTask {
     // WaitForInit(): wait for the initial SD card initialization, which initializes
     // _State.sd (particularly _State.sd.imgRingBufs), which other entities need
     static void WaitForInit() {
-        _Scheduler::Wait<_SDTask>([] { return _State.rca.has_value(); });
+        _Scheduler::Wait<_SDTask>([] { return _RCA.has_value(); });
     }
     
     static void _Disable() {
-        assert(_State.enabled);
+        assert(_Enabled);
         
         _SetPowerEnabled(false);
-        _State.enabled = false;
+        _Enabled = false;
     }
     
     static void _Enable() {
-        assert(!_State.enabled);
+        assert(!_Enabled);
         
         _SetPowerEnabled(true);
-        if (!_State.rca) {
+        if (!_RCA) {
             // We haven't successfully enabled the SD card since the battery was connected;
             // enable the SD card and get the card id / card data.
             SD::CardId cardId;
             SD::CardData cardData;
-            _State.rca = _SDCard::Init(&cardId, &cardData);
+            _RCA = _SDCard::Init(&cardId, &cardData);
             
             // If SD state isn't valid, or the existing SD card id doesn't match the current
             // card id, reset the SD state.
@@ -200,7 +200,7 @@ struct _SDTask {
             _SDCard::Init();
         }
         
-        _State.enabled = true;
+        _Enabled = true;
     }
     
     // _StateInit(): resets the _State.sd struct
@@ -299,18 +299,17 @@ struct _SDTask {
         _Scheduler::Sleep(_Scheduler::Ms(2));
     }
     
+    [[gnu::section(".ram_backup.main")]]
+    static inline std::optional<uint16_t> _RCA;
+    
+    static inline bool _Enabled = false;
+    
     // Task options
     static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
     [[gnu::section(".stack._SDTask")]]
     static inline uint8_t Stack[256];
-    
-    [[gnu::section(".ram_backup.main")]]
-    static inline struct {
-        std::optional<uint16_t> rca;
-        bool enabled = false;
-    } _State;
 };
 
 struct _ImgTask {
@@ -321,115 +320,6 @@ struct _ImgTask {
     [[gnu::section(".stack._ImgTask")]]
     static inline uint8_t Stack[128];
 };
-
-//class _SD {
-//public:
-//    static void EnableAsync() {
-//        Wait();
-//        if (_Enabled) return; // Short-circuit
-//        _Enabled = true;
-//        
-//        // If the SD state is valid, and this is a warm start (therefore we've already
-//        // verified the SD card ID), then enable the SD card asynchronously.
-//        if (_State.sd.valid && !Startup::ColdStart()) {
-//            _Scheduler::Start<_SDTask>([] { _RCA = _SDCard::Enable(); });
-//            return;
-//        }
-//        
-//        // Otherwise, enable the SD card synchronously because we need the card id / card data
-//        SD::CardId cardId;
-//        SD::CardData cardData;
-//        _RCA = _SDCard::Enable(&cardId, &cardData);
-//        
-//        // If the SD state is valid and the SD card id matches, just init the ring buffers
-//        if (_State.sd.valid && !memcmp(&_State.sd.cardId, &cardId, sizeof(cardId))) {
-//            _ImgRingBufInit();
-//        
-//        // Otherwise, either the SD state isn't valid, or the existing SD card id doesn't
-//        // match the current card id. Either way, we need to reset the SD state.
-//        } else {
-//            _ResetState(cardId, cardData);
-//        }
-//    }
-//    
-//    static void DisableAsync(bool force=false) {
-//        Wait();
-//        if (!_Enabled && !force) return; // Short-circuit
-//        _Enabled = false;
-//        
-//        _Scheduler::Start<_SDTask>([] { _SDCard::Disable(); });
-//    }
-//    
-//    static void Wait() {
-//        _Scheduler::Wait<_SDTask>();
-//    }
-//    
-//    static void WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
-//        _SDCard::WriteImage(_RCA, srcBlock, dstBlockIdx);
-//    }
-//    
-//private:
-//    static inline bool _Enabled = false;
-//    static inline uint16_t _RCA = 0;
-//    
-//    // _ResetState(): resets the _State.sd struct
-//    static void _ResetState(const SD::CardId& cardId, const SD::CardData& cardData) {
-//        FRAMWriteEn writeEn; // Enable FRAM writing
-//        
-//        // Mark the _State as invalid in case we lose power in the middle of modifying it
-//        _State.sd.valid = false;
-//        std::atomic_signal_fence(std::memory_order_seq_cst);
-//        
-//        // Set .cardId
-//        {
-//            _State.sd.cardId = cardId;
-//        }
-//        
-//        // Set .imgCap
-//        {
-//            // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
-//            const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
-//            // cardImgCap: the capacity of the SD card in number of images
-//            const uint32_t cardImgCap = cardBlockCap / ImgSD::ImgBlockCount;
-//            
-//            _State.sd.imgCap = cardImgCap;
-//        }
-//        
-//        // Set .imgRingBufs
-//        {
-//            _State.sd.imgRingBufs[0] = {};
-//            _State.sd.imgRingBufs[1] = {};
-//        }
-//        
-//        std::atomic_signal_fence(std::memory_order_seq_cst);
-//        _State.sd.valid = true;
-//    }
-//    
-//    // _ImgRingBufInit(): find the correct image ring buffer (the one with the greatest id that's valid)
-//    // and copy it into the other slot so that there are two copies. If neither slot contains a valid ring
-//    // buffer, reset them both so that they're both empty (and valid).
-//    static void _ImgRingBufInit() {
-//        using namespace MSP;
-//        FRAMWriteEn writeEn; // Enable FRAM writing
-//        
-//        MSP::ImgRingBuf& a = _State.sd.imgRingBufs[0];
-//        MSP::ImgRingBuf& b = _State.sd.imgRingBufs[1];
-//        const std::optional<int> comp = ImgRingBuf::Compare(a, b);
-//        if (comp && *comp>0) {
-//            // a>b (a is newer), so set b=a
-//            b = a;
-//        
-//        } else if (comp && *comp<0) {
-//            // b>a (b is newer), so set a=b
-//            a = b;
-//        
-//        } else if (!comp) {
-//            // Both a and b are invalid; reset them both
-//            a = {};
-//            b = {};
-//        }
-//    }
-//};
 
 class _Img {
 public:
