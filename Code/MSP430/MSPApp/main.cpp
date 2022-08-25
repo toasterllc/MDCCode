@@ -54,7 +54,7 @@ using _Clock = ClockType<_MCLKFreqHz>;
 using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 
-class _MotionTask;
+class _MainTask;
 class _SDTask;
 class _ImgTask;
 
@@ -78,7 +78,7 @@ using _Scheduler = Toastbox::Scheduler<
     _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
                                                 //              main stack for overflow; unused if T_StackGuardCount==0)
     _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
-    _MotionTask,                                // T_Tasks: list of tasks
+    _MainTask,                                // T_Tasks: list of tasks
     _SDTask,
     _ImgTask
 >;
@@ -124,381 +124,6 @@ static _RTCType _RTC;
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
 [[gnu::section(".fram_info.main")]]
 static MSP::State _State;
-
-struct _SDTask {
-    static void EnableAsync() {
-        Wait();
-        // Short-circuit if the state didn't change
-        if (_Enabled) return;
-        _Scheduler::Start<_SDTask>([] { _Enable(); });
-    }
-    
-    static void DisableAsync() {
-        Wait();
-        // Short-circuit if the state didn't change
-        if (!_Enabled) return;
-        _Scheduler::Start<_SDTask>([] { _Disable(); });
-    }
-    
-    static void WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
-        Wait();
-        assert(_Enabled);
-        
-        _SDCard::WriteImage(*_RCA, srcBlock, dstBlockIdx);
-        _ImgRingBufIncrement();
-    }
-    
-    static void Wait() {
-        _Scheduler::Wait<_SDTask>();
-    }
-    
-    // WaitForInit(): wait for the initial SD card initialization, which initializes
-    // _State.sd (particularly _State.sd.imgRingBufs), which other entities need
-    static void WaitForInit() {
-        _Scheduler::Wait<_SDTask>([] { return _RCA.has_value(); });
-    }
-    
-    static void _Enable() {
-        assert(!_Enabled);
-        
-        _SetPowerEnabled(true);
-        if (!_RCA) {
-            // We haven't successfully enabled the SD card since the battery was connected;
-            // enable the SD card and get the card id / card data.
-            SD::CardId cardId;
-            SD::CardData cardData;
-            _RCA = _SDCard::Init(&cardId, &cardData);
-            
-            // If SD state isn't valid, or the existing SD card id doesn't match the current
-            // card id, reset the SD state.
-            if (!_State.sd.valid || memcmp(&_State.sd.cardId, &cardId, sizeof(cardId))) {
-                _StateInit(cardId, cardData);
-            
-            // Otherwise the SD state is valid and the SD card id matches, so init the ring buffers.
-            } else {
-                _ImgRingBufInit();
-            }
-        
-        } else {
-            // We've previously enabled the SD card successfully since the battery was connected;
-            // enable it again
-            _SDCard::Init();
-        }
-        
-        _Enabled = true;
-    }
-    
-    static void _Disable() {
-        assert(_Enabled);
-        
-        _SetPowerEnabled(false);
-        _Enabled = false;
-    }
-    
-    static void _SetPowerEnabled(bool en) {
-        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-        if (_Pin::VDD_B_SD_EN::Read() == en) return;
-        
-        _Pin::VDD_B_SD_EN::Write(en);
-        // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-        _Scheduler::Sleep(_Scheduler::Ms(2));
-    }
-    
-    // _StateInit(): resets the _State.sd struct
-    static void _StateInit(const SD::CardId& cardId, const SD::CardData& cardData) {
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        
-        // Mark the _State as invalid in case we lose power in the middle of modifying it
-        _State.sd.valid = false;
-        std::atomic_signal_fence(std::memory_order_seq_cst);
-        
-        // Set .cardId
-        {
-            _State.sd.cardId = cardId;
-        }
-        
-        // Set .imgCap
-        {
-            // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
-            const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
-            // cardImgCap: the capacity of the SD card in number of images
-            const uint32_t cardImgCap = cardBlockCap / ImgSD::ImgBlockCount;
-            
-            _State.sd.imgCap = cardImgCap;
-        }
-        
-        // Set .imgRingBufs
-        {
-            _State.sd.imgRingBufs[0] = {};
-            _State.sd.imgRingBufs[1] = {};
-        }
-        
-        std::atomic_signal_fence(std::memory_order_seq_cst);
-        _State.sd.valid = true;
-    }
-    
-    // _ImgRingBufInit(): find the correct image ring buffer (the one with the greatest id that's valid)
-    // and copy it into the other slot so that there are two copies. If neither slot contains a valid ring
-    // buffer, reset them both so that they're both empty (and valid).
-    static void _ImgRingBufInit() {
-        using namespace MSP;
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        
-        MSP::ImgRingBuf& a = _State.sd.imgRingBufs[0];
-        MSP::ImgRingBuf& b = _State.sd.imgRingBufs[1];
-        const std::optional<int> comp = ImgRingBuf::Compare(a, b);
-        if (comp && *comp>0) {
-            // a>b (a is newer), so set b=a
-            b = a;
-        
-        } else if (comp && *comp<0) {
-            // b>a (b is newer), so set a=b
-            a = b;
-        
-        } else if (!comp) {
-            // Both a and b are invalid; reset them both
-            a = {};
-            b = {};
-        }
-    }
-    
-    static void _ImgRingBufIncrement() {
-        using namespace MSP;
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        ImgRingBuf ringBufCopy = _State.sd.imgRingBufs[0];
-        
-        // Update write index
-        ringBufCopy.buf.widx++;
-        // Wrap widx
-        if (ringBufCopy.buf.widx >= _State.sd.imgCap) ringBufCopy.buf.widx = 0;
-        
-        // Update read index (if we're currently full)
-        if (ringBufCopy.buf.full) {
-            ringBufCopy.buf.ridx++;
-            // Wrap ridx
-            if (ringBufCopy.buf.ridx >= _State.sd.imgCap) ringBufCopy.buf.ridx = 0;
-            
-            // Update the beginning image id (which only gets incremented if we're full)
-            ringBufCopy.buf.idBegin++;
-        }
-        
-        // Update the end image id (the next image id that'll be used)
-        ringBufCopy.buf.idEnd++;
-        
-        if (ringBufCopy.buf.widx == ringBufCopy.buf.ridx) ringBufCopy.buf.full = true;
-        
-        _State.sd.imgRingBufs[0] = ringBufCopy;
-        _State.sd.imgRingBufs[1] = ringBufCopy;
-    }
-    
-    // _RCA: SD card 'relative card address'; needed for SD comms after initialization.
-    // As an optional, _RCA also signifies whether we've successfully initiated comms
-    // with the SD card since the battery was plugged in.
-    // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-    // it's maintained during sleep, but reset upon a cold start.
-    [[gnu::section(".ram_backup.main")]]
-    static inline std::optional<uint16_t> _RCA;
-    
-    static inline bool _Enabled = false;
-    
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
-    
-    // Task stack
-    [[gnu::section(".stack._SDTask")]]
-    static inline uint8_t Stack[256];
-};
-
-struct _ImgTask {
-    static void EnableAsync() {
-        Wait();
-        // Short-circuit if the state didn't change
-        if (_Enabled) return;
-        _Scheduler::Start<_ImgTask>([] { _Enable(); });
-    }
-    
-    static void DisableAsync() {
-        Wait();
-        // Short-circuit if the state didn't change
-        if (!_Enabled) return;
-        _Scheduler::Start<_ImgTask>([] { _Disable(); });
-    }
-    
-    static void Wait() {
-        _Scheduler::Wait<_ImgTask>();
-    }
-    
-    static void _Enable() {
-        assert(!_Enabled);
-        
-        // Enable the power rails
-        _SetPowerEnabled(true);
-        // Initialize image sensor
-        _ImgSensor::Init();
-        // Set the initial exposure _before_ we enable streaming, so that the very first frame
-        // has the correct exposure, so we don't have to skip any frames on the first capture.
-        _ImgSensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
-        // Enable image streaming
-        _ImgSensor::SetStreamEnabled(true);
-        
-        _Enabled = true;
-    }
-    
-    static void _Disable() {
-        assert(_Enabled);
-        
-        _SetPowerEnabled(false);
-        _Enabled = false;
-    }
-    
-    static void _SetPowerEnabled(bool en) {
-        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-        if (_Pin::VDD_B_2V8_IMG_EN::Read()==en &&
-            _Pin::VDD_B_1V8_IMG_EN::Read()==en) return;
-        
-        if (en) {
-            _Pin::VDD_B_2V8_IMG_EN::Write(1);
-            _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-            _Pin::VDD_B_1V8_IMG_EN::Write(1);
-            
-            #warning measure actual delay that we need for the rails to rise
-        
-        } else {
-            // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-            _Pin::VDD_B_1V8_IMG_EN::Write(0);
-            _Pin::VDD_B_2V8_IMG_EN::Write(0);
-            
-            #warning measure actual delay that we need for the rails to fall
-        }
-    }
-    
-    // _ImgAutoExp: auto exposure algorithm object
-    // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-    // it's maintained during sleep, but reset upon a cold start.
-    [[gnu::section(".ram_backup.main")]]
-    static Img::AutoExposure _ImgAutoExp;
-    
-    static inline bool _Enabled = false;
-    
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
-    
-    // Task stack
-    [[gnu::section(".stack._ImgTask")]]
-    static inline uint8_t Stack[128];
-};
-
-// MARK: - Motion
-
-static void _ImgCapture() {
-    const auto& ringBuf = _State.sd.imgRingBufs[0].buf;
-    
-//    #warning TODO: remove this cold-start disabling once MSP controls ICE40, since ICE40 will be in a known state when MSP applies power
-//    // If this is a cold start, ensure SD/Img are disabled
-//    // This is necessary because ICE40 can be in an unknown state when MSP
-//    // restarts, because MSP may have aborted, or restarted due to STM
-//    // Spy-Bi-Wire debug access
-//    if (Startup::ColdStart()) {
-//        static bool disabled = false;
-//        if (!disabled) {
-//            _Img::DisableAsync(true);
-//            _SD::DisableAsync(true);
-//            _Scheduler::Wait<_ImgTask, _SDTask>();
-//            disabled = true;
-//        }
-//    }
-    
-    // Asynchronously enable the image sensor
-    _ImgTask::EnableAsync();
-    
-    // Asynchronously enable the SD card
-    _SDTask::EnableAsync();
-    // Block for the first SD initialization to ensure that _State.sd is initialized
-    _SDTask::WaitForInit();
-    
-    // Wait until the image sensor is ready
-    _Img::Wait();
-    
-    // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
-    constexpr uint8_t CaptureAttemptCount = 3;
-    uint8_t bestExpBlock = 0;
-    uint8_t bestExpScore = 0;
-    for (uint8_t i=0; i<CaptureAttemptCount; i++) {
-        // skipCount:
-        // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
-        // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
-        // image since the first image after setting the exposure is invalid.
-        const uint8_t skipCount = (!i ? 0 : 1);
-        
-        // expBlock: Store images in the block belonging to the worst-exposed image captured so far
-        const uint8_t expBlock = !bestExpBlock;
-        
-        // Populate the header
-        static Img::Header header = {
-            .magic          = Img::Header::MagicNumber,
-            .version        = Img::Header::Version,
-            .imageWidth     = Img::PixelWidth,
-            .imageHeight    = Img::PixelHeight,
-            .coarseIntTime  = 0,
-            .analogGain     = 0,
-            .id             = 0,
-            .timestamp      = 0,
-        };
-        
-        header.coarseIntTime = _ImgAutoExp.integrationTime();
-        header.id = ringBuf.idEnd;
-        header.timestamp = _RTC.time();
-        
-        // Capture an image to RAM
-        const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
-        const uint8_t expScore = _ImgAutoExp.update(resp.highlightCount(), resp.shadowCount());
-        if (!bestExpScore || (expScore > bestExpScore)) {
-            bestExpBlock = expBlock;
-            bestExpScore = expScore;
-        }
-        
-        // We're done if we don't have any exposure changes
-        if (!_ImgAutoExp.changed()) break;
-        
-        // Update the exposure
-        _ImgSensor::SetCoarseIntTime(_ImgAutoExp.integrationTime());
-    }
-    
-    // Write the best-exposed image to the SD card
-    const uint32_t dstBlockIdx = ringBuf.widx * ImgSD::ImgBlockCount;
-    _SDTask::WriteImage(bestExpBlock, dstBlockIdx);
-}
-
-// MARK: - Interrupts
-
-[[gnu::interrupt(RTC_VECTOR)]]
-static void _ISR_RTC() {
-    _RTC.isr();
-}
-
-[[gnu::interrupt(PORT1_VECTOR)]]
-static void _ISR_Port1() {
-    // Accessing `P1IV` automatically clears the highest-priority interrupt
-    switch (__even_in_range(P1IV, _MotionSignalIV)) {
-    case _MotionSignalIV:
-        _MotionTask::MotionSignal();
-        // Wake ourself
-        __bic_SR_register_on_exit(LPM3_bits);
-        break;
-    
-    default:
-        break;
-    }
-}
-
-[[gnu::interrupt(WDT_VECTOR)]]
-static void _ISR_SysTick() {
-    const bool wake = _Scheduler::Tick();
-    if (wake) {
-        // Wake ourself
-        __bic_SR_register_on_exit(LPM3_bits);
-    }
-}
 
 // MARK: - ICE40
 
@@ -549,11 +174,10 @@ static void _Sleep() {
     //   reset and execution will start from main().
     
     #warning TODO: re-enable LPM3.5 sleep below
-    // If we're currently busy (_BusyCount > 0), enter LPM1 sleep because some tasks are running.
-    // If we're not busy (!_BusyCount), enter the deep LPM3.5 sleep, where RAM content is lost.
-//    const uint16_t LPMBits = (_BusyCount ? LPM1_bits : LPM3_bits);
     const uint16_t LPMBits = LPM1_bits;
-//    const uint16_t LPMBits = (_MotionTask::DeepSleepOK() ? LPM3_bits : LPM1_bits);
+    // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
+    // Otherwise, enter LPM1 sleep, because something is running.
+//    const uint16_t LPMBits = (_MainTask::DeepSleepOK() ? LPM3_bits : LPM1_bits);
     
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
@@ -676,7 +300,289 @@ static void _Sleep() {
 //    static inline std::optional<_BusyAssertion> _Busy;
 //};
 
-struct _MotionTask {
+struct _SDTask {
+    static void Enable() {
+        Wait();
+        // Short-circuit if the state didn't change
+        if (_Enabled) return;
+        _Scheduler::Start<_SDTask>([] { _Enable(); });
+    }
+    
+    static void Disable() {
+        Wait();
+        // Short-circuit if the state didn't change
+        if (!_Enabled) return;
+        _Scheduler::Start<_SDTask>([] { _Disable(); });
+    }
+    
+    static void WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
+        static struct {
+            uint8_t srcBlock;
+            uint32_t dstBlockIdx;
+        } Args;
+        
+        Wait();
+        Assert(_Enabled);
+        Args = {srcBlock, dstBlockIdx};
+        _Scheduler::Start<_SDTask>([] { _WriteImage(Args.srcBlock, Args.dstBlockIdx); });
+    }
+    
+    static MSP::ImgRingBuf& ImgRingBuf() {
+        // Wait until _State.sd has been initialized (as signified by _RCA existing)
+        // before returning an element of _State.sd.
+        _Scheduler::Wait([&] { return _RCA.has_value(); });
+        return _State.sd.imgRingBufs[0];
+    }
+    
+    static void Wait() {
+        _Scheduler::Wait<_SDTask>();
+    }
+    
+//    // WaitForInit(): wait for the initial SD card initialization, which initializes
+//    // _State.sd (particularly _State.sd.imgRingBufs), which other entities need
+//    static void WaitForInit() {
+//        _Scheduler::Wait([&] { return _RCA.has_value(); });
+//    }
+    
+    static void _Enable() {
+        Assert(!_Enabled);
+        
+        _SetPowerEnabled(true);
+        if (!_RCA) {
+            // We haven't successfully enabled the SD card since the battery was connected;
+            // enable the SD card and get the card id / card data.
+            SD::CardId cardId;
+            SD::CardData cardData;
+            _RCA = _SDCard::Init(&cardId, &cardData);
+            
+            // If SD state isn't valid, or the existing SD card id doesn't match the current
+            // card id, reset the SD state.
+            if (!_State.sd.valid || memcmp(&_State.sd.cardId, &cardId, sizeof(cardId))) {
+                _StateInit(cardId, cardData);
+            
+            // Otherwise the SD state is valid and the SD card id matches, so init the ring buffers.
+            } else {
+                _ImgRingBufInit();
+            }
+        
+        } else {
+            // We've previously enabled the SD card successfully since the battery was connected;
+            // enable it again
+            _SDCard::Init();
+        }
+        
+        _Enabled = true;
+    }
+    
+    static void _Disable() {
+        Assert(_Enabled);
+        
+        _SetPowerEnabled(false);
+        _Enabled = false;
+    }
+    
+    static void _WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
+        _SDCard::WriteImage(*_RCA, srcBlock, dstBlockIdx);
+        _ImgRingBufIncrement();
+    }
+    
+    static void _SetPowerEnabled(bool en) {
+        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
+        if (_Pin::VDD_B_SD_EN::Read() == en) return;
+        
+        _Pin::VDD_B_SD_EN::Write(en);
+        // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
+        _Scheduler::Sleep(_Scheduler::Ms(2));
+    }
+    
+    // _StateInit(): resets the _State.sd struct
+    static void _StateInit(const SD::CardId& cardId, const SD::CardData& cardData) {
+        FRAMWriteEn writeEn; // Enable FRAM writing
+        
+        // Mark the _State as invalid in case we lose power in the middle of modifying it
+        _State.sd.valid = false;
+        std::atomic_signal_fence(std::memory_order_seq_cst);
+        
+        // Set .cardId
+        {
+            _State.sd.cardId = cardId;
+        }
+        
+        // Set .imgCap
+        {
+            // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
+            const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
+            // cardImgCap: the capacity of the SD card in number of images
+            const uint32_t cardImgCap = cardBlockCap / ImgSD::ImgBlockCount;
+            
+            _State.sd.imgCap = cardImgCap;
+        }
+        
+        // Set .imgRingBufs
+        {
+            _State.sd.imgRingBufs[0] = {};
+            _State.sd.imgRingBufs[1] = {};
+        }
+        
+        std::atomic_signal_fence(std::memory_order_seq_cst);
+        _State.sd.valid = true;
+    }
+    
+    // _ImgRingBufInit(): find the correct image ring buffer (the one with the greatest id that's valid)
+    // and copy it into the other slot so that there are two copies. If neither slot contains a valid ring
+    // buffer, reset them both so that they're both empty (and valid).
+    static void _ImgRingBufInit() {
+        using namespace MSP;
+        FRAMWriteEn writeEn; // Enable FRAM writing
+        
+        MSP::ImgRingBuf& a = _State.sd.imgRingBufs[0];
+        MSP::ImgRingBuf& b = _State.sd.imgRingBufs[1];
+        const std::optional<int> comp = ImgRingBuf::Compare(a, b);
+        if (comp && *comp>0) {
+            // a>b (a is newer), so set b=a
+            b = a;
+        
+        } else if (comp && *comp<0) {
+            // b>a (b is newer), so set a=b
+            a = b;
+        
+        } else if (!comp) {
+            // Both a and b are invalid; reset them both
+            a = {};
+            b = {};
+        }
+    }
+    
+    static void _ImgRingBufIncrement() {
+        FRAMWriteEn writeEn; // Enable FRAM writing
+        MSP::ImgRingBuf ringBufCopy = _State.sd.imgRingBufs[0];
+        
+        // Update write index
+        ringBufCopy.buf.widx++;
+        // Wrap widx
+        if (ringBufCopy.buf.widx >= _State.sd.imgCap) ringBufCopy.buf.widx = 0;
+        
+        // Update read index (if we're currently full)
+        if (ringBufCopy.buf.full) {
+            ringBufCopy.buf.ridx++;
+            // Wrap ridx
+            if (ringBufCopy.buf.ridx >= _State.sd.imgCap) ringBufCopy.buf.ridx = 0;
+            
+            // Update the beginning image id (which only gets incremented if we're full)
+            ringBufCopy.buf.idBegin++;
+        }
+        
+        // Update the end image id (the next image id that'll be used)
+        ringBufCopy.buf.idEnd++;
+        
+        if (ringBufCopy.buf.widx == ringBufCopy.buf.ridx) ringBufCopy.buf.full = true;
+        
+        _State.sd.imgRingBufs[0] = ringBufCopy;
+        _State.sd.imgRingBufs[1] = ringBufCopy;
+    }
+    
+    // _RCA: SD card 'relative card address'; needed for SD comms after initialization.
+    // As an optional, _RCA also signifies whether we've successfully initiated comms
+    // with the SD card since the battery was plugged in.
+    // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+    // it's maintained during sleep, but reset upon a cold start.
+    [[gnu::section(".ram_backup.main")]]
+    static inline std::optional<uint16_t> _RCA;
+    
+    static inline bool _Enabled = false;
+    
+    // Task options
+    static constexpr Toastbox::TaskOptions Options{};
+    
+    // Task stack
+    [[gnu::section(".stack._SDTask")]]
+    static inline uint8_t Stack[256];
+};
+
+struct _ImgTask {
+    static void Enable() {
+        Wait();
+        // Short-circuit if the state didn't change
+        if (_Enabled) return;
+        _Scheduler::Start<_ImgTask>([] { _Enable(); });
+    }
+    
+    static void Disable() {
+        Wait();
+        // Short-circuit if the state didn't change
+        if (!_Enabled) return;
+        _Scheduler::Start<_ImgTask>([] { _Disable(); });
+    }
+    
+    static void Wait() {
+        _Scheduler::Wait<_ImgTask>();
+    }
+    
+    static Img::AutoExposure& AutoExp() {
+        return _AutoExp;
+    }
+    
+    static void _Enable() {
+        Assert(!_Enabled);
+        
+        // Enable the power rails
+        _SetPowerEnabled(true);
+        // Initialize image sensor
+        _ImgSensor::Init();
+        // Set the initial exposure _before_ we enable streaming, so that the very first frame
+        // has the correct exposure, so we don't have to skip any frames on the first capture.
+        _ImgSensor::SetCoarseIntTime(_AutoExp.integrationTime());
+        // Enable image streaming
+        _ImgSensor::SetStreamEnabled(true);
+        
+        _Enabled = true;
+    }
+    
+    static void _Disable() {
+        Assert(_Enabled);
+        
+        _SetPowerEnabled(false);
+        _Enabled = false;
+    }
+    
+    static void _SetPowerEnabled(bool en) {
+        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
+        if (_Pin::VDD_B_2V8_IMG_EN::Read()==en &&
+            _Pin::VDD_B_1V8_IMG_EN::Read()==en) return;
+        
+        if (en) {
+            _Pin::VDD_B_2V8_IMG_EN::Write(1);
+            _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+            _Pin::VDD_B_1V8_IMG_EN::Write(1);
+            
+            #warning measure actual delay that we need for the rails to rise
+        
+        } else {
+            // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+            _Pin::VDD_B_1V8_IMG_EN::Write(0);
+            _Pin::VDD_B_2V8_IMG_EN::Write(0);
+            
+            #warning measure actual delay that we need for the rails to fall
+        }
+    }
+    
+    // _AutoExp: auto exposure algorithm object
+    // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
+    // it's maintained during sleep, but reset upon a cold start.
+    [[gnu::section(".ram_backup.main")]]
+    static inline Img::AutoExposure _AutoExp;
+    
+    static inline bool _Enabled = false;
+    
+    // Task options
+    static constexpr Toastbox::TaskOptions Options{};
+    
+    // Task stack
+    [[gnu::section(".stack._ImgTask")]]
+    static inline uint8_t Stack[128];
+};
+
+struct _MainTask {
     static void Run() {
 //        for (;;) {
 //            _Pin::VDD_B_EN::Write(1);
@@ -714,11 +620,20 @@ struct _MotionTask {
             #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
             _Scheduler::Sleep(_Scheduler::Ms(250));
             
+            // Enable image sensor / SD card
+            _ImgTask::Enable();
+            _SDTask::Enable();
+            
             for (;;) {
                 // Capture an image
-                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-                _ImgCapture();
-                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+                {
+                    _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+                    
+                    _ImgTask::Wait(); // Wait until the image sensor is ready before we attempt to capture an image
+                    _ImgCapture(_SDTask::ImgRingBuf());
+                    
+                    _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+                }
                 
                 // Wait up to 1s for further motion
                 const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
@@ -732,8 +647,8 @@ struct _MotionTask {
             }
             
             // We haven't had motion in a while; power down
-            _ImgTask::DisableAsync();
-            _SDTask::DisableAsync();
+            _ImgTask::Disable();
+            _SDTask::Disable();
             
             _Pin::VDD_B_EN::Write(0);
             
@@ -814,21 +729,73 @@ struct _MotionTask {
     static bool DeepSleepOK() {
         // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
         // This logic works because if _WaitingForMotion==true, then we've disabled both _SDTask
-        // and _ImgTask, so if _WaitingForMotion==true and the tasks are idle, then everything's
-        // idle so we can enter deep sleep. (The case that we need to be careful of is going to
-        // sleep when either _SDTask or _ImgTask is idle but still powered on, and this logic
-        // takes care of that.)
-        return _WaitingForMotion && !_SDTask::Running() && !_ImgTask::Running();
+        // and _ImgTask, so if the tasks are idle, then everything's idle so we can enter deep
+        // sleep. (The case that we need to be careful of is going to sleep when either _SDTask
+        // or _ImgTask is idle but still powered on, and this logic takes care of that.)
+        return _WaitingForMotion                &&
+               !_Scheduler::Running<_SDTask>()  &&
+               !_Scheduler::Running<_ImgTask>() ;
     }
     
     static void MotionSignal() {
         _Motion = true;
     }
     
+    static void _ImgCapture(const MSP::ImgRingBuf& imgRingBuf) {
+        // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
+        constexpr uint8_t CaptureAttemptCount = 3;
+        uint8_t bestExpBlock = 0;
+        uint8_t bestExpScore = 0;
+        for (uint8_t i=0; i<CaptureAttemptCount; i++) {
+            // skipCount:
+            // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
+            // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
+            // image since the first image after setting the exposure is invalid.
+            const uint8_t skipCount = (!i ? 0 : 1);
+            
+            // expBlock: Store images in the block belonging to the worst-exposed image captured so far
+            const uint8_t expBlock = !bestExpBlock;
+            
+            // Populate the header
+            static Img::Header header = {
+                .magic          = Img::Header::MagicNumber,
+                .version        = Img::Header::Version,
+                .imageWidth     = Img::PixelWidth,
+                .imageHeight    = Img::PixelHeight,
+                .coarseIntTime  = 0,
+                .analogGain     = 0,
+                .id             = 0,
+                .timestamp      = 0,
+            };
+            
+            header.coarseIntTime = _ImgTask::AutoExp().integrationTime();
+            header.id = imgRingBuf.buf.idEnd;
+            header.timestamp = _RTC.time();
+            
+            // Capture an image to RAM
+            const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
+            const uint8_t expScore = _ImgTask::AutoExp().update(resp.highlightCount(), resp.shadowCount());
+            if (!bestExpScore || (expScore > bestExpScore)) {
+                bestExpBlock = expBlock;
+                bestExpScore = expScore;
+            }
+            
+            // We're done if we don't have any exposure changes
+            if (!_ImgTask::AutoExp().changed()) break;
+            
+            // Update the exposure
+            _ImgSensor::SetCoarseIntTime(_ImgTask::AutoExp().integrationTime());
+        }
+        
+        // Write the best-exposed image to the SD card
+        const uint32_t dstBlockIdx = imgRingBuf.buf.widx * ImgSD::ImgBlockCount;
+        _SDTask::WriteImage(bestExpBlock, dstBlockIdx);
+    }
+    
     // _Motion: announces that motion occurred
     // atomic because _Motion is modified from the interrupt context
-    static std::atomic<bool> _Motion = false;
-    static bool _WaitingForMotion = false;
+    static inline std::atomic<bool> _Motion = false;
+    static inline bool _WaitingForMotion = false;
     
     // Task options
     static constexpr Toastbox::TaskOptions Options{
@@ -836,9 +803,40 @@ struct _MotionTask {
     };
     
     // Task stack
-    [[gnu::section(".stack._MotionTask")]]
+    [[gnu::section(".stack._MainTask")]]
     static inline uint8_t Stack[256];
 };
+
+// MARK: - Interrupts
+
+[[gnu::interrupt(RTC_VECTOR)]]
+static void _ISR_RTC() {
+    _RTC.isr();
+}
+
+[[gnu::interrupt(PORT1_VECTOR)]]
+static void _ISR_Port1() {
+    // Accessing `P1IV` automatically clears the highest-priority interrupt
+    switch (__even_in_range(P1IV, _MotionSignalIV)) {
+    case _MotionSignalIV:
+        _MainTask::MotionSignal();
+        // Wake ourself
+        __bic_SR_register_on_exit(LPM3_bits);
+        break;
+    
+    default:
+        break;
+    }
+}
+
+[[gnu::interrupt(WDT_VECTOR)]]
+static void _ISR_SysTick() {
+    const bool wake = _Scheduler::Tick();
+    if (wake) {
+        // Wake ourself
+        __bic_SR_register_on_exit(LPM3_bits);
+    }
+}
 
 // MARK: - Abort
 
@@ -888,8 +886,8 @@ static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t l
 
 [[noreturn]]
 static void _BOR() {
-    // Trigger a BOR
     PMMCTL0 = PMMPW | PMMSWBOR;
+    for (;;);
 }
 
 [[noreturn]]
@@ -904,7 +902,7 @@ static void _Abort(uint16_t domain, uint16_t line) {
 //    PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
 //    PMMCTL0_L |= PMMSWBOR_1_L;
     
-    for (;;);
+//    for (;;);
     
 //    _Pin::DEBUG_OUT::Init();
 //    
@@ -1199,6 +1197,6 @@ int main() {
 //};
 //
 //const _DebugStack& _Debug_MainStack               = *(_DebugStack*)_StackMain;
-//const _DebugStack& _Debug_MotionTaskStack         = *(_DebugStack*)_MotionTask::Stack;
+//const _DebugStack& _Debug_MainTaskStack         = *(_DebugStack*)_MainTask::Stack;
 //const _DebugStack& _Debug_SDTaskStack             = *(_DebugStack*)_SDTask::Stack;
 //const _DebugStack& _Debug_ImgTaskStack            = *(_DebugStack*)_ImgTask::Stack;
