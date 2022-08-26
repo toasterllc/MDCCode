@@ -572,15 +572,17 @@ struct _MainTask {
             for (int i=0; i<2; i++) {
                 _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
                 
-//                // Wait for _SDTask to be idle for 2 distinct reasons:
-//                //   1. we have to wait for it to initialize _State.sd, which we use below
-//                //   2. we can't initiate a new capture until writing to the SD card is
-//                //      complete (the SDRAM is single-port, so we can only read or write
-//                //      at one time)
-//                _SDTask::Wait();
+                // Get the ring buffer
+                // This has the necessary side effect of waiting for _SDTask to be idle, which is
+                // necessary for 2 reasons:
+                //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
+                //      access them,
+                //   2. we can't initiate a new capture until writing to the SD card (from a
+                //      previous capture) is complete (because the SDRAM is single-port, so
+                //      we can only read or write at one time)
+                const MSP::ImgRingBuf& imgRingBuf = _SDTask::ImgRingBuf();
                 
                 // Capture image to RAM
-                const MSP::ImgRingBuf& imgRingBuf = _SDTask::ImgRingBuf();
                 _ImgTask::Capture(imgRingBuf.buf.idEnd);
                 
                 // Copy image from RAM -> SD card
