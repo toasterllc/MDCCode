@@ -219,11 +219,11 @@ struct _SDTask {
         _Scheduler::Start<_SDTask>([] { _Disable(); });
     }
     
-//    static MSP::ImgRingBuf& ImgRingBuf() {
-//        Wait();
-//        Assert(_Enabled); // Ensures that we've initialized _State.sd.imgRingBufs
-//        return _State.sd.imgRingBufs[0];
-//    }
+    static MSP::ImgRingBuf& ImgRingBuf() {
+        Wait();
+        Assert(_Enabled); // Ensures that we've initialized _State.sd.imgRingBufs
+        return _State.sd.imgRingBufs[0];
+    }
     
     static void Write(uint8_t srcBlock, uint32_t dstBlockIdx) {
         Wait();
@@ -541,7 +541,7 @@ struct _ImgTask {
     
     // Task stack
     [[gnu::section(".stack._ImgTask")]]
-    static inline uint8_t Stack[128];
+    static inline uint8_t Stack[256];
 };
 
 struct _MainTask {
@@ -572,19 +572,19 @@ struct _MainTask {
             for (int i=0; i<2; i++) {
                 _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
                 
-                // Wait for _SDTask to be idle for 2 distinct reasons:
-                //   1. we have to wait for it to initialize _State.sd, which we use below
-                //   2. we can't initiate a new capture until writing to the SD card is
-                //      complete (the SDRAM is single-port, so we can only read or write
-                //      at one time)
-                _SDTask::Wait();
+//                // Wait for _SDTask to be idle for 2 distinct reasons:
+//                //   1. we have to wait for it to initialize _State.sd, which we use below
+//                //   2. we can't initiate a new capture until writing to the SD card is
+//                //      complete (the SDRAM is single-port, so we can only read or write
+//                //      at one time)
+//                _SDTask::Wait();
                 
                 // Capture image to RAM
-                const auto& imgRingBuf = _State.sd.imgRingBufs[0].buf;
-                _ImgTask::Capture(imgRingBuf.idEnd);
+                const MSP::ImgRingBuf& imgRingBuf = _SDTask::ImgRingBuf();
+                _ImgTask::Capture(imgRingBuf.buf.idEnd);
                 
                 // Copy image from RAM -> SD card
-                const uint32_t dstBlockIdx = imgRingBuf.widx * ImgSD::ImgBlockCount;
+                const uint32_t dstBlockIdx = imgRingBuf.buf.widx * ImgSD::ImgBlockCount;
                 const uint8_t srcBlock = _ImgTask::CaptureBlock();
                 _SDTask::Write(srcBlock, dstBlockIdx);
                 
