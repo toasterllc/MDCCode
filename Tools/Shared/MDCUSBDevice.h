@@ -251,14 +251,14 @@ public:
         _checkStatus("MSPConnect command failed");
     }
     
-    void mspDisconnect(bool run) {
+    void mspDisconnect(bool hostMode) {
         assert(_mode == STM::Status::Modes::STMApp);
         
         const STM::Cmd cmd = {
             .op = STM::Op::MSPDisconnect,
             .arg = {
                 .MSPDisconnect = {
-                    .run = run,
+                    .hostMode = hostMode,
                 },
             },
         };

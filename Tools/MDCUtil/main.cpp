@@ -309,7 +309,9 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(     "version:                   0x%04x\n",      state.version);
     printf(     "\n");
     
-    printf(     "time:                      0x%jx\n",       (uintmax_t)state.time);
+    printf(     "startTime\n");
+    printf(     "  time:                    0x%jx\n",       (uintmax_t)state.startTime.time);
+    printf(     "  valid:                   %d\n",          state.startTime.valid);
     printf(     "\n");
     
     printf(     "sd\n");
