@@ -245,7 +245,9 @@ struct _SDTask {
     static void _Enable() {
         Assert(!_Enabled);
         
+        _SDCard::Reset();
         _SetPowerEnabled(true);
+        
         if (!_RCA) {
             // We haven't successfully enabled the SD card since the battery was connected;
             // enable the SD card and get the card id / card data.
@@ -285,8 +287,8 @@ struct _SDTask {
     }
     
     static void _SetPowerEnabled(bool en) {
-        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-        if (_Pin::VDD_B_SD_EN::Read() == en) return;
+//        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
+//        if (_Pin::VDD_B_SD_EN::Read() == en) return;
         
         _Pin::VDD_B_SD_EN::Write(en);
         // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
@@ -444,9 +446,9 @@ struct _ImgTask {
     }
     
     static void _SetPowerEnabled(bool en) {
-        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-        if (_Pin::VDD_B_2V8_IMG_EN::Read()==en &&
-            _Pin::VDD_B_1V8_IMG_EN::Read()==en) return;
+//        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
+//        if (_Pin::VDD_B_2V8_IMG_EN::Read()==en &&
+//            _Pin::VDD_B_1V8_IMG_EN::Read()==en) return;
         
         if (en) {
             _Pin::VDD_B_2V8_IMG_EN::Write(1);
@@ -482,16 +484,16 @@ struct _ImgTask {
 
 struct _MainTask {
     static void Run() {
-        _Pin::VDD_B_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Ms(250));
-        
-        for (;;) {
-            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-            _Scheduler::Sleep(_Scheduler::Ms(250));
-            
-            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-            _Scheduler::Sleep(_Scheduler::Ms(250));
-        }
+//        _Pin::VDD_B_EN::Write(1);
+//        _Scheduler::Sleep(_Scheduler::Ms(250));
+//        
+//        for (;;) {
+//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+//            _Scheduler::Sleep(_Scheduler::Ms(250));
+//            
+//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//            _Scheduler::Sleep(_Scheduler::Ms(250));
+//        }
         
         for (;;) {
             // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
@@ -791,20 +793,20 @@ int main() {
     // Init SysTick
     _SysTick::Init();
     
-    {
-        _Pin::VDD_B_EN::Write(1);
-        _Scheduler::Delay(_Scheduler::Ms(1000));
-        
-//        debugSignal();
-        
-        for (;;) {
-            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-            _Scheduler::Delay(_Scheduler::Ms(250));
-            
-            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-            _Scheduler::Delay(_Scheduler::Ms(250));
-        }
-    }
+//    {
+//        _Pin::VDD_B_EN::Write(1);
+//        _Scheduler::Delay(_Scheduler::Ms(1000));
+//        
+////        debugSignal();
+//        
+//        for (;;) {
+//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+//            _Scheduler::Delay(_Scheduler::Ms(250));
+//            
+//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//            _Scheduler::Delay(_Scheduler::Ms(250));
+//        }
+//    }
     
     // Handle cold starts
     if (Startup::ColdStart()) {
