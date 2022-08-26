@@ -287,8 +287,8 @@ struct _SDTask {
     }
     
     static void _SetPowerEnabled(bool en) {
-//        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-//        if (_Pin::VDD_B_SD_EN::Read() == en) return;
+        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
+        if (_Pin::VDD_B_SD_EN::Read() == en) return;
         
         _Pin::VDD_B_SD_EN::Write(en);
         // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
@@ -505,9 +505,9 @@ struct _ImgTask {
     }
     
     static void _SetPowerEnabled(bool en) {
-//        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-//        if (_Pin::VDD_B_2V8_IMG_EN::Read()==en &&
-//            _Pin::VDD_B_1V8_IMG_EN::Read()==en) return;
+        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
+        if (_Pin::VDD_B_2V8_IMG_EN::Read()==en &&
+            _Pin::VDD_B_1V8_IMG_EN::Read()==en) return;
         
         if (en) {
             _Pin::VDD_B_2V8_IMG_EN::Write(1);
@@ -558,6 +558,14 @@ struct _MainTask {
 //        }
         
         for (;;) {
+            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
+            {
+                _WaitingForMotion = true;
+                _Scheduler::Wait([&] { return (bool)_Motion; });
+                _Motion = false;
+                _WaitingForMotion = false;
+            }
+            
             _Pin::VDD_B_EN::Write(1);
             #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
             _Scheduler::Sleep(_Scheduler::Ms(250));
@@ -565,32 +573,42 @@ struct _MainTask {
             // Enable image sensor / SD card
             _ImgTask::Enable();
             _SDTask::Enable();
-//            _SDTask::WaitForInit();
             
-            _Scheduler::Sleep(_Scheduler::Ms(250));
-            
-            for (int i=0; i<2; i++) {
-                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+            for (;;) {
+                // Capture an image
+                {
+                    _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+                    
+                    // Get the ring buffer
+                    // This has the necessary side effect of waiting for _SDTask to be idle, which is
+                    // necessary for 2 reasons:
+                    //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
+                    //      access them,
+                    //   2. we can't initiate a new capture until writing to the SD card (from a
+                    //      previous capture) is complete (because the SDRAM is single-port, so
+                    //      we can only read or write at one time)
+                    const MSP::ImgRingBuf& imgRingBuf = _SDTask::ImgRingBuf();
+                    
+                    // Capture image to RAM
+                    _ImgTask::Capture(imgRingBuf.buf.idEnd);
+                    
+                    // Copy image from RAM -> SD card
+                    const uint32_t dstBlockIdx = imgRingBuf.buf.widx * ImgSD::ImgBlockCount;
+                    const uint8_t srcBlock = _ImgTask::CaptureBlock();
+                    _SDTask::Write(srcBlock, dstBlockIdx);
+                    
+                    _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+                }
                 
-                // Get the ring buffer
-                // This has the necessary side effect of waiting for _SDTask to be idle, which is
-                // necessary for 2 reasons:
-                //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
-                //      access them,
-                //   2. we can't initiate a new capture until writing to the SD card (from a
-                //      previous capture) is complete (because the SDRAM is single-port, so
-                //      we can only read or write at one time)
-                const MSP::ImgRingBuf& imgRingBuf = _SDTask::ImgRingBuf();
+                // Wait up to 1s for further motion
+                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
+                if (!motion) break;
                 
-                // Capture image to RAM
-                _ImgTask::Capture(imgRingBuf.buf.idEnd);
-                
-                // Copy image from RAM -> SD card
-                const uint32_t dstBlockIdx = imgRingBuf.buf.widx * ImgSD::ImgBlockCount;
-                const uint8_t srcBlock = _ImgTask::CaptureBlock();
-                _SDTask::Write(srcBlock, dstBlockIdx);
-                
-                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+                // Only reset _Motion if we've observed motion; otherwise, if we always reset
+                // _Motion, there'd be a race window where we could first observe
+                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
+                // the true value by resetting it to false.
+                _Motion = false;
             }
             
             // We haven't had motion in a while; power down
