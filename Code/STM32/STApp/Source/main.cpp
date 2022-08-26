@@ -90,6 +90,7 @@ using _SDCard = SD::Card<
 class _SD {
 public:
     static void Init() {
+        _Reading = false;
         _RCA = _SDCard::Init(&_CardId, &_CardData);
     }
     
@@ -102,10 +103,14 @@ public:
     }
     
     static void ReadStart(uint32_t blockIdx) {
+        if (_Reading) ReadStop(); // Stop current read if one is in progress
+        
+        _Reading = true;
         _SDCard::ReadStart(blockIdx);
     }
     
     static void ReadStop() {
+        _Reading = false;
         _SDCard::ReadStop();
     }
     
@@ -113,6 +118,7 @@ private:
     static inline uint16_t _RCA = 0;
     static inline SD::CardId _CardId;
     static inline SD::CardData _CardData;
+    static inline bool _Reading = false;
 };
 
 // MARK: - ICE40
@@ -1076,6 +1082,14 @@ void _SDInit(const STM::Cmd& cmd) {
     // Configure QSPI for comms with ICEApp
     _QSPISetConfig(_QSPIConfigs.ICEApp);
     
+    _SDCard::Reset();
+    
+    const auto mspr = _MSP.connect();
+    _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _MSP_HOST_MODE_::Write(0);
+    _MSP.disconnect();
+    
+    _Scheduler::Sleep(_Scheduler::Ms(1000));
     _SD::Init();
     
     _System::USBSendStatus(true);
@@ -1091,21 +1105,14 @@ void _SDInit(const STM::Cmd& cmd) {
 }
 
 static void _SDRead(const STM::Cmd& cmd) {
-    static bool reading = false;
     const auto& arg = cmd.arg.SDRead;
     
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Stop reading from the SD card if a read is in progress
-    if (reading) {
-        _ICE_ST_SPI_CS_::Write(1);
-        _SD::ReadStop();
-        reading = false;
-    }
+    // Reset chip select in case a read was in progress
+    _ICE_ST_SPI_CS_::Write(1);
     
-    // Update state
-    reading = true;
     _SD::ReadStart(arg.blockIdx);
     
     // Send status
