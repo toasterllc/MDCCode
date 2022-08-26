@@ -496,14 +496,6 @@ struct _MainTask {
 //        }
         
         for (;;) {
-            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
-            {
-                _WaitingForMotion = true;
-                _Scheduler::Wait([&] { return (bool)_Motion; });
-                _Motion = false;
-                _WaitingForMotion = false;
-            }
-            
             _Pin::VDD_B_EN::Write(1);
             #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
             _Scheduler::Sleep(_Scheduler::Ms(250));
@@ -511,6 +503,8 @@ struct _MainTask {
             // Enable image sensor / SD card
             _ImgTask::Enable();
             _SDTask::Enable();
+            
+            _Scheduler::Sleep(_Scheduler::Ms(250));
             
             for (;;) {
                 // Capture an image
@@ -808,32 +802,32 @@ int main() {
 //        }
 //    }
     
-    // Handle cold starts
-    if (Startup::ColdStart()) {
-        // Temporarily enable a pullup on HOST_MODE_ so that we can determine whether STM is driving it low.
-        // We don't want the pullup to be permanent to prevent leakage current (~80nA) through STM32's GPIO
-        // that controls HOST_MODE_.
-        _Pin::HOST_MODE_::Write(1);
-        
-        // Wait for the pullup to pull the rail up
-        _Scheduler::Delay(_Scheduler::Ms(1));
-        
-        // Enter host mode if HOST_MODE_ is asserted
-        if (!_Pin::HOST_MODE_::Read()) {
-            _HostMode();
-        }
-        
-        // Return to default HOST_MODE_ config
-        // Not using GPIO::Init() here because it costs a lot more instructions.
-        _Pin::HOST_MODE_::Write(0);
-        
-        // Since this is a cold start, delay 3s before beginning.
-        // This delay is meant for the case where we restarted due to an abort, and
-        // serves 2 purposes:
-        //   1. it rate-limits aborts, in case there's a persistent issue
-        //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-        _Scheduler::Delay(_Scheduler::Ms(3000));
-    }
+//    // Handle cold starts
+//    if (Startup::ColdStart()) {
+//        // Temporarily enable a pullup on HOST_MODE_ so that we can determine whether STM is driving it low.
+//        // We don't want the pullup to be permanent to prevent leakage current (~80nA) through STM32's GPIO
+//        // that controls HOST_MODE_.
+//        _Pin::HOST_MODE_::Write(1);
+//        
+//        // Wait for the pullup to pull the rail up
+//        _Scheduler::Delay(_Scheduler::Ms(1));
+//        
+//        // Enter host mode if HOST_MODE_ is asserted
+//        if (!_Pin::HOST_MODE_::Read()) {
+//            _HostMode();
+//        }
+//        
+//        // Return to default HOST_MODE_ config
+//        // Not using GPIO::Init() here because it costs a lot more instructions.
+//        _Pin::HOST_MODE_::Write(0);
+//        
+//        // Since this is a cold start, delay 3s before beginning.
+//        // This delay is meant for the case where we restarted due to an abort, and
+//        // serves 2 purposes:
+//        //   1. it rate-limits aborts, in case there's a persistent issue
+//        //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
+//        _Scheduler::Delay(_Scheduler::Ms(3000));
+//    }
     
     _Scheduler::Run();
 }
