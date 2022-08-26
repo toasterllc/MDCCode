@@ -73,6 +73,9 @@ public:
                 constexpr bool MSPHostMode = true;
                 _dev->mspDisconnect(MSPHostMode);
             }
+            
+            sleep(1);
+            
 //            
 //            sleep(15);
             
@@ -121,13 +124,13 @@ public:
             if (!_mspState.sd.valid) {
                 // MSPApp state isn't valid -- ignore
                 #warning TODO: implement
-                throw Toastbox::RuntimeError("TODO: implement");
+                throw Toastbox::RuntimeError("TODO: !_mspState.sd.valid");
             }
             
             if (memcmp(&_sdCardInfo.cardId, &_mspState.sd.cardId, sizeof(_mspState.sd.cardId))) {
                 // Current SD card id doesn't match MSP's card id
                 #warning TODO: implement
-                throw Toastbox::RuntimeError("TODO: implement");
+                throw Toastbox::RuntimeError("TODO: memcmp(...)");
             }
         }
         
