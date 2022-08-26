@@ -91,6 +91,7 @@ class _SD {
 public:
     static void Init() {
         _Reading = false;
+        _SDCard::Reset();
         _RCA = _SDCard::Init(&_CardId, &_CardData);
     }
     
