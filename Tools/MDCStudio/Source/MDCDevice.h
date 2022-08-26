@@ -43,36 +43,36 @@ public:
         {
             auto lock = std::unique_lock(*_dev);
             
-            {
-                _dev->mspConnect();
-                _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
-                
-                if (_mspState.magic != MSP::State::MagicNumber) {
-                    // Program MSPApp onto MSP
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
-                }
-                
-                if (_mspState.version > MSP::State::Version) {
-                    // Newer version than we understand -- tell user to upgrade or re-program
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
-                }
-                
-                // Load ICE40 with our app
-                _ICEConfigure(*_dev);
-                
-                _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
-                _mspState.startTime.valid = true;
-                _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
-                
-                // MSPHostMode=true: make MSP enter host mode until physically disconnected from USB.
-                // (When USB is disconnected, STM will lose power, causing STM to stop asserting
-                // MSP_HOST_MODE_, allowing MSP_HOST_MODE_ to be pulled high by MSP's pullup, thereby
-                // allowing MSP to run again.)
-                constexpr bool MSPHostMode = true;
-                _dev->mspDisconnect(MSPHostMode);
-            }
+//            {
+//                _dev->mspConnect();
+//                _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
+//                
+//                if (_mspState.magic != MSP::State::MagicNumber) {
+//                    // Program MSPApp onto MSP
+//                    #warning TODO: implement
+//                    throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
+//                }
+//                
+//                if (_mspState.version > MSP::State::Version) {
+//                    // Newer version than we understand -- tell user to upgrade or re-program
+//                    #warning TODO: implement
+//                    throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
+//                }
+//                
+//                // Load ICE40 with our app
+//                _ICEConfigure(*_dev);
+//                
+//                _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
+//                _mspState.startTime.valid = true;
+//                _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
+//                
+//                // MSPHostMode=true: make MSP enter host mode until physically disconnected from USB.
+//                // (When USB is disconnected, STM will lose power, causing STM to stop asserting
+//                // MSP_HOST_MODE_, allowing MSP_HOST_MODE_ to be pulled high by MSP's pullup, thereby
+//                // allowing MSP to run again.)
+//                constexpr bool MSPHostMode = true;
+//                _dev->mspDisconnect(MSPHostMode);
+//            }
 //            
 //            sleep(15);
             
