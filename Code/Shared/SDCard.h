@@ -20,14 +20,12 @@ class Card {
 #define AssertArg(x) if (!(x)) T_Error(__LINE__)
 
 public:
-    static void Reset() {
+    static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
+        uint16_t rca = 0;
+        
         // Reset SDController
         T_ICE::Transfer(_ConfigReset);
         _Sleep(_Us(1));
-    }
-    
-    static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
-        uint16_t rca = 0;
         
         // Enable slow SDController clock
         T_ICE::Transfer(_ConfigClkSetSlow);
