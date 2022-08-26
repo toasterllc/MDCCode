@@ -89,9 +89,12 @@ using _SDCard = SD::Card<
 
 class _SD {
 public:
+    static void Reset() {
+        _SDCard::Reset();
+    }
+    
     static void Init() {
         _Reading = false;
-        _SDCard::Reset();
         _RCA = _SDCard::Init(&_CardId, &_CardData);
     }
     
@@ -266,86 +269,86 @@ static MSP430JTAG<_MSPTest, _MSPRst_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
 
-//static bool _MSPConnect(bool unlockPins) {
-//    constexpr uint16_t PM5CTL0Addr  = 0x0130;
-//    
-//    const auto mspr = _MSP.connect();
-//    if (mspr != _MSP.Status::OK) return false;
-//    
-//    if (unlockPins) {
-//        // Clear LOCKLPM5 in the PM5CTL0 register
-//        // This is necessary to be able to control the GPIOs
-//        _MSP.write(PM5CTL0Addr, 0x0010);
-//    }
-//    
-//    return true;
-//}
+static bool _MSPConnect(bool unlockPins) {
+    constexpr uint16_t PM5CTL0Addr  = 0x0130;
+    
+    const auto mspr = _MSP.connect();
+    if (mspr != _MSP.Status::OK) return false;
+    
+    if (unlockPins) {
+        // Clear LOCKLPM5 in the PM5CTL0 register
+        // This is necessary to be able to control the GPIOs
+        _MSP.write(PM5CTL0Addr, 0x0010);
+    }
+    
+    return true;
+}
 
-//static bool _SDSetPowerEnabled(bool en) {
-//    constexpr uint16_t BITB         = 1<<0xB;
-//    constexpr uint16_t VDD_SD_EN    = BITB;
-//    constexpr uint16_t PADIRAddr    = 0x0204;
-//    constexpr uint16_t PAOUTAddr    = 0x0202;
-//    
-//    const bool br = _MSPConnect(true);
-//    if (!br) return false;
-//    
-//    const uint16_t PADIR = _MSP.read(PADIRAddr);
-//    const uint16_t PAOUT = _MSP.read(PAOUTAddr);
-//    _MSP.write(PADIRAddr, PADIR | VDD_SD_EN);
-//    
-//    if (en) {
-//        _MSP.write(PAOUTAddr, PAOUT | VDD_SD_EN);
-//    } else {
-//        _MSP.write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
-//    }
-//    
-//    _MSPDisconnect(false); // Don't allow MSP to run
-//    
-//    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-//    _Scheduler::Sleep(_Scheduler::Ms(2));
-//    
-//    return true;
-//}
+static bool _SDSetPowerEnabled(bool en) {
+    constexpr uint16_t BITB         = 1<<0xB;
+    constexpr uint16_t VDD_SD_EN    = BITB;
+    constexpr uint16_t PADIRAddr    = 0x0204;
+    constexpr uint16_t PAOUTAddr    = 0x0202;
+    
+    const bool br = _MSPConnect(true);
+    if (!br) return false;
+    
+    const uint16_t PADIR = _MSP.read(PADIRAddr);
+    const uint16_t PAOUT = _MSP.read(PAOUTAddr);
+    _MSP.write(PADIRAddr, PADIR | VDD_SD_EN);
+    
+    if (en) {
+        _MSP.write(PAOUTAddr, PAOUT | VDD_SD_EN);
+    } else {
+        _MSP.write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
+    }
+    
+    _MSPDisconnect(false); // Don't allow MSP to run
+    
+    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
+    _Scheduler::Sleep(_Scheduler::Ms(2));
+    
+    return true;
+}
 
 [[noreturn]]
 static void _SDError(uint16_t line) {
     _System::Abort();
 }
 
-//static bool _ImgSetPowerEnabled(bool en) {
-//    constexpr uint16_t BIT0             = 1<<0;
-//    constexpr uint16_t BIT2             = 1<<2;
-//    constexpr uint16_t VDD_1V8_IMG_EN   = BIT0;
-//    constexpr uint16_t VDD_2V8_IMG_EN   = BIT2;
-//    constexpr uint16_t PADIRAddr        = 0x0204;
-//    constexpr uint16_t PAOUTAddr        = 0x0202;
-//    
-//    const bool br = _MSPConnect(true);
-//    if (!br) return false;
-//    
-//    const uint16_t PADIR = _MSP.read(PADIRAddr);
-//    const uint16_t PAOUT = _MSP.read(PAOUTAddr);
-//    _MSP.write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V8_IMG_EN));
-//    
-//    if (en) {
-//        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
-//        _Scheduler::Sleep(_Scheduler::Ms(1)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-//        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
-//    
-//    } else {
-//        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-//        _MSP.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
-//    }
-//    
-//    _MSPDisconnect(false); // Don't allow MSP to run
-//    
-//    #warning TODO: measure how long it takes for IMG rails to rise
-//    // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
-//    _Scheduler::Sleep(_Scheduler::Ms(2));
-//    
-//    return true;
-//}
+static bool _ImgSetPowerEnabled(bool en) {
+    constexpr uint16_t BIT0             = 1<<0;
+    constexpr uint16_t BIT2             = 1<<2;
+    constexpr uint16_t VDD_1V8_IMG_EN   = BIT0;
+    constexpr uint16_t VDD_2V8_IMG_EN   = BIT2;
+    constexpr uint16_t PADIRAddr        = 0x0204;
+    constexpr uint16_t PAOUTAddr        = 0x0202;
+    
+    const bool br = _MSPConnect(true);
+    if (!br) return false;
+    
+    const uint16_t PADIR = _MSP.read(PADIRAddr);
+    const uint16_t PAOUT = _MSP.read(PAOUTAddr);
+    _MSP.write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V8_IMG_EN));
+    
+    if (en) {
+        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
+        _Scheduler::Sleep(_Scheduler::Ms(1)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
+    
+    } else {
+        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+        _MSP.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
+    }
+    
+    _MSPDisconnect(false); // Don't allow MSP to run
+    
+    #warning TODO: measure how long it takes for IMG rails to rise
+    // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
+    _Scheduler::Sleep(_Scheduler::Ms(2));
+    
+    return true;
+}
 
 [[noreturn]]
 static void _ImgError(uint16_t line) {
@@ -1083,6 +1086,7 @@ void _SDInit(const STM::Cmd& cmd) {
     // Configure QSPI for comms with ICEApp
     _QSPISetConfig(_QSPIConfigs.ICEApp);
     
+    _SD::Reset();
     _SD::Init();
     
     _System::USBSendStatus(true);
