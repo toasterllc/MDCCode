@@ -219,32 +219,32 @@ struct _SDTask {
         _Scheduler::Start<_SDTask>([] { _Disable(); });
     }
     
-    static void WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
-        static struct {
-            uint8_t srcBlock;
-            uint32_t dstBlockIdx;
-        } Args;
-        
+//    static MSP::ImgRingBuf& ImgRingBuf() {
+//        Wait();
+//        Assert(_Enabled); // Ensures that we've initialized _State.sd.imgRingBufs
+//        return _State.sd.imgRingBufs[0];
+//    }
+    
+    static void Write(uint8_t srcBlock, uint32_t dstBlockIdx) {
         Wait();
         Assert(_Enabled);
-        Args = {srcBlock, dstBlockIdx};
-        _Scheduler::Start<_SDTask>([] { _WriteImage(Args.srcBlock, Args.dstBlockIdx); });
-    }
-    
-    static MSP::ImgRingBuf& ImgRingBuf() {
-        // Wait until _State.sd has been initialized (as signified by _RCA existing)
-        // before returning an element of _State.sd.
-        _Scheduler::Wait([&] { return _RCA.has_value(); });
-        return _State.sd.imgRingBufs[0];
+        
+        static struct { uint8_t srcBlock; uint32_t dstBlockIdx; } Args;
+        Args = { srcBlock, dstBlockIdx };
+        _Scheduler::Start<_SDTask>([] { _Write(Args.srcBlock, Args.dstBlockIdx); });
     }
     
     static void Wait() {
         _Scheduler::Wait<_SDTask>();
     }
     
+//    static void WaitForInit() {
+//        _Scheduler::Wait([&] { return _RCA.has_value(); });
+//    }
+    
     static void _Enable() {
         Assert(!_Enabled);
-        
+         
         _SDCard::Reset();
         _SetPowerEnabled(true);
         
@@ -281,7 +281,7 @@ struct _SDTask {
         _Enabled = false;
     }
     
-    static void _WriteImage(uint8_t srcBlock, uint32_t dstBlockIdx) {
+    static void _Write(uint8_t srcBlock, uint32_t dstBlockIdx) {
         _SDCard::WriteImage(*_RCA, srcBlock, dstBlockIdx);
         _ImgRingBufIncrement();
     }
@@ -384,8 +384,8 @@ struct _SDTask {
     // _RCA: SD card 'relative card address'; needed for SD comms after initialization.
     // As an optional, _RCA also signifies whether we've successfully initiated comms
     // with the SD card since the battery was plugged in.
-    // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-    // it's maintained during sleep, but reset upon a cold start.
+    // Stored in BAKMEM (RAM that's retained in LPM3.5) so that it's maintained during
+    // sleep, but reset upon a cold start.
     [[gnu::section(".ram_backup.main")]]
     static inline std::optional<uint16_t> _RCA;
     
@@ -414,12 +414,22 @@ struct _ImgTask {
         _Scheduler::Start<_ImgTask>([] { _Disable(); });
     }
     
-    static void Wait() {
-        _Scheduler::Wait<_ImgTask>();
+    static void Capture(const Img::Id& id) {
+        Wait();
+        Assert(_Enabled);
+        
+        static struct { Img::Id id; } Args;
+        Args = { id };
+        _Scheduler::Start<_ImgTask>([] { _Capture(Args.id); });
     }
     
-    static Img::AutoExposure& AutoExp() {
-        return _AutoExp;
+    static uint8_t CaptureBlock() {
+        Wait();
+        return _CaptureBlock;
+    }
+    
+    static void Wait() {
+        _Scheduler::Wait<_ImgTask>();
     }
     
     static void _Enable() {
@@ -445,6 +455,55 @@ struct _ImgTask {
         _Enabled = false;
     }
     
+    static void _Capture(const Img::Id& id) {
+        // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
+        constexpr uint8_t CaptureAttemptCount = 3;
+        uint8_t bestExpBlock = 0;
+        uint8_t bestExpScore = 0;
+        for (uint8_t i=0; i<CaptureAttemptCount; i++) {
+            // skipCount:
+            // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
+            // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
+            // image since the first image after setting the exposure is invalid.
+            const uint8_t skipCount = (!i ? 0 : 1);
+            
+            // expBlock: Store images in the block belonging to the worst-exposed image captured so far
+            const uint8_t expBlock = !bestExpBlock;
+            
+            // Populate the header
+            static Img::Header header = {
+                .magic          = Img::Header::MagicNumber,
+                .version        = Img::Header::Version,
+                .imageWidth     = Img::PixelWidth,
+                .imageHeight    = Img::PixelHeight,
+                .coarseIntTime  = 0,
+                .analogGain     = 0,
+                .id             = 0,
+                .timestamp      = 0,
+            };
+            
+            header.coarseIntTime = _AutoExp.integrationTime();
+            header.id = id;
+            header.timestamp = _RTC.time();
+            
+            // Capture an image to RAM
+            const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
+            const uint8_t expScore = _AutoExp.update(resp.highlightCount(), resp.shadowCount());
+            if (!bestExpScore || (expScore > bestExpScore)) {
+                bestExpBlock = expBlock;
+                bestExpScore = expScore;
+            }
+            
+            // We're done if we don't have any exposure changes
+            if (!_AutoExp.changed()) break;
+            
+            // Update the exposure
+            _ImgSensor::SetCoarseIntTime(_AutoExp.integrationTime());
+        }
+        
+        _CaptureBlock = bestExpBlock;
+    }
+    
     static void _SetPowerEnabled(bool en) {
 //        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
 //        if (_Pin::VDD_B_2V8_IMG_EN::Read()==en &&
@@ -466,13 +525,16 @@ struct _ImgTask {
         }
     }
     
+    static inline bool _Enabled = false;
+    static inline uint8_t _CaptureBlock = 0;
+    
     // _AutoExp: auto exposure algorithm object
     // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
     // it's maintained during sleep, but reset upon a cold start.
+    // This is so we don't forget exposure levels between captures,
+    // since the exposure doesn't change often.
     [[gnu::section(".ram_backup.main")]]
     static inline Img::AutoExposure _AutoExp;
-    
-    static inline bool _Enabled = false;
     
     // Task options
     static constexpr Toastbox::TaskOptions Options{};
@@ -503,15 +565,28 @@ struct _MainTask {
             // Enable image sensor / SD card
             _ImgTask::Enable();
             _SDTask::Enable();
+//            _SDTask::WaitForInit();
             
             _Scheduler::Sleep(_Scheduler::Ms(250));
             
             for (int i=0; i<2; i++) {
-                // Capture an image
                 _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
                 
-                _Scheduler::Wait<_ImgTask,_SDTask>();
-                _ImgCapture(_SDTask::ImgRingBuf());
+                // Wait for _SDTask to be idle for 2 distinct reasons:
+                //   1. we have to wait for it to initialize _State.sd, which we use below
+                //   2. we can't initiate a new capture until writing to the SD card is
+                //      complete (the SDRAM is single-port, so we can only read or write
+                //      at one time)
+                _SDTask::Wait();
+                
+                // Capture image to RAM
+                const auto& imgRingBuf = _State.sd.imgRingBufs[0].buf;
+                _ImgTask::Capture(imgRingBuf.idEnd);
+                
+                // Copy image from RAM -> SD card
+                const uint32_t dstBlockIdx = imgRingBuf.widx * ImgSD::ImgBlockCount;
+                const uint8_t srcBlock = _ImgTask::CaptureBlock();
+                _SDTask::Write(srcBlock, dstBlockIdx);
                 
                 _ICE::Transfer(_ICE::LEDSetMsg(0x00));
             }
@@ -537,59 +612,6 @@ struct _MainTask {
     
     static void MotionSignal() {
         _Motion = true;
-    }
-    
-    static void _ImgCapture(const MSP::ImgRingBuf& imgRingBuf) {
-        // Try up to `CaptureAttemptCount` times to capture a properly-exposed image
-        constexpr uint8_t CaptureAttemptCount = 3;
-        uint8_t bestExpBlock = 0;
-        uint8_t bestExpScore = 0;
-        for (uint8_t i=0; i<CaptureAttemptCount; i++) {
-            // skipCount:
-            // On the initial capture, we didn't set the exposure, so we don't need to skip any images.
-            // On subsequent captures, we did set the exposure before the capture, so we need to skip a single
-            // image since the first image after setting the exposure is invalid.
-            const uint8_t skipCount = (!i ? 0 : 1);
-            
-            // expBlock: Store images in the block belonging to the worst-exposed image captured so far
-            const uint8_t expBlock = !bestExpBlock;
-            
-            // Populate the header
-            static Img::Header header = {
-                .magic          = Img::Header::MagicNumber,
-                .version        = Img::Header::Version,
-                .imageWidth     = Img::PixelWidth,
-                .imageHeight    = Img::PixelHeight,
-                .coarseIntTime  = 0,
-                .analogGain     = 0,
-                .id             = 0,
-                .timestamp      = 0,
-            };
-            
-            header.coarseIntTime = _ImgTask::AutoExp().integrationTime();
-            header.id = imgRingBuf.buf.idEnd;
-            header.timestamp = _RTC.time();
-            
-            #warning TODO: we should move all this to the Img task right?
-            // Capture an image to RAM
-            const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
-            const uint8_t expScore = _ImgTask::AutoExp().update(resp.highlightCount(), resp.shadowCount());
-            if (!bestExpScore || (expScore > bestExpScore)) {
-                bestExpBlock = expBlock;
-                bestExpScore = expScore;
-            }
-            
-            // We're done if we don't have any exposure changes
-            if (!_ImgTask::AutoExp().changed()) break;
-            
-            // Update the exposure
-            _ImgSensor::SetCoarseIntTime(_ImgTask::AutoExp().integrationTime());
-        }
-        
-        #warning FIXME: current problem is that we don't wait for WriteImage() to complete, so if this function gets called again immediately, we start capturing another image via _ICE::ImgCapture while the SD card writing is in progress, which is impossible because we can't both read and write to the ram at the same time
-        // Write the best-exposed image to the SD card
-        const uint32_t dstBlockIdx = imgRingBuf.buf.widx * ImgSD::ImgBlockCount;
-        _SDTask::WriteImage(bestExpBlock, dstBlockIdx);
     }
     
     // _Motion: announces that motion occurred
