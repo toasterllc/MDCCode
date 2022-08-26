@@ -193,16 +193,16 @@ static void _Sleep() {
 
 // MARK: - Tasks
 
-//static void debugSignal() {
-//    _Pin::DEBUG_OUT::Init();
-////    for (;;) {
+static void debugSignal() {
+    _Pin::DEBUG_OUT::Init();
+    for (;;) {
 //    for (int i=0; i<10; i++) {
-//        _Pin::DEBUG_OUT::Write(0);
-//        for (volatile int i=0; i<10000; i++);
-//        _Pin::DEBUG_OUT::Write(1);
-//        for (volatile int i=0; i<10000; i++);
-//    }
-//}
+        _Pin::DEBUG_OUT::Write(0);
+        for (volatile int i=0; i<10000; i++);
+        _Pin::DEBUG_OUT::Write(1);
+        for (volatile int i=0; i<10000; i++);
+    }
+}
 
 struct _SDTask {
     static void Enable() {
@@ -790,6 +790,21 @@ int main() {
     
     // Init SysTick
     _SysTick::Init();
+    
+    {
+        _Pin::VDD_B_EN::Write(1);
+        _Scheduler::Delay(_Scheduler::Ms(1000));
+        
+//        debugSignal();
+        
+        for (;;) {
+            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+            _Scheduler::Delay(_Scheduler::Ms(250));
+            
+            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+            _Scheduler::Delay(_Scheduler::Ms(250));
+        }
+    }
     
     // Handle cold starts
     if (Startup::ColdStart()) {

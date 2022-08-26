@@ -249,7 +249,7 @@ static void MSPRead(const Args& args, MDCUSBDevice& device) {
     
     printf("\n");
     
-    device.mspDisconnect(true);
+    device.mspDisconnect(false);
 }
 
 static void MSPWrite(const Args& args, MDCUSBDevice& device) {
@@ -280,7 +280,7 @@ static void MSPWrite(const Args& args, MDCUSBDevice& device) {
         }
     });
     
-    device.mspDisconnect(true);
+    device.mspDisconnect(false);
 }
 
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
@@ -361,7 +361,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     }
     printf(     "\n");
     
-    device.mspDisconnect(true);
+    device.mspDisconnect(false);
 }
 
 static void SDImgRead(const Args& args, MDCUSBDevice& device) {

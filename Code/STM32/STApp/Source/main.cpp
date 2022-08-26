@@ -894,7 +894,7 @@ static void _MSPDisconnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Update MSP_RUN output which controls whether MSPApp runs once we disconnect SBW
+    // Update _MSP_HOST_MODE_ output which controls whether MSPApp runs once we disconnect SBW
     _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _MSP_HOST_MODE_::Write(!arg.hostMode);
     _MSP.disconnect();
