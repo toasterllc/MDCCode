@@ -138,9 +138,8 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
         _SPI::Init();
     }
     
-    static bool iceInit = false;
-    
     // Init ICE comms
+    static bool iceInit = false;
     if (!iceInit) {
         iceInit = true;
         // Reset ICE comms (by asserting SPI CLK for some length of time)
@@ -483,6 +482,17 @@ struct _ImgTask {
 
 struct _MainTask {
     static void Run() {
+        _Pin::VDD_B_EN::Write(1);
+        _Scheduler::Sleep(_Scheduler::Ms(250));
+        
+        for (;;) {
+            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+            _Scheduler::Sleep(_Scheduler::Ms(250));
+            
+            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+            _Scheduler::Sleep(_Scheduler::Ms(250));
+        }
+        
         for (;;) {
             // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
             {
