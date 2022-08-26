@@ -506,26 +506,14 @@ struct _MainTask {
             
             _Scheduler::Sleep(_Scheduler::Ms(250));
             
-            for (;;) {
+            for (int i=0; i<2; i++) {
                 // Capture an image
-                {
-                    _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-                    
-                    _ImgTask::Wait(); // Wait until the image sensor is ready before we attempt to capture an image
-                    _ImgCapture(_SDTask::ImgRingBuf());
-                    
-                    _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-                }
+                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
                 
-                // Wait up to 1s for further motion
-                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-                if (!motion) break;
+                _Scheduler::Wait<_ImgTask,_SDTask>();
+                _ImgCapture(_SDTask::ImgRingBuf());
                 
-                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-                // _Motion, there'd be a race window where we could first observe
-                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-                // the true value by resetting it to false.
-                _Motion = false;
+                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
             }
             
             // We haven't had motion in a while; power down
@@ -582,6 +570,7 @@ struct _MainTask {
             header.id = imgRingBuf.buf.idEnd;
             header.timestamp = _RTC.time();
             
+            #warning TODO: we should move all this to the Img task right?
             // Capture an image to RAM
             const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
             const uint8_t expScore = _ImgTask::AutoExp().update(resp.highlightCount(), resp.shadowCount());
@@ -597,6 +586,7 @@ struct _MainTask {
             _ImgSensor::SetCoarseIntTime(_ImgTask::AutoExp().integrationTime());
         }
         
+        #warning FIXME: current problem is that we don't wait for WriteImage() to complete, so if this function gets called again immediately, we start capturing another image via _ICE::ImgCapture while the SD card writing is in progress, which is impossible because we can't both read and write to the ram at the same time
         // Write the best-exposed image to the SD card
         const uint32_t dstBlockIdx = imgRingBuf.buf.widx * ImgSD::ImgBlockCount;
         _SDTask::WriteImage(bestExpBlock, dstBlockIdx);
