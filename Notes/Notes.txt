@@ -1,6 +1,6 @@
 - Rev6
     
-    - Consider combining if they're the rails are always on at the same time:
+    - Consider combining rails if they're always on at the same time:
         - VDD_B_1V8_IMG & VDD_B_1V8_SD
         - VDD_B_2V8_IMG & VDD_B_2V8_SD
     
@@ -76,7 +76,7 @@
     
     √ Bug: BAT_CHRG_LVL voltage divider resistance is too high for STM32 ADC input resistance
         - STM32 datasheet says maximum R_AIN is 50kΩ
-        √ Fixed: added a capacitor at the ADC input to act as low impedance charge storage
+        √ Fixed: added a capacitor at the ADC input to act as low-impedance charge storage
     
     √ Bug: BAT_CHRG_LVL_EN_ is subjecting STM32 to the battery voltage when STM32 is off,
       which is > the absolute maximum input voltage on FT pins of VDD+4.0
@@ -117,13 +117,6 @@
       highest drive settings for fast reliable startup. After startup, user software can reduce the drive strength to
       reduce power consumption."
     
-    - Bug: discrepency between wall time and device time on images
-        - Problem: _Clock::Init() prevents MSP430 from consuming time sent by host before the host
-          stops MSP430 again via _MSPConnectAndUnlockPins() when trying to talk to the SD card
-    
-    - MSPApp: Implement VDD_B rail handling.
-        - Turn on lazily when we need to talk to ICE / IMG / SD?
-    
     - Implement thumbnailing in ICEAppMSP / MSPApp
         - Motivation: so MDCStudio can load thumbnails quickly
     
@@ -160,6 +153,13 @@
 
 
 - Rev5 Done
+    
+    √ MSPApp: Implement VDD_B rail handling.
+        - Turn on lazily when we need to talk to ICE / IMG / SD?
+    
+    √ Bug: discrepency between wall time and device time on images
+        - Problem: _Clock::Init() prevents MSP430 from consuming time sent by host before the host
+          stops MSP430 again via _MSPConnectAndUnlockPins() when trying to talk to the SD card
     
     √ Investigate: _Clock::Init() takes 173 ms
         - Is that due to our bodge wire?
