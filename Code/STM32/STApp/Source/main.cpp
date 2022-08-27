@@ -528,11 +528,15 @@ static void _HostModeEnter(const STM::Cmd& cmd) {
     // Disconnect MSP JTAG, causing MSP to enter host mode and toggle the power rails
     _MSP.disconnect();
     
+    // Wait for MSP to toggle SD/IMG rails and enter host mode
+    _Scheduler::Sleep(_Scheduler::Ms(1000));
+    
     // Init SD
     _SD::Init();
     
-    _ImgSensor::Init();
-    _ImgSensor::SetStreamEnabled(true);
+    // TODO: _ImgSensor init only works when ICEAppImgCaptureSTM is loaded; have the peripherals passed as an argument?
+//    _ImgSensor::Init();
+//    _ImgSensor::SetStreamEnabled(true);
     
     // Send status
     _System::USBSendStatus(true);

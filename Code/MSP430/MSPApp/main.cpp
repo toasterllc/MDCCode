@@ -762,8 +762,8 @@ static void _HostMode() {
     _Scheduler::Delay(_Scheduler::Ms(100));
     
     _Pin::VDD_B_EN::Write(1);
-    _Pin::VDD_B_1V8_IMG_EN::Write(1);
     _Pin::VDD_B_2V8_IMG_EN::Write(1);
+    _Pin::VDD_B_1V8_IMG_EN::Write(1);
     _Pin::VDD_B_SD_EN::Write(1);
     
     while (!_Pin::HOST_MODE_::Read()) {

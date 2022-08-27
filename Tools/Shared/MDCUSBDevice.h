@@ -358,7 +358,6 @@ public:
         
         const STM::Cmd cmd = { .op = STM::Op::SDCardInfo };
         _sendCmd(cmd);
-        _checkStatus("SDCardInfo command failed");
         
         STM::SDCardInfo cardInfo = {};
         _dev.read(STM::Endpoints::DataIn, cardInfo);
