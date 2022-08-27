@@ -67,6 +67,8 @@ public:
                 _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
                 
                 _dev->hostModeEnter();
+                
+                printf("Set device time to 0x%jx\n", (uintmax_t)_mspState.startTime.time);
             }
             
             sleep(1);

@@ -575,6 +575,9 @@ static void _configureDevice(MDCUSBDevice& dev) {
 //        const size_t tmpPixelsCap = std::size(_streamImagesThread.pixels);
 //        auto tmpPixels = std::make_unique<MDC::Pixel[]>(tmpPixelsCap);
         
+        _dev.hostModeInit();
+        _dev.hostModeEnter();
+        
         dev.imgInit();
         
         std::optional<Img::AutoExposure> autoExp;

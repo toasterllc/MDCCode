@@ -379,13 +379,13 @@ public:
         _checkStatus("SDRead command failed");
     }
     
-//    void imgInit() {
-//        assert(_mode == STM::Status::Modes::STMApp);
-//        
-//        const STM::Cmd cmd = { .op = STM::Op::ImgInit };
-//        _sendCmd(cmd);
-//        _checkStatus("ImgInit command failed");
-//    }
+    void imgInit() {
+        assert(_mode == STM::Status::Modes::STMApp);
+        
+        const STM::Cmd cmd = { .op = STM::Op::ImgInit };
+        _sendCmd(cmd);
+        _checkStatus("ImgInit command failed");
+    }
     
     struct ImgExposure {
         uint16_t coarseIntTime  = 0;

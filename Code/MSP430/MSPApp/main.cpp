@@ -759,7 +759,7 @@ asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
 [[noreturn]]
 static void _HostMode() {
     // Let power rails fully discharge before turning them on
-    _Scheduler::Delay(_Scheduler::Ms(100));
+    _Scheduler::Delay(_Scheduler::Ms(10));
     
     _Pin::VDD_B_EN::Write(1);
     _Pin::VDD_B_2V8_IMG_EN::Write(1);
@@ -807,6 +807,8 @@ int main() {
     //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
     MSP::Time startTime = 0;
     if (_State.startTime.valid) {
+        startTime = _State.startTime.time;
+        
         // If `time` is valid, consume it before handing it off to _RTC.
         FRAMWriteEn writeEn; // Enable FRAM writing
         // Reset `valid` before consuming the start time, so that if we lose power,

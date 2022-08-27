@@ -399,6 +399,10 @@ static void ImgCapture(const Args& args, MDCUSBDevice& device) {
     device.hostModeEnter();
     printf("-> OK\n\n");
     
+    printf("Sending ImgInit command...\n");
+    device.imgInit();
+    printf("-> OK\n\n");
+    
     printf("Sending ImgCapture command...\n");
     STM::ImgCaptureStats stats = device.imgCapture(0, 0);
     printf("-> OK (len: %ju)\n\n", (uintmax_t)stats.len);

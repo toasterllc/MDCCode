@@ -529,7 +529,7 @@ static void _HostModeEnter(const STM::Cmd& cmd) {
     _MSP.disconnect();
     
     // Wait for MSP to toggle SD/IMG rails and enter host mode
-    _Scheduler::Sleep(_Scheduler::Ms(1000));
+    _Scheduler::Sleep(_Scheduler::Ms(20));
     
     // Init SD
     _SD::Init();
@@ -1147,6 +1147,21 @@ static void _SDRead(const STM::Cmd& cmd) {
     _TaskReadout::Start(std::nullopt);
 }
 
+void _ImgInit(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Configure QSPI for comms with ICEApp
+    _QSPISetConfig(_QSPIConfigs.ICEApp);
+    
+    _ImgSensor::Init();
+    
+    // Enable image streaming
+    _ImgSensor::SetStreamEnabled(true);
+    
+    _System::USBSendStatus(true);
+}
+
 void _ImgExposureSet(const STM::Cmd& cmd) {
     const auto& arg = cmd.arg.ImgExposureSet;
     
@@ -1217,6 +1232,7 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::SDCardInfo:        _SDCardInfo(cmd);                   break;
     case Op::SDRead:            _SDRead(cmd);                       break;
     // Img
+    case Op::ImgInit:           _ImgInit(cmd);                      break;
     case Op::ImgExposureSet:    _ImgExposureSet(cmd);               break;
     case Op::ImgCapture:        _ImgCapture(cmd);                   break;
     // Bad command
