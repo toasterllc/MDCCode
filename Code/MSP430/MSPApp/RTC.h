@@ -27,6 +27,14 @@ public:
     }
     
     void init(Time time) {
+        // Decrease the XT1 drive strength to save a little current
+        // We're not using this for now because supporting it with LPM3.5 is gross.
+        // That's because on a cold start, CSCTL6.XT1DRIVE needs to be set after we
+        // clear LOCKLPM5 (to reduce the drive strength after XT1 is running),
+        // but on a warm start, CSCTL6.XT1DRIVE needs to be set before we clear
+        // LOCKLPM5 (to return the register to its previous state before unlocking).
+//        CSCTL6 = (CSCTL6 & ~XT1DRIVE) | XT1DRIVE_0;
+        
         // Clear XT1 fault flags
         do {
             CSCTL7 &= ~(XT1OFFG | DCOFFG); // Clear XT1 and DCO fault flag

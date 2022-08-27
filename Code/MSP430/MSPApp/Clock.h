@@ -68,12 +68,6 @@ public:
         // Wait until FLL locks
         while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
-        // Experiment with decreasing the drive strength to save a little current
-        // We're not using this for now because CSCTL6 is maintained in LPM3.5
-        // and therefore when waking from LPM3.5, it has to be re-configured
-        // before we clear LOCKLPM5.
-//        CSCTL6 = (CSCTL6 & ~XT1DRIVE) | XT1DRIVE_0;
-        
         // MCLK / SMCLK source = DCOCLKDIV
         //         ACLK source = REFOCLK
         CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
