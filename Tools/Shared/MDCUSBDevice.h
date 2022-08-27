@@ -184,9 +184,16 @@ public:
         _checkStatus("HostModeInit command failed");
     }
     
-    void hostModeEnter() {
+    void hostModeEnter(STM::Peripheral periph) {
         assert(_mode == STM::Status::Modes::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::HostModeEnter };
+        const STM::Cmd cmd = {
+            .op = STM::Op::HostModeEnter,
+            .arg = {
+                .HostModeEnter = {
+                    .periph = periph,
+                },
+            },
+        };
         _sendCmd(cmd);
         _checkStatus("HostModeEnter command failed");
     }
@@ -377,14 +384,6 @@ public:
         };
         _sendCmd(cmd);
         _checkStatus("SDRead command failed");
-    }
-    
-    void imgInit() {
-        assert(_mode == STM::Status::Modes::STMApp);
-        
-        const STM::Cmd cmd = { .op = STM::Op::ImgInit };
-        _sendCmd(cmd);
-        _checkStatus("ImgInit command failed");
     }
     
     struct ImgExposure {

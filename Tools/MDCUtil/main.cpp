@@ -370,7 +370,7 @@ static void SDImgRead(const Args& args, MDCUSBDevice& device) {
     printf("-> OK\n\n");
     
     printf("Sending HostModeEnter command...\n");
-    device.hostModeEnter();
+    device.hostModeEnter(STM::Peripheral::SD);
     printf("-> OK\n\n");
     
     printf("Sending SDRead command...\n");
@@ -396,11 +396,7 @@ static void ImgCapture(const Args& args, MDCUSBDevice& device) {
     printf("-> OK\n\n");
     
     printf("Sending HostModeEnter command...\n");
-    device.hostModeEnter();
-    printf("-> OK\n\n");
-    
-    printf("Sending ImgInit command...\n");
-    device.imgInit();
+    device.hostModeEnter(STM::Peripheral::Img);
     printf("-> OK\n\n");
     
     printf("Sending ImgCapture command...\n");

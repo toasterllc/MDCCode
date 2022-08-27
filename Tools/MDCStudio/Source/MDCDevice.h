@@ -66,7 +66,7 @@ public:
                 _mspState.startTime.valid = true;
                 _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
                 
-                _dev->hostModeEnter();
+                _dev->hostModeEnter(STM::Peripheral::SD);
                 
                 printf("Set device time to 0x%jx\n", (uintmax_t)_mspState.startTime.time);
             }

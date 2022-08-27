@@ -512,6 +512,8 @@ static void _HostModeInit(const STM::Cmd& cmd) {
 }
 
 static void _HostModeEnter(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.HostModeEnter;
+    
     // Accept command
     _System::USBAcceptCommand(true);
     
@@ -522,8 +524,14 @@ static void _HostModeEnter(const STM::Cmd& cmd) {
     _MSP_HOST_MODE_::Write(0);
     _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
-    // Reset SD before MSP toggles the power rails (by entering host mode)
-    _SD::Reset();
+    switch (arg.periph) {
+    case STM::Peripheral::SD:
+        // Reset SD before MSP toggles the power rails (by entering host mode)
+        _SD::Reset();
+        break;
+    default:
+        break;
+    }
     
     // Disconnect MSP JTAG, causing MSP to enter host mode and toggle the power rails
     _MSP.disconnect();
@@ -532,11 +540,17 @@ static void _HostModeEnter(const STM::Cmd& cmd) {
     _Scheduler::Sleep(_Scheduler::Ms(20));
     
     // Init SD
-    _SD::Init();
-    
-    // TODO: _ImgSensor init only works when ICEAppImgCaptureSTM is loaded; have the peripherals passed as an argument?
-//    _ImgSensor::Init();
-//    _ImgSensor::SetStreamEnabled(true);
+    switch (arg.periph) {
+    case STM::Peripheral::SD:
+        _SD::Init();
+        break;
+    case STM::Peripheral::Img:
+        _ImgSensor::Init();
+        _ImgSensor::SetStreamEnabled(true);
+        break;
+    default:
+        break;
+    }
     
     // Send status
     _System::USBSendStatus(true);
@@ -1147,21 +1161,6 @@ static void _SDRead(const STM::Cmd& cmd) {
     _TaskReadout::Start(std::nullopt);
 }
 
-void _ImgInit(const STM::Cmd& cmd) {
-    // Accept command
-    _System::USBAcceptCommand(true);
-    
-    // Configure QSPI for comms with ICEApp
-    _QSPISetConfig(_QSPIConfigs.ICEApp);
-    
-    _ImgSensor::Init();
-    
-    // Enable image streaming
-    _ImgSensor::SetStreamEnabled(true);
-    
-    _System::USBSendStatus(true);
-}
-
 void _ImgExposureSet(const STM::Cmd& cmd) {
     const auto& arg = cmd.arg.ImgExposureSet;
     
@@ -1232,7 +1231,6 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::SDCardInfo:        _SDCardInfo(cmd);                   break;
     case Op::SDRead:            _SDRead(cmd);                       break;
     // Img
-    case Op::ImgInit:           _ImgInit(cmd);                      break;
     case Op::ImgExposureSet:    _ImgExposureSet(cmd);               break;
     case Op::ImgCapture:        _ImgCapture(cmd);                   break;
     // Bad command

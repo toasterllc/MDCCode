@@ -18,6 +18,12 @@ namespace STM {
         DataIn  = 0x81,
     );
     
+    enum class Peripheral : uint8_t {
+        None,
+        SD,
+        Img,
+    };
+    
     enum class Op : uint8_t {
         // Common command set
         None,
@@ -47,7 +53,6 @@ namespace STM {
         SDCardInfo,
         SDRead,
         
-        ImgInit,
         ImgExposureSet,
         ImgCapture,
     };
@@ -71,6 +76,10 @@ namespace STM {
             } STMReset;
             
             // # STMApp
+            struct [[gnu::packed]] {
+                Peripheral periph;
+            } HostModeEnter;
+            
             struct [[gnu::packed]] {
                 uint32_t len;
             } ICERAMWrite;
