@@ -44,6 +44,8 @@
     - We can make the whole package smaller by removing tall components from the backside, so the battery
       can be as flush as possible against the PCB
     
+    - MDCStudio: Implement battery voltage monitoring
+    
     √ Consider adding a pull-down to VDD_B_EN to ensure the input isn't floating when MSP430 isn't powered
       (eg when it crashes and restarts, or when it hasn't been programmed)
     
@@ -124,16 +126,11 @@
     
     - MDCStudio: add inspector sidebar
     
-    - MDCStudio/MSPApp: implement time handling
-        - MDCStudio needs to set MSP's time
-    
     - MSPApp: Improve exposure/gain algs
     
     - MSPApp: Optimize battery usage
         - Measure current during with various rails enabled and make sure it's what we expect
         - Currently we keep VDD_B on all the time!
-    
-    - MDCStudio: Implement battery voltage monitoring
     
     - Cancel order for TPS62802YKAR / TPS63805YFFR if we no longer need it
     
@@ -153,6 +150,9 @@
 
 
 - Rev5 Done
+    
+    √ MDCStudio/MSPApp: implement time handling
+        - MDCStudio needs to set MSP's time
     
     √ MSPApp: Implement VDD_B rail handling.
         - Turn on lazily when we need to talk to ICE / IMG / SD?
