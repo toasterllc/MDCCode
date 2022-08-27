@@ -44,7 +44,7 @@ public:
             auto lock = std::unique_lock(*_dev);
             
             {
-                _dev->mspConnect();
+                _dev->hostModeInit();
                 _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
                 
                 if (_mspState.magic != MSP::State::MagicNumber) {
@@ -66,12 +66,7 @@ public:
                 _mspState.startTime.valid = true;
                 _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
                 
-                // MSPHostMode=true: make MSP enter host mode until physically disconnected from USB.
-                // (When USB is disconnected, STM will lose power, causing STM to stop asserting
-                // MSP_HOST_MODE_, allowing MSP_HOST_MODE_ to be pulled high by MSP's pullup, thereby
-                // allowing MSP to run again.)
-                constexpr bool MSPHostMode = true;
-                _dev->mspDisconnect(MSPHostMode);
+                _dev->hostModeEnter();
             }
             
             sleep(1);
@@ -119,7 +114,7 @@ public:
             
             // Init SD card
             #warning TODO: how should we handle sdInit() failing (throwing)?
-            _sdCardInfo = _dev->sdInit();
+            _sdCardInfo = _dev->sdCardInfo();
             
             if (!_mspState.sd.valid) {
                 // MSPApp state isn't valid -- ignore

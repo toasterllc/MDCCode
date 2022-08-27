@@ -249,7 +249,7 @@ static void MSPRead(const Args& args, MDCUSBDevice& device) {
     
     printf("\n");
     
-    device.mspDisconnect(false);
+    device.mspDisconnect();
 }
 
 static void MSPWrite(const Args& args, MDCUSBDevice& device) {
@@ -280,7 +280,7 @@ static void MSPWrite(const Args& args, MDCUSBDevice& device) {
         }
     });
     
-    device.mspDisconnect(false);
+    device.mspDisconnect();
 }
 
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
@@ -361,12 +361,16 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     }
     printf(     "\n");
     
-    device.mspDisconnect(false);
+    device.mspDisconnect();
 }
 
 static void SDImgRead(const Args& args, MDCUSBDevice& device) {
-    printf("Sending SDInit command...\n");
-    device.sdInit();
+    printf("Sending HostModeInit command...\n");
+    device.hostModeInit();
+    printf("-> OK\n\n");
+    
+    printf("Sending HostModeEnter command...\n");
+    device.hostModeEnter();
     printf("-> OK\n\n");
     
     printf("Sending SDRead command...\n");
@@ -387,8 +391,12 @@ static void SDImgRead(const Args& args, MDCUSBDevice& device) {
 }
 
 static void ImgCapture(const Args& args, MDCUSBDevice& device) {
-    printf("Sending ImgInit command...\n");
-    device.imgInit();
+    printf("Sending HostModeInit command...\n");
+    device.hostModeInit();
+    printf("-> OK\n\n");
+    
+    printf("Sending HostModeEnter command...\n");
+    device.hostModeEnter();
     printf("-> OK\n\n");
     
     printf("Sending ImgCapture command...\n");

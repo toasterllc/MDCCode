@@ -269,86 +269,86 @@ static MSP430JTAG<_MSPTest, _MSPRst_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
 
-static bool _MSPConnect(bool unlockPins) {
-    constexpr uint16_t PM5CTL0Addr  = 0x0130;
-    
-    const auto mspr = _MSP.connect();
-    if (mspr != _MSP.Status::OK) return false;
-    
-    if (unlockPins) {
-        // Clear LOCKLPM5 in the PM5CTL0 register
-        // This is necessary to be able to control the GPIOs
-        _MSP.write(PM5CTL0Addr, 0x0010);
-    }
-    
-    return true;
-}
-
-static bool _SDSetPowerEnabled(bool en) {
-    constexpr uint16_t BITB         = 1<<0xB;
-    constexpr uint16_t VDD_SD_EN    = BITB;
-    constexpr uint16_t PADIRAddr    = 0x0204;
-    constexpr uint16_t PAOUTAddr    = 0x0202;
-    
-    const bool br = _MSPConnect(true);
-    if (!br) return false;
-    
-    const uint16_t PADIR = _MSP.read(PADIRAddr);
-    const uint16_t PAOUT = _MSP.read(PAOUTAddr);
-    _MSP.write(PADIRAddr, PADIR | VDD_SD_EN);
-    
-    if (en) {
-        _MSP.write(PAOUTAddr, PAOUT | VDD_SD_EN);
-    } else {
-        _MSP.write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
-    }
-    
-    _MSPDisconnect(false); // Don't allow MSP to run
-    
-    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-    _Scheduler::Sleep(_Scheduler::Ms(2));
-    
-    return true;
-}
+//static bool _MSPConnect(bool unlockPins) {
+//    constexpr uint16_t PM5CTL0Addr  = 0x0130;
+//    
+//    const auto mspr = _MSP.connect();
+//    if (mspr != _MSP.Status::OK) return false;
+//    
+//    if (unlockPins) {
+//        // Clear LOCKLPM5 in the PM5CTL0 register
+//        // This is necessary to be able to control the GPIOs
+//        _MSP.write(PM5CTL0Addr, 0x0010);
+//    }
+//    
+//    return true;
+//}
+//
+//static bool _SDSetPowerEnabled(bool en) {
+//    constexpr uint16_t BITB         = 1<<0xB;
+//    constexpr uint16_t VDD_SD_EN    = BITB;
+//    constexpr uint16_t PADIRAddr    = 0x0204;
+//    constexpr uint16_t PAOUTAddr    = 0x0202;
+//    
+//    const bool br = _MSPConnect(true);
+//    if (!br) return false;
+//    
+//    const uint16_t PADIR = _MSP.read(PADIRAddr);
+//    const uint16_t PAOUT = _MSP.read(PAOUTAddr);
+//    _MSP.write(PADIRAddr, PADIR | VDD_SD_EN);
+//    
+//    if (en) {
+//        _MSP.write(PAOUTAddr, PAOUT | VDD_SD_EN);
+//    } else {
+//        _MSP.write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
+//    }
+//    
+//    _MSPDisconnect(false); // Don't allow MSP to run
+//    
+//    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
+//    _Scheduler::Sleep(_Scheduler::Ms(2));
+//    
+//    return true;
+//}
 
 [[noreturn]]
 static void _SDError(uint16_t line) {
     _System::Abort();
 }
 
-static bool _ImgSetPowerEnabled(bool en) {
-    constexpr uint16_t BIT0             = 1<<0;
-    constexpr uint16_t BIT2             = 1<<2;
-    constexpr uint16_t VDD_1V8_IMG_EN   = BIT0;
-    constexpr uint16_t VDD_2V8_IMG_EN   = BIT2;
-    constexpr uint16_t PADIRAddr        = 0x0204;
-    constexpr uint16_t PAOUTAddr        = 0x0202;
-    
-    const bool br = _MSPConnect(true);
-    if (!br) return false;
-    
-    const uint16_t PADIR = _MSP.read(PADIRAddr);
-    const uint16_t PAOUT = _MSP.read(PAOUTAddr);
-    _MSP.write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V8_IMG_EN));
-    
-    if (en) {
-        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
-        _Scheduler::Sleep(_Scheduler::Ms(1)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
-    
-    } else {
-        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-        _MSP.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
-    }
-    
-    _MSPDisconnect(false); // Don't allow MSP to run
-    
-    #warning TODO: measure how long it takes for IMG rails to rise
-    // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
-    _Scheduler::Sleep(_Scheduler::Ms(2));
-    
-    return true;
-}
+//static bool _ImgSetPowerEnabled(bool en) {
+//    constexpr uint16_t BIT0             = 1<<0;
+//    constexpr uint16_t BIT2             = 1<<2;
+//    constexpr uint16_t VDD_1V8_IMG_EN   = BIT0;
+//    constexpr uint16_t VDD_2V8_IMG_EN   = BIT2;
+//    constexpr uint16_t PADIRAddr        = 0x0204;
+//    constexpr uint16_t PAOUTAddr        = 0x0202;
+//    
+//    const bool br = _MSPConnect(true);
+//    if (!br) return false;
+//    
+//    const uint16_t PADIR = _MSP.read(PADIRAddr);
+//    const uint16_t PAOUT = _MSP.read(PAOUTAddr);
+//    _MSP.write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V8_IMG_EN));
+//    
+//    if (en) {
+//        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
+//        _Scheduler::Sleep(_Scheduler::Ms(1)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+//        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
+//    
+//    } else {
+//        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+//        _MSP.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
+//    }
+//    
+//    _MSPDisconnect(false); // Don't allow MSP to run
+//    
+//    #warning TODO: measure how long it takes for IMG rails to rise
+//    // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
+//    _Scheduler::Sleep(_Scheduler::Ms(2));
+//    
+//    return true;
+//}
 
 [[noreturn]]
 static void _ImgError(uint16_t line) {
@@ -500,6 +500,43 @@ struct _TaskReadout {
 };
 
 // MARK: - Commands
+
+static void _HostModeInit(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const auto mspr = _MSP.connect();
+    
+    // Send status
+    _System::USBSendStatus(mspr == _MSP.Status::OK);
+}
+
+static void _HostModeEnter(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Configure QSPI for comms with ICEApp
+    _QSPISetConfig(_QSPIConfigs.ICEApp);
+    
+    // Update _MSP_HOST_MODE_ output which controls whether MSPApp runs once we disconnect SBW
+    _MSP_HOST_MODE_::Write(0);
+    _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Reset SD before MSP toggles the power rails (by entering host mode)
+    _SD::Reset();
+    
+    // Disconnect MSP JTAG, causing MSP to enter host mode and toggle the power rails
+    _MSP.disconnect();
+    
+    // Init SD
+    _SD::Init();
+    
+    _ImgSensor::Init();
+    _ImgSensor::SetStreamEnabled(true);
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
 
 static void _ICERAMWrite(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.ICERAMWrite;
@@ -893,14 +930,9 @@ static void _MSPConnect(const STM::Cmd& cmd) {
 }
 
 static void _MSPDisconnect(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.MSPDisconnect;
-    
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Update _MSP_HOST_MODE_ output which controls whether MSPApp runs once we disconnect SBW
-    _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _MSP_HOST_MODE_::Write(!arg.hostMode);
     _MSP.disconnect();
     
     // Send status
@@ -1079,17 +1111,9 @@ static void _MSPDebug(const STM::Cmd& cmd) {
     _System::USBSendStatus(state.ok);
 }
 
-void _SDInit(const STM::Cmd& cmd) {
+void _SDCardInfo(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
-    
-    // Configure QSPI for comms with ICEApp
-    _QSPISetConfig(_QSPIConfigs.ICEApp);
-    
-    _SD::Reset();
-    _SD::Init();
-    
-    _System::USBSendStatus(true);
     
     // Send SD card info
     alignas(4) const SDCardInfo cardInfo = {
@@ -1117,21 +1141,6 @@ static void _SDRead(const STM::Cmd& cmd) {
     
     // Start the Readout task
     _TaskReadout::Start(std::nullopt);
-}
-
-void _ImgInit(const STM::Cmd& cmd) {
-    // Accept command
-    _System::USBAcceptCommand(true);
-    
-    // Configure QSPI for comms with ICEApp
-    _QSPISetConfig(_QSPIConfigs.ICEApp);
-    
-    _ImgSensor::Init();
-    
-    // Enable image streaming
-    _ImgSensor::SetStreamEnabled(true);
-    
-    _System::USBSendStatus(true);
 }
 
 void _ImgExposureSet(const STM::Cmd& cmd) {
@@ -1186,6 +1195,9 @@ void _ImgCapture(const STM::Cmd& cmd) {
 
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
+    // Host Mode
+    case Op::HostModeInit:      _HostModeInit(cmd);                 break;
+    case Op::HostModeEnter:     _HostModeEnter(cmd);                break;
     // ICE40 Bootloader
     case Op::ICERAMWrite:       _ICERAMWrite(cmd);                  break;
     case Op::ICEFlashRead:      _ICEFlashRead(cmd);                 break;
@@ -1198,10 +1210,9 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::MSPWrite:          _MSPWrite(cmd);                     break;
     case Op::MSPDebug:          _MSPDebug(cmd);                     break;
     // SD Card
-    case Op::SDInit:            _SDInit(cmd);                       break;
+    case Op::SDCardInfo:        _SDCardInfo(cmd);                   break;
     case Op::SDRead:            _SDRead(cmd);                       break;
     // Img
-    case Op::ImgInit:           _ImgInit(cmd);                      break;
     case Op::ImgExposureSet:    _ImgExposureSet(cmd);               break;
     case Op::ImgCapture:        _ImgCapture(cmd);                   break;
     // Bad command

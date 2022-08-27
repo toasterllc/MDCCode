@@ -31,6 +31,9 @@ namespace STM {
         STMReset,
         
         // STMApp
+        HostModeInit,
+        HostModeEnter,
+        
         ICERAMWrite,
         ICEFlashRead,
         ICEFlashWrite,
@@ -41,10 +44,9 @@ namespace STM {
         MSPWrite,
         MSPDebug,
         
-        SDInit,
+        SDCardInfo,
         SDRead,
         
-        ImgInit,
         ImgExposureSet,
         ImgCapture,
     };
@@ -67,6 +69,7 @@ namespace STM {
                 uint32_t entryPointAddr;
             } STMReset;
             
+            // # STMApp
             struct [[gnu::packed]] {
                 uint32_t len;
             } ICERAMWrite;
@@ -80,10 +83,6 @@ namespace STM {
                 uint32_t addr;
                 uint32_t len;
             } ICEFlashWrite;
-            
-            struct [[gnu::packed]] {
-                uint8_t hostMode;
-            } MSPDisconnect;
             
             struct [[gnu::packed]] {
                 uint32_t addr;
@@ -100,7 +99,6 @@ namespace STM {
                 uint32_t respLen;
             } MSPDebug;
             
-            // # STMApp
             struct [[gnu::packed]] {
                 SD::BlockIdx blockIdx;
             } SDRead;
