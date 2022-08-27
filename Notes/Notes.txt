@@ -113,6 +113,10 @@
 
 - Rev5
     
+    - MSPApp: while running on battery power with CurrentRanger monitoring, after some time the current
+      consumption jumped from ~8µA to ~150µA, apparently not due to motion. Was this due to RTC timer
+      waking us up? If so, why didn't we go back to sleep into LPM3.5?
+    
     - MSPApp: are the rails properly reset to their default values when we abort?
     
     - "The drive settings of XT1 can be increased with the XT1DRIVE bits. At power up, the XT1 starts with the

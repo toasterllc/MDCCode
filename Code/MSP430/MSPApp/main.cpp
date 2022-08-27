@@ -151,46 +151,6 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
     _SPI::WriteRead(msg, resp);
 }
 
-// MARK: - IntState
-
-inline bool Toastbox::IntState::InterruptsEnabled() {
-    return __get_SR_register() & GIE;
-}
-
-inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
-    if (en) __bis_SR_register(GIE);
-    else    __bic_SR_register(GIE);
-}
-
-static void _Sleep() {
-    // Put ourself to sleep until an interrupt occurs. This function may or may not return:
-    // 
-    // - This function returns if an interrupt was already pending and the ISR
-    //   wakes us (via `__bic_SR_register_on_exit`). In this case we never enter LPM3.5.
-    // 
-    // - This function doesn't return if an interrupt wasn't pending and
-    //   therefore we enter LPM3.5. The next time we wake will be due to a
-    //   reset and execution will start from main().
-    
-    #warning TODO: re-enable LPM3.5 sleep below
-    const uint16_t LPMBits = LPM1_bits;
-    // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
-    // Otherwise, enter LPM1 sleep, because something is running.
-//    const uint16_t LPMBits = (_MainTask::DeepSleepOK() ? LPM3_bits : LPM1_bits);
-    
-    // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
-    if (LPMBits == LPM3_bits) {
-        PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-        PMMCTL0_L |= PMMREGOFF_1_L;
-    }
-    
-    // Atomically enable interrupts and go to sleep
-    const bool prevEn = Toastbox::IntState::InterruptsEnabled();
-    __bis_SR_register(GIE | LPMBits);
-    // If interrupts were disabled previously, disable them again
-    if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
-}
-
 // MARK: - Tasks
 
 static void debugSignal() {
@@ -648,6 +608,46 @@ struct _MainTask {
     [[gnu::section(".stack._MainTask")]]
     static inline uint8_t Stack[256];
 };
+
+// MARK: - IntState
+
+inline bool Toastbox::IntState::InterruptsEnabled() {
+    return __get_SR_register() & GIE;
+}
+
+inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
+    if (en) __bis_SR_register(GIE);
+    else    __bic_SR_register(GIE);
+}
+
+static void _Sleep() {
+    // Put ourself to sleep until an interrupt occurs. This function may or may not return:
+    // 
+    // - This function returns if an interrupt was already pending and the ISR
+    //   wakes us (via `__bic_SR_register_on_exit`). In this case we never enter LPM3.5.
+    // 
+    // - This function doesn't return if an interrupt wasn't pending and
+    //   therefore we enter LPM3.5. The next time we wake will be due to a
+    //   reset and execution will start from main().
+    
+    #warning TODO: re-enable LPM3.5 sleep below
+//    const uint16_t LPMBits = LPM1_bits;
+    // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
+    // Otherwise, enter LPM1 sleep, because something is running.
+    const uint16_t LPMBits = (_MainTask::DeepSleepOK() ? LPM3_bits : LPM1_bits);
+    
+    // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
+    if (LPMBits == LPM3_bits) {
+        PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+        PMMCTL0_L |= PMMREGOFF_1_L;
+    }
+    
+    // Atomically enable interrupts and go to sleep
+    const bool prevEn = Toastbox::IntState::InterruptsEnabled();
+    __bis_SR_register(GIE | LPMBits);
+    // If interrupts were disabled previously, disable them again
+    if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
+}
 
 // MARK: - Interrupts
 
