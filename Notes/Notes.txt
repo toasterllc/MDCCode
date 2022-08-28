@@ -113,6 +113,11 @@
 
 - Rev5
     
+    - MSPApp: power: try putting all GPIOs in high-impedance with pulldown, and turn chip off. what is power consumption?
+    
+    - MSPApp: before turning on the AC to cool the room, MDC current was increasing and eventually hit ~20µA.
+        - This may have been due to floating inputs! Make sure we have a pulldown on everything.
+    
     - MSPApp: while running on battery power with CurrentRanger monitoring, after some time the current
       consumption jumped from ~8µA to ~150µA, apparently not due to motion. Was this due to RTC timer
       waking us up? If so, why didn't we go back to sleep into LPM3.5?
