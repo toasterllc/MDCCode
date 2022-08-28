@@ -630,8 +630,6 @@ static void _Sleep() {
     //   therefore we enter LPM3.5. The next time we wake will be due to a
     //   reset and execution will start from main().
     
-    #warning TODO: re-enable LPM3.5 sleep below
-//    const uint16_t LPMBits = LPM1_bits;
     // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
     // Otherwise, enter LPM1 sleep, because something is running.
     const uint16_t LPMBits = (_MainTask::DeepSleepOK() ? LPM3_bits : LPM1_bits);
