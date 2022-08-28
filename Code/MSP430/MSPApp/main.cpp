@@ -257,6 +257,11 @@ struct _SDTask {
     
     // _StateInit(): resets the _State.sd struct
     static void _StateInit(const SD::CardId& cardId, const SD::CardData& cardData) {
+        // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
+        const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
+        // cardImgCap: the capacity of the SD card in number of images
+        const uint32_t cardImgCap = cardBlockCap / ImgSD::ImgBlockCount;
+        
         FRAMWriteEn writeEn; // Enable FRAM writing
         
         // Mark the _State as invalid in case we lose power in the middle of modifying it
@@ -270,11 +275,6 @@ struct _SDTask {
         
         // Set .imgCap
         {
-            // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
-            const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
-            // cardImgCap: the capacity of the SD card in number of images
-            const uint32_t cardImgCap = cardBlockCap / ImgSD::ImgBlockCount;
-            
             _State.sd.imgCap = cardImgCap;
         }
         
