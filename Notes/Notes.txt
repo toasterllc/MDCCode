@@ -113,20 +113,9 @@
 
 - Rev5
     
-    - MSPApp: power: try putting all GPIOs in high-impedance with pulldown, and turn chip off. what is power consumption?
-    
-    - MSPApp: before turning on the AC to cool the room, MDC current was increasing and eventually hit ~20µA.
-        - This may have been due to floating inputs! Make sure we have a pulldown on everything.
-    
     - MSPApp: while running on battery power with CurrentRanger monitoring, after some time the current
       consumption jumped from ~8µA to ~150µA, apparently not due to motion. Was this due to RTC timer
       waking us up? If so, why didn't we go back to sleep into LPM3.5?
-    
-    - MSPApp: are the rails properly reset to their default values when we abort?
-    
-    - "The drive settings of XT1 can be increased with the XT1DRIVE bits. At power up, the XT1 starts with the
-      highest drive settings for fast reliable startup. After startup, user software can reduce the drive strength to
-      reduce power consumption."
     
     - Implement thumbnailing in ICEAppMSP / MSPApp
         - Motivation: so MDCStudio can load thumbnails quickly
@@ -159,6 +148,19 @@
 
 
 - Rev5 Done
+    
+    X "The drive settings of XT1 can be increased with the XT1DRIVE bits. At power up, the XT1 starts with the
+      highest drive settings for fast reliable startup. After startup, user software can reduce the drive strength to
+      reduce power consumption."
+          X Tried implementing this but the current saved isn't that much, and there's no clean way to implement it. See XT1DRIVE comments in RTC.h.
+    
+    √ MSPApp: are the rails properly reset to their default values when we abort?
+    
+    √ MSPApp: before turning on the AC to cool the room, MDC current was increasing and eventually hit ~20µA.
+        - This may have been due to floating inputs! Make sure we have a pulldown on everything.
+    
+    √ MSPApp: power: try putting all GPIOs in high-impedance with pulldown, and turn chip off. what is the current consumption?
+        - 2.8 µA
     
     √ MDCStudio/MSPApp: implement time handling
         - MDCStudio needs to set MSP's time
