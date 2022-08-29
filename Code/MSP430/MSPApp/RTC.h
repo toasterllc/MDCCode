@@ -5,7 +5,7 @@
 
 namespace RTC {
 
-template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin>
+template <uint32_t T_XT1FreqHz>
 class Type {
 public:
     using Time = MSP::Time;
@@ -17,30 +17,11 @@ public:
     static constexpr uint16_t InterruptCount = (InterruptIntervalSec*FreqHz)-1;
     static_assert(InterruptCount == ((InterruptIntervalSec*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
     
-    struct Pin {
-        using XOUT  = typename T_XOUTPin::template Opts<GPIO::Option::Sel10>;
-        using XIN   = typename T_XINPin::template Opts<GPIO::Option::Sel10>;
-    };
-    
     bool enabled() const {
         return RTCCTL != 0;
     }
     
     void init(Time time) {
-        // Decrease the XT1 drive strength to save a little current
-        // We're not using this for now because supporting it with LPM3.5 is gross.
-        // That's because on a cold start, CSCTL6.XT1DRIVE needs to be set after we
-        // clear LOCKLPM5 (to reduce the drive strength after XT1 is running),
-        // but on a warm start, CSCTL6.XT1DRIVE needs to be set before we clear
-        // LOCKLPM5 (to return the register to its previous state before unlocking).
-//        CSCTL6 = (CSCTL6 & ~XT1DRIVE) | XT1DRIVE_0;
-        
-        // Clear XT1 fault flags
-        do {
-            CSCTL7 &= ~(XT1OFFG | DCOFFG); // Clear XT1 and DCO fault flag
-            SFRIFG1 &= ~OFIFG;
-        } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
-        
         // Start RTC if it's not yet running, or restart it if we were given a new time
         if (!enabled() || time) {
             _time = time;

@@ -50,7 +50,7 @@ struct _Pin {
 // _MotionSignalIV: motion interrupt vector; keep in sync with the pin chosen for MOTION_SIGNAL
 constexpr uint16_t _MotionSignalIV = P1IV__P1IFG3;
 
-using _Clock = ClockType<_MCLKFreqHz>;
+using _Clock = ClockType<_XT1FreqHz, _MCLKFreqHz, _Pin::XOUT, _Pin::XIN>;
 using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
 
@@ -108,7 +108,7 @@ using _SDCard = SD::Card<
     0                   // T_ClkDelayFast (odd values invert the clock)
 >;
 
-using _RTCType = RTC::Type<_XT1FreqHz, _Pin::XOUT, _Pin::XIN>;
+using _RTCType = RTC::Type<_XT1FreqHz>;
 
 // _RTC: real time clock
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
@@ -153,16 +153,16 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 
 // MARK: - Tasks
 
-static void debugSignal() {
-    _Pin::DEBUG_OUT::Init();
-    for (;;) {
-//    for (int i=0; i<10; i++) {
-        _Pin::DEBUG_OUT::Write(0);
-        for (volatile int i=0; i<10000; i++);
-        _Pin::DEBUG_OUT::Write(1);
-        for (volatile int i=0; i<10000; i++);
-    }
-}
+//static void debugSignal() {
+//    _Pin::DEBUG_OUT::Init();
+//    for (;;) {
+////    for (int i=0; i<10; i++) {
+//        _Pin::DEBUG_OUT::Write(0);
+//        for (volatile int i=0; i<10000; i++);
+//        _Pin::DEBUG_OUT::Write(1);
+//        for (volatile int i=0; i<10000; i++);
+//    }
+//}
 
 struct _SDTask {
     static void Enable() {
@@ -634,12 +634,6 @@ static void _Sleep() {
     // Otherwise, enter LPM1 sleep, because something is running.
     const uint16_t LPMBits = (_MainTask::DeepSleepOK() ? LPM3_bits : LPM1_bits);
     
-    // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
-    if (LPMBits == LPM3_bits) {
-        PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-        PMMCTL0_L |= PMMREGOFF_1_L;
-    }
-    
     // Atomically enable interrupts and go to sleep
     const bool prevEn = Toastbox::IntState::InterruptsEnabled();
     __bis_SR_register(GIE | LPMBits);
@@ -791,8 +785,8 @@ int main() {
         _SPI::Pin::DataIn,
         
         // Clock pins (config chosen by _RTCType)
-        _RTCType::Pin::XOUT,
-        _RTCType::Pin::XIN
+        _Clock::Pin::XOUT,
+        _Clock::Pin::XIN
     >();
     
     // Init clock
