@@ -89,8 +89,6 @@ using _ICE = ICE<
 >;
 
 // _ImgSensor: image sensor object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
 using _ImgSensor = Img::Sensor<
     _Scheduler,             // T_Scheduler
     _ICE,                   // T_ICE
@@ -98,8 +96,6 @@ using _ImgSensor = Img::Sensor<
 >;
 
 // _SDCard: SD card object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
 using _SDCard = SD::Card<
     _Scheduler,         // T_Scheduler
     _ICE,               // T_ICE
@@ -344,9 +340,6 @@ struct _SDTask {
     // _RCA: SD card 'relative card address'; needed for SD comms after initialization.
     // As an optional, _RCA also signifies whether we've successfully initiated comms
     // with the SD card since the battery was plugged in.
-    // Stored in BAKMEM (RAM that's retained in LPM3.5) so that it's maintained during
-    // sleep, but reset upon a cold start.
-    [[gnu::section(".ram_backup.main")]]
     static inline std::optional<uint16_t> _RCA;
     
     static inline bool _Enabled = false;
@@ -489,11 +482,6 @@ struct _ImgTask {
     static inline uint8_t _CaptureBlock = 0;
     
     // _AutoExp: auto exposure algorithm object
-    // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-    // it's maintained during sleep, but reset upon a cold start.
-    // This is so we don't forget exposure levels between captures,
-    // since the exposure doesn't change often.
-    [[gnu::section(".ram_backup.main")]]
     static inline Img::AutoExposure _AutoExp;
     
     // Task options
@@ -518,7 +506,7 @@ struct _MainTask {
 //        }
         
         for (;;) {
-            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
+            // Wait for motion. During this block we allow LPM3 sleep, as long as our other tasks are idle.
             {
                 _WaitingForMotion = true;
                 _Scheduler::Wait([&] { return (bool)_Motion; });
@@ -580,7 +568,7 @@ struct _MainTask {
     }
     
     static bool DeepSleepOK() {
-        // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
+        // Permit LPM3 if we're waiting for motion, and neither of our tasks are doing anything.
         // This logic works because if _WaitingForMotion==true, then we've disabled both _SDTask
         // and _ImgTask, so if the tasks are idle, then everything's idle so we can enter deep
         // sleep. (The case that we need to be careful of is going to sleep when either _SDTask
@@ -828,8 +816,8 @@ int main() {
 //        }
 //    }
     
-    // Handle cold starts
-    if (Startup::ColdStart()) {
+    // Handle host mode
+    {
         // Temporarily enable a pullup on HOST_MODE_ so that we can determine whether STM is driving it low.
         // We don't want the pullup to be permanent to prevent leakage current (~80nA) through STM32's GPIO
         // that controls HOST_MODE_.
@@ -846,14 +834,14 @@ int main() {
         // Return to default HOST_MODE_ config
         // Not using GPIO::Init() here because it costs a lot more instructions.
         _Pin::HOST_MODE_::Write(0);
-        
-        // Since this is a cold start, delay 3s before beginning.
-        // This delay is meant for the case where we restarted due to an abort, and
-        // serves 2 purposes:
-        //   1. it rate-limits aborts, in case there's a persistent issue
-        //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-        _Scheduler::Delay(_Scheduler::Ms(3000));
     }
+    
+    // Since this is a cold start, delay 3s before beginning.
+    // This delay is meant for the case where we restarted due to an abort, and
+    // serves 2 purposes:
+    //   1. it rate-limits aborts, in case there's a persistent issue
+    //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
+    _Scheduler::Delay(_Scheduler::Ms(3000));
     
     _Scheduler::Run();
 }
