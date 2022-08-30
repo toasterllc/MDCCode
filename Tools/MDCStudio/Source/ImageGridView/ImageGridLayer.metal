@@ -102,6 +102,8 @@ fragment float4 FragmentShader(
     );
     
     const bool inThumb = (pos.x>=0 && pos.y>=0 && pos.x<(int)ctx.thumb.width && pos.y<(int)ctx.thumb.height);
+    if (!inThumb) return 0;
+    return thumb;
     
     // Calculate mask value
     float mask = 0;

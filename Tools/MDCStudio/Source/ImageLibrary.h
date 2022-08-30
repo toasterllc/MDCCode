@@ -38,8 +38,8 @@ struct [[gnu::packed]] ImageRef {
 };
 
 struct [[gnu::packed]] ImageThumb {
-    static constexpr size_t ThumbWidth      = 288;
-    static constexpr size_t ThumbHeight     = 162;
+    static constexpr size_t ThumbWidth      = 576;
+    static constexpr size_t ThumbHeight     = 324;
     static constexpr size_t ThumbPixelSize  = 3;
     
     ImageRef ref;
