@@ -148,7 +148,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         {
             renderer.render(raw,
-                renderer.FragmentShader(ImagePipelineShaderNamespace "DownsampleLoad",
+                renderer.FragmentShader(ImagePipelineShaderNamespace "DownsampleDiscardRaw",
                     // Buffer args,
                     DownsampleFactor,
                     // Texture args

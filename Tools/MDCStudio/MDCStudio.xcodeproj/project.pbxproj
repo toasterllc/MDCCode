@@ -43,10 +43,10 @@
 		55E43F9A28C00D6B00FCCEA0 /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8828C00D6B00FCCEA0 /* ReconstructHighlights.metal */; };
 		55E43F9B28C00D6B00FCCEA0 /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8928C00D6B00FCCEA0 /* ImagePipeline.metal */; };
 		55E43F9C28C00D6B00FCCEA0 /* EstimateIlluminantFFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8A28C00D6B00FCCEA0 /* EstimateIlluminantFFCC.mm */; };
-		55E43F9D28C00D6B00FCCEA0 /* DownsampleLoad.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8B28C00D6B00FCCEA0 /* DownsampleLoad.metal */; };
 		55E43F9E28C00D6B00FCCEA0 /* DebayerBilinear.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F8F28C00D6B00FCCEA0 /* DebayerBilinear.metal */; };
 		55E43F9F28C00D6B00FCCEA0 /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F9028C00D6B00FCCEA0 /* RenderThumb.metal */; };
 		55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F9228C00D6B00FCCEA0 /* FFCC.mm */; };
+		55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */; };
 		55F1143D27C8BD3F00C24343 /* LayerScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F1143927C8BD3F00C24343 /* LayerScrollView.mm */; };
 		55F1143E27C8BD3F00C24343 /* MetalScrollLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F1143A27C8BD3F00C24343 /* MetalScrollLayer.mm */; };
 		55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */; };
@@ -160,7 +160,6 @@
 		55E43F8828C00D6B00FCCEA0 /* ReconstructHighlights.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
 		55E43F8928C00D6B00FCCEA0 /* ImagePipeline.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImagePipeline.metal; sourceTree = "<group>"; };
 		55E43F8A28C00D6B00FCCEA0 /* EstimateIlluminantFFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminantFFCC.mm; sourceTree = "<group>"; };
-		55E43F8B28C00D6B00FCCEA0 /* DownsampleLoad.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DownsampleLoad.metal; sourceTree = "<group>"; };
 		55E43F8C28C00D6B00FCCEA0 /* RenderThumb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenderThumb.h; sourceTree = "<group>"; };
 		55E43F8D28C00D6B00FCCEA0 /* Defringe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Defringe.h; sourceTree = "<group>"; };
 		55E43F8E28C00D6B00FCCEA0 /* ReconstructHighlights.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReconstructHighlights.h; sourceTree = "<group>"; };
@@ -168,6 +167,7 @@
 		55E43F9028C00D6B00FCCEA0 /* RenderThumb.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
 		55E43F9128C00D6B00FCCEA0 /* Saturation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Saturation.h; sourceTree = "<group>"; };
 		55E43F9228C00D6B00FCCEA0 /* FFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FFCC.mm; sourceTree = "<group>"; };
+		55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DownsampleDiscardRaw.metal; sourceTree = "<group>"; };
 		55F1143927C8BD3F00C24343 /* LayerScrollView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LayerScrollView.mm; sourceTree = "<group>"; };
 		55F1143A27C8BD3F00C24343 /* MetalScrollLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MetalScrollLayer.mm; sourceTree = "<group>"; };
 		55F1143B27C8BD3F00C24343 /* LayerScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LayerScrollView.h; sourceTree = "<group>"; };
@@ -423,9 +423,9 @@
 				55E43F8D28C00D6B00FCCEA0 /* Defringe.h */,
 				55E43F8328C00D6B00FCCEA0 /* Defringe.metal */,
 				55E43F7C28C00D6B00FCCEA0 /* Defringe.mm */,
-				55E43F8B28C00D6B00FCCEA0 /* DownsampleLoad.metal */,
 				55E43F7E28C00D6B00FCCEA0 /* EstimateIlluminantFFCC.h */,
 				55E43F8A28C00D6B00FCCEA0 /* EstimateIlluminantFFCC.mm */,
+				55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */,
 				55E43F8228C00D6B00FCCEA0 /* FFCC.h */,
 				55E43F8128C00D6B00FCCEA0 /* FFCC.metal */,
 				55E43F9228C00D6B00FCCEA0 /* FFCC.mm */,
@@ -549,6 +549,7 @@
 				55496F61278E88B800BCA739 /* Grid.h in Sources */,
 				55E43F9728C00D6B00FCCEA0 /* Defringe.metal in Sources */,
 				55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */,
+				55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */,
 				55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */,
 				55E43F9C28C00D6B00FCCEA0 /* EstimateIlluminantFFCC.mm in Sources */,
 				55E43F9A28C00D6B00FCCEA0 /* ReconstructHighlights.metal in Sources */,
@@ -563,7 +564,6 @@
 				55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */,
 				55F8D01427BEF3E500757165 /* ImageView.mm in Sources */,
 				55E43F9328C00D6B00FCCEA0 /* Defringe.mm in Sources */,
-				55E43F9D28C00D6B00FCCEA0 /* DownsampleLoad.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
