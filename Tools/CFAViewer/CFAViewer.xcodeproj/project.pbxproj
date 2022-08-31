@@ -33,6 +33,7 @@
 		55B9747824C50A81000B2633 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747724C50A81000B2633 /* Cocoa.framework */; };
 		55B9747A24C50A86000B2633 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747924C50A86000B2633 /* Metal.framework */; };
 		55B9747C24C50A8A000B2633 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747B24C50A8A000B2633 /* QuartzCore.framework */; };
+		55E43F3228BD554400FCCEA0 /* DownsampleLoad.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F3128BD554400FCCEA0 /* DownsampleLoad.metal */; };
 		55E98EB625A920030062B458 /* MainView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E98EB425A920030062B458 /* MainView.mm */; };
 		55E98ED425BFBA800062B458 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55E98ED325BFBA800062B458 /* MetalPerformanceShaders.framework */; };
 		55EBCC8C258966FE0089A441 /* BaseView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55EBCC87258966FE0089A441 /* BaseView.mm */; };
@@ -105,6 +106,7 @@
 		55D0820F27092A8200B9BB97 /* Assert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
 		55D08211270BACA600B9BB97 /* ChecksumFletcher32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChecksumFletcher32.h; sourceTree = "<group>"; };
 		55DE385B25F83EFB00AD2223 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
+		55E43F3128BD554400FCCEA0 /* DownsampleLoad.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DownsampleLoad.metal; sourceTree = "<group>"; };
 		55E98EB425A920030062B458 /* MainView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainView.mm; sourceTree = "<group>"; };
 		55E98EB525A920030062B458 /* MainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainView.h; sourceTree = "<group>"; };
 		55E98EB725A920880062B458 /* HistogramView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HistogramView.mm; sourceTree = "<group>"; };
@@ -194,29 +196,30 @@
 		55AC9DDC28ACB03100D0851E /* ImagePipeline */ = {
 			isa = PBXGroup;
 			children = (
-				55AC9DDD28ACB03100D0851E /* ImagePipeline.h */,
-				55AC9DDE28ACB03100D0851E /* Defringe.mm */,
-				55AC9DDF28ACB03100D0851E /* LocalContrast.metal */,
-				55AC9DE028ACB03100D0851E /* EstimateIlluminantFFCC.h */,
-				55AC9DE128ACB03100D0851E /* LocalContrast.h */,
-				55AC9DE228ACB03100D0851E /* Saturation.metal */,
-				55AC9DE328ACB03100D0851E /* FFCC.metal */,
-				55AC9DE428ACB03100D0851E /* FFCC.h */,
-				55AC9DE528ACB03100D0851E /* Defringe.metal */,
-				55AC9DE628ACB03100D0851E /* ImagePipeline.mm */,
-				55AC9DE728ACB03100D0851E /* DebayerLMMSE.metal */,
-				55AC9DE828ACB03100D0851E /* ImagePipelineTypes.h */,
-				55AC9DE928ACB03100D0851E /* DebayerLMMSE.h */,
-				55AC9DEA28ACB03100D0851E /* ReconstructHighlights.metal */,
-				55AC9DEB28ACB03100D0851E /* ImagePipeline.metal */,
-				55AC9DEC28ACB03100D0851E /* EstimateIlluminantFFCC.mm */,
-				55AC9DED28ACB03100D0851E /* RenderThumb.h */,
-				55AC9DEE28ACB03100D0851E /* Defringe.h */,
-				55AC9DEF28ACB03100D0851E /* ReconstructHighlights.h */,
+				55E43F3128BD554400FCCEA0 /* DownsampleLoad.metal */,
 				55AC9DF028ACB03100D0851E /* DebayerBilinear.metal */,
+				55AC9DE928ACB03100D0851E /* DebayerLMMSE.h */,
+				55AC9DE728ACB03100D0851E /* DebayerLMMSE.metal */,
+				55AC9DEE28ACB03100D0851E /* Defringe.h */,
+				55AC9DE528ACB03100D0851E /* Defringe.metal */,
+				55AC9DDE28ACB03100D0851E /* Defringe.mm */,
+				55AC9DE028ACB03100D0851E /* EstimateIlluminantFFCC.h */,
+				55AC9DEC28ACB03100D0851E /* EstimateIlluminantFFCC.mm */,
+				55AC9DE428ACB03100D0851E /* FFCC.h */,
+				55AC9DE328ACB03100D0851E /* FFCC.metal */,
+				55AC9DF328ACB03100D0851E /* FFCC.mm */,
+				55AC9DDD28ACB03100D0851E /* ImagePipeline.h */,
+				55AC9DEB28ACB03100D0851E /* ImagePipeline.metal */,
+				55AC9DE628ACB03100D0851E /* ImagePipeline.mm */,
+				55AC9DE828ACB03100D0851E /* ImagePipelineTypes.h */,
+				55AC9DE128ACB03100D0851E /* LocalContrast.h */,
+				55AC9DDF28ACB03100D0851E /* LocalContrast.metal */,
+				55AC9DEF28ACB03100D0851E /* ReconstructHighlights.h */,
+				55AC9DEA28ACB03100D0851E /* ReconstructHighlights.metal */,
+				55AC9DED28ACB03100D0851E /* RenderThumb.h */,
 				55AC9DF128ACB03100D0851E /* RenderThumb.metal */,
 				55AC9DF228ACB03100D0851E /* Saturation.h */,
-				55AC9DF328ACB03100D0851E /* FFCC.mm */,
+				55AC9DE228ACB03100D0851E /* Saturation.metal */,
 			);
 			name = ImagePipeline;
 			path = ../MDCStudio/Source/ImagePipeline;
@@ -367,6 +370,7 @@
 				55AC9DF728ACB03100D0851E /* FFCC.metal in Sources */,
 				55E98EB625A920030062B458 /* MainView.mm in Sources */,
 				55AC9DF428ACB03100D0851E /* Defringe.mm in Sources */,
+				55E43F3228BD554400FCCEA0 /* DownsampleLoad.metal in Sources */,
 				55AC9DF928ACB03100D0851E /* ImagePipeline.mm in Sources */,
 				55AC9DFC28ACB03100D0851E /* ImagePipeline.metal in Sources */,
 				55AC9DFE28ACB03100D0851E /* DebayerBilinear.metal in Sources */,

@@ -46,6 +46,7 @@
 		55D4AA9B27B1D3100052EFEE /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55D4AA8F27B1D3100052EFEE /* FFCC.mm */; };
 		55D4AAA127B1D3E70052EFEE /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */; };
 		55D4AAA327B1D3F20052EFEE /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA227B1D3F20052EFEE /* Accelerate.framework */; };
+		55E43F3428BEAB6C00FCCEA0 /* DownsampleLoad.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F3328BEAB6C00FCCEA0 /* DownsampleLoad.metal */; };
 		55F1143D27C8BD3F00C24343 /* LayerScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F1143927C8BD3F00C24343 /* LayerScrollView.mm */; };
 		55F1143E27C8BD3F00C24343 /* MetalScrollLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F1143A27C8BD3F00C24343 /* MetalScrollLayer.mm */; };
 		55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */; };
@@ -165,6 +166,7 @@
 		55D4AA8F27B1D3100052EFEE /* FFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FFCC.mm; sourceTree = "<group>"; };
 		55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 		55D4AAA227B1D3F20052EFEE /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		55E43F3328BEAB6C00FCCEA0 /* DownsampleLoad.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DownsampleLoad.metal; sourceTree = "<group>"; };
 		55F1143927C8BD3F00C24343 /* LayerScrollView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LayerScrollView.mm; sourceTree = "<group>"; };
 		55F1143A27C8BD3F00C24343 /* MetalScrollLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MetalScrollLayer.mm; sourceTree = "<group>"; };
 		55F1143B27C8BD3F00C24343 /* LayerScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LayerScrollView.h; sourceTree = "<group>"; };
@@ -438,6 +440,7 @@
 				55D4AA8927B1D3100052EFEE /* ImagePipeline.metal */,
 				55D4AA8427B1D3100052EFEE /* ImagePipeline.mm */,
 				55D4AA8627B1D3100052EFEE /* ImagePipelineTypes.h */,
+				55E43F3328BEAB6C00FCCEA0 /* DownsampleLoad.metal */,
 			);
 			path = ImagePipeline;
 			sourceTree = "<group>";
@@ -552,6 +555,7 @@
 				55D4AA9927B1D3100052EFEE /* EstimateIlluminantFFCC.mm in Sources */,
 				55D4AA9627B1D3100052EFEE /* DebayerLMMSE.metal in Sources */,
 				55D4AA9827B1D3100052EFEE /* ImagePipeline.metal in Sources */,
+				55E43F3428BEAB6C00FCCEA0 /* DownsampleLoad.metal in Sources */,
 				5544AE2927B5E595006AB473 /* Renderer.metal in Sources */,
 				55F8D01927BEF97200757165 /* ImageView.metal in Sources */,
 				55F1143D27C8BD3F00C24343 /* LayerScrollView.mm in Sources */,

@@ -30,19 +30,22 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 - (void)display {
     if (!_ipm) return;
     
+    [_ipm render];
+    
+    NSUInteger w = [_ipm->result.txt width];
+    NSUInteger h = [_ipm->result.txt height];
+    if (w*h <= 0) return;
+    
     // Update our drawable size using our view size (in pixels)
-    [self setDrawableSize:{(CGFloat)_ipm->rawImage.width, (CGFloat)_ipm->rawImage.height}];
+    [self setDrawableSize:{(CGFloat)w, (CGFloat)h}];
     
     id<CAMetalDrawable> drawable = [self nextDrawable];
     Assert(drawable, return);
     
-    {
-        [_ipm render];
-        _ipm->renderer.copy(_ipm->result.txt, [drawable texture]);
-        _ipm->renderer.commitAndWait();
-        [drawable present];
-        
-    }
+    _ipm->renderer.copy(_ipm->result.txt, [drawable texture]);
+    _ipm->renderer.commitAndWait();
+    [drawable present];
+    
 //    printf("Display took %f\n", start.durationMs()/1000.);
 }
 

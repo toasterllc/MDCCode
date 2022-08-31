@@ -117,10 +117,7 @@ static void _addImages(ImageLibraryPtr imgLib, MDCTools::Renderer& renderer, con
                 .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
             };
             
-            const Pipeline::Options pipelineOpts = {
-                .reconstructHighlights  = { .en = true, },
-                .debayerLMMSE           = { .applyGamma = true, },
-            };
+            const Pipeline::Options pipelineOpts = {};
             
             Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
             const size_t thumbDataOff = (uintptr_t)&imageThumb.thumb - (uintptr_t)chunk.mmap.data();
@@ -248,18 +245,22 @@ static void _addImages(ImageLibraryPtr imgLib, MDCTools::Renderer& renderer, con
             ImageCachePtr ic;
         };
         
-        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/ImageLibraryTest"));
+        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/Old/2022:8:30/ImageLibraryTest"));
         il->read();
         
         std::thread t([=] {
-            Toastbox::Mmap mmap("/Users/dave/Desktop/SDImagesRaw-512");
+            auto startTime = std::chrono::steady_clock::now();
+            
+            Toastbox::Mmap mmap("/Users/dave/Desktop/Old/2022:8:30/SDImagesRaw-512");
             
             id<MTLDevice> device = MTLCreateSystemDefaultDevice();
             if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
             MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
             
-            constexpr size_t ImageCount = 16;
+            constexpr size_t ImageCount = 1;
             _addImages(il, renderer, mmap.data(), ImageCount, 0);
+            
+//            il->write();
         });
         t.detach();
         
