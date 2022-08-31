@@ -11,6 +11,17 @@
 		559C33B72613B122001903FD /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747724C50A81000B2633 /* Cocoa.framework */; };
 		559C33BC2613BBDF001903FD /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55B9747924C50A86000B2633 /* Metal.framework */; };
 		559C34022616D8BE001903FD /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559D8E0F2594205300836B47 /* Accelerate.framework */; };
+		55E43FE228C0113200FCCEA0 /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FA428C00E2500FCCEA0 /* LocalContrast.metal */; };
+		55E43FE328C0113200FCCEA0 /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FA728C00E2500FCCEA0 /* Saturation.metal */; };
+		55E43FE428C0113200FCCEA0 /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FA828C00E2500FCCEA0 /* FFCC.metal */; };
+		55E43FE528C0113200FCCEA0 /* Defringe.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FAA28C00E2500FCCEA0 /* Defringe.metal */; };
+		55E43FE628C0113200FCCEA0 /* DebayerLMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FAC28C00E2500FCCEA0 /* DebayerLMMSE.metal */; };
+		55E43FE728C0113200FCCEA0 /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FAF28C00E2500FCCEA0 /* ReconstructHighlights.metal */; };
+		55E43FE828C0113200FCCEA0 /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FB028C00E2500FCCEA0 /* ImagePipeline.metal */; };
+		55E43FE928C0113200FCCEA0 /* DownsampleLoad.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FB228C00E2500FCCEA0 /* DownsampleLoad.metal */; };
+		55E43FEA28C0113200FCCEA0 /* DebayerBilinear.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FB628C00E2500FCCEA0 /* DebayerBilinear.metal */; };
+		55E43FEB28C0113200FCCEA0 /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FB728C00E2500FCCEA0 /* RenderThumb.metal */; };
+		55E43FEC28C0113400FCCEA0 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F5728C0061900FCCEA0 /* Renderer.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -328,7 +339,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55E43FEA28C0113200FCCEA0 /* DebayerBilinear.metal in Sources */,
+				55E43FE528C0113200FCCEA0 /* Defringe.metal in Sources */,
+				55E43FEC28C0113400FCCEA0 /* Renderer.metal in Sources */,
+				55E43FE328C0113200FCCEA0 /* Saturation.metal in Sources */,
+				55E43FE928C0113200FCCEA0 /* DownsampleLoad.metal in Sources */,
+				55E43FE728C0113200FCCEA0 /* ReconstructHighlights.metal in Sources */,
+				55E43FE428C0113200FCCEA0 /* FFCC.metal in Sources */,
+				55E43FEB28C0113200FCCEA0 /* RenderThumb.metal in Sources */,
+				55E43FE628C0113200FCCEA0 /* DebayerLMMSE.metal in Sources */,
+				55E43FE828C0113200FCCEA0 /* ImagePipeline.metal in Sources */,
 				559C33B62613B112001903FD /* main.mm in Sources */,
+				55E43FE228C0113200FCCEA0 /* LocalContrast.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
