@@ -4,8 +4,8 @@
 #import "../Color.h"
 #import "../Renderer.h"
 #import "../Mod.h"
-using namespace MDCStudio;
-using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools;
+using namespace MDCTools::ImagePipeline;
 using namespace MDCTools;
 
 using Mat64     = FFCC::Mat64;

@@ -45,7 +45,7 @@ using namespace MDCStudio;
 
 static void _addImages(ImageLibraryPtr imgLib, MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount, SD::BlockIdx blockIdx) {
     using namespace MDCTools;
-    using namespace MDCStudio::ImagePipeline;
+    using namespace MDCTools::ImagePipeline;
     
     ImageId imageId = 0;
     {

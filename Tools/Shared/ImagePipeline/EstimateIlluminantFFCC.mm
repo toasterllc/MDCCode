@@ -1,5 +1,5 @@
 #import "EstimateIlluminantFFCC.h"
-using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools::ImagePipeline;
 
 const FFCC::Model EstimateIlluminantFFCC::_Model = {
     .params = {

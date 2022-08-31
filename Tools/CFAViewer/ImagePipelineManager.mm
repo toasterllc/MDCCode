@@ -1,5 +1,5 @@
 #import "ImagePipelineManager.h"
-using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools::ImagePipeline;
 
 @implementation ImagePipelineManager
 
@@ -18,7 +18,7 @@ using namespace MDCStudio::ImagePipeline;
     // it contains are destroyed before we render again, so they can be reused
     // for this render run.
     result = {};
-    result = MDCStudio::ImagePipeline::Pipeline::Run(renderer, rawImage, options);
+    result = MDCTools::ImagePipeline::Pipeline::Run(renderer, rawImage, options);
     if (renderCallback) renderCallback();
 }
 

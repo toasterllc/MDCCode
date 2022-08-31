@@ -126,7 +126,7 @@ static simd::float3x3 simdForMat(const Mat<double,3,3>& m) {
     };
 }
 
-namespace MDCStudio::ImagePipeline {
+namespace MDCTools::ImagePipeline {
 
 Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts) {
     constexpr uint32_t DownsampleFactor = 4;
@@ -367,4 +367,4 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     };
 }
 
-} // namespace MDCStudio::ImagePipeline
+} // namespace MDCTools::ImagePipeline

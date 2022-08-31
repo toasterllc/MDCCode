@@ -2,7 +2,7 @@
 #import "ImagePipelineTypes.h"
 #import "../Renderer.h"
 
-namespace MDCStudio::ImagePipeline {
+namespace MDCTools::ImagePipeline {
 
 class RenderThumb {
 public:
@@ -83,4 +83,4 @@ public:
 //    constexpr MTLResourceOptions _BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
 };
 
-} // namespace MDCStudio::ImagePipeline
+} // namespace MDCTools::ImagePipeline

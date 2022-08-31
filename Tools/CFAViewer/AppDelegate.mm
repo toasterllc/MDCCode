@@ -33,9 +33,8 @@
 #import "ELF32Binary.h"
 using namespace CFAViewer;
 using namespace MDCTools::MetalUtil;
-using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools::ImagePipeline;
 using namespace Toastbox;
-using namespace MDCStudio;
 using namespace MDCTools;
 using namespace std::chrono;
 namespace fs = std::filesystem;
@@ -162,8 +161,8 @@ struct ExposureSettings {
         Img::Pixel pixels[2200*2200];
         Pipeline::RawImage img = {
             .cfaDesc = {
-                MDCStudio::CFAColor::Green, MDCStudio::CFAColor::Red,
-                MDCStudio::CFAColor::Blue, MDCStudio::CFAColor::Green,
+                MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
+                MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
             },
             .width = Img::PixelWidth,
             .height = Img::PixelHeight,

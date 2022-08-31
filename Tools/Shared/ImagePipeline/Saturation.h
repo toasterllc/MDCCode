@@ -3,7 +3,7 @@
 #import "ImagePipelineTypes.h"
 #import "../MetalUtil.h"
 
-namespace MDCStudio::ImagePipeline {
+namespace MDCTools::ImagePipeline {
 
 class Saturation {
 public:
@@ -49,4 +49,4 @@ public:
     }
 };
 
-}; // MDCStudio::ImagePipeline
+}; // MDCTools::ImagePipeline

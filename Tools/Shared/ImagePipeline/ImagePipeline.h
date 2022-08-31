@@ -6,7 +6,7 @@
 #import "../Color.h"
 #import "ImagePipelineTypes.h"
 
-namespace MDCStudio::ImagePipeline {
+namespace MDCTools::ImagePipeline {
 
 class Pipeline {
 public:
@@ -68,4 +68,4 @@ public:
     static Result Run(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts);
 };
 
-} // namespace MDCStudio::ImagePipeline
+} // namespace MDCTools::ImagePipeline

@@ -3,12 +3,12 @@
 #import "ImagePipelineTypes.h"
 #import "../CFA.h"
 using namespace metal;
-using namespace MDCStudio;
-using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools;
+using namespace MDCTools::ImagePipeline;
 using namespace MDCTools;
 using namespace MDCTools::MetalUtil;
 
-namespace MDCStudio {
+namespace MDCTools {
 namespace ImagePipeline {
 namespace Shader {
 namespace Defringe {
@@ -275,4 +275,4 @@ fragment float ApplyCorrection(
 } // namespace Defringe
 } // namespace Shader
 } // namespace ImagePipeline
-} // namespace MDCStudio
+} // namespace MDCTools

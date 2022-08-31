@@ -69,7 +69,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 - (void)display {
     using namespace MDCTools;
-    using namespace MDCStudio::ImagePipeline;
+    using namespace MDCTools::ImagePipeline;
     
     [super display];
     

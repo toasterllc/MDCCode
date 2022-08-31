@@ -4,9 +4,9 @@
 #import "../Mod.h"
 using namespace metal;
 using namespace MDCTools::MetalUtil;
-using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools::ImagePipeline;
 
-namespace MDCStudio {
+namespace MDCTools {
 namespace ImagePipeline {
 namespace Shader {
 namespace FFCC {
@@ -172,4 +172,4 @@ fragment float Transpose(
 } // namespace EstimateIlluminantFFCC
 } // namespace Shader
 } // namespace ImagePipeline
-} // namespace MDCStudio
+} // namespace MDCTools

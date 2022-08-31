@@ -4,7 +4,7 @@
 #import "../Renderer.h"
 #import "FFCC.h"
 
-namespace MDCStudio::ImagePipeline {
+namespace MDCTools::ImagePipeline {
 
 class EstimateIlluminantFFCC {
 public:
@@ -23,4 +23,4 @@ private:
     static const uint64_t _BVals[4096];
 };
 
-}; // namespace MDCStudio::ImagePipeline
+}; // namespace MDCTools::ImagePipeline

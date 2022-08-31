@@ -6,8 +6,8 @@
 #import "../PixelSampler.h"
 #import "../MetalUtil.h"
 #import "ImagePipelineTypes.h"
-using namespace MDCStudio;
-using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools;
+using namespace MDCTools::ImagePipeline;
 using namespace MDCTools;
 
 using Poly = Poly2D<double,4>;
@@ -367,7 +367,7 @@ static void _defringe(Renderer& renderer,
     renderer.copy(tmp, raw);
 }
 
-namespace MDCStudio::ImagePipeline {
+namespace MDCTools::ImagePipeline {
 
 void Defringe::Run(Renderer& renderer, const CFADesc& cfaDesc,
     const Options& opts, id<MTLTexture> raw) {
@@ -390,4 +390,4 @@ void Defringe::Run(Renderer& renderer, const CFADesc& cfaDesc,
     }
 }
 
-}; // MDCStudio::ImagePipeline
+}; // MDCTools::ImagePipeline

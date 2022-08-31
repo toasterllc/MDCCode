@@ -3,7 +3,7 @@
 #import "../MetalUtil.h"
 #import "ImagePipelineTypes.h"
 
-namespace MDCStudio::ImagePipeline {
+namespace MDCTools::ImagePipeline {
 
 class DebayerLMMSE {
 public:
@@ -249,4 +249,4 @@ public:
     }
 };
 
-}; // namespace MDCStudio::ImagePipeline
+}; // namespace MDCTools::ImagePipeline

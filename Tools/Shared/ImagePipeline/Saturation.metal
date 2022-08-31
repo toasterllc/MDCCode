@@ -3,9 +3,9 @@
 #import "ImagePipelineTypes.h"
 using namespace metal;
 using namespace MDCTools::MetalUtil;
-using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools::ImagePipeline;
 
-namespace MDCStudio {
+namespace MDCTools {
 namespace ImagePipeline {
 namespace Shader {
 namespace Saturation {
@@ -104,4 +104,4 @@ fragment float4 Saturation(
 } // namespace Saturation
 } // namespace Shader
 } // namespace ImagePipeline
-} // namespace MDCStudio
+} // namespace MDCTools

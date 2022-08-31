@@ -6,9 +6,9 @@
 @interface ImagePipelineManager : NSObject {
 @public
     MDCTools::Renderer renderer;
-    MDCStudio::ImagePipeline::Pipeline::RawImage rawImage;
-    MDCStudio::ImagePipeline::Pipeline::Options options;
-    MDCStudio::ImagePipeline::Pipeline::Result result;
+    MDCTools::ImagePipeline::Pipeline::RawImage rawImage;
+    MDCTools::ImagePipeline::Pipeline::Options options;
+    MDCTools::ImagePipeline::Pipeline::Result result;
     std::function<void()> renderCallback;
 }
 - (void)render;

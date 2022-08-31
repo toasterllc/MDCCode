@@ -5,7 +5,7 @@
 #import "ImagePipelineManager.h"
 using namespace CFAViewer;
 using namespace MDCTools::MetalUtil;
-using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools::ImagePipeline;
 
 // _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
 // so our layer needs to have the _sRGB pixel format to enable the automatic conversion.

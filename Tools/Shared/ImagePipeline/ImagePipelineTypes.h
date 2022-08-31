@@ -4,10 +4,10 @@
 #import <Metal/Metal.h>
 #endif // !MetalShaderContext
 
-namespace MDCStudio {
+namespace MDCTools {
 namespace ImagePipeline {
 
-#define ImagePipelineShaderNamespace "MDCStudio::ImagePipeline::Shader::"
+#define ImagePipelineShaderNamespace "MDCTools::ImagePipeline::Shader::"
 
 using ImagePixel = uint16_t;
 MetalConst ImagePixel ImagePixelMax = 0x0FFF; // 12 bit values
@@ -44,4 +44,4 @@ struct SampleRect {
 };
 
 } // namespace ImagePipeline
-} // namespace MDCStudio
+} // namespace MDCTools

@@ -4,7 +4,7 @@
 #import "ImagePipelineTypes.h"
 #import "../MetalUtil.h"
 
-namespace MDCStudio::ImagePipeline {
+namespace MDCTools::ImagePipeline {
     class LocalContrast {
     public:
         static void Run(MDCTools::Renderer& renderer, float amount, float radius, id<MTLTexture> rgb) {

@@ -5,7 +5,7 @@
 #import "../Mat.h"
 #import "../CFA.h"
 
-namespace MDCStudio::ImagePipeline {
+namespace MDCTools::ImagePipeline {
 
 class Defringe {
 public:
@@ -25,4 +25,4 @@ public:
     );
 };
 
-}; // MDCStudio::ImagePipeline
+}; // MDCTools::ImagePipeline

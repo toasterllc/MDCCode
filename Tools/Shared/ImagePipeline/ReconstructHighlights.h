@@ -3,7 +3,7 @@
 #import "ImagePipelineTypes.h"
 #import "../MetalUtil.h"
 
-namespace MDCStudio::ImagePipeline {
+namespace MDCTools::ImagePipeline {
 
 class ReconstructHighlights {
 public:
@@ -75,4 +75,4 @@ public:
     }
 };
 
-}; // MDCStudio::ImagePipeline
+}; // MDCTools::ImagePipeline

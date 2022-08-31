@@ -9,9 +9,9 @@
 #import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/Mat.h"
 #import "Tools/Shared/Color.h"
-#import "ImagePipeline/ImagePipelineTypes.h"
-#import "ImagePipeline/DebayerLMMSE.h"
-using namespace MDCStudio;
+#import "Tools/Shared/CFA.h"
+#import "Tools/Shared/ImagePipeline/ImagePipelineTypes.h"
+#import "Tools/Shared/ImagePipeline/DebayerLMMSE.h"
 using namespace MDCTools;
 namespace fs = std::filesystem;
 
@@ -153,7 +153,7 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
     
     // Create a texture from the raw CFA data
     Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
-    renderer.textureWrite(raw, (uint16_t*)imgMmap.data(), 1, sizeof(uint16_t), MetalUtil::ImagePixelMax);
+    renderer.textureWrite(raw, (uint16_t*)imgMmap.data(), 1, sizeof(uint16_t), ImagePixelMax);
     
 //    // Reconstruct highlights
 //    {
@@ -190,10 +190,15 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
     const uint32_t scaledWidth = 384;
     const uint32_t scaledHeight = (uint32_t)((scaledWidth*[raw height])/[raw width]);
     Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, scaledWidth, scaledHeight);
-    renderer.render("CFAViewer::Shader::ImagePipeline::DebayerDownsample", rgb,
-        CFADesc,
-        raw,
-        rgb
+    
+    renderer.render(rgb,
+        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::DebayerDownsample",
+            // Buffer args
+            CFADesc,
+            // Texture args
+            raw,
+            rgb
+        )
     );
     
 //    // LMMSE Debayer
@@ -261,9 +266,12 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
     // Final display render pass
     Renderer::Txt rgba16 = renderer.textureCreate(MTLPixelFormatRGBA16Float,
         [rgb width], [rgb height], MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
-    renderer.render("CFAViewer::Shader::ImagePipeline::Display", rgba16,
-        // Texture args
-        rgb
+    
+    renderer.render(rgba16,
+        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Display",
+            // Texture args
+            rgb
+        )
     );
     
     renderer.sync(rgba16);

@@ -3,7 +3,7 @@
 using namespace metal;
 using namespace MDCTools::MetalUtil;
 
-namespace MDCStudio {
+namespace MDCTools {
 namespace ImagePipeline {
 namespace Shader {
 namespace RenderThumb {
@@ -50,4 +50,4 @@ fragment float4 TextureFromRGB3(
 } // namespace RenderThumb
 } // namespace Shader
 } // namespace ImagePipeline
-} // namespace MDCStudio
+} // namespace MDCTools
