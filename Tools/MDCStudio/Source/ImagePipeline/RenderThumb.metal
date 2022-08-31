@@ -19,9 +19,12 @@ fragment void RGB3FromTexture(
     const uint pxIdx = (pos.y*thumbWidth + pos.x);
     const uint32_t off = dataOff + (3 * pxIdx);
     const float3 s = Sample::RGB(txt, pos);
-    dst[off+0] = s.r*255;
-    dst[off+1] = s.g*255;
-    dst[off+2] = s.b*255;
+//    dst[off+0] = s.r*255;
+//    dst[off+1] = s.g*255;
+//    dst[off+2] = s.b*255;
+    dst[off+0] = saturate(s.r)*255;
+    dst[off+1] = saturate(s.g)*255;
+    dst[off+2] = saturate(s.b)*255;
 }
 
 fragment float4 TextureFromRGB3(
