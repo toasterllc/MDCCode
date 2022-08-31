@@ -3,7 +3,7 @@
 #import "Tools/Shared/Mat.h"
 #import "Tools/Shared/Renderer.h"
 #import "ImagePipelineTypes.h"
-#import "CFA.h"
+#import "Tools/Shared/CFA.h"
 
 class FFCC {
 public:
@@ -30,7 +30,7 @@ public:
     static Vec3 Run(
         const Model& model,
         MDCTools::Renderer& renderer,
-        const MDCStudio::CFADesc& cfaDesc,
+        const MDCTools::CFADesc& cfaDesc,
         id<MTLTexture> raw
     );
 };

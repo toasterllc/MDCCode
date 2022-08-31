@@ -1,7 +1,7 @@
 #pragma once
-#import "Tools/Shared/MetalUtil.h"
+#import "MetalUtil.h"
 
-namespace MDCStudio {
+namespace MDCTools {
 
 enum class CFAColor : uint8_t {
     Red     = 0,
@@ -19,4 +19,4 @@ struct CFADesc {
     CFAColor color(T pos) MetalConst { return color(pos.x, pos.y); }
 };
 
-} // namespace MDCStudio
+} // namespace MDCTools

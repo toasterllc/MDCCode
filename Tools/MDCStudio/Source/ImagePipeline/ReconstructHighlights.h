@@ -7,7 +7,13 @@ namespace MDCStudio::ImagePipeline {
 
 class ReconstructHighlights {
 public:
-    static void Run(MDCTools::Renderer& renderer, const CFADesc& cfaDesc, const Mat<double,3,1>& illum, id<MTLTexture> raw) {
+    static void Run(
+        MDCTools::Renderer& renderer,
+        const MDCTools::CFADesc& cfaDesc,
+        const Mat<double,3,1>& illum,
+        id<MTLTexture> raw
+    ) {
+        
         using namespace MDCTools;
         
         const size_t w = [raw width];

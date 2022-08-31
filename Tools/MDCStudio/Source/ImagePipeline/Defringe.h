@@ -3,7 +3,7 @@
 #import "ImagePipelineTypes.h"
 #import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/Mat.h"
-#import "CFA.h"
+#import "Tools/Shared/CFA.h"
 
 namespace MDCStudio::ImagePipeline {
 
@@ -18,8 +18,11 @@ public:
                                 // computing derivative, when solving for tile shift
     };
     
-    static void Run(MDCTools::Renderer& renderer, const CFADesc& cfaDesc,
-        const Options& opts, id<MTLTexture> raw);
+    static void Run(
+        MDCTools::Renderer& renderer,
+        const MDCTools::CFADesc& cfaDesc,
+        const Options& opts, id<MTLTexture> raw
+    );
 };
 
 }; // MDCStudio::ImagePipeline

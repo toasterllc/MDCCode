@@ -9,7 +9,7 @@
 #import <functional>
 #import <assert.h>
 #import "Assert.h"
-#import "Tools/Shared/MetalUtil.h"
+#import "MetalUtil.h"
 #import "Toastbox/HashInts.h"
 
 namespace MDCTools {

@@ -1,10 +1,11 @@
 #import <metal_stdlib>
 #import "Tools/Shared/MetalUtil.h"
 #import "ImagePipelineTypes.h"
-#import "CFA.h"
+#import "Tools/Shared/CFA.h"
 using namespace metal;
 using namespace MDCStudio;
 using namespace MDCStudio::ImagePipeline;
+using namespace MDCTools;
 using namespace MDCTools::MetalUtil;
 
 namespace MDCStudio {
@@ -13,7 +14,7 @@ namespace Shader {
 namespace DebayerBilinear {
 
 #define PX(x,y) Sample::R(Sample::MirrorClamp, raw, pos+int2{x,y})
-float r(constant CFADesc& cfaDesc, texture2d<float> raw, int2 pos) {
+float r(constant MDCTools::CFADesc& cfaDesc, texture2d<float> raw, int2 pos) {
     const CFAColor c = cfaDesc.color(pos);
     const CFAColor cn = cfaDesc.color(pos.x+1, pos.y);
     if (c==CFAColor::Blue || cn==CFAColor::Blue) {

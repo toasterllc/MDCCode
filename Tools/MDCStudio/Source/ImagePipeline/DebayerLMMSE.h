@@ -7,7 +7,13 @@ namespace MDCStudio::ImagePipeline {
 
 class DebayerLMMSE {
 public:
-    static void Run(MDCTools::Renderer& renderer, const CFADesc& cfaDesc, bool applyGamma, id<MTLTexture> srcRaw, id<MTLTexture> dstRGB) {
+    static void Run(
+        MDCTools::Renderer& renderer,
+        const MDCTools::CFADesc& cfaDesc,
+        bool applyGamma,
+        id<MTLTexture> srcRaw,
+        id<MTLTexture> dstRGB
+    ) {
         
         using namespace MDCTools;
         

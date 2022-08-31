@@ -8,7 +8,11 @@ namespace MDCStudio::ImagePipeline {
 
 class EstimateIlluminantFFCC {
 public:
-    static MDCTools::Color<MDCTools::ColorSpace::Raw> Run(MDCTools::Renderer& renderer, const CFADesc& cfaDesc, id<MTLTexture> raw) {
+    static MDCTools::Color<MDCTools::ColorSpace::Raw> Run(
+        MDCTools::Renderer& renderer,
+        const MDCTools::CFADesc& cfaDesc,
+        id<MTLTexture> raw) {
+        
         return FFCC::Run(_Model, renderer, cfaDesc, raw);
     }
     

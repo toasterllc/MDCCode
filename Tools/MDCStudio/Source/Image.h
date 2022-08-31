@@ -1,13 +1,13 @@
 #pragma once
 #include <memory>
-#include "CFA.h"
+#import "Tools/Shared/CFA.h"
 
 namespace MDCStudio {
 
 struct Image {
     size_t width = 0;
     size_t height = 0;
-    CFADesc cfaDesc;
+    MDCTools::CFADesc cfaDesc;
     std::unique_ptr<uint8_t[]> data;
     size_t off = 0;
 };

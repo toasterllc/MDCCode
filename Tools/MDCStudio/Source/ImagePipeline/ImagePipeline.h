@@ -11,7 +11,7 @@ namespace MDCStudio::ImagePipeline {
 class Pipeline {
 public:
     struct RawImage {
-        CFADesc cfaDesc;
+        MDCTools::CFADesc cfaDesc;
         size_t width = 0;
         size_t height = 0;
         const ImagePixel* pixels = nullptr;

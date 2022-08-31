@@ -1,7 +1,7 @@
 #import <metal_stdlib>
 #import "Tools/Shared/MetalUtil.h"
 #import "ImagePipelineTypes.h"
-#import "CFA.h"
+#import "Tools/Shared/CFA.h"
 using namespace metal;
 using namespace MDCStudio;
 using namespace MDCStudio::ImagePipeline;
@@ -90,7 +90,7 @@ fragment float2 Blur(
 }
 
 fragment float ReconstructHighlights(
-    constant CFADesc& cfaDesc [[buffer(0)]],
+    constant MDCTools::CFADesc& cfaDesc [[buffer(0)]],
     constant float3& illum [[buffer(1)]],
     texture2d<float> raw [[texture(0)]],
     texture2d<float> rgb [[texture(1)]],
@@ -98,16 +98,16 @@ fragment float ReconstructHighlights(
     VertexOutput in [[stage_in]]
 ) {
     const int2 pos = int2(in.pos.xy);
-    const CFAColor c = cfaDesc.color(pos);
+    const MDCTools::CFAColor c = cfaDesc.color(pos);
     const float r = Sample::R(Sample::MirrorClamp, raw, pos);
     const float2 m = Sample::RG(Sample::MirrorClamp, map, pos);
     const float k = m.r; // Illuminant brightness
     const float α = m.g; // Alpha channel
     
     switch (c) {
-    case CFAColor::Red:     return (α)*k*illum.r + (1-α)*r;
-    case CFAColor::Green:   return (α)*k*illum.g + (1-α)*r;
-    case CFAColor::Blue:    return (α)*k*illum.b + (1-α)*r;
+    case MDCTools::CFAColor::Red:       return (α)*k*illum.r + (1-α)*r;
+    case MDCTools::CFAColor::Green:     return (α)*k*illum.g + (1-α)*r;
+    case MDCTools::CFAColor::Blue:      return (α)*k*illum.b + (1-α)*r;
     }
     return 0;
 }

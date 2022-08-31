@@ -197,9 +197,9 @@ private:
     static constexpr uint32_t _Version = 0;
     static constexpr uint64_t _UnixTimeOffset = 1640995200; // 2022-01-01 00:00:00 +0000
     
-    static constexpr CFADesc _CFADesc = {
-        CFAColor::Green, CFAColor::Red,
-        CFAColor::Blue, CFAColor::Green,
+    static constexpr MDCTools::CFADesc _CFADesc = {
+        MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
+        MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
     };
     
     struct [[gnu::packed]] _SerializedState {

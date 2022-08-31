@@ -167,6 +167,7 @@
 		55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 		55D4AAA227B1D3F20052EFEE /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		55E43F3328BEAB6C00FCCEA0 /* DownsampleLoad.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DownsampleLoad.metal; sourceTree = "<group>"; };
+		55E43F7928C0085500FCCEA0 /* CFA.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFA.h; sourceTree = "<group>"; };
 		55F1143927C8BD3F00C24343 /* LayerScrollView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LayerScrollView.mm; sourceTree = "<group>"; };
 		55F1143A27C8BD3F00C24343 /* MetalScrollLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MetalScrollLayer.mm; sourceTree = "<group>"; };
 		55F1143B27C8BD3F00C24343 /* LayerScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LayerScrollView.h; sourceTree = "<group>"; };
@@ -178,7 +179,6 @@
 		55F8D01627BEF97200757165 /* ImageView.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageView.metal; sourceTree = "<group>"; };
 		55F8D01827BEF97200757165 /* ImageViewTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageViewTypes.h; sourceTree = "<group>"; };
 		55F8D01B27BF5F0700757165 /* Image.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Image.h; sourceTree = "<group>"; };
-		55F8D01C27BF642900757165 /* CFA.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFA.h; sourceTree = "<group>"; };
 		55F8D03027BF9F8000757165 /* ImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageCache.h; sourceTree = "<group>"; };
 		55F8D05827C0E07900757165 /* Lockable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lockable.h; sourceTree = "<group>"; };
 		55F8D09227C2EE9D00757165 /* ImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageSource.h; sourceTree = "<group>"; };
@@ -264,6 +264,7 @@
 				5544AE0227B5E57A006AB473 /* Mod.h */,
 				5544AE0427B5E57A006AB473 /* Interp.h */,
 				5544AE0527B5E57A006AB473 /* Assert.h */,
+				55E43F7928C0085500FCCEA0 /* CFA.h */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -390,7 +391,6 @@
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				55F8D09227C2EE9D00757165 /* ImageSource.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
-				55F8D01C27BF642900757165 /* CFA.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,
 				5562353A27B5086E0008074C /* Util.h */,
 				55496F46278CFC0400BCA739 /* AppDelegate.mm */,

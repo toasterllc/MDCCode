@@ -5,13 +5,14 @@
 #import <filesystem>
 #import <iostream>
 #import <unordered_map>
-#import "Mmap.h"
-#import "Renderer.h"
-#import "ImagePipelineTypes.h"
-#import "DebayerLMMSE.h"
-#import "Mat.h"
-#import "Color.h"
-using namespace CFAViewer;
+#import "Toastbox/Mmap.h"
+#import "Tools/Shared/Renderer.h"
+#import "Tools/Shared/Mat.h"
+#import "Tools/Shared/Color.h"
+#import "ImagePipeline/ImagePipelineTypes.h"
+#import "ImagePipeline/DebayerLMMSE.h"
+using namespace MDCStudio;
+using namespace MDCTools;
 namespace fs = std::filesystem;
 
 struct CCM {
@@ -118,7 +119,7 @@ static simd::float3x3 SIMDFromMat(const Mat<double,3,3>& m) {
 }
 
 static void writePNG(Renderer& renderer, id<MTLTexture> txt, const fs::path& path) {
-    id img = renderer.createCGImage(txt);
+    id img = renderer.imageCreate(txt);
     if (!img) throw std::runtime_error("renderer.createCGImage returned nil");
     
     id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
@@ -145,7 +146,7 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //    const Color<ColorSpace::Raw>& illumRaw = C50Illuminants.at(path.filename().replace_extension());
 //    const Color<ColorSpace::Raw>& illum(C5IllumCorrectionMatrix*illumRaw.m);
     const size_t len = sizeof(uint16_t)*width*height;
-    const Mmap imgMmap(path.c_str());
+    const Toastbox::Mmap imgMmap(path.c_str());
     
     // Verify that the file size is what we expect, given the image width/height
     if (imgMmap.len() != len) throw std::runtime_error("invalid length");
