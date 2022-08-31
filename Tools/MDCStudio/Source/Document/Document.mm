@@ -117,7 +117,11 @@ static void _addImages(ImageLibraryPtr imgLib, MDCTools::Renderer& renderer, con
                 .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
             };
             
-            const Pipeline::Options pipelineOpts = {};
+            const Pipeline::Options pipelineOpts = {
+                .rawMode = false,
+//                .reconstructHighlights  = { .en = false, },
+                .debayerLMMSE           = { .applyGamma = true, },
+            };
             
             Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
             const size_t thumbDataOff = (uintptr_t)&imageThumb.thumb - (uintptr_t)chunk.mmap.data();
@@ -248,7 +252,7 @@ static void _addImages(ImageLibraryPtr imgLib, MDCTools::Renderer& renderer, con
         ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/Old/2022:8:30/ImageLibraryTest"));
         il->read();
         
-        std::thread t([=] {
+        {
             auto startTime = std::chrono::steady_clock::now();
             
             Toastbox::Mmap mmap("/Users/dave/Desktop/Old/2022:8:30/SDImagesRaw-512");
@@ -261,14 +265,16 @@ static void _addImages(ImageLibraryPtr imgLib, MDCTools::Renderer& renderer, con
             _addImages(il, renderer, mmap.data(), ImageCount, 0);
             
 //            il->write();
-        });
-        t.detach();
+        }
         
         ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (const ImageRef& imageRef) { return nullptr; });
         
         auto imageSource = std::make_shared<FakeImageSource>();
         imageSource->il = il;
         imageSource->ic = ic;
+        
+//        ImageView* imageView = [[ImageView alloc] initWithImageThumb:*il->recordGet(il->begin()) imageSource:imageSource];
+//        [_mainView setContentView:imageView animation:MainViewAnimation::None];
         
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
         [_mainView setContentView:imageGridView animation:MainViewAnimation::None];

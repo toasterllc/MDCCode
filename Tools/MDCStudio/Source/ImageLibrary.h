@@ -42,8 +42,8 @@ struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 288;
 //    static constexpr size_t ThumbHeight     = 162;
 
-    static constexpr size_t ThumbWidth      = 400;
-    static constexpr size_t ThumbHeight     = 225;
+//    static constexpr size_t ThumbWidth      = 400;
+//    static constexpr size_t ThumbHeight     = 225;
     
 //    static constexpr size_t ThumbWidth      = 432;
 //    static constexpr size_t ThumbHeight     = 243;
@@ -54,8 +54,11 @@ struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 512;
 //    static constexpr size_t ThumbHeight     = 288;
     
-//    static constexpr size_t ThumbWidth      = 576;
-//    static constexpr size_t ThumbHeight     = 324;
+    static constexpr size_t ThumbWidth      = 576;
+    static constexpr size_t ThumbHeight     = 324;
+    
+//    static constexpr size_t ThumbWidth      = 2304;
+//    static constexpr size_t ThumbHeight     = 1296;
     
     static constexpr size_t ThumbPixelSize  = 3;
     
