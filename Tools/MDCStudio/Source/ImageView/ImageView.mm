@@ -3,8 +3,8 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import "Util.h"
-#import "ImagePipeline/RenderThumb.h"
-#import "ImagePipeline/ImagePipeline.h"
+#import "Tools/Shared/ImagePipeline/RenderThumb.h"
+#import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "ImageViewTypes.h"
 #import "LayerScrollView.h"
 #import "MetalScrollLayer.h"

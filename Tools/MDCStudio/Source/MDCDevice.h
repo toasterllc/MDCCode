@@ -7,9 +7,9 @@
 #import "Code/Shared/ImgSD.h"
 #import "Code/Shared/BufQueue.h"
 #import "Tools/Shared/MDCUSBDevice.h"
+#import "Tools/Shared/ImagePipeline/ImagePipeline.h"
+#import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "ImageLibrary.h"
-#import "ImagePipeline/ImagePipeline.h"
-#import "ImagePipeline/RenderThumb.h"
 #import "ImageCache.h"
 #import "ImageSource.h"
 

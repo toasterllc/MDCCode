@@ -1,10 +1,10 @@
 #import "Defringe.h"
 #import <queue>
 #import <thread>
-#import "Tools/Shared/Renderer.h"
-#import "Tools/Shared/Poly2D.h"
-#import "Tools/Shared/PixelSampler.h"
-#import "Tools/Shared/MetalUtil.h"
+#import "../Renderer.h"
+#import "../Poly2D.h"
+#import "../PixelSampler.h"
+#import "../MetalUtil.h"
 #import "ImagePipelineTypes.h"
 using namespace MDCStudio;
 using namespace MDCStudio::ImagePipeline;

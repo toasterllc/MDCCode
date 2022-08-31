@@ -1,9 +1,9 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import "ImagePipelineTypes.h"
-#import "Tools/Shared/Renderer.h"
-#import "Tools/Shared/Mat.h"
-#import "Tools/Shared/CFA.h"
+#import "../Renderer.h"
+#import "../Mat.h"
+#import "../CFA.h"
 
 namespace MDCStudio::ImagePipeline {
 

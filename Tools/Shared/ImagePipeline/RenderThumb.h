@@ -1,6 +1,6 @@
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "ImagePipelineTypes.h"
-#import "Tools/Shared/Renderer.h"
+#import "../Renderer.h"
 
 namespace MDCStudio::ImagePipeline {
 

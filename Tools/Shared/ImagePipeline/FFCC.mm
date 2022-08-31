@@ -1,9 +1,9 @@
 #import "FFCC.h"
 #import "ImagePipelineTypes.h"
-#import "Tools/Shared/MetalUtil.h"
-#import "Tools/Shared/Color.h"
-#import "Tools/Shared/Renderer.h"
-#import "Tools/Shared/Mod.h"
+#import "../MetalUtil.h"
+#import "../Color.h"
+#import "../Renderer.h"
+#import "../Mod.h"
 using namespace MDCStudio;
 using namespace MDCStudio::ImagePipeline;
 using namespace MDCTools;

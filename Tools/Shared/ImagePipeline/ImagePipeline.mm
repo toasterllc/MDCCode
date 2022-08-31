@@ -1,15 +1,15 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import "ImagePipeline.h"
-#import "Tools/Shared/MetalUtil.h"
-#import "Tools/Shared/Renderer.h"
+#import "../MetalUtil.h"
+#import "../Renderer.h"
 #import "ImagePipelineTypes.h"
 #import "Defringe.h"
 #import "ReconstructHighlights.h"
 #import "DebayerLMMSE.h"
 #import "LocalContrast.h"
 #import "Saturation.h"
-#import "Tools/Shared/Mat.h"
+#import "../Mat.h"
 #import "EstimateIlluminantFFCC.h"
 using namespace MDCTools;
 

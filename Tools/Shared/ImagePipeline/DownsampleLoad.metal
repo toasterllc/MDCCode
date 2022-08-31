@@ -1,7 +1,7 @@
 #import <metal_stdlib>
-#import "Tools/Shared/MetalUtil.h"
+#import "../MetalUtil.h"
 #import "ImagePipelineTypes.h"
-#import "Tools/Shared/CFA.h"
+#import "../CFA.h"
 using namespace metal;
 using namespace MDCStudio;
 using namespace MDCStudio::ImagePipeline;

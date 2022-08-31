@@ -1,4 +1,4 @@
-#import "Tools/Shared/MetalUtil.h"
+#import "../MetalUtil.h"
 
 #if !MetalShaderContext
 #import <Metal/Metal.h>
