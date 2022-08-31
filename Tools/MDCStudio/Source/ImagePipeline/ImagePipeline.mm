@@ -11,7 +11,6 @@
 #import "Saturation.h"
 #import "Tools/Shared/Mat.h"
 #import "EstimateIlluminantFFCC.h"
-#import "ImageLibrary.h"
 using namespace MDCTools;
 
 struct CCM {
@@ -130,17 +129,15 @@ static simd::float3x3 simdForMat(const Mat<double,3,3>& m) {
 namespace MDCStudio::ImagePipeline {
 
 Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts) {
-    const size_t wraw = rawImg.width;
-    const size_t hraw = rawImg.height;
-    
     constexpr uint32_t DownsampleFactor = 4;
-    const size_t w = wraw/DownsampleFactor;
-    const size_t h = hraw/DownsampleFactor;
+    const size_t w = rawImg.width/DownsampleFactor;
+    const size_t h = rawImg.height/DownsampleFactor;
     
     Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
     
+    // Load `raw`
     {
-        Renderer::Txt rawLarge = renderer.textureCreate(MTLPixelFormatR32Float, wraw, hraw);
+        Renderer::Txt rawLarge = renderer.textureCreate(MTLPixelFormatR32Float, rawImg.width, rawImg.height);
         
         // Load `rawLarge`
         {
@@ -159,21 +156,18 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
                 )
             );
         }
+//        constexpr size_t SamplesPerPixel = 1;
+//        constexpr size_t BytesPerSample = sizeof(*rawImg.pixels);
+//        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
     }
     
-    Renderer::Txt rgbTmp1 = renderer.textureCreate(MTLPixelFormatRGBA32Float, [raw width], [raw height], MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite|MTLTextureUsageRenderTarget);
-    
-    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float,
-        MDCStudio::ImageThumb::ThumbWidth,
-        MDCStudio::ImageThumb::ThumbHeight,
-        MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite|MTLTextureUsageRenderTarget
-    );
+    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
     Color<ColorSpace::Raw> illumEst;
     
     // Raw mode (bilinear debayer only)
-    {
+    if (opts.rawMode) {
         // De-bayer
-        renderer.render(rgbTmp1,
+        renderer.render(rgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "DebayerBilinear::Debayer",
                 // Buffer args
                 rawImg.cfaDesc,
@@ -181,36 +175,191 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
                 raw
             )
         );
+    
+    } else {
+//        renderer.debugShowTexture(raw);
         
-//        auto rgbTmp2 = renderer.copy(rgbTmp1);
-//        MPSImageGaussianBlur* blur = [[MPSImageGaussianBlur alloc] initWithDevice:renderer.dev sigma:.1];
-//        [blur encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:rgbTmp2 destinationTexture:rgbTmp1];
+        // Estimate illuminant, if an illuminant isn't provided in `opts.illum`
+        Color<ColorSpace::Raw> illum;
+        if (opts.illum) {
+            illum = *opts.illum;
+        } else {
+            illum = EstimateIlluminantFFCC::Run(renderer, rawImg.cfaDesc, raw);
+            illumEst = illum;
+        }
+        
+        // Reconstruct highlights
+        if (opts.reconstructHighlights.en) {
+            ReconstructHighlights::Run(renderer, rawImg.cfaDesc, illum.m, raw);
+        }
+        
+        // White balance
+        {
+            const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
+            const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+            const simd::float3 simdWB = simdForMat(wb);
+            renderer.render(raw,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
+                    // Buffer args
+                    rawImg.cfaDesc,
+                    simdWB,
+                    // Texture args
+                    raw
+                )
+            );
+        }
+        
+        if (opts.defringe.en) {
+            Defringe::Run(renderer, rawImg.cfaDesc, opts.defringe.opts, raw);
+        }
+        
+        // LMMSE Debayer
+        {
+            DebayerLMMSE::Run(renderer, rawImg.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
+        }
+        
+        // Camera raw -> ProPhotoRGB
+        {
+            const CCM ccm = CCMForIlluminant(illum);
+//            printf("CCT: %f\n", ccm.cct);
+            const simd::float3x3 colorMatrix = simdForMat(ccm.m);
+            
+//            const simd::float3x3 colorMatrix = simdForMat(opts.colorMatrix);
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
+                    // Buffer args
+                    colorMatrix,
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // ProPhotoRGB -> XYZ.D50
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGB",
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // XYZ.D50 -> XYY.D50
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYYFromXYZ",
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // Exposure
+        {
+            const float exposure = pow(2, opts.exposure);
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Exposure",
+                    // Buffer args
+                    exposure,
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // XYY.D50 -> XYZ.D50
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZFromXYY",
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // XYZ.D50 -> Lab.D50
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // Brightness
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Brightness",
+                    // Buffer args
+                    opts.brightness,
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // Contrast
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Contrast",
+                    // Buffer args
+                    opts.contrast,
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // Local contrast
+        if (opts.localContrast.en) {
+            LocalContrast::Run(renderer, opts.localContrast.amount,
+                opts.localContrast.radius, rgb);
+        }
+        
+        // Lab.D50 -> XYZ.D50
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // Saturation
+        Saturation::Run(renderer, opts.saturation, rgb);
+        
+        // XYZ.D50 -> XYZ.D65
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::BradfordXYZD65FromXYZD50",
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // XYZ.D65 -> LSRGB.D65
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LSRGBD65FromXYZD65",
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // We changed our semantics to explicitly output LSRGB, so we no longer apply the SRGB gamma ourselves
+//        // Apply SRGB gamma
+//        {
+//            renderer.render(rgb, ImagePipelineShaderNamespace "Base::SRGBGamma",
+//                // Texture args
+//                rgb
+//            );
+//        }
     }
-    
-//    // LMMSE debayer mode
-//    {
-//        // Estimate illuminant, if an illuminant isn't provided in `opts.illum`
-//        Color<ColorSpace::Raw> illum = {1,1,1};
-////        if (opts.illum) {
-////            illum = *opts.illum;
-////        } else {
-////            illum = EstimateIlluminantFFCC::Run(renderer, rawImg.cfaDesc, raw);
-////            illumEst = illum;
-////        }
-////        
-////        // Reconstruct highlights
-////        if (opts.reconstructHighlights.en) {
-////            ReconstructHighlights::Run(renderer, rawImg.cfaDesc, illum.m, raw);
-////        }
-////        
-////        // LMMSE Debayer
-////        {
-//            DebayerLMMSE::Run(renderer, rawImg.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgbTmp1);
-////        }
-//    }
-    
-    MPSImageLanczosScale* resample = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
-    [resample encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:rgbTmp1 destinationTexture:rgb];
     
     return Result{
         .txt = std::move(rgb),
