@@ -204,16 +204,16 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
         DebayerLMMSE::Run(renderer, CFADesc, true, raw576x324, rgb576x324);
     }
     
-    // Scale the image
-    Renderer::Txt rgb64x36 = renderer.textureCreate(MTLPixelFormatRGBA8Unorm, 64, 36);
-    {
-        renderer.render(rgb64x36,
-            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Scale",
-                // Texture args
-                rgb576x324
-            )
-        );
-    }
+//    // Scale the image
+//    Renderer::Txt rgb64x36 = renderer.textureCreate(MTLPixelFormatRGBA8Unorm, 64, 36);
+//    {
+//        renderer.render(rgb64x36,
+//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Scale",
+//                // Texture args
+//                rgb576x324
+//            )
+//        );
+//    }
     
 //    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, scaledWidth, scaledHeight);
     
@@ -279,23 +279,23 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //        rgb = std::move(rgbScaled);
 //    }
     
-//    // Final display render pass
-//    Renderer::Txt rgba16 = renderer.textureCreate(MTLPixelFormatRGBA16Float,
-//        [rgb width], [rgb height], MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
-//    
-//    renderer.render(rgba16,
-//        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Display",
-//            // Texture args
-//            rgb
-//        )
-//    );
+    // Final display render pass
+    Renderer::Txt rgba16 = renderer.textureCreate(MTLPixelFormatRGBA16Float,
+        [rgb576x324 width], [rgb576x324 height], MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
     
-    renderer.sync(rgb64x36);
+    renderer.render(rgba16,
+        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Display",
+            // Texture args
+            rgb576x324
+        )
+    );
+    
+    renderer.sync(rgba16);
     renderer.commitAndWait();
     
     const fs::path pngPath = fs::path(path).replace_extension(".png");
     std::cout << pngPath << "\n";
-    writePNG(renderer, rgb64x36, pngPath);
+    writePNG(renderer, rgba16, pngPath);
 }
 
 static bool isCFAFile(const fs::path& path) {
