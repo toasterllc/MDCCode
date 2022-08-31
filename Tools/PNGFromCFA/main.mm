@@ -152,8 +152,8 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
     if (imgMmap.len() != len) throw std::runtime_error("invalid length");
     
     // Create a texture from the raw CFA data
-    Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
-    renderer.textureWrite(raw, (uint16_t*)imgMmap.data(), 1, sizeof(uint16_t), ImagePixelMax);
+    Renderer::Txt raw2304x1296 = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
+    renderer.textureWrite(raw2304x1296, (uint16_t*)imgMmap.data(), 1, sizeof(uint16_t), ImagePixelMax);
     
 //    // Reconstruct highlights
 //    {
@@ -187,19 +187,35 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //        );
 //    }
     
-    const uint32_t scaledWidth = 384;
-    const uint32_t scaledHeight = (uint32_t)((scaledWidth*[raw height])/[raw width]);
-    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, scaledWidth, scaledHeight);
-    
-    renderer.render(rgb,
-        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::DebayerDownsample",
+    constexpr uint32_t DownsampleFactor = 4;
+    Renderer::Txt raw576x324 = renderer.textureCreate(MTLPixelFormatR32Float, 576, 324);
+    renderer.render(raw576x324,
+        renderer.FragmentShader(ImagePipelineShaderNamespace "DownsampleDiscardRaw",
             // Buffer args
-            CFADesc,
+            DownsampleFactor,
             // Texture args
-            raw,
-            rgb
+            raw2304x1296
         )
     );
+    
+    // LMMSE Debayer
+    Renderer::Txt rgb576x324 = renderer.textureCreate(MTLPixelFormatRGBA32Float, [raw576x324 width], [raw576x324 height]);
+    {
+        DebayerLMMSE::Run(renderer, CFADesc, true, raw576x324, rgb576x324);
+    }
+    
+    // Scale the image
+    Renderer::Txt rgb64x36 = renderer.textureCreate(MTLPixelFormatRGBA8Unorm, 64, 36);
+    {
+        renderer.render(rgb64x36,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Scale",
+                // Texture args
+                rgb576x324
+            )
+        );
+    }
+    
+//    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, scaledWidth, scaledHeight);
     
 //    // LMMSE Debayer
 //    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, width, height);
@@ -263,23 +279,23 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //        rgb = std::move(rgbScaled);
 //    }
     
-    // Final display render pass
-    Renderer::Txt rgba16 = renderer.textureCreate(MTLPixelFormatRGBA16Float,
-        [rgb width], [rgb height], MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
+//    // Final display render pass
+//    Renderer::Txt rgba16 = renderer.textureCreate(MTLPixelFormatRGBA16Float,
+//        [rgb width], [rgb height], MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
+//    
+//    renderer.render(rgba16,
+//        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Display",
+//            // Texture args
+//            rgb
+//        )
+//    );
     
-    renderer.render(rgba16,
-        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Display",
-            // Texture args
-            rgb
-        )
-    );
-    
-    renderer.sync(rgba16);
+    renderer.sync(rgb64x36);
     renderer.commitAndWait();
     
     const fs::path pngPath = fs::path(path).replace_extension(".png");
     std::cout << pngPath << "\n";
-    writePNG(renderer, rgba16, pngPath);
+    writePNG(renderer, rgb64x36, pngPath);
 }
 
 static bool isCFAFile(const fs::path& path) {
@@ -287,7 +303,7 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 int main(int argc, const char* argv[]) {
-    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330-166-384x216"};
+    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330-166-64x36"};
     argc = std::size(args);
     argv = args;
     
