@@ -1,9 +1,9 @@
+`ifndef AFIFOChain_v
+`define AFIFOChain_v
+
 `include "Util.v"
 `include "AFIFO.v"
 `include "Sync.v"
-
-`ifndef AFIFOChain_v
-`define AFIFOChain_v
 
 module AFIFOChain #(
     parameter W = 16,   // Word width
