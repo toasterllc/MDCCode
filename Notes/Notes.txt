@@ -4,13 +4,14 @@
         - VDD_B_1V8_IMG & VDD_B_1V8_SD
         - VDD_B_2V8_IMG & VDD_B_2V8_SD
     
-    - Consider having STM control the VDD_B_X_EN rails directly, to clean up our host-mode logic
+    - Consider having STM control the VDD_B_X_EN rails directly, to clean up MSP's host-mode logic
         - MSP would control the VDD_B_X_EN rails with a weak pullup/pulldown. When STM is powered, it would control the rails with strong push/pull.
         - Rationale: we have a complicated host mode based on conflicting facts:
             1. MSP needs to be running to keep track of time,
             2. MSP rails need to be controlled via SBW/JTAG
             3. MSP rails are reset when connecting/disconnecting SBW/JTAG
         - To validate this idea, make sure MSP430 can pull up a net while connected to a high-Z STM GPIO
+            √ We know it can because it's currently able to pullup the HOST_MODE_ net
     
     - Add soldermask markings for VDD / GND battery terminal leads
     
