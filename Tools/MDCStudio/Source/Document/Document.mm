@@ -119,7 +119,7 @@ static void _addImages(ImageLibraryPtr imgLib, MDCTools::Renderer& renderer, con
             
             const Pipeline::Options pipelineOpts = {
                 .rawMode = false,
-//                .reconstructHighlights  = { .en = false, },
+                .reconstructHighlights  = { .en = true, },
                 .debayerLMMSE           = { .applyGamma = true, },
             };
             
@@ -261,7 +261,7 @@ static void _addImages(ImageLibraryPtr imgLib, MDCTools::Renderer& renderer, con
             if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
             MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
             
-            constexpr size_t ImageCount = 1;
+            constexpr size_t ImageCount = 256;
             _addImages(il, renderer, mmap.data(), ImageCount, 0);
             
 //            il->write();

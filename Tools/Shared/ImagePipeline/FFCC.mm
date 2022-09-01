@@ -259,7 +259,7 @@ FFCC::Vec3 FFCC::Run(
             )
         );
         
-        // Scale the image to `w` x `h`
+        // Scale the image to w * h
         renderer.render(img,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Scale",
                 // Texture args
