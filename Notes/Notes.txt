@@ -111,6 +111,25 @@
         - The STM32 previously enumerated via USB, so this used to work.
         √ Solution: don't rapidly change the temp of the board eg by adding flux or rinsing in alcohol!
 
+
+
+- FFCC improvements
+
+    - Create new training set
+        - Use color checker with known colors
+            - We could either:
+                - Measure the colors ourself, or
+                - Use a colorchecker with guaranteed colors
+
+        - Capture lots of different lighting conditions
+
+        - Capture images with the color checker illuminated by the primary illuminant (ie not in a shadow)
+
+        - Black-out color checker in images
+
+        - Ensure there aren't common elements in each image (eg Sue holding the color checker)
+
+
 - Rev5
     
     - MSPApp: while running on battery power with CurrentRanger monitoring, after some time the current
