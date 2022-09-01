@@ -118,8 +118,13 @@ static simd::float3x3 SIMDFromMat(const Mat<double,3,3>& m) {
     };
 }
 
+static id _SRGBColorSpace() {
+    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    return (__bridge id)cs;
+}
+
 static void writePNG(Renderer& renderer, id<MTLTexture> txt, const fs::path& path) {
-    id img = renderer.imageCreate(txt);
+    id img = renderer.imageCreate(txt, _SRGBColorSpace());
     if (!img) throw std::runtime_error("renderer.createCGImage returned nil");
     
     id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(
@@ -198,14 +203,48 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
         )
     );
     
-    // LMMSE Debayer
-    Renderer::Txt rgb576x324 = renderer.textureCreate(MTLPixelFormatRGBA32Float, [raw576x324 width], [raw576x324 height]);
+    // De-bayer
+    Renderer::Txt rgb576x324 = renderer.textureCreate(MTLPixelFormatRGBA32Float, 576, 324);
+    renderer.render(rgb576x324,
+        renderer.FragmentShader(ImagePipelineShaderNamespace "DebayerBilinear::Debayer",
+            // Buffer args
+            CFADesc,
+            // Texture args
+            raw576x324
+        )
+    );
+    
+    // Scale the image and convert to 16-bit
+    Renderer::Txt rgb64x36 = renderer.textureCreate(MTLPixelFormatRGBA16Float, 64, 36);
     {
-        DebayerLMMSE::Run(renderer, CFADesc, true, raw576x324, rgb576x324);
+        renderer.render(rgb64x36,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Scale",
+                // Texture args
+                rgb576x324
+            )
+        );
     }
     
+    
+    
+    
+    
+    
+    
+//    Renderer::Txt rgb64x36 = renderer.textureCreate(MTLPixelFormatRGBA32Float, 64, 36);
+//    renderer.render(rgb64x36,
+//        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::DebayerDownsample",
+//            // Buffer args
+//            CFADesc,
+//            (uint32_t)[rgb64x36 width],
+//            (uint32_t)[rgb64x36 height],
+//            // Texture args
+//            raw576x324
+//        )
+//    );
+//    
 //    // Scale the image
-//    Renderer::Txt rgb64x36 = renderer.textureCreate(MTLPixelFormatRGBA8Unorm, 64, 36);
+//    Renderer::Txt rgb64x36 = renderer.textureCreate(MTLPixelFormatRGBA16Float, 64, 36);
 //    {
 //        renderer.render(rgb64x36,
 //            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Scale",
@@ -279,23 +318,26 @@ static void createPNGFromCFA(Renderer& renderer, uint32_t width, uint32_t height
 //        rgb = std::move(rgbScaled);
 //    }
     
-    // Final display render pass
-    Renderer::Txt rgba16 = renderer.textureCreate(MTLPixelFormatRGBA16Float,
-        [rgb576x324 width], [rgb576x324 height], MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
+//    // Final display render pass
+//    Renderer::Txt rgba16 = renderer.textureCreate(MTLPixelFormatRGBA16Float,
+//        [rgb576x324 width], [rgb576x324 height], MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead);
+//    
+//    renderer.render(rgba16,
+//        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Display",
+//            // Texture args
+//            rgb576x324
+//        )
+//    );
     
-    renderer.render(rgba16,
-        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Display",
-            // Texture args
-            rgb576x324
-        )
-    );
+
+    const auto& rgb = rgb64x36;
     
-    renderer.sync(rgba16);
+    renderer.sync(rgb);
     renderer.commitAndWait();
     
     const fs::path pngPath = fs::path(path).replace_extension(".png");
     std::cout << pngPath << "\n";
-    writePNG(renderer, rgba16, pngPath);
+    writePNG(renderer, rgb, pngPath);
 }
 
 static bool isCFAFile(const fs::path& path) {
@@ -303,7 +345,7 @@ static bool isCFAFile(const fs::path& path) {
 }
 
 int main(int argc, const char* argv[]) {
-    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330-166-64x36"};
+    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330_64x36"};
     argc = std::size(args);
     argv = args;
     

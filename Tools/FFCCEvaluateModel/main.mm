@@ -3,13 +3,13 @@
 #import <complex>
 #import <iostream>
 #import <atomic>
-#import "Renderer.h"
+#import "Tools/Shared/Renderer.h"
 #import "/Applications/MATLAB_R2021a.app/extern/include/mat.h"
 #import "Debug.h"
-#import "Mmap.h"
-#import "EstimateIlluminantFFCC.h"
-using namespace CFAViewer;
-using namespace ImagePipeline;
+#import "Toastbox/Mmap.h"
+#import "Tools/Shared/ImagePipeline/EstimateIlluminantFFCC.h"
+using namespace MDCTools;
+using namespace MDCTools::ImagePipeline;
 namespace fs = std::filesystem;
 
 MATFile* W_EM = matOpen("/Users/dave/repos/MotionDetectorCamera/Tools/FFCCEvaluateModel/Workspace-EvaluateModel.mat", "r");
@@ -22,15 +22,27 @@ static void processImageFile(Renderer& renderer, const fs::path& path) {
     constexpr size_t W = 2304;
     constexpr size_t H = 1296;
     
-    const Mmap cfa(path);
-    assert(cfa.len() == W*H*sizeof(MetalUtil::ImagePixel));
+    const Toastbox::Mmap cfa(path);
+    assert(cfa.len() == W*H*sizeof(ImagePixel));
     
     // Create a texture from the raw CFA data
-    Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, W, H);
-    renderer.textureWrite(raw, (uint16_t*)cfa.data(), 1, sizeof(uint16_t), MetalUtil::ImagePixelMax);
+    Renderer::Txt raw2304x1296 = renderer.textureCreate(MTLPixelFormatR32Float, W, H);
+    renderer.textureWrite(raw2304x1296, (uint16_t*)cfa.data(), 1, sizeof(uint16_t), ImagePixelMax);
+    
+    // Downsample the fullsize image by discarding pixels
+    constexpr uint32_t DownsampleFactor = 4;
+    Renderer::Txt raw576x324 = renderer.textureCreate(MTLPixelFormatR32Float, 576, 324);
+    renderer.render(raw576x324,
+        renderer.FragmentShader(ImagePipelineShaderNamespace "DownsampleDiscardRaw",
+            // Buffer args
+            DownsampleFactor,
+            // Texture args
+            raw2304x1296
+        )
+    );
     
     const CFADesc cfaDesc = {CFAColor::Green, CFAColor::Red, CFAColor::Blue, CFAColor::Green};
-    const Color<ColorSpace::Raw> illum = EstimateIlluminantFFCC::Run(renderer, cfaDesc, raw);
+    const Color<ColorSpace::Raw> illum = EstimateIlluminantFFCC::Run(renderer, cfaDesc, raw576x324);
     
     printf("{ \"%s\", { %f, %f, %f } },\n",
         path.filename().replace_extension().c_str(),
@@ -68,7 +80,8 @@ int main(int argc, const char* argv[]) {
 //    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330/indoor_night2_132.png"};
 //    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330"};
 //    const char* args[] = {"", "/Users/dave/Desktop/Old/2021:4:3/CFAViewerSession-All-FilteredGood"};
-    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330-166-384x216"};
+//    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330-166-384x216"};
+    const char* args[] = {"", "/Users/dave/repos/ffcc/data/AR0330_64x36"};
     argc = std::size(args);
     argv = args;
     

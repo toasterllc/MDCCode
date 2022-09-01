@@ -243,17 +243,30 @@ FFCC::Vec3 FFCC::Run(
     const CFADesc& cfaDesc,
     id<MTLTexture> raw
 ) {
-    
-    const uint32_t w = 384;
+    const uint32_t w = 64;
     const uint32_t h = (uint32_t)((w*[raw height])/[raw width]);
     Renderer::Txt img = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
-    renderer.render(img,
-        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::DebayerDownsample",
-            cfaDesc,
-            raw,
-            img
-        )
-    );
+    
+    // De-bayer and scale
+    {
+        Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, [raw width], [raw height]);
+        renderer.render(rgb,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "DebayerBilinear::Debayer",
+                // Buffer args
+                cfaDesc,
+                // Texture args
+                raw
+            )
+        );
+        
+        // Scale the image to `w` x `h`
+        renderer.render(img,
+            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Scale",
+                // Texture args
+                rgb
+            )
+        );
+    }
     
     Renderer::Txt mask = renderer.textureCreate(MTLPixelFormatR8Unorm, w, h);
     renderer.render(mask,

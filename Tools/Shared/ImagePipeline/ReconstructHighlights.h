@@ -23,9 +23,10 @@ public:
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::DebayerDownsample",
                 // Buffer args
                 cfaDesc,
+                (uint32_t)[rgb width],
+                (uint32_t)[rgb height],
                 // Texture args
-                raw,
-                rgb
+                raw
             )
         );
         

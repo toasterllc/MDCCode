@@ -13,12 +13,14 @@
 		55958572261D8AFF0008EC38 /* libmex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 55958571261D8AFF0008EC38 /* libmex.dylib */; };
 		55958574261D8B7C0008EC38 /* libmx.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 55958573261D8B7C0008EC38 /* libmx.dylib */; };
 		55958576261FCA180008EC38 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55958575261FCA180008EC38 /* Cocoa.framework */; };
-		5595857F262008FD0008EC38 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5595857D262008FD0008EC38 /* Renderer.metal */; };
 		559585972620096D0008EC38 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559585962620096D0008EC38 /* Metal.framework */; };
-		55AE80D0262FCC5400BA227C /* EstimateIlluminantFFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55AE80CE262FCC5400BA227C /* EstimateIlluminantFFCC.mm */; };
-		55AE80D4262FCC6900BA227C /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55AE80D1262FCC6900BA227C /* FFCC.metal */; };
-		55AE80D5262FCC6900BA227C /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55AE80D3262FCC6900BA227C /* FFCC.mm */; };
-		55AE80D7262FCC8D00BA227C /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55AE80D6262FCC8D00BA227C /* ImagePipeline.metal */; };
+		55E4400F28C0548300FCCEA0 /* EstimateIlluminantFFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E4400728C0543900FCCEA0 /* EstimateIlluminantFFCC.mm */; };
+		55E4401028C0548B00FCCEA0 /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FFE28C0543900FCCEA0 /* FFCC.metal */; };
+		55E4401128C0548E00FCCEA0 /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E4400E28C0543900FCCEA0 /* FFCC.mm */; };
+		55E4401428C056DF00FCCEA0 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E4401228C056DF00FCCEA0 /* Renderer.metal */; };
+		55E4401528C056F700FCCEA0 /* DownsampleDiscardRaw.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FFB28C0543900FCCEA0 /* DownsampleDiscardRaw.metal */; };
+		55E4401628C0570600FCCEA0 /* DebayerBilinear.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E4400B28C0543900FCCEA0 /* DebayerBilinear.metal */; };
+		55E4401728C0571500FCCEA0 /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E4400628C0543900FCCEA0 /* ImagePipeline.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -35,10 +37,7 @@
 
 /* Begin PBXFileReference section */
 		554B91B6261D349A00618ACA /* FFCCEvaluateModel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = FFCCEvaluateModel; sourceTree = BUILT_PRODUCTS_DIR; };
-		555A1C8F2621CC8E0056C014 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mod.h; path = ../Shared/Mod.h; sourceTree = "<group>"; };
-		555A1CAC262435C60056C014 /* Debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
 		558C3600261D34DF0040241D /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
-		558C3602261D3CE90040241D /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../Shared/Mat.h; sourceTree = "<group>"; };
 		558C3604261D468B0040241D /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		5595856B261D822E0008EC38 /* libMatlabDataArray.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libMatlabDataArray.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/extern/bin/maci64/libMatlabDataArray.dylib; sourceTree = "<group>"; };
 		5595856C261D822E0008EC38 /* libMatlabEngine.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libMatlabEngine.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/extern/bin/maci64/libMatlabEngine.dylib; sourceTree = "<group>"; };
@@ -46,40 +45,41 @@
 		55958571261D8AFF0008EC38 /* libmex.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmex.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/bin/maci64/libmex.dylib; sourceTree = "<group>"; };
 		55958573261D8B7C0008EC38 /* libmx.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmx.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/bin/maci64/libmx.dylib; sourceTree = "<group>"; };
 		55958575261FCA180008EC38 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		5595857D262008FD0008EC38 /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Renderer.metal; path = ../CFAViewer/Renderer.metal; sourceTree = "<group>"; };
-		5595857E262008FD0008EC38 /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../CFAViewer/Renderer.h; sourceTree = "<group>"; };
-		559585812620093E0008EC38 /* USBPipe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
-		559585822620093E0008EC38 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
 		559585832620093E0008EC38 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		559585842620093E0008EC38 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
-		559585852620093E0008EC38 /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
-		559585862620093E0008EC38 /* TimeInstant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
 		559585872620093E0008EC38 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
-		559585882620093E0008EC38 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
-		559585892620093E0008EC38 /* USBInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBInterface.h; sourceTree = "<group>"; };
-		5595858A2620093E0008EC38 /* MDCLoaderDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCLoaderDevice.h; sourceTree = "<group>"; };
 		5595858B2620093E0008EC38 /* IOServiceWatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
 		5595858C2620093E0008EC38 /* ELF32Binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		5595858D2620093E0008EC38 /* IOServiceMatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceMatcher.h; sourceTree = "<group>"; };
-		5595858E2620093E0008EC38 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		5595858F2620093E0008EC38 /* Interp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Interp.h; sourceTree = "<group>"; };
 		559585902620093E0008EC38 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
-		559585912620093E0008EC38 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
-		559585922620093E0008EC38 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
-		559585942620094B0008EC38 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
-		559585952620094B0008EC38 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
 		559585962620096D0008EC38 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		5595859A26200FCC0008EC38 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
-		55AE80CE262FCC5400BA227C /* EstimateIlluminantFFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = EstimateIlluminantFFCC.mm; path = ../CFAViewer/ImagePipeline/EstimateIlluminantFFCC.mm; sourceTree = "<group>"; };
-		55AE80CF262FCC5400BA227C /* EstimateIlluminantFFCC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EstimateIlluminantFFCC.h; path = ../CFAViewer/ImagePipeline/EstimateIlluminantFFCC.h; sourceTree = "<group>"; };
-		55AE80D1262FCC6900BA227C /* FFCC.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = FFCC.metal; path = ../CFAViewer/ImagePipeline/FFCC.metal; sourceTree = "<group>"; };
-		55AE80D2262FCC6900BA227C /* FFCC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FFCC.h; path = ../CFAViewer/ImagePipeline/FFCC.h; sourceTree = "<group>"; };
-		55AE80D3262FCC6900BA227C /* FFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = FFCC.mm; path = ../CFAViewer/ImagePipeline/FFCC.mm; sourceTree = "<group>"; };
-		55AE80D6262FCC8D00BA227C /* ImagePipeline.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = ImagePipeline.metal; path = ../CFAViewer/ImagePipeline/ImagePipeline.metal; sourceTree = "<group>"; };
-		55B93E54262E3F5E00463F34 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Color.h; path = ../Shared/Color.h; sourceTree = "<group>"; };
-		55B93E58262E49F200463F34 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImagePipelineTypes.h; path = ../CFAViewer/ImagePipeline/ImagePipelineTypes.h; sourceTree = "<group>"; };
-		55B93E59262E57B700463F34 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mmap.h; path = ../Shared/Mmap.h; sourceTree = "<group>"; };
-		55E74406262A71B600472115 /* BitmapImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BitmapImage.h; path = ../Shared/BitmapImage.h; sourceTree = "<group>"; };
+		55E43FF728C0543900FCCEA0 /* ImagePipeline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipeline.h; sourceTree = "<group>"; };
+		55E43FF828C0543900FCCEA0 /* Defringe.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Defringe.mm; sourceTree = "<group>"; };
+		55E43FF928C0543900FCCEA0 /* LocalContrast.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
+		55E43FFA28C0543900FCCEA0 /* EstimateIlluminantFFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminantFFCC.h; sourceTree = "<group>"; };
+		55E43FFB28C0543900FCCEA0 /* DownsampleDiscardRaw.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DownsampleDiscardRaw.metal; sourceTree = "<group>"; };
+		55E43FFC28C0543900FCCEA0 /* LocalContrast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
+		55E43FFD28C0543900FCCEA0 /* Saturation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Saturation.metal; sourceTree = "<group>"; };
+		55E43FFE28C0543900FCCEA0 /* FFCC.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = FFCC.metal; sourceTree = "<group>"; };
+		55E43FFF28C0543900FCCEA0 /* FFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FFCC.h; sourceTree = "<group>"; };
+		55E4400028C0543900FCCEA0 /* Defringe.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Defringe.metal; sourceTree = "<group>"; };
+		55E4400128C0543900FCCEA0 /* ImagePipeline.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ImagePipeline.mm; sourceTree = "<group>"; };
+		55E4400228C0543900FCCEA0 /* DebayerLMMSE.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DebayerLMMSE.metal; sourceTree = "<group>"; };
+		55E4400328C0543900FCCEA0 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineTypes.h; sourceTree = "<group>"; };
+		55E4400428C0543900FCCEA0 /* DebayerLMMSE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DebayerLMMSE.h; sourceTree = "<group>"; };
+		55E4400528C0543900FCCEA0 /* ReconstructHighlights.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
+		55E4400628C0543900FCCEA0 /* ImagePipeline.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ImagePipeline.metal; sourceTree = "<group>"; };
+		55E4400728C0543900FCCEA0 /* EstimateIlluminantFFCC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminantFFCC.mm; sourceTree = "<group>"; };
+		55E4400828C0543900FCCEA0 /* RenderThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderThumb.h; sourceTree = "<group>"; };
+		55E4400928C0543900FCCEA0 /* Defringe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defringe.h; sourceTree = "<group>"; };
+		55E4400A28C0543900FCCEA0 /* ReconstructHighlights.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReconstructHighlights.h; sourceTree = "<group>"; };
+		55E4400B28C0543900FCCEA0 /* DebayerBilinear.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DebayerBilinear.metal; sourceTree = "<group>"; };
+		55E4400C28C0543900FCCEA0 /* RenderThumb.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
+		55E4400D28C0543900FCCEA0 /* Saturation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Saturation.h; sourceTree = "<group>"; };
+		55E4400E28C0543900FCCEA0 /* FFCC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = FFCC.mm; sourceTree = "<group>"; };
+		55E4401228C056DF00FCCEA0 /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
+		55E4401328C056DF00FCCEA0 /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,23 +103,6 @@
 			isa = PBXGroup;
 			children = (
 				559585802620093E0008EC38 /* Shared */,
-				559585932620094B0008EC38 /* Shared */,
-				5595857E262008FD0008EC38 /* Renderer.h */,
-				5595857D262008FD0008EC38 /* Renderer.metal */,
-				555A1C8F2621CC8E0056C014 /* Mod.h */,
-				558C3602261D3CE90040241D /* Mat.h */,
-				55B93E59262E57B700463F34 /* Mmap.h */,
-				55E74406262A71B600472115 /* BitmapImage.h */,
-				55B93E54262E3F5E00463F34 /* Color.h */,
-				5595859A26200FCC0008EC38 /* MetalUtil.h */,
-				55B93E58262E49F200463F34 /* ImagePipelineTypes.h */,
-				55AE80D6262FCC8D00BA227C /* ImagePipeline.metal */,
-				555A1CAC262435C60056C014 /* Debug.h */,
-				55AE80D2262FCC6900BA227C /* FFCC.h */,
-				55AE80D1262FCC6900BA227C /* FFCC.metal */,
-				55AE80D3262FCC6900BA227C /* FFCC.mm */,
-				55AE80CF262FCC5400BA227C /* EstimateIlluminantFFCC.h */,
-				55AE80CE262FCC5400BA227C /* EstimateIlluminantFFCC.mm */,
 				558C3600261D34DF0040241D /* main.mm */,
 				554B91B7261D349A00618ACA /* Products */,
 				558C3603261D468B0040241D /* Frameworks */,
@@ -152,37 +135,51 @@
 		559585802620093E0008EC38 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				559585812620093E0008EC38 /* USBPipe.h */,
-				559585822620093E0008EC38 /* MDCUtil.h */,
+				55E43FF628C0543900FCCEA0 /* ImagePipeline */,
 				559585832620093E0008EC38 /* Mat.h */,
 				559585842620093E0008EC38 /* Poly2D.h */,
-				559585852620093E0008EC38 /* MDCDevice.h */,
-				559585862620093E0008EC38 /* TimeInstant.h */,
 				559585872620093E0008EC38 /* Color.h */,
-				559585882620093E0008EC38 /* RuntimeError.h */,
-				559585892620093E0008EC38 /* USBInterface.h */,
-				5595858A2620093E0008EC38 /* MDCLoaderDevice.h */,
 				5595858B2620093E0008EC38 /* IOServiceWatcher.h */,
 				5595858C2620093E0008EC38 /* ELF32Binary.h */,
 				5595858D2620093E0008EC38 /* IOServiceMatcher.h */,
-				5595858E2620093E0008EC38 /* Mmap.h */,
 				5595858F2620093E0008EC38 /* Interp.h */,
 				559585902620093E0008EC38 /* Assert.h */,
-				559585912620093E0008EC38 /* USBDevice.h */,
-				559585922620093E0008EC38 /* SendRight.h */,
+				55E4401328C056DF00FCCEA0 /* Renderer.h */,
+				55E4401228C056DF00FCCEA0 /* Renderer.metal */,
 			);
 			name = Shared;
 			path = ../Shared;
 			sourceTree = "<group>";
 		};
-		559585932620094B0008EC38 /* Shared */ = {
+		55E43FF628C0543900FCCEA0 /* ImagePipeline */ = {
 			isa = PBXGroup;
 			children = (
-				559585942620094B0008EC38 /* Enum.h */,
-				559585952620094B0008EC38 /* HashInts.h */,
+				55E4400B28C0543900FCCEA0 /* DebayerBilinear.metal */,
+				55E4400428C0543900FCCEA0 /* DebayerLMMSE.h */,
+				55E4400228C0543900FCCEA0 /* DebayerLMMSE.metal */,
+				55E4400928C0543900FCCEA0 /* Defringe.h */,
+				55E4400028C0543900FCCEA0 /* Defringe.metal */,
+				55E43FF828C0543900FCCEA0 /* Defringe.mm */,
+				55E43FFB28C0543900FCCEA0 /* DownsampleDiscardRaw.metal */,
+				55E43FFA28C0543900FCCEA0 /* EstimateIlluminantFFCC.h */,
+				55E4400728C0543900FCCEA0 /* EstimateIlluminantFFCC.mm */,
+				55E43FFF28C0543900FCCEA0 /* FFCC.h */,
+				55E43FFE28C0543900FCCEA0 /* FFCC.metal */,
+				55E4400E28C0543900FCCEA0 /* FFCC.mm */,
+				55E43FF728C0543900FCCEA0 /* ImagePipeline.h */,
+				55E4400628C0543900FCCEA0 /* ImagePipeline.metal */,
+				55E4400128C0543900FCCEA0 /* ImagePipeline.mm */,
+				55E4400328C0543900FCCEA0 /* ImagePipelineTypes.h */,
+				55E43FFC28C0543900FCCEA0 /* LocalContrast.h */,
+				55E43FF928C0543900FCCEA0 /* LocalContrast.metal */,
+				55E4400A28C0543900FCCEA0 /* ReconstructHighlights.h */,
+				55E4400528C0543900FCCEA0 /* ReconstructHighlights.metal */,
+				55E4400828C0543900FCCEA0 /* RenderThumb.h */,
+				55E4400C28C0543900FCCEA0 /* RenderThumb.metal */,
+				55E4400D28C0543900FCCEA0 /* Saturation.h */,
+				55E43FFD28C0543900FCCEA0 /* Saturation.metal */,
 			);
-			name = Shared;
-			path = ../../Code/Shared;
+			path = ImagePipeline;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -242,12 +239,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				55AE80D0262FCC5400BA227C /* EstimateIlluminantFFCC.mm in Sources */,
-				55AE80D5262FCC6900BA227C /* FFCC.mm in Sources */,
-				55AE80D4262FCC6900BA227C /* FFCC.metal in Sources */,
-				55AE80D7262FCC8D00BA227C /* ImagePipeline.metal in Sources */,
+				55E4400F28C0548300FCCEA0 /* EstimateIlluminantFFCC.mm in Sources */,
+				55E4401628C0570600FCCEA0 /* DebayerBilinear.metal in Sources */,
+				55E4401128C0548E00FCCEA0 /* FFCC.mm in Sources */,
 				558C3601261D34DF0040241D /* main.mm in Sources */,
-				5595857F262008FD0008EC38 /* Renderer.metal in Sources */,
+				55E4401528C056F700FCCEA0 /* DownsampleDiscardRaw.metal in Sources */,
+				55E4401728C0571500FCCEA0 /* ImagePipeline.metal in Sources */,
+				55E4401428C056DF00FCCEA0 /* Renderer.metal in Sources */,
+				55E4401028C0548B00FCCEA0 /* FFCC.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,6 +301,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				USE_HEADERMAP = NO;
 			};
 			name = Release;
 		};
@@ -313,6 +313,10 @@
 				LIBRARY_SEARCH_PATHS = /Applications/MATLAB_R2021a.app/bin/maci64;
 				MTL_HEADER_SEARCH_PATHS = "../CFAViewer ../Shared ../CFAViewer/ImagePipeline";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = (
+					../..,
+					../../Code/Lib,
+				);
 			};
 			name = Release;
 		};

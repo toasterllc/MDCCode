@@ -471,12 +471,13 @@ fragment float4 Scale(
 
 fragment float4 DebayerDownsample(
     constant CFADesc& cfaDesc [[buffer(0)]],
+    constant uint32_t& targetWidth [[buffer(1)]],
+    constant uint32_t& targetHeight [[buffer(2)]],
     texture2d<float> raw [[texture(0)]],
-    texture2d<float> target [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
     // `halfPxOff` is the .5 offset converted to unity coordinates
-    const float2 halfPxOff = float2(.5)/float2(target.get_width(), target.get_height());
+    const float2 halfPxOff = float2(.5)/float2(targetWidth, targetHeight);
     // Convert unity position -> integer coords for `raw`
     const int2 pos = int2(round((in.posUnit.xy-halfPxOff) * float2(raw.get_width(), raw.get_height())));
     const CFAColor c = cfaDesc.color(pos);

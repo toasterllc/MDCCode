@@ -11,8 +11,8 @@ public:
     static MDCTools::Color<MDCTools::ColorSpace::Raw> Run(
         MDCTools::Renderer& renderer,
         const MDCTools::CFADesc& cfaDesc,
-        id<MTLTexture> raw) {
-        
+        id<MTLTexture> raw
+    ) {
         return FFCC::Run(_Model, renderer, cfaDesc, raw);
     }
     
