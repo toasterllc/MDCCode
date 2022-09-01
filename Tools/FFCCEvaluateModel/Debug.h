@@ -1,6 +1,6 @@
 #import <filesystem>
-#import "Renderer.h"
-#import "Mat.h"
+#import "Tools/Shared/Renderer.h"
+#import "Tools/Shared/Mat.h"
 #import "/Applications/MATLAB_R2021a.app/extern/include/mat.h"
 
 template <typename T, size_t H, size_t W, size_t Depth>
@@ -143,8 +143,9 @@ template <typename T, size_t H, size_t W, size_t Depth>
 struct MatImage { Mat<T,H,W> c[Depth]; };
 
 template <typename T, size_t H, size_t W, size_t Depth>
-MatImage<T,H,W,Depth> MatImageFromTexture(CFAViewer::Renderer& renderer, id<MTLTexture> txt) {
-    using namespace CFAViewer;
+MatImage<T,H,W,Depth> MatImageFromTexture(MDCTools::Renderer& renderer, id<MTLTexture> txt) {
+    using namespace MDCTools;
+    
     assert([txt height] == H);
     assert([txt width] == W);
     
@@ -215,8 +216,8 @@ MatImage<T,H,W,Depth> MatImageFromTexture(CFAViewer::Renderer& renderer, id<MTLT
     return matImage;
 }
 
-void writePNG(CFAViewer::Renderer& renderer, id<MTLTexture> txt, const std::filesystem::path& path) {
-    id img = renderer.createCGImage(txt);
+void writePNG(MDCTools::Renderer& renderer, id<MTLTexture> txt, const std::filesystem::path& path) {
+    id img = renderer.imageCreate(txt);
     if (!img) throw std::runtime_error("CGBitmapContextCreateImage returned nil");
     
     id imgDest = CFBridgingRelease(CGImageDestinationCreateWithURL(

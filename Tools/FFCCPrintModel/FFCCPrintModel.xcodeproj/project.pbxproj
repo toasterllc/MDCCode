@@ -13,8 +13,8 @@
 		55958572261D8AFF0008EC38 /* libmex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 55958571261D8AFF0008EC38 /* libmex.dylib */; };
 		55958574261D8B7C0008EC38 /* libmx.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 55958573261D8B7C0008EC38 /* libmx.dylib */; };
 		55958576261FCA180008EC38 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55958575261FCA180008EC38 /* Cocoa.framework */; };
-		5595857F262008FD0008EC38 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5595857D262008FD0008EC38 /* Renderer.metal */; };
 		559585972620096D0008EC38 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 559585962620096D0008EC38 /* Metal.framework */; };
+		55E43FF328C047C100FCCEA0 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FF228C047C100FCCEA0 /* Renderer.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -31,10 +31,8 @@
 
 /* Begin PBXFileReference section */
 		554B91B6261D349A00618ACA /* FFCCPrintModel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = FFCCPrintModel; sourceTree = BUILT_PRODUCTS_DIR; };
-		555A1C8F2621CC8E0056C014 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mod.h; path = ../Shared/Mod.h; sourceTree = "<group>"; };
 		555A1CAF2624F6100056C014 /* Debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Debug.h; path = ../FFCCEvaluateModel/Debug.h; sourceTree = "<group>"; };
 		558C3600261D34DF0040241D /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
-		558C3602261D3CE90040241D /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../Shared/Mat.h; sourceTree = "<group>"; };
 		558C3604261D468B0040241D /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		5595856B261D822E0008EC38 /* libMatlabDataArray.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libMatlabDataArray.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/extern/bin/maci64/libMatlabDataArray.dylib; sourceTree = "<group>"; };
 		5595856C261D822E0008EC38 /* libMatlabEngine.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libMatlabEngine.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/extern/bin/maci64/libMatlabEngine.dylib; sourceTree = "<group>"; };
@@ -42,30 +40,19 @@
 		55958571261D8AFF0008EC38 /* libmex.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmex.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/bin/maci64/libmex.dylib; sourceTree = "<group>"; };
 		55958573261D8B7C0008EC38 /* libmx.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmx.dylib; path = ../../../../../../Applications/MATLAB_R2021a.app/bin/maci64/libmx.dylib; sourceTree = "<group>"; };
 		55958575261FCA180008EC38 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		5595857D262008FD0008EC38 /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Renderer.metal; path = ../CFAViewer/Renderer.metal; sourceTree = "<group>"; };
-		5595857E262008FD0008EC38 /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../CFAViewer/Renderer.h; sourceTree = "<group>"; };
-		559585812620093E0008EC38 /* USBPipe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBPipe.h; sourceTree = "<group>"; };
-		559585822620093E0008EC38 /* MDCUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUtil.h; sourceTree = "<group>"; };
 		559585832620093E0008EC38 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
 		559585842620093E0008EC38 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
-		559585852620093E0008EC38 /* MDCDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCDevice.h; sourceTree = "<group>"; };
-		559585862620093E0008EC38 /* TimeInstant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
 		559585872620093E0008EC38 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
-		559585882620093E0008EC38 /* RuntimeError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RuntimeError.h; sourceTree = "<group>"; };
-		559585892620093E0008EC38 /* USBInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBInterface.h; sourceTree = "<group>"; };
-		5595858A2620093E0008EC38 /* MDCLoaderDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCLoaderDevice.h; sourceTree = "<group>"; };
 		5595858B2620093E0008EC38 /* IOServiceWatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
 		5595858C2620093E0008EC38 /* ELF32Binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		5595858D2620093E0008EC38 /* IOServiceMatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceMatcher.h; sourceTree = "<group>"; };
-		5595858E2620093E0008EC38 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		5595858F2620093E0008EC38 /* Interp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Interp.h; sourceTree = "<group>"; };
 		559585902620093E0008EC38 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
-		559585912620093E0008EC38 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
-		559585922620093E0008EC38 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
-		559585942620094B0008EC38 /* Enum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
-		559585952620094B0008EC38 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
 		559585962620096D0008EC38 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		5595859A26200FCC0008EC38 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MetalUtil.h; path = ../CFAViewer/MetalUtil.h; sourceTree = "<group>"; };
+		55E43FF128C047C100FCCEA0 /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
+		55E43FF228C047C100FCCEA0 /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Renderer.metal; sourceTree = "<group>"; };
+		55E43FF428C047E900FCCEA0 /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mat.h; sourceTree = "<group>"; };
+		55E43FF528C047F200FCCEA0 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mod.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,12 +76,6 @@
 			isa = PBXGroup;
 			children = (
 				559585802620093E0008EC38 /* Shared */,
-				559585932620094B0008EC38 /* Shared */,
-				5595857E262008FD0008EC38 /* Renderer.h */,
-				5595857D262008FD0008EC38 /* Renderer.metal */,
-				555A1C8F2621CC8E0056C014 /* Mod.h */,
-				558C3602261D3CE90040241D /* Mat.h */,
-				5595859A26200FCC0008EC38 /* MetalUtil.h */,
 				555A1CAF2624F6100056C014 /* Debug.h */,
 				558C3600261D34DF0040241D /* main.mm */,
 				554B91B7261D349A00618ACA /* Products */,
@@ -128,37 +109,21 @@
 		559585802620093E0008EC38 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				559585812620093E0008EC38 /* USBPipe.h */,
-				559585822620093E0008EC38 /* MDCUtil.h */,
+				55E43FF528C047F200FCCEA0 /* Mod.h */,
 				559585832620093E0008EC38 /* Mat.h */,
 				559585842620093E0008EC38 /* Poly2D.h */,
-				559585852620093E0008EC38 /* MDCDevice.h */,
-				559585862620093E0008EC38 /* TimeInstant.h */,
 				559585872620093E0008EC38 /* Color.h */,
-				559585882620093E0008EC38 /* RuntimeError.h */,
-				559585892620093E0008EC38 /* USBInterface.h */,
-				5595858A2620093E0008EC38 /* MDCLoaderDevice.h */,
 				5595858B2620093E0008EC38 /* IOServiceWatcher.h */,
 				5595858C2620093E0008EC38 /* ELF32Binary.h */,
 				5595858D2620093E0008EC38 /* IOServiceMatcher.h */,
-				5595858E2620093E0008EC38 /* Mmap.h */,
 				5595858F2620093E0008EC38 /* Interp.h */,
 				559585902620093E0008EC38 /* Assert.h */,
-				559585912620093E0008EC38 /* USBDevice.h */,
-				559585922620093E0008EC38 /* SendRight.h */,
+				55E43FF128C047C100FCCEA0 /* Renderer.h */,
+				55E43FF228C047C100FCCEA0 /* Renderer.metal */,
+				55E43FF428C047E900FCCEA0 /* Mat.h */,
 			);
 			name = Shared;
 			path = ../Shared;
-			sourceTree = "<group>";
-		};
-		559585932620094B0008EC38 /* Shared */ = {
-			isa = PBXGroup;
-			children = (
-				559585942620094B0008EC38 /* Enum.h */,
-				559585952620094B0008EC38 /* HashInts.h */,
-			);
-			name = Shared;
-			path = ../../Code/Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -218,8 +183,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55E43FF328C047C100FCCEA0 /* Renderer.metal in Sources */,
 				558C3601261D34DF0040241D /* main.mm in Sources */,
-				5595857F262008FD0008EC38 /* Renderer.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -275,6 +240,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				USE_HEADERMAP = NO;
 			};
 			name = Release;
 		};
@@ -284,8 +250,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				LD_RUNPATH_SEARCH_PATHS = /Applications/MATLAB_R2021a.app/bin/maci64;
 				LIBRARY_SEARCH_PATHS = /Applications/MATLAB_R2021a.app/bin/maci64;
-				MTL_HEADER_SEARCH_PATHS = "../CFAViewer ../Shared ../CFAViewer/ImagePipeline";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = (
+					../..,
+					../../Code/Lib,
+				);
 			};
 			name = Release;
 		};

@@ -1,7 +1,6 @@
 #import <Cocoa/Cocoa.h>
-#import "Debug.h"
+#import "../FFCCEvaluateModel/Debug.h"
 #import "/Applications/MATLAB_R2021a.app/extern/include/mat.h"
-using namespace CFAViewer;
 namespace fs = std::filesystem;
 
 using Mat64 = Mat<double,64,64>;
@@ -45,7 +44,7 @@ void printMat(const Mat64c& m) {
 }
 
 int main(int argc, const char* argv[]) {
-    MATFile* ModelFile = matOpen("/Users/dave/repos/ffcc/models/AR0330.mat", "r");
+    MATFile* ModelFile = matOpen("/Users/dave/repos/ffcc/models/AR0330_64x36.mat", "r");
     
     Mat64c F_fft[2];
     Mat64 B;
@@ -53,15 +52,15 @@ int main(int argc, const char* argv[]) {
     load(mxGetField(matGetVariable(ModelFile, "model"), 0, "F_fft"), F_fft);
     load(mxGetField(matGetVariable(ModelFile, "model"), 0, "B"), B);
     
-    printf("const uint64_t EstimateIlluminant::_F_fft0Vals[] = ");
+    printf("const uint64_t EstimateIlluminantFFCC::_F_fft0Vals[] = ");
     printMat(F_fft[0]);
     printf("\n\n");
     
-    printf("const uint64_t EstimateIlluminant::_F_fft1Vals[] = ");
+    printf("const uint64_t EstimateIlluminantFFCC::_F_fft1Vals[] = ");
     printMat(F_fft[1]);
     printf("\n\n");
     
-    printf("const uint64_t EstimateIlluminant::_BVals[] = ");
+    printf("const uint64_t EstimateIlluminantFFCC::_BVals[] = ");
     printMat(B);
     printf("\n\n");
     
