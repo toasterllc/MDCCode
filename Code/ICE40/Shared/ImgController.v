@@ -10,7 +10,7 @@
 module ImgController #(
     parameter ClkFreq                   = 24_000_000,
     parameter HeaderWordCount           = 8,
-    parameter ImgWordCount              = 4096*4096, // Total image word count (header + pixels + checksum)
+    parameter ImgPixelCount             = 4096*4096,
     localparam HeaderWidth              = HeaderWordCount*16
 )(
     input wire          clk,
@@ -26,15 +26,15 @@ module ImgController #(
     
     // Readout port (clock domain: `clk`)
     output reg          readout_rst = 0,
-    output reg          readout_start = 0,  // Toggle signal
-    output wire         readout_ready,
+    output reg          readout_start = 0, // Toggle signal
+    output reg          readout_ready = 0,
     input wire          readout_trigger,
-    output wire[15:0]   readout_data,
+    output reg[15:0]    readout_data = 0,
     
     // Status port (clock domain: `clk`)
     output reg          status_captureDone = 0, // Toggle signal
-    output wire[`RegWidth(ImgWordCount)-1:0]
-                        status_captureWordCount,
+    output wire[`RegWidth(ImgPixelCount)-1:0]
+                        status_capturePixelCount,
     output wire[17:0]   status_captureHighlightCount,
     output wire[17:0]   status_captureShadowCount,
     
@@ -175,10 +175,10 @@ module ImgController #(
     reg fifoIn_started = 0;
     `TogglePulse(ctrl_fifoInStarted, fifoIn_started, posedge, clk);
     
-    reg[`RegWidth(ImgWordCount)-1:0] fifoIn_wordCount = 0;
+    reg[`RegWidth(ImgPixelCount)-1:0] fifoIn_pixelCount = 0;
     reg[17:0] fifoIn_highlightCount = 0;
     reg[17:0] fifoIn_shadowCount = 0;
-    assign status_captureWordCount = fifoIn_wordCount;
+    assign status_capturePixelCount = fifoIn_pixelCount;
     assign status_captureHighlightCount = fifoIn_highlightCount;
     assign status_captureShadowCount = fifoIn_shadowCount;
     
@@ -208,7 +208,7 @@ module ImgController #(
         
         if (fifoIn_w_trigger) begin
             // Count the words in an image
-            fifoIn_wordCount <= fifoIn_wordCount+1;
+            fifoIn_pixelCount <= fifoIn_pixelCount+1;
         end
         
         if (!fifoIn_lv) fifoIn_x <= 0;
@@ -245,7 +245,7 @@ module ImgController #(
         1: begin
             fifoIn_rst <= 1;
             fifoIn_done <= 0;
-            fifoIn_wordCount <= 0;
+            fifoIn_pixelCount <= 0;
             fifoIn_highlightCount <= 0;
             fifoIn_shadowCount <= 0;
             fifoIn_started <= !fifoIn_started;
@@ -293,27 +293,32 @@ module ImgController #(
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
-    reg[`RegWidth(ImgWordCount)-1:0] ctrl_readoutCount = 0;
-    reg ctrl_readoutWrote = 0;
-    reg ctrl_readoutDone = 0;
+    reg[`RegWidth(ImgPixelCount)-1:0] ctrl_readoutPixelCount = 0;
+    wire ctrl_readoutConsumed = (readout_ready && readout_trigger);
+    reg ctrl_readoutPixelsDone = 0;
+    
+    reg[HeaderWidth-1:0] ctrl_header = 0;
+    reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_headerCount = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
     localparam Ctrl_State_Capture       = 1; // +3
-    localparam Ctrl_State_Readout       = 5; // +2
-    localparam Ctrl_State_Count         = 8;
+    localparam Ctrl_State_Readout       = 5; // +4
+    localparam Ctrl_State_Count         = 10;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
         readout_rst <= 0; // Pulse
+        readout_ready <= 0;
         
-        ctrl_readoutWrote <= readout_ready && readout_trigger;
-        if (ctrl_readoutWrote) begin
-            $display("[ImgController] ctrl_readoutCount: %0d", ctrl_readoutCount);
-            ctrl_readoutCount <= ctrl_readoutCount-1;
+        if (ctrl_readoutConsumed) begin
+            $display("[ImgController] ctrl_readoutPixelCount: %0d", ctrl_readoutPixelCount);
+            ctrl_header <= ctrl_header<<16;
+            ctrl_headerCount <= ctrl_headerCount-1;
+            ctrl_readoutPixelCount <= ctrl_readoutPixelCount-1;
         end
         
-        if (ctrl_readoutCount === 0) begin
-            ctrl_readoutDone <= 1;
+        if (ctrl_readoutPixelCount === 0) begin
+            ctrl_readoutPixelsDone <= 1;
         end
         
         case (ctrl_state)
@@ -361,27 +366,46 @@ module ImgController #(
         
         Ctrl_State_Readout: begin
             $display("[ImgController:Readout] Started");
-            // Supply 'Read' RAM command
-            ramctrl_cmd_block <= cmd_ramBlock;
-            ramctrl_cmd <= `RAMController_Cmd_Read;
             // Reset output FIFO
             readout_rst <= 1;
             // Reset readout state
-            ctrl_readoutCount <= ImgWordCount;
-            ctrl_readoutDone <= 0;
+            ctrl_readoutPixelsDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end
         
         Ctrl_State_Readout+1: begin
-            // Wait for readout_rst to complete
-            if (!readout_rst) begin
-                readout_start <= !readout_start;
-                ctrl_state <= Ctrl_State_Readout+2;
-            end
+            // Prepare to readout header
+            ctrl_header <= cmd_header;
+            ctrl_headerCount <= HeaderWordCount-1;
+            // Signal that readout is starting
+            readout_start <= !readout_start;
+            ctrl_state <= Ctrl_State_Readout+2;
         end
         
         Ctrl_State_Readout+2: begin
-            if (ctrl_readoutDone) begin
+            readout_data <= `LeftBits(ctrl_header, 0, 16);
+            readout_ready <= 1;
+            if (!ctrl_headerCount) begin
+                ctrl_state <= Ctrl_State_Readout+3;
+            end
+        end
+        
+        Ctrl_State_Readout+3: begin
+            $display("[ImgController:Readout] Started");
+            // Supply 'Read' RAM command
+            ramctrl_cmd_block <= cmd_ramBlock;
+            ramctrl_cmd <= `RAMController_Cmd_Read;
+            ctrl_readoutPixelCount <= ImgPixelCount;
+            ctrl_state <= Ctrl_State_Readout+4;
+        end
+        
+        Ctrl_State_Readout+4: begin
+            if (ramctrl_read_ready && ramctrl_read_trigger) begin
+                readout_data <= ramctrl_read_data;
+                readout_ready <= 1;
+            end
+            
+            if (ctrl_readoutPixelsDone) begin
                 $display("[ImgController:Readout] Stopping");
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 ctrl_state <= Ctrl_State_Idle;
@@ -406,9 +430,9 @@ module ImgController #(
     assign ramctrl_write_data = fifoIn_r_data;
     
     // Connect RAM read -> readout
-    assign readout_ready = ramctrl_read_ready;
-    assign readout_data = ramctrl_read_data;
-    assign ramctrl_read_trigger = readout_trigger;
+    // assign readout_ready = ramctrl_read_ready;
+    // assign readout_data = ramctrl_read_data;
+    assign ramctrl_read_trigger = (!readout_ready || readout_trigger);
     
 endmodule
 
