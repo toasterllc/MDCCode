@@ -169,9 +169,6 @@ module ImgController #(
     // ====================
     // Pixel input state machine
     // ====================
-    reg[`RegWidth(HeaderWordCount-1)-1:0] fifoIn_headerCount = 0;
-    reg[HeaderWidth-1:0] fifoIn_header = 0;
-    
     reg ctrl_fifoInCaptureTrigger = 0;
     `TogglePulse(fifoIn_captureTrigger, ctrl_fifoInCaptureTrigger, posedge, img_dclk);
     
@@ -204,8 +201,6 @@ module ImgController #(
         fifoIn_rst <= 0; // Pulse
         fifoIn_lvPrev <= fifoIn_lv;
         fifoIn_fvPrev <= fifoIn_fv;
-        fifoIn_header <= fifoIn_header<<16;
-        fifoIn_headerCount <= fifoIn_headerCount-1;
         fifoIn_w_trigger <= 0; // Pulse
         fifoIn_countStat <= 0; // Pulse
         
