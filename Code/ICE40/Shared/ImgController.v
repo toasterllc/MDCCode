@@ -11,7 +11,13 @@ module ImgController #(
     parameter ClkFreq                   = 24_000_000,
     parameter HeaderWordCount           = 8,
     parameter ImgPixelCount             = 4096*4096,
-    localparam HeaderWidth              = HeaderWordCount*16
+    parameter PaddingWordCount          = 42,
+    
+    localparam HeaderWidth              = HeaderWordCount*16,
+    localparam ChecksumWordCount        = 2,
+    localparam ChecksumWidth            = ChecksumWordCount*16,
+    localparam ChecksumPaddingWordCount = PaddingWordCount+ChecksumWordCount
+    
 )(
     input wire          clk,
     
@@ -298,12 +304,15 @@ module ImgController #(
     reg ctrl_readoutPixelsDone = 0;
     
     reg[HeaderWidth-1:0] ctrl_header = 0;
-    reg[`RegWidth(HeaderWordCount-1)-1:0] ctrl_headerCount = 0;
+    reg[`RegWidth(HeaderWordCount)-1:0] ctrl_headerCount = 0;
+    
+    reg[ChecksumWidth-1:0] ctrl_checksum = 0;
+    reg[`RegWidth(ChecksumPaddingWordCount)-1:0] ctrl_checksumPaddingCount = 0;
     
     localparam Ctrl_State_Idle          = 0; // +0
     localparam Ctrl_State_Capture       = 1; // +3
-    localparam Ctrl_State_Readout       = 5; // +4
-    localparam Ctrl_State_Count         = 10;
+    localparam Ctrl_State_Readout       = 5; // +6
+    localparam Ctrl_State_Count         = 12;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -315,6 +324,8 @@ module ImgController #(
             ctrl_header <= ctrl_header<<16;
             ctrl_headerCount <= ctrl_headerCount-1;
             ctrl_readoutPixelCount <= ctrl_readoutPixelCount-1;
+            ctrl_checksum <= ctrl_checksum<<16;
+            ctrl_checksumPaddingCount <= ctrl_checksumPaddingCount-1;
         end
         
         if (ctrl_readoutPixelCount === 0) begin
@@ -373,23 +384,26 @@ module ImgController #(
             ctrl_state <= Ctrl_State_Readout+1;
         end
         
+        // Prepare to output header
         Ctrl_State_Readout+1: begin
-            // Prepare to readout header
             ctrl_header <= cmd_header;
-            ctrl_headerCount <= HeaderWordCount-1;
+            ctrl_headerCount <= HeaderWordCount;
             // Signal that readout is starting
             readout_start <= !readout_start;
             ctrl_state <= Ctrl_State_Readout+2;
         end
         
+        // Output header
         Ctrl_State_Readout+2: begin
             readout_data <= `LeftBits(ctrl_header, 0, 16);
-            readout_ready <= 1;
-            if (!ctrl_headerCount) begin
+            if (ctrl_headerCount) begin
+                readout_ready <= 1;
+            end else begin
                 ctrl_state <= Ctrl_State_Readout+3;
             end
         end
         
+        // Prepare to output pixels
         Ctrl_State_Readout+3: begin
             $display("[ImgController:Readout] Started");
             // Supply 'Read' RAM command
@@ -399,6 +413,7 @@ module ImgController #(
             ctrl_state <= Ctrl_State_Readout+4;
         end
         
+        // Output pixels
         Ctrl_State_Readout+4: begin
             if (ramctrl_read_ready && ramctrl_read_trigger) begin
                 readout_data <= ramctrl_read_data;
@@ -408,6 +423,23 @@ module ImgController #(
             if (ctrl_readoutPixelsDone) begin
                 $display("[ImgController:Readout] Stopping");
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
+                ctrl_state <= Ctrl_State_Readout+5;
+            end
+        end
+        
+        // Prepare to output checksum+padding
+        Ctrl_State_Readout+5: begin
+            ctrl_checksum <= 0;
+            ctrl_checksumPaddingCount <= ChecksumPaddingWordCount;
+            ctrl_state <= Ctrl_State_Readout+6;
+        end
+        
+        // Output checksum+padding
+        Ctrl_State_Readout+6: begin
+            readout_data <= `LeftBits(ctrl_checksum, 0, 16);
+            if (ctrl_checksumPaddingCount) begin
+                readout_ready <= 1;
+            end else begin
                 ctrl_state <= Ctrl_State_Idle;
             end
         end
@@ -429,9 +461,8 @@ module ImgController #(
     assign ramctrl_write_trigger = fifoIn_r_ready;
     assign ramctrl_write_data = fifoIn_r_data;
     
-    // Connect RAM read -> readout
-    // assign readout_ready = ramctrl_read_ready;
-    // assign readout_data = ramctrl_read_data;
+    // ramctrl_read_trigger: trigger another read from RAM if our flop is currently empty (!readout_ready),
+    // or it's not empty and the client drained the word on this cycle
     assign ramctrl_read_trigger = (!readout_ready || readout_trigger);
     
 endmodule

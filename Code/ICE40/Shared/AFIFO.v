@@ -3,6 +3,9 @@
 `ifndef AFIFO_v
 `define AFIFO_v
 
+`define AFIFO_CapacityBits  4096
+`define AFIFO_CapacityBytes (`AFIFO_CapacityBits/8)
+
 // Based on Clifford E. Cummings paper:
 //   http://www.sunburst-design.com/papers/CummingsSNUG2002SJ_FIFO2.pdf
 module AFIFO #(
@@ -32,7 +35,7 @@ module AFIFO #(
 `endif
     
     // Note that `N` is used directly in instantiations, not `N-1`, because we want an extra bit
-    localparam N = `RegWidth((4096/W)-1);
+    localparam N = `RegWidth((`AFIFO_CapacityBits/W)-1);
     
     // ====================
     // Write handling

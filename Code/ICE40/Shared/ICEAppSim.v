@@ -834,7 +834,7 @@ module ICEAppSim();
 
             TestImgSetHeader(2, {
                 LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
-                8'hAA,                              /* timestamp[b0]        */,
+                8'hAA                               /* timestamp[b0]        */,
                 8'hBB                               /* timestamp[b1]        */
             });
 

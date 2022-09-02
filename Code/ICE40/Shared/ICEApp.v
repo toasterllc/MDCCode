@@ -165,16 +165,19 @@ module ICEApp(
     wire                                    imgctrl_readout_trigger;
     wire[15:0]                              imgctrl_readout_data;
     wire                                    imgctrl_status_captureDone;
-    wire[`RegWidth(`Img_WordCount)-1:0]     imgctrl_status_captureWordCount;
+    wire[`RegWidth(`Img_WordCount)-1:0]     imgctrl_status_capturePixelCount;
     wire[17:0]                              imgctrl_status_captureHighlightCount;
     wire[17:0]                              imgctrl_status_captureShadowCount;
-    // ImgCtrl_WordCountCeiled: image word count ceiled so that ImgController readout outputs
-    // enough data to trigger the AFIFOChain read threshold (`readoutfifo_r_thresh`)
-    localparam ImgCtrl_WordCountCeiled = `Ceil(`Img_WordCount, ReadoutFIFO_R_Thresh*512/2);
+    // ImgCtrl_PaddingWordCount: padding so that ImgController readout outputs enough
+    // data to trigger the AFIFOChain read threshold (`readoutfifo_r_thresh`)
+    localparam ImgCtrl_AFIFOWordCapacity = (`AFIFO_CapacityBytes/2);
+    localparam ImgCtrl_ReadoutWordThresh = ReadoutFIFO_R_Thresh*ImgCtrl_AFIFOWordCapacity;
+    localparam ImgCtrl_PaddingWordCount = (ImgCtrl_ReadoutWordThresh - (`Img_WordCount % ImgCtrl_ReadoutWordThresh)) % ImgCtrl_ReadoutWordThresh;
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
         .HeaderWordCount(`Img_HeaderWordCount),
-        .ImgWordCount(ImgCtrl_WordCountCeiled)
+        .ImgPixelCount(`Img_PixelCount),
+        .PaddingWordCount(ImgCtrl_PaddingWordCount)
     ) ImgController (
         .clk(img_clk),
         
@@ -191,7 +194,7 @@ module ICEApp(
         .readout_data(imgctrl_readout_data),
         
         .status_captureDone(imgctrl_status_captureDone),
-        .status_captureWordCount(imgctrl_status_captureWordCount),
+        .status_capturePixelCount(imgctrl_status_capturePixelCount),
         .status_captureHighlightCount(imgctrl_status_captureHighlightCount),
         .status_captureShadowCount(imgctrl_status_captureShadowCount),
         
@@ -742,7 +745,7 @@ module ICEApp(
                 `Msg_Type_ImgCaptureStatus: begin
                     $display("[SPI] Got Msg_Type_ImgCaptureStatus");
                     spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= !spi_imgCaptureDone_;
-                    spi_resp[`Resp_Arg_ImgCaptureStatus_WordCount_Bits] <= imgctrl_status_captureWordCount;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_WordCount_Bits] <= imgctrl_status_capturePixelCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits] <= imgctrl_status_captureHighlightCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits] <= imgctrl_status_captureShadowCount;
                 end
