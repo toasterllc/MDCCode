@@ -101,7 +101,7 @@ module ImgControllerTest();
     wire                                    imgctrl_readout_rst;
     wire                                    imgctrl_readout_start;
     wire                                    imgctrl_readout_ready;
-    wire                                    imgctrl_readout_trigger = 1;
+    reg                                     imgctrl_readout_trigger = 0;
     wire[15:0]                              imgctrl_readout_data;
     
     wire                                    imgctrl_status_captureDone;
@@ -214,6 +214,7 @@ module ImgControllerTest();
         // Wait for readout to start
         recvWordCount = 0;
         done = 0;
+        imgctrl_readout_trigger = 1;
         while (!done) begin
             wait(img_clk);
             if (imgctrl_readout_ready && imgctrl_readout_trigger) begin
@@ -222,6 +223,8 @@ module ImgControllerTest();
                 recvWordCount++;
             end
             wait(!img_clk);
+            
+            imgctrl_readout_trigger = $random&1;
             
             done = (
                 recvWordCount>`Img_HeaderWordCount &&   // Only institute our wait logic after the header has been received
@@ -246,7 +249,7 @@ module ImgControllerTest();
         
         ImgCapture();
         
-        ImgReadout(1);
+        // ImgReadout(1);
         ImgReadout(0);
         
         // for (i=0; i<ImageWordCount; i++) begin

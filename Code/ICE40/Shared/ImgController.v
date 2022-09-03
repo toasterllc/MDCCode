@@ -459,9 +459,9 @@ module ImgController #(
                 readout_data <= `LeftBits(ctrl_header, 0, 16);
             end
             
-            if (ctrl_headerCount) begin
-                readout_ready <= 1;
-            end else begin
+            readout_ready <= 1;
+            
+            if (!ctrl_headerCount && readout_trigger) begin
                 ctrl_state <= Ctrl_State_Readout+3;
             end
         end
