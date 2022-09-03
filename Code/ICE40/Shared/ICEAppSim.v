@@ -870,8 +870,8 @@ module ICEAppSim();
         `endif // _ICEApp_SD_En
 
         `ifdef ICEApp_ImgReadoutToSD_En
-            TestImgReadoutToSD(0); // Readout full size image
-            // TestImgReadoutToSD(1); // Readout thumbnail image
+            // TestImgReadoutToSD(0); // Readout full size image
+            TestImgReadoutToSD(1); // Readout thumbnail image
             // TestImgReadoutToSDRecovery();
         `endif // ICEApp_ImgReadoutToSD_En
 
