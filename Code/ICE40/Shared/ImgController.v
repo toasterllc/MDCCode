@@ -295,6 +295,31 @@ module ImgController #(
     end
     
     // ====================
+    // Readout Checksum
+    // ====================
+    wire        readout_checksum_clk;
+    reg         readout_checksum_rst = 0;
+    reg         readout_checksum_en = 0;
+    reg[15:0]   readout_checksum_din = 0;
+    wire[31:0]  readout_checksum_dout;
+    reg[31:0]   readout_checksum_shiftReg = 0;
+    reg         readout_checksum_done_ = 0;
+    FletcherChecksum #(
+        .Width(32)
+    ) FletcherChecksum_readout(
+        .clk    (readout_checksum_clk ),
+        .rst    (readout_checksum_rst ),
+        .en     (readout_checksum_en  ),
+        .din    (readout_checksum_din ),
+        .dout   (readout_checksum_dout)
+    );
+    
+    assign readout_checksum_clk  = clk;
+    // // readout_checksum_din: treat `readout_data` values as little-endian when
+    // // calculating the checksum, to match host behavior
+    // assign readout_checksum_din  = {readout_data[7:0], readout_data[15:8]};
+    
+    // ====================
     // Control State Machine
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
@@ -317,6 +342,8 @@ module ImgController #(
         ramctrl_cmd <= `RAMController_Cmd_None;
         readout_rst <= 0; // Pulse
         readout_ready <= 0;
+        readout_checksum_rst <= 0; // Pulse
+        readout_checksum_en <= 0; // Pulse
         
         if (!readout_ready || readout_trigger) begin
             ctrl_header <= ctrl_header<<16;
@@ -331,6 +358,9 @@ module ImgController #(
             // ctrl_header <= ctrl_header<<16;
             // ctrl_headerCount <= ctrl_headerCount-1;
             ctrl_readoutPixelCount <= ctrl_readoutPixelCount-1;
+            
+            readout_checksum_en <= 1;
+            readout_checksum_din <= {readout_data[7:0], readout_data[15:8]};
         end
         
         if (ctrl_readoutPixelCount === 0) begin
@@ -380,10 +410,13 @@ module ImgController #(
             end
         end
         
+        // TODO: combine this state with the next state?
         Ctrl_State_Readout: begin   // 5
             $display("[ImgController:Readout] Started");
             // Reset output FIFO
             readout_rst <= 1;
+            // Reset checksum
+            readout_checksum_rst <= 1;
             ctrl_state <= Ctrl_State_Readout+1;
         end
         
@@ -434,7 +467,13 @@ module ImgController #(
         
         // Prepare to output checksum+padding
         Ctrl_State_Readout+5: begin
-            ctrl_checksum <= 0;
+            // ctrl_checksum: little-endian
+            ctrl_checksum <= {
+                    readout_checksum_dout[ 7-:8],
+                    readout_checksum_dout[15-:8],
+                    readout_checksum_dout[23-:8],
+                    readout_checksum_dout[31-:8]
+            };
             ctrl_checksumPaddingCount <= ChecksumPaddingWordCount;
             ctrl_state <= Ctrl_State_Readout+6;
         end
