@@ -115,8 +115,6 @@ module ICEAppSim();
         );
     `endif // _ICEApp_SD_En
     
-    WordValidator WordValidator();
-    
     Top Top(.*);
     
     initial begin

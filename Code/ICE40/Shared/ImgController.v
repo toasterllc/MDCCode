@@ -367,7 +367,7 @@ module ImgController #(
         end
         
         if (readout_ready && readout_trigger) begin
-            $display("readout_data: %x", readout_data);
+            $display("[ImgController:Readout] readout_data: %x", readout_data);
             // ctrl_header <= ctrl_header<<16;
             // ctrl_headerCount <= ctrl_headerCount-1;
             // ctrl_readoutPixelCount <= ctrl_readoutPixelCount-1;

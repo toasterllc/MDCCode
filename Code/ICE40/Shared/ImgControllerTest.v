@@ -4,6 +4,8 @@
 `include "ImgController.v"
 `include "ClockGen.v"
 `include "ICEAppTypes.v"
+`include "WordValidator.v"
+`include "ImgSim.v"
 `timescale 1ns/1ps
 
 // MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
@@ -22,6 +24,9 @@ module ImgControllerTest();
     localparam ImgCtrl_ReadoutWordThresh = ReadoutFIFO_R_Thresh*ImgCtrl_AFIFOWordCapacity;
     localparam ImgCtrl_PaddingWordCount = (ImgCtrl_ReadoutWordThresh - (`Img_WordCount % ImgCtrl_ReadoutWordThresh)) % ImgCtrl_ReadoutWordThresh;
     
+    // ====================
+    // RAM
+    // ====================
     wire        ram_clk;
     wire        ram_cke;
     wire[1:0]   ram_ba;
@@ -46,6 +51,9 @@ module ImgControllerTest();
         .dqm(ram_dqm)
     );
     
+    // ====================
+    // Clock
+    // ====================
     localparam Img_Clk_Freq = 108_000_000;
     wire img_clk;
     ClockGen #(
@@ -56,6 +64,29 @@ module ImgControllerTest();
         .FILTER_RANGE(1)
     ) ClockGen_img_clk(.clkRef(ice_img_clk16mhz), .clk(img_clk));
     
+    // ====================
+    // Image sensor
+    // ====================
+    wire        img_dclk;
+    wire[11:0]  img_d;
+    wire        img_fv;
+    wire        img_lv;
+    wire        img_rst_;
+    
+    ImgSim #(
+        .ImgWidth(`Img_Width),
+        .ImgHeight(`Img_Height)
+    ) ImgSim (
+        .img_dclk(img_dclk),
+        .img_d(img_d),
+        .img_fv(img_fv),
+        .img_lv(img_lv),
+        .img_rst_(img_rst_)
+    );
+    
+    // ====================
+    // ImgController
+    // ====================
     reg                                     imgctrl_cmd_capture = 0;
     reg                                     imgctrl_cmd_readout = 0;
     reg[0:0]                                imgctrl_cmd_ramBlock = 0;
@@ -72,6 +103,11 @@ module ImgControllerTest();
     wire                                    imgctrl_readout_ready;
     wire                                    imgctrl_readout_trigger = 1;
     wire[15:0]                              imgctrl_readout_data;
+    
+    wire                                    imgctrl_status_captureDone;
+    wire[`RegWidth(`Img_WordCount)-1:0]     imgctrl_status_capturePixelCount;
+    wire[17:0]                              imgctrl_status_captureHighlightCount;
+    wire[17:0]                              imgctrl_status_captureShadowCount;
     
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
@@ -95,15 +131,15 @@ module ImgControllerTest();
         .readout_trigger(imgctrl_readout_trigger),
         .readout_data(imgctrl_readout_data),
         
-        .status_captureDone(),
-        .status_capturePixelCount(),
-        .status_captureHighlightCount(),
-        .status_captureShadowCount(),
+        .status_captureDone(imgctrl_status_captureDone),
+        .status_capturePixelCount(imgctrl_status_capturePixelCount),
+        .status_captureHighlightCount(imgctrl_status_captureHighlightCount),
+        .status_captureShadowCount(imgctrl_status_captureShadowCount),
         
-        .img_dclk(),
-        .img_d(),
-        .img_fv(),
-        .img_lv(),
+        .img_dclk(img_dclk),
+        .img_d(img_d),
+        .img_fv(img_fv),
+        .img_lv(img_lv),
         
         .ram_clk(ram_clk),
         .ram_cke(ram_cke),
@@ -117,15 +153,58 @@ module ImgControllerTest();
         .ram_dq(ram_dq)
     );
     
-    task TestImgReadout(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
+    // ====================
+    // WordValidator
+    // ====================
+    WordValidator WordValidator();
+    
+    task ImgCapture; begin
+        integer imgctrl_status_captureDonePrev;
+        $display("\n========== ImgCapture ==========");
+        
+        // Trigger capture
+        imgctrl_status_captureDonePrev = imgctrl_status_captureDone;
+        imgctrl_cmd_capture = !imgctrl_cmd_capture;
+        
+        // Wait until the capture is complete
+        wait(imgctrl_status_captureDone !== imgctrl_status_captureDonePrev);
+        
+        $display("[ImgCapture] Capture done (done:%b pixelCount:%0d, highlightCount:%0d, shadowCount:%0d)",
+            imgctrl_status_captureDone,
+            imgctrl_status_capturePixelCount,
+            imgctrl_status_captureHighlightCount,
+            imgctrl_status_captureShadowCount,
+        );
+        
+        if (imgctrl_status_capturePixelCount === `Img_PixelCount) begin
+            $display("[ImgCapture] Pixel count: %0d (expected: %0d) ✅", imgctrl_status_capturePixelCount, `Img_PixelCount);
+        end else begin
+            $display("[ImgCapture] Pixel count: %0d (expected: %0d) ❌", imgctrl_status_capturePixelCount, `Img_PixelCount);
+            $finish;
+        end
+    end endtask
+    
+    task ImgReadout(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
         localparam ImageWordCount = `Img_HeaderWordCount + (`Img_Width*`Img_Height) + ImgCtrl_PaddingWordCount;
+        localparam ImgWordInitialValue  = 16'h0FFF;
+        localparam ImgWordDelta         = -1;
         localparam WaitForWordTimeoutNs = 10000000;
         integer recvWordCount;
         integer done;
         realtime lastWordTime;
         integer expectedWordCount;
         
-        $display("\n========== TestImgReadout (thumb: %b) ==========", thumb);
+        $display("\n========== ImgReadout (thumb: %b) ==========", thumb);
+        
+        WordValidator.Reset();
+        WordValidator.Config(
+            `Img_HeaderWordCount,                               // headerWordCount
+            (!thumb ? `Img_PixelCount : `Img_ThumbPixelCount),  // bodyWordCount
+            ImgWordInitialValue,                                // bodyWordInitialValue
+            (!thumb ? 1 : 0),                                   // bodyWordDeltaValidate
+            ImgWordDelta,                                       // bodyWordDelta
+            1                                                   // checksumValidate
+        );
         
         imgctrl_cmd_thumb = thumb;
         
@@ -138,6 +217,7 @@ module ImgControllerTest();
         while (!done) begin
             wait(img_clk);
             if (imgctrl_readout_ready && imgctrl_readout_trigger) begin
+                WordValidator.Validate(imgctrl_readout_data);
                 lastWordTime = $realtime;
                 recvWordCount++;
             end
@@ -151,9 +231,9 @@ module ImgControllerTest();
         
         expectedWordCount = (!thumb ? `Img_WordCount : `Img_ThumbWordCount) + ImgCtrl_PaddingWordCount;
         if (recvWordCount === expectedWordCount) begin
-            $display("Received word count: %0d (expected: %0d) ✅", recvWordCount, expectedWordCount);
+            $display("[ImgReadout] Received word count: %0d (expected: %0d) ✅", recvWordCount, expectedWordCount);
         end else begin
-            $display("Received word count: %0d (expected: %0d) ❌", recvWordCount, expectedWordCount);
+            $display("[ImgReadout] Received word count: %0d (expected: %0d) ❌", recvWordCount, expectedWordCount);
             $finish;
         end
     end endtask
@@ -164,7 +244,10 @@ module ImgControllerTest();
         wait(img_clk);
         wait(!img_clk);
         
-        TestImgReadout(1);
+        ImgCapture();
+        
+        ImgReadout(1);
+        ImgReadout(0);
         
         // for (i=0; i<ImageWordCount; i++) begin
         //     wait(img_clk && imgctrl_readout_ready && imgctrl_readout_trigger);

@@ -3,6 +3,7 @@
 
 `include "Util.v"
 `include "FletcherChecksum.v"
+`include "EndianSwap.v"
 
 `timescale 1ns/1ps
 
