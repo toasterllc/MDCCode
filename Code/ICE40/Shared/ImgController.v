@@ -202,7 +202,7 @@ module ImgController #(
     reg fifoIn_done = 0;
     `Sync(ctrl_fifoInDone, fifoIn_done, posedge, clk);
     
-    reg[3:0] fifoIn_state = 0;
+    reg[2:0] fifoIn_state = 0;
     always @(posedge img_dclk) begin
         fifoIn_rst <= 0; // Pulse
         fifoIn_lvPrev <= fifoIn_lv;
