@@ -325,20 +325,20 @@ module ImgController #(
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
-    reg[`RegWidth(ImgWidth)-1:0] ctrl_readoutPixelX = 0;
-    reg[`RegWidth(ImgHeight)-1:0] ctrl_readoutPixelY = 0;
-    reg ctrl_readoutPixelFilterEn = 0;
-    // TODO: perf: try moving ctrl_readoutPixelFilterEn to where we increment ctrl_readoutPixelX/ctrl_readoutPixelY
-    // ctrl_readoutPixelKeep: keep the pixel if filtering is disabled (ie non-thumbnail mode),
+    reg[`RegWidth(ImgWidth)-1:0] ctrl_readout_pixelX = 0;
+    reg[`RegWidth(ImgHeight)-1:0] ctrl_readout_pixelY = 0;
+    reg ctrl_readout_pixelFilterEn = 0;
+    // TODO: perf: try moving ctrl_readout_pixelFilterEn to where we increment ctrl_readout_pixelX/ctrl_readout_pixelY
+    // ctrl_readout_pixelKeep: keep the pixel if filtering is disabled (ie non-thumbnail mode),
     // or if filtering is enabled and the pixel is in the upper-left 2x2 corner of any 8x8 group
-    wire ctrl_readoutPixelKeep = (
-        !ctrl_readoutPixelFilterEn ||
-        ((ctrl_readoutPixelX[2:0]===0 || ctrl_readoutPixelX[2:0]===1) &&
-         (ctrl_readoutPixelY[2:0]===0 || ctrl_readoutPixelY[2:0]===1))
+    wire ctrl_readout_pixelKeep = (
+        !ctrl_readout_pixelFilterEn ||
+        ((ctrl_readout_pixelX[2:0]===0 || ctrl_readout_pixelX[2:0]===1) &&
+         (ctrl_readout_pixelY[2:0]===0 || ctrl_readout_pixelY[2:0]===1))
     );
-    // TODO: perf: try adding ctrl_readoutPixelCount back to determine when to signal ctrl_readoutPixelDone,
-    // instead of using ctrl_readoutPixelX/Y
-    reg ctrl_readoutPixelDone = 0;
+    // TODO: perf: try adding ctrl_readoutPixelCount back to determine when to signal ctrl_readout_pixelDone,
+    // instead of using ctrl_readout_pixelX/Y
+    reg ctrl_readout_pixelDone = 0;
     
     reg[HeaderWidth-1:0] ctrl_shiftout_data = 0;
     reg[`RegWidth2(HeaderWordCount,ChecksumPaddingWordCount)-1:0] ctrl_shiftout_count = 0;
@@ -346,9 +346,6 @@ module ImgController #(
     
     reg[0:0] ctrl_delay_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_delay_nextState = 0;
-    
-    reg[ChecksumWidth-1:0] ctrl_checksum = 0;
-    reg[`RegWidth(ChecksumPaddingWordCount)-1:0] ctrl_checksumPaddingCount = 0;
     
     localparam Ctrl_State_Idle          = 0;  // +0
     localparam Ctrl_State_Capture       = 1;  // +3
@@ -368,9 +365,6 @@ module ImgController #(
         if (!readout_ready || readout_trigger) begin
             ctrl_shiftout_data <= ctrl_shiftout_data<<16;
             ctrl_shiftout_count <= ctrl_shiftout_count-1;
-            
-            ctrl_checksum <= ctrl_checksum<<16;
-            ctrl_checksumPaddingCount <= ctrl_checksumPaddingCount-1;
         end
         
         if (readout_ready && readout_trigger) begin
@@ -384,16 +378,16 @@ module ImgController #(
         end
         
         if (ramctrl_read_ready && ramctrl_read_trigger) begin
-            if (ctrl_readoutPixelX !== ImgWidth-1) begin
-                ctrl_readoutPixelX <= ctrl_readoutPixelX+1;
+            if (ctrl_readout_pixelX !== ImgWidth-1) begin
+                ctrl_readout_pixelX <= ctrl_readout_pixelX+1;
             end else begin
-                ctrl_readoutPixelX <= 0;
-                ctrl_readoutPixelY <= ctrl_readoutPixelY+1;
+                ctrl_readout_pixelX <= 0;
+                ctrl_readout_pixelY <= ctrl_readout_pixelY+1;
             end
         end
         
-        if ((ctrl_readoutPixelX===0) && (ctrl_readoutPixelY===ImgHeight)) begin
-            ctrl_readoutPixelDone <= 1;
+        if ((ctrl_readout_pixelX===0) && (ctrl_readout_pixelY===ImgHeight)) begin
+            ctrl_readout_pixelDone <= 1;
         end
         
         case (ctrl_state)
@@ -456,7 +450,7 @@ module ImgController #(
             // Signal that readout is starting
             readout_start <= !readout_start;
             // Enable pixel filter if we're in thumbnail mode
-            ctrl_readoutPixelFilterEn <= cmd_thumb;
+            ctrl_readout_pixelFilterEn <= cmd_thumb;
             // Output the header
             ctrl_shiftout_data <= cmd_header;
             ctrl_shiftout_count <= HeaderWordCount;
@@ -467,16 +461,17 @@ module ImgController #(
         // Prepare to output pixels
         Ctrl_State_Readout+2: begin
             // Reset pixel counters used for thumbnailing
-            ctrl_readoutPixelX <= 0;
-            ctrl_readoutPixelY <= 0;
+            ctrl_readout_pixelX <= 0;
+            ctrl_readout_pixelY <= 0;
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
-            ctrl_readoutPixelDone <= 0;
+            ctrl_readout_pixelDone <= 0;
             ctrl_state <= Ctrl_State_Readout+3;
         end
         
         // Output pixels
+        // TODO: perf: cleanup this state
         Ctrl_State_Readout+3: begin
             readout_ready <= readout_ready;
             
@@ -486,10 +481,10 @@ module ImgController #(
             
             if (ramctrl_read_ready && (!readout_ready || readout_trigger)) begin
                 readout_data <= ramctrl_read_data;
-                readout_ready <= ctrl_readoutPixelKeep;
+                readout_ready <= ctrl_readout_pixelKeep;
             end
             
-            if (ctrl_readoutPixelDone && readout_trigger) begin
+            if (ctrl_readout_pixelDone && readout_trigger) begin
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 
                 // We need 2 wait states before we read the checksum
