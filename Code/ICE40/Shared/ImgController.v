@@ -339,6 +339,7 @@ module ImgController #(
     // TODO: perf: try adding ctrl_readoutPixelCount back to determine when to signal ctrl_readout_pixelDone,
     // instead of using ctrl_readout_pixelX/Y
     reg ctrl_readout_pixelDone = 0;
+    wire ctrl_readout_dataLoad = (!readout_ready || readout_trigger);
     
     reg[HeaderWidth-1:0] ctrl_shiftout_data = 0;
     reg[`RegWidth2(HeaderWordCount,ChecksumPaddingWordCount)-1:0] ctrl_shiftout_count = 0;
@@ -362,17 +363,13 @@ module ImgController #(
         readout_checksum_en <= 0; // Pulse
         ctrl_delay_count <= ctrl_delay_count-1;
         
-        if (!readout_ready || readout_trigger) begin
+        if (ctrl_readout_dataLoad) begin
             ctrl_shiftout_data <= ctrl_shiftout_data<<16;
             ctrl_shiftout_count <= ctrl_shiftout_count-1;
         end
         
         if (readout_ready && readout_trigger) begin
             $display("[ImgController:Readout] readout_data: %x", readout_data);
-            // ctrl_header <= ctrl_header<<16;
-            // ctrl_headerCount <= ctrl_headerCount-1;
-            // ctrl_readoutPixelCount <= ctrl_readoutPixelCount-1;
-            
             readout_checksum_en <= 1;
             readout_checksum_din <= {readout_data[7:0], readout_data[15:8]};
         end
@@ -479,7 +476,7 @@ module ImgController #(
                 readout_ready <= 0;
             end
             
-            if (ramctrl_read_ready && (!readout_ready || readout_trigger)) begin
+            if (ramctrl_read_ready && ctrl_readout_dataLoad) begin
                 readout_data <= ramctrl_read_data;
                 readout_ready <= ctrl_readout_pixelKeep;
             end
@@ -510,7 +507,7 @@ module ImgController #(
         
         // Output `ctrl_shiftout_count` words from `ctrl_shiftout_data`
         Ctrl_State_Shiftout: begin
-            if (!readout_ready || readout_trigger) begin
+            if (ctrl_readout_dataLoad) begin
                 readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
             end
             
@@ -547,7 +544,7 @@ module ImgController #(
     
     // ramctrl_read_trigger: trigger another read from RAM if our flop is currently empty (!readout_ready),
     // or it's not empty and the client drained the word on this cycle
-    assign ramctrl_read_trigger = (!readout_ready || readout_trigger);
+    assign ramctrl_read_trigger = ctrl_readout_dataLoad;
     
 endmodule
 
