@@ -159,6 +159,7 @@ module ICEApp(
     reg[0:0]                                imgctrl_cmd_ramBlock = 0;
     reg[0:0]                                imgctrl_cmd_skipCount = 0;
     reg[`Img_HeaderWordCount*16-1:0]        imgctrl_cmd_header = 0;
+    reg                                     imgctrl_cmd_thumb = 0;
     wire                                    imgctrl_readout_rst;
     wire                                    imgctrl_readout_start;
     wire                                    imgctrl_readout_ready;
@@ -186,6 +187,7 @@ module ICEApp(
         .cmd_ramBlock(imgctrl_cmd_ramBlock),
         .cmd_skipCount(imgctrl_cmd_skipCount),
         .cmd_header(imgctrl_cmd_header),
+        .cmd_thumb(imgctrl_cmd_thumb),
         
         .readout_rst(imgctrl_readout_rst),
         .readout_start(imgctrl_readout_start),
@@ -753,6 +755,7 @@ module ICEApp(
                 `Msg_Type_ImgReadout: begin
                     $display("[SPI] Got Msg_Type_ImgReadout");
                     imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_SrcBlock_Bits];
+                    imgctrl_cmd_thumb <= spi_msgArg[`Msg_Arg_ImgReadout_Thumb_Bits];
                     imgctrl_cmd_readout <= !imgctrl_cmd_readout;
                 end
                 
