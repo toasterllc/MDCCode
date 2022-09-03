@@ -118,8 +118,8 @@
 `define Img_HeaderWordCount     16
 `define Img_ChecksumWordCount   2
 
-`define Img_PixelCount          (`Img_Width*`Img_Height)
-`define Img_ThumbPixelCount     (`Img_ThumbWidth*`Img_ThumbHeight)
+`define Img_PixelCount          (`Img_Width * `Img_Height)
+`define Img_ThumbPixelCount     (`Img_ThumbWidth * `Img_ThumbHeight)
 
 `define Img_WordCount           (`Img_HeaderWordCount + `Img_PixelCount + `Img_ChecksumWordCount)
 `define Img_ThumbWordCount      (`Img_HeaderWordCount + `Img_ThumbPixelCount + `Img_ChecksumWordCount)

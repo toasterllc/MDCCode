@@ -10,14 +10,15 @@
 module ImgController #(
     parameter ClkFreq                   = 24_000_000,
     parameter HeaderWordCount           = 8,
-    parameter ImgPixelCount             = 4096*4096,
+    parameter ImgWidth                  = 4096,
+    parameter ImgHeight                 = 4096,
     parameter PaddingWordCount          = 42,
     
     localparam HeaderWidth              = HeaderWordCount*16,
+    localparam ImgPixelCount            = ImgWidth*ImgHeight,
     localparam ChecksumWordCount        = 2,
     localparam ChecksumWidth            = ChecksumWordCount*16,
     localparam ChecksumPaddingWordCount = PaddingWordCount+ChecksumWordCount
-    
 )(
     input wire          clk,
     
@@ -324,11 +325,17 @@ module ImgController #(
     // ====================
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
-    reg[`RegWidth(ImgPixelCount)-1:0] ctrl_readoutPixelCount = 0;
+    reg[`RegWidth(ImgWidth)-1:0] ctrl_readoutPixelX = 0;
+    reg[`RegWidth(ImgHeight)-1:0] ctrl_readoutPixelY = 0;
     reg ctrl_readoutPixelFilterEn = 0;
-    reg[2:0] ctrl_readoutPixelFilterCount = 0;
-    // TODO: perf: try moving ctrl_readoutPixelFilterEn to where we increment ctrl_readoutPixelFilterCount
-    wire ctrl_readoutPixelKeep = (!ctrl_readoutPixelFilterEn || ctrl_readoutPixelFilterCount===0 || ctrl_readoutPixelFilterCount===1);
+    // TODO: perf: try moving ctrl_readoutPixelFilterEn to where we increment ctrl_readoutPixelX/ctrl_readoutPixelY
+    // ctrl_readoutPixelKeep: keep the pixel if filtering is disabled (ie non-thumbnail mode),
+    // or if filtering is enabled and the pixel is in the upper-left 2x2 corner of any 8x8 group
+    wire ctrl_readoutPixelKeep = (
+        !ctrl_readoutPixelFilterEn ||
+        ((ctrl_readoutPixelX[2:0]===0 || ctrl_readoutPixelX[2:0]===1) &&
+         (ctrl_readoutPixelY[2:0]===0 || ctrl_readoutPixelY[2:0]===1))
+    );
     reg ctrl_readoutPixelDone = 0;
     
     reg[HeaderWidth-1:0] ctrl_header = 0;
@@ -361,18 +368,23 @@ module ImgController #(
             $display("readout_data: %x", readout_data);
             // ctrl_header <= ctrl_header<<16;
             // ctrl_headerCount <= ctrl_headerCount-1;
-            ctrl_readoutPixelCount <= ctrl_readoutPixelCount-1;
+            // ctrl_readoutPixelCount <= ctrl_readoutPixelCount-1;
             
             readout_checksum_en <= 1;
             readout_checksum_din <= {readout_data[7:0], readout_data[15:8]};
         end
         
-        if (ctrl_readoutPixelCount === 0) begin
-            ctrl_readoutPixelDone <= 1;
+        if (ramctrl_read_ready && ramctrl_read_trigger) begin
+            if (ctrl_readoutPixelX !== ImgWidth-1) begin
+                ctrl_readoutPixelX <= ctrl_readoutPixelX+1;
+            end else begin
+                ctrl_readoutPixelX <= 0;
+                ctrl_readoutPixelY <= ctrl_readoutPixelY+1;
+            end
         end
         
-        if (ramctrl_read_ready && ramctrl_read_trigger) begin
-            ctrl_readoutPixelFilterCount <= ctrl_readoutPixelFilterCount+1;
+        if ((ctrl_readoutPixelX===ImgWidth-2) && (ctrl_readoutPixelY===ImgHeight-1)) begin
+            ctrl_readoutPixelDone <= 1;
         end
         
         case (ctrl_state)
@@ -454,10 +466,12 @@ module ImgController #(
         
         // Prepare to output pixels
         Ctrl_State_Readout+3: begin // 8
+            // Reset pixel counters used for thumbnailing
+            ctrl_readoutPixelX <= 0;
+            ctrl_readoutPixelY <= 0;
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
-            ctrl_readoutPixelCount <= ImgPixelCount;
             ctrl_readoutPixelDone <= 0;
             ctrl_state <= Ctrl_State_Readout+4;
         end
