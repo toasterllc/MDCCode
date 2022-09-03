@@ -336,6 +336,8 @@ module ImgController #(
         ((ctrl_readoutPixelX[2:0]===0 || ctrl_readoutPixelX[2:0]===1) &&
          (ctrl_readoutPixelY[2:0]===0 || ctrl_readoutPixelY[2:0]===1))
     );
+    // TODO: perf: try adding ctrl_readoutPixelCount back to determine when to signal ctrl_readoutPixelDone,
+    // instead of using ctrl_readoutPixelX/Y
     reg ctrl_readoutPixelDone = 0;
     
     reg[HeaderWidth-1:0] ctrl_header = 0;
