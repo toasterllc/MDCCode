@@ -346,8 +346,8 @@ module ImgController #(
     
     localparam Ctrl_State_Idle          = 0; // +0
     localparam Ctrl_State_Capture       = 1; // +3
-    localparam Ctrl_State_Readout       = 5; // +6
-    localparam Ctrl_State_Count         = 12;
+    localparam Ctrl_State_Readout       = 5; // +7
+    localparam Ctrl_State_Count         = 13;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -383,7 +383,7 @@ module ImgController #(
             end
         end
         
-        if ((ctrl_readoutPixelX===ImgWidth-2) && (ctrl_readoutPixelY===ImgHeight-1)) begin
+        if ((ctrl_readoutPixelX===0) && (ctrl_readoutPixelY===ImgHeight)) begin
             ctrl_readoutPixelDone <= 1;
         end
         
@@ -477,7 +477,7 @@ module ImgController #(
         end
         
         // Output pixels
-        Ctrl_State_Readout+4: begin
+        Ctrl_State_Readout+4: begin // 9
             if (ramctrl_read_ready && ramctrl_read_trigger) begin
                 readout_data <= ramctrl_read_data;
                 readout_ready <= ctrl_readoutPixelKeep;
@@ -489,8 +489,13 @@ module ImgController #(
             end
         end
         
+        // Wait state
+        Ctrl_State_Readout+5: begin // 10
+            ctrl_state <= Ctrl_State_Readout+6;
+        end
+        
         // Prepare to output checksum+padding
-        Ctrl_State_Readout+5: begin
+        Ctrl_State_Readout+6: begin // 10
             // ctrl_checksum: little-endian
             ctrl_checksum <= {
                     readout_checksum_dout[ 7-:8],
@@ -499,11 +504,11 @@ module ImgController #(
                     readout_checksum_dout[31-:8]
             };
             ctrl_checksumPaddingCount <= ChecksumPaddingWordCount;
-            ctrl_state <= Ctrl_State_Readout+6;
+            ctrl_state <= Ctrl_State_Readout+7;
         end
         
         // Output checksum+padding
-        Ctrl_State_Readout+6: begin
+        Ctrl_State_Readout+7: begin
             if (!readout_ready || readout_trigger) begin
                 readout_data <= `LeftBits(ctrl_checksum, 0, 16);
             end
