@@ -300,7 +300,7 @@ module ImgController #(
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
     reg[`RegWidth(ImgPixelCount)-1:0] ctrl_readoutPixelCount = 0;
-    reg ctrl_readoutPixelsDone = 0;
+    reg ctrl_readoutPixelDone = 0;
     
     reg[HeaderWidth-1:0] ctrl_header = 0;
     reg[`RegWidth(HeaderWordCount)-1:0] ctrl_headerCount = 0;
@@ -334,7 +334,7 @@ module ImgController #(
         end
         
         if (ctrl_readoutPixelCount === 0) begin
-            ctrl_readoutPixelsDone <= 1;
+            ctrl_readoutPixelDone <= 1;
         end
         
         case (ctrl_state)
@@ -384,8 +384,6 @@ module ImgController #(
             $display("[ImgController:Readout] Started");
             // Reset output FIFO
             readout_rst <= 1;
-            // Reset readout state
-            ctrl_readoutPixelsDone <= 0;
             ctrl_state <= Ctrl_State_Readout+1;
         end
         
@@ -417,6 +415,7 @@ module ImgController #(
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
             ctrl_readoutPixelCount <= ImgPixelCount;
+            ctrl_readoutPixelDone <= 0;
             ctrl_state <= Ctrl_State_Readout+4;
         end
         
@@ -427,7 +426,7 @@ module ImgController #(
                 readout_ready <= 1;
             end
             
-            if (ctrl_readoutPixelsDone) begin
+            if (ctrl_readoutPixelDone) begin
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 ctrl_state <= Ctrl_State_Readout+5;
             end
