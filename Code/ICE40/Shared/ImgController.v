@@ -347,8 +347,6 @@ module ImgController #(
     reg[ChecksumWidth-1:0] ctrl_checksum = 0;
     reg[`RegWidth(ChecksumPaddingWordCount)-1:0] ctrl_checksumPaddingCount = 0;
     
-    // TODO: perf: make the write-header state more general, and reuse it to output the checksum. in both cases, just load the shift register and have a counter for the number of words to output.
-    
     localparam Ctrl_State_Idle          = 0;  // +0
     localparam Ctrl_State_Capture       = 1;  // +3
     localparam Ctrl_State_Readout       = 5;  // +6
@@ -502,6 +500,7 @@ module ImgController #(
         // Output checksum+padding
         Ctrl_State_Readout+6: begin
             ctrl_shiftout_data[(HeaderWidth-1)-:32] <= {
+                // Little endian
                 readout_checksum_dout[ 7-:8],
                 readout_checksum_dout[15-:8],
                 readout_checksum_dout[23-:8],
@@ -512,7 +511,7 @@ module ImgController #(
             ctrl_state <= Ctrl_State_Shiftout;
         end
         
-        // Output shiftoutReg
+        // Output `ctrl_shiftout_count` words from `ctrl_shiftout_data`
         Ctrl_State_Shiftout: begin
             if (!readout_ready || readout_trigger) begin
                 readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
@@ -524,8 +523,6 @@ module ImgController #(
                 readout_ready <= 1;
             end
         end
-        
-        
         endcase
         
         if (ctrl_cmdCapture) ctrl_state <= Ctrl_State_Capture;
