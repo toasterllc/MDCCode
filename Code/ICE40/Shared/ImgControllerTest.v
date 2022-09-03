@@ -249,7 +249,7 @@ module ImgControllerTest();
         
         ImgCapture();
         
-        // ImgReadout(1);
+        ImgReadout(1);
         ImgReadout(0);
         
         // for (i=0; i<ImageWordCount; i++) begin
