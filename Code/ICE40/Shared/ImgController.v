@@ -340,18 +340,20 @@ module ImgController #(
     // instead of using ctrl_readoutPixelX/Y
     reg ctrl_readoutPixelDone = 0;
     
-    reg[HeaderWidth-1:0] ctrl_header = 0;
-    reg[`RegWidth(HeaderWordCount)-1:0] ctrl_headerCount = 0;
+    reg[HeaderWidth-1:0] ctrl_shiftout_data = 0;
+    reg[`RegWidth2(HeaderWordCount,ChecksumPaddingWordCount)-1:0] ctrl_shiftout_count = 0;
+    reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_shiftout_nextState = 0;
     
     reg[ChecksumWidth-1:0] ctrl_checksum = 0;
     reg[`RegWidth(ChecksumPaddingWordCount)-1:0] ctrl_checksumPaddingCount = 0;
     
     // TODO: perf: make the write-header state more general, and reuse it to output the checksum. in both cases, just load the shift register and have a counter for the number of words to output.
     
-    localparam Ctrl_State_Idle          = 0; // +0
-    localparam Ctrl_State_Capture       = 1; // +3
-    localparam Ctrl_State_Readout       = 5; // +8
-    localparam Ctrl_State_Count         = 14;
+    localparam Ctrl_State_Idle          = 0;  // +0
+    localparam Ctrl_State_Capture       = 1;  // +3
+    localparam Ctrl_State_Readout       = 5;  // +6
+    localparam Ctrl_State_Shiftout      = 12; // +0
+    localparam Ctrl_State_Count         = 13;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -361,8 +363,8 @@ module ImgController #(
         readout_checksum_en <= 0; // Pulse
         
         if (!readout_ready || readout_trigger) begin
-            ctrl_header <= ctrl_header<<16;
-            ctrl_headerCount <= ctrl_headerCount-1;
+            ctrl_shiftout_data <= ctrl_shiftout_data<<16;
+            ctrl_shiftout_count <= ctrl_shiftout_count-1;
             
             ctrl_checksum <= ctrl_checksum<<16;
             ctrl_checksumPaddingCount <= ctrl_checksumPaddingCount-1;
@@ -446,30 +448,18 @@ module ImgController #(
             ctrl_state <= Ctrl_State_Readout+1;
         end
         
-        // Prepare to output header
-        Ctrl_State_Readout+1: begin // 6
-            ctrl_header <= cmd_header;
-            ctrl_headerCount <= HeaderWordCount;
+        // Output header
+        Ctrl_State_Readout+1: begin
+            ctrl_shiftout_data <= cmd_header;
+            ctrl_shiftout_count <= HeaderWordCount;
+            ctrl_shiftout_nextState <= Ctrl_State_Readout+2;
             // Signal that readout is starting
             readout_start <= !readout_start;
-            ctrl_state <= Ctrl_State_Readout+2;
-        end
-        
-        // Output header
-        Ctrl_State_Readout+2: begin // 7
-            if (!readout_ready || readout_trigger) begin
-                readout_data <= `LeftBits(ctrl_header, 0, 16);
-            end
-            
-            if (!ctrl_headerCount && readout_trigger) begin
-                ctrl_state <= Ctrl_State_Readout+3;
-            end else begin
-                readout_ready <= 1;
-            end
+            ctrl_state <= Ctrl_State_Shiftout;
         end
         
         // Prepare to output pixels
-        Ctrl_State_Readout+3: begin // 8
+        Ctrl_State_Readout+2: begin
             // Reset pixel counters used for thumbnailing
             ctrl_readoutPixelX <= 0;
             ctrl_readoutPixelY <= 0;
@@ -477,11 +467,11 @@ module ImgController #(
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
             ctrl_readoutPixelDone <= 0;
-            ctrl_state <= Ctrl_State_Readout+4;
+            ctrl_state <= Ctrl_State_Readout+3;
         end
         
         // Output pixels
-        Ctrl_State_Readout+4: begin // 9
+        Ctrl_State_Readout+3: begin
             readout_ready <= readout_ready;
             
             if (readout_trigger) begin
@@ -495,46 +485,47 @@ module ImgController #(
             
             if (ctrl_readoutPixelDone && readout_trigger) begin
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
-                ctrl_state <= Ctrl_State_Readout+5;
+                ctrl_state <= Ctrl_State_Readout+4;
             end
         end
         
         // Wait state
-        Ctrl_State_Readout+5: begin // 10
+        Ctrl_State_Readout+4: begin
+            ctrl_state <= Ctrl_State_Readout+5;
+        end
+        
+        // Wait state
+        Ctrl_State_Readout+5: begin
             ctrl_state <= Ctrl_State_Readout+6;
         end
         
-        // Wait state
-        Ctrl_State_Readout+6: begin // 11
-            ctrl_state <= Ctrl_State_Readout+7;
-        end
-        
-        // Prepare to output checksum+padding
-        Ctrl_State_Readout+7: begin // 12
-            // ctrl_checksum: little-endian
-            ctrl_checksum <= {
-                    readout_checksum_dout[ 7-:8],
-                    readout_checksum_dout[15-:8],
-                    readout_checksum_dout[23-:8],
-                    readout_checksum_dout[31-:8]
-            };
-            ctrl_checksumPaddingCount <= ChecksumPaddingWordCount;
-            ctrl_state <= Ctrl_State_Readout+8;
-        end
-        
         // Output checksum+padding
-        Ctrl_State_Readout+8: begin // 13
+        Ctrl_State_Readout+6: begin
+            ctrl_shiftout_data[(HeaderWidth-1)-:32] <= {
+                readout_checksum_dout[ 7-:8],
+                readout_checksum_dout[15-:8],
+                readout_checksum_dout[23-:8],
+                readout_checksum_dout[31-:8]
+            };
+            ctrl_shiftout_count <= ChecksumPaddingWordCount;
+            ctrl_shiftout_nextState <= Ctrl_State_Idle;
+            ctrl_state <= Ctrl_State_Shiftout;
+        end
+        
+        // Output shiftoutReg
+        Ctrl_State_Shiftout: begin
             if (!readout_ready || readout_trigger) begin
-                readout_data <= `LeftBits(ctrl_checksum, 0, 16);
+                readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
             end
             
-            if (!ctrl_checksumPaddingCount && readout_trigger) begin
-                $display("[ImgController:Readout] Done");
-                ctrl_state <= Ctrl_State_Idle;
+            if (!ctrl_shiftout_count && readout_trigger) begin
+                ctrl_state <= ctrl_shiftout_nextState;
             end else begin
                 readout_ready <= 1;
             end
         end
+        
+        
         endcase
         
         if (ctrl_cmdCapture) ctrl_state <= Ctrl_State_Capture;
