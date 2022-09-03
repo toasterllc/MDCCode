@@ -325,6 +325,10 @@ module ImgController #(
     `TogglePulse(ctrl_cmdCapture, cmd_capture, posedge, clk);
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
     reg[`RegWidth(ImgPixelCount)-1:0] ctrl_readoutPixelCount = 0;
+    reg ctrl_readoutPixelFilterEn = 0;
+    reg[2:0] ctrl_readoutPixelFilterCount = 0;
+    // TODO: perf: try moving ctrl_readoutPixelFilterEn to where we increment ctrl_readoutPixelFilterCount
+    wire ctrl_readoutPixelKeep = (!ctrl_readoutPixelFilterEn || ctrl_readoutPixelFilterCount===0 || ctrl_readoutPixelFilterCount===1);
     reg ctrl_readoutPixelDone = 0;
     
     reg[HeaderWidth-1:0] ctrl_header = 0;
@@ -365,6 +369,10 @@ module ImgController #(
         
         if (ctrl_readoutPixelCount === 0) begin
             ctrl_readoutPixelDone <= 1;
+        end
+        
+        if (ramctrl_read_ready && ramctrl_read_trigger) begin
+            ctrl_readoutPixelFilterCount <= ctrl_readoutPixelFilterCount+1;
         end
         
         case (ctrl_state)
@@ -413,6 +421,8 @@ module ImgController #(
         // TODO: combine this state with the next state?
         Ctrl_State_Readout: begin   // 5
             $display("[ImgController:Readout] Started");
+            // Enable pixel filter if we're in thumbnail mode
+            ctrl_readoutPixelFilterEn <= cmd_thumb;
             // Reset output FIFO
             readout_rst <= 1;
             // Reset checksum
@@ -456,7 +466,7 @@ module ImgController #(
         Ctrl_State_Readout+4: begin
             if (ramctrl_read_ready && ramctrl_read_trigger) begin
                 readout_data <= ramctrl_read_data;
-                readout_ready <= 1;
+                readout_ready <= ctrl_readoutPixelKeep;
             end
             
             if (ctrl_readoutPixelDone) begin
