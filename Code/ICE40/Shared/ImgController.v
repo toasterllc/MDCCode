@@ -432,7 +432,7 @@ module ImgController #(
             end
         end
         
-        // TODO: combine this state with the next state?
+        // TODO: combine this state with the next state? or do we need a delay between readout_rst being asserted and readout_start toggling?
         Ctrl_State_Readout: begin   // 5
             $display("[ImgController:Readout] Started");
             // Enable pixel filter if we're in thumbnail mode
