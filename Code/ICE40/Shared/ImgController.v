@@ -352,10 +352,10 @@ module ImgController #(
     
     localparam Ctrl_State_Idle          = 0;  // +0
     localparam Ctrl_State_Capture       = 1;  // +3
-    localparam Ctrl_State_Readout       = 5;  // +3
-    localparam Ctrl_State_Shiftout      = 9;  // +0
-    localparam Ctrl_State_Delay         = 10; // +0
-    localparam Ctrl_State_Count         = 11;
+    localparam Ctrl_State_Readout       = 5;  // +4
+    localparam Ctrl_State_Shiftout      = 10; // +0
+    localparam Ctrl_State_Delay         = 11; // +0
+    localparam Ctrl_State_Count         = 12;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -443,27 +443,29 @@ module ImgController #(
             $display("[ImgController:Readout] Started");
             // Reset output FIFO
             readout_rst <= 1;
+            // Delay one cycle before outputting the header, to ensure the FIFO is finished
+            // resetting before we feed it data
+            ctrl_delay_count <= 0;
+            ctrl_delay_nextState <= Ctrl_State_Readout+1;
+            ctrl_state <= Ctrl_State_Delay;
+        end
+        
+        Ctrl_State_Readout+1: begin
             // Reset checksum
             readout_checksum_rst <= 1;
             // Signal that readout is starting
             readout_start <= !readout_start;
             // Enable pixel filter if we're in thumbnail mode
             ctrl_readoutPixelFilterEn <= cmd_thumb;
-            
             // Output the header
             ctrl_shiftout_data <= cmd_header;
             ctrl_shiftout_count <= HeaderWordCount;
-            ctrl_shiftout_nextState <= Ctrl_State_Readout+1;
-            
-            // Delay one cycle before outputting the header, to ensure the FIFO is finished
-            // resetting before we feed it data
-            ctrl_delay_count <= 0;
-            ctrl_delay_nextState <= Ctrl_State_Shiftout;
-            ctrl_state <= Ctrl_State_Delay;
+            ctrl_shiftout_nextState <= Ctrl_State_Readout+2;
+            ctrl_state <= Ctrl_State_Shiftout;
         end
         
         // Prepare to output pixels
-        Ctrl_State_Readout+1: begin
+        Ctrl_State_Readout+2: begin
             // Reset pixel counters used for thumbnailing
             ctrl_readoutPixelX <= 0;
             ctrl_readoutPixelY <= 0;
@@ -471,11 +473,11 @@ module ImgController #(
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
             ctrl_readoutPixelDone <= 0;
-            ctrl_state <= Ctrl_State_Readout+2;
+            ctrl_state <= Ctrl_State_Readout+3;
         end
         
         // Output pixels
-        Ctrl_State_Readout+2: begin
+        Ctrl_State_Readout+3: begin
             readout_ready <= readout_ready;
             
             if (readout_trigger) begin
@@ -492,13 +494,13 @@ module ImgController #(
                 
                 // We need 2 wait states before we read the checksum
                 ctrl_delay_count <= 1;
-                ctrl_delay_nextState <= Ctrl_State_Readout+3;
+                ctrl_delay_nextState <= Ctrl_State_Readout+4;
                 ctrl_state <= Ctrl_State_Delay;
             end
         end
         
         // Output checksum+padding
-        Ctrl_State_Readout+3: begin
+        Ctrl_State_Readout+4: begin
             ctrl_shiftout_data[(HeaderWidth-1)-:32] <= {
                 // Little endian
                 readout_checksum_dout[ 7-:8],
