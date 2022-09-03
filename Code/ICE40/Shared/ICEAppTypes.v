@@ -112,9 +112,16 @@
 `define Img_Height              1296
 `endif
 
+`define Img_ThumbWidth          (`Img_Width/4)
+`define Img_ThumbHeight         (`Img_Height/4)
+
 `define Img_HeaderWordCount     16
-`define Img_PixelCount          (`Img_Width*`Img_Height)
 `define Img_ChecksumWordCount   2
+
+`define Img_PixelCount          (`Img_Width*`Img_Height)
+`define Img_ThumbPixelCount     (`Img_ThumbWidth*`Img_ThumbHeight)
+
 `define Img_WordCount           (`Img_HeaderWordCount + `Img_PixelCount + `Img_ChecksumWordCount)
+`define Img_ThumbWordCount      (`Img_HeaderWordCount + `Img_ThumbPixelCount + `Img_ChecksumWordCount)
 
 `endif
