@@ -40,8 +40,9 @@ module WordValidator();
     reg[31:0]   _cfgHeaderWordCount         = 0;
     reg[31:0]   _cfgBodyWordCount           = 0;
     reg[31:0]   _cfgBodyWordInitialValue    = 0;
+    reg         _cfgBodyWordDeltaValidate   = 0;
     integer     _cfgBodyWordDelta           = 0;
-    reg[31:0]   _cfgValidateChecksum        = 0;
+    reg[31:0]   _cfgChecksumValidate        = 0;
     
     reg[31:0]   _wordCounter                = 0;
     reg[15:0]   _wordPrev                   = 0;
@@ -52,14 +53,16 @@ module WordValidator();
         input[31:0] headerWordCount,        // Number of 16-bit words to ignore at the beginning of the received data
         input[31:0] bodyWordCount,          // Number of 16-bit words to validate
         input[31:0] bodyWordInitialValue,   // Expected value of the first word
+        input       bodyWordDeltaValidate,     // Enable checking the delta between words
         integer     bodyWordDelta,          // Expected difference between current word value and previous word value
-        input[31:0] validateChecksum        // Whether to check the checksum appended to the data
+        input[31:0] checksumValidate        // Whether to check the checksum appended to the data
     ); begin
         _cfgHeaderWordCount        = headerWordCount;
         _cfgBodyWordCount          = bodyWordCount;
         _cfgBodyWordInitialValue   = bodyWordInitialValue;
+        _cfgBodyWordDeltaValidate  = bodyWordDeltaValidate;
         _cfgBodyWordDelta          = bodyWordDelta;
-        _cfgValidateChecksum       = validateChecksum;
+        _cfgChecksumValidate       = checksumValidate;
     end endtask
     
     task Validate(input[15:0] word); begin
@@ -72,28 +75,30 @@ module WordValidator();
             
             _ChecksumConsumeWord(word);
             
-            if (!_wordValidationStarted                 ||
-                (_cfgBodyWordDelta>0 && (&_wordPrev))   ||      // Check for overflow
-                (_cfgBodyWordDelta<0 && (!_wordPrev))) begin    // Check for overflow
-                wordExpected = _cfgBodyWordInitialValue;
-            end else begin
-                wordExpected = HostFromLittle16.Swap(_wordPrev)+_cfgBodyWordDelta;
+            if (_cfgBodyWordDeltaValidate) begin
+                if (!_wordValidationStarted                 ||
+                    (_cfgBodyWordDelta>0 && (&_wordPrev))   ||      // Check for overflow
+                    (_cfgBodyWordDelta<0 && (!_wordPrev))) begin    // Check for overflow
+                    wordExpected = _cfgBodyWordInitialValue;
+                end else begin
+                    wordExpected = HostFromLittle16.Swap(_wordPrev)+_cfgBodyWordDelta;
+                end
+            
+                wordGot = HostFromLittle16.Swap(word); // Unpack little-endian
+            
+                if (wordExpected === wordGot) begin
+                    $display("[WordValidator] Received valid word (expected:%h, got:%h) ✅", wordExpected, wordGot);
+                end else begin
+                    $display("[WordValidator] Received invalid word (expected:%h, got:%h) ❌", wordExpected, wordGot);
+                    `Finish;
+                end
+            
+                _wordValidationStarted = 1;
             end
-            
-            wordGot = HostFromLittle16.Swap(word); // Unpack little-endian
-            
-            if (wordExpected === wordGot) begin
-                $display("[WordValidator] Received valid word (expected:%h, got:%h) ✅", wordExpected, wordGot);
-            end else begin
-                $display("[WordValidator] Received invalid word (expected:%h, got:%h) ❌", wordExpected, wordGot);
-                `Finish;
-            end
-            
-            _wordValidationStarted = 1;
         
         end else if (_wordCounter == _cfgHeaderWordCount+_cfgBodyWordCount+1) begin
             // Validate checksum
-            if (_cfgValidateChecksum) begin
+            if (_cfgChecksumValidate) begin
                 // Supply one last clock to get the correct output
                 _checksum_clk   = 1; #1;
                 _checksum_clk   = 0; #1;
@@ -121,7 +126,7 @@ module WordValidator();
     end endtask
     
     task Reset; begin
-        if (_wordCounter && _cfgValidateChecksum && !_checksumReceived) begin
+        if (_wordCounter && _cfgChecksumValidate && !_checksumReceived) begin
             $display("[WordValidator] Didn't receive checksum ❌");
             `Finish;
         end

@@ -108,13 +108,7 @@ module ICEAppSim();
     `endif // _ICEApp_Img_En
     
     `ifdef _ICEApp_SD_En
-        SDCardSim #(
-            .RecvHeaderWordCount(`Img_HeaderWordCount),
-            .RecvBodyWordCount(`Img_PixelCount),
-            .RecvBodyWordInitialValue(Sim_ImgWordInitialValue),
-            .RecvBodyWordDelta(Sim_ImgWordDelta),
-            .RecvValidateChecksum(1)
-        ) SDCardSim (
+        SDCardSim SDCardSim (
             .sd_clk(sd_clk),
             .sd_cmd(sd_cmd),
             .sd_dat(sd_dat)
@@ -371,11 +365,13 @@ module ICEAppSim();
         );
     end endtask
     
-    task TestImgReadout; begin
+    task TestImgReadout(input[`Msg_Arg_ImgReadout_SrcBlock_Len-1:0] srcBlock, input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
         reg[`Msg_Arg_Len-1:0] arg;
         $display("\n[ICEAppSim] ========== TestImgReadout ==========");
         
         arg = 0;
+        arg[`Msg_Arg_ImgReadout_SrcBlock_Bits] = srcBlock;
+        arg[`Msg_Arg_ImgReadout_Thumb_Bits] = thumb;
         SendMsg(`Msg_Type_ImgReadout, arg);
     end endtask
     
@@ -661,7 +657,7 @@ module ICEAppSim();
         end
     end endtask
     
-    task TestImgReadoutToSD; begin
+    task TestImgReadoutToSD(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
         // ====================
         // Test writing data to SD card / DatOut
         // ====================
@@ -676,7 +672,15 @@ module ICEAppSim();
         SendSDCmdResp(CMD25, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
         
         // Start image readout
-        TestImgReadout();
+        SDCardSim.WordValidator.Config(
+            `Img_HeaderWordCount,                               // headerWordCount
+            (!thumb ? `Img_PixelCount : `Img_ThumbPixelCount),  // bodyWordCount
+            Sim_ImgWordInitialValue,                            // bodyWordInitialValue
+            (!thumb ? 1 : 0),                                   // bodyWordDeltaValidate
+            Sim_ImgWordDelta,                                   // bodyWordDelta
+            1                                                   // checksumValidate
+        );
+        TestImgReadout(0, thumb);
         
         // Wait until we're done clocking out data on DAT lines
         $display("[ICEAppSim] Waiting while data is written...");
@@ -706,7 +710,7 @@ module ICEAppSim();
         
         // Clock out data on DAT lines, but without the SD card
         // expecting data so that we don't get a response
-        TestImgReadout();
+        TestImgReadout(0, 0);
         
         #50000;
         
@@ -728,7 +732,7 @@ module ICEAppSim();
         if (!done) begin
             $display("[ICEAppSim] DatOut timeout ✅");
             $display("[ICEAppSim] Testing DatOut after timeout...");
-            TestImgReadoutToSD();
+            TestImgReadoutToSD(0);
             $display("[ICEAppSim] DatOut Recovered ✅");
             
         end else begin
@@ -786,7 +790,7 @@ module ICEAppSim();
     
     task TestImgReadoutToSPI; begin
         $display("\n[ICEAppSim] ========== TestImgReadoutToSPI ==========");
-        TestImgReadout();
+        TestImgReadout(0, 0);
         TestImgReadoutToSPI_Readout();
     end endtask
     
@@ -800,29 +804,30 @@ module ICEAppSim();
     
     initial begin
         TestRst();
-        TestEcho(56'h00000000000000);
-        TestEcho(56'h00000000000000);
-        TestEcho(56'hCAFEBABEFEEDAA);
-        TestNop();
-        TestEcho(56'hCAFEBABEFEEDAA);
-        TestEcho(56'h123456789ABCDE);
-        TestLEDSet(4'b1010);
-        TestLEDSet(4'b0101);
+        // TestEcho(56'h00000000000000);
+        // TestEcho(56'h00000000000000);
+        // TestEcho(56'hCAFEBABEFEEDAA);
+        // TestNop();
+        // TestEcho(56'hCAFEBABEFEEDAA);
+        // TestEcho(56'h123456789ABCDE);
+        // TestLEDSet(4'b1010);
+        // TestLEDSet(4'b0101);
         TestEcho(56'h123456789ABCDE);
         TestNop();
         TestRst();
         
-        `ifdef _ICEApp_SD_En
-            // Test SDController reset at the beginning, which should have no effect
-            // because SDController should already be in the reset state
-            TestSDReset();
-        `endif
+        // `ifdef _ICEApp_SD_En
+        //     // Test SDController reset at the beginning, which should have no effect
+        //     // because SDController should already be in the reset state
+        //     TestSDReset();
+        // `endif
         
         `ifdef _ICEApp_Img_En
             // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
             TestImgReset();
             TestImgSetHeader(0, {
-                LittleFromHost32.Swap(32'hDECAFBAD) /* magic number/version */,
+                8'hEE, 8'hFF, 8'hC0                 /* magic number */,
+                8'h00                               /* version */,
                 LittleFromHost16.Swap(16'd2304)     /* image width          */
             });
 
@@ -846,42 +851,43 @@ module ICEAppSim();
                 8'h42                               /* timestamp[b6]        */,
                 8'h43                               /* timestamp[b7]        */
             });
-
-            TestImgI2CWriteRead();
+       
+        //     TestImgI2CWriteRead();
             TestImgCapture();
         `endif // _ICEApp_Img_En
 
         `ifdef _ICEApp_SD_En
             TestSDInit();
-            TestSDCMD0();
-            TestSDCMD8();
-            TestSDCMD2();
-            TestSDCMD6();
+            // TestSDCMD0();
+            // TestSDCMD8();
+            // TestSDCMD2();
+            // TestSDCMD6();
 
             //           delay, speed,                                  action
             TestSDConfig(0,     `SDController_Config_ClkSpeed_Fast,     `SDController_Config_Action_ClkSet);
 
-            TestSDRespRecovery();
+            // TestSDRespRecovery();
         `endif // _ICEApp_SD_En
 
         `ifdef ICEApp_ImgReadoutToSD_En
-            TestImgReadoutToSD();
-            TestImgReadoutToSDRecovery();
+            TestImgReadoutToSD(0); // Readout full size image
+            // TestImgReadoutToSD(1); // Readout thumbnail image
+            // TestImgReadoutToSDRecovery();
         `endif // ICEApp_ImgReadoutToSD_En
 
-        `ifdef ICEApp_SDReadoutToSPI_En
-            TestSDReadoutToSPI();
-            TestLEDSet(4'b1010);
-            TestSDReadoutToSPI();
-        `endif // ICEApp_SDReadoutToSPI_En
-
-        `ifdef ICEApp_ImgReadoutToSPI_En
-            TestImgReadoutToSPI();
-        `endif // ICEApp_ImgReadoutToSPI_En
-        
-        `ifdef _ICEApp_SD_En
-            TestSDReset();
-        `endif
+        // `ifdef ICEApp_SDReadoutToSPI_En
+        //     TestSDReadoutToSPI();
+        //     TestLEDSet(4'b1010);
+        //     TestSDReadoutToSPI();
+        // `endif // ICEApp_SDReadoutToSPI_En
+        //
+        // `ifdef ICEApp_ImgReadoutToSPI_En
+        //     TestImgReadoutToSPI();
+        // `endif // ICEApp_ImgReadoutToSPI_En
+        //
+        // `ifdef _ICEApp_SD_En
+        //     TestSDReset();
+        // `endif
         
         `Finish;
     end
