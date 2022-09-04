@@ -63,6 +63,9 @@
 `define DivCeil(n, d) (((n)+(d)-1)/(d))
 `define Ceil(val, mult) (`DivCeil((val), (mult)) * (mult))
 
+// Padding: returns the amount of padding necessary to bring `len` up to a multiple of `mult`
+`define Padding(len, mult) (((mult) - ((len) % (mult))) % (mult))
+
 // Clocks() returns the minimum number of `freq` clock cycles
 // for >= `ns` nanoseconds to elapse. For example, if ns=5ns, and
 // the clock period is 4ns, Clocks(freq=250e6,ns=5,sub=0) will return 2.

@@ -658,10 +658,14 @@ module ICEAppSim();
         end
     end endtask
     
+    localparam Sim_SDBlockWordCount = 256; // Each SD block is 512 bytes == 256 16-bit words
     task TestImgReadoutToSD(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
         // ====================
         // Test writing data to SD card / DatOut
         // ====================
+        integer imgWidth;
+        integer imgHeight;
+        integer imgWordCount;
         
         $display("\n========== TestImgReadoutToSD ==========");
         
@@ -673,17 +677,24 @@ module ICEAppSim();
         SendSDCmdResp(CMD25, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
         
         // Configure SDCardSim's PixelValidator for the incoming pixel data
+        // localparam ImgWidth = (!thumb ? `Img_Width : `Img_ThumbWidth);
+        // localparam ImgHeight = (!thumb ? `Img_Height : `Img_ThumbHeight);
+        // localparam ImgWordCount = (!thumb ? `Img_WordCount : `Img_ThumbWordCount);
+        imgWidth = (!thumb ? `Img_Width : `Img_ThumbWidth);
+        imgHeight = (!thumb ? `Img_Height : `Img_ThumbHeight);
+        imgWordCount = (!thumb ? `Img_WordCount : `Img_ThumbWordCount);
+        
         SDCardSim.PixelValidator.Config(
-            `Img_HeaderWordCount,                       // headerWordCount
-            (!thumb ? `Img_Width : `Img_ThumbWidth),    // imageWidth
-            (!thumb ? `Img_Height : `Img_ThumbHeight),  // imageHeight
-            0,                                          // paddingWordCount
-            1,                                          // pixelValidate
-            Sim_ImgPixelInitial,                        // pixelInitial
-            Sim_ImgPixelDelta,                          // pixelDelta
-            (!thumb ? 1 : 8),                           // pixelFilterPeriod
-            (!thumb ? 1 : 2),                           // pixelFilterKeep
-            1                                           // checksumValidate
+            `Img_HeaderWordCount,                           // headerWordCount
+            imgWidth,                                       // imageWidth
+            imgHeight,                                      // imageHeight
+            `Padding(imgWordCount, Sim_SDBlockWordCount),   // paddingWordCount
+            1,                                              // pixelValidate
+            Sim_ImgPixelInitial,                            // pixelInitial
+            Sim_ImgPixelDelta,                              // pixelDelta
+            (!thumb ? 1 : 8),                               // pixelFilterPeriod
+            (!thumb ? 1 : 2),                               // pixelFilterKeep
+            1                                               // checksumValidate
         );
         
         // Start image readout
@@ -814,23 +825,23 @@ module ICEAppSim();
     
     initial begin
         TestRst();
-        // TestEcho(56'h00000000000000);
-        // TestEcho(56'h00000000000000);
-        // TestEcho(56'hCAFEBABEFEEDAA);
-        // TestNop();
-        // TestEcho(56'hCAFEBABEFEEDAA);
-        // TestEcho(56'h123456789ABCDE);
-        // TestLEDSet(4'b1010);
-        // TestLEDSet(4'b0101);
+        TestEcho(56'h00000000000000);
+        TestEcho(56'h00000000000000);
+        TestEcho(56'hCAFEBABEFEEDAA);
+        TestNop();
+        TestEcho(56'hCAFEBABEFEEDAA);
+        TestEcho(56'h123456789ABCDE);
+        TestLEDSet(4'b1010);
+        TestLEDSet(4'b0101);
         TestEcho(56'h123456789ABCDE);
         TestNop();
         TestRst();
         
-        // `ifdef _ICEApp_SD_En
-        //     // Test SDController reset at the beginning, which should have no effect
-        //     // because SDController should already be in the reset state
-        //     TestSDReset();
-        // `endif
+        `ifdef _ICEApp_SD_En
+            // Test SDController reset at the beginning, which should have no effect
+            // because SDController should already be in the reset state
+            TestSDReset();
+        `endif
         
         `ifdef _ICEApp_Img_En
             // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
@@ -862,43 +873,43 @@ module ICEAppSim();
                 8'h43                               /* timestamp[b7]        */
             });
        
-        //     TestImgI2CWriteRead();
+            TestImgI2CWriteRead();
             TestImgCapture();
         `endif // _ICEApp_Img_En
 
         `ifdef _ICEApp_SD_En
             TestSDInit();
-            // TestSDCMD0();
-            // TestSDCMD8();
-            // TestSDCMD2();
-            // TestSDCMD6();
+            TestSDCMD0();
+            TestSDCMD8();
+            TestSDCMD2();
+            TestSDCMD6();
 
             //           delay, speed,                                  action
             TestSDConfig(0,     `SDController_Config_ClkSpeed_Fast,     `SDController_Config_Action_ClkSet);
 
-            // TestSDRespRecovery();
+            TestSDRespRecovery();
         `endif // _ICEApp_SD_En
 
         `ifdef ICEApp_ImgReadoutToSD_En
-            // TestImgReadoutToSD(0); // Readout full size image
             TestImgReadoutToSD(1); // Readout thumbnail image
-            // TestImgReadoutToSDRecovery();
+            TestImgReadoutToSD(0); // Readout full size image
+            TestImgReadoutToSDRecovery();
         `endif // ICEApp_ImgReadoutToSD_En
 
-        // `ifdef ICEApp_SDReadoutToSPI_En
-        //     TestSDReadoutToSPI();
-        //     TestLEDSet(4'b1010);
-        //     TestSDReadoutToSPI();
-        // `endif // ICEApp_SDReadoutToSPI_En
-        //
-        // `ifdef ICEApp_ImgReadoutToSPI_En
-        //     TestImgReadoutToSPI(1);
-        //     TestImgReadoutToSPI(0);
-        // `endif // ICEApp_ImgReadoutToSPI_En
-        //
-        // `ifdef _ICEApp_SD_En
-        //     TestSDReset();
-        // `endif
+        `ifdef ICEApp_SDReadoutToSPI_En
+            TestSDReadoutToSPI();
+            TestLEDSet(4'b1010);
+            TestSDReadoutToSPI();
+        `endif // ICEApp_SDReadoutToSPI_En
+
+        `ifdef ICEApp_ImgReadoutToSPI_En
+            TestImgReadoutToSPI(1);
+            TestImgReadoutToSPI(0);
+        `endif // ICEApp_ImgReadoutToSPI_En
+
+        `ifdef _ICEApp_SD_En
+            TestSDReset();
+        `endif
         
         `Finish;
     end
