@@ -328,12 +328,9 @@ module ImgController #(
     reg[`RegWidth(ImgWidth)-1:0] ctrl_readout_pixelX = 0;
     reg[`RegWidth(ImgHeight)-1:0] ctrl_readout_pixelY = 0;
     reg ctrl_readout_pixelFilterEn = 0;
-    
-    // TODO: perf: try moving ctrl_readout_pixelFilterEn to where we increment ctrl_readout_pixelX/ctrl_readout_pixelY
     // ctrl_readout_pixelKeep: keep the pixel if filtering is disabled (ie non-thumbnail mode),
     // or if filtering is enabled and the pixel is in the upper-left 2x2 corner of any 8x8 group
     wire ctrl_readout_pixelKeep = (
-        !ctrl_readout_pixelFilterEn ||
         ((ctrl_readout_pixelX[2:0]===0 || ctrl_readout_pixelX[2:0]===1) &&
          (ctrl_readout_pixelY[2:0]===0 || ctrl_readout_pixelY[2:0]===1))
     );
@@ -375,14 +372,16 @@ module ImgController #(
             readout_checksum_din <= {readout_data[7:0], readout_data[15:8]};
         end
         
-        if (ramctrl_read_ready && ramctrl_read_trigger) begin
+        if (ctrl_readout_pixelFilterEn && ramctrl_read_ready && ramctrl_read_trigger) begin
             if (ctrl_readout_pixelX !== ImgWidth-1) begin
                 ctrl_readout_pixelX <= ctrl_readout_pixelX+1;
             end else begin
                 ctrl_readout_pixelX <= 0;
                 ctrl_readout_pixelY <= ctrl_readout_pixelY+1;
             end
-            
+        end
+        
+        if (ramctrl_read_ready && ramctrl_read_trigger) begin
             ctrl_readout_pixelDoneCount <= ctrl_readout_pixelDoneCount-1;
         end
         
