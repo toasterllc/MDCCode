@@ -58,7 +58,7 @@ module PixelValidator();
     integer     _wordCounter                = 0;
     reg[15:0]   _wordPrev                   = 0;
     reg         _pixelValidationStarted     = 0;
-    reg         _checksumReceived           = 0;
+    integer     _pixelIdx                   = 0;
     
     task Config(
         input integer headerWordCount,      // Number of 16-bit words to ignore at the beginning of the received data
@@ -86,7 +86,7 @@ module PixelValidator();
         _wordCounter            = 0;
         _wordPrev               = 0;
         _pixelValidationStarted = 0;
-        _checksumReceived       = 0;
+        _pixelIdx               = 0;
         
         _checksum_rst = 1; #1;
         _checksum_clk = 1; #1;
@@ -94,35 +94,55 @@ module PixelValidator();
         _checksum_rst = 0; #1;
     end endtask
     
+    function[15:0] PixelExpectedValue();
+        integer imgWidth;
+        integer k;
+        integer kx;
+        integer ky;
+        integer px;
+        integer py;
+        integer pidx;
+        // reg[31:0] pixelX;
+        // reg[31:0] pixelY;
+        begin
+            // Translate the thumbnail pixel index `_pixelIdx` to the absolute index in the full-size image
+            // k = _cfgImageWidth;
+            imgWidth = (_cfgImageWidth*_cfgPixelFilterPeriod)/_cfgPixelFilterKeep;
+            k = ((_cfgPixelFilterKeep*imgWidth)/_cfgPixelFilterPeriod);
+            kx = _pixelIdx % k;
+            ky = _cfgPixelFilterKeep * k;
+            px = (kx/_cfgPixelFilterKeep)*_cfgPixelFilterPeriod + (kx%_cfgPixelFilterKeep);
+            py = (_pixelIdx/ky)          *_cfgPixelFilterPeriod + ((_pixelIdx%ky)/k);
+            pidx = (py*imgWidth) + px;
+            $display("[PixelValidator] _pixelIdx:%0d -> px:%0d py:%0d [imgWidth:%0d]", _pixelIdx, px, py, imgWidth);
+            // Calculate the expected pixel value given the pixel index
+            PixelExpectedValue = _cfgPixelInitial + (pidx*_cfgPixelDelta);
+        end
+    endfunction
+    
     task Validate(input[15:0] word); begin
         if (_wordCounter < _cfgHeaderWordCount) begin
             _ChecksumConsumeWord(word);
         
         end else if (_wordCounter < _cfgHeaderWordCount+`ImagePixelCount) begin
-            reg[15:0] wordExpected;
-            reg[15:0] wordGot;
+            reg[15:0] pixelExpected;
+            reg[15:0] pixelGot;
             
             _ChecksumConsumeWord(word);
             
             if (_cfgPixelValidate) begin
-                if (!_pixelValidationStarted            ||
-                    (_cfgPixelDelta>0 && (&_wordPrev))  ||      // Check for overflow
-                    (_cfgPixelDelta<0 && (!_wordPrev))) begin   // Check for overflow
-                    wordExpected = _cfgPixelInitial;
+                pixelExpected = PixelExpectedValue();
+                pixelGot = HostFromLittle16.Swap(word); // Unpack little-endian
+                
+                if (pixelExpected === pixelGot) begin
+                    $display("[PixelValidator] Received valid word (expected:%h, got:%h) ✅", pixelExpected, pixelGot);
                 end else begin
-                    wordExpected = HostFromLittle16.Swap(_wordPrev)+_cfgPixelDelta;
-                end
-            
-                wordGot = HostFromLittle16.Swap(word); // Unpack little-endian
-            
-                if (wordExpected === wordGot) begin
-                    $display("[PixelValidator] Received valid word (expected:%h, got:%h) ✅", wordExpected, wordGot);
-                end else begin
-                    $display("[PixelValidator] Received invalid word (expected:%h, got:%h) ❌", wordExpected, wordGot);
+                    $display("[PixelValidator] Received invalid word (expected:%h, got:%h) ❌", pixelExpected, pixelGot);
                     `Finish;
                 end
             
                 _pixelValidationStarted = 1;
+                _pixelIdx++;
             end
         
         end else if (_wordCounter == _cfgHeaderWordCount+`ImagePixelCount+1) begin
@@ -138,7 +158,6 @@ module PixelValidator();
                     
                     checksumExpected    = _checksum_dout;
                     checksumGot         = HostFromLittle32.Swap(_wordPrev<<16|word);
-                    _checksumReceived    = 1;
                     
                     if (checksumExpected === checksumGot) begin
                         $display("[PixelValidator] Checksum valid [expected:%h got:%h] ✅", checksumExpected, checksumGot);

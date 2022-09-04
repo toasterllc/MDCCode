@@ -173,7 +173,7 @@ module ICEApp(
     // data to trigger the AFIFOChain read threshold (`readoutfifo_r_thresh`)
     localparam ImgCtrl_AFIFOWordCapacity = (`AFIFO_CapacityBytes/2);
     localparam ImgCtrl_ReadoutWordThresh = ReadoutFIFO_R_Thresh*ImgCtrl_AFIFOWordCapacity;
-    localparam ImgCtrl_PaddingWordCount = (ImgCtrl_ReadoutWordThresh - (`Img_WordCount % ImgCtrl_ReadoutWordThresh)) % ImgCtrl_ReadoutWordThresh;
+    localparam ImgCtrl_PaddingWordCount = ImgCtrl_ReadoutWordThresh-1;
     ImgController #(
         .ClkFreq(Img_Clk_Freq),
         .HeaderWordCount(`Img_HeaderWordCount),

@@ -20,10 +20,9 @@ module ImgControllerTest();
     localparam ReadoutFIFO_R_Thresh = 1;
     // ImgCtrl_PaddingWordCount: padding so that ImgController readout outputs enough
     // data to trigger the AFIFOChain read threshold (`readoutfifo_r_thresh`)
-    localparam ImgCtrl_AFIFOWordCapacity     = (`AFIFO_CapacityBytes/2);
-    localparam ImgCtrl_ReadoutWordThresh     = ReadoutFIFO_R_Thresh*ImgCtrl_AFIFOWordCapacity;
-    localparam ImgCtrl_PaddingWordCount      = (ImgCtrl_ReadoutWordThresh - (`Img_WordCount % ImgCtrl_ReadoutWordThresh)) % ImgCtrl_ReadoutWordThresh;
-    localparam ImgCtrl_ThumbPaddingWordCount = (ImgCtrl_ReadoutWordThresh - (`Img_ThumbWordCount % ImgCtrl_ReadoutWordThresh)) % ImgCtrl_ReadoutWordThresh;
+    localparam ImgCtrl_AFIFOWordCapacity = (`AFIFO_CapacityBytes/2);
+    localparam ImgCtrl_ReadoutWordThresh = ReadoutFIFO_R_Thresh*ImgCtrl_AFIFOWordCapacity;
+    localparam ImgCtrl_PaddingWordCount = ImgCtrl_ReadoutWordThresh-1;
     
     // ====================
     // RAM
@@ -196,19 +195,17 @@ module ImgControllerTest();
         
         $display("\n========== ImgReadout (thumb: %b) ==========", thumb);
         
-        ImgController.PaddingWordCount = (!thumb ? ImgCtrl_PaddingWordCount : ImgCtrl_ThumbPaddingWordCount);
-        
         PixelValidator.Config(
-            `Img_HeaderWordCount,                                                   // headerWordCount
-            (!thumb ? `Img_Width : `Img_ThumbWidth),                                // imageWidth
-            (!thumb ? `Img_Height : `Img_ThumbHeight),                              // imageHeight
-            (!thumb ? ImgCtrl_PaddingWordCount : ImgCtrl_ThumbPaddingWordCount),    // paddingWordCount
-            0,                                                                      // pixelValidate
-            ImgPixelInitial,                                                        // pixelInitial
-            ImgPixelDelta,                                                          // pixelDelta
-            (!thumb ? 0 : 8),                                                       // pixelFilterPeriod
-            (!thumb ? 0 : 2),                                                       // pixelFilterKeep
-            1                                                                       // checksumValidate
+            `Img_HeaderWordCount,                       // headerWordCount
+            (!thumb ? `Img_Width : `Img_ThumbWidth),    // imageWidth
+            (!thumb ? `Img_Height : `Img_ThumbHeight),  // imageHeight
+            ImgCtrl_PaddingWordCount,                   // paddingWordCount
+            1,                                          // pixelValidate
+            ImgPixelInitial,                            // pixelInitial
+            ImgPixelDelta,                              // pixelDelta
+            (!thumb ? 1 : 8),                           // pixelFilterPeriod
+            (!thumb ? 1 : 2),                           // pixelFilterKeep
+            1                                           // checksumValidate
         );
         
         imgctrl_cmd_thumb = thumb;
