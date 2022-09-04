@@ -196,13 +196,13 @@ module Top();
             `Img_HeaderWordCount,                       // headerWordCount
             (!thumb ? `Img_Width : `Img_ThumbWidth),    // imageWidth
             (!thumb ? `Img_Height : `Img_ThumbHeight),  // imageHeight
+            2,                                          // checksumWordCount
             ImgCtrl_PaddingWordCount,                   // paddingWordCount
             1,                                          // pixelValidate
             ImgPixelInitial,                            // pixelInitial
             ImgPixelDelta,                              // pixelDelta
             (!thumb ? 1 : 8),                           // pixelFilterPeriod
-            (!thumb ? 1 : 2),                           // pixelFilterKeep
-            1                                           // checksumValidate
+            (!thumb ? 1 : 2)                            // pixelFilterKeep
         );
         
         imgctrl_cmd_thumb = thumb;
