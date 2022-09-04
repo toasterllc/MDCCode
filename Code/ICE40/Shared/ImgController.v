@@ -328,6 +328,7 @@ module ImgController #(
     reg[`RegWidth(ImgWidth)-1:0] ctrl_readout_pixelX = 0;
     reg[`RegWidth(ImgHeight)-1:0] ctrl_readout_pixelY = 0;
     reg ctrl_readout_pixelFilterEn = 0;
+    
     // TODO: perf: try moving ctrl_readout_pixelFilterEn to where we increment ctrl_readout_pixelX/ctrl_readout_pixelY
     // ctrl_readout_pixelKeep: keep the pixel if filtering is disabled (ie non-thumbnail mode),
     // or if filtering is enabled and the pixel is in the upper-left 2x2 corner of any 8x8 group
@@ -336,8 +337,8 @@ module ImgController #(
         ((ctrl_readout_pixelX[2:0]===0 || ctrl_readout_pixelX[2:0]===1) &&
          (ctrl_readout_pixelY[2:0]===0 || ctrl_readout_pixelY[2:0]===1))
     );
-    // TODO: perf: try adding ctrl_readoutPixelCount back to determine when to signal ctrl_readout_pixelDone,
-    // instead of using ctrl_readout_pixelX/Y
+    
+    reg[`RegWidth(ImgPixelCount)-1:0] ctrl_readout_pixelDoneCount = 0;
     reg ctrl_readout_pixelDone = 0;
     wire ctrl_readout_dataLoad = (!readout_ready || readout_trigger);
     
@@ -381,9 +382,11 @@ module ImgController #(
                 ctrl_readout_pixelX <= 0;
                 ctrl_readout_pixelY <= ctrl_readout_pixelY+1;
             end
+            
+            ctrl_readout_pixelDoneCount <= ctrl_readout_pixelDoneCount-1;
         end
         
-        if ((ctrl_readout_pixelX===0) && (ctrl_readout_pixelY===ImgHeight)) begin
+        if (!ctrl_readout_pixelDoneCount) begin
             ctrl_readout_pixelDone <= 1;
         end
         
@@ -460,10 +463,11 @@ module ImgController #(
             // Reset pixel counters used for thumbnailing
             ctrl_readout_pixelX <= 0;
             ctrl_readout_pixelY <= 0;
+            ctrl_readout_pixelDone <= 0;
+            ctrl_readout_pixelDoneCount <= ImgPixelCount;
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
-            ctrl_readout_pixelDone <= 0;
             ctrl_state <= Ctrl_State_Readout+3;
         end
         
