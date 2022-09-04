@@ -96,7 +96,6 @@ module PixelValidator();
     
     function[15:0] PixelExpectedValue();
         integer imgWidth;
-        integer k;
         integer kx;
         integer ky;
         integer px;
@@ -106,13 +105,11 @@ module PixelValidator();
         // reg[31:0] pixelY;
         begin
             // Translate the thumbnail pixel index `_pixelIdx` to the absolute index in the full-size image
-            // k = _cfgImageWidth;
             imgWidth = (_cfgImageWidth*_cfgPixelFilterPeriod)/_cfgPixelFilterKeep;
-            k = ((_cfgPixelFilterKeep*imgWidth)/_cfgPixelFilterPeriod);
-            kx = _pixelIdx % k;
-            ky = _cfgPixelFilterKeep * k;
+            kx = _pixelIdx % _cfgImageWidth;
+            ky = _cfgPixelFilterKeep * _cfgImageWidth;
             px = (kx/_cfgPixelFilterKeep)*_cfgPixelFilterPeriod + (kx%_cfgPixelFilterKeep);
-            py = (_pixelIdx/ky)          *_cfgPixelFilterPeriod + ((_pixelIdx%ky)/k);
+            py = (_pixelIdx/ky)          *_cfgPixelFilterPeriod + ((_pixelIdx%ky)/_cfgImageWidth);
             pidx = (py*imgWidth) + px;
             $display("[PixelValidator] _pixelIdx:%0d -> px:%0d py:%0d [imgWidth:%0d]", _pixelIdx, px, py, imgWidth);
             // Calculate the expected pixel value given the pixel index
