@@ -76,7 +76,6 @@ module ICEAppSim();
     localparam Sim_ImgPixelInitial          = 16'h0FFF;
     localparam Sim_ImgPixelDelta            = -1;
     localparam Sim_SDBlockWordCount         = 256; // Each SD block is 512 bytes == 256 16-bit words
-    localparam Sim_SPIReadoutWordMultiple   = 2048/2; // Should match ReadoutFIFO_R_Thresh
     
     `ifdef _ICEApp_Img_En
         mobile_sdr mobile_sdr(

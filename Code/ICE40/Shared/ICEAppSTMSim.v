@@ -265,21 +265,21 @@ task TestImgReadoutToSPI_Readout(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb)
     imgWordCount = (!thumb ? `Img_WordCount : `Img_ThumbWordCount);
     
     PixelValidator.Config(
-        `Img_HeaderWordCount,                               // headerWordCount
-        imgWidth,                                           // imageWidth
-        imgHeight,                                          // imageHeight
-        `Img_ChecksumWordCount,                             // checksumWordCount
-        `Padding(imgWordCount, Sim_SPIReadoutWordMultiple), // paddingWordCount
-        1,                                                  // pixelValidate
-        Sim_ImgPixelInitial,                                // pixelInitial
-        Sim_ImgPixelDelta,                                  // pixelDelta
-        (!thumb ? 1 : 8),                                   // pixelFilterPeriod
-        (!thumb ? 1 : 2)                                    // pixelFilterKeep
+        `Img_HeaderWordCount,   // headerWordCount
+        imgWidth,               // imageWidth
+        imgHeight,              // imageHeight
+        `Img_ChecksumWordCount, // checksumWordCount
+        0,                      // paddingWordCount
+        1,                      // pixelValidate
+        Sim_ImgPixelInitial,    // pixelInitial
+        Sim_ImgPixelDelta,      // pixelDelta
+        (!thumb ? 1 : 8),       // pixelFilterPeriod
+        (!thumb ? 1 : 2)        // pixelFilterKeep
     );
     
     SPIReadout(
         1,              // waitForDReady,
         1,              // validateWords,
-        `Img_WordCount  // wordCount,
+        imgWordCount    // wordCount,
     );
 end endtask
