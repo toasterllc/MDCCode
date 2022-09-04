@@ -73,9 +73,10 @@ module ICEAppSim();
     // localparam Sim_ImgWidth             = 1006;
     // localparam Sim_ImgHeight            = 1;
     // localparam Sim_ImgPixelCount        = ImgWidth*ImgHeight;
-    localparam Sim_ImgPixelInitial      = 16'h0FFF;
-    localparam Sim_ImgPixelDelta        = -1;
-    localparam Sim_SDBlockWordCount     = 256; // Each SD block is 512 bytes == 256 16-bit words
+    localparam Sim_ImgPixelInitial          = 16'h0FFF;
+    localparam Sim_ImgPixelDelta            = -1;
+    localparam Sim_SDBlockWordCount         = 256; // Each SD block is 512 bytes == 256 16-bit words
+    localparam Sim_SPIReadoutWordMultiple   = 2048/2; // Should match ReadoutFIFO_R_Thresh
     
     `ifdef _ICEApp_Img_En
         mobile_sdr mobile_sdr(
@@ -678,9 +679,6 @@ module ICEAppSim();
         SendSDCmdResp(CMD25, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
         
         // Configure SDCardSim's PixelValidator for the incoming pixel data
-        // localparam ImgWidth = (!thumb ? `Img_Width : `Img_ThumbWidth);
-        // localparam ImgHeight = (!thumb ? `Img_Height : `Img_ThumbHeight);
-        // localparam ImgWordCount = (!thumb ? `Img_WordCount : `Img_ThumbWordCount);
         imgWidth = (!thumb ? `Img_Width : `Img_ThumbWidth);
         imgHeight = (!thumb ? `Img_Height : `Img_ThumbHeight);
         imgWordCount = (!thumb ? `Img_WordCount : `Img_ThumbWordCount);
