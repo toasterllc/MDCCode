@@ -468,7 +468,6 @@ module ImgController #(
         end
         
         // Output pixels
-        // TODO: perf: cleanup this state
         Ctrl_State_Readout+3: begin
             // If client isn't consuming a value, readout_ready needs to remain unchanged
             if (!readout_trigger) begin
@@ -491,6 +490,7 @@ module ImgController #(
         end
         
         // Output checksum+padding
+        // TODO: perf: try adding an intermediate register to hold the checksum, before shifting into ctrl_shiftout_data
         Ctrl_State_Readout+4: begin
             ctrl_shiftout_data[(HeaderWidth-1)-:32] <= {
                 // Little endian
