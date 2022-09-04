@@ -1,5 +1,5 @@
-`ifndef WordValidator_v
-`define WordValidator_v
+`ifndef PixelValidator_v
+`define PixelValidator_v
 
 `include "Util.v"
 `include "FletcherChecksum.v"
@@ -7,7 +7,7 @@
 
 `timescale 1ns/1ps
 
-module WordValidator();
+module PixelValidator();
     EndianSwap #(.Width(16)) HostFromLittle16();
     EndianSwap #(.Width(32)) HostFromLittle32();
     
@@ -88,9 +88,9 @@ module WordValidator();
                 wordGot = HostFromLittle16.Swap(word); // Unpack little-endian
             
                 if (wordExpected === wordGot) begin
-                    $display("[WordValidator] Received valid word (expected:%h, got:%h) ✅", wordExpected, wordGot);
+                    $display("[PixelValidator] Received valid word (expected:%h, got:%h) ✅", wordExpected, wordGot);
                 end else begin
-                    $display("[WordValidator] Received invalid word (expected:%h, got:%h) ❌", wordExpected, wordGot);
+                    $display("[PixelValidator] Received invalid word (expected:%h, got:%h) ❌", wordExpected, wordGot);
                     `Finish;
                 end
             
@@ -113,9 +113,9 @@ module WordValidator();
                     _checksumReceived    = 1;
                     
                     if (checksumExpected === checksumGot) begin
-                        $display("[WordValidator] Checksum valid [expected:%h got:%h] ✅", checksumExpected, checksumGot);
+                        $display("[PixelValidator] Checksum valid [expected:%h got:%h] ✅", checksumExpected, checksumGot);
                     end else begin
-                        $display("[WordValidator] Checksum invalid [expected:%h got:%h] ❌", checksumExpected, checksumGot);
+                        $display("[PixelValidator] Checksum invalid [expected:%h got:%h] ❌", checksumExpected, checksumGot);
                         `Finish;
                     end
                 end
@@ -128,7 +128,7 @@ module WordValidator();
     
     task Reset; begin
         if (_wordCounter && _cfgChecksumValidate && !_checksumReceived) begin
-            $display("[WordValidator] Didn't receive checksum ❌");
+            $display("[PixelValidator] Didn't receive checksum ❌");
             `Finish;
         end
         
@@ -144,4 +144,4 @@ module WordValidator();
     end endtask
 endmodule
 
-`endif // WordValidator_v
+`endif // PixelValidator_v

@@ -2,7 +2,7 @@
 `define SDCardSim_v
 
 `include "EndianSwap.v"
-`include "WordValidator.v"
+`include "PixelValidator.v"
 
 `timescale 1ps/1ps
 
@@ -505,7 +505,7 @@ module SDCardSim(
     // ====================
     // Handle writing to the card
     // ====================
-    WordValidator WordValidator();
+    PixelValidator PixelValidator();
     
     initial begin
         forever begin
@@ -541,7 +541,7 @@ module SDCardSim(
                     
                     // Validate every 16-bit word
                     if (i[1:0] === 3) begin
-                        WordValidator.Validate(datInReg[15:0]);
+                        PixelValidator.Validate(datInReg[15:0]);
                     end
                 end
                 
@@ -720,7 +720,7 @@ module SDCardSim(
                 dat_crcRst_ = 0;
             
             end else begin
-                WordValidator.Reset();
+                PixelValidator.Reset();
             end
             
             wait(!sd_clk);

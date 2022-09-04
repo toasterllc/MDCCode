@@ -146,8 +146,8 @@ task SPIReadout(
     
     totalWordCount = headerWordCount+wordCount+(validateChecksum ? ChecksumWordCount : 0);
     
-    WordValidator.Reset();
-    WordValidator.Config(
+    PixelValidator.Reset();
+    PixelValidator.Config(
         headerWordCount,    // HeaderWordCount
         wordCount,          // WordCount
         wordInitialValue,   // WordInitialValue
@@ -208,7 +208,7 @@ task SPIReadout(
                 _ReadResp(WordWidth);
                 word = spi_resp[WordWidth-1:0];
                 
-                if (validateWords) WordValidator.Validate(word);
+                if (validateWords) PixelValidator.Validate(word);
                 
                 // $display("[ICEAppSim] Read word: 0x%x", word);
                 

@@ -4,7 +4,7 @@
 `include "ImgController.v"
 `include "ClockGen.v"
 `include "ICEAppTypes.v"
-`include "WordValidator.v"
+`include "PixelValidator.v"
 `include "ImgSim.v"
 `timescale 1ns/1ps
 
@@ -154,9 +154,9 @@ module ImgControllerTest();
     );
     
     // ====================
-    // WordValidator
+    // PixelValidator
     // ====================
-    WordValidator WordValidator();
+    PixelValidator PixelValidator();
     
     task ImgCapture; begin
         integer imgctrl_status_captureDonePrev;
@@ -196,8 +196,8 @@ module ImgControllerTest();
         
         $display("\n========== ImgReadout (thumb: %b) ==========", thumb);
         
-        WordValidator.Reset();
-        WordValidator.Config(
+        PixelValidator.Reset();
+        PixelValidator.Config(
             `Img_HeaderWordCount,                               // headerWordCount
             (!thumb ? `Img_PixelCount : `Img_ThumbPixelCount),  // bodyWordCount
             ImgWordInitialValue,                                // bodyWordInitialValue
@@ -218,7 +218,7 @@ module ImgControllerTest();
         while (!done) begin
             wait(img_clk);
             if (imgctrl_readout_ready && imgctrl_readout_trigger) begin
-                WordValidator.Validate(imgctrl_readout_data);
+                PixelValidator.Validate(imgctrl_readout_data);
                 lastWordTime = $realtime;
                 recvWordCount++;
             end

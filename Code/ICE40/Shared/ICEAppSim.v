@@ -4,7 +4,7 @@
 `include "ICEAppTypes.v"
 `include "EndianSwap.v"
 `include "Util.v"
-`include "WordValidator.v"
+`include "PixelValidator.v"
 `include "SDController.v"
 
 `ifdef _ICEApp_SD_En
@@ -670,7 +670,7 @@ module ICEAppSim();
         SendSDCmdResp(CMD25, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
         
         // Start image readout
-        SDCardSim.WordValidator.Config(
+        SDCardSim.PixelValidator.Config(
             `Img_HeaderWordCount,                               // headerWordCount
             (!thumb ? `Img_PixelCount : `Img_ThumbPixelCount),  // bodyWordCount
             Sim_ImgWordInitialValue,                            // bodyWordInitialValue
