@@ -303,8 +303,7 @@ module ImgController #(
     reg         readout_checksum_en = 0;
     reg[15:0]   readout_checksum_din = 0;
     wire[31:0]  readout_checksum_dout;
-    reg[31:0]   readout_checksum_shiftReg = 0;
-    reg         readout_checksum_done_ = 0;
+    wire[31:0]  readout_checksum_doutLE;
     FletcherChecksum #(
         .Width(32)
     ) FletcherChecksum_readout(
@@ -316,6 +315,13 @@ module ImgController #(
     );
     
     assign readout_checksum_clk  = clk;
+    // assign readout_checksum_doutLE = {
+    //     // Little endian
+    //     readout_checksum_dout[ 7-:8],
+    //     readout_checksum_dout[15-:8],
+    //     readout_checksum_dout[23-:8],
+    //     readout_checksum_dout[31-:8]
+    // };
     // // readout_checksum_din: treat `readout_data` values as little-endian when
     // // calculating the checksum, to match host behavior
     // assign readout_checksum_din  = {readout_data[7:0], readout_data[15:8]};
@@ -339,11 +345,13 @@ module ImgController #(
     reg ctrl_readout_pixelDone = 0;
     wire ctrl_readout_dataLoad = (!readout_ready || readout_trigger);
     
+    reg[31:0] ctrl_readout_checksum = 0;
+    
     reg[HeaderWidth-1:0] ctrl_shiftout_data = 0;
     reg[`RegWidth2(HeaderWordCount,ChecksumPaddingWordCount)-1:0] ctrl_shiftout_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_shiftout_nextState = 0;
     
-    reg[0:0] ctrl_delay_count = 0;
+    reg[1:0] ctrl_delay_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_delay_nextState = 0;
     
     localparam Ctrl_State_Idle          = 0;  // +0
@@ -388,6 +396,8 @@ module ImgController #(
         if (!ctrl_readout_pixelDoneCount) begin
             ctrl_readout_pixelDone <= 1;
         end
+        
+        ctrl_readout_checksum <= readout_checksum_dout;
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
@@ -485,22 +495,21 @@ module ImgController #(
             if (ctrl_readout_pixelDone && readout_trigger) begin
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 
-                // We need 2 wait states before we sample the checksum
-                ctrl_delay_count <= 1;
+                // We need 3 wait states before we sample the checksum
+                ctrl_delay_count <= 2;
                 ctrl_delay_nextState <= Ctrl_State_Readout+4;
                 ctrl_state <= Ctrl_State_Delay;
             end
         end
         
         // Output checksum+padding
-        // TODO: perf: try adding an intermediate register to hold the checksum, before shifting into ctrl_shiftout_data
         Ctrl_State_Readout+4: begin
             ctrl_shiftout_data[(HeaderWidth-1)-:32] <= {
                 // Little endian
-                readout_checksum_dout[ 7-:8],
-                readout_checksum_dout[15-:8],
-                readout_checksum_dout[23-:8],
-                readout_checksum_dout[31-:8]
+                ctrl_readout_checksum[ 7-:8],
+                ctrl_readout_checksum[15-:8],
+                ctrl_readout_checksum[23-:8],
+                ctrl_readout_checksum[31-:8]
             };
             ctrl_shiftout_count <= ChecksumPaddingWordCount;
             ctrl_shiftout_nextState <= Ctrl_State_Idle;
