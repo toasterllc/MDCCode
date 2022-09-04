@@ -38,51 +38,77 @@ module PixelValidator();
         _checksum_en    = 0; #1;
     end endtask
     
-    reg[31:0]   _cfgHeaderWordCount         = 0;
-    reg[31:0]   _cfgBodyWordCount           = 0;
-    reg[31:0]   _cfgBodyWordInitialValue    = 0;
-    reg         _cfgBodyWordDeltaValidate   = 0;
-    integer     _cfgBodyWordDelta           = 0;
-    reg[31:0]   _cfgChecksumValidate        = 0;
+    integer     _cfgHeaderWordCount     = 0;
+    integer     _cfgImageWidth          = 0;
+    integer     _cfgImageHeight         = 0;
+    integer     _cfgPaddingWordCount    = 0;
+    integer     _cfgPixelValidate       = 0;
+    reg[15:0]   _cfgPixelInitial        = 0;
+    integer     _cfgPixelDelta          = 0;
+    integer     _cfgPixelFilterPeriod   = 0;
+    integer     _cfgPixelFilterKeep     = 0;
+    integer     _cfgChecksumValidate    = 0;
     
-    reg[31:0]   _wordCounter                = 0;
+    `define ImagePixelCount     (_cfgImageWidth*_cfgImageHeight)
+    `define ChecksumWordCount   2
+    `define ImageWordCount      (_cfgHeaderWordCount + `ImagePixelCount + `ChecksumWordCount + _cfgPaddingWordCount)
+    
+    integer     _wordCounter                = 0;
     reg[15:0]   _wordPrev                   = 0;
-    reg         _wordValidationStarted      = 0;
+    reg         _pixelValidationStarted     = 0;
     reg         _checksumReceived           = 0;
     
     task Config(
-        input[31:0] headerWordCount,        // Number of 16-bit words to ignore at the beginning of the received data
-        input[31:0] bodyWordCount,          // Number of 16-bit words to validate
-        input[31:0] bodyWordInitialValue,   // Expected value of the first word
-        input       bodyWordDeltaValidate,     // Enable checking the delta between words
-        integer     bodyWordDelta,          // Expected difference between current word value and previous word value
-        input[31:0] checksumValidate        // Whether to check the checksum appended to the data
+        input integer headerWordCount,      // Number of 16-bit words to ignore at the beginning of the received data
+        input integer imageWidth,           // Pixel width of image
+        input integer imageHeight,          // Pixel height of image
+        input integer paddingWordCount,     // Number of padding words expected after the checksum
+        input integer pixelValidate,        // Enable checking values of pixels
+        input[15:0]   pixelInitial,         // Expected value of the first pixel
+        input integer pixelDelta,           // Expected difference between current word value and previous word value
+        input integer pixelFilterPeriod,    // Period of the pixel filter (used for thumbnailing)
+        input integer pixelFilterKeep,      // Count of pixels to keep at the beginning of a period (used for thumbnailing)
+        input integer checksumValidate      // Enable validating checksum appended to the data
     ); begin
-        _cfgHeaderWordCount        = headerWordCount;
-        _cfgBodyWordCount          = bodyWordCount;
-        _cfgBodyWordInitialValue   = bodyWordInitialValue;
-        _cfgBodyWordDeltaValidate  = bodyWordDeltaValidate;
-        _cfgBodyWordDelta          = bodyWordDelta;
-        _cfgChecksumValidate       = checksumValidate;
+        _cfgHeaderWordCount     = headerWordCount;
+        _cfgImageWidth          = imageWidth;
+        _cfgImageHeight         = imageHeight;
+        _cfgPaddingWordCount    = paddingWordCount;
+        _cfgPixelValidate       = pixelValidate;
+        _cfgPixelInitial        = pixelInitial;
+        _cfgPixelDelta          = pixelDelta;
+        _cfgPixelFilterPeriod   = pixelFilterPeriod;
+        _cfgPixelFilterKeep     = pixelFilterKeep;
+        _cfgChecksumValidate    = checksumValidate;
+        
+        _wordCounter            = 0;
+        _wordPrev               = 0;
+        _pixelValidationStarted = 0;
+        _checksumReceived       = 0;
+        
+        _checksum_rst = 1; #1;
+        _checksum_clk = 1; #1;
+        _checksum_clk = 0; #1;
+        _checksum_rst = 0; #1;
     end endtask
     
     task Validate(input[15:0] word); begin
         if (_wordCounter < _cfgHeaderWordCount) begin
             _ChecksumConsumeWord(word);
         
-        end else if (_wordCounter < _cfgHeaderWordCount+_cfgBodyWordCount) begin
+        end else if (_wordCounter < _cfgHeaderWordCount+`ImagePixelCount) begin
             reg[15:0] wordExpected;
             reg[15:0] wordGot;
             
             _ChecksumConsumeWord(word);
             
-            if (_cfgBodyWordDeltaValidate) begin
-                if (!_wordValidationStarted                 ||
-                    (_cfgBodyWordDelta>0 && (&_wordPrev))   ||      // Check for overflow
-                    (_cfgBodyWordDelta<0 && (!_wordPrev))) begin    // Check for overflow
-                    wordExpected = _cfgBodyWordInitialValue;
+            if (_cfgPixelValidate) begin
+                if (!_pixelValidationStarted            ||
+                    (_cfgPixelDelta>0 && (&_wordPrev))  ||      // Check for overflow
+                    (_cfgPixelDelta<0 && (!_wordPrev))) begin   // Check for overflow
+                    wordExpected = _cfgPixelInitial;
                 end else begin
-                    wordExpected = HostFromLittle16.Swap(_wordPrev)+_cfgBodyWordDelta;
+                    wordExpected = HostFromLittle16.Swap(_wordPrev)+_cfgPixelDelta;
                 end
             
                 wordGot = HostFromLittle16.Swap(word); // Unpack little-endian
@@ -94,10 +120,10 @@ module PixelValidator();
                     `Finish;
                 end
             
-                _wordValidationStarted = 1;
+                _pixelValidationStarted = 1;
             end
         
-        end else if (_wordCounter == _cfgHeaderWordCount+_cfgBodyWordCount+1) begin
+        end else if (_wordCounter == _cfgHeaderWordCount+`ImagePixelCount+1) begin
             // Validate checksum
             if (_cfgChecksumValidate) begin
                 // Supply one last clock to get the correct output
@@ -126,21 +152,13 @@ module PixelValidator();
         _wordCounter = _wordCounter+1;
     end endtask
     
-    task Reset; begin
-        if (_wordCounter && _cfgChecksumValidate && !_checksumReceived) begin
-            $display("[PixelValidator] Didn't receive checksum ❌");
+    task Done; begin
+        if (_wordCounter === `ImageWordCount) begin
+            $display("[PixelValidator] Received word count: %0d (expected: %0d) ✅", _wordCounter, `ImageWordCount);
+        end else begin
+            $display("[PixelValidator] Received word count: %0d (expected: %0d) ❌", _wordCounter, `ImageWordCount);
             `Finish;
         end
-        
-        _wordCounter             = 0;
-        _wordPrev                = 0;
-        _wordValidationStarted   = 0;
-        _checksumReceived        = 0;
-        
-        _checksum_rst = 1; #1;
-        _checksum_clk = 1; #1;
-        _checksum_clk = 0; #1;
-        _checksum_rst = 0; #1;
     end endtask
 endmodule
 

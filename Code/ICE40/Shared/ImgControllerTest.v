@@ -20,9 +20,10 @@ module ImgControllerTest();
     localparam ReadoutFIFO_R_Thresh = 1;
     // ImgCtrl_PaddingWordCount: padding so that ImgController readout outputs enough
     // data to trigger the AFIFOChain read threshold (`readoutfifo_r_thresh`)
-    localparam ImgCtrl_AFIFOWordCapacity = (`AFIFO_CapacityBytes/2);
-    localparam ImgCtrl_ReadoutWordThresh = ReadoutFIFO_R_Thresh*ImgCtrl_AFIFOWordCapacity;
-    localparam ImgCtrl_PaddingWordCount = (ImgCtrl_ReadoutWordThresh - (`Img_WordCount % ImgCtrl_ReadoutWordThresh)) % ImgCtrl_ReadoutWordThresh;
+    localparam ImgCtrl_AFIFOWordCapacity     = (`AFIFO_CapacityBytes/2);
+    localparam ImgCtrl_ReadoutWordThresh     = ReadoutFIFO_R_Thresh*ImgCtrl_AFIFOWordCapacity;
+    localparam ImgCtrl_PaddingWordCount      = (ImgCtrl_ReadoutWordThresh - (`Img_WordCount % ImgCtrl_ReadoutWordThresh)) % ImgCtrl_ReadoutWordThresh;
+    localparam ImgCtrl_ThumbPaddingWordCount = (ImgCtrl_ReadoutWordThresh - (`Img_ThumbWordCount % ImgCtrl_ReadoutWordThresh)) % ImgCtrl_ReadoutWordThresh;
     
     // ====================
     // RAM
@@ -185,9 +186,9 @@ module ImgControllerTest();
     end endtask
     
     task ImgReadout(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
-        localparam ImageWordCount = `Img_HeaderWordCount + (`Img_Width*`Img_Height) + ImgCtrl_PaddingWordCount;
-        localparam ImgWordInitialValue  = 16'h0FFF;
-        localparam ImgWordDelta         = -1;
+        localparam ImgWordCount = `Img_HeaderWordCount + (`Img_Width*`Img_Height) + ImgCtrl_PaddingWordCount;
+        localparam ImgPixelInitial  = 16'h0FFF;
+        localparam ImgPixelDelta         = -1;
         localparam WaitForWordTimeoutNs = 10000000;
         integer recvWordCount;
         integer done;
@@ -196,14 +197,17 @@ module ImgControllerTest();
         
         $display("\n========== ImgReadout (thumb: %b) ==========", thumb);
         
-        PixelValidator.Reset();
         PixelValidator.Config(
-            `Img_HeaderWordCount,                               // headerWordCount
-            (!thumb ? `Img_PixelCount : `Img_ThumbPixelCount),  // bodyWordCount
-            ImgWordInitialValue,                                // bodyWordInitialValue
-            (!thumb ? 1 : 0),                                   // bodyWordDeltaValidate
-            ImgWordDelta,                                       // bodyWordDelta
-            1                                                   // checksumValidate
+            `Img_HeaderWordCount,                                                   // headerWordCount
+            (!thumb ? `Img_Width : `Img_ThumbWidth),                                // imageWidth
+            (!thumb ? `Img_Height : `Img_ThumbHeight),                              // imageHeight
+            (!thumb ? ImgCtrl_PaddingWordCount : ImgCtrl_ThumbPaddingWordCount),    // paddingWordCount
+            1,                                                                      // pixelValidate
+            ImgPixelInitial,                                                        // pixelInitial
+            ImgPixelDelta,                                                          // pixelDelta
+            0,                                                                      // pixelFilterPeriod
+            0,                                                                      // pixelFilterKeep
+            1                                                                       // checksumValidate
         );
         
         imgctrl_cmd_thumb = thumb;
@@ -232,6 +236,8 @@ module ImgControllerTest();
             );
         end
         
+        PixelValidator.Done();
+        
         expectedWordCount = (!thumb ? `Img_WordCount : `Img_ThumbWordCount) + ImgCtrl_PaddingWordCount;
         if (recvWordCount === expectedWordCount) begin
             $display("[ImgReadout] Received word count: %0d (expected: %0d) ✅", recvWordCount, expectedWordCount);
@@ -249,10 +255,10 @@ module ImgControllerTest();
         
         ImgCapture();
         
-        ImgReadout(1);
-        ImgReadout(0);
+        // ImgReadout(1); // Readout thumbnail image
+        ImgReadout(0); // Readout full-size image
         
-        // for (i=0; i<ImageWordCount; i++) begin
+        // for (i=0; i<ImgWordCount; i++) begin
         //     wait(img_clk && imgctrl_readout_ready && imgctrl_readout_trigger);
         //     wait(!img_clk);
         // end
