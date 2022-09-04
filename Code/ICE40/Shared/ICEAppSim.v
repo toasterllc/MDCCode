@@ -73,8 +73,9 @@ module ICEAppSim();
     // localparam Sim_ImgWidth             = 1006;
     // localparam Sim_ImgHeight            = 1;
     // localparam Sim_ImgPixelCount        = ImgWidth*ImgHeight;
-    localparam Sim_ImgPixelInitial  = 16'h0FFF;
-    localparam Sim_ImgPixelDelta         = -1;
+    localparam Sim_ImgPixelInitial      = 16'h0FFF;
+    localparam Sim_ImgPixelDelta        = -1;
+    localparam Sim_SDBlockWordCount     = 256; // Each SD block is 512 bytes == 256 16-bit words
     
     `ifdef _ICEApp_Img_En
         mobile_sdr mobile_sdr(
@@ -658,7 +659,7 @@ module ICEAppSim();
         end
     end endtask
     
-    localparam Sim_SDBlockWordCount = 256; // Each SD block is 512 bytes == 256 16-bit words
+`ifdef _ICEApp_SD_En
     task TestImgReadoutToSD(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
         // ====================
         // Test writing data to SD card / DatOut
@@ -688,13 +689,13 @@ module ICEAppSim();
             `Img_HeaderWordCount,                           // headerWordCount
             imgWidth,                                       // imageWidth
             imgHeight,                                      // imageHeight
+            `Img_ChecksumWordCount,                         // checksumWordCount
             `Padding(imgWordCount, Sim_SDBlockWordCount),   // paddingWordCount
             1,                                              // pixelValidate
             Sim_ImgPixelInitial,                            // pixelInitial
             Sim_ImgPixelDelta,                              // pixelDelta
             (!thumb ? 1 : 8),                               // pixelFilterPeriod
-            (!thumb ? 1 : 2),                               // pixelFilterKeep
-            1                                               // checksumValidate
+            (!thumb ? 1 : 2)                                // pixelFilterKeep
         );
         
         // Start image readout
@@ -761,6 +762,7 @@ module ICEAppSim();
             `Finish;
         end
     end endtask
+`endif // _ICEApp_SD_En
     
     task TestSDReadoutToSPI; begin
         $display("\n[ICEAppSim] ========== TestSDReadoutToSPI ==========");
@@ -811,7 +813,9 @@ module ICEAppSim();
     
     task TestImgReadoutToSPI(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
         $display("\n[ICEAppSim] ========== TestImgReadoutToSPI ==========");
+        // Start image readout
         TestImgReadout(0, thumb);
+        
         TestImgReadoutToSPI_Readout(thumb);
     end endtask
     

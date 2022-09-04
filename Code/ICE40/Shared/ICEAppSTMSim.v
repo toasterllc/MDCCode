@@ -139,31 +139,6 @@ task SPIReadout(
     
     parameter WordWidth = 16;
     parameter ChunkLen = 4*4096; // Each chunk consists of 4x RAM4K == 4*4096 bits
-    // parameter ChecksumWordCount = 2;
-    
-    // totalWordCount = headerWordCount+wordCount+(validateChecksum ? ChecksumWordCount : 0);
-    
-    // PixelValidator.Config(
-    //     headerWordCount,    // HeaderWordCount
-    //     wordCount,          // WordCount
-    //     wordInitialValue,   // WordInitialValue
-    //     wordDelta,          // WordDelta
-    //     validateChecksum    // ValidateChecksum
-    // );
-    //
-    //
-    // PixelValidator.Config(
-    //     headerWordCount,                            // headerWordCount
-    //     (!thumb ? `Img_Width : `Img_ThumbWidth),    // imageWidth
-    //     (!thumb ? `Img_Height : `Img_ThumbHeight),  // imageHeight
-    //     0,                                          // paddingWordCount
-    //     1,                                          // pixelValidate
-    //     Sim_ImgPixelInitial,                        // pixelInitial
-    //     Sim_ImgPixelDelta,                          // pixelDelta
-    //     (!thumb ? 1 : 8),                           // pixelFilterPeriod
-    //     (!thumb ? 1 : 2),                           // pixelFilterKeep
-    //     1                                           // checksumValidate
-    // );
     
     $display("\n[ICEAppSim] ========== SPIReadout ==========");
     
@@ -263,13 +238,13 @@ task TestSDReadoutToSPI_Readout; begin
         0,        // headerWordCount
         4*1024,   // imageWidth
         1,        // imageHeight
+        0,        // checksumWordCount
         0,        // paddingWordCount
         1,        // pixelValidate
         16'hFFFF, // pixelInitial
         -1,       // pixelDelta
         1,        // pixelFilterPeriod
-        1,        // pixelFilterKeep
-        0         // checksumValidate
+        1         // pixelFilterKeep
     );
     
     SPIReadout(
@@ -285,13 +260,13 @@ task TestImgReadoutToSPI_Readout(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb)
         `Img_HeaderWordCount,                       // headerWordCount
         (!thumb ? `Img_Width : `Img_ThumbWidth),    // imageWidth
         (!thumb ? `Img_Height : `Img_ThumbHeight),  // imageHeight
+        `Img_ChecksumWordCount,                     // checksumWordCount
         0,                                          // paddingWordCount
         1,                                          // pixelValidate
         Sim_ImgPixelInitial,                        // pixelInitial
         Sim_ImgPixelDelta,                          // pixelDelta
         (!thumb ? 1 : 8),                           // pixelFilterPeriod
-        (!thumb ? 1 : 2),                           // pixelFilterKeep
-        1                                           // checksumValidate
+        (!thumb ? 1 : 2)                            // pixelFilterKeep
     );
     
     SPIReadout(
