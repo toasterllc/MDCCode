@@ -470,10 +470,9 @@ module ImgController #(
         // Output pixels
         // TODO: perf: cleanup this state
         Ctrl_State_Readout+3: begin
-            readout_ready <= readout_ready;
-            
-            if (readout_trigger) begin
-                readout_ready <= 0;
+            // If client isn't consuming a value, readout_ready needs to remain unchanged
+            if (!readout_trigger) begin
+                readout_ready <= readout_ready;
             end
             
             if (ramctrl_read_ready && ctrl_readout_dataLoad) begin
@@ -484,7 +483,7 @@ module ImgController #(
             if (ctrl_readout_pixelDone && readout_trigger) begin
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 
-                // We need 2 wait states before we read the checksum
+                // We need 2 wait states before we sample the checksum
                 ctrl_delay_count <= 1;
                 ctrl_delay_nextState <= Ctrl_State_Readout+4;
                 ctrl_state <= Ctrl_State_Delay;
