@@ -8,6 +8,8 @@
 `timescale 1ns/1ps
 
 module PixelValidator();
+    localparam ChecksumWordCount = 2;
+    
     EndianSwap #(.Width(16)) HostFromLittle16();
     EndianSwap #(.Width(32)) HostFromLittle32();
     
@@ -51,7 +53,7 @@ module PixelValidator();
     
     `define ImagePixelCount     (_cfgImageWidth*_cfgImageHeight)
     `define ChecksumWordCount   2
-    `define ImageWordCount      (_cfgHeaderWordCount + `ImagePixelCount + `ChecksumWordCount + _cfgPaddingWordCount)
+    `define ImageWordCount      (_cfgHeaderWordCount + `ImagePixelCount + ChecksumWordCount + _cfgPaddingWordCount)
     
     integer     _wordCounter                = 0;
     reg[15:0]   _wordPrev                   = 0;

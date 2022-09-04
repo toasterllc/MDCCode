@@ -186,9 +186,8 @@ module ImgControllerTest();
     end endtask
     
     task ImgReadout(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
-        localparam ImgWordCount = `Img_HeaderWordCount + (`Img_Width*`Img_Height) + ImgCtrl_PaddingWordCount;
-        localparam ImgPixelInitial  = 16'h0FFF;
-        localparam ImgPixelDelta         = -1;
+        localparam ImgPixelInitial      = 16'h0FFF;
+        localparam ImgPixelDelta        = -1;
         localparam WaitForWordTimeoutNs = 10000000;
         integer recvWordCount;
         integer done;
@@ -197,16 +196,18 @@ module ImgControllerTest();
         
         $display("\n========== ImgReadout (thumb: %b) ==========", thumb);
         
+        ImgController.PaddingWordCount = (!thumb ? ImgCtrl_PaddingWordCount : ImgCtrl_ThumbPaddingWordCount);
+        
         PixelValidator.Config(
             `Img_HeaderWordCount,                                                   // headerWordCount
             (!thumb ? `Img_Width : `Img_ThumbWidth),                                // imageWidth
             (!thumb ? `Img_Height : `Img_ThumbHeight),                              // imageHeight
             (!thumb ? ImgCtrl_PaddingWordCount : ImgCtrl_ThumbPaddingWordCount),    // paddingWordCount
-            1,                                                                      // pixelValidate
+            0,                                                                      // pixelValidate
             ImgPixelInitial,                                                        // pixelInitial
             ImgPixelDelta,                                                          // pixelDelta
-            0,                                                                      // pixelFilterPeriod
-            0,                                                                      // pixelFilterKeep
+            (!thumb ? 0 : 8),                                                       // pixelFilterPeriod
+            (!thumb ? 0 : 2),                                                       // pixelFilterKeep
             1                                                                       // checksumValidate
         );
         
@@ -231,20 +232,12 @@ module ImgControllerTest();
             imgctrl_readout_trigger = $random&1;
             
             done = (
-                recvWordCount>`Img_HeaderWordCount &&   // Only institute our wait logic after the header has been received
+                recvWordCount>`Img_HeaderWordCount &&   // Only institute our timeout after the header has been received
                 $realtime-lastWordTime>WaitForWordTimeoutNs
             );
         end
         
         PixelValidator.Done();
-        
-        expectedWordCount = (!thumb ? `Img_WordCount : `Img_ThumbWordCount) + ImgCtrl_PaddingWordCount;
-        if (recvWordCount === expectedWordCount) begin
-            $display("[ImgReadout] Received word count: %0d (expected: %0d) ✅", recvWordCount, expectedWordCount);
-        end else begin
-            $display("[ImgReadout] Received word count: %0d (expected: %0d) ❌", recvWordCount, expectedWordCount);
-            $finish;
-        end
     end endtask
     
     // Actual test
@@ -255,7 +248,7 @@ module ImgControllerTest();
         
         ImgCapture();
         
-        // ImgReadout(1); // Readout thumbnail image
+        ImgReadout(1); // Readout thumbnail image
         ImgReadout(0); // Readout full-size image
         
         // for (i=0; i<ImgWordCount; i++) begin
