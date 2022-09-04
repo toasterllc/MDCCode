@@ -14,6 +14,8 @@ assign spi_dataOut[3:0] = `LeftBits(spi_dataOutReg,0,4);
 
 localparam ice_st_spi_clk_HALF_PERIOD = 8; // 64 MHz
 
+PixelValidator PixelValidator();
+
 task _SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
     reg[15:0] i;
     
@@ -132,28 +134,36 @@ end endtask
 task SPIReadout(
     input waitForDReady,
     input validateWords,
-    input[31:0] headerWordCount,
-    input[31:0] wordCount,
-    input[31:0] wordInitialValue,
-    input[31:0] wordDelta,
-    input validateChecksum
+    input[31:0] wordCount
 ); begin
     
     parameter WordWidth = 16;
     parameter ChunkLen = 4*4096; // Each chunk consists of 4x RAM4K == 4*4096 bits
-    parameter ChecksumWordCount = 2;
-    reg[31:0] totalWordCount;
+    // parameter ChecksumWordCount = 2;
     
-    totalWordCount = headerWordCount+wordCount+(validateChecksum ? ChecksumWordCount : 0);
+    // totalWordCount = headerWordCount+wordCount+(validateChecksum ? ChecksumWordCount : 0);
     
-    PixelValidator.Reset();
-    PixelValidator.Config(
-        headerWordCount,    // HeaderWordCount
-        wordCount,          // WordCount
-        wordInitialValue,   // WordInitialValue
-        wordDelta,          // WordDelta
-        validateChecksum    // ValidateChecksum
-    );
+    // PixelValidator.Config(
+    //     headerWordCount,    // HeaderWordCount
+    //     wordCount,          // WordCount
+    //     wordInitialValue,   // WordInitialValue
+    //     wordDelta,          // WordDelta
+    //     validateChecksum    // ValidateChecksum
+    // );
+    //
+    //
+    // PixelValidator.Config(
+    //     headerWordCount,                            // headerWordCount
+    //     (!thumb ? `Img_Width : `Img_ThumbWidth),    // imageWidth
+    //     (!thumb ? `Img_Height : `Img_ThumbHeight),  // imageHeight
+    //     0,                                          // paddingWordCount
+    //     1,                                          // pixelValidate
+    //     Sim_ImgPixelInitial,                        // pixelInitial
+    //     Sim_ImgPixelDelta,                          // pixelDelta
+    //     (!thumb ? 1 : 8),                           // pixelFilterPeriod
+    //     (!thumb ? 1 : 2),                           // pixelFilterKeep
+    //     1                                           // checksumValidate
+    // );
     
     $display("\n[ICEAppSim] ========== SPIReadout ==========");
     
@@ -168,11 +178,11 @@ task SPIReadout(
         reg[31:0] chunkCount;
         wordIdx = 0;
         chunkIdx = 0;
-        chunkCount = ((WordWidth*totalWordCount)+(ChunkLen-1)) / ChunkLen;
+        chunkCount = `DivCeil(WordWidth*wordCount, ChunkLen);
         
         _SendMsg(`Msg_Type_Readout, 0);
         
-        while (wordIdx < totalWordCount) begin
+        while (wordIdx < wordCount) begin
             reg[15:0] i;
             
             $display("[ICEAppSim] Reading chunk %0d/%0d...", chunkIdx+1, chunkCount);
@@ -201,7 +211,7 @@ task SPIReadout(
             
             #100; // TODO: remove; this helps debug where 8 dummy cycles end
             
-            for (i=0; i<(ChunkLen/WordWidth) && (wordIdx<totalWordCount); i++) begin
+            for (i=0; i<(ChunkLen/WordWidth) && (wordIdx<wordCount); i++) begin
                 reg[WordWidth-1:0] word;
                 
                 spi_resp = 0;
@@ -225,19 +235,17 @@ task SPIReadout(
     ice_st_spi_cs_ = 1;
     #1; // Let ice_st_spi_cs_ take effect
     
+    if (validateWords) PixelValidator.Done();
+    
     $display("[ICEAppSim] SPIReadout OK ✅");
 end endtask
 
 // TestSDCMD6_CheckAccessMode: required by TestSDCMD6
 task TestSDCMD6_CheckAccessMode; begin
     SPIReadout(
-        0,              // waitForDReady,
-        0,              // validateWords,
-        0,              // headerWordCount,
-        (512/16),       // wordCount,
-        0,              // wordInitialValue,
-        0,              // wordDelta,
-        0               // validateChecksum
+        0,          // waitForDReady
+        0,          // validateWords
+        (512/16)    // wordCount
     );
     
     // Check the access mode from the CMD6 response
@@ -251,26 +259,44 @@ end endtask
 
 // TestSDReadoutToSPI_Readout: required by TestSDReadoutToSPI
 task TestSDReadoutToSPI_Readout; begin
+    PixelValidator.Config(
+        0,        // headerWordCount
+        4*1024,   // imageWidth
+        1,        // imageHeight
+        0,        // paddingWordCount
+        1,        // pixelValidate
+        16'hFFFF, // pixelInitial
+        -1,       // pixelDelta
+        1,        // pixelFilterPeriod
+        1,        // pixelFilterKeep
+        0         // checksumValidate
+    );
+    
     SPIReadout(
-        1,              // waitForDReady,
-        1,              // validateWords,
-        0,              // headerWordCount,
-        4*1024,         // wordCount,
-        32'h0000FFFF,   // wordInitialValue,
-        -1,             // wordDelta,
-        0               // validateChecksum
+        1,      // waitForDReady
+        1,      // validateWords
+        4*1024  // wordCount
     );
 end endtask
 
 // TestImgReadoutToSPI_Readout: required by TestImgReadoutToSPI
-task TestImgReadoutToSPI_Readout; begin
+task TestImgReadoutToSPI_Readout(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
+    PixelValidator.Config(
+        `Img_HeaderWordCount,                       // headerWordCount
+        (!thumb ? `Img_Width : `Img_ThumbWidth),    // imageWidth
+        (!thumb ? `Img_Height : `Img_ThumbHeight),  // imageHeight
+        0,                                          // paddingWordCount
+        1,                                          // pixelValidate
+        Sim_ImgPixelInitial,                        // pixelInitial
+        Sim_ImgPixelDelta,                          // pixelDelta
+        (!thumb ? 1 : 8),                           // pixelFilterPeriod
+        (!thumb ? 1 : 2),                           // pixelFilterKeep
+        1                                           // checksumValidate
+    );
+    
     SPIReadout(
-        1,                          // waitForDReady,
-        1,                          // validateWords,
-        `Img_HeaderWordCount,       // headerWordCount,
-        `Img_PixelCount,            // wordCount,
-        Sim_ImgWordInitialValue,    // wordInitialValue,
-        Sim_ImgWordDelta,           // wordDelta,
-        1                           // validateChecksum
+        1,              // waitForDReady,
+        1,              // validateWords,
+        `Img_WordCount  // wordCount,
     );
 end endtask

@@ -118,7 +118,7 @@ task TestSDReadoutToSPI_Readout; begin
     `Finish;
 end endtask
 
-task TestImgReadoutToSPI_Readout; begin
+task TestImgReadoutToSPI_Readout(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
     $display("[ICEAppSim] TestImgReadoutToSPI_Readout unsupported");
     `Finish;
 end endtask

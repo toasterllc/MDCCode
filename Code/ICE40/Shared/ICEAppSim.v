@@ -73,8 +73,8 @@ module ICEAppSim();
     // localparam Sim_ImgWidth             = 1006;
     // localparam Sim_ImgHeight            = 1;
     // localparam Sim_ImgPixelCount        = ImgWidth*ImgHeight;
-    localparam Sim_ImgWordInitialValue  = 16'h0FFF;
-    localparam Sim_ImgWordDelta         = -1;
+    localparam Sim_ImgPixelInitial  = 16'h0FFF;
+    localparam Sim_ImgPixelDelta         = -1;
     
     `ifdef _ICEApp_Img_En
         mobile_sdr mobile_sdr(
@@ -363,7 +363,10 @@ module ICEAppSim();
         );
     end endtask
     
-    task TestImgReadout(input[`Msg_Arg_ImgReadout_SrcBlock_Len-1:0] srcBlock, input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
+    task TestImgReadout(
+        input[`Msg_Arg_ImgReadout_SrcBlock_Len-1:0] srcBlock,
+        input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb
+    ); begin
         reg[`Msg_Arg_Len-1:0] arg;
         $display("\n[ICEAppSim] ========== TestImgReadout ==========");
         
@@ -669,15 +672,21 @@ module ICEAppSim();
         // Send SD command CMD25 (WRITE_MULTIPLE_BLOCK)
         SendSDCmdResp(CMD25, `SDController_RespType_48, `SDController_DatInType_None, 32'b0);
         
-        // Start image readout
+        // Configure SDCardSim's PixelValidator for the incoming pixel data
         SDCardSim.PixelValidator.Config(
-            `Img_HeaderWordCount,                               // headerWordCount
-            (!thumb ? `Img_PixelCount : `Img_ThumbPixelCount),  // bodyWordCount
-            Sim_ImgWordInitialValue,                            // bodyWordInitialValue
-            (!thumb ? 1 : 0),                                   // bodyWordDeltaValidate
-            Sim_ImgWordDelta,                                   // bodyWordDelta
-            1                                                   // checksumValidate
+            `Img_HeaderWordCount,                       // headerWordCount
+            (!thumb ? `Img_Width : `Img_ThumbWidth),    // imageWidth
+            (!thumb ? `Img_Height : `Img_ThumbHeight),  // imageHeight
+            0,                                          // paddingWordCount
+            1,                                          // pixelValidate
+            Sim_ImgPixelInitial,                        // pixelInitial
+            Sim_ImgPixelDelta,                          // pixelDelta
+            (!thumb ? 1 : 8),                           // pixelFilterPeriod
+            (!thumb ? 1 : 2),                           // pixelFilterKeep
+            1                                           // checksumValidate
         );
+        
+        // Start image readout
         TestImgReadout(0, thumb);
         
         // Wait until we're done clocking out data on DAT lines
@@ -687,6 +696,9 @@ module ICEAppSim();
             SendMsg(`Msg_Type_SDStatus, 0);
         end while(!spi_resp[`Resp_Arg_SDStatus_DatOutDone_Bits]);
         $display("[ICEAppSim] Done writing (SD resp: %b)", spi_resp[`Resp_Arg_SDStatus_Resp_Bits]);
+        
+        // Tell SDCardSim's PixelValidator that the incoming data is finished
+        SDCardSim.PixelValidator.Done();
         
         // Check CRC status
         if (spi_resp[`Resp_Arg_SDStatus_DatOutCRCErr_Bits] === 1'b0) begin
@@ -786,10 +798,10 @@ module ICEAppSim();
         end
     end endtask
     
-    task TestImgReadoutToSPI; begin
+    task TestImgReadoutToSPI(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb); begin
         $display("\n[ICEAppSim] ========== TestImgReadoutToSPI ==========");
-        TestImgReadout(0, 0);
-        TestImgReadoutToSPI_Readout();
+        TestImgReadout(0, thumb);
+        TestImgReadoutToSPI_Readout(thumb);
     end endtask
     
 `ifdef ICEApp_MSP_En
@@ -880,7 +892,8 @@ module ICEAppSim();
         // `endif // ICEApp_SDReadoutToSPI_En
         //
         // `ifdef ICEApp_ImgReadoutToSPI_En
-        //     TestImgReadoutToSPI();
+        //     TestImgReadoutToSPI(1);
+        //     TestImgReadoutToSPI(0);
         // `endif // ICEApp_ImgReadoutToSPI_En
         //
         // `ifdef _ICEApp_SD_En

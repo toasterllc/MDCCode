@@ -718,9 +718,6 @@ module SDCardSim(
                 end
                 
                 dat_crcRst_ = 0;
-            
-            end else begin
-                PixelValidator.Reset();
             end
             
             wait(!sd_clk);
