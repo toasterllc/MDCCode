@@ -129,7 +129,7 @@ static simd::float3x3 simdForMat(const Mat<double,3,3>& m) {
 namespace MDCTools::ImagePipeline {
 
 Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts) {
-    constexpr uint32_t DownsampleFactor = 4;
+    constexpr uint32_t DownsampleFactor = 1;
     const size_t w = rawImg.width/DownsampleFactor;
     const size_t h = rawImg.height/DownsampleFactor;
     
@@ -137,28 +137,9 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     
     // Load `raw`
     {
-        Renderer::Txt rawLarge = renderer.textureCreate(MTLPixelFormatR32Float, rawImg.width, rawImg.height);
-        
-        // Load `rawLarge`
-        {
-            constexpr size_t SamplesPerPixel = 1;
-            constexpr size_t BytesPerSample = sizeof(*rawImg.pixels);
-            renderer.textureWrite(rawLarge, rawImg.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
-        }
-        
-        {
-            renderer.render(raw,
-                renderer.FragmentShader(ImagePipelineShaderNamespace "DownsampleDiscardRaw",
-                    // Buffer args,
-                    DownsampleFactor,
-                    // Texture args
-                    rawLarge
-                )
-            );
-        }
-//        constexpr size_t SamplesPerPixel = 1;
-//        constexpr size_t BytesPerSample = sizeof(*rawImg.pixels);
-//        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
+        constexpr size_t SamplesPerPixel = 1;
+        constexpr size_t BytesPerSample = sizeof(*rawImg.pixels);
+        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
     }
     
     Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
