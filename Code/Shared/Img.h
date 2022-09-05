@@ -34,23 +34,10 @@ namespace Img {
     };
     static_assert(sizeof(Header) == 32);
     
-//    struct Header {
-//        // Section idx=0
-//        uint16_t version;       // 0x4242
-//        uint16_t imageWidth;    // 0x0900
-//        uint16_t imageHeight;   // 0x0510
-//        uint16_t _pad0;         // 0x0000
-//        // Section idx=1
-//        uint32_t count;         // 0xCAFEBABE
-//        uint32_t _pad1;         // 0x00000000
-//        // Section idx=2
-//        uint32_t timestamp;     // 0xDEADBEEF
-//        uint32_t _pad2;         // 0x00000000
-//        // Section idx=3
-//        uint16_t coarseIntTime; // 0x1111
-//        uint16_t analogGain;    // 0x2222
-//        uint32_t _pad3;         // 0x00000000
-//    } __attribute__((packed));
+    enum class Size {
+        Full,
+        Thumb,
+    };
     
     constexpr uint32_t ChecksumLen          = sizeof(uint32_t);
     constexpr uint32_t PixelsOffset         = sizeof(Header);

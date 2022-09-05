@@ -91,8 +91,13 @@ namespace MSP {
             SD::CardId cardId;
             // imgCap: image capacity; the number of images that bounds the ring buffer
             uint32_t imgCap = 0;
+            // fullSizeBlockStart: the start of the full-size image region.
+            // The SD card is broken into 2 regions (thumbnails, fullSize), to allow
+            // the thumbnails to be efficiently read from the host. `fullSizeBlockStart`
+            // is the first block of the full-size image region.
+            uint32_t fullSizeBlockStart = 0;
             // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
-            // power failure
+            // power failure while updating one
             ImgRingBuf imgRingBufs[2] = {};
             bool valid = false;
             uint8_t _pad = 0;

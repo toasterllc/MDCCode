@@ -237,8 +237,9 @@ public:
         _ReadWriteStop();
     }
     
-    static void WriteImage(uint16_t rca, uint8_t srcBlock, SD::BlockIdx dstBlockIdx, bool thumb) {
-        WriteStart(rca, dstBlockIdx, (!thumb ? ImgSD::Full::ImgBlockCount : ImgSD::Thumb::ImgBlockCount));
+    static void WriteImage(uint16_t rca, uint8_t srcBlock, SD::BlockIdx dstBlockIdx, Img::Size imgSize) {
+        const uint32_t blockCountEst = (imgSize==Img::Size::Full ? ImgSD::Full::ImgBlockCount : ImgSD::Thumb::ImgBlockCount);
+        WriteStart(rca, dstBlockIdx, blockCountEst);
         
         // Clock out the image on the DAT lines
         T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcBlock, thumb));
