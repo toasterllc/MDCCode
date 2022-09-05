@@ -8,7 +8,6 @@
 #include "Code/Shared/STM.h"
 #include "Code/Shared/Img.h"
 #include "Code/Shared/SD.h"
-#include "Code/Shared/ImgSD.h"
 #include "Code/Shared/ChecksumFletcher32.h"
 
 class MDCUSBDevice {
@@ -408,7 +407,7 @@ public:
         _checkStatus("ImgExposureSet command failed");
     }
     
-    STM::ImgCaptureStats imgCapture(uint8_t dstBlock, uint8_t skipCount) {
+    STM::ImgCaptureStats imgCapture(uint8_t dstBlock, uint8_t skipCount, bool thumb) {
         assert(_mode == STM::Status::Modes::STMApp);
         
         const STM::Cmd cmd = {
@@ -417,6 +416,7 @@ public:
                 .ImgCapture = {
                     .dstBlock = 0,
                     .skipCount = skipCount,
+                    .thumb = thumb,
                 },
             },
         };
@@ -429,18 +429,20 @@ public:
         return stats;
     }
     
-    std::unique_ptr<uint8_t[]> imgReadout() {
+    std::unique_ptr<uint8_t[]> imgReadout(bool thumb) {
         assert(_mode == STM::Status::Modes::STMApp);
-        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(ImgSD::ImgPaddedLen);
-        const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), ImgSD::ImgPaddedLen);
-        if (lenGot < Img::Len) {
-            throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)ImgSD::ImgPaddedLen, (uintmax_t)lenGot);
+        const size_t imageLen = (!thumb ? Img::Full::ImageLen : Img::Thumb::ImageLen);
+        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(imageLen);
+        const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), imageLen);
+        if (lenGot < imageLen) {
+            throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)imageLen, (uintmax_t)lenGot);
         }
         
         // Validate checksum
-        const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), Img::ChecksumOffset);
+        const size_t checksumOffset = (!thumb ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
+        const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), checksumOffset);
         uint32_t checksumGot = 0;
-        memcpy(&checksumGot, (uint8_t*)buf.get()+Img::ChecksumOffset, Img::ChecksumLen);
+        memcpy(&checksumGot, (uint8_t*)buf.get()+checksumOffset, Img::ChecksumLen);
         if (checksumGot != checksumExpected) {
             throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
         }

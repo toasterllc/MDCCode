@@ -748,7 +748,7 @@ module ICEApp(
                 `Msg_Type_ImgCaptureStatus: begin
                     $display("[SPI] Got Msg_Type_ImgCaptureStatus");
                     spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits] <= !spi_imgCaptureDone_;
-                    spi_resp[`Resp_Arg_ImgCaptureStatus_WordCount_Bits] <= imgctrl_status_capturePixelCount;
+                    spi_resp[`Resp_Arg_ImgCaptureStatus_PixelCount_Bits] <= imgctrl_status_capturePixelCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits] <= imgctrl_status_captureHighlightCount;
                     spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits] <= imgctrl_status_captureShadowCount;
                 end

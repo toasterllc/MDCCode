@@ -77,7 +77,7 @@
 
 `define Msg_Type_ImgCaptureStatus                               `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h09
 `define     Resp_Arg_ImgCaptureStatus_Done_Bits                 63:63
-`define     Resp_Arg_ImgCaptureStatus_WordCount_Bits            62:39
+`define     Resp_Arg_ImgCaptureStatus_PixelCount_Bits           62:39
 `define     Resp_Arg_ImgCaptureStatus_HighlightCount_Bits       38:21
 `define     Resp_Arg_ImgCaptureStatus_ShadowCount_Bits          20:3
 

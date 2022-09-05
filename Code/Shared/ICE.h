@@ -221,20 +221,20 @@ public:
     
     struct ImgCaptureStatusResp : Resp {
         bool done() const               { return Resp::template getBit<63>();                  }
-        uint32_t wordCount() const      { return (uint32_t)Resp::template getBits<62,39>();    }
+        uint32_t pixelCount() const     { return (uint32_t)Resp::template getBits<62,39>();    }
         uint32_t highlightCount() const { return (uint32_t)Resp::template getBits<38,21>();    }
         uint32_t shadowCount() const    { return (uint32_t)Resp::template getBits<20,3>();     }
     };
     
     struct ImgReadoutMsg : Msg {
-        constexpr ImgReadoutMsg(uint8_t srcBlock) : Msg(MsgType::StartBit | 0x0A,
+        constexpr ImgReadoutMsg(uint8_t srcBlock, bool thumb) : Msg(MsgType::StartBit | 0x0A,
             0,
             0,
             0,
             0,
             0,
             0,
-            srcBlock&0x7
+            (srcBlock&0x7) | (thumb<<3)
         ) {}
     };
     
@@ -315,8 +315,8 @@ public:
                 _Sleep(_Ms(1));
                 continue;
             }
-            const uint32_t imgWordCount = status.wordCount();
-            Assert(imgWordCount == Img::Len/sizeof(Img::Word));
+            const uint32_t imgPixelCount = status.pixelCount();
+            Assert(imgPixelCount == Img::Full::PixelCount);
             return status;
         }
         // Timeout capturing image

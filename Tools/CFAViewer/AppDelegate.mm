@@ -153,8 +153,8 @@ struct ExposureSettings {
         bool cancel = false;
         ExposureSettings exposureSettings;
         Img::Pixel pixels[2200*2200];
-        uint32_t width = Img::PixelWidth;
-        uint32_t height = Img::PixelHeight;
+        uint32_t width = Img::Full::PixelWidth;
+        uint32_t height = Img::Full::PixelHeight;
     } _streamImagesThread;
     
     struct {
@@ -164,8 +164,8 @@ struct ExposureSettings {
                 MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
                 MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
             },
-            .width = Img::PixelWidth,
-            .height = Img::PixelHeight,
+            .width = Img::Full::PixelWidth,
+            .height = Img::Full::PixelHeight,
             .pixels = pixels,
         };
     } _rawImage;
@@ -336,18 +336,18 @@ static bool isCFAFile(const fs::path& path) {
     
     // Support 2 different filetypes:
     // (1) solely raw pixel data
-    if (imgData.len() == Img::PixelLen) {
+    if (imgData.len() == Img::Full::PixelLen) {
         // Copy the image data into _rawImage
-        memcpy(_rawImage.pixels, imgData.data(), Img::PixelLen);
+        memcpy(_rawImage.pixels, imgData.data(), Img::Full::PixelLen);
     
     // (2) header + raw pixel data + checksum
-    } else if (imgData.len() == Img::Len) {
+    } else if (imgData.len() == Img::Full::ImageLen) {
         // Copy the image data into _rawImage
-        memcpy(_rawImage.pixels, imgData.data()+sizeof(Img::Header), Img::PixelLen);
+        memcpy(_rawImage.pixels, imgData.data()+Img::PixelsOffset, Img::Full::PixelLen);
         
-        const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), Img::ChecksumOffset);
+        const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), Img::Full::ChecksumOffset);
         uint32_t checksumGot = 0;
-        memcpy(&checksumGot, imgData.data()+Img::ChecksumOffset, sizeof(checksumGot));
+        memcpy(&checksumGot, imgData.data()+Img::Full::ChecksumOffset, sizeof(checksumGot));
         assert(checksumExpected == checksumGot);
     
     // invaid image
@@ -591,17 +591,17 @@ static void _configureDevice(MDCUSBDevice& dev) {
 //                usleep(100000);
             }
             
+            constexpr bool Thumbnail = false;
             constexpr uint8_t DstBlock = 0; // Always save to RAM block 0
             const uint8_t skipCount = (setExp ? 1 : 0); // Skip one image if we set the exposure, so that the image we receive has the exposure applied
-            const STM::ImgCaptureStats imgStats = dev.imgCapture(DstBlock, skipCount);
-            if (imgStats.len != Img::Len) {
-                throw Toastbox::RuntimeError("invalid image length (expected: %ju, got: %ju)", (uintmax_t)Img::Len, (uintmax_t)imgStats.len);
+            const STM::ImgCaptureStats imgStats = dev.imgCapture(DstBlock, skipCount, Thumbnail);
+            if (imgStats.len != Img::Full::ImageLen) {
+                throw Toastbox::RuntimeError("invalid image length (expected: %ju, got: %ju)", (uintmax_t)Img::Full::ImageLen, (uintmax_t)imgStats.len);
             }
             
             printf("Highlights: %ju   Shadows: %ju\n", (uintmax_t)imgStats.highlightCount, (uintmax_t)imgStats.shadowCount);
             
-            std::unique_ptr<uint8_t[]> img = dev.imgReadout();
-            
+            std::unique_ptr<uint8_t[]> img = dev.imgReadout(Thumbnail);
             {
                 auto lock = std::unique_lock(_streamImagesThread.lock);
                 
@@ -609,7 +609,7 @@ static void _configureDevice(MDCUSBDevice& dev) {
                 if (_streamImagesThread.cancel) break;
                 
                 // Copy the image into the persistent buffer
-                memcpy(_streamImagesThread.pixels, img.get()+sizeof(Img::Header), Img::PixelLen);
+                memcpy(_streamImagesThread.pixels, img.get()+Img::PixelsOffset, Img::Full::PixelLen);
                 
                 // While we have the lock, copy the exposure settings
                 if (_streamImagesThread.exposureSettings.autoExposureEnabled && !autoExp) {

@@ -358,7 +358,7 @@ module ICEAppSim();
         end while(!spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits]);
         $display("[ICEAppSim] Capture done ✅ (done:%b image size:%0d, highlightCount:%0d, shadowCount:%0d)",
             spi_resp[`Resp_Arg_ImgCaptureStatus_Done_Bits],
-            spi_resp[`Resp_Arg_ImgCaptureStatus_WordCount_Bits],
+            spi_resp[`Resp_Arg_ImgCaptureStatus_PixelCount_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_HighlightCount_Bits],
             spi_resp[`Resp_Arg_ImgCaptureStatus_ShadowCount_Bits],
         );

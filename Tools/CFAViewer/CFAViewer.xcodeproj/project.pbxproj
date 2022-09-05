@@ -125,6 +125,7 @@
 		55EBCC932589C3960089A441 /* HistogramLayerShader.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = HistogramLayerShader.metal; sourceTree = "<group>"; };
 		55EBCC9B2589E5A00089A441 /* MetalUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalUtil.h; sourceTree = "<group>"; };
 		55EBCC9C2589E61F0089A441 /* HistogramLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HistogramLayerTypes.h; sourceTree = "<group>"; };
+		55EBFD2528C57FDD00B3D1B5 /* MDCUSBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUSBDevice.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -161,6 +162,7 @@
 				55AE80D92630C98100BA227C /* PixelSampler.h */,
 				55AC9E0128ACBF7E00D0851E /* Renderer.h */,
 				55AC9E0228ACBF7E00D0851E /* Renderer.metal */,
+				55EBFD2528C57FDD00B3D1B5 /* MDCUSBDevice.h */,
 			);
 			name = Shared;
 			path = ../Shared;

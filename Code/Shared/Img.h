@@ -52,14 +52,26 @@ namespace Img {
 //        uint32_t _pad3;         // 0x00000000
 //    } __attribute__((packed));
     
-    constexpr uint32_t PixelWidth           = 2304;
-    constexpr uint32_t PixelHeight          = 1296;
-    constexpr uint32_t PixelCount           = PixelWidth*PixelHeight;
-    constexpr uint32_t PixelLen             = PixelCount*sizeof(Pixel);
     constexpr uint32_t ChecksumLen          = sizeof(uint32_t);
-    constexpr uint32_t Len                  = sizeof(Header) + PixelLen + ChecksumLen;
     constexpr uint32_t PixelsOffset         = sizeof(Header);
-    constexpr uint32_t ChecksumOffset       = Len-ChecksumLen;
+    
+    namespace Full {
+        constexpr uint32_t PixelWidth           = 2304;
+        constexpr uint32_t PixelHeight          = 1296;
+        constexpr uint32_t PixelCount           = PixelWidth*PixelHeight;
+        constexpr uint32_t PixelLen             = PixelCount*sizeof(Pixel);
+        constexpr uint32_t ImageLen             = sizeof(Header) + PixelLen + ChecksumLen;
+        constexpr uint32_t ChecksumOffset       = ImageLen-ChecksumLen;
+    };
+    
+    namespace Thumb {
+        constexpr uint32_t PixelWidth           = Full::PixelWidth/4;
+        constexpr uint32_t PixelHeight          = Full::PixelHeight/4;
+        constexpr uint32_t PixelCount           = PixelWidth*PixelHeight;
+        constexpr uint32_t PixelLen             = PixelCount*sizeof(Pixel);
+        constexpr uint32_t ImageLen             = sizeof(Header) + PixelLen + ChecksumLen;
+        constexpr uint32_t ChecksumOffset       = ImageLen-ChecksumLen;
+    };
     
     // StatsSubsampleFactor: We only sample 1/16 of pixels for highlights/shadows
     constexpr uint16_t StatsSubsampleFactor = 16;

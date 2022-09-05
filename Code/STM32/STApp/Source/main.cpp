@@ -1181,18 +1181,21 @@ void _ImgCapture(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
+    const uint16_t imageWidth  = (!arg.thumb ? Img::Full::PixelWidth  : Img::Thumb::PixelWidth );
+    const uint16_t imageHeight = (!arg.thumb ? Img::Full::PixelHeight : Img::Thumb::PixelHeight);
+    const uint32_t imageLen    = (!arg.thumb ? Img::Full::ImageLen    : Img::Thumb::ImageLen   );
     const Img::Header header = {
         .magic          = Img::Header::MagicNumber,
         .version        = Img::Header::Version,
-        .imageWidth     = Img::PixelWidth,
-        .imageHeight    = Img::PixelHeight,
+        .imageWidth     = imageWidth,
+        .imageHeight    = imageHeight,
     };
     
     const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, arg.dstBlock, arg.skipCount);
     
     // stats: aligned to send via USB
     alignas(4) const ImgCaptureStats stats = {
-        .len            = resp.wordCount()*sizeof(Img::Word),
+        .len            = imageLen,
         .highlightCount = resp.highlightCount(),
         .shadowCount    = resp.shadowCount(),
     };
@@ -1202,7 +1205,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
     // Arrange for the image to be read out
-    _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstBlock));
+    _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstBlock, arg.thumb));
     
     // Send status
     _System::USBSendStatus(true);

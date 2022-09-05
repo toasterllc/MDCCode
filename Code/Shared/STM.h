@@ -116,6 +116,7 @@ namespace STM {
             struct [[gnu::packed]] {
                 uint8_t dstBlock;
                 uint8_t skipCount;
+                uint8_t thumb;
             } ImgCapture;
             
             struct [[gnu::packed]] {
@@ -212,7 +213,8 @@ namespace STM {
     // This is necessary so that when multiple images are streamed, the
     // transfer continues indefinitely and isn't cut short by a short packet
     // (ie a packet < the MPS).
-    static_assert((ImgSD::ImgPaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
+    static_assert((ImgSD::Full::ImgPaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
+    static_assert((ImgSD::Thumb::ImgPaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
     
 //    // ImgPaddedLen: Ceil the image size to the SD block size
 //    // This is the amount of data that's sent from device -> host, for each image.
