@@ -84,6 +84,7 @@ namespace MSP {
             bool valid = false;
             uint8_t _pad = 0;
         } startTime = {};
+        static_assert(!(sizeof(startTime) % 2)); // Check alignment
         
         struct [[gnu::packed]] {
             // cardId: the SD card's CID, used to determine when the SD card has been
@@ -91,23 +92,25 @@ namespace MSP {
             SD::CardId cardId;
             // imgCap: image capacity; the number of images that bounds the ring buffer
             uint32_t imgCap = 0;
-            // fullSizeBlockStart: the start of the full-size image region.
+            // fullSizeBlockStart: the first block of the full-size image region.
             // The SD card is broken into 2 regions (thumbnails, fullSize), to allow
             // the thumbnails to be efficiently read from the host. `fullSizeBlockStart`
-            // is the first block of the full-size image region.
-            uint32_t fullSizeBlockStart = 0;
+            // is the start of the full-size region.
+            SD::Block fullSizeBlockStart = 0;
             // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
             // power failure while updating one
             ImgRingBuf imgRingBufs[2] = {};
             bool valid = false;
             uint8_t _pad = 0;
         } sd = {};
+        static_assert(!(sizeof(sd) % 2)); // Check alignment
         
         // abort: records aborts that have occurred
         struct [[gnu::packed]] {
             AbortEvent events[3] = {};
             uint16_t eventsCount = 0;
         } abort = {};
+        static_assert(!(sizeof(abort) % 2)); // Check alignment
     };
 
 } // namespace MSP

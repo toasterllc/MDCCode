@@ -110,7 +110,7 @@ namespace STM {
             } MSPDebug;
             
             struct [[gnu::packed]] {
-                SD::BlockIdx blockIdx;
+                SD::Block block;
             } SDRead;
             
             struct [[gnu::packed]] {

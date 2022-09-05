@@ -5,7 +5,7 @@ namespace SD {
     // BlockLen: block size of SD card
     static constexpr uint32_t BlockLen = 512;
     
-    using BlockIdx = uint32_t;
+    using Block = uint32_t;
     
     struct [[gnu::packed]] CardId {
         uint8_t manufacturerId          = 0;

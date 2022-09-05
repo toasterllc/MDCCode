@@ -186,13 +186,13 @@ public:
 //    const CardId& cardId() const { return *_cardId; }
 //    const CardData& cardData() const { return *_cardData; }
     
-    static void ReadStart(SD::BlockIdx blockIdx) {
+    static void ReadStart(SD::Block block) {
         // ====================
         // CMD18 | READ_MULTIPLE_BLOCK
         //   State: Transfer -> Send Data
         //   Read blocks of data (1 block == 512 bytes)
         // ====================
-        _SendCmd(_CMD18, blockIdx, _RespType::Len48, _DatInType::Len4096xN);
+        _SendCmd(_CMD18, block, _RespType::Len48, _DatInType::Len4096xN);
     }
     
     static void ReadStop() {
@@ -202,7 +202,7 @@ public:
     // `blockCountEst`: the estimated block count that will be written; used to pre-erase SD blocks as a performance
     // optimization. More data can be written than `blockCountEst`, but performance may suffer if the actual count
     // is longer than the estimate.
-    static void WriteStart(uint16_t rca, SD::BlockIdx blockIdx, uint32_t blockCountEst=0) {
+    static void WriteStart(uint16_t rca, SD::Block block, uint32_t blockCountEst=0) {
         // ====================
         // ACMD23 | SET_WR_BLK_ERASE_COUNT
         //   State: Transfer -> Transfer
@@ -229,7 +229,7 @@ public:
         //   Write blocks of data
         // ====================
         {
-            _SendCmd(_CMD25, blockIdx);
+            _SendCmd(_CMD25, block);
         }
     }
     
@@ -237,12 +237,12 @@ public:
         _ReadWriteStop();
     }
     
-    static void WriteImage(uint16_t rca, uint8_t srcBlock, SD::BlockIdx dstBlockIdx, Img::Size imgSize) {
+    static void WriteImage(uint16_t rca, uint8_t srcRAMBlock, SD::Block dstSDBlock, Img::Size imgSize) {
         const uint32_t blockCountEst = (imgSize==Img::Size::Full ? ImgSD::Full::ImgBlockCount : ImgSD::Thumb::ImgBlockCount);
-        WriteStart(rca, dstBlockIdx, blockCountEst);
+        WriteStart(rca, dstSDBlock, blockCountEst);
         
         // Clock out the image on the DAT lines
-        T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcBlock, thumb));
+        T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcRAMBlock, imgSize));
         
         #warning TODO: call error handler if this takes too long -- look at SD spec for max time
         // Wait for writing to finish

@@ -179,23 +179,24 @@ struct _SDTask {
         _Scheduler::Start<_SDTask>([] { _Disable(); });
     }
     
-    static MSP::ImgRingBuf& ImgRingBuf() {
-        Wait();
-        Assert(_Enabled); // Ensures that we've initialized _State.sd.imgRingBufs
-        return _State.sd.imgRingBufs[0];
-    }
-    
-    static void Write(uint8_t srcBlock, uint32_t dstBlockIdx, Img::Size imgSize) {
+    static void Write(uint8_t srcRAMBlock, SD::Block dstSDBlock, Img::Size imgSize) {
         Wait();
         Assert(_Enabled);
         
-        static struct { uint8_t srcBlock; uint32_t dstBlockIdx; Img::Size imgSize; } Args;
-        Args = { srcBlock, dstBlockIdx, thumb };
-        _Scheduler::Start<_SDTask>([] { _Write(Args.srcBlock, Args.dstBlockIdx, Args.thumb); });
+        _Writing = true;
+        
+        static struct { uint8_t srcRAMBlock; SD::Block dstSDBlock; Img::Size imgSize; } Args;
+        Args = { srcRAMBlock, dstSDBlock, imgSize };
+        _Scheduler::Start<_SDTask>([] { _Write(Args.srcRAMBlock, Args.dstSDBlock, Args.imgSize); });
     }
     
     static void Wait() {
         _Scheduler::Wait<_SDTask>();
+    }
+    
+    // WaitForInitAndWrite: wait for both initialization and writing to complete
+    static void WaitForInitAndWrite() {
+        _Scheduler::Wait([&] { return _RCA.has_value() && !_Writing; });
     }
     
 //    static void WaitForInit() {
@@ -241,9 +242,10 @@ struct _SDTask {
         _Enabled = false;
     }
     
-    static void _Write(uint8_t srcBlock, uint32_t dstBlockIdx, Img::Size imgSize) {
-        _SDCard::WriteImage(*_RCA, srcBlock, dstBlockIdx, imgSize);
+    static void _Write(uint8_t srcRAMBlock, SD::Block dstSDBlock, Img::Size imgSize) {
+        _SDCard::WriteImage(*_RCA, srcRAMBlock, dstSDBlock, imgSize);
         _ImgRingBufIncrement();
+        _Writing = false;
     }
     
     static void _SetPowerEnabled(bool en) {
@@ -280,9 +282,9 @@ struct _SDTask {
             _State.sd.imgCap = cardImgCap;
         }
         
-        // Set .imgCap
+        // Set .fullSizeBlockStart
         {
-            _State.sd.fullBlockStart = cardImgCap * ImgSD::Thumb::ImgBlockCount;
+            _State.sd.fullSizeBlockStart = cardImgCap * ImgSD::Thumb::ImgBlockCount;
         }
         
         // Set .imgRingBufs
@@ -357,6 +359,7 @@ struct _SDTask {
     static inline std::optional<uint16_t> _RCA;
     
     static inline bool _Enabled = false;
+    static inline bool _Writing = false;
     
     // Task options
     static constexpr Toastbox::TaskOptions Options{};
@@ -524,6 +527,8 @@ struct _MainTask {
 //            _Scheduler::Sleep(_Scheduler::Ms(250));
 //        }
         
+        const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
+        
         for (;;) {
             // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
             {
@@ -546,30 +551,28 @@ struct _MainTask {
                 {
                     _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
                     
-                    // Get the ring buffer
-                    // This has the necessary side effect of waiting for _SDTask to be idle, which is
-                    // necessary for 2 reasons:
+                    // Wait for _SDTask to be initialized and done with writing, which is necessary
+                    // for 2 reasons:
                     //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
-                    //      access them,
+                    //      access it,
                     //   2. we can't initiate a new capture until writing to the SD card (from a
                     //      previous capture) is complete (because the SDRAM is single-port, so
                     //      we can only read or write at one time)
-                    const MSP::ImgRingBuf& imgRingBuf = _SDTask::ImgRingBuf();
+                    _SDTask::WaitForInitAndWrite();
                     
                     // Capture image to RAM
                     _ImgTask::Capture(imgRingBuf.buf.idEnd);
-                    
                     const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
                     
                     // Copy thumbnail from RAM -> SD card
                     {
-                        const uint32_t dstSDBlock = imgRingBuf.buf.widx * ImgSD::Thumb::ImgBlockCount;
+                        const SD::Block dstSDBlock = imgRingBuf.buf.widx * ImgSD::Thumb::ImgBlockCount;
                         _SDTask::Write(srcRAMBlock, dstSDBlock, Img::Size::Thumb);
                     }
                     
                     // Copy full-size image from RAM -> SD card
                     {
-                        const uint32_t dstSDBlock = _State.sd.fullSizeBlockStart + (imgRingBuf.buf.widx * ImgSD::Full::ImgBlockCount);
+                        const SD::Block dstSDBlock = _State.sd.fullSizeBlockStart + (imgRingBuf.buf.widx * ImgSD::Full::ImgBlockCount);
                         _SDTask::Write(srcRAMBlock, dstSDBlock, Img::Size::Full);
                     }
                     
@@ -600,7 +603,8 @@ struct _MainTask {
         // This logic works because if _WaitingForMotion==true, then we've disabled both _SDTask
         // and _ImgTask, so if the tasks are idle, then everything's idle so we can enter deep
         // sleep. (The case that we need to be careful of is going to sleep when either _SDTask
-        // or _ImgTask is idle but still powered on, and this logic takes care of that.)
+        // or _ImgTask is idle but still powered on, which the _WaitingForMotion check takes
+        // care of.)
         return _WaitingForMotion                &&
                !_Scheduler::Running<_SDTask>()  &&
                !_Scheduler::Running<_ImgTask>() ;
