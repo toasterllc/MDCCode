@@ -1,9 +1,9 @@
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
 #import "../Renderer.h"
-#import "Defringe.h"
 #import "../Mat.h"
 #import "../Color.h"
+#import "Defringe.h"
 #import "ImagePipelineTypes.h"
 
 namespace MDCTools::ImagePipeline {

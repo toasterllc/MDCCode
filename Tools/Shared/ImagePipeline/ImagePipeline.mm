@@ -129,6 +129,10 @@ static simd::float3x3 simdForMat(const Mat<double,3,3>& m) {
 namespace MDCTools::ImagePipeline {
 
 Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts) {
+    assert(rawImg.width);
+    assert(rawImg.height);
+    assert(rawImg.pixels);
+    
     constexpr uint32_t DownsampleFactor = 1;
     const size_t w = rawImg.width/DownsampleFactor;
     const size_t h = rawImg.height/DownsampleFactor;

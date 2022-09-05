@@ -14,11 +14,13 @@ using namespace MDCTools::ImagePipeline;
 }
 
 - (void)render {
+    assert(rawImage);
+    
     // Clear `result` so that the Renderer::Txt and Renderer::Buf objects that
     // it contains are destroyed before we render again, so they can be reused
     // for this render run.
     result = {};
-    result = MDCTools::ImagePipeline::Pipeline::Run(renderer, rawImage, options);
+    result = MDCTools::ImagePipeline::Pipeline::Run(renderer, *rawImage, options);
     if (renderCallback) renderCallback();
 }
 

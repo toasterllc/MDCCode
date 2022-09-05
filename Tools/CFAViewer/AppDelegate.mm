@@ -153,8 +153,8 @@ struct ExposureSettings {
         bool cancel = false;
         ExposureSettings exposureSettings;
         Img::Pixel pixels[2200*2200];
-        uint32_t width = Img::Full::PixelWidth;
-        uint32_t height = Img::Full::PixelHeight;
+        uint32_t width = 0;
+        uint32_t height = 0;
     } _streamImagesThread;
     
     struct {
@@ -164,8 +164,8 @@ struct ExposureSettings {
                 MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
                 MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
             },
-            .width = Img::Full::PixelWidth,
-            .height = Img::Full::PixelHeight,
+            .width = 0,
+            .height = 0,
             .pixels = pixels,
         };
     } _rawImage;
@@ -185,7 +185,6 @@ struct ExposureSettings {
     [_mainView setColorCheckerCircleRadius:_colorCheckerCircleRadius];
     
     _imagePipelineManager = [ImagePipelineManager new];
-    _imagePipelineManager->rawImage = _rawImage.img;
     _imagePipelineManager->renderCallback = [=]() {
         [weakSelf _renderCallback];
     };
@@ -548,6 +547,7 @@ static void _configureDevice(MDCUSBDevice& dev) {
         _rawImage.img.height = _streamImagesThread.height;
         const size_t pixelCount = _streamImagesThread.width*_streamImagesThread.height;
         std::copy(_streamImagesThread.pixels, _streamImagesThread.pixels+pixelCount, _rawImage.pixels);
+        _imagePipelineManager->rawImage = _rawImage.img;
     lock.unlock();
     
     [[_mainView imageLayer] setNeedsDisplay];
@@ -591,12 +591,15 @@ static void _configureDevice(MDCUSBDevice& dev) {
 //                usleep(100000);
             }
             
-            constexpr bool Thumbnail = false;
+            constexpr bool Thumbnail = true;
             constexpr uint8_t DstBlock = 0; // Always save to RAM block 0
+            constexpr size_t ImageWidth = (!Thumbnail ? Img::Full::PixelWidth : Img::Thumb::PixelWidth);
+            constexpr size_t ImageHeight = (!Thumbnail ? Img::Full::PixelHeight : Img::Thumb::PixelHeight);
+            constexpr size_t ImageLen = (!Thumbnail ? Img::Full::ImageLen : Img::Thumb::ImageLen);
             const uint8_t skipCount = (setExp ? 1 : 0); // Skip one image if we set the exposure, so that the image we receive has the exposure applied
             const STM::ImgCaptureStats imgStats = dev.imgCapture(DstBlock, skipCount, Thumbnail);
-            if (imgStats.len != Img::Full::ImageLen) {
-                throw Toastbox::RuntimeError("invalid image length (expected: %ju, got: %ju)", (uintmax_t)Img::Full::ImageLen, (uintmax_t)imgStats.len);
+            if (imgStats.len != ImageLen) {
+                throw Toastbox::RuntimeError("invalid image length (expected: %ju, got: %ju)", (uintmax_t)ImageLen, (uintmax_t)imgStats.len);
             }
             
             printf("Highlights: %ju   Shadows: %ju\n", (uintmax_t)imgStats.highlightCount, (uintmax_t)imgStats.shadowCount);
@@ -607,6 +610,9 @@ static void _configureDevice(MDCUSBDevice& dev) {
                 
                 // Check if we've been cancelled
                 if (_streamImagesThread.cancel) break;
+                
+                _streamImagesThread.width = ImageWidth;
+                _streamImagesThread.height = ImageHeight;
                 
                 // Copy the image into the persistent buffer
                 memcpy(_streamImagesThread.pixels, img.get()+Img::PixelsOffset, Img::Full::PixelLen);
@@ -832,6 +838,8 @@ static Mat<double,3,1> _averageRGB(const SampleRect& rect, id<MTLBuffer> buf) {
 }
 
 - (void)_updateSampleColorsUI {
+    return; // Currently broken
+    
     const SampleRect rect = _imagePipelineManager->options.sampleRect;
     const auto& sampleBufs = _imagePipelineManager->result.sampleBufs;
     _sampleRaw = _averageRaw(rect, _rawImage.img.cfaDesc, sampleBufs.raw);

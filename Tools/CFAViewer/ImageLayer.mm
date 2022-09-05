@@ -29,6 +29,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 - (void)display {
     if (!_ipm) return;
+    if (!_ipm->rawImage) return;
     
     [_ipm render];
     
@@ -59,7 +60,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
         // Update our bounds
         if (_ipm) {
             const CGFloat scale = [self contentsScale];
-            [self setBounds:{0, 0, _ipm->rawImage.width/scale, _ipm->rawImage.height/scale}];
+            [self setBounds:{0, 0, _ipm->rawImage->width/scale, _ipm->rawImage->height/scale}];
         }
         [super setNeedsDisplay];
     
