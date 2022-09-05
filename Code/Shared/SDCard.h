@@ -241,7 +241,7 @@ public:
         WriteStart(rca, dstBlockIdx, (!thumb ? ImgSD::Full::ImgBlockCount : ImgSD::Thumb::ImgBlockCount));
         
         // Clock out the image on the DAT lines
-        T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcBlock));
+        T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcBlock, thumb));
         
         #warning TODO: call error handler if this takes too long -- look at SD spec for max time
         // Wait for writing to finish

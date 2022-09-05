@@ -185,13 +185,13 @@ struct _SDTask {
         return _State.sd.imgRingBufs[0];
     }
     
-    static void Write(uint8_t srcBlock, uint32_t dstBlockIdx) {
+    static void Write(uint8_t srcBlock, uint32_t dstBlockIdx, bool thumb) {
         Wait();
         Assert(_Enabled);
         
-        static struct { uint8_t srcBlock; uint32_t dstBlockIdx; } Args;
-        Args = { srcBlock, dstBlockIdx };
-        _Scheduler::Start<_SDTask>([] { _Write(Args.srcBlock, Args.dstBlockIdx); });
+        static struct { uint8_t srcBlock; uint32_t dstBlockIdx; bool thumb; } Args;
+        Args = { srcBlock, dstBlockIdx, thumb };
+        _Scheduler::Start<_SDTask>([] { _Write(Args.srcBlock, Args.dstBlockIdx, Args.thumb); });
     }
     
     static void Wait() {
@@ -241,8 +241,8 @@ struct _SDTask {
         _Enabled = false;
     }
     
-    static void _Write(uint8_t srcBlock, uint32_t dstBlockIdx) {
-        _SDCard::WriteImage(*_RCA, srcBlock, dstBlockIdx);
+    static void _Write(uint8_t srcBlock, uint32_t dstBlockIdx, bool thumb) {
+        _SDCard::WriteImage(*_RCA, srcBlock, dstBlockIdx, thumb);
         _ImgRingBufIncrement();
     }
     
@@ -260,7 +260,7 @@ struct _SDTask {
         // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
         const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
         // cardImgCap: the capacity of the SD card in number of images
-        const uint32_t cardImgCap = cardBlockCap / ImgSD::ImgBlockCount;
+        const uint32_t cardImgCap = cardBlockCap / ImgSD::Full::ImgBlockCount;
         
         FRAMWriteEn writeEn; // Enable FRAM writing
         
@@ -434,8 +434,8 @@ struct _ImgTask {
             static Img::Header header = {
                 .magic          = Img::Header::MagicNumber,
                 .version        = Img::Header::Version,
-                .imageWidth     = Img::PixelWidth,
-                .imageHeight    = Img::PixelHeight,
+                .imageWidth     = Img::Full::PixelWidth,
+                .imageHeight    = Img::Full::PixelHeight,
                 .coarseIntTime  = 0,
                 .analogGain     = 0,
                 .id             = 0,
@@ -553,9 +553,9 @@ struct _MainTask {
                     _ImgTask::Capture(imgRingBuf.buf.idEnd);
                     
                     // Copy image from RAM -> SD card
-                    const uint32_t dstBlockIdx = imgRingBuf.buf.widx * ImgSD::ImgBlockCount;
+                    const uint32_t dstBlockIdx = imgRingBuf.buf.widx * ImgSD::Full::ImgBlockCount;
                     const uint8_t srcBlock = _ImgTask::CaptureBlock();
-                    _SDTask::Write(srcBlock, dstBlockIdx);
+                    _SDTask::Write(srcBlock, dstBlockIdx, false);
                     
                     _ICE::Transfer(_ICE::LEDSetMsg(0x00));
                 }
