@@ -591,20 +591,20 @@ static void _configureDevice(MDCUSBDevice& dev) {
 //                usleep(100000);
             }
             
-            constexpr bool Thumbnail = true;
+            constexpr Img::Size ImageSize = Img::Size::Full;
             constexpr uint8_t DstBlock = 0; // Always save to RAM block 0
-            constexpr size_t ImageWidth = (!Thumbnail ? Img::Full::PixelWidth : Img::Thumb::PixelWidth);
-            constexpr size_t ImageHeight = (!Thumbnail ? Img::Full::PixelHeight : Img::Thumb::PixelHeight);
-            constexpr size_t ImageLen = (!Thumbnail ? Img::Full::ImageLen : Img::Thumb::ImageLen);
+            constexpr size_t ImageWidth  = (ImageSize==Img::Size::Full ? Img::Full::PixelWidth  : Img::Thumb::PixelWidth );
+            constexpr size_t ImageHeight = (ImageSize==Img::Size::Full ? Img::Full::PixelHeight : Img::Thumb::PixelHeight);
+            constexpr size_t ImageLen    = (ImageSize==Img::Size::Full ? Img::Full::ImageLen    : Img::Thumb::ImageLen   );
             const uint8_t skipCount = (setExp ? 1 : 0); // Skip one image if we set the exposure, so that the image we receive has the exposure applied
-            const STM::ImgCaptureStats imgStats = dev.imgCapture(DstBlock, skipCount, Thumbnail);
+            const STM::ImgCaptureStats imgStats = dev.imgCapture(DstBlock, skipCount, ImageSize);
             if (imgStats.len != ImageLen) {
                 throw Toastbox::RuntimeError("invalid image length (expected: %ju, got: %ju)", (uintmax_t)ImageLen, (uintmax_t)imgStats.len);
             }
             
             printf("Highlights: %ju   Shadows: %ju\n", (uintmax_t)imgStats.highlightCount, (uintmax_t)imgStats.shadowCount);
             
-            std::unique_ptr<uint8_t[]> img = dev.imgReadout(Thumbnail);
+            std::unique_ptr<uint8_t[]> img = dev.imgReadout(ImageSize);
             {
                 auto lock = std::unique_lock(_streamImagesThread.lock);
                 
