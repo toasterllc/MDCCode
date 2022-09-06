@@ -346,7 +346,7 @@ module ICEAppSim();
         $display("\n[ICEAppSim] ========== TestImgCapture ==========");
         
         arg = 0;
-        arg[`Msg_Arg_ImgCapture_DstBlock_Bits] = 0;
+        arg[`Msg_Arg_ImgCapture_DstRAMBlock_Bits] = 0;
         arg[`Msg_Arg_ImgCapture_SkipCount_Bits] = 0;
         SendMsg(`Msg_Type_ImgCapture, arg);
         
@@ -365,14 +365,14 @@ module ICEAppSim();
     end endtask
     
     task TestImgReadout(
-        input[`Msg_Arg_ImgReadout_SrcBlock_Len-1:0] srcBlock,
+        input[`Msg_Arg_ImgReadout_SrcRAMBlock_Len-1:0] srcRAMBlock,
         input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb
     ); begin
         reg[`Msg_Arg_Len-1:0] arg;
         $display("\n[ICEAppSim] ========== TestImgReadout ==========");
         
         arg = 0;
-        arg[`Msg_Arg_ImgReadout_SrcBlock_Bits] = srcBlock;
+        arg[`Msg_Arg_ImgReadout_SrcRAMBlock_Bits] = srcRAMBlock;
         arg[`Msg_Arg_ImgReadout_Thumb_Bits] = thumb;
         SendMsg(`Msg_Type_ImgReadout, arg);
     end endtask

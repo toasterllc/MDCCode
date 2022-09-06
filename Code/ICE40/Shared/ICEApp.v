@@ -737,10 +737,10 @@ module ICEApp(
                 `Msg_Type_ImgCapture: begin
                     $display("[SPI] Got Msg_Type_ImgCapture (skipCount=%d, block=%d)",
                         spi_msgArg[`Msg_Arg_ImgCapture_SkipCount_Bits],
-                        spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits]);
+                        spi_msgArg[`Msg_Arg_ImgCapture_DstRAMBlock_Bits]);
                     // Reset spi_imgCaptureDone_
                     if (!spi_imgCaptureDone_) spi_imgCaptureDoneAck <= !spi_imgCaptureDoneAck;
-                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits];
+                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgCapture_DstRAMBlock_Bits];
                     imgctrl_cmd_skipCount <= spi_msgArg[`Msg_Arg_ImgCapture_SkipCount_Bits];
                     imgctrl_cmd_capture <= !imgctrl_cmd_capture;
                 end
@@ -755,7 +755,7 @@ module ICEApp(
                 
                 `Msg_Type_ImgReadout: begin
                     $display("[SPI] Got Msg_Type_ImgReadout");
-                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_SrcBlock_Bits];
+                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgReadout_SrcRAMBlock_Bits];
                     imgctrl_cmd_thumb <= spi_msgArg[`Msg_Arg_ImgReadout_Thumb_Bits];
                     imgctrl_cmd_readout <= !imgctrl_cmd_readout;
                 end

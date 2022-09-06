@@ -326,8 +326,8 @@ module Top(
                 end
                 
                 `Msg_Type_ImgCapture: begin
-                    $display("[SPI] Got Msg_Type_ImgCapture (block=%b)", spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits]);
-                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgCapture_DstBlock_Bits];
+                    $display("[SPI] Got Msg_Type_ImgCapture (block=%b)", spi_msgArg[`Msg_Arg_ImgCapture_DstRAMBlock_Bits]);
+                    imgctrl_cmd_ramBlock <= spi_msgArg[`Msg_Arg_ImgCapture_DstRAMBlock_Bits];
                     spi_imgCaptureTrigger <= !spi_imgCaptureTrigger;
                 end
                 
@@ -659,7 +659,7 @@ module Testbench();
         SendMsg(`Msg_Type_ImgReset, arg, 0); // Deassert Img reset
         
         arg = 0;
-        arg[`Msg_Arg_ImgCapture_DstBlock_Bits] = 0;
+        arg[`Msg_Arg_ImgCapture_DstRAMBlock_Bits] = 0;
         SendMsg(`Msg_Type_ImgCapture, arg, 0);
         
         forever begin
@@ -685,7 +685,7 @@ module Testbench();
                 for (i=0; i<ImageWidth/transferPixelCount; i++) begin
                     arg[`Msg_Arg_ImgReadout_Counter_Bits] = (transferPixelCount-1)*2;
                     arg[`Msg_Arg_ImgReadout_CaptureNext_Bits] = (row===(ImageHeight-1) && i===((ImageWidth/transferPixelCount)-1));
-                    arg[`Msg_Arg_ImgReadout_SrcBlock_Bits] = 0;
+                    arg[`Msg_Arg_ImgReadout_SrcRAMBlock_Bits] = 0;
                     
                     SendMsg(`Msg_Type_ImgReadout, arg, transferPixelCount*2);
                     imgRow = (imgRow<<(transferPixelCount*2*8))|resp;
