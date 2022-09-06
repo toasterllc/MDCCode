@@ -1191,7 +1191,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
         .imageHeight    = imageHeight,
     };
     
-    const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, arg.dstBlock, arg.skipCount);
+    const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, arg.dstRAMBlock, arg.skipCount);
     
     // stats: aligned to send via USB
     alignas(4) const ImgCaptureStats stats = {
@@ -1205,7 +1205,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
     // Arrange for the image to be read out
-    _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstBlock, arg.size));
+    _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstRAMBlock, arg.size));
     
     // Send status
     _System::USBSendStatus(true);

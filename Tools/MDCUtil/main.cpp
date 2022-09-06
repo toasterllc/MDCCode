@@ -374,11 +374,11 @@ static void SDImgRead(const Args& args, MDCUSBDevice& device) {
     printf("-> OK\n\n");
     
     printf("Sending SDRead command...\n");
-    device.sdRead(args.SDImgRead.idx * ImgSD::ImgPaddedLen);
+    device.sdRead(args.SDImgRead.idx * ImgSD::Full::ImgPaddedLen);
     printf("-> OK\n\n");
     
     printf("Reading image...\n");
-    auto img = device.imgReadout();
+    auto img = device.imgReadout(Img::Size::Full);
     printf("-> OK\n\n");
     
     // Write image
@@ -386,8 +386,8 @@ static void SDImgRead(const Args& args, MDCUSBDevice& device) {
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     f.open(args.SDImgRead.filePath.c_str());
-    f.write((char*)img.get(), Img::Len);
-    printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Len);
+    f.write((char*)img.get(), Img::Full::ImageLen);
+    printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Full::ImageLen);
 }
 
 static void ImgCapture(const Args& args, MDCUSBDevice& device) {
@@ -400,11 +400,11 @@ static void ImgCapture(const Args& args, MDCUSBDevice& device) {
     printf("-> OK\n\n");
     
     printf("Sending ImgCapture command...\n");
-    STM::ImgCaptureStats stats = device.imgCapture(0, 0);
+    STM::ImgCaptureStats stats = device.imgCapture(0, 0, Img::Size::Full);
     printf("-> OK (len: %ju)\n\n", (uintmax_t)stats.len);
     
     printf("Reading image...\n");
-    auto img = device.imgReadout();
+    auto img = device.imgReadout(Img::Size::Full);
     printf("-> OK\n\n");
     
     // Write image
@@ -412,8 +412,8 @@ static void ImgCapture(const Args& args, MDCUSBDevice& device) {
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     f.open(args.ImgCapture.filePath.c_str());
-    f.write((char*)img.get(), Img::Len);
-    printf("-> Wrote (len: %ju)\n", (uintmax_t)Img::Len);
+    f.write((char*)img.get(), Img::Full::ImageLen);
+    printf("-> Wrote (len: %ju)\n", (uintmax_t)Img::Full::ImageLen);
 }
 
 int main(int argc, const char* argv[]) {

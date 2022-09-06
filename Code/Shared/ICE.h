@@ -204,14 +204,14 @@ public:
     };
     
     struct ImgCaptureMsg : Msg {
-        constexpr ImgCaptureMsg(uint8_t dstBlock, uint8_t skipCount) : Msg(MsgType::StartBit | 0x08,
+        constexpr ImgCaptureMsg(uint8_t dstRAMBlock, uint8_t skipCount) : Msg(MsgType::StartBit | 0x08,
             0,
             0,
             0,
             0,
             0,
             0,
-            ((skipCount&0x7)<<3) | (dstBlock&0x7)
+            ((skipCount&0x7)<<3) | (dstRAMBlock&0x7)
         ) {}
     };
     
@@ -295,7 +295,7 @@ public:
     
     #warning TODO: call some failure function if this fails, instead of returning an optional
     #warning TODO: optimize the attempt mechanism -- how long should we sleep each iteration? how many attempts?
-    static ImgCaptureStatusResp ImgCapture(const Img::Header& header, uint8_t dstBlock, uint8_t skipCount) {
+    static ImgCaptureStatusResp ImgCapture(const Img::Header& header, uint8_t dstRAMBlock, uint8_t skipCount) {
         // Set the header of the image
         constexpr size_t ChunkCount = 4; // The number of 6-byte header chunks to write
         static_assert(sizeof(header) >= (ChunkCount * ImgSetHeaderMsg::ChunkLen));
@@ -304,7 +304,7 @@ public:
         }
         
         // Tell ICE40 to start capturing an image
-        Transfer(ImgCaptureMsg(dstBlock, skipCount));
+        Transfer(ImgCaptureMsg(dstRAMBlock, skipCount));
         
         // Wait for image to be captured
         constexpr uint16_t MaxAttempts = 1000;

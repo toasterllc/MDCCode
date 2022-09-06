@@ -407,14 +407,14 @@ public:
         _checkStatus("ImgExposureSet command failed");
     }
     
-    STM::ImgCaptureStats imgCapture(uint8_t dstBlock, uint8_t skipCount, Img::Size imgSize) {
+    STM::ImgCaptureStats imgCapture(uint8_t dstRAMBlock, uint8_t skipCount, Img::Size imgSize) {
         assert(_mode == STM::Status::Modes::STMApp);
         
         const STM::Cmd cmd = {
             .op = STM::Op::ImgCapture,
             .arg = {
                 .ImgCapture = {
-                    .dstBlock = 0,
+                    .dstRAMBlock = 0,
                     .skipCount = skipCount,
                     .size = imgSize,
                 },
@@ -429,9 +429,9 @@ public:
         return stats;
     }
     
-    std::unique_ptr<uint8_t[]> imgReadout(bool thumb) {
+    std::unique_ptr<uint8_t[]> imgReadout(Img::Size size) {
         assert(_mode == STM::Status::Modes::STMApp);
-        const size_t imageLen = (!thumb ? Img::Full::ImageLen : Img::Thumb::ImageLen);
+        const size_t imageLen = (size==Img::Size::Full ? Img::Full::ImageLen : Img::Thumb::ImageLen);
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(imageLen);
         const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), imageLen);
         if (lenGot < imageLen) {
@@ -439,7 +439,7 @@ public:
         }
         
         // Validate checksum
-        const size_t checksumOffset = (!thumb ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
+        const size_t checksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
         const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), checksumOffset);
         uint32_t checksumGot = 0;
         memcpy(&checksumGot, (uint8_t*)buf.get()+checksumOffset, Img::ChecksumLen);

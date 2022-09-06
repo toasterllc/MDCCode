@@ -114,7 +114,7 @@ namespace STM {
             } SDRead;
             
             struct [[gnu::packed]] {
-                uint8_t dstBlock;
+                uint8_t dstRAMBlock;
                 uint8_t skipCount;
                 Img::Size size;
             } ImgCapture;
