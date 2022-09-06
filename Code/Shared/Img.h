@@ -34,7 +34,7 @@ namespace Img {
     };
     static_assert(sizeof(Header) == 32);
     
-    enum class Size {
+    enum class Size : uint8_t {
         Full,
         Thumb,
     };

@@ -1152,7 +1152,7 @@ static void _SDRead(const STM::Cmd& cmd) {
     // Reset chip select in case a read was in progress
     _ICE_ST_SPI_CS_::Write(1);
     
-    _SD::ReadStart(arg.blockIdx);
+    _SD::ReadStart(arg.block);
     
     // Send status
     _System::USBSendStatus(true);
@@ -1181,9 +1181,9 @@ void _ImgCapture(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    const uint16_t imageWidth  = (!arg.thumb ? Img::Full::PixelWidth  : Img::Thumb::PixelWidth );
-    const uint16_t imageHeight = (!arg.thumb ? Img::Full::PixelHeight : Img::Thumb::PixelHeight);
-    const uint32_t imageLen    = (!arg.thumb ? Img::Full::ImageLen    : Img::Thumb::ImageLen   );
+    const uint16_t imageWidth  = (arg.size==Img::Size::Full ? Img::Full::PixelWidth  : Img::Thumb::PixelWidth );
+    const uint16_t imageHeight = (arg.size==Img::Size::Full ? Img::Full::PixelHeight : Img::Thumb::PixelHeight);
+    const uint32_t imageLen    = (arg.size==Img::Size::Full ? Img::Full::ImageLen    : Img::Thumb::ImageLen   );
     const Img::Header header = {
         .magic          = Img::Header::MagicNumber,
         .version        = Img::Header::Version,
@@ -1205,7 +1205,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     
     // Arrange for the image to be read out
-    _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstBlock, arg.thumb));
+    _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstBlock, arg.size));
     
     // Send status
     _System::USBSendStatus(true);

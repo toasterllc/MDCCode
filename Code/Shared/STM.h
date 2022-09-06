@@ -116,7 +116,7 @@ namespace STM {
             struct [[gnu::packed]] {
                 uint8_t dstBlock;
                 uint8_t skipCount;
-                uint8_t thumb;
+                Img::Size size;
             } ImgCapture;
             
             struct [[gnu::packed]] {
