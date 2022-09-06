@@ -227,14 +227,14 @@ public:
     };
     
     struct ImgReadoutMsg : Msg {
-        constexpr ImgReadoutMsg(uint8_t srcBlock, Img::Size imgSize) : Msg(MsgType::StartBit | 0x0A,
+        constexpr ImgReadoutMsg(uint8_t srcRAMBlock, Img::Size imgSize) : Msg(MsgType::StartBit | 0x0A,
             0,
             0,
             0,
             0,
             0,
             0,
-            (srcBlock&0x7) | ((uint8_t)(imgSize==Img::Size::Thumb)<<3)
+            (srcRAMBlock&0x7) | ((uint8_t)(imgSize==Img::Size::Thumb)<<3)
         ) {}
     };
     
