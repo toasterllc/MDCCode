@@ -71,6 +71,7 @@ public:
                 printf("Set device time to 0x%jx\n", (uintmax_t)_mspState.startTime.time);
             }
             
+            #warning TODO: we don't need this sleep anymore right, because STMApp waits until MSP toggles the rails and SD is initialized?
             sleep(1);
             
 //            
@@ -307,10 +308,10 @@ private:
         // Lock the device for the duration of this function
         auto lock = std::unique_lock(*_dev);
         
-        auto imageData = std::make_unique<uint8_t[]>(ImgSD::ImgPaddedLen);
+        auto imageData = std::make_unique<uint8_t[]>(ImgSD::Full::ImgPaddedLen);
         _dev->endpointsFlush();
-        _dev->sdRead((SD::BlockIdx)imageRef.addr);
-        _dev->readout(imageData.get(), ImgSD::ImgPaddedLen);
+        _dev->sdRead((SD::Block)imageRef.addr);
+        _dev->readout(imageData.get(), ImgSD::Full::ImgPaddedLen);
         
         const Img::Header& header = *(const Img::Header*)imageData.get();
         ImagePtr image = std::make_shared<Image>(Image{
@@ -413,28 +414,29 @@ private:
         if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
         Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
         
-        constexpr size_t ChunkImgCount = 16; // Number of images to read at a time
-        constexpr size_t BufCap = ChunkImgCount * ImgSD::ImgPaddedLen;
+        constexpr size_t ChunkImgCount = 100; // Number of images to read at a time
+        constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImgPaddedLen;
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
-        const SD::BlockIdx blockIdxStart = range.idx * ImgSD::ImgBlockCount;
+        const SD::Block fullBlockStart = range.idx * ImgSD::Full::ImgBlockCount;
+        const SD::Block thumbBlockStart = _mspState.sd.thumbBlockStart + (range.idx * ImgSD::Thumb::ImgBlockCount);
         
         _dev->endpointsFlush();
-        _dev->sdRead(blockIdxStart);
+        _dev->sdRead(thumbBlockStart);
         
         // Consumer
         std::thread consumerThread([&] {
             auto startTime = std::chrono::steady_clock::now();
-            SD::BlockIdx blockIdx = blockIdxStart;
+            SD::Block block = fullBlockStart;
             size_t addedImageCount = 0;
             
             for (;;) {
                 auto& buf = bufQueue.rget();
                 if (!buf.len) break; // We're done when we get an empty buffer
-                _addImages(renderer, buf.data, buf.len, blockIdx);
+                _addImages(renderer, buf.data, buf.len, block);
                 bufQueue.rpop();
                 
-                blockIdx += buf.len * ImgSD::ImgBlockCount;
+                block += buf.len * ImgSD::Full::ImgBlockCount;
                 addedImageCount += buf.len;
             }
             
@@ -447,7 +449,7 @@ private:
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
             auto& buf = bufQueue.wget();
             buf.len = chunkImgCount; // buffer length = count of images (not byte count)
-            _dev->readout(buf.data, chunkImgCount*ImgSD::ImgPaddedLen);
+            _dev->readout(buf.data, chunkImgCount*ImgSD::Thumb::ImgPaddedLen);
             bufQueue.wpush();
             i += chunkImgCount;
             
@@ -465,7 +467,7 @@ private:
         }
     }
     
-    void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount, SD::BlockIdx blockIdx) {
+    void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount, SD::Block block) {
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
         
@@ -484,7 +486,7 @@ private:
         
         Img::Id deviceImgIdLast = 0;
         for (size_t idx=0; idx<imgCount; idx++) {
-            const uint8_t* imgData = data+idx*ImgSD::ImgPaddedLen;
+            const uint8_t* imgData = data+idx*ImgSD::Thumb::ImgPaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
             // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
             const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
@@ -492,9 +494,9 @@ private:
             ImageRef& imageRef = imageThumb.ref; // Safe without a lock because we're the only entity using the image library's reserved space
             
             // Validate checksum
-            const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::ChecksumOffset);
+            const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::Thumb::ChecksumOffset);
             uint32_t checksumGot = 0;
-            memcpy(&checksumGot, imgData+Img::ChecksumOffset, Img::ChecksumLen);
+            memcpy(&checksumGot, imgData+Img::Thumb::ChecksumOffset, Img::ChecksumLen);
             if (checksumGot != checksumExpected) {
                 throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
             } else {
@@ -511,7 +513,7 @@ private:
                     imageRef.timestamp = MSP::UnixTimeFromTime(imgHeader.timestamp);
                 }
                 
-                imageRef.addr           = blockIdx;
+                imageRef.addr           = block;
                 
                 imageRef.imageWidth     = imgHeader.imageWidth;
                 imageRef.imageHeight    = imgHeader.imageHeight;
@@ -520,7 +522,7 @@ private:
                 imageRef.analogGain     = imgHeader.analogGain;
                 
                 imageId++;
-                blockIdx += ImgSD::ImgBlockCount;
+                block += ImgSD::Full::ImgBlockCount;
             }
             
             // Render the thumbnail into imageRef.thumbData
@@ -529,8 +531,8 @@ private:
                 
                 Pipeline::RawImage rawImage = {
                     .cfaDesc = _CFADesc,
-                    .width = Img::PixelWidth,
-                    .height = Img::PixelHeight,
+                    .width = Img::Thumb::PixelWidth,
+                    .height = Img::Thumb::PixelHeight,
                     .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
                 };
                 
