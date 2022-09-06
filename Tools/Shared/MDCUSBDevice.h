@@ -370,14 +370,14 @@ public:
         return cardInfo;
     }
     
-    void sdRead(SD::BlockIdx blockIdx) {
+    void sdRead(SD::Block block) {
         assert(_mode == STM::Status::Modes::STMApp);
         
         const STM::Cmd cmd = {
             .op = STM::Op::SDRead,
             .arg = {
                 .SDRead = {
-                    .blockIdx = blockIdx,
+                    .block = block,
                 },
             },
         };
@@ -407,7 +407,7 @@ public:
         _checkStatus("ImgExposureSet command failed");
     }
     
-    STM::ImgCaptureStats imgCapture(uint8_t dstBlock, uint8_t skipCount, bool thumb) {
+    STM::ImgCaptureStats imgCapture(uint8_t dstBlock, uint8_t skipCount, Img::Size imgSize) {
         assert(_mode == STM::Status::Modes::STMApp);
         
         const STM::Cmd cmd = {
@@ -416,7 +416,7 @@ public:
                 .ImgCapture = {
                     .dstBlock = 0,
                     .skipCount = skipCount,
-                    .thumb = thumb,
+                    .size = imgSize,
                 },
             },
         };

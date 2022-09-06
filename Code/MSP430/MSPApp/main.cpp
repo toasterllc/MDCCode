@@ -282,9 +282,9 @@ struct _SDTask {
             _State.sd.imgCap = cardImgCap;
         }
         
-        // Set .fullSizeBlockStart
+        // Set .thumbBlockStart
         {
-            _State.sd.fullSizeBlockStart = cardImgCap * ImgSD::Thumb::ImgBlockCount;
+            _State.sd.thumbBlockStart = cardImgCap * ImgSD::Full::ImgBlockCount;
         }
         
         // Set .imgRingBufs
@@ -564,16 +564,16 @@ struct _MainTask {
                     _ImgTask::Capture(imgRingBuf.buf.idEnd);
                     const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
                     
-                    // Copy thumbnail from RAM -> SD card
-                    {
-                        const SD::Block dstSDBlock = imgRingBuf.buf.widx * ImgSD::Thumb::ImgBlockCount;
-                        _SDTask::Write(srcRAMBlock, dstSDBlock, Img::Size::Thumb);
-                    }
-                    
                     // Copy full-size image from RAM -> SD card
                     {
-                        const SD::Block dstSDBlock = _State.sd.fullSizeBlockStart + (imgRingBuf.buf.widx * ImgSD::Full::ImgBlockCount);
+                        const SD::Block dstSDBlock = imgRingBuf.buf.widx * ImgSD::Full::ImgBlockCount;
                         _SDTask::Write(srcRAMBlock, dstSDBlock, Img::Size::Full);
+                    }
+                    
+                    // Copy thumbnail from RAM -> SD card
+                    {
+                        const SD::Block dstSDBlock = _State.sd.thumbBlockStart + (imgRingBuf.buf.widx * ImgSD::Thumb::ImgBlockCount);
+                        _SDTask::Write(srcRAMBlock, dstSDBlock, Img::Size::Thumb);
                     }
                     
                     _ICE::Transfer(_ICE::LEDSetMsg(0x00));
