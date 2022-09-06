@@ -98,7 +98,7 @@ using namespace MDCStudio;
 //            imageRef.analogGain     = imgHeader.analogGain;
 //            
 //            imageId++;
-//            block += ImgSD::Full::ImgBlockCount;
+//            block += ImgSD::Full::ImageBlockCount;
 //        }
 //        
 //        // Render the thumbnail into imageRef.thumbData

@@ -18,6 +18,7 @@ namespace STM {
         DataIn  = 0x81,
     );
     
+    #warning TODO: in the future we should be able to remove this, once we don't rely on MSP to toggle the peripheral rails when entering host mode
     enum class Peripheral : uint8_t {
         None,
         SD,

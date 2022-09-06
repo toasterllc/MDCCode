@@ -418,8 +418,8 @@ private:
         constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
-        const SD::Block fullBlockStart = range.idx * ImgSD::Full::ImgBlockCount;
-        const SD::Block thumbBlockStart = _mspState.sd.thumbBlockStart + (range.idx * ImgSD::Thumb::ImgBlockCount);
+        const SD::Block fullBlockStart = range.idx * ImgSD::Full::ImageBlockCount;
+        const SD::Block thumbBlockStart = _mspState.sd.thumbBlockStart + (range.idx * ImgSD::Thumb::ImageBlockCount);
         
         _dev->endpointsFlush();
         _dev->sdRead(thumbBlockStart);
@@ -436,7 +436,7 @@ private:
                 _addImages(renderer, buf.data, buf.len, block);
                 bufQueue.rpop();
                 
-                block += buf.len * ImgSD::Full::ImgBlockCount;
+                block += buf.len * ImgSD::Full::ImageBlockCount;
                 addedImageCount += buf.len;
             }
             
@@ -522,7 +522,7 @@ private:
                 imageRef.analogGain     = imgHeader.analogGain;
                 
                 imageId++;
-                block += ImgSD::Full::ImgBlockCount;
+                block += ImgSD::Full::ImageBlockCount;
             }
             
             // Render the thumbnail into imageRef.thumbData

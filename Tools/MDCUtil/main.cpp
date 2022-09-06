@@ -305,59 +305,60 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         );
     }
     
-    printf(     "magic:                     0x%08x\n",      state.magic);
-    printf(     "version:                   0x%04x\n",      state.version);
+    printf(     "magic:                     0x%08jx\n",     (uintmax_t)state.magic);
+    printf(     "version:                   0x%04jx\n",     (uintmax_t)state.version);
     printf(     "\n");
     
     printf(     "startTime\n");
     printf(     "  time:                    0x%jx\n",       (uintmax_t)state.startTime.time);
-    printf(     "  valid:                   %d\n",          state.startTime.valid);
+    printf(     "  valid:                   %jd\n",         (intmax_t)state.startTime.valid);
     printf(     "\n");
     
     printf(     "sd\n");
     printf(     "  cardId\n");
-    printf(     "    manufacturerId:        0x%02x\n",      state.sd.cardId.manufacturerId);
-    printf(     "    oemId:                 0x%02x\n",      state.sd.cardId.oemId);
+    printf(     "    manufacturerId:        0x%02jx\n",     (uintmax_t)state.sd.cardId.manufacturerId);
+    printf(     "    oemId:                 0x%02jx\n",     (uintmax_t)state.sd.cardId.oemId);
     printf(     "    productName:           %c%c%c%c%c\n",  state.sd.cardId.productName[0],
                                                             state.sd.cardId.productName[1],
                                                             state.sd.cardId.productName[2],
                                                             state.sd.cardId.productName[3],
                                                             state.sd.cardId.productName[4]);
-    printf(     "    productRevision:       0x%02x\n",      state.sd.cardId.productRevision);
-    printf(     "    productSerialNumber:   0x%08x\n",      state.sd.cardId.productSerialNumber);
-    printf(     "    manufactureDate:       0x%04x\n",      state.sd.cardId.manufactureDate);
-    printf(     "    crc:                   0x%02x\n",      state.sd.cardId.crc);
+    printf(     "    productRevision:       0x%02jx\n",     (uintmax_t)state.sd.cardId.productRevision);
+    printf(     "    productSerialNumber:   0x%08jx\n",     (uintmax_t)state.sd.cardId.productSerialNumber);
+    printf(     "    manufactureDate:       0x%04jx\n",     (uintmax_t)state.sd.cardId.manufactureDate);
+    printf(     "    crc:                   0x%02jx\n",     (uintmax_t)state.sd.cardId.crc);
     
-    printf(     "  imgCap:                  %u\n",          state.sd.imgCap);
+    printf(     "  imgCap:                  %ju\n",         (uintmax_t)state.sd.imgCap);
+    printf(     "  thumbBlockStart:         %ju\n",         (uintmax_t)state.sd.thumbBlockStart);
     
     printf(     "  imgRingBufs[0]\n");
     printf(     "    buf\n");
-    printf(     "      idBegin:             %u\n",          state.sd.imgRingBufs[0].buf.idBegin);
-    printf(     "      idEnd:               %u\n",          state.sd.imgRingBufs[0].buf.idEnd);
-    printf(     "      widx:                %u\n",          state.sd.imgRingBufs[0].buf.widx);
-    printf(     "      ridx:                %u\n",          state.sd.imgRingBufs[0].buf.ridx);
-    printf(     "      full:                %u\n",          state.sd.imgRingBufs[0].buf.full);
-    printf(     "    valid:                 %u\n",          state.sd.imgRingBufs[0].valid);
+    printf(     "      idBegin:             %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.idBegin);
+    printf(     "      idEnd:               %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.idEnd);
+    printf(     "      widx:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.widx);
+    printf(     "      ridx:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.ridx);
+    printf(     "      full:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.full);
+    printf(     "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].valid);
     
     printf(     "  imgRingBufs[1]\n");
     printf(     "    buf\n");
-    printf(     "      idBegin:             %u\n",          state.sd.imgRingBufs[1].buf.idBegin);
-    printf(     "      idEnd:               %u\n",          state.sd.imgRingBufs[1].buf.idEnd);
-    printf(     "      widx:                %u\n",          state.sd.imgRingBufs[1].buf.widx);
-    printf(     "      ridx:                %u\n",          state.sd.imgRingBufs[1].buf.ridx);
-    printf(     "      full:                %u\n",          state.sd.imgRingBufs[1].buf.full);
-    printf(     "    valid:                 %u\n",          state.sd.imgRingBufs[1].valid);
+    printf(     "      idBegin:             %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.idBegin);
+    printf(     "      idEnd:               %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.idEnd);
+    printf(     "      widx:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.widx);
+    printf(     "      ridx:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.ridx);
+    printf(     "      full:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.full);
+    printf(     "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].valid);
     printf(     "\n");
     
     printf(     "abort\n");
-    printf(     "  eventsCount:             %u\n",          state.abort.eventsCount);
+    printf(     "  eventsCount:             %ju\n",         (uintmax_t)state.abort.eventsCount);
     
     for (size_t i=0; i<std::min(std::size(state.abort.events), (size_t)state.abort.eventsCount); i++) {
         const auto& event = state.abort.events[i];
         printf( "  events[%ju]\n", (uintmax_t)i);
         printf( "    timestamp:             0x%jx\n",       (uintmax_t)event.timestamp);
-        printf( "    domain:                %u\n",          event.domain);
-        printf( "    line:                  %u\n",          event.line);
+        printf( "    domain:                %ju\n",         (uintmax_t)event.domain);
+        printf( "    line:                  %ju\n",         (uintmax_t)event.line);
     }
     printf(     "\n");
     

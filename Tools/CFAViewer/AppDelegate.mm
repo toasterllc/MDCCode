@@ -591,11 +591,11 @@ static void _configureDevice(MDCUSBDevice& dev) {
 //                usleep(100000);
             }
             
-            constexpr Img::Size ImageSize = Img::Size::Full;
+            constexpr Img::Size ImageSize = Img::Size::Thumb;
             constexpr uint8_t DstBlock = 0; // Always save to RAM block 0
-            constexpr size_t ImageWidth  = (ImageSize==Img::Size::Full ? Img::Full::PixelWidth  : Img::Thumb::PixelWidth );
-            constexpr size_t ImageHeight = (ImageSize==Img::Size::Full ? Img::Full::PixelHeight : Img::Thumb::PixelHeight);
-            constexpr size_t ImageLen    = (ImageSize==Img::Size::Full ? Img::Full::ImageLen    : Img::Thumb::ImageLen   );
+            constexpr size_t ImageWidth  = (ImageSize==Img::Size::Full ? Img::Full::PixelWidth       : Img::Thumb::PixelWidth       );
+            constexpr size_t ImageHeight = (ImageSize==Img::Size::Full ? Img::Full::PixelHeight      : Img::Thumb::PixelHeight      );
+            constexpr size_t ImageLen    = (ImageSize==Img::Size::Full ? ImgSD::Full::ImagePaddedLen : ImgSD::Thumb::ImagePaddedLen );
             const uint8_t skipCount = (setExp ? 1 : 0); // Skip one image if we set the exposure, so that the image we receive has the exposure applied
             const STM::ImgCaptureStats imgStats = dev.imgCapture(DstBlock, skipCount, ImageSize);
             if (imgStats.len != ImageLen) {

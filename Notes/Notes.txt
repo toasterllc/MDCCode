@@ -2,7 +2,7 @@
     - Order more ICE40s
         - It looks like Mouser will have ICE40HX8K-BG121 in stock in October 2022
     
-    - Return TPS62802 if Mouser accepts return request
+    - Return TPS62802 package to Mouser
 
 - Rev6
     

@@ -8,6 +8,7 @@
 #include "Code/Shared/STM.h"
 #include "Code/Shared/Img.h"
 #include "Code/Shared/SD.h"
+#include "Code/Shared/ImgSD.h"
 #include "Code/Shared/ChecksumFletcher32.h"
 
 class MDCUSBDevice {
@@ -431,10 +432,10 @@ public:
     
     std::unique_ptr<uint8_t[]> imgReadout(Img::Size size) {
         assert(_mode == STM::Status::Modes::STMApp);
-        const size_t imageLen = (size==Img::Size::Full ? Img::Full::ImageLen : Img::Thumb::ImageLen);
+        const size_t imageLen = (size==Img::Size::Full ? ImgSD::Full::ImagePaddedLen : ImgSD::Thumb::ImagePaddedLen);
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(imageLen);
         const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), imageLen);
-        if (lenGot < imageLen) {
+        if (lenGot != imageLen) {
             throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)imageLen, (uintmax_t)lenGot);
         }
         

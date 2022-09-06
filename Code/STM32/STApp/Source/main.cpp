@@ -10,6 +10,7 @@
 #include "BufQueue.h"
 #include "SDCard.h"
 #include "ImgSensor.h"
+#include "ImgSD.h"
 #include "USBConfigDesc.h"
 #include "MSP430JTAG.h"
 using namespace STM;
@@ -1181,9 +1182,9 @@ void _ImgCapture(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    const uint16_t imageWidth  = (arg.size==Img::Size::Full ? Img::Full::PixelWidth  : Img::Thumb::PixelWidth );
-    const uint16_t imageHeight = (arg.size==Img::Size::Full ? Img::Full::PixelHeight : Img::Thumb::PixelHeight);
-    const uint32_t imageLen    = (arg.size==Img::Size::Full ? Img::Full::ImageLen    : Img::Thumb::ImageLen   );
+    const uint16_t imageWidth       = (arg.size==Img::Size::Full ? Img::Full::PixelWidth         : Img::Thumb::PixelWidth       );
+    const uint16_t imageHeight      = (arg.size==Img::Size::Full ? Img::Full::PixelHeight        : Img::Thumb::PixelHeight      );
+    const uint32_t imagePaddedLen   = (arg.size==Img::Size::Full ? ImgSD::Full::ImagePaddedLen   : ImgSD::Thumb::ImagePaddedLen   );
     const Img::Header header = {
         .magic          = Img::Header::MagicNumber,
         .version        = Img::Header::Version,
@@ -1195,7 +1196,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     
     // stats: aligned to send via USB
     alignas(4) const ImgCaptureStats stats = {
-        .len            = imageLen,
+        .len            = imagePaddedLen,
         .highlightCount = resp.highlightCount(),
         .shadowCount    = resp.shadowCount(),
     };
@@ -1211,7 +1212,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
     
     // Start the Readout task
-    _TaskReadout::Start(stats.len);
+    _TaskReadout::Start(imagePaddedLen);
 }
 
 static void _CmdHandle(const STM::Cmd& cmd) {
