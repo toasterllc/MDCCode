@@ -238,7 +238,7 @@ public:
     }
     
     static void WriteImage(uint16_t rca, uint8_t srcRAMBlock, SD::Block dstSDBlock, Img::Size imgSize) {
-        const uint32_t blockCountEst = (imgSize==Img::Size::Full ? ImgSD::Full::ImgBlockCount : ImgSD::Thumb::ImgBlockCount);
+        const uint32_t blockCountEst = (imgSize==Img::Size::Full ? ImgSD::Full::ImageBlockCount : ImgSD::Thumb::ImageBlockCount);
         WriteStart(rca, dstSDBlock, blockCountEst);
         
         // Clock out the image on the DAT lines

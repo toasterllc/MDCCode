@@ -374,7 +374,7 @@ static void SDImgRead(const Args& args, MDCUSBDevice& device) {
     printf("-> OK\n\n");
     
     printf("Sending SDRead command...\n");
-    device.sdRead(args.SDImgRead.idx * ImgSD::Full::ImgPaddedLen);
+    device.sdRead(args.SDImgRead.idx * ImgSD::Full::ImagePaddedLen);
     printf("-> OK\n\n");
     
     printf("Reading image...\n");

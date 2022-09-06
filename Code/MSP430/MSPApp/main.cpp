@@ -260,7 +260,7 @@ struct _SDTask {
     // _StateInit(): resets the _State.sd struct
     static void _StateInit(const SD::CardId& cardId, const SD::CardData& cardData) {
         // CombinedBlockCount: thumbnail block count + full-size block count
-        constexpr uint32_t CombinedBlockCount = ImgSD::Thumb::ImgBlockCount + ImgSD::Full::ImgBlockCount;
+        constexpr uint32_t CombinedBlockCount = ImgSD::Thumb::ImageBlockCount + ImgSD::Full::ImageBlockCount;
         // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
         const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
         // cardImgCap: the capacity of the SD card in number of images
@@ -284,7 +284,7 @@ struct _SDTask {
         
         // Set .thumbBlockStart
         {
-            _State.sd.thumbBlockStart = cardImgCap * ImgSD::Full::ImgBlockCount;
+            _State.sd.thumbBlockStart = cardImgCap * ImgSD::Full::ImageBlockCount;
         }
         
         // Set .imgRingBufs
@@ -566,13 +566,13 @@ struct _MainTask {
                     
                     // Copy full-size image from RAM -> SD card
                     {
-                        const SD::Block dstSDBlock = imgRingBuf.buf.widx * ImgSD::Full::ImgBlockCount;
+                        const SD::Block dstSDBlock = imgRingBuf.buf.widx * ImgSD::Full::ImageBlockCount;
                         _SDTask::Write(srcRAMBlock, dstSDBlock, Img::Size::Full);
                     }
                     
                     // Copy thumbnail from RAM -> SD card
                     {
-                        const SD::Block dstSDBlock = _State.sd.thumbBlockStart + (imgRingBuf.buf.widx * ImgSD::Thumb::ImgBlockCount);
+                        const SD::Block dstSDBlock = _State.sd.thumbBlockStart + (imgRingBuf.buf.widx * ImgSD::Thumb::ImageBlockCount);
                         _SDTask::Write(srcRAMBlock, dstSDBlock, Img::Size::Thumb);
                     }
                     

@@ -308,10 +308,10 @@ private:
         // Lock the device for the duration of this function
         auto lock = std::unique_lock(*_dev);
         
-        auto imageData = std::make_unique<uint8_t[]>(ImgSD::Full::ImgPaddedLen);
+        auto imageData = std::make_unique<uint8_t[]>(ImgSD::Full::ImagePaddedLen);
         _dev->endpointsFlush();
         _dev->sdRead((SD::Block)imageRef.addr);
-        _dev->readout(imageData.get(), ImgSD::Full::ImgPaddedLen);
+        _dev->readout(imageData.get(), ImgSD::Full::ImagePaddedLen);
         
         const Img::Header& header = *(const Img::Header*)imageData.get();
         ImagePtr image = std::make_shared<Image>(Image{
@@ -415,7 +415,7 @@ private:
         Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
         
         constexpr size_t ChunkImgCount = 100; // Number of images to read at a time
-        constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImgPaddedLen;
+        constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
         const SD::Block fullBlockStart = range.idx * ImgSD::Full::ImgBlockCount;
@@ -449,7 +449,7 @@ private:
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
             auto& buf = bufQueue.wget();
             buf.len = chunkImgCount; // buffer length = count of images (not byte count)
-            _dev->readout(buf.data, chunkImgCount*ImgSD::Thumb::ImgPaddedLen);
+            _dev->readout(buf.data, chunkImgCount*ImgSD::Thumb::ImagePaddedLen);
             bufQueue.wpush();
             i += chunkImgCount;
             
@@ -486,7 +486,7 @@ private:
         
         Img::Id deviceImgIdLast = 0;
         for (size_t idx=0; idx<imgCount; idx++) {
-            const uint8_t* imgData = data+idx*ImgSD::Thumb::ImgPaddedLen;
+            const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
             // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
             const auto recordRefIter = _imageLibrary->reservedBegin()+idx;

@@ -209,16 +209,16 @@ namespace STM {
         uint32_t shadowCount;
     };
     
-    // Confirm that `Img::ImgPaddedLen` is a multiple of the USB max packet size.
+    // Confirm that `Img::ImagePaddedLen` is a multiple of the USB max packet size.
     // This is necessary so that when multiple images are streamed, the
     // transfer continues indefinitely and isn't cut short by a short packet
     // (ie a packet < the MPS).
-    static_assert((ImgSD::Full::ImgPaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
-    static_assert((ImgSD::Thumb::ImgPaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
+    static_assert((ImgSD::Full::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
+    static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
     
-//    // ImgPaddedLen: Ceil the image size to the SD block size
+//    // ImagePaddedLen: Ceil the image size to the SD block size
 //    // This is the amount of data that's sent from device -> host, for each image.
-//    constexpr uint32_t ImgPaddedLen = Util::Ceil(
+//    constexpr uint32_t ImagePaddedLen = Util::Ceil(
 //        (uint32_t)Img::Len,
 //        (uint32_t)SD::BlockLen
 //    );

@@ -62,7 +62,7 @@ using namespace MDCStudio;
 //    
 //    Img::Id deviceImgIdLast = 0;
 //    for (size_t idx=0; idx<imgCount; idx++) {
-//        const uint8_t* imgData = data+idx*ImgSD::ImgPaddedLen;
+//        const uint8_t* imgData = data+idx*ImgSD::ImagePaddedLen;
 //        const Img::Header& imgHeader = *(const Img::Header*)imgData;
 //        // Accessing `imgLib` without a lock because we're the only entity using the image library's reserved space
 //        const auto recordRefIter = imgLib->reservedBegin()+idx;
