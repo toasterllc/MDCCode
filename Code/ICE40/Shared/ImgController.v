@@ -486,7 +486,7 @@ module ImgController #(
         end
         
         // Output pixels
-        Ctrl_State_Readout+3: begin
+        Ctrl_State_Readout+3: begin // 8
             // If client isn't consuming a value, readout_ready needs to remain unchanged
             if (!readout_trigger) begin
                 readout_ready <= readout_ready;
@@ -508,7 +508,7 @@ module ImgController #(
         end
         
         // Output checksum+padding
-        Ctrl_State_Readout+4: begin
+        Ctrl_State_Readout+4: begin // 9
             ctrl_shiftout_data[(HeaderWidth-1)-:32] <= {
                 // Little endian
                 ctrl_readout_checksum[ 7-:8],
@@ -523,7 +523,7 @@ module ImgController #(
         end
         
         // Output `ctrl_shiftout_count` words from `ctrl_shiftout_data`
-        Ctrl_State_Shiftout: begin
+        Ctrl_State_Shiftout: begin // 10
             if (ctrl_readout_dataLoad) begin
                 readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
             end
@@ -538,7 +538,7 @@ module ImgController #(
         end
         
         // Output `ctrl_shiftout_count` words from `ctrl_shiftout_data`
-        Ctrl_State_Delay: begin
+        Ctrl_State_Delay: begin // 11
             if (!ctrl_delay_count) begin
                 ctrl_state <= ctrl_delay_nextState;
             end
