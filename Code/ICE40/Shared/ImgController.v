@@ -37,6 +37,7 @@ module ImgController #(
     output reg          readout_ready = 0,
     input wire          readout_trigger,
     output reg[15:0]    readout_data = 0,
+    output reg          readout_done = 0,
     
     // Status port (clock domain: `clk`)
     output reg          status_captureDone = 0, // Toggle signal
@@ -350,6 +351,8 @@ module ImgController #(
     reg[HeaderWidth-1:0] ctrl_shiftout_data = 0;
     reg[`RegWidth2(HeaderWordCount,ChecksumPaddingWordCount)-1:0] ctrl_shiftout_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_shiftout_nextState = 0;
+    // TODO: perf: try adding another state to set readout_done instead of using this `ctrl_shiftout_nextReadoutDone` technique
+    reg ctrl_shiftout_nextReadoutDone = 0;
     
     reg[1:0] ctrl_delay_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_delay_nextState = 0;
@@ -446,6 +449,8 @@ module ImgController #(
             $display("[ImgController:Readout] Started");
             // Reset output FIFO
             readout_rst <= 1;
+            // Reset done signal
+            readout_done <= 0;
             // Delay one cycle before outputting the header, to ensure the FIFO is finished
             // resetting before we feed it data
             ctrl_delay_count <= 0;
@@ -512,6 +517,7 @@ module ImgController #(
                 ctrl_readout_checksum[31-:8]
             };
             ctrl_shiftout_count <= ChecksumPaddingWordCount;
+            ctrl_shiftout_nextReadoutDone <= 1;
             ctrl_shiftout_nextState <= Ctrl_State_Idle;
             ctrl_state <= Ctrl_State_Shiftout;
         end
@@ -523,6 +529,8 @@ module ImgController #(
             end
             
             if (!ctrl_shiftout_count && readout_trigger) begin
+                readout_done <= ctrl_shiftout_nextReadoutDone;
+                ctrl_shiftout_nextReadoutDone <= 0;
                 ctrl_state <= ctrl_shiftout_nextState;
             end else begin
                 readout_ready <= 1;

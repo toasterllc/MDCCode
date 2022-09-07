@@ -105,8 +105,8 @@
 `define Msg_Type_Nop                                            `Msg_Type_Len'h00
 
 `ifdef SIM
-`define Img_Width               64
-`define Img_Height              32
+`define Img_Width               288
+`define Img_Height              160 // Different aspect ratio than non-simulation so that it's evenly divisible by 4 for the thumbnail
 `else
 `define Img_Width               2304
 `define Img_Height              1296

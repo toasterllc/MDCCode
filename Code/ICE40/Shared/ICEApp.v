@@ -165,6 +165,7 @@ module ICEApp(
     wire                                    imgctrl_readout_ready;
     wire                                    imgctrl_readout_trigger;
     wire[15:0]                              imgctrl_readout_data;
+    wire                                    imgctrl_readout_done;
     wire                                    imgctrl_status_captureDone;
     wire[`RegWidth(`Img_WordCount)-1:0]     imgctrl_status_capturePixelCount;
     wire[17:0]                              imgctrl_status_captureHighlightCount;
@@ -195,6 +196,7 @@ module ICEApp(
         .readout_ready(imgctrl_readout_ready),
         .readout_trigger(imgctrl_readout_trigger),
         .readout_data(imgctrl_readout_data),
+        .readout_done(imgctrl_readout_done),
         
         .status_captureDone(imgctrl_status_captureDone),
         .status_capturePixelCount(imgctrl_status_capturePixelCount),
@@ -306,11 +308,11 @@ module ICEApp(
     // Config port (clock domain: async)
     reg sd_config_trigger = 0;
     reg[`SDController_Config_Action_Width-1:0]
-        sd_config_action = 0;
+                sd_config_action = 0;
     reg[`SDController_Config_ClkSpeed_Width-1:0]
-        sd_config_clkSpeed = 0;
+                sd_config_clkSpeed = 0;
     reg[`SDController_Config_ClkDelay_Width-1:0]
-        sd_config_clkDelay = 0;
+                sd_config_clkDelay = 0;
     reg         sd_cmd_trigger          = 0;
     reg[47:0]   sd_cmd_data             = 0;
     reg[1:0]    sd_cmd_respType         = 0;
@@ -327,6 +329,7 @@ module ICEApp(
     wire        sd_datOutRead_ready;
     wire        sd_datOutRead_trigger;
     wire[15:0]  sd_datOutRead_data;
+    wire        sd_datOutRead_done;
     wire        sd_datIn_done;
     wire        sd_datIn_crcErr;
     wire        sd_datInWrite_rst;
@@ -368,6 +371,7 @@ module ICEApp(
         .datOutRead_ready(sd_datOutRead_ready),
         .datOutRead_trigger(sd_datOutRead_trigger),
         .datOutRead_data(sd_datOutRead_data),
+        .datOutRead_done(sd_datOutRead_done),
         
         .datIn_done(sd_datIn_done),
         .datIn_crcErr(sd_datIn_crcErr),
@@ -421,6 +425,9 @@ module ICEApp(
     assign sd_datOutRead_ready      = readoutfifo_r_thresh;
     assign sd_datOutRead_data       = readoutfifo_r_data;
     assign imgctrl_readout_trigger  = readoutfifo_w_ready;
+    
+    `Sync(sd_datOutRead_doneX, imgctrl_readout_done, posedge, sd_datOutRead_clk);
+    assign sd_datOutRead_done = sd_datOutRead_doneX;
 `endif // ICEApp_ImgReadoutToSD_En
     
 `ifdef ICEApp_SDReadoutToSPI_En

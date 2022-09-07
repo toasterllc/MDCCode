@@ -70,6 +70,7 @@ module SDController #(
     input wire          datOutRead_ready,
     output reg          datOutRead_trigger = 0,
     input wire[15:0]    datOutRead_data,
+    input wire          datOutRead_done,    // Level signal
     
     // DatIn port (clock domain: `clk`)
     output reg          datIn_done = 0,     // Toggle signal
@@ -240,7 +241,6 @@ module SDController #(
     
     reg[3:0] datOut_state = 0;
     reg[2:0] datOut_active = 0; // 3 bits -- see explanation where assigned
-    reg datOut_first = 0;
     reg datOut_crcRst = 0;
     reg datOut_crcEn = 0;
     reg datOut_crcOutEn = 0;
@@ -419,7 +419,6 @@ module SDController #(
         case (datOut_state)
         0: begin
             datOut_crcErr <= 0;
-            datOut_first <= 1;
         end
         
         1: begin
@@ -432,7 +431,7 @@ module SDController #(
                 $display("[SDController:DatOut] Write another block");
                 datOut_state <= 2;
             
-            end else if (!datOut_first) begin
+            end else if (datOutRead_done) begin
                 if (!datOut_done) $display("[SDController:DatOut] Done writing");
                 
                 // Signal that we're done while we're in this state (and therefore
@@ -447,7 +446,6 @@ module SDController #(
         2: begin
             datOut_active[0] <= 1;
             datOut_crcEn <= 1;
-            datOut_first <= 0; // Remember that the first block has been sent
             
             if (!datOut_readCounter) begin
                 // $display("[SDController:DatOut]   Write another word: %x", datOutRead_data);

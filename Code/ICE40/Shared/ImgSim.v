@@ -40,7 +40,7 @@ module ImgSim #(
         
         pxCount = 0;
         for (row=0; row<ImgHeight; row=row+1) begin
-            // $display("[ImgSim] Row %0d", row);
+            // $display("[ImgSim] Row %0d/%0d", row+1, ImgHeight);
             // img_lv=1 (line start)
             // Output a row
             img_lv = 1;
