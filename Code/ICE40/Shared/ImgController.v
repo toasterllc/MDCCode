@@ -351,16 +351,18 @@ module ImgController #(
     reg[HeaderWidth-1:0] ctrl_shiftout_data = 0;
     reg[`RegWidth2(HeaderWordCount,ChecksumPaddingWordCount)-1:0] ctrl_shiftout_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_shiftout_nextState = 0;
+    // TODO: perf: try adding another state to set readout_done instead of using this `ctrl_shiftout_nextReadoutDone` technique
+    reg ctrl_shiftout_nextReadoutDone = 0;
     
     reg[1:0] ctrl_delay_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_delay_nextState = 0;
     
     localparam Ctrl_State_Idle          = 0;  // +0
     localparam Ctrl_State_Capture       = 1;  // +3
-    localparam Ctrl_State_Readout       = 5;  // +5
-    localparam Ctrl_State_Shiftout      = 11; // +0
-    localparam Ctrl_State_Delay         = 12; // +0
-    localparam Ctrl_State_Count         = 13;
+    localparam Ctrl_State_Readout       = 5;  // +4
+    localparam Ctrl_State_Shiftout      = 10; // +0
+    localparam Ctrl_State_Delay         = 11; // +0
+    localparam Ctrl_State_Count         = 12;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -515,14 +517,9 @@ module ImgController #(
                 ctrl_readout_checksum[31-:8]
             };
             ctrl_shiftout_count <= ChecksumPaddingWordCount;
-            ctrl_shiftout_nextState <= Ctrl_State_Readout+5;
+            ctrl_shiftout_nextReadoutDone <= 1;
+            ctrl_shiftout_nextState <= Ctrl_State_Idle;
             ctrl_state <= Ctrl_State_Shiftout;
-        end
-        
-        // Signal readout_done=1
-        Ctrl_State_Readout+5: begin
-            readout_done <= 1;
-            ctrl_state <= Ctrl_State_Idle;
         end
         
         // Output `ctrl_shiftout_count` words from `ctrl_shiftout_data`
@@ -532,6 +529,8 @@ module ImgController #(
             end
             
             if (!ctrl_shiftout_count && readout_trigger) begin
+                readout_done <= ctrl_shiftout_nextReadoutDone;
+                ctrl_shiftout_nextReadoutDone <= 0;
                 ctrl_state <= ctrl_shiftout_nextState;
             end else begin
                 readout_ready <= 1;
