@@ -433,6 +433,8 @@ module SDController #(
                 datOut_state <= 2;
             
             end else if (!datOut_first) begin
+                if (!datOut_done) $display("[SDController:DatOut] Done writing");
+                
                 // Signal that we're done while we're in this state (and therefore
                 // there's no data to write), and this isn't the first block being
                 // written. We inhibit datOut_done=1 before the first block so that
@@ -453,7 +455,7 @@ module SDController #(
             end
             
             if (!datOut_counter) begin
-                $display("[SDController:DatOut] Done writing");
+                $display("[SDController:DatOut] Done writing block");
                 datOut_state <= 3;
             end
         end
