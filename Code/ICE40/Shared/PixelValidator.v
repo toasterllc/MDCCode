@@ -29,6 +29,8 @@ module PixelValidator();
     );
     
     task _ChecksumConsumeWord(input[15:0] word); begin
+        // $display("[PixelValidator] checksum consume word (index: %0d): %h", _wordIdx, word);
+        
         // Treat the word as a little-endian uint16, mimicking the checksum
         // algorithm on the host computer reading from the SD card
         _checksum_din   = HostFromLittle16.Swap(word);
@@ -54,7 +56,6 @@ module PixelValidator();
     
     integer     _wordIdx                    = 0;
     reg[15:0]   _wordPrev                   = 0;
-    reg         _pixelValidationStarted     = 0;
     integer     _pixelIdx                   = 0;
     
     task Config(
@@ -82,7 +83,6 @@ module PixelValidator();
         
         _wordIdx                = 0;
         _wordPrev               = 0;
-        _pixelValidationStarted = 0;
         _pixelIdx               = 0;
         
         _checksum_rst = 1; #1;
@@ -95,6 +95,19 @@ module PixelValidator();
             $display("[PixelValidator] Invalid checksum word count: %0d ❌", _cfgChecksumWordCount);
             `Finish;
         end
+        
+        $display("[PixelValidator] Config() called:");
+        $display("[PixelValidator]   _cfgHeaderWordCount:   %0d",  _cfgHeaderWordCount);
+        $display("[PixelValidator]   _cfgImageWidth:        %0d",  _cfgImageWidth);
+        $display("[PixelValidator]   _cfgImageHeight:       %0d",  _cfgImageHeight);
+        $display("[PixelValidator]   _cfgChecksumWordCount: %0d",  _cfgChecksumWordCount);
+        $display("[PixelValidator]   _cfgPaddingWordCount:  %0d",  _cfgPaddingWordCount);
+        $display("[PixelValidator]   _cfgPixelValidate:     %0d",  _cfgPixelValidate);
+        $display("[PixelValidator]   _cfgPixelInitial:      0x%x", _cfgPixelInitial);
+        $display("[PixelValidator]   _cfgPixelDelta:        %0d",  _cfgPixelDelta);
+        $display("[PixelValidator]   _cfgPixelFilterPeriod: %0d",  _cfgPixelFilterPeriod);
+        $display("[PixelValidator]   _cfgPixelFilterKeep:   %0d",  _cfgPixelFilterKeep);
+        $display("[PixelValidator]   _cfgHeaderWordCount:   %0d",  _cfgHeaderWordCount);
     end endtask
     
     function[15:0] PixelExpectedValue();
@@ -137,13 +150,12 @@ module PixelValidator();
                 pixelGot = HostFromLittle16.Swap(word); // Unpack little-endian
                 
                 if (pixelExpected === pixelGot) begin
-                    $display("[PixelValidator] Received valid pixel (expected:%h, got:%h) ✅", pixelExpected, pixelGot);
+                    $display("[PixelValidator] Received valid pixel (index:%0d, expected:%h, got:%h) ✅", _wordIdx, pixelExpected, pixelGot);
                 end else begin
-                    $display("[PixelValidator] Received invalid pixel (expected:%h, got:%h) ❌", pixelExpected, pixelGot);
+                    $display("[PixelValidator] Received invalid pixel (index:%0d, expected:%h, got:%h) ❌", _wordIdx, pixelExpected, pixelGot);
                     `Finish;
                 end
-            
-                _pixelValidationStarted = 1;
+                
                 _pixelIdx++;
             end
         
@@ -162,9 +174,9 @@ module PixelValidator();
                 checksumGot         = HostFromLittle32.Swap(_wordPrev<<16|word);
                 
                 if (checksumExpected === checksumGot) begin
-                    $display("[PixelValidator] Checksum valid [expected:%h got:%h] ✅", checksumExpected, checksumGot);
+                    $display("[PixelValidator] Checksum valid [index:%0d, expected:%h got:%h] ✅", _wordIdx, checksumExpected, checksumGot);
                 end else begin
-                    $display("[PixelValidator] Checksum invalid [expected:%h got:%h] ❌", checksumExpected, checksumGot);
+                    $display("[PixelValidator] Checksum invalid [index:%0d, expected:%h got:%h] ❌", _wordIdx, checksumExpected, checksumGot);
                     `Finish;
                 end
             end
@@ -172,9 +184,9 @@ module PixelValidator();
         // Handle padding words
         end else if (_wordIdx >= _cfgHeaderWordCount+`ImagePixelCount+_cfgChecksumWordCount) begin
             if (_wordIdx < `ImageWordCount) begin
-                $display("[PixelValidator] Received expected padding word (word:%h, index:%0d, expectedCount:%0d) ✅", HostFromLittle16.Swap(word), _wordIdx, `ImageWordCount);
+                $display("[PixelValidator] Received expected padding word (index:%0d, word:%h, expectedCount:%0d) ✅", _wordIdx, HostFromLittle16.Swap(word), `ImageWordCount);
             end else begin
-                $display("[PixelValidator] Received unexpected padding word (word:%h, index:%0d, expectedCount:%0d) ❌", HostFromLittle16.Swap(word), _wordIdx, `ImageWordCount);
+                $display("[PixelValidator] Received unexpected padding word (index:%0d, word:%h, expectedCount:%0d) ❌", _wordIdx, HostFromLittle16.Swap(word), `ImageWordCount);
                 `Finish;
             end
         end
