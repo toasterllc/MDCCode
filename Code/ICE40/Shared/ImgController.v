@@ -302,10 +302,9 @@ module ImgController #(
     wire        readout_checksum_clk;
     reg         readout_checksum_rst = 0;
     reg         readout_checksum_en = 0;
-    wire[15:0]  readout_checksum_din;
-    // reg[15:0]   readout_checksum_din = 0;
+    reg         readout_checksum_trigger = 0;
+    reg[15:0]   readout_checksum_din = 0;
     wire[31:0]  readout_checksum_dout;
-    wire[31:0]  readout_checksum_doutLE;
     FletcherChecksum #(
         .Width(32)
     ) FletcherChecksum_readout(
@@ -317,8 +316,7 @@ module ImgController #(
     );
     
     assign readout_checksum_clk  = clk;
-    // TODO: perf: try adding another register to hold readout_checksum_din (which requires another register to hold readout_checksum_en too, and we'll need to offset the delay by 1 cycle)
-    assign readout_checksum_din = {readout_data[7:0], readout_data[15:8]};
+    // assign readout_checksum_din = {readout_data[7:0], readout_data[15:8]};
     // assign readout_checksum_doutLE = {
     //     // Little endian
     //     readout_checksum_dout[ 7-:8],
@@ -372,7 +370,6 @@ module ImgController #(
         ramctrl_cmd <= `RAMController_Cmd_None;
         readout_rst <= 0; // Pulse
         readout_checksum_rst <= 0; // Pulse
-        readout_checksum_en <= 0; // Pulse
         ctrl_delay_count <= ctrl_delay_count-1;
         
         if (ctrl_readout_dataLoad) begin
@@ -408,6 +405,10 @@ module ImgController #(
         end
         
         ctrl_readout_checksum <= readout_checksum_dout;
+        readout_checksum_din <= {readout_data[7:0], readout_data[15:8]};
+        readout_checksum_en <= readout_checksum_trigger; // Pulse
+        readout_checksum_trigger <= 0; // Pulse
+        
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
@@ -498,7 +499,7 @@ module ImgController #(
                 if (ramctrl_read_ready && ctrl_readout_dataLoad) begin
                     readout_data <= ramctrl_read_data;
                     readout_ready <= ctrl_readout_pixelKeep;
-                    readout_checksum_en <= ctrl_readout_pixelKeep;
+                    readout_checksum_trigger <= ctrl_readout_pixelKeep;
                 end
             
             end else begin
@@ -532,7 +533,7 @@ module ImgController #(
                 if (ctrl_readout_dataLoad) begin
                     readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
                     readout_ready <= 1;
-                    readout_checksum_en <= 1;
+                    readout_checksum_trigger <= 1;
                 end
             
             end else begin
