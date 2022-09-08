@@ -358,6 +358,11 @@ module ImgController #(
     reg[1:0] ctrl_delay_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_delay_nextState = 0;
     
+    reg[15:0] ctrl_ramtmp_data = 0;
+    reg ctrl_ramtmp_readReady = 0;
+    wire ctrl_ramtmp_readTrigger;
+    assign ctrl_ramtmp_readTrigger = ramctrl_read_trigger;
+    
     localparam Ctrl_State_Idle          = 0;  // +0
     localparam Ctrl_State_Capture       = 1;  // +3
     localparam Ctrl_State_Readout       = 5;  // +4
@@ -370,6 +375,11 @@ module ImgController #(
         readout_rst <= 0; // Pulse
         readout_checksum_rst <= 0; // Pulse
         ctrl_delay_count <= ctrl_delay_count-1;
+        
+        if (!ctrl_ramtmp_readReady || ctrl_ramtmp_readTrigger) begin
+            ctrl_ramtmp_data <= ramctrl_read_data;
+            ctrl_ramtmp_readReady <= ramctrl_read_ready;
+        end
         
         if (ctrl_readout_dataLoad) begin
             ctrl_shiftout_data <= ctrl_shiftout_data<<16;
@@ -386,7 +396,7 @@ module ImgController #(
         
         ctrl_readout_rowEnding <= (ctrl_readout_pixelX === ImgWidth-2);
         
-        if (ctrl_readout_pixelFilterEn && ramctrl_read_ready && ramctrl_read_trigger) begin
+        if (ctrl_readout_pixelFilterEn && ctrl_ramtmp_readReady && ctrl_ramtmp_readTrigger) begin
             if (!ctrl_readout_rowEnding) begin
                 ctrl_readout_pixelX <= ctrl_readout_pixelX+1;
             end else begin
@@ -395,7 +405,7 @@ module ImgController #(
             end
         end
         
-        if (ramctrl_read_ready && ramctrl_read_trigger) begin
+        if (ctrl_ramtmp_readReady && ctrl_ramtmp_readTrigger) begin
             ctrl_readout_pixelCount <= ctrl_readout_pixelCount-1;
             if (!ctrl_readout_pixelCount) begin
                 ctrl_readout_pixelDone <= 1;
@@ -500,8 +510,8 @@ module ImgController #(
         
         // Output pixels
         Ctrl_State_Readout+3: begin // 8
-            if (ramctrl_read_ready && ctrl_readout_dataLoad) begin
-                readout_data <= ramctrl_read_data;
+            if (ctrl_ramtmp_readReady && ctrl_readout_dataLoad) begin
+                readout_data <= ctrl_ramtmp_data;
                 readout_ready <= ctrl_readout_pixelKeep;
                 readout_checksum_trigger <= ctrl_readout_pixelKeep;
                 
