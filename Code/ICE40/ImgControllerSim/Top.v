@@ -245,7 +245,7 @@ module Top();
         
         ImgCapture();
         
-        // ImgReadout(1); // Readout thumbnail image
+        ImgReadout(1); // Readout thumbnail image
         ImgReadout(0); // Readout full-size image
         
         // for (i=0; i<ImgWordCount; i++) begin
