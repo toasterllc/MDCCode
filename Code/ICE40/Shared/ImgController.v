@@ -359,10 +359,10 @@ module ImgController #(
     
     localparam Ctrl_State_Idle          = 0;  // +0
     localparam Ctrl_State_Capture       = 1;  // +3
-    localparam Ctrl_State_Readout       = 5;  // +5
-    localparam Ctrl_State_Shiftout      = 11; // +0
-    localparam Ctrl_State_Delay         = 12; // +0
-    localparam Ctrl_State_Count         = 13;
+    localparam Ctrl_State_Readout       = 5;  // +4
+    localparam Ctrl_State_Shiftout      = 10; // +0
+    localparam Ctrl_State_Delay         = 11; // +0
+    localparam Ctrl_State_Count         = 12;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
@@ -410,6 +410,9 @@ module ImgController #(
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
+            if (!readout_ready) begin
+                readout_done <= 1;
+            end
         end
         
         Ctrl_State_Capture: begin
@@ -519,16 +522,8 @@ module ImgController #(
                 ctrl_readout_checksum[31-:8]
             };
             ctrl_shiftout_count <= ChecksumPaddingWordCount-1;
-            ctrl_shiftout_nextState <= Ctrl_State_Readout+5;
+            ctrl_shiftout_nextState <= Ctrl_State_Idle;
             ctrl_state <= Ctrl_State_Shiftout;
-        end
-        
-        // Output checksum+padding
-        Ctrl_State_Readout+5: begin // 10
-            if (!readout_ready) begin
-                readout_done <= 1;
-                ctrl_state <= Ctrl_State_Idle;
-            end
         end
         
         // Output `ctrl_shiftout_count` words from `ctrl_shiftout_data`
