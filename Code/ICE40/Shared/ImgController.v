@@ -337,14 +337,14 @@ module ImgController #(
          (ctrl_readout_pixelY !== ImgHeight)
     );
     
-    reg[`RegWidth(ImgPixelCount-2)-1:0] ctrl_readout_pixelCount = 0;
+    reg[`RegWidth(ImgPixelCount-1)-1:0] ctrl_readout_pixelCount = 0;
     reg ctrl_readout_pixelDone = 0;
     wire ctrl_readout_dataLoad = (!readout_ready || readout_trigger);
     
     reg[31:0] ctrl_readout_checksum = 0;
     
     reg[HeaderWidth-1:0] ctrl_shiftout_data = 0;
-    reg[`RegWidth2(HeaderWordCount-1,ChecksumPaddingWordCount-1)-1:0] ctrl_shiftout_count = 0;
+    reg[`RegWidth2(HeaderWordCount,ChecksumPaddingWordCount)-1:0] ctrl_shiftout_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_shiftout_nextState = 0;
     
     reg[1:0] ctrl_delay_count = 0;
@@ -403,9 +403,7 @@ module ImgController #(
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
-            if (!readout_ready) begin
-                readout_done <= 1;
-            end
+            readout_done <= 1;
         end
         
         Ctrl_State_Capture: begin
@@ -469,7 +467,7 @@ module ImgController #(
             ctrl_readout_pixelFilterEn <= cmd_thumb;
             // Output the header
             ctrl_shiftout_data <= cmd_header;
-            ctrl_shiftout_count <= HeaderWordCount-1;
+            ctrl_shiftout_count <= HeaderWordCount;
             ctrl_shiftout_nextState <= Ctrl_State_Readout+2;
             ctrl_state <= Ctrl_State_Shiftout;
         end
@@ -480,7 +478,7 @@ module ImgController #(
             ctrl_readout_pixelX <= 0;
             ctrl_readout_pixelY <= 0;
             ctrl_readout_pixelDone <= 0;
-            ctrl_readout_pixelCount <= ImgPixelCount-2;
+            ctrl_readout_pixelCount <= ImgPixelCount-1;
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
@@ -490,11 +488,12 @@ module ImgController #(
         // Output pixels
         Ctrl_State_Readout+3: begin // 8
             if (ramctrl_read_ready && ctrl_readout_dataLoad) begin
-                readout_data <= ramctrl_read_data;
-                readout_ready <= ctrl_readout_pixelKeep;
-                readout_checksum_trigger <= ctrl_readout_pixelKeep;
+                if (!ctrl_readout_pixelDone) begin
+                    readout_data <= ramctrl_read_data;
+                    readout_ready <= ctrl_readout_pixelKeep;
+                    readout_checksum_trigger <= ctrl_readout_pixelKeep;
                 
-                if (ctrl_readout_pixelDone) begin
+                end else begin
                     // We need 3 wait states before we sample the checksum
                     ctrl_delay_count <= 3;
                     ctrl_delay_nextState <= Ctrl_State_Readout+4;
@@ -514,7 +513,7 @@ module ImgController #(
                 ctrl_readout_checksum[23-:8],
                 ctrl_readout_checksum[31-:8]
             };
-            ctrl_shiftout_count <= ChecksumPaddingWordCount-1;
+            ctrl_shiftout_count <= ChecksumPaddingWordCount;
             ctrl_shiftout_nextState <= Ctrl_State_Idle;
             ctrl_state <= Ctrl_State_Shiftout;
         end
@@ -522,11 +521,12 @@ module ImgController #(
         // Output `ctrl_shiftout_count` words from `ctrl_shiftout_data`
         Ctrl_State_Shiftout: begin // 11
             if (ctrl_readout_dataLoad) begin
-                readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
-                readout_ready <= 1;
-                readout_checksum_trigger <= 1;
+                if (ctrl_shiftout_count) begin
+                    readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
+                    readout_ready <= 1;
+                    readout_checksum_trigger <= 1;
                 
-                if (!ctrl_shiftout_count) begin
+                end else begin
                     ctrl_state <= ctrl_shiftout_nextState;
                 end
             end
