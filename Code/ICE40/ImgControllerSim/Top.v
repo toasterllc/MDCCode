@@ -226,7 +226,7 @@ module Top();
             end
             wait(!img_clk);
             
-            // imgctrl_readout_trigger = $random&1;
+            imgctrl_readout_trigger = $random&1;
             
             done = (
                 recvWordCount>`Img_HeaderWordCount &&   // Only institute our timeout after the header has been received
