@@ -491,9 +491,8 @@ module ImgController #(
         
         // Output pixels
         Ctrl_State_Readout+3: begin // 8
-            if (ctrl_readout_pixelDone && readout_trigger) begin // We have to wait until readout_trigger==1 to ensure that the checksum has been updated, otherwise our delay may be incorrect
-                ramctrl_cmd <= `RAMController_Cmd_Stop;
-                
+            // We have to wait until readout_trigger==1 to ensure that the checksum has been updated, otherwise our delay may be incorrect
+            if (ctrl_readout_pixelDone && readout_trigger) begin
                 // We need 3 wait states before we sample the checksum
                 ctrl_delay_count <= 2;
                 ctrl_delay_nextState <= Ctrl_State_Readout+4;
@@ -507,6 +506,8 @@ module ImgController #(
         
         // Output checksum+padding
         Ctrl_State_Readout+4: begin // 9
+            ramctrl_cmd <= `RAMController_Cmd_Stop;
+            
             ctrl_shiftout_data[(HeaderWidth-1)-:32] <= {
                 // Little endian
                 ctrl_readout_checksum[ 7-:8],
