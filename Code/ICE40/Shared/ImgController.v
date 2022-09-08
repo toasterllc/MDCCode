@@ -401,8 +401,8 @@ module ImgController #(
         end
         
         // If client isn't consuming a value, readout_ready needs to remain unchanged
-        if (!readout_trigger) begin
-            readout_ready <= readout_ready;
+        if (readout_trigger) begin
+            readout_ready <= 0;
         end
         
         ctrl_readout_checksum <= readout_checksum_dout;
