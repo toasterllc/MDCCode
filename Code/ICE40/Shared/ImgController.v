@@ -302,7 +302,8 @@ module ImgController #(
     wire        readout_checksum_clk;
     reg         readout_checksum_rst = 0;
     reg         readout_checksum_en = 0;
-    reg[15:0]   readout_checksum_din = 0;
+    wire[15:0]  readout_checksum_din;
+    // reg[15:0]   readout_checksum_din = 0;
     wire[31:0]  readout_checksum_dout;
     wire[31:0]  readout_checksum_doutLE;
     FletcherChecksum #(
@@ -316,6 +317,8 @@ module ImgController #(
     );
     
     assign readout_checksum_clk  = clk;
+    // TODO: perf: try adding another register to hold readout_checksum_din (which requires another register to hold readout_checksum_en too, and we'll need to offset the delay by 1 cycle)
+    assign readout_checksum_din = {readout_data[7:0], readout_data[15:8]};
     // assign readout_checksum_doutLE = {
     //     // Little endian
     //     readout_checksum_dout[ 7-:8],
@@ -379,9 +382,9 @@ module ImgController #(
         
         if (readout_ready && readout_trigger) begin
             $display("[ImgController:Readout] readout_data: %x", readout_data);
-            readout_checksum_en <= 1;
-            readout_checksum_din <= {readout_data[7:0], readout_data[15:8]};
         end
+        
+        // readout_checksum_din <= {readout_data[7:0], readout_data[15:8]};
         
         if (ctrl_readout_pixelFilterEn && ramctrl_read_ready && ramctrl_read_trigger) begin
             if (ctrl_readout_pixelX !== ImgWidth-1) begin
@@ -492,7 +495,7 @@ module ImgController #(
         // Output pixels
         Ctrl_State_Readout+3: begin // 8
             // We have to wait until readout_trigger==1 to ensure that the checksum has been updated, otherwise our delay may be incorrect
-            if (ctrl_readout_pixelDone && readout_trigger) begin
+            if (ctrl_readout_pixelDone) begin
                 // We need 3 wait states before we sample the checksum
                 ctrl_delay_count <= 2;
                 ctrl_delay_nextState <= Ctrl_State_Readout+4;
@@ -501,6 +504,7 @@ module ImgController #(
             end else if (ramctrl_read_ready && ctrl_readout_dataLoad) begin
                 readout_data <= ramctrl_read_data;
                 readout_ready <= ctrl_readout_pixelKeep;
+                readout_checksum_en <= ctrl_readout_pixelKeep;
             end
         end
         
@@ -531,6 +535,7 @@ module ImgController #(
             end else if (ctrl_readout_dataLoad) begin
                 readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
                 readout_ready <= 1;
+                readout_checksum_en <= 1;
             end
         end
         
