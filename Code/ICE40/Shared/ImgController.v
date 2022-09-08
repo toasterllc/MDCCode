@@ -204,7 +204,7 @@ module ImgController #(
     reg fifoIn_done = 0;
     `Sync(ctrl_fifoInDone, fifoIn_done, posedge, clk);
     
-    reg[2:0] fifoIn_state = 0;
+    reg[1:0] fifoIn_state = 0;
     always @(posedge img_dclk) begin
         fifoIn_rst <= 0; // Pulse
         fifoIn_lvPrev <= fifoIn_lv;
@@ -265,22 +265,15 @@ module ImgController #(
         2: begin
             if (fifoIn_frameStart) begin
                 $display("[ImgController:fifoIn] Frame start");
-                fifoIn_state <= 3;
-            end
-        end
-        
-        // If this is a skip frame, wait for another frame
-        3: begin
-            fifoIn_skipCount <= fifoIn_skipCount-1;
-            if (fifoIn_skipCount) begin
-                fifoIn_state <= 2;
-            end else begin
-                fifoIn_state <= 4;
+                fifoIn_skipCount <= fifoIn_skipCount-1;
+                if (!fifoIn_skipCount) begin
+                    fifoIn_state <= 3;
+                end
             end
         end
         
         // Wait until the end of the frame
-        4: begin
+        3: begin
             fifoIn_countStat <= (fifoIn_lv && !fifoIn_x && !fifoIn_y);
             fifoIn_w_trigger <= fifoIn_lv;
             if (!fifoIn_fv) begin
