@@ -335,16 +335,14 @@ module ImgController #(
     reg[`RegWidth(ImgWidth)-1:0] ctrl_readout_pixelX = 0;
     reg[`RegWidth(ImgHeight)-1:0] ctrl_readout_pixelY = 0;
     reg ctrl_readout_pixelFilterEn = 0;
-    reg ctrl_readout_pixelLastRow = 0;
-    reg ctrl_readout_pixelLastRowPrev = 0;
     // ctrl_readout_pixelKeep: keep the pixel if filtering is disabled (ie non-thumbnail mode),
     // or if filtering is enabled and the pixel is in the upper-left 2x2 corner of any 8x8 group
     wire ctrl_readout_pixelKeep = (
-        !ctrl_readout_pixelLastRowPrev &&
         ((ctrl_readout_pixelX[2:0]===0 || ctrl_readout_pixelX[2:0]===1) &&
          (ctrl_readout_pixelY[2:0]===0 || ctrl_readout_pixelY[2:0]===1))
     );
     
+    reg[`RegWidth(ImgPixelCount)-1:0] ctrl_readout_pixelDoneCount = 0;
     reg ctrl_readout_pixelDone = 0;
     wire ctrl_readout_dataLoad = (!readout_ready || readout_trigger);
     
@@ -353,6 +351,7 @@ module ImgController #(
     reg[HeaderWidth-1:0] ctrl_shiftout_data = 0;
     reg[`RegWidth2(HeaderWordCount,ChecksumPaddingWordCount)-1:0] ctrl_shiftout_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_shiftout_nextState = 0;
+    // TODO: perf: try adding another state to set readout_done instead of using this `ctrl_shiftout_nextReadoutDone` technique
     reg ctrl_shiftout_nextReadoutDone = 0;
     
     reg[1:0] ctrl_delay_count = 0;
@@ -390,14 +389,14 @@ module ImgController #(
             end else begin
                 ctrl_readout_pixelX <= 0;
                 ctrl_readout_pixelY <= ctrl_readout_pixelY+1;
-                ctrl_readout_pixelLastRowPrev <= ctrl_readout_pixelLastRow;
             end
         end
         
-        // ctrl_readout_pixelLastRowPrev <= ctrl_readout_pixelLastRow;
-        ctrl_readout_pixelLastRow <= (ctrl_readout_pixelY===(ImgHeight-1));
+        if (ramctrl_read_ready && ramctrl_read_trigger) begin
+            ctrl_readout_pixelDoneCount <= ctrl_readout_pixelDoneCount-1;
+        end
         
-        if (ctrl_readout_pixelLastRowPrev && !ctrl_readout_pixelLastRow) begin
+        if (!ctrl_readout_pixelDoneCount) begin
             ctrl_readout_pixelDone <= 1;
         end
         
@@ -452,8 +451,6 @@ module ImgController #(
             readout_rst <= 1;
             // Reset done signal
             readout_done <= 0;
-            ctrl_readout_pixelLastRow <= 0;
-            ctrl_readout_pixelLastRowPrev <= 0;
             // Delay one cycle before outputting the header, to ensure the FIFO is finished
             // resetting before we feed it data
             ctrl_delay_count <= 0;
@@ -481,6 +478,7 @@ module ImgController #(
             ctrl_readout_pixelX <= 0;
             ctrl_readout_pixelY <= 0;
             ctrl_readout_pixelDone <= 0;
+            ctrl_readout_pixelDoneCount <= ImgPixelCount;
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
