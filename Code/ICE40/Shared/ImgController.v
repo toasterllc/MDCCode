@@ -491,7 +491,7 @@ module ImgController #(
         
         // Output pixels
         Ctrl_State_Readout+3: begin // 8
-            if (ctrl_readout_pixelDone) begin
+            if (ctrl_readout_pixelDone && readout_trigger) begin // We have to wait until readout_trigger==1 to ensure that the checksum has been updated, otherwise our delay may be incorrect
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 
                 // We need 3 wait states before we sample the checksum
