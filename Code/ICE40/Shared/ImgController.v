@@ -339,7 +339,8 @@ module ImgController #(
     // or if filtering is enabled and the pixel is in the upper-left 2x2 corner of any 8x8 group
     wire ctrl_readout_pixelKeep = (
         ((ctrl_readout_pixelX[2:0]===0 || ctrl_readout_pixelX[2:0]===1) &&
-         (ctrl_readout_pixelY[2:0]===0 || ctrl_readout_pixelY[2:0]===1))
+         (ctrl_readout_pixelY[2:0]===0 || ctrl_readout_pixelY[2:0]===1)) &&
+         (ctrl_readout_pixelY !== ImgHeight)
     );
     
     reg[`RegWidth(ImgPixelCount)-1:0] ctrl_readout_pixelDoneCount = 0;
