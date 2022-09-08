@@ -335,6 +335,7 @@ module ImgController #(
     `TogglePulse(ctrl_cmdReadout, cmd_readout, posedge, clk);
     reg[`RegWidth(ImgWidth)-1:0] ctrl_readout_pixelX = 0;
     reg[`RegWidth(ImgHeight)-1:0] ctrl_readout_pixelY = 0;
+    reg ctrl_readout_rowEnding = 0;
     reg ctrl_readout_pixelFilterEn = 0;
     // ctrl_readout_pixelKeep: keep the pixel if filtering is disabled (ie non-thumbnail mode),
     // or if filtering is enabled and the pixel is in the upper-left 2x2 corner of any 8x8 group
@@ -375,14 +376,18 @@ module ImgController #(
             ctrl_shiftout_count <= ctrl_shiftout_count-1;
         end
         
+`ifdef SIM
         if (readout_ready && readout_trigger) begin
             $display("[ImgController:Readout] readout_data: %x", readout_data);
         end
+`endif
         
         // readout_checksum_din <= {readout_data[7:0], readout_data[15:8]};
         
+        ctrl_readout_rowEnding <= (ctrl_readout_pixelX === ImgWidth-2);
+        
         if (ctrl_readout_pixelFilterEn && ramctrl_read_ready && ramctrl_read_trigger) begin
-            if (ctrl_readout_pixelX !== ImgWidth-1) begin
+            if (!ctrl_readout_rowEnding) begin
                 ctrl_readout_pixelX <= ctrl_readout_pixelX+1;
             end else begin
                 ctrl_readout_pixelX <= 0;
@@ -406,7 +411,6 @@ module ImgController #(
         readout_checksum_din <= {readout_data[7:0], readout_data[15:8]};
         readout_checksum_en <= readout_checksum_trigger; // Pulse
         readout_checksum_trigger <= 0; // Pulse
-        
         
         case (ctrl_state)
         Ctrl_State_Idle: begin
