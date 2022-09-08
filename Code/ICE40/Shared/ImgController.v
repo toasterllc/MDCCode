@@ -355,21 +355,16 @@ module ImgController #(
     reg[`RegWidth2(HeaderWordCount-1,ChecksumPaddingWordCount-1)-1:0] ctrl_shiftout_count = 0;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_shiftout_nextState = 0;
     
-    reg[1:0] ctrl_delay_count = 0;
-    reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_delay_nextState = 0;
-    
     localparam Ctrl_State_Idle          = 0;  // +0
     localparam Ctrl_State_Capture       = 1;  // +3
     localparam Ctrl_State_Readout       = 5;  // +4
     localparam Ctrl_State_Shiftout      = 10; // +0
-    localparam Ctrl_State_Delay         = 11; // +0
-    localparam Ctrl_State_Count         = 12;
+    localparam Ctrl_State_Count         = 11;
     reg[`RegWidth(Ctrl_State_Count-1)-1:0] ctrl_state = 0;
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
         readout_rst <= 0; // Pulse
         readout_checksum_rst <= 0; // Pulse
-        ctrl_delay_count <= ctrl_delay_count-1;
         
         if (ctrl_readout_dataLoad) begin
             ctrl_shiftout_data <= ctrl_shiftout_data<<16;
@@ -464,11 +459,7 @@ module ImgController #(
             readout_rst <= 1;
             // Reset done signal
             readout_done <= 0;
-            // Delay one cycle before outputting the header, to ensure the FIFO is finished
-            // resetting before we feed it data
-            ctrl_delay_count <= 0;
-            ctrl_delay_nextState <= Ctrl_State_Readout+1;
-            ctrl_state <= Ctrl_State_Delay;
+            ctrl_state <= Ctrl_State_Readout+1;
         end
         
         Ctrl_State_Readout+1: begin // 6
@@ -506,10 +497,7 @@ module ImgController #(
                 readout_checksum_trigger <= ctrl_readout_pixelKeep;
                 
                 if (ctrl_readout_pixelDone) begin
-                    // We need 3 wait states before we sample the checksum
-                    ctrl_delay_count <= 3;
-                    ctrl_delay_nextState <= Ctrl_State_Readout+4;
-                    ctrl_state <= Ctrl_State_Delay;
+                    ctrl_state <= Ctrl_State_Readout+4;
                 end
             end
         end
@@ -540,13 +528,6 @@ module ImgController #(
                 if (!ctrl_shiftout_count) begin
                     ctrl_state <= ctrl_shiftout_nextState;
                 end
-            end
-        end
-        
-        // Delay `ctrl_delay_count` cycles
-        Ctrl_State_Delay: begin // 12
-            if (!ctrl_delay_count) begin
-                ctrl_state <= ctrl_delay_nextState;
             end
         end
         endcase
