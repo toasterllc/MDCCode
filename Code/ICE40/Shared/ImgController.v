@@ -368,7 +368,6 @@ module ImgController #(
     always @(posedge clk) begin
         ramctrl_cmd <= `RAMController_Cmd_None;
         readout_rst <= 0; // Pulse
-        readout_ready <= 0;
         readout_checksum_rst <= 0; // Pulse
         readout_checksum_en <= 0; // Pulse
         ctrl_delay_count <= ctrl_delay_count-1;
@@ -400,7 +399,7 @@ module ImgController #(
             end
         end
         
-        // If client isn't consuming a value, readout_ready needs to remain unchanged
+        // Reset readout_ready if the client consumes a value
         if (readout_trigger) begin
             readout_ready <= 0;
         end
