@@ -523,15 +523,13 @@ module ImgController #(
         
         // Output `ctrl_shiftout_count` words from `ctrl_shiftout_data`
         Ctrl_State_Shiftout: begin // 10
-            if (ctrl_readout_dataLoad) begin
-                readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
-            end
-            
-            if (!ctrl_shiftout_count && readout_trigger) begin
+            if (!ctrl_shiftout_count) begin
                 readout_done <= ctrl_shiftout_nextReadoutDone;
                 ctrl_shiftout_nextReadoutDone <= 0;
                 ctrl_state <= ctrl_shiftout_nextState;
-            end else begin
+            
+            end else if (ctrl_readout_dataLoad) begin
+                readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
                 readout_ready <= 1;
             end
         end
