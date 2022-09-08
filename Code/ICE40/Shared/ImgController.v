@@ -338,10 +338,12 @@ module ImgController #(
     // ctrl_readout_pixelKeep: keep the pixel if filtering is disabled (ie non-thumbnail mode),
     // or if filtering is enabled and the pixel is in the upper-left 2x2 corner of any 8x8 group
     wire ctrl_readout_pixelKeep = (
+        !ctrl_readout_pixelKeepInhibit &&
         ((ctrl_readout_pixelX[2:0]===0 || ctrl_readout_pixelX[2:0]===1) &&
-         (ctrl_readout_pixelY[2:0]===0 || ctrl_readout_pixelY[2:0]===1)) &&
-         (ctrl_readout_pixelY !== ImgHeight)
+         (ctrl_readout_pixelY[2:0]===0 || ctrl_readout_pixelY[2:0]===1))
     );
+    reg ctrl_readout_pixelKeepInhibit = 0;
+    reg ctrl_readout_pixelLastRow = 0;
     
     reg[`RegWidth(ImgPixelCount)-1:0] ctrl_readout_pixelDoneCount = 0;
     reg ctrl_readout_pixelDone = 0;
@@ -390,8 +392,11 @@ module ImgController #(
             end else begin
                 ctrl_readout_pixelX <= 0;
                 ctrl_readout_pixelY <= ctrl_readout_pixelY+1;
+                ctrl_readout_pixelKeepInhibit <= ctrl_readout_pixelLastRow;
             end
         end
+        
+        ctrl_readout_pixelLastRow <= (ctrl_readout_pixelY === ImgHeight-1);
         
         if (ramctrl_read_ready && ramctrl_read_trigger) begin
             ctrl_readout_pixelDoneCount <= ctrl_readout_pixelDoneCount-1;
@@ -478,6 +483,7 @@ module ImgController #(
             // Reset pixel counters used for thumbnailing
             ctrl_readout_pixelX <= 0;
             ctrl_readout_pixelY <= 0;
+            ctrl_readout_pixelKeepInhibit <= 0;
             ctrl_readout_pixelDone <= 0;
             ctrl_readout_pixelDoneCount <= ImgPixelCount;
             // Supply 'Read' RAM command
