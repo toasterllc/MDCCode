@@ -400,6 +400,11 @@ module ImgController #(
             end
         end
         
+        // If client isn't consuming a value, readout_ready needs to remain unchanged
+        if (!readout_trigger) begin
+            readout_ready <= readout_ready;
+        end
+        
         ctrl_readout_checksum <= readout_checksum_dout;
         
         case (ctrl_state)
@@ -487,11 +492,6 @@ module ImgController #(
         
         // Output pixels
         Ctrl_State_Readout+3: begin // 8
-            // If client isn't consuming a value, readout_ready needs to remain unchanged
-            if (!readout_trigger) begin
-                readout_ready <= readout_ready;
-            end
-            
             if (ctrl_readout_pixelDone) begin
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 
