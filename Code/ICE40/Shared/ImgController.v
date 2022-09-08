@@ -343,8 +343,8 @@ module ImgController #(
          (ctrl_readout_pixelY !== ImgHeight)
     );
     
-    reg[`RegWidth(ImgPixelCount)-1:0] ctrl_readout_pixelDoneCount = 0;
-    reg ctrl_readout_pixelDone = 0;
+    reg[`RegWidth(ImgPixelCount-1)-1:0] ctrl_readout_pixelCount = 0;
+    reg ctrl_readout_pixelLast = 0;
     wire ctrl_readout_dataLoad = (!readout_ready || readout_trigger);
     
     reg[31:0] ctrl_readout_checksum = 0;
@@ -394,11 +394,11 @@ module ImgController #(
         end
         
         if (ramctrl_read_ready && ramctrl_read_trigger) begin
-            ctrl_readout_pixelDoneCount <= ctrl_readout_pixelDoneCount-1;
+            ctrl_readout_pixelCount <= ctrl_readout_pixelCount-1;
         end
         
-        if (!ctrl_readout_pixelDoneCount) begin
-            ctrl_readout_pixelDone <= 1;
+        if (!ctrl_readout_pixelCount) begin
+            ctrl_readout_pixelLast <= 1;
         end
         
         ctrl_readout_checksum <= readout_checksum_dout;
@@ -446,7 +446,7 @@ module ImgController #(
             end
         end
         
-        Ctrl_State_Readout: begin
+        Ctrl_State_Readout: begin // 5
             $display("[ImgController:Readout] Started");
             // Reset output FIFO
             readout_rst <= 1;
@@ -459,7 +459,7 @@ module ImgController #(
             ctrl_state <= Ctrl_State_Delay;
         end
         
-        Ctrl_State_Readout+1: begin
+        Ctrl_State_Readout+1: begin // 6
             // Reset checksum
             readout_checksum_rst <= 1;
             // Signal that readout is starting
@@ -474,12 +474,12 @@ module ImgController #(
         end
         
         // Prepare to output pixels
-        Ctrl_State_Readout+2: begin
+        Ctrl_State_Readout+2: begin // 7
             // Reset pixel counters used for thumbnailing
             ctrl_readout_pixelX <= 0;
             ctrl_readout_pixelY <= 0;
-            ctrl_readout_pixelDone <= 0;
-            ctrl_readout_pixelDoneCount <= ImgPixelCount;
+            ctrl_readout_pixelLast <= 0;
+            ctrl_readout_pixelCount <= ImgPixelCount-1;
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
@@ -493,18 +493,17 @@ module ImgController #(
                 readout_ready <= readout_ready;
             end
             
-            if (ramctrl_read_ready && ctrl_readout_dataLoad) begin
-                readout_data <= ramctrl_read_data;
-                readout_ready <= ctrl_readout_pixelKeep;
-            end
-            
-            if (ctrl_readout_pixelDone && readout_trigger) begin
+            if (ctrl_readout_pixelLast && readout_ready && readout_trigger) begin
                 ramctrl_cmd <= `RAMController_Cmd_Stop;
                 
                 // We need 3 wait states before we sample the checksum
                 ctrl_delay_count <= 2;
                 ctrl_delay_nextState <= Ctrl_State_Readout+4;
                 ctrl_state <= Ctrl_State_Delay;
+            
+            end else if (ramctrl_read_ready && ctrl_readout_dataLoad) begin
+                readout_data <= ramctrl_read_data;
+                readout_ready <= ctrl_readout_pixelKeep;
             end
         end
         

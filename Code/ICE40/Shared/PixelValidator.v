@@ -29,7 +29,7 @@ module PixelValidator();
     );
     
     task _ChecksumConsumeWord(input[15:0] word); begin
-        // $display("[PixelValidator] checksum consume word (index: %0d): %h", _wordIdx, word);
+        $display("[PixelValidator] checksum consume word (index: %0d): %h", _wordIdx, word);
         
         // Treat the word as a little-endian uint16, mimicking the checksum
         // algorithm on the host computer reading from the SD card

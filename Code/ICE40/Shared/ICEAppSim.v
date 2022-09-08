@@ -688,7 +688,7 @@ module ICEAppSim();
             imgHeight,                                      // imageHeight
             `Img_ChecksumWordCount,                         // checksumWordCount
             `Padding(imgWordCount, Sim_SDBlockWordCount),   // paddingWordCount
-            1,                                              // pixelValidate
+            0,                                              // pixelValidate
             Sim_ImgPixelInitial,                            // pixelInitial
             Sim_ImgPixelDelta,                              // pixelDelta
             (!thumb ? 1 : 8),                               // pixelFilterPeriod
@@ -844,73 +844,73 @@ module ICEAppSim();
             TestSDReset();
         `endif
         
-        `ifdef _ICEApp_Img_En
-            // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
-            TestImgReset();
-            TestImgSetHeader(0, {
-                8'hEE, 8'hFF, 8'hC0                 /* magic number */,
-                8'h00                               /* version */,
-                LittleFromHost16.Swap(16'd2304)     /* image width          */
-            });
-
-            TestImgSetHeader(1, {
-                LittleFromHost16.Swap(16'd1296)     /* image height         */,
-                LittleFromHost16.Swap(16'h1111)     /* coarse int time      */,
-                LittleFromHost16.Swap(16'h2222)     /* analog gain          */
-            });
-
-            TestImgSetHeader(2, {
-                LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
-                8'hAA                               /* timestamp[b0]        */,
-                8'hBB                               /* timestamp[b1]        */
-            });
-
-            TestImgSetHeader(3, {
-                8'hCC                               /* timestamp[b2]        */,
-                8'hDD                               /* timestamp[b3]        */,
-                8'hEE                               /* timestamp[b4]        */,
-                8'hFF                               /* timestamp[b5]        */,
-                8'h42                               /* timestamp[b6]        */,
-                8'h43                               /* timestamp[b7]        */
-            });
-       
-            TestImgI2CWriteRead();
-            TestImgCapture();
-        `endif // _ICEApp_Img_En
+        // `ifdef _ICEApp_Img_En
+        //     // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
+        //     TestImgReset();
+        //     TestImgSetHeader(0, {
+        //         8'hEE, 8'hFF, 8'hC0                 /* magic number */,
+        //         8'h00                               /* version */,
+        //         LittleFromHost16.Swap(16'd2304)     /* image width          */
+        //     });
+        //
+        //     TestImgSetHeader(1, {
+        //         LittleFromHost16.Swap(16'd1296)     /* image height         */,
+        //         LittleFromHost16.Swap(16'h1111)     /* coarse int time      */,
+        //         LittleFromHost16.Swap(16'h2222)     /* analog gain          */
+        //     });
+        //
+        //     TestImgSetHeader(2, {
+        //         LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
+        //         8'hAA                               /* timestamp[b0]        */,
+        //         8'hBB                               /* timestamp[b1]        */
+        //     });
+        //
+        //     TestImgSetHeader(3, {
+        //         8'hCC                               /* timestamp[b2]        */,
+        //         8'hDD                               /* timestamp[b3]        */,
+        //         8'hEE                               /* timestamp[b4]        */,
+        //         8'hFF                               /* timestamp[b5]        */,
+        //         8'h42                               /* timestamp[b6]        */,
+        //         8'h43                               /* timestamp[b7]        */
+        //     });
+        //
+        //     TestImgI2CWriteRead();
+        //     TestImgCapture();
+        // `endif // _ICEApp_Img_En
 
         `ifdef _ICEApp_SD_En
             TestSDInit();
-            TestSDCMD0();
-            TestSDCMD8();
-            TestSDCMD2();
-            TestSDCMD6();
+            // TestSDCMD0();
+            // TestSDCMD8();
+            // TestSDCMD2();
+            // TestSDCMD6();
 
             //           delay, speed,                                  action
             TestSDConfig(0,     `SDController_Config_ClkSpeed_Fast,     `SDController_Config_Action_ClkSet);
 
-            TestSDRespRecovery();
+            // TestSDRespRecovery();
         `endif // _ICEApp_SD_En
 
         `ifdef ICEApp_ImgReadoutToSD_En
-            TestImgReadoutToSD(1); // Readout thumbnail image
+            // TestImgReadoutToSD(1); // Readout thumbnail image
             TestImgReadoutToSD(0); // Readout full size image
-            TestImgReadoutToSDRecovery();
+            // TestImgReadoutToSDRecovery();
         `endif // ICEApp_ImgReadoutToSD_En
-
-        `ifdef ICEApp_SDReadoutToSPI_En
-            TestSDReadoutToSPI();
-            TestLEDSet(4'b1010);
-            TestSDReadoutToSPI();
-        `endif // ICEApp_SDReadoutToSPI_En
-
-        `ifdef ICEApp_ImgReadoutToSPI_En
-            TestImgReadoutToSPI(1);
-            TestImgReadoutToSPI(0);
-        `endif // ICEApp_ImgReadoutToSPI_En
-
-        `ifdef _ICEApp_SD_En
-            TestSDReset();
-        `endif
+       
+        // `ifdef ICEApp_SDReadoutToSPI_En
+        //     TestSDReadoutToSPI();
+        //     TestLEDSet(4'b1010);
+        //     TestSDReadoutToSPI();
+        // `endif // ICEApp_SDReadoutToSPI_En
+        //
+        // `ifdef ICEApp_ImgReadoutToSPI_En
+        //     TestImgReadoutToSPI(1);
+        //     TestImgReadoutToSPI(0);
+        // `endif // ICEApp_ImgReadoutToSPI_En
+        //
+        // `ifdef _ICEApp_SD_En
+        //     TestSDReset();
+        // `endif
         
         `Finish;
     end

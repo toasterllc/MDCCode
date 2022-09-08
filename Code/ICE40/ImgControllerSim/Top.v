@@ -88,12 +88,15 @@ module Top();
     reg                                     imgctrl_cmd_readout = 0;
     reg[0:0]                                imgctrl_cmd_ramBlock = 0;
     reg[0:0]                                imgctrl_cmd_skipCount = 0;
-    reg[`Img_HeaderWordCount*16-1:0]        imgctrl_cmd_header = {
-        8'h00, 8'h11, 8'h22, 8'h33, 8'h44, 8'h55, 8'h66, 8'h77,
-        8'h88, 8'h99, 8'hAA, 8'hBB, 8'hCC, 8'hDD, 8'hEE, 8'hFF,
-        8'hFF, 8'hEE, 8'hDD, 8'hCC, 8'hBB, 8'hAA, 8'h99, 8'h88,
-        8'h77, 8'h66, 8'h55, 8'h44, 8'h33, 8'h22, 8'h11, 8'h00
-    };
+    // reg[`Img_HeaderWordCount*16-1:0]        imgctrl_cmd_header = {
+    //     8'h00, 8'h11, 8'h22, 8'h33, 8'h44, 8'h55, 8'h66, 8'h77,
+    //     8'h88, 8'h99, 8'hAA, 8'hBB, 8'hCC, 8'hDD, 8'hEE, 8'hFF,
+    //     8'hFF, 8'hEE, 8'hDD, 8'hCC, 8'hBB, 8'hAA, 8'h99, 8'h88,
+    //     8'h77, 8'h66, 8'h55, 8'h44, 8'h33, 8'h22, 8'h11, 8'h00
+    // };
+    
+    reg[`Img_HeaderWordCount*16-1:0]        imgctrl_cmd_header = 0;
+    
     reg                                     imgctrl_cmd_thumb = 0;
     wire                                    imgctrl_readout_rst;
     wire                                    imgctrl_readout_start;
@@ -223,7 +226,7 @@ module Top();
             end
             wait(!img_clk);
             
-            imgctrl_readout_trigger = $random&1;
+            // imgctrl_readout_trigger = $random&1;
             
             done = (
                 recvWordCount>`Img_HeaderWordCount &&   // Only institute our timeout after the header has been received
@@ -242,7 +245,7 @@ module Top();
         
         ImgCapture();
         
-        ImgReadout(1); // Readout thumbnail image
+        // ImgReadout(1); // Readout thumbnail image
         ImgReadout(0); // Readout full-size image
         
         // for (i=0; i<ImgWordCount; i++) begin
