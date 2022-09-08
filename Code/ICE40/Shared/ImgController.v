@@ -495,18 +495,16 @@ module ImgController #(
         
         // Output pixels
         Ctrl_State_Readout+3: begin // 8
-            if (!ctrl_readout_pixelDone) begin
-                if (ramctrl_read_ready && ctrl_readout_dataLoad) begin
-                    readout_data <= ramctrl_read_data;
-                    readout_ready <= ctrl_readout_pixelKeep;
-                    readout_checksum_trigger <= ctrl_readout_pixelKeep;
-                end
-            
-            end else begin
+            if (ctrl_readout_pixelDone) begin
                 // We need 3 wait states before we sample the checksum
                 ctrl_delay_count <= 2;
                 ctrl_delay_nextState <= Ctrl_State_Readout+4;
                 ctrl_state <= Ctrl_State_Delay;
+            
+            end else if (ramctrl_read_ready && ctrl_readout_dataLoad) begin
+                readout_data <= ramctrl_read_data;
+                readout_ready <= ctrl_readout_pixelKeep;
+                readout_checksum_trigger <= ctrl_readout_pixelKeep;
             end
         end
         
@@ -529,17 +527,15 @@ module ImgController #(
         
         // Output `ctrl_shiftout_count` words from `ctrl_shiftout_data`
         Ctrl_State_Shiftout: begin // 10
-            if (ctrl_shiftout_count) begin
-                if (ctrl_readout_dataLoad) begin
-                    readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
-                    readout_ready <= 1;
-                    readout_checksum_trigger <= 1;
-                end
-            
-            end else begin
+            if (!ctrl_shiftout_count) begin
                 readout_done <= ctrl_shiftout_nextReadoutDone;
                 ctrl_shiftout_nextReadoutDone <= 0;
                 ctrl_state <= ctrl_shiftout_nextState;
+            
+            end else if (ctrl_readout_dataLoad) begin
+                readout_data <= `LeftBits(ctrl_shiftout_data, 0, 16);
+                readout_ready <= 1;
+                readout_checksum_trigger <= 1;
             end
         end
         
