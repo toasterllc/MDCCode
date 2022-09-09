@@ -239,14 +239,17 @@ module Top();
     
     // Actual test
     initial begin
+        integer i;
         // Wait for clock to go high then low
         wait(img_clk);
         wait(!img_clk);
         
         ImgCapture();
         
-        ImgReadout(1); // Readout thumbnail image
-        ImgReadout(0); // Readout full-size image
+        for (i=0; i<10; i++) begin
+            ImgReadout(1); // Readout thumbnail image
+            ImgReadout(0); // Readout full-size image
+        end
         
         // for (i=0; i<ImgWordCount; i++) begin
         //     wait(img_clk && imgctrl_readout_ready && imgctrl_readout_trigger);
