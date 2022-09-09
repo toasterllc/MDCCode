@@ -453,6 +453,11 @@ module ImgController #(
             readout_rst <= 1;
             // Reset done signal
             readout_done <= 0;
+            // Reset RAMController because it could be in the middle of reading or writing if the client
+            // interrupts us with a new command while one was underway.
+            // If we don't do this, ramctrl_ signals leftover from the previous ImgController command
+            // (eg ramctrl_read_ready) will interfere with the new command.
+            ramctrl_cmd <= `RAMController_Cmd_Stop;
             // Delay one cycle before outputting the header, to ensure the FIFO is finished
             // resetting before we feed it data
             ctrl_delay_count <= 0;
