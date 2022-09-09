@@ -530,13 +530,13 @@ struct _MainTask {
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
         for (;;) {
-            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
-            {
-                _WaitingForMotion = true;
-                _Scheduler::Wait([&] { return (bool)_Motion; });
-                _Motion = false;
-                _WaitingForMotion = false;
-            }
+//            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
+//            {
+//                _WaitingForMotion = true;
+//                _Scheduler::Wait([&] { return (bool)_Motion; });
+//                _Motion = false;
+//                _WaitingForMotion = false;
+//            }
             
             _Pin::VDD_B_EN::Write(1);
             #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
@@ -564,11 +564,11 @@ struct _MainTask {
                     _ImgTask::Capture(imgRingBuf.buf.idEnd);
                     const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
                     
-                    // Copy full-size image from RAM -> SD card
-                    {
-                        const SD::Block dstSDBlock = imgRingBuf.buf.widx * ImgSD::Full::ImageBlockCount;
-                        _SDTask::Write(srcRAMBlock, dstSDBlock, Img::Size::Full);
-                    }
+//                    // Copy full-size image from RAM -> SD card
+//                    {
+//                        const SD::Block dstSDBlock = imgRingBuf.buf.widx * ImgSD::Full::ImageBlockCount;
+//                        _SDTask::Write(srcRAMBlock, dstSDBlock, Img::Size::Full);
+//                    }
                     
                     // Copy thumbnail from RAM -> SD card
                     {
@@ -595,6 +595,8 @@ struct _MainTask {
             _SDTask::Disable();
             
             _Pin::VDD_B_EN::Write(0);
+            
+            _Scheduler::Sleep(_Scheduler::Ms(2000));
         }
     }
     

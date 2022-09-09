@@ -498,7 +498,8 @@ private:
             uint32_t checksumGot = 0;
             memcpy(&checksumGot, imgData+Img::Thumb::ChecksumOffset, Img::ChecksumLen);
             if (checksumGot != checksumExpected) {
-                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+                printf("invalid checksum (expected:0x%08x got:0x%08x)\n", checksumExpected, checksumGot);
+//                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
             } else {
                 printf("Checksum OK\n");
             }

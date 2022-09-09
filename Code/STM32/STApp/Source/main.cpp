@@ -538,7 +538,7 @@ static void _HostModeEnter(const STM::Cmd& cmd) {
     _MSP.disconnect();
     
     // Wait for MSP to toggle SD/IMG rails and enter host mode
-    _Scheduler::Sleep(_Scheduler::Ms(20));
+    _Scheduler::Sleep(_Scheduler::Ms(1000));
     
     // Init SD
     switch (arg.periph) {
