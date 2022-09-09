@@ -365,7 +365,7 @@ module ImgController #(
         readout_checksum_rst <= 0; // Pulse
         ctrl_delay_count <= ctrl_delay_count-1;
         
-        if (ctrl_readout_dataLoad) begin
+        if (readout_ready && readout_trigger) begin
             ctrl_shiftout_data <= ctrl_shiftout_data<<16;
             ctrl_shiftout_count <= ctrl_shiftout_count-1;
         end
@@ -496,7 +496,7 @@ module ImgController #(
             ctrl_readout_pixelFilterEn <= cmd_thumb;
             // Output the header
             ctrl_shiftout_data <= cmd_header;
-            ctrl_shiftout_count <= HeaderWordCount;
+            ctrl_shiftout_count <= HeaderWordCount-2;
             ctrl_shiftout_nextState <= Ctrl_State_Readout+2;
             ctrl_state <= Ctrl_State_Shiftout;
         end
@@ -507,7 +507,7 @@ module ImgController #(
             ctrl_readout_pixelX <= 0;
             ctrl_readout_pixelY <= 0;
             ctrl_readout_pixelDone <= 0;
-            ctrl_readout_pixelCount <= ImgPixelCount;
+            ctrl_readout_pixelCount <= ImgPixelCount-1;
             // Supply 'Read' RAM command
             ramctrl_cmd_block <= cmd_ramBlock;
             ramctrl_cmd <= `RAMController_Cmd_Read;
@@ -538,7 +538,7 @@ module ImgController #(
                 ctrl_readout_checksum[23-:8],
                 ctrl_readout_checksum[31-:8]
             };
-            ctrl_shiftout_count <= ChecksumPaddingWordCount;
+            ctrl_shiftout_count <= ChecksumPaddingWordCount-2;
             ctrl_shiftout_nextState <= Ctrl_State_Idle;
             ctrl_state <= Ctrl_State_Shiftout;
         end
