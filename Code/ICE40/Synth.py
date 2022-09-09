@@ -78,7 +78,7 @@ def nextpnrOptTrial(alpha, beta, critexp, timingweight):
         if clkName not in projClocks:
             del clkFreqs[clkName]
     
-    clkMin = 135
+    clkMin = 130
     
     # Subtract the minimum clock
     for clkName in clkFreqs:
