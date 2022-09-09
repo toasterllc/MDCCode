@@ -30,7 +30,7 @@ const CmdStr ICEFlashWriteCmd       = "ICEFlashWrite";
 const CmdStr MSPReadCmd             = "MSPRead";
 const CmdStr MSPWriteCmd            = "MSPWrite";
 const CmdStr MSPStateReadCmd        = "MSPStateRead";
-const CmdStr SDImgReadCmd           = "SDImgRead";
+const CmdStr SDReadCmd              = "SDRead";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
 
 static void printUsage() {
@@ -49,7 +49,7 @@ static void printUsage() {
     cout << "  " << MSPWriteCmd         << " <file>\n";
     cout << "  " << MSPStateReadCmd     << "\n";
     
-    cout << "  " << SDImgReadCmd        << " <idx> <output.cfa>\n";
+    cout << "  " << SDReadCmd           << " <addr> <len> <output>\n";
     cout << "  " << ImgCaptureCmd       << " <output.cfa>\n";
     
     cout << "\n";
@@ -90,9 +90,10 @@ struct Args {
     } MSPWrite = {};
     
     struct {
-        uint32_t idx = 0;
+        uintptr_t addr = 0;
+        size_t len = 0;
         std::string filePath;
-    } SDImgRead = {};
+    } SDRead = {};
     
     struct {
         std::string filePath;
@@ -150,10 +151,11 @@ static Args parseArgs(int argc, const char* argv[]) {
     
     } else if (args.cmd == lower(MSPStateReadCmd)) {
     
-    } else if (args.cmd == lower(SDImgReadCmd)) {
-        if (strs.size() < 3) throw std::runtime_error("index/file path not specified");
-        IntForStr(args.SDImgRead.idx, strs[1]);
-        args.SDImgRead.filePath = strs[2];
+    } else if (args.cmd == lower(SDReadCmd)) {
+        if (strs.size() < 4) throw std::runtime_error("address/length/file not specified");
+        IntForStr(args.SDRead.addr, strs[1]);
+        IntForStr(args.SDRead.len, strs[2]);
+        args.SDRead.filePath = strs[3];
     
     } else if (args.cmd == lower(ImgCaptureCmd)) {
         if (strs.size() < 2) throw std::runtime_error("index/file path not specified");
@@ -364,7 +366,15 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     device.mspDisconnect();
 }
 
-static void SDImgRead(const Args& args, MDCUSBDevice& device) {
+static void SDRead(const Args& args, MDCUSBDevice& device) {
+    if (args.SDRead.addr % SD::BlockLen)
+        throw Toastbox::RuntimeError("address must be a multiple of the SD block size (%ju)",
+            (uintmax_t)SD::BlockLen);
+    
+    if (args.SDRead.len % Toastbox::USB::Endpoint::MaxPacketSizeBulk)
+        throw Toastbox::RuntimeError("length must be a multiple of the USB packet size (%ju)",
+            (uintmax_t)Toastbox::USB::Endpoint::MaxPacketSizeBulk);
+    
     printf("Sending HostModeInit command...\n");
     device.hostModeInit();
     printf("-> OK\n\n");
@@ -374,20 +384,21 @@ static void SDImgRead(const Args& args, MDCUSBDevice& device) {
     printf("-> OK\n\n");
     
     printf("Sending SDRead command...\n");
-    device.sdRead(args.SDImgRead.idx * ImgSD::ImgPaddedLen);
+    device.sdRead((SD::BlockIdx)(args.SDRead.addr / SD::BlockLen));
     printf("-> OK\n\n");
     
-    printf("Reading image...\n");
-    auto img = device.imgReadout();
+    printf("Reading data...\n");
+    auto buf = std::make_unique<uint8_t[]>(args.SDRead.len);
+    device.readout(buf.get(), args.SDRead.len);
     printf("-> OK\n\n");
     
     // Write image
     printf("Writing image...\n");
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    f.open(args.SDImgRead.filePath.c_str());
-    f.write((char*)img.get(), Img::Len);
-    printf("-> Wrote %ju bytes\n", (uintmax_t)Img::Len);
+    f.open(args.SDRead.filePath.c_str());
+    f.write((char*)buf.get(), args.SDRead.len);
+    printf("-> Wrote %ju bytes\n", (uintmax_t)args.SDRead.len);
 }
 
 static void ImgCapture(const Args& args, MDCUSBDevice& device) {
@@ -479,7 +490,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPReadCmd))         MSPRead(args, device);
         else if (args.cmd == lower(MSPWriteCmd))        MSPWrite(args, device);
         else if (args.cmd == lower(MSPStateReadCmd))    MSPStateRead(args, device);
-        else if (args.cmd == lower(SDImgReadCmd))       SDImgRead(args, device);
+        else if (args.cmd == lower(SDReadCmd))          SDRead(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))      ImgCapture(args, device);
     
     } catch (const std::exception& e) {
