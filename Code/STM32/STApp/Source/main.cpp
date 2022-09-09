@@ -520,6 +520,8 @@ static void _HostModeEnter(const STM::Cmd& cmd) {
     // Configure QSPI for comms with ICEApp
     _QSPISetConfig(_QSPIConfigs.ICEApp);
     
+    _ICE::Init();
+    
     // Update _MSP_HOST_MODE_ output which controls whether MSPApp runs once we disconnect SBW
     _MSP_HOST_MODE_::Write(0);
     _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
