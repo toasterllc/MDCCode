@@ -393,8 +393,8 @@ static void SDRead(const Args& args, MDCUSBDevice& device) {
     device.readout(buf.get(), args.SDRead.len);
     printf("-> OK\n\n");
     
-    // Write image
-    printf("Writing image...\n");
+    // Write data
+    printf("Writing data...\n");
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     f.open(args.SDRead.filePath.c_str());
