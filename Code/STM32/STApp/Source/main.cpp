@@ -231,6 +231,8 @@ static struct {
     QSPI::Config ICEApp = {
         .mode       = QSPI::Mode::Dual,
         .clkDivider = 1, // clkDivider: 1 -> QSPI clock = 64 MHz)
+//        .clkDivider = 31, // clkDivider: 31 -> QSPI clock = 4 MHz)
+//        .clkDivider = 255, // clkDivider: 255 -> QSPI clock = .5 MHz)
         .align      = QSPI::Align::Word,
     };
 } _QSPIConfigs;
@@ -540,7 +542,7 @@ static void _HostModeEnter(const STM::Cmd& cmd) {
     _MSP.disconnect();
     
     // Wait for MSP to toggle SD/IMG rails and enter host mode
-    _Scheduler::Sleep(_Scheduler::Ms(1000));
+    _Scheduler::Sleep(_Scheduler::Ms(20));
     
     // Init SD
     switch (arg.periph) {
