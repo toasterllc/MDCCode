@@ -139,6 +139,7 @@ module ICEAppSim();
         reg[`Msg_Arg_Len-1:0] arg;
         
         $display("\n[ICEAppSim] ========== TestEcho ==========");
+        arg = 0;
         arg[`Msg_Arg_Echo_Msg_Bits] = val;
         
         SendMsg(`Msg_Type_Echo, arg);
@@ -444,6 +445,7 @@ module ICEAppSim();
         reg[`Msg_Arg_Len-1:0] arg;
         
         $display("\n[ICEAppSim] ========== TestSDResp ==========");
+        arg = 0;
         arg[`Msg_Arg_SDResp_Idx_Bits] = val;
         
         SendMsg(`Msg_Type_SDResp, arg);
@@ -459,6 +461,7 @@ module ICEAppSim();
         reg[`Msg_Arg_Len-1:0] arg;
         
         $display("\n[ICEAppSim] ========== TestSDConfig ==========");
+        arg = 0;
         arg[`Msg_Arg_SDConfig_ClkDelay_Bits] = clkDelay;
         arg[`Msg_Arg_SDConfig_ClkSpeed_Bits] = clkSpeed;
         arg[`Msg_Arg_SDConfig_Action_Bits] = action;
@@ -470,7 +473,6 @@ module ICEAppSim();
     
     task TestSDInit; begin
         reg[15:0] i;
-        reg[`Msg_Arg_Len-1:0] arg;
         reg done;
         
         $display("\n[ICEAppSim] ========== TestSDInit ==========");
