@@ -234,52 +234,52 @@ using namespace MDCStudio;
 //    }
     
     
-    {
-        class FakeImageSource : public ImageSource {
-        public:
-            ImageLibraryPtr imageLibrary() override {
-                return il;
-            }
-            
-            ImageCachePtr imageCache() override {
-                return ic;
-            }
-            
-            ImageLibraryPtr il;
-            ImageCachePtr ic;
-        };
-        
-        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/205132485632/ImageLibrary"));
-//        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/Old/2022:8:30/ImageLibraryTest"));
-        il->read();
-        
-//        {
-//            auto startTime = std::chrono::steady_clock::now();
+//    {
+//        class FakeImageSource : public ImageSource {
+//        public:
+//            ImageLibraryPtr imageLibrary() override {
+//                return il;
+//            }
 //            
-//            Toastbox::Mmap mmap("/Users/dave/Desktop/Old/2022:8:30/SDImagesRaw-512");
+//            ImageCachePtr imageCache() override {
+//                return ic;
+//            }
 //            
-//            id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-//            if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
-//            MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
-//            
-//            constexpr size_t ImageCount = 256;
-//            _addImages(il, renderer, mmap.data(), ImageCount, 0);
-//            
-////            il->write();
-//        }
-        
-        ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (const ImageRef& imageRef) { return nullptr; });
-        
-        auto imageSource = std::make_shared<FakeImageSource>();
-        imageSource->il = il;
-        imageSource->ic = ic;
-        
-//        ImageView* imageView = [[ImageView alloc] initWithImageThumb:*il->recordGet(il->begin()) imageSource:imageSource];
-//        [_mainView setContentView:imageView animation:MainViewAnimation::None];
-        
-        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
-        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
-    }
+//            ImageLibraryPtr il;
+//            ImageCachePtr ic;
+//        };
+//        
+//        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/205132485632/ImageLibrary"));
+////        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/Old/2022:8:30/ImageLibraryTest"));
+//        il->read();
+//        
+////        {
+////            auto startTime = std::chrono::steady_clock::now();
+////            
+////            Toastbox::Mmap mmap("/Users/dave/Desktop/Old/2022:8:30/SDImagesRaw-512");
+////            
+////            id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+////            if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
+////            MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+////            
+////            constexpr size_t ImageCount = 256;
+////            _addImages(il, renderer, mmap.data(), ImageCount, 0);
+////            
+//////            il->write();
+////        }
+//        
+//        ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (const ImageRef& imageRef) { return nullptr; });
+//        
+//        auto imageSource = std::make_shared<FakeImageSource>();
+//        imageSource->il = il;
+//        imageSource->ic = ic;
+//        
+////        ImageView* imageView = [[ImageView alloc] initWithImageThumb:*il->recordGet(il->begin()) imageSource:imageSource];
+////        [_mainView setContentView:imageView animation:MainViewAnimation::None];
+//        
+//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
+//        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
+//    }
     
     
     
@@ -295,15 +295,15 @@ using namespace MDCStudio;
 //        [self setContentView:imageGridView];
 //    }
     
-//    ImageSourcePtr selection = [_sourceListView selection];
-//    if (selection) {
-//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
-//        [imageGridView setDelegate:self];
-//        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
-//    
-//    } else {
-//        [_mainView setContentView:nil animation:MainViewAnimation::None];
-//    }
+    ImageSourcePtr selection = [_sourceListView selection];
+    if (selection) {
+        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
+        [imageGridView setDelegate:self];
+        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
+    
+    } else {
+        [_mainView setContentView:nil animation:MainViewAnimation::None];
+    }
 }
 
 // _openImage: open a particular image id, or an image offset from a particular image id

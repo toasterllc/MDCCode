@@ -375,7 +375,7 @@ private:
                         );
                     }
                     
-                    const uint32_t addCount = deviceImgIdEnd-libImgIdEnd;
+                    const uint32_t addCount = 1000;//deviceImgIdEnd-libImgIdEnd;
                     printf("Adding %ju images\n", (uintmax_t)addCount);
                     
                     _Range newest;
@@ -414,7 +414,7 @@ private:
         if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
         Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
         
-        constexpr size_t ChunkImgCount = 100; // Number of images to read at a time
+        constexpr size_t ChunkImgCount = 128; // Number of images to read at a time
         constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
@@ -453,7 +453,8 @@ private:
             bufQueue.wpush();
             i += chunkImgCount;
             
-            printf("Read %ju images\n", (uintmax_t)chunkImgCount);
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
+            printf("Read %ju images (ms: %ju)\n", (uintmax_t)chunkImgCount, (uintmax_t)ms.count());
         }
         
         // Wait until we're complete
@@ -498,10 +499,10 @@ private:
             uint32_t checksumGot = 0;
             memcpy(&checksumGot, imgData+Img::Thumb::ChecksumOffset, Img::ChecksumLen);
             if (checksumGot != checksumExpected) {
-                printf("invalid checksum (expected:0x%08x got:0x%08x)\n", checksumExpected, checksumGot);
+                printf("Checksum invalid (expected:0x%08x got:0x%08x)\n", checksumExpected, checksumGot);
 //                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
             } else {
-                printf("Checksum OK\n");
+//                printf("Checksum OK\n");
             }
             
             // Populate ImageRef fields
@@ -538,8 +539,9 @@ private:
                 };
                 
                 const Pipeline::Options pipelineOpts = {
-                    .reconstructHighlights  = { .en = true, },
-                    .debayerLMMSE           = { .applyGamma = true, },
+                    .rawMode = true,
+//                    .reconstructHighlights  = { .en = true, },
+//                    .debayerLMMSE           = { .applyGamma = true, },
                 };
                 
                 Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
