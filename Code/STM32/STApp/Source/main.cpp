@@ -518,12 +518,25 @@ struct _TaskReadout {
                     Clk::Write(0);
                 }
                 
-                for (uint32_t i=0; i<_ICE::ReadoutMsg::ReadoutLen; i++) {
-                    buf.data[buf.len] = ReadByte();
-                    buf.len++;
+                for (uint32_t i=0; i<_ICE::ReadoutMsg::ReadoutLen/2; i++) {
+                    const uint8_t i0 = ReadByte();
                     
                     Clk::Write(1);
                     Clk::Write(0);
+                    
+                    const uint8_t i1 = ReadByte();
+                    
+                    Clk::Write(1);
+                    Clk::Write(0);
+                    
+                    // Demangle 2 bytes
+                    const uint8_t b0 = ((i0&0x0F)<<4) | ((i1&0x0F)<<0);
+                    const uint8_t b1 = ((i0&0xF0)<<0) | ((i1&0xF0)>>4);
+                    
+                    buf.data[buf.len] = b0;
+                    buf.len++;
+                    buf.data[buf.len] = b1;
+                    buf.len++;
                 }
                 
                 _Bufs.wpush();
