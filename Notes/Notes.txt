@@ -120,23 +120,6 @@
 
 
 
-- FFCC improvements
-
-    - Create new training set
-        - Use color checker with known colors
-            - We could either:
-                - Measure the colors ourself, or
-                - Use a colorchecker with guaranteed colors
-
-        - Capture lots of different lighting conditions
-
-        - Capture images with the color checker illuminated by the primary illuminant (ie not in a shadow)
-
-        - Black-out color checker in images
-
-        - Ensure there aren't common elements in each image (eg Sue holding the color checker)
-
-
 - Rev5
     
     - MSPApp: while running on battery power with CurrentRanger monitoring, after some time the current
@@ -560,6 +543,33 @@
 
 
 - Software / Firmware Todo
+
+    - MDCStudio: Improve ImagePipeline perf so that we process each thumbnail in realtime to avoid slowing image loading more than the data transfer speed
+        - Ie, make sure the bottleneck remains the data transfer
+            - We transfer data at 42525582 bytes/sec -> /373760 == 113.778 thumbnails/sec -> 1/113.778 == 8.789 ms/thumbnail
+            - Therefore ImagePipeline needs to process every image in less than 8.789ms
+            - Currently ImagePipeline takes 9-12ms per thumbnail
+        
+        - ImagePipeline bottlenecks appear to be:
+            - FFCC (takes 9.8 ms / thumbnail)
+            - LMMSE (1.2 ms / thumbnail)
+            - Remainder of ImagePipeline (2 ms / thumbnail)
+            - Checksum validation (0.429687 ms / thumbnail)
+    
+    - FFCC:
+        - Create new training set
+            - Use color checker with known colors
+                - We could either:
+                    - Measure the colors ourself, or
+                    - Use a colorchecker with guaranteed colors
+
+            - Capture lots of different lighting conditions
+
+            - Capture images with the color checker illuminated by the primary illuminant (ie not in a shadow)
+
+            - Black-out color checker in images
+
+            - Ensure there aren't common elements in each image (eg Sue holding the color checker)
 
     - MDCStudio: ImageGridView: thumbnail resize
         - Use LayerScrollView -magnifyIncrease: / -magnifyDecrease: interface
