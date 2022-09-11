@@ -519,11 +519,13 @@ struct _TaskReadout {
                 }
                 
                 for (uint32_t i=0; i<_ICE::ReadoutMsg::ReadoutLen/2; i++) {
+                    for (volatile int i=0; i<10000; i++);
                     const uint8_t i0 = ReadByte();
                     
                     Clk::Write(1);
                     Clk::Write(0);
                     
+                    for (volatile int i=0; i<10000; i++);
                     const uint8_t i1 = ReadByte();
                     
                     Clk::Write(1);
