@@ -436,6 +436,27 @@ struct _TaskUSBDataIn {
 
 // _TaskReadout:
 struct _TaskReadout {
+    using Clk = GPIO<GPIOPortB, GPIO_PIN_2>; // AF9
+    using D0 = GPIO<GPIOPortF, GPIO_PIN_8>;  // AF10
+    using D1 = GPIO<GPIOPortF, GPIO_PIN_9>;  // AF10
+    using D2 = GPIO<GPIOPortF, GPIO_PIN_7>;  // AF9
+    using D3 = GPIO<GPIOPortF, GPIO_PIN_6>;  // AF9
+    using D4 = GPIO<GPIOPortE, GPIO_PIN_7>;  // AF10
+    using D5 = GPIO<GPIOPortE, GPIO_PIN_8>;  // AF10
+    using D6 = GPIO<GPIOPortE, GPIO_PIN_9>;  // AF10
+    using D7 = GPIO<GPIOPortE, GPIO_PIN_10>; // AF10
+    
+    static uint8_t ReadByte() {
+        return (((uint8_t)D7::Read()) << 7) |
+               (((uint8_t)D6::Read()) << 6) |
+               (((uint8_t)D5::Read()) << 5) |
+               (((uint8_t)D4::Read()) << 4) |
+               (((uint8_t)D3::Read()) << 3) |
+               (((uint8_t)D2::Read()) << 2) |
+               (((uint8_t)D1::Read()) << 1) |
+               (((uint8_t)D0::Read()) << 0) ;
+    }
+    
     static void Start(std::optional<size_t> len) {
         static std::optional<size_t> remLen;
         remLen = len;
@@ -450,6 +471,18 @@ struct _TaskReadout {
             // we release the chip select
             _ICE_ST_SPI_CS_::Write(0);
             _QSPI.command(_QSPICmd::ICEApp(_ICE::ReadoutMsg(), 0));
+            
+            Clk::Write(0);
+            Clk::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+            
+            D0::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+            D1::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+            D2::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+            D3::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+            D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+            D5::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+            D6::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+            D7::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
             
             // Read data over QSPI and write it to USB, indefinitely
             for (;;) {
@@ -477,8 +510,23 @@ struct _TaskReadout {
                 #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
                 while (!_ICE_ST_SPI_D_READY::Read());
                 
-                _QSPI.read(_QSPICmd::ICEAppReadOnly(len), buf.data+buf.len);
-                buf.len += len;
+                _Scheduler::Sleep(_Scheduler::Ms(1000));
+                
+                // 8 dummy cycles
+                for (uint32_t i=0; i<8; i++) {
+                    Clk::Write(1);
+                    Clk::Write(0);
+                }
+                
+                for (uint32_t i=0; i<_ICE::ReadoutMsg::ReadoutLen; i++) {
+                    buf.data[buf.len] = ReadByte();
+                    buf.len++;
+                    
+                    Clk::Write(1);
+                    Clk::Write(0);
+                }
+                
+                _Bufs.wpush();
                 
                 if (remLen) *remLen -= len;
             }
@@ -1226,21 +1274,21 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::HostModeEnter:     _HostModeEnter(cmd);                break;
     // ICE40 Bootloader
     case Op::ICERAMWrite:       _ICERAMWrite(cmd);                  break;
-    case Op::ICEFlashRead:      _ICEFlashRead(cmd);                 break;
-    case Op::ICEFlashWrite:     _ICEFlashWrite(cmd);                break;
+//    case Op::ICEFlashRead:      _ICEFlashRead(cmd);                 break;
+//    case Op::ICEFlashWrite:     _ICEFlashWrite(cmd);                break;
     // MSP430 Bootloader
-    case Op::MSPConnect:        _MSPConnect(cmd);                   break;
-    case Op::MSPDisconnect:     _MSPDisconnect(cmd);                break;
+//    case Op::MSPConnect:        _MSPConnect(cmd);                   break;
+//    case Op::MSPDisconnect:     _MSPDisconnect(cmd);                break;
     // MSP430 Debug
-    case Op::MSPRead:           _MSPRead(cmd);                      break;
-    case Op::MSPWrite:          _MSPWrite(cmd);                     break;
-    case Op::MSPDebug:          _MSPDebug(cmd);                     break;
+//    case Op::MSPRead:           _MSPRead(cmd);                      break;
+//    case Op::MSPWrite:          _MSPWrite(cmd);                     break;
+//    case Op::MSPDebug:          _MSPDebug(cmd);                     break;
     // SD Card
     case Op::SDCardInfo:        _SDCardInfo(cmd);                   break;
     case Op::SDRead:            _SDRead(cmd);                       break;
     // Img
-    case Op::ImgExposureSet:    _ImgExposureSet(cmd);               break;
-    case Op::ImgCapture:        _ImgCapture(cmd);                   break;
+//    case Op::ImgExposureSet:    _ImgExposureSet(cmd);               break;
+//    case Op::ImgCapture:        _ImgCapture(cmd);                   break;
     // Bad command
     default:                    _System::USBAcceptCommand(false);   break;
     }
