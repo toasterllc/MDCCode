@@ -467,83 +467,91 @@ struct _TaskReadout {
             // Start the USB DataIn task
             _TaskUSBDataIn::Start();
             
-            // Send the Readout message, which causes us to enter the readout mode until
-            // we release the chip select
-            _ICE_ST_SPI_CS_::Write(0);
-            _QSPI.command(_QSPICmd::ICEApp(_ICE::ReadoutMsg(), 0));
-            
-            Clk::Write(0);
-            Clk::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-            
-            D0::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-            D1::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-            D2::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-            D3::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-            D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-            D5::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-            D6::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-            D7::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
-            
-            // Read data over QSPI and write it to USB, indefinitely
             for (;;) {
-                // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
-                _Scheduler::Wait([] { return _Bufs.wok() && _QSPI.ready(); });
+                // Send the Readout message, which causes us to enter the readout mode until
+                // we release the chip select
+                _ICE_ST_SPI_CS_::Write(0);
+                _QSPI.command(_QSPICmd::ICEApp(_ICE::ReadoutMsg(), 0));
                 
-                const size_t len = std::min(remLen.value_or(SIZE_MAX), _ICE::ReadoutMsg::ReadoutLen);
-                auto& buf = _Bufs.wget();
+                Clk::Write(0);
+                Clk::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
                 
-                // If there's no more data to read, bail
-                if (!len) {
-                    // Before bailing, push the final buffer if it holds data
-                    if (buf.len) _Bufs.wpush();
-                    break;
-                }
+                D0::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+                D1::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+                D2::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+                D3::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+                D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+                D5::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+                D6::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
+                D7::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
                 
-                // If we can't read any more data into the producer buffer,
-                // push it so the data will be sent over USB
-                if (sizeof(buf.data)-buf.len < len) {
+                // Read data over QSPI and write it to USB, indefinitely
+                {
+                    // Wait until: there's an available buffer, QSPI is ready, and ICE40 says data is available
+                    _Scheduler::Wait([] { return _Bufs.wok() && _QSPI.ready(); });
+                    
+                    const size_t len = std::min(remLen.value_or(SIZE_MAX), _ICE::ReadoutMsg::ReadoutLen);
+                    auto& buf = _Bufs.wget();
+                    
+                    // If there's no more data to read, bail
+                    if (!len) {
+                        // Before bailing, push the final buffer if it holds data
+                        if (buf.len) _Bufs.wpush();
+                        break;
+                    }
+                    
+                    // If we can't read any more data into the producer buffer,
+                    // push it so the data will be sent over USB
+                    if (sizeof(buf.data)-buf.len < len) {
+                        _Bufs.wpush();
+                        continue;
+                    }
+                    
+                    // Wait until ICE40 signals that data is ready to be read
+                    #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
+                    while (!_ICE_ST_SPI_D_READY::Read());
+                    
+                    _Scheduler::Sleep(_Scheduler::Ms(1000));
+                    
+                    // 8 dummy cycles
+                    for (uint32_t i=0; i<8; i++) {
+                        Clk::Write(1);
+                        Clk::Write(0);
+                    }
+                    
+                    for (uint32_t i=0; i<_ICE::ReadoutMsg::ReadoutLen/2; i++) {
+                        for (volatile int i=0; i<10000; i++);
+                        const uint8_t i0 = ReadByte();
+                        
+                        Clk::Write(1);
+                        Clk::Write(0);
+                        
+                        for (volatile int i=0; i<10000; i++);
+                        const uint8_t i1 = ReadByte();
+                        
+                        Clk::Write(1);
+                        Clk::Write(0);
+                        
+                        // Demangle 2 bytes
+                        const uint8_t b0 = ((i0&0x0F)<<4) | ((i1&0x0F)<<0);
+                        const uint8_t b1 = ((i0&0xF0)<<0) | ((i1&0xF0)>>4);
+                        
+                        buf.data[buf.len] = b0;
+                        buf.len++;
+                        buf.data[buf.len] = b1;
+                        buf.len++;
+                    }
+                    
                     _Bufs.wpush();
-                    continue;
+                    
+                    if (remLen) *remLen -= len;
                 }
                 
-                // Wait until ICE40 signals that data is ready to be read
-                #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
-                while (!_ICE_ST_SPI_D_READY::Read());
+                _ICE_ST_SPI_CS_::Write(1);
+                _QSPI.configPins();
                 
-                _Scheduler::Sleep(_Scheduler::Ms(1000));
-                
-                // 8 dummy cycles
-                for (uint32_t i=0; i<8; i++) {
-                    Clk::Write(1);
-                    Clk::Write(0);
-                }
-                
-                for (uint32_t i=0; i<_ICE::ReadoutMsg::ReadoutLen/2; i++) {
-                    for (volatile int i=0; i<10000; i++);
-                    const uint8_t i0 = ReadByte();
-                    
-                    Clk::Write(1);
-                    Clk::Write(0);
-                    
-                    for (volatile int i=0; i<10000; i++);
-                    const uint8_t i1 = ReadByte();
-                    
-                    Clk::Write(1);
-                    Clk::Write(0);
-                    
-                    // Demangle 2 bytes
-                    const uint8_t b0 = ((i0&0x0F)<<4) | ((i1&0x0F)<<0);
-                    const uint8_t b1 = ((i0&0xF0)<<0) | ((i1&0xF0)>>4);
-                    
-                    buf.data[buf.len] = b0;
-                    buf.len++;
-                    buf.data[buf.len] = b1;
-                    buf.len++;
-                }
-                
-                _Bufs.wpush();
-                
-                if (remLen) *remLen -= len;
+                auto sdStatus = _ICE::SDStatus();
+                Assert(!sdStatus.datInCRCErr());
             }
         });
     }
