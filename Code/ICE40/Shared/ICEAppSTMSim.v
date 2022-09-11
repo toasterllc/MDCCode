@@ -234,23 +234,25 @@ end endtask
 
 // TestSDReadoutToSPI_Readout: required by TestSDReadoutToSPI
 task TestSDReadoutToSPI_Readout; begin
+    localparam WordCount = 4*1024;
+    
     PixelValidator.Config(
-        0,        // headerWordCount
-        4*1024,   // imageWidth
-        1,        // imageHeight
-        0,        // checksumWordCount
-        0,        // paddingWordCount
-        1,        // pixelValidate
-        16'hFFFF, // pixelInitial
-        -1,       // pixelDelta
-        1,        // pixelFilterPeriod
-        1         // pixelFilterKeep
+        0,          // headerWordCount
+        WordCount,  // imageWidth
+        1,          // imageHeight
+        0,          // checksumWordCount
+        0,          // paddingWordCount
+        1,          // pixelValidate
+        16'hFFFF,   // pixelInitial
+        -1,         // pixelDelta
+        1,          // pixelFilterPeriod
+        1           // pixelFilterKeep
     );
     
     SPIReadout(
-        1,      // waitForDReady
-        1,      // validateWords
-        4*1024  // wordCount
+        1,          // waitForDReady
+        1,          // validateWords
+        WordCount   // wordCount
     );
 end endtask
 
