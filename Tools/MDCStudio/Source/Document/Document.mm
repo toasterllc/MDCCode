@@ -294,15 +294,15 @@ using namespace MDCStudio;
 //        [self setContentView:imageGridView];
 //    }
     
-//    ImageSourcePtr selection = [_sourceListView selection];
-//    if (selection) {
-//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
-//        [imageGridView setDelegate:self];
-//        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
-//    
-//    } else {
-//        [_mainView setContentView:nil animation:MainViewAnimation::None];
-//    }
+    ImageSourcePtr selection = [_sourceListView selection];
+    if (selection) {
+        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
+        [imageGridView setDelegate:self];
+        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
+    
+    } else {
+        [_mainView setContentView:nil animation:MainViewAnimation::None];
+    }
 }
 
 // _openImage: open a particular image id, or an image offset from a particular image id
