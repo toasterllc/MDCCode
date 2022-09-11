@@ -375,7 +375,7 @@ private:
                         );
                     }
                     
-                    const uint32_t addCount = 1000;//deviceImgIdEnd-libImgIdEnd;
+                    const uint32_t addCount = deviceImgIdEnd-libImgIdEnd;
                     printf("Adding %ju images\n", (uintmax_t)addCount);
                     
                     _Range newest;
@@ -426,22 +426,25 @@ private:
         
         // Consumer
         std::thread consumerThread([&] {
-            auto startTime = std::chrono::steady_clock::now();
             SD::Block block = fullBlockStart;
             size_t addedImageCount = 0;
             
             for (;;) {
-                auto& buf = bufQueue.rget();
-                if (!buf.len) break; // We're done when we get an empty buffer
-                _addImages(renderer, buf.data, buf.len, block);
+                const auto& buf = bufQueue.rget();
+                
+                auto startTime = std::chrono::steady_clock::now();
+                const size_t imageCount = buf.len;
+                if (!imageCount) break; // We're done when we get an empty buffer
+                _addImages(renderer, buf.data, imageCount, block);
+                
+                block += imageCount * ImgSD::Full::ImageBlockCount;
+                addedImageCount += imageCount;
+                
                 bufQueue.rpop();
                 
-                block += buf.len * ImgSD::Full::ImageBlockCount;
-                addedImageCount += buf.len;
+                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+                printf("Consumer took %ju ms for %ju images (avg %f ms / img)\n", (uintmax_t)durationMs, (uintmax_t)imageCount, ((double)durationMs/imageCount));
             }
-            
-            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-            printf("Consumer took %ju ms for %ju images (avg %ju ms / img)\n", (uintmax_t)durationMs, (uintmax_t)addedImageCount, ((uintmax_t)durationMs/addedImageCount));
         });
         
         // Producer
@@ -541,7 +544,7 @@ private:
                 const Pipeline::Options pipelineOpts = {
                     .rawMode = true,
 //                    .reconstructHighlights  = { .en = true, },
-//                    .debayerLMMSE           = { .applyGamma = true, },
+                    .debayerLMMSE           = { .applyGamma = true, },
                 };
                 
                 Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
