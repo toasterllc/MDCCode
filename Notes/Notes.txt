@@ -50,6 +50,8 @@
     - We can make the whole package smaller by removing tall components from the backside, so the battery
       can be as flush as possible against the PCB
     
+    - Replace battery connector with something smaller
+    
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
 
 
