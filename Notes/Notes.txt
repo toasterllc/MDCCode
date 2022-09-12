@@ -4,10 +4,6 @@
 
 - Rev6 Board
     
-    - Consider combining rails if they're always on at the same time:
-        - VDD_B_1V8_IMG & VDD_B_1V8_SD
-        - VDD_B_2V8_IMG & VDD_B_2V8_SD
-    
     - Consider having STM control the VDD_B_X_EN rails directly, to clean up MSP's host-mode logic
         - MSP would control the VDD_B_X_EN rails with a weak pullup/pulldown. When STM is powered, it would control the rails with strong push/pull.
         - Rationale: we have a complicated host mode based on conflicting facts:
@@ -58,6 +54,10 @@
 
 - Rev6 Board Done
 
+    √ Combine rails since they're always on at the same time:
+        - VDD_B_1V8_IMG & VDD_B_1V8_SD
+        - VDD_B_2V8_IMG & VDD_B_2V8_SD
+    
     √ Consider adding a pull-down to VDD_B_EN to ensure the input isn't floating when MSP430 isn't powered
       (eg when it crashes and restarts, or when it hasn't been programmed)
     
