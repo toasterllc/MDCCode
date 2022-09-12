@@ -52,8 +52,6 @@
     - We can make the whole package smaller by removing tall components from the backside, so the battery
       can be as flush as possible against the PCB
     
-    - MDCStudio: Implement battery voltage monitoring
-    
     √ Consider adding a pull-down to VDD_B_EN to ensure the input isn't floating when MSP430 isn't powered
       (eg when it crashes and restarts, or when it hasn't been programmed)
     
@@ -544,7 +542,9 @@
 
 
 - Software / Firmware Todo
-
+    
+    - MDCStudio/STMApp: Implement battery voltage monitoring
+    
     - MDCStudio: Improve ImagePipeline perf so that we process each thumbnail in realtime to avoid slowing image loading more than the data transfer speed
         - Ie, make sure the bottleneck remains the data transfer
             - We transfer data at 42525582 bytes/sec -> /373760 == 113.778 thumbnails/sec -> 1/113.778 == 8.789 ms/thumbnail
