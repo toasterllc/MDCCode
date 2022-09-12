@@ -327,8 +327,8 @@ using namespace MDCStudio;
         ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageSource:imageSource];
         [imageView setDelegate:self];
         
-        NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageThumb.ref.timestamp];
-        printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageId, (uintmax_t)imageThumb.ref.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);
+        NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageThumb.timestamp];
+        printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageId, (uintmax_t)imageThumb.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);
         
 //        if (delta) {
 //            [_mainView setContentView:imageView animation:(delta>0 ? MainViewAnimation::SlideToLeft : MainViewAnimation::SlideToRight)];

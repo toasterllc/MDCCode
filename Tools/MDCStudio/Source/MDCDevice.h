@@ -511,26 +511,28 @@ private:
             // Populate ImageRef fields
             {
                 imageRef.id = imageId;
-                
+                imageRef.addr = block;
+            }
+            
+            // Populate ImageThumb fields
+            {
                 // If the image has an absolute time, use it
                 // If the image has a relative time (ie time since device boot), drop it
                 if (imgHeader.timestamp & MSP::TimeAbsoluteBase) {
-                    imageRef.timestamp = MSP::UnixTimeFromTime(imgHeader.timestamp);
+                    imageThumb.timestamp = MSP::UnixTimeFromTime(imgHeader.timestamp);
                 }
                 
-                imageRef.addr           = block;
+                imageThumb.imageWidth     = imgHeader.imageWidth;
+                imageThumb.imageHeight    = imgHeader.imageHeight;
                 
-                imageRef.imageWidth     = imgHeader.imageWidth;
-                imageRef.imageHeight    = imgHeader.imageHeight;
-                
-                imageRef.coarseIntTime  = imgHeader.coarseIntTime;
-                imageRef.analogGain     = imgHeader.analogGain;
+                imageThumb.coarseIntTime  = imgHeader.coarseIntTime;
+                imageThumb.analogGain     = imgHeader.analogGain;
                 
                 imageId++;
                 block += ImgSD::Full::ImageBlockCount;
             }
             
-            // Render the thumbnail into imageRef.thumbData
+            // Render the thumbnail into imageThumb.thumb
             {
                 const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
                 
@@ -542,7 +544,7 @@ private:
                 };
                 
                 const Pipeline::Options pipelineOpts = {
-                    .rawMode = true,
+                    .rawMode = false,
 //                    .reconstructHighlights  = { .en = true, },
                     .debayerLMMSE           = { .applyGamma = true, },
                 };
@@ -560,6 +562,11 @@ private:
                 };
                 
                 RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, buf);
+                
+                // Populate the illuminant
+                imageThumb.illum[0] = renderResult.illumEst[0];
+                imageThumb.illum[1] = renderResult.illumEst[1];
+                imageThumb.illum[2] = renderResult.illumEst[2];
             }
             
             deviceImgIdLast = imgHeader.id;

@@ -11,31 +11,13 @@ using ImageId = uint64_t;
 struct [[gnu::packed]] ImageRef {
     static constexpr uint32_t Version = 0;
     
-    enum Rotation : uint8_t {
-        None,
-        Clockwise90,
-        Clockwise180,
-        Clockwise270
-    };
-    
     ImageId id = 0;
-    
-    uint64_t timestamp = 0; // Unix time
-    
     uint64_t addr = 0;
-    
-    uint16_t imageWidth = 0;
-    uint16_t imageHeight = 0;
-    uint8_t _pad[4] = {};
-    
-    uint32_t coarseIntTime = 0;
-    uint32_t analogGain = 0;
-    
-    Rotation rotation = Rotation::None;
-    uint8_t _pad2[7] = {};
     
     uint8_t _reserved[64] = {}; // So we can add fields without doing a big data migration
 };
+
+static_assert(!(sizeof(ImageRef) % 8)); // Ensure that ImageRef is a multiple of 8 bytes
 
 struct [[gnu::packed]] ImageThumb {
     
@@ -48,11 +30,11 @@ struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 432;
 //    static constexpr size_t ThumbHeight     = 243;
     
-    static constexpr size_t ThumbWidth      = 480;
-    static constexpr size_t ThumbHeight     = 270;
+//    static constexpr size_t ThumbWidth      = 480;
+//    static constexpr size_t ThumbHeight     = 270;
     
-//    static constexpr size_t ThumbWidth      = 512;
-//    static constexpr size_t ThumbHeight     = 288;
+    static constexpr size_t ThumbWidth      = 512;
+    static constexpr size_t ThumbHeight     = 288;
     
 //    static constexpr size_t ThumbWidth      = 576;
 //    static constexpr size_t ThumbHeight     = 324;
@@ -62,9 +44,32 @@ struct [[gnu::packed]] ImageThumb {
     
     static constexpr size_t ThumbPixelSize  = 3;
     
+    enum Rotation : uint8_t {
+        None,
+        Clockwise90,
+        Clockwise180,
+        Clockwise270
+    };
+    
     ImageRef ref;
+    
+    uint64_t timestamp = 0; // Unix time
+    
+    uint16_t imageWidth = 0;
+    uint16_t imageHeight = 0;
+    uint8_t _pad[4] = {};
+    
+    uint32_t coarseIntTime = 0;
+    uint32_t analogGain = 0;
+    
+    double illum[3] = {0,0,0};
+    Rotation rotation = Rotation::None;
+    uint8_t _pad2[7] = {};
+    
     uint8_t thumb[ThumbWidth*ThumbHeight*ThumbPixelSize];
 };
+
+static_assert(!(sizeof(ImageThumb) % 8)); // Ensure that ImageThumb is a multiple of 8 bytes
 
 class ImageLibrary : public RecordStore<ImageRef::Version, ImageThumb, 512> {
 public:

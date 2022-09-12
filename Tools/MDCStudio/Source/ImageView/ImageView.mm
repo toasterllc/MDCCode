@@ -97,8 +97,10 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
             .pixels     = (ImagePixel*)(_image->data.get() + _image->off),
         };
         
+        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(imageThumb.illum);
         const Pipeline::Options pipelineOpts = {
-            .reconstructHighlights  = { .en = true, },
+            .illum                  = illum,
+//            .reconstructHighlights  = { .en = true, },
             .debayerLMMSE           = { .applyGamma = true, },
         };
         
@@ -337,8 +339,8 @@ static void _InitCommon(ImageScrollView* self) {
     
     // Set document view's size
     {
-        [_docWidth setConstant:imageThumb.ref.imageWidth*2];
-        [_docHeight setConstant:imageThumb.ref.imageHeight*2];
+        [_docWidth setConstant:imageThumb.imageWidth*2];
+        [_docHeight setConstant:imageThumb.imageHeight*2];
 //        NSView* doc = [_scrollView documentView];
 //        [doc setTranslatesAutoresizingMaskIntoConstraints:false];
 //        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeWidth
