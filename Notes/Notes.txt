@@ -18,6 +18,7 @@
             3. MSP rails are reset when connecting/disconnecting SBW/JTAG
         - To validate this idea, make sure MSP430 can pull up a net while connected to a high-Z STM GPIO
             √ We know it can because it's currently able to pullup the HOST_MODE_ net
+                - Takes 1.74µs for MSP to pullup HOST_MODE_ net to 90% of its VDD (3.3V)
     
     - Add soldermask markings for VDD / GND battery terminal leads
     
