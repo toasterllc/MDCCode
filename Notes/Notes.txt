@@ -4,23 +4,6 @@
 
 - Rev6 Board
     
-    - Replace U8 with a reliable 2.8V buck
-        - U8: voltage selection is sporadic. It seems the 'R2D converter' can fail to choose the right voltage
-          in our system because of either: slow rise of VDD_B (due to U1 slow start), or because when
-          power-cycling the device, it never actually turns off because VDD_B never drains
-              - Adding a voltage divider (56k,20k) to the enable pins seems to fix it
-                  - Rationale: Ven = 3.8*(20/(56+20)) = 1V -> VDD_B needs to reach 3.8V before U8 turns on,
-                    presumably because the added delay allows the R2D converter to function correctly
-                
-                  X Nevermind, it's broken again after soldering the image sensor + motion sensor (now it's 3V instead of 2.8V)
-        
-        - Good options:
-            - DIODESINC AP3429AKTTR-G1
-                - Stock: none
-            - TI TLV62568A-DRL
-                - Stock:
-                    - ti.com
-    
     - Add soldermask markings for VDD / GND battery terminal leads
     
     - Add soldermask markings for STM32 header pins, if we keep the header (since we want to make backside thinner)
@@ -49,6 +32,23 @@
 
 
 - Rev6 Board Done
+    
+    √ Replace U8 with a reliable 2.8V buck
+        - U8: voltage selection is sporadic. It seems the 'R2D converter' can fail to choose the right voltage
+          in our system because of either: slow rise of VDD_B (due to U1 slow start), or because when
+          power-cycling the device, it never actually turns off because VDD_B never drains
+              - Adding a voltage divider (56k,20k) to the enable pins seems to fix it
+                  - Rationale: Ven = 3.8*(20/(56+20)) = 1V -> VDD_B needs to reach 3.8V before U8 turns on,
+                    presumably because the added delay allows the R2D converter to function correctly
+                
+                  X Nevermind, it's broken again after soldering the image sensor + motion sensor (now it's 3V instead of 2.8V)
+        
+        - Good options:
+            - DIODESINC AP3429AKTTR-G1
+                - Stock: none
+            - TI TLV62568A-DRL
+                - Stock:
+                    - ti.com
     
     √ Make STM nets consistently named 'STM', not ST; eg 'ICE_ST_FLASH_EN' needs renaming
 
