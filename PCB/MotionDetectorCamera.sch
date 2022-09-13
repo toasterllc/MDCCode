@@ -4863,6 +4863,12 @@ be OK because the datasheet says the effective
 inductance can be +20 / -30% of that value, and our
 chosen inductors are +/-20%, so our minimum effective
 inductance would be 0.752 uH, which is greater than .7 uH.</text>
+<text x="178.308" y="187.452" size="1.016" layer="95" align="top-left">AP3429 is another good option for the buck IC,
+which has better efficiency. Its downsides are:
+it's physically larger and requires larger output
+capacitance (40uF), larger output inductance
+(2.2uH), and an additional capacitor around the
+feedback resistor.</text>
 </plain>
 <instances>
 <instance part="C8" gate="G$1" x="165.1" y="294.64" smashed="yes">

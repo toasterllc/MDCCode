@@ -12,8 +12,6 @@
       account miswiring the flash chip)
           - Need to update Pins.pcf to do this testing
     
-    - Fix: USB C connector mount point collides with lens holder plastic (see lens holder's keepout region)
-    
     - We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
       card sticks out the side of the board
     
@@ -22,7 +20,8 @@
     
     - Replace battery connector with something smaller
     
-    - Switch lens holder footprint to machined version
+    ? Switch lens holder footprint to machined version
+        - This would allow the enclosure to be low-profile
     
     - Remove STM32 header in favor of test clips + vias
         - Clips: https://www.amazon.com/Magic-Shell-Grabber-Analyzer-Accessories/dp/B07F69JHYK
@@ -32,6 +31,9 @@
 
 
 - Rev6 Board Done
+    
+    X Fix: USB C connector mount point collides with lens holder plastic (see lens holder's keepout region)
+        - Not an issue in practice
     
     √ Replace U8 with a reliable 2.8V buck
         - U8: voltage selection is sporadic. It seems the 'R2D converter' can fail to choose the right voltage
