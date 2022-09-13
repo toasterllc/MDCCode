@@ -7198,12 +7198,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="6.48033125" y1="8.09901875" x2="5.746746875" y2="8.2338" width="0" layer="19" extent="1-16"/>
 <wire x1="6.193234375" y1="6.911915625" x2="6.48033125" y2="8.09901875" width="0" layer="19" extent="1-16"/>
 </signal>
-<signal name="VDD_B_SD_EN">
-<contactref element="U15" pad="12"/>
-<wire x1="14.30274375" y1="9.367359375" x2="14.30274375" y2="8.572678125" width="0.127" layer="1"/>
-<wire x1="14.607559375" y1="8.2678625" x2="14.607559375" y2="7.691121875" width="0.127" layer="1"/>
-<wire x1="14.30274375" y1="8.572678125" x2="14.607559375" y2="8.2678625" width="0.127" layer="1"/>
-</signal>
 <signal name="VDD_B_2V8_IMG_SD_EN">
 <contactref element="U15" pad="20"/>
 <contactref element="U10" pad="3"/>
@@ -7227,6 +7221,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="8.509" y1="6.76" x2="10.66948125" y2="6.76" width="0.127" layer="1"/>
 <wire x1="10.66948125" y1="6.76" x2="10.672959375" y2="6.756521875" width="0.127" layer="1"/>
 <wire x1="0.967740625" y1="5.665259375" x2="3.46013125" y2="3.17286875" width="0.127" layer="1"/>
+<contactref element="U25" pad="A1"/>
+<wire x1="10.672959375" y1="6.756521875" x2="18.380403125" y2="0.77901875" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="VDD_B_1V8_IMG_SD_EN">
 <contactref element="U9" pad="3"/>
@@ -7256,6 +7252,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="42.18" y1="27.334" x2="42.492421875" y2="27.646421875" width="0.127" layer="16"/>
 <wire x1="42.492421875" y1="27.646421875" x2="43.179996875" y2="27.646421875" width="0.127" layer="16"/>
 <wire x1="43.179996875" y1="27.646421875" x2="44.069" y2="26.75741875" width="0.127" layer="16"/>
+<contactref element="U25" pad="A2"/>
+<wire x1="11.107559375" y1="4.321921875" x2="19.030403125" y2="0.77901875" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="IMG_CLK16MHZ">
 <contactref element="U23" pad="D7"/>

@@ -6171,13 +6171,6 @@ battery voltage.</text>
 <junction x="119.38" y="96.52"/>
 </segment>
 </net>
-<net name="VDD_B_SD_EN" class="0">
-<segment>
-<wire x1="129.54" y1="71.12" x2="127" y2="71.12" width="0.1524" layer="91"/>
-<label x="127" y="71.12" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U15" gate="C" pin="PA.B/P2.3/TA1.2/UCB0STE/A5"/>
-</segment>
-</net>
 <net name="VDD_B_1V8_STM" class="0">
 <segment>
 <wire x1="-10.16" y1="12.7" x2="-7.62" y2="12.7" width="0.1524" layer="91"/>
@@ -9539,6 +9532,20 @@ between input and output when its VDD=0.</text>
 <pinref part="U25" gate="E" pin="PE4_B1"/>
 <wire x1="2.54" y1="-83.82" x2="5.08" y2="-83.82" width="0.1524" layer="91"/>
 <label x="5.08" y="-83.82" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="VDD_B_1V8_IMG_SD_EN" class="0">
+<segment>
+<wire x1="2.54" y1="-78.74" x2="5.08" y2="-78.74" width="0.1524" layer="91"/>
+<label x="5.08" y="-78.74" size="1.778" layer="95"/>
+<pinref part="U25" gate="E" pin="PE2_A2"/>
+</segment>
+</net>
+<net name="VDD_B_2V8_IMG_SD_EN" class="0">
+<segment>
+<wire x1="2.54" y1="-81.28" x2="5.08" y2="-81.28" width="0.1524" layer="91"/>
+<label x="5.08" y="-81.28" size="1.778" layer="95"/>
+<pinref part="U25" gate="E" pin="PE3_A1"/>
 </segment>
 </net>
 </nets>
