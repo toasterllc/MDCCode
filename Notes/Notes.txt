@@ -35,6 +35,9 @@
     
     - Switch lens holder footprint to machined version
     
+    - Remove STM32 header in favor of test clips + vias
+        - Clips: https://www.amazon.com/Magic-Shell-Grabber-Analyzer-Accessories/dp/B07F69JHYK
+    
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
 
 
