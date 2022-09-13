@@ -28,15 +28,12 @@
     - We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
       card sticks out the side of the board
     
-    - We should be able to make the board smaller by removing the footprint for the motion sensor, and just
-      using through-hole wires to connect to it. The motion sensor will likely need to be raised up in the
-      final product, since the lens is longer than the motion sensor, therefore we'll need wires to connect
-      to the board anyway.
-    
     - We can make the whole package smaller by removing tall components from the backside, so the battery
       can be as flush as possible against the PCB
     
     - Replace battery connector with something smaller
+    
+    - Switch lens holder footprint to machined version
     
     - MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
 
@@ -44,6 +41,12 @@
 
 - Rev6 Board Done
 
+    X We should be able to make the board smaller by removing the footprint for the motion sensor, and just
+      using through-hole wires to connect to it. The motion sensor will likely need to be raised up in the
+      final product, since the lens is longer than the motion sensor, therefore we'll need wires to connect
+      to the board anyway.
+          - Nevermind, we're planning to have motion sensor be mounted to the board
+    
     √ Have STM control the VDD_B_X_EN rails directly, to clean up MSP's host-mode logic
         - MSP would control the VDD_B_X_EN rails with a weak pullup/pulldown. When STM is powered, it would control the rails with strong push/pull.
         - Rationale: we have a complicated host mode based on conflicting facts:
