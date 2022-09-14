@@ -1577,6 +1577,58 @@ SMD mount</description>
 <circle x="-10.9982" y="0" radius="1.016" width="2.54" layer="39"/>
 <circle x="10.9982" y="0" radius="1.016" width="2.54" layer="39"/>
 </package>
+<package name="SOICBITE">
+<smd name="1" x="1.905" y="0.75" dx="0.8" dy="1.5" layer="1" roundness="100" rot="R180"/>
+<smd name="2" x="0.635" y="0.75" dx="0.8" dy="1.5" layer="1" roundness="100" rot="R180"/>
+<smd name="3" x="-0.635" y="0.75" dx="0.8" dy="1.5" layer="1" roundness="100" rot="R180"/>
+<smd name="4" x="-1.905" y="0.75" dx="0.8" dy="1.5" layer="1" roundness="100" rot="R180"/>
+<smd name="5" x="-1.905" y="0.75" dx="0.8" dy="1.5" layer="16" roundness="100"/>
+<smd name="6" x="-0.635" y="0.75" dx="0.8" dy="1.5" layer="16" roundness="100"/>
+<smd name="7" x="0.635" y="0.75" dx="0.8" dy="1.5" layer="16" roundness="100"/>
+<smd name="8" x="1.905" y="0.75" dx="0.8" dy="1.5" layer="16" roundness="100"/>
+<text x="-3.252" y="2.645" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<hole x="-2.54" y="1.905" drill="0.7"/>
+<hole x="-1.27" y="1.905" drill="0.7"/>
+<hole x="0" y="1.905" drill="0.7"/>
+<hole x="1.27" y="1.905" drill="0.7"/>
+<hole x="2.54" y="1.905" drill="0.7"/>
+<wire x1="-3.175" y1="2.54" x2="3.175" y2="2.54" width="0.05" layer="21"/>
+<wire x1="3.175" y1="2.54" x2="3.175" y2="-0.381" width="0.05" layer="21"/>
+<wire x1="-3.175" y1="2.54" x2="-3.175" y2="-0.381" width="0.05" layer="21"/>
+<wire x1="-3.175" y1="-0.381" x2="3.175" y2="-0.381" width="0.05" layer="21"/>
+<polygon width="0.05" layer="21">
+<vertex x="3.154" y="1.038"/>
+<vertex x="1.754" y="-0.362"/>
+<vertex x="3.154" y="-0.362"/>
+</polygon>
+<polygon width="0.05" layer="39">
+<vertex x="-3.175" y="2.54"/>
+<vertex x="-3.175" y="-0.381"/>
+<vertex x="3.175" y="-0.381"/>
+<vertex x="3.175" y="2.54"/>
+</polygon>
+<polygon width="0.05" layer="40">
+<vertex x="-3.175" y="2.54"/>
+<vertex x="-3.175" y="-0.381"/>
+<vertex x="3.175" y="-0.381"/>
+<vertex x="3.175" y="2.54"/>
+</polygon>
+</package>
+<package name="TAGCONNECT-TC2030-NL">
+<smd name="2" x="-1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="1" x="-1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="4" x="0" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="3" x="0" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="6" x="1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="5" x="1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<rectangle x1="-1.27" y1="-0.635" x2="1.27" y2="0.635" layer="41"/>
+<hole x="-2.54" y="0" drill="0.9906"/>
+<hole x="2.54" y="1.016" drill="0.9906"/>
+<hole x="2.54" y="-1.016" drill="0.9906"/>
+<text x="-3.302" y="1.397" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<rectangle x1="-3.048" y1="-1.524" x2="3.048" y2="1.524" layer="39"/>
+<rectangle x1="-3.048" y1="-1.524" x2="3.048" y2="1.524" layer="40"/>
+</package>
 </packages>
 <packages3d>
 <package3d name="SON50P300X200X80-8N" urn="urn:adsk.eagle:package:36180302/1" type="model">
@@ -2647,6 +2699,37 @@ Header</text>
 <text x="0.075" y="0.8919" size="1.778" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
 <text x="0.075" y="-28.0641" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
 <pin name="PG" x="20.32" y="-22.86" visible="pin" length="short" rot="R180"/>
+</symbol>
+<symbol name="SOICBITE">
+<pin name="P$1" x="15.24" y="-2.54" visible="pad" length="short" rot="R180"/>
+<pin name="P$2" x="15.24" y="-5.08" visible="pad" length="short" rot="R180"/>
+<pin name="P$3" x="15.24" y="-7.62" visible="pad" length="short" rot="R180"/>
+<pin name="P$4" x="15.24" y="-10.16" visible="pad" length="short" rot="R180"/>
+<pin name="P$5" x="15.24" y="-15.24" visible="pad" length="short" rot="R180"/>
+<pin name="P$6" x="15.24" y="-17.78" visible="pad" length="short" rot="R180"/>
+<pin name="P$7" x="15.24" y="-20.32" visible="pad" length="short" rot="R180"/>
+<pin name="P$8" x="15.24" y="-22.86" visible="pad" length="short" rot="R180"/>
+<wire x1="0" y1="-25.4" x2="0" y2="0" width="0.254" layer="94"/>
+<wire x1="12.7" y1="0" x2="12.7" y2="-25.4" width="0.254" layer="94"/>
+<wire x1="12.7" y1="-25.4" x2="0" y2="-25.4" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="12.7" y2="0" width="0.254" layer="94"/>
+<text x="0" y="0.508" size="1.27" layer="95">&gt;NAME</text>
+<text x="2.54" y="-22.86" size="1.27" layer="94">SOICbite</text>
+</symbol>
+<symbol name="TAGCONNECT-TC2030-NL">
+<wire x1="0" y1="0" x2="0" y2="-20.32" width="0.254" layer="94"/>
+<wire x1="0" y1="-20.32" x2="17.78" y2="-20.32" width="0.254" layer="94"/>
+<wire x1="17.78" y1="-20.32" x2="17.78" y2="0" width="0.254" layer="94"/>
+<wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
+<text x="0.254" y="0.508" size="1.778" layer="95">&gt;NAME</text>
+<pin name="6" x="20.32" y="-17.78" length="short" rot="R180"/>
+<pin name="4" x="20.32" y="-12.7" length="short" rot="R180"/>
+<pin name="1" x="20.32" y="-2.54" length="short" rot="R180"/>
+<pin name="2" x="20.32" y="-5.08" length="short" rot="R180"/>
+<pin name="3" x="20.32" y="-7.62" length="short" rot="R180"/>
+<pin name="5" x="20.32" y="-15.24" length="short" rot="R180"/>
+<text x="1.016" y="-19.05" size="1.778" layer="94">Tag
+Connect</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -3960,6 +4043,58 @@ Header</text>
 </device>
 </devices>
 </deviceset>
+<deviceset name="SOICBITE" prefix="JP">
+<description>&lt;b&gt;SOICbite footprint&lt;/b&gt; &lt;br&gt;
+Allows for direct clipping of a SOIC-8 Testclip onto a PCB edge for Programming/Debugging purposes without extra components.
+&lt;br&gt;
+&lt;br&gt;
+Original footprint created by: Simon Merrit &lt;br&gt;
+Adapted to Eagle by: Chiel Voswijk (Foxhood)
+&lt;br&gt;
+&lt;br&gt;
+NOTE: Footprint is to be used on the edge of a PCB and may require the use of thin traces for accessing the inner pads. This may violate some Design Rules! One can often ignore these, but understand working is NOT guaranteed.</description>
+<gates>
+<gate name="G$1" symbol="SOICBITE" x="10.16" y="-2.54"/>
+</gates>
+<devices>
+<device name="" package="SOICBITE">
+<connects>
+<connect gate="G$1" pin="P$1" pad="1"/>
+<connect gate="G$1" pin="P$2" pad="2"/>
+<connect gate="G$1" pin="P$3" pad="3"/>
+<connect gate="G$1" pin="P$4" pad="4"/>
+<connect gate="G$1" pin="P$5" pad="5"/>
+<connect gate="G$1" pin="P$6" pad="6"/>
+<connect gate="G$1" pin="P$7" pad="7"/>
+<connect gate="G$1" pin="P$8" pad="8"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="TAGCONNECT-TC2030-NL" prefix="H">
+<description>TagConnect 6-pin Receptacle</description>
+<gates>
+<gate name="A" symbol="TAGCONNECT-TC2030-NL" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="TAGCONNECT-TC2030-NL">
+<connects>
+<connect gate="A" pin="1" pad="1"/>
+<connect gate="A" pin="2" pad="2"/>
+<connect gate="A" pin="3" pad="3"/>
+<connect gate="A" pin="4" pad="4"/>
+<connect gate="A" pin="5" pad="5"/>
+<connect gate="A" pin="6" pad="6"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 </libraries>
@@ -4712,6 +4847,8 @@ Header</text>
 <attribute name="MFG" value="Samsung"/>
 <attribute name="PN" value="CL21A226MQQNNNG"/>
 </part>
+<part name="JP1" library="EagleLibrary" deviceset="SOICBITE" device=""/>
+<part name="H2" library="EagleLibrary" deviceset="TAGCONNECT-TC2030-NL" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -8910,6 +9047,12 @@ between input and output when its VDD=0.</text>
 <instance part="H1" gate="G$1" x="223.52" y="-83.82" smashed="yes">
 <attribute name="NAME" x="223.52" y="-83.058" size="1.778" layer="95"/>
 </instance>
+<instance part="JP1" gate="G$1" x="220.98" y="-93.98" smashed="yes">
+<attribute name="NAME" x="220.98" y="-93.472" size="1.27" layer="95"/>
+</instance>
+<instance part="H2" gate="A" x="261.62" y="-93.98" smashed="yes">
+<attribute name="NAME" x="261.874" y="-93.472" size="1.778" layer="95"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -9163,6 +9306,21 @@ between input and output when its VDD=0.</text>
 <wire x1="78.74" y1="-139.7" x2="81.28" y2="-139.7" width="0.1524" layer="91"/>
 <label x="81.28" y="-139.7" size="1.778" layer="95"/>
 </segment>
+<segment>
+<pinref part="JP1" gate="G$1" pin="P$4"/>
+<wire x1="236.22" y1="-104.14" x2="238.76" y2="-104.14" width="0.1524" layer="91"/>
+<label x="238.76" y="-104.14" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="JP1" gate="G$1" pin="P$5"/>
+<wire x1="236.22" y1="-109.22" x2="238.76" y2="-109.22" width="0.1524" layer="91"/>
+<label x="238.76" y="-109.22" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="H2" gate="A" pin="5"/>
+<wire x1="281.94" y1="-109.22" x2="284.48" y2="-109.22" width="0.1524" layer="91"/>
+<label x="284.48" y="-109.22" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="VDD_B_1V8_STM" class="0">
 <segment>
@@ -9349,6 +9507,16 @@ between input and output when its VDD=0.</text>
 <label x="218.44" y="-86.36" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="H1" gate="G$1" pin="1"/>
 </segment>
+<segment>
+<pinref part="JP1" gate="G$1" pin="P$2"/>
+<wire x1="236.22" y1="-99.06" x2="238.76" y2="-99.06" width="0.1524" layer="91"/>
+<label x="238.76" y="-99.06" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="H2" gate="A" pin="1"/>
+<wire x1="281.94" y1="-96.52" x2="284.48" y2="-96.52" width="0.1524" layer="91"/>
+<label x="284.48" y="-96.52" size="1.778" layer="95"/>
+</segment>
 </net>
 <net name="STM_SWCLK" class="0">
 <segment>
@@ -9360,6 +9528,16 @@ between input and output when its VDD=0.</text>
 <wire x1="233.68" y1="-86.36" x2="236.22" y2="-86.36" width="0.1524" layer="91"/>
 <label x="236.22" y="-86.36" size="1.778" layer="95"/>
 <pinref part="H1" gate="G$1" pin="2"/>
+</segment>
+<segment>
+<pinref part="JP1" gate="G$1" pin="P$1"/>
+<wire x1="236.22" y1="-96.52" x2="238.76" y2="-96.52" width="0.1524" layer="91"/>
+<label x="238.76" y="-96.52" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="H2" gate="A" pin="2"/>
+<wire x1="281.94" y1="-99.06" x2="284.48" y2="-99.06" width="0.1524" layer="91"/>
+<label x="284.48" y="-99.06" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_STM_SPI_D2" class="0">
@@ -9432,6 +9610,11 @@ between input and output when its VDD=0.</text>
 <wire x1="220.98" y1="-88.9" x2="218.44" y2="-88.9" width="0.1524" layer="91"/>
 <label x="218.44" y="-88.9" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="H1" gate="G$1" pin="3"/>
+</segment>
+<segment>
+<pinref part="H2" gate="A" pin="6"/>
+<wire x1="281.94" y1="-111.76" x2="284.48" y2="-111.76" width="0.1524" layer="91"/>
+<label x="284.48" y="-111.76" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$29" class="0">

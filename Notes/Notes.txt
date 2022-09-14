@@ -3,6 +3,10 @@
         - It looks like Mouser will have ICE40HX8K-BG121 in stock in October 2022
     
     - Order TPS62A01DRLR from ti.com
+    
+    - Buy TagConnect cable (TC2030-IDC-NL) and grips
+        https://www.tag-connect.com/product/tc2030-idc-nl
+        https://www.tag-connect.com/product/grip-6-3-pack
 
 
 
@@ -18,15 +22,12 @@
     
     - Layout: We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
       card sticks out the side of the board
-    
-    - Replace STM32 header with SOICbite:
-        https://hackaday.io/project/165917-soicbite-programmingdebug-connector-footprint
-        - Clip:
-            https://www.amazon.com/Ximimark-SOIC8-Socket-Adpter-Programmer/dp/B07BRSVRXV/ref=sr_1_5?keywords=soic+test+clip&qid=1561491531&s=gateway&sr=8-5
 
 
 
 - Rev6 Board Done
+    
+    √ Replace STM32 header with 6-pin TagConnect
     
     √ Replace battery connector with a smaller version
     
