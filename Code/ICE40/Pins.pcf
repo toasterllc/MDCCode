@@ -1,4 +1,5 @@
 # Updated for board/Rev5 tag
+# Sorted with `sort -V`
 
 set_io ice_img_clk16mhz                 C11
 set_io ice_led[0]                       C9
@@ -9,13 +10,13 @@ set_io ice_msp_spi_clk                  K2
 set_io ice_msp_spi_data                 K3
 set_io ice_st_spi_clk                   L10
 set_io ice_st_spi_cs_                   K10
-set_io ice_st_spi_d[0]                  J9
+set_io ice_st_spi_d[0]                  L8
 set_io ice_st_spi_d[1]                  L7
 set_io ice_st_spi_d[2]                  K6
 set_io ice_st_spi_d[3]                  K7
-set_io ice_st_spi_d[4]                  J7
-set_io ice_st_spi_d[5]                  L8
-set_io ice_st_spi_d[6]                  K9
+set_io ice_st_spi_d[4]                  K9
+set_io ice_st_spi_d[5]                  J9
+set_io ice_st_spi_d[6]                  J7
 set_io ice_st_spi_d[7]                  J8
 set_io ice_st_spi_d_ready               L5
 set_io img_dclk                         F11
