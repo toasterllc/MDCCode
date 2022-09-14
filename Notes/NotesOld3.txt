@@ -1,5 +1,8 @@
 - Rev5 Done
     
+    X MSP430: If we need more FRAM/SRAM, replace MSP430FR2422 (8KB FRAM, 2KB SRAM) -> MSP430FR2433 (16KB FRAM, 4KB SRAM)
+        Unneeded for now
+    
     √ Implement thumbnailing in ICEAppMSP / MSPApp
         - Motivation: so MDCStudio can load thumbnails quickly
     
