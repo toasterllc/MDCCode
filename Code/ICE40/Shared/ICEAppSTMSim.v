@@ -1,8 +1,8 @@
 wire[7:0]   spi_dataOut;
 reg         spi_dataOutEn = 0;
 wire[7:0]   spi_dataIn;
-assign ice_st_spi_d = (spi_dataOutEn ? spi_dataOut : {8{1'bz}});
-assign spi_dataIn = ice_st_spi_d;
+assign ice_stm_spi_d = (spi_dataOutEn ? spi_dataOut : {8{1'bz}});
+assign spi_dataIn = ice_stm_spi_d;
 
 reg[`Msg_Len-1:0] spi_dataOutReg = 0;
 reg[`Resp_Len-1:0] spi_resp = 0;
@@ -12,7 +12,7 @@ reg[15:0] spi_dinReg = 0;
 assign spi_dataOut[7:4] = `LeftBits(spi_dataOutReg,0,4);
 assign spi_dataOut[3:0] = `LeftBits(spi_dataOutReg,0,4);
 
-localparam ice_st_spi_clk_HALF_PERIOD = 8; // 64 MHz
+localparam ice_stm_spi_clk_HALF_PERIOD = 8; // 64 MHz
 
 PixelValidator PixelValidator();
 
@@ -24,18 +24,18 @@ task _SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
     
         // 2 initial dummy cycles
         for (i=0; i<2; i++) begin
-            #(ice_st_spi_clk_HALF_PERIOD);
-            ice_st_spi_clk = 1;
-            #(ice_st_spi_clk_HALF_PERIOD);
-            ice_st_spi_clk = 0;
+            #(ice_stm_spi_clk_HALF_PERIOD);
+            ice_stm_spi_clk = 1;
+            #(ice_stm_spi_clk_HALF_PERIOD);
+            ice_stm_spi_clk = 0;
         end
         
         // Clock out message
         for (i=0; i<`Msg_Len/4; i++) begin
-            #(ice_st_spi_clk_HALF_PERIOD);
-            ice_st_spi_clk = 1;
-            #(ice_st_spi_clk_HALF_PERIOD);
-            ice_st_spi_clk = 0;
+            #(ice_stm_spi_clk_HALF_PERIOD);
+            ice_stm_spi_clk = 1;
+            #(ice_stm_spi_clk_HALF_PERIOD);
+            ice_stm_spi_clk = 0;
 
             spi_dataOutReg = spi_dataOutReg<<4|{4{1'b1}};
         end
@@ -49,10 +49,10 @@ task _SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
         // is supplied but the SPI data line is invalid.
         if (typ !== 0) begin
             for (i=0; i<4; i++) begin
-                #(ice_st_spi_clk_HALF_PERIOD);
-                ice_st_spi_clk = 1;
-                #(ice_st_spi_clk_HALF_PERIOD);
-                ice_st_spi_clk = 0;
+                #(ice_stm_spi_clk_HALF_PERIOD);
+                ice_stm_spi_clk = 1;
+                #(ice_stm_spi_clk_HALF_PERIOD);
+                ice_stm_spi_clk = 0;
             end
         end
         
@@ -68,18 +68,18 @@ task _ReadResp(input[31:0] len); begin
             spi_resp = spi_resp<<8;
             if (i[0]) spi_resp = spi_resp|spi_dinReg;
         
-        #(ice_st_spi_clk_HALF_PERIOD);
-        ice_st_spi_clk = 1;
+        #(ice_stm_spi_clk_HALF_PERIOD);
+        ice_stm_spi_clk = 1;
         
-        #(ice_st_spi_clk_HALF_PERIOD);
-        ice_st_spi_clk = 0;
+        #(ice_stm_spi_clk_HALF_PERIOD);
+        ice_stm_spi_clk = 0;
     end
 end endtask
 
 task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
     reg[15:0] i;
     
-    ice_st_spi_cs_ = 0;
+    ice_stm_spi_cs_ = 0;
     
         _SendMsg(typ, arg);
         
@@ -88,15 +88,15 @@ task SendMsg(input[`Msg_Type_Len-1:0] typ, input[`Msg_Arg_Len-1:0] arg); begin
             _ReadResp(`Resp_Len);
         end
     
-    ice_st_spi_cs_ = 1;
-    #1; // Allow ice_st_spi_cs_ to take effect
+    ice_stm_spi_cs_ = 1;
+    #1; // Allow ice_stm_spi_cs_ to take effect
 end endtask
 
 task TestRst; begin
     $display("\n[ICEAppSim] ========== TestRst ==========");
     
-    $display("[ICEAppSim] ice_st_spi_cs_ = 0");
-    ice_st_spi_cs_ = 0;
+    $display("[ICEAppSim] ice_stm_spi_cs_ = 0");
+    ice_stm_spi_cs_ = 0;
     #1;
     
     if (sim_spiRst_ === 1'b1) begin
@@ -106,8 +106,8 @@ task TestRst; begin
         `Finish;
     end
     
-    $display("\n[ICEAppSim] ice_st_spi_cs_ = 1");
-    ice_st_spi_cs_ = 1;
+    $display("\n[ICEAppSim] ice_stm_spi_cs_ = 1");
+    ice_stm_spi_cs_ = 1;
     #1;
     
     if (sim_spiRst_ === 1'b0) begin
@@ -117,8 +117,8 @@ task TestRst; begin
         `Finish;
     end
     
-    $display("\n[ICEAppSim] ice_st_spi_cs_ = 0");
-    ice_st_spi_cs_ = 0;
+    $display("\n[ICEAppSim] ice_stm_spi_cs_ = 0");
+    ice_stm_spi_cs_ = 0;
     #1;
     
     if (sim_spiRst_ === 1'b1) begin
@@ -142,10 +142,10 @@ task SPIReadout(
     
     $display("\n[ICEAppSim] ========== SPIReadout ==========");
     
-    ice_st_spi_cs_ = 1;
-    #1; // Let ice_st_spi_cs_ take effect
-    ice_st_spi_cs_ = 0;
-    #1; // Let ice_st_spi_cs_ take effect
+    ice_stm_spi_cs_ = 1;
+    #1; // Let ice_stm_spi_cs_ take effect
+    ice_stm_spi_cs_ = 0;
+    #1; // Let ice_stm_spi_cs_ take effect
     
     begin
         reg[31:0] wordIdx;
@@ -167,8 +167,8 @@ task SPIReadout(
                 done = 0;
                 while (!done) begin
                     #2000;
-                    $display("[ICEAppSim] Waiting for ice_st_spi_d_ready (%b)...", ice_st_spi_d_ready);
-                    if (ice_st_spi_d_ready) begin
+                    $display("[ICEAppSim] Waiting for ice_stm_spi_d_ready (%b)...", ice_stm_spi_d_ready);
+                    if (ice_stm_spi_d_ready) begin
                         done = 1;
                     end
                 end
@@ -178,10 +178,10 @@ task SPIReadout(
             
             // Dummy cycles
             for (i=0; i<8; i++) begin
-                #(ice_st_spi_clk_HALF_PERIOD);
-                ice_st_spi_clk = 1;
-                #(ice_st_spi_clk_HALF_PERIOD);
-                ice_st_spi_clk = 0;
+                #(ice_stm_spi_clk_HALF_PERIOD);
+                ice_stm_spi_clk = 1;
+                #(ice_stm_spi_clk_HALF_PERIOD);
+                ice_stm_spi_clk = 0;
             end
             
             #100; // TODO: remove; this helps debug where 8 dummy cycles end
@@ -207,8 +207,8 @@ task SPIReadout(
         end
     end
     
-    ice_st_spi_cs_ = 1;
-    #1; // Let ice_st_spi_cs_ take effect
+    ice_stm_spi_cs_ = 1;
+    #1; // Let ice_stm_spi_cs_ take effect
     
     if (validateWords) PixelValidator.Done();
     

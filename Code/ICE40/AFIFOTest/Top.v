@@ -7,7 +7,7 @@
 `timescale 1ns/1ps
 
 module Top(
-    input wire ice_st_spi_clk,
+    input wire ice_stm_spi_clk,
     input wire ice_img_clk16mhz,
     output reg[3:0] ice_led = 0
 );
@@ -69,7 +69,7 @@ module Top(
     `Sync(w_initDelayDone, initDelay_done, posedge, w_clk);
     
     reg[4:0] initDelay_counter = 0;
-    always @(posedge ice_st_spi_clk) begin
+    always @(posedge ice_stm_spi_clk) begin
         initDelay_counter <= initDelay_counter+1;
         if (&initDelay_counter) begin
             initDelay_done <= 1;
@@ -241,12 +241,12 @@ endmodule
 
 `ifdef SIM
 module Testbench();
-    reg ice_st_spi_clk = 0;
+    reg ice_stm_spi_clk = 0;
     reg ice_img_clk16mhz = 0;
     wire[3:0] ice_led;
     Top Top(.*);
     
-    initial forever #10 ice_st_spi_clk = !ice_st_spi_clk;
+    initial forever #10 ice_stm_spi_clk = !ice_stm_spi_clk;
     
     initial begin
         $dumpfile("Top.vcd");

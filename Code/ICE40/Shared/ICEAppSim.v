@@ -31,11 +31,11 @@ module ICEAppSim();
     reg         ice_msp_spi_clk = 0;
     wire        ice_msp_spi_data;
     
-    reg         ice_st_spi_clk = 0;
-    reg         ice_st_spi_cs_ = 1;
-    wire[7:0]   ice_st_spi_d;
-    wire        ice_st_spi_d_ready;
-    wire        ice_st_spi_d_ready_rev4bodge;
+    reg         ice_stm_spi_clk = 0;
+    reg         ice_stm_spi_cs_ = 1;
+    wire[7:0]   ice_stm_spi_d;
+    wire        ice_stm_spi_d_ready;
+    wire        ice_stm_spi_d_ready_rev4bodge;
     
     wire        sd_clk;
     wire        sd_cmd;

@@ -12,11 +12,11 @@ module Top(
     input wire          ice_img_clk16mhz,
     
     // STM SPI port
-    input wire          ice_st_spi_clk,
-    input wire          ice_st_spi_cs_,
-    inout wire[7:0]     ice_st_spi_d,
-    output wire         ice_st_spi_d_ready,
-    output wire         ice_st_spi_d_ready_rev4bodge,
+    input wire          ice_stm_spi_clk,
+    input wire          ice_stm_spi_cs_,
+    inout wire[7:0]     ice_stm_spi_d,
+    output wire         ice_stm_spi_d_ready,
+    output wire         ice_stm_spi_d_ready_rev4bodge,
     
     // SD port
     output wire         sd_clk,

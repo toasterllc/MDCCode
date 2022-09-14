@@ -44,10 +44,10 @@ module ICEApp(
     
 `ifdef ICEApp_STM_En
     // STM SPI port
-    input wire          ice_st_spi_clk,
-    input wire          ice_st_spi_cs_,
-    inout wire[7:0]     ice_st_spi_d,
-    output wire         ice_st_spi_d_ready,
+    input wire          ice_stm_spi_clk,
+    input wire          ice_stm_spi_cs_,
+    inout wire[7:0]     ice_stm_spi_d,
+    output wire         ice_stm_spi_d_ready,
 `endif // ICEApp_STM_En
     
 `ifdef _ICEApp_SD_En
@@ -527,11 +527,11 @@ module ICEApp(
     //     MsgCycleCount=(`Msg_Len/4)-1, so with this dummy byte,
     //     MsgCycleCount=(`Msg_Len/4)+1.
     //
-    //   - Commands use 4 lines (ice_st_ice_st_spi_d[3:0]), so we divide `Msg_Len by 4.
+    //   - Commands use 4 lines (ice_stm_ice_stm_spi_d[3:0]), so we divide `Msg_Len by 4.
     //     Commands use only 4 lines, instead of all 8 lines used for responses,
     //     because dual-QSPI doesn't allow that, since dual-QSPI is meant to control
-    //     two separate flash devices, so it outputs the same data on ice_st_ice_st_spi_d[3:0]
-    //     that it does on ice_st_ice_st_spi_d[7:4].
+    //     two separate flash devices, so it outputs the same data on ice_stm_ice_stm_spi_d[3:0]
+    //     that it does on ice_stm_ice_stm_spi_d[7:4].
     localparam MsgCycleCount = (`Msg_Len/4)+1;
     
     localparam SPI_State_MsgIn      = 0;    // +2
@@ -544,7 +544,7 @@ module ICEApp(
     reg spi_dataOutLoad_ = 0;
     reg[15:0] spi_dataOut = 0;
     wire[7:0] spi_dataIn;
-    wire[7:0] spi_dataInRaw = ice_st_spi_d;
+    wire[7:0] spi_dataInRaw = ice_stm_spi_d;
     
     // spi_msgTypeRaw / spi_msgType: STM32's QSPI messaging mechanism doesn't allow
     // for setting the first bit to 1, so we fake the first bit.
@@ -594,7 +594,7 @@ module ICEApp(
             `endif // ICEApp_MSP_En
             
             `ifdef ICEApp_STM_En
-                // Commands only use 4 lines (ice_st_spi_d[3:0]) because it's quadspi.
+                // Commands only use 4 lines (ice_stm_spi_d[3:0]) because it's quadspi.
                 // See MsgCycleCount comment above.
                 spi_msg <= spi_msg<<4|spi_dataIn[3:0];
                 spi_dataOutLoad_ <= !spi_dataOutLoad_;
@@ -900,30 +900,30 @@ module ICEApp(
     
 `ifdef ICEApp_STM_En
     // ====================
-    // Pin: ice_st_spi_clk
+    // Pin: ice_stm_spi_clk
     // ====================
     SB_IO #(
         .PIN_TYPE(6'b0000_01) // Output: none; input: unregistered
-    ) SB_IO_ice_st_spi_clk (
-        .PACKAGE_PIN(ice_st_spi_clk),
+    ) SB_IO_ice_stm_spi_clk (
+        .PACKAGE_PIN(ice_stm_spi_clk),
         .D_IN_0(spi_clk)
     );
     
     // ====================
-    // Pin: ice_st_spi_cs_
+    // Pin: ice_stm_spi_cs_
     // ====================
     wire spi_cs_;
     SB_IO #(
         .PIN_TYPE(6'b0000_01), // Output: none; input: unregistered
         .PULLUP(1'b1)
-    ) SB_IO_ice_st_spi_cs_ (
-        .PACKAGE_PIN(ice_st_spi_cs_),
+    ) SB_IO_ice_stm_spi_cs_ (
+        .PACKAGE_PIN(ice_stm_spi_cs_),
         .D_IN_0(spi_cs_)
     );
     assign spi_rst_ = !spi_cs_;
     
     // ====================
-    // Pin: ice_st_spi_d
+    // Pin: ice_stm_spi_d
     // ====================
     wire[7:0] spi_dataOutQSPIMangled = {
         `LeftBits(spi_dataOut, 8, 4),   // High 4 bits: 4 bits of byte 1
@@ -934,10 +934,10 @@ module ICEApp(
     for (i=0; i<8; i++) begin
         SB_IO #(
             .PIN_TYPE(6'b1001_00) // Output: registered with unregistered enable; input: registered
-        ) SB_IO_ice_st_spi_d (
+        ) SB_IO_ice_stm_spi_d (
             .INPUT_CLK(spi_clk),
             .OUTPUT_CLK(spi_clk),
-            .PACKAGE_PIN(ice_st_spi_d[i]),
+            .PACKAGE_PIN(ice_stm_spi_d[i]),
             .OUTPUT_ENABLE(spi_dataOutEn),
             .D_OUT_0(spi_dataOutQSPIMangled[i]),
             .D_IN_0(spi_dataIn[i])
@@ -945,13 +945,13 @@ module ICEApp(
     end
     
     // ====================
-    // Pin: ice_st_spi_d_ready
+    // Pin: ice_stm_spi_d_ready
     // ====================
-    // ice_st_spi_d_ready: we have to use AFIFOChain's `async_r_thresh` (the r_clk async version),
+    // ice_stm_spi_d_ready: we have to use AFIFOChain's `async_r_thresh` (the r_clk async version),
     // not `r_thresh` (the r_clk sync version) because when STM32 is waiting for data, it's not
     // driving spi_clk (AFIFOChain's r_clk), so `r_thresh` is never asserted. `async_r_thresh`
     // is driven by AFIFOChain's `w_clk`, so it can toggle while `r_clk` is halted.
-    assign ice_st_spi_d_ready = readoutfifo_async_r_thresh;
+    assign ice_stm_spi_d_ready = readoutfifo_async_r_thresh;
 `endif // ICEApp_STM_En
     
 endmodule
