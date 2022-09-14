@@ -586,45 +586,57 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="X" x="0" y="0" dx="0.4" dy="0.4" layer="1" roundness="100" cream="no"/>
 <text x="0" y="0.327" size="0.508" layer="25" font="vector" align="bottom-center">&gt;NAME</text>
 </package>
-<package name="S-MOUNT-LENS-HOLDER">
+<package name="M12LENSES-PT-LH008P">
 <description>Chip, 3.20 X 2.50 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
-<text x="-10.956" y="11.2871" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<pad name="1" x="-10.9982" y="0" drill="1.778"/>
-<pad name="2" x="10.9982" y="0" drill="1.778"/>
-<circle x="-10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
-<circle x="10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
-<circle x="0" y="0" radius="6.858" width="0.05" layer="21"/>
+<text x="-7.056" y="7.8871" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<pad name="1" x="-9" y="0" drill="1.7"/>
+<pad name="2" x="9" y="0" drill="1.7"/>
+<circle x="-9" y="0" radius="2.25" width="0.05" layer="21"/>
+<circle x="9" y="0" radius="2.25" width="0.05" layer="21"/>
+<circle x="0" y="0" radius="6" width="0.05" layer="21"/>
 <polygon width="0.127" layer="39">
-<vertex x="-10.9728" y="10.9728"/>
-<vertex x="-10.9728" y="-10.9728"/>
-<vertex x="-8.636" y="-10.9728"/>
-<vertex x="-8.636" y="10.9728"/>
+<vertex x="-7.175" y="7.55"/>
+<vertex x="-7.175" y="-7.55"/>
+<vertex x="-6.125" y="-7.55"/>
+<vertex x="-6.125" y="7.55"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="8.636" y="10.9728"/>
-<vertex x="8.636" y="-10.9728"/>
-<vertex x="10.9728" y="-10.9728"/>
-<vertex x="10.9728" y="10.9728"/>
+<vertex x="6.125" y="7.55"/>
+<vertex x="6.125" y="-7.55"/>
+<vertex x="7.175" y="-7.55"/>
+<vertex x="7.175" y="7.55"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="-10.9728" y="8.636"/>
-<vertex x="10.9728" y="8.636"/>
-<vertex x="10.9728" y="10.9728"/>
-<vertex x="-10.9728" y="10.9728"/>
+<vertex x="-7.175" y="6.625"/>
+<vertex x="7.175" y="6.625"/>
+<vertex x="7.175" y="7.55"/>
+<vertex x="-7.175" y="7.55"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="-10.9728" y="-10.9728"/>
-<vertex x="10.9728" y="-10.9728"/>
-<vertex x="10.9728" y="-8.636"/>
-<vertex x="-10.9728" y="-8.636"/>
+<vertex x="-7.175" y="-7.55"/>
+<vertex x="7.175" y="-7.55"/>
+<vertex x="7.175" y="-6.625"/>
+<vertex x="-7.175" y="-6.625"/>
 </polygon>
-<wire x1="-10.9982" y1="10.9982" x2="10.9982" y2="10.9982" width="0.05" layer="21"/>
-<wire x1="10.9982" y1="10.9982" x2="10.9982" y2="-10.9982" width="0.05" layer="21"/>
-<wire x1="10.9982" y1="-10.9982" x2="-10.9982" y2="-10.9982" width="0.05" layer="21"/>
-<wire x1="-10.9982" y1="-10.9982" x2="-10.9982" y2="10.9982" width="0.05" layer="21"/>
-<circle x="-10.9982" y="0" radius="1.016" width="2.54" layer="39"/>
-<circle x="10.9982" y="0" radius="1.016" width="2.54" layer="39"/>
+<wire x1="-7.175" y1="7.55" x2="7.175" y2="7.55" width="0.05" layer="21"/>
+<wire x1="7.175" y1="7.55" x2="7.175" y2="-7.55" width="0.05" layer="21"/>
+<wire x1="7.175" y1="-7.55" x2="-7.175" y2="-7.55" width="0.05" layer="21"/>
+<wire x1="-7.175" y1="-7.55" x2="-7.175" y2="7.55" width="0.05" layer="21"/>
+<circle x="-9" y="0" radius="1.016" width="2.54" layer="39"/>
+<circle x="9" y="0" radius="1.016" width="2.54" layer="39"/>
+<polygon width="0.127" layer="39">
+<vertex x="-9" y="-2.25"/>
+<vertex x="-6.75" y="-2.25"/>
+<vertex x="-6.75" y="2.25"/>
+<vertex x="-9" y="2.25"/>
+</polygon>
+<polygon width="0.127" layer="39">
+<vertex x="6.75" y="-2.25"/>
+<vertex x="9" y="-2.25"/>
+<vertex x="9" y="2.25"/>
+<vertex x="6.75" y="2.25"/>
+</polygon>
 </package>
 <package name="STM-STM32F730I8" urn="urn:adsk.eagle:footprint:22433302/1" locally_modified="yes">
 <description>225-BGA, collapsing, 0.65 mm pitch, 10.00 X 10.00 X 0.60 mm body
@@ -1548,6 +1560,46 @@ SMD mount</description>
 <vertex x="-0.6" y="-0.1"/>
 <vertex x="0.2" y="0.8"/>
 </polygon>
+</package>
+<package name="MARSHALL-V-LH4">
+<description>Chip, 3.20 X 2.50 X 0.70 mm body
+&lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
+<text x="-10.956" y="11.2871" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<pad name="1" x="-10.9982" y="0" drill="1.778"/>
+<pad name="2" x="10.9982" y="0" drill="1.778"/>
+<circle x="-10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
+<circle x="10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
+<circle x="0" y="0" radius="6.858" width="0.05" layer="21"/>
+<polygon width="0.127" layer="39">
+<vertex x="-10.9728" y="10.9728"/>
+<vertex x="-10.9728" y="-10.9728"/>
+<vertex x="-8.636" y="-10.9728"/>
+<vertex x="-8.636" y="10.9728"/>
+</polygon>
+<polygon width="0.127" layer="39">
+<vertex x="8.636" y="10.9728"/>
+<vertex x="8.636" y="-10.9728"/>
+<vertex x="10.9728" y="-10.9728"/>
+<vertex x="10.9728" y="10.9728"/>
+</polygon>
+<polygon width="0.127" layer="39">
+<vertex x="-10.9728" y="8.636"/>
+<vertex x="10.9728" y="8.636"/>
+<vertex x="10.9728" y="10.9728"/>
+<vertex x="-10.9728" y="10.9728"/>
+</polygon>
+<polygon width="0.127" layer="39">
+<vertex x="-10.9728" y="-10.9728"/>
+<vertex x="10.9728" y="-10.9728"/>
+<vertex x="10.9728" y="-8.636"/>
+<vertex x="-10.9728" y="-8.636"/>
+</polygon>
+<wire x1="-10.9982" y1="10.9982" x2="10.9982" y2="10.9982" width="0.05" layer="21"/>
+<wire x1="10.9982" y1="10.9982" x2="10.9982" y2="-10.9982" width="0.05" layer="21"/>
+<wire x1="10.9982" y1="-10.9982" x2="-10.9982" y2="-10.9982" width="0.05" layer="21"/>
+<wire x1="-10.9982" y1="-10.9982" x2="-10.9982" y2="10.9982" width="0.05" layer="21"/>
+<circle x="-10.9982" y="0" radius="1.016" width="2.54" layer="39"/>
+<circle x="10.9982" y="0" radius="1.016" width="2.54" layer="39"/>
 </package>
 </packages>
 <packages3d>
@@ -3083,13 +3135,28 @@ Connector</text>
 <gate name="G$1" symbol="S-MOUNT-LENS-HOLDER" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="S-MOUNT-LENS-HOLDER">
+<device name="MARSHALL-V-LH4" package="MARSHALL-V-LH4">
 <connects>
 <connect gate="G$1" pin="GND1" pad="1"/>
 <connect gate="G$1" pin="GND2" pad="2"/>
 </connects>
 <technologies>
-<technology name=""/>
+<technology name="">
+<attribute name="MFG" value="Marshall Electronics"/>
+<attribute name="PN" value="V-LH4"/>
+</technology>
+</technologies>
+</device>
+<device name="M12LENSES-PT-LH008P" package="M12LENSES-PT-LH008P">
+<connects>
+<connect gate="G$1" pin="GND1" pad="1"/>
+<connect gate="G$1" pin="GND2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="M12 Lenses"/>
+<attribute name="PN" value="PT-LH008P"/>
+</technology>
 </technologies>
 </device>
 </devices>
@@ -4205,10 +4272,7 @@ Connector</text>
 <attribute name="PN" value="WR04X473 JTL"/>
 </part>
 <part name="TP2" library="EagleLibrary" deviceset="TEST-POINT" device=""/>
-<part name="J9" library="EagleLibrary" deviceset="S-MOUNT-LENS-HOLDER" device="">
-<attribute name="MFG" value="Marshall Electronics"/>
-<attribute name="PN" value="V-LH4"/>
-</part>
+<part name="J9" library="EagleLibrary" deviceset="S-MOUNT-LENS-HOLDER" device="M12LENSES-PT-LH008P"/>
 <part name="U25" library="EagleLibrary" deviceset="STM-STM32F730" device="">
 <attribute name="PN" value="STM32F730I8K6"/>
 </part>

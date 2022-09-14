@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
+<grid distance="0.1" unitdist="mm" unit="mm" style="lines" multiple="1" display="no" altdistance="0.001" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
@@ -602,45 +602,57 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <smd name="X" x="0" y="0" dx="0.4" dy="0.4" layer="1" roundness="100" cream="no"/>
 <text x="0" y="0.327" size="0.508" layer="25" font="vector" align="bottom-center">&gt;NAME</text>
 </package>
-<package name="S-MOUNT-LENS-HOLDER">
+<package name="M12LENSES-PT-LH008P">
 <description>Chip, 3.20 X 2.50 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
-<text x="-10.956" y="11.2871" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<pad name="1" x="-10.9982" y="0" drill="1.778"/>
-<pad name="2" x="10.9982" y="0" drill="1.778"/>
-<circle x="-10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
-<circle x="10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
-<circle x="0" y="0" radius="6.858" width="0.05" layer="21"/>
+<text x="-7.056" y="7.8871" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<pad name="1" x="-9" y="0" drill="1.7"/>
+<pad name="2" x="9" y="0" drill="1.7"/>
+<circle x="-9" y="0" radius="2.25" width="0.05" layer="21"/>
+<circle x="9" y="0" radius="2.25" width="0.05" layer="21"/>
+<circle x="0" y="0" radius="6" width="0.05" layer="21"/>
 <polygon width="0.127" layer="39">
-<vertex x="-10.9728" y="10.9728"/>
-<vertex x="-10.9728" y="-10.9728"/>
-<vertex x="-8.636" y="-10.9728"/>
-<vertex x="-8.636" y="10.9728"/>
+<vertex x="-7.175" y="7.55"/>
+<vertex x="-7.175" y="-7.55"/>
+<vertex x="-6.125" y="-7.55"/>
+<vertex x="-6.125" y="7.55"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="8.636" y="10.9728"/>
-<vertex x="8.636" y="-10.9728"/>
-<vertex x="10.9728" y="-10.9728"/>
-<vertex x="10.9728" y="10.9728"/>
+<vertex x="6.125" y="7.55"/>
+<vertex x="6.125" y="-7.55"/>
+<vertex x="7.175" y="-7.55"/>
+<vertex x="7.175" y="7.55"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="-10.9728" y="8.636"/>
-<vertex x="10.9728" y="8.636"/>
-<vertex x="10.9728" y="10.9728"/>
-<vertex x="-10.9728" y="10.9728"/>
+<vertex x="-7.175" y="6.625"/>
+<vertex x="7.175" y="6.625"/>
+<vertex x="7.175" y="7.55"/>
+<vertex x="-7.175" y="7.55"/>
 </polygon>
 <polygon width="0.127" layer="39">
-<vertex x="-10.9728" y="-10.9728"/>
-<vertex x="10.9728" y="-10.9728"/>
-<vertex x="10.9728" y="-8.636"/>
-<vertex x="-10.9728" y="-8.636"/>
+<vertex x="-7.175" y="-7.55"/>
+<vertex x="7.175" y="-7.55"/>
+<vertex x="7.175" y="-6.625"/>
+<vertex x="-7.175" y="-6.625"/>
 </polygon>
-<wire x1="-10.9982" y1="10.9982" x2="10.9982" y2="10.9982" width="0.05" layer="21"/>
-<wire x1="10.9982" y1="10.9982" x2="10.9982" y2="-10.9982" width="0.05" layer="21"/>
-<wire x1="10.9982" y1="-10.9982" x2="-10.9982" y2="-10.9982" width="0.05" layer="21"/>
-<wire x1="-10.9982" y1="-10.9982" x2="-10.9982" y2="10.9982" width="0.05" layer="21"/>
-<circle x="-10.9982" y="0" radius="1.016" width="2.54" layer="39"/>
-<circle x="10.9982" y="0" radius="1.016" width="2.54" layer="39"/>
+<wire x1="-7.175" y1="7.55" x2="7.175" y2="7.55" width="0.05" layer="21"/>
+<wire x1="7.175" y1="7.55" x2="7.175" y2="-7.55" width="0.05" layer="21"/>
+<wire x1="7.175" y1="-7.55" x2="-7.175" y2="-7.55" width="0.05" layer="21"/>
+<wire x1="-7.175" y1="-7.55" x2="-7.175" y2="7.55" width="0.05" layer="21"/>
+<circle x="-9" y="0" radius="1.016" width="2.54" layer="39"/>
+<circle x="9" y="0" radius="1.016" width="2.54" layer="39"/>
+<polygon width="0.127" layer="39">
+<vertex x="-9" y="-2.25"/>
+<vertex x="-6.75" y="-2.25"/>
+<vertex x="-6.75" y="2.25"/>
+<vertex x="-9" y="2.25"/>
+</polygon>
+<polygon width="0.127" layer="39">
+<vertex x="6.75" y="-2.25"/>
+<vertex x="9" y="-2.25"/>
+<vertex x="9" y="2.25"/>
+<vertex x="6.75" y="2.25"/>
+</polygon>
 </package>
 <package name="STM-STM32F730I8" urn="urn:adsk.eagle:footprint:22433302/1" locally_modified="yes">
 <description>225-BGA, collapsing, 0.65 mm pitch, 10.00 X 10.00 X 0.60 mm body
@@ -1938,10 +1950,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <element name="TP2" library="EagleLibrary" package="TEST-POINT" value="TEST-POINT" x="24.6126" y="19.7394" smashed="yes">
 <attribute name="NAME" x="24.729440625" y="20.1426" size="0.508" layer="25" font="vector" align="bottom-center"/>
 </element>
-<element name="J9" library="EagleLibrary" package="S-MOUNT-LENS-HOLDER" value="S-MOUNT-LENS-HOLDER" x="35.1424" y="17.392" smashed="yes" rot="R90">
-<attribute name="MFG" value="Marshall Electronics" x="35.1424" y="17.392" size="1.778" layer="27" rot="R90" display="off"/>
+<element name="J9" library="EagleLibrary" package="M12LENSES-PT-LH008P" value="S-MOUNT-LENS-HOLDERM12LENSES-PT-LH008P" x="35.1424" y="17.392" smashed="yes" rot="R90">
+<attribute name="MFG" value="M12 Lenses" x="35.1424" y="17.392" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="45.6993" y="5.928" size="1.27" layer="25" font="vector" rot="R180"/>
-<attribute name="PN" value="V-LH4" x="35.1424" y="17.392" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="PN" value="PT-LH008P" x="35.1424" y="17.392" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="U25" library="EagleLibrary" package="STM-STM32F730I8" value="STM-STM32F730" x="22.930403125" y="5.32901875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="STMicroelectronics" x="22.930403125" y="5.32901875" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -3793,6 +3805,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="33.3795375" y1="24.49811875" x2="34.02943125" y2="22.7594625" width="0" layer="19" extent="1-16"/>
 <wire x1="33.8102625" y1="24.746659375" x2="33.3795375" y2="24.49811875" width="0" layer="19" extent="1-16"/>
 <wire x1="32.68139375" y1="24.90138125" x2="33.3795375" y2="24.49811875" width="0" layer="19" extent="1-16"/>
+<wire x1="35.1424" y1="26.392" x2="33.8102625" y2="24.746659375" width="0" layer="19" extent="16-16"/>
 <wire x1="32.60495" y1="11.4654" x2="33.502759375" y2="13.530940625" width="0" layer="19" extent="16-16"/>
 <wire x1="32.60495" y1="10.600684375" x2="32.60495" y2="11.4654" width="0" layer="19" extent="16-16"/>
 <wire x1="32.60495" y1="9.7382" x2="32.60495" y2="10.600684375" width="0" layer="19" extent="16-16"/>
@@ -3804,6 +3817,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="37.68851875" y1="23.153159375" x2="37.4305" y2="21.9847625" width="0" layer="19" extent="16-16"/>
 <wire x1="38.490378125" y1="23.85818125" x2="37.68851875" y2="23.153159375" width="0" layer="19" extent="1-1"/>
 <wire x1="38.227" y1="25.556" x2="38.490378125" y2="23.85818125" width="0" layer="19" extent="1-1"/>
+<wire x1="35.1424" y1="8.392" x2="34.785040625" y2="10.6773" width="0" layer="19" extent="1-1"/>
 <wire x1="36.9972" y1="15.407" x2="34.3972" y2="15.407" width="0" layer="19" extent="1-1"/>
 <wire x1="37.6472" y1="16.057" x2="36.9972" y2="15.407" width="0" layer="19" extent="1-1"/>
 <wire x1="37.6472" y1="16.707" x2="37.6472" y2="16.057" width="0" layer="19" extent="1-1"/>
@@ -3864,7 +3878,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="43.596759375" y1="0.93348125" x2="40.366759375" y2="0.93348125" width="0" layer="19" extent="1-1"/>
 <wire x1="44.396759375" y1="0.93348125" x2="43.596759375" y2="0.93348125" width="0" layer="19" extent="1-1"/>
 <wire x1="42.81344375" y1="3.256484375" x2="43.596759375" y2="0.93348125" width="0" layer="19" extent="1-1"/>
-<wire x1="35.1424" y1="6.3938" x2="32.60495" y2="8.8746" width="0" layer="19" extent="16-16"/>
 <wire x1="27.691078125" y1="25.9878" x2="25.0197" y2="23.435096875" width="0" layer="19" extent="16-16"/>
 <wire x1="27.691078125" y1="26.7498" x2="27.691078125" y2="25.9878" width="0" layer="19" extent="1-1"/>
 <wire x1="27.691078125" y1="27.5118" x2="27.691078125" y2="26.7498" width="0" layer="19" extent="1-1"/>
@@ -3877,7 +3890,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="28.6528625" y1="31.93218125" x2="29.535278125" y2="31.95671875" width="0" layer="19" extent="1-1"/>
 <wire x1="31.7185" y1="29.291615625" x2="30.145559375" y2="31.23318125" width="0" layer="19" extent="1-1"/>
 <wire x1="25.48128125" y1="31.0043" x2="28.330359375" y2="29.6681625" width="0" layer="19" extent="16-16"/>
-<wire x1="35.1424" y1="28.3902" x2="31.7185" y2="29.291615625" width="0" layer="19" extent="1-1"/>
 <wire x1="41.4980375" y1="31.705159375" x2="45.246440625" y2="30.55358125" width="0" layer="19" extent="1-16"/>
 <wire x1="38.546440625" y1="30.55358125" x2="41.4980375" y2="31.705159375" width="0" layer="19" extent="1-16"/>
 <wire x1="17.9324" y1="16.0557" x2="15.8274" y2="12.475640625" width="0" layer="19" extent="16-16"/>

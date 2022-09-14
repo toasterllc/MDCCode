@@ -4,26 +4,26 @@
     
     - Order TPS62A01DRLR from ti.com
 
+
+
 - Rev6 Board
-    
-    - Add soldermask markings for VDD / GND battery terminal leads
-    
-    - Add soldermask markings for STM32 header pins, if we keep the header (since we want to make backside thinner)
     
     - Verify that the new ICE40 pin assignment meets our timing (since we moved the pins since Rev5 to
       account miswiring the flash chip)
           - Need to update Pins.pcf to do this testing
     
-    - We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
+    - Layout: Add soldermask markings for VDD / GND battery terminal leads
+    
+    - Layout: Add soldermask markings for STM32 header pins, if we keep the header (since we want to make backside thinner)
+    
+    - Layout: We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
       card sticks out the side of the board
     
-    - We can make the whole package smaller by removing tall components from the backside, so the battery
-      can be as flush as possible against the PCB
+    - Layout: move USB-C connector to the front of the board so the battery can sit flush with the back
+    
+    - Replace lens holder with the 18mm version
     
     - Replace battery connector with something smaller
-    
-    ? Switch lens holder footprint to machined version
-        - This would allow the enclosure to be low-profile
     
     - Remove STM32 header in favor of test clips + vias
         - Clips: https://www.amazon.com/Magic-Shell-Grabber-Analyzer-Accessories/dp/B07F69JHYK
