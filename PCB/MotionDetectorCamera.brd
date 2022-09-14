@@ -1420,25 +1420,6 @@ SMD mount</description>
 <vertex x="4.32" y="3.24"/>
 </polygon>
 </package>
-<package name="WURTH-621004242921">
-<description>16-SOP, 0.64 mm pitch, 6.00 mm span, 4.91 X 3.90 X 1.75 mm body
-&lt;p&gt;16-pin SOP package with 0.64 mm pitch, 6.00 mm span with body size 4.91 X 3.90 X 1.75 mm&lt;/p&gt;</description>
-<text x="-3.156" y="2.4293" size="1.016" layer="25" font="vector">&gt;NAME</text>
-<wire x1="3.1" y1="-2.3" x2="-3.1" y2="-2.3" width="0.05" layer="21"/>
-<wire x1="-3.1" y1="-2.3" x2="-3.1" y2="2.3" width="0.05" layer="21"/>
-<wire x1="-3.1" y1="2.3" x2="3.1" y2="2.3" width="0.05" layer="21"/>
-<wire x1="3.1" y1="2.3" x2="3.1" y2="-2.3" width="0.05" layer="21"/>
-<polygon width="0.05" layer="39">
-<vertex x="3.1" y="-2.3"/>
-<vertex x="-3.1" y="-2.3"/>
-<vertex x="-3.1" y="2.3"/>
-<vertex x="3.1" y="2.3"/>
-</polygon>
-<smd name="3" x="-2.65" y="-1" dx="2.1" dy="0.89" layer="1" roundness="40"/>
-<smd name="4" x="2.65" y="-1" dx="2.1" dy="0.89" layer="1" roundness="40"/>
-<smd name="1" x="-2.65" y="1" dx="2.1" dy="0.89" layer="1" roundness="40"/>
-<smd name="2" x="2.65" y="1" dx="2.1" dy="0.89" layer="1" roundness="40"/>
-</package>
 <package name="TI-TPS62A01DRLR">
 <description>5-SOT23, 0.95 mm pitch, 2.80 mm span, 2.90 X 1.60 X 1.45 mm body
 &lt;p&gt;5-pin SOT23 package with 0.95 mm pitch, 2.80 mm span with body size 2.90 X 1.60 X 1.45 mm&lt;/p&gt;</description>
@@ -1463,43 +1444,6 @@ SMD mount</description>
 <vertex x="-0.6" y="0.8"/>
 <vertex x="-0.6" y="-0.1"/>
 <vertex x="0.2" y="0.8"/>
-</polygon>
-</package>
-<package name="SOICBITE">
-<smd name="1" x="1.905" y="0.75" dx="0.8" dy="1.5" layer="1" roundness="100" rot="R180"/>
-<smd name="2" x="0.635" y="0.75" dx="0.8" dy="1.5" layer="1" roundness="100" rot="R180"/>
-<smd name="3" x="-0.635" y="0.75" dx="0.8" dy="1.5" layer="1" roundness="100" rot="R180"/>
-<smd name="4" x="-1.905" y="0.75" dx="0.8" dy="1.5" layer="1" roundness="100" rot="R180"/>
-<smd name="5" x="-1.905" y="0.75" dx="0.8" dy="1.5" layer="16" roundness="100"/>
-<smd name="6" x="-0.635" y="0.75" dx="0.8" dy="1.5" layer="16" roundness="100"/>
-<smd name="7" x="0.635" y="0.75" dx="0.8" dy="1.5" layer="16" roundness="100"/>
-<smd name="8" x="1.905" y="0.75" dx="0.8" dy="1.5" layer="16" roundness="100"/>
-<text x="-3.252" y="2.645" size="1.016" layer="25" font="vector">&gt;NAME</text>
-<hole x="-2.54" y="1.905" drill="0.7"/>
-<hole x="-1.27" y="1.905" drill="0.7"/>
-<hole x="0" y="1.905" drill="0.7"/>
-<hole x="1.27" y="1.905" drill="0.7"/>
-<hole x="2.54" y="1.905" drill="0.7"/>
-<wire x1="-3.175" y1="2.54" x2="3.175" y2="2.54" width="0.05" layer="21"/>
-<wire x1="3.175" y1="2.54" x2="3.175" y2="-0.381" width="0.05" layer="21"/>
-<wire x1="-3.175" y1="2.54" x2="-3.175" y2="-0.381" width="0.05" layer="21"/>
-<wire x1="-3.175" y1="-0.381" x2="3.175" y2="-0.381" width="0.05" layer="21"/>
-<polygon width="0.05" layer="21">
-<vertex x="3.154" y="1.038"/>
-<vertex x="1.754" y="-0.362"/>
-<vertex x="3.154" y="-0.362"/>
-</polygon>
-<polygon width="0.05" layer="39">
-<vertex x="-3.175" y="2.54"/>
-<vertex x="-3.175" y="-0.381"/>
-<vertex x="3.175" y="-0.381"/>
-<vertex x="3.175" y="2.54"/>
-</polygon>
-<polygon width="0.05" layer="40">
-<vertex x="-3.175" y="2.54"/>
-<vertex x="-3.175" y="-0.381"/>
-<vertex x="3.175" y="-0.381"/>
-<vertex x="3.175" y="2.54"/>
 </polygon>
 </package>
 <package name="TAGCONNECT-TC2030-NL">
@@ -2508,11 +2452,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="39.412925" y="3.904659375" size="0.508" layer="25" font="vector" rot="R270"/>
 <attribute name="PN" value="AC0402FR-075K1L" x="38.892484375" y="3.010959375" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="H1" library="EagleLibrary" package="WURTH-621004242921" value="HEADER-2X2" x="31.869921875" y="1.830978125" smashed="yes" rot="MR0">
-<attribute name="MFG" value="Wurth" x="31.869921875" y="1.830978125" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="32.133921875" y="4.260278125" size="1.016" layer="26" font="vector" rot="MR0"/>
-<attribute name="PN" value="621004242921" x="31.869921875" y="1.830978125" size="1.778" layer="28" rot="MR0" display="off"/>
-</element>
 <element name="J4" library="EagleLibrary" package="JUMPER-SOLDER" value="JUMPER-SOLDER" x="42.74058125" y="22.4064" smashed="yes" rot="R90">
 <attribute name="NAME" x="43.25391875" y="23.242440625" size="0.508" layer="25" font="vector" rot="R270"/>
 </element>
@@ -2630,9 +2569,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="MFG" value="Samsung" x="-1.524" y="-103.886" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="-2.993" y="-94.7573" size="0.762" layer="25" font="vector"/>
 <attribute name="PN" value="CL21A226MQQNNNG" x="-1.524" y="-103.886" size="1.778" layer="27" display="off"/>
-</element>
-<element name="JP1" library="EagleLibrary" package="SOICBITE" value="SOICBITE" x="31.9" y="4.6" smashed="yes" rot="MR0">
-<attribute name="NAME" x="35.152" y="7.245" size="1.016" layer="26" font="vector" rot="MR0"/>
 </element>
 <element name="H2" library="EagleLibrary" package="TAGCONNECT-TC2030-NL" value="TAGCONNECT-TC2030-NL" x="31.6" y="1.5" smashed="yes">
 <attribute name="NAME" x="28.298" y="2.897" size="1.016" layer="25" font="vector"/>
@@ -3425,7 +3361,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="J11" pad="GND8"/>
 <contactref element="R34" pad="2"/>
 <contactref element="R33" pad="2"/>
-<contactref element="H1" pad="4"/>
 <contactref element="U20" pad="9"/>
 <polygon width="0.127" layer="1" thermals="no" rank="3">
 <vertex x="28.321" y="32.25651875"/>
@@ -3645,8 +3580,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R40" pad="2"/>
 <contactref element="U6" pad="6"/>
 <contactref element="C9" pad="2"/>
-<contactref element="JP1" pad="4"/>
-<contactref element="JP1" pad="5"/>
 <contactref element="H2" pad="5"/>
 <wire x1="-0.6486" y1="-95.758" x2="0.4325" y2="-98.298" width="0" layer="19" extent="1-1"/>
 <wire x1="0.53" y1="-95.258" x2="-0.6486" y2="-95.758" width="0" layer="19" extent="1-1"/>
@@ -3811,7 +3744,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="28.704540625" y1="1.6393625" x2="28.064575" y2="3.145153125" width="0" layer="19" extent="1-1"/>
 <wire x1="29.460190625" y1="1.6393625" x2="28.704540625" y2="1.6393625" width="0" layer="19" extent="1-1"/>
 <wire x1="30.215840625" y1="1.6393625" x2="29.460190625" y2="1.6393625" width="0" layer="19" extent="1-1"/>
-<wire x1="29.219921875" y1="0.830978125" x2="29.460190625" y2="1.6393625" width="0" layer="19" extent="16-16"/>
 <wire x1="32.87" y1="0.865" x2="30.215840625" y2="1.6393625" width="0" layer="19" extent="1-1"/>
 <wire x1="33.70995625" y1="2.24044375" x2="32.87" y2="0.865" width="0" layer="19" extent="1-1"/>
 <wire x1="34.827096875" y1="2.373625" x2="33.70995625" y2="2.24044375" width="0" layer="19" extent="1-1"/>
@@ -3822,8 +3754,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="39.366759375" y1="1.03348125" x2="39.176759375" y2="2.15348125" width="0" layer="19" extent="1-1"/>
 <wire x1="40.466759375" y1="1.03348125" x2="39.366759375" y2="1.03348125" width="0" layer="19" extent="1-1"/>
 <wire x1="38.8536" y1="5.247078125" x2="38.892484375" y2="2.578459375" width="0" layer="19" extent="1-1"/>
-<wire x1="33.805" y1="5.35" x2="33.70995625" y2="2.24044375" width="0" layer="19" extent="1-16"/>
-<wire x1="33.805" y1="5.35" x2="33.805" y2="5.35" width="0" layer="19" extent="1-16"/>
 <wire x1="28.87471875" y1="12.51818125" x2="25.745440625" y2="12.75948125" width="0" layer="19" extent="1-1"/>
 <wire x1="29.570678125" y1="14.6314625" x2="28.87471875" y2="12.51818125" width="0" layer="19" extent="1-1"/>
 <wire x1="30.37181875" y1="15.291859375" x2="29.570678125" y2="14.6314625" width="0" layer="19" extent="16-16"/>
@@ -6274,30 +6204,22 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </signal>
 <signal name="STM_SWDIO">
 <contactref element="U25" pad="A15"/>
-<contactref element="H1" pad="1"/>
-<wire x1="33.795665625" y1="2.106721875" x2="34.519921875" y2="2.830978125" width="0.127" layer="16"/>
 <wire x1="27.480403125" y1="1.007921875" x2="28.579203125" y2="2.106721875" width="0.127" layer="16"/>
 <wire x1="27.480403125" y1="0.77901875" x2="27.480403125" y2="1.007921875" width="0.127" layer="16"/>
 <wire x1="28.579203125" y1="2.106721875" x2="33.795665625" y2="2.106721875" width="0.127" layer="16"/>
-<contactref element="JP1" pad="2"/>
 <contactref element="H2" pad="1"/>
-<wire x1="34.519921875" y1="2.830978125" x2="31.265" y2="5.35" width="0" layer="19" extent="16-16"/>
-<wire x1="30.33" y1="0.865" x2="27.480403125" y2="0.77901875" width="0" layer="19" extent="1-16"/>
+<wire x1="27.480403125" y1="0.77901875" x2="30.33" y2="0.865" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="STM_SWCLK">
 <contactref element="U25" pad="A14"/>
-<contactref element="H1" pad="2"/>
 <wire x1="26.830403125" y1="0.91291875" x2="26.830403125" y2="0.77901875" width="0.127" layer="16"/>
-<wire x1="29.219921875" y1="2.830978125" x2="28.74338125" y2="2.830978125" width="0.127" layer="16"/>
 <wire x1="27.360075" y1="1.71951875" x2="27.18990625" y2="1.54935" width="0.127" layer="16"/>
 <wire x1="28.74338125" y1="2.830978125" x2="27.631921875" y2="1.71951875" width="0.127" layer="16"/>
 <wire x1="27.631921875" y1="1.71951875" x2="27.360075" y2="1.71951875" width="0.127" layer="16"/>
 <wire x1="27.18990625" y1="1.272421875" x2="26.830403125" y2="0.91291875" width="0.127" layer="16"/>
 <wire x1="27.18990625" y1="1.54935" x2="27.18990625" y2="1.272421875" width="0.127" layer="16"/>
-<contactref element="JP1" pad="1"/>
 <contactref element="H2" pad="2"/>
-<wire x1="29.219921875" y1="2.830978125" x2="29.995" y2="5.35" width="0" layer="19" extent="16-16"/>
-<wire x1="30.33" y1="2.135" x2="29.219921875" y2="2.830978125" width="0" layer="19" extent="1-16"/>
+<wire x1="28.74338125" y1="2.830978125" x2="30.33" y2="2.135" width="0" layer="19" extent="1-16"/>
 </signal>
 <signal name="ICE_STM_SPI_D2">
 <contactref element="U25" pad="K1"/>
@@ -7512,7 +7434,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <signal name="VDD_USB_IN">
 <contactref element="FB1" pad="2"/>
 <contactref element="J1" pad="1"/>
-<contactref element="H1" pad="3"/>
 <polygon width="0.127" layer="1" thermals="no">
 <vertex x="40.934640625" y="3.5443625"/>
 <vertex x="40.934640625" y="0.41"/>
@@ -7540,8 +7461,7 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="H2" pad="6"/>
 <wire x1="41.942221875" y1="3.29235625" x2="41.062684375" y2="3.270103125" width="0" layer="19" extent="1-1"/>
 <wire x1="41.315640625" y1="0.636059375" x2="41.062684375" y2="3.270103125" width="0" layer="19" extent="1-1"/>
-<wire x1="34.519921875" y1="0.830978125" x2="35.994340625" y2="0.978959375" width="0" layer="19" extent="16-16"/>
-<wire x1="32.87" y1="2.135" x2="34.519921875" y2="0.830978125" width="0" layer="19" extent="1-16"/>
+<wire x1="32.87" y1="2.135" x2="35.994340625" y2="0.978959375" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$20">
 <contactref element="LED3" pad="C"/>
