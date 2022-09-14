@@ -19,8 +19,6 @@
     - Layout: We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
       card sticks out the side of the board
     
-    - Replace battery connector with a smaller version
-    
     - Replace STM32 header with SOICbite:
         https://hackaday.io/project/165917-soicbite-programmingdebug-connector-footprint
         - Clip:
@@ -29,6 +27,10 @@
 
 
 - Rev6 Board Done
+    
+    √ Replace battery connector with a smaller version
+    
+    √ Move battery connector to the front of the board
     
     √ Replace lens holder with the 18mm version
     

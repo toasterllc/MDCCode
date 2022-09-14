@@ -1403,48 +1403,24 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="0.6" y="0.4"/>
 </polygon>
 </package>
-<package name="JST-PH-2">
+<package name="JST-SM02B-SRSS-TB">
 <description>JST PH series
 2-pin
 SMD mount</description>
-<smd name="GND1" x="-3.35" y="5.75" dx="1.5" dy="3.4" layer="1" cream="no"/>
-<text x="-4.247321875" y="7.799178125" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<wire x1="-4.2" y1="7.6" x2="-4.2" y2="-1.9" width="0.05" layer="21"/>
-<wire x1="-4.2" y1="-1.9" x2="4.2" y2="-1.9" width="0.05" layer="21"/>
-<wire x1="4.2" y1="-1.9" x2="4.2" y2="7.6" width="0.05" layer="21"/>
-<wire x1="4.2" y1="7.6" x2="-4.2" y2="7.6" width="0.05" layer="21"/>
-<smd name="R" x="-1" y="0" dx="1" dy="3.5" layer="1" cream="no"/>
+<smd name="GND1" x="-1.8" y="0" dx="1.2" dy="1.8" layer="1"/>
+<text x="-2.247321875" y="6.099178125" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<wire x1="-2" y1="4.35" x2="-2" y2="-0.6" width="0.05" layer="21"/>
+<wire x1="-2" y1="-0.6" x2="2" y2="-0.6" width="0.05" layer="21"/>
+<wire x1="2" y1="-0.6" x2="2" y2="4.35" width="0.05" layer="21"/>
+<wire x1="2" y1="4.35" x2="-2" y2="4.35" width="0.05" layer="21"/>
+<smd name="L" x="-0.5" y="4.775" dx="0.6" dy="1.55" layer="1"/>
+<smd name="GND2" x="1.8" y="0" dx="1.2" dy="1.8" layer="1"/>
+<smd name="R" x="0.5" y="4.775" dx="0.6" dy="1.55" layer="1"/>
 <polygon width="0.05" layer="39">
-<vertex x="-4.2" y="7.6"/>
-<vertex x="-4.2" y="-1.9"/>
-<vertex x="4.2" y="-1.9"/>
-<vertex x="4.2" y="7.6"/>
-</polygon>
-<smd name="GND2" x="3.35" y="5.75" dx="1.5" dy="3.4" layer="1" cream="no"/>
-<smd name="L" x="1" y="0" dx="1" dy="3.5" layer="1" cream="no"/>
-<polygon width="0.05" layer="31">
-<vertex x="3" y="7.2"/>
-<vertex x="3" y="4.3"/>
-<vertex x="3.7" y="4.3"/>
-<vertex x="3.7" y="7.2"/>
-</polygon>
-<polygon width="0.05" layer="31">
-<vertex x="-3.7" y="7.2"/>
-<vertex x="-3.7" y="4.3"/>
-<vertex x="-3" y="4.3"/>
-<vertex x="-3" y="7.2"/>
-</polygon>
-<polygon width="0.05" layer="31">
-<vertex x="-1.25" y="1.4"/>
-<vertex x="-1.25" y="-1.5"/>
-<vertex x="-0.7" y="-1.5"/>
-<vertex x="-0.7" y="1.4"/>
-</polygon>
-<polygon width="0.05" layer="31">
-<vertex x="0.75" y="1.4"/>
-<vertex x="0.75" y="-1.5"/>
-<vertex x="1.3" y="-1.5"/>
-<vertex x="1.3" y="1.4"/>
+<vertex x="-2" y="4.35"/>
+<vertex x="-2" y="-0.6"/>
+<vertex x="2" y="-0.6"/>
+<vertex x="2" y="4.35"/>
 </polygon>
 </package>
 <package name="GSWITCH-GT-USB-7010ASV">
@@ -2613,7 +2589,7 @@ Charger</text>
 <pin name="2" x="12.7" y="-2.54" visible="off" length="short" rot="R180"/>
 <text x="2.54" y="-3.302" size="1.778" layer="94">ESD</text>
 </symbol>
-<symbol name="JST-PH-2">
+<symbol name="BATTERY-HEADER">
 <wire x1="0" y1="0" x2="0" y2="-15.24" width="0.254" layer="94"/>
 <wire x1="0" y1="-15.24" x2="15.24" y2="-15.24" width="0.254" layer="94"/>
 <wire x1="15.24" y1="-15.24" x2="15.24" y2="0" width="0.254" layer="94"/>
@@ -2623,8 +2599,8 @@ Charger</text>
 <text x="0" y="-17.78" size="1.778" layer="95">&gt;PN</text>
 <text x="0" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <pin name="GND" x="17.78" y="-7.62" visible="pin" length="short" rot="R180"/>
-<text x="1.27" y="-13.716" size="1.778" layer="94">JST
-Connector</text>
+<text x="1.27" y="-13.716" size="1.778" layer="94">Battery
+Header</text>
 </symbol>
 <symbol name="USB-C-JACK">
 <wire x1="0" y1="0" x2="0" y2="-33.02" width="0.254" layer="94"/>
@@ -3898,12 +3874,12 @@ Connector</text>
 </device>
 </devices>
 </deviceset>
-<deviceset name="JST-PH-2" prefix="J">
+<deviceset name="JST-SM02B-SRSS-TB" prefix="J">
 <gates>
-<gate name="G$1" symbol="JST-PH-2" x="0" y="0"/>
+<gate name="G$1" symbol="BATTERY-HEADER" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="JST-PH-2">
+<device name="" package="JST-SM02B-SRSS-TB">
 <connects>
 <connect gate="G$1" pin="GND" pad="GND1 GND2"/>
 <connect gate="G$1" pin="L" pad="L"/>
@@ -4637,7 +4613,7 @@ Connector</text>
 <part name="U5" library="EagleLibrary" deviceset="EATON-STN101" device="">
 <attribute name="PN" value="STN101050B101"/>
 </part>
-<part name="J5" library="EagleLibrary" deviceset="JST-PH-2" device="">
+<part name="J5" library="EagleLibrary" deviceset="JST-SM02B-SRSS-TB" device="">
 <attribute name="MFG" value="HX (Zhejiang Yueqing Hongxing Elec)"/>
 <attribute name="MFG2" value="HDGC"/>
 <attribute name="PN" value="HX20007-2AWB"/>
