@@ -19,8 +19,6 @@
     - Layout: We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
       card sticks out the side of the board
     
-    - Replace lens holder with the 18mm version
-    
     - Replace battery connector with something smaller
     
     - Remove STM32 header in favor of test clips + vias
@@ -31,6 +29,8 @@
 
 
 - Rev6 Board Done
+    
+    √ Replace lens holder with the 18mm version
     
     √ Layout: move USB-C connector to the front of the board so the battery can sit flush with the back
     
