@@ -9155,6 +9155,10 @@ between input and output when its VDD=0.</text>
 <label x="81.28" y="-139.7" size="1.778" layer="95"/>
 </segment>
 <segment>
+<wire x1="256.54" y1="-96.52" x2="259.08" y2="-96.52" width="0.1524" layer="91"/>
+<label x="259.08" y="-96.52" size="1.778" layer="95"/>
+</segment>
+<segment>
 <pinref part="H2" gate="A" pin="5"/>
 <wire x1="233.68" y1="-96.52" x2="236.22" y2="-96.52" width="0.1524" layer="91"/>
 <label x="236.22" y="-96.52" size="1.778" layer="95"/>
@@ -9341,9 +9345,13 @@ between input and output when its VDD=0.</text>
 <label x="17.78" y="-45.72" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="H2" gate="A" pin="1"/>
-<wire x1="233.68" y1="-83.82" x2="236.22" y2="-83.82" width="0.1524" layer="91"/>
-<label x="236.22" y="-83.82" size="1.778" layer="95"/>
+<wire x1="256.54" y1="-83.82" x2="259.08" y2="-83.82" width="0.1524" layer="91"/>
+<label x="259.08" y="-83.82" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="H2" gate="A" pin="6"/>
+<wire x1="233.68" y1="-99.06" x2="236.22" y2="-99.06" width="0.1524" layer="91"/>
+<label x="236.22" y="-99.06" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="STM_SWCLK" class="0">
@@ -9353,9 +9361,13 @@ between input and output when its VDD=0.</text>
 <label x="17.78" y="-48.26" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="H2" gate="A" pin="2"/>
-<wire x1="233.68" y1="-86.36" x2="236.22" y2="-86.36" width="0.1524" layer="91"/>
-<label x="236.22" y="-86.36" size="1.778" layer="95"/>
+<wire x1="256.54" y1="-86.36" x2="259.08" y2="-86.36" width="0.1524" layer="91"/>
+<label x="259.08" y="-86.36" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="H2" gate="A" pin="4"/>
+<wire x1="233.68" y1="-93.98" x2="236.22" y2="-93.98" width="0.1524" layer="91"/>
+<label x="236.22" y="-93.98" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ICE_STM_SPI_D2" class="0">
@@ -9421,13 +9433,6 @@ between input and output when its VDD=0.</text>
 <pinref part="C82" gate="G$1" pin="1"/>
 <wire x1="55.88" y1="-238.76" x2="66.04" y2="-238.76" width="0.1524" layer="91"/>
 <label x="55.88" y="-238.76" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="VDD_USB_IN" class="0">
-<segment>
-<pinref part="H2" gate="A" pin="6"/>
-<wire x1="233.68" y1="-99.06" x2="236.22" y2="-99.06" width="0.1524" layer="91"/>
-<label x="236.22" y="-99.06" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$29" class="0">
@@ -9618,6 +9623,17 @@ between input and output when its VDD=0.</text>
 <wire x1="2.54" y1="-81.28" x2="5.08" y2="-81.28" width="0.1524" layer="91"/>
 <label x="5.08" y="-81.28" size="1.778" layer="95"/>
 <pinref part="U25" gate="E" pin="PE3_A1"/>
+</segment>
+</net>
+<net name="VDD_USB_IN" class="0">
+<segment>
+<wire x1="256.54" y1="-99.06" x2="259.08" y2="-99.06" width="0.1524" layer="91"/>
+<label x="259.08" y="-99.06" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="H2" gate="A" pin="1"/>
+<wire x1="233.68" y1="-83.82" x2="236.22" y2="-83.82" width="0.1524" layer="91"/>
+<label x="236.22" y="-83.82" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
