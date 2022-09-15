@@ -2620,14 +2620,14 @@ Header</text>
 <wire x1="0" y1="-25.4" x2="17.78" y2="-25.4" width="0.254" layer="94"/>
 <wire x1="17.78" y1="-25.4" x2="17.78" y2="0" width="0.254" layer="94"/>
 <wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<pin name="EN" x="-2.54" y="-7.62" visible="pin" length="short"/>
-<pin name="GND" x="-2.54" y="-22.86" visible="pin" length="short"/>
-<pin name="FB" x="20.32" y="-17.78" visible="pin" length="short" rot="R180"/>
-<pin name="SW" x="20.32" y="-2.54" visible="pin" length="short" rot="R180"/>
-<pin name="VIN" x="-2.54" y="-2.54" visible="pin" length="short"/>
+<pin name="EN" x="-2.54" y="-7.62" length="short"/>
+<pin name="GND" x="-2.54" y="-22.86" length="short"/>
+<pin name="FB" x="20.32" y="-17.78" length="short" rot="R180"/>
+<pin name="SW" x="20.32" y="-2.54" length="short" rot="R180"/>
+<pin name="VIN" x="-2.54" y="-2.54" length="short"/>
 <text x="0.075" y="0.8919" size="1.778" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
 <text x="0.075" y="-28.0641" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
-<pin name="PG" x="20.32" y="-22.86" visible="pin" length="short" rot="R180"/>
+<pin name="PG" x="20.32" y="-22.86" length="short" rot="R180"/>
 </symbol>
 <symbol name="TAGCONNECT-TC2030-NL">
 <wire x1="0" y1="0" x2="0" y2="-20.32" width="0.254" layer="94"/>
@@ -3882,7 +3882,10 @@ Connect</text>
 <connect gate="G$1" pin="R" pad="R"/>
 </connects>
 <technologies>
-<technology name=""/>
+<technology name="">
+<attribute name="MFG" value="JST"/>
+<attribute name="PN" value="SM02B-SRSS-TB"/>
+</technology>
 </technologies>
 </device>
 </devices>
@@ -4609,12 +4612,7 @@ Connect</text>
 <part name="U5" library="EagleLibrary" deviceset="EATON-STN101" device="">
 <attribute name="PN" value="STN101050B101"/>
 </part>
-<part name="J5" library="EagleLibrary" deviceset="JST-SM02B-SRSS-TB" device="">
-<attribute name="MFG" value="HX (Zhejiang Yueqing Hongxing Elec)"/>
-<attribute name="MFG2" value="HDGC"/>
-<attribute name="PN" value="HX20007-2AWB"/>
-<attribute name="PN2" value="HDGC2001WR-S-2P"/>
-</part>
+<part name="J5" library="EagleLibrary" deviceset="JST-SM02B-SRSS-TB" device=""/>
 <part name="J11" library="EagleLibrary" deviceset="USB-C-JACK" device=""/>
 <part name="R33" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="5.1k">
 <attribute name="MFG" value="Yageo"/>
@@ -4996,9 +4994,6 @@ input while MSP430 is resetting.</text>
 <attribute name="PN" x="154.94" y="345.44" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
 <instance part="J5" gate="G$1" x="124.46" y="355.6" smashed="yes">
-<attribute name="MFG" x="124.46" y="355.6" size="1.778" layer="96" display="off"/>
-<attribute name="MFG2" x="124.46" y="355.6" size="1.778" layer="96" display="off"/>
-<attribute name="PN2" x="124.46" y="355.6" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="124.46" y="337.82" size="1.778" layer="95"/>
 <attribute name="NAME" x="124.46" y="358.14" size="1.778" layer="95" align="top-left"/>
 </instance>
