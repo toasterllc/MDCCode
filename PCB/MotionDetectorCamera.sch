@@ -6165,29 +6165,29 @@ battery voltage.</text>
 </net>
 <net name="ICE_MSP_SPI_DATA_X" class="0">
 <segment>
-<pinref part="U15" gate="B" pin="PA.4/P1.4/UCA0TXD/UCA0SIMO/TA0.1/TCK"/>
-<pinref part="U15" gate="B" pin="PA.5/P1.5/UCA0RXD/UCA0SOMI/TA0.2/TMS"/>
-<wire x1="35.56" y1="68.58" x2="35.56" y2="66.04" width="0.1524" layer="91"/>
-<wire x1="35.56" y1="66.04" x2="33.02" y2="66.04" width="0.1524" layer="91"/>
-<junction x="35.56" y="66.04"/>
-<label x="33.02" y="66.04" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
 <wire x1="101.6" y1="0" x2="99.06" y2="0" width="0.1524" layer="91"/>
 <label x="99.06" y="0" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U17" gate="G$1" pin="B1"/>
 </segment>
+<segment>
+<wire x1="129.54" y1="66.04" x2="129.54" y2="63.5" width="0.1524" layer="91"/>
+<wire x1="129.54" y1="63.5" x2="127" y2="63.5" width="0.1524" layer="91"/>
+<junction x="129.54" y="63.5"/>
+<label x="127" y="63.5" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U15" gate="C" pin="PA.D/P2.5/UCB0SIMO/UCB0SDA/A7"/>
+<pinref part="U15" gate="C" pin="PA.E/P2.6/UCB0SOMI/UCB0SCL"/>
+</segment>
 </net>
 <net name="ICE_MSP_SPI_CLK_X" class="0">
-<segment>
-<pinref part="U15" gate="B" pin="PA.6/P1.6/UCA0CLK/TA0CLK/TDI/TCLK"/>
-<wire x1="35.56" y1="63.5" x2="33.02" y2="63.5" width="0.1524" layer="91"/>
-<label x="33.02" y="63.5" size="1.778" layer="95" align="bottom-right"/>
-</segment>
 <segment>
 <wire x1="101.6" y1="-5.08" x2="99.06" y2="-5.08" width="0.1524" layer="91"/>
 <label x="99.06" y="-5.08" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U17" gate="G$1" pin="B2"/>
+</segment>
+<segment>
+<wire x1="129.54" y1="68.58" x2="127" y2="68.58" width="0.1524" layer="91"/>
+<label x="127" y="68.58" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U15" gate="C" pin="PA.C/P2.4/TA1CLK/UCB0CLK/A6"/>
 </segment>
 </net>
 <net name="VDD_B_1V8" class="0">
@@ -6205,20 +6205,6 @@ battery voltage.</text>
 <pinref part="C30" gate="G$1" pin="1"/>
 <wire x1="127" y1="27.94" x2="127" y2="30.48" width="0.1524" layer="91"/>
 <label x="127" y="30.48" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="VDD_B_1V8_IMG_SD_EN" class="0">
-<segment>
-<wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
-<label x="33.02" y="78.74" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U15" gate="B" pin="PA.0/P1.0/UCB0STE/A0/VEREF+"/>
-</segment>
-</net>
-<net name="VDD_B_2V8_IMG_SD_EN" class="0">
-<segment>
-<pinref part="U15" gate="B" pin="PA.2/P1.2/UCB0SIMO/UCB0SDA/SMCLK/A2/VEREF-"/>
-<wire x1="35.56" y1="73.66" x2="33.02" y2="73.66" width="0.1524" layer="91"/>
-<label x="33.02" y="73.66" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
 <net name="N$14" class="0">
@@ -6290,20 +6276,6 @@ battery voltage.</text>
 <pinref part="U15" gate="B" pin="PA.3/P1.3/UCB0SOMI/UCB0SCL/MCLK/A3"/>
 </segment>
 </net>
-<net name="VDD_B_EN" class="0">
-<segment>
-<wire x1="35.56" y1="76.2" x2="33.02" y2="76.2" width="0.1524" layer="91"/>
-<label x="33.02" y="76.2" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U15" gate="B" pin="PA.1/P1.1/UCB0CLK/ACLK/A1/VREF+"/>
-</segment>
-</net>
-<net name="MSP_RUN" class="0">
-<segment>
-<pinref part="U15" gate="C" pin="PA.D/P2.5/UCB0SIMO/UCB0SDA/A7"/>
-<wire x1="129.54" y1="66.04" x2="127" y2="66.04" width="0.1524" layer="91"/>
-<label x="127" y="66.04" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-</net>
 <net name="MSP_SBW_EN" class="0">
 <segment>
 <pinref part="U16" gate="G$1" pin="OE"/>
@@ -6313,6 +6285,34 @@ battery voltage.</text>
 <wire x1="12.7" y1="2.54" x2="12.7" y2="5.08" width="0.1524" layer="91"/>
 <junction x="12.7" y="5.08"/>
 <pinref part="R8" gate="G$1" pin="2"/>
+</segment>
+</net>
+<net name="VDD_B_EN" class="0">
+<segment>
+<wire x1="35.56" y1="68.58" x2="33.02" y2="68.58" width="0.1524" layer="91"/>
+<label x="33.02" y="68.58" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U15" gate="B" pin="PA.4/P1.4/UCA0TXD/UCA0SIMO/TA0.1/TCK"/>
+</segment>
+</net>
+<net name="VDD_B_2V8_IMG_SD_EN" class="0">
+<segment>
+<wire x1="35.56" y1="66.04" x2="33.02" y2="66.04" width="0.1524" layer="91"/>
+<label x="33.02" y="66.04" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U15" gate="B" pin="PA.5/P1.5/UCA0RXD/UCA0SOMI/TA0.2/TMS"/>
+</segment>
+</net>
+<net name="VDD_B_1V8_IMG_SD_EN" class="0">
+<segment>
+<wire x1="35.56" y1="63.5" x2="33.02" y2="63.5" width="0.1524" layer="91"/>
+<label x="33.02" y="63.5" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U15" gate="B" pin="PA.6/P1.6/UCA0CLK/TA0CLK/TDI/TCLK"/>
+</segment>
+</net>
+<net name="MSP_HOST_MODE_" class="0">
+<segment>
+<wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
+<label x="33.02" y="78.74" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U15" gate="B" pin="PA.0/P1.0/UCB0STE/A0/VEREF+"/>
 </segment>
 </net>
 </nets>
@@ -9597,13 +9597,6 @@ between input and output when its VDD=0.</text>
 <pinref part="U25" gate="F" pin="PF5_K3"/>
 </segment>
 </net>
-<net name="MSP_RUN" class="0">
-<segment>
-<pinref part="U25" gate="H" pin="PH1_H1"/>
-<wire x1="170.18" y1="-76.2" x2="172.72" y2="-76.2" width="0.1524" layer="91"/>
-<label x="172.72" y="-76.2" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="MSP_SBW_EN" class="0">
 <segment>
 <pinref part="U25" gate="E" pin="PE4_B1"/>
@@ -9634,6 +9627,13 @@ between input and output when its VDD=0.</text>
 <pinref part="H2" gate="A" pin="1"/>
 <wire x1="233.68" y1="-83.82" x2="236.22" y2="-83.82" width="0.1524" layer="91"/>
 <label x="236.22" y="-83.82" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="MSP_HOST_MODE_" class="0">
+<segment>
+<wire x1="2.54" y1="-86.36" x2="5.08" y2="-86.36" width="0.1524" layer="91"/>
+<label x="5.08" y="-86.36" size="1.778" layer="95"/>
+<pinref part="U25" gate="E" pin="PE5_B2"/>
 </segment>
 </net>
 </nets>
