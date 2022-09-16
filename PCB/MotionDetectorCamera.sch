@@ -1570,8 +1570,6 @@ SMD mount</description>
 <hole x="2.54" y="1.016" drill="0.9906"/>
 <hole x="2.54" y="-1.016" drill="0.9906"/>
 <text x="-3.302" y="1.397" size="1.016" layer="25" font="vector">&gt;NAME</text>
-<rectangle x1="-3.048" y1="-1.524" x2="3.048" y2="1.524" layer="39"/>
-<rectangle x1="-3.048" y1="-1.524" x2="3.048" y2="1.524" layer="40"/>
 </package>
 </packages>
 <packages3d>
