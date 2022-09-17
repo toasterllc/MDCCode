@@ -2367,13 +2367,13 @@ tolerant of VDDUSB</text>
 <wire x1="0" y1="-15.24" x2="17.78" y2="-15.24" width="0.254" layer="94"/>
 <wire x1="17.78" y1="-15.24" x2="17.78" y2="0" width="0.254" layer="94"/>
 <wire x1="17.78" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<pin name="VIN" x="-2.54" y="-2.54" visible="pin" length="short"/>
-<pin name="VOUT" x="20.32" y="-2.54" visible="pin" length="short" rot="R180"/>
-<pin name="EN" x="-2.54" y="-5.08" visible="pin" length="short"/>
+<pin name="VIN" x="-2.54" y="-2.54" length="short"/>
+<pin name="VOUT" x="20.32" y="-2.54" length="short" rot="R180"/>
+<pin name="EN" x="-2.54" y="-5.08" length="short"/>
 <text x="0" y="-17.78" size="1.778" layer="95">&gt;PN</text>
 <text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
-<pin name="GND" x="-2.54" y="-7.62" visible="pin" length="short"/>
-<pin name="QOD" x="20.32" y="-5.08" visible="pin" length="short" rot="R180"/>
+<pin name="GND" x="-2.54" y="-7.62" length="short"/>
+<pin name="QOD" x="20.32" y="-5.08" length="short" rot="R180"/>
 <text x="9.652" y="-13.97" size="1.778" layer="94">Load
 Switch</text>
 </symbol>
