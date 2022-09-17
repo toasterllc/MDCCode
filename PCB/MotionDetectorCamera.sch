@@ -2496,15 +2496,15 @@ Switch</text>
 <wire x1="0" y1="-25.4" x2="20.32" y2="-25.4" width="0.254" layer="94"/>
 <wire x1="20.32" y1="-25.4" x2="20.32" y2="0" width="0.254" layer="94"/>
 <wire x1="20.32" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<pin name="MODE" x="-2.54" y="-7.62" visible="pin" length="short"/>
-<pin name="VIN1" x="-2.54" y="-2.54" visible="pin" length="short"/>
-<pin name="VOUT" x="22.86" y="-2.54" visible="pin" length="short" rot="R180"/>
+<pin name="MODE" x="-2.54" y="-7.62" length="short"/>
+<pin name="VIN1" x="-2.54" y="-2.54" length="short"/>
+<pin name="VOUT" x="22.86" y="-2.54" length="short" rot="R180"/>
 <text x="0.075" y="0.8919" size="1.778" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
 <text x="0.075" y="-28.0641" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
-<pin name="ST" x="22.86" y="-7.62" visible="pin" length="short" rot="R180"/>
-<pin name="GND" x="-2.54" y="-22.86" visible="pin" length="short"/>
-<pin name="PR1" x="-2.54" y="-12.7" visible="pin" length="short"/>
-<pin name="VIN2" x="-2.54" y="-17.78" visible="pin" length="short"/>
+<pin name="ST" x="22.86" y="-7.62" length="short" rot="R180"/>
+<pin name="GND" x="-2.54" y="-22.86" length="short"/>
+<pin name="PR1" x="-2.54" y="-12.7" length="short"/>
+<pin name="VIN2" x="-2.54" y="-17.78" length="short"/>
 <text x="12.192" y="-24.384" size="1.778" layer="94">Power
 Mux</text>
 </symbol>
