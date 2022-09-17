@@ -6264,32 +6264,32 @@ battery voltage.</text>
 <pinref part="R8" gate="G$1" pin="2"/>
 </segment>
 </net>
+<net name="MSP_HOST_MODE_" class="0">
+<segment>
+<wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
+<label x="33.02" y="78.74" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U15" gate="B" pin="PA.0/P1.0/UCB0STE/A0/VEREF+"/>
+</segment>
+</net>
 <net name="VDD_B_EN" class="0">
 <segment>
-<wire x1="35.56" y1="68.58" x2="33.02" y2="68.58" width="0.1524" layer="91"/>
-<label x="33.02" y="68.58" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U15" gate="B" pin="PA.4/P1.4/UCA0TXD/UCA0SIMO/TA0.1/TCK"/>
+<wire x1="35.56" y1="73.66" x2="33.02" y2="73.66" width="0.1524" layer="91"/>
+<label x="33.02" y="73.66" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U15" gate="B" pin="PA.2/P1.2/UCB0SIMO/UCB0SDA/SMCLK/A2/VEREF-"/>
 </segment>
 </net>
 <net name="VDD_B_2V8_IMG_SD_EN" class="0">
-<segment>
-<wire x1="35.56" y1="66.04" x2="33.02" y2="66.04" width="0.1524" layer="91"/>
-<label x="33.02" y="66.04" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U15" gate="B" pin="PA.5/P1.5/UCA0RXD/UCA0SOMI/TA0.2/TMS"/>
-</segment>
-</net>
-<net name="VDD_B_1V8_IMG_SD_EN" class="0">
 <segment>
 <wire x1="35.56" y1="63.5" x2="33.02" y2="63.5" width="0.1524" layer="91"/>
 <label x="33.02" y="63.5" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U15" gate="B" pin="PA.6/P1.6/UCA0CLK/TA0CLK/TDI/TCLK"/>
 </segment>
 </net>
-<net name="MSP_HOST_MODE_" class="0">
+<net name="VDD_B_1V8_IMG_SD_EN" class="0">
 <segment>
-<wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
-<label x="33.02" y="78.74" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U15" gate="B" pin="PA.0/P1.0/UCB0STE/A0/VEREF+"/>
+<wire x1="129.54" y1="71.12" x2="127" y2="71.12" width="0.1524" layer="91"/>
+<label x="127" y="71.12" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U15" gate="C" pin="PA.B/P2.3/TA1.2/UCB0STE/A5"/>
 </segment>
 </net>
 </nets>
