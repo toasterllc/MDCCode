@@ -575,12 +575,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="5.325" y="-7.8675"/>
 <vertex x="5.325" y="7.8675"/>
 </polygon>
-<polygon width="0.05" layer="41">
-<vertex x="-5.025" y="7.5675"/>
-<vertex x="-5.025" y="0.9325"/>
-<vertex x="5.125" y="0.9325"/>
-<vertex x="5.125" y="7.5675"/>
-</polygon>
 </package>
 <package name="TEST-POINT">
 <smd name="X" x="0" y="0" dx="0.4" dy="0.4" layer="1" roundness="100" cream="no"/>
