@@ -1561,7 +1561,7 @@ SMD mount</description>
 <smd name="3" x="0" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
 <smd name="6" x="1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
 <smd name="5" x="1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<rectangle x1="-1.27" y1="-0.635" x2="1.27" y2="0.635" layer="41"/>
+<rectangle x1="-1.143" y1="-0.508" x2="1.143" y2="0.508" layer="41"/>
 <hole x="-2.54" y="0" drill="0.9906"/>
 <hole x="2.54" y="1.016" drill="0.9906"/>
 <hole x="2.54" y="-1.016" drill="0.9906"/>
