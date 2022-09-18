@@ -6144,11 +6144,6 @@ battery voltage.</text>
 </net>
 <net name="ICE_MSP_SPI_DATA_X" class="0">
 <segment>
-<wire x1="101.6" y1="0" x2="99.06" y2="0" width="0.1524" layer="91"/>
-<label x="99.06" y="0" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U17" gate="G$1" pin="B1"/>
-</segment>
-<segment>
 <wire x1="129.54" y1="66.04" x2="129.54" y2="63.5" width="0.1524" layer="91"/>
 <wire x1="129.54" y1="63.5" x2="127" y2="63.5" width="0.1524" layer="91"/>
 <junction x="129.54" y="63.5"/>
@@ -6156,17 +6151,22 @@ battery voltage.</text>
 <pinref part="U15" gate="C" pin="PA.D/P2.5/UCB0SIMO/UCB0SDA/A7"/>
 <pinref part="U15" gate="C" pin="PA.E/P2.6/UCB0SOMI/UCB0SCL"/>
 </segment>
-</net>
-<net name="ICE_MSP_SPI_CLK_X" class="0">
 <segment>
 <wire x1="101.6" y1="-5.08" x2="99.06" y2="-5.08" width="0.1524" layer="91"/>
 <label x="99.06" y="-5.08" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U17" gate="G$1" pin="B2"/>
 </segment>
+</net>
+<net name="ICE_MSP_SPI_CLK_X" class="0">
 <segment>
 <wire x1="129.54" y1="68.58" x2="127" y2="68.58" width="0.1524" layer="91"/>
 <label x="127" y="68.58" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U15" gate="C" pin="PA.C/P2.4/TA1CLK/UCB0CLK/A6"/>
+</segment>
+<segment>
+<wire x1="101.6" y1="0" x2="99.06" y2="0" width="0.1524" layer="91"/>
+<label x="99.06" y="0" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U17" gate="G$1" pin="B1"/>
 </segment>
 </net>
 <net name="VDD_B_1V8" class="0">
@@ -6234,20 +6234,6 @@ battery voltage.</text>
 <label x="-7.62" y="-5.08" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_MSP_SPI_CLK" class="0">
-<segment>
-<wire x1="127" y1="-5.08" x2="129.54" y2="-5.08" width="0.1524" layer="91"/>
-<label x="129.54" y="-5.08" size="1.778" layer="95"/>
-<pinref part="U17" gate="G$1" pin="A2"/>
-</segment>
-</net>
-<net name="ICE_MSP_SPI_DATA" class="0">
-<segment>
-<wire x1="127" y1="0" x2="129.54" y2="0" width="0.1524" layer="91"/>
-<label x="129.54" y="0" size="1.778" layer="95"/>
-<pinref part="U17" gate="G$1" pin="A1"/>
-</segment>
-</net>
 <net name="MOTION_SIGNAL" class="0">
 <segment>
 <wire x1="35.56" y1="71.12" x2="33.02" y2="71.12" width="0.1524" layer="91"/>
@@ -6292,6 +6278,20 @@ battery voltage.</text>
 <wire x1="129.54" y1="73.66" x2="127" y2="73.66" width="0.1524" layer="91"/>
 <label x="127" y="73.66" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U15" gate="C" pin="PA.A/P2.2/TA1.1/A4"/>
+</segment>
+</net>
+<net name="ICE_MSP_SPI_CLK" class="0">
+<segment>
+<wire x1="127" y1="0" x2="129.54" y2="0" width="0.1524" layer="91"/>
+<label x="129.54" y="0" size="1.778" layer="95"/>
+<pinref part="U17" gate="G$1" pin="A1"/>
+</segment>
+</net>
+<net name="ICE_MSP_SPI_DATA" class="0">
+<segment>
+<wire x1="127" y1="-5.08" x2="129.54" y2="-5.08" width="0.1524" layer="91"/>
+<label x="129.54" y="-5.08" size="1.778" layer="95"/>
+<pinref part="U17" gate="G$1" pin="A2"/>
 </segment>
 </net>
 </nets>
