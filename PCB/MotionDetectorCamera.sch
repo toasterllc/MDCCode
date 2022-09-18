@@ -631,6 +631,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="9" y="2.25"/>
 <vertex x="6.75" y="2.25"/>
 </polygon>
+<circle x="-9" y="0" radius="0.508" width="2.54" layer="42"/>
+<circle x="9" y="0" radius="0.508" width="2.54" layer="42"/>
 </package>
 <package name="STM-STM32F730I8" urn="urn:adsk.eagle:footprint:22433302/1" locally_modified="yes">
 <description>225-BGA, collapsing, 0.65 mm pitch, 10.00 X 10.00 X 0.60 mm body
@@ -1480,10 +1482,10 @@ SMD mount</description>
 <wire x1="-4.32" y1="0.4" x2="-4.32" y2="-0.4" width="1" layer="15"/>
 <wire x1="4.32" y1="0.4" x2="4.32" y2="-0.4" width="1" layer="15"/>
 <polygon width="0.05" layer="41">
-<vertex x="-4.32" y="3.24"/>
+<vertex x="-4.32" y="3.68"/>
 <vertex x="-4.32" y="-2.25"/>
 <vertex x="4.32" y="-2.25"/>
-<vertex x="4.32" y="3.24"/>
+<vertex x="4.32" y="3.68"/>
 </polygon>
 </package>
 <package name="TI-TPS62A01DRLR">
@@ -6264,13 +6266,6 @@ battery voltage.</text>
 <pinref part="R8" gate="G$1" pin="2"/>
 </segment>
 </net>
-<net name="MSP_HOST_MODE_" class="0">
-<segment>
-<wire x1="35.56" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
-<label x="33.02" y="78.74" size="1.778" layer="95" align="bottom-right"/>
-<pinref part="U15" gate="B" pin="PA.0/P1.0/UCB0STE/A0/VEREF+"/>
-</segment>
-</net>
 <net name="VDD_B_EN" class="0">
 <segment>
 <wire x1="35.56" y1="73.66" x2="33.02" y2="73.66" width="0.1524" layer="91"/>
@@ -6290,6 +6285,13 @@ battery voltage.</text>
 <wire x1="129.54" y1="71.12" x2="127" y2="71.12" width="0.1524" layer="91"/>
 <label x="127" y="71.12" size="1.778" layer="95" align="bottom-right"/>
 <pinref part="U15" gate="C" pin="PA.B/P2.3/TA1.2/UCB0STE/A5"/>
+</segment>
+</net>
+<net name="MSP_HOST_MODE_" class="0">
+<segment>
+<wire x1="129.54" y1="73.66" x2="127" y2="73.66" width="0.1524" layer="91"/>
+<label x="127" y="73.66" size="1.778" layer="95" align="bottom-right"/>
+<pinref part="U15" gate="C" pin="PA.A/P2.2/TA1.1/A4"/>
 </segment>
 </net>
 </nets>
@@ -9567,20 +9569,6 @@ between input and output when its VDD=0.</text>
 <label x="5.08" y="-83.82" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="VDD_B_1V8_IMG_SD_EN" class="0">
-<segment>
-<wire x1="2.54" y1="-78.74" x2="5.08" y2="-78.74" width="0.1524" layer="91"/>
-<label x="5.08" y="-78.74" size="1.778" layer="95"/>
-<pinref part="U25" gate="E" pin="PE2_A2"/>
-</segment>
-</net>
-<net name="VDD_B_2V8_IMG_SD_EN" class="0">
-<segment>
-<wire x1="2.54" y1="-81.28" x2="5.08" y2="-81.28" width="0.1524" layer="91"/>
-<label x="5.08" y="-81.28" size="1.778" layer="95"/>
-<pinref part="U25" gate="E" pin="PE3_A1"/>
-</segment>
-</net>
 <net name="VDD_USB_IN" class="0">
 <segment>
 <wire x1="256.54" y1="-99.06" x2="259.08" y2="-99.06" width="0.1524" layer="91"/>
@@ -9592,11 +9580,25 @@ between input and output when its VDD=0.</text>
 <label x="236.22" y="-83.82" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="MSP_HOST_MODE_" class="0">
+<net name="VDD_B_2V8_IMG_SD_EN" class="0">
+<segment>
+<wire x1="2.54" y1="-78.74" x2="5.08" y2="-78.74" width="0.1524" layer="91"/>
+<label x="5.08" y="-78.74" size="1.778" layer="95"/>
+<pinref part="U25" gate="E" pin="PE2_A2"/>
+</segment>
+</net>
+<net name="VDD_B_1V8_IMG_SD_EN" class="0">
 <segment>
 <wire x1="2.54" y1="-86.36" x2="5.08" y2="-86.36" width="0.1524" layer="91"/>
 <label x="5.08" y="-86.36" size="1.778" layer="95"/>
 <pinref part="U25" gate="E" pin="PE5_B2"/>
+</segment>
+</net>
+<net name="MSP_HOST_MODE_" class="0">
+<segment>
+<wire x1="2.54" y1="-81.28" x2="5.08" y2="-81.28" width="0.1524" layer="91"/>
+<label x="5.08" y="-81.28" size="1.778" layer="95"/>
+<pinref part="U25" gate="E" pin="PE3_A1"/>
 </segment>
 </net>
 </nets>
