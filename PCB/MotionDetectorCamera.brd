@@ -8,7 +8,7 @@
 </settings>
 <grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
+<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
 <layer number="3" name="Route3" color="17" fill="1" visible="no" active="no"/>
 <layer number="4" name="Route4" color="18" fill="1" visible="no" active="no"/>
@@ -23,33 +23,33 @@
 <layer number="13" name="Route13" color="21" fill="1" visible="no" active="no"/>
 <layer number="14" name="Route14" color="22" fill="1" visible="no" active="no"/>
 <layer number="15" name="Power" color="42" fill="1" visible="no" active="yes"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="yes"/>
 <layer number="20" name="Dimension" color="24" fill="1" visible="yes" active="yes"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="yes"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="yes"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
-<layer number="32" name="bCream" color="7" fill="5" visible="yes" active="yes"/>
-<layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
-<layer number="34" name="bFinish" color="6" fill="6" visible="yes" active="yes"/>
-<layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
-<layer number="36" name="bGlue" color="7" fill="5" visible="yes" active="yes"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
-<layer number="38" name="bTest" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="yes"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="yes"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
+<layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
+<layer number="33" name="tFinish" color="6" fill="3" visible="yes" active="yes"/>
+<layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
+<layer number="35" name="tGlue" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
-<layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="yes"/>
-<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
+<layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
@@ -2602,8 +2602,23 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 </polygon>
 <via x="24.6507" y="31.62808125" extent="1-16" drill="0.381"/>
 <via x="25.41778125" y="31.64078125" extent="1-16" drill="0.381"/>
+<wire x1="27.2542" y1="26.42108125" x2="27.24911875" y2="26.416" width="0.635" layer="15"/>
+<wire x1="27.24911875" y1="26.416" x2="26.6319" y2="26.416" width="0.635" layer="15"/>
+<wire x1="26.6319" y1="26.416" x2="25.9842" y2="26.416" width="0.635" layer="15"/>
+<wire x1="25.41778125" y1="31.64078125" x2="25.916" y2="30.917740625" width="0" layer="19" extent="16-16"/>
+<wire x1="24.6507" y1="31.62808125" x2="25.41778125" y2="31.64078125" width="0" layer="19" extent="1-1"/>
+<wire x1="24.865703125" y1="30.355546875" x2="25.916" y2="30.917740625" width="0" layer="19" extent="16-16"/>
+<wire x1="25.916" y1="29.437740625" x2="24.865703125" y2="30.355546875" width="0" layer="19" extent="16-16"/>
 <wire x1="26.133678125" y1="28.664759375" x2="25.916" y2="29.437740625" width="0" layer="19" extent="1-16"/>
+<wire x1="26.133678125" y1="27.184759375" x2="26.133678125" y2="28.664759375" width="0" layer="19" extent="1-1"/>
+<wire x1="25.9842" y1="26.416" x2="26.133678125" y2="27.184759375" width="0" layer="19" extent="1-1"/>
+<wire x1="25.192578125" y1="25.960959375" x2="25.9842" y2="26.416" width="0" layer="19" extent="16-16"/>
+<wire x1="27.3389125" y1="27.4783" x2="27.2542" y2="26.42108125" width="0" layer="19" extent="1-1"/>
+<wire x1="23.712578125" y1="25.960959375" x2="25.192578125" y2="25.960959375" width="0" layer="19" extent="16-16"/>
+<wire x1="23.266496875" y1="27.012225" x2="23.712578125" y2="25.960959375" width="0" layer="19" extent="16-16"/>
 <wire x1="1.773159375" y1="27.982221875" x2="23.266496875" y2="27.012225" width="0" layer="19" extent="16-16"/>
+<wire x1="0.934721875" y1="27.95121875" x2="1.773159375" y2="27.982221875" width="0" layer="19" extent="16-16"/>
+<wire x1="0.673103125" y1="27.36701875" x2="0.934721875" y2="27.95121875" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VDD_B_1V8">
 <contactref element="C67" pad="1"/>
