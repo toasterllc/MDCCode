@@ -3501,10 +3501,25 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="26.553159375" y="25.654"/>
 <vertex x="26.553159375" y="26.84271875"/>
 </polygon>
-<wire x1="25.18305" y1="3.8088125" x2="25.530403125" y2="4.02901875" width="0" layer="19" extent="1-16"/>
-<wire x1="2.4022375" y1="27.936703125" x2="1.79581875" y2="27.282559375" width="0" layer="19" extent="1-16"/>
-<wire x1="29.4972" y1="16.707" x2="30.1472" y2="17.357" width="0" layer="19" extent="1-1"/>
-<wire x1="34.47018125" y1="14.71458125" x2="33.3972" y2="15.407" width="0" layer="19" extent="1-16"/>
+<polygon width="0.127" layer="16" thermals="no">
+<vertex x="1.29031875" y="28.107640625"/>
+<vertex x="3.556" y="28.107640625"/>
+<vertex x="3.556" y="26.162"/>
+<vertex x="1.524" y="26.162"/>
+<vertex x="1.524" y="26.924"/>
+<vertex x="3.048" y="26.924"/>
+<vertex x="3.048" y="27.686"/>
+<vertex x="1.29031875" y="27.686"/>
+</polygon>
+<via x="34.29" y="13.716" extent="1-16" drill="0.381"/>
+<via x="34.29" y="12.954" extent="1-16" drill="0.381"/>
+<polygon width="0.127" layer="16" thermals="no">
+<vertex x="24.13" y="5.588"/>
+<vertex x="25.6032" y="5.588"/>
+<vertex x="25.6032" y="3.964940625"/>
+<vertex x="24.13" y="3.964940625"/>
+</polygon>
+<wire x1="30.1472" y1="17.357" x2="29.4972" y2="16.707" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="ICE_IMG_CLK16MHZ">
 <contactref element="U19" pad="C11"/>
@@ -6871,9 +6886,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="5.928359375" y="29.108403125"/>
 </polygon>
 <wire x1="4.3430375" y1="27.936703125" x2="4.332375" y2="27.947365625" width="0.127" layer="16" grouprefs="_VDD_B_CONTROL"/>
-<wire x1="4.332375" y1="27.947365625" x2="3.594671875" y2="27.947365625" width="0.127" layer="16" grouprefs="_VDD_B_CONTROL"/>
-<wire x1="2.955334375" y1="28.586703125" x2="2.4022375" y2="28.586703125" width="0.127" layer="16" grouprefs="_VDD_B_CONTROL"/>
-<wire x1="3.594671875" y1="27.947365625" x2="2.955334375" y2="28.586703125" width="0.127" layer="16" grouprefs="_VDD_B_CONTROL"/>
+<wire x1="4.332375" y1="27.947365625" x2="3.998528125" y2="27.947365625" width="0.127" layer="16" grouprefs="_VDD_B_CONTROL"/>
+<wire x1="3.359190625" y1="28.586703125" x2="2.4022375" y2="28.586703125" width="0.127" layer="16" grouprefs="_VDD_B_CONTROL"/>
+<wire x1="3.998528125" y1="27.947365625" x2="3.359190625" y2="28.586703125" width="0.127" layer="16" grouprefs="_VDD_B_CONTROL"/>
 <via x="5.290815625" y="27.91968125" extent="1-16" drill="0.254" grouprefs="_VDD_B_CONTROL"/>
 <wire x1="5.290815625" y1="27.91968125" x2="4.360059375" y2="27.91968125" width="0.381" layer="16" grouprefs="_VDD_B_CONTROL"/>
 <wire x1="4.360059375" y1="27.91968125" x2="4.3430375" y2="27.936703125" width="0.381" layer="16" grouprefs="_VDD_B_CONTROL"/>
