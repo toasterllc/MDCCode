@@ -6501,16 +6501,16 @@ should be a high voltage during power up.</text>
 <attribute name="MFG" x="22.86" y="-43.18" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="22.86" y="-43.18" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="LED4" gate="G$1" x="198.12" y="-35.56" smashed="yes">
-<attribute name="NAME" x="201.676" y="-40.132" size="1.778" layer="95" rot="R90"/>
-<attribute name="MFG" x="198.12" y="-35.56" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="198.12" y="-35.56" size="1.778" layer="96" display="off"/>
+<instance part="LED4" gate="G$1" x="198.12" y="-33.02" smashed="yes">
+<attribute name="NAME" x="201.676" y="-37.592" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="198.12" y="-33.02" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="198.12" y="-33.02" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="R15" gate="G$1" x="198.12" y="-48.26" smashed="yes" rot="R270">
-<attribute name="NAME" x="199.39" y="-45.72" size="1.778" layer="95"/>
-<attribute name="VALUE" x="199.39" y="-48.26" size="1.778" layer="96"/>
-<attribute name="MFG" x="198.12" y="-48.26" size="1.778" layer="96" rot="R270" display="off"/>
-<attribute name="PN" x="198.12" y="-48.26" size="1.778" layer="96" rot="R270" display="off"/>
+<instance part="R15" gate="G$1" x="198.12" y="-45.72" smashed="yes" rot="R270">
+<attribute name="NAME" x="199.39" y="-43.18" size="1.778" layer="95"/>
+<attribute name="VALUE" x="199.39" y="-45.72" size="1.778" layer="96"/>
+<attribute name="MFG" x="198.12" y="-45.72" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="198.12" y="-45.72" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="C46" gate="G$1" x="149.86" y="-86.36" smashed="yes">
 <attribute name="NAME" x="146.558" y="-86.487" size="1.778" layer="95" align="bottom-right"/>
@@ -6531,38 +6531,38 @@ should be a high voltage during power up.</text>
 <attribute name="MFG" x="68.58" y="-101.6" size="1.778" layer="96" display="off"/>
 <attribute name="PN" x="68.58" y="-101.6" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="LED3" gate="G$1" x="185.42" y="-35.56" smashed="yes">
-<attribute name="NAME" x="188.976" y="-40.132" size="1.778" layer="95" rot="R90"/>
-<attribute name="MFG" x="185.42" y="-35.56" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="185.42" y="-35.56" size="1.778" layer="96" display="off"/>
+<instance part="LED3" gate="G$1" x="167.64" y="-33.02" smashed="yes">
+<attribute name="NAME" x="171.196" y="-37.592" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="167.64" y="-33.02" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="167.64" y="-33.02" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="R14" gate="G$1" x="185.42" y="-48.26" smashed="yes" rot="R270">
-<attribute name="NAME" x="186.69" y="-45.72" size="1.778" layer="95"/>
-<attribute name="VALUE" x="186.69" y="-48.26" size="1.778" layer="96"/>
-<attribute name="MFG" x="185.42" y="-48.26" size="1.778" layer="96" rot="R270" display="off"/>
-<attribute name="PN" x="185.42" y="-48.26" size="1.778" layer="96" rot="R270" display="off"/>
+<instance part="R14" gate="G$1" x="167.64" y="-45.72" smashed="yes" rot="R270">
+<attribute name="NAME" x="168.91" y="-43.18" size="1.778" layer="95"/>
+<attribute name="VALUE" x="168.91" y="-45.72" size="1.778" layer="96"/>
+<attribute name="MFG" x="167.64" y="-45.72" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="167.64" y="-45.72" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
-<instance part="LED2" gate="G$1" x="172.72" y="-35.56" smashed="yes">
-<attribute name="NAME" x="176.276" y="-40.132" size="1.778" layer="95" rot="R90"/>
-<attribute name="MFG" x="172.72" y="-35.56" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="172.72" y="-35.56" size="1.778" layer="96" display="off"/>
+<instance part="LED2" gate="G$1" x="182.88" y="-33.02" smashed="yes">
+<attribute name="NAME" x="186.436" y="-37.592" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="182.88" y="-33.02" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="182.88" y="-33.02" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="R13" gate="G$1" x="172.72" y="-48.26" smashed="yes" rot="R270">
-<attribute name="NAME" x="173.99" y="-45.72" size="1.778" layer="95"/>
-<attribute name="VALUE" x="173.99" y="-48.26" size="1.778" layer="96"/>
-<attribute name="MFG" x="172.72" y="-48.26" size="1.778" layer="96" rot="R270" display="off"/>
-<attribute name="PN" x="172.72" y="-48.26" size="1.778" layer="96" rot="R270" display="off"/>
+<instance part="R13" gate="G$1" x="182.88" y="-45.72" smashed="yes" rot="R270">
+<attribute name="NAME" x="184.15" y="-43.18" size="1.778" layer="95"/>
+<attribute name="VALUE" x="184.15" y="-45.72" size="1.778" layer="96"/>
+<attribute name="MFG" x="182.88" y="-45.72" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="182.88" y="-45.72" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
-<instance part="LED1" gate="G$1" x="160.02" y="-35.56" smashed="yes">
-<attribute name="NAME" x="163.576" y="-40.132" size="1.778" layer="95" rot="R90"/>
-<attribute name="MFG" x="160.02" y="-35.56" size="1.778" layer="96" display="off"/>
-<attribute name="PN" x="160.02" y="-35.56" size="1.778" layer="96" display="off"/>
+<instance part="LED1" gate="G$1" x="213.36" y="-33.02" smashed="yes">
+<attribute name="NAME" x="216.916" y="-37.592" size="1.778" layer="95" rot="R90"/>
+<attribute name="MFG" x="213.36" y="-33.02" size="1.778" layer="96" display="off"/>
+<attribute name="PN" x="213.36" y="-33.02" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="R12" gate="G$1" x="160.02" y="-48.26" smashed="yes" rot="R270">
-<attribute name="NAME" x="161.29" y="-45.72" size="1.778" layer="95"/>
-<attribute name="VALUE" x="161.29" y="-48.26" size="1.778" layer="96"/>
-<attribute name="MFG" x="160.02" y="-48.26" size="1.778" layer="96" rot="R270" display="off"/>
-<attribute name="PN" x="160.02" y="-48.26" size="1.778" layer="96" rot="R270" display="off"/>
+<instance part="R12" gate="G$1" x="213.36" y="-45.72" smashed="yes" rot="R270">
+<attribute name="NAME" x="214.63" y="-43.18" size="1.778" layer="95"/>
+<attribute name="VALUE" x="214.63" y="-45.72" size="1.778" layer="96"/>
+<attribute name="MFG" x="213.36" y="-45.72" size="1.778" layer="96" rot="R270" display="off"/>
+<attribute name="PN" x="213.36" y="-45.72" size="1.778" layer="96" rot="R270" display="off"/>
 </instance>
 <instance part="U20" gate="G$1" x="106.68" y="-142.24" smashed="yes">
 <attribute name="NAME" x="106.755" y="-141.3481" size="1.778" layer="95" ratio="10" rot="SR0"/>
@@ -6754,8 +6754,8 @@ should be a high voltage during power up.</text>
 </segment>
 <segment>
 <pinref part="R15" gate="G$1" pin="2"/>
-<wire x1="198.12" y1="-53.34" x2="198.12" y2="-55.88" width="0.1524" layer="91"/>
-<label x="198.12" y="-55.88" size="1.778" layer="95"/>
+<wire x1="198.12" y1="-50.8" x2="198.12" y2="-53.34" width="0.1524" layer="91"/>
+<label x="198.12" y="-53.34" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="X2" gate="G$1" pin="GND"/>
@@ -6772,18 +6772,18 @@ should be a high voltage during power up.</text>
 </segment>
 <segment>
 <pinref part="R14" gate="G$1" pin="2"/>
-<wire x1="185.42" y1="-53.34" x2="185.42" y2="-55.88" width="0.1524" layer="91"/>
-<label x="185.42" y="-55.88" size="1.778" layer="95"/>
+<wire x1="167.64" y1="-50.8" x2="167.64" y2="-53.34" width="0.1524" layer="91"/>
+<label x="167.64" y="-53.34" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R13" gate="G$1" pin="2"/>
-<wire x1="172.72" y1="-53.34" x2="172.72" y2="-55.88" width="0.1524" layer="91"/>
-<label x="172.72" y="-55.88" size="1.778" layer="95"/>
+<wire x1="182.88" y1="-50.8" x2="182.88" y2="-53.34" width="0.1524" layer="91"/>
+<label x="182.88" y="-53.34" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="R12" gate="G$1" pin="2"/>
-<wire x1="160.02" y1="-53.34" x2="160.02" y2="-55.88" width="0.1524" layer="91"/>
-<label x="160.02" y="-55.88" size="1.778" layer="95"/>
+<wire x1="213.36" y1="-50.8" x2="213.36" y2="-53.34" width="0.1524" layer="91"/>
+<label x="213.36" y="-53.34" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U20" gate="G$1" pin="GND"/>
@@ -7077,11 +7077,11 @@ should be a high voltage during power up.</text>
 <label x="50.8" y="-175.26" size="1.778" layer="95" align="bottom-right"/>
 </segment>
 </net>
-<net name="ICE_LED0" class="0">
+<net name="ICE_LED2" class="0">
 <segment>
 <pinref part="LED4" gate="G$1" pin="A"/>
-<wire x1="198.12" y1="-33.02" x2="198.12" y2="-30.48" width="0.1524" layer="91"/>
-<label x="198.12" y="-30.48" size="1.778" layer="95"/>
+<wire x1="198.12" y1="-30.48" x2="198.12" y2="-27.94" width="0.1524" layer="91"/>
+<label x="198.12" y="-27.94" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U19" gate="A" pin="C9"/>
@@ -7128,7 +7128,7 @@ should be a high voltage during power up.</text>
 <net name="N$23" class="0">
 <segment>
 <pinref part="LED4" gate="G$1" pin="C"/>
-<wire x1="198.12" y1="-40.64" x2="198.12" y2="-43.18" width="0.1524" layer="91"/>
+<wire x1="198.12" y1="-38.1" x2="198.12" y2="-40.64" width="0.1524" layer="91"/>
 <pinref part="R15" gate="G$1" pin="1"/>
 </segment>
 </net>
@@ -7294,29 +7294,29 @@ should be a high voltage during power up.</text>
 <net name="N$20" class="0">
 <segment>
 <pinref part="LED3" gate="G$1" pin="C"/>
-<wire x1="185.42" y1="-40.64" x2="185.42" y2="-43.18" width="0.1524" layer="91"/>
+<wire x1="167.64" y1="-38.1" x2="167.64" y2="-40.64" width="0.1524" layer="91"/>
 <pinref part="R14" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$26" class="0">
 <segment>
 <pinref part="LED2" gate="G$1" pin="C"/>
-<wire x1="172.72" y1="-40.64" x2="172.72" y2="-43.18" width="0.1524" layer="91"/>
+<wire x1="182.88" y1="-38.1" x2="182.88" y2="-40.64" width="0.1524" layer="91"/>
 <pinref part="R13" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$28" class="0">
 <segment>
 <pinref part="LED1" gate="G$1" pin="C"/>
-<wire x1="160.02" y1="-40.64" x2="160.02" y2="-43.18" width="0.1524" layer="91"/>
+<wire x1="213.36" y1="-38.1" x2="213.36" y2="-40.64" width="0.1524" layer="91"/>
 <pinref part="R12" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="ICE_LED3" class="0">
 <segment>
 <pinref part="LED1" gate="G$1" pin="A"/>
-<wire x1="160.02" y1="-33.02" x2="160.02" y2="-30.48" width="0.1524" layer="91"/>
-<label x="160.02" y="-30.48" size="1.778" layer="95"/>
+<wire x1="213.36" y1="-30.48" x2="213.36" y2="-27.94" width="0.1524" layer="91"/>
+<label x="213.36" y="-27.94" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U19" gate="B" pin="B11"/>
@@ -7324,11 +7324,11 @@ should be a high voltage during power up.</text>
 <label x="91.44" y="66.04" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_LED2" class="0">
+<net name="ICE_LED1" class="0">
 <segment>
 <pinref part="LED2" gate="G$1" pin="A"/>
-<wire x1="172.72" y1="-33.02" x2="172.72" y2="-30.48" width="0.1524" layer="91"/>
-<label x="172.72" y="-30.48" size="1.778" layer="95"/>
+<wire x1="182.88" y1="-30.48" x2="182.88" y2="-27.94" width="0.1524" layer="91"/>
+<label x="182.88" y="-27.94" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U19" gate="A" pin="A11"/>
@@ -7336,11 +7336,11 @@ should be a high voltage during power up.</text>
 <label x="35.56" y="40.64" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="ICE_LED1" class="0">
+<net name="ICE_LED0" class="0">
 <segment>
 <pinref part="LED3" gate="G$1" pin="A"/>
-<wire x1="185.42" y1="-33.02" x2="185.42" y2="-30.48" width="0.1524" layer="91"/>
-<label x="185.42" y="-30.48" size="1.778" layer="95"/>
+<wire x1="167.64" y1="-30.48" x2="167.64" y2="-27.94" width="0.1524" layer="91"/>
+<label x="167.64" y="-27.94" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="U19" gate="A" pin="A10"/>
