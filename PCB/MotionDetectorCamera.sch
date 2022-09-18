@@ -9370,11 +9370,6 @@ between input and output when its VDD=0.</text>
 <label x="246.38" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="170.18" y1="-35.56" x2="172.72" y2="-35.56" width="0.1524" layer="91"/>
-<label x="172.72" y="-35.56" size="1.778" layer="95"/>
-<pinref part="U25" gate="D" pin="PD9_P14"/>
-</segment>
-<segment>
 <pinref part="U25" gate="B" pin="PB10_R12"/>
 <wire x1="68.58" y1="-38.1" x2="71.12" y2="-38.1" width="0.1524" layer="91"/>
 <label x="71.12" y="-38.1" size="1.778" layer="95"/>
@@ -9421,11 +9416,6 @@ between input and output when its VDD=0.</text>
 <label x="231.14" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="170.18" y1="-40.64" x2="172.72" y2="-40.64" width="0.1524" layer="91"/>
-<label x="172.72" y="-40.64" size="1.778" layer="95"/>
-<pinref part="U25" gate="D" pin="PD11_N14"/>
-</segment>
-<segment>
 <pinref part="U25" gate="B" pin="PB12_P12"/>
 <wire x1="68.58" y1="-43.18" x2="71.12" y2="-43.18" width="0.1524" layer="91"/>
 <label x="71.12" y="-43.18" size="1.778" layer="95"/>
@@ -9438,11 +9428,6 @@ between input and output when its VDD=0.</text>
 <label x="215.9" y="-43.18" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="170.18" y1="-48.26" x2="172.72" y2="-48.26" width="0.1524" layer="91"/>
-<label x="172.72" y="-48.26" size="1.778" layer="95"/>
-<pinref part="U25" gate="D" pin="PD14_M14"/>
-</segment>
-<segment>
 <pinref part="U25" gate="B" pin="PB11_R13"/>
 <wire x1="68.58" y1="-40.64" x2="71.12" y2="-40.64" width="0.1524" layer="91"/>
 <label x="71.12" y="-40.64" size="1.778" layer="95"/>
@@ -9453,11 +9438,6 @@ between input and output when its VDD=0.</text>
 <pinref part="LED5" gate="G$1" pin="A"/>
 <wire x1="200.66" y1="-45.72" x2="200.66" y2="-43.18" width="0.1524" layer="91"/>
 <label x="200.66" y="-43.18" size="1.778" layer="95"/>
-</segment>
-<segment>
-<wire x1="170.18" y1="-50.8" x2="172.72" y2="-50.8" width="0.1524" layer="91"/>
-<label x="172.72" y="-50.8" size="1.778" layer="95"/>
-<pinref part="U25" gate="D" pin="PD15_L14"/>
 </segment>
 <segment>
 <pinref part="U25" gate="B" pin="PB13_P13"/>
