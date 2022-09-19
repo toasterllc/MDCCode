@@ -11,17 +11,17 @@
 
 
 - Rev6 Board
-    
-    - Layout: Add soldermask markings for VDD / GND battery terminal leads
-    
-    - Layout: Add soldermask markings for STM32 header pins, if we keep the header (since we want to make backside thinner)
-    
-    X Layout: We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
-      card sticks out the side of the board
 
 
 
 - Rev6 Board Done
+    
+    X Layout: Add soldermask markings for STM32 header pins, if we keep the header (since we want to make backside thinner)
+    
+    X Layout: We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
+      card sticks out the side of the board
+    
+    √ Layout: Add soldermask markings for VDD / GND battery terminal leads
     
     √ Make new TagConnect part that doesn't have the holes on the bottom
     
