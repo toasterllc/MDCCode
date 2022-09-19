@@ -1567,6 +1567,18 @@ SMD mount</description>
 <hole x="2.54" y="-1.016" drill="0.9906"/>
 <text x="-3.302" y="1.397" size="1.016" layer="25" font="vector">&gt;NAME</text>
 </package>
+<package name="TAGCONNECT-TC2030-NL-EDGE">
+<smd name="2" x="-1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="1" x="-1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="4" x="0" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="3" x="0" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="6" x="1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="5" x="1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<rectangle x1="-1.143" y1="-0.508" x2="1.143" y2="0.508" layer="41"/>
+<hole x="-2.54" y="0" drill="0.9906"/>
+<text x="-3.302" y="1.397" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<wire x1="2.115" y1="1.27" x2="2.115" y2="-1.016" width="0.0762" layer="21"/>
+</package>
 </packages>
 <packages3d>
 <package3d name="SON50P300X200X80-8N" urn="urn:adsk.eagle:package:36180302/1" type="model">
@@ -2515,16 +2527,16 @@ Mux</text>
 <wire x1="0" y1="-27.94" x2="20.32" y2="-27.94" width="0.254" layer="94"/>
 <wire x1="20.32" y1="-27.94" x2="20.32" y2="0" width="0.254" layer="94"/>
 <wire x1="20.32" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
-<pin name="VCC" x="-2.54" y="-2.54" visible="pin" length="short"/>
-<pin name="CS_" x="-2.54" y="-7.62" visible="pin" length="short"/>
+<pin name="VCC" x="-2.54" y="-2.54" length="short"/>
+<pin name="CS_" x="-2.54" y="-7.62" length="short"/>
 <text x="0.075" y="0.8919" size="1.778" layer="95" ratio="10" rot="SR0">&gt;NAME</text>
 <text x="0.075" y="-30.6041" size="1.778" layer="95" ratio="10" rot="SR0">&gt;PN</text>
-<pin name="DI" x="-2.54" y="-12.7" visible="pin" length="short"/>
-<pin name="GND" x="-2.54" y="-25.4" visible="pin" length="short"/>
-<pin name="DO" x="22.86" y="-2.54" visible="pin" length="short" rot="R180"/>
-<pin name="WP_" x="-2.54" y="-17.78" visible="pin" length="short"/>
-<pin name="HOLD_" x="-2.54" y="-20.32" visible="pin" length="short"/>
-<pin name="CLK" x="-2.54" y="-10.16" visible="pin" length="short"/>
+<pin name="DI" x="-2.54" y="-12.7" length="short"/>
+<pin name="GND" x="-2.54" y="-25.4" length="short"/>
+<pin name="DO" x="22.86" y="-2.54" length="short" rot="R180"/>
+<pin name="WP_" x="-2.54" y="-17.78" length="short"/>
+<pin name="HOLD_" x="-2.54" y="-20.32" length="short"/>
+<pin name="CLK" x="-2.54" y="-10.16" length="short"/>
 <text x="19.304" y="-26.924" size="1.778" layer="94" align="bottom-right">SPI
 Flash</text>
 </symbol>
@@ -3951,6 +3963,19 @@ Connect</text>
 <technology name=""/>
 </technologies>
 </device>
+<device name="EDGE" package="TAGCONNECT-TC2030-NL-EDGE">
+<connects>
+<connect gate="A" pin="1" pad="1"/>
+<connect gate="A" pin="2" pad="2"/>
+<connect gate="A" pin="3" pad="3"/>
+<connect gate="A" pin="4" pad="4"/>
+<connect gate="A" pin="5" pad="5"/>
+<connect gate="A" pin="6" pad="6"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
 </devices>
 </deviceset>
 </devicesets>
@@ -4689,7 +4714,7 @@ Connect</text>
 <attribute name="MFG" value="Samsung"/>
 <attribute name="PN" value="CL21A226MQQNNNG"/>
 </part>
-<part name="H2" library="EagleLibrary" deviceset="TAGCONNECT-TC2030-NL" device=""/>
+<part name="H2" library="EagleLibrary" deviceset="TAGCONNECT-TC2030-NL" device="EDGE" value="TAGCONNECT-TC2030-NLEDGE"/>
 </parts>
 <sheets>
 <sheet>
