@@ -1400,9 +1400,8 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 </polygon>
 </package>
 <package name="JST-SM02B-SRSS-TB">
-<description>JST PH series
-2-pin
-SMD mount</description>
+<description>Header: JST SM02B-SRSS-TB
+Contact Housing: JST SHR-02V-S</description>
 <smd name="GND1" x="-1.8" y="0" dx="1.2" dy="1.8" layer="1"/>
 <text x="-2.247321875" y="6.099178125" size="1.27" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-2" y1="4.35" x2="-2" y2="-0.6" width="0.05" layer="21"/>

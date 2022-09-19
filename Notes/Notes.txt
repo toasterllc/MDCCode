@@ -16,7 +16,7 @@
     
     - Layout: Add soldermask markings for STM32 header pins, if we keep the header (since we want to make backside thinner)
     
-    - Layout: We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
+    X Layout: We should be able to make the board smaller by rotating the SD card holder 90 degrees, so that the SD
       card sticks out the side of the board
 
 
