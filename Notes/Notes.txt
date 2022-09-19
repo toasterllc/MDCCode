@@ -12,10 +12,6 @@
 
 - Rev6 Board
     
-    - Check/correct RAM trace lengths
-    
-    - Check/correct IMG trace lengths
-    
     - Check/correct SD trace lengths
     
     - Layout: Add soldermask markings for VDD / GND battery terminal leads
@@ -28,6 +24,10 @@
 
 
 - Rev6 Board Done
+    
+    √ Check/correct RAM trace lengths
+    
+    √ Check/correct IMG trace lengths
     
     √ Verify that the new ICE40 pin assignment meets our timing (since we moved the pins since Rev5 to
       account miswiring the flash chip)
