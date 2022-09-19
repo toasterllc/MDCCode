@@ -4820,8 +4820,8 @@ due to the high resistance of the voltage divider.
 The capacitor acts as low-impedance charge storage
 that the ADC will draw from during its sampling.
 </text>
-<text x="325.628" y="435.61" size="1.016" layer="95" align="top-left">Pulldow prevents a floating
-input while MSP430 is resetting.</text>
+<text x="325.628" y="435.61" size="1.016" layer="95" align="top-left">Pulldown prevents a floating
+input while MSP430 is resetting</text>
 </plain>
 <instances>
 <instance part="C9" gate="G$1" x="165.1" y="297.18" smashed="yes">

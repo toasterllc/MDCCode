@@ -4,6 +4,10 @@
     
     - Order TPS62A01DRLR from ti.com
     
+    - Order lens holders
+    
+    - Order battery headers
+    
     - Buy TagConnect cable (TC2030-IDC-NL) and grips
         https://www.tag-connect.com/product/tc2030-idc-nl
         https://www.tag-connect.com/product/grip-6-3-pack
