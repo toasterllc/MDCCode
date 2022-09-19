@@ -12,6 +12,8 @@
 
 - Rev6 Board
     
+    - Make new TagConnect part that doesn't have the holes on the bottom
+    
     - Check/correct SD trace lengths
     
     - Layout: Add soldermask markings for VDD / GND battery terminal leads
