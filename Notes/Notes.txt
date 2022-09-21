@@ -16,6 +16,7 @@
 
 - Rev6 Board
 
+    - Consider switching to G-Switch GT-USB-7010B if we need to get rid of the plastic holes
 
 
 - Rev6 Board Done
