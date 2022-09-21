@@ -584,8 +584,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <description>Chip, 3.20 X 2.50 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
 <text x="-7.056" y="7.8871" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<pad name="1" x="-9" y="0" drill="1.7"/>
-<pad name="2" x="9" y="0" drill="1.7"/>
 <circle x="-9" y="0" radius="2.25" width="0.05" layer="21"/>
 <circle x="9" y="0" radius="2.25" width="0.05" layer="21"/>
 <circle x="0" y="0" radius="6" width="0.05" layer="21"/>
@@ -631,8 +629,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="9" y="2.25"/>
 <vertex x="6.75" y="2.25"/>
 </polygon>
-<circle x="-9" y="0" radius="0.508" width="2.54" layer="42"/>
+<circle x="-9" y="0" radius="0.4826" width="2.54" layer="42"/>
 <circle x="9" y="0" radius="0.508" width="2.54" layer="42"/>
+<hole x="-9" y="0" drill="1.7"/>
+<hole x="9" y="0" drill="1.7"/>
 </package>
 <package name="STM-STM32F730I8" urn="urn:adsk.eagle:footprint:22433302/1" locally_modified="yes">
 <description>225-BGA, collapsing, 0.65 mm pitch, 10.00 X 10.00 X 0.60 mm body
@@ -1513,12 +1513,35 @@ Contact Housing: JST SHR-02V-S</description>
 <vertex x="0.2" y="0.8"/>
 </polygon>
 </package>
+<package name="TAGCONNECT-TC2030-NL">
+<smd name="2" x="-1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="1" x="-1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="4" x="0" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="3" x="0" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="6" x="1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="5" x="1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<rectangle x1="-1.143" y1="-0.508" x2="1.143" y2="0.508" layer="41"/>
+<hole x="-2.54" y="0" drill="0.9906"/>
+<hole x="2.54" y="1.016" drill="0.9906"/>
+<hole x="2.54" y="-1.016" drill="0.9906"/>
+<text x="-3.302" y="1.397" size="1.016" layer="25" font="vector">&gt;NAME</text>
+</package>
+<package name="TAGCONNECT-TC2030-NL-EDGE">
+<smd name="2" x="-1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="1" x="-1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="4" x="0" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="3" x="0" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="6" x="1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<smd name="5" x="1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
+<rectangle x1="-1.143" y1="-0.508" x2="1.143" y2="0.508" layer="41"/>
+<hole x="-2.54" y="0" drill="0.9906"/>
+<text x="-3.302" y="1.397" size="1.016" layer="25" font="vector">&gt;NAME</text>
+<wire x1="2.115" y1="1.27" x2="2.115" y2="-1.016" width="0.0762" layer="21"/>
+</package>
 <package name="MARSHALL-V-LH4">
 <description>Chip, 3.20 X 2.50 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
 <text x="-10.956" y="11.2871" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<pad name="1" x="-10.9982" y="0" drill="1.778"/>
-<pad name="2" x="10.9982" y="0" drill="1.778"/>
 <circle x="-10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
 <circle x="10.9982" y="0" radius="2.286" width="0.05" layer="21"/>
 <circle x="0" y="0" radius="6.858" width="0.05" layer="21"/>
@@ -1552,31 +1575,8 @@ Contact Housing: JST SHR-02V-S</description>
 <wire x1="-10.9982" y1="-10.9982" x2="-10.9982" y2="10.9982" width="0.05" layer="21"/>
 <circle x="-10.9982" y="0" radius="1.016" width="2.54" layer="39"/>
 <circle x="10.9982" y="0" radius="1.016" width="2.54" layer="39"/>
-</package>
-<package name="TAGCONNECT-TC2030-NL">
-<smd name="2" x="-1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="1" x="-1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="4" x="0" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="3" x="0" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="6" x="1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="5" x="1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<rectangle x1="-1.143" y1="-0.508" x2="1.143" y2="0.508" layer="41"/>
-<hole x="-2.54" y="0" drill="0.9906"/>
-<hole x="2.54" y="1.016" drill="0.9906"/>
-<hole x="2.54" y="-1.016" drill="0.9906"/>
-<text x="-3.302" y="1.397" size="1.016" layer="25" font="vector">&gt;NAME</text>
-</package>
-<package name="TAGCONNECT-TC2030-NL-EDGE">
-<smd name="2" x="-1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="1" x="-1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="4" x="0" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="3" x="0" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="6" x="1.27" y="0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<smd name="5" x="1.27" y="-0.635" dx="0.7874" dy="0.7874" layer="1" roundness="100"/>
-<rectangle x1="-1.143" y1="-0.508" x2="1.143" y2="0.508" layer="41"/>
-<hole x="-2.54" y="0" drill="0.9906"/>
-<text x="-3.302" y="1.397" size="1.016" layer="25" font="vector">&gt;NAME</text>
-<wire x1="2.115" y1="1.27" x2="2.115" y2="-1.016" width="0.0762" layer="21"/>
+<hole x="-10.9982" y="0" drill="1.778"/>
+<hole x="10.9982" y="0" drill="1.778"/>
 </package>
 </packages>
 <packages3d>
@@ -1962,8 +1962,6 @@ the design uses this PLL</text>
 <text x="0" y="-27.94" size="1.778" layer="95">S-Mount Lens Holder</text>
 <text x="0" y="0.762" size="1.778" layer="95">&gt;NAME</text>
 <circle x="12.7" y="-12.7" radius="7.184203125" width="0.254" layer="94"/>
-<pin name="GND1" x="-2.54" y="-22.86" visible="pin" length="short"/>
-<pin name="GND2" x="27.94" y="-22.86" visible="pin" length="short" rot="R180"/>
 </symbol>
 <symbol name="STM-STM32F730I8-A">
 <wire x1="0" y1="-43.18" x2="0" y2="0" width="0.254" layer="94"/>
@@ -3113,10 +3111,6 @@ Connect</text>
 </gates>
 <devices>
 <device name="MARSHALL-V-LH4" package="MARSHALL-V-LH4">
-<connects>
-<connect gate="G$1" pin="GND1" pad="1"/>
-<connect gate="G$1" pin="GND2" pad="2"/>
-</connects>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="Marshall Electronics"/>
@@ -3125,10 +3119,6 @@ Connect</text>
 </technologies>
 </device>
 <device name="M12LENSES-PT-LH008P" package="M12LENSES-PT-LH008P">
-<connects>
-<connect gate="G$1" pin="GND1" pad="1"/>
-<connect gate="G$1" pin="GND2" pad="2"/>
-</connects>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="M12 Lenses"/>
@@ -7869,16 +7859,6 @@ between input and output when its VDD=0.</text>
 <wire x1="17.78" y1="38.1" x2="27.94" y2="38.1" width="0.1524" layer="91"/>
 <label x="17.78" y="37.592" size="1.778" layer="95" align="top-left"/>
 <pinref part="C52" gate="G$1" pin="2"/>
-</segment>
-<segment>
-<pinref part="J9" gate="G$1" pin="GND1"/>
-<wire x1="226.06" y1="33.02" x2="223.52" y2="33.02" width="0.1524" layer="91"/>
-<label x="223.52" y="33.02" size="1.778" layer="95" align="bottom-right"/>
-</segment>
-<segment>
-<pinref part="J9" gate="G$1" pin="GND2"/>
-<wire x1="256.54" y1="33.02" x2="259.08" y2="33.02" width="0.1524" layer="91"/>
-<label x="259.08" y="33.02" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="C45" gate="G$1" pin="2"/>

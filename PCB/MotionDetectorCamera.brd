@@ -591,8 +591,6 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <description>Chip, 3.20 X 2.50 X 0.70 mm body
 &lt;p&gt;Chip package with body size 3.20 X 2.50 X 0.70 mm&lt;/p&gt;</description>
 <text x="-7.056" y="7.8871" size="1.27" layer="25" font="vector">&gt;NAME</text>
-<pad name="1" x="-9" y="0" drill="1.7"/>
-<pad name="2" x="9" y="0" drill="1.7"/>
 <circle x="-9" y="0" radius="2.25" width="0.05" layer="21"/>
 <circle x="9" y="0" radius="2.25" width="0.05" layer="21"/>
 <circle x="0" y="0" radius="6" width="0.05" layer="21"/>
@@ -638,8 +636,10 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <vertex x="9" y="2.25"/>
 <vertex x="6.75" y="2.25"/>
 </polygon>
-<circle x="-9" y="0" radius="0.508" width="2.54" layer="42"/>
+<circle x="-9" y="0" radius="0.4826" width="2.54" layer="42"/>
 <circle x="9" y="0" radius="0.508" width="2.54" layer="42"/>
+<hole x="-9" y="0" drill="1.7"/>
+<hole x="9" y="0" drill="1.7"/>
 </package>
 <package name="STM-STM32F730I8" urn="urn:adsk.eagle:footprint:22433302/1" locally_modified="yes">
 <description>225-BGA, collapsing, 0.65 mm pitch, 10.00 X 10.00 X 0.60 mm body
@@ -2985,8 +2985,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="J10" pad="VSS"/>
 <contactref element="C63" pad="2"/>
 <contactref element="C64" pad="2"/>
-<contactref element="J9" pad="1"/>
-<contactref element="J9" pad="2"/>
 <contactref element="U24" pad="D5"/>
 <contactref element="U24" pad="M9"/>
 <contactref element="U24" pad="D7"/>
