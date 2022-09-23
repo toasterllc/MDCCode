@@ -15,8 +15,14 @@
 
 
 - Rev6 Board
-
-    - Consider switching to G-Switch GT-USB-7010B if we need to get rid of the plastic holes
+    
+    - PCB: Make cutout for battery wire
+    
+    - PCB: Round corners if needed to match enclosure
+    
+    - PCB: Consider switching to G-Switch GT-USB-7010B if we need to get rid of the plastic holes
+    
+    - Enclosure: Add cutout for USB port
 
 
 - Rev6 Board Done
