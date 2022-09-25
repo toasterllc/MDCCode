@@ -16,16 +16,17 @@
 
 - Rev6 Board
     
-    - PCB: make cutout for battery wire
-    
-    - PCB: round corners if needed to match enclosure
-    
     - Enclosure: add cutout for USB port
-    
-    - Enclosure: make backplate radius different than enclosure outer radius
-
 
 - Rev6 Board Done
+    
+    √ PCB: make cutout for battery wire
+    
+    √ PCB: round corners if needed to match enclosure
+    
+    √ Enclosure: add small gap between board edges and enclosure
+    
+    √ Enclosure: adjust backplate radius to look better
     
     √ Enclosure: make backplate hole a semicircle
     
