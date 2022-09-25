@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="mm" unit="mm" style="lines" multiple="1" display="no" altdistance="0.001" altunitdist="mm" altunit="mm"/>
+<grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
@@ -2320,20 +2320,20 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="42.69674375" y="29.3838" size="0.635" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="PMPB10UPX" x="41.339884375" y="28.37" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="Q2" library="EagleLibrary" package="NEXPERIA-SOT1220" value="PMOS-NEXPERIA-SOT1220" x="41.336984375" y="30.53" smashed="yes" rot="MR0" grouprefs="_REVERSE_BATTERY_PROTECTION">
-<attribute name="MFG" value="Nexperia" x="41.336984375" y="30.53" size="1.778" layer="28" rot="MR0" display="off"/>
-<attribute name="NAME" x="43.698684375" y="30.8751" size="0.762" layer="26" font="vector" rot="MR0"/>
-<attribute name="PN" value="PMPB10UPX" x="41.336984375" y="30.53" size="1.778" layer="28" rot="MR0" display="off"/>
+<element name="Q2" library="EagleLibrary" package="NEXPERIA-SOT1220" value="PMOS-NEXPERIA-SOT1220" x="40.836984375" y="30.53" smashed="yes" rot="MR0" grouprefs="_REVERSE_BATTERY_PROTECTION">
+<attribute name="MFG" value="Nexperia" x="40.836984375" y="30.53" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="NAME" x="43.198684375" y="30.8751" size="0.762" layer="26" font="vector" rot="MR0"/>
+<attribute name="PN" value="PMPB10UPX" x="40.836984375" y="30.53" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R10" library="EagleLibrary" package="0402" value="100k" x="43.168621875" y="28.204840625" smashed="yes" rot="MR270" grouprefs="_REVERSE_BATTERY_PROTECTION">
-<attribute name="MFG" value="Yageo" x="43.168621875" y="28.204840625" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="NAME" x="43.397484375" y="27.249421875" size="0.508" layer="26" font="vector" rot="MR270"/>
-<attribute name="PN" value="RC0402FR-07100KL" x="43.168621875" y="28.204840625" size="1.778" layer="28" rot="MR270" display="off"/>
+<element name="R10" library="EagleLibrary" package="0402" value="100k" x="43.0568625" y="28.2251625" smashed="yes" rot="MR270" grouprefs="_REVERSE_BATTERY_PROTECTION">
+<attribute name="MFG" value="Yageo" x="43.0568625" y="28.2251625" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="43.285725" y="27.26974375" size="0.508" layer="26" font="vector" rot="MR270"/>
+<attribute name="PN" value="RC0402FR-07100KL" x="43.0568625" y="28.2251625" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
-<element name="R8" library="EagleLibrary" package="0402" value="100k" x="39.657503125" y="30.08951875" smashed="yes" rot="MR270" grouprefs="_REVERSE_BATTERY_PROTECTION">
-<attribute name="MFG" value="Yageo" x="39.657503125" y="30.08951875" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="NAME" x="39.89144375" y="32.415778125" size="0.508" layer="26" font="vector" rot="MR270"/>
-<attribute name="PN" value="RC0402FR-07100KL" x="39.657503125" y="30.08951875" size="1.778" layer="28" rot="MR270" display="off"/>
+<element name="R8" library="EagleLibrary" package="0402" value="100k" x="39.23078125" y="30.10221875" smashed="yes" rot="MR270" grouprefs="_REVERSE_BATTERY_PROTECTION">
+<attribute name="MFG" value="Yageo" x="39.23078125" y="30.10221875" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="39.464721875" y="32.428478125" size="0.508" layer="26" font="vector" rot="MR270"/>
+<attribute name="PN" value="RC0402FR-07100KL" x="39.23078125" y="30.10221875" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="R2" library="EagleLibrary" package="0402" value="300k" x="33.9556" y="29.36688125" smashed="yes" rot="MR180" grouprefs="_POWER_MUX">
 <attribute name="MFG" value="Walsin" x="33.9556" y="29.36688125" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -2459,8 +2459,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="36.449603125" y="7.557340625" size="0.508" layer="26" font="vector" rot="MR180"/>
 <attribute name="PN" value="AC0402FR-075K1L" x="36.837840625" y="6.584259375" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="J4" library="EagleLibrary" package="JUMPER-SOLDER" value="JUMPER-SOLDER" x="38.79141875" y="29.1934" smashed="yes" rot="MR90" grouprefs="_REVERSE_BATTERY_PROTECTION">
-<attribute name="NAME" x="38.5397" y="30.336778125" size="0.508" layer="26" font="vector" rot="MR90"/>
+<element name="J4" library="EagleLibrary" package="JUMPER-SOLDER" value="JUMPER-SOLDER" x="39.487378125" y="28.329796875" smashed="yes" rot="MR90" grouprefs="_REVERSE_BATTERY_PROTECTION">
+<attribute name="NAME" x="39.235659375" y="29.473175" size="0.508" layer="26" font="vector" rot="MR90"/>
 </element>
 <element name="U5" library="EagleLibrary" package="NEXPERIA-SOT363" value="NEXPERIA-74LVC1G98-BUFFER" x="42.538959375" y="15.46238125" smashed="yes" rot="R90">
 <attribute name="MFG" value="Nexperia" x="42.538959375" y="15.46238125" size="1.778" layer="27" rot="R90" display="off"/>
@@ -5937,7 +5937,6 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="37.069778125" y="28.381396875" extent="1-16" drill="0.381"/>
 <via x="37.735259375" y="28.381396875" extent="1-16" drill="0.381"/>
 <wire x1="37.069778125" y1="28.381396875" x2="37.735259375" y2="28.381396875" width="0.635" layer="15"/>
-<wire x1="37.735259375" y1="28.381396875" x2="38.231103125" y2="28.3814125" width="0.635" layer="15"/>
 <wire x1="41.9923" y1="19.198" x2="41.9923" y2="18.436" width="0.635" layer="15"/>
 <wire x1="41.9923" y1="18.436" x2="41.309040625" y2="17.752740625" width="0.635" layer="15"/>
 <wire x1="41.309040625" y1="17.752740625" x2="41.309040625" y2="16.52421875" width="0.635" layer="15"/>
@@ -5971,8 +5970,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="32.63904375" y1="29.55895625" x2="32.63904375" y2="29.36904375" width="0.127" layer="1"/>
 <wire x1="3.657" y1="30.499" x2="5.36011875" y2="32.20211875" width="0.127" layer="16"/>
 <wire x1="3.657" y1="27.448859375" x2="3.657" y2="30.499" width="0.127" layer="16"/>
-<wire x1="38.231103125" y1="28.3814125" x2="39.188059375" y2="27.42445625" width="0.635" layer="15"/>
-<wire x1="39.188059375" y1="27.42445625" x2="39.188059375" y2="22.002240625" width="0.635" layer="15"/>
+<wire x1="37.735259375" y1="28.381396875" x2="37.735259375" y2="24.320496875" width="0.635" layer="15"/>
+<wire x1="39.188059375" y1="22.867696875" x2="37.735259375" y2="24.320496875" width="0.635" layer="15"/>
+<wire x1="39.188059375" y1="22.867696875" x2="39.188059375" y2="22.002240625" width="0.635" layer="15"/>
 <wire x1="39.188059375" y1="22.002240625" x2="41.9923" y2="19.198" width="0.635" layer="15"/>
 </signal>
 <signal name="VDD_B_1V8_STM">
@@ -6995,21 +6995,21 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="34.258" y="30.48"/>
 </polygon>
 <via x="33.104840625" y="30.215840625" extent="1-16" drill="0.381"/>
-<via x="39.5148" y="28.80638125" extent="1-16" drill="0.381"/>
+<via x="38.709621875" y="27.881821875" extent="1-16" drill="0.381"/>
 <polygon width="0.127" layer="16" thermals="no">
-<vertex x="38.5379" y="29.0856"/>
-<vertex x="38.5379" y="28.463"/>
-<vertex x="39.759640625" y="28.463"/>
-<vertex x="39.759640625" y="29.0856"/>
+<vertex x="38.454078125" y="28.163578125"/>
+<vertex x="38.454078125" y="27.632415625"/>
+<vertex x="39.48531875" y="27.632415625"/>
+<vertex x="39.48531875" y="28.163578125"/>
 </polygon>
 <via x="41.9923" y="21.738" extent="1-16" drill="0.381"/>
 <via x="41.9923" y="21.103" extent="1-16" drill="0.381"/>
 <wire x1="41.9923" y1="21.738" x2="41.9923" y2="21.103" width="0.635" layer="15"/>
 <wire x1="41.888959375" y1="14.49198125" x2="41.902159375" y2="14.50518125" width="0.127" layer="1"/>
 <wire x1="41.902159375" y1="14.50518125" x2="41.902159375" y2="15.156525" width="0.127" layer="1"/>
-<wire x1="38.98790625" y1="28.80638125" x2="39.5148" y2="28.80638125" width="0.635" layer="15"/>
+<wire x1="38.709621875" y1="29.084665625" x2="38.709621875" y2="27.881821875" width="0.635" layer="15"/>
 <wire x1="33.104840625" y1="30.215840625" x2="37.578446875" y2="30.215840625" width="0.635" layer="15"/>
-<wire x1="37.578446875" y1="30.215840625" x2="38.98790625" y2="28.80638125" width="0.635" layer="15"/>
+<wire x1="37.578446875" y1="30.215840625" x2="38.709621875" y2="29.084665625" width="0.635" layer="15"/>
 <via x="42.52061875" y="15.515840625" extent="1-16" drill="0.381"/>
 <wire x1="41.902159375" y1="15.156525" x2="42.261475" y2="15.515840625" width="0.127" layer="1"/>
 <wire x1="42.261475" y1="15.515840625" x2="42.52061875" y2="15.515840625" width="0.127" layer="1"/>
@@ -7019,9 +7019,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="42.52061875" y1="17.5355875" x2="42.52061875" y2="15.515840625" width="0.635" layer="15"/>
 <wire x1="41.9923" y1="21.103" x2="42.7543" y2="20.341" width="0.635" layer="15"/>
 <wire x1="42.7543" y1="20.341" x2="42.7543" y2="17.76926875" width="0.635" layer="15"/>
-<wire x1="39.5148" y1="28.80638125" x2="39.5148" y2="28.17535" width="0.635" layer="15"/>
-<wire x1="39.5148" y1="28.17535" x2="39.9500625" y2="27.7400875" width="0.635" layer="15"/>
-<wire x1="39.9500625" y1="27.7400875" x2="39.9500625" y2="23.7802375" width="0.635" layer="15"/>
+<wire x1="38.709621875" y1="27.881821875" x2="38.709621875" y2="27.710528125" width="0.635" layer="15"/>
+<wire x1="39.9500625" y1="26.4700875" x2="38.709621875" y2="27.710528125" width="0.635" layer="15"/>
+<wire x1="39.9500625" y1="26.4700875" x2="39.9500625" y2="23.7802375" width="0.635" layer="15"/>
 <wire x1="39.9500625" y1="23.7802375" x2="41.9923" y2="21.738" width="0.635" layer="15"/>
 </signal>
 <signal name="VDD_B_EN">
@@ -7153,16 +7153,15 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R10" pad="1"/>
 <polygon width="0.127" layer="16" thermals="no" grouprefs="_REVERSE_BATTERY_PROTECTION">
 <vertex x="42.61158125" y="28.4962"/>
-<vertex x="40.07158125" y="28.4962"/>
-<vertex x="40.07158125" y="27.2389"/>
+<vertex x="40.239221875" y="28.4962"/>
+<vertex x="40.239221875" y="27.2389"/>
 <vertex x="42.61158125" y="27.2389"/>
 </polygon>
-<wire x1="42.274884375" y1="28.37" x2="42.58758125" y2="28.2823625" width="0.127" layer="16"/>
-<wire x1="42.942559375" y1="28.637340625" x2="42.58758125" y2="28.2823625" width="0.127" layer="16"/>
-<wire x1="42.942559375" y1="28.637340625" x2="43.168621875" y2="28.637340625" width="0.127" layer="16"/>
-<wire x1="43.168621875" y1="28.637340625" x2="43.168621875" y2="29.410340625" width="0.127" layer="16"/>
-<wire x1="43.168621875" y1="29.410340625" x2="42.779984375" y2="29.798978125" width="0.127" layer="16"/>
-<wire x1="42.779984375" y1="29.798978125" x2="42.271984375" y2="29.88" width="0.127" layer="16"/>
+<wire x1="43.0568625" y1="28.6576625" x2="43.0568625" y2="29.5221" width="0.127" layer="16"/>
+<wire x1="42.6989625" y1="29.88" x2="41.771984375" y2="29.88" width="0.127" layer="16"/>
+<wire x1="43.0568625" y1="29.5221" x2="42.6989625" y2="29.88" width="0.127" layer="16"/>
+<wire x1="42.274884375" y1="28.37" x2="42.7692" y2="28.37" width="0.127" layer="16"/>
+<wire x1="42.7692" y1="28.37" x2="43.0568625" y2="28.6576625" width="0.127" layer="16"/>
 </signal>
 <signal name="VDD_BAT_IN">
 <contactref element="Q3" pad="3"/>
@@ -7175,22 +7174,23 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="U6" pad="1"/>
 <contactref element="J5" pad="L"/>
 <polygon width="0.127" layer="16" thermals="no" grouprefs="_REVERSE_BATTERY_PROTECTION">
-<vertex x="42.454103125" y="32.212578125"/>
-<vertex x="38.483" y="32.212578125"/>
-<vertex x="38.483" y="30.1599"/>
-<vertex x="42.454103125" y="30.1599"/>
+<vertex x="41.946103125" y="32.212578125"/>
+<vertex x="37.6203" y="32.212578125"/>
+<vertex x="37.6203" y="30.99561875"/>
+<vertex x="38.94328125" y="30.99561875"/>
+<vertex x="38.94328125" y="30.1599"/>
+<vertex x="41.946103125" y="30.1599"/>
 </polygon>
-<wire x1="39.657503125" y1="30.52201875" x2="39.568603125" y2="30.52201875" width="0.127" layer="16"/>
-<wire x1="39.568603125" y1="30.52201875" x2="39.299503125" y2="30.25291875" width="0.127" layer="16"/>
-<wire x1="39.299503125" y1="30.25291875" x2="38.4396375" y2="30.25291875" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
-<wire x1="38.24985625" y1="30.0631375" x2="38.24985625" y2="28.263065625" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
-<wire x1="38.824440625" y1="27.68848125" x2="38.24985625" y2="28.263065625" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
-<wire x1="38.4396375" y1="30.25291875" x2="38.24985625" y2="30.0631375" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
+<wire x1="39.23078125" y1="30.53471875" x2="39.23078125" y2="30.52215625" width="0.127" layer="16"/>
+<wire x1="39.23078125" y1="30.52215625" x2="38.708875" y2="30.52215625" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
+<wire x1="38.226996875" y1="30.040278125" x2="38.226996875" y2="27.564565625" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
+<wire x1="38.451059375" y1="27.340503125" x2="38.226996875" y2="27.564565625" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
+<wire x1="38.708875" y1="30.52215625" x2="38.226996875" y2="30.040278125" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
 <wire x1="40.404884375" y1="29.02" x2="40.22200625" y2="28.9323625" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
-<wire x1="40.00045625" y1="28.7108125" x2="40.22200625" y2="28.9323625" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
-<wire x1="40.00045625" y1="28.7108125" x2="40.00045625" y2="27.951759375" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
-<wire x1="40.00045625" y1="27.951759375" x2="39.737178125" y2="27.68848125" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
-<wire x1="39.737178125" y1="27.68848125" x2="38.824440625" y2="27.68848125" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
+<wire x1="40.000459375" y1="28.710815625" x2="40.22200625" y2="28.9323625" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
+<wire x1="40.000459375" y1="28.710815625" x2="40.000459375" y2="27.532659375" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
+<wire x1="40.000459375" y1="27.532659375" x2="39.808303125" y2="27.340503125" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
+<wire x1="39.808303125" y1="27.340503125" x2="38.451059375" y2="27.340503125" width="0.127" layer="16" grouprefs="_REVERSE_BATTERY_PROTECTION"/>
 <via x="37.91408125" y="31.27558125" extent="1-16" drill="0.381"/>
 <via x="37.908" y="31.90141875" extent="1-16" drill="0.381"/>
 <via x="38.60508125" y="31.29258125" extent="1-16" drill="0.381"/>
@@ -7330,9 +7330,11 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="J4" pad="2"/>
 <polygon width="0.127" layer="16" thermals="no" grouprefs="_REVERSE_BATTERY_PROTECTION">
 <vertex x="41.67178125" y="29.899359375"/>
-<vertex x="38.471384375" y="29.899359375"/>
-<vertex x="38.471384375" y="29.393621875"/>
-<vertex x="40.88691875" y="29.393621875"/>
+<vertex x="38.979384375" y="29.899359375"/>
+<vertex x="38.979384375" y="28.420059375"/>
+<vertex x="39.758621875" y="28.420059375"/>
+<vertex x="39.758621875" y="29.464"/>
+<vertex x="40.88691875" y="29.464"/>
 <vertex x="40.88691875" y="28.7781375"/>
 <vertex x="42.61158125" y="28.7781375"/>
 <vertex x="42.61158125" y="29.2709"/>
