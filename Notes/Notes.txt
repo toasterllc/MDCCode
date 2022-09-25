@@ -16,14 +16,18 @@
 
 - Rev6 Board
     
-    - PCB: Make cutout for battery wire
+    - PCB: make cutout for battery wire
     
-    - PCB: Round corners if needed to match enclosure
+    - PCB: round corners if needed to match enclosure
     
-    - Enclosure: Add cutout for USB port
+    - Enclosure: add cutout for USB port
+    
+    - Enclosure: make backplate radius different than enclosure outer radius
 
 
 - Rev6 Board Done
+    
+    √ Enclosure: make backplate hole a semicircle
     
     X Layout: Add soldermask markings for STM32 header pins, if we keep the header (since we want to make backside thinner)
     
