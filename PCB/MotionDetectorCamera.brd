@@ -53,7 +53,7 @@
 <layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="yes"/>
 <layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
 <layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="no" active="yes"/>
@@ -159,6 +159,7 @@
 <text x="34.043640625" y="28.4547375" size="0.508" layer="25" font="vector" ratio="10">VDD_BAT_IN</text>
 <text x="2.8736" y="31.2374" size="0.762" layer="25" font="vector" ratio="10">MDC Rev 6</text>
 <wire x1="26.4794625" y1="8.6080625" x2="26.095925" y2="8.37438125" width="0.0762" layer="25"/>
+<rectangle x1="40.894" y1="28.532" x2="45.72" y2="30.564" layer="46"/>
 </plain>
 <libraries>
 <library name="EagleLibrary">
@@ -1327,7 +1328,6 @@ Contact Housing: JST SHR-02V-S</description>
 <smd name="GND1" x="-1.8" y="0" dx="1.2" dy="1.8" layer="1"/>
 <text x="-2.247321875" y="6.099178125" size="1.27" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-2" y1="4.35" x2="-2" y2="-0.6" width="0.05" layer="21"/>
-<wire x1="-2" y1="-0.6" x2="2" y2="-0.6" width="0.05" layer="21"/>
 <wire x1="2" y1="-0.6" x2="2" y2="4.35" width="0.05" layer="21"/>
 <wire x1="2" y1="4.35" x2="-2" y2="4.35" width="0.05" layer="21"/>
 <smd name="L" x="-0.5" y="4.775" dx="0.6" dy="1.55" layer="1"/>
@@ -1335,10 +1335,14 @@ Contact Housing: JST SHR-02V-S</description>
 <smd name="R" x="0.5" y="4.775" dx="0.6" dy="1.55" layer="1"/>
 <polygon width="0.05" layer="39">
 <vertex x="-2" y="4.35"/>
-<vertex x="-2" y="-0.6"/>
-<vertex x="2" y="-0.6"/>
+<vertex x="-2" y="-1.2"/>
+<vertex x="2" y="-1.2"/>
 <vertex x="2" y="4.35"/>
 </polygon>
+<wire x1="-2" y1="-0.6" x2="-2" y2="-1.2" width="0.05" layer="21"/>
+<wire x1="-2" y1="-1.2" x2="2" y2="-1.2" width="0.05" layer="21"/>
+<wire x1="2" y1="-1.2" x2="2" y2="-0.6" width="0.05" layer="21"/>
+<wire x1="2" y1="-0.6" x2="-2" y2="-0.6" width="0.05" layer="21"/>
 </package>
 <package name="KOREANHRO-TYPE-C-31-M-08A">
 <text x="-4.168" y="2.4509" size="1.27" layer="25" font="vector">&gt;NAME</text>
@@ -2325,10 +2329,10 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="NAME" x="41.157584375" y="30.859859375" size="0.762" layer="26" font="vector" rot="MR0"/>
 <attribute name="PN" value="PMPB10UPX" x="38.795884375" y="30.514759375" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="R10" library="EagleLibrary" package="0402" value="100k" x="40.459503125" y="28.154040625" smashed="yes" rot="MR270" grouprefs="_REVERSE_BATTERY_PROTECTION">
-<attribute name="MFG" value="Yageo" x="40.459503125" y="28.154040625" size="1.778" layer="28" rot="MR270" display="off"/>
-<attribute name="NAME" x="40.688365625" y="27.198621875" size="0.508" layer="26" font="vector" rot="MR270"/>
-<attribute name="PN" value="RC0402FR-07100KL" x="40.459503125" y="28.154040625" size="1.778" layer="28" rot="MR270" display="off"/>
+<element name="R10" library="EagleLibrary" package="0402" value="100k" x="39.578121875" y="26.35318125" smashed="yes" rot="MR270" grouprefs="_REVERSE_BATTERY_PROTECTION">
+<attribute name="MFG" value="Yageo" x="39.578121875" y="26.35318125" size="1.778" layer="28" rot="MR270" display="off"/>
+<attribute name="NAME" x="39.806984375" y="25.3977625" size="0.508" layer="26" font="vector" rot="MR270"/>
+<attribute name="PN" value="RC0402FR-07100KL" x="39.578121875" y="26.35318125" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="R8" library="EagleLibrary" package="0402" value="100k" x="37.18968125" y="30.086978125" smashed="yes" rot="MR270" grouprefs="_REVERSE_BATTERY_PROTECTION">
 <attribute name="MFG" value="Yageo" x="37.18968125" y="30.086978125" size="1.778" layer="28" rot="MR270" display="off"/>
@@ -7020,8 +7024,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <polygon width="0.127" layer="16" thermals="no">
 <vertex x="36.83" y="27.589478125"/>
 <vertex x="36.83" y="26.67"/>
-<vertex x="39.116" y="26.67"/>
-<vertex x="39.116" y="27.178"/>
+<vertex x="38.989" y="26.67"/>
+<vertex x="38.989" y="27.178"/>
 <vertex x="37.4142" y="27.178"/>
 <vertex x="37.4142" y="27.589478125"/>
 </polygon>
@@ -7163,13 +7167,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="38.198121875" y="27.4421"/>
 <vertex x="39.912621875" y="27.4421"/>
 </polygon>
-<wire x1="40.459503125" y1="28.586540625" x2="40.459503125" y2="29.60845625" width="0.127" layer="16"/>
-<wire x1="40.19558125" y1="29.872378125" x2="39.738503125" y2="29.872378125" width="0.127" layer="16"/>
-<wire x1="39.738503125" y1="29.872378125" x2="39.730884375" y2="29.864759375" width="0.127" layer="16"/>
-<wire x1="40.459503125" y1="29.60845625" x2="40.19558125" y2="29.872378125" width="0.127" layer="16"/>
-<wire x1="39.731784375" y1="28.354759375" x2="39.739403125" y2="28.362378125" width="0.127" layer="16"/>
-<wire x1="40.235340625" y1="28.362378125" x2="39.739403125" y2="28.362378125" width="0.127" layer="16"/>
-<wire x1="40.235340625" y1="28.362378125" x2="40.459503125" y2="28.586540625" width="0.127" layer="16"/>
+<wire x1="39.739403125" y1="28.362378125" x2="39.731784375" y2="28.354759375" width="0.127" layer="16"/>
+<wire x1="39.578121875" y1="26.78568125" x2="39.731784375" y2="26.93934375" width="0.127" layer="16"/>
+<wire x1="39.731784375" y1="26.93934375" x2="39.731784375" y2="27.704759375" width="0.127" layer="16"/>
+<wire x1="39.731784375" y1="28.354759375" x2="39.8613625" y2="28.354759375" width="0.127" layer="16"/>
+<wire x1="40.2084" y1="28.701796875" x2="39.8613625" y2="28.354759375" width="0.127" layer="16"/>
+<wire x1="39.730884375" y1="29.864759375" x2="39.941703125" y2="29.864759375" width="0.127" layer="16"/>
+<wire x1="40.2084" y1="29.5980625" x2="39.941703125" y2="29.864759375" width="0.127" layer="16"/>
+<wire x1="40.2084" y1="29.5980625" x2="40.2084" y2="28.701796875" width="0.127" layer="16"/>
 </signal>
 <signal name="VDD_BAT_IN">
 <contactref element="Q3" pad="3"/>
@@ -7328,14 +7333,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <contactref element="R8" pad="2"/>
 <contactref element="J4" pad="2"/>
 <polygon width="0.127" layer="16" thermals="no" grouprefs="_REVERSE_BATTERY_PROTECTION">
-<vertex x="39.63068125" y="29.88411875"/>
+<vertex x="39.384303125" y="29.88411875"/>
 <vertex x="36.603084375" y="29.88411875"/>
 <vertex x="36.603084375" y="27.84481875"/>
 <vertex x="37.474025" y="27.84481875"/>
 <vertex x="37.474025" y="28.79845625"/>
 <vertex x="39.89738125" y="28.79845625"/>
 <vertex x="39.89738125" y="29.255659375"/>
-<vertex x="39.63068125" y="29.255659375"/>
+<vertex x="39.384303125" y="29.255659375"/>
 </polygon>
 </signal>
 <signal name="NIL">

@@ -1405,7 +1405,6 @@ Contact Housing: JST SHR-02V-S</description>
 <smd name="GND1" x="-1.8" y="0" dx="1.2" dy="1.8" layer="1"/>
 <text x="-2.247321875" y="6.099178125" size="1.27" layer="25" font="vector">&gt;NAME</text>
 <wire x1="-2" y1="4.35" x2="-2" y2="-0.6" width="0.05" layer="21"/>
-<wire x1="-2" y1="-0.6" x2="2" y2="-0.6" width="0.05" layer="21"/>
 <wire x1="2" y1="-0.6" x2="2" y2="4.35" width="0.05" layer="21"/>
 <wire x1="2" y1="4.35" x2="-2" y2="4.35" width="0.05" layer="21"/>
 <smd name="L" x="-0.5" y="4.775" dx="0.6" dy="1.55" layer="1"/>
@@ -1413,10 +1412,14 @@ Contact Housing: JST SHR-02V-S</description>
 <smd name="R" x="0.5" y="4.775" dx="0.6" dy="1.55" layer="1"/>
 <polygon width="0.05" layer="39">
 <vertex x="-2" y="4.35"/>
-<vertex x="-2" y="-0.6"/>
-<vertex x="2" y="-0.6"/>
+<vertex x="-2" y="-1.2"/>
+<vertex x="2" y="-1.2"/>
 <vertex x="2" y="4.35"/>
 </polygon>
+<wire x1="-2" y1="-0.6" x2="-2" y2="-1.2" width="0.05" layer="21"/>
+<wire x1="-2" y1="-1.2" x2="2" y2="-1.2" width="0.05" layer="21"/>
+<wire x1="2" y1="-1.2" x2="2" y2="-0.6" width="0.05" layer="21"/>
+<wire x1="2" y1="-0.6" x2="-2" y2="-0.6" width="0.05" layer="21"/>
 </package>
 <package name="KOREANHRO-TYPE-C-31-M-08A">
 <text x="-4.168" y="2.4509" size="1.27" layer="25" font="vector">&gt;NAME</text>
