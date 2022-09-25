@@ -587,25 +587,25 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <circle x="-9" y="0" radius="2.25" width="0.05" layer="21"/>
 <circle x="9" y="0" radius="2.25" width="0.05" layer="21"/>
 <circle x="0" y="0" radius="6" width="0.05" layer="21"/>
-<polygon width="0.127" layer="39">
+<polygon width="0.05" layer="39">
 <vertex x="-7.175" y="7.55"/>
 <vertex x="-7.175" y="-7.55"/>
 <vertex x="-6.125" y="-7.55"/>
 <vertex x="-6.125" y="7.55"/>
 </polygon>
-<polygon width="0.127" layer="39">
+<polygon width="0.05" layer="39">
 <vertex x="6.125" y="7.55"/>
 <vertex x="6.125" y="-7.55"/>
 <vertex x="7.175" y="-7.55"/>
 <vertex x="7.175" y="7.55"/>
 </polygon>
-<polygon width="0.127" layer="39">
+<polygon width="0.05" layer="39">
 <vertex x="-7.175" y="6.625"/>
 <vertex x="7.175" y="6.625"/>
 <vertex x="7.175" y="7.55"/>
 <vertex x="-7.175" y="7.55"/>
 </polygon>
-<polygon width="0.127" layer="39">
+<polygon width="0.05" layer="39">
 <vertex x="-7.175" y="-7.55"/>
 <vertex x="7.175" y="-7.55"/>
 <vertex x="7.175" y="-6.625"/>
@@ -617,13 +617,13 @@ Source: http://www.osram.convergy.de/ ... LG_LY Q971.pdf</description>
 <wire x1="-7.175" y1="-7.55" x2="-7.175" y2="7.55" width="0.05" layer="21"/>
 <circle x="-9" y="0" radius="1.016" width="2.54" layer="39"/>
 <circle x="9" y="0" radius="1.016" width="2.54" layer="39"/>
-<polygon width="0.127" layer="39">
+<polygon width="0.05" layer="39">
 <vertex x="-9" y="-2.25"/>
 <vertex x="-6.75" y="-2.25"/>
 <vertex x="-6.75" y="2.25"/>
 <vertex x="-9" y="2.25"/>
 </polygon>
-<polygon width="0.127" layer="39">
+<polygon width="0.05" layer="39">
 <vertex x="6.75" y="-2.25"/>
 <vertex x="9" y="-2.25"/>
 <vertex x="9" y="2.25"/>
@@ -1416,6 +1416,89 @@ Contact Housing: JST SHR-02V-S</description>
 <vertex x="-2" y="-0.6"/>
 <vertex x="2" y="-0.6"/>
 <vertex x="2" y="4.35"/>
+</polygon>
+</package>
+<package name="KOREANHRO-TYPE-C-31-M-08A">
+<text x="-4.168" y="2.4509" size="1.27" layer="25" font="vector">&gt;NAME</text>
+<smd name="B9" x="-1.8" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="A6" x="-0.2" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="A7" x="0.2" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="B6" x="0.6" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="B7" x="-0.6" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="A8" x="1" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="A5" x="-1" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="B5" x="1.4" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="B8" x="-1.4" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="B4" x="1.8" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="B1" x="2.6" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="B12" x="-2.6" y="1.125" dx="0.2" dy="1" layer="1"/>
+<wire x1="-4.32" y1="2.3" x2="-4.32" y2="-5.775" width="0.05" layer="21"/>
+<wire x1="-4.32" y1="-5.775" x2="4.32" y2="-5.775" width="0.05" layer="21"/>
+<wire x1="4.32" y1="-5.775" x2="4.32" y2="2.3" width="0.05" layer="21"/>
+<wire x1="4.32" y1="2.3" x2="-4.32" y2="2.3" width="0.05" layer="21"/>
+<polygon width="0.05" layer="39">
+<vertex x="-4.32" y="2.3"/>
+<vertex x="-4.32" y="-5.775"/>
+<vertex x="4.32" y="-5.775"/>
+<vertex x="4.32" y="2.3"/>
+</polygon>
+<pad name="GND1" x="-4.32" y="1.825" drill="0.5" diameter="0.9" rot="R90"/>
+<pad name="GND2" x="-4.32" y="0.725" drill="0.5" diameter="0.9" rot="R90"/>
+<wire x1="-4.32" y1="1.825" x2="-4.32" y2="0.725" width="0.5" layer="46"/>
+<wire x1="4.32" y1="1.825" x2="4.32" y2="0.725" width="0.9" layer="2"/>
+<pad name="GND3" x="4.32" y="1.825" drill="0.5" diameter="0.9" rot="R90"/>
+<pad name="GND4" x="4.32" y="0.725" drill="0.5" diameter="0.9" rot="R90"/>
+<wire x1="4.32" y1="1.825" x2="4.32" y2="0.725" width="0.5" layer="46"/>
+<pad name="GND7" x="-4.32" y="-0.775" drill="0.5" diameter="0.9" rot="R90"/>
+<pad name="GND8" x="-4.32" y="-1.775" drill="0.5" diameter="0.9" rot="R90"/>
+<wire x1="-4.32" y1="-0.775" x2="-4.32" y2="-1.775" width="0.5" layer="46"/>
+<wire x1="-4.32" y1="-0.775" x2="-4.32" y2="-1.775" width="0.9" layer="2"/>
+<pad name="GND5" x="4.32" y="-0.775" drill="0.5" diameter="0.9" rot="R90"/>
+<pad name="GND6" x="4.32" y="-1.775" drill="0.5" diameter="0.9" rot="R90"/>
+<wire x1="4.32" y1="-0.775" x2="4.32" y2="-1.775" width="0.5" layer="46"/>
+<wire x1="4.32" y1="-0.775" x2="4.32" y2="-1.775" width="0.9" layer="2"/>
+<polygon width="0.05" layer="41">
+<vertex x="-4.32" y="0.325"/>
+<vertex x="-4.32" y="-0.525"/>
+<vertex x="4.32" y="-0.525"/>
+<vertex x="4.32" y="0.325"/>
+</polygon>
+<smd name="A4" x="-2.2" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="A9" x="2.2" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="A12" x="3" y="1.125" dx="0.2" dy="1" layer="1"/>
+<smd name="A1" x="-3" y="1.125" dx="0.2" dy="1" layer="1"/>
+<wire x1="4.32" y1="1.825" x2="4.32" y2="0.725" width="0.9" layer="16"/>
+<wire x1="-4.32" y1="-0.775" x2="-4.32" y2="-1.775" width="0.9" layer="16"/>
+<wire x1="4.32" y1="-0.775" x2="4.32" y2="-1.775" width="0.9" layer="16"/>
+<wire x1="4.32" y1="1.825" x2="4.32" y2="0.725" width="0.9" layer="15"/>
+<wire x1="-4.32" y1="-0.775" x2="-4.32" y2="-1.775" width="0.9" layer="15"/>
+<wire x1="4.32" y1="-0.775" x2="4.32" y2="-1.775" width="0.9" layer="15"/>
+<wire x1="-4.32" y1="1.825" x2="-4.32" y2="0.725" width="0.9" layer="29"/>
+<wire x1="4.32" y1="1.825" x2="4.32" y2="0.725" width="0.9" layer="29"/>
+<wire x1="-4.32" y1="-0.775" x2="-4.32" y2="-1.775" width="0.9" layer="29"/>
+<wire x1="4.32" y1="-0.775" x2="4.32" y2="-1.775" width="0.9" layer="29"/>
+<wire x1="-4.32" y1="1.825" x2="-4.32" y2="0.725" width="0.9" layer="30"/>
+<wire x1="4.32" y1="1.825" x2="4.32" y2="0.725" width="0.9" layer="30"/>
+<wire x1="-4.32" y1="-0.775" x2="-4.32" y2="-1.775" width="0.9" layer="30"/>
+<wire x1="4.32" y1="-0.775" x2="4.32" y2="-1.775" width="0.9" layer="30"/>
+<wire x1="-4.32" y1="1.825" x2="-4.32" y2="0.725" width="0.9" layer="2"/>
+<wire x1="-4.32" y1="1.825" x2="-4.32" y2="0.725" width="0.9" layer="16"/>
+<wire x1="-4.32" y1="1.825" x2="-4.32" y2="0.725" width="0.9" layer="15"/>
+<wire x1="-4.32" y1="1.825" x2="-4.32" y2="0.725" width="0.9" layer="1"/>
+<wire x1="4.32" y1="1.825" x2="4.32" y2="0.725" width="0.9" layer="1"/>
+<wire x1="-4.32" y1="-0.775" x2="-4.32" y2="-1.775" width="0.9" layer="1"/>
+<wire x1="4.32" y1="-0.775" x2="4.32" y2="-1.775" width="0.9" layer="1"/>
+<polygon width="0.05" layer="41">
+<vertex x="-4.32" y="-2.025"/>
+<vertex x="-4.32" y="-5.775"/>
+<vertex x="4.32" y="-5.775"/>
+<vertex x="4.32" y="-2.025"/>
+</polygon>
+<polygon width="0.05" layer="41">
+<vertex x="-2.6" y="-0.525"/>
+<vertex x="-2.6" y="-2.025"/>
+<vertex x="2.6" y="-2.025"/>
+<vertex x="2.6" y="-0.525"/>
 </polygon>
 </package>
 <package name="GSWITCH-GT-USB-7010ASV">
@@ -3885,12 +3968,12 @@ Connect</text>
 </device>
 </devices>
 </deviceset>
-<deviceset name="USB-C-JACK" prefix="J">
+<deviceset name="USB-C-RECEPTACLE" prefix="J">
 <gates>
 <gate name="G$1" symbol="USB-C-JACK" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="GSWITCH-GT-USB-7010ASV">
+<device name="-GSWITCH" package="GSWITCH-GT-USB-7010ASV">
 <connects>
 <connect gate="G$1" pin="CC1" pad="A5"/>
 <connect gate="G$1" pin="CC2" pad="B5"/>
@@ -3905,6 +3988,24 @@ Connect</text>
 <technology name="">
 <attribute name="MFG" value="G-Switch"/>
 <attribute name="PN" value="GT-USB-7010ASV"/>
+</technology>
+</technologies>
+</device>
+<device name="-KOREANHRO" package="KOREANHRO-TYPE-C-31-M-08A">
+<connects>
+<connect gate="G$1" pin="CC1" pad="A5"/>
+<connect gate="G$1" pin="CC2" pad="B5"/>
+<connect gate="G$1" pin="D+" pad="A6 B6"/>
+<connect gate="G$1" pin="D-" pad="A7 B7"/>
+<connect gate="G$1" pin="GND" pad="A1 A12 B1 B12 GND1 GND2 GND3 GND4 GND5 GND6 GND7 GND8"/>
+<connect gate="G$1" pin="SBU1" pad="A8"/>
+<connect gate="G$1" pin="SBU2" pad="B8"/>
+<connect gate="G$1" pin="VBUS" pad="A4 A9 B4 B9"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Korean Hroparts Electronics"/>
+<attribute name="PN" value="TYPE-C-31-M-08A"/>
 </technology>
 </technologies>
 </device>
@@ -4611,7 +4712,7 @@ Connect</text>
 <attribute name="PN" value="STN101050B101"/>
 </part>
 <part name="J5" library="EagleLibrary" deviceset="JST-SM02B-SRSS-TB" device=""/>
-<part name="J11" library="EagleLibrary" deviceset="USB-C-JACK" device=""/>
+<part name="J11" library="EagleLibrary" deviceset="USB-C-RECEPTACLE" device="-KOREANHRO"/>
 <part name="R39" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="5.1k">
 <attribute name="MFG" value="Yageo"/>
 <attribute name="PN" value="AC0402FR-075K1L"/>
