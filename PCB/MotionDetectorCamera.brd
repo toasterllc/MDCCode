@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="10" unitdist="mil" unit="mil" style="lines" multiple="1" display="no" altdistance="0.00254" altunitdist="mm" altunit="mil"/>
+<grid distance="0.1" unitdist="mm" unit="mm" style="lines" multiple="1" display="no" altdistance="0.001" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Ground" color="16" fill="1" visible="no" active="yes"/>
@@ -5901,14 +5901,14 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <vertex x="42.246159375" y="19.448"/>
 </polygon>
 <polygon width="0.127" layer="16" thermals="no" grouprefs="_POWER_MUX">
-<vertex x="37.994340625" y="30.734"/>
+<vertex x="37.343340625" y="30.734"/>
 <vertex x="35.02" y="30.734"/>
 <vertex x="35.02" y="30.426659375"/>
 <vertex x="35.891221875" y="30.426659375"/>
 <vertex x="35.891221875" y="29.972"/>
 <vertex x="36.7599" y="29.972"/>
-<vertex x="36.7599" y="28.0766"/>
-<vertex x="37.994340625" y="28.0766"/>
+<vertex x="36.7599" y="27.4826"/>
+<vertex x="37.343340625" y="27.4826"/>
 </polygon>
 <via x="39.084" y="10.4902" extent="1-16" drill="0.381"/>
 <via x="39.846" y="10.4902" extent="1-16" drill="0.381"/>
@@ -5935,8 +5935,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <via x="41.9923" y="18.436" extent="1-16" drill="0.381"/>
 <via x="41.9923" y="19.198" extent="1-16" drill="0.381"/>
 <via x="37.069778125" y="28.381396875" extent="1-16" drill="0.381"/>
-<via x="37.735259375" y="28.381396875" extent="1-16" drill="0.381"/>
-<wire x1="37.069778125" y1="28.381396875" x2="37.735259375" y2="28.381396875" width="0.635" layer="15"/>
+<via x="37.069778125" y="27.759396875" extent="1-16" drill="0.381"/>
+<wire x1="37.069778125" y1="27.759396875" x2="37.0601625" y2="28.37178125" width="0.635" layer="15"/>
+<wire x1="37.069778125" y1="28.381396875" x2="37.0601625" y2="28.37178125" width="0.635" layer="15"/>
 <wire x1="41.9923" y1="19.198" x2="41.9923" y2="18.436" width="0.635" layer="15"/>
 <wire x1="41.9923" y1="18.436" x2="41.309040625" y2="17.752740625" width="0.635" layer="15"/>
 <wire x1="41.309040625" y1="17.752740625" x2="41.309040625" y2="16.52421875" width="0.635" layer="15"/>
@@ -5970,8 +5971,8 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <wire x1="32.63904375" y1="29.55895625" x2="32.63904375" y2="29.36904375" width="0.127" layer="1"/>
 <wire x1="3.657" y1="30.499" x2="5.36011875" y2="32.20211875" width="0.127" layer="16"/>
 <wire x1="3.657" y1="27.448859375" x2="3.657" y2="30.499" width="0.127" layer="16"/>
-<wire x1="37.735259375" y1="28.381396875" x2="37.735259375" y2="24.320496875" width="0.635" layer="15"/>
-<wire x1="39.188059375" y1="22.867696875" x2="37.735259375" y2="24.320496875" width="0.635" layer="15"/>
+<wire x1="37.069778125" y1="27.759396875" x2="37.076915625" y2="24.978840625" width="0.635" layer="15"/>
+<wire x1="39.188059375" y1="22.867696875" x2="37.076915625" y2="24.978840625" width="0.635" layer="15"/>
 <wire x1="39.188059375" y1="22.867696875" x2="39.188059375" y2="22.002240625" width="0.635" layer="15"/>
 <wire x1="39.188059375" y1="22.002240625" x2="41.9923" y2="19.198" width="0.635" layer="15"/>
 </signal>
