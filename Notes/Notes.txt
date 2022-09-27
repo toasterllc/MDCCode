@@ -16,9 +16,15 @@
 
 - Rev6 Board
     
-    - Enclosure: add cutout for USB port
+    - Enclosure: verify that PCB holes are positioned correctly
+    
 
 - Rev6 Board Done
+    
+    √ Enclosure: add cutout for USB port
+        - Size the hole for the receptacle, not the plug, because the receptacle sticks off the board and needs to peek through the hole a bit!
+    
+    √ Enclosure: confirm lens extrusion depth
     
     √ PCB: make cutout for battery wire
     
