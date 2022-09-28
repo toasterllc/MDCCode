@@ -2516,9 +2516,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="CIGT201610LH1R0MNE" x="29.480259375" y="27.985721875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R15" library="EagleLibrary" package="0402" value="365k" x="29.693621875" y="29.8983375" smashed="yes" rot="MR90" grouprefs="_VDD_B_2V8_BUCK">
-<attribute name="MFG" value="" x="29.693621875" y="29.8983375" size="1.778" layer="28" rot="MR90" display="off"/>
+<attribute name="MFG" value="Walsin" x="29.693621875" y="29.8983375" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="NAME" x="30.320740625" y="30.81565625" size="0.508" layer="26" font="vector" rot="MR0"/>
-<attribute name="PN" value="" x="29.693621875" y="29.8983375" size="1.778" layer="28" rot="MR90" display="off"/>
+<attribute name="PN" value="WR04X3653FTL" x="29.693621875" y="29.8983375" size="1.778" layer="28" rot="MR90" display="off"/>
 </element>
 <element name="R16" library="EagleLibrary" package="0402" value="100k" x="29.2516625" y="31.831278125" smashed="yes" rot="MR180" grouprefs="_VDD_B_2V8_BUCK">
 <attribute name="MFG" value="Yageo" x="29.2516625" y="31.831278125" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -2541,9 +2541,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="CIGT201610LH1R0MNE" x="25.7744" y="28.8163" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="R13" library="EagleLibrary" package="0402" value="200k" x="26.373840625" y="27.69108125" smashed="yes" rot="R90" grouprefs="_VDD_B_1V8_BUCK">
-<attribute name="MFG" value="" x="26.119840625" y="27.69108125" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="MFG" value="Yageo" x="26.119840625" y="27.69108125" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="27.979384375" y="25.32418125" size="0.508" layer="25" font="vector" rot="R90"/>
-<attribute name="PN" value="" x="26.119840625" y="27.69108125" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="PN" value="RC0402FR-13200KL" x="26.119840625" y="27.69108125" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="R14" library="EagleLibrary" package="0402" value="100k" x="26.368759375" y="29.4716125" smashed="yes" rot="R90" grouprefs="_VDD_B_1V8_BUCK">
 <attribute name="MFG" value="Yageo" x="28.654759375" y="27.1856125" size="1.778" layer="27" rot="R90" display="off"/>
@@ -2566,9 +2566,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="CIGT201610LH1R0MNE" x="27.311103125" y="24.30271875" size="1.778" layer="28" rot="MR270" display="off"/>
 </element>
 <element name="R11" library="EagleLibrary" package="0402" value="100k" x="27.867365625" y="24.208746875" smashed="yes" rot="MR180" grouprefs="_VDD_B_1V2_BUCK">
-<attribute name="MFG" value="" x="27.867365625" y="23.954746875" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="MFG" value="Yageo" x="27.867365625" y="23.954746875" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="29.711784375" y="24.73986875" size="0.508" layer="26" font="vector" rot="MR180"/>
-<attribute name="PN" value="" x="27.867365625" y="23.954746875" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="PN" value="RC0402FR-07100KL" x="27.867365625" y="23.954746875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R12" library="EagleLibrary" package="0402" value="100k" x="28.136603125" y="25.557484375" smashed="yes" rot="MR90" grouprefs="_VDD_B_1V2_BUCK">
 <attribute name="MFG" value="Yageo" x="25.850603125" y="23.271484375" size="1.778" layer="28" rot="MR90" display="off"/>

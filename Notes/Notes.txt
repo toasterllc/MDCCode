@@ -1,4 +1,12 @@
 - Misc
+    √ Order board
+    
+    √ Order enclosure
+    
+    √ Order stencils
+    
+    - Order Rev6 parts
+    
     - Order more ICE40s
         - It looks like Mouser will have ICE40HX8K-BG121 in stock in October 2022
     
@@ -18,8 +26,6 @@
 
 
 
-- Rev6 Board
-    
 
 - Rev6 Board Done
     

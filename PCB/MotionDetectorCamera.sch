@@ -4762,8 +4762,8 @@ Connect</text>
 <attribute name="PN" value="CIGT201610LH1R0MNE"/>
 </part>
 <part name="R15" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="365k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<attribute name="MFG" value="Walsin"/>
+<attribute name="PN" value="WR04X3653FTL"/>
 </part>
 <part name="R16" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
 <attribute name="MFG" value="Yageo"/>
@@ -4779,8 +4779,8 @@ Connect</text>
 <attribute name="PN" value="CIGT201610LH1R0MNE"/>
 </part>
 <part name="R13" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="200k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-13200KL"/>
 </part>
 <part name="R14" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
 <attribute name="MFG" value="Yageo"/>
@@ -4796,8 +4796,8 @@ Connect</text>
 <attribute name="PN" value="CIGT201610LH1R0MNE"/>
 </part>
 <part name="R11" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
-<attribute name="MFG" value=""/>
-<attribute name="PN" value=""/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-07100KL"/>
 </part>
 <part name="R12" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="100k">
 <attribute name="MFG" value="Yageo"/>
