@@ -1,28 +1,71 @@
+- Business
+
+    - Order mass quantity
+        - TPS62A01DRLR from ti.com
+        - Lens holder (if we end up needed them)
+        - USB-C receptacle
+        - Battery
+        - Battery header
+        - Battery housing (goes into header/receptacle)
+            - Only if battery supplier can't attach proper connector to battery
+    
+
 - Misc
-    √ Order board
     
-    √ Order enclosure
-    
-    √ Order stencils
-    
-    - Order Rev6 parts
-    
-    - Order more ICE40s
-        - It looks like Mouser will have ICE40HX8K-BG121 in stock in October 2022
-    
-    - Order TPS62A01DRLR from ti.com
-    
-    - Order lens holders
-    
-    - Order battery headers
-    
-    - Order battery
-    
-    - Order USB-C receptacle
-    
-    - Buy TagConnect cable (TC2030-IDC-NL) and grips
-        https://www.tag-connect.com/product/tc2030-idc-nl
-        https://www.tag-connect.com/product/grip-6-3-pack
+    - Order Rev6 prototype stuff
+        √ Order board
+        
+        √ Order enclosure
+        
+        √ Order stencils
+        
+        - Mouser
+            - RB168MM substitute (1x)
+                - PMEG60T10ELR
+            
+            - PMPB10UPX substitute (3x)
+                - PMPB13UP
+            
+            - DT1446-04V-7 substitute (1x)
+                - D5V0F4U6V-7
+            
+            - Additional motion sensor
+            
+            - More ICE40s
+                - It looks like Mouser will have ICE40HX8K-BG121 in stock in October 2022
+        
+        - DigiKey
+            - Additional image sensor
+            
+            - Battery header
+                - JST: SM02B-SRSS-TB
+                - Adam Tech 1SH-A-02-TR-SMT
+            
+            - Battery wiring socket:
+                - Option 1: order housing and contacts separately
+                    - Contact housing (goes into receptacle)
+                        - JST: SHR-02V-S
+                        - Adam Tech: 1CH-A-02
+                    
+                    - Contacts (to attach to battery wires and insert into housing)
+                        - JST: SSH-003T-P0.2-H
+                        - Adam Tech: 1CTA-R
+                
+                - Option 2: order pre-made housing+contacts+wiring
+                    - Uses socket: JST 02SR-3S, which is compatible with our header (SM02B-SRSS-TB)
+                    - A02SR02SR30K51A
+                        - https://www.digikey.com/en/products/detail/jst-sales-america-inc/A02SR02SR30K51A/6009373
+        
+        - LCSC
+            - USB-C receptacle
+                - https://www.lcsc.com/product-detail/USB-Connectors_Korean-Hroparts-Elec-TYPE-C-31-M-08A_C2848616.html
+        
+        - Order Battery
+            https://www.amazon.com/1300mAh-103040-Rechargeable-Replacement-Electronic/dp/B09YQ2WJ75
+        
+        - Buy TagConnect cable (TC2030-IDC-NL) and grips
+            https://www.tag-connect.com/product/tc2030-idc-nl
+            https://www.tag-connect.com/product/grip-6-3-pack
 
 
 
