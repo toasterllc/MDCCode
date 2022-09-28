@@ -6727,6 +6727,7 @@ should be a high voltage during power up.</text>
 <pinref part="C32" gate="G$1" pin="1"/>
 <wire x1="-25.4" y1="-40.64" x2="-15.24" y2="-40.64" width="0.1524" layer="91"/>
 <label x="-25.4" y="-40.64" size="1.778" layer="95"/>
+<junction x="-15.24" y="-40.64"/>
 </segment>
 <segment>
 <pinref part="U18" gate="E" pin="VCCIO_0_D6"/>
@@ -6818,6 +6819,7 @@ should be a high voltage during power up.</text>
 <pinref part="C32" gate="G$1" pin="2"/>
 <wire x1="-25.4" y1="-48.26" x2="-15.24" y2="-48.26" width="0.1524" layer="91"/>
 <label x="-25.4" y="-48.26" size="1.778" layer="95" align="top-left"/>
+<junction x="-15.24" y="-48.26"/>
 </segment>
 <segment>
 <pinref part="C28" gate="G$1" pin="2"/>
