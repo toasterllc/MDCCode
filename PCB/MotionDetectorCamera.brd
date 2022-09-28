@@ -1750,9 +1750,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="RC0402JR-0710KL" x="24.2783375" y="13.312140625" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="R20" library="EagleLibrary" package="0402" value="1.8k" x="39.084396875" y="25.530278125" smashed="yes" rot="R90">
-<attribute name="MFG" value="TE Connectivity" x="39.084396875" y="25.530278125" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="MFG" value="Yageo" x="39.084396875" y="25.530278125" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="39.3412" y="23.328478125" size="0.508" layer="25" font="vector" rot="R90"/>
-<attribute name="PN" value="CRGP0402F1K8" x="39.084396875" y="25.530278125" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="PN" value="RC0402FR-071K8L" x="39.084396875" y="25.530278125" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="U23" library="EagleLibrary" package="ALLIANCE-AS4C8M16MSA-6BIN" value="ALLIANCE-AS4C8M16MSA-6BIN" x="12.87855625" y="25.724409375" smashed="yes" rot="R45">
 <attribute name="MFG" value="Alliance Memory" x="12.87855625" y="25.724409375" size="1.778" layer="27" rot="R45" display="off"/>
@@ -2068,9 +2068,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="KS DELLS1.22-JHKI-1" x="38.190171875" y="11.892103125" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R37" library="EagleLibrary" package="0402" value="1.8k" x="42.72381875" y="14.503240625" smashed="yes" rot="MR180">
-<attribute name="MFG" value="TE Connectivity" x="42.72381875" y="23.647240625" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="MFG" value="Yageo" x="42.72381875" y="23.647240625" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="42.4749" y="18.384621875" size="0.508" layer="26" font="vector" rot="MR180"/>
-<attribute name="PN" value="CRGP0402F1K8" x="42.72381875" y="23.647240625" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="PN" value="RC0402FR-071K8L" x="42.72381875" y="23.647240625" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R24" library="EagleLibrary" package="0402" value="10k" x="21.955696875" y="16.391346875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="Yageo" x="21.955696875" y="16.391346875" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -2172,27 +2172,27 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="KS DELLS1.22-JHKI-1" x="37.0149375" y="23.7170625" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R18" library="EagleLibrary" package="0402" value="1.8k" x="37.252521875" y="26.017028125" smashed="yes" rot="R180">
-<attribute name="MFG" value="TE Connectivity" x="37.252521875" y="28.303028125" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="MFG" value="Yageo" x="37.252521875" y="28.303028125" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="37.65091875" y="24.711728125" size="0.508" layer="25" font="vector" rot="R180"/>
-<attribute name="PN" value="CRGP0402F1K8" x="37.252521875" y="28.303028125" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="PN" value="RC0402FR-071K8L" x="37.252521875" y="28.303028125" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="LED2" library="EagleLibrary" package="LED-0603" value="LED" x="37.0149375" y="25.538728125" smashed="yes" rot="MR180">
 <attribute name="MFG" value="OSRAM" x="37.0149375" y="22.998728125" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1" x="37.0149375" y="22.998728125" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R19" library="EagleLibrary" package="0402" value="1.8k" x="37.239896875" y="25.131128125" smashed="yes" rot="R180">
-<attribute name="MFG" value="TE Connectivity" x="37.239896875" y="27.417128125" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="MFG" value="Yageo" x="37.239896875" y="27.417128125" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="37.6535375" y="24.105228125" size="0.508" layer="25" font="vector" rot="R180"/>
-<attribute name="PN" value="CRGP0402F1K8" x="37.239896875" y="27.417128125" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="PN" value="RC0402FR-071K8L" x="37.239896875" y="27.417128125" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="LED4" library="EagleLibrary" package="LED-0603" value="LED" x="37.0149375" y="24.102059375" smashed="yes" rot="MR180">
 <attribute name="MFG" value="OSRAM" x="37.0149375" y="21.562059375" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1" x="37.0149375" y="21.562059375" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R21" library="EagleLibrary" package="0402" value="1.8k" x="39.942859375" y="25.517678125" smashed="yes" rot="R90">
-<attribute name="MFG" value="TE Connectivity" x="42.228859375" y="25.517678125" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="MFG" value="Yageo" x="42.228859375" y="25.517678125" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="40.1641" y="23.36921875" size="0.508" layer="25" font="vector" rot="R90"/>
-<attribute name="PN" value="CRGP0402F1K8" x="42.228859375" y="25.517678125" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="PN" value="RC0402FR-071K8L" x="42.228859375" y="25.517678125" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="LED7" library="EagleLibrary" package="LED-0603" value="LED" x="40.730171875" y="13.692175" smashed="yes" rot="MR180">
 <attribute name="MFG" value="OSRAM" x="40.730171875" y="11.152175" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -2200,9 +2200,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="KS DELLS1.22-JHKI-1" x="40.730171875" y="11.152175" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R36" library="EagleLibrary" package="0402" value="1.8k" x="42.72381875" y="13.639640625" smashed="yes" rot="MR180">
-<attribute name="MFG" value="TE Connectivity" x="42.72381875" y="15.925640625" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="MFG" value="Yageo" x="42.72381875" y="15.925640625" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="42.4749" y="17.7547" size="0.508" layer="26" font="vector" rot="MR180"/>
-<attribute name="PN" value="CRGP0402F1K8" x="42.72381875" y="15.925640625" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="PN" value="RC0402FR-071K8L" x="42.72381875" y="15.925640625" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="LED6" library="EagleLibrary" package="LED-0603" value="LED" x="40.730171875" y="12.952246875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="OSRAM" x="40.730171875" y="10.412246875" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -2210,9 +2210,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="KS DELLS1.22-JHKI-1" x="40.730171875" y="10.412246875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R35" library="EagleLibrary" package="0402" value="1.8k" x="42.72381875" y="12.776040625" smashed="yes" rot="MR180">
-<attribute name="MFG" value="TE Connectivity" x="42.72381875" y="15.062040625" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="MFG" value="Yageo" x="42.72381875" y="15.062040625" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="42.4749" y="17.07651875" size="0.508" layer="26" font="vector" rot="MR180"/>
-<attribute name="PN" value="CRGP0402F1K8" x="42.72381875" y="15.062040625" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="PN" value="RC0402FR-071K8L" x="42.72381875" y="15.062040625" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="LED5" library="EagleLibrary" package="LED-0603" value="LED" x="40.730171875" y="12.21231875" smashed="yes" rot="MR180">
 <attribute name="MFG" value="OSRAM" x="40.730171875" y="9.67231875" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -2220,9 +2220,9 @@ Note, that not all DRC settings must be set by the manufacturer. Several can be 
 <attribute name="PN" value="KS DELLS1.22-JHKI-1" x="40.730171875" y="9.67231875" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="R34" library="EagleLibrary" package="0402" value="1.8k" x="42.72381875" y="11.912440625" smashed="yes" rot="MR180">
-<attribute name="MFG" value="TE Connectivity" x="42.72381875" y="14.198440625" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="MFG" value="Yageo" x="42.72381875" y="14.198440625" size="1.778" layer="28" rot="MR180" display="off"/>
 <attribute name="NAME" x="42.4749" y="16.40088125" size="0.508" layer="26" font="vector" rot="MR180"/>
-<attribute name="PN" value="CRGP0402F1K8" x="42.72381875" y="14.198440625" size="1.778" layer="28" rot="MR180" display="off"/>
+<attribute name="PN" value="RC0402FR-071K8L" x="42.72381875" y="14.198440625" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="C52" library="EagleLibrary" package="0402" value="100n" x="33.646025" y="13.77801875" smashed="yes">
 <attribute name="MFG" value="Murata" x="33.646025" y="13.77801875" size="1.778" layer="27" display="off"/>

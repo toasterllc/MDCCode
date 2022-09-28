@@ -4213,8 +4213,8 @@ Connect</text>
 <attribute name="PN" value="RC0402JR-0710KL"/>
 </part>
 <part name="R20" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
-<attribute name="MFG" value="TE Connectivity"/>
-<attribute name="PN" value="CRGP0402F1K8"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-071K8L"/>
 </part>
 <part name="U18" library="EagleLibrary" deviceset="LATTICE-ICE40HX4K-BG121" device=""/>
 <part name="C37" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
@@ -4449,8 +4449,8 @@ Connect</text>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
 </part>
 <part name="R37" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
-<attribute name="MFG" value="TE Connectivity"/>
-<attribute name="PN" value="CRGP0402F1K8"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-071K8L"/>
 </part>
 <part name="R24" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="10k">
 <attribute name="MFG" value="Yageo"/>
@@ -4529,48 +4529,48 @@ Connect</text>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
 </part>
 <part name="R18" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
-<attribute name="MFG" value="TE Connectivity"/>
-<attribute name="PN" value="CRGP0402F1K8"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-071K8L"/>
 </part>
 <part name="LED2" library="EagleLibrary" deviceset="LED" device="">
 <attribute name="MFG" value="OSRAM"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
 </part>
 <part name="R19" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
-<attribute name="MFG" value="TE Connectivity"/>
-<attribute name="PN" value="CRGP0402F1K8"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-071K8L"/>
 </part>
 <part name="LED4" library="EagleLibrary" deviceset="LED" device="">
 <attribute name="MFG" value="OSRAM"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
 </part>
 <part name="R21" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
-<attribute name="MFG" value="TE Connectivity"/>
-<attribute name="PN" value="CRGP0402F1K8"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-071K8L"/>
 </part>
 <part name="LED7" library="EagleLibrary" deviceset="LED" device="">
 <attribute name="MFG" value="OSRAM"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
 </part>
 <part name="R36" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
-<attribute name="MFG" value="TE Connectivity"/>
-<attribute name="PN" value="CRGP0402F1K8"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-071K8L"/>
 </part>
 <part name="LED6" library="EagleLibrary" deviceset="LED" device="">
 <attribute name="MFG" value="OSRAM"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
 </part>
 <part name="R35" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
-<attribute name="MFG" value="TE Connectivity"/>
-<attribute name="PN" value="CRGP0402F1K8"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-071K8L"/>
 </part>
 <part name="LED5" library="EagleLibrary" deviceset="LED" device="">
 <attribute name="MFG" value="OSRAM"/>
 <attribute name="PN" value="KS DELLS1.22-JHKI-1"/>
 </part>
 <part name="R34" library="EagleLibrary" deviceset="RESISTOR" device="0402" value="1.8k">
-<attribute name="MFG" value="TE Connectivity"/>
-<attribute name="PN" value="CRGP0402F1K8"/>
+<attribute name="MFG" value="Yageo"/>
+<attribute name="PN" value="RC0402FR-071K8L"/>
 </part>
 <part name="C52" library="EagleLibrary" deviceset="CAPACITOR" device="0402" value="100n">
 <attribute name="MFG" value="Murata"/>
