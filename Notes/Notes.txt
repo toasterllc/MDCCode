@@ -10,6 +10,8 @@
     
     - Order battery
     
+    - Order USB-C receptacle
+    
     - Buy TagConnect cable (TC2030-IDC-NL) and grips
         https://www.tag-connect.com/product/tc2030-idc-nl
         https://www.tag-connect.com/product/grip-6-3-pack
@@ -18,10 +20,10 @@
 
 - Rev6 Board
     
-    - Enclosure: verify that PCB holes are positioned correctly
-    
 
 - Rev6 Board Done
+    
+    √ Enclosure: verify that PCB holes are positioned correctly
     
     √ Enclosure: add cutout for USB port
         - Size the hole for the receptacle, not the plug, because the receptacle sticks off the board and needs to peek through the hole a bit!
