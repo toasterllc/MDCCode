@@ -4916,6 +4916,19 @@ that the ADC will draw from during its sampling.
 </text>
 <text x="325.628" y="435.61" size="1.016" layer="95" align="top-left">Pulldown prevents a floating
 input while MSP430 is resetting</text>
+<wire x1="302.26" y1="398.78" x2="248.92" y2="398.78" width="0.1524" layer="95"/>
+<wire x1="248.92" y1="398.78" x2="248.92" y2="393.7" width="0.1524" layer="95"/>
+<wire x1="224.282" y1="360.68" x2="246.38" y2="360.68" width="0.1524" layer="95"/>
+<wire x1="246.38" y1="360.68" x2="246.38" y2="378.46" width="0.1524" layer="95"/>
+<text x="231.902" y="393.446" size="1.016" layer="95" align="top-left">PFET requirements:
+
+- low drain / gate leakage current (Idss, Igss): &lt; 1uA
+    necessary to minimize battery leakage
+    current when system is sleeping
+
+- low drain-source resistance (Rdson): &lt; 50mΩ
+    necessary to minimize voltage drop and
+    minimize wasted power</text>
 </plain>
 <instances>
 <instance part="C9" gate="G$1" x="165.1" y="297.18" smashed="yes">
