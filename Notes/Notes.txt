@@ -1,7 +1,8 @@
 - Business
 
     - Order mass quantity
-        - TPS62A01DRLR from ti.com
+        - TPS62A01DRLR (350x) from ti.com
+            - Waiting for tax exemption to be accepted
         - Lens holder (if we end up needed them)
         - USB-C receptacle
         - Battery
@@ -12,7 +13,7 @@
 
 - Misc
     
-    √ Order Rev6 prototype stuff
+    - Order Rev6 prototype stuff
         √ Board
         
         √ Enclosure
@@ -81,6 +82,8 @@
         √ Buy TagConnect cable (TC2030-IDC-NL) and grips
             https://www.tag-connect.com/product/tc2030-idc-nl
             https://www.tag-connect.com/product/grip-6-3-pack
+        
+        √ Lens holder
         
         X Jig to hold stencils (for both BGA but also for solder paste)
             X For now we're going to try using a silicone mat with a cutout for chips
