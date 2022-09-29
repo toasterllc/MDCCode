@@ -35,7 +35,12 @@
                 - It looks like Mouser will have ICE40HX8K-BG121 in stock in October 2022
         
         - DigiKey
+            - Solder balls
+                - STM32 pitch is .65mm, so we should use .65/2 size balls:
+                    https://www.digikey.com/en/products/detail/chip-quik-inc/SMD2024-25000/9558182
+            
             - Additional image sensor
+                https://www.digikey.com/en/products/detail/onsemi/AR0330CS1C12SPKA0-CR/5321549?s=N4IgTCBcDaIIICUAMBmFSDCBlAjBnYWACgNJxIC0GCIAugL5A
             
             - Battery header
                 - JST: SM02B-SRSS-TB
@@ -60,12 +65,28 @@
             - USB-C receptacle
                 - https://www.lcsc.com/product-detail/USB-Connectors_Korean-Hroparts-Elec-TYPE-C-31-M-08A_C2848616.html
         
-        - Order Battery
-            https://www.amazon.com/1300mAh-103040-Rechargeable-Replacement-Electronic/dp/B09YQ2WJ75
+        - Amazon
+            - Chisel solder tip (to help with desoldering BGAs)
+                https://www.amazon.com/Pace-1131-0055-P1-AccuDrive-Solder-Chisel/dp/B07F1XPYSS
+            
+            - Battery
+                https://www.amazon.com/1300mAh-103040-Rechargeable-Replacement-Electronic/dp/B09YQ2WJ75
+            
+            - Silicone mat
+                http://amzn.to/2jfAiKp
+        
+        - Stencil for BGA
         
         - Buy TagConnect cable (TC2030-IDC-NL) and grips
             https://www.tag-connect.com/product/tc2030-idc-nl
             https://www.tag-connect.com/product/grip-6-3-pack
+        
+        
+        
+        - Jig to hold stencils (for both BGA but also for solder paste)
+        
+        - PCB holder?
+            https://www.adafruit.com/product/3791
 
 
 
