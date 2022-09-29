@@ -12,14 +12,16 @@
 
 - Misc
     
-    - Order Rev6 prototype stuff
-        √ Order board
+    √ Order Rev6 prototype stuff
+        √ Board
         
-        √ Order enclosure
+        √ Enclosure
         
-        √ Order stencils
+        √ Stencils
         
-        - Mouser
+        √ Reball stencils
+        
+        √ Mouser
             - RB168MM substitute (1x)
                 - PMEG60T10ELR
             
@@ -34,11 +36,7 @@
             - More ICE40s
                 - It looks like Mouser will have ICE40HX8K-BG121 in stock in October 2022
         
-        - DigiKey
-            - Solder balls
-                - STM32 pitch is .65mm, so we should use .65/2 size balls:
-                    https://www.digikey.com/en/products/detail/chip-quik-inc/SMD2024-25000/9558182
-            
+        √ DigiKey
             - Additional image sensor
                 https://www.digikey.com/en/products/detail/onsemi/AR0330CS1C12SPKA0-CR/5321549?s=N4IgTCBcDaIIICUAMBmFSDCBlAjBnYWACgNJxIC0GCIAugL5A
             
@@ -60,33 +58,36 @@
                     - Uses socket: JST 02SR-3S, which is compatible with our header (SM02B-SRSS-TB)
                     - A02SR02SR30K51A
                         - https://www.digikey.com/en/products/detail/jst-sales-america-inc/A02SR02SR30K51A/6009373
+            
+            X Solder balls
+                - STM32 pitch is .65mm, so we should use .65/2 size balls:
+                    https://www.digikey.com/en/products/detail/chip-quik-inc/SMD2024-25000/9558182
+                X Nevermind, we're going to try the solder-paste reball method
         
-        - LCSC
+        √ LCSC
             - USB-C receptacle
                 - https://www.lcsc.com/product-detail/USB-Connectors_Korean-Hroparts-Elec-TYPE-C-31-M-08A_C2848616.html
         
-        - Amazon
+        √ Amazon
             - Chisel solder tip (to help with desoldering BGAs)
                 https://www.amazon.com/Pace-1131-0055-P1-AccuDrive-Solder-Chisel/dp/B07F1XPYSS
             
             - Battery
                 https://www.amazon.com/1300mAh-103040-Rechargeable-Replacement-Electronic/dp/B09YQ2WJ75
             
-            - Silicone mat
+            - Silicone mat (for reballing)
                 http://amzn.to/2jfAiKp
         
-        - Stencil for BGA
-        
-        - Buy TagConnect cable (TC2030-IDC-NL) and grips
+        √ Buy TagConnect cable (TC2030-IDC-NL) and grips
             https://www.tag-connect.com/product/tc2030-idc-nl
             https://www.tag-connect.com/product/grip-6-3-pack
         
+        X Jig to hold stencils (for both BGA but also for solder paste)
+            X For now we're going to try using a silicone mat with a cutout for chips
         
-        
-        - Jig to hold stencils (for both BGA but also for solder paste)
-        
-        - PCB holder?
-            https://www.adafruit.com/product/3791
+        X PCB holder
+            - https://www.adafruit.com/product/3791
+            X Maybe later
 
 
 
