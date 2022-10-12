@@ -1,3 +1,4 @@
+#pragma once
 #import <simd/simd.h>
 
 #ifdef __METAL_VERSION__
@@ -11,11 +12,11 @@
 #endif
 
 #if MetalShaderContext
-#define MetalConst constant
+#define MetalConstant constant
 #define MetalDevice device
 #define MetalThread thread
 #else
-#define MetalConst const
+#define MetalConstant
 #define MetalDevice
 #define MetalThread
 #endif
@@ -24,7 +25,7 @@ namespace MDCTools {
 namespace MetalUtil {
 
 // Unique vertexes (defines a unit square)
-MetalConst vector_float4 SquareVert[4] = {
+constexpr MetalConstant vector_float4 SquareVert[4] = {
     { 1,  1, 0, 1},
     {-1,  1, 0, 1},
     {-1, -1, 0, 1},
@@ -32,12 +33,12 @@ MetalConst vector_float4 SquareVert[4] = {
 };
 
 // Vertex indicies (for a square)
-MetalConst uint8_t SquareVertIdx[6] = {
+constexpr MetalConstant uint8_t SquareVertIdx[6] = {
     0, 1, 2,
     0, 2, 3,
 };
 
-MetalConst size_t SquareVertIdxCount = sizeof(SquareVertIdx)/sizeof(*SquareVertIdx);
+constexpr MetalConstant size_t SquareVertIdxCount = sizeof(SquareVertIdx)/sizeof(*SquareVertIdx);
 
 #if MetalShaderContext
 

@@ -9,14 +9,10 @@ AutoSaveProject=1
 UsedLibrary="EagleLibrary/EagleLibrary.lbr"
 
 [Win_1]
-Type="Control Panel"
-Number=0
-
-[Win_2]
 Type="Schematic Editor"
 Number=1
-File="MotionDetectorCamera-Rev5.sch"
-View="61.6604 23.0928 199.303 77.2884"
+File="MotionDetectorCamera.sch"
+View="167.536 192.222 341.469 405.485"
 WireWidths=" 0.0762 0.1016 0.127 0.15 0.2 0.2032 0.254 0.3048 0.4064 0.508 0.6096 0.8128 1.016 1.27 2.54 0.1524"
 PadDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
 PadDrills=" 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.65 0.7 0.75 0.8 0.85 0.9 1 0.6"
@@ -55,14 +51,18 @@ ArcDirection=0
 AddLevel=2
 PadsSameType=0
 Layer=91
-Views=" 5: 61.6604 23.0928 199.303 77.2884"
-Sheet="5"
+Views=" 1: 167.536 192.222 341.469 405.485 2: -84.1208 -15.172 188.576 116.044 4: -20.9166 -166.399 238.355 77.5217 5: -21.7543 -12.0587 283.018 112.905 6: -76.0032 -61.0809 149.654 36.5372 8: -16.4844 -318.386 233.979 -63.3288 9: -38.1915 -86.5357 129.268 21.5753"
+Sheet="1"
+
+[Win_2]
+Type="Control Panel"
+Number=0
 
 [Win_3]
 Type="Board Editor"
 Number=2
-File="MotionDetectorCamera-Rev5.brd"
-View="1.83036 7.80063 35.6306 33.1847"
+File="MotionDetectorCamera.brd"
+View="3.17919 -0.785075 45.2424 32.018"
 WireWidths=" 0.0762 0.1016 0.127 0.15 0.2 0.2032 0.254 0.3048 0.4064 0.508 0.6096 0.8128 1.016 1.27 2.54 0.1524"
 PadDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
 PadDrills=" 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.65 0.7 0.75 0.8 0.85 0.9 1 0.6"
@@ -103,7 +103,7 @@ PadsSameType=0
 Layer=1
 
 [Desktop]
-Screen="1792 1120"
+Screen="2560 1440"
 Window="Win_1"
 Window="Win_2"
 Window="Win_3"

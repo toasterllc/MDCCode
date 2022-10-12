@@ -1,14 +1,14 @@
 - Business
 
     - Order mass quantity
-        - TPS62A01DRLR (350x) from ti.com
-            - Waiting for tax exemption to be accepted
         - Lens holder (if we end up needed them)
         - USB-C receptacle
         - Battery
         - Battery header
         - Battery housing (goes into header/receptacle)
             - Only if battery supplier can't attach proper connector to battery
+        √ TPS62A01DRLR (350x) from ti.com
+            √ Waiting for tax exemption to be accepted
     
 
 - Misc
@@ -79,7 +79,7 @@
             - Silicone mat (for reballing)
                 http://amzn.to/2jfAiKp
         
-        √ Buy TagConnect cable (TC2030-IDC-NL) and grips
+        √ TagConnect cable (TC2030-IDC-NL) and grips
             https://www.tag-connect.com/product/tc2030-idc-nl
             https://www.tag-connect.com/product/grip-6-3-pack
         

@@ -13,10 +13,10 @@ struct CFADesc {
     CFAColor desc[2][2] = {};
     
     template <typename T>
-    CFAColor color(T x, T y) MetalConst { return desc[y&1][x&1]; }
+    CFAColor color(T x, T y) const MetalConstant { return desc[y&1][x&1]; }
     
     template <typename T>
-    CFAColor color(T pos) MetalConst { return color(pos.x, pos.y); }
+    CFAColor color(T pos) const MetalConstant { return color(pos.x, pos.y); }
 };
 
 } // namespace MDCTools
