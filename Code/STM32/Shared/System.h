@@ -154,7 +154,7 @@ public:
     
     static void LEDInit() {
         // Enable GPIO clocks
-        __HAL_RCC_GPIOD_CLK_ENABLE();
+        __HAL_RCC_GPIOB_CLK_ENABLE();
         
         LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
@@ -182,10 +182,10 @@ public:
     }
     
     // LEDs
-    using LED0 = GPIO<GPIOPortD, GPIO_PIN_9>;
-    using LED1 = GPIO<GPIOPortD, GPIO_PIN_11>;
-    using LED2 = GPIO<GPIOPortD, GPIO_PIN_14>;
-    using LED3 = GPIO<GPIOPortD, GPIO_PIN_15>;
+    using LED0 = GPIO<GPIOPortB, GPIO_PIN_10>;
+    using LED1 = GPIO<GPIOPortB, GPIO_PIN_12>;
+    using LED2 = GPIO<GPIOPortB, GPIO_PIN_11>;
+    using LED3 = GPIO<GPIOPortB, GPIO_PIN_13>;
     
     static inline T_USB USB;
     
@@ -207,6 +207,7 @@ public:
         
         LEDInit();
         for (bool x=true;; x=!x) {
+            LED0::Write(x);
             LED1::Write(x);
             LED2::Write(x);
             LED3::Write(x);
