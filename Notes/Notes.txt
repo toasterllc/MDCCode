@@ -11,7 +11,18 @@
             √ Waiting for tax exemption to be accepted
     
 
-- Misc
+- Board Rev7 Todo
+    - Fix USB receptacle layout for A9/B4 pins -- we didn't label the polygon correctly, resulting in a 'fork'
+    - Make placing board into enclosure easier
+        - Cut notch in board?
+            - May need to move backplate mounting points so that a notch can be cut
+    - Remove cream from TagConnect footprint
+    - Fix R1/J1 labels (they're swapped)
+    - Fix J4 label (obscured)
+    - Make Q2 label the same size as Q3
+    - Fix C17 label (obscured by pads)
+
+√ Misc
     
     - Order Rev6 prototype stuff
         √ Board
