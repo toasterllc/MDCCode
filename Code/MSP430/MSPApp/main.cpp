@@ -33,18 +33,21 @@ static void _Abort(uint16_t domain, uint16_t line);
 
 struct _Pin {
     // Default GPIOs
-    using VDD_B_1V8_IMG_EN                  = PortA::Pin<0x0, Option::Output0>;
-    using VDD_B_EN                          = PortA::Pin<0x1, Option::Output0>;
-    using VDD_B_2V8_IMG_EN                  = PortA::Pin<0x2, Option::Output0>;
+    using UNUSED0                           = PortA::Pin<0x0>;
+    using DEBUG_OUT                         = PortA::Pin<0x1, Option::Output0>;
+    using VDD_B_EN                          = PortA::Pin<0x2, Option::Output0>;
     using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
-    using ICE_MSP_SPI_DATA_OUT              = PortA::Pin<0x4>;
-    using ICE_MSP_SPI_DATA_IN               = PortA::Pin<0x5>;
-    using ICE_MSP_SPI_CLK                   = PortA::Pin<0x6>;
+    using UNUSED4                           = PortA::Pin<0x4>;
+    using UNUSED5                           = PortA::Pin<0x5>;
+    using VDD_B_2V8_IMG_SD_EN               = PortA::Pin<0x6, Option::Input, Option::Resistor0>; // Weakly controlled to allow STM to override
+    using UNUSED7                           = PortA::Pin<0x7>;
     using XOUT                              = PortA::Pin<0x8>;
     using XIN                               = PortA::Pin<0x9>;
-    using VDD_B_SD_EN                       = PortA::Pin<0xB, Option::Output0>;
-    using DEBUG_OUT                         = PortA::Pin<0xD, Option::Output0>;
-    using HOST_MODE_                        = PortA::Pin<0xE, Option::Input, Option::Resistor0>;
+    using HOST_MODE_                        = PortA::Pin<0xA, Option::Input, Option::Resistor0>;
+    using VDD_B_1V8_IMG_SD_EN               = PortA::Pin<0xB, Option::Input, Option::Resistor0>; // Weakly controlled to allow STM to override
+    using ICE_MSP_SPI_CLK                   = PortA::Pin<0xC>;
+    using ICE_MSP_SPI_DATA_OUT              = PortA::Pin<0xD>;
+    using ICE_MSP_SPI_DATA_IN               = PortA::Pin<0xE>;
 };
 
 // _MotionSignalIV: motion interrupt vector; keep in sync with the pin chosen for MOTION_SIGNAL
@@ -125,6 +128,32 @@ static _RTCType _RTC;
 [[gnu::section(".fram_info.main")]]
 static MSP::State _State;
 
+// MARK: - Power
+
+static void _VDDBSetEnabled(bool en) {
+    _Pin::VDD_B_EN::Write(en);
+}
+
+static void _VDDIMGSDSetEnabled(bool en) {
+    // Short-circuit if the pin state hasn't changed, to save us the Sleep()
+    if (_Pin::VDD_B_2V8_IMG_SD_EN::Read() == en) return;
+    
+    if (en) {
+        _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
+        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+        _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
+        
+        #warning measure actual delay that we need for the rails to rise
+    
+    } else {
+        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+        _Pin::VDD_B_2V8_IMG_SD_EN::Write(0);
+        _Pin::VDD_B_1V8_IMG_SD_EN::Write(0);
+        
+        #warning measure actual delay that we need for the rails to fall
+    }
+}
+
 // MARK: - ICE40
 
 template<>
@@ -165,23 +194,21 @@ static void debugSignal() {
 }
 
 struct _SDTask {
-    static void Enable() {
+    static void Reset() {
         Wait();
-        // Short-circuit if the state didn't change
-        if (_Enabled) return;
-        _Scheduler::Start<_SDTask>([] { _Enable(); });
+        _Scheduler::Start<_SDTask>([] { _Reset(); });
     }
     
-    static void Disable() {
+    static void Init() {
         Wait();
         // Short-circuit if the state didn't change
-        if (!_Enabled) return;
-        _Scheduler::Start<_SDTask>([] { _Disable(); });
+        if (_InitDone) return;
+        _Scheduler::Start<_SDTask>([] { _Init(); });
     }
     
     static void Write(uint8_t srcRAMBlock) {
         Wait();
-        Assert(_Enabled);
+        Assert(_InitDone);
         
         _Writing = true;
         
@@ -203,11 +230,12 @@ struct _SDTask {
 //        _Scheduler::Wait([&] { return _RCA.has_value(); });
 //    }
     
-    static void _Enable() {
-        Assert(!_Enabled);
-         
+    static void _Reset() {
         _SDCard::Reset();
-        _SetPowerEnabled(true);
+    }
+    
+    static void _Init() {
+        Assert(!_InitDone);
         
         if (!_RCA) {
             // We haven't successfully enabled the SD card since the battery was connected;
@@ -232,14 +260,7 @@ struct _SDTask {
             _SDCard::Init();
         }
         
-        _Enabled = true;
-    }
-    
-    static void _Disable() {
-        Assert(_Enabled);
-        
-        _SetPowerEnabled(false);
-        _Enabled = false;
+        _InitDone = true;
     }
     
     static void _Write(uint8_t srcRAMBlock) {
@@ -259,15 +280,6 @@ struct _SDTask {
         
         _ImgRingBufIncrement();
         _Writing = false;
-    }
-    
-    static void _SetPowerEnabled(bool en) {
-        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-        if (_Pin::VDD_B_SD_EN::Read() == en) return;
-        
-        _Pin::VDD_B_SD_EN::Write(en);
-        // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
-        _Scheduler::Sleep(_Scheduler::Ms(2));
     }
     
     // _StateInit(): resets the _State.sd struct
@@ -371,7 +383,7 @@ struct _SDTask {
     [[gnu::section(".ram_backup.main")]]
     static inline std::optional<uint16_t> _RCA;
     
-    static inline bool _Enabled = false;
+    static inline bool _InitDone = false;
     static inline bool _Writing = false;
     
     // Task options
@@ -487,27 +499,6 @@ struct _ImgTask {
         _CaptureBlock = bestExpBlock;
     }
     
-    static void _SetPowerEnabled(bool en) {
-        // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-        if (_Pin::VDD_B_2V8_IMG_EN::Read()==en &&
-            _Pin::VDD_B_1V8_IMG_EN::Read()==en) return;
-        
-        if (en) {
-            _Pin::VDD_B_2V8_IMG_EN::Write(1);
-            _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-            _Pin::VDD_B_1V8_IMG_EN::Write(1);
-            
-            #warning measure actual delay that we need for the rails to rise
-        
-        } else {
-            // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-            _Pin::VDD_B_1V8_IMG_EN::Write(0);
-            _Pin::VDD_B_2V8_IMG_EN::Write(0);
-            
-            #warning measure actual delay that we need for the rails to fall
-        }
-    }
-    
     static inline bool _Enabled = false;
     static inline uint8_t _CaptureBlock = 0;
     
@@ -551,7 +542,8 @@ struct _MainTask {
                 _WaitingForMotion = false;
             }
             
-            _Pin::VDD_B_EN::Write(1);
+            _VDDBSetEnabled(true);
+            
             #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
             _Scheduler::Sleep(_Scheduler::Ms(250));
             
