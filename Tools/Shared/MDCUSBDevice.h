@@ -177,25 +177,11 @@ public:
     }
     
     // MARK: - STMApp Commands
-    void hostModeInit() {
+    void hostModeSetEnabled(bool en) {
         assert(_mode == STM::Status::Modes::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::HostModeInit };
+        const STM::Cmd cmd = { .op = STM::Op::HostModeSetEnabled };
         _sendCmd(cmd);
-        _checkStatus("HostModeInit command failed");
-    }
-    
-    void hostModeEnter(STM::Peripheral periph) {
-        assert(_mode == STM::Status::Modes::STMApp);
-        const STM::Cmd cmd = {
-            .op = STM::Op::HostModeEnter,
-            .arg = {
-                .HostModeEnter = {
-                    .periph = periph,
-                },
-            },
-        };
-        _sendCmd(cmd);
-        _checkStatus("HostModeEnter command failed");
+        _checkStatus("HostModeSetEnabled command failed");
     }
     
     void iceRAMWrite(const void* data, size_t len) {
@@ -360,10 +346,10 @@ public:
         _checkStatus("MSPDebug command failed");
     }
     
-    STM::SDCardInfo sdCardInfo() {
+    STM::SDCardInfo sdInit() {
         assert(_mode == STM::Status::Modes::STMApp);
         
-        const STM::Cmd cmd = { .op = STM::Op::SDCardInfo };
+        const STM::Cmd cmd = { .op = STM::Op::SDInit };
         _sendCmd(cmd);
         
         STM::SDCardInfo cardInfo = {};
@@ -384,6 +370,14 @@ public:
         };
         _sendCmd(cmd);
         _checkStatus("SDRead command failed");
+    }
+    
+    void imgInit() {
+        assert(_mode == STM::Status::Modes::STMApp);
+        
+        const STM::Cmd cmd = { .op = STM::Op::ImgInit, };
+        _sendCmd(cmd);
+        _checkStatus("ImgInit command failed");
     }
     
     struct ImgExposure {

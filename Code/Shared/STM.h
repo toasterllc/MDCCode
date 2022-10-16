@@ -18,13 +18,6 @@ namespace STM {
         DataIn  = 0x81,
     );
     
-    #warning TODO: in the future we should be able to remove this, once we don't rely on MSP to toggle the peripheral rails when entering host mode
-    enum class Peripheral : uint8_t {
-        None,
-        SD,
-        Img,
-    };
-    
     enum class Op : uint8_t {
         // Common command set
         None,
@@ -38,8 +31,7 @@ namespace STM {
         STMReset,
         
         // STMApp
-        HostModeInit,
-        HostModeEnter,
+        HostModeSetEnabled,
         
         ICERAMWrite,
         ICEFlashRead,
@@ -51,9 +43,10 @@ namespace STM {
         MSPWrite,
         MSPDebug,
         
-        SDCardInfo,
+        SDInit,
         SDRead,
         
+        ImgInit,
         ImgExposureSet,
         ImgCapture,
     };
@@ -78,8 +71,8 @@ namespace STM {
             
             // # STMApp
             struct [[gnu::packed]] {
-                Peripheral periph;
-            } HostModeEnter;
+                uint8_t en;
+            } HostModeSetEnabled;
             
             struct [[gnu::packed]] {
                 uint32_t len;

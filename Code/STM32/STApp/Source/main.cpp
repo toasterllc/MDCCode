@@ -68,6 +68,9 @@ using _ICE_ST_SPI_CLK       = QSPI::Clk;
 using _ICE_ST_SPI_D4        = QSPI::D4;
 using _ICE_ST_SPI_D5        = QSPI::D5;
 using _MSP_HOST_MODE_       = GPIO<GPIOPortE, GPIO_PIN_3>;
+using _MSP_SBW_EN           = GPIO<GPIOPortE, GPIO_PIN_4>;
+using _VDD_B_1V8_IMG_SD_EN  = GPIO<GPIOPortE, GPIO_PIN_5>;
+using _VDD_B_2V8_IMG_SD_EN  = GPIO<GPIOPortE, GPIO_PIN_2>;
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -125,6 +128,19 @@ private:
     static inline SD::CardData _CardData;
     static inline bool _Reading = false;
 };
+
+// MARK: - Utility Functions
+
+static void _IMGSDPowerSetEnabled(bool en) {
+    // Toggle power rails
+    _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    _VDD_B_1V8_IMG_SD_EN::Write(en);
+    _VDD_B_2V8_IMG_SD_EN::Write(en);
+    
+    _Scheduler::Sleep(_Scheduler::Ms(10));
+}
 
 // MARK: - ICE40
 
@@ -242,9 +258,9 @@ static void _ICEError(uint16_t line) {
 
 // MARK: - MSP430
 
-using _MSPTest = GPIO<GPIOPortI, GPIO_PIN_8>;
-using _MSPRst_ = GPIO<GPIOPortF, GPIO_PIN_0>;
-static MSP430JTAG<_MSPTest, _MSPRst_, _System::CPUFreqMHz> _MSP;
+using _MSP_TEST = GPIO<GPIOPortI, GPIO_PIN_8>;
+using _MSP_RST_ = GPIO<GPIOPortF, GPIO_PIN_0>;
+static MSP430JTAG<_MSP_TEST, _MSP_RST_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
 
@@ -480,57 +496,26 @@ struct _TaskReadout {
 
 // MARK: - Commands
 
-static void _HostModeInit(const STM::Cmd& cmd) {
-    // Accept command
-    _System::USBAcceptCommand(true);
-    
-    const auto mspr = _MSP.connect();
-    
-    // Send status
-    _System::USBSendStatus(mspr == _MSP.Status::OK);
-}
-
-static void _HostModeEnter(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.HostModeEnter;
+static void _HostModeSetEnabled(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.HostModeSetEnabled;
     
     // Accept command
     _System::USBAcceptCommand(true);
-    
-    // Configure QSPI for comms with ICEApp
-    _QSPISetConfig(_QSPIConfigs.ICEApp);
-    
-    _ICE::Init();
     
     // Update _MSP_HOST_MODE_ output which controls whether MSPApp runs once we disconnect SBW
-    _MSP_HOST_MODE_::Write(0);
     _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _MSP_RST_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
-    switch (arg.periph) {
-    case STM::Peripheral::SD:
-        // Reset SD before MSP toggles the power rails (by entering host mode)
-        _SD::Reset();
-        break;
-    default:
-        break;
-    }
+    // Enable host mode
+    if (arg.en) {
+        _MSP_HOST_MODE_::Write(0);
+        _MSP_RST_::Write(0);
+        _Scheduler::Sleep(_Scheduler::Ms(10));
+        _MSP_RST_::Write(1);
     
-    // Disconnect MSP JTAG, causing MSP to enter host mode and toggle the power rails
-    _MSP.disconnect();
-    
-    // Wait for MSP to toggle SD/IMG rails and enter host mode
-    _Scheduler::Sleep(_Scheduler::Ms(20));
-    
-    // Init SD
-    switch (arg.periph) {
-    case STM::Peripheral::SD:
-        _SD::Init();
-        break;
-    case STM::Peripheral::Img:
-        _ImgSensor::Init();
-        _ImgSensor::SetStreamEnabled(true);
-        break;
-    default:
-        break;
+    // Disable host mode
+    } else {
+        _MSP_HOST_MODE_::Write(1);
     }
     
     // Send status
@@ -1116,9 +1101,20 @@ static void _MSPDebug(const STM::Cmd& cmd) {
     _System::USBSendStatus(state.ok);
 }
 
-void _SDCardInfo(const STM::Cmd& cmd) {
+void _SDInit(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
+    
+    // Reset SD before toggling the power rails
+    // This is necessary to put the SD nets in a predefined state before applying power to SD
+    _SD::Reset();
+    
+    // Toggle power rails
+    _IMGSDPowerSetEnabled(false);
+    _IMGSDPowerSetEnabled(true);
+    
+    // Init SD card now that its power has been cycled
+    _SD::Init();
     
     // Send SD card info
     alignas(4) const SDCardInfo cardInfo = {
@@ -1146,6 +1142,20 @@ static void _SDRead(const STM::Cmd& cmd) {
     
     // Start the Readout task
     _TaskReadout::Start(std::nullopt);
+}
+
+void _ImgInit(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Enable IMG power rails
+    _IMGSDPowerSetEnabled(true);
+    
+    _ImgSensor::Init();
+    _ImgSensor::SetStreamEnabled(true);
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 void _ImgExposureSet(const STM::Cmd& cmd) {
@@ -1204,27 +1214,27 @@ void _ImgCapture(const STM::Cmd& cmd) {
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     // Host Mode
-    case Op::HostModeInit:      _HostModeInit(cmd);                 break;
-    case Op::HostModeEnter:     _HostModeEnter(cmd);                break;
+    case Op::HostModeSetEnabled:    _HostModeSetEnabled(cmd);           break;
     // ICE40 Bootloader
-    case Op::ICERAMWrite:       _ICERAMWrite(cmd);                  break;
-    case Op::ICEFlashRead:      _ICEFlashRead(cmd);                 break;
-    case Op::ICEFlashWrite:     _ICEFlashWrite(cmd);                break;
+    case Op::ICERAMWrite:           _ICERAMWrite(cmd);                  break;
+    case Op::ICEFlashRead:          _ICEFlashRead(cmd);                 break;
+    case Op::ICEFlashWrite:         _ICEFlashWrite(cmd);                break;
     // MSP430 Bootloader
-    case Op::MSPConnect:        _MSPConnect(cmd);                   break;
-    case Op::MSPDisconnect:     _MSPDisconnect(cmd);                break;
+    case Op::MSPConnect:            _MSPConnect(cmd);                   break;
+    case Op::MSPDisconnect:         _MSPDisconnect(cmd);                break;
     // MSP430 Debug
-    case Op::MSPRead:           _MSPRead(cmd);                      break;
-    case Op::MSPWrite:          _MSPWrite(cmd);                     break;
-    case Op::MSPDebug:          _MSPDebug(cmd);                     break;
+    case Op::MSPRead:               _MSPRead(cmd);                      break;
+    case Op::MSPWrite:              _MSPWrite(cmd);                     break;
+    case Op::MSPDebug:              _MSPDebug(cmd);                     break;
     // SD Card
-    case Op::SDCardInfo:        _SDCardInfo(cmd);                   break;
-    case Op::SDRead:            _SDRead(cmd);                       break;
+    case Op::SDInit:                _SDInit(cmd);                       break;
+    case Op::SDRead:                _SDRead(cmd);                       break;
     // Img
-    case Op::ImgExposureSet:    _ImgExposureSet(cmd);               break;
-    case Op::ImgCapture:        _ImgCapture(cmd);                   break;
+    case Op::ImgInit:               _ImgInit(cmd);                      break;
+    case Op::ImgExposureSet:        _ImgExposureSet(cmd);               break;
+    case Op::ImgCapture:            _ImgCapture(cmd);                   break;
     // Bad command
-    default:                    _System::USBAcceptCommand(false);   break;
+    default:                        _System::USBAcceptCommand(false);   break;
     }
 }
 

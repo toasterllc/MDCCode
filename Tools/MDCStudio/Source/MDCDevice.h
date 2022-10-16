@@ -44,35 +44,30 @@ public:
             auto lock = std::unique_lock(*_dev);
             
             {
-                _dev->hostModeInit();
-                _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
+                _dev->hostModeSetEnabled(true);
                 
-                if (_mspState.magic != MSP::State::MagicNumber) {
-                    // Program MSPApp onto MSP
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
-                }
-                
-                if (_mspState.version > MSP::State::Version) {
-                    // Newer version than we understand -- tell user to upgrade or re-program
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
-                }
-                
-                // Load ICE40 with our app
-                _ICEConfigure(*_dev);
-                
-                _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
-                _mspState.startTime.valid = true;
-                _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
-                
-                _dev->hostModeEnter(STM::Peripheral::SD);
+                _dev->mspConnect();
+                    _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
+                    
+                    if (_mspState.magic != MSP::State::MagicNumber) {
+                        // Program MSPApp onto MSP
+                        #warning TODO: implement
+                        throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
+                    }
+                    
+                    if (_mspState.version > MSP::State::Version) {
+                        // Newer version than we understand -- tell user to upgrade or re-program
+                        #warning TODO: implement
+                        throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
+                    }
+                    
+                    _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
+                    _mspState.startTime.valid = true;
+                    _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
+                _dev->mspDisconnect();
                 
                 printf("Set device time to 0x%jx\n", (uintmax_t)_mspState.startTime.time);
             }
-            
-            #warning TODO: we don't need this sleep anymore right, because STMApp waits until MSP toggles the rails and SD is initialized?
-            sleep(1);
             
 //            
 //            sleep(15);
@@ -115,9 +110,12 @@ public:
 //            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
 //            printf("durationMs: %ju\n", (uintmax_t)durationMs);
             
+            // Load ICE40 with our app
+            _ICEConfigure(*_dev);
+            
             // Init SD card
             #warning TODO: how should we handle sdInit() failing (throwing)?
-            _sdCardInfo = _dev->sdCardInfo();
+            _sdCardInfo = _dev->sdInit();
             
             if (!_mspState.sd.valid) {
                 // MSPApp state isn't valid -- ignore

@@ -376,12 +376,8 @@ static void SDRead(const Args& args, MDCUSBDevice& device) {
         throw Toastbox::RuntimeError("length must be a multiple of the USB packet size (%ju)",
             (uintmax_t)Toastbox::USB::Endpoint::MaxPacketSizeBulk);
     
-    printf("Sending HostModeInit command...\n");
-    device.hostModeInit();
-    printf("-> OK\n\n");
-    
-    printf("Sending HostModeEnter command...\n");
-    device.hostModeEnter(STM::Peripheral::SD);
+    printf("Sending SDInit command...\n");
+    device.sdInit();
     printf("-> OK\n\n");
     
     printf("Sending SDRead command...\n");
@@ -403,12 +399,8 @@ static void SDRead(const Args& args, MDCUSBDevice& device) {
 }
 
 static void ImgCapture(const Args& args, MDCUSBDevice& device) {
-    printf("Sending HostModeInit command...\n");
-    device.hostModeInit();
-    printf("-> OK\n\n");
-    
-    printf("Sending HostModeEnter command...\n");
-    device.hostModeEnter(STM::Peripheral::Img);
+    printf("Sending ImgInit command...\n");
+    device.imgInit();
     printf("-> OK\n\n");
     
     printf("Sending ImgCapture command...\n");
