@@ -201,14 +201,11 @@ struct _SDTask {
     
     static void Init() {
         Wait();
-        // Short-circuit if the state didn't change
-        if (_InitDone) return;
         _Scheduler::Start<_SDTask>([] { _Init(); });
     }
     
     static void Write(uint8_t srcRAMBlock) {
         Wait();
-        Assert(_InitDone);
         
         _Writing = true;
         
@@ -235,8 +232,6 @@ struct _SDTask {
     }
     
     static void _Init() {
-        Assert(!_InitDone);
-        
         if (!_RCA) {
             // We haven't successfully enabled the SD card since the battery was connected;
             // enable the SD card and get the card id / card data.
@@ -259,8 +254,6 @@ struct _SDTask {
             // enable it again
             _SDCard::Init();
         }
-        
-        _InitDone = true;
     }
     
     static void _Write(uint8_t srcRAMBlock) {
@@ -383,7 +376,6 @@ struct _SDTask {
     [[gnu::section(".ram_backup.main")]]
     static inline std::optional<uint16_t> _RCA;
     
-    static inline bool _InitDone = false;
     static inline bool _Writing = false;
     
     // Task options
@@ -395,23 +387,13 @@ struct _SDTask {
 };
 
 struct _ImgTask {
-    static void Enable() {
+    static void Init() {
         Wait();
-        // Short-circuit if the state didn't change
-        if (_Enabled) return;
-        _Scheduler::Start<_ImgTask>([] { _Enable(); });
-    }
-    
-    static void Disable() {
-        Wait();
-        // Short-circuit if the state didn't change
-        if (!_Enabled) return;
-        _Scheduler::Start<_ImgTask>([] { _Disable(); });
+        _Scheduler::Start<_ImgTask>([] { _Init(); });
     }
     
     static void Capture(const Img::Id& id) {
         Wait();
-        Assert(_Enabled);
         
         static struct { Img::Id id; } Args;
         Args = { id };
@@ -427,11 +409,7 @@ struct _ImgTask {
         _Scheduler::Wait<_ImgTask>();
     }
     
-    static void _Enable() {
-        Assert(!_Enabled);
-        
-        // Enable the power rails
-        _SetPowerEnabled(true);
+    static void _Init() {
         // Initialize image sensor
         _ImgSensor::Init();
         // Set the initial exposure _before_ we enable streaming, so that the very first frame
@@ -439,15 +417,6 @@ struct _ImgTask {
         _ImgSensor::SetCoarseIntTime(_AutoExp.integrationTime());
         // Enable image streaming
         _ImgSensor::SetStreamEnabled(true);
-        
-        _Enabled = true;
-    }
-    
-    static void _Disable() {
-        Assert(_Enabled);
-        
-        _SetPowerEnabled(false);
-        _Enabled = false;
     }
     
     static void _Capture(const Img::Id& id) {
@@ -499,7 +468,6 @@ struct _ImgTask {
         _CaptureBlock = bestExpBlock;
     }
     
-    static inline bool _Enabled = false;
     static inline uint8_t _CaptureBlock = 0;
     
     // _AutoExp: auto exposure algorithm object
@@ -542,14 +510,21 @@ struct _MainTask {
                 _WaitingForMotion = false;
             }
             
+            // Turn on VDD_B power (turns on ICE40)
             _VDDBSetEnabled(true);
             
             #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
             _Scheduler::Sleep(_Scheduler::Ms(250));
             
-            // Enable image sensor / SD card
-            _ImgTask::Enable();
-            _SDTask::Enable();
+            // Reset SD nets before we turn on SD power
+            _SDTask::Reset();
+            
+            // Turn on IMG/SD power
+            _VDDIMGSDSetEnabled(true);
+            
+            // Init image sensor / SD card
+            _ImgTask::Init();
+            _SDTask::Init();
             
             for (;;) {
                 // Capture an image
@@ -586,11 +561,8 @@ struct _MainTask {
                 _Motion = false;
             }
             
-            // We haven't had motion in a while; power down
-            _ImgTask::Disable();
-            _SDTask::Disable();
-            
-            _Pin::VDD_B_EN::Write(0);
+            _VDDIMGSDSetEnabled(false);
+            _VDDBSetEnabled(false);
         }
     }
     
@@ -770,21 +742,13 @@ uint8_t _StackMain[_StackMainSize];
 asm(".global __stack");
 asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
 
-[[noreturn]]
 static void _HostMode() {
     // Let power rails fully discharge before turning them on
     _Scheduler::Delay(_Scheduler::Ms(10));
     
-    _Pin::VDD_B_EN::Write(1);
-    _Pin::VDD_B_2V8_IMG_EN::Write(1);
-    _Pin::VDD_B_1V8_IMG_EN::Write(1);
-    _Pin::VDD_B_SD_EN::Write(1);
-    
     while (!_Pin::HOST_MODE_::Read()) {
         _Scheduler::Delay(_Scheduler::Ms(100));
     }
-    
-    _BOR();
 }
 
 int main() {
@@ -793,22 +757,17 @@ int main() {
     
     // Init GPIOs
     GPIO::Init<
-        // Main Pins
-        _Pin::VDD_B_1V8_IMG_EN,
-        _Pin::VDD_B_2V8_IMG_EN,
-        _Pin::VDD_B_SD_EN,
+        _Pin::DEBUG_OUT,
         _Pin::VDD_B_EN,
         _Pin::MOTION_SIGNAL,
+        _Pin::VDD_B_2V8_IMG_SD_EN,
+        _Pin::XOUT,
+        _Pin::XIN,
         _Pin::HOST_MODE_,
-        
-        // SPI pins (config chosen by _SPI)
-        _SPI::Pin::Clk,
-        _SPI::Pin::DataOut,
-        _SPI::Pin::DataIn,
-        
-        // Clock pins (config chosen by _RTCType)
-        _RTCType::Pin::XOUT,
-        _RTCType::Pin::XIN
+        _Pin::VDD_B_1V8_IMG_SD_EN,
+        _Pin::ICE_MSP_SPI_CLK,
+        _Pin::ICE_MSP_SPI_DATA_OUT,
+        _Pin::ICE_MSP_SPI_DATA_IN
     >();
     
     // Init clock
