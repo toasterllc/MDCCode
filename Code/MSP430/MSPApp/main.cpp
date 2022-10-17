@@ -108,7 +108,7 @@ using _SDCard = SD::Card<
     _ICE,               // T_ICE
     _SDError,           // T_Error
     1,                  // T_ClkDelaySlow (odd values invert the clock)
-    0                   // T_ClkDelayFast (odd values invert the clock)
+    6                   // T_ClkDelayFast (odd values invert the clock)
 >;
 
 using _RTCType = RTC::Type<_XT1FreqHz, _Pin::XOUT, _Pin::XIN>;
