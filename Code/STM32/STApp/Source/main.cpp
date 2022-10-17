@@ -71,6 +71,8 @@ using _MSP_HOST_MODE_       = GPIO<GPIOPortE, GPIO_PIN_3>;
 using _MSP_SBW_EN           = GPIO<GPIOPortE, GPIO_PIN_4>;
 using _VDD_B_1V8_IMG_SD_EN  = GPIO<GPIOPortE, GPIO_PIN_5>;
 using _VDD_B_2V8_IMG_SD_EN  = GPIO<GPIOPortE, GPIO_PIN_2>;
+using _MSP_TEST             = GPIO<GPIOPortI, GPIO_PIN_8>;
+using _MSP_RST_             = GPIO<GPIOPortF, GPIO_PIN_0>;
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -132,14 +134,23 @@ private:
 // MARK: - Utility Functions
 
 static void _IMGSDPowerSetEnabled(bool en) {
-    // Toggle power rails
     _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
-    _VDD_B_1V8_IMG_SD_EN::Write(en);
-    _VDD_B_2V8_IMG_SD_EN::Write(en);
+    if (en) {
+        _VDD_B_2V8_IMG_SD_EN::Write(1);
+        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+        _VDD_B_1V8_IMG_SD_EN::Write(1);
+        
+        #warning measure actual delay that we need for the rails to rise
     
-    _Scheduler::Sleep(_Scheduler::Ms(10));
+    } else {
+        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+        _VDD_B_2V8_IMG_SD_EN::Write(0);
+        _VDD_B_1V8_IMG_SD_EN::Write(0);
+        
+        #warning measure actual delay that we need for the rails to fall
+    }
 }
 
 // MARK: - ICE40
@@ -213,21 +224,23 @@ static QSPI_CommandTypeDef ICEAppReadOnly(size_t len) {
 
 } // namespace _QSPICmd
 
-static struct {
-    QSPI::Config ICEWrite = {
-        .mode       = QSPI::Mode::Single,
-        .clkDivider = 5, // clkDivider: 5 -> QSPI clock = 21.3 MHz
-        .align      = QSPI::Align::Byte,
-    };
-    
-    QSPI::Config ICEApp = {
-        .mode       = QSPI::Mode::Dual,
-        .clkDivider = 1, // clkDivider: 1 -> QSPI clock = 64 MHz)
-//        .clkDivider = 31, // clkDivider: 31 -> QSPI clock = 4 MHz)
-//        .clkDivider = 255, // clkDivider: 255 -> QSPI clock = .5 MHz)
-        .align      = QSPI::Align::Word,
-    };
-} _QSPIConfigs;
+namespace _QSPIConfigs {
+
+static QSPI::Config ICEWrite = {
+    .mode       = QSPI::Mode::Single,
+    .clkDivider = 5, // clkDivider: 5 -> QSPI clock = 21.3 MHz
+    .align      = QSPI::Align::Byte,
+};
+
+static QSPI::Config ICEApp = {
+    .mode       = QSPI::Mode::Dual,
+    .clkDivider = 1, // clkDivider: 1 -> QSPI clock = 64 MHz
+//        .clkDivider = 31, // clkDivider: 31 -> QSPI clock = 4 MHz
+//        .clkDivider = 255, // clkDivider: 255 -> QSPI clock = .5 MHz
+    .align      = QSPI::Align::Word,
+};
+
+} // namespace _QSPIConfigs
 
 void _QSPISetConfig(const QSPI::Config& config) {
     _QSPI.setConfig(config);
@@ -251,15 +264,19 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
     _ICE_ST_SPI_CS_::Write(1);
 }
 
+static void _ICEAppInit() {
+    // Prepare for comms with ICEApp via QSPI
+    _QSPISetConfig(_QSPIConfigs::ICEApp);
+    // Confirm comms are working
+    _ICE::Init();
+}
+
 [[noreturn]]
 static void _ICEError(uint16_t line) {
     _System::Abort();
 }
 
 // MARK: - MSP430
-
-using _MSP_TEST = GPIO<GPIOPortI, GPIO_PIN_8>;
-using _MSP_RST_ = GPIO<GPIOPortF, GPIO_PIN_0>;
 static MSP430JTAG<_MSP_TEST, _MSP_RST_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
@@ -502,12 +519,12 @@ static void _HostModeSetEnabled(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Update _MSP_HOST_MODE_ output which controls whether MSPApp runs once we disconnect SBW
-    _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _MSP_RST_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    // Host mode asserts _MSP_HOST_MODE_, which MSPApp observes and
+    // prevents itself from running if it's asserted
     
     // Enable host mode
     if (arg.en) {
+        // Asssert _MSP_HOST_MODE_ and reset MSP, which triggers the check for _MSP_HOST_MODE_
         _MSP_HOST_MODE_::Write(0);
         _MSP_RST_::Write(0);
         _Scheduler::Sleep(_Scheduler::Ms(10));
@@ -1105,6 +1122,9 @@ void _SDInit(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
+    // Prepare for comms with ICEApp via QSPI
+    _ICEAppInit();
+    
     // Reset SD before toggling the power rails
     // This is necessary to put the SD nets in a predefined state before applying power to SD
     _SD::Reset();
@@ -1147,6 +1167,9 @@ static void _SDRead(const STM::Cmd& cmd) {
 void _ImgInit(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
+    
+    // Prepare for comms with ICEApp via QSPI
+    _ICEAppInit();
     
     // Enable IMG power rails
     _IMGSDPowerSetEnabled(true);
@@ -1282,11 +1305,24 @@ int main() {
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOE_CLK_ENABLE();
-    __HAL_RCC_GPIOI_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
+    __HAL_RCC_GPIOI_CLK_ENABLE();
+    
+    _MSP_HOST_MODE_::Write(1);
+    _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    _VDD_B_1V8_IMG_SD_EN::Write(0);
+    _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    _VDD_B_2V8_IMG_SD_EN::Write(0);
+    _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Init MSP
     _MSP.init();
+    
+    // Enable SBW voltage translation once _MSP has initialized the MSP_TEST and MSP_RST_ pins
+    _MSP_SBW_EN::Write(1);
+    _MSP_SBW_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     _Scheduler::Run();
     return 0;
