@@ -134,9 +134,6 @@ private:
 // MARK: - Utility Functions
 
 static void _IMGSDPowerSetEnabled(bool en) {
-    _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    
     if (en) {
         _VDD_B_2V8_IMG_SD_EN::Write(1);
         _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
@@ -529,10 +526,21 @@ static void _HostModeSetEnabled(const STM::Cmd& cmd) {
         _MSP_RST_::Write(0);
         _Scheduler::Sleep(_Scheduler::Ms(10));
         _MSP_RST_::Write(1);
+        _Scheduler::Sleep(_Scheduler::Ms(10));
+        
+        // Take control of power rails and disable them by default
+        _VDD_B_1V8_IMG_SD_EN::Write(0);
+        _VDD_B_2V8_IMG_SD_EN::Write(0);
+        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Disable host mode
     } else {
         _MSP_HOST_MODE_::Write(1);
+        
+        // Relinquish control of power rails
+        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
     // Send status
@@ -1310,12 +1318,6 @@ int main() {
     
     _MSP_HOST_MODE_::Write(1);
     _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    
-    _VDD_B_1V8_IMG_SD_EN::Write(0);
-    _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    
-    _VDD_B_2V8_IMG_SD_EN::Write(0);
-    _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Init MSP
     _MSP.init();
