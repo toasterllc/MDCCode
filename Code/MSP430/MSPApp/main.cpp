@@ -488,6 +488,14 @@ struct _ImgTask {
 
 struct _MainTask {
     static void Run() {
+        
+        for (;;) {
+            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
+            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
+        }
+        
 //        _Pin::VDD_B_EN::Write(1);
 //        _Scheduler::Sleep(_Scheduler::Ms(250));
 //        
@@ -502,13 +510,14 @@ struct _MainTask {
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
         for (;;) {
-            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
-            {
-                _WaitingForMotion = true;
-                _Scheduler::Wait([&] { return (bool)_Motion; });
-                _Motion = false;
-                _WaitingForMotion = false;
-            }
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
+//            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
+//            {
+//                _WaitingForMotion = true;
+//                _Scheduler::Wait([&] { return (bool)_Motion; });
+//                _Motion = false;
+//                _WaitingForMotion = false;
+//            }
             
             // Turn on VDD_B power (turns on ICE40)
             _VDDBSetEnabled(true);
@@ -757,17 +766,24 @@ int main() {
     
     // Init GPIOs
     GPIO::Init<
+        // General IO
         _Pin::DEBUG_OUT,
-        _Pin::VDD_B_EN,
         _Pin::MOTION_SIGNAL,
-        _Pin::VDD_B_2V8_IMG_SD_EN,
-        _Pin::XOUT,
-        _Pin::XIN,
         _Pin::HOST_MODE_,
+        
+        // Power control
+        _Pin::VDD_B_EN,
         _Pin::VDD_B_1V8_IMG_SD_EN,
-        _Pin::ICE_MSP_SPI_CLK,
-        _Pin::ICE_MSP_SPI_DATA_OUT,
-        _Pin::ICE_MSP_SPI_DATA_IN
+        _Pin::VDD_B_2V8_IMG_SD_EN,
+        
+        // Clock (config chosen by _RTCType)
+        _RTCType::Pin::XOUT,
+        _RTCType::Pin::XIN,
+        
+        // SPI (config chosen by _SPI)
+        _SPI::Pin::Clk,
+        _SPI::Pin::DataOut,
+        _SPI::Pin::DataIn
     >();
     
     // Init clock

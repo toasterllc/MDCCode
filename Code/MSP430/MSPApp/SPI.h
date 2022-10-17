@@ -23,36 +23,34 @@ public:
         __delay_cycles((((uint64_t)ICE40SPIResetDurationUs)*T_MCLKFreqHz) / 1000000);
         _ClkManual::Write(0);
         
-        // Return control of `T_ClkPin` to the SPI peripheral (PA.6 = UCA0CLK)
+        // Return control of `T_ClkPin` to the SPI peripheral (PA.C = UCB0CLK)
         _ClkPeriph::Init();
     }
     
     // Init(): configure SPI peripheral
     static void Init() {
-        // Turn over control of `T_ClkPin` to the SPI peripheral (PA.6 = UCA0CLK)
+        // Turn over control of `T_ClkPin` to the SPI peripheral (PA.C = UCB0CLK)
         _ClkPeriph::Init();
         
         // Assert USCI reset
-        UCA0CTLW0 |= UCSWRST;
+        UCB0CTLW0 |= UCSWRST;
         
-        UCA0CTLW0 |=
+        UCB0CTLW0 |=
             // phase=1, polarity=0, MSB first, width=8-bit
             UCCKPH_1 | UCCKPL__LOW | UCMSB_1 | UC7BIT__8BIT |
             // mode=master, mode=3-pin SPI, mode=synchronous, clock=SMCLK
             UCMST__MASTER | UCMODE_0 | UCSYNC__SYNC | UCSSEL__SMCLK;
         
         // fBitClock = fBRCLK / 1;
-        UCA0BRW = 0;
-        // No modulation
-        UCA0MCTLW = 0;
+        UCB0BRW = 0;
         
         // De-assert USCI reset
-        UCA0CTLW0 &= ~UCSWRST;
+        UCB0CTLW0 &= ~UCSWRST;
     }
     
     template <typename T_DataOut, typename T_DataIn>
     static void WriteRead(const T_DataOut& dataOut, T_DataIn* dataIn=nullptr) {
-        // PA.4 = UCA0SIMO
+        // PA.4 = UCB0SIMO
         _DataOutEnabled::Init();
         
         const uint8_t* dataOutU8 = (const uint8_t*)&dataOut;
@@ -83,17 +81,17 @@ private:
     using _DataOutEnabled = typename Pin::DataOut::template Opts<GPIO::Option::Sel01>;
     
     static uint8_t _TxRx(uint8_t b) {
-        // Wait until `UCA0TXBUF` can accept more data
-        while (!(UCA0IFG & UCTXIFG));
+        // Wait until `UCB0TXBUF` can accept more data
+        while (!(UCB0IFG & UCTXIFG));
         // Clear UCRXIFG so we can tell when tx/rx is complete
-        UCA0IFG &= ~UCRXIFG;
+        UCB0IFG &= ~UCRXIFG;
         // Start the SPI transaction
-        UCA0TXBUF = b;
+        UCB0TXBUF = b;
         // Wait for tx completion
-        // Wait for UCRXIFG, not UCTXIFG! UCTXIFG signifies that UCA0TXBUF
+        // Wait for UCRXIFG, not UCTXIFG! UCTXIFG signifies that UCB0TXBUF
         // can accept more data, not transfer completion. UCRXIFG signifies
         // rx completion, which implies tx completion.
-        while (!(UCA0IFG & UCRXIFG));
-        return UCA0RXBUF;
+        while (!(UCB0IFG & UCRXIFG));
+        return UCB0RXBUF;
     }
 };
