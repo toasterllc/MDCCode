@@ -133,20 +133,42 @@ private:
 
 // MARK: - Utility Functions
 
-static void _IMGSDPowerSetEnabled(bool en) {
-    if (en) {
-        _VDD_B_2V8_IMG_SD_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-        _VDD_B_1V8_IMG_SD_EN::Write(1);
-        
-        #warning measure actual delay that we need for the rails to rise
+enum class _IMGSDPowerState {
+    Uncontrolled,
+    Off,
+    On,
+};
+
+static void _IMGSDPowerStateSet(_IMGSDPowerState state) {
+    switch (state) {
+    case _IMGSDPowerState::Uncontrolled:
+        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        break;
     
-    } else {
+    case _IMGSDPowerState::Off:
         // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
         _VDD_B_2V8_IMG_SD_EN::Write(0);
         _VDD_B_1V8_IMG_SD_EN::Write(0);
         
-        #warning measure actual delay that we need for the rails to fall
+        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        
+        // Rails take ~1.5ms to turn off, so wait 2ms to be sure
+        _Scheduler::Sleep(_Scheduler::Ms(2));
+        break;
+    
+    case _IMGSDPowerState::On:
+        _VDD_B_2V8_IMG_SD_EN::Write(1);
+        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        
+        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+        _VDD_B_1V8_IMG_SD_EN::Write(1);
+        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        
+        // Rails take ~1ms to turn on, so wait 2ms to be sure
+        _Scheduler::Sleep(_Scheduler::Ms(2));
+        break;
     }
 }
 
@@ -529,18 +551,14 @@ static void _HostModeSetEnabled(const STM::Cmd& cmd) {
         _Scheduler::Sleep(_Scheduler::Ms(10));
         
         // Take control of power rails and disable them by default
-        _VDD_B_1V8_IMG_SD_EN::Write(0);
-        _VDD_B_2V8_IMG_SD_EN::Write(0);
-        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _IMGSDPowerStateSet(_IMGSDPowerState::Off);
     
     // Disable host mode
     } else {
         _MSP_HOST_MODE_::Write(1);
         
         // Relinquish control of power rails
-        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _IMGSDPowerStateSet(_IMGSDPowerState::Uncontrolled);
     }
     
     // Send status
@@ -1133,13 +1151,15 @@ void _SDInit(const STM::Cmd& cmd) {
     // Prepare for comms with ICEApp via QSPI
     _ICEAppInit();
     
-    // Reset SD before toggling the power rails
+    // Disable SD power
+    _IMGSDPowerStateSet(_IMGSDPowerState::Off);
+    
+    // Reset SD before turning power on
     // This is necessary to put the SD nets in a predefined state before applying power to SD
     _SD::Reset();
     
-    // Toggle power rails
-    _IMGSDPowerSetEnabled(false);
-    _IMGSDPowerSetEnabled(true);
+    // Enable SD power
+    _IMGSDPowerStateSet(_IMGSDPowerState::On);
     
     // Init SD card now that its power has been cycled
     _SD::Init();
@@ -1180,7 +1200,7 @@ void _ImgInit(const STM::Cmd& cmd) {
     _ICEAppInit();
     
     // Enable IMG power rails
-    _IMGSDPowerSetEnabled(true);
+    _IMGSDPowerStateSet(_IMGSDPowerState::On);
     
     _ImgSensor::Init();
     _ImgSensor::SetStreamEnabled(true);
