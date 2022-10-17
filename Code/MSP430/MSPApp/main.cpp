@@ -143,12 +143,18 @@ static void _VDDIMGSDSetEnabled(bool en) {
         _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
         _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
         
+        // Rails take ~1ms to turn on, so wait 2ms to be sure
+        _Scheduler::Sleep(_Scheduler::Ms(2));
+        
         #warning measure actual delay that we need for the rails to rise
     
     } else {
         // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
         _Pin::VDD_B_2V8_IMG_SD_EN::Write(0);
         _Pin::VDD_B_1V8_IMG_SD_EN::Write(0);
+        
+        // Rails take ~1.5ms to turn off, so wait 2ms to be sure
+        _Scheduler::Sleep(_Scheduler::Ms(2));
         
         #warning measure actual delay that we need for the rails to fall
     }
@@ -489,13 +495,6 @@ struct _ImgTask {
 struct _MainTask {
     static void Run() {
         
-        for (;;) {
-            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
-            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
-        }
-        
 //        _Pin::VDD_B_EN::Write(1);
 //        _Scheduler::Sleep(_Scheduler::Ms(250));
 //        
@@ -527,6 +526,7 @@ struct _MainTask {
             
             // Reset SD nets before we turn on SD power
             _SDTask::Reset();
+            _SDTask::Wait();
             
             // Turn on IMG/SD power
             _VDDIMGSDSetEnabled(true);
@@ -535,7 +535,28 @@ struct _MainTask {
             _ImgTask::Init();
             _SDTask::Init();
             
-            for (;;) {
+//            #warning TODO: remove this wait
+//            _SDTask::Wait();
+            
+//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//            _Scheduler::Sleep(_Scheduler::Ms(100));
+            
+//            for (;;) {
+//                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+//                _Scheduler::Sleep(_Scheduler::Ms(250));
+//                
+//                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//                _Scheduler::Sleep(_Scheduler::Ms(250));
+//            }
+            
+//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+//            _Scheduler::Sleep(_Scheduler::Ms(100));
+//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//            _Scheduler::Sleep(_Scheduler::Ms(100));
+            
+            #warning TODO: uncomment loop
+//            for (;;)
+            {
                 // Capture an image
                 {
                     _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
@@ -555,19 +576,21 @@ struct _MainTask {
                     
                     // Copy image from RAM -> SD card
                     _SDTask::Write(srcRAMBlock);
+                    _SDTask::Wait();
                     
                     _ICE::Transfer(_ICE::LEDSetMsg(0x00));
                 }
                 
-                // Wait up to 1s for further motion
-                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-                if (!motion) break;
-                
-                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-                // _Motion, there'd be a race window where we could first observe
-                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-                // the true value by resetting it to false.
-                _Motion = false;
+                #warning TODO: uncomment
+//                // Wait up to 1s for further motion
+//                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
+//                if (!motion) break;
+//                
+//                // Only reset _Motion if we've observed motion; otherwise, if we always reset
+//                // _Motion, there'd be a race window where we could first observe
+//                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
+//                // the true value by resetting it to false.
+//                _Motion = false;
             }
             
             _VDDIMGSDSetEnabled(false);
