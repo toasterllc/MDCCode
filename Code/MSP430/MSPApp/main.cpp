@@ -145,8 +145,6 @@ static void _VDDIMGSDSetEnabled(bool en) {
         
         // Rails take ~1ms to turn on, so wait 2ms to be sure
         _Scheduler::Sleep(_Scheduler::Ms(2));
-        
-        #warning measure actual delay that we need for the rails to rise
     
     } else {
         // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
@@ -155,8 +153,6 @@ static void _VDDIMGSDSetEnabled(bool en) {
         
         // Rails take ~1.5ms to turn off, so wait 2ms to be sure
         _Scheduler::Sleep(_Scheduler::Ms(2));
-        
-        #warning measure actual delay that we need for the rails to fall
     }
 }
 
