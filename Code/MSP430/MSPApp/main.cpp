@@ -786,6 +786,10 @@ int main() {
         _SPI::Pin::DataIn
     >();
     
+    // We're using the 'remapped' pin assignments for the eUSCI_B0 pins, which requires setting SYSCFG2.USCIBRMP.
+    // See "Table 9-11. eUSCI Pin Configurations" in the datasheet.
+    SYSCFG2 |= USCIBRMP;
+    
     // Init clock
     _Clock::Init();
     

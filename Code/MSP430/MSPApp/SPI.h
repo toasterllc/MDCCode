@@ -7,7 +7,7 @@ public:
     struct Pin {
         using Clk       = typename T_ClkPin::template Opts<GPIO::Option::Output1>;
         using DataOut   = typename T_DataOutPin::template Opts<GPIO::Option::Input, GPIO::Option::Resistor0>; // Pulldown to prevent floating input (particularly when ICE40 is off)
-        using DataIn    = typename T_DataInPin::template Opts<GPIO::Option::Sel01>;
+        using DataIn    = typename T_DataInPin::template Opts<GPIO::Option::Sel10>;
     };
     
     // ICEReset(): reset ICE comms by asserting `T_ClkPin` for some period
@@ -75,10 +75,10 @@ public:
     
 private:
     using _ClkManual = typename Pin::Clk::template Opts<GPIO::Option::Output1>;
-    using _ClkPeriph = typename Pin::Clk::template Opts<GPIO::Option::Sel01>;
+    using _ClkPeriph = typename Pin::Clk::template Opts<GPIO::Option::Sel10>;
     
     using _DataOutDisabled = typename Pin::DataOut;
-    using _DataOutEnabled = typename Pin::DataOut::template Opts<GPIO::Option::Sel01>;
+    using _DataOutEnabled = typename Pin::DataOut::template Opts<GPIO::Option::Sel10>;
     
     static uint8_t _TxRx(uint8_t b) {
         // Wait until `UCB0TXBUF` can accept more data
