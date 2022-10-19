@@ -3,16 +3,25 @@
 #include "stm32f7xx.h"
 #include "GPIO.h"
 #include "Assert.h"
+#include "STM.h"
 
 template <typename T_Scheduler>
 class Battery {
 public:
+    using BAT_CHRG_STAT = GPIO<GPIOPortE, GPIO_PIN_15>;
     using BAT_CHRG_LVL = GPIO<GPIOPortF, GPIO_PIN_3>;
     
     Battery() {}
     
     // Initialization
     void init() {
+        // Enable ADC+GPIO clocks
+        {
+            __HAL_RCC_ADC3_CLK_ENABLE();
+            __HAL_RCC_GPIOE_CLK_ENABLE();
+            __HAL_RCC_GPIOF_CLK_ENABLE();
+        }
+        
         // Configure global features of the ADC (clock, resolution,
         // data alignment, number of conversions)
         {
@@ -42,12 +51,6 @@ public:
             Assert(hs == HAL_OK);
         }
         
-        // Enable ADC clocks
-        {
-            __HAL_RCC_ADC3_CLK_ENABLE();
-            __HAL_RCC_GPIOF_CLK_ENABLE();
-        }
-        
         // Configure ADC callbacks
         {
             _adc3.Ctx = this;
@@ -64,8 +67,9 @@ public:
             HAL_NVIC_EnableIRQ(ADC_IRQn);
         }
         
-        // Configure pins
+        // Configure GPIOs
         {
+            BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
             BAT_CHRG_LVL::Config(GPIO_MODE_ANALOG, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         }
     }
@@ -74,7 +78,56 @@ public:
         ISR_HAL_ADC(&_adc3);
     }
     
-    uint16_t voltageSample() {
+    STM::BatteryStatus status() {
+        return {
+            .chargeStatus = _chargeStatus(),
+            .voltage = _voltageSample(),
+        };
+    }
+    
+private:
+    STM::BatteryStatus::ChargeStatus _chargeStatus() {
+        using namespace STM;
+        
+        // The battery charger IC (MCP73831T-2ACI/OT) has tristate output, where:
+        //   high-z: shutdown / no battery
+        //   low: charging underway
+        //   high: charging complete
+        // To sense these 3 different states, we configure our GPIO with a pullup
+        // and read the value of the pin, and then repeat with a pulldown, and
+        // compare the read values.
+        BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
+        T_Scheduler::Sleep(T_Scheduler::Ms(10));
+        const bool a = BAT_CHRG_STAT::Read();
+        
+        BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
+        T_Scheduler::Sleep(T_Scheduler::Ms(10));
+        const bool b = BAT_CHRG_STAT::Read();
+        
+        if (a != b) {
+            // BAT_CHRG_STAT == high-z
+            return BatteryStatus::ChargeStatuses::Shutdown;
+        } else {
+            if (!a) {
+                // BAT_CHRG_STAT == low
+                return BatteryStatus::ChargeStatuses::Underway;
+            } else {
+                // BAT_CHRG_STAT == high
+                return BatteryStatus::ChargeStatuses::Complete;
+            }
+        }
+    }
+    
+    uint16_t _voltageSample() {
+//        HAL_StatusTypeDef hs = HAL_ADC_Start(&_adc3);
+//        Assert(hs == HAL_OK);
+//        
+//        hs = HAL_ADC_PollForConversion(&_adc3, HAL_MAX_DELAY);
+//        Assert(hs == HAL_OK);
+//        
+//        return HAL_ADC_GetValue(&_adc3);
+        
+        
         _busy = true;
         
         HAL_StatusTypeDef hs = HAL_ADC_Start_IT(&_adc3);
@@ -82,10 +135,14 @@ public:
         
         T_Scheduler::Wait([&] { return !_busy; });
         
-        return HAL_ADC_GetValue(&_adc3);
+        const uint32_t sample = HAL_ADC_GetValue(&_adc3);
+        
+        constexpr uint32_t SampleMax = (1<<12)-1; // 12-bit samples
+        constexpr uint32_t VoltageMaxMillivolts = 1800;
+        constexpr uint32_t VoltageMultiplier = 4; // We have a 1/4 voltage divider at the ADC input
+        return (sample * VoltageMaxMillivolts * VoltageMultiplier) / SampleMax;
     }
     
-private:
     void _handleSampleDone() {
         _busy = false;
     }

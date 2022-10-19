@@ -1269,11 +1269,7 @@ void _BatteryStatusGet(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Send battery status
-    alignas(4) const BatteryStatus status = {
-        .chargeStatus = BatteryStatus::ChargeStatuses::Unknown,
-        .voltage = _Battery.voltageSample(),
-    };
-    
+    alignas(4) const BatteryStatus status = _Battery.status();
     _USB.send(Endpoints::DataIn, &status, sizeof(status));
     _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
 }

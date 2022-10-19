@@ -133,9 +133,9 @@ namespace STM {
             STMApp,
         );
         
-        uint32_t magic;
-        uint32_t version;
-        Mode mode;
+        uint32_t magic = 0;
+        uint32_t version = 0;
+        Mode mode = Modes::None;
     };
     
     struct [[gnu::packed]] MSPDebugCmd {
@@ -200,9 +200,9 @@ namespace STM {
     };
     
     struct [[gnu::packed]] ImgCaptureStats {
-        uint32_t len;
-        uint32_t highlightCount;
-        uint32_t shadowCount;
+        uint32_t len = 0;
+        uint32_t highlightCount = 0;
+        uint32_t shadowCount = 0;
     };
     
     // Confirm that `Img::ImagePaddedLen` is a multiple of the USB max packet size.
@@ -229,12 +229,13 @@ namespace STM {
     
     struct [[gnu::packed]] BatteryStatus {
         Enum(uint32_t, ChargeStatus, ChargeStatuses,
-            Unknown,
-            ChargingUnderway,
-            ChargingComplete,
+            Invalid,
+            Shutdown,
+            Underway,
+            Complete,
         );
         
-        ChargeStatus chargeStatus;
-        uint16_t voltage;
+        ChargeStatus chargeStatus = ChargeStatuses::Invalid;
+        uint16_t voltage = 0;
     };
 }

@@ -44,7 +44,7 @@ public:
             auto lock = std::unique_lock(*_dev);
             
             {
-                _dev->hostModeSetEnabled(true);
+                _dev->hostModeSet(true);
                 
                 _dev->mspConnect();
                     _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));

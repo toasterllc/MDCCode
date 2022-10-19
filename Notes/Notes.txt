@@ -12,6 +12,7 @@
     
 
 - Board Rev7 Todo
+    - Move voltage divider resistors R7 and R9 closer together
     - Stop using VDD_USB as a signal; use TPS2116DRLR's ST signal instead, pulled to VDD_USB via a 10k resistor
         - Necessary because U12 appears to backfeed voltage to its enable pin, causing VDD_USB=2.5V.
             - Therefore its enable pin needs to be strongly driven (at least strongly driven low, weakly pulled high appears to work fine...)
