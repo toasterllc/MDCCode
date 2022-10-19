@@ -12,8 +12,14 @@
     
 
 - Board Rev7 Todo
+    - Stop using VDD_USB as a signal; use TPS2116DRLR's ST signal instead, pulled to VDD_USB via a 10k resistor
+        - Necessary because U12 appears to backfeed voltage to its enable pin, causing VDD_USB=2.5V.
+            - Therefore its enable pin needs to be strongly driven (at least strongly driven low, weakly pulled high appears to work fine...)
+        - 3 instances of using VDD_USB as a signal: U3, U5, U12
     - Fix USB receptacle layout for A9/B4 pins -- we didn't label the polygon correctly, resulting in a 'fork'
     - Make placing board into enclosure easier
+        - Enclosure's bottom board mount needed to be snipped to give enough clearance
+          to allow USB-C connector to go into hole
         - Cut notch in board?
             - May need to move backplate mounting points so that a notch can be cut
     - Remove cream from TagConnect footprint
