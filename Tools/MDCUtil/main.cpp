@@ -24,6 +24,7 @@ const CmdStr LEDSetCmd              = "LEDSet";
 const CmdStr STMWriteCmd            = "STMWrite";
 
 // STMApp Commands
+const CmdStr HostModeSetEnabledCmd  = "HostModeSetEnabled";
 const CmdStr ICERAMWriteCmd         = "ICERAMWrite";
 const CmdStr ICEFlashReadCmd        = "ICEFlashRead";
 const CmdStr ICEFlashWriteCmd       = "ICEFlashWrite";
@@ -37,20 +38,25 @@ static void printUsage() {
     using namespace std;
     cout << "MDCUtil commands:\n";
     
-    cout << "  " << BootloaderInvokeCmd << "\n";
-    cout << "  " << LEDSetCmd           << " <idx> <0/1>\n";
+    // Common Commands
+    cout << "  " << BootloaderInvokeCmd     << "\n";
+    cout << "  " << LEDSetCmd               << " <idx> <0/1>\n";
     
-    cout << "  " << STMWriteCmd         << " <file>\n";
-    cout << "  " << ICERAMWriteCmd      << " <file>\n";
-    cout << "  " << ICEFlashReadCmd     << " <addr> <len>\n";
-    cout << "  " << ICEFlashWriteCmd    << " <file>\n";
+    // STMLoader Commands
+    cout << "  " << STMWriteCmd             << " <file>\n";
     
-    cout << "  " << MSPReadCmd          << " <addr> <len>\n";
-    cout << "  " << MSPWriteCmd         << " <file>\n";
-    cout << "  " << MSPStateReadCmd     << "\n";
+    // STMApp Commands
+    cout << "  " << HostModeSetEnabledCmd   << " <0/1>\n";
+    cout << "  " << ICERAMWriteCmd          << " <file>\n";
+    cout << "  " << ICEFlashReadCmd         << " <addr> <len>\n";
+    cout << "  " << ICEFlashWriteCmd        << " <file>\n";
     
-    cout << "  " << SDReadCmd           << " <addr> <len> <output>\n";
-    cout << "  " << ImgCaptureCmd       << " <output.cfa>\n";
+    cout << "  " << MSPReadCmd              << " <addr> <len>\n";
+    cout << "  " << MSPWriteCmd             << " <file>\n";
+    cout << "  " << MSPStateReadCmd         << "\n";
+    
+    cout << "  " << SDReadCmd               << " <addr> <len> <output>\n";
+    cout << "  " << ImgCaptureCmd           << " <output.cfa>\n";
     
     cout << "\n";
 }
@@ -66,6 +72,10 @@ struct Args {
     struct {
         std::string filePath;
     } STMWrite = {};
+    
+    struct {
+        bool en;
+    } HostModeSetEnabled = {};
     
     struct {
         std::string filePath;
@@ -126,6 +136,10 @@ static Args parseArgs(int argc, const char* argv[]) {
     } else if (args.cmd == lower(STMWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
         args.STMWrite.filePath = strs[1];
+    
+    } else if (args.cmd == lower(HostModeSetEnabledCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("enabled argument specified");
+        IntForStr(args.HostModeSetEnabled.en, strs[1]);
     
     } else if (args.cmd == lower(ICERAMWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
@@ -190,6 +204,11 @@ static void STMWrite(const Args& args, MDCUSBDevice& device) {
     // Reset the device, triggering it to load the program we just wrote
     printf("STMWrite: Resetting device\n");
     device.stmReset(elf.entryPointAddr());
+}
+
+static void HostModeSetEnabled(const Args& args, MDCUSBDevice& device) {
+    printf("HostModeSetEnabled: %d\n", (int)args.HostModeSetEnabled.en);
+    device.hostModeSetEnabled(args.HostModeSetEnabled.en);
 }
 
 static void ICERAMWrite(const Args& args, MDCUSBDevice& device) {
@@ -474,17 +493,18 @@ int main(int argc, const char* argv[]) {
     MDCUSBDevice& device = devices[0];
     try {
         device.endpointsFlush();
-        if (args.cmd == lower(BootloaderInvokeCmd))     BootloaderInvoke(args, device);
-        else if (args.cmd == lower(LEDSetCmd))          LEDSet(args, device);
-        else if (args.cmd == lower(STMWriteCmd))        STMWrite(args, device);
-        else if (args.cmd == lower(ICERAMWriteCmd))     ICERAMWrite(args, device);
-        else if (args.cmd == lower(ICEFlashReadCmd))    ICEFlashRead(args, device);
-        else if (args.cmd == lower(ICEFlashWriteCmd))   ICEFlashWrite(args, device);
-        else if (args.cmd == lower(MSPReadCmd))         MSPRead(args, device);
-        else if (args.cmd == lower(MSPWriteCmd))        MSPWrite(args, device);
-        else if (args.cmd == lower(MSPStateReadCmd))    MSPStateRead(args, device);
-        else if (args.cmd == lower(SDReadCmd))          SDRead(args, device);
-        else if (args.cmd == lower(ImgCaptureCmd))      ImgCapture(args, device);
+        if (args.cmd == lower(BootloaderInvokeCmd))         BootloaderInvoke(args, device);
+        else if (args.cmd == lower(LEDSetCmd))              LEDSet(args, device);
+        else if (args.cmd == lower(STMWriteCmd))            STMWrite(args, device);
+        else if (args.cmd == lower(HostModeSetEnabledCmd))  HostModeSetEnabled(args, device);
+        else if (args.cmd == lower(ICERAMWriteCmd))         ICERAMWrite(args, device);
+        else if (args.cmd == lower(ICEFlashReadCmd))        ICEFlashRead(args, device);
+        else if (args.cmd == lower(ICEFlashWriteCmd))       ICEFlashWrite(args, device);
+        else if (args.cmd == lower(MSPReadCmd))             MSPRead(args, device);
+        else if (args.cmd == lower(MSPWriteCmd))            MSPWrite(args, device);
+        else if (args.cmd == lower(MSPStateReadCmd))        MSPStateRead(args, device);
+        else if (args.cmd == lower(SDReadCmd))              SDRead(args, device);
+        else if (args.cmd == lower(ImgCaptureCmd))          ImgCapture(args, device);
     
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());

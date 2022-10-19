@@ -179,7 +179,14 @@ public:
     // MARK: - STMApp Commands
     void hostModeSetEnabled(bool en) {
         assert(_mode == STM::Status::Modes::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::HostModeSetEnabled };
+        const STM::Cmd cmd = {
+            .op = STM::Op::HostModeSetEnabled,
+            .arg = {
+                .HostModeSetEnabled = {
+                    .en = en,
+                },
+            },
+        };
         _sendCmd(cmd);
         _checkStatus("HostModeSetEnabled command failed");
     }
