@@ -7,6 +7,7 @@
 #include "STM.h"
 #include "USB.h"
 #include "QSPI.h"
+#include "Battery.h"
 #include "BufQueue.h"
 #include "SDCard.h"
 #include "ImgSensor.h"
@@ -31,6 +32,7 @@ static const void* _USBConfigDesc(size_t& len) {
 }
 
 static QSPI _QSPI;
+static Battery _Battery;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -1317,6 +1319,10 @@ extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
     _QSPI.isrDMA();
 }
 
+extern "C" [[gnu::section(".isr")]] void ISR_ADC() {
+    _Battery.isr();
+}
+
 // MARK: - Abort
 
 extern "C" [[noreturn]]
@@ -1336,15 +1342,22 @@ int main() {
     __HAL_RCC_GPIOF_CLK_ENABLE();
     __HAL_RCC_GPIOI_CLK_ENABLE();
     
-    _MSP_HOST_MODE_::Write(1);
-    _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    // Init Battery
+    {
+        _Battery.init();
+    }
     
     // Init MSP
-    _MSP.init();
-    
-    // Enable SBW voltage translation once _MSP has initialized the MSP_TEST and MSP_RST_ pins
-    _MSP_SBW_EN::Write(1);
-    _MSP_SBW_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    {
+        _MSP_HOST_MODE_::Write(1);
+        _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        
+        _MSP.init();
+        
+        // Enable SBW voltage translation once _MSP has initialized the MSP_TEST and MSP_RST_ pins
+        _MSP_SBW_EN::Write(1);
+        _MSP_SBW_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    }
     
     _Scheduler::Run();
     return 0;
