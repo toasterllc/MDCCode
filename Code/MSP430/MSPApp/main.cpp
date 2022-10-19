@@ -505,14 +505,13 @@ struct _MainTask {
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
         for (;;) {
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
-//            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
-//            {
-//                _WaitingForMotion = true;
-//                _Scheduler::Wait([&] { return (bool)_Motion; });
-//                _Motion = false;
-//                _WaitingForMotion = false;
-//            }
+            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
+            {
+                _WaitingForMotion = true;
+                _Scheduler::Wait([&] { return (bool)_Motion; });
+                _Motion = false;
+                _WaitingForMotion = false;
+            }
             
             // Turn on VDD_B power (turns on ICE40)
             _VDDBSetEnabled(true);
@@ -531,28 +530,7 @@ struct _MainTask {
             _ImgTask::Init();
             _SDTask::Init();
             
-//            #warning TODO: remove this wait
-//            _SDTask::Wait();
-            
-//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            _Scheduler::Sleep(_Scheduler::Ms(100));
-            
-//            for (;;) {
-//                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//                _Scheduler::Sleep(_Scheduler::Ms(250));
-//                
-//                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//                _Scheduler::Sleep(_Scheduler::Ms(250));
-//            }
-            
-//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//            _Scheduler::Sleep(_Scheduler::Ms(100));
-//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            _Scheduler::Sleep(_Scheduler::Ms(100));
-            
-            #warning TODO: uncomment loop
-//            for (;;)
-            {
+            for (;;) {
                 // Capture an image
                 {
                     _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
@@ -577,16 +555,15 @@ struct _MainTask {
                     _ICE::Transfer(_ICE::LEDSetMsg(0x00));
                 }
                 
-                #warning TODO: uncomment
-//                // Wait up to 1s for further motion
-//                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-//                if (!motion) break;
-//                
-//                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-//                // _Motion, there'd be a race window where we could first observe
-//                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-//                // the true value by resetting it to false.
-//                _Motion = false;
+                // Wait up to 1s for further motion
+                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
+                if (!motion) break;
+                
+                // Only reset _Motion if we've observed motion; otherwise, if we always reset
+                // _Motion, there'd be a race window where we could first observe
+                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
+                // the true value by resetting it to false.
+                _Motion = false;
             }
             
             _VDDIMGSDSetEnabled(false);
