@@ -1,8 +1,10 @@
 #pragma once
+#include "Toastbox/Task.h"
 #include "stm32f7xx.h"
 #include "GPIO.h"
 #include "Assert.h"
 
+template <typename T_Scheduler>
 class Battery {
 public:
     using BAT_CHRG_LVL = GPIO<GPIOPortF, GPIO_PIN_3>;
@@ -72,18 +74,14 @@ public:
         ISR_HAL_ADC(&_adc3);
     }
     
-    void voltageSample() {
+    uint16_t voltageSample() {
         _busy = true;
         
         HAL_StatusTypeDef hs = HAL_ADC_Start_IT(&_adc3);
         Assert(hs == HAL_OK);
-    }
-    
-    bool voltageReady() const {
-        return !_busy;
-    }
-    
-    uint32_t voltage() {
+        
+        T_Scheduler::Wait([&] { return !_busy; });
+        
         return HAL_ADC_GetValue(&_adc3);
     }
     

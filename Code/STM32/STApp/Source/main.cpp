@@ -31,9 +31,6 @@ static const void* _USBConfigDesc(size_t& len) {
     return USBConfigDesc<_USBType>(len);
 }
 
-static QSPI _QSPI;
-static Battery _Battery;
-
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
 static void _BufQueueAssert(bool c) { Assert(c); }
@@ -60,6 +57,9 @@ using _System = System<
 
 constexpr auto& _USB = _System::USB;
 using _Scheduler = _System::Scheduler;
+
+static QSPI _QSPI;
+static Battery<_Scheduler> _Battery;
 
 using _ICE_CRST_            = GPIO<GPIOPortF, GPIO_PIN_11>;
 using _ICE_CDONE            = GPIO<GPIOPortB, GPIO_PIN_1>;
@@ -534,8 +534,8 @@ struct _TaskReadout {
 
 // MARK: - Commands
 
-static void _HostModeSetEnabled(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.HostModeSetEnabled;
+static void _HostModeSet(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.HostModeSet;
     
     // Accept command
     _System::USBAcceptCommand(true);
@@ -1264,10 +1264,24 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _TaskReadout::Start(imagePaddedLen);
 }
 
+void _BatteryStatusGet(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Send battery status
+    alignas(4) const BatteryStatus status = {
+        .chargeStatus = BatteryStatus::ChargeStatuses::Unknown,
+        .voltage = _Battery.voltageSample(),
+    };
+    
+    _USB.send(Endpoints::DataIn, &status, sizeof(status));
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+}
+
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     // Host Mode
-    case Op::HostModeSetEnabled:    _HostModeSetEnabled(cmd);           break;
+    case Op::HostModeSet:           _HostModeSet(cmd);                  break;
     // ICE40 Bootloader
     case Op::ICERAMWrite:           _ICERAMWrite(cmd);                  break;
     case Op::ICEFlashRead:          _ICEFlashRead(cmd);                 break;
@@ -1286,6 +1300,8 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::ImgInit:               _ImgInit(cmd);                      break;
     case Op::ImgExposureSet:        _ImgExposureSet(cmd);               break;
     case Op::ImgCapture:            _ImgCapture(cmd);                   break;
+    // Battery
+    case Op::BatteryStatusGet:      _BatteryStatusGet(cmd);             break;
     // Bad command
     default:                        _System::USBAcceptCommand(false);   break;
     }

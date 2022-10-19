@@ -177,18 +177,18 @@ public:
     }
     
     // MARK: - STMApp Commands
-    void hostModeSetEnabled(bool en) {
+    void hostModeSet(bool en) {
         assert(_mode == STM::Status::Modes::STMApp);
         const STM::Cmd cmd = {
-            .op = STM::Op::HostModeSetEnabled,
+            .op = STM::Op::HostModeSet,
             .arg = {
-                .HostModeSetEnabled = {
+                .HostModeSet = {
                     .en = en,
                 },
             },
         };
         _sendCmd(cmd);
-        _checkStatus("HostModeSetEnabled command failed");
+        _checkStatus("HostModeSet command failed");
     }
     
     void iceRAMWrite(const void* data, size_t len) {

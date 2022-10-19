@@ -24,7 +24,7 @@ const CmdStr LEDSetCmd              = "LEDSet";
 const CmdStr STMWriteCmd            = "STMWrite";
 
 // STMApp Commands
-const CmdStr HostModeSetEnabledCmd  = "HostModeSetEnabled";
+const CmdStr HostModeSetCmd  = "HostModeSet";
 const CmdStr ICERAMWriteCmd         = "ICERAMWrite";
 const CmdStr ICEFlashReadCmd        = "ICEFlashRead";
 const CmdStr ICEFlashWriteCmd       = "ICEFlashWrite";
@@ -46,7 +46,7 @@ static void printUsage() {
     cout << "  " << STMWriteCmd             << " <file>\n";
     
     // STMApp Commands
-    cout << "  " << HostModeSetEnabledCmd   << " <0/1>\n";
+    cout << "  " << HostModeSetCmd   << " <0/1>\n";
     cout << "  " << ICERAMWriteCmd          << " <file>\n";
     cout << "  " << ICEFlashReadCmd         << " <addr> <len>\n";
     cout << "  " << ICEFlashWriteCmd        << " <file>\n";
@@ -75,7 +75,7 @@ struct Args {
     
     struct {
         bool en;
-    } HostModeSetEnabled = {};
+    } HostModeSet = {};
     
     struct {
         std::string filePath;
@@ -137,9 +137,9 @@ static Args parseArgs(int argc, const char* argv[]) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
         args.STMWrite.filePath = strs[1];
     
-    } else if (args.cmd == lower(HostModeSetEnabledCmd)) {
+    } else if (args.cmd == lower(HostModeSetCmd)) {
         if (strs.size() < 2) throw std::runtime_error("enabled argument specified");
-        IntForStr(args.HostModeSetEnabled.en, strs[1]);
+        IntForStr(args.HostModeSet.en, strs[1]);
     
     } else if (args.cmd == lower(ICERAMWriteCmd)) {
         if (strs.size() < 2) throw std::runtime_error("file path not specified");
@@ -206,9 +206,9 @@ static void STMWrite(const Args& args, MDCUSBDevice& device) {
     device.stmReset(elf.entryPointAddr());
 }
 
-static void HostModeSetEnabled(const Args& args, MDCUSBDevice& device) {
-    printf("HostModeSetEnabled: %d\n", (int)args.HostModeSetEnabled.en);
-    device.hostModeSetEnabled(args.HostModeSetEnabled.en);
+static void HostModeSet(const Args& args, MDCUSBDevice& device) {
+    printf("HostModeSet: %d\n", (int)args.HostModeSet.en);
+    device.hostModeSet(args.HostModeSet.en);
 }
 
 static void ICERAMWrite(const Args& args, MDCUSBDevice& device) {
@@ -496,7 +496,7 @@ int main(int argc, const char* argv[]) {
         if (args.cmd == lower(BootloaderInvokeCmd))         BootloaderInvoke(args, device);
         else if (args.cmd == lower(LEDSetCmd))              LEDSet(args, device);
         else if (args.cmd == lower(STMWriteCmd))            STMWrite(args, device);
-        else if (args.cmd == lower(HostModeSetEnabledCmd))  HostModeSetEnabled(args, device);
+        else if (args.cmd == lower(HostModeSetCmd))         HostModeSet(args, device);
         else if (args.cmd == lower(ICERAMWriteCmd))         ICERAMWrite(args, device);
         else if (args.cmd == lower(ICEFlashReadCmd))        ICEFlashRead(args, device);
         else if (args.cmd == lower(ICEFlashWriteCmd))       ICEFlashWrite(args, device);

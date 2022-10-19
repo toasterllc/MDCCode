@@ -31,7 +31,7 @@ namespace STM {
         STMReset,
         
         // STMApp
-        HostModeSetEnabled,
+        HostModeSet,
         
         ICERAMWrite,
         ICEFlashRead,
@@ -49,6 +49,8 @@ namespace STM {
         ImgInit,
         ImgExposureSet,
         ImgCapture,
+        
+        BatteryStatusGet,
     };
     
     struct [[gnu::packed]] Cmd {
@@ -72,7 +74,7 @@ namespace STM {
             // # STMApp
             struct [[gnu::packed]] {
                 uint8_t en;
-            } HostModeSetEnabled;
+            } HostModeSet;
             
             struct [[gnu::packed]] {
                 uint32_t len;
@@ -224,4 +226,15 @@ namespace STM {
 //        ),
 //        (uint32_t)USB::Endpoint::MaxPacketSizeBulk
 //    );
+    
+    struct [[gnu::packed]] BatteryStatus {
+        Enum(uint32_t, ChargeStatus, ChargeStatuses,
+            Unknown,
+            ChargingUnderway,
+            ChargingComplete,
+        );
+        
+        ChargeStatus chargeStatus;
+        uint16_t voltage;
+    };
 }
