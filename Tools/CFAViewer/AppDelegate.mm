@@ -590,7 +590,7 @@ static void _configureDevice(MDCUSBDevice& dev) {
 //                usleep(100000);
             }
             
-            constexpr Img::Size ImageSize = Img::Size::Thumb;
+            constexpr Img::Size ImageSize = Img::Size::Full;
             constexpr uint8_t DstBlock = 0; // Always save to RAM block 0
             constexpr size_t ImageWidth  = (ImageSize==Img::Size::Full ? Img::Full::PixelWidth       : Img::Thumb::PixelWidth       );
             constexpr size_t ImageHeight = (ImageSize==Img::Size::Full ? Img::Full::PixelHeight      : Img::Thumb::PixelHeight      );
