@@ -13,11 +13,6 @@
 
 - Board Rev7 Todo
     
-    - Swap ICE_STM_SPI nets so that ICERAMWrite can use QSPI to program, while ICEFlashWrite bitbangs
-        - This seems like a good idea because we'll do ICERAMWrite anytime we run MDCStudio, but ICEFlashWrite only
-          when flashing (which should happen rarely). Makes sense to have ICERAMWrite faster than ICEFlashWrite right?
-            - Currently ICERAMWrite takes .5s when optimized with -Os
-    
     - Layout: Remove cream from TagConnect footprint
     
     - Layout: Make placing board into enclosure easier
@@ -41,6 +36,11 @@
     - Layout: fix DRC errors
     
     
+    
+    √ Swap ICE_STM_SPI nets so that ICERAMWrite can use QSPI to program, while ICEFlashWrite bitbangs
+        - This seems like a good idea because we'll do ICERAMWrite anytime we run MDCStudio, but ICEFlashWrite only
+          when flashing (which should happen rarely). Makes sense to have ICERAMWrite faster than ICEFlashWrite right?
+            - Currently ICERAMWrite takes .5s when optimized with -Os
     
     √ Stop using VDD_USB as a signal; use TPS2116DRLR's ST signal instead, pulled to VDD_USB via a 10k resistor
         - Necessary because U12 appears to backfeed voltage to its enable pin, causing VDD_USB=2.5V.
