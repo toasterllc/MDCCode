@@ -12,16 +12,43 @@
     
 
 - Board Rev7 Todo
-    - Drive U5 (VDD_BAT voltage buffer) from an STM GPIO instead constantly while connected to USB
-        - Necessary because the ADC voltage divider breaks MCP73831T's battery detection logic because
-          its impedance is too low (MCP73831T requires an impedance of >7MΩ).
-          - So instead, we'll disable the voltage divider except when a battery is detected
-        
-        - Drive from STM PA11/C15 pin
-            - Need to use this pin because it can output 3.3V (by virtue of being supplied by VDDUSB)
-              to meet the 74LVC1G98 Vih (2.74V when powered by 4.5V)
     
-    - Battery voltage divider: change resistor values to take advantage of full ADC dynamic range
+    - Swap ICE_STM_SPI nets so that ICERAMWrite can use QSPI to program, while ICEFlashWrite bitbangs
+        - This seems like a good idea because we'll do ICERAMWrite anytime we run MDCStudio, but ICEFlashWrite only
+          when flashing (which should happen rarely). Makes sense to have ICERAMWrite faster than ICEFlashWrite right?
+            - Currently ICERAMWrite takes .5s when optimized with -Os
+    
+    - Layout: Remove cream from TagConnect footprint
+    
+    - Layout: Make placing board into enclosure easier
+        - Enclosure's bottom board mount needed to be snipped to give enough clearance
+          to allow USB-C connector to go into hole
+        - Cut notch in board for clearance around right backplate mount?
+            - May need to move backplate mounting points so that a notch can be cut
+    
+    - Layout: Fix R1/J1 labels (they're swapped)
+    
+    - Layout: Fix J4 label (obscured)
+    
+    - Layout: Make Q2 label the same size as Q3
+    
+    - Layout: Fix C17 label (obscured by pads)
+    
+    - Layout: battery voltage divider: move resistors R7 and R9 closer together
+    
+    - Layout: fix USB receptacle layout for A9/B4 pins -- we didn't label the polygon correctly, resulting in a 'fork'
+    
+    - Layout: fix DRC errors
+    
+    
+    
+    √ Stop using VDD_USB as a signal; use TPS2116DRLR's ST signal instead, pulled to VDD_USB via a 10k resistor
+        - Necessary because U12 appears to backfeed voltage to its enable pin, causing VDD_USB=2.5V.
+            - Therefore its enable pin needs to be strongly driven (at least strongly driven low, weakly pulled high appears to work fine...)
+        - 2 instances of using VDD_USB as a signal: U3, U12
+    
+    
+    √ Battery voltage divider: change resistor values to take advantage of full ADC dynamic range
         - Currently our voltage divider ratio = 1/4 so the dynamic range = (4.2/4)/1.8 = 58% of full ADC range.
         - Switch the resistors of the voltage divider:
             - Option 1: 200k / 300k
@@ -30,38 +57,18 @@
             - Option 2: 100k / 147k (147k = 100k + 47k in series)
                 - Voltage divider ratio = 1/2.47
                 - Dynamic range = (4.2/2.47)/1.8 = 94% of full ADC range
-            - Conclusion: use option 1 because it's simplest
+            - Conclusion: use Option 1 because it's simplest
                 - Just change R9 to be 200k
     
-    - Battery voltage divider: move resistors R7 and R9 closer together
     
-    - Stop using VDD_USB as a signal; use TPS2116DRLR's ST signal instead, pulled to VDD_USB via a 10k resistor
-        - Necessary because U12 appears to backfeed voltage to its enable pin, causing VDD_USB=2.5V.
-            - Therefore its enable pin needs to be strongly driven (at least strongly driven low, weakly pulled high appears to work fine...)
-        - 3 instances of using VDD_USB as a signal: U3, U5, U12
-    
-    - Fix USB receptacle layout for A9/B4 pins -- we didn't label the polygon correctly, resulting in a 'fork'
-    
-    - Make placing board into enclosure easier
-        - Enclosure's bottom board mount needed to be snipped to give enough clearance
-          to allow USB-C connector to go into hole
-        - Cut notch in board?
-            - May need to move backplate mounting points so that a notch can be cut
-    
-    - Remove cream from TagConnect footprint
-    
-    - Fix R1/J1 labels (they're swapped)
-    
-    - Fix J4 label (obscured)
-    
-    - Make Q2 label the same size as Q3
-    
-    - Fix C17 label (obscured by pads)
-    
-    - Consider swapping ICE_STM_SPI nets so that ICERAMWrite can use QSPI to program, while ICEFlashWrite bitbangs
-        - This seems like a good idea because we'll do ICERAMWrite anytime we run MDCStudio, but ICEFlashWrite only
-          when flashing (which should happen rarely). Makes sense to have ICERAMWrite faster than ICEFlashWrite right?
-            - Currently ICERAMWrite takes .5s when optimized with -Os
+    √ Drive U5 (VDD_BAT voltage buffer) from an STM GPIO instead constantly while connected to USB
+        - Necessary because the ADC voltage divider breaks MCP73831T's battery detection logic because
+          its impedance is too low (MCP73831T requires an impedance of >7MΩ).
+          - So instead, we'll disable the voltage divider except when a battery is detected
+        
+        - Drive from STM PA11/C15 pin
+            - Need to use this pin because it can output 3.3V (by virtue of being supplied by VDDUSB)
+              to meet the 74LVC1G98 Vih (2.74V when powered by 4.5V)
 
 
 - Software / Firmware Todo
