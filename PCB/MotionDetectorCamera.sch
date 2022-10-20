@@ -2077,6 +2077,7 @@ Only use with voltages
 tolerant of VDDUSB</text>
 <wire x1="14.986" y1="-30.48" x2="13.462" y2="-30.48" width="0.254" layer="95"/>
 <wire x1="14.986" y1="-33.02" x2="13.462" y2="-33.02" width="0.254" layer="95"/>
+<wire x1="13.462" y1="-30.48" x2="13.462" y2="-33.02" width="0.254" layer="95"/>
 </symbol>
 <symbol name="STM-STM32F730I8-B">
 <pin name="PB0_R5" x="20.32" y="-2.54" length="middle" rot="R180"/>
@@ -2103,28 +2104,33 @@ tolerant of VDDUSB</text>
 <text x="0" y="-45.72" size="1.778" layer="95">&gt;PN</text>
 </symbol>
 <symbol name="STM-STM32F730I8-C">
-<pin name="PC0_M2" x="20.32" y="-2.54" length="middle" rot="R180"/>
-<pin name="PC1_M3" x="20.32" y="-5.08" length="middle" rot="R180"/>
-<pin name="PC10_B14" x="20.32" y="-27.94" length="middle" rot="R180"/>
-<pin name="PC11_B13" x="20.32" y="-30.48" length="middle" rot="R180"/>
-<pin name="PC12_A12" x="20.32" y="-33.02" length="middle" rot="R180"/>
-<pin name="PC13_D1" x="20.32" y="-35.56" length="middle" rot="R180"/>
-<pin name="PC14_E1" x="20.32" y="-38.1" length="middle" rot="R180"/>
-<pin name="PC15_F1" x="20.32" y="-40.64" length="middle" rot="R180"/>
-<pin name="PC2_M4" x="20.32" y="-7.62" length="middle" rot="R180"/>
-<pin name="PC3_M5" x="20.32" y="-10.16" length="middle" rot="R180"/>
-<pin name="PC4_N5" x="20.32" y="-12.7" length="middle" rot="R180"/>
-<pin name="PC5_P5" x="20.32" y="-15.24" length="middle" rot="R180"/>
-<pin name="PC6_H15" x="20.32" y="-17.78" length="middle" rot="R180"/>
-<pin name="PC7_G15" x="20.32" y="-20.32" length="middle" rot="R180"/>
-<pin name="PC8_G14" x="20.32" y="-22.86" length="middle" rot="R180"/>
-<pin name="PC9_F14" x="20.32" y="-25.4" length="middle" rot="R180"/>
+<pin name="PC0_M2" x="33.02" y="-2.54" length="middle" rot="R180"/>
+<pin name="PC1_M3" x="33.02" y="-5.08" length="middle" rot="R180"/>
+<pin name="PC10_B14" x="33.02" y="-27.94" length="middle" rot="R180"/>
+<pin name="PC11_B13" x="33.02" y="-30.48" length="middle" rot="R180"/>
+<pin name="PC12_A12" x="33.02" y="-33.02" length="middle" rot="R180"/>
+<pin name="PC13_D1" x="33.02" y="-35.56" length="middle" rot="R180"/>
+<pin name="PC14_E1" x="33.02" y="-38.1" length="middle" rot="R180"/>
+<pin name="PC15_F1" x="33.02" y="-40.64" length="middle" rot="R180"/>
+<pin name="PC2_M4" x="33.02" y="-7.62" length="middle" rot="R180"/>
+<pin name="PC3_M5" x="33.02" y="-10.16" length="middle" rot="R180"/>
+<pin name="PC4_N5" x="33.02" y="-12.7" length="middle" rot="R180"/>
+<pin name="PC5_P5" x="33.02" y="-15.24" length="middle" rot="R180"/>
+<pin name="PC6_H15" x="33.02" y="-17.78" length="middle" rot="R180"/>
+<pin name="PC7_G15" x="33.02" y="-20.32" length="middle" rot="R180"/>
+<pin name="PC8_G14" x="33.02" y="-22.86" length="middle" rot="R180"/>
+<pin name="PC9_F14" x="33.02" y="-25.4" length="middle" rot="R180"/>
 <wire x1="0" y1="-43.18" x2="0" y2="0" width="0.254" layer="94"/>
-<wire x1="0" y1="0" x2="15.24" y2="0" width="0.254" layer="94"/>
-<wire x1="15.24" y1="0" x2="15.24" y2="-43.18" width="0.254" layer="94"/>
-<wire x1="15.24" y1="-43.18" x2="0" y2="-43.18" width="0.254" layer="94"/>
+<wire x1="0" y1="0" x2="27.94" y2="0" width="0.254" layer="94"/>
+<wire x1="27.94" y1="0" x2="27.94" y2="-43.18" width="0.254" layer="94"/>
+<wire x1="27.94" y1="-43.18" x2="0" y2="-43.18" width="0.254" layer="94"/>
 <text x="0.254" y="2.54" size="1.778" layer="95" align="top-left">&gt;NAME</text>
 <text x="0" y="-45.72" size="1.778" layer="95">&gt;PN</text>
+<text x="12.192" y="-37.846" size="0.762" layer="95" align="top-right">Limited drive strength</text>
+<wire x1="14.986" y1="-35.56" x2="13.462" y2="-35.56" width="0.254" layer="95"/>
+<wire x1="14.986" y1="-38.1" x2="13.462" y2="-38.1" width="0.254" layer="95"/>
+<wire x1="14.986" y1="-40.64" x2="13.462" y2="-40.64" width="0.254" layer="95"/>
+<wire x1="13.462" y1="-35.56" x2="13.462" y2="-40.64" width="0.254" layer="95"/>
 </symbol>
 <symbol name="STM-STM32F730I8-D">
 <pin name="PD0_B12" x="20.32" y="-2.54" length="middle" rot="R180"/>
