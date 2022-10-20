@@ -447,7 +447,7 @@ static void ImgCapture(const Args& args, MDCUSBDevice& device) {
 static const char* _StringForChargeStatus(const STM::BatteryStatus::ChargeStatus status) {
     using namespace STM;
     switch (status) {
-    case BatteryStatus::ChargeStatuses::Unknown:  return "Unknown";
+    case BatteryStatus::ChargeStatuses::Shutdown: return "Shutdown";
     case BatteryStatus::ChargeStatuses::Underway: return "Underway";
     case BatteryStatus::ChargeStatuses::Complete: return "Complete";
     default:                                      return "Invalid";
