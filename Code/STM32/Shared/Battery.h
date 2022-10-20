@@ -79,6 +79,9 @@ public:
     }
     
     STM::BatteryStatus status() {
+        #warning TODO: on Rev7 board:
+        #warning TODO: to sample the battery voltage, we'll need to enable the voltage divider, sample the battery voltage, and then disable the voltage divider.
+        #warning TODO: and we only sample the battery voltage if _chargeStatus() == Underway|Complete! this is because the voltage divider circuitry breaks MCP73831T's battery-detection when no battery is connected.
         return {
             .chargeStatus = _chargeStatus(),
             .voltage = _voltageSample(),
@@ -139,8 +142,9 @@ private:
         
         constexpr uint32_t SampleMax = (1<<12)-1; // 12-bit samples
         constexpr uint32_t VoltageMaxMillivolts = 1800;
-        constexpr uint32_t VoltageMultiplier = 4; // We have a 1/4 voltage divider at the ADC input
-        return (sample * VoltageMaxMillivolts * VoltageMultiplier) / SampleMax;
+        constexpr uint32_t VoltageDividerNumer = 500; // We have a 2/5 voltage divider at the ADC input
+        constexpr uint32_t VoltageDividerDenom = 200; // We have a 2/5 voltage divider at the ADC input
+        return (sample * VoltageMaxMillivolts * VoltageDividerNumer) / (SampleMax * VoltageDividerDenom);
     }
     
     void _handleSampleDone() {
