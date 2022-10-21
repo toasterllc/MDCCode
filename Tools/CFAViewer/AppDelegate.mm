@@ -390,7 +390,7 @@ static void _nop(void* ctx, io_iterator_t iter) {}
 
 static void _configureDevice(MDCUSBDevice& dev) {
     {
-        const char* ICEBinPath = "/Users/dave/repos/MDC/Code/ICE40/ICEAppImgCaptureSTM/Synth/Top.bin";
+        const char* ICEBinPath = "/Users/dave/repos/MDCCode/Code/ICE40/ICEAppImgCaptureSTM/Synth/Top.bin";
         Mmap mmap(ICEBinPath);
         
         // Write the ICE40 binary

@@ -186,7 +186,7 @@ private:
     }
     
     static void _DeviceBootload(MDCUSBDevice& dev) {
-        const char* STMBinPath = "/Users/dave/repos/MDC/Code/STM32/STApp/Release/STApp.elf";
+        const char* STMBinPath = "/Users/dave/repos/MDCCode/Code/STM32/STApp/Release/STApp.elf";
         ELF32Binary elf(STMBinPath);
         
         elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,

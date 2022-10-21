@@ -13,29 +13,29 @@
 
 - Board Rev7 Todo
     
-    - Layout: Remove cream from TagConnect footprint
-    
     - Layout: Make placing board into enclosure easier
         - Enclosure's bottom board mount needed to be snipped to give enough clearance
           to allow USB-C connector to go into hole
         - Cut notch in board for clearance around right backplate mount?
             - May need to move backplate mounting points so that a notch can be cut
     
-    - Layout: Fix R1/J1 labels (they're swapped)
-    
-    - Layout: Fix J4 label (obscured)
-    
-    - Layout: Make Q2 label the same size as Q3
-    
-    - Layout: Fix C17 label (obscured by pads)
-    
     - Layout: battery voltage divider: move resistors R7 and R9 closer together
-    
-    - Layout: fix USB receptacle layout for A9/B4 pins -- we didn't label the polygon correctly, resulting in a 'fork'
     
     - Layout: fix DRC errors
     
     
+    
+    √ Layout: fix USB receptacle layout for A9/B4 pins -- we didn't label the polygon correctly, resulting in a 'fork'
+    
+    √ Layout: Fix C17 label (obscured by pads)
+    
+    √ Layout: Make Q2 label the same size as Q3
+    
+    √ Layout: Fix J4 label (obscured)
+    
+    √ Layout: Fix R1/J1 labels (they're swapped)
+    
+    √ Layout: Remove cream from TagConnect footprint
     
     √ Swap ICE_STM_SPI nets so that ICERAMWrite can use QSPI to program, while ICEFlashWrite bitbangs
         - This seems like a good idea because we'll do ICERAMWrite anytime we run MDCStudio, but ICEFlashWrite only

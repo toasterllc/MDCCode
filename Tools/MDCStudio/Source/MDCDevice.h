@@ -289,7 +289,7 @@ private:
     }
     
     static void _ICEConfigure(MDCUSBDevice& dev) {
-        const char* ICEBinPath = "/Users/dave/repos/MDC/Code/ICE40/ICEAppSDReadoutSTM/Synth/Top.bin";
+        const char* ICEBinPath = "/Users/dave/repos/MDCCode/Code/ICE40/ICEAppSDReadoutSTM/Synth/Top.bin";
         Toastbox::Mmap mmap(ICEBinPath);
         
         // Write the ICE40 binary
