@@ -15,9 +15,10 @@
 `define SDController_Config_Action_ClkSet           2'b10
 `define SDController_Config_Action_Width            2
 
-`define SDController_Config_ClkSpeed_Slow           1'b0
-`define SDController_Config_ClkSpeed_Fast           1'b1
-`define SDController_Config_ClkSpeed_Width          1
+`define SDController_Config_ClkSpeed_Slow           2'b00
+`define SDController_Config_ClkSpeed_Off            2'b01
+`define SDController_Config_ClkSpeed_Fast           2'b11
+`define SDController_Config_ClkSpeed_Width          2
 `define SDController_Config_ClkDelay_Width          4
 
 `define SDController_RespType_None                  2'b00
@@ -108,13 +109,9 @@ module SDController #(
     // ====================
     // Config State Machine
     // ====================
-    localparam Cfg_ClkSpeed_Slow    = 2'b00; // Default
-    localparam Cfg_ClkSpeed_Off     = 2'b01;
-    localparam Cfg_ClkSpeed_Fast    = 2'b11;
-    
     reg[1:0] cfg_state = 0;
-    reg[1:0] cfg_clkSpeed = Cfg_ClkSpeed_Slow;
-    reg[1:0] cfg_clkSpeedNext = Cfg_ClkSpeed_Slow;
+    reg[1:0] cfg_clkSpeed = `SDController_Config_ClkSpeed_Slow;
+    reg[1:0] cfg_clkSpeedNext = `SDController_Config_ClkSpeed_Slow;
     wire cfg_clkSpeed_slow = !cfg_clkSpeed[0];
     wire cfg_clkSpeed_fast = cfg_clkSpeed[1];
     reg [`SDController_Config_ClkDelay_Width-1:0] cfg_clkDelay = 0;
@@ -135,7 +132,7 @@ module SDController #(
             
             1: begin
                 // Disable clock
-                cfg_clkSpeed <= Cfg_ClkSpeed_Off;
+                cfg_clkSpeed <= `SDController_Config_ClkSpeed_Off;
                 // Delay to ensure clock is stopped
                 cfg_delayCounter <= 2;
                 cfg_state <= 2;
@@ -145,7 +142,7 @@ module SDController #(
                 case (config_action)
                 `SDController_Config_Action_Reset: begin
                     cfg_resetTrigger <= !cfg_resetTrigger;
-                    cfg_clkSpeedNext <= Cfg_ClkSpeed_Slow;
+                    cfg_clkSpeedNext <= `SDController_Config_ClkSpeed_Slow;
                     cfg_clkDelay <= 0;
                 end
                 
@@ -154,7 +151,7 @@ module SDController #(
                 end
                 
                 `SDController_Config_Action_ClkSet: begin
-                    cfg_clkSpeedNext <= (config_clkSpeed===`SDController_Config_ClkSpeed_Slow ? Cfg_ClkSpeed_Slow : Cfg_ClkSpeed_Fast);
+                    cfg_clkSpeedNext <= config_clkSpeed;
                     cfg_clkDelay <= config_clkDelay;
                 end
                 endcase

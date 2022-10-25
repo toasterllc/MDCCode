@@ -24,19 +24,30 @@ public:
         // Reset SDController
         T_ICE::Transfer(_ConfigReset);
         _Sleep(_Us(1));
+        
+        // Enable slow SDController clock
+        T_ICE::Transfer(_ConfigClkSetSlow);
+        _Sleep(_Us(1));
+    }
+    
+    static void LVSSequence() {
+        // Trigger the SD card low voltage signalling (LVS) init sequence
+        T_ICE::Transfer(_ConfigInit);
+        // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
+        _Sleep(_Ms(6));
     }
     
     static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
         uint16_t rca = 0;
         
-        // Enable slow SDController clock
-        T_ICE::Transfer(_ConfigClkSetSlow);
-        _Sleep(_Us(1));
-        
-        // Trigger the SD card low voltage signalling (LVS) init sequence
-        T_ICE::Transfer(_ConfigInit);
-        // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
-        _Sleep(_Ms(6));
+//        // Enable slow SDController clock
+//        T_ICE::Transfer(_ConfigClkSetSlow);
+//        _Sleep(_Us(1));
+//        
+//        // Trigger the SD card low voltage signalling (LVS) init sequence
+//        T_ICE::Transfer(_ConfigInit);
+//        // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
+//        _Sleep(_Ms(6));
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -57,7 +68,7 @@ public:
         //   Send interface condition
         // ====================
         {
-            constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
+            constexpr uint32_t Voltage       = 0x00000001; // 0b0010 == 'Low Voltage Range'
             constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
             const _SDStatusResp status = _SendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
             const uint8_t replyVoltage = status.template respGetBits<19,16>();
@@ -84,9 +95,53 @@ public:
                 if (!ready) continue;
                 // Check S18A; for LVS initialization, it's expected to be 0
                 const bool S18A = status.template respGetBit<32>();
-                Assert(S18A == 0);
+                Assert(S18A == 1);
                 break;
             }
+        }
+        
+        // ====================
+        // CMD11 | VOLTAGE_SWITCH
+        //   State: Ready -> Ready
+        //   Switch to 1.8V
+        // ====================
+        {
+            _SendCmd(_CMD11, 0, _RespType::Len48);
+            
+            // At this point the SD card must be driving CMD=0 / DAT[0:3]=0
+            // Verify this by checking DAT[0]
+            {
+                const _SDStatusResp status = T_ICE::SDStatus();
+                Assert(!status.dat0Idle());
+            }
+            
+            // Turn off clock for 6ms
+            T_ICE::Transfer(_ConfigClkSetOff);
+            _Sleep(_Ms(6));
+            
+            // Turn on clock again
+            T_ICE::Transfer(_ConfigClkSetSlow);
+            
+            // Wait for SD card to indicate that it's ready (DAT0=1)
+            #warning TODO: implement timeout in case something's broken
+            for (;;) {
+                const _SDStatusResp status = T_ICE::SDStatus();
+                if (status.dat0Idle()) break;
+            }
+            
+//            for (;;) {
+//                _Sleep(_Ms(1000));
+//            }
+            
+//            // Trigger the SD card low voltage signalling (LVS) init sequence
+//            T_ICE::Transfer(_ConfigInit);
+//            // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
+//            _Sleep(_Ms(6));
+            
+//            // Enable slow SDController clock
+//            T_ICE::Transfer(_ConfigClkSetSlow);
+//            _Sleep(_Us(1));
+            
         }
         
         // ====================
@@ -161,13 +216,121 @@ public:
             // Group 4 (Current Limit)     = 0xF (no change)
             // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
             // Group 2 (Command System)    = 0xF (no change)
-            // Group 1 (Access Mode)       = 0x3 (SDR104)
-            const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
-            Assert(!status.datInCRCErr());
+            // Group 1 (Access Mode)       = 0x2 (SDR104)
+            
+            {
+                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
+                Assert(!status.datInCRCErr());
+                const uint8_t accessMode = status.datInCMD6AccessMode();
+                Assert(accessMode == 0x03);
+//                T_Error(accessMode);
+            }
+            
+            
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x80000001, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//                const uint8_t accessMode = status.datInCMD6AccessMode();
+//            }
+//            
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x8FFFFFFF, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//                const uint8_t accessMode = status.datInCMD6AccessMode();
+//                Assert(accessMode == 1);
+//            }
+//            
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x8FFFFFF2, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//                const uint8_t accessMode = status.datInCMD6AccessMode();
+//                T_Error(accessMode);
+//            }
+            
+//            // Set Current Limit = 3
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FF31FF, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//            }
+            
+//            // Set DriverStrength=1
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFF1FF, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//            }
+//            
+//            // Set CurrentLimit=3, AccessMode=3
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FF3FF3, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//                const uint8_t accessMode = status.datInCMD6AccessMode();
+//                T_Error(accessMode);
+//            }
+            
+            
+//            // Set Access Mode = 1
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF4, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//                const uint8_t accessMode = status.datInCMD6AccessMode();
+//                T_Error(accessMode);
+////                Assert(accessMode == 0x04);
+//            }
+            
+            
+            
+            
+            
+            
+            
+            
+//            uint16_t accessModeBefore = 0;
+//            uint16_t accessModeAfter = 0;
+//            
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x00FFFFFF, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//                accessModeBefore = status.datInCMD6AccessMode();
+//            }
+//            
+//            
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF1, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+////                const uint8_t accessMode = status.datInCMD6AccessMode();
+////                T_Error(accessMode);
+//            }
+//            
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x00FFFFF1, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//                accessModeAfter = status.datInCMD6AccessMode();
+//            }
+//            
+//            T_Error((accessModeBefore<<8) | accessModeAfter);
+            
+            
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF1, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//                const uint8_t accessMode = status.datInCMD6AccessMode();
+//                T_Error(accessMode);
+//            }
+            
+//            const _SDStatusResp status = _SendCmd(_CMD6, 0x00FFFFFF, _RespType::Len48, _DatInType::Len512x1);
+//            Assert(!status.datInCRCErr());
+            
             // Verify that the access mode was successfully changed
             // TODO: properly handle this failing, see CMD6 docs
-            Assert(status.datInCMD6AccessMode() == 0x03);
+//            Assert(status.datInCMD6AccessMode() == 0x03);
+//            Assert(status.datInCMD6AccessMode() == 0x0F);
+//            const uint8_t accessMode = status.datInCMD6AccessMode();
+//            if (accessMode != 0xF) {
+//                T_Error(accessMode);
+//            }
+//            _Sleep(_Ms(10));
         }
+//        T_Error(0xAABB);
         
         // SDClock=Fast
         T_ICE::Transfer(_ConfigClkSetFast);
@@ -274,6 +437,7 @@ private:
     using _RespType     = typename T_ICE::SDSendCmdMsg::RespType;
     using _DatInType    = typename T_ICE::SDSendCmdMsg::DatInType;
     
+    static constexpr auto _ConfigClkSetOff  = _SDConfigMsg(_SDConfigMsg::Action::ClkSet,    _SDConfigMsg::ClkSpeed::Off,    0);
     static constexpr auto _ConfigClkSetSlow = _SDConfigMsg(_SDConfigMsg::Action::ClkSet,    _SDConfigMsg::ClkSpeed::Slow,   T_ClkDelaySlow);
     static constexpr auto _ConfigClkSetFast = _SDConfigMsg(_SDConfigMsg::Action::ClkSet,    _SDConfigMsg::ClkSpeed::Fast,   T_ClkDelayFast);
     static constexpr auto _ConfigReset      = _SDConfigMsg(_SDConfigMsg::Action::Reset,     _SDConfigMsg::ClkSpeed::Slow,   0);
@@ -291,6 +455,7 @@ private:
     static constexpr uint8_t _CMD8  = 8;
     static constexpr uint8_t _CMD9  = 9;
     static constexpr uint8_t _CMD10 = 10;
+    static constexpr uint8_t _CMD11 = 11;
     static constexpr uint8_t _CMD12 = 12;
     static constexpr uint8_t _CMD18 = 18;
     static constexpr uint8_t _CMD23 = 23;
