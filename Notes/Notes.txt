@@ -13,15 +13,27 @@
 
 - Board Rev7 Todo
     
+    - Move parts (resistors, capacitors) further away front mount points on front of board
+        - We want more safety margin near mount points
+    
+    - Update mounting hole size based on enclosure hole size
+    
+    - Figure out which parts are breaking when exposed to sunlight and figure out a solution
+        - Streaming images breaks in direct sunlight
+    
     - Layout: Make placing board into enclosure easier
         - Enclosure's bottom board mount needed to be snipped to give enough clearance
           to allow USB-C connector to go into hole
-        - Cut notch in board for clearance around right backplate mount?
-            - May need to move backplate mounting points so that a notch can be cut
+        
+        - Enclosure's right backplate mount needed to be snipped to give enough clearance
+            - Cut notch in board for clearance around right backplate mount?
+            - Move backplate mounting points so that a notch can be cut?
     
     - Layout: battery voltage divider: move resistors R7 and R9 closer together
     
     - Layout: fix DRC errors
+    
+    - Add green LED to front
     
     
     
