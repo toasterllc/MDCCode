@@ -511,6 +511,7 @@ struct _MainTask {
 //            _Scheduler::Sleep(_Scheduler::Ms(250));
 //        }
         
+//        _WaitingForMotion = true;
 //        for (;;) {
 //            _Scheduler::Sleep(_Scheduler::Ms(10000));
 //        }
@@ -537,17 +538,17 @@ struct _MainTask {
             _SDTask::Reset();
             _SDTask::Wait();
             
-            // Perform LVS sequence
-            _SDTask::LVSSequence();
-            _SDTask::Wait();
+//            // Perform LVS sequence
+//            _SDTask::LVSSequence();
+//            _SDTask::Wait();
             
             // Turn on IMG/SD power
             _VDDIMGSDSetEnabled(true);
             _Scheduler::Sleep(_Scheduler::Ms(1000));
             
-//            // Perform LVS sequence
-//            _SDTask::LVSSequence();
-//            _SDTask::Wait();
+            // Perform LVS sequence
+            _SDTask::LVSSequence();
+            _SDTask::Wait();
             
             _Scheduler::Sleep(_Scheduler::Ms(1000));
             _SDTask::Init();
@@ -848,7 +849,7 @@ int main() {
         // serves 2 purposes:
         //   1. it rate-limits aborts, in case there's a persistent issue
         //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-        _Scheduler::Delay(_Scheduler::Ms(3000));
+//        _Scheduler::Delay(_Scheduler::Ms(3000));
     }
     
     _Scheduler::Run();

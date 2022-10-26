@@ -157,6 +157,8 @@ public:
         
         template<uint8_t T_Start, uint8_t T_End>
         uint64_t respGetBits() const {
+//            static_assert(T_Start < 48);
+//            static_assert(T_Start >= T_End);
             return Resp::template getBits<T_Start+_RespIdx, T_End+_RespIdx>();
         }
         
