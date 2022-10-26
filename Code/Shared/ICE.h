@@ -86,7 +86,7 @@ public:
         enum class ClkSpeed : uint8_t {
             Slow    = 0,
             Off     = 1,
-            Fast    = 2,
+            Fast    = 3,
         };
         
         constexpr SDConfigMsg(Action action, ClkSpeed clkSpeed, uint8_t clkDelay) : Msg(MsgType::StartBit | 0x02,

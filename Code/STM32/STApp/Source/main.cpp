@@ -99,6 +99,7 @@ class _SD {
 public:
     static void Reset() {
         _SDCard::Reset();
+        _SDCard::LVSSequence();
     }
     
     static void Init() {
