@@ -13,6 +13,20 @@
 
 - Board Rev7 Todo
     
+    - Remove MSP430<->STM32 level shifter (U15) and connect MSP_TEST / MSP_RST_ directly to STM32
+        - Connect VDDSDMMC to VDD_B_3V3_STM
+        - Connect MSP_TEST / MSP_RST_ to VDDSDMMC-powered pins
+        - Switch capacitor on MSP_RST_ to the recommended one
+    
+    - Consider removing MSP430<->ICE40 level shifter (U16) and use open-drain comms
+        - We only need open-drain comms on the data line, clock will always be push-pull driven by MSP430
+        - Considerations:
+            - Can ICE40 IOs handle being driven at 3.3V?
+            - What pullup resistor value should we use?
+            - Power consumption?
+    
+    - If ICE40 is going to interface directly with SD at 2.8V, can ICE40 interface directly with MSP?
+    
     - Move parts (resistors, capacitors) further away front mount points on front of board
         - We want more safety margin near mount points
     

@@ -518,14 +518,9 @@ struct _MainTask {
         
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
-        _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-        _Scheduler::Sleep(_Scheduler::Ms(250));
-        
 //        for (int i=0; i<2; i++)
         for (;;)
         {
-            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-            
             _Scheduler::Sleep(_Scheduler::Ms(100));
             
             // Turn on VDD_B power (turns on ICE40)
@@ -533,6 +528,7 @@ struct _MainTask {
             
             #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
             _Scheduler::Sleep(_Scheduler::Ms(250));
+            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
             
             // Reset SDController before we turn on power
             _SDTask::Reset();
@@ -570,9 +566,9 @@ struct _MainTask {
             _SDTask::Wait();
             
             _VDDIMGSDSetEnabled(false);
-            _VDDBSetEnabled(false);
             
             _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+            _VDDBSetEnabled(false);
             
             _Scheduler::Sleep(_Scheduler::Ms(100));
         }
@@ -790,7 +786,8 @@ int main() {
         _SPI::Pin::DataIn
     >();
     
-    // We're using the 'remapped' pin assignments for the eUSCI_B0 pins, which requires setting SYSCFG2.USCIBRMP.
+    // We're using the 'remapped' pin assignments for the SPI (eUSCI_B0) pins,
+    // which requires setting SYSCFG2.USCIBRMP.
     // See "Table 9-11. eUSCI Pin Configurations" in the datasheet.
     SYSCFG2 |= USCIBRMP;
     
