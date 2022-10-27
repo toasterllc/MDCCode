@@ -518,18 +518,61 @@ struct _MainTask {
         
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
-        _VDDBSetEnabled(true);
-        _Scheduler::Sleep(_Scheduler::Ms(250)); // Wait for ICE40 to boot
-        
-        for (;;) {
+//        for (int i=0; i<2; i++)
+        for (;;)
+        {
+            _Scheduler::Sleep(_Scheduler::Ms(100));
+            
+            // Turn on VDD_B power (turns on ICE40)
+            _VDDBSetEnabled(true);
+            
+            #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
+            _Scheduler::Sleep(_Scheduler::Ms(250));
             _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+            
+            // Reset SDController before we turn on power
+            _SDTask::Reset();
+            _SDTask::Wait();
+            
+            // Perform LVS sequence
+            _SDTask::LVSSequence();
+            _SDTask::Wait();
+            
+            // Turn on IMG/SD power
+            _VDDIMGSDSetEnabled(true);
             _Scheduler::Sleep(_Scheduler::Ms(1000));
             
-            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//            // Perform LVS sequence
+//            _SDTask::LVSSequence();
+//            _SDTask::Wait();
+            
             _Scheduler::Sleep(_Scheduler::Ms(1000));
+            _SDTask::Init();
+            _SDTask::Wait();
+            
+            // Capture image to RAM
+            _ImgTask::Init();
+            _ImgTask::Capture(imgRingBuf.buf.idEnd);
+            const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+            
+            // Copy image from RAM -> SD card
+            _SDTask::Write(srcRAMBlock);
+            _SDTask::Wait();
+            
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
+            
+            // Reset SDController before we turn off power
+            _SDTask::Reset();
+            _SDTask::Wait();
+            
+            _VDDIMGSDSetEnabled(false);
+            
+            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+            _VDDBSetEnabled(false);
+            
+            _Scheduler::Sleep(_Scheduler::Ms(100));
         }
-        
-        _VDDBSetEnabled(false);
+//        for (;;);
     }
     
     static bool DeepSleepOK() {
