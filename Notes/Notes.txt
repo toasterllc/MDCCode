@@ -25,6 +25,25 @@
             - What pullup resistor value should we use?
             - Power consumption?
     
+    - How do we handle SD initialization?
+        - Options:
+            - Option 1: Require LVS SD cards and init with 1.8V
+                - If all the high-endurance cards support LVS, this seems like a good option because:
+                    - Less complexity, fewer parts
+                        - No need for 2 extra ICE40 IOs that control pullup voltage
+                        - No need for pull-up voltage transistors
+                - DDR50 may let us loosen timing constraints, since the frequency is half, and the output SB_IO is responsible for outputting
+            - Option 2: Allow non-LVS cards and init with 2.8V
+                - Option 2A: use an open-drain solution to be able to output 2.8V.
+                X Option 2B: raise 1.8V to a higher voltage
+                    X That won't work because:
+                        - SD.Vih_min_3V3 = 0.625*VDD = 1.75
+                        - SD.Vih_max_1V8 = 2.0
+                        - ICE40.Voh_min = VCCIO–0.4
+                        - Because SD.Vih_max_1V8=2, ICE40.VCCIO can't be greater than 2V. Therefore if ICE40.VCCIO=2, ICE40.Voh_min = VCCIO–0.4 = 2-.4 = 1.6
+                            - But SD.Vih_min_3V3=1.75 > ICE40.Voh_min=1.6. In other words, SD requires >=1.75V to register as a '1',
+                              but ICE40 may only be able to output 1.6V.
+    
     - If ICE40 is going to interface directly with SD at 2.8V, can ICE40 interface directly with MSP?
     
     - Move parts (resistors, capacitors) further away front mount points on front of board
