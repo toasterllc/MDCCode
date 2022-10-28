@@ -28,22 +28,26 @@ public:
         // Enable slow SDController clock
         T_ICE::Transfer(_ConfigClkSetSlow);
         _Sleep(_Us(1));
+        
+//        // Enable slow SDController clock
+//        T_ICE::Transfer(_ConfigPinModeSetPushPull);
+//        _Sleep(_Us(1));
     }
     
-//    static void LVSSequence() {
-//        // Trigger the SD card low voltage signalling (LVS) init sequence
-//        T_ICE::Transfer(_ConfigInit);
-//        // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
-//        _Sleep(_Ms(6));
-//    }
-    
-    static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
-        uint16_t rca = 0;
-        
+    static void LVSSequence() {
         // Trigger the SD card low voltage signalling (LVS) init sequence
         T_ICE::Transfer(_ConfigInit);
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
         _Sleep(_Ms(6));
+    }
+    
+    static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
+        uint16_t rca = 0;
+        
+//        // Trigger the SD card low voltage signalling (LVS) init sequence
+//        T_ICE::Transfer(_ConfigInit);
+//        // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
+//        _Sleep(_Ms(6));
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -73,7 +77,9 @@ public:
             Assert(replyCheckPattern == CheckPattern);
         }
         
-        T_Error(11111);
+        return rca;
+        
+//        T_Error(11111);
         
         // ====================
         // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND

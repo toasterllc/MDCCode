@@ -1,8 +1,8 @@
 `ifndef Pin_v
 `define Pin_v
 
-`define Pin_Mode_PushPull    0
-`define Pin_Mode_OpenDrain   1
+`define Pin_Mode_PushPull    1'b0
+`define Pin_Mode_OpenDrain   1'b1
 `define Pin_Mode_Width       1
 
 module PinOut #(
