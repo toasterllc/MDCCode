@@ -11,11 +11,6 @@
 
 `define SDController_BlockLen                       512
 
-`define SDController_Config_Action_Reset            2'b00
-`define SDController_Config_Action_ClkSet           2'b01
-`define SDController_Config_Action_PinModeSet       2'b10
-`define SDController_Config_Action_Width            2
-
 `define SDController_Config_ClkSpeed_Off            2'b00
 `define SDController_Config_ClkSpeed_Slow           2'b01
 `define SDController_Config_ClkSpeed_Fast           2'b10
@@ -46,8 +41,6 @@ module SDController #(
     
     // Config port (clock domain: async)
     input wire          config_trigger,     // Toggle signal
-    input wire[`SDController_Config_Action_Width-1:0]
-                        config_action,
     input wire[`SDController_Config_ClkSpeed_Width-1:0]
                         config_clkSpeed,
     input wire[`SDController_Config_ClkDelay_Width-1:0]
@@ -122,8 +115,6 @@ module SDController #(
     wire cfg_clkSpeed_fast = cfg_clkSpeed[1];
     reg [`SDController_Config_ClkDelay_Width-1:0] cfg_clkDelay = 0;
     reg [`SDController_Config_PinMode_Width-1:0] cfg_pinMode = 0;
-    reg cfg_resetTrigger = 0;
-    reg cfg_initTrigger = 0;
     reg[1:0] cfg_delayCounter = 0;
     
     `TogglePulse(cfg_triggerPulse, config_trigger, posedge, clk_slow);
@@ -140,31 +131,15 @@ module SDController #(
             1: begin
                 // Disable clock
                 cfg_clkSpeed <= `SDController_Config_ClkSpeed_Off;
-                // By default, restore the current clock speed
-                cfg_clkSpeedNext <= cfg_clkSpeed;
                 // Delay to ensure clock is stopped
                 cfg_delayCounter <= 2;
                 cfg_state <= 2;
             end
             
             2: begin
-                case (config_action)
-                `SDController_Config_Action_Reset: begin
-                    cfg_clkSpeedNext <= `SDController_Config_ClkSpeed_Slow;
-                    cfg_clkDelay <= 0;
-                    cfg_pinMode <= `SDController_Config_PinMode_OpenDrain;
-                    cfg_resetTrigger <= !cfg_resetTrigger;
-                end
-                
-                `SDController_Config_Action_ClkSet: begin
-                    cfg_clkSpeedNext <= config_clkSpeed;
-                    cfg_clkDelay <= config_clkDelay;
-                end
-                
-                `SDController_Config_Action_PinModeSet: begin
-                    cfg_pinMode <= config_pinMode;
-                end
-                endcase
+                cfg_clkSpeedNext <= config_clkSpeed;
+                cfg_clkDelay <= config_clkDelay;
+                cfg_pinMode <= config_pinMode;
                 
                 // Delay to let registers settle (particularly cfg_clkDelay) before re-enabling clock
                 cfg_delayCounter <= 2;
@@ -273,22 +248,6 @@ module SDController #(
     reg[3:0] datIn_crcCounter = 0;
     reg[1:0] datInWrite_counter = 0;
     
-    localparam Init_ClockPulseUs = 15; // Pulse needs to be at least 10us, per SD LVS spec
-    localparam Init_ClockPulseDelay = Clocks(Clk_SlowFreq, Init_ClockPulseUs*1000, 1);
-    localparam Init_HoldUs = 5; // Hold outputs for 5us after the negative edge of the clock pulse
-    localparam Init_HoldDelay = Clocks(Clk_SlowFreq, Init_HoldUs*1000, 1);
-`ifdef SIM
-    localparam Init_FinishUs = 10; // Don't wait as long during simulation
-`else
-    localparam Init_FinishUs = 5500; // Hold outputs for 5.5ms after the negative edge of the clock pulse
-`endif
-    localparam Init_FinishDelay = Clocks(Clk_SlowFreq, Init_FinishUs*1000, 1);
-    localparam Init_DelayCounterWidth = `RegWidth3(Init_ClockPulseDelay,Init_HoldDelay,Init_FinishDelay);
-    reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
-    `TogglePulse(init_cfgResetTrigger, cfg_resetTrigger, posedge, clk_int);
-    `TogglePulse(init_cfgInitTrigger, cfg_initTrigger, posedge, clk_int);
-    reg[2:0] init_state = 0;
-    
     always @(posedge clk_int) begin
         man_en_ <= 1; // Disable manual control by default
         
@@ -340,8 +299,6 @@ module SDController #(
         datInWrite_trigger <= 0; // Pulse
         datInWrite_counter <= datInWrite_counter-1;
         datInWrite_data <= datIn_reg;
-        
-        init_delayCounter <= init_delayCounter-1;
         
         status_dat0Idle <= datIn_reg[0];
         
@@ -720,28 +677,6 @@ module SDController #(
         
         if (cmd_triggerPulse) begin
             cmd_state <= 1;
-        end
-        
-        // ====================
-        // Init State Machine
-        // ====================
-        case (init_state)
-        0: begin
-            man_en_ <= 0;
-            man_sdClk <= 0;
-        end
-        
-        1: begin
-        end
-        endcase
-        
-        if (init_cfgResetTrigger) begin
-            $display("[SDController:Init] Reset");
-            init_state <= 0;
-        
-        end else if (init_cfgInitTrigger) begin
-            $display("[SDController:Init] Trigger");
-            init_state <= 1;
         end
     end
     
