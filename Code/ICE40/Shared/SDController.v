@@ -16,10 +16,9 @@
 `define SDController_Config_Action_PinModeSet       2'b10
 `define SDController_Config_Action_Width            2
 
-`define SDController_Config_ClkSpeed_Off            2'b00
-`define SDController_Config_ClkSpeed_Slow           2'b01
-`define SDController_Config_ClkSpeed_Fast           2'b10
-`define SDController_Config_ClkSpeed_Width          2
+`define SDController_Config_ClkSpeed_Slow           1'b0
+`define SDController_Config_ClkSpeed_Fast           1'b1
+`define SDController_Config_ClkSpeed_Width          1
 `define SDController_Config_ClkDelay_Width          4
 `define SDController_Config_PinMode_PushPull        `Pin_Mode_PushPull
 `define SDController_Config_PinMode_OpenDrain       `Pin_Mode_OpenDrain
