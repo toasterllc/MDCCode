@@ -49,6 +49,8 @@ public:
 //        // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
 //        _Sleep(_Ms(6));
         
+//        for (;;);
+        
         // ====================
         // CMD0 | GO_IDLE_STATE
         //   State: X -> Idle
@@ -106,14 +108,14 @@ public:
             
             // CMD41
             {
-                const _SDStatusResp status = _SendCmd(_CMD41, 0x51008000);
+                const _SDStatusResp status = _SendCmd(_CMD41, 0x50008000);
                 // Don't check CRC with .respCRCOK() (the CRC response to ACMD41 is all 1's)
                 // Check if card is ready. If it's not, retry ACMD41.
                 const bool ready = status.template respGetBit<39>();
                 if (!ready) continue;
                 // Check S18A; for LVS initialization, it's expected to be 0
                 const bool S18A = status.template respGetBit<32>();
-                Assert(S18A == 1);
+                Assert(S18A == 0);
                 break;
             }
         }
