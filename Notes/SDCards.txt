@@ -1,0 +1,330 @@
+SD Cards
+
+- Best picks:
+    - SanDisk MAX ENDURANCE
+        Size        64 GB
+        Model       SDSQQVR-064G-GN6IA
+        Endurance   360 TBW
+        Write       30 MB/s
+        App Class   -
+        Sources
+            https://www.westerndigital.com/products/memory-cards/sandisk-max-endurance-uhs-i-microsd#SDSQQVR-064G-GN6IA
+                $17.99 @ 1
+            https://bulkmemorycards.com/shop/microsd-cards/microsd-64gb/microsd-64gb-class-10/microsd-64gb-class-10-w-sd-adapter/64gb-sandisk-max-endurance-microsdxc-memory-card-sdsqqvr-064g-gn6ia/
+                $15.30 @ 100
+        Notes
+            Got quote from WD (see email):
+                SDSQQVR-064G-GN6IA QTY: 100 MSRP: USD18.29 QUOTE:USD17.55
+                SDSQQNR-128G-GN6IA QTY: 100 MSRP: USD17.99 QUOTE: USD17.27
+    
+    - SanDisk High Endurance
+        Size        128 GB
+        Model       SDSQQNR-128G-GN6IA
+        Endurance   120 TBW
+        Write       30 MB/s
+        App Class   -
+        Sources
+            https://www.westerndigital.com/products/memory-cards/sandisk-high-endurance-uhs-i-microsd#SDSQQNR-128G-GN6IA
+                $17.99 @ 1
+            https://bulkmemorycards.com/shop/microsd-cards/microsd-128gb/sd-128gb-class-10/microsd-128gb-class-10-w-sd-adapter/128gb-sandisk-high-endurance-video-monitoring-card-sdsqqnr-128g-gn6ia/
+                $13.15 @ 100
+        Notes
+            Got quote from WD (see email):
+                SDSQQVR-064G-GN6IA QTY: 100 MSRP: USD18.29 QUOTE:USD17.55
+                SDSQQNR-128G-GN6IA QTY: 100 MSRP: USD17.99 QUOTE: USD17.27
+    
+    - Micron Industrial
+        Size        64 GB
+        Model       MTSD064AMC8MS-1WT
+        Endurance   140 TBW
+        Write       30 MB/s
+        App Class   A2
+        Notes
+            Emailed lum@paragont.com for quote. (Contact info via Micron website.)
+                Responded saying they can't help
+        Sources
+            https://www.mouser.com/ProductDetail/Micron/MTSD064AMC8MS-1WT?qs=A6eO%252BMLsxmRix8Q5bXoMtQ%3D%3D
+                $21.41 @ 100
+    
+    - Samsung PRO Endurance
+        Size        64 GB
+        Model       MB-MJ64KA/AM
+        Endurance   410 TBW
+        Write       10 MB/s
+        App Class   -
+        Sources
+            https://www.samsung.com/us/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-64gb-mb-mj64ka-am/
+                $13.99
+    
+    - Samsung PRO Endurance
+        Size        128 GB
+        Model       MB-MJ128KA/AM
+        Endurance   820 TBW
+        Write       30 MB/s
+        App Class   -
+        Notes
+            Contacted bulkmemorycards.com via web form. See BulkMemoryCardsMessage.txt.
+        Sources
+            https://www.samsung.com/us/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-128gb-mb-mj128ka-am/
+                $19.99
+    
+    - Kensington Endurance
+        Size        64 GB
+        Model       SDCE/64GB
+        Endurance   323 TBW
+        Write       10 MB/s
+        App Class   A1
+        Notes
+            Marketing says "26.9K hours 24/7 recording" = 3,333,333 bytes/sec * 26.9e3*60*60 sec = 322.79996772 TBW
+            Unclear which capacity this applies to, so if we assume the worst case and it's for the largest size (128 GB),
+            the 64 GB model will have half the endurance = 162 TBW.
+        Sources
+            https://shop.kingston.com/products/high-endurance-microsd-memory-card?variant=40349368320192
+                $13.99
+    
+    - Patriot EP Series High Endurance
+        Size        64 GB
+        Model       PEF64GE31MCH
+        Endurance   96 TBW
+        Write       30 MB/s
+        App Class   -
+        Notes
+            Might support LVS, mentions support for "SDA 6.X"
+        Sources
+            https://store.patriotmemory.com/collections/memory-cards/products/ep-series-high-endurance-microsdhc-xc?variant=37666058633381
+                $15.99
+
+
+    
+
+
+
+- WD Purple SC QD102 High Endurance
+    https://www.westerndigital.com/products/memory-cards/wd-purple-qd102-microsd
+    
+    - SDA Version: 5.1
+    
+    - Flash Tech: XXX
+    
+    - Write Speed: 60 MB/s
+    
+    - Endurance: 1k PE cycles
+        - 32 GB     32 TBW
+        - 64 GB     64 TBW
+        - 128 GB    128 TBW
+    
+    - Price
+        - 32 GB     $7.00
+        - 64 GB     $12.00
+        - 128 GB    $22.00
+
+
+
+- WD Purple SC QD101 Ultra Endurance
+    https://www.westerndigital.com/products/memory-cards/wd-purple-microsd
+    
+    - SDA Version: 6.0
+    
+    - Flash Tech: XXX
+    
+    - Write Speed: XXX
+    
+    - Endurance: .5k PE cycles
+        - 32 GB     16 TBW
+        - 64 GB     32 TBW
+        - 128 GB    64 TBW
+    
+    - Price
+        - 32 GB     $10.99
+        - 64 GB     $14.99
+        - 128 GB    $27.99
+
+
+
+- SanDisk High Endurance
+    https://www.westerndigital.com/products/memory-cards/sandisk-high-endurance-uhs-i-microsd
+    
+    - SDA Version: XXX
+    
+    - Flash Tech: XXX
+    
+    - Write Speed: 40 MB/s
+    
+    - Endurance: 1k PE cycles
+        - 32 GB     30 TBW      2.5k hours @ 3.33 MB/sec
+        - 64 GB     60 TBW      5k hours @ 3.33 MB/sec
+        - 128 GB    120 TBW     10k hours @ 3.33 MB/sec
+    
+    - Price
+        - 32 GB     $9.49
+        - 64 GB     $11.29
+        - 128 GB    $17.99
+
+
+
+- SanDisk MAX ENDURANCE
+    https://www.westerndigital.com/products/memory-cards/sandisk-max-endurance-uhs-i-microsd
+    
+    - SDA Version: XXX
+    
+    - Flash Tech: XXX
+    
+    - Write Speed: 40 MB/s
+    
+    - Endurance: 5.6k PE cycles
+        - 32 GB     180 TBW     15k hours @ 3.33 MB/sec
+        - 64 GB     360 TBW     30k hours @ 3.33 MB/sec
+        - 128 GB    719 TBW     60k hours @ 3.33 MB/sec
+    
+    - Price
+        - 32 GB     $12.99
+        - 64 GB     $18.29
+        - 128 GB    $30.99
+
+
+
+- Western Digital Industrial (IX QD332)
+    https://www.westerndigital.com/products/memory-cards/industrial-microsd
+    https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/brochure/brochure-industrial-grade-microsd-sd-card-portfolio.pdf
+    https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/brochure/brochure-removable-flash-storage.pdf
+    
+    - SDA Version: 5.1
+    
+    - Flash Tech: 2D MLC
+    
+    - Write Speed: 50 MB/s
+    
+    - Endurance: 3k PE cycles
+        - 32 GB     96 TBW
+        - 64 GB     192 TBW
+        - 128 GB    384 TBW
+    
+    - Price (Mouser)
+        - 32 GB     $27.61
+        - 64 GB     $49.67
+        - 128 GB    $98.66
+
+
+
+
+- Western Digital Industrial (IX QD334)
+    https://www.westerndigital.com/products/memory-cards/industrial-microsd
+    https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/brochure/brochure-industrial-grade-microsd-sd-card-portfolio.pdf
+    https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/brochure/brochure-removable-flash-storage.pdf
+    
+    - SDA Version: 5.1 or 6.0 (contradiction among documents)
+    
+    - Flash Tech: 2D SLC
+    
+    - Write Speed: 50 MB/s
+    
+    - Endurance: 30k PE cycles
+        - 32 GB     960 TBW
+        - 64 GB     1920 TBW
+    
+    - Price (Mouser)
+        - 32 GB     $49.23
+        - 64 GB     $87.65
+
+
+
+
+- Western Digital Industrial (IX QD342)
+    https://www.westerndigital.com/products/memory-cards/industrial-microsd
+    https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/brochure/brochure-industrial-grade-microsd-sd-card-portfolio.pdf
+    https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/brochure/brochure-removable-flash-storage.pdf
+    
+    - SDA Version: 6.0
+    
+    - Flash Tech: 3D TLC
+    
+    - Write Speed: 50 MB/s
+    
+    - Endurance: 3k PE cycles
+        - 32 GB     96 TBW
+        - 64 GB     192 TBW
+        - 128 GB    384 TBW
+    
+    - Price (Mouser)
+        - 32 GB     $26.72
+        - 64 GB     $47.19
+        - 128 GB    $94.37
+
+
+
+
+
+- Micron Industrial MTSD064AMC8MS-1WT
+    https://www.mouser.com/ProductDetail/Micron/MTSD064AMC8MS-1WT?qs=A6eO%252BMLsxmRix8Q5bXoMtQ%3D%3D
+    https://www.arrow.com/en/products/mtsd064amc8ms-1wt/micron-technology?region=nac&utm_campaign=octopart_2022&utm_content=inv_listing&utm_currency=USD&utm_keyword=MTSD064AMC8MS-1WT&utm_medium=aggregator&utm_source=octopart
+    
+    - SDA Version: 6.10
+    
+    - Flash Tech: 3D TLC
+    
+    - Write Speed: 45 MB/s
+    
+    - Endurance: XXX
+        - 64 GB     140 TBW
+    
+    - Price (Mouser)
+        - 64 GB     $21.41 @ 100
+
+
+
+
+- Samsung PRO Endurance
+    https://www.samsung.com/us/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-128gb-mb-mj128ka-am/
+    
+    - SDA Version: XXX
+    
+    - Flash Tech: XXX
+    
+    - Write Speed: 10 MB/s (64 GB), 30 MB/s (128 GB)
+    
+    - Endurance: XXX
+        - 64 GB     410 TBW
+        - 128 GB    820 TBW
+    
+    - Price
+        - 64 GB     $13.99
+        - 128 GB    $19.99
+
+
+
+
+
+- Math
+
+    - Images taken per year @ 1 image / 5 sec
+        24*60*60*365/5 = 6307200 images
+    
+    - Size of image + thumbnail
+        6346240 bytes
+    
+    - Data written per year
+        6307200 images * 6346240 bytes/image = 40.027e9 bytes = ~40 TB
+
+
+
+
+- Full HD Video to bitrate conversion
+    - From https://www.westerndigital.com/brand/sandisk/hd-video-capacity-charts:
+    
+    128 GB = 128e9 bytes
+    640 minutes = 38400 seconds
+    
+    Their data rate ('full HD video') = 3,333,333.3333333335 bytes / sec = 3.33 MB/sec (1 MB = 1e6 bytes)
+
+
+
+
+64e9 bytes
+1 image = 5972480 bytes
+-> 10715 images
+
+3000 P/E cycles
+
+10715 images * 3000 = 32,145,000 images
+
+1 image every 5 seconds = 32,145,000 * 5 = 160,725,000 sec / 86400 sec/day = 1,860.2430555556 days = 5 years
