@@ -7,6 +7,7 @@
 `include "CRC7.v"
 `include "CRC16.v"
 `include "Sync.v"
+`include "Pin.v"
 
 `define SDController_BlockLen                       512
 
@@ -779,6 +780,8 @@ module SDController #(
     // ====================
     // Pin: sd_clk
     // ====================
+    PinOut
+    
     assign sd_clk = (!man_enSynced_ ? man_sdClk : clk_int_delayed);
     
     // ====================
