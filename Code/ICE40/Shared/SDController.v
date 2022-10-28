@@ -105,7 +105,7 @@ module SDController #(
     // ====================
     // clk_slow (<400 kHz)
     // ====================
-    localparam Clk_SlowFreq = 100000; // TODO: switch back to 400 kHz once our hardware has a physical pullup. Also, what about the comment above if we can get LVS working for all cards?
+    localparam Clk_SlowFreq = 200000; // TODO: switch back to 400 kHz once our hardware has a physical pullup. Also, what about the comment above if we can get LVS working for all cards?
     localparam Clk_SlowDividerWidth = $clog2(`DivCeil(Clk_FastFreq, Clk_SlowFreq));
     reg[Clk_SlowDividerWidth-1:0] clk_slow_divider = 0;
     wire clk_slow = clk_slow_divider[Clk_SlowDividerWidth-1];
@@ -141,6 +141,8 @@ module SDController #(
             1: begin
                 // Disable clock
                 cfg_clkSpeed <= `SDController_Config_ClkSpeed_Off;
+                // By default, restore the current clock speed
+                cfg_clkSpeedNext <= cfg_clkSpeed;
                 // Delay to ensure clock is stopped
                 cfg_delayCounter <= 2;
                 cfg_state <= 2;
@@ -149,10 +151,10 @@ module SDController #(
             2: begin
                 case (config_action)
                 `SDController_Config_Action_Reset: begin
-                    cfg_resetTrigger <= !cfg_resetTrigger;
                     cfg_clkSpeedNext <= `SDController_Config_ClkSpeed_Slow;
                     cfg_clkDelay <= 0;
                     cfg_pinMode <= `SDController_Config_PinMode_OpenDrain;
+                    cfg_resetTrigger <= !cfg_resetTrigger;
                 end
                 
                 `SDController_Config_Action_Init: begin
@@ -175,7 +177,7 @@ module SDController #(
             end
             
             3: begin
-                // Enable clock
+                // Restore clock
                 cfg_clkSpeed <= cfg_clkSpeedNext;
                 cfg_state <= 0;
             end
@@ -757,8 +759,8 @@ module SDController #(
         .Pullup(1) // Remove once we have a physical hardware pullup
     ) PinOut_sd_clk (
         .clk(),
-        .mode(`SDController_Config_PinMode_PushPull),     // TODO: remove and uncomment below once we have a physical pullup
-        // .mode(cfg_pinMode),
+        // .mode(`SDController_Config_PinMode_PushPull),     // TODO: remove and uncomment below once we have a physical pullup
+        .mode(cfg_pinMode),
         .out(sd_clkOut),
         .pin(sd_clk)
     );

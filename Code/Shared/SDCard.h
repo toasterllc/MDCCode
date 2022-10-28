@@ -23,11 +23,11 @@ public:
     static void Reset() {
         // Reset SDController
         T_ICE::Transfer(_ConfigReset);
-        _Sleep(_Us(1));
+        _Sleep(_Us(100)); // Wait 10 100kHz cycles
         
         // Enable slow SDController clock
         T_ICE::Transfer(_ConfigClkSetSlow);
-        _Sleep(_Us(1));
+        _Sleep(_Us(100)); // Wait 10 100kHz cycles
         
 //        // Enable slow SDController clock
 //        T_ICE::Transfer(_ConfigPinModeSetPushPull);
@@ -120,6 +120,7 @@ public:
             
             // Turn off clock
             T_ICE::Transfer(_ConfigClkSetOff);
+            _Sleep(_Us(100)); // Wait 10 100kHz cycles (to allow clock to stop before changing the pin mode)
             
             // Switch pin mode from open-drain -> push-pull
             T_ICE::Transfer(_ConfigPinModeSetPushPull);
@@ -129,6 +130,7 @@ public:
             
             // Re-enable clock
             T_ICE::Transfer(_ConfigClkSetSlow);
+            _Sleep(_Us(100)); // Wait 10 100kHz cycles (to allow clock to start)
             
             // Wait for SD card to indicate that it's ready (DAT0=1)
             #warning TODO: implement timeout in case something's broken
