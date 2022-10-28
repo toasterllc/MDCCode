@@ -109,9 +109,9 @@ module SDController #(
     // Config State Machine
     // ====================
     reg[1:0] cfg_state = 0;
-    reg[1:0] cfg_clkSpeed = `SDController_Config_ClkSpeed_Slow;
-    reg[1:0] cfg_clkSpeedNext = `SDController_Config_ClkSpeed_Slow;
-    wire cfg_clkSpeed_slow = !cfg_clkSpeed[0];
+    reg[1:0] cfg_clkSpeed = `SDController_Config_ClkSpeed_Off;
+    reg[1:0] cfg_clkSpeedNext = `SDController_Config_ClkSpeed_Off;
+    wire cfg_clkSpeed_slow = cfg_clkSpeed[0];
     wire cfg_clkSpeed_fast = cfg_clkSpeed[1];
     reg [`SDController_Config_ClkDelay_Width-1:0] cfg_clkDelay = 0;
     reg [`SDController_Config_PinMode_Width-1:0] cfg_pinMode = 0;
@@ -160,9 +160,6 @@ module SDController #(
         end
     end
     
-    
-    
-    
     // ====================
     // clk_int
     // ====================
@@ -187,15 +184,11 @@ module SDController #(
     );
     
     // ====================
-    // Manual SD Line Control
+    // sd_clk Pausing
     // ====================
-    reg         man_en_         = 0;
-    reg         man_sdClk       = 0;
-    wire        man_sdCmdOut    = 0;
-    reg         man_sdCmdOutEn  = 0;
-    wire[3:0]   man_sdDatOut    = 0;
-    reg[3:0]    man_sdDatOutEn  = 0;
-    `Sync(man_enSynced_, man_en_, negedge, clk_int);
+    reg sdClkPause_en       = 0;
+    reg sdClkPause_enSynced = 0;
+    `Sync(sdClkPause_enSynced, sdClkPause_en, negedge, clk_int);
     
     // ====================
     // Main State Machine
@@ -249,7 +242,7 @@ module SDController #(
     reg[1:0] datInWrite_counter = 0;
     
     always @(posedge clk_int) begin
-        man_en_ <= 1; // Disable manual control by default
+        sdClkPause_en <= 0; // Disable manual control by default
         
         cmd_counter <= cmd_counter-1;
         // `cmd_active` is 3 bits to track whether `cmd_in` is
@@ -598,8 +591,7 @@ module SDController #(
         
         7: begin
             // Disable sd_clk while we're in this state
-            man_en_ <= 0;
-            man_sdClk <= 0;
+            sdClkPause_en <= 1;
             
             // Wait until the FIFO can accept data
             if (datInWrite_ready) begin
@@ -626,7 +618,7 @@ module SDController #(
             datIn_state <= 0;
             cmd_crcRst <= 1;
             // Delay a few cycles (while manual control is potentially being disabled) before issuing the SD command.
-            // This is necessary because the DatIn state machine halts the clock (using `man_en_`) until
+            // This is necessary because the DatIn state machine halts the clock (using `sdClkPause_en`) until
             // the FIFO has space (`datInWrite_ready`). So if we're coming from that state, we need to
             // wait until the clock is unhalted, which will happen automatically because we reset
             // resp_state/datOut_state/datIn_state.
@@ -683,32 +675,27 @@ module SDController #(
     // ====================
     // Pin: sd_clk
     // ====================
-    wire sd_clkOut = (!man_enSynced_ ? man_sdClk : clk_int_delayed);
     PinOut #(
         .Reg(0),
-        .Pullup(1) // Remove once we have a physical hardware pullup
     ) PinOut_sd_clk (
-        .clk(),
-        // .mode(`SDController_Config_PinMode_PushPull),     // TODO: remove and uncomment below once we have a physical pullup
-        .mode(cfg_pinMode),
-        .out(sd_clkOut),
-        .pin(sd_clk)
+        .clk(                                               ),
+        .mode(cfg_pinMode                                   ),
+        .out(sdClkPause_enSynced ? 1'b0 : clk_int_delayed   ),
+        .pin(sd_clk                                         )
     );
     
     // ====================
     // Pin: sd_cmd
     // ====================
-    wire sd_cmdDir = (!man_enSynced_ ? man_sdCmdOutEn : cmd_active[0]);
-    wire sd_cmdOut = (!man_enSynced_ ? man_sdCmdOut : cmdresp_shiftReg[47]);
     PinInOut #(
         .Reg(1)
     ) PinInOut_sd_cmd (
-        .clk(clk_int),
-        .mode(cfg_pinMode),
-        .dir(sd_cmdDir),
-        .out(sd_cmdOut),
-        .in(cmd_in),
-        .pin(sd_cmd)
+        .clk(clk_int                ),
+        .mode(cfg_pinMode           ),
+        .dir(cmd_active[0]          ),
+        .out(cmdresp_shiftReg[47]   ),
+        .in(cmd_in                  ),
+        .pin(sd_cmd                 )
     );
     
     // ====================
@@ -719,12 +706,12 @@ module SDController #(
         SB_IO #(
             .PIN_TYPE(6'b1101_00)
         ) SB_IO_sd_dat (
-            .INPUT_CLK      (clk_int                                                    ),
-            .OUTPUT_CLK     (clk_int                                                    ),
-            .PACKAGE_PIN    (sd_dat[i]                                                  ),
-            .OUTPUT_ENABLE  (!man_enSynced_ ? man_sdDatOutEn[i]    : datOut_active[0]   ),
-            .D_OUT_0        (!man_enSynced_ ? man_sdDatOut[i]      : datOut_reg[16+i]   ),
-            .D_IN_0         (datIn[i]                                                   )
+            .INPUT_CLK      (clk_int            ),
+            .OUTPUT_CLK     (clk_int            ),
+            .PACKAGE_PIN    (sd_dat[i]          ),
+            .OUTPUT_ENABLE  (datOut_active[0]   ),
+            .D_OUT_0        (datOut_reg[16+i]   ),
+            .D_IN_0         (datIn[i]           )
         );
     end
     

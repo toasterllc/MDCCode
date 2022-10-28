@@ -31,13 +31,11 @@
 
 `define Msg_Type_SDConfig                                       `Msg_Type_StartBit | `Msg_Type_Len'h02
 `define     Msg_Arg_SDConfig_PinMode_Len                        1
-`define     Msg_Arg_SDConfig_PinMode_Bits                       8:8
+`define     Msg_Arg_SDConfig_PinMode_Bits                       16:16
 `define     Msg_Arg_SDConfig_ClkDelay_Len                       4
-`define     Msg_Arg_SDConfig_ClkDelay_Bits                      19:16
+`define     Msg_Arg_SDConfig_ClkDelay_Bits                      11:8
 `define     Msg_Arg_SDConfig_ClkSpeed_Len                       2
-`define     Msg_Arg_SDConfig_ClkSpeed_Bits                      9:8
-`define     Msg_Arg_SDConfig_Action_Len                         2
-`define     Msg_Arg_SDConfig_Action_Bits                        1:0
+`define     Msg_Arg_SDConfig_ClkSpeed_Bits                      1:0
 
 `define Msg_Type_SDSendCmd                                      `Msg_Type_StartBit | `Msg_Type_Len'h03
 `define     Msg_Arg_SDSendCmd_RespType_Len                      2
