@@ -732,50 +732,9 @@ module SDController #(
         0: begin
             man_en_ <= 0;
             man_sdClk <= 0;
-            man_sdCmdOutEn <= 1;
-            man_sdDatOutEn <= '1;
-            init_delayCounter <= Init_ClockPulseDelay;
         end
         
         1: begin
-            man_en_ <= 0;
-            man_sdClk <= 1;
-            if (!init_delayCounter) begin
-                init_state <= 2;
-            end
-        end
-        
-        2: begin
-            man_en_ <= 0;
-            man_sdClk <= 0;
-            init_delayCounter <= Init_HoldDelay;
-            init_state <= 3;
-        end
-        
-        3: begin
-            man_en_ <= 0;
-            if (!init_delayCounter) begin
-                init_state <= 4;
-            end
-        end
-        
-        4: begin
-            man_en_ <= 0;
-            man_sdCmdOutEn <= 0;
-            man_sdDatOutEn <= 0;
-            init_delayCounter <= Init_FinishDelay;
-            init_state <= 5;
-        end
-        
-        5: begin
-            man_en_ <= 0;
-            if (!init_delayCounter) begin
-                $display("[SDController:Init] Done");
-                init_state <= 6;
-            end
-        end
-        
-        6: begin
         end
         endcase
         
@@ -798,7 +757,8 @@ module SDController #(
         .Pullup(1) // Remove once we have a physical hardware pullup
     ) PinOut_sd_clk (
         .clk(),
-        .mode(cfg_pinMode),
+        .mode(`SDController_Config_PinMode_PushPull),     // TODO: remove and uncomment below once we have a physical pullup
+        // .mode(cfg_pinMode),
         .out(sd_clkOut),
         .pin(sd_clk)
     );

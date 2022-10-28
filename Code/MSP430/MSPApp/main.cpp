@@ -201,10 +201,10 @@ struct _SDTask {
         _Scheduler::Start<_SDTask>([] { _Reset(); });
     }
     
-    static void LVSSequence() {
-        Wait();
-        _Scheduler::Start<_SDTask>([] { _LVSSequence(); });
-    }
+//    static void LVSSequence() {
+//        Wait();
+//        _Scheduler::Start<_SDTask>([] { _LVSSequence(); });
+//    }
     
     static void Init() {
         Wait();
@@ -238,9 +238,9 @@ struct _SDTask {
         _SDCard::Reset();
     }
     
-    static void _LVSSequence() {
-        _SDCard::LVSSequence();
-    }
+//    static void _LVSSequence() {
+//        _SDCard::LVSSequence();
+//    }
     
     static void _Init() {
         if (!_RCA) {
@@ -522,14 +522,13 @@ struct _MainTask {
         _VDDBSetEnabled(true);
         
         // Reset SDController before we turn on power
-        _VDDIMGSDSetEnabled(false);
         _SDTask::Reset();
         _SDTask::Wait();
         _Scheduler::Sleep(_Scheduler::Ms(1000));
         
-        // Perform LVS sequence
-        _SDTask::LVSSequence();
-        _SDTask::Wait();
+//        // Perform LVS sequence
+//        _SDTask::LVSSequence();
+//        _SDTask::Wait();
         
         // Turn on IMG/SD power
         _VDDIMGSDSetEnabled(true);
