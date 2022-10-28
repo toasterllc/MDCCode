@@ -3,12 +3,15 @@
 
 `define Pin_Mode_PushPull    0
 `define Pin_Mode_OpenDrain   1
+`define Pin_Mode_Width       1
 
 module PinOut #(
     parameter Reg = 0,
+    parameter Pullup = 0
 )(
     input wire clk,     // if Reg=1
-    input wire mode,
+    input wire[`Pin_Mode_Width-1:0]
+               mode,
     input wire out,
     output wire pin
 );
@@ -17,11 +20,12 @@ module PinOut #(
         // TODO: implement
     
     end else begin
-        wire douten  = (mode===Pin_Mode_PushPull ? 1'b1 : ~out);
-        wire dout    = (mode===Pin_Mode_PushPull ? out  : 1'b0);
+        wire douten  = (mode===`Pin_Mode_PushPull ? 1'b1 : ~out);
+        wire dout    = (mode===`Pin_Mode_PushPull ? out  : 1'b0);
         
         SB_IO #(
-            .PIN_TYPE(6'b1010_01)
+            .PIN_TYPE(6'b1010_01),
+            .PULLUP(Pullup)
         ) SB_IO (
             .INPUT_CLK      (),
             .OUTPUT_CLK     (),
@@ -41,9 +45,11 @@ endmodule
 
 module PinInOut #(
     parameter Reg = 0,
+    parameter Pullup = 0
 )(
     input wire clk,     // if Reg=1
-    input wire mode,
+    input wire[`Pin_Mode_Width-1:0]
+               mode,
     input wire dir,     // in=0, out=1
     input wire out,
     output wire in,
@@ -51,11 +57,12 @@ module PinInOut #(
 );
     
     generate if (Reg) begin
-        wire douten  = (mode===Pin_Mode_PushPull ? 1'b1 : ~out);
-        wire dout    = (mode===Pin_Mode_PushPull ? out  : 1'b0);
+        wire douten  = (dir ? (mode===`Pin_Mode_PushPull ? 1'b1 : ~out) : 1'b0);
+        wire dout    = (mode===`Pin_Mode_PushPull ? out  : 1'b0);
         
         SB_IO #(
-            .PIN_TYPE(6'b1101_00)
+            .PIN_TYPE(6'b1101_00),
+            .PULLUP(Pullup)
         ) SB_IO (
             .INPUT_CLK      (clk),
             .OUTPUT_CLK     (clk),

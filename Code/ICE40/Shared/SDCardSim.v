@@ -154,6 +154,10 @@ module SDCardSim(
         time lvsinit_pulseBeginTimePs;
         time lvsinit_pulseEndTimePs;
         
+        // Wait one time unit to allow initial wire values to settle
+        // This is necessary otherwise we see a spurious value for sd_clk
+        #1;
+        
         // Handle LVS init sequence
         $display("[SDCardSim] Waiting for LVS init sequence...");
         wait(sd_clk);

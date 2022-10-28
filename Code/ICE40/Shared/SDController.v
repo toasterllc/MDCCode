@@ -14,6 +14,7 @@
 `define SDController_Config_Action_Reset            2'b00
 `define SDController_Config_Action_Init             2'b01
 `define SDController_Config_Action_ClkSet           2'b10
+`define SDController_Config_Action_PinModeSet       2'b11
 `define SDController_Config_Action_Width            2
 
 `define SDController_Config_ClkSpeed_Slow           2'b00
@@ -21,6 +22,9 @@
 `define SDController_Config_ClkSpeed_Fast           2'b11
 `define SDController_Config_ClkSpeed_Width          2
 `define SDController_Config_ClkDelay_Width          4
+`define SDController_Config_PinMode_PushPull        `Pin_Mode_PushPull
+`define SDController_Config_PinMode_OpenDrain       `Pin_Mode_OpenDrain
+`define SDController_Config_PinMode_Width           `Pin_Mode_Width
 
 `define SDController_RespType_None                  2'b00
 `define SDController_RespType_48                    2'b01
@@ -49,6 +53,8 @@ module SDController #(
                         config_clkSpeed,
     input wire[`SDController_Config_ClkDelay_Width-1:0]
                         config_clkDelay,
+    input wire[`SDController_Config_PinMode_Width-1:0]
+                        config_pinMode,
     
     // Command port (clock domain: `clk`)
     input wire          cmd_trigger,        // Toggle signal
@@ -99,7 +105,7 @@ module SDController #(
     // ====================
     // clk_slow (<400 kHz)
     // ====================
-    localparam Clk_SlowFreq = 400000;
+    localparam Clk_SlowFreq = 100000; // TODO: switch back to 400 kHz once our hardware has a physical pullup. Also, what about the comment above if we can get LVS working for all cards?
     localparam Clk_SlowDividerWidth = $clog2(`DivCeil(Clk_FastFreq, Clk_SlowFreq));
     reg[Clk_SlowDividerWidth-1:0] clk_slow_divider = 0;
     wire clk_slow = clk_slow_divider[Clk_SlowDividerWidth-1];
@@ -116,6 +122,7 @@ module SDController #(
     wire cfg_clkSpeed_slow = !cfg_clkSpeed[0];
     wire cfg_clkSpeed_fast = cfg_clkSpeed[1];
     reg [`SDController_Config_ClkDelay_Width-1:0] cfg_clkDelay = 0;
+    reg [`SDController_Config_PinMode_Width-1:0] cfg_pinMode = 0;
     reg cfg_resetTrigger = 0;
     reg cfg_initTrigger = 0;
     reg[1:0] cfg_delayCounter = 0;
@@ -145,6 +152,7 @@ module SDController #(
                     cfg_resetTrigger <= !cfg_resetTrigger;
                     cfg_clkSpeedNext <= `SDController_Config_ClkSpeed_Slow;
                     cfg_clkDelay <= 0;
+                    cfg_pinMode <= `SDController_Config_PinMode_OpenDrain;
                 end
                 
                 `SDController_Config_Action_Init: begin
@@ -154,6 +162,10 @@ module SDController #(
                 `SDController_Config_Action_ClkSet: begin
                     cfg_clkSpeedNext <= config_clkSpeed;
                     cfg_clkDelay <= config_clkDelay;
+                end
+                
+                `SDController_Config_Action_PinModeSet: begin
+                    cfg_pinMode <= config_pinMode;
                 end
                 endcase
                 
@@ -780,22 +792,31 @@ module SDController #(
     // ====================
     // Pin: sd_clk
     // ====================
-    PinOut
-    
-    assign sd_clk = (!man_enSynced_ ? man_sdClk : clk_int_delayed);
+    wire sd_clkOut = (!man_enSynced_ ? man_sdClk : clk_int_delayed);
+    PinOut #(
+        .Reg(0),
+        .Pullup(1) // Remove once we have a physical hardware pullup
+    ) PinOut_sd_clk (
+        .clk(),
+        .mode(cfg_pinMode),
+        .out(sd_clkOut),
+        .pin(sd_clk)
+    );
     
     // ====================
     // Pin: sd_cmd
     // ====================
-    SB_IO #(
-        .PIN_TYPE(6'b1101_00)
-    ) SB_IO_sd_cmd (
-        .INPUT_CLK      (clk_int                                                    ),
-        .OUTPUT_CLK     (clk_int                                                    ),
-        .PACKAGE_PIN    (sd_cmd                                                     ),
-        .OUTPUT_ENABLE  (!man_enSynced_ ? man_sdCmdOutEn   : cmd_active[0]          ),
-        .D_OUT_0        (!man_enSynced_ ? man_sdCmdOut     : cmdresp_shiftReg[47]   ),
-        .D_IN_0         (cmd_in                                                     )
+    wire sd_cmdDir = (!man_enSynced_ ? man_sdCmdOutEn : cmd_active[0]);
+    wire sd_cmdOut = (!man_enSynced_ ? man_sdCmdOut : cmdresp_shiftReg[47]);
+    PinInOut #(
+        .Reg(1)
+    ) PinInOut_sd_cmd (
+        .clk(clk_int),
+        .mode(cfg_pinMode),
+        .dir(sd_cmdDir),
+        .out(sd_cmdOut),
+        .in(cmd_in),
+        .pin(sd_cmd)
     );
     
     // ====================

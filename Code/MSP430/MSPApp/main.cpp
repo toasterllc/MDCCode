@@ -201,10 +201,10 @@ struct _SDTask {
         _Scheduler::Start<_SDTask>([] { _Reset(); });
     }
     
-    static void LVSSequence() {
-        Wait();
-        _Scheduler::Start<_SDTask>([] { _LVSSequence(); });
-    }
+//    static void LVSSequence() {
+//        Wait();
+//        _Scheduler::Start<_SDTask>([] { _LVSSequence(); });
+//    }
     
     static void Init() {
         Wait();
@@ -238,9 +238,9 @@ struct _SDTask {
         _SDCard::Reset();
     }
     
-    static void _LVSSequence() {
-        _SDCard::LVSSequence();
-    }
+//    static void _LVSSequence() {
+//        _SDCard::LVSSequence();
+//    }
     
     static void _Init() {
         if (!_RCA) {
@@ -534,9 +534,9 @@ struct _MainTask {
             _SDTask::Reset();
             _SDTask::Wait();
             
-            // Perform LVS sequence
-            _SDTask::LVSSequence();
-            _SDTask::Wait();
+//            // Perform LVS sequence
+//            _SDTask::LVSSequence();
+//            _SDTask::Wait();
             
             // Turn on IMG/SD power
             _VDDIMGSDSetEnabled(true);
@@ -545,19 +545,19 @@ struct _MainTask {
 //            // Perform LVS sequence
 //            _SDTask::LVSSequence();
 //            _SDTask::Wait();
+//            _Scheduler::Sleep(_Scheduler::Ms(1000));
             
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
             _SDTask::Init();
             _SDTask::Wait();
             
-            // Capture image to RAM
-            _ImgTask::Init();
-            _ImgTask::Capture(imgRingBuf.buf.idEnd);
-            const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
-            
-            // Copy image from RAM -> SD card
-            _SDTask::Write(srcRAMBlock);
-            _SDTask::Wait();
+//            // Capture image to RAM
+//            _ImgTask::Init();
+//            _ImgTask::Capture(imgRingBuf.buf.idEnd);
+//            const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+//            
+//            // Copy image from RAM -> SD card
+//            _SDTask::Write(srcRAMBlock);
+//            _SDTask::Wait();
             
             _Scheduler::Sleep(_Scheduler::Ms(1000));
             

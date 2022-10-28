@@ -30,15 +30,20 @@ public:
         _Sleep(_Us(1));
     }
     
-    static void LVSSequence() {
+//    static void LVSSequence() {
+//        // Trigger the SD card low voltage signalling (LVS) init sequence
+//        T_ICE::Transfer(_ConfigInit);
+//        // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
+//        _Sleep(_Ms(6));
+//    }
+    
+    static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
+        uint16_t rca = 0;
+        
         // Trigger the SD card low voltage signalling (LVS) init sequence
         T_ICE::Transfer(_ConfigInit);
         // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
         _Sleep(_Ms(6));
-    }
-    
-    static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
-        uint16_t rca = 0;
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -67,6 +72,8 @@ public:
             const uint8_t replyCheckPattern = status.template respGetBits<15,8>();
             Assert(replyCheckPattern == CheckPattern);
         }
+        
+        T_Error(11111);
         
         // ====================
         // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
@@ -97,6 +104,7 @@ public:
         //   Switch to 1.8V
         // ====================
         {
+            #warning TODO: in the future we need to switch from 2.8V -> 1.8V pullups here (once our hardware supports it)
             _SendCmd(_CMD11, 0, _RespType::Len48);
             
             // At this point the SD card must be driving CMD=0 / DAT[0:3]=0
@@ -106,9 +114,16 @@ public:
                 Assert(!status.dat0Idle());
             }
             
-            // Turn off clock for 6ms
+            // Turn off clock
             T_ICE::Transfer(_ConfigClkSetOff);
+            
+            // Switch pin mode from open-drain -> push-pull
+            T_ICE::Transfer(_ConfigPinModeSetPushPull);
+            
+            // Wait >5ms while clock is stopped (per SD spec)
             _Sleep(_Ms(6));
+            
+            // Re-enable clock
             T_ICE::Transfer(_ConfigClkSetSlow);
             
             // Wait for SD card to indicate that it's ready (DAT0=1)
@@ -306,11 +321,15 @@ private:
     using _RespType     = typename T_ICE::SDSendCmdMsg::RespType;
     using _DatInType    = typename T_ICE::SDSendCmdMsg::DatInType;
     
-    static constexpr auto _ConfigClkSetOff  = _SDConfigMsg(_SDConfigMsg::Action::ClkSet,    _SDConfigMsg::ClkSpeed::Off,    0);
-    static constexpr auto _ConfigClkSetSlow = _SDConfigMsg(_SDConfigMsg::Action::ClkSet,    _SDConfigMsg::ClkSpeed::Slow,   T_ClkDelaySlow);
-    static constexpr auto _ConfigClkSetFast = _SDConfigMsg(_SDConfigMsg::Action::ClkSet,    _SDConfigMsg::ClkSpeed::Fast,   T_ClkDelayFast);
-    static constexpr auto _ConfigReset      = _SDConfigMsg(_SDConfigMsg::Action::Reset,     _SDConfigMsg::ClkSpeed::Slow,   0);
-    static constexpr auto _ConfigInit       = _SDConfigMsg(_SDConfigMsg::Action::Init,      _SDConfigMsg::ClkSpeed::Slow,   0);
+    static constexpr auto _ConfigClkSetOff  = _SDConfigMsg(_SDConfigMsg::ClkSpeed::Off,  0);
+    static constexpr auto _ConfigClkSetSlow = _SDConfigMsg(_SDConfigMsg::ClkSpeed::Slow, T_ClkDelaySlow);
+    static constexpr auto _ConfigClkSetFast = _SDConfigMsg(_SDConfigMsg::ClkSpeed::Fast, T_ClkDelayFast);
+    
+    static constexpr auto _ConfigPinModeSetPushPull  = _SDConfigMsg(_SDConfigMsg::PinMode::PushPull);
+    static constexpr auto _ConfigPinModeSetOpenDrain = _SDConfigMsg(_SDConfigMsg::PinMode::OpenDrain);
+    
+    static constexpr auto _ConfigReset = _SDConfigMsg(_SDConfigMsg::Action::Reset);
+    static constexpr auto _ConfigInit  = _SDConfigMsg(_SDConfigMsg::Action::Init);
     
     static constexpr auto _Us = T_Scheduler::Us;
     static constexpr auto _Ms = T_Scheduler::Ms;
