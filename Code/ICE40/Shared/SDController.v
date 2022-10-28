@@ -12,14 +12,13 @@
 `define SDController_BlockLen                       512
 
 `define SDController_Config_Action_Reset            2'b00
-`define SDController_Config_Action_Init             2'b01
-`define SDController_Config_Action_ClkSet           2'b10
-`define SDController_Config_Action_PinModeSet       2'b11
+`define SDController_Config_Action_ClkSet           2'b01
+`define SDController_Config_Action_PinModeSet       2'b10
 `define SDController_Config_Action_Width            2
 
-`define SDController_Config_ClkSpeed_Slow           2'b00
-`define SDController_Config_ClkSpeed_Off            2'b01
-`define SDController_Config_ClkSpeed_Fast           2'b11
+`define SDController_Config_ClkSpeed_Off            2'b00
+`define SDController_Config_ClkSpeed_Slow           2'b01
+`define SDController_Config_ClkSpeed_Fast           2'b10
 `define SDController_Config_ClkSpeed_Width          2
 `define SDController_Config_ClkDelay_Width          4
 `define SDController_Config_PinMode_PushPull        `Pin_Mode_PushPull
@@ -155,10 +154,6 @@ module SDController #(
                     cfg_clkDelay <= 0;
                     cfg_pinMode <= `SDController_Config_PinMode_OpenDrain;
                     cfg_resetTrigger <= !cfg_resetTrigger;
-                end
-                
-                `SDController_Config_Action_Init: begin
-                    cfg_initTrigger <= !cfg_initTrigger;
                 end
                 
                 `SDController_Config_Action_ClkSet: begin

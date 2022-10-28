@@ -1,17 +1,25 @@
 - Business
 
     - Order mass quantity
+        - Small signal mosfets
+            https://www.newark.com/torex/xp231p02013r-g/mosfet-p-ch-0-2a-30v-sot-323-3a/dp/91AH9291?st=mosfet
+                Vt_max = 1.2 V
+                Idss = 10 µA
+                $0.024 @ 500
+                $0.024 @ 1000
         - Lens holder (if we end up needed them)
-        - USB-C receptacle
         - Battery
         - Battery header
         - Battery housing (goes into header/receptacle)
             - Only if battery supplier can't attach proper connector to battery
         √ TPS62A01DRLR (350x) from ti.com
             √ Waiting for tax exemption to be accepted
+        √ USB-C receptacle
     
 
-- Board Rev7 Todo
+- Rev7 Todo
+    
+    - Clean up SDController to handle 3V3 initialization
     
     - Remove MSP430<->STM32 level shifter (U15) and connect MSP_TEST / MSP_RST_ directly to STM32
         - Connect VDDSDMMC to VDD_B_3V3_STM
