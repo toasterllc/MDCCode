@@ -538,27 +538,27 @@ struct _MainTask {
             _SDTask::Reset();
             _SDTask::Wait();
             
-            // Perform LVS sequence
-            _SDTask::LVSSequence();
-            _SDTask::Wait();
+//            // Perform LVS sequence
+//            _SDTask::LVSSequence();
+//            _SDTask::Wait();
             
             // Turn on IMG/SD power
             _VDDIMGSDSetEnabled(true);
             _Scheduler::Sleep(_Scheduler::Ms(1000));
             
-//            // Perform LVS sequence
-//            _SDTask::LVSSequence();
-//            _SDTask::Wait();
+            // Perform LVS sequence
+            _SDTask::LVSSequence();
+            _SDTask::Wait();
             
             _Scheduler::Sleep(_Scheduler::Ms(1000));
             _SDTask::Init();
             _SDTask::Wait();
             
-            // Capture image to RAM
-            _ImgTask::Init();
-            _ImgTask::Capture(imgRingBuf.buf.idEnd);
-            const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
-            
+//            // Capture image to RAM
+//            _ImgTask::Init();
+//            _ImgTask::Capture(imgRingBuf.buf.idEnd);
+//            const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+//            
 //            // Copy image from RAM -> SD card
 //            _SDTask::Write(srcRAMBlock);
 //            _SDTask::Wait();
