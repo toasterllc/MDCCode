@@ -537,6 +537,15 @@ struct _MainTask {
         _SDTask::Init();
         _SDTask::Wait();
         
+        // Capture image to RAM
+        _ImgTask::Init();
+        _ImgTask::Capture(imgRingBuf.buf.idEnd);
+        const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+        
+        // Copy image from RAM -> SD card
+        _SDTask::Write(srcRAMBlock);
+        _SDTask::Wait();
+        
         _Scheduler::Sleep(_Scheduler::Ms(1000));
         
         // Reset SDController before we turn off power
