@@ -15,11 +15,11 @@
 `include "ImgSim.v"
 `include "ImgI2CSlaveSim.v"
 
-// // MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
-// // beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
-// // when that happens
-// `define MOBILE_SDR_INIT_VAL 16'hCAFE
-// `include "mt48h32m16lf/mobile_sdr.v"
+// MOBILE_SDR_INIT_VAL: Initialize the memory because ImgController reads a few words
+// beyond the image that's written to the RAM, and we don't want to read `x` (don't care)
+// when that happens
+`define MOBILE_SDR_INIT_VAL 16'hCAFE
+`include "mt48h32m16lf/mobile_sdr.v"
 
 `endif // _ICEApp_Img_En
 
@@ -37,6 +37,8 @@ module ICEAppSim();
     wire        ice_stm_spi_d_ready;
     wire        ice_stm_spi_d_ready_rev4bodge;
     
+    // sd_clk: this is a `tri1` instead of a `wire` becuase our hardware has a pullup on sd_clk (which isn't in the SD spec)
+    // We have this pullup because we perform SD initialization using open-drain comms, to be compatible with 3V3 signalling.
     tri1        sd_clk;
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
@@ -78,18 +80,18 @@ module ICEAppSim();
     localparam Sim_SDBlockWordCount         = 256; // Each SD block is 512 bytes == 256 16-bit words
     
     `ifdef _ICEApp_Img_En
-        // mobile_sdr mobile_sdr(
-        //     .clk(ram_clk),
-        //     .cke(ram_cke),
-        //     .addr(ram_a),
-        //     .ba(ram_ba),
-        //     .cs_n(ram_cs_),
-        //     .ras_n(ram_ras_),
-        //     .cas_n(ram_cas_),
-        //     .we_n(ram_we_),
-        //     .dq(ram_dq),
-        //     .dqm(ram_dqm)
-        // );
+        mobile_sdr mobile_sdr(
+            .clk(ram_clk),
+            .cke(ram_cke),
+            .addr(ram_a),
+            .ba(ram_ba),
+            .cs_n(ram_cs_),
+            .ras_n(ram_ras_),
+            .cas_n(ram_cas_),
+            .we_n(ram_we_),
+            .dq(ram_dq),
+            .dqm(ram_dqm)
+        );
         
         ImgSim #(
             .ImgWidth(`Img_Width),
@@ -465,43 +467,18 @@ module ICEAppSim();
         #(100_000); // Wait 100us for the change to take effect
     end endtask
     
-    task TestSDConfigInit; begin
+    task TestSDConfigInit(
+        input[`Msg_Arg_SDConfig_ClkSpeed_Len-1:0] clkSpeed,
+        input[`Msg_Arg_SDConfig_ClkDelay_Len-1:0] clkDelay,
+        input[`Msg_Arg_SDConfig_PinMode_Len-1:0] pinMode
+    ); begin
         reg[`Msg_Arg_Len-1:0] arg;
         
         $display("\n[ICEAppSim] ========== TestSDConfigInit ==========");
         arg = 0;
         arg[`Msg_Arg_SDConfig_Action_Bits] = `SDController_Config_Action_Init;
-        
-        SendMsg(`Msg_Type_SDConfig, arg);
-        
-        #(100_000); // Wait 100us for the change to take effect
-    end endtask
-    
-    task TestSDConfigClkSet(
-        input[`Msg_Arg_SDConfig_ClkSpeed_Len-1:0] clkSpeed,
-        input[`Msg_Arg_SDConfig_ClkDelay_Len-1:0] clkDelay
-    ); begin
-        reg[`Msg_Arg_Len-1:0] arg;
-        
-        $display("\n[ICEAppSim] ========== TestSDConfigClkSet ==========");
-        arg = 0;
-        arg[`Msg_Arg_SDConfig_Action_Bits] = `SDController_Config_Action_ClkSet;
         arg[`Msg_Arg_SDConfig_ClkSpeed_Bits] = clkSpeed;
         arg[`Msg_Arg_SDConfig_ClkDelay_Bits] = clkDelay;
-        
-        SendMsg(`Msg_Type_SDConfig, arg);
-        
-        #(100_000); // Wait 100us for the change to take effect
-    end endtask
-    
-    task TestSDConfigPinModeSet(
-        input[`Msg_Arg_SDConfig_PinMode_Len-1:0] pinMode
-    ); begin
-        reg[`Msg_Arg_Len-1:0] arg;
-        
-        $display("\n[ICEAppSim] ========== TestSDConfigPinModeSet ==========");
-        arg = 0;
-        arg[`Msg_Arg_SDConfig_Action_Bits] = `SDController_Config_Action_PinModeSet;
         arg[`Msg_Arg_SDConfig_PinMode_Bits] = pinMode;
         
         SendMsg(`Msg_Type_SDConfig, arg);
@@ -515,13 +492,12 @@ module ICEAppSim();
         
         $display("\n[ICEAppSim] ========== TestSDInit ==========");
         
-        // Set SD clock source (=slow) and delay (=0)
-        TestSDConfigClkSet(`SDController_Config_ClkSpeed_Slow, 0);
+        TestSDConfigReset();
         
         // <-- Turn on power to SD card
         
-        // Trigger LVS init sequence
-        TestSDConfigInit();
+        // Set SD.ClkSpeed=slow / SD.ClkDelay=0 / SD.PinMode=OpenDrain
+        TestSDConfigInit(`SDController_Config_ClkSpeed_Slow, 0, `SDController_Config_PinMode_OpenDrain);
     
     `ifdef SIM
         // Wait 50us, because waiting 5ms takes forever in simulation
@@ -581,12 +557,12 @@ module ICEAppSim();
             `Finish;
         end
         
-        if (sd_cmd !== 1'b0) begin
+        if (sd_cmd !== 1'b1) begin
             $display("[ICEAppSim] sd_cmd invalid after SDController reset: %b ❌", sd_cmd);
             `Finish;
         end
         
-        if (sd_dat !== 4'b0) begin
+        if (sd_dat !== 4'b1111) begin
             $display("[ICEAppSim] sd_dat invalid after SDController reset: %b ❌", sd_dat);
             `Finish;
         end
@@ -884,39 +860,39 @@ module ICEAppSim();
             TestSDReset();
         `endif
         
-        // `ifdef _ICEApp_Img_En
-        //     // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
-        //     TestImgReset();
-        //     TestImgSetHeader(0, {
-        //         8'hEE, 8'hFF, 8'hC0                 /* magic number */,
-        //         8'h00                               /* version */,
-        //         LittleFromHost16.Swap(16'd2304)     /* image width          */
-        //     });
-        //
-        //     TestImgSetHeader(1, {
-        //         LittleFromHost16.Swap(16'd1296)     /* image height         */,
-        //         LittleFromHost16.Swap(16'h1111)     /* coarse int time      */,
-        //         LittleFromHost16.Swap(16'h2222)     /* analog gain          */
-        //     });
-        //
-        //     TestImgSetHeader(2, {
-        //         LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
-        //         8'hAA                               /* timestamp[b0]        */,
-        //         8'hBB                               /* timestamp[b1]        */
-        //     });
-        //
-        //     TestImgSetHeader(3, {
-        //         8'hCC                               /* timestamp[b2]        */,
-        //         8'hDD                               /* timestamp[b3]        */,
-        //         8'hEE                               /* timestamp[b4]        */,
-        //         8'hFF                               /* timestamp[b5]        */,
-        //         8'h42                               /* timestamp[b6]        */,
-        //         8'h43                               /* timestamp[b7]        */
-        //     });
-        //
-        //     TestImgI2CWriteRead();
-        //     TestImgCapture();
-        // `endif // _ICEApp_Img_En
+        `ifdef _ICEApp_Img_En
+            // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
+            TestImgReset();
+            TestImgSetHeader(0, {
+                8'hEE, 8'hFF, 8'hC0                 /* magic number */,
+                8'h00                               /* version */,
+                LittleFromHost16.Swap(16'd2304)     /* image width          */
+            });
+
+            TestImgSetHeader(1, {
+                LittleFromHost16.Swap(16'd1296)     /* image height         */,
+                LittleFromHost16.Swap(16'h1111)     /* coarse int time      */,
+                LittleFromHost16.Swap(16'h2222)     /* analog gain          */
+            });
+
+            TestImgSetHeader(2, {
+                LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
+                8'hAA                               /* timestamp[b0]        */,
+                8'hBB                               /* timestamp[b1]        */
+            });
+
+            TestImgSetHeader(3, {
+                8'hCC                               /* timestamp[b2]        */,
+                8'hDD                               /* timestamp[b3]        */,
+                8'hEE                               /* timestamp[b4]        */,
+                8'hFF                               /* timestamp[b5]        */,
+                8'h42                               /* timestamp[b6]        */,
+                8'h43                               /* timestamp[b7]        */
+            });
+
+            TestImgI2CWriteRead();
+            TestImgCapture();
+        `endif // _ICEApp_Img_En
 
         `ifdef _ICEApp_SD_En
             TestSDInit();
@@ -926,31 +902,32 @@ module ICEAppSim();
             TestSDCMD2();
             TestSDCMD6();
             
-            TestSDConfigClkSet(`SDController_Config_ClkSpeed_Fast, 0);
+            // Set SD.ClkSpeed=fast / SD.ClkDelay=0 / SD.PinMode=PushPull
+            TestSDConfigInit(`SDController_Config_ClkSpeed_Fast, 0, `SDController_Config_PinMode_PushPull);
             
             TestSDRespRecovery();
         `endif // _ICEApp_SD_En
 
-        // `ifdef ICEApp_ImgReadoutToSD_En
-        //     TestImgReadoutToSD(1); // Readout thumbnail image
-        //     TestImgReadoutToSD(0); // Readout full size image
-        //     TestImgReadoutToSDRecovery();
-        // `endif // ICEApp_ImgReadoutToSD_En
-        //
-        // `ifdef ICEApp_SDReadoutToSPI_En
-        //     TestSDReadoutToSPI();
-        //     TestLEDSet(4'b1010);
-        //     TestSDReadoutToSPI();
-        // `endif // ICEApp_SDReadoutToSPI_En
-        //
-        // `ifdef ICEApp_ImgReadoutToSPI_En
-        //     TestImgReadoutToSPI(1);
-        //     TestImgReadoutToSPI(0);
-        // `endif // ICEApp_ImgReadoutToSPI_En
-        //
-        // `ifdef _ICEApp_SD_En
-        //     TestSDReset();
-        // `endif
+        `ifdef ICEApp_ImgReadoutToSD_En
+            TestImgReadoutToSD(1); // Readout thumbnail image
+            TestImgReadoutToSD(0); // Readout full size image
+            TestImgReadoutToSDRecovery();
+        `endif // ICEApp_ImgReadoutToSD_En
+
+        `ifdef ICEApp_SDReadoutToSPI_En
+            TestSDReadoutToSPI();
+            TestLEDSet(4'b1010);
+            TestSDReadoutToSPI();
+        `endif // ICEApp_SDReadoutToSPI_En
+
+        `ifdef ICEApp_ImgReadoutToSPI_En
+            TestImgReadoutToSPI(1);
+            TestImgReadoutToSPI(0);
+        `endif // ICEApp_ImgReadoutToSPI_En
+
+        `ifdef _ICEApp_SD_En
+            TestSDReset();
+        `endif
         
         `Finish;
     end

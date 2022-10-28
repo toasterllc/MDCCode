@@ -12,8 +12,7 @@
 `define SDController_BlockLen                       512
 
 `define SDController_Config_Action_Reset            2'b00
-`define SDController_Config_Action_ClkSet           2'b01
-`define SDController_Config_Action_PinModeSet       2'b10
+`define SDController_Config_Action_Init             2'b01
 `define SDController_Config_Action_Width            2
 
 `define SDController_Config_ClkSpeed_Slow           1'b0
@@ -114,9 +113,13 @@ module SDController #(
     // ====================
     // Config State Machine
     // ====================
+    localparam Cfg_ClkSpeed_Slow    = 2'b00; // Default
+    localparam Cfg_ClkSpeed_Off     = 2'b01;
+    localparam Cfg_ClkSpeed_Fast    = 2'b11;
+    
     reg[1:0] cfg_state = 0;
-    reg[1:0] cfg_clkSpeed = `SDController_Config_ClkSpeed_Slow;
-    reg[1:0] cfg_clkSpeedNext = `SDController_Config_ClkSpeed_Slow;
+    reg[1:0] cfg_clkSpeed = Cfg_ClkSpeed_Slow;
+    reg[1:0] cfg_clkSpeedNext = Cfg_ClkSpeed_Slow;
     wire cfg_clkSpeed_slow = !cfg_clkSpeed[0];
     wire cfg_clkSpeed_fast = cfg_clkSpeed[1];
     reg [`SDController_Config_ClkDelay_Width-1:0] cfg_clkDelay = 0;
@@ -138,7 +141,7 @@ module SDController #(
             
             1: begin
                 // Disable clock
-                cfg_clkSpeed <= `SDController_Config_ClkSpeed_Off;
+                cfg_clkSpeed <= Cfg_ClkSpeed_Off;
                 // By default, restore the current clock speed
                 cfg_clkSpeedNext <= cfg_clkSpeed;
                 // Delay to ensure clock is stopped
@@ -149,19 +152,17 @@ module SDController #(
             2: begin
                 case (config_action)
                 `SDController_Config_Action_Reset: begin
-                    cfg_clkSpeedNext <= `SDController_Config_ClkSpeed_Slow;
+                    cfg_clkSpeedNext <= Cfg_ClkSpeed_Slow;
                     cfg_clkDelay <= 0;
                     cfg_pinMode <= `SDController_Config_PinMode_OpenDrain;
                     cfg_resetTrigger <= !cfg_resetTrigger;
                 end
                 
-                `SDController_Config_Action_ClkSet: begin
-                    cfg_clkSpeedNext <= config_clkSpeed;
+                `SDController_Config_Action_Init: begin
+                    cfg_clkSpeedNext <= (config_clkSpeed===`SDController_Config_ClkSpeed_Slow ? Cfg_ClkSpeed_Slow : Cfg_ClkSpeed_Fast);
                     cfg_clkDelay <= config_clkDelay;
-                end
-                
-                `SDController_Config_Action_PinModeSet: begin
                     cfg_pinMode <= config_pinMode;
+                    cfg_initTrigger <= !cfg_initTrigger;
                 end
                 endcase
                 
@@ -213,12 +214,7 @@ module SDController #(
     // ====================
     // Manual SD Line Control
     // ====================
-    reg         man_en_         = 0;
-    reg         man_sdClk       = 0;
-    wire        man_sdCmdOut    = 0;
-    reg         man_sdCmdOutEn  = 0;
-    wire[3:0]   man_sdDatOut    = 0;
-    reg[3:0]    man_sdDatOutEn  = 0;
+    reg man_en_ = 0;
     `Sync(man_enSynced_, man_en_, negedge, clk_int);
     
     // ====================
@@ -641,7 +637,6 @@ module SDController #(
         7: begin
             // Disable sd_clk while we're in this state
             man_en_ <= 0;
-            man_sdClk <= 0;
             
             // Wait until the FIFO can accept data
             if (datInWrite_ready) begin
@@ -726,8 +721,11 @@ module SDController #(
         // ====================
         case (init_state)
         0: begin
+            cmd_state <= 0;
+            resp_state <= 0;
+            datOut_state <= 0;
+            datIn_state <= 0;
             man_en_ <= 0;
-            man_sdClk <= 0;
         end
         
         1: begin
@@ -747,32 +745,27 @@ module SDController #(
     // ====================
     // Pin: sd_clk
     // ====================
-    wire sd_clkOut = (!man_enSynced_ ? man_sdClk : clk_int_delayed);
     PinOut #(
-        .Reg(0),
-        .Pullup(1) // Remove once we have a physical hardware pullup
+        .Reg(0)
     ) PinOut_sd_clk (
-        .clk(),
-        // .mode(`SDController_Config_PinMode_PushPull),     // TODO: remove and uncomment below once we have a physical pullup
-        .mode(cfg_pinMode),
-        .out(sd_clkOut),
-        .pin(sd_clk)
+        .clk(                                           ),
+        .mode(cfg_pinMode                               ),
+        .out(!man_enSynced_ ? 1'b0 : clk_int_delayed    ),
+        .pin(sd_clk                                     )
     );
     
     // ====================
     // Pin: sd_cmd
     // ====================
-    wire sd_cmdDir = (!man_enSynced_ ? man_sdCmdOutEn : cmd_active[0]);
-    wire sd_cmdOut = (!man_enSynced_ ? man_sdCmdOut : cmdresp_shiftReg[47]);
     PinInOut #(
         .Reg(1)
     ) PinInOut_sd_cmd (
-        .clk(clk_int),
-        .mode(cfg_pinMode),
-        .dir(sd_cmdDir),
-        .out(sd_cmdOut),
-        .in(cmd_in),
-        .pin(sd_cmd)
+        .clk    (clk_int                ),
+        .mode   (cfg_pinMode            ),
+        .dir    (cmd_active[0]          ),
+        .out    (cmdresp_shiftReg[47]   ),
+        .in     (cmd_in                 ),
+        .pin    (sd_cmd                 )
     );
     
     // ====================
@@ -783,12 +776,12 @@ module SDController #(
         SB_IO #(
             .PIN_TYPE(6'b1101_00)
         ) SB_IO_sd_dat (
-            .INPUT_CLK      (clk_int                                                    ),
-            .OUTPUT_CLK     (clk_int                                                    ),
-            .PACKAGE_PIN    (sd_dat[i]                                                  ),
-            .OUTPUT_ENABLE  (!man_enSynced_ ? man_sdDatOutEn[i]    : datOut_active[0]   ),
-            .D_OUT_0        (!man_enSynced_ ? man_sdDatOut[i]      : datOut_reg[16+i]   ),
-            .D_IN_0         (datIn[i]                                                   )
+            .INPUT_CLK      (clk_int            ),
+            .OUTPUT_CLK     (clk_int            ),
+            .PACKAGE_PIN    (sd_dat[i]          ),
+            .OUTPUT_ENABLE  (datOut_active[0]   ),
+            .D_OUT_0        (datOut_reg[16+i]   ),
+            .D_IN_0         (datIn[i]           )
         );
     end
     
