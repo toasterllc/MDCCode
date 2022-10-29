@@ -516,48 +516,60 @@ struct _MainTask {
 //            _Scheduler::Sleep(_Scheduler::Ms(10000));
 //        }
         
-        const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
-        
-        // Turn on VDD_B power (turns on ICE40)
-        _VDDBSetEnabled(true);
-        
-        // Reset SDController before we turn on power
-        _SDTask::Reset();
-        _SDTask::Wait();
-        _Scheduler::Sleep(_Scheduler::Ms(1000));
-        
-//        // Perform LVS sequence
-//        _SDTask::LVSSequence();
-//        _SDTask::Wait();
-        
-        // Turn on IMG/SD power
-        _VDDIMGSDSetEnabled(true);
-        _Scheduler::Sleep(_Scheduler::Ms(1000));
-        
-        _SDTask::Init();
-        _SDTask::Wait();
-        
-        // Capture image to RAM
-        _ImgTask::Init();
-        _ImgTask::Capture(imgRingBuf.buf.idEnd);
-        const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
-        
-        // Copy image from RAM -> SD card
-        _SDTask::Write(srcRAMBlock);
-        _SDTask::Wait();
-        
-        _Scheduler::Sleep(_Scheduler::Ms(1000));
-        
-        // Reset SDController before we turn off power
-        _SDTask::Reset();
-        _SDTask::Wait();
-        
-        _VDDIMGSDSetEnabled(false);
-        
-        // Go to sleep
         for (;;) {
-            _Scheduler::Sleep(_Scheduler::Ms(10000));
+        
+            const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
+            
+            // Turn on VDD_B power (turns on ICE40)
+            _VDDBSetEnabled(true);
+            _Scheduler::Sleep(_Scheduler::Ms(250)); // Wait for ICE40 to turn on
+            
+            // Reset SDController before we turn on power
+            _SDTask::Reset();
+            _SDTask::Wait();
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
+            
+            // Turn on IMG/SD power
+            _VDDIMGSDSetEnabled(true);
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
+            
+            _SDTask::Init();
+            _SDTask::Wait();
+            
+            // Capture image to RAM
+            _ImgTask::Init();
+            _ImgTask::Capture(imgRingBuf.buf.idEnd);
+            const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+            
+            // Copy image from RAM -> SD card
+            _SDTask::Write(srcRAMBlock);
+            _SDTask::Wait();
+            
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
+            
+            // Reset SDController before we turn off power
+            _SDTask::Reset();
+            _SDTask::Wait();
+            
+            _VDDIMGSDSetEnabled(false);
+            
+            for (int i=0; i<10; i++) {
+                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+                _Scheduler::Sleep(_Scheduler::Ms(100));
+                
+                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+                _Scheduler::Sleep(_Scheduler::Ms(100));
+            }
+            
+            // Turn off VDD_B power (turns on ICE40)
+            _VDDBSetEnabled(false);
+        
         }
+        
+//        // Go to sleep
+//        for (;;) {
+//            _Scheduler::Sleep(_Scheduler::Ms(10000));
+//        }
     }
     
     static bool DeepSleepOK() {
