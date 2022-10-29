@@ -2,19 +2,19 @@
 # -----------------------------------------------------------
 # Clk                                                    Freq
 # -----------------------------------------------------------
-# ICEApp.SDController.clk_slow                         176.03 
-# ICEApp.readoutfifo_r_clk_$glb_clk                    141.92 *
-# ICEApp.sd_clk_int                                    365.23 
-# ICEApp.spi_clk_$glb_clk                              116.25 
-# ice_img_clk16mhz$SB_IO_IN                            113.15 
+# ICEApp.SDController.clk_slow                         199.60 
+# ICEApp.readoutfifo_r_clk_$glb_clk                    135.21 *
+# ICEApp.sd_clk_int                                    316.06 
+# ICEApp.spi_clk_$glb_clk                               97.78 
+# ice_img_clk16mhz$SB_IO_IN                            127.03 
 # img_dclk$SB_IO_IN_$glb_clk                           145.62 *
-# ram_clk$SB_IO_OUT_$glb_clk                           124.22 *
+# ram_clk$SB_IO_OUT_$glb_clk                           122.10 *
 
 ['--placer-heap-alpha',
- '0.025',
+ '0.30000000000000004',
  '--placer-heap-beta',
  '0.5',
  '--placer-heap-critexp',
- '1',
+ '9',
  '--placer-heap-timingweight',
- '16']
+ '6']
