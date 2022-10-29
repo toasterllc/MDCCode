@@ -11,9 +11,9 @@
 
 `define SDController_BlockLen                       512
 
-`define SDController_Config_Action_Reset            2'b00
-`define SDController_Config_Action_Init             2'b01
-`define SDController_Config_Action_Width            2
+`define SDController_Config_Action_Reset            1'b0
+`define SDController_Config_Action_Init             1'b1
+`define SDController_Config_Action_Width            1
 
 `define SDController_Config_ClkSpeed_Slow           1'b0
 `define SDController_Config_ClkSpeed_Fast           1'b1

@@ -77,17 +77,12 @@ public:
     };
     
     struct SDConfigMsg : Msg {
-        enum class Action : uint8_t {
-            Reset       = 0,
-            Init        = 1,
-            ClkSet      = 2,
-            PinModeSet  = 3,
-        };
+        static constexpr struct _Reset{} Reset = {};
+        static constexpr struct _Init{} Init = {};
         
         enum class ClkSpeed : uint8_t {
-            Slow    = 0,
-            Off     = 1,
-            Fast    = 3,
+            Slow = 0,
+            Fast = 1,
         };
         
         enum class PinMode : uint8_t {
@@ -95,34 +90,24 @@ public:
             OpenDrain   = 1,
         };
         
-        constexpr SDConfigMsg(Action action) : Msg(MsgType::StartBit | 0x02,
+        constexpr SDConfigMsg(_Reset) : Msg(MsgType::StartBit | 0x02,
             0,
             0,
             0,
             0,
             0,
             0,
-            (uint8_t)action
+            0 // action; 0=reset
         ) {}
         
-        constexpr SDConfigMsg(ClkSpeed clkSpeed, uint8_t clkDelay) : Msg(MsgType::StartBit | 0x02,
-            0,
-            0,
-            0,
-            0,
-            clkDelay,
-            (uint8_t)clkSpeed,
-            (uint8_t)Action::ClkSet
-        ) {}
-        
-        constexpr SDConfigMsg(PinMode pinMode) : Msg(MsgType::StartBit | 0x02,
-            0,
-            0,
+        constexpr SDConfigMsg(_Init, ClkSpeed clkSpeed, uint8_t clkDelay, PinMode pinMode) : Msg(MsgType::StartBit | 0x02,
             0,
             0,
             0,
             (uint8_t)pinMode,
-            (uint8_t)Action::PinModeSet
+            clkDelay,
+            (uint8_t)clkSpeed,
+            1 // action; 1=init
         ) {}
     };
     
