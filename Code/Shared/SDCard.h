@@ -87,8 +87,8 @@ public:
         //   Send interface condition
         // ====================
         {
-            constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
-            constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
+            constexpr uint32_t Voltage       = 0x00000002; // b0010 == 'Low Voltage Range'
+            constexpr uint32_t CheckPattern  = 0x000000A5; // b10100101 == 3.3V range, 1.8V signalling
             const _SDStatusResp status = _SendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
             const uint8_t replyVoltage = status.template respGetBits<19,16>();
             Assert(replyVoltage == Voltage);
@@ -262,8 +262,20 @@ public:
             // Group 2 (Command System)    = 0xF (no change)
             // Group 1 (Access Mode)       = 0x2 (SDR104)
             
+//            // Set Current Limit
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FF3FFF, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//            }
+//            
+//            // Set Drive Strength
+//            {
+//                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFF1FF, _RespType::Len48, _DatInType::Len512x1);
+//                Assert(!status.datInCRCErr());
+//            }
+            
             {
-                const _SDStatusResp status = _SendCmd(_CMD6, 0x00FFFFF3, _RespType::Len48, _DatInType::Len512x1);
+                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
                 Assert(!status.datInCRCErr());
                 const uint8_t accessMode = status.datInCMD6AccessMode();
                 T_Error(accessMode);
