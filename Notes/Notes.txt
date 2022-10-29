@@ -19,6 +19,14 @@
 
 - Rev7 Todo
     
+    - Try 22k pull-up resistors for open-drain comms, so that we can use 400 kHz
+        - The issue with this is how it affects the high-speed (102MHz) comms:
+            - sd_cmd/sd_dat: the lower the resistance, the more the pullup will affect the high-speed signal
+            - sd_clk: the lower the resistance, the more the capacitance of the small-signal mosfet will be visible
+    
+    - Disable SD's DAT3 pullup by sending it the appropriate command? should help with signal integrity...
+        ACMD42 / SET_CLR_CARD_DETECT
+    
     - Clean up SDController to handle 3V3 initialization
     
     - Remove MSP430<->STM32 level shifter (U15) and connect MSP_TEST / MSP_RST_ directly to STM32

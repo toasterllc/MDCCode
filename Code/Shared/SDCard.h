@@ -77,8 +77,6 @@ public:
             Assert(replyCheckPattern == CheckPattern);
         }
         
-//        T_Error(11111);
-        
         // ====================
         // ACMD41 (CMD55, CMD41) | SD_SEND_OP_COND
         //   State: Idle -> Ready
@@ -125,7 +123,7 @@ public:
             _Sleep(_Ms(6));
             
             // Re-enable clock
-            T_ICE::Transfer(_ConfigClkSetSlow);
+            T_ICE::Transfer(_ConfigClkSetSlowPushPull);
             _Sleep(_Us(100)); // Wait 10 100kHz cycles (to allow clock to start)
             
             // Wait for SD card to indicate that it's ready (DAT0=1)
@@ -205,13 +203,13 @@ public:
             // Mode = 1 (switch function)  = 0x80
             // Group 6 (Reserved)          = 0xF (no change)
             // Group 5 (Reserved)          = 0xF (no change)
-            // Group 4 (Current Limit)     = 0xF (no change)
+            // Group 4 (Current Limit)     = 0x3 (800mA)
             // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
             // Group 2 (Command System)    = 0xF (no change)
             // Group 1 (Access Mode)       = 0x2 (SDR104)
             
             {
-                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
+                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FF3FF3, _RespType::Len48, _DatInType::Len512x1);
                 Assert(!status.datInCRCErr());
                 const uint8_t accessMode = status.datInCMD6AccessMode();
                 Assert(accessMode == 3);
@@ -327,6 +325,9 @@ private:
     
     static constexpr auto _ConfigClkSetSlow = _SDConfigMsg(
         _SDConfigMsg::Init, _SDConfigMsg::ClkSpeed::Slow, T_ClkDelaySlow, _SDConfigMsg::PinMode::OpenDrain);
+        
+    static constexpr auto _ConfigClkSetSlowPushPull = _SDConfigMsg(
+        _SDConfigMsg::Init, _SDConfigMsg::ClkSpeed::Slow, T_ClkDelaySlow, _SDConfigMsg::PinMode::PushPull);
     
     static constexpr auto _ConfigClkSetFast = _SDConfigMsg(
         _SDConfigMsg::Init, _SDConfigMsg::ClkSpeed::Fast, T_ClkDelayFast, _SDConfigMsg::PinMode::PushPull);
