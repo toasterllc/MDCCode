@@ -19,45 +19,7 @@
 
 - Rev7 Todo
     
-    - SD: implement changing pullup voltage
-    
-    - Disable SD's DAT3 pullup by sending it the appropriate command? should help with signal integrity...
-        ACMD42 / SET_CLR_CARD_DETECT
-    
-    - Clean up SDController to handle 3V3 initialization
-    
-    - Remove MSP430<->STM32 level shifter (U15) and connect MSP_TEST / MSP_RST_ directly to STM32
-        - Connect VDDSDMMC to VDD_B_3V3_STM
-        - Connect MSP_TEST / MSP_RST_ to VDDSDMMC-powered pins
-        - Switch capacitor on MSP_RST_ to the recommended one
-    
-    - Consider removing MSP430<->ICE40 level shifter (U16) and use open-drain comms
-        - We only need open-drain comms on the data line, clock will always be push-pull driven by MSP430
-        - Considerations:
-            - Can ICE40 IOs handle being driven at 3.3V?
-            - What pullup resistor value should we use?
-            - Power consumption?
-    
-    - How do we handle SD initialization?
-        - Options:
-            - Option 1: Require LVS SD cards and init with 1.8V
-                - If all the high-endurance cards support LVS, this seems like a good option because:
-                    - Less complexity, fewer parts
-                        - No need for 2 extra ICE40 IOs that control pullup voltage
-                        - No need for pull-up voltage transistors
-                - DDR50 may let us loosen timing constraints, since the frequency is half, and the output SB_IO is responsible for outputting
-            - Option 2: Allow non-LVS cards and init with 2.8V
-                - Option 2A: use an open-drain solution to be able to output 2.8V.
-                X Option 2B: raise 1.8V to a higher voltage
-                    X That won't work because:
-                        - SD.Vih_min_3V3 = 0.625*VDD = 1.75
-                        - SD.Vih_max_1V8 = 2.0
-                        - ICE40.Voh_min = VCCIO–0.4
-                        - Because SD.Vih_max_1V8=2, ICE40.VCCIO can't be greater than 2V. Therefore if ICE40.VCCIO=2, ICE40.Voh_min = VCCIO–0.4 = 2-.4 = 1.6
-                            - But SD.Vih_min_3V3=1.75 > ICE40.Voh_min=1.6. In other words, SD requires >=1.75V to register as a '1',
-                              but ICE40 may only be able to output 1.6V.
-    
-    - If ICE40 is going to interface directly with SD at 2.8V, can ICE40 interface directly with MSP?
+    - Replace NTB0102GF (U16) with a part that's easier to solder by hand
     
     - Move parts (resistors, capacitors) further away front mount points on front of board
         - We want more safety margin near mount points
@@ -83,6 +45,46 @@
     
     
     
+    
+    X If ICE40 is going to interface directly with SD at 2.8V, can ICE40 interface directly with MSP?
+        X No, see "Consider removing MSP430<->ICE40 level shifter"
+    
+    √ Remove MSP430<->STM32 level shifter (U15) and connect MSP_TEST / MSP_RST_ directly to STM32
+        √ Connect VDDSDMMC to VDD_B_3V3_STM
+        √ Connect MSP_TEST / MSP_RST_ to VDDSDMMC-powered pins
+        X Switch capacitor on MSP_RST_ to the recommended one
+            X We don't use 1nF anywhere else in the design
+    
+    X Consider removing MSP430<->ICE40 level shifter (U16) and use open-drain comms
+        X Using open-drain comms is going to use significantly more power than using a level shifter
+            X For example, to be able to hit 16 MHz, our pullup resistor will need to be 2.5k,
+              so during comms, we'll burn 3.3/2.5e3 = 1.3mA when driving a 0, which sucks.
+        - We only need open-drain comms on the data line, clock will always be push-pull driven by MSP430
+        - Considerations:
+            - Can ICE40 IOs handle being driven at 3.3V?
+            - What pullup resistor value should we use?
+            - Power consumption?
+    
+    √ How do we handle SD initialization?
+        - Options:
+            - Option 1: Require LVS SD cards and init with 1.8V
+                - If all the high-endurance cards support LVS, this seems like a good option because:
+                    - Less complexity, fewer parts
+                        - No need for 2 extra ICE40 IOs that control pullup voltage
+                        - No need for pull-up voltage transistors
+                - DDR50 may let us loosen timing constraints, since the frequency is half, and the output SB_IO is responsible for outputting
+            - Option 2: Allow non-LVS cards and init with 2.8V
+                √ Option 2A: use an open-drain solution to be able to output 2.8V.
+                X Option 2B: raise 1.8V to a higher voltage
+                    X That won't work because:
+                        - SD.Vih_min_3V3 = 0.625*VDD = 1.75
+                        - SD.Vih_max_1V8 = 2.0
+                        - ICE40.Voh_min = VCCIO–0.4
+                        - Because SD.Vih_max_1V8=2, ICE40.VCCIO can't be greater than 2V. Therefore if ICE40.VCCIO=2, ICE40.Voh_min = VCCIO–0.4 = 2-.4 = 1.6
+                            - But SD.Vih_min_3V3=1.75 > ICE40.Voh_min=1.6. In other words, SD requires >=1.75V to register as a '1',
+                              but ICE40 may only be able to output 1.6V.
+    
+    √ SD: implement changing pullup voltage
     
     √ SD: Try 22k pull-up resistors for open-drain comms, so that we can use 400 kHz
         - The issue with this is how it affects the high-speed (102MHz) comms:
@@ -145,6 +147,9 @@
 
 
 - Software / Firmware Todo
+    
+    - MSPApp: Disable SD's DAT3 pullup by sending it the appropriate command, to help with signal integrity
+        ACMD42 / SET_CLR_CARD_DETECT
     
     - MSPApp: while running on battery power with CurrentRanger monitoring, after some time the current
       consumption jumped from ~8µA to ~150µA, apparently not due to motion. Was this due to RTC timer
@@ -274,3 +279,5 @@
         - One cause is because Img::Sensor::Init() failed, because of an IMG I2C error
             - Might be because we're not waiting long enough after turning on the power rails to do I2C comms
                 - "#warning TODO: measure how long it takes for IMG rails to rise"
+    
+    √ SDController: clean up handling of 3V3 initialization
