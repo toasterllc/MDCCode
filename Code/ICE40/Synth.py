@@ -102,7 +102,7 @@ def opt():
         'timingweight': range(1,35, 5),
     }
     
-    cfg = dict(num_iteration=10)
+    cfg = dict(num_iteration=30)
     tuner = Tuner(space, nextpnrOptTrial, cfg)
     results = tuner.maximize()
     
