@@ -313,6 +313,8 @@ module ICEApp(
                 sd_config_clkSpeed = 0;
     reg[`SDController_Config_ClkDelay_Width-1:0]
                 sd_config_clkDelay = 0;
+    reg[`SDController_Config_PinMode_Width-1:0]
+                sd_config_pinMode = 0;
     reg         sd_cmd_trigger          = 0;
     reg[47:0]   sd_cmd_data             = 0;
     reg[1:0]    sd_cmd_respType         = 0;
@@ -352,6 +354,7 @@ module ICEApp(
         .config_action(sd_config_action),
         .config_clkSpeed(sd_config_clkSpeed),
         .config_clkDelay(sd_config_clkDelay),
+        .config_pinMode(sd_config_pinMode),
         
         .cmd_trigger(sd_cmd_trigger),
         .cmd_data(sd_cmd_data),
@@ -666,16 +669,18 @@ module ICEApp(
 `ifdef _ICEApp_SD_En
                 // Set SD clock source
                 `Msg_Type_SDConfig: begin
-                    $display("[SPI] Got Msg_Type_SDConfig: delay=%0d speed=%0d action=%0d",
-                        spi_msgArg[`Msg_Arg_SDConfig_ClkDelay_Bits],
-                        spi_msgArg[`Msg_Arg_SDConfig_ClkSpeed_Bits],
+                    $display("[SPI] Got Msg_Type_SDConfig: action=%0d speed=%0d delay=%0d pinMode=%0d",
                         spi_msgArg[`Msg_Arg_SDConfig_Action_Bits],
+                        spi_msgArg[`Msg_Arg_SDConfig_ClkSpeed_Bits],
+                        spi_msgArg[`Msg_Arg_SDConfig_ClkDelay_Bits],
+                        spi_msgArg[`Msg_Arg_SDConfig_PinMode_Bits]
                     );
                     
-                    sd_config_clkDelay  <= spi_msgArg[`Msg_Arg_SDConfig_ClkDelay_Bits];
-                    sd_config_clkSpeed  <= spi_msgArg[`Msg_Arg_SDConfig_ClkSpeed_Bits];
-                    sd_config_action    <= spi_msgArg[`Msg_Arg_SDConfig_Action_Bits];
                     sd_config_trigger   <= !sd_config_trigger;
+                    sd_config_action    <= spi_msgArg[`Msg_Arg_SDConfig_Action_Bits];
+                    sd_config_clkSpeed  <= spi_msgArg[`Msg_Arg_SDConfig_ClkSpeed_Bits];
+                    sd_config_clkDelay  <= spi_msgArg[`Msg_Arg_SDConfig_ClkDelay_Bits];
+                    sd_config_pinMode   <= spi_msgArg[`Msg_Arg_SDConfig_PinMode_Bits];
                 end
                 
                 // Clock out SD command

@@ -23,7 +23,8 @@ public:
     static void Reset() {
         // Reset SDController
         T_ICE::Transfer(_ConfigReset);
-        _Sleep(_Us(1));
+        // TODO: switch to sleeping 25us when we get back to 400 kHz
+        _Sleep(_Us(100)); // Wait 10 100kHz cycles
     }
     
     static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
@@ -31,12 +32,8 @@ public:
         
         // Enable slow SDController clock
         T_ICE::Transfer(_ConfigClkSetSlow);
-        _Sleep(_Us(1));
-        
-        // Trigger the SD card low voltage signalling (LVS) init sequence
-        T_ICE::Transfer(_ConfigInit);
-        // Wait 6ms for the LVS init sequence to complete (LVS spec specifies 5ms, and ICE40 waits 5.5ms)
-        _Sleep(_Ms(6));
+        // TODO: switch to sleeping 25us when we get back to 400 kHz
+        _Sleep(_Us(100)); // Wait 10 100kHz cycles
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -57,7 +54,7 @@ public:
         //   Send interface condition
         // ====================
         {
-            constexpr uint32_t Voltage       = 0x00000002; // 0b0010 == 'Low Voltage Range'
+            constexpr uint32_t Voltage       = 0x00000001;
             constexpr uint32_t CheckPattern  = 0x000000AA; // "It is recommended to use '10101010b' for the 'check pattern'"
             const _SDStatusResp status = _SendCmd(_CMD8, (Voltage<<8)|(CheckPattern<<0));
             const uint8_t replyVoltage = status.template respGetBits<19,16>();
@@ -84,8 +81,43 @@ public:
                 if (!ready) continue;
                 // Check S18A; for LVS initialization, it's expected to be 0
                 const bool S18A = status.template respGetBit<32>();
-                Assert(S18A == 0);
+                Assert(S18A == 1);
                 break;
+            }
+        }
+        
+        // ====================
+        // CMD11 | VOLTAGE_SWITCH
+        //   State: Ready -> Ready
+        //   Switch to 1.8V
+        // ====================
+        {
+            #warning TODO: in the future we need to switch from 2.8V -> 1.8V pullups here (once our hardware supports it)
+            _SendCmd(_CMD11, 0, _RespType::Len48);
+            
+            // At this point the SD card must be driving CMD=0 / DAT[0:3]=0
+            // Verify this by checking DAT[0]
+            {
+                const _SDStatusResp status = T_ICE::SDStatus();
+                Assert(!status.dat0Idle());
+            }
+            
+            // Reset SDController (which turns off the clock)
+            T_ICE::Transfer(_ConfigReset);
+            
+            // Wait >5ms while clock is stopped (per SD spec)
+            _Sleep(_Ms(6));
+            
+            // Re-enable clock
+            T_ICE::Transfer(_ConfigClkSetSlowPushPull);
+            // TODO: switch to sleeping 25us when we get back to 400 kHz
+            _Sleep(_Us(100)); // Wait 10 100kHz cycles (to allow clock to start)
+            
+            // Wait for SD card to indicate that it's ready (DAT0=1)
+            #warning TODO: implement timeout in case something's broken
+            for (;;) {
+                const _SDStatusResp status = T_ICE::SDStatus();
+                if (status.dat0Idle()) break;
             }
         }
         
@@ -158,15 +190,17 @@ public:
             // Mode = 1 (switch function)  = 0x80
             // Group 6 (Reserved)          = 0xF (no change)
             // Group 5 (Reserved)          = 0xF (no change)
-            // Group 4 (Current Limit)     = 0xF (no change)
+            // Group 4 (Current Limit)     = 0x3 (800mA)
             // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
             // Group 2 (Command System)    = 0xF (no change)
-            // Group 1 (Access Mode)       = 0x3 (SDR104)
-            const _SDStatusResp status = _SendCmd(_CMD6, 0x80FFFFF3, _RespType::Len48, _DatInType::Len512x1);
-            Assert(!status.datInCRCErr());
-            // Verify that the access mode was successfully changed
-            // TODO: properly handle this failing, see CMD6 docs
-            Assert(status.datInCMD6AccessMode() == 0x03);
+            // Group 1 (Access Mode)       = 0x2 (SDR104)
+            
+            {
+                const _SDStatusResp status = _SendCmd(_CMD6, 0x80FF3FF3, _RespType::Len48, _DatInType::Len512x1);
+                Assert(!status.datInCRCErr());
+                const uint8_t accessMode = status.datInCMD6AccessMode();
+                Assert(accessMode == 3);
+            }
         }
         
         // SDClock=Fast
@@ -274,10 +308,16 @@ private:
     using _RespType     = typename T_ICE::SDSendCmdMsg::RespType;
     using _DatInType    = typename T_ICE::SDSendCmdMsg::DatInType;
     
-    static constexpr auto _ConfigClkSetSlow = _SDConfigMsg(_SDConfigMsg::Action::ClkSet,    _SDConfigMsg::ClkSpeed::Slow,   T_ClkDelaySlow);
-    static constexpr auto _ConfigClkSetFast = _SDConfigMsg(_SDConfigMsg::Action::ClkSet,    _SDConfigMsg::ClkSpeed::Fast,   T_ClkDelayFast);
-    static constexpr auto _ConfigReset      = _SDConfigMsg(_SDConfigMsg::Action::Reset,     _SDConfigMsg::ClkSpeed::Slow,   0);
-    static constexpr auto _ConfigInit       = _SDConfigMsg(_SDConfigMsg::Action::Init,      _SDConfigMsg::ClkSpeed::Slow,   0);
+    static constexpr auto _ConfigReset = _SDConfigMsg(_SDConfigMsg::Reset);
+    
+    static constexpr auto _ConfigClkSetSlow = _SDConfigMsg(
+        _SDConfigMsg::Init, _SDConfigMsg::ClkSpeed::Slow, T_ClkDelaySlow, _SDConfigMsg::PinMode::OpenDrain);
+        
+    static constexpr auto _ConfigClkSetSlowPushPull = _SDConfigMsg(
+        _SDConfigMsg::Init, _SDConfigMsg::ClkSpeed::Slow, T_ClkDelaySlow, _SDConfigMsg::PinMode::PushPull);
+    
+    static constexpr auto _ConfigClkSetFast = _SDConfigMsg(
+        _SDConfigMsg::Init, _SDConfigMsg::ClkSpeed::Fast, T_ClkDelayFast, _SDConfigMsg::PinMode::PushPull);
     
     static constexpr auto _Us = T_Scheduler::Us;
     static constexpr auto _Ms = T_Scheduler::Ms;
@@ -291,6 +331,7 @@ private:
     static constexpr uint8_t _CMD8  = 8;
     static constexpr uint8_t _CMD9  = 9;
     static constexpr uint8_t _CMD10 = 10;
+    static constexpr uint8_t _CMD11 = 11;
     static constexpr uint8_t _CMD12 = 12;
     static constexpr uint8_t _CMD18 = 18;
     static constexpr uint8_t _CMD23 = 23;

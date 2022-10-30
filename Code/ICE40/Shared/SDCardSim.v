@@ -149,54 +149,9 @@ module SDCardSim(
     // ====================
     localparam Duration5Ms = 5_000_000_000;
     initial begin
-        reg lvsinit_sdCmd;
-        reg[3:0] lvsinit_sdDat;
-        time lvsinit_pulseBeginTimePs;
-        time lvsinit_pulseEndTimePs;
-        
-        // Handle LVS init sequence
-        $display("[SDCardSim] Waiting for LVS init sequence...");
-        wait(sd_clk);
-        lvsinit_pulseBeginTimePs = $time;
-        lvsinit_sdCmd = sd_cmd;
-        lvsinit_sdDat = sd_dat;
-        wait(!sd_clk);
-        lvsinit_pulseEndTimePs = $time;
-        
-        if (lvsinit_sdCmd===1'b0 && lvsinit_sdDat===4'b0 && (lvsinit_pulseEndTimePs-lvsinit_pulseBeginTimePs)>10000000) begin
-            $display("[SDCardSim] LVS init succeeded [ sd_cmd: %b, sd_dat: %b, pulse duration (ns): %0d ] ✅",
-                lvsinit_sdCmd,
-                lvsinit_sdDat,
-                (lvsinit_pulseEndTimePs-lvsinit_pulseBeginTimePs)/1000
-            );
-        end else begin
-            $display("[SDCardSim] LVS init failed [ sd_cmd: %b, sd_dat: %b, pulse duration (ns): %0d ] ❌",
-                lvsinit_sdCmd,
-                lvsinit_sdDat,
-                (lvsinit_pulseEndTimePs-lvsinit_pulseBeginTimePs)/1000
-            );
-            `Finish;
-        end
-        
-        // Verify that there's a 5ms delay after the LVS sequence before the first clock is supplied
-        wait(sd_clk);
-        
-        if (($time-lvsinit_pulseEndTimePs) >= Duration5Ms) begin
-            $display("[SDCardSim] First sd_clk after LVS init occurred after more than 5ms (elapsed: %0d us) ✅",
-                ($time-lvsinit_pulseEndTimePs)/1000000
-            );
-        end else begin
-            `ifdef SIM
-                $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us); ignoring because SIM is defined",
-                    ($time-lvsinit_pulseEndTimePs)/1000000
-                );
-            `else
-                $display("[SDCardSim] First sd_clk after LVS init occurred before 5ms elapsed (elapsed: %0d us) ❌",
-                    ($time-lvsinit_pulseEndTimePs)/1000000
-                );
-                `Finish;
-            `endif
-        end
+        // Wait one time unit to allow initial wire values to settle
+        // This is necessary otherwise we see a spurious value for sd_clk
+        #1;
         
         forever begin
             cmdIn_ourCRC_rst_ = 0;

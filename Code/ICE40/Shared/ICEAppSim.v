@@ -37,8 +37,10 @@ module ICEAppSim();
     wire        ice_stm_spi_d_ready;
     wire        ice_stm_spi_d_ready_rev4bodge;
     
-    wire        sd_clk;
-    wire        sd_cmd;
+    // sd_clk: this is a `tri1` instead of a `wire` becuase our hardware has a pullup on sd_clk (which isn't in the SD spec)
+    // We have this pullup because we perform SD initialization using open-drain comms, to be compatible with 3V3 signalling.
+    tri1        sd_clk;
+    tri1        sd_cmd;
     tri1[3:0]   sd_dat;
     
     wire        img_dclk;
@@ -453,18 +455,31 @@ module ICEAppSim();
         $display("[ICEAppSim] SDResp: 0x%x", spi_resp[`Resp_Arg_SDResp_Resp_Bits]);
     end endtask
     
-    task TestSDConfig(
-        input[`Msg_Arg_SDConfig_ClkDelay_Len-1:0] clkDelay,
+    task TestSDConfigReset; begin
+        reg[`Msg_Arg_Len-1:0] arg;
+        
+        $display("\n[ICEAppSim] ========== TestSDConfigReset ==========");
+        arg = 0;
+        arg[`Msg_Arg_SDConfig_Action_Bits] = `SDController_Config_Action_Reset;
+        
+        SendMsg(`Msg_Type_SDConfig, arg);
+        
+        #(100_000); // Wait 100us for the change to take effect
+    end endtask
+    
+    task TestSDConfigInit(
         input[`Msg_Arg_SDConfig_ClkSpeed_Len-1:0] clkSpeed,
-        input[`Msg_Arg_SDConfig_Action_Len-1:0] action
+        input[`Msg_Arg_SDConfig_ClkDelay_Len-1:0] clkDelay,
+        input[`Msg_Arg_SDConfig_PinMode_Len-1:0] pinMode
     ); begin
         reg[`Msg_Arg_Len-1:0] arg;
         
-        $display("\n[ICEAppSim] ========== TestSDConfig ==========");
+        $display("\n[ICEAppSim] ========== TestSDConfigInit ==========");
         arg = 0;
-        arg[`Msg_Arg_SDConfig_ClkDelay_Bits] = clkDelay;
+        arg[`Msg_Arg_SDConfig_Action_Bits] = `SDController_Config_Action_Init;
         arg[`Msg_Arg_SDConfig_ClkSpeed_Bits] = clkSpeed;
-        arg[`Msg_Arg_SDConfig_Action_Bits] = action;
+        arg[`Msg_Arg_SDConfig_ClkDelay_Bits] = clkDelay;
+        arg[`Msg_Arg_SDConfig_PinMode_Bits] = pinMode;
         
         SendMsg(`Msg_Type_SDConfig, arg);
         
@@ -477,12 +492,12 @@ module ICEAppSim();
         
         $display("\n[ICEAppSim] ========== TestSDInit ==========");
         
-        //           delay, speed,                                  action
-        // Set SD clock source (=slow) and delay (=0)
-        TestSDConfig(0,     `SDController_Config_ClkSpeed_Slow,     `SDController_Config_Action_ClkSet);
+        TestSDConfigReset();
+        
         // <-- Turn on power to SD card
-        // Trigger LVS init sequence
-        TestSDConfig(0,     0,                                      `SDController_Config_Action_Init);
+        
+        // Set SD.ClkSpeed=slow / SD.ClkDelay=0 / SD.PinMode=OpenDrain
+        TestSDConfigInit(`SDController_Config_ClkSpeed_Slow, 0, `SDController_Config_PinMode_OpenDrain);
     
     `ifdef SIM
         // Wait 50us, because waiting 5ms takes forever in simulation
@@ -511,8 +526,7 @@ module ICEAppSim();
         reg[15:0] sdClkObserved;
         $display("\n[ICEAppSim] ========== TestSDReset ==========");
         
-        //           delay, speed,  action
-        TestSDConfig(0,     0,      `SDController_Config_Action_Reset);
+        TestSDConfigReset();
         
         $display("[ICEAppSim] Verifying that sd_clk is disabled...");
         // Verify that sd_clk is disabled
@@ -543,12 +557,12 @@ module ICEAppSim();
             `Finish;
         end
         
-        if (sd_cmd !== 1'b0) begin
+        if (sd_cmd !== 1'b1) begin
             $display("[ICEAppSim] sd_cmd invalid after SDController reset: %b ❌", sd_cmd);
             `Finish;
         end
         
-        if (sd_dat !== 4'b0) begin
+        if (sd_dat !== 4'b1111) begin
             $display("[ICEAppSim] sd_dat invalid after SDController reset: %b ❌", sd_dat);
             `Finish;
         end
@@ -882,14 +896,15 @@ module ICEAppSim();
 
         `ifdef _ICEApp_SD_En
             TestSDInit();
+            
             TestSDCMD0();
             TestSDCMD8();
             TestSDCMD2();
             TestSDCMD6();
-
-            //           delay, speed,                                  action
-            TestSDConfig(0,     `SDController_Config_ClkSpeed_Fast,     `SDController_Config_Action_ClkSet);
-
+            
+            // Set SD.ClkSpeed=fast / SD.ClkDelay=0 / SD.PinMode=PushPull
+            TestSDConfigInit(`SDController_Config_ClkSpeed_Fast, 0, `SDController_Config_PinMode_PushPull);
+            
             TestSDRespRecovery();
         `endif // _ICEApp_SD_En
 

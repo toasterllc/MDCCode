@@ -1,17 +1,63 @@
 - Business
 
     - Order mass quantity
+        - Small signal mosfets
+            https://www.newark.com/torex/xp231p02013r-g/mosfet-p-ch-0-2a-30v-sot-323-3a/dp/91AH9291?st=mosfet
+                Vt_max = 1.2 V
+                Idss = 10 µA
+                $0.024 @ 500
+                $0.024 @ 1000
         - Lens holder (if we end up needed them)
-        - USB-C receptacle
         - Battery
         - Battery header
         - Battery housing (goes into header/receptacle)
             - Only if battery supplier can't attach proper connector to battery
         √ TPS62A01DRLR (350x) from ti.com
             √ Waiting for tax exemption to be accepted
+        √ USB-C receptacle
     
 
-- Board Rev7 Todo
+- Rev7 Todo
+    
+    - SD: implement changing pullup voltage
+    
+    - Disable SD's DAT3 pullup by sending it the appropriate command? should help with signal integrity...
+        ACMD42 / SET_CLR_CARD_DETECT
+    
+    - Clean up SDController to handle 3V3 initialization
+    
+    - Remove MSP430<->STM32 level shifter (U15) and connect MSP_TEST / MSP_RST_ directly to STM32
+        - Connect VDDSDMMC to VDD_B_3V3_STM
+        - Connect MSP_TEST / MSP_RST_ to VDDSDMMC-powered pins
+        - Switch capacitor on MSP_RST_ to the recommended one
+    
+    - Consider removing MSP430<->ICE40 level shifter (U16) and use open-drain comms
+        - We only need open-drain comms on the data line, clock will always be push-pull driven by MSP430
+        - Considerations:
+            - Can ICE40 IOs handle being driven at 3.3V?
+            - What pullup resistor value should we use?
+            - Power consumption?
+    
+    - How do we handle SD initialization?
+        - Options:
+            - Option 1: Require LVS SD cards and init with 1.8V
+                - If all the high-endurance cards support LVS, this seems like a good option because:
+                    - Less complexity, fewer parts
+                        - No need for 2 extra ICE40 IOs that control pullup voltage
+                        - No need for pull-up voltage transistors
+                - DDR50 may let us loosen timing constraints, since the frequency is half, and the output SB_IO is responsible for outputting
+            - Option 2: Allow non-LVS cards and init with 2.8V
+                - Option 2A: use an open-drain solution to be able to output 2.8V.
+                X Option 2B: raise 1.8V to a higher voltage
+                    X That won't work because:
+                        - SD.Vih_min_3V3 = 0.625*VDD = 1.75
+                        - SD.Vih_max_1V8 = 2.0
+                        - ICE40.Voh_min = VCCIO–0.4
+                        - Because SD.Vih_max_1V8=2, ICE40.VCCIO can't be greater than 2V. Therefore if ICE40.VCCIO=2, ICE40.Voh_min = VCCIO–0.4 = 2-.4 = 1.6
+                            - But SD.Vih_min_3V3=1.75 > ICE40.Voh_min=1.6. In other words, SD requires >=1.75V to register as a '1',
+                              but ICE40 may only be able to output 1.6V.
+    
+    - If ICE40 is going to interface directly with SD at 2.8V, can ICE40 interface directly with MSP?
     
     - Move parts (resistors, capacitors) further away front mount points on front of board
         - We want more safety margin near mount points
@@ -36,6 +82,21 @@
     - Add green LED to front
     
     
+    
+    
+    √ SD: Try 22k pull-up resistors for open-drain comms, so that we can use 400 kHz
+        - The issue with this is how it affects the high-speed (102MHz) comms:
+            - sd_cmd/sd_dat: the lower the resistance, the more the pullup will affect the high-speed signal
+            - sd_clk: the lower the resistance, the more the capacitance of the small-signal mosfet will be visible
+    
+    X STM32: connect STM32.VBAT to VDD_B_3V3_STM if it helps with routing
+        - Doesn't seem to matter whether we connect VBAT to 1.8 or 3.3
+        X Nevermind: "If no external battery is used in the application, it is recommended to connect the VBAT pin to VDD"
+    
+    √ VDD_BAT voltage divider: if we connect STM32.VDDA to VDD_B_3V3_STM, change the voltage divider ratio
+        - ratio of .75 (100k / 300k) seems good: .75*4.2 == 3.15, close to 3.3
+    
+    √ STM32: connect VREF+ and VDDA to VDD_B_3V3_STM so we can reduce the VDD_BAT voltage divider fraction to get more dynamic range
     
     √ Layout: fix USB receptacle layout for A9/B4 pins -- we didn't label the polygon correctly, resulting in a 'fork'
     
