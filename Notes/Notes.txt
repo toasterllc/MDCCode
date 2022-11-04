@@ -1,12 +1,35 @@
 - Business
 
     - Order mass quantity
+        - SD cards
+            - SanDisk MAX ENDURANCE 64 GB SDSQQVR-064G-GN6IA
+                https://bulkmemorycards.com/shop/microsd-cards/microsd-64gb/microsd-64gb-class-10/microsd-64gb-class-10-w-sd-adapter/64gb-sandisk-max-endurance-microsdxc-memory-card-sdsqqvr-064g-gn6ia/
+                $15.30 @ 100
+            - Samsung PRO Endurance 128 GB MB-MJ128KA/AM
+                https://www.samsung.com/us/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-128gb-mb-mj128ka-am/
+                $16.99 each
+                https://www.samsung.com/us/business/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-128gb-mb-mj128ka-am/
+                $15.63 each @ 100
+        
         - Small signal mosfets
+            https://www.arrow.com/en/products/dmg2305ux-7/diodes-incorporated
+                DMG2305UX
+                $0.0432 @ 1000
+                Vt_max = 0.9 V
+                Idss = 1 µA
             https://www.newark.com/torex/xp231p02013r-g/mosfet-p-ch-0-2a-30v-sot-323-3a/dp/91AH9291?st=mosfet
+                XP231P02013R-G
                 Vt_max = 1.2 V
-                Idss = 10 µA
+                Idss = 10 µA        XXX High leakage
                 $0.024 @ 500
                 $0.024 @ 1000
+        
+        - MSP430FR2433 ?
+            - Since it looks like we may run out code space
+        
+        - TXB0102YZP
+            
+        - Lenses
         - Lens holder (if we end up needed them)
         - Battery
         - Battery header
@@ -15,138 +38,11 @@
         √ TPS62A01DRLR (350x) from ti.com
             √ Waiting for tax exemption to be accepted
         √ USB-C receptacle
-    
-
-- Rev7 Todo
-    
-    - Replace NTB0102GF (U16) with a part that's easier to solder by hand
-    
-    - Move parts (resistors, capacitors) further away front mount points on front of board
-        - We want more safety margin near mount points
-    
-    - Update mounting hole size based on enclosure hole size
-    
-    - Figure out which parts are breaking when exposed to sunlight and figure out a solution
-        - Streaming images breaks in direct sunlight
-    
-    - Layout: Make placing board into enclosure easier
-        - Enclosure's bottom board mount needed to be snipped to give enough clearance
-          to allow USB-C connector to go into hole
-        
-        - Enclosure's right backplate mount needed to be snipped to give enough clearance
-            - Cut notch in board for clearance around right backplate mount?
-            - Move backplate mounting points so that a notch can be cut?
-    
-    - Layout: battery voltage divider: move resistors R7 and R9 closer together
-    
-    - Layout: fix DRC errors
-    
-    - Add green LED to front
-    
-    
-    
-    
-    X If ICE40 is going to interface directly with SD at 2.8V, can ICE40 interface directly with MSP?
-        X No, see "Consider removing MSP430<->ICE40 level shifter"
-    
-    √ Remove MSP430<->STM32 level shifter (U15) and connect MSP_TEST / MSP_RST_ directly to STM32
-        √ Connect VDDSDMMC to VDD_B_3V3_STM
-        √ Connect MSP_TEST / MSP_RST_ to VDDSDMMC-powered pins
-        X Switch capacitor on MSP_RST_ to the recommended one
-            X We don't use 1nF anywhere else in the design
-    
-    X Consider removing MSP430<->ICE40 level shifter (U16) and use open-drain comms
-        X Using open-drain comms is going to use significantly more power than using a level shifter
-            X For example, to be able to hit 16 MHz, our pullup resistor will need to be 2.5k,
-              so during comms, we'll burn 3.3/2.5e3 = 1.3mA when driving a 0, which sucks.
-        - We only need open-drain comms on the data line, clock will always be push-pull driven by MSP430
-        - Considerations:
-            - Can ICE40 IOs handle being driven at 3.3V?
-            - What pullup resistor value should we use?
-            - Power consumption?
-    
-    √ How do we handle SD initialization?
-        - Options:
-            - Option 1: Require LVS SD cards and init with 1.8V
-                - If all the high-endurance cards support LVS, this seems like a good option because:
-                    - Less complexity, fewer parts
-                        - No need for 2 extra ICE40 IOs that control pullup voltage
-                        - No need for pull-up voltage transistors
-                - DDR50 may let us loosen timing constraints, since the frequency is half, and the output SB_IO is responsible for outputting
-            - Option 2: Allow non-LVS cards and init with 2.8V
-                √ Option 2A: use an open-drain solution to be able to output 2.8V.
-                X Option 2B: raise 1.8V to a higher voltage
-                    X That won't work because:
-                        - SD.Vih_min_3V3 = 0.625*VDD = 1.75
-                        - SD.Vih_max_1V8 = 2.0
-                        - ICE40.Voh_min = VCCIO–0.4
-                        - Because SD.Vih_max_1V8=2, ICE40.VCCIO can't be greater than 2V. Therefore if ICE40.VCCIO=2, ICE40.Voh_min = VCCIO–0.4 = 2-.4 = 1.6
-                            - But SD.Vih_min_3V3=1.75 > ICE40.Voh_min=1.6. In other words, SD requires >=1.75V to register as a '1',
-                              but ICE40 may only be able to output 1.6V.
-    
-    √ SD: implement changing pullup voltage
-    
-    √ SD: Try 22k pull-up resistors for open-drain comms, so that we can use 400 kHz
-        - The issue with this is how it affects the high-speed (102MHz) comms:
-            - sd_cmd/sd_dat: the lower the resistance, the more the pullup will affect the high-speed signal
-            - sd_clk: the lower the resistance, the more the capacitance of the small-signal mosfet will be visible
-    
-    X STM32: connect STM32.VBAT to VDD_B_3V3_STM if it helps with routing
-        - Doesn't seem to matter whether we connect VBAT to 1.8 or 3.3
-        X Nevermind: "If no external battery is used in the application, it is recommended to connect the VBAT pin to VDD"
-    
-    √ VDD_BAT voltage divider: if we connect STM32.VDDA to VDD_B_3V3_STM, change the voltage divider ratio
-        - ratio of .75 (100k / 300k) seems good: .75*4.2 == 3.15, close to 3.3
-    
-    √ STM32: connect VREF+ and VDDA to VDD_B_3V3_STM so we can reduce the VDD_BAT voltage divider fraction to get more dynamic range
-    
-    √ Layout: fix USB receptacle layout for A9/B4 pins -- we didn't label the polygon correctly, resulting in a 'fork'
-    
-    √ Layout: Fix C17 label (obscured by pads)
-    
-    √ Layout: Make Q2 label the same size as Q3
-    
-    √ Layout: Fix J4 label (obscured)
-    
-    √ Layout: Fix R1/J1 labels (they're swapped)
-    
-    √ Layout: Remove cream from TagConnect footprint
-    
-    √ Swap ICE_STM_SPI nets so that ICERAMWrite can use QSPI to program, while ICEFlashWrite bitbangs
-        - This seems like a good idea because we'll do ICERAMWrite anytime we run MDCStudio, but ICEFlashWrite only
-          when flashing (which should happen rarely). Makes sense to have ICERAMWrite faster than ICEFlashWrite right?
-            - Currently ICERAMWrite takes .5s when optimized with -Os
-    
-    √ Stop using VDD_USB as a signal; use TPS2116DRLR's ST signal instead, pulled to VDD_USB via a 10k resistor
-        - Necessary because U12 appears to backfeed voltage to its enable pin, causing VDD_USB=2.5V.
-            - Therefore its enable pin needs to be strongly driven (at least strongly driven low, weakly pulled high appears to work fine...)
-        - 2 instances of using VDD_USB as a signal: U3, U12
-    
-    
-    √ Battery voltage divider: change resistor values to take advantage of full ADC dynamic range
-        - Currently our voltage divider ratio = 1/4 so the dynamic range = (4.2/4)/1.8 = 58% of full ADC range.
-        - Switch the resistors of the voltage divider:
-            - Option 1: 200k / 300k
-                    - Voltage divider ratio = 1/2.5
-                    - Dynamic range = (4.2/2.5)/1.8 = 93% of full ADC range.
-            - Option 2: 100k / 147k (147k = 100k + 47k in series)
-                - Voltage divider ratio = 1/2.47
-                - Dynamic range = (4.2/2.47)/1.8 = 94% of full ADC range
-            - Conclusion: use Option 1 because it's simplest
-                - Just change R9 to be 200k
-    
-    
-    √ Drive U5 (VDD_BAT voltage buffer) from an STM GPIO instead constantly while connected to USB
-        - Necessary because the ADC voltage divider breaks MCP73831T's battery detection logic because
-          its impedance is too low (MCP73831T requires an impedance of >7MΩ).
-          - So instead, we'll disable the voltage divider except when a battery is detected
-        
-        - Drive from STM PA11/C15 pin
-            - Need to use this pin because it can output 3.3V (by virtue of being supplied by VDDUSB)
-              to meet the 74LVC1G98 Vih (2.74V when powered by 4.5V)
 
 
 - Software / Firmware Todo
+    
+    - MSPApp: can we save power by holding IMG in reset while writing to SD card?
     
     - MSPApp: Disable SD's DAT3 pullup by sending it the appropriate command, to help with signal integrity
         ACMD42 / SET_CLR_CARD_DETECT
