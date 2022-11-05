@@ -267,11 +267,11 @@ struct _SDTask {
             _SDCard::WriteImage(*_RCA, srcRAMBlock, dstSDBlock, Img::Size::Full);
         }
         
-        // Copy thumbnail from RAM -> SD card
-        {
-            const SD::Block dstSDBlock = _State.sd.thumbBlockStart + (widx * ImgSD::Thumb::ImageBlockCount);
-            _SDCard::WriteImage(*_RCA, srcRAMBlock, dstSDBlock, Img::Size::Thumb);
-        }
+//        // Copy thumbnail from RAM -> SD card
+//        {
+//            const SD::Block dstSDBlock = _State.sd.thumbBlockStart + (widx * ImgSD::Thumb::ImageBlockCount);
+//            _SDCard::WriteImage(*_RCA, srcRAMBlock, dstSDBlock, Img::Size::Thumb);
+//        }
         
         _ImgRingBufIncrement();
         _Writing = false;
@@ -540,9 +540,15 @@ struct _MainTask {
                     _ImgTask::Capture(imgRingBuf.buf.idEnd);
                     const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
                     
-                    // Copy image from RAM -> SD card
-                    _SDTask::Write(srcRAMBlock);
-                    _SDTask::Wait();
+                    for (;;) {
+                        // Copy image from RAM -> SD card
+                        _Pin::DEBUG_OUT::Write(1);
+                        _SDTask::Write(srcRAMBlock);
+                        _SDTask::Wait();
+                        _Pin::DEBUG_OUT::Write(0);
+                        
+                        _Scheduler::Sleep(_Scheduler::Ms(100));
+                    }
                     
                     _ICE::Transfer(_ICE::LEDSetMsg(0x00));
                 }
