@@ -40,7 +40,9 @@
         √ USB-C receptacle
 
 
-- Software / Firmware Todo
+- Rev7 Software / Firmware Todo
+    
+    - ICEApp: update Pins.pcf (ICE40 pins changed on Rev7!)
     
     - MSPApp: can we save power by holding IMG in reset while writing to SD card?
     
