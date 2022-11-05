@@ -10,6 +10,7 @@
                 $16.99 each
                 https://www.samsung.com/us/business/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-128gb-mb-mj128ka-am/
                 $15.63 each @ 100
+                Try using promo code (see SD card manilla envelope)
         
         - Small signal mosfets
             https://www.arrow.com/en/products/dmg2305ux-7/diodes-incorporated
@@ -24,8 +25,7 @@
                 $0.024 @ 500
                 $0.024 @ 1000
         
-        - MSP430FR2433 ?
-            - Since it looks like we may run out code space
+        - MSP430FR2433
         
         - TXB0102YZP
             
