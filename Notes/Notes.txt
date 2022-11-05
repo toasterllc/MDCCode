@@ -25,16 +25,14 @@
                 $0.024 @ 500
                 $0.024 @ 1000
         
-        - MSP430FR2433
-        
-        - TXB0102YZP
-            
         - Lenses
         - Lens holder (if we end up needed them)
         - Battery
         - Battery header
         - Battery housing (goes into header/receptacle)
             - Only if battery supplier can't attach proper connector to battery
+        √ MSP430FR2433 (110x)
+        √ TXB0102YZP (110x)
         √ TPS62A01DRLR (350x) from ti.com
             √ Waiting for tax exemption to be accepted
         √ USB-C receptacle
