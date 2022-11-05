@@ -1,6 +1,0 @@
-Lens have:	16.6+6.6 = 23.2 
-EO #88-591	13.1+1.9 = 15
-
-----
-
-subtract 7.7mm from lens-to-plane length to get protrusion length
