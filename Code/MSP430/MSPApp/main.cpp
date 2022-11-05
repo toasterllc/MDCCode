@@ -504,15 +504,7 @@ struct _MainTask {
         
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
-        for (;;) {
-            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
-            {
-                _WaitingForMotion = true;
-                _Scheduler::Wait([&] { return (bool)_Motion; });
-                _Motion = false;
-                _WaitingForMotion = false;
-            }
-            
+        {
             // Turn on VDD_B power (turns on ICE40)
             _VDDBSetEnabled(true);
             
@@ -555,15 +547,7 @@ struct _MainTask {
                     _ICE::Transfer(_ICE::LEDSetMsg(0x00));
                 }
                 
-                // Wait up to 1s for further motion
-                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-                if (!motion) break;
-                
-                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-                // _Motion, there'd be a race window where we could first observe
-                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-                // the true value by resetting it to false.
-                _Motion = false;
+                _Scheduler::Sleep(_Scheduler::Ms(1000));
             }
             
             _VDDIMGSDSetEnabled(false);
