@@ -1,13 +1,13 @@
 - Lens Requirements
     - Lens can screw in far enough to focus, but doesn't stick out from the enclosure too much:
-        Lens.ThreadsStickOut = (Lens.ThreadsLength + Lens.BFL) - Enclosure.LensStandoff
+        Lens.ThreadsStickOut = (Lens.ThreadsLength + Lens.BFL) - Enclosure.LensThreadDepth
         Want to minimize Lens.ThreadsStickOut, while keeping it >0
         
         Note that this neglects that the image sensor isn't flush with the PCB front face
 
 - Enclosure Values
-    Enclosure.LensStandoff  = 12.2mm        PCB front face to enclosure circular protrusion front face
-    Enclosure.FrontPCBDelta = 7.7mm         PCB front face to enclosure front face
+    Enclosure.LensThreadDepth  = 12.2mm     PCB front face to enclosure circular protrusion front face
+    Enclosure.FrontPCBDelta    = 7.7mm      PCB front face to enclosure front face
 
 https://www.arducam.com/product/m25360h06s-2/
     Lens.ThreadsLength   = 10.5
