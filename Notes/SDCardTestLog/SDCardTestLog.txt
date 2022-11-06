@@ -52,6 +52,13 @@ frequency, which we don't care about.).
         - Current
             No change
     
+    - Write image current consumption
+        - Config
+            CMD6.CurrentLimit:  0x0/200mA
+            CMD6.AccessMode:    0x2/SDR50
+        - Current
+            No change
+    
     - Write image duration
         130 ms
 
