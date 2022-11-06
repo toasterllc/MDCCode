@@ -1,6 +1,21 @@
 SD Cards
 
 - Best picks:
+    - Samsung PRO Endurance
+        Size        128 GB
+        Model       MB-MJ128KA/AM
+        Endurance   820 TBW
+        Write       30 MB/s
+        App Class   -
+        Notes
+            Contacted bulkmemorycards.com via web form. See BulkMemoryCardsMessage.txt.
+        Sources
+            https://www.samsung.com/us/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-128gb-mb-mj128ka-am/
+                $19.99  2022-10-27
+                $16.99  2022-10-31
+            https://www.samsung.com/us/business/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-128gb-mb-mj128ka-am/
+                $15.63  2022-10-31  Samsung business site
+    
     - SanDisk MAX ENDURANCE
         Size        64 GB
         Model       SDSQQVR-064G-GN6IA
@@ -56,21 +71,6 @@ SD Cards
             https://www.samsung.com/us/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-64gb-mb-mj64ka-am/
                 $13.99  2022-10-27
                 $12.99  2022-10-31
-    
-    - Samsung PRO Endurance
-        Size        128 GB
-        Model       MB-MJ128KA/AM
-        Endurance   820 TBW
-        Write       30 MB/s
-        App Class   -
-        Notes
-            Contacted bulkmemorycards.com via web form. See BulkMemoryCardsMessage.txt.
-        Sources
-            https://www.samsung.com/us/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-128gb-mb-mj128ka-am/
-                $19.99  2022-10-27
-                $16.99  2022-10-31
-            https://www.samsung.com/us/business/computing/memory-storage/memory-cards/pro-endurance-adapter-microsdxc-128gb-mb-mj128ka-am/
-                $15.63  2022-10-31  Samsung business site
     
     - Kensington Endurance
         Size        64 GB
