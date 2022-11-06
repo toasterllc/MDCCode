@@ -31,8 +31,26 @@ frequency, which we don't care about.).
     √ CMD6 succeeds in switching to SDR104 after LVS init
     
     - Write image current consumption
-        Max: 233 mA
-        Avg: 144 mA
+        - Config
+            CMD6.CurrentLimit:  0x3/800mA
+            CMD6.AccessMode:    0x3/SDR104
+        - Current
+            Max: 233 mA
+            Avg: 144 mA
+    
+    - Write image current consumption
+        - Config
+            CMD6.CurrentLimit:  0x0/200mA
+            CMD6.AccessMode:    0x3/SDR104
+        - Current
+            No change
+    
+    - Write image current consumption
+        - Config
+            CMD6.CurrentLimit:  0x3/800mA
+            CMD6.AccessMode:    0x2/SDR50
+        - Current
+            No change
     
     - Write image duration
         130 ms
