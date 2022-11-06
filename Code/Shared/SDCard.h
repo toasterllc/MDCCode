@@ -193,7 +193,7 @@ public:
             // Group 4 (Current Limit)     = 0x3 (800mA)
             // Group 3 (Driver Strength)   = 0xF (no change; 0x0=TypeB[1x], 0x1=TypeA[1.5x], 0x2=TypeC[.75x], 0x3=TypeD[.5x])
             // Group 2 (Command System)    = 0xF (no change)
-            // Group 1 (Access Mode)       = 0x2 (SDR104)
+            // Group 1 (Access Mode)       = 0x3 (SDR104)
             
             {
                 const _SDStatusResp status = _SendCmd(_CMD6, 0x80FF3FF3, _RespType::Len48, _DatInType::Len512x1);
