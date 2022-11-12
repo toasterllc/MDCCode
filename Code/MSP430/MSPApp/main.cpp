@@ -504,16 +504,55 @@ struct _MainTask {
         // Source=ACLK, Continuous mode, clear TAR
         TA0CTL = TASSEL__ACLK | ID__4 | MC__UP | TACLR;
         
+        const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
+        
         for (;;) {
             // Turn on VDD_B power (turns on ICE40)
             _VDDBSetEnabled(true);
             
+            // Wait for ICE40 to start
+            // We specify (within the bitstream itself, via icepack) that ICE40 should load
+            // the bitstream at high-frequency (40 MHz).
+            // Measured on a scope, this takes ~33ms.
             _Scheduler::Sleep(_Scheduler::Ms(40));
             
-            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-            _Scheduler::Sleep(_Scheduler::Ms(250));
-            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+            // Reset SD nets before we turn on SD power
+            _SDTask::Reset();
+            _SDTask::Wait();
             
+            // Turn on IMG/SD power
+            _VDDIMGSDSetEnabled(true);
+            
+            // Init image sensor / SD card
+            _ImgTask::Init();
+            _SDTask::Init();
+            
+            // Capture an image
+            {
+                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+                
+                // Wait for _SDTask to be initialized and done with writing, which is necessary
+                // for 2 reasons:
+                //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
+                //      access it,
+                //   2. we can't initiate a new capture until writing to the SD card (from a
+                //      previous capture) is complete (because the SDRAM is single-port, so
+                //      we can only read or write at one time)
+                _SDTask::WaitForInitAndWrite();
+                
+                // Capture image to RAM
+                _ImgTask::Capture(imgRingBuf.buf.idEnd);
+                const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+                
+                // Copy image from RAM -> SD card
+                _SDTask::Write(srcRAMBlock);
+                _SDTask::Wait();
+                
+                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+            }
+            
+            // Turn off power
+            _VDDIMGSDSetEnabled(false);
             _VDDBSetEnabled(false);
             
             // Go to sleep and wait for timer to fire
