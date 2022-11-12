@@ -189,4 +189,4 @@ if args.opt:
 # Generate bitstream file with `icepack` (Top.asc -> Top.bin)
 print('\n# [Synth.py] Packing design\n')
 icepackPath = os.path.join(rootDir, '../../Tools/icestorm/install/bin/icepack')
-subprocess.run([ icepackPath, topAscFile, topBinFile ])
+subprocess.run([ icepackPath, '-Fh', topAscFile, topBinFile ])
