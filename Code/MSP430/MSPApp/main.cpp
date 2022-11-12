@@ -36,7 +36,8 @@ struct _Pin {
     using UNUSED0                           = PortA::Pin<0x0>;
     using DEBUG_OUT                         = PortA::Pin<0x1, Option::Output0>;
     using VDD_B_EN                          = PortA::Pin<0x2, Option::Output0>;
-    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
+    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
+//    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
     using UNUSED4                           = PortA::Pin<0x4>;
     using UNUSED5                           = PortA::Pin<0x5>;
     using VDD_B_2V8_IMG_SD_EN               = PortA::Pin<0x6, Option::Input, Option::Resistor0>; // Weakly controlled to allow STM to override
@@ -488,20 +489,10 @@ struct _ImgTask {
     static inline uint8_t Stack[256];
 };
 
-//[[gnu::interrupt(TIMER0_A1_VECTOR)]]
-//static void _ISR_TIMER0_A1() {
-//    __bic_SR_register_on_exit(LPM3_bits);
-//}
-
-//[[gnu::interrupt(TIMER0_A0_VECTOR)]]
-//static void _ISR_TIMER0_A0() {
-//    __bic_SR_register_on_exit(LPM3_bits);
-//}
-
 // CCIFG0 interrupt
 [[gnu::interrupt(TIMER0_A0_VECTOR)]]
 static void _ISR_TIMER0_A0() {
-    __bic_SR_register_on_exit(LPM0_bits);
+    __bic_SR_register_on_exit(LPM3_bits);
 }
 
 struct _MainTask {
