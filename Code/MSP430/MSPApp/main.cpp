@@ -508,8 +508,7 @@ struct _MainTask {
             // Turn on VDD_B power (turns on ICE40)
             _VDDBSetEnabled(true);
             
-            #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
-            _Scheduler::Sleep(_Scheduler::Ms(250));
+            _Scheduler::Sleep(_Scheduler::Ms(40));
             
             _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
             _Scheduler::Sleep(_Scheduler::Ms(250));
