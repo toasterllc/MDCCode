@@ -42,6 +42,14 @@
 
 - Rev7 Software / Firmware Todo
     
+    - MSPApp: disable SysTick if no one is waiting on a Sleep() or Delay()
+        - This way, when we need to sleep long periods of time (ie waiting for a specific wall time),
+          we can use a timer peripheral to wake ourself and ensure we don't unnecessarily wake intermittently
+    
+    - Switch ACLK to be sourced by XT1, so that TimerA can be sourced by ACLK/XT1, so that we can wake ourselves with a high-accuracy clock
+        - Does this present a problem with Clock.h? IN Clock.h, we switched the ACLK source from XT1->REFOCLK, but why did we do that?
+          Was sourcing ACLK from XT1 delaying startup for some reason?
+    
     - ICEApp: update Pins.pcf (ICE40 pins changed on Rev7!)
     
     - MSPApp: can we save power by holding IMG in reset while writing to SD card?
