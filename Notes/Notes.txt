@@ -42,6 +42,8 @@
 
 - Rev7 Software / Firmware Todo
     
+    - SDController: remove old LVS stuff -- Init_ClockPulseUs, init_delayCounter, etc
+    
     - MSPApp: disable SysTick if no one is waiting on a Sleep() or Delay()
         - This way, when we need to sleep long periods of time (ie waiting for a specific wall time),
           we can use a timer peripheral to wake ourself and ensure we don't unnecessarily wake intermittently
