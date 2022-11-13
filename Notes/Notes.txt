@@ -42,6 +42,10 @@
 
 - Rev7 Software / Firmware Todo
     
+    - We're getting SD card timeouts:
+        domain:                4
+        line:                  379
+    
     - MSPApp: abort times seem to be wrong -- they have bit 0x40000000000000 set for some reason:
           eventsCount:             3
           events[0]
