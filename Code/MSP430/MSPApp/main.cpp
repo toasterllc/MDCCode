@@ -118,28 +118,6 @@ static void _VDDBSetEnabled(bool en) {
     _Pin::VDD_B_EN::Write(en);
 }
 
-static void _VDDIMGSDSetEnabled(bool en) {
-    // Short-circuit if the pin state hasn't changed, to save us the Sleep()
-    if (_Pin::VDD_B_2V8_IMG_SD_EN::Read() == en) return;
-    
-    if (en) {
-        _Pin::VDD_B_2V8_IMG_SD_EN::Write(1);
-        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-        _Pin::VDD_B_1V8_IMG_SD_EN::Write(1);
-        
-        // Rails take ~1ms to turn on, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms(2));
-    
-    } else {
-        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-        _Pin::VDD_B_2V8_IMG_SD_EN::Write(0);
-        _Pin::VDD_B_1V8_IMG_SD_EN::Write(0);
-        
-        // Rails take ~1.5ms to turn off, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms(2));
-    }
-}
-
 // MARK: - ICE40
 
 template<>
@@ -150,37 +128,25 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 
 // MARK: - Tasks
 
-static void debugSignal() {
-    _Pin::DEBUG_OUT::Init();
-    for (;;) {
-//    for (int i=0; i<10; i++) {
-        _Pin::DEBUG_OUT::Write(0);
-        for (volatile int i=0; i<10000; i++);
-        _Pin::DEBUG_OUT::Write(1);
-        for (volatile int i=0; i<10000; i++);
-    }
-}
+//static void debugSignal() {
+//    _Pin::DEBUG_OUT::Init();
+//    for (;;) {
+////    for (int i=0; i<10; i++) {
+//        _Pin::DEBUG_OUT::Write(0);
+//        for (volatile int i=0; i<10000; i++);
+//        _Pin::DEBUG_OUT::Write(1);
+//        for (volatile int i=0; i<10000; i++);
+//    }
+//}
 
 struct _SDTask {
     static void Reset() {
-        Wait();
-        _Scheduler::Start<_SDTask>([] { _Reset(); });
-    }
-    
-    static void Init() {
-        Wait();
-        _Scheduler::Start<_SDTask>([] { _Init(); });
-    }
-    
-    static void Wait() {
         _Scheduler::Wait<_SDTask>();
+        _Scheduler::Start<_SDTask>([] { _Reset(); });
     }
     
     static void _Reset() {
         _SDCard::Reset();
-    }
-    
-    static void _Init() {
         _SDCard::Init();
     }
     
@@ -200,8 +166,6 @@ static void _ISR_TIMER0_A0() {
 
 struct _MainTask {
     static void Run() {
-        const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
-        
         // Init SPI peripheral
         _SPI::Init();
         
@@ -221,12 +185,7 @@ struct _MainTask {
         _ICE::Init();
         
         for (;;) {
-            // Reset SD nets before we turn on SD power
             _SDTask::Reset();
-            _SDTask::Wait();
-            
-            // Init image sensor / SD card
-            _SDTask::Init();
         }
     }
     

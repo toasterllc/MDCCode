@@ -32,7 +32,7 @@ public:
         // Reset SDController
         T_ICE::Transfer(_ConfigReset);
         // TODO: switch to sleeping 25us when we get back to 400 kHz
-        _Sleep(_Us(100)); // Wait 10 100kHz cycles
+        _Sleep(_Us(100)); // Wait 20 100kHz cycles
     }
     
     static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
@@ -41,7 +41,7 @@ public:
         // Enable slow SDController clock
         T_ICE::Transfer(_ConfigClkSetSlow);
         // TODO: switch to sleeping 25us when we get back to 400 kHz
-        _Sleep(_Us(100)); // Wait 10 100kHz cycles
+        _Sleep(_Us(100)); // Wait 20 100kHz cycles
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -95,95 +95,6 @@ public:
         }
         
         return rca;
-    }
-    
-//    static void Disable() {
-//        T_ICE::Transfer(_ConfigReset);
-//        _Sleep(_Us(1));
-//    }
-    
-//    bool enabled() const { return _enabled; }
-//    
-//    const CardId& cardId() const { return *_cardId; }
-//    const CardData& cardData() const { return *_cardData; }
-    
-    static void ReadStart(SD::Block block) {
-        // ====================
-        // CMD18 | READ_MULTIPLE_BLOCK
-        //   State: Transfer -> Send Data
-        //   Read blocks of data (1 block == 512 bytes)
-        // ====================
-        _SendCmd(_CMD18, block, _RespType::Len48, _DatInType::Len4096xN);
-    }
-    
-    static void ReadStop() {
-        _ReadWriteStop();
-    }
-    
-    // `blockCountEst`: the estimated block count that will be written; used to pre-erase SD blocks as a performance
-    // optimization. More data can be written than `blockCountEst`, but performance may suffer if the actual count
-    // is longer than the estimate.
-    static void WriteStart(uint16_t rca, SD::Block block, uint32_t blockCountEst=0) {
-        // ====================
-        // ACMD23 | SET_WR_BLK_ERASE_COUNT
-        //   State: Transfer -> Transfer
-        //   Set the number of blocks to be
-        //   pre-erased before writing
-        // ====================
-        {
-            // CMD55
-            {
-                _SendCmd(_CMD55, ((uint32_t)rca)<<16);
-            }
-            
-            // CMD23
-            {
-                // Min block count = 1
-                const uint32_t blockCount = std::min(UINT32_C(1), blockCountEst);
-                _SendCmd(_CMD23, blockCount);
-            }
-        }
-        
-        // ====================
-        // CMD25 | WRITE_MULTIPLE_BLOCK
-        //   State: Transfer -> Receive Data
-        //   Write blocks of data
-        // ====================
-        {
-            _SendCmd(_CMD25, block);
-        }
-    }
-    
-    static void WriteStop() {
-        _ReadWriteStop();
-    }
-    
-    static void WriteImage(uint16_t rca, uint8_t srcRAMBlock, SD::Block dstSDBlock, Img::Size imgSize) {
-        const uint32_t blockCountEst = (imgSize==Img::Size::Full ? ImgSD::Full::ImageBlockCount : ImgSD::Thumb::ImageBlockCount);
-        WriteStart(rca, dstSDBlock, blockCountEst);
-        
-        // Clock out the image on the DAT lines
-        T_ICE::Transfer(typename T_ICE::ImgReadoutMsg(srcRAMBlock, imgSize));
-        
-        #warning TODO: call error handler if this takes too long -- look at SD spec for max time
-        // Wait for writing to finish
-        for (;;) {
-            const _SDStatusResp status = T_ICE::SDStatus();
-            if (status.datOutDone()) {
-                Assert(!status.datOutCRCErr());
-                break;
-            }
-            // Busy
-        }
-        
-        WriteStop();
-        
-        #warning TODO: call error handler if this takes too long -- look at SD spec for max time
-        // Wait for SD card to indicate that it's ready (DAT0=1)
-        for (;;) {
-            const _SDStatusResp status = T_ICE::SDStatus();
-            if (status.dat0Idle()) break;
-        }
     }
     
 private:
@@ -259,15 +170,8 @@ private:
             default:
                 if (s.respCRCErr()) {
                     T_Error(0xFE00|sdCmd);
-//                    for (int i=0; i<5; i++) {
-//                        T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x03));
-//                        _Sleep(_Ms(100));
-//                        T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x0C));
-//                        _Sleep(_Ms(100));
-//                    }
                     _BOR();
                 }
-//                Assert(!s.respCRCErr());
                 break;
             }
             return s;
@@ -278,7 +182,6 @@ private:
         
         if (!sdCmd) {
             for (;;) {
-//            for (int i=0; i<10; i++) {
                 T_ICE::Transfer(typename T_ICE::LEDSetMsg(0xF));
                 _Sleep(_Ms(100));
                 T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x0));
@@ -287,67 +190,8 @@ private:
         }
         
         _BOR();
-        
-//        for (;;) {
-//            T_ICE::Transfer(typename T_ICE::LEDSetMsg(0xFF));
-//            _Sleep(_Ms(100));
-//            T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x00));
-//            _Sleep(_Ms(100));
-//        }
-        
-//        Assert(false);
     }
     
-    static void _ReadWriteStop() {
-        // ====================
-        // CMD12 | STOP_TRANSMISSION
-        //   State: Send Data -> Transfer
-        //   Finish reading
-        // ====================
-        _SendCmd(_CMD12, 0);
-    }
-    
-    template <size_t T_Len>
-    static void _SDRespGet(void* dst) {
-        using Resp = typename T_ICE::Resp;
-        static_assert((T_Len % sizeof(Resp)) == 0);
-        
-        Resp* resp = (Resp*)dst;
-        for (size_t i=0; i<(T_Len/sizeof(Resp)); i++) {
-            T_ICE::Transfer(_SDRespMsg(i), resp);
-            resp++;
-        }
-    }
-    
-//    template <size_t T_Len>
-//    static void _SDRespGet(void* dst) {
-//        using Resp = typename T_ICE::Resp;
-//        static_assert((T_Len % sizeof(Resp)) == 0);
-//        
-//        Resp* resp = (Resp*)dst;
-//        for (size_t i=0; i<(T_Len/sizeof(Resp)); i++) {
-//            T_ICE::Transfer(_SDRespMsg(i), resp);
-//            resp++;
-//        }
-//    }
-    
-//    template <typename T>
-//    static T _SDResp128Get() {
-//        // Get the 128-bit response
-//        T dst;
-//        _SDRespResp resp;
-//        static_assert((sizeof(T) % sizeof(resp.payload)) == 0);
-//        for (size_t i=0; i<sizeof(T)/sizeof(resp); i++) {
-//            T_ICE::Transfer(_SDRespMsg(i), &resp);
-//            memcpy(((uint8_t*)&dst) + sizeof(resp.payload)*i, resp.payload, sizeof(resp.payload));
-//        }
-//        return dst;
-//    }
-    
-//    bool _enabled = false;
-//    uint16_t _rca = 0;
-//    CardId _cardId;
-//    CardData _cardData;
 #undef Assert
 #undef AssertArg
 };
