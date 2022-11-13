@@ -1,4 +1,5 @@
 #pragma once
+#include <msp430.h>
 #include "ICE.h"
 #include "Util.h"
 #include "Toastbox/Task.h"
@@ -7,6 +8,12 @@
 #include "ImgSD.h"
 
 namespace SD {
+
+[[noreturn]]
+static void _BOR() {
+    PMMCTL0 = PMMPW | PMMSWBOR;
+    for (;;);
+}
 
 template <
     typename T_Scheduler,
@@ -372,6 +379,7 @@ private:
             default:
                 if (s.respCRCErr()) {
                     T_Error(0xFE00|sdCmd);
+//                    _BOR();
                 }
 //                Assert(!s.respCRCErr());
                 break;
@@ -381,13 +389,14 @@ private:
         
         // Timeout sending SD command
         T_Error(0xFF00|sdCmd);
+//        _BOR();
         
-        for (;;) {
-            T_ICE::Transfer(typename T_ICE::LEDSetMsg(0xFF));
-            _Sleep(_Ms(100));
-            T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x00));
-            _Sleep(_Ms(100));
-        }
+//        for (;;) {
+//            T_ICE::Transfer(typename T_ICE::LEDSetMsg(0xFF));
+//            _Sleep(_Ms(100));
+//            T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x00));
+//            _Sleep(_Ms(100));
+//        }
         
 //        Assert(false);
     }
