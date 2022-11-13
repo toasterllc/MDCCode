@@ -370,7 +370,10 @@ private:
             case _CMD41:
                 break;
             default:
-                Assert(!s.respCRCErr());
+                if (s.respCRCErr()) {
+                    T_Error(0xFE00|sdCmd);
+                }
+//                Assert(!s.respCRCErr());
                 break;
             }
             return s;
