@@ -513,8 +513,8 @@ struct _MainTask {
             // Wait for ICE40 to start
             // We specify (within the bitstream itself, via icepack) that ICE40 should load
             // the bitstream at high-frequency (40 MHz).
-            // Measured on a scope, this takes ~33ms.
-            _Scheduler::Sleep(_Scheduler::Ms(40));
+            // According to the datasheet, this takes 70ms.
+            _Scheduler::Sleep(_Scheduler::Ms(75));
             
             // Reset SD nets before we turn on SD power
             _SDTask::Reset();
