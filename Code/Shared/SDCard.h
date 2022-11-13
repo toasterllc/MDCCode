@@ -259,12 +259,12 @@ private:
             default:
                 if (s.respCRCErr()) {
                     T_Error(0xFE00|sdCmd);
-                    for (int i=0; i<5; i++) {
-                        T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x03));
-                        _Sleep(_Ms(100));
-                        T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x0C));
-                        _Sleep(_Ms(100));
-                    }
+//                    for (int i=0; i<5; i++) {
+//                        T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x03));
+//                        _Sleep(_Ms(100));
+//                        T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x0C));
+//                        _Sleep(_Ms(100));
+//                    }
                     _BOR();
                 }
 //                Assert(!s.respCRCErr());
