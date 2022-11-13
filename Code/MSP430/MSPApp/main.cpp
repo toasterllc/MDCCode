@@ -488,9 +488,10 @@ struct _MainTask {
         // Init SPI peripheral
         _SPI::Init();
         
+        // Turn on VDD_B power (turns on ICE40)
+        _VDDBSetEnabled(true);
+        
         for (;;) {
-            // Turn on VDD_B power (turns on ICE40)
-            _VDDBSetEnabled(true);
             
             // Wait for ICE40 to start
             // We specify (within the bitstream itself, via icepack) that ICE40 should load
@@ -534,7 +535,6 @@ struct _MainTask {
             
             // Turn off power
             _VDDIMGSDSetEnabled(false);
-            _VDDBSetEnabled(false);
             
             // Go to sleep and wait for timer to fire
             // We pause SysTick while we sleep so we don't wake at all until the timer fires
