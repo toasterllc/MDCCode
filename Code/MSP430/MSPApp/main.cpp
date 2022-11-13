@@ -231,12 +231,7 @@ struct _MainTask {
             // Init image sensor / SD card
             _SDTask::Init();
             
-            // Capture an image
-            {
-//                _ICE::Transfer(_ICE::LEDSetMsg(0xF));
-                _Scheduler::Sleep(_Scheduler::Ms(100));
-//                _ICE::Transfer(_ICE::LEDSetMsg(0x0));
-            }
+            _Scheduler::Sleep(_Scheduler::Ms(100));
             
             // Turn off power
             _VDDIMGSDSetEnabled(false);
