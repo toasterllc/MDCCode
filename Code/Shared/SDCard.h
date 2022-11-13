@@ -375,8 +375,18 @@ private:
             }
             return s;
         }
+        
+        for (;;) {
+            T_ICE::Transfer(typename T_ICE::LEDSetMsg(0xFF));
+            _Sleep(_Ms(100));
+            T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x00));
+            _Sleep(_Ms(100));
+        }
+        
         // Timeout sending SD command
-        Assert(false);
+        T_Error(0xFF00|sdCmd);
+        
+//        Assert(false);
     }
     
     static void _ReadWriteStop() {
