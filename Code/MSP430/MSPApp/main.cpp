@@ -28,7 +28,7 @@ static constexpr uint64_t _MCLKFreqHz       = 16000000;
 static constexpr uint32_t _XT1FreqHz        = 32768;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
 
-[[noreturn]]
+//[[noreturn]]
 static void _Abort(uint16_t domain, uint16_t line);
 
 struct _Pin {
@@ -528,13 +528,15 @@ struct _MainTask {
                 //      we can only read or write at one time)
                 _SDTask::WaitForInitAndWrite();
                 
-                // Capture image to RAM
-                _ImgTask::Capture(imgRingBuf.buf.idEnd);
-                const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+                _Scheduler::Sleep(_Scheduler::Ms(100));
                 
-                // Copy image from RAM -> SD card
-                _SDTask::Write(srcRAMBlock);
-                _SDTask::Wait();
+//                // Capture image to RAM
+//                _ImgTask::Capture(imgRingBuf.buf.idEnd);
+//                const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+//                
+//                // Copy image from RAM -> SD card
+//                _SDTask::Write(srcRAMBlock);
+//                _SDTask::Wait();
                 
                 _ICE::Transfer(_ICE::LEDSetMsg(0x00));
             }
@@ -667,22 +669,22 @@ namespace AbortDomain {
     static constexpr uint16_t Img           = 5;
 }
 
-[[noreturn]]
+//[[noreturn]]
 static void _SchedulerError(uint16_t line) {
     _Abort(AbortDomain::Scheduler, line);
 }
 
-[[noreturn]]
+//[[noreturn]]
 static void _ICEError(uint16_t line) {
     _Abort(AbortDomain::ICE, line);
 }
 
-[[noreturn]]
+//[[noreturn]]
 static void _SDError(uint16_t line) {
     _Abort(AbortDomain::SD, line);
 }
 
-[[noreturn]]
+//[[noreturn]]
 static void _ImgError(uint16_t line) {
     _Abort(AbortDomain::Img, line);
 }
@@ -708,17 +710,18 @@ static void _BOR() {
     for (;;);
 }
 
-[[noreturn]]
+//[[noreturn]]
 static void _Abort(uint16_t domain, uint16_t line) {
     const MSP::Time timestamp = _RTC.time();
     // Record the abort
     _AbortRecord(timestamp, domain, line);
-    _BOR();
+//    _BOR();
 }
 
 extern "C" [[noreturn]]
 void abort() {
     _Abort(AbortDomain::General, 0);
+    for (;;);
 }
 
 // MARK: - Main

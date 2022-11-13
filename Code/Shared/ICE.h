@@ -11,7 +11,9 @@
 
 template <
     typename T_Scheduler,
-    [[noreturn]] void T_Error(uint16_t)
+    
+//    [[noreturn]]
+    void T_Error(uint16_t)
 >
 class ICE {
 #define Assert(x) if (!(x)) T_Error(__LINE__)
@@ -334,6 +336,7 @@ public:
         // Timeout capturing image
         // This should never happen, since it indicates a Verilog error or a hardware failure.
         Assert(false);
+        for (;;);
     }
     
     static ImgCaptureStatusResp ImgCaptureStatus() {
@@ -359,6 +362,7 @@ public:
         // Timeout getting response from ICE40
         // This should never happen, since it indicates a Verilog error or a hardware failure.
         Assert(false);
+        for (;;);
     }
     
     static uint16_t ImgI2CRead(uint16_t addr) {
