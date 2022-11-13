@@ -93,8 +93,6 @@ using _ICE = ICE<
 >;
 
 // _ImgSensor: image sensor object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
 using _ImgSensor = Img::Sensor<
     _Scheduler,             // T_Scheduler
     _ICE,                   // T_ICE
@@ -102,8 +100,6 @@ using _ImgSensor = Img::Sensor<
 >;
 
 // _SDCard: SD card object
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
 using _SDCard = SD::Card<
     _Scheduler,         // T_Scheduler
     _ICE,               // T_ICE
@@ -162,24 +158,6 @@ static void _VDDIMGSDSetEnabled(bool en) {
 template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
-    
-    // Init SPI peripheral
-    static bool spiInit = false;
-    if (!spiInit) {
-        spiInit = true;
-        _SPI::Init();
-    }
-    
-    // Init ICE comms
-    static bool iceInit = false;
-    if (!iceInit) {
-        iceInit = true;
-        // Reset ICE comms (by asserting SPI CLK for some length of time)
-        _SPI::ICEReset();
-        // Init ICE comms
-        _ICE::Init();
-    }
-    
     _SPI::WriteRead(msg, resp);
 }
 
@@ -497,14 +475,18 @@ static void _ISR_TIMER0_A0() {
 
 struct _MainTask {
     static void Run() {
+        const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
         // Configure Timer_A
         TA0CCTL0 = CM__NONE | CAP__COMPARE | CCIE_1; // No capture (CM__NONE), compare mode (CAP__COMPARE), enable CCIFG0 interrupt
-        TA0CCR0 = 40960-1; // 5 seconds: 5 s / (1 / (32768 Hz / 4))
+//        TA0CCR0 = 40960-1; // 5 seconds: 5 s / (1 / (32768 Hz / 4))
+//        TA0CCR0 = 8192-1; // // 1 second: 1 s / (1 / (32768 Hz / 4))
+        TA0CCR0 = 16384-1; // // 2 seconds: 2 s / (1 / (32768 Hz / 4))
         // Source=ACLK, Continuous mode, clear TAR
         TA0CTL = TASSEL__ACLK | ID__4 | MC__UP | TACLR;
         
-        const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
+        // Init SPI peripheral
+        _SPI::Init();
         
         for (;;) {
             // Turn on VDD_B power (turns on ICE40)
@@ -515,6 +497,12 @@ struct _MainTask {
             // the bitstream at high-frequency (40 MHz).
             // According to the datasheet, this takes 70ms.
             _Scheduler::Sleep(_Scheduler::Ms(75));
+            
+            // Reset ICE comms (by asserting SPI CLK for some length of time)
+            _SPI::ICEReset();
+            
+            // Init ICE comms
+            _ICE::Init();
             
             // Reset SD nets before we turn on SD power
             _SDTask::Reset();
