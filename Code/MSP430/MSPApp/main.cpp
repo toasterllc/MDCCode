@@ -176,15 +176,6 @@ struct _SDTask {
         _Scheduler::Wait<_SDTask>();
     }
     
-    // WaitForInitAndWrite: wait for both initialization and writing to complete
-    static void WaitForInitAndWrite() {
-        _Scheduler::Wait([&] { return !_Writing; });
-    }
-    
-//    static void WaitForInit() {
-//        _Scheduler::Wait([&] { return _RCA.has_value(); });
-//    }
-    
     static void _Reset() {
         _SDCard::Reset();
     }
@@ -192,8 +183,6 @@ struct _SDTask {
     static void _Init() {
         _SDCard::Init();
     }
-    
-    static inline bool _Writing = false;
     
     // Task options
     static constexpr Toastbox::TaskOptions Options{};
@@ -241,22 +230,12 @@ struct _MainTask {
             
             // Init image sensor / SD card
             _SDTask::Init();
+            _SDTask::Wait();
             
             // Capture an image
             {
                 _ICE::Transfer(_ICE::LEDSetMsg(0xF));
-                
-                // Wait for _SDTask to be initialized and done with writing, which is necessary
-                // for 2 reasons:
-                //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
-                //      access it,
-                //   2. we can't initiate a new capture until writing to the SD card (from a
-                //      previous capture) is complete (because the SDRAM is single-port, so
-                //      we can only read or write at one time)
-                _SDTask::WaitForInitAndWrite();
-                
                 _Scheduler::Sleep(_Scheduler::Ms(100));
-                
                 _ICE::Transfer(_ICE::LEDSetMsg(0x0));
             }
             
