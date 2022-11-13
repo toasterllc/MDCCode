@@ -230,7 +230,6 @@ struct _MainTask {
             
             // Init image sensor / SD card
             _SDTask::Init();
-            _SDTask::Wait();
             
             // Capture an image
             {
