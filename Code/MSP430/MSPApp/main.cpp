@@ -226,13 +226,17 @@ struct _MainTask {
             _SDTask::Wait();
             
             // Turn on IMG/SD power
-            _VDDIMGSDSetEnabled(true);
+//            _VDDIMGSDSetEnabled(true);
+            
+            _Scheduler::Sleep(_Scheduler::Ms(2));
             
             // Init image sensor / SD card
             _SDTask::Init();
             
+            _Scheduler::Sleep(_Scheduler::Ms(2));
+            
             // Turn off power
-            _VDDIMGSDSetEnabled(false);
+//            _VDDIMGSDSetEnabled(false);
         }
     }
     
