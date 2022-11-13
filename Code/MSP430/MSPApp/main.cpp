@@ -655,26 +655,6 @@ namespace AbortDomain {
     static constexpr uint16_t Img           = 5;
 }
 
-[[noreturn]]
-static void _SchedulerError(uint16_t line) {
-    _Abort(AbortDomain::Scheduler, line);
-}
-
-[[noreturn]]
-static void _ICEError(uint16_t line) {
-    _Abort(AbortDomain::ICE, line);
-}
-
-[[noreturn]]
-static void _SDError(uint16_t line) {
-    _Abort(AbortDomain::SD, line);
-}
-
-[[noreturn]]
-static void _ImgError(uint16_t line) {
-    _Abort(AbortDomain::Img, line);
-}
-
 static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t line) {
     FRAMWriteEn writeEn; // Enable FRAM writing
     
@@ -688,6 +668,26 @@ static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t l
     };
     
     abort.eventsCount++;
+}
+
+[[noreturn]]
+static void _SchedulerError(uint16_t line) {
+    _Abort(AbortDomain::Scheduler, line);
+}
+
+[[noreturn]]
+static void _ICEError(uint16_t line) {
+    _Abort(AbortDomain::ICE, line);
+}
+
+static void _SDError(uint16_t line) {
+    const MSP::Time timestamp = _RTC.time();
+    _AbortRecord(timestamp, AbortDomain::SD, line);
+}
+
+[[noreturn]]
+static void _ImgError(uint16_t line) {
+    _Abort(AbortDomain::Img, line);
 }
 
 [[noreturn]]

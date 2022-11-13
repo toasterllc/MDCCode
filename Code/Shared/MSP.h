@@ -107,7 +107,7 @@ namespace MSP {
         
         // abort: records aborts that have occurred
         struct [[gnu::packed]] {
-            AbortEvent events[3] = {};
+            AbortEvent events[14] = {};
             uint16_t eventsCount = 0;
         } abort = {};
         static_assert(!(sizeof(abort) % 2)); // Check alignment

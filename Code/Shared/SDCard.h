@@ -18,7 +18,8 @@ static void _BOR() {
 template <
     typename T_Scheduler,
     typename T_ICE,
-    [[noreturn]] void T_Error(uint16_t),
+//    [[noreturn]]
+    void T_Error(uint16_t),
     uint8_t T_ClkDelaySlow,
     uint8_t T_ClkDelayFast
 >
@@ -257,20 +258,23 @@ private:
                 break;
             default:
                 if (s.respCRCErr()) {
+                    T_Error(0xFE00|sdCmd);
                     for (int i=0; i<10; i++) {
                         T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x03));
                         _Sleep(_Ms(100));
                         T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x0C));
                         _Sleep(_Ms(100));
                     }
-                    T_Error(0xFE00|sdCmd);
-//                    _BOR();
+                    _BOR();
                 }
 //                Assert(!s.respCRCErr());
                 break;
             }
             return s;
         }
+        
+        // Timeout sending SD command
+        T_Error(0xFF00|sdCmd);
         
         if (!sdCmd) {
             for (;;) {
@@ -282,9 +286,7 @@ private:
             }
         }
         
-        // Timeout sending SD command
-        T_Error(0xFF00|sdCmd);
-//        _BOR();
+        _BOR();
         
 //        for (;;) {
 //            T_ICE::Transfer(typename T_ICE::LEDSetMsg(0xFF));
