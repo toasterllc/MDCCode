@@ -497,13 +497,13 @@ struct _MainTask {
         // According to the datasheet, this takes 70ms.
         _Scheduler::Sleep(_Scheduler::Ms(75));
         
+        // Reset ICE comms (by asserting SPI CLK for some length of time)
+        _SPI::ICEReset();
+        
+        // Init ICE comms
+        _ICE::Init();
+        
         for (;;) {
-            // Reset ICE comms (by asserting SPI CLK for some length of time)
-            _SPI::ICEReset();
-            
-            // Init ICE comms
-            _ICE::Init();
-            
             // Reset SD nets before we turn on SD power
             _SDTask::Reset();
             _SDTask::Wait();
