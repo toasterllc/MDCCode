@@ -516,7 +516,7 @@ struct _MainTask {
             
             // Capture an image
             {
-                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+                _ICE::Transfer(_ICE::LEDSetMsg(0xF));
                 
                 // Wait for _SDTask to be initialized and done with writing, which is necessary
                 // for 2 reasons:
@@ -529,7 +529,7 @@ struct _MainTask {
                 
                 _Scheduler::Sleep(_Scheduler::Ms(100));
                 
-                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+                _ICE::Transfer(_ICE::LEDSetMsg(0x0));
             }
             
             // Turn off power
@@ -823,7 +823,7 @@ int main() {
         // serves 2 purposes:
         //   1. it rate-limits aborts, in case there's a persistent issue
         //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-        _Scheduler::Delay(_Scheduler::Ms(3000));
+        _Scheduler::Delay(_Scheduler::Ms(1000));
     }
     
     _Scheduler::Run();

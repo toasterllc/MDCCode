@@ -257,6 +257,12 @@ private:
                 break;
             default:
                 if (s.respCRCErr()) {
+                    for (int i=0; i<10; i++) {
+                        T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x03));
+                        _Sleep(_Ms(100));
+                        T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x0C));
+                        _Sleep(_Ms(100));
+                    }
                     T_Error(0xFE00|sdCmd);
 //                    _BOR();
                 }
@@ -264,6 +270,16 @@ private:
                 break;
             }
             return s;
+        }
+        
+        if (!sdCmd) {
+            for (;;) {
+//            for (int i=0; i<10; i++) {
+                T_ICE::Transfer(typename T_ICE::LEDSetMsg(0xF));
+                _Sleep(_Ms(100));
+                T_ICE::Transfer(typename T_ICE::LEDSetMsg(0x0));
+                _Sleep(_Ms(100));
+            }
         }
         
         // Timeout sending SD command
