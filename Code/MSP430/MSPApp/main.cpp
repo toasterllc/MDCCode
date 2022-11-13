@@ -176,7 +176,7 @@ struct _MainTask {
         // We specify (within the bitstream itself, via icepack) that ICE40 should load
         // the bitstream at high-frequency (40 MHz).
         // According to the datasheet, this takes 70ms.
-        _Scheduler::Sleep(_Scheduler::Ms(75));
+        _Scheduler::Sleep(_Scheduler::Ms(250));
         
         // Reset ICE comms (by asserting SPI CLK for some length of time)
         _SPI::ICEReset();
