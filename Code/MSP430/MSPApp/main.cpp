@@ -235,8 +235,6 @@ struct _MainTask {
             
             // Turn off power
             _VDDIMGSDSetEnabled(false);
-            
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
         }
     }
     
