@@ -225,8 +225,6 @@ struct _MainTask {
             _SDTask::Reset();
             _SDTask::Wait();
             
-            _Scheduler::Sleep(_Scheduler::Ms(2));
-            
             // Init image sensor / SD card
             _SDTask::Init();
         }
