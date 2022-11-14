@@ -50,18 +50,27 @@ public:
         }
     };
     
-    struct EchoMsg : public Msg {
+    struct ReadyMsg : public Msg {
         template <size_t T_N>
-        constexpr EchoMsg(const char (&str)[T_N]) : Msg(MsgType::StartBit | MsgType::Resp | 0x00) {
+        constexpr ReadyMsg(const char (&str)[T_N]) : Msg(MsgType::StartBit | MsgType::Resp | 0x00) {
             static_assert(T_N == sizeof(Msg::payload));
             memcpy(Msg::payload, str, sizeof(Msg::payload));
         }
     };
     
-    struct EchoResp : Resp {
-        bool matches(const EchoMsg& msg) {
+    struct ReadyResp : Resp {
+        bool responseMatches(const ReadyMsg& msg) const {
             return !memcmp(Resp::payload, msg.payload, sizeof(msg.payload));
         }
+        
+        bool ready() const { return Resp::template getBit<0>(); }
+        
+//        bool ready(const ReadyMsg& msg) const {
+//            const bool ready = return Resp::template getBit<0>();
+//            if (!ready) return false;
+//            const bool echoMatch = !memcmp(Resp::payload, msg.payload, sizeof(msg.payload));
+//            if (!echoMatch) return false;
+//        }
     };
     
     struct LEDSetMsg : Msg {
@@ -291,10 +300,22 @@ public:
     
     static void Init() {
         // Confirm that we can communicate with ICE40
-        EchoMsg msg("halla7");
-        EchoResp resp;
-        Transfer(msg, &resp);
-        Assert(resp.matches(msg));
+        const ReadyMsg msg("halla7");
+        ReadyResp resp;
+        for (int i=0; i<100; i++) {
+            Transfer(msg, &resp);
+            // Compare the response first (resp.responseMatches()), before checking the ready bit (resp.ready()).
+            // The reasoning: when ICE40 is booting, it won't echo our message until the SPI subsystem is working,
+            // but it will respond with garbage, which could easily cause the single `ready` bit == 1. So don't
+            // check the ready bit until it looks like we have a valid response.
+            if (resp.responseMatches(msg)) {
+                if (resp.ready()) {
+                    return;
+                }
+            }
+            _Sleep(_Ms(1));
+        }
+        Assert(false);
     }
     
     // MARK: - Img

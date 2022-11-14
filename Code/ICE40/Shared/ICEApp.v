@@ -481,6 +481,30 @@ module ICEApp(
 `endif // SIM
     
     // ====================
+    // Ready Logic (communicates whether our PLLs are ready)
+    // ====================
+    
+`ifdef _ICEApp_Img_En
+    reg ready_imgClkReady = 0;
+    always @(posedge img_clk) begin
+        ready_imgClkReady <= 1;
+    end
+`else
+    wire ready_imgClkReady = 1;
+`endif
+    
+`ifdef _ICEApp_SD_En
+    reg ready_sdClkReady = 0;
+    always @(posedge sd_clk_int) begin
+        ready_sdClkReady <= 1;
+    end
+`else
+    wire ready_sdClkReady = 1;
+`endif
+    
+    wire ready_ready = ready_imgClkReady & ready_sdClkReady;
+    
+    // ====================
     // SPI State Machine
     // ====================
     
@@ -652,12 +676,13 @@ module ICEApp(
                 `endif // ICEApp_STM_En
                 
                 case (spi_msgType)
-                // Echo
-                `Msg_Type_Echo: begin
-                    $display("[SPI] Got Msg_Type_Echo: %0h", spi_msgArg[`Msg_Arg_Echo_Msg_Bits]);
+                // Ready
+                `Msg_Type_Ready: begin
+                    $display("[SPI] Got Msg_Type_Ready: %0h", spi_msgArg[`Msg_Arg_Ready_Msg_Bits]);
                     // spi_resp <= 64'hxxxxxxxx_xxxxxxxx;
                     // spi_resp <= 64'h12345678_ABCDEF12;
-                    spi_resp[`Resp_Arg_Echo_Msg_Bits] <= spi_msgArg[`Msg_Arg_Echo_Msg_Bits];
+                    spi_resp[`Resp_Arg_Ready_Msg_Bits] <= spi_msgArg[`Msg_Arg_Ready_Msg_Bits];
+                    spi_resp[`Resp_Arg_Ready_Ready_Bits] <= ready_ready;
                 end
                 
                 // LEDSet
