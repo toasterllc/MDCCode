@@ -486,9 +486,9 @@ struct _MainTask {
         
         // Configure Timer_A
         TA0CCTL0 = CM__NONE | CAP__COMPARE | CCIE_1; // No capture (CM__NONE), compare mode (CAP__COMPARE), enable CCIFG0 interrupt
-//        TA0CCR0 = 40960-1; // 5 seconds: 5 s / (1 / (32768 Hz / 4))
+        TA0CCR0 = 40960-1; // 5 seconds: 5 s / (1 / (32768 Hz / 4))
 //        TA0CCR0 = 8192-1; // // 1 second: 1 s / (1 / (32768 Hz / 4))
-        TA0CCR0 = 16384-1; // // 2 seconds: 2 s / (1 / (32768 Hz / 4))
+//        TA0CCR0 = 16384-1; // // 2 seconds: 2 s / (1 / (32768 Hz / 4))
         // Source=ACLK, Continuous mode, clear TAR
         TA0CTL = TASSEL__ACLK | ID__4 | MC__UP | TACLR;
         
