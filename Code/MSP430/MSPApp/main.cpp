@@ -524,7 +524,7 @@ struct _MainTask {
             
             // Capture an image
             {
-                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+//                _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
                 
                 // Wait for _SDTask to be initialized and done with writing, which is necessary
                 // for 2 reasons:
@@ -543,7 +543,7 @@ struct _MainTask {
                 _SDTask::Write(srcRAMBlock);
                 _SDTask::Wait();
                 
-                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
             }
             
             // Turn off power
