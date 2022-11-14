@@ -496,7 +496,7 @@ struct _MainTask {
             // We specify (within the bitstream itself, via icepack) that ICE40 should load
             // the bitstream at high-frequency (40 MHz).
             // According to the datasheet, this takes 70ms.
-            _Scheduler::Sleep(_Scheduler::Ms(75));
+            _Scheduler::Sleep(_Scheduler::Ms(30));
             
             // Reset ICE comms (by asserting SPI CLK for some length of time)
             _SPI::ICEReset();
@@ -541,7 +541,9 @@ struct _MainTask {
             
             // Turn off power
             _VDDIMGSDSetEnabled(false);
+            
             _VDDBSetEnabled(false);
+            _Scheduler::Sleep(_Scheduler::Ms(2)); // Wait for ICE40 to turn off
             
             // Go to sleep and wait for timer to fire
             // We pause SysTick while we sleep so we don't wake at all until the timer fires
