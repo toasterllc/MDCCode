@@ -371,14 +371,17 @@ private:
                 break;
             default:
                 if (s.respCRCErr()) {
-                    T_Error(0xFF00 | sdCmd);
+                    T_Error(0xFE00 | sdCmd);
                 }
                 break;
             }
             return s;
         }
-        // Timeout sending SD command
-        Assert(false);
+        
+        T_Error(0xFF00 | sdCmd);
+        
+//        // Timeout sending SD command
+//        Assert(false);
     }
     
     static void _ReadWriteStop() {

@@ -477,6 +477,13 @@ struct _MainTask {
     static void Run() {
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
+        // Enter LPM4.5 without SVS
+        {
+            PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+            PMMCTL0_L = PMMREGOFF_1_L | SVSHE_0; // Disable regulator, disable SVS
+        }
+        __bis_SR_register(LPM4_bits);
+        
         // Configure Timer_A
         TA0CCTL0 = CM__NONE | CAP__COMPARE | CCIE_1; // No capture (CM__NONE), compare mode (CAP__COMPARE), enable CCIFG0 interrupt
 //        TA0CCR0 = 40960-1; // 5 seconds: 5 s / (1 / (32768 Hz / 4))
@@ -548,11 +555,11 @@ struct _MainTask {
             // Go to sleep and wait for timer to fire
             // We pause SysTick while we sleep so we don't wake at all until the timer fires
             WDTCTL = ((uint16_t)WDTCTL_L | WDTPW) | WDTHOLD;
-//            // Enter LPM3.5
-//            {
-//                PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-//                PMMCTL0_L |= PMMREGOFF_1_L;
-//            }
+            // Enter LPM3.5
+            {
+                PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+                PMMCTL0_L |= PMMREGOFF_1_L;
+            }
             __bis_SR_register(LPM3_bits);
             WDTCTL = ((uint16_t)WDTCTL_L | WDTPW | WDTCNTCL) & ~WDTHOLD;
         }
