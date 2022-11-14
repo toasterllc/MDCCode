@@ -20,10 +20,11 @@
 `define Resp_Len                                                `Msg_Len
 `define Resp_Arg_Bits                                           63:0
 
-`define Msg_Type_Echo                                           `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h00
-`define     Msg_Arg_Echo_Msg_Len                                56
-`define     Msg_Arg_Echo_Msg_Bits                               55:0
-`define     Resp_Arg_Echo_Msg_Bits                              63:8
+`define Msg_Type_Ready                                          `Msg_Type_StartBit | `Msg_Type_Resp | `Msg_Type_Len'h00
+`define     Msg_Arg_Ready_Msg_Len                               56
+`define     Msg_Arg_Ready_Msg_Bits                              55:0
+`define     Resp_Arg_Ready_Msg_Bits                             63:8
+`define     Resp_Arg_Ready_Ready_Bits                           0:0
 
 `define Msg_Type_LEDSet                                         `Msg_Type_StartBit | `Msg_Type_Len'h01
 `define     Msg_Arg_LEDSet_Val_Len                              4

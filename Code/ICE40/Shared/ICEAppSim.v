@@ -137,18 +137,30 @@ module ICEAppSim();
         SendMsg(`Msg_Type_Nop, 56'h00000000000000);
     end endtask
     
-    task TestEcho(input[`Msg_Arg_Echo_Msg_Len-1:0] val); begin
+    task TestReady(input[`Msg_Arg_Ready_Msg_Len-1:0] val); begin
         reg[`Msg_Arg_Len-1:0] arg;
+        reg[15:0] i;
+        reg ready;
         
-        $display("\n[ICEAppSim] ========== TestEcho ==========");
+        $display("\n[ICEAppSim] ========== TestReady ==========");
         arg = 0;
-        arg[`Msg_Arg_Echo_Msg_Bits] = val;
+        arg[`Msg_Arg_Ready_Msg_Bits] = val;
         
-        SendMsg(`Msg_Type_Echo, arg);
-        if (spi_resp[`Resp_Arg_Echo_Msg_Bits] === val) begin
-            $display("[ICEAppSim] Response OK: %h ✅", spi_resp[`Resp_Arg_Echo_Msg_Bits]);
-        end else begin
-            $display("[ICEAppSim] Bad response: %h ❌", spi_resp[`Resp_Arg_Echo_Msg_Bits]);
+        ready = 0;
+        for (i=0; i<10 && !ready; i++) begin
+            SendMsg(`Msg_Type_Ready, arg);
+            if (spi_resp[`Resp_Arg_Ready_Msg_Bits] === val) begin
+                $display("[ICEAppSim] Response OK: %h ✅", spi_resp[`Resp_Arg_Ready_Msg_Bits]);
+            end else begin
+                $display("[ICEAppSim] Bad response: %h ❌", spi_resp[`Resp_Arg_Ready_Msg_Bits]);
+                `Finish;
+            end
+            
+            ready = spi_resp[`Resp_Arg_Ready_Ready_Bits];
+        end
+        
+        if (!ready) begin
+            $display("[ICEAppSim] Ready timeout ❌");
             `Finish;
         end
     end endtask
@@ -842,15 +854,15 @@ module ICEAppSim();
     
     initial begin
         TestRst();
-        TestEcho(56'h00000000000000);
-        TestEcho(56'h00000000000000);
-        TestEcho(56'hCAFEBABEFEEDAA);
+        TestReady(56'h00000000000000);
+        TestReady(56'h00000000000000);
+        TestReady(56'hCAFEBABEFEEDAA);
         TestNop();
-        TestEcho(56'hCAFEBABEFEEDAA);
-        TestEcho(56'h123456789ABCDE);
+        TestReady(56'hCAFEBABEFEEDAA);
+        TestReady(56'h123456789ABCDE);
         TestLEDSet(4'b1010);
         TestLEDSet(4'b0101);
-        TestEcho(56'h123456789ABCDE);
+        TestReady(56'h123456789ABCDE);
         TestNop();
         TestRst();
         
