@@ -555,11 +555,11 @@ struct _MainTask {
             // Go to sleep and wait for timer to fire
             // We pause SysTick while we sleep so we don't wake at all until the timer fires
             WDTCTL = ((uint16_t)WDTCTL_L | WDTPW) | WDTHOLD;
-            // Enter LPM3.5
-            {
-                PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-                PMMCTL0_L |= PMMREGOFF_1_L;
-            }
+//            {
+//                // Disable regulator to enter LPM3.5
+//                PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+//                PMMCTL0_L |= PMMREGOFF_1_L;
+//            }
             __bis_SR_register(LPM3_bits);
             WDTCTL = ((uint16_t)WDTCTL_L | WDTPW | WDTCNTCL) & ~WDTHOLD;
         }
