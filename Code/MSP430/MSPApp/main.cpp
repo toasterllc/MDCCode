@@ -477,12 +477,12 @@ struct _MainTask {
     static void Run() {
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
-        // Enter LPM4.5 without SVS
-        {
-            PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-            PMMCTL0_L = PMMREGOFF_1_L | SVSHE_0; // Disable regulator, disable SVS
-        }
-        __bis_SR_register(LPM4_bits);
+//        // Enter LPM4.5 without SVS
+//        {
+//            PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+//            PMMCTL0_L = PMMREGOFF_1_L | SVSHE_0; // Disable regulator, disable SVS
+//        }
+//        __bis_SR_register(LPM4_bits);
         
         // Configure Timer_A
         TA0CCTL0 = CM__NONE | CAP__COMPARE | CCIE_1; // No capture (CM__NONE), compare mode (CAP__COMPARE), enable CCIFG0 interrupt
