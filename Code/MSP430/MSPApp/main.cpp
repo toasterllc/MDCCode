@@ -35,7 +35,7 @@ struct _Pin {
     // Default GPIOs
     using UNUSED0                           = PortA::Pin<0x0>;
     using DEBUG_OUT                         = PortA::Pin<0x1, Option::Output0>;
-    using VDD_B_EN                          = PortA::Pin<0x2, Option::Output0>;
+    using VDD_B_EN                          = PortA::Pin<0x2, Option::Input, Option::Output0>;
     using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
 //    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
     using UNUSED4                           = PortA::Pin<0x4>;
