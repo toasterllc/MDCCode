@@ -544,6 +544,9 @@ struct _MainTask {
                 _SDTask::Wait();
                 
 //                _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+                // Turn on a single LED to signal that we successfully wrote an image
+                // The LED will be turned off when ICE40 is turned off
+                _ICE::Transfer(_ICE::LEDSetMsg(0x01));
             }
             
             // Turn off power
