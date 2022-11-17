@@ -150,7 +150,7 @@
 #define PREFETCH_ENABLE              0U
 #define ART_ACCLERATOR_ENABLE        1U /* To enable instruction cache and prefetch */
 
-#define USE_HAL_ADC_REGISTER_CALLBACKS         0U /* ADC register callback disabled       */
+#define USE_HAL_ADC_REGISTER_CALLBACKS         1U /* ADC register callback disabled       */
 #define USE_HAL_CAN_REGISTER_CALLBACKS         0U /* CAN register callback disabled       */
 #define USE_HAL_CEC_REGISTER_CALLBACKS         0U /* CEC register callback disabled       */
 #define USE_HAL_CRYP_REGISTER_CALLBACKS        0U /* CRYP register callback disabled      */

@@ -31,9 +31,6 @@ static const void* _USBConfigDesc(size_t& len) {
     return USBConfigDesc<_USBType>(len);
 }
 
-static QSPI _QSPI;
-static Battery<_Scheduler> _Battery;
-
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
 static void _BufQueueAssert(bool c) { Assert(c); }
@@ -60,6 +57,9 @@ using _System = System<
 
 constexpr auto& _USB = _System::USB;
 using _Scheduler = _System::Scheduler;
+
+static QSPI _QSPI;
+static Battery<_Scheduler> _Battery;
 
 using _ICE_CRST_            = GPIO<GPIOPortF, GPIO_PIN_11>;
 using _ICE_CDONE            = GPIO<GPIOPortB, GPIO_PIN_1>;
