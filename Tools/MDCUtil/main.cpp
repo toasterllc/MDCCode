@@ -32,6 +32,7 @@ const CmdStr MSPWriteCmd            = "MSPWrite";
 const CmdStr MSPStateReadCmd        = "MSPStateRead";
 const CmdStr SDReadCmd              = "SDRead";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
+const CmdStr BatteryStatusGetCmd    = "BatteryStatusGet";
 
 static void printUsage() {
     using namespace std;
