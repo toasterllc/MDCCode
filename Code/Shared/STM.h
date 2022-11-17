@@ -233,4 +233,16 @@ namespace STM {
 //        ),
 //        (uint32_t)USB::Endpoint::MaxPacketSizeBulk
 //    );
+    
+    struct [[gnu::packed]] BatteryStatus {
+        Enum(uint32_t, ChargeStatus, ChargeStatuses,
+            Invalid,
+            Shutdown,
+            Underway,
+            Complete,
+        );
+        
+        ChargeStatus chargeStatus = ChargeStatuses::Invalid;
+        uint16_t voltage = 0;
+    };
 }
