@@ -518,6 +518,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPStateReadCmd))    MSPStateRead(args, device);
         else if (args.cmd == lower(SDReadCmd))          SDRead(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))      ImgCapture(args, device);
+        else if (args.cmd == lower(BatteryStatusGetCmd))    BatteryStatusGet(args, device);
     
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
