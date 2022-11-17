@@ -53,6 +53,8 @@ static void printUsage() {
     cout << "  " << SDReadCmd           << " <addr> <len> <output>\n";
     cout << "  " << ImgCaptureCmd       << " <output.cfa>\n";
     
+    cout << "  " << BatteryStatusGetCmd     << "\n";
+    
     cout << "\n";
 }
 
