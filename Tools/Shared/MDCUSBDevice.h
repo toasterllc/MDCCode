@@ -479,6 +479,17 @@ public:
 //        return buf;
     }
     
+    STM::BatteryStatus batteryStatusGet() {
+        assert(_mode == STM::Status::Modes::STMApp);
+        
+        const STM::Cmd cmd = { .op = STM::Op::BatteryStatusGet };
+        _sendCmd(cmd);
+        
+        STM::BatteryStatus status = {};
+        _dev.read(STM::Endpoints::DataIn, status);
+        return status;
+    }
+    
 private:
     void _flushEndpoint(uint8_t ep) {
         namespace USB = Toastbox::USB;
