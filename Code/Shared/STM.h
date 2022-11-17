@@ -243,6 +243,6 @@ namespace STM {
         );
         
         ChargeStatus chargeStatus = ChargeStatuses::Invalid;
-        uint16_t voltage = 0;
+        uint32_t voltageMicrovolts = 0;
     };
 }

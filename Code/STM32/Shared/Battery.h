@@ -84,7 +84,7 @@ public:
         #warning TODO: and we only sample the battery voltage if _chargeStatus() == Underway|Complete! this is because the voltage divider circuitry breaks MCP73831T's battery-detection when no battery is connected.
         return {
             .chargeStatus = _chargeStatus(),
-            .voltage = _voltageSample(),
+            .voltageMicrovolts = _voltageSample(),
         };
     }
     
@@ -122,7 +122,7 @@ private:
 //        }
     }
     
-    uint16_t _voltageSample() {
+    uint32_t _voltageSample() {
 //        HAL_StatusTypeDef hs = HAL_ADC_Start(&_adc3);
 //        Assert(hs == HAL_OK);
 //        
@@ -139,13 +139,13 @@ private:
         
         T_Scheduler::Wait([&] { return !_busy; });
         
-        const uint32_t sample = HAL_ADC_GetValue(&_adc3);
+        const uint64_t sample = HAL_ADC_GetValue(&_adc3);
         
-        constexpr uint32_t SampleMax = (1<<12)-1; // 12-bit samples
-        constexpr uint32_t VoltageMaxMillivolts = 1800;
-        constexpr uint32_t VoltageDividerNumer = 500; // We have a 2/5 voltage divider at the ADC input
-        constexpr uint32_t VoltageDividerDenom = 200; // We have a 2/5 voltage divider at the ADC input
-        return (sample * VoltageMaxMillivolts * VoltageDividerNumer) / (SampleMax * VoltageDividerDenom);
+        constexpr uint64_t SampleMax = (1<<12)-1; // 12-bit samples
+        constexpr uint64_t VoltageMaxMicrovolts = 1800000;
+        constexpr uint64_t VoltageDividerNumer = 1000;
+        constexpr uint64_t VoltageDividerDenom = 1000+1808;
+        return (sample * VoltageMaxMicrovolts * VoltageDividerDenom) / (SampleMax * VoltageDividerNumer);
     }
     
     void _handleSampleDone() {

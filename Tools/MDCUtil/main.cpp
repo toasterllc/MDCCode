@@ -445,12 +445,18 @@ static const char* _StringForChargeStatus(const STM::BatteryStatus::ChargeStatus
 
 static void BatteryStatusGet(const Args& args, MDCUSBDevice& device) {
     using namespace STM;
-    BatteryStatus status = device.batteryStatusGet();
     
-    printf("Battery status:\n");
-    printf("  Charge status: %s\n", _StringForChargeStatus(status.chargeStatus));
-    printf("  Battery voltage: %ju mV\n", (uintmax_t)status.voltage);
-    printf("\n");
+    double voltage = 0;
+    for (;;) {
+        for (int i=0; i<1000; i++) {
+            const BatteryStatus status = device.batteryStatusGet();
+            
+            constexpr double ε = 0.99;
+            voltage = (ε)*voltage + (1-ε)*((double)status.voltageMicrovolts/1000000);
+        }
+        
+        printf("  Battery voltage: %f V\n", voltage);
+    }
 }
 
 int main(int argc, const char* argv[]) {
