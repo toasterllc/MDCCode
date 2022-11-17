@@ -7,6 +7,7 @@
 #include "STM.h"
 #include "USB.h"
 #include "QSPI.h"
+#include "Battery.h"
 #include "BufQueue.h"
 #include "SDCard.h"
 #include "ImgSensor.h"
@@ -31,6 +32,7 @@ static const void* _USBConfigDesc(size_t& len) {
 }
 
 static QSPI _QSPI;
+static Battery<_Scheduler> _Battery;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -1219,6 +1221,16 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _TaskReadout::Start(imagePaddedLen);
 }
 
+void _BatteryStatusGet(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Send battery status
+    alignas(4) const BatteryStatus status = _Battery.status();
+    _USB.send(Endpoints::DataIn, &status, sizeof(status));
+    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+}
+
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     // Host Mode
@@ -1241,6 +1253,8 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     // Img
     case Op::ImgExposureSet:    _ImgExposureSet(cmd);               break;
     case Op::ImgCapture:        _ImgCapture(cmd);                   break;
+    // Battery
+    case Op::BatteryStatusGet:  _BatteryStatusGet(cmd);             break;
     // Bad command
     default:                    _System::USBAcceptCommand(false);   break;
     }
@@ -1274,6 +1288,10 @@ extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
     _QSPI.isrDMA();
 }
 
+extern "C" [[gnu::section(".isr")]] void ISR_ADC() {
+    _Battery.isr();
+}
+
 // MARK: - Abort
 
 extern "C" [[noreturn]]
@@ -1292,6 +1310,11 @@ int main() {
     __HAL_RCC_GPIOE_CLK_ENABLE();
     __HAL_RCC_GPIOI_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
+    
+    // Init Battery
+    {
+        _Battery.init();
+    }
     
     // Init MSP
     _MSP.init();
