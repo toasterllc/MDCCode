@@ -164,6 +164,8 @@ static Args parseArgs(int argc, const char* argv[]) {
         if (strs.size() < 2) throw std::runtime_error("index/file path not specified");
         args.ImgCapture.filePath = strs[1];
     
+    } else if (args.cmd == lower(BatteryStatusGetCmd)) {
+    
     } else {
         throw std::runtime_error("invalid command");
     }
