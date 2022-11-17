@@ -56,6 +56,8 @@ namespace STM {
         
         ImgExposureSet,
         ImgCapture,
+        
+        BatteryStatusGet,
     };
     
     struct [[gnu::packed]] Cmd {
