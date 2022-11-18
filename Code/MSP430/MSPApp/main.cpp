@@ -36,7 +36,8 @@ struct _Pin {
     using VDD_B_1V8_IMG_EN                  = PortA::Pin<0x0, Option::Output0>;
     using VDD_B_EN                          = PortA::Pin<0x1, Option::Output0>;
     using VDD_B_2V8_IMG_EN                  = PortA::Pin<0x2, Option::Output0>;
-    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
+    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Resistor0>; // Disable motion sensor interrupt for VDD_BAT droop debugging
+//    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
     using ICE_MSP_SPI_DATA_OUT              = PortA::Pin<0x4>;
     using ICE_MSP_SPI_DATA_IN               = PortA::Pin<0x5>;
     using ICE_MSP_SPI_CLK                   = PortA::Pin<0x6>;
@@ -509,6 +510,12 @@ struct _ImgTask {
     static inline uint8_t Stack[256];
 };
 
+// CCIFG0 interrupt
+[[gnu::interrupt(TIMER0_A0_VECTOR)]]
+static void _ISR_TIMER0_A0() {
+    __bic_SR_register_on_exit(LPM3_bits);
+}
+
 struct _MainTask {
     static void Run() {
 //        _Pin::VDD_B_EN::Write(1);
@@ -548,17 +555,17 @@ struct _MainTask {
             // Init ICE comms
             _ICE::Init();
             
-//            _ImgTask::Enable();
+            _ImgTask::Enable();
             
             // Capture an image
             {
                 _ICE::Transfer(_ICE::LEDSetMsg(0xF));
                 
-                _Scheduler::Sleep(_Scheduler::Ms(250));
+//                _Scheduler::Sleep(_Scheduler::Ms(250));
                 
-//                // Capture image to RAM
-//                _ImgTask::Capture(imgRingBuf.buf.idEnd);
-//                const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+                // Capture image to RAM
+                _ImgTask::Capture(imgRingBuf.buf.idEnd);
+                const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
                 
                 _ICE::Transfer(_ICE::LEDSetMsg(0x0));
             }
