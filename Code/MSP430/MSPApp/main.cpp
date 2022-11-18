@@ -542,63 +542,63 @@ struct _MainTask {
         
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
+        // Configure Timer_A
+        TA0CCTL0 = CM__NONE | CAP__COMPARE | CCIE_1; // No capture (CM__NONE), compare mode (CAP__COMPARE), enable CCIFG0 interrupt
+        TA0CCR0 = 40960-1; // 5 seconds: 5 s / (1 / (32768 Hz / 4))
+//        TA0CCR0 = 8192-1; // // 1 second: 1 s / (1 / (32768 Hz / 4))
+//        TA0CCR0 = 16384-1; // // 2 seconds: 2 s / (1 / (32768 Hz / 4))
+        // Source=ACLK, Continuous mode, clear TAR
+        TA0CTL = TASSEL__ACLK | ID__4 | MC__UP | TACLR;
+        
+        // Init SPI peripheral
+        _SPI::Init();
+        
         for (;;) {
-            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
-            {
-                _WaitingForMotion = true;
-                _Scheduler::Wait([&] { return (bool)_Motion; });
-                _Motion = false;
-                _WaitingForMotion = false;
-            }
+            // Turn on VDD_B power (turns on ICE40)
+            _VDDBSetEnabled(true);
             
-            _Pin::VDD_B_EN::Write(1);
-            #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
+            // Wait for ICE40 to start
             _Scheduler::Sleep(_Scheduler::Ms(250));
             
-            // Enable image sensor / SD card
-            _ImgTask::Enable();
-            _SDTask::Enable();
+            // Reset ICE comms (by asserting SPI CLK for some length of time)
+            _SPI::ICEReset();
             
-            for (;;) {
-                // Capture an image
-                {
-                    _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-                    
-                    // Wait for _SDTask to be initialized and done with writing, which is necessary
-                    // for 2 reasons:
-                    //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
-                    //      access it,
-                    //   2. we can't initiate a new capture until writing to the SD card (from a
-                    //      previous capture) is complete (because the SDRAM is single-port, so
-                    //      we can only read or write at one time)
-                    _SDTask::WaitForInitAndWrite();
-                    
-                    // Capture image to RAM
-                    _ImgTask::Capture(imgRingBuf.buf.idEnd);
-                    const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
-                    
-                    // Copy image from RAM -> SD card
-                    _SDTask::Write(srcRAMBlock);
-                    
-                    _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-                }
+            // Init ICE comms
+            _ICE::Init();
+            
+            // Turn on IMG/SD power
+            _VDDIMGSDSetEnabled(true);
+            
+            // Init image sensor / SD card
+            _ImgTask::Init();
+            
+            // Capture an image
+            {
+                _ICE::Transfer(_ICE::LEDSetMsg(0xF));
                 
-                // Wait up to 1s for further motion
-                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-                if (!motion) break;
+                // Capture image to RAM
+                _ImgTask::Capture(imgRingBuf.buf.idEnd);
+                const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
                 
-                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-                // _Motion, there'd be a race window where we could first observe
-                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-                // the true value by resetting it to false.
-                _Motion = false;
+                _ICE::Transfer(_ICE::LEDSetMsg(0x0));
             }
             
-            // We haven't had motion in a while; power down
-            _ImgTask::Disable();
-            _SDTask::Disable();
+            // Turn off power
+            _VDDIMGSDSetEnabled(false);
             
-            _Pin::VDD_B_EN::Write(0);
+            _VDDBSetEnabled(false);
+            _Scheduler::Sleep(_Scheduler::Ms(2)); // Wait for ICE40 to turn off
+            
+            // Go to sleep and wait for timer to fire
+            // We pause SysTick while we sleep so we don't wake at all until the timer fires
+            WDTCTL = ((uint16_t)WDTCTL_L | WDTPW) | WDTHOLD;
+//            {
+//                // Disable regulator to enter LPM3.5
+//                PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+//                PMMCTL0_L |= PMMREGOFF_1_L;
+//            }
+            __bis_SR_register(LPM3_bits);
+            WDTCTL = ((uint16_t)WDTCTL_L | WDTPW | WDTCNTCL) & ~WDTHOLD;
         }
     }
     
