@@ -130,24 +130,6 @@ static MSP::State _State;
 template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
-    
-    // Init SPI peripheral
-    static bool spiInit = false;
-    if (!spiInit) {
-        spiInit = true;
-        _SPI::Init();
-    }
-    
-    // Init ICE comms
-    static bool iceInit = false;
-    if (!iceInit) {
-        iceInit = true;
-        // Reset ICE comms (by asserting SPI CLK for some length of time)
-        _SPI::ICEReset();
-        // Init ICE comms
-        _ICE::Init();
-    }
-    
     _SPI::WriteRead(msg, resp);
 }
 
@@ -555,7 +537,7 @@ struct _MainTask {
         
         for (;;) {
             // Turn on VDD_B power (turns on ICE40)
-            _VDDBSetEnabled(true);
+            _Pin::VDD_B_EN::Write(1);
             
             // Wait for ICE40 to start
             _Scheduler::Sleep(_Scheduler::Ms(250));
@@ -566,27 +548,22 @@ struct _MainTask {
             // Init ICE comms
             _ICE::Init();
             
-            // Turn on IMG/SD power
-            _VDDIMGSDSetEnabled(true);
-            
-            // Init image sensor / SD card
-            _ImgTask::Init();
+//            _ImgTask::Enable();
             
             // Capture an image
             {
                 _ICE::Transfer(_ICE::LEDSetMsg(0xF));
                 
-                // Capture image to RAM
-                _ImgTask::Capture(imgRingBuf.buf.idEnd);
-                const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+                _Scheduler::Sleep(_Scheduler::Ms(250));
+                
+//                // Capture image to RAM
+//                _ImgTask::Capture(imgRingBuf.buf.idEnd);
+//                const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
                 
                 _ICE::Transfer(_ICE::LEDSetMsg(0x0));
             }
             
-            // Turn off power
-            _VDDIMGSDSetEnabled(false);
-            
-            _VDDBSetEnabled(false);
+            _Pin::VDD_B_EN::Write(0);
             _Scheduler::Sleep(_Scheduler::Ms(2)); // Wait for ICE40 to turn off
             
             // Go to sleep and wait for timer to fire
@@ -645,28 +622,9 @@ inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
 }
 
 static void _Sleep() {
-    // Put ourself to sleep until an interrupt occurs. This function may or may not return:
-    // 
-    // - This function returns if an interrupt was already pending and the ISR
-    //   wakes us (via `__bic_SR_register_on_exit`). In this case we never enter LPM3.5.
-    // 
-    // - This function doesn't return if an interrupt wasn't pending and
-    //   therefore we enter LPM3.5. The next time we wake will be due to a
-    //   reset and execution will start from main().
-    
-    // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
-    // Otherwise, enter LPM1 sleep, because something is running.
-    const uint16_t LPMBits = (_MainTask::DeepSleepOK() ? LPM3_bits : LPM1_bits);
-    
-    // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
-    if (LPMBits == LPM3_bits) {
-        PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-        PMMCTL0_L |= PMMREGOFF_1_L;
-    }
-    
     // Atomically enable interrupts and go to sleep
     const bool prevEn = Toastbox::IntState::InterruptsEnabled();
-    __bis_SR_register(GIE | LPMBits);
+    __bis_SR_register(GIE | LPM1_bits);
     // If interrupts were disabled previously, disable them again
     if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
 }
