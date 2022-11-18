@@ -570,6 +570,9 @@ struct _MainTask {
                 _ICE::Transfer(_ICE::LEDSetMsg(0x0));
             }
             
+            _ImgTask::Disable();
+            _ImgTask::Wait();
+            
             _Pin::VDD_B_EN::Write(0);
             _Scheduler::Sleep(_Scheduler::Ms(2)); // Wait for ICE40 to turn off
             
