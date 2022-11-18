@@ -69,8 +69,8 @@ public:
         while (CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1));
         
         // MCLK / SMCLK source = DCOCLKDIV
-        //         ACLK source = REFOCLK
-        CSCTL4 = SELMS__DCOCLKDIV | SELA__REFOCLK;
+        //         ACLK source = XT1
+        CSCTL4 = SELMS__DCOCLKDIV | SELA__XT1CLK;
     }
 
 private:
