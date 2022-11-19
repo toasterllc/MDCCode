@@ -42,6 +42,21 @@
 
 - Rev7 Software / Firmware Todo
     
+    - MSPApp: root cause these aborts that occurred during battery test #1 (scratch/Rev6/BatteryLifeTest 90ec322)
+          eventsCount:             3
+          events[0]
+            timestamp:             0x923e
+            domain:                3
+            line:                  318
+          events[1]
+            timestamp:             0x1f109
+            domain:                3
+            line:                  318
+          events[2]
+            timestamp:             0x56ec7
+            domain:                3
+            line:                  318
+    
     - MSPApp: reduce current consumption when motion sensor is asserting that there's motion
         - Immediately upon the motion interrupt, replace the pull-down resistor with a pull-up
           resistor, and only re-enable the pull-down resistor when we're ready for motion again
