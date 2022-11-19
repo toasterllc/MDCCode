@@ -338,12 +338,14 @@ private:
     void _threadUpdateImageLibrary() {
         try {
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(_mspState);
+            const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
+            const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
             
             {
                 // Remove images from beginning of library: lib has, device doesn't
                 {
                     auto lock = std::unique_lock(*_imageLibrary);
-                    const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
+                    
                     const auto removeBegin = _imageLibrary->begin();
                     
                     // Find the first image >= `deviceImgIdBegin`
@@ -364,8 +366,6 @@ private:
                         libImgIdEnd = _imageLibrary->deviceImgIdEnd();
                     }
                     
-                    const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
-                    
                     if (libImgIdEnd > deviceImgIdEnd) {
                         throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImgIdEnd: %ju)",
                             (uintmax_t)libImgIdEnd,
@@ -373,7 +373,7 @@ private:
                         );
                     }
                     
-                    const uint32_t addCount = deviceImgIdEnd-libImgIdEnd;
+                    const uint32_t addCount = deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd);
                     printf("Adding %ju images\n", (uintmax_t)addCount);
                     
                     _Range newest;

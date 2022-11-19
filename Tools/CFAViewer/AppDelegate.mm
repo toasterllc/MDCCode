@@ -340,7 +340,7 @@ static bool isCFAFile(const fs::path& path) {
         memcpy(_rawImage.pixels, imgData.data(), Img::Full::PixelLen);
     
     // (2) header + raw pixel data + checksum
-    } else if (imgData.len() == Img::Full::ImageLen) {
+    } else if (imgData.len()==Img::Full::ImageLen || imgData.len()==ImgSD::Full::ImagePaddedLen) {
         // Copy the image data into _rawImage
         memcpy(_rawImage.pixels, imgData.data()+Img::PixelsOffset, Img::Full::PixelLen);
         
