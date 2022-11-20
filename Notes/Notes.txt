@@ -64,6 +64,8 @@
             timestamp:             0x56ec7
             domain:                3
             line:                  318
+          
+          Maybe we need to reset the 
     
     - MSPApp: reduce current consumption when motion sensor is asserting that there's motion
         - Immediately upon the motion interrupt, replace the pull-down resistor with a pull-up
@@ -72,10 +74,6 @@
         - Currently it consumes 100 uA while there's motion, due to the pull-down resistor
             - Do we ignore it because in Rev7, we'll disable the motion sensor when we don't need it anyway,
               and when we do need it, we end up using a lot more current, so the 100µA is negligable anyway?
-    
-    - We're getting SD card timeouts:
-        domain:                4
-        line:                  379
     
     - MSPApp: abort times seem to be wrong -- they have bit 0x40000000000000 set for some reason:
           eventsCount:             3
@@ -240,6 +238,13 @@
     
     
     
+    
+    
+    X We're getting SD card timeouts:
+        domain:                4
+        line:                  379
+        
+        X Hasn't occurred in a while
     
     X MSPApp: can we save power by using SDR50 instead of SDR104?
         X No difference in current consumption observed with Samsung Pro Endurance 128 GB
