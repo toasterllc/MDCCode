@@ -132,6 +132,8 @@ static MSP::State _State;
 
 static void _VDDBSetEnabled(bool en) {
     _Pin::VDD_B_EN::Write(en);
+    // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
+    _Scheduler::Sleep(_Scheduler::Ms(2));
 }
 
 static void _VDDIMGSDSetEnabled(bool en) {
@@ -161,24 +163,6 @@ static void _VDDIMGSDSetEnabled(bool en) {
 template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
-    
-    // Init SPI peripheral
-    static bool spiInit = false;
-    if (!spiInit) {
-        spiInit = true;
-        _SPI::Init();
-    }
-    
-    // Init ICE comms
-    static bool iceInit = false;
-    if (!iceInit) {
-        iceInit = true;
-        // Reset ICE comms (by asserting SPI CLK for some length of time)
-        _SPI::ICEReset();
-        // Init ICE comms
-        _ICE::Init();
-    }
-    
     _SPI::WriteRead(msg, resp);
 }
 
@@ -504,6 +488,9 @@ struct _MainTask {
         
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
+        // Init SPI peripheral
+        _SPI::Init();
+        
         for (;;) {
             // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
             {
@@ -516,8 +503,17 @@ struct _MainTask {
             // Turn on VDD_B power (turns on ICE40)
             _VDDBSetEnabled(true);
             
-            #warning TODO: this delay is needed for the ICE40 to start, but we need to speed it up, see Notes.txt
-            _Scheduler::Sleep(_Scheduler::Ms(250));
+            // Wait for ICE40 to start
+            // We specify (within the bitstream itself, via icepack) that ICE40 should load
+            // the bitstream at high-frequency (40 MHz).
+            // According to the datasheet, this takes 70ms.
+            _Scheduler::Sleep(_Scheduler::Ms(30));
+            
+            // Reset ICE comms (by asserting SPI CLK for some length of time)
+            _SPI::ICEReset();
+            
+            // Init ICE comms
+            _ICE::Init();
             
             // Reset SD nets before we turn on SD power
             _SDTask::Reset();
