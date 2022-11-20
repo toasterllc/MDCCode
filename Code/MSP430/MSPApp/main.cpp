@@ -703,18 +703,36 @@ static void _ImgError(uint16_t line) {
 }
 
 static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t line) {
+    using namespace MSP;
     FRAMWriteEn writeEn; // Enable FRAM writing
     
-    auto& abort = _State.abort;
-    if (abort.eventsCount >= std::size(abort.events)) return;
+    AbortHistory* hist = nullptr;
+    AbortHistory* histUnused = nullptr;
+    for (AbortHistory& h : _State.aborts) {
+        if (!h.count) histUnused = &h;
+        if (h.type.domain == domain && h.type.line == line) {
+            hist = &h;
+            break;
+        }
+    }
     
-    abort.events[abort.eventsCount] = MSP::AbortEvent{
-        .timestamp = timestamp,
-        .domain = domain,
-        .line = line,
-    };
+    if (!hist) {
+        // We don't have a matching AbortHistory entry yet.
+        // If there are no unused AbortHistory slots, then there's no
+        // place to record the abort, so just drop it.
+        if (!histUnused) return;
+        hist = histUnused;
+        
+        hist->type = {
+            .domain = domain,
+            .line = line,
+        };
+        
+        hist->timestampEarliest = timestamp;
+    }
     
-    abort.eventsCount++;
+    hist->timestampLatest = timestamp;
+    hist->count++;
 }
 
 [[noreturn]]

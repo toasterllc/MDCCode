@@ -63,11 +63,21 @@ namespace MSP {
 
     };
     
-    struct [[gnu::packed]] AbortEvent {
-        Time timestamp  = {};
+    // AbortType: a (domain,line) tuple that uniquely identifies a type of abort
+    struct [[gnu::packed]] AbortType {
         uint16_t domain = 0;
         uint16_t line   = 0;
     };
+    static_assert(!(sizeof(AbortType) % 2)); // Check alignment
+    
+    // AbortHistory: records history of an abort type, where an abort type is a (domain,line) tuple
+    struct [[gnu::packed]] AbortHistory {
+        AbortType type          = {};
+        Time timestampEarliest  = {};
+        Time timestampLatest    = {};
+        uint16_t count          = 0;
+    };
+    static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
     
     static constexpr uint32_t StateAddr = 0x1800;
     
@@ -105,12 +115,9 @@ namespace MSP {
         } sd = {};
         static_assert(!(sizeof(sd) % 2)); // Check alignment
         
-        // abort: records aborts that have occurred
-        struct [[gnu::packed]] {
-            AbortEvent events[3] = {};
-            uint16_t eventsCount = 0;
-        } abort = {};
-        static_assert(!(sizeof(abort) % 2)); // Check alignment
+        // aborts: records aborts that have occurred
+        AbortHistory aborts[5] = {};
+        static_assert(!(sizeof(aborts) % 2)); // Check alignment
     };
 
 } // namespace MSP

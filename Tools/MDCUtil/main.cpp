@@ -376,15 +376,19 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(     "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].valid);
     printf(     "\n");
     
-    printf(     "abort\n");
-    printf(     "  eventsCount:             %ju\n",         (uintmax_t)state.abort.eventsCount);
-    
-    for (size_t i=0; i<std::min(std::size(state.abort.events), (size_t)state.abort.eventsCount); i++) {
-        const auto& event = state.abort.events[i];
-        printf( "  events[%ju]\n", (uintmax_t)i);
-        printf( "    timestamp:             0x%jx\n",       (uintmax_t)event.timestamp);
-        printf( "    domain:                %ju\n",         (uintmax_t)event.domain);
-        printf( "    line:                  %ju\n",         (uintmax_t)event.line);
+    printf(     "aborts\n");
+    size_t i = 0;
+    for (const auto& abort : state.aborts) {
+        if (!abort.count) break;
+        
+        printf( "  #%ju\n",                                 (uintmax_t)i);
+        printf( "    type:\n");
+        printf( "      domain:              %ju\n",         (uintmax_t)abort.type.domain);
+        printf( "      line:                %ju\n",         (uintmax_t)abort.type.line);
+        printf( "    timestampEarliest:     0x%jx\n",       (uintmax_t)abort.timestampEarliest);
+        printf( "    timestampLatest:       0x%jx\n",       (uintmax_t)abort.timestampLatest);
+        printf( "    count:                 %ju\n",         (uintmax_t)abort.count);
+        i++;
     }
     printf(     "\n");
     

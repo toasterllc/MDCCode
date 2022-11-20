@@ -42,6 +42,14 @@
 
 - Rev7 Software / Firmware Todo
     
+    - MSPApp: make abort tracking track classes of events that occur, rather than each individual event
+        - Each event should track:
+            Domain
+            Line
+            EarliestTimestamp
+            LatestTimestamp
+            Count
+    
     - MSPApp: root cause these aborts that occurred during battery test #1 (scratch/Rev6/BatteryLifeTest 90ec322)
           eventsCount:             3
           events[0]
