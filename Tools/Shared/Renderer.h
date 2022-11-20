@@ -463,37 +463,37 @@ public:
         return textureCreate([txt pixelFormat], [txt width], [txt height], usage);
     }
     
-    Buf bufferCreate(const void* data, size_t len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
-        Buf buf = bufferCreate(len, opts);
+    Buf bufferCreate(const void* data, size_t len, MTLStorageMode storageMode=MTLStorageModeShared) {
+        Buf buf = bufferCreate(len, storageMode);
         memcpy([buf contents], data, len);
-        if (opts & MTLResourceStorageModeManaged) {
+        if (storageMode == MTLStorageModeManaged) {
             [buf didModifyRange:{0,len}];
         }
         return buf;
     }
     
-    Buf bufferCreate(size_t len, MTLResourceOptions opts=MTLResourceStorageModeShared) {
+    Buf bufferCreate(size_t len, MTLStorageMode storageMode=MTLStorageModeShared) {
         // Return an existing buffer if its length is between len and 2*len,
         // and its options match `opts`
         for (auto it=_bufs.begin(); it!=_bufs.end(); it++) {
             id<MTLBuffer> buf = *it;
             const size_t bufLen = [buf length];
-            const MTLResourceOptions bufOpts = [buf resourceOptions];
-            if (bufLen>=len && bufLen<=2*len && bufOpts==opts) {
+            const MTLStorageMode bufStorageMode = [buf storageMode];
+            if (bufLen>=len && bufLen<=2*len && bufStorageMode==storageMode) {
                 Buf b(*this, buf);
                 _bufs.erase(it);
                 return b;
             }
         }
         
-        id<MTLBuffer> buf = [dev newBufferWithLength:len options:opts];
+        id<MTLBuffer> buf = [dev newBufferWithLength:len options:(storageMode<<MTLResourceStorageModeShift)];
         Assert(buf, return Buf());
         return Buf(*this, buf);
     }
     
     Buf bufferCreate(id<MTLBuffer> buf) {
         assert(buf);
-        return bufferCreate([buf length], [buf resourceOptions]);
+        return bufferCreate([buf length], [buf storageMode]);
     }
     
     // Write samples (from a raw pointer) to a texture

@@ -396,14 +396,10 @@ private:
     
     void _loadImages(const _Range& range) {
         using namespace MDCTools;
-        // Lock the device for the duration of this function
-        auto lock = std::unique_lock(*_dev);
-        
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
-        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-        if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
-        Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+        // Lock the device for the duration of this function
+        auto lock = std::unique_lock(*_dev);
         
         constexpr size_t ChunkImgCount = 128; // Number of images to read at a time
         constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
@@ -419,10 +415,14 @@ private:
         std::thread consumerThread([&] {
             constexpr size_t WriteInterval = ChunkImgCount*8;
             
+            id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+            if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
+            Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+            
             SD::Block block = fullBlockStart;
             size_t addedImageCount = 0;
             
-            for (;;) {
+            for (;;) @autoreleasepool {
                 const auto& buf = bufQueue.rget();
                 
                 auto startTime = std::chrono::steady_clock::now();

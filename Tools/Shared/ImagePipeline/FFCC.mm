@@ -69,7 +69,7 @@ static Mat64 _calcXFromImage(const FFCC::Model& model, Renderer& renderer, id<MT
     );
     
     using ValidPixelCount = uint32_t;
-    Renderer::Buf validPixelCountBuf = renderer.bufferCreate(sizeof(ValidPixelCount), MTLResourceStorageModeManaged);
+    Renderer::Buf validPixelCountBuf = renderer.bufferCreate(sizeof(ValidPixelCount), MTLStorageModeManaged);
     renderer.bufferClear(validPixelCountBuf);
     Renderer::Txt maskUV = renderer.textureCreate(MTLPixelFormatR8Unorm, w, h);
     {
@@ -113,7 +113,7 @@ static Mat64 _calcXFromImage(const FFCC::Model& model, Renderer& renderer, id<MT
     
     const size_t binsBufCount = binCount*binCount;
     const size_t binsBufLen = sizeof(std::atomic_uint)*binsBufCount;
-    Renderer::Buf binsBuf = renderer.bufferCreate(binsBufLen, MTLResourceStorageModeManaged);
+    Renderer::Buf binsBuf = renderer.bufferCreate(binsBufLen, MTLStorageModeManaged);
     renderer.bufferClear(binsBuf);
     
     renderer.render(w, h,
