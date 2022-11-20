@@ -24,6 +24,9 @@
 #include "ImgSD.h"
 using namespace GPIO;
 
+#define Assert(x) if (!(x)) _MainError(__LINE__)
+#define AssertArg(x) if (!(x)) _MainError(__LINE__)
+
 static constexpr uint64_t _MCLKFreqHz       = 16000000;
 static constexpr uint32_t _XT1FreqHz        = 32768;
 static constexpr uint32_t _SysTickPeriodUs  = 512;
@@ -63,6 +66,7 @@ class _ImgTask;
 
 static void _Sleep();
 
+static void _MainError(uint16_t line);
 static void _SchedulerError(uint16_t line);
 static void _ICEError(uint16_t line);
 static void _SDError(uint16_t line);
@@ -164,6 +168,18 @@ template<>
 void _ICE::Transfer(const Msg& msg, Resp* resp) {
     AssertArg((bool)resp == (bool)(msg.type & _ICE::MsgType::Resp));
     _SPI::WriteRead(msg, resp);
+}
+
+static void _ICEInit() {
+    bool ok = false;
+    for (int i=0; i<100 && !ok; i++) {
+        _Scheduler::Sleep(_Scheduler::Ms(1));
+        // Reset ICE comms (by asserting SPI CLK for some length of time)
+        _SPI::ICEReset();
+        // Init ICE comms
+        ok = _ICE::Init();
+    }
+    Assert(ok);
 }
 
 // MARK: - Tasks
@@ -508,12 +524,7 @@ struct _MainTask {
             // the bitstream at high-frequency (40 MHz).
             // According to the datasheet, this takes 70ms.
             _Scheduler::Sleep(_Scheduler::Ms(30));
-            
-            // Reset ICE comms (by asserting SPI CLK for some length of time)
-            _SPI::ICEReset();
-            
-            // Init ICE comms
-            _ICE::Init();
+            _ICEInit();
             
             // Reset SD nets before we turn on SD power
             _SDTask::Reset();
@@ -671,11 +682,16 @@ static void _ISR_SysTick() {
 
 namespace AbortDomain {
     static constexpr uint16_t Invalid       = 0;
-    static constexpr uint16_t General       = 1;
+    static constexpr uint16_t Main          = 1;
     static constexpr uint16_t Scheduler     = 2;
     static constexpr uint16_t ICE           = 3;
     static constexpr uint16_t SD            = 4;
     static constexpr uint16_t Img           = 5;
+}
+
+[[noreturn]]
+static void _MainError(uint16_t line) {
+    _Abort(AbortDomain::Main, line);
 }
 
 [[noreturn]]
@@ -747,7 +763,7 @@ static void _Abort(uint16_t domain, uint16_t line) {
 
 extern "C" [[noreturn]]
 void abort() {
-    _Abort(AbortDomain::General, 0);
+    Assert(false);
 }
 
 // MARK: - Main

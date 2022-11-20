@@ -5,7 +5,6 @@
 #include <utility>
 #include <optional>
 #include "Toastbox/Task.h"
-#include "Assert.h"
 #include "Img.h"
 #include "GetBits.h"
 
@@ -298,24 +297,21 @@ public:
     
     // MARK: - Methods
     
-    static void Init() {
+    static bool Init() {
         // Confirm that we can communicate with ICE40
         const ReadyMsg msg("halla7");
         ReadyResp resp;
-        for (int i=0; i<100; i++) {
-            Transfer(msg, &resp);
-            // Compare the response first (resp.responseMatches()), before checking the ready bit (resp.ready()).
-            // The reasoning: when ICE40 is booting, it won't echo our message until the SPI subsystem is working,
-            // but it will respond with garbage, which could easily cause the single `ready` bit == 1. So don't
-            // check the ready bit until it looks like we have a valid response.
-            if (resp.responseMatches(msg)) {
-                if (resp.ready()) {
-                    return;
-                }
+        Transfer(msg, &resp);
+        // Compare the response first (resp.responseMatches()), before checking the ready bit (resp.ready()).
+        // The reasoning: when ICE40 is booting, it won't echo our message until the SPI subsystem is working,
+        // but it will respond with garbage, which could easily cause the single `ready` bit == 1. So don't
+        // check the ready bit until it looks like we have a valid response.
+        if (resp.responseMatches(msg)) {
+            if (resp.ready()) {
+                return true;
             }
-            _Sleep(_Ms(1));
         }
-        Assert(false);
+        return false;
     }
     
     // MARK: - Img
