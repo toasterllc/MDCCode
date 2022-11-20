@@ -64,7 +64,7 @@ private:
     
     void _thread() {
         for (;;) {
-            std::set<ImageId> inserted;
+            std::set<Img::Id> inserted;
             
             // Wait for work
             _Work work;
@@ -152,7 +152,7 @@ private:
             {
                 auto lock = std::unique_lock(_state.lock);
                 for (auto it=_state.images.begin(); it!=_state.images.end() && _state.images.size()>_CacheImageCount;) {
-                    const ImageId imageId = it->first;
+                    const Img::Id imageId = it->first;
                     const auto itPrev = it;
                     it++;
                     
@@ -166,7 +166,7 @@ private:
     
     struct {
         std::mutex lock; // Protects this struct
-        std::map<ImageId,ImagePtr> images;
+        std::map<Img::Id,ImagePtr> images;
         std::thread thread;
         bool threadStop = false;
         std::condition_variable threadSignal;

@@ -6,12 +6,12 @@
 
 namespace MDCStudio {
 
-using ImageId = uint64_t;
-
 struct [[gnu::packed]] ImageRef {
     static constexpr uint32_t Version = 0;
     
-    ImageId id = 0;
+    Img::Id id = 0;
+    uint8_t _pad[4];
+    
     uint64_t addr = 0;
     
     uint8_t _reserved[64] = {}; // So we can add fields without doing a big data migration
@@ -57,14 +57,14 @@ struct [[gnu::packed]] ImageThumb {
     
     uint16_t imageWidth = 0;
     uint16_t imageHeight = 0;
-    uint8_t _pad[4] = {};
+    uint8_t _pad[4];
     
     uint32_t coarseIntTime = 0;
     uint32_t analogGain = 0;
     
     double illum[3] = {0,0,0};
     Rotation rotation = Rotation::None;
-    uint8_t _pad2[7] = {};
+    uint8_t _pad2[7];
     
     uint8_t thumb[ThumbWidth*ThumbHeight*ThumbPixelSize];
 };
@@ -121,7 +121,7 @@ public:
         _notifyObservers();
     }
     
-    RecordRefConstIter find(ImageId id) {
+    RecordRefConstIter find(Img::Id id) {
         RecordRefConstIter iter = std::lower_bound(begin(), end(), 0,
             [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
                 return recordGet(sample)->ref.id < id;

@@ -307,7 +307,7 @@ using namespace MDCStudio;
 }
 
 // _openImage: open a particular image id, or an image offset from a particular image id
-- (bool)_openImage:(ImageId)imageId delta:(ssize_t)delta {
+- (bool)_openImage:(Img::Id)imageId delta:(ssize_t)delta {
     ImageSourcePtr imageSource = [_sourceListView selection];
     if (!imageSource) return false;
     
@@ -347,7 +347,7 @@ using namespace MDCStudio;
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
     const ImageGridViewImageIds& selectedImageIds = [imageGridView selectedImageIds];
     if (selectedImageIds.empty()) return;
-    const ImageId imageId = *selectedImageIds.begin();
+    const Img::Id imageId = *selectedImageIds.begin();
     [self _openImage:imageId delta:0];
 }
 

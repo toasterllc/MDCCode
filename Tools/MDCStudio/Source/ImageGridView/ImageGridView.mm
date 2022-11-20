@@ -5,6 +5,7 @@
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
 #import "Grid.h"
+#import "Code/Shared/Img.h"
 using namespace MDCStudio;
 
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
@@ -47,7 +48,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     
     struct {
         ImageGridViewImageIds imageIds;
-        MDCStudio::ImageId first = 0;
+        Img::Id first = 0;
         size_t count = 0;
         id<MTLBuffer> buf;
     } _selection;
@@ -357,7 +358,7 @@ done:
         constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
         _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
         bool* bools = (bool*)[_selection.buf contents];
-        for (ImageId imageId : imageIds) {
+        for (Img::Id imageId : imageIds) {
             bools[imageId-_selection.first] = true;
         }
     
@@ -502,13 +503,13 @@ done:
 
 static ImageGridViewImageIds _XORImageIds(const ImageGridViewImageIds& a, const ImageGridViewImageIds& b) {
     ImageGridViewImageIds r;
-    for (ImageId x : a) {
+    for (Img::Id x : a) {
         if (b.find(x) == b.end()) {
             r.insert(x);
         }
     }
     
-    for (ImageId x : b) {
+    for (Img::Id x : b) {
         if (a.find(x) == a.end()) {
             r.insert(x);
         }
@@ -573,7 +574,7 @@ struct SelectionDelta {
     ImageGridViewImageIds selectedImageIds = [_imageGridLayer selectedImageIds];
     ssize_t newIdx = 0;
     if (!selectedImageIds.empty()) {
-        const ImageId lastSelectedImgId = *std::prev(selectedImageIds.end());
+        const Img::Id lastSelectedImgId = *std::prev(selectedImageIds.end());
         const auto iter = imageLibrary->find(lastSelectedImgId);
         if (iter == imageLibrary->end()) {
             NSLog(@"Image no longer in library");
@@ -627,7 +628,7 @@ struct SelectionDelta {
     }
     
 //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
-    const ImageId newImgId = imageLibrary->recordGet(imageLibrary->begin()+newIdx)->ref.id;
+    const Img::Id newImgId = imageLibrary->recordGet(imageLibrary->begin()+newIdx)->ref.id;
     [_documentView scrollRectToVisible:[_imageGridLayer rectForImageAtIndex:newIdx]];
     
     if (!extend) selectedImageIds.clear();

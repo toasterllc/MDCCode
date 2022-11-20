@@ -387,13 +387,6 @@ private:
                     _loadImages(oldest);
                     _loadImages(newest);
                 }
-                
-                // Write the library
-                {
-                    auto lock = std::unique_lock(*_imageLibrary);
-                    printf("Writing library (%ju images)\n", (uintmax_t)_imageLibrary->recordCount());
-                    _imageLibrary->write();
-                }
             }
         
         } catch (const std::exception& e) {
@@ -424,6 +417,8 @@ private:
         
         // Consumer
         std::thread consumerThread([&] {
+            constexpr size_t WriteInterval = ChunkImgCount*8;
+            
             SD::Block block = fullBlockStart;
             size_t addedImageCount = 0;
             
@@ -442,6 +437,20 @@ private:
                 
                 auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
                 printf("Consumer took %ju ms for %ju images (avg %f ms / img)\n", (uintmax_t)durationMs, (uintmax_t)imageCount, ((double)durationMs/imageCount));
+                
+                // Periodically write the library
+                if (!(addedImageCount % WriteInterval)) {
+                    auto lock = std::unique_lock(*_imageLibrary);
+                    printf("Writing library (%ju images)\n", (uintmax_t)_imageLibrary->recordCount());
+                    _imageLibrary->write();
+                }
+            }
+            
+            // Write the library
+            {
+                auto lock = std::unique_lock(*_imageLibrary);
+                printf("Writing library (%ju images)\n", (uintmax_t)_imageLibrary->recordCount());
+                _imageLibrary->write();
             }
         });
         
@@ -473,17 +482,10 @@ private:
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
         
-        ImageId imageId = 0;
+        // Reserve space for `imgCount` additional images
         {
             auto lock = std::unique_lock(*_imageLibrary);
-            
-            // Reserve space for `imgCount` additional images
             _imageLibrary->reserve(imgCount);
-            
-            // Load `imageId` by looking at the last record's image id +1, and reserve space
-            if (_imageLibrary->recordCount()) {
-                imageId = _imageLibrary->recordGet(_imageLibrary->back())->ref.id+1;
-            }
         }
         
         Img::Id deviceImgIdLast = 0;
@@ -508,7 +510,7 @@ private:
             
             // Populate ImageRef fields
             {
-                imageRef.id = imageId;
+                imageRef.id = imgHeader.id;
                 imageRef.addr = block;
             }
             
@@ -526,7 +528,6 @@ private:
                 imageThumb.coarseIntTime  = imgHeader.coarseIntTime;
                 imageThumb.analogGain     = imgHeader.analogGain;
                 
-                imageId++;
                 block += ImgSD::Full::ImageBlockCount;
             }
             

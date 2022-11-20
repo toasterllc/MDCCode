@@ -1,9 +1,10 @@
 #import <Cocoa/Cocoa.h>
 #import <set>
 #import "ImageSource.h"
+#import "Code/Shared/Img.h"
 @class ImageGridView;
 
-using ImageGridViewImageIds = std::set<MDCStudio::ImageId>;
+using ImageGridViewImageIds = std::set<Img::Id>;
 
 @protocol ImageGridViewDelegate
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView;
