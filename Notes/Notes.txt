@@ -1,5 +1,11 @@
 - Business
 
+    - Order small additional quantity (8-16) of 16 MHz clock chips (DigiKey)
+    
+    - Order solder balls (DigiKey / AliExpress)
+        https://www.aliexpress.us/item/3256802494887154.html?algo_pvid=7bfa36e2-aa88-4fe4-b23b-5635443e5e60
+        https://www.digikey.com/en/products/detail/chip-quik-inc/SMD2024-25000/9558182
+    
     - Order mass quantity
         - Small signal mosfets
             https://www.arrow.com/en/products/dmg2305ux-7/diodes-incorporated
@@ -14,11 +20,30 @@
                 $0.024 @ 500
                 $0.024 @ 1000
         
+        - LEDs
+        - Tactile switches (LCSC)
+        - Orings (Grainger / AliExpress?)
+            13.5mm OD / 11.5mm ID
+                Hardness: 70A (medium hard)
+                Thickness: 1mm
+                https://www.grainger.com/category/hardware/o-rings-and-o-ring-kits/o-rings?attrs=Nominal+Outside+Dia.%7C13.5+mm~~System+of+Measurement%7CMetric&filters=attrs
+                $17.06 / 100
+            
+            14mm OD / 12mm ID
+                Hardness: 50A (soft)
+                Thickness: 1mm
+                https://www.mcmaster.com/1174N103/
+                $51.52 / 100
+                
+                *** This seems better than the 13.5mm one because it's softer, so it should block light better.
+                *** But it's more expensive, and we'll need to change the enclosure slightly because its larger OD.
+        
+        - Screws for mounting PCB (AliExpress)
         - Lenses
         - Lens holder (if we end up needed them)
         - Battery
-        - Battery header
-        - Battery housing (goes into header/receptacle)
+        - Battery wire header
+        - Battery wire housing (goes into header/receptacle)
             - Only if battery supplier can't attach proper connector to battery
         
         √ SD cards
