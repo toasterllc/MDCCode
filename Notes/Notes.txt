@@ -7,22 +7,17 @@
         https://www.digikey.com/en/products/detail/chip-quik-inc/SMD2024-25000/9558182
     
     - Order mass quantity
-        - Small signal mosfets
-            https://www.arrow.com/en/products/dmg2305ux-7/diodes-incorporated
-                DMG2305UX
-                $0.0432 @ 1000
-                Vt_max = 0.9 V
-                Idss = 1 µA
-            https://www.newark.com/torex/xp231p02013r-g/mosfet-p-ch-0-2a-30v-sot-323-3a/dp/91AH9291?st=mosfet
-                XP231P02013R-G
-                Vt_max = 1.2 V
-                Idss = 10 µA        XXX High leakage
-                $0.024 @ 500
-                $0.024 @ 1000
-        
         - LEDs
-        - Tactile switches (LCSC)
-        - Orings (Grainger / AliExpress?)
+        - Lenses
+        - Lens holder (if we end up needed them)
+        - Battery
+        - Battery wire header
+        - Battery wire housing (goes into header/receptacle)
+            - Only if battery supplier can't attach proper connector to battery
+        
+        √ Tactile switches (LCSC)
+        
+        √ Orings (Grainger / AliExpress?)
             13.5mm OD / 11.5mm ID
                 Hardness: 70A (medium hard)
                 Thickness: 1mm
@@ -38,13 +33,23 @@
                 *** This seems better than the 13.5mm one because it's softer, so it should block light better.
                 *** But it's more expensive, and we'll need to change the enclosure slightly because its larger OD.
         
-        - Screws for mounting PCB (AliExpress)
-        - Lenses
-        - Lens holder (if we end up needed them)
-        - Battery
-        - Battery wire header
-        - Battery wire housing (goes into header/receptacle)
-            - Only if battery supplier can't attach proper connector to battery
+        √ Screws for mounting PCB (AliExpress)
+        
+        √ Small signal mosfets
+            https://www.lcsc.com/product-detail/MOSFETs_HXY-MOSFET-DMG2305UX-7_C5261054.html
+                DMG2305UX-7
+                $0.0471 @ 300
+            https://www.arrow.com/en/products/dmg2305ux-7/diodes-incorporated
+                DMG2305UX
+                $0.0432 @ 1000
+                Vt_max = 0.9 V
+                Idss = 1 µA
+            https://www.newark.com/torex/xp231p02013r-g/mosfet-p-ch-0-2a-30v-sot-323-3a/dp/91AH9291?st=mosfet
+                XP231P02013R-G
+                Vt_max = 1.2 V
+                Idss = 10 µA        XXX High leakage
+                $0.024 @ 500
+                $0.024 @ 1000
         
         √ SD cards
             √ Samsung PRO Endurance 128 GB MB-MJ128KA/AM
