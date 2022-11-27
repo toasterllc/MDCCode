@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+import os, sys
+if 'PYTHONPATH' not in os.environ:
+    os.environ["PYTHONPATH"] = os.path.join(os.path.dirname(__file__), "../../Tools/Python")
+    os.execv(sys.argv[0], sys.argv)
+
+
+
+#!/usr/bin/env python3
 import os
 import argparse
 import shutil
@@ -6,8 +14,6 @@ import subprocess
 import sys
 import ast
 import pprint
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../Tools/Python"))
 from mango import Tuner, scheduler
 
 def nextpnr(cmdArgs, stdoutSuppress=False):
