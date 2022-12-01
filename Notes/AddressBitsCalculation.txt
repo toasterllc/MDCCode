@@ -1,6 +1,0 @@
-8,388,608 words == 23 address bits
-a0-a11 (row)	12 bits
-a0-8 (row)	9 bits
-b0,b1		2 bits
-========================
-		23 bits

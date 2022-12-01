@@ -1,7 +1,0 @@
-- Use CurrentRanger to find out how much current enters an unpowered STM32's GPIO,
-  from a 47k resistor hooked to ~3.3V. Test on Rev3 board by removing an LED. (Or
-  test first without removing an LED, in case the current is small enough in that
-  case, and so we don't need to remove it.)
-
-    - Did testing -- STM32 GPIO consumes 83 nA when the STM32 is unpowered
-        -> GPIO resistance = 40 MΩ

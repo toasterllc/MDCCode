@@ -1,5 +1,0 @@
-208 MHz clock signal:
-  1.3 V max
-  .69 V min
-
-See SDClock-207MHz.png

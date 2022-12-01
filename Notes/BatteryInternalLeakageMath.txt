@@ -1,7 +1,0 @@
-internal leakage = 3 percent per month for lipo batteries
-2200mah lipo, 3% = 66mAh
-
-66 mAh = 66 mA * 1 hour == 0.066 A * 3600 seconds == 237.6 amp-seconds
-1 month = 2592000 seconds
-
-237.6 amp-seconds / 2592000 seconds == 0.00009166666667 amps == 92 uA

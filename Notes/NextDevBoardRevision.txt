@@ -1,9 +1,0 @@
-* Use lower-power SDRAM
-
-* Consider putting RAM traces on the middle layers since they're high-speed?
-    https://old.reddit.com/r/FPGA/comments/7uhiac/fpga_board_and_best_pcb_layer_stack/
-    http://www.hottconsultants.com/techtips/pcb-stack-up-1.html
-    
-    "4. High-speed signals should be routed on buried layers located between planes.  In this way the planes can act as shields and contain the radiation from the high-speed traces."
-
-    Cons: debugging and rework would be hard/impossible

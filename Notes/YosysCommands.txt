@@ -1,9 +1,0 @@
-read_verilog -sv blink.sv ; prep -top top ; sim -clock clk -reset rst -rstlen 1 -vcd blink.vcd
-
-read_verilog -sv -lib +/ice40/cells_sim.v blink.sv
-prep -top top
-sim -clock clk -reset rst -rstlen 10 -vcd blink.vcd
-
-read_verilog -sv blink.sv
-prep -top top
-sim -clock clk -reset rst -vcd blink.vcd

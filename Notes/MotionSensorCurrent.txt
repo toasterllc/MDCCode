@@ -1,5 +1,0 @@
-Motion sensor current
-
-Idle (no motion): .9 uA
-During motion: 95.4 uA
-Mask period after motion: 1.6 - 2.2 uA

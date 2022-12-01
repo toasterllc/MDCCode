@@ -1,3 +1,0 @@
-Rev1Board_ReadWriteTest current consumption
-64 mA @ 159 MHz
-30 mA @ 24 MHz

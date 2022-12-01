@@ -1,7 +1,0 @@
-Test to determine if battery reverse-polarity protection circuit works:
-
-On Rev6 board, measured current through a 1k resistor connected between board nets N$1 and GND. Battery voltage was measured to be 3.9V.
-
-With the battery terminals connected properly, ~4 mA was measured through the resistor (as expected).
-
-With the battery terminals reversed, 31 nA was measured through the resistor. This shows that the reverse-polarity circuit has a resistance of 3.9/31e-9 = 126 MΩ, which seems good.

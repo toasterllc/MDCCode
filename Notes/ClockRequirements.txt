@@ -1,8 +1,0 @@
-Clock requirements
-
-    - AR0330
-        - fEXTCLK: 6-27 MHz
-    
-    - STM32
-        - PLL1 input clock: 12, 12.5, 16, 24, 25
-        - "The PLL1 has as input HSE clock."

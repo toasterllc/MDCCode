@@ -1,4 +1,0 @@
-Row0    G R G R
-Row1    B G B G
-Row2    G R G R
-Row3    B G B G
