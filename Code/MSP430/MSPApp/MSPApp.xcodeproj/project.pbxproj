@@ -14,14 +14,12 @@
 		5588914C273C6BCD0004458F /* RTC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RTC.h; sourceTree = "<group>"; };
 		5588914D273C79540004458F /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Clock.h; sourceTree = "<group>"; };
 		5588914E273C7DEB0004458F /* SPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SPI.h; sourceTree = "<group>"; };
-		55B2150B26FA7A99001423C1 /* msp430fr2422.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2422.txt; sourceTree = "<group>"; };
 		55B9EC94293AA2A300318243 /* msp430fr2433.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.txt; sourceTree = "<group>"; };
 		55B9EC95293AA2A300318243 /* msp430fr2433.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2433.ld; sourceTree = "<group>"; };
 		55BCD85C276AAF7C002B4CC7 /* WDT.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WDT.h; sourceTree = "<group>"; };
 		55FD016B275F25BA005505B5 /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
 		55FD016C27605D4F005505B5 /* Startup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Startup.h; sourceTree = "<group>"; };
 		55FD016D27609F93005505B5 /* FRAMWriteEn.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FRAMWriteEn.h; sourceTree = "<group>"; };
-		55FD01ED27699E9D005505B5 /* msp430fr2422.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp430fr2422.ld; sourceTree = "<group>"; };
 		55FD01EE27699F08005505B5 /* Release */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Release; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -33,8 +31,6 @@
 				556E45F126B1204A006681FA /* Lib */,
 				55FD01EE27699F08005505B5 /* Release */,
 				55FD016B275F25BA005505B5 /* Linker.ld */,
-				55FD01ED27699E9D005505B5 /* msp430fr2422.ld */,
-				55B2150B26FA7A99001423C1 /* msp430fr2422.txt */,
 				55B9EC95293AA2A300318243 /* msp430fr2433.ld */,
 				55B9EC94293AA2A300318243 /* msp430fr2433.txt */,
 				55889121273B3D360004458F /* GPIO.h */,
