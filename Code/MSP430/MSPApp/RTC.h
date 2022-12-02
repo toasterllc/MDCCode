@@ -66,7 +66,7 @@ public:
     void isr() {
         // Accessing `RTCIV` automatically clears the highest-priority interrupt
         switch (__even_in_range(RTCIV, RTCIV__RTCIFG)) {
-        case RTCIV__RTCIFG:
+        case RTCIV_RTCIF:
             // Update our time
             _time += InterruptIntervalSec;
             break;

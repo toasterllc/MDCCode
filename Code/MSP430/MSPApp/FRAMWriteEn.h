@@ -8,7 +8,7 @@ public:
         _prevSYSCFG0 = SYSCFG0 & 0x00FF; // Mask out the password field (FRWPPW)
         // Disable write protection
         // Assume FRWPOA=0 for now
-        SYSCFG0 = FRWPPW | DFWP_0;
+        SYSCFG0 = FRWPPW;
     }
     
     ~FRAMWriteEn() {

@@ -33,13 +33,20 @@ public:
         _ClkPeriph::Init();
         
         // Assert USCI reset
-        UCB0CTLW0 |= UCSWRST;
+        UCB0CTLW0 = UCSWRST;
+        
+//        UCB0CTLW0 |=
+//            // phase=1, polarity=0, MSB first, width=8-bit
+//            UCCKPH_1 | UCCKPL__LOW | UCMSB_1 | UC7BIT__8BIT |
+//            // mode=master, mode=3-pin SPI, mode=synchronous, clock=SMCLK
+//            UCMST__MASTER | UCMODE_0 | UCSYNC__SYNC | UCSSEL__SMCLK;
+        
         
         UCB0CTLW0 |=
             // phase=1, polarity=0, MSB first, width=8-bit
-            UCCKPH_1 | UCCKPL__LOW | UCMSB_1 | UC7BIT__8BIT |
+            UCCKPH | (UCCKPL&0) | UCMSB | (UC7BIT&0) |
             // mode=master, mode=3-pin SPI, mode=synchronous, clock=SMCLK
-            UCMST__MASTER | UCMODE_0 | UCSYNC__SYNC | UCSSEL__SMCLK;
+            UCMST | UCMODE_0 | UCSYNC | UCSSEL__SMCLK;
         
         // fBitClock = fBRCLK / 1;
         UCB0BRW = 0;

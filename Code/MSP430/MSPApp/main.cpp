@@ -54,7 +54,7 @@ struct _Pin {
 };
 
 // _MotionSignalIV: motion interrupt vector; keep in sync with the pin chosen for MOTION_SIGNAL
-constexpr uint16_t _MotionSignalIV = P1IV__P1IFG3;
+constexpr uint16_t _MotionSignalIV = P1IV_P1IFG3;
 
 using _Clock = ClockType<_MCLKFreqHz>;
 using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
@@ -637,7 +637,7 @@ static void _Sleep() {
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
         PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
-        PMMCTL0_L |= PMMREGOFF_1_L;
+        PMMCTL0_L |= PMMREGOFF_L;
     }
     
     // Atomically enable interrupts and go to sleep
@@ -811,10 +811,6 @@ int main() {
         _SPI::Pin::DataOut,
         _SPI::Pin::DataIn
     >();
-    
-    // We're using the 'remapped' pin assignments for the eUSCI_B0 pins, which requires setting SYSCFG2.USCIBRMP.
-    // See "Table 9-11. eUSCI Pin Configurations" in the datasheet.
-    SYSCFG2 |= USCIBRMP;
     
     // Init clock
     _Clock::Init();

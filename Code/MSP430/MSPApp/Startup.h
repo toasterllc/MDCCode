@@ -7,7 +7,7 @@ class Startup {
 public:
     static bool ColdStart() {
         // This is a cold start if we're not waking from LPM3.5
-        static bool coldStart = (SYSRSTIV != SYSRSTIV__LPM5WU);
+        static bool coldStart = (SYSRSTIV != SYSRSTIV_LPM5WU);
         return coldStart;
     }
     
