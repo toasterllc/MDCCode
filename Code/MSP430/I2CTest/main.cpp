@@ -29,8 +29,6 @@ struct _Pin {
     using LED2      = PortA::Pin<0x1, Option::Output0>;
     using I2CData   = PortA::Pin<0x2>;
     using I2CClock  = PortA::Pin<0x3>;
-    using XOUT      = PortA::Pin<0x8>;
-    using XIN       = PortA::Pin<0x9>;
 };
 
 using _Clock = ClockType<_MCLKFreqHz>;
@@ -74,7 +72,10 @@ struct _I2CTask {
             _I2C::Recv(msg);
             
             // Send a response
-            _I2CMsg resp;
+            _I2CMsg resp = {
+                .type = 0xCA,
+                .payload = 0xFE,
+            };
             _I2C::Send(resp);
             
 //            _Pin::LED1::Write(1);
@@ -156,14 +157,8 @@ static void _I2CError(uint16_t line) {
 }
 
 [[noreturn]]
-static void _BOR() {
-    PMMCTL0 = PMMPW | PMMSWBOR;
-    for (;;);
-}
-
-[[noreturn]]
 static void _Abort(uint16_t domain, uint16_t line) {
-    _BOR();
+    for (;;);
 }
 
 extern "C" [[noreturn]]
@@ -189,9 +184,6 @@ int main() {
     GPIO::Init<
         _Pin::LED1,
         _Pin::LED2,
-        _Pin::XOUT,
-        _Pin::XIN,
-        
         _I2C::Pin::Clk,
         _I2C::Pin::Data
     >();
@@ -201,6 +193,9 @@ int main() {
     
     // Init SysTick
     _SysTick::Init();
+    
+    // Init I2C Peripheral
+    _I2C::Init();
     
     _Scheduler::Run();
 }
