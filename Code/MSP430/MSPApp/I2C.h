@@ -79,7 +79,7 @@ public:
             // Confirm that we received another byte
             Assert(ev == USCI_I2C_UCRXIFG0);
             // Store the byte
-            b[i] = UCB0RXBUF & 0xFF;
+            b[i] = UCB0RXBUF_L;
         }
         
         ev = _WaitForEvent();

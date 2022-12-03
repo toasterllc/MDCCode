@@ -36,7 +36,8 @@ struct _Pin {
 using _Clock = ClockType<_MCLKFreqHz>;
 using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 struct _I2CMsg {
-
+    uint8_t type = 0;
+    uint8_t payload = 0;
 };
 
 class _I2CTask;
