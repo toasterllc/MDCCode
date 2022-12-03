@@ -38,7 +38,6 @@ using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 struct _I2CMsg {
 
 };
-using _I2C = I2CType<_Pin::I2CClock, _Pin::I2CData, _I2CMsg>;
 
 class _I2CTask;
 
@@ -46,6 +45,7 @@ static void _Sleep();
 
 static void _MainError(uint16_t line);
 static void _SchedulerError(uint16_t line);
+static void _I2CError(uint16_t line);
 
 extern uint8_t _StackMain[];
 
@@ -63,13 +63,23 @@ using _Scheduler = Toastbox::Scheduler<
     _I2CTask                                    // T_Tasks: list of tasks
 >;
 
+using _I2C = I2CType<_Scheduler, _Pin::I2CClock, _Pin::I2CData, _I2CMsg, _I2CError>;
+
 struct _I2CTask {
     static void Run() {
         for (;;) {
-            _Pin::LED1::Write(1);
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
-            _Pin::LED1::Write(0);
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
+            // Wait for a message to arrive over I2C
+            _I2CMsg msg;
+            _I2C::Recv(msg);
+            
+            // Send a response
+            _I2CMsg resp;
+            _I2C::Send(resp);
+            
+//            _Pin::LED1::Write(1);
+//            _Scheduler::Sleep(_Scheduler::Ms(1000));
+//            _Pin::LED1::Write(0);
+//            _Scheduler::Sleep(_Scheduler::Ms(1000));
         }
     }
     
@@ -115,7 +125,7 @@ static void _ISR_WDT() {
 
 [[gnu::interrupt(USCI_B0_VECTOR)]]
 static void _ISR_USCI_B0() {
-    _I2C.ISR();
+    _I2C::ISR();
     // Wake ourself
     __bic_SR_register_on_exit(LPM0_bits);
 }
@@ -126,6 +136,7 @@ namespace AbortDomain {
     static constexpr uint16_t Invalid       = 0;
     static constexpr uint16_t Main          = 1;
     static constexpr uint16_t Scheduler     = 2;
+    static constexpr uint16_t I2C           = 3;
 }
 
 [[noreturn]]
@@ -136,6 +147,11 @@ static void _MainError(uint16_t line) {
 [[noreturn]]
 static void _SchedulerError(uint16_t line) {
     _Abort(AbortDomain::Scheduler, line);
+}
+
+[[noreturn]]
+static void _I2CError(uint16_t line) {
+    _Abort(AbortDomain::I2C, line);
 }
 
 [[noreturn]]

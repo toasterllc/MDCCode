@@ -1,8 +1,16 @@
 #pragma once
 #include <msp430.h>
 
-template <typename T_ClkPin, typename T_DataPin, typename T_Msg>
+template <
+typename T_Scheduler,
+typename T_ClkPin,
+typename T_DataPin,
+typename T_Msg,
+[[noreturn]] void T_Error(uint16_t)
+>
 class I2CType {
+#define Assert(x) if (!(x)) T_Error(__LINE__)
+
 public:
     struct Pin {
         using Clk       = typename T_ClkPin::template Opts<GPIO::Option::Sel01>;
@@ -54,12 +62,29 @@ public:
 //#define UCRXIE0                (0x0001)       /* I2C Receive Interrupt Enable 0 */
         
         
-        // Enable interrupts
-        UCB0IE = (UCTXIE0 | UCRXIE0);
+//        #warning TODO: in the future, we probably want UCSTTIE too, so that we can wake from sleep upon a START condition
+//        // Enable interrupts
+//        UCB0IE = (UCTXIE0 | UCRXIE0);
     }
     
     static void Recv(T_Msg& msg) {
+        uint8_t* b = reinterpret_cast<uint8_t*>(&msg);
         
+        uint16_t ev = _WaitForEvent();
+        // Confirm that we have a START condition
+        Assert(ev == USCI_I2C_UCSTTIFG);
+        
+        for (size_t i=0; i<sizeof(msg); i++) {
+            ev = _WaitForEvent();
+            // Confirm that we received another byte
+            Assert(ev == USCI_I2C_UCRXIFG0);
+            // Store the byte
+            b[i] = UCB0RXBUF & 0xFF;
+        }
+        
+        ev = _WaitForEvent();
+        // Confirm that we have a STOP condition
+        Assert(ev == USCI_I2C_UCSTPIFG);
     }
     
     static void Send(const T_Msg& msg) {
@@ -67,19 +92,32 @@ public:
     }
     
     static void ISR() {
-        switch (__even_in_range(UCB0IV, USCI_I2C_UCBIT9IFG)) {
-//        case USCI_I2C_UCSTTIFG: // Start bit received
+        // We should never be called until _Event is cleared
+        Assert(!_Event);
+        // Disable interrupts until current one is handled by our thread
+        _I2CIntsSetEnabled(false);
+        _Event = UCB0IV;
+        
+//        UCB0IV = ;
+//        
+//        switch (__even_in_range(UCB0IV, USCI_I2C_UCBIT9IFG)) {
+////        case USCI_I2C_UCSTTIFG: // Start bit received
+////            break;
+////        case USCI_I2C_UCSTPIFG: // Stop bit received
+////            break;
+//        case USCI_I2C_UCRXIFG0:
+//            // Disable receive interrupts until the current byte is handled
+//            UCB0IE &= ~UCRXIE0;
+//            _Rx = UCB0RXBUF;
 //            break;
-//        case USCI_I2C_UCSTPIFG: // Stop bit received
+//        case USCI_I2C_UCTXIFG0:
 //            break;
-        case USCI_I2C_UCRXIFG0:
-            break;
-        case USCI_I2C_UCTXIFG0:
-            break;
-        default:
-            // Received an interrupt we didn't enable
-            abort();
-            break;
+//        default:
+//            // Received an interrupt we didn't enable
+//            abort();
+//            break;
+//        }
+        
 //        #define USCI_I2C_UCALIFG       (0x0002)       /* Interrupt Vector: I2C Mode: UCALIFG */
 //        #define USCI_I2C_UCNACKIFG     (0x0004)       /* Interrupt Vector: I2C Mode: UCNACKIFG */
 //        #define USCI_I2C_UCSTTIFG      (0x0006)       /* Interrupt Vector: I2C Mode: UCSTTIFG*/
@@ -134,6 +172,28 @@ public:
 //        case 0x1e: ... // Vector 30: 9th bit
 //        break;
 //        default: break;
-//        }
     }
+
+private:
+    static void _I2CIntsSetEnabled(bool en) {
+        if (en) UCB0IE = UCSTTIE | UCSTPIE | UCTXIE0 | UCRXIE0;
+        else    UCB0IE = 0;
+    }
+//    static _RxSet(uint8_t b) {
+//        // Disable receive interrupts until the current byte is handled
+//        UCB0IE &= ~UCRXIE0;
+//        _Rx = UCB0RXBUF;
+//    }
+    
+    static uint16_t _WaitForEvent() {
+        _Event = std::nullopt;
+        // Re-enable interrupts now that we're ready for an event
+        _I2CIntsSetEnabled(true);
+        T_Scheduler::Wait([&] { return _Event.has_value(); });
+        return *_Event;
+    }
+    
+    static inline std::optional<uint16_t> _Event;
+
+#undef Assert
 };
