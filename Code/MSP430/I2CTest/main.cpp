@@ -66,6 +66,9 @@ using _I2C = I2CType<_Scheduler, _Pin::I2CClock, _Pin::I2CData, _I2CMsg, _I2CErr
 
 struct _I2CTask {
     static void Run() {
+        // Init I2C Peripheral
+        _I2C::Init();
+        
         for (;;) {
             // Wait for a message to arrive over I2C
             _I2CMsg msg;
@@ -189,9 +192,6 @@ int main() {
     
     // Init SysTick
     _SysTick::Init();
-    
-    // Init I2C Peripheral
-    _I2C::Init();
     
     _Scheduler::Run();
 }

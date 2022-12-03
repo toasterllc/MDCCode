@@ -89,12 +89,14 @@ public:
         for (;;) {
             ev = _WaitForEvent();
             switch (ev) {
-            // Send 0xFF after the end of our data
+            // Request for more data: send 0xFF after the end of our data
             case USCI_I2C_UCTXIFG0:
                 UCB0TXBUF_L = 0xFF;
                 continue;
+            // STOP condition
             case USCI_I2C_UCSTPIFG:
                 return;
+            // Unexpected event
             default:
                 Assert(false);
             }
@@ -109,7 +111,7 @@ public:
         if (!ev) return;
         
         _Event = ev;
-        // Disable I2C interrupts until current one is handled by our thread
+        // Disable I2C interrupts until current event is handled by our thread
         _I2CIntsSetEnabled(false);
     }
 
