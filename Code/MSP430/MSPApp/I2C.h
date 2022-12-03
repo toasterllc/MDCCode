@@ -47,7 +47,7 @@ public:
         UCB0I2COA0 = 
             (UCGCEN&0)      |   // don't respond to general calls
             UCOAEN          |   // enable this slave (slave 0)
-            0x00            ;   // our slave address
+            0x55            ;   // our slave address
         
         // Enable!
         UCB0CTLW0 &= ~UCSWRST;
@@ -105,12 +105,11 @@ public:
         // We should never be called unless _Event is cleared
         Assert(!_Event);
         const uint16_t ev = UCB0IV;
-        
         // Ignore spurious interrupts
         if (!ev) return;
         
         _Event = ev;
-        // Disable interrupts until current one is handled by our thread
+        // Disable I2C interrupts until current one is handled by our thread
         _I2CIntsSetEnabled(false);
     }
 
@@ -122,7 +121,7 @@ private:
     
     static uint16_t _WaitForEvent() {
         _Event = std::nullopt;
-        // Re-enable interrupts now that we're ready for an event
+        // Re-enable I2C interrupts now that we're ready for an event
         _I2CIntsSetEnabled(true);
         T_Scheduler::Wait([&] { return _Event.has_value(); });
         return *_Event;

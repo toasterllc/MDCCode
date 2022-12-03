@@ -91,7 +91,7 @@ struct _I2CTask {
     };
     
     // Task stack
-    [[gnu::section(".stack._MainTask")]]
+    [[gnu::section(".stack._I2CTask")]]
     static inline uint8_t Stack[256];
 };
 
@@ -168,7 +168,7 @@ void abort() {
 
 // MARK: - Main
 
-#define _StackMainSize 128
+#define _StackMainSize 256
 
 [[gnu::section(".stack.main")]]
 uint8_t _StackMain[_StackMainSize];
