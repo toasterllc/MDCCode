@@ -27,7 +27,7 @@ enum class Option : uint8_t {
     Interrupt10,
 };
 
-enum class PortIndex { A };
+enum class PortIndex { A, B };
 
 template <PortIndex T_PortIdx>
 class Port {
@@ -62,24 +62,79 @@ public:
             IES(    InitConfig::IES()   );
         }
         
-        static constexpr bool Out()         { if constexpr (PortIdx == PortIndex::A) return _Getter(PAOUT);   }
-        static constexpr bool Dir()         { if constexpr (PortIdx == PortIndex::A) return _Getter(PADIR);   }
-        static constexpr bool Sel0()        { if constexpr (PortIdx == PortIndex::A) return _Getter(PASEL0);  }
-        static constexpr bool Sel1()        { if constexpr (PortIdx == PortIndex::A) return _Getter(PASEL1);  }
-        static constexpr bool REn()         { if constexpr (PortIdx == PortIndex::A) return _Getter(PAREN);   }
-        static constexpr bool IE()          { if constexpr (PortIdx == PortIndex::A) return _Getter(PAIE);    }
-        static constexpr bool IES()         { if constexpr (PortIdx == PortIndex::A) return _Getter(PAIES);   }
+        static constexpr bool Out() {
+            if constexpr (PortIdx == PortIndex::A)      return _Getter(PAOUT);
+            else if constexpr (PortIdx == PortIndex::B) return _Getter(PBOUT);
+        }
         
-        static constexpr void Out(bool x)   { if constexpr (PortIdx == PortIndex::A) _Setter(PAOUT, x);   }
-        static constexpr void Dir(bool x)   { if constexpr (PortIdx == PortIndex::A) _Setter(PADIR, x);   }
-        static constexpr void Sel0(bool x)  { if constexpr (PortIdx == PortIndex::A) _Setter(PASEL0, x);  }
-        static constexpr void Sel1(bool x)  { if constexpr (PortIdx == PortIndex::A) _Setter(PASEL1, x);  }
-        static constexpr void REn(bool x)   { if constexpr (PortIdx == PortIndex::A) _Setter(PAREN, x);   }
-        static constexpr void IE(bool x)    { if constexpr (PortIdx == PortIndex::A) _Setter(PAIE, x);    }
-        static constexpr void IES(bool x)   { if constexpr (PortIdx == PortIndex::A) _Setter(PAIES, x);   }
+        static constexpr bool Dir() {
+            if constexpr (PortIdx == PortIndex::A)      return _Getter(PADIR);
+            else if constexpr (PortIdx == PortIndex::B) return _Getter(PBDIR);
+        }
+        
+        static constexpr bool Sel0() {
+            if constexpr (PortIdx == PortIndex::A)      return _Getter(PASEL0);
+            else if constexpr (PortIdx == PortIndex::B) return _Getter(PBSEL0);
+        }
+        
+        static constexpr bool Sel1() {
+            if constexpr (PortIdx == PortIndex::A)      return _Getter(PASEL1);
+            else if constexpr (PortIdx == PortIndex::B) return _Getter(PBSEL1);
+        }
+        
+        static constexpr bool REn() {
+            if constexpr (PortIdx == PortIndex::A)      return _Getter(PAREN);
+            else if constexpr (PortIdx == PortIndex::B) return _Getter(PBREN);
+        }
+        
+        template <std::enable_if_t<PortIdx==PortIndex::A, int> = 0>
+        static constexpr bool IE() {
+            return _Getter(PAIE);
+        }
+        
+        template <std::enable_if_t<PortIdx==PortIndex::A, int> = 0>
+        static constexpr bool IES() {
+            return _Getter(PAIES);
+        }
+        
+        static constexpr void Out(bool x) {
+            if constexpr (PortIdx == PortIndex::A)      _Setter(PAOUT, x);
+            else if constexpr (PortIdx == PortIndex::B) _Setter(PBOUT, x);
+        }
+        
+        static constexpr void Dir(bool x) {
+            if constexpr (PortIdx == PortIndex::A)      _Setter(PADIR, x);
+            else if constexpr (PortIdx == PortIndex::B) _Setter(PBDIR, x);
+        }
+        
+        static constexpr void Sel0(bool x) {
+            if constexpr (PortIdx == PortIndex::A)      _Setter(PASEL0, x);
+            else if constexpr (PortIdx == PortIndex::B) _Setter(PBSEL0, x);
+        }
+        
+        static constexpr void Sel1(bool x) {
+            if constexpr (PortIdx == PortIndex::A)      _Setter(PASEL1, x);
+            else if constexpr (PortIdx == PortIndex::B) _Setter(PBSEL1, x);
+        }
+        
+        static constexpr void REn(bool x) {
+            if constexpr (PortIdx == PortIndex::A)      _Setter(PAREN, x);
+            else if constexpr (PortIdx == PortIndex::B) _Setter(PBREN, x);
+        }
+        
+        template <std::enable_if_t<PortIdx==PortIndex::A, int> = 0>
+        static constexpr void IE(bool x) {
+            _Setter(PAIE, x);
+        }
+        
+        template <std::enable_if_t<PortIdx==PortIndex::A, int> = 0>
+        static constexpr void IES(bool x) {
+            _Setter(PAIES, x);
+        }
         
         static bool Read() {
-            if constexpr (PortIdx == PortIndex::A) return PAIN & Bit;
+            if constexpr (PortIdx == PortIndex::A)      return PAIN & Bit;
+            else if constexpr (PortIdx == PortIndex::B) return PBIN & Bit;
         }
         
         static void Write(bool x) {
@@ -166,6 +221,8 @@ static void Init() {
     Toastbox::IntState ints(false);
     
     // Config pins
+    
+    // Port A
     constexpr _Regs regsA = _GetRegs<PortIndex::A, T_Pins...>(_Regs{});
     PAOUT   = regsA.Out;
     PADIR   = regsA.Dir;
@@ -173,6 +230,14 @@ static void Init() {
     PASEL1  = regsA.Sel1;
     PAREN   = regsA.REn;
     PAIES   = regsA.IES;
+    
+    // Port B
+    constexpr _Regs regsB = _GetRegs<PortIndex::B, T_Pins...>(_Regs{});
+    PBOUT   = regsB.Out;
+    PBDIR   = regsB.Dir;
+    PBSEL0  = regsB.Sel0;
+    PBSEL1  = regsB.Sel1;
+    PBREN   = regsB.REn;
     
     // Unlock GPIOs
     PM5CTL0 &= ~LOCKLPM5;
@@ -189,5 +254,6 @@ static void Init() {
 }
 
 using PortA = Port<PortIndex::A>;
+using PortB = Port<PortIndex::B>;
 
 } // namespace GPIO
