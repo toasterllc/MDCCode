@@ -72,11 +72,7 @@ struct _I2CTask {
             _I2C::Recv(msg);
             
             // Send a response
-            _I2CMsg resp = {
-                .type = 0xCA,
-                .payload = 0xFE,
-            };
-            _I2C::Send(resp);
+            _I2C::Send(msg);
             
 //            _Pin::LED1::Write(1);
 //            _Scheduler::Sleep(_Scheduler::Ms(1000));
