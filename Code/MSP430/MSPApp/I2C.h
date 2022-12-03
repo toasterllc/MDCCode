@@ -3,9 +3,10 @@
 
 template <
 typename T_Scheduler,
-typename T_ClkPin,
-typename T_DataPin,
+typename T_SCLPin,
+typename T_SDAPin,
 typename T_Msg,
+uint8_t T_Addr,
 [[noreturn]] void T_Error(uint16_t)
 >
 class I2CType {
@@ -13,8 +14,8 @@ class I2CType {
 
 public:
     struct Pin {
-        using Clk       = typename T_ClkPin::template Opts<GPIO::Option::Sel01>;
-        using Data      = typename T_DataPin::template Opts<GPIO::Option::Sel01>;
+        using SCL = typename T_SCLPin::template Opts<GPIO::Option::Sel01>;
+        using SDA = typename T_SDAPin::template Opts<GPIO::Option::Sel01>;
     };
     
     static void Init() {
@@ -47,7 +48,7 @@ public:
         UCB0I2COA0 = 
             (UCGCEN&0)      |   // don't respond to general calls
             UCOAEN          |   // enable this slave (slave 0)
-            0x55            ;   // our slave address
+            T_Addr          ;   // our slave address
         
         // Enable!
         UCB0CTLW0 &= ~UCSWRST;
@@ -114,7 +115,7 @@ public:
         // Disable I2C interrupts until current event is handled by our thread
         _I2CIntsSetEnabled(false);
     }
-
+    
 private:
     static void _I2CIntsSetEnabled(bool en) {
         if (en) UCB0IE = UCSTTIE | UCSTPIE | UCTXIE0 | UCRXIE0;

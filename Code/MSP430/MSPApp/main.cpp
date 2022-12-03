@@ -22,6 +22,7 @@
 #include "GetBits.h"
 #include "Toastbox/IntState.h"
 #include "ImgSD.h"
+#include "I2C.h"
 using namespace GPIO;
 
 #define Assert(x) if (!(x)) _MainError(__LINE__)
@@ -38,6 +39,11 @@ struct _Pin {
     // Default GPIOs
     using UNUSED0                           = PortA::Pin<0x0>;
     using DEBUG_OUT                         = PortA::Pin<0x1, Option::Output0>;
+    
+    using I2C_SDA                           = PortA::Pin<0x2>;
+    using I2C_SCL                           = PortA::Pin<0x3>;
+    
+    #warning TODO: VDD_B_EN / MOTION_SIGNAL moved to different pins, update
     using VDD_B_EN                          = PortA::Pin<0x2, Option::Output0>;
     using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
     using UNUSED4                           = PortA::Pin<0x4>;
@@ -53,16 +59,10 @@ struct _Pin {
     using ICE_MSP_SPI_DATA_IN               = PortA::Pin<0xE>;
 };
 
-// _MotionSignalIV: motion interrupt vector; keep in sync with the pin chosen for MOTION_SIGNAL
-constexpr uint16_t _MotionSignalIV = P1IV_P1IFG3;
-
-using _Clock = ClockType<_MCLKFreqHz>;
-using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
-using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
-
 class _MainTask;
 class _SDTask;
 class _ImgTask;
+class _I2CTask;
 
 static void _Sleep();
 
@@ -71,6 +71,7 @@ static void _SchedulerError(uint16_t line);
 static void _ICEError(uint16_t line);
 static void _SDError(uint16_t line);
 static void _ImgError(uint16_t line);
+static void _I2CError(uint16_t line);
 
 extern uint8_t _StackMain[];
 
@@ -87,13 +88,26 @@ using _Scheduler = Toastbox::Scheduler<
     _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
     _MainTask,                                  // T_Tasks: list of tasks
     _SDTask,
-    _ImgTask
+    _ImgTask,
+    _I2CTask
 >;
 
-using _ICE = ICE<
-    _Scheduler,
-    _ICEError
->;
+// _MotionSignalIV: motion interrupt vector; keep in sync with the pin chosen for MOTION_SIGNAL
+constexpr uint16_t _MotionSignalIV = P1IV_P1IFG3;
+
+using _Clock = ClockType<_MCLKFreqHz>;
+using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
+using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
+using _ICE = ICE<_Scheduler, _ICEError>;
+
+constexpr uint8_t _I2CAddr = 0x55;
+
+struct _I2CMsg {
+    uint8_t type = 0;
+    uint8_t payload = 0;
+};
+
+using _I2C = I2CType<_Scheduler, _Pin::I2C_SCL, _Pin::I2C_SDA, _I2CMsg, _I2CAddr, _I2CError>;
 
 // _ImgSensor: image sensor object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
@@ -488,6 +502,31 @@ struct _ImgTask {
     static inline uint8_t Stack[256];
 };
 
+struct _I2CTask {
+    static void Run() {
+        // Init I2C Peripheral
+        _I2C::Init();
+        
+        for (;;) {
+            // Wait for a message to arrive over I2C
+            _I2CMsg msg;
+            _I2C::Recv(msg);
+            
+            // Send a response
+            _I2C::Send(msg);
+        }
+    }
+    
+    // Task options
+    static constexpr Toastbox::TaskOptions Options{
+        .AutoStart = Run, // Task should start running
+    };
+    
+    // Task stack
+    [[gnu::section(".stack._I2CTask")]]
+    static inline uint8_t Stack[256];
+};
+
 struct _MainTask {
     static void Run() {
         
@@ -687,6 +726,7 @@ namespace AbortDomain {
     static constexpr uint16_t ICE           = 3;
     static constexpr uint16_t SD            = 4;
     static constexpr uint16_t Img           = 5;
+    static constexpr uint16_t I2C           = 6;
 }
 
 [[noreturn]]
@@ -712,6 +752,11 @@ static void _SDError(uint16_t line) {
 [[noreturn]]
 static void _ImgError(uint16_t line) {
     _Abort(AbortDomain::Img, line);
+}
+
+[[noreturn]]
+static void _I2CError(uint16_t line) {
+    _Abort(AbortDomain::I2C, line);
 }
 
 static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t line) {
@@ -809,7 +854,11 @@ int main() {
         // SPI (config chosen by _SPI)
         _SPI::Pin::Clk,
         _SPI::Pin::DataOut,
-        _SPI::Pin::DataIn
+        _SPI::Pin::DataIn,
+        
+        // I2C (config chosen by _I2C)
+        _I2C::Pin::SCL,
+        _I2C::Pin::SDA
     >();
     
     // Init clock

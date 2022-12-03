@@ -27,8 +27,8 @@ static void _Abort(uint16_t domain, uint16_t line);
 struct _Pin {
     using LED1      = PortA::Pin<0x0, Option::Output0>;
     using LED2      = PortA::Pin<0x1, Option::Output0>;
-    using I2CData   = PortA::Pin<0x2>;
-    using I2CClock  = PortA::Pin<0x3>;
+    using I2CSDA    = PortA::Pin<0x2>;
+    using I2CSCL    = PortA::Pin<0x3>;
 };
 
 using _Clock = ClockType<_MCLKFreqHz>;
@@ -62,7 +62,8 @@ using _Scheduler = Toastbox::Scheduler<
     _I2CTask                                    // T_Tasks: list of tasks
 >;
 
-using _I2C = I2CType<_Scheduler, _Pin::I2CClock, _Pin::I2CData, _I2CMsg, _I2CError>;
+constexpr uint8_t _I2CAddr = 0x55;
+using _I2C = I2CType<_Scheduler, _Pin::I2CSCL, _Pin::I2CSDA, _I2CMsg, _I2CAddr, _I2CError>;
 
 struct _I2CTask {
     static void Run() {
@@ -183,8 +184,8 @@ int main() {
     GPIO::Init<
         _Pin::LED1,
         _Pin::LED2,
-        _I2C::Pin::Clk,
-        _I2C::Pin::Data
+        _I2C::Pin::SCL,
+        _I2C::Pin::SDA
     >();
     
     // Init clock
