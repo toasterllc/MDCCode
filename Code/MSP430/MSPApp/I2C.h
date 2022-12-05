@@ -108,7 +108,7 @@ public:
         Assert(!_Ev);
         const _Event ev = (_Event)UCB0IV;
         // Ignore spurious interrupts
-        if (!ev) return;
+        if (!(uint16_t)ev) return;
         
         _Ev = ev;
         // Disable I2C interrupts until current event is handled by our thread
