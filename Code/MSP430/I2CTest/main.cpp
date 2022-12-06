@@ -70,16 +70,7 @@ struct _I2CTask {
         // Init I2C Peripheral
         _I2C::Init();
         
-//        P1DIR = 0;
-//        P1IES = 0;
-//        P1IFG = 0;
-//        P1IE  = BIT3;
-        
         for (;;) {
-//            volatile bool x = _Pin::I2CSCL::Read();
-//            
-//            for (volatile int i=0; i<1; i++);
-            
             // Wait for a message to arrive over I2C
             _I2CMsg msg;
             _I2C::Recv(msg);
@@ -124,11 +115,6 @@ static void _Sleep() {
 }
 
 // MARK: - Interrupts
-
-[[gnu::interrupt(PORT1_VECTOR)]]
-static void _ISR_PORT1() {
-    for (;;);
-}
 
 [[gnu::interrupt(WDT_VECTOR)]]
 static void _ISR_WDT() {
