@@ -39,7 +39,7 @@ public:
         
         UCB0CTLW1 = 
             (UCETXINT&0)    |   // UCTXIFGx is set after an address match
-            UCCLTO_0        |   // disable clock low time-out counter
+            UCCLTO_1        |   // disable clock low time-out counter
             (UCSTPNACK&0)   |   // (not applicable in slave mode)
             (UCSWACK&0)     |   // hardware controls address ACK
             UCASTP_0        |   // no automatic STOP generation
@@ -124,7 +124,7 @@ private:
     };
     
     static void _I2CIntsSetEnabled(bool en) {
-        if (en) UCB0IE = UCSTTIE | UCSTPIE | UCTXIE0 | UCRXIE0;
+        if (en) UCB0IE = UCSTTIE | UCSTPIE | UCTXIE0 | UCRXIE0 | UCCLTOIE | UCALIE | UCNACKIE;
         else    UCB0IE = 0;
     }
     
