@@ -1,13 +1,13 @@
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 
-@protocol LayerScrollViewLayer
+@protocol FixedScrollViewDocument
 - (void)setTranslation:(CGPoint)t magnification:(CGFloat)m;
 @end
 
-@interface LayerScrollView : NSScrollView
+@interface FixedScrollView : NSScrollView
 
-- (void)setScrollLayer:(CALayer<LayerScrollViewLayer>*)layer;
+- (void)setFixedDocument:(NSView<FixedScrollViewDocument>*)doc;
 
 - (bool)magnifyToFit;
 - (void)setMagnifyToFit:(bool)magnifyToFit animate:(bool)animate;

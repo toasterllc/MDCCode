@@ -1,4 +1,4 @@
-#import "MetalScrollLayer.h"
+#import "FixedMetalDocumentLayer.h"
 #import <algorithm>
 #import <cmath>
 #import "Tools/Shared/Mat.h"
@@ -30,7 +30,7 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     };
 }
 
-@implementation MetalScrollLayer {
+@implementation FixedMetalDocumentLayer {
 @private
     CGFloat _magnification;
 }
@@ -52,10 +52,10 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     [self setDrawableSize:{(CGFloat)drawableWidth, (CGFloat)drawableHeight}];
 }
 
-- (simd_float4x4)transform {
+- (simd_float4x4)fixedTransform {
     const CGRect frame = [self frame];
     // We expect our superlayer's size to be the full content size,
-    // which LayerScrollView ensures
+    // which ScrollView ensures
     const CGSize contentSize = [[self superlayer] bounds].size;
     const int flip = [self isGeometryFlipped] ? -1 : 1;
     const Mat<float,4,4> transform =
@@ -80,7 +80,7 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     return nil;
 }
 
-// MARK: - LayerScrollViewLayer Protocol
+// MARK: - FixedScrollViewDocument Protocol
 
 - (void)setTranslation:(CGPoint)t magnification:(CGFloat)m {
     _magnification = m;

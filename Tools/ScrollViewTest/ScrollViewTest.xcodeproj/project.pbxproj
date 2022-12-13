@@ -7,8 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		55C15C1D27CC565800C70A8E /* LayerScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C15C1A27CC565800C70A8E /* LayerScrollView.mm */; };
-		55C15C1E27CC565800C70A8E /* MetalScrollLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C15C1B27CC565800C70A8E /* MetalScrollLayer.mm */; };
+		55290239294924080092B16D /* FixedMetalDocumentLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55290233294924080092B16D /* FixedMetalDocumentLayer.mm */; };
+		5529023A294924080092B16D /* FixedScrollView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55290235294924080092B16D /* FixedScrollView.mm */; };
+		5529023B294924080092B16D /* FixedDocumentView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55290238294924080092B16D /* FixedDocumentView.mm */; };
 		55C15C2127CC566E00C70A8E /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C15C2027CC566E00C70A8E /* Renderer.metal */; };
 		55F1144827C8BFD800C24343 /* ImageView-Shadow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F1144727C8BFD800C24343 /* ImageView-Shadow@2x.png */; };
 		55F1144A27C8C0DA00C24343 /* RenderNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F1144927C8C0DA00C24343 /* RenderNoise.metal */; };
@@ -23,10 +24,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		55C15C1927CC565800C70A8E /* LayerScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LayerScrollView.h; path = ../../MDCStudio/Source/LayerScrollView.h; sourceTree = "<group>"; };
-		55C15C1A27CC565800C70A8E /* LayerScrollView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LayerScrollView.mm; path = ../../MDCStudio/Source/LayerScrollView.mm; sourceTree = "<group>"; };
-		55C15C1B27CC565800C70A8E /* MetalScrollLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = MetalScrollLayer.mm; path = ../../MDCStudio/Source/MetalScrollLayer.mm; sourceTree = "<group>"; };
-		55C15C1C27CC565800C70A8E /* MetalScrollLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MetalScrollLayer.h; path = ../../MDCStudio/Source/MetalScrollLayer.h; sourceTree = "<group>"; };
+		55290233294924080092B16D /* FixedMetalDocumentLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = FixedMetalDocumentLayer.mm; path = ../../MDCStudio/Source/FixedMetalDocumentLayer.mm; sourceTree = "<group>"; };
+		55290234294924080092B16D /* FixedMetalDocumentLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FixedMetalDocumentLayer.h; path = ../../MDCStudio/Source/FixedMetalDocumentLayer.h; sourceTree = "<group>"; };
+		55290235294924080092B16D /* FixedScrollView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = FixedScrollView.mm; path = ../../MDCStudio/Source/FixedScrollView.mm; sourceTree = "<group>"; };
+		55290236294924080092B16D /* FixedDocumentView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FixedDocumentView.h; path = ../../MDCStudio/Source/FixedDocumentView.h; sourceTree = "<group>"; };
+		55290237294924080092B16D /* FixedScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FixedScrollView.h; path = ../../MDCStudio/Source/FixedScrollView.h; sourceTree = "<group>"; };
+		55290238294924080092B16D /* FixedDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = FixedDocumentView.mm; path = ../../MDCStudio/Source/FixedDocumentView.mm; sourceTree = "<group>"; };
 		55C15C1F27CC566E00C70A8E /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../../Shared/Renderer.h; sourceTree = "<group>"; };
 		55C15C2027CC566E00C70A8E /* Renderer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Renderer.metal; path = ../../Shared/Renderer.metal; sourceTree = "<group>"; };
 		55C15C2227CC567700C70A8E /* Mat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mat.h; path = ../../Shared/Mat.h; sourceTree = "<group>"; };
@@ -89,10 +92,12 @@
 				55F8D0D027C6DBF200757165 /* RenderTypes.h */,
 				55F8D0A127C594F800757165 /* AppDelegate.h */,
 				55F8D0A227C594F800757165 /* AppDelegate.mm */,
-				55C15C1927CC565800C70A8E /* LayerScrollView.h */,
-				55C15C1A27CC565800C70A8E /* LayerScrollView.mm */,
-				55C15C1C27CC565800C70A8E /* MetalScrollLayer.h */,
-				55C15C1B27CC565800C70A8E /* MetalScrollLayer.mm */,
+				55290237294924080092B16D /* FixedScrollView.h */,
+				55290235294924080092B16D /* FixedScrollView.mm */,
+				55290236294924080092B16D /* FixedDocumentView.h */,
+				55290238294924080092B16D /* FixedDocumentView.mm */,
+				55290234294924080092B16D /* FixedMetalDocumentLayer.h */,
+				55290233294924080092B16D /* FixedMetalDocumentLayer.mm */,
 				55F8D0A427C594FA00757165 /* Assets.xcassets */,
 				55F8D0A627C594FA00757165 /* MainMenu.xib */,
 				55F1144727C8BFD800C24343 /* ImageView-Shadow@2x.png */,
@@ -184,12 +189,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				55F8D0AB27C594FA00757165 /* main.m in Sources */,
-				55C15C1D27CC565800C70A8E /* LayerScrollView.mm in Sources */,
 				55F1144A27C8C0DA00C24343 /* RenderNoise.metal in Sources */,
 				55F8D0C927C635CD00757165 /* MyDocumentLayer.metal in Sources */,
-				55C15C1E27CC565800C70A8E /* MetalScrollLayer.mm in Sources */,
 				55C15C2127CC566E00C70A8E /* Renderer.metal in Sources */,
 				55F8D0A327C594F800757165 /* AppDelegate.mm in Sources */,
+				5529023A294924080092B16D /* FixedScrollView.mm in Sources */,
+				5529023B294924080092B16D /* FixedDocumentView.mm in Sources */,
+				55290239294924080092B16D /* FixedMetalDocumentLayer.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

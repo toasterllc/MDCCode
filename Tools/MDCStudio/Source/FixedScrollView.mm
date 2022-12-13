@@ -1,12 +1,12 @@
-#import "LayerScrollView.h"
+#import "FixedScrollView.h"
 #import <algorithm>
 #import <cmath>
 #import <optional>
 
-@implementation LayerScrollView {
-    CALayer<LayerScrollViewLayer>* _layer;
-    CGRect _layerFrame;
-    CGFloat _layerMagnification;
+@implementation FixedScrollView {
+    NSView<FixedScrollViewDocument>* _doc;
+    CGRect _docFrame;
+    CGFloat _docMagnification;
     CGPoint _anchorPointDocument;
     CGPoint _anchorPointScreen;
     bool _magnifyToFit;
@@ -19,7 +19,7 @@
     id _documentViewFrameChangedObserver;
 }
 
-static void _InitCommon(LayerScrollView* self) {
+static void _InitCommon(FixedScrollView* self) {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_liveMagnifyEnded)
         name:NSScrollViewDidEndLiveMagnifyNotification object:nil];
 }
@@ -57,16 +57,12 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     return mag;
 }
 
-- (void)setScrollLayer:(CALayer<LayerScrollViewLayer>*)layer {
-    [_layer removeFromSuperlayer];
+- (void)setFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
+    [_doc removeFromSuperview];
     
-    _layer = layer;
-    CALayer* rootLayer = [CALayer new];
-    [rootLayer addSublayer:_layer];
-    
+    _doc = doc;
     NSView* documentView = [self documentView];
-    [documentView setLayer:rootLayer];
-    [documentView setWantsLayer:true];
+    [documentView addSubview:_doc];
     
     // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
     __weak auto weakSelf = self;
@@ -75,8 +71,6 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
         [weakSelf _documentViewFrameChanged];
     }];
     
-    [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-    [_layer setGeometryFlipped:[documentView isFlipped]];
     [self setMagnifyToFit:true animate:false];
 }
 
@@ -219,11 +213,6 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     [self reflectScrolledClipView:clip];
 }
 
-- (void)viewDidChangeBackingProperties {
-    [super viewDidChangeBackingProperties];
-    [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-}
-
 - (void)viewWillStartLiveResize {
     [super viewWillStartLiveResize];
     _anchorPointDocument = [self documentVisibleRect].origin;
@@ -315,11 +304,11 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
         frame.size.height += heightExtra;
     }
     
-    if (!CGRectEqualToRect(frame, _layerFrame) || mag!=_layerMagnification) {
-        _layerFrame = frame;
-        _layerMagnification = mag;
-        [_layer setFrame:_layerFrame];
-        [_layer setTranslation:_layerFrame.origin magnification:_layerMagnification];
+    if (!CGRectEqualToRect(frame, _docFrame) || mag!=_docMagnification) {
+        _docFrame = frame;
+        _docMagnification = mag;
+        [_doc setFrame:_docFrame];
+        [_doc setTranslation:_docFrame.origin magnification:_docMagnification];
     }
 }
 

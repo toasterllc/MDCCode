@@ -6,8 +6,9 @@
 #import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/Mat.h"
 #import "RenderTypes.h"
-#import "Tools/MDCStudio/Source/LayerScrollView.h"
-#import "Tools/MDCStudio/Source/MetalScrollLayer.h"
+#import "Tools/MDCStudio/Source/FixedScrollView.h"
+#import "Tools/MDCStudio/Source/FixedDocumentView.h"
+#import "Tools/MDCStudio/Source/FixedMetalDocumentLayer.h"
 using namespace MDCTools;
 
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
@@ -27,10 +28,10 @@ inline NSDictionary* LayerNullActions = @{
     @"fontSize": [NSNull null],
 };
 
-@interface MyDocumentLayer : MetalScrollLayer
+@interface MyFixedDocLayer : FixedMetalDocumentLayer
 @end
 
-@implementation MyDocumentLayer {
+@implementation MyFixedDocLayer {
 @private
     id<MTLDevice> _device;
     id<MTLLibrary> _library;
@@ -69,7 +70,7 @@ inline NSDictionary* LayerNullActions = @{
     Renderer renderer(_device, _library, _commandQueue);
     renderer.clear(drawableTxt, {0,0,0,0});
     
-    const simd_float4x4 transform = [self transform];
+    const simd_float4x4 transform = [self fixedTransform];
     renderer.render(drawableTxt, Renderer::BlendType::None,
         renderer.VertexShader("VertexShader", transform),
         renderer.FragmentShader("FragmentShader", _imageTexture)
@@ -84,6 +85,7 @@ inline NSDictionary* LayerNullActions = @{
 //}
 
 @end
+
 
 @interface MyClipView : NSClipView
 @end
@@ -137,7 +139,7 @@ static void _init(MyDocumentView* self) {
 }
 
 - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
-    const bool fit = [(LayerScrollView*)[self enclosingScrollView] magnifyToFit];
+    const bool fit = [(FixedScrollView*)[self enclosingScrollView] magnifyToFit];
     if (fit) {
         return CGRectInset({point, {0,0}}, -20, -20);
     } else {
@@ -161,7 +163,7 @@ static void _init(MyDocumentView* self) {
 
 constexpr CGFloat ShadowCenterOffset = 45;
 
-@interface MyScrollView : LayerScrollView
+@interface MyScrollView : FixedScrollView
 @end
 
 @implementation MyScrollView {
@@ -182,7 +184,9 @@ constexpr CGFloat ShadowCenterOffset = 45;
 }
 
 - (void)initCommon {
-    [self setScrollLayer:[MyDocumentLayer new]];
+    FixedDocumentView* fixedDocView = [[FixedDocumentView alloc] initWithFrame:{}];
+    [fixedDocView setFixedLayer:[MyFixedDocLayer new]];
+    [self setFixedDocument:fixedDocView];
     
     constexpr uint32_t BackgroundTileSize = 256;
     constexpr uint32_t BackgroundTileLen = BackgroundTileSize*BackgroundTileSize*3;
