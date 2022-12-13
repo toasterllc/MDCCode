@@ -52,11 +52,15 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     [self setDrawableSize:{(CGFloat)drawableWidth, (CGFloat)drawableHeight}];
 }
 
+- (CGSize)fixedDocumentSize {
+    return [[self superlayer] bounds].size;
+}
+
 - (simd_float4x4)fixedTransform {
     const CGRect frame = [self frame];
     // We expect our superlayer's size to be the full content size,
     // which ScrollView ensures
-    const CGSize contentSize = [[self superlayer] bounds].size;
+    const CGSize contentSize = [self fixedDocumentSize];
     const int flip = [self isGeometryFlipped] ? -1 : 1;
     const Mat<float,4,4> transform =
         _Translate(-1, -1*flip, 1)                          *
