@@ -6,7 +6,8 @@
 // translation/magnification to the fixed document via -setTranslation:magnification:.
 // This allows the document to implement scrolling/magnification itself by using its
 // own transformation math (necessary for scrollable/zoomable Metal rendering, for
-// example), while retaining consistent NSScrollView behaviors.
+// example), while retaining consistent NSScrollView behaviors (eg rubber-banding,
+// content-snapping, momentum scroll, window titlebar content-blur).
 
 @protocol FixedScrollViewDocument
 - (void)setTranslation:(CGPoint)t magnification:(CGFloat)m;
