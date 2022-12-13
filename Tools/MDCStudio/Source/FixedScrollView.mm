@@ -53,8 +53,8 @@ static void _InitCommon(FixedScrollView* self) {
     [self setHasHorizontalScroller:true];
     [self setHasVerticalScroller:true];
     [self setAllowsMagnification:true];
-    [self setMinMagnification:1./(2*2*2*2)];
-    [self setMaxMagnification:2*2*2*2];
+    [self setMinMagnification:1./(1<<10)];
+    [self setMaxMagnification:1<<10];
 }
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
