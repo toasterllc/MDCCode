@@ -22,19 +22,19 @@ class Renderer {
 private:
     template <typename... T_Args>
     struct _VertexShader {
-        const std::string_view& fn;
+        std::string_view fn;
         std::tuple<T_Args...> args;
     };
     
     template <typename... T_Args>
     struct _FragmentShader {
-        const std::string_view& fn;
+        std::string_view fn;
         std::tuple<T_Args...> args;
     };
     
     template <typename... T_Args>
     struct _ComputeKernel {
-        const std::string_view& fn;
+        std::string_view fn;
         std::tuple<T_Args...> args;
     };
     
@@ -143,7 +143,7 @@ public:
     }
     
     template <typename... T_Args>
-    _VertexShader<T_Args...> VertexShader(const std::string_view& fn, T_Args&&... args) {
+    _VertexShader<T_Args...> VertexShader(std::string_view fn, T_Args&&... args) {
         return _VertexShader<T_Args...>{
             .fn = fn,
             .args = std::forward_as_tuple(args...),
@@ -151,7 +151,7 @@ public:
     }
     
     template <typename... T_Args>
-    _FragmentShader<T_Args...> FragmentShader(const std::string_view& fn, T_Args&&... args) {
+    _FragmentShader<T_Args...> FragmentShader(std::string_view fn, T_Args&&... args) {
         return _FragmentShader<T_Args...>{
             .fn = fn,
             .args = std::forward_as_tuple(args...),
@@ -159,7 +159,7 @@ public:
     }
     
     template <typename... T_Args>
-    _ComputeKernel<T_Args...> ComputeKernel(const std::string_view& fn, T_Args&&... args) {
+    _ComputeKernel<T_Args...> ComputeKernel(std::string_view fn, T_Args&&... args) {
         return _ComputeKernel<T_Args...>{
             .fn = fn,
             .args = std::forward_as_tuple(args...),
@@ -854,7 +854,7 @@ private:
         _bufs.push_back(buf);
     }
     
-    id<MTLRenderPipelineState> _renderPipelineState(const std::string_view& vertName, const std::string_view& fragName, MTLPixelFormat fmt, BlendType blendType) {
+    id<MTLRenderPipelineState> _renderPipelineState(std::string_view vertName, std::string_view fragName, MTLPixelFormat fmt, BlendType blendType) {
         RenderPipelineStateKey key(vertName, fragName, fmt, blendType);
         auto find = _renderPipelineStates.find(key);
         if (find != _renderPipelineStates.end()) return find->second;
@@ -886,7 +886,7 @@ private:
         return ps;
     }
     
-    id<MTLComputePipelineState> _computePipelineState(const std::string_view& fnName) {
+    id<MTLComputePipelineState> _computePipelineState(std::string_view fnName) {
         auto find = _computePipelineStates.find(fnName);
         if (find != _computePipelineStates.end()) return find->second;
         
@@ -902,7 +902,7 @@ private:
     
     class RenderPipelineStateKey {
     public:
-        RenderPipelineStateKey(const std::string_view& vertName, const std::string_view& fragName, MTLPixelFormat fmt, BlendType blendType) :
+        RenderPipelineStateKey(std::string_view vertName, std::string_view fragName, MTLPixelFormat fmt, BlendType blendType) :
         _vertName(vertName), _fragName(fragName), _fmt(fmt), _blendType(blendType) {}
         
         bool operator==(const RenderPipelineStateKey& x) const {
