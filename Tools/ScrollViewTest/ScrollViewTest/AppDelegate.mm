@@ -234,3 +234,35 @@ constexpr CGFloat ShadowCenterOffset = 45;
 
 
 @end
+
+
+
+@interface MainView : NSView
+@end
+
+@implementation MainView
+
+- (void)initCommon {
+    MyScrollView* sv = [[MyScrollView alloc] initWithFrame:{}];
+    [self addSubview:sv];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[sv]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(sv)]];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[sv]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(sv)]];
+}
+
+- (instancetype)initWithCoder:(NSCoder*)coder {
+    if (!(self = [super initWithCoder:coder])) return nil;
+    [self initCommon];
+    return self;
+}
+
+- (instancetype)initWithFrame:(NSRect)frame {
+    if (!(self = [super initWithFrame:frame])) return nil;
+    [self initCommon];
+    return self;
+}
+
+
+
+@end

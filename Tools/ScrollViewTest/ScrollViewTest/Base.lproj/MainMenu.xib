@@ -678,41 +678,9 @@
             <rect key="contentRect" x="335" y="390" width="480" height="360"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <value key="minSize" type="size" width="480" height="360"/>
-            <view key="contentView" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EiT-Mj-1SZ">
+            <view key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="EiT-Mj-1SZ" customClass="MainView">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                <subviews>
-                    <scrollView ambiguous="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" allowsMagnification="YES" maxMagnification="16" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gRc-k2-gdg" userLabel="ScrollView" customClass="MyScrollView">
-                        <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                        <clipView key="contentView" ambiguous="YES" id="fmr-Mq-B3i" userLabel="ClipView">
-                            <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                            <subviews>
-                                <view fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZVo-Pu-yE1">
-                                    <rect key="frame" x="0.0" y="0.0" width="465" height="345"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
-                                </view>
-                            </subviews>
-                        </clipView>
-                        <constraints>
-                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="480" id="Un6-nc-AaE"/>
-                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="360" id="zxE-M3-wnu"/>
-                        </constraints>
-                        <scroller key="horizontalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="V2U-Uv-ybo">
-                            <rect key="frame" x="0.0" y="344" width="480" height="16"/>
-                            <autoresizingMask key="autoresizingMask"/>
-                        </scroller>
-                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="BB3-pU-knJ">
-                            <rect key="frame" x="464" y="0.0" width="16" height="360"/>
-                            <autoresizingMask key="autoresizingMask"/>
-                        </scroller>
-                    </scrollView>
-                </subviews>
-                <constraints>
-                    <constraint firstItem="gRc-k2-gdg" firstAttribute="top" secondItem="EiT-Mj-1SZ" secondAttribute="top" id="0O0-rN-8za"/>
-                    <constraint firstItem="gRc-k2-gdg" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" id="BEm-lE-9JO"/>
-                    <constraint firstAttribute="bottom" secondItem="gRc-k2-gdg" secondAttribute="bottom" id="V0Z-p6-OEW"/>
-                    <constraint firstAttribute="trailing" secondItem="gRc-k2-gdg" secondAttribute="trailing" id="fIz-XQ-b5w"/>
-                </constraints>
+                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             </view>
             <point key="canvasLocation" x="-446" y="-398"/>
         </window>

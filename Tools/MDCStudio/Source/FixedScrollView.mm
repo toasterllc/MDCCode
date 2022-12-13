@@ -38,6 +38,8 @@ static void _InitCommon(FixedScrollView* self) {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_liveMagnifyEnded)
         name:NSScrollViewDidEndLiveMagnifyNotification object:nil];
     
+    [self setTranslatesAutoresizingMaskIntoConstraints:false];
+    
     FixedScrollView_ClipView* clipView = [[FixedScrollView_ClipView alloc] initWithFrame:{}];
     clipView->fixedScrollView = self;
     [self setContentView:clipView];
@@ -45,6 +47,14 @@ static void _InitCommon(FixedScrollView* self) {
     FixedScrollView_DocView* docView = [[FixedScrollView_DocView alloc] initWithFrame:{}];
     docView->fixedScrollView = self;
     [self setDocumentView:docView];
+    
+    [self setScrollerStyle:NSScrollerStyleOverlay];
+    [self setBorderType:NSNoBorder];
+    [self setHasHorizontalScroller:true];
+    [self setHasVerticalScroller:true];
+    [self setAllowsMagnification:true];
+    [self setMinMagnification:1./(2*2*2*2)];
+    [self setMaxMagnification:2*2*2*2];
 }
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
