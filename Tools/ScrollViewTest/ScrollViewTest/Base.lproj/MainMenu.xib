@@ -681,13 +681,13 @@
             <view key="contentView" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EiT-Mj-1SZ">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
                 <subviews>
-                    <scrollView ambiguous="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" allowsMagnification="YES" maxMagnification="16" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gRc-k2-gdg" customClass="MyScrollView">
+                    <scrollView ambiguous="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" allowsMagnification="YES" maxMagnification="16" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gRc-k2-gdg" userLabel="ScrollView" customClass="MyScrollView">
                         <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
-                        <clipView key="contentView" ambiguous="YES" id="fmr-Mq-B3i" customClass="MyClipView">
+                        <clipView key="contentView" ambiguous="YES" id="fmr-Mq-B3i" userLabel="ClipView">
                             <rect key="frame" x="0.0" y="0.0" width="480" height="360"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <view fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZVo-Pu-yE1" customClass="MyDocumentView">
+                                <view fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZVo-Pu-yE1">
                                     <rect key="frame" x="0.0" y="0.0" width="465" height="345"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                 </view>

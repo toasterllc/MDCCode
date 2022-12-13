@@ -3,7 +3,22 @@
 #import <cmath>
 #import <optional>
 
+@interface FixedScrollView_ClipView : NSClipView {
+@public
+    __weak FixedScrollView* fixedScrollView;
+}
+@end
+
+@interface FixedScrollView_DocView : NSView {
+@public
+    __weak FixedScrollView* fixedScrollView;
+}
+@end
+
 @implementation FixedScrollView {
+@public
+    NSLayoutConstraint* _contentWidth;
+    NSLayoutConstraint* _contentHeight;
     NSView<FixedScrollViewDocument>* _doc;
     CGRect _docFrame;
     CGFloat _docMagnification;
@@ -22,6 +37,14 @@
 static void _InitCommon(FixedScrollView* self) {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_liveMagnifyEnded)
         name:NSScrollViewDidEndLiveMagnifyNotification object:nil];
+    
+    FixedScrollView_ClipView* clipView = [[FixedScrollView_ClipView alloc] initWithFrame:{}];
+    clipView->fixedScrollView = self;
+    [self setContentView:clipView];
+    
+    FixedScrollView_DocView* docView = [[FixedScrollView_DocView alloc] initWithFrame:{}];
+    docView->fixedScrollView = self;
+    [self setDocumentView:docView];
 }
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
@@ -58,11 +81,28 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
 }
 
 - (void)setFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
+    NSView* documentView = [self documentView];
+    if (_contentWidth) {
+        [documentView removeConstraint:_contentWidth];
+        [documentView removeConstraint:_contentHeight];
+        _contentWidth = nil;
+        _contentHeight = nil;
+    }
+    
     [_doc removeFromSuperview];
     
     _doc = doc;
-    NSView* documentView = [self documentView];
+    if (!_doc) return;
+    
     [documentView addSubview:_doc];
+    
+    const CGSize contentSize = [_doc fixedContentSize];
+    _contentWidth = [NSLayoutConstraint constraintWithItem:documentView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+        multiplier:1 constant:contentSize.width];
+    _contentHeight = [NSLayoutConstraint constraintWithItem:documentView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+        multiplier:1 constant:contentSize.height];
+    [documentView addConstraint:_contentWidth];
+    [documentView addConstraint:_contentHeight];
     
     // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
     __weak auto weakSelf = self;
@@ -308,8 +348,59 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
         _docFrame = frame;
         _docMagnification = mag;
         [_doc setFrame:_docFrame];
-        [_doc setTranslation:_docFrame.origin magnification:_docMagnification];
+        [_doc setFixedTranslation:_docFrame.origin magnification:_docMagnification];
     }
 }
+
+@end
+
+@implementation FixedScrollView_ClipView
+
+- (instancetype)initWithFrame:(NSRect)frame {
+    if (!(self = [super initWithFrame:frame])) return nil;
+    [self setTranslatesAutoresizingMaskIntoConstraints:false];
+    return self;
+}
+
+- (NSRect)constrainBoundsRect:(NSRect)bounds {
+    bounds = [super constrainBoundsRect:bounds];
+    
+    const CGSize docSize = [[self documentView] frame].size;
+    if (bounds.size.width >= docSize.width) {
+        bounds.origin.x = (docSize.width-bounds.size.width)/2;
+    }
+    if (bounds.size.height >= docSize.height) {
+        bounds.origin.y = (docSize.height-bounds.size.height)/2;
+    }
+    return bounds;
+}
+
+@end
+
+
+@implementation FixedScrollView_DocView
+
+- (instancetype)initWithFrame:(NSRect)frame {
+    if (!(self = [super initWithFrame:frame])) return nil;
+    [self setTranslatesAutoresizingMaskIntoConstraints:false];
+    return self;
+}
+
+- (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
+    FixedScrollView* sv = fixedScrollView;
+    if (!sv) return {};
+    return [sv->_doc rectForSmartMagnificationAtPoint:point inRect:rect];
+}
+
+#warning TODO: not sure how we want to handle flipping. forward message to FixedScrollView._doc? always return flipped or not flipped?
+- (BOOL)isFlipped {
+    return true;
+}
+
+//- (BOOL)isFlipped {
+//    FixedScrollView* sv = fixedScrollView;
+//    if (!sv) return false;
+//    return [sv->_doc fixedFlipped];
+//}
 
 @end

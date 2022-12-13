@@ -28,10 +28,10 @@ inline NSDictionary* LayerNullActions = @{
     @"fontSize": [NSNull null],
 };
 
-@interface MyFixedDocLayer : FixedMetalDocumentLayer
+@interface MyDocLayer : FixedMetalDocumentLayer
 @end
 
-@implementation MyFixedDocLayer {
+@implementation MyDocLayer {
 @private
     id<MTLDevice> _device;
     id<MTLLibrary> _library;
@@ -80,6 +80,10 @@ inline NSDictionary* LayerNullActions = @{
     [drawable present];
 }
 
+- (CGSize)fixedContentSize {
+    return {640, 480};
+}
+
 //- (BOOL)isGeometryFlipped {
 //    return true;
 //}
@@ -87,68 +91,23 @@ inline NSDictionary* LayerNullActions = @{
 @end
 
 
-@interface MyClipView : NSClipView
+
+
+
+
+
+@interface MyDocView : FixedDocumentView
 @end
 
-@implementation MyClipView
-
-- (NSRect)constrainBoundsRect:(NSRect)bounds {
-    bounds = [super constrainBoundsRect:bounds];
-    
-    const CGSize docSize = [[self documentView] frame].size;
-    if (bounds.size.width >= docSize.width) {
-        bounds.origin.x = (docSize.width-bounds.size.width)/2;
-    }
-    if (bounds.size.height >= docSize.height) {
-        bounds.origin.y = (docSize.height-bounds.size.height)/2;
-    }
-    return bounds;
-}
-
-@end
-
-
-
-
-
-
-
-@interface MyDocumentView : NSView
-@end
-
-@implementation MyDocumentView
-
-static void _init(MyDocumentView* self) {
-    [self setTranslatesAutoresizingMaskIntoConstraints:false];
-    [self addConstraint:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth
-        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:640]];
-    [self addConstraint:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeHeight
-        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:480]];
-}
-
-- (instancetype)initWithCoder:(NSCoder*)coder {
-    if (!(self = [super initWithCoder:coder])) return nil;
-    _init(self);
-    return self;
-}
-
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
-    _init(self);
-    return self;
-}
+@implementation MyDocView
 
 - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
     const bool fit = [(FixedScrollView*)[self enclosingScrollView] magnifyToFit];
     if (fit) {
         return CGRectInset({point, {0,0}}, -20, -20);
     } else {
-        return [self bounds];
+        return [[self superview] bounds];
     }
-}
-
-- (BOOL)isFlipped {
-    return true;
 }
 
 @end
@@ -184,8 +143,7 @@ constexpr CGFloat ShadowCenterOffset = 45;
 }
 
 - (void)initCommon {
-    FixedDocumentView* fixedDocView = [[FixedDocumentView alloc] initWithFrame:{}];
-    [fixedDocView setFixedLayer:[MyFixedDocLayer new]];
+    FixedDocumentView* fixedDocView = [[MyDocView alloc] initWithFixedLayer:[MyDocLayer new]];
     [self setFixedDocument:fixedDocView];
     
     constexpr uint32_t BackgroundTileSize = 256;
@@ -265,5 +223,14 @@ constexpr CGFloat ShadowCenterOffset = 45;
     [super viewDidChangeBackingProperties];
     [_shadowLayer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
 }
+
+
+
+
+//- (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
+//    NSLog(@"BBB rectForSmartMagnificationAtPoint");
+//    return {};
+//}
+
 
 @end
