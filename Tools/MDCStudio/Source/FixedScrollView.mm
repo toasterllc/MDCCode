@@ -53,8 +53,8 @@ static void _InitCommon(FixedScrollView* self) {
     [self setHasHorizontalScroller:true];
     [self setHasVerticalScroller:true];
     [self setAllowsMagnification:true];
-    [self setMinMagnification:1./(1<<10)];
-    [self setMaxMagnification:1<<10];
+    [self setMinMagnification:1./(1<<16)];
+    [self setMaxMagnification:1<<16];
 }
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
@@ -402,10 +402,10 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     return [sv->_doc rectForSmartMagnificationAtPoint:point inRect:rect];
 }
 
-#warning TODO: not sure how we want to handle flipping. forward message to FixedScrollView._doc? always return flipped or not flipped?
-- (BOOL)isFlipped {
-    return true;
-}
+//#warning TODO: not sure how we want to handle flipping. forward message to FixedScrollView._doc? always return flipped or not flipped?
+//- (BOOL)isFlipped {
+//    return true;
+//}
 
 //- (BOOL)isFlipped {
 //    FixedScrollView* sv = fixedScrollView;

@@ -31,4 +31,12 @@
     [_layer setFixedTranslation:t magnification:m];
 }
 
+- (CGPoint)convertPointToFixedDocument:(CGPoint)point fromView:(NSView*)view {
+    return [[self superview] convertPoint:point fromView:view];
+}
+
+- (CGRect)convertRectToFixedDocument:(CGRect)rect fromView:(NSView*)view {
+    return [[self superview] convertRect:rect fromView:view];
+}
+
 @end
