@@ -15,8 +15,6 @@
 }
 @end
 
-//enum class AnchorMode { None, Center, Screen };
-
 @implementation FixedScrollView {
 @public
     NSLayoutConstraint* _contentWidth;
@@ -25,9 +23,7 @@
     CGRect _docFrame;
     CGFloat _docMagnification;
     struct {
-//        AnchorMode mode = Mode::None;
         bool liveResizeUnderway = false;
-        bool center = false;
         CGPoint document = {};
         CGPoint screen = {};
     } _anchor;
@@ -134,35 +130,15 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
 
 - (void)scrollToCenter {
     NSView*const dv = [self documentView];
-    NSView*const cv = [self contentView];
     const CGSize scrollSize = [self bounds].size;
     const CGSize dvSize = [dv bounds].size;
     const CGPoint dvPoint = {
         dvSize.width/2 - scrollSize.width/2,
         dvSize.height/2 - scrollSize.height/2,
     };
-//    const CGPoint cvPoint = [cv convertPoint:dvPoint fromView:dv];
-
-    //        [[schemScrollView contentView] scrollToPoint:docViewPoint];
-
-    //        [schemScrollView setMagnification:1 centeredAtPoint:docViewPoint];
-
-//    NSLog(@"scrollPoint: %@", NSStringFromPoint(dvPoint));
-
-    //        const CGPoint contentViewCenter = [[schemScrollView contentView] convertPoint:docViewCenter
-    //            fromView:docView];
-    //        NSLog(@"scrollPoint: %@", NSStringFromPoint(docViewScrollPoint));
-    [dv scrollPoint:dvPoint];
     
-//    _anchor.document = dvPoint;
-//    _anchor.center = true;
+    [dv scrollPoint:dvPoint];
 }
-
-//- (void)scrollClipView:(NSClipView*)cv toPoint:(NSPoint)point {
-//    NSLog(@"scrollClipView:toPoint:");
-//    [super scrollClipView:cv toPoint:point];
-//    _anchor.center = false;
-//}
 
 - (bool)magnifyToFit {
     return _magnifyToFit;
@@ -392,11 +368,6 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
         }];
     }
 }
-
-//- (void)scrollClipView:(NSClipView*)clipView toPoint:(NSPoint)point {
-//    [super scrollClipView:clipView toPoint:point];
-//    NSLog(@"scrollClipView:toPoint:");
-//}
 
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
     [super reflectScrolledClipView:clipView];
