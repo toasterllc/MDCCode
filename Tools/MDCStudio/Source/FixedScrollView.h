@@ -4,10 +4,16 @@
 // FixedScrollView: a scroll view that holds the document (set via -setFixedDocument:)
 // fixed at the visible rect of the scroll view, but transmits the current
 // translation/magnification to the fixed document via -setTranslation:magnification:.
-// This allows the document to implement scrolling/magnification itself by using its
-// own transformation math (necessary for scrollable/zoomable Metal rendering, for
-// example), while retaining consistent NSScrollView behaviors (eg rubber-banding,
-// content-snapping, momentum scroll, window titlebar content-blur).
+// This allows:
+//
+//   - the document to implement scrolling/magnification itself by using its
+//     own transformation math (necessary for scrollable/zoomable Metal rendering);
+//
+//   - the size of the fixed document to match the size of the viewport, instead of
+//     the size of the full content (necessary for Metal rendering);
+// 
+//   - consistent NSScrollView behaviors (eg rubber-banding, momentum scrolling,
+//     window titlebar underlay effects).
 
 @protocol FixedScrollViewDocument
 // -fixedContentSize: the total size of the scrollable/zoomable content.
@@ -25,6 +31,8 @@
 @interface FixedScrollView : NSScrollView
 
 - (void)setFixedDocument:(NSView<FixedScrollViewDocument>*)doc;
+
+- (void)scrollToCenter;
 
 - (bool)magnifyToFit;
 - (void)setMagnifyToFit:(bool)magnifyToFit animate:(bool)animate;

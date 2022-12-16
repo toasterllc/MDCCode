@@ -15,6 +15,8 @@
 }
 @end
 
+//enum class AnchorMode { None, Center, Screen };
+
 @implementation FixedScrollView {
 @public
     NSLayoutConstraint* _contentWidth;
@@ -22,8 +24,13 @@
     NSView<FixedScrollViewDocument>* _doc;
     CGRect _docFrame;
     CGFloat _docMagnification;
-    CGPoint _anchorPointDocument;
-    CGPoint _anchorPointScreen;
+    struct {
+//        AnchorMode mode = Mode::None;
+        bool liveResizeUnderway = false;
+        bool center = false;
+        CGPoint document = {};
+        CGPoint screen = {};
+    } _anchor;
     bool _magnifyToFit;
     std::optional<CGFloat> _modelMagnification;
     struct {
@@ -55,6 +62,7 @@ static void _InitCommon(FixedScrollView* self) {
     [self setAllowsMagnification:true];
     [self setMinMagnification:1./(1<<16)];
     [self setMaxMagnification:1<<16];
+    [self setUsesPredominantAxisScrolling:false];
 }
 
 - (instancetype)initWithCoder:(NSCoder*)coder {
@@ -121,8 +129,40 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
         [weakSelf _documentViewFrameChanged];
     }];
     
-    [self setMagnifyToFit:true animate:false];
+//    [self setMagnifyToFit:true animate:false];
 }
+
+- (void)scrollToCenter {
+    NSView*const dv = [self documentView];
+    NSView*const cv = [self contentView];
+    const CGSize scrollSize = [self bounds].size;
+    const CGSize dvSize = [dv bounds].size;
+    const CGPoint dvPoint = {
+        dvSize.width/2 - scrollSize.width/2,
+        dvSize.height/2 - scrollSize.height/2,
+    };
+//    const CGPoint cvPoint = [cv convertPoint:dvPoint fromView:dv];
+
+    //        [[schemScrollView contentView] scrollToPoint:docViewPoint];
+
+    //        [schemScrollView setMagnification:1 centeredAtPoint:docViewPoint];
+
+//    NSLog(@"scrollPoint: %@", NSStringFromPoint(dvPoint));
+
+    //        const CGPoint contentViewCenter = [[schemScrollView contentView] convertPoint:docViewCenter
+    //            fromView:docView];
+    //        NSLog(@"scrollPoint: %@", NSStringFromPoint(docViewScrollPoint));
+    [dv scrollPoint:dvPoint];
+    
+//    _anchor.document = dvPoint;
+//    _anchor.center = true;
+}
+
+//- (void)scrollClipView:(NSClipView*)cv toPoint:(NSPoint)point {
+//    NSLog(@"scrollClipView:toPoint:");
+//    [super scrollClipView:cv toPoint:point];
+//    _anchor.center = false;
+//}
 
 - (bool)magnifyToFit {
     return _magnifyToFit;
@@ -240,39 +280,45 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
 - (void)setFrame:(NSRect)frame {
     [super setFrame:frame];
     
-    // Keep the content anchored
-    // This keeps the content in place when resizing the containing window, which looks better
-    NSWindow* win = [self window];
-    NSView* doc = [self documentView];
-    NSClipView* clip = [self contentView];
+    NSView*const dv = [self documentView];
+    NSClipView*const cv = [self contentView];
     
-    const CGPoint anchorPointWant = _anchorPointDocument;
-    const CGPoint anchorPointHave = [doc convertPoint:[win convertPointFromScreen:_anchorPointScreen] fromView:nil];
-    const CGPoint delta = {
-        anchorPointWant.x-anchorPointHave.x,
-        anchorPointWant.y-anchorPointHave.y,
-    };
+    if (_anchor.liveResizeUnderway) {
+        // Keep the content anchored
+        // This keeps the content in place when resizing the containing window, which looks better
+        NSWindow* win = [self window];
+        
+        const CGPoint anchorPointWant = _anchor.document;
+        const CGPoint anchorPointHave = [dv convertPoint:[win convertPointFromScreen:_anchor.screen] fromView:nil];
+        const CGPoint delta = {
+            anchorPointWant.x-anchorPointHave.x,
+            anchorPointWant.y-anchorPointHave.y,
+        };
+        
+        CGRect bounds = [cv bounds];
+        bounds.origin.x += delta.x;
+        bounds.origin.y += delta.y;
+        bounds = [cv constrainBoundsRect:bounds];
+        
+        [self scrollClipView:cv toPoint:bounds.origin];
+    }
     
-    CGRect bounds = [clip bounds];
-    bounds.origin.x += delta.x;
-    bounds.origin.y += delta.y;
-    bounds = [clip constrainBoundsRect:bounds];
-    
-    [self scrollClipView:clip toPoint:bounds.origin];
     [self setMagnifyToFit:_magnifyToFit animate:false];
-    [self reflectScrolledClipView:clip];
+    [self reflectScrolledClipView:cv];
 }
 
 - (void)viewWillStartLiveResize {
+    _anchor.liveResizeUnderway = true;
     [super viewWillStartLiveResize];
-    _anchorPointDocument = [self documentVisibleRect].origin;
-    _anchorPointScreen = [[self window] convertPointToScreen:
-        [[self documentView] convertPoint:_anchorPointDocument toView:nil]];
+    _anchor.document = [self documentVisibleRect].origin;
+    _anchor.screen = [[self window] convertPointToScreen:
+        [[self documentView] convertPoint:_anchor.document toView:nil]];
 }
 
 - (void)viewDidEndLiveResize {
     [super viewDidEndLiveResize];
     [self magnifySnapToFit];
+    _anchor.liveResizeUnderway = false;
 }
 
 - (void)smartMagnifyWithEvent:(NSEvent*)event {
@@ -285,12 +331,21 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
 
 // MARK: - NSScrollView Overrides
 
+//- (void)setMagnification:(CGFloat)mag centeredAtPoint:(NSPoint)point {
+//    [super setMagnification:mag centeredAtPoint:point];
+//    
+//    _anchorPointDocument = [[self documentView] convertPoint:point fromView:[self contentView]];
+//    _anchorPointScreen = [[self window] convertPointToScreen:
+//        [[self documentView] convertPoint:_anchorPointDocument toView:nil]];
+//    
+//}
+
 - (void)_scrollWheelReset {
     [_scrollWheel.magnifyToFitTimer invalidate];
     _scrollWheel = {};
 }
 
-// Disable NSScrollView legacy 'responsive scrolling' by merely overriding -scrollWheel
+// Disable NSScrollView legacy 'responsive scrolling' by merely overriding -scrollWheel:
 // We don't want this behavior because it causes strange flashes and artifacts when
 // scrolling quickly, especially when scrolling near the margin
 - (void)scrollWheel:(NSEvent*)event {
@@ -337,6 +392,11 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
         }];
     }
 }
+
+//- (void)scrollClipView:(NSClipView*)clipView toPoint:(NSPoint)point {
+//    [super scrollClipView:clipView toPoint:point];
+//    NSLog(@"scrollClipView:toPoint:");
+//}
 
 - (void)reflectScrolledClipView:(NSClipView*)clipView {
     [super reflectScrolledClipView:clipView];
