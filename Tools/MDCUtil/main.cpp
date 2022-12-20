@@ -254,7 +254,12 @@ static void ICEFlashWrite(const Args& args, MDCUSBDevice& device) {
     auto buf = std::make_unique<uint8_t[]>(len);
     device.iceFlashRead(0, buf.get(), len);
     if (memcmp(mmap.data(), buf.get(), len)) {
-        throw Toastbox::RuntimeError("data written doesn't match data read");
+        constexpr const char* ReadBackDataFilename = "ICEFlashWrite-ReadBack.bin";
+        std::ofstream f;
+        f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        f.open(ReadBackDataFilename);
+        f.write((char*)buf.get(), len);
+        throw Toastbox::RuntimeError("data written doesn't match data read (wrote to %s)", ReadBackDataFilename);
     }
 }
 
