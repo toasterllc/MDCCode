@@ -688,7 +688,7 @@ static void __ICEFlashIn(uint8_t* d, size_t len) {
             _ICE_ST_SPI_CLK::Write(1);
             
             b <<= 1;
-            b |= _ICE_ST_SPI_D5::Read();
+            b |= _ICE_ST_SPI_D4::Read();
             
             _ICE_ST_SPI_CLK::Write(0);
         }
@@ -699,7 +699,7 @@ static void __ICEFlashOut(const uint8_t* d, size_t len) {
     for (size_t i=0; i<len; i++) {
         uint8_t b = d[i];
         for (int ii=0; ii<8; ii++) {
-            _ICE_ST_SPI_D4::Write(b & 0x80);
+            _ICE_ST_SPI_D5::Write(b & 0x80);
             b <<= 1;
             
             _ICE_ST_SPI_CLK::Write(1);
