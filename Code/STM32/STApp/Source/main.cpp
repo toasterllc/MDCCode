@@ -71,8 +71,6 @@ using _ICE_ST_SPI_D4        = QSPI::D4;
 using _ICE_ST_SPI_D5        = QSPI::D5;
 using _MSP_HOST_MODE_       = GPIO<GPIOPortE, GPIO_PIN_3>;
 using _MSP_SBW_EN           = GPIO<GPIOPortE, GPIO_PIN_4>;
-using _VDD_B_1V8_IMG_SD_EN  = GPIO<GPIOPortE, GPIO_PIN_5>;
-using _VDD_B_2V8_IMG_SD_EN  = GPIO<GPIOPortE, GPIO_PIN_2>;
 using _MSP_TEST             = GPIO<GPIOPortG, GPIO_PIN_11>;
 using _MSP_RST_             = GPIO<GPIOPortG, GPIO_PIN_12>;
 
@@ -142,36 +140,37 @@ enum class _IMGSDPowerState {
 };
 
 static void _IMGSDPowerStateSet(_IMGSDPowerState state) {
-    switch (state) {
-    case _IMGSDPowerState::Uncontrolled:
-        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        break;
-    
-    case _IMGSDPowerState::Off:
-        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-        _VDD_B_2V8_IMG_SD_EN::Write(0);
-        _VDD_B_1V8_IMG_SD_EN::Write(0);
-        
-        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        
-        // Rails take ~1.5ms to turn off, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms(2));
-        break;
-    
-    case _IMGSDPowerState::On:
-        _VDD_B_2V8_IMG_SD_EN::Write(1);
-        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        
-        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-        _VDD_B_1V8_IMG_SD_EN::Write(1);
-        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        
-        // Rails take ~1ms to turn on, so wait 2ms to be sure
-        _Scheduler::Sleep(_Scheduler::Ms(2));
-        break;
-    }
+    #warning TODO: update for rev7 board
+//    switch (state) {
+//    case _IMGSDPowerState::Uncontrolled:
+//        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//        break;
+//    
+//    case _IMGSDPowerState::Off:
+//        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
+//        _VDD_B_2V8_IMG_SD_EN::Write(0);
+//        _VDD_B_1V8_IMG_SD_EN::Write(0);
+//        
+//        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//        
+//        // Rails take ~1.5ms to turn off, so wait 2ms to be sure
+//        _Scheduler::Sleep(_Scheduler::Ms(2));
+//        break;
+//    
+//    case _IMGSDPowerState::On:
+//        _VDD_B_2V8_IMG_SD_EN::Write(1);
+//        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//        
+//        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
+//        _VDD_B_1V8_IMG_SD_EN::Write(1);
+//        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//        
+//        // Rails take ~1ms to turn on, so wait 2ms to be sure
+//        _Scheduler::Sleep(_Scheduler::Ms(2));
+//        break;
+//    }
 }
 
 // MARK: - ICE40
