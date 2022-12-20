@@ -75,7 +75,8 @@ public:
         _device.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
         _device.Init.ClockMode = QSPI_CLOCK_MODE_0; // Clock idles low
 //        _device.Init.ClockMode = QSPI_CLOCK_MODE_3; // Clock idles high
-        _device.Init.FlashID = QSPI_FLASH_ID_1;
+        // In single mode, we want QSPI to use D4/D5 (flash 2), not D0/D1 (flash 1)
+        _device.Init.FlashID = (_config->mode==Mode::Single ? QSPI_FLASH_ID_2 : QSPI_FLASH_ID_1);
         _device.Init.DualFlash = (_config->mode==Mode::Single ? QSPI_DUALFLASH_DISABLE : QSPI_DUALFLASH_ENABLE);
         _device.Ctx = this;
         

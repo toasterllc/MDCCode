@@ -178,6 +178,30 @@ static void _IMGSDPowerStateSet(_IMGSDPowerState state) {
 
 namespace _QSPICmd {
 
+static QSPI_CommandTypeDef ICEWrite(size_t len) {
+    return QSPI_CommandTypeDef{
+        .Instruction = 0,
+        .InstructionMode = QSPI_INSTRUCTION_NONE,
+        
+        .Address = 0,
+        .AddressSize = QSPI_ADDRESS_8_BITS,
+        .AddressMode = QSPI_ADDRESS_NONE,
+        
+        .AlternateBytes = 0,
+        .AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS,
+        .AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE,
+        
+        .DummyCycles = 0,
+        
+        .NbData = (uint32_t)len,
+        .DataMode = QSPI_DATA_1_LINE,
+        
+        .DdrMode = QSPI_DDR_MODE_DISABLE,
+        .DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY,
+        .SIOOMode = QSPI_SIOO_INST_EVERY_CMD,
+    };
+}
+
 static QSPI_CommandTypeDef ICEApp(const _ICE::Msg& msg, size_t respLen) {
     uint8_t b[8];
     static_assert(sizeof(msg) == sizeof(b));
@@ -578,8 +602,6 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D5::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     
     // Disable flash
@@ -595,12 +617,13 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     _ICE_CRST_::Write(1);
     _Scheduler::Sleep(_Scheduler::Ms(2)); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
     
+    // Configure QSPI for writing the ICE40 configuration
+    _QSPISetConfig(_QSPIConfigs::ICEWrite);
+    
     // Send 8 clocks and wait for them to complete
-    _ICE_ST_SPI_D5::Write(1);
-    for (int i=0; i<8; i++) {
-        _ICE_ST_SPI_CLK::Write(1);
-        _ICE_ST_SPI_CLK::Write(0);
-    }
+    static const uint8_t ff = 0xff;
+    _QSPI.write(_QSPICmd::ICEWrite(sizeof(ff)), &ff);
+    _Scheduler::Wait([] { return _QSPI.ready(); });
     
     // Reset state
     _Bufs.reset();
@@ -609,22 +632,15 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     _TaskUSBDataOut::Start(arg.len);
     
     for (;;) {
-        // Wait until we have data to consume
-        _Scheduler::Wait([] { return _Bufs.rok(); });
+        // Wait until we have data to consume, and QSPI is ready to write
+        _Scheduler::Wait([] { return _Bufs.rok() && _QSPI.ready(); });
         
-        // Bitbang the data and wait for completion
+        // Write the data over QSPI and wait for completion
         auto& buf = _Bufs.rget();
-        for (size_t i=0; i<buf.len; i++) {
-            uint8_t b = buf.data[i];
-            for (int i=0; i<8; i++) {
-                _ICE_ST_SPI_D5::Write(b & 0x80);
-                b <<= 1;
-                
-                _ICE_ST_SPI_CLK::Write(1);
-                _ICE_ST_SPI_CLK::Write(0);
-            }
+        if (buf.len) {
+            _QSPI.write(_QSPICmd::ICEWrite(buf.len), buf.data);
+            _Scheduler::Wait([] { return _QSPI.ready(); });
         }
-        
         _Bufs.rpop();
         if (!buf.len) break; // We're done when we receive an empty buffer
     }
@@ -644,18 +660,20 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     }
     
     // Finish
-    // Supply >=49 additional clocks (8*7=56 clocks), per the
-    // "iCE40 Programming and Configuration" guide.
-    // These clocks apparently reach the user application. Since this
-    // appears unavoidable, prevent the clocks from affecting the user
-    // application by writing 0xFF, which the user application must
-    // consider as a NOP.
-    _ICE_ST_SPI_D5::Write(1);
-    for (int i=0; i<50; i++) {
-        _ICE_ST_SPI_CLK::Write(1);
-        _ICE_ST_SPI_CLK::Write(0);
+    {
+        // Supply >=49 additional clocks (8*7=56 clocks), per the
+        // "iCE40 Programming and Configuration" guide.
+        // These clocks apparently reach the user application. Since this
+        // appears unavoidable, prevent the clocks from affecting the user
+        // application by writing 0xFF, which the user application must
+        // consider as a NOP.
+        constexpr uint8_t ClockCount = 7;
+        static int i;
+        for (i=0; i<ClockCount; i++) {
+            _QSPI.write(_QSPICmd::ICEWrite(sizeof(ff)), &ff);
+            _Scheduler::Wait([] { return _QSPI.ready(); });
+        }
     }
-    
     
     // Release chip-select now that we're done
     _ICE_ST_SPI_CS_::Write(1);
