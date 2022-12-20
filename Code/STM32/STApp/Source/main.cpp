@@ -1331,10 +1331,6 @@ extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
     _QSPI.isrDMA();
 }
 
-extern "C" [[gnu::section(".isr")]] void ISR_ADC() {
-    _Battery.isr();
-}
-
 // MARK: - Abort
 
 extern "C" [[noreturn]]
