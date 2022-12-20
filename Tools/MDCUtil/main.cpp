@@ -24,7 +24,7 @@ const CmdStr LEDSetCmd              = "LEDSet";
 const CmdStr STMWriteCmd            = "STMWrite";
 
 // STMApp Commands
-const CmdStr HostModeSetCmd  = "HostModeSet";
+const CmdStr HostModeSetCmd         = "HostModeSet";
 const CmdStr ICERAMWriteCmd         = "ICERAMWrite";
 const CmdStr ICEFlashReadCmd        = "ICEFlashRead";
 const CmdStr ICEFlashWriteCmd       = "ICEFlashWrite";
@@ -47,7 +47,7 @@ static void printUsage() {
     cout << "  " << STMWriteCmd             << " <file>\n";
     
     // STMApp Commands
-    cout << "  " << HostModeSetCmd   << " <0/1>\n";
+    cout << "  " << HostModeSetCmd          << " <0/1>\n";
     cout << "  " << ICERAMWriteCmd          << " <file>\n";
     cout << "  " << ICEFlashReadCmd         << " <addr> <len>\n";
     cout << "  " << ICEFlashWriteCmd        << " <file>\n";
