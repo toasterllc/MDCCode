@@ -14,13 +14,13 @@ set_io ice_stm_spi_d[0]                 L8
 set_io ice_stm_spi_d[1]                 L7
 set_io ice_stm_spi_d[2]                 K6
 set_io ice_stm_spi_d[3]                 K7
-set_io ice_stm_spi_d[4]                 K9
-set_io ice_stm_spi_d[5]                 J9
+set_io ice_stm_spi_d[4]                 J9
+set_io ice_stm_spi_d[5]                 K9
 set_io ice_stm_spi_d[6]                 J7
 set_io ice_stm_spi_d[7]                 J8
 set_io ice_stm_spi_d_ready              L5
 set_io img_dclk                         F11
-set_io img_d[0]                         E8
+set_io img_d[0]                         D9
 set_io img_d[1]                         D10
 set_io img_d[2]                         G11
 set_io img_d[3]                         G9
@@ -81,3 +81,4 @@ set_io sd_dat[0]                        L2
 set_io sd_dat[1]                        L1
 set_io sd_dat[2]                        K5
 set_io sd_dat[3]                        L4
+set_io sd_pullup_1v8_en_                J3
