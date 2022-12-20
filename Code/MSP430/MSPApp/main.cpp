@@ -36,27 +36,27 @@ static constexpr uint32_t _SysTickPeriodUs  = 512;
 static void _Abort(uint16_t domain, uint16_t line);
 
 struct _Pin {
-    // Default GPIOs
-    using UNUSED0                           = PortA::Pin<0x0>;
-    using DEBUG_OUT                         = PortA::Pin<0x1, Option::Output0>;
-    
-    using I2C_SDA                           = PortA::Pin<0x2>;
-    using I2C_SCL                           = PortA::Pin<0x3>;
-    
-    #warning TODO: VDD_B_EN / MOTION_SIGNAL moved to different pins, update
-    using VDD_B_EN                          = PortA::Pin<0x2, Option::Output0>;
-    using MOTION_SIGNAL                     = PortA::Pin<0x3, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only pull up, so it requires a pulldown resistor
-    using UNUSED4                           = PortA::Pin<0x4>;
-    using UNUSED5                           = PortA::Pin<0x5>;
-    using VDD_B_2V8_IMG_SD_EN               = PortA::Pin<0x6, Option::Input, Option::Resistor0>; // Weakly controlled to allow STM to override
-    using UNUSED7                           = PortA::Pin<0x7>;
-    using XOUT                              = PortA::Pin<0x8>;
-    using XIN                               = PortA::Pin<0x9>;
-    using HOST_MODE_                        = PortA::Pin<0xA, Option::Input, Option::Resistor0>;
-    using VDD_B_1V8_IMG_SD_EN               = PortA::Pin<0xB, Option::Input, Option::Resistor0>; // Weakly controlled to allow STM to override
-    using ICE_MSP_SPI_CLK                   = PortA::Pin<0xC>;
-    using ICE_MSP_SPI_DATA_OUT              = PortA::Pin<0xD>;
-    using ICE_MSP_SPI_DATA_IN               = PortA::Pin<0xE>;
+    // Port A
+    using VDD_B_1V8_IMG_SD_EN       = PortA::Pin<0x0, Option::Output0>;
+    using LED_GREEN_                = PortA::Pin<0x1, Option::Output1>;
+    using MSP_STM_I2C_SDA           = PortA::Pin<0x2>;
+    using MSP_STM_I2C_SCL           = PortA::Pin<0x3>;
+    using ICE_MSP_SPI_DATA_OUT      = PortA::Pin<0x4>;
+    using ICE_MSP_SPI_DATA_IN       = PortA::Pin<0x5>;
+    using ICE_MSP_SPI_CLK           = PortA::Pin<0x6>;
+    using BAT_CHRG_LVL              = PortA::Pin<0x7, Option::Input>; // No pullup/pulldown because this is an analog input (and the voltage divider provides a physical pulldown)
+    using MSP_XOUT                  = PortA::Pin<0x8>;
+    using MSP_XIN                   = PortA::Pin<0x9>;
+    using LED_RED_                  = PortA::Pin<0xA, Option::Output1>;
+    using VDD_B_2V8_IMG_SD_EN       = PortA::Pin<0xB, Option::Output0>;
+    using MOTION_SIGNAL             = PortA::Pin<0xC, Option::Input, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only drive 1, so we have a pulldown
+    using BUTTON_SIGNAL_            = PortA::Pin<0xD, Option::Input, Option::Interrupt10, Option::Resistor1>; // Button can only drive 0, so we have a pullup
+    using BAT_CHRG_LVL_EN           = PortA::Pin<0xE, Option::Output0>;
+    using VDD_B_3V3_STM             = PortA::Pin<0xF, Option::Input, Option::Resistor0>;
+    // Port B
+    using MOTION_EN_                = PortB::Pin<0x0, Option::Output1>;
+    using VDD_B_EN                  = PortB::Pin<0x1, Option::Output0>;
+    using _UNUSED0                  = PortB::Pin<0x2>;
 };
 
 class _MainTask;
@@ -107,7 +107,7 @@ struct _I2CMsg {
     uint8_t payload = 0;
 };
 
-using _I2C = I2CType<_Scheduler, _Pin::I2C_SCL, _Pin::I2C_SDA, _I2CMsg, _I2CAddr, _I2CError>;
+using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _I2CMsg, _I2CAddr, _I2CError>;
 
 // _ImgSensor: image sensor object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
@@ -129,7 +129,7 @@ using _SDCard = SD::Card<
     6                   // T_ClkDelayFast (odd values invert the clock)
 >;
 
-using _RTCType = RTC::Type<_XT1FreqHz, _Pin::XOUT, _Pin::XIN>;
+using _RTCType = RTC::Type<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
 
 // _RTC: real time clock
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
@@ -198,16 +198,16 @@ static void _ICEInit() {
 
 // MARK: - Tasks
 
-static void debugSignal() {
-    _Pin::DEBUG_OUT::Init();
-    for (;;) {
-//    for (int i=0; i<10; i++) {
-        _Pin::DEBUG_OUT::Write(0);
-        for (volatile int i=0; i<10000; i++);
-        _Pin::DEBUG_OUT::Write(1);
-        for (volatile int i=0; i<10000; i++);
-    }
-}
+//static void debugSignal() {
+//    _Pin::DEBUG_OUT::Init();
+//    for (;;) {
+////    for (int i=0; i<10; i++) {
+//        _Pin::DEBUG_OUT::Write(0);
+//        for (volatile int i=0; i<10000; i++);
+//        _Pin::DEBUG_OUT::Write(1);
+//        for (volatile int i=0; i<10000; i++);
+//    }
+//}
 
 struct _SDTask {
     static void Reset() {
@@ -822,14 +822,14 @@ uint8_t _StackMain[_StackMainSize];
 asm(".global __stack");
 asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
 
-static void _HostMode() {
-    // Let power rails fully discharge before turning them on
-    _Scheduler::Delay(_Scheduler::Ms(10));
-    
-    while (!_Pin::HOST_MODE_::Read()) {
-        _Scheduler::Delay(_Scheduler::Ms(100));
-    }
-}
+//static void _HostMode() {
+//    // Let power rails fully discharge before turning them on
+//    _Scheduler::Delay(_Scheduler::Ms(10));
+//    
+//    while (!_Pin::HOST_MODE_::Read()) {
+//        _Scheduler::Delay(_Scheduler::Ms(100));
+//    }
+//}
 
 int main() {
     // Stop watchdog timer
@@ -838,12 +838,15 @@ int main() {
     // Init GPIOs
     GPIO::Init<
         // General IO
-        _Pin::DEBUG_OUT,
         _Pin::MOTION_SIGNAL,
-        _Pin::HOST_MODE_,
+        _Pin::BUTTON_SIGNAL_,
+        _Pin::BAT_CHRG_LVL_EN,
+        _Pin::VDD_B_3V3_STM,
+        _Pin::LED_GREEN_,
+        _Pin::LED_RED_,
+        _Pin::BAT_CHRG_LVL,
         
         // Power control
-        _Pin::VDD_B_EN,
         _Pin::VDD_B_1V8_IMG_SD_EN,
         _Pin::VDD_B_2V8_IMG_SD_EN,
         
@@ -859,6 +862,13 @@ int main() {
         // I2C (config chosen by _I2C)
         _I2C::Pin::SCL,
         _I2C::Pin::SDA
+    >();
+    
+    // Init GPIOs
+    GPIO::Init<
+        _Pin::MOTION_EN_,
+        _Pin::VDD_B_EN,
+        _Pin::_UNUSED0
     >();
     
     // Init clock
@@ -900,32 +910,32 @@ int main() {
 //        }
 //    }
     
-    // Handle cold starts
-    if (Startup::ColdStart()) {
-        // Temporarily enable a pullup on HOST_MODE_ so that we can determine whether STM is driving it low.
-        // We don't want the pullup to be permanent to prevent leakage current (~80nA) through STM32's GPIO
-        // that controls HOST_MODE_.
-        _Pin::HOST_MODE_::Write(1);
-        
-        // Wait for the pullup to pull the rail up
-        _Scheduler::Delay(_Scheduler::Ms(1));
-        
-        // Enter host mode if HOST_MODE_ is asserted
-        if (!_Pin::HOST_MODE_::Read()) {
-            _HostMode();
-        }
-        
-        // Return to default HOST_MODE_ config
-        // Not using GPIO::Init() here because it costs a lot more instructions.
-        _Pin::HOST_MODE_::Write(0);
-        
-        // Since this is a cold start, delay 3s before beginning.
-        // This delay is meant for the case where we restarted due to an abort, and
-        // serves 2 purposes:
-        //   1. it rate-limits aborts, in case there's a persistent issue
-        //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-        _Scheduler::Delay(_Scheduler::Ms(3000));
-    }
+//    // Handle cold starts
+//    if (Startup::ColdStart()) {
+//        // Temporarily enable a pullup on HOST_MODE_ so that we can determine whether STM is driving it low.
+//        // We don't want the pullup to be permanent to prevent leakage current (~80nA) through STM32's GPIO
+//        // that controls HOST_MODE_.
+//        _Pin::HOST_MODE_::Write(1);
+//        
+//        // Wait for the pullup to pull the rail up
+//        _Scheduler::Delay(_Scheduler::Ms(1));
+//        
+//        // Enter host mode if HOST_MODE_ is asserted
+//        if (!_Pin::HOST_MODE_::Read()) {
+//            _HostMode();
+//        }
+//        
+//        // Return to default HOST_MODE_ config
+//        // Not using GPIO::Init() here because it costs a lot more instructions.
+//        _Pin::HOST_MODE_::Write(0);
+//        
+//        // Since this is a cold start, delay 3s before beginning.
+//        // This delay is meant for the case where we restarted due to an abort, and
+//        // serves 2 purposes:
+//        //   1. it rate-limits aborts, in case there's a persistent issue
+//        //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
+//        _Scheduler::Delay(_Scheduler::Ms(3000));
+//    }
     
     _Scheduler::Run();
 }

@@ -58,7 +58,11 @@ public:
             Sel0(   InitConfig::Sel0()  );
             Sel1(   InitConfig::Sel1()  );
             REn(    InitConfig::REn()   );
+            
+            if constexpr (PortIdx == PortIndex::A)
             IE(     InitConfig::IE()    );
+            
+            if constexpr (PortIdx == PortIndex::A)
             IES(    InitConfig::IES()   );
         }
         
@@ -87,12 +91,18 @@ public:
             else if constexpr (PortIdx == PortIndex::B) return _Getter(PBREN);
         }
         
-        template <std::enable_if_t<PortIdx==PortIndex::A, int> = 0>
+        template <
+        PortIndex _T_PortIdx = PortIdx,
+        typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0
+        >
         static constexpr bool IE() {
             return _Getter(PAIE);
         }
         
-        template <std::enable_if_t<PortIdx==PortIndex::A, int> = 0>
+        template <
+        PortIndex _T_PortIdx = PortIdx,
+        typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0
+        >
         static constexpr bool IES() {
             return _Getter(PAIES);
         }
@@ -122,12 +132,18 @@ public:
             else if constexpr (PortIdx == PortIndex::B) _Setter(PBREN, x);
         }
         
-        template <std::enable_if_t<PortIdx==PortIndex::A, int> = 0>
+        template <
+        PortIndex _T_PortIdx = PortIdx,
+        typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0
+        >
         static constexpr void IE(bool x) {
             _Setter(PAIE, x);
         }
         
-        template <std::enable_if_t<PortIdx==PortIndex::A, int> = 0>
+        template <
+        PortIndex _T_PortIdx = PortIdx,
+        typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0
+        >
         static constexpr void IES(bool x) {
             _Setter(PAIES, x);
         }
