@@ -73,8 +73,8 @@ using _MSP_HOST_MODE_       = GPIO<GPIOPortE, GPIO_PIN_3>;
 using _MSP_SBW_EN           = GPIO<GPIOPortE, GPIO_PIN_4>;
 using _VDD_B_1V8_IMG_SD_EN  = GPIO<GPIOPortE, GPIO_PIN_5>;
 using _VDD_B_2V8_IMG_SD_EN  = GPIO<GPIOPortE, GPIO_PIN_2>;
-using _MSP_TEST             = GPIO<GPIOPortI, GPIO_PIN_8>;
-using _MSP_RST_             = GPIO<GPIOPortF, GPIO_PIN_0>;
+using _MSP_TEST             = GPIO<GPIOPortG, GPIO_PIN_11>;
+using _MSP_RST_             = GPIO<GPIOPortG, GPIO_PIN_12>;
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -1366,7 +1366,7 @@ int main() {
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOE_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
-    __HAL_RCC_GPIOI_CLK_ENABLE();
+    __HAL_RCC_GPIOG_CLK_ENABLE();
     
     // Init Battery
     {
