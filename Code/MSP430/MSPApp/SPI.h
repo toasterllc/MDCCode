@@ -41,8 +41,12 @@ public:
             // mode=master, mode=3-pin SPI, mode=synchronous, clock=SMCLK
             UCMST | UCMODE_0 | UCSYNC | UCSSEL__SMCLK;
         
-        // fBitClock = fBRCLK / 1;
-        UCA0BRW = 0;
+        // 16 MHz / 64 = 250 kHz, while we have a debug resistor/capacitor, for debugging the TXB0102.
+        // Without these components we can do 1 MHz. We can't go higher because the TXB0102 seems to
+        // have signal integrity issues. See:
+        //   https://e2e.ti.com/support/logic-group/logic/f/logic-forum/1182055/txb0102-output-noise-prevents-high-speed-translation
+        // fBitClock = fBRCLK / 64;
+        UCA0BRW = 64;
         // No modulation
         UCA0MCTLW = 0;
         
