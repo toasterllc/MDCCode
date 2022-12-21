@@ -546,14 +546,15 @@ struct _MainTask {
         // Init SPI peripheral
         _SPI::Init();
         
+        uint8_t leds = 0x00;
         for (;;) {
-            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
-            {
-                _WaitingForMotion = true;
-                _Scheduler::Wait([&] { return (bool)_Motion; });
-                _Motion = false;
-                _WaitingForMotion = false;
-            }
+//            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
+//            {
+//                _WaitingForMotion = true;
+//                _Scheduler::Wait([&] { return (bool)_Motion; });
+//                _Motion = false;
+//                _WaitingForMotion = false;
+//            }
             
             // Turn on VDD_B power (turns on ICE40)
             _VDDBSetEnabled(true);
@@ -565,55 +566,61 @@ struct _MainTask {
             _Scheduler::Sleep(_Scheduler::Ms(30));
             _ICEInit();
             
-            // Reset SD nets before we turn on SD power
-            _SDTask::Reset();
-            _SDTask::Wait();
+            _ICE::Transfer(_ICE::LEDSetMsg(leds));
             
-            // Turn on IMG/SD power
-            _VDDIMGSDSetEnabled(true);
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
             
-            // Init image sensor / SD card
-            _ImgTask::Init();
-            _SDTask::Init();
-            
-            for (;;) {
-                // Capture an image
-                {
-                    _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-                    
-                    // Wait for _SDTask to be initialized and done with writing, which is necessary
-                    // for 2 reasons:
-                    //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
-                    //      access it,
-                    //   2. we can't initiate a new capture until writing to the SD card (from a
-                    //      previous capture) is complete (because the SDRAM is single-port, so
-                    //      we can only read or write at one time)
-                    _SDTask::WaitForInitAndWrite();
-                    
-                    // Capture image to RAM
-                    _ImgTask::Capture(imgRingBuf.buf.idEnd);
-                    const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
-                    
-                    // Copy image from RAM -> SD card
-                    _SDTask::Write(srcRAMBlock);
-                    _SDTask::Wait();
-                    
-                    _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-                }
-                
-                // Wait up to 1s for further motion
-                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-                if (!motion) break;
-                
-                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-                // _Motion, there'd be a race window where we could first observe
-                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-                // the true value by resetting it to false.
-                _Motion = false;
-            }
+//            // Reset SD nets before we turn on SD power
+//            _SDTask::Reset();
+//            _SDTask::Wait();
+//            
+//            // Turn on IMG/SD power
+//            _VDDIMGSDSetEnabled(true);
+//            
+//            // Init image sensor / SD card
+//            _ImgTask::Init();
+//            _SDTask::Init();
+//            
+//            for (;;) {
+//                // Capture an image
+//                {
+//                    _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
+//                    
+//                    // Wait for _SDTask to be initialized and done with writing, which is necessary
+//                    // for 2 reasons:
+//                    //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
+//                    //      access it,
+//                    //   2. we can't initiate a new capture until writing to the SD card (from a
+//                    //      previous capture) is complete (because the SDRAM is single-port, so
+//                    //      we can only read or write at one time)
+//                    _SDTask::WaitForInitAndWrite();
+//                    
+//                    // Capture image to RAM
+//                    _ImgTask::Capture(imgRingBuf.buf.idEnd);
+//                    const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+//                    
+//                    // Copy image from RAM -> SD card
+//                    _SDTask::Write(srcRAMBlock);
+//                    _SDTask::Wait();
+//                    
+//                    _ICE::Transfer(_ICE::LEDSetMsg(0x00));
+//                }
+//                
+//                // Wait up to 1s for further motion
+//                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
+//                if (!motion) break;
+//                
+//                // Only reset _Motion if we've observed motion; otherwise, if we always reset
+//                // _Motion, there'd be a race window where we could first observe
+//                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
+//                // the true value by resetting it to false.
+//                _Motion = false;
+//            }
             
             _VDDIMGSDSetEnabled(false);
             _VDDBSetEnabled(false);
+            
+            leds = ~leds;
         }
     }
     
