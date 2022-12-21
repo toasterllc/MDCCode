@@ -46,7 +46,7 @@ public:
         // have signal integrity issues. See:
         //   https://e2e.ti.com/support/logic-group/logic/f/logic-forum/1182055/txb0102-output-noise-prevents-high-speed-translation
         // fBitClock = fBRCLK / 64;
-        UCA0BRW = 64;
+        UCA0BRW = 0;
         // No modulation
         UCA0MCTLW = 0;
         
