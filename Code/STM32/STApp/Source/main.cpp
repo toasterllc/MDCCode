@@ -1011,7 +1011,6 @@ static void _MSPWrite(const STM::Cmd& cmd) {
     
     // Reset state
     _Bufs.reset();
-    _MSP.crcReset();
     
     // Trigger the USB DataOut task with the amount of data
     _TaskUSBDataOut::Start(arg.len);
@@ -1030,10 +1029,7 @@ static void _MSPWrite(const STM::Cmd& cmd) {
         if (!buf.len) break; // We're done when we receive an empty buffer
     }
     
-    // Verify the CRC of all the data we wrote
-    const auto r = _MSP.crcVerify();
-    // Send status
-    _System::USBSendStatus(r == _MSP.Status::OK);
+    _System::USBSendStatus(true);
 }
 
 struct _MSPDebugState {

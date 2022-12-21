@@ -67,10 +67,6 @@ private:
     
     bool _connected = false;
     bool _tclkSaved = 1;
-    uint16_t _crc = 0;
-    uint32_t _crcAddr = 0;
-    size_t _crcLen = 0;
-    bool _crcStarted = false;
     
     void _pinsReset() {
         // De-assert RST_ before de-asserting TEST, because the MSP430 latches RST_
@@ -346,61 +342,6 @@ private:
         _drShift<20>(0);
     }
     
-    void _crcStart(uint32_t addr) {
-        _crc = addr-2;
-        _crcAddr = addr;
-        _crcLen = 0;
-        _crcStarted = true;
-    }
-    
-    void _crcUpdate(uint16_t val) {
-        constexpr uint16_t Poly = 0x0805;
-        if (_crc & 0x8000) {
-            _crc ^= Poly;
-            _crc <<= 1;
-            _crc |= 0x0001;
-        } else {
-            _crc <<= 1;
-        }
-        _crc ^= val;
-    }
-    
-    uint16_t _crcCalc(uint32_t addr, size_t len) {
-        AssertArg(!(addr & 1)); // Address must be 16-bit aligned
-        AssertArg(!(len & 1)); // Length must be 16-bit aligned
-        
-        _pcSet(addr);
-        _tclkSet(1);
-        
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0501);
-        
-        _irShift(_IR_DATA_16BIT);
-        _drShift<16>(addr-2);
-        
-        _irShift(_IR_DATA_PSA);
-        
-        for (size_t i=0; i<len; i+=2) {
-            _tclkSet(0);
-            _sbwio(1, 1);
-            // <- Select DR-Scan
-            _sbwio(0, 1);
-            // <- Capture-DR
-            _sbwio(0, 1);
-            // <- Shift-DR
-            _sbwio(1, 1);
-            // <- Exit1-DR
-            _sbwio(1, 1);
-            // <- Update-DR
-            _sbwio(0, 1);
-            // <- Run-Test/Idle
-            _tclkSet(1);
-        }
-        
-        _irShift(_IR_SHIFT_OUT_PSA);
-        return _drShift<16>(0);
-    }
-    
     template <typename T>
     T _read(uint32_t addr) {
         static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
@@ -538,7 +479,6 @@ private:
                 
                 _write16(addr, w);
                 
-                _crcUpdate(w);
                 addr += 2;
                 src += 2;
                 len -= 2;
@@ -588,7 +528,6 @@ private:
                     _drShift<16>(w);
                     _tclkSet(0);
                     
-                    _crcUpdate(w);
                     addr += 2;
                     src += 2;
                     len -= 2;
@@ -797,7 +736,6 @@ public:
     }
     
     void write(uint32_t addr, const void* src, size_t len) {
-        if (!_crcStarted) _crcStart(addr);
         if (_FRAMAddr(addr) && _FRAMAddr(addr+len-1)) {
             // framWrite() is a write implementation that's faster than the
             // general-purpose write(), but only works for FRAM memory regions
@@ -805,16 +743,6 @@ public:
         } else {
             _write(addr, (uint8_t*)src, len);
         }
-        _crcLen += len;
-    }
-    
-    void crcReset() {
-        _crcStarted = false;
-    }
-    
-    Status crcVerify() {
-        Assert(_crcStarted);
-        return (_crcCalc(_crcAddr, _crcLen)==_crc ? Status::OK : Status::Error);
     }
     
     void debugTestSet(bool val) {
