@@ -852,6 +852,8 @@ int main() {
         _Pin::LED_GREEN_,
         _Pin::LED_RED_,
         _Pin::BAT_CHRG_LVL,
+        _Pin::MOTION_EN_,
+        _Pin::VDD_B_EN,
         
         // Power control
         _Pin::VDD_B_1V8_IMG_SD_EN,
@@ -869,13 +871,6 @@ int main() {
         // I2C (config chosen by _I2C)
         _I2C::Pin::SCL,
         _I2C::Pin::SDA
-    >();
-    
-    // Init GPIOs
-    GPIO::Init<
-        _Pin::MOTION_EN_,
-        _Pin::VDD_B_EN,
-        _Pin::_UNUSED0
     >();
     
     // Init clock
