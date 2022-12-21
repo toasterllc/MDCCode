@@ -69,8 +69,6 @@ using _ICE_ST_FLASH_EN      = GPIO<GPIOPortF, GPIO_PIN_5>;
 using _ICE_ST_SPI_CLK       = QSPI::Clk;
 using _ICE_ST_SPI_D4        = QSPI::D4;
 using _ICE_ST_SPI_D5        = QSPI::D5;
-using _MSP_HOST_MODE_       = GPIO<GPIOPortE, GPIO_PIN_3>;
-using _MSP_SBW_EN           = GPIO<GPIOPortE, GPIO_PIN_4>;
 using _MSP_TEST             = GPIO<GPIOPortG, GPIO_PIN_11>;
 using _MSP_RST_             = GPIO<GPIOPortG, GPIO_PIN_12>;
 
@@ -563,28 +561,7 @@ static void _HostModeSet(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Host mode asserts _MSP_HOST_MODE_, which MSPApp observes and
-    // prevents itself from running if it's asserted
-    
-    // Enable host mode
-    if (arg.en) {
-        // Asssert _MSP_HOST_MODE_ and reset MSP, which triggers the check for _MSP_HOST_MODE_
-        _MSP_HOST_MODE_::Write(0);
-        _MSP_RST_::Write(0);
-        _Scheduler::Sleep(_Scheduler::Ms(10));
-        _MSP_RST_::Write(1);
-        _Scheduler::Sleep(_Scheduler::Ms(10));
-        
-        // Take control of power rails and disable them by default
-        _IMGSDPowerStateSet(_IMGSDPowerState::Off);
-    
-    // Disable host mode
-    } else {
-        _MSP_HOST_MODE_::Write(1);
-        
-        // Relinquish control of power rails
-        _IMGSDPowerStateSet(_IMGSDPowerState::Uncontrolled);
-    }
+    #warning TODO: implement
     
     // Send status
     _System::USBSendStatus(true);
@@ -1374,14 +1351,7 @@ int main() {
     
     // Init MSP
     {
-        _MSP_HOST_MODE_::Write(1);
-        _MSP_HOST_MODE_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        
         _MSP.init();
-        
-        // Enable SBW voltage translation once _MSP has initialized the MSP_TEST and MSP_RST_ pins
-        _MSP_SBW_EN::Write(1);
-        _MSP_SBW_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
     _Scheduler::Run();
