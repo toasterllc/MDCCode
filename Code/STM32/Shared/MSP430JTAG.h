@@ -35,7 +35,8 @@ private:
     static constexpr uint8_t _IR_BYPASS             = _Reverse(0xFF);       // 0xFF
     
     static constexpr uint8_t _JTAGID                = 0x98;
-    static constexpr uint16_t _DeviceID             = 0x8311;
+//    static constexpr uint16_t _DeviceID             = 0x8311;             // MSP430FR2422
+    static constexpr uint16_t _DeviceID             = 0x8240;               // MSP430FR2433
     static constexpr uint32_t _SafePC               = 0x00000004;
     static constexpr uint32_t _SYSRSTIVAddr         = 0x0000015E;
     static constexpr uint32_t _SYSCFG0Addr          = 0x00000160;
@@ -820,14 +821,14 @@ public:
         // Write before configuring. If we configured before writing, we could drive the
         // wrong value momentarily before writing the correct value.
         Test::Write(val);
-        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        Test::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
     void debugRstSet(bool val) {
         // Write before configuring. If we configured before writing, we could drive the
         // wrong value momentarily before writing the correct value.
         Rst_::Write(val);
-        Rst_::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        Rst_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
     void debugTestPulse() {
@@ -835,7 +836,7 @@ public:
         // Write before configuring. If we configured before writing, we could drive the
         // wrong value momentarily before writing the correct value.
         Test::Write(0);
-        Test::Config(GPIO_MODE_OUTPUT_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        Test::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         Test::Write(1);
     }
     
