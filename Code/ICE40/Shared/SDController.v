@@ -98,12 +98,10 @@ module SDController #(
     localparam Clk_FastFreq = ClkFreq;
     wire clk_fast = clk;
     
-    // TODO: since we're initializing with LVS, we may be able to start off in SDR12 (25 MHz).
-    // TODO: try bumping clk_slow up to 25 MHz.
     // ====================
     // clk_slow (<400 kHz)
     // ====================
-    localparam Clk_SlowFreq = 200000; // TODO: switch back to 400 kHz once our hardware has a physical pullup. Also, what about the comment above if we can get LVS working for all cards?
+    localparam Clk_SlowFreq = 400000;
     localparam Clk_SlowDividerWidth = $clog2(`DivCeil(Clk_FastFreq, Clk_SlowFreq));
     reg[Clk_SlowDividerWidth-1:0] clk_slow_divider = 0;
     wire clk_slow = clk_slow_divider[Clk_SlowDividerWidth-1];
