@@ -31,7 +31,7 @@ public:
         uint16_t rca = 0;
         
         // Enable slow SDController clock
-        T_ICE::Transfer(_ConfigClkSetSlow);
+        T_ICE::Transfer(_ConfigSlowOpenDrain);
         // TODO: switch to sleeping 25us when we get back to 400 kHz
         _Sleep(_Us(100)); // Wait 10 100kHz cycles
         
@@ -109,7 +109,7 @@ public:
             _Sleep(_Ms(6));
             
             // Re-enable clock
-            T_ICE::Transfer(_ConfigClkSetSlowPushPull);
+            T_ICE::Transfer(_ConfigSlowPushPull);
             // TODO: switch to sleeping 25us when we get back to 400 kHz
             _Sleep(_Us(100)); // Wait 10 100kHz cycles (to allow clock to start)
             
@@ -204,7 +204,7 @@ public:
         }
         
         // SDClock=Fast
-        T_ICE::Transfer(_ConfigClkSetFast);
+        T_ICE::Transfer(_ConfigFastPushPull);
         _Sleep(_Us(1));
         
         return rca;
@@ -310,13 +310,13 @@ private:
     
     static constexpr auto _ConfigReset = _SDConfigMsg(_SDConfigMsg::Reset);
     
-    static constexpr auto _ConfigClkSetSlow = _SDConfigMsg(
+    static constexpr auto _ConfigSlowOpenDrain = _SDConfigMsg(
         _SDConfigMsg::Init, _SDConfigMsg::ClkSpeed::Slow, T_ClkDelaySlow, _SDConfigMsg::PinMode::OpenDrain);
         
-    static constexpr auto _ConfigClkSetSlowPushPull = _SDConfigMsg(
+    static constexpr auto _ConfigSlowPushPull = _SDConfigMsg(
         _SDConfigMsg::Init, _SDConfigMsg::ClkSpeed::Slow, T_ClkDelaySlow, _SDConfigMsg::PinMode::PushPull);
     
-    static constexpr auto _ConfigClkSetFast = _SDConfigMsg(
+    static constexpr auto _ConfigFastPushPull = _SDConfigMsg(
         _SDConfigMsg::Init, _SDConfigMsg::ClkSpeed::Fast, T_ClkDelayFast, _SDConfigMsg::PinMode::PushPull);
     
     static constexpr auto _Us = T_Scheduler::Us;
