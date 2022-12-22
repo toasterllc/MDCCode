@@ -21,15 +21,15 @@ public:
         Align align = Align::Byte;
     };
     
-    using Clk = GPIO<GPIOPortB, GPIO_PIN_2>; // AF9
-    using D0 = GPIO<GPIOPortF, GPIO_PIN_8>;  // AF10
-    using D1 = GPIO<GPIOPortF, GPIO_PIN_9>;  // AF10
-    using D2 = GPIO<GPIOPortF, GPIO_PIN_7>;  // AF9
-    using D3 = GPIO<GPIOPortF, GPIO_PIN_6>;  // AF9
-    using D4 = GPIO<GPIOPortE, GPIO_PIN_7>;  // AF10
-    using D5 = GPIO<GPIOPortE, GPIO_PIN_8>;  // AF10
-    using D6 = GPIO<GPIOPortE, GPIO_PIN_9>;  // AF10
-    using D7 = GPIO<GPIOPortE, GPIO_PIN_10>; // AF10
+    using Clk = GPIO<GPIOPortB, 2>;  // AF9
+    using D0  = GPIO<GPIOPortF, 8>;  // AF10
+    using D1  = GPIO<GPIOPortF, 9>;  // AF10
+    using D2  = GPIO<GPIOPortF, 7>;  // AF9
+    using D3  = GPIO<GPIOPortF, 6>;  // AF9
+    using D4  = GPIO<GPIOPortE, 7>;  // AF10
+    using D5  = GPIO<GPIOPortE, 8>;  // AF10
+    using D6  = GPIO<GPIOPortE, 9>;  // AF10
+    using D7  = GPIO<GPIOPortE, 10>; // AF10
     
     QSPI() {}
     
@@ -275,8 +275,8 @@ public:
     
 private:
     const Config* _config = nullptr;
-    QSPI_HandleTypeDef _device;
-    DMA_HandleTypeDef _dma;
+    QSPI_HandleTypeDef _device = {};
+    DMA_HandleTypeDef _dma = {};
     bool _busy = false;
     
     void _handleCommandDone() {

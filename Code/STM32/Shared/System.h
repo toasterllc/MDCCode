@@ -182,10 +182,10 @@ public:
     }
     
     // LEDs
-    using LED0 = GPIO<GPIOPortB, GPIO_PIN_10>;
-    using LED1 = GPIO<GPIOPortB, GPIO_PIN_12>;
-    using LED2 = GPIO<GPIOPortB, GPIO_PIN_11>;
-    using LED3 = GPIO<GPIOPortB, GPIO_PIN_13>;
+    using LED0 = GPIO<GPIOPortB, 10>;
+    using LED1 = GPIO<GPIOPortB, 12>;
+    using LED2 = GPIO<GPIOPortB, 11>;
+    using LED3 = GPIO<GPIOPortB, 13>;
     
     static inline T_USB USB;
     
@@ -254,11 +254,12 @@ private:
         
         {
             RCC_PeriphCLKInitTypeDef cfg = {};
-            cfg.PeriphClockSelection = RCC_PERIPHCLK_CLK48;
+            cfg.PeriphClockSelection = RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_CLK48;
             cfg.PLLSAI.PLLSAIN = 96;
             cfg.PLLSAI.PLLSAIQ = 2;
             cfg.PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV4;
             cfg.PLLSAIDivQ = 1;
+            cfg.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
             cfg.Clk48ClockSelection = RCC_CLK48SOURCE_PLLSAIP;
             
             HAL_StatusTypeDef hr = HAL_RCCEx_PeriphCLKConfig(&cfg);

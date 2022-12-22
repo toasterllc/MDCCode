@@ -19,12 +19,14 @@ GPIOPort(GPIOPortG, GPIOG_BASE);
 GPIOPort(GPIOPortH, GPIOH_BASE);
 GPIOPort(GPIOPortI, GPIOI_BASE);
 
-template <GPIO_TypeDef& Port, uint16_t Pin>
+template <GPIO_TypeDef& Port, uint16_t PinIdx>
 class GPIO {
 public:
+    static constexpr uint16_t Bit = UINT16_C(1)<<PinIdx;
+    
     static void Config(uint32_t mode, uint32_t pull, uint32_t speed, uint32_t alt) {
         GPIO_InitTypeDef cfg = {
-            .Pin = Pin,
+            .Pin = Bit,
             .Mode = mode,
             .Pull = pull,
             .Speed = speed,
@@ -35,10 +37,10 @@ public:
     }
     
     static bool Read() {
-        return HAL_GPIO_ReadPin(&Port, Pin)==GPIO_PIN_SET;
+        return HAL_GPIO_ReadPin(&Port, Bit)==GPIO_PIN_SET;
     }
     
     static void Write(bool x) {
-        HAL_GPIO_WritePin(&Port, Pin, (x ? GPIO_PIN_SET : GPIO_PIN_RESET));
+        HAL_GPIO_WritePin(&Port, Bit, (x ? GPIO_PIN_SET : GPIO_PIN_RESET));
     }
 };

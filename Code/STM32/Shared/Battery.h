@@ -8,7 +8,7 @@
 template <typename T_Scheduler>
 class Battery {
 public:
-    using BAT_CHRG_STAT = GPIO<GPIOPortE, GPIO_PIN_15>;
+    using BAT_CHRG_STAT = GPIO<GPIOPortE, 15>;
     
     Battery() {}
     

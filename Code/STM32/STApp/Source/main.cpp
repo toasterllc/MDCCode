@@ -14,6 +14,7 @@
 #include "ImgSD.h"
 #include "USBConfigDesc.h"
 #include "MSP430JTAG.h"
+#include "I2C.h"
 using namespace STM;
 
 // MARK: - Peripherals & Types
@@ -58,19 +59,21 @@ using _System = System<
 constexpr auto& _USB = _System::USB;
 using _Scheduler = _System::Scheduler;
 
+using _I2C = I2CType<_Scheduler>;
+
 static QSPI _QSPI;
 static Battery<_Scheduler> _Battery;
 
-using _ICE_CRST_            = GPIO<GPIOPortF, GPIO_PIN_11>;
-using _ICE_CDONE            = GPIO<GPIOPortB, GPIO_PIN_1>;
-using _ICE_ST_SPI_CS_       = GPIO<GPIOPortE, GPIO_PIN_12>;
-using _ICE_ST_SPI_D_READY   = GPIO<GPIOPortA, GPIO_PIN_3>;
-using _ICE_ST_FLASH_EN      = GPIO<GPIOPortF, GPIO_PIN_5>;
+using _ICE_CRST_            = GPIO<GPIOPortF, 11>;
+using _ICE_CDONE            = GPIO<GPIOPortB, 1>;
+using _ICE_ST_SPI_CS_       = GPIO<GPIOPortE, 12>;
+using _ICE_ST_SPI_D_READY   = GPIO<GPIOPortA, 3>;
+using _ICE_ST_FLASH_EN      = GPIO<GPIOPortF, 5>;
 using _ICE_ST_SPI_CLK       = QSPI::Clk;
 using _ICE_ST_SPI_D4        = QSPI::D4;
 using _ICE_ST_SPI_D5        = QSPI::D5;
-using _MSP_TEST             = GPIO<GPIOPortG, GPIO_PIN_11>;
-using _MSP_RST_             = GPIO<GPIOPortG, GPIO_PIN_12>;
+using _MSP_TEST             = GPIO<GPIOPortG, 11>;
+using _MSP_RST_             = GPIO<GPIOPortG, 12>;
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -131,13 +134,7 @@ private:
 
 // MARK: - Utility Functions
 
-enum class _IMGSDPowerState {
-    Uncontrolled,
-    Off,
-    On,
-};
-
-static void _IMGSDPowerStateSet(_IMGSDPowerState state) {
+static void _IMGSDPowerStateSet(bool en) {
     #warning TODO: update for rev7 board
 //    switch (state) {
 //    case _IMGSDPowerState::Uncontrolled:
@@ -1144,14 +1141,14 @@ void _SDInit(const STM::Cmd& cmd) {
     _ICEAppInit();
     
     // Disable SD power
-    _IMGSDPowerStateSet(_IMGSDPowerState::Off);
+    _IMGSDPowerStateSet(false);
     
     // Reset SD before turning power on
     // This is necessary to put the SD nets in a predefined state before applying power to SD
     _SD::Reset();
     
     // Enable SD power
-    _IMGSDPowerStateSet(_IMGSDPowerState::On);
+    _IMGSDPowerStateSet(true);
     
     // Init SD card now that its power has been cycled
     _SD::Init();
@@ -1192,7 +1189,7 @@ void _ImgInit(const STM::Cmd& cmd) {
     _ICEAppInit();
     
     // Enable IMG power rails
-    _IMGSDPowerStateSet(_IMGSDPowerState::On);
+    _IMGSDPowerStateSet(true);
     
     _ImgSensor::Init();
     _ImgSensor::SetStreamEnabled(true);
@@ -1339,6 +1336,11 @@ int main() {
     __HAL_RCC_GPIOE_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
     __HAL_RCC_GPIOG_CLK_ENABLE();
+    
+    // Init I2C
+    {
+        _I2C::Init();
+    }
     
     // Init Battery
     {
