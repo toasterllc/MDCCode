@@ -272,21 +272,9 @@ module SDController #(
     reg[3:0] datIn_crcCounter = 0;
     reg[1:0] datInWrite_counter = 0;
     
-    localparam Init_ClockPulseUs = 15; // Pulse needs to be at least 10us, per SD LVS spec
-    localparam Init_ClockPulseDelay = Clocks(Clk_SlowFreq, Init_ClockPulseUs*1000, 1);
-    localparam Init_HoldUs = 5; // Hold outputs for 5us after the negative edge of the clock pulse
-    localparam Init_HoldDelay = Clocks(Clk_SlowFreq, Init_HoldUs*1000, 1);
-`ifdef SIM
-    localparam Init_FinishUs = 10; // Don't wait as long during simulation
-`else
-    localparam Init_FinishUs = 5500; // Hold outputs for 5.5ms after the negative edge of the clock pulse
-`endif
-    localparam Init_FinishDelay = Clocks(Clk_SlowFreq, Init_FinishUs*1000, 1);
-    localparam Init_DelayCounterWidth = `RegWidth3(Init_ClockPulseDelay,Init_HoldDelay,Init_FinishDelay);
-    reg[Init_DelayCounterWidth-1:0] init_delayCounter = 0;
     `TogglePulse(init_cfgResetTrigger, cfg_resetTrigger, posedge, clk_int);
     `TogglePulse(init_cfgInitTrigger, cfg_initTrigger, posedge, clk_int);
-    reg[2:0] init_state = 0;
+    reg[0:0] init_state = 0;
     
     always @(posedge clk_int) begin
         sdkClkPause_ <= 1; // Unpause the clock by default
@@ -339,8 +327,6 @@ module SDController #(
         datInWrite_trigger <= 0; // Pulse
         datInWrite_counter <= datInWrite_counter-1;
         datInWrite_data <= datIn_reg;
-        
-        init_delayCounter <= init_delayCounter-1;
         
         status_dat0Idle <= datIn_reg[0];
         
