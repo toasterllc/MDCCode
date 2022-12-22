@@ -502,22 +502,18 @@ struct _I2CTask {
             
             for (;;) {
                 // Wait for a message to arrive over I2C
-                {
-                    MSP::Cmd cmd;
-                    bool ok = _I2C::Recv(cmd);
-                    if (!ok) break;
-                }
+                MSP::Cmd cmd;
+                bool ok = _I2C::Recv(cmd);
+                if (!ok) break;
                 
                 // Send a response
-                {
-                    const MSP::Resp resp = {
-                        .Status = {
-                            .ok = true,
-                        },
-                    };
-                    bool ok = _I2C::Send(resp);
-                    if (!ok) break;
-                }
+                const MSP::Resp resp = {
+                    .Status = {
+                        .ok = true,
+                    },
+                };
+                ok = _I2C::Send(resp);
+                if (!ok) break;
             }
         }
     }
