@@ -315,12 +315,10 @@ static void MSPWrite(const Args& args, MDCUSBDevice& device) {
 }
 
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
-    constexpr uintptr_t StateAddr = 0x1800;
-    
     device.mspConnect();
     
     MSP::State state;
-    device.mspRead(StateAddr, &state, sizeof(state));
+    device.mspRead(MSP::StateAddr, &state, sizeof(state));
     
     if (state.magic != MSP::State::MagicNumber) {
         throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
