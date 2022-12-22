@@ -949,9 +949,6 @@ int main() {
     }
     
     _Scheduler::Run();
-    
-    _Pin::MSP_STM_I2C_SCL::IVPort1();
-    _Pin::VDD_B_2V8_IMG_SD_EN::IVPort2();
 }
 
 
