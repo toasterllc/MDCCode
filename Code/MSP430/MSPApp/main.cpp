@@ -565,16 +565,20 @@ struct _MainTask {
             _Scheduler::Sleep(_Scheduler::Ms(30));
             _ICEInit();
             
-//            // Reset SD nets before we turn on SD power
-//            _SDTask::Reset();
-//            _SDTask::Wait();
+            // Reset SD nets before we turn on SD power
+            _SDTask::Reset();
+            _SDTask::Wait();
             
             // Turn on IMG/SD power
             _VDDIMGSDSetEnabled(true);
             
             // Init image sensor / SD card
-            _ImgTask::Init();
-//            _SDTask::Init();
+//            _ImgTask::Init();
+            _SDTask::Init();
+            
+            for (;;) {
+                _Scheduler::Sleep(_Scheduler::Ms(3000));
+            }
             
             for (;;) {
                 // Capture an image
@@ -768,22 +772,18 @@ static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t l
     FRAMWriteEn writeEn; // Enable FRAM writing
     
     AbortHistory* hist = nullptr;
-    AbortHistory* histUnused = nullptr;
     for (AbortHistory& h : _State.aborts) {
-        if (!h.count) histUnused = &h;
-        if (h.type.domain == domain && h.type.line == line) {
+        if (!h.count || (h.type.domain == domain && h.type.line == line)) {
             hist = &h;
             break;
         }
     }
     
-    if (!hist) {
-        // We don't have a matching AbortHistory entry yet.
-        // If there are no unused AbortHistory slots, then there's no
-        // place to record the abort, so just drop it.
-        if (!histUnused) return;
-        hist = histUnused;
-        
+    // If we don't have a place to record the abort, bail
+    if (!hist) return;
+    
+    // Prep the element if this is the first instance
+    if (!hist->count) {
         hist->type = {
             .domain = domain,
             .line = line,
@@ -909,8 +909,8 @@ int main() {
 //        }
 //    }
     
-//    // Handle cold starts
-//    if (Startup::ColdStart()) {
+    // Handle cold starts
+    if (Startup::ColdStart()) {
 //        // Temporarily enable a pullup on HOST_MODE_ so that we can determine whether STM is driving it low.
 //        // We don't want the pullup to be permanent to prevent leakage current (~80nA) through STM32's GPIO
 //        // that controls HOST_MODE_.
@@ -927,14 +927,16 @@ int main() {
 //        // Return to default HOST_MODE_ config
 //        // Not using GPIO::Init() here because it costs a lot more instructions.
 //        _Pin::HOST_MODE_::Write(0);
-//        
-//        // Since this is a cold start, delay 3s before beginning.
-//        // This delay is meant for the case where we restarted due to an abort, and
-//        // serves 2 purposes:
-//        //   1. it rate-limits aborts, in case there's a persistent issue
-//        //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-//        _Scheduler::Delay(_Scheduler::Ms(3000));
-//    }
+        
+        // Since this is a cold start, delay 3s before beginning.
+        // This delay is meant for the case where we restarted due to an abort, and
+        // serves 2 purposes:
+        //   1. it rate-limits aborts, in case there's a persistent issue
+        //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
+        _Pin::LED_RED_::Write(0);
+        _Scheduler::Delay(_Scheduler::Ms(3000));
+        _Pin::LED_RED_::Write(1);
+    }
     
     _Scheduler::Run();
 }

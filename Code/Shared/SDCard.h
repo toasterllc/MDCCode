@@ -23,8 +23,7 @@ public:
     static void Reset() {
         // Reset SDController
         T_ICE::Transfer(_ConfigReset);
-        // TODO: switch to sleeping 25us when we get back to 400 kHz
-        _Sleep(_Us(100)); // Wait 10 100kHz cycles
+        _Sleep(_Us(25)); // Wait 10 400kHz cycles
     }
     
     static uint16_t Init(CardId* cardId=nullptr, CardData* cardData=nullptr) {
@@ -32,8 +31,7 @@ public:
         
         // Enable slow SDController clock
         T_ICE::Transfer(_ConfigSlowOpenDrain);
-        // TODO: switch to sleeping 25us when we get back to 400 kHz
-        _Sleep(_Us(100)); // Wait 10 100kHz cycles
+        _Sleep(_Us(25)); // Wait 10 400kHz cycles
         
         // ====================
         // CMD0 | GO_IDLE_STATE
@@ -92,7 +90,6 @@ public:
         //   Switch to 1.8V
         // ====================
         {
-            #warning TODO: in the future we need to switch from 2.8V -> 1.8V pullups here (once our hardware supports it)
             _SendCmd(_CMD11, 0, _RespType::Len48);
             
             // At this point the SD card must be driving CMD=0 / DAT[0:3]=0
@@ -110,8 +107,7 @@ public:
             
             // Re-enable clock
             T_ICE::Transfer(_ConfigSlowPushPull);
-            // TODO: switch to sleeping 25us when we get back to 400 kHz
-            _Sleep(_Us(100)); // Wait 10 100kHz cycles (to allow clock to start)
+            _Sleep(_Us(25)); // Wait 10 400kHz cycles
             
             // Wait for SD card to indicate that it's ready (DAT0=1)
             #warning TODO: implement timeout in case something's broken
