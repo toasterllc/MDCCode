@@ -19,6 +19,7 @@ module Top(
     output wire         sd_clk,
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat,
+    output wire         sd_pullup_1v8_en_,
     
     // IMG port
     input wire          img_dclk,

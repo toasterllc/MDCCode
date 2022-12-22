@@ -55,6 +55,7 @@ module ICEApp(
     output wire         sd_clk,
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat,
+    output wire         sd_pullup_1v8_en_,
 `endif // _ICEApp_SD_En
     
 `ifdef _ICEApp_Img_En
@@ -349,6 +350,7 @@ module ICEApp(
         .sd_clk(sd_clk),
         .sd_cmd(sd_cmd),
         .sd_dat(sd_dat),
+        .sd_pullup_1v8_en_(sd_pullup_1v8_en_),
         
         .config_trigger(sd_config_trigger),
         .config_action(sd_config_action),

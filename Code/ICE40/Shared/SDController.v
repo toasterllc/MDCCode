@@ -19,8 +19,8 @@
 `define SDController_Config_ClkSpeed_Fast           1'b1
 `define SDController_Config_ClkSpeed_Width          1
 `define SDController_Config_ClkDelay_Width          4
-`define SDController_Config_PinMode_PushPull        `Pin_Mode_PushPull
-`define SDController_Config_PinMode_OpenDrain       `Pin_Mode_OpenDrain
+`define SDController_Config_PinMode_PushPull1V8     `Pin_Mode_PushPull
+`define SDController_Config_PinMode_OpenDrain2V8    `Pin_Mode_OpenDrain
 `define SDController_Config_PinMode_Width           `Pin_Mode_Width
 
 `define SDController_RespType_None                  2'b00
@@ -41,6 +41,7 @@ module SDController #(
     output wire         sd_clk,
     inout wire          sd_cmd,
     inout wire[3:0]     sd_dat,
+    output wire         sd_pullup_1v8_en_,
     
     // Config port (clock domain: async)
     input wire          config_trigger,     // Toggle signal
@@ -122,8 +123,9 @@ module SDController #(
     reg[1:0] cfg_clkSpeedNext = Cfg_ClkSpeed_Slow;
     wire cfg_clkSpeed_slow = !cfg_clkSpeed[0];
     wire cfg_clkSpeed_fast = cfg_clkSpeed[1];
-    reg [`SDController_Config_ClkDelay_Width-1:0] cfg_clkDelay = 0;
-    reg [`SDController_Config_PinMode_Width-1:0] cfg_pinMode = 0;
+    reg[`SDController_Config_ClkDelay_Width-1:0] cfg_clkDelay = 0;
+    reg[`Pin_Mode_Width-1:0] cfg_pinMode = 0;
+    reg cfg_pinMode2V8En_ = 0;
     reg cfg_resetTrigger = 0;
     reg cfg_initTrigger = 0;
     reg[1:0] cfg_delayCounter = 0;
@@ -154,7 +156,8 @@ module SDController #(
                 `SDController_Config_Action_Reset: begin
                     cfg_clkSpeedNext <= Cfg_ClkSpeed_Slow;
                     cfg_clkDelay <= 0;
-                    cfg_pinMode <= `SDController_Config_PinMode_OpenDrain;
+                    cfg_pinMode <= `Pin_Mode_OpenDrain;
+                    cfg_pinMode2V8En_ <= 0;
                     cfg_resetTrigger <= !cfg_resetTrigger;
                 end
                 
@@ -162,6 +165,7 @@ module SDController #(
                     cfg_clkSpeedNext <= (config_clkSpeed===`SDController_Config_ClkSpeed_Slow ? Cfg_ClkSpeed_Slow : Cfg_ClkSpeed_Fast);
                     cfg_clkDelay <= config_clkDelay;
                     cfg_pinMode <= config_pinMode;
+                    cfg_pinMode2V8En_ <= !(config_pinMode === `SDController_Config_PinMode_OpenDrain2V8);
                     cfg_initTrigger <= !cfg_initTrigger;
                 end
                 endcase
@@ -784,6 +788,18 @@ module SDController #(
             .D_IN_0         (datIn[i]           )
         );
     end
+    
+    // ====================
+    // Pin: sd_pullup_1v8_en_
+    // ====================
+    PinOut #(
+        .Reg(0)
+    ) PinOut_sd_pullup_1v8_en_ (
+        .clk(),
+        .mode(`Pin_Mode_OpenDrain),
+        .out(!cfg_pinMode2V8En_),
+        .pin(sd_pullup_1v8_en_)
+    );
     
     // ====================
     // CRC: cmd_crc

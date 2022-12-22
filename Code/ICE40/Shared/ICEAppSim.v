@@ -42,6 +42,7 @@ module ICEAppSim();
     tri1        sd_clk;
     tri1        sd_cmd;
     tri1[3:0]   sd_dat;
+    tri1        sd_pullup_1v8_en_;
     
     wire        img_dclk;
     wire[11:0]  img_d;
@@ -509,7 +510,7 @@ module ICEAppSim();
         // <-- Turn on power to SD card
         
         // Set SD.ClkSpeed=slow / SD.ClkDelay=0 / SD.PinMode=OpenDrain
-        TestSDConfigInit(`SDController_Config_ClkSpeed_Slow, 0, `SDController_Config_PinMode_OpenDrain);
+        TestSDConfigInit(`SDController_Config_ClkSpeed_Slow, 0, `SDController_Config_PinMode_OpenDrain2V8);
     
     `ifdef SIM
         // Wait 50us, because waiting 5ms takes forever in simulation
@@ -915,7 +916,7 @@ module ICEAppSim();
             TestSDCMD6();
             
             // Set SD.ClkSpeed=fast / SD.ClkDelay=0 / SD.PinMode=PushPull
-            TestSDConfigInit(`SDController_Config_ClkSpeed_Fast, 0, `SDController_Config_PinMode_PushPull);
+            TestSDConfigInit(`SDController_Config_ClkSpeed_Fast, 0, `SDController_Config_PinMode_PushPull1V8);
             
             TestSDRespRecovery();
         `endif // _ICEApp_SD_En
