@@ -20,5 +20,5 @@ mkdir -p "$simDir"
 
 # Simulate!
 cd "$simDir"
-iverilog "-I$rootDir" "-I$rootDir/Shared" -DSIM -o Top.vvp -g2012 -DNO_ICE40_DEFAULT_ASSIGNMENTS `yosys-config --datdir/ice40/cells_sim.v` ../Top.v
+iverilog "-I$rootDir" "-I$rootDir/Shared" -DSIM -o Top.vvp -g2012 -DNO_ICE40_DEFAULT_ASSIGNMENTS "$rootDir/../../Tools/yosys/install/share/yosys/ice40/cells_sim.v" ../Top.v
 ./Top.vvp
