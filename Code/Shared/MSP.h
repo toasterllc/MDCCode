@@ -123,14 +123,19 @@ namespace MSP {
     struct [[gnu::packed]] Cmd {
         enum class Op : uint8_t {
             None,
-            HostModeSet,
+            HostModeSetEnabled,
+            VDDIMGSDSetEnabled,
         };
         
         Op op;
         union {
             struct [[gnu::packed]] {
                 uint8_t en;
-            } HostModeSet;
+            } HostModeSetEnabled;
+            
+            struct [[gnu::packed]] {
+                uint8_t en;
+            } VDDIMGSDSetEnabled;
         } arg;
     };
     
