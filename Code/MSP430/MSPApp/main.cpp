@@ -99,12 +99,7 @@ using _ICE = ICE<_Scheduler, _ICEError>;
 
 constexpr uint8_t _I2CAddr = 0x55;
 
-struct _I2CMsg {
-    uint8_t type = 0;
-    uint8_t payload = 0;
-};
-
-using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, _I2CMsg, _I2CAddr, _I2CError>;
+using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, _I2CAddr, _I2CError>;
 
 // _ImgSensor: image sensor object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
@@ -507,13 +502,22 @@ struct _I2CTask {
             
             for (;;) {
                 // Wait for a message to arrive over I2C
-                _I2CMsg msg;
-                bool ok = _I2C::Recv(msg);
-                if (!ok) break;
+                {
+                    MSP::Cmd cmd;
+                    bool ok = _I2C::Recv(cmd);
+                    if (!ok) break;
+                }
                 
                 // Send a response
-                ok = _I2C::Send(msg);
-                if (!ok) break;
+                {
+                    const MSP::Resp resp = {
+                        .Status = {
+                            .ok = true,
+                        },
+                    };
+                    bool ok = _I2C::Send(resp);
+                    if (!ok) break;
+                }
             }
         }
     }

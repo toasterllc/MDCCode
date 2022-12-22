@@ -7,7 +7,6 @@ typename T_Scheduler,
 typename T_SCLPin,
 typename T_SDAPin,
 typename T_ActivePin,
-typename T_Msg,
 uint8_t T_Addr,
 [[noreturn]] void T_Error(uint16_t)
 >
@@ -42,7 +41,8 @@ public:
         _ActiveIntsConfig(0);
     }
     
-    static bool Recv(T_Msg& msg) {
+    template <typename T>
+    static bool Recv(T& msg) {
         _Event ev = _WaitForEvent();
         if (ev == _Event::Inactive) return false;
         // Confirm that we have a START condition
@@ -65,7 +65,8 @@ public:
         return true;
     }
     
-    static bool Send(const T_Msg& msg) {
+    template <typename T>
+    static bool Send(const T& msg) {
         _Event ev = _WaitForEvent();
         if (ev == _Event::Inactive) return false;
         // Confirm that we have a START condition

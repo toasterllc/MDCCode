@@ -120,4 +120,24 @@ namespace MSP {
         static_assert(!(sizeof(aborts) % 2)); // Check alignment
     };
 
+    struct [[gnu::packed]] Cmd {
+        enum class Op : uint8_t {
+            None,
+            HostModeSet,
+        };
+        
+        Op op;
+        union {
+            struct [[gnu::packed]] {
+                uint8_t en;
+            } HostModeSet;
+        } arg;
+    };
+    
+    union Resp {
+        struct [[gnu::packed]] {
+            uint8_t ok;
+        } Status;
+    };
+
 } // namespace MSP
