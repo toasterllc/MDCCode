@@ -573,34 +573,30 @@ struct _MainTask {
             _VDDIMGSDSetEnabled(true);
             
             // Init image sensor / SD card
-//            _ImgTask::Init();
+            _ImgTask::Init();
             _SDTask::Init();
-            
-            for (;;) {
-                _Scheduler::Sleep(_Scheduler::Ms(3000));
-            }
             
             for (;;) {
                 // Capture an image
                 {
                     _Pin::LED_GREEN_::Write(0);
                     
-//                    // Wait for _SDTask to be initialized and done with writing, which is necessary
-//                    // for 2 reasons:
-//                    //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
-//                    //      access it,
-//                    //   2. we can't initiate a new capture until writing to the SD card (from a
-//                    //      previous capture) is complete (because the SDRAM is single-port, so
-//                    //      we can only read or write at one time)
-//                    _SDTask::WaitForInitAndWrite();
+                    // Wait for _SDTask to be initialized and done with writing, which is necessary
+                    // for 2 reasons:
+                    //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
+                    //      access it,
+                    //   2. we can't initiate a new capture until writing to the SD card (from a
+                    //      previous capture) is complete (because the SDRAM is single-port, so
+                    //      we can only read or write at one time)
+                    _SDTask::WaitForInitAndWrite();
                     
                     // Capture image to RAM
                     _ImgTask::Capture(imgRingBuf.buf.idEnd);
                     const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
                     
-//                    // Copy image from RAM -> SD card
-//                    _SDTask::Write(srcRAMBlock);
-//                    _SDTask::Wait();
+                    // Copy image from RAM -> SD card
+                    _SDTask::Write(srcRAMBlock);
+                    _SDTask::Wait();
                     
                     _Pin::LED_GREEN_::Write(1);
                 }
