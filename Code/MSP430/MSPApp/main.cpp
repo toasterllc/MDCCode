@@ -92,9 +92,6 @@ using _Scheduler = Toastbox::Scheduler<
     _I2CTask
 >;
 
-// _MotionSignalIV: motion interrupt vector; keep in sync with the pin chosen for MOTION_SIGNAL
-constexpr uint16_t _MotionSignalIV = P1IV_P1IFG3;
-
 using _Clock = ClockType<_MCLKFreqHz>;
 using _SysTick = WDTType<_MCLKFreqHz, _SysTickPeriodUs>;
 using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_OUT, _Pin::ICE_MSP_SPI_DATA_IN>;
@@ -107,7 +104,7 @@ struct _I2CMsg {
     uint8_t payload = 0;
 };
 
-using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _I2CMsg, _I2CAddr, _I2CError>;
+using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, _I2CMsg, _I2CAddr, _I2CError>;
 
 // _ImgSensor: image sensor object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
@@ -504,16 +501,20 @@ struct _ImgTask {
 
 struct _I2CTask {
     static void Run() {
-        // Init I2C Peripheral
-        _I2C::Init();
-        
         for (;;) {
-            // Wait for a message to arrive over I2C
-            _I2CMsg msg;
-            _I2C::Recv(msg);
+            // Wait until the I2C lines are activated (ie VDD_B_3V3_STM becomes powered)
+            _I2C::WaitUntilActive();
             
-            // Send a response
-            _I2C::Send(msg);
+            for (;;) {
+                // Wait for a message to arrive over I2C
+                _I2CMsg msg;
+                bool ok = _I2C::Recv(msg);
+                if (!ok) break;
+                
+                // Send a response
+                ok = _I2C::Send(msg);
+                if (!ok) break;
+            }
         }
     }
     
@@ -633,7 +634,7 @@ struct _MainTask {
                !_Scheduler::Running<_ImgTask>() ;
     }
     
-    static void MotionSignal() {
+    static void MotionSignal(uint16_t iv) {
         _Motion = true;
     }
     
@@ -697,19 +698,32 @@ static void _ISR_RTC() {
     _RTC.isr();
 }
 
-[[gnu::interrupt(PORT1_VECTOR)]]
-static void _ISR_Port1() {
-    // Accessing `P1IV` automatically clears the highest-priority interrupt
-    switch (__even_in_range(P1IV, _MotionSignalIV)) {
-    case _MotionSignalIV:
-        _MainTask::MotionSignal();
+[[gnu::interrupt(PORT2_VECTOR)]]
+static void _ISR_Port2() {
+    // Accessing `P2IV` automatically clears the highest-priority interrupt
+    const uint16_t iv = P2IV;
+    switch (__even_in_range(iv, 0x10)) {
+    case _Pin::MOTION_SIGNAL::IVPort2():
+        _MainTask::MotionSignal(iv);
         // Wake ourself
         __bic_SR_register_on_exit(LPM3_bits);
         break;
-    
+    case _I2C::Pin::Active::IVPort2():
+        _I2C::ISR_Active(iv);
+        // Wake ourself
+        __bic_SR_register_on_exit(LPM3_bits);
     default:
         break;
     }
+}
+
+[[gnu::interrupt(USCI_B0_VECTOR)]]
+static void _ISR_USCI_B0() {
+    // Accessing `UCB0IV` automatically clears the highest-priority interrupt
+    const uint16_t iv = UCB0IV;
+    _I2C::ISR_I2C(iv);
+    // Wake ourself
+    __bic_SR_register_on_exit(LPM0_bits);
 }
 
 [[gnu::interrupt(WDT_VECTOR)]]
@@ -841,7 +855,6 @@ int main() {
         _Pin::MOTION_SIGNAL,
         _Pin::BUTTON_SIGNAL_,
         _Pin::BAT_CHRG_LVL_EN,
-        _Pin::VDD_B_3V3_STM,
         _Pin::LED_GREEN_,
         _Pin::LED_RED_,
         _Pin::BAT_CHRG_LVL,
@@ -863,7 +876,8 @@ int main() {
         
         // I2C (config chosen by _I2C)
         _I2C::Pin::SCL,
-        _I2C::Pin::SDA
+        _I2C::Pin::SDA,
+        _I2C::Pin::Active
     >();
     
     // Init clock
@@ -935,6 +949,9 @@ int main() {
     }
     
     _Scheduler::Run();
+    
+    _Pin::MSP_STM_I2C_SCL::IVPort1();
+    _Pin::VDD_B_2V8_IMG_SD_EN::IVPort2();
 }
 
 

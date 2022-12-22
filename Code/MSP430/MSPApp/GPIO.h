@@ -32,6 +32,32 @@ enum class PortIndex { A, B };
 template <PortIndex T_PortIdx>
 class Port {
 public:
+#define OnlyPortA                                                   \
+    template <                                                      \
+    PortIndex _T_PortIdx = PortIdx,                                 \
+    typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0  \
+    >
+
+#define OnlyPort1                       \
+    template <                          \
+    PortIndex _T_PortIdx = PortIdx,     \
+    uint8_t _T_PinIdx = PinIdx,         \
+    typename std::enable_if_t<          \
+        _T_PortIdx==PortIndex::A &&     \
+        _T_PinIdx>=0 &&                 \
+        _T_PinIdx<8                     \
+    , int> = 0>
+
+#define OnlyPort2                       \
+    template <                          \
+    PortIndex _T_PortIdx = PortIdx,     \
+    uint8_t _T_PinIdx = PinIdx,         \
+    typename std::enable_if_t<          \
+        _T_PortIdx==PortIndex::A &&     \
+        _T_PinIdx>=8 &&                 \
+        _T_PinIdx<16                    \
+    , int> = 0>
+
     template <uint8_t T_PinIdx, Option... T_Opts>
     class Pin {
     public:
@@ -40,9 +66,9 @@ public:
         static constexpr uint16_t Bit       = UINT16_C(1)<<PinIdx;
         
         template <Option... T_NewOpts>
-        using Opts = Port::Pin<T_PinIdx, T_NewOpts...>;
+        using Opts = Port::Pin<PinIdx, T_NewOpts...>;
         
-        struct InitConfig {
+        struct InitCfg {
             static constexpr bool Out()     { return _InitGetter(Option::Output1)       || _InitGetter(Option::Resistor1);      }
             static constexpr bool Dir()     { return _InitGetter(Option::Output0)       || _InitGetter(Option::Output1);        }
             static constexpr bool Sel0()    { return _InitGetter(Option::Sel01)         || _InitGetter(Option::Sel11);          }
@@ -52,18 +78,46 @@ public:
             static constexpr bool IES()     { return _InitGetter(Option::Interrupt10);                                          }
         };
         
+        // Init(): configure the pin
         static constexpr void Init() {
-            Out(    InitConfig::Out()   );
-            Dir(    InitConfig::Dir()   );
-            Sel0(   InitConfig::Sel0()  );
-            Sel1(   InitConfig::Sel1()  );
-            REn(    InitConfig::REn()   );
+            Out  (InitCfg::Out() );
+            Dir  (InitCfg::Dir() );
+            Sel0 (InitCfg::Sel0());
+            Sel1 (InitCfg::Sel1());
+            REn  (InitCfg::REn() );
             
             if constexpr (PortIdx == PortIndex::A)
-            IE(     InitConfig::IE()    );
+            IE   (InitCfg::IE()  );
             
             if constexpr (PortIdx == PortIndex::A)
-            IES(    InitConfig::IES()   );
+            IES  (InitCfg::IES() );
+        }
+        
+        // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
+        template <typename T_Prev>
+        static constexpr void Init() {
+            if constexpr (InitCfg::Out() != T_Prev::InitCfg::Out())
+            Out  (InitCfg::Out() );
+            
+            if constexpr (InitCfg::Dir() != T_Prev::InitCfg::Dir())
+            Dir  (InitCfg::Dir() );
+            
+            if constexpr (InitCfg::Sel0() != T_Prev::InitCfg::Sel0())
+            Sel0 (InitCfg::Sel0());
+            
+            if constexpr (InitCfg::Sel1() != T_Prev::InitCfg::Sel1())
+            Sel1 (InitCfg::Sel1());
+            
+            if constexpr (InitCfg::REn() != T_Prev::InitCfg::REn())
+            REn  (InitCfg::REn() );
+            
+            if constexpr (PortIdx == PortIndex::A)
+            if constexpr (InitCfg::IE() != T_Prev::InitCfg::IE())
+            IE   (InitCfg::IE()  );
+            
+            if constexpr (PortIdx == PortIndex::A)
+            if constexpr (InitCfg::IES() != T_Prev::InitCfg::IES())
+            IES  (InitCfg::IES() );
         }
         
         static constexpr bool Out() {
@@ -91,21 +145,47 @@ public:
             else if constexpr (PortIdx == PortIndex::B) return _Getter(PBREN);
         }
         
-        template <
-        PortIndex _T_PortIdx = PortIdx,
-        typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0
-        >
+        OnlyPortA
         static constexpr bool IE() {
             return _Getter(PAIE);
         }
         
-        template <
-        PortIndex _T_PortIdx = PortIdx,
-        typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0
-        >
+        OnlyPortA
         static constexpr bool IES() {
             return _Getter(PAIES);
         }
+        
+        OnlyPortA
+        static constexpr bool IFG() {
+            return _Getter(PAIFG);
+        }
+        
+        // IVPort1(): returns the interrupt vector for Port1 pins
+        // We intentionally separate IVPort1() / IVPort2(), instead of having a single IV(),
+        // because we want to get a compiler error if we call IVPort1() on a pin that only
+        // has a Port2 IV.
+        OnlyPort1
+        static constexpr uint16_t IVPort1() {
+            return (PinIdx+1)<<1;
+        }
+        
+        // IVPort2(): returns the interrupt vector for Port2 pins
+        // We intentionally separate IVPort1() / IVPort2(), instead of having a single IV(),
+        // because we want to get a compiler error if we call IVPort1() on a pin that only
+        // has a Port2 IV.
+        OnlyPort2
+        static constexpr uint16_t IVPort2() {
+            return (PinIdx-8+1)<<1;
+        }
+        
+//        OnlyPortA
+//        static constexpr void IFGClear() {
+//            if constexpr (PinIdx < 8) {
+//                P1IFG &= ~IVPort1();
+//            } else {
+//                P2IFG &= ~IVPort2();
+//            }
+//        }
         
         static constexpr void Out(bool x) {
             if constexpr (PortIdx == PortIndex::A)      _Setter(PAOUT, x);
@@ -132,20 +212,19 @@ public:
             else if constexpr (PortIdx == PortIndex::B) _Setter(PBREN, x);
         }
         
-        template <
-        PortIndex _T_PortIdx = PortIdx,
-        typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0
-        >
+        OnlyPortA
         static constexpr void IE(bool x) {
             _Setter(PAIE, x);
         }
         
-        template <
-        PortIndex _T_PortIdx = PortIdx,
-        typename std::enable_if_t<_T_PortIdx == PortIndex::A, int> = 0
-        >
+        OnlyPortA
         static constexpr void IES(bool x) {
             _Setter(PAIES, x);
+        }
+        
+        OnlyPortA
+        static constexpr void IFG(bool x) {
+            _Setter(PAIFG, x);
         }
         
         static bool Read() {
@@ -176,6 +255,7 @@ public:
             else    reg &= ~Bit;
         }
     };
+#undef OnlyPortA
 };
 
 struct _Regs {
@@ -208,13 +288,13 @@ static constexpr _Regs _GetRegs(_Regs regs) {
         regs.IES    &= ~T_Pin::Bit;
         
         // Set the bit for the GPIO, if it's set
-        regs.Out    |= (T_Pin::InitConfig::Out()  ? T_Pin::Bit : 0);
-        regs.Dir    |= (T_Pin::InitConfig::Dir()  ? T_Pin::Bit : 0);
-        regs.Sel0   |= (T_Pin::InitConfig::Sel0() ? T_Pin::Bit : 0);
-        regs.Sel1   |= (T_Pin::InitConfig::Sel1() ? T_Pin::Bit : 0);
-        regs.REn    |= (T_Pin::InitConfig::REn()  ? T_Pin::Bit : 0);
-        regs.IE     |= (T_Pin::InitConfig::IE()   ? T_Pin::Bit : 0);
-        regs.IES    |= (T_Pin::InitConfig::IES()  ? T_Pin::Bit : 0);
+        regs.Out    |= (T_Pin::InitCfg::Out()  ? T_Pin::Bit : 0);
+        regs.Dir    |= (T_Pin::InitCfg::Dir()  ? T_Pin::Bit : 0);
+        regs.Sel0   |= (T_Pin::InitCfg::Sel0() ? T_Pin::Bit : 0);
+        regs.Sel1   |= (T_Pin::InitCfg::Sel1() ? T_Pin::Bit : 0);
+        regs.REn    |= (T_Pin::InitCfg::REn()  ? T_Pin::Bit : 0);
+        regs.IE     |= (T_Pin::InitCfg::IE()   ? T_Pin::Bit : 0);
+        regs.IES    |= (T_Pin::InitCfg::IES()  ? T_Pin::Bit : 0);
     }
     
     if constexpr (sizeof...(T_Pins)) return _GetRegs<T_PortIdx, T_Pins...>(regs);

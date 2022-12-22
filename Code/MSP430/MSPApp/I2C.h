@@ -1,10 +1,12 @@
 #pragma once
 #include <msp430.h>
+#include <atomic>
 
 template <
 typename T_Scheduler,
 typename T_SCLPin,
 typename T_SDAPin,
+typename T_ActivePin,
 typename T_Msg,
 uint8_t T_Addr,
 [[noreturn]] void T_Error(uint16_t)
@@ -12,16 +14,122 @@ uint8_t T_Addr,
 class I2CType {
 #define Assert(x) if (!(x)) T_Error(__LINE__)
 
+private:
+    using _ActiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
+    using _InactiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
+    
 public:
     struct Pin {
         using SCL = typename T_SCLPin::template Opts<GPIO::Option::Sel01>;
         using SDA = typename T_SDAPin::template Opts<GPIO::Option::Sel01>;
+        using Active = _ActiveInterrupt;
     };
     
-    static void Init() {
-        // Reset
-        UCB0CTLW0 = UCSWRST;
+    static void WaitUntilActive() {
+        // Keep I2C peripheral in reset until we get the active interrupt
+        _I2CReset();
         
+        // Observe 0->1 transitions on Pin::Active
+        _ActiveIntsConfig(1);
+        
+        // Wait until we're active
+        T_Scheduler::Wait([&] { return _active.load(); });
+        
+        // Initialize I2C peripheral
+        _I2CInit();
+        
+        // Observe 1->0 transitions on Pin::Active
+        _ActiveIntsConfig(0);
+    }
+    
+    static bool Recv(T_Msg& msg) {
+        _Event ev = _WaitForEvent();
+        if (ev == _Event::Inactive) return false;
+        // Confirm that we have a START condition
+        Assert(ev == _Event::Start);
+        
+        uint8_t* b = reinterpret_cast<uint8_t*>(&msg);
+        for (size_t i=0; i<sizeof(msg); i++) {
+            ev = _WaitForEvent();
+            if (ev == _Event::Inactive) return false;
+            // Confirm that we received another byte
+            Assert(ev == _Event::Rx);
+            // Store the byte
+            b[i] = UCB0RXBUF_L;
+        }
+        
+        ev = _WaitForEvent();
+        if (ev == _Event::Inactive) return false;
+        // Confirm that we have a STOP condition
+        Assert(ev == _Event::Stop);
+        return true;
+    }
+    
+    static bool Send(const T_Msg& msg) {
+        _Event ev = _WaitForEvent();
+        if (ev == _Event::Inactive) return false;
+        // Confirm that we have a START condition
+        Assert(ev == _Event::Start);
+        
+        const uint8_t* b = reinterpret_cast<const uint8_t*>(&msg);
+        for (size_t i=0; i<sizeof(msg); i++) {
+            ev = _WaitForEvent();
+            if (ev == _Event::Inactive) return false;
+            // Confirm that we can write another byte
+            Assert(ev == _Event::Tx);
+            UCB0TXBUF_L = b[i];
+        }
+        
+        // Wait for STOP condition
+        for (;;) {
+            ev = _WaitForEvent();
+            if (ev == _Event::Inactive) return false;
+            
+            switch (ev) {
+            case _Event::Tx:
+                // Send 0xFF after the end of our data
+                UCB0TXBUF_L = 0xFF;
+                continue;
+            case _Event::Stop:
+                return true;
+            default:
+                // Unexpected event
+                Assert(false);
+            }
+        }
+    }
+    
+    static void ISR_I2C(uint16_t iv) {
+        // We should never be called unless _iv is cleared
+        Assert(!_iv);
+        // Ignore spurious interrupts
+        if (!iv) return;
+        _iv = iv;
+        // Disable I2C interrupts until _iv is handled by our thread
+        _I2CIntsSetEnabled(false);
+    }
+    
+    static void ISR_Active(uint16_t iv) {
+        // Update _active based on whether we're observing 0->1 or 1->0 transitions
+        _active = (Pin::Active::IES() == _ActiveInterrupt::IES());
+    }
+    
+private:
+    enum class _Event : uint16_t {
+        None        = 0, // Must not conflict with possible interrupt IV values (stored in UCB0IV)
+        Inactive    = 1, // Must not conflict with possible interrupt IV values (stored in UCB0IV)
+        Start       = USCI_I2C_UCSTTIFG,
+        Stop        = USCI_I2C_UCSTPIFG,
+        Rx          = USCI_I2C_UCRXIFG0,
+        Tx          = USCI_I2C_UCTXIFG0,
+    };
+    
+    static void _I2CReset() {
+        // Reset I2C peripheral
+        UCB0CTLW0 = UCSWRST;
+    }
+    
+    static void _I2CInit() {
         UCB0CTLW0 |=
             (UCA10&0)       |   // 7bit own addr
             (UCSLA10&0)     |   // 7bit slave addr
@@ -54,74 +162,24 @@ public:
         UCB0CTLW0 &= ~UCSWRST;
     }
     
-    static void Recv(T_Msg& msg) {
-        _Event ev = _WaitForEvent();
-        // Confirm that we have a START condition
-        Assert(ev == _Event::Start);
+    static void _ActiveIntsConfig(bool dir) {
+        // Disable interrupts while we change the interrupt config
+        Toastbox::IntState ints(false);
         
-        uint8_t* b = reinterpret_cast<uint8_t*>(&msg);
-        for (size_t i=0; i<sizeof(msg); i++) {
-            ev = _WaitForEvent();
-            // Confirm that we received another byte
-            Assert(ev == _Event::Rx);
-            // Store the byte
-            b[i] = UCB0RXBUF_L;
+        // Monitor for 0->1 transitions
+        if (dir) {
+            _ActiveInterrupt::template Init<_InactiveInterrupt>();
+        
+        // Monitor for 1->0 transitions
+        } else {
+            _InactiveInterrupt::template Init<_ActiveInterrupt>();
         }
         
-        ev = _WaitForEvent();
-        // Confirm that we have a STOP condition
-        Assert(ev == _Event::Stop);
+        // After configuring the interrupt, ensure that the IFG reflects the state of the pin.
+        // This is necessary because we may have missed a transition due to the inherent race
+        // between changing the interrupt config and the pin changing state.
+        Pin::Active::IFG(Pin::Active::Read() == dir);
     }
-    
-    static void Send(const T_Msg& msg) {
-        _Event ev = _WaitForEvent();
-        // Confirm that we have a START condition
-        Assert(ev == _Event::Start);
-        
-        const uint8_t* b = reinterpret_cast<const uint8_t*>(&msg);
-        for (size_t i=0; i<sizeof(msg); i++) {
-            ev = _WaitForEvent();
-            // Confirm that we can write another byte
-            Assert(ev == _Event::Tx);
-            UCB0TXBUF_L = b[i];
-        }
-        
-        // Wait for STOP condition
-        for (;;) {
-            ev = _WaitForEvent();
-            switch (ev) {
-            case _Event::Tx:
-                // Send 0xFF after the end of our data
-                UCB0TXBUF_L = 0xFF;
-                continue;
-            case _Event::Stop:
-                return;
-            default:
-                // Unexpected event
-                Assert(false);
-            }
-        }
-    }
-    
-    static void ISR() {
-        // We should never be called unless _Ev is cleared
-        Assert(!_Ev);
-        const _Event ev = (_Event)UCB0IV;
-        // Ignore spurious interrupts
-        if (!(uint16_t)ev) return;
-        
-        _Ev = ev;
-        // Disable I2C interrupts until current event is handled by our thread
-        _I2CIntsSetEnabled(false);
-    }
-    
-private:
-    enum class _Event : uint16_t {
-        Start = USCI_I2C_UCSTTIFG,
-        Stop  = USCI_I2C_UCSTPIFG,
-        Rx    = USCI_I2C_UCRXIFG0,
-        Tx    = USCI_I2C_UCTXIFG0,
-    };
     
     static void _I2CIntsSetEnabled(bool en) {
         if (en) UCB0IE = UCSTTIE | UCSTPIE | UCTXIE0 | UCRXIE0;
@@ -129,14 +187,18 @@ private:
     }
     
     static _Event _WaitForEvent() {
-        _Ev = std::nullopt;
+        _iv = 0;
         // Re-enable I2C interrupts now that we're ready for an event
         _I2CIntsSetEnabled(true);
-        T_Scheduler::Wait([&] { return _Ev.has_value(); });
-        return *_Ev;
+        // Wait until we get an inactive interrupt, or an I2C event occurs
+        T_Scheduler::Wait([&] { return !_active.load() || _iv.load(); });
+        if (!_active.load()) return _Event::Inactive;
+        return (_Event)_iv.load();
     }
     
-    static inline std::optional<_Event> _Ev;
-
+    // Using std::atomic here because these fields are modified from the interrupt context
+    static inline std::atomic<bool> _active = false;
+    static inline std::atomic<uint16_t> _iv = 0;
+    
 #undef Assert
 };
