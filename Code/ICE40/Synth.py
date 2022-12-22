@@ -100,7 +100,7 @@ def nextpnrOptTrial(alpha, beta, critexp, timingweight):
     
     return loss
 
-def opt():
+def opt(iter):
     space = {
         'alpha':        [x * .025 for x in range( 1,21)], # 0.025->0.5 (.25 step)
         'beta':         [x * .025 for x in range(20,41)], # 0.500->1.0 (.25 step)
@@ -108,7 +108,7 @@ def opt():
         'timingweight': range(1,35, 5),
     }
     
-    cfg = dict(num_iteration=10)
+    cfg = dict(num_iteration=iter)
     tuner = Tuner(space, nextpnrOptTrial, cfg)
     results = tuner.maximize()
     
@@ -128,7 +128,7 @@ argsp.add_argument('--dev', required=True, type=str, help="Device")
 argsp.add_argument('--pkg', required=True, type=str, help="Package")
 argsp.add_argument('--proj', required=True, type=str, help="Project")
 argsp.add_argument('--nosynth', action='store_true', help="Skip synthesis")
-argsp.add_argument('--opt', action='store_true', help="Optimize place and route")
+argsp.add_argument('--opt', type=int, metavar='ITERATIONS', help="Optimize place and route with specified number of iterations")
 args = argsp.parse_args()
 
 rootDir = os.path.dirname(os.path.realpath(__file__))
@@ -155,12 +155,13 @@ if not args.nosynth:
 # Optimize the design
 projClocks = evalFile(projClocksFile)
 if args.opt:
-    print('\n# [Synth.py] Optimizing design\n')
+    print(f"\n# [Synth.py] Optimizing design ({args.opt} iterations)\n")
+    
     if not projClocks:
         print(f"[Synth.py] {projClocksFile} doesn't exist or doesn't contain any clocks")
         sys.exit(1)
     
-    nextpnrProjArgs = opt()
+    nextpnrProjArgs = opt(args.opt)
 
 # If we didn't optimize the design, load nextpnr args from the project's NextpnrArgs.py file
 else:
