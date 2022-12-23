@@ -17,9 +17,8 @@
 
 @implementation FixedScrollView {
 @public
-    NSLayoutConstraint* _contentWidth;
-    NSLayoutConstraint* _contentHeight;
     NSView<FixedScrollViewDocument>* _doc;
+    NSArray* _docConstraints;
     CGRect _docFrame;
     CGFloat _docMagnification;
     struct {
@@ -96,11 +95,9 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
 
 - (void)setFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
     NSView* documentView = [self documentView];
-    if (_contentWidth) {
-        [documentView removeConstraint:_contentWidth];
-        [documentView removeConstraint:_contentHeight];
-        _contentWidth = nil;
-        _contentHeight = nil;
+    if (_docConstraints) {
+        [documentView removeConstraints:_docConstraints];
+        _docConstraints = nil;
     }
     
     [_doc removeFromSuperview];
@@ -110,13 +107,16 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     
     [documentView addSubview:_doc];
     
-    const CGSize contentSize = [_doc fixedContentSize];
-    _contentWidth = [NSLayoutConstraint constraintWithItem:documentView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
-        multiplier:1 constant:contentSize.width];
-    _contentHeight = [NSLayoutConstraint constraintWithItem:documentView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
-        multiplier:1 constant:contentSize.height];
-    [documentView addConstraint:_contentWidth];
-    [documentView addConstraint:_contentHeight];
+//    _docConstraints = [_doc fixedConstraintsForContainer:documentView];
+//    [documentView addConstraints:_docConstraints];
+//    
+//    const CGSize contentSize = [_doc fixedContentSize];
+//    _contentWidth = [NSLayoutConstraint constraintWithItem:documentView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+//        multiplier:1 constant:contentSize.width];
+//    _contentHeight = [NSLayoutConstraint constraintWithItem:documentView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+//        multiplier:1 constant:contentSize.height];
+//    [documentView addConstraint:_contentWidth];
+//    [documentView addConstraint:_contentHeight];
     
     // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
     __weak auto weakSelf = self;

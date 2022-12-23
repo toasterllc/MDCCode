@@ -23,9 +23,13 @@
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
 }
 
-- (CGSize)fixedContentSize {
-    return [_layer fixedContentSize];
-}
+//- (NSArray*)fixedConstraintsForContainer:(NSView*)container {
+//    return [_layer fixedConstraintsForContainer:container];
+//}
+
+//- (CGSize)fixedContentSize {
+//    return [_layer fixedContentSize];
+//}
 
 - (void)setFixedTranslation:(CGPoint)t magnification:(CGFloat)m {
     [_layer setFixedTranslation:t magnification:m];

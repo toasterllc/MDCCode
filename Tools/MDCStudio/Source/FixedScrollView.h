@@ -16,9 +16,10 @@
 //     window titlebar underlay effects).
 
 @protocol FixedScrollViewDocument
-// -fixedContentSize: the total size of the scrollable/zoomable content.
-// (Ie, the size of the 'universe'.)
-- (CGSize)fixedContentSize;
+
+//// -fixedContentSize: the total size of the scrollable/zoomable content.
+//// (Ie, the size of the 'universe'.)
+//- (CGSize)fixedContentSize;
 
 #warning TODO: not sure if we want this
 //- (bool)fixedFlipped;
