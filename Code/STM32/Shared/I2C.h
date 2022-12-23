@@ -9,15 +9,17 @@ uint8_t T_Addr
 class I2CType {
 public:
     static void Init() {
+        constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
+        
         __HAL_RCC_GPIOB_CLK_ENABLE();
         
         _SCL::Config(GPIO_MODE_AF_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF4_I2C1);
         _SDA::Config(GPIO_MODE_AF_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF4_I2C1);
         
         __HAL_RCC_I2C1_CLK_ENABLE();
-        HAL_NVIC_SetPriority(I2C1_EV_IRQn, 0, 0);
+        HAL_NVIC_SetPriority(I2C1_EV_IRQn, InterruptPriority, 0);
         HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
-        HAL_NVIC_SetPriority(I2C1_ER_IRQn, 0, 0);
+        HAL_NVIC_SetPriority(I2C1_ER_IRQn, InterruptPriority, 0);
         HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
         
         HAL_StatusTypeDef hs = HAL_I2C_Init(&_Device);

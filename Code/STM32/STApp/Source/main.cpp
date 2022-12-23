@@ -1359,11 +1359,6 @@ int main() {
     __HAL_RCC_GPIOF_CLK_ENABLE();
     __HAL_RCC_GPIOG_CLK_ENABLE();
     
-    // Init I2C
-    {
-        _I2C::Init();
-    }
-    
     // Init Battery
     {
         _Battery.init();

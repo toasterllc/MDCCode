@@ -156,7 +156,9 @@ private:
     
     struct _TaskBatteryMonitor {
         static void Run() {
-            for (bool green=false;; green=!green) {
+            for (bool green=true;; green=!green) {
+                LED0::Write(green);
+                
                 MSP::Cmd cmd = {
                     .op = MSP::Cmd::Op::LEDSet,
                     .arg = {
@@ -208,6 +210,9 @@ public:
         
         // Configure our LEDs
         LEDInit();
+        
+        // Configure I2C
+        I2C::Init();
         
         // Configure USB
         USB.init();
