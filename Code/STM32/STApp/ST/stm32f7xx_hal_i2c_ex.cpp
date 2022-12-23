@@ -69,7 +69,7 @@
 
 /** @defgroup I2CEx_Exported_Functions_Group1 Extended features functions
   * @brief    Extended features functions
- *
+  *
 @verbatim
  ===============================================================================
                       ##### Extended features functions #####
@@ -92,8 +92,8 @@
 HAL_StatusTypeDef HAL_I2CEx_ConfigAnalogFilter(I2C_HandleTypeDef *hi2c, uint32_t AnalogFilter)
 {
   /* Check the parameters */
-  AssertArg(IS_I2C_ALL_INSTANCE(hi2c->Instance));
-  AssertArg(IS_I2C_ANALOG_FILTER(AnalogFilter));
+  assert_param(IS_I2C_ALL_INSTANCE(hi2c->Instance));
+  assert_param(IS_I2C_ANALOG_FILTER(AnalogFilter));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -138,8 +138,8 @@ HAL_StatusTypeDef HAL_I2CEx_ConfigDigitalFilter(I2C_HandleTypeDef *hi2c, uint32_
   uint32_t tmpreg;
 
   /* Check the parameters */
-  AssertArg(IS_I2C_ALL_INSTANCE(hi2c->Instance));
-  AssertArg(IS_I2C_DIGITAL_FILTER(DigitalFilter));
+  assert_param(IS_I2C_ALL_INSTANCE(hi2c->Instance));
+  assert_param(IS_I2C_DIGITAL_FILTER(DigitalFilter));
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -199,7 +199,7 @@ HAL_StatusTypeDef HAL_I2CEx_ConfigDigitalFilter(I2C_HandleTypeDef *hi2c, uint32_
 void HAL_I2CEx_EnableFastModePlus(uint32_t ConfigFastModePlus)
 {
   /* Check the parameter */
-  AssertArg(IS_I2C_FASTMODEPLUS(ConfigFastModePlus));
+  assert_param(IS_I2C_FASTMODEPLUS(ConfigFastModePlus));
 
   /* Enable SYSCFG clock */
   __HAL_RCC_SYSCFG_CLK_ENABLE();
@@ -228,7 +228,7 @@ void HAL_I2CEx_EnableFastModePlus(uint32_t ConfigFastModePlus)
 void HAL_I2CEx_DisableFastModePlus(uint32_t ConfigFastModePlus)
 {
   /* Check the parameter */
-  AssertArg(IS_I2C_FASTMODEPLUS(ConfigFastModePlus));
+  assert_param(IS_I2C_FASTMODEPLUS(ConfigFastModePlus));
 
   /* Enable SYSCFG clock */
   __HAL_RCC_SYSCFG_CLK_ENABLE();
