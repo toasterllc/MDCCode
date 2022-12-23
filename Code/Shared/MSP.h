@@ -119,7 +119,9 @@ namespace MSP {
         AbortHistory aborts[5] = {};
         static_assert(!(sizeof(aborts) % 2)); // Check alignment
     };
-
+    
+    static constexpr uint8_t I2CAddr = 0x55;
+    
     struct [[gnu::packed]] Cmd {
         enum class Op : uint8_t {
             None,

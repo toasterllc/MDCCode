@@ -32,7 +32,7 @@ public:
         _ActiveIntsConfig(1);
         
         // Wait until we're active
-        T_Scheduler::Wait([&] { return _active.load(); });
+        T_Scheduler::Wait([&] { return _Active.load(); });
         
         // Initialize I2C peripheral
         _I2CInit();
@@ -101,18 +101,18 @@ public:
     }
     
     static void ISR_I2C(uint16_t iv) {
-        // We should never be called unless _iv is cleared
-        Assert(!_iv);
+        // We should never be called unless _IV is cleared
+        Assert(!_IV);
         // Ignore spurious interrupts
         if (!iv) return;
-        _iv = iv;
-        // Disable I2C interrupts until _iv is handled by our thread
+        _IV = iv;
+        // Disable I2C interrupts until _IV is handled by our thread
         _I2CIntsSetEnabled(false);
     }
     
     static void ISR_Active(uint16_t iv) {
-        // Update _active based on whether we're observing 0->1 or 1->0 transitions
-        _active = (Pin::Active::IES() == _ActiveInterrupt::IES());
+        // Update _Active based on whether we're observing 0->1 or 1->0 transitions
+        _Active = (Pin::Active::IES() == _ActiveInterrupt::IES());
     }
     
 private:
@@ -188,18 +188,18 @@ private:
     }
     
     static _Event _WaitForEvent() {
-        _iv = 0;
+        _IV = 0;
         // Re-enable I2C interrupts now that we're ready for an event
         _I2CIntsSetEnabled(true);
         // Wait until we get an inactive interrupt, or an I2C event occurs
-        T_Scheduler::Wait([&] { return !_active.load() || _iv.load(); });
-        if (!_active.load()) return _Event::Inactive;
-        return (_Event)_iv.load();
+        T_Scheduler::Wait([&] { return !_Active.load() || _IV.load(); });
+        if (!_Active.load()) return _Event::Inactive;
+        return (_Event)_IV.load();
     }
     
     // Using std::atomic here because these fields are modified from the interrupt context
-    static inline std::atomic<bool> _active = false;
-    static inline std::atomic<uint16_t> _iv = 0;
+    static inline std::atomic<bool> _Active = false;
+    static inline std::atomic<uint16_t> _IV = 0;
     
 #undef Assert
 };

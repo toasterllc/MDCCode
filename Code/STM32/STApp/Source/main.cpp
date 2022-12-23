@@ -14,6 +14,7 @@
 #include "ImgSD.h"
 #include "USBConfigDesc.h"
 #include "MSP430JTAG.h"
+#include "MSP.h"
 #include "I2C.h"
 using namespace STM;
 
@@ -59,7 +60,7 @@ using _System = System<
 constexpr auto& _USB = _System::USB;
 using _Scheduler = _System::Scheduler;
 
-using _I2C = I2CType<_Scheduler>;
+using _I2C = I2CType<_Scheduler, MSP::I2CAddr>;
 
 static QSPI _QSPI;
 static Battery<_Scheduler> _Battery;

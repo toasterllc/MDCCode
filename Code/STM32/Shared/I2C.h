@@ -1,7 +1,11 @@
 #pragma once
+#include <atomic>
 #include "stm32f7xx.h"
 
-template <typename T_Scheduler>
+template <
+typename T_Scheduler,
+uint8_t T_Addr
+>
 class I2CType {
 public:
     static void Init() {
@@ -16,36 +20,66 @@ public:
         HAL_NVIC_SetPriority(I2C1_ER_IRQn, 0, 0);
         HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
         
-        HAL_StatusTypeDef hs = HAL_I2C_Init(&_device);
+        _Device.MasterTxCpltCallback = [] (I2C_HandleTypeDef* me) {
+            Assert(_Busy.load());
+            _Busy = false;
+        };
+        
+        _Device.MasterRxCpltCallback = [] (I2C_HandleTypeDef* me) {
+            Assert(_Busy.load());
+            _Busy = false;
+        };
+        
+        _Device.ErrorCallback = [] (I2C_HandleTypeDef* me) {
+            Assert(false);
+        };
+        
+        _Device.AbortCpltCallback = [] (I2C_HandleTypeDef* me) {
+            Assert(false);
+        };
+        
+        HAL_StatusTypeDef hs = HAL_I2C_Init(&_Device);
         Assert(hs == HAL_OK);
         
-        hs = HAL_I2CEx_ConfigAnalogFilter(&_device, I2C_ANALOGFILTER_ENABLE);
+        hs = HAL_I2CEx_ConfigAnalogFilter(&_Device, I2C_ANALOGFILTER_ENABLE);
         Assert(hs == HAL_OK);
         
-        hs = HAL_I2CEx_ConfigDigitalFilter(&_device, 0);
+        hs = HAL_I2CEx_ConfigDigitalFilter(&_Device, 0);
         Assert(hs == HAL_OK);
     }
     
     template <typename T>
     static void Send(const T& msg) {
+        Assert(!_Busy.load());
         
+        HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(_Device, T_Addr, &msg, sizeof(msg));
+        Assert(hs == HAL_OK);
+        
+        T_Scheduler::Wait([&] { return !_Busy.load(); });
     }
     
     template <typename T>
     static void Recv(T& msg) {
+        Assert(!_Busy.load());
         
+        HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(_Device, T_Addr, &msg, sizeof(msg));
+        Assert(hs == HAL_OK);
+        
+        T_Scheduler::Wait([&] { return !_Busy.load(); });
     }
     
     static void ISR_Event() {
-        ISR_HAL_I2C_EV(&_device);
+        ISR_HAL_I2C_EV(&_Device);
     }
     
     static void ISR_Error() {
-        ISR_HAL_I2C_ER(&_device);
+        ISR_HAL_I2C_ER(&_Device);
     }
     
 private:
-    static inline I2C_HandleTypeDef _device = {
+    static inline std::atomic<bool> _Busy = false;
+    
+    static inline I2C_HandleTypeDef _Device = {
         .Instance               = I2C1,
         .Init = {
             .Timing             = 0x00707CBB,
