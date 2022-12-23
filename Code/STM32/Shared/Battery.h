@@ -56,14 +56,14 @@ private:
         
         if (a != b) {
             // BAT_CHRG_STAT == high-z
-            return BatteryStatus::ChargeStatuses::Shutdown;
+            return BatteryStatus::ChargeStatus::Shutdown;
         } else {
             if (!a) {
                 // BAT_CHRG_STAT == low
-                return BatteryStatus::ChargeStatuses::Underway;
+                return BatteryStatus::ChargeStatus::Underway;
             } else {
                 // BAT_CHRG_STAT == high
-                return BatteryStatus::ChargeStatuses::Complete;
+                return BatteryStatus::ChargeStatus::Complete;
             }
         }
     }

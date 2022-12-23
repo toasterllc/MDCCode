@@ -46,16 +46,16 @@ public:
             {
                 _dev->hostModeSet(true);
                 
-                _dev->mspConnect();
-                    _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
+                _dev->mspSBWConnect();
+                    _dev->mspSBWRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
                     
-                    if (_mspState.magic != MSP::State::MagicNumber) {
+                    if (_mspState.header.magic != MSP::State::MagicNumber) {
                         // Program MSPApp onto MSP
                         #warning TODO: implement
                         throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
                     }
                     
-                    if (_mspState.version > MSP::State::Version) {
+                    if (_mspState.header.version > MSP::State::Version) {
                         // Newer version than we understand -- tell user to upgrade or re-program
                         #warning TODO: implement
                         throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
@@ -63,8 +63,8 @@ public:
                     
                     _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
                     _mspState.startTime.valid = true;
-                    _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
-                _dev->mspDisconnect();
+                    _dev->mspSBWWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
+                _dev->mspSBWDisconnect();
                 
                 printf("Set device time to 0x%jx\n", (uintmax_t)_mspState.startTime.time);
             }
@@ -74,8 +74,8 @@ public:
             
 //            // Update device time
 //            {
-//                _dev->mspConnect();
-//                _dev->mspRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
+//                _dev->mspSBWConnect();
+//                _dev->mspSBWRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
 //                
 //                if (_mspState.magic != MSP::State::MagicNumber) {
 //                    // Program MSPApp onto MSP
@@ -91,7 +91,7 @@ public:
 //                
 //                _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
 //                _mspState.startTime.valid = true;
-//                _dev->mspWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
+//                _dev->mspSBWWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
 //                
 //                // MSPHostMode=true: make MSP enter host mode until physically disconnected from USB.
 //                // (When USB is disconnected, STM will lose power, causing STM to stop asserting
@@ -100,7 +100,7 @@ public:
 //                constexpr bool MSPHostMode = true;
 //                
 //                startTime = std::chrono::steady_clock::now();
-//                _dev->mspDisconnect(MSPHostMode);
+//                _dev->mspSBWDisconnect(MSPHostMode);
 //            }
             
 //            usleep(180000);

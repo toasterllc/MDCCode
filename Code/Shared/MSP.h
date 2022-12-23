@@ -85,8 +85,13 @@ namespace MSP {
         static constexpr uint32_t MagicNumber   = 0xDECAFBAD;
         static constexpr uint16_t Version       = 0;
         
-        const uint32_t magic = MagicNumber;
-        const uint16_t version = Version;
+        struct [[gnu::packed]] Header {
+            const uint32_t magic    = MagicNumber;
+            const uint16_t version  = Version;
+            const uint16_t size     = sizeof(State)-sizeof(Header);
+        };
+        
+        Header header;
         
         // startTime: the absolute time set by the outside world (seconds since reference date)
         struct [[gnu::packed]] {
@@ -125,20 +130,24 @@ namespace MSP {
     struct [[gnu::packed]] Cmd {
         enum class Op : uint8_t {
             None,
-            Echo,
+            StateRead,
+            StateWrite,
             LEDSet,
             HostModeSet,
             VDDIMGSDSet,
             BatterySample,
-            StateRead,
-            StateWrite,
         };
         
         Op op = Op::None;
         union {
             struct [[gnu::packed]] {
-                uint32_t data;
-            } Echo;
+                uint8_t chunk;
+            } StateRead;
+            
+            struct [[gnu::packed]] {
+                uint8_t chunk;
+                uint8_t data[4];
+            } StateWrite;
             
             struct [[gnu::packed]] {
                 uint8_t red;
@@ -152,15 +161,6 @@ namespace MSP {
             struct [[gnu::packed]] {
                 uint8_t en;
             } VDDIMGSDSet;
-            
-            struct [[gnu::packed]] {
-                uint8_t chunk;
-            } StateRead;
-            
-            struct [[gnu::packed]] {
-                uint8_t chunk;
-                uint8_t data[4];
-            } StateWrite;
         } arg;
     };
     
@@ -168,16 +168,12 @@ namespace MSP {
         uint8_t ok = false;
         union {
             struct [[gnu::packed]] {
-                uint64_t data;
-            } Echo;
+                uint8_t data[4];
+            } StateRead;
             
             struct [[gnu::packed]] {
                 uint16_t sample;
             } BatterySample;
-            
-            struct [[gnu::packed]] {
-                uint8_t data[4];
-            } StateRead;
         } arg;
     };
 

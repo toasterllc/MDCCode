@@ -264,7 +264,7 @@ static void ICEFlashWrite(const Args& args, MDCUSBDevice& device) {
 }
 
 static void MSPRead(const Args& args, MDCUSBDevice& device) {
-    device.mspConnect();
+    device.mspSBWConnect();
     
     printf("Reading [0x%08jx,0x%08jx):\n",
         (uintmax_t)args.MSPRead.addr,
@@ -272,7 +272,7 @@ static void MSPRead(const Args& args, MDCUSBDevice& device) {
     );
     
     auto buf = std::make_unique<uint8_t[]>(args.MSPRead.len);
-    device.mspRead(args.MSPRead.addr, buf.get(), args.MSPRead.len);
+    device.mspSBWRead(args.MSPRead.addr, buf.get(), args.MSPRead.len);
     
     for (size_t i=0; i<args.MSPRead.len; i++) {
         printf("%02jx ", (uintmax_t)buf[i]);
@@ -280,13 +280,13 @@ static void MSPRead(const Args& args, MDCUSBDevice& device) {
     
     printf("\n");
     
-    device.mspDisconnect();
+    device.mspSBWDisconnect();
 }
 
 static void MSPWrite(const Args& args, MDCUSBDevice& device) {
     ELF32Binary elf(args.MSPWrite.filePath.c_str());
     
-    device.mspConnect();
+    device.mspSBWConnect();
     
     // Write the data
     elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
@@ -294,7 +294,7 @@ static void MSPWrite(const Args& args, MDCUSBDevice& device) {
         printf("MSPWrite: Writing %22s @ 0x%04jx    size: 0x%04jx    vaddr: 0x%04jx\n",
             name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
         
-        device.mspWrite(paddr, data, size);
+        device.mspSBWWrite(paddr, data, size);
     });
     
     // Read back data and compare with what we expect
@@ -304,38 +304,38 @@ static void MSPWrite(const Args& args, MDCUSBDevice& device) {
             name, (uintmax_t)paddr, (uintmax_t)size);
         
         auto buf = std::make_unique<uint8_t[]>(size);
-        device.mspRead(paddr, buf.get(), size);
+        device.mspSBWRead(paddr, buf.get(), size);
         
         if (memcmp(data, buf.get(), size)) {
             throw Toastbox::RuntimeError("section doesn't match: %s", name);
         }
     });
     
-    device.mspDisconnect();
+    device.mspSBWDisconnect();
 }
 
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
-    device.mspConnect();
+    device.mspSBWConnect();
     
     MSP::State state;
-    device.mspRead(MSP::StateAddr, &state, sizeof(state));
+    device.mspSBWRead(MSP::StateAddr, &state, sizeof(state));
     
-    if (state.magic != MSP::State::MagicNumber) {
+    if (state.header.magic != MSP::State::MagicNumber) {
         throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
             (uintmax_t)MSP::State::MagicNumber,
-            (uintmax_t)state.magic
+            (uintmax_t)state.header.magic
         );
     }
     
-    if (state.version != MSP::State::Version) {
+    if (state.header.version != MSP::State::Version) {
         throw Toastbox::RuntimeError("unrecognized MSP::State version (expected: 0x%02jx, got: 0x%02jx)",
             (uintmax_t)MSP::State::Version,
-            (uintmax_t)state.version
+            (uintmax_t)state.header.version
         );
     }
     
-    printf(     "magic:                     0x%08jx\n",     (uintmax_t)state.magic);
-    printf(     "version:                   0x%04jx\n",     (uintmax_t)state.version);
+    printf(     "magic:                     0x%08jx\n",     (uintmax_t)state.header.magic);
+    printf(     "version:                   0x%04jx\n",     (uintmax_t)state.header.version);
     printf(     "\n");
     
     printf(     "startTime\n");
@@ -395,7 +395,7 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     }
     printf(     "\n");
     
-    device.mspDisconnect();
+    device.mspSBWDisconnect();
 }
 
 static void SDRead(const Args& args, MDCUSBDevice& device) {
@@ -454,10 +454,10 @@ static void ImgCapture(const Args& args, MDCUSBDevice& device) {
 static const char* _StringForChargeStatus(const STM::BatteryStatus::ChargeStatus status) {
     using namespace STM;
     switch (status) {
-    case BatteryStatus::ChargeStatuses::Shutdown: return "Shutdown";
-    case BatteryStatus::ChargeStatuses::Underway: return "Underway";
-    case BatteryStatus::ChargeStatuses::Complete: return "Complete";
-    default:                                      return "Invalid";
+    case BatteryStatus::ChargeStatus::Shutdown: return "Shutdown";
+    case BatteryStatus::ChargeStatus::Underway: return "Underway";
+    case BatteryStatus::ChargeStatus::Complete: return "Complete";
+    default:                                    return "Invalid";
     }
 }
 

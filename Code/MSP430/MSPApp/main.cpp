@@ -683,33 +683,6 @@ struct _I2CTask {
     static MSP::Resp _CmdHandle(const MSP::Cmd& cmd) {
         using namespace MSP;
         switch (cmd.op) {
-        case Cmd::Op::Echo:
-            return MSP::Resp{
-                .ok = true,
-                .arg = {
-                    .Echo = {
-                        .data = cmd.arg.Echo.data,
-                    },
-                },
-            };
-        
-        case Cmd::Op::LEDSet:
-            _LEDRed_::Set(_LEDRed_::Priority::High, !cmd.arg.LEDSet.red);
-            _LEDGreen_::Set(_LEDGreen_::Priority::High, !cmd.arg.LEDSet.green);
-            return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::HostModeSet:
-            _MainTask::HostModeSet(cmd.arg.HostModeSet.en);
-            return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::VDDIMGSDSet:
-            _VDDIMGSDSet(cmd.arg.VDDIMGSDSet.en);
-            return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::BatterySample:
-            // TODO: implement
-            return MSP::Resp{ .ok = false };
-        
         case Cmd::Op::StateRead: {
             const size_t off = cmd.arg.StateRead.chunk * sizeof(MSP::Resp::arg.StateRead.data);
             if (off > sizeof(_State)) return MSP::Resp{ .ok = false };
@@ -728,6 +701,23 @@ struct _I2CTask {
             memcpy((uint8_t*)&_State+off, cmd.arg.StateWrite.data, len);
             return MSP::Resp{ .ok = true };
         }
+        
+        case Cmd::Op::LEDSet:
+            _LEDRed_::Set(_LEDRed_::Priority::High, !cmd.arg.LEDSet.red);
+            _LEDGreen_::Set(_LEDGreen_::Priority::High, !cmd.arg.LEDSet.green);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::HostModeSet:
+            _MainTask::HostModeSet(cmd.arg.HostModeSet.en);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::VDDIMGSDSet:
+            _VDDIMGSDSet(cmd.arg.VDDIMGSDSet.en);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::BatterySample:
+            // TODO: implement
+            return MSP::Resp{ .ok = false };
         
         default:
             return MSP::Resp{ .ok = false };

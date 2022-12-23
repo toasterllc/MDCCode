@@ -319,7 +319,7 @@ static MSP430JTAG<_MSP_TEST, _MSP_RST_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
 
-//static bool _MSPConnect(bool unlockPins) {
+//static bool _MSPSBWConnect(bool unlockPins) {
 //    constexpr uint16_t PM5CTL0Addr  = 0x0130;
 //    
 //    const auto mspr = _MSP.connect();
@@ -340,7 +340,7 @@ static MSP430JTAG<_MSP_TEST, _MSP_RST_, _System::CPUFreqMHz> _MSP;
 //    constexpr uint16_t PADIRAddr    = 0x0204;
 //    constexpr uint16_t PAOUTAddr    = 0x0202;
 //    
-//    const bool br = _MSPConnect(true);
+//    const bool br = _MSPSBWConnect(true);
 //    if (!br) return false;
 //    
 //    const uint16_t PADIR = _MSP.read(PADIRAddr);
@@ -353,7 +353,7 @@ static MSP430JTAG<_MSP_TEST, _MSP_RST_, _System::CPUFreqMHz> _MSP;
 //        _MSP.write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
 //    }
 //    
-//    _MSPDisconnect(false); // Don't allow MSP to run
+//    _MSPSBWDisconnect(false); // Don't allow MSP to run
 //    
 //    // The TPS22919 takes 1ms for VDD to reach 2.8V (empirically measured)
 //    _Scheduler::Sleep(_Scheduler::Ms(2));
@@ -374,7 +374,7 @@ static void _SDError(uint16_t line) {
 //    constexpr uint16_t PADIRAddr        = 0x0204;
 //    constexpr uint16_t PAOUTAddr        = 0x0202;
 //    
-//    const bool br = _MSPConnect(true);
+//    const bool br = _MSPSBWConnect(true);
 //    if (!br) return false;
 //    
 //    const uint16_t PADIR = _MSP.read(PADIRAddr);
@@ -391,7 +391,7 @@ static void _SDError(uint16_t line) {
 //        _MSP.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
 //    }
 //    
-//    _MSPDisconnect(false); // Don't allow MSP to run
+//    _MSPSBWDisconnect(false); // Don't allow MSP to run
 //    
 //    #warning TODO: measure how long it takes for IMG rails to rise
 //    // The TPS22919 takes 1ms for VDD_2V8_IMG VDD to reach 2.8V (empirically measured)
@@ -944,7 +944,117 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static void _MSPConnect(const STM::Cmd& cmd) {
+static bool __MSPStateRead(size_t off, uint8_t* data, size_t len) {
+    constexpr size_t ChunkSize = sizeof(MSP::Resp::arg.StateRead.data);
+    AssertArg((off % ChunkSize) == 0);
+    
+    const size_t chunkOff = off / ChunkSize;
+    const size_t chunkCount = (len+ChunkSize-1) / ChunkSize;
+    for (uint8_t chunk=0; chunk<chunkCount; chunk++) {
+        const MSP::Cmd cmd = {
+            .op = MSP::Cmd::Op::StateRead,
+            .arg = { .StateRead = { .chunk = chunkOff+chunk } },
+        };
+        
+        MSP::Resp resp;
+        const bool ok = _I2C::Send(cmd, resp);
+        if (!ok) return false;
+        
+        const size_t l = std::min(len, ChunkSize);
+        memcpy(data+off, resp.arg.StateRead.data, l);
+        off += l;
+        len -= l;
+    }
+    
+    return true;
+}
+
+
+//static bool __MSPStateReadChunk(uint8_t* data, size_t dataCap, size_t off) {
+//    constexpr size_t ChunkSize = sizeof(MSP::Resp::arg.StateRead.data);
+//    AssertArg((off % ChunkSize) == 0);
+//    
+//    for (;;) {
+//        const MSP::Cmd cmd = {
+//            .op = MSP::Cmd::Op::StateRead,
+//            .arg = { .StateRead = { .chunk = off/ChunkSize } },
+//        };
+//        
+//        MSP::Resp resp;
+//        const bool ok = _I2C::Send(cmd, resp);
+//        if (!ok) return false;
+//    }
+//    
+//    return true;
+//}
+
+
+static size_t __MSPStateRead(uint8_t* data, size_t cap) {
+    MSP::State::Header header;
+    if (cap < sizeof(header)) return 0;
+    
+    size_t off = 0;
+    bool ok = __MSPStateRead(off, &header, sizeof(header));
+    if (!ok) return 0;
+    
+    // Copy header into destination buffer
+    memcpy(data+off, &header, sizeof(header));
+    off += sizeof(header);
+    
+    // Validate the header
+    if (header.magic != MSP::State::MagicNumber) return 0;
+    // Validate that the caller has enough space to hold the header + payload
+    if (cap < sizeof(header) + header.size) return 0;
+    // Read payload directly into destination buffer
+    ok = __MSPStateRead(off, data+off, header.size);
+    if (!ok) return 0;
+    off += header.size);
+    return off;
+}
+
+static void _MSPStateRead(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    MSP::State::Header header;
+    
+    MSP::Cmd cmd = {
+        .op = MSP::Cmd::Op::StateRead,
+        .arg = {
+            .StateRead = {
+                .en = en,
+            },
+        },
+    };
+    MSP::Resp resp;
+    
+    const bool ok = _I2C::Send(cmd, resp);
+    if (!ok) return false;
+    
+    return resp.ok;
+    
+    
+    
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
+
+static void _MSPStateWrite(const STM::Cmd& cmd) {
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    
+    
+    
+    
+    
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
+
+static void _MSPSBWConnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
@@ -954,7 +1064,7 @@ static void _MSPConnect(const STM::Cmd& cmd) {
     _System::USBSendStatus(mspr == _MSP.Status::OK);
 }
 
-static void _MSPDisconnect(const STM::Cmd& cmd) {
+static void _MSPSBWDisconnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
@@ -964,8 +1074,8 @@ static void _MSPDisconnect(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static void _MSPRead(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.MSPRead;
+static void _MSPSBWRead(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPSBWRead;
     
     // Accept command
     _System::USBAcceptCommand(true);
@@ -999,8 +1109,8 @@ static void _MSPRead(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static void _MSPWrite(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.MSPWrite;
+static void _MSPSBWWrite(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPSBWWrite;
     
     // Accept command
     _System::USBAcceptCommand(true);
@@ -1028,14 +1138,14 @@ static void _MSPWrite(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-struct _MSPDebugState {
+struct _MSPSBWDebugState {
     uint8_t bits = 0;
     uint8_t bitsLen = 0;
     size_t len = 0;
     bool ok = true;
 };
 
-static void _MSPDebugPushReadBits(_MSPDebugState& state, _BufQueue::Buf& buf) {
+static void _MSPSBWDebugPushReadBits(_MSPSBWDebugState& state, _BufQueue::Buf& buf) {
     if (state.len >= sizeof(buf.data)) {
         state.ok = false;
         return;
@@ -1049,7 +1159,7 @@ static void _MSPDebugPushReadBits(_MSPDebugState& state, _BufQueue::Buf& buf) {
     state.bitsLen = 0;
 }
 
-static void _MSPDebugHandleSBWIO(const MSPDebugCmd& cmd, _MSPDebugState& state, _BufQueue::Buf& buf) {
+static void _MSPSBWDebugHandleSBWIO(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& state, _BufQueue::Buf& buf) {
     const bool tdo = _MSP.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
     if (cmd.tdoReadGet()) {
         // Enqueue a new bit
@@ -1059,23 +1169,23 @@ static void _MSPDebugHandleSBWIO(const MSPDebugCmd& cmd, _MSPDebugState& state, 
         
         // Enqueue the byte if it's filled
         if (state.bitsLen == 8) {
-            _MSPDebugPushReadBits(state, buf);
+            _MSPSBWDebugPushReadBits(state, buf);
         }
     }
 }
 
-static void _MSPDebugHandleCmd(const MSPDebugCmd& cmd, _MSPDebugState& state, _BufQueue::Buf& buf) {
+static void _MSPSBWDebugHandleCmd(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& state, _BufQueue::Buf& buf) {
     switch (cmd.opGet()) {
-    case MSPDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet());     break;
-    case MSPDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet()); 	    break;
-    case MSPDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse(); 				    break;
-    case MSPDebugCmd::Ops::SBWIO:       _MSPDebugHandleSBWIO(cmd, state, buf);	break;
+    case MSPSBWDebugCmd::Ops::TestSet:     _MSP.debugTestSet(cmd.pinValGet());     break;
+    case MSPSBWDebugCmd::Ops::RstSet:      _MSP.debugRstSet(cmd.pinValGet()); 	    break;
+    case MSPSBWDebugCmd::Ops::TestPulse:   _MSP.debugTestPulse(); 				    break;
+    case MSPSBWDebugCmd::Ops::SBWIO:       _MSPSBWDebugHandleSBWIO(cmd, state, buf);	break;
     default:                            abort();
     }
 }
 
-static void _MSPDebug(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.MSPDebug;
+static void _MSPSBWDebug(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPSBWDebug;
     
     // Bail if more data was requested than the size of our buffer
     if (arg.respLen > sizeof(_BufQueue::Buf::data)) {
@@ -1093,7 +1203,7 @@ static void _MSPDebug(const STM::Cmd& cmd) {
     _Bufs.wpush();
     auto& bufOut = _Bufs.wget();
     
-    _MSPDebugState state;
+    _MSPSBWDebugState state;
     
     // Handle debug commands
     {
@@ -1103,11 +1213,11 @@ static void _MSPDebug(const STM::Cmd& cmd) {
             _USB.recv(Endpoints::DataOut, bufIn.data, sizeof(bufIn.data));
             _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
             
-            // Handle each MSPDebugCmd
-            const MSPDebugCmd* cmds = (MSPDebugCmd*)bufIn.data;
-            const size_t cmdsLen = _USB.recvLen(Endpoints::DataOut) / sizeof(MSPDebugCmd);
+            // Handle each MSPSBWDebugCmd
+            const MSPSBWDebugCmd* cmds = (MSPSBWDebugCmd*)bufIn.data;
+            const size_t cmdsLen = _USB.recvLen(Endpoints::DataOut) / sizeof(MSPSBWDebugCmd);
             for (size_t i=0; i<cmdsLen && state.ok; i++) {
-                _MSPDebugHandleCmd(cmds[i], state, bufOut);
+                _MSPSBWDebugHandleCmd(cmds[i], state, bufOut);
             }
             
             cmdsLenRem -= cmdsLen;
@@ -1119,7 +1229,7 @@ static void _MSPDebug(const STM::Cmd& cmd) {
         // Push outstanding bits into the buffer
         // This is necessary for when the client reads a number of bits
         // that didn't fall on a byte boundary.
-        if (state.bitsLen) _MSPDebugPushReadBits(state, bufOut);
+        if (state.bitsLen) _MSPSBWDebugPushReadBits(state, bufOut);
         
         if (arg.respLen) {
             // Send the data and wait for it to be received
@@ -1283,13 +1393,15 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::ICERAMWrite:           _ICERAMWrite(cmd);                  break;
     case Op::ICEFlashRead:          _ICEFlashRead(cmd);                 break;
     case Op::ICEFlashWrite:         _ICEFlashWrite(cmd);                break;
-    // MSP430 Bootloader
-    case Op::MSPConnect:            _MSPConnect(cmd);                   break;
-    case Op::MSPDisconnect:         _MSPDisconnect(cmd);                break;
-    // MSP430 Debug
-    case Op::MSPRead:               _MSPRead(cmd);                      break;
-    case Op::MSPWrite:              _MSPWrite(cmd);                     break;
-    case Op::MSPDebug:              _MSPDebug(cmd);                     break;
+    // MSP430 State Read/Write
+    case Op::MSPStateRead:          _MSPStateRead(cmd);                 break;
+    case Op::MSPStateWrite:         _MSPStateWrite(cmd);                break;
+    // MSP430 SBW
+    case Op::MSPSBWConnect:         _MSPSBWConnect(cmd);                break;
+    case Op::MSPSBWDisconnect:      _MSPSBWDisconnect(cmd);             break;
+    case Op::MSPSBWRead:            _MSPSBWRead(cmd);                   break;
+    case Op::MSPSBWWrite:           _MSPSBWWrite(cmd);                  break;
+    case Op::MSPSBWDebug:           _MSPSBWDebug(cmd);                  break;
     // SD Card
     case Op::SDInit:                _SDInit(cmd);                       break;
     case Op::SDRead:                _SDRead(cmd);                       break;

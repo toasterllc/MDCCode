@@ -258,21 +258,21 @@ public:
         _checkStatus("ICEFlashWrite command failed");
     }
     
-    void mspConnect() {
+    void mspSBWConnect() {
         assert(_mode == STM::Status::Modes::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::MSPConnect };
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWConnect };
         _sendCmd(cmd);
-        _checkStatus("MSPConnect command failed");
+        _checkStatus("MSPSBWConnect command failed");
     }
     
-    void mspDisconnect() {
+    void mspSBWDisconnect() {
         assert(_mode == STM::Status::Modes::STMApp);
-        const STM::Cmd cmd = { .op = STM::Op::MSPDisconnect };
+        const STM::Cmd cmd = { .op = STM::Op::MSPSBWDisconnect };
         _sendCmd(cmd);
-        _checkStatus("MSPDisconnect command failed");
+        _checkStatus("MSPSBWDisconnect command failed");
     }
     
-    void mspRead(uintptr_t addr, void* data, size_t len) {
+    void mspSBWRead(uintptr_t addr, void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
@@ -282,9 +282,9 @@ public:
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
         
         const STM::Cmd cmd = {
-            .op = STM::Op::MSPRead,
+            .op = STM::Op::MSPSBWRead,
             .arg = {
-                .MSPRead = {
+                .MSPSBWRead = {
                     .addr = (uint32_t)addr,
                     .len = (uint32_t)len,
                 },
@@ -296,7 +296,7 @@ public:
         _checkStatus("MSPRead command failed");
     }
     
-    void mspWrite(uintptr_t addr, const void* data, size_t len) {
+    void mspSBWWrite(uintptr_t addr, const void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
@@ -306,9 +306,9 @@ public:
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
         
         const STM::Cmd cmd = {
-            .op = STM::Op::MSPWrite,
+            .op = STM::Op::MSPSBWWrite,
             .arg = {
-                .MSPWrite = {
+                .MSPSBWWrite = {
                     .addr = (uint32_t)addr,
                     .len = (uint32_t)len,
                 },
@@ -320,7 +320,7 @@ public:
         _checkStatus("MSPWrite command failed");
     }
     
-    void mspDebug(const STM::MSPDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
+    void mspSBWDebug(const STM::MSPSBWDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
         assert(_mode == STM::Status::Modes::STMApp);
         
         if (cmdsLen >= std::numeric_limits<uint32_t>::max())
@@ -330,9 +330,9 @@ public:
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)respLen);
         
         const STM::Cmd cmd = {
-            .op = STM::Op::MSPDebug,
+            .op = STM::Op::MSPSBWDebug,
             .arg = {
-                .MSPDebug = {
+                .MSPSBWDebug = {
                     .cmdsLen = (uint32_t)cmdsLen,
                     .respLen = (uint32_t)respLen,
                 },
@@ -342,7 +342,7 @@ public:
         
         // Write the MSPDebugCmds
         if (cmdsLen) {
-            _dev.write(STM::Endpoints::DataOut, cmds, cmdsLen*sizeof(STM::MSPDebugCmd));
+            _dev.write(STM::Endpoints::DataOut, cmds, cmdsLen*sizeof(STM::MSPSBWDebugCmd));
         }
         
         // Read back the queued data

@@ -37,11 +37,14 @@ namespace STM {
         ICEFlashRead,
         ICEFlashWrite,
         
-        MSPConnect,
-        MSPDisconnect,
-        MSPRead,
-        MSPWrite,
-        MSPDebug,
+        MSPStateRead,
+        MSPStateWrite,
+        
+        MSPSBWConnect,
+        MSPSBWDisconnect,
+        MSPSBWRead,
+        MSPSBWWrite,
+        MSPSBWDebug,
         
         SDInit,
         SDRead,
@@ -86,6 +89,10 @@ namespace STM {
             } ICEFlashRead;
             
             struct [[gnu::packed]] {
+                uint32_t len;
+            } MSPStateWrite;
+            
+            struct [[gnu::packed]] {
                 uint32_t addr;
                 uint32_t len;
             } ICEFlashWrite;
@@ -93,17 +100,17 @@ namespace STM {
             struct [[gnu::packed]] {
                 uint32_t addr;
                 uint32_t len;
-            } MSPRead;
+            } MSPSBWRead;
             
             struct [[gnu::packed]] {
                 uint32_t addr;
                 uint32_t len;
-            } MSPWrite;
+            } MSPSBWWrite;
             
             struct [[gnu::packed]] {
                 uint32_t cmdsLen;
                 uint32_t respLen;
-            } MSPDebug;
+            } MSPSBWDebug;
             
             struct [[gnu::packed]] {
                 SD::Block block;
@@ -138,7 +145,7 @@ namespace STM {
         Mode mode = Modes::None;
     };
     
-    struct [[gnu::packed]] MSPDebugCmd {
+    struct [[gnu::packed]] MSPSBWDebugCmd {
         Enum(uint8_t, Op, Ops,
             TestSet,
             RstSet,
@@ -151,21 +158,21 @@ namespace STM {
         struct TestPulseType {}; static constexpr auto TestPulse = TestPulseType();
         struct SBWIOType {}; static constexpr auto SBWIO = SBWIOType();
         
-        MSPDebugCmd(TestSetType, bool val) {
+        MSPSBWDebugCmd(TestSetType, bool val) {
             opSet(Ops::TestSet);
             pinValSet(val);
         }
         
-        MSPDebugCmd(RstSetType, bool val) {
+        MSPSBWDebugCmd(RstSetType, bool val) {
             opSet(Ops::RstSet);
             pinValSet(val);
         }
         
-        MSPDebugCmd(TestPulseType) {
+        MSPSBWDebugCmd(TestPulseType) {
             opSet(Ops::TestPulse);
         }
         
-        MSPDebugCmd(SBWIOType, bool tms, bool tclk, bool tdi, bool tdoRead) {
+        MSPSBWDebugCmd(SBWIOType, bool tms, bool tclk, bool tdi, bool tdoRead) {
             opSet(Ops::SBWIO);
             tmsSet(tms);
             tclkSet(tclk);
@@ -205,6 +212,10 @@ namespace STM {
         uint32_t shadowCount = 0;
     };
     
+    struct [[gnu::packed]] MSPStateInfo {
+        uint32_t len = 0;
+    };
+    
     // Confirm that `Img::ImagePaddedLen` is a multiple of the USB max packet size.
     // This is necessary so that when multiple images are streamed, the
     // transfer continues indefinitely and isn't cut short by a short packet
@@ -228,14 +239,14 @@ namespace STM {
 //    );
     
     struct [[gnu::packed]] BatteryStatus {
-        Enum(uint32_t, ChargeStatus, ChargeStatuses,
+        enum class ChargeStatus : uint8_t {
             Invalid,
             Shutdown,
             Underway,
             Complete,
-        );
+        };
         
-        ChargeStatus chargeStatus = ChargeStatuses::Invalid;
+        ChargeStatus chargeStatus = ChargeStatus::Invalid;
         uint16_t voltage = 0;
     };
 }
