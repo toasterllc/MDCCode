@@ -530,22 +530,22 @@ struct _I2CTask {
         case Cmd::Op::LEDSet:
             _Pin::LED_RED_::Write(!cmd.arg.LEDSet.red);
             _Pin::LED_GREEN_::Write(!cmd.arg.LEDSet.green);
-            return MSP::Resp{ .ok = true, };
+            return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
             // TODO: implement
+            return MSP::Resp{ .ok = false };
         
         case Cmd::Op::VDDIMGSDSet:
             _VDDIMGSDSet(cmd.arg.VDDIMGSDSet.en);
-            return MSP::Resp{ .ok = true, };
+            return MSP::Resp{ .ok = true };
         
         case Cmd::Op::BatterySample:
             // TODO: implement
+            return MSP::Resp{ .ok = false };
         
         default:
-            return MSP::Resp{
-                .ok = false,
-            };
+            return MSP::Resp{ .ok = false };
         }
     }
     
