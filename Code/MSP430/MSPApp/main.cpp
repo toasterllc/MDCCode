@@ -612,7 +612,6 @@ struct _MainTask {
         _Motion = true;
     }
     
-    
     static void _HostModeHandle() {
         if (!_HostModeRequest) return; // Short-circuit if there's no pending request
         for (;;) {
@@ -662,6 +661,11 @@ struct _I2CTask {
                 ok = _I2C::Send(resp);
                 if (!ok) break;
             }
+            
+            // Cleanup
+            
+            // Exit host mode
+            _MainTask::HostModeSet(false);
         }
     }
     
