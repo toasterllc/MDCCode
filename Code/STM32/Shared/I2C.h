@@ -64,8 +64,10 @@ private:
     static bool _Send(const T& msg) {
         Assert(_St.load()==_State::Idle || _St.load()==_State::Error);
         
+        // "address ... must be shifted to the left before calling"
+        constexpr uint16_t Addr = T_Addr<<1;
         _St = _State::Send;
-        HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, T_Addr, (uint8_t*)&msg, sizeof(msg));
+        HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, Addr, (uint8_t*)&msg, sizeof(msg));
         Assert(hs == HAL_OK);
         
         T_Scheduler::Wait([&] { return _St.load() != _State::Send; });
@@ -76,8 +78,10 @@ private:
     static bool _Recv(T& msg) {
         Assert(_St.load()==_State::Idle || _St.load()==_State::Error);
         
+        // "address ... must be shifted to the left before calling"
+        constexpr uint16_t Addr = T_Addr<<1;
         _St = _State::Recv;
-        HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, T_Addr, (uint8_t*)&msg, sizeof(msg));
+        HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, Addr, (uint8_t*)&msg, sizeof(msg));
         Assert(hs == HAL_OK);
         
         T_Scheduler::Wait([&] { return _St.load() != _State::Recv; });
