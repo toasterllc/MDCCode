@@ -130,7 +130,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
         
         renderer.clear(drawableTxt, {0,0,0,0});
         
-        const simd_float4x4 transform = [self transform];
+        const simd_float4x4 transform = [self fixedTransform];
         renderer.render(drawableTxt, Renderer::BlendType::None,
             renderer.VertexShader("MDCStudio::ImageViewShader::VertexShader", transform),
             renderer.FragmentShader("MDCStudio::ImageViewShader::FragmentShader", srcTxt)
@@ -221,79 +221,79 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 
 
-constexpr CGFloat ShadowCenterOffset = 45;
-
-@interface ImageScrollView : LayerScrollView
-@end
-
-@implementation ImageScrollView {
-    NSView* _shadowView;
-    CALayer* _shadowLayer;
-}
-
-static void _InitCommon(ImageScrollView* self) {
-    [self setBackgroundColor:[NSColor colorWithSRGBRed:WindowBackgroundColor.srgb[0]
-        green:WindowBackgroundColor.srgb[1] blue:WindowBackgroundColor.srgb[2] alpha:1]];
-}
-
-- (instancetype)initWithCoder:(NSCoder*)coder {
-    if (!(self = [super initWithCoder:coder])) return nil;
-    _InitCommon(self);
-    return self;
-}
-
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
-    _InitCommon(self);
-    return self;
-}
-
-- (void)tile {
-    [super tile];
-    if (!_shadowView) {
-        _shadowLayer = [CALayer new];
-        [_shadowLayer setActions:LayerNullActions];
-        NSImage* shadow = [NSImage imageNamed:@"ImageView-Shadow"];
-        assert(shadow);
-        [_shadowLayer setContents:shadow];
-        [_shadowLayer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-        
-        CGSize shadowSize = [shadow size];
-        CGRect center = { ShadowCenterOffset, ShadowCenterOffset, shadowSize.width-2*ShadowCenterOffset, shadowSize.height-2*ShadowCenterOffset };
-        center.origin.x /= shadowSize.width;
-        center.origin.y /= shadowSize.height;
-        center.size.width /= shadowSize.width;
-        center.size.height /= shadowSize.height;
-        [_shadowLayer setContentsCenter:center];
-        
-        _shadowView = [[NSView alloc] initWithFrame:{}];
-        [_shadowView setTranslatesAutoresizingMaskIntoConstraints:false];
-        [_shadowView setLayer:_shadowLayer];
-        [_shadowView setWantsLayer:true];
-        [self addSubview:_shadowView positioned:NSWindowBelow relativeTo:[self contentView]];
-    }
-    
-    [self _updateShadowFrame];
-}
-
-- (void)_updateShadowFrame {
-    NSView* docView = [self documentView];
-    CGRect shadowFrame = [self convertRect:[docView visibleRect] fromView:docView];
-    shadowFrame = CGRectInset(shadowFrame, -ShadowCenterOffset/[_shadowLayer contentsScale], -ShadowCenterOffset/[_shadowLayer contentsScale]);
-    [_shadowView setFrame:shadowFrame];
-}
-
-- (void)reflectScrolledClipView:(NSClipView*)clipView {
-    [super reflectScrolledClipView:clipView];
-    [self _updateShadowFrame];
-}
-
-- (void)viewDidChangeBackingProperties {
-    [super viewDidChangeBackingProperties];
-    [_shadowLayer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-}
-
-@end
+//constexpr CGFloat ShadowCenterOffset = 45;
+//
+//@interface ImageScrollView : LayerScrollView
+//@end
+//
+//@implementation ImageScrollView {
+//    NSView* _shadowView;
+//    CALayer* _shadowLayer;
+//}
+//
+//static void _InitCommon(ImageScrollView* self) {
+//    [self setBackgroundColor:[NSColor colorWithSRGBRed:WindowBackgroundColor.srgb[0]
+//        green:WindowBackgroundColor.srgb[1] blue:WindowBackgroundColor.srgb[2] alpha:1]];
+//}
+//
+//- (instancetype)initWithCoder:(NSCoder*)coder {
+//    if (!(self = [super initWithCoder:coder])) return nil;
+//    _InitCommon(self);
+//    return self;
+//}
+//
+//- (instancetype)initWithFrame:(NSRect)frame {
+//    if (!(self = [super initWithFrame:frame])) return nil;
+//    _InitCommon(self);
+//    return self;
+//}
+//
+//- (void)tile {
+//    [super tile];
+//    if (!_shadowView) {
+//        _shadowLayer = [CALayer new];
+//        [_shadowLayer setActions:LayerNullActions];
+//        NSImage* shadow = [NSImage imageNamed:@"ImageView-Shadow"];
+//        assert(shadow);
+//        [_shadowLayer setContents:shadow];
+//        [_shadowLayer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
+//        
+//        CGSize shadowSize = [shadow size];
+//        CGRect center = { ShadowCenterOffset, ShadowCenterOffset, shadowSize.width-2*ShadowCenterOffset, shadowSize.height-2*ShadowCenterOffset };
+//        center.origin.x /= shadowSize.width;
+//        center.origin.y /= shadowSize.height;
+//        center.size.width /= shadowSize.width;
+//        center.size.height /= shadowSize.height;
+//        [_shadowLayer setContentsCenter:center];
+//        
+//        _shadowView = [[NSView alloc] initWithFrame:{}];
+//        [_shadowView setTranslatesAutoresizingMaskIntoConstraints:false];
+//        [_shadowView setLayer:_shadowLayer];
+//        [_shadowView setWantsLayer:true];
+//        [self addSubview:_shadowView positioned:NSWindowBelow relativeTo:[self contentView]];
+//    }
+//    
+//    [self _updateShadowFrame];
+//}
+//
+//- (void)_updateShadowFrame {
+//    NSView* docView = [self documentView];
+//    CGRect shadowFrame = [self convertRect:[docView visibleRect] fromView:docView];
+//    shadowFrame = CGRectInset(shadowFrame, -ShadowCenterOffset/[_shadowLayer contentsScale], -ShadowCenterOffset/[_shadowLayer contentsScale]);
+//    [_shadowView setFrame:shadowFrame];
+//}
+//
+//- (void)reflectScrolledClipView:(NSClipView*)clipView {
+//    [super reflectScrolledClipView:clipView];
+//    [self _updateShadowFrame];
+//}
+//
+//- (void)viewDidChangeBackingProperties {
+//    [super viewDidChangeBackingProperties];
+//    [_shadowLayer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
+//}
+//
+//@end
 
 
 
@@ -363,31 +363,55 @@ static void _InitCommon(ImageScrollView* self) {
     [_delegate imageViewNextImage:self];
 }
 
-- (void)viewWillStartLiveResize {
-    // MainView sends this message explicitly when resizing using the divider; forward it to _scrollView
-    [super viewWillStartLiveResize];
-    [_scrollView viewWillStartLiveResize];
-}
-
-- (void)viewDidEndLiveResize {
-    // MainView sends this message explicitly when resizing using the divider; forward it to _scrollView
-    [super viewDidEndLiveResize];
-    [_scrollView viewDidEndLiveResize];
-}
+//- (void)viewWillStartLiveResize {
+//    // MainView sends this message explicitly when resizing using the divider; forward it to _scrollView
+//    [super viewWillStartLiveResize];
+//    [_scrollView viewWillStartLiveResize];
+//}
+//
+//- (void)viewDidEndLiveResize {
+//    // MainView sends this message explicitly when resizing using the divider; forward it to _scrollView
+//    [super viewDidEndLiveResize];
+//    [_scrollView viewDidEndLiveResize];
+//}
 
 //- (NSView*)initialFirstResponder {
 //    return [_scrollView documentView];
 //}
 
 - (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
-    const bool fit = [(LayerScrollView*)[self enclosingScrollView] magnifyToFit];
+    const bool fit = [(FixedScrollView*)[self enclosingScrollView] magnifyToFit];
     return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
 }
 
-// MARK: - FixedMetalDocumentLayer Overrides
-- (CGSize)fixedContentSize {
-    #error TODO: implement
-    return {};
+// MARK: - NSView Overrides
+- (void)viewDidMoveToSuperview {
+    [super viewDidMoveToSuperview];
+    
+    
+//        [_docWidth setConstant:imageThumb.imageWidth*2];
+//        [_docHeight setConstant:imageThumb.imageHeight*2];
+////        NSView* doc = [_scrollView documentView];
+////        [doc setTranslatesAutoresizingMaskIntoConstraints:false];
+////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeWidth
+////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+////            constant:imageThumb.ref.imageWidth*2]];
+////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeHeight
+////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+////            constant:imageThumb.ref.imageHeight*2]];
+    
+    NSView*const superview = [self superview];
+    if (!superview) return;
+    
+    NSLayoutConstraint* width = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeWidth
+        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+        constant:_imageLayer->imageThumb.imageWidth*2];
+    
+    NSLayoutConstraint* height = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeHeight
+        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+        constant:_imageLayer->imageThumb.imageHeight*2];
+    
+    [NSLayoutConstraint activateConstraints:@[width, height]];
 }
 
 @end

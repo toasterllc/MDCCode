@@ -369,12 +369,6 @@ done:
     [self setNeedsDisplay];
 }
 
-// MARK: - FixedMetalDocumentLayer Overrides
-- (CGSize)fixedContentSize {
-    #error TODO: implement
-    return {};
-}
-
 @end
 
 
@@ -402,6 +396,7 @@ done:
     CALayer* _selectionRectLayer;
     ImageSourcePtr _imageSource;
     __weak id<ImageGridViewDelegate> _delegate;
+    NSLayoutConstraint* _documentHeight;
 }
 
 // MARK: - Creation
@@ -469,12 +464,31 @@ done:
 - (void)_updateDocumentHeight {
     [_imageGridLayer setContainerWidth:[self bounds].size.width];
     [_imageGridLayer recomputeGrid];
-//    [_documentHeight setConstant:[_imageGridLayer containerHeight]];
+    [_documentHeight setConstant:[_imageGridLayer containerHeight]];
 }
 
 - (void)_handleImageLibraryChanged {
     [self _updateDocumentHeight];
     [_imageGridLayer setNeedsDisplay];
+}
+
+// MARK: - NSView Overrides
+- (void)viewDidMoveToSuperview {
+    [super viewDidMoveToSuperview];
+    
+    NSView*const superview = [self superview];
+    if (!superview) return;
+    
+    NSView*const superSuperview = [superview superview];
+    if (!superSuperview) return;
+    
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[superview]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(superview)]];
+    
+    _documentHeight = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeHeight
+        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+        multiplier:1 constant:0];
+    [NSLayoutConstraint activateConstraints:@[_documentHeight]];
 }
 
 // MARK: - Event Handling

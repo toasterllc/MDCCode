@@ -332,6 +332,9 @@ using namespace MDCStudio;
         ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageSource:imageSource];
         [imageView setDelegate:self];
         
+        FixedScrollView* sv = [[FixedScrollView alloc] initWithFrame:{}];
+        [sv setFixedDocument:imageView];
+        
         NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageThumb.timestamp];
         printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageId, (uintmax_t)imageThumb.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);
         
@@ -341,7 +344,7 @@ using namespace MDCStudio;
 //            [_mainView setContentView:imageView animation:MainViewAnimation::None];
 //        }
         
-        [_mainView setContentView:imageView animation:MainViewAnimation::None];
+        [_mainView setContentView:sv animation:MainViewAnimation::None];
         
         return true;
     }

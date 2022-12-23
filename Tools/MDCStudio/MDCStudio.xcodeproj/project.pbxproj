@@ -15,7 +15,6 @@
 		5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544A7EC27B5E011006AB473 /* SourceListView.mm */; };
 		5544AE2927B5E595006AB473 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5544ADFD27B5E57A006AB473 /* Renderer.metal */; };
 		5544AE3327B5F98C006AB473 /* MainView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE3227B5F98C006AB473 /* MainView.mm */; };
-		5544AE3527B646C3006AB473 /* ImageGridView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544AE3427B646C3006AB473 /* ImageGridView.xib */; };
 		5544AE5D27B6EE04006AB473 /* Document.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE5A27B6EE04006AB473 /* Document.mm */; };
 		5544AE5E27B6EE04006AB473 /* Document.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544AE5B27B6EE04006AB473 /* Document.xib */; };
 		5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE6027B6F16F006AB473 /* DocumentController.mm */; };
@@ -54,7 +53,6 @@
 		55F8D01027BDF26400757165 /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00F27BDF26400757165 /* Shadow.png */; };
 		55F8D01427BEF3E500757165 /* ImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* ImageView.mm */; };
 		55F8D01927BEF97200757165 /* ImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* ImageView.metal */; };
-		55F8D09427C442CA00757165 /* ImageView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D09327C442CA00757165 /* ImageView.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -116,7 +114,6 @@
 		5544AE2827B5E58F006AB473 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
 		5544AE3127B5F98C006AB473 /* MainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainView.h; sourceTree = "<group>"; };
 		5544AE3227B5F98C006AB473 /* MainView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainView.mm; sourceTree = "<group>"; };
-		5544AE3427B646C3006AB473 /* ImageGridView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageGridView.xib; sourceTree = "<group>"; };
 		5544AE5A27B6EE04006AB473 /* Document.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Document.mm; sourceTree = "<group>"; };
 		5544AE5B27B6EE04006AB473 /* Document.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Document.xib; sourceTree = "<group>"; };
 		5544AE5C27B6EE04006AB473 /* Document.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Document.h; sourceTree = "<group>"; };
@@ -185,7 +182,6 @@
 		55F8D03027BF9F8000757165 /* ImageCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageCache.h; sourceTree = "<group>"; };
 		55F8D05827C0E07900757165 /* Lockable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lockable.h; sourceTree = "<group>"; };
 		55F8D09227C2EE9D00757165 /* ImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageSource.h; sourceTree = "<group>"; };
-		55F8D09327C442CA00757165 /* ImageView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ImageView.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -214,7 +210,6 @@
 				55C6C846279001CA005ABD39 /* ImageGridLayer.metal */,
 				551328B727B45D7C00CD823B /* ImageGridView.h */,
 				551328B827B45D7C00CD823B /* ImageGridView.mm */,
-				5544AE3427B646C3006AB473 /* ImageGridView.xib */,
 			);
 			path = ImageGridView;
 			sourceTree = "<group>";
@@ -457,7 +452,6 @@
 				55F8D01627BEF97200757165 /* ImageView.metal */,
 				55F8D01227BEF3E500757165 /* ImageView.h */,
 				55F8D01327BEF3E500757165 /* ImageView.mm */,
-				55F8D09327C442CA00757165 /* ImageView.xib */,
 				55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */,
 			);
 			path = ImageView;
@@ -522,12 +516,10 @@
 			files = (
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
 				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
-				5544AE3527B646C3006AB473 /* ImageGridView.xib in Resources */,
 				553031FF27BC45A100BEFFEA /* Mask.png in Resources */,
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,
 				55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */,
-				55F8D09427C442CA00757165 /* ImageView.xib in Resources */,
 				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
 				55F8D01027BDF26400757165 /* Shadow.png in Resources */,
