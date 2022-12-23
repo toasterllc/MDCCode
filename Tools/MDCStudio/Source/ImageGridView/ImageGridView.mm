@@ -479,9 +479,6 @@ done:
     NSView*const superview = [self superview];
     if (!superview) return;
     
-    NSView*const superSuperview = [superview superview];
-    if (!superSuperview) return;
-    
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[superview]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(superview)]];
     
