@@ -179,7 +179,7 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskBatteryMonitor")]]
-        static inline uint8_t Stack[64];
+        static inline uint8_t Stack[256];
     };
 
 public:
