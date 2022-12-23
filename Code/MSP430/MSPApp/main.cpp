@@ -928,10 +928,8 @@ int main() {
         // General IO
         _Pin::MOTION_SIGNAL,
         _Pin::BUTTON_SIGNAL_,
-        _Pin::BAT_CHRG_LVL_EN,
         _Pin::LED_GREEN_,
         _Pin::LED_RED_,
-        _Pin::BAT_CHRG_LVL,
         _Pin::MOTION_EN_,
         _Pin::VDD_B_EN,
         
@@ -951,7 +949,11 @@ int main() {
         // I2C (config chosen by _I2C)
         _I2C::Pin::SCL,
         _I2C::Pin::SDA,
-        _I2C::Pin::Active
+        _I2C::Pin::Active,
+        
+        // Battery
+        _Battery::Pin::BatChrgLvlPin,
+        _Battery::Pin::BatChrgLvlEnPin,
     >();
     
     // Init clock
