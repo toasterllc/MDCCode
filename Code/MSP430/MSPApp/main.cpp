@@ -23,6 +23,7 @@
 #include "Toastbox/IntState.h"
 #include "ImgSD.h"
 #include "I2C.h"
+#include "OutputPriority.h"
 using namespace GPIO;
 
 #define Assert(x) if (!(x)) _MainError(__LINE__)
@@ -98,6 +99,9 @@ using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_
 using _ICE = ICE<_Scheduler, _ICEError>;
 
 using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr, _I2CError>;
+
+using _LEDGreen_ = OutputPriority<_Pin::LED_GREEN_>;
+using _LEDRed_ = OutputPriority<_Pin::LED_RED_>;
 
 // _ImgSensor: image sensor object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
@@ -547,7 +551,7 @@ struct _MainTask {
             for (;;) {
                 // Capture an image
                 {
-                    _Pin::LED_GREEN_::Write(0);
+                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
                     
                     // Wait for _SDTask to be initialized and done with writing, which is necessary
                     // for 2 reasons:
@@ -566,7 +570,7 @@ struct _MainTask {
                     _SDTask::Write(srcRAMBlock);
                     _SDTask::Wait();
                     
-                    _Pin::LED_GREEN_::Write(1);
+                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
                 }
                 
                 break;
@@ -664,6 +668,10 @@ struct _I2CTask {
             
             // Cleanup
             
+            // Relinquish LEDs
+            _LEDRed_::Set(_LEDRed_::Priority::High, std::nullopt);
+            _LEDGreen_::Set(_LEDGreen_::Priority::High, std::nullopt);
+            
             // Exit host mode
             _MainTask::HostModeSet(false);
         }
@@ -683,8 +691,8 @@ struct _I2CTask {
             };
         
         case Cmd::Op::LEDSet:
-            _Pin::LED_RED_::Write(!cmd.arg.LEDSet.red);
-            _Pin::LED_GREEN_::Write(!cmd.arg.LEDSet.green);
+            _LEDRed_::Set(_LEDRed_::Priority::High, !cmd.arg.LEDSet.red);
+            _LEDGreen_::Set(_LEDGreen_::Priority::High, !cmd.arg.LEDSet.green);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
