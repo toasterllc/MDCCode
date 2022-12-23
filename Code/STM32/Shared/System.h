@@ -163,7 +163,6 @@ private:
                     .op = MSP::Cmd::Op::LEDSet,
                     .arg = {
                         .LEDSet = {
-                            .red = !green,
                             .green = green,
                         },
                     },
