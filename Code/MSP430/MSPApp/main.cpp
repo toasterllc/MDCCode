@@ -492,73 +492,6 @@ struct _ImgTask {
     static inline uint8_t Stack[256];
 };
 
-struct _I2CTask {
-    static void Run() {
-        for (;;) {
-            // Wait until the I2C lines are activated (ie VDD_B_3V3_STM becomes powered)
-            _I2C::WaitUntilActive();
-            
-            for (;;) {
-                // Wait for a command
-                MSP::Cmd cmd;
-                bool ok = _I2C::Recv(cmd);
-                if (!ok) break;
-                
-                // Handle command
-                const MSP::Resp resp = _CmdHandle(cmd);
-                
-                // Send response
-                ok = _I2C::Send(resp);
-                if (!ok) break;
-            }
-        }
-    }
-    
-    static MSP::Resp _CmdHandle(const MSP::Cmd& cmd) {
-        using namespace MSP;
-        switch (cmd.op) {
-        case Cmd::Op::Echo:
-            return MSP::Resp{
-                .ok = true,
-                .arg = {
-                    .Echo = {
-                        .data = cmd.arg.Echo.data,
-                    },
-                },
-            };
-        
-        case Cmd::Op::LEDSet:
-            _Pin::LED_RED_::Write(!cmd.arg.LEDSet.red);
-            _Pin::LED_GREEN_::Write(!cmd.arg.LEDSet.green);
-            return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::HostModeSet:
-            // TODO: implement
-            return MSP::Resp{ .ok = false };
-        
-        case Cmd::Op::VDDIMGSDSet:
-            _VDDIMGSDSet(cmd.arg.VDDIMGSDSet.en);
-            return MSP::Resp{ .ok = true };
-        
-        case Cmd::Op::BatterySample:
-            // TODO: implement
-            return MSP::Resp{ .ok = false };
-        
-        default:
-            return MSP::Resp{ .ok = false };
-        }
-    }
-    
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{
-        .AutoStart = Run, // Task should start running
-    };
-    
-    // Task stack
-    [[gnu::section(".stack._I2CTask")]]
-    static inline uint8_t Stack[256];
-};
-
 struct _MainTask {
     static void Run() {
         
@@ -584,6 +517,9 @@ struct _MainTask {
         _SPI::Init();
         
         for (;;) {
+            // Enter host mode if necessary
+            _HostModeHandle();
+            
 //            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
 //            {
 //                _WaitingForMotion = true;
@@ -670,14 +606,37 @@ struct _MainTask {
                !_Scheduler::Running<_ImgTask>() ;
     }
     
-    static void MotionSignal(uint16_t iv) {
+    static void HostModeSet(bool en) {
+        Assert(!_HostModeRequest);
+        _HostModeRequest = en;
+        // Wait until the request is consumed
+        _Scheduler::Wait([&] { return !_HostModeRequest; });
+    }
+    
+    static void ISR_MotionSignal(uint16_t iv) {
         _Motion = true;
+    }
+    
+    
+    static void _HostModeHandle() {
+        if (!_HostModeRequest) return; // Short-circuit if there's no pending request
+        for (;;) {
+            // Consume the request
+            const bool en = *_HostModeRequest;
+            _HostModeRequest = std::nullopt;
+            // If host mode is disabled; bail
+            if (!en) return;
+            // Host mode is enabled; park here and wait for further requests
+            _Scheduler::Wait([&] { return _HostModeRequest; });
+        }
     }
     
     // _Motion: announces that motion occurred
     // atomic because _Motion is modified from the interrupt context
     static inline std::atomic<bool> _Motion = false;
     static inline bool _WaitingForMotion = false;
+    
+    static inline std::optional<bool> _HostModeRequest;
     
     // Task options
     static constexpr Toastbox::TaskOptions Options{
@@ -686,6 +645,75 @@ struct _MainTask {
     
     // Task stack
     [[gnu::section(".stack._MainTask")]]
+    static inline uint8_t Stack[256];
+};
+
+struct _I2CTask {
+    static void Run() {
+        for (;;) {
+            // Wait until the I2C lines are activated (ie VDD_B_3V3_STM becomes powered)
+            _I2C::WaitUntilActive();
+            
+            for (;;) {
+                // Wait for a command
+                MSP::Cmd cmd;
+                bool ok = _I2C::Recv(cmd);
+                if (!ok) break;
+                
+                // Handle command
+                const MSP::Resp resp = _CmdHandle(cmd);
+                
+                // Send response
+                ok = _I2C::Send(resp);
+                if (!ok) break;
+            }
+        }
+    }
+    
+    static MSP::Resp _CmdHandle(const MSP::Cmd& cmd) {
+        using namespace MSP;
+        switch (cmd.op) {
+        case Cmd::Op::Echo:
+            return MSP::Resp{
+                .ok = true,
+                .arg = {
+                    .Echo = {
+                        .data = cmd.arg.Echo.data,
+                    },
+                },
+            };
+        
+        case Cmd::Op::LEDSet:
+            _Pin::LED_RED_::Write(!cmd.arg.LEDSet.red);
+            _Pin::LED_GREEN_::Write(!cmd.arg.LEDSet.green);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::HostModeSet:
+            _MainTask::HostModeSet(cmd.arg.HostModeSet.en);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::VDDIMGSDSet:
+            _VDDIMGSDSet(cmd.arg.VDDIMGSDSet.en);
+            return MSP::Resp{ .ok = true };
+        
+        case Cmd::Op::BatterySample:
+            // TODO: implement
+            return MSP::Resp{ .ok = false };
+        
+        default:
+            return MSP::Resp{ .ok = false };
+        }
+    }
+    
+    static inline bool _HostMode = false;
+    
+    // Task options
+    static constexpr Toastbox::TaskOptions Options{
+        .AutoStart = Run, // Task should start running
+    };
+    
+    // Task stack
+    [[gnu::section(".stack._I2CTask")]]
     static inline uint8_t Stack[256];
 };
 
@@ -740,7 +768,7 @@ static void _ISR_Port2() {
     const uint16_t iv = P2IV;
     switch (__even_in_range(iv, 0x10)) {
     case _Pin::MOTION_SIGNAL::IVPort2():
-        _MainTask::MotionSignal(iv);
+        _MainTask::ISR_MotionSignal(iv);
         // Wake ourself
         __bic_SR_register_on_exit(LPM3_bits);
         break;
