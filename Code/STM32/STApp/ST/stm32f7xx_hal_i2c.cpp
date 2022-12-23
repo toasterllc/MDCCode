@@ -498,21 +498,28 @@ HAL_StatusTypeDef HAL_I2C_Init(I2C_HandleTypeDef *hi2c)
 
 #if (USE_HAL_I2C_REGISTER_CALLBACKS == 1)
     /* Init the I2C Callback settings */
-    hi2c->MasterTxCpltCallback = HAL_I2C_MasterTxCpltCallback; /* Legacy weak MasterTxCpltCallback */
-    hi2c->MasterRxCpltCallback = HAL_I2C_MasterRxCpltCallback; /* Legacy weak MasterRxCpltCallback */
-    hi2c->SlaveTxCpltCallback  = HAL_I2C_SlaveTxCpltCallback;  /* Legacy weak SlaveTxCpltCallback  */
-    hi2c->SlaveRxCpltCallback  = HAL_I2C_SlaveRxCpltCallback;  /* Legacy weak SlaveRxCpltCallback  */
-    hi2c->ListenCpltCallback   = HAL_I2C_ListenCpltCallback;   /* Legacy weak ListenCpltCallback   */
-    hi2c->MemTxCpltCallback    = HAL_I2C_MemTxCpltCallback;    /* Legacy weak MemTxCpltCallback    */
-    hi2c->MemRxCpltCallback    = HAL_I2C_MemRxCpltCallback;    /* Legacy weak MemRxCpltCallback    */
-    hi2c->ErrorCallback        = HAL_I2C_ErrorCallback;        /* Legacy weak ErrorCallback        */
-    hi2c->AbortCpltCallback    = HAL_I2C_AbortCpltCallback;    /* Legacy weak AbortCpltCallback    */
-    hi2c->AddrCallback         = HAL_I2C_AddrCallback;         /* Legacy weak AddrCallback         */
-
-    if (hi2c->MspInitCallback == NULL)
-    {
-      hi2c->MspInitCallback = HAL_I2C_MspInit; /* Legacy weak MspInit  */
-    }
+    if (!hi2c->MasterTxCpltCallback)
+        hi2c->MasterTxCpltCallback  = HAL_I2C_MasterTxCpltCallback; /* Legacy weak MasterTxCpltCallback */
+    if (!hi2c->MasterRxCpltCallback)
+        hi2c->MasterRxCpltCallback  = HAL_I2C_MasterRxCpltCallback; /* Legacy weak MasterRxCpltCallback */
+    if (!hi2c->SlaveTxCpltCallback)
+        hi2c->SlaveTxCpltCallback   = HAL_I2C_SlaveTxCpltCallback;  /* Legacy weak SlaveTxCpltCallback  */
+    if (!hi2c->SlaveRxCpltCallback)
+        hi2c->SlaveRxCpltCallback   = HAL_I2C_SlaveRxCpltCallback;  /* Legacy weak SlaveRxCpltCallback  */
+    if (!hi2c->ListenCpltCallback)
+        hi2c->ListenCpltCallback    = HAL_I2C_ListenCpltCallback;   /* Legacy weak ListenCpltCallback   */
+    if (!hi2c->MemTxCpltCallback)
+        hi2c->MemTxCpltCallback     = HAL_I2C_MemTxCpltCallback;    /* Legacy weak MemTxCpltCallback    */
+    if (!hi2c->MemRxCpltCallback)
+        hi2c->MemRxCpltCallback     = HAL_I2C_MemRxCpltCallback;    /* Legacy weak MemRxCpltCallback    */
+    if (!hi2c->ErrorCallback)
+        hi2c->ErrorCallback         = HAL_I2C_ErrorCallback;        /* Legacy weak ErrorCallback        */
+    if (!hi2c->AbortCpltCallback)
+        hi2c->AbortCpltCallback     = HAL_I2C_AbortCpltCallback;    /* Legacy weak AbortCpltCallback    */
+    if (!hi2c->AddrCallback)
+        hi2c->AddrCallback          = HAL_I2C_AddrCallback;         /* Legacy weak AddrCallback         */
+    if (!hi2c->MspInitCallback)
+        hi2c->MspInitCallback       = HAL_I2C_MspInit;              /* Legacy weak MspInit  */
 
     /* Init the low level hardware : GPIO, CLOCK, CORTEX...etc */
     hi2c->MspInitCallback(hi2c);

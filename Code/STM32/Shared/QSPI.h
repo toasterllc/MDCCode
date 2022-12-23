@@ -3,6 +3,7 @@
 #include "GPIO.h"
 #include "Toastbox/IntState.h"
 
+#warning TODO: follow I2C implementation and make this a singleton class (QSPIType)
 class QSPI {
 public:
     enum class Mode {
@@ -80,6 +81,8 @@ public:
         _device.Init.DualFlash = (_config->mode==Mode::Single ? QSPI_DUALFLASH_DISABLE : QSPI_DUALFLASH_ENABLE);
         _device.Ctx = this;
         
+        #warning TODO: update to follow the I2C model, where we statically define _device
+        #warning TODO: update HAL_QSPI_Init so that it doesn't overwrite out callback pointers!
         HAL_StatusTypeDef hs = HAL_QSPI_Init(&_device);
         Assert(hs == HAL_OK);
         

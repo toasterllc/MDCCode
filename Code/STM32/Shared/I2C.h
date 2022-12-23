@@ -15,8 +15,9 @@ public:
         _SCL::Config(GPIO_MODE_AF_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF4_I2C1);
         _SDA::Config(GPIO_MODE_AF_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF4_I2C1);
         
-        constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
         __HAL_RCC_I2C1_CLK_ENABLE();
+        
+        constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
         HAL_NVIC_SetPriority(I2C1_EV_IRQn, InterruptPriority, 0);
         HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
         HAL_NVIC_SetPriority(I2C1_ER_IRQn, InterruptPriority, 0);
@@ -84,25 +85,21 @@ private:
     }
     
     static void _CallbackTx(I2C_HandleTypeDef* me) {
-        Assert(false);
         Assert(_St.load() == _State::Send);
         _St = _State::Idle;
     }
     
     static void _CallbackRx(I2C_HandleTypeDef* me) {
-        Assert(false);
         Assert(_St.load() == _State::Recv);
         _St = _State::Idle;
     }
     
     static void _CallbackError(I2C_HandleTypeDef* me) {
-        Assert(false);
         Assert(_St.load()==_State::Send || _St.load()==_State::Recv);
         _St = _State::Error;
     }
     
     static void _CallbackAbort(I2C_HandleTypeDef* me) {
-        Assert(false);
         // Should never occur
         Assert(false);
     }
