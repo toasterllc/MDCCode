@@ -9,13 +9,13 @@ uint8_t T_Addr
 class I2CType {
 public:
     static void Init() {
-        constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
-        
+        // Enable clock for SCL/SDA GPIOs (B8/B9)
         __HAL_RCC_GPIOB_CLK_ENABLE();
         
         _SCL::Config(GPIO_MODE_AF_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF4_I2C1);
         _SDA::Config(GPIO_MODE_AF_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF4_I2C1);
         
+        constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
         __HAL_RCC_I2C1_CLK_ENABLE();
         HAL_NVIC_SetPriority(I2C1_EV_IRQn, InterruptPriority, 0);
         HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
@@ -79,26 +79,30 @@ private:
         HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, T_Addr, (uint8_t*)&msg, sizeof(msg));
         Assert(hs == HAL_OK);
         
-        T_Scheduler::Wait([&] { return _St.load()!=_State::Recv; });
+        T_Scheduler::Wait([&] { return _St.load() != _State::Recv; });
         return _St.load()==_State::Idle;
     }
     
     static void _CallbackTx(I2C_HandleTypeDef* me) {
+        Assert(false);
         Assert(_St.load() == _State::Send);
         _St = _State::Idle;
     }
     
     static void _CallbackRx(I2C_HandleTypeDef* me) {
+        Assert(false);
         Assert(_St.load() == _State::Recv);
         _St = _State::Idle;
     }
     
     static void _CallbackError(I2C_HandleTypeDef* me) {
+        Assert(false);
         Assert(_St.load()==_State::Send || _St.load()==_State::Recv);
         _St = _State::Error;
     }
     
     static void _CallbackAbort(I2C_HandleTypeDef* me) {
+        Assert(false);
         // Should never occur
         Assert(false);
     }
