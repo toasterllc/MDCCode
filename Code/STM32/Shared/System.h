@@ -4,6 +4,8 @@
 #include "Util.h"
 #include "STM.h"
 #include "USB.h"
+#include "I2C.h"
+#include "MSP.h"
 #include "Toastbox/Task.h"
 
 // MARK: - Main Thread Stack
@@ -28,6 +30,7 @@ class System {
 private:
     class _TaskCmdRecv;
     class _TaskCmdHandle;
+    class _TaskBatteryMonitor;
     
     [[noreturn]]
     static void _SchedulerError(uint16_t line) {
@@ -54,6 +57,7 @@ public:
         4,                                          // T_StackGuardCount: number of pointer-sized stack guard elements to use
         _TaskCmdRecv,                               // T_Tasks: list of tasks
         _TaskCmdHandle,
+        _TaskBatteryMonitor,
         T_Tasks...
     >;
     
@@ -149,6 +153,34 @@ private:
         [[gnu::section(".stack._TaskCmdHandle")]]
         static inline uint8_t Stack[1024];
     };
+    
+    struct _TaskBatteryMonitor {
+        static void Run() {
+            for (bool green=false;; green=!green) {
+                MSP::Cmd cmd = {
+                    .op = MSP::Cmd::Op::LEDSet,
+                    .arg = {
+                        .LEDSet = {
+                            .green = green,
+                        },
+                    },
+                };
+                MSP::Resp resp;
+                I2C::Send(cmd, resp);
+                
+                Scheduler::Sleep(Scheduler::Ms(1000));
+            }
+        }
+        
+        // Task options
+        static constexpr Toastbox::TaskOptions Options{
+            .AutoStart = Run, // Task should start running
+        };
+        
+        // Task stack
+        [[gnu::section(".stack._TaskBatteryMonitor")]]
+        static inline uint8_t Stack[64];
+    };
 
 public:
     
@@ -186,6 +218,9 @@ public:
     using LED1 = GPIO<GPIOPortB, 12>;
     using LED2 = GPIO<GPIOPortB, 11>;
     using LED3 = GPIO<GPIOPortB, 13>;
+    
+    // I2C
+    using I2C = I2CType<Scheduler, MSP::I2CAddr>;
     
     static inline T_USB USB;
     

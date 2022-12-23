@@ -126,25 +126,26 @@ namespace MSP {
         enum class Op : uint8_t {
             None,
             Echo,
+            LEDSet,
             HostModeSet,
             VDDIMGSDSet,
             BatterySample,
         };
         
-        Op op;
+        Op op = Op::None;
         union {
             struct [[gnu::packed]] {
                 uint32_t data;
             } Echo;
             
             struct [[gnu::packed]] {
-                uint8_t en;
-            } HostModeSet;
-            
-            struct [[gnu::packed]] {
                 uint8_t red;
                 uint8_t green;
             } LEDSet;
+            
+            struct [[gnu::packed]] {
+                uint8_t en;
+            } HostModeSet;
             
             struct [[gnu::packed]] {
                 uint8_t en;
@@ -155,18 +156,17 @@ namespace MSP {
         } arg;
     };
     
-    union Resp {
-        struct [[gnu::packed]] {
-            uint8_t ok;
-        } Status;
-        
-        struct [[gnu::packed]] {
-            uint32_t data;
-        } Echo;
-        
-        struct [[gnu::packed]] {
-            uint16_t sample;
-        } BatterySample;
+    struct [[gnu::packed]] Resp {
+        uint8_t ok = false;
+        union {
+            struct [[gnu::packed]] {
+                uint32_t data;
+            } Echo;
+            
+            struct [[gnu::packed]] {
+                uint16_t sample;
+            } BatterySample;
+        } arg;
     };
 
 } // namespace MSP

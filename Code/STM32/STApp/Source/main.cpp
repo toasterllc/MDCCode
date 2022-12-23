@@ -14,8 +14,6 @@
 #include "ImgSD.h"
 #include "USBConfigDesc.h"
 #include "MSP430JTAG.h"
-#include "MSP.h"
-#include "I2C.h"
 using namespace STM;
 
 // MARK: - Peripherals & Types
@@ -60,7 +58,7 @@ using _System = System<
 constexpr auto& _USB = _System::USB;
 using _Scheduler = _System::Scheduler;
 
-using _I2C = I2CType<_Scheduler, MSP::I2CAddr>;
+using _I2C = _System::I2C;
 
 static QSPI _QSPI;
 static Battery<_Scheduler> _Battery;
@@ -149,7 +147,7 @@ static bool _VDDIMGSDSet(bool en) {
     const bool ok = _I2C::Send(cmd, resp);
     if (!ok) return false;
     
-    return resp.Status.ok;
+    return resp.ok;
 }
 
 static bool _HostModeSet(bool en) {
@@ -166,7 +164,7 @@ static bool _HostModeSet(bool en) {
     const bool ok = _I2C::Send(cmd, resp);
     if (!ok) return false;
     
-    return resp.Status.ok;
+    return resp.ok;
 }
 
 // MARK: - ICE40

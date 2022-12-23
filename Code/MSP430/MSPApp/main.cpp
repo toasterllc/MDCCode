@@ -499,20 +499,49 @@ struct _I2CTask {
             _I2C::WaitUntilActive();
             
             for (;;) {
-                // Wait for a message to arrive over I2C
+                // Wait for a command
                 MSP::Cmd cmd;
                 bool ok = _I2C::Recv(cmd);
                 if (!ok) break;
                 
-                // Send a response
-                const MSP::Resp resp = {
-                    .Status = {
-                        .ok = true,
-                    },
-                };
+                // Handle command
+                const MSP::Resp resp = _CmdHandle(cmd);
+                
+                // Send response
                 ok = _I2C::Send(resp);
                 if (!ok) break;
             }
+        }
+    }
+    
+    static MSP::Resp _CmdHandle(const MSP::Cmd& cmd) {
+        using namespace MSP;
+        switch (cmd.op) {
+        case Cmd::Op::Echo:
+            return MSP::Resp{
+                .ok = true,
+                .arg = {
+                    .Echo = {
+                        .data = cmd.arg.Echo.data,
+                    },
+                },
+            };
+        
+        case Cmd::Op::LEDSet:
+            _Pin::LED_RED_::Write(!cmd.arg.LEDSet.red);
+            _Pin::LED_GREEN_::Write(!cmd.arg.LEDSet.green);
+            return MSP::Resp{ .ok = true, };
+        
+        case Cmd::Op::HostModeSet:
+            // TODO: implement
+        case Cmd::Op::VDDIMGSDSet:
+            // TODO: implement
+        case Cmd::Op::BatterySample:
+            // TODO: implement
+        default:
+            return MSP::Resp{
+                .ok = false,
+            };
         }
     }
     
@@ -539,6 +568,11 @@ struct _MainTask {
 //            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
 //            _Scheduler::Sleep(_Scheduler::Ms(250));
 //        }
+        
+        // TODO: remove
+        for (;;) {
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
+        }
         
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
