@@ -506,11 +506,6 @@ struct _MainTask {
 //            _Scheduler::Sleep(_Scheduler::Ms(250));
 //        }
         
-        // TODO: remove
-        for (;;) {
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
-        }
-        
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
         // Init SPI peripheral
@@ -968,40 +963,8 @@ int main() {
     // Init SysTick
     _SysTick::Init();
     
-//    {
-//        _Pin::VDD_B_EN::Write(1);
-//        _Scheduler::Delay(_Scheduler::Ms(1000));
-//        
-////        debugSignal();
-//        
-//        for (;;) {
-//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//            _Scheduler::Delay(_Scheduler::Ms(250));
-//            
-//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            _Scheduler::Delay(_Scheduler::Ms(250));
-//        }
-//    }
-    
     // Handle cold starts
     if (Startup::ColdStart()) {
-//        // Temporarily enable a pullup on HOST_MODE_ so that we can determine whether STM is driving it low.
-//        // We don't want the pullup to be permanent to prevent leakage current (~80nA) through STM32's GPIO
-//        // that controls HOST_MODE_.
-//        _Pin::HOST_MODE_::Write(1);
-//        
-//        // Wait for the pullup to pull the rail up
-//        _Scheduler::Delay(_Scheduler::Ms(1));
-//        
-//        // Enter host mode if HOST_MODE_ is asserted
-//        if (!_Pin::HOST_MODE_::Read()) {
-//            _HostMode();
-//        }
-//        
-//        // Return to default HOST_MODE_ config
-//        // Not using GPIO::Init() here because it costs a lot more instructions.
-//        _Pin::HOST_MODE_::Write(0);
-        
         // Since this is a cold start, delay 3s before beginning.
         // This delay is meant for the case where we restarted due to an abort, and
         // serves 2 purposes:
