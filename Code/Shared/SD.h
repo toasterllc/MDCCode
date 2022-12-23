@@ -16,7 +16,7 @@ namespace SD {
         uint16_t manufactureDate        = 0;
         uint8_t crc                     = 0;
     };
-
+    
     struct [[gnu::packed]] CardData {
         uint8_t data[15]    = {};
         uint8_t crc         = 0;

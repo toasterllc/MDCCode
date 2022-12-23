@@ -135,38 +135,38 @@ private:
 
 // MARK: - Utility Functions
 
-static void _IMGSDPowerStateSet(bool en) {
-    #warning TODO: update for rev7 board
-//    switch (state) {
-//    case _IMGSDPowerState::Uncontrolled:
-//        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        break;
-//    
-//    case _IMGSDPowerState::Off:
-//        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-//        _VDD_B_2V8_IMG_SD_EN::Write(0);
-//        _VDD_B_1V8_IMG_SD_EN::Write(0);
-//        
-//        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        
-//        // Rails take ~1.5ms to turn off, so wait 2ms to be sure
-//        _Scheduler::Sleep(_Scheduler::Ms(2));
-//        break;
-//    
-//    case _IMGSDPowerState::On:
-//        _VDD_B_2V8_IMG_SD_EN::Write(1);
-//        _VDD_B_2V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        
-//        _Scheduler::Sleep(_Scheduler::Us(100)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-//        _VDD_B_1V8_IMG_SD_EN::Write(1);
-//        _VDD_B_1V8_IMG_SD_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//        
-//        // Rails take ~1ms to turn on, so wait 2ms to be sure
-//        _Scheduler::Sleep(_Scheduler::Ms(2));
-//        break;
-//    }
+static bool _VDDIMGSDSet(bool en) {
+    MSP::Cmd cmd = {
+        .op = MSP::Cmd::Op::VDDIMGSDSet,
+        .arg = {
+            .VDDIMGSDSet = {
+                .en = en,
+            },
+        },
+    };
+    MSP::Resp resp;
+    
+    const bool ok = _I2C::Send(cmd, resp);
+    if (!ok) return false;
+    
+    return resp.Status.ok;
+}
+
+static bool _HostModeSet(bool en) {
+    MSP::Cmd cmd = {
+        .op = MSP::Cmd::Op::HostModeSet,
+        .arg = {
+            .HostModeSet = {
+                .en = en,
+            },
+        },
+    };
+    MSP::Resp resp;
+    
+    const bool ok = _I2C::Send(cmd, resp);
+    if (!ok) return false;
+    
+    return resp.Status.ok;
 }
 
 // MARK: - ICE40
@@ -559,10 +559,10 @@ static void _HostModeSet(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    #warning TODO: implement
+    const bool ok = _HostModeSet(arg.en);
     
     // Send status
-    _System::USBSendStatus(true);
+    _System::USBSendStatus(ok);
 }
 
 static void _ICERAMWrite(const STM::Cmd& cmd) {
@@ -1142,17 +1142,28 @@ void _SDInit(const STM::Cmd& cmd) {
     _ICEAppInit();
     
     // Disable SD power
-    _IMGSDPowerStateSet(false);
+    bool ok = _VDDIMGSDSet(false);
+    if (!ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
     
     // Reset SD before turning power on
     // This is necessary to put the SD nets in a predefined state before applying power to SD
     _SD::Reset();
     
     // Enable SD power
-    _IMGSDPowerStateSet(true);
+    ok = _VDDIMGSDSet(true);
+    if (!ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
     
     // Init SD card now that its power has been cycled
     _SD::Init();
+    
+    // Send status
+    _System::USBSendStatus(true);
     
     // Send SD card info
     alignas(4) const SDCardInfo cardInfo = {
@@ -1190,7 +1201,11 @@ void _ImgInit(const STM::Cmd& cmd) {
     _ICEAppInit();
     
     // Enable IMG power rails
-    _IMGSDPowerStateSet(true);
+    const bool ok = _VDDIMGSDSet(true);
+    if (!ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
     
     _ImgSensor::Init();
     _ImgSensor::SetStreamEnabled(true);

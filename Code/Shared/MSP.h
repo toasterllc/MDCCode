@@ -125,19 +125,33 @@ namespace MSP {
     struct [[gnu::packed]] Cmd {
         enum class Op : uint8_t {
             None,
-            HostModeSetEnabled,
-            VDDIMGSDSetEnabled,
+            Echo,
+            HostModeSet,
+            VDDIMGSDSet,
+            BatterySample,
         };
         
         Op op;
         union {
             struct [[gnu::packed]] {
-                uint8_t en;
-            } HostModeSetEnabled;
+                uint32_t data;
+            } Echo;
             
             struct [[gnu::packed]] {
                 uint8_t en;
-            } VDDIMGSDSetEnabled;
+            } HostModeSet;
+            
+            struct [[gnu::packed]] {
+                uint8_t red;
+                uint8_t green;
+            } LEDSet;
+            
+            struct [[gnu::packed]] {
+                uint8_t en;
+            } VDDIMGSDSet;
+            
+            struct [[gnu::packed]] {
+            } BatterySample;
         } arg;
     };
     
@@ -145,6 +159,14 @@ namespace MSP {
         struct [[gnu::packed]] {
             uint8_t ok;
         } Status;
+        
+        struct [[gnu::packed]] {
+            uint32_t data;
+        } Echo;
+        
+        struct [[gnu::packed]] {
+            uint16_t sample;
+        } BatterySample;
     };
 
 } // namespace MSP
