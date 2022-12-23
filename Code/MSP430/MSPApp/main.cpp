@@ -24,6 +24,7 @@
 #include "ImgSD.h"
 #include "I2C.h"
 #include "OutputPriority.h"
+#include "Battery.h"
 using namespace GPIO;
 
 #define Assert(x) if (!(x)) _MainError(__LINE__)
@@ -99,6 +100,8 @@ using _SPI = SPIType<_MCLKFreqHz, _Pin::ICE_MSP_SPI_CLK, _Pin::ICE_MSP_SPI_DATA_
 using _ICE = ICE<_Scheduler, _ICEError>;
 
 using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr, _I2CError>;
+
+using _Battery = BatteryType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN>;
 
 using _LEDGreen_ = OutputPriority<_Pin::LED_GREEN_>;
 using _LEDRed_ = OutputPriority<_Pin::LED_RED_>;
