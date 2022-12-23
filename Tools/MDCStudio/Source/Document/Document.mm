@@ -19,6 +19,7 @@ using namespace MDCStudio;
 }
 
 - (void)awakeFromNib {
+//    printf("sizeof(MSP::State): %zu\n", sizeof(MSP::State));
     _sourceListView = [_mainView sourceListView];
     [_sourceListView setDelegate:self];
     

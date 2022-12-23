@@ -710,6 +710,25 @@ struct _I2CTask {
             // TODO: implement
             return MSP::Resp{ .ok = false };
         
+        case Cmd::Op::StateRead: {
+            const size_t off = cmd.arg.StateRead.chunk * sizeof(MSP::Resp::arg.StateRead.data);
+            if (off > sizeof(_State)) return MSP::Resp{ .ok = false };
+            const size_t rem = sizeof(_State)-off;
+            const size_t len = std::min(rem, sizeof(MSP::Resp::arg.StateRead.data));
+            MSP::Resp resp = { .ok = true };
+            memcpy(resp.arg.StateRead.data, (uint8_t*)&_State+off, len);
+            return resp;
+        }
+        
+        case Cmd::Op::StateWrite: {
+            const size_t off = cmd.arg.StateWrite.chunk * sizeof(MSP::Cmd::arg.StateWrite.data);
+            if (off > sizeof(_State)) return MSP::Resp{ .ok = false };
+            const size_t rem = sizeof(_State)-off;
+            const size_t len = std::min(rem, sizeof(MSP::Cmd::arg.StateWrite.data));
+            memcpy((uint8_t*)&_State+off, cmd.arg.StateWrite.data, len);
+            return MSP::Resp{ .ok = true };
+        }
+        
         default:
             return MSP::Resp{ .ok = false };
         }
@@ -953,7 +972,7 @@ int main() {
         
         // Battery
         _Battery::Pin::BatChrgLvlPin,
-        _Battery::Pin::BatChrgLvlEnPin,
+        _Battery::Pin::BatChrgLvlEnPin
     >();
     
     // Init clock

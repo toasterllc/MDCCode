@@ -130,6 +130,8 @@ namespace MSP {
             HostModeSet,
             VDDIMGSDSet,
             BatterySample,
+            StateRead,
+            StateWrite,
         };
         
         Op op = Op::None;
@@ -152,7 +154,13 @@ namespace MSP {
             } VDDIMGSDSet;
             
             struct [[gnu::packed]] {
-            } BatterySample;
+                uint8_t chunk;
+            } StateRead;
+            
+            struct [[gnu::packed]] {
+                uint8_t chunk;
+                uint8_t data[4];
+            } StateWrite;
         } arg;
     };
     
@@ -160,12 +168,16 @@ namespace MSP {
         uint8_t ok = false;
         union {
             struct [[gnu::packed]] {
-                uint32_t data;
+                uint64_t data;
             } Echo;
             
             struct [[gnu::packed]] {
                 uint16_t sample;
             } BatterySample;
+            
+            struct [[gnu::packed]] {
+                uint8_t data[4];
+            } StateRead;
         } arg;
     };
 
