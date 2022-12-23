@@ -107,7 +107,7 @@ public:
         if (!iv) return;
         _IV = iv;
         // Disable I2C interrupts until _IV is handled by our thread
-        _I2CIntsSetEnabled(false);
+        _I2CIntsEnable(false);
     }
     
     static void ISR_Active(uint16_t iv) {
@@ -182,7 +182,7 @@ private:
         Pin::Active::IFG(Pin::Active::Read() == dir);
     }
     
-    static void _I2CIntsSetEnabled(bool en) {
+    static void _I2CIntsEnable(bool en) {
         if (en) UCB0IE = UCSTTIE | UCSTPIE | UCTXIE0 | UCRXIE0;
         else    UCB0IE = 0;
     }
@@ -190,7 +190,7 @@ private:
     static _Event _WaitForEvent() {
         _IV = 0;
         // Re-enable I2C interrupts now that we're ready for an event
-        _I2CIntsSetEnabled(true);
+        _I2CIntsEnable(true);
         // Wait until we get an inactive interrupt, or an I2C event occurs
         T_Scheduler::Wait([&] { return !_Active.load() || _IV.load(); });
         if (!_Active.load()) return _Event::Inactive;

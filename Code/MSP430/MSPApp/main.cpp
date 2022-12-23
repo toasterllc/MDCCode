@@ -138,13 +138,13 @@ static MSP::State _State;
 
 // MARK: - Power
 
-static void _VDDBSetEnabled(bool en) {
+static void _VDDBSet(bool en) {
     _Pin::VDD_B_EN::Write(en);
     // Rails take ~1.5ms to turn on/off, so wait 2ms to be sure
     _Scheduler::Sleep(_Scheduler::Ms(2));
 }
 
-static void _VDDIMGSDSetEnabled(bool en) {
+static void _VDDIMGSDSet(bool en) {
     // Short-circuit if the pin state hasn't changed, to save us the Sleep()
     if (_Pin::VDD_B_2V8_IMG_SD_EN::Read() == en) return;
     
@@ -534,10 +534,14 @@ struct _I2CTask {
         
         case Cmd::Op::HostModeSet:
             // TODO: implement
+        
         case Cmd::Op::VDDIMGSDSet:
-            // TODO: implement
+            _VDDIMGSDSet(cmd.arg.VDDIMGSDSet.en);
+            return MSP::Resp{ .ok = true, };
+        
         case Cmd::Op::BatterySample:
             // TODO: implement
+        
         default:
             return MSP::Resp{
                 .ok = false,
@@ -589,7 +593,7 @@ struct _MainTask {
 //            }
             
             // Turn on VDD_B power (turns on ICE40)
-            _VDDBSetEnabled(true);
+            _VDDBSet(true);
             
             // Wait for ICE40 to start
             // We specify (within the bitstream itself, via icepack) that ICE40 should load
@@ -603,7 +607,7 @@ struct _MainTask {
             _SDTask::Wait();
             
             // Turn on IMG/SD power
-            _VDDIMGSDSetEnabled(true);
+            _VDDIMGSDSet(true);
             
             // Init image sensor / SD card
             _ImgTask::Init();
@@ -647,8 +651,8 @@ struct _MainTask {
 //                _Motion = false;
             }
             
-            _VDDIMGSDSetEnabled(false);
-            _VDDBSetEnabled(false);
+            _VDDIMGSDSet(false);
+            _VDDBSet(false);
             
             _Scheduler::Sleep(_Scheduler::Ms(3000));
         }
