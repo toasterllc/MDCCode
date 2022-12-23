@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "Image.h"
 #import "ImageSource.h"
+#import "FixedDocumentView.h"
 @class ImageView;
 
 @protocol ImageViewDelegate
@@ -9,7 +10,7 @@
 - (void)imageViewNextImage:(ImageView*)imageView;
 @end
 
-@interface ImageView : NSView
+@interface ImageView : FixedDocumentView
 - (instancetype)initWithImageThumb:(const MDCStudio::ImageThumb&)imageThumb
     imageSource:(MDCStudio::ImageSourcePtr)imageSource;
 
@@ -17,6 +18,6 @@
 
 - (void)setDelegate:(id<ImageViewDelegate>)delegate;
 
-- (NSView*)initialFirstResponder;
+//- (NSView*)initialFirstResponder;
 
 @end

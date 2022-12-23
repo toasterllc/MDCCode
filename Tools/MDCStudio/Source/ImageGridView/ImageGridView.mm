@@ -1,7 +1,7 @@
 #import "ImageGridView.h"
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
-#import "MetalScrollLayer.h"
+#import "FixedMetalDocumentLayer.h"
 #import "ImageGridLayerTypes.h"
 #import "Util.h"
 #import "Grid.h"
@@ -15,7 +15,7 @@ static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 // so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
-@interface ImageGridLayer : MetalScrollLayer
+@interface ImageGridLayer : FixedMetalDocumentLayer
 
 - (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib;
 
@@ -278,7 +278,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     .imagesOff = (uint32_t)(addrBegin-addrAlignedBegin),
                     .imageSize = (uint32_t)sizeof(ImageLibrary::Record),
                     .viewSize = {(float)viewSize.width, (float)viewSize.height},
-                    .transform = [self transform],
+                    .transform = [self fixedTransform],
                     .off = {
                         .id         = (uint32_t)(offsetof(ImageLibrary::Record, ref.id)),
                         .thumbData  = (uint32_t)(offsetof(ImageLibrary::Record, thumb)),
@@ -369,44 +369,35 @@ done:
     [self setNeedsDisplay];
 }
 
-@end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@interface ImageGridDocumentView : NSView
-@end
-
-@implementation ImageGridDocumentView
-
-// We need to be flipped so that NSEvent coordinates match the coordinates of the ImageGridLayer's grid
-- (BOOL)isFlipped {
-    return true;
+// MARK: - FixedMetalDocumentLayer Overrides
+- (CGSize)fixedContentSize {
+    #error TODO: implement
+    return {};
 }
 
 @end
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @implementation ImageGridView {
-    IBOutlet LayerScrollView* _scrollView;
-    IBOutlet ImageGridDocumentView* _documentView;
-    IBOutlet NSLayoutConstraint* _documentHeight;
     ImageGridLayer* _imageGridLayer;
     CALayer* _selectionRectLayer;
     ImageSourcePtr _imageSource;
@@ -416,29 +407,16 @@ done:
 // MARK: - Creation
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
-    if (!(self = [super initWithFrame:{}])) return nil;
+    // Create ImageGridLayer
+    ImageGridLayer* imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:imageSource->imageLibrary()];
+    
+    if (!(self = [super initWithFixedLayer:imageGridLayer])) return nil;
+    
+    [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
     _imageSource = imageSource;
-    
-    // Load from nib
-    {
-        [self setTranslatesAutoresizingMaskIntoConstraints:false];
-        
-        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
-        assert(br);
-        
-        [_scrollView setTranslatesAutoresizingMaskIntoConstraints:false];
-        [self addSubview:_scrollView];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_scrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_scrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
-    }
-    
-    // Create ImageGridLayer
-    {
-        _imageGridLayer = [[ImageGridLayer alloc] initWithImageLibrary:_imageSource->imageLibrary()];
-        [_scrollView setScrollLayer:_imageGridLayer];
-        [self _handleImageLibraryChanged];
-    }
+    _imageGridLayer = imageGridLayer;
+    [self _handleImageLibraryChanged];
     
     // Create _selectionRectLayer
     {
@@ -479,9 +457,9 @@ done:
     return [_imageGridLayer selectedImageIds];
 }
 
-- (NSView*)initialFirstResponder {
-    return [_scrollView documentView];
-}
+//- (NSView*)initialFirstResponder {
+//    return [_scrollView documentView];
+//}
 
 - (void)setFrameSize:(NSSize)size {
     [super setFrameSize:size];
@@ -491,7 +469,7 @@ done:
 - (void)_updateDocumentHeight {
     [_imageGridLayer setContainerWidth:[self bounds].size.width];
     [_imageGridLayer recomputeGrid];
-    [_documentHeight setConstant:[_imageGridLayer containerHeight]];
+//    [_documentHeight setConstant:[_imageGridLayer containerHeight]];
 }
 
 - (void)_handleImageLibraryChanged {
@@ -530,14 +508,14 @@ static ImageGridViewImageIds _XORImageIds(const ImageGridViewImageIds& a, const 
     NSWindow* win = [mouseDownEvent window];
 //    const CGPoint startPoint = _ConvertPoint(_imageGridLayer, _documentView,
 //        [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil]);
-    const CGPoint startPoint = [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
+    const CGPoint startPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
     [_selectionRectLayer setHidden:false];
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
     const ImageGridViewImageIds oldSelection = [_imageGridLayer selectedImageIds];
     TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
 //        const CGPoint curPoint = _ConvertPoint(_imageGridLayer, _documentView, [_documentView convertPoint:[event locationInWindow] fromView:nil]);
-        const CGPoint curPoint = [_documentView convertPoint:[event locationInWindow] fromView:nil];
+        const CGPoint curPoint = [self convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
         const ImageGridViewImageIds newSelection = [_imageGridLayer imageIdsForRect:rect];
         if (extend) {
@@ -547,7 +525,7 @@ static ImageGridViewImageIds _XORImageIds(const ImageGridViewImageIds& a, const 
         }
         [_selectionRectLayer setFrame:rect];
         
-        [_documentView autoscroll:event];
+        [self autoscroll:event];
 //        NSLog(@"mouseDown:");
     });
     [_selectionRectLayer setHidden:true];
@@ -629,7 +607,7 @@ struct SelectionDelta {
     
 //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
     const Img::Id newImgId = imageLibrary->recordGet(imageLibrary->begin()+newIdx)->ref.id;
-    [_documentView scrollRectToVisible:[_imageGridLayer rectForImageAtIndex:newIdx]];
+    [self scrollRectToVisible:[_imageGridLayer rectForImageAtIndex:newIdx]];
     
     if (!extend) selectedImageIds.clear();
     selectedImageIds.insert(newImgId);

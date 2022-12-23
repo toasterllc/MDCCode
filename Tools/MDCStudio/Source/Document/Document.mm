@@ -3,6 +3,7 @@
 #import "SourceListView/SourceListView.h"
 #import "ImageGridView/ImageGridView.h"
 #import "ImageView/ImageView.h"
+#import "FixedScrollView.h"
 using namespace MDCStudio;
 
 @interface Document () <SourceListViewDelegate, ImageGridViewDelegate, ImageViewDelegate>
@@ -299,7 +300,11 @@ using namespace MDCStudio;
     if (selection) {
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
         [imageGridView setDelegate:self];
-        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
+        
+        FixedScrollView* sv = [[FixedScrollView alloc] initWithFrame:{}];
+        [sv setFixedDocument:imageGridView];
+        
+        [_mainView setContentView:sv animation:MainViewAnimation::None];
     
     } else {
         [_mainView setContentView:nil animation:MainViewAnimation::None];

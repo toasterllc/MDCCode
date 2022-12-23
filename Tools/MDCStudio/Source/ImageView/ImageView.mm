@@ -5,9 +5,8 @@
 #import "Util.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
+#import "FixedMetalDocumentLayer.h"
 #import "ImageViewTypes.h"
-#import "LayerScrollView.h"
-#import "MetalScrollLayer.h"
 using namespace MDCStudio;
 using namespace MDCStudio::ImageViewTypes;
 using namespace MDCTools;
@@ -33,7 +32,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 
 
-@interface ImageLayer : MetalScrollLayer
+@interface ImageLayer : FixedMetalDocumentLayer
 @end
 
 @implementation ImageLayer {
@@ -157,45 +156,45 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 
 
-@interface ImageDocumentView : NSView
-@end
+//@interface ImageDocumentView : NSView
+//@end
+//
+//@implementation ImageDocumentView
+//
+//- (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
+//    const bool fit = [(LayerScrollView*)[self enclosingScrollView] magnifyToFit];
+//    return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
+//}
+//
+//- (BOOL)isFlipped {
+//    return true;
+//}
+//
+//@end
 
-@implementation ImageDocumentView
-
-- (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
-    const bool fit = [(LayerScrollView*)[self enclosingScrollView] magnifyToFit];
-    return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
-}
-
-- (BOOL)isFlipped {
-    return true;
-}
-
-@end
 
 
-
-@interface ImageClipView : NSClipView
-@end
-
-@implementation ImageClipView
-
-// -constrainBoundsRect override:
-// Center the document view when it's smaller than the scroll view's bounds
-- (NSRect)constrainBoundsRect:(NSRect)bounds {
-    bounds = [super constrainBoundsRect:bounds];
-    
-    const CGSize docSize = [[self documentView] frame].size;
-    if (bounds.size.width >= docSize.width) {
-        bounds.origin.x = (docSize.width-bounds.size.width)/2;
-    }
-    if (bounds.size.height >= docSize.height) {
-        bounds.origin.y = (docSize.height-bounds.size.height)/2;
-    }
-    return bounds;
-}
-
-@end
+//@interface ImageClipView : NSClipView
+//@end
+//
+//@implementation ImageClipView
+//
+//// -constrainBoundsRect override:
+//// Center the document view when it's smaller than the scroll view's bounds
+//- (NSRect)constrainBoundsRect:(NSRect)bounds {
+//    bounds = [super constrainBoundsRect:bounds];
+//    
+//    const CGSize docSize = [[self documentView] frame].size;
+//    if (bounds.size.width >= docSize.width) {
+//        bounds.origin.x = (docSize.width-bounds.size.width)/2;
+//    }
+//    if (bounds.size.height >= docSize.height) {
+//        bounds.origin.y = (docSize.height-bounds.size.height)/2;
+//    }
+//    return bounds;
+//}
+//
+//@end
 
 
 
@@ -307,9 +306,6 @@ static void _InitCommon(ImageScrollView* self) {
 
 
 @implementation ImageView {
-    IBOutlet ImageScrollView* _scrollView;
-    IBOutlet NSLayoutConstraint* _docWidth;
-    IBOutlet NSLayoutConstraint* _docHeight;
     ImageLayer* _imageLayer;
     __weak id<ImageViewDelegate> _delegate;
 }
@@ -317,39 +313,27 @@ static void _InitCommon(ImageScrollView* self) {
 - (instancetype)initWithImageThumb:(const MDCStudio::ImageThumb&)imageThumb
     imageSource:(MDCStudio::ImageSourcePtr)imageSource {
     
-    if (!(self = [super initWithFrame:{}])) return nil;
+    ImageLayer* imageLayer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
     
-    // Load from nib
-    {
-        [self setTranslatesAutoresizingMaskIntoConstraints:false];
-        
-        bool br = [[[NSNib alloc] initWithNibNamed:NSStringFromClass([self class]) bundle:nil] instantiateWithOwner:self topLevelObjects:nil];
-        assert(br);
-        
-        [self addSubview:_scrollView];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_scrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_scrollView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_scrollView)]];
-    }
+    if (!(self = [super initWithFixedLayer:imageLayer])) return nil;
     
-//    [self setWantsLayer:true];
-//    [[self layer] setBackgroundColor:[[NSColor redColor] CGColor]];
+    [self setTranslatesAutoresizingMaskIntoConstraints:false];
     
-    _imageLayer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
-    [_scrollView setScrollLayer:_imageLayer];
+    _imageLayer = imageLayer;
     
-    // Set document view's size
-    {
-        [_docWidth setConstant:imageThumb.imageWidth*2];
-        [_docHeight setConstant:imageThumb.imageHeight*2];
-//        NSView* doc = [_scrollView documentView];
-//        [doc setTranslatesAutoresizingMaskIntoConstraints:false];
-//        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeWidth
-//            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-//            constant:imageThumb.ref.imageWidth*2]];
-//        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeHeight
-//            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-//            constant:imageThumb.ref.imageHeight*2]];
-    }
+//    // Set document view's size
+//    {
+//        [_docWidth setConstant:imageThumb.imageWidth*2];
+//        [_docHeight setConstant:imageThumb.imageHeight*2];
+////        NSView* doc = [_scrollView documentView];
+////        [doc setTranslatesAutoresizingMaskIntoConstraints:false];
+////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeWidth
+////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+////            constant:imageThumb.ref.imageWidth*2]];
+////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeHeight
+////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+////            constant:imageThumb.ref.imageHeight*2]];
+//    }
     
 //    [NSTimer scheduledTimerWithTimeInterval:1 repeats:true block:^(NSTimer* timer) {
 //        NSLog(@"[self bounds]: %@", NSStringFromRect([self bounds]));
@@ -391,8 +375,19 @@ static void _InitCommon(ImageScrollView* self) {
     [_scrollView viewDidEndLiveResize];
 }
 
-- (NSView*)initialFirstResponder {
-    return [_scrollView documentView];
+//- (NSView*)initialFirstResponder {
+//    return [_scrollView documentView];
+//}
+
+- (NSRect)rectForSmartMagnificationAtPoint:(NSPoint)point inRect:(NSRect)rect {
+    const bool fit = [(LayerScrollView*)[self enclosingScrollView] magnifyToFit];
+    return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
+}
+
+// MARK: - FixedMetalDocumentLayer Overrides
+- (CGSize)fixedContentSize {
+    #error TODO: implement
+    return {};
 }
 
 @end

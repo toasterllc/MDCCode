@@ -2,6 +2,7 @@
 #import <set>
 #import "ImageSource.h"
 #import "Code/Shared/Img.h"
+#import "FixedDocumentView.h"
 @class ImageGridView;
 
 using ImageGridViewImageIds = std::set<Img::Id>;
@@ -10,7 +11,7 @@ using ImageGridViewImageIds = std::set<Img::Id>;
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView;
 @end
 
-@interface ImageGridView : NSView
+@interface ImageGridView : FixedDocumentView
 
 - (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
 
@@ -19,6 +20,6 @@ using ImageGridViewImageIds = std::set<Img::Id>;
 - (MDCStudio::ImageSourcePtr)imageSource;
 - (const ImageGridViewImageIds&)selectedImageIds;
 
-- (NSView*)initialFirstResponder;
+//- (NSView*)initialFirstResponder;
 
 @end
