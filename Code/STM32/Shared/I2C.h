@@ -11,6 +11,10 @@ public:
         _SDA::Config(GPIO_MODE_AF_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF4_I2C1);
         
         __HAL_RCC_I2C1_CLK_ENABLE();
+        HAL_NVIC_SetPriority(I2C1_EV_IRQn, 0, 0);
+        HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
+        HAL_NVIC_SetPriority(I2C1_ER_IRQn, 0, 0);
+        HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
         
         HAL_StatusTypeDef hs = HAL_I2C_Init(&_device);
         Assert(hs == HAL_OK);
@@ -30,6 +34,14 @@ public:
     template <typename T>
     static void Recv(T& msg) {
         
+    }
+    
+    static void ISR_Event() {
+        ISR_HAL_I2C_EV(&_device);
+    }
+    
+    static void ISR_Error() {
+        ISR_HAL_I2C_ER(&_device);
     }
     
 private:

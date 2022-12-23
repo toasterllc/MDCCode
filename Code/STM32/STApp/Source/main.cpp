@@ -1318,6 +1318,14 @@ extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
     _QSPI.isrDMA();
 }
 
+extern "C" [[gnu::section(".isr")]] void ISR_I2C1_EV() {
+    _I2C::ISR_Event();
+}
+
+extern "C" [[gnu::section(".isr")]] void ISR_I2C1_ER() {
+    _I2C::ISR_Error();
+}
+
 // MARK: - Abort
 
 extern "C" [[noreturn]]
