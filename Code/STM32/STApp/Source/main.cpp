@@ -134,7 +134,7 @@ private:
 // MARK: - Utility Functions
 
 static bool _VDDIMGSDSet(bool en) {
-    MSP::Cmd cmd = {
+    const MSP::Cmd cmd = {
         .op = MSP::Cmd::Op::VDDIMGSDSet,
         .arg = {
             .VDDIMGSDSet = {
@@ -142,29 +142,12 @@ static bool _VDDIMGSDSet(bool en) {
             },
         },
     };
+    
     MSP::Resp resp;
-    
     const bool ok = _I2C::Send(cmd, resp);
-    if (!ok) return false;
+    if (!ok || !resp.ok) return false;
     
-    return resp.ok;
-}
-
-static bool _HostModeSet(bool en) {
-    MSP::Cmd cmd = {
-        .op = MSP::Cmd::Op::HostModeSet,
-        .arg = {
-            .HostModeSet = {
-                .en = en,
-            },
-        },
-    };
-    MSP::Resp resp;
-    
-    const bool ok = _I2C::Send(cmd, resp);
-    if (!ok) return false;
-    
-    return resp.ok;
+    return true;
 }
 
 // MARK: - ICE40
@@ -557,10 +540,20 @@ static void _HostModeSet(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    const bool ok = _HostModeSet(arg.en);
+    const MSP::Cmd cmd = {
+        .op = MSP::Cmd::Op::HostModeSet,
+        .arg = { .HostModeSet = { .en = arg.en } },
+    };
+    MSP::Resp resp;
+    
+    const bool ok = _I2C::Send(cmd, resp);
+    if (!ok || !resp.ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
     
     // Send status
-    _System::USBSendStatus(ok);
+    _System::USBSendStatus(true);
 }
 
 static void _ICERAMWrite(const STM::Cmd& cmd) {
@@ -1060,6 +1053,28 @@ static void _MSPStateWrite(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
+static void _MSPTimeSet(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPTimeSet;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const MSP::Cmd cmd = {
+        .op = MSP::Cmd::Op::TimeSet,
+        .arg = { .TimeSet = { .time = arg.time } },
+    };
+    
+    MSP::Resp resp;
+    const bool ok = _I2C::Send(cmd, resp);
+    if (!ok || !resp.ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
+
 static void _MSPSBWConnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
@@ -1402,6 +1417,7 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     // MSP430 State Read/Write
     case Op::MSPStateRead:          _MSPStateRead(cmd);                 break;
     case Op::MSPStateWrite:         _MSPStateWrite(cmd);                break;
+    case Op::MSPTimeSet:            _MSPTimeSet(cmd);                   break;
     // MSP430 SBW
     case Op::MSPSBWConnect:         _MSPSBWConnect(cmd);                break;
     case Op::MSPSBWDisconnect:      _MSPSBWDisconnect(cmd);             break;

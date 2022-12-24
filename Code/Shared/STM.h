@@ -5,6 +5,7 @@
 #include "Img.h"
 #include "SD.h"
 #include "ImgSD.h"
+#include "MSP.h"
 
 namespace STM {
     static constexpr uint32_t Version = 0;
@@ -39,6 +40,7 @@ namespace STM {
         
         MSPStateRead,
         MSPStateWrite,
+        MSPTimeSet,
         
         MSPSBWConnect,
         MSPSBWDisconnect,
@@ -91,6 +93,10 @@ namespace STM {
             struct [[gnu::packed]] {
                 uint32_t len;
             } MSPStateWrite;
+            
+            struct [[gnu::packed]] {
+                MSP::Time time;
+            } MSPTimeSet;
             
             struct [[gnu::packed]] {
                 uint32_t addr;
