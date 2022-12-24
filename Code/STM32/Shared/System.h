@@ -170,7 +170,7 @@ private:
                 MSP::Resp resp;
                 I2C::Send(cmd, resp);
                 
-                Scheduler::Sleep(Scheduler::Ms(1000));
+                Scheduler::Sleep(Scheduler::Ms(100));
             }
         }
         

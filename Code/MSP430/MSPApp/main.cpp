@@ -532,45 +532,45 @@ struct _MainTask {
             // Turn on VDD_B power (turns on ICE40)
             _VDDBSet(true);
             
-            // Wait for ICE40 to start
-            // We specify (within the bitstream itself, via icepack) that ICE40 should load
-            // the bitstream at high-frequency (40 MHz).
-            // According to the datasheet, this takes 70ms.
-            _Scheduler::Sleep(_Scheduler::Ms(30));
-            _ICEInit();
+//            // Wait for ICE40 to start
+//            // We specify (within the bitstream itself, via icepack) that ICE40 should load
+//            // the bitstream at high-frequency (40 MHz).
+//            // According to the datasheet, this takes 70ms.
+//            _Scheduler::Sleep(_Scheduler::Ms(30));
+//            _ICEInit();
             
-            // Reset SD nets before we turn on SD power
-            _SDTask::Reset();
-            _SDTask::Wait();
+//            // Reset SD nets before we turn on SD power
+//            _SDTask::Reset();
+//            _SDTask::Wait();
             
             // Turn on IMG/SD power
             _VDDIMGSDSet(true);
             
-            // Init image sensor / SD card
-            _ImgTask::Init();
-            _SDTask::Init();
+//            // Init image sensor / SD card
+//            _ImgTask::Init();
+//            _SDTask::Init();
             
             for (;;) {
                 // Capture an image
                 {
                     _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
                     
-                    // Wait for _SDTask to be initialized and done with writing, which is necessary
-                    // for 2 reasons:
-                    //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
-                    //      access it,
-                    //   2. we can't initiate a new capture until writing to the SD card (from a
-                    //      previous capture) is complete (because the SDRAM is single-port, so
-                    //      we can only read or write at one time)
-                    _SDTask::WaitForInitAndWrite();
-                    
-                    // Capture image to RAM
-                    _ImgTask::Capture(imgRingBuf.buf.idEnd);
-                    const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
-                    
-                    // Copy image from RAM -> SD card
-                    _SDTask::Write(srcRAMBlock);
-                    _SDTask::Wait();
+//                    // Wait for _SDTask to be initialized and done with writing, which is necessary
+//                    // for 2 reasons:
+//                    //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
+//                    //      access it,
+//                    //   2. we can't initiate a new capture until writing to the SD card (from a
+//                    //      previous capture) is complete (because the SDRAM is single-port, so
+//                    //      we can only read or write at one time)
+//                    _SDTask::WaitForInitAndWrite();
+//                    
+//                    // Capture image to RAM
+//                    _ImgTask::Capture(imgRingBuf.buf.idEnd);
+//                    const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+//                    
+//                    // Copy image from RAM -> SD card
+//                    _SDTask::Write(srcRAMBlock);
+//                    _SDTask::Wait();
                     
                     _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
                 }
