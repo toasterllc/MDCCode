@@ -3,10 +3,8 @@
 #include "Toastbox/IntState.h"
 #include "MSP.h"
 
-namespace RTC {
-
 template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin>
-class Type {
+class RTCType {
 public:
     using Time = MSP::Time;
     
@@ -22,11 +20,14 @@ public:
         using XIN   = typename T_XINPin::template Opts<GPIO::Option::Sel10>;
     };
     
-    bool enabled() const {
+    static bool Enabled() {
         return RTCCTL != 0;
     }
     
-    void init(Time time) {
+    static void Init(Time time=0) {
+        // Prevent interrupts from firing while we update our time / reset the RTC
+        Toastbox::IntState ints(false);
+        
         // Decrease the XT1 drive strength to save a little current
         // We're not using this for now because supporting it with LPM3.5 is gross.
         // That's because on a cold start, CSCTL6.XT1DRIVE needs to be set after we
@@ -42,8 +43,8 @@ public:
         } while (SFRIFG1 & OFIFG); // Test oscillator fault flag
         
         // Start RTC if it's not yet running, or restart it if we were given a new time
-        if (!enabled() || time) {
-            _time = time;
+        if (!Enabled() || time) {
+            _Time = time;
             
             RTCMOD = InterruptCount;
             RTCCTL = RTCSS__XT1CLK | _RTCPSForPredivider<Predivider>() | RTCSR;
@@ -56,19 +57,30 @@ public:
         }
     }
     
-    // time(): returns the current time, which is either absolute or relative (to the
-    // device start time), depending on the value supplied to init()
-    // Interrupts must be enabled when calling!
-    Time time() const {
-        return _timeRead();
+    // TimeRead(): returns the current time, which is either absolute (wall time) or
+    // relative (to the device start time), depending on the value supplied to Init().
+    //
+    // TimeRead() reads _Time in an safe, overflow-aware manner.
+    //
+    // Interrupts must be *enabled* (not disabled!) when calling to properly handle overflow!
+    static Time TimeRead() {
+        // This 2x _TimeRead() loop is necessary to handle the race related to RTCCNT overflowing:
+        // When we read _Time and RTCCNT, we don't know if _Time has been updated for the most
+        // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
+        // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
+        for (;;) {
+            const Time t1 = _TimeRead();
+            const Time t2 = _TimeRead();
+            if (t2 >= t1) return t2;
+        }
     }
     
-    void isr() {
+    static void ISR() {
         // Accessing `RTCIV` automatically clears the highest-priority interrupt
         switch (__even_in_range(RTCIV, RTCIV__RTCIFG)) {
         case RTCIV_RTCIF:
             // Update our time
-            _time += InterruptIntervalSec;
+            _Time += InterruptIntervalSec;
             break;
         
         default:
@@ -93,31 +105,25 @@ private:
         else static_assert(_AlwaysFalse<T_Predivider>);
     }
     
-    // _timeRead(): reads _time in an safe, overflow-aware manner
-    // Interrupts must be enabled when calling!
-    Time _timeRead() const {
-        // This 2x __timeRead() loop is necessary to handle the race related to RTCCNT overflowing:
-        // When we read _time and RTCCNT, we don't know if _time has been updated for the most
-        // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
-        // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
-        for (;;) {
-            const Time t1 = __timeRead();
-            const Time t2 = __timeRead();
-            if (t2 >= t1) return t2;
-        }
-    }
-    
-    Time __timeRead() const {
-        // Disable interrupts so we can read _time and RTCCNT atomically.
-        // This is especially necessary because reading _time isn't atomic
+    static Time _TimeRead() {
+        // Disable interrupts so we can read _Time and RTCCNT atomically.
+        // This is especially necessary because reading _Time isn't atomic
         // since it's 32 bits.
         Toastbox::IntState ints(false);
-        return _time + (RTCCNT/FreqHz);
+        return _Time + (RTCCNT/FreqHz);
     }
     
-    // _time: the current time (either absolute or relative, depending on the value supplied to init())
-    // volatile because _time is updated from the interrupt context
-    volatile Time _time;
+    // _Time: the current time (either absolute or relative, depending on the
+    // value supplied to Init()).
+    //
+    // _Time is volatile because it's updated from the interrupt context.
+    //
+    // _Time is stored in BAKMEM (RAM that's retained in LPM3.5) so that
+    // it's maintained during sleep.
+    //
+    // _Time needs to live in the _noinit variant of BAKMEM so that RTC
+    // memory is never automatically initialized, because we don't want it
+    // to be reset when we abort.
+    [[gnu::section(".ram_backup_noinit.main")]]
+    static inline volatile Time _Time;
 };
-
-} // namespace RTC

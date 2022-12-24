@@ -126,17 +126,8 @@ using _SDCard = SD::Card<
     6                   // T_ClkDelayFast (odd values invert the clock)
 >;
 
-using _RTCType = RTC::Type<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
-
 // _RTC: real time clock
-// Stored in BAKMEM (RAM that's retained in LPM3.5) so that
-// it's maintained during sleep, but reset upon a cold start.
-// 
-// _RTC needs to live in the _noinit variant, so that RTC memory
-// is never automatically initialized, because we don't want it
-// to be reset when we abort.
-[[gnu::section(".ram_backup_noinit.main")]]
-static _RTCType _RTC;
+using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
@@ -461,7 +452,7 @@ struct _ImgTask {
             
             header.coarseIntTime = _AutoExp.integrationTime();
             header.id = id;
-            header.timestamp = _RTC.time();
+            header.timestamp = _RTC::TimeRead();
             
             // Capture an image to RAM
             const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
@@ -707,6 +698,10 @@ struct _I2CTask {
             _LEDGreen_::Set(_LEDGreen_::Priority::High, !cmd.arg.LEDSet.green);
             return MSP::Resp{ .ok = true };
         
+        case Cmd::Op::TimeSet:
+            _RTC::Init(cmd.arg.TimeSet.time);
+            return MSP::Resp{ .ok = true };
+        
         case Cmd::Op::HostModeSet:
             _MainTask::HostModeSet(cmd.arg.HostModeSet.en);
             return MSP::Resp{ .ok = true };
@@ -778,7 +773,7 @@ static void _Sleep() {
 
 [[gnu::interrupt(RTC_VECTOR)]]
 static void _ISR_RTC() {
-    _RTC.isr();
+    _RTC::ISR();
 }
 
 [[gnu::interrupt(PORT2_VECTOR)]]
@@ -897,7 +892,7 @@ static void _BOR() {
 
 [[noreturn]]
 static void _Abort(uint16_t domain, uint16_t line) {
-    const MSP::Time timestamp = _RTC.time();
+    const MSP::Time timestamp = _RTC::TimeRead();
     // Record the abort
     _AbortRecord(timestamp, domain, line);
     _BOR();
@@ -947,8 +942,8 @@ int main() {
         _Pin::VDD_B_2V8_IMG_SD_EN,
         
         // Clock (config chosen by _RTCType)
-        _RTCType::Pin::XOUT,
-        _RTCType::Pin::XIN,
+        _RTC::Pin::XOUT,
+        _RTC::Pin::XIN,
         
         // SPI (config chosen by _SPI)
         _SPI::Pin::Clk,
@@ -973,18 +968,7 @@ int main() {
     //   - We want to track relative time (ie system uptime) even if we don't know the wall time.
     //   - RTC must be enabled to keep BAKMEM alive when sleeping. If RTC is disabled, we enter
     //     LPM4.5 when we sleep (instead of LPM3.5), and BAKMEM is lost.
-    MSP::Time startTime = 0;
-    if (_State.startTime.valid) {
-        startTime = _State.startTime.time;
-        
-        // If `time` is valid, consume it before handing it off to _RTC.
-        FRAMWriteEn writeEn; // Enable FRAM writing
-        // Reset `valid` before consuming the start time, so that if we lose power,
-        // the time won't be reused again
-        _State.startTime.valid = false;
-        std::atomic_signal_fence(std::memory_order_seq_cst);
-    }
-    _RTC.init(startTime);
+    _RTC::Init();
     
     // Init SysTick
     _SysTick::Init();

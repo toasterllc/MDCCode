@@ -88,18 +88,10 @@ namespace MSP {
         struct [[gnu::packed]] Header {
             const uint32_t magic    = MagicNumber;
             const uint16_t version  = Version;
-            const uint16_t size     = sizeof(State)-sizeof(Header);
+            const uint16_t length   = sizeof(State)-sizeof(Header);
         };
         
         Header header;
-        
-        // startTime: the absolute time set by the outside world (seconds since reference date)
-        struct [[gnu::packed]] {
-            Time time = 0;
-            bool valid = false;
-            uint8_t _pad = 0;
-        } startTime = {};
-        static_assert(!(sizeof(startTime) % 2)); // Check alignment
         
         struct [[gnu::packed]] {
             // cardId: the SD card's CID, used to determine when the SD card has been
@@ -133,6 +125,7 @@ namespace MSP {
             StateRead,
             StateWrite,
             LEDSet,
+            TimeSet,
             HostModeSet,
             VDDIMGSDSet,
             BatterySample,
@@ -146,13 +139,17 @@ namespace MSP {
             
             struct [[gnu::packed]] {
                 uint8_t chunk;
-                uint8_t data[4];
+                uint8_t data[8];
             } StateWrite;
             
             struct [[gnu::packed]] {
                 uint8_t red;
                 uint8_t green;
             } LEDSet;
+            
+            struct [[gnu::packed]] {
+                Time time;
+            } TimeSet;
             
             struct [[gnu::packed]] {
                 uint8_t en;
@@ -168,7 +165,7 @@ namespace MSP {
         uint8_t ok = false;
         union {
             struct [[gnu::packed]] {
-                uint8_t data[4];
+                uint8_t data[8];
             } StateRead;
             
             struct [[gnu::packed]] {

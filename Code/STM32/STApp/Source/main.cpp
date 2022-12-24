@@ -1008,7 +1008,7 @@ static size_t __MSPStateRead(uint8_t* data, size_t cap) {
     // Read payload directly into destination buffer
     ok = __MSPStateRead(off, data+off, header.size);
     if (!ok) return 0;
-    off += header.size);
+    off += header.size;
     return off;
 }
 
@@ -1016,28 +1016,34 @@ static void _MSPStateRead(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    MSP::State::Header header;
+    // Reset state
+    _Bufs.reset();
     
-    MSP::Cmd cmd = {
-        .op = MSP::Cmd::Op::StateRead,
-        .arg = {
-            .StateRead = {
-                .en = en,
-            },
-        },
-    };
-    MSP::Resp resp;
-    
-    const bool ok = _I2C::Send(cmd, resp);
-    if (!ok) return false;
-    
-    return resp.ok;
-    
-    
-    
+    auto& buf = _Bufs.wget();
+    size_t len = __MSPStateRead(buf.data, sizeof(buf.data));
+    if (!len) {
+        _System::USBSendStatus(false);
+        return;
+    }
     
     // Send status
     _System::USBSendStatus(true);
+    
+    // Send MSPStateInfo
+    {
+        alignas(4) const MSPStateInfo stateInfo = {
+            .len = len,
+        };
+        
+        _USB.send(Endpoints::DataIn, &stateInfo, sizeof(stateInfo));
+        _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    }
+    
+    // Send state itself
+    {
+        _USB.send(Endpoints::DataIn, buf.data, len);
+        _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    }
 }
 
 static void _MSPStateWrite(const STM::Cmd& cmd) {

@@ -34,7 +34,10 @@ private:
     // into memory), while 0500 is the `run_preinit_array` crt function (which
     // calls C++ constructors). We need the correct values stored in BAKMEM after other
     // data is copied into memory, but before C++ constructors are called, so 0401 makes
-    // sense.
+    // sense. Additionally, because _Startup() relies on ColdStart(), it must come after
+    // the init_bss/init_highbss sections (0100/0200), because ColdStart() has a static
+    // variable that's initialized upon the first call, which implicitly requires a
+    // zeroed variable to track whether it's been initialized.
     //
     // See the `crt0.S` file in the newlib project for more info.
     [[gnu::section(".crt_0401._Startup"), gnu::naked, gnu::used]]
