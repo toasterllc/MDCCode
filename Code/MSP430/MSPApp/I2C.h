@@ -52,6 +52,11 @@ public:
         for (size_t i=0; i<sizeof(msg); i++) {
             ev = _WaitForEvent();
             if (ev == _Event::Inactive) return false;
+            // Check if we got a STOP interrupt.
+            // We need to check for STOP because it's possible to receive the STOP
+            // interrupt before receiving the final RX interrupt, because the STOP
+            // interrupt has a higher priority than the RX interrupt.
+            if (ev == _Event::Stop) break;
             // Confirm that we received another byte
             Assert(ev == _Event::Rx);
             // Store the byte
