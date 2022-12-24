@@ -44,8 +44,13 @@ public:
             auto lock = std::unique_lock(*_dev);
             
             {
+                // Enter host mode
                 _dev->mspHostModeSet(true);
-                _mspState = _dev->mspStateRead();
+                
+                // Read the MSP::State header and make sure we understand it
+                
+                MSP::State::Header header;
+                _dev->mspStateRead(header);
                 
                 if (_mspState.header.magic != MSP::StateHeader.magic) {
                     // Program MSPApp onto MSP
@@ -58,6 +63,9 @@ public:
                     #warning TODO: implement
                     throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
                 }
+                
+                // Header looks good; read the whole MSP::State
+                _dev->mspStateRead(_mspState);
                 
                 MSP::Time time = MSP::TimeFromUnixTime(std::time(nullptr));
                 _dev->mspTimeSet(time);

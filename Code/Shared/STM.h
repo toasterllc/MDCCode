@@ -221,10 +221,6 @@ namespace STM {
         uint32_t shadowCount = 0;
     };
     
-    struct [[gnu::packed]] MSPStateInfo {
-        uint32_t len = 0;
-    };
-    
     // Confirm that `Img::ImagePaddedLen` is a multiple of the USB max packet size.
     // This is necessary so that when multiple images are streamed, the
     // transfer continues indefinitely and isn't cut short by a short packet

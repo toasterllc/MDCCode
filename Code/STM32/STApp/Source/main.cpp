@@ -938,20 +938,18 @@ static void _MSPHostModeSet(const STM::Cmd& cmd) {
 }
 
 static bool __MSPStateRead(uint8_t* data, size_t len) {
+    using ChunkIdx = decltype(MSP::Cmd::arg.StateRead.chunk);
     constexpr size_t ChunkSize = sizeof(MSP::Resp::arg.StateRead.data);
-    AssertArg((off % ChunkSize) == 0);
-    
-    using Chunk = decltype(MSP::Cmd::arg.StateRead.chunk);
     
     // Make sure `chunkCount-1` won't overflow our struct field
     const size_t chunkCount = (len+ChunkSize-1) / ChunkSize;
-    if (chunkCount-1 > std::numeric_limits<Chunk>::max())
+    if (chunkCount-1 > std::numeric_limits<ChunkIdx>::max())
         return false;
     
     for (size_t off=0, chunk=0; chunk<chunkCount; chunk++) {
         const MSP::Cmd mspCmd = {
             .op = MSP::Cmd::Op::StateRead,
-            .arg = { .StateRead = { .chunk = (Chunk)chunk } },
+            .arg = { .StateRead = { .chunk = (ChunkIdx)chunk } },
         };
         
         MSP::Resp mspResp;

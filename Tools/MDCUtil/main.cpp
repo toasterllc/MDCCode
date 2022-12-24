@@ -279,21 +279,27 @@ static void MSPHostModeSet(const Args& args, MDCUSBDevice& device) {
 }
 
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
-    MSP::State state = device.mspStateRead();
+    // First read the header to make sure we understand it
+    MSP::State::Header header;
+    device.mspStateRead(header);
     
-    if (state.header.magic != MSP::StateHeader.magic) {
+    if (header.magic != MSP::StateHeader.magic) {
         throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
             (uintmax_t)MSP::StateHeader.magic,
-            (uintmax_t)state.header.magic
+            (uintmax_t)header.magic
         );
     }
     
-    if (state.header.version != MSP::StateHeader.version) {
+    if (header.version != MSP::StateHeader.version) {
         throw Toastbox::RuntimeError("unrecognized MSP::State version (expected: 0x%02jx, got: 0x%02jx)",
             (uintmax_t)MSP::StateHeader.version,
-            (uintmax_t)state.header.version
+            (uintmax_t)header.version
         );
     }
+    
+    // Header looks good; read the full state
+    MSP::State state;
+    device.mspStateRead(state);
     
     printf(     "header\n");
     printf(     "  magic:                     0x%08jx\n",     (uintmax_t)state.header.magic);

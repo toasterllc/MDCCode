@@ -246,24 +246,31 @@ public:
         _checkStatus("MSPHostModeSet command failed");
     }
     
-    MSP::State mspStateRead() {
+//    MSP::State::Header mspStateHeaderRead() {
+//        assert(_mode == STM::Status::Modes::STMApp);
+//        const STM::Cmd cmd = {
+//            .op = STM::Op::MSPStateRead,
+//            .arg = { .MSPStateRead = { .len = sizeof(MSP::State::Header) } },
+//        };
+//        _sendCmd(cmd);
+//        _checkStatus("MSPStateRead command failed");
+//        
+//        MSP::State state;
+//        _dev.read(STM::Endpoints::DataIn, state);
+//        return state;
+//    }
+    
+    template <typename T>
+    void mspStateRead(T& t) {
         assert(_mode == STM::Status::Modes::STMApp);
         const STM::Cmd cmd = {
             .op = STM::Op::MSPStateRead,
+            .arg = { .MSPStateRead = { .len = sizeof(t) } },
         };
         _sendCmd(cmd);
         _checkStatus("MSPStateRead command failed");
         
-        STM::MSPStateInfo stateInfo = {};
-        _dev.read(STM::Endpoints::DataIn, stateInfo);
-        
-        if (stateInfo.len != sizeof(MSP::State))
-            throw Toastbox::RuntimeError("MSP state length (%ju) doesn't match expected state length (%ju)",
-                (uintmax_t)stateInfo.len, (uintmax_t)sizeof(MSP::State));
-        
-        MSP::State state;
-        _dev.read(STM::Endpoints::DataIn, state);
-        return state;
+        _dev.read(STM::Endpoints::DataIn, t);
     }
     
     void mspTimeSet(MSP::Time time) {
