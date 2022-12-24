@@ -33,17 +33,14 @@ namespace MSP {
         } buf;
         bool valid = false;
         
-        ImgRingBuf& operator=(const ImgRingBuf& x) {
-            valid = false;
-            
+        static void Set(ImgRingBuf& a, const ImgRingBuf& b) {
+            a.valid = false;
             // Ensure that `valid` is reset before we modify `buf`
             std::atomic_signal_fence(std::memory_order_seq_cst);
-            buf = x.buf;
+            a.buf = b.buf;
             // Ensure that `buf` is valid before we set `valid`
             std::atomic_signal_fence(std::memory_order_seq_cst);
-            
-            valid = true;
-            return *this;
+            a.valid = true;
         }
         
         static std::optional<int> Compare(const ImgRingBuf& a, const ImgRingBuf& b) {
@@ -60,7 +57,6 @@ namespace MSP {
             }
             return std::nullopt;
         }
-
     };
     
     // AbortType: a (domain,line) tuple that uniquely identifies a type of abort
@@ -82,13 +78,10 @@ namespace MSP {
     static constexpr uint32_t StateAddr = 0x1800;
     
     struct [[gnu::packed]] State {
-        static constexpr uint32_t MagicNumber   = 0xDECAFBAD;
-        static constexpr uint16_t Version       = 0;
-        
         struct [[gnu::packed]] Header {
-            const uint32_t magic    = MagicNumber;
-            const uint16_t version  = Version;
-            const uint16_t length   = sizeof(State)-sizeof(Header);
+            uint32_t magic   = 0;
+            uint16_t version = 0;
+            uint16_t length  = 0;
         };
         
         Header header;
@@ -115,6 +108,12 @@ namespace MSP {
         // aborts: records aborts that have occurred
         AbortHistory aborts[5] = {};
         static_assert(!(sizeof(aborts) % 2)); // Check alignment
+    };
+    
+    static constexpr State::Header StateHeader = {
+        .magic   = 0xDECAFBAD,
+        .version = 0,
+        .length  = sizeof(State)-sizeof(State::Header),
     };
     
     static constexpr uint8_t I2CAddr = 0x55;

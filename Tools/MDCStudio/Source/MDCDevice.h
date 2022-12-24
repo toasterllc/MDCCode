@@ -44,29 +44,24 @@ public:
             auto lock = std::unique_lock(*_dev);
             
             {
-                _dev->hostModeSet(true);
+                _dev->mspHostModeSet(true);
+                _mspState = _dev->mspStateRead();
                 
-                _dev->mspSBWConnect();
-                    _dev->mspSBWRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
-                    
-                    if (_mspState.header.magic != MSP::State::MagicNumber) {
-                        // Program MSPApp onto MSP
-                        #warning TODO: implement
-                        throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
-                    }
-                    
-                    if (_mspState.header.version > MSP::State::Version) {
-                        // Newer version than we understand -- tell user to upgrade or re-program
-                        #warning TODO: implement
-                        throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
-                    }
-                    
-                    _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
-                    _mspState.startTime.valid = true;
-                    _dev->mspSBWWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
-                _dev->mspSBWDisconnect();
+                if (_mspState.header.magic != MSP::StateHeader.magic) {
+                    // Program MSPApp onto MSP
+                    #warning TODO: implement
+                    throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
+                }
                 
-                printf("Set device time to 0x%jx\n", (uintmax_t)_mspState.startTime.time);
+                if (_mspState.header.version > MSP::StateHeader.version) {
+                    // Newer version than we understand -- tell user to upgrade or re-program
+                    #warning TODO: implement
+                    throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
+                }
+                
+                MSP::Time time = MSP::TimeFromUnixTime(std::time(nullptr));
+                _dev->mspTimeSet(time);
+                printf("Set device time to 0x%jx\n", (uintmax_t)time);
             }
             
 //            

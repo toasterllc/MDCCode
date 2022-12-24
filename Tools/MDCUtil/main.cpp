@@ -281,16 +281,16 @@ static void MSPHostModeSet(const Args& args, MDCUSBDevice& device) {
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     MSP::State state = device.mspStateRead();
     
-    if (state.header.magic != MSP::State::MagicNumber) {
+    if (state.header.magic != MSP::StateHeader.magic) {
         throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
-            (uintmax_t)MSP::State::MagicNumber,
+            (uintmax_t)MSP::StateHeader.magic,
             (uintmax_t)state.header.magic
         );
     }
     
-    if (state.header.version != MSP::State::Version) {
+    if (state.header.version != MSP::StateHeader.version) {
         throw Toastbox::RuntimeError("unrecognized MSP::State version (expected: 0x%02jx, got: 0x%02jx)",
-            (uintmax_t)MSP::State::Version,
+            (uintmax_t)MSP::StateHeader.version,
             (uintmax_t)state.header.version
         );
     }

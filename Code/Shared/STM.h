@@ -91,6 +91,10 @@ namespace STM {
             
             struct [[gnu::packed]] {
                 uint32_t len;
+            } MSPStateRead;
+            
+            struct [[gnu::packed]] {
+                uint32_t len;
             } MSPStateWrite;
             
             struct [[gnu::packed]] {

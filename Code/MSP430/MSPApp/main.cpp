@@ -132,7 +132,9 @@ using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
 [[gnu::section(".fram_info.main")]]
-static MSP::State _State;
+static MSP::State _State = {
+    .header = MSP::StateHeader,
+};
 
 // MARK: - Power
 
@@ -281,6 +283,7 @@ struct _SDTask {
     
     // _StateInit(): resets the _State.sd struct
     static void _StateInit(const SD::CardId& cardId, const SD::CardData& cardData) {
+        using namespace MSP;
         // CombinedBlockCount: thumbnail block count + full-size block count
         constexpr uint32_t CombinedBlockCount = ImgSD::Thumb::ImageBlockCount + ImgSD::Full::ImageBlockCount;
         // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
@@ -311,8 +314,8 @@ struct _SDTask {
         
         // Set .imgRingBufs
         {
-            _State.sd.imgRingBufs[0] = {};
-            _State.sd.imgRingBufs[1] = {};
+            ImgRingBuf::Set(_State.sd.imgRingBufs[0], {});
+            ImgRingBuf::Set(_State.sd.imgRingBufs[1], {});
         }
         
         std::atomic_signal_fence(std::memory_order_seq_cst);
@@ -326,25 +329,26 @@ struct _SDTask {
         using namespace MSP;
         FRAMWriteEn writeEn; // Enable FRAM writing
         
-        MSP::ImgRingBuf& a = _State.sd.imgRingBufs[0];
-        MSP::ImgRingBuf& b = _State.sd.imgRingBufs[1];
+        ImgRingBuf& a = _State.sd.imgRingBufs[0];
+        ImgRingBuf& b = _State.sd.imgRingBufs[1];
         const std::optional<int> comp = ImgRingBuf::Compare(a, b);
         if (comp && *comp>0) {
             // a>b (a is newer), so set b=a
-            b = a;
+            ImgRingBuf::Set(b, a);
         
         } else if (comp && *comp<0) {
             // b>a (b is newer), so set a=b
-            a = b;
+            ImgRingBuf::Set(a, b);
         
         } else if (!comp) {
             // Both a and b are invalid; reset them both
-            a = {};
-            b = {};
+            ImgRingBuf::Set(a, {});
+            ImgRingBuf::Set(b, {});
         }
     }
     
     static void _ImgRingBufIncrement() {
+        using namespace MSP;
         FRAMWriteEn writeEn; // Enable FRAM writing
         MSP::ImgRingBuf ringBufCopy = _State.sd.imgRingBufs[0];
         
@@ -368,8 +372,8 @@ struct _SDTask {
         
         if (ringBufCopy.buf.widx == ringBufCopy.buf.ridx) ringBufCopy.buf.full = true;
         
-        _State.sd.imgRingBufs[0] = ringBufCopy;
-        _State.sd.imgRingBufs[1] = ringBufCopy;
+        ImgRingBuf::Set(_State.sd.imgRingBufs[0], ringBufCopy);
+        ImgRingBuf::Set(_State.sd.imgRingBufs[1], ringBufCopy);
     }
     
     // _RCA: SD card 'relative card address'; needed for SD comms after initialization.

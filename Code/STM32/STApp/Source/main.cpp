@@ -937,20 +937,18 @@ static void _MSPHostModeSet(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-static bool __MSPStateRead(size_t off, uint8_t* data, size_t len) {
+static bool __MSPStateRead(uint8_t* data, size_t len) {
     constexpr size_t ChunkSize = sizeof(MSP::Resp::arg.StateRead.data);
     AssertArg((off % ChunkSize) == 0);
     
-    const size_t chunkOff = off / ChunkSize;
+    using Chunk = decltype(MSP::Cmd::arg.StateRead.chunk);
+    
+    // Make sure `chunkCount-1` won't overflow our struct field
     const size_t chunkCount = (len+ChunkSize-1) / ChunkSize;
-    for (size_t i=0; i<chunkCount; i++) {
-        using Chunk = decltype(MSP::Cmd::arg.StateRead.chunk);
-        const size_t chunk = chunkOff+i;
-        
-        // Make sure `chunk` won't overflow our struct field
-        if (chunk > std::numeric_limits<Chunk>::max())
-            return false;
-        
+    if (chunkCount-1 > std::numeric_limits<Chunk>::max())
+        return false;
+    
+    for (size_t off=0, chunk=0; chunk<chunkCount; chunk++) {
         const MSP::Cmd mspCmd = {
             .op = MSP::Cmd::Op::StateRead,
             .arg = { .StateRead = { .chunk = (Chunk)chunk } },
@@ -969,57 +967,44 @@ static bool __MSPStateRead(size_t off, uint8_t* data, size_t len) {
     return true;
 }
 
-
-//static bool __MSPStateReadChunk(uint8_t* data, size_t dataCap, size_t off) {
-//    constexpr size_t ChunkSize = sizeof(MSP::Resp::arg.StateRead.data);
-//    AssertArg((off % ChunkSize) == 0);
+//static size_t __MSPStateRead(uint8_t* data, size_t cap) {
+//    MSP::State::Header header;
+//    if (cap < sizeof(header)) return 0;
 //    
-//    for (;;) {
-//        const MSP::Cmd mspCmd = {
-//            .op = MSP::Cmd::Op::StateRead,
-//            .arg = { .StateRead = { .chunk = off/ChunkSize } },
-//        };
-//        
-//        MSP::Resp mspResp;
-//        const bool ok = _I2C::Send(mspCmd, mspResp);
-//        if (!ok) return false;
-//    }
+//    size_t off = 0;
+//    bool ok = __MSPStateRead(off, (uint8_t*)&header, sizeof(header));
+//    if (!ok) return 0;
 //    
-//    return true;
+//    // Copy header into destination buffer
+//    memcpy(data+off, (uint8_t*)&header, sizeof(header));
+//    off += sizeof(header);
+//    
+//    // Validate that the caller has enough space to hold the header + payload
+//    if (cap < sizeof(header) + header.length) return 0;
+//    // Read payload directly into destination buffer
+//    ok = __MSPStateRead(off, data+off, header.length);
+//    if (!ok) return 0;
+//    off += header.length;
+//    return off;
 //}
 
-
-static size_t __MSPStateRead(uint8_t* data, size_t cap) {
-    MSP::State::Header header;
-    if (cap < sizeof(header)) return 0;
-    
-    size_t off = 0;
-    bool ok = __MSPStateRead(off, (uint8_t*)&header, sizeof(header));
-    if (!ok) return 0;
-    
-    // Copy header into destination buffer
-    memcpy(data+off, (uint8_t*)&header, sizeof(header));
-    off += sizeof(header);
-    
-    // Validate that the caller has enough space to hold the header + payload
-    if (cap < sizeof(header) + header.length) return 0;
-    // Read payload directly into destination buffer
-    ok = __MSPStateRead(off, data+off, header.length);
-    if (!ok) return 0;
-    off += header.length;
-    return off;
-}
-
 static void _MSPStateRead(const STM::Cmd& cmd) {
+    // Reset state
+    _Bufs.reset();
+    auto& buf = _Bufs.wget();
+    
+    auto& arg = cmd.arg.MSPStateRead;
+    if (arg.len > sizeof(buf.data)) {
+        // Reject command if the requested amount of data doesn't fit in our buffer
+        _System::USBAcceptCommand(false);
+        return;
+    }
+    
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Reset state
-    _Bufs.reset();
-    
-    auto& buf = _Bufs.wget();
-    size_t len = __MSPStateRead(buf.data, sizeof(buf.data));
-    if (!len) {
+    bool ok = __MSPStateRead(buf.data, arg.len);
+    if (!ok) {
         _System::USBSendStatus(false);
         return;
     }
@@ -1027,19 +1012,9 @@ static void _MSPStateRead(const STM::Cmd& cmd) {
     // Send status
     _System::USBSendStatus(true);
     
-    // Send MSPStateInfo
+    // Send data
     {
-        alignas(4) const MSPStateInfo stateInfo = {
-            .len = len,
-        };
-        
-        _USB.send(Endpoints::DataIn, &stateInfo, sizeof(stateInfo));
-        _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-    }
-    
-    // Send state itself
-    {
-        _USB.send(Endpoints::DataIn, buf.data, len);
+        _USB.send(Endpoints::DataIn, buf.data, arg.len);
         _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
     }
 }
