@@ -260,17 +260,63 @@ public:
 //        return state;
 //    }
     
-    template <typename T>
-    void mspStateRead(T& t) {
+//    template <typename T>
+//    void mspStateRead(T& t) {
+//        assert(_mode == STM::Status::Modes::STMApp);
+//        const STM::Cmd cmd = {
+//            .op = STM::Op::MSPStateRead,
+//            .arg = { .MSPStateRead = { .len = sizeof(t) } },
+//        };
+//        _sendCmd(cmd);
+//        _checkStatus("MSPStateRead command failed");
+//        
+//        _dev.read(STM::Endpoints::DataIn, t);
+//    }
+    
+    MSP::State mspStateRead() {
         assert(_mode == STM::Status::Modes::STMApp);
-        const STM::Cmd cmd = {
-            .op = STM::Op::MSPStateRead,
-            .arg = { .MSPStateRead = { .len = sizeof(t) } },
-        };
-        _sendCmd(cmd);
-        _checkStatus("MSPStateRead command failed");
         
-        _dev.read(STM::Endpoints::DataIn, t);
+        // Read MSP::State::Header and make sure we understand it
+        {
+            const STM::Cmd cmd = {
+                .op = STM::Op::MSPStateRead,
+                .arg = { .MSPStateRead = { .len = sizeof(MSP::State::Header) } },
+            };
+            _sendCmd(cmd);
+            _checkStatus("MSPStateRead command failed (header)");
+            
+            MSP::State::Header header;
+            _dev.read(STM::Endpoints::DataIn, header);
+            
+            if (header.magic != MSP::StateHeader.magic) {
+                throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
+                    (uintmax_t)MSP::StateHeader.magic,
+                    (uintmax_t)header.magic
+                );
+            }
+            
+            if (header.version != MSP::StateHeader.version) {
+                throw Toastbox::RuntimeError("unrecognized MSP::State version (expected: 0x%02jx, got: 0x%02jx)",
+                    (uintmax_t)MSP::StateHeader.version,
+                    (uintmax_t)header.version
+                );
+            }
+        }
+        
+        // Header looks good; read the full MSP::State
+        {
+            const STM::Cmd cmd = {
+                .op = STM::Op::MSPStateRead,
+                .arg = { .MSPStateRead = { .len = sizeof(MSP::State) } },
+            };
+            _sendCmd(cmd);
+            _checkStatus("MSPStateRead command failed (header+payload)");
+            
+            MSP::State state;
+            _dev.read(STM::Endpoints::DataIn, state);
+            
+            return state;
+        }
     }
     
     void mspTimeSet(MSP::Time time) {

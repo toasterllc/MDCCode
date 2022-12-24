@@ -43,34 +43,16 @@ public:
         {
             auto lock = std::unique_lock(*_dev);
             
-            {
-                // Enter host mode
-                _dev->mspHostModeSet(true);
-                
-                // Read the MSP::State header and make sure we understand it
-                
-                MSP::State::Header header;
-                _dev->mspStateRead(header);
-                
-                if (_mspState.header.magic != MSP::StateHeader.magic) {
-                    // Program MSPApp onto MSP
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
-                }
-                
-                if (_mspState.header.version > MSP::StateHeader.version) {
-                    // Newer version than we understand -- tell user to upgrade or re-program
-                    #warning TODO: implement
-                    throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
-                }
-                
-                // Header looks good; read the whole MSP::State
-                _dev->mspStateRead(_mspState);
-                
-                MSP::Time time = MSP::TimeFromUnixTime(std::time(nullptr));
-                _dev->mspTimeSet(time);
-                printf("Set device time to 0x%jx\n", (uintmax_t)time);
-            }
+            // Update our _mspState from the device
+            _mspState = _dev->mspStateRead();
+            
+            // Enter host mode
+            _dev->mspHostModeSet(true);
+            
+            // Update the device's time
+            MSP::Time time = MSP::TimeFromUnixTime(std::time(nullptr));
+            _dev->mspTimeSet(time);
+            printf("Set device time to 0x%jx\n", (uintmax_t)time);
             
 //            
 //            sleep(15);
