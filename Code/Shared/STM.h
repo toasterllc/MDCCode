@@ -32,12 +32,11 @@ namespace STM {
         STMReset,
         
         // STMApp
-        HostModeSet,
-        
         ICERAMWrite,
         ICEFlashRead,
         ICEFlashWrite,
         
+        MSPHostModeSet,
         MSPStateRead,
         MSPStateWrite,
         MSPTimeSet,
@@ -78,10 +77,6 @@ namespace STM {
             
             // # STMApp
             struct [[gnu::packed]] {
-                uint8_t en;
-            } HostModeSet;
-            
-            struct [[gnu::packed]] {
                 uint32_t len;
             } ICERAMWrite;
             
@@ -89,6 +84,10 @@ namespace STM {
                 uint32_t addr;
                 uint32_t len;
             } ICEFlashRead;
+            
+            struct [[gnu::packed]] {
+                uint8_t en;
+            } MSPHostModeSet;
             
             struct [[gnu::packed]] {
                 uint32_t len;

@@ -134,7 +134,7 @@ private:
 // MARK: - Utility Functions
 
 static bool _VDDIMGSDSet(bool en) {
-    const MSP::Cmd cmd = {
+    const MSP::Cmd mspCmd = {
         .op = MSP::Cmd::Op::VDDIMGSDSet,
         .arg = {
             .VDDIMGSDSet = {
@@ -143,9 +143,9 @@ static bool _VDDIMGSDSet(bool en) {
         },
     };
     
-    MSP::Resp resp;
-    const bool ok = _I2C::Send(cmd, resp);
-    if (!ok || !resp.ok) return false;
+    MSP::Resp mspResp;
+    const bool ok = _I2C::Send(mspCmd, mspResp);
+    if (!ok || !mspResp.ok) return false;
     
     return true;
 }
@@ -534,28 +534,6 @@ struct _TaskReadout {
 
 // MARK: - Commands
 
-static void _HostModeSet(const STM::Cmd& cmd) {
-    auto& arg = cmd.arg.HostModeSet;
-    
-    // Accept command
-    _System::USBAcceptCommand(true);
-    
-    const MSP::Cmd cmd = {
-        .op = MSP::Cmd::Op::HostModeSet,
-        .arg = { .HostModeSet = { .en = arg.en } },
-    };
-    MSP::Resp resp;
-    
-    const bool ok = _I2C::Send(cmd, resp);
-    if (!ok || !resp.ok) {
-        _System::USBSendStatus(false);
-        return;
-    }
-    
-    // Send status
-    _System::USBSendStatus(true);
-}
-
 static void _ICERAMWrite(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.ICERAMWrite;
     
@@ -937,24 +915,53 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
+static void _MSPHostModeSet(const STM::Cmd& cmd) {
+    auto& arg = cmd.arg.MSPHostModeSet;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const MSP::Cmd mspCmd = {
+        .op = MSP::Cmd::Op::HostModeSet,
+        .arg = { .HostModeSet = { .en = arg.en } },
+    };
+    MSP::Resp mspResp;
+    
+    const bool ok = _I2C::Send(mspCmd, mspResp);
+    if (!ok || !mspResp.ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Send status
+    _System::USBSendStatus(true);
+}
+
 static bool __MSPStateRead(size_t off, uint8_t* data, size_t len) {
     constexpr size_t ChunkSize = sizeof(MSP::Resp::arg.StateRead.data);
     AssertArg((off % ChunkSize) == 0);
     
     const size_t chunkOff = off / ChunkSize;
     const size_t chunkCount = (len+ChunkSize-1) / ChunkSize;
-    for (uint8_t chunk=0; chunk<chunkCount; chunk++) {
-        const MSP::Cmd cmd = {
+    for (size_t i=0; i<chunkCount; i++) {
+        using Chunk = decltype(MSP::Cmd::arg.StateRead.chunk);
+        const size_t chunk = chunkOff+i;
+        
+        // Make sure `chunk` won't overflow our struct field
+        if (chunk > std::numeric_limits<Chunk>::max())
+            return false;
+        
+        const MSP::Cmd mspCmd = {
             .op = MSP::Cmd::Op::StateRead,
-            .arg = { .StateRead = { .chunk = chunkOff+chunk } },
+            .arg = { .StateRead = { .chunk = (Chunk)chunk } },
         };
         
-        MSP::Resp resp;
-        const bool ok = _I2C::Send(cmd, resp);
+        MSP::Resp mspResp;
+        const bool ok = _I2C::Send(mspCmd, mspResp);
         if (!ok) return false;
         
         const size_t l = std::min(len, ChunkSize);
-        memcpy(data+off, resp.arg.StateRead.data, l);
+        memcpy(data+off, mspResp.arg.StateRead.data, l);
         off += l;
         len -= l;
     }
@@ -968,13 +975,13 @@ static bool __MSPStateRead(size_t off, uint8_t* data, size_t len) {
 //    AssertArg((off % ChunkSize) == 0);
 //    
 //    for (;;) {
-//        const MSP::Cmd cmd = {
+//        const MSP::Cmd mspCmd = {
 //            .op = MSP::Cmd::Op::StateRead,
 //            .arg = { .StateRead = { .chunk = off/ChunkSize } },
 //        };
 //        
-//        MSP::Resp resp;
-//        const bool ok = _I2C::Send(cmd, resp);
+//        MSP::Resp mspResp;
+//        const bool ok = _I2C::Send(mspCmd, mspResp);
 //        if (!ok) return false;
 //    }
 //    
@@ -987,21 +994,19 @@ static size_t __MSPStateRead(uint8_t* data, size_t cap) {
     if (cap < sizeof(header)) return 0;
     
     size_t off = 0;
-    bool ok = __MSPStateRead(off, &header, sizeof(header));
+    bool ok = __MSPStateRead(off, (uint8_t*)&header, sizeof(header));
     if (!ok) return 0;
     
     // Copy header into destination buffer
-    memcpy(data+off, &header, sizeof(header));
+    memcpy(data+off, (uint8_t*)&header, sizeof(header));
     off += sizeof(header);
     
-    // Validate the header
-    if (header.magic != MSP::State::MagicNumber) return 0;
     // Validate that the caller has enough space to hold the header + payload
-    if (cap < sizeof(header) + header.size) return 0;
+    if (cap < sizeof(header) + header.length) return 0;
     // Read payload directly into destination buffer
-    ok = __MSPStateRead(off, data+off, header.size);
+    ok = __MSPStateRead(off, data+off, header.length);
     if (!ok) return 0;
-    off += header.size;
+    off += header.length;
     return off;
 }
 
@@ -1043,14 +1048,10 @@ static void _MSPStateWrite(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    
-    
-    
-    
-    
+    // TODO: implement? not sure we actually need this though...
     
     // Send status
-    _System::USBSendStatus(true);
+    _System::USBSendStatus(false);
 }
 
 static void _MSPTimeSet(const STM::Cmd& cmd) {
@@ -1059,14 +1060,14 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    const MSP::Cmd cmd = {
+    const MSP::Cmd mspCmd = {
         .op = MSP::Cmd::Op::TimeSet,
         .arg = { .TimeSet = { .time = arg.time } },
     };
     
-    MSP::Resp resp;
-    const bool ok = _I2C::Send(cmd, resp);
-    if (!ok || !resp.ok) {
+    MSP::Resp mspResp;
+    const bool ok = _I2C::Send(mspCmd, mspResp);
+    if (!ok || !mspResp.ok) {
         _System::USBSendStatus(false);
         return;
     }
@@ -1408,13 +1409,12 @@ void _BatteryStatusGet(const STM::Cmd& cmd) {
 
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
-    // Host Mode
-    case Op::HostModeSet:           _HostModeSet(cmd);                  break;
     // ICE40 Bootloader
     case Op::ICERAMWrite:           _ICERAMWrite(cmd);                  break;
     case Op::ICEFlashRead:          _ICEFlashRead(cmd);                 break;
     case Op::ICEFlashWrite:         _ICEFlashWrite(cmd);                break;
-    // MSP430 State Read/Write
+    // MSP430
+    case Op::MSPHostModeSet:        _MSPHostModeSet(cmd);               break;
     case Op::MSPStateRead:          _MSPStateRead(cmd);                 break;
     case Op::MSPStateWrite:         _MSPStateWrite(cmd);                break;
     case Op::MSPTimeSet:            _MSPTimeSet(cmd);                   break;

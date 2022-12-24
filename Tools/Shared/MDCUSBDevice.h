@@ -166,31 +166,13 @@ public:
         
         const STM::Cmd cmd = {
             .op = STM::Op::STMReset,
-            .arg = {
-                .STMReset = {
-                    .entryPointAddr = (uint32_t)entryPointAddr,
-                },
-            },
+            .arg = { .STMReset = { .entryPointAddr = (uint32_t)entryPointAddr } }
         };
         _sendCmd(cmd);
         _checkStatus("STMReset command failed");
     }
     
     // MARK: - STMApp Commands
-    void hostModeSet(bool en) {
-        assert(_mode == STM::Status::Modes::STMApp);
-        const STM::Cmd cmd = {
-            .op = STM::Op::HostModeSet,
-            .arg = {
-                .HostModeSet = {
-                    .en = en,
-                },
-            },
-        };
-        _sendCmd(cmd);
-        _checkStatus("HostModeSet command failed");
-    }
-    
     void iceRAMWrite(const void* data, size_t len) {
         assert(_mode == STM::Status::Modes::STMApp);
         if (len >= std::numeric_limits<uint32_t>::max())
@@ -198,11 +180,7 @@ public:
         
         const STM::Cmd cmd = {
             .op = STM::Op::ICERAMWrite,
-            .arg = {
-                .ICERAMWrite = {
-                    .len = (uint32_t)len,
-                },
-            },
+            .arg = { .ICERAMWrite = { .len = (uint32_t)len } },
         };
         _sendCmd(cmd);
         // Send data
@@ -258,6 +236,46 @@ public:
         _checkStatus("ICEFlashWrite command failed");
     }
     
+    void mspHostModeSet(bool en) {
+        assert(_mode == STM::Status::Modes::STMApp);
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPHostModeSet,
+            .arg = { .MSPHostModeSet = { .en = en } },
+        };
+        _sendCmd(cmd);
+        _checkStatus("MSPHostModeSet command failed");
+    }
+    
+    MSP::State mspStateRead() {
+        assert(_mode == STM::Status::Modes::STMApp);
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPStateRead,
+        };
+        _sendCmd(cmd);
+        _checkStatus("MSPStateRead command failed");
+        
+        STM::MSPStateInfo stateInfo = {};
+        _dev.read(STM::Endpoints::DataIn, stateInfo);
+        
+        if (stateInfo.len != sizeof(MSP::State))
+            throw Toastbox::RuntimeError("MSP state length (%ju) doesn't match expected state length (%ju)",
+                (uintmax_t)stateInfo.len, (uintmax_t)sizeof(MSP::State));
+        
+        MSP::State state;
+        _dev.read(STM::Endpoints::DataIn, state);
+        return state;
+    }
+    
+    void mspTimeSet(MSP::Time time) {
+        assert(_mode == STM::Status::Modes::STMApp);
+        const STM::Cmd cmd = {
+            .op = STM::Op::MSPTimeSet,
+            .arg = { .MSPTimeSet = { .time = time } },
+        };
+        _sendCmd(cmd);
+        _checkStatus("MSPHostModeSet command failed");
+    }
+    
     void mspSBWConnect() {
         assert(_mode == STM::Status::Modes::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWConnect };
@@ -293,7 +311,7 @@ public:
         _sendCmd(cmd);
         // Read data
         _dev.read(STM::Endpoints::DataIn, data, len);
-        _checkStatus("MSPRead command failed");
+        _checkStatus("MSPSBWRead command failed");
     }
     
     void mspSBWWrite(uintptr_t addr, const void* data, size_t len) {
@@ -317,7 +335,7 @@ public:
         _sendCmd(cmd);
         // Send data
         _dev.write(STM::Endpoints::DataOut, data, len);
-        _checkStatus("MSPWrite command failed");
+        _checkStatus("MSPSBWWrite command failed");
     }
     
     void mspSBWDebug(const STM::MSPSBWDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {

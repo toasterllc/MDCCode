@@ -24,13 +24,15 @@ const CmdStr LEDSetCmd              = "LEDSet";
 const CmdStr STMWriteCmd            = "STMWrite";
 
 // STMApp Commands
-const CmdStr HostModeSetCmd         = "HostModeSet";
 const CmdStr ICERAMWriteCmd         = "ICERAMWrite";
 const CmdStr ICEFlashReadCmd        = "ICEFlashRead";
 const CmdStr ICEFlashWriteCmd       = "ICEFlashWrite";
-const CmdStr MSPReadCmd             = "MSPRead";
-const CmdStr MSPWriteCmd            = "MSPWrite";
+const CmdStr MSPHostModeSetCmd      = "MSPHostModeSet";
 const CmdStr MSPStateReadCmd        = "MSPStateRead";
+const CmdStr MSPStateWriteCmd       = "MSPStateWrite";
+const CmdStr MSPTimeSetCmd          = "MSPTimeSet";
+const CmdStr MSPSBWReadCmd          = "MSPSBWRead";
+const CmdStr MSPSBWWriteCmd         = "MSPSBWWrite";
 const CmdStr SDReadCmd              = "SDRead";
 const CmdStr ImgCaptureCmd          = "ImgCapture";
 const CmdStr BatteryStatusGetCmd    = "BatteryStatusGet";
@@ -47,14 +49,17 @@ static void printUsage() {
     cout << "  " << STMWriteCmd             << " <file>\n";
     
     // STMApp Commands
-    cout << "  " << HostModeSetCmd          << " <0/1>\n";
     cout << "  " << ICERAMWriteCmd          << " <file>\n";
     cout << "  " << ICEFlashReadCmd         << " <addr> <len>\n";
     cout << "  " << ICEFlashWriteCmd        << " <file>\n";
     
-    cout << "  " << MSPReadCmd              << " <addr> <len>\n";
-    cout << "  " << MSPWriteCmd             << " <file>\n";
+    cout << "  " << MSPHostModeSetCmd       << " <0/1>\n";
     cout << "  " << MSPStateReadCmd         << "\n";
+    cout << "  " << MSPStateWriteCmd        << "\n";
+    cout << "  " << MSPTimeSetCmd           << " <time>\n";
+    
+    cout << "  " << MSPSBWReadCmd           << " <addr> <len>\n";
+    cout << "  " << MSPSBWWriteCmd          << " <file>\n";
     
     cout << "  " << SDReadCmd               << " <addr> <len> <output>\n";
     cout << "  " << ImgCaptureCmd           << " <output.cfa>\n";
@@ -77,10 +82,6 @@ struct Args {
     } STMWrite = {};
     
     struct {
-        bool en;
-    } HostModeSet = {};
-    
-    struct {
         std::string filePath;
     } ICERAMWrite = {};
     
@@ -94,13 +95,21 @@ struct Args {
     } ICEFlashWrite = {};
     
     struct {
+        bool en;
+    } MSPHostModeSet = {};
+    
+    struct {
+        MSP::Time time = 0;
+    } MSPTimeSet = {};
+    
+    struct {
         uintptr_t addr = 0;
         size_t len = 0;
-    } MSPRead = {};
+    } MSPSBWRead = {};
     
     struct {
         std::string filePath;
-    } MSPWrite = {};
+    } MSPSBWWrite = {};
     
     struct {
         uintptr_t addr = 0;
@@ -132,50 +141,56 @@ static Args parseArgs(int argc, const char* argv[]) {
     if (args.cmd == lower(BootloaderInvokeCmd)) {
     
     } else if (args.cmd == lower(LEDSetCmd)) {
-        if (strs.size() < 3) throw std::runtime_error("LED index/state not specified");
+        if (strs.size() < 3) throw std::runtime_error("missing argument: LED index/state");
         IntForStr(args.LEDSet.idx, strs[1]);
         IntForStr(args.LEDSet.on, strs[2]);
     
     } else if (args.cmd == lower(STMWriteCmd)) {
-        if (strs.size() < 2) throw std::runtime_error("file path not specified");
+        if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.STMWrite.filePath = strs[1];
     
-    } else if (args.cmd == lower(HostModeSetCmd)) {
-        if (strs.size() < 2) throw std::runtime_error("enabled argument specified");
-        IntForStr(args.HostModeSet.en, strs[1]);
-    
     } else if (args.cmd == lower(ICERAMWriteCmd)) {
-        if (strs.size() < 2) throw std::runtime_error("file path not specified");
+        if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.ICERAMWrite.filePath = strs[1];
     
     } else if (args.cmd == lower(ICEFlashReadCmd)) {
-        if (strs.size() < 3) throw std::runtime_error("address/length not specified");
+        if (strs.size() < 3) throw std::runtime_error("missing argument: address/length");
         IntForStr(args.ICEFlashRead.addr, strs[1]);
         IntForStr(args.ICEFlashRead.len, strs[2]);
     
     } else if (args.cmd == lower(ICEFlashWriteCmd)) {
-        if (strs.size() < 2) throw std::runtime_error("file path not specified");
+        if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.ICEFlashWrite.filePath = strs[1];
     
-    } else if (args.cmd == lower(MSPReadCmd)) {
-        if (strs.size() < 3) throw std::runtime_error("address/length not specified");
-        IntForStr(args.MSPRead.addr, strs[1]);
-        IntForStr(args.MSPRead.len, strs[2]);
-    
-    } else if (args.cmd == lower(MSPWriteCmd)) {
-        if (strs.size() < 2) throw std::runtime_error("file path not specified");
-        args.MSPWrite.filePath = strs[1];
+    } else if (args.cmd == lower(MSPHostModeSetCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("missing argument: host mode state");
+        IntForStr(args.MSPHostModeSet.en, strs[1]);
     
     } else if (args.cmd == lower(MSPStateReadCmd)) {
     
+    } else if (args.cmd == lower(MSPStateWriteCmd)) {
+    
+    } else if (args.cmd == lower(MSPTimeSetCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("missing argument: time");
+        IntForStr(args.MSPTimeSet.time, strs[1]);
+    
+    } else if (args.cmd == lower(MSPSBWReadCmd)) {
+        if (strs.size() < 3) throw std::runtime_error("missing argument: address/length");
+        IntForStr(args.MSPSBWRead.addr, strs[1]);
+        IntForStr(args.MSPSBWRead.len, strs[2]);
+    
+    } else if (args.cmd == lower(MSPSBWWriteCmd)) {
+        if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
+        args.MSPSBWWrite.filePath = strs[1];
+    
     } else if (args.cmd == lower(SDReadCmd)) {
-        if (strs.size() < 4) throw std::runtime_error("address/length/file not specified");
+        if (strs.size() < 4) throw std::runtime_error("missing argument: address/length/file");
         IntForStr(args.SDRead.addr, strs[1]);
         IntForStr(args.SDRead.len, strs[2]);
         args.SDRead.filePath = strs[3];
     
     } else if (args.cmd == lower(ImgCaptureCmd)) {
-        if (strs.size() < 2) throw std::runtime_error("index/file path not specified");
+        if (strs.size() < 2) throw std::runtime_error("missing argument: file path");
         args.ImgCapture.filePath = strs[1];
     
     } else if (args.cmd == lower(BatteryStatusGetCmd)) {
@@ -209,11 +224,6 @@ static void STMWrite(const Args& args, MDCUSBDevice& device) {
     // Reset the device, triggering it to load the program we just wrote
     printf("STMWrite: Resetting device\n");
     device.stmReset(elf.entryPointAddr());
-}
-
-static void HostModeSet(const Args& args, MDCUSBDevice& device) {
-    printf("HostModeSet: %d\n", (int)args.HostModeSet.en);
-    device.hostModeSet(args.HostModeSet.en);
 }
 
 static void ICERAMWrite(const Args& args, MDCUSBDevice& device) {
@@ -263,62 +273,13 @@ static void ICEFlashWrite(const Args& args, MDCUSBDevice& device) {
     }
 }
 
-static void MSPRead(const Args& args, MDCUSBDevice& device) {
-    device.mspSBWConnect();
-    
-    printf("Reading [0x%08jx,0x%08jx):\n",
-        (uintmax_t)args.MSPRead.addr,
-        (uintmax_t)(args.MSPRead.addr+args.MSPRead.len)
-    );
-    
-    auto buf = std::make_unique<uint8_t[]>(args.MSPRead.len);
-    device.mspSBWRead(args.MSPRead.addr, buf.get(), args.MSPRead.len);
-    
-    for (size_t i=0; i<args.MSPRead.len; i++) {
-        printf("%02jx ", (uintmax_t)buf[i]);
-    }
-    
-    printf("\n");
-    
-    device.mspSBWDisconnect();
-}
-
-static void MSPWrite(const Args& args, MDCUSBDevice& device) {
-    ELF32Binary elf(args.MSPWrite.filePath.c_str());
-    
-    device.mspSBWConnect();
-    
-    // Write the data
-    elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-    size_t size, const char* name) {
-        printf("MSPWrite: Writing %22s @ 0x%04jx    size: 0x%04jx    vaddr: 0x%04jx\n",
-            name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
-        
-        device.mspSBWWrite(paddr, data, size);
-    });
-    
-    // Read back data and compare with what we expect
-    elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
-    size_t size, const char* name) {
-        printf("MSPWrite: Verifying %s @ 0x%jx [size: 0x%jx]\n",
-            name, (uintmax_t)paddr, (uintmax_t)size);
-        
-        auto buf = std::make_unique<uint8_t[]>(size);
-        device.mspSBWRead(paddr, buf.get(), size);
-        
-        if (memcmp(data, buf.get(), size)) {
-            throw Toastbox::RuntimeError("section doesn't match: %s", name);
-        }
-    });
-    
-    device.mspSBWDisconnect();
+static void MSPHostModeSet(const Args& args, MDCUSBDevice& device) {
+    printf("MSPHostModeSet: %d\n", (int)args.MSPHostModeSet.en);
+    device.mspHostModeSet(args.MSPHostModeSet.en);
 }
 
 static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
-    device.mspSBWConnect();
-    
-    MSP::State state;
-    device.mspSBWRead(MSP::StateAddr, &state, sizeof(state));
+    MSP::State state = device.mspStateRead();
     
     if (state.header.magic != MSP::State::MagicNumber) {
         throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
@@ -334,13 +295,10 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         );
     }
     
-    printf(     "magic:                     0x%08jx\n",     (uintmax_t)state.header.magic);
-    printf(     "version:                   0x%04jx\n",     (uintmax_t)state.header.version);
-    printf(     "\n");
-    
-    printf(     "startTime\n");
-    printf(     "  time:                    0x%jx\n",       (uintmax_t)state.startTime.time);
-    printf(     "  valid:                   %jd\n",         (intmax_t)state.startTime.valid);
+    printf(     "header\n");
+    printf(     "  magic:                     0x%08jx\n",     (uintmax_t)state.header.magic);
+    printf(     "  version:                   0x%04jx\n",     (uintmax_t)state.header.version);
+    printf(     "  length:                    0x%04jx\n",     (uintmax_t)state.header.length);
     printf(     "\n");
     
     printf(     "sd\n");
@@ -394,6 +352,66 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
         i++;
     }
     printf(     "\n");
+    
+    device.mspSBWDisconnect();
+}
+
+static void MSPStateWrite(const Args& args, MDCUSBDevice& device) {
+    printf("Unimplemented\n");
+}
+
+static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
+    printf("MSPTimeSet: 0x%016jx\n", (uintmax_t)args.MSPTimeSet.time);
+    device.mspTimeSet(args.MSPTimeSet.time);
+}
+
+static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
+    device.mspSBWConnect();
+    
+    printf("Reading [0x%08jx,0x%08jx):\n",
+        (uintmax_t)args.MSPSBWRead.addr,
+        (uintmax_t)(args.MSPSBWRead.addr+args.MSPSBWRead.len)
+    );
+    
+    auto buf = std::make_unique<uint8_t[]>(args.MSPSBWRead.len);
+    device.mspSBWRead(args.MSPSBWRead.addr, buf.get(), args.MSPSBWRead.len);
+    
+    for (size_t i=0; i<args.MSPSBWRead.len; i++) {
+        printf("%02jx ", (uintmax_t)buf[i]);
+    }
+    
+    printf("\n");
+    
+    device.mspSBWDisconnect();
+}
+
+static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
+    ELF32Binary elf(args.MSPSBWWrite.filePath.c_str());
+    
+    device.mspSBWConnect();
+    
+    // Write the data
+    elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+    size_t size, const char* name) {
+        printf("MSPSBWWrite: Writing %22s @ 0x%04jx    size: 0x%04jx    vaddr: 0x%04jx\n",
+            name, (uintmax_t)paddr, (uintmax_t)size, (uintmax_t)vaddr);
+        
+        device.mspSBWWrite(paddr, data, size);
+    });
+    
+    // Read back data and compare with what we expect
+    elf.enumerateLoadableSections([&](uint32_t paddr, uint32_t vaddr, const void* data,
+    size_t size, const char* name) {
+        printf("MSPSBWWrite: Verifying %s @ 0x%jx [size: 0x%jx]\n",
+            name, (uintmax_t)paddr, (uintmax_t)size);
+        
+        auto buf = std::make_unique<uint8_t[]>(size);
+        device.mspSBWRead(paddr, buf.get(), size);
+        
+        if (memcmp(data, buf.get(), size)) {
+            throw Toastbox::RuntimeError("section doesn't match: %s", name);
+        }
+    });
     
     device.mspSBWDisconnect();
 }
@@ -528,13 +546,15 @@ int main(int argc, const char* argv[]) {
         if (args.cmd == lower(BootloaderInvokeCmd))         BootloaderInvoke(args, device);
         else if (args.cmd == lower(LEDSetCmd))              LEDSet(args, device);
         else if (args.cmd == lower(STMWriteCmd))            STMWrite(args, device);
-        else if (args.cmd == lower(HostModeSetCmd))         HostModeSet(args, device);
         else if (args.cmd == lower(ICERAMWriteCmd))         ICERAMWrite(args, device);
         else if (args.cmd == lower(ICEFlashReadCmd))        ICEFlashRead(args, device);
         else if (args.cmd == lower(ICEFlashWriteCmd))       ICEFlashWrite(args, device);
-        else if (args.cmd == lower(MSPReadCmd))             MSPRead(args, device);
-        else if (args.cmd == lower(MSPWriteCmd))            MSPWrite(args, device);
+        else if (args.cmd == lower(MSPHostModeSetCmd))      MSPHostModeSet(args, device);
         else if (args.cmd == lower(MSPStateReadCmd))        MSPStateRead(args, device);
+        else if (args.cmd == lower(MSPStateWriteCmd))       MSPStateWrite(args, device);
+        else if (args.cmd == lower(MSPTimeSetCmd))          MSPTimeSet(args, device);
+        else if (args.cmd == lower(MSPSBWReadCmd))          MSPSBWRead(args, device);
+        else if (args.cmd == lower(MSPSBWWriteCmd))         MSPSBWWrite(args, device);
         else if (args.cmd == lower(SDReadCmd))              SDRead(args, device);
         else if (args.cmd == lower(ImgCaptureCmd))          ImgCapture(args, device);
         else if (args.cmd == lower(BatteryStatusGetCmd))    BatteryStatusGet(args, device);
