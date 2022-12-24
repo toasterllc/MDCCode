@@ -35,6 +35,8 @@ public:
     
     template <typename T_Send, typename T_Recv>
     static bool Send(const T_Send& send, T_Recv& recv) {
+        T_Scheduler::Wait([&] { return _St.load() == _State::Idle; });
+        
         bool ok = _Send(send);
         if (!ok) return false;
         
@@ -57,12 +59,13 @@ private:
         Idle,
         Send,
         Recv,
+        Done,
         Error,
     };
     
     template <typename T>
     static bool _Send(const T& msg) {
-        Assert(_St.load()==_State::Idle || _St.load()==_State::Error);
+        Assert(_St.load() == _State::Idle);
         
         // "address ... must be shifted to the left before calling"
         constexpr uint16_t Addr = T_Addr<<1;
@@ -71,12 +74,15 @@ private:
         Assert(hs == HAL_OK);
         
         T_Scheduler::Wait([&] { return _St.load() != _State::Send; });
-        return _St.load()==_State::Idle;
+        const bool ok = (_St.load() == _State::Done);
+        _St = _State::Idle;
+        
+        return ok;
     }
     
     template <typename T>
     static bool _Recv(T& msg) {
-        Assert(_St.load()==_State::Idle || _St.load()==_State::Error);
+        Assert(_St.load() == _State::Idle);
         
         // "address ... must be shifted to the left before calling"
         constexpr uint16_t Addr = T_Addr<<1;
@@ -85,17 +91,20 @@ private:
         Assert(hs == HAL_OK);
         
         T_Scheduler::Wait([&] { return _St.load() != _State::Recv; });
-        return _St.load()==_State::Idle;
+        const bool ok = (_St.load() == _State::Done);
+        _St = _State::Idle;
+        
+        return ok;
     }
     
     static void _CallbackTx(I2C_HandleTypeDef* me) {
         Assert(_St.load() == _State::Send);
-        _St = _State::Idle;
+        _St = _State::Done;
     }
     
     static void _CallbackRx(I2C_HandleTypeDef* me) {
         Assert(_St.load() == _State::Recv);
-        _St = _State::Idle;
+        _St = _State::Done;
     }
     
     static void _CallbackError(I2C_HandleTypeDef* me) {

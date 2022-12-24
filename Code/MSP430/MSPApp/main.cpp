@@ -508,6 +508,10 @@ struct _MainTask {
 //            _Scheduler::Sleep(_Scheduler::Ms(250));
 //        }
         
+//        for (;;) {
+//            _Scheduler::Sleep(_Scheduler::Ms(1000));
+//        }
+        
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
         // Init SPI peripheral
