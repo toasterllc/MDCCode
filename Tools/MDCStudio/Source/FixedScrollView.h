@@ -1,9 +1,9 @@
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 
-// FixedScrollView: a scroll view that holds the document (set via -setFixedDocument:)
+// FixedScrollView: a scroll view that holds the document (supplied to -initWithFixedDocument:)
 // fixed at the visible rect of the scroll view, but transmits the current
-// translation/magnification to the fixed document via -setTranslation:magnification:.
+// translation/magnification to the fixed document via -fixedTranslationChanged:magnification:.
 // This allows:
 //
 //   - the document to implement scrolling/magnification itself by using its
