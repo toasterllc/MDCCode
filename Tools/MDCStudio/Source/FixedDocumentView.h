@@ -5,6 +5,6 @@
 // FixedDocumentView forwards the FixedScrollViewDocument protocol methods to its layer.
 @interface FixedDocumentView : NSView <FixedScrollViewDocument>
 - (instancetype)initWithFixedLayer:(CALayer<FixedScrollViewDocument>*)layer;
-- (CGPoint)convertPointToFixedDocument:(CGPoint)point fromView:(NSView*)view;
-- (CGRect)convertRectToFixedDocument:(CGRect)rect fromView:(NSView*)view;
+//- (CGPoint)convertPointToFixedDocument:(CGPoint)point fromView:(NSView*)view;
+//- (CGRect)convertRectToFixedDocument:(CGRect)rect fromView:(NSView*)view;
 @end

@@ -431,7 +431,7 @@ done:
         [_selectionRectLayer setBorderColor:[[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1] CGColor]];
         [_selectionRectLayer setHidden:true];
         [_selectionRectLayer setBorderWidth:1];
-        [[_imageGridLayer superlayer] addSublayer:_selectionRectLayer];
+        [_imageGridLayer addSublayer:_selectionRectLayer];
     }
     
     // Observe image library changes so that we update the image grid
@@ -554,17 +554,19 @@ static ImageGridViewImageIds _XORImageIds(const ImageGridViewImageIds& a, const 
 - (void)mouseDown:(NSEvent*)mouseDownEvent {
     [[self window] makeFirstResponder:self];
     
+    NSView* superview = [self superview];
     NSWindow* win = [mouseDownEvent window];
 //    const CGPoint startPoint = _ConvertPoint(_imageGridLayer, _documentView,
 //        [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil]);
-    const CGPoint startPoint = [self convertPointToFixedDocument:[mouseDownEvent locationInWindow] fromView:nil];
+    const CGPoint startPoint = [superview convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
+//    const CGPoint startPoint = [self convertPointToFixedDocument:[mouseDownEvent locationInWindow] fromView:nil];
     [_selectionRectLayer setHidden:false];
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
     const ImageGridViewImageIds oldSelection = [_imageGridLayer selectedImageIds];
     TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
 //        const CGPoint curPoint = _ConvertPoint(_imageGridLayer, _documentView, [_documentView convertPoint:[event locationInWindow] fromView:nil]);
-        const CGPoint curPoint = [self convertPointToFixedDocument:[event locationInWindow] fromView:nil];
+        const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
         const ImageGridViewImageIds newSelection = [_imageGridLayer imageIdsForRect:rect];
         if (extend) {
@@ -572,7 +574,7 @@ static ImageGridViewImageIds _XORImageIds(const ImageGridViewImageIds& a, const 
         } else {
             [_imageGridLayer setSelectedImageIds:newSelection];
         }
-        [_selectionRectLayer setFrame:rect];
+        [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
         
         [self autoscroll:event];
 //        NSLog(@"mouseDown:");
@@ -656,7 +658,7 @@ struct SelectionDelta {
     
 //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
     const Img::Id newImgId = imageLibrary->recordGet(imageLibrary->begin()+newIdx)->ref.id;
-    [self scrollRectToVisible:[_imageGridLayer rectForImageAtIndex:newIdx]];
+    [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
     
     if (!extend) selectedImageIds.clear();
     selectedImageIds.insert(newImgId);

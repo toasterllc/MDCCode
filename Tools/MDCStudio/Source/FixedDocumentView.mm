@@ -12,7 +12,7 @@
     
     _layer = layer;
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-//    [_layer setGeometryFlipped:[self isFlipped]];
+//    [_layer setGeometryFlipped:false];
     [self setLayer:_layer];
     [self setWantsLayer:true];
     return self;
@@ -57,12 +57,12 @@
     return [_layer fixedFlipped];
 }
 
-- (CGPoint)convertPointToFixedDocument:(CGPoint)point fromView:(NSView*)view {
-    return [[self superview] convertPoint:point fromView:view];
-}
-
-- (CGRect)convertRectToFixedDocument:(CGRect)rect fromView:(NSView*)view {
-    return [[self superview] convertRect:rect fromView:view];
-}
+//- (CGPoint)convertPointToFixedDocument:(CGPoint)point fromView:(NSView*)view {
+//    return [[self superview] convertPoint:point fromView:view];
+//}
+//
+//- (CGRect)convertRectToFixedDocument:(CGRect)rect fromView:(NSView*)view {
+//    return [[self superview] convertRect:rect fromView:view];
+//}
 
 @end
