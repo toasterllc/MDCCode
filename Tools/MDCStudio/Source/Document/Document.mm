@@ -282,9 +282,7 @@ using namespace MDCStudio;
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
         [imageGridView setDelegate:self];
         
-        FixedScrollView* sv = [[FixedScrollView alloc] initWithFixedDocument:imageGridView];
-        [sv setAllowsMagnification:false];
-        
+        ImageGridScrollView* sv = [[ImageGridScrollView alloc] initWithFixedDocument:imageGridView];
         [_mainView setContentView:sv animation:MainViewAnimation::None];
         
 //        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];

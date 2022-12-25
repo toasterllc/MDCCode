@@ -16,23 +16,22 @@
 //     window titlebar underlay effects).
 
 @protocol FixedScrollViewDocument
-
-//// -fixedContentSize: the total size of the scrollable/zoomable content.
-//// (Ie, the size of the 'universe'.)
-//- (CGSize)fixedContentSize;
-
-// -setFixedTranslation:magnification: called whenever the
-// translation/magnification changes.
+@required
+// -setFixedTranslation:magnification: called whenever the translation/magnification changes
 - (void)setFixedTranslation:(CGPoint)t magnification:(CGFloat)m;
-
 - (bool)fixedFlipped;
 
+@optional
+- (void)createFixedConstraintsForContainer:(NSView*)container;
 @end
 
 @interface FixedScrollView : NSScrollView
 
 - (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc;
 
+- (NSView<FixedScrollViewDocument>*)document;
+
+- (void)setAnchorDuringResize:(bool)anchorDuringResize;
 - (void)scrollToCenter;
 
 - (bool)magnifyToFit;

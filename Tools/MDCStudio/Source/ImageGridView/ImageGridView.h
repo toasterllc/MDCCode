@@ -23,3 +23,6 @@ using ImageGridViewImageIds = std::set<Img::Id>;
 //- (NSView*)initialFirstResponder;
 
 @end
+
+@interface ImageGridScrollView : FixedScrollView
+@end

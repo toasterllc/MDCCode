@@ -93,6 +93,10 @@ inline NSDictionary* LayerNullActions = @{
     return true;
 }
 
+- (CGSize)preferredFrameSize {
+    return {640, 480};
+}
+
 @end
 
 
@@ -115,22 +119,22 @@ inline NSDictionary* LayerNullActions = @{
     }
 }
 
-- (void)viewDidMoveToSuperview {
-    [super viewDidMoveToSuperview];
-    
-    NSView*const superview = [self superview];
-    if (!superview) return;
-    
-    NSLayoutConstraint* width = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeWidth
-        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
-        multiplier:1 constant:640];
-    
-    NSLayoutConstraint* height = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeHeight
-        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
-        multiplier:1 constant:480];
-    
-    [NSLayoutConstraint activateConstraints:@[width, height]];
-}
+//- (void)viewDidMoveToSuperview {
+//    [super viewDidMoveToSuperview];
+//    
+//    NSView*const superview = [self superview];
+//    if (!superview) return;
+//    
+//    NSLayoutConstraint* width = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeWidth
+//        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+//        multiplier:1 constant:640];
+//    
+//    NSLayoutConstraint* height = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeHeight
+//        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+//        multiplier:1 constant:480];
+//    
+//    [NSLayoutConstraint activateConstraints:@[width, height]];
+//}
 
 @end
 

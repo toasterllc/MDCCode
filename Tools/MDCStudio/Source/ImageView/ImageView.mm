@@ -146,6 +146,10 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     [self setNeedsDisplay];
 }
 
+- (CGSize)preferredFrameSize {
+    return {(CGFloat)imageThumb.imageWidth*2, (CGFloat)imageThumb.imageHeight*2};
+}
+
 @end
 
 
@@ -384,34 +388,29 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
 }
 
-// MARK: - NSView Overrides
-- (void)viewDidMoveToSuperview {
-    [super viewDidMoveToSuperview];
-    
-    
-//        [_docWidth setConstant:imageThumb.imageWidth*2];
-//        [_docHeight setConstant:imageThumb.imageHeight*2];
-////        NSView* doc = [_scrollView documentView];
-////        [doc setTranslatesAutoresizingMaskIntoConstraints:false];
-////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeWidth
-////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-////            constant:imageThumb.ref.imageWidth*2]];
-////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeHeight
-////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-////            constant:imageThumb.ref.imageHeight*2]];
-    
-    NSView*const superview = [self superview];
-    if (!superview) return;
-    
-    NSLayoutConstraint* width = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeWidth
-        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-        constant:_imageLayer->imageThumb.imageWidth*2];
-    
-    NSLayoutConstraint* height = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeHeight
-        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
-        constant:_imageLayer->imageThumb.imageHeight*2];
-    
-    [NSLayoutConstraint activateConstraints:@[width, height]];
-}
+//// MARK: - NSView Overrides
+//- (void)createFixedConstraintsForContainer:(NSView*)container {
+//    
+////        [_docWidth setConstant:imageThumb.imageWidth*2];
+////        [_docHeight setConstant:imageThumb.imageHeight*2];
+//////        NSView* doc = [_scrollView documentView];
+//////        [doc setTranslatesAutoresizingMaskIntoConstraints:false];
+//////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeWidth
+//////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+//////            constant:imageThumb.ref.imageWidth*2]];
+//////        [doc addConstraint:[NSLayoutConstraint constraintWithItem:doc attribute:NSLayoutAttributeHeight
+//////            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+//////            constant:imageThumb.ref.imageHeight*2]];
+//    
+//    NSLayoutConstraint* width = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeWidth
+//        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+//        constant:_imageLayer->imageThumb.imageWidth*2];
+//    
+//    NSLayoutConstraint* height = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
+//        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+//        constant:_imageLayer->imageThumb.imageHeight*2];
+//    
+//    [NSLayoutConstraint activateConstraints:@[width, height]];
+//}
 
 @end

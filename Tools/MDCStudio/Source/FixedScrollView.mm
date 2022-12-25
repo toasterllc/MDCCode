@@ -21,6 +21,7 @@
     CGRect _docFrame;
     CGFloat _docMagnification;
     struct {
+        bool enabled = true;
         bool liveResizeUnderway = false;
         CGPoint document = {};
         CGPoint screen = {};
@@ -55,6 +56,9 @@
     [self setDocumentView:docView];
     
     [docView addSubview:_doc];
+    if ([_doc respondsToSelector:@selector(createFixedConstraintsForContainer:)]) {
+        [_doc createFixedConstraintsForContainer:docView];
+    }
     
     // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
     __weak auto weakSelf = self;
@@ -94,6 +98,14 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     mag = _ShouldSnapToFitMagnification(mag, fitMag) ? fitMag : mag;
     mag = std::clamp(mag, min, max);
     return mag;
+}
+
+- (NSView<FixedScrollViewDocument>*)document {
+    return _doc;
+}
+
+- (void)setAnchorDuringResize:(bool)anchorDuringResize {
+    _anchor.enabled = anchorDuringResize;
 }
 
 - (void)scrollToCenter {
@@ -227,7 +239,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     NSView*const dv = [self documentView];
     NSClipView*const cv = [self contentView];
     
-    if (_anchor.liveResizeUnderway) {
+    if (_anchor.enabled && _anchor.liveResizeUnderway) {
         // Keep the content anchored
         // This keeps the content in place when resizing the containing window, which looks better
         NSWindow* win = [self window];

@@ -81,11 +81,6 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
 
 // MARK: - FixedScrollViewDocument Protocol
 
-- (NSArray*)fixedConstraintsForContainer:(NSView*)container {
-    // Subclasses must implement
-    abort();
-}
-
 //- (CGSize)fixedContentSize {
 //    // Subclasses must implement
 //    abort();

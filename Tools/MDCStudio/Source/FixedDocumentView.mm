@@ -35,6 +35,24 @@
     [_layer setFixedTranslation:t magnification:m];
 }
 
+- (void)createFixedConstraintsForContainer:(NSView*)container {
+    if ([_layer respondsToSelector:@selector(createFixedConstraintsForContainer:)]) {
+        [_layer createFixedConstraintsForContainer:container];
+    
+    } else {
+        const CGSize size = [_layer preferredFrameSize];
+        NSLayoutConstraint* width = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeWidth
+            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+            constant:size.width];
+        
+        NSLayoutConstraint* height = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
+            relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1
+            constant:size.height];
+        
+        [NSLayoutConstraint activateConstraints:@[width, height]];
+    }
+}
+
 - (bool)fixedFlipped {
     return [_layer fixedFlipped];
 }
