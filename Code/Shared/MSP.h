@@ -84,7 +84,7 @@ namespace MSP {
             uint16_t length  = 0;
         };
         
-        Header header;
+        Header header = {};
         
         struct [[gnu::packed]] {
             // cardId: the SD card's CID, used to determine when the SD card has been

@@ -651,22 +651,51 @@ struct _MainTask {
 struct _I2CTask {
     static void Run() {
         for (;;) {
+//            _Pin::LED_GREEN_::Write(1);
+//            _Pin::LED_RED_::Write(1);
+            
             // Wait until the I2C lines are activated (ie VDD_B_3V3_STM becomes powered)
             _I2C::WaitUntilActive();
             
-            for (;;) {
+            for (int i=0;; i++) {
                 // Wait for a command
                 MSP::Cmd cmd;
+                
+                for (int i=0; i<5; i++) {
+                    _Pin::LED_GREEN_::Write(0);
+                    for (volatile uint16_t i=0; i<0xFFF; i++);
+                    _Pin::LED_GREEN_::Write(1);
+                    for (volatile uint16_t i=0; i<0xFFF; i++);
+                }
+                
                 bool ok = _I2C::Recv(cmd);
                 if (!ok) break;
                 
-                // Handle command
-                const MSP::Resp resp = _CmdHandle(cmd);
+//                // Handle command
+//                const MSP::Resp resp = _CmdHandle(cmd);
+//                
+//                // Send response
+//                
+//                for (int i=0; i<5; i++) {
+//                    _Pin::LED_RED_::Write(0);
+//                    for (volatile uint16_t i=0; i<0xFFFE; i++);
+//                    _Pin::LED_RED_::Write(1);
+//                    for (volatile uint16_t i=0; i<0xFFFE; i++);
+//                }
                 
-                // Send response
-                ok = _I2C::Send(resp);
-                if (!ok) break;
+//                MSP::Resp resp;
+//                ok = _I2C::Send(resp);
+//                if (!ok) break;
             }
+            
+            Assert(false);
+            
+//            for (;;) {
+//                _Pin::LED_RED_::Write(0);
+//                for (volatile uint16_t i=0; i<0xFFFE; i++);
+//                _Pin::LED_RED_::Write(1);
+//                for (volatile uint16_t i=0; i<0xFFFE; i++);
+//            }
             
             // Cleanup
             
@@ -702,8 +731,8 @@ struct _I2CTask {
         }
         
         case Cmd::Op::LEDSet:
-            _LEDRed_::Set(_LEDRed_::Priority::High, !cmd.arg.LEDSet.red);
-            _LEDGreen_::Set(_LEDGreen_::Priority::High, !cmd.arg.LEDSet.green);
+//            _LEDRed_::Set(_LEDRed_::Priority::High, !cmd.arg.LEDSet.red);
+//            _LEDGreen_::Set(_LEDGreen_::Priority::High, !cmd.arg.LEDSet.green);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::TimeSet:

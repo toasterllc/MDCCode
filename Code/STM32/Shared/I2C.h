@@ -33,18 +33,35 @@ public:
         Assert(hs == HAL_OK);
     }
     
-    template <typename T_Send, typename T_Recv>
-    static bool Send(const T_Send& send, T_Recv& recv) {
+//    template <typename T_Send, typename T_Recv>
+//    static bool Send(const T_Send& send, T_Recv& recv) {
+//        T_Scheduler::Wait([&] { return _St.load() == _State::Idle; });
+//        
+//        bool ok = _Send(send);
+//        if (!ok) return false;
+//        
+//        ok = _Recv(recv);
+//        Assert(ok);
+//        if (!ok) return false;
+//        
+//        return true;
+//    }
+    
+    template <typename T_Send>
+    static bool Send(const T_Send& send) {
         T_Scheduler::Wait([&] { return _St.load() == _State::Idle; });
-        
         bool ok = _Send(send);
         if (!ok) return false;
-        
-        ok = _Recv(recv);
-        if (!ok) return false;
-        
         return true;
     }
+    
+    template <typename T_Recv>
+    static bool Recv(const T_Recv& recv) {
+        Assert(_St.load() == _State::Idle);
+        return _Recv(recv);
+    }
+    
+    
     
     static void ISR_Event() {
         ISR_HAL_I2C_EV(&_Device);

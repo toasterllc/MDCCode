@@ -17,6 +17,8 @@ class I2CType {
 private:
     using _ActiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
     using _InactiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
+    using _LED_GREEN_   = GPIO::PortA::Pin<0x1, GPIO::Option::Output1>;
+    using _LED_RED_     = GPIO::PortA::Pin<0xA, GPIO::Option::Output1>;
     
 public:
     struct Pin {
@@ -51,12 +53,21 @@ public:
         for (size_t i=0; i<sizeof(msg); i++) {
             ev = _WaitForEvents(_Events::Rx | _Events::Stop | _Events::Inactive);
             if (ev & _Events::Inactive) return false;
+            // Only allow STOP events on the very last byte
+            Assert(!(ev & _Events::Stop) || (i == (sizeof(msg)-1)));
             // Confirm that we received another byte
             Assert(ev & _Events::Rx);
 //            if (ev != _Events::Rx) T_Error(__LINE__ | ((uint16_t)ev<<8));
             // Store the byte
             b[i] = UCB0RXBUF_L;
         }
+        
+//        for (int i=0; i<5; i++) {
+//            _LED_GREEN_::Write(0);
+//            for (volatile uint16_t i=0; i<0xFFFE; i++);
+//            _LED_GREEN_::Write(1);
+//            for (volatile uint16_t i=0; i<0xFFFE; i++);
+//        }
         
         // If our loop didn't receive a STOP event, wait for it now
         if (!(ev & _Events::Stop)) {
@@ -76,22 +87,39 @@ public:
         for (size_t i=0; i<sizeof(msg); i++) {
             ev = _WaitForEvents(_Events::Tx | _Events::Stop | _Events::Inactive);
             if (ev & _Events::Inactive) return false;
-            // Confirm that we can write another byte
-            Assert(ev & _Events::Tx);
+            // Ensure that we haven't gotten a STOP before we're done responding
+            Assert(!(ev & _Events::Stop));
             UCB0TXBUF_L = b[i];
         }
         
         // Wait for STOP condition
         for (;;) {
-            ev = _WaitForEvents(_Events::Stop | _Events::Inactive);
+            ev = _WaitForEvents(_Events::Tx | _Events::Stop | _Events::Inactive);
             if (ev & _Events::Inactive) return false;
+            if (ev & _Events::Stop) break;
+            // Send 0xFF after the end of our data
+            UCB0TXBUF_L = 0xFF;
         }
         return true;
+        
+        
+        
+//        // Wait for STOP condition
+//        ev = _WaitForEvents(_Events::Stop | _Events::Inactive);
+//        if (ev & _Events::Inactive) return false;
+//        return true;
+        
+//        for (;;) {
+//            ev = _WaitForEvents(_Events::Stop | _Events::Inactive);
+//            if (ev & _Events::Inactive) return false;
+//            if (ev & _Events::Stop) break;
+//            // Send 0xFF after the end of our data
+//            UCB0TXBUF_L = 0xFF;
+//        }
+//        return true;
     }
     
     static void ISR_I2C(uint16_t iv) {
-        // Ignore spurious interrupts
-        if (!iv) return;
         switch (__even_in_range(iv, USCI_I2C_UCTXIFG0)) {
         case USCI_I2C_UCSTTIFG: _Ev |= _Events::Start;  break;
         case USCI_I2C_UCSTPIFG: _Ev |= _Events::Stop;   break;
@@ -107,7 +135,7 @@ public:
     }
     
 private:
-    struct _Events : Toastbox::Bitfield<uint16_t> {
+    struct _Events : Toastbox::Bitfield<volatile uint16_t> {
         using Bitfield::Bitfield;
         static constexpr Bit None        = 0;
         static constexpr Bit Active      = 1<<0;
@@ -182,13 +210,7 @@ private:
         Pin::Active::IFG(Pin::Active::Read() == dir);
     }
     
-    static void _I2CIntsEnable(bool en) {
-        if (en) UCB0IE = UCSTTIE | UCSTPIE | UCTXIE0 | UCRXIE0;
-        else    UCB0IE = 0;
-    }
-    
     static _Events _WaitForEvents(_Events events) {
-        // Wait until we get an inactive interrupt, or an I2C event occurs
         T_Scheduler::Wait([&] { return _Ev & events; });
         
         Toastbox::IntState ints(false);

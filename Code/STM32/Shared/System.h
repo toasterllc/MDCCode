@@ -159,18 +159,19 @@ private:
             for (bool green=true;; green=!green) {
                 LED0::Write(green);
                 
-                MSP::Cmd cmd = {
-                    .op = MSP::Cmd::Op::LEDSet,
-                    .arg = {
-                        .LEDSet = {
-                            .green = green,
-                        },
-                    },
-                };
-                MSP::Resp resp;
-                I2C::Send(cmd, resp);
+                {
+                    const MSP::Cmd cmd = {
+                        .op = MSP::Cmd::Op::LEDSet,
+                        .arg = { .LEDSet = { .green = green } },
+                    };
+                    const bool ok = I2C::Send(cmd);
+//                    Assert(ok);
+                }
                 
-                Scheduler::Sleep(Scheduler::Ms(100));
+//                MSP::Resp resp;
+//                I2C::Recv(resp);
+                
+                Scheduler::Sleep(Scheduler::Ms(1000));
             }
         }
         
