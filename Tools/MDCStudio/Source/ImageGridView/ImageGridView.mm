@@ -480,8 +480,9 @@ done:
 //    [_imageGridLayer setContainerWidth:size.width];
 //    [_imageGridLayer recomputeGrid];
 //    const CGFloat height = [_imageGridLayer containerHeight];
-//    [_docHeight setConstant:height];
-//    [super setFrameSize:{size.width, [_imageGridLayer containerHeight]}];
+////    [_docHeight setConstant:height];
+//    [super setFrameSize:{size.width, height}];
+////    [super setFrameSize:size];
 ////    [self _updateDocumentHeight];
 //}
 
@@ -493,7 +494,7 @@ done:
 
 - (void)_updateDocumentHeight {
     NSLog(@"_updateDocumentHeight");
-    [_imageGridLayer setContainerWidth:[self bounds].size.width];
+    [_imageGridLayer setContainerWidth:[[[self superview] superview] bounds].size.width];
     [_imageGridLayer recomputeGrid];
 //    [self setFrameSize:{[self bounds].size.width, 0}];
     [_docHeight setConstant:[_imageGridLayer containerHeight]];
@@ -521,6 +522,9 @@ done:
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[superview]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(superview)]];
     
+    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[self]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(self)]];
+    
 //    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[superview]|"
 //        options:0 metrics:nil views:NSDictionaryOfVariableBindings(superview)]];
     
@@ -541,7 +545,7 @@ done:
     // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
     __weak auto weakSelf = self;
     _superviewFrameChangedObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSViewFrameDidChangeNotification
-        object:superview queue:nil usingBlock:^(NSNotification*) {
+        object:superSuperview queue:nil usingBlock:^(NSNotification*) {
         [weakSelf _superviewFrameChanged];
     }];
 }

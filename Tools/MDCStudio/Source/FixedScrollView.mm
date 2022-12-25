@@ -345,16 +345,16 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     const CGFloat heightExtra = 22/mag; // Expand the height to get the NSWindow titlebar mirror effect
     const CGRect visibleRect = [doc visibleRect];//[doc convertRectToLayer:[doc visibleRect]];
     
-    CGRect frame = visibleRect;
+    CGRect docFrame = visibleRect;
     if ([doc isFlipped]) {
-        frame.origin.y -= heightExtra;
-        frame.size.height += heightExtra;
+        docFrame.origin.y -= heightExtra;
+        docFrame.size.height += heightExtra;
     } else {
-        frame.size.height += heightExtra;
+        docFrame.size.height += heightExtra;
     }
     
-    if (!CGRectEqualToRect(frame, _docFrame) || mag!=_docMagnification) {
-        _docFrame = frame;
+    if (!CGRectEqualToRect(docFrame, _docFrame) || mag!=_docMagnification) {
+        _docFrame = docFrame;
         _docMagnification = mag;
         [_doc setFrame:_docFrame];
         [_doc setFixedTranslation:_docFrame.origin magnification:_docMagnification];
