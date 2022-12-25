@@ -396,7 +396,7 @@ done:
     CALayer* _selectionRectLayer;
     ImageSourcePtr _imageSource;
     __weak id<ImageGridViewDelegate> _delegate;
-    NSLayoutConstraint* _documentHeight;
+    NSLayoutConstraint* _docHeight;
 }
 
 // MARK: - Creation
@@ -464,7 +464,7 @@ done:
 - (void)_updateDocumentHeight {
     [_imageGridLayer setContainerWidth:[self bounds].size.width];
     [_imageGridLayer recomputeGrid];
-    [_documentHeight setConstant:[_imageGridLayer containerHeight]];
+    [_docHeight setConstant:[_imageGridLayer containerHeight]];
 }
 
 - (void)_handleImageLibraryChanged {
@@ -479,13 +479,28 @@ done:
     NSView*const superview = [self superview];
     if (!superview) return;
     
+    NSView*const superSuperview = [superview superview];
+    if (!superSuperview) return;
+    
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[superview]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(superview)]];
     
-    _documentHeight = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeHeight
-        relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+//    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[superview]|"
+//        options:0 metrics:nil views:NSDictionaryOfVariableBindings(superview)]];
+    
+//    NSLayoutConstraint* docHeightMin = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeHeight
+//        relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+//        multiplier:1 constant:100];
+    
+    
+    NSLayoutConstraint* docHeightMin = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeHeight
+        relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:superSuperview attribute:NSLayoutAttributeHeight
         multiplier:1 constant:0];
-    [NSLayoutConstraint activateConstraints:@[_documentHeight]];
+    
+    _docHeight = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeHeight
+        relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
+        multiplier:1 constant:0];
+    [NSLayoutConstraint activateConstraints:@[docHeightMin, _docHeight]];
 }
 
 // MARK: - Event Handling
