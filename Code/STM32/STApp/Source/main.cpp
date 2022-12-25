@@ -144,8 +144,8 @@ static bool _VDDIMGSDSet(bool en) {
     };
     
     MSP::Resp mspResp;
-//    const bool ok = _I2C::Send(mspCmd, mspResp);
-//    if (!ok || !mspResp.ok) return false;
+    const bool ok = _I2C::Send(mspCmd, mspResp);
+    if (!ok || !mspResp.ok) return false;
     
     return true;
 }
@@ -927,11 +927,11 @@ static void _MSPHostModeSet(const STM::Cmd& cmd) {
     };
     MSP::Resp mspResp;
     
-//    const bool ok = _I2C::Send(mspCmd, mspResp);
-//    if (!ok || !mspResp.ok) {
-//        _System::USBSendStatus(false);
-//        return;
-//    }
+    const bool ok = _I2C::Send(mspCmd, mspResp);
+    if (!ok || !mspResp.ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
     
     // Send status
     _System::USBSendStatus(true);
@@ -953,8 +953,8 @@ static bool __MSPStateRead(uint8_t* data, size_t len) {
         };
         
         MSP::Resp mspResp;
-//        const bool ok = _I2C::Send(mspCmd, mspResp);
-//        if (!ok) return false;
+        const bool ok = _I2C::Send(mspCmd, mspResp);
+        if (!ok) return false;
         
         const size_t l = std::min(len, ChunkSize);
         memcpy(data+off, mspResp.arg.StateRead.data, l);
@@ -1039,11 +1039,11 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
     };
     
     MSP::Resp mspResp;
-//    const bool ok = _I2C::Send(mspCmd, mspResp);
-//    if (!ok || !mspResp.ok) {
-//        _System::USBSendStatus(false);
-//        return;
-//    }
+    const bool ok = _I2C::Send(mspCmd, mspResp);
+    if (!ok || !mspResp.ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
     
     // Send status
     _System::USBSendStatus(true);

@@ -683,9 +683,9 @@ struct _I2CTask {
 //                    for (volatile uint16_t i=0; i<0xFFFE; i++);
 //                }
                 
-//                MSP::Resp resp;
-//                ok = _I2C::Send(resp);
-//                if (!ok) break;
+                MSP::Resp resp;
+                ok = _I2C::Send(resp);
+                if (!ok) break;
             }
             
             Assert(false);
