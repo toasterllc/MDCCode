@@ -17,12 +17,12 @@
 
 @protocol FixedScrollViewDocument
 @required
-// -setFixedTranslation:magnification: called whenever the translation/magnification changes
-- (void)setFixedTranslation:(CGPoint)t magnification:(CGFloat)m;
+// -fixedTranslationChanged:magnification: called whenever the translation/magnification changes
+- (void)fixedTranslationChanged:(CGPoint)t magnification:(CGFloat)m;
 - (bool)fixedFlipped;
 
 @optional
-- (void)createFixedConstraintsForContainer:(NSView*)container;
+- (void)fixedCreateConstraintsForContainer:(NSView*)container;
 @end
 
 @interface FixedScrollView : NSScrollView

@@ -146,6 +146,10 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     [self setNeedsDisplay];
 }
 
+- (bool)fixedFlipped {
+    return true;
+}
+
 - (CGSize)preferredFrameSize {
     return {(CGFloat)imageThumb.imageWidth*2, (CGFloat)imageThumb.imageHeight*2};
 }
@@ -393,7 +397,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 //}
 
 //// MARK: - NSView Overrides
-//- (void)createFixedConstraintsForContainer:(NSView*)container {
+//- (void)fixedCreateConstraintsForContainer:(NSView*)container {
 //    
 ////        [_docWidth setConstant:imageThumb.imageWidth*2];
 ////        [_docHeight setConstant:imageThumb.imageHeight*2];

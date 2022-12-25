@@ -691,7 +691,7 @@ struct SelectionDelta {
     [_imageGridLayer setSelectedImageIds:ids];
 }
 
-- (void)createFixedConstraintsForContainer:(NSView*)container {
+- (void)fixedCreateConstraintsForContainer:(NSView*)container {
     NSView*const containerSuperview = [container superview];
     if (!containerSuperview) return;
     

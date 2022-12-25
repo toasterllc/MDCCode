@@ -56,8 +56,8 @@
     [self setDocumentView:docView];
     
     [docView addSubview:_doc];
-    if ([_doc respondsToSelector:@selector(createFixedConstraintsForContainer:)]) {
-        [_doc createFixedConstraintsForContainer:docView];
+    if ([_doc respondsToSelector:@selector(fixedCreateConstraintsForContainer:)]) {
+        [_doc fixedCreateConstraintsForContainer:docView];
     }
     
     // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
@@ -354,6 +354,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     
     NSView* doc = [self documentView];
     const CGFloat mag = [self _presentationMagnification];
+    // TODO: we need to determine the '22' dynamically, because window titlebar heights aren't always 22pt (eg when there's a toolbar it's ~150pt)
     const CGFloat heightExtra = 22/mag; // Expand the height to get the NSWindow titlebar mirror effect
     const CGRect visibleRect = [doc visibleRect];//[doc convertRectToLayer:[doc visibleRect]];
     
@@ -369,7 +370,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
         _docFrame = docFrame;
         _docMagnification = mag;
         [_doc setFrame:_docFrame];
-        [_doc setFixedTranslation:_docFrame.origin magnification:_docMagnification];
+        [_doc fixedTranslationChanged:_docFrame.origin magnification:_docMagnification];
     }
 }
 

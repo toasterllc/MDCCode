@@ -31,13 +31,13 @@
 //    return [_layer fixedContentSize];
 //}
 
-- (void)setFixedTranslation:(CGPoint)t magnification:(CGFloat)m {
-    [_layer setFixedTranslation:t magnification:m];
+- (void)fixedTranslationChanged:(CGPoint)t magnification:(CGFloat)m {
+    [_layer fixedTranslationChanged:t magnification:m];
 }
 
-- (void)createFixedConstraintsForContainer:(NSView*)container {
-    if ([_layer respondsToSelector:@selector(createFixedConstraintsForContainer:)]) {
-        [_layer createFixedConstraintsForContainer:container];
+- (void)fixedCreateConstraintsForContainer:(NSView*)container {
+    if ([_layer respondsToSelector:@selector(fixedCreateConstraintsForContainer:)]) {
+        [_layer fixedCreateConstraintsForContainer:container];
     
     } else {
         const CGSize size = [_layer preferredFrameSize];

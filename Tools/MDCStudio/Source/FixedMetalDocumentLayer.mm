@@ -86,7 +86,7 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
 //    abort();
 //}
 
-- (void)setFixedTranslation:(CGPoint)t magnification:(CGFloat)m {
+- (void)fixedTranslationChanged:(CGPoint)t magnification:(CGFloat)m {
     _magnification = m;
     [self setNeedsDisplay];
 }
