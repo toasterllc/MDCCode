@@ -388,6 +388,10 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
 }
 
+//- (void)mouseDown:(NSEvent*)mouseDownEvent {
+//    [[self window] makeFirstResponder:self];
+//}
+
 //// MARK: - NSView Overrides
 //- (void)createFixedConstraintsForContainer:(NSView*)container {
 //    
@@ -412,5 +416,13 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 //    
 //    [NSLayoutConstraint activateConstraints:@[width, height]];
 //}
+
+@end
+
+@implementation ImageScrollView
+
+- (NSView*)initialFirstResponder {
+    return [self document];
+}
 
 @end

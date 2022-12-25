@@ -21,3 +21,6 @@
 //- (NSView*)initialFirstResponder;
 
 @end
+
+@interface ImageScrollView : FixedScrollView
+@end

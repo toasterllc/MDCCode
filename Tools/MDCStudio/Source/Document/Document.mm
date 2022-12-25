@@ -162,21 +162,6 @@ using namespace MDCStudio;
 
 
 - (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
-//    auto selection = [_sourceListView selection];
-//    if (selection.device) {
-//        auto imgLib = selection.device->imageLibrary();
-//        auto lock = std::unique_lock(*imgLib);
-//        const ImageThumb& imageThumb = *imgLib->recordGet(imgLib->begin());
-//        
-//        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb
-//            imageCache:selection.device->imageCache()];
-//        
-//        [self setContentView:imageView];
-//    
-//    } else {
-//        [self setContentView:nil];
-//    }
-    
 //    {
 //        class FakeImageSource : public ImageSource {
 //        public:
@@ -192,37 +177,7 @@ using namespace MDCStudio;
 //            ImageCachePtr ic;
 //        };
 //        
-//        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/205132485632") / "ImageLibrary");
-//        il->read();
-//        
-//        ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (const ImageRef& imageRef) { return nullptr; });
-//        
-//        auto imageSource = std::make_shared<FakeImageSource>();
-//        imageSource->il = il;
-//        imageSource->ic = ic;
-//        
-//        ImageView* imageView = [[ImageView alloc] initWithImageThumb:*il->recordGet(il->begin()) imageSource:imageSource];
-//        [_mainView setContentView:imageView animation:MainViewAnimation::None];
-//    }
-    
-    
-    
-//    {
-//        class FakeImageSource : public ImageSource {
-//        public:
-//            ImageLibraryPtr imageLibrary() override {
-//                return il;
-//            }
-//            
-//            ImageCachePtr imageCache() override {
-//                return ic;
-//            }
-//            
-//            ImageLibraryPtr il;
-//            ImageCachePtr ic;
-//        };
-//        
-//        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio3/Devices/205132485632") / "ImageLibrary");
+//        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/335E36593137/ImageLibrary"));
 //        il->read();
 //        
 //        ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (const ImageRef& imageRef) { return nullptr; });
@@ -232,89 +187,30 @@ using namespace MDCStudio;
 //        imageSource->ic = ic;
 //        
 //        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
-//        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
+//        [imageGridView setDelegate:self];
+//        
+//        ImageGridScrollView* sv = [[ImageGridScrollView alloc] initWithFixedDocument:imageGridView];
+//        [_mainView setContentView:sv animation:MainViewAnimation::None];
 //    }
     
     
-    {
-        class FakeImageSource : public ImageSource {
-        public:
-            ImageLibraryPtr imageLibrary() override {
-                return il;
-            }
-            
-            ImageCachePtr imageCache() override {
-                return ic;
-            }
-            
-            ImageLibraryPtr il;
-            ImageCachePtr ic;
-        };
-        
-        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/335E36593137/ImageLibrary"));
-//        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/Old/2022:8:30/ImageLibraryTest"));
-        il->read();
-        
-//        {
-//            auto startTime = std::chrono::steady_clock::now();
-//            
-//            Toastbox::Mmap mmap("/Users/dave/Desktop/Old/2022:8:30/SDImagesRaw-512");
-//            
-//            id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-//            if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
-//            MDCTools::Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
-//            
-//            constexpr size_t ImageCount = 256;
-//            _addImages(il, renderer, mmap.data(), ImageCount, 0);
-//            
-////            il->write();
-//        }
-        
-        ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (const ImageRef& imageRef) { return nullptr; });
-        
-        auto imageSource = std::make_shared<FakeImageSource>();
-        imageSource->il = il;
-        imageSource->ic = ic;
-        
-//        ImageView* imageView = [[ImageView alloc] initWithImageThumb:*il->recordGet(il->begin()) imageSource:imageSource];
-//        [_mainView setContentView:imageView animation:MainViewAnimation::None];
-        
-        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
+    
+    
+    
+    
+    
+    
+    ImageSourcePtr selection = [_sourceListView selection];
+    if (selection) {
+        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
         [imageGridView setDelegate:self];
         
         ImageGridScrollView* sv = [[ImageGridScrollView alloc] initWithFixedDocument:imageGridView];
         [_mainView setContentView:sv animation:MainViewAnimation::None];
-        
-//        [_mainView setContentView:imageGridView animation:MainViewAnimation::None];
+    
+    } else {
+        [_mainView setContentView:nil animation:MainViewAnimation::None];
     }
-    
-    
-    
-    
-    
-    
-    
-    
-//    {
-//        auto imgLib = std::make_shared<MDCTools::Vendor<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/337336593137") / "ImageLibrary");
-//        imgLib->vend()->read();
-//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageLibrary:imgLib];
-//        [self setContentView:imageGridView];
-//    }
-    
-//    ImageSourcePtr selection = [_sourceListView selection];
-//    if (selection) {
-//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
-//        [imageGridView setDelegate:self];
-//        
-//        FixedScrollView* sv = [[FixedScrollView alloc] initWithFrame:{}];
-//        [sv setFixedDocument:imageGridView];
-//        
-//        [_mainView setContentView:sv animation:MainViewAnimation::None];
-//    
-//    } else {
-//        [_mainView setContentView:nil animation:MainViewAnimation::None];
-//    }
 }
 
 // _openImage: open a particular image id, or an image offset from a particular image id
@@ -338,7 +234,8 @@ using namespace MDCStudio;
         ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageSource:imageSource];
         [imageView setDelegate:self];
         
-        FixedScrollView* sv = [[FixedScrollView alloc] initWithFixedDocument:imageView];
+        ImageScrollView* sv = [[ImageScrollView alloc] initWithFixedDocument:imageView];
+        [sv setMagnifyToFit:true animate:false];
         
         NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageThumb.timestamp];
         printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageId, (uintmax_t)imageThumb.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);

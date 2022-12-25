@@ -462,10 +462,6 @@ done:
     return [_imageGridLayer selectedImageIds];
 }
 
-//- (NSView*)initialFirstResponder {
-//    return [_scrollView documentView];
-//}
-
 //- (void)setFrame:(NSRect)frame {
 //    
 ////    [_imageGridLayer setContainerWidth:frame.size.width];
@@ -748,6 +744,10 @@ struct SelectionDelta {
 - (void)tile {
     [super tile];
     [(ImageGridView*)[self document] _updateDocumentHeightForWidth:[[self contentView] frame].size.width];
+}
+
+- (NSView*)initialFirstResponder {
+    return [self document];
 }
 
 @end
