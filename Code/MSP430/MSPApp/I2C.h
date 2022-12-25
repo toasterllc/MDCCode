@@ -101,22 +101,6 @@ public:
             UCB0TXBUF_L = 0xFF;
         }
         return true;
-        
-        
-        
-//        // Wait for STOP condition
-//        ev = _WaitForEvents(_Events::Stop | _Events::Inactive);
-//        if (ev & _Events::Inactive) return false;
-//        return true;
-        
-//        for (;;) {
-//            ev = _WaitForEvents(_Events::Stop | _Events::Inactive);
-//            if (ev & _Events::Inactive) return false;
-//            if (ev & _Events::Stop) break;
-//            // Send 0xFF after the end of our data
-//            UCB0TXBUF_L = 0xFF;
-//        }
-//        return true;
     }
     
     static void ISR_I2C(uint16_t iv) {
