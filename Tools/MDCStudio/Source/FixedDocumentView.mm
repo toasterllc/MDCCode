@@ -12,7 +12,7 @@
     
     _layer = layer;
     [_layer setContentsScale:std::max(1., [[self window] backingScaleFactor])];
-    [_layer setGeometryFlipped:[self isFlipped]];
+//    [_layer setGeometryFlipped:[self isFlipped]];
     [self setLayer:_layer];
     [self setWantsLayer:true];
     return self;
@@ -33,6 +33,10 @@
 
 - (void)setFixedTranslation:(CGPoint)t magnification:(CGFloat)m {
     [_layer setFixedTranslation:t magnification:m];
+}
+
+- (bool)fixedFlipped {
+    return [_layer fixedFlipped];
 }
 
 - (CGPoint)convertPointToFixedDocument:(CGPoint)point fromView:(NSView*)view {

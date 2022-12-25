@@ -438,10 +438,11 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
 //    return true;
 //}
 
-//- (BOOL)isFlipped {
-//    FixedScrollView* sv = fixedScrollView;
-//    if (!sv) return false;
-//    return [sv->_doc fixedFlipped];
-//}
+- (BOOL)isFlipped {
+    FixedScrollView* sv = fixedScrollView;
+    assert(sv);
+    assert(sv->_doc);
+    return [sv->_doc fixedFlipped];
+}
 
 @end

@@ -187,6 +187,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     return ((x+s-1)/s)*s;
 }
 
+//- (BOOL)isGeometryFlipped {
+//    return true;
+//}
+
 - (void)display {
     auto startTime = std::chrono::steady_clock::now();
     [super display];
@@ -369,6 +373,11 @@ done:
     [self setNeedsDisplay];
 }
 
+// MARK: - FixedScrollViewDocument
+- (bool)fixedFlipped {
+    return true;
+}
+
 @end
 
 
@@ -473,6 +482,10 @@ done:
 }
 
 // MARK: - NSView Overrides
+//- (BOOL)isFlipped {
+//    return true;
+//}
+
 - (void)viewDidMoveToSuperview {
     [super viewDidMoveToSuperview];
     
@@ -534,14 +547,14 @@ static ImageGridViewImageIds _XORImageIds(const ImageGridViewImageIds& a, const 
     NSWindow* win = [mouseDownEvent window];
 //    const CGPoint startPoint = _ConvertPoint(_imageGridLayer, _documentView,
 //        [_documentView convertPoint:[mouseDownEvent locationInWindow] fromView:nil]);
-    const CGPoint startPoint = [self convertPoint:[mouseDownEvent locationInWindow] fromView:nil];
+    const CGPoint startPoint = [self convertPointToFixedDocument:[mouseDownEvent locationInWindow] fromView:nil];
     [_selectionRectLayer setHidden:false];
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
     const ImageGridViewImageIds oldSelection = [_imageGridLayer selectedImageIds];
     TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
 //        const CGPoint curPoint = _ConvertPoint(_imageGridLayer, _documentView, [_documentView convertPoint:[event locationInWindow] fromView:nil]);
-        const CGPoint curPoint = [self convertPoint:[event locationInWindow] fromView:nil];
+        const CGPoint curPoint = [self convertPointToFixedDocument:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
         const ImageGridViewImageIds newSelection = [_imageGridLayer imageIdsForRect:rect];
         if (extend) {

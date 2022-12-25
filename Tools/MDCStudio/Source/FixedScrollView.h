@@ -21,12 +21,12 @@
 //// (Ie, the size of the 'universe'.)
 //- (CGSize)fixedContentSize;
 
-#warning TODO: not sure if we want this
-//- (bool)fixedFlipped;
-
 // -setFixedTranslation:magnification: called whenever the
 // translation/magnification changes.
 - (void)setFixedTranslation:(CGPoint)t magnification:(CGFloat)m;
+
+- (bool)fixedFlipped;
+
 @end
 
 @interface FixedScrollView : NSScrollView

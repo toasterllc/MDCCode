@@ -96,4 +96,8 @@ static simd::float4x4 _SIMDForMat(const Mat<float,4,4>& m) {
     [self setNeedsDisplay];
 }
 
+- (bool)fixedFlipped {
+    return false;
+}
+
 @end
