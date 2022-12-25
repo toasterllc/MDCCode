@@ -406,6 +406,7 @@ done:
     ImageSourcePtr _imageSource;
     __weak id<ImageGridViewDelegate> _delegate;
     NSLayoutConstraint* _docHeight;
+    id _superviewFrameChangedObserver;
 }
 
 // MARK: - Creation
@@ -465,15 +466,36 @@ done:
 //    return [_scrollView documentView];
 //}
 
-- (void)setFrameSize:(NSSize)size {
-    [super setFrameSize:size];
-    [self _updateDocumentHeight];
-}
+//- (void)setFrame:(NSRect)frame {
+//    
+//    [_imageGridLayer setContainerWidth:frame.size.width];
+//    [_imageGridLayer recomputeGrid];
+//    [_docHeight setConstant:[_imageGridLayer containerHeight]];
+//    
+////    [self _updateDocumentHeight];
+//    [super setFrame:frame];
+//}
+
+//- (void)setFrameSize:(NSSize)size {
+//    [_imageGridLayer setContainerWidth:size.width];
+//    [_imageGridLayer recomputeGrid];
+//    const CGFloat height = [_imageGridLayer containerHeight];
+//    [_docHeight setConstant:height];
+//    [super setFrameSize:{size.width, [_imageGridLayer containerHeight]}];
+////    [self _updateDocumentHeight];
+//}
+
+//- (void)updateConstraints {
+//    [super updateConstraints];
+//    [self _updateDocumentHeight];
+//    NSLog(@"updateConstraints");
+//}
 
 - (void)_updateDocumentHeight {
     NSLog(@"_updateDocumentHeight");
     [_imageGridLayer setContainerWidth:[self bounds].size.width];
     [_imageGridLayer recomputeGrid];
+//    [self setFrameSize:{[self bounds].size.width, 0}];
     [_docHeight setConstant:[_imageGridLayer containerHeight]];
 }
 
@@ -515,6 +537,18 @@ done:
         relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
         multiplier:1 constant:0];
     [NSLayoutConstraint activateConstraints:@[docHeightMin, _docHeight]];
+    
+    // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
+    __weak auto weakSelf = self;
+    _superviewFrameChangedObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSViewFrameDidChangeNotification
+        object:superview queue:nil usingBlock:^(NSNotification*) {
+        [weakSelf _superviewFrameChanged];
+    }];
+}
+
+- (void)_superviewFrameChanged {
+//    NSLog(@"_superviewFrameChanged");
+    [self _updateDocumentHeight];
 }
 
 // MARK: - Event Handling
