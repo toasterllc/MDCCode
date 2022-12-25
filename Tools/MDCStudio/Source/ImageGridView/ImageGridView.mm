@@ -471,6 +471,7 @@ done:
 }
 
 - (void)_updateDocumentHeight {
+    NSLog(@"_updateDocumentHeight");
     [_imageGridLayer setContainerWidth:[self bounds].size.width];
     [_imageGridLayer recomputeGrid];
     [_docHeight setConstant:[_imageGridLayer containerHeight]];

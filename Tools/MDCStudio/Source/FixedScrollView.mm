@@ -18,7 +18,6 @@
 @implementation FixedScrollView {
 @public
     NSView<FixedScrollViewDocument>* _doc;
-    NSArray* _docConstraints;
     CGRect _docFrame;
     CGFloat _docMagnification;
     struct {
@@ -33,14 +32,19 @@
         bool magnify = false;
         bool pan = false;
     } _scrollWheel;
-    id _documentViewFrameChangedObserver;
+    id _docViewFrameChangedObserver;
 }
 
-static void _InitCommon(FixedScrollView* self) {
+- (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
+    NSParameterAssert(doc);
+    if (!(self = [super initWithFrame:{}])) return nil;
+    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_liveMagnifyEnded)
         name:NSScrollViewDidEndLiveMagnifyNotification object:nil];
     
     [self setTranslatesAutoresizingMaskIntoConstraints:false];
+    
+    _doc = doc;
     
     FixedScrollView_ClipView* clipView = [[FixedScrollView_ClipView alloc] initWithFrame:{}];
     clipView->fixedScrollView = self;
@@ -50,6 +54,15 @@ static void _InitCommon(FixedScrollView* self) {
     docView->fixedScrollView = self;
     [self setDocumentView:docView];
     
+    [docView addSubview:_doc];
+    
+    // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
+    __weak auto weakSelf = self;
+    _docViewFrameChangedObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSViewFrameDidChangeNotification
+        object:docView queue:nil usingBlock:^(NSNotification*) {
+        [weakSelf _docViewFrameChanged];
+    }];
+    
     [self setScrollerStyle:NSScrollerStyleOverlay];
     [self setBorderType:NSNoBorder];
     [self setHasHorizontalScroller:true];
@@ -58,17 +71,7 @@ static void _InitCommon(FixedScrollView* self) {
     [self setMinMagnification:1./(1<<16)];
     [self setMaxMagnification:1<<16];
     [self setUsesPredominantAxisScrolling:false];
-}
-
-- (instancetype)initWithCoder:(NSCoder*)coder {
-    if (!(self = [super initWithCoder:coder])) return nil;
-    _InitCommon(self);
-    return self;
-}
-
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
-    _InitCommon(self);
+    
     return self;
 }
 
@@ -91,41 +94,6 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     mag = _ShouldSnapToFitMagnification(mag, fitMag) ? fitMag : mag;
     mag = std::clamp(mag, min, max);
     return mag;
-}
-
-- (void)setFixedDocument:(NSView<FixedScrollViewDocument>*)doc {
-    NSView* documentView = [self documentView];
-    if (_docConstraints) {
-        [documentView removeConstraints:_docConstraints];
-        _docConstraints = nil;
-    }
-    
-    [_doc removeFromSuperview];
-    
-    _doc = doc;
-    if (!_doc) return;
-    
-    [documentView addSubview:_doc];
-    
-//    _docConstraints = [_doc fixedConstraintsForContainer:documentView];
-//    [documentView addConstraints:_docConstraints];
-//    
-//    const CGSize contentSize = [_doc fixedContentSize];
-//    _contentWidth = [NSLayoutConstraint constraintWithItem:documentView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
-//        multiplier:1 constant:contentSize.width];
-//    _contentHeight = [NSLayoutConstraint constraintWithItem:documentView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
-//        multiplier:1 constant:contentSize.height];
-//    [documentView addConstraint:_contentWidth];
-//    [documentView addConstraint:_contentHeight];
-    
-    // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
-    __weak auto weakSelf = self;
-    _documentViewFrameChangedObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSViewFrameDidChangeNotification
-        object:documentView queue:nil usingBlock:^(NSNotification*) {
-        [weakSelf _documentViewFrameChanged];
-    }];
-    
-//    [self setMagnifyToFit:true animate:false];
 }
 
 - (void)scrollToCenter {
@@ -224,7 +192,7 @@ static CGFloat _NextMagnification(CGFloat mag, CGFloat fitMag, CGFloat min, CGFl
     [self magnifySnapToFit];
 }
 
-- (void)_documentViewFrameChanged {
+- (void)_docViewFrameChanged {
     // Update our magnification if we're in magnify-to-fit mode
     [self setMagnifyToFit:_magnifyToFit animate:false];
 }

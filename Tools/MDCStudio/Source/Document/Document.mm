@@ -282,9 +282,8 @@ using namespace MDCStudio;
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
         [imageGridView setDelegate:self];
         
-        FixedScrollView* sv = [[FixedScrollView alloc] initWithFrame:{}];
+        FixedScrollView* sv = [[FixedScrollView alloc] initWithFixedDocument:imageGridView];
         [sv setAllowsMagnification:false];
-        [sv setFixedDocument:imageGridView];
         
         [_mainView setContentView:sv animation:MainViewAnimation::None];
         
@@ -341,8 +340,7 @@ using namespace MDCStudio;
         ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageSource:imageSource];
         [imageView setDelegate:self];
         
-        FixedScrollView* sv = [[FixedScrollView alloc] initWithFrame:{}];
-        [sv setFixedDocument:imageView];
+        FixedScrollView* sv = [[FixedScrollView alloc] initWithFixedDocument:imageView];
         
         NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageThumb.timestamp];
         printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageId, (uintmax_t)imageThumb.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);

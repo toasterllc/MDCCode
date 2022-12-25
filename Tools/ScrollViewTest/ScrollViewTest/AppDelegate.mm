@@ -147,21 +147,10 @@ constexpr CGFloat ShadowCenterOffset = 45;
     CALayer* _shadowLayer;
 }
 
-- (instancetype)initWithCoder:(NSCoder*)coder {
-    if (!(self = [super initWithCoder:coder])) return nil;
-    [self initCommon];
-    return self;
-}
-
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
-    [self initCommon];
-    return self;
-}
-
-- (void)initCommon {
+- (instancetype)init {
     FixedDocumentView* fixedDocView = [[MyDocView alloc] initWithFixedLayer:[MyDocLayer new]];
-    [self setFixedDocument:fixedDocView];
+    
+    if (!(self = [super initWithFixedDocument:fixedDocView])) return nil;
     
     constexpr uint32_t BackgroundTileSize = 256;
     constexpr uint32_t BackgroundTileLen = BackgroundTileSize*BackgroundTileSize*3;
@@ -190,7 +179,7 @@ constexpr CGFloat ShadowCenterOffset = 45;
     assert(image);
     [self setBackgroundColor:[NSColor colorWithPatternImage:[[NSImage alloc] initWithCGImage:(__bridge CGImageRef)image size:{BackgroundTileSize/2, BackgroundTileSize/2}]]];
 
-    
+    return self;
     
     
 //    [self setBackgroundColor:[NSColor colorWithSRGBRed:.118 green:.122 blue:.129 alpha:1]];
@@ -260,7 +249,7 @@ constexpr CGFloat ShadowCenterOffset = 45;
 @implementation MainView
 
 - (void)initCommon {
-    MyScrollView* sv = [[MyScrollView alloc] initWithFrame:{}];
+    MyScrollView* sv = [MyScrollView new];
     [self addSubview:sv];
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[sv]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(sv)]];

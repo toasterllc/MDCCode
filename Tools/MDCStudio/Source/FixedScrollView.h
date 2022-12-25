@@ -31,7 +31,7 @@
 
 @interface FixedScrollView : NSScrollView
 
-- (void)setFixedDocument:(NSView<FixedScrollViewDocument>*)doc;
+- (instancetype)initWithFixedDocument:(NSView<FixedScrollViewDocument>*)doc;
 
 - (void)scrollToCenter;
 
