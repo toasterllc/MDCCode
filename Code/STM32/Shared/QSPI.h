@@ -184,7 +184,7 @@ public:
         //       ...
         //       Len = DummyCycles
         if (cmd.DummyCycles) {
-            static uint8_t buf[32]; // Dummy cycles (DCYC) register is 5 bits == up to 31 cycles
+            alignas(4) static uint8_t buf[32]; // Dummy cycles (DCYC) register is 5 bits == up to 31 cycles
             size_t readLen = 0;
             
             if (_config->mode == Mode::Single) {
@@ -226,8 +226,9 @@ public:
         AssertArg(cmd.DataMode != QSPI_DATA_NONE);
         AssertArg(data);
         AssertArg(len);
-        // Validate `len` alignment
+        // Validate pointer/length alignment
         if (_config->align == Align::Word) {
+            AssertArg(!((uintptr_t)data % sizeof(uint32_t)));
             AssertArg(!(len % sizeof(uint32_t)));
         }
         Assert(ready());
@@ -250,8 +251,9 @@ public:
         AssertArg(cmd.DataMode != QSPI_DATA_NONE);
         AssertArg(data);
         AssertArg(len);
-        // Validate `len` alignment
+        // Validate pointer/length alignment
         if (_config->align == Align::Word) {
+            AssertArg(!((uintptr_t)data % sizeof(uint32_t)));
             AssertArg(!(len % sizeof(uint32_t)));
         }
         Assert(ready());

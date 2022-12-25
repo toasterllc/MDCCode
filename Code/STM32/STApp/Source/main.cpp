@@ -126,8 +126,8 @@ public:
     
 private:
     static inline uint16_t _RCA = 0;
-    static inline SD::CardId _CardId;
-    static inline SD::CardData _CardData;
+    alignas(4) static inline SD::CardId _CardId;
+    alignas(4) static inline SD::CardData _CardData;
     static inline bool _Reading = false;
 };
 
@@ -288,8 +288,14 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 static void _ICEAppInit() {
     // Prepare for comms with ICEApp via QSPI
     _QSPISetConfig(_QSPIConfigs::ICEApp);
-    // Confirm comms are working
-    _ICE::Init();
+    
+    bool ok = false;
+    for (int i=0; i<100 && !ok; i++) {
+        _Scheduler::Sleep(_Scheduler::Ms(1));
+        // Init ICE comms
+        ok = _ICE::Init();
+    }
+    Assert(ok);
 }
 
 [[noreturn]]

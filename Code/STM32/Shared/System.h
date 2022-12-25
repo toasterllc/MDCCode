@@ -167,7 +167,7 @@ private:
                 MSP::Resp resp;
                 I2C::Send(cmd, resp);
                 
-                Scheduler::Sleep(Scheduler::Ms(100));
+                Scheduler::Sleep(Scheduler::Ms(3000));
             }
         }
         
@@ -227,8 +227,7 @@ public:
     static inline T_USB USB;
     
     static void USBSendStatus(bool s) {
-        alignas(4) static bool status = false; // Aligned to send via USB
-        status = s;
+        alignas(4) bool status = s; // Aligned to send via USB
         USB.send(STM::Endpoints::DataIn, &status, sizeof(status));
         Scheduler::Wait([] { return USB.endpointReady(STM::Endpoints::DataIn); });
     }
