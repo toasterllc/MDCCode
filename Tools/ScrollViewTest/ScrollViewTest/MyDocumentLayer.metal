@@ -31,6 +31,6 @@ fragment float4 FragmentShader(
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]
 ) {
-    return txt.sample({}, {in.posUnit.x, 1-in.posUnit.y});
-//    return txt.sample({}, in.posUnit);
+//    return txt.sample({}, {in.posUnit.x, 1-in.posUnit.y});
+    return txt.sample({}, in.posUnit);
 }

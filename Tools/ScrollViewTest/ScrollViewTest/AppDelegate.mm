@@ -88,6 +88,11 @@ inline NSDictionary* LayerNullActions = @{
 //    return true;
 //}
 
+
+- (bool)fixedFlipped {
+    return true;
+}
+
 @end
 
 
