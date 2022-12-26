@@ -20,8 +20,12 @@ public:
         
         // Wait 150k EXTCLK (16MHz) periods
         // (150e3*(1/16e6)) == 9.375ms
+        // The docs say to wait 150k EXTCLK cycles, but empirically we've seen the subsequent I2C write
+        // fail (responds with a NAK) if we only wait 10ms. 11ms seems to work, but we may need to bump
+        // this in the future if we see failures.
+        // See MDCNotes/AR0330-I2CNAK-After150k-EXTCLKs.png
         {
-            _Sleep(_Ms(10));
+            _Sleep(_Ms(11));
         }
         
         // Configure internal register initialization
