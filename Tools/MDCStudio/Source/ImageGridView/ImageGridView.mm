@@ -462,65 +462,16 @@ done:
     return [_imageGridLayer selectedImageIds];
 }
 
-//- (void)setFrame:(NSRect)frame {
-//    
-////    [_imageGridLayer setContainerWidth:frame.size.width];
-////    [_imageGridLayer recomputeGrid];
-////    [_docHeight setConstant:[_imageGridLayer containerHeight]];
-//    
-////    [self _updateDocumentHeight];
-//    [super setFrame:frame];
-//    [self _updateDocumentHeight];
-//}
-
-//- (void)setFrameSize:(NSSize)size {
-////    [_imageGridLayer setContainerWidth:size.width];
-////    [_imageGridLayer recomputeGrid];
-////    const CGFloat height = [_imageGridLayer containerHeight];
-////    [_docHeight setConstant:height];
-////    [super setFrameSize:{size.width, height}];
-//    [super setFrameSize:size];
-//    [self _updateDocumentHeight];
-//}
-
-//- (void)setFrameSize:(NSSize)size {
-//    [_imageGridLayer setContainerWidth:size.width];
-//    [_imageGridLayer recomputeGrid];
-//    const CGFloat height = [_imageGridLayer containerHeight];
-////    [_docHeight setConstant:height];
-//    [super setFrameSize:{size.width, height}];
-////    [super setFrameSize:size];
-////    [self _updateDocumentHeight];
-//}
-
-//- (void)updateConstraints {
-//    [super updateConstraints];
-//    [self _updateDocumentHeight];
-//    NSLog(@"updateConstraints");
-//}
-
-- (void)_updateDocumentHeightForWidth:(CGFloat)width {
-//    NSLog(@"_updateDocumentHeight");
-    [_imageGridLayer setContainerWidth:width];
+- (void)_updateDocumentHeight {
+    [_imageGridLayer setContainerWidth:[self bounds].size.width];
     [_imageGridLayer recomputeGrid];
-//    [self setFrameSize:{[self bounds].size.width, 0}];
     [_docHeight setConstant:[_imageGridLayer containerHeight]];
 }
 
 - (void)_handleImageLibraryChanged {
-    [self _updateDocumentHeightForWidth:[self bounds].size.width];
+    [[self enclosingScrollView] tile];
     [_imageGridLayer setNeedsDisplay];
 }
-
-// MARK: - NSView Overrides
-//- (BOOL)isFlipped {
-//    return true;
-//}
-
-//- (void)_widthChanged {
-//    NSLog(@"_widthChanged");
-//    [self _updateDocumentHeight];
-//}
 
 // MARK: - Event Handling
 
@@ -698,17 +649,6 @@ struct SelectionDelta {
     [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[container]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(container)]];
     
-//    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[self]|"
-//        options:0 metrics:nil views:NSDictionaryOfVariableBindings(self)]];
-    
-//    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[superview]|"
-//        options:0 metrics:nil views:NSDictionaryOfVariableBindings(superview)]];
-    
-//    NSLayoutConstraint* docHeightMin = [NSLayoutConstraint constraintWithItem:superview attribute:NSLayoutAttributeHeight
-//        relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
-//        multiplier:1 constant:100];
-    
-    
     NSLayoutConstraint* docHeightMin = [NSLayoutConstraint constraintWithItem:container attribute:NSLayoutAttributeHeight
         relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:containerSuperview attribute:NSLayoutAttributeHeight
         multiplier:1 constant:0];
@@ -717,13 +657,6 @@ struct SelectionDelta {
         relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute
         multiplier:1 constant:0];
     [NSLayoutConstraint activateConstraints:@[docHeightMin, _docHeight]];
-    
-//    // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
-//    __weak auto weakSelf = self;
-//    _widthChangedObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSViewFrameDidChangeNotification
-//        object:containerSuperview queue:nil usingBlock:^(NSNotification*) {
-//        [weakSelf _widthChanged];
-//    }];
 }
 
 @end
@@ -743,7 +676,8 @@ struct SelectionDelta {
 
 - (void)tile {
     [super tile];
-    [(ImageGridView*)[self document] _updateDocumentHeightForWidth:[[self contentView] frame].size.width];
+    ImageGridView*const gridView = (ImageGridView*)[self document];
+    [gridView _updateDocumentHeight];
 }
 
 - (NSView*)initialFirstResponder {
