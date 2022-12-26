@@ -17,8 +17,6 @@ class I2CType {
 private:
     using _ActiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt01, GPIO::Option::Resistor0>;
     using _InactiveInterrupt = typename T_ActivePin::template Opts<GPIO::Option::Interrupt10, GPIO::Option::Resistor0>;
-    using _LED_GREEN_   = GPIO::PortA::Pin<0x1, GPIO::Option::Output1>;
-    using _LED_RED_     = GPIO::PortA::Pin<0xA, GPIO::Option::Output1>;
     
 public:
     struct Pin {
