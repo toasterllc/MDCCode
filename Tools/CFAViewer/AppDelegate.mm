@@ -451,7 +451,11 @@ static void _configureDevice(MDCUSBDevice& dev) {
 //                    break;
                 
                 case STM::Status::Modes::STMApp:
+                    // Enter host mode
+                    mdc->mspHostModeSet(true);
+                    
                     _configureDevice(*mdc);
+                    
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [self _setMDCUSBDevice:std::move(mdc)];
                     });
