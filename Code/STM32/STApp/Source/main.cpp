@@ -18,9 +18,37 @@ using namespace STM;
 
 // MARK: - Peripherals & Types
 
+[[noreturn]] static void _SchedulerError(uint16_t line);
+
+class _TaskCmdRecv;
+class _TaskCmdHandle;
+class _TaskBatteryMonitor;
+class _TaskUSBDataOut;
+class _TaskUSBDataIn;
+class _TaskReadout;
+
+#warning TODO: remove stack guards for production
+using _Scheduler = Toastbox::Scheduler<
+    _UsPerSysTick,                              // T_UsPerTick: microseconds per tick
+    Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
+    _Sleep,                                     // T_Sleep: function to put processor to sleep;
+                                                //          invoked when no tasks have work to do
+    _SchedulerError,                            // T_Error: function to call upon an unrecoverable error (eg stack overflow)
+    _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
+                                                //              main stack for overflow; unused if T_StackGuardCount==0)
+    4,                                          // T_StackGuardCount: number of pointer-sized stack guard elements to use
+    _TaskCmdRecv,                               // T_Tasks: list of tasks
+    _TaskCmdHandle,
+    _TaskBatteryMonitor,
+    _TaskUSBDataOut,
+    _TaskUSBDataIn,
+    _TaskReadout
+>;
+
 static const void* _USBConfigDesc(size_t& len);
 
-using _USBType = USBType<
+using _USB = USBType<
+    _Scheduler,
     true,                       // T_DMAEn
     _USBConfigDesc,             // T_ConfigDesc
     STM::Endpoints::DataOut,    // T_Endpoints
@@ -28,7 +56,23 @@ using _USBType = USBType<
 >;
 
 static const void* _USBConfigDesc(size_t& len) {
-    return USBConfigDesc<_USBType>(len);
+    return USBConfigDesc<_USB>(len);
+}
+
+using _I2C = I2CType<_Scheduler, MSP::I2CAddr>;
+
+static void _CmdHandle(const STM::Cmd& cmd);
+
+using _System = System<
+    _USB,
+    _I2C,
+    STM::Status::Modes::STMApp,
+    _CmdHandle
+>;
+
+[[noreturn]]
+static void _SchedulerError(uint16_t line) {
+    _System::Abort();
 }
 
 // We're using 63K buffers instead of 64K, because the
@@ -39,26 +83,6 @@ using _BufQueue = BufQueue<uint8_t, 63*1024, 2, _BufQueueAssert>;
 #warning TODO: were not putting the _BufQueue code in .sram1 too are we?
 [[gnu::section(".sram1")]]
 static _BufQueue _Bufs;
-
-struct _TaskUSBDataOut;
-struct _TaskUSBDataIn;
-struct _TaskReadout;
-
-static void _CmdHandle(const STM::Cmd& cmd);
-using _System = System<
-    _USBType,
-    STM::Status::Modes::STMApp,
-    _CmdHandle,
-    // Additional Tasks
-    _TaskUSBDataOut,
-    _TaskUSBDataIn,
-    _TaskReadout
->;
-
-constexpr auto& _USB = _System::USB;
-using _Scheduler = _System::Scheduler;
-
-using _I2C = _System::I2C;
 
 static QSPI _QSPI;
 static Battery<_Scheduler> _Battery;
@@ -79,18 +103,18 @@ using _ICE = ::ICE<_Scheduler, _ICEError>;
 
 [[noreturn]] static void _ImgError(uint16_t line);
 using _ImgSensor = Img::Sensor<
-    _System::Scheduler,     // T_Scheduler
-    _ICE,                   // T_ICE
-    _ImgError               // T_Error
+    _Scheduler, // T_Scheduler
+    _ICE,       // T_ICE
+    _ImgError   // T_Error
 >;
 
 [[noreturn]] static void _SDError(uint16_t line);
 using _SDCard = SD::Card<
-    _System::Scheduler, // T_Scheduler
-    _ICE,               // T_ICE
-    _SDError,           // T_Error
-    1,                  // T_ClkDelaySlow (odd values invert the clock)
-    0                   // T_ClkDelayFast (odd values invert the clock)
+    _Scheduler, // T_Scheduler
+    _ICE,       // T_ICE
+    _SDError,   // T_Error
+    1,          // T_ClkDelaySlow (odd values invert the clock)
+    0           // T_ClkDelayFast (odd values invert the clock)
 >;
 
 class _SD {
@@ -304,7 +328,7 @@ static void _ICEError(uint16_t line) {
 }
 
 // MARK: - MSP430
-static MSP430JTAG<_MSP_TEST, _MSP_RST_, _System::CPUFreqMHz> _MSP;
+static MSP430JTAG<_MSP_TEST, _MSP_RST_, _CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
 
@@ -418,19 +442,18 @@ struct _TaskUSBDataOut {
                 
                 // Prepare to receive either `len` bytes or the buffer capacity bytes,
                 // whichever is smaller.
-                const size_t cap = _USB.CeilToMaxPacketSize(_USB.MaxPacketSizeOut(), std::min(len, sizeof(buf.data)));
+                const size_t cap = _USB::CeilToMaxPacketSize(_USB::MaxPacketSizeOut(), std::min(len, sizeof(buf.data)));
                 // Ensure that after rounding up to the nearest packet size, we don't
                 // exceed the buffer capacity. (This should always be safe as long as
                 // the buffer capacity is a multiple of the max packet size.)
                 Assert(cap <= sizeof(buf.data));
-                _USB.recv(Endpoints::DataOut, buf.data, cap);
-                _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
+                const size_t recvLen = _USB::Recv(Endpoints::DataOut, buf.data, cap);
                 
                 // Never claim that we read more than the requested data, even if ceiling
                 // to the max packet size caused us to read more than requested.
-                const size_t recvLen = std::min(len, _USB.recvLen(Endpoints::DataOut));
-                len -= recvLen;
-                buf.len = recvLen;
+                const size_t recvLenMin = std::min(len, recvLen);
+                len -= recvLenMin;
+                buf.len = recvLenMin;
                 _Bufs.wpush();
             }
         });
@@ -453,8 +476,7 @@ struct _TaskUSBDataIn {
                 
                 // Send the data and wait until the transfer is complete
                 auto& buf = _Bufs.rget();
-                _USB.send(Endpoints::DataIn, buf.data, buf.len);
-                _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+                _USB::send(Endpoints::DataIn, buf.data, buf.len);
                 
                 buf.len = 0;
                 _Bufs.rpop();
@@ -1017,10 +1039,7 @@ static void _MSPStateRead(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
     
     // Send data
-    {
-        _USB.send(Endpoints::DataIn, buf.data, arg.len);
-        _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
-    }
+    _USB::send(Endpoints::DataIn, buf.data, arg.len);
 }
 
 static void _MSPStateWrite(const STM::Cmd& cmd) {
@@ -1211,12 +1230,11 @@ static void _MSPSBWDebug(const STM::Cmd& cmd) {
         size_t cmdsLenRem = arg.cmdsLen;
         while (cmdsLenRem) {
             // Receive debug commands into buf
-            _USB.recv(Endpoints::DataOut, bufIn.data, sizeof(bufIn.data));
-            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
+            const size_t recvLen = _USB::Recv(Endpoints::DataOut, bufIn.data, sizeof(bufIn.data));
+            const size_t cmdsLen = recvLen / sizeof(MSPSBWDebugCmd);
             
             // Handle each MSPSBWDebugCmd
             const MSPSBWDebugCmd* cmds = (MSPSBWDebugCmd*)bufIn.data;
-            const size_t cmdsLen = _USB.recvLen(Endpoints::DataOut) / sizeof(MSPSBWDebugCmd);
             for (size_t i=0; i<cmdsLen && state.ok; i++) {
                 _MSPSBWDebugHandleCmd(cmds[i], state, bufOut);
             }
@@ -1234,8 +1252,7 @@ static void _MSPSBWDebug(const STM::Cmd& cmd) {
         
         if (arg.respLen) {
             // Send the data and wait for it to be received
-            _USB.send(Endpoints::DataIn, bufOut.data, arg.respLen);
-            _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+            _USB::Send(Endpoints::DataIn, bufOut.data, arg.respLen);
         }
     }
     
@@ -1280,8 +1297,7 @@ void _SDInit(const STM::Cmd& cmd) {
         .cardData = _SD::CardData(),
     };
     
-    _USB.send(Endpoints::DataIn, &cardInfo, sizeof(cardInfo));
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    _USB::Send(Endpoints::DataIn, &cardInfo, sizeof(cardInfo));
 }
 
 static void _SDRead(const STM::Cmd& cmd) {
@@ -1363,8 +1379,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     };
     
     // Send ImgCaptureStats
-    _USB.send(Endpoints::DataIn, &stats, sizeof(stats));
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    _USB::Send(Endpoints::DataIn, &stats, sizeof(stats));
     
     // Arrange for the image to be read out
     _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstRAMBlock, arg.size));
@@ -1382,8 +1397,7 @@ void _BatteryStatusGet(const STM::Cmd& cmd) {
     
     // Send battery status
     alignas(4) const BatteryStatus status = _Battery.status();
-    _USB.send(Endpoints::DataIn, &status, sizeof(status));
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataIn); });
+    _USB::Send(Endpoints::DataIn, &status, sizeof(status));
 }
 
 static void _CmdHandle(const STM::Cmd& cmd) {
@@ -1434,7 +1448,7 @@ extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
-    _USB.isr();
+    _USB::ISR();
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_QUADSPI() {

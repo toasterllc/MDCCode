@@ -18,171 +18,29 @@ uint8_t _StackMain[_StackMainSize];
 asm(".global _StackMainEnd");
 asm(".equ _StackMainEnd, _StackMain+" Stringify(_StackMainSize));
 
+static constexpr uint8_t _CPUFreqMHz = 128;
+static constexpr uint32_t _UsPerSysTick = 1000;
+
+static void _Sleep() {
+    __WFI();
+}
+
 // MARK: - System
 
 template <
     typename T_USB,
+    typename T_I2C,
     STM::Status::Mode T_Mode,
-    void T_CmdHandle(const STM::Cmd&),
-    typename... T_Tasks
+    void T_CmdHandle(const STM::Cmd&)
 >
 class System {
 private:
-    class _TaskCmdRecv;
-    class _TaskCmdHandle;
-    class _TaskBatteryMonitor;
-    
-    [[noreturn]]
-    static void _SchedulerError(uint16_t line) {
-        Abort();
-    }
-    
-    static void _Sleep() {
-        __WFI();
-    }
+//    [[noreturn]]
+//    static void _SchedulerError(uint16_t line) {
+//        Abort();
+//    }
     
 public:
-    static constexpr uint8_t CPUFreqMHz = 128;
-    static constexpr uint32_t UsPerSysTick = 1000;
-    
-    #warning TODO: remove stack guards for production
-    using Scheduler = Toastbox::Scheduler<
-        UsPerSysTick,                               // T_UsPerTick: microseconds per tick
-        Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
-        _Sleep,                                     // T_Sleep: function to put processor to sleep;
-                                                    //          invoked when no tasks have work to do
-        _SchedulerError,                            // T_Error: function to call upon an unrecoverable error (eg stack overflow)
-        _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
-                                                    //              main stack for overflow; unused if T_StackGuardCount==0)
-        4,                                          // T_StackGuardCount: number of pointer-sized stack guard elements to use
-        _TaskCmdRecv,                               // T_Tasks: list of tasks
-        _TaskCmdHandle,
-        _TaskBatteryMonitor,
-        T_Tasks...
-    >;
-    
-private:
-    // _TaskCmdRecv: receive commands over USB initiate handling them
-    struct _TaskCmdRecv {
-        static void Run() {
-            for (;;) {
-                // Wait for USB to be re-connected (`Connecting` state) so we can call USB.connect(),
-                // or for a new command to arrive so we can handle it.
-                Scheduler::Wait([] { return USB.state()==T_USB::State::Connecting || USB.cmdRecv(); });
-                
-                // Disable interrupts so we can inspect+modify `USB` atomically
-                Toastbox::IntState ints(false);
-                
-                // Reset all tasks
-                // This needs to happen before we call `USB.connect()` so that any tasks that
-                // were running in the previous USB session are stopped before we enable
-                // USB again by calling USB.connect().
-                _TasksReset();
-                
-                switch (USB.state()) {
-                case T_USB::State::Connecting:
-                    USB.connect();
-                    continue;
-                case T_USB::State::Connected:
-                    if (!USB.cmdRecv()) continue;
-                    break;
-                default:
-                    continue;
-                }
-                
-                auto usbCmd = *USB.cmdRecv();
-                
-                // Re-enable interrupts while we handle the command
-                ints.restore();
-                
-                // Reject command if the length isn't valid
-                STM::Cmd cmd;
-                if (usbCmd.len != sizeof(cmd)) {
-                    USB.cmdAccept(false);
-                    continue;
-                }
-                
-                memcpy(&cmd, usbCmd.data, usbCmd.len);
-                
-                // Only accept command if it's a flush command (in which case the endpoints
-                // don't need to be ready), or it's not a flush command, but all endpoints
-                // are ready. Otherwise, reject the command.
-                if (cmd.op!=STM::Op::EndpointsFlush && !USB.endpointsReady()) {
-                    USB.cmdAccept(false);
-                    continue;
-                }
-                
-                USB.cmdAccept(true);
-                _TaskCmdHandle::Start(cmd);
-            }
-        }
-        
-        // Task options
-        static constexpr Toastbox::TaskOptions Options{
-            .AutoStart = Run, // Task should start running
-        };
-        
-        // Task stack
-        [[gnu::section(".stack._TaskCmdRecv")]]
-        static inline uint8_t Stack[512];
-    };
-    
-    // _TaskCmdHandle: handle command
-    struct _TaskCmdHandle {
-        static void Start(const STM::Cmd& c) {
-            using namespace STM;
-            static STM::Cmd cmd = {};
-            cmd = c;
-            
-            Scheduler::template Start<_TaskCmdHandle>([] {
-                switch (cmd.op) {
-                case Op::EndpointsFlush:    _EndpointsFlush(cmd);       break;
-                case Op::StatusGet:         _StatusGet(cmd);            break;
-                case Op::BootloaderInvoke:  _BootloaderInvoke(cmd);     break;
-                case Op::LEDSet:            _LEDSet(cmd);               break;
-                // Unknown command
-                default:                    T_CmdHandle(cmd);           break;
-                }
-            });
-        }
-        
-        // Task options
-        static constexpr Toastbox::TaskOptions Options{};
-        
-        // Task stack
-        [[gnu::section(".stack._TaskCmdHandle")]]
-        static inline uint8_t Stack[1024];
-    };
-    
-    struct _TaskBatteryMonitor {
-        static void Run() {
-            for (bool green=true;; green=!green) {
-                LED0::Write(green);
-                
-                const MSP::Cmd cmd = {
-                    .op = MSP::Cmd::Op::LEDSet,
-                    .arg = { .LEDSet = { .green = green }, },
-                };
-                
-                MSP::Resp resp;
-                I2C::Send(cmd, resp);
-                
-                Scheduler::Sleep(Scheduler::Ms(3000));
-            }
-        }
-        
-        // Task options
-        static constexpr Toastbox::TaskOptions Options{
-            .AutoStart = Run, // Task should start running
-        };
-        
-        // Task stack
-        [[gnu::section(".stack._TaskBatteryMonitor")]]
-        static inline uint8_t Stack[256];
-    };
-
-public:
-    
     static void LEDInit() {
         // Enable GPIO clocks
         __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -209,10 +67,10 @@ public:
         LEDInit();
         
         // Configure I2C
-        I2C::Init();
+        T_I2C::Init();
         
         // Configure USB
-        USB.init();
+        T_USB::Init();
     }
     
     // LEDs
@@ -221,15 +79,9 @@ public:
     using LED2 = GPIO<GPIOPortB, 11>;
     using LED3 = GPIO<GPIOPortB, 13>;
     
-    // I2C
-    using I2C = I2CType<Scheduler, MSP::I2CAddr>;
-    
-    static inline T_USB USB;
-    
     static void USBSendStatus(bool s) {
         alignas(4) bool status = s; // Aligned to send via USB
-        USB.send(STM::Endpoints::DataIn, &status, sizeof(status));
-        Scheduler::Wait([] { return USB.endpointReady(STM::Endpoints::DataIn); });
+        T_USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
     }
     
     static void USBAcceptCommand(bool s) {
@@ -309,15 +161,13 @@ private:
     }
     
     static void _TasksReset() {
-        Scheduler::template Stop<_TaskCmdHandle>();
-        (Scheduler::template Stop<T_Tasks>(), ...);
+//        Scheduler::template Stop<_TaskCmdHandle>();
+//        (Scheduler::template Stop<T_Tasks>(), ...);
     }
     
     static void _EndpointsFlush(const STM::Cmd& cmd) {
         // Reset endpoints
-        USB.endpointsReset();
-        // Wait until endpoints are ready
-        Scheduler::Wait([] { return USB.endpointsReady(); });
+        T_USB::EndpointsReset();
         // Send status
         USBSendStatus(true);
     }
@@ -327,14 +177,13 @@ private:
         USBAcceptCommand(true);
         
         // Send status struct
-        alignas(4) static const STM::Status status = { // Aligned to send via USB
+        alignas(4) const STM::Status status = { // Aligned to send via USB
             .magic      = STM::Status::MagicNumber,
             .version    = STM::Version,
             .mode       = T_Mode,
         };
         
-        USB.send(STM::Endpoints::DataIn, &status, sizeof(status));
-        Scheduler::Wait([] { return USB.endpointReady(STM::Endpoints::DataIn); });
+        T_USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
         
         // Send status
         USBSendStatus(true);
@@ -354,10 +203,11 @@ private:
     
     static void _LEDSet(const STM::Cmd& cmd) {
         switch (cmd.arg.LEDSet.idx) {
-        case 0: USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
-        case 1: USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
-        case 2: USBAcceptCommand(true); LED2::Write(cmd.arg.LEDSet.on); break;
-        case 3: USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;
+        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
+        case 1:  USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
+        case 2:  USBAcceptCommand(true); LED2::Write(cmd.arg.LEDSet.on); break;
+        case 3:  USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;
+        default: USBAcceptCommand(false); return;
         }
         
         // Send status
