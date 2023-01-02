@@ -46,18 +46,9 @@ struct _System : System<
 
 using _I2C = _System::I2C;
 
-struct _TaskCmdHandle : TaskCmdHandle<
-    _TaskCmdHandle,
-    _Scheduler,
-    _System,
-    _CmdHandle
-> {};
+using _TaskCmdHandle = _System::_TaskCmdHandle;
 
-struct _TaskCmdRecv : TaskCmdRecv<
-    _USB,
-    _TaskCmdHandle::Handle,
-    _TasksReset
-> {};
+using _TaskCmdRecv = _System::_TaskCmdRecv;
 
 struct _TaskMSPComms : TaskMSPComms<
     _Scheduler,

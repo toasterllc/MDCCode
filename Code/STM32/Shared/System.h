@@ -155,7 +155,7 @@ public:
         }
     }
     
-private:
+//private:
     struct _TaskCmdHandle {
         static void Handle(const STM::Cmd& c) {
             Assert(!_Cmd);
