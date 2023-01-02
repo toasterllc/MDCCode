@@ -10,10 +10,9 @@
 #include "Toastbox/IntState.h"
 
 template <
-typename T_Scheduler,               // T_Scheduler: scheduler
-bool T_DMAEn,                       // T_DMAEn: whether DMA is enabled
-const void* T_ConfigDesc(size_t&),  // T_ConfigDesc: returns USB configuration descriptor
-uint8_t... T_Endpoints              // T_Endpoints: list of endpoints
+typename T_Scheduler,   // T_Scheduler: scheduler
+bool T_DMAEn,           // T_DMAEn: whether DMA is enabled
+typename T_Config       // T_ConfigDesc: contains endpoints and configuration descriptor
 >
 class USBType {
 public:
@@ -49,36 +48,28 @@ public:
     static constexpr size_t MaxPacketSizeCtrl = Toastbox::USB::Endpoint::MaxPacketSizeCtrl;
     static constexpr size_t MaxPacketSizeBulk = Toastbox::USB::Endpoint::MaxPacketSizeBulk;
     
-    static constexpr uint8_t EndpointIdx(uint8_t ep)    { return ep&0xF;        }
-    static constexpr bool EndpointOut(uint8_t ep)       { return !(ep&0x80);    }
-    static constexpr bool EndpointIn(uint8_t ep)        { return  (ep&0x80);    }
+    static constexpr auto EndpointIdx = Toastbox::USB::Endpoint::Idx;
+    static constexpr auto EndpointOut = Toastbox::USB::Endpoint::Out;
+    static constexpr auto EndpointIn = Toastbox::USB::Endpoint::In;
     
     static constexpr size_t EndpointCountOut() {
-        size_t count = 0;
-        for (uint8_t ep : {T_Endpoints...}) count += EndpointOut(ep);
-        return count;
+        return Toastbox::USB::Endpoint::CountOut(T_Config::Endpoints);
     }
     
     static constexpr size_t EndpointCountIn() {
-        size_t count = 0;
-        for (uint8_t ep : {T_Endpoints...}) count += EndpointIn(ep);
-        return count;
+        return Toastbox::USB::Endpoint::CountIn(T_Config::Endpoints);
     }
     
     static constexpr size_t EndpointCount() {
-        return sizeof...(T_Endpoints);
+        return std::size(T_Config::Endpoints);
     }
     
     static constexpr size_t MaxPacketSizeIn() {
-        // Don't have IN endpoints: MPS=control transfer MPS (64)
-        // Do have IN endpoints: MPS=bulk transfer MPS (512, the only value that the spec allows for HS bulk endpoints)
-        return !EndpointCountIn() ? MaxPacketSizeCtrl : MaxPacketSizeBulk;
+        return Toastbox::USB::Endpoint::MaxPacketSizeIn(T_Config::Endpoints);
     }
     
     static constexpr size_t MaxPacketSizeOut() {
-        // Don't have OUT endpoints: MPS=control transfer MPS (64)
-        // Do have OUT endpoints: MPS=bulk transfer MPS (512, the only value that the spec allows for HS bulk endpoints)
-        return !EndpointCountOut() ? MaxPacketSizeCtrl : MaxPacketSizeBulk;
+        return Toastbox::USB::Endpoint::MaxPacketSizeOut(T_Config::Endpoints);
     }
     
     static constexpr uint32_t FIFORxSize() {
@@ -245,7 +236,7 @@ public:
         HAL_PCDEx_SetTxFiFo(&_PCD, 0, FIFOCapTxCtrl/sizeof(uint32_t));
         
         // # Set Tx FIFO size for bulk IN endpoints (DIEPTXFx register)
-        for (uint8_t ep : {T_Endpoints...}) {
+        for (uint8_t ep : T_Config::Endpoints) {
             if (EndpointIn(ep)) {
                 HAL_PCDEx_SetTxFiFo(&_PCD, EndpointIdx(ep), FIFOCapTxBulk/sizeof(uint32_t));
             }
@@ -274,7 +265,7 @@ public:
     static void EndpointsReset() {
         #warning TODO: wait until endpoints are ready
         Toastbox::IntState ints(false);
-        for (uint8_t ep : {T_Endpoints...}) {
+        for (uint8_t ep : T_Config::Endpoints) {
             _EndpointReset(ep);
         }
     }
@@ -286,7 +277,7 @@ public:
     
     static bool EndpointsReady() {
         Toastbox::IntState ints(false);
-        for (uint8_t ep : {T_Endpoints...}) {
+        for (uint8_t ep : T_Config::Endpoints) {
             if (!_EndpointReady(ep)) return false;
         }
         return true;
@@ -422,7 +413,7 @@ public:
 private:
     static uint8_t _USBD_Init(uint8_t cfgidx) {
         // Open endpoints
-        for (uint8_t ep : {T_Endpoints...}) {
+        for (uint8_t ep : T_Config::Endpoints) {
             if (EndpointOut(ep)) {
                 USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeOut());
                 _Device.ep_out[EndpointIdx(ep)].is_used = 1U;
@@ -530,10 +521,8 @@ private:
     }
     
     static uint8_t* _USBD_GetHSConfigDescriptor(uint16_t* len) {
-        size_t descLen = 0;
-        const void*const desc = T_ConfigDesc(descLen);
-        *len = descLen;
-        return (uint8_t*)desc;
+        *len = sizeof(T_Config::Descriptor);
+        return (uint8_t*)&T_Config::Descriptor;
     }
     
     static uint8_t* _USBD_GetFSConfigDescriptor(uint16_t* len) {

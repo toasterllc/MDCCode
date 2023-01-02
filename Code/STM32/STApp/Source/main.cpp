@@ -12,7 +12,7 @@
 #include "SDCard.h"
 #include "ImgSensor.h"
 #include "ImgSD.h"
-#include "USBConfigDesc.h"
+#include "USBConfig.h"
 #include "MSP430JTAG.h"
 using namespace STM;
 
@@ -383,6 +383,8 @@ static void _ImgError(uint16_t line) {
 
 struct _TaskUSBDataIn {
     static void Start() {
+        // Make sure this task isn't already running
+        Assert(!_Scheduler::Running<_TaskUSBDataIn>());
         _Scheduler::Start<_TaskUSBDataIn>();
     }
     
@@ -410,7 +412,7 @@ struct _TaskUSBDataIn {
 
 struct _TaskUSBDataOut {
     static void Start(size_t len) {
-        // Make sure this task isn't busy
+        // Make sure this task isn't already running
         Assert(!_Scheduler::Running<_TaskUSBDataOut>());
         _Len = len;
         _Scheduler::Start<_TaskUSBDataOut>();
@@ -455,12 +457,14 @@ struct _TaskUSBDataOut {
     static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
-    [[gnu::section(".stack.TaskUSBDataOut")]]
+    [[gnu::section(".stack._TaskUSBDataOut")]]
     static inline uint8_t Stack[256];
 };
 
 struct _TaskReadout {
     static void Start(std::optional<size_t> len) {
+        // Make sure this task isn't already running
+        Assert(!_Scheduler::Running<_TaskReadout>());
         _RemLen = len;
         _Scheduler::Start<_TaskReadout>();
     }

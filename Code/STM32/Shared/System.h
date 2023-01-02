@@ -6,7 +6,7 @@
 #include "USB.h"
 #include "I2C.h"
 #include "MSP.h"
-#include "USBConfigDesc.h"
+#include "USBConfig.h"
 #include "Toastbox/Task.h"
 
 // MARK: - Main Thread Stack
@@ -102,14 +102,10 @@ public:
         T_Tasks...
     >;
     
-    struct USB;
-    
     using USB = USBType<
-        Scheduler,
-        T_USBDMAEn,                 // T_DMAEn
-        USBConfigDesc<USB>::Get,    // T_ConfigDesc
-        STM::Endpoints::DataOut,    // T_Endpoints
-        STM::Endpoints::DataIn
+        Scheduler,  // T_Scheduler
+        T_USBDMAEn, // T_DMAEn
+        USBConfig   // T_Config
     >;
     
     using I2C = I2CType<Scheduler, MSP::I2CAddr>;
