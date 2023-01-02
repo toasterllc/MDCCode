@@ -102,17 +102,15 @@ public:
         T_Tasks...
     >;
     
-    struct _USBConfigDesc;
+    struct USB;
     
     struct USB : USBType<
         Scheduler,
         T_USBDMAEn,                 // T_DMAEn
-        _USBConfigDesc::Data,       // T_ConfigDesc
+        USBConfigDesc<USB>::Get,    // T_ConfigDesc
         STM::Endpoints::DataOut,    // T_Endpoints
         STM::Endpoints::DataIn
     > {};
-    
-    struct _USBConfigDesc : USBConfigDesc<USB> {};
     
     using I2C = I2CType<Scheduler, MSP::I2CAddr>;
     

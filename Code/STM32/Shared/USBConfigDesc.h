@@ -14,8 +14,14 @@ struct USBConfigDesc {
             Toastbox::USB::EndpointDescriptor epIn1Desc;
     };
     
+    static const void* Get(size_t& len) {
+        len = sizeof(_Data);
+        return (const void*)&_Data;
+    }
+    
+private:
     alignas(4)
-    static const inline DataType Data = {
+    static const inline DataType _Data = {
         .configDesc = {
             .bLength                        = LFH_U8(sizeof(Toastbox::USB::ConfigurationDescriptor)),   // bLength: configuration descriptor length
             .bDescriptorType                = LFH_U8(Toastbox::USB::DescriptorType::Configuration),     // bDescriptorType: configuration descriptor
