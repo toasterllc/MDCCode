@@ -39,7 +39,9 @@ struct _USB : USBType<
 struct _System : System<
     _Scheduler,
     _USB,
-    STM::Status::Modes::STMApp
+    STM::Status::Modes::STMApp,
+    _CmdHandle,
+    _TasksReset
 > {};
 
 using _I2C = _System::I2C;

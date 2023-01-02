@@ -30,7 +30,9 @@ static void _Sleep() {
 template <
 typename T_Scheduler,
 typename T_USB,
-STM::Status::Mode T_Mode
+STM::Status::Mode T_Mode,
+auto T_CmdHandle,
+auto T_TasksReset
 >
 class System {
 private:
@@ -89,7 +91,7 @@ public:
         USBSendStatus(s);
     }
     
-static void EndpointsFlush(const STM::Cmd& cmd) {
+    static void EndpointsFlush(const STM::Cmd& cmd) {
         // Reset endpoints
         T_USB::EndpointsReset();
         // Send status
@@ -154,6 +156,86 @@ static void EndpointsFlush(const STM::Cmd& cmd) {
     }
     
 private:
+    struct _TaskCmdHandle {
+        static void Handle(const STM::Cmd& c) {
+            Assert(!_Cmd);
+            _Cmd = c;
+            T_Scheduler::template Start<_TaskCmdHandle>();
+        }
+        
+        static void Run() {
+            using namespace STM;
+            
+            switch (_Cmd->op) {
+            case Op::EndpointsFlush:    EndpointsFlush(*_Cmd);      break;
+            case Op::StatusGet:         StatusGet(*_Cmd);           break;
+            case Op::BootloaderInvoke:  BootloaderInvoke(*_Cmd);    break;
+            case Op::LEDSet:            LEDSet(*_Cmd);              break;
+            default:                    T_CmdHandle(*_Cmd);         break;
+            }
+            
+            _Cmd = std::nullopt;
+        }
+        
+        static inline std::optional<STM::Cmd> _Cmd;
+        
+        // Task options
+        static constexpr Toastbox::TaskOptions Options{};
+        
+        // Task stack
+        [[gnu::section(".stack.TaskCmdHandle")]]
+        static inline uint8_t Stack[1024];
+    };
+    
+    struct _TaskCmdRecv {
+        static void Run() {
+            for (;;) {
+                auto usbCmdOpt = T_USB::CmdRecv();
+                // If T_USB returns nullopt, it signifies that USB was disconnected or re-connected,
+                // so we need to reset our tasks.
+                if (!usbCmdOpt) {
+                    // Reset all tasks
+                    // This needs to happen before we call `T_USB::Connect()` so that any tasks that
+                    // were running in the previous T_USB session are stopped before we enable
+                    // T_USB again by calling T_USB::Connect().
+                    T_TasksReset();
+                    continue;
+                }
+                
+                auto usbCmd = *usbCmdOpt;
+                
+                // Reject command if the length isn't valid
+                STM::Cmd cmd;
+                if (usbCmd.len != sizeof(cmd)) {
+                    T_USB::CmdAccept(false);
+                    continue;
+                }
+                
+                memcpy(&cmd, usbCmd.data, usbCmd.len);
+                
+                // Only accept command if it's a flush command (in which case the endpoints
+                // don't need to be ready), or it's not a flush command, but all endpoints
+                // are ready. Otherwise, reject the command.
+                if (cmd.op!=STM::Op::EndpointsFlush && !T_USB::EndpointsReady()) {
+                    T_USB::CmdAccept(false);
+                    continue;
+                }
+                
+                T_USB::CmdAccept(true);
+                _TaskCmdHandle::Handle(cmd);
+            }
+        }
+        
+        // Task options
+        static constexpr Toastbox::TaskOptions Options{
+            .AutoStart = Run, // Task should start running
+        };
+        
+        // Task stack
+        [[gnu::section(".stack.TaskCmdRecv")]]
+        static inline uint8_t Stack[512];
+    };
+    
     static void _ClockInit() {
         // Configure the main internal regulator output voltage
         {
