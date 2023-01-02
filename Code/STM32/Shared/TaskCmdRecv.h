@@ -3,7 +3,6 @@
 
 // _TaskCmdRecv: receive commands over USB, and initiate handling them
 template <
-typename T_Scheduler,
 typename T_USB,
 auto T_CmdHandle,
 auto T_TasksReset

@@ -3,6 +3,7 @@
 
 // TaskCmdHandle: handle command
 template <
+typename T_Task,
 typename T_Scheduler,
 typename T_System,
 auto T_CmdHandle
@@ -11,7 +12,7 @@ struct TaskCmdHandle {
     static void Handle(const STM::Cmd& c) {
         Assert(!_Cmd);
         _Cmd = c;
-        T_Scheduler::template Start<TaskCmdHandle>();
+        T_Scheduler::template Start<T_Task>();
     }
     
     static void Run() {

@@ -28,39 +28,39 @@ static void _TasksReset();
 static void _SchedulerError(uint16_t line);
 static const void* _USBConfigDesc(size_t& len);
 
-using _USB = USBType<
+struct _USB : USBType<
     _Scheduler,
     true,                       // T_DMAEn
     _USBConfigDesc,             // T_ConfigDesc
     STM::Endpoints::DataOut,    // T_Endpoints
     STM::Endpoints::DataIn
->;
+> {};
 
-using _I2C = I2CType<_Scheduler, MSP::I2CAddr>;
+struct _I2C : I2CType<_Scheduler, MSP::I2CAddr> {};
 
-using _System = System<
+struct _System : System<
     _USB,
     _I2C,
     STM::Status::Modes::STMApp
->;
+> {};
 
-using _TaskCmdHandle = TaskCmdHandle<
+struct _TaskCmdHandle : TaskCmdHandle<
+    _TaskCmdHandle,
     _Scheduler,
     _System,
     _CmdHandle
->;
+> {};
 
-using _TaskCmdRecv = TaskCmdRecv<
-    _Scheduler,
+struct _TaskCmdRecv : TaskCmdRecv<
     _USB,
     _TaskCmdHandle::Handle,
     _TasksReset
->;
+> {};
 
-using _TaskMSPComms = TaskMSPComms<
+struct _TaskMSPComms : TaskMSPComms<
     _Scheduler,
     _I2C
->;
+> {};
 
 struct _TaskUSBDataOut;
 struct _TaskUSBDataIn;
