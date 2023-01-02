@@ -259,11 +259,11 @@ public:
     }
     
     // Methods
-    static void Connect() {
-        Toastbox::IntState ints(false);
-        if (_State != State::Connecting) return; // Short-circuit if we're not Connecting
-        _State = State::Connected;
-    }
+//    static void Connect() {
+//        Toastbox::IntState ints(false);
+//        if (_State != State::Connecting) return; // Short-circuit if we're not Connecting
+//        _State = State::Connected;
+//    }
     
     static void EndpointReset(uint8_t ep) {
         #warning TODO: wait until endpoints are ready
@@ -293,9 +293,68 @@ public:
     }
     
     static std::optional<Cmd> CmdRecv() {
-        Toastbox::IntState ints(false);
-        if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
-        return _Cmd;
+        for (;;) {
+            // Wait for USB to be re-connected (`Connecting` state), or for a new command to arrive.
+            T_Scheduler::Wait([] { return _State==State::Connecting || _Cmd; });
+            
+            // Disable interrupts
+            Toastbox::IntState ints(false);
+            
+            if (_State == State::Connecting) {
+                // Return nullopt to notify the caller that USB was reconnected,
+                // so that the caller can reset everything.
+                return std::nullopt;
+            
+            } else if (_Cmd) {
+                return _Cmd;
+            
+            } else {
+                // It's possible for _State / _Cmd to change between observing them in Wait()
+                // and disabling interrupts. If we get here, neither is in a state that we
+                // care about, so go around the loop again.
+            }
+        }
+        
+//        _State == State::Connecting
+//        
+//        State::Connecting
+//        
+//        #warning TODO: move all this logic into USB::CmdRecv()
+//        // Wait for USB to be re-connected (`Connecting` state) so we can call USB::Connect(),
+//        // or for a new command to arrive so we can handle it.
+//        Scheduler::Wait([] { return USB::StateGet()==T_USB::State::Connecting || USB::CmdRecv(); });
+//        
+//        // Disable interrupts so we can inspect+modify `USB` atomically
+//        Toastbox::IntState ints(false);
+//        
+//        // Reset all tasks
+//        // This needs to happen before we call `USB::Connect()` so that any tasks that
+//        // were running in the previous USB session are stopped before we enable
+//        // USB again by calling USB::Connect().
+//        _TasksReset();
+//        
+//        switch (USB::StateGet()) {
+//        case T_USB::State::Connecting:
+//            USB::Connect();
+//            continue;
+//        case T_USB::State::Connected:
+//            if (!USB::CmdRecv()) continue;
+//            break;
+//        default:
+//            continue;
+//        }
+//        
+//        auto usbCmd = *USB::CmdRecv();
+//        
+//        // Re-enable interrupts while we handle the command
+//        ints.restore();
+//        
+//        
+//        
+//        
+//        Toastbox::IntState ints(false);
+//        if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
+//        return _Cmd;
     }
     
     static void CmdAccept(bool accept) {
@@ -309,7 +368,7 @@ public:
     }
     
     static std::optional<size_t> Recv(uint8_t ep, void* data, size_t len) {
-        #warning TODO: wait until endpoints are ready
+        #warning TODO: wait until endpoints are ready (previously we expected the caller to do that)
         AssertArg(EndpointOut(ep));
         _OutEndpoint& outep = _OutEndpointGet(ep);
         
@@ -324,7 +383,7 @@ public:
             Assert(us == USBD_OK);
         }
         
-        auto waitResult = T_Scheduler::Wait([=] { return _EndpointWait(ep, outep); });
+        auto waitResult = T_Scheduler::Wait([&] { return _EndpointWait(ep, outep); });
         return waitResult.result;
     }
     
@@ -337,7 +396,7 @@ public:
 //    }
     
     static bool Send(uint8_t ep, const void* data, size_t len) {
-        #warning TODO: wait until endpoints are ready
+        #warning TODO: wait until endpoints are ready (previously we expected the caller to do that)
         AssertArg(EndpointIn(ep));
         _InEndpoint& inep = _InEndpointGet(ep);
         
@@ -352,7 +411,7 @@ public:
             Assert(us == USBD_OK);
         }
         
-        auto waitResult = T_Scheduler::Wait([=] { return _EndpointWait(ep, inep); });
+        auto waitResult = T_Scheduler::Wait([&] { return _EndpointWait(ep, inep); });
         return waitResult.result;
     }
     
@@ -519,7 +578,7 @@ private:
     struct _EndpointWaitResult {
         bool done = false;
         T result = {};
-        operator bool() { return done; }
+        operator bool() const { return done; }
     };
     
     static _EndpointWaitResult<std::optional<size_t>> _EndpointWait(uint8_t ep, _OutEndpoint& outep) {

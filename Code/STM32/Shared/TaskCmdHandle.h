@@ -2,24 +2,33 @@
 #include "Toastbox/Task.h"
 
 // TaskCmdHandle: handle command
-template <typename T_Scheduler>
+template <
+typename T_Scheduler,
+typename T_System,
+auto T_CmdHandle
+>
 struct TaskCmdHandle {
-    static void Start(const STM::Cmd& c) {
-        using namespace STM;
-        static STM::Cmd cmd = {};
-        cmd = c;
-        
-        T_Scheduler::template Start<TaskCmdHandle>([] {
-            switch (cmd.op) {
-            case Op::EndpointsFlush:    _EndpointsFlush(cmd);       break;
-            case Op::StatusGet:         _StatusGet(cmd);            break;
-            case Op::BootloaderInvoke:  _BootloaderInvoke(cmd);     break;
-            case Op::LEDSet:            _LEDSet(cmd);               break;
-            // Unknown command
-            default:                    T_CmdHandle(cmd);           break;
-            }
-        });
+    static void Handle(const STM::Cmd& c) {
+        Assert(!_Cmd);
+        _Cmd = c;
+        T_Scheduler::template Start<TaskCmdHandle>();
     }
+    
+    static void Run() {
+        using namespace STM;
+        
+        switch (_Cmd->op) {
+        case Op::EndpointsFlush:    T_System::EndpointsFlush(*_Cmd);   break;
+        case Op::StatusGet:         T_System::StatusGet(*_Cmd);        break;
+        case Op::BootloaderInvoke:  T_System::BootloaderInvoke(*_Cmd); break;
+        case Op::LEDSet:            T_System::LEDSet(*_Cmd);           break;
+        default:                    T_CmdHandle(*_Cmd);                 break;
+        }
+        
+        _Cmd = std::nullopt;
+    }
+    
+    static inline std::optional<STM::Cmd> _Cmd;
     
     // Task options
     static constexpr Toastbox::TaskOptions Options{};

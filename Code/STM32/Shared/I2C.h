@@ -73,6 +73,7 @@ private:
         HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, Addr, (uint8_t*)&msg, sizeof(msg));
         Assert(hs == HAL_OK);
         
+        #warning TODO: institute a time limit and return failure if it elapses
         T_Scheduler::Wait([&] { return _St.load() != _State::Send; });
         const bool ok = (_St.load() == _State::Done);
         _St = _State::Idle;
@@ -90,6 +91,7 @@ private:
         HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, Addr, (uint8_t*)&msg, sizeof(msg));
         Assert(hs == HAL_OK);
         
+        #warning TODO: institute a time limit and return failure if it elapses
         T_Scheduler::Wait([&] { return _St.load() != _State::Recv; });
         const bool ok = (_St.load() == _State::Done);
         _St = _State::Idle;

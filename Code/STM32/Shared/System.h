@@ -28,10 +28,9 @@ static void _Sleep() {
 // MARK: - System
 
 template <
-    typename T_USB,
-    typename T_I2C,
-    STM::Status::Mode T_Mode,
-    void T_CmdHandle(const STM::Cmd&)
+typename T_USB,
+typename T_I2C,
+STM::Status::Mode T_Mode
 >
 class System {
 private:
@@ -86,6 +85,55 @@ public:
     
     static void USBAcceptCommand(bool s) {
         USBSendStatus(s);
+    }
+    
+static void EndpointsFlush(const STM::Cmd& cmd) {
+        // Reset endpoints
+        T_USB::EndpointsReset();
+        // Send status
+        USBSendStatus(true);
+    }
+    
+    static void StatusGet(const STM::Cmd& cmd) {
+        // Accept command
+        USBAcceptCommand(true);
+        
+        // Send status struct
+        alignas(4) const STM::Status status = { // Aligned to send via USB
+            .magic      = STM::Status::MagicNumber,
+            .version    = STM::Version,
+            .mode       = T_Mode,
+        };
+        
+        T_USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
+        
+        // Send status
+        USBSendStatus(true);
+    }
+    
+    static void BootloaderInvoke(const STM::Cmd& cmd) {
+        // Accept command
+        USBAcceptCommand(true);
+        // Send status
+        USBSendStatus(true);
+        
+        // Perform software reset
+        HAL_NVIC_SystemReset();
+        // Unreachable
+        abort();
+    }
+    
+    static void LEDSet(const STM::Cmd& cmd) {
+        switch (cmd.arg.LEDSet.idx) {
+        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
+        case 1:  USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
+        case 2:  USBAcceptCommand(true); LED2::Write(cmd.arg.LEDSet.on); break;
+        case 3:  USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;
+        default: USBAcceptCommand(false); return;
+        }
+        
+        // Send status
+        USBSendStatus(true);
     }
     
     #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
@@ -158,60 +206,6 @@ private:
         {
             __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
         }
-    }
-    
-    static void _TasksReset() {
-//        Scheduler::template Stop<_TaskCmdHandle>();
-//        (Scheduler::template Stop<T_Tasks>(), ...);
-    }
-    
-    static void _EndpointsFlush(const STM::Cmd& cmd) {
-        // Reset endpoints
-        T_USB::EndpointsReset();
-        // Send status
-        USBSendStatus(true);
-    }
-    
-    static void _StatusGet(const STM::Cmd& cmd) {
-        // Accept command
-        USBAcceptCommand(true);
-        
-        // Send status struct
-        alignas(4) const STM::Status status = { // Aligned to send via USB
-            .magic      = STM::Status::MagicNumber,
-            .version    = STM::Version,
-            .mode       = T_Mode,
-        };
-        
-        T_USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
-        
-        // Send status
-        USBSendStatus(true);
-    }
-    
-    static void _BootloaderInvoke(const STM::Cmd& cmd) {
-        // Accept command
-        USBAcceptCommand(true);
-        // Send status
-        USBSendStatus(true);
-        
-        // Perform software reset
-        HAL_NVIC_SystemReset();
-        // Unreachable
-        abort();
-    }
-    
-    static void _LEDSet(const STM::Cmd& cmd) {
-        switch (cmd.arg.LEDSet.idx) {
-        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
-        case 1:  USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
-        case 2:  USBAcceptCommand(true); LED2::Write(cmd.arg.LEDSet.on); break;
-        case 3:  USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;
-        default: USBAcceptCommand(false); return;
-        }
-        
-        // Send status
-        USBSendStatus(true);
     }
 };
 
