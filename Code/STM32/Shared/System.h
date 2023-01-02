@@ -104,13 +104,13 @@ public:
     
     struct USB;
     
-    struct USB : USBType<
+    using USB = USBType<
         Scheduler,
         T_USBDMAEn,                 // T_DMAEn
         USBConfigDesc<USB>::Get,    // T_ConfigDesc
         STM::Endpoints::DataOut,    // T_Endpoints
         STM::Endpoints::DataIn
-    > {};
+    >;
     
     using I2C = I2CType<Scheduler, MSP::I2CAddr>;
     
