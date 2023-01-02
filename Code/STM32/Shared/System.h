@@ -29,8 +29,9 @@ static void _Sleep() {
 
 template <
 typename T_Scheduler,
-typename T_USB,
 STM::Status::Mode T_Mode,
+bool T_USBDMAEn,
+auto T_USBConfigDesc,
 auto T_CmdHandle,
 auto T_TasksReset
 >
@@ -71,7 +72,7 @@ public:
         I2C::Init();
         
         // Configure USB
-        T_USB::Init();
+        USB::Init();
     }
     
     // LEDs
@@ -80,11 +81,19 @@ public:
     using LED2 = GPIO<GPIOPortB, 11>;
     using LED3 = GPIO<GPIOPortB, 13>;
     
+    using USB = USBType<
+        T_Scheduler,
+        T_USBDMAEn,                 // T_DMAEn
+        T_USBConfigDesc,            // T_ConfigDesc
+        STM::Endpoints::DataOut,    // T_Endpoints
+        STM::Endpoints::DataIn
+    >;
+    
     using I2C = I2CType<T_Scheduler, MSP::I2CAddr>;
     
     static void USBSendStatus(bool s) {
         alignas(4) bool status = s; // Aligned to send via USB
-        T_USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
+        USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
     }
     
     static void USBAcceptCommand(bool s) {
@@ -93,7 +102,7 @@ public:
     
     static void EndpointsFlush(const STM::Cmd& cmd) {
         // Reset endpoints
-        T_USB::EndpointsReset();
+        USB::EndpointsReset();
         // Send status
         USBSendStatus(true);
     }
@@ -109,7 +118,7 @@ public:
             .mode       = T_Mode,
         };
         
-        T_USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
+        USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
         
         // Send status
         USBSendStatus(true);
@@ -190,14 +199,14 @@ public:
     struct _TaskCmdRecv {
         static void Run() {
             for (;;) {
-                auto usbCmdOpt = T_USB::CmdRecv();
+                auto usbCmdOpt = USB::CmdRecv();
                 // If T_USB returns nullopt, it signifies that USB was disconnected or re-connected,
                 // so we need to reset our tasks.
                 if (!usbCmdOpt) {
                     // Reset all tasks
-                    // This needs to happen before we call `T_USB::Connect()` so that any tasks that
+                    // This needs to happen before we call `USB::Connect()` so that any tasks that
                     // were running in the previous T_USB session are stopped before we enable
-                    // T_USB again by calling T_USB::Connect().
+                    // T_USB again by calling USB::Connect().
                     T_TasksReset();
                     continue;
                 }
@@ -207,7 +216,7 @@ public:
                 // Reject command if the length isn't valid
                 STM::Cmd cmd;
                 if (usbCmd.len != sizeof(cmd)) {
-                    T_USB::CmdAccept(false);
+                    USB::CmdAccept(false);
                     continue;
                 }
                 
@@ -216,12 +225,12 @@ public:
                 // Only accept command if it's a flush command (in which case the endpoints
                 // don't need to be ready), or it's not a flush command, but all endpoints
                 // are ready. Otherwise, reject the command.
-                if (cmd.op!=STM::Op::EndpointsFlush && !T_USB::EndpointsReady()) {
-                    T_USB::CmdAccept(false);
+                if (cmd.op!=STM::Op::EndpointsFlush && !USB::EndpointsReady()) {
+                    USB::CmdAccept(false);
                     continue;
                 }
                 
-                T_USB::CmdAccept(true);
+                USB::CmdAccept(true);
                 _TaskCmdHandle::Handle(cmd);
             }
         }
