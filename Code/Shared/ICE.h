@@ -23,7 +23,7 @@ public:
         static constexpr uint8_t Resp       = 0x40;
     };
     
-    struct Msg {
+    struct [[gnu::packed]] Msg {
         uint8_t type = 0;
         uint8_t payload[7] = {};
         
@@ -33,7 +33,7 @@ public:
         payload{static_cast<uint8_t>(p)...} {
             static_assert(sizeof...(p)==0 || sizeof...(p)==sizeof(payload));
         }
-    } __attribute__((packed));
+    };
     
     struct Resp {
         uint8_t payload[8];

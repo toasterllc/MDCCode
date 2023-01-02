@@ -19,8 +19,6 @@ using namespace STM;
 static void _CmdHandle(const STM::Cmd& cmd);
 static void _TasksReset();
 
-static const void* _USBConfigDesc(size_t& len);
-
 struct _TaskUSBDataOut;
 struct _TaskUSBDataIn;
 struct _TaskReadout;
@@ -28,7 +26,6 @@ struct _TaskReadout;
 struct _System : System<
     STM::Status::Modes::STMApp, // T_Mode
     true,                       // T_USBDMAEn
-    _USBConfigDesc,             // T_USBConfigDesc
     _CmdHandle,                 // T_CmdHandle
     _TasksReset,                // T_TasksReset
     
@@ -40,10 +37,6 @@ struct _System : System<
 using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
 using _I2C = _System::I2C;
-
-static const void* _USBConfigDesc(size_t& len) {
-    return USBConfigDesc<_USB>(len);
-}
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.

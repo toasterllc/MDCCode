@@ -10,9 +10,9 @@
 #include "Toastbox/IntState.h"
 
 template <
-typename T_Scheduler,
+typename T_Scheduler,               // T_Scheduler: scheduler
 bool T_DMAEn,                       // T_DMAEn: whether DMA is enabled
-const void* T_ConfigDesc(size_t&),  // T_ConfigDesc: returns USB configuration descriptor
+const auto& T_ConfigDesc,           // T_ConfigDesc: configuration descriptor
 uint8_t... T_Endpoints              // T_Endpoints: list of endpoints
 >
 class USBType {
@@ -530,10 +530,8 @@ private:
     }
     
     static uint8_t* _USBD_GetHSConfigDescriptor(uint16_t* len) {
-        size_t descLen = 0;
-        const void*const desc = T_ConfigDesc(descLen);
-        *len = descLen;
-        return (uint8_t*)desc;
+        *len = sizeof(T_ConfigDesc);
+        return (uint8_t*)&T_ConfigDesc;
     }
     
     static uint8_t* _USBD_GetFSConfigDescriptor(uint16_t* len) {

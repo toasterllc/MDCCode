@@ -6,6 +6,7 @@
 #include "USB.h"
 #include "I2C.h"
 #include "MSP.h"
+#include "USBConfigDesc.h"
 #include "Toastbox/Task.h"
 
 // MARK: - Main Thread Stack
@@ -27,7 +28,6 @@ static void _Sleep() {
 template <
 STM::Status::Mode T_Mode,
 bool T_USBDMAEn,
-auto T_USBConfigDesc,
 auto T_CmdHandle,
 auto T_TasksReset,
 typename... T_Tasks
@@ -102,13 +102,17 @@ public:
         T_Tasks...
     >;
     
-    using USB = USBType<
+    struct _USBConfigDesc;
+    
+    struct USB : USBType<
         Scheduler,
         T_USBDMAEn,                 // T_DMAEn
-        T_USBConfigDesc,            // T_ConfigDesc
+        _USBConfigDesc::Data,       // T_ConfigDesc
         STM::Endpoints::DataOut,    // T_Endpoints
         STM::Endpoints::DataIn
-    >;
+    > {};
+    
+    struct _USBConfigDesc : USBConfigDesc<USB> {};
     
     using I2C = I2CType<Scheduler, MSP::I2CAddr>;
     
