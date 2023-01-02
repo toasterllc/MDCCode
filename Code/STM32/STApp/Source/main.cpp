@@ -36,13 +36,13 @@ struct _USB : USBType<
     STM::Endpoints::DataIn
 > {};
 
-struct _I2C : I2CType<_Scheduler, MSP::I2CAddr> {};
-
 struct _System : System<
+    _Scheduler,
     _USB,
-    _I2C,
     STM::Status::Modes::STMApp
 > {};
+
+using _I2C = _System::I2C;
 
 struct _TaskCmdHandle : TaskCmdHandle<
     _TaskCmdHandle,

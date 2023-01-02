@@ -28,8 +28,8 @@ static void _Sleep() {
 // MARK: - System
 
 template <
+typename T_Scheduler,
 typename T_USB,
-typename T_I2C,
 STM::Status::Mode T_Mode
 >
 class System {
@@ -66,7 +66,7 @@ public:
         LEDInit();
         
         // Configure I2C
-        T_I2C::Init();
+        I2C::Init();
         
         // Configure USB
         T_USB::Init();
@@ -77,6 +77,8 @@ public:
     using LED1 = GPIO<GPIOPortB, 12>;
     using LED2 = GPIO<GPIOPortB, 11>;
     using LED3 = GPIO<GPIOPortB, 13>;
+    
+    using I2C = I2CType<T_Scheduler, MSP::I2CAddr>;
     
     static void USBSendStatus(bool s) {
         alignas(4) bool status = s; // Aligned to send via USB
