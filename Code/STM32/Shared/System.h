@@ -29,162 +29,23 @@ STM::Status::Mode T_Mode,
 bool T_USBDMAEn,
 auto T_USBConfigDesc,
 auto T_CmdHandle,
-auto T_TasksReset
+auto T_TasksReset,
+typename... T_Tasks
 >
 class System {
+public:
+    static constexpr uint8_t CPUFreqMHz = 128;
+    static constexpr uint32_t UsPerSysTick = 1000;
+    
 private:
-    static constexpr uint8_t _CPUFreqMHz = 128;
-    static constexpr uint32_t _UsPerSysTick = 1000;
-    
-    struct _TaskCmdHandle {
-        static void Handle(const STM::Cmd& c) {
-            Assert(!_Cmd);
-            _Cmd = c;
-            Scheduler::template Start<_TaskCmdHandle>();
-        }
-        
-        static void Run() {
-            using namespace STM;
-            
-            switch (_Cmd->op) {
-            case Op::EndpointsFlush:    EndpointsFlush(*_Cmd);      break;
-            case Op::StatusGet:         StatusGet(*_Cmd);           break;
-            case Op::BootloaderInvoke:  BootloaderInvoke(*_Cmd);    break;
-            case Op::LEDSet:            LEDSet(*_Cmd);              break;
-            default:                    T_CmdHandle(*_Cmd);         break;
-            }
-            
-            _Cmd = std::nullopt;
-        }
-        
-        static inline std::optional<STM::Cmd> _Cmd;
-        
-        // Task options
-        static constexpr Toastbox::TaskOptions Options{};
-        
-        // Task stack
-        [[gnu::section(".stack._TaskCmdHandle")]]
-        static inline uint8_t Stack[1024];
-    };
-    
-    struct _TaskCmdRecv {
-        static void Run() {
-            for (;;) {
-                auto usbCmdOpt = USB::CmdRecv();
-                // If T_USB returns nullopt, it signifies that USB was disconnected or re-connected,
-                // so we need to reset our tasks.
-                if (!usbCmdOpt) {
-                    // Reset all tasks
-                    _Scheduler::Stop<_TaskCmdHandle>();
-                    T_TasksReset();
-                    continue;
-                }
-                
-                auto usbCmd = *usbCmdOpt;
-                
-                // Reject command if the length isn't valid
-                STM::Cmd cmd;
-                if (usbCmd.len != sizeof(cmd)) {
-                    USB::CmdAccept(false);
-                    continue;
-                }
-                
-                memcpy(&cmd, usbCmd.data, usbCmd.len);
-                
-                // Only accept command if it's a flush command (in which case the endpoints
-                // don't need to be ready), or it's not a flush command, but all endpoints
-                // are ready. Otherwise, reject the command.
-                if (cmd.op!=STM::Op::EndpointsFlush && !USB::EndpointsReady()) {
-                    USB::CmdAccept(false);
-                    continue;
-                }
-                
-                USB::CmdAccept(true);
-                _TaskCmdHandle::Handle(cmd);
-            }
-        }
-        
-        // Task options
-        static constexpr Toastbox::TaskOptions Options{
-            .AutoStart = Run, // Task should start running
-        };
-        
-        // Task stack
-        [[gnu::section(".stack._TaskCmdRecv")]]
-        static inline uint8_t Stack[512];
-    };
-    
-    struct _TaskMSPComms {
-        static void Run() {
-            using Deadline = _Scheduler::Deadline;
-            constexpr uint16_t UpdateChargeStatusIntervalMs = 10000;
-            
-            Deadline updateChargeStatusDeadline = _Scheduler::CurrentTime();
-            for (;;) {
-                // Wait until we get a command or for the deadline to pass
-                bool ok = _Scheduler::WaitUntil(updateChargeStatusDeadline, [&] { return (bool)_Cmd; });
-                if (!ok) {
-                    // Deadline passed; update charge status
-                    _UpdateChargeStatus();
-                    // Update our deadline for the next charge status update
-                    updateChargeStatusDeadline = _Scheduler::CurrentTime() + _Scheduler::Ms(UpdateChargeStatusIntervalMs);
-                    continue;
-                }
-                
-                MSP::Resp resp;
-                ok = T_I2C::Send(_Cmd, resp);
-                #warning TODO: handle errors properly
-                Assert(ok);
-                // Return the response to the caller
-                _Resp = resp;
-            }
-        }
-        
-        static MSP::Resp Send(const MSP::Cmd& cmd) {
-            // Wait until _Cmd is empty
-            _Scheduler::Wait([&] { return !_Cmd; });
-            // Supply the I2C command to be sent
-            _Cmd = cmd;
-            // Wait until we get a response
-            _Scheduler::Wait([&] { return _Resp; });
-            const MSP::Resp resp = *_Resp;
-            // Reset our state
-            _Cmd = std::nullopt;
-            _Resp = std::nullopt;
-            return resp;
-        }
-        
-        static void _UpdateChargeStatus() {
-            // Refresh charge status LEDs
-            const MSP::Cmd cmd = {
-                .op = MSP::Cmd::Op::LEDSet,
-                .arg = { .LEDSet = { .green = true }, },
-            };
-            
-            MSP::Resp resp;
-            const bool ok = T_I2C::Send(cmd, resp);
-            #warning TODO: handle errors properly
-            Assert(ok);
-            Assert(resp.ok);
-        }
-        
-        static inline std::optional<MSP::Cmd> _Cmd;
-        static inline std::optional<MSP::Resp> _Resp;
-        
-        // Task options
-        static constexpr Toastbox::TaskOptions Options{
-            .AutoStart = Run, // Task should start running
-        };
-        
-        // Task stack
-        [[gnu::section(".stack._TaskMSPComms")]]
-        static inline uint8_t Stack[256];
-    };
-    
     [[noreturn]]
     static void _SchedulerError(uint16_t line) {
         Abort();
     }
+    
+    struct _TaskCmdRecv;
+    struct _TaskCmdHandle;
+    struct _TaskMSPComms;
     
 public:
     static void LEDInit() {
@@ -227,7 +88,7 @@ public:
     
     #warning TODO: remove stack guards for production
     using Scheduler = Toastbox::Scheduler<
-        _UsPerSysTick,                              // T_UsPerTick: microseconds per tick
+        UsPerSysTick,                               // T_UsPerTick: microseconds per tick
         Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
         _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                     //          invoked when no tasks have work to do
@@ -238,10 +99,8 @@ public:
         _TaskCmdRecv,                               // T_Tasks: list of tasks
         _TaskCmdHandle,
         _TaskMSPComms,
-        _TaskUSBDataOut,
-        _TaskUSBDataIn,
-        _TaskReadout
-    > {};
+        T_Tasks...
+    >;
     
     using USB = USBType<
         Scheduler,
@@ -331,6 +190,152 @@ public:
     }
     
 private:
+    struct _TaskCmdRecv {
+        static void Run() {
+            for (;;) {
+                auto usbCmdOpt = USB::CmdRecv();
+                // If T_USB returns nullopt, it signifies that USB was disconnected or re-connected,
+                // so we need to reset our tasks.
+                if (!usbCmdOpt) {
+                    // Reset all tasks
+                    Scheduler::template Stop<_TaskCmdHandle>();
+                    (Scheduler::template Stop<T_Tasks>(), ...);
+                    T_TasksReset();
+                    continue;
+                }
+                
+                auto usbCmd = *usbCmdOpt;
+                
+                // Reject command if the length isn't valid
+                STM::Cmd cmd;
+                if (usbCmd.len != sizeof(cmd)) {
+                    USB::CmdAccept(false);
+                    continue;
+                }
+                
+                memcpy(&cmd, usbCmd.data, usbCmd.len);
+                
+                // Only accept command if it's a flush command (in which case the endpoints
+                // don't need to be ready), or it's not a flush command, but all endpoints
+                // are ready. Otherwise, reject the command.
+                if (cmd.op!=STM::Op::EndpointsFlush && !USB::EndpointsReady()) {
+                    USB::CmdAccept(false);
+                    continue;
+                }
+                
+                USB::CmdAccept(true);
+                _TaskCmdHandle::Handle(cmd);
+            }
+        }
+        
+        // Task options
+        static constexpr Toastbox::TaskOptions Options{
+            .AutoStart = Run, // Task should start running
+        };
+        
+        // Task stack
+        [[gnu::section(".stack._TaskCmdRecv")]]
+        static inline uint8_t Stack[512];
+    };
+    
+    struct _TaskCmdHandle {
+        static void Handle(const STM::Cmd& c) {
+            Assert(!_Cmd);
+            _Cmd = c;
+            Scheduler::template Start<_TaskCmdHandle>();
+        }
+        
+        static void Run() {
+            using namespace STM;
+            
+            switch (_Cmd->op) {
+            case Op::EndpointsFlush:    EndpointsFlush(*_Cmd);      break;
+            case Op::StatusGet:         StatusGet(*_Cmd);           break;
+            case Op::BootloaderInvoke:  BootloaderInvoke(*_Cmd);    break;
+            case Op::LEDSet:            LEDSet(*_Cmd);              break;
+            default:                    T_CmdHandle(*_Cmd);         break;
+            }
+            
+            _Cmd = std::nullopt;
+        }
+        
+        static inline std::optional<STM::Cmd> _Cmd;
+        
+        // Task options
+        static constexpr Toastbox::TaskOptions Options{};
+        
+        // Task stack
+        [[gnu::section(".stack._TaskCmdHandle")]]
+        static inline uint8_t Stack[1024];
+    };
+    
+    struct _TaskMSPComms {
+        static void Run() {
+            using Deadline = typename Scheduler::Deadline;
+            constexpr uint16_t UpdateChargeStatusIntervalMs = 10000;
+            
+            Deadline updateChargeStatusDeadline = Scheduler::CurrentTime();
+            for (;;) {
+                // Wait until we get a command or for the deadline to pass
+                bool ok = Scheduler::WaitUntil(updateChargeStatusDeadline, [&] { return (bool)_Cmd; });
+                if (!ok) {
+                    // Deadline passed; update charge status
+                    _UpdateChargeStatus();
+                    // Update our deadline for the next charge status update
+                    updateChargeStatusDeadline = Scheduler::CurrentTime() + Scheduler::Ms(UpdateChargeStatusIntervalMs);
+                    continue;
+                }
+                
+                MSP::Resp resp;
+                ok = I2C::Send(_Cmd, resp);
+                #warning TODO: handle errors properly
+                Assert(ok);
+                // Return the response to the caller
+                _Resp = resp;
+            }
+        }
+        
+        static MSP::Resp Send(const MSP::Cmd& cmd) {
+            // Wait until _Cmd is empty
+            Scheduler::Wait([&] { return !_Cmd; });
+            // Supply the I2C command to be sent
+            _Cmd = cmd;
+            // Wait until we get a response
+            Scheduler::Wait([&] { return _Resp; });
+            const MSP::Resp resp = *_Resp;
+            // Reset our state
+            _Cmd = std::nullopt;
+            _Resp = std::nullopt;
+            return resp;
+        }
+        
+        static void _UpdateChargeStatus() {
+            // Refresh charge status LEDs
+            const MSP::Cmd cmd = {
+                .op = MSP::Cmd::Op::LEDSet,
+                .arg = { .LEDSet = { .green = true }, },
+            };
+            
+            MSP::Resp resp;
+            const bool ok = I2C::Send(cmd, resp);
+            #warning TODO: handle errors properly
+            Assert(ok);
+            Assert(resp.ok);
+        }
+        
+        static inline std::optional<MSP::Cmd> _Cmd;
+        static inline std::optional<MSP::Resp> _Resp;
+        
+        // Task options
+        static constexpr Toastbox::TaskOptions Options{
+            .AutoStart = Run, // Task should start running
+        };
+        
+        // Task stack
+        [[gnu::section(".stack._TaskMSPComms")]]
+        static inline uint8_t Stack[256];
+    };
+    
     static void _ClockInit() {
         // Configure the main internal regulator output voltage
         {

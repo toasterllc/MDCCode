@@ -41,9 +41,6 @@ using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
 using _I2C = _System::I2C;
 
-using _TaskCmdHandle = _System::_TaskCmdHandle;
-using _TaskCmdRecv = _System::_TaskCmdRecv;
-
 static const void* _USBConfigDesc(size_t& len) {
     return USBConfigDesc<_USB>(len);
 }
@@ -299,7 +296,7 @@ static void _ICEError(uint16_t line) {
 }
 
 // MARK: - MSP430
-static MSP430JTAG<_MSP_TEST, _MSP_RST_, _CPUFreqMHz> _MSP;
+static MSP430JTAG<_MSP_TEST, _MSP_RST_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
 
@@ -1403,10 +1400,6 @@ static void _CmdHandle(const STM::Cmd& cmd) {
 
 static void _TasksReset() {
     #warning TODO: reset shared state!
-    _Scheduler::Stop<_TaskCmdHandle>();
-    _Scheduler::Stop<_TaskUSBDataOut>();
-    _Scheduler::Stop<_TaskUSBDataIn>();
-    _Scheduler::Stop<_TaskReadout>();
 }
 
 // MARK: - ISRs
