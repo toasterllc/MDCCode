@@ -15,7 +15,7 @@ struct TaskMSPComms {
         Deadline updateChargeStatusDeadline = T_Scheduler::CurrentTime();
         for (;;) {
             // Wait until we get a command or for the deadline to pass
-            const auto ok = T_Scheduler::WaitUntil(updateChargeStatusDeadline, [&] { return (bool)_Cmd; });
+            bool ok = T_Scheduler::WaitUntil(updateChargeStatusDeadline, [&] { return (bool)_Cmd; });
             if (!ok) {
                 // Deadline passed; update charge status
                 _UpdateChargeStatus();
@@ -25,7 +25,7 @@ struct TaskMSPComms {
             }
             
             MSP::Resp resp;
-            const bool ok = T_I2C::Send(_Cmd, resp);
+            ok = T_I2C::Send(_Cmd, resp);
             #warning TODO: handle errors properly
             Assert(ok);
             // Return the response to the caller
