@@ -14,69 +14,38 @@
 #include "ImgSD.h"
 #include "USBConfigDesc.h"
 #include "MSP430JTAG.h"
-#include "TaskCmdRecv.h"
-#include "TaskCmdHandle.h"
-#include "TaskMSPComms.h"
 using namespace STM;
-
-struct _Scheduler;
 
 static void _CmdHandle(const STM::Cmd& cmd);
 static void _TasksReset();
 
-[[noreturn]]
-static void _SchedulerError(uint16_t line);
 static const void* _USBConfigDesc(size_t& len);
 
+struct _TaskUSBDataOut;
+struct _TaskUSBDataIn;
+struct _TaskReadout;
+
 struct _System : System<
-    _Scheduler,                 // T_Scheduler
     STM::Status::Modes::STMApp, // T_Mode
     true,                       // T_USBDMAEn
     _USBConfigDesc,             // T_USBConfigDesc
     _CmdHandle,                 // T_CmdHandle
-    _TasksReset                 // T_TasksReset
+    _TasksReset,                // T_TasksReset
+    
+    _TaskUSBDataOut,
+    _TaskUSBDataIn,
+    _TaskReadout
 > {};
 
+using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
 using _I2C = _System::I2C;
 
 using _TaskCmdHandle = _System::_TaskCmdHandle;
 using _TaskCmdRecv = _System::_TaskCmdRecv;
 
-struct _TaskMSPComms : TaskMSPComms<
-    _Scheduler,
-    _I2C
-> {};
-
-struct _TaskUSBDataOut;
-struct _TaskUSBDataIn;
-struct _TaskReadout;
-
-#warning TODO: remove stack guards for production
-struct _Scheduler : Toastbox::Scheduler<
-    _UsPerSysTick,                              // T_UsPerTick: microseconds per tick
-    Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
-    _Sleep,                                     // T_Sleep: function to put processor to sleep;
-                                                //          invoked when no tasks have work to do
-    _SchedulerError,                            // T_Error: function to call upon an unrecoverable error (eg stack overflow)
-    _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
-                                                //              main stack for overflow; unused if T_StackGuardCount==0)
-    4,                                          // T_StackGuardCount: number of pointer-sized stack guard elements to use
-    _TaskCmdRecv,                               // T_Tasks: list of tasks
-    _TaskCmdHandle,
-    _TaskMSPComms,
-    _TaskUSBDataOut,
-    _TaskUSBDataIn,
-    _TaskReadout
-> {};
-
 static const void* _USBConfigDesc(size_t& len) {
     return USBConfigDesc<_USB>(len);
-}
-
-[[noreturn]]
-static void _SchedulerError(uint16_t line) {
-    _System::Abort();
 }
 
 // We're using 63K buffers instead of 64K, because the
@@ -171,7 +140,7 @@ static bool _VDDIMGSDSet(bool en) {
         },
     };
     
-    const MSP::Resp mspResp = _TaskMSPComms::Send(mspCmd);
+    const MSP::Resp mspResp = _System::MSPSend(mspCmd);
     if (!mspResp.ok) return false;
     return true;
 }
@@ -954,7 +923,7 @@ static void _MSPHostModeSet(const STM::Cmd& cmd) {
         .arg = { .HostModeSet = { .en = arg.en } },
     };
     
-    const MSP::Resp mspResp = _TaskMSPComms::Send(mspCmd);
+    const MSP::Resp mspResp = _System::MSPSend(mspCmd);
     if (!mspResp.ok) {
         _System::USBSendStatus(false);
         return;
@@ -978,7 +947,7 @@ static bool __MSPStateRead(uint8_t* data, size_t len) {
             .op = MSP::Cmd::Op::StateRead,
             .arg = { .StateRead = { .chunk = (ChunkIdx)chunk } },
         };
-        const MSP::Resp mspResp = _TaskMSPComms::Send(mspCmd);
+        const MSP::Resp mspResp = _System::MSPSend(mspCmd);
         if (!mspResp.ok) return false;
         
         const size_t l = std::min(len, ChunkSize);
@@ -1060,7 +1029,7 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
         .arg = { .TimeSet = { .time = arg.time } },
     };
     
-    const MSP::Resp mspResp = _TaskMSPComms::Send(mspCmd);
+    const MSP::Resp mspResp = _System::MSPSend(mspCmd);
     if (!mspResp.ok) {
         _System::USBSendStatus(false);
         return;
