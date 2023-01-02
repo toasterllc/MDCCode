@@ -19,10 +19,6 @@ uint8_t _StackMain[_StackMainSize];
 asm(".global _StackMainEnd");
 asm(".equ _StackMainEnd, _StackMain+" Stringify(_StackMainSize));
 
-static void _Sleep() {
-    __WFI();
-}
-
 // MARK: - System
 
 template <
@@ -41,6 +37,10 @@ private:
     [[noreturn]]
     static void _SchedulerError(uint16_t line) {
         Abort();
+    }
+    
+    static void _Sleep() {
+        __WFI();
     }
     
     struct _TaskCmdRecv;
