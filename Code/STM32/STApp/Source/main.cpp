@@ -566,19 +566,10 @@ struct _TaskReadout {
         }
     }
     
-    static void DidStop() {
-        // De-assert the SPI chip select when the _TaskReadout is stopped.
-        // This is necessary because the _TaskReadout asserts the SPI chip select,
-        // but never deasserts it because _TaskReadout continues indefinitely.
-        _ICE_ST_SPI_CS_::Write(1);
-    }
-    
     static inline std::optional<size_t> _RemLen;
     
     // Task options
-    static constexpr Toastbox::TaskOptions Options{
-        .DidStop = DidStop,
-    };
+    static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
     [[gnu::section(".stack._TaskReadout")]]
