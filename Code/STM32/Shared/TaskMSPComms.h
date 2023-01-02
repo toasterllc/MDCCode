@@ -15,8 +15,8 @@ struct TaskMSPComms {
         Deadline updateChargeStatusDeadline = T_Scheduler::CurrentTime();
         for (;;) {
             // Wait until we get a command or for the deadline to pass
-            const auto cmd = T_Scheduler::WaitUntil(updateChargeStatusDeadline, [&] { return (bool)_Cmd; });
-            if (!cmd) {
+            const auto ok = T_Scheduler::WaitUntil(updateChargeStatusDeadline, [&] { return (bool)_Cmd; });
+            if (!ok) {
                 // Deadline passed; update charge status
                 _UpdateChargeStatus();
                 // Update our deadline for the next charge status update
@@ -83,7 +83,7 @@ struct TaskMSPComms {
         _Cmd = cmd;
         // Wait until we get a response
         T_Scheduler::Wait([&] { return _Resp; });
-        const MSP::Resp resp = _Resp;
+        const MSP::Resp resp = *_Resp;
         // Reset our state
         _Cmd = std::nullopt;
         _Resp = std::nullopt;
