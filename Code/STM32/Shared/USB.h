@@ -243,11 +243,11 @@ public:
         }
     }
     
-    // Accessors
-    static State StateGet() {
-        Toastbox::IntState ints(false);
-        return _State;
-    }
+//    // Accessors
+//    static State StateGet() {
+//        Toastbox::IntState ints(false);
+//        return _State;
+//    }
     
     // Methods
 //    static void Connect() {
