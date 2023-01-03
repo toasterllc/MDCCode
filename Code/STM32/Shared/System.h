@@ -192,15 +192,13 @@ private:
         static void Run() {
             for (;;) {
                 auto usbCmdOpt = USB::CmdRecv();
-                // If T_USB returns nullopt, it signifies that USB was disconnected or re-connected,
-                // so we need to reset our tasks.
-                if (!usbCmdOpt) {
-                    // Reset all tasks
-                    Scheduler::template Stop<_TaskCmdHandle>();
-                    (Scheduler::template Stop<T_Tasks>(), ...);
-                    T_TasksReset();
-                    continue;
-                }
+                
+                // Reset ourself whenever we get a new command
+                _TasksReset();
+                
+                // CmdRecv() returns nullopt when USB disconnects/reconnects, in which case there's nothing to do.
+                #warning TODO: if the above is true, should we just not have USB::CmdRecv() return until there's actually a command?
+                if (!usbCmdOpt) continue;
                 
                 auto usbCmd = *usbCmdOpt;
                 
@@ -213,13 +211,14 @@ private:
                 
                 memcpy(&cmd, usbCmd.data, usbCmd.len);
                 
-                // Only accept command if it's a flush command (in which case the endpoints
-                // don't need to be ready), or it's not a flush command, but all endpoints
-                // are ready. Otherwise, reject the command.
-                if (cmd.op!=STM::Op::EndpointsFlush && !USB::EndpointsReady()) {
-                    USB::CmdAccept(false);
-                    continue;
-                }
+                #warning TODO: we commented this out because it protects against issuing commands when the device is still handling a previous command, but for proper operation we expect a flush when we start comms, so this should be an issue...
+//                // Only accept command if it's a flush command (in which case the endpoints
+//                // don't need to be ready), or it's not a flush command, but all endpoints
+//                // are ready. Otherwise, reject the command.
+//                if (cmd.op!=STM::Op::EndpointsFlush && !USB::EndpointsReady()) {
+//                    USB::CmdAccept(false);
+//                    continue;
+//                }
                 
                 USB::CmdAccept(true);
                 _TaskCmdHandle::Handle(cmd);
@@ -241,6 +240,11 @@ private:
             Assert(!_Cmd);
             _Cmd = c;
             Scheduler::template Start<_TaskCmdHandle>();
+        }
+        
+        static void Reset() {
+            Scheduler::template Stop<_TaskCmdHandle>();
+            _Cmd = std::nullopt;
         }
         
         static void Run() {
@@ -333,6 +337,15 @@ private:
         [[gnu::section(".stack._TaskMSPComms")]]
         static inline uint8_t Stack[256];
     };
+    
+    static void _TasksReset() {
+        // Reset _TaskCmdHandle task
+        _TaskCmdHandle::Reset();
+        // Reset T_Tasks
+        (Scheduler::template Stop<T_Tasks>(), ...);
+        // Call supplied T_TasksReset function
+        T_TasksReset();
+    }
     
     static void _ClockInit() {
         // Configure the main internal regulator output voltage

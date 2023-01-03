@@ -243,19 +243,6 @@ public:
         }
     }
     
-//    // Accessors
-//    static State StateGet() {
-//        Toastbox::IntState ints(false);
-//        return _State;
-//    }
-    
-    // Methods
-//    static void Connect() {
-//        Toastbox::IntState ints(false);
-//        if (_State != State::Connecting) return; // Short-circuit if we're not Connecting
-//        _State = State::Connected;
-//    }
-    
     static void EndpointReset(uint8_t ep) {
         #warning TODO: wait until endpoints are ready
         Toastbox::IntState ints(false);
@@ -305,47 +292,6 @@ public:
                 // care about, so go around the loop again.
             }
         }
-        
-//        _State == State::Connecting
-//        
-//        State::Connecting
-//        
-//        #warning TODO: move all this logic into USB::CmdRecv()
-//        // Wait for USB to be re-connected (`Connecting` state) so we can call USB::Connect(),
-//        // or for a new command to arrive so we can handle it.
-//        Scheduler::Wait([] { return USB::StateGet()==T_USB::State::Connecting || USB::CmdRecv(); });
-//        
-//        // Disable interrupts so we can inspect+modify `USB` atomically
-//        Toastbox::IntState ints(false);
-//        
-//        // Reset all tasks
-//        // This needs to happen before we call `USB::Connect()` so that any tasks that
-//        // were running in the previous USB session are stopped before we enable
-//        // USB again by calling USB::Connect().
-//        _TasksReset();
-//        
-//        switch (USB::StateGet()) {
-//        case T_USB::State::Connecting:
-//            USB::Connect();
-//            continue;
-//        case T_USB::State::Connected:
-//            if (!USB::CmdRecv()) continue;
-//            break;
-//        default:
-//            continue;
-//        }
-//        
-//        auto usbCmd = *USB::CmdRecv();
-//        
-//        // Re-enable interrupts while we handle the command
-//        ints.restore();
-//        
-//        
-//        
-//        
-//        Toastbox::IntState ints(false);
-//        if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
-//        return _Cmd;
     }
     
     static void CmdAccept(bool accept) {
@@ -376,14 +322,6 @@ public:
         auto waitResult = T_Scheduler::Wait([&] { return _EndpointWait(ep, outep); });
         return waitResult.result;
     }
-    
-//    static size_t RecvLen(uint8_t ep) {
-//        AssertArg(EndpointOut(ep));
-//        
-//        Toastbox::IntState ints(false);
-//        if (_State != State::Connected) return 0; // Short-circuit if we're not Connected
-//        return _RecvLen(_OutEndpointGet(ep));
-//    }
     
     static bool Send(uint8_t ep, const void* data, size_t len) {
         AssertArg(EndpointIn(ep));
