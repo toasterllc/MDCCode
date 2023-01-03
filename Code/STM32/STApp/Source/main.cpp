@@ -47,7 +47,7 @@ using _BufQueue = BufQueue<uint8_t, 63*1024, 2, _BufQueueAssert>;
 [[gnu::section(".sram1")]]
 static _BufQueue _Bufs;
 
-static QSPI _QSPI;
+using _QSPI = QSPIType;
 static Battery<_Scheduler> _Battery;
 
 using _ICE_CRST_            = GPIO<GPIOPortF, 11>;

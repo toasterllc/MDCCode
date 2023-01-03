@@ -321,21 +321,38 @@ HAL_StatusTypeDef HAL_QSPI_Init(QSPI_HandleTypeDef *hqspi)
 
 #if (USE_HAL_QSPI_REGISTER_CALLBACKS == 1)
     /* Reset Callback pointers in HAL_QSPI_STATE_RESET only */
-    hqspi->ErrorCallback         = HAL_QSPI_ErrorCallback;
-    hqspi->AbortCpltCallback     = HAL_QSPI_AbortCpltCallback;
-    hqspi->FifoThresholdCallback = HAL_QSPI_FifoThresholdCallback;
-    hqspi->CmdCpltCallback       = HAL_QSPI_CmdCpltCallback;
-    hqspi->RxCpltCallback        = HAL_QSPI_RxCpltCallback;
-    hqspi->TxCpltCallback        = HAL_QSPI_TxCpltCallback;
-    hqspi->RxHalfCpltCallback    = HAL_QSPI_RxHalfCpltCallback;
-    hqspi->TxHalfCpltCallback    = HAL_QSPI_TxHalfCpltCallback;
-    hqspi->StatusMatchCallback   = HAL_QSPI_StatusMatchCallback;
-    hqspi->TimeOutCallback       = HAL_QSPI_TimeOutCallback;
+    if (!hqspi->ErrorCallback)
+        hqspi->ErrorCallback         = HAL_QSPI_ErrorCallback;
+    
+    if (!hqspi->AbortCpltCallback)
+        hqspi->AbortCpltCallback     = HAL_QSPI_AbortCpltCallback;
+    
+    if (!hqspi->FifoThresholdCallback)
+        hqspi->FifoThresholdCallback = HAL_QSPI_FifoThresholdCallback;
+    
+    if (!hqspi->CmdCpltCallback)
+        hqspi->CmdCpltCallback       = HAL_QSPI_CmdCpltCallback;
+    
+    if (!hqspi->RxCpltCallback)
+        hqspi->RxCpltCallback        = HAL_QSPI_RxCpltCallback;
+    
+    if (!hqspi->TxCpltCallback)
+        hqspi->TxCpltCallback        = HAL_QSPI_TxCpltCallback;
+    
+    if (!hqspi->RxHalfCpltCallback)
+        hqspi->RxHalfCpltCallback    = HAL_QSPI_RxHalfCpltCallback;
+    
+    if (!hqspi->TxHalfCpltCallback)
+        hqspi->TxHalfCpltCallback    = HAL_QSPI_TxHalfCpltCallback;
+    
+    if (!hqspi->StatusMatchCallback)
+        hqspi->StatusMatchCallback   = HAL_QSPI_StatusMatchCallback;
+    
+    if (!hqspi->TimeOutCallback)
+        hqspi->TimeOutCallback       = HAL_QSPI_TimeOutCallback;
 
-    if(hqspi->MspInitCallback == NULL)
-    {
-      hqspi->MspInitCallback = HAL_QSPI_MspInit;
-    }
+    if  (!hqspi->MspInitCallback)
+        hqspi->MspInitCallback = HAL_QSPI_MspInit;
 
     /* Init the low level hardware */
     hqspi->MspInitCallback(hqspi);

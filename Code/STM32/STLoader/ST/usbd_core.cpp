@@ -276,7 +276,7 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status) {
 
 
 // Initializes the device stack and load the class driver
-USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef* pdev, USBD_DescriptorsTypeDef* pdesc, uint8_t id, void* ctx)
+USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef* pdev, USBD_DescriptorsTypeDef* pdesc, uint8_t id)
 {
   // Check whether the USB Host handle is valid
   if (pdev == NULL) {
@@ -293,7 +293,6 @@ USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef* pdev, USBD_DescriptorsTypeDef* 
   // Set Device initial State
   pdev->dev_state = USBD_STATE_DEFAULT;
   pdev->id = id;
-  pdev->pCtx = ctx;
 
   return USBD_OK;
 }
@@ -313,7 +312,6 @@ USBD_StatusTypeDef USBD_DeInit(USBD_HandleTypeDef* pdev)
   }
 
   pdev->pConfDesc = NULL;
-  pdev->pCtx = NULL;
 
   // Stop the low level driver
   ret = USBD_LL_Stop(pdev);
