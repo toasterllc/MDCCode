@@ -359,7 +359,6 @@ public:
     }
     
     static std::optional<size_t> Recv(uint8_t ep, void* data, size_t len) {
-        #warning TODO: wait until endpoints are ready (previously we expected the caller to do that)
         AssertArg(EndpointOut(ep));
         _OutEndpoint& outep = _OutEndpointGet(ep);
         
@@ -387,7 +386,6 @@ public:
 //    }
     
     static bool Send(uint8_t ep, const void* data, size_t len) {
-        #warning TODO: wait until endpoints are ready (previously we expected the caller to do that)
         AssertArg(EndpointIn(ep));
         _InEndpoint& inep = _InEndpointGet(ep);
         
@@ -572,6 +570,10 @@ private:
     
     static _EndpointWaitResult<std::optional<size_t>> _EndpointWait(uint8_t ep, _OutEndpoint& outep) {
         Toastbox::IntState ints(false);
+        
+        // Short-circuit if we're not Connected
+        if (_State != State::Connected) return { true, std::nullopt }; // Done, failed
+        
         switch (outep.state) {
         case _EndpointState::Busy:
             // Still waiting for completion
