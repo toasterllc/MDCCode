@@ -84,24 +84,22 @@ public:
         
         __HAL_LINKDMA(&_Device, hdma, _DMA);
         
-        ConfigPins();
+        // Configure GPIOs
+        {
+            Clk::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+            
+            D0::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+            D1::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+            D2::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+            D3::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
+            D4::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+            D5::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+            D6::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+            D7::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
+        }
     }
     
-    // ConfigPins(): reconfigures GPIOs, in case they're reused for some other purpose
-    static void ConfigPins() {
-        Clk::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        
-        D0::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-        D1::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-        D2::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        D3::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-        D4::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-        D5::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-        D6::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-        D7::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-    }
-    
-    // reset(): aborts whatever is in progress and resets state
+    // Reset(): aborts whatever is in progress and resets state
     static void Reset() {
         AssertArg(_Config);
         
@@ -112,13 +110,10 @@ public:
         HAL_QSPI_Abort(&_Device);
         
         // Reset state
-        _busy = false;
+        _Busy = false;
     }
     
-//    static bool Ready() const {
-//        return !_busy;
-//    }
-    
+    #warning TODO: Command/Read/Write need to wait (using T_Scheduler) until command is complete
     static void Command(const QSPI_CommandTypeDef& cmd) {
         AssertArg(_Config);
         AssertArg(cmd.DataMode == QSPI_DATA_NONE);
@@ -162,15 +157,15 @@ public:
             readCmd.NbData = readLen;
             readCmd.DataMode = QSPI_DATA_4_LINES;
             readCmd.DummyCycles = 0;
-            read(readCmd, buf);
+            Read(readCmd, buf);
         
         } else {
-            Assert(ready());
+            Assert(!_Busy);
             
-            // Update _busy before the interrupt can occur, otherwise `_busy = true`
-            // could occur after the transaction is complete, cloberring the `_busy = false`
+            // Update _Busy before the interrupt can occur, otherwise `_Busy = true`
+            // could occur after the transaction is complete, cloberring the `_Busy = false`
             // assignment in the completion interrupt handler.
-            _busy = true;
+            _Busy = true;
             
             // Use HAL_QSPI_Command_IT() in this case, instead of HAL_QSPI_Command(),
             // because we're not transferring any data, so the HAL_QSPI_Command()
@@ -179,6 +174,9 @@ public:
             HAL_StatusTypeDef hs = HAL_QSPI_Command_IT(&_Device, &cmd);
             Assert(hs == HAL_OK);
         }
+        
+        // Wait until we're done
+        T_Scheduler::Wait([&] { return !_Busy; });
     }
     
     static void Read(const QSPI_CommandTypeDef& cmd, void* data) {
@@ -192,18 +190,21 @@ public:
             AssertArg(!((uintptr_t)data % sizeof(uint32_t)));
             AssertArg(!(len % sizeof(uint32_t)));
         }
-        Assert(ready());
+        Assert(!_Busy);
         
-        // Update _busy before the interrupt can occur, otherwise `_busy = true`
-        // could occur after the transaction is complete, cloberring the `_busy = false`
+        // Update _Busy before the interrupt can occur, otherwise `_Busy = true`
+        // could occur after the transaction is complete, cloberring the `_Busy = false`
         // assignment in the completion interrupt handler.
-        _busy = true;
+        _Busy = true;
         
         HAL_StatusTypeDef hs = HAL_QSPI_Command(&_Device, &cmd, HAL_MAX_DELAY);
         Assert(hs == HAL_OK);
         
         hs = HAL_QSPI_Receive_DMA(&_Device, (uint8_t*)data);
         Assert(hs == HAL_OK);
+        
+        // Wait until we're done
+        T_Scheduler::Wait([&] { return !_Busy; });
     }
     
     static void Write(const QSPI_CommandTypeDef& cmd, const void* data) {
@@ -217,18 +218,21 @@ public:
             AssertArg(!((uintptr_t)data % sizeof(uint32_t)));
             AssertArg(!(len % sizeof(uint32_t)));
         }
-        Assert(ready());
+        Assert(!_Busy);
         
-        // Update _busy before the interrupt can occur, otherwise `_busy = true`
-        // could occur after the transaction is complete, cloberring the `_busy = false`
+        // Update _Busy before the interrupt can occur, otherwise `_Busy = true`
+        // could occur after the transaction is complete, cloberring the `_Busy = false`
         // assignment in the completion interrupt handler.
-        _busy = true;
+        _Busy = true;
         
         HAL_StatusTypeDef hs = HAL_QSPI_Command(&_Device, &cmd, HAL_MAX_DELAY);
         Assert(hs == HAL_OK);
         
         hs = HAL_QSPI_Transmit_DMA(&_Device, (uint8_t*)data);
         Assert(hs == HAL_OK);
+        
+        // Wait until we're done
+        T_Scheduler::Wait([&] { return !_Busy; });
     }
     
     static void ISR_QSPI() {
@@ -240,19 +244,19 @@ public:
     }
     
 private:
-    static void _CallbackCommandDone() {
+    static void _CallbackCommandDone(QSPI_HandleTypeDef* me) {
         _Busy = false;
     }
     
-    static void _CallbackReadDone() {
+    static void _CallbackReadDone(QSPI_HandleTypeDef* me) {
         _Busy = false;
     }
     
-    static void _CallbackWriteDone() {
+    static void _CallbackWriteDone(QSPI_HandleTypeDef* me) {
         _Busy = false;
     }
     
-    static void _CallbackError() {
+    static void _CallbackError(QSPI_HandleTypeDef* me) {
         abort();
     }
     
@@ -260,23 +264,22 @@ private:
     static inline QSPI_HandleTypeDef _Device = {
         .Instance = QUADSPI,
         .Init = {
-            .FifoThreshold = 4;
-            .SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
-//            .SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
-            .FlashSize = 31; // Flash size is 31+1 address bits => 2^(31+1) bytes
-            .ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
-            .ClockMode = QSPI_CLOCK_MODE_0; // Clock idles low
-//            .ClockMode = QSPI_CLOCK_MODE_3; // Clock idles high
+            .FifoThreshold = 4,
+            .SampleShifting = QSPI_SAMPLE_SHIFTING_NONE,
+//            .SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE,
+            .FlashSize = 31, // Flash size is 31+1 address bits => 2^(31+1) bytes
+            .ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE,
+            .ClockMode = QSPI_CLOCK_MODE_0, // Clock idles low
+//            .ClockMode = QSPI_CLOCK_MODE_3, // Clock idles high
         },
-        
+        .ErrorCallback   = _CallbackError,
         .CmdCpltCallback = _CallbackCommandDone,
-        .RxCpltCallback = _CallbackReadDone,
-        .TxCpltCallback = _CallbackWriteDone,
-        .ErrorCallback = _CallbackError,
+        .RxCpltCallback  = _CallbackReadDone,
+        .TxCpltCallback  = _CallbackWriteDone,
     };
     
     static inline DMA_HandleTypeDef _DMA = {
-        .Instance = DMA2_Stream7;
+        .Instance = DMA2_Stream7,
         .Init = {
             .Channel = DMA_CHANNEL_3,
             .Direction = DMA_MEMORY_TO_PERIPH,
@@ -289,6 +292,7 @@ private:
             .MemBurst = DMA_MBURST_SINGLE,
             .PeriphBurst = DMA_PBURST_SINGLE,
         },
-        
+    };
+    
     static inline bool _Busy = false;
 };
