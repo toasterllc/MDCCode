@@ -108,7 +108,6 @@ public:
     // Types
     enum class State : uint8_t {
         Disconnected,
-        Connecting,
         Connected,
     };
     
@@ -244,64 +243,50 @@ public:
     }
     
     static void EndpointReset(uint8_t ep) {
-        #warning TODO: wait until endpoints are ready
         Toastbox::IntState ints(false);
         _EndpointReset(ep);
+        T_Scheduler::Wait([=] { return _EndpointReady(ep); });
     }
     
     static void EndpointsReset() {
-        #warning TODO: wait until endpoints are ready
         Toastbox::IntState ints(false);
         for (uint8_t ep : T_Config::Endpoints) {
             _EndpointReset(ep);
         }
+        T_Scheduler::Wait([] { return _EndpointsReady(); });
     }
     
-    static bool EndpointReady(uint8_t ep) {
-        Toastbox::IntState ints(false);
-        return _EndpointReady(ep);
-    }
-    
-    static bool EndpointsReady() {
-        Toastbox::IntState ints(false);
-        for (uint8_t ep : T_Config::Endpoints) {
-            if (!_EndpointReady(ep)) return false;
-        }
-        return true;
-    }
-    
-    static std::optional<Cmd> CmdRecv() {
+    template <typename T>
+    static void CmdRecv(T& cmd) {
         for (;;) {
-            // Wait for USB to be re-connected (`Connecting` state), or for a new command to arrive.
-            T_Scheduler::Wait([] { return _State==State::Connecting || _Cmd; });
+            // Wait for a new command to arrive
+            T_Scheduler::Wait([] { return _CmdRecvLen; });
             
             // Disable interrupts
             Toastbox::IntState ints(false);
             
-            if (_State == State::Connecting) {
-                // Return nullopt to notify the caller that USB was reconnected,
-                // so that the caller can reset everything.
-                return std::nullopt;
+            // It's possible for _CmdRecvLen to change between observing it in Wait()
+            // and then disabling interrupts. If that's the case, try again.
+            if (!_CmdRecvLen) continue;
             
-            } else if (_Cmd) {
-                return _Cmd;
+            const size_t len = *_CmdRecvLen;
+            _CmdRecvLen = std::nullopt;
             
-            } else {
-                // It's possible for _State / _Cmd to change between observing them in Wait()
-                // and disabling interrupts. If we get here, neither is in a state that we
-                // care about, so go around the loop again.
+            // Short-circuit if we're not Connected, but only do this after
+            // consuming _CmdRecvLen.
+            if (_State != State::Connected) continue;
+            
+            // Reject command if the length isn't valid
+            if (len != sizeof(T)) {
+                _CmdAccept(false);
+                continue;
             }
+            
+            T cmd;
+            memcpy(&cmd, _CmdRecvBuf, len);
+            _CmdAccept(true);
+            break;
         }
-    }
-    
-    static void CmdAccept(bool accept) {
-        Toastbox::IntState ints(false);
-        if (_State != State::Connected) return; // Short-circuit if we're not Connected
-        
-        if (accept) USBD_CtlSendStatus(&_Device);
-        else        USBD_CtlError(&_Device, nullptr);
-        
-        _Cmd = std::nullopt;
     }
     
     static std::optional<size_t> Recv(uint8_t ep, void* data, size_t len) {
@@ -364,8 +349,8 @@ private:
             }
         }
         
-        _Cmd = std::nullopt;
-        _State = State::Connecting;
+        _CmdRecvLen = std::nullopt;
+        _State = State::Connected;
         
         return (uint8_t)USBD_OK;
     }
@@ -403,12 +388,9 @@ private:
     }
     
     static uint8_t _USBD_EP0_RxReady() {
-        const size_t dataLen = USBD_LL_GetRxDataSize(&_Device, 0);
-        if (!_Cmd) {
-            _Cmd = Cmd{
-                .data = _CmdRecvBuf,
-                .len = dataLen,
-            };
+        const size_t recvLen = USBD_LL_GetRxDataSize(&_Device, 0);
+        if (!_CmdRecvLen) {
+            _CmdRecvLen = recvLen;
         } else {
             // If a command is already underway, respond to the request with an error
             USBD_CtlError(&_Device, nullptr);
@@ -475,6 +457,12 @@ private:
     
     static uint8_t* _USBD_GetUsrStrDescriptor(uint8_t index, uint16_t* len) {
         return nullptr;
+    }
+    
+    // Interrupts must be disabled
+    static void _CmdAccept(bool accept) {
+        if (accept) USBD_CtlSendStatus(&_Device);
+        else        USBD_CtlError(&_Device, nullptr);
     }
     
     static _OutEndpoint& _OutEndpointGet(uint8_t ep) {
@@ -568,9 +556,16 @@ private:
     
     // Interrupts must be disabled
     static bool _EndpointReady(uint8_t ep) {
-        if (_State != State::Connected) return false; // Short-circuit if we're not Connected
         if (EndpointOut(ep))    return _Ready(_OutEndpointGet(ep));
         else                    return _Ready(_InEndpointGet(ep));
+    }
+    
+    // Interrupts must be disabled
+    static bool _EndpointsReady() {
+        for (uint8_t ep : T_Config::Endpoints) {
+            if (!_EndpointReady(ep)) return false;
+        }
+        return true;
     }
     
     // Interrupts must be disabled
@@ -684,8 +679,8 @@ private:
     // ignored as long as the flash isn't unlocked.
     static constexpr uint32_t _DevNullAddr = 0x08000000;
     
-    static inline std::optional<Cmd> _Cmd;
-    alignas(4) static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl]; // Aligned to send via USB
+    alignas(4) static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl]; // Aligned to receive via USB
+    static inline std::optional<size_t> _CmdRecvLen;
     static inline _OutEndpoint _OutEndpoints[EndpointCountOut()] = {};
     static inline _InEndpoint _InEndpoints[EndpointCountIn()] = {};
     static inline USBD_HandleTypeDef _Device;

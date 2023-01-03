@@ -191,25 +191,11 @@ private:
     struct _TaskCmdRecv {
         static void Run() {
             for (;;) {
-                auto usbCmdOpt = USB::CmdRecv();
+                STM::Cmd cmd;
+                USB::CmdRecv(cmd);
                 
                 // Reset ourself whenever we get a new command
                 _TasksReset();
-                
-                // CmdRecv() returns nullopt when USB disconnects/reconnects, in which case there's nothing to do.
-                #warning TODO: if the above is true, should we just not have USB::CmdRecv() return until there's actually a command?
-                if (!usbCmdOpt) continue;
-                
-                auto usbCmd = *usbCmdOpt;
-                
-                // Reject command if the length isn't valid
-                STM::Cmd cmd;
-                if (usbCmd.len != sizeof(cmd)) {
-                    USB::CmdAccept(false);
-                    continue;
-                }
-                
-                memcpy(&cmd, usbCmd.data, usbCmd.len);
                 
                 #warning TODO: we commented this out because it protects against issuing commands when the device is still handling a previous command, but for proper operation we expect a flush when we start comms, so this should be an issue...
 //                // Only accept command if it's a flush command (in which case the endpoints
@@ -220,7 +206,6 @@ private:
 //                    continue;
 //                }
                 
-                USB::CmdAccept(true);
                 _TaskCmdHandle::Handle(cmd);
             }
         }
@@ -341,8 +326,6 @@ private:
     static void _TasksReset() {
         // Reset _TaskCmdHandle task
         _TaskCmdHandle::Reset();
-        // Reset T_Tasks
-        (Scheduler::template Stop<T_Tasks>(), ...);
         // Call supplied T_TasksReset function
         T_TasksReset();
     }

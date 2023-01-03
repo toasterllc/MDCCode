@@ -29,6 +29,7 @@ struct _System : System<
     _CmdHandle,                 // T_CmdHandle
     _TasksReset,                // T_TasksReset
     
+    // T_Tasks
     _TaskUSBDataOut,
     _TaskUSBDataIn,
     _TaskReadout
@@ -1397,6 +1398,9 @@ static void _CmdHandle(const STM::Cmd& cmd) {
 
 static void _TasksReset() {
     #warning TODO: reset shared state!
+    _Scheduler::template Stop<_TaskUSBDataOut>();
+    _Scheduler::template Stop<_TaskUSBDataIn>();
+    _Scheduler::template Stop<_TaskReadout>();
 }
 
 // MARK: - ISRs
