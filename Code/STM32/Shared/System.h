@@ -74,7 +74,7 @@ public:
         LEDInit();
         
         // Configure I2C
-        I2C::Init();
+        _I2C::Init();
         
         // Configure USB
         USB::Init();
@@ -107,8 +107,6 @@ public:
         T_USBDMAEn, // T_DMAEn
         USBConfig   // T_Config
     >;
-    
-    using I2C = I2CType<Scheduler, MSP::I2CAddr>;
     
     static void USBSendStatus(bool s) {
         alignas(4) bool status = s; // Aligned to send via USB
@@ -187,7 +185,17 @@ public:
         }
     }
     
+    static void ISR_I2CEvent() {
+        _I2C::ISR_Event();
+    }
+    
+    static void ISR_I2CError() {
+        _I2C::ISR_Error();
+    }
+    
 private:
+    using _I2C = I2CType<Scheduler, MSP::I2CAddr>;
+    
     struct _TaskCmdRecv {
         static void Run() {
             for (;;) {
@@ -275,7 +283,7 @@ private:
                 }
                 
                 MSP::Resp resp;
-                ok = I2C::Send(_Cmd, resp);
+                ok = _I2C::Send(_Cmd, resp);
                 #warning TODO: handle errors properly
                 Assert(ok);
                 // Return the response to the caller
@@ -305,7 +313,7 @@ private:
             };
             
             MSP::Resp resp;
-            const bool ok = I2C::Send(cmd, resp);
+            const bool ok = _I2C::Send(cmd, resp);
             #warning TODO: handle errors properly
             Assert(ok);
             Assert(resp.ok);

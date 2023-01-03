@@ -37,7 +37,6 @@ struct _System : System<
 
 using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
-using _I2C = _System::I2C;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -1432,11 +1431,11 @@ extern "C" [[gnu::section(".isr")]] void ISR_DMA2_Stream7() {
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_I2C1_EV() {
-    _I2C::ISR_Event();
+    _System::ISR_I2CEvent();
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_I2C1_ER() {
-    _I2C::ISR_Error();
+    _System::ISR_I2CError();
 }
 
 // MARK: - Abort
