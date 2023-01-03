@@ -1398,9 +1398,9 @@ static void _CmdHandle(const STM::Cmd& cmd) {
 
 static void _TasksReset() {
     #warning TODO: reset shared state!
-    _Scheduler::template Stop<_TaskUSBDataOut>();
-    _Scheduler::template Stop<_TaskUSBDataIn>();
-    _Scheduler::template Stop<_TaskReadout>();
+    _Scheduler::Stop<_TaskUSBDataOut>();
+    _Scheduler::Stop<_TaskUSBDataIn>();
+    _Scheduler::Stop<_TaskReadout>();
 }
 
 // MARK: - ISRs
