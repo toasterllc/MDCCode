@@ -386,7 +386,7 @@ struct _TaskUSBDataIn {
     static void Start() {
         // Make sure this task isn't already running
         Assert(!_Scheduler::Running<_TaskUSBDataIn>());
-        _Scheduler::Start<_TaskUSBDataIn>();
+        _Scheduler::Start<_TaskUSBDataIn>(Run);
     }
     
     static void Run() {
@@ -416,7 +416,7 @@ struct _TaskUSBDataOut {
         // Make sure this task isn't already running
         Assert(!_Scheduler::Running<_TaskUSBDataOut>());
         _Len = len;
-        _Scheduler::Start<_TaskUSBDataOut>();
+        _Scheduler::Start<_TaskUSBDataOut>(Run);
     }
     
     static void Run() {
@@ -467,7 +467,7 @@ struct _TaskReadout {
         // Make sure this task isn't already running
         Assert(!_Scheduler::Running<_TaskReadout>());
         _RemLen = len;
-        _Scheduler::Start<_TaskReadout>();
+        _Scheduler::Start<_TaskReadout>(Run);
     }
     
     static void Run() {

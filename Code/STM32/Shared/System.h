@@ -197,7 +197,7 @@ private:
                 // Reset ourself whenever we get a new command
                 _TasksReset();
                 
-                #warning TODO: we commented this out because it protects against issuing commands when the device is still handling a previous command, but for proper operation we expect a flush when we start comms, so this should be an issue...
+                #warning TODO: we commented this out because it protects against issuing commands when the device is still handling a previous command, but for proper operation we expect a flush when we start comms, so this shouldn't be an issue...
 //                // Only accept command if it's a flush command (in which case the endpoints
 //                // don't need to be ready), or it's not a flush command, but all endpoints
 //                // are ready. Otherwise, reject the command.
@@ -206,6 +206,7 @@ private:
 //                    continue;
 //                }
                 
+                // Dispatch the command to our handler task
                 _TaskCmdHandle::Handle(cmd);
             }
         }
@@ -224,7 +225,7 @@ private:
         static void Handle(const STM::Cmd& c) {
             Assert(!_Cmd);
             _Cmd = c;
-            Scheduler::template Start<_TaskCmdHandle>();
+            Scheduler::template Start<_TaskCmdHandle>(Run);
         }
         
         static void Reset() {
