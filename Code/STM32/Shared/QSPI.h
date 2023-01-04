@@ -103,7 +103,6 @@ public:
         }
     }
     
-    #warning TODO: Command/Read/Write need to wait (using T_Scheduler) until command is complete
     static void Command(const QSPI_CommandTypeDef& cmd) {
         AssertArg(_Config);
         AssertArg(cmd.DataMode == QSPI_DATA_NONE);
