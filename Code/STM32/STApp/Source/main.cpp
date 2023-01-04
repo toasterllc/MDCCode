@@ -7,7 +7,6 @@
 #include "STM.h"
 #include "USB.h"
 #include "QSPI.h"
-#include "Battery.h"
 #include "BufQueue.h"
 #include "SDCard.h"
 #include "ImgSensor.h"
@@ -48,7 +47,6 @@ using _BufQueue = BufQueue<uint8_t, 63*1024, 2, _BufQueueAssert>;
 static _BufQueue _Bufs;
 
 using _QSPI = QSPIType<_Scheduler>;
-static Battery<_Scheduler> _Battery;
 
 using _ICE_CRST_            = GPIO<GPIOPortF, 11>;
 using _ICE_CDONE            = GPIO<GPIOPortB, 1>;
@@ -1351,15 +1349,6 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _TaskReadout::Start(imagePaddedLen);
 }
 
-void _BatteryStatusGet(const STM::Cmd& cmd) {
-    // Accept command
-    _System::USBAcceptCommand(true);
-    
-    // Send battery status
-    alignas(4) const BatteryStatus status = _Battery.status();
-    _USB::Send(Endpoints::DataIn, &status, sizeof(status));
-}
-
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     // ICE40 Bootloader
@@ -1384,8 +1373,6 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     case Op::ImgInit:               _ImgInit(cmd);                      break;
     case Op::ImgExposureSet:        _ImgExposureSet(cmd);               break;
     case Op::ImgCapture:            _ImgCapture(cmd);                   break;
-    // Battery
-    case Op::BatteryStatusGet:      _BatteryStatusGet(cmd);             break;
     // Bad command
     default:                        _System::USBAcceptCommand(false);   break;
     }
@@ -1453,11 +1440,6 @@ int main() {
     __HAL_RCC_GPIOE_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
     __HAL_RCC_GPIOG_CLK_ENABLE();
-    
-    // Init Battery
-    {
-        _Battery.init();
-    }
     
     // Init MSP
     {

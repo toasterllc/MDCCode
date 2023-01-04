@@ -39,10 +39,10 @@ public:
     }
     
     MDCUSBDevice(USBDevice&& dev) : _dev(std::move(dev)) {
-        printf("[MDCUSBDevice] endpointsFlush START\n");
-        // We don't know what state the device was left in, so flush the endpoints
-        endpointsFlush();
-        printf("[MDCUSBDevice] endpointsFlush END\n");
+        printf("[MDCUSBDevice] reset START\n");
+        // We don't know what state the device was left in, so reset its state
+        reset();
+        printf("[MDCUSBDevice] reset END\n");
         
         _serial = _dev.serialNumber();
         const STM::Status status = statusGet();
@@ -62,8 +62,8 @@ public:
     const std::string& serial() const { return _serial; }
     
     // MARK: - Common Commands
-    void endpointsFlush() {
-        const STM::Cmd cmd = { .op = STM::Op::EndpointsFlush };
+    void reset() {
+        const STM::Cmd cmd = { .op = STM::Op::Reset };
         // Send command
         _dev.vendorRequestOut(0, cmd);
         
@@ -72,7 +72,7 @@ public:
         for (const uint8_t ep : eps) {
             _flushEndpoint(ep);
         }
-        _checkStatus("EndpointsFlush command failed");
+        _checkStatus("Reset command failed");
     }
     
     STM::Status statusGet() {
@@ -86,14 +86,23 @@ public:
                 (uintmax_t)STM::Status::MagicNumber, (uintmax_t)status.magic);
         }
         
-        _checkStatus("StatusGet command failed");
+        return status;
+    }
+    
+    STM::BatteryStatus batteryStatusGet() {
+        assert(_mode == STM::Status::Modes::STMApp);
+        
+        const STM::Cmd cmd = { .op = STM::Op::BatteryStatusGet };
+        _sendCmd(cmd);
+        
+        STM::BatteryStatus status = {};
+        _dev.read(STM::Endpoints::DataIn, status);
         return status;
     }
     
     void bootloaderInvoke() {
         const STM::Cmd cmd = { .op = STM::Op::BootloaderInvoke };
         _sendCmd(cmd);
-        _checkStatus("BootloaderInvoke command failed");
     }
     
     // bootloaderInvoke version that replaces `this` with the newly-enumerated USB device
@@ -130,7 +139,6 @@ public:
             },
         };
         _sendCmd(cmd);
-        _checkStatus("LEDSet command failed");
     }
     
     // MARK: - STMLoader Commands
@@ -550,17 +558,6 @@ public:
 //        }
 //        
 //        return buf;
-    }
-    
-    STM::BatteryStatus batteryStatusGet() {
-        assert(_mode == STM::Status::Modes::STMApp);
-        
-        const STM::Cmd cmd = { .op = STM::Op::BatteryStatusGet };
-        _sendCmd(cmd);
-        
-        STM::BatteryStatus status = {};
-        _dev.read(STM::Endpoints::DataIn, status);
-        return status;
     }
     
 private:

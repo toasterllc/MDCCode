@@ -138,17 +138,32 @@ public:
         };
         
         USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
+    }
+    
+    void BatteryStatusGet(const STM::Cmd& cmd) {
+        // Accept command
+        USBAcceptCommand(true);
         
-        // Send status
-        USBSendStatus(true);
+        alignas(4) STM::BatteryStatus status = {
+            .chargeStatus = _BatteryChargeStatusGet(),
+            .voltage = 0,
+        };
+        
+        // Only sample the battery voltage if charging is underway
+        if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
+            const MSP::Cmd mspCmd = { .op = MSP::Cmd::Op::BatterySample };
+            const MSP::Resp mspResp = MSPSend(mspCmd);
+            if (mspResp.ok) {
+                status.voltage = mspResp.arg.BatterySample.sample;
+            }
+        }
+        
+        USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
     }
     
     static void BootloaderInvoke(const STM::Cmd& cmd) {
         // Accept command
         USBAcceptCommand(true);
-        // Send status
-        USBSendStatus(true);
-        
         // Perform software reset
         HAL_NVIC_SystemReset();
         // Unreachable
@@ -163,9 +178,6 @@ public:
         case 3:  USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;
         default: USBAcceptCommand(false); return;
         }
-        
-        // Send status
-        USBSendStatus(true);
     }
     
     static MSP::Resp MSPSend(const MSP::Cmd& cmd) {
@@ -197,6 +209,7 @@ public:
     
 private:
     using _I2C = I2CType<Scheduler, MSP::I2CAddr>;
+    using _BAT_CHRG_STAT = GPIO<GPIOPortE, 15>;
     
     struct _TaskCmdRecv {
         static void Run() {
@@ -292,6 +305,7 @@ private:
         }
         
         static void _UpdateChargeStatus() {
+            #warning TODO: update LED color based on _BatteryChargeStatusGet()
             // Refresh charge status LEDs
             const MSP::Cmd cmd = {
                 .op = MSP::Cmd::Op::LEDSet,
@@ -317,6 +331,38 @@ private:
         [[gnu::section(".stack._TaskMSPComms")]]
         static inline uint8_t Stack[256];
     };
+    
+    static STM::BatteryStatus::ChargeStatus _BatteryChargeStatusGet() {
+        using namespace STM;
+        
+        // The battery charger IC (MCP73831T-2ACI/OT) has tristate output, where:
+        //   high-z: shutdown / no battery
+        //   low: charging underway
+        //   high: charging complete
+        // To sense these 3 different states, we configure our GPIO with a pullup
+        // and read the value of the pin, repeat with a pulldown, and compare the
+        // read values.
+        _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
+        Scheduler::Sleep(Scheduler::Ms(10));
+        const bool a = _BAT_CHRG_STAT::Read();
+        
+        _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
+        Scheduler::Sleep(Scheduler::Ms(10));
+        const bool b = _BAT_CHRG_STAT::Read();
+        
+        if (a != b) {
+            // _BAT_CHRG_STAT == high-z
+            return BatteryStatus::ChargeStatus::Shutdown;
+        } else {
+            if (!a) {
+                // _BAT_CHRG_STAT == low
+                return BatteryStatus::ChargeStatus::Underway;
+            } else {
+                // _BAT_CHRG_STAT == high
+                return BatteryStatus::ChargeStatus::Complete;
+            }
+        }
+    }
     
     static void _ClockInit() {
         // Configure the main internal regulator output voltage

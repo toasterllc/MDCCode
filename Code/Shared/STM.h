@@ -24,6 +24,7 @@ namespace STM {
         None,
         Reset,
         StatusGet,
+        BatteryStatusGet,
         BootloaderInvoke,
         LEDSet,
         
@@ -53,8 +54,6 @@ namespace STM {
         ImgInit,
         ImgExposureSet,
         ImgCapture,
-        
-        BatteryStatusGet,
     };
     
     struct [[gnu::packed]] Cmd {
