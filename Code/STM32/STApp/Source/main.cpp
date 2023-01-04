@@ -17,7 +17,7 @@
 using namespace STM;
 
 static void _CmdHandle(const STM::Cmd& cmd);
-static void _TasksReset();
+static void _Reset();
 
 struct _TaskUSBDataOut;
 struct _TaskUSBDataIn;
@@ -27,7 +27,7 @@ struct _System : System<
     STM::Status::Modes::STMApp, // T_Mode
     true,                       // T_USBDMAEn
     _CmdHandle,                 // T_CmdHandle
-    _TasksReset,                // T_TasksReset
+    _Reset,                     // T_Reset
     
     // T_Tasks
     _TaskUSBDataOut,
@@ -1391,11 +1391,12 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     }
 }
 
-static void _TasksReset() {
-    #warning TODO: reset shared state!
+static void _Reset() {
     _Scheduler::Stop<_TaskUSBDataOut>();
     _Scheduler::Stop<_TaskUSBDataIn>();
     _Scheduler::Stop<_TaskReadout>();
+    
+    _QSPIConfigSet(_QSPIConfigs::ICEApp);
 }
 
 // MARK: - ISRs

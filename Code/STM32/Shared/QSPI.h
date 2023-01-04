@@ -34,15 +34,19 @@ public:
     using D6  = GPIO<GPIOPortE, 9>;  // AF10
     using D7  = GPIO<GPIOPortE, 10>; // AF10
     
-//    const Config* getConfig() const { return _config; }
-    
     static void ConfigSet(const Config& config) {
         if (_Config) {
+            // Abort whatever is underway (if anything)
+            HAL_QSPI_Abort(&_Device);
+            
             HAL_StatusTypeDef hs = HAL_DMA_DeInit(&_DMA);
             Assert(hs == HAL_OK);
             
             hs = HAL_QSPI_DeInit(&_Device);
             Assert(hs == HAL_OK);
+            
+            // Reset state
+            _Busy = false;
         }
         
         _Config = &config;
@@ -97,20 +101,6 @@ public:
             D6::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
             D7::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
         }
-    }
-    
-    // Reset(): aborts whatever is in progress and resets state
-    static void Reset() {
-        AssertArg(_Config);
-        
-        // Disable interrupts so that resetting is atomic
-        Toastbox::IntState ints(false);
-        
-        // Abort whatever is underway (if anything)
-        HAL_QSPI_Abort(&_Device);
-        
-        // Reset state
-        _Busy = false;
     }
     
     #warning TODO: Command/Read/Write need to wait (using T_Scheduler) until command is complete

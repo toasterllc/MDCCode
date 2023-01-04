@@ -25,7 +25,7 @@ template <
 STM::Status::Mode T_Mode,
 bool T_USBDMAEn,
 auto T_CmdHandle,
-auto T_TasksReset,
+auto T_Reset,
 typename... T_Tasks
 >
 class System {
@@ -117,9 +117,11 @@ public:
         USBSendStatus(s);
     }
     
-    static void EndpointsFlush(const STM::Cmd& cmd) {
+    static void Reset(const STM::Cmd& cmd) {
         // Reset endpoints
         USB::EndpointsReset();
+        // Call supplied T_Reset function
+        T_Reset();
         // Send status
         USBSendStatus(true);
     }
@@ -202,18 +204,6 @@ private:
                 STM::Cmd cmd;
                 USB::CmdRecv(cmd);
                 
-                // Reset ourself whenever we get a new command
-                _TasksReset();
-                
-                #warning TODO: we commented this out because it protects against issuing commands when the device is still handling a previous command, but for proper operation we expect a flush when we start comms, so this shouldn't be an issue...
-//                // Only accept command if it's a flush command (in which case the endpoints
-//                // don't need to be ready), or it's not a flush command, but all endpoints
-//                // are ready. Otherwise, reject the command.
-//                if (cmd.op!=STM::Op::EndpointsFlush && !USB::EndpointsReady()) {
-//                    USB::CmdAccept(false);
-//                    continue;
-//                }
-                
                 // Dispatch the command to our handler task
                 _TaskCmdHandle::Handle(cmd);
             }
@@ -231,21 +221,17 @@ private:
     
     struct _TaskCmdHandle {
         static void Handle(const STM::Cmd& c) {
-            Assert(!_Cmd);
+            // We intentionally don't check for _Cmd==nullopt because we need the Reset
+            // command to work even if _TaskCmdHandle is hung from the previous command.
             _Cmd = c;
             Scheduler::template Start<_TaskCmdHandle>(Run);
-        }
-        
-        static void Reset() {
-            Scheduler::template Stop<_TaskCmdHandle>();
-            _Cmd = std::nullopt;
         }
         
         static void Run() {
             using namespace STM;
             
             switch (_Cmd->op) {
-            case Op::EndpointsFlush:    EndpointsFlush(*_Cmd);      break;
+            case Op::Reset:             Reset(*_Cmd);               break;
             case Op::StatusGet:         StatusGet(*_Cmd);           break;
             case Op::BootloaderInvoke:  BootloaderInvoke(*_Cmd);    break;
             case Op::LEDSet:            LEDSet(*_Cmd);              break;
@@ -331,13 +317,6 @@ private:
         [[gnu::section(".stack._TaskMSPComms")]]
         static inline uint8_t Stack[256];
     };
-    
-    static void _TasksReset() {
-        // Reset _TaskCmdHandle task
-        _TaskCmdHandle::Reset();
-        // Call supplied T_TasksReset function
-        T_TasksReset();
-    }
     
     static void _ClockInit() {
         // Configure the main internal regulator output voltage
