@@ -301,13 +301,8 @@ private:
             _BatteryStatus = _BatteryStatusGet();
             
             // Update LEDs
-            bool red = false;
-            bool green = false;
-            switch (_BatteryStatus.chargeStatus) {
-            case STM::BatteryStatus::ChargeStatus::Underway: red = true; break;
-            case STM::BatteryStatus::ChargeStatus::Complete: green = true; break;
-            }
-            
+            const bool red = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway);
+            const bool green = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Complete);
             const MSP::Cmd cmd = {
                 .op = MSP::Cmd::Op::LEDSet,
                 .arg = { .LEDSet = { .red = red, .green = green }, },
