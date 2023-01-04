@@ -163,7 +163,6 @@ public:
         _sendCmd(cmd);
         // Send data
         _dev.write(STM::Endpoints::DataOut, data, len);
-        _checkStatus("STMWrite command failed");
     }
     
     void stmReset(uintptr_t entryPointAddr) {
@@ -177,7 +176,6 @@ public:
             .arg = { .STMReset = { .entryPointAddr = (uint32_t)entryPointAddr } }
         };
         _sendCmd(cmd);
-        _checkStatus("STMReset command failed");
     }
     
     // MARK: - STMApp Commands

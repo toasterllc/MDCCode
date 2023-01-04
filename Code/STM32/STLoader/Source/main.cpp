@@ -8,36 +8,20 @@
 #include "USB.h"
 #include "BufQueue.h"
 #include "System.h"
-#include "USBConfigDesc.h"
-
 using namespace STM;
 
-// MARK: - Peripherals & Types
-static const void* _USBConfigDesc(size_t& len);
-
-using _USBType = USBType<
-    false,                      // T_DMAEn: disabled because we want USB to be able to write to
-                                // ITCM RAM (because we write to that region as a part of
-                                // bootloading), but DMA masters can't access it.
-    _USBConfigDesc,             // T_ConfigDesc
-    STM::Endpoints::DataOut,    // T_Endpoints
-    STM::Endpoints::DataIn
->;
-
-static const void* _USBConfigDesc(size_t& len) {
-    return USBConfigDesc<_USBType>(len);
-}
-
 static void _CmdHandle(const STM::Cmd& cmd);
-using _System = System<
-    _USBType,
-    STM::Status::Modes::STMLoader,
-    _CmdHandle
->;
+static void _Reset();
 
-constexpr auto& _USB = _System::USB;
+using _System = System<
+    STM::Status::Modes::STMLoader,  // T_Mode
+    false,                          // T_USBDMAEn
+    _CmdHandle,                     // T_CmdHandle
+    _Reset                          // T_Reset
+>;
 
 using _Scheduler = _System::Scheduler;
+using _USB = _System::USB;
 
 using _BufQueue = BufQueue<uint8_t,1024,2>;
 static _BufQueue _Bufs;
@@ -71,9 +55,9 @@ static void _STMWrite(const STM::Cmd& cmd) {
     
     // Bail if the region capacity is too small to hold the
     // incoming data length (ceiled to the packet length)
-    const size_t len = _USB.CeilToMaxPacketSize(_USB.MaxPacketSizeOut(), arg.len);
+    const size_t len = _USB::CeilToMaxPacketSize(_USB::MaxPacketSizeOut(), arg.len);
     if (len > _STMRegionCapacity((void*)arg.addr)) {
-        // Send preliminary status: error
+        // Reject command
         _System::USBAcceptCommand(false);
         return;
     }
@@ -82,11 +66,7 @@ static void _STMWrite(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Receive USB data
-    _USB.recv(Endpoints::DataOut, (void*)arg.addr, len);
-    _Scheduler::Wait([] { return _USB.endpointReady(Endpoints::DataOut); });
-    
-    // Send final status
-    _System::USBSendStatus(true);
+    _USB::Recv(Endpoints::DataOut, (void*)arg.addr, len);
 }
 
 static void _STMReset(const STM::Cmd& cmd) {
@@ -94,9 +74,6 @@ static void _STMReset(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     _AppEntryPoint = (_VoidFn)cmd.arg.STMReset.entryPointAddr;
-    
-    // Send final status
-    _System::USBSendStatus(true);
     
     // Perform software reset
     HAL_NVIC_SystemReset();
@@ -107,12 +84,14 @@ static void _STMReset(const STM::Cmd& cmd) {
 static void _CmdHandle(const STM::Cmd& cmd) {
     switch (cmd.op) {
     // STM32 Bootloader
-    case Op::STMWrite:              _STMWrite(cmd);                     break;
-    case Op::STMReset:              _STMReset(cmd);                     break;
+    case Op::STMWrite:  _STMWrite(cmd);                     break;
+    case Op::STMReset:  _STMReset(cmd);                     break;
     // Bad command
-    default:                        _System::USBAcceptCommand(false);   break;
+    default:            _System::USBAcceptCommand(false);   break;
     }
 }
+
+static void _Reset() {}
 
 // MARK: - ISRs
 
@@ -131,7 +110,7 @@ extern "C" [[gnu::section(".isr")]] void ISR_SysTick() {
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
-    _USB.isr();
+    _USB::ISR();
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_I2C1_EV() {
@@ -179,15 +158,3 @@ int main() {
     _Scheduler::Run();
     return 0;
 }
-
-
-
-
-#warning TODO: remove these debug symbols
-#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
-constexpr auto& _Debug_Tasks              = _Scheduler::_Tasks;
-constexpr auto& _Debug_DidWork            = _Scheduler::_DidWork;
-constexpr auto& _Debug_CurrentTask        = _Scheduler::_CurrentTask;
-constexpr auto& _Debug_CurrentTime        = _Scheduler::_ISR.CurrentTime;
-constexpr auto& _Debug_Wake               = _Scheduler::_ISR.Wake;
-constexpr auto& _Debug_WakeTime           = _Scheduler::_ISR.WakeTime;

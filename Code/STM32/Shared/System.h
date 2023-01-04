@@ -70,7 +70,7 @@ public:
         HAL_DBGMCU_EnableDBGStopMode();
         HAL_DBGMCU_EnableDBGStandbyMode();
         
-        // Configure our LEDs
+        // Configure LEDs
         LEDInit();
         
         // Configure I2C
