@@ -114,11 +114,11 @@ extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_I2C1_EV() {
-    _System::I2C::ISR_Event();
+    _System::ISR_I2CEvent();
 }
 
 extern "C" [[gnu::section(".isr")]] void ISR_I2C1_ER() {
-    _System::I2C::ISR_Error();
+    _System::ISR_I2CError();
 }
 
 // MARK: - Main
