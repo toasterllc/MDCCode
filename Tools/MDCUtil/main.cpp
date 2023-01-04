@@ -201,6 +201,16 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
+static const char* _StringForChargeStatus(const STM::BatteryStatus::ChargeStatus status) {
+    using namespace STM;
+    switch (status) {
+    case BatteryStatus::ChargeStatus::Shutdown: return "Shutdown";
+    case BatteryStatus::ChargeStatus::Underway: return "Underway";
+    case BatteryStatus::ChargeStatus::Complete: return "Complete";
+    default:                                    return "Invalid";
+    }
+}
+
 static void BatteryStatusGet(const Args& args, MDCUSBDevice& device) {
     using namespace STM;
     BatteryStatus status = device.batteryStatusGet();
@@ -461,16 +471,6 @@ static void ImgCapture(const Args& args, MDCUSBDevice& device) {
     f.open(args.ImgCapture.filePath.c_str());
     f.write((char*)img.get(), Img::Full::ImageLen);
     printf("-> Wrote (len: %ju)\n", (uintmax_t)Img::Full::ImageLen);
-}
-
-static const char* _StringForChargeStatus(const STM::BatteryStatus::ChargeStatus status) {
-    using namespace STM;
-    switch (status) {
-    case BatteryStatus::ChargeStatus::Shutdown: return "Shutdown";
-    case BatteryStatus::ChargeStatus::Underway: return "Underway";
-    case BatteryStatus::ChargeStatus::Complete: return "Complete";
-    default:                                    return "Invalid";
-    }
 }
 
 int main(int argc, const char* argv[]) {
