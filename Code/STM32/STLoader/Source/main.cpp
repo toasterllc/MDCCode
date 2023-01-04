@@ -134,6 +134,14 @@ extern "C" [[gnu::section(".isr")]] void ISR_OTG_HS() {
     _USB.isr();
 }
 
+extern "C" [[gnu::section(".isr")]] void ISR_I2C1_EV() {
+    _System::I2C::ISR_Event();
+}
+
+extern "C" [[gnu::section(".isr")]] void ISR_I2C1_ER() {
+    _System::I2C::ISR_Error();
+}
+
 // MARK: - Main
 
 static void _JumpToAppIfNeeded() {
