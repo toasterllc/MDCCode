@@ -22,7 +22,7 @@ struct _TaskUSBDataOut;
 struct _TaskUSBDataIn;
 struct _TaskReadout;
 
-struct _System : System<
+using _System = System<
     STM::Status::Modes::STMApp, // T_Mode
     true,                       // T_USBDMAEn
     _CmdHandle,                 // T_CmdHandle
@@ -32,7 +32,7 @@ struct _System : System<
     _TaskUSBDataOut,
     _TaskUSBDataIn,
     _TaskReadout
-> {};
+>;
 
 using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
