@@ -140,7 +140,7 @@ public:
         USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
     }
     
-    void BatteryStatusGet(const STM::Cmd& cmd) {
+    static void BatteryStatusGet(const STM::Cmd& cmd) {
         // Accept command
         USBAcceptCommand(true);
         
@@ -246,6 +246,7 @@ private:
             switch (_Cmd->op) {
             case Op::Reset:             Reset(*_Cmd);               break;
             case Op::StatusGet:         StatusGet(*_Cmd);           break;
+            case Op::BatteryStatusGet:  BatteryStatusGet(*_Cmd);    break;
             case Op::BootloaderInvoke:  BootloaderInvoke(*_Cmd);    break;
             case Op::LEDSet:            LEDSet(*_Cmd);              break;
             default:                    T_CmdHandle(*_Cmd);         break;
