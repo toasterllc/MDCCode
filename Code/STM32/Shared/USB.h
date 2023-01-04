@@ -569,14 +569,14 @@ private:
     }
     
     // Interrupts must be disabled
-    static bool _Ready(const _OutEndpoint& outep)            { return outep.state==_EndpointState::Ready;  }
-    static bool _Ready(const _InEndpoint& inep)              { return inep.state==_EndpointState::Ready;   }
-    static bool _Busy(const _OutEndpoint& outep)             { return outep.state==_EndpointState::Busy;   }
-    static bool _Busy(const _InEndpoint& inep)               { return inep.state==_EndpointState::Busy;    }
-    static bool _Done(const _OutEndpoint& outep)             { return outep.state==_EndpointState::Done;   }
-    static bool _Done(const _InEndpoint& inep)               { return inep.state==_EndpointState::Done;    }
+    static bool _Ready(const _OutEndpoint& outep)       { return outep.state==_EndpointState::Ready;  }
+    static bool _Ready(const _InEndpoint& inep)         { return inep.state==_EndpointState::Ready;   }
+    static bool _Busy(const _OutEndpoint& outep)        { return outep.state==_EndpointState::Busy;   }
+    static bool _Busy(const _InEndpoint& inep)          { return inep.state==_EndpointState::Busy;    }
+    static bool _Done(const _OutEndpoint& outep)        { return outep.state==_EndpointState::Done;   }
+    static bool _Done(const _InEndpoint& inep)          { return inep.state==_EndpointState::Done;    }
     
-    static size_t _RecvLen(const _OutEndpoint& outep)        { return outep.len;                           }
+    static size_t _RecvLen(const _OutEndpoint& outep)   { return outep.len;                           }
     
     // Interrupts must be disabled
     template <typename OutInEndpoint>
