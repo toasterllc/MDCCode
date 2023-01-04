@@ -144,20 +144,8 @@ public:
         // Accept command
         USBAcceptCommand(true);
         
-        alignas(4) STM::BatteryStatus status = {
-            .chargeStatus = _BatteryChargeStatusGet(),
-            .voltage = 0,
-        };
-        
-        // Only sample the battery voltage if charging is underway
-        if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
-            const MSP::Cmd mspCmd = { .op = MSP::Cmd::Op::BatterySample };
-            const MSP::Resp mspResp = MSPSend(mspCmd);
-            if (mspResp.ok) {
-                status.voltage = mspResp.arg.BatterySample.sample;
-            }
-        }
-        
+        alignas(4) // Aligned to send via USB
+        const STM::BatteryStatus status = _TaskMSPComms::BatteryStatus();
         USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
     }
     
@@ -268,17 +256,17 @@ private:
     struct _TaskMSPComms {
         static void Run() {
             using Deadline = typename Scheduler::Deadline;
-            constexpr uint16_t UpdateChargeStatusIntervalMs = 10000;
+            constexpr uint16_t BatteryStatusUpdateIntervalMs = 10000;
             
-            Deadline updateChargeStatusDeadline = Scheduler::CurrentTime();
+            Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime();
             for (;;) {
                 // Wait until we get a command or for the deadline to pass
-                bool ok = Scheduler::WaitUntil(updateChargeStatusDeadline, [&] { return (bool)_Cmd; });
+                bool ok = Scheduler::WaitUntil(batteryStatusUpdateDeadline, [&] { return (bool)_Cmd; });
                 if (!ok) {
-                    // Deadline passed; update charge status
-                    _UpdateChargeStatus();
-                    // Update our deadline for the next charge status update
-                    updateChargeStatusDeadline = Scheduler::CurrentTime() + Scheduler::Ms(UpdateChargeStatusIntervalMs);
+                    // Deadline passed; update battery status
+                    _BatteryStatusUpdate();
+                    // Update our deadline for the next battery status update
+                    batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::Ms(BatteryStatusUpdateIntervalMs);
                     continue;
                 }
                 
@@ -305,12 +293,24 @@ private:
             return resp;
         }
         
-        static void _UpdateChargeStatus() {
-            #warning TODO: update LED color based on _BatteryChargeStatusGet()
-            // Refresh charge status LEDs
+        static const STM::BatteryStatus& BatteryStatus() {
+            return _BatteryStatus;
+        }
+        
+        static void _BatteryStatusUpdate() {
+            _BatteryStatus = _BatteryStatusGet();
+            
+            // Update LEDs
+            bool red = false;
+            bool green = false;
+            switch (_BatteryStatus.chargeStatus) {
+            case STM::BatteryStatus::ChargeStatus::Underway: red = true; break;
+            case STM::BatteryStatus::ChargeStatus::Complete: green = true; break;
+            }
+            
             const MSP::Cmd cmd = {
                 .op = MSP::Cmd::Op::LEDSet,
-                .arg = { .LEDSet = { .green = true }, },
+                .arg = { .LEDSet = { .red = red, .green = green }, },
             };
             
             MSP::Resp resp;
@@ -320,8 +320,59 @@ private:
             Assert(resp.ok);
         }
         
+        static STM::BatteryStatus _BatteryStatusGet() {
+            STM::BatteryStatus status = {
+                .chargeStatus = _ChargeStatusGet(),
+                .voltage = 0,
+            };
+            
+            // Only sample the battery voltage if charging is underway
+            if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
+                const MSP::Cmd mspCmd = { .op = MSP::Cmd::Op::BatterySample };
+                const MSP::Resp mspResp = MSPSend(mspCmd);
+                if (mspResp.ok) {
+                    status.voltage = mspResp.arg.BatterySample.sample;
+                }
+            }
+            
+            return status;
+        }
+        
+        static STM::BatteryStatus::ChargeStatus _ChargeStatusGet() {
+            using namespace STM;
+            
+            // The battery charger IC (MCP73831T-2ACI/OT) has tristate output, where:
+            //   high-z: shutdown / no battery
+            //   low: charging underway
+            //   high: charging complete
+            // To sense these 3 different states, we configure our GPIO with a pullup
+            // and read the value of the pin, repeat with a pulldown, and compare the
+            // read values.
+            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
+            Scheduler::Sleep(Scheduler::Ms(10));
+            const bool a = _BAT_CHRG_STAT::Read();
+            
+            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
+            Scheduler::Sleep(Scheduler::Ms(10));
+            const bool b = _BAT_CHRG_STAT::Read();
+            
+            if (a != b) {
+                // _BAT_CHRG_STAT == high-z
+                return BatteryStatus::ChargeStatus::Shutdown;
+            } else {
+                if (!a) {
+                    // _BAT_CHRG_STAT == low
+                    return BatteryStatus::ChargeStatus::Underway;
+                } else {
+                    // _BAT_CHRG_STAT == high
+                    return BatteryStatus::ChargeStatus::Complete;
+                }
+            }
+        }
+        
         static inline std::optional<MSP::Cmd> _Cmd;
         static inline std::optional<MSP::Resp> _Resp;
+        static inline STM::BatteryStatus _BatteryStatus = {};
         
         // Task options
         static constexpr Toastbox::TaskOptions Options{
@@ -332,38 +383,6 @@ private:
         [[gnu::section(".stack._TaskMSPComms")]]
         static inline uint8_t Stack[256];
     };
-    
-    static STM::BatteryStatus::ChargeStatus _BatteryChargeStatusGet() {
-        using namespace STM;
-        
-        // The battery charger IC (MCP73831T-2ACI/OT) has tristate output, where:
-        //   high-z: shutdown / no battery
-        //   low: charging underway
-        //   high: charging complete
-        // To sense these 3 different states, we configure our GPIO with a pullup
-        // and read the value of the pin, repeat with a pulldown, and compare the
-        // read values.
-        _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
-        Scheduler::Sleep(Scheduler::Ms(10));
-        const bool a = _BAT_CHRG_STAT::Read();
-        
-        _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
-        Scheduler::Sleep(Scheduler::Ms(10));
-        const bool b = _BAT_CHRG_STAT::Read();
-        
-        if (a != b) {
-            // _BAT_CHRG_STAT == high-z
-            return BatteryStatus::ChargeStatus::Shutdown;
-        } else {
-            if (!a) {
-                // _BAT_CHRG_STAT == low
-                return BatteryStatus::ChargeStatus::Underway;
-            } else {
-                // _BAT_CHRG_STAT == high
-                return BatteryStatus::ChargeStatus::Complete;
-            }
-        }
-    }
     
     static void _ClockInit() {
         // Configure the main internal regulator output voltage
