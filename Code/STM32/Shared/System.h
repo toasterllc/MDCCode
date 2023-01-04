@@ -258,7 +258,7 @@ private:
             using Deadline = typename Scheduler::Deadline;
             constexpr uint16_t BatteryStatusUpdateIntervalMs = 10000;
             
-            Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime();
+            Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::Ms(1000);
             for (;;) {
                 // Wait until we get a command or for the deadline to pass
                 bool ok = Scheduler::WaitUntil(batteryStatusUpdateDeadline, [&] { return (bool)_Cmd; });
@@ -270,12 +270,8 @@ private:
                     continue;
                 }
                 
-                MSP::Resp resp;
-                ok = _I2C::Send(_Cmd, resp);
-                #warning TODO: handle errors properly
-                Assert(ok);
-                // Return the response to the caller
-                _Resp = resp;
+                // Send command and return response to the caller
+                _Resp = _Send(*_Cmd);
             }
         }
         
@@ -290,6 +286,14 @@ private:
             // Reset our state
             _Cmd = std::nullopt;
             _Resp = std::nullopt;
+            return resp;
+        }
+        
+        static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
+            MSP::Resp resp;
+            const bool ok = _I2C::Send(cmd, resp);
+            if (!ok) return std::nullopt;
+            #warning TODO: handle errors properly. reset MSP if we fail?
             return resp;
         }
         
@@ -308,11 +312,11 @@ private:
                 .arg = { .LEDSet = { .red = red, .green = green }, },
             };
             
-            MSP::Resp resp;
-            const bool ok = _I2C::Send(cmd, resp);
+            const auto resp = _Send(cmd);
             #warning TODO: handle errors properly
-            Assert(ok);
-            Assert(resp.ok);
+            if (resp) {
+                Assert(resp->ok);
+            }
         }
         
         static STM::BatteryStatus _BatteryStatusGet() {
@@ -323,10 +327,10 @@ private:
             
             // Only sample the battery voltage if charging is underway
             if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
-                const MSP::Cmd mspCmd = { .op = MSP::Cmd::Op::BatterySample };
-                const MSP::Resp mspResp = MSPSend(mspCmd);
-                if (mspResp.ok) {
-                    status.voltage = mspResp.arg.BatterySample.sample;
+                const auto resp = _Send({ .op = MSP::Cmd::Op::BatterySample });
+                #warning TODO: handle errors properly
+                if (resp && resp->ok) {
+                    status.voltage = resp->arg.BatterySample.sample;
                 }
             }
             
@@ -376,7 +380,7 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskMSPComms")]]
-        static inline uint8_t Stack[256];
+        static inline uint8_t Stack[512];
     };
     
     static void _ClockInit() {

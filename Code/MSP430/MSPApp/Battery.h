@@ -13,7 +13,7 @@ class BatteryType {
 public:
     struct Pin {
         using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;
-        using BatChrgLvlEnPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Output0>;
+        using BatChrgLvlEnPin = typename T_BatChrgLvlEnPin::template Opts<GPIO::Option::Output0>;
     };
     
 #undef Assert
