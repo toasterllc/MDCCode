@@ -302,9 +302,9 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     MSP::State state = device.mspStateRead();
     
     printf(     "header\n");
-    printf(     "  magic:                     0x%08jx\n",     (uintmax_t)state.header.magic);
-    printf(     "  version:                   0x%04jx\n",     (uintmax_t)state.header.version);
-    printf(     "  length:                    0x%04jx\n",     (uintmax_t)state.header.length);
+    printf(     "  magic:                   0x%08jx\n",     (uintmax_t)state.header.magic);
+    printf(     "  version:                 0x%04jx\n",     (uintmax_t)state.header.version);
+    printf(     "  length:                  0x%04jx\n",     (uintmax_t)state.header.length);
     printf(     "\n");
     
     printf(     "sd\n");
