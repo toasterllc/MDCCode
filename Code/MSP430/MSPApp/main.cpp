@@ -391,6 +391,7 @@ struct _SDTask {
     
     // Task stack
     [[gnu::section(".stack._SDTask")]]
+    alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -491,6 +492,7 @@ struct _ImgTask {
     
     // Task stack
     [[gnu::section(".stack._ImgTask")]]
+    alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -648,6 +650,7 @@ struct _MainTask {
     
     // Task stack
     [[gnu::section(".stack._MainTask")]]
+    alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -741,6 +744,7 @@ struct _I2CTask {
     
     // Task stack
     [[gnu::section(".stack._I2CTask")]]
+    alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -922,6 +926,7 @@ void abort() {
 #define _StackMainSize 128
 
 [[gnu::section(".stack.main")]]
+alignas(sizeof(void*))
 uint8_t _StackMain[_StackMainSize];
 
 asm(".global __stack");

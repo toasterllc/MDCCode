@@ -37,12 +37,10 @@
 		55B2152327091003001423C1 /* Poly2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Poly2D.h; sourceTree = "<group>"; };
 		55B2152427091003001423C1 /* BitmapImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BitmapImage.h; sourceTree = "<group>"; };
 		55B2152527091003001423C1 /* MDCUSBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MDCUSBDevice.h; sourceTree = "<group>"; };
-		55B2152627091003001423C1 /* TimeInstant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeInstant.h; sourceTree = "<group>"; };
 		55B2152727091003001423C1 /* Color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Color.h; sourceTree = "<group>"; };
 		55B2152927091003001423C1 /* IOServiceWatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceWatcher.h; sourceTree = "<group>"; };
 		55B2152A27091003001423C1 /* ELF32Binary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		55B2152B27091003001423C1 /* IOServiceMatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOServiceMatcher.h; sourceTree = "<group>"; };
-		55B2152C27091003001423C1 /* Mmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mmap.h; sourceTree = "<group>"; };
 		55B2152D27091004001423C1 /* Mod.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Mod.h; sourceTree = "<group>"; };
 		55B2152E27091004001423C1 /* Interp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Interp.h; sourceTree = "<group>"; };
 		55B2152F27091004001423C1 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
@@ -112,11 +110,9 @@
 				55B2152927091003001423C1 /* IOServiceWatcher.h */,
 				55B2152127091003001423C1 /* Mat.h */,
 				55B2152527091003001423C1 /* MDCUSBDevice.h */,
-				55B2152C27091003001423C1 /* Mmap.h */,
 				55B2152D27091004001423C1 /* Mod.h */,
 				55B2152227091003001423C1 /* PixelSampler.h */,
 				55B2152327091003001423C1 /* Poly2D.h */,
-				55B2152627091003001423C1 /* TimeInstant.h */,
 			);
 			name = Shared;
 			path = ../Shared;

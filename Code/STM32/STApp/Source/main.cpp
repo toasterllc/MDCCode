@@ -404,6 +404,7 @@ struct _TaskUSBDataIn {
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataIn")]]
+    alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -455,6 +456,7 @@ struct _TaskUSBDataOut {
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataOut")]]
+    alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
 
@@ -517,6 +519,7 @@ struct _TaskReadout {
     
     // Task stack
     [[gnu::section(".stack._TaskReadout")]]
+    alignas(sizeof(void*))
     static inline uint8_t Stack[512];
 };
 

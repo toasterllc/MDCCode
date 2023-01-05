@@ -14,6 +14,7 @@
 #define _StackMainSize 1024
 
 [[gnu::section(".stack.main")]]
+alignas(sizeof(void*))
 uint8_t _StackMain[_StackMainSize];
 
 asm(".global _StackMainEnd");
@@ -176,6 +177,7 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskCmdRecv")]]
+        alignas(sizeof(void*))
         static inline uint8_t Stack[512];
     };
     
@@ -213,6 +215,7 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskCmdHandle")]]
+        alignas(sizeof(void*))
         static inline uint8_t Stack[1024];
     };
     
@@ -343,6 +346,7 @@ private:
         
         // Task stack
         [[gnu::section(".stack._TaskMSPComms")]]
+        alignas(sizeof(void*))
         static inline uint8_t Stack[512];
     };
     
