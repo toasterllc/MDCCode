@@ -282,7 +282,6 @@ public:
                 continue;
             }
             
-            T cmd;
             memcpy(&cmd, _CmdRecvBuf, len);
             _CmdAccept(true);
             break;
@@ -304,8 +303,9 @@ public:
             Assert(us == USBD_OK);
         }
         
-        auto waitResult = T_Scheduler::Wait([&] { return _EndpointWait(ep, outep); });
-        return waitResult.result;
+        auto waitResult = T_Scheduler::Wait([&] { return _Wait(ep, outep); });
+        if (!waitResult.ok) return std::nullopt;
+        return waitResult.len;
     }
     
     static bool Send(uint8_t ep, const void* data, size_t len) {
@@ -323,8 +323,8 @@ public:
             Assert(us == USBD_OK);
         }
         
-        auto waitResult = T_Scheduler::Wait([&] { return _EndpointWait(ep, inep); });
-        return waitResult.result;
+        auto waitResult = T_Scheduler::Wait([&] { return _Wait(ep, inep); });
+        return waitResult.ok;
     }
     
     static void ISR() {
@@ -487,18 +487,18 @@ private:
         abort();
     }
     
-    template <typename T>
-    struct _EndpointWaitResult {
+    struct _WaitResultOut {
         bool done = false;
-        T result = {};
+        bool ok = false;
+        size_t len = 0;
         operator bool() const { return done; }
     };
     
-    static _EndpointWaitResult<std::optional<size_t>> _EndpointWait(uint8_t ep, _OutEndpoint& outep) {
+    static _WaitResultOut _Wait(uint8_t ep, _OutEndpoint& outep) {
         Toastbox::IntState ints(false);
         
         // Short-circuit if we're not Connected
-        if (_State != State::Connected) return { true, std::nullopt }; // Done, failed
+        if (_State != State::Connected) return { true, false }; // Done, failed
         
         switch (outep.state) {
         case _EndpointState::Busy:
@@ -507,15 +507,25 @@ private:
         case _EndpointState::Done:
             // Done, success
             _AdvanceState(ep, outep);
-            return { true, _RecvLen(outep) };
+            return { true, true, _RecvLen(outep) };
         default:
             // Done, failed
-            return { true, std::nullopt };
+            return { true, false };
         }
     }
     
-    static _EndpointWaitResult<bool> _EndpointWait(uint8_t ep, _InEndpoint& inep) {
+    struct _WaitResultIn {
+        bool done = false;
+        bool ok = false;
+        operator bool() const { return done; }
+    };
+    
+    static _WaitResultIn _Wait(uint8_t ep, _InEndpoint& inep) {
         Toastbox::IntState ints(false);
+        
+        // Short-circuit if we're not Connected
+        if (_State != State::Connected) return { true, false }; // Done, failed
+        
         switch (inep.state) {
         case _EndpointState::Busy:
             // Still waiting for completion

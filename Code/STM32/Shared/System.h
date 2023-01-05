@@ -117,57 +117,6 @@ public:
         USBSendStatus(s);
     }
     
-    static void Reset(const STM::Cmd& cmd) {
-        // Reset endpoints
-        USB::EndpointsReset();
-        // Call supplied T_Reset function
-        T_Reset();
-        // Send status
-        USBSendStatus(true);
-    }
-    
-    static void StatusGet(const STM::Cmd& cmd) {
-        // Accept command
-        USBAcceptCommand(true);
-        
-        // Send status struct
-        alignas(4) const STM::Status status = { // Aligned to send via USB
-            .magic      = STM::Status::MagicNumber,
-            .version    = STM::Version,
-            .mode       = T_Mode,
-        };
-        
-        USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
-    }
-    
-    static void BatteryStatusGet(const STM::Cmd& cmd) {
-        // Accept command
-        USBAcceptCommand(true);
-        
-        alignas(4) // Aligned to send via USB
-        const STM::BatteryStatus status = _TaskMSPComms::BatteryStatus();
-        USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
-    }
-    
-    static void BootloaderInvoke(const STM::Cmd& cmd) {
-        // Accept command
-        USBAcceptCommand(true);
-        // Perform software reset
-        HAL_NVIC_SystemReset();
-        // Unreachable
-        abort();
-    }
-    
-    static void LEDSet(const STM::Cmd& cmd) {
-        switch (cmd.arg.LEDSet.idx) {
-        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
-        case 1:  USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
-        case 2:  USBAcceptCommand(true); LED2::Write(cmd.arg.LEDSet.on); break;
-        case 3:  USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;
-        default: USBAcceptCommand(false); return;
-        }
-    }
-    
     static MSP::Resp MSPSend(const MSP::Cmd& cmd) {
         return _TaskMSPComms::Send(cmd);
     }
@@ -205,8 +154,18 @@ private:
                 STM::Cmd cmd;
                 USB::CmdRecv(cmd);
                 
-                // Dispatch the command to our handler task
-                _TaskCmdHandle::Handle(cmd);
+                switch (cmd.op) {
+                // We specially-handle the Reset command from this thread to allow us to recover
+                // from _TaskCmdHandle hanging.
+                case STM::Op::Reset:
+                    _Reset(cmd);
+                    break;
+                
+                default:
+                    // Dispatch the command to our handler task
+                    _TaskCmdHandle::Handle(cmd);
+                    break;
+                }
             }
         }
         
@@ -222,21 +181,25 @@ private:
     
     struct _TaskCmdHandle {
         static void Handle(const STM::Cmd& c) {
-            // We intentionally don't check for _Cmd==nullopt because we need the Reset
-            // command to work even if _TaskCmdHandle is hung from the previous command.
+            // Wait until previous command is finished being handled
+            Scheduler::Wait([&] { return !_Cmd; });
             _Cmd = c;
             Scheduler::template Start<_TaskCmdHandle>(Run);
+        }
+        
+        static void Reset() {
+            Scheduler::template Stop<_TaskCmdHandle>();
+            _Cmd = std::nullopt;
         }
         
         static void Run() {
             using namespace STM;
             
             switch (_Cmd->op) {
-            case Op::Reset:             Reset(*_Cmd);               break;
-            case Op::StatusGet:         StatusGet(*_Cmd);           break;
-            case Op::BatteryStatusGet:  BatteryStatusGet(*_Cmd);    break;
-            case Op::BootloaderInvoke:  BootloaderInvoke(*_Cmd);    break;
-            case Op::LEDSet:            LEDSet(*_Cmd);              break;
+            case Op::StatusGet:         _StatusGet(*_Cmd);          break;
+            case Op::BatteryStatusGet:  _BatteryStatusGet(*_Cmd);   break;
+            case Op::BootloaderInvoke:  _BootloaderInvoke(*_Cmd);   break;
+            case Op::LEDSet:            _LEDSet(*_Cmd);             break;
             default:                    T_CmdHandle(*_Cmd);         break;
             }
             
@@ -436,6 +399,59 @@ private:
         // Enable GPIO clocks
         {
             __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
+        }
+    }
+    
+    static void _Reset(const STM::Cmd& cmd) {
+        // Reset _TaskCmdHandle
+        _TaskCmdHandle::Reset();
+        // Reset USB endpoints
+        USB::EndpointsReset();
+        // Call supplied T_Reset function
+        T_Reset();
+        // Send status
+        USBSendStatus(true);
+    }
+    
+    static void _StatusGet(const STM::Cmd& cmd) {
+        // Accept command
+        USBAcceptCommand(true);
+        
+        // Send status struct
+        alignas(4) const STM::Status status = { // Aligned to send via USB
+            .magic      = STM::Status::MagicNumber,
+            .version    = STM::Version,
+            .mode       = T_Mode,
+        };
+        
+        USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
+    }
+    
+    static void _BatteryStatusGet(const STM::Cmd& cmd) {
+        // Accept command
+        USBAcceptCommand(true);
+        
+        alignas(4) // Aligned to send via USB
+        const STM::BatteryStatus status = _TaskMSPComms::BatteryStatus();
+        USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
+    }
+    
+    static void _BootloaderInvoke(const STM::Cmd& cmd) {
+        // Accept command
+        USBAcceptCommand(true);
+        // Perform software reset
+        HAL_NVIC_SystemReset();
+        // Unreachable
+        abort();
+    }
+    
+    static void _LEDSet(const STM::Cmd& cmd) {
+        switch (cmd.arg.LEDSet.idx) {
+        case 0:  USBAcceptCommand(true); LED0::Write(cmd.arg.LEDSet.on); break;
+        case 1:  USBAcceptCommand(true); LED1::Write(cmd.arg.LEDSet.on); break;
+        case 2:  USBAcceptCommand(true); LED2::Write(cmd.arg.LEDSet.on); break;
+        case 3:  USBAcceptCommand(true); LED3::Write(cmd.arg.LEDSet.on); break;
+        default: USBAcceptCommand(false); return;
         }
     }
 };

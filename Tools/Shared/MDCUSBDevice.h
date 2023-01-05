@@ -67,10 +67,10 @@ public:
         // Send command
         _dev.vendorRequestOut(0, cmd);
         
-        // Flush endpoints
+        // Reset endpoints
         const std::vector<uint8_t> eps = _dev.endpoints();
         for (const uint8_t ep : eps) {
-            _flushEndpoint(ep);
+            _endpointReset(ep);
         }
         _checkStatus("Reset command failed");
     }
@@ -90,8 +90,6 @@ public:
     }
     
     STM::BatteryStatus batteryStatusGet() {
-        assert(_mode == STM::Status::Modes::STMApp);
-        
         const STM::Cmd cmd = { .op = STM::Op::BatteryStatusGet };
         _sendCmd(cmd);
         
@@ -559,7 +557,7 @@ public:
     }
     
 private:
-    void _flushEndpoint(uint8_t ep) {
+    void _endpointReset(uint8_t ep) {
         namespace USB = Toastbox::USB;
         if ((ep&USB::Endpoint::DirectionMask) == USB::Endpoint::DirectionOut) {
             // Send 2x ZLPs + sentinel
@@ -569,9 +567,12 @@ private:
             _dev.write(ep, &sentinel, sizeof(sentinel));
         
         } else {
+            constexpr size_t BufSize = 16*1024;
+            auto buf = std::make_unique<uint8_t[]>(BufSize);
+            
             // Flush data from the endpoint until we get a ZLP
             for (;;) {
-                const size_t len = _dev.read(ep, _buf, sizeof(_buf));
+                const size_t len = _dev.read(ep, buf.get(), BufSize);
                 if (!len) break;
             }
             
@@ -600,7 +601,6 @@ private:
     USBDevice _dev;
     std::string _serial = {};
     STM::Status::Mode _mode = STM::Status::Modes::None;
-    uint8_t _buf[16*1024];
 };
 
 using MDCUSBDevicePtr = std::shared_ptr<MDCTools::Lockable<MDCUSBDevice>>;
