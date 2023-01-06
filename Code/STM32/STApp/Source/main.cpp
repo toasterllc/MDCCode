@@ -15,8 +15,8 @@
 #include "MSP430JTAG.h"
 using namespace STM;
 
-static void _CmdHandle(const STM::Cmd& cmd);
 static void _Reset();
+static void _CmdHandle(const STM::Cmd& cmd);
 
 struct _TaskUSBDataOut;
 struct _TaskUSBDataIn;
@@ -1352,7 +1352,20 @@ void _ImgCapture(const STM::Cmd& cmd) {
     _TaskReadout::Start(imagePaddedLen);
 }
 
+static void _TasksReset() {
+    _Scheduler::Stop<_TaskUSBDataOut>();
+    _Scheduler::Stop<_TaskUSBDataIn>();
+    _Scheduler::Stop<_TaskReadout>();
+}
+
+static void _Reset() {
+    _TasksReset();
+    _QSPIConfigSet(_QSPIConfigs::ICEApp);
+}
+
 static void _CmdHandle(const STM::Cmd& cmd) {
+    _TasksReset();
+    
     switch (cmd.op) {
     // ICE40 Bootloader
     case Op::ICERAMWrite:           _ICERAMWrite(cmd);                  break;
@@ -1379,14 +1392,6 @@ static void _CmdHandle(const STM::Cmd& cmd) {
     // Bad command
     default:                        _System::USBAcceptCommand(false);   break;
     }
-}
-
-static void _Reset() {
-    _Scheduler::Stop<_TaskUSBDataOut>();
-    _Scheduler::Stop<_TaskUSBDataIn>();
-    _Scheduler::Stop<_TaskReadout>();
-    
-    _QSPIConfigSet(_QSPIConfigs::ICEApp);
 }
 
 // MARK: - ISRs
