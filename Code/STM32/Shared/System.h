@@ -227,7 +227,7 @@ private:
             Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::Ms(1000);
             for (;;) {
                 // Wait until we get a command or for the deadline to pass
-                bool ok = Scheduler::WaitUntil(batteryStatusUpdateDeadline, [&] { return (bool)_Cmd; });
+                bool ok = Scheduler::WaitUntil(batteryStatusUpdateDeadline, [&] { return _MSPCmd && !_MSPResp; });
                 if (!ok) {
                     // Deadline passed; update battery status
                     _BatteryStatusUpdate();
@@ -237,28 +237,29 @@ private:
                 }
                 
                 // Send command and return response to the caller
-                _Resp = _Send(*_Cmd);
+                _MSPResp = _Send(*_MSPCmd);
             }
         }
         
         static MSP::Resp Send(const MSP::Cmd& cmd) {
-            // Wait until _Cmd is empty
-            Scheduler::Wait([&] { return !_Cmd; });
+            // Wait until _MSPCmd/_MSPResp are empty
+            Scheduler::Wait([&] { return !_MSPCmd && !_MSPResp; });
             // Supply the I2C command to be sent
-            _Cmd = cmd;
+            _MSPCmd = cmd;
             // Wait until we get a response
-            Scheduler::Wait([&] { return _Resp; });
-            const MSP::Resp resp = *_Resp;
+            Scheduler::Wait([&] { return _MSPResp; });
+            const MSP::Resp resp = *_MSPResp;
             // Reset our state
-            _Cmd = std::nullopt;
-            _Resp = std::nullopt;
+            _MSPCmd = std::nullopt;
+            _MSPResp = std::nullopt;
             return resp;
         }
         
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
             MSP::Resp resp;
             const bool ok = _I2C::Send(cmd, resp);
-            if (!ok) return std::nullopt;
+            Assert(ok);
+//            if (!ok) return std::nullopt;
             #warning TODO: handle errors properly. reset MSP if we fail?
             return resp;
         }
@@ -335,8 +336,8 @@ private:
             }
         }
         
-        static inline std::optional<MSP::Cmd> _Cmd;
-        static inline std::optional<MSP::Resp> _Resp;
+        static inline std::optional<MSP::Cmd> _MSPCmd;
+        static inline std::optional<MSP::Resp> _MSPResp;
         static inline STM::BatteryStatus _BatteryStatus = {};
         
         // Task options
