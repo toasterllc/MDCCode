@@ -128,8 +128,8 @@ static bool _VDDIMGSDSet(bool en) {
         },
     };
     
-    const MSP::Resp mspResp = _System::MSPSend(mspCmd);
-    if (!mspResp.ok) return false;
+    const auto mspResp = _System::MSPSend(mspCmd);
+    if (!mspResp || !mspResp->ok) return false;
     return true;
 }
 
@@ -914,8 +914,8 @@ static void _MSPHostModeSet(const STM::Cmd& cmd) {
         .arg = { .HostModeSet = { .en = arg.en } },
     };
     
-    const MSP::Resp mspResp = _System::MSPSend(mspCmd);
-    if (!mspResp.ok) {
+    const auto mspResp = _System::MSPSend(mspCmd);
+    if (!mspResp || !mspResp->ok) {
         _System::USBSendStatus(false);
         return;
     }
@@ -938,11 +938,11 @@ static bool __MSPStateRead(uint8_t* data, size_t len) {
             .op = MSP::Cmd::Op::StateRead,
             .arg = { .StateRead = { .chunk = (ChunkIdx)chunk } },
         };
-        const MSP::Resp mspResp = _System::MSPSend(mspCmd);
-        if (!mspResp.ok) return false;
+        const auto mspResp = _System::MSPSend(mspCmd);
+        if (!mspResp || !mspResp->ok) return false;
         
         const size_t l = std::min(len, ChunkSize);
-        memcpy(data+off, mspResp.arg.StateRead.data, l);
+        memcpy(data+off, mspResp->arg.StateRead.data, l);
         off += l;
         len -= l;
     }
@@ -1020,8 +1020,8 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
         .arg = { .TimeSet = { .time = arg.time } },
     };
     
-    const MSP::Resp mspResp = _System::MSPSend(mspCmd);
-    if (!mspResp.ok) {
+    const auto mspResp = _System::MSPSend(mspCmd);
+    if (!mspResp || !mspResp->ok) {
         _System::USBSendStatus(false);
         return;
     }

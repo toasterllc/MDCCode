@@ -118,7 +118,7 @@ public:
         USBSendStatus(s);
     }
     
-    static MSP::Resp MSPSend(const MSP::Cmd& cmd) {
+    static std::optional<MSP::Resp> MSPSend(const MSP::Cmd& cmd) {
         return _TaskMSPComms::Send(cmd);
     }
     
@@ -191,6 +191,7 @@ private:
         
         static void Reset() {
             Scheduler::template Stop<_TaskCmdHandle>();
+            _TaskMSPComms::Reset();
             _Cmd = std::nullopt;
         }
         
@@ -227,7 +228,7 @@ private:
             Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::Ms(1000);
             for (;;) {
                 // Wait until we get a command or for the deadline to pass
-                bool ok = Scheduler::WaitUntil(batteryStatusUpdateDeadline, [&] { return _MSPCmd && !_MSPResp; });
+                bool ok = Scheduler::WaitUntil(batteryStatusUpdateDeadline, [&] { return _Cmd.state==_State::Cmd; });
                 if (!ok) {
                     // Deadline passed; update battery status
                     _BatteryStatusUpdate();
@@ -237,29 +238,33 @@ private:
                 }
                 
                 // Send command and return response to the caller
-                _MSPResp = _Send(*_MSPCmd);
+                _Cmd.resp = _Send(_Cmd.cmd);
+                // Update our state
+                _Cmd.state = _State::Resp;
             }
         }
         
-        static MSP::Resp Send(const MSP::Cmd& cmd) {
-            // Wait until _MSPCmd/_MSPResp are empty
-            Scheduler::Wait([&] { return !_MSPCmd && !_MSPResp; });
+        static void Reset() {
+            _Cmd.state = _State::Idle;
+        }
+        
+        static std::optional<MSP::Resp> Send(const MSP::Cmd& cmd) {
+            // Wait until we're idle
+            Scheduler::Wait([&] { return _Cmd.state==_State::Idle; });
             // Supply the I2C command to be sent
-            _MSPCmd = cmd;
+            _Cmd.cmd = cmd;
+            _Cmd.state = _State::Cmd;
             // Wait until we get a response
-            Scheduler::Wait([&] { return _MSPResp; });
-            const MSP::Resp resp = *_MSPResp;
+            Scheduler::Wait([&] { return _Cmd.state==_State::Resp; });
             // Reset our state
-            _MSPCmd = std::nullopt;
-            _MSPResp = std::nullopt;
-            return resp;
+            _Cmd.state = _State::Idle;
+            return _Cmd.resp;
         }
         
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
             MSP::Resp resp;
             const bool ok = _I2C::Send(cmd, resp);
-            Assert(ok);
-//            if (!ok) return std::nullopt;
+            if (!ok) return std::nullopt;
             #warning TODO: handle errors properly. reset MSP if we fail?
             return resp;
         }
@@ -278,12 +283,7 @@ private:
                 .op = MSP::Cmd::Op::LEDSet,
                 .arg = { .LEDSet = { .red = red, .green = green }, },
             };
-            
-            const auto resp = _Send(cmd);
-            #warning TODO: handle errors properly
-            if (resp) {
-                Assert(resp->ok);
-            }
+            _Send(cmd);
         }
         
         static STM::BatteryStatus _BatteryStatusGet() {
@@ -295,7 +295,6 @@ private:
             // Only sample the battery voltage if charging is underway
             if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
                 const auto resp = _Send({ .op = MSP::Cmd::Op::BatterySample });
-                #warning TODO: handle errors properly
                 if (resp && resp->ok) {
                     status.voltage = resp->arg.BatterySample.sample;
                 }
@@ -336,8 +335,18 @@ private:
             }
         }
         
-        static inline std::optional<MSP::Cmd> _MSPCmd;
-        static inline std::optional<MSP::Resp> _MSPResp;
+        enum class _State {
+            Idle,
+            Cmd,
+            Resp,
+        };
+        
+        static inline struct {
+            _State state = _State::Idle;
+            MSP::Cmd cmd;
+            std::optional<MSP::Resp> resp;
+        } _Cmd;
+        
         static inline STM::BatteryStatus _BatteryStatus = {};
         
         // Task options
