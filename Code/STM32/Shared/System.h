@@ -326,35 +326,6 @@ private:
             return _BatteryChargeStatusTransitionCount > OscillationThreshold;
         }
         
-//        static std::optional<bool> _ChargeStatusSample(bool pullup) {
-//            constexpr uint32_t SampleCount = 10;
-//            constexpr uint32_t OscillationThreshold = 2; // Number of transitions to consider the signal to be oscillating
-//            
-//            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, (pullup ? GPIO_PULLUP : GPIO_PULLDOWN), GPIO_SPEED_FREQ_LOW, 0);
-//            std::optional<bool> sample;
-//            uint32_t transitionCount = 0;
-//            for (uint32_t i=0; i<SampleCount; i++) {
-//                // Sleep at the beginning of our loop, instead of the end, so that the pullup config has
-//                // time to take effect upon the first iteration.
-//                // We sleep for 1.5ms because MCP73831T's STAT signal (empirically) toggles every 3ms when
-//                // the battery isn't charging, so by choosing half that period, we maximize our chance of
-//                // observing the transitions.
-//                Scheduler::Sleep(Scheduler::Us(1500));
-//                
-//                const bool cur = _BAT_CHRG_STAT::Read();
-//                if (sample && cur!=*sample) {
-//                    transitionCount++;
-//                    // Short-circuit if we notice the signal oscillating
-//                    if (transitionCount >= OscillationThreshold) {
-//                        return std::nullopt;
-//                    }
-//                }
-//                
-//                sample = cur;
-//            }
-//            return *sample;
-//        }
-        
         static STM::BatteryStatus::ChargeStatus _ChargeStatusGet() {
             const bool oscillating = _ChargeStatusOscillating();
             if (oscillating) return STM::BatteryStatus::ChargeStatus::Shutdown;
