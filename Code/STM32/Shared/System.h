@@ -49,16 +49,6 @@ private:
     struct _TaskMSPComms;
     
 public:
-    static void LEDInit() {
-        // Enable GPIO clocks
-        __HAL_RCC_GPIOB_CLK_ENABLE();
-        
-        LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        LED3::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    }
-    
     static void Init() {
         // Reset peripherals, initialize flash interface, initialize SysTick
         HAL_Init();
@@ -72,13 +62,18 @@ public:
         HAL_DBGMCU_EnableDBGStandbyMode();
         
         // Configure LEDs
-        LEDInit();
+        _LEDInit();
         
         // Configure I2C
         _I2C::Init();
         
         // Configure USB
         USB::Init();
+        
+        // Enable interrupts for BAT_CHRG_STAT
+        constexpr uint32_t InterruptPriority = 2; // Should be >0 so that SysTick can still preempt
+        HAL_NVIC_SetPriority(EXTI15_10_IRQn, InterruptPriority, 0);
+        HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
     }
     
     // LEDs
@@ -127,7 +122,7 @@ public:
     static void Abort() {
         Toastbox::IntState ints(false);
         
-        LEDInit();
+        _LEDInit();
         for (bool x=true;; x=!x) {
             LED0::Write(x);
             LED1::Write(x);
@@ -143,6 +138,12 @@ public:
     
     static void ISR_I2CError() {
         _I2C::ISR_Error();
+    }
+    
+    static void ISR_ExtInt_15_10() {
+        if (_BAT_CHRG_STAT::InterruptClear()) {
+            _TaskMSPComms::_BatteryChargeStatusChanged();
+        }
     }
     
 private:
@@ -261,16 +262,16 @@ private:
             return _Cmd.resp;
         }
         
+        static const STM::BatteryStatus& BatteryStatus() {
+            return _BatteryStatus;
+        }
+        
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
             MSP::Resp resp;
             const bool ok = _I2C::Send(cmd, resp);
             if (!ok) return std::nullopt;
             #warning TODO: handle errors properly. reset MSP if we fail?
             return resp;
-        }
-        
-        static const STM::BatteryStatus& BatteryStatus() {
-            return _BatteryStatus;
         }
         
         static void _BatteryStatusUpdate() {
@@ -303,51 +304,74 @@ private:
             return status;
         }
         
-        static std::optional<bool> _ChargeStatusSample(bool pullup) {
-            constexpr uint32_t SampleCount = 10;
+        static bool _ChargeStatusOscillating() {
             constexpr uint32_t OscillationThreshold = 2; // Number of transitions to consider the signal to be oscillating
             
-            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, (pullup ? GPIO_PULLUP : GPIO_PULLDOWN), GPIO_SPEED_FREQ_LOW, 0);
-            std::optional<bool> sample;
-            uint32_t transitionCount = 0;
-            for (uint32_t i=0; i<SampleCount; i++) {
-                // Sleep at the beginning of our loop, instead of the end, so that the pullup config has
-                // time to take effect upon the first iteration.
-                // We sleep for 1.5ms because MCP73831T's STAT signal (empirically) toggles every 3ms when
-                // the battery isn't charging, so by choosing half that period, we maximize our chance of
-                // observing the transitions.
-                Scheduler::Sleep(Scheduler::Us(1500));
-                
-                const bool cur = _BAT_CHRG_STAT::Read();
-                if (sample && cur!=*sample) {
-                    transitionCount++;
-                    // Short-circuit if we notice the signal oscillating
-                    if (transitionCount >= OscillationThreshold) {
-                        return std::nullopt;
-                    }
-                }
-                
-                sample = cur;
+            // Start counting _BAT_CHRG_STAT transitions
+            {
+                Toastbox::IntState ints(false);
+                _BAT_CHRG_STAT::Config(GPIO_MODE_IT_RISING_FALLING, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
+                _BatteryChargeStatusTransitionCount = 0;
             }
-            return *sample;
+            
+            // Wait 10ms while we count _BAT_CHRG_STAT transitions
+            Scheduler::Sleep(Scheduler::Ms(10));
+            
+            // Stop counting _BAT_CHRG_STAT transitions
+            {
+                Toastbox::IntState ints(false);
+                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
+            }
+            
+            return _BatteryChargeStatusTransitionCount > OscillationThreshold;
         }
         
+//        static std::optional<bool> _ChargeStatusSample(bool pullup) {
+//            constexpr uint32_t SampleCount = 10;
+//            constexpr uint32_t OscillationThreshold = 2; // Number of transitions to consider the signal to be oscillating
+//            
+//            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, (pullup ? GPIO_PULLUP : GPIO_PULLDOWN), GPIO_SPEED_FREQ_LOW, 0);
+//            std::optional<bool> sample;
+//            uint32_t transitionCount = 0;
+//            for (uint32_t i=0; i<SampleCount; i++) {
+//                // Sleep at the beginning of our loop, instead of the end, so that the pullup config has
+//                // time to take effect upon the first iteration.
+//                // We sleep for 1.5ms because MCP73831T's STAT signal (empirically) toggles every 3ms when
+//                // the battery isn't charging, so by choosing half that period, we maximize our chance of
+//                // observing the transitions.
+//                Scheduler::Sleep(Scheduler::Us(1500));
+//                
+//                const bool cur = _BAT_CHRG_STAT::Read();
+//                if (sample && cur!=*sample) {
+//                    transitionCount++;
+//                    // Short-circuit if we notice the signal oscillating
+//                    if (transitionCount >= OscillationThreshold) {
+//                        return std::nullopt;
+//                    }
+//                }
+//                
+//                sample = cur;
+//            }
+//            return *sample;
+//        }
+        
         static STM::BatteryStatus::ChargeStatus _ChargeStatusGet() {
-            std::optional<bool> a = _ChargeStatusSample(true);
-            // _ChargeStatusSample() returns nullopt if BAT_CHRG_STAT is oscillating.
-            // If that's the case, then the battery isn't charging, so return as such.
-            if (!a) return STM::BatteryStatus::ChargeStatus::Shutdown;
+            const bool oscillating = _ChargeStatusOscillating();
+            if (oscillating) return STM::BatteryStatus::ChargeStatus::Shutdown;
             
-            std::optional<bool> b = _ChargeStatusSample(false);
-            // _ChargeStatusSample() returns nullopt if BAT_CHRG_STAT is oscillating.
-            // If that's the case, then the battery isn't charging, so return as such.
-            if (!b) return STM::BatteryStatus::ChargeStatus::Shutdown;
+            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
+            Scheduler::Sleep(Scheduler::Ms(1));
+            const bool a = _BAT_CHRG_STAT::Read();
             
-            if (*a != *b) {
+            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
+            Scheduler::Sleep(Scheduler::Ms(1));
+            const bool b = _BAT_CHRG_STAT::Read();
+            
+            if (a != b) {
                 // _BAT_CHRG_STAT == high-z
                 return STM::BatteryStatus::ChargeStatus::Shutdown;
             } else {
-                if (!*a) {
+                if (!b) {
                     // _BAT_CHRG_STAT == low
                     return STM::BatteryStatus::ChargeStatus::Underway;
                 } else {
@@ -355,6 +379,10 @@ private:
                     return STM::BatteryStatus::ChargeStatus::Complete;
                 }
             }
+        }
+        
+        static void _BatteryChargeStatusChanged() {
+            _BatteryChargeStatusTransitionCount++;
         }
         
         enum class _State {
@@ -370,6 +398,8 @@ private:
         } _Cmd;
         
         static inline STM::BatteryStatus _BatteryStatus = {};
+        
+        static inline std::atomic<uint32_t> _BatteryChargeStatusTransitionCount;
         
         // Task options
         static constexpr Toastbox::TaskOptions Options{
@@ -447,6 +477,16 @@ private:
         T_Reset();
         // Send status
         USBSendStatus(true);
+    }
+    
+    static void _LEDInit() {
+        // Enable GPIO clocks
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+        
+        LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        LED3::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
     static void _StatusGet(const STM::Cmd& cmd) {

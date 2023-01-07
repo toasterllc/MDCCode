@@ -33,6 +33,11 @@ public:
             .Alternate = alt,
         };
         
+        // Call HAL_GPIO_DeInit in case the interrupt was previously configured as an interrupt source.
+        // If we didn't call HAL_GPIO_DeInit(), then interrupts would remain enabled.
+        #warning TODO: reduce overhead of configuring GPIOs. we shouldn't need to de-init/init everytime,
+        #warning TODO: and we should be able to init all GPIOs simultaneously, like with MSPApp.
+        HAL_GPIO_DeInit(&Port, Bit);
         HAL_GPIO_Init(&Port, &cfg);
     }
     
@@ -42,5 +47,12 @@ public:
     
     static void Write(bool x) {
         HAL_GPIO_WritePin(&Port, Bit, (x ? GPIO_PIN_SET : GPIO_PIN_RESET));
+    }
+    
+    static bool InterruptClear() {
+        if (!(EXTI->PR & Bit)) return false;
+        // Clear interrupt
+        EXTI->PR = Bit;
+        return true;
     }
 };
