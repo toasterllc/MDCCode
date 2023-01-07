@@ -303,96 +303,56 @@ private:
             return status;
         }
         
-        static STM::BatteryStatus::ChargeStatus _ChargeStatusGet() {
-            using namespace STM;
+        static std::optional<bool> _ChargeStatusSample(bool pullup) {
+            constexpr uint32_t SampleCount = 10;
+            constexpr uint32_t OscillationThreshold = 2; // Number of transitions to consider the signal to be oscillating
             
-//            LED0::Write(1);
-//            Scheduler::Sleep(Scheduler::Ms(1000));
-//            LED0::Write(0);
-            
-            // The battery charger IC (MCP73831T-2ACI/OT) has tristate output, where:
-            //   high-z: shutdown / no battery
-            //   low: charging underway
-            //   high: charging complete
-            // To sense these 3 different states, we configure our GPIO with a pullup
-            // and read the value of the pin, repeat with a pulldown, and compare the
-            // read values.
-            
-//            using _ICE_ST_SPI_CS_ = GPIO<GPIOPortE, 12>;
-//            _ICE_ST_SPI_CS_::Write(1);
-//            _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//            for (;;) {
-//                LED0::Write(0);
-//                _ICE_ST_SPI_CS_::Write(0);
-//                Scheduler::Sleep(Scheduler::Ms(1000));
-//                
-//                LED0::Write(1);
-//                _ICE_ST_SPI_CS_::Write(1);
-//                Scheduler::Sleep(Scheduler::Ms(1000));
-//            }
-            
-            for (;;) {
-//                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//                _BAT_CHRG_STAT::Write(0);
-//                Scheduler::Sleep(Scheduler::Ms(1000));
+            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, (pullup ? GPIO_PULLUP : GPIO_PULLDOWN), GPIO_SPEED_FREQ_LOW, 0);
+            std::optional<bool> sample;
+            uint32_t transitionCount = 0;
+            for (uint32_t i=0; i<SampleCount; i++) {
+                // Sleep at the beginning of our loop, instead of the end, so that the pullup config has
+                // time to take effect upon the first iteration.
+                // We sleep for 1.5ms because MCP73831T's STAT signal (empirically) toggles every 3ms when
+                // the battery isn't charging, so by choosing half that period, we maximize our chance of
+                // observing the transitions.
+                Scheduler::Sleep(Scheduler::Us(1500));
                 
-                _BAT_CHRG_STAT::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-                _BAT_CHRG_STAT::Write(1);
-                Scheduler::Sleep(Scheduler::Ms(1000));
+                const bool cur = _BAT_CHRG_STAT::Read();
+                if (sample && cur!=*sample) {
+                    transitionCount++;
+                    // Short-circuit if we notice the signal oscillating
+                    if (transitionCount >= OscillationThreshold) {
+                        return std::nullopt;
+                    }
+                }
                 
-                
-//                _BAT_CHRG_STAT::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//                _BAT_CHRG_STAT::Write(1);
-//                Scheduler::Sleep(Scheduler::Ms(1000));
-                
-//                LED0::Write(1);
-//                LED1::Write(1);
-//                LED2::Write(1);
-//                LED3::Write(1);
-//                
-//                
-//                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
-//                Scheduler::Sleep(Scheduler::Ms(1000));
-//                
-//                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
-//                Scheduler::Sleep(Scheduler::Ms(1000));
-                
-                
-//                _BAT_CHRG_STAT::Write(0);
-//                _BAT_CHRG_STAT::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//                Scheduler::Sleep(Scheduler::Ms(1000));
-                
-//                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//                Scheduler::Sleep(Scheduler::Ms(1000));
-                
-                
-                
-//                _BAT_CHRG_STAT::Write(0);
-//                _BAT_CHRG_STAT::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//                Scheduler::Sleep(Scheduler::Ms(1000));
-//                
-//                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//                Scheduler::Sleep(Scheduler::Ms(1000));
+                sample = cur;
             }
+            return *sample;
+        }
+        
+        static STM::BatteryStatus::ChargeStatus _ChargeStatusGet() {
+            std::optional<bool> a = _ChargeStatusSample(true);
+            // _ChargeStatusSample() returns nullopt if BAT_CHRG_STAT is oscillating.
+            // If that's the case, then the battery isn't charging, so return as such.
+            if (!a) return STM::BatteryStatus::ChargeStatus::Shutdown;
             
-            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
-            Scheduler::Sleep(Scheduler::Ms(1000));
-            const bool a = _BAT_CHRG_STAT::Read();
+            std::optional<bool> b = _ChargeStatusSample(false);
+            // _ChargeStatusSample() returns nullopt if BAT_CHRG_STAT is oscillating.
+            // If that's the case, then the battery isn't charging, so return as such.
+            if (!b) return STM::BatteryStatus::ChargeStatus::Shutdown;
             
-            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
-            Scheduler::Sleep(Scheduler::Ms(1000));
-            const bool b = _BAT_CHRG_STAT::Read();
-            
-            if (a != b) {
+            if (*a != *b) {
                 // _BAT_CHRG_STAT == high-z
-                return BatteryStatus::ChargeStatus::Shutdown;
+                return STM::BatteryStatus::ChargeStatus::Shutdown;
             } else {
-                if (!a) {
+                if (!*a) {
                     // _BAT_CHRG_STAT == low
-                    return BatteryStatus::ChargeStatus::Underway;
+                    return STM::BatteryStatus::ChargeStatus::Underway;
                 } else {
                     // _BAT_CHRG_STAT == high
-                    return BatteryStatus::ChargeStatus::Complete;
+                    return STM::BatteryStatus::ChargeStatus::Complete;
                 }
             }
         }
