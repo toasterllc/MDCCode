@@ -223,7 +223,7 @@ private:
     struct _TaskMSPComms {
         static void Run() {
             using Deadline = typename Scheduler::Deadline;
-            constexpr uint16_t BatteryStatusUpdateIntervalMs = 10000;
+            constexpr uint16_t BatteryStatusUpdateIntervalMs = 100;
             
             Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::Ms(1000);
             for (;;) {
@@ -306,6 +306,10 @@ private:
         static STM::BatteryStatus::ChargeStatus _ChargeStatusGet() {
             using namespace STM;
             
+//            LED0::Write(1);
+//            Scheduler::Sleep(Scheduler::Ms(1000));
+//            LED0::Write(0);
+            
             // The battery charger IC (MCP73831T-2ACI/OT) has tristate output, where:
             //   high-z: shutdown / no battery
             //   low: charging underway
@@ -313,12 +317,70 @@ private:
             // To sense these 3 different states, we configure our GPIO with a pullup
             // and read the value of the pin, repeat with a pulldown, and compare the
             // read values.
+            
+//            using _ICE_ST_SPI_CS_ = GPIO<GPIOPortE, 12>;
+//            _ICE_ST_SPI_CS_::Write(1);
+//            _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//            for (;;) {
+//                LED0::Write(0);
+//                _ICE_ST_SPI_CS_::Write(0);
+//                Scheduler::Sleep(Scheduler::Ms(1000));
+//                
+//                LED0::Write(1);
+//                _ICE_ST_SPI_CS_::Write(1);
+//                Scheduler::Sleep(Scheduler::Ms(1000));
+//            }
+            
+            for (;;) {
+//                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//                _BAT_CHRG_STAT::Write(0);
+//                Scheduler::Sleep(Scheduler::Ms(1000));
+                
+                _BAT_CHRG_STAT::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+                _BAT_CHRG_STAT::Write(1);
+                Scheduler::Sleep(Scheduler::Ms(1000));
+                
+                
+//                _BAT_CHRG_STAT::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//                _BAT_CHRG_STAT::Write(1);
+//                Scheduler::Sleep(Scheduler::Ms(1000));
+                
+//                LED0::Write(1);
+//                LED1::Write(1);
+//                LED2::Write(1);
+//                LED3::Write(1);
+//                
+//                
+//                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
+//                Scheduler::Sleep(Scheduler::Ms(1000));
+//                
+//                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
+//                Scheduler::Sleep(Scheduler::Ms(1000));
+                
+                
+//                _BAT_CHRG_STAT::Write(0);
+//                _BAT_CHRG_STAT::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//                Scheduler::Sleep(Scheduler::Ms(1000));
+                
+//                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//                Scheduler::Sleep(Scheduler::Ms(1000));
+                
+                
+                
+//                _BAT_CHRG_STAT::Write(0);
+//                _BAT_CHRG_STAT::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//                Scheduler::Sleep(Scheduler::Ms(1000));
+//                
+//                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+//                Scheduler::Sleep(Scheduler::Ms(1000));
+            }
+            
             _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
-            Scheduler::Sleep(Scheduler::Ms(10));
+            Scheduler::Sleep(Scheduler::Ms(1000));
             const bool a = _BAT_CHRG_STAT::Read();
             
             _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
-            Scheduler::Sleep(Scheduler::Ms(10));
+            Scheduler::Sleep(Scheduler::Ms(1000));
             const bool b = _BAT_CHRG_STAT::Read();
             
             if (a != b) {
