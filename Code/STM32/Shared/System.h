@@ -224,9 +224,9 @@ private:
     struct _TaskMSPComms {
         static void Run() {
             using Deadline = typename Scheduler::Deadline;
-            constexpr uint16_t BatteryStatusUpdateIntervalMs = 100;
+            constexpr uint16_t BatteryStatusUpdateIntervalMs = 2000;
             
-            Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::Ms(1000);
+            Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::Ms(200);
             for (;;) {
                 // Wait until we get a command or for the deadline to pass
                 bool ok = Scheduler::WaitUntil(batteryStatusUpdateDeadline, [&] { return _Cmd.state==_State::Cmd; });
