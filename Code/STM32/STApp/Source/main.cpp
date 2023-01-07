@@ -526,90 +526,90 @@ struct _TaskReadout {
 // MARK: - Commands
 
 static void _ICERAMWrite(const STM::Cmd& cmd) {
-//    auto& arg = cmd.arg.ICERAMWrite;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Configure ICE40 control GPIOs
-//    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    
-//    // Disable flash
-//    _ICE_ST_FLASH_EN::Write(0);
-//    
-//    // Put ICE40 into configuration mode
-//    _ICE_ST_SPI_CLK::Write(1);
-//    
-//    _ICE_ST_SPI_CS_::Write(0);
-//    _ICE_CRST_::Write(0);
-//    _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms (ideally, 200 ns)
-//    
-//    _ICE_CRST_::Write(1);
-//    _Scheduler::Sleep(_Scheduler::Ms(2)); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
-//    
-//    // Configure QSPI for writing the ICE40 configuration
-//    _QSPIConfigSet(_QSPIConfigs::ICEWrite);
-//    
-//    // Send 8 clocks
-//    static const uint8_t ff = 0xff;
-//    _QSPI::Write(_QSPICmd::ICEWrite(sizeof(ff)), &ff);
-//    
-//    // Reset state
-//    _Bufs.reset();
-//    
-//    // Trigger the USB DataOut task with the amount of data
-//    _TaskUSBDataOut::Start(arg.len);
-//    
-//    for (;;) {
-//        // Wait until we have data to consume
-//        _Scheduler::Wait([] { return _Bufs.rok(); });
-//        
-//        // Write the data over QSPI and wait for completion
-//        auto& buf = _Bufs.rget();
-//        if (buf.len) {
-//            _QSPI::Write(_QSPICmd::ICEWrite(buf.len), buf.data);
-//        }
-//        _Bufs.rpop();
-//        if (!buf.len) break; // We're done when we receive an empty buffer
-//    }
-//    
-//    // Wait for CDONE to be asserted
-//    {
-//        bool ok = false;
-//        for (int i=0; i<10 && !ok; i++) {
-//            if (i) _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms
-//            ok = _ICE_CDONE::Read();
-//        }
-//        
-//        if (!ok) {
-//            _System::USBSendStatus(false);
-//            return;
-//        }
-//    }
-//    
-//    // Finish
-//    {
-//        // Supply >=49 additional clocks (8*7=56 clocks), per the
-//        // "iCE40 Programming and Configuration" guide.
-//        // These clocks apparently reach the user application. Since this
-//        // appears unavoidable, prevent the clocks from affecting the user
-//        // application by writing 0xFF, which the user application must
-//        // consider as a NOP.
-//        constexpr uint8_t ClockCount = 7;
-//        static int i;
-//        for (i=0; i<ClockCount; i++) {
-//            _QSPI::Write(_QSPICmd::ICEWrite(sizeof(ff)), &ff);
-//        }
-//    }
-//    
-//    // Release chip-select now that we're done
-//    _ICE_ST_SPI_CS_::Write(1);
-//    
-//    _System::USBSendStatus(true);
+    auto& arg = cmd.arg.ICERAMWrite;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Configure ICE40 control GPIOs
+    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Disable flash
+    _ICE_ST_FLASH_EN::Write(0);
+    
+    // Put ICE40 into configuration mode
+    _ICE_ST_SPI_CLK::Write(1);
+    
+    _ICE_ST_SPI_CS_::Write(0);
+    _ICE_CRST_::Write(0);
+    _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms (ideally, 200 ns)
+    
+    _ICE_CRST_::Write(1);
+    _Scheduler::Sleep(_Scheduler::Ms(2)); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+    
+    // Configure QSPI for writing the ICE40 configuration
+    _QSPIConfigSet(_QSPIConfigs::ICEWrite);
+    
+    // Send 8 clocks
+    static const uint8_t ff = 0xff;
+    _QSPI::Write(_QSPICmd::ICEWrite(sizeof(ff)), &ff);
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Trigger the USB DataOut task with the amount of data
+    _TaskUSBDataOut::Start(arg.len);
+    
+    for (;;) {
+        // Wait until we have data to consume
+        _Scheduler::Wait([] { return _Bufs.rok(); });
+        
+        // Write the data over QSPI and wait for completion
+        auto& buf = _Bufs.rget();
+        if (buf.len) {
+            _QSPI::Write(_QSPICmd::ICEWrite(buf.len), buf.data);
+        }
+        _Bufs.rpop();
+        if (!buf.len) break; // We're done when we receive an empty buffer
+    }
+    
+    // Wait for CDONE to be asserted
+    {
+        bool ok = false;
+        for (int i=0; i<10 && !ok; i++) {
+            if (i) _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms
+            ok = _ICE_CDONE::Read();
+        }
+        
+        if (!ok) {
+            _System::USBSendStatus(false);
+            return;
+        }
+    }
+    
+    // Finish
+    {
+        // Supply >=49 additional clocks (8*7=56 clocks), per the
+        // "iCE40 Programming and Configuration" guide.
+        // These clocks apparently reach the user application. Since this
+        // appears unavoidable, prevent the clocks from affecting the user
+        // application by writing 0xFF, which the user application must
+        // consider as a NOP.
+        constexpr uint8_t ClockCount = 7;
+        static int i;
+        for (i=0; i<ClockCount; i++) {
+            _QSPI::Write(_QSPICmd::ICEWrite(sizeof(ff)), &ff);
+        }
+    }
+    
+    // Release chip-select now that we're done
+    _ICE_ST_SPI_CS_::Write(1);
+    
+    _System::USBSendStatus(true);
 }
 
 static void __ICEFlashIn(uint8_t* d, size_t len) {
@@ -701,227 +701,227 @@ static void _ICEFlashWait() {
 //}
 
 static void _ICEFlashRead(const STM::Cmd& cmd) {
-//    auto& arg = cmd.arg.ICEFlashRead;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Configure ICE40 control GPIOs
-//    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_D5::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    
-//    // Hold ICE40 in reset while we write to flash
-//    _ICE_CRST_::Write(0);
-//    
-//    // Set default clock state before enabling flash
-//    _ICE_ST_SPI_CLK::Write(0);
-//    
-//    // De-assert chip select before enabling flash
-//    _ICE_ST_SPI_CS_::Write(1);
-//    
-//    // Enable flash
-//    _ICE_ST_FLASH_EN::Write(1);
-//    
-//    // Reset flash
-//    _ICEFlashOut(0x66);
-//    _ICEFlashOut(0x99);
-//    _Scheduler::Sleep(_Scheduler::Us(32)); // "the device will take approximately tRST=30us to reset"
-//    
-//    // Reset state
-//    _Bufs.reset();
-//    
-//    // Start the USB DataIn task
-//    _TaskUSBDataIn::Start();
-//    
-//    _ICE_ST_SPI_CS_::Write(0);
-//    
-//    // Start flash read
-//    {
-//        const uint8_t instr[] = {
-//            0x03,
-//            (uint8_t)((arg.addr&0xFF0000)>>16),
-//            (uint8_t)((arg.addr&0x00FF00)>>8),
-//            (uint8_t)((arg.addr&0x0000FF)>>0),
-//        };
-//        
-//        __ICEFlashOut(instr, sizeof(instr));
-//    }
-//    
-//    uint32_t addr = arg.addr;
-//    uint32_t len = arg.len;
-//    while (len) {
-//        _Scheduler::Wait([] { return _Bufs.wok(); });
-//        
-//        auto& buf = _Bufs.wget();
-//        // Prepare to receive either `len` bytes or the
-//        // buffer capacity bytes, whichever is smaller.
-//        const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
-//        __ICEFlashIn(buf.data, chunkLen);
-//        addr += chunkLen;
-//        len -= chunkLen;
-//        // Enqueue the buffer
-//        buf.len = chunkLen;
-//        _Bufs.wpush();
-//    }
-//    
-//    // Wait for DataIn task to complete
-//    _Scheduler::Wait([] { return !_Bufs.rok(); });
-//    
-//    // Disable flash
-//    _ICE_ST_FLASH_EN::Write(0);
-//    
-//    _ICE_ST_SPI_CLK::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_CS_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_FLASH_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_D5::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    
-//    // Take ICE40 out of reset
-//    _ICE_CRST_::Write(1);
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
+    auto& arg = cmd.arg.ICEFlashRead;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Configure ICE40 control GPIOs
+    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D5::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Hold ICE40 in reset while we write to flash
+    _ICE_CRST_::Write(0);
+    
+    // Set default clock state before enabling flash
+    _ICE_ST_SPI_CLK::Write(0);
+    
+    // De-assert chip select before enabling flash
+    _ICE_ST_SPI_CS_::Write(1);
+    
+    // Enable flash
+    _ICE_ST_FLASH_EN::Write(1);
+    
+    // Reset flash
+    _ICEFlashOut(0x66);
+    _ICEFlashOut(0x99);
+    _Scheduler::Sleep(_Scheduler::Us(32)); // "the device will take approximately tRST=30us to reset"
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Start the USB DataIn task
+    _TaskUSBDataIn::Start();
+    
+    _ICE_ST_SPI_CS_::Write(0);
+    
+    // Start flash read
+    {
+        const uint8_t instr[] = {
+            0x03,
+            (uint8_t)((arg.addr&0xFF0000)>>16),
+            (uint8_t)((arg.addr&0x00FF00)>>8),
+            (uint8_t)((arg.addr&0x0000FF)>>0),
+        };
+        
+        __ICEFlashOut(instr, sizeof(instr));
+    }
+    
+    uint32_t addr = arg.addr;
+    uint32_t len = arg.len;
+    while (len) {
+        _Scheduler::Wait([] { return _Bufs.wok(); });
+        
+        auto& buf = _Bufs.wget();
+        // Prepare to receive either `len` bytes or the
+        // buffer capacity bytes, whichever is smaller.
+        const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
+        __ICEFlashIn(buf.data, chunkLen);
+        addr += chunkLen;
+        len -= chunkLen;
+        // Enqueue the buffer
+        buf.len = chunkLen;
+        _Bufs.wpush();
+    }
+    
+    // Wait for DataIn task to complete
+    _Scheduler::Wait([] { return !_Bufs.rok(); });
+    
+    // Disable flash
+    _ICE_ST_FLASH_EN::Write(0);
+    
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_FLASH_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D5::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Take ICE40 out of reset
+    _ICE_CRST_::Write(1);
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 static void _ICEFlashWrite(const STM::Cmd& cmd) {
-//    auto& arg = cmd.arg.ICEFlashWrite;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Configure ICE40 control GPIOs
-//    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_D5::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    
-//    // Hold ICE40 in reset while we write to flash
-//    _ICE_CRST_::Write(0);
-//    
-//    // Set default clock state before enabling flash
-//    _ICE_ST_SPI_CLK::Write(0);
-//    
-//    // De-assert chip select before enabling flash
-//    _ICE_ST_SPI_CS_::Write(1);
-//    
-//    // Enable flash
-//    _ICE_ST_FLASH_EN::Write(1);
-//    
-//    // Reset flash
-//    _ICEFlashOut(0x66);
-//    _ICEFlashOut(0x99);
-//    _Scheduler::Sleep(_Scheduler::Us(32)); // "the device will take approximately tRST=30us to reset"
-//    
-//    // Write enable
-//    _ICEFlashOut(0x06);
-//    // Mass erase
-//    _ICEFlashOut(0xC7);
-//    // Wait until erase is complete
-//    _ICEFlashWait();
-//    
-//    // Reset state
-//    _Bufs.reset();
-//    
-//    // Trigger the USB DataOut task with the amount of data
-//    _TaskUSBDataOut::Start(arg.len);
-//    
-//    constexpr size_t FlashPageSize = 256;
-//    uint32_t addr = 0;
-//    for (;;) {
-//        // Wait until we have data to consume, and QSPI is ready to write
-//        _Scheduler::Wait([] { return _Bufs.rok(); });
-//        
-//        // Write the data over SPI and wait for completion
-//        auto& buf = _Bufs.rget();
-//        if (buf.len) {
-//            // We only allow writing to addresses that are page-aligned.
-//            // If we receive some data over USB that isn't a multiple of the flash's page size,
-//            // then this check will fail. So data sent over USB must be a multiple of the flash
-//            // page size, excepting the final/remainder piece of data if the entire data isn't
-//            // a multiple of the flash's page size.
-//            if (addr & (FlashPageSize-1)) {
-//                _System::USBSendStatus(false);
-//                return;
-//            }
-//            
-//            size_t chunkOff = 0;
-//            for (;;) {
-//                const size_t chunkLen = std::min(FlashPageSize, buf.len-chunkOff);
-//                if (!chunkLen) break;
-//                
-//                // Write enable
-//                _ICEFlashOut(0x06);
-//                
-//                // Page program
-//                {
-//                    const uint8_t instr[] = {
-//                        0x02,
-//                        (uint8_t)((addr&0xFF0000)>>16),
-//                        (uint8_t)((addr&0x00FF00)>>8),
-//                        (uint8_t)((addr&0x0000FF)>>0),
-//                    };
-//                    
-//                    _ICE_ST_SPI_CS_::Write(0);
-//                    __ICEFlashOut(instr, sizeof(instr));
-//                    __ICEFlashOut(buf.data+chunkOff, chunkLen);
-//                    _ICE_ST_SPI_CS_::Write(1);
-//                }
-//                
-//                // Wait until write is complete
-//                _ICEFlashWait();
-//                
-//                chunkOff += chunkLen;
-//                addr += chunkLen;
-//            }
-//        }
-//        
-//        _Bufs.rpop();
-//        if (!buf.len) break; // We're done when we receive an empty buffer
-//    }
-//    
-//    // Disable flash
-//    _ICE_ST_FLASH_EN::Write(0);
-//    
-//    _ICE_ST_SPI_CLK::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_CS_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_FLASH_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    _ICE_ST_SPI_D5::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-//    
-//    // Take ICE40 out of reset
-//    _ICE_CRST_::Write(1);
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
+    auto& arg = cmd.arg.ICEFlashWrite;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Configure ICE40 control GPIOs
+    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D5::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Hold ICE40 in reset while we write to flash
+    _ICE_CRST_::Write(0);
+    
+    // Set default clock state before enabling flash
+    _ICE_ST_SPI_CLK::Write(0);
+    
+    // De-assert chip select before enabling flash
+    _ICE_ST_SPI_CS_::Write(1);
+    
+    // Enable flash
+    _ICE_ST_FLASH_EN::Write(1);
+    
+    // Reset flash
+    _ICEFlashOut(0x66);
+    _ICEFlashOut(0x99);
+    _Scheduler::Sleep(_Scheduler::Us(32)); // "the device will take approximately tRST=30us to reset"
+    
+    // Write enable
+    _ICEFlashOut(0x06);
+    // Mass erase
+    _ICEFlashOut(0xC7);
+    // Wait until erase is complete
+    _ICEFlashWait();
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Trigger the USB DataOut task with the amount of data
+    _TaskUSBDataOut::Start(arg.len);
+    
+    constexpr size_t FlashPageSize = 256;
+    uint32_t addr = 0;
+    for (;;) {
+        // Wait until we have data to consume, and QSPI is ready to write
+        _Scheduler::Wait([] { return _Bufs.rok(); });
+        
+        // Write the data over SPI and wait for completion
+        auto& buf = _Bufs.rget();
+        if (buf.len) {
+            // We only allow writing to addresses that are page-aligned.
+            // If we receive some data over USB that isn't a multiple of the flash's page size,
+            // then this check will fail. So data sent over USB must be a multiple of the flash
+            // page size, excepting the final/remainder piece of data if the entire data isn't
+            // a multiple of the flash's page size.
+            if (addr & (FlashPageSize-1)) {
+                _System::USBSendStatus(false);
+                return;
+            }
+            
+            size_t chunkOff = 0;
+            for (;;) {
+                const size_t chunkLen = std::min(FlashPageSize, buf.len-chunkOff);
+                if (!chunkLen) break;
+                
+                // Write enable
+                _ICEFlashOut(0x06);
+                
+                // Page program
+                {
+                    const uint8_t instr[] = {
+                        0x02,
+                        (uint8_t)((addr&0xFF0000)>>16),
+                        (uint8_t)((addr&0x00FF00)>>8),
+                        (uint8_t)((addr&0x0000FF)>>0),
+                    };
+                    
+                    _ICE_ST_SPI_CS_::Write(0);
+                    __ICEFlashOut(instr, sizeof(instr));
+                    __ICEFlashOut(buf.data+chunkOff, chunkLen);
+                    _ICE_ST_SPI_CS_::Write(1);
+                }
+                
+                // Wait until write is complete
+                _ICEFlashWait();
+                
+                chunkOff += chunkLen;
+                addr += chunkLen;
+            }
+        }
+        
+        _Bufs.rpop();
+        if (!buf.len) break; // We're done when we receive an empty buffer
+    }
+    
+    // Disable flash
+    _ICE_ST_FLASH_EN::Write(0);
+    
+    _ICE_ST_SPI_CLK::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_CS_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_FLASH_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    _ICE_ST_SPI_D5::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    
+    // Take ICE40 out of reset
+    _ICE_CRST_::Write(1);
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 static void _MSPHostModeSet(const STM::Cmd& cmd) {
-//    auto& arg = cmd.arg.MSPHostModeSet;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    const MSP::Cmd mspCmd = {
-//        .op = MSP::Cmd::Op::HostModeSet,
-//        .arg = { .HostModeSet = { .en = arg.en } },
-//    };
-//    
-//    const auto mspResp = _System::MSPSend(mspCmd);
-//    if (!mspResp || !mspResp->ok) {
-//        _System::USBSendStatus(false);
-//        return;
-//    }
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
+    auto& arg = cmd.arg.MSPHostModeSet;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const MSP::Cmd mspCmd = {
+        .op = MSP::Cmd::Op::HostModeSet,
+        .arg = { .HostModeSet = { .en = arg.en } },
+    };
+    
+    const auto mspResp = _System::MSPSend(mspCmd);
+    if (!mspResp || !mspResp->ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 static bool __MSPStateRead(uint8_t* data, size_t len) {
@@ -972,147 +972,147 @@ static bool __MSPStateRead(uint8_t* data, size_t len) {
 //}
 
 static void _MSPStateRead(const STM::Cmd& cmd) {
-//    // Reset state
-//    _Bufs.reset();
-//    auto& buf = _Bufs.wget();
-//    
-//    auto& arg = cmd.arg.MSPStateRead;
-//    if (arg.len > sizeof(buf.data)) {
-//        // Reject command if the requested amount of data doesn't fit in our buffer
-//        _System::USBAcceptCommand(false);
-//        return;
-//    }
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    bool ok = __MSPStateRead(buf.data, arg.len);
-//    if (!ok) {
-//        _System::USBSendStatus(false);
-//        return;
-//    }
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
-//    
-//    // Send data
-//    _USB::Send(Endpoints::DataIn, buf.data, arg.len);
+    // Reset state
+    _Bufs.reset();
+    auto& buf = _Bufs.wget();
+    
+    auto& arg = cmd.arg.MSPStateRead;
+    if (arg.len > sizeof(buf.data)) {
+        // Reject command if the requested amount of data doesn't fit in our buffer
+        _System::USBAcceptCommand(false);
+        return;
+    }
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    bool ok = __MSPStateRead(buf.data, arg.len);
+    if (!ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Send status
+    _System::USBSendStatus(true);
+    
+    // Send data
+    _USB::Send(Endpoints::DataIn, buf.data, arg.len);
 }
 
 static void _MSPStateWrite(const STM::Cmd& cmd) {
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // TODO: implement? not sure we actually need this though...
-//    
-//    // Send status
-//    _System::USBSendStatus(false);
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // TODO: implement? not sure we actually need this though...
+    
+    // Send status
+    _System::USBSendStatus(false);
 }
 
 static void _MSPTimeSet(const STM::Cmd& cmd) {
-//    auto& arg = cmd.arg.MSPTimeSet;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    const MSP::Cmd mspCmd = {
-//        .op = MSP::Cmd::Op::TimeSet,
-//        .arg = { .TimeSet = { .time = arg.time } },
-//    };
-//    
-//    const auto mspResp = _System::MSPSend(mspCmd);
-//    if (!mspResp || !mspResp->ok) {
-//        _System::USBSendStatus(false);
-//        return;
-//    }
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
+    auto& arg = cmd.arg.MSPTimeSet;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const MSP::Cmd mspCmd = {
+        .op = MSP::Cmd::Op::TimeSet,
+        .arg = { .TimeSet = { .time = arg.time } },
+    };
+    
+    const auto mspResp = _System::MSPSend(mspCmd);
+    if (!mspResp || !mspResp->ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 static void _MSPSBWConnect(const STM::Cmd& cmd) {
-//    #warning TODO: we need to acquire some mutex to prevent TaskMSPComms from trying to talk to
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    const auto mspr = _MSP.connect();
-//    
-//    // Send status
-//    _System::USBSendStatus(mspr == _MSP.Status::OK);
+    #warning TODO: we need to acquire some mutex to prevent TaskMSPComms from trying to talk to
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const auto mspr = _MSP.connect();
+    
+    // Send status
+    _System::USBSendStatus(mspr == _MSP.Status::OK);
 }
 
 static void _MSPSBWDisconnect(const STM::Cmd& cmd) {
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    _MSP.disconnect();
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    _MSP.disconnect();
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 static void _MSPSBWRead(const STM::Cmd& cmd) {
-//    auto& arg = cmd.arg.MSPSBWRead;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Reset state
-//    _Bufs.reset();
-//    
-//    // Start the USB DataIn task
-//    _TaskUSBDataIn::Start();
-//    
-//    uint32_t addr = arg.addr;
-//    uint32_t len = arg.len;
-//    while (len) {
-//        _Scheduler::Wait([] { return _Bufs.wok(); });
-//        
-//        auto& buf = _Bufs.wget();
-//        // Prepare to receive either `len` bytes or the
-//        // buffer capacity bytes, whichever is smaller.
-//        const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
-//        _MSP.read(addr, buf.data, chunkLen);
-//        addr += chunkLen;
-//        len -= chunkLen;
-//        // Enqueue the buffer
-//        buf.len = chunkLen;
-//        _Bufs.wpush();
-//    }
-//    
-//    // Wait for DataIn task to complete
-//    _Scheduler::Wait([] { return !_Bufs.rok(); });
-//    // Send status
-//    _System::USBSendStatus(true);
+    auto& arg = cmd.arg.MSPSBWRead;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Start the USB DataIn task
+    _TaskUSBDataIn::Start();
+    
+    uint32_t addr = arg.addr;
+    uint32_t len = arg.len;
+    while (len) {
+        _Scheduler::Wait([] { return _Bufs.wok(); });
+        
+        auto& buf = _Bufs.wget();
+        // Prepare to receive either `len` bytes or the
+        // buffer capacity bytes, whichever is smaller.
+        const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
+        _MSP.read(addr, buf.data, chunkLen);
+        addr += chunkLen;
+        len -= chunkLen;
+        // Enqueue the buffer
+        buf.len = chunkLen;
+        _Bufs.wpush();
+    }
+    
+    // Wait for DataIn task to complete
+    _Scheduler::Wait([] { return !_Bufs.rok(); });
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 static void _MSPSBWWrite(const STM::Cmd& cmd) {
-//    auto& arg = cmd.arg.MSPSBWWrite;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Reset state
-//    _Bufs.reset();
-//    
-//    // Trigger the USB DataOut task with the amount of data
-//    _TaskUSBDataOut::Start(arg.len);
-//    
-//    uint32_t addr = arg.addr;
-//    for (;;) {
-//        _Scheduler::Wait([] { return _Bufs.rok(); });
-//        
-//        // Write the data over Spy-bi-wire
-//        auto& buf = _Bufs.rget();
-//        if (buf.len) {
-//            _MSP.write(addr, buf.data, buf.len);
-//            addr += buf.len; // Update the MSP430 address to write to
-//        }
-//        _Bufs.rpop();
-//        if (!buf.len) break; // We're done when we receive an empty buffer
-//    }
-//    
-//    _System::USBSendStatus(true);
+    auto& arg = cmd.arg.MSPSBWWrite;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Reset state
+    _Bufs.reset();
+    
+    // Trigger the USB DataOut task with the amount of data
+    _TaskUSBDataOut::Start(arg.len);
+    
+    uint32_t addr = arg.addr;
+    for (;;) {
+        _Scheduler::Wait([] { return _Bufs.rok(); });
+        
+        // Write the data over Spy-bi-wire
+        auto& buf = _Bufs.rget();
+        if (buf.len) {
+            _MSP.write(addr, buf.data, buf.len);
+            addr += buf.len; // Update the MSP430 address to write to
+        }
+        _Bufs.rpop();
+        if (!buf.len) break; // We're done when we receive an empty buffer
+    }
+    
+    _System::USBSendStatus(true);
 }
 
 struct _MSPSBWDebugState {
@@ -1162,194 +1162,194 @@ static void _MSPSBWDebugHandleCmd(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& 
 }
 
 static void _MSPSBWDebug(const STM::Cmd& cmd) {
-//    auto& arg = cmd.arg.MSPSBWDebug;
-//    
-//    // Bail if more data was requested than the size of our buffer
-//    if (arg.respLen > sizeof(_BufQueue::Buf::data)) {
-//        // Reject command
-//        _System::USBAcceptCommand(false);
-//        return;
-//    }
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Reset state
-//    _Bufs.reset();
-//    auto& bufIn = _Bufs.wget();
-//    _Bufs.wpush();
-//    auto& bufOut = _Bufs.wget();
-//    
-//    _MSPSBWDebugState state;
-//    
-//    // Handle debug commands
-//    {
-//        size_t cmdsLenRem = arg.cmdsLen;
-//        while (cmdsLenRem) {
-//            // Receive debug commands into buf
-//            const std::optional<size_t> recvLenOpt = _USB::Recv(Endpoints::DataOut, bufIn.data, sizeof(bufIn.data));
-//            if (!recvLenOpt) return;
-//            
-//            const size_t cmdsLen = *recvLenOpt / sizeof(MSPSBWDebugCmd);
-//            
-//            // Handle each MSPSBWDebugCmd
-//            const MSPSBWDebugCmd* cmds = (MSPSBWDebugCmd*)bufIn.data;
-//            for (size_t i=0; i<cmdsLen && state.ok; i++) {
-//                _MSPSBWDebugHandleCmd(cmds[i], state, bufOut);
-//            }
-//            
-//            cmdsLenRem -= cmdsLen;
-//        }
-//    }
-//    
-//    // Reply with data generated from debug commands
-//    {
-//        // Push outstanding bits into the buffer
-//        // This is necessary for when the client reads a number of bits
-//        // that didn't fall on a byte boundary.
-//        if (state.bitsLen) _MSPSBWDebugPushReadBits(state, bufOut);
-//        
-//        if (arg.respLen) {
-//            // Send the data and wait for it to be received
-//            const bool br = _USB::Send(Endpoints::DataIn, bufOut.data, arg.respLen);
-//            if (!br) return;
-//        }
-//    }
-//    
-//    // Send status
-//    _System::USBSendStatus(state.ok);
+    auto& arg = cmd.arg.MSPSBWDebug;
+    
+    // Bail if more data was requested than the size of our buffer
+    if (arg.respLen > sizeof(_BufQueue::Buf::data)) {
+        // Reject command
+        _System::USBAcceptCommand(false);
+        return;
+    }
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Reset state
+    _Bufs.reset();
+    auto& bufIn = _Bufs.wget();
+    _Bufs.wpush();
+    auto& bufOut = _Bufs.wget();
+    
+    _MSPSBWDebugState state;
+    
+    // Handle debug commands
+    {
+        size_t cmdsLenRem = arg.cmdsLen;
+        while (cmdsLenRem) {
+            // Receive debug commands into buf
+            const std::optional<size_t> recvLenOpt = _USB::Recv(Endpoints::DataOut, bufIn.data, sizeof(bufIn.data));
+            if (!recvLenOpt) return;
+            
+            const size_t cmdsLen = *recvLenOpt / sizeof(MSPSBWDebugCmd);
+            
+            // Handle each MSPSBWDebugCmd
+            const MSPSBWDebugCmd* cmds = (MSPSBWDebugCmd*)bufIn.data;
+            for (size_t i=0; i<cmdsLen && state.ok; i++) {
+                _MSPSBWDebugHandleCmd(cmds[i], state, bufOut);
+            }
+            
+            cmdsLenRem -= cmdsLen;
+        }
+    }
+    
+    // Reply with data generated from debug commands
+    {
+        // Push outstanding bits into the buffer
+        // This is necessary for when the client reads a number of bits
+        // that didn't fall on a byte boundary.
+        if (state.bitsLen) _MSPSBWDebugPushReadBits(state, bufOut);
+        
+        if (arg.respLen) {
+            // Send the data and wait for it to be received
+            const bool br = _USB::Send(Endpoints::DataIn, bufOut.data, arg.respLen);
+            if (!br) return;
+        }
+    }
+    
+    // Send status
+    _System::USBSendStatus(state.ok);
 }
 
 void _SDInit(const STM::Cmd& cmd) {
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Prepare for comms with ICEApp via QSPI
-//    _ICEAppInit();
-//    
-//    // Disable SD power
-//    bool ok = _VDDIMGSDSet(false);
-//    if (!ok) {
-//        _System::USBSendStatus(false);
-//        return;
-//    }
-//    
-//    // Reset SD before turning power on
-//    // This is necessary to put the SD nets in a predefined state before applying power to SD
-//    _SD::Reset();
-//    
-//    // Enable SD power
-//    ok = _VDDIMGSDSet(true);
-//    if (!ok) {
-//        _System::USBSendStatus(false);
-//        return;
-//    }
-//    
-//    // Init SD card now that its power has been cycled
-//    _SD::Init();
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
-//    
-//    // Send SD card info
-//    alignas(4) const SDCardInfo cardInfo = {
-//        .cardId = _SD::CardId(),
-//        .cardData = _SD::CardData(),
-//    };
-//    
-//    _USB::Send(Endpoints::DataIn, &cardInfo, sizeof(cardInfo));
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Prepare for comms with ICEApp via QSPI
+    _ICEAppInit();
+    
+    // Disable SD power
+    bool ok = _VDDIMGSDSet(false);
+    if (!ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Reset SD before turning power on
+    // This is necessary to put the SD nets in a predefined state before applying power to SD
+    _SD::Reset();
+    
+    // Enable SD power
+    ok = _VDDIMGSDSet(true);
+    if (!ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    // Init SD card now that its power has been cycled
+    _SD::Init();
+    
+    // Send status
+    _System::USBSendStatus(true);
+    
+    // Send SD card info
+    alignas(4) const SDCardInfo cardInfo = {
+        .cardId = _SD::CardId(),
+        .cardData = _SD::CardData(),
+    };
+    
+    _USB::Send(Endpoints::DataIn, &cardInfo, sizeof(cardInfo));
 }
 
 static void _SDRead(const STM::Cmd& cmd) {
-//    const auto& arg = cmd.arg.SDRead;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Reset chip select in case a read was in progress
-//    _ICE_ST_SPI_CS_::Write(1);
-//    
-//    _SD::ReadStart(arg.block);
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
-//    
-//    // Start the Readout task
-//    _TaskReadout::Start(std::nullopt);
+    const auto& arg = cmd.arg.SDRead;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Reset chip select in case a read was in progress
+    _ICE_ST_SPI_CS_::Write(1);
+    
+    _SD::ReadStart(arg.block);
+    
+    // Send status
+    _System::USBSendStatus(true);
+    
+    // Start the Readout task
+    _TaskReadout::Start(std::nullopt);
 }
 
 void _ImgInit(const STM::Cmd& cmd) {
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    // Prepare for comms with ICEApp via QSPI
-//    _ICEAppInit();
-//    
-//    // Enable IMG power rails
-//    const bool ok = _VDDIMGSDSet(true);
-//    if (!ok) {
-//        _System::USBSendStatus(false);
-//        return;
-//    }
-//    
-//    _ImgSensor::Init();
-//    _ImgSensor::SetStreamEnabled(true);
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    // Prepare for comms with ICEApp via QSPI
+    _ICEAppInit();
+    
+    // Enable IMG power rails
+    const bool ok = _VDDIMGSDSet(true);
+    if (!ok) {
+        _System::USBSendStatus(false);
+        return;
+    }
+    
+    _ImgSensor::Init();
+    _ImgSensor::SetStreamEnabled(true);
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 void _ImgExposureSet(const STM::Cmd& cmd) {
-//    const auto& arg = cmd.arg.ImgExposureSet;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    _ImgSensor::SetCoarseIntTime(arg.coarseIntTime);
-//    _ImgSensor::SetFineIntTime(arg.fineIntTime);
-//    _ImgSensor::SetAnalogGain(arg.analogGain);
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
+    const auto& arg = cmd.arg.ImgExposureSet;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    _ImgSensor::SetCoarseIntTime(arg.coarseIntTime);
+    _ImgSensor::SetFineIntTime(arg.fineIntTime);
+    _ImgSensor::SetAnalogGain(arg.analogGain);
+    
+    // Send status
+    _System::USBSendStatus(true);
 }
 
 void _ImgCapture(const STM::Cmd& cmd) {
-//    const auto& arg = cmd.arg.ImgCapture;
-//    
-//    // Accept command
-//    _System::USBAcceptCommand(true);
-//    
-//    const uint16_t imageWidth       = (arg.size==Img::Size::Full ? Img::Full::PixelWidth         : Img::Thumb::PixelWidth       );
-//    const uint16_t imageHeight      = (arg.size==Img::Size::Full ? Img::Full::PixelHeight        : Img::Thumb::PixelHeight      );
-//    const uint32_t imagePaddedLen   = (arg.size==Img::Size::Full ? ImgSD::Full::ImagePaddedLen   : ImgSD::Thumb::ImagePaddedLen   );
-//    const Img::Header header = {
-//        .magic          = Img::Header::MagicNumber,
-//        .version        = Img::Header::Version,
-//        .imageWidth     = imageWidth,
-//        .imageHeight    = imageHeight,
-//    };
-//    
-//    const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, arg.dstRAMBlock, arg.skipCount);
-//    
-//    // stats: aligned to send via USB
-//    alignas(4) const ImgCaptureStats stats = {
-//        .len            = imagePaddedLen,
-//        .highlightCount = resp.highlightCount(),
-//        .shadowCount    = resp.shadowCount(),
-//    };
-//    
-//    // Send ImgCaptureStats
-//    const bool br = _USB::Send(Endpoints::DataIn, &stats, sizeof(stats));
-//    if (!br) return;
-//    
-//    // Arrange for the image to be read out
-//    _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstRAMBlock, arg.size));
-//    
-//    // Send status
-//    _System::USBSendStatus(true);
-//    
-//    // Start the Readout task
-//    _TaskReadout::Start(imagePaddedLen);
+    const auto& arg = cmd.arg.ImgCapture;
+    
+    // Accept command
+    _System::USBAcceptCommand(true);
+    
+    const uint16_t imageWidth       = (arg.size==Img::Size::Full ? Img::Full::PixelWidth         : Img::Thumb::PixelWidth       );
+    const uint16_t imageHeight      = (arg.size==Img::Size::Full ? Img::Full::PixelHeight        : Img::Thumb::PixelHeight      );
+    const uint32_t imagePaddedLen   = (arg.size==Img::Size::Full ? ImgSD::Full::ImagePaddedLen   : ImgSD::Thumb::ImagePaddedLen   );
+    const Img::Header header = {
+        .magic          = Img::Header::MagicNumber,
+        .version        = Img::Header::Version,
+        .imageWidth     = imageWidth,
+        .imageHeight    = imageHeight,
+    };
+    
+    const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, arg.dstRAMBlock, arg.skipCount);
+    
+    // stats: aligned to send via USB
+    alignas(4) const ImgCaptureStats stats = {
+        .len            = imagePaddedLen,
+        .highlightCount = resp.highlightCount(),
+        .shadowCount    = resp.shadowCount(),
+    };
+    
+    // Send ImgCaptureStats
+    const bool br = _USB::Send(Endpoints::DataIn, &stats, sizeof(stats));
+    if (!br) return;
+    
+    // Arrange for the image to be read out
+    _ICE::Transfer(_ICE::ImgReadoutMsg(arg.dstRAMBlock, arg.size));
+    
+    // Send status
+    _System::USBSendStatus(true);
+    
+    // Start the Readout task
+    _TaskReadout::Start(imagePaddedLen);
 }
 
 static void _TasksReset() {
