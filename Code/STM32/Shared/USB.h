@@ -108,6 +108,7 @@ public:
     // Types
     enum class State : uint8_t {
         Disconnected,
+        Connecting,
         Connected,
     };
     
@@ -259,33 +260,52 @@ public:
     template <typename T>
     static void CmdRecv(T& cmd) {
         for (;;) {
-            // Wait for a new command to arrive
-            T_Scheduler::Wait([] { return _CmdRecvLen; });
-            
-            // Disable interrupts
-            Toastbox::IntState ints(false);
-            
-            // It's possible for _CmdRecvLen to change between observing it in Wait()
-            // and then disabling interrupts. If that's the case, try again.
-            if (!_CmdRecvLen) continue;
-            
-            const size_t len = *_CmdRecvLen;
-            _CmdRecvLen = std::nullopt;
-            
-            // Short-circuit if we're not Connected, but only do this after
-            // consuming _CmdRecvLen.
-            if (_State != State::Connected) continue;
-            
-            // Reject command if the length isn't valid
-            if (len != sizeof(T)) {
-                _CmdAccept(false);
-                continue;
+            // Wait until we're in the Connecting state
+            {
+                Toastbox::IntState ints(false);
+                T_Scheduler::Wait([] { return _State == State::Connecting; });
+                // Update our state
+                _State = State::Connected;
+                _CmdRecvLen = std::nullopt;
             }
             
-            memcpy(&cmd, _CmdRecvBuf, len);
-            _CmdAccept(true);
-            break;
+            // Wait for a command
+            for (;;) {
+                // Disable interrupts
+                Toastbox::IntState ints(false);
+                
+                // Wait for a new command to arrive, or for our state to change
+                T_Scheduler::Wait([] { return _CmdRecvLen || _State!=State::Connected; });
+                
+                // If we're no longer connected, bail and wait to be connected again
+                if (_State != State::Connected) break;
+                
+                // Consume the command
+                const size_t len = *_CmdRecvLen;
+                _CmdRecvLen = std::nullopt;
+                
+                // Reject command if the length isn't valid
+                if (len != sizeof(T)) {
+                    _CmdAccept(false);
+                    continue;
+                }
+                
+                // Return command to caller
+                memcpy(&cmd, _CmdRecvBuf, len);
+                return;
+            }
         }
+    }
+    
+//    static void _WaitForConnect() {
+//        T_Scheduler::Wait([] { return _State == State::Connected; });
+//    }
+    
+    static void CmdAccept(bool accept) {
+        Toastbox::IntState ints(false);
+        // Short-circuit if we're not Connected
+        if (_State != State::Connected) return;
+        _CmdAccept(accept);
     }
     
     static std::optional<size_t> Recv(uint8_t ep, void* data, size_t len) {
@@ -349,8 +369,7 @@ private:
             }
         }
         
-        _CmdRecvLen = std::nullopt;
-        _State = State::Connected;
+        _State = State::Connecting;
         
         return (uint8_t)USBD_OK;
     }

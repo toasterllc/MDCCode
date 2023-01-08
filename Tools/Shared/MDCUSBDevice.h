@@ -63,8 +63,15 @@ public:
     
     // MARK: - Common Commands
     void reset() {
-        const STM::Cmd cmd = { .op = STM::Op::Reset };
+//        {
+//            const std::vector<uint8_t> eps = _dev.endpoints();
+//            for (const uint8_t ep : eps) {
+//                _dev.reset(ep);
+//            }
+//        }
+        
         // Send command
+        const STM::Cmd cmd = { .op = STM::Op::Reset };
         _dev.vendorRequestOut(0, cmd);
         
         // Reset endpoints

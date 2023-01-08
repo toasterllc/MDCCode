@@ -8,6 +8,7 @@
 #include "MSP.h"
 #include "BoolLock.h"
 #include "USBConfig.h"
+#include "Assert.h"
 #include "Toastbox/Task.h"
 
 // MARK: - Main Thread Stack
@@ -163,12 +164,15 @@ private:
                 // We specially-handle the Reset command from this thread to allow us to recover
                 // from _TaskCmdHandle hanging.
                 case STM::Op::Reset:
+                    USB::CmdAccept(true); // Always accept reset commands
                     _Reset(cmd);
                     break;
                 
                 default:
                     // Dispatch the command to our handler task
-                    _TaskCmdHandle::Handle(cmd);
+                    const bool accepted = _TaskCmdHandle::Handle(cmd);
+                    // Tell the host whether we accepted the command
+                    USB::CmdAccept(accepted);
                     break;
                 }
             }
@@ -186,11 +190,11 @@ private:
     };
     
     struct _TaskCmdHandle {
-        static void Handle(const STM::Cmd& c) {
-            // Wait until previous command is finished being handled
-            Scheduler::Wait([&] { return !_Cmd; });
+        static bool Handle(const STM::Cmd& c) {
+            if (_Cmd) return false; // Short-circuit if we can't handle the command because one is already underway
             _Cmd = c;
             Scheduler::template Start<_TaskCmdHandle>(Run);
+            return true;
         }
         
         static void Reset() {
