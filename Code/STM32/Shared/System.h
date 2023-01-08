@@ -6,6 +6,7 @@
 #include "USB.h"
 #include "I2C.h"
 #include "MSP.h"
+#include "Lock.h"
 #include "USBConfig.h"
 #include "Toastbox/Task.h"
 
@@ -115,6 +116,11 @@ public:
     
     static std::optional<MSP::Resp> MSPSend(const MSP::Cmd& cmd) {
         return _TaskMSPComms::Send(cmd);
+    }
+    
+    using MSPLock = Lock<Scheduler>;
+    static MSPLock& MSPLockGet() {
+        return _TaskMSPComms::Lock();
     }
     
     #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
@@ -266,7 +272,16 @@ private:
             return _BatteryStatus;
         }
         
+        // Lock(): returns a lock that can be used to ensure only one entity is trying to talk
+        // to the MSP430 at a time.
+        // Currently this is used by the MSP Spy-bi-wire (SBW) facilities to prevent I2C comms
+        // while SBW IO is taking place.
+        static MSPLock& Lock() {
+            return _Lock;
+        }
+        
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
+            auto lock = std::unique_lock(_Lock);
             MSP::Resp resp;
             const bool ok = _I2C::Send(cmd, resp);
             if (!ok) return std::nullopt;
@@ -371,6 +386,8 @@ private:
         static inline STM::BatteryStatus _BatteryStatus = {};
         
         static inline std::atomic<uint32_t> _BatteryChargeStatusTransitionCount;
+        
+        static inline MSPLock _Lock;
         
         // Task options
         static constexpr Toastbox::TaskOptions Options{

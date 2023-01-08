@@ -1030,11 +1030,19 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
+//static std::unique_lock<_System::MSPLock> _MSPSBWLock;
+
+static void _MSPSBWReset() {
+    _MSP.disconnect();
+//    _MSPSBWLock = {};
+}
+
 static void _MSPSBWConnect(const STM::Cmd& cmd) {
     #warning TODO: we need to acquire some mutex to prevent TaskMSPComms from trying to talk to
     // Accept command
     _System::USBAcceptCommand(true);
     
+    auto a = std::unique_lock(_System::MSPLockGet());
     const auto mspr = _MSP.connect();
     
     // Send status
@@ -1045,7 +1053,7 @@ static void _MSPSBWDisconnect(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    _MSP.disconnect();
+    _MSPSBWReset();
     
     // Send status
     _System::USBSendStatus(true);
