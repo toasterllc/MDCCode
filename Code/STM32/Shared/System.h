@@ -435,6 +435,8 @@ private:
         
         // Enable GPIO clocks
         {
+            __HAL_RCC_GPIOB_CLK_ENABLE(); // LED[3:0]
+            __HAL_RCC_GPIOE_CLK_ENABLE(); // _BAT_CHRG_STAT
             __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
         }
     }
@@ -451,9 +453,6 @@ private:
     }
     
     static void _LEDInit() {
-        // Enable GPIO clocks
-        __HAL_RCC_GPIOB_CLK_ENABLE();
-        
         LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);

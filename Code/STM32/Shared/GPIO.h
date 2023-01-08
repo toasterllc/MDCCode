@@ -37,6 +37,8 @@ public:
         // If we didn't call HAL_GPIO_DeInit(), then interrupts would remain enabled.
         #warning TODO: reduce overhead of configuring GPIOs. we shouldn't need to de-init/init everytime,
         #warning TODO: and we should be able to init all GPIOs simultaneously, like with MSPApp.
+        
+        #warning TODO: also, automatically call __HAL_RCC_GPIOX_CLK_ENABLE
         HAL_GPIO_DeInit(&Port, Bit);
         HAL_GPIO_Init(&Port, &cfg);
     }
