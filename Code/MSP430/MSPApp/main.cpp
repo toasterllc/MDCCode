@@ -807,6 +807,7 @@ static void _ISR_Port2() {
         _I2C::ISR_Active(iv);
         // Wake ourself
         __bic_SR_register_on_exit(LPM3_bits);
+        break;
     default:
         break;
     }
