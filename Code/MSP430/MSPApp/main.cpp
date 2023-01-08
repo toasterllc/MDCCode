@@ -916,13 +916,6 @@ static void _Abort(uint16_t domain, uint16_t line) {
 
 extern "C" [[noreturn]]
 void abort() {
-//    for (;;) {
-//        _Pin::LED_GREEN_::Write(0);
-//        _Scheduler::Delay(_Scheduler::Ms(100));
-//        _Pin::LED_GREEN_::Write(1);
-//        _Scheduler::Delay(_Scheduler::Ms(100));
-//    }
-//    
     Assert(false);
 }
 
