@@ -1031,7 +1031,7 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
 }
 
 // _MSPSBWLock: ensures mutual exclusion between MSP I2C comms (via System::_TaskMSPComms) and MSP Spy-bi-wire IO
-static std::unique_lock<_System::MSPLock> _MSPSBWLock(_System::MSPLock, std::defer_lock);
+static _System::MSPLock _MSPSBWLock(_System::MSPLock::Unlocked);
 
 static void _MSPSBWReset() {
     _MSP.disconnect();
