@@ -342,7 +342,7 @@ private:
                 // _BAT_CHRG_STAT == high-z
                 return STM::BatteryStatus::ChargeStatus::Shutdown;
             } else {
-                if (!b) {
+                if (!a) {
                     // _BAT_CHRG_STAT == low
                     return STM::BatteryStatus::ChargeStatus::Underway;
                 } else {
