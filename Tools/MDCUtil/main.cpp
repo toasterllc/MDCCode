@@ -17,6 +17,8 @@
 using CmdStr = std::string;
 
 // Common Commands
+const CmdStr ResetCmd               = "Reset";
+const CmdStr StatusGetCmd           = "StatusGet";
 const CmdStr BatteryStatusGetCmd    = "BatteryStatusGet";
 const CmdStr BootloaderInvokeCmd    = "BootloaderInvoke";
 const CmdStr LEDSetCmd              = "LEDSet";
@@ -42,6 +44,8 @@ static void printUsage() {
     cout << "MDCUtil commands:\n";
     
     // Common Commands
+    cout << "  " << ResetCmd                << "\n";
+    cout << "  " << StatusGetCmd            << "\n";
     cout << "  " << BatteryStatusGetCmd     << "\n";
     cout << "  " << BootloaderInvokeCmd     << "\n";
     cout << "  " << LEDSetCmd               << " <idx> <0/1>\n";
@@ -137,7 +141,11 @@ static Args parseArgs(int argc, const char* argv[]) {
     if (strs.size() < 1) throw std::runtime_error("no command specified");
     args.cmd = lower(strs[0]);
     
-    if (args.cmd == lower(BatteryStatusGetCmd)) {
+    if (args.cmd == lower(ResetCmd)) {
+    
+    } else if (args.cmd == lower(StatusGetCmd)) {
+    
+    } else if (args.cmd == lower(BatteryStatusGetCmd)) {
     
     } else if (args.cmd == lower(BootloaderInvokeCmd)) {
     
@@ -201,13 +209,38 @@ static Args parseArgs(int argc, const char* argv[]) {
     return args;
 }
 
+static void Reset(const Args& args, MDCUSBDevice& device) {
+    printf("Resetting...\n");
+    device.reset();
+    printf("-> OK\n\n");
+}
+
+static const char* _StringForStatusMode(const STM::Status::Mode mode) {
+    using namespace STM;
+    switch (mode) {
+    case STM::Status::Mode::STMLoader:  return "STMLoader";
+    case STM::Status::Mode::STMApp:     return "STMApp";
+    default:                            return "<Invalid>";
+    }
+}
+
+static void StatusGet(const Args& args, MDCUSBDevice& device) {
+    using namespace STM;
+    Status status = device.statusGet();
+    printf("Status:\n");
+    printf("  magic:    0x%08jx\n", (uintmax_t)status.magic);
+    printf("  version:  0x%08jx\n", (uintmax_t)status.version);
+    printf("  mode:     %s\n", _StringForStatusMode(status.mode));
+    printf("\n");
+}
+
 static const char* _StringForChargeStatus(const STM::BatteryStatus::ChargeStatus status) {
     using namespace STM;
     switch (status) {
     case BatteryStatus::ChargeStatus::Shutdown: return "Shutdown";
     case BatteryStatus::ChargeStatus::Underway: return "Underway";
     case BatteryStatus::ChargeStatus::Complete: return "Complete";
-    default:                                    return "Invalid";
+    default:                                    return "<Invalid>";
     }
 }
 
@@ -216,7 +249,7 @@ static void BatteryStatusGet(const Args& args, MDCUSBDevice& device) {
     BatteryStatus status = device.batteryStatusGet();
     
     printf("Battery status:\n");
-    printf("  Charge status: %s\n", _StringForChargeStatus(status.chargeStatus));
+    printf("  Charge status:   %s\n", _StringForChargeStatus(status.chargeStatus));
     printf("  Battery voltage: %ju mV\n", (uintmax_t)status.voltage);
     printf("\n");
 }
@@ -527,7 +560,9 @@ int main(int argc, const char* argv[]) {
     MDCUSBDevice& device = devices[0];
     try {
         device.reset();
-        if (args.cmd == lower(BatteryStatusGetCmd))         BatteryStatusGet(args, device);
+        if (args.cmd == lower(ResetCmd))                    Reset(args, device);
+        else if (args.cmd == lower(StatusGetCmd))           StatusGet(args, device);
+        else if (args.cmd == lower(BatteryStatusGetCmd))    BatteryStatusGet(args, device);
         else if (args.cmd == lower(BootloaderInvokeCmd))    BootloaderInvoke(args, device);
         else if (args.cmd == lower(LEDSetCmd))              LEDSet(args, device);
         else if (args.cmd == lower(STMWriteCmd))            STMWrite(args, device);

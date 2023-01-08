@@ -107,7 +107,7 @@ public:
     
     static void USBSendStatus(bool s) {
         alignas(4) bool status = s; // Aligned to send via USB
-        USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
+        USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
     }
     
     static void USBAcceptCommand(bool s) {
@@ -280,7 +280,7 @@ private:
 //        }
         
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
-            MSPLock lock;
+            MSPLock lock; // Acquire mutex
             MSP::Resp resp;
             const bool ok = _I2C::Send(cmd, resp);
             if (!ok) return std::nullopt;
@@ -484,7 +484,7 @@ private:
             .mode       = T_Mode,
         };
         
-        USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
+        USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
     }
     
     static void _BatteryStatusGet(const STM::Cmd& cmd) {
@@ -493,7 +493,7 @@ private:
         
         alignas(4) // Aligned to send via USB
         const STM::BatteryStatus status = _TaskMSPComms::BatteryStatus();
-        USB::Send(STM::Endpoints::DataIn, &status, sizeof(status));
+        USB::Send(STM::Endpoint::DataIn, &status, sizeof(status));
     }
     
     static void _BootloaderInvoke(const STM::Cmd& cmd) {

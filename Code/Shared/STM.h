@@ -10,14 +10,14 @@
 namespace STM {
     static constexpr uint32_t Version = 0;
     
-    Enum(uint8_t, Endpoint, Endpoints,
+    enum class Endpoint : uint8_t {
         // Control endpoint
         Ctrl    = 0x00,
         // OUT endpoints (high bit 0)
         DataOut = 0x01,
         // IN endpoints (high bit 1)
         DataIn  = 0x81,
-    );
+    };
     
     enum class Op : uint8_t {
         // Common command set
@@ -142,24 +142,24 @@ namespace STM {
     struct [[gnu::packed]] Status {
         static constexpr uint32_t MagicNumber = 0xCAFEBABE;
         
-        Enum(uint32_t, Mode, Modes,
+        enum class Mode : uint32_t {
             None,
             STMLoader,
             STMApp,
-        );
+        };
         
         uint32_t magic = 0;
         uint32_t version = 0;
-        Mode mode = Modes::None;
+        Mode mode = Mode::None;
     };
     
     struct [[gnu::packed]] MSPSBWDebugCmd {
-        Enum(uint8_t, Op, Ops,
+        enum class Op : uint8_t {
             TestSet,
             RstSet,
             TestPulse,
             SBWIO,
-        );
+        };
         
         struct TestSetType {}; static constexpr auto TestSet = TestSetType();
         struct RstSetType {}; static constexpr auto RstSet = RstSetType();
@@ -167,29 +167,29 @@ namespace STM {
         struct SBWIOType {}; static constexpr auto SBWIO = SBWIOType();
         
         MSPSBWDebugCmd(TestSetType, bool val) {
-            opSet(Ops::TestSet);
+            opSet(Op::TestSet);
             pinValSet(val);
         }
         
         MSPSBWDebugCmd(RstSetType, bool val) {
-            opSet(Ops::RstSet);
+            opSet(Op::RstSet);
             pinValSet(val);
         }
         
         MSPSBWDebugCmd(TestPulseType) {
-            opSet(Ops::TestPulse);
+            opSet(Op::TestPulse);
         }
         
         MSPSBWDebugCmd(SBWIOType, bool tms, bool tclk, bool tdi, bool tdoRead) {
-            opSet(Ops::SBWIO);
+            opSet(Op::SBWIO);
             tmsSet(tms);
             tclkSet(tclk);
             tdiSet(tdi);
             tdoReadSet(tdoRead);
         }
         
-        Op opGet() const            { return (data&(0x03<<0))>>0; }
-        void opSet(Op x)            { data = (data&(~(0x03<<0)))|(x<<0); }
+        Op opGet() const            { return (Op)((data&(0x03<<0))>>0); }
+        void opSet(Op x)            { data = (data&(~(0x03<<0)))|((uint8_t)x<<0); }
         
         bool pinValGet() const      { return (data&(0x01<<2))>>2; }
         void pinValSet(bool x)      { data = (data&(~(0x01<<2)))|(x<<2); }

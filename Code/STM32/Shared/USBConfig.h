@@ -17,8 +17,8 @@ private:
     
 public:
     static constexpr inline uint8_t Endpoints[] = {
-        STM::Endpoints::DataOut,
-        STM::Endpoints::DataIn,
+        (uint8_t)STM::Endpoint::DataOut,
+        (uint8_t)STM::Endpoint::DataIn,
     };
     
     alignas(4)
@@ -49,7 +49,7 @@ public:
                 .epOut1Desc = {
                     .bLength                = _LFH_U8(sizeof(Toastbox::USB::EndpointDescriptor)),               // bLength: Endpoint Descriptor size
                     .bDescriptorType        = _LFH_U8(Toastbox::USB::DescriptorType::Endpoint),                 // bDescriptorType: Endpoint
-                    .bEndpointAddress       = _LFH_U8(STM::Endpoints::DataOut),                                 // bEndpointAddress
+                    .bEndpointAddress       = _LFH_U8(STM::Endpoint::DataOut),                                 // bEndpointAddress
                     .bmAttributes           = _LFH_U8(Toastbox::USB::EndpointAttributes::TransferBulk),         // bmAttributes: Bulk
                     .wMaxPacketSize         = _LFH_U16(Toastbox::USB::Endpoint::MaxPacketSizeOut(Endpoints)),   // wMaxPacketSize
                     .bInterval              = _LFH_U8(0x00),                                                    // bInterval: ignore for Bulk transfer
@@ -58,7 +58,7 @@ public:
                 .epIn1Desc = {
                     .bLength                = _LFH_U8(sizeof(Toastbox::USB::EndpointDescriptor)),               // bLength: Endpoint Descriptor size
                     .bDescriptorType        = _LFH_U8(Toastbox::USB::DescriptorType::Endpoint),                 // bDescriptorType: Endpoint
-                    .bEndpointAddress       = _LFH_U8(STM::Endpoints::DataIn),                                  // bEndpointAddress
+                    .bEndpointAddress       = _LFH_U8(STM::Endpoint::DataIn),                                  // bEndpointAddress
                     .bmAttributes           = _LFH_U8(Toastbox::USB::EndpointAttributes::TransferBulk),         // bmAttributes: Bulk
                     .wMaxPacketSize         = _LFH_U16(Toastbox::USB::Endpoint::MaxPacketSizeIn(Endpoints)),    // wMaxPacketSize
                     .bInterval              = _LFH_U8(0x00),                                                    // bInterval: ignore for Bulk transfer

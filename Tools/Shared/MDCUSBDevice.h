@@ -80,7 +80,7 @@ public:
         _sendCmd(cmd);
         
         STM::Status status;
-        _dev.read(STM::Endpoints::DataIn, status);
+        _dev.read(STM::Endpoint::DataIn, status);
         if (status.magic != STM::Status::MagicNumber) {
             throw Toastbox::RuntimeError("invalid magic number (expected:0x%08jx got:0x%08jx)",
                 (uintmax_t)STM::Status::MagicNumber, (uintmax_t)status.magic);
@@ -94,7 +94,7 @@ public:
         _sendCmd(cmd);
         
         STM::BatteryStatus status = {};
-        _dev.read(STM::Endpoints::DataIn, status);
+        _dev.read(STM::Endpoint::DataIn, status);
         return status;
     }
     
@@ -141,7 +141,7 @@ public:
     
     // MARK: - STMLoader Commands
     void stmWrite(uintptr_t addr, const void* data, size_t len) {
-        assert(_mode == STM::Status::Modes::STMLoader);
+        assert(_mode == STM::Status::Mode::STMLoader);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -160,11 +160,11 @@ public:
         };
         _sendCmd(cmd);
         // Send data
-        _dev.write(STM::Endpoints::DataOut, data, len);
+        _dev.write(STM::Endpoint::DataOut, data, len);
     }
     
     void stmReset(uintptr_t entryPointAddr) {
-        assert(_mode == STM::Status::Modes::STMLoader);
+        assert(_mode == STM::Status::Mode::STMLoader);
         
         if (entryPointAddr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)entryPointAddr);
@@ -178,7 +178,7 @@ public:
     
     // MARK: - STMApp Commands
     void iceRAMWrite(const void* data, size_t len) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         if (len >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)len);
         
@@ -188,12 +188,12 @@ public:
         };
         _sendCmd(cmd);
         // Send data
-        _dev.write(STM::Endpoints::DataOut, data, len);
+        _dev.write(STM::Endpoint::DataOut, data, len);
         _checkStatus("ICERAMWrite command failed");
     }
     
     void iceFlashRead(uintptr_t addr, void* data, size_t len) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -212,12 +212,12 @@ public:
         };
         _sendCmd(cmd);
         // Read data
-        _dev.read(STM::Endpoints::DataIn, data, len);
+        _dev.read(STM::Endpoint::DataIn, data, len);
         _checkStatus("ICEFlashRead command failed");
     }
     
     void iceFlashWrite(uintptr_t addr, const void* data, size_t len) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -236,12 +236,12 @@ public:
         };
         _sendCmd(cmd);
         // Send data
-        _dev.write(STM::Endpoints::DataOut, data, len);
+        _dev.write(STM::Endpoint::DataOut, data, len);
         _checkStatus("ICEFlashWrite command failed");
     }
     
     void mspHostModeSet(bool en) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {
             .op = STM::Op::MSPHostModeSet,
             .arg = { .MSPHostModeSet = { .en = en } },
@@ -251,7 +251,7 @@ public:
     }
     
 //    MSP::State::Header mspStateHeaderRead() {
-//        assert(_mode == STM::Status::Modes::STMApp);
+//        assert(_mode == STM::Status::Mode::STMApp);
 //        const STM::Cmd cmd = {
 //            .op = STM::Op::MSPStateRead,
 //            .arg = { .MSPStateRead = { .len = sizeof(MSP::State::Header) } },
@@ -260,13 +260,13 @@ public:
 //        _checkStatus("MSPStateRead command failed");
 //        
 //        MSP::State state;
-//        _dev.read(STM::Endpoints::DataIn, state);
+//        _dev.read(STM::Endpoint::DataIn, state);
 //        return state;
 //    }
     
 //    template <typename T>
 //    void mspStateRead(T& t) {
-//        assert(_mode == STM::Status::Modes::STMApp);
+//        assert(_mode == STM::Status::Mode::STMApp);
 //        const STM::Cmd cmd = {
 //            .op = STM::Op::MSPStateRead,
 //            .arg = { .MSPStateRead = { .len = sizeof(t) } },
@@ -274,11 +274,11 @@ public:
 //        _sendCmd(cmd);
 //        _checkStatus("MSPStateRead command failed");
 //        
-//        _dev.read(STM::Endpoints::DataIn, t);
+//        _dev.read(STM::Endpoint::DataIn, t);
 //    }
     
     MSP::State mspStateRead() {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         
         // Read MSP::State::Header and make sure we understand it
         {
@@ -290,7 +290,7 @@ public:
             _checkStatus("MSPStateRead command failed (header)");
             
             MSP::State::Header header;
-            _dev.read(STM::Endpoints::DataIn, header);
+            _dev.read(STM::Endpoint::DataIn, header);
             
             if (header.magic != MSP::StateHeader.magic) {
                 throw Toastbox::RuntimeError("invalid MSP::State magic number (expected: 0x%08jx, got: 0x%08jx)",
@@ -317,14 +317,14 @@ public:
             _checkStatus("MSPStateRead command failed (header+payload)");
             
             MSP::State state;
-            _dev.read(STM::Endpoints::DataIn, state);
+            _dev.read(STM::Endpoint::DataIn, state);
             
             return state;
         }
     }
     
     void mspTimeSet(MSP::Time time) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {
             .op = STM::Op::MSPTimeSet,
             .arg = { .MSPTimeSet = { .time = time } },
@@ -334,21 +334,21 @@ public:
     }
     
     void mspSBWConnect() {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWConnect };
         _sendCmd(cmd);
         _checkStatus("MSPSBWConnect command failed");
     }
     
     void mspSBWDisconnect() {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = { .op = STM::Op::MSPSBWDisconnect };
         _sendCmd(cmd);
         _checkStatus("MSPSBWDisconnect command failed");
     }
     
     void mspSBWRead(uintptr_t addr, void* data, size_t len) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -367,12 +367,12 @@ public:
         };
         _sendCmd(cmd);
         // Read data
-        _dev.read(STM::Endpoints::DataIn, data, len);
+        _dev.read(STM::Endpoint::DataIn, data, len);
         _checkStatus("MSPSBWRead command failed");
     }
     
     void mspSBWWrite(uintptr_t addr, const void* data, size_t len) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         
         if (addr >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)addr);
@@ -391,12 +391,12 @@ public:
         };
         _sendCmd(cmd);
         // Send data
-        _dev.write(STM::Endpoints::DataOut, data, len);
+        _dev.write(STM::Endpoint::DataOut, data, len);
         _checkStatus("MSPSBWWrite command failed");
     }
     
     void mspSBWDebug(const STM::MSPSBWDebugCmd* cmds, size_t cmdsLen, void* resp, size_t respLen) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         
         if (cmdsLen >= std::numeric_limits<uint32_t>::max())
             throw Toastbox::RuntimeError("%jx doesn't fit in uint32_t", (uintmax_t)cmdsLen);
@@ -417,31 +417,31 @@ public:
         
         // Write the MSPDebugCmds
         if (cmdsLen) {
-            _dev.write(STM::Endpoints::DataOut, cmds, cmdsLen*sizeof(STM::MSPSBWDebugCmd));
+            _dev.write(STM::Endpoint::DataOut, cmds, cmdsLen*sizeof(STM::MSPSBWDebugCmd));
         }
         
         // Read back the queued data
         if (respLen) {
-            _dev.read(STM::Endpoints::DataIn, resp, respLen);
+            _dev.read(STM::Endpoint::DataIn, resp, respLen);
         }
         
         _checkStatus("MSPDebug command failed");
     }
     
     STM::SDCardInfo sdInit() {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = { .op = STM::Op::SDInit };
         _sendCmd(cmd);
         _checkStatus("SDInit command failed");
         
         STM::SDCardInfo cardInfo = {};
-        _dev.read(STM::Endpoints::DataIn, cardInfo);
+        _dev.read(STM::Endpoint::DataIn, cardInfo);
         return cardInfo;
     }
     
     void sdRead(SD::Block block) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = {
             .op = STM::Op::SDRead,
@@ -456,7 +456,7 @@ public:
     }
     
     void imgInit() {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = { .op = STM::Op::ImgInit, };
         _sendCmd(cmd);
@@ -470,7 +470,7 @@ public:
     };
     
     void imgExposureSet(const ImgExposure& exp) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {
             .op = STM::Op::ImgExposureSet,
             .arg = {
@@ -486,7 +486,7 @@ public:
     }
     
     STM::ImgCaptureStats imgCapture(uint8_t dstRAMBlock, uint8_t skipCount, Img::Size imgSize) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         
         const STM::Cmd cmd = {
             .op = STM::Op::ImgCapture,
@@ -502,16 +502,16 @@ public:
         _sendCmd(cmd);
         
         STM::ImgCaptureStats stats;
-        _dev.read(STM::Endpoints::DataIn, stats);
+        _dev.read(STM::Endpoint::DataIn, stats);
         _checkStatus("ImgCapture command failed");
         return stats;
     }
     
     std::unique_ptr<uint8_t[]> imgReadout(Img::Size size) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         const size_t imageLen = (size==Img::Size::Full ? ImgSD::Full::ImagePaddedLen : ImgSD::Thumb::ImagePaddedLen);
         std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(imageLen);
-        const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), imageLen);
+        const size_t lenGot = _dev.read(STM::Endpoint::DataIn, buf.get(), imageLen);
         if (lenGot != imageLen) {
             throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)imageLen, (uintmax_t)lenGot);
         }
@@ -529,18 +529,18 @@ public:
     }
     
     void readout(void* dst, size_t len) {
-        assert(_mode == STM::Status::Modes::STMApp);
+        assert(_mode == STM::Status::Mode::STMApp);
         if (!len) return; // Short-circuit if there's no data to read
         
-        const size_t mps = _dev.maxPacketSize(STM::Endpoints::DataIn);
+        const size_t mps = _dev.maxPacketSize(STM::Endpoint::DataIn);
         if (len % mps) {
             throw Toastbox::RuntimeError("len isn't a multiple of max packet size (len: %ju, max packet size: %ju)", (uintmax_t)len, (uintmax_t)mps);
         }
         
-        _dev.read(STM::Endpoints::DataIn, dst, len);
+        _dev.read(STM::Endpoint::DataIn, dst, len);
         
 //        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(Img::PaddedLen);
-//        const size_t lenGot = _dev.read(STM::Endpoints::DataIn, buf.get(), Img::PaddedLen);
+//        const size_t lenGot = _dev.read(STM::Endpoint::DataIn, buf.get(), Img::PaddedLen);
 //        if (lenGot < Img::Len) {
 //            throw Toastbox::RuntimeError("expected 0x%jx bytes, got 0x%jx bytes", (uintmax_t)Img::PaddedLen, (uintmax_t)lenGot);
 //        }
@@ -594,13 +594,13 @@ private:
     void _checkStatus(const char* errMsg) {
         // Wait for completion and throw on failure
         bool s = false;
-        _dev.read(STM::Endpoints::DataIn, s);
+        _dev.read(STM::Endpoint::DataIn, s);
         if (!s) throw std::runtime_error(errMsg);
     }
     
     USBDevice _dev;
     std::string _serial = {};
-    STM::Status::Mode _mode = STM::Status::Modes::None;
+    STM::Status::Mode _mode = STM::Status::Mode::None;
 };
 
 using MDCUSBDevicePtr = std::shared_ptr<MDCTools::Lockable<MDCUSBDevice>>;

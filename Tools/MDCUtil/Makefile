@@ -5,7 +5,7 @@ CXX			= g++
 CXXFLAGS	= -std=c++17 -O0 -g3 -Wall -Weffc++ $(IDIRS)
 LFLAGS		= -lusb-1.0
 
-IDIRS =
+IDIRS =									\
 	-iquote ../..						\
 	-iquote ../Shared					\
 	-iquote ../../Shared				\

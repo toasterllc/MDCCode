@@ -1,5 +1,6 @@
 #pragma once
 #include <optional>
+#include <atomic>
 #include "Img.h"
 #include "SD.h"
 
