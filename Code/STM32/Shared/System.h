@@ -1,12 +1,12 @@
 #pragma once
 #include <cstring>
+#include <mutex>
 #include "GPIO.h"
 #include "Util.h"
 #include "STM.h"
 #include "USB.h"
 #include "I2C.h"
 #include "MSP.h"
-#include "BoolLock.h"
 #include "USBConfig.h"
 #include "Toastbox/Task.h"
 
@@ -118,7 +118,7 @@ public:
         return _TaskMSPComms::Send(cmd);
     }
     
-    using MSPLock = BoolLock<Scheduler, _TaskMSPComms::Lock>;
+    static inline typename _TaskMSPComms::Lock MSPLock = {};
     
     #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
     [[noreturn]]
@@ -225,7 +225,17 @@ private:
     };
     
     struct _TaskMSPComms {
-        static inline bool Lock = false;
+        class Lock {
+        public:
+            void lock() {
+                Scheduler::Wait([&] { return !_Lock; });
+                _Lock = true;
+            }
+            
+            void unlock() {
+                _Lock = false;
+            }
+        };
         
         static void Run() {
             using Deadline = typename Scheduler::Deadline;
@@ -280,7 +290,7 @@ private:
 //        }
         
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
-            MSPLock lock;
+            auto lock = std::unique_lock(MSPLock);
             MSP::Resp resp;
             const bool ok = _I2C::Send(cmd, resp);
             if (!ok) return std::nullopt;
@@ -383,8 +393,8 @@ private:
         } _Cmd;
         
         static inline STM::BatteryStatus _BatteryStatus = {};
-        
         static inline std::atomic<uint32_t> _BatteryChargeStatusTransitionCount;
+        static inline bool _Lock = false;
         
         // Task options
         static constexpr Toastbox::TaskOptions Options{
