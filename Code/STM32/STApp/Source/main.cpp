@@ -23,7 +23,7 @@ struct _TaskUSBDataIn;
 struct _TaskReadout;
 
 using _System = System<
-    STM::Status::Modes::STMApp, // T_Mode
+    STM::Status::Mode::STMApp,  // T_Mode
     true,                       // T_USBDMAEn
     _CmdHandle,                 // T_CmdHandle
     _Reset,                     // T_Reset
@@ -391,7 +391,7 @@ struct _TaskUSBDataIn {
             
             // Send the data and wait until the transfer is complete
             auto& buf = _Bufs.rget();
-            const bool br = _USB::Send(Endpoints::DataIn, buf.data, buf.len);
+            const bool br = _USB::Send(Endpoint::DataIn, buf.data, buf.len);
             if (!br) break;
             
             buf.len = 0;
@@ -436,7 +436,7 @@ struct _TaskUSBDataOut {
             // exceed the buffer capacity. (This should always be safe as long as
             // the buffer capacity is a multiple of the max packet size.)
             Assert(cap <= sizeof(buf.data));
-            const std::optional<size_t> recvLenOpt = _USB::Recv(Endpoints::DataOut, buf.data, cap);
+            const std::optional<size_t> recvLenOpt = _USB::Recv(Endpoint::DataOut, buf.data, cap);
             #warning TODO: handle errors somehow
             if (!recvLenOpt) break;
             
@@ -996,7 +996,7 @@ static void _MSPStateRead(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
     
     // Send data
-    _USB::Send(Endpoints::DataIn, buf.data, arg.len);
+    _USB::Send(Endpoint::DataIn, buf.data, arg.len);
 }
 
 static void _MSPStateWrite(const STM::Cmd& cmd) {
@@ -1163,10 +1163,10 @@ static void _MSPSBWDebugHandleSBWIO(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState
 
 static void _MSPSBWDebugHandleCmd(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& state, _BufQueue::Buf& buf) {
     switch (cmd.opGet()) {
-    case MSPSBWDebugCmd::Ops::TestSet:      _MSP.debugTestSet(cmd.pinValGet());         break;
-    case MSPSBWDebugCmd::Ops::RstSet:       _MSP.debugRstSet(cmd.pinValGet()); 	        break;
-    case MSPSBWDebugCmd::Ops::TestPulse:    _MSP.debugTestPulse(); 				        break;
-    case MSPSBWDebugCmd::Ops::SBWIO:        _MSPSBWDebugHandleSBWIO(cmd, state, buf);	break;
+    case MSPSBWDebugCmd::Op::TestSet:       _MSP.debugTestSet(cmd.pinValGet());         break;
+    case MSPSBWDebugCmd::Op::RstSet:        _MSP.debugRstSet(cmd.pinValGet()); 	        break;
+    case MSPSBWDebugCmd::Op::TestPulse:     _MSP.debugTestPulse(); 				        break;
+    case MSPSBWDebugCmd::Op::SBWIO:         _MSPSBWDebugHandleSBWIO(cmd, state, buf);	break;
     default:                                abort();
     }
 }
@@ -1197,7 +1197,7 @@ static void _MSPSBWDebug(const STM::Cmd& cmd) {
         size_t cmdsLenRem = arg.cmdsLen;
         while (cmdsLenRem) {
             // Receive debug commands into buf
-            const std::optional<size_t> recvLenOpt = _USB::Recv(Endpoints::DataOut, bufIn.data, sizeof(bufIn.data));
+            const std::optional<size_t> recvLenOpt = _USB::Recv(Endpoint::DataOut, bufIn.data, sizeof(bufIn.data));
             if (!recvLenOpt) return;
             
             const size_t cmdsLen = *recvLenOpt / sizeof(MSPSBWDebugCmd);
@@ -1221,7 +1221,7 @@ static void _MSPSBWDebug(const STM::Cmd& cmd) {
         
         if (arg.respLen) {
             // Send the data and wait for it to be received
-            const bool br = _USB::Send(Endpoints::DataIn, bufOut.data, arg.respLen);
+            const bool br = _USB::Send(Endpoint::DataIn, bufOut.data, arg.respLen);
             if (!br) return;
         }
     }
@@ -1267,7 +1267,7 @@ void _SDInit(const STM::Cmd& cmd) {
         .cardData = _SD::CardData(),
     };
     
-    _USB::Send(Endpoints::DataIn, &cardInfo, sizeof(cardInfo));
+    _USB::Send(Endpoint::DataIn, &cardInfo, sizeof(cardInfo));
 }
 
 static void _SDRead(const STM::Cmd& cmd) {
@@ -1349,7 +1349,7 @@ void _ImgCapture(const STM::Cmd& cmd) {
     };
     
     // Send ImgCaptureStats
-    const bool br = _USB::Send(Endpoints::DataIn, &stats, sizeof(stats));
+    const bool br = _USB::Send(Endpoint::DataIn, &stats, sizeof(stats));
     if (!br) return;
     
     // Arrange for the image to be read out

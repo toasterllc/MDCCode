@@ -14,7 +14,7 @@ static void _CmdHandle(const STM::Cmd& cmd);
 static void _Reset();
 
 using _System = System<
-    STM::Status::Modes::STMLoader,  // T_Mode
+    STM::Status::Mode::STMLoader,   // T_Mode
     false,                          // T_USBDMAEn
     _CmdHandle,                     // T_CmdHandle
     _Reset                          // T_Reset
@@ -66,7 +66,7 @@ static void _STMWrite(const STM::Cmd& cmd) {
     _System::USBAcceptCommand(true);
     
     // Receive USB data
-    _USB::Recv(Endpoints::DataOut, (void*)arg.addr, len);
+    _USB::Recv(Endpoint::DataOut, (void*)arg.addr, len);
 }
 
 static void _STMReset(const STM::Cmd& cmd) {

@@ -10,13 +10,13 @@
 namespace STM {
     static constexpr uint32_t Version = 0;
     
-    enum class Endpoint : uint8_t {
+    struct Endpoint {
         // Control endpoint
-        Ctrl    = 0x00,
+        static constexpr uint8_t Ctrl    = 0x00;
         // OUT endpoints (high bit 0)
-        DataOut = 0x01,
+        static constexpr uint8_t DataOut = 0x01;
         // IN endpoints (high bit 1)
-        DataIn  = 0x81,
+        static constexpr uint8_t DataIn  = 0x81;
     };
     
     enum class Op : uint8_t {
