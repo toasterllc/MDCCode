@@ -15,12 +15,12 @@ public:
     BoolLock(BoolLock&& x) { swap(x); }
     BoolLock& operator=(BoolLock&& x) { swap(x); return *this; }
     
-    BoolLock() {
-        lock();
-    }
+    // Constructor, unlocked
+    BoolLock() {}
     
-    struct UnlockedType {}; static constexpr auto Unlocked = UnlockedType();
-    BoolLock(UnlockedType) {}
+    // Constructor, locked
+    struct LockType {}; static constexpr auto Lock = LockType();
+    BoolLock(LockType) {}
     
     ~BoolLock() {
         if (_locked) {

@@ -280,7 +280,7 @@ private:
 //        }
         
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
-            MSPLock lock; // Acquire mutex
+            MSPLock lock(MSPLock::Lock); // Acquire mutex
             MSP::Resp resp;
             const bool ok = _I2C::Send(cmd, resp);
             if (!ok) return std::nullopt;
