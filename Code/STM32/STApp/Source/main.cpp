@@ -1030,19 +1030,21 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
     _System::USBSendStatus(true);
 }
 
-//static std::unique_lock<_System::MSPLock> _MSPSBWLock;
+// _MSPSBWLock: ensures mutual exclusion between MSP I2C comms (via System::_TaskMSPComms) and MSP Spy-bi-wire IO
+static _System::MSPLock _MSPSBWLock(_System::MSPLock::Unlocked);
 
 static void _MSPSBWReset() {
     _MSP.disconnect();
-//    _MSPSBWLock = {};
+    // Relinquish the lock if it was held (no-op otherwise)
+    _MSPSBWLock = {};
 }
 
 static void _MSPSBWConnect(const STM::Cmd& cmd) {
-    #warning TODO: we need to acquire some mutex to prevent TaskMSPComms from trying to talk to
     // Accept command
     _System::USBAcceptCommand(true);
     
-    auto a = std::unique_lock(_System::MSPLockGet());
+    // Acquire mutex to block MSP I2C comms until our SBW IO is done (and _MSPSBWDisconnect() is called)
+    _MSPSBWLock.lock();
     const auto mspr = _MSP.connect();
     
     // Send status
@@ -1368,6 +1370,7 @@ static void _TasksReset() {
 
 static void _Reset() {
     _TasksReset();
+    _MSPSBWReset();
     _QSPIConfigSet(_QSPIConfigs::ICEApp);
 }
 

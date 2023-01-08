@@ -6,7 +6,7 @@
 #include "USB.h"
 #include "I2C.h"
 #include "MSP.h"
-#include "Lock.h"
+#include "BoolLock.h"
 #include "USBConfig.h"
 #include "Toastbox/Task.h"
 
@@ -118,10 +118,7 @@ public:
         return _TaskMSPComms::Send(cmd);
     }
     
-    using MSPLock = Lock<Scheduler>;
-    static MSPLock& MSPLockGet() {
-        return _TaskMSPComms::Lock();
-    }
+    using MSPLock = BoolLock<Scheduler, _TaskMSPComms::Lock>;
     
     #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
     [[noreturn]]
@@ -228,6 +225,8 @@ private:
     };
     
     struct _TaskMSPComms {
+        static inline bool Lock = false;
+        
         static void Run() {
             using Deadline = typename Scheduler::Deadline;
             constexpr uint16_t BatteryStatusUpdateIntervalMs = 2000;
@@ -272,16 +271,16 @@ private:
             return _BatteryStatus;
         }
         
-        // Lock(): returns a lock that can be used to ensure only one entity is trying to talk
-        // to the MSP430 at a time.
-        // Currently this is used by the MSP Spy-bi-wire (SBW) facilities to prevent I2C comms
-        // while SBW IO is taking place.
-        static MSPLock& Lock() {
-            return _Lock;
-        }
+//        // Lock(): returns a bool that can be used to ensure only one entity is trying to talk
+//        // to the MSP430 at a time.
+//        // Currently this is used by the MSP Spy-bi-wire (SBW) facilities to prevent I2C comms
+//        // while SBW IO is taking place.
+//        static bool& Lock() {
+//            return _Lock;
+//        }
         
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
-            auto lock = std::unique_lock(_Lock);
+            MSPLock lock;
             MSP::Resp resp;
             const bool ok = _I2C::Send(cmd, resp);
             if (!ok) return std::nullopt;
@@ -386,8 +385,6 @@ private:
         static inline STM::BatteryStatus _BatteryStatus = {};
         
         static inline std::atomic<uint32_t> _BatteryChargeStatusTransitionCount;
-        
-        static inline MSPLock _Lock;
         
         // Task options
         static constexpr Toastbox::TaskOptions Options{
