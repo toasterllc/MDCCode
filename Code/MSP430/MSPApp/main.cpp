@@ -660,7 +660,7 @@ struct _I2CTask {
             // Wait until the I2C lines are activated (ie VDD_B_3V3_STM becomes powered)
             _I2C::WaitUntilActive();
             
-            for (int i=0;; i++) {
+            for (;;) {
                 // Wait for a command
                 MSP::Cmd cmd;
                 
@@ -673,8 +673,6 @@ struct _I2CTask {
                 ok = _I2C::Send(resp);
                 if (!ok) break;
             }
-            
-            Assert(false);
             
             // Cleanup
             
@@ -918,6 +916,13 @@ static void _Abort(uint16_t domain, uint16_t line) {
 
 extern "C" [[noreturn]]
 void abort() {
+//    for (;;) {
+//        _Pin::LED_GREEN_::Write(0);
+//        _Scheduler::Delay(_Scheduler::Ms(100));
+//        _Pin::LED_GREEN_::Write(1);
+//        _Scheduler::Delay(_Scheduler::Ms(100));
+//    }
+//    
     Assert(false);
 }
 
@@ -992,6 +997,13 @@ int main() {
     // Init SysTick
     _SysTick::Init();
     
+    // Init LEDs by setting their low-priority / 'backstop' values to off.
+    // This is necessary so that relinquishing the LEDs from I2C task causes
+    // them to turn off. If we didn't have a backstop value, the LEDs would
+    // remain in whatever state the I2C task set them to before relinquishing.
+    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
+    _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+    
     // Handle cold starts
     if (Startup::ColdStart()) {
         // Since this is a cold start, delay 3s before beginning.
@@ -999,9 +1011,9 @@ int main() {
         // serves 2 purposes:
         //   1. it rate-limits aborts, in case there's a persistent issue
         //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-        _Pin::LED_RED_::Write(0);
+        _LEDRed_::Set(_LEDRed_::Priority::High, 0);
         _Scheduler::Delay(_Scheduler::Ms(3000));
-        _Pin::LED_RED_::Write(1);
+        _LEDRed_::Set(_LEDRed_::Priority::High, 1);
     }
     
     _Scheduler::Run();

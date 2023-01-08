@@ -115,9 +115,35 @@ public:
         }
     }
     
+//    static void LEDGreenBlink() {
+//        using LED_GREEN_ = GPIO::PortA::Pin<0x1, GPIO::Option::Output1>;
+//        for (int i=0; i<20; i++) {
+//            LED_GREEN_::Write(0);
+//            for (volatile uint32_t i=0; i<0xFFFF; i++);
+//            LED_GREEN_::Write(1);
+//            for (volatile uint32_t i=0; i<0xFFFF; i++);
+//        }
+//    }
+//    
+//    static void LEDRedBlink() {
+//        using LED_RED_ = GPIO::PortA::Pin<0xA, GPIO::Option::Output1>;
+//        for (int i=0; i<20; i++) {
+//            LED_RED_::Write(0);
+//            for (volatile uint32_t i=0; i<0xFFFF; i++);
+//            LED_RED_::Write(1);
+//            for (volatile uint32_t i=0; i<0xFFFF; i++);
+//        }
+//    }
+    
     static void ISR_Active(uint16_t iv) {
-        const bool active = (Pin::Active::IES() == _ActiveInterrupt::IES());
+        const bool active = (Pin::Active::IES() == _ActiveInterrupt::InitCfg::IES());
         _Ev |= (active ? _Events::Active : _Events::Inactive);
+        
+//        if (active) {
+//            LEDGreenBlink();
+//        } else {
+//            LEDRedBlink();
+//        }
     }
     
 private:
