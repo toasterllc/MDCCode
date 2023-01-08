@@ -96,7 +96,7 @@ private:
                         }
                         
                         case _DeviceState::STMLoaderCheck: {
-                            if (dev->statusGet().mode == STM::Status::Modes::STMLoader) {
+                            if (dev->statusGet().mode == STM::Status::Mode::STMLoader) {
                                 state = _DeviceState::STMAppWrite;
                             } else {
                                 state = _DeviceState::STMLoaderInvoke; // Start over
@@ -111,7 +111,7 @@ private:
                         }
                         
                         case _DeviceState::STMAppCheck: {
-                            if (dev->statusGet().mode == STM::Status::Modes::STMApp) {
+                            if (dev->statusGet().mode == STM::Status::Mode::STMApp) {
                                 state = _DeviceState::Finish;
                             } else {
                                 state = _DeviceState::STMLoaderInvoke; // Start over

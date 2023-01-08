@@ -292,7 +292,7 @@ private:
         auto lock = std::unique_lock(*_dev);
         
         auto imageData = std::make_unique<uint8_t[]>(ImgSD::Full::ImagePaddedLen);
-        _dev->endpointsFlush();
+        _dev->reset();
         _dev->sdRead((SD::Block)imageRef.addr);
         _dev->readout(imageData.get(), ImgSD::Full::ImagePaddedLen);
         
@@ -393,7 +393,7 @@ private:
         const SD::Block fullBlockStart = range.idx * ImgSD::Full::ImageBlockCount;
         const SD::Block thumbBlockStart = _mspState.sd.thumbBlockStart + (range.idx * ImgSD::Thumb::ImageBlockCount);
         
-        _dev->endpointsFlush();
+        _dev->reset();
         _dev->sdRead(thumbBlockStart);
         
         // Consumer
