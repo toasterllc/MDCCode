@@ -1033,7 +1033,7 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
 static _System::MSPLock _MSPSBWLock;
 
 static void _MSPSBWReset() {
-//    _MSP.disconnect();
+    _MSP.disconnect();
     // Relinquish the lock if it was held (no-op otherwise)
     _MSPSBWLock = {};
 }
@@ -1044,7 +1044,7 @@ static void _MSPSBWConnect(const STM::Cmd& cmd) {
     
     // Acquire mutex to block MSP I2C comms until our SBW IO is done (and _MSPSBWDisconnect() is called)
     _MSPSBWLock.lock();
-//    const auto mspr = _MSP.connect();
+    const auto mspr = _MSP.connect();
     
     // Send status
     _System::USBSendStatus(true);
