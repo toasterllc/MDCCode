@@ -63,13 +63,10 @@ public:
     
     // MARK: - Common Commands
     void reset() {
-        // Reset default control endpoint
-        _dev.reset(Toastbox::USB::Endpoint::Default);
-        
         // Send Reset command
-        // We're not using _sendCmd() because the Reset command is special and doesn't respond with a
-        // status on the DataIn endpoint (because the state of endpoint is assumed broken hence
-        // the need to reset), which _sendCmd() expects.
+        // We're not using _sendCmd() because the Reset command is special and doesn't respond with the typical
+        // 'command-accepted' status on the DataIn endpoint, which _sendCmd() expects. (The Reset command
+        // doesn't send this status because the state of endpoint is assumed broken hence the need to reset.)
         const STM::Cmd cmd = { .op = STM::Op::Reset };
         _dev.vendorRequestOut(0, cmd);
         
@@ -593,6 +590,7 @@ private:
     }
     
     void _sendCmd(const STM::Cmd& cmd) {
+        // The device will reject a control request if the previous request is still in progress.
         constexpr int TryCount = 2;
         for (int i=0; i<TryCount; i++) {
             try {
@@ -602,8 +600,6 @@ private:
             } catch (...) {
                 // We failed, so if this is the last attempt, throw the exception
                 if (i == TryCount-1) throw;
-                // Reset default control endpoint before trying again
-                _dev.reset(Toastbox::USB::Endpoint::Default);
             }
         }
         _checkStatus("command rejected");
