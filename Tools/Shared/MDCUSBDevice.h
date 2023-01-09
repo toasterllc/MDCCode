@@ -63,14 +63,13 @@ public:
     
     // MARK: - Common Commands
     void reset() {
-//        {
-//            const std::vector<uint8_t> eps = _dev.endpoints();
-//            for (const uint8_t ep : eps) {
-//                _dev.reset(ep);
-//            }
-//        }
+        // Reset default control endpoint
+        _dev.reset(Toastbox::USB::Endpoint::Default);
         
-        // Send command
+        // Send Reset command
+        // We're not using _sendCmd() because the Reset command is special and doesn't respond with a
+        // status on the DataIn endpoint (because the state of endpoint is assumed broken hence
+        // the need to reset), which _sendCmd() expects.
         const STM::Cmd cmd = { .op = STM::Op::Reset };
         _dev.vendorRequestOut(0, cmd);
         
