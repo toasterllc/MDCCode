@@ -254,7 +254,7 @@ public:
         for (uint8_t ep : T_Config::Endpoints) {
             _EndpointReset(ep);
         }
-        T_Scheduler::Wait([] { return _EndpointsReady(); });
+//        T_Scheduler::Wait([] { return _EndpointsReady(); });
     }
     
     template <typename T>

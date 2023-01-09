@@ -195,7 +195,6 @@ private:
         
         static void Reset() {
             Scheduler::template Stop<_TaskCmdHandle>();
-            _TaskMSPComms::Reset();
             _Cmd = std::nullopt;
         }
         
@@ -455,22 +454,23 @@ private:
         }
     }
     
-    static void _Reset(const STM::Cmd& cmd) {
-        // Reset _TaskCmdHandle
-        _TaskCmdHandle::Reset();
-        // Reset USB endpoints
-        USB::EndpointsReset();
-        // Call supplied T_Reset function
-        T_Reset();
-        // Send status
-        USBSendStatus(true);
-    }
-    
     static void _LEDInit() {
         LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED3::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    }
+    
+    static void _Reset(const STM::Cmd& cmd) {
+        // Reset tasks
+        _TaskCmdHandle::Reset();
+        _TaskMSPComms::Reset();
+        // Reset USB endpoints
+        USB::EndpointsReset();
+        // Call supplied T_Reset function
+        T_Reset();
+        // We intentionally don't send status here (via USBSendStatus()) because the Reset command
+        // is special and executes on the _TaskCmdRecv() task, ...
     }
     
     static void _StatusGet(const STM::Cmd& cmd) {
