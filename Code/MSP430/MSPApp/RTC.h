@@ -1,6 +1,6 @@
 #pragma once
 #include <msp430.h>
-#include "Toastbox/IntState.h"
+#include "Toastbox/Scheduler.h"
 #include "MSP.h"
 
 template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin>

@@ -1,6 +1,6 @@
 #pragma once
 #include <msp430.h>
-#include "Toastbox/IntState.h"
+#include "Toastbox/Scheduler.h"
 
 class FRAMWriteEn : Toastbox::IntState {
 public:

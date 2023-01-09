@@ -1,6 +1,5 @@
 #define TaskARM32
-#include "Toastbox/Task.h"
-#include "Toastbox/IntState.h"
+#include "Toastbox/Scheduler.h"
 #include "Assert.h"
 #include "System.h"
 #include "ICE.h"

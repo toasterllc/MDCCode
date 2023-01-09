@@ -2,7 +2,7 @@
 #include <msp430.h>
 #include <type_traits>
 #include <initializer_list>
-#include "Toastbox/IntState.h"
+#include "Toastbox/Scheduler.h"
 #include "Startup.h"
 
 namespace GPIO {

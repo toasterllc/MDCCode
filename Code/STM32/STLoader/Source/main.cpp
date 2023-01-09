@@ -1,9 +1,8 @@
 #include <string.h>
 #include <algorithm>
 #define TaskARM32
-#include "Toastbox/Task.h"
+#include "Toastbox/Scheduler.h"
 #include "Assert.h"
-#include "Toastbox/IntState.h"
 #include "STM.h"
 #include "USB.h"
 #include "BufQueue.h"

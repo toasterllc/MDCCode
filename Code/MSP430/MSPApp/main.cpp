@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <atomic>
 #define TaskMSP430
-#include "Toastbox/Task.h"
+#include "Toastbox/Scheduler.h"
 #include "SDCard.h"
 #include "ICE.h"
 #include "ImgSensor.h"
@@ -20,7 +20,6 @@
 #include "Util.h"
 #include "MSP.h"
 #include "GetBits.h"
-#include "Toastbox/IntState.h"
 #include "ImgSD.h"
 #include "I2C.h"
 #include "OutputPriority.h"
@@ -81,7 +80,6 @@ extern uint8_t _StackMain[];
 static constexpr size_t _StackGuardCount = 16;
 using _Scheduler = Toastbox::Scheduler<
     _SysTickPeriodUs,                           // T_UsPerTick: microseconds per tick
-    Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
     _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                 //          invoked when no tasks have work to do
     _SchedulerError,                            // T_Error: function to handle unrecoverable error
@@ -748,11 +746,11 @@ struct _I2CTask {
 
 // MARK: - IntState
 
-inline bool Toastbox::IntState::InterruptsEnabled() {
+inline bool Toastbox::IntState::Get() {
     return __get_SR_register() & GIE;
 }
 
-inline void Toastbox::IntState::SetInterruptsEnabled(bool en) {
+inline void Toastbox::IntState::Set(bool en) {
     if (en) __bis_SR_register(GIE);
     else    __bic_SR_register(GIE);
 }
@@ -778,10 +776,10 @@ static void _Sleep() {
     }
     
     // Atomically enable interrupts and go to sleep
-    const bool prevEn = Toastbox::IntState::InterruptsEnabled();
+    const bool prevEn = Toastbox::IntState::Get();
     __bis_SR_register(GIE | LPMBits);
     // If interrupts were disabled previously, disable them again
-    if (!prevEn) Toastbox::IntState::SetInterruptsEnabled(false);
+    if (!prevEn) Toastbox::IntState::Set(false);
 }
 
 // MARK: - Interrupts

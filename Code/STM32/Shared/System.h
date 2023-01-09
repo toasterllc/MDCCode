@@ -9,7 +9,7 @@
 #include "BoolLock.h"
 #include "USBConfig.h"
 #include "Assert.h"
-#include "Toastbox/Task.h"
+#include "Toastbox/Scheduler.h"
 
 // MARK: - Main Thread Stack
 
@@ -87,7 +87,6 @@ public:
     #warning TODO: remove stack guards for production
     using Scheduler = Toastbox::Scheduler<
         UsPerSysTick,                               // T_UsPerTick: microseconds per tick
-        Toastbox::IntState::SetInterruptsEnabled,   // T_SetInterruptsEnabled: function to change interrupt state
         _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                     //          invoked when no tasks have work to do
         _SchedulerError,                            // T_Error: function to call upon an unrecoverable error (eg stack overflow)
@@ -522,11 +521,11 @@ private:
 
 // MARK: - IntState
 
-bool Toastbox::IntState::InterruptsEnabled() {
+bool Toastbox::IntState::Get() {
     return !__get_PRIMASK();
 }
 
-void Toastbox::IntState::SetInterruptsEnabled(bool en) {
+void Toastbox::IntState::Set(bool en) {
     if (en) __enable_irq();
     else __disable_irq();
 }
