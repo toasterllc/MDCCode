@@ -405,21 +405,21 @@ static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
 static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
     device.mspSBWConnect();
     
-//    printf("Reading [0x%08jx,0x%08jx):\n",
-//        (uintmax_t)args.MSPSBWRead.addr,
-//        (uintmax_t)(args.MSPSBWRead.addr+args.MSPSBWRead.len)
-//    );
-//    
-//    auto buf = std::make_unique<uint8_t[]>(args.MSPSBWRead.len);
-//    device.mspSBWRead(args.MSPSBWRead.addr, buf.get(), args.MSPSBWRead.len);
-//    
-//    for (size_t i=0; i<args.MSPSBWRead.len; i++) {
-//        printf("%02jx ", (uintmax_t)buf[i]);
-//    }
-//    
-//    printf("\n");
-//    
-//    device.mspSBWDisconnect();
+    printf("Reading [0x%08jx,0x%08jx):\n",
+        (uintmax_t)args.MSPSBWRead.addr,
+        (uintmax_t)(args.MSPSBWRead.addr+args.MSPSBWRead.len)
+    );
+    
+    auto buf = std::make_unique<uint8_t[]>(args.MSPSBWRead.len);
+    device.mspSBWRead(args.MSPSBWRead.addr, buf.get(), args.MSPSBWRead.len);
+    
+    for (size_t i=0; i<args.MSPSBWRead.len; i++) {
+        printf("%02jx ", (uintmax_t)buf[i]);
+    }
+    
+    printf("\n");
+    
+    device.mspSBWDisconnect();
 }
 
 static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
