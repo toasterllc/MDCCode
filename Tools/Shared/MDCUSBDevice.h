@@ -78,6 +78,7 @@ public:
         for (const uint8_t ep : eps) {
             _endpointReset(ep);
         }
+        _checkStatus("Reset command failed");
     }
     
     STM::Status statusGet() {
@@ -598,9 +599,9 @@ private:
                 _dev.vendorRequestOut(0, cmd);
                 break;
                 
-            } catch (const std::exception& e) {
+            } catch (...) {
                 // We failed, so if this is the last attempt, throw the exception
-                if (i == TryCount-1) throw e;
+                if (i == TryCount-1) throw;
                 // Reset default control endpoint before trying again
                 _dev.reset(Toastbox::USB::Endpoint::Default);
             }

@@ -159,14 +159,6 @@ private:
                 STM::Cmd cmd;
                 USB::CmdRecv(cmd);
                 
-                // Specially-handle the Reset command from this thread to allow us to recover
-                // from _TaskCmdHandle hanging.
-                if (cmd.op == STM::Op::Reset) {
-                    USB::CmdAccept(true); // Always accept reset commands
-                    _Reset(cmd);
-                    continue;
-                }
-                
                 // Dispatch the command to our handler task
                 const bool accepted = _TaskCmdHandle::Handle(cmd);
                 // Tell the host whether we accepted the command
@@ -187,21 +179,22 @@ private:
     
     struct _TaskCmdHandle {
         static bool Handle(const STM::Cmd& c) {
-            if (_Cmd) return false; // Short-circuit if we can't handle the command because one is already underway
+            using namespace STM;
+            // Short-circuit if we already have a command, and the new command isn't a Reset command.
+            // We specifically allow Reset commands to interrupt whatever command is currently
+            // underway, since Reset commands are meant to recover from a broken state and
+            // _TaskCmdHandle might be hung.
+            if (_Cmd && c.op!=Op::Reset) return false;
             _Cmd = c;
             Scheduler::template Start<_TaskCmdHandle>(Run);
             return true;
-        }
-        
-        static void Reset() {
-            Scheduler::template Stop<_TaskCmdHandle>();
-            _Cmd = std::nullopt;
         }
         
         static void Run() {
             using namespace STM;
             
             switch (_Cmd->op) {
+            case Op::Reset:             _Reset(*_Cmd);              break;
             case Op::StatusGet:         _StatusGet(*_Cmd);          break;
             case Op::BatteryStatusGet:  _BatteryStatusGet(*_Cmd);   break;
             case Op::BootloaderInvoke:  _BootloaderInvoke(*_Cmd);   break;
@@ -463,14 +456,13 @@ private:
     
     static void _Reset(const STM::Cmd& cmd) {
         // Reset tasks
-        _TaskCmdHandle::Reset();
         _TaskMSPComms::Reset();
         // Reset USB endpoints
         USB::EndpointsReset();
         // Call supplied T_Reset function
         T_Reset();
-        // We intentionally don't send status here (via USBSendStatus()) because the Reset command
-        // is special and executes on the _TaskCmdRecv() task, ...
+        // Send status
+        USBSendStatus(true);
     }
     
     static void _StatusGet(const STM::Cmd& cmd) {
