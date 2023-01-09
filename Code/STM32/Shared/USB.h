@@ -263,10 +263,12 @@ public:
             // Wait until we're in the Connecting state
             {
                 Toastbox::IntState ints(false);
-                T_Scheduler::Wait([] { return _State == State::Connecting; });
-                // Update our state
-                _State = State::Connected;
-                _CmdRecvLen = std::nullopt;
+                T_Scheduler::Wait([] { return _State == State::Connecting || _State == State::Connected; });
+                if (_State == State::Connecting) {
+                    // Update our state
+                    _State = State::Connected;
+                    _CmdRecvLen = std::nullopt;
+                }
             }
             
             // Wait for a command

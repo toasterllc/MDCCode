@@ -159,21 +159,18 @@ private:
                 STM::Cmd cmd;
                 USB::CmdRecv(cmd);
                 
-                switch (cmd.op) {
-                // We specially-handle the Reset command from this thread to allow us to recover
+                // Specially-handle the Reset command from this thread to allow us to recover
                 // from _TaskCmdHandle hanging.
-                case STM::Op::Reset:
+                if (cmd.op == STM::Op::Reset) {
                     USB::CmdAccept(true); // Always accept reset commands
                     _Reset(cmd);
-                    break;
-                
-                default:
-                    // Dispatch the command to our handler task
-                    const bool accepted = _TaskCmdHandle::Handle(cmd);
-                    // Tell the host whether we accepted the command
-                    USB::CmdAccept(accepted);
-                    break;
+                    continue;
                 }
+                
+                // Dispatch the command to our handler task
+                const bool accepted = _TaskCmdHandle::Handle(cmd);
+                // Tell the host whether we accepted the command
+                USB::CmdAccept(accepted);
             }
         }
         
