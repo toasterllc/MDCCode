@@ -88,11 +88,6 @@ public:
     using LED2 = GPIO<GPIOPortB, 11>;
     using LED3 = GPIO<GPIOPortB, 13>;
     
-    // MSP Spy-bi-wire
-    using MSP_TEST  = GPIO<GPIOPortG, 11>;
-    using MSP_RST_  = GPIO<GPIOPortG, 12>;
-    using MSPJTAG = MSP430JTAG<MSP_TEST, MSP_RST_, CPUFreqMHz>;
-    
     #warning TODO: remove stack guards for production
     using Scheduler = Toastbox::Scheduler<
         UsPerSysTick,                               // T_UsPerTick: microseconds per tick
@@ -107,6 +102,12 @@ public:
         _TaskMSPComms,
         T_Tasks...
     >;
+    
+    // MSP Spy-bi-wire
+    using MSP_TEST  = GPIO<GPIOPortG, 11>;
+    using MSP_RST_  = GPIO<GPIOPortG, 12>;
+    using MSPJTAG = MSP430JTAG<MSP_TEST, MSP_RST_, CPUFreqMHz>;
+    using MSPLock = BoolLock<Scheduler, _TaskMSPComms::Lock>;
     
     using USB = USBType<
         Scheduler,  // T_Scheduler
@@ -126,8 +127,6 @@ public:
     static std::optional<MSP::Resp> MSPSend(const MSP::Cmd& cmd) {
         return _TaskMSPComms::Send(cmd);
     }
-    
-    using MSPLock = BoolLock<Scheduler, _TaskMSPComms::Lock>;
     
     #warning TODO: update Abort to accept a domain / line, like we do with MSPApp?
     [[noreturn]]
@@ -281,7 +280,9 @@ private:
 //        }
         
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
-            MSPLock lock(MSPLock::Lock); // Acquire mutex
+            // Acquire mutex while we talk to MSP via I2C, to prevent MSPJTAG from
+            // being used until we're done
+            MSPLock lock(MSPLock::Lock);
             
             // Try AttemptBatchCount * AttemptCount attempts, resetting MSP after each batch
             constexpr int AttemptBatchCount = 2;
