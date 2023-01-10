@@ -11,7 +11,6 @@
 #include "ImgSensor.h"
 #include "ImgSD.h"
 #include "USBConfig.h"
-#include "MSP430JTAG.h"
 using namespace STM;
 
 static void _Reset();
@@ -35,6 +34,7 @@ using _System = System<
 
 using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
+using _MSP = _System::MSP;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -55,8 +55,6 @@ using _ICE_ST_FLASH_EN      = GPIO<GPIOPortF, 5>;
 using _ICE_ST_SPI_CLK       = _QSPI::Clk;
 using _ICE_ST_SPI_D4        = _QSPI::D4;
 using _ICE_ST_SPI_D5        = _QSPI::D5;
-using _MSP_TEST             = GPIO<GPIOPortG, 11>;
-using _MSP_RST_             = GPIO<GPIOPortG, 12>;
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -283,9 +281,6 @@ static void _ICEAppInit() {
 static void _ICEError(uint16_t line) {
     _System::Abort();
 }
-
-// MARK: - MSP430
-static MSP430JTAG<_MSP_TEST, _MSP_RST_, _System::CPUFreqMHz> _MSP;
 
 // MARK: - SD Card
 
@@ -1461,12 +1456,6 @@ int main() {
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOE_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
-    __HAL_RCC_GPIOG_CLK_ENABLE();
-    
-    // Init MSP
-    {
-        _MSP.init();
-    }
     
     _Scheduler::Run();
     return 0;

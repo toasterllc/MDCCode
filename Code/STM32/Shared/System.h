@@ -9,6 +9,7 @@
 #include "BoolLock.h"
 #include "USBConfig.h"
 #include "Assert.h"
+#include "MSP430JTAG.h"
 #include "Toastbox/Scheduler.h"
 
 // MARK: - Main Thread Stack
@@ -66,6 +67,9 @@ public:
         // Configure LEDs
         _LEDInit();
         
+        // Configure MSP
+        MSP::Init();
+        
         // Configure I2C
         _I2C::Init();
         
@@ -83,6 +87,11 @@ public:
     using LED1 = GPIO<GPIOPortB, 12>;
     using LED2 = GPIO<GPIOPortB, 11>;
     using LED3 = GPIO<GPIOPortB, 13>;
+    
+    // MSP Spy-bi-wire
+    using MSP_TEST  = GPIO<GPIOPortG, 11>;
+    using MSP_RST_  = GPIO<GPIOPortG, 12>;
+    static MSP430JTAG<MSP_TEST, MSP_RST_, CPUFreqMHz> MSP;
     
     #warning TODO: remove stack guards for production
     using Scheduler = Toastbox::Scheduler<
@@ -273,11 +282,33 @@ private:
         
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
             MSPLock lock(MSPLock::Lock); // Acquire mutex
+            
+            // Try AttemptBatchCount * AttemptCount attempts, resetting MSP after each batch
+            constexpr int AttemptBatchCount = 2;
+            constexpr int AttemptCount = 5;
+            constexpr int AttemptDelayMs = 100;
+            
             MSP::Resp resp;
-            const bool ok = _I2C::Send(cmd, resp);
-            if (!ok) return std::nullopt;
-            #warning TODO: handle errors properly. reset MSP if we fail?
-            return resp;
+            for (int i=0; i<AttemptBatchCount; i++) {
+                for (int ii=0; ii<AttemptCount; ii++) {
+                    const bool ok = _I2C::Send(cmd, resp);
+                    if (ok) return resp;
+                    if (ii != AttemptCount-1) {
+                        Scheduler::Sleep(Scheduler::Ms(AttemptDelayMs));
+                    }
+                }
+                
+                if (i != AttemptBatchCount-1) {
+                    // Previous batch of attempts failed; try resetting MSP
+                    MSP_RST_::Write(0);
+                    Scheduler::Sleep(Scheduler::Ms(1));
+                    MSP_RST_::Write(1);
+                    // Wait a bit before trying comms again
+                    Scheduler::Sleep(Scheduler::Ms(AttemptDelayMs));
+                }
+            }
+            
+            return std::nullopt;
         }
         
         static void _BatteryStatusUpdate() {
@@ -443,6 +474,7 @@ private:
         {
             __HAL_RCC_GPIOB_CLK_ENABLE(); // LED[3:0]
             __HAL_RCC_GPIOE_CLK_ENABLE(); // _BAT_CHRG_STAT
+            __HAL_RCC_GPIOG_CLK_ENABLE(); // MSP_TEST / MSP_RST_
             __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
         }
     }

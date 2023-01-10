@@ -38,38 +38,30 @@ public:
     static bool Send(const T_Send& send, T_Recv& recv) {
         // "address ... must be shifted to the left before calling"
         constexpr uint16_t Addr = T_Addr<<1;
-        constexpr int AttemptCount = 5;
-        constexpr int AttemptDelayMs = 200;
         
         // Reset _St upon return
         Defer( _St = _State::Idle; );
         
         // Wait until we're idle
         T_Scheduler::Wait([&] { return _St.load() == _State::Idle; });
-        _St = _State::Busy;
         
-        // Try up to `AttemptCount` times to get an ACK
-        for (int i=0; i<AttemptCount; i++) {
+        // Send `send`
+        {
+            _St = _State::Busy;
             HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, Addr, (uint8_t*)&send, sizeof(send));
             Assert(hs == HAL_OK);
-            
             T_Scheduler::Wait([&] { return _St.load() != _State::Busy; });
-            if (_St.load() == _State::Done) {
-                break;
-            } else if (i != AttemptCount-1) {
-                T_Scheduler::Sleep(T_Scheduler::Ms(AttemptDelayMs));
-            } else {
-                // This was the final attempt and it failed; bail
-                return false;
-            }
+            if (_St.load() != _State::Done) return false;
         }
         
-        _St = _State::Busy;
-        HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, Addr, (uint8_t*)&recv, sizeof(recv));
-        Assert(hs == HAL_OK);
-        
-        T_Scheduler::Wait([&] { return _St.load() != _State::Busy; });
-        if (_St.load() != _State::Done) return false;
+        // Receive `recv`
+        {
+            _St = _State::Busy;
+            HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, Addr, (uint8_t*)&recv, sizeof(recv));
+            Assert(hs == HAL_OK);
+            T_Scheduler::Wait([&] { return _St.load() != _State::Busy; });
+            if (_St.load() != _State::Done) return false;
+        }
         
         return true;
     }
