@@ -1047,7 +1047,7 @@ static void _MSPSBWConnect(const STM::Cmd& cmd) {
     const auto mspr = _MSP.connect();
     
     // Send status
-    _System::USBSendStatus(true);
+    _System::USBSendStatus(mspr == _MSP.Status::OK);
 }
 
 static void _MSPSBWDisconnect(const STM::Cmd& cmd) {

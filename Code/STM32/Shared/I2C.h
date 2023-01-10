@@ -1,6 +1,7 @@
 #pragma once
 #include <atomic>
 #include "stm32f7xx.h"
+#include "Toastbox/Defer.h"
 
 template <
 typename T_Scheduler,
@@ -35,13 +36,40 @@ public:
     
     template <typename T_Send, typename T_Recv>
     static bool Send(const T_Send& send, T_Recv& recv) {
+        // "address ... must be shifted to the left before calling"
+        constexpr uint16_t Addr = T_Addr<<1;
+        constexpr int AttemptCount = 5;
+        constexpr int AttemptDelayMs = 200;
+        
+        // Reset _St upon return
+        Defer( _St = _State::Idle; );
+        
+        // Wait until we're idle
         T_Scheduler::Wait([&] { return _St.load() == _State::Idle; });
+        _St = _State::Busy;
         
-        bool ok = _Send(send);
-        if (!ok) return false;
+        // Try up to `AttemptCount` times to get an ACK
+        for (int i=0; i<AttemptCount; i++) {
+            HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, Addr, (uint8_t*)&send, sizeof(send));
+            Assert(hs == HAL_OK);
+            
+            T_Scheduler::Wait([&] { return _St.load() != _State::Busy; });
+            if (_St.load() == _State::Done) {
+                break;
+            } else if (i != AttemptCount-1) {
+                T_Scheduler::Sleep(T_Scheduler::Ms(AttemptDelayMs));
+            } else {
+                // This was the final attempt and it failed; bail
+                return false;
+            }
+        }
         
-        ok = _Recv(recv);
-        if (!ok) return false;
+        _St = _State::Busy;
+        HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, Addr, (uint8_t*)&recv, sizeof(recv));
+        Assert(hs == HAL_OK);
+        
+        T_Scheduler::Wait([&] { return _St.load() != _State::Busy; });
+        if (_St.load() != _State::Done) return false;
         
         return true;
     }
@@ -57,60 +85,18 @@ public:
 private:
     enum class _State : uint8_t {
         Idle,
-        Send,
-        Recv,
+        Busy,
         Done,
         Error,
     };
     
-    template <typename T>
-    static bool _Send(const T& msg) {
-        Assert(_St.load() == _State::Idle);
-        
-        // "address ... must be shifted to the left before calling"
-        constexpr uint16_t Addr = T_Addr<<1;
-        _St = _State::Send;
-        HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, Addr, (uint8_t*)&msg, sizeof(msg));
-        Assert(hs == HAL_OK);
-        
-        #warning TODO: institute a time limit and return failure if it elapses
-        T_Scheduler::Wait([&] { return _St.load() != _State::Send; });
-        const bool ok = (_St.load() == _State::Done);
-        _St = _State::Idle;
-        
-        return ok;
-    }
-    
-    template <typename T>
-    static bool _Recv(T& msg) {
-        Assert(_St.load() == _State::Idle);
-        
-        // "address ... must be shifted to the left before calling"
-        constexpr uint16_t Addr = T_Addr<<1;
-        _St = _State::Recv;
-        HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, Addr, (uint8_t*)&msg, sizeof(msg));
-        Assert(hs == HAL_OK);
-        
-        #warning TODO: institute a time limit and return failure if it elapses
-        T_Scheduler::Wait([&] { return _St.load() != _State::Recv; });
-        const bool ok = (_St.load() == _State::Done);
-        _St = _State::Idle;
-        
-        return ok;
-    }
-    
-    static void _CallbackTx(I2C_HandleTypeDef* me) {
-        Assert(_St.load() == _State::Send);
-        _St = _State::Done;
-    }
-    
-    static void _CallbackRx(I2C_HandleTypeDef* me) {
-        Assert(_St.load() == _State::Recv);
+    static void _CallbackTxRx(I2C_HandleTypeDef* me) {
+        Assert(_St.load() == _State::Busy);
         _St = _State::Done;
     }
     
     static void _CallbackError(I2C_HandleTypeDef* me) {
-        Assert(_St.load()==_State::Send || _St.load()==_State::Recv);
+        Assert(_St.load() == _State::Busy);
         _St = _State::Error;
     }
     
@@ -125,7 +111,7 @@ private:
         .Instance               = I2C1,
         
         .Init = {
-            .Timing             = 0x00707CBB,
+            .Timing             = 0x00100413, // SCL = 1 MHz
             .OwnAddress1        = 0,
             .AddressingMode     = I2C_ADDRESSINGMODE_7BIT,
             .DualAddressMode    = I2C_DUALADDRESS_DISABLE,
@@ -135,8 +121,8 @@ private:
             .NoStretchMode      = I2C_NOSTRETCH_DISABLE,
         },
         
-        .MasterTxCpltCallback   = _CallbackTx,
-        .MasterRxCpltCallback   = _CallbackRx,
+        .MasterTxCpltCallback   = _CallbackTxRx,
+        .MasterRxCpltCallback   = _CallbackTxRx,
         .ErrorCallback          = _CallbackError,
         .AbortCpltCallback      = _CallbackAbort,
     };
