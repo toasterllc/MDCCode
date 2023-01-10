@@ -41,15 +41,15 @@ private:
     static constexpr uint32_t _SYSRSTIVAddr         = 0x0000015E;
     static constexpr uint32_t _SYSCFG0Addr          = 0x00000160;
     
-    static constexpr uint16_t JMBMailboxIn0Ready    = 0x0001;
-    static constexpr uint16_t JMBMailboxIn1Ready    = 0x0002;
-    static constexpr uint16_t JMBMailboxOut0Ready   = 0x0004;
-    static constexpr uint16_t JMBMailboxOut1Ready   = 0x0008;
-    static constexpr uint16_t JMBDirWrite           = 0x0001; // Direction = writing into mailbox
-    static constexpr uint16_t JMBDirRead            = 0x0004; // Direction = reading from mailbox
-    static constexpr uint16_t JMBWidth32            = 0x0010; // 32-bit operation
-    static constexpr uint16_t JMBMagicNum           = 0xA55A;
-    static constexpr uint16_t JMBEraseCmd           = 0x1A1A;
+    static constexpr uint16_t _JMBMailboxIn0Ready   = 0x0001;
+    static constexpr uint16_t _JMBMailboxIn1Ready   = 0x0002;
+    static constexpr uint16_t _JMBMailboxOut0Ready  = 0x0004;
+    static constexpr uint16_t _JMBMailboxOut1Ready  = 0x0008;
+    static constexpr uint16_t _JMBDirWrite          = 0x0001; // Direction = writing into mailbox
+    static constexpr uint16_t _JMBDirRead           = 0x0004; // Direction = reading from mailbox
+    static constexpr uint16_t _JMBWidth32           = 0x0010; // 32-bit operation
+    static constexpr uint16_t _JMBMagicNum          = 0xA55A;
+    static constexpr uint16_t _JMBEraseCmd          = 0x1A1A;
     
     // _DelayUs: primitive delay implementation
     // Assumes a simple for loop takes 1 clock cycle per iteration
@@ -65,10 +65,10 @@ private:
     using _TCK = Test;
     using _TDIO = Rst_;
     
-    bool _connected = false;
-    bool _tclkSaved = 1;
+    static inline bool _Connected = false;
+    static inline bool _TclkSaved = 1;
     
-    void _pinsReset() {
+    static void _PinsReset() {
         // De-assert RST_ before de-asserting TEST, because the MSP430 latches RST_
         // as being asserted, if it's asserted when when TEST is de-asserted
         Rst_::Write(1);
@@ -80,44 +80,44 @@ private:
         _DelayUs(200);
     }
     
-    void _tapReset() {
+    static void _TAPReset() {
         // Reset JTAG state machine
         // TMS=1 for 6 clocks
         for (int i=0; i<6; i++) {
-            _sbwio(1, 1);
+            _SBWIO(1, 1);
         }
         // <- Test-Logic-Reset
         
         // TMS=0 for 1 clock
-        _sbwio(0, 1);
+        _SBWIO(0, 1);
         // <- Run-Test/Idle
     }
     
-    void _irShiftStart() {
+    static void _IRShiftStart() {
         // <- Run-Test/Idle
-        _sbwio(1, _tclkSaved);
+        _SBWIO(1, _TclkSaved);
         // <- Select DR-Scan
-        _sbwio(1, 1);
+        _SBWIO(1, 1);
         // <- Select IR-Scan
-        _sbwio(0, 1);
+        _SBWIO(0, 1);
         // <- Capture-IR
-        _sbwio(0, 1);
+        _SBWIO(0, 1);
         // <- Shift-IR
     }
     
-    void _drShiftStart() {
+    static void _DRShiftStart() {
         // <- Run-Test/Idle
-        _sbwio(1, _tclkSaved);
+        _SBWIO(1, _TclkSaved);
         // <- Select DR-Scan
-        _sbwio(0, 1);
+        _SBWIO(0, 1);
         // <- Capture-IR
-        _sbwio(0, 1);
+        _SBWIO(0, 1);
         // <- Shift-DR
     }
     
     // Perform a single Spy-bi-wire I/O cycle
-    __attribute__((noinline))
-    bool _sbwio(bool tms, bool tclk, bool tdi) {
+    [[gnu::noinline]]
+    static bool _SBWIO(bool tms, bool tclk, bool tdi) {
         // We have strict timing requirements, so disable interrupts.
         // Specifically, the low cycle of TCK can't be longer than 7us,
         // otherwise SBW will be disabled.
@@ -167,183 +167,183 @@ private:
         return tdo;
     }
     
-    bool _sbwio(bool tms, bool tdi) {
+    static bool _SBWIO(bool tms, bool tdi) {
         // With no `tclk` specified, use the value for TMS, so that the line stays constant
         // between registering the TMS value and outputting the TDI value
-        return _sbwio(tms, tms, tdi);
+        return _SBWIO(tms, tms, tdi);
     }
     
     // Shifts `dout` MSB first
     template <uint8_t W>
-    __attribute__((noinline))
-    uint32_t _shift(uint32_t dout) {
+    [[gnu::noinline]]
+    static uint32_t _Shift(uint32_t dout) {
         const uint32_t mask = (uint32_t)1<<(W-1);
         // <- Shift-DR / Shift-IR
         uint32_t din = 0;
         for (uint8_t i=0; i<W; i++) {
             const bool tms = (i<(W-1) ? 0 : 1); // Final bit needs TMS=1
             din <<= 1;
-            din |= _sbwio(tms, dout&mask);
+            din |= _SBWIO(tms, dout&mask);
             dout <<= 1;
         }
         
         // <- Exit1-DR / Exit1-IR
-        _sbwio(1, 1);
+        _SBWIO(1, 1);
         // <- Update-DR / Update-IR
-        _sbwio(0, _tclkSaved);
+        _SBWIO(0, _TclkSaved);
         // <- Run-Test/Idle
         
         return din;
     }
     
-    uint8_t _irShift(uint8_t d) {
-        _irShiftStart();
-        const uint8_t din = _shift<8>(d);
+    static uint8_t _IRShift(uint8_t d) {
+        _IRShiftStart();
+        const uint8_t din = _Shift<8>(d);
         return din;
     }
     
     template <uint8_t W>
-    uint32_t _drShift(uint32_t d) {
-        _drShiftStart();
-        const uint32_t din = _shift<W>(d);
+    static uint32_t _DRShift(uint32_t d) {
+        _DRShiftStart();
+        const uint32_t din = _Shift<W>(d);
         return din;
     }
     
-    uint8_t _jtagID() {
-        const uint8_t din = _irShift(_IR_CNTRL_SIG_CAPTURE);
+    static uint8_t _JTAGIDGet() {
+        const uint8_t din = _IRShift(_IR_CNTRL_SIG_CAPTURE);
         return din;
     }
     
-    bool _jtagFuseBlown() {
-        _irShift(_IR_CNTRL_SIG_CAPTURE);
-        const uint16_t din = _drShift<16>(0xAAAA);
+    static bool _JTAGFuseBlown() {
+        _IRShift(_IR_CNTRL_SIG_CAPTURE);
+        const uint16_t din = _DRShift<16>(0xAAAA);
         return din == 0x5555;
     }
     
-    uint16_t _coreID() {
-        _irShift(_IR_COREIP_ID);
-        const uint16_t din = _drShift<16>(0);
+    static uint16_t _CoreID() {
+        _IRShift(_IR_COREIP_ID);
+        const uint16_t din = _DRShift<16>(0);
         return din;
     }
     
-    uint32_t _deviceIDAddr() {
-        _irShift(_IR_DEVICE_ID);
-        const uint32_t din = _drShift<20>(0);
+    static uint32_t _DeviceIDAddr() {
+        _IRShift(_IR_DEVICE_ID);
+        const uint32_t din = _DRShift<20>(0);
         return din;
     }
     
-    uint16_t _deviceID() {
-        const uint32_t deviceIDAddr = _deviceIDAddr()+4;
-        const uint16_t deviceID = _read16(deviceIDAddr);
+    static uint16_t _DeviceIDGet() {
+        const uint32_t deviceIDAddr = _DeviceIDAddr()+4;
+        const uint16_t deviceID = _Read16(deviceIDAddr);
         return deviceID;
     }
     
-    void _tclkSet(bool tclk) {
-        _sbwio(0, _tclkSaved, tclk);
-        _tclkSaved = tclk;
+    static void _TclkSet(bool tclk) {
+        _SBWIO(0, _TclkSaved, tclk);
+        _TclkSaved = tclk;
     }
     
-    bool _fullEmulationState() {
+    static bool _FullEmulationState() {
         // Return whether the device is in full-emulation state
-        _irShift(_IR_CNTRL_SIG_CAPTURE);
-        return _drShift<16>(0) & 0x0301;
+        _IRShift(_IR_CNTRL_SIG_CAPTURE);
+        return _DRShift<16>(0) & 0x0301;
     }
     
-    bool _cpuReset() {
+    static bool _CPUReset() {
         // One clock to empty the pipe
-        _tclkSet(0);
-        _tclkSet(1);
+        _TclkSet(0);
+        _TclkSet(1);
         
         // Reset CPU
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
-        _drShift<16>(0x0401); // Deassert POR
+        _IRShift(_IR_CNTRL_SIG_16BIT);
+        _DRShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
+        _DRShift<16>(0x0401); // Deassert POR
         
         // Set PC to 'safe' memory location
-        _irShift(_IR_DATA_16BIT);
-        _tclkSet(0);
-        _tclkSet(1);
-        _tclkSet(0);
-        _tclkSet(1);
-        _drShift<16>(_SafePC);
+        _IRShift(_IR_DATA_16BIT);
+        _TclkSet(0);
+        _TclkSet(1);
+        _TclkSet(0);
+        _TclkSet(1);
+        _DRShift<16>(_SafePC);
         // PC is set to 0x4 - MAB value can be 0x6 or 0x8
         
         // Drive safe address into PC
-        _tclkSet(0);
-        _tclkSet(1);
-        _irShift(_IR_DATA_CAPTURE);
+        _TclkSet(0);
+        _TclkSet(1);
+        _IRShift(_IR_DATA_CAPTURE);
         // Two more clocks to release CPU internal POR delay signals
-        _tclkSet(0);
-        _tclkSet(1);
-        _tclkSet(0);
-        _tclkSet(1);
+        _TclkSet(0);
+        _TclkSet(1);
+        _TclkSet(0);
+        _TclkSet(1);
         
         // Set CPUSUSP signal again
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0501);
+        _IRShift(_IR_CNTRL_SIG_16BIT);
+        _DRShift<16>(0x0501);
         // One more clock
-        _tclkSet(0);
-        _tclkSet(1);
+        _TclkSet(0);
+        _TclkSet(1);
         // <- CPU in Full-Emulation-State
         
         // Disable Watchdog Timer on target device now by setting the HOLD signal
         // in the WDT_CNTRL register
-        _write16(0x01CC, 0x5A80);
+        _Write16(0x01CC, 0x5A80);
         
         // Check if device is in Full-Emulation-State and return status
-        if (!_fullEmulationState()) return false;
+        if (!_FullEmulationState()) return false;
         return true;
     }
     
-    bool _cpuSyncWait() {
+    static bool _CPUSyncWait() {
         for (int i=0; i<50; i++) {
-            _irShift(_IR_CNTRL_SIG_CAPTURE);
-            if (_drShift<16>(0) & 0x0200) return true;
+            _IRShift(_IR_CNTRL_SIG_CAPTURE);
+            if (_DRShift<16>(0) & 0x0200) return true;
         }
         return false;
     }
     
-    bool _mpuDisable() {
+    static bool _MPUDisable() {
         constexpr uint16_t PasswordMask = 0xFF00;
         constexpr uint16_t Password = 0xA500;
         constexpr uint16_t MPUMask = 0x0003;
         constexpr uint16_t MPUDisabled = 0x0000;
-        uint16_t reg = _read16(_SYSCFG0Addr);
+        uint16_t reg = _Read16(_SYSCFG0Addr);
         reg &= ~(PasswordMask|MPUMask); // Clear password and MPU protection bits
         reg |= (Password|MPUDisabled); // Password
-        _write16(_SYSCFG0Addr, reg);
+        _Write16(_SYSCFG0Addr, reg);
         // Verify that the MPU protection bits are cleared
-        return (_read16(_SYSCFG0Addr)&MPUMask) == MPUDisabled;
+        return (_Read16(_SYSCFG0Addr)&MPUMask) == MPUDisabled;
     }
     
     // CPU must be in Full-Emulation-State
-    void _pcSet(uint32_t addr) {
+    static void _PCSet(uint32_t addr) {
         constexpr uint16_t movInstr = 0x0080;
         const uint16_t pcHigh = ((addr>>8)&0xF00);
         const uint16_t pcLow = ((addr & 0xFFFF));
         
-        _tclkSet(0);
+        _TclkSet(0);
         // Take over bus control during clock LOW phase
-        _irShift(_IR_DATA_16BIT);
-        _tclkSet(1);
-        _drShift<16>(pcHigh | movInstr);
-        _tclkSet(0);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x1400);
-        _irShift(_IR_DATA_16BIT);
-        _tclkSet(0);
-        _tclkSet(1);
-        _drShift<16>(pcLow);
-        _tclkSet(0);
-        _tclkSet(1);
-        _drShift<16>(0x4303);
-        _tclkSet(0);
-        _irShift(_IR_ADDR_CAPTURE);
-        _drShift<20>(0);
+        _IRShift(_IR_DATA_16BIT);
+        _TclkSet(1);
+        _DRShift<16>(pcHigh | movInstr);
+        _TclkSet(0);
+        _IRShift(_IR_CNTRL_SIG_16BIT);
+        _DRShift<16>(0x1400);
+        _IRShift(_IR_DATA_16BIT);
+        _TclkSet(0);
+        _TclkSet(1);
+        _DRShift<16>(pcLow);
+        _TclkSet(0);
+        _TclkSet(1);
+        _DRShift<16>(0x4303);
+        _TclkSet(0);
+        _IRShift(_IR_ADDR_CAPTURE);
+        _DRShift<20>(0);
     }
     
     template <typename T>
-    T _read(uint32_t addr) {
+    static T _Read(uint32_t addr) {
         static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
         AssertArg(!(addr % sizeof(T))); // Address must be naturally aligned
         
@@ -358,29 +358,29 @@ private:
         // of regions).
         // In addition, unaligned word reads also appear to work, even
         // when straddling different regions (eg FRAM and ROM).
-        _pcSet(addr);
-        _tclkSet(1);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(std::is_same_v<T,uint8_t> ? 0x0511 : 0x0501);
-        _irShift(_IR_ADDR_CAPTURE);
-        _irShift(_IR_DATA_QUICK);
-        _tclkSet(1);
-        _tclkSet(0);
+        _PCSet(addr);
+        _TclkSet(1);
+        _IRShift(_IR_CNTRL_SIG_16BIT);
+        _DRShift<16>(std::is_same_v<T,uint8_t> ? 0x0511 : 0x0501);
+        _IRShift(_IR_ADDR_CAPTURE);
+        _IRShift(_IR_DATA_QUICK);
+        _TclkSet(1);
+        _TclkSet(0);
         
         if constexpr (std::is_same_v<T,uint8_t>) {
-            if (addr & 1)   return _drShift<8>(0);
-            else            return _drShift<16>(0) & 0x00FF;
+            if (addr & 1)   return _DRShift<8>(0);
+            else            return _DRShift<16>(0) & 0x00FF;
         } else {
-            return _drShift<16>(0);
+            return _DRShift<16>(0);
         }
     }
     
-    uint8_t _read8(uint32_t addr) {
-        return _read<uint8_t>(addr);
+    static uint8_t _Read8(uint32_t addr) {
+        return _Read<uint8_t>(addr);
     }
     
-    uint16_t _read16(uint32_t addr) {
-        return _read<uint16_t>(addr);
+    static uint16_t _Read16(uint32_t addr) {
+        return _Read<uint16_t>(addr);
     }
     
     // General-purpose read
@@ -388,11 +388,11 @@ private:
     //   Works for: peripherals, RAM, FRAM
     //   
     //   This is the 'quick' read implementation suggested by JTAG guide
-    void _read(uint32_t addr, uint8_t* dst, size_t len) {
+    static void _Read(uint32_t addr, uint8_t* dst, size_t len) {
         while (len) {
             // Read first/last byte
             if ((addr&1) || (len==1)) {
-                *dst = _read8(addr);
+                *dst = _Read8(addr);
                 addr++;
                 dst++;
                 len--;
@@ -400,18 +400,18 @@ private:
             
             // Read 16-bit words ('quick' implementation)
             if (len > 1) {
-                _pcSet(addr);
-                _tclkSet(1);
-                _irShift(_IR_CNTRL_SIG_16BIT);
-                _drShift<16>(0x0501);
-                _irShift(_IR_ADDR_CAPTURE);
-                _irShift(_IR_DATA_QUICK);
+                _PCSet(addr);
+                _TclkSet(1);
+                _IRShift(_IR_CNTRL_SIG_16BIT);
+                _DRShift<16>(0x0501);
+                _IRShift(_IR_ADDR_CAPTURE);
+                _IRShift(_IR_DATA_QUICK);
                 
                 while (len > 1) {
-                    _tclkSet(1);
-                    _tclkSet(0);
+                    _TclkSet(1);
+                    _TclkSet(0);
                     
-                    const uint16_t w = _drShift<16>(0);
+                    const uint16_t w = _DRShift<16>(0);
                     memcpy(dst, &w, sizeof(w));
                     addr += 2;
                     dst += 2;
@@ -422,39 +422,39 @@ private:
     }
     
     template <typename T>
-    void _write(uint32_t addr, T val) {
+    static void _Write(uint32_t addr, T val) {
         static_assert(std::is_same_v<T,uint8_t> || std::is_same_v<T,uint16_t>, "invalid type");
         AssertArg(!(addr % sizeof(T))); // Address must be naturally aligned
         
         // Activate write mode (clear read bit in JTAG control register)
-        _tclkSet(0);
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(std::is_same_v<T,uint8_t> ? 0x0510 : 0x0500);
+        _TclkSet(0);
+        _IRShift(_IR_CNTRL_SIG_16BIT);
+        _DRShift<16>(std::is_same_v<T,uint8_t> ? 0x0510 : 0x0500);
         
         // Shift address to write to
-        _irShift(_IR_ADDR_16BIT);
-        _drShift<20>(addr);
-        _tclkSet(1);
+        _IRShift(_IR_ADDR_16BIT);
+        _DRShift<20>(addr);
+        _TclkSet(1);
         
         // Shift data to write
-        _irShift(_IR_DATA_TO_ADDR);
-        _drShift<16>(val);
-        _tclkSet(0);
+        _IRShift(_IR_DATA_TO_ADDR);
+        _DRShift<16>(val);
+        _TclkSet(0);
         
         // Deactivate write mode (set read bit in JTAG control register)
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0501);
-        _tclkSet(1);
-        _tclkSet(0);
-        _tclkSet(1);
+        _IRShift(_IR_CNTRL_SIG_16BIT);
+        _DRShift<16>(0x0501);
+        _TclkSet(1);
+        _TclkSet(0);
+        _TclkSet(1);
     }
     
-    void _write8(uint32_t addr, uint8_t val) {
-        _write<uint8_t>(addr, val);
+    static void _Write8(uint32_t addr, uint8_t val) {
+        _Write<uint8_t>(addr, val);
     }
     
-    void _write16(uint32_t addr, uint16_t val) {
-        _write<uint16_t>(addr, val);
+    static void _Write16(uint32_t addr, uint16_t val) {
+        _Write<uint16_t>(addr, val);
     }
     
     // General-purpose write
@@ -462,11 +462,11 @@ private:
     //   Works for: peripherals, RAM, FRAM
     //   
     //   This is the 'non-quick' write implementation suggested by JTAG guide
-    void _write(uint32_t addr, const uint8_t* src, size_t len) {
+    static void _Write(uint32_t addr, const uint8_t* src, size_t len) {
         while (len) {
             // Write first/last byte
             if ((addr&1) || (len==1)) {
-                _write8(addr, *src);
+                _Write8(addr, *src);
                 addr++;
                 src++;
                 len--;
@@ -477,7 +477,7 @@ private:
                 uint16_t w = 0;
                 memcpy(&w, src, sizeof(w));
                 
-                _write16(addr, w);
+                _Write16(addr, w);
                 
                 addr += 2;
                 src += 2;
@@ -499,11 +499,11 @@ private:
     //   This technique has been confirmed to fail in these situations:
     //   - Writing to RAM (has no effect)
     //   - Writing to peripherals (clears the preceding word)
-    void _framWrite(uint32_t addr, const uint8_t* src, size_t len) {
+    static void _FRAMWrite(uint32_t addr, const uint8_t* src, size_t len) {
         while (len) {
             // Write first/last byte
             if ((addr&1) || (len==1)) {
-                _write8(addr, *src);
+                _Write8(addr, *src);
                 addr++;
                 src++;
                 len--;
@@ -511,22 +511,22 @@ private:
             
             // Write 16-bit words ('quick' implementation)
             if (len > 1) {
-                _pcSet(addr-2);
-                _tclkSet(1);
+                _PCSet(addr-2);
+                _TclkSet(1);
                 
                 // Activate write mode (clear read bit in JTAG control register)
-                _irShift(_IR_CNTRL_SIG_16BIT);
-                _drShift<16>(0x0500);
-                _irShift(_IR_DATA_QUICK);
-                _tclkSet(0);
+                _IRShift(_IR_CNTRL_SIG_16BIT);
+                _DRShift<16>(0x0500);
+                _IRShift(_IR_DATA_QUICK);
+                _TclkSet(0);
                 
                 while (len > 1) {
                     uint16_t w = 0;
                     memcpy(&w, src, sizeof(w));
                     
-                    _tclkSet(1);
-                    _drShift<16>(w);
-                    _tclkSet(0);
+                    _TclkSet(1);
+                    _DRShift<16>(w);
+                    _TclkSet(0);
                     
                     addr += 2;
                     src += 2;
@@ -534,40 +534,40 @@ private:
                 }
                 
                 // Deactivate write mode (set read bit in JTAG control register)
-                _irShift(_IR_CNTRL_SIG_16BIT);
-                _drShift<16>(0x0501);
-                _tclkSet(1);
-                _tclkSet(0);
-                _tclkSet(1);
+                _IRShift(_IR_CNTRL_SIG_16BIT);
+                _DRShift<16>(0x0501);
+                _TclkSet(1);
+                _TclkSet(0);
+                _TclkSet(1);
             }
         }
     }
     
-    bool _jmbErase() {
-        _irShift(_IR_JMB_EXCHANGE);
+    static bool _JMBErase() {
+        _IRShift(_IR_JMB_EXCHANGE);
         bool ready = false;
         for (int i=0; i<3000 && !ready; i++) {
-            ready = _drShift<16>(0) & JMBMailboxIn0Ready;
+            ready = _DRShift<16>(0) & _JMBMailboxIn0Ready;
         }
         if (!ready) return false; // Timeout
         
-        _drShift<16>(JMBWidth32 | JMBDirWrite);
-        _drShift<16>(JMBMagicNum);
-        _drShift<16>(JMBEraseCmd);
+        _DRShift<16>(_JMBWidth32 | _JMBDirWrite);
+        _DRShift<16>(_JMBMagicNum);
+        _DRShift<16>(_JMBEraseCmd);
         return true;
     }
     
-    bool _jmbRead(uint32_t* val=nullptr) {
-        _irShift(_IR_JMB_EXCHANGE);
-        if (!(_drShift<16>(0) & JMBMailboxOut1Ready)) return false;
-        _drShift<16>(JMBWidth32 | JMBDirRead);
-        const uint32_t low = _drShift<16>(0);
-        const uint32_t high = _drShift<16>(0);
+    static bool _JMBRead(uint32_t* val=nullptr) {
+        _IRShift(_IR_JMB_EXCHANGE);
+        if (!(_DRShift<16>(0) & _JMBMailboxOut1Ready)) return false;
+        _DRShift<16>(_JMBWidth32 | _JMBDirRead);
+        const uint32_t low = _DRShift<16>(0);
+        const uint32_t high = _DRShift<16>(0);
         if (val) *val = (high<<16)|low;
         return true;
     }
     
-    void _jtagStart(bool rst_) {
+    static void _JTAGStart(bool rst_) {
         // We have strict timing requirements, so disable interrupts.
         // Specifically, the low cycle of TCK can't be longer than 7us,
         // otherwise SBW will be disabled.
@@ -575,7 +575,7 @@ private:
         
         // Reset pin states
         {
-            _pinsReset();
+            _PinsReset();
         }
         
         // Reset the MSP430 so that it starts from a known state
@@ -607,9 +607,9 @@ private:
         }
     }
     
-    void _jtagEnd() {
+    static void _JTAGEnd() {
         // Read the SYSRSTIV register to clear it, to emulate a real power-up
-        _read16(_SYSRSTIVAddr);
+        _Read16(_SYSRSTIVAddr);
         
         // Perform a BOR (brownout reset)
         // TI's code claims that this resets the device and causes us to lose JTAG control,
@@ -617,19 +617,19 @@ private:
         // 
         // Note that a BOR still doesn't reset some modules (like RTC and PMM), but it's as close as
         // we can get to a full reset without power cycling the device.
-        _irShift(_IR_TEST_REG);
-        _drShift<16>(0x0200);
+        _IRShift(_IR_TEST_REG);
+        _DRShift<16>(0x0200);
         
         // Reset CPU
-        _irShift(_IR_CNTRL_SIG_16BIT);
-        _drShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
-        _drShift<16>(0x0401); // Deassert POR
+        _IRShift(_IR_CNTRL_SIG_16BIT);
+        _DRShift<16>(0x0C01); // Deassert CPUSUSP, assert POR
+        _DRShift<16>(0x0401); // Deassert POR
         
         // Release JTAG control
-        _irShift(_IR_CNTRL_SIG_RELEASE);
+        _IRShift(_IR_CNTRL_SIG_RELEASE);
         
         // Return pins to default state
-        _pinsReset();
+        _PinsReset();
     }
     
 public:
@@ -639,64 +639,64 @@ public:
         JTAGDisabled,
     };
     
-    void init() {
-        _pinsReset();
+    static void Init() {
+        _PinsReset();
     }
     
-    Status connect() {
-        if (_connected) return Status::OK; // Short-circuit
+    static Status Connect() {
+        if (_Connected) return Status::OK; // Short-circuit
         
         for (int i=0; i<3; i++) {
             // Perform JTAG entry sequence with RST_=1
-            _jtagStart(1);
+            _JTAGStart(1);
             
             // Reset JTAG state machine (test access port, TAP)
-            _tapReset();
+            _TAPReset();
             
             // Validate the JTAG ID
-            if (_jtagID() != _JTAGID) {
+            if (_JTAGIDGet() != _JTAGID) {
                 continue; // Try again
             }
             
             // Check JTAG fuse blown state
-            if (_jtagFuseBlown()) {
+            if (_JTAGFuseBlown()) {
                 return Status::JTAGDisabled;
             }
             
             // Validate the Core ID
-            if (_coreID() == 0) {
+            if (_CoreID() == 0) {
                 continue; // Try again
             }
             
             // Set device into JTAG mode + read
-            _irShift(_IR_CNTRL_SIG_16BIT);
-            _drShift<16>(0x1501);
+            _IRShift(_IR_CNTRL_SIG_16BIT);
+            _DRShift<16>(0x1501);
             
             // Wait until CPU is sync'd
-            if (!_cpuSyncWait()) {
+            if (!_CPUSyncWait()) {
                 continue;
             }
             
             // Reset CPU
-            if (!_cpuReset()) {
+            if (!_CPUReset()) {
                 continue; // Try again
             }
             
             // Validate the Device ID
             {
-                const uint16_t deviceID = _deviceID();
+                const uint16_t deviceID = _DeviceIDGet();
                 if (deviceID != _DeviceID) {
                     continue; // Try again
                 }
             }
             
             // Disable MPU (so we can write to FRAM)
-            if (!_mpuDisable()) {
+            if (!_MPUDisable()) {
                 continue; // Try again
             }
             
             // Nothing failed!
-            _connected = true;
+            _Connected = true;
             return Status::OK;
         }
         
@@ -704,62 +704,62 @@ public:
         return Status::Error;
     }
     
-    void disconnect() {
-        if (!_connected) return; // Short-circuit
-        _jtagEnd();
-        _connected = false;
+    static void Disconnect() {
+        if (!_Connected) return; // Short-circuit
+        _JTAGEnd();
+        _Connected = false;
     }
     
-    Status erase() {
+    static Status Erase() {
         // Perform JTAG entry sequence with RST_=0
-        _jtagStart(0);
+        _JTAGStart(0);
         // Reset JTAG TAP
-        _tapReset();
+        _TAPReset();
         
-        bool r = _jmbErase();
+        bool r = _JMBErase();
         if (!r) return Status::Error;
         
-        _jtagEnd();
+        _JTAGEnd();
         return Status::OK;
     }
     
-    uint16_t read(uint32_t addr) {
-        return _read16(addr);
+    static uint16_t Read(uint32_t addr) {
+        return _Read16(addr);
     }
     
-    void read(uint32_t addr, void* dst, size_t len) {
-        _read(addr, (uint8_t*)dst, len);
+    static void Read(uint32_t addr, void* dst, size_t len) {
+        _Read(addr, (uint8_t*)dst, len);
     }
     
-    void write(uint32_t addr, uint16_t val) {
-        _write16(addr, val);
+    static void Write(uint32_t addr, uint16_t val) {
+        _Write16(addr, val);
     }
     
-    void write(uint32_t addr, const void* src, size_t len) {
+    static void Write(uint32_t addr, const void* src, size_t len) {
         if (_FRAMAddr(addr) && _FRAMAddr(addr+len-1)) {
             // framWrite() is a write implementation that's faster than the
-            // general-purpose write(), but only works for FRAM memory regions
-            _framWrite(addr, (uint8_t*)src, len);
+            // general-purpose Write(), but only works for FRAM memory regions
+            _FRAMWrite(addr, (uint8_t*)src, len);
         } else {
-            _write(addr, (uint8_t*)src, len);
+            _Write(addr, (uint8_t*)src, len);
         }
     }
     
-    void debugTestSet(bool val) {
+    static void DebugTestSet(bool val) {
         // Write before configuring. If we configured before writing, we could drive the
         // wrong value momentarily before writing the correct value.
         Test::Write(val);
         Test::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
-    void debugRstSet(bool val) {
+    static void DebugRstSet(bool val) {
         // Write before configuring. If we configured before writing, we could drive the
         // wrong value momentarily before writing the correct value.
         Rst_::Write(val);
         Rst_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
-    void debugTestPulse() {
+    static void DebugTestPulse() {
         Toastbox::IntState ints(false);
         // Write before configuring. If we configured before writing, we could drive the
         // wrong value momentarily before writing the correct value.
@@ -768,7 +768,7 @@ public:
         Test::Write(1);
     }
     
-    bool debugSBWIO(bool tms, bool tclk, bool tdi) {
-        return _sbwio(tms, tclk, tdi);
+    static bool DebugSBWIO(bool tms, bool tclk, bool tdi) {
+        return _SBWIO(tms, tclk, tdi);
     }
 };

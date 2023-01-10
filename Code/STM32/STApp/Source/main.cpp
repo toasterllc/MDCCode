@@ -34,7 +34,7 @@ using _System = System<
 
 using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
-using _MSP = _System::MSP;
+using _MSPJTAG = _System::MSPJTAG;
 
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
@@ -287,13 +287,13 @@ static void _ICEError(uint16_t line) {
 //static bool _MSPSBWConnect(bool unlockPins) {
 //    constexpr uint16_t PM5CTL0Addr  = 0x0130;
 //    
-//    const auto mspr = _MSP.connect();
-//    if (mspr != _MSP.Status::OK) return false;
+//    const auto mspr = _MSPJTAG::connect();
+//    if (mspr != _MSPJTAG::Status::OK) return false;
 //    
 //    if (unlockPins) {
 //        // Clear LOCKLPM5 in the PM5CTL0 register
 //        // This is necessary to be able to control the GPIOs
-//        _MSP.write(PM5CTL0Addr, 0x0010);
+//        _MSPJTAG::write(PM5CTL0Addr, 0x0010);
 //    }
 //    
 //    return true;
@@ -308,14 +308,14 @@ static void _ICEError(uint16_t line) {
 //    const bool br = _MSPSBWConnect(true);
 //    if (!br) return false;
 //    
-//    const uint16_t PADIR = _MSP.read(PADIRAddr);
-//    const uint16_t PAOUT = _MSP.read(PAOUTAddr);
-//    _MSP.write(PADIRAddr, PADIR | VDD_SD_EN);
+//    const uint16_t PADIR = _MSPJTAG::read(PADIRAddr);
+//    const uint16_t PAOUT = _MSPJTAG::read(PAOUTAddr);
+//    _MSPJTAG::write(PADIRAddr, PADIR | VDD_SD_EN);
 //    
 //    if (en) {
-//        _MSP.write(PAOUTAddr, PAOUT | VDD_SD_EN);
+//        _MSPJTAG::write(PAOUTAddr, PAOUT | VDD_SD_EN);
 //    } else {
-//        _MSP.write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
+//        _MSPJTAG::write(PAOUTAddr, PAOUT & ~VDD_SD_EN);
 //    }
 //    
 //    _MSPSBWDisconnect(false); // Don't allow MSP to run
@@ -342,18 +342,18 @@ static void _SDError(uint16_t line) {
 //    const bool br = _MSPSBWConnect(true);
 //    if (!br) return false;
 //    
-//    const uint16_t PADIR = _MSP.read(PADIRAddr);
-//    const uint16_t PAOUT = _MSP.read(PAOUTAddr);
-//    _MSP.write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V8_IMG_EN));
+//    const uint16_t PADIR = _MSPJTAG::read(PADIRAddr);
+//    const uint16_t PAOUT = _MSPJTAG::read(PAOUTAddr);
+//    _MSPJTAG::write(PADIRAddr, PADIR | (VDD_2V8_IMG_EN | VDD_1V8_IMG_EN));
 //    
 //    if (en) {
-//        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
+//        _MSPJTAG::write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN));
 //        _Scheduler::Sleep(_Scheduler::Ms(1)); // 100us delay needed between power on of VAA (2V8) and VDD_IO (1V8)
-//        _MSP.write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
+//        _MSPJTAG::write(PAOUTAddr, PAOUT | (VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
 //    
 //    } else {
 //        // No delay between 2V8/1V8 needed for power down (per AR0330CS datasheet)
-//        _MSP.write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
+//        _MSPJTAG::write(PAOUTAddr, PAOUT & ~(VDD_2V8_IMG_EN|VDD_1V8_IMG_EN));
 //    }
 //    
 //    _MSPSBWDisconnect(false); // Don't allow MSP to run
@@ -1028,7 +1028,7 @@ static void _MSPTimeSet(const STM::Cmd& cmd) {
 static _System::MSPLock _MSPSBWLock;
 
 static void _MSPSBWReset() {
-    _MSP.disconnect();
+    _MSPJTAG::Disconnect();
     // Relinquish the lock if it was held (no-op otherwise)
     _MSPSBWLock = {};
 }
@@ -1039,10 +1039,10 @@ static void _MSPSBWConnect(const STM::Cmd& cmd) {
     
     // Acquire mutex to block MSP I2C comms until our SBW IO is done (and _MSPSBWDisconnect() is called)
     _MSPSBWLock.lock();
-    const auto mspr = _MSP.connect();
+    const auto mspr = _MSPJTAG::Connect();
     
     // Send status
-    _System::USBSendStatus(mspr == _MSP.Status::OK);
+    _System::USBSendStatus(mspr == _MSPJTAG::Status::OK);
 }
 
 static void _MSPSBWDisconnect(const STM::Cmd& cmd) {
@@ -1076,7 +1076,7 @@ static void _MSPSBWRead(const STM::Cmd& cmd) {
         // Prepare to receive either `len` bytes or the
         // buffer capacity bytes, whichever is smaller.
         const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
-        _MSP.read(addr, buf.data, chunkLen);
+        _MSPJTAG::Read(addr, buf.data, chunkLen);
         addr += chunkLen;
         len -= chunkLen;
         // Enqueue the buffer
@@ -1109,7 +1109,7 @@ static void _MSPSBWWrite(const STM::Cmd& cmd) {
         // Write the data over Spy-bi-wire
         auto& buf = _Bufs.rget();
         if (buf.len) {
-            _MSP.write(addr, buf.data, buf.len);
+            _MSPJTAG::Write(addr, buf.data, buf.len);
             addr += buf.len; // Update the MSP430 address to write to
         }
         _Bufs.rpop();
@@ -1141,7 +1141,7 @@ static void _MSPSBWDebugPushReadBits(_MSPSBWDebugState& state, _BufQueue::Buf& b
 }
 
 static void _MSPSBWDebugHandleSBWIO(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& state, _BufQueue::Buf& buf) {
-    const bool tdo = _MSP.debugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
+    const bool tdo = _MSPJTAG::DebugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
     if (cmd.tdoReadGet()) {
         // Enqueue a new bit
         state.bits <<= 1;
@@ -1157,9 +1157,9 @@ static void _MSPSBWDebugHandleSBWIO(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState
 
 static void _MSPSBWDebugHandleCmd(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& state, _BufQueue::Buf& buf) {
     switch (cmd.opGet()) {
-    case MSPSBWDebugCmd::Op::TestSet:       _MSP.debugTestSet(cmd.pinValGet());         break;
-    case MSPSBWDebugCmd::Op::RstSet:        _MSP.debugRstSet(cmd.pinValGet()); 	        break;
-    case MSPSBWDebugCmd::Op::TestPulse:     _MSP.debugTestPulse(); 				        break;
+    case MSPSBWDebugCmd::Op::TestSet:       _MSPJTAG::DebugTestSet(cmd.pinValGet());    break;
+    case MSPSBWDebugCmd::Op::RstSet:        _MSPJTAG::DebugRstSet(cmd.pinValGet());     break;
+    case MSPSBWDebugCmd::Op::TestPulse:     _MSPJTAG::DebugTestPulse();                 break;
     case MSPSBWDebugCmd::Op::SBWIO:         _MSPSBWDebugHandleSBWIO(cmd, state, buf);	break;
     default:                                abort();
     }

@@ -68,7 +68,7 @@ public:
         _LEDInit();
         
         // Configure MSP
-        MSP::Init();
+        MSPJTAG::Init();
         
         // Configure I2C
         _I2C::Init();
@@ -91,7 +91,7 @@ public:
     // MSP Spy-bi-wire
     using MSP_TEST  = GPIO<GPIOPortG, 11>;
     using MSP_RST_  = GPIO<GPIOPortG, 12>;
-    static MSP430JTAG<MSP_TEST, MSP_RST_, CPUFreqMHz> MSP;
+    using MSPJTAG = MSP430JTAG<MSP_TEST, MSP_RST_, CPUFreqMHz>;
     
     #warning TODO: remove stack guards for production
     using Scheduler = Toastbox::Scheduler<
