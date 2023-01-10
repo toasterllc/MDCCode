@@ -518,9 +518,6 @@ struct _MainTask {
         _SPI::Init();
         
         for (;;) {
-            // Enter host mode if necessary
-            _HostModeHandle();
-            
 //            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
 //            {
 //                _WaitingForMotion = true;
@@ -611,35 +608,36 @@ struct _MainTask {
     }
     
     static void HostModeSet(bool en) {
-        Assert(!_HostModeRequest);
-        _HostModeRequest = en;
-        // Wait until the request is consumed
-        _Scheduler::Wait([&] { return !_HostModeRequest; });
+        // Short-circuit if the state hasn't changed
+        if (_HostMode == en) return;
+        _HostMode = en;
+        
+        if (_HostMode) {
+            // Reset state
+            _WaitingForMotion = false;
+            _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+            _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
+            // Stop _MainTask
+            _Scheduler::Stop<_MainTask>();
+            // Turn off power
+            _VDDIMGSDSet(false);
+            _VDDBSet(false);
+        
+        } else {
+            _Scheduler::Start<_MainTask>(Run);
+        }
     }
     
     static void ISR_MotionSignal(uint16_t iv) {
         _Motion = true;
     }
     
-    static void _HostModeHandle() {
-        if (!_HostModeRequest) return; // Short-circuit if there's no pending request
-        for (;;) {
-            // Consume the request
-            const bool en = *_HostModeRequest;
-            _HostModeRequest = std::nullopt;
-            // If host mode is disabled; bail
-            if (!en) return;
-            // Host mode is enabled; park here and wait for further requests
-            _Scheduler::Wait([&] { return _HostModeRequest; });
-        }
-    }
+    static inline bool _HostMode = false;
     
     // _Motion: announces that motion occurred
     // atomic because _Motion is modified from the interrupt context
     static inline std::atomic<bool> _Motion = false;
     static inline bool _WaitingForMotion = false;
-    
-    static inline std::optional<bool> _HostModeRequest;
     
     // Task options
     static constexpr Toastbox::TaskOptions Options{
