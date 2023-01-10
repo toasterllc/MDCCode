@@ -231,7 +231,7 @@ private:
             using Deadline = typename Scheduler::Deadline;
             constexpr uint16_t BatteryStatusUpdateIntervalMs = 2000;
             
-            Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime() + Scheduler::Ms(200);
+            Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime();
             for (;;) {
                 // Wait until we get a command or for the deadline to pass
                 bool ok = Scheduler::WaitUntil(batteryStatusUpdateDeadline, [&] { return _Cmd.state==_State::Cmd; });
@@ -284,32 +284,37 @@ private:
             // being used until we're done
             MSPLock lock(MSPLock::Lock);
             
-            // Try AttemptBatchCount * AttemptCount attempts, resetting MSP after each batch
-            constexpr int AttemptBatchCount = 2;
             constexpr int AttemptCount = 5;
-            constexpr int AttemptDelayMs = 100;
+            constexpr int ErrorDelayMs = 10;
             
             MSP::Resp resp;
-            for (int i=0; i<AttemptBatchCount; i++) {
-                for (int ii=0; ii<AttemptCount; ii++) {
-                    const bool ok = _I2C::Send(cmd, resp);
-                    if (ok) return resp;
-                    if (ii != AttemptCount-1) {
-                        Scheduler::Sleep(Scheduler::Ms(AttemptDelayMs));
-                    }
+            for (int i=0; i<AttemptCount; i++) {
+                const auto status = _I2C::Send(cmd, resp);
+                switch (status) {
+                case _I2C::Status::OK:
+                    return resp;
+                case _I2C::Status::NAK:
+                    // Allow a single NAK before we reset MSP, in case we initiated comms
+                    // before MSP was fully booted.
+                    if (i) _MSPReset();
+                    break;
+                case _I2C::Status::Error:
+                    // Comms failure; try resetting MSP
+                    _MSPReset();
+                    break;
                 }
                 
-                if (i != AttemptBatchCount-1) {
-                    // Previous batch of attempts failed; try resetting MSP
-                    MSP_RST_::Write(0);
-                    Scheduler::Sleep(Scheduler::Ms(1));
-                    MSP_RST_::Write(1);
-                    // Wait a bit before trying comms again
-                    Scheduler::Sleep(Scheduler::Ms(AttemptDelayMs));
-                }
+                Scheduler::Sleep(Scheduler::Ms(ErrorDelayMs));
             }
             
             return std::nullopt;
+        }
+        
+        static void _MSPReset() {
+            MSP_RST_::Write(0);
+            Scheduler::Sleep(Scheduler::Ms(1));
+            MSP_RST_::Write(1);
+            Scheduler::Sleep(Scheduler::Ms(1));
         }
         
         static void _BatteryStatusUpdate() {

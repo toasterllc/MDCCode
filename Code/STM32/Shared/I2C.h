@@ -2,6 +2,7 @@
 #include <atomic>
 #include "stm32f7xx.h"
 #include "Toastbox/Defer.h"
+#include "Toastbox/Scheduler.h"
 
 template <
 typename T_Scheduler,
@@ -34,13 +35,20 @@ public:
         Assert(hs == HAL_OK);
     }
     
+    enum class Status {
+        OK,     // Success
+        NAK,    // Slave didn't respond
+        Error,  // Slave acknowledged but held clock low past our timeout
+    };
+    
     template <typename T_Send, typename T_Recv>
-    static bool Send(const T_Send& send, T_Recv& recv) {
+    static Status Send(const T_Send& send, T_Recv& recv) {
         // "address ... must be shifted to the left before calling"
-        constexpr uint16_t Addr = T_Addr<<1;
+        constexpr uint32_t TimeoutMs = 100;
         
-        // Reset _St upon return
-        Defer( _St = _State::Idle; );
+        // Cleanup when we return
+        // This will handle aborting the existing transaction if we timeout.
+        Defer(_Cleanup());
         
         // Wait until we're idle
         T_Scheduler::Wait([&] { return _St.load() == _State::Idle; });
@@ -48,22 +56,24 @@ public:
         // Send `send`
         {
             _St = _State::Busy;
-            HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, Addr, (uint8_t*)&send, sizeof(send));
+            HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, _Addr, (uint8_t*)&send, sizeof(send));
             Assert(hs == HAL_OK);
-            T_Scheduler::Wait([&] { return _St.load() != _State::Busy; });
-            if (_St.load() != _State::Done) return false;
+            const auto ok = T_Scheduler::Wait(T_Scheduler::Ms(TimeoutMs), [&] { return _St.load() != _State::Busy; });
+            if (!ok) return Status::Error; // Error: slave is holding clock low
+            if (_St.load() != _State::Done) return Status::NAK;
         }
         
         // Receive `recv`
         {
             _St = _State::Busy;
-            HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, Addr, (uint8_t*)&recv, sizeof(recv));
+            HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, _Addr, (uint8_t*)&recv, sizeof(recv));
             Assert(hs == HAL_OK);
-            T_Scheduler::Wait([&] { return _St.load() != _State::Busy; });
-            if (_St.load() != _State::Done) return false;
+            const auto ok = T_Scheduler::Wait(T_Scheduler::Ms(TimeoutMs), [&] { return _St.load() != _State::Busy; });
+            if (!ok) return Status::Error; // Error: slave is holding clock low
+            if (_St.load() != _State::Done) return Status::NAK;
         }
         
-        return true;
+        return Status::OK;
     }
     
     static void ISR_Event() {
@@ -75,12 +85,34 @@ public:
     }
     
 private:
+    static constexpr uint16_t _Addr = T_Addr<<1;
+    
     enum class _State : uint8_t {
         Idle,
         Busy,
         Done,
         Error,
+        Aborting,
     };
+    
+    static void _Cleanup() {
+        Toastbox::IntState ints(false);
+        switch (_St.load()) {
+        case _State::Busy: {
+            HAL_StatusTypeDef hs = HAL_I2C_Master_Abort_IT(&_Device, _Addr);
+            Assert(hs == HAL_OK);
+            _St = _State::Aborting;
+            break;
+        }
+        case _State::Done:
+        case _State::Error:
+            _St = _State::Idle;
+            break;
+        default:
+            Assert(false);
+            break;
+        }
+    }
     
     static void _CallbackTxRx(I2C_HandleTypeDef* me) {
         Assert(_St.load() == _State::Busy);
@@ -93,8 +125,8 @@ private:
     }
     
     static void _CallbackAbort(I2C_HandleTypeDef* me) {
-        // Should never occur
-        Assert(false);
+        Assert(_St.load() == _State::Aborting);
+        _St = _State::Idle;
     }
     
     static inline std::atomic<_State> _St = _State::Idle;
@@ -103,7 +135,9 @@ private:
         .Instance               = I2C1,
         
         .Init = {
-            .Timing             = 0x00100413, // SCL = 1 MHz
+            .Timing             = 0x00707CBB, // SCL = 100 kHz
+//            .Timing             = 0x00300F38, // SCL = 400 kHz
+//            .Timing             = 0x00100413, // SCL = 1 MHz
             .OwnAddress1        = 0,
             .AddressingMode     = I2C_ADDRESSINGMODE_7BIT,
             .DualAddressMode    = I2C_DUALADDRESS_DISABLE,
