@@ -497,6 +497,27 @@ struct _ImgTask {
 struct _MainTask {
     static void Run() {
         
+        // Handle cold starts
+        if (!_Init) {
+            _Init = true;
+            // Since this is a cold start, delay 3s before beginning.
+            // This delay is meant for the case where we restarted due to an abort, and
+            // serves 2 purposes:
+            //   1. it rate-limits aborts, in case there's a persistent issue
+            //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
+            _LEDRed_::Set(_LEDRed_::Priority::Low, 0);
+            _Scheduler::Sleep(_Scheduler::Ms(3000));
+            _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+        }
+        
+        _Scheduler::Sleep(_Scheduler::Ms(10000));
+        for (;;) {
+            _Pin::LED_GREEN_::Write(0);
+            for (volatile uint16_t i=0; i<50000; i++);
+            _Pin::LED_GREEN_::Write(1);
+            for (volatile uint16_t i=0; i<50000; i++);
+        }
+        
 //        _Pin::VDD_B_EN::Write(1);
 //        _Scheduler::Sleep(_Scheduler::Ms(250));
 //        
@@ -633,6 +654,10 @@ struct _MainTask {
     }
     
     static inline bool _HostMode = false;
+    
+    // _Init: stores whether this is the first
+    [[gnu::section(".ram_backup.main")]]
+    static inline bool _Init = false;
     
     // _Motion: announces that motion occurred
     // atomic because _Motion is modified from the interrupt context
@@ -992,18 +1017,6 @@ int main() {
     // remain in whatever state the I2C task set them to before relinquishing.
     _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
     _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
-    
-    // Handle cold starts
-    if (Startup::ColdStart()) {
-        // Since this is a cold start, delay 3s before beginning.
-        // This delay is meant for the case where we restarted due to an abort, and
-        // serves 2 purposes:
-        //   1. it rate-limits aborts, in case there's a persistent issue
-        //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-        _LEDRed_::Set(_LEDRed_::Priority::High, 0);
-        _Scheduler::Delay(_Scheduler::Ms(3000));
-        _LEDRed_::Set(_LEDRed_::Priority::High, 1);
-    }
     
     _Scheduler::Run();
 }
