@@ -311,6 +311,8 @@ private:
         }
         
         static void _MSPReset() {
+            #warning TODO: remove this assert in the future. we're just using it for debugging so that we know if this occurs
+            Assert(false);
             MSP_RST_::Write(0);
             Scheduler::Sleep(Scheduler::Ms(1));
             MSP_RST_::Write(1);
