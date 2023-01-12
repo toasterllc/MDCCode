@@ -15,7 +15,11 @@ class BatterySamplerType {
 public:
     struct Pin {
         using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;
-        using BatChrgLvlEn_Pin = typename T_BatChrgLvlEn_Pin::template Opts<GPIO::Option::Output1>;
+        #warning TODO: Keep BatChrgLvlEn_ asserted because it makes BAT_CHRG_STAT work for some reason.
+        #warning TODO: We need to debug and see if once we correct U5 to be a buffer (instead of an inverter),
+        #warning TODO: and we switch BatChrgLvlEn_ polarity back (BatChrgLvlEn_ -> BatChrgLvlEn), does
+        #warning TODO: BAT_CHRG_STAT work? Does it oscillate or does the high-z state work as expected?
+        using BatChrgLvlEn_Pin = typename T_BatChrgLvlEn_Pin::template Opts<GPIO::Option::Output0>;
     };
     
     using LED_GREEN_ = GPIO::PortA::Pin<0x1, GPIO::Option::Output1>;
@@ -89,8 +93,8 @@ public:
         // Sample battery voltage
         uint16_t sampleBat = 0;
         {
-            // Enable BAT_CHRG_LVL buffer
-            Pin::BatChrgLvlEn_Pin::Write(0);
+//            // Enable BAT_CHRG_LVL buffer
+//            Pin::BatChrgLvlEn_Pin::Write(0);
             
             // Wait 5 time constants for BAT_CHRG_LVL to settle:
             //   5 time constants -> 5*R*C (where R=1k, C=100n) -> 500us 
@@ -98,8 +102,8 @@ public:
             
             sampleBat = _ChannelSample(_Channel::BatChrgLvl);
             
-            // Disable BAT_CHRG_LVL buffer (to save power)
-            Pin::BatChrgLvlEn_Pin::Write(1);
+//            // Disable BAT_CHRG_LVL buffer (to save power)
+//            Pin::BatChrgLvlEn_Pin::Write(1);
         }
         
         _ADCEnable(false);
