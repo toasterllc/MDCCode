@@ -6,7 +6,8 @@
 
 template <
 typename T_Scheduler,
-uint8_t T_Addr
+uint8_t T_Addr,
+uint32_t T_TimeoutMs
 >
 class I2CType {
 public:
@@ -43,9 +44,6 @@ public:
     
     template <typename T_Send, typename T_Recv>
     static Status Send(const T_Send& send, T_Recv& recv) {
-        // "address ... must be shifted to the left before calling"
-        constexpr uint32_t TimeoutMs = 100;
-        
         // Cleanup when we return
         // This will handle aborting the existing transaction if we timeout.
         Defer(_Cleanup());
@@ -58,7 +56,7 @@ public:
             _St = _State::Busy;
             HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, _Addr, (uint8_t*)&send, sizeof(send));
             Assert(hs == HAL_OK);
-            const auto ok = T_Scheduler::Wait(T_Scheduler::Ms(TimeoutMs), [&] { return _St.load() != _State::Busy; });
+            const auto ok = T_Scheduler::Wait(T_Scheduler::Ms(T_TimeoutMs), [&] { return _St.load() != _State::Busy; });
             if (!ok) return Status::Error; // Error: slave is holding clock low
             if (_St.load() != _State::Done) return Status::NAK;
         }
@@ -68,7 +66,7 @@ public:
             _St = _State::Busy;
             HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, _Addr, (uint8_t*)&recv, sizeof(recv));
             Assert(hs == HAL_OK);
-            const auto ok = T_Scheduler::Wait(T_Scheduler::Ms(TimeoutMs), [&] { return _St.load() != _State::Busy; });
+            const auto ok = T_Scheduler::Wait(T_Scheduler::Ms(T_TimeoutMs), [&] { return _St.load() != _State::Busy; });
             if (!ok) return Status::Error; // Error: slave is holding clock low
             if (_St.load() != _State::Done) return Status::NAK;
         }
@@ -85,6 +83,7 @@ public:
     }
     
 private:
+    // "address ... must be shifted to the left before calling"
     static constexpr uint16_t _Addr = T_Addr<<1;
     
     enum class _State : uint8_t {

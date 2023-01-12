@@ -158,7 +158,8 @@ public:
     }
     
 private:
-    using _I2C = I2CType<Scheduler, MSP::I2CAddr>;
+    static constexpr uint32_t _I2CTimeoutMs = 5000;
+    using _I2C = I2CType<Scheduler, MSP::I2CAddr, _I2CTimeoutMs>;
     using _BAT_CHRG_STAT = GPIO<GPIOPortE, 15>;
     
     struct _TaskCmdRecv {
