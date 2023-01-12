@@ -498,6 +498,13 @@ struct _ImgTask {
 struct _MainTask {
     static void Run() {
         
+        for (bool x=false;; x=!x) {
+            _Pin::LED_RED_::Write(x);
+            _BatterySampler::Sample();
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
+        }
+        
+        
         // Handle cold starts
         if (!_Init) {
             _Init = true;
@@ -511,13 +518,13 @@ struct _MainTask {
             _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
         }
         
-        _Scheduler::Sleep(_Scheduler::Ms(10000));
-        for (;;) {
-            _Pin::LED_GREEN_::Write(0);
-            for (volatile uint16_t i=0; i<50000; i++);
-            _Pin::LED_GREEN_::Write(1);
-            for (volatile uint16_t i=0; i<50000; i++);
-        }
+//        _Scheduler::Sleep(_Scheduler::Ms(10000));
+//        for (;;) {
+//            _Pin::LED_GREEN_::Write(0);
+//            for (volatile uint16_t i=0; i<50000; i++);
+//            _Pin::LED_GREEN_::Write(1);
+//            for (volatile uint16_t i=0; i<50000; i++);
+//        }
         
 //        _Pin::VDD_B_EN::Write(1);
 //        _Scheduler::Sleep(_Scheduler::Ms(250));
@@ -747,10 +754,11 @@ struct _I2CTask {
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::BatterySample: {
-            return MSP::Resp{
-                .ok = true,
-                .arg = { .BatterySample = { .sample = _BatterySampler::Sample() } },
-            };
+            #warning TODO: uncomment
+//            return MSP::Resp{
+//                .ok = true,
+//                .arg = { .BatterySample = { .sample = _BatterySampler::Sample() } },
+//            };
         }
         
         default:
@@ -852,6 +860,13 @@ static void _ISR_SysTick() {
         // Wake ourself
         __bic_SR_register_on_exit(LPM3_bits);
     }
+}
+
+[[gnu::interrupt(ADC_VECTOR)]]
+static void _ISR_ADC() {
+    _BatterySampler::ISR(ADCIV);
+    // Wake ourself
+    __bic_SR_register_on_exit(LPM3_bits);
 }
 
 // MARK: - Abort

@@ -19,6 +19,8 @@ public:
         using BatChrgLvlEnPin = typename T_BatChrgLvlEnPin::template Opts<GPIO::Option::Output0>;
     };
     
+    using LED_GREEN_ = GPIO::PortA::Pin<0x1, GPIO::Option::Output1>;
+    
     static void Init() {
         // Configure ADC pin
         static_assert(Pin::BatChrgLvlPin::PinIdx < 8);
@@ -199,8 +201,8 @@ private:
     static constexpr uint16_t _SampleCount = 0xFFFF / 0x03FF;
     static_assert(_SampleCount == 64);
     
-    static constexpr inline uint16_t& _ADCGain = *((const uint16_t*)0x1A16);
-    static constexpr inline int16_t& _ADCOffset = *((const int16_t*)0x1A18);
+    static const inline uint16_t& _ADCGain = *((const uint16_t*)0x1A16);
+    static const inline int16_t& _ADCOffset = *((const int16_t*)0x1A18);
     
     static inline struct {
         std::atomic<bool> done = false;
