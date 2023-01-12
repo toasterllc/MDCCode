@@ -340,12 +340,18 @@ private:
             };
             
             // Only sample the battery voltage if charging is underway
-            if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
+            // The reason for this is that asserting BAT_CHRG_LVL_EN causes a current draw which
+            // fools the battery charger IC's (MCP73831T) battery-detection circuit into thinking
+            // a battery is present even if one isn't. So we only want to sample the battery
+            // voltage if we know a battery is being charged (and therefore a battery is present),
+            // to ensure that we can detect the 'Shutdown' battery state.
+            #warning TODO: uncomment `status.chargeStatus` check below
+//            if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
                 const auto resp = _Send({ .op = MSP::Cmd::Op::BatterySample });
                 if (resp && resp->ok) {
                     status.voltage = resp->arg.BatterySample.sample;
                 }
-            }
+//            }
             
             return status;
         }
