@@ -498,12 +498,11 @@ struct _ImgTask {
 struct _MainTask {
     static void Run() {
         
-        for (bool x=false;; x=!x) {
-            _Pin::LED_RED_::Write(x);
-            _BatterySampler::Sample();
-            _Scheduler::Sleep(_Scheduler::Ms(1000));
-        }
-        
+//        for (bool x=false;; x=!x) {
+//            _Pin::LED_RED_::Write(x);
+//            _BatterySampler::Sample();
+//            _Scheduler::Sleep(_Scheduler::Ms(1000));
+//        }
         
         // Handle cold starts
         if (!_Init) {
@@ -668,8 +667,8 @@ struct _MainTask {
     static inline bool _Init = false;
     
     // _Motion: announces that motion occurred
-    // atomic because _Motion is modified from the interrupt context
-    static inline std::atomic<bool> _Motion = false;
+    // _Motion: volatile because it's modified from the interrupt context
+    static volatile inline bool _Motion = false;
     static inline bool _WaitingForMotion = false;
     
     // Task options
@@ -754,11 +753,11 @@ struct _I2CTask {
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::BatterySample: {
-            #warning TODO: uncomment
-//            return MSP::Resp{
-//                .ok = true,
-//                .arg = { .BatterySample = { .sample = _BatterySampler::Sample() } },
-//            };
+//            #warning TODO: uncomment
+            return MSP::Resp{
+                .ok = true,
+                .arg = { .BatterySample = { .sample = _BatterySampler::Sample() } },
+            };
         }
         
         default:
@@ -810,11 +809,10 @@ static void _Sleep() {
         PMMCTL0_L |= PMMREGOFF_L;
     }
     
+    // Remember our current interrupt state, which IntState will restore upon return
+    Toastbox::IntState ints;
     // Atomically enable interrupts and go to sleep
-    const bool prevEn = Toastbox::IntState::Get();
     __bis_SR_register(GIE | LPMBits);
-    // If interrupts were disabled previously, disable them again
-    if (!prevEn) Toastbox::IntState::Set(false);
 }
 
 // MARK: - Interrupts

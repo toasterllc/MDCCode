@@ -1,6 +1,5 @@
 #pragma once
 #include <msp430.h>
-#include <atomic>
 #include "MSP.h"
 #include "RegLocker.h"
 
@@ -146,7 +145,7 @@ private:
         // Trigger sampling to start
         _SampleStart(ch);
         // Wait until we're done sampling
-        T_Scheduler::Wait([&] { return _Sample.done.load(); });
+        T_Scheduler::Wait([&] { return _Sample.done; });
         return _Sample.val;
     }
     
@@ -205,9 +204,9 @@ private:
     static const inline int16_t& _ADCOffset = *((const int16_t*)0x1A18);
     
     static inline struct {
-        std::atomic<bool> done = false;
-        std::atomic<uint16_t> count = 0;
-        std::atomic<uint16_t> val = 0;
+        volatile bool done = false;
+        volatile uint16_t count = 0;
+        volatile uint16_t val = 0;
     } _Sample;
     
 #undef Assert
