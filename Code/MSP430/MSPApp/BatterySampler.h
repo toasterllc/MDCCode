@@ -73,7 +73,7 @@ public:
             
             // Wait 30us for the internal reference to settle
             // Datasheet: "The on-chip reference from the PMM module must be enabled by
-            // software. Its settling time is ≤30 µs. "
+            // software. Its settling time is ≤30 µs."
             T_Scheduler::Sleep(T_Scheduler::Us(30));
             
             sampleIntRef1V5 = _ChannelSample(_Channel::IntRef1V5);
@@ -173,8 +173,8 @@ private:
         Assert(_Sample.count <= _SampleCount);
         // Stop ADC sampling upon receiving the second-to-last sample, during which the
         // last sample is underway.
-        // This stops ADC operation "at the end of the current conversion", ie ADC
-        // operation will be stopped after we have _SampleCount samples.
+        // This stops ADC sampling "at the end of the current conversion", ie at the
+        // end of the final sample.
         if (_Sample.count == _SampleCount-1) {
             _SampleStop();
         } else if (_Sample.count == _SampleCount) {
