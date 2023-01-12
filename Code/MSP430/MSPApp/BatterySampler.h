@@ -63,7 +63,7 @@ public:
         _ADCEnable(true);
         
         // Sample internal reference
-        uint16_t sampleIntRef1V5 = 0;
+        uint16_t sample1V5 = 0;
         {
             // Enable internal reference
             {
@@ -76,7 +76,7 @@ public:
             // software. Its settling time is ≤30 µs."
             T_Scheduler::Sleep(T_Scheduler::Us(30));
             
-            sampleIntRef1V5 = _ChannelSample(_Channel::IntRef1V5);
+            sample1V5 = _ChannelSample(_Channel::IntRef1V5);
             
             // Disable internal reference (to save power)
             {
@@ -86,7 +86,7 @@ public:
         }
         
         // Sample battery voltage
-        uint16_t sampleBatChrgLvl = 0;
+        uint16_t sampleBat = 0;
         {
             // Enable BAT_CHRG_LVL buffer
             Pin::BatChrgLvlEnPin::Write(1);
@@ -95,7 +95,7 @@ public:
             //   5 time constants -> 5*R*C (where R=1k, C=100n) -> 500us 
             T_Scheduler::Sleep(T_Scheduler::Us(500));
             
-            sampleBatChrgLvl = _ChannelSample(_Channel::BatChrgLvl);
+            sampleBat = _ChannelSample(_Channel::BatChrgLvl);
             
             // Disable BAT_CHRG_LVL buffer (to save power)
             Pin::BatChrgLvlEnPin::Write(0);
@@ -103,7 +103,9 @@ public:
         
         _ADCEnable(false);
         
-        return 0;
+        // Calculate the battery voltage in millivolts
+        const uint32_t mv = ((UINT32_C(1500) * sampleBat) / sample1V5) / _SampleCount;
+        return mv;
     }
     
     static void ISR(uint16_t iv) {
@@ -140,7 +142,7 @@ private:
         // Trigger sampling to start
         _SampleStart(ch);
         // Wait until we're done sampling
-        T_Scheduler::Wait([&] { return _Sample.done; });
+        T_Scheduler::Wait([&] { return _Sample.state == _State; });
         return _Sample.val;
     }
     
@@ -169,6 +171,8 @@ private:
 //    }
     
     static void _SampleHandle(uint16_t sample) {
+        Assert(_Sample.state == _State::Underway);
+        
         _Sample.count++;
         Assert(_Sample.count <= _SampleCount);
         // Stop ADC sampling upon receiving the second-to-last sample, during which the
@@ -178,21 +182,34 @@ private:
         if (_Sample.count == _SampleCount-1) {
             _SampleStop();
         } else if (_Sample.count == _SampleCount) {
-            _Sample.done = true;
+            _Sample.state = _State::Done;
         }
         
-        // TODO: implement ADC error calibrations
-        _Sample.val += sample;
+        _Sample.val += _SampleCorrect(sample);
+    }
+    
+    static uint16_t _SampleCorrect(uint16_t sample) {
+        // Correct the sample using the calibration values stored in the MSP430 TLV
+        return (((uint32_t)sample * _ADCGain) / 0x8000) + _ADCOffset;
     }
     
     // Collect as many 10-bit samples as will fit in a uint16_t without overflowing
     static constexpr uint16_t _SampleCount = 0xFFFF / 0x03FF;
     static_assert(_SampleCount == 64);
     
+    static constexpr inline uint16_t& _ADCGain = *((const uint16_t*)0x1A16);
+    static constexpr inline int16_t& _ADCOffset = *((const int16_t*)0x1A18);
+    
+    enum class _State {
+        Underway,
+        Done,
+    };
+    
     static inline struct {
+        std::atomic<_State> state = _State::Underway;
         std::atomic<uint16_t> count = 0;
         std::atomic<uint16_t> val = 0;
-        std::atomic<bool> done = false;
+//        std::atomic<_State> state = 0;
     } _Sample;
     
 #undef Assert
