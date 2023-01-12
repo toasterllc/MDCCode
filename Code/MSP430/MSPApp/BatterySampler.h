@@ -120,7 +120,7 @@ public:
 private:
     struct _Channel {
         static constexpr uint16_t BatChrgLvl = Pin::BatChrgLvlPin::PinIdx;
-        static constexpr uint16_t IntRef1V5 = 13; // Internal 1.5V reference is connected to ADC channel 13
+        static constexpr uint16_t IntRef1V5  = 13; // Internal 1.5V reference is connected to ADC channel 13
     };
     
     static void _ADCEnable(bool en) {
@@ -142,7 +142,7 @@ private:
         // Trigger sampling to start
         _SampleStart(ch);
         // Wait until we're done sampling
-        T_Scheduler::Wait([&] { return _Sample.state == _State; });
+        T_Scheduler::Wait([&] { return _Sample.done; });
         return _Sample.val;
     }
     
@@ -171,7 +171,7 @@ private:
 //    }
     
     static void _SampleHandle(uint16_t sample) {
-        Assert(_Sample.state == _State::Underway);
+        Assert(!_Sample.done);
         
         _Sample.count++;
         Assert(_Sample.count <= _SampleCount);
@@ -182,7 +182,7 @@ private:
         if (_Sample.count == _SampleCount-1) {
             _SampleStop();
         } else if (_Sample.count == _SampleCount) {
-            _Sample.state = _State::Done;
+            _Sample.done = true;
         }
         
         _Sample.val += _SampleCorrect(sample);
@@ -200,16 +200,10 @@ private:
     static constexpr inline uint16_t& _ADCGain = *((const uint16_t*)0x1A16);
     static constexpr inline int16_t& _ADCOffset = *((const int16_t*)0x1A18);
     
-    enum class _State {
-        Underway,
-        Done,
-    };
-    
     static inline struct {
-        std::atomic<_State> state = _State::Underway;
+        std::atomic<bool> done = false;
         std::atomic<uint16_t> count = 0;
         std::atomic<uint16_t> val = 0;
-//        std::atomic<_State> state = 0;
     } _Sample;
     
 #undef Assert
