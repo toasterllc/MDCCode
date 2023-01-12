@@ -20,7 +20,9 @@ public:
     
     // Constructor, locked
     struct LockType {}; static constexpr auto Lock = LockType();
-    BoolLock(LockType) {}
+    BoolLock(LockType) {
+        lock();
+    }
     
     ~BoolLock() {
         if (_locked) {
@@ -29,17 +31,15 @@ public:
     }
     
     void lock() {
-        #warning TODO: uncomment after fixing USB comms
-//        Assert(!_locked);
+        Assert(!_locked);
         T_Scheduler::Wait([&] { return !T_Lock; });
         T_Lock = true;
         _locked = true;
     }
     
     void unlock() {
-        #warning TODO: uncomment after fixing USB comms
-//        Assert(_locked);
-//        Assert(T_Lock);
+        Assert(_locked);
+        Assert(T_Lock);
         T_Lock = false;
         _locked = false;
     }
