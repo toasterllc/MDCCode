@@ -173,7 +173,7 @@ namespace MSP {
             } StateRead;
             
             struct [[gnu::packed]] {
-                uint16_t sample;
+                BatterySample sample;
             } BatterySample;
         } arg;
     };

@@ -746,9 +746,12 @@ struct _I2CTask {
             _VDDIMGSDSet(cmd.arg.VDDIMGSDSet.en);
             return MSP::Resp{ .ok = true };
         
-        case Cmd::Op::BatterySample:
-            // TODO: implement
-            return MSP::Resp{ .ok = false };
+        case Cmd::Op::BatterySample: {
+            return MSP::Resp{
+                .ok = true,
+                .arg = { .BatterySample = { .sample = _BatterySampler::Sample() } },
+            };
+        }
         
         default:
             return MSP::Resp{ .ok = false };
@@ -1019,6 +1022,9 @@ int main() {
     
     // Init SysTick
     _SysTick::Init();
+    
+    // Init _BatterySampler
+    _BatterySampler::Init();
     
     // Init LEDs by setting their low-priority / 'backstop' values to off.
     // This is necessary so that relinquishing the LEDs from I2C task causes

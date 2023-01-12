@@ -138,11 +138,13 @@ private:
     
     static uint16_t _ChannelSample(uint16_t ch) {
         // Reset state
-        _Sample = {};
+        _Sample.done = false;
+        _Sample.count = 0;
+        _Sample.val = 0;
         // Trigger sampling to start
         _SampleStart(ch);
         // Wait until we're done sampling
-        T_Scheduler::Wait([&] { return _Sample.done; });
+        T_Scheduler::Wait([&] { return _Sample.done.load(); });
         return _Sample.val;
     }
     
