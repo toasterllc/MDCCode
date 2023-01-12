@@ -52,7 +52,7 @@ struct _Pin {
     using VDD_B_2V8_IMG_SD_EN       = PortA::Pin<0xB, Option::Output0>;
     using MOTION_SIGNAL             = PortA::Pin<0xC, Option::Input, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only drive 1, so we have a pulldown
     using BUTTON_SIGNAL_            = PortA::Pin<0xD, Option::Input, Option::Interrupt10, Option::Resistor1>; // Button can only drive 0, so we have a pullup
-    using BAT_CHRG_LVL_EN           = PortA::Pin<0xE, Option::Output0>;
+    using BAT_CHRG_LVL_EN_          = PortA::Pin<0xE, Option::Output1>;
     using VDD_B_3V3_STM             = PortA::Pin<0xF, Option::Input, Option::Resistor0>;
     // Port B
     using MOTION_EN_                = PortB::Pin<0x0, Option::Output1>;
@@ -100,7 +100,7 @@ using _ICE = ICE<_Scheduler, _ICEError>;
 
 using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr, _I2CError>;
 
-using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN, _BatterySamplerError>;
+using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_, _BatterySamplerError>;
 
 using _LEDGreen_ = OutputPriority<_Pin::LED_GREEN_>;
 using _LEDRed_ = OutputPriority<_Pin::LED_RED_>;
@@ -1020,7 +1020,7 @@ int main() {
         
         // Battery
         _BatterySampler::Pin::BatChrgLvlPin,
-        _BatterySampler::Pin::BatChrgLvlEnPin
+        _BatterySampler::Pin::BatChrgLvlEn_Pin
     >();
     
     // Init clock

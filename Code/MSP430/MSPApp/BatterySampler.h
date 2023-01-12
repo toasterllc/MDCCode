@@ -6,7 +6,7 @@
 template <
 typename T_Scheduler,
 typename T_BatChrgLvlPin,
-typename T_BatChrgLvlEnPin,
+typename T_BatChrgLvlEn_Pin,
 [[noreturn]] void T_Error(uint16_t)
 >
 class BatterySamplerType {
@@ -15,7 +15,7 @@ class BatterySamplerType {
 public:
     struct Pin {
         using BatChrgLvlPin = typename T_BatChrgLvlPin::template Opts<GPIO::Option::Input>;
-        using BatChrgLvlEnPin = typename T_BatChrgLvlEnPin::template Opts<GPIO::Option::Output0>;
+        using BatChrgLvlEn_Pin = typename T_BatChrgLvlEn_Pin::template Opts<GPIO::Option::Output1>;
     };
     
     using LED_GREEN_ = GPIO::PortA::Pin<0x1, GPIO::Option::Output1>;
@@ -90,7 +90,7 @@ public:
         uint16_t sampleBat = 0;
         {
             // Enable BAT_CHRG_LVL buffer
-            Pin::BatChrgLvlEnPin::Write(1);
+            Pin::BatChrgLvlEn_Pin::Write(0);
             
             // Wait 5 time constants for BAT_CHRG_LVL to settle:
             //   5 time constants -> 5*R*C (where R=1k, C=100n) -> 500us 
@@ -99,13 +99,16 @@ public:
             sampleBat = _ChannelSample(_Channel::BatChrgLvl);
             
             // Disable BAT_CHRG_LVL buffer (to save power)
-            Pin::BatChrgLvlEnPin::Write(0);
+            Pin::BatChrgLvlEn_Pin::Write(1);
         }
         
         _ADCEnable(false);
         
-        // Calculate the battery voltage in millivolts
-        const uint32_t mv = ((UINT32_C(1500) * sampleBat) / ((uint32_t)sample1V5 * _SampleCount));
+        // Calculate the battery voltage in millivolts, correcting the sample using the 1.5V reference
+        // voltage, and the voltage divider ratio.
+        constexpr uint16_t VoltageDividerNumer = 4;
+        constexpr uint16_t VoltageDividerDenom = 3;
+        const uint32_t mv = (UINT32_C(1500) * sampleBat * VoltageDividerNumer) / ((uint32_t)sample1V5 * VoltageDividerDenom);
         return mv;
     }
     
