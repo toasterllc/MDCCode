@@ -16,14 +16,14 @@
 #include "RTC.h"
 #include "SPI.h"
 #include "WDT.h"
-#include "FRAMWriteEn.h"
+#include "RegLocker.h"
 #include "Util.h"
 #include "MSP.h"
 #include "GetBits.h"
 #include "ImgSD.h"
 #include "I2C.h"
 #include "OutputPriority.h"
-#include "Battery.h"
+#include "BatterySampler.h"
 using namespace GPIO;
 
 #define Assert(x) if (!(x)) _MainError(__LINE__)
@@ -73,6 +73,7 @@ static void _ICEError(uint16_t line);
 static void _SDError(uint16_t line);
 static void _ImgError(uint16_t line);
 static void _I2CError(uint16_t line);
+static void _BatterySamplerError(uint16_t line);
 
 extern uint8_t _StackMain[];
 
@@ -99,7 +100,7 @@ using _ICE = ICE<_Scheduler, _ICEError>;
 
 using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr, _I2CError>;
 
-using _Battery = BatteryType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN>;
+using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN, _BatterySamplerError>;
 
 using _LEDGreen_ = OutputPriority<_Pin::LED_GREEN_>;
 using _LEDRed_ = OutputPriority<_Pin::LED_RED_>;
@@ -794,7 +795,7 @@ static void _Sleep() {
     
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
-        PMMCTL0_H = PMMPW_H; // Open PMM Registers for write
+        PMMUnlock pmm; // Unlock PMM registers
         PMMCTL0_L |= PMMREGOFF_L;
     }
     
@@ -853,13 +854,14 @@ static void _ISR_SysTick() {
 // MARK: - Abort
 
 namespace AbortDomain {
-    static constexpr uint16_t Invalid       = 0;
-    static constexpr uint16_t Main          = 1;
-    static constexpr uint16_t Scheduler     = 2;
-    static constexpr uint16_t ICE           = 3;
-    static constexpr uint16_t SD            = 4;
-    static constexpr uint16_t Img           = 5;
-    static constexpr uint16_t I2C           = 6;
+    static constexpr uint16_t Invalid           = 0;
+    static constexpr uint16_t Main              = 1;
+    static constexpr uint16_t Scheduler         = 2;
+    static constexpr uint16_t ICE               = 3;
+    static constexpr uint16_t SD                = 4;
+    static constexpr uint16_t Img               = 5;
+    static constexpr uint16_t I2C               = 6;
+    static constexpr uint16_t BatterySampler    = 7;
 }
 
 [[noreturn]]
@@ -890,6 +892,11 @@ static void _ImgError(uint16_t line) {
 [[noreturn]]
 static void _I2CError(uint16_t line) {
     _Abort(AbortDomain::I2C, line);
+}
+
+[[noreturn]]
+static void _BatterySamplerError(uint16_t line) {
+    _Abort(AbortDomain::BatterySampler, line);
 }
 
 static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t line) {
@@ -923,7 +930,9 @@ static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t l
 
 [[noreturn]]
 static void _BOR() {
-    PMMCTL0 = PMMPW | PMMSWBOR;
+    PMMUnlock pmm; // Unlock PMM registers
+    PMMCTL0_L |= PMMSWBOR_L;
+    // Wait for reset
     for (;;);
 }
 
@@ -994,8 +1003,8 @@ int main() {
         _I2C::Pin::Active,
         
         // Battery
-        _Battery::Pin::BatChrgLvlPin,
-        _Battery::Pin::BatChrgLvlEnPin
+        _BatterySampler::Pin::BatChrgLvlPin,
+        _BatterySampler::Pin::BatChrgLvlEnPin
     >();
     
     // Init clock

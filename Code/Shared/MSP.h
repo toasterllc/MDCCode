@@ -8,6 +8,10 @@ namespace MSP {
     
     using Time = uint64_t;
     
+    using BatterySample = uint16_t;
+    static constexpr BatterySample BatterySampleMin = 0;
+    static constexpr BatterySample BatterySampleMax = 1000;    
+    
     static constexpr bool TimeIsAbsolute(const Time& t) {
         return t&((uint64_t)1<<63);
     }

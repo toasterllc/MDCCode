@@ -19,10 +19,10 @@
 		55B9EC96293AE38500318243 /* I2C.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = I2C.h; sourceTree = "<group>"; };
 		55BCD85C276AAF7C002B4CC7 /* WDT.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WDT.h; sourceTree = "<group>"; };
 		55C4567E295580AB00A20363 /* OutputPriority.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OutputPriority.h; sourceTree = "<group>"; };
-		55C4567F29559E7D00A20363 /* Battery.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Battery.h; sourceTree = "<group>"; };
+		55C4567F29559E7D00A20363 /* BatterySampler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BatterySampler.h; sourceTree = "<group>"; };
 		55FD016B275F25BA005505B5 /* Linker.ld */ = {isa = PBXFileReference; lastKnownFileType = text; path = Linker.ld; sourceTree = "<group>"; };
 		55FD016C27605D4F005505B5 /* Startup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Startup.h; sourceTree = "<group>"; };
-		55FD016D27609F93005505B5 /* FRAMWriteEn.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FRAMWriteEn.h; sourceTree = "<group>"; };
+		55FD016D27609F93005505B5 /* RegLocker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RegLocker.h; sourceTree = "<group>"; };
 		55FD01EE27699F08005505B5 /* Release */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Release; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -42,9 +42,9 @@
 				5588914C273C6BCD0004458F /* RTC.h */,
 				5588914E273C7DEB0004458F /* SPI.h */,
 				55B9EC96293AE38500318243 /* I2C.h */,
-				55C4567F29559E7D00A20363 /* Battery.h */,
+				55C4567F29559E7D00A20363 /* BatterySampler.h */,
 				55FD016C27605D4F005505B5 /* Startup.h */,
-				55FD016D27609F93005505B5 /* FRAMWriteEn.h */,
+				55FD016D27609F93005505B5 /* RegLocker.h */,
 				55C4567E295580AB00A20363 /* OutputPriority.h */,
 				556E45EF26B12023006681FA /* main.cpp */,
 			);

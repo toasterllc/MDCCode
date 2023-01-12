@@ -1,7 +1,6 @@
 #pragma once
 #include <msp430.h>
 #include <cstring>
-#include "FRAMWriteEn.h"
 
 class Startup {
 public:
