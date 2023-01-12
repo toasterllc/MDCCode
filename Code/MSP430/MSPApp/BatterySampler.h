@@ -104,7 +104,7 @@ public:
         _ADCEnable(false);
         
         // Calculate the battery voltage in millivolts
-        const uint32_t mv = ((UINT32_C(1500) * sampleBat) / sample1V5) / _SampleCount;
+        const uint32_t mv = ((UINT32_C(1500) * sampleBat) / ((uint32_t)sample1V5 * _SampleCount));
         return mv;
     }
     
