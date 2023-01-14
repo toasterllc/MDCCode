@@ -336,7 +336,7 @@ private:
         static STM::BatteryStatus _BatteryStatusGet() {
             STM::BatteryStatus status = {
                 .chargeStatus = _ChargeStatusGet(),
-                .voltage = 0,
+                .level = 0,
             };
             
             // Only sample the battery voltage if charging is underway
@@ -347,9 +347,9 @@ private:
             // to ensure that we can detect the 'Shutdown' battery state.
             #warning TODO: uncomment `status.chargeStatus` check below
 //            if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
-                const auto resp = _Send({ .op = MSP::Cmd::Op::BatterySample });
+                const auto resp = _Send({ .op = MSP::Cmd::Op::BatteryChargeLevelGet });
                 if (resp && resp->ok) {
-                    status.voltage = resp->arg.BatterySample.sample;
+                    status.level = resp->arg.BatteryChargeLevelGet.level;
                 }
 //            }
             

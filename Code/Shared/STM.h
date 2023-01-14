@@ -251,6 +251,6 @@ namespace STM {
         };
         
         ChargeStatus chargeStatus = ChargeStatus::Invalid;
-        uint16_t voltage = 0;
+        MSP::BatteryChargeLevel level = 0;
     };
 }

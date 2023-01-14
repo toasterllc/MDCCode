@@ -249,8 +249,8 @@ static void BatteryStatusGet(const Args& args, MDCUSBDevice& device) {
     BatteryStatus status = device.batteryStatusGet();
     
     printf("Battery status:\n");
-    printf("  Charge status:   %s\n", _StringForChargeStatus(status.chargeStatus));
-    printf("  Battery voltage: %ju mV\n", (uintmax_t)status.voltage);
+    printf("  Charge status: %s\n", _StringForChargeStatus(status.chargeStatus));
+    printf("  Charge level:  %ju%%\n", (uintmax_t)status.level);
     printf("\n");
 }
 
