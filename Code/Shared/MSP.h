@@ -8,9 +8,9 @@ namespace MSP {
     
     using Time = uint64_t;
     
-    using BatterySample = uint16_t;
-    static constexpr BatterySample BatterySampleMin = 0;
-    static constexpr BatterySample BatterySampleMax = 1000;    
+    using BatteryChargeLevel = uint8_t;
+    static constexpr BatteryChargeLevel BatteryChargeLevelMin = 0;
+    static constexpr BatteryChargeLevel BatteryChargeLevelMax = 100;
     
     static constexpr bool TimeIsAbsolute(const Time& t) {
         return t&((uint64_t)1<<63);
@@ -132,7 +132,7 @@ namespace MSP {
             TimeSet,
             HostModeSet,
             VDDIMGSDSet,
-            BatterySample,
+            BatteryChargeLevelGet,
         };
         
         Op op = Op::None;
@@ -173,8 +173,8 @@ namespace MSP {
             } StateRead;
             
             struct [[gnu::packed]] {
-                BatterySample sample;
-            } BatterySample;
+                BatteryChargeLevel level;
+            } BatteryChargeLevelGet;
         } arg;
     };
 

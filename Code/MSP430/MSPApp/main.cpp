@@ -752,11 +752,11 @@ struct _I2CTask {
             _VDDIMGSDSet(cmd.arg.VDDIMGSDSet.en);
             return MSP::Resp{ .ok = true };
         
-        case Cmd::Op::BatterySample: {
+        case Cmd::Op::BatteryChargeLevelGet: {
 //            #warning TODO: uncomment
             return MSP::Resp{
                 .ok = true,
-                .arg = { .BatterySample = { .sample = _BatterySampler::Sample() } },
+                .arg = { .BatteryChargeLevelGet = { .level = _BatterySampler::Sample() } },
             };
         }
         
