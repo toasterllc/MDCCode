@@ -667,9 +667,9 @@ struct _MainTask {
     static inline bool _Init = false;
     
     // _Motion: announces that motion occurred
-    // _Motion: volatile because it's modified from the interrupt context
-    static volatile inline bool _Motion = false;
-    static inline bool _WaitingForMotion = false;
+    // _Motion: atomic because it's modified from the interrupt context
+    static std::atomic<bool> inline _Motion = false;
+    static bool inline _WaitingForMotion = false;
     
     // Task options
     static constexpr Toastbox::TaskOptions Options{
