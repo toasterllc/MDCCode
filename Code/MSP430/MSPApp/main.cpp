@@ -753,7 +753,6 @@ struct _I2CTask {
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::BatteryChargeLevelGet: {
-//            #warning TODO: uncomment
             return MSP::Resp{
                 .ok = true,
                 .arg = { .BatteryChargeLevelGet = { .level = _BatterySampler::Sample() } },
@@ -1018,7 +1017,7 @@ int main() {
         _I2C::Pin::SDA,
         _I2C::Pin::Active,
         
-        // Battery
+        // Battery (config chosen by _BatterySampler)
         _BatterySampler::Pin::BatChrgLvlPin,
         _BatterySampler::Pin::BatChrgLvlEn_Pin
     >();
