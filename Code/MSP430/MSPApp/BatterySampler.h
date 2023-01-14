@@ -285,8 +285,10 @@ private:
         const Entry& left = *std::prev(it);
         const Entry& right = *it;
         
+        // Interpolate between `left` and `right`, where the result is normalized between [0x0, 0xFFFF]
         const uint16_t levelFFFF =
             left.level + (((uint32_t)(mv-left.mv) * (uint32_t)(right.level-left.level)) / (right.mv-left.mv));
+        // Convert `levelFFFF` from the range [0x0, 0xFFFF] -> [0, 100]
         const uint16_t level100 = ((uint32_t)levelFFFF * MSP::BatteryChargeLevelMax) / UINT16_MAX;
         return level100;
     }
