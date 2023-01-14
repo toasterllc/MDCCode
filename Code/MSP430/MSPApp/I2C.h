@@ -55,17 +55,9 @@ public:
             Assert(!(ev & _Events::Stop) || (i == (sizeof(msg)-1)));
             // Confirm that we received another byte
             Assert(ev & _Events::Rx);
-//            if (ev != _Events::Rx) T_Error(__LINE__ | ((uint16_t)ev<<8));
             // Store the byte
             b[i] = UCB0RXBUF_L;
         }
-        
-//        for (int i=0; i<5; i++) {
-//            _LED_GREEN_::Write(0);
-//            for (volatile uint16_t i=0; i<0xFFFE; i++);
-//            _LED_GREEN_::Write(1);
-//            for (volatile uint16_t i=0; i<0xFFFE; i++);
-//        }
         
         // If our loop didn't receive a STOP event, wait for it now
         if (!(ev & _Events::Stop)) {
@@ -93,16 +85,6 @@ public:
         ev = _WaitForEvents(_Events::Stop | _Events::Inactive);
         if (ev & _Events::Inactive) return false;
         return true;
-        
-//        // Wait for STOP condition
-//        for (;;) {
-//            ev = _WaitForEvents(_Events::Tx | _Events::Stop | _Events::Inactive);
-//            if (ev & _Events::Inactive) return false;
-//            if (ev & _Events::Stop) break;
-//            // Send 0xFF after the end of our data
-//            UCB0TXBUF_L = 0xFF;
-//        }
-//        return true;
     }
     
     static void ISR_I2C(uint16_t iv) {
