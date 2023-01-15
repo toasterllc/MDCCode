@@ -789,12 +789,14 @@ struct _ButtonTask {
             const _Button::Event ev = _Button::WaitForEvent();
             switch (ev) {
             case _Button::Event::Press:
+                // Take a photo
                 _LEDRed_::Set(_LEDRed_::Priority::Low, 0);
                 _Scheduler::Sleep(_Scheduler::Ms(250));
                 _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
                 break;
             
             case _Button::Event::Hold:
+                // Turn off
                 _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
                 _Scheduler::Sleep(_Scheduler::Ms(250));
                 _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
@@ -863,18 +865,25 @@ static void _ISR_Port2() {
     // Accessing `P2IV` automatically clears the highest-priority interrupt
     const uint16_t iv = P2IV;
     switch (__even_in_range(iv, 0x10)) {
+    
+    // Motion
     case _Pin::MOTION_SIGNAL::IVPort2():
         _MainTask::ISR_MotionSignal(iv);
         __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
         break;
+    
+    // I2C (ie VDD_B_3V3_STM)
     case _I2C::Pin::Active::IVPort2():
         _I2C::ISR_Active(iv);
         __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
         break;
+    
+    // Button
     case _Button::Pin::IVPort2():
         _Button::ISR();
         __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
         break;
+    
     default:
         break;
     }
