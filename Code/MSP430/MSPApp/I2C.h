@@ -30,7 +30,7 @@ public:
         _I2CReset();
         
         // Observe 0->1 transitions on Pin::Active
-        _ActiveIntsConfig(1);
+        _ActiveInterrupt::IESConfig();
         
         // Wait until we're active
         _WaitForEvents(_Events::Active);
@@ -39,7 +39,7 @@ public:
         _I2CInit();
         
         // Observe 1->0 transitions on Pin::Active
-        _ActiveIntsConfig(0);
+        _InactiveInterrupt::IESConfig();
     }
     
     template <typename T>
@@ -157,25 +157,6 @@ private:
         // Enable interrupts
         // User's guide says to enable interrupts after clearing UCSWRST
         UCB0IE = UCSTTIE | UCSTPIE | UCTXIE0 | UCRXIE0;
-    }
-    
-    static void _ActiveIntsConfig(bool dir) {
-        // Disable interrupts while we change the interrupt config
-        Toastbox::IntState ints(false);
-        
-        // Monitor for 0->1 transitions
-        if (dir) {
-            _ActiveInterrupt::template Init<_InactiveInterrupt>();
-        
-        // Monitor for 1->0 transitions
-        } else {
-            _InactiveInterrupt::template Init<_ActiveInterrupt>();
-        }
-        
-        // After configuring the interrupt, ensure that the IFG reflects the state of the pin.
-        // This is necessary because we may have missed a transition due to the inherent race
-        // between changing the interrupt config and the pin changing state.
-        Pin::Active::IFG(Pin::Active::Read() == dir);
     }
     
     static _Events _WaitForEvents(_Events events) {

@@ -24,6 +24,7 @@
 #include "I2C.h"
 #include "OutputPriority.h"
 #include "BatterySampler.h"
+#include "Button.h"
 using namespace GPIO;
 
 #define Assert(x) if (!(x)) _MainError(__LINE__)
@@ -51,7 +52,7 @@ struct _Pin {
     using LED_RED_                  = PortA::Pin<0xA, Option::Output1>;
     using VDD_B_2V8_IMG_SD_EN       = PortA::Pin<0xB, Option::Output0>;
     using MOTION_SIGNAL             = PortA::Pin<0xC, Option::Input, Option::Interrupt01, Option::Resistor0>; // Motion sensor can only drive 1, so we have a pulldown
-    using BUTTON_SIGNAL_            = PortA::Pin<0xD, Option::Input, Option::Interrupt10, Option::Resistor1>; // Button can only drive 0, so we have a pullup
+    using BUTTON_SIGNAL_            = PortA::Pin<0xD>;
     using BAT_CHRG_LVL_EN_          = PortA::Pin<0xE, Option::Output1>;
     using VDD_B_3V3_STM             = PortA::Pin<0xF, Option::Input, Option::Resistor0>;
     // Port B
@@ -64,6 +65,7 @@ class _MainTask;
 class _SDTask;
 class _ImgTask;
 class _I2CTask;
+class _ButtonTask;
 
 static void _Sleep();
 
@@ -90,7 +92,8 @@ using _Scheduler = Toastbox::Scheduler<
     _MainTask,                                  // T_Tasks: list of tasks
     _SDTask,
     _ImgTask,
-    _I2CTask
+    _I2CTask,
+    _ButtonTask
 >;
 
 using _Clock = ClockType<_MCLKFreqHz>;
@@ -101,6 +104,9 @@ using _ICE = ICE<_Scheduler, _ICEError>;
 using _I2C = I2CType<_Scheduler, _Pin::MSP_STM_I2C_SCL, _Pin::MSP_STM_I2C_SDA, _Pin::VDD_B_3V3_STM, MSP::I2CAddr, _I2CError>;
 
 using _BatterySampler = BatterySamplerType<_Scheduler, _Pin::BAT_CHRG_LVL, _Pin::BAT_CHRG_LVL_EN_, _BatterySamplerError>;
+
+constexpr uint16_t _ButtonHoldDurationMs = 1500;
+using _Button = ButtonType<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDurationMs>;
 
 using _LEDGreen_ = OutputPriority<_Pin::LED_GREEN_>;
 using _LEDRed_ = OutputPriority<_Pin::LED_RED_>;
@@ -578,7 +584,7 @@ struct _MainTask {
             for (;;) {
                 // Capture an image
                 {
-                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
+//                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
                     
                     // Pretend to capture an image
                     _Scheduler::Sleep(_Scheduler::Ms(500));
@@ -600,7 +606,7 @@ struct _MainTask {
 //                    _SDTask::Write(srcRAMBlock);
 //                    _SDTask::Wait();
                     
-                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
+//                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
                 }
                 
                 break;
@@ -668,8 +674,8 @@ struct _MainTask {
     
     // _Motion: announces that motion occurred
     // _Motion: atomic because it's modified from the interrupt context
-    static std::atomic<bool> inline _Motion = false;
-    static bool inline _WaitingForMotion = false;
+    static inline std::atomic<bool> _Motion = false;
+    static inline bool _WaitingForMotion = false;
     
     // Task options
     static constexpr Toastbox::TaskOptions Options{
@@ -777,6 +783,37 @@ struct _I2CTask {
     static inline uint8_t Stack[256];
 };
 
+struct _ButtonTask {
+    static void Run() {
+        for (;;) {
+            const _Button::Event ev = _Button::WaitForEvent();
+            switch (ev) {
+            case _Button::Event::Press:
+                _LEDRed_::Set(_LEDRed_::Priority::Low, 0);
+                _Scheduler::Sleep(_Scheduler::Ms(250));
+                _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+                break;
+            
+            case _Button::Event::Hold:
+                _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
+                _Scheduler::Sleep(_Scheduler::Ms(250));
+                _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
+                break;
+            }
+        }
+    }
+    
+    // Task options
+    static constexpr Toastbox::TaskOptions Options{
+        .AutoStart = Run, // Task should start running
+    };
+    
+    // Task stack
+    [[gnu::section(".stack._ButtonTask")]]
+    alignas(sizeof(void*))
+    static inline uint8_t Stack[128];
+};
+
 // MARK: - IntState
 
 inline bool Toastbox::IntState::Get() {
@@ -828,13 +865,15 @@ static void _ISR_Port2() {
     switch (__even_in_range(iv, 0x10)) {
     case _Pin::MOTION_SIGNAL::IVPort2():
         _MainTask::ISR_MotionSignal(iv);
-        // Wake ourself
-        __bic_SR_register_on_exit(LPM3_bits);
+        __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
         break;
     case _I2C::Pin::Active::IVPort2():
         _I2C::ISR_Active(iv);
-        // Wake ourself
-        __bic_SR_register_on_exit(LPM3_bits);
+        __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
+        break;
+    case _Button::Pin::IVPort2():
+        _Button::ISR();
+        __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
         break;
     default:
         break;
@@ -993,7 +1032,6 @@ int main() {
     GPIO::Init<
         // General IO
         _Pin::MOTION_SIGNAL,
-        _Pin::BUTTON_SIGNAL_,
         _Pin::LED_GREEN_,
         _Pin::LED_RED_,
         _Pin::MOTION_EN_,
@@ -1019,7 +1057,10 @@ int main() {
         
         // Battery (config chosen by _BatterySampler)
         _BatterySampler::Pin::BatChrgLvlPin,
-        _BatterySampler::Pin::BatChrgLvlEn_Pin
+        _BatterySampler::Pin::BatChrgLvlEn_Pin,
+        
+        // Button
+        _Button::Pin
     >();
     
     // Init clock

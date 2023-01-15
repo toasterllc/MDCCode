@@ -227,6 +227,24 @@ public:
             _Setter(PAIFG, x);
         }
         
+        // IESConfig(): convenience for changing IES to switch between monitoring 0->1 and 1->0 transitions.
+        // This function ensures that transitions won't be missed (due to the inherent race of configuring
+        // IES and the pin changing state), by explicitly setting IFG to reflect the state of the pin,
+        // after configuring IES.
+        OnlyPortA
+        static constexpr void IESConfig() {
+            // Disable interrupts while we change the IES config
+            Toastbox::IntState ints(false);
+            
+            constexpr bool ies = InitCfg::IES();
+            IES(ies);
+            
+            // After configuring IES, ensure that IFG reflects the state of the pin.
+            // This is necessary because we may have missed a transition due to the
+            // inherent race between configuring IES and the pin changing state.
+            IFG(Read() != ies);
+        }
+        
         static bool Read() {
             if constexpr (PortIdx == PortIndex::A)      return PAIN & Bit;
             else if constexpr (PortIdx == PortIndex::B) return PBIN & Bit;
