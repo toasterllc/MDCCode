@@ -93,8 +93,8 @@ public:
         // Sample battery voltage
         uint16_t sampleBat = 0;
         {
-            #warning TODO: for the Rev8 board: uncomment our pin enabling/sleep/disabling code here, where BAT_CHRG_LVL_EN should work as intended.
-            #warning TODO: on Rev7 it doesn't work as intended because U5 is an inverter instead of a buffer, so we leave BAT_CHRG_LVL_EN enabled all the time
+            #warning TODO: for the Rev8 board: uncomment our pin enabling/sleep/disabling code here, because BAT_CHRG_LVL_EN should work as intended on Rev8.
+            #warning TODO: on Rev7 it doesn't work as intended because U5 is an inverter instead of a buffer, so we decided to leave BAT_CHRG_LVL_EN enabled all the time, instead of enabling it only when sampling.
 //            // Enable BAT_CHRG_LVL buffer
 //            Pin::BatChrgLvlEn_Pin::Write(0);
 //            
