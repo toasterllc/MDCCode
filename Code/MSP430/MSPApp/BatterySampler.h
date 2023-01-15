@@ -62,13 +62,6 @@ public:
             // ADCINCH=0: disable all channels
             ADCMCTL0 = ADCSREF_0;
         }
-        
-//        #warning TODO: remove
-//        // Enable internal reference
-//        {
-//            PMMUnlock pmm; // Unlock PMM registers
-//            PMMCTL2 |= INTREFEN;
-//        }
     }
     
     static MSP::BatteryChargeLevel Sample() {
@@ -100,11 +93,13 @@ public:
         // Sample battery voltage
         uint16_t sampleBat = 0;
         {
+            #warning TODO: for the Rev8 board: uncomment our pin enabling/sleep/disabling code here, where BAT_CHRG_LVL_EN should work as intended.
+            #warning TODO: on Rev7 it doesn't work as intended because U5 is an inverter instead of a buffer, so we leave BAT_CHRG_LVL_EN enabled all the time
 //            // Enable BAT_CHRG_LVL buffer
 //            Pin::BatChrgLvlEn_Pin::Write(0);
-            
+//            
 //            // Wait 5 time constants for BAT_CHRG_LVL to settle:
-//            //   5 time constants -> 5*R*C (where R=1k, C=100n) -> 500us
+//            //   5 time constants = 5*R*C (where R=1k, C=100n) = 500us
 //            T_Scheduler::Sleep(T_Scheduler::Us(500));
             
             sampleBat = _ChannelSample(_Channel::BatChrgLvl);
@@ -119,8 +114,6 @@ public:
         // voltage, and the voltage divider ratio.
         constexpr uint16_t VoltageDividerNumer = 4;
         constexpr uint16_t VoltageDividerDenom = 3;
-//        constexpr uint16_t VoltageDividerNumer = 1;
-//        constexpr uint16_t VoltageDividerDenom = 1;
         const uint16_t mv =
             (UINT64_C(1500) * sampleBat * _ADC1V5RefFactor * VoltageDividerNumer) /
             ((uint64_t)sample1V5 * 0x8000 * VoltageDividerDenom);
@@ -178,19 +171,6 @@ private:
     static void _SampleStop() {
         ADCCTL0 &= ~ADCENC;
     }
-    
-//    static void _SampleStop() {
-//        // Users Guide: "Any conversion mode can be stopped immediately by setting CONSEQx = 0 and setting ADCENC = 0."
-//        // We're not sure what 'immediately' means, but hopefully 10 ADC clock cycles with ADCCONSEQ=0 is enough.
-//        // The fADCOSC,min = 3.8 MHz, while MCLK=16MHz, so:
-//        //   (10*(1/3.8e6))/(1/16e6) = 42 MCLK cycles to meet 10 ADC clock cycles
-//        // Rounding up to 50 MCLK cycles.
-//        const uint16_t ADCCTL1saved = ADCCTL1;
-//        ADCCTL1 &= ~ADCCONSEQ;
-//        ADCCTL0 &= ~ADCENC;
-//        __delay_cycles(50);
-//        ADCCTL1 = ADCCTL1saved;
-//    }
     
     static void _SampleHandle(uint16_t sample) {
         Assert(!_Sample.done);
