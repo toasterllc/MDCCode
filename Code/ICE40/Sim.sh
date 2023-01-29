@@ -7,7 +7,7 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-rootDir=$(cd $(dirname "$0"); pwd)
+rootDir="$(cd "$(dirname "$0")"; pwd)"
 if [ ! -n "$rootDir" ]; then echo "Bad rootDir" ; exit 1; fi
 
 proj="$1"

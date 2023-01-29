@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get path to MDCDebugger
-dir=$(cd $(dirname "$0"); pwd)
+dir="$(cd "$(dirname "$0")"; pwd)"
 MDCDebugger="$dir/MDCDebugger/MDCDebugger"
 
 # Configure internal register initialization
