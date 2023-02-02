@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <cstddef>
 #include <atomic>
-#define TaskMSP430
+#define SchedulerMSP430
 #include "Toastbox/Scheduler.h"
 #include "SDCard.h"
 #include "ICE.h"
@@ -69,26 +69,27 @@ class _ButtonTask;
 
 static void _Sleep();
 
+static void _SchedulerStackOverflow();
 static void _MainError(uint16_t line);
-static void _SchedulerError(uint16_t line);
 static void _ICEError(uint16_t line);
 static void _SDError(uint16_t line);
 static void _ImgError(uint16_t line);
 static void _I2CError(uint16_t line);
 static void _BatterySamplerError(uint16_t line);
 
-extern uint8_t _StackMain[];
-
-#warning disable stack guard for production
+#warning TODO: disable stack guard for production
 static constexpr size_t _StackGuardCount = 16;
+
 using _Scheduler = Toastbox::Scheduler<
     _SysTickPeriodUs,                           // T_UsPerTick: microseconds per tick
+    
     _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                 //          invoked when no tasks have work to do
-    _SchedulerError,                            // T_Error: function to handle unrecoverable error
-    _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
-                                                //              main stack for overflow; unused if T_StackGuardCount==0)
+    
     _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
+    _SchedulerStackOverflow,                    // T_Error: function to handle unrecoverable error
+    nullptr,                                    // T_StackInterrupt: unused
+    
     _MainTask,                                  // T_Tasks: list of tasks
     _SDTask,
     _ImgTask,
@@ -391,9 +392,6 @@ struct _SDTask {
     
     static inline bool _Writing = false;
     
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
-    
     // Task stack
     [[gnu::section(".stack._SDTask")]]
     alignas(sizeof(void*))
@@ -491,9 +489,6 @@ struct _ImgTask {
     // since the exposure doesn't change often.
     [[gnu::section(".ram_backup.main")]]
     static inline Img::AutoExposure _AutoExp;
-    
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
     [[gnu::section(".stack._ImgTask")]]
@@ -677,11 +672,6 @@ struct _MainTask {
     static inline std::atomic<bool> _Motion = false;
     static inline bool _WaitingForMotion = false;
     
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{
-        .AutoStart = Run, // Task should start running
-    };
-    
     // Task stack
     [[gnu::section(".stack._MainTask")]]
     alignas(sizeof(void*))
@@ -772,11 +762,6 @@ struct _I2CTask {
     
     static inline bool _HostMode = false;
     
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{
-        .AutoStart = Run, // Task should start running
-    };
-    
     // Task stack
     [[gnu::section(".stack._I2CTask")]]
     alignas(sizeof(void*))
@@ -804,11 +789,6 @@ struct _ButtonTask {
             }
         }
     }
-    
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{
-        .AutoStart = Run, // Task should start running
-    };
     
     // Task stack
     [[gnu::section(".stack._ButtonTask")]]
@@ -917,24 +897,24 @@ static void _ISR_ADC() {
 // MARK: - Abort
 
 namespace AbortDomain {
-    static constexpr uint16_t Invalid           = 0;
-    static constexpr uint16_t Main              = 1;
-    static constexpr uint16_t Scheduler         = 2;
-    static constexpr uint16_t ICE               = 3;
-    static constexpr uint16_t SD                = 4;
-    static constexpr uint16_t Img               = 5;
-    static constexpr uint16_t I2C               = 6;
-    static constexpr uint16_t BatterySampler    = 7;
+    static constexpr uint16_t Invalid                   = 0;
+    static constexpr uint16_t SchedulerStackOverflow    = 1;
+    static constexpr uint16_t Main                      = 2;
+    static constexpr uint16_t ICE                       = 3;
+    static constexpr uint16_t SD                        = 4;
+    static constexpr uint16_t Img                       = 5;
+    static constexpr uint16_t I2C                       = 6;
+    static constexpr uint16_t BatterySampler            = 7;
+}
+
+[[noreturn]]
+static void _SchedulerStackOverflow() {
+    _Abort(AbortDomain::SchedulerStackOverflow, 0);
 }
 
 [[noreturn]]
 static void _MainError(uint16_t line) {
     _Abort(AbortDomain::Main, line);
-}
-
-[[noreturn]]
-static void _SchedulerError(uint16_t line) {
-    _Abort(AbortDomain::Scheduler, line);
 }
 
 [[noreturn]]
