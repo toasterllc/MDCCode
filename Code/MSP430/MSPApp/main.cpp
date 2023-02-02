@@ -227,7 +227,7 @@ struct _SDTask {
     }
     
     static void Wait() {
-        _Scheduler::Wait<_SDTask>();
+        _Scheduler::Wait([] { return !_Scheduler::Running<_SDTask>(); });
     }
     
     // WaitForInitAndWrite: wait for both initialization and writing to complete
@@ -418,7 +418,7 @@ struct _ImgTask {
     }
     
     static void Wait() {
-        _Scheduler::Wait<_ImgTask>();
+        _Scheduler::Wait([] { return !_Scheduler::Running<_ImgTask>(); });
     }
     
     static void _Init() {
@@ -1075,6 +1075,7 @@ int main() {
     _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
     _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
     
+    _Scheduler::Start<_MainTask, _I2CTask, _ButtonTask>();
     _Scheduler::Run();
 }
 
