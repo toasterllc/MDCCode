@@ -994,17 +994,6 @@ void abort() {
 
 // MARK: - Main
 
-#warning TODO: we can get rid of _StackMain now right, with the Scheduler revamp?
-#warning verify that _StackMainSize is large enough
-#define _StackMainSize 128
-
-[[gnu::section(".stack.main")]]
-alignas(sizeof(void*))
-uint8_t _StackMain[_StackMainSize];
-
-asm(".global __stack");
-asm(".equ __stack, _StackMain+" Stringify(_StackMainSize));
-
 //static void _HostMode() {
 //    // Let power rails fully discharge before turning them on
 //    _Scheduler::Delay(_Scheduler::Ms(10));
