@@ -157,7 +157,7 @@ private:
         // Trigger sampling to start
         _SampleStart(ch);
         // Wait until we're done sampling
-        T_Scheduler::Wait([&] { return _Sample.done; });
+        T_Scheduler::Wait([] { return _Sample.done; });
         return _Sample.val;
     }
     

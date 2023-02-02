@@ -30,7 +30,7 @@ public:
         {
             _DeassertedInterrupt::IESConfig();
             _Signal = false;
-            T_Scheduler::Wait([&] { return _Signal.load(); });
+            T_Scheduler::Wait([] { return _Signal.load(); });
             // Debounce delay
             T_Scheduler::Sleep(T_Scheduler::Ms(DebounceDelayMs));
         }
@@ -39,7 +39,7 @@ public:
         {
             _AssertedInterrupt::IESConfig();
             _Signal = false;
-            T_Scheduler::Wait([&] { return _Signal.load(); });
+            T_Scheduler::Wait([] { return _Signal.load(); });
             // Debounce delay
             T_Scheduler::Sleep(T_Scheduler::Ms(DebounceDelayMs));
         }
@@ -48,7 +48,7 @@ public:
         {
             _DeassertedInterrupt::IESConfig();
             _Signal = false;
-            auto ok = T_Scheduler::Wait(T_Scheduler::Ms(T_HoldDurationMs), [&] { return _Signal.load(); });
+            auto ok = T_Scheduler::Wait(T_Scheduler::Ms(T_HoldDurationMs), [] { return _Signal.load(); });
             // If we timed-out, then the button's being held
             if (!ok) return Event::Hold;
             // Otherwise, we didn't timeout, so the button was simply pressed

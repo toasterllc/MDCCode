@@ -232,7 +232,7 @@ struct _SDTask {
     
     // WaitForInitAndWrite: wait for both initialization and writing to complete
     static void WaitForInitAndWrite() {
-        _Scheduler::Wait([&] { return _RCA.has_value() && !_Writing; });
+        _Scheduler::Wait([] { return _RCA.has_value() && !_Writing; });
     }
     
 //    static void WaitForInit() {
