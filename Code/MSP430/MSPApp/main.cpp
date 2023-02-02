@@ -1076,8 +1076,7 @@ int main() {
     _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
     _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
     
-    _Scheduler::Start<_MainTask, _I2CTask, _ButtonTask>();
-    _Scheduler::Run();
+    _Scheduler::Run<_MainTask, _I2CTask, _ButtonTask>();
 }
 
 

@@ -349,7 +349,6 @@ SECTIONS
 
   .stack (ORIGIN (RAM) + LENGTH(RAM)) :
   {
-    PROVIDE (__stack = .);
     *(.stack)
   }
 
