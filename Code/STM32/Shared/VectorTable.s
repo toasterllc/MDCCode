@@ -16,7 +16,7 @@
 .align 9
 .type VectorTable, %object
 VectorTable:
-    .word _StackMainEnd
+    .word _StackInterruptEnd
     .word ISR_Reset
 
     .word ISR_NMI
@@ -433,7 +433,7 @@ VectorTable:
 .type ISR_Reset, %function
 ISR_Reset:
     // Set stack pointer
-    ldr sp, =_StackMainEnd
+    ldr sp, =_StackInterruptEnd
     // Jump to init routine
     b Startup
 

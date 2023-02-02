@@ -325,7 +325,7 @@ public:
             Assert(us == USBD_OK);
         }
         
-        auto waitResult = T_Scheduler::Wait([&] { return _Wait(ep, outep); });
+        auto waitResult = T_Scheduler::Wait([] { return _Wait(ep, outep); });
         if (!waitResult.ok) return std::nullopt;
         return waitResult.len;
     }
@@ -345,7 +345,7 @@ public:
             Assert(us == USBD_OK);
         }
         
-        auto waitResult = T_Scheduler::Wait([&] { return _Wait(ep, inep); });
+        auto waitResult = T_Scheduler::Wait([] { return _Wait(ep, inep); });
         return waitResult.ok;
     }
     

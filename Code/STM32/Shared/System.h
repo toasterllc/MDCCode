@@ -14,14 +14,14 @@
 
 // MARK: - Main Thread Stack
 
-#define _StackMainSize 1024
+#define _StackInterruptSize 1024
 
-[[gnu::section(".stack.main")]]
+[[gnu::section(".stack.interrupt")]]
 alignas(sizeof(void*))
-uint8_t _StackMain[_StackMainSize];
+uint8_t _StackInterrupt[_StackInterruptSize];
 
-asm(".global _StackMainEnd");
-asm(".equ _StackMainEnd, _StackMain+" Stringify(_StackMainSize));
+asm(".global _StackInterruptEnd");
+asm(".equ _StackInterruptEnd, _StackInterrupt+" Stringify(_StackInterruptSize));
 
 // MARK: - System
 
@@ -83,6 +83,9 @@ public:
         constexpr uint32_t InterruptPriority = 2; // Should be >0 so that SysTick can still preempt
         HAL_NVIC_SetPriority(EXTI15_10_IRQn, InterruptPriority, 0);
         HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+        
+        // Start our default tasks running
+        Scheduler::template Start<_TaskCmdRecv, _TaskMSPComms>();
     }
     
     // LEDs
@@ -98,53 +101,10 @@ public:
                                                     //          invoked when no tasks have work to do
         
         _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
-        _SchedulerStackOverflow,                    // T_Error: function to handle unrecoverable error
-        nullptr,                                    // T_StackInterrupt: unused
+        _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
+        _StackInterrupt,                            // T_StackInterrupt: stack used for handling interrupts;
+                                                    //                   Scheduler only uses this to detect stack overflow
         
-        _MainTask,                                  // T_Tasks: list of tasks
-        _SDTask,
-        _ImgTask,
-        _I2CTask,
-        _ButtonTask
-    >;
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    using _Scheduler = Toastbox::Scheduler<
-        SysTickPeriodUs,                            // T_UsPerTick: microseconds per tick
-        
-        _Sleep,                                     // T_Sleep: function to put processor to sleep;
-                                                    //          invoked when no tasks have work to do
-        
-        _SchedulerStackOverflow,                    // T_StackOverflow: function to call upon an stack overflow
-        _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
-        ,                    // T_Error: function to handle unrecoverable error
-        nullptr,                                    // T_StackInterrupt: unused
-        
-        _MainTask,                                  // T_Tasks: list of tasks
-        _SDTask,
-        _ImgTask,
-        _I2CTask,
-        _ButtonTask
-    >;
-    
-    
-    
-    
-    using Scheduler = Toastbox::Scheduler<
-        SysTickPeriodUs,                            // T_UsPerTick: microseconds per tick
-        _Sleep,                                     // T_Sleep: function to put processor to sleep;
-                                                    //          invoked when no tasks have work to do
-        _SchedulerError,                            // T_Error: function to call upon an unrecoverable error (eg stack overflow)
-        _StackMain,                                 // T_MainStack: main stack pointer (only used to monitor
-                                                    //              main stack for overflow; unused if T_StackGuardCount==0)
-        4,                                          // T_StackGuardCount: number of pointer-sized stack guard elements to use
         _TaskCmdRecv,                               // T_Tasks: list of tasks
         _TaskCmdHandle,
         _TaskMSPComms,
@@ -223,11 +183,6 @@ private:
             }
         }
         
-        // Task options
-        static constexpr Toastbox::TaskOptions Options{
-            .AutoStart = Run, // Task should start running
-        };
-        
         // Task stack
         [[gnu::section(".stack._TaskCmdRecv")]]
         alignas(sizeof(void*))
@@ -263,9 +218,6 @@ private:
         }
         
         static inline std::optional<STM::Cmd> _Cmd;
-        
-        // Task options
-        static constexpr Toastbox::TaskOptions Options{};
         
         // Task stack
         [[gnu::section(".stack._TaskCmdHandle")]]
@@ -471,11 +423,6 @@ private:
         static inline STM::BatteryStatus _BatteryStatus = {};
         
         static inline std::atomic<uint32_t> _BatteryChargeStatusTransitionCount;
-        
-        // Task options
-        static constexpr Toastbox::TaskOptions Options{
-            .AutoStart = Run, // Task should start running
-        };
         
         // Task stack
         [[gnu::section(".stack._TaskMSPComms")]]
