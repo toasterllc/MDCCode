@@ -1,7 +1,6 @@
 #pragma once
 #include <msp430.h>
 #include <atomic>
-#include "Toastbox/Bitfield.h"
 
 template <
 typename T_Scheduler,
@@ -33,7 +32,7 @@ public:
         _ActiveInterrupt::IESConfig();
         
         // Wait until we're active
-        _WaitForEvents(_Events::Active);
+        _WaitForEvents(_EventActive);
         
         // Initialize I2C peripheral
         _I2CInit();
@@ -44,25 +43,25 @@ public:
     
     template <typename T>
     static bool Recv(T& msg) {
-        _Events ev = _WaitForEvents(_Events::Start | _Events::Inactive);
-        if (ev & _Events::Inactive) return false;
+        _Events ev = _WaitForEvents(_EventStart | _EventInactive);
+        if (ev & _EventInactive) return false;
         
         uint8_t* b = reinterpret_cast<uint8_t*>(&msg);
         for (size_t i=0; i<sizeof(msg); i++) {
-            ev = _WaitForEvents(_Events::Rx | _Events::Stop | _Events::Inactive);
-            if (ev & _Events::Inactive) return false;
+            ev = _WaitForEvents(_EventRx | _EventStop | _EventInactive);
+            if (ev & _EventInactive) return false;
             // Only allow STOP events on the very last byte
-            Assert(!(ev & _Events::Stop) || (i == (sizeof(msg)-1)));
+            Assert(!(ev & _EventStop) || (i == (sizeof(msg)-1)));
             // Confirm that we received another byte
-            Assert(ev & _Events::Rx);
+            Assert(ev & _EventRx);
             // Store the byte
             b[i] = UCB0RXBUF_L;
         }
         
         // If our loop didn't receive a STOP event, wait for it now
-        if (!(ev & _Events::Stop)) {
-            ev = _WaitForEvents(_Events::Stop | _Events::Inactive);
-            if (ev & _Events::Inactive) return false;
+        if (!(ev & _EventStop)) {
+            ev = _WaitForEvents(_EventStop | _EventInactive);
+            if (ev & _EventInactive) return false;
         }
         
         return true;
@@ -70,56 +69,54 @@ public:
     
     template <typename T>
     static bool Send(const T& msg) {
-        _Events ev = _WaitForEvents(_Events::Start | _Events::Inactive);
-        if (ev & _Events::Inactive) return false;
+        _Events ev = _WaitForEvents(_EventStart | _EventInactive);
+        if (ev & _EventInactive) return false;
         
         const uint8_t* b = reinterpret_cast<const uint8_t*>(&msg);
         for (size_t i=0; i<sizeof(msg); i++) {
-            ev = _WaitForEvents(_Events::Tx | _Events::Stop | _Events::Inactive);
-            if (ev & _Events::Inactive) return false;
+            ev = _WaitForEvents(_EventTx | _EventStop | _EventInactive);
+            if (ev & _EventInactive) return false;
             // Ensure that we haven't gotten a STOP before we're done responding
-            Assert(!(ev & _Events::Stop));
+            Assert(!(ev & _EventStop));
             UCB0TXBUF_L = b[i];
         }
         
-        ev = _WaitForEvents(_Events::Stop | _Events::Inactive);
-        if (ev & _Events::Inactive) return false;
+        ev = _WaitForEvents(_EventStop | _EventInactive);
+        if (ev & _EventInactive) return false;
         return true;
     }
     
     static void ISR_I2C(uint16_t iv) {
         switch (__even_in_range(iv, USCI_I2C_UCTXIFG0)) {
-        case USCI_I2C_UCSTTIFG: _Ev |= _Events::Start;  break;
-        case USCI_I2C_UCSTPIFG: _Ev |= _Events::Stop;   break;
-        case USCI_I2C_UCRXIFG0: _Ev |= _Events::Rx;     break;
-        case USCI_I2C_UCTXIFG0: _Ev |= _Events::Tx;     break;
-        default:                                        break;
+        case USCI_I2C_UCSTTIFG: _Ev |= _EventStart; break;
+        case USCI_I2C_UCSTPIFG: _Ev |= _EventStop;  break;
+        case USCI_I2C_UCRXIFG0: _Ev |= _EventRx;    break;
+        case USCI_I2C_UCTXIFG0: _Ev |= _EventTx;    break;
+        default:                                    break;
         }
     }
     
     static void ISR_Active(uint16_t iv) {
         const bool active = (Pin::Active::IES() == _ActiveInterrupt::InitCfg::IES());
-        _Ev |= (active ? _Events::Active : _Events::Inactive);
+        _Ev |= (active ? _EventActive : _EventInactive);
     }
     
 private:
-    struct _Events : Toastbox::Bitfield<volatile uint16_t> {
-        using Bitfield::Bitfield;
-        static constexpr Bit None        = 0;
-        static constexpr Bit Active      = 1<<0;
-        static constexpr Bit Inactive    = 1<<1;
-        static constexpr Bit Start       = 1<<2;
-        static constexpr Bit Stop        = 1<<3;
-        static constexpr Bit Rx          = 1<<4;
-        static constexpr Bit Tx          = 1<<5;
-    };
+    using _Events = uint16_t;
+    static constexpr _Events _EventNone       = 0;
+    static constexpr _Events _EventActive     = 1<<0;
+    static constexpr _Events _EventInactive   = 1<<1;
+    static constexpr _Events _EventStart      = 1<<2;
+    static constexpr _Events _EventStop       = 1<<3;
+    static constexpr _Events _EventRx         = 1<<4;
+    static constexpr _Events _EventTx         = 1<<5;
     
     static void _I2CReset() {
         // Reset I2C peripheral
         // This automatically resets our interrupt configuruation (UCB0IFG UCB0IE)
         UCB0CTLW0 = UCSWRST;
         // Clear our events (making sure to do this after we reset the I2C peripheral to ensure it stays cleared)
-        _Ev = _Events::None;
+        _Ev = _EventNone;
     }
     
     static void _I2CInit() {
@@ -172,7 +169,7 @@ private:
         return ev;
     }
     
-    static inline _Events _Ev = _Events::None;
+    static inline _Events _Ev = _EventNone;
     
 #undef Assert
 };

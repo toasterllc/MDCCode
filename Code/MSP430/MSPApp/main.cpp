@@ -994,6 +994,7 @@ void abort() {
 
 // MARK: - Main
 
+#warning TODO: we can get rid of _StackMain now right, with the Scheduler revamp?
 #warning verify that _StackMainSize is large enough
 #define _StackMainSize 128
 
