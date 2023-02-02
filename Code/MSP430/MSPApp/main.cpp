@@ -227,7 +227,7 @@ struct _SDTask {
     }
     
     static void Wait() {
-        _Scheduler::Wait([] { return !_Scheduler::Running<_SDTask>(); });
+        _Scheduler::Wait<_SDTask>();
     }
     
     // WaitForInitAndWrite: wait for both initialization and writing to complete
@@ -418,7 +418,7 @@ struct _ImgTask {
     }
     
     static void Wait() {
-        _Scheduler::Wait([] { return !_Scheduler::Running<_ImgTask>(); });
+        _Scheduler::Wait<_ImgTask>();
     }
     
     static void _Init() {
