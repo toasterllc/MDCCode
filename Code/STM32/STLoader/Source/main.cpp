@@ -1,6 +1,6 @@
 #include <string.h>
 #include <algorithm>
-#define TaskARM32
+#define SchedulerARM32
 #include "Toastbox/Scheduler.h"
 #include "Assert.h"
 #include "STM.h"

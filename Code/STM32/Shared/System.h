@@ -35,11 +35,14 @@ typename... T_Tasks
 class System {
 public:
     static constexpr uint8_t CPUFreqMHz = 128;
-    static constexpr uint32_t UsPerSysTick = 1000;
+    static constexpr uint32_t SysTickPeriodUs = 1000;
     
 private:
+    #warning TODO: remove stack guards for production
+    static constexpr size_t _StackGuardCount = 4;
+    
     [[noreturn]]
-    static void _SchedulerError(uint16_t line) {
+    static void _SchedulerStackOverflow() {
         Abort();
     }
     
@@ -88,9 +91,54 @@ public:
     using LED2 = GPIO<GPIOPortB, 11>;
     using LED3 = GPIO<GPIOPortB, 13>;
     
-    #warning TODO: remove stack guards for production
     using Scheduler = Toastbox::Scheduler<
-        UsPerSysTick,                               // T_UsPerTick: microseconds per tick
+        SysTickPeriodUs,                            // T_UsPerTick: microseconds per tick
+        
+        _Sleep,                                     // T_Sleep: function to put processor to sleep;
+                                                    //          invoked when no tasks have work to do
+        
+        _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
+        _SchedulerStackOverflow,                    // T_Error: function to handle unrecoverable error
+        nullptr,                                    // T_StackInterrupt: unused
+        
+        _MainTask,                                  // T_Tasks: list of tasks
+        _SDTask,
+        _ImgTask,
+        _I2CTask,
+        _ButtonTask
+    >;
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    using _Scheduler = Toastbox::Scheduler<
+        SysTickPeriodUs,                            // T_UsPerTick: microseconds per tick
+        
+        _Sleep,                                     // T_Sleep: function to put processor to sleep;
+                                                    //          invoked when no tasks have work to do
+        
+        _SchedulerStackOverflow,                    // T_StackOverflow: function to call upon an stack overflow
+        _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
+        ,                    // T_Error: function to handle unrecoverable error
+        nullptr,                                    // T_StackInterrupt: unused
+        
+        _MainTask,                                  // T_Tasks: list of tasks
+        _SDTask,
+        _ImgTask,
+        _I2CTask,
+        _ButtonTask
+    >;
+    
+    
+    
+    
+    using Scheduler = Toastbox::Scheduler<
+        SysTickPeriodUs,                            // T_UsPerTick: microseconds per tick
         _Sleep,                                     // T_Sleep: function to put processor to sleep;
                                                     //          invoked when no tasks have work to do
         _SchedulerError,                            // T_Error: function to call upon an unrecoverable error (eg stack overflow)
