@@ -61,11 +61,11 @@ struct _Pin {
     using _UNUSED0                  = PortB::Pin<0x2>;
 };
 
-class _MainTask;
-class _SDTask;
-class _ImgTask;
-class _I2CTask;
-class _ButtonTask;
+class _TaskMain;
+class _TaskSD;
+class _TaskImg;
+class _TaskI2C;
+class _TaskButton;
 
 static void _Sleep();
 
@@ -87,14 +87,14 @@ using _Scheduler = Toastbox::Scheduler<
                                                 //          invoked when no tasks have work to do
     
     _StackGuardCount,                           // T_StackGuardCount: number of pointer-sized stack guard elements to use
-    _SchedulerStackOverflow,                    // T_Error: function to handle unrecoverable error
+    _SchedulerStackOverflow,                    // T_StackOverflow: function to handle stack overflow
     nullptr,                                    // T_StackInterrupt: unused
     
-    _MainTask,                                  // T_Tasks: list of tasks
-    _SDTask,
-    _ImgTask,
-    _I2CTask,
-    _ButtonTask
+    _TaskMain,                                  // T_Tasks: list of tasks
+    _TaskSD,
+    _TaskImg,
+    _TaskI2C,
+    _TaskButton
 >;
 
 using _Clock = ClockType<_MCLKFreqHz>;
@@ -205,15 +205,15 @@ static void _ICEInit() {
 //    }
 //}
 
-struct _SDTask {
+struct _TaskSD {
     static void Reset() {
         Wait();
-        _Scheduler::Start<_SDTask>([] { _Reset(); });
+        _Scheduler::Start<_TaskSD>([] { _Reset(); });
     }
     
     static void Init() {
         Wait();
-        _Scheduler::Start<_SDTask>([] { _Init(); });
+        _Scheduler::Start<_TaskSD>([] { _Init(); });
     }
     
     static void Write(uint8_t srcRAMBlock) {
@@ -223,11 +223,11 @@ struct _SDTask {
         
         static struct { uint8_t srcRAMBlock; } Args;
         Args = { srcRAMBlock };
-        _Scheduler::Start<_SDTask>([] { _Write(Args.srcRAMBlock); });
+        _Scheduler::Start<_TaskSD>([] { _Write(Args.srcRAMBlock); });
     }
     
     static void Wait() {
-        _Scheduler::Wait<_SDTask>();
+        _Scheduler::Wait<_TaskSD>();
     }
     
     // WaitForInitAndWrite: wait for both initialization and writing to complete
@@ -393,15 +393,15 @@ struct _SDTask {
     static inline bool _Writing = false;
     
     // Task stack
-    [[gnu::section(".stack._SDTask")]]
+    [[gnu::section(".stack._TaskSD")]]
     alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
 
-struct _ImgTask {
+struct _TaskImg {
     static void Init() {
         Wait();
-        _Scheduler::Start<_ImgTask>([] { _Init(); });
+        _Scheduler::Start<_TaskImg>([] { _Init(); });
     }
     
     static void Capture(const Img::Id& id) {
@@ -409,7 +409,7 @@ struct _ImgTask {
         
         static struct { Img::Id id; } Args;
         Args = { id };
-        _Scheduler::Start<_ImgTask>([] { _Capture(Args.id); });
+        _Scheduler::Start<_TaskImg>([] { _Capture(Args.id); });
     }
     
     static uint8_t CaptureBlock() {
@@ -418,7 +418,7 @@ struct _ImgTask {
     }
     
     static void Wait() {
-        _Scheduler::Wait<_ImgTask>();
+        _Scheduler::Wait<_TaskImg>();
     }
     
     static void _Init() {
@@ -491,12 +491,12 @@ struct _ImgTask {
     static inline Img::AutoExposure _AutoExp;
     
     // Task stack
-    [[gnu::section(".stack._ImgTask")]]
+    [[gnu::section(".stack._TaskImg")]]
     alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
 
-struct _MainTask {
+struct _TaskMain {
     static void Run() {
         
 //        for (bool x=false;; x=!x) {
@@ -566,15 +566,15 @@ struct _MainTask {
             _ICEInit();
             
             // Reset SD nets before we turn on SD power
-            _SDTask::Reset();
-            _SDTask::Wait();
+            _TaskSD::Reset();
+            _TaskSD::Wait();
             
             // Turn on IMG/SD power
             _VDDIMGSDSet(true);
             
             // Init image sensor / SD card
-            _ImgTask::Init();
-            _SDTask::Init();
+            _TaskImg::Init();
+            _TaskSD::Init();
             
             for (;;) {
                 // Capture an image
@@ -584,22 +584,22 @@ struct _MainTask {
                     // Pretend to capture an image
                     _Scheduler::Sleep(_Scheduler::Ms(500));
                     
-                    // Wait for _SDTask to be initialized and done with writing, which is necessary
+                    // Wait for _TaskSD to be initialized and done with writing, which is necessary
                     // for 2 reasons:
-                    //   1. we have to wait for _SDTask to initialize _State.sd.imgRingBufs before we
+                    //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
                     //      access it,
                     //   2. we can't initiate a new capture until writing to the SD card (from a
                     //      previous capture) is complete (because the SDRAM is single-port, so
                     //      we can only read or write at one time)
-                    _SDTask::WaitForInitAndWrite();
+                    _TaskSD::WaitForInitAndWrite();
                     
                     // Capture image to RAM
-                    _ImgTask::Capture(imgRingBuf.buf.idEnd);
-                    const uint8_t srcRAMBlock = _ImgTask::CaptureBlock();
+                    _TaskImg::Capture(imgRingBuf.buf.idEnd);
+                    const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
                     
                     // Copy image from RAM -> SD card
-                    _SDTask::Write(srcRAMBlock);
-                    _SDTask::Wait();
+                    _TaskSD::Write(srcRAMBlock);
+                    _TaskSD::Wait();
                     
 //                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
                 }
@@ -626,14 +626,14 @@ struct _MainTask {
     
     static bool DeepSleepOK() {
         // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
-        // This logic works because if _WaitingForMotion==true, then we've disabled both _SDTask
-        // and _ImgTask, so if the tasks are idle, then everything's idle so we can enter deep
-        // sleep. (The case that we need to be careful of is going to sleep when either _SDTask
-        // or _ImgTask is idle but still powered on, which the _WaitingForMotion check takes
+        // This logic works because if _WaitingForMotion==true, then we've disabled both _TaskSD
+        // and _TaskImg, so if the tasks are idle, then everything's idle so we can enter deep
+        // sleep. (The case that we need to be careful of is going to sleep when either _TaskSD
+        // or _TaskImg is idle but still powered on, which the _WaitingForMotion check takes
         // care of.)
         return _WaitingForMotion                &&
-               !_Scheduler::Running<_SDTask>()  &&
-               !_Scheduler::Running<_ImgTask>() ;
+               !_Scheduler::Running<_TaskSD>()  &&
+               !_Scheduler::Running<_TaskImg>() ;
     }
     
     static void HostModeSet(bool en) {
@@ -646,14 +646,14 @@ struct _MainTask {
             _WaitingForMotion = false;
             _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
             _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
-            // Stop _MainTask
-            _Scheduler::Stop<_MainTask>();
+            // Stop _TaskMain
+            _Scheduler::Stop<_TaskMain>();
             // Turn off power
             _VDDIMGSDSet(false);
             _VDDBSet(false);
         
         } else {
-            _Scheduler::Start<_MainTask>(Run);
+            _Scheduler::Start<_TaskMain>(Run);
         }
     }
     
@@ -673,12 +673,12 @@ struct _MainTask {
     static inline bool _WaitingForMotion = false;
     
     // Task stack
-    [[gnu::section(".stack._MainTask")]]
+    [[gnu::section(".stack._TaskMain")]]
     alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
 
-struct _I2CTask {
+struct _TaskI2C {
     static void Run() {
         for (;;) {
             // Wait until the I2C lines are activated (ie VDD_B_3V3_STM becomes powered)
@@ -705,7 +705,7 @@ struct _I2CTask {
             _LEDGreen_::Set(_LEDGreen_::Priority::High, std::nullopt);
             
             // Exit host mode
-            _MainTask::HostModeSet(false);
+            _TaskMain::HostModeSet(false);
         }
     }
     
@@ -741,7 +741,7 @@ struct _I2CTask {
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
-            _MainTask::HostModeSet(cmd.arg.HostModeSet.en);
+            _TaskMain::HostModeSet(cmd.arg.HostModeSet.en);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::VDDIMGSDSet:
@@ -763,12 +763,12 @@ struct _I2CTask {
     static inline bool _HostMode = false;
     
     // Task stack
-    [[gnu::section(".stack._I2CTask")]]
+    [[gnu::section(".stack._TaskI2C")]]
     alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
 
-struct _ButtonTask {
+struct _TaskButton {
     static void Run() {
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -791,7 +791,7 @@ struct _ButtonTask {
     }
     
     // Task stack
-    [[gnu::section(".stack._ButtonTask")]]
+    [[gnu::section(".stack._TaskButton")]]
     alignas(sizeof(void*))
     static inline uint8_t Stack[128];
 };
@@ -819,7 +819,7 @@ static void _Sleep() {
     
     // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
     // Otherwise, enter LPM1 sleep, because something is running.
-    const uint16_t LPMBits = (_MainTask::DeepSleepOK() ? LPM3_bits : LPM1_bits);
+    const uint16_t LPMBits = (_TaskMain::DeepSleepOK() ? LPM3_bits : LPM1_bits);
     
     // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
     if (LPMBits == LPM3_bits) {
@@ -848,7 +848,7 @@ static void _ISR_Port2() {
     
     // Motion
     case _Pin::MOTION_SIGNAL::IVPort2():
-        _MainTask::ISR_MotionSignal(iv);
+        _TaskMain::ISR_MotionSignal(iv);
         __bic_SR_register_on_exit(LPM3_bits); // Wake ourself
         break;
     
@@ -1065,26 +1065,5 @@ int main() {
     _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
     _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
     
-    _Scheduler::Run<_MainTask, _I2CTask, _ButtonTask>();
+    _Scheduler::Run<_TaskMain, _TaskI2C, _TaskButton>();
 }
-
-
-
-
-//#warning TODO: remove these debug symbols
-//#warning TODO: when we remove these, re-enable: Project > Optimization > Place [data/functions] in own section
-//constexpr auto& _Debug_Tasks              = _Scheduler::_Tasks;
-//constexpr auto& _Debug_DidWork            = _Scheduler::_DidWork;
-//constexpr auto& _Debug_CurrentTask        = _Scheduler::_CurrentTask;
-//constexpr auto& _Debug_CurrentTime        = _Scheduler::_ISR.CurrentTime;
-//constexpr auto& _Debug_Wake               = _Scheduler::_ISR.Wake;
-//constexpr auto& _Debug_WakeTime           = _Scheduler::_ISR.WakeTime;
-//
-//struct _DebugStack {
-//    uint16_t stack[_StackGuardCount];
-//};
-//
-//const _DebugStack& _Debug_MainStack               = *(_DebugStack*)_StackMain;
-//const _DebugStack& _Debug_MainTaskStack         = *(_DebugStack*)_MainTask::Stack;
-//const _DebugStack& _Debug_SDTaskStack             = *(_DebugStack*)_SDTask::Stack;
-//const _DebugStack& _Debug_ImgTaskStack            = *(_DebugStack*)_ImgTask::Stack;
