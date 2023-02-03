@@ -471,7 +471,7 @@ private:
         return nullptr;
     }
     
-    // Interrupts must be disabled
+    // Ints must be disabled
     static void _CmdAccept(bool accept) {
         if (accept) USBD_CtlSendStatus(&_Device);
         else        USBD_CtlError(&_Device, nullptr);
@@ -524,7 +524,7 @@ private:
         }
     }
     
-    // Interrupts must be disabled
+    // Ints must be disabled
     static void _EndpointReset(uint8_t ep) {
         if (_State != State::Connected) return; // Short-circuit if we're not Connected
         _EndpointState& eps = _EndpointStateGet(ep);
@@ -538,11 +538,12 @@ private:
         }
     }
     
+    // Ints must be disabled
     static bool _EndpointReady(uint8_t ep) {
         return _Ready(_EndpointStateGet(ep));
     }
     
-    // Interrupts must be disabled
+    // Ints must be disabled
     static bool _EndpointsReady() {
         for (uint8_t ep : T_Config::Endpoints) {
             if (!_EndpointReady(ep)) return false;
@@ -550,10 +551,12 @@ private:
         return true;
     }
     
-//    // Interrupts must be disabled
-    static bool _Ready(const _EndpointState& eps)   { return eps.stage==_EndpointStage::Ready;  }
+    // Ints must be disabled
+    static bool _Ready(const _EndpointState& eps) {
+        return eps.stage==_EndpointStage::Ready;
+    }
     
-    // Interrupts must be disabled
+    // Ints must be disabled
     static void _AdvanceStateOut(uint8_t ep) {
         _EndpointState& eps = _EndpointStateGet(ep);
         if (eps.needsReset) {
@@ -592,7 +595,7 @@ private:
         }
     }
     
-    // Interrupts must be disabled
+    // Ints must be disabled
     static void _AdvanceStateIn(uint8_t ep) {
         _EndpointState& eps = _EndpointStateGet(ep);
         if (eps.needsReset) {
@@ -639,9 +642,9 @@ private:
     
     static _EndpointState& _EndpointStateGet(uint8_t ep) {
         if (EndpointOut(ep)) {
-            return _OutEndpoints[EndpointIdx(ep)-1];
+            return _EndpointsOut[EndpointIdx(ep)-1];
         } else {
-            return _InEndpoints[EndpointIdx(ep)-1];
+            return _EndpointsIn[EndpointIdx(ep)-1];
         }
     }
     
@@ -661,8 +664,8 @@ private:
     static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl]; // Aligned to receive via USB
     
     static inline std::optional<size_t> _CmdRecvLen;
-    static inline _EndpointState _OutEndpoints[EndpointCountOut()] = {};
-    static inline _EndpointState _InEndpoints[EndpointCountIn()] = {};
+    static inline _EndpointState _EndpointsOut[EndpointCountOut()] = {};
+    static inline _EndpointState _EndpointsIn[EndpointCountIn()] = {};
     static inline USBD_HandleTypeDef _Device;
     static inline PCD_HandleTypeDef _PCD;
     static inline State _State = State::Disconnected;
