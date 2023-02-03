@@ -3,10 +3,9 @@
 
 extern "C" void __libc_init_array();
 
-#warning TODO: confirm that at the point of executing `mrs r0, msp`, SP=_StackInterruptEnd
 [[gnu::always_inline]]
 static inline void _PSPStackActivate() {
-    // Switch to using PSP stack.
+    // Set the PSP stack pointer to the MSP stack pointer, and switch to using PSP stack.
     // Scheduler and its tasks use the PSP stack, while interrupts are handled on the MSP stack.
     asm volatile("mrs r0, msp" : : : );         // r0 = msp
     asm volatile("msr psp, r0" : : : );         // psp = r0
@@ -18,7 +17,8 @@ static inline void _PSPStackActivate() {
 
 // Startup() needs to be in the .isr section so that it's near ISR_Reset,
 // otherwise we can get a linker error.
-extern "C" [[gnu::section(".isr")]]
+extern "C"
+[[noreturn, gnu::section(".isr")]]
 void Startup() {
     extern uint8_t _sdata_flash[];
     extern uint8_t _sdata_ram[];
