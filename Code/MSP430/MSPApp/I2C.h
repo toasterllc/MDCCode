@@ -158,7 +158,10 @@ private:
     
     static _Events _WaitForEvents(_Events events) {
         Toastbox::IntState ints(false);
-        T_Scheduler::Wait(events, [] (_Events events) { return (bool)(_Ev & events); });
+        
+        static _Events Mask = 0;
+        Mask = events;
+        T_Scheduler::Wait([] { return (bool)(_Ev & Mask); });
         
         const _Events ev = _Ev & events;
         // Clear the events that we're returning

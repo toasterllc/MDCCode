@@ -48,7 +48,7 @@ public:
         {
             _DeassertedInterrupt::IESConfig();
             _Signal = false;
-            const bool ok = T_Scheduler::WaitDelay(T_Scheduler::Ms(T_HoldDurationMs), [] { return _Signal.load(); });
+            auto ok = T_Scheduler::Wait(T_Scheduler::Ms(T_HoldDurationMs), [] { return _Signal.load(); });
             // If we timed-out, then the button's being held
             if (!ok) return Event::Hold;
             // Otherwise, we didn't timeout, so the button was simply pressed
