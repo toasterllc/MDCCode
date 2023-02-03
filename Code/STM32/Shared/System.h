@@ -235,7 +235,7 @@ private:
             Deadline batteryStatusUpdateDeadline = Scheduler::CurrentTime();
             for (;;) {
                 // Wait until we get a command or for the deadline to pass
-                bool ok = Scheduler::WaitUntil(batteryStatusUpdateDeadline, [&] { return _Cmd.state==_State::Cmd; });
+                bool ok = Scheduler::WaitDeadline(batteryStatusUpdateDeadline, [] { return _Cmd.state==_State::Cmd; });
                 if (!ok) {
                     // Deadline passed; update battery status
                     _BatteryStatusUpdate();

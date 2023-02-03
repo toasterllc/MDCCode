@@ -49,14 +49,14 @@ public:
         Defer(_Cleanup());
         
         // Wait until we're idle
-        T_Scheduler::Wait([&] { return _St.load() == _State::Idle; });
+        T_Scheduler::Wait([] { return _St.load() == _State::Idle; });
         
         // Send `send`
         {
             _St = _State::Busy;
             HAL_StatusTypeDef hs = HAL_I2C_Master_Transmit_IT(&_Device, _Addr, (uint8_t*)&send, sizeof(send));
             Assert(hs == HAL_OK);
-            const auto ok = T_Scheduler::Wait(T_Scheduler::Ms(T_TimeoutMs), [&] { return _St.load() != _State::Busy; });
+            const auto ok = T_Scheduler::Wait(T_Scheduler::Ms(T_TimeoutMs), [] { return _St.load() != _State::Busy; });
             if (!ok) return Status::Error; // Error: slave is holding clock low
             if (_St.load() != _State::Done) return Status::NAK;
         }
@@ -66,7 +66,7 @@ public:
             _St = _State::Busy;
             HAL_StatusTypeDef hs = HAL_I2C_Master_Receive_IT(&_Device, _Addr, (uint8_t*)&recv, sizeof(recv));
             Assert(hs == HAL_OK);
-            const auto ok = T_Scheduler::Wait(T_Scheduler::Ms(T_TimeoutMs), [&] { return _St.load() != _State::Busy; });
+            const auto ok = T_Scheduler::Wait(T_Scheduler::Ms(T_TimeoutMs), [] { return _St.load() != _State::Busy; });
             if (!ok) return Status::Error; // Error: slave is holding clock low
             if (_St.load() != _State::Done) return Status::NAK;
         }

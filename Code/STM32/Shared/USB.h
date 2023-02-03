@@ -22,7 +22,7 @@ public:
     };
     
 private:
-    enum class _EndpointState : uint8_t {
+    enum class _EndpointStage : uint8_t {
         Ready,
         Busy,
         Done,
@@ -33,14 +33,9 @@ private:
         ResetSentinel,
     };
     
-    struct _OutEndpoint {
-        _EndpointState state = _EndpointState::Ready;
+    struct _EndpointState {
+        _EndpointStage stage = _EndpointStage::Ready;
         size_t len = 0;
-        bool needsReset = false;
-    };
-    
-    struct _InEndpoint {
-        _EndpointState state = _EndpointState::Ready;
         bool needsReset = false;
     };
     
@@ -246,7 +241,9 @@ public:
     static void EndpointReset(uint8_t ep) {
         Toastbox::IntState ints(false);
         _EndpointReset(ep);
-        T_Scheduler::Wait([=] { return _EndpointReady(ep); });
+        
+        T_Scheduler::Ctx(ep);
+        T_Scheduler::Wait([] { return _EndpointReady(T_Scheduler::template Ctx<uint8_t>()); });
     }
     
     static void EndpointsReset() {
@@ -310,43 +307,87 @@ public:
         _CmdAccept(accept);
     }
     
+//    static std::optional<size_t> _Recv(_EndpointState& eps, void* data, size_t len) {
+//        const uint8_t epnum = _EndpointNum(eps);
+//        
+//        {
+//            Toastbox::IntState ints(false);
+//            if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
+//            
+//            Assert(_Ready(eps));
+//            _AdvanceStateOut(eps);
+//            
+//            USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, epnum, (uint8_t*)data, len);
+//            Assert(us == USBD_OK);
+//        }
+//        
+//        auto waitResult = T_Scheduler::Wait([] { return _Wait(ep, outep); });
+//        if (!waitResult.ok) return std::nullopt;
+//        return waitResult.len;
+//    }
+//    
+//    static std::optional<size_t> _RecvStart(uint8_t ep, void* data, size_t len) {
+//        if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
+//        
+//        Assert(_Ready(outep));
+//        _AdvanceState(ep, outep);
+//        
+//        USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)data, len);
+//        Assert(us == USBD_OK);
+//        
+//        {
+//            Toastbox::IntState ints(false);
+//            if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
+//            
+//            Assert(_Ready(outep));
+//            _AdvanceState(ep, outep);
+//            
+//            USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)data, len);
+//            Assert(us == USBD_OK);
+//        }
+//        
+//        auto waitResult = T_Scheduler::Wait([] { return _Wait(ep, outep); });
+//        if (!waitResult.ok) return std::nullopt;
+//        return waitResult.len;
+//    }
+    
     static std::optional<size_t> Recv(uint8_t ep, void* data, size_t len) {
-        AssertArg(EndpointOut(ep));
-        _OutEndpoint& outep = _OutEndpointGet(ep);
+        Assert(EndpointOut(ep));
+        _EndpointState& eps = _EndpointStateGet(ep);
         
-        {
-            Toastbox::IntState ints(false);
-            if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
-            
-            Assert(_Ready(outep));
-            _AdvanceState(ep, outep);
-            
-            USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)data, len);
-            Assert(us == USBD_OK);
-        }
+        Toastbox::IntState ints(false);
+        if (_State != State::Connected) return std::nullopt; // Short-circuit if we're not Connected
         
-        auto waitResult = T_Scheduler::Wait([] { return _Wait(ep, outep); });
-        if (!waitResult.ok) return std::nullopt;
-        return waitResult.len;
+        Assert(_Ready(eps));
+        _AdvanceStateOut(ep);
+        
+        const USBD_StatusTypeDef us = USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)data, len);
+        Assert(us == USBD_OK);
+        
+        _WaitState ws = { .ep = ep };
+        T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
+        T_Scheduler::Wait([] { return _WaitOut(*T_Scheduler::template Ctx<_WaitState*>()); });
+        if (!ws.ok) return std::nullopt;
+        return ws.len;
     }
     
     static bool Send(uint8_t ep, const void* data, size_t len) {
-        AssertArg(EndpointIn(ep));
-        _InEndpoint& inep = _InEndpointGet(ep);
+        Assert(EndpointIn(ep));
+        _EndpointState& eps = _EndpointStateGet(ep);
         
-        {
-            Toastbox::IntState ints(false);
-            if (_State != State::Connected) return false; // Short-circuit if we're not Connected
-            
-            Assert(_Ready(inep));
-            _AdvanceState(ep, inep);
-            
-            USBD_StatusTypeDef us = USBD_LL_Transmit(&_Device, ep, (uint8_t*)data, len);
-            Assert(us == USBD_OK);
-        }
+        Toastbox::IntState ints(false);
+        if (_State != State::Connected) return false; // Short-circuit if we're not Connected
         
-        auto waitResult = T_Scheduler::Wait([] { return _Wait(ep, inep); });
-        return waitResult.ok;
+        Assert(_Ready(eps));
+        _AdvanceStateIn(ep);
+        
+        const USBD_StatusTypeDef us = USBD_LL_Transmit(&_Device, ep, (uint8_t*)data, len);
+        Assert(us == USBD_OK);
+        
+        _WaitState ws = { .ep = ep };
+        T_Scheduler::Ctx(&ws); // Set current task's context, which we'll retrieve from the Wait() lambda
+        T_Scheduler::Wait([] { return _WaitIn(*T_Scheduler::template Ctx<_WaitState*>()); });
+        return ws.ok;
     }
     
     static void ISR() {
@@ -360,19 +401,17 @@ private:
             if (EndpointOut(ep)) {
                 USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeOut());
                 _Device.ep_out[EndpointIdx(ep)].is_used = 1U;
-                // Reset endpoint state
-                _OutEndpointGet(ep) = {};
             
             } else {
                 USBD_LL_OpenEP(&_Device, ep, USBD_EP_TYPE_BULK, MaxPacketSizeIn());
                 _Device.ep_in[EndpointIdx(ep)].is_used = 1U;
-                // Reset endpoint state
-                _InEndpointGet(ep) = {};
             }
+            
+            // Reset endpoint state
+            _EndpointStateGet(ep) = {};
         }
         
         _State = State::Connecting;
-        
         return (uint8_t)USBD_OK;
     }
     
@@ -421,29 +460,29 @@ private:
     
     static uint8_t _USBD_DataIn(uint8_t ep) {
         // Sanity-check the endpoint state
-        _InEndpoint& inep = _InEndpointGet(ep);
+        _EndpointState& eps = _EndpointStateGet(ep);
         Assert(
-            inep.state == _EndpointState::ResetZLP1     ||
-            inep.state == _EndpointState::ResetZLP2     ||
-            inep.state == _EndpointState::ResetSentinel ||
-            inep.state == _EndpointState::Busy
+            eps.stage == _EndpointStage::ResetZLP1     ||
+            eps.stage == _EndpointStage::ResetZLP2     ||
+            eps.stage == _EndpointStage::ResetSentinel ||
+            eps.stage == _EndpointStage::Busy
         );
         
-        _AdvanceState(ep, inep);
+        _AdvanceStateIn(ep);
         return (uint8_t)USBD_OK;
     }
     
     static uint8_t _USBD_DataOut(uint8_t ep) {
         // Sanity-check the endpoint state
-        _OutEndpoint& outep = _OutEndpointGet(ep);
+        _EndpointState& eps = _EndpointStateGet(ep);
         Assert(
-            outep.state == _EndpointState::ResetZLP1     ||
-            outep.state == _EndpointState::ResetZLP2     ||
-            outep.state == _EndpointState::ResetSentinel ||
-            outep.state == _EndpointState::Busy
+            eps.stage == _EndpointStage::ResetZLP1     ||
+            eps.stage == _EndpointStage::ResetZLP2     ||
+            eps.stage == _EndpointStage::ResetSentinel ||
+            eps.stage == _EndpointStage::Busy
         );
         
-        _AdvanceState(ep, outep);
+        _AdvanceStateOut(ep);
         return (uint8_t)USBD_OK;
     }
     
@@ -486,168 +525,268 @@ private:
         else        USBD_CtlError(&_Device, nullptr);
     }
     
-    static _OutEndpoint& _OutEndpointGet(uint8_t ep) {
-        if constexpr (EndpointCountOut()) {
-            return _OutEndpoints[EndpointIdx(ep)-1];
-        }
-        abort();
-    }
-    
-//    static const _OutEndpoint& _OutEndpointGet(uint8_t ep) {
+//    static _EndpointState& _OutEndpointStateGet(uint8_t ep) {
 //        if constexpr (EndpointCountOut()) {
 //            return _OutEndpoints[EndpointIdx(ep)-1];
 //        }
 //        abort();
-////        return const_cast<const _OutEndpoint&>(std::as_const(*this)._OutEndpointGet(ep));
 //    }
     
-    static _InEndpoint& _InEndpointGet(uint8_t ep) {
-        if constexpr (EndpointCountIn()) {
-            return _InEndpoints[EndpointIdx(ep)-1];
-        }
-        abort();
-    }
+//    static const _EndpointState& _OutEndpointStateGet(uint8_t ep) {
+//        if constexpr (EndpointCountOut()) {
+//            return _OutEndpoints[EndpointIdx(ep)-1];
+//        }
+//        abort();
+////        return const_cast<const _EndpointState&>(std::as_const(*this)._OutEndpointStateGet(ep));
+//    }
     
-    struct _WaitResultOut {
-        bool done = false;
-        bool ok = false;
-        size_t len = 0;
-        operator bool() const { return done; }
-    };
-    
-    static _WaitResultOut _Wait(uint8_t ep, _OutEndpoint& outep) {
-        Toastbox::IntState ints(false);
-        
-        // Short-circuit if we're not Connected
-        if (_State != State::Connected) return { true, false }; // Done, failed
-        
-        switch (outep.state) {
-        case _EndpointState::Busy:
-            // Still waiting for completion
-            return { false };
-        case _EndpointState::Done:
-            // Done, success
-            _AdvanceState(ep, outep);
-            return { true, true, _RecvLen(outep) };
-        default:
-            // Done, failed
-            return { true, false };
-        }
-    }
-    
-    struct _WaitResultIn {
-        bool done = false;
-        bool ok = false;
-        operator bool() const { return done; }
-    };
-    
-    static _WaitResultIn _Wait(uint8_t ep, _InEndpoint& inep) {
-        Toastbox::IntState ints(false);
-        
-        // Short-circuit if we're not Connected
-        if (_State != State::Connected) return { true, false }; // Done, failed
-        
-        switch (inep.state) {
-        case _EndpointState::Busy:
-            // Still waiting for completion
-            return { false };
-        case _EndpointState::Done:
-            // Done, success
-            _AdvanceState(ep, inep);
-            return { true, true };
-        default:
-            // Done, failed
-            return { true, false };
-        }
-    }
-    
-//    static const _InEndpoint& _InEndpointGet(uint8_t ep) {
+//    static _InEndpoint& _EndpointStateGet(uint8_t ep) {
 //        if constexpr (EndpointCountIn()) {
 //            return _InEndpoints[EndpointIdx(ep)-1];
 //        }
 //        abort();
-////        return const_cast<const _InEndpoint&>(std::as_const(*this)._InEndpointGet(ep));
 //    }
+    
+//    template <uint8_t T_Ep>
+//    static bool _Wait() {
+//        // Short-circuit if we're not Connected
+//        if (_State != State::Connected) return true;
+//        const _EndpointState& eps = _EndpointStateGet<T_Ep>();
+//        switch (eps.stage) {
+//        case _EndpointStage::Busy:  return false;   // Still waiting for completion
+//        case _EndpointStage::Done:  return true;    // Done, success
+//        default:                    return true;    // Done, failed
+//        }
+//    }
+    
+    struct _WaitState {
+        const uint8_t ep = 0;
+        bool ok = false;
+        size_t len = 0;
+    };
+    
+    static bool _WaitOut(_WaitState& ws) {
+        // Short-circuit if we're not Connected
+        if (_State != State::Connected) return true; // Done, failed
+        
+        const _EndpointState& eps = _EndpointStateGet(ws.ep);
+        switch (eps.stage) {
+        // Still waiting for completion
+        case _EndpointStage::Busy:
+            return false;
+        // Done, success
+        case _EndpointStage::Done:
+            ws.ok = true;
+            ws.len = eps.len;
+            _AdvanceStateOut(ws.ep);
+            return true;
+        // Done, failed
+        default:
+            return true;
+        }
+    }
+    
+    static bool _WaitIn(_WaitState& ws) {
+        // Short-circuit if we're not Connected
+        if (_State != State::Connected) return true; // Done, failed
+        
+        const _EndpointState& eps = _EndpointStateGet(ws.ep);
+        switch (eps.stage) {
+        // Still waiting for completion
+        case _EndpointStage::Busy:
+            return false;
+        // Done, success
+        case _EndpointStage::Done:
+            ws.ok = true;
+            _AdvanceStateIn(ws.ep);
+            return true;
+        // Done, failed
+        default:
+            return true;
+        }
+    }
+    
+//    static const _InEndpoint& _InEndpointStateGet(uint8_t ep) {
+//        if constexpr (EndpointCountIn()) {
+//            return _InEndpoints[EndpointIdx(ep)-1];
+//        }
+//        abort();
+////        return const_cast<const _InEndpoint&>(std::as_const(*this)._InEndpointStateGet(ep));
+//    }
+    
+//    // Interrupts must be disabled
+//    template <uint8_t T_Ep>
+//    static void _EndpointReset() {
+//        if (_State != State::Connected) return; // Short-circuit if we're not Connected
+//        _EndpointState& eps = _EndpointStateGet<T_Ep>();
+//        eps.needsReset = true;
+//        if (_Ready(eps)) {
+//            if constexpr (EndpointOut(ep)) {
+//                _AdvanceStateOut(T_Ep);
+//            } else {
+//                _AdvanceStateIn(T_Ep);
+//            }
+//        }
+//    }
+    
     
     // Interrupts must be disabled
     static void _EndpointReset(uint8_t ep) {
         if (_State != State::Connected) return; // Short-circuit if we're not Connected
-        
-        if (EndpointOut(ep)) {
-            _OutEndpoint& outep = _OutEndpointGet(ep);
-            if (_Ready(outep))  _EndpointReset(ep, outep);
-            else                outep.needsReset = true;
-        
-        } else {
-            _InEndpoint& inep = _InEndpointGet(ep);
-            if (_Ready(inep))   _EndpointReset(ep, inep);
-            else                inep.needsReset = true;
+        _EndpointState& eps = _EndpointStateGet(ep);
+        eps.needsReset = true;
+        if (_Ready(eps)) {
+            if (EndpointOut(ep)) {
+                _AdvanceStateOut(ep);
+            } else {
+                _AdvanceStateIn(ep);
+            }
         }
     }
     
-    // Interrupts must be disabled
+//    // Interrupts must be disabled
+//    template <uint8_t T_Ep>
+//    static void _EndpointReset() {
+//        if constexpr (EndpointOut(T_Ep)) _OutEndpointReset(T_Ep);
+//        else                             _InEndpointReset(T_Ep);
+//    }
+    
+//    static void _OutEndpointReset(uint8_t ep) {
+//        if (_State != State::Connected) return; // Short-circuit if we're not Connected
+//        _EndpointState& eps = _OutEndpointStateGet(ep);
+//        eps.needsReset = true;
+//        if (_Ready(eps)) _AdvanceStateOut(ep);
+//    }
+//    
+//    static void _InEndpointReset(uint8_t ep) {
+//        if (_State != State::Connected) return; // Short-circuit if we're not Connected
+//        _EndpointState& eps = _InEndpointStateGet(ep);
+//        eps.needsReset = true;
+//        if (_Ready(eps)) _AdvanceStateIn(ep);
+//    }
+    
+    
+    
+    
+//    // Interrupts must be disabled
+//    template <uint8_t T_Ep>
+//    static bool _EndpointReady() {
+//        return _Ready(_EndpointStateGet<T_Ep>());
+//    }
+    
+    
+//    // Interrupts must be disabled
+//    template <uint8_t T_Ep>
+//    static void _OutEndpointReset() {
+//        if (_State != State::Connected) return; // Short-circuit if we're not Connected
+//        _EndpointState& eps = _OutEndpointStateGet<T_Ep>();
+//        eps.needsReset = true;
+//        if (_Ready(eps)) _AdvanceStateOut(T_Ep);
+//    }
+//    
+//    // Interrupts must be disabled
+//    template <uint8_t T_Ep>
+//    static void _InEndpointReset() {
+//        if (_State != State::Connected) return; // Short-circuit if we're not Connected
+//        _EndpointState& eps = _InEndpointStateGet<T_Ep>();
+//        eps.needsReset = true;
+//        if (_Ready(eps)) _AdvanceStateIn(T_Ep);
+//    }
+//    
+//    // Interrupts must be disabled
+//    template <uint8_t T_Ep>
+//    static bool _OutEndpointReady() {
+//        return _Ready(_OutEndpointStateGet<T_Ep>());
+//    }
+//    
+//    // Interrupts must be disabled
+//    template <uint8_t T_Ep>
+//    static bool _InEndpointReady() {
+//        return _Ready(_InEndpointStateGet<T_Ep>());
+//    }
+    
+    
+    
+//    // Interrupts must be disabled
+//    static void _EndpointReset(uint8_t ep) {
+//        if (_State != State::Connected) return; // Short-circuit if we're not Connected
+//        
+//        if (EndpointOut(ep)) {
+//            _EndpointState& outep = _OutEndpointStateGet(ep);
+//            if (_Ready(outep))  _EndpointReset(ep, outep);
+//            else                outep.needsReset = true;
+//        
+//        } else {
+//            _InEndpoint& inep = _InEndpointStateGet(ep);
+//            if (_Ready(inep))   _EndpointReset(ep, inep);
+//            else                inep.needsReset = true;
+//        }
+//    }
+    
+//    // Interrupts must be disabled
+//    static bool _EndpointReady(uint8_t ep) {
+//        if (EndpointOut(ep))    return _Ready(_OutEndpointStateGet(ep));
+//        else                    return _Ready(_InEndpointStateGet(ep));
+//    }
+    
     static bool _EndpointReady(uint8_t ep) {
-        if (EndpointOut(ep))    return _Ready(_OutEndpointGet(ep));
-        else                    return _Ready(_InEndpointGet(ep));
+        return _Ready(_EndpointStateGet(ep));
     }
     
     // Interrupts must be disabled
     static bool _EndpointsReady() {
         for (uint8_t ep : T_Config::Endpoints) {
             if (!_EndpointReady(ep)) return false;
+//            _EndpointState& eps = _EndpointStateGet(ep);
+//            if (!_Ready(eps)) return false;
         }
         return true;
     }
     
-    // Interrupts must be disabled
-    static bool _Ready(const _OutEndpoint& outep)       { return outep.state==_EndpointState::Ready;  }
-    static bool _Ready(const _InEndpoint& inep)         { return inep.state==_EndpointState::Ready;   }
-    static bool _Busy(const _OutEndpoint& outep)        { return outep.state==_EndpointState::Busy;   }
-    static bool _Busy(const _InEndpoint& inep)          { return inep.state==_EndpointState::Busy;    }
-    static bool _Done(const _OutEndpoint& outep)        { return outep.state==_EndpointState::Done;   }
-    static bool _Done(const _InEndpoint& inep)          { return inep.state==_EndpointState::Done;    }
+//    // Interrupts must be disabled
+    static bool _Ready(const _EndpointState& eps)   { return eps.stage==_EndpointStage::Ready;  }
+//    static bool _Busy(const _EndpointState& eps)    { return eps.stage==_EndpointStage::Busy;   }
+//    static bool _Done(const _EndpointState& eps)    { return eps.stage==_EndpointStage::Done;   }
     
-    static size_t _RecvLen(const _OutEndpoint& outep)   { return outep.len;                           }
-    
-    // Interrupts must be disabled
-    template <typename OutInEndpoint>
-    static void _EndpointReset(uint8_t ep, OutInEndpoint& outinep) {
-        outinep.state = _EndpointState::Reset;
-        outinep.needsReset = false;
-        _AdvanceState(ep, outinep);
-    }
+//    // Interrupts must be disabled
+//    static void _EndpointReset(_EndpointState& eps) {
+//        eps.stage = _EndpointStage::Reset;
+//        eps.needsReset = false;
+//        _AdvanceState(ep, eps);
+//    }
     
     // Interrupts must be disabled
-    static void _AdvanceState(uint8_t ep, _OutEndpoint& outep) {
-        if (outep.needsReset) {
-            _EndpointReset(ep, outep);
-            return;
+    static void _AdvanceStateOut(uint8_t ep) {
+        _EndpointState& eps = _EndpointStateGet(ep);
+        if (eps.needsReset) {
+            eps.stage = _EndpointStage::Reset;
+            eps.needsReset = false;
         }
         
-        outep.len = USBD_LL_GetRxDataSize(&_Device, ep);
+        eps.len = USBD_LL_GetRxDataSize(&_Device, ep);
         
         // State transitions
-        switch (outep.state) {
-        case _EndpointState::Ready:     outep.state = _EndpointState::Busy; break;
-        case _EndpointState::Busy:      outep.state = _EndpointState::Done; break;
-        case _EndpointState::Done:      outep.state = _EndpointState::Ready; break;
-        case _EndpointState::Reset:     outep.state = _EndpointState::ResetZLP1; break;
-        case _EndpointState::ResetZLP1:
+        switch (eps.stage) {
+        case _EndpointStage::Ready:     eps.stage = _EndpointStage::Busy; break;
+        case _EndpointStage::Busy:      eps.stage = _EndpointStage::Done; break;
+        case _EndpointStage::Done:      eps.stage = _EndpointStage::Ready; break;
+        case _EndpointStage::Reset:     eps.stage = _EndpointStage::ResetZLP1; break;
+        case _EndpointStage::ResetZLP1:
             // Only advance if we received a ZLP
-            if (outep.len == 0) outep.state = _EndpointState::ResetSentinel;
+            if (eps.len == 0) eps.stage = _EndpointStage::ResetSentinel;
             break;
-        case _EndpointState::ResetSentinel:
+        case _EndpointStage::ResetSentinel:
             // Only advance if we received the sentinel
-            if (outep.len == sizeof(_ResetSentinel)) outep.state = _EndpointState::Ready;
+            if (eps.len == sizeof(_ResetSentinel)) eps.stage = _EndpointStage::Ready;
             break;
         default:
             abort();
         }
         
         // State actions
-        switch (outep.state) {
-        case _EndpointState::ResetZLP1:
-        case _EndpointState::ResetSentinel:
+        switch (eps.stage) {
+        case _EndpointStage::ResetZLP1:
+        case _EndpointStage::ResetSentinel:
             USBD_LL_PrepareReceive(&_Device, ep, (uint8_t*)_DevNullAddr, MaxPacketSizeBulk);
             break;
         default:
@@ -656,10 +795,11 @@ private:
     }
     
     // Interrupts must be disabled
-    static void _AdvanceState(uint8_t ep, _InEndpoint& inep) {
-        if (inep.needsReset) {
-            _EndpointReset(ep, inep);
-            return;
+    static void _AdvanceStateIn(uint8_t ep) {
+        _EndpointState& eps = _EndpointStateGet(ep);
+        if (eps.needsReset) {
+            eps.stage = _EndpointStage::Reset;
+            eps.needsReset = false;
         }
         
         // We send two ZLPs (instead of just one) because if a transfer is in progress, the first ZLP will
@@ -674,24 +814,24 @@ private:
         // therefore the endpoint is finished being reset.
         
         // State transitions
-        switch (inep.state) {
-        case _EndpointState::Ready:         inep.state = _EndpointState::Busy;          break;
-        case _EndpointState::Busy:          inep.state = _EndpointState::Done;          break;
-        case _EndpointState::Done:          inep.state = _EndpointState::Ready;         break;
-        case _EndpointState::Reset:         inep.state = _EndpointState::ResetZLP1;     break;
-        case _EndpointState::ResetZLP1:     inep.state = _EndpointState::ResetZLP2;     break;
-        case _EndpointState::ResetZLP2:     inep.state = _EndpointState::ResetSentinel; break;
-        case _EndpointState::ResetSentinel: inep.state = _EndpointState::Ready;         break;
+        switch (eps.stage) {
+        case _EndpointStage::Ready:         eps.stage = _EndpointStage::Busy;          break;
+        case _EndpointStage::Busy:          eps.stage = _EndpointStage::Done;          break;
+        case _EndpointStage::Done:          eps.stage = _EndpointStage::Ready;         break;
+        case _EndpointStage::Reset:         eps.stage = _EndpointStage::ResetZLP1;     break;
+        case _EndpointStage::ResetZLP1:     eps.stage = _EndpointStage::ResetZLP2;     break;
+        case _EndpointStage::ResetZLP2:     eps.stage = _EndpointStage::ResetSentinel; break;
+        case _EndpointStage::ResetSentinel: eps.stage = _EndpointStage::Ready;         break;
         default:                            abort();
         }
         
         // State actions
-        switch (inep.state) {
-        case _EndpointState::ResetZLP1:
-        case _EndpointState::ResetZLP2:
+        switch (eps.stage) {
+        case _EndpointStage::ResetZLP1:
+        case _EndpointStage::ResetZLP2:
             USBD_LL_TransmitZeroLen(&_Device, ep);
             break;
-        case _EndpointState::ResetSentinel:
+        case _EndpointStage::ResetSentinel:
             USBD_LL_Transmit(&_Device, ep, (uint8_t*)&_ResetSentinel, sizeof(_ResetSentinel));
             break;
         default:
@@ -699,8 +839,78 @@ private:
         }
     }
     
+//    template <uint8_t T_Ep>
+//    static constexpr _EndpointState& _OutEndpointStateGet() {
+//        static_assert(EndpointOut(T_Ep), "must be OUT endpoint");
+//        return _OutEndpoints[EndpointIdx(T_Ep)-1];
+//    }
+    
+//    static constexpr _EndpointState& _OutEndpointStateGet(uint8_t ep) {
+//        return _OutEndpoints[EndpointIdx(ep)-1];
+//    }
+    
+//    template <uint8_t T_Ep>
+//    static constexpr _EndpointState& _InEndpointStateGet() {
+//        static_assert(EndpointIn(T_Ep), "must be IN endpoint");
+//        return _InEndpoints[EndpointIdx(T_Ep)-1];
+//    }
+    
+//    static constexpr _EndpointState& _InEndpointStateGet(uint8_t ep) {
+//        return _InEndpoints[EndpointIdx(ep)-1];
+//    }
+    
+//    template <uint8_t T_Ep>
+//    static constexpr _EndpointState& _EndpointStateGet() {
+//        if constexpr (EndpointOut(T_Ep)) {
+//            return _OutEndpoints[EndpointIdx(T_Ep)-1];
+//        } else {
+//            return _InEndpoints[EndpointIdx(T_Ep)-1];
+//        }
+//        
+//    }
+    
+    static _EndpointState& _EndpointStateGet(uint8_t ep) {
+        if (EndpointOut(ep)) {
+            return _OutEndpoints[EndpointIdx(ep)-1];
+        } else {
+            return _InEndpoints[EndpointIdx(ep)-1];
+        }
+    }
+    
+//    template <uint8_t T_Ep>
+//    static constexpr _EndpointState& _EndpointStateGet() {
+//        if constexpr (EndpointIn(T_Ep)) {
+//            return _InEndpoints[EndpointIdx(T_Ep)-1];
+//        }
+//        return _OutEndpoints[EndpointIdx(T_Ep)-1];
+//    }
+//    
+//    static bool _EndpointOut(_EndpointState& eps) {
+//        return &eps>=std::begin(_OutEndpoints) && &eps<std::end(_OutEndpoints);
+//    }
+//    
+//    static bool _EndpointIn(_EndpointState& eps) {
+//        return &eps>=std::begin(_InEndpoints) && &eps<std::end(_InEndpoints);
+//    }
+//    
+//    static uint8_t _EndpointNum(_EndpointState& eps) {
+//        if (_EndpointOut(eps)) {
+//            return Toastbox::USB::Endpoint::DirectionOut | (uint8_t)(&eps-_OutEndpoints);
+//        }
+//        return Toastbox::USB::Endpoint::DirectionIn | (uint8_t)(&eps-_InEndpoints);
+//    }
+//    
+//    static uint8_t _EndpointNumIn(_EndpointState& eps) {
+//        return Toastbox::USB::Endpoint::DirectionIn | (uint8_t)(&eps-_InEndpoints);
+//    }
+//    
+//    static uint8_t _EndpointNumOut(_EndpointState& eps) {
+//        return Toastbox::USB::Endpoint::DirectionOut | (uint8_t)(&eps-_OutEndpoints);
+//    }
+    
 private:
-    alignas(4) static const inline uint8_t _ResetSentinel = 0; // Aligned to send via USB
+    alignas(4)
+    static const inline uint8_t _ResetSentinel = 0; // Aligned to send via USB
     
     // _DevNullAddr: address that throw-away data can be written to.
     // This must be a region that a packet can be written to without causing
@@ -710,10 +920,12 @@ private:
     // ignored as long as the flash isn't unlocked.
     static constexpr uint32_t _DevNullAddr = 0x08000000;
     
-    alignas(4) static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl]; // Aligned to receive via USB
+    alignas(4)
+    static inline uint8_t _CmdRecvBuf[MaxPacketSizeCtrl]; // Aligned to receive via USB
+    
     static inline std::optional<size_t> _CmdRecvLen;
-    static inline _OutEndpoint _OutEndpoints[EndpointCountOut()] = {};
-    static inline _InEndpoint _InEndpoints[EndpointCountIn()] = {};
+    static inline _EndpointState _OutEndpoints[EndpointCountOut()] = {};
+    static inline _EndpointState _InEndpoints[EndpointCountIn()] = {};
     static inline USBD_HandleTypeDef _Device;
     static inline PCD_HandleTypeDef _PCD;
     static inline State _State = State::Disconnected;

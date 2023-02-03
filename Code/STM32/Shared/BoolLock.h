@@ -32,7 +32,7 @@ public:
     
     void lock() {
         Assert(!_locked);
-        T_Scheduler::Wait([&] { return !T_Lock; });
+        T_Scheduler::Wait([] { return !T_Lock; });
         T_Lock = true;
         _locked = true;
     }

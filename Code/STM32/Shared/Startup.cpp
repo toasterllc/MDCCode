@@ -3,12 +3,13 @@
 
 extern "C" void __libc_init_array();
 
-#warning TODO: confirm that at the point of executing `msr psp, msp`, SP=_StackInterruptEnd
-[[gnu::always_inline, gnu::naked]]
-static void _PSPStackActivate() {
+#warning TODO: confirm that at the point of executing `mrs r0, msp`, SP=_StackInterruptEnd
+[[gnu::always_inline]]
+static inline void _PSPStackActivate() {
     // Switch to using PSP stack.
     // Scheduler and its tasks use the PSP stack, while interrupts are handled on the MSP stack.
-    asm volatile("msr psp, msp" : : : );        // psp = msp
+    asm volatile("mrs r0, msp" : : : );         // r0 = msp
+    asm volatile("msr psp, r0" : : : );         // psp = r0
     asm volatile("mrs r0, CONTROL" : : : );     // r0 = CONTROL
     asm volatile("orrs r0, r0, #2" : : : );     // Set SPSEL bit (enable using PSP stack)
     asm volatile("msr CONTROL, r0" : : : );     // CONTROL = r0
