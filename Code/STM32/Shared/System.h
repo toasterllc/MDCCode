@@ -257,12 +257,12 @@ private:
         
         static std::optional<MSP::Resp> Send(const MSP::Cmd& cmd) {
             // Wait until we're idle
-            Scheduler::Wait([&] { return _Cmd.state==_State::Idle; });
+            Scheduler::Wait([] { return _Cmd.state==_State::Idle; });
             // Supply the I2C command to be sent
             _Cmd.cmd = cmd;
             _Cmd.state = _State::Cmd;
             // Wait until we get a response
-            Scheduler::Wait([&] { return _Cmd.state==_State::Resp; });
+            Scheduler::Wait([] { return _Cmd.state==_State::Resp; });
             // Reset our state
             _Cmd.state = _State::Idle;
             return _Cmd.resp;

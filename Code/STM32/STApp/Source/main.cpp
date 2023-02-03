@@ -1,4 +1,4 @@
-#define TaskARM32
+#define SchedulerARM32
 #include "Toastbox/Scheduler.h"
 #include "Assert.h"
 #include "System.h"
@@ -393,9 +393,6 @@ struct _TaskUSBDataIn {
         }
     }
     
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
-    
     // Task stack
     [[gnu::section(".stack._TaskUSBDataIn")]]
     alignas(sizeof(void*))
@@ -444,9 +441,6 @@ struct _TaskUSBDataOut {
     }
     
     static inline size_t _Len = 0;
-    
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataOut")]]
@@ -507,9 +501,6 @@ struct _TaskReadout {
     }
     
     static inline std::optional<size_t> _RemLen;
-    
-    // Task options
-    static constexpr Toastbox::TaskOptions Options{};
     
     // Task stack
     [[gnu::section(".stack._TaskReadout")]]

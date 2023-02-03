@@ -165,7 +165,7 @@ public:
         }
         
         // Wait until we're done
-        T_Scheduler::Wait([&] { return !_Busy; });
+        T_Scheduler::Wait([] { return !_Busy; });
     }
     
     static void Read(const QSPI_CommandTypeDef& cmd, void* data) {
@@ -193,7 +193,7 @@ public:
         Assert(hs == HAL_OK);
         
         // Wait until we're done
-        T_Scheduler::Wait([&] { return !_Busy; });
+        T_Scheduler::Wait([] { return !_Busy; });
     }
     
     static void Write(const QSPI_CommandTypeDef& cmd, const void* data) {
@@ -221,7 +221,7 @@ public:
         Assert(hs == HAL_OK);
         
         // Wait until we're done
-        T_Scheduler::Wait([&] { return !_Busy; });
+        T_Scheduler::Wait([] { return !_Busy; });
     }
     
     static void ISR_QSPI() {
