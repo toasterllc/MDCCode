@@ -498,7 +498,6 @@ struct _TaskImg {
 
 struct _TaskMain {
     static void Run() {
-        
 //        for (bool x=false;; x=!x) {
 //            _Pin::LED_RED_::Write(x);
 //            _BatterySampler::Sample();
@@ -519,12 +518,6 @@ struct _TaskMain {
         }
         
 //        _Scheduler::Sleep(_Scheduler::Ms(10000));
-//        for (;;) {
-//            _Pin::LED_GREEN_::Write(0);
-//            for (volatile uint16_t i=0; i<50000; i++);
-//            _Pin::LED_GREEN_::Write(1);
-//            for (volatile uint16_t i=0; i<50000; i++);
-//        }
         
 //        _Pin::VDD_B_EN::Write(1);
 //        _Scheduler::Sleep(_Scheduler::Ms(250));
@@ -1003,6 +996,15 @@ void abort() {
 //    }
 //}
 
+extern "C" void Blink() {
+    for (;;) {
+        _Pin::LED_GREEN_::Write(0);
+        for (volatile uint16_t i=0; i<50000; i++);
+        _Pin::LED_GREEN_::Write(1);
+        for (volatile uint16_t i=0; i<50000; i++);
+    }
+}
+
 int main() {
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;
@@ -1065,6 +1067,9 @@ int main() {
     _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
     _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
     
-    _Scheduler::Start<_TaskMain, _TaskI2C, _TaskButton>();
+//    _TaskMain::Run();
+    
+    _Scheduler::Start<_TaskMain>();
+//    _Scheduler::Start<_TaskMain, _TaskI2C, _TaskButton>();
     _Scheduler::Run();
 }

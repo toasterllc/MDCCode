@@ -58,7 +58,7 @@ public:
     [[noreturn]]
     static void Run() {
         // Start our default tasks running
-        Scheduler::template Start<_TaskCmdRecv, _TaskMSPComms>();
+        Scheduler::template Start<_TaskCmdRecv/*, _TaskMSPComms*/>();
         Scheduler::Run();
     }
     

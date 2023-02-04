@@ -169,7 +169,7 @@ private:
         return ev;
     }
     
-    static inline _Events _Ev = _EventNone;
+    static volatile inline _Events _Ev = _EventNone;
     
 #undef Assert
 };
