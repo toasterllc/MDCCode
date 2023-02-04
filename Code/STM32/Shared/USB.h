@@ -410,7 +410,8 @@ private:
         return (uint8_t)USBD_OK;
     }
     
-    static uint8_t _USBD_DataIn(uint8_t ep) {
+    static uint8_t _USBD_DataIn(uint8_t epidx) {
+        const uint8_t ep = Toastbox::USB::Endpoint::DirectionIn | epidx;
         // Sanity-check the endpoint state
         _EndpointState& eps = _EndpointStateGet(ep);
         Assert(
@@ -419,21 +420,20 @@ private:
             eps.stage == _EndpointStage::ResetSentinel ||
             eps.stage == _EndpointStage::Busy
         );
-        
         _AdvanceStateIn(ep);
         return (uint8_t)USBD_OK;
     }
     
-    static uint8_t _USBD_DataOut(uint8_t ep) {
-        // Sanity-check the endpoint state
+    static uint8_t _USBD_DataOut(uint8_t epidx) {
+        const uint8_t ep = Toastbox::USB::Endpoint::DirectionOut | epidx;
         _EndpointState& eps = _EndpointStateGet(ep);
+        // Sanity-check the endpoint state
         Assert(
             eps.stage == _EndpointStage::ResetZLP1     ||
             eps.stage == _EndpointStage::ResetZLP2     ||
             eps.stage == _EndpointStage::ResetSentinel ||
             eps.stage == _EndpointStage::Busy
         );
-        
         _AdvanceStateOut(ep);
         return (uint8_t)USBD_OK;
     }

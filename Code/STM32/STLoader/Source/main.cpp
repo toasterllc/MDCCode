@@ -157,7 +157,6 @@ void abort() {
 
 int main() {
     _JumpToAppIfNeeded();
-    _System::Init();
-    _Scheduler::Run();
+    _System::Run();
     return 0;
 }

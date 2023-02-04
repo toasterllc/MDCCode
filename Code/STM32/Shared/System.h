@@ -55,37 +55,11 @@ private:
     struct _TaskMSPComms;
     
 public:
-    static void Init() {
-        // Reset peripherals, initialize flash interface, initialize SysTick
-        HAL_Init();
-        
-        // Configure the system clock
-        _ClockInit();
-        
-        // Allow debugging while we're asleep
-        HAL_DBGMCU_EnableDBGSleepMode();
-        HAL_DBGMCU_EnableDBGStopMode();
-        HAL_DBGMCU_EnableDBGStandbyMode();
-        
-        // Configure LEDs
-        _LEDInit();
-        
-        // Configure MSP
-        MSPJTAG::Init();
-        
-        // Configure I2C
-        _I2C::Init();
-        
-        // Configure USB
-        USB::Init();
-        
-        // Enable interrupts for BAT_CHRG_STAT
-        constexpr uint32_t InterruptPriority = 2; // Should be >0 so that SysTick can still preempt
-        HAL_NVIC_SetPriority(EXTI15_10_IRQn, InterruptPriority, 0);
-        HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-        
+    [[noreturn]]
+    static void Run() {
         // Start our default tasks running
         Scheduler::template Start<_TaskCmdRecv, _TaskMSPComms>();
+        Scheduler::Run();
     }
     
     // LEDs
@@ -172,6 +146,16 @@ private:
     
     struct _TaskCmdRecv {
         static void Run() {
+            // Init system
+            // We have to call _Init from within a task, instead of before running the scheduler,
+            // because _Init requires interrupts to be enabled, and interrupts are disabled until
+            // the first task (this task) executes. See Startup.cpp for why we disable interrupts
+            // until our first task executes.
+            // (At least one reason -- and there are likely several reasons -- that interrupts
+            // need to be enabled for _Init is because the USB init code has some sleeps that
+            // require HAL_Delay to work, which requires the SysTick interrupt to fire.)
+            _Init();
+            
             for (;;) {
                 STM::Cmd cmd;
                 USB::CmdRecv(cmd);
@@ -429,6 +413,36 @@ private:
         alignas(sizeof(void*))
         static inline uint8_t Stack[512];
     };
+    
+    static void _Init() {
+        // Reset peripherals, initialize flash interface, initialize SysTick
+        HAL_Init();
+        
+        // Configure the system clock
+        _ClockInit();
+        
+        // Allow debugging while we're asleep
+        HAL_DBGMCU_EnableDBGSleepMode();
+        HAL_DBGMCU_EnableDBGStopMode();
+        HAL_DBGMCU_EnableDBGStandbyMode();
+        
+        // Configure LEDs
+        _LEDInit();
+        
+        // Configure MSP
+        MSPJTAG::Init();
+        
+        // Configure I2C
+        _I2C::Init();
+        
+        // Configure USB
+        USB::Init();
+        
+        // Enable interrupts for BAT_CHRG_STAT
+        constexpr uint32_t InterruptPriority = 2; // Should be >0 so that SysTick can still preempt
+        HAL_NVIC_SetPriority(EXTI15_10_IRQn, InterruptPriority, 0);
+        HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+    }
     
     static void _ClockInit() {
         // Configure the main internal regulator output voltage
