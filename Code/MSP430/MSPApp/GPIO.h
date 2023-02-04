@@ -68,96 +68,54 @@ public:
         template <Option... T_NewOpts>
         using Opts = Port::Pin<PinIdx, T_NewOpts...>;
         
-        struct InitCfg {
-            static constexpr bool Out()     { return _InitGetter(Option::Output1)       || _InitGetter(Option::Resistor1);      }
-            static constexpr bool Dir()     { return _InitGetter(Option::Output0)       || _InitGetter(Option::Output1);        }
-            static constexpr bool Sel0()    { return _InitGetter(Option::Sel01)         || _InitGetter(Option::Sel11);          }
-            static constexpr bool Sel1()    { return _InitGetter(Option::Sel10)         || _InitGetter(Option::Sel11);          }
-            static constexpr bool REn()     { return _InitGetter(Option::Resistor0)     || _InitGetter(Option::Resistor1);      }
-            static constexpr bool IE()      { return _InitGetter(Option::Interrupt01)   || _InitGetter(Option::Interrupt10);    }
-            static constexpr bool IES()     { return _InitGetter(Option::Interrupt10);                                          }
-        };
+        static constexpr bool Out()     { return _Getter(Option::Output1)       || _Getter(Option::Resistor1);      }
+        static constexpr bool Dir()     { return _Getter(Option::Output0)       || _Getter(Option::Output1);        }
+        static constexpr bool Sel0()    { return _Getter(Option::Sel01)         || _Getter(Option::Sel11);          }
+        static constexpr bool Sel1()    { return _Getter(Option::Sel10)         || _Getter(Option::Sel11);          }
+        static constexpr bool REn()     { return _Getter(Option::Resistor0)     || _Getter(Option::Resistor1);      }
+        static constexpr bool IE()      { return _Getter(Option::Interrupt01)   || _Getter(Option::Interrupt10);    }
+        static constexpr bool IES()     { return _Getter(Option::Interrupt10);                                      }
         
         // Init(): configure the pin
         static constexpr void Init() {
-            Out  (InitCfg::Out() );
-            Dir  (InitCfg::Dir() );
-            Sel0 (InitCfg::Sel0());
-            Sel1 (InitCfg::Sel1());
-            REn  (InitCfg::REn() );
+            State::Out(Out());
+            State::Dir(Dir());
+            State::Sel0(Sel0());
+            State::Sel1(Sel1());
+            State::REn(REn());
             
             if constexpr (PortIdx == PortIndex::A)
-            IE   (InitCfg::IE()  );
+            State::IE(IE());
             
             if constexpr (PortIdx == PortIndex::A)
-            IES  (InitCfg::IES() );
+            State::IES(IES());
         }
         
         // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
         template <typename T_Prev>
         static constexpr void Init() {
-            if constexpr (InitCfg::Out() != T_Prev::InitCfg::Out())
-            Out  (InitCfg::Out() );
+            if constexpr (Out() != T_Prev::Out())
+            State::Out(Out());
             
-            if constexpr (InitCfg::Dir() != T_Prev::InitCfg::Dir())
-            Dir  (InitCfg::Dir() );
+            if constexpr (Dir() != T_Prev::Dir())
+            State::Dir(Dir());
             
-            if constexpr (InitCfg::Sel0() != T_Prev::InitCfg::Sel0())
-            Sel0 (InitCfg::Sel0());
+            if constexpr (Sel0() != T_Prev::Sel0())
+            State::Sel0(Sel0());
             
-            if constexpr (InitCfg::Sel1() != T_Prev::InitCfg::Sel1())
-            Sel1 (InitCfg::Sel1());
+            if constexpr (Sel1() != T_Prev::Sel1())
+            State::Sel1(Sel1());
             
-            if constexpr (InitCfg::REn() != T_Prev::InitCfg::REn())
-            REn  (InitCfg::REn() );
-            
-            if constexpr (PortIdx == PortIndex::A)
-            if constexpr (InitCfg::IE() != T_Prev::InitCfg::IE())
-            IE   (InitCfg::IE()  );
+            if constexpr (REn() != T_Prev::REn())
+            State::REn(REn());
             
             if constexpr (PortIdx == PortIndex::A)
-            if constexpr (InitCfg::IES() != T_Prev::InitCfg::IES())
-            IES  (InitCfg::IES() );
-        }
-        
-        static constexpr bool Out() {
-            if constexpr (PortIdx == PortIndex::A)      return _Getter(PAOUT);
-            else if constexpr (PortIdx == PortIndex::B) return _Getter(PBOUT);
-        }
-        
-        static constexpr bool Dir() {
-            if constexpr (PortIdx == PortIndex::A)      return _Getter(PADIR);
-            else if constexpr (PortIdx == PortIndex::B) return _Getter(PBDIR);
-        }
-        
-        static constexpr bool Sel0() {
-            if constexpr (PortIdx == PortIndex::A)      return _Getter(PASEL0);
-            else if constexpr (PortIdx == PortIndex::B) return _Getter(PBSEL0);
-        }
-        
-        static constexpr bool Sel1() {
-            if constexpr (PortIdx == PortIndex::A)      return _Getter(PASEL1);
-            else if constexpr (PortIdx == PortIndex::B) return _Getter(PBSEL1);
-        }
-        
-        static constexpr bool REn() {
-            if constexpr (PortIdx == PortIndex::A)      return _Getter(PAREN);
-            else if constexpr (PortIdx == PortIndex::B) return _Getter(PBREN);
-        }
-        
-        OnlyPortA
-        static constexpr bool IE() {
-            return _Getter(PAIE);
-        }
-        
-        OnlyPortA
-        static constexpr bool IES() {
-            return _Getter(PAIES);
-        }
-        
-        OnlyPortA
-        static constexpr bool IFG() {
-            return _Getter(PAIFG);
+            if constexpr (IE() != T_Prev::IE())
+            State::IE(IE());
+            
+            if constexpr (PortIdx == PortIndex::A)
+            if constexpr (IES() != T_Prev::IES())
+            State::IES(IES());
         }
         
         // IVPort1(): returns the interrupt vector for Port1 pins
@@ -178,55 +136,6 @@ public:
             return (PinIdx-8+1)<<1;
         }
         
-//        OnlyPortA
-//        static constexpr void IFGClear() {
-//            if constexpr (PinIdx < 8) {
-//                P1IFG &= ~IVPort1();
-//            } else {
-//                P2IFG &= ~IVPort2();
-//            }
-//        }
-        
-        static constexpr void Out(bool x) {
-            if constexpr (PortIdx == PortIndex::A)      _Setter(PAOUT, x);
-            else if constexpr (PortIdx == PortIndex::B) _Setter(PBOUT, x);
-        }
-        
-        static constexpr void Dir(bool x) {
-            if constexpr (PortIdx == PortIndex::A)      _Setter(PADIR, x);
-            else if constexpr (PortIdx == PortIndex::B) _Setter(PBDIR, x);
-        }
-        
-        static constexpr void Sel0(bool x) {
-            if constexpr (PortIdx == PortIndex::A)      _Setter(PASEL0, x);
-            else if constexpr (PortIdx == PortIndex::B) _Setter(PBSEL0, x);
-        }
-        
-        static constexpr void Sel1(bool x) {
-            if constexpr (PortIdx == PortIndex::A)      _Setter(PASEL1, x);
-            else if constexpr (PortIdx == PortIndex::B) _Setter(PBSEL1, x);
-        }
-        
-        static constexpr void REn(bool x) {
-            if constexpr (PortIdx == PortIndex::A)      _Setter(PAREN, x);
-            else if constexpr (PortIdx == PortIndex::B) _Setter(PBREN, x);
-        }
-        
-        OnlyPortA
-        static constexpr void IE(bool x) {
-            _Setter(PAIE, x);
-        }
-        
-        OnlyPortA
-        static constexpr void IES(bool x) {
-            _Setter(PAIES, x);
-        }
-        
-        OnlyPortA
-        static constexpr void IFG(bool x) {
-            _Setter(PAIFG, x);
-        }
-        
         // IESConfig(): convenience for changing IES to switch between monitoring 0->1 and 1->0 transitions.
         // This function ensures that transitions won't be missed (due to the inherent race of configuring
         // IES and the pin changing state), by explicitly setting IFG to reflect the state of the pin,
@@ -236,13 +145,13 @@ public:
             // Disable interrupts while we change the IES config
             Toastbox::IntState ints(false);
             
-            constexpr bool ies = InitCfg::IES();
-            IES(ies);
+            constexpr bool ies = IES();
+            State::IES(ies);
             
             // After configuring IES, ensure that IFG reflects the state of the pin.
             // This is necessary because we may have missed a transition due to the
             // inherent race between configuring IES and the pin changing state.
-            IFG(Read() != ies);
+            State::IFG(Read() != ies);
         }
         
         static bool Read() {
@@ -251,26 +160,112 @@ public:
         }
         
         static void Write(bool x) {
-            Out(x);
+            State::Out(x);
         }
         
+        // State: accessors for reading/writing pin configuration at runtime
+        struct State {
+            // Getters
+            static constexpr bool Out() {
+                if constexpr (PortIdx == PortIndex::A)      return _Getter(PAOUT);
+                else if constexpr (PortIdx == PortIndex::B) return _Getter(PBOUT);
+            }
+            
+            static constexpr bool Dir() {
+                if constexpr (PortIdx == PortIndex::A)      return _Getter(PADIR);
+                else if constexpr (PortIdx == PortIndex::B) return _Getter(PBDIR);
+            }
+            
+            static constexpr bool Sel0() {
+                if constexpr (PortIdx == PortIndex::A)      return _Getter(PASEL0);
+                else if constexpr (PortIdx == PortIndex::B) return _Getter(PBSEL0);
+            }
+            
+            static constexpr bool Sel1() {
+                if constexpr (PortIdx == PortIndex::A)      return _Getter(PASEL1);
+                else if constexpr (PortIdx == PortIndex::B) return _Getter(PBSEL1);
+            }
+            
+            static constexpr bool REn() {
+                if constexpr (PortIdx == PortIndex::A)      return _Getter(PAREN);
+                else if constexpr (PortIdx == PortIndex::B) return _Getter(PBREN);
+            }
+            
+            OnlyPortA
+            static constexpr bool IE() {
+                return _Getter(PAIE);
+            }
+            
+            OnlyPortA
+            static constexpr bool IES() {
+                return _Getter(PAIES);
+            }
+            
+            OnlyPortA
+            static constexpr bool IFG() {
+                return _Getter(PAIFG);
+            }
+            
+            // Setters
+            static constexpr void Out(bool x) {
+                if constexpr (PortIdx == PortIndex::A)      _Setter(PAOUT, x);
+                else if constexpr (PortIdx == PortIndex::B) _Setter(PBOUT, x);
+            }
+            
+            static constexpr void Dir(bool x) {
+                if constexpr (PortIdx == PortIndex::A)      _Setter(PADIR, x);
+                else if constexpr (PortIdx == PortIndex::B) _Setter(PBDIR, x);
+            }
+            
+            static constexpr void Sel0(bool x) {
+                if constexpr (PortIdx == PortIndex::A)      _Setter(PASEL0, x);
+                else if constexpr (PortIdx == PortIndex::B) _Setter(PBSEL0, x);
+            }
+            
+            static constexpr void Sel1(bool x) {
+                if constexpr (PortIdx == PortIndex::A)      _Setter(PASEL1, x);
+                else if constexpr (PortIdx == PortIndex::B) _Setter(PBSEL1, x);
+            }
+            
+            static constexpr void REn(bool x) {
+                if constexpr (PortIdx == PortIndex::A)      _Setter(PAREN, x);
+                else if constexpr (PortIdx == PortIndex::B) _Setter(PBREN, x);
+            }
+            
+            OnlyPortA
+            static constexpr void IE(bool x) {
+                _Setter(PAIE, x);
+            }
+            
+            OnlyPortA
+            static constexpr void IES(bool x) {
+                _Setter(PAIES, x);
+            }
+            
+            OnlyPortA
+            static constexpr void IFG(bool x) {
+                _Setter(PAIFG, x);
+            }
+            
+        private:
+            template <typename T>
+            static constexpr bool _Getter(T& reg) {
+                return reg & Bit;
+            }
+            
+            template <typename T>
+            static constexpr void _Setter(T& reg, bool x) {
+                if (x)  reg |= Bit;
+                else    reg &= ~Bit;
+            }
+        };
+        
     private:
-        static constexpr bool _InitGetter(Option opt) {
+        static constexpr bool _Getter(Option opt) {
             for (const Option o : (Option[]){T_Opts...}) {
                 if (o == opt) return true;
             }
             return false;
-        }
-        
-        template <typename T>
-        static constexpr bool _Getter(T& reg) {
-            return reg & Bit;
-        }
-        
-        template <typename T>
-        static constexpr void _Setter(T& reg, bool x) {
-            if (x)  reg |= Bit;
-            else    reg &= ~Bit;
         }
     };
 #undef OnlyPortA
@@ -306,13 +301,13 @@ static constexpr _Regs _GetRegs(_Regs regs) {
         regs.IES    &= ~T_Pin::Bit;
         
         // Set the bit for the GPIO, if it's set
-        regs.Out    |= (T_Pin::InitCfg::Out()  ? T_Pin::Bit : 0);
-        regs.Dir    |= (T_Pin::InitCfg::Dir()  ? T_Pin::Bit : 0);
-        regs.Sel0   |= (T_Pin::InitCfg::Sel0() ? T_Pin::Bit : 0);
-        regs.Sel1   |= (T_Pin::InitCfg::Sel1() ? T_Pin::Bit : 0);
-        regs.REn    |= (T_Pin::InitCfg::REn()  ? T_Pin::Bit : 0);
-        regs.IE     |= (T_Pin::InitCfg::IE()   ? T_Pin::Bit : 0);
-        regs.IES    |= (T_Pin::InitCfg::IES()  ? T_Pin::Bit : 0);
+        regs.Out    |= (T_Pin::Out()  ? T_Pin::Bit : 0);
+        regs.Dir    |= (T_Pin::Dir()  ? T_Pin::Bit : 0);
+        regs.Sel0   |= (T_Pin::Sel0() ? T_Pin::Bit : 0);
+        regs.Sel1   |= (T_Pin::Sel1() ? T_Pin::Bit : 0);
+        regs.REn    |= (T_Pin::REn()  ? T_Pin::Bit : 0);
+        regs.IE     |= (T_Pin::IE()   ? T_Pin::Bit : 0);
+        regs.IES    |= (T_Pin::IES()  ? T_Pin::Bit : 0);
     }
     
     if constexpr (sizeof...(T_Pins)) return _GetRegs<T_PortIdx, T_Pins...>(regs);

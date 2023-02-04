@@ -97,7 +97,7 @@ public:
     }
     
     static void ISR_Active(uint16_t iv) {
-        const bool active = (Pin::Active::IES() == _ActiveInterrupt::InitCfg::IES());
+        const bool active = (Pin::Active::State::IES() == _ActiveInterrupt::IES());
         _Ev |= (active ? _EventActive : _EventInactive);
     }
     

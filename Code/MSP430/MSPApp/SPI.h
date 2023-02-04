@@ -12,6 +12,7 @@ public:
     
     // ICEReset(): reset ICE comms by asserting `T_ClkPin` for some period
     static void ICEReset() {
+        #warning TODO: switch to using Init() variant that accepts the previous pin
         // Take over manual control of `T_ClkPin`
         _ClkManual::Init();
         
@@ -24,12 +25,14 @@ public:
         _ClkManual::Write(0);
         
         // Return control of `T_ClkPin` to the SPI peripheral (PA.6 = UCA0CLK)
+        #warning TODO: switch to using Init() variant that accepts the previous pin
         _ClkPeriph::Init();
     }
     
     // Init(): configure SPI peripheral
     static void Init() {
         // Turn over control of `T_ClkPin` to the SPI peripheral (PA.6 = UCA0CLK)
+        #warning TODO: switch to using Init() variant that accepts the previous pin
         _ClkPeriph::Init();
         
         // Assert USCI reset
@@ -57,6 +60,7 @@ public:
     template <typename T_DataOut, typename T_DataIn>
     static void WriteRead(const T_DataOut& dataOut, T_DataIn* dataIn=nullptr) {
         // PA.4 = UCA0SIMO
+        #warning TODO: switch to using Init() variant that accepts the previous pin
         _DataOutEnabled::Init();
         
         const uint8_t* dataOutU8 = (const uint8_t*)&dataOut;
@@ -65,6 +69,7 @@ public:
         }
         
         // PA.4 = GPIO input
+        #warning TODO: switch to using Init() variant that accepts the previous pin
         _DataOutDisabled::Init();
         
         // 8-cycle turnaround

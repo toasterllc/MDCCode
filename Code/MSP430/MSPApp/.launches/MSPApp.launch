@@ -26,6 +26,7 @@
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.MSP430FR2433.ccxml.TI MSP430 USB1/MSP430" value="MSPApp"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${target_config_active_default:MSPApp}"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430FR2422.ccxml.TI MSP430 USB1/MSP430" value="/home/dave/repos/MDC/Code/MSP430/MSPApp/Release/MSPApp.out"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430FR2433.ccxml.TI MSP430 USB1/MSP430" value="/home/dave/repos/MDCCode/Code/MSP430/MSPApp/Release/MSPApp.out"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/MSPApp"/>
 </listAttribute>
