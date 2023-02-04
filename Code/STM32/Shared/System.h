@@ -504,6 +504,8 @@ private:
     }
     
     static void _LEDInit() {
+        // Enable clock for LED GPIOs (GPIOPortB)
+        __HAL_RCC_GPIOB_CLK_ENABLE();
         LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
         LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);

@@ -12,7 +12,7 @@ uint32_t T_TimeoutMs
 class I2CType {
 public:
     static void Init() {
-        // Enable clock for SCL/SDA GPIOs (B8/B9)
+        // Enable clock for SCL/SDA GPIOs (GPIOPortB)
         __HAL_RCC_GPIOB_CLK_ENABLE();
         
         _SCL::Config(GPIO_MODE_AF_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF4_I2C1);
