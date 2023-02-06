@@ -649,6 +649,10 @@ static void Init() {
     
     // EXTI Registers
     EXTIRegsSet(_EXTIRegsCollect<T_Pins...>(EXTIRegs{}));
+    
+    // Unconditionally enable SYSCFG clock, because it's used for EXTI interrupts
+    // that may be enable after our initial GPIO configuration.
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
 }
 
 } // namespace GPIO

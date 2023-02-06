@@ -109,9 +109,6 @@ public:
     
     // Initialization
     static void Init() {
-        // Enable GPIO clocks
-        __HAL_RCC_GPIOB_CLK_ENABLE();
-        
         _PCD.pData = &_Device;
         _PCD.Instance = USB_OTG_HS;
         _PCD.Init.dev_endpoints = 9;

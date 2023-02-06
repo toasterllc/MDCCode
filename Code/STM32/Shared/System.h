@@ -157,7 +157,6 @@ public:
     static void Abort() {
         Toastbox::IntState ints(false);
         
-        _LEDInit();
         for (bool x=true;; x=!x) {
             LED0::Write(x);
             LED1::Write(x);
@@ -467,9 +466,6 @@ private:
         HAL_DBGMCU_EnableDBGStopMode();
         HAL_DBGMCU_EnableDBGStandbyMode();
         
-        // Configure LEDs
-        _LEDInit();
-        
         // Configure MSP
         MSPJTAG::Init();
         
@@ -534,20 +530,6 @@ private:
             HAL_StatusTypeDef hr = HAL_RCCEx_PeriphCLKConfig(&cfg);
             Assert(hr == HAL_OK);
         }
-        
-        // Enable GPIO clocks
-        {
-            __HAL_RCC_GPIOB_CLK_ENABLE(); // LED[3:0]
-            __HAL_RCC_GPIOE_CLK_ENABLE(); // _BAT_CHRG_STAT
-            __HAL_RCC_GPIOG_CLK_ENABLE(); // MSP_TEST / MSP_RST_
-            __HAL_RCC_GPIOH_CLK_ENABLE(); // HSE (clock input)
-        }
-    }
-    
-    static void _LEDInit() {
-        // Enable clock for LED GPIOs (GPIOPortB)
-        #warning TODO: remove when GPIO calls __HAL_RCC_GPIOB_CLK_ENABLE automatically
-        __HAL_RCC_GPIOB_CLK_ENABLE();
     }
     
     static void _Reset(const STM::Cmd& cmd) {

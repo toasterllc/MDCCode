@@ -19,8 +19,7 @@ public:
     };
     
     static void Init() {
-        // Enable clock for SCL/SDA GPIOs (GPIOPortB)
-        __HAL_RCC_GPIOB_CLK_ENABLE();
+        // Enable clock for I2C
         __HAL_RCC_I2C1_CLK_ENABLE();
         
         constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt

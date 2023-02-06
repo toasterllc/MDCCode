@@ -1435,12 +1435,6 @@ void abort() {
 // MARK: - Main
 
 int main() {
-    // Enable GPIO clocks
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOE_CLK_ENABLE();
-    __HAL_RCC_GPIOF_CLK_ENABLE();
-    
     _System::Run<
         _ICE_CRST_,
         _ICE_CDONE,
