@@ -8,7 +8,7 @@ static void SystemClockConfig_Resume();
 
 void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
+//  GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(pcdHandle->Instance==USB_OTG_HS)
   {
     // GPIO is configured by System.h
