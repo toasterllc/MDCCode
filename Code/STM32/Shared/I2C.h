@@ -14,10 +14,6 @@ public:
     static void Init() {
         // Enable clock for SCL/SDA GPIOs (GPIOPortB)
         __HAL_RCC_GPIOB_CLK_ENABLE();
-        
-        _SCL::Config(GPIO_MODE_AF_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF4_I2C1);
-        _SDA::Config(GPIO_MODE_AF_OD, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF4_I2C1);
-        
         __HAL_RCC_I2C1_CLK_ENABLE();
         
         constexpr uint32_t InterruptPriority = 1; // Should be >0 so that SysTick can still preempt
@@ -152,6 +148,6 @@ private:
         .AbortCpltCallback      = _CallbackAbort,
     };
     
-    using _SCL = GPIO<GPIOPortB, 8>;
-    using _SDA = GPIO<GPIOPortB, 9>;
+    using _SCL = GPIO::PortB::Pin<8, GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
+    using _SDA = GPIO::PortB::Pin<9, GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
 };

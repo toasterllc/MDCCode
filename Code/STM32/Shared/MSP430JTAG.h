@@ -4,8 +4,146 @@
 #include "GPIO.h"
 #include "Toastbox/Scheduler.h"
 
-template <typename Test, typename Rst_, uint8_t CPUFreqMHz>
+template <typename T_TestPin, typename T_RstPin_, uint8_t T_CPUFreqMHz>
 class MSP430JTAG {
+public:
+    struct Pin {
+        using Test = typename T_TestPin::template Opts<GPIO::Option::Output0>;
+        using Rst_ = typename T_RstPin_::template Opts<GPIO::Option::Output1>;
+    };
+    
+    enum class Status {
+        OK,
+        Error,
+        JTAGDisabled,
+    };
+    
+    static void Init() {
+        _PinsReset();
+    }
+    
+    static Status Connect() {
+        if (_Connected) return Status::OK; // Short-circuit
+        
+        for (int i=0; i<3; i++) {
+            // Perform JTAG entry sequence with RST_=1
+            _JTAGStart(1);
+            
+            // Reset JTAG state machine (test access port, TAP)
+            _TAPReset();
+            
+            // Validate the JTAG ID
+            if (_JTAGIDGet() != _JTAGID) {
+                continue; // Try again
+            }
+            
+            // Check JTAG fuse blown state
+            if (_JTAGFuseBlown()) {
+                return Status::JTAGDisabled;
+            }
+            
+            // Validate the Core ID
+            if (_CoreID() == 0) {
+                continue; // Try again
+            }
+            
+            // Set device into JTAG mode + read
+            _IRShift(_IR_CNTRL_SIG_16BIT);
+            _DRShift<16>(0x1501);
+            
+            // Wait until CPU is sync'd
+            if (!_CPUSyncWait()) {
+                continue;
+            }
+            
+            // Reset CPU
+            if (!_CPUReset()) {
+                continue; // Try again
+            }
+            
+            // Validate the Device ID
+            {
+                const uint16_t deviceID = _DeviceIDGet();
+                if (deviceID != _DeviceID) {
+                    continue; // Try again
+                }
+            }
+            
+            // Disable MPU (so we can write to FRAM)
+            if (!_MPUDisable()) {
+                continue; // Try again
+            }
+            
+            // Nothing failed!
+            _Connected = true;
+            return Status::OK;
+        }
+        
+        // Too many failures
+        return Status::Error;
+    }
+    
+    static void Disconnect() {
+        if (!_Connected) return; // Short-circuit
+        _JTAGEnd();
+        _Connected = false;
+    }
+    
+    static Status Erase() {
+        // Perform JTAG entry sequence with RST_=0
+        _JTAGStart(0);
+        // Reset JTAG TAP
+        _TAPReset();
+        
+        bool r = _JMBErase();
+        if (!r) return Status::Error;
+        
+        _JTAGEnd();
+        return Status::OK;
+    }
+    
+    static uint16_t Read(uint32_t addr) {
+        return _Read16(addr);
+    }
+    
+    static void Read(uint32_t addr, void* dst, size_t len) {
+        _Read(addr, (uint8_t*)dst, len);
+    }
+    
+    static void Write(uint32_t addr, uint16_t val) {
+        _Write16(addr, val);
+    }
+    
+    static void Write(uint32_t addr, const void* src, size_t len) {
+        if (_FRAMAddr(addr) && _FRAMAddr(addr+len-1)) {
+            // framWrite() is a write implementation that's faster than the
+            // general-purpose Write(), but only works for FRAM memory regions
+            _FRAMWrite(addr, (uint8_t*)src, len);
+        } else {
+            _Write(addr, (uint8_t*)src, len);
+        }
+    }
+    
+    static void DebugTestSet(bool val) {
+        _Test::Write(val);
+    }
+    
+    static void DebugRstSet(bool val) {
+        _Rst_::Write(val);
+    }
+    
+    static void DebugTestPulse() {
+        Toastbox::IntState ints(false);
+        // Write before configuring. If we configured before writing, we could drive the
+        // wrong value momentarily before writing the correct value.
+        _Test::Write(0);
+        _Test::Write(1);
+    }
+    
+    static bool DebugSBWIO(bool tms, bool tclk, bool tdi) {
+        return _SBWIO(tms, tclk, tdi);
+    }
+    
 private:
     static constexpr uint8_t _Reverse(uint8_t x) {
         return (x&(1<<7))>>7 | (x&(1<<6))>>5 | (x&(1<<5))>>3 | (x&(1<<4))>>1 |
@@ -54,7 +192,7 @@ private:
     // _DelayUs: primitive delay implementation
     // Assumes a simple for loop takes 1 clock cycle per iteration
     static void _DelayUs(uint32_t us) {
-        const uint32_t cycles = CPUFreqMHz*us;
+        const uint32_t cycles = T_CPUFreqMHz*us;
         for (volatile uint32_t i=0; i<cycles; i++);
     }
     
@@ -62,8 +200,9 @@ private:
         return addr>=0xE300 && addr<=0xFFFF;
     }
     
-    using _TCK = Test;
-    using _TDIO = Rst_;
+    using _Test   = typename Pin::Test;
+    using _Rst_   = typename Pin::Rst_;
+    using _RstIn_ = typename Pin::Rst_::template Opts<GPIO::Option::Input>;
     
     static inline bool _Connected = false;
     static inline bool _TclkSaved = 1;
@@ -71,12 +210,10 @@ private:
     static void _PinsReset() {
         // De-assert RST_ before de-asserting TEST, because the MSP430 latches RST_
         // as being asserted, if it's asserted when when TEST is de-asserted
-        Rst_::Write(1);
-        Rst_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _Rst_::Write(1);
         _DelayUs(10);
         
-        Test::Write(0);
-        Test::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+        _Test::Write(0);
         _DelayUs(200);
     }
     
@@ -125,43 +262,43 @@ private:
         
         // Write TMS
         {
-            _TDIO::Write(tms);
+            _Rst_::Write(tms);
             _DelayUs(0);
             
-            _TCK::Write(0);
+            _Test::Write(0);
             _DelayUs(0);
             
-            _TDIO::Write(tclk);
-            _TCK::Write(1);
+            _Rst_::Write(tclk);
+            _Test::Write(1);
             _DelayUs(0);
         }
         
         // Write TDI
         {
-            _TDIO::Write(tdi);
+            _Rst_::Write(tdi);
             _DelayUs(0);
             
-            _TCK::Write(0);
+            _Test::Write(0);
             _DelayUs(0);
             
-            _TCK::Write(1);
+            _Test::Write(1);
             // Stop driving SBWTDIO, in preparation for the slave to start driving it
-            _TDIO::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _RstIn_::Init();
             _DelayUs(0);
         }
         
         // Read TDO
         bool tdo = 0;
         {
-            _TCK::Write(0);
+            _Test::Write(0);
             _DelayUs(0);
             // Read the TDO value, driven by the slave, while SBWTCK=0
-            tdo = _TDIO::Read();
-            _TCK::Write(1);
+            tdo = _Rst_::Read();
+            _Test::Write(1);
             _DelayUs(0);
             
             // Start driving SBWTDIO again
-            _TDIO::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+            _Rst_::Init();
         }
         
         return tdo;
@@ -580,29 +717,29 @@ private:
         
         // Reset the MSP430 so that it starts from a known state
         {
-            Rst_::Write(0);
+            _Rst_::Write(0);
             _DelayUs(0);
         }
         
         // Enable test mode
         {
             // Apply the supplied reset state, `rst_`
-            Rst_::Write(rst_);
+            _Rst_::Write(rst_);
             _DelayUs(0);
             // Assert TEST
-            Test::Write(1);
+            _Test::Write(1);
             _DelayUs(100);
         }
         
         // Choose 2-wire/Spy-bi-wire mode
         {
             // TDIO=1 while applying a single clock to TCK
-            _TDIO::Write(1);
+            _Rst_::Write(1);
             _DelayUs(0);
             
-            _TCK::Write(0);
+            _Test::Write(0);
             _DelayUs(0);
-            _TCK::Write(1);
+            _Test::Write(1);
             _DelayUs(0);
         }
     }
@@ -630,145 +767,5 @@ private:
         
         // Return pins to default state
         _PinsReset();
-    }
-    
-public:
-    enum class Status {
-        OK,
-        Error,
-        JTAGDisabled,
-    };
-    
-    static void Init() {
-        _PinsReset();
-    }
-    
-    static Status Connect() {
-        if (_Connected) return Status::OK; // Short-circuit
-        
-        for (int i=0; i<3; i++) {
-            // Perform JTAG entry sequence with RST_=1
-            _JTAGStart(1);
-            
-            // Reset JTAG state machine (test access port, TAP)
-            _TAPReset();
-            
-            // Validate the JTAG ID
-            if (_JTAGIDGet() != _JTAGID) {
-                continue; // Try again
-            }
-            
-            // Check JTAG fuse blown state
-            if (_JTAGFuseBlown()) {
-                return Status::JTAGDisabled;
-            }
-            
-            // Validate the Core ID
-            if (_CoreID() == 0) {
-                continue; // Try again
-            }
-            
-            // Set device into JTAG mode + read
-            _IRShift(_IR_CNTRL_SIG_16BIT);
-            _DRShift<16>(0x1501);
-            
-            // Wait until CPU is sync'd
-            if (!_CPUSyncWait()) {
-                continue;
-            }
-            
-            // Reset CPU
-            if (!_CPUReset()) {
-                continue; // Try again
-            }
-            
-            // Validate the Device ID
-            {
-                const uint16_t deviceID = _DeviceIDGet();
-                if (deviceID != _DeviceID) {
-                    continue; // Try again
-                }
-            }
-            
-            // Disable MPU (so we can write to FRAM)
-            if (!_MPUDisable()) {
-                continue; // Try again
-            }
-            
-            // Nothing failed!
-            _Connected = true;
-            return Status::OK;
-        }
-        
-        // Too many failures
-        return Status::Error;
-    }
-    
-    static void Disconnect() {
-        if (!_Connected) return; // Short-circuit
-        _JTAGEnd();
-        _Connected = false;
-    }
-    
-    static Status Erase() {
-        // Perform JTAG entry sequence with RST_=0
-        _JTAGStart(0);
-        // Reset JTAG TAP
-        _TAPReset();
-        
-        bool r = _JMBErase();
-        if (!r) return Status::Error;
-        
-        _JTAGEnd();
-        return Status::OK;
-    }
-    
-    static uint16_t Read(uint32_t addr) {
-        return _Read16(addr);
-    }
-    
-    static void Read(uint32_t addr, void* dst, size_t len) {
-        _Read(addr, (uint8_t*)dst, len);
-    }
-    
-    static void Write(uint32_t addr, uint16_t val) {
-        _Write16(addr, val);
-    }
-    
-    static void Write(uint32_t addr, const void* src, size_t len) {
-        if (_FRAMAddr(addr) && _FRAMAddr(addr+len-1)) {
-            // framWrite() is a write implementation that's faster than the
-            // general-purpose Write(), but only works for FRAM memory regions
-            _FRAMWrite(addr, (uint8_t*)src, len);
-        } else {
-            _Write(addr, (uint8_t*)src, len);
-        }
-    }
-    
-    static void DebugTestSet(bool val) {
-        // Write before configuring. If we configured before writing, we could drive the
-        // wrong value momentarily before writing the correct value.
-        Test::Write(val);
-        Test::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    }
-    
-    static void DebugRstSet(bool val) {
-        // Write before configuring. If we configured before writing, we could drive the
-        // wrong value momentarily before writing the correct value.
-        Rst_::Write(val);
-        Rst_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    }
-    
-    static void DebugTestPulse() {
-        Toastbox::IntState ints(false);
-        // Write before configuring. If we configured before writing, we could drive the
-        // wrong value momentarily before writing the correct value.
-        Test::Write(0);
-        Test::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        Test::Write(1);
-    }
-    
-    static bool DebugSBWIO(bool tms, bool tclk, bool tdi) {
-        return _SBWIO(tms, tclk, tdi);
     }
 };

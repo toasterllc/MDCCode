@@ -301,6 +301,82 @@ public:
         
         // State: accessors for reading/writing pin configuration at runtime
         struct State {
+            // Getters
+            static constexpr uint32_t MODER() {
+                return RegsRef().MODER & MODERMask();
+            }
+            
+            static constexpr uint32_t OTYPER() {
+                return RegsRef().OTYPER & OTYPERMask();
+            }
+            
+            static constexpr uint32_t OSPEEDR() {
+                return RegsRef().OSPEEDR & OSPEEDRMask();
+            }
+            
+            static constexpr uint32_t PUPDR() {
+                return RegsRef().PUPDR & PUPDRMask();
+            }
+            
+            static constexpr uint32_t ODR() {
+                return RegsRef().ODR & ODRMask();
+            }
+            
+            static constexpr uint32_t IDR() {
+                return RegsRef().IDR & IDRMask();
+            }
+            
+            static constexpr uint32_t AFRL() {
+                return RegsRef().AFR[0] & AFRLMask();
+            }
+            
+            static constexpr uint32_t AFRH() {
+                return RegsRef().AFR[1] & AFRHMask();
+            }
+            
+            // Setters
+            static constexpr void MODER(uint32_t x) {
+                RegsRef().MODER = (RegsRef().MODER & ~MODERMask()) | x;
+            }
+            
+            static constexpr void OTYPER(uint32_t x) {
+                RegsRef().OTYPER = (RegsRef().OTYPER & ~OTYPERMask()) | x;
+            }
+            
+            static constexpr void OSPEEDR(uint32_t x) {
+                RegsRef().OSPEEDR = (RegsRef().OSPEEDR & ~OSPEEDRMask()) | x;
+            }
+            
+            static constexpr void PUPDR(uint32_t x) {
+                RegsRef().PUPDR = (RegsRef().PUPDR & ~PUPDRMask()) | x;
+            }
+            
+            static constexpr void ODR(uint32_t x) {
+                RegsRef().ODR = (RegsRef().ODR & ~ODRMask()) | x;
+            }
+            
+            static constexpr void IDR(uint32_t x) {
+                RegsRef().IDR = (RegsRef().IDR & ~IDRMask()) | x;
+            }
+            
+            static constexpr void AFRL(uint32_t x) {
+                RegsRef().AFR[0] = (RegsRef().AFR[0] & ~AFRLMask()) | x;
+            }
+            
+            static constexpr void AFRH(uint32_t x) {
+                RegsRef().AFR[1] = (RegsRef().AFR[1] & ~AFRHMask()) | x;
+            }
+            
+//            static constexpr _Setter(uint32_t& reg, uint32_t mask, uint32_t val) {
+//                reg = (reg & ~mask) | val;
+//            }
+            
+            static bool IntClear() {
+                if (!(EXTI->PR & (1<<PinIdx))) return false;
+                // Clear interrupt
+                EXTI->PR = (1<<PinIdx);
+                return true;
+            }
         };
         
     private:
@@ -504,6 +580,7 @@ static void Init() {
     Toastbox::IntState ints(false);
     
     #warning TODO: call __HAL_RCC_GPIOX_CLK_ENABLE if we have relevent pins
+    // GPIO Registers
     GPIORegsSet<PortA>(_GPIORegsCollect<PortIndex::A, T_Pins...>(GPIORegs{}));
     GPIORegsSet<PortB>(_GPIORegsCollect<PortIndex::B, T_Pins...>(GPIORegs{}));
     GPIORegsSet<PortC>(_GPIORegsCollect<PortIndex::C, T_Pins...>(GPIORegs{}));
@@ -513,6 +590,12 @@ static void Init() {
     GPIORegsSet<PortG>(_GPIORegsCollect<PortIndex::G, T_Pins...>(GPIORegs{}));
     GPIORegsSet<PortH>(_GPIORegsCollect<PortIndex::H, T_Pins...>(GPIORegs{}));
     GPIORegsSet<PortI>(_GPIORegsCollect<PortIndex::I, T_Pins...>(GPIORegs{}));
+    
+    // SYSCFG Registers
+    SYSCFGRegsSet(_SYSCFGRegsCollect<T_Pins...>(SYSCFGRegs{}));
+    
+    // EXTI Registers
+    EXTIRegsSet(_EXTIRegsCollect<T_Pins...>(EXTIRegs{}));
 }
 
 } // namespace GPIO

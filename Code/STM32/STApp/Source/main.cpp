@@ -47,14 +47,18 @@ static _BufQueue _Bufs;
 
 using _QSPI = QSPIType<_Scheduler>;
 
-using _ICE_CRST_            = GPIO<GPIOPortF, 11>;
-using _ICE_CDONE            = GPIO<GPIOPortB, 1>;
-using _ICE_ST_SPI_CS_       = GPIO<GPIOPortE, 12>;
-using _ICE_ST_SPI_D_READY   = GPIO<GPIOPortA, 3>;
-using _ICE_ST_FLASH_EN      = GPIO<GPIOPortF, 5>;
-using _ICE_ST_SPI_CLK       = _QSPI::Clk;
-using _ICE_ST_SPI_D4        = _QSPI::D4;
-using _ICE_ST_SPI_D5        = _QSPI::D5;
+using _ICE_CRST_             = GPIO::PortF::Pin<11, GPIO::Option::Output1>;
+using _ICE_CDONE             = GPIO::PortB::Pin<1,  GPIO::Option::Input>;
+using _ICE_ST_SPI_CS_        = GPIO::PortE::Pin<12, GPIO::Option::Output1, GPIO::Option::Speed3>;
+using _ICE_ST_SPI_D_READY    = GPIO::PortA::Pin<3,  GPIO::Option::Input>;
+using _ICE_ST_FLASH_EN       = GPIO::PortF::Pin<5,  GPIO::Option::Output0>;
+using _ICE_ST_SPI_CLK        = _QSPI::Clk;
+using _ICE_ST_SPI_CLK_MANUAL = typename _ICE_ST_SPI_CLK::template Opts<GPIO::Option::Output0>;
+using _ICE_ST_SPI_D4         = _QSPI::D4;
+using _ICE_ST_SPI_D4_MANUAL  = typename _ICE_ST_SPI_D4::template Opts<GPIO::Option::Input>;
+using _ICE_ST_SPI_D5         = _QSPI::D5;
+using _ICE_ST_SPI_D5_MANUAL  = typename _ICE_ST_SPI_D5::template Opts<GPIO::Option::Output0>;
+
 
 [[noreturn]] static void _ICEError(uint16_t line);
 using _ICE = ::ICE<_Scheduler, _ICEError>;
@@ -243,12 +247,24 @@ static _QSPI::Config ICEApp = {
 
 } // namespace _QSPIConfigs
 
-void _QSPIConfigSet(const _QSPI::Config& config) {
-    _QSPI::ConfigSet(config);
+void _QSPIConfigSet(const _QSPI::Config* config) {
+    // QSPI mode
+    if (config) {
+        _QSPI::ConfigSet(*config);
+        
+        _ICE_ST_SPI_CLK::Init();
+        _ICE_ST_SPI_D4::Init();
+        _ICE_ST_SPI_D5::Init();
+    
+    // Manual mode
+    } else {
+        _ICE_ST_SPI_CLK_MANUAL::Init();
+        _ICE_ST_SPI_D4_MANUAL::Init();
+        _ICE_ST_SPI_D5_MANUAL::Init();
+    }
     
     // We manually control chip-select
     _ICE_ST_SPI_CS_::Write(1);
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, 0);
 }
 
 template<>
@@ -266,7 +282,7 @@ void _ICE::Transfer(const Msg& msg, Resp* resp) {
 
 static void _ICEAppInit() {
     // Prepare for comms with ICEApp via QSPI
-    _QSPIConfigSet(_QSPIConfigs::ICEApp);
+    _QSPIConfigSet(&_QSPIConfigs::ICEApp);
     
     bool ok = false;
     for (int i=0; i<100 && !ok; i++) {
@@ -516,28 +532,28 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Configure ICE40 control GPIOs
-    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    // Enable manual control of SPI lines
+    _QSPIConfigSet(nullptr);
     
     // Disable flash
     _ICE_ST_FLASH_EN::Write(0);
     
     // Put ICE40 into configuration mode
-    _ICE_ST_SPI_CLK::Write(1);
+    _ICE_ST_SPI_CLK_MANUAL::Write(1);
     
+    // Assert chip select
     _ICE_ST_SPI_CS_::Write(0);
+    
+    // Assert reset
     _ICE_CRST_::Write(0);
     _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms (ideally, 200 ns)
     
+    // Configure QSPI for writing the ICE40 configuration
+    _QSPIConfigSet(&_QSPIConfigs::ICEWrite);
+    
+    // Release reset
     _ICE_CRST_::Write(1);
     _Scheduler::Sleep(_Scheduler::Ms(2)); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
-    
-    // Configure QSPI for writing the ICE40 configuration
-    _QSPIConfigSet(_QSPIConfigs::ICEWrite);
     
     // Send 8 clocks
     static const uint8_t ff = 0xff;
@@ -601,12 +617,12 @@ static void __ICEFlashIn(uint8_t* d, size_t len) {
     for (size_t i=0; i<len; i++) {
         uint8_t& b = d[i];
         for (int ii=0; ii<8; ii++) {
-            _ICE_ST_SPI_CLK::Write(1);
+            _ICE_ST_SPI_CLK_MANUAL::Write(1);
             
             b <<= 1;
-            b |= _ICE_ST_SPI_D4::Read();
+            b |= _ICE_ST_SPI_D4_MANUAL::Read();
             
-            _ICE_ST_SPI_CLK::Write(0);
+            _ICE_ST_SPI_CLK_MANUAL::Write(0);
         }
     }
 }
@@ -615,11 +631,11 @@ static void __ICEFlashOut(const uint8_t* d, size_t len) {
     for (size_t i=0; i<len; i++) {
         uint8_t b = d[i];
         for (int ii=0; ii<8; ii++) {
-            _ICE_ST_SPI_D5::Write(b & 0x80);
+            _ICE_ST_SPI_D5_MANUAL::Write(b & 0x80);
             b <<= 1;
             
-            _ICE_ST_SPI_CLK::Write(1);
-            _ICE_ST_SPI_CLK::Write(0);
+            _ICE_ST_SPI_CLK_MANUAL::Write(1);
+            _ICE_ST_SPI_CLK_MANUAL::Write(0);
         }
     }
 }
@@ -661,8 +677,8 @@ static void _ICEFlashWait() {
 //        _ICE_ST_SPI_D4::Write(w & 0x80);
 //        w <<= 1;
 //        
-//        _ICE_ST_SPI_CLK::Write(1);
-//        _ICE_ST_SPI_CLK::Write(0);
+//        _ICE_ST_SPI_CLK_MANUAL::Write(1);
+//        _ICE_ST_SPI_CLK_MANUAL::Write(0);
 //    }
 //}
 //
@@ -691,20 +707,14 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Configure ICE40 control GPIOs
-    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D5::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    // Enable manual control of SPI lines
+    _QSPIConfigSet(nullptr);
     
-    // Hold ICE40 in reset while we write to flash
+    // Hold ICE40 in reset while we read from flash
     _ICE_CRST_::Write(0);
     
     // Set default clock state before enabling flash
-    _ICE_ST_SPI_CLK::Write(0);
+    _ICE_ST_SPI_CLK_MANUAL::Write(0);
     
     // De-assert chip select before enabling flash
     _ICE_ST_SPI_CS_::Write(1);
@@ -760,11 +770,8 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
     // Disable flash
     _ICE_ST_FLASH_EN::Write(0);
     
-    _ICE_ST_SPI_CLK::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_FLASH_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D5::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    // Revert to default QSPI config
+    _QSPIConfigSet(&_QSPIConfigs::ICEApp);
     
     // Take ICE40 out of reset
     _ICE_CRST_::Write(1);
@@ -779,20 +786,14 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     // Accept command
     _System::USBAcceptCommand(true);
     
-    // Configure ICE40 control GPIOs
-    _ICE_CRST_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_CDONE::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CLK::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_FLASH_EN::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D5::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    // Enable manual control of SPI lines
+    _QSPIConfigSet(nullptr);
     
     // Hold ICE40 in reset while we write to flash
     _ICE_CRST_::Write(0);
     
     // Set default clock state before enabling flash
-    _ICE_ST_SPI_CLK::Write(0);
+    _ICE_ST_SPI_CLK_MANUAL::Write(0);
     
     // De-assert chip select before enabling flash
     _ICE_ST_SPI_CS_::Write(1);
@@ -875,11 +876,8 @@ static void _ICEFlashWrite(const STM::Cmd& cmd) {
     // Disable flash
     _ICE_ST_FLASH_EN::Write(0);
     
-    _ICE_ST_SPI_CLK::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_CS_::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_FLASH_EN::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D4::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-    _ICE_ST_SPI_D5::Config(GPIO_MODE_INPUT, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
+    // Revert to default QSPI config
+    _QSPIConfigSet(&_QSPIConfigs::ICEApp);
     
     // Take ICE40 out of reset
     _ICE_CRST_::Write(1);
@@ -1356,7 +1354,7 @@ static void _TasksReset() {
 static void _Reset() {
     _TasksReset();
     _MSPSBWReset();
-    _QSPIConfigSet(_QSPIConfigs::ICEApp);
+    _QSPIConfigSet(&_QSPIConfigs::ICEApp);
 }
 
 static void _CmdHandle(const STM::Cmd& cmd) {

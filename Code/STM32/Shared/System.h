@@ -63,10 +63,10 @@ public:
     }
     
     // LEDs
-    using LED0 = GPIO<GPIOPortB, 10>;
-    using LED1 = GPIO<GPIOPortB, 12>;
-    using LED2 = GPIO<GPIOPortB, 11>;
-    using LED3 = GPIO<GPIOPortB, 13>;
+    using LED0 = GPIO::PortB::Pin<10, GPIO::Option::Output0>;
+    using LED1 = GPIO::PortB::Pin<12, GPIO::Option::Output0>;
+    using LED2 = GPIO::PortB::Pin<11, GPIO::Option::Output0>;
+    using LED3 = GPIO::PortB::Pin<13, GPIO::Option::Output0>;
     
     using Scheduler = Toastbox::Scheduler<
         SysTickPeriodUs,                            // T_UsPerTick: microseconds per tick
@@ -86,9 +86,9 @@ public:
     >;
     
     // MSP Spy-bi-wire
-    using MSP_TEST  = GPIO<GPIOPortG, 11>;
-    using MSP_RST_  = GPIO<GPIOPortG, 12>;
-    using MSPJTAG = MSP430JTAG<MSP_TEST, MSP_RST_, CPUFreqMHz>;
+    using _MSP_TEST  = GPIO::PortG::Pin<11>;
+    using _MSP_RST_  = GPIO::PortG::Pin<12>;
+    using MSPJTAG = MSP430JTAG<_MSP_TEST, _MSP_RST_, CPUFreqMHz>;
     using MSPLock = BoolLock<Scheduler, _TaskMSPComms::Lock>;
     
     using USB = USBType<
@@ -134,7 +134,7 @@ public:
     }
     
     static void ISR_ExtInt_15_10() {
-        if (_BAT_CHRG_STAT::InterruptClear()) {
+        if (_BAT_CHRG_STAT::State::IntClear()) {
             _TaskMSPComms::_BatteryChargeStatusChanged();
         }
     }
@@ -142,7 +142,11 @@ public:
 private:
     static constexpr uint32_t _I2CTimeoutMs = 5000;
     using _I2C = I2CType<Scheduler, MSP::I2CAddr, _I2CTimeoutMs>;
-    using _BAT_CHRG_STAT = GPIO<GPIOPortE, 15>;
+    using _BAT_CHRG_STAT          = GPIO::PortE::Pin<15>;
+    using _BAT_CHRG_STAT_PULLDOWN = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input, GPIO::Option::Resistor0>;
+    using _BAT_CHRG_STAT_PULLUP   = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input, GPIO::Option::Resistor1>;
+    using _BAT_CHRG_STAT_INT      = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input,
+        GPIO::Option::Resistor1, GPIO::Option::IntRiseFall>;
     
     struct _TaskCmdRecv {
         static void Run() {
@@ -298,9 +302,9 @@ private:
         static void _MSPReset() {
             #warning TODO: remove this assert in the future. we're just using it for debugging so that we know if this occurs
             Assert(false);
-            MSP_RST_::Write(0);
+            _MSP_RST_::Write(0);
             Scheduler::Sleep(Scheduler::Ms(1));
-            MSP_RST_::Write(1);
+            _MSP_RST_::Write(1);
             Scheduler::Sleep(Scheduler::Ms(1));
         }
         
@@ -346,7 +350,7 @@ private:
             // Start counting _BAT_CHRG_STAT transitions
             {
                 Toastbox::IntState ints(false);
-                _BAT_CHRG_STAT::Config(GPIO_MODE_IT_RISING_FALLING, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
+                _BAT_CHRG_STAT_INT::Init();
                 _BatteryChargeStatusTransitionCount = 0;
             }
             
@@ -356,7 +360,7 @@ private:
             // Stop counting _BAT_CHRG_STAT transitions
             {
                 Toastbox::IntState ints(false);
-                _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
+                _BAT_CHRG_STAT_PULLUP::Init();
             }
             
             return _BatteryChargeStatusTransitionCount > OscillationThreshold;
@@ -366,11 +370,11 @@ private:
             const bool oscillating = _ChargeStatusOscillating();
             if (oscillating) return STM::BatteryStatus::ChargeStatus::Shutdown;
             
-            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLDOWN, GPIO_SPEED_FREQ_LOW, 0);
+            _BAT_CHRG_STAT_PULLDOWN::Init();
             Scheduler::Sleep(Scheduler::Ms(1));
             const bool a = _BAT_CHRG_STAT::Read();
             
-            _BAT_CHRG_STAT::Config(GPIO_MODE_INPUT, GPIO_PULLUP, GPIO_SPEED_FREQ_LOW, 0);
+            _BAT_CHRG_STAT_PULLUP::Init();
             Scheduler::Sleep(Scheduler::Ms(1));
             const bool b = _BAT_CHRG_STAT::Read();
             
@@ -505,11 +509,8 @@ private:
     
     static void _LEDInit() {
         // Enable clock for LED GPIOs (GPIOPortB)
+        #warning TODO: remove when GPIO calls __HAL_RCC_GPIOB_CLK_ENABLE automatically
         __HAL_RCC_GPIOB_CLK_ENABLE();
-        LED0::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        LED1::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        LED2::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
-        LED3::Config(GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW, 0);
     }
     
     static void _Reset(const STM::Cmd& cmd) {

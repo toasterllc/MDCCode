@@ -24,15 +24,15 @@ public:
         Align align = Align::Byte;
     };
     
-    using Clk = GPIO<GPIOPortB, 2>;  // AF9
-    using D0  = GPIO<GPIOPortF, 8>;  // AF10
-    using D1  = GPIO<GPIOPortF, 9>;  // AF10
-    using D2  = GPIO<GPIOPortF, 7>;  // AF9
-    using D3  = GPIO<GPIOPortF, 6>;  // AF9
-    using D4  = GPIO<GPIOPortE, 7>;  // AF10
-    using D5  = GPIO<GPIOPortE, 8>;  // AF10
-    using D6  = GPIO<GPIOPortE, 9>;  // AF10
-    using D7  = GPIO<GPIOPortE, 10>; // AF10
+    using Clk = GPIO::PortB::Pin<2,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+    using D0  = GPIO::PortF::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+    using D1  = GPIO::PortF::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+    using D2  = GPIO::PortF::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+    using D3  = GPIO::PortF::Pin<6,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+    using D4  = GPIO::PortE::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+    using D5  = GPIO::PortE::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+    using D6  = GPIO::PortE::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+    using D7  = GPIO::PortE::Pin<10, GPIO::Option::Speed3, GPIO::Option::AltFn10>;
     
     static void ConfigSet(const Config& config) {
         if (_Config) {
@@ -87,20 +87,6 @@ public:
         Assert(hs == HAL_OK);
         
         __HAL_LINKDMA(&_Device, hdma, _DMA);
-        
-        // Configure GPIOs
-        {
-            Clk::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-            
-            D0::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-            D1::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-            D2::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-            D3::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF9_QUADSPI);
-            D4::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-            D5::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-            D6::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-            D7::Config(GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_VERY_HIGH, GPIO_AF10_QUADSPI);
-        }
     }
     
     static void Command(const QSPI_CommandTypeDef& cmd) {
