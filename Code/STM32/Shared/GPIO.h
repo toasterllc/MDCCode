@@ -701,18 +701,7 @@ static void Init() {
     // Disable interrupts
     Toastbox::IntState ints(false);
     
-    // GPIO Registers
-    GPIORegsSet<PortA>(_GPIORegsCollect<PortIndex::A, T_Pins...>(GPIORegsDefaultPortA));
-    GPIORegsSet<PortB>(_GPIORegsCollect<PortIndex::B, T_Pins...>(GPIORegsDefaultPortB));
-    GPIORegsSet<PortC>(_GPIORegsCollect<PortIndex::C, T_Pins...>(GPIORegs{}));
-    GPIORegsSet<PortD>(_GPIORegsCollect<PortIndex::D, T_Pins...>(GPIORegs{}));
-    GPIORegsSet<PortE>(_GPIORegsCollect<PortIndex::E, T_Pins...>(GPIORegs{}));
-    GPIORegsSet<PortF>(_GPIORegsCollect<PortIndex::F, T_Pins...>(GPIORegs{}));
-    GPIORegsSet<PortG>(_GPIORegsCollect<PortIndex::G, T_Pins...>(GPIORegs{}));
-    GPIORegsSet<PortH>(_GPIORegsCollect<PortIndex::H, T_Pins...>(GPIORegs{}));
-    GPIORegsSet<PortI>(_GPIORegsCollect<PortIndex::I, T_Pins...>(GPIORegs{}));
-    
-    // GPIO Clocks
+    // Enable GPIO clocks
     if (_GPIORegsCountPort<PortIndex::A, T_Pins...>(0)) __HAL_RCC_GPIOA_CLK_ENABLE();
     if (_GPIORegsCountPort<PortIndex::B, T_Pins...>(0)) __HAL_RCC_GPIOB_CLK_ENABLE();
     if (_GPIORegsCountPort<PortIndex::C, T_Pins...>(0)) __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -723,15 +712,27 @@ static void Init() {
     if (_GPIORegsCountPort<PortIndex::H, T_Pins...>(0)) __HAL_RCC_GPIOH_CLK_ENABLE();
     if (_GPIORegsCountPort<PortIndex::I, T_Pins...>(0)) __HAL_RCC_GPIOI_CLK_ENABLE();
     
-    // SYSCFG Registers
-    SYSCFGRegsSet(_SYSCFGRegsCollect<T_Pins...>(SYSCFGRegs{}));
-    
-    // EXTI Registers
-    EXTIRegsSet(_EXTIRegsCollect<T_Pins...>(EXTIRegs{}));
-    
-    // Unconditionally enable SYSCFG clock, because it's used for EXTI interrupts
+    // Enable SYSCFG clock
+    // We unconditionally enable the SYSCFG clock because it's used for EXTI interrupts
     // that may be enable after our initial GPIO configuration.
     __HAL_RCC_SYSCFG_CLK_ENABLE();
+    
+    // Config GPIO registers
+    GPIORegsSet<PortA>(_GPIORegsCollect<PortIndex::A, T_Pins...>(GPIORegsDefaultPortA));
+    GPIORegsSet<PortB>(_GPIORegsCollect<PortIndex::B, T_Pins...>(GPIORegsDefaultPortB));
+    GPIORegsSet<PortC>(_GPIORegsCollect<PortIndex::C, T_Pins...>(GPIORegs{}));
+    GPIORegsSet<PortD>(_GPIORegsCollect<PortIndex::D, T_Pins...>(GPIORegs{}));
+    GPIORegsSet<PortE>(_GPIORegsCollect<PortIndex::E, T_Pins...>(GPIORegs{}));
+    GPIORegsSet<PortF>(_GPIORegsCollect<PortIndex::F, T_Pins...>(GPIORegs{}));
+    GPIORegsSet<PortG>(_GPIORegsCollect<PortIndex::G, T_Pins...>(GPIORegs{}));
+    GPIORegsSet<PortH>(_GPIORegsCollect<PortIndex::H, T_Pins...>(GPIORegs{}));
+    GPIORegsSet<PortI>(_GPIORegsCollect<PortIndex::I, T_Pins...>(GPIORegs{}));
+    
+    // Config SYSCFG registers
+    SYSCFGRegsSet(_SYSCFGRegsCollect<T_Pins...>(SYSCFGRegs{}));
+    
+    // Config EXTI registers
+    EXTIRegsSet(_EXTIRegsCollect<T_Pins...>(EXTIRegs{}));
 }
 
 } // namespace GPIO
