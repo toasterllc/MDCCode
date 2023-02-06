@@ -6,11 +6,18 @@
 
 template <
 typename T_Scheduler,
+typename T_SCLPin,
+typename T_SDAPin,
 uint8_t T_Addr,
 uint32_t T_TimeoutMs
 >
 class I2CType {
 public:
+    struct Pin {
+        using SCL = typename T_SCLPin::template Opts<GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
+        using SDA = typename T_SDAPin::template Opts<GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
+    };
+    
     static void Init() {
         // Enable clock for SCL/SDA GPIOs (GPIOPortB)
         __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -147,7 +154,4 @@ private:
         .ErrorCallback          = _CallbackError,
         .AbortCpltCallback      = _CallbackAbort,
     };
-    
-    using _SCL = GPIO::PortB::Pin<8, GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
-    using _SDA = GPIO::PortB::Pin<9, GPIO::Option::OpenDrain, GPIO::Option::Speed3, GPIO::Option::AltFn4>;
 };

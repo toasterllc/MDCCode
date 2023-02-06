@@ -24,15 +24,17 @@ public:
         Align align = Align::Byte;
     };
     
-    using Clk = GPIO::PortB::Pin<2,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
-    using D0  = GPIO::PortF::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-    using D1  = GPIO::PortF::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-    using D2  = GPIO::PortF::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
-    using D3  = GPIO::PortF::Pin<6,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
-    using D4  = GPIO::PortE::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-    using D5  = GPIO::PortE::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-    using D6  = GPIO::PortE::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
-    using D7  = GPIO::PortE::Pin<10, GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+    struct Pin {
+        using Clk = GPIO::PortB::Pin<2,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+        using D0  = GPIO::PortF::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+        using D1  = GPIO::PortF::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+        using D2  = GPIO::PortF::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+        using D3  = GPIO::PortF::Pin<6,  GPIO::Option::Speed3, GPIO::Option::AltFn9>;
+        using D4  = GPIO::PortE::Pin<7,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+        using D5  = GPIO::PortE::Pin<8,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+        using D6  = GPIO::PortE::Pin<9,  GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+        using D7  = GPIO::PortE::Pin<10, GPIO::Option::Speed3, GPIO::Option::AltFn10>;
+    };
     
     static void ConfigSet(const Config& config) {
         if (_Config) {

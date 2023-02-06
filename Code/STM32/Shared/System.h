@@ -41,6 +41,17 @@ private:
     #warning TODO: remove stack guards for production
     static constexpr size_t _StackGuardCount = 4;
     
+    using _I2C_SCL  = GPIO::PortB::Pin<8>;
+    using _I2C_SDA  = GPIO::PortB::Pin<9>;
+    
+    using _MSP_TEST  = GPIO::PortG::Pin<11>;
+    using _MSP_RST_  = GPIO::PortG::Pin<12>;
+    
+    using _BAT_CHRG_STAT          = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor1>;
+    using _BAT_CHRG_STAT_PULLDOWN = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input, GPIO::Option::Resistor0>;
+    using _BAT_CHRG_STAT_INT      = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input,
+        GPIO::Option::Resistor1, GPIO::Option::IntRiseFall>;
+    
     [[noreturn]]
     static void _SchedulerStackOverflow() {
         Abort();
@@ -55,8 +66,26 @@ private:
     struct _TaskMSPComms;
     
 public:
+    template <typename... T_Pins>
     [[noreturn]]
     static void Run() {
+        GPIO::Init<
+            LED0,
+            LED1,
+            LED2,
+            LED3,
+            
+            MSPJTAG::Pin::Test,
+            MSPJTAG::Pin::Rst_,
+            
+            _BAT_CHRG_STAT,
+            
+            typename _I2C::Pin::SCL,
+            typename _I2C::Pin::SDA,
+            
+            T_Pins...
+        >();
+        
         // Start our default tasks running
         Scheduler::template Start<_TaskCmdRecv/*, _TaskMSPComms*/>();
         Scheduler::Run();
@@ -86,8 +115,6 @@ public:
     >;
     
     // MSP Spy-bi-wire
-    using _MSP_TEST  = GPIO::PortG::Pin<11>;
-    using _MSP_RST_  = GPIO::PortG::Pin<12>;
     using MSPJTAG = MSP430JTAG<_MSP_TEST, _MSP_RST_, CPUFreqMHz>;
     using MSPLock = BoolLock<Scheduler, _TaskMSPComms::Lock>;
     
@@ -141,12 +168,7 @@ public:
     
 private:
     static constexpr uint32_t _I2CTimeoutMs = 5000;
-    using _I2C = I2CType<Scheduler, MSP::I2CAddr, _I2CTimeoutMs>;
-    using _BAT_CHRG_STAT          = GPIO::PortE::Pin<15>;
-    using _BAT_CHRG_STAT_PULLDOWN = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input, GPIO::Option::Resistor0>;
-    using _BAT_CHRG_STAT_PULLUP   = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input, GPIO::Option::Resistor1>;
-    using _BAT_CHRG_STAT_INT      = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input,
-        GPIO::Option::Resistor1, GPIO::Option::IntRiseFall>;
+    using _I2C = I2CType<Scheduler, _I2C_SCL, _I2C_SDA, MSP::I2CAddr, _I2CTimeoutMs>;
     
     struct _TaskCmdRecv {
         static void Run() {
@@ -360,7 +382,7 @@ private:
             // Stop counting _BAT_CHRG_STAT transitions
             {
                 Toastbox::IntState ints(false);
-                _BAT_CHRG_STAT_PULLUP::Init();
+                _BAT_CHRG_STAT::Init();
             }
             
             return _BatteryChargeStatusTransitionCount > OscillationThreshold;
@@ -374,7 +396,7 @@ private:
             Scheduler::Sleep(Scheduler::Ms(1));
             const bool a = _BAT_CHRG_STAT::Read();
             
-            _BAT_CHRG_STAT_PULLUP::Init();
+            _BAT_CHRG_STAT::Init();
             Scheduler::Sleep(Scheduler::Ms(1));
             const bool b = _BAT_CHRG_STAT::Read();
             
