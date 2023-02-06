@@ -249,15 +249,15 @@ void _QSPIConfigSet(const _QSPI::Config* config) {
     if (config) {
         _QSPI::ConfigSet(*config);
         
-        _QSPI::Pin::Clk::Init();
-        _QSPI::Pin::D4::Init();
-        _QSPI::Pin::D5::Init();
+        _QSPI::Pin::Clk::Init<_ICE_ST_SPI_CLK>();
+        _QSPI::Pin::D4::Init<_ICE_ST_SPI_D4>();
+        _QSPI::Pin::D5::Init<_ICE_ST_SPI_D5>();
     
     // Manual mode
     } else {
-        _ICE_ST_SPI_CLK::Init();
-        _ICE_ST_SPI_D4::Init();
-        _ICE_ST_SPI_D5::Init();
+        _ICE_ST_SPI_CLK::Init<_QSPI::Pin::Clk>();
+        _ICE_ST_SPI_D4::Init<_QSPI::Pin::D4>();
+        _ICE_ST_SPI_D5::Init<_QSPI::Pin::D5>();
     }
     
     // We manually control chip-select

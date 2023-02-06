@@ -283,7 +283,7 @@ private:
             
             _Test::Write(1);
             // Stop driving SBWTDIO, in preparation for the slave to start driving it
-            _RstIn_::Init();
+            _RstIn_::Init<_Rst_>();
             _DelayUs(0);
         }
         
@@ -298,7 +298,7 @@ private:
             _DelayUs(0);
             
             // Start driving SBWTDIO again
-            _Rst_::Init();
+            _Rst_::Init<_RstIn_>();
         }
         
         return tdo;

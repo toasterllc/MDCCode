@@ -56,10 +56,9 @@ private:
     using _OSC_IN   = GPIO::PortH::Pin<0>;
     using _OSC_OUT  = GPIO::PortH::Pin<1>;
     
-    using _BAT_CHRG_STAT          = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor1>;
-    using _BAT_CHRG_STAT_PULLDOWN = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input, GPIO::Option::Resistor0>;
-    using _BAT_CHRG_STAT_INT      = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input,
-        GPIO::Option::Resistor1, GPIO::Option::IntRiseFall>;
+    using _BAT_CHRG_STAT          = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor1, GPIO::Option::IntRiseFall>;
+    using _BAT_CHRG_STAT_PULLDOWN = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor0, GPIO::Option::IntRiseFall>;
+    using _BAT_CHRG_STAT_INT      = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor1, GPIO::Option::IntRiseFall, GPIO::Option::IntEn>;
     
     [[noreturn]]
     static void _SchedulerStackOverflow() {
@@ -396,7 +395,7 @@ private:
             // Stop counting _BAT_CHRG_STAT transitions
             {
                 Toastbox::IntState ints(false);
-                _BAT_CHRG_STAT::Init();
+                _BAT_CHRG_STAT::Init<_BAT_CHRG_STAT_INT>();
             }
             
             return _BatteryChargeStatusTransitionCount > OscillationThreshold;
@@ -410,7 +409,7 @@ private:
             Scheduler::Sleep(Scheduler::Ms(1));
             const bool a = _BAT_CHRG_STAT::Read();
             
-            _BAT_CHRG_STAT::Init();
+            _BAT_CHRG_STAT::Init<_BAT_CHRG_STAT_PULLDOWN>();
             Scheduler::Sleep(Scheduler::Ms(1));
             const bool b = _BAT_CHRG_STAT::Read();
             

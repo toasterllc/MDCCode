@@ -48,6 +48,7 @@ enum class Option : uint8_t {
     Resistor1,
     
     // Interrupts
+    IntEn,
     IntRise,
     IntFall,
     IntRiseFall,
@@ -222,49 +223,49 @@ public:
         
         // MARK: - SYSCFG Registers
         static constexpr uint32_t EXTICR1() {
-            if constexpr ((PinIdx/4) == 0) return ((uint32_t)PortIdx << (4 * (PinIdx & 0x03)));
+            if constexpr (_IntInterest() && (PinIdx/4) == 0) return ((uint32_t)PortIdx << (4 * (PinIdx & 0x03)));
             return 0;
         }
         
         static constexpr uint32_t EXTICR1Mask() {
-            if constexpr ((PinIdx/4) == 0) return (0x0F << (4 * (PinIdx & 0x03)));
+            if constexpr (_IntInterest() && (PinIdx/4) == 0) return (0x0F << (4 * (PinIdx & 0x03)));
             return 0;
         }
         
         static constexpr uint32_t EXTICR2() {
-            if constexpr ((PinIdx/4) == 1) return ((uint32_t)PortIdx << (4 * (PinIdx & 0x03)));
+            if constexpr (_IntInterest() && (PinIdx/4) == 1) return ((uint32_t)PortIdx << (4 * (PinIdx & 0x03)));
             return 0;
         }
         
         static constexpr uint32_t EXTICR2Mask() {
-            if constexpr ((PinIdx/4) == 1) return (0x0F << (4 * (PinIdx & 0x03)));
+            if constexpr (_IntInterest() && (PinIdx/4) == 1) return (0x0F << (4 * (PinIdx & 0x03)));
             return 0;
         }
         
         static constexpr uint32_t EXTICR3() {
-            if constexpr ((PinIdx/4) == 2) return ((uint32_t)PortIdx << (4 * (PinIdx & 0x03)));
+            if constexpr (_IntInterest() && (PinIdx/4) == 2) return ((uint32_t)PortIdx << (4 * (PinIdx & 0x03)));
             return 0;
         }
         
         static constexpr uint32_t EXTICR3Mask() {
-            if constexpr ((PinIdx/4) == 2) return (0x0F << (4 * (PinIdx & 0x03)));
+            if constexpr (_IntInterest() && (PinIdx/4) == 2) return (0x0F << (4 * (PinIdx & 0x03)));
             return 0;
         }
         
         static constexpr uint32_t EXTICR4() {
-            if constexpr ((PinIdx/4) == 3) return ((uint32_t)PortIdx << (4 * (PinIdx & 0x03)));
+            if constexpr (_IntInterest() && (PinIdx/4) == 3) return ((uint32_t)PortIdx << (4 * (PinIdx & 0x03)));
             return 0;
         }
         
         static constexpr uint32_t EXTICR4Mask() {
-            if constexpr ((PinIdx/4) == 3) return (0x0F << (4 * (PinIdx & 0x03)));
+            if constexpr (_IntInterest() && (PinIdx/4) == 3) return (0x0F << (4 * (PinIdx & 0x03)));
             return 0;
         }
         
         // MARK: - EXTI Registers
         
         static constexpr uint32_t IMR() {
-            if constexpr (_IntEn()) return 1<<PinIdx;
+            if constexpr (_Getter(Option::IntEn)) return 1<<PinIdx;
             return 0;
         }
         
@@ -310,12 +311,49 @@ public:
             State::ODR(ODR());
             State::AFRL(AFRL());
             State::AFRH(AFRH());
+            
+            State::IMR(IMR());
+            State::EMR(EMR());
+            State::RTSR(RTSR());
+            State::FTSR(FTSR());
         }
         
-//        // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
-//        template <typename T_Prev>
-//        static constexpr void Init() {
-//        }
+        // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
+        template <typename T_Prev>
+        static constexpr void Init() {
+            if constexpr (MODER() != T_Prev::MODER())
+            State::MODER(MODER());
+            
+            if constexpr (OTYPER() != T_Prev::OTYPER())
+            State::OTYPER(OTYPER());
+            
+            if constexpr (OSPEEDR() != T_Prev::OSPEEDR())
+            State::OSPEEDR(OSPEEDR());
+            
+            if constexpr (PUPDR() != T_Prev::PUPDR())
+            State::PUPDR(PUPDR());
+            
+            if constexpr (ODR() != T_Prev::ODR())
+            State::ODR(ODR());
+            
+            if constexpr (AFRL() != T_Prev::AFRL())
+            State::AFRL(AFRL());
+            
+            if constexpr (AFRH() != T_Prev::AFRH())
+            State::AFRH(AFRH());
+            
+            if constexpr (IMR() != T_Prev::IMR())
+            State::IMR(IMR());
+            
+            if constexpr (EMR() != T_Prev::EMR())
+            State::EMR(EMR());
+            
+            if constexpr (RTSR() != T_Prev::RTSR())
+            State::RTSR(RTSR());
+            
+            if constexpr (FTSR() != T_Prev::FTSR())
+            State::FTSR(FTSR());
+        }
         
         static bool Read() {
             return RegsRef().IDR & IDRMask();
@@ -328,7 +366,7 @@ public:
         
         // State: accessors for reading/writing pin configuration at runtime
         struct State {
-            // Getters
+            // MARK: - GPIO Getters
             static constexpr uint32_t MODER() {
                 return RegsRef().MODER & MODERMask();
             }
@@ -361,7 +399,7 @@ public:
                 return RegsRef().AFR[1] & AFRHMask();
             }
             
-            // Setters
+            // MARK: - GPIO Setters
             static constexpr void MODER(uint32_t x) {
                 RegsRef().MODER = (RegsRef().MODER & ~MODERMask()) | x;
             }
@@ -395,6 +433,41 @@ public:
                 RegsRef().AFR[1] = (RegsRef().AFR[1] & ~AFRHMask()) | x;
             }
             
+            // MARK: - EXTI Getters
+            static constexpr uint32_t IMR() {
+                return EXTI->IMR & IMRMask();
+            }
+            
+            static constexpr uint32_t EMR() {
+                return EXTI->EMR & EMRMask();
+            }
+            
+            static constexpr uint32_t RTSR() {
+                return EXTI->RTSR & RTSRMask();
+            }
+            
+            static constexpr uint32_t FTSR() {
+                return EXTI->FTSR & FTSRMask();
+            }
+            
+            // MARK: - EXTI Setters
+            static constexpr void IMR(uint32_t x) {
+                EXTI->IMR = (EXTI->IMR & ~IMRMask()) | x;
+            }
+            
+            static constexpr void EMR(uint32_t x) {
+                EXTI->EMR = (EXTI->EMR & ~EMRMask()) | x;
+            }
+            
+            static constexpr void RTSR(uint32_t x) {
+                EXTI->RTSR = (EXTI->RTSR & ~RTSRMask()) | x;
+            }
+            
+            static constexpr void FTSR(uint32_t x) {
+                EXTI->FTSR = (EXTI->FTSR & ~FTSRMask()) | x;
+            }
+            
+            // MARK: - Other Functions
             static bool IntClear() {
                 if (!(EXTI->PR & (1<<PinIdx))) return false;
                 // Clear interrupt
@@ -444,7 +517,9 @@ public:
             return 0;
         }
         
-        static constexpr bool _IntEn() {
+        // _IntInterest(): whether the pin is 'interested' in an interrupt edge,
+        // (but the interrupt is not necessarily enabled)
+        static constexpr bool _IntInterest() {
             if constexpr (_Getter(Option::IntRise))     return true;
             if constexpr (_Getter(Option::IntFall))     return true;
             if constexpr (_Getter(Option::IntRiseFall)) return true;
