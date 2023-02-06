@@ -101,7 +101,7 @@ public:
         >();
         
         // Start our default tasks running
-        Scheduler::template Start<_TaskCmdRecv/*, _TaskMSPComms*/>();
+        Scheduler::template Start<_TaskCmdRecv, _TaskMSPComms>();
         Scheduler::Run();
     }
     
@@ -346,14 +346,14 @@ private:
         static void _BatteryStatusUpdate() {
             _BatteryStatus = _BatteryStatusGet();
             
-            // Update LEDs
-            const bool red = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway);
-            const bool green = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Complete);
-            const MSP::Cmd cmd = {
-                .op = MSP::Cmd::Op::LEDSet,
-                .arg = { .LEDSet = { .red = red, .green = green }, },
-            };
-            _Send(cmd);
+//            // Update LEDs
+//            const bool red = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway);
+//            const bool green = (_BatteryStatus.chargeStatus == STM::BatteryStatus::ChargeStatus::Complete);
+//            const MSP::Cmd cmd = {
+//                .op = MSP::Cmd::Op::LEDSet,
+//                .arg = { .LEDSet = { .red = red, .green = green }, },
+//            };
+//            _Send(cmd);
         }
         
         static STM::BatteryStatus _BatteryStatusGet() {
@@ -370,10 +370,10 @@ private:
             // to ensure that we can detect the 'Shutdown' battery state.
             #warning TODO: uncomment `status.chargeStatus` check below
 //            if (status.chargeStatus == STM::BatteryStatus::ChargeStatus::Underway) {
-                const auto resp = _Send({ .op = MSP::Cmd::Op::BatteryChargeLevelGet });
-                if (resp && resp->ok) {
-                    status.level = resp->arg.BatteryChargeLevelGet.level;
-                }
+//                const auto resp = _Send({ .op = MSP::Cmd::Op::BatteryChargeLevelGet });
+//                if (resp && resp->ok) {
+//                    status.level = resp->arg.BatteryChargeLevelGet.level;
+//                }
 //            }
             
             return status;
@@ -412,6 +412,8 @@ private:
             _BAT_CHRG_STAT::Init<_BAT_CHRG_STAT_PULLDOWN>();
             Scheduler::Sleep(Scheduler::Ms(1));
             const bool b = _BAT_CHRG_STAT::Read();
+            
+            return STM::BatteryStatus::ChargeStatus::Invalid;
             
             if (a != b) {
                 // _BAT_CHRG_STAT == high-z
