@@ -536,18 +536,18 @@ static constexpr GPIORegs _GPIORegsCollect(GPIORegs r) {
 
 
 template <PortIndex T_PortIdx>
-static constexpr GPIORegs _GPIORegsCountPort(size_t r) {
+static constexpr size_t _GPIORegsCountPort(size_t r) {
     return r;
 }
 
 template <PortIndex T_PortIdx, typename T_Pin, typename... T_Pins>
-static constexpr GPIORegs _GPIORegsCountPort(size_t r) {
+static constexpr size_t _GPIORegsCountPort(size_t r) {
     // Only consider pins for the specified port index (T_PortIdx)
     if constexpr (T_Pin::PortIdx == T_PortIdx) {
         r += 1;
     }
     
-    if constexpr (sizeof...(T_Pins)) return _GPIORegsCollect<T_PortIdx, T_Pins...>(r);
+    if constexpr (sizeof...(T_Pins)) return _GPIORegsCountPort<T_PortIdx, T_Pins...>(r);
     else return r;
 }
 
