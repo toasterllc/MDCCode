@@ -183,7 +183,7 @@ public:
             return 1<<PinIdx;
         }
         
-        // Writing IDR doesn't make sense, so we don't supply IDR()
+        // Writing IDR doesn't make sense, so we don't supply this
 //        static constexpr uint32_t IDR() {
 //            return 0x00;
 //        }
@@ -303,12 +303,19 @@ public:
         
         // Init(): configure the pin
         static constexpr void Init() {
+            State::MODER(MODER());
+            State::OTYPER(OTYPER());
+            State::OSPEEDR(OSPEEDR());
+            State::PUPDR(PUPDR());
+            State::ODR(ODR());
+            State::AFRL(AFRL());
+            State::AFRH(AFRH());
         }
         
-        // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
-        template <typename T_Prev>
-        static constexpr void Init() {
-        }
+//        // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
+//        template <typename T_Prev>
+//        static constexpr void Init() {
+//        }
         
         static bool Read() {
             return RegsRef().IDR & IDRMask();
@@ -375,9 +382,10 @@ public:
                 RegsRef().ODR = (RegsRef().ODR & ~ODRMask()) | x;
             }
             
-            static constexpr void IDR(uint32_t x) {
-                RegsRef().IDR = (RegsRef().IDR & ~IDRMask()) | x;
-            }
+            // Writing IDR doesn't make sense, so we don't supply this
+//            static constexpr void IDR(uint32_t x) {
+//                RegsRef().IDR = (RegsRef().IDR & ~IDRMask()) | x;
+//            }
             
             static constexpr void AFRL(uint32_t x) {
                 RegsRef().AFR[0] = (RegsRef().AFR[0] & ~AFRLMask()) | x;
@@ -386,10 +394,6 @@ public:
             static constexpr void AFRH(uint32_t x) {
                 RegsRef().AFR[1] = (RegsRef().AFR[1] & ~AFRHMask()) | x;
             }
-            
-//            static constexpr _Setter(uint32_t& reg, uint32_t mask, uint32_t val) {
-//                reg = (reg & ~mask) | val;
-//            }
             
             static bool IntClear() {
                 if (!(EXTI->PR & (1<<PinIdx))) return false;
