@@ -97,6 +97,26 @@ struct EXTIRegs {
     uint32_t FTSR       = 0x00000000;
 };
 
+static constexpr GPIORegs GPIORegsDefaultPortA = {
+    .MODER      = 0xA8000000,   // Nonzero
+    .OTYPER     = 0x00000000,
+    .OSPEEDR    = 0x0C000000,   // Nonzero
+    .PUPDR      = 0x64000000,   // Nonzero
+    .ODR        = 0x00000000,
+    .AFRL       = 0x00000000,
+    .AFRH       = 0x00000000,
+};
+
+static constexpr GPIORegs GPIORegsDefaultPortB = {
+    .MODER      = 0x00000280,   // Nonzero
+    .OTYPER     = 0x00000000,
+    .OSPEEDR    = 0x000000C0,   // Nonzero
+    .PUPDR      = 0x00000100,   // Nonzero
+    .ODR        = 0x00000000,
+    .AFRL       = 0x00000000,
+    .AFRH       = 0x00000000,
+};
+
 template <PortIndex T_PortIdx>
 class Port {
 public:
@@ -581,8 +601,8 @@ static void Init() {
     
     #warning TODO: call __HAL_RCC_GPIOX_CLK_ENABLE if we have relevent pins
     // GPIO Registers
-    GPIORegsSet<PortA>(_GPIORegsCollect<PortIndex::A, T_Pins...>(GPIORegs{}));
-    GPIORegsSet<PortB>(_GPIORegsCollect<PortIndex::B, T_Pins...>(GPIORegs{}));
+    GPIORegsSet<PortA>(_GPIORegsCollect<PortIndex::A, T_Pins...>(GPIORegsDefaultPortA));
+    GPIORegsSet<PortB>(_GPIORegsCollect<PortIndex::B, T_Pins...>(GPIORegsDefaultPortB));
     GPIORegsSet<PortC>(_GPIORegsCollect<PortIndex::C, T_Pins...>(GPIORegs{}));
     GPIORegsSet<PortD>(_GPIORegsCollect<PortIndex::D, T_Pins...>(GPIORegs{}));
     GPIORegsSet<PortE>(_GPIORegsCollect<PortIndex::E, T_Pins...>(GPIORegs{}));
