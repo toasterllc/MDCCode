@@ -44,8 +44,17 @@ private:
     using _I2C_SCL  = GPIO::PortB::Pin<8>;
     using _I2C_SDA  = GPIO::PortB::Pin<9>;
     
-    using _MSP_TEST  = GPIO::PortG::Pin<11>;
-    using _MSP_RST_  = GPIO::PortG::Pin<12>;
+    using _MSP_TEST = GPIO::PortG::Pin<11>;
+    using _MSP_RST_ = GPIO::PortG::Pin<12>;
+    
+    using _USB_DM   = GPIO::PortB::Pin<14, GPIO::Option::Speed3, GPIO::Option::AltFn12>;
+    using _USB_DP   = GPIO::PortB::Pin<15, GPIO::Option::Speed3, GPIO::Option::AltFn12>;
+    
+    // _OSC_IN / _OSC_OUT: used for providing external clock
+    // There's no alt function to configure here; we just need these to exist so that GPIO
+    // enables the clock for the relevent port (PortH)
+    using _OSC_IN   = GPIO::PortH::Pin<0>;
+    using _OSC_OUT  = GPIO::PortH::Pin<1>;
     
     using _BAT_CHRG_STAT          = GPIO::PortE::Pin<15, GPIO::Option::Input, GPIO::Option::Resistor1>;
     using _BAT_CHRG_STAT_PULLDOWN = typename _BAT_CHRG_STAT::template Opts<GPIO::Option::Input, GPIO::Option::Resistor0>;
@@ -77,6 +86,12 @@ public:
             
             MSPJTAG::Pin::Test,
             MSPJTAG::Pin::Rst_,
+            
+            _USB_DM,
+            _USB_DP,
+            
+            _OSC_IN,
+            _OSC_OUT,
             
             _BAT_CHRG_STAT,
             

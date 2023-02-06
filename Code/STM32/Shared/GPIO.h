@@ -534,6 +534,29 @@ static constexpr GPIORegs _GPIORegsCollect(GPIORegs r) {
 
 
 
+
+template <PortIndex T_PortIdx>
+static constexpr GPIORegs _GPIORegsCountPort(size_t r) {
+    return r;
+}
+
+template <PortIndex T_PortIdx, typename T_Pin, typename... T_Pins>
+static constexpr GPIORegs _GPIORegsCountPort(size_t r) {
+    // Only consider pins for the specified port index (T_PortIdx)
+    if constexpr (T_Pin::PortIdx == T_PortIdx) {
+        r += 1;
+    }
+    
+    if constexpr (sizeof...(T_Pins)) return _GPIORegsCollect<T_PortIdx, T_Pins...>(r);
+    else return r;
+}
+
+
+
+
+
+
+
 static constexpr SYSCFGRegs _SYSCFGRegsCollect(SYSCFGRegs r) {
     return r;
 }
@@ -599,7 +622,6 @@ static void Init() {
     // Disable interrupts
     Toastbox::IntState ints(false);
     
-    #warning TODO: call __HAL_RCC_GPIOX_CLK_ENABLE if we have relevent pins
     // GPIO Registers
     GPIORegsSet<PortA>(_GPIORegsCollect<PortIndex::A, T_Pins...>(GPIORegsDefaultPortA));
     GPIORegsSet<PortB>(_GPIORegsCollect<PortIndex::B, T_Pins...>(GPIORegsDefaultPortB));
@@ -610,6 +632,17 @@ static void Init() {
     GPIORegsSet<PortG>(_GPIORegsCollect<PortIndex::G, T_Pins...>(GPIORegs{}));
     GPIORegsSet<PortH>(_GPIORegsCollect<PortIndex::H, T_Pins...>(GPIORegs{}));
     GPIORegsSet<PortI>(_GPIORegsCollect<PortIndex::I, T_Pins...>(GPIORegs{}));
+    
+    // GPIO Clocks
+    if (_GPIORegsCountPort<PortIndex::A, T_Pins...>(0)) __HAL_RCC_GPIOA_CLK_ENABLE();
+    if (_GPIORegsCountPort<PortIndex::B, T_Pins...>(0)) __HAL_RCC_GPIOB_CLK_ENABLE();
+    if (_GPIORegsCountPort<PortIndex::C, T_Pins...>(0)) __HAL_RCC_GPIOC_CLK_ENABLE();
+    if (_GPIORegsCountPort<PortIndex::D, T_Pins...>(0)) __HAL_RCC_GPIOD_CLK_ENABLE();
+    if (_GPIORegsCountPort<PortIndex::E, T_Pins...>(0)) __HAL_RCC_GPIOE_CLK_ENABLE();
+    if (_GPIORegsCountPort<PortIndex::F, T_Pins...>(0)) __HAL_RCC_GPIOF_CLK_ENABLE();
+    if (_GPIORegsCountPort<PortIndex::G, T_Pins...>(0)) __HAL_RCC_GPIOG_CLK_ENABLE();
+    if (_GPIORegsCountPort<PortIndex::H, T_Pins...>(0)) __HAL_RCC_GPIOH_CLK_ENABLE();
+    if (_GPIORegsCountPort<PortIndex::I, T_Pins...>(0)) __HAL_RCC_GPIOI_CLK_ENABLE();
     
     // SYSCFG Registers
     SYSCFGRegsSet(_SYSCFGRegsCollect<T_Pins...>(SYSCFGRegs{}));
