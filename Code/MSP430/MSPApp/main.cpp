@@ -498,12 +498,6 @@ struct _TaskImg {
 
 struct _TaskMain {
     static void Run() {
-//        for (bool x=false;; x=!x) {
-//            _Pin::LED_RED_::Write(x);
-//            _BatterySampler::Sample();
-//            _Scheduler::Sleep(_Scheduler::Ms(1000));
-//        }
-        
         // Handle cold starts
         if (!_Init) {
             _Init = true;
@@ -517,103 +511,13 @@ struct _TaskMain {
             _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
         }
         
-//        _Scheduler::Sleep(_Scheduler::Ms(10000));
-        
-//        _Pin::VDD_B_EN::Write(1);
-//        _Scheduler::Sleep(_Scheduler::Ms(250));
-//        
-//        for (;;) {
-//            _ICE::Transfer(_ICE::LEDSetMsg(0xFF));
-//            _Scheduler::Sleep(_Scheduler::Ms(250));
-//            
-//            _ICE::Transfer(_ICE::LEDSetMsg(0x00));
-//            _Scheduler::Sleep(_Scheduler::Ms(250));
-//        }
-        
-//        for (;;) {
-//            _Scheduler::Sleep(_Scheduler::Ms(1000));
-//        }
-        
-        const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
-        
         // Init SPI peripheral
         _SPI::Init();
         
         for (;;) {
-//            // Wait for motion. During this block we allow LPM3.5 sleep, as long as our other tasks are idle.
-//            {
-//                _WaitingForMotion = true;
-//                _Scheduler::Wait([&] { return (bool)_Motion; });
-//                _Motion = false;
-//                _WaitingForMotion = false;
-//            }
+            _Scheduler::Sleep(_Scheduler::Ms(1000));
             
-            // Turn on VDD_B power (turns on ICE40)
-            _VDDBSet(true);
-            
-            // Wait for ICE40 to start
-            // We specify (within the bitstream itself, via icepack) that ICE40 should load
-            // the bitstream at high-frequency (40 MHz).
-            // According to the datasheet, this takes 70ms.
-            _Scheduler::Sleep(_Scheduler::Ms(30));
             _ICEInit();
-            
-            // Reset SD nets before we turn on SD power
-            _TaskSD::Reset();
-            _TaskSD::Wait();
-            
-            // Turn on IMG/SD power
-            _VDDIMGSDSet(true);
-            
-            // Init image sensor / SD card
-            _TaskImg::Init();
-            _TaskSD::Init();
-            
-            for (;;) {
-                // Capture an image
-                {
-//                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
-                    
-                    // Pretend to capture an image
-                    _Scheduler::Sleep(_Scheduler::Ms(500));
-                    
-                    // Wait for _TaskSD to be initialized and done with writing, which is necessary
-                    // for 2 reasons:
-                    //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
-                    //      access it,
-                    //   2. we can't initiate a new capture until writing to the SD card (from a
-                    //      previous capture) is complete (because the SDRAM is single-port, so
-                    //      we can only read or write at one time)
-                    _TaskSD::WaitForInitAndWrite();
-                    
-                    // Capture image to RAM
-                    _TaskImg::Capture(imgRingBuf.buf.idEnd);
-                    const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
-                    
-                    // Copy image from RAM -> SD card
-                    _TaskSD::Write(srcRAMBlock);
-                    _TaskSD::Wait();
-                    
-//                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
-                }
-                
-                break;
-                
-//                // Wait up to 1s for further motion
-//                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-//                if (!motion) break;
-//                
-//                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-//                // _Motion, there'd be a race window where we could first observe
-//                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-//                // the true value by resetting it to false.
-//                _Motion = false;
-            }
-            
-            _VDDIMGSDSet(false);
-            _VDDBSet(false);
-            
-            _Scheduler::Sleep(_Scheduler::Ms(3000));
         }
     }
     

@@ -101,7 +101,7 @@ public:
         >();
         
         // Start our default tasks running
-        Scheduler::template Start<_TaskCmdRecv/*, _TaskMSPComms*/>();
+        Scheduler::template Start<_TaskCmdRecv, _TaskMSPComms>();
         Scheduler::Run();
     }
     
@@ -294,14 +294,6 @@ private:
         static const STM::BatteryStatus& BatteryStatus() {
             return _BatteryStatus;
         }
-        
-//        // Lock(): returns a bool that can be used to ensure only one entity is trying to talk
-//        // to the MSP430 at a time.
-//        // Currently this is used by the MSP Spy-bi-wire (SBW) facilities to prevent I2C comms
-//        // while SBW IO is taking place.
-//        static bool& Lock() {
-//            return _Lock;
-//        }
         
         static std::optional<MSP::Resp> _Send(const MSP::Cmd& cmd) {
             // Acquire mutex while we talk to MSP via I2C, to prevent MSPJTAG from
