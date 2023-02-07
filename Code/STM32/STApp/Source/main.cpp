@@ -51,7 +51,7 @@ using _ICE_CRST_          = GPIO::PortF::Pin<11, GPIO::Option::Output1>;
 using _ICE_CDONE          = GPIO::PortB::Pin<1,  GPIO::Option::Input>;
 using _ICE_ST_SPI_CS_     = GPIO::PortE::Pin<12, GPIO::Option::Output1, GPIO::Option::Speed3>;
 using _ICE_ST_SPI_D_READY = GPIO::PortA::Pin<3,  GPIO::Option::Input>;
-using _ICE_ST_FLASH_EN    = GPIO::PortF::Pin<5,  GPIO::Option::Output1>;
+using _ICE_ST_FLASH_EN    = GPIO::PortF::Pin<5,  GPIO::Option::Output0>;
 
 using _ICE_ST_SPI_CLK     = _QSPI::Pin::Clk::Opts<GPIO::Option::Output0>;
 using _ICE_ST_SPI_D4      = _QSPI::Pin::D4::Opts<GPIO::Option::Input>;
