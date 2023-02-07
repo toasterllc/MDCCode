@@ -996,14 +996,14 @@ void abort() {
 //    }
 //}
 
-extern "C" void Blink() {
-    for (;;) {
-        _Pin::LED_GREEN_::Write(0);
-        for (volatile uint16_t i=0; i<50000; i++);
-        _Pin::LED_GREEN_::Write(1);
-        for (volatile uint16_t i=0; i<50000; i++);
-    }
-}
+//extern "C" void Blink() {
+//    for (;;) {
+//        _Pin::LED_GREEN_::Write(0);
+//        for (volatile uint16_t i=0; i<50000; i++);
+//        _Pin::LED_GREEN_::Write(1);
+//        for (volatile uint16_t i=0; i<50000; i++);
+//    }
+//}
 
 int main() {
     // Stop watchdog timer
@@ -1067,9 +1067,6 @@ int main() {
     _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
     _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
     
-//    _TaskMain::Run();
-    
-    _Scheduler::Start<_TaskMain>();
-//    _Scheduler::Start<_TaskMain, _TaskI2C, _TaskButton>();
+    _Scheduler::Start<_TaskMain, _TaskI2C, _TaskButton>();
     _Scheduler::Run();
 }

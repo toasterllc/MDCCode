@@ -349,9 +349,9 @@ SECTIONS
 
   .stack (NOLOAD) : {
       . = ALIGN(2);
-      PROVIDE(__stack = .);
       *(.stack.*)
       . = ALIGN(2);
+      PROVIDE(__stack = .);
   } > RAM
 
   .infoA (NOLOAD) : {} > INFOA              /* MSP430 INFO FLASH MEMORY SEGMENTS */
