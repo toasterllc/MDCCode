@@ -304,11 +304,14 @@ public:
         
         // Init(): configure the pin
         static constexpr void Init() {
+            // Set output value (ODR) before changing the mode (MODER), so we don't intermittently
+            // drive the wrong value when going changing from input->output
+            State::ODR(ODR());
+            
             State::MODER(MODER());
             State::OTYPER(OTYPER());
             State::OSPEEDR(OSPEEDR());
             State::PUPDR(PUPDR());
-            State::ODR(ODR());
             State::AFRL(AFRL());
             State::AFRH(AFRH());
             
@@ -321,6 +324,11 @@ public:
         // Init(): configure the pin, but only emit instructions for the changes relative to `T_Prev`
         template <typename T_Prev>
         static constexpr void Init() {
+            // Set output value (ODR) before changing the mode (MODER), so we don't intermittently
+            // drive the wrong value when going changing from input->output
+            if constexpr (ODR() != T_Prev::ODR())
+            State::ODR(ODR());
+            
             if constexpr (MODER() != T_Prev::MODER())
             State::MODER(MODER());
             
@@ -332,9 +340,6 @@ public:
             
             if constexpr (PUPDR() != T_Prev::PUPDR())
             State::PUPDR(PUPDR());
-            
-            if constexpr (ODR() != T_Prev::ODR())
-            State::ODR(ODR());
             
             if constexpr (AFRL() != T_Prev::AFRL())
             State::AFRL(AFRL());
@@ -550,11 +555,15 @@ public:
 template <typename T_Port>
 static void GPIORegsSet(const GPIORegs& x) {
     GPIO_TypeDef& r = T_Port::RegsRef();
+    
+    // Set output value (ODR) before changing the mode (MODER), so we don't intermittently
+    // drive the wrong value when going changing from input->output
+    r.ODR     = x.ODR;
+    
     r.MODER   = x.MODER;
     r.OTYPER  = x.OTYPER;
     r.OSPEEDR = x.OSPEEDR;
     r.PUPDR   = x.PUPDR;
-    r.ODR     = x.ODR;
     r.AFR[0]  = x.AFRL;
     r.AFR[1]  = x.AFRH;
 }
