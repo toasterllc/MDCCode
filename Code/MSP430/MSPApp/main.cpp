@@ -67,7 +67,14 @@ class _TaskImg;
 class _TaskI2C;
 class _TaskButton;
 
+enum class _SleepMode {
+    Light,
+    Deep,
+    Off,
+};
+
 static void _Sleep();
+static void __Sleep(_SleepMode mode);
 
 static void _SchedulerStackOverflow();
 static void _MainError(uint16_t line);
@@ -206,14 +213,21 @@ static void _ICEInit() {
 //}
 
 struct _TaskSD {
-    static void Reset() {
-        Wait();
-        _Scheduler::Start<_TaskSD>([] { _Reset(); });
+    static void Init() {
+        // Reset our shared state
+        // This is used to init our task after it's been stopped in an arbitrary state.
+        _RCA = std::nullopt;
+        _Writing = false;
     }
     
-    static void Init() {
+    static void CardReset() {
         Wait();
-        _Scheduler::Start<_TaskSD>([] { _Init(); });
+        _Scheduler::Start<_TaskSD>([] { _CardReset(); });
+    }
+    
+    static void CardInit() {
+        Wait();
+        _Scheduler::Start<_TaskSD>([] { _CardInit(); });
     }
     
     static void Write(uint8_t srcRAMBlock) {
@@ -239,11 +253,11 @@ struct _TaskSD {
 //        _Scheduler::Wait([&] { return _RCA.has_value(); });
 //    }
     
-    static void _Reset() {
+    static void _CardReset() {
         _SDCard::Reset();
     }
     
-    static void _Init() {
+    static void _CardInit() {
         if (!_RCA) {
             // We haven't successfully enabled the SD card since the battery was connected;
             // enable the SD card and get the card id / card data.
@@ -400,8 +414,13 @@ struct _TaskSD {
 
 struct _TaskImg {
     static void Init() {
+        _CaptureBlock = 0;
+        _AutoExp = {};
+    }
+    
+    static void SensorInit() {
         Wait();
-        _Scheduler::Start<_TaskImg>([] { _Init(); });
+        _Scheduler::Start<_TaskImg>([] { _SensorInit(); });
     }
     
     static void Capture(const Img::Id& id) {
@@ -421,7 +440,7 @@ struct _TaskImg {
         _Scheduler::Wait<_TaskImg>();
     }
     
-    static void _Init() {
+    static void _SensorInit() {
         // Initialize image sensor
         _ImgSensor::Init();
         // Set the initial exposure _before_ we enable streaming, so that the very first frame
@@ -505,8 +524,8 @@ struct _TaskMain {
 //        }
         
         // Handle cold starts
-        if (!_Init) {
-            _Init = true;
+        if (!_FirstRunDone) {
+            _FirstRunDone = true;
             // Since this is a cold start, delay 3s before beginning.
             // This delay is meant for the case where we restarted due to an abort, and
             // serves 2 purposes:
@@ -536,6 +555,12 @@ struct _TaskMain {
         
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
+        // Init our tasks
+        // This is necessary because we may have stopped them at an arbitrary point via _HostModeSet()
+        _Init();
+        _TaskSD::Init();
+        _TaskImg::Init();
+        
         // Init SPI peripheral
         _SPI::Init();
         
@@ -559,15 +584,15 @@ struct _TaskMain {
             _ICEInit();
             
             // Reset SD nets before we turn on SD power
-            _TaskSD::Reset();
+            _TaskSD::CardReset();
             _TaskSD::Wait();
             
             // Turn on IMG/SD power
             _VDDIMGSDSet(true);
             
             // Init image sensor / SD card
-            _TaskImg::Init();
-            _TaskSD::Init();
+            _TaskImg::SensorInit();
+            _TaskSD::CardInit();
             
             for (;;) {
                 // Capture an image
@@ -614,6 +639,12 @@ struct _TaskMain {
         }
     }
     
+    static void _Init() {
+        // Reset our shared state
+        // This is used to init our task after it's been stopped in an arbitrary state.
+        _WaitingForMotion = false;
+    }
+    
     static bool DeepSleepOK() {
         // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
         // This logic works because if _WaitingForMotion==true, then we've disabled both _TaskSD
@@ -626,36 +657,13 @@ struct _TaskMain {
                !_Scheduler::Running<_TaskImg>() ;
     }
     
-    static void HostModeSet(bool en) {
-        // Short-circuit if the state hasn't changed
-        if (_HostMode == en) return;
-        _HostMode = en;
-        
-        if (_HostMode) {
-            // Reset state
-            _WaitingForMotion = false;
-            _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
-            _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
-            // Stop _TaskMain
-            _Scheduler::Stop<_TaskMain>();
-            // Turn off power
-            _VDDIMGSDSet(false);
-            _VDDBSet(false);
-        
-        } else {
-            _Scheduler::Start<_TaskMain>(Run);
-        }
-    }
-    
     static void ISR_MotionSignal(uint16_t iv) {
         _Motion = true;
     }
     
-    static inline bool _HostMode = false;
-    
     // _Init: stores whether this is the first
     [[gnu::section(".ram_backup.main")]]
-    static inline bool _Init = false;
+    static inline bool _FirstRunDone = false;
     
     // _Motion: announces that motion occurred
     // _Motion: atomic because it's modified from the interrupt context
@@ -667,6 +675,30 @@ struct _TaskMain {
     alignas(sizeof(void*))
     static inline uint8_t Stack[256];
 };
+
+static inline bool _HostMode = false;
+
+static void _HostModeSet(bool en) {
+    // Short-circuit if the state hasn't changed
+    if (_HostMode == en) return;
+    _HostMode = en;
+    
+    if (_HostMode) {
+        // Reset state
+        _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+        _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
+        // Stop _TaskMain
+        _Scheduler::Stop<_TaskSD>();
+        _Scheduler::Stop<_TaskImg>();
+        _Scheduler::Stop<_TaskMain>();
+        // Turn off power
+        _VDDIMGSDSet(false);
+        _VDDBSet(false);
+    
+    } else {
+        _Scheduler::Start<_TaskMain>();
+    }
+}
 
 struct _TaskI2C {
     static void Run() {
@@ -695,7 +727,7 @@ struct _TaskI2C {
             _LEDGreen_::Set(_LEDGreen_::Priority::High, std::nullopt);
             
             // Exit host mode
-            _TaskMain::HostModeSet(false);
+            _HostModeSet(false);
         }
     }
     
@@ -731,7 +763,7 @@ struct _TaskI2C {
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
-            _TaskMain::HostModeSet(cmd.arg.HostModeSet.en);
+            _HostModeSet(cmd.arg.HostModeSet.en);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::VDDIMGSDSet:
@@ -750,8 +782,6 @@ struct _TaskI2C {
         }
     }
     
-    static inline bool _HostMode = false;
-    
     // Task stack
     [[gnu::section(".stack._TaskI2C")]]
     alignas(sizeof(void*))
@@ -762,6 +792,9 @@ struct _TaskButton {
     static void Run() {
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
+            // Ignore button presses in host mode
+            if (_HostMode) continue;
+            
             switch (ev) {
             case _Button::Event::Press:
                 // Take a photo
@@ -771,10 +804,14 @@ struct _TaskButton {
                 break;
             
             case _Button::Event::Hold:
-                // Turn off
+                // Flash LED
                 _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
-                _Scheduler::Sleep(_Scheduler::Ms(250));
+                _Scheduler::Delay(_Scheduler::Ms(250));
                 _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
+                // Configure button for device turning off
+                _Button::OffConfig();
+                // Turn off
+                __Sleep(_SleepMode::Off);
                 break;
             }
         }
@@ -797,6 +834,17 @@ inline void Toastbox::IntState::Set(bool en) {
     else    __bic_SR_register(GIE);
 }
 
+// MARK: - Sleep
+
+static uint16_t _LPMForSleepMode(_SleepMode mode) {
+    switch (mode) {
+    case _SleepMode::Light: return LPM1_bits;
+    case _SleepMode::Deep:  return LPM3_bits;
+    case _SleepMode::Off:   return LPM4_bits;
+    default:                return 0;
+    }
+}
+
 static void _Sleep() {
     // Put ourself to sleep until an interrupt occurs. This function may or may not return:
     // 
@@ -809,10 +857,14 @@ static void _Sleep() {
     
     // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
     // Otherwise, enter LPM1 sleep, because something is running.
-    const uint16_t LPMBits = (_TaskMain::DeepSleepOK() ? LPM3_bits : LPM1_bits);
+    __Sleep(_TaskMain::DeepSleepOK() ? _SleepMode::Deep : _SleepMode::Light);
+}
+
+static void __Sleep(_SleepMode mode) {
+    const uint16_t lpm = _LPMForSleepMode(mode);
     
-    // If we're entering LPM3, disable regulator so we enter LPM3.5 (instead of just LPM3)
-    if (LPMBits == LPM3_bits) {
+    // If we're entering LPM3/LPM4, disable regulator so we enter LPM3.5 / LPM4.5 (instead of just LPM3/LPM4)
+    if (lpm==LPM3_bits || lpm==LPM4_bits) {
         PMMUnlock pmm; // Unlock PMM registers
         PMMCTL0_L |= PMMREGOFF_L;
     }
@@ -820,7 +872,7 @@ static void _Sleep() {
     // Remember our current interrupt state, which IntState will restore upon return
     Toastbox::IntState ints;
     // Atomically enable interrupts and go to sleep
-    __bis_SR_register(GIE | LPMBits);
+    __bis_SR_register(GIE | lpm);
 }
 
 // MARK: - Interrupts

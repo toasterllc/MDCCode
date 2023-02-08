@@ -56,6 +56,15 @@ public:
         }
     }
     
+    static void OffConfig() {
+        // Wait while button is asserted without running other tasks
+        while (!Pin::Read()) T_Scheduler::Delay(T_Scheduler::Ms(10));
+        // Debounce so we don't turn back on due to the bouncing signal
+        T_Scheduler::Delay(T_Scheduler::Ms(10));
+        // Configure interrupt for the device off state
+        _AssertedInterrupt::IESConfig();
+    }
+    
     static void ISR() {
         _Signal = true;
     }
