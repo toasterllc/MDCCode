@@ -367,11 +367,8 @@ public:
         constexpr uint32_t MaxAttempts = 1000;
         for (uint32_t i=0; i<MaxAttempts; i++) {
             const ImgI2CStatusResp status = ImgI2CStatus();
-            if (!status.err() && !status.done()) {
-                _Sleep(_Ms(1));
-                continue;
-            }
-            return status;
+            if (status.done()) return status;
+            _Sleep(_Ms(1));
         }
         // Timeout getting response from ICE40
         // This should never happen, since it indicates a Verilog error or a hardware failure.
