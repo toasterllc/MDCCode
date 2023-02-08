@@ -572,10 +572,7 @@ struct _TaskMain {
             for (;;) {
                 // Capture an image
                 {
-//                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
-                    
-                    // Pretend to capture an image
-                    _Scheduler::Sleep(_Scheduler::Ms(500));
+                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
                     
                     // Wait for _TaskSD to be initialized and done with writing, which is necessary
                     // for 2 reasons:
@@ -594,7 +591,7 @@ struct _TaskMain {
                     _TaskSD::Write(srcRAMBlock);
                     _TaskSD::Wait();
                     
-//                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
+                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
                 }
                 
                 break;
