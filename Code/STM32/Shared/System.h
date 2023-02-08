@@ -12,7 +12,9 @@
 #include "MSP430JTAG.h"
 #include "Toastbox/Scheduler.h"
 
-// MARK: - Main Thread Stack
+// MARK: - Interrupt Stack
+// This is the stack that's used to handle interrupts.
+// It's large because STM's USB code is large and executes in the interrupt context.
 
 #define _StackInterruptSize 1024
 
