@@ -70,7 +70,6 @@ class _TaskButton;
 enum class _SleepMode {
     Light,
     Deep,
-    Off,
 };
 
 static void _Sleep();
@@ -141,6 +140,9 @@ using _SDCard = SD::Card<
 
 // _RTC: real time clock
 using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
+
+// _MOTION_SIGNAL_DISABLED: MOTION_SIGNAL GPIO state for when the device is off
+using _MOTION_SIGNAL_DISABLED = _Pin::MOTION_SIGNAL::Opts<Option::Input, Option::Resistor1>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
@@ -804,14 +806,23 @@ struct _TaskButton {
                 break;
             
             case _Button::Event::Hold:
-                // Flash LED
-                _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
-                _Scheduler::Delay(_Scheduler::Ms(250));
-                _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
+                // Blink red LED to signal that we're turning off
+                for (int i=0; i<5; i++) {
+                    _Pin::LED_RED_::Write(0);
+                    _Scheduler::Delay(_Scheduler::Ms(50));
+                    _Pin::LED_RED_::Write(1);
+                    _Scheduler::Delay(_Scheduler::Ms(50));
+                }
+                
+                #warning TODO: disable any timer interrupt sources that we may have set up, so we don't wake to take a photo
+                
+                _MOTION_SIGNAL_DISABLED::Init<_Pin::MOTION_SIGNAL>();
+                
                 // Configure button for device turning off
                 _Button::OffConfig();
+                
                 // Turn off
-                __Sleep(_SleepMode::Off);
+                __Sleep(_SleepMode::Deep);
                 break;
             }
         }
@@ -840,7 +851,6 @@ static uint16_t _LPMForSleepMode(_SleepMode mode) {
     switch (mode) {
     case _SleepMode::Light: return LPM1_bits;
     case _SleepMode::Deep:  return LPM3_bits;
-    case _SleepMode::Off:   return LPM4_bits;
     default:                return 0;
     }
 }
@@ -1115,6 +1125,14 @@ int main() {
     // remain in whatever state the I2C task set them to before relinquishing.
     _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
     _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+    
+    // Blink green LED to signal that we're turning off
+    for (int i=0; i<5; i++) {
+        _Pin::LED_GREEN_::Write(0);
+        for (volatile int i=0; i<0xFFFF; i++);
+        _Pin::LED_GREEN_::Write(1);
+        for (volatile int i=0; i<0xFFFF; i++);
+    }
     
     _Scheduler::Start<_TaskMain, _TaskI2C, _TaskButton>();
     _Scheduler::Run();
