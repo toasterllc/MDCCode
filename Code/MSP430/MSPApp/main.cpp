@@ -25,6 +25,7 @@
 #include "OutputPriority.h"
 #include "BatterySampler.h"
 #include "Button.h"
+#include "ResourceCounter.h"
 using namespace GPIO;
 
 #define Assert(x) if (!(x)) _MainError(__LINE__)
@@ -67,13 +68,7 @@ class _TaskImg;
 class _TaskI2C;
 class _TaskButton;
 
-enum class _SleepMode {
-    Light,
-    Deep,
-};
-
 static void _Sleep();
-static void __Sleep(_SleepMode mode);
 
 static void _SchedulerStackOverflow();
 static void _MainError(uint16_t line);
@@ -150,6 +145,12 @@ using _MOTION_SIGNAL_DISABLED = _Pin::MOTION_SIGNAL::Opts<Option::Input, Option:
 static MSP::State _State = {
     .header = MSP::StateHeader,
 };
+
+static volatile uint8_t _PowerAssertionCounter = 0;
+using _PowerAssertion = T_ResourceCounter<_PowerAssertionCounter>;
+
+static volatile uint8_t _CapturePauseAssertionCounter = 0;
+using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter>;
 
 // MARK: - Power
 
@@ -525,19 +526,19 @@ struct _TaskMain {
 //            _Scheduler::Sleep(_Scheduler::Ms(1000));
 //        }
         
-        // Handle cold starts
-        if (!_FirstRunDone) {
-            _FirstRunDone = true;
-            // Since this is a cold start, delay 3s before beginning.
-            // This delay is meant for the case where we restarted due to an abort, and
-            // serves 2 purposes:
-            //   1. it rate-limits aborts, in case there's a persistent issue
-            //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
-            _LEDRed_::Set(_LEDRed_::Priority::Low, 0);
-            _Scheduler::Sleep(_Scheduler::Ms(3000));
-            _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
-        }
-        
+//        // Handle cold starts
+//        if (!_FirstRunDone) {
+//            _FirstRunDone = true;
+//            // Since this is a cold start, delay 3s before beginning.
+//            // This delay is meant for the case where we restarted due to an abort, and
+//            // serves 2 purposes:
+//            //   1. it rate-limits aborts, in case there's a persistent issue
+//            //   2. it allows GPIO outputs to settle, so that peripherals fully turn off
+//            _LEDRed_::Set(_LEDRed_::Priority::Low, 0);
+//            _Scheduler::Sleep(_Scheduler::Ms(3000));
+//            _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+//        }
+//        
 //        _Scheduler::Sleep(_Scheduler::Ms(10000));
         
 //        _Pin::VDD_B_EN::Write(1);
@@ -574,6 +575,14 @@ struct _TaskMain {
 //                _Motion = false;
 //                _WaitingForMotion = false;
 //            }
+            
+            // Wait until captures aren't paused
+            _Scheduler::Wait([] { return !_CapturePauseAssertion::Locked(); });
+            
+            _Scheduler::Sleep(_Scheduler::Ms(3000));
+            
+            // Stay powered until we finish capturing the image
+            _Power.lock();
             
             // Turn on VDD_B power (turns on ICE40)
             _VDDBSet(true);
@@ -637,40 +646,43 @@ struct _TaskMain {
             _VDDIMGSDSet(false);
             _VDDBSet(false);
             
-            _Scheduler::Sleep(_Scheduler::Ms(3000));
+            // Release power assertion
+            _Power.unlock();
         }
     }
     
     static void _Init() {
         // Reset our shared state
         // This is used to init our task after it's been stopped in an arbitrary state.
-        _WaitingForMotion = false;
+//        _WaitingForMotion = false;
     }
     
-    static bool DeepSleepOK() {
-        // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
-        // This logic works because if _WaitingForMotion==true, then we've disabled both _TaskSD
-        // and _TaskImg, so if the tasks are idle, then everything's idle so we can enter deep
-        // sleep. (The case that we need to be careful of is going to sleep when either _TaskSD
-        // or _TaskImg is idle but still powered on, which the _WaitingForMotion check takes
-        // care of.)
-        return _WaitingForMotion                &&
-               !_Scheduler::Running<_TaskSD>()  &&
-               !_Scheduler::Running<_TaskImg>() ;
-    }
+//    static bool DeepSleepOK() {
+//        // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
+//        // This logic works because if _WaitingForMotion==true, then we've disabled both _TaskSD
+//        // and _TaskImg, so if the tasks are idle, then everything's idle so we can enter deep
+//        // sleep. (The case that we need to be careful of is going to sleep when either _TaskSD
+//        // or _TaskImg is idle but still powered on, which the _WaitingForMotion check takes
+//        // care of.)
+//        return _WaitingForMotion                &&
+//               !_Scheduler::Running<_TaskSD>()  &&
+//               !_Scheduler::Running<_TaskImg>() ;
+//    }
     
     static void ISR_MotionSignal(uint16_t iv) {
         _Motion = true;
     }
     
-    // _Init: stores whether this is the first
-    [[gnu::section(".ram_backup.main")]]
-    static inline bool _FirstRunDone = false;
+//    // _Init: stores whether this is the first
+//    [[gnu::section(".ram_backup.main")]]
+//    static inline bool _FirstRunDone = false;
     
     // _Motion: announces that motion occurred
     // _Motion: atomic because it's modified from the interrupt context
-    static inline std::atomic<bool> _Motion = false;
-    static inline bool _WaitingForMotion = false;
+    static volatile inline bool _Motion = false;
+//    static inline bool _WaitingForMotion = false;
+    
+    static inline _PowerAssertion _Power;
     
     // Task stack
     [[gnu::section(".stack._TaskMain")]]
@@ -707,6 +719,9 @@ struct _TaskI2C {
         for (;;) {
             // Wait until the I2C lines are activated (ie VDD_B_3V3_STM becomes powered)
             _I2C::WaitUntilActive();
+            
+            // Maintain power while I2C is active
+            _PowerAssertion power(_PowerAssertion::Lock);
             
             for (;;) {
                 // Wait for a command
@@ -792,6 +807,9 @@ struct _TaskI2C {
 
 struct _TaskButton {
     static void Run() {
+        // Flash green LEDs to signal that we turned on
+        _LEDFlash<_Pin::LED_GREEN_>();
+        
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
             // Ignore button presses in host mode
@@ -806,27 +824,58 @@ struct _TaskButton {
                 break;
             
             case _Button::Event::Hold:
-                // Blink red LED to signal that we're turning off
-                for (int i=0; i<5; i++) {
-                    _Pin::LED_RED_::Write(0);
-                    _Scheduler::Delay(_Scheduler::Ms(50));
-                    _Pin::LED_RED_::Write(1);
-                    _Scheduler::Delay(_Scheduler::Ms(50));
+                if (_CapturePause.locked()) {
+                    // Deassert capture pause -- ie, turn on
+                    _CapturePause.unlock();
+                    // Flash green LEDs
+                    _LEDFlash<_Pin::LED_GREEN_>();
+                
+                } else {
+                    // Assert capture pause -- ie, turn off
+                    _CapturePause.lock();
+                    // Flash red LEDs
+                    _LEDFlash<_Pin::LED_RED_>();
                 }
                 
-                #warning TODO: disable any timer interrupt sources that we may have set up, so we don't wake to take a photo
                 
-                _MOTION_SIGNAL_DISABLED::Init<_Pin::MOTION_SIGNAL>();
                 
-                // Configure button for device turning off
-                _Button::OffConfig();
-                
-                // Turn off
-                __Sleep(_SleepMode::Deep);
+//                _Pause.toggle();
+//                if (_Pause.asserted()) {
+//                    // Flash red LED to signal that we're turning off
+//                    for (int i=0; i<5; i++) {
+//                        _Pin::LED_RED_::Write(0);
+//                        _Scheduler::Delay(_Scheduler::Ms(50));
+//                        _Pin::LED_RED_::Write(1);
+//                        _Scheduler::Delay(_Scheduler::Ms(50));
+//                    }
+//                }
+//                
+//                #warning TODO: disable any timer interrupt sources that we may have set up, so we don't wake to take a photo
+//                
+//                _MOTION_SIGNAL_DISABLED::Init<_Pin::MOTION_SIGNAL>();
+//                
+//                // Configure button for device turning off
+//                _Button::OffConfig();
+//                
+//                // Turn off
+//                __Sleep(_SleepMode::Deep);
                 break;
             }
         }
     }
+    
+    template <typename T_Pin>
+    static void _LEDFlash() {
+        // Flash red LED to signal that we're turning off
+        for (int i=0; i<5; i++) {
+            T_Pin::Write(0);
+            _Scheduler::Delay(_Scheduler::Ms(50));
+            T_Pin::Write(1);
+            _Scheduler::Delay(_Scheduler::Ms(50));
+        }
+    }
+    
+    static inline _CapturePauseAssertion _CapturePause;//(_CapturePauseAssertion::Lock);
     
     // Task stack
     [[gnu::section(".stack._TaskButton")]]
@@ -847,14 +896,6 @@ inline void Toastbox::IntState::Set(bool en) {
 
 // MARK: - Sleep
 
-static uint16_t _LPMForSleepMode(_SleepMode mode) {
-    switch (mode) {
-    case _SleepMode::Light: return LPM1_bits;
-    case _SleepMode::Deep:  return LPM3_bits;
-    default:                return 0;
-    }
-}
-
 static void _Sleep() {
     // Put ourself to sleep until an interrupt occurs. This function may or may not return:
     // 
@@ -867,14 +908,11 @@ static void _Sleep() {
     
     // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
     // Otherwise, enter LPM1 sleep, because something is running.
-    __Sleep(_TaskMain::DeepSleepOK() ? _SleepMode::Deep : _SleepMode::Light);
-}
-
-static void __Sleep(_SleepMode mode) {
-    const uint16_t lpm = _LPMForSleepMode(mode);
+    
+    const uint16_t mode = (_PowerAssertion::Locked() ? LPM1_bits : LPM3_bits);
     
     // If we're entering LPM3/LPM4, disable regulator so we enter LPM3.5 / LPM4.5 (instead of just LPM3/LPM4)
-    if (lpm==LPM3_bits || lpm==LPM4_bits) {
+    if (mode == LPM3_bits) {
         PMMUnlock pmm; // Unlock PMM registers
         PMMCTL0_L |= PMMREGOFF_L;
     }
@@ -882,7 +920,7 @@ static void __Sleep(_SleepMode mode) {
     // Remember our current interrupt state, which IntState will restore upon return
     Toastbox::IntState ints;
     // Atomically enable interrupts and go to sleep
-    __bis_SR_register(GIE | lpm);
+    __bis_SR_register(GIE | mode);
 }
 
 // MARK: - Interrupts
