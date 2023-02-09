@@ -13,51 +13,46 @@ public:
     T_ResourceCounter(T_ResourceCounter&& x) { swap(x); }
     T_ResourceCounter& operator=(T_ResourceCounter&& x) { swap(x); return *this; }
     
-    // Constructor, unlocked
+    // Constructor, released
     T_ResourceCounter() {}
     
-    // Constructor, locked
-    struct LockType {}; static constexpr auto Lock = LockType();
-    T_ResourceCounter(LockType) {
-        lock();
+    // Constructor, acquireed
+    struct AcquireType {}; static constexpr auto Acquire = AcquireType();
+    T_ResourceCounter(AcquireType) {
+        acquire();
     }
     
     ~T_ResourceCounter() {
-        if (_locked) {
-            unlock();
+        if (_acquired) {
+            release();
         }
     }
     
-    static bool Locked() {
+    static bool Acquired() {
         return T_Counter;
     }
     
-    bool locked() const {
-        return _locked;
+    bool acquired() const {
+        return _acquired;
     }
     
-    void lock() {
-        Assert(!_locked);
+    void acquire() {
+        Assert(!_acquired);
         T_Counter++;
-        _locked = true;
+        _acquired = true;
     }
     
-    void unlock() {
-        Assert(_locked);
+    void release() {
+        Assert(_acquired);
         Assert(T_Counter);
         T_Counter--;
-        _locked = false;
+        _acquired = false;
     }
     
-//    void toggle() {
-//        if (_asserted) deassert();
-//        else           assert();
-//    }
-    
     void swap(T_ResourceCounter& x) {
-        std::swap(_locked, x._locked);
+        std::swap(_acquired, x._acquired);
     }
     
 private:
-    bool _locked = false;
+    bool _acquired = false;
 };

@@ -137,7 +137,7 @@ using _SDCard = SD::Card<
 using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
 
 // _MOTION_SIGNAL_DISABLED: MOTION_SIGNAL GPIO state for when the device is off
-using _MOTION_SIGNAL_DISABLED = _Pin::MOTION_SIGNAL::Opts<Option::Input, Option::Resistor1>;
+//using _MOTION_SIGNAL_DISABLED = _Pin::MOTION_SIGNAL::Opts<Option::Input, Option::Resistor1>;
 
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
@@ -577,12 +577,12 @@ struct _TaskMain {
 //            }
             
             // Wait until captures aren't paused
-            _Scheduler::Wait([] { return !_CapturePauseAssertion::Locked(); });
+            _Scheduler::Wait([] { return !_CapturePauseAssertion::Acquired(); });
             
             _Scheduler::Sleep(_Scheduler::Ms(3000));
             
             // Stay powered until we finish capturing the image
-            _Power.lock();
+            _Power.acquire();
             
             // Turn on VDD_B power (turns on ICE40)
             _VDDBSet(true);
@@ -647,7 +647,7 @@ struct _TaskMain {
             _VDDBSet(false);
             
             // Release power assertion
-            _Power.unlock();
+            _Power.release();
         }
     }
     
@@ -721,7 +721,7 @@ struct _TaskI2C {
             _I2C::WaitUntilActive();
             
             // Maintain power while I2C is active
-            _PowerAssertion power(_PowerAssertion::Lock);
+            _PowerAssertion power(_PowerAssertion::Acquire);
             
             for (;;) {
                 // Wait for a command
@@ -812,11 +812,14 @@ struct _TaskButton {
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
-            // Ignore button presses in host mode
+            // Ignore all interaction in host mode
             if (_HostMode) continue;
             
             switch (ev) {
             case _Button::Event::Press:
+                // Ignore button presses if we're off
+                if (_CapturePause.acquired()) break;
+                
                 // Take a photo
                 _LEDRed_::Set(_LEDRed_::Priority::Low, 0);
                 _Scheduler::Sleep(_Scheduler::Ms(250));
@@ -824,15 +827,15 @@ struct _TaskButton {
                 break;
             
             case _Button::Event::Hold:
-                if (_CapturePause.locked()) {
+                if (_CapturePause.acquired()) {
                     // Deassert capture pause -- ie, turn on
-                    _CapturePause.unlock();
+                    _CapturePause.release();
                     // Flash green LEDs
                     _LEDFlash<_Pin::LED_GREEN_>();
                 
                 } else {
                     // Assert capture pause -- ie, turn off
-                    _CapturePause.lock();
+                    _CapturePause.acquire();
                     // Flash red LEDs
                     _LEDFlash<_Pin::LED_RED_>();
                 }
@@ -875,7 +878,11 @@ struct _TaskButton {
         }
     }
     
-    static inline _CapturePauseAssertion _CapturePause;//(_CapturePauseAssertion::Lock);
+    // _CapturePause: controls user-visible on/off behavior
+    // By default, captures are paused so that the device is off until
+    // the user turns it on by holding the power button.
+    static inline _CapturePauseAssertion _CapturePause =
+        _CapturePauseAssertion(_CapturePauseAssertion::Acquire);
     
     // Task stack
     [[gnu::section(".stack._TaskButton")]]
@@ -909,7 +916,7 @@ static void _Sleep() {
     // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
     // Otherwise, enter LPM1 sleep, because something is running.
     
-    const uint16_t mode = (_PowerAssertion::Locked() ? LPM1_bits : LPM3_bits);
+    const uint16_t mode = (_PowerAssertion::Acquired() ? LPM1_bits : LPM3_bits);
     
     // If we're entering LPM3/LPM4, disable regulator so we enter LPM3.5 / LPM4.5 (instead of just LPM3/LPM4)
     if (mode == LPM3_bits) {
