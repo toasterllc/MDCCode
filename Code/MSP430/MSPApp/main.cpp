@@ -136,9 +136,6 @@ using _SDCard = SD::Card<
 // _RTC: real time clock
 using _RTC = RTCType<_XT1FreqHz, _Pin::MSP_XOUT, _Pin::MSP_XIN>;
 
-// _MOTION_SIGNAL_DISABLED: MOTION_SIGNAL GPIO state for when the device is off
-//using _MOTION_SIGNAL_DISABLED = _Pin::MOTION_SIGNAL::Opts<Option::Input, Option::Resistor1>;
-
 // _State: stores MSPApp persistent state, intended to be read/written by outside world
 // Stored in 'Information Memory' (FRAM) because it needs to persist indefinitely
 [[gnu::section(".fram_info.main")]]
@@ -149,8 +146,11 @@ static MSP::State _State = {
 static volatile uint8_t _PowerAssertionCounter = 0;
 using _PowerAssertion = T_ResourceCounter<_PowerAssertionCounter>;
 
+static void _CapturePause();
+static void _CaptureResume();
+
 static volatile uint8_t _CapturePauseAssertionCounter = 0;
-using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter>;
+using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter, _TaskMain::Stop, _TaskMain::Start>;
 
 // MARK: - Power
 
@@ -519,6 +519,22 @@ struct _TaskImg {
 };
 
 struct _TaskMain {
+    static void Start() {
+        _Scheduler::Start<_TaskMain>();
+    }
+    
+    static void Stop() {
+        // Release power assertion
+        _Power = {};
+        // Stop tasks
+        _Scheduler::Stop<_TaskSD>();
+        _Scheduler::Stop<_TaskImg>();
+        _Scheduler::Stop<_TaskMain>();
+        // Turn off power
+        _VDDIMGSDSet(false);
+        _VDDBSet(false);
+    }
+    
     static void Run() {
 //        for (bool x=false;; x=!x) {
 //            _Pin::LED_RED_::Write(x);
@@ -558,7 +574,7 @@ struct _TaskMain {
         
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
-        // Init our tasks
+        // Init our state
         // This is necessary because we may have stopped them at an arbitrary point via _HostModeSet()
         _Init();
         _TaskSD::Init();
@@ -654,7 +670,7 @@ struct _TaskMain {
     static void _Init() {
         // Reset our shared state
         // This is used to init our task after it's been stopped in an arbitrary state.
-//        _WaitingForMotion = false;
+        _Motion = false;
     }
     
 //    static bool DeepSleepOK() {
@@ -678,9 +694,7 @@ struct _TaskMain {
 //    static inline bool _FirstRunDone = false;
     
     // _Motion: announces that motion occurred
-    // _Motion: atomic because it's modified from the interrupt context
     static volatile inline bool _Motion = false;
-//    static inline bool _WaitingForMotion = false;
     
     static inline _PowerAssertion _Power;
     
@@ -1179,6 +1193,6 @@ int main() {
         for (volatile int i=0; i<0xFFFF; i++);
     }
     
-    _Scheduler::Start<_TaskMain, _TaskI2C, _TaskButton>();
+    _Scheduler::Start<_TaskButton, _TaskI2C>();
     _Scheduler::Run();
 }

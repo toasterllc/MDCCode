@@ -2,7 +2,9 @@
 #include "Assert.h"
 
 template <
-auto& T_Counter
+auto& T_Counter,
+void T_Acquire() = nullptr,
+void T_Release() = nullptr
 >
 class T_ResourceCounter {
 public:
@@ -40,6 +42,12 @@ public:
         Assert(!_acquired);
         T_Counter++;
         _acquired = true;
+        
+        if constexpr (!std::is_null_pointer_v<decltype(T_Acquire)>) {
+            if (T_Counter == 1) {
+                T_Acquire();
+            }
+        }
     }
     
     void release() {
@@ -47,6 +55,12 @@ public:
         Assert(T_Counter);
         T_Counter--;
         _acquired = false;
+        
+        if constexpr (!std::is_null_pointer_v<decltype(T_Acquire)>) {
+            if (T_Counter == 0) {
+                T_Release();
+            }
+        }
     }
     
     void swap(T_ResourceCounter& x) {
