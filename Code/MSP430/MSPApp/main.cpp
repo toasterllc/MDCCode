@@ -114,9 +114,10 @@ using _LEDGreen_ = OutputPriority<_Pin::LED_GREEN_>;
 using _LEDRed_ = OutputPriority<_Pin::LED_RED_>;
 
 struct _LEDPriority {
-    static constexpr uint8_t User    = 0;
-    static constexpr uint8_t I2C     = 1;
-    static constexpr uint8_t Default = 2;
+    static constexpr uint8_t Power   = 0;
+    static constexpr uint8_t Capture = 1;
+    static constexpr uint8_t I2C     = 2;
+    static constexpr uint8_t Default = 3;
 };
 
 // _ImgSensor: image sensor object
@@ -624,8 +625,9 @@ struct _TaskMain {
                 return trigger!=_TriggerSources::None;
             });
             
+            // Light the red LED if this is a manual trigger
             if (trigger & _TriggerSources::Manual) {
-                _LEDRed_::Set(_LEDPriority::User, 0);
+                _LEDRed_::Set(_LEDPriority::Capture, 0);
             }
             
             // Stay powered until we finish capturing the image
@@ -652,42 +654,62 @@ struct _TaskMain {
             _TaskImg::SensorInit();
             _TaskSD::CardInit();
             
-            for (;;) {
-                // Capture an image
-                {
-                    // Wait for _TaskSD to be initialized and done with writing, which is necessary
-                    // for 2 reasons:
-                    //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
-                    //      access it,
-                    //   2. we can't initiate a new capture until writing to the SD card (from a
-                    //      previous capture) is complete (because the SDRAM is single-port, so
-                    //      we can only read or write at one time)
-                    _TaskSD::WaitForInitAndWrite();
-                    
-                    // Capture image to RAM
-                    _TaskImg::Capture(imgRingBuf.buf.idEnd);
-                    const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
-                    
-                    // Copy image from RAM -> SD card
-                    _TaskSD::Write(srcRAMBlock);
-                    _TaskSD::Wait();
-                }
+            // Capture an image
+            {
+                // Wait for _TaskSD to be initialized and done with writing, which is necessary
+                // for 2 reasons:
+                //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
+                //      access it,
+                //   2. we can't initiate a new capture until writing to the SD card (from a
+                //      previous capture) is complete (because the SDRAM is single-port, so
+                //      we can only read or write at one time)
+                _TaskSD::WaitForInitAndWrite();
                 
-                break;
+                // Capture image to RAM
+                _TaskImg::Capture(imgRingBuf.buf.idEnd);
+                const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
                 
-//                // Wait up to 1s for further motion
-//                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
-//                if (!motion) break;
-//                
-//                // Only reset _Motion if we've observed motion; otherwise, if we always reset
-//                // _Motion, there'd be a race window where we could first observe
-//                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
-//                // the true value by resetting it to false.
-//                _Motion = false;
+                // Copy image from RAM -> SD card
+                _TaskSD::Write(srcRAMBlock);
+                _TaskSD::Wait();
             }
             
+//            for (;;) {
+//                // Capture an image
+//                {
+//                    // Wait for _TaskSD to be initialized and done with writing, which is necessary
+//                    // for 2 reasons:
+//                    //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
+//                    //      access it,
+//                    //   2. we can't initiate a new capture until writing to the SD card (from a
+//                    //      previous capture) is complete (because the SDRAM is single-port, so
+//                    //      we can only read or write at one time)
+//                    _TaskSD::WaitForInitAndWrite();
+//                    
+//                    // Capture image to RAM
+//                    _TaskImg::Capture(imgRingBuf.buf.idEnd);
+//                    const uint8_t srcRAMBlock = _TaskImg::CaptureBlock();
+//                    
+//                    // Copy image from RAM -> SD card
+//                    _TaskSD::Write(srcRAMBlock);
+//                    _TaskSD::Wait();
+//                }
+//                
+//                break;
+//                
+////                // Wait up to 1s for further motion
+////                const auto motion = _Scheduler::Wait(_Scheduler::Ms(1000), [] { return (bool)_Motion; });
+////                if (!motion) break;
+////                
+////                // Only reset _Motion if we've observed motion; otherwise, if we always reset
+////                // _Motion, there'd be a race window where we could first observe
+////                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
+////                // the true value by resetting it to false.
+////                _Motion = false;
+//            }
+            
             if (trigger & _TriggerSources::Manual) {
-                _LEDRed_::Set(_LEDPriority::User, 1);
+                _LEDRed_::Set(_LEDPriority::Capture, 1);
             }
             
             _VDDIMGSDSet(false);
@@ -695,6 +717,9 @@ struct _TaskMain {
             
             // Release power assertion
             _Power.release();
+            
+            // Release control of the LED
+            _LEDRed_::Set(_LEDPriority::Capture, std::nullopt);
         }
     }
     
@@ -919,11 +944,12 @@ struct _TaskButton {
     static void _LEDFlash() {
         // Flash red LED to signal that we're turning off
         for (int i=0; i<5; i++) {
-            T_Pin::Set(_LEDPriority::User, 0);
+            T_Pin::Set(_LEDPriority::Power, 0);
             _Scheduler::Delay(_Scheduler::Ms(50));
-            T_Pin::Set(_LEDPriority::User, 1);
+            T_Pin::Set(_LEDPriority::Power, 1);
             _Scheduler::Delay(_Scheduler::Ms(50));
         }
+        T_Pin::Set(_LEDPriority::Power, std::nullopt);
     }
     
     // _OffAssertion: controls user-visible on/off behavior
