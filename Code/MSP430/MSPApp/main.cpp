@@ -150,7 +150,7 @@ static void _CapturePause();
 static void _CaptureResume();
 
 static volatile uint8_t _CapturePauseAssertionCounter = 0;
-using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter, _TaskMain::Stop, _TaskMain::Start>;
+using _CapturePauseAssertion = T_ResourceCounter<_CapturePauseAssertionCounter, _CapturePause, _CaptureResume>;
 
 // MARK: - Power
 
@@ -523,9 +523,14 @@ struct _TaskMain {
         _Scheduler::Start<_TaskMain>();
     }
     
-    static void Stop() {
-        // Release power assertion
+    static void Reset() {
+        // Reset our state
         _Power = {};
+        _Motion = false;
+        // Reset other tasks' state
+        // This is necessary because we're stopping them at an arbitrary point
+        _TaskSD::Init();
+        _TaskImg::Init();
         // Stop tasks
         _Scheduler::Stop<_TaskSD>();
         _Scheduler::Stop<_TaskImg>();
@@ -574,11 +579,8 @@ struct _TaskMain {
         
         const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
-        // Init our state
-        // This is necessary because we may have stopped them at an arbitrary point via _HostModeSet()
-        _Init();
-        _TaskSD::Init();
-        _TaskImg::Init();
+        // Reset our state
+        Reset();
         
         // Init SPI peripheral
         _SPI::Init();
@@ -667,12 +669,12 @@ struct _TaskMain {
         }
     }
     
-    static void _Init() {
-        // Reset our shared state
-        // This is used to init our task after it's been stopped in an arbitrary state.
-        _Motion = false;
-    }
-    
+//    static void _Init() {
+//        // Reset our shared state
+//        // This is used to init our task after it's been stopped in an arbitrary state.
+//        _Motion = false;
+//    }
+//    
 //    static bool DeepSleepOK() {
 //        // Permit LPM3.5 if we're waiting for motion, and neither of our tasks are doing anything.
 //        // This logic works because if _WaitingForMotion==true, then we've disabled both _TaskSD
@@ -704,28 +706,12 @@ struct _TaskMain {
     static inline uint8_t Stack[256];
 };
 
-static inline bool _HostMode = false;
+static void _CapturePause() {
+    _TaskMain::Reset();
+}
 
-static void _HostModeSet(bool en) {
-    // Short-circuit if the state hasn't changed
-    if (_HostMode == en) return;
-    _HostMode = en;
-    
-    if (_HostMode) {
-        // Reset state
-        _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
-        _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
-        // Stop _TaskMain
-        _Scheduler::Stop<_TaskSD>();
-        _Scheduler::Stop<_TaskImg>();
-        _Scheduler::Stop<_TaskMain>();
-        // Turn off power
-        _VDDIMGSDSet(false);
-        _VDDBSet(false);
-    
-    } else {
-        _Scheduler::Start<_TaskMain>();
-    }
+static void _CaptureResume() {
+    _TaskMain::Start();
 }
 
 struct _TaskI2C {
@@ -757,8 +743,8 @@ struct _TaskI2C {
             _LEDRed_::Set(_LEDRed_::Priority::High, std::nullopt);
             _LEDGreen_::Set(_LEDGreen_::Priority::High, std::nullopt);
             
-            // Exit host mode
-            _HostModeSet(false);
+            // Release capture-pause assertion if it was held
+            _CapturePause = {};
         }
     }
     
@@ -794,7 +780,13 @@ struct _TaskI2C {
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
-            _HostModeSet(cmd.arg.HostModeSet.en);
+            if (cmd.arg.HostModeSet.en != _CapturePause.acquired()) {
+                if (cmd.arg.HostModeSet.en) {
+                    _CapturePause.acquire();
+                } else {
+                    _CapturePause.release();
+                }
+            }
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::VDDIMGSDSet:
@@ -813,6 +805,12 @@ struct _TaskI2C {
         }
     }
     
+    static bool HostModeEnabled() {
+        return _CapturePause.acquired();
+    }
+    
+    static inline _CapturePauseAssertion _CapturePause;
+    
     // Task stack
     [[gnu::section(".stack._TaskI2C")]]
     alignas(sizeof(void*))
@@ -827,7 +825,10 @@ struct _TaskButton {
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
             // Ignore all interaction in host mode
-            if (_HostMode) continue;
+            if (_TaskI2C::HostModeEnabled()) continue;
+            
+            // Keep the lights on until we're done handling the event
+            _PowerAssertion power(_PowerAssertion::Acquire);
             
             switch (ev) {
             case _Button::Event::Press:
@@ -854,7 +855,7 @@ struct _TaskButton {
                     _LEDFlash<_Pin::LED_RED_>();
                 }
                 
-                
+                _Button::WaitForDeassert();
                 
 //                _Pause.toggle();
 //                if (_Pause.asserted()) {

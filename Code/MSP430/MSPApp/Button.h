@@ -21,19 +21,18 @@ public:
         Hold,
     };
     
+    static void WaitForDeassert() {
+        Toastbox::IntState ints(false);
+        _WaitForDeassert();
+    }
+    
     static Event WaitForEvent() {
-        constexpr uint16_t DebounceDelayMs = 2;
-        
+        // Disable interrupts so that there's no race between us calling
+        // IESConfig() / resetting _Signal, and the ISR firing.
         Toastbox::IntState ints(false);
         
         // Wait for the button to be deasserted, in case it was already asserted when we entered this function
-        {
-            _DeassertedInterrupt::IESConfig();
-            _Signal = false;
-            T_Scheduler::Wait([] { return _Signal.load(); });
-            // Debounce delay
-            T_Scheduler::Sleep(T_Scheduler::Ms(DebounceDelayMs));
-        }
+        _WaitForDeassert();
         
         // Wait for 1->0 transition
         {
@@ -41,7 +40,7 @@ public:
             _Signal = false;
             T_Scheduler::Wait([] { return _Signal.load(); });
             // Debounce delay
-            T_Scheduler::Sleep(T_Scheduler::Ms(DebounceDelayMs));
+            T_Scheduler::Sleep(T_Scheduler::Ms(_DebounceDelayMs));
         }
         
         // Wait for 0->1 transition, or for the hold-timeout to elapse
@@ -56,13 +55,13 @@ public:
         }
     }
     
-    static void OffConfig() {
-        // Wait while button is asserted without running other tasks
-        while (!Pin::Read()) T_Scheduler::Delay(T_Scheduler::Ms(10));
-        // Debounce so we don't turn back on due to the bouncing signal
-        T_Scheduler::Delay(T_Scheduler::Ms(10));
-        // Configure interrupt for the device off state
-        _AssertedInterrupt::IESConfig();
+    static void _WaitForDeassert() {
+        // Wait for the button to be deasserted, in case it was already asserted when we entered this function
+        _DeassertedInterrupt::IESConfig();
+        _Signal = false;
+        T_Scheduler::Wait([] { return _Signal.load(); });
+        // Debounce delay
+        T_Scheduler::Sleep(T_Scheduler::Ms(_DebounceDelayMs));
     }
     
     static void ISR() {
@@ -70,5 +69,7 @@ public:
     }
     
 private:
+    static constexpr uint16_t _DebounceDelayMs = 2;
+    
     static inline std::atomic<bool> _Signal = false;
 };
