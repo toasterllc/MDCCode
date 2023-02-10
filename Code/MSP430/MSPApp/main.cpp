@@ -526,7 +526,8 @@ struct _TaskMain {
     static void Reset() {
         // Reset our state
         _Power = {};
-        _Motion = false;
+        _MotionTrigger = false;
+        _ManualTrigger = false;
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Init();
@@ -538,6 +539,23 @@ struct _TaskMain {
         // Turn off power
         _VDDIMGSDSet(false);
         _VDDBSet(false);
+    }
+    
+    static bool _Trigger() {
+        // Check for manual trigger or motion trigger
+        // We check for either flag and clear both, because we don't want to take 2 back-to-back photos
+        // if both are set in the same timeframe.
+        if (_ManualTrigger || _MotionTrigger) {
+            _ManualTrigger = false;
+            _MotionTrigger = false;
+            return true;
+        }
+        
+        return false;
+    }
+    
+    static void ManualTrigger() {
+        _ManualTrigger = true;
     }
     
     static void Run() {
@@ -595,9 +613,7 @@ struct _TaskMain {
 //            }
             
             // Wait until captures aren't paused
-            _Scheduler::Wait([] { return !_CapturePauseAssertion::Acquired(); });
-            
-            _Scheduler::Sleep(_Scheduler::Ms(3000));
+            _Scheduler::Wait([] { return _Trigger(); });
             
             // Stay powered until we finish capturing the image
             _Power.acquire();
@@ -688,15 +704,18 @@ struct _TaskMain {
 //    }
     
     static void ISR_MotionSignal(uint16_t iv) {
-        _Motion = true;
+        _MotionTrigger = true;
     }
     
 //    // _Init: stores whether this is the first
 //    [[gnu::section(".ram_backup.main")]]
 //    static inline bool _FirstRunDone = false;
     
-    // _Motion: announces that motion occurred
-    static volatile inline bool _Motion = false;
+    // _MotionTrigger: announces that motion occurred
+    static volatile inline bool _MotionTrigger = false;
+    
+    // _ManualTrigger: manual capture trigger
+    static volatile inline bool _ManualTrigger = false;
     
     static inline _PowerAssertion _Power;
     
@@ -822,7 +841,7 @@ struct _TaskButton {
     static void Run() {
         // Pause captures upon power on. This is so that the device is off until
         // the user turns it on by holding the power button.
-        _CapturePause.acquire();
+        _OffAssertion.acquire();
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -836,7 +855,7 @@ struct _TaskButton {
             switch (ev) {
             case _Button::Event::Press:
                 // Ignore button presses if we're off
-                if (_CapturePause.acquired()) break;
+                if (_OffAssertion.acquired()) break;
                 
                 // Take a photo
                 _LEDRed_::Set(_LEDRed_::Priority::Low, 0);
@@ -845,15 +864,15 @@ struct _TaskButton {
                 break;
             
             case _Button::Event::Hold:
-                if (_CapturePause.acquired()) {
+                if (_OffAssertion.acquired()) {
                     // Deassert capture pause -- ie, turn on
-                    _CapturePause.release();
+                    _OffAssertion.release();
                     // Flash green LEDs
                     _LEDFlash<_Pin::LED_GREEN_>();
                 
                 } else {
                     // Assert capture pause -- ie, turn off
-                    _CapturePause.acquire();
+                    _OffAssertion.acquire();
                     // Flash red LEDs
                     _LEDFlash<_Pin::LED_RED_>();
                 }
@@ -896,10 +915,10 @@ struct _TaskButton {
         }
     }
     
-    // _CapturePause: controls user-visible on/off behavior
+    // _OffAssertion: controls user-visible on/off behavior
     // By default, captures are paused so that the device is off until
     // the user turns it on by holding the power button.
-    static inline _CapturePauseAssertion _CapturePause;
+    static inline _CapturePauseAssertion _OffAssertion;
     
     // Task stack
     [[gnu::section(".stack._TaskButton")]]
