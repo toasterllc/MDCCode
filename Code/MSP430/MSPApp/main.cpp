@@ -113,6 +113,12 @@ using _Button = ButtonType<_Scheduler, _Pin::BUTTON_SIGNAL_, _ButtonHoldDuration
 using _LEDGreen_ = OutputPriority<_Pin::LED_GREEN_>;
 using _LEDRed_ = OutputPriority<_Pin::LED_RED_>;
 
+struct _LEDPriority {
+    static constexpr uint8_t User    = 0;
+    static constexpr uint8_t I2C     = 1;
+    static constexpr uint8_t Default = 2;
+};
+
 // _ImgSensor: image sensor object
 // Stored in BAKMEM (RAM that's retained in LPM3.5) so that
 // it's maintained during sleep, but reset upon a cold start.
@@ -619,7 +625,7 @@ struct _TaskMain {
             });
             
             if (trigger & _TriggerSources::Manual) {
-                _Pin::LED_RED_::Write(0);
+                _LEDRed_::Set(_LEDPriority::User, 0);
             }
             
             // Stay powered until we finish capturing the image
@@ -681,7 +687,7 @@ struct _TaskMain {
             }
             
             if (trigger & _TriggerSources::Manual) {
-                _Pin::LED_RED_::Write(1);
+                _LEDRed_::Set(_LEDPriority::User, 1);
             }
             
             _VDDIMGSDSet(false);
@@ -769,8 +775,8 @@ struct _TaskI2C {
             // Cleanup
             
 //            // Relinquish LEDs
-//            _LEDRed_::Set(_LEDRed_::Priority::High, std::nullopt);
-//            _LEDGreen_::Set(_LEDGreen_::Priority::High, std::nullopt);
+            _LEDRed_::Set(_LEDPriority::I2C, std::nullopt);
+            _LEDGreen_::Set(_LEDPriority::I2C, std::nullopt);
             
             // Release capture-pause assertion if it was held
             _HostMode = {};
@@ -800,8 +806,8 @@ struct _TaskI2C {
         }
         
         case Cmd::Op::LEDSet:
-            _LEDRed_::Set(_LEDRed_::Priority::High, !cmd.arg.LEDSet.red);
-            _LEDGreen_::Set(_LEDGreen_::Priority::High, !cmd.arg.LEDSet.green);
+            _LEDRed_::Set(_LEDPriority::I2C, !cmd.arg.LEDSet.red);
+            _LEDGreen_::Set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::TimeSet:
@@ -873,13 +879,13 @@ struct _TaskButton {
                     // Deassert capture pause -- ie, turn on
                     _OffAssertion.release();
                     // Flash green LEDs
-                    _LEDFlash<_Pin::LED_GREEN_>();
+                    _LEDFlash<_LEDGreen_>();
                 
                 } else {
                     // Assert capture pause -- ie, turn off
                     _OffAssertion.acquire();
                     // Flash red LEDs
-                    _LEDFlash<_Pin::LED_RED_>();
+                    _LEDFlash<_LEDRed_>();
                 }
                 
                 _Button::WaitForDeassert();
@@ -913,9 +919,9 @@ struct _TaskButton {
     static void _LEDFlash() {
         // Flash red LED to signal that we're turning off
         for (int i=0; i<5; i++) {
-            T_Pin::Write(0);
+            T_Pin::Set(_LEDPriority::User, 0);
             _Scheduler::Delay(_Scheduler::Ms(50));
-            T_Pin::Write(1);
+            T_Pin::Set(_LEDPriority::User, 1);
             _Scheduler::Delay(_Scheduler::Ms(50));
         }
     }
@@ -1205,12 +1211,12 @@ int main() {
     // Init _BatterySampler
     _BatterySampler::Init();
     
-//    // Init LEDs by setting their low-priority / 'backstop' values to off.
-//    // This is necessary so that relinquishing the LEDs from I2C task causes
-//    // them to turn off. If we didn't have a backstop value, the LEDs would
-//    // remain in whatever state the I2C task set them to before relinquishing.
-//    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
-//    _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+    // Init LEDs by setting their default-priority / 'backstop' values to off.
+    // This is necessary so that relinquishing the LEDs from I2C task causes
+    // them to turn off. If we didn't have a backstop value, the LEDs would
+    // remain in whatever state the I2C task set them to before relinquishing.
+    _LEDGreen_::Set(_LEDPriority::Default, 1);
+    _LEDRed_::Set(_LEDPriority::Default, 1);
     
 //    // Blink green LED to signal that we're turning off
 //    for (;;) {
