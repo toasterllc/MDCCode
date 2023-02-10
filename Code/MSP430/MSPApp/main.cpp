@@ -526,8 +526,7 @@ struct _TaskMain {
     static void Reset() {
         // Reset our state
         _Power = {};
-        _MotionTrigger = false;
-        _ManualTrigger = false;
+        _TrigSrc = _TriggerSources::None;
         // Reset other tasks' state
         // This is necessary because we're stopping them at an arbitrary point
         _TaskSD::Init();
@@ -541,21 +540,21 @@ struct _TaskMain {
         _VDDBSet(false);
     }
     
-    static bool _Trigger() {
-        // Check for manual trigger or motion trigger
-        // We check for either flag and clear both, because we don't want to take 2 back-to-back photos
-        // if both are set in the same timeframe.
-        if (_ManualTrigger || _MotionTrigger) {
-            _ManualTrigger = false;
-            _MotionTrigger = false;
-            return true;
-        }
-        
-        return false;
+    using _TriggerSource = uint8_t;
+    struct _TriggerSources {
+        static constexpr _TriggerSource None    = 0;
+        static constexpr _TriggerSource Motion  = 1<<0;
+        static constexpr _TriggerSource Manual  = 1<<1;
+    };
+    
+    static _TriggerSource _TriggerPoll() {
+        const _TriggerSource x = _TrigSrc;
+        _TrigSrc = _TriggerSources::None;
+        return x;
     }
     
     static void ManualTrigger() {
-        _ManualTrigger = true;
+        _TrigSrc |= _TriggerSources::Manual;
     }
     
     static void Run() {
@@ -612,8 +611,16 @@ struct _TaskMain {
 //                _WaitingForMotion = false;
 //            }
             
-            // Wait until captures aren't paused
-            _Scheduler::Wait([] { return _Trigger(); });
+            // Wait until we're triggered to capture an image
+            static _TriggerSource trigger = _TriggerSources::None;
+            _Scheduler::Wait([] {
+                trigger = _TriggerPoll();
+                return trigger!=_TriggerSources::None;
+            });
+            
+            if (trigger & _TriggerSources::Manual) {
+                _Pin::LED_RED_::Write(0);
+            }
             
             // Stay powered until we finish capturing the image
             _Power.acquire();
@@ -642,8 +649,6 @@ struct _TaskMain {
             for (;;) {
                 // Capture an image
                 {
-                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 0);
-                    
                     // Wait for _TaskSD to be initialized and done with writing, which is necessary
                     // for 2 reasons:
                     //   1. we have to wait for _TaskSD to initialize _State.sd.imgRingBufs before we
@@ -660,8 +665,6 @@ struct _TaskMain {
                     // Copy image from RAM -> SD card
                     _TaskSD::Write(srcRAMBlock);
                     _TaskSD::Wait();
-                    
-                    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
                 }
                 
                 break;
@@ -675,6 +678,10 @@ struct _TaskMain {
 //                // _Motion==false, but then the ISR sets _Motion=true, but then we clobber
 //                // the true value by resetting it to false.
 //                _Motion = false;
+            }
+            
+            if (trigger & _TriggerSources::Manual) {
+                _Pin::LED_RED_::Write(1);
             }
             
             _VDDIMGSDSet(false);
@@ -704,18 +711,20 @@ struct _TaskMain {
 //    }
     
     static void ISR_MotionSignal(uint16_t iv) {
-        _MotionTrigger = true;
+        _TrigSrc |= _TriggerSources::Motion;
     }
     
 //    // _Init: stores whether this is the first
 //    [[gnu::section(".ram_backup.main")]]
 //    static inline bool _FirstRunDone = false;
+//    
+//    // _MotionTrigger: announces that motion occurred
+//    static volatile inline bool _MotionTrigger = false;
+//    
+//    // _ManualTrigger: manual capture trigger
+//    static volatile inline bool _ManualTrigger = false;
     
-    // _MotionTrigger: announces that motion occurred
-    static volatile inline bool _MotionTrigger = false;
-    
-    // _ManualTrigger: manual capture trigger
-    static volatile inline bool _ManualTrigger = false;
+    static volatile inline _TriggerSource _TrigSrc = _TriggerSources::None;
     
     static inline _PowerAssertion _Power;
     
@@ -759,9 +768,9 @@ struct _TaskI2C {
             
             // Cleanup
             
-            // Relinquish LEDs
-            _LEDRed_::Set(_LEDRed_::Priority::High, std::nullopt);
-            _LEDGreen_::Set(_LEDGreen_::Priority::High, std::nullopt);
+//            // Relinquish LEDs
+//            _LEDRed_::Set(_LEDRed_::Priority::High, std::nullopt);
+//            _LEDGreen_::Set(_LEDGreen_::Priority::High, std::nullopt);
             
             // Release capture-pause assertion if it was held
             _HostMode = {};
@@ -856,12 +865,6 @@ struct _TaskButton {
             case _Button::Event::Press:
                 // Ignore button presses if we're off
                 if (_OffAssertion.acquired()) break;
-                
-                // Take a photo
-                _Pin::LED_RED_::Write(0);
-                _Scheduler::Sleep(_Scheduler::Ms(250));
-                _Pin::LED_RED_::Write(1);
-                
                 _TaskMain::ManualTrigger();
                 break;
             
@@ -1202,12 +1205,12 @@ int main() {
     // Init _BatterySampler
     _BatterySampler::Init();
     
-    // Init LEDs by setting their low-priority / 'backstop' values to off.
-    // This is necessary so that relinquishing the LEDs from I2C task causes
-    // them to turn off. If we didn't have a backstop value, the LEDs would
-    // remain in whatever state the I2C task set them to before relinquishing.
-    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
-    _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+//    // Init LEDs by setting their low-priority / 'backstop' values to off.
+//    // This is necessary so that relinquishing the LEDs from I2C task causes
+//    // them to turn off. If we didn't have a backstop value, the LEDs would
+//    // remain in whatever state the I2C task set them to before relinquishing.
+//    _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
+//    _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
     
 //    // Blink green LED to signal that we're turning off
 //    for (;;) {
