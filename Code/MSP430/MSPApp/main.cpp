@@ -858,9 +858,11 @@ struct _TaskButton {
                 if (_OffAssertion.acquired()) break;
                 
                 // Take a photo
-                _LEDRed_::Set(_LEDRed_::Priority::Low, 0);
+                _Pin::LED_RED_::Write(0);
                 _Scheduler::Sleep(_Scheduler::Ms(250));
-                _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
+                _Pin::LED_RED_::Write(1);
+                
+                _TaskMain::ManualTrigger();
                 break;
             
             case _Button::Event::Hold:
@@ -952,10 +954,10 @@ static void _Sleep() {
     // If deep sleep is OK, enter LPM3.5 sleep, where RAM content is lost.
     // Otherwise, enter LPM1 sleep, because something is running.
     
-    const uint16_t mode = (_PowerAssertion::Acquired() ? LPM1_bits : LPM3_bits);
+//    const uint16_t mode = (_PowerAssertion::Acquired() ? LPM1_bits : LPM3_bits);
     
-//    // If we're entering LPM3/LPM4, disable regulator so we enter LPM3.5 / LPM4.5 (instead of just LPM3/LPM4)
-//    if (mode == LPM3_bits) {
+//    // If nothing asserts that we remained powered, enter LPM3.5
+//    if (!_PowerAssertion::Acquired()) {
 //        PMMUnlock pmm; // Unlock PMM registers
 //        PMMCTL0_L |= PMMREGOFF_L;
 //    }
@@ -963,7 +965,7 @@ static void _Sleep() {
     // Remember our current interrupt state, which IntState will restore upon return
     Toastbox::IntState ints;
     // Atomically enable interrupts and go to sleep
-    __bis_SR_register(GIE | mode);
+    __bis_SR_register(GIE | LPM3_bits);
 }
 
 // MARK: - Interrupts
