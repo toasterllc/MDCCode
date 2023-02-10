@@ -935,11 +935,11 @@ static void _Sleep() {
     
     const uint16_t mode = (_PowerAssertion::Acquired() ? LPM1_bits : LPM3_bits);
     
-    // If we're entering LPM3/LPM4, disable regulator so we enter LPM3.5 / LPM4.5 (instead of just LPM3/LPM4)
-    if (mode == LPM3_bits) {
-        PMMUnlock pmm; // Unlock PMM registers
-        PMMCTL0_L |= PMMREGOFF_L;
-    }
+//    // If we're entering LPM3/LPM4, disable regulator so we enter LPM3.5 / LPM4.5 (instead of just LPM3/LPM4)
+//    if (mode == LPM3_bits) {
+//        PMMUnlock pmm; // Unlock PMM registers
+//        PMMCTL0_L |= PMMREGOFF_L;
+//    }
     
     // Remember our current interrupt state, which IntState will restore upon return
     Toastbox::IntState ints;
