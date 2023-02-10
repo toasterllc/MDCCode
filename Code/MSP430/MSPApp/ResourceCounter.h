@@ -3,8 +3,8 @@
 
 template <
 auto& T_Counter,
-void T_Acquire() = nullptr,
-void T_Release() = nullptr
+auto T_AcquireFn = nullptr,
+auto T_ReleaseFn = nullptr
 >
 class T_ResourceCounter {
 public:
@@ -15,14 +15,14 @@ public:
     T_ResourceCounter(T_ResourceCounter&& x) { swap(x); }
     T_ResourceCounter& operator=(T_ResourceCounter&& x) { swap(x); return *this; }
     
-    // Constructor, released
+    // Constructor
     T_ResourceCounter() {}
-    
-    // Constructor, acquireed
-    struct AcquireType {}; static constexpr auto Acquire = AcquireType();
-    T_ResourceCounter(AcquireType) {
-        acquire();
-    }
+//    
+//    // Constructor, acquireed
+//    struct AcquireType {}; static constexpr auto Acquire = AcquireType();
+//    T_ResourceCounter(AcquireType) {
+//        acquire();
+//    }
     
     ~T_ResourceCounter() {
         if (_acquired) {
@@ -43,9 +43,9 @@ public:
         T_Counter++;
         _acquired = true;
         
-        if constexpr (!std::is_null_pointer_v<decltype(T_Acquire)>) {
+        if constexpr (!std::is_null_pointer_v<decltype(T_AcquireFn)>) {
             if (T_Counter == 1) {
-                T_Acquire();
+                T_AcquireFn();
             }
         }
     }
@@ -56,9 +56,9 @@ public:
         T_Counter--;
         _acquired = false;
         
-        if constexpr (!std::is_null_pointer_v<decltype(T_Acquire)>) {
+        if constexpr (!std::is_null_pointer_v<decltype(T_ReleaseFn)>) {
             if (T_Counter == 0) {
-                T_Release();
+                T_ReleaseFn();
             }
         }
     }

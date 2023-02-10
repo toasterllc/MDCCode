@@ -721,7 +721,8 @@ struct _TaskI2C {
             _I2C::WaitUntilActive();
             
             // Maintain power while I2C is active
-            _PowerAssertion power(_PowerAssertion::Acquire);
+            _PowerAssertion power;
+            power.acquire();
             
             for (;;) {
                 // Wait for a command
@@ -819,8 +820,9 @@ struct _TaskI2C {
 
 struct _TaskButton {
     static void Run() {
-        // Flash green LEDs to signal that we turned on
-        _LEDFlash<_Pin::LED_GREEN_>();
+        // Pause captures upon power on. This is so that the device is off until
+        // the user turns it on by holding the power button.
+        _CapturePause.acquire();
         
         for (;;) {
             const _Button::Event ev = _Button::WaitForEvent();
@@ -828,7 +830,8 @@ struct _TaskButton {
             if (_TaskI2C::HostModeEnabled()) continue;
             
             // Keep the lights on until we're done handling the event
-            _PowerAssertion power(_PowerAssertion::Acquire);
+            _PowerAssertion power;
+            power.acquire();
             
             switch (ev) {
             case _Button::Event::Press:
@@ -896,8 +899,7 @@ struct _TaskButton {
     // _CapturePause: controls user-visible on/off behavior
     // By default, captures are paused so that the device is off until
     // the user turns it on by holding the power button.
-    static inline _CapturePauseAssertion _CapturePause =
-        _CapturePauseAssertion(_CapturePauseAssertion::Acquire);
+    static inline _CapturePauseAssertion _CapturePause;
     
     // Task stack
     [[gnu::section(".stack._TaskButton")]]
@@ -1186,14 +1188,17 @@ int main() {
     _LEDGreen_::Set(_LEDGreen_::Priority::Low, 1);
     _LEDRed_::Set(_LEDRed_::Priority::Low, 1);
     
-    // Blink green LED to signal that we're turning off
-    for (int i=0; i<5; i++) {
-        _Pin::LED_GREEN_::Write(0);
-        for (volatile int i=0; i<0xFFFF; i++);
-        _Pin::LED_GREEN_::Write(1);
-        for (volatile int i=0; i<0xFFFF; i++);
-    }
+//    // Blink green LED to signal that we're turning off
+//    for (;;) {
+//        for (int i=0; i<5; i++) {
+//            _Pin::LED_GREEN_::Write(0);
+//            for (volatile int i=0; i<0xFFFF; i++);
+//            _Pin::LED_GREEN_::Write(1);
+//            for (volatile int i=0; i<0xFFFF; i++);
+//        }
+//    }
     
+//    _Scheduler::Start<_TaskButton>();
     _Scheduler::Start<_TaskButton, _TaskI2C>();
     _Scheduler::Run();
 }
