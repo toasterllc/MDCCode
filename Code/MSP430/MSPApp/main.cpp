@@ -745,7 +745,7 @@ struct _TaskI2C {
             _LEDGreen_::Set(_LEDGreen_::Priority::High, std::nullopt);
             
             // Release capture-pause assertion if it was held
-            _CapturePause = {};
+            _HostMode = {};
         }
     }
     
@@ -781,11 +781,11 @@ struct _TaskI2C {
             return MSP::Resp{ .ok = true };
         
         case Cmd::Op::HostModeSet:
-            if (cmd.arg.HostModeSet.en != _CapturePause.acquired()) {
+            if (cmd.arg.HostModeSet.en != _HostMode.acquired()) {
                 if (cmd.arg.HostModeSet.en) {
-                    _CapturePause.acquire();
+                    _HostMode.acquire();
                 } else {
-                    _CapturePause.release();
+                    _HostMode.release();
                 }
             }
             return MSP::Resp{ .ok = true };
@@ -807,10 +807,10 @@ struct _TaskI2C {
     }
     
     static bool HostModeEnabled() {
-        return _CapturePause.acquired();
+        return _HostMode.acquired();
     }
     
-    static inline _CapturePauseAssertion _CapturePause;
+    static inline _CapturePauseAssertion _HostMode;
     
     // Task stack
     [[gnu::section(".stack._TaskI2C")]]
