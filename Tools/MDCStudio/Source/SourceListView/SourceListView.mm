@@ -209,9 +209,9 @@ using namespace MDCStudio;
     //    device->name = @"MDC Device 123456";
     //    _devicesSection->items.push_back(device);
         
-        Library* library = [self _createItemWithClass:[Library class]];
-        library->name = @"New Library";
-        _librariesSection->items.push_back(library);
+//        Library* library = [self _createItemWithClass:[Library class]];
+//        library->name = @"New Library";
+//        _librariesSection->items.push_back(library);
         
         _outlineItems = {
             spacer1,
