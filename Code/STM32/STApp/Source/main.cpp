@@ -545,12 +545,12 @@ static void _ICERAMWrite(const STM::Cmd& cmd) {
     _ICE_CRST_::Write(0);
     _Scheduler::Sleep(_Scheduler::Ms(1)); // Sleep 1 ms (ideally, 200 ns)
     
-    // Configure QSPI for writing the ICE40 configuration
-    _QSPIConfigSet(&_QSPIConfigs::ICEWrite);
-    
     // Release reset
     _ICE_CRST_::Write(1);
     _Scheduler::Sleep(_Scheduler::Ms(2)); // Sleep 2 ms (ideally, 1.2 ms for 8K devices)
+    
+    // Configure QSPI for writing the ICE40 configuration
+    _QSPIConfigSet(&_QSPIConfigs::ICEWrite);
     
     // Send 8 clocks
     static const uint8_t ff = 0xff;
