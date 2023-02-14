@@ -443,14 +443,15 @@ static void _configureDevice(MDCUSBDevice& dev) {
                 
                 const STM::Status status = mdc->statusGet();
                 switch (status.mode) {
-                case STM::Status::Modes::STMLoader:
+                case STM::Status::Mode::STMLoader: {
                     abort();
                     break;
 //                    _configureDevice(*mdc);
 //                    configuredDevices.insert(mdc->serial());
 //                    break;
+                }
                 
-                case STM::Status::Modes::STMApp:
+                case STM::Status::Mode::STMApp: {
                     // Enter host mode
                     mdc->mspHostModeSet(true);
                     
@@ -473,6 +474,11 @@ static void _configureDevice(MDCUSBDevice& dev) {
 //                        mdc->bootloaderInvoke();
 //                    }
                     break;
+                }
+                
+                default: {
+                    abort();
+                }
                 
 //                default:
 ////                    configuredDevices.erase(mdc->serial());
