@@ -73,7 +73,7 @@ using _SDCard = SD::Card<
     _ICE,       // T_ICE
     _SDError,   // T_Error
     1,          // T_ClkDelaySlow (odd values invert the clock)
-    0           // T_ClkDelayFast (odd values invert the clock)
+    1           // T_ClkDelayFast (odd values invert the clock)
 >;
 
 class _SD {
