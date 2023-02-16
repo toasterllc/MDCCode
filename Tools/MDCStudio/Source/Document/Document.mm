@@ -238,7 +238,8 @@ using namespace MDCStudio;
         [sv setMagnifyToFit:true animate:false];
         
         NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageThumb.timestamp];
-        printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageId, (uintmax_t)imageThumb.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);
+        printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageThumb.ref.id,
+            (uintmax_t)imageThumb.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);
         
 //        if (delta) {
 //            [_mainView setContentView:imageView animation:(delta>0 ? MainViewAnimation::SlideToLeft : MainViewAnimation::SlideToRight)];

@@ -296,6 +296,22 @@ private:
         _dev->sdRead((SD::Block)imageRef.addr);
         _dev->readout(imageData.get(), ImgSD::Full::ImagePaddedLen);
         
+        if (_ChecksumValid(imageData.get(), Img::Size::Full)) {
+//            printf("Checksum valid (size: full)\n");
+        } else {
+            printf("Checksum INVALID (size: full)\n");
+//            abort();
+        }
+        
+//        // Validate checksum
+//        const size_t checksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
+//        const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), checksumOffset);
+//        uint32_t checksumGot = 0;
+//        memcpy(&checksumGot, (uint8_t*)buf.get()+checksumOffset, Img::ChecksumLen);
+//        if (checksumGot != checksumExpected) {
+//            throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+//        }
+        
         const Img::Header& header = *(const Img::Header*)imageData.get();
         ImagePtr image = std::make_shared<Image>(Image{
             .width      = header.imageWidth,
@@ -463,6 +479,19 @@ private:
         }
     }
     
+    static bool _ChecksumValid(const void* data, Img::Size size) {
+        const size_t ChecksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
+        // Validate thumbnail checksum
+        const uint32_t checksumExpected = ChecksumFletcher32(data, ChecksumOffset);
+        uint32_t checksumGot = 0;
+        memcpy(&checksumGot, (uint8_t*)data+ChecksumOffset, Img::ChecksumLen);
+        if (checksumGot != checksumExpected) {
+            printf("Checksum invalid (expected:0x%08x got:0x%08x)\n", checksumExpected, checksumGot);
+            return false;
+        }
+        return true;
+    }
+    
     void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount, SD::Block block) {
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
@@ -482,15 +511,12 @@ private:
             ImageThumb& imageThumb = *_imageLibrary->recordGet(recordRefIter);
             ImageRef& imageRef = imageThumb.ref; // Safe without a lock because we're the only entity using the image library's reserved space
             
-            // Validate checksum
-            const uint32_t checksumExpected = ChecksumFletcher32(imgData, Img::Thumb::ChecksumOffset);
-            uint32_t checksumGot = 0;
-            memcpy(&checksumGot, imgData+Img::Thumb::ChecksumOffset, Img::ChecksumLen);
-            if (checksumGot != checksumExpected) {
-                printf("Checksum invalid (expected:0x%08x got:0x%08x)\n", checksumExpected, checksumGot);
-//                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+            // Validate thumbnail checksum
+            if (_ChecksumValid(imgData, Img::Size::Thumb)) {
+                printf("Checksum valid (size: thumb)\n");
             } else {
-//                printf("Checksum OK\n");
+                abort();
+//                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
             }
             
             // Populate ImageRef fields
