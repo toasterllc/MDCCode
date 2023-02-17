@@ -11,10 +11,10 @@
 		553031FC27BC45A100BEFFEA /* Selection.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F827BC45A100BEFFEA /* Selection.png */; };
 		553031FD27BC45A100BEFFEA /* Outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F927BC45A100BEFFEA /* Outline.png */; };
 		553031FF27BC45A100BEFFEA /* Mask.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031FB27BC45A100BEFFEA /* Mask.png */; };
+		55425B1B29A01BE000F25D57 /* ThreePartView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B1A29A01BE000F25D57 /* ThreePartView.mm */; };
 		5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544A7EA27B5E011006AB473 /* SourceListView.xib */; };
 		5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544A7EC27B5E011006AB473 /* SourceListView.mm */; };
 		5544AE2927B5E595006AB473 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5544ADFD27B5E57A006AB473 /* Renderer.metal */; };
-		5544AE3327B5F98C006AB473 /* MainView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE3227B5F98C006AB473 /* MainView.mm */; };
 		5544AE5D27B6EE04006AB473 /* Document.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE5A27B6EE04006AB473 /* Document.mm */; };
 		5544AE5E27B6EE04006AB473 /* Document.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544AE5B27B6EE04006AB473 /* Document.xib */; };
 		5544AE6127B6F16F006AB473 /* DocumentController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544AE6027B6F16F006AB473 /* DocumentController.mm */; };
@@ -62,6 +62,9 @@
 		553031F827BC45A100BEFFEA /* Selection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Selection.png; sourceTree = "<group>"; };
 		553031F927BC45A100BEFFEA /* Outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Outline.png; sourceTree = "<group>"; };
 		553031FB27BC45A100BEFFEA /* Mask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Mask.png; sourceTree = "<group>"; };
+		55425B1829A01BE000F25D57 /* ThreePartView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
+		55425B1929A01BE000F25D57 /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
+		55425B1A29A01BE000F25D57 /* ThreePartView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ThreePartView.mm; sourceTree = "<group>"; };
 		5544A7EA27B5E011006AB473 /* SourceListView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SourceListView.xib; sourceTree = "<group>"; };
 		5544A7EB27B5E011006AB473 /* SourceListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SourceListView.h; sourceTree = "<group>"; };
 		5544A7EC27B5E011006AB473 /* SourceListView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SourceListView.mm; sourceTree = "<group>"; };
@@ -108,12 +111,8 @@
 		5544AE2227B5E58F006AB473 /* RefCounted.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RefCounted.h; sourceTree = "<group>"; };
 		5544AE2327B5E58F006AB473 /* Uniqued.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Uniqued.h; sourceTree = "<group>"; };
 		5544AE2427B5E58F006AB473 /* USBDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBDevice.h; sourceTree = "<group>"; };
-		5544AE2527B5E58F006AB473 /* TaskSwap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskSwap.h; sourceTree = "<group>"; };
 		5544AE2627B5E58F006AB473 /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
-		5544AE2727B5E58F006AB473 /* IntState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IntState.h; sourceTree = "<group>"; };
 		5544AE2827B5E58F006AB473 /* SendRight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SendRight.h; sourceTree = "<group>"; };
-		5544AE3127B5F98C006AB473 /* MainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainView.h; sourceTree = "<group>"; };
-		5544AE3227B5F98C006AB473 /* MainView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MainView.mm; sourceTree = "<group>"; };
 		5544AE5A27B6EE04006AB473 /* Document.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Document.mm; sourceTree = "<group>"; };
 		5544AE5B27B6EE04006AB473 /* Document.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Document.xib; sourceTree = "<group>"; };
 		5544AE5C27B6EE04006AB473 /* Document.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Document.h; sourceTree = "<group>"; };
@@ -212,6 +211,16 @@
 				551328B827B45D7C00CD823B /* ImageGridView.mm */,
 			);
 			path = ImageGridView;
+			sourceTree = "<group>";
+		};
+		55425B1729A01BE000F25D57 /* Mac */ = {
+			isa = PBXGroup;
+			children = (
+				55425B1829A01BE000F25D57 /* ThreePartView.h */,
+				55425B1A29A01BE000F25D57 /* ThreePartView.mm */,
+				55425B1929A01BE000F25D57 /* Util.h */,
+			);
+			path = Mac;
 			sourceTree = "<group>";
 		};
 		5544A7E927B5E011006AB473 /* SourceListView */ = {
@@ -314,10 +323,9 @@
 				5544AE2227B5E58F006AB473 /* RefCounted.h */,
 				5544AE2327B5E58F006AB473 /* Uniqued.h */,
 				5544AE2427B5E58F006AB473 /* USBDevice.h */,
-				5544AE2527B5E58F006AB473 /* TaskSwap.h */,
 				5544AE2627B5E58F006AB473 /* RingBuffer.h */,
-				5544AE2727B5E58F006AB473 /* IntState.h */,
 				5544AE2827B5E58F006AB473 /* SendRight.h */,
+				55425B1729A01BE000F25D57 /* Mac */,
 			);
 			path = Toastbox;
 			sourceTree = "<group>";
@@ -329,8 +337,6 @@
 				5544AE6027B6F16F006AB473 /* DocumentController.mm */,
 				5544AE5C27B6EE04006AB473 /* Document.h */,
 				5544AE5A27B6EE04006AB473 /* Document.mm */,
-				5544AE3127B5F98C006AB473 /* MainView.h */,
-				5544AE3227B5F98C006AB473 /* MainView.mm */,
 				5544AE5B27B6EE04006AB473 /* Document.xib */,
 			);
 			path = Document;
@@ -551,9 +557,9 @@
 				55E43F9828C00D6B00FCCEA0 /* ImagePipeline.mm in Sources */,
 				55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */,
 				55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */,
+				55425B1B29A01BE000F25D57 /* ThreePartView.mm in Sources */,
 				55E43F9C28C00D6B00FCCEA0 /* EstimateIlluminantFFCC.mm in Sources */,
 				55E43F9A28C00D6B00FCCEA0 /* ReconstructHighlights.metal in Sources */,
-				5544AE3327B5F98C006AB473 /* MainView.mm in Sources */,
 				55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */,
 				5544AE2927B5E595006AB473 /* Renderer.metal in Sources */,
 				55F8D01927BEF97200757165 /* ImageView.metal in Sources */,

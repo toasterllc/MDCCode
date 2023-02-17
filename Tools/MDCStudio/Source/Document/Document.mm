@@ -1,5 +1,5 @@
 #import "Document.h"
-#import "MainView.h"
+#import "Toastbox/Mac/ThreePartView.h"
 #import "SourceListView/SourceListView.h"
 #import "ImageGridView/ImageGridView.h"
 #import "ImageView/ImageView.h"
@@ -10,7 +10,7 @@ using namespace MDCStudio;
 @end
 
 @implementation Document {
-    IBOutlet MainView* _mainView;
+    IBOutlet ThreePartView* _mainView;
     SourceListView* _sourceListView;
 }
 
@@ -19,9 +19,13 @@ using namespace MDCStudio;
 }
 
 - (void)awakeFromNib {
-//    printf("sizeof(MSP::State): %zu\n", sizeof(MSP::State));
-    _sourceListView = [_mainView sourceListView];
+    // Create source list
+    _sourceListView = [[SourceListView alloc] initWithFrame:{}];
     [_sourceListView setDelegate:self];
+    
+//    printf("sizeof(MSP::State): %zu\n", sizeof(MSP::State));
+    
+    [_mainView setLeftView:_sourceListView];
     
     // Handle whatever is first selected
     [self sourceListViewSelectionChanged:_sourceListView];
@@ -206,10 +210,12 @@ using namespace MDCStudio;
         [imageGridView setDelegate:self];
         
         ImageGridScrollView* sv = [[ImageGridScrollView alloc] initWithFixedDocument:imageGridView];
-        [_mainView setContentView:sv animation:MainViewAnimation::None];
+        [_mainView setCenterView:sv];
+        [[_mainView window] makeFirstResponder:[sv document]];
+//        [_mainView setContentView:sv animation:MainViewAnimation::None];
     
     } else {
-        [_mainView setContentView:nil animation:MainViewAnimation::None];
+//        [_mainView setCenterView:nil];
     }
 }
 
@@ -247,7 +253,8 @@ using namespace MDCStudio;
 //            [_mainView setContentView:imageView animation:MainViewAnimation::None];
 //        }
         
-        [_mainView setContentView:sv animation:MainViewAnimation::None];
+        [_mainView setCenterView:sv];
+        [[_mainView window] makeFirstResponder:[sv document]];
         
         return true;
     }
