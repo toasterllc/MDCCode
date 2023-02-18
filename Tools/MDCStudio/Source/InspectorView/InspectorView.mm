@@ -84,6 +84,31 @@ using namespace MDCStudio;
 
 
 
+
+@interface InspectorView_Checkbox : InspectorView_Item
+@end
+
+@implementation InspectorView_Checkbox {
+@public
+    IBOutlet NSButton* checkbox;
+    NSString* name;
+}
+
+- (NSString*)name { return @""; }
+- (bool)selectable { return false; }
+
+- (void)update {
+    [super update];
+    [checkbox setTitle:name];
+}
+
+@end
+
+
+
+
+
+
 @interface InspectorView_RowView : NSTableRowView
 @end
 
@@ -97,6 +122,7 @@ using namespace MDCStudio;
 #define SectionItem     InspectorView_SectionItem
 #define Spacer          InspectorView_Spacer
 #define Slider          InspectorView_Slider
+#define Checkbox        InspectorView_Checkbox
 
 // MARK: - InspectorView
 
@@ -215,6 +241,29 @@ using namespace MDCStudio;
             _outlineItems.push_back(section);
         }
         
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = 8;
+            _outlineItems.push_back(spacer);
+        }
+        
+        
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"Processing";
+            
+            Checkbox* checkbox1 = [self _createItemWithClass:[Checkbox class]];
+            checkbox1->name = @"Defringe";
+            
+            Checkbox* checkbox2 = [self _createItemWithClass:[Checkbox class]];
+            checkbox2->name = @"Reconstruct Highlights Hello";
+            
+            section->items = { checkbox1, checkbox2 };
+            _outlineItems.push_back(section);
+        }
+        
+        
+        
 //        Spacer* spacer2 = [self _createItemWithClass:[Spacer class]];
 //        spacer2->height = 10;
         
@@ -255,14 +304,14 @@ using namespace MDCStudio;
     return view;
 }
 
-- (void)setFrameSize:(NSSize)size {
-    [super setFrameSize:size];
-    // Fix intermittent issue where our sole column can be sized a few points too large,
-    // causing the enclosing scroll view to be able to scroll horizontally (which
-    // we don't want)
-    CGFloat usableWidth = [self bounds].size.width-4;
-    [[_outlineView tableColumns][0] setWidth:usableWidth];
-}
+//- (void)setFrameSize:(NSSize)size {
+//    [super setFrameSize:size];
+//    // Fix intermittent issue where our sole column can be sized a few points too large,
+//    // causing the enclosing scroll view to be able to scroll horizontally (which
+//    // we don't want)
+//    CGFloat usableWidth = [self bounds].size.width-4;
+//    [[_outlineView tableColumns][0] setWidth:usableWidth];
+//}
 
 // MARK: - Outline View Data Source / Delegate
 

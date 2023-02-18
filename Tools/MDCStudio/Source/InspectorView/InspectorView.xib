@@ -41,7 +41,7 @@
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                     </tableCellView>
                                     <tableCellView identifier="InspectorView_Spacer" translatesAutoresizingMaskIntoConstraints="NO" id="xVL-Ng-GMo" customClass="InspectorView_Spacer">
-                                        <rect key="frame" x="0.0" y="0.0" width="200" height="20"/>
+                                        <rect key="frame" x="1" y="20" width="200" height="20"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="20" id="wWk-M5-Tlg"/>
                                         </constraints>
@@ -50,7 +50,7 @@
                                         </connections>
                                     </tableCellView>
                                     <tableCellView identifier="InspectorView_Section" translatesAutoresizingMaskIntoConstraints="NO" id="PcM-y8-dqV" customClass="InspectorView_Section">
-                                        <rect key="frame" x="0.0" y="0.0" width="200" height="20"/>
+                                        <rect key="frame" x="1" y="42" width="200" height="20"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aQl-zt-mX6">
                                                 <rect key="frame" x="-2" y="3" width="204" height="14"/>
@@ -116,6 +116,30 @@
                                             <outlet property="slider" destination="DZe-QJ-YrD" id="JOi-gS-krL"/>
                                         </connections>
                                     </tableCellView>
+                                    <tableCellView identifier="InspectorView_Checkbox" id="EwO-sD-ijl" customClass="InspectorView_Checkbox">
+                                        <rect key="frame" x="1" y="86" width="200" height="20"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <subviews>
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4h7-i2-RCa">
+                                                <rect key="frame" x="-3" y="1" width="193" height="18"/>
+                                                <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingMiddle" state="on" inset="2" id="acZ-s2-rX2">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="menu" size="11"/>
+                                                </buttonCell>
+                                            </button>
+                                        </subviews>
+                                        <constraints>
+                                            <constraint firstItem="4h7-i2-RCa" firstAttribute="leading" secondItem="EwO-sD-ijl" secondAttribute="leading" id="Ec5-QO-cXg"/>
+                                            <constraint firstAttribute="trailing" secondItem="4h7-i2-RCa" secondAttribute="trailing" constant="12" id="g17-fM-mE9"/>
+                                            <constraint firstItem="4h7-i2-RCa" firstAttribute="centerY" secondItem="EwO-sD-ijl" secondAttribute="centerY" id="l1c-7I-CyJ"/>
+                                            <constraint firstAttribute="height" constant="20" id="sne-Vo-Dpv"/>
+                                        </constraints>
+                                        <connections>
+                                            <outlet property="_height" destination="sne-Vo-Dpv" id="9BH-Jz-MrR"/>
+                                            <outlet property="_indent" destination="Ec5-QO-cXg" id="CjR-c1-YJw"/>
+                                            <outlet property="checkbox" destination="4h7-i2-RCa" id="czp-5J-7Sa"/>
+                                        </connections>
+                                    </tableCellView>
                                 </prototypeCellViews>
                             </tableColumn>
                         </tableColumns>
@@ -127,7 +151,7 @@
                 </subviews>
                 <nil key="backgroundColor"/>
             </clipView>
-            <scroller key="horizontalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="oaD-I2-Mvd">
+            <scroller key="horizontalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="0.33333333333333331" horizontal="YES" id="oaD-I2-Mvd">
                 <rect key="frame" x="0.0" y="384" width="200" height="16"/>
                 <autoresizingMask key="autoresizingMask"/>
             </scroller>
