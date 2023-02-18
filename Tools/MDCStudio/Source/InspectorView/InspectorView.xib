@@ -123,7 +123,7 @@
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
                                                 <rect key="frame" x="-2" y="3" width="33" height="14"/>
                                                 <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" title="Label" id="v9N-Nx-KcH">
-                                                    <font key="font" metaFont="controlContent" size="11"/>
+                                                    <font key="font" metaFont="menu" size="11"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
@@ -156,7 +156,7 @@
                                                 <rect key="frame" x="-3" y="1" width="193" height="18"/>
                                                 <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingMiddle" state="on" inset="2" id="acZ-s2-rX2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="controlContent" size="11"/>
+                                                    <font key="font" metaFont="menu" size="11"/>
                                                 </buttonCell>
                                             </button>
                                         </subviews>
@@ -176,31 +176,31 @@
                                         <rect key="frame" x="1" y="130" width="200" height="20"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
-                                            <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ctX-YX-6kU">
+                                            <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="98b-tg-mR0">
                                                 <rect key="frame" x="-3" y="-2" width="194" height="22"/>
-                                                <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="IsN-P0-sBz" id="zTu-3j-lbB">
+                                                <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Y5b-qt-FR1" id="D89-oK-seX">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="controlContent" size="11"/>
-                                                    <menu key="menu" id="had-DB-ulJ">
+                                                    <font key="font" metaFont="menu" size="11"/>
+                                                    <menu key="menu" id="Bvc-nQ-9xm">
                                                         <items>
-                                                            <menuItem title="Item 1" state="on" id="IsN-P0-sBz"/>
-                                                            <menuItem title="Item 2" id="R3c-kS-fZm"/>
-                                                            <menuItem title="Item 3" id="nSS-KE-YTu"/>
+                                                            <menuItem title="Item 1" state="on" id="Y5b-qt-FR1"/>
+                                                            <menuItem title="Item 2" id="VDK-5j-gw4"/>
+                                                            <menuItem title="Item 3" id="h1o-Yd-Edw"/>
                                                         </items>
                                                     </menu>
                                                 </popUpButtonCell>
                                             </popUpButton>
                                         </subviews>
                                         <constraints>
-                                            <constraint firstItem="ctX-YX-6kU" firstAttribute="centerY" secondItem="Uqz-Ai-fuI" secondAttribute="centerY" id="6Ry-cZ-GRI"/>
-                                            <constraint firstAttribute="trailing" secondItem="ctX-YX-6kU" secondAttribute="trailing" constant="12" id="DIA-mC-Vq2"/>
                                             <constraint firstAttribute="height" constant="20" id="Ft1-kI-uBO"/>
-                                            <constraint firstItem="ctX-YX-6kU" firstAttribute="leading" secondItem="Uqz-Ai-fuI" secondAttribute="leading" id="ctH-9c-8rE"/>
+                                            <constraint firstItem="98b-tg-mR0" firstAttribute="leading" secondItem="Uqz-Ai-fuI" secondAttribute="leading" id="VDW-tO-TgH"/>
+                                            <constraint firstItem="98b-tg-mR0" firstAttribute="centerY" secondItem="Uqz-Ai-fuI" secondAttribute="centerY" id="YY7-vN-bVH"/>
+                                            <constraint firstAttribute="trailing" secondItem="98b-tg-mR0" secondAttribute="trailing" constant="12" id="rUv-V2-sgZ"/>
                                         </constraints>
                                         <connections>
                                             <outlet property="_height" destination="Ft1-kI-uBO" id="icE-Eb-awB"/>
-                                            <outlet property="_indent" destination="ctH-9c-8rE" id="fOj-Xt-9kc"/>
-                                            <outlet property="menu" destination="ctX-YX-6kU" id="q5l-Og-CAP"/>
+                                            <outlet property="_indent" destination="VDW-tO-TgH" id="sid-C6-mo9"/>
+                                            <outlet property="menu" destination="98b-tg-mR0" id="aUu-II-dMo"/>
                                         </connections>
                                     </tableCellView>
                                 </prototypeCellViews>
