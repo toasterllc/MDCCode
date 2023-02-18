@@ -22,8 +22,6 @@ public:
         using BatChrgLvlEn_Pin = typename T_BatChrgLvlEn_Pin::template Opts<GPIO::Option::Output0>;
     };
     
-    using LED_GREEN_ = GPIO::PortA::Pin<0x1, GPIO::Option::Output1>;
-    
     static void Init() {
         // Configure ADC pin
         static_assert(Pin::BatChrgLvlPin::PinIdx < 8);
