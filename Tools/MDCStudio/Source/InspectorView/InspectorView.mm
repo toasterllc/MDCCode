@@ -150,16 +150,75 @@ using namespace MDCStudio;
     
     // Populate NSOutlineView
     {
-        Spacer* spacer1 = [self _createItemWithClass:[Spacer class]];
-        spacer1->height = 3;
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = 3;
+            _outlineItems.push_back(spacer);
+        }
         
-        Section* section = [self _createItemWithClass:[Section class]];
-        section->name = @"Devices";
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"White Balance";
+            section->items = { [self _createItemWithClass:[Slider class]] };
+            _outlineItems.push_back(section);
+        }
         
-        Spacer* spacer2 = [self _createItemWithClass:[Spacer class]];
-        spacer2->height = 10;
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = 8;
+            _outlineItems.push_back(spacer);
+        }
         
-        Slider* slider = [self _createItemWithClass:[Slider class]];
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"Exposure";
+            section->items = { [self _createItemWithClass:[Slider class]] };
+            _outlineItems.push_back(section);
+        }
+        
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = 8;
+            _outlineItems.push_back(spacer);
+        }
+        
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"Brightness";
+            section->items = { [self _createItemWithClass:[Slider class]] };
+            _outlineItems.push_back(section);
+        }
+        
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = 8;
+            _outlineItems.push_back(spacer);
+        }
+        
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"Contrast";
+            section->items = { [self _createItemWithClass:[Slider class]] };
+            _outlineItems.push_back(section);
+        }
+        
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = 8;
+            _outlineItems.push_back(spacer);
+        }
+        
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"Saturation";
+            section->items = { [self _createItemWithClass:[Slider class]] };
+            _outlineItems.push_back(section);
+        }
+        
+//        Spacer* spacer2 = [self _createItemWithClass:[Spacer class]];
+//        spacer2->height = 10;
+        
+//        Slider* slider = [self _createItemWithClass:[Slider class]];
         
 //        _librariesSection = [self _createItemWithClass:[Section class]];
 //        _librariesSection->name = @"Libraries";
@@ -172,12 +231,11 @@ using namespace MDCStudio;
 //        library->name = @"New Library";
 //        _librariesSection->items.push_back(library);
         
-        _outlineItems = {
-            spacer1,
-            section,
-            spacer2,
-            slider
-        };
+//        _outlineItems = {
+//            spacer1,
+//            section,
+//            spacer2
+//        };
         
         [_outlineView reloadData];
         
