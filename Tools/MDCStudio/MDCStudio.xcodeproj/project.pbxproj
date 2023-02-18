@@ -12,6 +12,8 @@
 		553031FD27BC45A100BEFFEA /* Outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031F927BC45A100BEFFEA /* Outline.png */; };
 		553031FF27BC45A100BEFFEA /* Mask.png in Resources */ = {isa = PBXBuildFile; fileRef = 553031FB27BC45A100BEFFEA /* Mask.png */; };
 		55425B1B29A01BE000F25D57 /* ThreePartView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B1A29A01BE000F25D57 /* ThreePartView.mm */; };
+		55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B2229A02F7D00F25D57 /* InspectorView.mm */; };
+		55425B2629A0752300F25D57 /* InspectorView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55425B2529A0752300F25D57 /* InspectorView.xib */; };
 		5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544A7EA27B5E011006AB473 /* SourceListView.xib */; };
 		5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544A7EC27B5E011006AB473 /* SourceListView.mm */; };
 		5544AE2927B5E595006AB473 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5544ADFD27B5E57A006AB473 /* Renderer.metal */; };
@@ -65,6 +67,9 @@
 		55425B1829A01BE000F25D57 /* ThreePartView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
 		55425B1929A01BE000F25D57 /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		55425B1A29A01BE000F25D57 /* ThreePartView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ThreePartView.mm; sourceTree = "<group>"; };
+		55425B2229A02F7D00F25D57 /* InspectorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorView.mm; sourceTree = "<group>"; };
+		55425B2329A02F7D00F25D57 /* InspectorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorView.h; sourceTree = "<group>"; };
+		55425B2529A0752300F25D57 /* InspectorView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = InspectorView.xib; sourceTree = "<group>"; };
 		5544A7EA27B5E011006AB473 /* SourceListView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SourceListView.xib; sourceTree = "<group>"; };
 		5544A7EB27B5E011006AB473 /* SourceListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SourceListView.h; sourceTree = "<group>"; };
 		5544A7EC27B5E011006AB473 /* SourceListView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SourceListView.mm; sourceTree = "<group>"; };
@@ -221,6 +226,16 @@
 				55425B1929A01BE000F25D57 /* Util.h */,
 			);
 			path = Mac;
+			sourceTree = "<group>";
+		};
+		55425B1C29A02F6500F25D57 /* InspectorView */ = {
+			isa = PBXGroup;
+			children = (
+				55425B2529A0752300F25D57 /* InspectorView.xib */,
+				55425B2329A02F7D00F25D57 /* InspectorView.h */,
+				55425B2229A02F7D00F25D57 /* InspectorView.mm */,
+			);
+			path = InspectorView;
 			sourceTree = "<group>";
 		};
 		5544A7E927B5E011006AB473 /* SourceListView */ = {
@@ -383,6 +398,7 @@
 				551328BA27B45E6200CD823B /* ImageGridView */,
 				55F8D01127BEF3E500757165 /* ImageView */,
 				5544A7E927B5E011006AB473 /* SourceListView */,
+				55425B1C29A02F6500F25D57 /* InspectorView */,
 				5544AE5927B6EE04006AB473 /* Document */,
 				55C456802955A1AE00A20363 /* FixedDocumentView.h */,
 				55C456852955A1AE00A20363 /* FixedDocumentView.mm */,
@@ -528,6 +544,7 @@
 				55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */,
 				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
+				55425B2629A0752300F25D57 /* InspectorView.xib in Resources */,
 				55F8D01027BDF26400757165 /* Shadow.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -561,6 +578,7 @@
 				55E43F9C28C00D6B00FCCEA0 /* EstimateIlluminantFFCC.mm in Sources */,
 				55E43F9A28C00D6B00FCCEA0 /* ReconstructHighlights.metal in Sources */,
 				55E43F9528C00D6B00FCCEA0 /* Saturation.metal in Sources */,
+				55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */,
 				5544AE2927B5E595006AB473 /* Renderer.metal in Sources */,
 				55F8D01927BEF97200757165 /* ImageView.metal in Sources */,
 				55E43F9E28C00D6B00FCCEA0 /* DebayerBilinear.metal in Sources */,

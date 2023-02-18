@@ -44,7 +44,7 @@ struct [[gnu::packed]] ImageThumb {
     
     static constexpr size_t ThumbPixelSize  = 3;
     
-    enum Rotation : uint8_t {
+    enum class Rotation : uint8_t {
         None,
         Clockwise90,
         Clockwise180,

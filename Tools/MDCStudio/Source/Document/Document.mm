@@ -1,6 +1,7 @@
 #import "Document.h"
 #import "Toastbox/Mac/ThreePartView.h"
 #import "SourceListView/SourceListView.h"
+#import "InspectorView/InspectorView.h"
 #import "ImageGridView/ImageGridView.h"
 #import "ImageView/ImageView.h"
 #import "FixedScrollView.h"
@@ -12,6 +13,7 @@ using namespace MDCStudio;
 @implementation Document {
     IBOutlet ThreePartView* _mainView;
     SourceListView* _sourceListView;
+    InspectorView* _inspectorView;
 }
 
 + (BOOL)autosavesInPlace {
@@ -23,9 +25,12 @@ using namespace MDCStudio;
     _sourceListView = [[SourceListView alloc] initWithFrame:{}];
     [_sourceListView setDelegate:self];
     
+    _inspectorView = [[InspectorView alloc] initWithFrame:{}];
+    
 //    printf("sizeof(MSP::State): %zu\n", sizeof(MSP::State));
     
     [_mainView setLeftView:_sourceListView];
+    [_mainView setRightView:_inspectorView];
     
     // Handle whatever is first selected
     [self sourceListViewSelectionChanged:_sourceListView];
