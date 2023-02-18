@@ -136,11 +136,41 @@ using namespace MDCStudio;
 
 @implementation InspectorView_Menu {
 @public
-    IBOutlet NSPopUpButton* menu;
+    IBOutlet NSPopUpButton* button;
 }
 
 - (NSString*)name { return @""; }
 - (bool)selectable { return false; }
+
+@end
+
+
+
+
+
+@interface InspectorView_Stat : InspectorView_Item
+@end
+
+@implementation InspectorView_Stat {
+@private
+    IBOutlet NSTextField* _nameLabel;
+    IBOutlet NSTextField* _valueLabel;
+    IBOutlet NSLayoutConstraint* _valueIndentConstraint;
+@public
+    NSString* name;
+    NSString* value;
+    CGFloat valueIndent;
+}
+
+- (NSString*)name { return @""; }
+- (bool)selectable { return false; }
+
+- (void)update {
+    [super update];
+    [_nameLabel setStringValue:name];
+    [_valueLabel setStringValue:value];
+    [_valueIndentConstraint setConstant:valueIndent];
+}
 
 @end
 
@@ -165,6 +195,7 @@ using namespace MDCStudio;
 #define SliderLabel     InspectorView_SliderLabel
 #define Checkbox        InspectorView_Checkbox
 #define Menu            InspectorView_Menu
+#define Stat            InspectorView_Stat
 
 // MARK: - InspectorView
 
@@ -224,6 +255,76 @@ using namespace MDCStudio;
             spacer->height = 3;
             _outlineItems.push_back(spacer);
         }
+        
+        
+        
+        
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"Stats";
+            
+            {
+                Stat* stat = [self _createItemWithClass:[Stat class]];
+                stat->name = @"Image ID";
+                stat->value = @"7553";
+                stat->valueIndent = 75;
+                section->items.push_back(stat);
+            }
+            
+            {
+                Stat* stat = [self _createItemWithClass:[Stat class]];
+                stat->name = @"Date";
+                stat->value = @"Feb 18, 2023";
+                stat->valueIndent = 75;
+                section->items.push_back(stat);
+            }
+            
+            {
+                Stat* stat = [self _createItemWithClass:[Stat class]];
+                stat->name = @"Time";
+                stat->value = @"8:43 PM";
+                stat->valueIndent = 75;
+                section->items.push_back(stat);
+            }
+            
+            {
+                Stat* stat = [self _createItemWithClass:[Stat class]];
+                stat->name = @"Exposure";
+                stat->value = @"555";
+                stat->valueIndent = 75;
+                section->items.push_back(stat);
+            }
+            
+            {
+                Stat* stat = [self _createItemWithClass:[Stat class]];
+                stat->name = @"Gain";
+                stat->value = @"1023";
+                stat->valueIndent = 75;
+                section->items.push_back(stat);
+            }
+            
+            
+            
+//            Stat* stat1 = [self _createItemWithClass:[Stat class]];
+//            stat1->name = "Date";
+            
+//            section->items = { [self _createItemWithClass:[SliderIcon class]] };
+            _outlineItems.push_back(section);
+        }
+        
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = SpacerSize;
+            _outlineItems.push_back(spacer);
+        }
+        
+        
+        
+        
+        
+        
+        
+        
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
@@ -332,9 +433,15 @@ using namespace MDCStudio;
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
-            section->name = @"Date / Time";
+            section->name = @"Timestamp";
             section->items = { [self _createItemWithClass:[Menu class]] };
             _outlineItems.push_back(section);
+        }
+        
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = SpacerSize;
+            _outlineItems.push_back(spacer);
         }
         
         
