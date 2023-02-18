@@ -17,7 +17,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="200" height="400"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <outlineView verticalHuggingPriority="750" misplaced="YES" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" selectionHighlightStyle="sourceList" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="20" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" translatesAutoresizingMaskIntoConstraints="NO" id="AKO-DU-mMa">
+                    <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" selectionHighlightStyle="sourceList" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="20" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" translatesAutoresizingMaskIntoConstraints="NO" id="AKO-DU-mMa">
                         <rect key="frame" x="0.0" y="0.0" width="203" height="400"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <size key="intercellSpacing" width="3" height="2"/>
@@ -73,7 +73,7 @@
                                             <outlet property="textField" destination="aQl-zt-mX6" id="94H-o3-xPX"/>
                                         </connections>
                                     </tableCellView>
-                                    <tableCellView identifier="InspectorView_Slider" id="Oca-BY-FTK" customClass="InspectorView_Slider">
+                                    <tableCellView identifier="InspectorView_SliderIcon" id="Oca-BY-FTK" customClass="InspectorView_SliderIcon">
                                         <rect key="frame" x="1" y="64" width="200" height="20"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
@@ -116,15 +116,47 @@
                                             <outlet property="slider" destination="DZe-QJ-YrD" id="JOi-gS-krL"/>
                                         </connections>
                                     </tableCellView>
-                                    <tableCellView identifier="InspectorView_Checkbox" id="EwO-sD-ijl" customClass="InspectorView_Checkbox">
+                                    <tableCellView identifier="InspectorView_SliderLabel" id="JiA-Ly-2Hk" customClass="InspectorView_SliderLabel">
                                         <rect key="frame" x="1" y="86" width="200" height="20"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <subviews>
+                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
+                                                <rect key="frame" x="-2" y="3" width="33" height="14"/>
+                                                <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" title="Label" id="v9N-Nx-KcH">
+                                                    <font key="font" metaFont="controlContent" size="11"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="WRI-17-iHa">
+                                                <rect key="frame" x="37" y="3" width="151" height="15"/>
+                                                <sliderCell key="cell" controlSize="small" state="on" alignment="left" maxValue="100" doubleValue="50" tickMarkPosition="above" sliderType="linear" id="91Q-rx-s56"/>
+                                            </slider>
+                                        </subviews>
+                                        <constraints>
+                                            <constraint firstItem="WRI-17-iHa" firstAttribute="leading" secondItem="2Wk-Za-sn6" secondAttribute="trailing" constant="8" id="00z-MG-tR8"/>
+                                            <constraint firstItem="2Wk-Za-sn6" firstAttribute="centerY" secondItem="JiA-Ly-2Hk" secondAttribute="centerY" id="1MM-te-ZK1"/>
+                                            <constraint firstAttribute="height" constant="20" id="IK2-Nv-hWf"/>
+                                            <constraint firstItem="2Wk-Za-sn6" firstAttribute="leading" secondItem="JiA-Ly-2Hk" secondAttribute="leading" id="Q6L-zI-UVh"/>
+                                            <constraint firstItem="WRI-17-iHa" firstAttribute="centerY" secondItem="JiA-Ly-2Hk" secondAttribute="centerY" id="lxD-UK-MCx"/>
+                                            <constraint firstAttribute="trailing" secondItem="WRI-17-iHa" secondAttribute="trailing" constant="12" id="ul2-D6-zDc"/>
+                                        </constraints>
+                                        <connections>
+                                            <outlet property="_height" destination="IK2-Nv-hWf" id="rxS-a9-fxD"/>
+                                            <outlet property="_indent" destination="Q6L-zI-UVh" id="HDK-XE-LzS"/>
+                                            <outlet property="label" destination="2Wk-Za-sn6" id="85B-nm-xFl"/>
+                                            <outlet property="slider" destination="WRI-17-iHa" id="va4-Eb-kXe"/>
+                                        </connections>
+                                    </tableCellView>
+                                    <tableCellView identifier="InspectorView_Checkbox" id="EwO-sD-ijl" customClass="InspectorView_Checkbox">
+                                        <rect key="frame" x="1" y="108" width="200" height="20"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4h7-i2-RCa">
                                                 <rect key="frame" x="-3" y="1" width="193" height="18"/>
                                                 <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingMiddle" state="on" inset="2" id="acZ-s2-rX2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="menu" size="11"/>
+                                                    <font key="font" metaFont="controlContent" size="11"/>
                                                 </buttonCell>
                                             </button>
                                         </subviews>
@@ -138,6 +170,37 @@
                                             <outlet property="_height" destination="sne-Vo-Dpv" id="9BH-Jz-MrR"/>
                                             <outlet property="_indent" destination="Ec5-QO-cXg" id="CjR-c1-YJw"/>
                                             <outlet property="checkbox" destination="4h7-i2-RCa" id="czp-5J-7Sa"/>
+                                        </connections>
+                                    </tableCellView>
+                                    <tableCellView identifier="InspectorView_Menu" id="Uqz-Ai-fuI" customClass="InspectorView_Menu">
+                                        <rect key="frame" x="1" y="130" width="200" height="20"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <subviews>
+                                            <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ctX-YX-6kU">
+                                                <rect key="frame" x="-3" y="-2" width="194" height="22"/>
+                                                <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="IsN-P0-sBz" id="zTu-3j-lbB">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="controlContent" size="11"/>
+                                                    <menu key="menu" id="had-DB-ulJ">
+                                                        <items>
+                                                            <menuItem title="Item 1" state="on" id="IsN-P0-sBz"/>
+                                                            <menuItem title="Item 2" id="R3c-kS-fZm"/>
+                                                            <menuItem title="Item 3" id="nSS-KE-YTu"/>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                            </popUpButton>
+                                        </subviews>
+                                        <constraints>
+                                            <constraint firstItem="ctX-YX-6kU" firstAttribute="centerY" secondItem="Uqz-Ai-fuI" secondAttribute="centerY" id="6Ry-cZ-GRI"/>
+                                            <constraint firstAttribute="trailing" secondItem="ctX-YX-6kU" secondAttribute="trailing" constant="12" id="DIA-mC-Vq2"/>
+                                            <constraint firstAttribute="height" constant="20" id="Ft1-kI-uBO"/>
+                                            <constraint firstItem="ctX-YX-6kU" firstAttribute="leading" secondItem="Uqz-Ai-fuI" secondAttribute="leading" id="ctH-9c-8rE"/>
+                                        </constraints>
+                                        <connections>
+                                            <outlet property="_height" destination="Ft1-kI-uBO" id="icE-Eb-awB"/>
+                                            <outlet property="_indent" destination="ctH-9c-8rE" id="fOj-Xt-9kc"/>
+                                            <outlet property="menu" destination="ctX-YX-6kU" id="q5l-Og-CAP"/>
                                         </connections>
                                     </tableCellView>
                                 </prototypeCellViews>

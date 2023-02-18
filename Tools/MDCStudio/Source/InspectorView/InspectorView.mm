@@ -66,10 +66,10 @@ using namespace MDCStudio;
 
 
 
-@interface InspectorView_Slider : InspectorView_Item
+@interface InspectorView_SliderIcon : InspectorView_Item
 @end
 
-@implementation InspectorView_Slider {
+@implementation InspectorView_SliderIcon {
 @public
     IBOutlet NSImageView* iconLeft;
     IBOutlet NSImageView* iconRight;
@@ -79,6 +79,29 @@ using namespace MDCStudio;
 - (bool)selectable { return false; }
 @end
 
+
+
+
+
+
+@interface InspectorView_SliderLabel : InspectorView_Item
+@end
+
+@implementation InspectorView_SliderLabel {
+@public
+    IBOutlet NSTextField* label;
+    IBOutlet NSSlider* slider;
+    NSString* name;
+}
+- (NSString*)name { return name; }
+- (bool)selectable { return false; }
+
+- (void)update {
+    [super update];
+    [label setStringValue:name];
+}
+
+@end
 
 
 
@@ -94,13 +117,30 @@ using namespace MDCStudio;
     NSString* name;
 }
 
-- (NSString*)name { return @""; }
+- (NSString*)name { return name; }
 - (bool)selectable { return false; }
 
 - (void)update {
     [super update];
     [checkbox setTitle:name];
 }
+
+@end
+
+
+
+
+
+@interface InspectorView_Menu : InspectorView_Item
+@end
+
+@implementation InspectorView_Menu {
+@public
+    IBOutlet NSPopUpButton* menu;
+}
+
+- (NSString*)name { return @""; }
+- (bool)selectable { return false; }
 
 @end
 
@@ -121,8 +161,10 @@ using namespace MDCStudio;
 #define Section         InspectorView_Section
 #define SectionItem     InspectorView_SectionItem
 #define Spacer          InspectorView_Spacer
-#define Slider          InspectorView_Slider
+#define SliderIcon      InspectorView_SliderIcon
+#define SliderLabel     InspectorView_SliderLabel
 #define Checkbox        InspectorView_Checkbox
+#define Menu            InspectorView_Menu
 
 // MARK: - InspectorView
 
@@ -176,6 +218,7 @@ using namespace MDCStudio;
     
     // Populate NSOutlineView
     {
+        static constexpr CGFloat SpacerSize = 20;
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = 3;
@@ -185,68 +228,87 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"White Balance";
-            section->items = { [self _createItemWithClass:[Slider class]] };
+            section->items = { [self _createItemWithClass:[SliderIcon class]] };
             _outlineItems.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = 8;
+            spacer->height = SpacerSize;
             _outlineItems.push_back(spacer);
         }
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Exposure";
-            section->items = { [self _createItemWithClass:[Slider class]] };
+            section->items = { [self _createItemWithClass:[SliderIcon class]] };
             _outlineItems.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = 8;
+            spacer->height = SpacerSize;
             _outlineItems.push_back(spacer);
         }
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Brightness";
-            section->items = { [self _createItemWithClass:[Slider class]] };
+            section->items = { [self _createItemWithClass:[SliderIcon class]] };
             _outlineItems.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = 8;
+            spacer->height = SpacerSize;
             _outlineItems.push_back(spacer);
         }
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Contrast";
-            section->items = { [self _createItemWithClass:[Slider class]] };
+            section->items = { [self _createItemWithClass:[SliderIcon class]] };
             _outlineItems.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = 8;
+            spacer->height = SpacerSize;
+            _outlineItems.push_back(spacer);
+        }
+        
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"Local Constrast";
+            
+            SliderLabel* slider1 = [self _createItemWithClass:[SliderLabel class]];
+            slider1->name = @"Amount";
+            
+            SliderLabel* slider2 = [self _createItemWithClass:[SliderLabel class]];
+            slider2->name = @"Radius";
+            
+            section->items = { slider1, slider2 };
+            _outlineItems.push_back(section);
+        }
+        
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = SpacerSize;
             _outlineItems.push_back(spacer);
         }
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Saturation";
-            section->items = { [self _createItemWithClass:[Slider class]] };
+            section->items = { [self _createItemWithClass:[SliderIcon class]] };
             _outlineItems.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = 8;
+            spacer->height = SpacerSize;
             _outlineItems.push_back(spacer);
         }
-        
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
@@ -256,9 +318,22 @@ using namespace MDCStudio;
             checkbox1->name = @"Defringe";
             
             Checkbox* checkbox2 = [self _createItemWithClass:[Checkbox class]];
-            checkbox2->name = @"Reconstruct Highlights Hello";
+            checkbox2->name = @"Reconstruct highlights";
             
             section->items = { checkbox1, checkbox2 };
+            _outlineItems.push_back(section);
+        }
+        
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = SpacerSize;
+            _outlineItems.push_back(spacer);
+        }
+        
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"Date / Time";
+            section->items = { [self _createItemWithClass:[Menu class]] };
             _outlineItems.push_back(section);
         }
         
