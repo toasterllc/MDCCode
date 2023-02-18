@@ -60,6 +60,30 @@ using namespace MDCStudio;
 - (CGFloat)height { return height; }
 @end
 
+
+
+
+
+
+
+@interface InspectorView_Slider : InspectorView_Item
+@end
+
+@implementation InspectorView_Slider {
+@public
+    IBOutlet NSImageView* iconLeft;
+    IBOutlet NSImageView* iconRight;
+    IBOutlet NSSlider* slider;
+}
+- (NSString*)name { return @""; }
+- (bool)selectable { return false; }
+@end
+
+
+
+
+
+
 @interface InspectorView_RowView : NSTableRowView
 @end
 
@@ -67,13 +91,12 @@ using namespace MDCStudio;
 - (BOOL)isEmphasized { return false; }
 @end
 
-#define Device          InspectorView_Device
 #define Item            InspectorView_Item
-#define Library         InspectorView_Library
 #define RowView         InspectorView_RowView
 #define Section         InspectorView_Section
 #define SectionItem     InspectorView_SectionItem
 #define Spacer          InspectorView_Spacer
+#define Slider          InspectorView_Slider
 
 // MARK: - InspectorView
 
@@ -136,6 +159,8 @@ using namespace MDCStudio;
         Spacer* spacer2 = [self _createItemWithClass:[Spacer class]];
         spacer2->height = 10;
         
+        Slider* slider = [self _createItemWithClass:[Slider class]];
+        
 //        _librariesSection = [self _createItemWithClass:[Section class]];
 //        _librariesSection->name = @"Libraries";
         
@@ -150,7 +175,8 @@ using namespace MDCStudio;
         _outlineItems = {
             spacer1,
             section,
-            spacer2
+            spacer2,
+            slider
         };
         
         [_outlineView reloadData];
