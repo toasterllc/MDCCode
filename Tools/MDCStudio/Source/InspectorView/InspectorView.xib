@@ -203,7 +203,7 @@
                                             <outlet property="button" destination="98b-tg-mR0" id="cqY-mk-x2s"/>
                                         </connections>
                                     </tableCellView>
-                                    <tableCellView identifier="InspectorView_ImageCorner" id="ZXZ-qK-hhw" userLabel="Inspector View ImageCorner" customClass="InspectorView_ImageCorner">
+                                    <tableCellView identifier="InspectorView_Timestamp" id="ZXZ-qK-hhw" customClass="InspectorView_Timestamp">
                                         <rect key="frame" x="1" y="152" width="200" height="20"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
