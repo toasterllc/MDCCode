@@ -9,9 +9,10 @@ static void _Init(ImageCornerButton* self) {
     [self setCorner:Corner::BottomLeft];
 }
 
-static Corner _CornerNext(Corner x) {
-    if (x == Corner::TopLeft) return Corner::BottomLeft;
-    return (Corner)((int)x+1);
+static Corner _CornerNext(Corner x, int delta) {
+    if (x==Corner::TopLeft && delta>0) return Corner::BottomLeft;
+    if (x==Corner::BottomLeft && delta<0) return Corner::TopLeft;
+    return (Corner)((int)x+delta);
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
@@ -27,7 +28,9 @@ static Corner _CornerNext(Corner x) {
 }
 
 - (BOOL)sendAction:(SEL)action to:(id)target {
-    [self setCorner:_CornerNext(_corner)];
+    NSEvent* ev = [NSApp currentEvent];
+    const int delta = (([ev modifierFlags] & NSEventModifierFlagShift) ? -1 : 1);
+    [self setCorner:_CornerNext(_corner, delta)];
     return [super sendAction:action to:target];
 }
 

@@ -147,6 +147,23 @@ using namespace MDCStudio;
 
 
 
+@interface InspectorView_ImageCorner : InspectorView_Item
+@end
+
+@implementation InspectorView_ImageCorner {
+@public
+    IBOutlet NSPopUpButton* button;
+    IBOutlet NSButton* imageCornerButton;
+}
+
+- (NSString*)name { return @""; }
+- (bool)selectable { return false; }
+
+@end
+
+
+
+
 
 @interface InspectorView_Stat : InspectorView_Item
 @end
@@ -195,6 +212,7 @@ using namespace MDCStudio;
 #define SliderLabel     InspectorView_SliderLabel
 #define Checkbox        InspectorView_Checkbox
 #define Menu            InspectorView_Menu
+#define ImageCorner     InspectorView_ImageCorner
 #define Stat            InspectorView_Stat
 
 // MARK: - InspectorView
@@ -434,7 +452,7 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Timestamp";
-            section->items = { [self _createItemWithClass:[Menu class]] };
+            section->items = { [self _createItemWithClass:[ImageCorner class]] };
             _outlineItems.push_back(section);
         }
         
