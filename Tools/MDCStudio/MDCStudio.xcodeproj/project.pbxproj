@@ -14,6 +14,11 @@
 		55425B1B29A01BE000F25D57 /* ThreePartView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B1A29A01BE000F25D57 /* ThreePartView.mm */; };
 		55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B2229A02F7D00F25D57 /* InspectorView.mm */; };
 		55425B2629A0752300F25D57 /* InspectorView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55425B2529A0752300F25D57 /* InspectorView.xib */; };
+		55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B5C29A2B8C900F25D57 /* ImageCornerButton.mm */; };
+		55425B6229A2B8E400F25D57 /* ImageCornerButton-0.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B5E29A2B8E400F25D57 /* ImageCornerButton-0.pdf */; };
+		55425B6329A2B8E400F25D57 /* ImageCornerButton-2.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B5F29A2B8E400F25D57 /* ImageCornerButton-2.pdf */; };
+		55425B6429A2B8E400F25D57 /* ImageCornerButton-3.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B6029A2B8E400F25D57 /* ImageCornerButton-3.pdf */; };
+		55425B6529A2B8E400F25D57 /* ImageCornerButton-1.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B6129A2B8E400F25D57 /* ImageCornerButton-1.pdf */; };
 		5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544A7EA27B5E011006AB473 /* SourceListView.xib */; };
 		5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544A7EC27B5E011006AB473 /* SourceListView.mm */; };
 		5544AE2927B5E595006AB473 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5544ADFD27B5E57A006AB473 /* Renderer.metal */; };
@@ -70,6 +75,12 @@
 		55425B2229A02F7D00F25D57 /* InspectorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = InspectorView.mm; sourceTree = "<group>"; };
 		55425B2329A02F7D00F25D57 /* InspectorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InspectorView.h; sourceTree = "<group>"; };
 		55425B2529A0752300F25D57 /* InspectorView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = InspectorView.xib; sourceTree = "<group>"; };
+		55425B5B29A2B8C900F25D57 /* ImageCornerButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageCornerButton.h; sourceTree = "<group>"; };
+		55425B5C29A2B8C900F25D57 /* ImageCornerButton.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageCornerButton.mm; sourceTree = "<group>"; };
+		55425B5E29A2B8E400F25D57 /* ImageCornerButton-0.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-0.pdf"; sourceTree = "<group>"; };
+		55425B5F29A2B8E400F25D57 /* ImageCornerButton-2.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-2.pdf"; sourceTree = "<group>"; };
+		55425B6029A2B8E400F25D57 /* ImageCornerButton-3.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-3.pdf"; sourceTree = "<group>"; };
+		55425B6129A2B8E400F25D57 /* ImageCornerButton-1.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-1.pdf"; sourceTree = "<group>"; };
 		5544A7EA27B5E011006AB473 /* SourceListView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SourceListView.xib; sourceTree = "<group>"; };
 		5544A7EB27B5E011006AB473 /* SourceListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SourceListView.h; sourceTree = "<group>"; };
 		5544A7EC27B5E011006AB473 /* SourceListView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SourceListView.mm; sourceTree = "<group>"; };
@@ -238,6 +249,19 @@
 			path = InspectorView;
 			sourceTree = "<group>";
 		};
+		55425B5A29A2B8C900F25D57 /* ImageCornerButton */ = {
+			isa = PBXGroup;
+			children = (
+				55425B5E29A2B8E400F25D57 /* ImageCornerButton-0.pdf */,
+				55425B6129A2B8E400F25D57 /* ImageCornerButton-1.pdf */,
+				55425B5F29A2B8E400F25D57 /* ImageCornerButton-2.pdf */,
+				55425B6029A2B8E400F25D57 /* ImageCornerButton-3.pdf */,
+				55425B5B29A2B8C900F25D57 /* ImageCornerButton.h */,
+				55425B5C29A2B8C900F25D57 /* ImageCornerButton.mm */,
+			);
+			path = ImageCornerButton;
+			sourceTree = "<group>";
+		};
 		5544A7E927B5E011006AB473 /* SourceListView */ = {
 			isa = PBXGroup;
 			children = (
@@ -400,6 +424,7 @@
 				5544A7E927B5E011006AB473 /* SourceListView */,
 				55425B1C29A02F6500F25D57 /* InspectorView */,
 				5544AE5927B6EE04006AB473 /* Document */,
+				55425B5A29A2B8C900F25D57 /* ImageCornerButton */,
 				55C456802955A1AE00A20363 /* FixedDocumentView.h */,
 				55C456852955A1AE00A20363 /* FixedDocumentView.mm */,
 				55C456812955A1AE00A20363 /* FixedMetalDocumentLayer.h */,
@@ -537,11 +562,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
+				55425B6529A2B8E400F25D57 /* ImageCornerButton-1.pdf in Resources */,
 				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
+				55425B6329A2B8E400F25D57 /* ImageCornerButton-2.pdf in Resources */,
 				553031FF27BC45A100BEFFEA /* Mask.png in Resources */,
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,
+				55425B6229A2B8E400F25D57 /* ImageCornerButton-0.pdf in Resources */,
 				55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */,
+				55425B6429A2B8E400F25D57 /* ImageCornerButton-3.pdf in Resources */,
 				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
 				55425B2629A0752300F25D57 /* InspectorView.xib in Resources */,
@@ -581,6 +610,7 @@
 				55425B2429A02F7D00F25D57 /* InspectorView.mm in Sources */,
 				5544AE2927B5E595006AB473 /* Renderer.metal in Sources */,
 				55F8D01927BEF97200757165 /* ImageView.metal in Sources */,
+				55425B5D29A2B8C900F25D57 /* ImageCornerButton.mm in Sources */,
 				55E43F9E28C00D6B00FCCEA0 /* DebayerBilinear.metal in Sources */,
 				5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */,
 				55E43F9428C00D6B00FCCEA0 /* LocalContrast.metal in Sources */,

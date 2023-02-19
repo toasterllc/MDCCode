@@ -1,0 +1,360 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		55425B4829A2A76700F25D57 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B4729A2A76700F25D57 /* AppDelegate.mm */; };
+		55425B4A29A2A76800F25D57 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55425B4929A2A76800F25D57 /* Assets.xcassets */; };
+		55425B4D29A2A76800F25D57 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55425B4B29A2A76800F25D57 /* MainMenu.xib */; };
+		55425B5029A2A76800F25D57 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 55425B4F29A2A76800F25D57 /* main.m */; };
+		55425B7929A2B99500F25D57 /* ImageCornerButton-0.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B7329A2B99500F25D57 /* ImageCornerButton-0.pdf */; };
+		55425B7A29A2B99500F25D57 /* ImageCornerButton-1.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B7429A2B99500F25D57 /* ImageCornerButton-1.pdf */; };
+		55425B7B29A2B99500F25D57 /* ImageCornerButton-3.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B7529A2B99500F25D57 /* ImageCornerButton-3.pdf */; };
+		55425B7C29A2B99500F25D57 /* ImageCornerButton-2.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B7629A2B99500F25D57 /* ImageCornerButton-2.pdf */; };
+		55425B7D29A2B99500F25D57 /* ImageCornerButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55425B7829A2B99500F25D57 /* ImageCornerButton.mm */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		55425B4329A2A76700F25D57 /* ImageCornerButton.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ImageCornerButton.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		55425B4629A2A76700F25D57 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		55425B4729A2A76700F25D57 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
+		55425B4929A2A76800F25D57 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		55425B4C29A2A76800F25D57 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		55425B4E29A2A76800F25D57 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		55425B4F29A2A76800F25D57 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		55425B5129A2A76800F25D57 /* ImageCornerButton.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ImageCornerButton.entitlements; sourceTree = "<group>"; };
+		55425B7329A2B99500F25D57 /* ImageCornerButton-0.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-0.pdf"; sourceTree = "<group>"; };
+		55425B7429A2B99500F25D57 /* ImageCornerButton-1.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-1.pdf"; sourceTree = "<group>"; };
+		55425B7529A2B99500F25D57 /* ImageCornerButton-3.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-3.pdf"; sourceTree = "<group>"; };
+		55425B7629A2B99500F25D57 /* ImageCornerButton-2.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-2.pdf"; sourceTree = "<group>"; };
+		55425B7729A2B99500F25D57 /* ImageCornerButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageCornerButton.h; sourceTree = "<group>"; };
+		55425B7829A2B99500F25D57 /* ImageCornerButton.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageCornerButton.mm; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		55425B4029A2A76700F25D57 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		55425B3A29A2A76700F25D57 = {
+			isa = PBXGroup;
+			children = (
+				55425B4529A2A76700F25D57 /* ImageCornerButton */,
+				55425B4429A2A76700F25D57 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		55425B4429A2A76700F25D57 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				55425B4329A2A76700F25D57 /* ImageCornerButton.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		55425B4529A2A76700F25D57 /* ImageCornerButton */ = {
+			isa = PBXGroup;
+			children = (
+				55425B7229A2B99500F25D57 /* ImageCornerButton */,
+				55425B4629A2A76700F25D57 /* AppDelegate.h */,
+				55425B4729A2A76700F25D57 /* AppDelegate.mm */,
+				55425B4929A2A76800F25D57 /* Assets.xcassets */,
+				55425B4B29A2A76800F25D57 /* MainMenu.xib */,
+				55425B4E29A2A76800F25D57 /* Info.plist */,
+				55425B4F29A2A76800F25D57 /* main.m */,
+				55425B5129A2A76800F25D57 /* ImageCornerButton.entitlements */,
+			);
+			path = ImageCornerButton;
+			sourceTree = "<group>";
+		};
+		55425B7229A2B99500F25D57 /* ImageCornerButton */ = {
+			isa = PBXGroup;
+			children = (
+				55425B7329A2B99500F25D57 /* ImageCornerButton-0.pdf */,
+				55425B7429A2B99500F25D57 /* ImageCornerButton-1.pdf */,
+				55425B7529A2B99500F25D57 /* ImageCornerButton-3.pdf */,
+				55425B7629A2B99500F25D57 /* ImageCornerButton-2.pdf */,
+				55425B7729A2B99500F25D57 /* ImageCornerButton.h */,
+				55425B7829A2B99500F25D57 /* ImageCornerButton.mm */,
+			);
+			name = ImageCornerButton;
+			path = ../../MDCStudio/Source/ImageCornerButton;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		55425B4229A2A76700F25D57 /* ImageCornerButton */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 55425B5429A2A76800F25D57 /* Build configuration list for PBXNativeTarget "ImageCornerButton" */;
+			buildPhases = (
+				55425B3F29A2A76700F25D57 /* Sources */,
+				55425B4029A2A76700F25D57 /* Frameworks */,
+				55425B4129A2A76700F25D57 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ImageCornerButton;
+			productName = ImageCornerButton;
+			productReference = 55425B4329A2A76700F25D57 /* ImageCornerButton.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		55425B3B29A2A76700F25D57 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1140;
+				ORGANIZATIONNAME = Toaster;
+				TargetAttributes = {
+					55425B4229A2A76700F25D57 = {
+						CreatedOnToolsVersion = 11.4;
+					};
+				};
+			};
+			buildConfigurationList = 55425B3E29A2A76700F25D57 /* Build configuration list for PBXProject "ImageCornerButton" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 55425B3A29A2A76700F25D57;
+			productRefGroup = 55425B4429A2A76700F25D57 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				55425B4229A2A76700F25D57 /* ImageCornerButton */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		55425B4129A2A76700F25D57 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				55425B4A29A2A76800F25D57 /* Assets.xcassets in Resources */,
+				55425B7B29A2B99500F25D57 /* ImageCornerButton-3.pdf in Resources */,
+				55425B7C29A2B99500F25D57 /* ImageCornerButton-2.pdf in Resources */,
+				55425B7A29A2B99500F25D57 /* ImageCornerButton-1.pdf in Resources */,
+				55425B4D29A2A76800F25D57 /* MainMenu.xib in Resources */,
+				55425B7929A2B99500F25D57 /* ImageCornerButton-0.pdf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		55425B3F29A2A76700F25D57 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				55425B5029A2A76800F25D57 /* main.m in Sources */,
+				55425B4829A2A76700F25D57 /* AppDelegate.mm in Sources */,
+				55425B7D29A2B99500F25D57 /* ImageCornerButton.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		55425B4B29A2A76800F25D57 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				55425B4C29A2A76800F25D57 /* Base */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		55425B5229A2A76800F25D57 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		55425B5329A2A76800F25D57 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		55425B5529A2A76800F25D57 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = ImageCornerButton/ImageCornerButton.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = TTCPZ26X6U;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = ImageCornerButton/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.heytoaster.ImageCornerButton;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		55425B5629A2A76800F25D57 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = ImageCornerButton/ImageCornerButton.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = TTCPZ26X6U;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = ImageCornerButton/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.heytoaster.ImageCornerButton;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		55425B3E29A2A76700F25D57 /* Build configuration list for PBXProject "ImageCornerButton" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55425B5229A2A76800F25D57 /* Debug */,
+				55425B5329A2A76800F25D57 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		55425B5429A2A76800F25D57 /* Build configuration list for PBXNativeTarget "ImageCornerButton" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55425B5529A2A76800F25D57 /* Debug */,
+				55425B5629A2A76800F25D57 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 55425B3B29A2A76700F25D57 /* Project object */;
+}
