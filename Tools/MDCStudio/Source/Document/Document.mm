@@ -1,4 +1,5 @@
 #import "Document.h"
+#import <algorithm>
 #import "Toastbox/Mac/ThreePartView.h"
 #import "SourceListView/SourceListView.h"
 #import "InspectorView/InspectorView.h"
@@ -7,12 +8,14 @@
 #import "FixedScrollView.h"
 using namespace MDCStudio;
 
-@interface Document () <SourceListViewDelegate, ImageGridViewDelegate, ImageViewDelegate>
+@interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, ImageViewDelegate>
 @end
 
 @implementation Document {
-    IBOutlet ThreePartView* _mainView;
+    IBOutlet NSSplitView* _splitView;
     SourceListView* _sourceListView;
+    NSView* _centerViewContainer;
+    NSView* _centerView;
     InspectorView* _inspectorView;
 }
 
@@ -20,17 +23,31 @@ using namespace MDCStudio;
     return false;
 }
 
+- (void)setCenterView:(NSView*)centerView {
+    if (_centerView) [_centerView removeFromSuperview];
+    _centerView = centerView;
+    [_centerViewContainer addSubview:_centerView];
+    [_centerViewContainer addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_centerView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_centerView)]];
+    [_centerViewContainer addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_centerView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_centerView)]];
+}
+
 - (void)awakeFromNib {
-    // Create source list
     _sourceListView = [[SourceListView alloc] initWithFrame:{}];
     [_sourceListView setDelegate:self];
     
+    _centerViewContainer = [[NSView alloc] initWithFrame:{}];
+    [_centerViewContainer setTranslatesAutoresizingMaskIntoConstraints:false];
+    
     _inspectorView = [[InspectorView alloc] initWithFrame:{}];
+    [_splitView addArrangedSubview:_sourceListView];
+    [_splitView addArrangedSubview:_centerViewContainer];
+    [_splitView addArrangedSubview:_inspectorView];
     
-//    printf("sizeof(MSP::State): %zu\n", sizeof(MSP::State));
-    
-    [_mainView setLeftView:_sourceListView];
-    [_mainView setRightView:_inspectorView];
+    [_splitView setHoldingPriority:NSLayoutPriorityDefaultLow forSubviewAtIndex:0];
+    [_splitView setHoldingPriority:NSLayoutPriorityFittingSizeCompression forSubviewAtIndex:1];
+    [_splitView setHoldingPriority:NSLayoutPriorityDefaultLow forSubviewAtIndex:2];
     
     // Handle whatever is first selected
     [self sourceListViewSelectionChanged:_sourceListView];
@@ -215,8 +232,8 @@ using namespace MDCStudio;
         [imageGridView setDelegate:self];
         
         ImageGridScrollView* sv = [[ImageGridScrollView alloc] initWithFixedDocument:imageGridView];
-        [_mainView setCenterView:sv];
-        [[_mainView window] makeFirstResponder:[sv document]];
+        [self setCenterView:sv];
+        [[_splitView window] makeFirstResponder:[sv document]];
 //        [_mainView setContentView:sv animation:MainViewAnimation::None];
     
     } else {
@@ -258,8 +275,8 @@ using namespace MDCStudio;
 //            [_mainView setContentView:imageView animation:MainViewAnimation::None];
 //        }
         
-        [_mainView setCenterView:sv];
-        [[_mainView window] makeFirstResponder:[sv document]];
+        [self setCenterView:sv];
+        [[_splitView window] makeFirstResponder:[sv document]];
         
         return true;
     }
@@ -284,6 +301,12 @@ using namespace MDCStudio;
 - (void)imageViewNextImage:(ImageView*)imageView {
     const bool ok = [self _openImage:[imageView imageThumb].ref.id delta:1];
     if (!ok) NSBeep();
+}
+
+// MARK: - NSSplitViewDelegate
+
+- (BOOL)splitView:(NSSplitView*)splitView canCollapseSubview:(NSView*)subview {
+    return true;
 }
 
 @end

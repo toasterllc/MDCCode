@@ -7,7 +7,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="Document">
             <connections>
-                <outlet property="_mainView" destination="Se2-wR-iRH" id="vhB-Tv-U3c"/>
+                <outlet property="_splitView" destination="wmp-X4-4cT" id="zYd-My-Ma5"/>
                 <outlet property="window" destination="xOd-HO-29H" id="JIz-fz-R2o"/>
             </connections>
         </customObject>
@@ -22,15 +22,18 @@
                 <rect key="frame" x="0.0" y="0.0" width="1000" height="600"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="Se2-wR-iRH" customClass="ThreePartView">
+                    <splitView arrangesAllSubviews="NO" dividerStyle="thin" vertical="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wmp-X4-4cT">
                         <rect key="frame" x="0.0" y="0.0" width="1000" height="600"/>
-                    </customView>
+                        <connections>
+                            <outlet property="delegate" destination="-2" id="eRu-SN-5r4"/>
+                        </connections>
+                    </splitView>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="Se2-wR-iRH" firstAttribute="top" secondItem="gIp-Ho-8D9" secondAttribute="top" id="3H0-fI-5hm"/>
-                    <constraint firstAttribute="trailing" secondItem="Se2-wR-iRH" secondAttribute="trailing" id="FF8-Oy-qRd"/>
-                    <constraint firstItem="Se2-wR-iRH" firstAttribute="leading" secondItem="gIp-Ho-8D9" secondAttribute="leading" id="P3j-Mb-lJh"/>
-                    <constraint firstAttribute="bottom" secondItem="Se2-wR-iRH" secondAttribute="bottom" id="fE0-o6-A1U"/>
+                    <constraint firstItem="wmp-X4-4cT" firstAttribute="top" secondItem="gIp-Ho-8D9" secondAttribute="top" id="BId-h8-ipU"/>
+                    <constraint firstItem="wmp-X4-4cT" firstAttribute="leading" secondItem="gIp-Ho-8D9" secondAttribute="leading" id="cff-kE-j1I"/>
+                    <constraint firstAttribute="bottom" secondItem="wmp-X4-4cT" secondAttribute="bottom" id="lMK-Vb-YnC"/>
+                    <constraint firstAttribute="trailing" secondItem="wmp-X4-4cT" secondAttribute="trailing" id="qG7-K9-N8b"/>
                 </constraints>
             </view>
             <connections>

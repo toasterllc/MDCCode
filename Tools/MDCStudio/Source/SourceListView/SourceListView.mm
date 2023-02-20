@@ -178,19 +178,6 @@ using namespace MDCStudio;
         });
     }
     
-//    // Add a divider line
-//    {
-//        NSView* dividerLine = [[NSView alloc] initWithFrame:{}];
-//        [dividerLine setTranslatesAutoresizingMaskIntoConstraints:false];
-//        [dividerLine setWantsLayer:true];
-//        [[dividerLine layer] setBackgroundColor:[[NSColor colorWithWhite:0 alpha:1] CGColor]];
-//        [self addSubview:dividerLine];
-//        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[dividerLine(==1)]|"
-//            options:0 metrics:nil views:NSDictionaryOfVariableBindings(dividerLine)]];
-//        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[dividerLine]|"
-//            options:0 metrics:nil views:NSDictionaryOfVariableBindings(dividerLine)]];
-//    }
-    
     // Populate NSOutlineView
     {
         Spacer* spacer1 = [self _createItemWithClass:[Spacer class]];

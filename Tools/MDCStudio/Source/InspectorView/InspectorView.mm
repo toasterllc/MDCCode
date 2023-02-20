@@ -204,35 +204,6 @@ using namespace MDCStudio;
 
 
 
-//@interface InspectorView_RowView : NSTableRowView
-//@end
-//
-//@implementation InspectorView_RowView {
-//    bool darkBackground;
-//}
-//
-//- (NSBackgroundStyle)interiorBackgroundStyle {
-//    return NSBackgroundStyleEmphasized;
-//}
-//
-////@property(readonly) NSBackgroundStyle interiorBackgroundStyle;
-////
-/////* The backgroundColor property defaults to the Table View's backgroundColor, unless usesAlternatingRowBackgroundColors is set to YES. In that case, the colors alternate, and are automatically updated as required by insertions and deletions. The value can be customized in the delegate method -tableView:didAddRowView:forRow:. The property is animatable.
-//// */
-////@property(copy) NSColor *backgroundColor;
-//
-//
-////- (BOOL)isEmphasized { return true; }
-//- (NSColor*)backgroundColor {
-//    if (darkBackground) return [[NSColor blackColor] colorWithAlphaComponent:.5];
-//    return [super backgroundColor];
-//}
-//@end
-
-
-
-
-
 @interface InspectorView_DarkRowView : NSTableRowView
 @end
 
@@ -278,16 +249,6 @@ using namespace MDCStudio;
 
 // MARK: - Creation
 
-//static void _Init(InspectorView* self) {
-//    
-//}
-
-//- (instancetype)initWithCoder:(NSCoder*)coder {
-//    if (!(self = [super initWithCoder:coder])) return nil;
-//    _Init(self);
-//    return self;
-//}
-
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;
     
@@ -303,19 +264,6 @@ using namespace MDCStudio;
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
     }
-    
-//    // Add a divider line
-//    {
-//        NSView* dividerLine = [[NSView alloc] initWithFrame:{}];
-//        [dividerLine setTranslatesAutoresizingMaskIntoConstraints:false];
-//        [dividerLine setWantsLayer:true];
-//        [[dividerLine layer] setBackgroundColor:[[NSColor colorWithWhite:0 alpha:1] CGColor]];
-//        [self addSubview:dividerLine];
-//        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:[dividerLine(==1)]|"
-//            options:0 metrics:nil views:NSDictionaryOfVariableBindings(dividerLine)]];
-//        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[dividerLine]|"
-//            options:0 metrics:nil views:NSDictionaryOfVariableBindings(dividerLine)]];
-//    }
     
     // Populate NSOutlineView
     {
