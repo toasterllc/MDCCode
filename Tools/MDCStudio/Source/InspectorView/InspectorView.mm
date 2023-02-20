@@ -9,8 +9,11 @@ using namespace MDCStudio;
 @end
 
 @implementation InspectorView_Item {
+@private
     IBOutlet NSLayoutConstraint* _indent;
     IBOutlet NSLayoutConstraint* _height;
+@public
+    bool darkBackground;
 }
 
 - (NSString*)name { abort(); }
@@ -22,6 +25,11 @@ using namespace MDCStudio;
     [_height setConstant:[self height]];
     [[self textField] setStringValue:[self name]];
 }
+
+//- (void)drawRect:(NSRect)rect {
+//    [[NSColor redColor] set];
+//    NSRectFill(rect);
+//}
 
 @end
 
@@ -196,15 +204,56 @@ using namespace MDCStudio;
 
 
 
-@interface InspectorView_RowView : NSTableRowView
+//@interface InspectorView_RowView : NSTableRowView
+//@end
+//
+//@implementation InspectorView_RowView {
+//    bool darkBackground;
+//}
+//
+//- (NSBackgroundStyle)interiorBackgroundStyle {
+//    return NSBackgroundStyleEmphasized;
+//}
+//
+////@property(readonly) NSBackgroundStyle interiorBackgroundStyle;
+////
+/////* The backgroundColor property defaults to the Table View's backgroundColor, unless usesAlternatingRowBackgroundColors is set to YES. In that case, the colors alternate, and are automatically updated as required by insertions and deletions. The value can be customized in the delegate method -tableView:didAddRowView:forRow:. The property is animatable.
+//// */
+////@property(copy) NSColor *backgroundColor;
+//
+//
+////- (BOOL)isEmphasized { return true; }
+//- (NSColor*)backgroundColor {
+//    if (darkBackground) return [[NSColor blackColor] colorWithAlphaComponent:.5];
+//    return [super backgroundColor];
+//}
+//@end
+
+
+
+
+
+@interface InspectorView_DarkRowView : NSTableRowView
 @end
 
-@implementation InspectorView_RowView
-- (BOOL)isEmphasized { return false; }
+@implementation InspectorView_DarkRowView
+
+- (NSBackgroundStyle)interiorBackgroundStyle {
+    return NSBackgroundStyleEmphasized;
+}
+
+- (NSColor*)backgroundColor {
+    return [[NSColor blackColor] colorWithAlphaComponent:.25];
+}
+
 @end
+
+
+
+
 
 #define Item            InspectorView_Item
-#define RowView         InspectorView_RowView
+#define DarkRowView     InspectorView_DarkRowView
 #define Section         InspectorView_Section
 #define SectionItem     InspectorView_SectionItem
 #define Spacer          InspectorView_Spacer
@@ -274,21 +323,19 @@ using namespace MDCStudio;
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = 3;
+            spacer->darkBackground = true;
             _outlineItems.push_back(spacer);
-        }
-        
-        
-        
-        
-        {
+            
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Stats";
+            section->darkBackground = true;
             
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Image ID";
                 stat->value = @"7553";
                 stat->valueIndent = 75;
+                stat->darkBackground = true;
                 section->items.push_back(stat);
             }
             
@@ -297,6 +344,7 @@ using namespace MDCStudio;
                 stat->name = @"Date";
                 stat->value = @"Feb 18, 2023";
                 stat->valueIndent = 75;
+                stat->darkBackground = true;
                 section->items.push_back(stat);
             }
             
@@ -305,6 +353,7 @@ using namespace MDCStudio;
                 stat->name = @"Time";
                 stat->value = @"8:43 PM";
                 stat->valueIndent = 75;
+                stat->darkBackground = true;
                 section->items.push_back(stat);
             }
             
@@ -313,6 +362,7 @@ using namespace MDCStudio;
                 stat->name = @"Exposure";
                 stat->value = @"555";
                 stat->valueIndent = 75;
+                stat->darkBackground = true;
                 section->items.push_back(stat);
             }
             
@@ -321,7 +371,15 @@ using namespace MDCStudio;
                 stat->name = @"Gain";
                 stat->value = @"1023";
                 stat->valueIndent = 75;
+                stat->darkBackground = true;
                 section->items.push_back(stat);
+            }
+            
+            {
+                Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+                spacer->height = SpacerSize/2;
+                spacer->darkBackground = true;
+                section->items.push_back(spacer);
             }
             
             
@@ -335,11 +393,9 @@ using namespace MDCStudio;
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = SpacerSize;
+            spacer->height = SpacerSize/2;
             _outlineItems.push_back(spacer);
         }
-        
-        
         
         
         
@@ -569,7 +625,11 @@ using namespace MDCStudio;
 }
 
 - (NSTableRowView*)outlineView:(NSOutlineView*)outlineView rowViewForItem:(id)item {
-    return [_outlineView makeViewWithIdentifier:NSStringFromClass([RowView class]) owner:nil];
+    auto it = CastOrNil<Item>(item);
+    if (it->darkBackground) {
+        return [_outlineView makeViewWithIdentifier:NSStringFromClass([DarkRowView class]) owner:nil];
+    }
+    return nil;
 }
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
