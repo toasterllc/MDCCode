@@ -70,13 +70,22 @@ using namespace MDCStudio;
 @end
 
 @implementation InspectorView_SliderIcon {
+@private
+    IBOutlet NSButton* _buttonMin;
+    IBOutlet NSButton* _buttonMax;
+    IBOutlet NSSlider* _slider;
 @public
-    IBOutlet NSImageView* iconLeft;
-    IBOutlet NSImageView* iconRight;
-    IBOutlet NSSlider* slider;
+    NSString* icon;
 }
 - (NSString*)name { return @""; }
 - (bool)selectable { return false; }
+
+- (void)update {
+    [super update];
+    [_buttonMin setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Min", icon]]];
+    [_buttonMax setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Max", icon]]];
+}
+
 @end
 
 
@@ -347,7 +356,10 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"White Balance";
-            section->items = { [self _createItemWithClass:[SliderIcon class]] };
+            
+            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            slider->icon = @"Inspector-WhiteBalance";
+            section->items = { slider };
             _outlineItems.push_back(section);
         }
         
@@ -360,7 +372,9 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Exposure";
-            section->items = { [self _createItemWithClass:[SliderIcon class]] };
+            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            slider->icon = @"Inspector-Exposure";
+            section->items = { slider };
             _outlineItems.push_back(section);
         }
         
@@ -373,7 +387,9 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Brightness";
-            section->items = { [self _createItemWithClass:[SliderIcon class]] };
+            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            slider->icon = @"Inspector-Brightness";
+            section->items = { slider };
             _outlineItems.push_back(section);
         }
         
@@ -386,7 +402,9 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Contrast";
-            section->items = { [self _createItemWithClass:[SliderIcon class]] };
+            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            slider->icon = @"Inspector-Contrast";
+            section->items = { slider };
             _outlineItems.push_back(section);
         }
         
@@ -419,7 +437,9 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Saturation";
-            section->items = { [self _createItemWithClass:[SliderIcon class]] };
+            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            slider->icon = @"Inspector-Saturation";
+            section->items = { slider };
             _outlineItems.push_back(section);
         }
         

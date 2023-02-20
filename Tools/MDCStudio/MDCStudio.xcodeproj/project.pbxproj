@@ -19,6 +19,16 @@
 		55425B6329A2B8E400F25D57 /* ImageCornerButton-2.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B5F29A2B8E400F25D57 /* ImageCornerButton-2.pdf */; };
 		55425B6429A2B8E400F25D57 /* ImageCornerButton-3.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B6029A2B8E400F25D57 /* ImageCornerButton-3.pdf */; };
 		55425B6529A2B8E400F25D57 /* ImageCornerButton-1.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B6129A2B8E400F25D57 /* ImageCornerButton-1.pdf */; };
+		55425B8829A3F39700F25D57 /* Inspector-Brightness-Max.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B7E29A3F39600F25D57 /* Inspector-Brightness-Max.pdf */; };
+		55425B8929A3F39700F25D57 /* Inspector-Contrast-Max.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B7F29A3F39600F25D57 /* Inspector-Contrast-Max.pdf */; };
+		55425B8A29A3F39700F25D57 /* Inspector-WhiteBalance-Max.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B8029A3F39700F25D57 /* Inspector-WhiteBalance-Max.pdf */; };
+		55425B8B29A3F39700F25D57 /* Inspector-Saturation-Min.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B8129A3F39700F25D57 /* Inspector-Saturation-Min.pdf */; };
+		55425B8C29A3F39700F25D57 /* Inspector-Brightness-Min.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B8229A3F39700F25D57 /* Inspector-Brightness-Min.pdf */; };
+		55425B8D29A3F39700F25D57 /* Inspector-Saturation-Max.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B8329A3F39700F25D57 /* Inspector-Saturation-Max.pdf */; };
+		55425B8E29A3F39700F25D57 /* Inspector-Exposure-Max.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B8429A3F39700F25D57 /* Inspector-Exposure-Max.pdf */; };
+		55425B8F29A3F39700F25D57 /* Inspector-Contrast-Min.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B8529A3F39700F25D57 /* Inspector-Contrast-Min.pdf */; };
+		55425B9029A3F39700F25D57 /* Inspector-WhiteBalance-Min.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B8629A3F39700F25D57 /* Inspector-WhiteBalance-Min.pdf */; };
+		55425B9129A3F39700F25D57 /* Inspector-Exposure-Min.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55425B8729A3F39700F25D57 /* Inspector-Exposure-Min.pdf */; };
 		5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5544A7EA27B5E011006AB473 /* SourceListView.xib */; };
 		5544A7EE27B5E011006AB473 /* SourceListView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5544A7EC27B5E011006AB473 /* SourceListView.mm */; };
 		5544AE2927B5E595006AB473 /* Renderer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5544ADFD27B5E57A006AB473 /* Renderer.metal */; };
@@ -81,6 +91,16 @@
 		55425B5F29A2B8E400F25D57 /* ImageCornerButton-2.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-2.pdf"; sourceTree = "<group>"; };
 		55425B6029A2B8E400F25D57 /* ImageCornerButton-3.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-3.pdf"; sourceTree = "<group>"; };
 		55425B6129A2B8E400F25D57 /* ImageCornerButton-1.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "ImageCornerButton-1.pdf"; sourceTree = "<group>"; };
+		55425B7E29A3F39600F25D57 /* Inspector-Brightness-Max.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-Brightness-Max.pdf"; sourceTree = "<group>"; };
+		55425B7F29A3F39600F25D57 /* Inspector-Contrast-Max.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-Contrast-Max.pdf"; sourceTree = "<group>"; };
+		55425B8029A3F39700F25D57 /* Inspector-WhiteBalance-Max.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-WhiteBalance-Max.pdf"; sourceTree = "<group>"; };
+		55425B8129A3F39700F25D57 /* Inspector-Saturation-Min.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-Saturation-Min.pdf"; sourceTree = "<group>"; };
+		55425B8229A3F39700F25D57 /* Inspector-Brightness-Min.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-Brightness-Min.pdf"; sourceTree = "<group>"; };
+		55425B8329A3F39700F25D57 /* Inspector-Saturation-Max.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-Saturation-Max.pdf"; sourceTree = "<group>"; };
+		55425B8429A3F39700F25D57 /* Inspector-Exposure-Max.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-Exposure-Max.pdf"; sourceTree = "<group>"; };
+		55425B8529A3F39700F25D57 /* Inspector-Contrast-Min.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-Contrast-Min.pdf"; sourceTree = "<group>"; };
+		55425B8629A3F39700F25D57 /* Inspector-WhiteBalance-Min.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-WhiteBalance-Min.pdf"; sourceTree = "<group>"; };
+		55425B8729A3F39700F25D57 /* Inspector-Exposure-Min.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-Exposure-Min.pdf"; sourceTree = "<group>"; };
 		5544A7EA27B5E011006AB473 /* SourceListView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SourceListView.xib; sourceTree = "<group>"; };
 		5544A7EB27B5E011006AB473 /* SourceListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SourceListView.h; sourceTree = "<group>"; };
 		5544A7EC27B5E011006AB473 /* SourceListView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SourceListView.mm; sourceTree = "<group>"; };
@@ -405,6 +425,16 @@
 			isa = PBXGroup;
 			children = (
 				55496F48278CFC0600BCA739 /* Assets.xcassets */,
+				55425B7E29A3F39600F25D57 /* Inspector-Brightness-Max.pdf */,
+				55425B8229A3F39700F25D57 /* Inspector-Brightness-Min.pdf */,
+				55425B7F29A3F39600F25D57 /* Inspector-Contrast-Max.pdf */,
+				55425B8529A3F39700F25D57 /* Inspector-Contrast-Min.pdf */,
+				55425B8429A3F39700F25D57 /* Inspector-Exposure-Max.pdf */,
+				55425B8729A3F39700F25D57 /* Inspector-Exposure-Min.pdf */,
+				55425B8329A3F39700F25D57 /* Inspector-Saturation-Max.pdf */,
+				55425B8129A3F39700F25D57 /* Inspector-Saturation-Min.pdf */,
+				55425B8029A3F39700F25D57 /* Inspector-WhiteBalance-Max.pdf */,
+				55425B8629A3F39700F25D57 /* Inspector-WhiteBalance-Min.pdf */,
 				553031FB27BC45A100BEFFEA /* Mask.png */,
 				553031F927BC45A100BEFFEA /* Outline.png */,
 				553031F827BC45A100BEFFEA /* Selection.png */,
@@ -563,17 +593,27 @@
 			files = (
 				55496F49278CFC0600BCA739 /* Assets.xcassets in Resources */,
 				55425B6529A2B8E400F25D57 /* ImageCornerButton-1.pdf in Resources */,
+				55425B9129A3F39700F25D57 /* Inspector-Exposure-Min.pdf in Resources */,
+				55425B8C29A3F39700F25D57 /* Inspector-Brightness-Min.pdf in Resources */,
 				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
+				55425B8A29A3F39700F25D57 /* Inspector-WhiteBalance-Max.pdf in Resources */,
+				55425B8F29A3F39700F25D57 /* Inspector-Contrast-Min.pdf in Resources */,
 				55425B6329A2B8E400F25D57 /* ImageCornerButton-2.pdf in Resources */,
+				55425B9029A3F39700F25D57 /* Inspector-WhiteBalance-Min.pdf in Resources */,
 				553031FF27BC45A100BEFFEA /* Mask.png in Resources */,
 				5544AE5E27B6EE04006AB473 /* Document.xib in Resources */,
+				55425B8E29A3F39700F25D57 /* Inspector-Exposure-Max.pdf in Resources */,
 				55496F4C278CFC0600BCA739 /* MainMenu.xib in Resources */,
+				55425B8929A3F39700F25D57 /* Inspector-Contrast-Max.pdf in Resources */,
 				55425B6229A2B8E400F25D57 /* ImageCornerButton-0.pdf in Resources */,
 				55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */,
+				55425B8B29A3F39700F25D57 /* Inspector-Saturation-Min.pdf in Resources */,
+				55425B8D29A3F39700F25D57 /* Inspector-Saturation-Max.pdf in Resources */,
 				55425B6429A2B8E400F25D57 /* ImageCornerButton-3.pdf in Resources */,
 				553031FD27BC45A100BEFFEA /* Outline.png in Resources */,
 				5544A7ED27B5E011006AB473 /* SourceListView.xib in Resources */,
 				55425B2629A0752300F25D57 /* InspectorView.xib in Resources */,
+				55425B8829A3F39700F25D57 /* Inspector-Brightness-Max.pdf in Resources */,
 				55F8D01027BDF26400757165 /* Shadow.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
