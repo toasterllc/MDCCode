@@ -14,7 +14,6 @@ using namespace MDCStudio;
 }
 
 - (NSString*)name { abort(); }
-- (bool)selectable { abort(); }
 - (CGFloat)height { return 20; }
 - (CGFloat)indent { return 12; }
 
@@ -36,7 +35,6 @@ using namespace MDCStudio;
 }
 
 - (NSString*)name { return [name uppercaseString]; }
-- (bool)selectable { return false; }
 - (CGFloat)height { return 20; }
 
 - (void)update {
@@ -56,7 +54,6 @@ using namespace MDCStudio;
     CGFloat height;
 }
 - (NSString*)name { return @""; }
-- (bool)selectable { return false; }
 - (CGFloat)height { return height; }
 @end
 
@@ -78,7 +75,6 @@ using namespace MDCStudio;
     NSString* icon;
 }
 - (NSString*)name { return @""; }
-- (bool)selectable { return false; }
 
 - (void)update {
     [super update];
@@ -103,7 +99,6 @@ using namespace MDCStudio;
     NSString* name;
 }
 - (NSString*)name { return name; }
-- (bool)selectable { return false; }
 
 - (void)update {
     [super update];
@@ -127,7 +122,6 @@ using namespace MDCStudio;
 }
 
 - (NSString*)name { return name; }
-- (bool)selectable { return false; }
 
 - (void)update {
     [super update];
@@ -149,7 +143,6 @@ using namespace MDCStudio;
 }
 
 - (NSString*)name { return @""; }
-- (bool)selectable { return false; }
 
 @end
 
@@ -166,7 +159,6 @@ using namespace MDCStudio;
 }
 
 - (NSString*)name { return @""; }
-- (bool)selectable { return false; }
 
 @end
 
@@ -189,7 +181,6 @@ using namespace MDCStudio;
 }
 
 - (NSString*)name { return @""; }
-- (bool)selectable { return false; }
 
 - (void)update {
     [super update];
@@ -225,6 +216,9 @@ using namespace MDCStudio;
 #define Stat            InspectorView_Stat
 
 // MARK: - InspectorView
+
+@interface InspectorView () <NSOutlineViewDelegate>
+@end
 
 @implementation InspectorView {
     IBOutlet NSView* _nibView;
@@ -567,9 +561,6 @@ using namespace MDCStudio;
 }
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView shouldSelectItem:(id)item {
-    if (auto it = CastOrNil<Item>(item)) {
-        return [it selectable];
-    }
     return false;
 }
 
@@ -586,12 +577,18 @@ using namespace MDCStudio;
     return item;
 }
 
-//- (void)outlineView:(NSOutlineView*)outlineView willDisplayCell:(id)cell forTableColumn:(NSTableColumn*)tableColumn item:(id)item {
-//    NSLog(@"AAA %@", NSStringFromSelector(_cmd));
-//}
+@end
 
-//- (void)outlineViewSelectionDidChange:(NSNotification*)note {
-//    [_delegate sourceListViewSelectionChanged:self];
-//}
+
+@interface InspectorOutlineView : NSOutlineView
+@end
+
+
+@implementation InspectorOutlineView
+
+- (BOOL)validateProposedFirstResponder:(NSResponder*)responder forEvent:(NSEvent*)event {
+    // Allow labels in our outline view to be selected
+    return true;
+}
 
 @end

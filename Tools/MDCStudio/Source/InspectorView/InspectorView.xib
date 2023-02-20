@@ -17,7 +17,7 @@
                 <rect key="frame" x="0.0" y="0.0" width="200" height="400"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" selectionHighlightStyle="sourceList" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="20" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" translatesAutoresizingMaskIntoConstraints="NO" id="AKO-DU-mMa">
+                    <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" selectionHighlightStyle="sourceList" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowHeight="20" rowSizeStyle="automatic" usesAutomaticRowHeights="YES" viewBased="YES" indentationMarkerFollowsCell="NO" outlineTableColumn="wRa-Pk-v3r" translatesAutoresizingMaskIntoConstraints="NO" id="AKO-DU-mMa" customClass="InspectorOutlineView">
                         <rect key="frame" x="0.0" y="0.0" width="203" height="400"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <size key="intercellSpacing" width="3" height="2"/>
@@ -54,7 +54,7 @@
                                         <subviews>
                                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aQl-zt-mX6">
                                                 <rect key="frame" x="-2" y="3" width="204" height="14"/>
-                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="HEADER CELL" id="h9x-xw-FdW">
+                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" sendsActionOnEndEditing="YES" title="HEADER CELL" id="h9x-xw-FdW">
                                                     <font key="font" metaFont="smallSystemBold"/>
                                                     <color key="textColor" name="headerColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -128,7 +128,7 @@
                                         <subviews>
                                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
                                                 <rect key="frame" x="-2" y="3" width="33" height="14"/>
-                                                <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" title="Label" id="v9N-Nx-KcH">
+                                                <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" title="Label" id="v9N-Nx-KcH">
                                                     <font key="font" metaFont="controlContent" size="11"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
