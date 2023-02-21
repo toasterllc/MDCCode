@@ -6,12 +6,12 @@ using namespace ImageCornerButtonTypes;
 }
 
 static void _Init(ImageCornerButton* self) {
-    [self setCorner:Corner::BottomLeft];
+    [self setCorner:Corner::BottomRight];
 }
 
 static Corner _CornerNext(Corner x, int delta) {
-    if (x==Corner::TopLeft && delta>0) return Corner::BottomLeft;
-    if (x==Corner::BottomLeft && delta<0) return Corner::TopLeft;
+    if (x==Corner::TopRight && delta>0) return Corner::BottomRight;
+    if (x==Corner::BottomRight && delta<0) return Corner::TopRight;
     return (Corner)((int)x+delta);
 }
 

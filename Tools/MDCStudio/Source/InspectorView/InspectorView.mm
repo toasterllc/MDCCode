@@ -173,6 +173,27 @@ using namespace MDCStudio;
 
 
 
+@interface InspectorView_Rotation : InspectorView_Item
+@end
+
+@implementation InspectorView_Rotation {
+@private
+    IBOutlet NSButton* _button;
+@public
+    NSString* icon;
+}
+
+- (NSString*)name { return @""; }
+
+//- (void)update {
+//    [super update];
+//    [_button setImage:[NSImage imageNamed:icon]];
+//}
+
+@end
+
+
+
 
 @interface InspectorView_Stat : InspectorView_Item
 @end
@@ -233,6 +254,7 @@ using namespace MDCStudio;
 #define Checkbox        InspectorView_Checkbox
 #define Menu            InspectorView_Menu
 #define Timestamp       InspectorView_Timestamp
+#define Rotation        InspectorView_Rotation
 #define Stat            InspectorView_Stat
 
 // MARK: - InspectorView
@@ -449,6 +471,21 @@ using namespace MDCStudio;
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"Rotation";
+            Rotation* rotation = [self _createItemWithClass:[Rotation class]];
+            rotation->icon = @"Rotation";
+            section->items = { rotation };
+            _outlineItems.push_back(section);
+        }
+        
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = SpacerSize;
+            _outlineItems.push_back(spacer);
+        }
+        
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Processing";
             
             Checkbox* checkbox1 = [self _createItemWithClass:[Checkbox class]];
@@ -466,6 +503,7 @@ using namespace MDCStudio;
             spacer->height = SpacerSize;
             _outlineItems.push_back(spacer);
         }
+        
         
         {
             Section* section = [self _createItemWithClass:[Section class]];

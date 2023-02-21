@@ -3,10 +3,10 @@
 namespace ImageCornerButtonTypes {
 
 enum class Corner {
-    BottomLeft,
     BottomRight,
-    TopRight,
+    BottomLeft,
     TopLeft,
+    TopRight,
 };
 
 } // namespace ImageCornerButtonTypes
