@@ -6,7 +6,7 @@ namespace Img {
     
     using Word  = uint16_t;
     using Pixel = Word;
-    using Id = uint32_t;
+    using Id = uint64_t;
     
     struct [[gnu::packed]] Header {
         union [[gnu::packed]] MagicNumber24 {
@@ -27,10 +27,10 @@ namespace Img {
         uint16_t coarseIntTime; // 0x1111
         uint16_t analogGain;    // 0x2222
         
-        Id id;                  // 0xCAFEBABE
-        uint64_t timestamp;     // 0xDEADBEEFBEEFCAFE
+        Id id;                  // 0xA7A6A5A4A3A2A1A0
+        uint64_t timestamp;     // 0xB7B6B5B4B3B2B1B0
         
-        uint8_t _pad[8];
+        uint8_t _pad[4];
     };
     static_assert(sizeof(Header) == 32);
     

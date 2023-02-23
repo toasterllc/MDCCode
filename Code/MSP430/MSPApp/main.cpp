@@ -492,6 +492,7 @@ struct _TaskImg {
             header.timestamp = _RTC::TimeRead();
             
             // Capture an image to RAM
+            #warning TODO: optimize the header logic so that we don't set the magic/version/imageWidth/imageHeight every time, since it only needs to be set once per ice40 power-on
             const _ICE::ImgCaptureStatusResp resp = _ICE::ImgCapture(header, expBlock, skipCount);
             const uint8_t expScore = _AutoExp.update(resp.highlightCount(), resp.shadowCount());
             if (!bestExpScore || (expScore > bestExpScore)) {
