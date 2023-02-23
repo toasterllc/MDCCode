@@ -5,6 +5,12 @@
 
 template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin>
 class RTCType {
+private:
+    template <typename I>
+    static constexpr bool _IsPowerOf2(I x) {
+        return x && ((x & (x-1)) == 0);
+    }
+    
 public:
     using Time = MSP::Time;
     
@@ -12,6 +18,7 @@ public:
     static constexpr uint32_t Predivider = 1024;
     static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
     static_assert((T_XT1FreqHz % Predivider) == 0); // Confirm that T_XT1FreqHz is evenly divisible by Predivider
+    static_assert(_IsPowerOf2(FreqHz)); // Confirm that FreqHz is a power of two for cheap division in _TimeRead()
     static constexpr uint16_t InterruptCount = (InterruptIntervalSec*FreqHz)-1;
     static_assert(InterruptCount == ((InterruptIntervalSec*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
     
