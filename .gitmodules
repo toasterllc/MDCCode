@@ -13,3 +13,6 @@
 [submodule "Tools/nextpnr"]
 	path = Tools/nextpnr
 	url = git@github.com:davekeck/nextpnr-MDC.git
+[submodule "Code/Lib/date"]
+	path = Code/Lib/date
+	url = git@github.com:heytoaster/date-MDC.git
