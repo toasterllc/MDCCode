@@ -3,6 +3,7 @@
 #import <thread>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "Toastbox/Mmap.h"
+#import "Code/Shared/Time.h"
 #import "Code/Shared/MSP.h"
 #import "Code/Shared/ImgSD.h"
 #import "Code/Shared/BufQueue.h"
@@ -50,7 +51,7 @@ public:
             _dev->mspHostModeSet(true);
             
             // Update the device's time
-            MSP::Time time = MSP::TimeFromUnixTime(std::time(nullptr));
+            const Time::Instant time = 0;//MSP::TimeFromUnixTime(std::time(nullptr));
             _dev->mspTimeSet(time);
             printf("Set device time to 0x%jx\n", (uintmax_t)time);
             
@@ -374,7 +375,7 @@ private:
                         );
                     }
                     
-                    const uint32_t addCount = deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd);
+                    const uint32_t addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                     printf("Adding %ju images\n", (uintmax_t)addCount);
                     
                     _Range newest;
@@ -529,17 +530,13 @@ private:
             
             // Populate ImageThumb fields
             {
-                // If the image has an absolute time, use it
-                // If the image has a relative time (ie time since device boot), drop it
-                if (imgHeader.timestamp & MSP::TimeAbsoluteBase) {
-                    imageThumb.timestamp = MSP::UnixTimeFromTime(imgHeader.timestamp);
-                }
+                imageThumb.timestamp        = imgHeader.timestamp;
                 
-                imageThumb.imageWidth     = imgHeader.imageWidth;
-                imageThumb.imageHeight    = imgHeader.imageHeight;
+                imageThumb.imageWidth       = imgHeader.imageWidth;
+                imageThumb.imageHeight      = imgHeader.imageHeight;
                 
-                imageThumb.coarseIntTime  = imgHeader.coarseIntTime;
-                imageThumb.analogGain     = imgHeader.analogGain;
+                imageThumb.coarseIntTime    = imgHeader.coarseIntTime;
+                imageThumb.analogGain       = imgHeader.analogGain;
                 
                 block += ImgSD::Full::ImageBlockCount;
             }
@@ -576,9 +573,9 @@ private:
                 RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, buf);
                 
                 // Populate the illuminant
-                imageThumb.illum[0] = renderResult.illumEst[0];
-                imageThumb.illum[1] = renderResult.illumEst[1];
-                imageThumb.illum[2] = renderResult.illumEst[2];
+                imageThumb.illumEst[0] = renderResult.illumEst[0];
+                imageThumb.illumEst[1] = renderResult.illumEst[1];
+                imageThumb.illumEst[2] = renderResult.illumEst[2];
             }
             
             deviceImgIdLast = imgHeader.id;

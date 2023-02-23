@@ -96,7 +96,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
             .pixels     = (ImagePixel*)(_image->data.get() + _image->off),
         };
         
-        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(imageThumb.illum);
+        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(imageThumb.illumEst);
         const Pipeline::Options pipelineOpts = {
             .illum                  = illum,
 //            .reconstructHighlights  = { .en = true, },

@@ -1113,7 +1113,7 @@ static void _BatterySamplerError(uint16_t line) {
     _Abort(AbortDomain::BatterySampler, line);
 }
 
-static void _AbortRecord(const MSP::Time& timestamp, uint16_t domain, uint16_t line) {
+static void _AbortRecord(const Time::Instant& timestamp, uint16_t domain, uint16_t line) {
     using namespace MSP;
     FRAMWriteEn writeEn; // Enable FRAM writing
     
@@ -1152,7 +1152,7 @@ static void _BOR() {
 
 [[noreturn]]
 static void _Abort(uint16_t domain, uint16_t line) {
-    const MSP::Time timestamp = _RTC::TimeRead();
+    const Time::Instant timestamp = _RTC::TimeRead();
     // Record the abort
     _AbortRecord(timestamp, domain, line);
     _BOR();

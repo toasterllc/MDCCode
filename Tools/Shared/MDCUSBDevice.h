@@ -326,7 +326,7 @@ public:
         }
     }
     
-    void mspTimeSet(MSP::Time time) {
+    void mspTimeSet(Time::Instant time) {
         assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {
             .op = STM::Op::MSPTimeSet,

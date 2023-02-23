@@ -2,6 +2,7 @@
 #include <msp430.h>
 #include "Toastbox/Scheduler.h"
 #include "MSP.h"
+#include "Time.h"
 
 template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin>
 class RTCType {
@@ -12,8 +13,6 @@ private:
     }
     
 public:
-    using Time = MSP::Time;
-    
     static constexpr uint32_t InterruptIntervalSec = 2048;
     static constexpr uint32_t Predivider = 1024;
     static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
@@ -31,7 +30,7 @@ public:
         return RTCCTL != 0;
     }
     
-    static void Init(Time time=0) {
+    static void Init(Time::Instant time=0) {
         // Prevent interrupts from firing while we update our time / reset the RTC
         Toastbox::IntState ints(false);
         
@@ -70,14 +69,14 @@ public:
     // TimeRead() reads _Time in an safe, overflow-aware manner.
     //
     // Interrupts must be *enabled* (not disabled!) when calling to properly handle overflow!
-    static Time TimeRead() {
+    static Time::Instant TimeRead() {
         // This 2x _TimeRead() loop is necessary to handle the race related to RTCCNT overflowing:
         // When we read _Time and RTCCNT, we don't know if _Time has been updated for the most
         // recent overflow of RTCCNT yet. Therefore we compute the time twice, and if t2>=t1,
         // then we got a valid reading. Otherwise, we got an invalid reading and need to try again.
         for (;;) {
-            const Time t1 = _TimeRead();
-            const Time t2 = _TimeRead();
+            const Time::Instant t1 = _TimeRead();
+            const Time::Instant t2 = _TimeRead();
             if (t2 >= t1) return t2;
         }
     }
@@ -112,7 +111,7 @@ private:
         else static_assert(_AlwaysFalse<T_Predivider>);
     }
     
-    static Time _TimeRead() {
+    static Time::Instant _TimeRead() {
         // Disable interrupts so we can read _Time and RTCCNT atomically.
         // This is especially necessary because reading _Time isn't atomic
         // since it's 32 bits.
@@ -132,5 +131,5 @@ private:
     // memory is never automatically initialized, because we don't want it
     // to be reset when we abort.
     [[gnu::section(".ram_backup_noinit.main")]]
-    static inline volatile Time _Time;
+    static inline volatile Time::Instant _Time;
 };

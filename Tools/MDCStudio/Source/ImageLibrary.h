@@ -1,5 +1,6 @@
 #pragma once
 #include <forward_list>
+#include "Code/Shared/Time.h"
 #include "RecordStore.h"
 #include "Code/Shared/Img.h"
 #include "Tools/Shared/Lockable.h"
@@ -10,11 +11,12 @@ struct [[gnu::packed]] ImageRef {
     static constexpr uint32_t Version = 0;
     
     Img::Id id = 0;
-    uint8_t _pad[4];
     
+    // addr: address of the full-size image on the device
     uint64_t addr = 0;
     
-    uint8_t _reserved[64] = {}; // So we can add fields without doing a big data migration
+    // _reserved: so we can add fields in the future without doing a data migration
+    uint8_t _reserved[64] = {};
 };
 
 static_assert(!(sizeof(ImageRef) % 8)); // Ensure that ImageRef is a multiple of 8 bytes
@@ -80,18 +82,21 @@ struct [[gnu::packed]] ImageThumb {
     
     ImageRef ref;
     
-    uint64_t timestamp = 0; // Unix time
+    Time::Instant timestamp = 0;
     
     uint16_t imageWidth = 0;
     uint16_t imageHeight = 0;
-    uint8_t _pad[4];
     
-    uint32_t coarseIntTime = 0;
-    uint32_t analogGain = 0;
+    uint16_t coarseIntTime = 0;
+    uint16_t analogGain = 0;
     
-    double illum[3] = {0,0,0};
+    // illumEst: estimated illuminant
+    double illumEst[3] = {0,0,0};
     
     ImageOptions options;
+    
+    // _reserved: so we can add fields in the future without doing a data migration
+    uint8_t _reserved[64] = {};
     
     uint8_t thumb[ThumbWidth*ThumbHeight*ThumbPixelSize];
 };
