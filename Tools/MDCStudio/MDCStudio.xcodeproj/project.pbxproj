@@ -50,6 +50,7 @@
 		55C456882955A1AE00A20363 /* FixedDocumentView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456852955A1AE00A20363 /* FixedDocumentView.mm */; };
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
 		55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C846279001CA005ABD39 /* ImageGridLayer.metal */; };
+		55D30A2E29A828E60080BCBD /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55D30A2C29A828070080BCBD /* tz.cpp */; };
 		55D4AAA127B1D3E70052EFEE /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */; };
 		55D4AAA327B1D3F20052EFEE /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55D4AAA227B1D3F20052EFEE /* Accelerate.framework */; };
 		55E43F9328C00D6B00FCCEA0 /* Defringe.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F7C28C00D6B00FCCEA0 /* Defringe.mm */; };
@@ -182,6 +183,18 @@
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
 		55D3097E29A80F2E0080BCBD /* Time.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Time.h; sourceTree = "<group>"; };
 		55D3099229A822D60080BCBD /* TimeConvert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeConvert.h; sourceTree = "<group>"; };
+		55D30A1B29A828070080BCBD /* tz_private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz_private.h; sourceTree = "<group>"; };
+		55D30A1C29A828070080BCBD /* ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios.h; sourceTree = "<group>"; };
+		55D30A1D29A828070080BCBD /* ptz.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ptz.h; sourceTree = "<group>"; };
+		55D30A1E29A828070080BCBD /* solar_hijri.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = solar_hijri.h; sourceTree = "<group>"; };
+		55D30A1F29A828070080BCBD /* date.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = date.h; sourceTree = "<group>"; };
+		55D30A2029A828070080BCBD /* julian.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = julian.h; sourceTree = "<group>"; };
+		55D30A2129A828070080BCBD /* chrono_io.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = chrono_io.h; sourceTree = "<group>"; };
+		55D30A2229A828070080BCBD /* iso_week.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iso_week.h; sourceTree = "<group>"; };
+		55D30A2329A828070080BCBD /* tz.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz.h; sourceTree = "<group>"; };
+		55D30A2429A828070080BCBD /* islamic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = islamic.h; sourceTree = "<group>"; };
+		55D30A2C29A828070080BCBD /* tz.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tz.cpp; sourceTree = "<group>"; };
+		55D30A2D29A828070080BCBD /* ios.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ios.mm; sourceTree = "<group>"; };
 		55D4AAA027B1D3E70052EFEE /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 		55D4AAA227B1D3F20052EFEE /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		55E43F7928C0085500FCCEA0 /* CFA.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFA.h; sourceTree = "<group>"; };
@@ -364,6 +377,7 @@
 		5544AE1527B5E58F006AB473 /* Lib */ = {
 			isa = PBXGroup;
 			children = (
+				55D3099329A828070080BCBD /* date */,
 				5544AE1627B5E58F006AB473 /* Toastbox */,
 			);
 			path = Lib;
@@ -493,6 +507,49 @@
 				55496F5A278CFCE200BCA739 /* Cocoa.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		55D3099329A828070080BCBD /* date */ = {
+			isa = PBXGroup;
+			children = (
+				55D30A1929A828070080BCBD /* include */,
+				55D30A2B29A828070080BCBD /* src */,
+			);
+			path = date;
+			sourceTree = "<group>";
+		};
+		55D30A1929A828070080BCBD /* include */ = {
+			isa = PBXGroup;
+			children = (
+				55D30A1A29A828070080BCBD /* date */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		55D30A1A29A828070080BCBD /* date */ = {
+			isa = PBXGroup;
+			children = (
+				55D30A1B29A828070080BCBD /* tz_private.h */,
+				55D30A1C29A828070080BCBD /* ios.h */,
+				55D30A1D29A828070080BCBD /* ptz.h */,
+				55D30A1E29A828070080BCBD /* solar_hijri.h */,
+				55D30A1F29A828070080BCBD /* date.h */,
+				55D30A2029A828070080BCBD /* julian.h */,
+				55D30A2129A828070080BCBD /* chrono_io.h */,
+				55D30A2229A828070080BCBD /* iso_week.h */,
+				55D30A2329A828070080BCBD /* tz.h */,
+				55D30A2429A828070080BCBD /* islamic.h */,
+			);
+			path = date;
+			sourceTree = "<group>";
+		};
+		55D30A2B29A828070080BCBD /* src */ = {
+			isa = PBXGroup;
+			children = (
+				55D30A2C29A828070080BCBD /* tz.cpp */,
+				55D30A2D29A828070080BCBD /* ios.mm */,
+			);
+			path = src;
 			sourceTree = "<group>";
 		};
 		55E43F7A28C00D6B00FCCEA0 /* ImagePipeline */ = {
@@ -634,6 +691,7 @@
 				55C456862955A1AE00A20363 /* FixedScrollView.mm in Sources */,
 				551328B927B45D7C00CD823B /* ImageGridView.mm in Sources */,
 				55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */,
+				55D30A2E29A828E60080BCBD /* tz.cpp in Sources */,
 				55C456872955A1AE00A20363 /* FixedMetalDocumentLayer.mm in Sources */,
 				55C456882955A1AE00A20363 /* FixedDocumentView.mm in Sources */,
 				55496F4F278CFC0600BCA739 /* main.mm in Sources */,
@@ -677,69 +735,11 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		55496F51278CFC0600BCA739 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = c11;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
-				USE_HEADERMAP = NO;
-			};
-			name = Debug;
-		};
 		55496F52278CFC0600BCA739 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
@@ -768,6 +768,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -775,61 +776,42 @@
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"HAS_REMOTE_API=0",
+					"USE_OS_TZDB=1",
+				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/Source $PROJECT_DIR/../.. $PROJECT_DIR/../../Code/Lib";
 				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = (
+					$PROJECT_DIR/Source,
+					$PROJECT_DIR/../..,
+					$PROJECT_DIR/../../Code/Lib,
+					$PROJECT_DIR/../../Code/Lib/date/include,
+				);
 				USE_HEADERMAP = NO;
 			};
 			name = Release;
 		};
-		55496F54278CFC0600BCA739 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = MDCStudio/MDCStudio.entitlements;
-				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = Resources/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/Source $PROJECT_DIR/../.. $PROJECT_DIR/../../Code/Lib";
-				PRODUCT_BUNDLE_IDENTIFIER = com.heytoaster.MDCStudio;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = (
-					$PROJECT_DIR/Source,
-					$PROJECT_DIR/../..,
-					$PROJECT_DIR/../../Code/Lib,
-				);
-			};
-			name = Debug;
-		};
 		55496F55278CFC0600BCA739 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = MDCStudio/MDCStudio.entitlements;
-				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = Resources/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MTL_HEADER_SEARCH_PATHS = "$PROJECT_DIR/Source $PROJECT_DIR/../.. $PROJECT_DIR/../../Code/Lib";
 				PRODUCT_BUNDLE_IDENTIFIER = com.heytoaster.MDCStudio;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = (
-					$PROJECT_DIR/Source,
-					$PROJECT_DIR/../..,
-					$PROJECT_DIR/../../Code/Lib,
-				);
 			};
 			name = Release;
 		};
@@ -839,7 +821,6 @@
 		55496F3D278CFC0400BCA739 /* Build configuration list for PBXProject "MDCStudio" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				55496F51278CFC0600BCA739 /* Debug */,
 				55496F52278CFC0600BCA739 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -848,7 +829,6 @@
 		55496F53278CFC0600BCA739 /* Build configuration list for PBXNativeTarget "MDCStudio" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				55496F54278CFC0600BCA739 /* Debug */,
 				55496F55278CFC0600BCA739 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;

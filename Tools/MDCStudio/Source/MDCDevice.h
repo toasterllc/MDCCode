@@ -4,6 +4,7 @@
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "Toastbox/Mmap.h"
 #import "Code/Shared/Time.h"
+#import "Code/Shared/TimeConvert.h"
 #import "Code/Shared/MSP.h"
 #import "Code/Shared/ImgSD.h"
 #import "Code/Shared/BufQueue.h"
@@ -51,7 +52,7 @@ public:
             _dev->mspHostModeSet(true);
             
             // Update the device's time
-            const Time::Instant time = 0;//MSP::TimeFromUnixTime(std::time(nullptr));
+            const Time::Instant time = Time::Current();
             _dev->mspTimeSet(time);
             printf("Set device time to 0x%jx\n", (uintmax_t)time);
             

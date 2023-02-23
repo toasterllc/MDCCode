@@ -3,13 +3,19 @@
 namespace Time {
 
 // Instant: represents a particular moment in time
-// Encoded as the linear number of milliseconds since our epoch (defined by EpochUnix)
+// Encoded as the linear count of milliseconds since our epoch (defined by `AbsoluteEpochUnix`)
 using Instant = uint64_t;
 
-static constexpr uint64_t EpochUnix = 1640995200; // 2022-01-01 00:00:00 +0000
+static constexpr uint64_t AbsoluteEpochUnix = 1640995200; // 2022-01-01 00:00:00 +0000
+static constexpr Instant AbsoluteBit = (Instant)1<<63;
 
+// Absolute(): returns whether the time instant is an absolute time (versus a relative time)
+// The difference between them is that an absolute time is a time delta since the epoch
+// (AbsoluteEpochUnix), whereas a relative time is a time delta since the device booting. A
+// relative time therefore can't be converted to an absolute time without knowing the
+// absolute time that the device booted.
 static constexpr bool Absolute(const Instant& t) {
-    return t&((uint64_t)1<<63);
+    return t&AbsoluteBit;
 }
 
 //static constexpr Time TimeAbsoluteUnixReference = 1640995200; // 2022-01-01 00:00:00 +0000
