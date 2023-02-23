@@ -515,7 +515,9 @@ private:
             if (_ChecksumValid(imgData, Img::Size::Thumb)) {
                 printf("Checksum valid (size: thumb)\n");
             } else {
-                abort();
+                printf("Invalid checksum\n");
+//                throw Toastbox::RuntimeError("invalid checksum");
+//                abort();
 //                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
             }
             

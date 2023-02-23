@@ -19,6 +19,40 @@ struct [[gnu::packed]] ImageRef {
 
 static_assert(!(sizeof(ImageRef) % 8)); // Ensure that ImageRef is a multiple of 8 bytes
 
+struct [[gnu::packed]] ImageOptions {
+    enum class Rotation : uint8_t {
+        None,
+        Clockwise90,
+        Clockwise180,
+        Clockwise270,
+    };
+    
+    enum class Corner : uint8_t {
+        BottomRight,
+        BottomLeft,
+        TopLeft,
+        TopRight,
+    };
+    
+    Rotation rotation = Rotation::None;
+    bool defringe = false;
+    bool reconstructHighlights = false;
+    bool timestamp = false;
+    Corner timestampCorner = Corner::BottomRight;
+    uint8_t _pad[3];
+    
+    float exposure = 0;
+    float saturation = 0;
+    float brightness = 0;
+    float contrast = 0;
+    struct {
+        float amount = 0;
+        float radius = 0;
+    } localContrast;
+};
+
+static_assert(!(sizeof(ImageOptions) % 8)); // Ensure that ImageRef is a multiple of 8 bytes
+
 struct [[gnu::packed]] ImageThumb {
     
 //    static constexpr size_t ThumbWidth      = 288;
@@ -44,13 +78,6 @@ struct [[gnu::packed]] ImageThumb {
     
     static constexpr size_t ThumbPixelSize  = 3;
     
-    enum class Rotation : uint8_t {
-        None,
-        Clockwise90,
-        Clockwise180,
-        Clockwise270
-    };
-    
     ImageRef ref;
     
     uint64_t timestamp = 0; // Unix time
@@ -63,8 +90,8 @@ struct [[gnu::packed]] ImageThumb {
     uint32_t analogGain = 0;
     
     double illum[3] = {0,0,0};
-    Rotation rotation = Rotation::None;
-    uint8_t _pad2[7];
+    
+    ImageOptions options;
     
     uint8_t thumb[ThumbWidth*ThumbHeight*ThumbPixelSize];
 };

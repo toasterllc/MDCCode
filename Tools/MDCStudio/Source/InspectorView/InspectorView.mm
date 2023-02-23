@@ -406,6 +406,21 @@ using namespace MDCStudio;
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
+            section->name = @"Saturation";
+            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            slider->icon = @"Inspector-Saturation";
+            section->items = { slider };
+            _outlineItems.push_back(section);
+        }
+        
+        {
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = SpacerSize;
+            _outlineItems.push_back(spacer);
+        }
+        
+        {
+            Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Brightness";
             SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
             slider->icon = @"Inspector-Brightness";
@@ -456,21 +471,6 @@ using namespace MDCStudio;
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
-            section->name = @"Saturation";
-            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
-            slider->icon = @"Inspector-Saturation";
-            section->items = { slider };
-            _outlineItems.push_back(section);
-        }
-        
-        {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = SpacerSize;
-            _outlineItems.push_back(spacer);
-        }
-        
-        {
-            Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Rotation";
             Rotation* rotation = [self _createItemWithClass:[Rotation class]];
             rotation->icon = @"Rotation";
@@ -486,15 +486,37 @@ using namespace MDCStudio;
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
-            section->name = @"Processing";
+            section->name = @"Other";
             
-            Checkbox* checkbox1 = [self _createItemWithClass:[Checkbox class]];
-            checkbox1->name = @"Defringe";
+            {
+                Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
+                checkbox->name = @"Defringe";
+                section->items.push_back(checkbox);
+            }
             
-            Checkbox* checkbox2 = [self _createItemWithClass:[Checkbox class]];
-            checkbox2->name = @"Reconstruct highlights";
+//            {
+//                Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+//                spacer->height = 4;
+//                section->items.push_back(spacer);
+//            }
             
-            section->items = { checkbox1, checkbox2 };
+            {
+                Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
+                checkbox->name = @"Reconstruct highlights";
+                section->items.push_back(checkbox);
+            }
+            
+//            {
+//                Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+//                spacer->height = 4;
+//                section->items.push_back(spacer);
+//            }
+            
+            {
+                Timestamp* timestamp = [self _createItemWithClass:[Timestamp class]];
+                section->items.push_back(timestamp);
+            }
+            
             _outlineItems.push_back(section);
         }
         
@@ -505,12 +527,12 @@ using namespace MDCStudio;
         }
         
         
-        {
-            Section* section = [self _createItemWithClass:[Section class]];
-            section->name = @"Timestamp";
-            section->items = { [self _createItemWithClass:[Timestamp class]] };
-            _outlineItems.push_back(section);
-        }
+//        {
+//            Section* section = [self _createItemWithClass:[Section class]];
+//            section->name = @"Timestamp";
+//            section->items = { [self _createItemWithClass:[Timestamp class]] };
+//            _outlineItems.push_back(section);
+//        }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];

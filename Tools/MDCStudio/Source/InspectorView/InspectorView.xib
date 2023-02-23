@@ -129,7 +129,7 @@
                                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
                                                 <rect key="frame" x="-2" y="3" width="33" height="14"/>
                                                 <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" title="Label" id="v9N-Nx-KcH">
-                                                    <font key="font" metaFont="menu" size="11"/>
+                                                    <font key="font" metaFont="label" size="11"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
@@ -162,7 +162,7 @@
                                                 <rect key="frame" x="-3" y="1" width="240" height="18"/>
                                                 <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingMiddle" state="on" inset="2" id="acZ-s2-rX2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="menu" size="11"/>
+                                                    <font key="font" metaFont="label" size="11"/>
                                                 </buttonCell>
                                             </button>
                                         </subviews>
@@ -186,7 +186,7 @@
                                                 <rect key="frame" x="-3" y="-2" width="241" height="22"/>
                                                 <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Y5b-qt-FR1" id="D89-oK-seX">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="menu" size="11"/>
+                                                    <font key="font" metaFont="label" size="11"/>
                                                     <menu key="menu" id="Bvc-nQ-9xm">
                                                         <items>
                                                             <menuItem title="Item 1" state="on" id="Y5b-qt-FR1"/>
@@ -213,22 +213,15 @@
                                         <rect key="frame" x="1" y="152" width="247" height="20"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
-                                            <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6zi-df-ht2">
-                                                <rect key="frame" x="-3" y="-2" width="201" height="22"/>
-                                                <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="XMQ-gj-Zn6" id="Toa-EJ-UaR">
-                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                    <font key="font" metaFont="menu" size="11"/>
-                                                    <menu key="menu" id="Y2w-xF-et1">
-                                                        <items>
-                                                            <menuItem title="Item 1" state="on" id="XMQ-gj-Zn6"/>
-                                                            <menuItem title="Item 2" id="0fd-hc-rKj"/>
-                                                            <menuItem title="Item 3" id="HwL-e6-4e7"/>
-                                                        </items>
-                                                    </menu>
-                                                </popUpButtonCell>
-                                            </popUpButton>
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="yui-q4-XJp">
+                                                <rect key="frame" x="-3" y="1" width="81" height="18"/>
+                                                <buttonCell key="cell" type="check" title="Timestamp" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingMiddle" state="on" inset="2" id="4WS-8D-meS">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="label" size="11"/>
+                                                </buttonCell>
+                                            </button>
                                             <button translatesAutoresizingMaskIntoConstraints="NO" id="hlR-S1-aEk" customClass="ImageCornerButton">
-                                                <rect key="frame" x="203" y="-6" width="32" height="32"/>
+                                                <rect key="frame" x="84" y="-7" width="32" height="32"/>
                                                 <constraints>
                                                     <constraint firstAttribute="width" constant="32" id="IY3-fP-zae"/>
                                                     <constraint firstAttribute="height" constant="32" id="wan-6S-Zkk"/>
@@ -240,17 +233,15 @@
                                             </button>
                                         </subviews>
                                         <constraints>
-                                            <constraint firstItem="hlR-S1-aEk" firstAttribute="leading" secondItem="6zi-df-ht2" secondAttribute="trailing" constant="8" id="3bn-LD-oTw"/>
-                                            <constraint firstAttribute="trailing" secondItem="hlR-S1-aEk" secondAttribute="trailing" constant="12" id="IHw-wj-RJw"/>
-                                            <constraint firstItem="6zi-df-ht2" firstAttribute="centerY" secondItem="ZXZ-qK-hhw" secondAttribute="centerY" id="N9R-wV-jdB"/>
-                                            <constraint firstItem="hlR-S1-aEk" firstAttribute="centerY" secondItem="ZXZ-qK-hhw" secondAttribute="centerY" id="Nt7-1e-k4E"/>
-                                            <constraint firstItem="6zi-df-ht2" firstAttribute="leading" secondItem="ZXZ-qK-hhw" secondAttribute="leading" id="ibB-JV-qGy"/>
+                                            <constraint firstItem="hlR-S1-aEk" firstAttribute="leading" secondItem="yui-q4-XJp" secondAttribute="trailing" constant="8" id="AnE-L8-wbP"/>
+                                            <constraint firstItem="yui-q4-XJp" firstAttribute="leading" secondItem="ZXZ-qK-hhw" secondAttribute="leading" id="CnP-NK-A81"/>
+                                            <constraint firstItem="hlR-S1-aEk" firstAttribute="centerY" secondItem="ZXZ-qK-hhw" secondAttribute="centerY" constant="1" id="Nt7-1e-k4E"/>
+                                            <constraint firstItem="yui-q4-XJp" firstAttribute="centerY" secondItem="ZXZ-qK-hhw" secondAttribute="centerY" id="qcv-Zb-qF7"/>
                                             <constraint firstAttribute="height" constant="20" id="wM8-TS-jGI"/>
                                         </constraints>
                                         <connections>
                                             <outlet property="_height" destination="wM8-TS-jGI" id="51r-GS-f6O"/>
-                                            <outlet property="_indent" destination="ibB-JV-qGy" id="ptW-k7-MbU"/>
-                                            <outlet property="button" destination="6zi-df-ht2" id="QsM-Uh-Jct"/>
+                                            <outlet property="_indent" destination="CnP-NK-A81" id="ixT-v8-e1L"/>
                                             <outlet property="imageCornerButton" destination="hlR-S1-aEk" id="370-ye-aqx"/>
                                         </connections>
                                     </tableCellView>
@@ -259,8 +250,8 @@
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Sz1-Dv-gjR">
-                                                <rect key="frame" x="0.0" y="-2" width="23" height="23"/>
-                                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSTouchBarRotateRightTemplate" imagePosition="only" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="MA8-vh-aWW">
+                                                <rect key="frame" x="0.0" y="-5" width="22" height="30"/>
+                                                <buttonCell key="cell" type="roundTextured" bezelStyle="texturedRounded" image="NSTouchBarRotateRightTemplate" imagePosition="only" alignment="center" imageScaling="proportionallyDown" inset="2" id="MA8-vh-aWW">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
@@ -284,7 +275,7 @@
                                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0kZ-EE-8AJ">
                                                 <rect key="frame" x="-2" y="3" width="42" height="14"/>
                                                 <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" alignment="right" title="Label" id="UyD-hX-cXp">
-                                                    <font key="font" metaFont="menu" size="11"/>
+                                                    <font key="font" metaFont="label" size="11"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
@@ -292,7 +283,7 @@
                                             <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dea-aE-rs7">
                                                 <rect key="frame" x="48" y="3" width="33" height="14"/>
                                                 <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" title="Label" id="Eyq-II-qyb">
-                                                    <font key="font" metaFont="menu" size="11"/>
+                                                    <font key="font" metaFont="label" size="11"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
