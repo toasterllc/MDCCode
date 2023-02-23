@@ -18,11 +18,11 @@ namespace Img {
         static constexpr MagicNumber24 MagicNumber  = { 0xC0FFEE };
         static constexpr uint8_t Version            = 0;
         
-        MagicNumber24 magic;
-        uint8_t version;
+        MagicNumber24 magic;    // 0xC0FFEE
+        uint8_t version;        // 0x00
         
-        uint16_t imageWidth;    // 16'd2304 == 0x0900
-        uint16_t imageHeight;   // 16'd1296 == 0x0510
+        uint16_t imageWidth;    // 0x0900 == 2304
+        uint16_t imageHeight;   // 0x0510 == 1296
         
         uint16_t coarseIntTime; // 0x1111
         uint16_t analogGain;    // 0x2222
