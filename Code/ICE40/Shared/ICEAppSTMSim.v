@@ -237,7 +237,7 @@ task TestSDReadoutToSPI_Readout; begin
     localparam WordCount = 4*1024;
     
     PixelValidator.Config(
-        0,          // headerWordCount
+        '{},        // header
         WordCount,  // imageWidth
         1,          // imageHeight
         0,          // checksumWordCount
@@ -267,7 +267,7 @@ task TestImgReadoutToSPI_Readout(input[`Msg_Arg_ImgReadout_Thumb_Len-1:0] thumb)
     imgWordCount = (!thumb ? `Img_WordCount : `Img_ThumbWordCount);
     
     PixelValidator.Config(
-        `Img_HeaderWordCount,   // headerWordCount
+        `Img_TestHeader,        // header
         imgWidth,               // imageWidth
         imgHeight,              // imageHeight
         `Img_ChecksumWordCount, // checksumWordCount

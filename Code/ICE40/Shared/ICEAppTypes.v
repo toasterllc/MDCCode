@@ -69,10 +69,10 @@
 `define     Msg_Arg_ImgReset_Val_Bits                           0:0
 
 `define Msg_Type_ImgSetHeader                                   `Msg_Type_StartBit | `Msg_Type_Len'h07
-`define     Msg_Arg_ImgSetHeader_Header_Bits                    55:8
-`define     Msg_Arg_ImgSetHeader_Header_Len                     48
-`define     Msg_Arg_ImgSetHeader_Idx_Bits                       1:0
-`define     Msg_Arg_ImgSetHeader_Idx_Len                        2
+`define     Msg_Arg_ImgSetHeader_Header_Bits                    39:8
+`define     Msg_Arg_ImgSetHeader_Header_Len                     32
+`define     Msg_Arg_ImgSetHeader_Idx_Bits                       2:0
+`define     Msg_Arg_ImgSetHeader_Idx_Len                        3
 
 `define Msg_Type_ImgCapture                                     `Msg_Type_StartBit | `Msg_Type_Len'h08
 `define     Msg_Arg_ImgCapture_SkipCount_Bits                   5:3 // Wider than currently necessary to future-proof
@@ -126,5 +126,19 @@
 
 `define Img_WordCount           (`Img_HeaderWordCount + `Img_PixelCount + `Img_ChecksumWordCount)
 `define Img_ThumbWordCount      (`Img_HeaderWordCount + `Img_ThumbPixelCount + `Img_ChecksumWordCount)
+
+`ifdef SIM
+`define Img_TestHeader  '{                                      \
+    8'hEE, 8'hFF, 8'hC0,                                        \ /* magic number        */
+    8'h00,                                                      \ /* version             */
+    8'h00, 8'h09,                                               \ /* image width (2304)  */
+    8'h10, 8'h05,                                               \ /* image height (1296) */
+    8'h11, 8'h11,                                               \ /* coarse int time     */
+    8'h22, 8'h22,                                               \ /* analog gain         */
+    8'hA0, 8'hA1, 8'hA2, 8'hA3, 8'hA4, 8'hA5, 8'hA6, 8'hA7,     \ /* id                  */
+    8'hB0, 8'hB1, 8'hB2, 8'hB3, 8'hB4, 8'hB5, 8'hB6, 8'hB7,     \ /* timestamp           */
+    8'h00, 8'h00, 8'h00, 8'h00                                  \ /* padding             */
+}
+`endif
 
 `endif

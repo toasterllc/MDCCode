@@ -40,7 +40,7 @@ module PixelValidator();
         _checksum_en    = 0; #1;
     end endtask
     
-    integer     _cfgHeaderWordCount     = 0;
+    reg[7:0]    _cfgHeader[];
     integer     _cfgImageWidth          = 0;
     integer     _cfgImageHeight         = 0;
     integer     _cfgChecksumWordCount   = 0;
@@ -52,25 +52,25 @@ module PixelValidator();
     integer     _cfgPixelFilterKeep     = 0;
     
     `define ImagePixelCount     (_cfgImageWidth*_cfgImageHeight)
-    `define ImageWordCount      (_cfgHeaderWordCount + `ImagePixelCount + _cfgChecksumWordCount + _cfgPaddingWordCount)
+    `define ImageWordCount      (_cfgHeader.size/2 + `ImagePixelCount + _cfgChecksumWordCount + _cfgPaddingWordCount)
     
     integer     _wordIdx                    = 0;
     reg[15:0]   _wordPrev                   = 0;
     integer     _pixelIdx                   = 0;
     
     task Config(
-        input integer headerWordCount,      // Number of 16-bit words to ignore at the beginning of the received data
-        input integer imageWidth,           // Pixel width of image
-        input integer imageHeight,          // Pixel height of image
-        input integer checksumWordCount,    // Number of checksum words expected after the pixels
-        input integer paddingWordCount,     // Number of padding words expected after the checksum
-        input integer pixelValidate,        // Enable checking values of pixels
-        input[15:0]   pixelInitial,         // Expected value of the first pixel
-        input integer pixelDelta,           // Expected difference between current word value and previous word value
-        input integer pixelFilterPeriod,    // Period of the pixel filter (used for thumbnailing)
-        input integer pixelFilterKeep       // Count of pixels to keep at the beginning of a period (used for thumbnailing)
+        input reg[7:0]  header[],           // Header that we expect to receive
+        input integer   imageWidth,         // Pixel width of image
+        input integer   imageHeight,        // Pixel height of image
+        input integer   checksumWordCount,  // Number of checksum words expected after the pixels
+        input integer   paddingWordCount,   // Number of padding words expected after the checksum
+        input integer   pixelValidate,      // Enable checking values of pixels
+        input reg[15:0] pixelInitial,       // Expected value of the first pixel
+        input integer   pixelDelta,         // Expected difference between current word value and previous word value
+        input integer   pixelFilterPeriod,  // Period of the pixel filter (used for thumbnailing)
+        input integer   pixelFilterKeep     // Count of pixels to keep at the beginning of a period (used for thumbnailing)
     ); begin
-        _cfgHeaderWordCount     = headerWordCount;
+        _cfgHeader              = header;
         _cfgImageWidth          = imageWidth;
         _cfgImageHeight         = imageHeight;
         _cfgChecksumWordCount   = checksumWordCount;
@@ -90,6 +90,12 @@ module PixelValidator();
         _checksum_clk = 0; #1;
         _checksum_rst = 0; #1;
         
+        // Validate _cfgHeader.size is a multiple of our word size (16 bits)
+        if (_cfgHeader.size % 2) begin
+            $display("[PixelValidator] Invalid header size: %0d ❌", _cfgHeader.size);
+            `Finish;
+        end
+        
         // Validate _cfgChecksumWordCount
         if (_cfgChecksumWordCount!==0 && _cfgChecksumWordCount!==2) begin
             $display("[PixelValidator] Invalid checksum word count: %0d ❌", _cfgChecksumWordCount);
@@ -97,7 +103,7 @@ module PixelValidator();
         end
         
         $display("[PixelValidator] Config() called:");
-        $display("[PixelValidator]   _cfgHeaderWordCount:   %0d",  _cfgHeaderWordCount);
+        $display("[PixelValidator]   _cfgHeader.size:       %0d",  _cfgHeader.size);
         $display("[PixelValidator]   _cfgImageWidth:        %0d",  _cfgImageWidth);
         $display("[PixelValidator]   _cfgImageHeight:       %0d",  _cfgImageHeight);
         $display("[PixelValidator]   _cfgChecksumWordCount: %0d",  _cfgChecksumWordCount);
@@ -107,7 +113,6 @@ module PixelValidator();
         $display("[PixelValidator]   _cfgPixelDelta:        %0d",  _cfgPixelDelta);
         $display("[PixelValidator]   _cfgPixelFilterPeriod: %0d",  _cfgPixelFilterPeriod);
         $display("[PixelValidator]   _cfgPixelFilterKeep:   %0d",  _cfgPixelFilterKeep);
-        $display("[PixelValidator]   _cfgHeaderWordCount:   %0d",  _cfgHeaderWordCount);
     end endtask
     
     function[15:0] PixelExpectedValue();
@@ -135,11 +140,25 @@ module PixelValidator();
     
     task Validate(input[15:0] word); begin
         // Handle header words
-        if (_wordIdx < _cfgHeaderWordCount) begin
+        if (_wordIdx < _cfgHeader.size/2) begin
+            reg[15:0] headerWordExpected;
+            reg[15:0] headerWordGot;
+            
             _ChecksumConsumeWord(word);
+            
+            // Validate header word
+            headerWordExpected = { _cfgHeader[(_wordIdx*2)+0], _cfgHeader[(_wordIdx*2)+1] };
+            headerWordGot = word;
+            
+            if (headerWordExpected === headerWordGot) begin
+                $display("[PixelValidator] Received valid header word (index:%0d, expected:%h, got:%h) ✅", _wordIdx, headerWordExpected, headerWordGot);
+            end else begin
+                $display("[PixelValidator] Received invalid header word (index:%0d, expected:%h, got:%h) ❌", _wordIdx, headerWordExpected, headerWordGot);
+                `Finish;
+            end
         
         // Handle pixels
-        end else if (_wordIdx < _cfgHeaderWordCount+`ImagePixelCount) begin
+        end else if (_wordIdx < (_cfgHeader.size/2)+`ImagePixelCount) begin
             reg[15:0] pixelExpected;
             reg[15:0] pixelGot;
             
@@ -160,7 +179,7 @@ module PixelValidator();
             end
         
         // Handle checksum
-        end else if (_cfgChecksumWordCount && (_wordIdx === _cfgHeaderWordCount+`ImagePixelCount+1)) begin
+        end else if (_cfgChecksumWordCount && (_wordIdx === (_cfgHeader.size/2)+`ImagePixelCount+1)) begin
             // Validate checksum
             // Supply one last clock to get the correct output
             _checksum_clk   = 1; #1;
@@ -182,7 +201,7 @@ module PixelValidator();
             end
         
         // Handle padding words
-        end else if (_wordIdx >= _cfgHeaderWordCount+`ImagePixelCount+_cfgChecksumWordCount) begin
+        end else if (_wordIdx >= (_cfgHeader.size/2)+`ImagePixelCount+_cfgChecksumWordCount) begin
             if (_wordIdx < `ImageWordCount) begin
                 $display("[PixelValidator] Received expected padding word (index:%0d, word:%h, expectedCount:%0d) ✅", _wordIdx, HostFromLittle16.Swap(word), `ImageWordCount);
             end else begin

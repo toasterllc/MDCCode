@@ -196,7 +196,7 @@ module Top();
         $display("\n========== ImgReadout (thumb: %b) ==========", thumb);
         
         PixelValidator.Config(
-            `Img_HeaderWordCount,                       // headerWordCount
+            `Img_TestHeader,                            // header
             (!thumb ? `Img_Width : `Img_ThumbWidth),    // imageWidth
             (!thumb ? `Img_Height : `Img_ThumbHeight),  // imageHeight
             2,                                          // checksumWordCount

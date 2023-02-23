@@ -357,6 +357,41 @@ module ICEAppSim();
         SendMsg(`Msg_Type_ImgSetHeader, arg);
     end endtask
     
+    task TestImgSetHeaderFull(input reg[7:0] header[]); begin
+        integer off;
+        integer chunkSize;
+        integer chunkIdx;
+        reg[`Msg_Arg_ImgSetHeader_Header_Len-1:0] chunk;
+        
+        // Verify that the header size is a multiple of `Msg_Arg_ImgSetHeader_Header_Len
+        if (header.size % (`Msg_Arg_ImgSetHeader_Header_Len / 8)) begin
+            $display("[ICEAppSim] Invalid header size: not divisible by %0d ❌", (`Msg_Arg_ImgSetHeader_Header_Len / 8));
+            `Finish;
+        end
+        
+        chunkSize = (`Msg_Arg_ImgSetHeader_Header_Len / 8);
+        
+        // for (i=0; i<header.size; i+=chunkSize) begin
+        //     integer ii;
+        //     for (ii=0; ii<chunkSize; ii++) begin
+        //         chunk = (chunk<<8) | header[i+ii];
+        //     end
+        //
+        //     TestImgSetHeader(i, chunk);
+        // end
+        
+        chunkIdx = 0;
+        for (off=0; off<header.size; off+=chunkSize) begin
+            integer i;
+            for (i=0; i<chunkSize; i++) begin
+                chunk = (chunk<<8) | header[off+i];
+            end
+            
+            TestImgSetHeader(chunkIdx, chunk);
+            chunkIdx++;
+        end
+    end endtask
+    
     task TestImgCapture; begin
         reg[`Msg_Arg_Len-1:0] arg;
         $display("\n[ICEAppSim] ========== TestImgCapture ==========");
@@ -712,7 +747,7 @@ module ICEAppSim();
         imgWordCount = (!thumb ? `Img_WordCount : `Img_ThumbWordCount);
         
         SDCardSim.PixelValidator.Config(
-            `Img_HeaderWordCount,                           // headerWordCount
+            `Img_TestHeader,                                // header
             imgWidth,                                       // imageWidth
             imgHeight,                                      // imageHeight
             `Img_ChecksumWordCount,                         // checksumWordCount
@@ -876,33 +911,9 @@ module ICEAppSim();
         `ifdef _ICEApp_Img_En
             // Do Img stuff before SD stuff, so that an image is ready for readout to the SD card
             TestImgReset();
-            TestImgSetHeader(0, {
-                8'hEE, 8'hFF, 8'hC0                 /* magic number */,
-                8'h00                               /* version */,
-                LittleFromHost16.Swap(16'd2304)     /* image width          */
-            });
-
-            TestImgSetHeader(1, {
-                LittleFromHost16.Swap(16'd1296)     /* image height         */,
-                LittleFromHost16.Swap(16'h1111)     /* coarse int time      */,
-                LittleFromHost16.Swap(16'h2222)     /* analog gain          */
-            });
-
-            TestImgSetHeader(2, {
-                LittleFromHost32.Swap(32'hCAFEBABE) /* id                   */,
-                8'hAA                               /* timestamp[b0]        */,
-                8'hBB                               /* timestamp[b1]        */
-            });
-
-            TestImgSetHeader(3, {
-                8'hCC                               /* timestamp[b2]        */,
-                8'hDD                               /* timestamp[b3]        */,
-                8'hEE                               /* timestamp[b4]        */,
-                8'hFF                               /* timestamp[b5]        */,
-                8'h42                               /* timestamp[b6]        */,
-                8'h43                               /* timestamp[b7]        */
-            });
-
+            
+            TestImgSetHeaderFull(`Img_TestHeader);
+            
             TestImgI2CWriteRead();
             TestImgCapture();
         `endif // _ICEApp_Img_En

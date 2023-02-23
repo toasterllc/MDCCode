@@ -766,10 +766,14 @@ module ICEApp(
                     );
                     
                     case (spi_msgArg[`Msg_Arg_ImgSetHeader_Idx_Bits])
-                    0: `LeftBits(imgctrl_cmd_header,0*48,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
-                    1: `LeftBits(imgctrl_cmd_header,1*48,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
-                    2: `LeftBits(imgctrl_cmd_header,2*48,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
-                    3: `LeftBits(imgctrl_cmd_header,3*48,48) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    0: `LeftBits(imgctrl_cmd_header,0*32,32) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    1: `LeftBits(imgctrl_cmd_header,1*32,32) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    2: `LeftBits(imgctrl_cmd_header,2*32,32) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    3: `LeftBits(imgctrl_cmd_header,3*32,32) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    4: `LeftBits(imgctrl_cmd_header,4*32,32) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    5: `LeftBits(imgctrl_cmd_header,5*32,32) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    6: `LeftBits(imgctrl_cmd_header,6*32,32) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
+                    7: `LeftBits(imgctrl_cmd_header,7*32,32) <= spi_msgArg[`Msg_Arg_ImgSetHeader_Header_Bits];
                     endcase
                 end
                 
