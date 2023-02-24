@@ -12,7 +12,7 @@ public:
     using ImageProvider = std::function<ImagePtr(const ImageRef&)>;
     using ImageLoadedHandler = std::function<void(ImagePtr)>;
     
-    ImageCache(ImageLibraryPtr imageLibrary, ImageProvider&& imageProvider) : _imageLibrary(imageLibrary), _imageProvider(imageProvider) {
+    ImageCache(ImageLibraryPtr imageLibrary, ImageProvider&& imageProvider) : _imageLibrary(imageLibrary), _imageProvider(std::move(imageProvider)) {
         auto lock = std::unique_lock(_state.lock);
         _state.thread = std::thread([=] { _thread(); });
     }

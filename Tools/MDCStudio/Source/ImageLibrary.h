@@ -108,6 +108,16 @@ public:
     using RecordStore::RecordStore;
     using Observer = std::function<bool()>;
     
+//    struct Event {
+//        enum class Type {
+//            Add,
+//            Remove,
+//            Change,
+//        };
+//        
+//        std::set<> changed;
+//    };
+    
     void read() {
         // Reset our state, as RecordStore::read() does
         _state = {};
