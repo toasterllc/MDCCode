@@ -1,6 +1,5 @@
 #import "InspectorView.h"
 #import <vector>
-#import <objc/message.h>
 #import "Util.h"
 #import "ImageCornerButton/ImageCornerButton.h"
 using namespace MDCStudio;
@@ -364,19 +363,46 @@ static id _extract_id(const ImageThumb& thumb) {
     return @(thumb.id);
 }
 
-using _ModelGetterFn = id(*)(const ImageThumb&);
+using _ModelExtractFn = id(*)(const ImageThumb&);
 
-static _ModelData _Getter(InspectorView* self, _ModelGetterFn fn) {
+//static _ModelData _Getter(InspectorView* self, _ModelGetterFn fn) {
+//    // first: holds the first non-nil value
+//    id first = nil;
+//    // mixed: tracks whether there are at least 2 differing values
+//    bool mixed = false;
+//    
+//    auto lock = std::unique_lock(*self->_imgLib);
+//    for (const Img::Id imgId : self->_selection) {
+//        auto find = self->_imgLib->find(imgId);
+//        if (find == self->_imgLib->end()) continue;
+//        const id obj = fn(*self->_imgLib->recordGet(find));
+//        if (!obj) continue;
+//        if (!first) {
+//            first = obj;
+//        } else {
+//            mixed |= ![first isEqual:obj];
+//        }
+//    }
+//    
+//    if (!mixed) {
+//        return _ModelData{ .data = first };
+//    }
+//    
+//    return _ModelData{ .type = _ModelData::Type::Mixed };
+//}
+
+
+- (_ModelData)_getter:(_ModelExtractFn)fn {
     // first: holds the first non-nil value
     id first = nil;
     // mixed: tracks whether there are at least 2 differing values
     bool mixed = false;
     
-    auto lock = std::unique_lock(*self->_imgLib);
-    for (const Img::Id imgId : self->_selection) {
-        auto find = self->_imgLib->find(imgId);
-        if (find == self->_imgLib->end()) continue;
-        const id obj = fn(*self->_imgLib->recordGet(find));
+    auto lock = std::unique_lock(*_imgLib);
+    for (const Img::Id imgId : _selection) {
+        auto find = _imgLib->find(imgId);
+        if (find == _imgLib->end()) continue;
+        const id obj = fn(*_imgLib->recordGet(find));
         if (!obj) continue;
         if (!first) {
             first = obj;
@@ -391,6 +417,16 @@ static _ModelData _Getter(InspectorView* self, _ModelGetterFn fn) {
     
     return _ModelData{ .type = _ModelData::Type::Mixed };
 }
+
+static _ModelGetter _GetterCreate(InspectorView* self, _ModelExtractFn fn) {
+    __weak const auto selfWeak = self;
+    return ^_ModelData(InspectorView_Item*){
+        const auto selfStrong = selfWeak;
+        if (!selfStrong) return _ModelData{};
+        return [selfStrong _getter:fn];
+    };
+}
+
 
 - (_ModelData)_getter_id {
     if (_selection.size() != 1) {
@@ -441,15 +477,6 @@ static _ModelData _Getter(InspectorView* self, _ModelGetterFn fn) {
 //    return @(_imgLib->recordGet(find)->analogGain);
 }
 
-static _ModelGetter _GetterCreate(InspectorView* self, SEL sel) {
-    __weak const auto selfWeak = self;
-    return ^_ModelData(InspectorView_Item*){
-        const auto selfStrong = selfWeak;
-        if (!selfStrong) return _ModelData{};
-        return ((_ModelData (*)(id, SEL))objc_msgSend)(selfStrong, sel);
-    };
-}
-
 - (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib {
     if (!(self = [super initWithFrame:{}])) return nil;
     
@@ -488,7 +515,7 @@ static _ModelGetter _GetterCreate(InspectorView* self, SEL sel) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Image ID";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, @selector(_getter_id));
+                stat->modelGetter = _GetterCreate(self, _extract_id);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
