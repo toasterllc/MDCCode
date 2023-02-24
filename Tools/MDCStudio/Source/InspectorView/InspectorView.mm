@@ -280,7 +280,7 @@ using _SetterBlock = void(^)(InspectorView_Item*, id);
 
 @implementation InspectorView {
     ImageLibraryPtr _imgLib;
-    std::vector<Item*> _outlineItems;
+    Section* _rootItem;
     std::set<Img::Id> _selection;
     
     IBOutlet NSView* _nibView;
@@ -345,14 +345,17 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_nibView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(_nibView)]];
     }
     
-    // Populate NSOutlineView
+    // Create NSOutlineView items
     {
         static constexpr CGFloat SpacerSize = 20;
+        _rootItem = [self _createItemWithClass:[Section class]];
+        _rootItem->name = @"";
+        
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = 3;
             spacer->darkBackground = true;
-            _outlineItems.push_back(spacer);
+            _rootItem->items.push_back(spacer);
             
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Stats";
@@ -416,13 +419,13 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
 //            stat1->name = "Date";
             
 //            section->items = { [self _createItemWithClass:[SliderWithIcon class]] };
-            _outlineItems.push_back(section);
+            _rootItem->items.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = SpacerSize/2;
-            _outlineItems.push_back(spacer);
+            _rootItem->items.push_back(spacer);
         }
         
         
@@ -438,13 +441,13 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             slider->icon = @"Inspector-WhiteBalance";
             slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
             section->items = { slider };
-            _outlineItems.push_back(section);
+            _rootItem->items.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = SpacerSize;
-            _outlineItems.push_back(spacer);
+            _rootItem->items.push_back(spacer);
         }
         
         {
@@ -454,13 +457,13 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             slider->icon = @"Inspector-Exposure";
             slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
             section->items = { slider };
-            _outlineItems.push_back(section);
+            _rootItem->items.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = SpacerSize;
-            _outlineItems.push_back(spacer);
+            _rootItem->items.push_back(spacer);
         }
         
         {
@@ -470,13 +473,13 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             slider->icon = @"Inspector-Saturation";
             slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
             section->items = { slider };
-            _outlineItems.push_back(section);
+            _rootItem->items.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = SpacerSize;
-            _outlineItems.push_back(spacer);
+            _rootItem->items.push_back(spacer);
         }
         
         {
@@ -486,13 +489,13 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             slider->icon = @"Inspector-Brightness";
             slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
             section->items = { slider };
-            _outlineItems.push_back(section);
+            _rootItem->items.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = SpacerSize;
-            _outlineItems.push_back(spacer);
+            _rootItem->items.push_back(spacer);
         }
         
         {
@@ -502,13 +505,13 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             slider->icon = @"Inspector-Contrast";
             slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
             section->items = { slider };
-            _outlineItems.push_back(section);
+            _rootItem->items.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = SpacerSize;
-            _outlineItems.push_back(spacer);
+            _rootItem->items.push_back(spacer);
         }
         
         {
@@ -524,13 +527,13 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             slider2->modelGetter = ^(id){ return @0; /*meowmix*/ };
             
             section->items = { slider1, slider2 };
-            _outlineItems.push_back(section);
+            _rootItem->items.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = SpacerSize;
-            _outlineItems.push_back(spacer);
+            _rootItem->items.push_back(spacer);
         }
         
         {
@@ -539,13 +542,13 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             Rotation* rotation = [self _createItemWithClass:[Rotation class]];
             rotation->icon = @"Rotation";
             section->items = { rotation };
-            _outlineItems.push_back(section);
+            _rootItem->items.push_back(section);
         }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = SpacerSize;
-            _outlineItems.push_back(spacer);
+            _rootItem->items.push_back(spacer);
         }
         
         {
@@ -585,13 +588,13 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
                 section->items.push_back(timestamp);
             }
             
-            _outlineItems.push_back(section);
+            _rootItem->items.push_back(section);
         }
         
 //        {
 //            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
 //            spacer->height = SpacerSize;
-//            _outlineItems.push_back(spacer);
+//            _rootItem->items.push_back(spacer);
 //        }
 //        
 //        
@@ -599,13 +602,13 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
 //            Section* section = [self _createItemWithClass:[Section class]];
 //            section->name = @"Timestamp";
 //            section->items = { [self _createItemWithClass:[Timestamp class]] };
-//            _outlineItems.push_back(section);
+//            _rootItem->items.push_back(section);
 //        }
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = SpacerSize;
-            _outlineItems.push_back(spacer);
+            _rootItem->items.push_back(spacer);
         }
         
         
@@ -631,20 +634,30 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
 //            section,
 //            spacer2
 //        };
-        
-        [_outlineView reloadData];
-        
-        for (auto item : _outlineItems) {
-            [_outlineView expandItem:item];
-        }
+    }
+    
+    [_outlineView reloadData];
+    
+    for (auto item : _rootItem->items) {
+        [_outlineView expandItem:item];
     }
     return self;
 }
 
 // MARK: - Methods
 
+static void _UpdateView(Item* it) {
+    [it updateView];
+    if (auto section = CastOrNil<Section>(it)) {
+        for (auto it : section->items) {
+            _UpdateView(it);
+        }
+    }
+}
+
 - (void)setSelection:(const std::set<Img::Id>&)selection {
     _selection = selection;
+    _UpdateView(_rootItem);
 }
 
 - (id)_createItemWithClass:(Class)itemClass {
@@ -667,7 +680,8 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
 
 - (NSInteger)outlineView:(NSOutlineView*)outlineView numberOfChildrenOfItem:(id)item {
     if (item == nullptr) {
-        return _outlineItems.size();
+        if (!_rootItem) return 0;
+        return _rootItem->items.size();
     
     } else if (auto it = CastOrNil<Section>(item)) {
         return it->items.size();
@@ -679,7 +693,8 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
 
 - (id)outlineView:(NSOutlineView*)outlineView child:(NSInteger)index ofItem:(id)item {
     if (item == nullptr) {
-        return _outlineItems[index];
+        if (!_rootItem) return nil;
+        return _rootItem->items[index];
     
     } else if (auto section = CastOrNil<Section>(item)) {
         return section->items.at(index);
