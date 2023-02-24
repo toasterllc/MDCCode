@@ -9,12 +9,13 @@
 #include "Toastbox/IntForStr.h"
 
 template <
-    uint32_t T_Version,
     typename T_Record,
     size_t T_ChunkRecordCap // Max number of records per chunk
 >
 class RecordStore {
 public:
+    static constexpr uint32_t Version = T_Record::Version;
+    
     using Path = std::filesystem::path;
     using Record = T_Record;
     
@@ -238,7 +239,7 @@ private:
     using _RecordRefIter = typename RecordRefs::iterator;
     
     struct [[gnu::packed]] _SerializedHeader {
-        uint32_t version     = 0; // T_Version
+        uint32_t version     = 0; // Version
         uint32_t recordSize  = 0; // sizeof(T_Record)
         uint32_t recordCount = 0; // Count of RecordRef structs in Index file
         uint32_t chunkCount  = 0; // Count of _Chunk structs in Index file
@@ -259,9 +260,9 @@ private:
         _SerializedHeader header;
         f.read((char*)&header, sizeof(header));
         
-        if (header.version != T_Version) {
+        if (header.version != Version) {
             throw Toastbox::RuntimeError("invalid header version (expected: 0x%jx, got: 0x%jx)",
-                (uintmax_t)T_Version,
+                (uintmax_t)Version,
                 (uintmax_t)header.version
             );
         }
@@ -338,10 +339,10 @@ private:
         
         // Write header
         const _SerializedHeader header = {
-            .version    = (uint32_t)T_Version,
+            .version     = Version,
             .recordSize  = (uint32_t)sizeof(T_Record),
             .recordCount = (uint32_t)recordRefs.size(),
-            .chunkCount = (uint32_t)chunks.size(),
+            .chunkCount  = (uint32_t)chunks.size(),
         };
         f.write((char*)&header, sizeof(header));
         

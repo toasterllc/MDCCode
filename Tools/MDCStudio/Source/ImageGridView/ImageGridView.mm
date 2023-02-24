@@ -284,7 +284,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     .viewSize = {(float)viewSize.width, (float)viewSize.height},
                     .transform = [self fixedTransform],
                     .off = {
-                        .id         = (uint32_t)(offsetof(ImageLibrary::Record, ref.id)),
+                        .id         = (uint32_t)(offsetof(ImageLibrary::Record, id)),
                         .thumbData  = (uint32_t)(offsetof(ImageLibrary::Record, thumb)),
                     },
                     .thumb = {
@@ -337,8 +337,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
             const int32_t idx = _grid.columnCount()*y + x;
             if (idx >= _imageLibrary->recordCount()) goto done;
-            const ImageRef& imageRef = _imageLibrary->recordGet(_imageLibrary->begin()+idx)->ref;
-            imageIds.insert(imageRef.id);
+            const Img::Id imageId = _imageLibrary->recordGet(_imageLibrary->begin()+idx)->id;
+            imageIds.insert(imageId);
         }
     }
 done:
@@ -604,7 +604,7 @@ struct SelectionDelta {
     }
     
 //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
-    const Img::Id newImgId = imageLibrary->recordGet(imageLibrary->begin()+newIdx)->ref.id;
+    const Img::Id newImgId = imageLibrary->recordGet(imageLibrary->begin()+newIdx)->id;
     [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
     
     if (!extend) selectedImageIds.clear();
@@ -637,7 +637,7 @@ struct SelectionDelta {
     auto lock = std::unique_lock(*imageLibrary);
     ImageGridViewImageIds ids;
     for (auto it=imageLibrary->begin(); it!=imageLibrary->end(); it++) {
-        ids.insert(imageLibrary->recordGet(it)->ref.id);
+        ids.insert(imageLibrary->recordGet(it)->id);
     }
     [_imageGridLayer setSelectedImageIds:ids];
 }

@@ -157,10 +157,10 @@ public:
         auto lock = std::unique_lock(_state.lock);
         if (!_state.imageCache) {
             std::weak_ptr<MDCDevice> weakThis = shared_from_this();
-            ImageCache::ImageProvider imageProvider = [=] (const ImageRef& imageRef) -> ImagePtr {
+            ImageCache::ImageProvider imageProvider = [=] (uint64_t addr) -> ImagePtr {
                 auto strongThis = weakThis.lock();
                 if (!strongThis) return nullptr;
-                return strongThis->_imageProvider(imageRef);
+                return strongThis->_imageProvider(addr);
             };
             
             _state.imageCache = std::make_shared<ImageCache>(_imageLibrary, std::move(imageProvider));
@@ -289,13 +289,13 @@ private:
 //        return MSP::TimeAbsoluteBase | (t-MSP::TimeAbsoluteUnixReference);
 //    }
     
-    ImagePtr _imageProvider(const ImageRef& imageRef) {
+    ImagePtr _imageProvider(uint64_t addr) {
         // Lock the device for the duration of this function
         auto lock = std::unique_lock(*_dev);
         
         auto imageData = std::make_unique<uint8_t[]>(ImgSD::Full::ImagePaddedLen);
         _dev->reset();
-        _dev->sdRead((SD::Block)imageRef.addr);
+        _dev->sdRead((SD::Block)addr);
         _dev->readout(imageData.get(), ImgSD::Full::ImagePaddedLen);
         
         if (_ChecksumValid(imageData.get(), Img::Size::Full)) {
@@ -354,7 +354,7 @@ private:
                     // Find the first image >= `deviceImgIdBegin`
                     const auto removeEnd = std::lower_bound(_imageLibrary->begin(), _imageLibrary->end(), 0,
                         [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                            return _imageLibrary->recordGet(sample)->ref.id < deviceImgIdBegin;
+                            return _imageLibrary->recordGet(sample)->id < deviceImgIdBegin;
                         });
                     
                     printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
@@ -511,7 +511,6 @@ private:
             // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
             const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
             ImageThumb& imageThumb = *_imageLibrary->recordGet(recordRefIter);
-            ImageRef& imageRef = imageThumb.ref; // Safe without a lock because we're the only entity using the image library's reserved space
             
             // Validate thumbnail checksum
             if (_ChecksumValid(imgData, Img::Size::Thumb)) {
@@ -523,14 +522,11 @@ private:
 //                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
             }
             
-            // Populate ImageRef fields
-            {
-                imageRef.id = imgHeader.id;
-                imageRef.addr = block;
-            }
-            
             // Populate ImageThumb fields
             {
+                imageThumb.id               = imgHeader.id;
+                imageThumb.addr             = block;
+                
                 imageThumb.timestamp        = imgHeader.timestamp;
                 
                 imageThumb.imageWidth       = imgHeader.imageWidth;

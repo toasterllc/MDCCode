@@ -7,20 +7,6 @@
 
 namespace MDCStudio {
 
-struct [[gnu::packed]] ImageRef {
-    static constexpr uint32_t Version = 0;
-    
-    Img::Id id = 0;
-    
-    // addr: address of the full-size image on the device
-    uint64_t addr = 0;
-    
-    // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64] = {};
-};
-
-static_assert(!(sizeof(ImageRef) % 8)); // Ensure that ImageRef is a multiple of 8 bytes
-
 struct [[gnu::packed]] ImageOptions {
     enum class Rotation : uint8_t {
         None,
@@ -53,9 +39,10 @@ struct [[gnu::packed]] ImageOptions {
     } localContrast;
 };
 
-static_assert(!(sizeof(ImageOptions) % 8)); // Ensure that ImageRef is a multiple of 8 bytes
+static_assert(!(sizeof(ImageOptions) % 8)); // Ensure that ImageOptions is a multiple of 8 bytes
 
 struct [[gnu::packed]] ImageThumb {
+    static constexpr uint32_t Version = 0;
     
 //    static constexpr size_t ThumbWidth      = 288;
 //    static constexpr size_t ThumbHeight     = 162;
@@ -80,7 +67,10 @@ struct [[gnu::packed]] ImageThumb {
     
     static constexpr size_t ThumbPixelSize  = 3;
     
-    ImageRef ref;
+    Img::Id id = 0;
+    
+    // addr: address of the full-size image on the device
+    uint64_t addr = 0;
     
     Time::Instant timestamp = 0;
     
@@ -103,7 +93,7 @@ struct [[gnu::packed]] ImageThumb {
 
 static_assert(!(sizeof(ImageThumb) % 8)); // Ensure that ImageThumb is a multiple of 8 bytes
 
-class ImageLibrary : public RecordStore<ImageRef::Version, ImageThumb, 512> {
+class ImageLibrary : public RecordStore<ImageThumb, 512> {
 public:
     using RecordStore::RecordStore;
     using Observer = std::function<bool()>;
@@ -166,11 +156,11 @@ public:
     RecordRefConstIter find(Img::Id id) {
         RecordRefConstIter iter = std::lower_bound(begin(), end(), 0,
             [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                return recordGet(sample)->ref.id < id;
+                return recordGet(sample)->id < id;
             });
         
         if (iter == end()) return end();
-        if (recordGet(iter)->ref.id != id) return end();
+        if (recordGet(iter)->id != id) return end();
         return iter;
     }
     

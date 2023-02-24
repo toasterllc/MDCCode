@@ -80,7 +80,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     // Fetch the image from the cache, if we don't have _image yet
     if (!_image) {
         __weak auto weakSelf = self;
-        _image = _imageSource->imageCache()->imageForImageRef(imageThumb.ref, [=] (ImagePtr image) {
+        _image = _imageSource->imageCache()->imageForId(imageThumb.id, [=] (ImagePtr image) {
             dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf _handleImageLoaded:image]; });
         });
     }

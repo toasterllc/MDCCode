@@ -9,7 +9,7 @@ namespace MDCStudio {
 
 class ImageCache {
 public:
-    using ImageProvider = std::function<ImagePtr(const ImageRef&)>;
+    using ImageProvider = std::function<ImagePtr(uint64_t addr)>;
     using ImageLoadedHandler = std::function<void(ImagePtr)>;
     
     ImageCache(ImageLibraryPtr imageLibrary, ImageProvider&& imageProvider) : _imageLibrary(imageLibrary), _imageProvider(std::move(imageProvider)) {
@@ -29,19 +29,19 @@ public:
         printf("~ImageCache()\n");
     }
     
-    ImagePtr imageForImageRef(const ImageRef& imageRef, ImageLoadedHandler handler) {
+    ImagePtr imageForId(Img::Id id, ImageLoadedHandler handler) {
         auto lock = std::unique_lock(_state.lock);
         
         // If the image is already in the cache, return it
         ImagePtr image;
-        auto find = _state.images.find(imageRef.id);
+        auto find = _state.images.find(id);
         if (find != _state.images.end()) {
             image = find->second;
         }
         
         // Schedule the image/neighbors to be loaded asynchronously
         _state.work = _Work{
-            .imageRef = imageRef,
+            .id = id,
             .handler = handler,
             .loadImage = !image,
             .loadNeighbors = true,
@@ -56,11 +56,18 @@ private:
     static constexpr size_t _NeighborImageLoadCount = 8;
     
     struct _Work {
-        ImageRef imageRef;
+        Img::Id id = 0;
         ImageLoadedHandler handler;
         bool loadImage = false;
         bool loadNeighbors = false;
     };
+    
+    std::optional<uint64_t> _AddrForImageId(ImageLibraryPtr lib, Img::Id id) {
+        auto lock = std::unique_lock(*_imageLibrary);
+        auto find = _imageLibrary->find(id);
+        if (find == _imageLibrary->end()) return std::nullopt;
+        return _imageLibrary->recordGet(find)->id;
+    }
     
     void _thread() {
         for (;;) {
@@ -81,12 +88,16 @@ private:
             
             // Load the image itself, if instructed to do so
             if (work.loadImage) {
-                // Load the image
-                ImagePtr image = _imageProvider(work.imageRef);
-                if (image) {
-                    // Put the image in the cache
-                    _state.images[work.imageRef.id] = image;
-                    inserted.insert(work.imageRef.id);
+                const std::optional<uint64_t> addr = _AddrForImageId(_imageLibrary, work.id);
+                ImagePtr image;
+                if (addr) {
+                    // Load the image
+                    image = _imageProvider(*addr);
+                    if (image) {
+                        // Put the image in the cache
+                        _state.images[work.id] = image;
+                        inserted.insert(work.id);
+                    }
                 }
                 // Notify the handler
                 work.handler(image);
@@ -94,13 +105,13 @@ private:
             
             // Load the image neighbors, if instructed to do so and there's no further work to do
             if (work.loadNeighbors) {
-                std::vector<ImageRef> imageRefs;
-                imageRefs.reserve(_NeighborImageLoadCount);
+                std::vector<Img::Id> imageIds;
+                imageIds.reserve(_NeighborImageLoadCount);
                 
-                // Collect the neighboring ImageRefs in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
+                // Collect the neighboring image ids in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
                 {
                     auto lock = std::unique_lock(*_imageLibrary);
-                    auto find = _imageLibrary->find(work.imageRef.id);
+                    auto find = _imageLibrary->find(work.id);
                     auto it = find;
                     auto rit = std::make_reverse_iterator(find); // Points to element before `find`
                     
@@ -108,11 +119,11 @@ private:
                         if (it != _imageLibrary->end()) it++;
                         
                         if (it != _imageLibrary->end()) {
-                            imageRefs.push_back(_imageLibrary->recordGet(it)->ref);
+                            imageIds.push_back(_imageLibrary->recordGet(it)->id);
                         }
                         
                         if (rit != _imageLibrary->rend()) {
-                            imageRefs.push_back(_imageLibrary->recordGet(rit)->ref);
+                            imageIds.push_back(_imageLibrary->recordGet(rit)->id);
                         }
                         
                         // make_reverse_iterator() returns an iterator that points to the element _before_ the
@@ -123,26 +134,26 @@ private:
                 }
                 
                 // Load the neighboring images, bailing if additional work appears
-                for (const ImageRef& imageRef : imageRefs) {
-                    inserted.insert(imageRef.id);
-                    printf("[ImageCache] Loading neighbor %ju\n", (uintmax_t)imageRef.id);
+                for (const Img::Id id : imageIds) {
+                    inserted.insert(id);
+                    printf("[ImageCache] Loading neighbor %ju\n", (uintmax_t)id);
                     
                     auto lock = std::unique_lock(_state.lock);
                         // Bail if more work appears
                         if (_state.work) break;
-                        const auto find = _state.images.find(imageRef.id);
+                        const auto find = _state.images.find(id);
                         // Move on if this image is already loaded
                         if (find != _state.images.end()) continue;
                     lock.unlock();
                     
                     // Load the image without the lock held
-                    ImagePtr image = _imageProvider(imageRef);
+                    ImagePtr image = _imageProvider(id);
                     
                     if (image) {
                         lock.lock();
                             // `find` stays valid after relinquishing the lock because this thread
                             // is the only thread that modifies `_state.images`
-                            _state.images.insert_or_assign(find, imageRef.id, image);
+                            _state.images.insert_or_assign(find, id, image);
                         lock.unlock();
                     }
                 }
