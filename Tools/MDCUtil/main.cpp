@@ -13,6 +13,7 @@
 #include "ImgSD.h"
 #include "MSP.h"
 #include "ELF32Binary.h"
+#include "Time.h"
 
 using CmdStr = std::string;
 
@@ -102,7 +103,7 @@ struct Args {
     } MSPHostModeSet = {};
     
     struct {
-        MSP::Time time = 0;
+        Time::Instant time = 0;
     } MSPTimeSet = {};
     
     struct {

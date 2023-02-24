@@ -59,6 +59,7 @@
 		55CAD62226AF7B5B00450881 /* HashInts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashInts.h; sourceTree = "<group>"; };
 		55CAD62326AF7B5B00450881 /* RingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
 		55D08210270BAC6500B9BB97 /* ChecksumFletcher32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChecksumFletcher32.h; sourceTree = "<group>"; };
+		55D30A2F29A92FC70080BCBD /* Time.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Time.h; sourceTree = "<group>"; };
 		55D4AAAA27B237AA0052EFEE /* ImgSD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgSD.h; sourceTree = "<group>"; };
 		55E1D8DE253E864F00628EF6 /* MDCUtil */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MDCUtil; sourceTree = BUILT_PRODUCTS_DIR; };
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -132,6 +133,7 @@
 				55B66B422715286A00AD39A5 /* SDCard.h */,
 				55B66B472717691200AD39A5 /* STM.h */,
 				55EBFD2628C7DD3C00B3D1B5 /* Util.h */,
+				55D30A2F29A92FC70080BCBD /* Time.h */,
 			);
 			name = Shared;
 			path = ../../Code/Shared;
