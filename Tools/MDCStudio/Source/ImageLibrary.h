@@ -1,5 +1,6 @@
 #pragma once
 #include <forward_list>
+#include <set>
 #include "Code/Shared/Time.h"
 #include "RecordStore.h"
 #include "Code/Shared/Img.h"
@@ -96,17 +97,19 @@ static_assert(!(sizeof(ImageThumb) % 8)); // Ensure that ImageThumb is a multipl
 class ImageLibrary : public RecordStore<ImageThumb, 512> {
 public:
     using RecordStore::RecordStore;
-    using Observer = std::function<bool()>;
     
-//    struct Event {
-//        enum class Type {
-//            Add,
-//            Remove,
-//            Change,
-//        };
-//        
-//        std::set<> changed;
-//    };
+    struct Event {
+        enum class Type {
+            Add,
+            Remove,
+            Change,
+        };
+        
+        Type type = Type::Add;
+        std::set<Img::Id> ids;
+    };
+    
+    using Observer = std::function<bool(const Event& ev)>;
     
     void read() {
         // Reset our state, as RecordStore::read() does
@@ -142,15 +145,25 @@ public:
     }
     
     void add() {
+        Event ev = { .type = Event::Type::Add };
+        for (auto i=reservedBegin(); i!=reservedEnd(); i++) {
+            ev.ids.insert(recordGet(i)->id);
+        }
+        
         RecordStore::add();
         // Notify observers that we changed
-        _notifyObservers();
+        notify(ev);
     }
     
     void remove(RecordRefConstIter begin, RecordRefConstIter end) {
+        Event ev = { .type = Event::Type::Remove };
+        for (auto i=begin; i!=end; i++) {
+            ev.ids.insert(recordGet(i)->id);
+        }
+        
         RecordStore::remove(begin, end);
         // Notify observers that we changed
-        _notifyObservers();
+        notify(ev);
     }
     
     RecordRefConstIter find(Img::Id id) {
@@ -176,6 +189,26 @@ public:
         _state.deviceImgIdEnd = id;
     }
     
+    void notify(const Event& ev) {
+        auto prev = _state.observers.before_begin();
+        for (auto it=_state.observers.begin(); it!=_state.observers.end();) {
+            // Notify the observer; it returns whether it's still valid
+            // If it's not valid (it returned false), remove it from the list
+            if (!(*it)(ev)) {
+                it = _state.observers.erase_after(prev);
+            } else {
+                prev = it;
+                it++;
+            }
+        }
+    }
+    
+    void notifyChange(std::set<Img::Id>&& ids) {
+        Event ev = { .type = Event::Type::Change };
+        ev.ids = std::move(ids);
+        notify(ev);
+    }
+    
 private:
     static constexpr uint32_t _Version = 0;
     
@@ -188,20 +221,6 @@ private:
         Img::Id deviceImgIdEnd = 0;
         std::forward_list<Observer> observers;
     } _state;
-    
-    void _notifyObservers() {
-        auto prev = _state.observers.before_begin();
-        for (auto it=_state.observers.begin(); it!=_state.observers.end();) {
-            // Notify the observer; it returns whether it's still valid
-            // If it's not valid (it returned false), remove it from the list
-            if (!(*it)()) {
-                it = _state.observers.erase_after(prev);
-            } else {
-                prev = it;
-                it++;
-            }
-        }
-    }
 };
 
 using ImageLibraryPtr = std::shared_ptr<MDCTools::Lockable<ImageLibrary>>;

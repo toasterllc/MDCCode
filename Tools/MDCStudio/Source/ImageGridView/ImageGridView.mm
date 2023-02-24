@@ -439,7 +439,7 @@ done:
         __weak auto weakSelf = self;
         ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
         auto lock = std::unique_lock(*imageLibrary);
-        imageLibrary->addObserver([=] {
+        imageLibrary->addObserver([=] (const ImageLibrary::Event& ev) {
             auto strongSelf = weakSelf;
             if (!strongSelf) return false;
             dispatch_async(dispatch_get_main_queue(), ^{ [strongSelf _handleImageLibraryChanged]; });
