@@ -310,12 +310,30 @@ using _SetterBlock = void(^)(InspectorView_Item*, id);
     return @"time";
 }
 
-- (id)_getter_exposure {
-    return @"exposure";
+- (id)_getter_integrationTime {
+    if (_selection.size() != 1) {
+        return nil;
+    }
+    
+    const Img::Id id = *_selection.begin();
+    
+    auto lock = std::unique_lock(*_imgLib);
+    auto find = _imgLib->find(id);
+    if (find == _imgLib->end()) return nil;
+    return @(_imgLib->recordGet(find)->coarseIntTime);
 }
 
-- (id)_getter_gain {
-    return @"gain";
+- (id)_getter_analogGain {
+    if (_selection.size() != 1) {
+        return nil;
+    }
+    
+    const Img::Id id = *_selection.begin();
+    
+    auto lock = std::unique_lock(*_imgLib);
+    auto find = _imgLib->find(id);
+    if (find == _imgLib->end()) return nil;
+    return @(_imgLib->recordGet(find)->analogGain);
 }
 
 static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
@@ -364,7 +382,7 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Image ID";
-                stat->valueIndent = 75;
+                stat->valueIndent = 110;
                 stat->modelGetter = _GetterCreate(self, @selector(_getter_id));
                 stat->darkBackground = true;
                 section->items.push_back(stat);
@@ -373,7 +391,7 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Date";
-                stat->valueIndent = 75;
+                stat->valueIndent = 110;
                 stat->modelGetter = _GetterCreate(self, @selector(_getter_date));
                 stat->darkBackground = true;
                 section->items.push_back(stat);
@@ -382,7 +400,7 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Time";
-                stat->valueIndent = 75;
+                stat->valueIndent = 110;
                 stat->modelGetter = _GetterCreate(self, @selector(_getter_time));
                 stat->darkBackground = true;
                 section->items.push_back(stat);
@@ -390,18 +408,18 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
-                stat->name = @"Exposure";
-                stat->valueIndent = 75;
-                stat->modelGetter = _GetterCreate(self, @selector(_getter_exposure));
+                stat->name = @"Integration Time";
+                stat->valueIndent = 110;
+                stat->modelGetter = _GetterCreate(self, @selector(_getter_integrationTime));
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
             
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
-                stat->name = @"Gain";
-                stat->valueIndent = 75;
-                stat->modelGetter = _GetterCreate(self, @selector(_getter_gain));
+                stat->name = @"Analog Gain";
+                stat->valueIndent = 110;
+                stat->modelGetter = _GetterCreate(self, @selector(_getter_analogGain));
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
