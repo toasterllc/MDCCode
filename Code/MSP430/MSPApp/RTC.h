@@ -6,18 +6,14 @@
 
 template <uint32_t T_XT1FreqHz, typename T_XOUTPin, typename T_XINPin>
 class RTCType {
-private:
-    template <typename I>
-    static constexpr bool _IsPowerOf2(I x) {
-        return x && ((x & (x-1)) == 0);
-    }
-    
 public:
     static constexpr uint32_t InterruptIntervalSec = 2048;
+    static constexpr uint32_t InterruptIntervalUs = InterruptIntervalSec*1000000;
     static constexpr uint32_t Predivider = 1024;
     static constexpr uint32_t FreqHz = T_XT1FreqHz/Predivider;
     static_assert((T_XT1FreqHz % Predivider) == 0); // Confirm that T_XT1FreqHz is evenly divisible by Predivider
-    static_assert(_IsPowerOf2(FreqHz)); // Confirm that FreqHz is a power of two for cheap division in _TimeRead()
+    static constexpr uint32_t UsPerTick = 1000000/FreqHz;
+    static_assert((1000000 % FreqHz) == 0); // Confirm that UsPerTick calculation is exact
     static constexpr uint16_t InterruptCount = (InterruptIntervalSec*FreqHz)-1;
     static_assert(InterruptCount == ((InterruptIntervalSec*FreqHz)-1)); // Confirm that InterruptCount safely fits in 16 bits
     
@@ -86,7 +82,7 @@ public:
         switch (__even_in_range(RTCIV, RTCIV__RTCIFG)) {
         case RTCIV_RTCIF:
             // Update our time
-            _Time += InterruptIntervalSec;
+            _Time += InterruptIntervalUs;
             break;
         
         default:
@@ -114,9 +110,9 @@ private:
     static Time::Instant _TimeRead() {
         // Disable interrupts so we can read _Time and RTCCNT atomically.
         // This is especially necessary because reading _Time isn't atomic
-        // since it's 32 bits.
+        // since it's 64 bits.
         Toastbox::IntState ints(false);
-        return _Time + (RTCCNT/FreqHz);
+        return _Time + RTCCNT*UsPerTick;
     }
     
     // _Time: the current time (either absolute or relative, depending on the

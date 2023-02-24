@@ -21,7 +21,7 @@ inline Instant Current() {
     
     const time_point<utc_clock> epoch = clock_cast<utc_clock>(system_clock::from_time_t(AbsoluteEpochUnix));
     const time_point<utc_clock> now = utc_clock::now();
-    const milliseconds delta = duration_cast<milliseconds>(now-epoch);
+    const microseconds delta = duration_cast<microseconds>(now-epoch);
     return AbsoluteBit | (Instant)delta.count();
 }
 
