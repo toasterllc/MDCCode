@@ -360,6 +360,38 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 // MARK: - Creation
 
+static id _extract_id(const ImageThumb& thumb) {
+    return @(thumb.id);
+}
+
+using _ModelGetterFn = id(*)(const ImageThumb&);
+
+static _ModelData _Getter(InspectorView* self, _ModelGetterFn fn) {
+    // first: holds the first non-nil value
+    id first = nil;
+    // mixed: tracks whether there are at least 2 differing values
+    bool mixed = false;
+    
+    auto lock = std::unique_lock(*self->_imgLib);
+    for (const Img::Id imgId : self->_selection) {
+        auto find = self->_imgLib->find(imgId);
+        if (find == self->_imgLib->end()) continue;
+        const id obj = fn(*self->_imgLib->recordGet(find));
+        if (!obj) continue;
+        if (!first) {
+            first = obj;
+        } else {
+            mixed |= ![first isEqual:obj];
+        }
+    }
+    
+    if (!mixed) {
+        return _ModelData{ .data = first };
+    }
+    
+    return _ModelData{ .type = _ModelData::Type::Mixed };
+}
+
 - (_ModelData)_getter_id {
     if (_selection.size() != 1) {
         return _ModelData{ .type = _ModelData::Type::Mixed };
