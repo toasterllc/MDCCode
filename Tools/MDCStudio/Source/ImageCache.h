@@ -105,8 +105,13 @@ private:
             
             // Load the image neighbors, if instructed to do so and there's no further work to do
             if (work.loadNeighbors) {
-                std::vector<Img::Id> imageIds;
-                imageIds.reserve(_NeighborImageLoadCount);
+                struct IdAddr {
+                    Img::Id id = 0;
+                    uint64_t addr = 0;
+                };
+                
+                std::vector<IdAddr> idAddrs;
+                idAddrs.reserve(_NeighborImageLoadCount);
                 
                 // Collect the neighboring image ids in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
                 {
@@ -119,11 +124,13 @@ private:
                         if (it != _imageLibrary->end()) it++;
                         
                         if (it != _imageLibrary->end()) {
-                            imageIds.push_back(_imageLibrary->recordGet(it)->id);
+                            const ImageThumb& thumb = *_imageLibrary->recordGet(it);
+                            idAddrs.push_back({ thumb.id, thumb.addr });
                         }
                         
                         if (rit != _imageLibrary->rend()) {
-                            imageIds.push_back(_imageLibrary->recordGet(rit)->id);
+                            const ImageThumb& thumb = *_imageLibrary->recordGet(rit);
+                            idAddrs.push_back({ thumb.id, thumb.addr });
                         }
                         
                         // make_reverse_iterator() returns an iterator that points to the element _before_ the
@@ -134,26 +141,26 @@ private:
                 }
                 
                 // Load the neighboring images, bailing if additional work appears
-                for (const Img::Id id : imageIds) {
-                    inserted.insert(id);
-                    printf("[ImageCache] Loading neighbor %ju\n", (uintmax_t)id);
+                for (const IdAddr& idAddr : idAddrs) {
+                    inserted.insert(idAddr.id);
+                    printf("[ImageCache] Loading neighbor %ju\n", (uintmax_t)idAddr.id);
                     
                     auto lock = std::unique_lock(_state.lock);
                         // Bail if more work appears
                         if (_state.work) break;
-                        const auto find = _state.images.find(id);
+                        const auto find = _state.images.find(idAddr.id);
                         // Move on if this image is already loaded
                         if (find != _state.images.end()) continue;
                     lock.unlock();
                     
                     // Load the image without the lock held
-                    ImagePtr image = _imageProvider(id);
+                    ImagePtr image = _imageProvider(idAddr.addr);
                     
                     if (image) {
                         lock.lock();
                             // `find` stays valid after relinquishing the lock because this thread
                             // is the only thread that modifies `_state.images`
-                            _state.images.insert_or_assign(find, id, image);
+                            _state.images.insert_or_assign(find, idAddr.id, image);
                         lock.unlock();
                     }
                 }
