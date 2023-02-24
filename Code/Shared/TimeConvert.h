@@ -11,9 +11,10 @@ namespace Time {
 // representation of time. That is, when a leap second occurs, Unix time doesn't
 // increment for that particular second, so performing duration calculations across
 // leap seconds produces results that would disagree with a stopwatch running over
-// the same period (by a magnitude of the number of leap seconds that occurred).
+// the same period (by a magnitude of the number of leap seconds that occurred during
+// that period).
 //
-// Instead we use the C++ utc_clock which properly handles our duration math.
+// Instead we use the C++ utc_clock which performs duration math accurately.
 
 inline Instant Current() {
     using namespace std::chrono;
