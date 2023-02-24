@@ -14,8 +14,11 @@ using namespace MDCStudio;
 @implementation Document {
     IBOutlet NSSplitView* _splitView;
     SourceListView* _sourceListView;
-    NSView* _centerViewContainer;
+    
+    NSView* _centerContainerView;
     NSView* _centerView;
+    
+    NSView* _inspectorContainerView;
     InspectorView* _inspectorView;
 }
 
@@ -26,24 +29,36 @@ using namespace MDCStudio;
 - (void)setCenterView:(NSView*)centerView {
     if (_centerView) [_centerView removeFromSuperview];
     _centerView = centerView;
-    [_centerViewContainer addSubview:_centerView];
-    [_centerViewContainer addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_centerView]|"
+    [_centerContainerView addSubview:_centerView];
+    [_centerContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_centerView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_centerView)]];
-    [_centerViewContainer addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_centerView]|"
+    [_centerContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_centerView]|"
         options:0 metrics:nil views:NSDictionaryOfVariableBindings(_centerView)]];
+}
+
+- (void)setInspectorView:(InspectorView*)inspectorView {
+    if (_inspectorView) [_inspectorView removeFromSuperview];
+    _inspectorView = inspectorView;
+    [_inspectorContainerView addSubview:_inspectorView];
+    [_inspectorContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_inspectorView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_inspectorView)]];
+    [_inspectorContainerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_inspectorView]|"
+        options:0 metrics:nil views:NSDictionaryOfVariableBindings(_inspectorView)]];
 }
 
 - (void)awakeFromNib {
     _sourceListView = [[SourceListView alloc] initWithFrame:{}];
     [_sourceListView setDelegate:self];
     
-    _centerViewContainer = [[NSView alloc] initWithFrame:{}];
-    [_centerViewContainer setTranslatesAutoresizingMaskIntoConstraints:false];
+    _centerContainerView = [[NSView alloc] initWithFrame:{}];
+    [_centerContainerView setTranslatesAutoresizingMaskIntoConstraints:false];
     
-    _inspectorView = [[InspectorView alloc] initWithFrame:{}];
+    _inspectorContainerView = [[NSView alloc] initWithFrame:{}];
+    [_inspectorContainerView setTranslatesAutoresizingMaskIntoConstraints:false];
+    
     [_splitView addArrangedSubview:_sourceListView];
-    [_splitView addArrangedSubview:_centerViewContainer];
-    [_splitView addArrangedSubview:_inspectorView];
+    [_splitView addArrangedSubview:_centerContainerView];
+    [_splitView addArrangedSubview:_inspectorContainerView];
     
     [_splitView setHoldingPriority:NSLayoutPriorityDefaultLow forSubviewAtIndex:0];
     [_splitView setHoldingPriority:NSLayoutPriorityFittingSizeCompression forSubviewAtIndex:1];
@@ -226,14 +241,15 @@ using namespace MDCStudio;
     
     
     
-    ImageSourcePtr selection = [_sourceListView selection];
-    if (selection) {
-        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:selection];
+    ImageSourcePtr imageSource = [_sourceListView selection];
+    if (imageSource) {
+        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
         [imageGridView setDelegate:self];
         
-        ImageGridScrollView* sv = [[ImageGridScrollView alloc] initWithFixedDocument:imageGridView];
-        [self setCenterView:sv];
-        [[_splitView window] makeFirstResponder:[sv document]];
+        [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
+        [self setInspectorView:[[InspectorView alloc] initWithImageLibrary:imageSource->imageLibrary()]];
+        
+        [[_splitView window] makeFirstResponder:imageGridView];
 //        [_mainView setContentView:sv animation:MainViewAnimation::None];
     
     } else {
@@ -284,10 +300,14 @@ using namespace MDCStudio;
 
 // MARK: - ImageGridViewDelegate
 
+- (void)imageGridViewSelectionChanged:(ImageGridView*)imageGridView {
+    
+}
+
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
-    const ImageGridViewImageIds& selectedImageIds = [imageGridView selectedImageIds];
-    if (selectedImageIds.empty()) return;
-    const Img::Id imageId = *selectedImageIds.begin();
+    const std::set<Img::Id> selection = [imageGridView selection];
+    if (selection.empty()) return;
+    const Img::Id imageId = *selection.begin();
     [self _openImage:imageId delta:0];
 }
 

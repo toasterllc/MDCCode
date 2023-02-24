@@ -5,9 +5,8 @@
 #import "FixedDocumentView.h"
 @class ImageGridView;
 
-using ImageGridViewImageIds = std::set<Img::Id>;
-
 @protocol ImageGridViewDelegate
+- (void)imageGridViewSelectionChanged:(ImageGridView*)imageGridView;
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView;
 @end
 
@@ -18,7 +17,7 @@ using ImageGridViewImageIds = std::set<Img::Id>;
 - (void)setDelegate:(id<ImageGridViewDelegate>)delegate;
 
 - (MDCStudio::ImageSourcePtr)imageSource;
-- (const ImageGridViewImageIds&)selectedImageIds;
+- (std::set<Img::Id>)selection;
 
 //- (NSView*)initialFirstResponder;
 

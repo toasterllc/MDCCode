@@ -1,8 +1,13 @@
 #import "InspectorView.h"
 #import <vector>
+#import <objc/message.h>
 #import "Util.h"
 #import "ImageCornerButton/ImageCornerButton.h"
 using namespace MDCStudio;
+
+@class InspectorView_Item;
+using _GetterBlock = id(^)(InspectorView_Item*);
+using _SetterBlock = void(^)(InspectorView_Item*, id);
 
 // MARK: - Outline View Items
 
@@ -14,8 +19,8 @@ using namespace MDCStudio;
     IBOutlet NSLayoutConstraint* _indent;
     IBOutlet NSLayoutConstraint* _height;
 @public
-    id(^modelGetter)(InspectorView_Item*);
-    void(^modelSetter)(InspectorView_Item*, id);
+    _GetterBlock modelGetter;
+    _SetterBlock modelSetter;
     bool darkBackground;
 }
 
@@ -274,16 +279,58 @@ using namespace MDCStudio;
 @end
 
 @implementation InspectorView {
+    ImageLibraryPtr _imgLib;
+    std::vector<Item*> _outlineItems;
+    std::set<Img::Id> _selection;
+    
     IBOutlet NSView* _nibView;
     IBOutlet NSOutlineView* _outlineView;
-    
-    std::vector<Item*> _outlineItems;
 }
 
 // MARK: - Creation
 
-- (instancetype)initWithFrame:(NSRect)frame {
-    if (!(self = [super initWithFrame:frame])) return nil;
+- (id)_getter_id {
+    if (_selection.size() != 1) {
+        return nil;
+    }
+    
+    const Img::Id id = *_selection.begin();
+    
+    auto lock = std::unique_lock(*_imgLib);
+    auto find = _imgLib->find(id);
+    if (find == _imgLib->end()) return nil;
+    return @(_imgLib->recordGet(find)->id);
+}
+
+- (id)_getter_date {
+    return @"date";
+}
+
+- (id)_getter_time {
+    return @"time";
+}
+
+- (id)_getter_exposure {
+    return @"exposure";
+}
+
+- (id)_getter_gain {
+    return @"gain";
+}
+
+static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
+    __weak const auto selfWeak = self;
+    return ^id(InspectorView_Item*){
+        const auto selfStrong = selfWeak;
+        if (!selfStrong) return nil;
+        return ((id (*)(id, SEL))objc_msgSend)(selfStrong, sel);
+    };
+}
+
+- (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib {
+    if (!(self = [super initWithFrame:{}])) return nil;
+    
+    _imgLib = imgLib;
     
     // Load view from nib
     {
@@ -315,7 +362,7 @@ using namespace MDCStudio;
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Image ID";
                 stat->valueIndent = 75;
-                stat->modelGetter = ^(id){ return @"meowmix"; };
+                stat->modelGetter = _GetterCreate(self, @selector(_getter_id));
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -324,7 +371,7 @@ using namespace MDCStudio;
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Date";
                 stat->valueIndent = 75;
-                stat->modelGetter = ^(id){ return @"meowmix"; };
+                stat->modelGetter = _GetterCreate(self, @selector(_getter_date));
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -333,7 +380,7 @@ using namespace MDCStudio;
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Time";
                 stat->valueIndent = 75;
-                stat->modelGetter = ^(id){ return @"meowmix"; };
+                stat->modelGetter = _GetterCreate(self, @selector(_getter_time));
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -342,7 +389,7 @@ using namespace MDCStudio;
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Exposure";
                 stat->valueIndent = 75;
-                stat->modelGetter = ^(id){ return @"meowmix"; };
+                stat->modelGetter = _GetterCreate(self, @selector(_getter_exposure));
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -351,7 +398,7 @@ using namespace MDCStudio;
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Gain";
                 stat->valueIndent = 75;
-                stat->modelGetter = ^(id){ return @"meowmix"; };
+                stat->modelGetter = _GetterCreate(self, @selector(_getter_gain));
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -595,6 +642,10 @@ using namespace MDCStudio;
 }
 
 // MARK: - Methods
+
+- (void)setSelection:(const std::set<Img::Id>&)selection {
+    _selection = selection;
+}
 
 - (id)_createItemWithClass:(Class)itemClass {
     NSParameterAssert(itemClass);

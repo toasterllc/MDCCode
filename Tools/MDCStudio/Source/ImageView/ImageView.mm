@@ -425,8 +425,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 @implementation ImageScrollView
 
-- (NSView*)initialFirstResponder {
-    return [self document];
-}
+//- (NSView*)initialFirstResponder {
+//    return [self document];
+//}
 
 @end

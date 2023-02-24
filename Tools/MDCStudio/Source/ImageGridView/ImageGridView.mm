@@ -8,6 +8,8 @@
 #import "Code/Shared/Img.h"
 using namespace MDCStudio;
 
+using _ImageIds = std::set<Img::Id>;
+
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
 static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 
@@ -17,18 +19,18 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 @interface ImageGridLayer : FixedMetalDocumentLayer
 
-- (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib;
+- (instancetype)initWithImageLibrary:(ImageLibraryPtr)imgLib;
 
 - (void)setContainerWidth:(CGFloat)width;
 - (CGFloat)containerHeight;
 - (size_t)columnCount;
 - (void)recomputeGrid;
 
-- (ImageGridViewImageIds)imageIdsForRect:(CGRect)rect;
+- (_ImageIds)imageIdsForRect:(CGRect)rect;
 - (CGRect)rectForImageAtIndex:(size_t)idx;
 
-- (const ImageGridViewImageIds&)selectedImageIds;
-- (void)setSelectedImageIds:(const ImageGridViewImageIds&)imageIds;
+- (const _ImageIds&)selection;
+- (void)setSelection:(_ImageIds&&)imageIds;
 
 @end
 
@@ -47,7 +49,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     ImageLibraryPtr _imageLibrary;
     
     struct {
-        ImageGridViewImageIds imageIds;
+        _ImageIds imageIds;
         Img::Id first = 0;
         size_t count = 0;
         id<MTLBuffer> buf;
@@ -329,10 +331,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     printf("Took %ju ms\n", (uintmax_t)durationMs);
 }
 
-- (ImageGridViewImageIds)imageIdsForRect:(CGRect)rect {
+- (_ImageIds)imageIdsForRect:(CGRect)rect {
     auto lock = std::unique_lock(*_imageLibrary);
     const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, [self contentsScale]));
-    ImageGridViewImageIds imageIds;
+    _ImageIds imageIds;
     for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
             const int32_t idx = _grid.columnCount()*y + x;
@@ -349,20 +351,20 @@ done:
     return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
 }
 
-- (const ImageGridViewImageIds&)selectedImageIds {
+- (const _ImageIds&)selection {
     return _selection.imageIds;
 }
 
-- (void)setSelectedImageIds:(const ImageGridViewImageIds&)imageIds {
+- (void)setSelection:(_ImageIds&&)imageIds {
     if (!imageIds.empty()) {
-        _selection.imageIds = imageIds;
-        _selection.first = *imageIds.begin();
-        _selection.count = *std::prev(imageIds.end())-*imageIds.begin()+1;
+        _selection.imageIds = std::move(imageIds);
+        _selection.first = *_selection.imageIds.begin();
+        _selection.count = *std::prev(_selection.imageIds.end())-*_selection.imageIds.begin()+1;
         
         constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
         _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
         bool* bools = (bool*)[_selection.buf contents];
-        for (Img::Id imageId : imageIds) {
+        for (Img::Id imageId : _selection.imageIds) {
             bools[imageId-_selection.first] = true;
         }
     
@@ -458,8 +460,13 @@ done:
     return _imageSource;
 }
 
-- (const ImageGridViewImageIds&)selectedImageIds {
-    return [_imageGridLayer selectedImageIds];
+- (std::set<Img::Id>)selection {
+    return [_imageGridLayer selection];
+}
+
+- (void)_setSelection:(_ImageIds&&)ids {
+    [_imageGridLayer setSelection:std::move(ids)];
+    [_delegate imageGridViewSelectionChanged:self];
 }
 
 - (void)_updateDocumentHeight {
@@ -475,8 +482,8 @@ done:
 
 // MARK: - Event Handling
 
-static ImageGridViewImageIds _XORImageIds(const ImageGridViewImageIds& a, const ImageGridViewImageIds& b) {
-    ImageGridViewImageIds r;
+static _ImageIds _XORImageIds(const _ImageIds& a, const _ImageIds& b) {
+    _ImageIds r;
     for (Img::Id x : a) {
         if (b.find(x) == b.end()) {
             r.insert(x);
@@ -510,16 +517,16 @@ static ImageGridViewImageIds _XORImageIds(const ImageGridViewImageIds& a, const 
     [_selectionRectLayer setHidden:false];
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
-    const ImageGridViewImageIds oldSelection = [_imageGridLayer selectedImageIds];
+    const _ImageIds oldSelection = [_imageGridLayer selection];
     TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
 //        const CGPoint curPoint = _ConvertPoint(_imageGridLayer, _documentView, [_documentView convertPoint:[event locationInWindow] fromView:nil]);
         const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
-        const ImageGridViewImageIds newSelection = [_imageGridLayer imageIdsForRect:rect];
+        _ImageIds newSelection = [_imageGridLayer imageIdsForRect:rect];
         if (extend) {
-            [_imageGridLayer setSelectedImageIds:_XORImageIds(oldSelection, newSelection)];
+            [_imageGridLayer setSelection:_XORImageIds(oldSelection, newSelection)];
         } else {
-            [_imageGridLayer setSelectedImageIds:newSelection];
+            [_imageGridLayer setSelection:std::move(newSelection)];
         }
         [_selectionRectLayer setFrame:[self convertRect:rect fromView:superview]];
         
@@ -547,11 +554,11 @@ struct SelectionDelta {
     const size_t imgCount = imageLibrary->recordCount();
     if (!imgCount) return;
     
-    ImageGridViewImageIds selectedImageIds = [_imageGridLayer selectedImageIds];
+    _ImageIds selection = [_imageGridLayer selection];
     ssize_t newIdx = 0;
-    if (!selectedImageIds.empty()) {
-        const Img::Id lastSelectedImgId = *std::prev(selectedImageIds.end());
-        const auto iter = imageLibrary->find(lastSelectedImgId);
+    if (!selection.empty()) {
+        const Img::Id lastImgId = *std::prev(selection.end());
+        const auto iter = imageLibrary->find(lastImgId);
         if (iter == imageLibrary->end()) {
             NSLog(@"Image no longer in library");
             return;
@@ -607,9 +614,9 @@ struct SelectionDelta {
     const Img::Id newImgId = imageLibrary->recordGet(imageLibrary->begin()+newIdx)->id;
     [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
     
-    if (!extend) selectedImageIds.clear();
-    selectedImageIds.insert(newImgId);
-    [_imageGridLayer setSelectedImageIds:selectedImageIds];
+    if (!extend) selection.clear();
+    selection.insert(newImgId);
+    [_imageGridLayer setSelection:std::move(selection)];
 }
 
 - (void)moveDown:(id)sender {
@@ -635,11 +642,11 @@ struct SelectionDelta {
 - (void)selectAll:(id)sender {
     ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
     auto lock = std::unique_lock(*imageLibrary);
-    ImageGridViewImageIds ids;
+    _ImageIds ids;
     for (auto it=imageLibrary->begin(); it!=imageLibrary->end(); it++) {
         ids.insert(imageLibrary->recordGet(it)->id);
     }
-    [_imageGridLayer setSelectedImageIds:ids];
+    [_imageGridLayer setSelection:std::move(ids)];
 }
 
 - (void)fixedCreateConstraintsForContainer:(NSView*)container {
@@ -680,8 +687,8 @@ struct SelectionDelta {
     [gridView _updateDocumentHeight];
 }
 
-- (NSView*)initialFirstResponder {
-    return [self document];
-}
+//- (NSView*)initialFirstResponder {
+//    return [self document];
+//}
 
 @end
