@@ -10,10 +10,30 @@ static void _Init(ImageCornerButton* self) {
 }
 
 static Corner _CornerNext(Corner x, int delta) {
-    if (x==Corner::TopRight && delta>0) return Corner::BottomRight;
+    if ((x==Corner::TopRight && delta>0) || x==Corner::Mixed) return Corner::BottomRight;
     if (x==Corner::BottomRight && delta<0) return Corner::TopRight;
     return (Corner)((int)x+delta);
 }
+
+//static Corner _CornerNext(Corner x, int delta) {
+//    if (delta > 0) {
+//        switch (x) {
+//        case Corner::BottomRight:   return Corner::BottomLeft;
+//        case Corner::BottomLeft:    return Corner::TopLeft;
+//        case Corner::TopLeft:       return Corner::TopRight;
+//        case Corner::TopRight:      return Corner::BottomRight;
+//        case Corner::Mixed:         return Corner::BottomRight;
+//        }
+//    } else {
+//        switch (x) {
+//        case Corner::BottomRight:   return Corner::TopRight;
+//        case Corner::BottomLeft:    return Corner::BottomRight;
+//        case Corner::TopLeft:       return Corner::BottomLeft;
+//        case Corner::TopRight:      return Corner::TopLeft;
+//        case Corner::Mixed:         return Corner::BottomRight;
+//        }
+//    }
+//}
 
 - (instancetype)initWithFrame:(NSRect)frame {
     if (!(self = [super initWithFrame:frame])) return nil;

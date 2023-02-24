@@ -5,9 +5,19 @@
 #import "ImageCornerButton/ImageCornerButton.h"
 using namespace MDCStudio;
 
+struct _ModelData {
+    enum class Type {
+        Normal,
+        Mixed,
+    };
+    
+    Type type = Type::Normal;
+    id data = nil;
+};
+
 @class InspectorView_Item;
-using _GetterBlock = id(^)(InspectorView_Item*);
-using _SetterBlock = void(^)(InspectorView_Item*, id);
+using _ModelGetter = _ModelData(^)(InspectorView_Item*);
+using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 // MARK: - Outline View Items
 
@@ -19,8 +29,8 @@ using _SetterBlock = void(^)(InspectorView_Item*, id);
     IBOutlet NSLayoutConstraint* _indent;
     IBOutlet NSLayoutConstraint* _height;
 @public
-    _GetterBlock modelGetter;
-    _SetterBlock modelSetter;
+    _ModelGetter modelGetter;
+    _ModelSetter modelSetter;
     bool darkBackground;
 }
 
@@ -100,7 +110,16 @@ using _SetterBlock = void(^)(InspectorView_Item*, id);
     [super updateView];
     [_buttonMin setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Min", icon]]];
     [_buttonMax setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Max", icon]]];
-    [_slider setObjectValue:modelGetter(self)];
+    
+    const _ModelData data = modelGetter(self);
+    switch (data.type) {
+    case _ModelData::Type::Normal:
+        [_slider setObjectValue:data.data];
+        break;
+    case _ModelData::Type::Mixed:
+        [_slider setObjectValue:@(0)];
+        break;
+    }
 }
 
 @end
@@ -125,7 +144,16 @@ using _SetterBlock = void(^)(InspectorView_Item*, id);
 - (void)updateView {
     [super updateView];
     [_label setStringValue:name];
-    [_slider setObjectValue:modelGetter(self)];
+    
+    const _ModelData data = modelGetter(self);
+    switch (data.type) {
+    case _ModelData::Type::Normal:
+        [_slider setObjectValue:data.data];
+        break;
+    case _ModelData::Type::Mixed:
+        [_slider setObjectValue:@(0)];
+        break;
+    }
 }
 
 @end
@@ -150,7 +178,16 @@ using _SetterBlock = void(^)(InspectorView_Item*, id);
 - (void)updateView {
     [super updateView];
     [_checkbox setTitle:name];
-    [_checkbox setObjectValue:modelGetter(self)];
+    
+    const _ModelData data = modelGetter(self);
+    switch (data.type) {
+    case _ModelData::Type::Normal:
+        [_checkbox setState:([data.data boolValue] ? NSControlStateValueOn : NSControlStateValueOff)];
+        break;
+    case _ModelData::Type::Mixed:
+        [_checkbox setState:NSControlStateValueMixed];
+        break;
+    }
 }
 
 @end
@@ -179,14 +216,36 @@ using _SetterBlock = void(^)(InspectorView_Item*, id);
     IBOutlet NSButton* _checkbox;
     IBOutlet ImageCornerButton* _cornerButton;
 @public
-    ImageCornerButtonTypes::Corner (^cornerModelGetter)(InspectorView_Item*);
-    void(^cornerModelSetter)(InspectorView_Item*, ImageCornerButtonTypes::Corner);
+    _ModelGetter cornerModelGetter;
+    _ModelSetter cornerModelSetter;
 }
 
 - (void)updateView {
     [super updateView];
-    [_checkbox setObjectValue:modelGetter(self)];
-    [_cornerButton setCorner:cornerModelGetter(self)];
+    
+    {
+        const _ModelData data = modelGetter(self);
+        switch (data.type) {
+        case _ModelData::Type::Normal:
+            [_checkbox setState:([data.data boolValue] ? NSControlStateValueOn : NSControlStateValueOff)];
+            break;
+        case _ModelData::Type::Mixed:
+            [_checkbox setState:NSControlStateValueMixed];
+            break;
+        }
+    }
+    
+    {
+        const _ModelData data = cornerModelGetter(self);
+        switch (data.type) {
+        case _ModelData::Type::Normal:
+            [_cornerButton setCorner:(ImageCornerButtonTypes::Corner)[data.data intValue]];
+            break;
+        case _ModelData::Type::Mixed:
+            [_cornerButton setCorner:ImageCornerButtonTypes::Corner::Mixed];
+            break;
+        }
+    }
 }
 
 @end
@@ -230,7 +289,19 @@ using _SetterBlock = void(^)(InspectorView_Item*, id);
 - (void)updateView {
     [super updateView];
     [_nameLabel setStringValue:name];
-    [_valueLabel setObjectValue:modelGetter(self)];
+    
+    const _ModelData data = modelGetter(self);
+    switch (data.type) {
+    case _ModelData::Type::Normal:
+        [_valueLabel setObjectValue:data.data];
+        [_valueLabel setTextColor:[NSColor labelColor]];
+        break;
+    case _ModelData::Type::Mixed:
+        [_valueLabel setObjectValue:@"multiple"];
+        [_valueLabel setTextColor:[NSColor placeholderTextColor]];
+        break;
+    }
+    
     [_valueIndentConstraint setConstant:valueIndent];
 }
 
@@ -289,59 +360,61 @@ using _SetterBlock = void(^)(InspectorView_Item*, id);
 
 // MARK: - Creation
 
-- (id)_getter_id {
+- (_ModelData)_getter_id {
     if (_selection.size() != 1) {
-        return nil;
+        return _ModelData{ .type = _ModelData::Type::Mixed };
     }
     
     const Img::Id id = *_selection.begin();
-    
     auto lock = std::unique_lock(*_imgLib);
     auto find = _imgLib->find(id);
-    if (find == _imgLib->end()) return nil;
-    return @(_imgLib->recordGet(find)->id);
-}
-
-- (id)_getter_date {
-    return @"date";
-}
-
-- (id)_getter_time {
-    return @"time";
-}
-
-- (id)_getter_integrationTime {
-    if (_selection.size() != 1) {
-        return nil;
-    }
+    if (find == _imgLib->end()) return {};
     
-    const Img::Id id = *_selection.begin();
-    
-    auto lock = std::unique_lock(*_imgLib);
-    auto find = _imgLib->find(id);
-    if (find == _imgLib->end()) return nil;
-    return @(_imgLib->recordGet(find)->coarseIntTime);
+    return _ModelData{ .data = @(_imgLib->recordGet(find)->id) };
 }
 
-- (id)_getter_analogGain {
-    if (_selection.size() != 1) {
-        return nil;
-    }
-    
-    const Img::Id id = *_selection.begin();
-    
-    auto lock = std::unique_lock(*_imgLib);
-    auto find = _imgLib->find(id);
-    if (find == _imgLib->end()) return nil;
-    return @(_imgLib->recordGet(find)->analogGain);
+- (_ModelData)_getter_date {
+    return {};
 }
 
-static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
+- (_ModelData)_getter_time {
+    return {};
+}
+
+- (_ModelData)_getter_integrationTime {
+    return {};
+//    if (_selection.size() != 1) {
+//        return nil;
+//    }
+//    
+//    const Img::Id id = *_selection.begin();
+//    
+//    auto lock = std::unique_lock(*_imgLib);
+//    auto find = _imgLib->find(id);
+//    if (find == _imgLib->end()) return nil;
+//    return @(_imgLib->recordGet(find)->coarseIntTime);
+}
+
+- (_ModelData)_getter_analogGain {
+    return {};
+//    if (_selection.size() != 1) {
+//        return nil;
+//    }
+//    
+//    const Img::Id id = *_selection.begin();
+//    
+//    auto lock = std::unique_lock(*_imgLib);
+//    auto find = _imgLib->find(id);
+//    if (find == _imgLib->end()) return nil;
+//    return @(_imgLib->recordGet(find)->analogGain);
+}
+
+static _ModelGetter _GetterCreate(InspectorView* self, SEL sel) {
     __weak const auto selfWeak = self;
-    return ^id(InspectorView_Item*){
+    return ^_ModelData(InspectorView_Item*){
         const auto selfStrong = selfWeak;
-        if (!selfStrong) return nil;
-        return ((id (*)(id, SEL))objc_msgSend)(selfStrong, sel);
+        if (!selfStrong) return _ModelData{};
+        return ((_ModelData (*)(id, SEL))objc_msgSend)(selfStrong, sel);
     };
 }
 
@@ -457,7 +530,7 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             section->name = @"White Balance";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-WhiteBalance";
-            slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
+            slider->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -473,7 +546,7 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             section->name = @"Exposure";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Exposure";
-            slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
+            slider->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -489,7 +562,7 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             section->name = @"Saturation";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Saturation";
-            slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
+            slider->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -505,7 +578,7 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             section->name = @"Brightness";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Brightness";
-            slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
+            slider->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -521,7 +594,7 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             section->name = @"Contrast";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Contrast";
-            slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
+            slider->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -538,11 +611,11 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             
             SliderWithLabel* slider1 = [self _createItemWithClass:[SliderWithLabel class]];
             slider1->name = @"Amount";
-            slider1->modelGetter = ^(id){ return @0; /*meowmix*/ };
+            slider1->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
             
             SliderWithLabel* slider2 = [self _createItemWithClass:[SliderWithLabel class]];
             slider2->name = @"Radius";
-            slider2->modelGetter = ^(id){ return @0; /*meowmix*/ };
+            slider2->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
             
             section->items = { slider1, slider2 };
             _rootItem->items.push_back(section);
@@ -576,7 +649,7 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             {
                 Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
                 checkbox->name = @"Defringe";
-                checkbox->modelGetter = ^(id){ return @0; /*meowmix*/ };
+                checkbox->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
                 section->items.push_back(checkbox);
             }
             
@@ -589,7 +662,7 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             {
                 Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
                 checkbox->name = @"Reconstruct highlights";
-                checkbox->modelGetter = ^(id){ return @0; /*meowmix*/ };
+                checkbox->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
                 section->items.push_back(checkbox);
             }
             
@@ -601,8 +674,8 @@ static _GetterBlock _GetterCreate(InspectorView* self, SEL sel) {
             
             {
                 Timestamp* timestamp = [self _createItemWithClass:[Timestamp class]];
-                timestamp->modelGetter = ^(id){ return @0; /*meowmix*/ };
-                timestamp->cornerModelGetter = ^(id){ return ImageCornerButtonTypes::Corner::BottomRight; /*meowmix*/ };
+                timestamp->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+                timestamp->cornerModelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
                 section->items.push_back(timestamp);
             }
             

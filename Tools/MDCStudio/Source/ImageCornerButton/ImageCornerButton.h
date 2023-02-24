@@ -7,6 +7,8 @@ enum class Corner {
     BottomLeft,
     TopLeft,
     TopRight,
+    // Mixed: represents multiple values (ie when multiple items are selected with different corners)
+    Mixed,
 };
 
 } // namespace ImageCornerButtonTypes
