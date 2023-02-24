@@ -1,6 +1,7 @@
 #import "InspectorView.h"
 #import <vector>
 #import "Util.h"
+#import "ImageCornerButton/ImageCornerButton.h"
 using namespace MDCStudio;
 
 // MARK: - Outline View Items
@@ -13,18 +14,26 @@ using namespace MDCStudio;
     IBOutlet NSLayoutConstraint* _indent;
     IBOutlet NSLayoutConstraint* _height;
 @public
+    id(^modelGetter)(InspectorView_Item*);
+    void(^modelSetter)(InspectorView_Item*, id);
     bool darkBackground;
 }
 
-- (NSString*)name { abort(); }
+- (NSString*)name { return @""; }
 - (CGFloat)height { return 20; }
 - (CGFloat)indent { return 12; }
 
-- (void)update {
+- (void)updateView {
     [_indent setConstant:[self indent]];
     [_height setConstant:[self height]];
     [[self textField] setStringValue:[self name]];
 }
+
+//- (void)updateModel {
+//    if (updateModel) {
+//        updateModel(self);
+//    }
+//}
 
 //- (void)drawRect:(NSRect)rect {
 //    [[NSColor redColor] set];
@@ -45,10 +54,10 @@ using namespace MDCStudio;
 - (NSString*)name { return [name uppercaseString]; }
 - (CGFloat)height { return 20; }
 
-- (void)update {
-    [super update];
+- (void)updateView {
+    [super updateView];
     for (InspectorView_Item* it : items) {
-        [it update];
+        [it updateView];
     }
 }
 
@@ -61,7 +70,6 @@ using namespace MDCStudio;
 @public
     CGFloat height;
 }
-- (NSString*)name { return @""; }
 - (CGFloat)height { return height; }
 @end
 
@@ -71,10 +79,10 @@ using namespace MDCStudio;
 
 
 
-@interface InspectorView_SliderIcon : InspectorView_Item
+@interface InspectorView_SliderWithIcon : InspectorView_Item
 @end
 
-@implementation InspectorView_SliderIcon {
+@implementation InspectorView_SliderWithIcon {
 @private
     IBOutlet NSButton* _buttonMin;
     IBOutlet NSButton* _buttonMax;
@@ -82,12 +90,12 @@ using namespace MDCStudio;
 @public
     NSString* icon;
 }
-- (NSString*)name { return @""; }
 
-- (void)update {
-    [super update];
+- (void)updateView {
+    [super updateView];
     [_buttonMin setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Min", icon]]];
     [_buttonMax setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Max", icon]]];
+    [_slider setObjectValue:modelGetter(self)];
 }
 
 @end
@@ -97,20 +105,22 @@ using namespace MDCStudio;
 
 
 
-@interface InspectorView_SliderLabel : InspectorView_Item
+@interface InspectorView_SliderWithLabel : InspectorView_Item
 @end
 
-@implementation InspectorView_SliderLabel {
+@implementation InspectorView_SliderWithLabel {
+@private
+    IBOutlet NSTextField* _label;
+    IBOutlet NSSlider* _slider;
 @public
-    IBOutlet NSTextField* label;
-    IBOutlet NSSlider* slider;
     NSString* name;
 }
 - (NSString*)name { return name; }
 
-- (void)update {
-    [super update];
-    [label setStringValue:name];
+- (void)updateView {
+    [super updateView];
+    [_label setStringValue:name];
+    [_slider setObjectValue:modelGetter(self)];
 }
 
 @end
@@ -124,16 +134,18 @@ using namespace MDCStudio;
 @end
 
 @implementation InspectorView_Checkbox {
+@private
+    IBOutlet NSButton* _checkbox;
 @public
-    IBOutlet NSButton* checkbox;
     NSString* name;
 }
 
 - (NSString*)name { return name; }
 
-- (void)update {
-    [super update];
-    [checkbox setTitle:name];
+- (void)updateView {
+    [super updateView];
+    [_checkbox setTitle:name];
+    [_checkbox setObjectValue:modelGetter(self)];
 }
 
 @end
@@ -146,12 +158,9 @@ using namespace MDCStudio;
 @end
 
 @implementation InspectorView_Menu {
-@public
-    IBOutlet NSPopUpButton* button;
+@private
+    IBOutlet NSPopUpButton* _button;
 }
-
-- (NSString*)name { return @""; }
-
 @end
 
 
@@ -161,12 +170,19 @@ using namespace MDCStudio;
 @end
 
 @implementation InspectorView_Timestamp {
+@private
+    IBOutlet NSButton* _checkbox;
+    IBOutlet ImageCornerButton* _cornerButton;
 @public
-    IBOutlet NSPopUpButton* button;
-    IBOutlet NSButton* imageCornerButton;
+    ImageCornerButtonTypes::Corner (^cornerModelGetter)(InspectorView_Item*);
+    void(^cornerModelSetter)(InspectorView_Item*, ImageCornerButtonTypes::Corner);
 }
 
-- (NSString*)name { return @""; }
+- (void)updateView {
+    [super updateView];
+    [_checkbox setObjectValue:modelGetter(self)];
+    [_cornerButton setCorner:cornerModelGetter(self)];
+}
 
 @end
 
@@ -183,10 +199,8 @@ using namespace MDCStudio;
     NSString* icon;
 }
 
-- (NSString*)name { return @""; }
-
-//- (void)update {
-//    [super update];
+//- (void)updateView {
+//    [super updateView];
 //    [_button setImage:[NSImage imageNamed:icon]];
 //}
 
@@ -205,16 +219,13 @@ using namespace MDCStudio;
     IBOutlet NSLayoutConstraint* _valueIndentConstraint;
 @public
     NSString* name;
-    NSString* value;
     CGFloat valueIndent;
 }
 
-- (NSString*)name { return @""; }
-
-- (void)update {
-    [super update];
+- (void)updateView {
+    [super updateView];
     [_nameLabel setStringValue:name];
-    [_valueLabel setStringValue:value];
+    [_valueLabel setObjectValue:modelGetter(self)];
     [_valueIndentConstraint setConstant:valueIndent];
 }
 
@@ -249,10 +260,10 @@ using namespace MDCStudio;
 #define Section         InspectorView_Section
 #define SectionItem     InspectorView_SectionItem
 #define Spacer          InspectorView_Spacer
-#define SliderIcon      InspectorView_SliderIcon
-#define SliderLabel     InspectorView_SliderLabel
+#define SliderWithIcon  InspectorView_SliderWithIcon
+#define SliderWithLabel InspectorView_SliderWithLabel
 #define Checkbox        InspectorView_Checkbox
-#define Menu            InspectorView_Menu
+//#define Menu            InspectorView_Menu
 #define Timestamp       InspectorView_Timestamp
 #define Rotation        InspectorView_Rotation
 #define Stat            InspectorView_Stat
@@ -303,8 +314,8 @@ using namespace MDCStudio;
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Image ID";
-                stat->value = @"7553";
                 stat->valueIndent = 75;
+                stat->modelGetter = ^(id){ return @"meowmix"; };
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -312,8 +323,8 @@ using namespace MDCStudio;
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Date";
-                stat->value = @"Feb 18, 2023";
                 stat->valueIndent = 75;
+                stat->modelGetter = ^(id){ return @"meowmix"; };
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -321,8 +332,8 @@ using namespace MDCStudio;
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Time";
-                stat->value = @"8:43 PM";
                 stat->valueIndent = 75;
+                stat->modelGetter = ^(id){ return @"meowmix"; };
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -330,8 +341,8 @@ using namespace MDCStudio;
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Exposure";
-                stat->value = @"555";
                 stat->valueIndent = 75;
+                stat->modelGetter = ^(id){ return @"meowmix"; };
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -339,8 +350,8 @@ using namespace MDCStudio;
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Gain";
-                stat->value = @"1023";
                 stat->valueIndent = 75;
+                stat->modelGetter = ^(id){ return @"meowmix"; };
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -357,7 +368,7 @@ using namespace MDCStudio;
 //            Stat* stat1 = [self _createItemWithClass:[Stat class]];
 //            stat1->name = "Date";
             
-//            section->items = { [self _createItemWithClass:[SliderIcon class]] };
+//            section->items = { [self _createItemWithClass:[SliderWithIcon class]] };
             _outlineItems.push_back(section);
         }
         
@@ -376,9 +387,9 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"White Balance";
-            
-            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-WhiteBalance";
+            slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
             section->items = { slider };
             _outlineItems.push_back(section);
         }
@@ -392,8 +403,9 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Exposure";
-            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Exposure";
+            slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
             section->items = { slider };
             _outlineItems.push_back(section);
         }
@@ -407,8 +419,9 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Saturation";
-            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Saturation";
+            slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
             section->items = { slider };
             _outlineItems.push_back(section);
         }
@@ -422,8 +435,9 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Brightness";
-            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Brightness";
+            slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
             section->items = { slider };
             _outlineItems.push_back(section);
         }
@@ -437,8 +451,9 @@ using namespace MDCStudio;
         {
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Contrast";
-            SliderIcon* slider = [self _createItemWithClass:[SliderIcon class]];
+            SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Contrast";
+            slider->modelGetter = ^(id){ return @0; /*meowmix*/ };
             section->items = { slider };
             _outlineItems.push_back(section);
         }
@@ -453,11 +468,13 @@ using namespace MDCStudio;
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Local Constrast";
             
-            SliderLabel* slider1 = [self _createItemWithClass:[SliderLabel class]];
+            SliderWithLabel* slider1 = [self _createItemWithClass:[SliderWithLabel class]];
             slider1->name = @"Amount";
+            slider1->modelGetter = ^(id){ return @0; /*meowmix*/ };
             
-            SliderLabel* slider2 = [self _createItemWithClass:[SliderLabel class]];
+            SliderWithLabel* slider2 = [self _createItemWithClass:[SliderWithLabel class]];
             slider2->name = @"Radius";
+            slider2->modelGetter = ^(id){ return @0; /*meowmix*/ };
             
             section->items = { slider1, slider2 };
             _outlineItems.push_back(section);
@@ -491,6 +508,7 @@ using namespace MDCStudio;
             {
                 Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
                 checkbox->name = @"Defringe";
+                checkbox->modelGetter = ^(id){ return @0; /*meowmix*/ };
                 section->items.push_back(checkbox);
             }
             
@@ -503,6 +521,7 @@ using namespace MDCStudio;
             {
                 Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
                 checkbox->name = @"Reconstruct highlights";
+                checkbox->modelGetter = ^(id){ return @0; /*meowmix*/ };
                 section->items.push_back(checkbox);
             }
             
@@ -514,19 +533,21 @@ using namespace MDCStudio;
             
             {
                 Timestamp* timestamp = [self _createItemWithClass:[Timestamp class]];
+                timestamp->modelGetter = ^(id){ return @0; /*meowmix*/ };
+                timestamp->cornerModelGetter = ^(id){ return ImageCornerButtonTypes::Corner::BottomRight; /*meowmix*/ };
                 section->items.push_back(timestamp);
             }
             
             _outlineItems.push_back(section);
         }
         
-        {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = SpacerSize;
-            _outlineItems.push_back(spacer);
-        }
-        
-        
+//        {
+//            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+//            spacer->height = SpacerSize;
+//            _outlineItems.push_back(spacer);
+//        }
+//        
+//        
 //        {
 //            Section* section = [self _createItemWithClass:[Section class]];
 //            section->name = @"Timestamp";
@@ -641,7 +662,7 @@ using namespace MDCStudio;
 }
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item {
-    [Cast<Item>(item) update];
+    [Cast<Item>(item) updateView];
     return item;
 }
 

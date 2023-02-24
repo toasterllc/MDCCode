@@ -73,7 +73,7 @@
                                             <outlet property="textField" destination="aQl-zt-mX6" id="94H-o3-xPX"/>
                                         </connections>
                                     </tableCellView>
-                                    <tableCellView identifier="InspectorView_SliderIcon" id="Oca-BY-FTK" customClass="InspectorView_SliderIcon">
+                                    <tableCellView identifier="InspectorView_SliderWithIcon" id="Oca-BY-FTK" customClass="InspectorView_SliderWithIcon">
                                         <rect key="frame" x="1" y="64" width="247" height="20"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
@@ -122,7 +122,7 @@
                                             <outlet property="_slider" destination="DZe-QJ-YrD" id="75m-xG-gqk"/>
                                         </connections>
                                     </tableCellView>
-                                    <tableCellView identifier="InspectorView_SliderLabel" id="JiA-Ly-2Hk" customClass="InspectorView_SliderLabel">
+                                    <tableCellView identifier="InspectorView_SliderWithLabel" id="JiA-Ly-2Hk" customClass="InspectorView_SliderWithLabel">
                                         <rect key="frame" x="1" y="86" width="247" height="20"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
@@ -150,8 +150,8 @@
                                         <connections>
                                             <outlet property="_height" destination="IK2-Nv-hWf" id="rxS-a9-fxD"/>
                                             <outlet property="_indent" destination="Q6L-zI-UVh" id="HDK-XE-LzS"/>
-                                            <outlet property="label" destination="2Wk-Za-sn6" id="85B-nm-xFl"/>
-                                            <outlet property="slider" destination="WRI-17-iHa" id="va4-Eb-kXe"/>
+                                            <outlet property="_label" destination="2Wk-Za-sn6" id="bCh-KJ-FKQ"/>
+                                            <outlet property="_slider" destination="WRI-17-iHa" id="1OS-zG-2xZ"/>
                                         </connections>
                                     </tableCellView>
                                     <tableCellView identifier="InspectorView_Checkbox" id="EwO-sD-ijl" customClass="InspectorView_Checkbox">
@@ -173,9 +173,9 @@
                                             <constraint firstAttribute="height" constant="20" id="sne-Vo-Dpv"/>
                                         </constraints>
                                         <connections>
+                                            <outlet property="_checkbox" destination="4h7-i2-RCa" id="Tcg-FA-ka7"/>
                                             <outlet property="_height" destination="sne-Vo-Dpv" id="9BH-Jz-MrR"/>
                                             <outlet property="_indent" destination="Ec5-QO-cXg" id="CjR-c1-YJw"/>
-                                            <outlet property="checkbox" destination="4h7-i2-RCa" id="czp-5J-7Sa"/>
                                         </connections>
                                     </tableCellView>
                                     <tableCellView identifier="InspectorView_Menu" id="Uqz-Ai-fuI" customClass="InspectorView_Menu">
@@ -204,9 +204,9 @@
                                             <constraint firstAttribute="trailing" secondItem="98b-tg-mR0" secondAttribute="trailing" constant="12" id="rUv-V2-sgZ"/>
                                         </constraints>
                                         <connections>
+                                            <outlet property="_button" destination="98b-tg-mR0" id="42w-ea-z4s"/>
                                             <outlet property="_height" destination="Ft1-kI-uBO" id="icE-Eb-awB"/>
                                             <outlet property="_indent" destination="VDW-tO-TgH" id="sid-C6-mo9"/>
-                                            <outlet property="button" destination="98b-tg-mR0" id="cqY-mk-x2s"/>
                                         </connections>
                                     </tableCellView>
                                     <tableCellView identifier="InspectorView_Timestamp" id="ZXZ-qK-hhw" customClass="InspectorView_Timestamp">
@@ -240,9 +240,10 @@
                                             <constraint firstAttribute="height" constant="20" id="wM8-TS-jGI"/>
                                         </constraints>
                                         <connections>
+                                            <outlet property="_checkbox" destination="yui-q4-XJp" id="FoD-gW-XsG"/>
+                                            <outlet property="_cornerButton" destination="hlR-S1-aEk" id="SA3-TI-gpY"/>
                                             <outlet property="_height" destination="wM8-TS-jGI" id="51r-GS-f6O"/>
                                             <outlet property="_indent" destination="CnP-NK-A81" id="ixT-v8-e1L"/>
-                                            <outlet property="imageCornerButton" destination="hlR-S1-aEk" id="370-ye-aqx"/>
                                         </connections>
                                     </tableCellView>
                                     <tableCellView identifier="InspectorView_Rotation" id="QyM-zH-3HC" customClass="InspectorView_Rotation">
