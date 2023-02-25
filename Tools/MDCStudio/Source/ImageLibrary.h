@@ -205,7 +205,7 @@ public:
         }
     }
     
-    void notifyChange(std::set<Img::Id>&& ids) {
+    void notifyChange(const std::set<Img::Id>& ids) {
         Event ev = { .type = Event::Type::Change };
         ev.ids = std::move(ids);
         notify(ev);

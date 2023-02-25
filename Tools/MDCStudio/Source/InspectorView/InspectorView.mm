@@ -457,12 +457,15 @@ using _ModelSetterFn = void(*)(ImageThumb&, id);
 }
 
 - (void)_set:(_ModelSetterFn)fn data:(id)data {
-    auto lock = std::unique_lock(*_imgLib);
-    for (const Img::Id imgId : _selection) {
-        auto find = _imgLib->find(imgId);
-        if (find == _imgLib->end()) continue;
-        fn(*_imgLib->recordGet(find), data);
+    {
+        auto lock = std::unique_lock(*_imgLib);
+        for (const Img::Id imgId : _selection) {
+            auto find = _imgLib->find(imgId);
+            if (find == _imgLib->end()) continue;
+            fn(*_imgLib->recordGet(find), data);
+        }
     }
+    _imgLib->notifyChange(_selection);
 }
 
 static _ModelGetter _GetterCreate(InspectorView* self, _ModelGetterFn fn) {
@@ -492,8 +495,10 @@ static id _Get_id(const ImageThumb& thumb) {
 static NSDateFormatter* _DateFormatterCreate() {
     NSDateFormatter* x = [[NSDateFormatter alloc] init];
     [x setLocale:[NSLocale autoupdatingCurrentLocale]];
-    [x setDateStyle: NSDateFormatterMediumStyle];
-    [x setTimeStyle: NSDateFormatterMediumStyle];
+    [x setDateStyle:NSDateFormatterMediumStyle];
+    [x setTimeStyle:NSDateFormatterMediumStyle];
+    // Update date format to show milliseconds
+    [x setDateFormat:[[x dateFormat] stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
     return x;
 }
 
@@ -507,8 +512,8 @@ static id _Get_timestamp(const ImageThumb& thumb) {
     const Time::Instant t = thumb.timestamp;
     if (Time::Absolute(t)) {
         auto timestamp = clock_cast<system_clock>(thumb.timestamp);
-        const seconds sec = duration_cast<seconds>(timestamp.time_since_epoch());
-        return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:sec.count()]];
+        const milliseconds ms = duration_cast<milliseconds>(timestamp.time_since_epoch());
+        return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.]];
     
     } else {
         const seconds sec = Time::DurationSinceEpoch<seconds>(thumb.timestamp);
