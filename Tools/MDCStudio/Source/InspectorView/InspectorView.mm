@@ -141,6 +141,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     }
 }
 
+- (IBAction)updateModel:(id)sender {
+    modelSetter(self, [_slider objectValue]);
+}
+
 @end
 
 
@@ -175,6 +179,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     }
 }
 
+- (IBAction)updateModel:(id)sender {
+    modelSetter(self, [_slider objectValue]);
+}
+
 @end
 
 
@@ -207,6 +215,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
         [_checkbox setState:NSControlStateValueMixed];
         break;
     }
+}
+
+- (IBAction)updateModel:(id)sender {
+    modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
 }
 
 @end
@@ -267,6 +279,11 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     }
 }
 
+- (IBAction)updateModel:(id)sender {
+    modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
+    cornerModelSetter(self, @((int)[_cornerButton corner]));
+}
+
 @end
 
 
@@ -286,6 +303,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 //    [super updateView];
 //    [_button setImage:[NSImage imageNamed:icon]];
 //}
+
+- (IBAction)updateModel:(id)sender {
+    modelSetter(self, nil);
+}
 
 @end
 
@@ -379,7 +400,8 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 // MARK: - Creation
 
-using _ModelExtractFn = id(*)(const ImageThumb&);
+using _ModelGetterFn = id(*)(const ImageThumb&);
+using _ModelSetterFn = void(*)(ImageThumb&, id);
 
 //static _ModelData _Getter(InspectorView* self, _ModelGetterFn fn) {
 //    // first: holds the first non-nil value
@@ -408,7 +430,7 @@ using _ModelExtractFn = id(*)(const ImageThumb&);
 //}
 
 
-- (_ModelData)_getter:(_ModelExtractFn)fn {
+- (_ModelData)_get:(_ModelGetterFn)fn {
     // first: holds the first non-nil value
     id first = nil;
     // mixed: tracks whether there are at least 2 differing values
@@ -434,16 +456,36 @@ using _ModelExtractFn = id(*)(const ImageThumb&);
     return _ModelData{ .type = _ModelData::Type::Mixed };
 }
 
-static _ModelGetter _GetterCreate(InspectorView* self, _ModelExtractFn fn) {
+- (void)_set:(_ModelSetterFn)fn data:(id)data {
+    auto lock = std::unique_lock(*_imgLib);
+    for (const Img::Id imgId : _selection) {
+        auto find = _imgLib->find(imgId);
+        if (find == _imgLib->end()) continue;
+        fn(*_imgLib->recordGet(find), data);
+    }
+}
+
+static _ModelGetter _GetterCreate(InspectorView* self, _ModelGetterFn fn) {
     __weak const auto selfWeak = self;
     return ^_ModelData(InspectorView_Item*){
         const auto selfStrong = selfWeak;
         if (!selfStrong) return _ModelData{};
-        return [selfStrong _getter:fn];
+        return [selfStrong _get:fn];
     };
 }
 
-static id _Extract_id(const ImageThumb& thumb) {
+static _ModelSetter _SetterCreate(InspectorView* self, _ModelSetterFn fn) {
+    __weak const auto selfWeak = self;
+    return ^void(InspectorView_Item*, id data){
+        const auto selfStrong = selfWeak;
+        if (!selfStrong) return;
+        [selfStrong _set:fn data:data];
+    };
+}
+
+// MARK: - Getters
+
+static id _Get_id(const ImageThumb& thumb) {
     return @(thumb.id);
 }
 
@@ -460,7 +502,7 @@ static NSDateFormatter* _DateFormatter() {
     return x;
 }
 
-static id _Extract_timestamp(const ImageThumb& thumb) {
+static id _Get_timestamp(const ImageThumb& thumb) {
     using namespace std::chrono;
     const Time::Instant t = thumb.timestamp;
     if (Time::Absolute(t)) {
@@ -475,58 +517,135 @@ static id _Extract_timestamp(const ImageThumb& thumb) {
     }
 }
 
-static id _Extract_integrationTime(const ImageThumb& thumb) {
+static id _Get_integrationTime(const ImageThumb& thumb) {
     return @(thumb.coarseIntTime);
 }
 
-static id _Extract_analogGain(const ImageThumb& thumb) {
+static id _Get_analogGain(const ImageThumb& thumb) {
     return @(thumb.analogGain);
 }
 
-static id _Extract_whiteBalance(const ImageThumb& thumb) {
+static id _Get_whiteBalance(const ImageThumb& thumb) {
     // meowmix
     return @(0);
 }
 
-static id _Extract_exposure(const ImageThumb& thumb) {
+static id _Get_exposure(const ImageThumb& thumb) {
     return @(thumb.options.exposure);
 }
 
-static id _Extract_saturation(const ImageThumb& thumb) {
+static id _Get_saturation(const ImageThumb& thumb) {
     return @(thumb.options.saturation);
 }
 
-static id _Extract_brightness(const ImageThumb& thumb) {
+static id _Get_brightness(const ImageThumb& thumb) {
     return @(thumb.options.brightness);
 }
 
-static id _Extract_contrast(const ImageThumb& thumb) {
+static id _Get_contrast(const ImageThumb& thumb) {
     return @(thumb.options.contrast);
 }
 
-static id _Extract_localContrastAmount(const ImageThumb& thumb) {
+static id _Get_localContrastAmount(const ImageThumb& thumb) {
     return @(thumb.options.localContrast.amount);
 }
 
-static id _Extract_localContrastRadius(const ImageThumb& thumb) {
+static id _Get_localContrastRadius(const ImageThumb& thumb) {
     return @(thumb.options.localContrast.radius);
 }
 
-static id _Extract_defringe(const ImageThumb& thumb) {
+static id _Get_defringe(const ImageThumb& thumb) {
     return @(thumb.options.defringe);
 }
 
-static id _Extract_reconstructHighlights(const ImageThumb& thumb) {
+static id _Get_reconstructHighlights(const ImageThumb& thumb) {
     return @(thumb.options.reconstructHighlights);
 }
 
-static id _Extract_timestampShow(const ImageThumb& thumb) {
+static id _Get_timestampShow(const ImageThumb& thumb) {
     return @(thumb.options.timestamp.show);
 }
 
-static id _Extract_timestampCorner(const ImageThumb& thumb) {
+static id _Get_timestampCorner(const ImageThumb& thumb) {
     return @((int)thumb.options.timestamp.corner);
 }
+
+
+// MARK: - Setters
+
+static void _Set_whiteBalance(ImageThumb& thumb, id data) {
+    // meowmix
+}
+
+static void _Set_exposure(ImageThumb& thumb, id data) {
+    thumb.options.exposure = [data floatValue];
+}
+
+static void _Set_saturation(ImageThumb& thumb, id data) {
+    thumb.options.saturation = [data floatValue];
+}
+
+static void _Set_brightness(ImageThumb& thumb, id data) {
+    thumb.options.brightness = [data floatValue];
+}
+
+static void _Set_contrast(ImageThumb& thumb, id data) {
+    thumb.options.contrast = [data floatValue];
+}
+
+static void _Set_localContrastAmount(ImageThumb& thumb, id data) {
+    thumb.options.localContrast.amount = [data floatValue];
+}
+
+static void _Set_localContrastRadius(ImageThumb& thumb, id data) {
+    thumb.options.localContrast.radius = [data floatValue];
+}
+
+static void _Set_defringe(ImageThumb& thumb, id data) {
+    thumb.options.defringe = [data boolValue];
+}
+
+static void _Set_reconstructHighlights(ImageThumb& thumb, id data) {
+    thumb.options.reconstructHighlights = [data boolValue];
+}
+
+static void _Set_timestampShow(ImageThumb& thumb, id data) {
+    thumb.options.timestamp.show = [data boolValue];
+}
+
+static ImageOptions::Corner _Convert(ImageCornerButtonTypes::Corner x) {
+    switch (x) {
+    case ImageCornerButtonTypes::Corner::BottomRight:   return ImageOptions::Corner::BottomRight;
+    case ImageCornerButtonTypes::Corner::BottomLeft:    return ImageOptions::Corner::BottomLeft;
+    case ImageCornerButtonTypes::Corner::TopLeft:       return ImageOptions::Corner::TopLeft;
+    case ImageCornerButtonTypes::Corner::TopRight:      return ImageOptions::Corner::TopRight;
+    case ImageCornerButtonTypes::Corner::Mixed:         return ImageOptions::Corner::BottomRight;
+    }
+}
+
+static ImageCornerButtonTypes::Corner _Convert(ImageOptions::Corner x) {
+    switch (x) {
+    case ImageOptions::Corner::BottomRight: return ImageCornerButtonTypes::Corner::BottomRight;
+    case ImageOptions::Corner::BottomLeft:  return ImageCornerButtonTypes::Corner::BottomLeft;
+    case ImageOptions::Corner::TopLeft:     return ImageCornerButtonTypes::Corner::TopLeft;
+    case ImageOptions::Corner::TopRight:    return ImageCornerButtonTypes::Corner::TopRight;
+    }
+}
+
+static void _Set_timestampCorner(ImageThumb& thumb, id data) {
+    const ImageOptions::Corner corner = _Convert((ImageCornerButtonTypes::Corner)[data intValue]);
+    thumb.options.timestamp.corner = corner;
+}
+
+
+
+
+
+
+
+
+
+
 
 - (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib {
     if (!(self = [super initWithFrame:{}])) return nil;
@@ -566,7 +685,7 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Image ID";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _Extract_id);
+                stat->modelGetter = _GetterCreate(self, _Get_id);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -575,7 +694,7 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Timestamp";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _Extract_timestamp);
+                stat->modelGetter = _GetterCreate(self, _Get_timestamp);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -584,7 +703,7 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Integration Time";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _Extract_integrationTime);
+                stat->modelGetter = _GetterCreate(self, _Get_integrationTime);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -593,7 +712,7 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Analog Gain";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _Extract_analogGain);
+                stat->modelGetter = _GetterCreate(self, _Get_analogGain);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -631,7 +750,8 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
             section->name = @"White Balance";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-WhiteBalance";
-            slider->modelGetter = _GetterCreate(self, _Extract_whiteBalance);
+            slider->modelGetter = _GetterCreate(self, _Get_whiteBalance);
+            slider->modelSetter = _SetterCreate(self, _Set_whiteBalance);
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -647,7 +767,8 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
             section->name = @"Exposure";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Exposure";
-            slider->modelGetter = _GetterCreate(self, _Extract_exposure);
+            slider->modelGetter = _GetterCreate(self, _Get_exposure);
+            slider->modelSetter = _SetterCreate(self, _Set_exposure);
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -663,7 +784,8 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
             section->name = @"Saturation";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Saturation";
-            slider->modelGetter = _GetterCreate(self, _Extract_saturation);
+            slider->modelGetter = _GetterCreate(self, _Get_saturation);
+            slider->modelSetter = _SetterCreate(self, _Set_saturation);
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -679,7 +801,8 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
             section->name = @"Brightness";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Brightness";
-            slider->modelGetter = _GetterCreate(self, _Extract_brightness);
+            slider->modelGetter = _GetterCreate(self, _Get_brightness);
+            slider->modelSetter = _SetterCreate(self, _Set_brightness);
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -695,7 +818,8 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
             section->name = @"Contrast";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Contrast";
-            slider->modelGetter = _GetterCreate(self, _Extract_contrast);
+            slider->modelGetter = _GetterCreate(self, _Get_contrast);
+            slider->modelSetter = _SetterCreate(self, _Set_contrast);
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -712,11 +836,13 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
             
             SliderWithLabel* slider1 = [self _createItemWithClass:[SliderWithLabel class]];
             slider1->name = @"Amount";
-            slider1->modelGetter = _GetterCreate(self, _Extract_localContrastAmount);
+            slider1->modelGetter = _GetterCreate(self, _Get_localContrastAmount);
+            slider1->modelSetter = _SetterCreate(self, _Set_localContrastAmount);
             
             SliderWithLabel* slider2 = [self _createItemWithClass:[SliderWithLabel class]];
             slider2->name = @"Radius";
-            slider2->modelGetter = _GetterCreate(self, _Extract_localContrastRadius);
+            slider2->modelGetter = _GetterCreate(self, _Get_localContrastRadius);
+            slider2->modelSetter = _SetterCreate(self, _Set_localContrastRadius);
             
             section->items = { slider1, slider2 };
             _rootItem->items.push_back(section);
@@ -750,7 +876,8 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
             {
                 Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
                 checkbox->name = @"Defringe";
-                checkbox->modelGetter = _GetterCreate(self, _Extract_defringe);
+                checkbox->modelGetter = _GetterCreate(self, _Get_defringe);
+                checkbox->modelSetter = _SetterCreate(self, _Set_defringe);
                 section->items.push_back(checkbox);
             }
             
@@ -763,7 +890,8 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
             {
                 Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
                 checkbox->name = @"Reconstruct highlights";
-                checkbox->modelGetter = _GetterCreate(self, _Extract_reconstructHighlights);
+                checkbox->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
+                checkbox->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
                 section->items.push_back(checkbox);
             }
             
@@ -775,8 +903,10 @@ static id _Extract_timestampCorner(const ImageThumb& thumb) {
             
             {
                 Timestamp* timestamp = [self _createItemWithClass:[Timestamp class]];
-                timestamp->modelGetter = _GetterCreate(self, _Extract_timestampShow);
-                timestamp->cornerModelGetter = _GetterCreate(self, _Extract_timestampCorner);
+                timestamp->modelGetter = _GetterCreate(self, _Get_timestampShow);
+                timestamp->modelSetter = _SetterCreate(self, _Set_timestampShow);
+                timestamp->cornerModelGetter = _GetterCreate(self, _Get_timestampCorner);
+                timestamp->cornerModelSetter = _SetterCreate(self, _Set_timestampCorner);
                 section->items.push_back(timestamp);
             }
             

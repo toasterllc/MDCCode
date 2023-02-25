@@ -644,11 +644,13 @@ struct SelectionDelta {
 }
 
 - (void)selectAll:(id)sender {
-    ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
-    auto lock = std::unique_lock(*imageLibrary);
     _ImageIds ids;
-    for (auto it=imageLibrary->begin(); it!=imageLibrary->end(); it++) {
-        ids.insert(imageLibrary->recordGet(it)->id);
+    {
+        ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
+        auto lock = std::unique_lock(*imageLibrary);
+        for (auto it=imageLibrary->begin(); it!=imageLibrary->end(); it++) {
+            ids.insert(imageLibrary->recordGet(it)->id);
+        }
     }
     [self _setSelection:std::move(ids)];
 }
