@@ -264,17 +264,21 @@ using namespace MDCStudio;
     
     ImageLibraryPtr imageLibrary = imageSource->imageLibrary();
     {
-        auto lock = std::unique_lock(*imageLibrary);
-        if (imageLibrary->empty()) return false;
+        ImageRecord imageThumb;
+        {
+            auto lock = std::unique_lock(*imageLibrary);
+            if (imageLibrary->empty()) return false;
+            
+            auto find = imageLibrary->find(imageId);
+            if (find == imageLibrary->end()) return false;
+            
+            const ssize_t deltaMin = std::distance(find, imageLibrary->begin());
+            const ssize_t deltaMax = std::distance(find, std::prev(imageLibrary->end()));
+            if (delta<deltaMin || delta>deltaMax) return false;
+            
+            imageThumb = *imageLibrary->recordGet(find+delta);
+        }
         
-        auto find = imageLibrary->find(imageId);
-        if (find == imageLibrary->end()) return false;
-        
-        const ssize_t deltaMin = std::distance(find, imageLibrary->begin());
-        const ssize_t deltaMax = std::distance(find, std::prev(imageLibrary->end()));
-        if (delta<deltaMin || delta>deltaMax) return false;
-        
-        const ImageRecord& imageThumb = *imageLibrary->recordGet(find+delta);
         ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageSource:imageSource];
         [imageView setDelegate:self];
         

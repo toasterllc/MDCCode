@@ -47,27 +47,10 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     ImageSourcePtr _imageSource;
 }
 
-// _handleImageLibraryEvent: called on whatever thread where the modification happened,
-// and with the ImageLibraryPtr lock held!
-- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
-    switch (ev.type) {
-    case ImageLibrary::Event::Type::Add:
-        break;
-    case ImageLibrary::Event::Type::Remove:
-        break;
-    case ImageLibrary::Event::Type::Change:
-        if (ev.ids.count(_imageThumb.id)) {
-            _rerender = true;
-            dispatch_async(dispatch_get_main_queue(), ^{ [self setNeedsDisplay]; });
-        }
-        break;
-    }
-}
-
-- (instancetype)initWithImageThumb:(const ImageRecord&)imageThumbArg imageSource:(ImageSourcePtr)imageSource {
+- (instancetype)initWithImageThumb:(const ImageRecord&)imageThumb imageSource:(ImageSourcePtr)imageSource {
     if (!(self = [super init])) return nil;
     
-    _imageThumb = imageThumbArg;
+    _imageThumb = imageThumb;
     _imageSource = imageSource;
     
     // Add ourself as an observer of the image library
@@ -194,6 +177,22 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 - (void)_handleImageLoaded:(ImagePtr)image {
     _image = image;
     [self setNeedsDisplay];
+}
+
+// _handleImageLibraryEvent: called on whatever thread where the modification happened,
+// and with the ImageLibraryPtr lock held!
+- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
+    switch (ev.type) {
+    case ImageLibrary::Event::Type::Add:
+        break;
+    case ImageLibrary::Event::Type::Remove:
+        break;
+    case ImageLibrary::Event::Type::Change:
+        if (ev.ids.count(_imageThumb.id)) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [self setNeedsDisplay]; });
+        }
+        break;
+    }
 }
 
 - (bool)fixedFlipped {
