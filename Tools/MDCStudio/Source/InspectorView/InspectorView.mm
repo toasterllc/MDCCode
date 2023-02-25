@@ -4,6 +4,7 @@
 #import "ImageCornerButton/ImageCornerButton.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/TimeConvert.h"
+#import "Toastbox/RelativeTimeString.h"
 using namespace MDCStudio;
 
 struct _ModelData {
@@ -433,14 +434,6 @@ static NSDateFormatter* _DateFormatterCreate() {
     NSDateFormatter* x = [[NSDateFormatter alloc] init];
     [x setLocale:[NSLocale autoupdatingCurrentLocale]];
     [x setDateStyle: NSDateFormatterMediumStyle];
-    [x setTimeStyle: NSDateFormatterNoStyle];
-    return x;
-}
-
-static NSDateFormatter* _TimeFormatterCreate() {
-    NSDateFormatter* x = [[NSDateFormatter alloc] init];
-    [x setLocale:[NSLocale autoupdatingCurrentLocale]];
-    [x setDateStyle: NSDateFormatterNoStyle];
     [x setTimeStyle: NSDateFormatterMediumStyle];
     return x;
 }
@@ -450,12 +443,7 @@ static NSDateFormatter* _DateFormatter() {
     return x;
 }
 
-static NSDateFormatter* _TimeFormatter() {
-    static NSDateFormatter* x = _TimeFormatterCreate();
-    return x;
-}
-
-static id _Extract_date(const ImageThumb& thumb) {
+static id _Extract_timestamp(const ImageThumb& thumb) {
     using namespace std::chrono;
     const Time::Instant t = thumb.timestamp;
     if (Time::Absolute(t)) {
@@ -464,7 +452,9 @@ static id _Extract_date(const ImageThumb& thumb) {
         return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:sec.count()]];
     
     } else {
-        return @"relative";
+        const seconds sec = Time::DurationSinceEpoch<seconds>(thumb.timestamp);
+        const std::string relTimeStr = Toastbox::RelativeTimeString(true, sec);
+        return [NSString stringWithFormat:@"%s after boot", relTimeStr.c_str()];
     }
     
 //    const microseconds us = duration_cast<microseconds>(timestamp.time_since_epoch());
@@ -490,19 +480,6 @@ static id _Extract_date(const ImageThumb& thumb) {
 //    std::chrono::time_point<<#class _Clock#>>
 //    thumb.timestamp;
 //    return @"";
-}
-
-static id _Extract_time(const ImageThumb& thumb) {
-    using namespace std::chrono;
-    const Time::Instant t = thumb.timestamp;
-    if (Time::Absolute(t)) {
-        auto timestamp = clock_cast<system_clock>(thumb.timestamp);
-        const seconds sec = duration_cast<seconds>(timestamp.time_since_epoch());
-        return [_TimeFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:sec.count()]];
-    
-    } else {
-        return @"relative";
-    }
 }
 
 static id _Extract_integrationTime(const ImageThumb& thumb) {
@@ -558,18 +535,9 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
             
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
-                stat->name = @"Date";
+                stat->name = @"Timestamp";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _Extract_date);
-                stat->darkBackground = true;
-                section->items.push_back(stat);
-            }
-            
-            {
-                Stat* stat = [self _createItemWithClass:[Stat class]];
-                stat->name = @"Time";
-                stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _Extract_time);
+                stat->modelGetter = _GetterCreate(self, _Extract_timestamp);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }

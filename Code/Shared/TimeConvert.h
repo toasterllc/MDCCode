@@ -33,7 +33,7 @@ inline Instant Current() {
 namespace std::chrono {
 
 template <typename T_Clock>
-auto clock_cast(Time::Instant t) {
+auto clock_cast(const Time::Instant& t) {
     using namespace std::chrono;
     using namespace date;
     
