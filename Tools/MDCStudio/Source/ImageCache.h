@@ -66,7 +66,7 @@ private:
         auto lock = std::unique_lock(*_imageLibrary);
         auto find = _imageLibrary->find(id);
         if (find == _imageLibrary->end()) return std::nullopt;
-        return _imageLibrary->recordGet(find)->id;
+        return _imageLibrary->recordGet(find)->addr;
     }
     
     void _thread() {

@@ -490,6 +490,51 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
     return @(thumb.analogGain);
 }
 
+static id _Extract_whiteBalance(const ImageThumb& thumb) {
+    // meowmix
+    return @(0);
+}
+
+static id _Extract_exposure(const ImageThumb& thumb) {
+    return @(thumb.options.exposure);
+}
+
+static id _Extract_saturation(const ImageThumb& thumb) {
+    return @(thumb.options.saturation);
+}
+
+static id _Extract_brightness(const ImageThumb& thumb) {
+    return @(thumb.options.brightness);
+}
+
+static id _Extract_contrast(const ImageThumb& thumb) {
+    return @(thumb.options.contrast);
+}
+
+static id _Extract_localContrastAmount(const ImageThumb& thumb) {
+    return @(thumb.options.localContrast.amount);
+}
+
+static id _Extract_localContrastRadius(const ImageThumb& thumb) {
+    return @(thumb.options.localContrast.radius);
+}
+
+static id _Extract_defringe(const ImageThumb& thumb) {
+    return @(thumb.options.defringe);
+}
+
+static id _Extract_reconstructHighlights(const ImageThumb& thumb) {
+    return @(thumb.options.reconstructHighlights);
+}
+
+static id _Extract_timestampShow(const ImageThumb& thumb) {
+    return @(thumb.options.timestamp);
+}
+
+static id _Extract_timestampCorner(const ImageThumb& thumb) {
+    return @((int)thumb.options.timestampCorner);
+}
+
 - (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib {
     if (!(self = [super initWithFrame:{}])) return nil;
     
@@ -593,7 +638,7 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
             section->name = @"White Balance";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-WhiteBalance";
-            slider->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+            slider->modelGetter = _GetterCreate(self, _Extract_whiteBalance);
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -609,7 +654,7 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
             section->name = @"Exposure";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Exposure";
-            slider->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+            slider->modelGetter = _GetterCreate(self, _Extract_exposure);
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -625,7 +670,7 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
             section->name = @"Saturation";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Saturation";
-            slider->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+            slider->modelGetter = _GetterCreate(self, _Extract_saturation);
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -641,7 +686,7 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
             section->name = @"Brightness";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Brightness";
-            slider->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+            slider->modelGetter = _GetterCreate(self, _Extract_brightness);
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -657,7 +702,7 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
             section->name = @"Contrast";
             SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
             slider->icon = @"Inspector-Contrast";
-            slider->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+            slider->modelGetter = _GetterCreate(self, _Extract_contrast);
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -674,11 +719,11 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
             
             SliderWithLabel* slider1 = [self _createItemWithClass:[SliderWithLabel class]];
             slider1->name = @"Amount";
-            slider1->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+            slider1->modelGetter = _GetterCreate(self, _Extract_localContrastAmount);
             
             SliderWithLabel* slider2 = [self _createItemWithClass:[SliderWithLabel class]];
             slider2->name = @"Radius";
-            slider2->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+            slider2->modelGetter = _GetterCreate(self, _Extract_localContrastRadius);
             
             section->items = { slider1, slider2 };
             _rootItem->items.push_back(section);
@@ -712,7 +757,7 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
             {
                 Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
                 checkbox->name = @"Defringe";
-                checkbox->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+                checkbox->modelGetter = _GetterCreate(self, _Extract_defringe);
                 section->items.push_back(checkbox);
             }
             
@@ -725,7 +770,7 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
             {
                 Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
                 checkbox->name = @"Reconstruct highlights";
-                checkbox->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+                checkbox->modelGetter = _GetterCreate(self, _Extract_reconstructHighlights);
                 section->items.push_back(checkbox);
             }
             
@@ -737,8 +782,8 @@ static id _Extract_analogGain(const ImageThumb& thumb) {
             
             {
                 Timestamp* timestamp = [self _createItemWithClass:[Timestamp class]];
-                timestamp->modelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
-                timestamp->cornerModelGetter = ^(id){ return _ModelData{}; /*meowmix*/ };
+                timestamp->modelGetter = _GetterCreate(self, _Extract_timestampShow);
+                timestamp->cornerModelGetter = _GetterCreate(self, _Extract_timestampCorner);
                 section->items.push_back(timestamp);
             }
             
