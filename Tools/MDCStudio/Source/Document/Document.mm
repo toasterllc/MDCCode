@@ -274,7 +274,7 @@ using namespace MDCStudio;
         const ssize_t deltaMax = std::distance(find, std::prev(imageLibrary->end()));
         if (delta<deltaMin || delta>deltaMax) return false;
         
-        const ImageThumb& imageThumb = *imageLibrary->recordGet(find+delta);
+        const ImageRecord& imageThumb = *imageLibrary->recordGet(find+delta);
         ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageSource:imageSource];
         [imageView setDelegate:self];
         

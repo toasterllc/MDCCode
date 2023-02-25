@@ -44,9 +44,7 @@ struct [[gnu::packed]] ImageOptions {
 
 static_assert(!(sizeof(ImageOptions) % 8)); // Ensure that ImageOptions is a multiple of 8 bytes
 
-struct [[gnu::packed]] ImageThumb {
-    static constexpr uint32_t Version = 0;
-    
+struct [[gnu::packed]] ImageThumbData {
 //    static constexpr size_t ThumbWidth      = 288;
 //    static constexpr size_t ThumbHeight     = 162;
 
@@ -70,6 +68,12 @@ struct [[gnu::packed]] ImageThumb {
     
     static constexpr size_t ThumbPixelSize  = 3;
     
+    uint8_t data[ThumbWidth*ThumbHeight*ThumbPixelSize];
+};
+
+struct [[gnu::packed]] ImageRecord {
+    static constexpr uint32_t Version = 0;
+    
     Img::Id id = 0;
     
     // addr: address of the full-size image on the device
@@ -91,12 +95,12 @@ struct [[gnu::packed]] ImageThumb {
     // _reserved: so we can add fields in the future without doing a data migration
     uint8_t _reserved[64] = {};
     
-    uint8_t thumb[ThumbWidth*ThumbHeight*ThumbPixelSize];
+    ImageThumbData thumb;
 };
 
-static_assert(!(sizeof(ImageThumb) % 8)); // Ensure that ImageThumb is a multiple of 8 bytes
+static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageThumb is a multiple of 8 bytes
 
-class ImageLibrary : public RecordStore<ImageThumb, 512> {
+class ImageLibrary : public RecordStore<ImageRecord, 512> {
 public:
     using RecordStore::RecordStore;
     
@@ -179,7 +183,7 @@ public:
         return iter;
     }
     
-    void addObserver(Observer&& observer) {
+    void observerAdd(Observer&& observer) {
         _state.observers.push_front(std::move(observer));
     }
     
@@ -191,6 +195,9 @@ public:
         _state.deviceImgIdEnd = id;
     }
     
+    // notify(): notifies each observer of an event.
+    // The notifications are delivered synchronously on the calling thread.
+    // The ImageLibraryPtr lock will therefore be held when events are delivered!
     void notify(const Event& ev) {
         auto prev = _state.observers.before_begin();
         for (auto it=_state.observers.begin(); it!=_state.observers.end();) {

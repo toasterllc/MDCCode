@@ -10,8 +10,8 @@ using namespace MDCStudio;
 
 using _ImageIds = std::set<Img::Id>;
 
-static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
-static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
+static constexpr auto _ThumbWidth = ImageThumbData::ThumbWidth;
+static constexpr auto _ThumbHeight = ImageThumbData::ThumbHeight;
 
 // _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
 // so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
@@ -290,9 +290,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                         .thumbData  = (uint32_t)(offsetof(ImageLibrary::Record, thumb)),
                     },
                     .thumb = {
-                        .width  = ImageThumb::ThumbWidth,
-                        .height = ImageThumb::ThumbHeight,
-                        .pxSize = ImageThumb::ThumbPixelSize,
+                        .width  = ImageThumbData::ThumbWidth,
+                        .height = ImageThumbData::ThumbHeight,
+                        .pxSize = ImageThumbData::ThumbPixelSize,
                     },
                     .selection = {
                         .first = (uint32_t)_selection.first,
@@ -438,13 +438,13 @@ done:
     
     // Observe image library changes so that we update the image grid
     {
-        __weak auto weakSelf = self;
+        __weak auto selfWeak = self;
         ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
         auto lock = std::unique_lock(*imageLibrary);
-        imageLibrary->addObserver([=] (const ImageLibrary::Event& ev) {
-            auto strongSelf = weakSelf;
-            if (!strongSelf) return false;
-            dispatch_async(dispatch_get_main_queue(), ^{ [strongSelf _handleImageLibraryChanged]; });
+        imageLibrary->observerAdd([=] (const ImageLibrary::Event& ev) {
+            auto selfStrong = selfWeak;
+            if (!selfStrong) return false;
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong _handleImageLibraryChanged]; });
             return true;
         });
     }

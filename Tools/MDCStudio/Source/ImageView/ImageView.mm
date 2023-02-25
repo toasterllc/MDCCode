@@ -36,25 +36,51 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 @end
 
 @implementation ImageLayer {
-@public
-    ImageThumb imageThumb;
-    
-@private
     id<MTLDevice> _device;
     id<MTLLibrary> _library;
     id<MTLCommandQueue> _commandQueue;
     
+    ImageRecord _imageThumb;
     ImagePtr _image;
     id<MTLTexture> _thumbTxt;
     id<MTLTexture> _imageTxt;
     ImageSourcePtr _imageSource;
 }
 
-- (instancetype)initWithImageThumb:(const ImageThumb&)imageThumbArg imageSource:(ImageSourcePtr)imageSource {
+// _handleImageLibraryEvent: called on whatever thread where the modification happened,
+// and with the ImageLibraryPtr lock held!
+- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
+    switch (ev.type) {
+    case ImageLibrary::Event::Type::Add:
+        break;
+    case ImageLibrary::Event::Type::Remove:
+        break;
+    case ImageLibrary::Event::Type::Change:
+        if (ev.ids.count(_imageThumb.id)) {
+            _rerender = true;
+            dispatch_async(dispatch_get_main_queue(), ^{ [self setNeedsDisplay]; });
+        }
+        break;
+    }
+}
+
+- (instancetype)initWithImageThumb:(const ImageRecord&)imageThumbArg imageSource:(ImageSourcePtr)imageSource {
     if (!(self = [super init])) return nil;
     
-    imageThumb = imageThumbArg;
+    _imageThumb = imageThumbArg;
     _imageSource = imageSource;
+    
+    // Add ourself as an observer of the image library
+    {
+        auto lock = std::unique_lock(*_imageSource->imageLibrary());
+        __weak auto selfWeak = self;
+        _imageSource->imageLibrary()->observerAdd([=](const ImageLibrary::Event& ev) {
+            auto selfStrong = selfWeak;
+            if (!selfStrong) return false;
+            [self _handleImageLibraryEvent:ev];
+            return true;
+        });
+    }
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
@@ -65,6 +91,30 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     _commandQueue = [_device newCommandQueue];
     return self;
 }
+
+- (const ImageRecord&)imageThumb {
+    return _imageThumb;
+}
+
+//static id<MTLTexture> _ThumbRender(Renderer& renderer, const ImageRecord& thumb) {
+//    using namespace MDCTools;
+//    using namespace MDCTools::ImagePipeline;
+//    
+//    #warning TODO: try removing the Write usage flag
+//    id<MTLTexture> txt = renderer.textureCreate(MTLPixelFormatBGRA8Unorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
+//        MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
+//    
+//    constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
+//    id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytes:thumb.thumb length:sizeof(thumb.thumb) options:BufOpts];
+//    const RenderThumb::Options thumbOpts = {
+//        .thumbWidth = ImageThumb::ThumbWidth,
+//        .thumbHeight = ImageThumb::ThumbHeight,
+//        .dataOff = 0,
+//    };
+//    RenderThumb::TextureFromRGB3(renderer, thumbOpts, thumbBuf, txt);
+//    
+//    return txt;
+//}
 
 - (void)display {
     using namespace MDCTools;
@@ -79,9 +129,9 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     
     // Fetch the image from the cache, if we don't have _image yet
     if (!_image) {
-        __weak auto weakSelf = self;
-        _image = _imageSource->imageCache()->imageForId(imageThumb.id, [=] (ImagePtr image) {
-            dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf _handleImageLoaded:image]; });
+        __weak auto selfWeak = self;
+        _image = _imageSource->imageCache()->imageForId(_imageThumb.id, [=] (ImagePtr image) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:image]; });
         });
     }
     
@@ -96,7 +146,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
             .pixels     = (ImagePixel*)(_image->data.get() + _image->off),
         };
         
-        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(imageThumb.illumEst);
+        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(_imageThumb.illumEst);
         const Pipeline::Options pipelineOpts = {
             .illum                  = illum,
 //            .reconstructHighlights  = { .en = true, },
@@ -114,10 +164,10 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
             MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
         
         constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
-        id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytes:imageThumb.thumb length:sizeof(imageThumb.thumb) options:BufOpts];
+        id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytes:_imageThumb.thumb.data length:sizeof(_imageThumb.thumb.data) options:BufOpts];
         const RenderThumb::Options thumbOpts = {
-            .thumbWidth = ImageThumb::ThumbWidth,
-            .thumbHeight = ImageThumb::ThumbHeight,
+            .thumbWidth = ImageThumbData::ThumbWidth,
+            .thumbHeight = ImageThumbData::ThumbHeight,
             .dataOff = 0,
         };
         RenderThumb::TextureFromRGB3(renderer, thumbOpts, thumbBuf, _thumbTxt);
@@ -151,7 +201,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 }
 
 - (CGSize)preferredFrameSize {
-    return {(CGFloat)imageThumb.imageWidth*2, (CGFloat)imageThumb.imageHeight*2};
+    return {(CGFloat)_imageThumb.imageWidth*2, (CGFloat)_imageThumb.imageHeight*2};
 }
 
 @end
@@ -318,7 +368,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     __weak id<ImageViewDelegate> _delegate;
 }
 
-- (instancetype)initWithImageThumb:(const MDCStudio::ImageThumb&)imageThumb
+- (instancetype)initWithImageThumb:(const MDCStudio::ImageRecord&)imageThumb
     imageSource:(MDCStudio::ImageSourcePtr)imageSource {
     
     ImageLayer* imageLayer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
@@ -353,8 +403,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     return self;
 }
 
-- (const ImageThumb&)imageThumb {
-    return _imageLayer->imageThumb;
+- (const ImageRecord&)imageThumb {
+    return [_imageLayer imageThumb];
 }
 
 - (void)setDelegate:(id<ImageViewDelegate>)delegate {

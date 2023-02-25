@@ -124,12 +124,12 @@ private:
                         if (it != _imageLibrary->end()) it++;
                         
                         if (it != _imageLibrary->end()) {
-                            const ImageThumb& thumb = *_imageLibrary->recordGet(it);
+                            const ImageRecord& thumb = *_imageLibrary->recordGet(it);
                             idAddrs.push_back({ thumb.id, thumb.addr });
                         }
                         
                         if (rit != _imageLibrary->rend()) {
-                            const ImageThumb& thumb = *_imageLibrary->recordGet(rit);
+                            const ImageRecord& thumb = *_imageLibrary->recordGet(rit);
                             idAddrs.push_back({ thumb.id, thumb.addr });
                         }
                         

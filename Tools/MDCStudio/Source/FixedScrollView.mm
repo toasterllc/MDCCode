@@ -61,10 +61,10 @@
     }
     
     // Observe document frame changes so we can update our magnification if we're in magnify-to-fit mode
-    __weak auto weakSelf = self;
+    __weak auto selfWeak = self;
     _docViewFrameChangedObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSViewFrameDidChangeNotification
         object:docView queue:nil usingBlock:^(NSNotification*) {
-        [weakSelf _docViewFrameChanged];
+        [selfWeak _docViewFrameChanged];
     }];
     
     [self setScrollerStyle:NSScrollerStyleOverlay];

@@ -173,7 +173,7 @@ public:
         return _state.imageCache;
     }
     
-    void addObserver(Observer&& observer) {
+    void observerAdd(Observer&& observer) {
         auto lock = std::unique_lock(_state.lock);
         _state.observers.push_front(std::move(observer));
     }
@@ -515,7 +515,7 @@ private:
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
             // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
             const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
-            ImageThumb& imageThumb = *_imageLibrary->recordGet(recordRefIter);
+            ImageRecord& imageThumb = *_imageLibrary->recordGet(recordRefIter);
             
             // Validate thumbnail checksum
             if (_ChecksumValid(imgData, Img::Size::Thumb)) {
@@ -567,8 +567,8 @@ private:
                 id<MTLBuffer> buf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:chunk.mmap.len() options:BufOpts deallocator:nil];
                 
                 const RenderThumb::Options thumbOpts = {
-                    .thumbWidth = ImageThumb::ThumbWidth,
-                    .thumbHeight = ImageThumb::ThumbHeight,
+                    .thumbWidth = ImageThumbData::ThumbWidth,
+                    .thumbHeight = ImageThumbData::ThumbHeight,
                     .dataOff = thumbDataOff,
                 };
                 

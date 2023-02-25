@@ -81,11 +81,11 @@ using namespace MDCStudio;
 - (void)setDevice:(MDCDevicePtr)dev {
     assert(!device); // We're one-time use since MDCDevice observers can't be removed
     device = dev;
-    __weak auto weakSelf = self;
-    dev->addObserver([=] {
-        auto strongSelf = weakSelf;
-        if (!strongSelf) return false;
-        dispatch_async(dispatch_get_main_queue(), ^{ [strongSelf update]; });
+    __weak auto selfWeak = self;
+    dev->observerAdd([=] {
+        auto selfStrong = selfWeak;
+        if (!selfStrong) return false;
+        dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong update]; });
         return true;
     });
 }
@@ -166,13 +166,13 @@ using namespace MDCStudio;
     
     // Observe devices connecting/disconnecting
     {
-        __weak auto weakSelf = self;
+        __weak auto selfWeak = self;
         MDCDevicesManager::AddObserver([=] {
-            auto strongSelf = weakSelf;
-            if (!strongSelf) return false;
+            auto selfStrong = selfWeak;
+            if (!selfStrong) return false;
             dispatch_async(dispatch_get_main_queue(), ^{
-                [strongSelf _updateDevices];
-                [strongSelf->_outlineView reloadData];
+                [selfStrong _updateDevices];
+                [selfStrong->_outlineView reloadData];
             });
             return true;
         });
