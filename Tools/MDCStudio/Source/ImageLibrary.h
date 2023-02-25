@@ -26,8 +26,10 @@ struct [[gnu::packed]] ImageOptions {
     Rotation rotation = Rotation::None;
     bool defringe = false;
     bool reconstructHighlights = false;
-    bool timestamp = false;
-    Corner timestampCorner = Corner::BottomRight;
+    struct [[gnu::packed]] {
+        bool show = false;
+        Corner corner = Corner::BottomRight;
+    } timestamp;
     uint8_t _pad[3];
     
     float exposure = 0;

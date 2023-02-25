@@ -21,6 +21,23 @@ struct _ModelData {
 using _ModelGetter = _ModelData(^)(InspectorView_Item*);
 using _ModelSetter = void(^)(InspectorView_Item*, id);
 
+@interface InspectorCheckboxCell : NSButtonCell
+@end
+
+@implementation InspectorCheckboxCell
+- (NSInteger)nextState {
+    NSInteger state = [self state];
+    switch (state) {
+    case NSControlStateValueMixed:  return NSControlStateValueOn;
+    case NSControlStateValueOff:    return NSControlStateValueOn;
+    case NSControlStateValueOn:     return NSControlStateValueOff;
+    }
+    return NSControlStateValueOff;
+}
+@end
+
+
+
 // MARK: - Outline View Items
 
 @interface InspectorView_Item : NSTableCellView
@@ -456,30 +473,6 @@ static id _Extract_timestamp(const ImageThumb& thumb) {
         const std::string relTimeStr = Toastbox::RelativeTimeString(true, sec);
         return [NSString stringWithFormat:@"%s after boot", relTimeStr.c_str()];
     }
-    
-//    const microseconds us = duration_cast<microseconds>(timestamp.time_since_epoch());
-//    NSDate* date = [NSDate dateWithTimeIntervalSince1970:(double)us/1000000.];
-    
-//    NSDateComponents* components = [NSDateComponents new];
-//    [components setYear:];
-//    [components setMonth:];
-//    [components setDay:];
-//    [components setHour:];
-//    [components setMinute:];
-//    [components setSecond:];
-//    [components setNanosecond:];
-//    
-//    NSDateComponentsFormatter* fmt = [NSDateComponentsFormatter new];
-//    [fmt setAllowedUnits:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay];
-//    [fmt setAllowedUnits:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond|NSCalendarUnitNanosecond];
-    
-//    NSDate *date = [NSDate dateWithTimeIntervalSince1970:(double)us/1000000.];
-//    system_clock::to_time_t(timestamp);
-//    timestamp.
-//    [NSDate dateWithTimeIntervalSince1970:]
-//    std::chrono::time_point<<#class _Clock#>>
-//    thumb.timestamp;
-//    return @"";
 }
 
 static id _Extract_integrationTime(const ImageThumb& thumb) {
@@ -528,11 +521,11 @@ static id _Extract_reconstructHighlights(const ImageThumb& thumb) {
 }
 
 static id _Extract_timestampShow(const ImageThumb& thumb) {
-    return @(thumb.options.timestamp);
+    return @(thumb.options.timestamp.show);
 }
 
 static id _Extract_timestampCorner(const ImageThumb& thumb) {
-    return @((int)thumb.options.timestampCorner);
+    return @((int)thumb.options.timestamp.corner);
 }
 
 - (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib {
