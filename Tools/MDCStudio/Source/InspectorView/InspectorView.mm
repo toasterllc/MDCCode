@@ -359,10 +359,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 // MARK: - Creation
 
-static id _extract_id(const ImageThumb& thumb) {
-    return @(thumb.id);
-}
-
 using _ModelExtractFn = id(*)(const ImageThumb&);
 
 //static _ModelData _Getter(InspectorView* self, _ModelGetterFn fn) {
@@ -427,54 +423,25 @@ static _ModelGetter _GetterCreate(InspectorView* self, _ModelExtractFn fn) {
     };
 }
 
-
-- (_ModelData)_getter_id {
-    if (_selection.size() != 1) {
-        return _ModelData{ .type = _ModelData::Type::Mixed };
-    }
-    
-    const Img::Id id = *_selection.begin();
-    auto lock = std::unique_lock(*_imgLib);
-    auto find = _imgLib->find(id);
-    if (find == _imgLib->end()) return {};
-    
-    return _ModelData{ .data = @(_imgLib->recordGet(find)->id) };
+static id _extract_id(const ImageThumb& thumb) {
+    return @(thumb.id);
 }
 
-- (_ModelData)_getter_date {
-    return {};
+static id _extract_date(const ImageThumb& thumb) {
+    thumb.timestamp;
+    return @"";
 }
 
-- (_ModelData)_getter_time {
-    return {};
+static id _extract_time(const ImageThumb& thumb) {
+    return @"";
 }
 
-- (_ModelData)_getter_integrationTime {
-    return {};
-//    if (_selection.size() != 1) {
-//        return nil;
-//    }
-//    
-//    const Img::Id id = *_selection.begin();
-//    
-//    auto lock = std::unique_lock(*_imgLib);
-//    auto find = _imgLib->find(id);
-//    if (find == _imgLib->end()) return nil;
-//    return @(_imgLib->recordGet(find)->coarseIntTime);
+static id _extract_integrationTime(const ImageThumb& thumb) {
+    return @(thumb.coarseIntTime);
 }
 
-- (_ModelData)_getter_analogGain {
-    return {};
-//    if (_selection.size() != 1) {
-//        return nil;
-//    }
-//    
-//    const Img::Id id = *_selection.begin();
-//    
-//    auto lock = std::unique_lock(*_imgLib);
-//    auto find = _imgLib->find(id);
-//    if (find == _imgLib->end()) return nil;
-//    return @(_imgLib->recordGet(find)->analogGain);
+static id _extract_analogGain(const ImageThumb& thumb) {
+    return @(thumb.analogGain);
 }
 
 - (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib {
@@ -524,7 +491,7 @@ static _ModelGetter _GetterCreate(InspectorView* self, _ModelExtractFn fn) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Date";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, @selector(_getter_date));
+                stat->modelGetter = _GetterCreate(self, _extract_date);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -533,7 +500,7 @@ static _ModelGetter _GetterCreate(InspectorView* self, _ModelExtractFn fn) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Time";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, @selector(_getter_time));
+                stat->modelGetter = _GetterCreate(self, _extract_time);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -542,7 +509,7 @@ static _ModelGetter _GetterCreate(InspectorView* self, _ModelExtractFn fn) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Integration Time";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, @selector(_getter_integrationTime));
+                stat->modelGetter = _GetterCreate(self, _extract_integrationTime);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -551,7 +518,7 @@ static _ModelGetter _GetterCreate(InspectorView* self, _ModelExtractFn fn) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Analog Gain";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, @selector(_getter_analogGain));
+                stat->modelGetter = _GetterCreate(self, _extract_analogGain);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
