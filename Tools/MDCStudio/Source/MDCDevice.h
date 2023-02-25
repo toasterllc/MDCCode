@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <filesystem>
 #import <thread>
+#import <chrono>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "Toastbox/Mmap.h"
 #import "Code/Shared/Time.h"
@@ -53,8 +54,12 @@ public:
             
             // Update the device's time
             const Time::Instant time = Time::Current();
+            auto startTime = std::chrono::steady_clock::now();
             _dev->mspTimeSet(time);
-            printf("Set device time to 0x%jx\n", (uintmax_t)time);
+            const auto delta = std::chrono::steady_clock::now()-startTime;
+            printf("Set device time to 0x%jx (took %ju ms)\n", (uintmax_t)time,
+                (uintmax_t)std::chrono::duration_cast<std::chrono::milliseconds>(delta).count());
+            
             
 //            
 //            sleep(15);

@@ -488,9 +488,25 @@ static _ModelSetter _SetterCreate(InspectorView* self, _ModelSetterFn fn) {
 
 // MARK: - Getters
 
-static id _Get_id(const ImageThumb& thumb) {
-    return @(thumb.id);
+static ImageOptions::Corner _Convert(ImageCornerButtonTypes::Corner x) {
+    switch (x) {
+    case ImageCornerButtonTypes::Corner::BottomRight:   return ImageOptions::Corner::BottomRight;
+    case ImageCornerButtonTypes::Corner::BottomLeft:    return ImageOptions::Corner::BottomLeft;
+    case ImageCornerButtonTypes::Corner::TopLeft:       return ImageOptions::Corner::TopLeft;
+    case ImageCornerButtonTypes::Corner::TopRight:      return ImageOptions::Corner::TopRight;
+    case ImageCornerButtonTypes::Corner::Mixed:         return ImageOptions::Corner::BottomRight;
+    }
 }
+
+static ImageCornerButtonTypes::Corner _Convert(ImageOptions::Corner x) {
+    switch (x) {
+    case ImageOptions::Corner::BottomRight: return ImageCornerButtonTypes::Corner::BottomRight;
+    case ImageOptions::Corner::BottomLeft:  return ImageCornerButtonTypes::Corner::BottomLeft;
+    case ImageOptions::Corner::TopLeft:     return ImageCornerButtonTypes::Corner::TopLeft;
+    case ImageOptions::Corner::TopRight:    return ImageCornerButtonTypes::Corner::TopRight;
+    }
+}
+
 
 static NSDateFormatter* _DateFormatterCreate() {
     NSDateFormatter* x = [[NSDateFormatter alloc] init];
@@ -505,6 +521,12 @@ static NSDateFormatter* _DateFormatterCreate() {
 static NSDateFormatter* _DateFormatter() {
     static NSDateFormatter* x = _DateFormatterCreate();
     return x;
+}
+
+
+
+static id _Get_id(const ImageThumb& thumb) {
+    return @(thumb.id);
 }
 
 static id _Get_timestamp(const ImageThumb& thumb) {
@@ -572,9 +594,8 @@ static id _Get_timestampShow(const ImageThumb& thumb) {
 }
 
 static id _Get_timestampCorner(const ImageThumb& thumb) {
-    return @((int)thumb.options.timestamp.corner);
+    return @((int)_Convert(thumb.options.timestamp.corner));
 }
-
 
 // MARK: - Setters
 
@@ -620,25 +641,6 @@ static void _Set_reconstructHighlights(ImageThumb& thumb, id data) {
 
 static void _Set_timestampShow(ImageThumb& thumb, id data) {
     thumb.options.timestamp.show = [data boolValue];
-}
-
-static ImageOptions::Corner _Convert(ImageCornerButtonTypes::Corner x) {
-    switch (x) {
-    case ImageCornerButtonTypes::Corner::BottomRight:   return ImageOptions::Corner::BottomRight;
-    case ImageCornerButtonTypes::Corner::BottomLeft:    return ImageOptions::Corner::BottomLeft;
-    case ImageCornerButtonTypes::Corner::TopLeft:       return ImageOptions::Corner::TopLeft;
-    case ImageCornerButtonTypes::Corner::TopRight:      return ImageOptions::Corner::TopRight;
-    case ImageCornerButtonTypes::Corner::Mixed:         return ImageOptions::Corner::BottomRight;
-    }
-}
-
-static ImageCornerButtonTypes::Corner _Convert(ImageOptions::Corner x) {
-    switch (x) {
-    case ImageOptions::Corner::BottomRight: return ImageCornerButtonTypes::Corner::BottomRight;
-    case ImageOptions::Corner::BottomLeft:  return ImageCornerButtonTypes::Corner::BottomLeft;
-    case ImageOptions::Corner::TopLeft:     return ImageCornerButtonTypes::Corner::TopLeft;
-    case ImageOptions::Corner::TopRight:    return ImageCornerButtonTypes::Corner::TopRight;
-    }
 }
 
 static void _Set_timestampCorner(ImageThumb& thumb, id data) {
