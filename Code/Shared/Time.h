@@ -4,10 +4,9 @@ namespace Time {
 
 // Instant: represents a particular moment in time
 // Encoded as the linear count of microseconds since our epoch,
-// where our epoch is defined by `AbsoluteEpochUnix`
+// where our epoch is defined by `Epoch` in TimeConvert.h
 using Instant = uint64_t;
 
-static constexpr uint64_t AbsoluteEpochUnix = 1640995200; // 2022-01-01 00:00:00 +0000
 static constexpr Instant AbsoluteBit = (Instant)1<<63;
 
 // Absolute(): returns whether the time instant is an absolute time (versus a relative time)

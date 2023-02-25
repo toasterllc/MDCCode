@@ -5,6 +5,9 @@
 
 namespace Time {
 
+// Epoch: 2022-01-01 00:00:00 +0000
+static constexpr std::chrono::time_point<date::utc_clock> Epoch(std::chrono::seconds(1640995227));
+
 // Current(): returns the current time instant
 //
 // Note that we can't use Unix time here (ie time()) because Unix time is a non-linear
@@ -20,10 +23,26 @@ inline Instant Current() {
     using namespace std::chrono;
     using namespace date;
     
-    const time_point<utc_clock> epoch = clock_cast<utc_clock>(system_clock::from_time_t(AbsoluteEpochUnix));
     const time_point<utc_clock> now = utc_clock::now();
-    const microseconds delta = duration_cast<microseconds>(now-epoch);
-    return AbsoluteBit | (Instant)delta.count();
+    const microseconds us = duration_cast<microseconds>(now-Epoch);
+    return AbsoluteBit | (Instant)us.count();
 }
+
+
+template <typename T_Clock>
+inline std::chrono::time_point<T_Clock> Convert(Instant t) {
+    using namespace std::chrono;
+    using namespace date;
+    
+    // `t` must be an absolute time
+    assert(Absolute(t));
+    
+    const microseconds us(t & ~AbsoluteBit);
+    return clock_cast<T_Clock>(Epoch+us);
+}
+
+//namespace ::std::chrono {
+//
+//}
 
 } // namespace Time
