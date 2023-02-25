@@ -601,6 +601,10 @@ static void _Set_localContrastRadius(ImageThumb& thumb, id data) {
     thumb.options.localContrast.radius = [data floatValue];
 }
 
+static void _Set_rotation(ImageThumb& thumb, id data) {
+    // meowmix
+}
+
 static void _Set_defringe(ImageThumb& thumb, id data) {
     thumb.options.defringe = [data boolValue];
 }
@@ -859,6 +863,7 @@ static void _Set_timestampCorner(ImageThumb& thumb, id data) {
             section->name = @"Rotation";
             Rotation* rotation = [self _createItemWithClass:[Rotation class]];
             rotation->icon = @"Rotation";
+            rotation->modelSetter = _SetterCreate(self, _Set_rotation);
             section->items = { rotation };
             _rootItem->items.push_back(section);
         }
