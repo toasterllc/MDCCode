@@ -28,21 +28,20 @@ inline Instant Current() {
     return AbsoluteBit | (Instant)us.count();
 }
 
+} // namespace Time
+
+namespace std::chrono {
 
 template <typename T_Clock>
-inline std::chrono::time_point<T_Clock> Convert(Instant t) {
+auto clock_cast(Time::Instant t) {
     using namespace std::chrono;
     using namespace date;
     
     // `t` must be an absolute time
-    assert(Absolute(t));
+    assert(Time::Absolute(t));
     
-    const microseconds us(t & ~AbsoluteBit);
-    return clock_cast<T_Clock>(Epoch+us);
+    const microseconds us(t & ~Time::AbsoluteBit);
+    return clock_cast<T_Clock>(Time::Epoch+us);
 }
 
-//namespace ::std::chrono {
-//
-//}
-
-} // namespace Time
+} // std::chrono

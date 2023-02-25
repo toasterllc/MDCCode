@@ -2,6 +2,8 @@
 #import <vector>
 #import "Util.h"
 #import "ImageCornerButton/ImageCornerButton.h"
+#import "Code/Shared/Time.h"
+#import "Code/Shared/TimeConvert.h"
 using namespace MDCStudio;
 
 struct _ModelData {
@@ -423,24 +425,91 @@ static _ModelGetter _GetterCreate(InspectorView* self, _ModelExtractFn fn) {
     };
 }
 
-static id _extract_id(const ImageThumb& thumb) {
+static id _Extract_id(const ImageThumb& thumb) {
     return @(thumb.id);
 }
 
-static id _extract_date(const ImageThumb& thumb) {
-    thumb.timestamp;
-    return @"";
+static NSDateFormatter* _DateFormatterCreate() {
+    NSDateFormatter* x = [[NSDateFormatter alloc] init];
+    [x setLocale:[NSLocale autoupdatingCurrentLocale]];
+    [x setDateStyle: NSDateFormatterMediumStyle];
+    [x setTimeStyle: NSDateFormatterNoStyle];
+    return x;
 }
 
-static id _extract_time(const ImageThumb& thumb) {
-    return @"";
+static NSDateFormatter* _TimeFormatterCreate() {
+    NSDateFormatter* x = [[NSDateFormatter alloc] init];
+    [x setLocale:[NSLocale autoupdatingCurrentLocale]];
+    [x setDateStyle: NSDateFormatterNoStyle];
+    [x setTimeStyle: NSDateFormatterMediumStyle];
+    return x;
 }
 
-static id _extract_integrationTime(const ImageThumb& thumb) {
+static NSDateFormatter* _DateFormatter() {
+    static NSDateFormatter* x = _DateFormatterCreate();
+    return x;
+}
+
+static NSDateFormatter* _TimeFormatter() {
+    static NSDateFormatter* x = _TimeFormatterCreate();
+    return x;
+}
+
+static id _Extract_date(const ImageThumb& thumb) {
+    using namespace std::chrono;
+    const Time::Instant t = thumb.timestamp;
+    if (Time::Absolute(t)) {
+        auto timestamp = clock_cast<system_clock>(thumb.timestamp);
+        const seconds sec = duration_cast<seconds>(timestamp.time_since_epoch());
+        return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:sec.count()]];
+    
+    } else {
+        return @"relative";
+    }
+    
+//    const microseconds us = duration_cast<microseconds>(timestamp.time_since_epoch());
+//    NSDate* date = [NSDate dateWithTimeIntervalSince1970:(double)us/1000000.];
+    
+//    NSDateComponents* components = [NSDateComponents new];
+//    [components setYear:];
+//    [components setMonth:];
+//    [components setDay:];
+//    [components setHour:];
+//    [components setMinute:];
+//    [components setSecond:];
+//    [components setNanosecond:];
+//    
+//    NSDateComponentsFormatter* fmt = [NSDateComponentsFormatter new];
+//    [fmt setAllowedUnits:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay];
+//    [fmt setAllowedUnits:NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond|NSCalendarUnitNanosecond];
+    
+//    NSDate *date = [NSDate dateWithTimeIntervalSince1970:(double)us/1000000.];
+//    system_clock::to_time_t(timestamp);
+//    timestamp.
+//    [NSDate dateWithTimeIntervalSince1970:]
+//    std::chrono::time_point<<#class _Clock#>>
+//    thumb.timestamp;
+//    return @"";
+}
+
+static id _Extract_time(const ImageThumb& thumb) {
+    using namespace std::chrono;
+    const Time::Instant t = thumb.timestamp;
+    if (Time::Absolute(t)) {
+        auto timestamp = clock_cast<system_clock>(thumb.timestamp);
+        const seconds sec = duration_cast<seconds>(timestamp.time_since_epoch());
+        return [_TimeFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:sec.count()]];
+    
+    } else {
+        return @"relative";
+    }
+}
+
+static id _Extract_integrationTime(const ImageThumb& thumb) {
     return @(thumb.coarseIntTime);
 }
 
-static id _extract_analogGain(const ImageThumb& thumb) {
+static id _Extract_analogGain(const ImageThumb& thumb) {
     return @(thumb.analogGain);
 }
 
@@ -482,7 +551,7 @@ static id _extract_analogGain(const ImageThumb& thumb) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Image ID";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _extract_id);
+                stat->modelGetter = _GetterCreate(self, _Extract_id);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -491,7 +560,7 @@ static id _extract_analogGain(const ImageThumb& thumb) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Date";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _extract_date);
+                stat->modelGetter = _GetterCreate(self, _Extract_date);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -500,7 +569,7 @@ static id _extract_analogGain(const ImageThumb& thumb) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Time";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _extract_time);
+                stat->modelGetter = _GetterCreate(self, _Extract_time);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -509,7 +578,7 @@ static id _extract_analogGain(const ImageThumb& thumb) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Integration Time";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _extract_integrationTime);
+                stat->modelGetter = _GetterCreate(self, _Extract_integrationTime);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
@@ -518,7 +587,7 @@ static id _extract_analogGain(const ImageThumb& thumb) {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Analog Gain";
                 stat->valueIndent = 110;
-                stat->modelGetter = _GetterCreate(self, _extract_analogGain);
+                stat->modelGetter = _GetterCreate(self, _Extract_analogGain);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
             }
