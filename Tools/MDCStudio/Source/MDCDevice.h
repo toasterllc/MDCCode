@@ -359,7 +359,7 @@ private:
                     // Find the first image >= `deviceImgIdBegin`
                     const auto removeEnd = std::lower_bound(_imageLibrary->begin(), _imageLibrary->end(), 0,
                         [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                            return _imageLibrary->recordGet(sample)->id < deviceImgIdBegin;
+                            return sample->info.id < deviceImgIdBegin;
                         });
                     
                     printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
@@ -515,7 +515,7 @@ private:
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
             // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
             const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
-            ImageRecord& imageThumb = *_imageLibrary->recordGet(recordRefIter);
+            ImageRecord& imageThumb = **recordRefIter;
             
             // Validate thumbnail checksum
             if (_ChecksumValid(imgData, Img::Size::Thumb)) {
@@ -529,16 +529,16 @@ private:
             
             // Populate ImageThumb fields
             {
-                imageThumb.id               = imgHeader.id;
-                imageThumb.addr             = block;
+                imageThumb.info.id              = imgHeader.id;
+                imageThumb.info.addr            = block;
                 
-                imageThumb.timestamp        = imgHeader.timestamp;
+                imageThumb.info.timestamp       = imgHeader.timestamp;
                 
-                imageThumb.imageWidth       = imgHeader.imageWidth;
-                imageThumb.imageHeight      = imgHeader.imageHeight;
+                imageThumb.info.imageWidth      = imgHeader.imageWidth;
+                imageThumb.info.imageHeight     = imgHeader.imageHeight;
                 
-                imageThumb.coarseIntTime    = imgHeader.coarseIntTime;
-                imageThumb.analogGain       = imgHeader.analogGain;
+                imageThumb.info.coarseIntTime   = imgHeader.coarseIntTime;
+                imageThumb.info.analogGain      = imgHeader.analogGain;
                 
                 block += ImgSD::Full::ImageBlockCount;
             }
@@ -567,17 +567,17 @@ private:
                 id<MTLBuffer> buf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:chunk.mmap.len() options:BufOpts deallocator:nil];
                 
                 const RenderThumb::Options thumbOpts = {
-                    .thumbWidth = ImageThumbData::ThumbWidth,
-                    .thumbHeight = ImageThumbData::ThumbHeight,
+                    .thumbWidth = ImageThumb::ThumbWidth,
+                    .thumbHeight = ImageThumb::ThumbHeight,
                     .dataOff = thumbDataOff,
                 };
                 
                 RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, buf);
                 
                 // Populate the illuminant
-                imageThumb.illumEst[0] = renderResult.illumEst[0];
-                imageThumb.illumEst[1] = renderResult.illumEst[1];
-                imageThumb.illumEst[2] = renderResult.illumEst[2];
+                imageThumb.info.illumEst[0] = renderResult.illumEst[0];
+                imageThumb.info.illumEst[1] = renderResult.illumEst[1];
+                imageThumb.info.illumEst[2] = renderResult.illumEst[2];
             }
             
             deviceImgIdLast = imgHeader.id;

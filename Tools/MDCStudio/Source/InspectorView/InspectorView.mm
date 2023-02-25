@@ -440,7 +440,7 @@ using _ModelSetterFn = void(*)(ImageRecord&, id);
     for (const Img::Id imgId : _selection) {
         auto find = _imgLib->find(imgId);
         if (find == _imgLib->end()) continue;
-        const id obj = fn(*_imgLib->recordGet(find));
+        const id obj = fn(**find);
         if (!obj) continue;
         if (!first) {
             first = obj;
@@ -461,7 +461,7 @@ using _ModelSetterFn = void(*)(ImageRecord&, id);
     for (const Img::Id imgId : _selection) {
         auto find = _imgLib->find(imgId);
         if (find == _imgLib->end()) continue;
-        fn(*_imgLib->recordGet(find), data);
+        fn(**find, data);
     }
     _imgLib->notifyChange(_selection);
 }
@@ -523,127 +523,127 @@ static NSDateFormatter* _DateFormatter() {
 
 
 
-static id _Get_id(const ImageRecord& thumb) {
-    return @(thumb.id);
+static id _Get_id(const ImageRecord& rec) {
+    return @(rec.info.id);
 }
 
-static id _Get_timestamp(const ImageRecord& thumb) {
+static id _Get_timestamp(const ImageRecord& rec) {
     using namespace std::chrono;
-    const Time::Instant t = thumb.timestamp;
+    const Time::Instant t = rec.info.timestamp;
     if (Time::Absolute(t)) {
-        auto timestamp = clock_cast<system_clock>(thumb.timestamp);
+        auto timestamp = clock_cast<system_clock>(rec.info.timestamp);
         const milliseconds ms = duration_cast<milliseconds>(timestamp.time_since_epoch());
         return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.]];
     
     } else {
-        const seconds sec = Time::DurationSinceEpoch<seconds>(thumb.timestamp);
+        const seconds sec = Time::DurationSinceEpoch<seconds>(rec.info.timestamp);
         const std::string relTimeStr = Toastbox::RelativeTimeString(true, sec);
         return [NSString stringWithFormat:@"%s after boot", relTimeStr.c_str()];
     }
 }
 
-static id _Get_integrationTime(const ImageRecord& thumb) {
-    return @(thumb.coarseIntTime);
+static id _Get_integrationTime(const ImageRecord& rec) {
+    return @(rec.info.coarseIntTime);
 }
 
-static id _Get_analogGain(const ImageRecord& thumb) {
-    return @(thumb.analogGain);
+static id _Get_analogGain(const ImageRecord& rec) {
+    return @(rec.info.analogGain);
 }
 
-static id _Get_whiteBalance(const ImageRecord& thumb) {
+static id _Get_whiteBalance(const ImageRecord& rec) {
     // meowmix
     return @(0);
 }
 
-static id _Get_exposure(const ImageRecord& thumb) {
-    return @(thumb.options.exposure);
+static id _Get_exposure(const ImageRecord& rec) {
+    return @(rec.options.exposure);
 }
 
-static id _Get_saturation(const ImageRecord& thumb) {
-    return @(thumb.options.saturation);
+static id _Get_saturation(const ImageRecord& rec) {
+    return @(rec.options.saturation);
 }
 
-static id _Get_brightness(const ImageRecord& thumb) {
-    return @(thumb.options.brightness);
+static id _Get_brightness(const ImageRecord& rec) {
+    return @(rec.options.brightness);
 }
 
-static id _Get_contrast(const ImageRecord& thumb) {
-    return @(thumb.options.contrast);
+static id _Get_contrast(const ImageRecord& rec) {
+    return @(rec.options.contrast);
 }
 
-static id _Get_localContrastAmount(const ImageRecord& thumb) {
-    return @(thumb.options.localContrast.amount);
+static id _Get_localContrastAmount(const ImageRecord& rec) {
+    return @(rec.options.localContrast.amount);
 }
 
-static id _Get_localContrastRadius(const ImageRecord& thumb) {
-    return @(thumb.options.localContrast.radius);
+static id _Get_localContrastRadius(const ImageRecord& rec) {
+    return @(rec.options.localContrast.radius);
 }
 
-static id _Get_defringe(const ImageRecord& thumb) {
-    return @(thumb.options.defringe);
+static id _Get_defringe(const ImageRecord& rec) {
+    return @(rec.options.defringe);
 }
 
-static id _Get_reconstructHighlights(const ImageRecord& thumb) {
-    return @(thumb.options.reconstructHighlights);
+static id _Get_reconstructHighlights(const ImageRecord& rec) {
+    return @(rec.options.reconstructHighlights);
 }
 
-static id _Get_timestampShow(const ImageRecord& thumb) {
-    return @(thumb.options.timestamp.show);
+static id _Get_timestampShow(const ImageRecord& rec) {
+    return @(rec.options.timestamp.show);
 }
 
-static id _Get_timestampCorner(const ImageRecord& thumb) {
-    return @((int)_Convert(thumb.options.timestamp.corner));
+static id _Get_timestampCorner(const ImageRecord& rec) {
+    return @((int)_Convert(rec.options.timestamp.corner));
 }
 
 // MARK: - Setters
 
-static void _Set_whiteBalance(ImageRecord& thumb, id data) {
+static void _Set_whiteBalance(ImageRecord& rec, id data) {
     // meowmix
 }
 
-static void _Set_exposure(ImageRecord& thumb, id data) {
-    thumb.options.exposure = [data floatValue];
+static void _Set_exposure(ImageRecord& rec, id data) {
+    rec.options.exposure = [data floatValue];
 }
 
-static void _Set_saturation(ImageRecord& thumb, id data) {
-    thumb.options.saturation = [data floatValue];
+static void _Set_saturation(ImageRecord& rec, id data) {
+    rec.options.saturation = [data floatValue];
 }
 
-static void _Set_brightness(ImageRecord& thumb, id data) {
-    thumb.options.brightness = [data floatValue];
+static void _Set_brightness(ImageRecord& rec, id data) {
+    rec.options.brightness = [data floatValue];
 }
 
-static void _Set_contrast(ImageRecord& thumb, id data) {
-    thumb.options.contrast = [data floatValue];
+static void _Set_contrast(ImageRecord& rec, id data) {
+    rec.options.contrast = [data floatValue];
 }
 
-static void _Set_localContrastAmount(ImageRecord& thumb, id data) {
-    thumb.options.localContrast.amount = [data floatValue];
+static void _Set_localContrastAmount(ImageRecord& rec, id data) {
+    rec.options.localContrast.amount = [data floatValue];
 }
 
-static void _Set_localContrastRadius(ImageRecord& thumb, id data) {
-    thumb.options.localContrast.radius = [data floatValue];
+static void _Set_localContrastRadius(ImageRecord& rec, id data) {
+    rec.options.localContrast.radius = [data floatValue];
 }
 
-static void _Set_rotation(ImageRecord& thumb, id data) {
+static void _Set_rotation(ImageRecord& rec, id data) {
     // meowmix
 }
 
-static void _Set_defringe(ImageRecord& thumb, id data) {
-    thumb.options.defringe = [data boolValue];
+static void _Set_defringe(ImageRecord& rec, id data) {
+    rec.options.defringe = [data boolValue];
 }
 
-static void _Set_reconstructHighlights(ImageRecord& thumb, id data) {
-    thumb.options.reconstructHighlights = [data boolValue];
+static void _Set_reconstructHighlights(ImageRecord& rec, id data) {
+    rec.options.reconstructHighlights = [data boolValue];
 }
 
-static void _Set_timestampShow(ImageRecord& thumb, id data) {
-    thumb.options.timestamp.show = [data boolValue];
+static void _Set_timestampShow(ImageRecord& rec, id data) {
+    rec.options.timestamp.show = [data boolValue];
 }
 
-static void _Set_timestampCorner(ImageRecord& thumb, id data) {
+static void _Set_timestampCorner(ImageRecord& rec, id data) {
     const ImageOptions::Corner corner = _Convert((ImageCornerButtonTypes::Corner)[data intValue]);
-    thumb.options.timestamp.corner = corner;
+    rec.options.timestamp.corner = corner;
 }
 
 

@@ -66,7 +66,7 @@ private:
         auto lock = std::unique_lock(*_imageLibrary);
         auto find = _imageLibrary->find(id);
         if (find == _imageLibrary->end()) return std::nullopt;
-        return _imageLibrary->recordGet(find)->addr;
+        return (*find)->info.addr;
     }
     
     void _thread() {
@@ -124,13 +124,13 @@ private:
                         if (it != _imageLibrary->end()) it++;
                         
                         if (it != _imageLibrary->end()) {
-                            const ImageRecord& thumb = *_imageLibrary->recordGet(it);
-                            idAddrs.push_back({ thumb.id, thumb.addr });
+                            const ImageRecord& thumb = **it;
+                            idAddrs.push_back({ thumb.info.id, thumb.info.addr });
                         }
                         
                         if (rit != _imageLibrary->rend()) {
-                            const ImageRecord& thumb = *_imageLibrary->recordGet(rit);
-                            idAddrs.push_back({ thumb.id, thumb.addr });
+                            const ImageRecord& thumb = **rit;
+                            idAddrs.push_back({ thumb.info.id, thumb.info.addr });
                         }
                         
                         // make_reverse_iterator() returns an iterator that points to the element _before_ the

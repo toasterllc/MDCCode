@@ -8,6 +8,29 @@
 
 namespace MDCStudio {
 
+struct [[gnu::packed]] ImageInfo {
+    Img::Id id = 0;
+    
+    // addr: address of the full-size image on the device
+    uint64_t addr = 0;
+    
+    Time::Instant timestamp = 0;
+    
+    uint16_t imageWidth = 0;
+    uint16_t imageHeight = 0;
+    
+    uint16_t coarseIntTime = 0;
+    uint16_t analogGain = 0;
+    
+    // illumEst: estimated illuminant
+    double illumEst[3] = {0,0,0};
+    
+    // _reserved: so we can add fields in the future without doing a data migration
+    uint8_t _reserved[64] = {};
+};
+
+static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple of 8 bytes
+
 struct [[gnu::packed]] ImageOptions {
     enum class Rotation : uint8_t {
         None,
@@ -40,11 +63,14 @@ struct [[gnu::packed]] ImageOptions {
         float amount = 0;
         float radius = 0;
     } localContrast;
+    
+    // _reserved: so we can add fields in the future without doing a data migration
+    uint8_t _reserved[64] = {};
 };
 
 static_assert(!(sizeof(ImageOptions) % 8)); // Ensure that ImageOptions is a multiple of 8 bytes
 
-struct [[gnu::packed]] ImageThumbData {
+struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 288;
 //    static constexpr size_t ThumbHeight     = 162;
 
@@ -71,34 +97,16 @@ struct [[gnu::packed]] ImageThumbData {
     uint8_t data[ThumbWidth*ThumbHeight*ThumbPixelSize];
 };
 
+static_assert(!(sizeof(ImageThumb) % 8)); // Ensure that ImageThumb is a multiple of 8 bytes
+
 struct [[gnu::packed]] ImageRecord {
     static constexpr uint32_t Version = 0;
-    
-    Img::Id id = 0;
-    
-    // addr: address of the full-size image on the device
-    uint64_t addr = 0;
-    
-    Time::Instant timestamp = 0;
-    
-    uint16_t imageWidth = 0;
-    uint16_t imageHeight = 0;
-    
-    uint16_t coarseIntTime = 0;
-    uint16_t analogGain = 0;
-    
-    // illumEst: estimated illuminant
-    double illumEst[3] = {0,0,0};
-    
+    ImageInfo info;
     ImageOptions options;
-    
-    // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64] = {};
-    
-    ImageThumbData thumb;
+    ImageThumb thumb;
 };
 
-static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageThumb is a multiple of 8 bytes
+static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageRecord is a multiple of 8 bytes
 
 class ImageLibrary : public RecordStore<ImageRecord, 512> {
 public:
@@ -153,7 +161,7 @@ public:
     void add() {
         Event ev = { .type = Event::Type::Add };
         for (auto i=reservedBegin(); i!=reservedEnd(); i++) {
-            ev.ids.insert(recordGet(i)->id);
+            ev.ids.insert((*i)->info.id);
         }
         
         RecordStore::add();
@@ -164,7 +172,7 @@ public:
     void remove(RecordRefConstIter begin, RecordRefConstIter end) {
         Event ev = { .type = Event::Type::Remove };
         for (auto i=begin; i!=end; i++) {
-            ev.ids.insert(recordGet(i)->id);
+            ev.ids.insert((*i)->info.id);
         }
         
         RecordStore::remove(begin, end);
@@ -175,12 +183,18 @@ public:
     RecordRefConstIter find(Img::Id id) {
         RecordRefConstIter iter = std::lower_bound(begin(), end(), 0,
             [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                return recordGet(sample)->id < id;
+                return sample->info.id < id;
             });
         
         if (iter == end()) return end();
-        if (recordGet(iter)->id != id) return end();
+        if ((*iter)->info.id != id) return end();
         return iter;
+    }
+    
+    RecordStrongRef findStrong(Img::Id id) {
+        auto it = find(id);
+        if (it == end()) return {};
+        return *it;
     }
     
     void observerAdd(Observer&& observer) {
@@ -233,5 +247,6 @@ private:
 };
 
 using ImageLibraryPtr = std::shared_ptr<MDCTools::Lockable<ImageLibrary>>;
+using ImageRecordPtr = ImageLibrary::RecordStrongRef;
 
 } // namespace MDCStudio

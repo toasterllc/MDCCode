@@ -264,7 +264,7 @@ using namespace MDCStudio;
     
     ImageLibraryPtr imageLibrary = imageSource->imageLibrary();
     {
-        ImageRecord imageThumb;
+        ImageRecordPtr imageRecord;
         {
             auto lock = std::unique_lock(*imageLibrary);
             if (imageLibrary->empty()) return false;
@@ -276,18 +276,18 @@ using namespace MDCStudio;
             const ssize_t deltaMax = std::distance(find, std::prev(imageLibrary->end()));
             if (delta<deltaMin || delta>deltaMax) return false;
             
-            imageThumb = *imageLibrary->recordGet(find+delta);
+            imageRecord = *(find+delta);
         }
         
-        ImageView* imageView = [[ImageView alloc] initWithImageThumb:imageThumb imageSource:imageSource];
+        ImageView* imageView = [[ImageView alloc] initWithImageRecord:imageRecord imageSource:imageSource];
         [imageView setDelegate:self];
         
         ImageScrollView* sv = [[ImageScrollView alloc] initWithFixedDocument:imageView];
         [sv setMagnifyToFit:true animate:false];
         
-        NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageThumb.timestamp];
-        printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageThumb.id,
-            (uintmax_t)imageThumb.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);
+        NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageRecord->info.timestamp];
+        printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageRecord->info.id,
+            (uintmax_t)imageRecord->info.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);
         
 //        if (delta) {
 //            [_mainView setContentView:imageView animation:(delta>0 ? MainViewAnimation::SlideToLeft : MainViewAnimation::SlideToRight)];
@@ -318,12 +318,12 @@ using namespace MDCStudio;
 // MARK: - ImageViewDelegate
 
 - (void)imageViewPreviousImage:(ImageView*)imageView {
-    const bool ok = [self _openImage:[imageView imageThumb].id delta:-1];
+    const bool ok = [self _openImage:[imageView imageRecord]->info.id delta:-1];
     if (!ok) NSBeep();
 }
 
 - (void)imageViewNextImage:(ImageView*)imageView {
-    const bool ok = [self _openImage:[imageView imageThumb].id delta:1];
+    const bool ok = [self _openImage:[imageView imageRecord]->info.id delta:1];
     if (!ok) NSBeep();
 }
 

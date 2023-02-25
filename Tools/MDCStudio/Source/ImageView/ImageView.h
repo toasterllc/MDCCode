@@ -11,10 +11,9 @@
 @end
 
 @interface ImageView : FixedDocumentView
-- (instancetype)initWithImageThumb:(const MDCStudio::ImageRecord&)imageThumb
-    imageSource:(MDCStudio::ImageSourcePtr)imageSource;
+- (instancetype)initWithImageRecord:(MDCStudio::ImageRecordPtr)imageRecord imageSource:(MDCStudio::ImageSourcePtr)imageSource;
 
-- (const MDCStudio::ImageRecord&)imageThumb;
+- (MDCStudio::ImageRecordPtr)imageRecord;
 
 - (void)setDelegate:(id<ImageViewDelegate>)delegate;
 

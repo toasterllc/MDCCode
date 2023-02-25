@@ -10,8 +10,8 @@ using namespace MDCStudio;
 
 using _ImageIds = std::set<Img::Id>;
 
-static constexpr auto _ThumbWidth = ImageThumbData::ThumbWidth;
-static constexpr auto _ThumbHeight = ImageThumbData::ThumbHeight;
+static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
+static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 
 // _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
 // so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
@@ -286,13 +286,13 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     .viewSize = {(float)viewSize.width, (float)viewSize.height},
                     .transform = [self fixedTransform],
                     .off = {
-                        .id         = (uint32_t)(offsetof(ImageLibrary::Record, id)),
+                        .id         = (uint32_t)(offsetof(ImageLibrary::Record, info.id)),
                         .thumbData  = (uint32_t)(offsetof(ImageLibrary::Record, thumb)),
                     },
                     .thumb = {
-                        .width  = ImageThumbData::ThumbWidth,
-                        .height = ImageThumbData::ThumbHeight,
-                        .pxSize = ImageThumbData::ThumbPixelSize,
+                        .width  = ImageThumb::ThumbWidth,
+                        .height = ImageThumb::ThumbHeight,
+                        .pxSize = ImageThumb::ThumbPixelSize,
                     },
                     .selection = {
                         .first = (uint32_t)_selection.first,
@@ -339,7 +339,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
             const int32_t idx = _grid.columnCount()*y + x;
             if (idx >= _imageLibrary->recordCount()) goto done;
-            const Img::Id imageId = _imageLibrary->recordGet(_imageLibrary->begin()+idx)->id;
+            const Img::Id imageId = (*(_imageLibrary->begin()+idx))->info.id;
             imageIds.insert(imageId);
         }
     }
@@ -613,7 +613,7 @@ struct SelectionDelta {
         }
         
     //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
-        newImgId = imgLib->recordGet(imgLib->begin()+newIdx)->id;
+        newImgId = (*(imgLib->begin()+newIdx))->info.id;
     }
     
     [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
@@ -649,7 +649,7 @@ struct SelectionDelta {
         ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
         auto lock = std::unique_lock(*imageLibrary);
         for (auto it=imageLibrary->begin(); it!=imageLibrary->end(); it++) {
-            ids.insert(imageLibrary->recordGet(it)->id);
+            ids.insert((*it)->info.id);
         }
     }
     [self _setSelection:std::move(ids)];

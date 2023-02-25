@@ -40,17 +40,19 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     id<MTLLibrary> _library;
     id<MTLCommandQueue> _commandQueue;
     
-    ImageRecord _imageThumb;
+    ImageRecordPtr _imageRecord;
+    ImageSourcePtr _imageSource;
+    
+    std::atomic<bool> _dirty;
     ImagePtr _image;
     id<MTLTexture> _thumbTxt;
     id<MTLTexture> _imageTxt;
-    ImageSourcePtr _imageSource;
 }
 
-- (instancetype)initWithImageThumb:(const ImageRecord&)imageThumb imageSource:(ImageSourcePtr)imageSource {
+- (instancetype)initWithImageRecord:(ImageRecordPtr)imageRecord imageSource:(ImageSourcePtr)imageSource {
     if (!(self = [super init])) return nil;
     
-    _imageThumb = imageThumb;
+    _imageRecord = imageRecord;
     _imageSource = imageSource;
     
     // Add ourself as an observer of the image library
@@ -75,8 +77,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     return self;
 }
 
-- (const ImageRecord&)imageThumb {
-    return _imageThumb;
+- (ImageRecordPtr)imageRecord {
+    return _imageRecord;
 }
 
 //static id<MTLTexture> _ThumbRender(Renderer& renderer, const ImageRecord& thumb) {
@@ -105,6 +107,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     
     [super display];
     
+    const bool dirty = _dirty.exchange(false);
     id<CAMetalDrawable> drawable = [self nextDrawable];
     assert(drawable);
     id<MTLTexture> drawableTxt = [drawable texture];
@@ -113,7 +116,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     // Fetch the image from the cache, if we don't have _image yet
     if (!_image) {
         __weak auto selfWeak = self;
-        _image = _imageSource->imageCache()->imageForId(_imageThumb.id, [=] (ImagePtr image) {
+        _image = _imageSource->imageCache()->imageForId(_imageRecord->info.id, [=] (ImagePtr image) {
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:image]; });
         });
     }
@@ -121,7 +124,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     Renderer renderer(_device, _library, _commandQueue);
     
     // Create _imageTxt if it doesn't exist yet and we have the image
-    if (!_imageTxt && _image) {
+    if ((!_imageTxt || dirty) && _image) {
         Pipeline::RawImage rawImage = {
             .cfaDesc    = _image->cfaDesc,
             .width      = _image->width,
@@ -129,28 +132,102 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
             .pixels     = (ImagePixel*)(_image->data.get() + _image->off),
         };
         
-        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(_imageThumb.illumEst);
+        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(_imageRecord->info.illumEst);
         const Pipeline::Options pipelineOpts = {
-            .illum                  = illum,
-//            .reconstructHighlights  = { .en = true, },
-            .debayerLMMSE           = { .applyGamma = true, },
+            .illum = illum,
+            
+            .debayerLMMSE = {
+                .applyGamma = true,
+            },
+            
+            // TODO: implement
+//            rotation = Rotation::None;
+            .defringe = {
+                .en = _imageRecord->options.defringe,
+            },
+            
+            .reconstructHighlights = {
+                .en = _imageRecord->options.reconstructHighlights,
+            },
+            
+            // TODO: implement
+//            struct [[gnu::packed]] {
+//                bool show = false;
+//                Corner corner = Corner::BottomRight;
+//            } timestamp;
+            
+            
+            
+            .exposure = _imageRecord->options.exposure,
+            .saturation = _imageRecord->options.saturation,
+            .brightness = _imageRecord->options.brightness,
+            .contrast = _imageRecord->options.contrast,
+            .localContrast = {
+                .en = false,
+                .amount = _imageRecord->options.localContrast.amount,
+                .radius = _imageRecord->options.localContrast.radius,
+            },
         };
+        
+//struct [[gnu::packed]] ImageOptions {
+//    enum class Rotation : uint8_t {
+//        None,
+//        Clockwise90,
+//        Clockwise180,
+//        Clockwise270,
+//    };
+//    
+//    enum class Corner : uint8_t {
+//        BottomRight,
+//        BottomLeft,
+//        TopLeft,
+//        TopRight,
+//    };
+//    
+//    Rotation rotation = Rotation::None;
+//    bool defringe = false;
+//    bool reconstructHighlights = false;
+//    struct [[gnu::packed]] {
+//        bool show = false;
+//        Corner corner = Corner::BottomRight;
+//    } timestamp;
+//    uint8_t _pad[3];
+//    
+//    float exposure = 0;
+//    float saturation = 0;
+//    float brightness = 0;
+//    float contrast = 0;
+//    struct {
+//        float amount = 0;
+//        float radius = 0;
+//    } localContrast;
+//    
+//    // _reserved: so we can add fields in the future without doing a data migration
+//    uint8_t _reserved[64] = {};
+//};
+        
+        
+        
+        
+        
+        
+        
         
         Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
         _imageTxt = renderResult.txt;
     }
     
     // If we don't have the thumbnail texture yet, create it
-    if (!_imageTxt && !_thumbTxt) {
+    if (!_thumbTxt || dirty) {
         #warning TODO: try removing the Write usage flag
         _thumbTxt = renderer.textureCreate(MTLPixelFormatBGRA8Unorm, [drawableTxt width], [drawableTxt height],
             MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
         
         constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
-        id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytes:_imageThumb.thumb.data length:sizeof(_imageThumb.thumb.data) options:BufOpts];
+        id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytes:_imageRecord->thumb.data length:sizeof(_imageRecord->thumb.data) options:BufOpts];
         const RenderThumb::Options thumbOpts = {
-            .thumbWidth = ImageThumbData::ThumbWidth,
-            .thumbHeight = ImageThumbData::ThumbHeight,
+            .thumbWidth = ImageThumb::ThumbWidth,
+            .thumbHeight = ImageThumb::ThumbHeight,
             .dataOff = 0,
         };
         RenderThumb::TextureFromRGB3(renderer, thumbOpts, thumbBuf, _thumbTxt);
@@ -188,7 +265,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     case ImageLibrary::Event::Type::Remove:
         break;
     case ImageLibrary::Event::Type::Change:
-        if (ev.ids.count(_imageThumb.id)) {
+        if (ev.ids.count(_imageRecord->info.id)) {
+            _dirty = true;
             dispatch_async(dispatch_get_main_queue(), ^{ [self setNeedsDisplay]; });
         }
         break;
@@ -200,7 +278,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 }
 
 - (CGSize)preferredFrameSize {
-    return {(CGFloat)_imageThumb.imageWidth*2, (CGFloat)_imageThumb.imageHeight*2};
+    return {(CGFloat)_imageRecord->info.imageWidth*2, (CGFloat)_imageRecord->info.imageHeight*2};
 }
 
 @end
@@ -367,10 +445,9 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     __weak id<ImageViewDelegate> _delegate;
 }
 
-- (instancetype)initWithImageThumb:(const MDCStudio::ImageRecord&)imageThumb
-    imageSource:(MDCStudio::ImageSourcePtr)imageSource {
+- (instancetype)initWithImageRecord:(ImageRecordPtr)imageRecord imageSource:(ImageSourcePtr)imageSource {
     
-    ImageLayer* imageLayer = [[ImageLayer alloc] initWithImageThumb:imageThumb imageSource:imageSource];
+    ImageLayer* imageLayer = [[ImageLayer alloc] initWithImageRecord:imageRecord imageSource:imageSource];
     
     if (!(self = [super initWithFixedLayer:imageLayer])) return nil;
     
@@ -402,8 +479,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     return self;
 }
 
-- (const ImageRecord&)imageThumb {
-    return [_imageLayer imageThumb];
+- (ImageRecordPtr)imageRecord {
+    return [_imageLayer imageRecord];
 }
 
 - (void)setDelegate:(id<ImageViewDelegate>)delegate {

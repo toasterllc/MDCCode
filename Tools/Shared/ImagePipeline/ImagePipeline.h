@@ -42,9 +42,9 @@ public:
         };
         
         float exposure = 0;
+        float saturation = 0;
         float brightness = 0;
         float contrast = 0;
-        float saturation = 0;
         
         struct {
             bool en = false;
