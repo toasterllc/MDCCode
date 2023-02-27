@@ -291,20 +291,4 @@ inline ImageSet ImageSetsXOR(const ImageSet& a, const ImageSet& b) {
     return r;
 }
 
-inline Img::Id ImageSetImgIdMin(const ImageSet& a) {
-    Img::Id r = std::numeric_limits<Img::Id>::max();
-    for (const auto& x : a) {
-        r = std::min(r, x->info.id);
-    }
-    return r;
-}
-
-inline Img::Id ImageSetImgIdMax(const ImageSet& a) {
-    Img::Id r = std::numeric_limits<Img::Id>::min();
-    for (const auto& x : a) {
-        r = std::max(r, x->info.id);
-    }
-    return r;
-}
-
 } // namespace MDCStudio
