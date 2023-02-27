@@ -392,7 +392,8 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 @implementation InspectorView {
     ImageLibraryPtr _imgLib;
     Section* _rootItem;
-    std::set<ImageRecordPtr> _selection;
+    ImageSet _selection;
+    bool _notifying;
     
     IBOutlet NSView* _nibView;
     IBOutlet NSOutlineView* _outlineView;
@@ -948,9 +949,6 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
 
 
 
-
-
-
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
 // and with the ImageLibraryPtr lock held!
 - (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
@@ -960,6 +958,15 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
     case ImageLibrary::Event::Type::Remove:
         break;
     case ImageLibrary::Event::Type::Change:
+        // For now, require image modifications to occur on the main thread
+        assert([NSThread isMainThread]);
+        
+        // Short-circuit if this notification is due to our own changes
+        if (_notifying) break;
+        
+        if (ImageSetsOverlap(_selection, ev.records)) {
+            _UpdateView(_rootItem);
+        }
         break;
     }
 }
@@ -975,7 +982,7 @@ static void _UpdateView(Item* it) {
     }
 }
 
-- (void)setSelection:(std::set<ImageRecordPtr>)selection {
+- (void)setSelection:(ImageSet)selection {
     _selection = std::move(selection);
     _UpdateView(_rootItem);
 }
@@ -1017,10 +1024,14 @@ static void _UpdateView(Item* it) {
         fn(*rec, data);
     }
     
-    auto lock = std::unique_lock(*_imgLib);
-    std::set<ImageLibrary::RecordRef> records;
-    for (const ImageRecordPtr& x : _selection) records.insert(x);
-    _imgLib->notifyChange(std::move(records));
+    _notifying = true;
+    {
+        auto lock = std::unique_lock(*_imgLib);
+        std::set<ImageLibrary::RecordRef> records;
+        for (const ImageRecordPtr& x : _selection) records.insert(x);
+        _imgLib->notifyChange(std::move(records));
+    }
+    _notifying = false;
 }
 
 //- (void)setFrameSize:(NSSize)size {

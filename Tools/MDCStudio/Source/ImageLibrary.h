@@ -249,4 +249,46 @@ private:
 using ImageLibraryPtr = std::shared_ptr<MDCTools::Lockable<ImageLibrary>>;
 using ImageRecordPtr = ImageLibrary::RecordStrongRef;
 
+using ImageSet = std::set<ImageRecordPtr>;
+
+// ImageSetsOverlap: returns whether there's an intersection between a and b.
+// This is templated so we can compare between std::set<RecordRef> and std::set<RecordStrongRef>
+template <typename T_A, typename T_B>
+bool ImageSetsOverlap(const T_A& a, const T_B& b) {
+    ImageSet r;
+    for (const ImageRecordPtr& x : a) {
+        if (b.find(x) != b.end()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+inline ImageSet ImageSetsIntersect(const ImageSet& a, const ImageSet& b) {
+    ImageSet r;
+    for (const ImageRecordPtr& x : a) {
+        if (b.find(x) != b.end()) {
+            r.insert(x);
+        }
+    }
+    return r;
+}
+
+inline ImageSet ImageSetsXOR(const ImageSet& a, const ImageSet& b) {
+    ImageSet r;
+    for (const ImageRecordPtr& x : a) {
+        if (b.find(x) == b.end()) {
+            r.insert(x);
+        }
+    }
+    
+    for (const ImageRecordPtr& x : b) {
+        if (a.find(x) == a.end()) {
+            r.insert(x);
+        }
+    }
+    
+    return r;
+}
+
 } // namespace MDCStudio

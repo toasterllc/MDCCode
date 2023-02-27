@@ -17,7 +17,7 @@
 - (void)setDelegate:(id<ImageGridViewDelegate>)delegate;
 
 - (MDCStudio::ImageSourcePtr)imageSource;
-- (const std::set<MDCStudio::ImageRecordPtr>&)selection;
+- (const MDCStudio::ImageSet&)selection;
 
 //- (NSView*)initialFirstResponder;
 

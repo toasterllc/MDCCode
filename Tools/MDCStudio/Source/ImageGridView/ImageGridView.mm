@@ -8,8 +8,6 @@
 #import "Code/Shared/Img.h"
 using namespace MDCStudio;
 
-using _ImageSet = std::set<ImageRecordPtr>;
-
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
 static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 
@@ -26,11 +24,11 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 - (size_t)columnCount;
 - (void)recomputeGrid;
 
-- (_ImageSet)imagesForRect:(CGRect)rect;
+- (ImageSet)imagesForRect:(CGRect)rect;
 - (CGRect)rectForImageAtIndex:(size_t)idx;
 
-- (const _ImageSet&)selection;
-- (void)setSelection:(_ImageSet)selection;
+- (const ImageSet&)selection;
+- (void)setSelection:(ImageSet)selection;
 
 @end
 
@@ -49,7 +47,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     ImageLibraryPtr _imageLibrary;
     
     struct {
-        _ImageSet images;
+        ImageSet images;
         Img::Id first = 0;
         size_t count = 0;
         id<MTLBuffer> buf;
@@ -331,10 +329,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     printf("Took %ju ms\n", (uintmax_t)durationMs);
 }
 
-- (_ImageSet)imagesForRect:(CGRect)rect {
+- (ImageSet)imagesForRect:(CGRect)rect {
     auto lock = std::unique_lock(*_imageLibrary);
     const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, [self contentsScale]));
-    _ImageSet images;
+    ImageSet images;
     for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
             const int32_t idx = _grid.columnCount()*y + x;
@@ -350,11 +348,11 @@ done:
     return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
 }
 
-- (const _ImageSet&)selection {
+- (const ImageSet&)selection {
     return _selection.images;
 }
 
-- (void)setSelection:(_ImageSet)images {
+- (void)setSelection:(ImageSet)images {
     if (!images.empty()) {
         _selection.images = std::move(images);
         
@@ -467,11 +465,11 @@ done:
     return _imageSource;
 }
 
-- (const _ImageSet&)selection {
+- (const ImageSet&)selection {
     return [_imageGridLayer selection];
 }
 
-- (void)_setSelection:(_ImageSet)selection {
+- (void)_setSelection:(ImageSet)selection {
     [_imageGridLayer setSelection:std::move(selection)];
     [_delegate imageGridViewSelectionChanged:self];
 }
@@ -488,23 +486,6 @@ done:
 }
 
 // MARK: - Event Handling
-
-static _ImageSet _XORImageSets(const _ImageSet& a, const _ImageSet& b) {
-    _ImageSet r;
-    for (const ImageRecordPtr& x : a) {
-        if (b.find(x) == b.end()) {
-            r.insert(x);
-        }
-    }
-    
-    for (const ImageRecordPtr& x : b) {
-        if (a.find(x) == a.end()) {
-            r.insert(x);
-        }
-    }
-    
-    return r;
-}
 
 //static CGPoint _ConvertPoint(CALayer* dst, NSView* src, CGPoint x) {
 //    CALayer* srcLayer = [src layer];
@@ -524,14 +505,14 @@ static _ImageSet _XORImageSets(const _ImageSet& a, const _ImageSet& b) {
     [_selectionRectLayer setHidden:false];
     
     const bool extend = [[[self window] currentEvent] modifierFlags] & (NSEventModifierFlagShift|NSEventModifierFlagCommand);
-    const _ImageSet oldSelection = [_imageGridLayer selection];
+    const ImageSet oldSelection = [_imageGridLayer selection];
     TrackMouse(win, mouseDownEvent, [=] (NSEvent* event, bool done) {
 //        const CGPoint curPoint = _ConvertPoint(_imageGridLayer, _documentView, [_documentView convertPoint:[event locationInWindow] fromView:nil]);
         const CGPoint curPoint = [superview convertPoint:[event locationInWindow] fromView:nil];
         const CGRect rect = CGRectStandardize(CGRect{startPoint.x, startPoint.y, curPoint.x-startPoint.x, curPoint.y-startPoint.y});
-        _ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
+        ImageSet newSelection = [_imageGridLayer imagesForRect:rect];
         if (extend) {
-            [self _setSelection:_XORImageSets(oldSelection, newSelection)];
+            [self _setSelection:ImageSetsXOR(oldSelection, newSelection)];
         } else {
             [self _setSelection:std::move(newSelection)];
         }
@@ -557,7 +538,7 @@ struct SelectionDelta {
 - (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
     ssize_t newIdx = 0;
     ImageRecordPtr newImg;
-    _ImageSet selection = [_imageGridLayer selection];
+    ImageSet selection = [_imageGridLayer selection];
     {
         ImageLibraryPtr imgLib = _imageSource->imageLibrary();
         auto lock = std::unique_lock(*imgLib);
@@ -651,7 +632,7 @@ struct SelectionDelta {
 }
 
 - (void)selectAll:(id)sender {
-    _ImageSet selection;
+    ImageSet selection;
     {
         ImageLibraryPtr imgLib = _imageSource->imageLibrary();
         auto lock = std::unique_lock(*imgLib);

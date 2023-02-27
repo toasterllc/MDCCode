@@ -309,7 +309,7 @@ using namespace MDCStudio;
 }
 
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
-    const std::set<ImageRecordPtr> selection = [imageGridView selection];
+    const ImageSet selection = [imageGridView selection];
     if (selection.empty()) return;
     const ImageRecordPtr image = *selection.begin();
     [self _openImage:image->info.id delta:0];
