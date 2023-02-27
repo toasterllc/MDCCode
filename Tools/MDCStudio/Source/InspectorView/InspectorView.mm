@@ -1108,6 +1108,12 @@ static void _UpdateView(Item* it) {
 
 @implementation InspectorOutlineView
 
+- (BOOL)acceptsFirstResponder {
+    // Don't accept first responder status so that the center view of the 3-part-view
+    // remains the first responder when clicking on the inspector.
+    return false;
+}
+
 - (BOOL)validateProposedFirstResponder:(NSResponder*)responder forEvent:(NSEvent*)event {
     // Allow labels in our outline view to be selected
     return true;

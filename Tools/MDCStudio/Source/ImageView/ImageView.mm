@@ -518,9 +518,9 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     return (fit ? CGRectInset({point, {0,0}}, -500, -500) : [self bounds]);
 }
 
-//- (void)mouseDown:(NSEvent*)mouseDownEvent {
-//    [[self window] makeFirstResponder:self];
-//}
+- (void)mouseDown:(NSEvent*)mouseDownEvent {
+    [[self window] makeFirstResponder:self];
+}
 
 //// MARK: - NSView Overrides
 //- (void)fixedCreateConstraintsForContainer:(NSView*)container {

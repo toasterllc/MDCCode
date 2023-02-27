@@ -285,10 +285,6 @@ using namespace MDCStudio;
         ImageScrollView* sv = [[ImageScrollView alloc] initWithFixedDocument:imageView];
         [sv setMagnifyToFit:true animate:false];
         
-        NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageRecord->info.timestamp];
-        printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageRecord->info.id,
-            (uintmax_t)imageRecord->info.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);
-        
 //        if (delta) {
 //            [_mainView setContentView:imageView animation:(delta>0 ? MainViewAnimation::SlideToLeft : MainViewAnimation::SlideToRight)];
 //        } else {
@@ -297,6 +293,14 @@ using namespace MDCStudio;
         
         [self setCenterView:sv];
         [[_splitView window] makeFirstResponder:[sv document]];
+        
+        ImageSet selection;
+        selection.insert(imageRecord);
+        [_inspectorView setSelection:selection];
+        
+        NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageRecord->info.timestamp];
+        printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageRecord->info.id,
+            (uintmax_t)imageRecord->info.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);
         
         return true;
     }
