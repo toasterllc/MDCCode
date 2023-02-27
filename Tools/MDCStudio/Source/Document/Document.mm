@@ -305,14 +305,14 @@ using namespace MDCStudio;
 // MARK: - ImageGridViewDelegate
 
 - (void)imageGridViewSelectionChanged:(ImageGridView*)imageGridView {
-//    [_inspectorView setSelection:[imageGridView selection]];
+    [_inspectorView setSelection:[imageGridView selection]];
 }
 
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
-    const std::set<Img::Id> selection = [imageGridView selection];
+    const std::set<ImageRecordPtr> selection = [imageGridView selection];
     if (selection.empty()) return;
-    const Img::Id imageId = *selection.begin();
-    [self _openImage:imageId delta:0];
+    const ImageRecordPtr image = *selection.begin();
+    [self _openImage:image->info.id delta:0];
 }
 
 // MARK: - ImageViewDelegate
