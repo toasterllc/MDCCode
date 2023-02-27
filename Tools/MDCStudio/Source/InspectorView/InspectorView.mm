@@ -396,11 +396,12 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     bool _notifying;
     
     IBOutlet NSView* _nibView;
+    IBOutlet NSTextField* _noSelectionLabel;
+    IBOutlet NSView* _outlineContainerView;
     IBOutlet NSOutlineView* _outlineView;
 }
 
 // MARK: - Creation
-
 
 - (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib {
     if (!(self = [super initWithFrame:{}])) return nil;
@@ -731,6 +732,8 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     for (auto item : _rootItem->items) {
         [_outlineView expandItem:item];
     }
+    
+    [self setSelection:{}];
     return self;
 }
 
@@ -984,6 +987,9 @@ static void _UpdateView(Item* it) {
 
 - (void)setSelection:(ImageSet)selection {
     _selection = std::move(selection);
+    [_outlineContainerView setHidden:_selection.empty()];
+    [_noSelectionLabel setHidden:!_selection.empty()];
+    
     _UpdateView(_rootItem);
 }
 
