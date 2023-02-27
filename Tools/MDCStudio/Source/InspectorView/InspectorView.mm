@@ -1020,7 +1020,7 @@ static void _UpdateView(Item* it) {
     auto lock = std::unique_lock(*_imgLib);
     std::set<ImageLibrary::RecordRef> records;
     for (const ImageRecordPtr& x : _selection) records.insert(x);
-    _imgLib->notifyChange(records);
+    _imgLib->notifyChange(std::move(records));
 }
 
 //- (void)setFrameSize:(NSSize)size {
