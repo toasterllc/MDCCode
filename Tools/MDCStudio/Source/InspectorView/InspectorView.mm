@@ -392,7 +392,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 @implementation InspectorView {
     ImageLibraryPtr _imgLib;
     Section* _rootItem;
-    std::set<Img::Id> _selection;
+    std::set<ImageRecordPtr> _selection;
     
     IBOutlet NSView* _nibView;
     IBOutlet NSOutlineView* _outlineView;
@@ -400,266 +400,23 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 // MARK: - Creation
 
-using _ModelGetterFn = id(*)(const ImageRecord&);
-using _ModelSetterFn = void(*)(ImageRecord&, id);
-
-//static _ModelData _Getter(InspectorView* self, _ModelGetterFn fn) {
-//    // first: holds the first non-nil value
-//    id first = nil;
-//    // mixed: tracks whether there are at least 2 differing values
-//    bool mixed = false;
-//    
-//    auto lock = std::unique_lock(*self->_imgLib);
-//    for (const Img::Id imgId : self->_selection) {
-//        auto find = self->_imgLib->find(imgId);
-//        if (find == self->_imgLib->end()) continue;
-//        const id obj = fn(*self->_imgLib->recordGet(find));
-//        if (!obj) continue;
-//        if (!first) {
-//            first = obj;
-//        } else {
-//            mixed |= ![first isEqual:obj];
-//        }
-//    }
-//    
-//    if (!mixed) {
-//        return _ModelData{ .data = first };
-//    }
-//    
-//    return _ModelData{ .type = _ModelData::Type::Mixed };
-//}
-
-
-- (_ModelData)_get:(_ModelGetterFn)fn {
-    // first: holds the first non-nil value
-    id first = nil;
-    // mixed: tracks whether there are at least 2 differing values
-    bool mixed = false;
-    
-    auto lock = std::unique_lock(*_imgLib);
-    for (const Img::Id imgId : _selection) {
-        auto find = _imgLib->find(imgId);
-        if (find == _imgLib->end()) continue;
-        const id obj = fn(**find);
-        if (!obj) continue;
-        if (!first) {
-            first = obj;
-        } else {
-            mixed |= ![first isEqual:obj];
-        }
-    }
-    
-    if (!mixed) {
-        return _ModelData{ .data = first };
-    }
-    
-    return _ModelData{ .type = _ModelData::Type::Mixed };
-}
-
-- (void)_set:(_ModelSetterFn)fn data:(id)data {
-    auto lock = std::unique_lock(*_imgLib);
-    for (const Img::Id imgId : _selection) {
-        auto find = _imgLib->find(imgId);
-        if (find == _imgLib->end()) continue;
-        fn(**find, data);
-    }
-    _imgLib->notifyChange(_selection);
-}
-
-static _ModelGetter _GetterCreate(InspectorView* self, _ModelGetterFn fn) {
-    __weak const auto selfWeak = self;
-    return ^_ModelData(InspectorView_Item*) {
-        const auto selfStrong = selfWeak;
-        if (!selfStrong) return _ModelData{};
-        return [selfStrong _get:fn];
-    };
-}
-
-static _ModelSetter _SetterCreate(InspectorView* self, _ModelSetterFn fn) {
-    __weak const auto selfWeak = self;
-    return ^void(InspectorView_Item*, id data) {
-        const auto selfStrong = selfWeak;
-        if (!selfStrong) return;
-        [selfStrong _set:fn data:data];
-    };
-}
-
-// MARK: - Getters
-
-static ImageOptions::Corner _Convert(ImageCornerButtonTypes::Corner x) {
-    switch (x) {
-    case ImageCornerButtonTypes::Corner::BottomRight:   return ImageOptions::Corner::BottomRight;
-    case ImageCornerButtonTypes::Corner::BottomLeft:    return ImageOptions::Corner::BottomLeft;
-    case ImageCornerButtonTypes::Corner::TopLeft:       return ImageOptions::Corner::TopLeft;
-    case ImageCornerButtonTypes::Corner::TopRight:      return ImageOptions::Corner::TopRight;
-    case ImageCornerButtonTypes::Corner::Mixed:         return ImageOptions::Corner::BottomRight;
-    }
-}
-
-static ImageCornerButtonTypes::Corner _Convert(ImageOptions::Corner x) {
-    switch (x) {
-    case ImageOptions::Corner::BottomRight: return ImageCornerButtonTypes::Corner::BottomRight;
-    case ImageOptions::Corner::BottomLeft:  return ImageCornerButtonTypes::Corner::BottomLeft;
-    case ImageOptions::Corner::TopLeft:     return ImageCornerButtonTypes::Corner::TopLeft;
-    case ImageOptions::Corner::TopRight:    return ImageCornerButtonTypes::Corner::TopRight;
-    }
-}
-
-
-static NSDateFormatter* _DateFormatterCreate() {
-    NSDateFormatter* x = [[NSDateFormatter alloc] init];
-    [x setLocale:[NSLocale autoupdatingCurrentLocale]];
-    [x setDateStyle:NSDateFormatterMediumStyle];
-    [x setTimeStyle:NSDateFormatterMediumStyle];
-    // Update date format to show milliseconds
-    [x setDateFormat:[[x dateFormat] stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
-    return x;
-}
-
-static NSDateFormatter* _DateFormatter() {
-    static NSDateFormatter* x = _DateFormatterCreate();
-    return x;
-}
-
-
-
-static id _Get_id(const ImageRecord& rec) {
-    return @(rec.info.id);
-}
-
-static id _Get_timestamp(const ImageRecord& rec) {
-    using namespace std::chrono;
-    const Time::Instant t = rec.info.timestamp;
-    if (Time::Absolute(t)) {
-        auto timestamp = clock_cast<system_clock>(rec.info.timestamp);
-        const milliseconds ms = duration_cast<milliseconds>(timestamp.time_since_epoch());
-        return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.]];
-    
-    } else {
-        const seconds sec = Time::DurationSinceEpoch<seconds>(rec.info.timestamp);
-        const std::string relTimeStr = Toastbox::RelativeTimeString(true, sec);
-        return [NSString stringWithFormat:@"%s after boot", relTimeStr.c_str()];
-    }
-}
-
-static id _Get_integrationTime(const ImageRecord& rec) {
-    return @(rec.info.coarseIntTime);
-}
-
-static id _Get_analogGain(const ImageRecord& rec) {
-    return @(rec.info.analogGain);
-}
-
-static id _Get_whiteBalance(const ImageRecord& rec) {
-    // meowmix
-    return @(0);
-}
-
-static id _Get_exposure(const ImageRecord& rec) {
-    return @(rec.options.exposure);
-}
-
-static id _Get_saturation(const ImageRecord& rec) {
-    return @(rec.options.saturation);
-}
-
-static id _Get_brightness(const ImageRecord& rec) {
-    return @(rec.options.brightness);
-}
-
-static id _Get_contrast(const ImageRecord& rec) {
-    return @(rec.options.contrast);
-}
-
-static id _Get_localContrastAmount(const ImageRecord& rec) {
-    return @(rec.options.localContrast.amount);
-}
-
-static id _Get_localContrastRadius(const ImageRecord& rec) {
-    return @(rec.options.localContrast.radius);
-}
-
-static id _Get_defringe(const ImageRecord& rec) {
-    return @(rec.options.defringe);
-}
-
-static id _Get_reconstructHighlights(const ImageRecord& rec) {
-    return @(rec.options.reconstructHighlights);
-}
-
-static id _Get_timestampShow(const ImageRecord& rec) {
-    return @(rec.options.timestamp.show);
-}
-
-static id _Get_timestampCorner(const ImageRecord& rec) {
-    return @((int)_Convert(rec.options.timestamp.corner));
-}
-
-// MARK: - Setters
-
-static void _Set_whiteBalance(ImageRecord& rec, id data) {
-    // meowmix
-}
-
-static void _Set_exposure(ImageRecord& rec, id data) {
-    rec.options.exposure = [data floatValue];
-}
-
-static void _Set_saturation(ImageRecord& rec, id data) {
-    rec.options.saturation = [data floatValue];
-}
-
-static void _Set_brightness(ImageRecord& rec, id data) {
-    rec.options.brightness = [data floatValue];
-}
-
-static void _Set_contrast(ImageRecord& rec, id data) {
-    rec.options.contrast = [data floatValue];
-}
-
-static void _Set_localContrastAmount(ImageRecord& rec, id data) {
-    rec.options.localContrast.amount = [data floatValue];
-}
-
-static void _Set_localContrastRadius(ImageRecord& rec, id data) {
-    rec.options.localContrast.radius = [data floatValue];
-}
-
-static void _Set_rotation(ImageRecord& rec, id data) {
-    // meowmix
-}
-
-static void _Set_defringe(ImageRecord& rec, id data) {
-    rec.options.defringe = [data boolValue];
-}
-
-static void _Set_reconstructHighlights(ImageRecord& rec, id data) {
-    rec.options.reconstructHighlights = [data boolValue];
-}
-
-static void _Set_timestampShow(ImageRecord& rec, id data) {
-    rec.options.timestamp.show = [data boolValue];
-}
-
-static void _Set_timestampCorner(ImageRecord& rec, id data) {
-    const ImageOptions::Corner corner = _Convert((ImageCornerButtonTypes::Corner)[data intValue]);
-    rec.options.timestamp.corner = corner;
-}
-
-
-
-
-
-
-
-
-
-
 
 - (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib {
     if (!(self = [super initWithFrame:{}])) return nil;
     
     _imgLib = imgLib;
+    
+    // Add ourself as an observer of the image library
+    {
+        auto lock = std::unique_lock(*_imgLib);
+        __weak auto selfWeak = self;
+        _imgLib->observerAdd([=](const ImageLibrary::Event& ev) {
+            auto selfStrong = selfWeak;
+            if (!selfStrong) return false;
+            [self _handleImageLibraryEvent:ev];
+            return true;
+        });
+    }
     
     // Load view from nib
     {
@@ -976,6 +733,237 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
     return self;
 }
 
+using _ModelGetterFn = id(*)(const ImageRecord&);
+using _ModelSetterFn = void(*)(ImageRecord&, id);
+
+//static _ModelData _Getter(InspectorView* self, _ModelGetterFn fn) {
+//    // first: holds the first non-nil value
+//    id first = nil;
+//    // mixed: tracks whether there are at least 2 differing values
+//    bool mixed = false;
+//    
+//    auto lock = std::unique_lock(*self->_imgLib);
+//    for (const Img::Id imgId : self->_selection) {
+//        auto find = self->_imgLib->find(imgId);
+//        if (find == self->_imgLib->end()) continue;
+//        const id obj = fn(*self->_imgLib->recordGet(find));
+//        if (!obj) continue;
+//        if (!first) {
+//            first = obj;
+//        } else {
+//            mixed |= ![first isEqual:obj];
+//        }
+//    }
+//    
+//    if (!mixed) {
+//        return _ModelData{ .data = first };
+//    }
+//    
+//    return _ModelData{ .type = _ModelData::Type::Mixed };
+//}
+
+static _ModelGetter _GetterCreate(InspectorView* self, _ModelGetterFn fn) {
+    __weak const auto selfWeak = self;
+    return ^_ModelData(InspectorView_Item*) {
+        const auto selfStrong = selfWeak;
+        if (!selfStrong) return _ModelData{};
+        return [selfStrong _get:fn];
+    };
+}
+
+static _ModelSetter _SetterCreate(InspectorView* self, _ModelSetterFn fn) {
+    __weak const auto selfWeak = self;
+    return ^void(InspectorView_Item*, id data) {
+        const auto selfStrong = selfWeak;
+        if (!selfStrong) return;
+        [selfStrong _set:fn data:data];
+    };
+}
+
+// MARK: - Getters
+
+static ImageOptions::Corner _Convert(ImageCornerButtonTypes::Corner x) {
+    switch (x) {
+    case ImageCornerButtonTypes::Corner::BottomRight:   return ImageOptions::Corner::BottomRight;
+    case ImageCornerButtonTypes::Corner::BottomLeft:    return ImageOptions::Corner::BottomLeft;
+    case ImageCornerButtonTypes::Corner::TopLeft:       return ImageOptions::Corner::TopLeft;
+    case ImageCornerButtonTypes::Corner::TopRight:      return ImageOptions::Corner::TopRight;
+    case ImageCornerButtonTypes::Corner::Mixed:         return ImageOptions::Corner::BottomRight;
+    }
+}
+
+static ImageCornerButtonTypes::Corner _Convert(ImageOptions::Corner x) {
+    switch (x) {
+    case ImageOptions::Corner::BottomRight: return ImageCornerButtonTypes::Corner::BottomRight;
+    case ImageOptions::Corner::BottomLeft:  return ImageCornerButtonTypes::Corner::BottomLeft;
+    case ImageOptions::Corner::TopLeft:     return ImageCornerButtonTypes::Corner::TopLeft;
+    case ImageOptions::Corner::TopRight:    return ImageCornerButtonTypes::Corner::TopRight;
+    }
+}
+
+
+static NSDateFormatter* _DateFormatterCreate() {
+    NSDateFormatter* x = [[NSDateFormatter alloc] init];
+    [x setLocale:[NSLocale autoupdatingCurrentLocale]];
+    [x setDateStyle:NSDateFormatterMediumStyle];
+    [x setTimeStyle:NSDateFormatterMediumStyle];
+    // Update date format to show milliseconds
+    [x setDateFormat:[[x dateFormat] stringByReplacingOccurrencesOfString:@":ss" withString:@":ss.SSS"]];
+    return x;
+}
+
+static NSDateFormatter* _DateFormatter() {
+    static NSDateFormatter* x = _DateFormatterCreate();
+    return x;
+}
+
+
+
+static id _Get_id(const ImageRecord& rec) {
+    return @(rec.info.id);
+}
+
+static id _Get_timestamp(const ImageRecord& rec) {
+    using namespace std::chrono;
+    const Time::Instant t = rec.info.timestamp;
+    if (Time::Absolute(t)) {
+        auto timestamp = clock_cast<system_clock>(rec.info.timestamp);
+        const milliseconds ms = duration_cast<milliseconds>(timestamp.time_since_epoch());
+        return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.]];
+    
+    } else {
+        const seconds sec = Time::DurationSinceEpoch<seconds>(rec.info.timestamp);
+        const std::string relTimeStr = Toastbox::RelativeTimeString(true, sec);
+        return [NSString stringWithFormat:@"%s after boot", relTimeStr.c_str()];
+    }
+}
+
+static id _Get_integrationTime(const ImageRecord& rec) {
+    return @(rec.info.coarseIntTime);
+}
+
+static id _Get_analogGain(const ImageRecord& rec) {
+    return @(rec.info.analogGain);
+}
+
+static id _Get_whiteBalance(const ImageRecord& rec) {
+    // meowmix
+    return @(0);
+}
+
+static id _Get_exposure(const ImageRecord& rec) {
+    return @(rec.options.exposure);
+}
+
+static id _Get_saturation(const ImageRecord& rec) {
+    return @(rec.options.saturation);
+}
+
+static id _Get_brightness(const ImageRecord& rec) {
+    return @(rec.options.brightness);
+}
+
+static id _Get_contrast(const ImageRecord& rec) {
+    return @(rec.options.contrast);
+}
+
+static id _Get_localContrastAmount(const ImageRecord& rec) {
+    return @(rec.options.localContrast.amount);
+}
+
+static id _Get_localContrastRadius(const ImageRecord& rec) {
+    return @(rec.options.localContrast.radius);
+}
+
+static id _Get_defringe(const ImageRecord& rec) {
+    return @(rec.options.defringe);
+}
+
+static id _Get_reconstructHighlights(const ImageRecord& rec) {
+    return @(rec.options.reconstructHighlights);
+}
+
+static id _Get_timestampShow(const ImageRecord& rec) {
+    return @(rec.options.timestamp.show);
+}
+
+static id _Get_timestampCorner(const ImageRecord& rec) {
+    return @((int)_Convert(rec.options.timestamp.corner));
+}
+
+// MARK: - Setters
+
+static void _Set_whiteBalance(ImageRecord& rec, id data) {
+    // meowmix
+}
+
+static void _Set_exposure(ImageRecord& rec, id data) {
+    rec.options.exposure = [data floatValue];
+}
+
+static void _Set_saturation(ImageRecord& rec, id data) {
+    rec.options.saturation = [data floatValue];
+}
+
+static void _Set_brightness(ImageRecord& rec, id data) {
+    rec.options.brightness = [data floatValue];
+}
+
+static void _Set_contrast(ImageRecord& rec, id data) {
+    rec.options.contrast = [data floatValue];
+}
+
+static void _Set_localContrastAmount(ImageRecord& rec, id data) {
+    rec.options.localContrast.amount = [data floatValue];
+}
+
+static void _Set_localContrastRadius(ImageRecord& rec, id data) {
+    rec.options.localContrast.radius = [data floatValue];
+}
+
+static void _Set_rotation(ImageRecord& rec, id data) {
+    // meowmix
+}
+
+static void _Set_defringe(ImageRecord& rec, id data) {
+    rec.options.defringe = [data boolValue];
+}
+
+static void _Set_reconstructHighlights(ImageRecord& rec, id data) {
+    rec.options.reconstructHighlights = [data boolValue];
+}
+
+static void _Set_timestampShow(ImageRecord& rec, id data) {
+    rec.options.timestamp.show = [data boolValue];
+}
+
+static void _Set_timestampCorner(ImageRecord& rec, id data) {
+    const ImageOptions::Corner corner = _Convert((ImageCornerButtonTypes::Corner)[data intValue]);
+    rec.options.timestamp.corner = corner;
+}
+
+
+
+
+
+
+
+
+
+
+// _handleImageLibraryEvent: called on whatever thread where the modification happened,
+// and with the ImageLibraryPtr lock held!
+- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
+    switch (ev.type) {
+    case ImageLibrary::Event::Type::Add:
+        break;
+    case ImageLibrary::Event::Type::Remove:
+        break;
+    case ImageLibrary::Event::Type::Change:
+        break;
+    }
+}
+
 // MARK: - Methods
 
 static void _UpdateView(Item* it) {
@@ -987,16 +975,51 @@ static void _UpdateView(Item* it) {
     }
 }
 
-- (void)setSelection:(const std::set<Img::Id>&)selection {
-    _selection = selection;
+- (void)setSelection:(std::set<ImageRecordPtr>)selection {
+    _selection = std::move(selection);
     _UpdateView(_rootItem);
 }
+
+// MARK: - Private Methods
 
 - (id)_createItemWithClass:(Class)itemClass {
     NSParameterAssert(itemClass);
     Item* view = Cast<Item>([_outlineView makeViewWithIdentifier:NSStringFromClass(itemClass) owner:nil]);
     assert(view);
     return view;
+}
+
+- (_ModelData)_get:(_ModelGetterFn)fn {
+    // first: holds the first non-nil value
+    id first = nil;
+    // mixed: tracks whether there are at least 2 differing values
+    bool mixed = false;
+    
+    for (const ImageRecordPtr& rec : _selection) {
+        const id obj = fn(*rec);
+        if (!obj) continue;
+        if (!first) {
+            first = obj;
+        } else {
+            mixed |= ![first isEqual:obj];
+        }
+    }
+    
+    if (!mixed) {
+        return _ModelData{ .data = first };
+    }
+    
+    return _ModelData{ .type = _ModelData::Type::Mixed };
+}
+
+- (void)_set:(_ModelSetterFn)fn data:(id)data {
+    for (const ImageRecordPtr& rec : _selection) {
+        fn(*rec, data);
+    }
+    auto lock = std::unique_lock(*_imgLib);
+    std::set<ImageLibrary::RecordRef> records;
+    records.insert(records.end(), _selection.begin(), _selection.end());
+    _imgLib->notifyChange(records);
 }
 
 //- (void)setFrameSize:(NSSize)size {

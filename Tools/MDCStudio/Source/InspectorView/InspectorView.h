@@ -4,5 +4,5 @@
 
 @interface InspectorView : NSView
 - (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib;
-- (void)setSelection:(const std::set<Img::Id>&)selection;
+- (void)setSelection:(std::set<MDCStudio::ImageRecordPtr>)selection;
 @end

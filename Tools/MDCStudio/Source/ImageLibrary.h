@@ -120,7 +120,7 @@ public:
         };
         
         Type type = Type::Add;
-        std::set<Img::Id> ids;
+        std::set<RecordRef> records;
     };
     
     using Observer = std::function<bool(const Event& ev)>;
@@ -161,7 +161,7 @@ public:
     void add() {
         Event ev = { .type = Event::Type::Add };
         for (auto i=reservedBegin(); i!=reservedEnd(); i++) {
-            ev.ids.insert((*i)->info.id);
+            ev.records.insert(*i);
         }
         
         RecordStore::add();
@@ -172,7 +172,7 @@ public:
     void remove(RecordRefConstIter begin, RecordRefConstIter end) {
         Event ev = { .type = Event::Type::Remove };
         for (auto i=begin; i!=end; i++) {
-            ev.ids.insert((*i)->info.id);
+            ev.records.insert(*i);
         }
         
         RecordStore::remove(begin, end);
@@ -182,7 +182,7 @@ public:
     
     RecordRefConstIter find(Img::Id id) {
         RecordRefConstIter iter = std::lower_bound(begin(), end(), 0,
-            [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
+            [&](const RecordRef& sample, auto) -> bool {
                 return sample->info.id < id;
             });
         
@@ -226,9 +226,9 @@ public:
         }
     }
     
-    void notifyChange(const std::set<Img::Id>& ids) {
+    void notifyChange(std::set<RecordRef> records) {
         Event ev = { .type = Event::Type::Change };
-        ev.ids = std::move(ids);
+        ev.records = std::move(records);
         notify(ev);
     }
     
