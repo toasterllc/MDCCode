@@ -4,7 +4,7 @@
 #import "ImageCornerButton/ImageCornerButton.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/TimeConvert.h"
-#import "Toastbox/RelativeTimeString.h"
+#import "Toastbox/DurationString.h"
 using namespace MDCStudio;
 
 struct _ModelData {
@@ -834,7 +834,7 @@ static id _Get_timestamp(const ImageRecord& rec) {
     
     } else {
         const seconds sec = Time::DurationRelative<seconds>(rec.info.timestamp);
-        const std::string relTimeStr = Toastbox::RelativeTimeString(true, sec);
+        const std::string relTimeStr = Toastbox::DurationString(true, sec);
         return [NSString stringWithFormat:@"%s after boot", relTimeStr.c_str()];
     }
 }
