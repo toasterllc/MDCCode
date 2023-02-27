@@ -961,16 +961,23 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
     case ImageLibrary::Event::Type::Remove:
         break;
     case ImageLibrary::Event::Type::Change:
-        // For now, require image modifications to occur on the main thread
-        assert([NSThread isMainThread]);
-        
-        // Short-circuit if this notification is due to our own changes
-        if (_notifying) break;
-        
-        if (ImageSetsOverlap(_selection, ev.records)) {
-            _UpdateView(_rootItem);
+        if ([NSThread isMainThread]) {
+            [self _handleImagesChanged:ev.records];
+        } else {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self _handleImagesChanged:ev.records];
+            });
         }
         break;
+    }
+}
+
+- (void)_handleImagesChanged:(const ImageSet&)images {
+    assert([NSThread isMainThread]);
+    // Short-circuit if this notification is due to our own changes
+    if (_notifying) return;
+    if (ImageSetsOverlap(_selection, images)) {
+        _UpdateView(_rootItem);
     }
 }
 
@@ -1033,7 +1040,7 @@ static void _UpdateView(Item* it) {
     _notifying = true;
     {
         auto lock = std::unique_lock(*_imgLib);
-        std::set<ImageLibrary::RecordRef> records;
+        std::set<ImageLibrary::RecordStrongRef> records;
         for (const ImageRecordPtr& x : _selection) records.insert(x);
         _imgLib->notifyChange(std::move(records));
     }

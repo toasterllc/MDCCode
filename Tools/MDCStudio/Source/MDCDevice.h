@@ -608,7 +608,7 @@ private:
             // Add the records that we previously reserved
             _imageLibrary->add();
             // Update the device's image id 'end' == last image id that we've observed from the device +1
-            _imageLibrary->setDeviceImgIdEnd(deviceImgIdLast+1);
+            _imageLibrary->deviceImgIdEnd(deviceImgIdLast+1);
         }
     }
     

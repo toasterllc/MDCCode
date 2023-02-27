@@ -192,7 +192,7 @@ using namespace MDCStudio;
 //        // Add the records that we previously reserved
 //        imgLib->add();
 //        // Update the device's image id 'end' == last image id that we've observed from the device +1
-//        imgLib->setDeviceImgIdEnd(deviceImgIdLast+1);
+//        imgLib->deviceImgIdEnd(deviceImgIdLast+1);
 //    }
 //}
 
@@ -298,9 +298,7 @@ using namespace MDCStudio;
         selection.insert(imageRecord);
         [_inspectorView setSelection:selection];
         
-        NSDate* date = [NSDate dateWithTimeIntervalSince1970:imageRecord->info.timestamp];
-        printf("Showing image #%ju (timestamp: 0x%jx / %s)\n", (uintmax_t)imageRecord->info.id,
-            (uintmax_t)imageRecord->info.timestamp, [[date descriptionWithLocale:[NSLocale currentLocale]] UTF8String]);
+        printf("Showing image id %ju\n", (uintmax_t)imageRecord->info.id);
         
         return true;
     }

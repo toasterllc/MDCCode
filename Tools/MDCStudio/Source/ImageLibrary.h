@@ -120,7 +120,7 @@ public:
         };
         
         Type type = Type::Add;
-        std::set<RecordRef> records;
+        std::set<RecordStrongRef> records;
     };
     
     using Observer = std::function<bool(const Event& ev)>;
@@ -201,13 +201,8 @@ public:
         _state.observers.push_front(std::move(observer));
     }
     
-    Img::Id deviceImgIdEnd() const {
-        return _state.deviceImgIdEnd;
-    }
-    
-    void setDeviceImgIdEnd(Img::Id id) {
-        _state.deviceImgIdEnd = id;
-    }
+    Img::Id deviceImgIdEnd() const { return _state.deviceImgIdEnd; }
+    void deviceImgIdEnd(Img::Id id) { _state.deviceImgIdEnd = id; }
     
     // notify(): notifies each observer of an event.
     // The notifications are delivered synchronously on the calling thread.
@@ -226,7 +221,7 @@ public:
         }
     }
     
-    void notifyChange(std::set<RecordRef> records) {
+    void notifyChange(std::set<RecordStrongRef> records) {
         Event ev = { .type = Event::Type::Change };
         ev.records = std::move(records);
         notify(ev);
