@@ -14,6 +14,7 @@
 #include "MSP.h"
 #include "ELF32Binary.h"
 #include "Time.h"
+#include "TimeConvert.h"
 
 using CmdStr = std::string;
 
@@ -34,6 +35,7 @@ const CmdStr ICEFlashWriteCmd       = "ICEFlashWrite";
 const CmdStr MSPHostModeSetCmd      = "MSPHostModeSet";
 const CmdStr MSPStateReadCmd        = "MSPStateRead";
 const CmdStr MSPStateWriteCmd       = "MSPStateWrite";
+const CmdStr MSPTimeGetCmd          = "MSPTimeGet";
 const CmdStr MSPTimeSetCmd          = "MSPTimeSet";
 const CmdStr MSPSBWReadCmd          = "MSPSBWRead";
 const CmdStr MSPSBWWriteCmd         = "MSPSBWWrite";
@@ -62,7 +64,8 @@ static void printUsage() {
     cout << "  " << MSPHostModeSetCmd       << " <0/1>\n";
     cout << "  " << MSPStateReadCmd         << "\n";
     cout << "  " << MSPStateWriteCmd        << "\n";
-    cout << "  " << MSPTimeSetCmd           << " <time>\n";
+    cout << "  " << MSPTimeGetCmd           << "\n";
+    cout << "  " << MSPTimeSetCmd           << " [<time>]\n";
     
     cout << "  " << MSPSBWReadCmd           << " <addr> <len>\n";
     cout << "  " << MSPSBWWriteCmd          << " <file>\n";
@@ -103,7 +106,7 @@ struct Args {
     } MSPHostModeSet = {};
     
     struct {
-        Time::Instant time = 0;
+        std::optional<Time::Instant> time;
     } MSPTimeSet = {};
     
     struct {
@@ -180,9 +183,12 @@ static Args parseArgs(int argc, const char* argv[]) {
     
     } else if (args.cmd == lower(MSPStateWriteCmd)) {
     
+    } else if (args.cmd == lower(MSPTimeGetCmd)) {
+    
     } else if (args.cmd == lower(MSPTimeSetCmd)) {
-        if (strs.size() < 2) throw std::runtime_error("missing argument: time");
-        IntForStr(args.MSPTimeSet.time, strs[1]);
+        if (strs.size() >= 2) {
+            args.MSPTimeSet.time = IntForStr<Time::Instant>(strs[1]);
+        }
     
     } else if (args.cmd == lower(MSPSBWReadCmd)) {
         if (strs.size() < 3) throw std::runtime_error("missing argument: address/length");
@@ -398,9 +404,32 @@ static void MSPStateWrite(const Args& args, MDCUSBDevice& device) {
     throw Toastbox::RuntimeError("unimplemented");
 }
 
+static void MSPTimeGet(const Args& args, MDCUSBDevice& device) {
+    printf("MSPTimeGet:\n");
+    const Time::Instant mdcTime = device.mspTimeGet();
+    const Time::Instant actualTime = Time::Current();
+    
+    if (Time::Absolute(mdcTime)) {
+        using namespace std::chrono;
+        using namespace date;
+        const microseconds deltaUs = clock_cast<utc_clock>(mdcTime)-clock_cast<utc_clock>(actualTime);
+        
+        printf("   MDC time: 0x%016jx\n", (uintmax_t)mdcTime);
+        printf("Actual time: 0x%016jx\n", (uintmax_t)actualTime);
+        printf("      Delta: %+jd us\n",  (intmax_t)deltaUs.count());
+        printf("\n");
+    
+    } else {
+        printf("   MDC time: 0x%016jx [relative]\n", (uintmax_t)mdcTime);
+        printf("Actual time: 0x%016jx\n", (uintmax_t)actualTime);
+        printf("\n");
+    }
+}
+
 static void MSPTimeSet(const Args& args, MDCUSBDevice& device) {
-    printf("MSPTimeSet: 0x%016jx\n", (uintmax_t)args.MSPTimeSet.time);
-    device.mspTimeSet(args.MSPTimeSet.time);
+    const Time::Instant time = args.MSPTimeSet.time.value_or(Time::Current());
+    printf("MSPTimeSet: 0x%016jx\n", (uintmax_t)time);
+    device.mspTimeSet(time);
 }
 
 static void MSPSBWRead(const Args& args, MDCUSBDevice& device) {
@@ -572,6 +601,7 @@ int main(int argc, const char* argv[]) {
         else if (args.cmd == lower(MSPHostModeSetCmd))      MSPHostModeSet(args, device);
         else if (args.cmd == lower(MSPStateReadCmd))        MSPStateRead(args, device);
         else if (args.cmd == lower(MSPStateWriteCmd))       MSPStateWrite(args, device);
+        else if (args.cmd == lower(MSPTimeGetCmd))          MSPTimeGet(args, device);
         else if (args.cmd == lower(MSPTimeSetCmd))          MSPTimeSet(args, device);
         else if (args.cmd == lower(MSPSBWReadCmd))          MSPSBWRead(args, device);
         else if (args.cmd == lower(MSPSBWWriteCmd))         MSPSBWWrite(args, device);

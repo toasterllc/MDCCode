@@ -1,5 +1,4 @@
 #pragma once
-#include <chrono>
 
 namespace Time {
 
@@ -17,13 +16,6 @@ static constexpr Instant AbsoluteBit = (Instant)1<<63;
 // absolute time that the device booted.
 static constexpr bool Absolute(const Instant& t) {
     return t&AbsoluteBit;
-}
-
-template <typename T_Duration=std::chrono::microseconds>
-static constexpr T_Duration DurationSinceEpoch(const Time::Instant& t) {
-    using namespace std::chrono;
-    const microseconds us(t & ~Time::AbsoluteBit);
-    return duration_cast<T_Duration>(us);
 }
 
 //static constexpr Time TimeAbsoluteUnixReference = 1640995200; // 2022-01-01 00:00:00 +0000

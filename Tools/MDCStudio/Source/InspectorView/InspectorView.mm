@@ -833,7 +833,7 @@ static id _Get_timestamp(const ImageRecord& rec) {
         return [_DateFormatter() stringFromDate:[NSDate dateWithTimeIntervalSince1970:(double)ms.count()/1000.]];
     
     } else {
-        const seconds sec = Time::DurationSinceEpoch<seconds>(rec.info.timestamp);
+        const seconds sec = Time::DurationRelative<seconds>(rec.info.timestamp);
         const std::string relTimeStr = Toastbox::RelativeTimeString(true, sec);
         return [NSString stringWithFormat:@"%s after boot", relTimeStr.c_str()];
     }

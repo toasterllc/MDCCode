@@ -1,5 +1,6 @@
 #pragma once
 #include <chrono>
+#include <cassert>
 #include "date/date.h"
 #include "date/tz.h"
 
@@ -26,6 +27,23 @@ inline Instant Current() {
     const time_point<utc_clock> now = utc_clock::now();
     const microseconds us = duration_cast<microseconds>(now-Epoch);
     return AbsoluteBit | (Instant)us.count();
+}
+
+// DurationAbsolute: Commenting-out for now because we should use the chrono APIs / clock_utc for absolute times
+//template <typename T_Duration=std::chrono::microseconds>
+//static constexpr T_Duration DurationAbsolute(const Time::Instant& t) {
+//    using namespace std::chrono;
+//    assert(Absolute(t));
+//    const microseconds us(t & ~Time::AbsoluteBit);
+//    return duration_cast<T_Duration>(us);
+//}
+
+template <typename T_Duration=std::chrono::microseconds>
+static constexpr T_Duration DurationRelative(const Time::Instant& t) {
+    using namespace std::chrono;
+    assert(!Absolute(t));
+    const microseconds us(t);
+    return duration_cast<T_Duration>(us);
 }
 
 } // namespace Time

@@ -113,6 +113,7 @@ struct [[gnu::packed]] Cmd {
         StateRead,
         StateWrite,
         LEDSet,
+        TimeGet,
         TimeSet,
         HostModeSet,
         VDDIMGSDSet,
@@ -155,6 +156,10 @@ struct [[gnu::packed]] Resp {
         struct [[gnu::packed]] {
             uint8_t data[8];
         } StateRead;
+        
+        struct [[gnu::packed]] {
+            Time::Instant time;
+        } TimeGet;
         
         struct [[gnu::packed]] {
             BatteryChargeLevel level;

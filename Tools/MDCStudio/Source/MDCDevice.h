@@ -53,12 +53,29 @@ public:
             _dev->mspHostModeSet(true);
             
             // Update the device's time
-            const Time::Instant time = Time::Current();
-            auto startTime = std::chrono::steady_clock::now();
-            _dev->mspTimeSet(time);
-            const auto delta = std::chrono::steady_clock::now()-startTime;
-            printf("Set device time to 0x%jx (took %ju ms)\n", (uintmax_t)time,
-                (uintmax_t)std::chrono::duration_cast<std::chrono::milliseconds>(delta).count());
+            {
+                using namespace std::chrono;
+                using namespace date;
+                
+                const Time::Instant mdcTime = _dev->mspTimeGet();
+                const Time::Instant actualTime = Time::Current();
+                
+                auto startTime = steady_clock::now();
+                _dev->mspTimeSet(actualTime);
+                const milliseconds timeSetDuration = duration_cast<milliseconds>(steady_clock::now()-startTime);
+                
+                if (Time::Absolute(mdcTime)) {
+                    const microseconds deltaUs = clock_cast<utc_clock>(mdcTime)-clock_cast<utc_clock>(actualTime);
+                    
+                    printf("[Set device time] Time before update: 0x%016jx [absolute] (delta from actual time: %+jd us)\n", (uintmax_t)mdcTime,
+                        (intmax_t)deltaUs.count());
+                } else {
+                    printf("[Set device time] Time before update: 0x%016jx [relative]\n", (uintmax_t)mdcTime);
+                }
+                
+                printf("[Set device time] Time after update: 0x%016jx (took %ju ms)\n", (uintmax_t)actualTime,
+                    (uintmax_t)timeSetDuration.count());
+            }
             
             
 //            

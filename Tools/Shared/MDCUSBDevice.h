@@ -326,6 +326,17 @@ public:
         }
     }
     
+    Time::Instant mspTimeGet() {
+        assert(_mode == STM::Status::Mode::STMApp);
+        const STM::Cmd cmd = { .op = STM::Op::MSPTimeGet };
+        _sendCmd(cmd);
+        _checkStatus("MSPTimeGet command failed");
+        
+        Time::Instant time;
+        _dev.read(STM::Endpoint::DataIn, time);
+        return time;
+    }
+    
     void mspTimeSet(Time::Instant time) {
         assert(_mode == STM::Status::Mode::STMApp);
         const STM::Cmd cmd = {
@@ -333,7 +344,7 @@ public:
             .arg = { .MSPTimeSet = { .time = time } },
         };
         _sendCmd(cmd);
-        _checkStatus("MSPHostModeSet command failed");
+        _checkStatus("MSPTimeSet command failed");
     }
     
     void mspSBWConnect() {

@@ -41,6 +41,7 @@ enum class Op : uint8_t {
     MSPHostModeSet,
     MSPStateRead,
     MSPStateWrite,
+    MSPTimeGet,
     MSPTimeSet,
     
     MSPSBWConnect,

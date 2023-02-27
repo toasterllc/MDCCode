@@ -836,6 +836,12 @@ struct _TaskI2C {
             _LEDGreen_::Set(_LEDPriority::I2C, !cmd.arg.LEDSet.green);
             return MSP::Resp{ .ok = true };
         
+        case Cmd::Op::TimeGet:
+            return MSP::Resp{
+                .ok = true,
+                .arg = { .TimeGet = { .time = _RTC::TimeRead() } },
+            };
+        
         case Cmd::Op::TimeSet:
             _RTC::Init(cmd.arg.TimeSet.time);
             return MSP::Resp{ .ok = true };
