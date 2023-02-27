@@ -265,7 +265,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     case ImageLibrary::Event::Type::Remove:
         break;
     case ImageLibrary::Event::Type::Change:
-        if (ev.ids.count(_imageRecord->info.id)) {
+        if (ev.records.count(_imageRecord)) {
             _dirty = true;
             dispatch_async(dispatch_get_main_queue(), ^{ [self setNeedsDisplay]; });
         }

@@ -305,7 +305,7 @@ using namespace MDCStudio;
 // MARK: - ImageGridViewDelegate
 
 - (void)imageGridViewSelectionChanged:(ImageGridView*)imageGridView {
-    [_inspectorView setSelection:[imageGridView selection]];
+//    [_inspectorView setSelection:[imageGridView selection]];
 }
 
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {

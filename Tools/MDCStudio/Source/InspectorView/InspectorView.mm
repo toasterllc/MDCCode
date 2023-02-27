@@ -1018,7 +1018,7 @@ static void _UpdateView(Item* it) {
     }
     auto lock = std::unique_lock(*_imgLib);
     std::set<ImageLibrary::RecordRef> records;
-    records.insert(records.end(), _selection.begin(), _selection.end());
+    for (const ImageRecordPtr& x : _selection) records.insert(x);
     _imgLib->notifyChange(records);
 }
 

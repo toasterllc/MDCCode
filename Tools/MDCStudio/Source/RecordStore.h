@@ -31,9 +31,22 @@ public:
     
     using Chunks = std::list<Chunk>;
     
-    struct RecordRef {
+    class RecordRef {
+    public:
         Chunk* chunk = nullptr;
         size_t idx = 0;
+        
+        bool operator<(const RecordRef& x) const {
+            if (chunk != x.chunk)   return chunk < x.chunk;
+            if (idx != x.idx)       return idx < x.idx;
+            return false;
+        }
+        
+        bool operator==(const RecordRef& x) const {
+            if (chunk != x.chunk)   return false;
+            if (idx != x.idx)       return false;
+            return true;
+        }
         
         operator bool() const { return chunk; }
         T_Record* operator->() const { return &record(); }
@@ -43,37 +56,63 @@ public:
         }
     };
     
-    class RecordStrongRef {
+    class RecordStrongRef : public RecordRef {
     public:
         RecordStrongRef() {}
         RecordStrongRef(RecordRef ref) { _set(ref); }
         
         // Copy
-        RecordStrongRef(const RecordStrongRef& x) { _set(x._ref); }
-        RecordStrongRef& operator=(const RecordStrongRef& x) { _set(x._ref); return *this; }
+        RecordStrongRef(const RecordStrongRef& x) { _set(x); }
+        RecordStrongRef& operator=(const RecordStrongRef& x) { _set(x); return *this; }
         // Move
-        RecordStrongRef(RecordStrongRef&& x) { _swap(x._ref); }
-        RecordStrongRef& operator=(RecordStrongRef&& x) { _swap(x._ref); return *this; }
+        RecordStrongRef(RecordStrongRef&& x) { _swap(x); }
+        RecordStrongRef& operator=(RecordStrongRef&& x) { _swap(x); return *this; }
         ~RecordStrongRef() { _set({}); }
-        
-        operator bool() const { return _ref; }
-        T_Record* operator->() const { return &_ref.record(); }
-        T_Record& operator*() const { return _ref.record(); }
-        T_Record& record() const { _ref.record(); }
         
     private:
         void _set(const RecordRef& ref) {
             if (ref.chunk) ref.chunk->strongCount++;
-            if (_ref.chunk) _ref.chunk->strongCount--;
-            _ref = ref;
+            if (RecordRef::chunk) RecordRef::chunk->strongCount--;
+            static_cast<RecordRef&>(*this) = ref;
         }
         
-        void _swap(RecordRef& ref) {
-            std::swap(_ref, ref);
+        void _swap(RecordStrongRef& ref) {
+            std::swap(static_cast<RecordRef&>(*this), static_cast<RecordRef&>(ref));
         }
-        
-        RecordRef _ref;
     };
+    
+    
+//    class RecordStrongRef {
+//    public:
+//        RecordStrongRef() {}
+//        RecordStrongRef(RecordRef ref) { _set(ref); }
+//        
+//        // Copy
+//        RecordStrongRef(const RecordStrongRef& x) { _set(x._ref); }
+//        RecordStrongRef& operator=(const RecordStrongRef& x) { _set(x._ref); return *this; }
+//        // Move
+//        RecordStrongRef(RecordStrongRef&& x) { _swap(x._ref); }
+//        RecordStrongRef& operator=(RecordStrongRef&& x) { _swap(x._ref); return *this; }
+//        ~RecordStrongRef() { _set({}); }
+//        
+//        operator bool() const { return _ref; }
+//        T_Record* operator->() const { return &_ref.record(); }
+//        T_Record& operator*() const { return _ref.record(); }
+//        T_Record& record() const { _ref.record(); }
+//        
+//    private:
+//        void _set(const RecordRef& ref) {
+//            if (ref.chunk) ref.chunk->strongCount++;
+//            if (_ref.chunk) _ref.chunk->strongCount--;
+//            _ref = ref;
+//        }
+//        
+//        void _swap(RecordRef& ref) {
+//            std::swap(_ref, ref);
+//        }
+//        
+//        RecordRef _ref;
+//    };
     
     using RecordRefs = std::vector<RecordRef>;
     using RecordRefConstIter = typename RecordRefs::const_iterator;
