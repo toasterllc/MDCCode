@@ -356,13 +356,8 @@ done:
     if (!images.empty()) {
         _selection.images = std::move(images);
         
-        Img::Id idMin = std::numeric_limits<Img::Id>::max();
-        Img::Id idMax = std::numeric_limits<Img::Id>::min();
-        for (const ImageRecordPtr& image : _selection.images) {
-            idMin = std::min(idMin, image->info.id);
-            idMax = std::max(idMax, image->info.id);
-        }
-        
+        const Img::Id idMin = ImageSetImgIdMin(_selection.images);
+        const Img::Id idMax = ImageSetImgIdMax(_selection.images);
         _selection.first = idMin;
         _selection.count = idMax-idMin+1;
         
@@ -547,7 +542,7 @@ struct SelectionDelta {
         if (!imgCount) return;
         
         if (!selection.empty()) {
-            const Img::Id lastImgId = *std::prev(selection.end());
+            const Img::Id lastImgId = ImageSetImgIdMax(selection);
             const auto iter = imgLib->find(lastImgId);
             if (iter == imgLib->end()) {
                 NSLog(@"Image no longer in library");

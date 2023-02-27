@@ -29,19 +29,20 @@ public:
         printf("~ImageCache()\n");
     }
     
-    ImagePtr imageForId(Img::Id id, ImageLoadedHandler handler) {
+    ImagePtr image(ImageRecordPtr rec, ImageLoadedHandler handler) {
         auto lock = std::unique_lock(_state.lock);
         
         // If the image is already in the cache, return it
         ImagePtr image;
-        auto find = _state.images.find(id);
+        auto find = _state.images.find(rec->info.id);
         if (find != _state.images.end()) {
             image = find->second;
         }
         
         // Schedule the image/neighbors to be loaded asynchronously
         _state.work = _Work{
-            .id = id,
+            .id = rec->info.id,
+            .addr = rec->info.addr,
             .handler = handler,
             .loadImage = !image,
             .loadNeighbors = true,
@@ -57,17 +58,11 @@ private:
     
     struct _Work {
         Img::Id id = 0;
+        uint64_t addr = 0;
         ImageLoadedHandler handler;
         bool loadImage = false;
         bool loadNeighbors = false;
     };
-    
-    std::optional<uint64_t> _AddrForImageId(ImageLibraryPtr lib, Img::Id id) {
-        auto lock = std::unique_lock(*_imageLibrary);
-        auto find = _imageLibrary->find(id);
-        if (find == _imageLibrary->end()) return std::nullopt;
-        return (*find)->info.addr;
-    }
     
     void _thread() {
         for (;;) {
@@ -88,16 +83,13 @@ private:
             
             // Load the image itself, if instructed to do so
             if (work.loadImage) {
-                const std::optional<uint64_t> addr = _AddrForImageId(_imageLibrary, work.id);
                 ImagePtr image;
-                if (addr) {
-                    // Load the image
-                    image = _imageProvider(*addr);
-                    if (image) {
-                        // Put the image in the cache
-                        _state.images[work.id] = image;
-                        inserted.insert(work.id);
-                    }
+                // Load the image
+                image = _imageProvider(work.addr);
+                if (image) {
+                    // Put the image in the cache
+                    _state.images[work.id] = image;
+                    inserted.insert(work.id);
                 }
                 // Notify the handler
                 work.handler(image);
