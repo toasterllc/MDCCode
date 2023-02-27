@@ -180,22 +180,22 @@ public:
         notify(ev);
     }
     
-    RecordRefConstIter find(Img::Id id) {
-        RecordRefConstIter iter = std::lower_bound(begin(), end(), 0,
-            [&](const RecordRef& sample, auto) -> bool {
-                return sample->info.id < id;
-            });
-        
-        if (iter == end()) return end();
-        if ((*iter)->info.id != id) return end();
-        return iter;
-    }
-    
-    RecordStrongRef findStrong(Img::Id id) {
-        auto it = find(id);
-        if (it == end()) return {};
-        return *it;
-    }
+//    RecordRefConstIter find(Img::Id id) {
+//        RecordRefConstIter iter = std::lower_bound(begin(), end(), 0,
+//            [&](const RecordRef& sample, auto) -> bool {
+//                return sample->info.id < id;
+//            });
+//        
+//        if (iter == end()) return end();
+//        if ((*iter)->info.id != id) return end();
+//        return iter;
+//    }
+//    
+//    RecordStrongRef findStrong(Img::Id id) {
+//        auto it = find(id);
+//        if (it == end()) return {};
+//        return *it;
+//    }
     
     void observerAdd(Observer&& observer) {
         _state.observers.push_front(std::move(observer));

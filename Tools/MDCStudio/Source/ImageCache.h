@@ -41,8 +41,7 @@ public:
         
         // Schedule the image/neighbors to be loaded asynchronously
         _state.work = _Work{
-            .id = rec->info.id,
-            .addr = rec->info.addr,
+            .rec = rec,
             .handler = handler,
             .loadImage = !image,
             .loadNeighbors = true,
@@ -57,8 +56,7 @@ private:
     static constexpr size_t _NeighborImageLoadCount = 8;
     
     struct _Work {
-        Img::Id id = 0;
-        uint64_t addr = 0;
+        ImageRecordPtr rec;
         ImageLoadedHandler handler;
         bool loadImage = false;
         bool loadNeighbors = false;
@@ -85,11 +83,11 @@ private:
             if (work.loadImage) {
                 ImagePtr image;
                 // Load the image
-                image = _imageProvider(work.addr);
+                image = _imageProvider(work.rec->info.addr);
                 if (image) {
                     // Put the image in the cache
-                    _state.images[work.id] = image;
-                    inserted.insert(work.id);
+                    _state.images[work.rec->info.id] = image;
+                    inserted.insert(work.rec->info.id);
                 }
                 // Notify the handler
                 work.handler(image);
@@ -108,7 +106,7 @@ private:
                 // Collect the neighboring image ids in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
                 {
                     auto lock = std::unique_lock(*_imageLibrary);
-                    auto find = _imageLibrary->find(work.id);
+                    auto find = _imageLibrary->find(work.rec);
                     auto it = find;
                     auto rit = std::make_reverse_iterator(find); // Points to element before `find`
                     

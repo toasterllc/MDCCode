@@ -258,7 +258,7 @@ using namespace MDCStudio;
 }
 
 // _openImage: open a particular image id, or an image offset from a particular image id
-- (bool)_openImage:(Img::Id)imageId delta:(ssize_t)delta {
+- (bool)_openImage:(ImageRecordPtr)rec delta:(ssize_t)delta {
     ImageSourcePtr imageSource = [_sourceListView selection];
     if (!imageSource) return false;
     
@@ -269,7 +269,7 @@ using namespace MDCStudio;
             auto lock = std::unique_lock(*imageLibrary);
             if (imageLibrary->empty()) return false;
             
-            auto find = imageLibrary->find(imageId);
+            const auto find = imageLibrary->find(rec);
             if (find == imageLibrary->end()) return false;
             
             const ssize_t deltaMin = std::distance(find, imageLibrary->begin());
@@ -311,19 +311,19 @@ using namespace MDCStudio;
 - (void)imageGridViewOpenSelectedImage:(ImageGridView*)imageGridView {
     const ImageSet selection = [imageGridView selection];
     if (selection.empty()) return;
-    const ImageRecordPtr image = *selection.begin();
-    [self _openImage:image->info.id delta:0];
+    const ImageRecordPtr rec = *selection.begin();
+    [self _openImage:rec delta:0];
 }
 
 // MARK: - ImageViewDelegate
 
 - (void)imageViewPreviousImage:(ImageView*)imageView {
-    const bool ok = [self _openImage:[imageView imageRecord]->info.id delta:-1];
+    const bool ok = [self _openImage:[imageView imageRecord] delta:-1];
     if (!ok) NSBeep();
 }
 
 - (void)imageViewNextImage:(ImageView*)imageView {
-    const bool ok = [self _openImage:[imageView imageRecord]->info.id delta:1];
+    const bool ok = [self _openImage:[imageView imageRecord] delta:1];
     if (!ok) NSBeep();
 }
 

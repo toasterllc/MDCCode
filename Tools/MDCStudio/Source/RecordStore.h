@@ -21,8 +21,8 @@ public:
     
     class Chunk {
     public:
-        Chunk(Toastbox::Mmap&& mmap) : mmap(std::move(mmap)) {}
-        
+        Chunk(size_t order, Toastbox::Mmap&& mmap) : order(order), mmap(std::move(mmap)) {}
+        size_t order = 0;                       // Order of the chunk, so that RecordRefs can order themselves
         size_t recordCount = 0;                 // Count of records currently stored in chunk
         size_t recordIdx = 0;                   // Index of next record
         std::atomic<size_t> strongCount = 0;    // Count of RecordStrongRef's that currently refer to this chunk
@@ -37,7 +37,7 @@ public:
         size_t idx = 0;
         
         bool operator<(const RecordRef& x) const {
-            if (chunk != x.chunk)   return chunk < x.chunk;
+            if (chunk != x.chunk)   return chunk->order < x.chunk->order;
             if (idx != x.idx)       return idx < x.idx;
             return false;
         }
@@ -262,6 +262,17 @@ public:
     
     bool empty() const { return _state.recordRefs.empty(); }
     
+    RecordRefConstIter find(const RecordRef& ref) const {
+        RecordRefConstIter it = std::lower_bound(begin(), end(), 0,
+            [&](const RecordRef& sample, auto) -> bool {
+                return sample < ref;
+            });
+        
+        if (it == end()) return end();
+        if (*it != ref) return end();
+        return it;
+    }
+    
     const RecordRef& front() const              { return _state.recordRefs.front(); }
     const RecordRef& back() const               { return _state.recordRefs.back(); }
     RecordRefConstIter begin() const            { return _state.recordRefs.begin(); }
@@ -319,7 +330,7 @@ private:
         std::list<Chunk> chunks;
         std::vector<Chunk*> chunksVec;
         for (size_t i=0; i<header.chunkCount; i++) {
-            Chunk& chunk = chunks.emplace_back(_ChunkFileOpen(_ChunkPath(path, i)));
+            Chunk& chunk = _ChunkPush(chunks, _ChunkFileOpen(_ChunkPath(path, i)));
             chunksVec.push_back(&chunk);
         }
         
@@ -413,6 +424,11 @@ private:
         return _ChunkPath(_path, idx);
     }
     
+    static Chunk& _ChunkPush(std::list<Chunk>& chunks, Toastbox::Mmap&& mmap) {
+        const size_t order = (chunks.empty() ? 0 : chunks.back().order+1);
+        return chunks.emplace_back(order, std::move(mmap));
+    }
+    
     static Toastbox::Mmap _ChunkFileCreate(const Path& path) {
         constexpr int ChunkPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
         const int fd = open(path.c_str(), O_RDWR|O_CREAT|O_CLOEXEC, ChunkPerm);
@@ -440,7 +456,7 @@ private:
         if (lastChunk==_state.chunks.end() || lastChunk->recordIdx>=T_ChunkRecordCap) {
             // We don't have any chunks, or the last chunk is full
             // Create a new chunk
-            return _state.chunks.emplace_back(_ChunkFileCreate(_chunkPath(_state.chunks.size())));
+            return _ChunkPush(_state.chunks, _ChunkFileCreate(_chunkPath(_state.chunks.size())));
         
         } else {
             // The last chunk can fit more records

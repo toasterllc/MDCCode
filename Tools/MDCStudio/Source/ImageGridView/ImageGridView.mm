@@ -356,8 +356,8 @@ done:
     if (!images.empty()) {
         _selection.images = std::move(images);
         
-        const Img::Id idMin = ImageSetImgIdMin(_selection.images);
-        const Img::Id idMax = ImageSetImgIdMax(_selection.images);
+        const Img::Id idMin = (*(_selection.images.begin()))->info.id;
+        const Img::Id idMax = (*std::prev((_selection.images.end())))->info.id;
         _selection.first = idMin;
         _selection.count = idMax-idMin+1;
         
@@ -542,14 +542,13 @@ struct SelectionDelta {
         if (!imgCount) return;
         
         if (!selection.empty()) {
-            const Img::Id lastImgId = ImageSetImgIdMax(selection);
-            const auto iter = imgLib->find(lastImgId);
-            if (iter == imgLib->end()) {
+            const auto it = imgLib->find(*std::prev(selection.end()));
+            if (it == imgLib->end()) {
                 NSLog(@"Image no longer in library");
                 return;
             }
             
-            const size_t idx = std::distance(imgLib->begin(), iter);
+            const size_t idx = std::distance(imgLib->begin(), it);
             const size_t colCount = [_imageGridLayer columnCount];
             const size_t rem = (imgCount % colCount);
             const size_t lastRowCount = (rem ? rem : colCount);
