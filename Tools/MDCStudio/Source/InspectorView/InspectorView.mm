@@ -18,6 +18,7 @@ struct _ModelData {
 };
 
 @class InspectorView_Item;
+@class InspectorView_Section;
 using _ModelGetter = _ModelData(^)(InspectorView_Item*);
 using _ModelSetter = void(^)(InspectorView_Item*, id);
 
@@ -99,7 +100,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
         modified |= [it modified];
     }
     
-    [_clearButton setHidden:modified];
+    [_clearButton setHidden:!modified];
 }
 
 - (IBAction)clear:(id)sender {
@@ -172,7 +173,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 }
 
 - (bool)modified {
-    return [[_slider objectValue] isEqual:@(valueDefault)];
+    return ![[_slider objectValue] isEqual:@(valueDefault)];
 }
 
 //- (void)_updateSlider:(const _ModelData&)data {
@@ -204,7 +205,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 - (IBAction)sliderAction:(id)sender {
     const id val = [_slider objectValue];
     modelSetter(self, val);
-    [self updateView];
+    [section updateView];
 }
 
 - (IBAction)numberFieldAction:(id)sender {
@@ -213,7 +214,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     if (val) {
         modelSetter(self, val);
     }
-    [self updateView];
+    [section updateView];
 }
 
 @end
@@ -308,11 +309,12 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 }
 
 - (bool)modified {
-    return [[_checkbox objectValue] isEqual:@(valueDefault)];
+    return ![[_checkbox objectValue] isEqual:@(valueDefault)];
 }
 
 - (IBAction)checkboxAction:(id)sender {
     modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
+    [section updateView];
 }
 
 @end
@@ -376,6 +378,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 - (IBAction)checkboxAction:(id)sender {
     modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
     cornerModelSetter(self, @((int)[_cornerButton corner]));
+    [section updateView];
 }
 
 @end
@@ -400,6 +403,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 - (IBAction)buttonAction:(id)sender {
     modelSetter(self, nil);
+    [section updateView];
 }
 
 @end
@@ -632,6 +636,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->icon = @"Inspector-WhiteBalance";
             slider->modelGetter = _GetterCreate(self, _Get_whiteBalance);
             slider->modelSetter = _SetterCreate(self, _Set_whiteBalance);
+            slider->section = section;
             slider->valueMin = -1;
             slider->valueMax = +1;
             slider->valueDefault = 0;
@@ -652,6 +657,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->icon = @"Inspector-Exposure";
             slider->modelGetter = _GetterCreate(self, _Get_exposure);
             slider->modelSetter = _SetterCreate(self, _Set_exposure);
+            slider->section = section;
             slider->valueMin = -1;
             slider->valueMax = +1;
             slider->valueDefault = 0;
@@ -672,6 +678,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->icon = @"Inspector-Saturation";
             slider->modelGetter = _GetterCreate(self, _Get_saturation);
             slider->modelSetter = _SetterCreate(self, _Set_saturation);
+            slider->section = section;
             slider->valueMin = -1;
             slider->valueMax = +1;
             slider->valueDefault = 0;
@@ -692,6 +699,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->icon = @"Inspector-Brightness";
             slider->modelGetter = _GetterCreate(self, _Get_brightness);
             slider->modelSetter = _SetterCreate(self, _Set_brightness);
+            slider->section = section;
             slider->valueMin = -1;
             slider->valueMax = +1;
             slider->valueDefault = 0;
@@ -712,6 +720,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->icon = @"Inspector-Contrast";
             slider->modelGetter = _GetterCreate(self, _Get_contrast);
             slider->modelSetter = _SetterCreate(self, _Set_contrast);
+            slider->section = section;
             slider->valueMin = -1;
             slider->valueMax = +1;
             slider->valueDefault = 0;
@@ -737,6 +746,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider1->name = @"Amount";
             slider1->modelGetter = _GetterCreate(self, _Get_localContrastAmount);
             slider1->modelSetter = _SetterCreate(self, _Set_localContrastAmount);
+            slider1->section = section;
             slider1->valueMin = -1;
             slider1->valueMax = +1;
             slider1->valueDefault = 0;
@@ -746,6 +756,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider2->name = @"Radius";
             slider2->modelGetter = _GetterCreate(self, _Get_localContrastRadius);
             slider2->modelSetter = _SetterCreate(self, _Set_localContrastRadius);
+            slider2->section = section;
             slider2->valueMin = -1;
             slider2->valueMax = +1;
             slider2->valueDefault = 0;
@@ -766,6 +777,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             Rotation* rotation = [self _createItemWithClass:[Rotation class]];
             rotation->icon = @"Rotation";
             rotation->modelSetter = _SetterCreate(self, _Set_rotation);
+            rotation->section = section;
             section->items = { rotation };
             _rootItem->items.push_back(section);
         }
@@ -785,6 +797,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
                 checkbox->name = @"Defringe";
                 checkbox->modelGetter = _GetterCreate(self, _Get_defringe);
                 checkbox->modelSetter = _SetterCreate(self, _Set_defringe);
+                checkbox->section = section;
                 section->items.push_back(checkbox);
             }
             
@@ -793,6 +806,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
                 checkbox->name = @"Reconstruct highlights";
                 checkbox->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
                 checkbox->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
+                checkbox->section = section;
                 section->items.push_back(checkbox);
             }
             
@@ -802,6 +816,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
                 timestamp->modelSetter = _SetterCreate(self, _Set_timestampShow);
                 timestamp->cornerModelGetter = _GetterCreate(self, _Get_timestampCorner);
                 timestamp->cornerModelSetter = _SetterCreate(self, _Set_timestampCorner);
+                timestamp->section = section;
                 section->items.push_back(timestamp);
             }
             
