@@ -498,7 +498,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     
     // Create NSOutlineView items
     {
-        static constexpr CGFloat SpacerSize = 20;
+        static constexpr CGFloat SpacerSize = 0;
         _rootItem = [self _createItemWithClass:[Section class]];
         _rootItem->name = @"";
         
@@ -550,7 +550,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             
             {
                 Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-                spacer->height = SpacerSize/2;
+                spacer->height = 10;
                 spacer->darkBackground = true;
                 section->items.push_back(spacer);
             }
@@ -560,15 +560,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = SpacerSize/2;
+            spacer->height = 10;
             _rootItem->items.push_back(spacer);
         }
-        
-        
-        
-        
-        
-        
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
