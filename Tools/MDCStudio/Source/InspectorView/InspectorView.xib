@@ -69,8 +69,8 @@
                                                 <rect key="frame" x="1" y="42" width="247" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
-                                                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aQl-zt-mX6">
-                                                        <rect key="frame" x="0.0" y="3" width="235" height="14"/>
+                                                    <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="aQl-zt-mX6">
+                                                        <rect key="frame" x="0.0" y="3" width="82" height="14"/>
                                                         <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" sendsActionOnEndEditing="YES" title="HEADER CELL" drawsBackground="YES" id="h9x-xw-FdW">
                                                             <font key="font" metaFont="smallSystemBold"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -79,13 +79,14 @@
                                                     </textField>
                                                 </subviews>
                                                 <constraints>
-                                                    <constraint firstAttribute="trailing" secondItem="aQl-zt-mX6" secondAttribute="trailing" constant="12" id="02y-Po-7Km"/>
+                                                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="aQl-zt-mX6" secondAttribute="trailing" constant="12" id="02y-Po-7Km"/>
                                                     <constraint firstItem="aQl-zt-mX6" firstAttribute="centerY" secondItem="PcM-y8-dqV" secondAttribute="centerY" id="ZNS-yf-Y6w"/>
                                                     <constraint firstAttribute="height" constant="20" id="wW1-wV-K3h"/>
                                                     <constraint firstItem="aQl-zt-mX6" firstAttribute="leading" secondItem="PcM-y8-dqV" secondAttribute="leading" id="xfx-sC-a2v"/>
                                                 </constraints>
                                                 <connections>
-                                                    <outlet property="_indent" destination="xfx-sC-a2v" id="yyq-eb-uBF"/>
+                                                    <outlet property="_indentLeft" destination="xfx-sC-a2v" id="8mq-E2-HUG"/>
+                                                    <outlet property="_indentRight" destination="02y-Po-7Km" id="YMN-lL-3gT"/>
                                                     <outlet property="textField" destination="aQl-zt-mX6" id="94H-o3-xPX"/>
                                                 </connections>
                                             </tableCellView>
@@ -129,7 +130,7 @@
                                                         </constraints>
                                                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="center" title="1.23" id="QYU-GF-Fdw">
                                                             <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="jKh-VJ-c2m"/>
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -153,7 +154,8 @@
                                                 <connections>
                                                     <outlet property="_buttonMax" destination="1eQ-eD-Mpf" id="wUU-Of-iW2"/>
                                                     <outlet property="_buttonMin" destination="ccx-WW-HOu" id="GfA-34-PjG"/>
-                                                    <outlet property="_indent" destination="KHY-Aa-bFM" id="7RM-Zs-6mR"/>
+                                                    <outlet property="_indentLeft" destination="KHY-Aa-bFM" id="l4U-Om-sAi"/>
+                                                    <outlet property="_indentRight" destination="S7S-4p-ij9" id="eBK-q7-m0P"/>
                                                     <outlet property="_numberField" destination="kGS-IH-WVJ" id="7Uh-sw-2d4"/>
                                                     <outlet property="_slider" destination="DZe-QJ-YrD" id="75m-xG-gqk"/>
                                                 </connections>
@@ -165,7 +167,7 @@
                                                     <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
                                                         <rect key="frame" x="-2" y="21" width="33" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" title="Label" id="v9N-Nx-KcH">
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -184,7 +186,7 @@
                                                         </constraints>
                                                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" alignment="center" title="1.23" id="GMl-Bs-UXJ">
                                                             <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="Ngk-4Y-T6C"/>
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -205,7 +207,8 @@
                                                     <constraint firstAttribute="trailing" secondItem="WRI-17-iHa" secondAttribute="trailing" constant="12" id="ul2-D6-zDc"/>
                                                 </constraints>
                                                 <connections>
-                                                    <outlet property="_indent" destination="Q6L-zI-UVh" id="HDK-XE-LzS"/>
+                                                    <outlet property="_indentLeft" destination="Q6L-zI-UVh" id="Xaq-cF-SpY"/>
+                                                    <outlet property="_indentRight" destination="ul2-D6-zDc" id="2wA-WN-tg9"/>
                                                     <outlet property="_label" destination="2Wk-Za-sn6" id="bCh-KJ-FKQ"/>
                                                     <outlet property="_numberField" destination="gUz-V3-zNi" id="tey-Sx-zFK"/>
                                                     <outlet property="_slider" destination="WRI-17-iHa" id="1OS-zG-2xZ"/>
@@ -215,11 +218,11 @@
                                                 <rect key="frame" x="1" y="148" width="247" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
-                                                    <button verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="4h7-i2-RCa">
-                                                        <rect key="frame" x="-3" y="1" width="240" height="18"/>
+                                                    <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="4h7-i2-RCa">
+                                                        <rect key="frame" x="-3" y="1" width="56" height="18"/>
                                                         <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingTail" state="on" allowsMixedState="YES" inset="2" id="acZ-s2-rX2" customClass="InspectorCheckboxCell">
                                                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                         </buttonCell>
                                                         <connections>
                                                             <action selector="updateModel:" target="EwO-sD-ijl" id="RI8-t2-HWG"/>
@@ -228,13 +231,14 @@
                                                 </subviews>
                                                 <constraints>
                                                     <constraint firstItem="4h7-i2-RCa" firstAttribute="leading" secondItem="EwO-sD-ijl" secondAttribute="leading" id="Ec5-QO-cXg"/>
-                                                    <constraint firstAttribute="trailing" secondItem="4h7-i2-RCa" secondAttribute="trailing" constant="12" id="g17-fM-mE9"/>
+                                                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="4h7-i2-RCa" secondAttribute="trailing" constant="12" id="g17-fM-mE9"/>
                                                     <constraint firstItem="4h7-i2-RCa" firstAttribute="centerY" secondItem="EwO-sD-ijl" secondAttribute="centerY" id="l1c-7I-CyJ"/>
                                                     <constraint firstAttribute="height" constant="20" id="sne-Vo-Dpv"/>
                                                 </constraints>
                                                 <connections>
                                                     <outlet property="_checkbox" destination="4h7-i2-RCa" id="Tcg-FA-ka7"/>
-                                                    <outlet property="_indent" destination="Ec5-QO-cXg" id="CjR-c1-YJw"/>
+                                                    <outlet property="_indentLeft" destination="Ec5-QO-cXg" id="Bdy-Al-chf"/>
+                                                    <outlet property="_indentRight" destination="g17-fM-mE9" id="tlL-Ua-WoF"/>
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorView_Menu" id="Uqz-Ai-fuI" customClass="InspectorView_Menu">
@@ -245,7 +249,7 @@
                                                         <rect key="frame" x="-3" y="-2" width="241" height="22"/>
                                                         <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" allowsMixedState="YES" imageScaling="proportionallyDown" inset="2" selectedItem="Y5b-qt-FR1" id="D89-oK-seX">
                                                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <menu key="menu" id="Bvc-nQ-9xm">
                                                                 <items>
                                                                     <menuItem title="Item 1" state="on" id="Y5b-qt-FR1"/>
@@ -264,18 +268,19 @@
                                                 </constraints>
                                                 <connections>
                                                     <outlet property="_button" destination="98b-tg-mR0" id="42w-ea-z4s"/>
-                                                    <outlet property="_indent" destination="VDW-tO-TgH" id="sid-C6-mo9"/>
+                                                    <outlet property="_indentLeft" destination="VDW-tO-TgH" id="6Xy-qb-ghV"/>
+                                                    <outlet property="_indentRight" destination="rUv-V2-sgZ" id="p4U-He-fls"/>
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorView_Timestamp" id="ZXZ-qK-hhw" customClass="InspectorView_Timestamp">
                                                 <rect key="frame" x="1" y="192" width="247" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
-                                                    <button verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="yui-q4-XJp">
+                                                    <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="yui-q4-XJp">
                                                         <rect key="frame" x="-3" y="1" width="81" height="18"/>
                                                         <buttonCell key="cell" type="check" title="Timestamp" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingTail" state="on" allowsMixedState="YES" inset="2" id="4WS-8D-meS" customClass="InspectorCheckboxCell">
                                                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                         </buttonCell>
                                                         <connections>
                                                             <action selector="updateModel:" target="ZXZ-qK-hhw" id="GjM-uJ-PHH"/>
@@ -300,13 +305,15 @@
                                                     <constraint firstItem="hlR-S1-aEk" firstAttribute="leading" secondItem="yui-q4-XJp" secondAttribute="trailing" constant="8" id="AnE-L8-wbP"/>
                                                     <constraint firstItem="yui-q4-XJp" firstAttribute="leading" secondItem="ZXZ-qK-hhw" secondAttribute="leading" id="CnP-NK-A81"/>
                                                     <constraint firstItem="hlR-S1-aEk" firstAttribute="centerY" secondItem="ZXZ-qK-hhw" secondAttribute="centerY" constant="1" id="Nt7-1e-k4E"/>
+                                                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="hlR-S1-aEk" secondAttribute="trailing" constant="12" id="iX1-xT-jNh"/>
                                                     <constraint firstItem="yui-q4-XJp" firstAttribute="centerY" secondItem="ZXZ-qK-hhw" secondAttribute="centerY" id="qcv-Zb-qF7"/>
                                                     <constraint firstAttribute="height" constant="20" id="wM8-TS-jGI"/>
                                                 </constraints>
                                                 <connections>
                                                     <outlet property="_checkbox" destination="yui-q4-XJp" id="FoD-gW-XsG"/>
                                                     <outlet property="_cornerButton" destination="hlR-S1-aEk" id="SA3-TI-gpY"/>
-                                                    <outlet property="_indent" destination="CnP-NK-A81" id="ixT-v8-e1L"/>
+                                                    <outlet property="_indentLeft" destination="CnP-NK-A81" id="YvO-Wr-qW3"/>
+                                                    <outlet property="_indentRight" destination="iX1-xT-jNh" id="bwo-MP-taM"/>
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorView_Rotation" id="QyM-zH-3HC" customClass="InspectorView_Rotation">
@@ -331,7 +338,7 @@
                                                 </constraints>
                                                 <connections>
                                                     <outlet property="_button" destination="Sz1-Dv-gjR" id="Ts0-RW-PxI"/>
-                                                    <outlet property="_indent" destination="wgz-5l-XcB" id="PtO-um-Ksx"/>
+                                                    <outlet property="_indentLeft" destination="wgz-5l-XcB" id="IbU-fg-yJk"/>
                                                 </connections>
                                             </tableCellView>
                                             <tableCellView identifier="InspectorView_Stat" id="PvD-sd-A2Z" customClass="InspectorView_Stat">
@@ -341,7 +348,7 @@
                                                     <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0kZ-EE-8AJ">
                                                         <rect key="frame" x="0.0" y="3" width="38" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" alignment="right" title="Label" drawsBackground="YES" id="UyD-hX-cXp">
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" red="0.11764705882352941" green="0.11764705882352941" blue="0.11764705882352941" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                                                         </textFieldCell>
@@ -349,7 +356,7 @@
                                                     <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="dea-aE-rs7">
                                                         <rect key="frame" x="50" y="3" width="33" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" selectable="YES" title="Label" drawsBackground="YES" id="Eyq-II-qyb">
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" red="0.11764705882352941" green="0.11764705882352941" blue="0.11764705882352941" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                                                         </textFieldCell>
@@ -366,7 +373,8 @@
                                                     <constraint firstAttribute="bottom" secondItem="dea-aE-rs7" secondAttribute="bottom" constant="3" id="nuz-3w-BsZ"/>
                                                 </constraints>
                                                 <connections>
-                                                    <outlet property="_indent" destination="ACy-gA-se9" id="fUI-Ky-hSV"/>
+                                                    <outlet property="_indentLeft" destination="ACy-gA-se9" id="zMt-Cv-JVi"/>
+                                                    <outlet property="_indentRight" destination="WR9-F6-UCK" id="w0G-y4-bgh"/>
                                                     <outlet property="_nameLabel" destination="0kZ-EE-8AJ" id="fgF-tA-6cV"/>
                                                     <outlet property="_valueIndentConstraint" destination="33j-T0-BRl" id="Cc7-kw-Xz5"/>
                                                     <outlet property="_valueLabel" destination="dea-aE-rs7" id="y0s-Q0-7VQ"/>

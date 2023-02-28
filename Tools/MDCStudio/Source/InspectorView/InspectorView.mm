@@ -45,7 +45,8 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 @implementation InspectorView_Item {
 @private
-    IBOutlet NSLayoutConstraint* _indent;
+    IBOutlet NSLayoutConstraint* _indentLeft;
+    IBOutlet NSLayoutConstraint* _indentRight;
 @public
     _ModelGetter modelGetter;
     _ModelSetter modelSetter;
@@ -53,10 +54,11 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 }
 
 - (NSString*)name { return @""; }
-- (CGFloat)indent { return 12; }
+- (CGFloat)indent { return 16; }
 
 - (void)updateView {
-    [_indent setConstant:[self indent]];
+    [_indentLeft setConstant:[self indent]];
+    [_indentRight setConstant:[self indent]];
     [[self textField] setStringValue:[self name]];
 }
 
