@@ -51,6 +51,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 @public
     _ModelGetter modelGetter;
     _ModelSetter modelSetter;
+    NSNumber* valueMin;
+    NSNumber* valueMax;
+    NSNumber* valueDefault;
     bool darkBackground;
     __weak InspectorView_Section* section;
 }
@@ -100,7 +103,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 }
 
 - (IBAction)clear:(id)sender {
-    NSLog(@"clear:");
+    for (InspectorView_Item* it : items) {
+        it->modelSetter(it, it->valueDefault);
+    }
+    [self updateView];
 }
 
 @end
@@ -136,26 +142,22 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     IBOutlet NSSlider* _slider;
     IBOutlet NSTextField* _numberField;
     IBOutlet NSNumberFormatter* _numberFormatter;
-@public
-    float valueMin;
-    float valueMax;
-    float valueDefault;
 }
 
 - (bool)updateView {
     bool modified = [super updateView];
     
-    [_slider setMinValue:valueMin];
-    [_slider setMaxValue:valueMax];
+    [_slider setMinValue:[valueMin floatValue]];
+    [_slider setMaxValue:[valueMax floatValue]];
     
-    [_numberFormatter setMinimum:@(valueMin)];
-    [_numberFormatter setMaximum:@(valueMax)];
+    [_numberFormatter setMinimum:valueMin];
+    [_numberFormatter setMaximum:valueMax];
     
     const _ModelData data = modelGetter(self);
     
     switch (data.type) {
     case _ModelData::Type::Normal:
-        modified |= ![data.data isEqual:@(valueDefault)];
+        modified |= ![data.data isEqual:valueDefault];
         [_slider setObjectValue:data.data];
         [_numberField setObjectValue:data.data];
         [_numberField setPlaceholderString:nil];
@@ -641,9 +643,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->modelGetter = _GetterCreate(self, _Get_whiteBalance);
             slider->modelSetter = _SetterCreate(self, _Set_whiteBalance);
             slider->section = section;
-            slider->valueMin = -1;
-            slider->valueMax = +1;
-            slider->valueDefault = 0;
+            slider->valueMin = @-1;
+            slider->valueMax = @+1;
+            slider->valueDefault = @0;
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -662,9 +664,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->modelGetter = _GetterCreate(self, _Get_exposure);
             slider->modelSetter = _SetterCreate(self, _Set_exposure);
             slider->section = section;
-            slider->valueMin = -1;
-            slider->valueMax = +1;
-            slider->valueDefault = 0;
+            slider->valueMin = @-1;
+            slider->valueMax = @+1;
+            slider->valueDefault = @0;
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -683,9 +685,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->modelGetter = _GetterCreate(self, _Get_saturation);
             slider->modelSetter = _SetterCreate(self, _Set_saturation);
             slider->section = section;
-            slider->valueMin = -1;
-            slider->valueMax = +1;
-            slider->valueDefault = 0;
+            slider->valueMin = @-1;
+            slider->valueMax = @+1;
+            slider->valueDefault = @0;
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -704,9 +706,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->modelGetter = _GetterCreate(self, _Get_brightness);
             slider->modelSetter = _SetterCreate(self, _Set_brightness);
             slider->section = section;
-            slider->valueMin = -1;
-            slider->valueMax = +1;
-            slider->valueDefault = 0;
+            slider->valueMin = @-1;
+            slider->valueMax = @+1;
+            slider->valueDefault = @0;
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -725,9 +727,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->modelGetter = _GetterCreate(self, _Get_contrast);
             slider->modelSetter = _SetterCreate(self, _Set_contrast);
             slider->section = section;
-            slider->valueMin = -1;
-            slider->valueMax = +1;
-            slider->valueDefault = 0;
+            slider->valueMin = @-1;
+            slider->valueMax = @+1;
+            slider->valueDefault = @0;
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -751,9 +753,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider1->modelGetter = _GetterCreate(self, _Get_localContrastAmount);
             slider1->modelSetter = _SetterCreate(self, _Set_localContrastAmount);
             slider1->section = section;
-            slider1->valueMin = -1;
-            slider1->valueMax = +1;
-            slider1->valueDefault = 0;
+            slider1->valueMin = @-1;
+            slider1->valueMax = @+1;
+            slider1->valueDefault = @0;
             section->items.push_back(slider1);
             
             SliderWithLabel* slider2 = [self _createItemWithClass:[SliderWithLabel class]];
@@ -761,9 +763,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider2->modelGetter = _GetterCreate(self, _Get_localContrastRadius);
             slider2->modelSetter = _SetterCreate(self, _Set_localContrastRadius);
             slider2->section = section;
-            slider2->valueMin = -1;
-            slider2->valueMax = +1;
-            slider2->valueDefault = 0;
+            slider2->valueMin = @-1;
+            slider2->valueMax = @+1;
+            slider2->valueDefault = @0;
             section->items.push_back(slider2);
             
             _rootItem->items.push_back(section);
