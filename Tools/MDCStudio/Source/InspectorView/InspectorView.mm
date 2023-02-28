@@ -115,16 +115,104 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 
 
+@interface InspectorView_Slider : InspectorView_Item
+@end
 
-@interface InspectorView_SliderWithIcon : InspectorView_Item
+@implementation InspectorView_Slider {
+@private
+    IBOutlet NSSlider* _slider;
+    IBOutlet NSTextField* _numberField;
+@public
+    float valueMin;
+    float valueMax;
+    float valueDefault;
+}
+
+- (void)updateView {
+    [super updateView];
+    
+    [_slider setMinValue:valueMin];
+    [_slider setMaxValue:valueMax];
+    
+    const _ModelData data = modelGetter(self);
+    
+    switch (data.type) {
+    case _ModelData::Type::Normal:
+        [_slider setObjectValue:data.data];
+        [_numberField setObjectValue:data.data];
+        [_numberField setPlaceholderString:nil];
+        [_numberField setHidden:[data.data isEqual:@(valueDefault)]];
+        break;
+    case _ModelData::Type::Mixed:
+        [_slider setObjectValue:@(0)];
+        [_numberField setObjectValue:nil];
+        [_numberField setPlaceholderString:@"multiple"];
+        [_numberField setHidden:false];
+        break;
+    }
+}
+
+//- (void)_updateSlider:(const _ModelData&)data {
+//    switch (data.type) {
+//    case _ModelData::Type::Normal:
+//        [_slider setObjectValue:data.data];
+//        [_numberField setObjectValue:data.data];
+//        break;
+//    case _ModelData::Type::Mixed:
+//        [_slider setObjectValue:@(0)];
+//        break;
+//    }
+//}
+//
+//- (void)_updateNumberField:(const _ModelData&)data {
+//    switch (data.type) {
+//    case _ModelData::Type::Normal:
+//        [_numberField setObjectValue:data.data];
+//        [_numberField setPlaceholderString:nil];
+//        [_numberField setHidden:[data.data isEqual:@(valueDefault)]];
+//        break;
+//    case _ModelData::Type::Mixed:
+//        [_numberField setObjectValue:nil];
+//        [_numberField setPlaceholderString:@"multiple"];
+//        break;
+//    }
+//}
+
+- (IBAction)sliderAction:(id)sender {
+    const id val = [_slider objectValue];
+    modelSetter(self, val);
+    [self updateView];
+}
+
+- (IBAction)numberFieldAction:(id)sender {
+    const id val = [_numberField objectValue];
+    modelSetter(self, val);
+    [self updateView];
+}
+
+@end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@interface InspectorView_SliderWithIcon : InspectorView_Slider
 @end
 
 @implementation InspectorView_SliderWithIcon {
 @private
     IBOutlet NSButton* _buttonMin;
     IBOutlet NSButton* _buttonMax;
-    IBOutlet NSSlider* _slider;
-    IBOutlet NSTextField* _numberField;
 @public
     NSString* icon;
 }
@@ -133,48 +221,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     [super updateView];
     [_buttonMin setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Min", icon]]];
     [_buttonMax setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Max", icon]]];
-    
-    const _ModelData data = modelGetter(self);
-    [self _updateSlider:data];
-    [self _updateNumberField:data];
-}
-
-- (void)_updateSlider:(const _ModelData&)data {
-    switch (data.type) {
-    case _ModelData::Type::Normal:
-        [_slider setObjectValue:data.data];
-        [_numberField setObjectValue:data.data];
-        break;
-    case _ModelData::Type::Mixed:
-        [_slider setObjectValue:@(0)];
-        break;
-    }
-}
-
-- (void)_updateNumberField:(const _ModelData&)data {
-    switch (data.type) {
-    case _ModelData::Type::Normal:
-        [_numberField setObjectValue:data.data];
-        [_numberField setPlaceholderString:nil];
-        break;
-    case _ModelData::Type::Mixed:
-        [_numberField setObjectValue:nil];
-        [_numberField setPlaceholderString:@"multiple"];
-        break;
-    }
-}
-
-- (IBAction)sliderAction:(id)sender {
-    id val = [_slider objectValue];
-    modelSetter(self, val);
-    [self _updateNumberField:{.data = val}];
-}
-
-- (IBAction)numberFieldAction:(id)sender {
-//    [[_numberField formatter] objectValue];
-    id val = [_numberField objectValue];
-    modelSetter(self, val);
-    [self _updateSlider:{.data = val}];
 }
 
 @end
@@ -184,13 +230,12 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 
 
-@interface InspectorView_SliderWithLabel : InspectorView_Item
+@interface InspectorView_SliderWithLabel : InspectorView_Slider
 @end
 
 @implementation InspectorView_SliderWithLabel {
 @private
     IBOutlet NSTextField* _label;
-    IBOutlet NSSlider* _slider;
 @public
     NSString* name;
 }
@@ -199,20 +244,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 - (void)updateView {
     [super updateView];
     [_label setStringValue:name];
-    
-    const _ModelData data = modelGetter(self);
-    switch (data.type) {
-    case _ModelData::Type::Normal:
-        [_slider setObjectValue:data.data];
-        break;
-    case _ModelData::Type::Mixed:
-        [_slider setObjectValue:@(0)];
-        break;
-    }
-}
-
-- (IBAction)updateModel:(id)sender {
-    modelSetter(self, [_slider objectValue]);
 }
 
 @end
@@ -524,12 +555,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
                 section->items.push_back(spacer);
             }
             
-            
-            
-//            Stat* stat1 = [self _createItemWithClass:[Stat class]];
-//            stat1->name = "Date";
-            
-//            section->items = { [self _createItemWithClass:[SliderWithIcon class]] };
             _rootItem->items.push_back(section);
         }
         
@@ -552,6 +577,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->icon = @"Inspector-WhiteBalance";
             slider->modelGetter = _GetterCreate(self, _Get_whiteBalance);
             slider->modelSetter = _SetterCreate(self, _Set_whiteBalance);
+            slider->valueMin = -1;
+            slider->valueMax = +1;
+            slider->valueDefault = 0;
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -569,6 +597,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->icon = @"Inspector-Exposure";
             slider->modelGetter = _GetterCreate(self, _Get_exposure);
             slider->modelSetter = _SetterCreate(self, _Set_exposure);
+            slider->valueMin = -1;
+            slider->valueMax = +1;
+            slider->valueDefault = 0;
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -586,6 +617,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->icon = @"Inspector-Saturation";
             slider->modelGetter = _GetterCreate(self, _Get_saturation);
             slider->modelSetter = _SetterCreate(self, _Set_saturation);
+            slider->valueMin = -1;
+            slider->valueMax = +1;
+            slider->valueDefault = 0;
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -603,6 +637,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->icon = @"Inspector-Brightness";
             slider->modelGetter = _GetterCreate(self, _Get_brightness);
             slider->modelSetter = _SetterCreate(self, _Set_brightness);
+            slider->valueMin = -1;
+            slider->valueMax = +1;
+            slider->valueDefault = 0;
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -620,6 +657,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider->icon = @"Inspector-Contrast";
             slider->modelGetter = _GetterCreate(self, _Get_contrast);
             slider->modelSetter = _SetterCreate(self, _Set_contrast);
+            slider->valueMin = -1;
+            slider->valueMax = +1;
+            slider->valueDefault = 0;
             section->items = { slider };
             _rootItem->items.push_back(section);
         }
@@ -638,11 +678,17 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider1->name = @"Amount";
             slider1->modelGetter = _GetterCreate(self, _Get_localContrastAmount);
             slider1->modelSetter = _SetterCreate(self, _Set_localContrastAmount);
+            slider1->valueMin = -1;
+            slider1->valueMax = +1;
+            slider1->valueDefault = 0;
             
             SliderWithLabel* slider2 = [self _createItemWithClass:[SliderWithLabel class]];
             slider2->name = @"Radius";
             slider2->modelGetter = _GetterCreate(self, _Get_localContrastRadius);
             slider2->modelSetter = _SetterCreate(self, _Set_localContrastRadius);
+            slider2->valueMin = -1;
+            slider2->valueMax = +1;
+            slider2->valueDefault = 0;
             
             section->items = { slider1, slider2 };
             _rootItem->items.push_back(section);
@@ -682,12 +728,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
                 section->items.push_back(checkbox);
             }
             
-//            {
-//                Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-//                spacer->height = 4;
-//                section->items.push_back(spacer);
-//            }
-            
             {
                 Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
                 checkbox->name = @"Reconstruct highlights";
@@ -695,12 +735,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
                 checkbox->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
                 section->items.push_back(checkbox);
             }
-            
-//            {
-//                Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-//                spacer->height = 4;
-//                section->items.push_back(spacer);
-//            }
             
             {
                 Timestamp* timestamp = [self _createItemWithClass:[Timestamp class]];
@@ -714,49 +748,11 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             _rootItem->items.push_back(section);
         }
         
-//        {
-//            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-//            spacer->height = SpacerSize;
-//            _rootItem->items.push_back(spacer);
-//        }
-//        
-//        
-//        {
-//            Section* section = [self _createItemWithClass:[Section class]];
-//            section->name = @"Timestamp";
-//            section->items = { [self _createItemWithClass:[Timestamp class]] };
-//            _rootItem->items.push_back(section);
-//        }
-        
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
             spacer->height = SpacerSize;
             _rootItem->items.push_back(spacer);
         }
-        
-        
-        
-//        Spacer* spacer2 = [self _createItemWithClass:[Spacer class]];
-//        spacer2->height = 10;
-        
-//        Slider* slider = [self _createItemWithClass:[Slider class]];
-        
-//        _librariesSection = [self _createItemWithClass:[Section class]];
-//        _librariesSection->name = @"Libraries";
-        
-    //    Device* device = [self _createItemWithClass:[Device class]];
-    //    device->name = @"MDC Device 123456";
-    //    _devicesSection->items.push_back(device);
-        
-//        Library* library = [self _createItemWithClass:[Library class]];
-//        library->name = @"New Library";
-//        _librariesSection->items.push_back(library);
-        
-//        _outlineItems = {
-//            spacer1,
-//            section,
-//            spacer2
-//        };
     }
     
     [_outlineView reloadData];
