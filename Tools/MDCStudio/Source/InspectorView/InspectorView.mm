@@ -46,7 +46,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 @implementation InspectorView_Item {
 @private
     IBOutlet NSLayoutConstraint* _indent;
-    IBOutlet NSLayoutConstraint* _height;
 @public
     _ModelGetter modelGetter;
     _ModelSetter modelSetter;
@@ -54,12 +53,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 }
 
 - (NSString*)name { return @""; }
-- (CGFloat)height { return 20; }
 - (CGFloat)indent { return 12; }
 
 - (void)updateView {
     [_indent setConstant:[self indent]];
-    [_height setConstant:[self height]];
     [[self textField] setStringValue:[self name]];
 }
 
@@ -86,7 +83,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 }
 
 - (NSString*)name { return [name uppercaseString]; }
-- (CGFloat)height { return 20; }
 
 - (void)updateView {
     [super updateView];
@@ -101,10 +97,17 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 @end
 
 @implementation InspectorView_Spacer {
+@private
+    IBOutlet NSLayoutConstraint* _height;
 @public
     CGFloat height;
 }
-- (CGFloat)height { return height; }
+
+- (void)updateView {
+    [super updateView];
+    [_height setConstant:height];
+}
+
 @end
 
 
@@ -121,6 +124,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     IBOutlet NSButton* _buttonMin;
     IBOutlet NSButton* _buttonMax;
     IBOutlet NSSlider* _slider;
+    IBOutlet NSTextField* _numberField;
 @public
     NSString* icon;
 }
@@ -131,9 +135,15 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     [_buttonMax setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Max", icon]]];
     
     const _ModelData data = modelGetter(self);
+    [self _updateSlider:data];
+    [self _updateNumberField:data];
+}
+
+- (void)_updateSlider:(const _ModelData&)data {
     switch (data.type) {
     case _ModelData::Type::Normal:
         [_slider setObjectValue:data.data];
+        [_numberField setObjectValue:data.data];
         break;
     case _ModelData::Type::Mixed:
         [_slider setObjectValue:@(0)];
@@ -141,8 +151,30 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     }
 }
 
-- (IBAction)updateModel:(id)sender {
-    modelSetter(self, [_slider objectValue]);
+- (void)_updateNumberField:(const _ModelData&)data {
+    switch (data.type) {
+    case _ModelData::Type::Normal:
+        [_numberField setObjectValue:data.data];
+        [_numberField setPlaceholderString:nil];
+        break;
+    case _ModelData::Type::Mixed:
+        [_numberField setObjectValue:nil];
+        [_numberField setPlaceholderString:@"multiple"];
+        break;
+    }
+}
+
+- (IBAction)sliderAction:(id)sender {
+    id val = [_slider objectValue];
+    modelSetter(self, val);
+    [self _updateNumberField:{.data = val}];
+}
+
+- (IBAction)numberFieldAction:(id)sender {
+//    [[_numberField formatter] objectValue];
+    id val = [_numberField objectValue];
+    modelSetter(self, val);
+    [self _updateSlider:{.data = val}];
 }
 
 @end
@@ -1121,11 +1153,11 @@ static void _UpdateView(Item* it) {
 
 @implementation InspectorOutlineView
 
-- (BOOL)acceptsFirstResponder {
-    // Don't accept first responder status so that the center view of the 3-part-view
-    // remains the first responder when clicking on the inspector.
-    return false;
-}
+//- (BOOL)acceptsFirstResponder {
+//    // Don't accept first responder status so that the center view of the 3-part-view
+//    // remains the first responder when clicking on the inspector.
+//    return false;
+//}
 
 - (BOOL)validateProposedFirstResponder:(NSResponder*)responder forEvent:(NSEvent*)event {
     // Allow labels in our outline view to be selected
