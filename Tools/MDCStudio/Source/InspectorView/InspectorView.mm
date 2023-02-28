@@ -84,8 +84,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     std::vector<InspectorView_Item*> items;
 }
 
-- (CGFloat)indent { return 0; }
-
 - (NSString*)name { return [name uppercaseString]; }
 
 - (void)updateView {
