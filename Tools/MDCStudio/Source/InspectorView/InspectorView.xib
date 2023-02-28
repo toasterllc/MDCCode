@@ -19,9 +19,9 @@
             <rect key="frame" x="0.0" y="0.0" width="250" height="400"/>
             <subviews>
                 <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="h6k-Bl-ryl">
-                    <rect key="frame" x="57" y="186" width="137" height="28"/>
+                    <rect key="frame" x="70" y="190" width="110" height="21"/>
                     <textFieldCell key="cell" alignment="center" title="No Selection" id="7cC-rY-jvg">
-                        <font key="font" metaFont="systemLight" size="24"/>
+                        <font key="font" metaFont="systemLight" size="18"/>
                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -149,7 +149,7 @@
                                                     <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
                                                         <rect key="frame" x="-2" y="3" width="33" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" title="Label" id="v9N-Nx-KcH">
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="label" size="11"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -185,7 +185,7 @@
                                                         <rect key="frame" x="-3" y="1" width="240" height="18"/>
                                                         <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingTail" state="on" allowsMixedState="YES" inset="2" id="acZ-s2-rX2" customClass="InspectorCheckboxCell">
                                                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="label" size="11"/>
                                                         </buttonCell>
                                                         <connections>
                                                             <action selector="updateModel:" target="EwO-sD-ijl" id="RI8-t2-HWG"/>
@@ -212,7 +212,7 @@
                                                         <rect key="frame" x="-3" y="-2" width="241" height="22"/>
                                                         <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" allowsMixedState="YES" imageScaling="proportionallyDown" inset="2" selectedItem="Y5b-qt-FR1" id="D89-oK-seX">
                                                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="label" size="11"/>
                                                             <menu key="menu" id="Bvc-nQ-9xm">
                                                                 <items>
                                                                     <menuItem title="Item 1" state="on" id="Y5b-qt-FR1"/>
@@ -243,7 +243,7 @@
                                                         <rect key="frame" x="-3" y="1" width="81" height="18"/>
                                                         <buttonCell key="cell" type="check" title="Timestamp" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingTail" state="on" allowsMixedState="YES" inset="2" id="4WS-8D-meS" customClass="InspectorCheckboxCell">
                                                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="label" size="11"/>
                                                         </buttonCell>
                                                         <connections>
                                                             <action selector="updateModel:" target="ZXZ-qK-hhw" id="GjM-uJ-PHH"/>
@@ -311,7 +311,7 @@
                                                     <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0kZ-EE-8AJ">
                                                         <rect key="frame" x="-2" y="3" width="42" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" alignment="right" title="Label" id="UyD-hX-cXp">
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="label" size="11"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -319,7 +319,7 @@
                                                     <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="dea-aE-rs7">
                                                         <rect key="frame" x="48" y="3" width="33" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" selectable="YES" title="Label" id="Eyq-II-qyb">
-                                                            <font key="font" metaFont="controlContent" size="11"/>
+                                                            <font key="font" metaFont="label" size="11"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
