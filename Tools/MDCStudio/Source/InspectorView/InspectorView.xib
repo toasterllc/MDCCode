@@ -316,7 +316,7 @@
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                         <connections>
-                                                            <action selector="updateModel:" target="ZXZ-qK-hhw" id="ssT-YQ-tW1"/>
+                                                            <action selector="cornerButtonAction:" target="ZXZ-qK-hhw" id="sBD-0e-H9O"/>
                                                         </connections>
                                                     </button>
                                                 </subviews>

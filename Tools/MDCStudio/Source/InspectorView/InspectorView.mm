@@ -57,12 +57,12 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 - (NSString*)name { return @""; }
 - (CGFloat)indent { return 16; }
-- (bool)modified { return false; }
 
-- (void)updateView {
+- (bool)updateView {
     [_indentLeft setConstant:[self indent]];
     [_indentRight setConstant:[self indent]];
     [[self textField] setStringValue:[self name]];
+    return false;
 }
 
 //- (void)updateModel {
@@ -91,16 +91,13 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 - (NSString*)name { return [name uppercaseString]; }
 
-- (void)updateView {
-    [super updateView];
-    
-    bool modified = false;
+- (bool)updateView {
+    bool modified = [super updateView];
     for (InspectorView_Item* it : items) {
-        [it updateView];
-        modified |= [it modified];
+        modified |= [it updateView];
     }
-    
     [_clearButton setHidden:!modified];
+    return modified;
 }
 
 - (IBAction)clear:(id)sender {
@@ -119,9 +116,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     CGFloat height;
 }
 
-- (void)updateView {
-    [super updateView];
+- (bool)updateView {
+    const bool modified = [super updateView];
     [_height setConstant:height];
+    return modified;
 }
 
 @end
@@ -145,8 +143,8 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     float valueDefault;
 }
 
-- (void)updateView {
-    [super updateView];
+- (bool)updateView {
+    bool modified = [super updateView];
     
     [_slider setMinValue:valueMin];
     [_slider setMaxValue:valueMax];
@@ -158,22 +156,21 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     
     switch (data.type) {
     case _ModelData::Type::Normal:
+        modified |= ![data.data isEqual:@(valueDefault)];
         [_slider setObjectValue:data.data];
         [_numberField setObjectValue:data.data];
         [_numberField setPlaceholderString:nil];
-        [_numberField setHidden:[data.data isEqual:@(valueDefault)]];
+        [_numberField setHidden:!modified];
         break;
     case _ModelData::Type::Mixed:
+        modified = true;
         [_slider setObjectValue:@(0)];
         [_numberField setObjectValue:nil];
         [_numberField setPlaceholderString:@"multiple"];
         [_numberField setHidden:false];
         break;
     }
-}
-
-- (bool)modified {
-    return ![[_slider objectValue] isEqual:@(valueDefault)];
+    return modified;
 }
 
 //- (void)_updateSlider:(const _ModelData&)data {
@@ -244,10 +241,11 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     NSString* icon;
 }
 
-- (void)updateView {
-    [super updateView];
+- (bool)updateView {
+    const bool modified = [super updateView];
     [_buttonMin setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Min", icon]]];
     [_buttonMax setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Max", icon]]];
+    return modified;
 }
 
 @end
@@ -268,9 +266,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 }
 - (NSString*)name { return name; }
 
-- (void)updateView {
-    [super updateView];
+- (bool)updateView {
+    const bool modified = [super updateView];
     [_label setStringValue:name];
+    return modified;
 }
 
 @end
@@ -284,7 +283,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 @end
 
 @implementation InspectorView_Checkbox {
-@private
+@protected
     IBOutlet NSButton* _checkbox;
 @public
     NSString* name;
@@ -293,23 +292,22 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 - (NSString*)name { return name; }
 
-- (void)updateView {
-    [super updateView];
+- (bool)updateView {
+    bool modified = [super updateView];
     [_checkbox setTitle:name];
     
     const _ModelData data = modelGetter(self);
     switch (data.type) {
     case _ModelData::Type::Normal:
+        modified |= ((bool)[data.data boolValue] != valueDefault);
         [_checkbox setState:([data.data boolValue] ? NSControlStateValueOn : NSControlStateValueOff)];
         break;
     case _ModelData::Type::Mixed:
+        modified = true;
         [_checkbox setState:NSControlStateValueMixed];
         break;
     }
-}
-
-- (bool)modified {
-    return ![[_checkbox objectValue] isEqual:@(valueDefault)];
+    return modified;
 }
 
 - (IBAction)checkboxAction:(id)sender {
@@ -335,28 +333,30 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 
 
-@interface InspectorView_Timestamp : InspectorView_Item
+@interface InspectorView_Timestamp : InspectorView_Checkbox
 @end
 
 @implementation InspectorView_Timestamp {
 @private
-    IBOutlet NSButton* _checkbox;
     IBOutlet ImageCornerButton* _cornerButton;
 @public
+    ImageCornerButtonTypes::Corner cornerValueDefault;
     _ModelGetter cornerModelGetter;
     _ModelSetter cornerModelSetter;
 }
 
-- (void)updateView {
-    [super updateView];
+- (bool)updateView {
+    bool modified = [super updateView];
     
     {
         const _ModelData data = modelGetter(self);
         switch (data.type) {
         case _ModelData::Type::Normal:
+            modified |= ((bool)[data.data boolValue] != valueDefault);
             [_checkbox setState:([data.data boolValue] ? NSControlStateValueOn : NSControlStateValueOff)];
             break;
         case _ModelData::Type::Mixed:
+            modified = true;
             [_checkbox setState:NSControlStateValueMixed];
             break;
         }
@@ -366,17 +366,24 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
         const _ModelData data = cornerModelGetter(self);
         switch (data.type) {
         case _ModelData::Type::Normal:
+            modified |= ((ImageCornerButtonTypes::Corner)[data.data intValue] != cornerValueDefault);
             [_cornerButton setCorner:(ImageCornerButtonTypes::Corner)[data.data intValue]];
             break;
         case _ModelData::Type::Mixed:
+            modified = true;
             [_cornerButton setCorner:ImageCornerButtonTypes::Corner::Mixed];
             break;
         }
     }
+    return modified;
 }
 
 - (IBAction)checkboxAction:(id)sender {
     modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
+    [section updateView];
+}
+
+- (IBAction)cornerButtonAction:(id)sender {
     cornerModelSetter(self, @((int)[_cornerButton corner]));
     [section updateView];
 }
@@ -396,7 +403,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     NSString* icon;
 }
 
-//- (void)updateView {
+//- (bool)updateView {
 //    [super updateView];
 //    [_button setImage:[NSImage imageNamed:icon]];
 //}
@@ -424,8 +431,8 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     CGFloat valueIndent;
 }
 
-- (void)updateView {
-    [super updateView];
+- (bool)updateView {
+    const bool modified = [super updateView];
     [_nameLabel setStringValue:name];
     
     const _ModelData data = modelGetter(self);
@@ -442,6 +449,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 //    [_valueLabel setBackgroundColor:[NSColor redColor]];
     
     [_valueIndentConstraint setConstant:valueIndent];
+    return modified;
 }
 
 @end
@@ -812,6 +820,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             
             {
                 Timestamp* timestamp = [self _createItemWithClass:[Timestamp class]];
+                timestamp->name = @"Timestamp";
                 timestamp->modelGetter = _GetterCreate(self, _Get_timestampShow);
                 timestamp->modelSetter = _SetterCreate(self, _Set_timestampShow);
                 timestamp->cornerModelGetter = _GetterCreate(self, _Get_timestampCorner);
