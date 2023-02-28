@@ -545,7 +545,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Image ID";
-                stat->valueIndent = 110;
+                stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_id);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
@@ -554,7 +554,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Timestamp";
-                stat->valueIndent = 110;
+                stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_timestamp);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
@@ -563,7 +563,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Integration Time";
-                stat->valueIndent = 110;
+                stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_integrationTime);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
@@ -572,7 +572,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             {
                 Stat* stat = [self _createItemWithClass:[Stat class]];
                 stat->name = @"Analog Gain";
-                stat->valueIndent = 110;
+                stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_analogGain);
                 stat->darkBackground = true;
                 section->items.push_back(stat);
