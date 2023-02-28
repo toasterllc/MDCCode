@@ -397,13 +397,14 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     switch (data.type) {
     case _ModelData::Type::Normal:
         [_valueLabel setObjectValue:data.data];
-        [_valueLabel setTextColor:[NSColor labelColor]];
+//        [_valueLabel setTextColor:[NSColor secondaryLabelColor]];
         break;
     case _ModelData::Type::Mixed:
         [_valueLabel setObjectValue:@"multiple"];
-        [_valueLabel setTextColor:[NSColor placeholderTextColor]];
+//        [_valueLabel setTextColor:[NSColor placeholderTextColor]];
         break;
     }
+//    [_valueLabel setBackgroundColor:[NSColor redColor]];
     
     [_valueIndentConstraint setConstant:valueIndent];
 }
@@ -420,13 +421,42 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 @implementation InspectorView_DarkRowView
 
-- (NSBackgroundStyle)interiorBackgroundStyle {
-    return NSBackgroundStyleEmphasized;
-}
+//- (NSTableViewSelectionHighlightStyle)selectionHighlightStyle {
+//    return NSTableViewSelectionHighlightStyleSourceList;
+//}
+
+//- (BOOL)isEmphasized {
+//    return true;
+//}
+
+//- (BOOL)groupRowStyle {
+//    return true;
+//}
+
+//- (BOOL)selected {
+//    return false;
+//}
+
+//- (NSBackgroundStyle)interiorBackgroundStyle {
+//    return NSBackgroundStyleEmphasized;
+//}
 
 - (NSColor*)backgroundColor {
+//    return [NSColor blackColor];
     return [[NSColor blackColor] colorWithAlphaComponent:.25];
 }
+
+- (BOOL)isOpaque {
+    return true;
+}
+
+
+
+
+
+
+
+
 
 @end
 
@@ -498,7 +528,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     
     // Create NSOutlineView items
     {
-        static constexpr CGFloat SpacerSize = 0;
+        static constexpr CGFloat SpacerSize = 8;
         _rootItem = [self _createItemWithClass:[Section class]];
         _rootItem->name = @"";
         
@@ -550,7 +580,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             
             {
                 Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-                spacer->height = 10;
+                spacer->height = SpacerSize;
                 spacer->darkBackground = true;
                 section->items.push_back(spacer);
             }
@@ -560,7 +590,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = 10;
+            spacer->height = SpacerSize;
             _rootItem->items.push_back(spacer);
         }
         
@@ -660,13 +690,17 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
         
         {
             Spacer* spacer = [self _createItemWithClass:[Spacer class]];
-            spacer->height = SpacerSize;
+            spacer->height = SpacerSize*2;
             _rootItem->items.push_back(spacer);
         }
         
         {
             Section* section = [self _createItemWithClass:[Section class]];
-            section->name = @"Local Constrast";
+            section->name = @"Local Contrast";
+            
+            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            spacer->height = SpacerSize/3;
+            section->items.push_back(spacer);
             
             SliderWithLabel* slider1 = [self _createItemWithClass:[SliderWithLabel class]];
             slider1->name = @"Amount";
@@ -675,6 +709,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider1->valueMin = -1;
             slider1->valueMax = +1;
             slider1->valueDefault = 0;
+            section->items.push_back(slider1);
             
             SliderWithLabel* slider2 = [self _createItemWithClass:[SliderWithLabel class]];
             slider2->name = @"Radius";
@@ -683,8 +718,8 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             slider2->valueMin = -1;
             slider2->valueMax = +1;
             slider2->valueDefault = 0;
+            section->items.push_back(slider2);
             
-            section->items = { slider1, slider2 };
             _rootItem->items.push_back(section);
         }
         

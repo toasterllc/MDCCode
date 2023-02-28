@@ -280,9 +280,9 @@
 		55425B1C29A02F6500F25D57 /* InspectorView */ = {
 			isa = PBXGroup;
 			children = (
-				55425B2529A0752300F25D57 /* InspectorView.xib */,
 				55425B2329A02F7D00F25D57 /* InspectorView.h */,
 				55425B2229A02F7D00F25D57 /* InspectorView.mm */,
+				55425B2529A0752300F25D57 /* InspectorView.xib */,
 			);
 			path = InspectorView;
 			sourceTree = "<group>";
