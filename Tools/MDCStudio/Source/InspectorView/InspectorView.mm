@@ -124,6 +124,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 @private
     IBOutlet NSSlider* _slider;
     IBOutlet NSTextField* _numberField;
+    IBOutlet NSNumberFormatter* _numberFormatter;
 @public
     float valueMin;
     float valueMax;
@@ -135,6 +136,9 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     
     [_slider setMinValue:valueMin];
     [_slider setMaxValue:valueMax];
+    
+    [_numberFormatter setMinimum:@(valueMin)];
+    [_numberFormatter setMaximum:@(valueMax)];
     
     const _ModelData data = modelGetter(self);
     
@@ -188,7 +192,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 - (IBAction)numberFieldAction:(id)sender {
     const id val = [_numberField objectValue];
-    modelSetter(self, val);
+    // Don't set nil values, since they represent an empty text field
+    if (val) {
+        modelSetter(self, val);
+    }
     [self updateView];
 }
 
