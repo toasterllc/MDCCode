@@ -157,7 +157,6 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     [_numberFormatter setMaximum:@(valueMax)];
     
     const _ModelData data = modelGetter(self);
-    
     switch (data.type) {
     case _ModelData::Type::Normal:
         modified |= ![data.data isEqual:@(valueDefault)];
@@ -254,6 +253,28 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     [_buttonMin setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Min", icon]]];
     [_buttonMax setImage:[NSImage imageNamed:[NSString stringWithFormat:@"%@-Max", icon]]];
     return modified;
+}
+
+- (void)_buttonAction:(int)delta {
+    const int StepCount = 40;
+    const float interval = (valueMax-valueMin)/StepCount;
+    const float factor = 1/interval;
+    const _ModelData data = modelGetter(self);
+    
+    float value = (data.type==_ModelData::Type::Normal ? [data.data floatValue] : valueDefault);
+    if (delta > 0) value = std::min(valueMax, std::ceil(((value*factor)+interval))/factor);
+    else           value = std::max(valueMin, std::floor(((value*factor)-interval))/factor);
+    
+    modelSetter(self, @(value));
+    [section updateView];
+}
+
+- (IBAction)_buttonMinAction:(id)sender {
+    [self _buttonAction:-1];
+}
+
+- (IBAction)_buttonMaxAction:(id)sender {
+    [self _buttonAction:+1];
 }
 
 @end
