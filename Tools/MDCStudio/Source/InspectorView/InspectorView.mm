@@ -51,6 +51,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     _ModelGetter modelGetter;
     _ModelSetter modelSetter;
     bool darkBackground;
+    __weak InspectorView_Section* section;
 }
 
 - (NSString*)name { return @""; }
@@ -80,6 +81,8 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 @end
 
 @implementation InspectorView_Section {
+@private
+    IBOutlet NSButton* _clearButton;
 @public
     NSString* name;
     std::vector<InspectorView_Item*> items;
@@ -93,8 +96,14 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     bool modified = false;
     for (InspectorView_Item* it : items) {
         [it updateView];
-        [it modified];
+        modified |= [it modified];
     }
+    
+    [_clearButton setHidden:modified];
+}
+
+- (IBAction)clear:(id)sender {
+    NSLog(@"clear:");
 }
 
 @end
@@ -1056,19 +1065,23 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
     // Short-circuit if this notification is due to our own changes
     if (_notifying) return;
     if (ImageSetsOverlap(_selection, images)) {
-        _UpdateView(_rootItem);
+        _Update(_rootItem);
     }
 }
 
 // MARK: - Methods
 
-static void _UpdateView(Item* it) {
-    [it updateView];
+static void _Update(Item* it) {
     if (auto section = CastOrNil<Section>(it)) {
-        for (auto it : section->items) {
-            _UpdateView(it);
-        }
+        [section updateView];
     }
+    
+//    [it updateView];
+//    if (auto section = CastOrNil<Section>(it)) {
+//        for (auto it : section->items) {
+//            _UpdateView(it);
+//        }
+//    }
 }
 
 - (void)setSelection:(ImageSet)selection {
@@ -1076,7 +1089,7 @@ static void _UpdateView(Item* it) {
     [_outlineContainerView setHidden:_selection.empty()];
     [_noSelectionLabel setHidden:!_selection.empty()];
     
-    _UpdateView(_rootItem);
+    _Update(_rootItem);
 }
 
 // MARK: - Private Methods
