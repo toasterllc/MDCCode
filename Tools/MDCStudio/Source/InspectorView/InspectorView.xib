@@ -69,36 +69,36 @@
                                                 <rect key="frame" x="1" y="42" width="247" height="20"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <subviews>
-                                                    <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="aQl-zt-mX6">
-                                                        <rect key="frame" x="0.0" y="3" width="82" height="14"/>
-                                                        <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" sendsActionOnEndEditing="YES" title="HEADER CELL" drawsBackground="YES" id="h9x-xw-FdW">
-                                                            <font key="font" metaFont="smallSystemBold"/>
-                                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                                            <color key="backgroundColor" red="0.11764705882352941" green="0.11764705882352941" blue="0.11764705882352941" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
-                                                        </textFieldCell>
-                                                    </textField>
                                                     <button translatesAutoresizingMaskIntoConstraints="NO" id="vMA-td-fix">
-                                                        <rect key="frame" x="84" y="4" width="12" height="12"/>
+                                                        <rect key="frame" x="0.0" y="4" width="18" height="12"/>
                                                         <constraints>
                                                             <constraint firstAttribute="height" constant="12" id="hka-Pd-Jbf"/>
-                                                            <constraint firstAttribute="width" constant="12" id="ydO-66-6Ms"/>
+                                                            <constraint firstAttribute="width" constant="18" id="ydO-66-6Ms"/>
                                                         </constraints>
                                                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="Inspector-Clear" imagePosition="only" alignment="center" inset="2" id="tKp-6k-2I7">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
+                                                    <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="aQl-zt-mX6">
+                                                        <rect key="frame" x="18" y="3" width="82" height="14"/>
+                                                        <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" sendsActionOnEndEditing="YES" title="HEADER CELL" drawsBackground="YES" id="h9x-xw-FdW">
+                                                            <font key="font" metaFont="smallSystemBold"/>
+                                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                            <color key="backgroundColor" red="0.11764705882352941" green="0.11764705882352941" blue="0.11764705882352941" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
+                                                        </textFieldCell>
+                                                    </textField>
                                                 </subviews>
                                                 <constraints>
                                                     <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="aQl-zt-mX6" secondAttribute="trailing" constant="12" id="02y-Po-7Km"/>
-                                                    <constraint firstItem="vMA-td-fix" firstAttribute="leading" secondItem="aQl-zt-mX6" secondAttribute="trailing" constant="2" id="27y-Q3-Jgf"/>
+                                                    <constraint firstItem="aQl-zt-mX6" firstAttribute="leading" secondItem="vMA-td-fix" secondAttribute="trailing" id="5sj-VH-Feg"/>
                                                     <constraint firstItem="vMA-td-fix" firstAttribute="centerY" secondItem="aQl-zt-mX6" secondAttribute="centerY" id="M7W-Et-Rjb"/>
                                                     <constraint firstItem="aQl-zt-mX6" firstAttribute="centerY" secondItem="PcM-y8-dqV" secondAttribute="centerY" id="ZNS-yf-Y6w"/>
                                                     <constraint firstAttribute="height" constant="20" id="wW1-wV-K3h"/>
-                                                    <constraint firstItem="aQl-zt-mX6" firstAttribute="leading" secondItem="PcM-y8-dqV" secondAttribute="leading" id="xfx-sC-a2v"/>
+                                                    <constraint firstItem="vMA-td-fix" firstAttribute="leading" secondItem="PcM-y8-dqV" secondAttribute="leading" id="ycB-rx-90y"/>
                                                 </constraints>
                                                 <connections>
-                                                    <outlet property="_indentLeft" destination="xfx-sC-a2v" id="8mq-E2-HUG"/>
+                                                    <outlet property="_indentLeft" destination="ycB-rx-90y" id="u9N-4G-MXK"/>
                                                     <outlet property="_indentRight" destination="02y-Po-7Km" id="YMN-lL-3gT"/>
                                                     <outlet property="textField" destination="aQl-zt-mX6" id="94H-o3-xPX"/>
                                                 </connections>
@@ -143,7 +143,7 @@
                                                         </constraints>
                                                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" alignment="center" title="1.23" id="QYU-GF-Fdw">
                                                             <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="jKh-VJ-c2m"/>
-                                                            <font key="font" metaFont="menu" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -181,7 +181,7 @@
                                                     <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2Wk-Za-sn6">
                                                         <rect key="frame" x="-2" y="21" width="33" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" title="Label" id="v9N-Nx-KcH">
-                                                            <font key="font" metaFont="menu" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -200,7 +200,7 @@
                                                         </constraints>
                                                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" alignment="center" title="1.23" id="GMl-Bs-UXJ">
                                                             <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="Ngk-4Y-T6C"/>
-                                                            <font key="font" metaFont="menu" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
@@ -237,7 +237,7 @@
                                                         <rect key="frame" x="-3" y="1" width="56" height="18"/>
                                                         <buttonCell key="cell" type="check" title="Check" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingTail" state="on" allowsMixedState="YES" inset="2" id="acZ-s2-rX2" customClass="InspectorCheckboxCell">
                                                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                            <font key="font" metaFont="menu" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                         </buttonCell>
                                                         <connections>
                                                             <action selector="updateModel:" target="EwO-sD-ijl" id="RI8-t2-HWG"/>
@@ -264,7 +264,7 @@
                                                         <rect key="frame" x="-3" y="-2" width="241" height="22"/>
                                                         <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" allowsMixedState="YES" imageScaling="proportionallyDown" inset="2" selectedItem="Y5b-qt-FR1" id="D89-oK-seX">
                                                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                            <font key="font" metaFont="menu" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <menu key="menu" id="Bvc-nQ-9xm">
                                                                 <items>
                                                                     <menuItem title="Item 1" state="on" id="Y5b-qt-FR1"/>
@@ -295,7 +295,7 @@
                                                         <rect key="frame" x="-3" y="1" width="81" height="18"/>
                                                         <buttonCell key="cell" type="check" title="Timestamp" bezelStyle="regularSquare" imagePosition="left" controlSize="small" lineBreakMode="truncatingTail" state="on" allowsMixedState="YES" inset="2" id="4WS-8D-meS" customClass="InspectorCheckboxCell">
                                                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                            <font key="font" metaFont="menu" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                         </buttonCell>
                                                         <connections>
                                                             <action selector="updateModel:" target="ZXZ-qK-hhw" id="GjM-uJ-PHH"/>
@@ -363,7 +363,7 @@
                                                     <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0kZ-EE-8AJ">
                                                         <rect key="frame" x="0.0" y="3" width="38" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" selectable="YES" alignment="right" title="Label" drawsBackground="YES" id="UyD-hX-cXp">
-                                                            <font key="font" metaFont="menu" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" red="0.11764705882352941" green="0.11764705882352941" blue="0.11764705882352941" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                                                         </textFieldCell>
@@ -371,7 +371,7 @@
                                                     <textField horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="dea-aE-rs7">
                                                         <rect key="frame" x="50" y="3" width="33" height="14"/>
                                                         <textFieldCell key="cell" controlSize="small" selectable="YES" title="Label" drawsBackground="YES" id="Eyq-II-qyb">
-                                                            <font key="font" metaFont="menu" size="11"/>
+                                                            <font key="font" metaFont="message" size="11"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" red="0.11764705882352941" green="0.11764705882352941" blue="0.11764705882352941" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                                                         </textFieldCell>
