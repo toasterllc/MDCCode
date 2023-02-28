@@ -240,7 +240,7 @@
                                                             <font key="font" metaFont="menu" size="11"/>
                                                         </buttonCell>
                                                         <connections>
-                                                            <action selector="updateModel:" target="EwO-sD-ijl" id="RI8-t2-HWG"/>
+                                                            <action selector="checkboxAction:" target="EwO-sD-ijl" id="75B-t0-3vz"/>
                                                         </connections>
                                                     </button>
                                                 </subviews>
@@ -298,7 +298,7 @@
                                                             <font key="font" metaFont="menu" size="11"/>
                                                         </buttonCell>
                                                         <connections>
-                                                            <action selector="updateModel:" target="ZXZ-qK-hhw" id="GjM-uJ-PHH"/>
+                                                            <action selector="checkboxAction:" target="ZXZ-qK-hhw" id="xTu-AQ-tTb"/>
                                                         </connections>
                                                     </button>
                                                     <button translatesAutoresizingMaskIntoConstraints="NO" id="hlR-S1-aEk" customClass="ImageCornerButton">
@@ -342,7 +342,7 @@
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                         <connections>
-                                                            <action selector="updateModel:" target="QyM-zH-3HC" id="DND-NP-MZq"/>
+                                                            <action selector="buttonAction:" target="QyM-zH-3HC" id="chE-Sn-w3d"/>
                                                         </connections>
                                                     </button>
                                                 </subviews>

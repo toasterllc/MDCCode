@@ -289,7 +289,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     }
 }
 
-- (IBAction)updateModel:(id)sender {
+- (IBAction)checkboxAction:(id)sender {
     modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
 }
 
@@ -351,7 +351,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     }
 }
 
-- (IBAction)updateModel:(id)sender {
+- (IBAction)checkboxAction:(id)sender {
     modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
     cornerModelSetter(self, @((int)[_cornerButton corner]));
 }
@@ -376,7 +376,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 //    [_button setImage:[NSImage imageNamed:icon]];
 //}
 
-- (IBAction)updateModel:(id)sender {
+- (IBAction)buttonAction:(id)sender {
     modelSetter(self, nil);
 }
 
