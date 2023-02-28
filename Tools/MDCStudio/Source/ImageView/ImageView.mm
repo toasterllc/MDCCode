@@ -104,6 +104,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 - (void)display {
     using namespace MDCTools;
     using namespace MDCTools::ImagePipeline;
+    using namespace Toastbox;
     
     [super display];
     
@@ -220,15 +221,19 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     // If we don't have the thumbnail texture yet, create it
     if (!_thumbTxt || dirty) {
         #warning TODO: try removing the Write usage flag
-        _thumbTxt = renderer.textureCreate(MTLPixelFormatBGRA8Unorm, [drawableTxt width], [drawableTxt height],
+        _thumbTxt = renderer.textureCreate(MTLPixelFormatBGRA8Unorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
             MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
         
-        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeManaged;
-        id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytes:_imageRecord->thumb.data length:sizeof(_imageRecord->thumb.data) options:BufOpts];
+        const ImageLibrary::Chunk& chunk = *_imageRecord.chunk;
+        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
+        id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data()
+            length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+        const size_t thumbDataOff = (uintptr_t)&_imageRecord->thumb - (uintptr_t)chunk.mmap.data();
+        
         const RenderThumb::Options thumbOpts = {
             .thumbWidth = ImageThumb::ThumbWidth,
             .thumbHeight = ImageThumb::ThumbHeight,
-            .dataOff = 0,
+            .dataOff = thumbDataOff,
         };
         RenderThumb::TextureFromRGB3(renderer, thumbOpts, thumbBuf, _thumbTxt);
     }

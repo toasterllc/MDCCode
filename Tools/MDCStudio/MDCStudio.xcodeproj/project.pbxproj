@@ -78,6 +78,7 @@
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
 		551328B827B45D7C00CD823B /* ImageGridView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageGridView.mm; sourceTree = "<group>"; };
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
+		552F4BB429AD7ECE000CEAB2 /* ImageRender.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageRender.h; sourceTree = "<group>"; };
 		553031F827BC45A100BEFFEA /* Selection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Selection.png; sourceTree = "<group>"; };
 		553031F927BC45A100BEFFEA /* Outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Outline.png; sourceTree = "<group>"; };
 		553031FB27BC45A100BEFFEA /* Mask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Mask.png; sourceTree = "<group>"; };
@@ -488,6 +489,7 @@
 				55F8D03027BF9F8000757165 /* ImageCache.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				55F8D09227C2EE9D00757165 /* ImageSource.h */,
+				552F4BB429AD7ECE000CEAB2 /* ImageRender.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,
 				5562353A27B5086E0008074C /* Util.h */,

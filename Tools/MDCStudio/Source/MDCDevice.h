@@ -519,6 +519,7 @@ private:
     void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount, SD::Block block) {
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
+        using namespace Toastbox;
         
         // Reserve space for `imgCount` additional images
         {
@@ -532,7 +533,7 @@ private:
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
             // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
             const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
-            ImageRecord& imageThumb = **recordRefIter;
+            ImageRecord& rec = **recordRefIter;
             
             // Validate thumbnail checksum
             if (_ChecksumValid(imgData, Img::Size::Thumb)) {
@@ -544,23 +545,23 @@ private:
 //                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
             }
             
-            // Populate ImageThumb fields
+            // Populate ImageInfo fields
             {
-                imageThumb.info.id              = imgHeader.id;
-                imageThumb.info.addr            = block;
+                rec.info.id              = imgHeader.id;
+                rec.info.addr            = block;
                 
-                imageThumb.info.timestamp       = imgHeader.timestamp;
+                rec.info.timestamp       = imgHeader.timestamp;
                 
-                imageThumb.info.imageWidth      = imgHeader.imageWidth;
-                imageThumb.info.imageHeight     = imgHeader.imageHeight;
+                rec.info.imageWidth      = imgHeader.imageWidth;
+                rec.info.imageHeight     = imgHeader.imageHeight;
                 
-                imageThumb.info.coarseIntTime   = imgHeader.coarseIntTime;
-                imageThumb.info.analogGain      = imgHeader.analogGain;
+                rec.info.coarseIntTime   = imgHeader.coarseIntTime;
+                rec.info.analogGain      = imgHeader.analogGain;
                 
                 block += ImgSD::Full::ImageBlockCount;
             }
             
-            // Render the thumbnail into imageThumb.thumb
+            // Render the thumbnail into rec.thumb
             {
                 const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
                 
@@ -578,10 +579,10 @@ private:
                 };
                 
                 Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
-                const size_t thumbDataOff = (uintptr_t)&imageThumb.thumb - (uintptr_t)chunk.mmap.data();
+                const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
                 
                 constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-                id<MTLBuffer> buf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:chunk.mmap.len() options:BufOpts deallocator:nil];
+                id<MTLBuffer> buf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
                 
                 const RenderThumb::Options thumbOpts = {
                     .thumbWidth = ImageThumb::ThumbWidth,
@@ -592,9 +593,9 @@ private:
                 RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, buf);
                 
                 // Populate the illuminant
-                imageThumb.info.illumEst[0] = renderResult.illumEst[0];
-                imageThumb.info.illumEst[1] = renderResult.illumEst[1];
-                imageThumb.info.illumEst[2] = renderResult.illumEst[2];
+                rec.info.illumEst[0] = renderResult.illumEst[0];
+                rec.info.illumEst[1] = renderResult.illumEst[1];
+                rec.info.illumEst[2] = renderResult.illumEst[2];
             }
             
             deviceImgIdLast = imgHeader.id;
