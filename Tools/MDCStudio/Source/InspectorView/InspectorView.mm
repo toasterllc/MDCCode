@@ -17,10 +17,10 @@ struct _ModelData {
     id data = nil;
 };
 
-@class InspectorView_Item;
-@class InspectorView_Section;
-using _ModelGetter = _ModelData(^)(InspectorView_Item*);
-using _ModelSetter = void(^)(InspectorView_Item*, id);
+@class InspectorViewItem;
+@class InspectorViewItem_Section;
+using _ModelGetter = _ModelData(^)(InspectorViewItem*);
+using _ModelSetter = void(^)(InspectorViewItem*, id);
 
 @interface InspectorCheckboxCell : NSButtonCell
 @end
@@ -41,10 +41,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 // MARK: - Outline View Items
 
-@interface InspectorView_Item : NSTableCellView
+@interface InspectorViewItem : NSTableCellView
 @end
 
-@implementation InspectorView_Item {
+@implementation InspectorViewItem {
 @private
     IBOutlet NSLayoutConstraint* _indentLeft;
     IBOutlet NSLayoutConstraint* _indentRight;
@@ -52,7 +52,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     _ModelGetter modelGetter;
     _ModelSetter modelSetter;
     bool darkBackground;
-    __weak InspectorView_Section* section;
+    __weak InspectorViewItem_Section* section;
 }
 
 - (CGFloat)indent { return 16; }
@@ -78,21 +78,21 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 @end
 
-@interface InspectorView_Section : InspectorView_Item
+@interface InspectorViewItem_Section : InspectorViewItem
 @end
 
-@implementation InspectorView_Section {
+@implementation InspectorViewItem_Section {
 @private
     IBOutlet NSTextField* _label;
     IBOutlet NSButton* _clearButton;
 @public
     NSString* name;
-    std::vector<InspectorView_Item*> items;
+    std::vector<InspectorViewItem*> items;
 }
 
 - (bool)updateView {
     bool modified = [super updateView];
-    for (InspectorView_Item* it : items) {
+    for (InspectorViewItem* it : items) {
         modified |= [it updateView];
     }
     [_label setStringValue:[name uppercaseString]];
@@ -102,7 +102,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 }
 
 - (IBAction)clear:(id)sender {
-    for (InspectorView_Item* it : items) {
+    for (InspectorViewItem* it : items) {
         [it clear];
     }
     [self updateView];
@@ -110,10 +110,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 @end
 
-@interface InspectorView_Spacer : InspectorView_Item
+@interface InspectorViewItem_Spacer : InspectorViewItem
 @end
 
-@implementation InspectorView_Spacer {
+@implementation InspectorViewItem_Spacer {
 @private
     IBOutlet NSLayoutConstraint* _height;
 @public
@@ -133,7 +133,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 
 
-@interface InspectorView_Slider : InspectorView_Item
+@interface InspectorView_Slider : InspectorViewItem
 @end
 
 @implementation InspectorView_Slider {
@@ -238,10 +238,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 
 
-@interface InspectorView_SliderWithIcon : InspectorView_Slider
+@interface InspectorViewItem_SliderWithIcon : InspectorView_Slider
 @end
 
-@implementation InspectorView_SliderWithIcon {
+@implementation InspectorViewItem_SliderWithIcon {
 @private
     IBOutlet NSButton* _buttonMin;
     IBOutlet NSButton* _buttonMax;
@@ -263,10 +263,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 
 
-@interface InspectorView_SliderWithLabel : InspectorView_Slider
+@interface InspectorViewItem_SliderWithLabel : InspectorView_Slider
 @end
 
-@implementation InspectorView_SliderWithLabel {
+@implementation InspectorViewItem_SliderWithLabel {
 @private
     IBOutlet NSTextField* _label;
 @public
@@ -286,10 +286,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 
 
-@interface InspectorView_Checkbox : InspectorView_Item
+@interface InspectorViewItem_Checkbox : InspectorViewItem
 @end
 
-@implementation InspectorView_Checkbox {
+@implementation InspectorViewItem_Checkbox {
 @protected
     IBOutlet NSButton* _checkbox;
 @public
@@ -330,7 +330,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 
 
-@interface InspectorView_Menu : InspectorView_Item
+@interface InspectorView_Menu : InspectorViewItem
 @end
 
 @implementation InspectorView_Menu {
@@ -342,10 +342,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 
 
-@interface InspectorView_Timestamp : InspectorView_Checkbox
+@interface InspectorViewItem_Timestamp : InspectorViewItem_Checkbox
 @end
 
-@implementation InspectorView_Timestamp {
+@implementation InspectorViewItem_Timestamp {
 @private
     IBOutlet ImageCornerButton* _cornerButton;
 @public
@@ -407,10 +407,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 
 
-@interface InspectorView_Rotation : InspectorView_Item
+@interface InspectorViewItem_Rotation : InspectorViewItem
 @end
 
-@implementation InspectorView_Rotation {
+@implementation InspectorViewItem_Rotation {
 @private
     IBOutlet NSButton* _button;
 @public
@@ -418,12 +418,21 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 }
 
 static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta) {
+    using R = ImageOptions::Rotation;
     if (delta >= 0) {
-        if (x == ImageOptions::Rotation::Clockwise270) return ImageOptions::Rotation::Clockwise0;
-        return (ImageOptions::Rotation)((int)x+1);
+        switch (x) {
+        case R::Clockwise0:    return R::Clockwise90;
+        case R::Clockwise90:   return R::Clockwise180;
+        case R::Clockwise180:  return R::Clockwise270;
+        case R::Clockwise270:  return R::Clockwise0;
+        }
     } else {
-        if (x == ImageOptions::Rotation::Clockwise0) return ImageOptions::Rotation::Clockwise270;
-        return (ImageOptions::Rotation)((int)x-1);
+        switch (x) {
+        case R::Clockwise0:    return R::Clockwise270;
+        case R::Clockwise90:   return R::Clockwise0;
+        case R::Clockwise180:  return R::Clockwise90;
+        case R::Clockwise270:  return R::Clockwise180;
+        }
     }
 }
 
@@ -471,10 +480,10 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 
 
 
-@interface InspectorView_Stat : InspectorView_Item
+@interface InspectorViewItem_Stat : InspectorViewItem
 @end
 
-@implementation InspectorView_Stat {
+@implementation InspectorViewItem_Stat {
 @private
     IBOutlet NSTextField* _nameLabel;
     IBOutlet NSTextField* _valueLabel;
@@ -560,16 +569,15 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 
 
 
-#define Item            InspectorView_Item
-#define DarkRowView     InspectorView_DarkRowView
-#define Section         InspectorView_Section
-#define Spacer          InspectorView_Spacer
-#define SliderWithIcon  InspectorView_SliderWithIcon
-#define SliderWithLabel InspectorView_SliderWithLabel
-#define Checkbox        InspectorView_Checkbox
-#define Timestamp       InspectorView_Timestamp
-#define Rotation        InspectorView_Rotation
-#define Stat            InspectorView_Stat
+#define Item                    InspectorViewItem
+#define Item_Section            InspectorViewItem_Section
+#define Item_Spacer             InspectorViewItem_Spacer
+#define Item_SliderWithIcon     InspectorViewItem_SliderWithIcon
+#define Item_SliderWithLabel    InspectorViewItem_SliderWithLabel
+#define Item_Checkbox           InspectorViewItem_Checkbox
+#define Item_Timestamp          InspectorViewItem_Timestamp
+#define Item_Rotation           InspectorViewItem_Rotation
+#define Item_Stat               InspectorViewItem_Stat
 
 // MARK: - InspectorView
 
@@ -578,7 +586,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 
 @implementation InspectorView {
     ImageLibraryPtr _imgLib;
-    Section* _rootItem;
+    Item_Section* _rootItem;
     ImageSet _selection;
     bool _notifying;
     
@@ -623,21 +631,21 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     // Create NSOutlineView items
     {
         static constexpr CGFloat SpacerSize = 8;
-        _rootItem = [self _createItemWithClass:[Section class]];
+        _rootItem = [self _createItemWithClass:[Item_Section class]];
         _rootItem->name = @"";
         
         {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = 3;
             spacer->darkBackground = true;
             _rootItem->items.push_back(spacer);
             
-            Section* section = [self _createItemWithClass:[Section class]];
+            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Stats";
             section->darkBackground = true;
             
             {
-                Stat* stat = [self _createItemWithClass:[Stat class]];
+                Item_Stat* stat = [self _createItemWithClass:[Item_Stat class]];
                 stat->name = @"Image ID";
                 stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_id);
@@ -646,7 +654,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             }
             
             {
-                Stat* stat = [self _createItemWithClass:[Stat class]];
+                Item_Stat* stat = [self _createItemWithClass:[Item_Stat class]];
                 stat->name = @"Timestamp";
                 stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_timestamp);
@@ -655,7 +663,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             }
             
             {
-                Stat* stat = [self _createItemWithClass:[Stat class]];
+                Item_Stat* stat = [self _createItemWithClass:[Item_Stat class]];
                 stat->name = @"Integration Time";
                 stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_integrationTime);
@@ -664,7 +672,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             }
             
             {
-                Stat* stat = [self _createItemWithClass:[Stat class]];
+                Item_Stat* stat = [self _createItemWithClass:[Item_Stat class]];
                 stat->name = @"Analog Gain";
                 stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_analogGain);
@@ -673,7 +681,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             }
             
             {
-                Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+                Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
                 spacer->height = SpacerSize;
                 spacer->darkBackground = true;
                 section->items.push_back(spacer);
@@ -683,15 +691,15 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
             _rootItem->items.push_back(spacer);
         }
         
         {
-            Section* section = [self _createItemWithClass:[Section class]];
+            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"White Balance";
-            SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
+            Item_SliderWithIcon* slider = [self _createItemWithClass:[Item_SliderWithIcon class]];
             slider->icon = @"Inspector-WhiteBalance";
             slider->modelGetter = _GetterCreate(self, _Get_whiteBalance);
             slider->modelSetter = _SetterCreate(self, _Set_whiteBalance);
@@ -704,15 +712,15 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
             _rootItem->items.push_back(spacer);
         }
         
         {
-            Section* section = [self _createItemWithClass:[Section class]];
+            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Exposure";
-            SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
+            Item_SliderWithIcon* slider = [self _createItemWithClass:[Item_SliderWithIcon class]];
             slider->icon = @"Inspector-Exposure";
             slider->modelGetter = _GetterCreate(self, _Get_exposure);
             slider->modelSetter = _SetterCreate(self, _Set_exposure);
@@ -725,15 +733,15 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
             _rootItem->items.push_back(spacer);
         }
         
         {
-            Section* section = [self _createItemWithClass:[Section class]];
+            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Saturation";
-            SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
+            Item_SliderWithIcon* slider = [self _createItemWithClass:[Item_SliderWithIcon class]];
             slider->icon = @"Inspector-Saturation";
             slider->modelGetter = _GetterCreate(self, _Get_saturation);
             slider->modelSetter = _SetterCreate(self, _Set_saturation);
@@ -746,15 +754,15 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
             _rootItem->items.push_back(spacer);
         }
         
         {
-            Section* section = [self _createItemWithClass:[Section class]];
+            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Brightness";
-            SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
+            Item_SliderWithIcon* slider = [self _createItemWithClass:[Item_SliderWithIcon class]];
             slider->icon = @"Inspector-Brightness";
             slider->modelGetter = _GetterCreate(self, _Get_brightness);
             slider->modelSetter = _SetterCreate(self, _Set_brightness);
@@ -767,15 +775,15 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
             _rootItem->items.push_back(spacer);
         }
         
         {
-            Section* section = [self _createItemWithClass:[Section class]];
+            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Contrast";
-            SliderWithIcon* slider = [self _createItemWithClass:[SliderWithIcon class]];
+            Item_SliderWithIcon* slider = [self _createItemWithClass:[Item_SliderWithIcon class]];
             slider->icon = @"Inspector-Contrast";
             slider->modelGetter = _GetterCreate(self, _Get_contrast);
             slider->modelSetter = _SetterCreate(self, _Set_contrast);
@@ -788,20 +796,20 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize*2;
             _rootItem->items.push_back(spacer);
         }
         
         {
-            Section* section = [self _createItemWithClass:[Section class]];
+            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Local Contrast";
             
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize/3;
             section->items.push_back(spacer);
             
-            SliderWithLabel* slider1 = [self _createItemWithClass:[SliderWithLabel class]];
+            Item_SliderWithLabel* slider1 = [self _createItemWithClass:[Item_SliderWithLabel class]];
             slider1->name = @"Amount";
             slider1->modelGetter = _GetterCreate(self, _Get_localContrastAmount);
             slider1->modelSetter = _SetterCreate(self, _Set_localContrastAmount);
@@ -811,7 +819,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider1->valueDefault = 0;
             section->items.push_back(slider1);
             
-            SliderWithLabel* slider2 = [self _createItemWithClass:[SliderWithLabel class]];
+            Item_SliderWithLabel* slider2 = [self _createItemWithClass:[Item_SliderWithLabel class]];
             slider2->name = @"Radius";
             slider2->modelGetter = _GetterCreate(self, _Get_localContrastRadius);
             slider2->modelSetter = _SetterCreate(self, _Set_localContrastRadius);
@@ -825,15 +833,15 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
             _rootItem->items.push_back(spacer);
         }
         
         {
-            Section* section = [self _createItemWithClass:[Section class]];
+            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Rotation";
-            Rotation* rotation = [self _createItemWithClass:[Rotation class]];
+            Item_Rotation* rotation = [self _createItemWithClass:[Item_Rotation class]];
             rotation->modelGetter = _GetterCreate(self, _Get_rotation);
             rotation->modelSetter = _SetterCreate(self, _Set_rotation);
             rotation->section = section;
@@ -842,17 +850,17 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
             _rootItem->items.push_back(spacer);
         }
         
         {
-            Section* section = [self _createItemWithClass:[Section class]];
+            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Other";
             
             {
-                Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
+                Item_Checkbox* checkbox = [self _createItemWithClass:[Item_Checkbox class]];
                 checkbox->name = @"Defringe";
                 checkbox->modelGetter = _GetterCreate(self, _Get_defringe);
                 checkbox->modelSetter = _SetterCreate(self, _Set_defringe);
@@ -861,7 +869,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             }
             
             {
-                Checkbox* checkbox = [self _createItemWithClass:[Checkbox class]];
+                Item_Checkbox* checkbox = [self _createItemWithClass:[Item_Checkbox class]];
                 checkbox->name = @"Reconstruct highlights";
                 checkbox->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
                 checkbox->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
@@ -870,7 +878,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             }
             
             {
-                Timestamp* timestamp = [self _createItemWithClass:[Timestamp class]];
+                Item_Timestamp* timestamp = [self _createItemWithClass:[Item_Timestamp class]];
                 timestamp->name = @"Timestamp";
                 timestamp->modelGetter = _GetterCreate(self, _Get_timestampShow);
                 timestamp->modelSetter = _SetterCreate(self, _Set_timestampShow);
@@ -884,7 +892,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            Spacer* spacer = [self _createItemWithClass:[Spacer class]];
+            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
             _rootItem->items.push_back(spacer);
         }
@@ -931,7 +939,7 @@ using _ModelSetterFn = void(*)(ImageRecord&, id);
 
 static _ModelGetter _GetterCreate(InspectorView* self, _ModelGetterFn fn) {
     __weak const auto selfWeak = self;
-    return ^_ModelData(InspectorView_Item*) {
+    return ^_ModelData(InspectorViewItem*) {
         const auto selfStrong = selfWeak;
         if (!selfStrong) return _ModelData{};
         return [selfStrong _get:fn];
@@ -940,7 +948,7 @@ static _ModelGetter _GetterCreate(InspectorView* self, _ModelGetterFn fn) {
 
 static _ModelSetter _SetterCreate(InspectorView* self, _ModelSetterFn fn) {
     __weak const auto selfWeak = self;
-    return ^void(InspectorView_Item*, id data) {
+    return ^void(InspectorViewItem*, id data) {
         const auto selfStrong = selfWeak;
         if (!selfStrong) return;
         [selfStrong _set:fn data:data];
@@ -1151,12 +1159,12 @@ static void _Set_timestampCorner(ImageRecord& rec, id data) {
 // MARK: - Methods
 
 static void _Update(Item* it) {
-    if (auto section = CastOrNil<Section>(it)) {
+    if (auto section = CastOrNil<Item_Section>(it)) {
         [section updateView];
     }
     
 //    [it updateView];
-//    if (auto section = CastOrNil<Section>(it)) {
+//    if (auto section = CastOrNil<Item_Section>(it)) {
 //        for (auto it : section->items) {
 //            _UpdateView(it);
 //        }
@@ -1234,7 +1242,7 @@ static void _Update(Item* it) {
         if (!_rootItem) return 0;
         return _rootItem->items.size();
     
-    } else if (auto it = CastOrNil<Section>(item)) {
+    } else if (auto it = CastOrNil<Item_Section>(item)) {
         return it->items.size();
     
     } else {
@@ -1247,7 +1255,7 @@ static void _Update(Item* it) {
         if (!_rootItem) return nil;
         return _rootItem->items[index];
     
-    } else if (auto section = CastOrNil<Section>(item)) {
+    } else if (auto section = CastOrNil<Item_Section>(item)) {
         return section->items.at(index);
     
     } else {
@@ -1256,7 +1264,7 @@ static void _Update(Item* it) {
 }
 
 - (BOOL)outlineView:(NSOutlineView*)outlineView isItemExpandable:(id)item {
-    if (auto it = CastOrNil<Section>(item)) {
+    if (auto it = CastOrNil<Item_Section>(item)) {
         return true;
     }
     return false;
@@ -1273,7 +1281,7 @@ static void _Update(Item* it) {
 - (NSTableRowView*)outlineView:(NSOutlineView*)outlineView rowViewForItem:(id)item {
     auto it = CastOrNil<Item>(item);
     if (it->darkBackground) {
-        return [_outlineView makeViewWithIdentifier:NSStringFromClass([DarkRowView class]) owner:nil];
+        return [_outlineView makeViewWithIdentifier:NSStringFromClass([InspectorView_DarkRowView class]) owner:nil];
     }
     return nil;
 }
