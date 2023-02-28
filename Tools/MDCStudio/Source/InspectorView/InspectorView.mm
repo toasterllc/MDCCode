@@ -55,13 +55,11 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     __weak InspectorView_Section* section;
 }
 
-- (NSString*)name { return @""; }
 - (CGFloat)indent { return 16; }
 
 - (bool)updateView {
     [_indentLeft setConstant:[self indent]];
     [_indentRight setConstant:[self indent]];
-    [[self textField] setStringValue:[self name]];
     return false;
 }
 
@@ -83,19 +81,20 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 @implementation InspectorView_Section {
 @private
+    IBOutlet NSTextField* _label;
     IBOutlet NSButton* _clearButton;
 @public
     NSString* name;
     std::vector<InspectorView_Item*> items;
 }
 
-- (NSString*)name { return [name uppercaseString]; }
-
 - (bool)updateView {
     bool modified = [super updateView];
     for (InspectorView_Item* it : items) {
         modified |= [it updateView];
     }
+    [_label setStringValue:[name uppercaseString]];
+    [_label setTextColor:(modified ? [NSColor labelColor] : [NSColor secondaryLabelColor])];
     [_clearButton setHidden:!modified];
     return modified;
 }
@@ -264,7 +263,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 @public
     NSString* name;
 }
-- (NSString*)name { return name; }
 
 - (bool)updateView {
     const bool modified = [super updateView];
@@ -289,8 +287,6 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     NSString* name;
     bool valueDefault;
 }
-
-- (NSString*)name { return name; }
 
 - (bool)updateView {
     bool modified = [super updateView];
