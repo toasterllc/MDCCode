@@ -55,6 +55,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 - (NSString*)name { return @""; }
 - (CGFloat)indent { return 16; }
+- (bool)modified { return false; }
 
 - (void)updateView {
     [_indentLeft setConstant:[self indent]];
@@ -88,8 +89,11 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 
 - (void)updateView {
     [super updateView];
+    
+    bool modified = false;
     for (InspectorView_Item* it : items) {
         [it updateView];
+        [it modified];
     }
 }
 
@@ -156,6 +160,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
         [_numberField setHidden:false];
         break;
     }
+}
+
+- (bool)modified {
+    return [[_slider objectValue] isEqual:@(valueDefault)];
 }
 
 //- (void)_updateSlider:(const _ModelData&)data {
@@ -270,6 +278,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
     IBOutlet NSButton* _checkbox;
 @public
     NSString* name;
+    bool valueDefault;
 }
 
 - (NSString*)name { return name; }
@@ -287,6 +296,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
         [_checkbox setState:NSControlStateValueMixed];
         break;
     }
+}
+
+- (bool)modified {
+    return [[_checkbox objectValue] isEqual:@(valueDefault)];
 }
 
 - (IBAction)checkboxAction:(id)sender {
