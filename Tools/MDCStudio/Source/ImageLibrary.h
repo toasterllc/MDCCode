@@ -33,7 +33,7 @@ static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple 
 
 struct [[gnu::packed]] ImageOptions {
     enum class Rotation : uint8_t {
-        None,
+        Clockwise0,
         Clockwise90,
         Clockwise180,
         Clockwise270,
@@ -46,7 +46,7 @@ struct [[gnu::packed]] ImageOptions {
         TopRight,
     };
     
-    Rotation rotation = Rotation::None;
+    Rotation rotation = Rotation::Clockwise0;
     bool defringe = false;
     bool reconstructHighlights = false;
     struct [[gnu::packed]] {

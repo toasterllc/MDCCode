@@ -48,7 +48,7 @@ static Corner _CornerNext(Corner x, int delta) {
 }
 
 - (BOOL)sendAction:(SEL)action to:(id)target {
-    NSEvent* ev = [NSApp currentEvent];
+    NSEvent*const ev = [NSApp currentEvent];
     const int delta = (([ev modifierFlags] & NSEventModifierFlagShift) ? -1 : 1);
     [self setCorner:_CornerNext(_corner, delta)];
     return [super sendAction:action to:target];

@@ -414,16 +414,55 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 @private
     IBOutlet NSButton* _button;
 @public
-    NSString* icon;
+    ImageOptions::Rotation valueDefault;
 }
 
-//- (bool)updateView {
-//    [super updateView];
-//    [_button setImage:[NSImage imageNamed:icon]];
-//}
+static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta) {
+    if (delta >= 0) {
+        if (x == ImageOptions::Rotation::Clockwise270) return ImageOptions::Rotation::Clockwise0;
+        return (ImageOptions::Rotation)((int)x+1);
+    } else {
+        if (x == ImageOptions::Rotation::Clockwise0) return ImageOptions::Rotation::Clockwise270;
+        return (ImageOptions::Rotation)((int)x-1);
+    }
+}
+
+- (bool)updateView {
+    bool modified = [super updateView];
+    
+    const _ModelData data = modelGetter(self);
+    switch (data.type) {
+    case _ModelData::Type::Normal:
+        modified |= ((ImageOptions::Rotation)[data.data intValue] != valueDefault);
+        break;
+    case _ModelData::Type::Mixed:
+        modified = true;
+        break;
+    }
+    
+    return modified;
+}
+
+- (void)clear {
+    modelSetter(self, @((int)valueDefault));
+}
 
 - (IBAction)buttonAction:(id)sender {
-    modelSetter(self, nil);
+    NSEvent*const ev = [NSApp currentEvent];
+    const int delta = (([ev modifierFlags] & NSEventModifierFlagShift) ? -1 : 1);
+    
+    ImageOptions::Rotation rotationNext = ImageOptions::Rotation::Clockwise0;
+    const _ModelData data = modelGetter(self);
+    switch (data.type) {
+    case _ModelData::Type::Normal:
+        rotationNext = _RotationNext((ImageOptions::Rotation)[data.data intValue], delta);
+        break;
+    case _ModelData::Type::Mixed:
+        rotationNext = _RotationNext(rotationNext, delta);
+        break;
+    }
+    
+    modelSetter(self, @((int)rotationNext));
     [section updateView];
 }
 
@@ -524,12 +563,10 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
 #define Item            InspectorView_Item
 #define DarkRowView     InspectorView_DarkRowView
 #define Section         InspectorView_Section
-#define SectionItem     InspectorView_SectionItem
 #define Spacer          InspectorView_Spacer
 #define SliderWithIcon  InspectorView_SliderWithIcon
 #define SliderWithLabel InspectorView_SliderWithLabel
 #define Checkbox        InspectorView_Checkbox
-//#define Menu            InspectorView_Menu
 #define Timestamp       InspectorView_Timestamp
 #define Rotation        InspectorView_Rotation
 #define Stat            InspectorView_Stat
@@ -797,7 +834,7 @@ using _ModelSetter = void(^)(InspectorView_Item*, id);
             Section* section = [self _createItemWithClass:[Section class]];
             section->name = @"Rotation";
             Rotation* rotation = [self _createItemWithClass:[Rotation class]];
-            rotation->icon = @"Rotation";
+            rotation->modelGetter = _GetterCreate(self, _Get_rotation);
             rotation->modelSetter = _SetterCreate(self, _Set_rotation);
             rotation->section = section;
             section->items = { rotation };
@@ -1005,6 +1042,10 @@ static id _Get_localContrastRadius(const ImageRecord& rec) {
     return @(rec.options.localContrast.radius);
 }
 
+static id _Get_rotation(const ImageRecord& rec) {
+    return @((int)rec.options.rotation);
+}
+
 static id _Get_defringe(const ImageRecord& rec) {
     return @(rec.options.defringe);
 }
@@ -1052,7 +1093,7 @@ static void _Set_localContrastRadius(ImageRecord& rec, id data) {
 }
 
 static void _Set_rotation(ImageRecord& rec, id data) {
-    // meowmix
+    rec.options.rotation = (ImageOptions::Rotation)[data intValue];
 }
 
 static void _Set_defringe(ImageRecord& rec, id data) {
