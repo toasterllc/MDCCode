@@ -157,8 +157,6 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 //                Corner corner = Corner::BottomRight;
 //            } timestamp;
             
-            
-            
             .exposure = _imageRecord->options.exposure,
             .saturation = _imageRecord->options.saturation,
             .brightness = _imageRecord->options.brightness,
@@ -169,50 +167,6 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
                 .radius = _imageRecord->options.localContrast.radius,
             },
         };
-        
-//struct [[gnu::packed]] ImageOptions {
-//    enum class Rotation : uint8_t {
-//        None,
-//        Clockwise90,
-//        Clockwise180,
-//        Clockwise270,
-//    };
-//    
-//    enum class Corner : uint8_t {
-//        BottomRight,
-//        BottomLeft,
-//        TopLeft,
-//        TopRight,
-//    };
-//    
-//    Rotation rotation = Rotation::None;
-//    bool defringe = false;
-//    bool reconstructHighlights = false;
-//    struct [[gnu::packed]] {
-//        bool show = false;
-//        Corner corner = Corner::BottomRight;
-//    } timestamp;
-//    uint8_t _pad[3];
-//    
-//    float exposure = 0;
-//    float saturation = 0;
-//    float brightness = 0;
-//    float contrast = 0;
-//    struct {
-//        float amount = 0;
-//        float radius = 0;
-//    } localContrast;
-//    
-//    // _reserved: so we can add fields in the future without doing a data migration
-//    uint8_t _reserved[64] = {};
-//};
-        
-        
-        
-        
-        
-        
-        
         
         Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
         _imageTxt = renderResult.txt;
