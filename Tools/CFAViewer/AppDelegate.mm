@@ -336,14 +336,23 @@ static bool isCFAFile(const fs::path& path) {
     // Support 2 different filetypes:
     // (1) solely raw pixel data
     if (imgData.len() == Img::Full::PixelLen) {
+        _rawImage.img.width = Img::Full::PixelWidth;
+        _rawImage.img.height = Img::Full::PixelHeight;
+        
         // Copy the image data into _rawImage
         memcpy(_rawImage.pixels, imgData.data(), Img::Full::PixelLen);
     
     // (2) header + raw pixel data + checksum
     } else if (imgData.len()==Img::Full::ImageLen || imgData.len()==ImgSD::Full::ImagePaddedLen) {
+        const Img::Header& header = *(Img::Header*)imgData.data();
+        
+        _rawImage.img.width = header.imageWidth;
+        _rawImage.img.height = header.imageHeight;
+        
         // Copy the image data into _rawImage
         memcpy(_rawImage.pixels, imgData.data()+Img::PixelsOffset, Img::Full::PixelLen);
         
+        // Validate checksum
         const uint32_t checksumExpected = ChecksumFletcher32(imgData.data(), Img::Full::ChecksumOffset);
         uint32_t checksumGot = 0;
         memcpy(&checksumGot, imgData.data()+Img::Full::ChecksumOffset, sizeof(checksumGot));
@@ -353,6 +362,8 @@ static bool isCFAFile(const fs::path& path) {
     } else {
         abort();
     }
+    
+    _imagePipelineManager->rawImage = _rawImage.img;
     
     [[_mainView imageLayer] setNeedsDisplay];
     

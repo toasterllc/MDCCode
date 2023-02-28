@@ -59,6 +59,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     if ([NSThread isMainThread]) {
         // Update our bounds
         if (_ipm) {
+            assert(_ipm->rawImage);
             const CGFloat scale = [self contentsScale];
             [self setBounds:{0, 0, _ipm->rawImage->width/scale, _ipm->rawImage->height/scale}];
         }
