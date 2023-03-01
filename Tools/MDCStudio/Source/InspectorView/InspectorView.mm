@@ -65,6 +65,8 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 
 - (void)clear {}
 
+- (void)setMouseState:(bool)state {}
+
 //- (void)updateModel {
 //    if (updateModel) {
 //        updateModel(self);
@@ -85,14 +87,23 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 @private
     IBOutlet NSTextField* _label;
     IBOutlet NSButton* _clearButton;
+    std::vector<InspectorViewItem*> _items;
 @public
     NSString* name;
-    std::vector<InspectorViewItem*> items;
+}
+
+- (void)addItem:(InspectorViewItem*)it {
+    it->section = self;
+    _items.push_back(it);
+}
+
+- (const std::vector<InspectorViewItem*>&)items {
+    return _items;
 }
 
 - (bool)updateView {
     bool modified = [super updateView];
-    for (InspectorViewItem* it : items) {
+    for (InspectorViewItem* it : _items) {
         modified |= [it updateView];
     }
     [_label setStringValue:[name uppercaseString]];
@@ -102,10 +113,17 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 }
 
 - (IBAction)clear:(id)sender {
-    for (InspectorViewItem* it : items) {
+    for (InspectorViewItem* it : _items) {
         [it clear];
     }
     [self updateView];
+}
+
+- (void)setMouseState:(bool)state {
+    [super setMouseState:state];
+    for (InspectorViewItem* it : _items) {
+        [it setMouseState:state];
+    }
 }
 
 @end
@@ -141,6 +159,10 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     IBOutlet NSSlider* _slider;
     IBOutlet NSTextField* _numberField;
     IBOutlet NSNumberFormatter* _numberFormatter;
+    struct {
+        bool mouse;
+        bool mixed;
+    } _numberFieldState;
 @public
     float valueMin;
     float valueMax;
@@ -160,24 +182,36 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     switch (data.type) {
     case _ModelData::Type::Normal:
         modified |= ![data.data isEqual:@(valueDefault)];
+        _numberFieldState.mixed = false;
         [_slider setObjectValue:data.data];
         [_numberField setObjectValue:data.data];
         [_numberField setPlaceholderString:nil];
-        [_numberField setHidden:!modified];
         break;
     case _ModelData::Type::Mixed:
         modified = true;
+        _numberFieldState.mixed = true;
         [_slider setObjectValue:@(0)];
         [_numberField setObjectValue:nil];
         [_numberField setPlaceholderString:@"multiple"];
-        [_numberField setHidden:false];
         break;
     }
+    [self _numberFieldUpdate];
     return modified;
 }
 
 - (void)clear {
     modelSetter(self, @(valueDefault));
+}
+
+- (void)setMouseState:(bool)state {
+    [super setMouseState:state];
+    _numberFieldState.mouse = state;
+    [self _numberFieldUpdate];
+}
+
+- (void)_numberFieldUpdate {
+    const bool visible = _numberFieldState.mouse || _numberFieldState.mixed;
+    [_numberField setHidden:!visible];
 }
 
 //- (void)_updateSlider:(const _ModelData&)data {
@@ -615,6 +649,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     IBOutlet NSTextField* _noSelectionLabel;
     IBOutlet NSView* _outlineContainerView;
     IBOutlet NSOutlineView* _outlineView;
+    NSTrackingArea* _trackingArea;
+    Item_Section* _mouseSection;
 }
 
 // MARK: - Creation
@@ -659,7 +695,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = 3;
             spacer->darkBackground = true;
-            _rootItem->items.push_back(spacer);
+            [_rootItem addItem:spacer];
             
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Stats";
@@ -671,7 +707,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_id);
                 stat->darkBackground = true;
-                section->items.push_back(stat);
+                [section addItem:stat];
             }
             
             {
@@ -680,7 +716,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_timestamp);
                 stat->darkBackground = true;
-                section->items.push_back(stat);
+                [section addItem:stat];
             }
             
             {
@@ -689,7 +725,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_integrationTime);
                 stat->darkBackground = true;
-                section->items.push_back(stat);
+                [section addItem:stat];
             }
             
             {
@@ -698,23 +734,23 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 stat->valueIndent = 115;
                 stat->modelGetter = _GetterCreate(self, _Get_analogGain);
                 stat->darkBackground = true;
-                section->items.push_back(stat);
+                [section addItem:stat];
             }
             
             {
                 Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
                 spacer->height = SpacerSize;
                 spacer->darkBackground = true;
-                section->items.push_back(spacer);
+                [section addItem:spacer];
             }
             
-            _rootItem->items.push_back(section);
+            [_rootItem addItem:section];
         }
         
         {
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
-            _rootItem->items.push_back(spacer);
+            [_rootItem addItem:spacer];
         }
         
         {
@@ -728,14 +764,13 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider->valueMin = -1;
             slider->valueMax = +1;
             slider->valueDefault = 0;
-            section->items = { slider };
-            _rootItem->items.push_back(section);
-        }
-        
-        {
+            [section addItem:slider];
+            
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
-            _rootItem->items.push_back(spacer);
+            [section addItem:spacer];
+            
+            [_rootItem addItem:section];
         }
         
         {
@@ -749,14 +784,13 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider->valueMin = -1;
             slider->valueMax = +1;
             slider->valueDefault = 0;
-            section->items = { slider };
-            _rootItem->items.push_back(section);
-        }
-        
-        {
+            [section addItem:slider];
+            
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
-            _rootItem->items.push_back(spacer);
+            [section addItem:spacer];
+            
+            [_rootItem addItem:section];
         }
         
         {
@@ -770,14 +804,13 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider->valueMin = -1;
             slider->valueMax = +1;
             slider->valueDefault = 0;
-            section->items = { slider };
-            _rootItem->items.push_back(section);
-        }
-        
-        {
+            [section addItem:slider];
+            
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
-            _rootItem->items.push_back(spacer);
+            [section addItem:spacer];
+            
+            [_rootItem addItem:section];
         }
         
         {
@@ -791,14 +824,13 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider->valueMin = -1;
             slider->valueMax = +1;
             slider->valueDefault = 0;
-            section->items = { slider };
-            _rootItem->items.push_back(section);
-        }
-        
-        {
+            [section addItem:slider];
+            
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
-            _rootItem->items.push_back(spacer);
+            [section addItem:spacer];
+            
+            [_rootItem addItem:section];
         }
         
         {
@@ -812,14 +844,13 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider->valueMin = -1;
             slider->valueMax = +1;
             slider->valueDefault = 0;
-            section->items = { slider };
-            _rootItem->items.push_back(section);
-        }
-        
-        {
+            [section addItem:slider];
+            
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize*2;
-            _rootItem->items.push_back(spacer);
+            spacer->height = SpacerSize;
+            [section addItem:spacer];
+            
+            [_rootItem addItem:section];
         }
         
         {
@@ -828,7 +859,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize/3;
-            section->items.push_back(spacer);
+            [section addItem:spacer];
             
             Item_SliderWithLabel* slider1 = [self _createItemWithClass:[Item_SliderWithLabel class]];
             slider1->name = @"Amount";
@@ -838,7 +869,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider1->valueMin = -1;
             slider1->valueMax = +1;
             slider1->valueDefault = 0;
-            section->items.push_back(slider1);
+            [section addItem:slider1];
             
             Item_SliderWithLabel* slider2 = [self _createItemWithClass:[Item_SliderWithLabel class]];
             slider2->name = @"Radius";
@@ -848,15 +879,13 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider2->valueMin = -1;
             slider2->valueMax = +1;
             slider2->valueDefault = 0;
-            section->items.push_back(slider2);
+            [section addItem:slider2];
             
-            _rootItem->items.push_back(section);
-        }
-        
-        {
-            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize;
-            _rootItem->items.push_back(spacer);
+            Item_Spacer* spacer2 = [self _createItemWithClass:[Item_Spacer class]];
+            spacer2->height = SpacerSize;
+            [section addItem:spacer2];
+            
+            [_rootItem addItem:section];
         }
         
         {
@@ -866,14 +895,13 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             rotation->modelGetter = _GetterCreate(self, _Get_rotation);
             rotation->modelSetter = _SetterCreate(self, _Set_rotation);
             rotation->section = section;
-            section->items = { rotation };
-            _rootItem->items.push_back(section);
-        }
-        
-        {
+            [section addItem:rotation];
+            
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
-            _rootItem->items.push_back(spacer);
+            [section addItem:spacer];
+            
+            [_rootItem addItem:section];
         }
         
         {
@@ -886,7 +914,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 checkbox->modelGetter = _GetterCreate(self, _Get_defringe);
                 checkbox->modelSetter = _SetterCreate(self, _Set_defringe);
                 checkbox->section = section;
-                section->items.push_back(checkbox);
+                [section addItem:checkbox];
             }
             
             {
@@ -895,7 +923,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 checkbox->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
                 checkbox->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
                 checkbox->section = section;
-                section->items.push_back(checkbox);
+                [section addItem:checkbox];
             }
             
             {
@@ -906,22 +934,20 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 timestamp->cornerModelGetter = _GetterCreate(self, _Get_timestampCorner);
                 timestamp->cornerModelSetter = _SetterCreate(self, _Set_timestampCorner);
                 timestamp->section = section;
-                section->items.push_back(timestamp);
+                [section addItem:timestamp];
             }
             
-            _rootItem->items.push_back(section);
-        }
-        
-        {
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
             spacer->height = SpacerSize;
-            _rootItem->items.push_back(spacer);
+            [section addItem:spacer];
+            
+            [_rootItem addItem:section];
         }
     }
     
     [_outlineView reloadData];
     
-    for (auto item : _rootItem->items) {
+    for (auto item : [_rootItem items]) {
         [_outlineView expandItem:item];
     }
     
@@ -1247,6 +1273,56 @@ static void _Update(Item* it) {
     _notifying = false;
 }
 
+// MARK: - Tracking Area
+
+- (void)updateTrackingAreas {
+    [super updateTrackingAreas];
+    if (_trackingArea) {
+        [self removeTrackingArea:_trackingArea];
+        _trackingArea = nil;
+    }
+    
+    _trackingArea = [[NSTrackingArea alloc] initWithRect:[self bounds]
+        options:NSTrackingMouseEnteredAndExited|NSTrackingMouseMoved|NSTrackingActiveInKeyWindow
+        owner:self userInfo:nil];
+    [self addTrackingArea:_trackingArea];
+}
+
+- (void)mouseEntered:(NSEvent*)event {
+    [super mouseEntered:event];
+    [self _updateMouseSection:event];
+}
+
+- (void)mouseMoved:(NSEvent*)event {
+    [super mouseMoved:event];
+    [self _updateMouseSection:event];
+}
+
+- (void)mouseExited:(NSEvent*)event {
+    [super mouseExited:event];
+    [self _setMouseSection:nil];
+}
+
+- (void)_updateMouseSection:(NSEvent*)event {
+    const CGPoint p = [_outlineView convertPoint:[event locationInWindow] fromView:nil];
+    const NSInteger row = [_outlineView rowAtPoint:p];
+    if (row < 0) return;
+    Item*const it = CastOrNil<Item>([_outlineView itemAtRow:row]);
+    if (!it) return;
+    Item_Section* sec = CastOrNil<Item_Section>(it);
+    if (!sec) sec = CastOrNil<Item_Section>(it->section);
+    // Don't allow root item to be mouse section (otherwise all sections become the mouse section)
+    if (sec == _rootItem) sec = nil;
+    [self _setMouseSection:sec];
+}
+
+- (void)_setMouseSection:(Item_Section*)sec {
+    if (sec == _mouseSection) return;
+    [_mouseSection setMouseState:false];
+    _mouseSection = sec;
+    [_mouseSection setMouseState:true];
+}
+
 //- (void)setFrameSize:(NSSize)size {
 //    [super setFrameSize:size];
 //    // Fix intermittent issue where our sole column can be sized a few points too large,
@@ -1259,12 +1335,11 @@ static void _Update(Item* it) {
 // MARK: - Outline View Data Source / Delegate
 
 - (NSInteger)outlineView:(NSOutlineView*)outlineView numberOfChildrenOfItem:(id)item {
-    if (item == nullptr) {
-        if (!_rootItem) return 0;
-        return _rootItem->items.size();
+    if (!_rootItem) return 0;
+    if (!item) item = _rootItem;
     
-    } else if (auto it = CastOrNil<Item_Section>(item)) {
-        return it->items.size();
+    if (auto it = CastOrNil<Item_Section>(item)) {
+        return [it items].size();
     
     } else {
         abort();
@@ -1272,12 +1347,11 @@ static void _Update(Item* it) {
 }
 
 - (id)outlineView:(NSOutlineView*)outlineView child:(NSInteger)index ofItem:(id)item {
-    if (item == nullptr) {
-        if (!_rootItem) return nil;
-        return _rootItem->items[index];
+    if (!_rootItem) return 0;
+    if (!item) item = _rootItem;
     
-    } else if (auto section = CastOrNil<Item_Section>(item)) {
-        return section->items.at(index);
+    if (auto it = CastOrNil<Item_Section>(item)) {
+        return [it items].at(index);
     
     } else {
         abort();
