@@ -162,6 +162,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     struct {
         bool mouse;
         bool mixed;
+        bool editing;
     } _numberFieldState;
 @public
     float valueMin;
@@ -210,35 +211,10 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 }
 
 - (void)_numberFieldUpdate {
-    const bool visible = _numberFieldState.mouse || _numberFieldState.mixed;
+    const bool editing = [_numberField currentEditor];
+    const bool visible = _numberFieldState.mouse || _numberFieldState.mixed || editing;
     [_numberField setHidden:!visible];
 }
-
-//- (void)_updateSlider:(const _ModelData&)data {
-//    switch (data.type) {
-//    case _ModelData::Type::Normal:
-//        [_slider setObjectValue:data.data];
-//        [_numberField setObjectValue:data.data];
-//        break;
-//    case _ModelData::Type::Mixed:
-//        [_slider setObjectValue:@(0)];
-//        break;
-//    }
-//}
-//
-//- (void)_updateNumberField:(const _ModelData&)data {
-//    switch (data.type) {
-//    case _ModelData::Type::Normal:
-//        [_numberField setObjectValue:data.data];
-//        [_numberField setPlaceholderString:nil];
-//        [_numberField setHidden:[data.data isEqual:@(valueDefault)]];
-//        break;
-//    case _ModelData::Type::Mixed:
-//        [_numberField setObjectValue:nil];
-//        [_numberField setPlaceholderString:@"multiple"];
-//        break;
-//    }
-//}
 
 - (IBAction)sliderAction:(id)sender {
     const id val = [_slider objectValue];
