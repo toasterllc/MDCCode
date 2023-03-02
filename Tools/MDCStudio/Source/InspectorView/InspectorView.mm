@@ -663,7 +663,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     
     // Create NSOutlineView items
     {
-        static constexpr CGFloat SpacerSize = 8;
+        static constexpr CGFloat SpacerSize = 0;
         _rootItem = [self _createItemWithClass:[Item_Section class]];
         _rootItem->name = @"";
         
@@ -715,7 +715,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             
             {
                 Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-                spacer->height = SpacerSize;
+                spacer->height = 10;
                 spacer->darkBackground = true;
                 [section addItem:spacer];
             }
@@ -725,7 +725,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         
         {
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize;
+            spacer->height = 10;
             [_rootItem addItem:spacer];
         }
         
@@ -742,9 +742,9 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider->valueDefault = 0;
             [section addItem:slider];
             
-            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize;
-            [section addItem:spacer];
+//            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
+//            spacer->height = SpacerSize;
+//            [section addItem:spacer];
             
             [_rootItem addItem:section];
         }
@@ -762,9 +762,9 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider->valueDefault = 0;
             [section addItem:slider];
             
-            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize;
-            [section addItem:spacer];
+//            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
+//            spacer->height = SpacerSize;
+//            [section addItem:spacer];
             
             [_rootItem addItem:section];
         }
@@ -782,9 +782,9 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider->valueDefault = 0;
             [section addItem:slider];
             
-            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize;
-            [section addItem:spacer];
+//            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
+//            spacer->height = SpacerSize;
+//            [section addItem:spacer];
             
             [_rootItem addItem:section];
         }
@@ -802,9 +802,9 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider->valueDefault = 0;
             [section addItem:slider];
             
-            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize;
-            [section addItem:spacer];
+//            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
+//            spacer->height = SpacerSize;
+//            [section addItem:spacer];
             
             [_rootItem addItem:section];
         }
@@ -822,9 +822,9 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider->valueDefault = 0;
             [section addItem:slider];
             
-            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize;
-            [section addItem:spacer];
+//            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
+//            spacer->height = SpacerSize;
+//            [section addItem:spacer];
             
             [_rootItem addItem:section];
         }
@@ -834,7 +834,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             section->name = @"Local Contrast";
             
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize/3;
+            spacer->height = 2;
             [section addItem:spacer];
             
             Item_SliderWithLabel* slider1 = [self _createItemWithClass:[Item_SliderWithLabel class]];
@@ -857,9 +857,9 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             slider2->valueDefault = 0;
             [section addItem:slider2];
             
-            Item_Spacer* spacer2 = [self _createItemWithClass:[Item_Spacer class]];
-            spacer2->height = SpacerSize;
-            [section addItem:spacer2];
+//            Item_Spacer* spacer2 = [self _createItemWithClass:[Item_Spacer class]];
+//            spacer2->height = SpacerSize;
+//            [section addItem:spacer2];
             
             [_rootItem addItem:section];
         }
@@ -874,7 +874,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             [section addItem:rotation];
             
             Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize;
+            spacer->height = 16;
             [section addItem:spacer];
             
             [_rootItem addItem:section];
@@ -913,9 +913,9 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 [section addItem:timestamp];
             }
             
-            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = SpacerSize;
-            [section addItem:spacer];
+//            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
+//            spacer->height = SpacerSize;
+//            [section addItem:spacer];
             
             [_rootItem addItem:section];
         }
