@@ -511,6 +511,9 @@ struct _TaskReadout {
             
             if (_RemLen) *_RemLen -= len;
         }
+        
+        // Release chip-select to exit readout mode
+        _ICE_ST_SPI_CS_::Write(1);
     }
     
     static inline std::optional<size_t> _RemLen;
