@@ -23,6 +23,10 @@ public:
         // The docs say to wait 150k EXTCLK cycles, but empirically we've seen the subsequent I2C write
         // fail (responds with a NAK) if we only wait 10ms. We've also seen 11ms fail, so we bumped it
         // up to 15ms. See MDCNotes/AR0330-I2CNAK-After150k-EXTCLKs.png.
+        #warning TODO: it's possible that the IMG reset was failing because the ICE message was being suppressed
+        #warning TODO: because chip-select was already asserted when we sent the message (due to being in readout mode).
+        #warning TODO: See commit 94bfa7b.
+        #warning TODO: Therefore maybe we can switch back to 11ms? What about 10ms?
         {
             _Sleep(_Ms(15));
         }
