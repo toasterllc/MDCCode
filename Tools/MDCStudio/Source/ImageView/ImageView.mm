@@ -11,26 +11,11 @@ using namespace MDCStudio;
 using namespace MDCStudio::ImageViewTypes;
 using namespace MDCTools;
 
-// _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
-// so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// _PixelFormat: Our pixels are in the linear RGB space (LSRGB), and need conversion to the display color space.
+// To do so, we declare that our pixels are LSRGB (ie we _don't_ use the _sRGB MTLPixelFormat variant!),
+// and we opt-in to color matching by setting the colorspace on our CAMetalLayer via -setColorspace:.
+// (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
 @interface ImageLayer : FixedMetalDocumentLayer
 @end
@@ -45,8 +30,13 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     
     std::atomic<bool> _dirty;
     ImagePtr _image;
-    id<MTLTexture> _thumbTxt;
-    id<MTLTexture> _imageTxt;
+    Renderer::Txt _thumbTxt;
+    Renderer::Txt _imageTxt;
+}
+
+static CGColorSpaceRef _LSRGBColorSpace() {
+    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+    return cs;
 }
 
 - (instancetype)initWithImageRecord:(ImageRecordPtr)imageRecord imageSource:(ImageSourcePtr)imageSource {
@@ -57,9 +47,9 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     
     // Add ourself as an observer of the image library
     {
-        auto lock = std::unique_lock(*_imageSource->imageLibrary());
+        auto lock = std::unique_lock(_imageSource->imageLibrary());
         __weak auto selfWeak = self;
-        _imageSource->imageLibrary()->observerAdd([=](const ImageLibrary::Event& ev) {
+        _imageSource->imageLibrary().observerAdd([=](const ImageLibrary::Event& ev) {
             auto selfStrong = selfWeak;
             if (!selfStrong) return false;
             [self _handleImageLibraryEvent:ev];
@@ -71,6 +61,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     assert(_device);
     [self setDevice:_device];
     [self setPixelFormat:_PixelFormat];
+    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
     
     _library = [_device newDefaultLibrary];
     _commandQueue = [_device newCommandQueue];
@@ -117,7 +108,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     // Fetch the image from the cache, if we don't have _image yet
     if (!_image) {
         __weak auto selfWeak = self;
-        _image = _imageSource->imageCache()->image(_imageRecord, [=] (ImagePtr image) {
+        _image = _imageSource->imageCache().image(_imageRecord, [=] (ImagePtr image) {
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:image]; });
         });
     }
@@ -126,70 +117,56 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     
     // Create _imageTxt if it doesn't exist yet and we have the image
     if ((!_imageTxt || dirty) && _image) {
-        Pipeline::RawImage rawImage = {
-            .cfaDesc    = _image->cfaDesc,
-            .width      = _image->width,
-            .height     = _image->height,
-            .pixels     = (ImagePixel*)(_image->data.get() + _image->off),
-        };
+        const ImageOptions& opts = _imageRecord->options;
         
-        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(_imageRecord->info.illumEst);
-        const Pipeline::Options pipelineOpts = {
-            .illum = illum,
+        if (!_imageTxt) {
+            // _imageTxt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
+            // representation of the pipeline result without clipping to 8-bit components, so we can
+            // render to an HDR display and make use of the depth.
+            _imageTxt = renderer.textureCreate(MTLPixelFormatRGBA16Float, _image->width, _image->height);
+        }
+        
+        Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+            _image->width, _image->height, (ImagePixel*)(_image->data.get() + _image->off));
+        
+        Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
+        
+        // Debayer raw image
+        const Pipeline::DebayerOptions debayerOpts = {
+            .cfaDesc        = _image->cfaDesc,
+            .illum          = ColorRaw(opts.whiteBalance.illum),
+            .debayerLMMSE   = { .applyGamma = true, },
+        };
+        Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
+        
+        // Process rgb image
+        const Pipeline::ProcessOptions processOpts = {
+            .illum = ColorRaw(opts.whiteBalance.illum),
+            .colorMatrix = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
             
-            .debayerLMMSE = {
-                .applyGamma = true,
-            },
+            .exposure   = (float)opts.exposure,
+            .saturation = (float)opts.saturation,
+            .brightness = (float)opts.brightness,
+            .contrast   = (float)opts.contrast,
             
-            // TODO: implement
-//            rotation = Rotation::None;
-            .defringe = {
-                .en = _imageRecord->options.defringe,
-            },
-            
-            .reconstructHighlights = {
-                .en = _imageRecord->options.reconstructHighlights,
-            },
-            
-            // TODO: implement
-//            struct [[gnu::packed]] {
-//                bool show = false;
-//                Corner corner = Corner::BottomRight;
-//            } timestamp;
-            
-            .exposure = _imageRecord->options.exposure,
-            .saturation = _imageRecord->options.saturation,
-            .brightness = _imageRecord->options.brightness,
-            .contrast = _imageRecord->options.contrast,
             .localContrast = {
-                .en = false,
-                .amount = _imageRecord->options.localContrast.amount,
-                .radius = _imageRecord->options.localContrast.radius,
+                .en = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
+                .amount = (float)opts.localContrast.amount,
+                .radius = (float)opts.localContrast.radius,
             },
         };
         
-        Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
-        _imageTxt = renderResult.txt;
+        Pipeline::Process(renderer, processOpts, rgbTxt, _imageTxt);
     }
     
     // If we don't have the thumbnail texture yet, create it
     if (!_thumbTxt || dirty) {
-        #warning TODO: try removing the Write usage flag
-        _thumbTxt = renderer.textureCreate(MTLPixelFormatBGRA8Unorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
-            MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
+        if (!_thumbTxt) {
+            _thumbTxt = renderer.textureCreate(MTLPixelFormatBC7_RGBAUnorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight);
+        }
         
-        const ImageLibrary::Chunk& chunk = *_imageRecord.chunk;
-        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-        id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data()
-            length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
-        const size_t thumbDataOff = (uintptr_t)&_imageRecord->thumb - (uintptr_t)chunk.mmap.data();
-        
-        const RenderThumb::Options thumbOpts = {
-            .thumbWidth = ImageThumb::ThumbWidth,
-            .thumbHeight = ImageThumb::ThumbHeight,
-            .dataOff = thumbDataOff,
-        };
-        RenderThumb::TextureFromRGB3(renderer, thumbOpts, thumbBuf, _thumbTxt);
+        [_thumbTxt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
+            slice:0 withBytes:_imageRecord->thumb.data bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
     }
     
     // Finally render into `drawableTxt`, from the full-size image if it
@@ -216,7 +193,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 }
 
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
-// and with the ImageLibraryPtr lock held!
+// and with the ImageLibrary lock held!
 - (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
     switch (ev.type) {
     case ImageLibrary::Event::Type::Add:

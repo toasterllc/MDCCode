@@ -96,8 +96,8 @@
 		55E1D8E9253E868000628EF6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		55E1D8EB253E868400628EF6 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		55E1D8ED253E892B00628EF6 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		55EBFD2628C7DD3C00B3D1B5 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		55ECAFCB26B0293500A339C7 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		55F755A729BE97FE00241672 /* Math.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Math.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -178,6 +178,7 @@
 			isa = PBXGroup;
 			children = (
 				552F4B8C29AD3ACB000CEAB2 /* LICENSE.md */,
+				55F755A729BE97FE00241672 /* Math.h */,
 				552F4B8D29AD3ACB000CEAB2 /* ReadWrite.h */,
 				552F4B8E29AD3ACB000CEAB2 /* Enum.h */,
 				552F4B8F29AD3ACB000CEAB2 /* Endian.h */,
@@ -260,7 +261,6 @@
 				55B66B40271525F800AD39A5 /* SD.h */,
 				55B66B422715286A00AD39A5 /* SDCard.h */,
 				55B66B472717691200AD39A5 /* STM.h */,
-				55EBFD2628C7DD3C00B3D1B5 /* Util.h */,
 				55D30A2F29A92FC70080BCBD /* Time.h */,
 				552F476929AD3877000CEAB2 /* TimeConvert.h */,
 			);

@@ -12,7 +12,8 @@ public:
     using ImageProvider = std::function<ImagePtr(uint64_t addr)>;
     using ImageLoadedHandler = std::function<void(ImagePtr)>;
     
-    ImageCache(ImageLibraryPtr imageLibrary, ImageProvider&& imageProvider) : _imageLibrary(imageLibrary), _imageProvider(std::move(imageProvider)) {
+    ImageCache(ImageLibrary& imageLibrary, ImageProvider&& imageProvider)
+    : _imageLibrary(imageLibrary), _imageProvider(std::move(imageProvider)) {
         auto lock = std::unique_lock(_state.lock);
         _state.thread = std::thread([=] { _thread(); });
     }
@@ -22,9 +23,9 @@ public:
         {
             auto lock = std::unique_lock(_state.lock);
             _state.threadStop = true;
-            _state.threadSignal.notify_all();
         }
         
+        _state.threadSignal.notify_all();
         _state.thread.join();
         printf("~ImageCache()\n");
     }
@@ -83,7 +84,7 @@ private:
             if (work.loadImage) {
                 ImagePtr image;
                 // Load the image
-                image = _imageProvider(work.rec->info.addr);
+                image = _imageProvider(work.rec->addr.full);
                 if (image) {
                     // Put the image in the cache
                     _state.images[work.rec->info.id] = image;
@@ -105,28 +106,28 @@ private:
                 
                 // Collect the neighboring image ids in the order that we want to load them: 3 2 1 0 [img] 0 1 2 3
                 {
-                    auto lock = std::unique_lock(*_imageLibrary);
-                    auto find = _imageLibrary->find(work.rec);
+                    auto lock = std::unique_lock(_imageLibrary);
+                    auto find = _imageLibrary.find(work.rec);
                     auto it = find;
                     auto rit = std::make_reverse_iterator(find); // Points to element before `find`
                     
                     for (size_t i=0; i<_NeighborImageLoadCount/2; i++) {
-                        if (it != _imageLibrary->end()) it++;
+                        if (it != _imageLibrary.end()) it++;
                         
-                        if (it != _imageLibrary->end()) {
+                        if (it != _imageLibrary.end()) {
                             const ImageRecord& thumb = **it;
-                            idAddrs.push_back({ thumb.info.id, thumb.info.addr });
+                            idAddrs.push_back({ thumb.info.id, thumb.addr.full });
                         }
                         
-                        if (rit != _imageLibrary->rend()) {
+                        if (rit != _imageLibrary.rend()) {
                             const ImageRecord& thumb = **rit;
-                            idAddrs.push_back({ thumb.info.id, thumb.info.addr });
+                            idAddrs.push_back({ thumb.info.id, thumb.addr.full });
                         }
                         
                         // make_reverse_iterator() returns an iterator that points to the element _before_ the
                         // forward iterator (`find`), so we increment `rit` at the end of the loop, instead of
                         // at the beginning (where we increment the forward iterator `it`)
-                        if (rit != _imageLibrary->rend()) rit++;
+                        if (rit != _imageLibrary.rend()) rit++;
                     }
                 }
                 
@@ -181,7 +182,7 @@ private:
         std::optional<_Work> work;
     } _state;
     
-    ImageLibraryPtr _imageLibrary;
+    ImageLibrary& _imageLibrary;
     ImageProvider _imageProvider;
 };
 

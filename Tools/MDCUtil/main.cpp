@@ -70,7 +70,7 @@ static void printUsage() {
     cout << "  " << MSPSBWReadCmd           << " <addr> <len>\n";
     cout << "  " << MSPSBWWriteCmd          << " <file>\n";
     
-    cout << "  " << SDReadCmd               << " <addr> <len> <output>\n";
+    cout << "  " << SDReadCmd               << " <addr> <blockcount> <output>\n";
     cout << "  " << ImgCaptureCmd           << " <output.cfa>\n";
     
     cout << "\n";
@@ -119,8 +119,8 @@ struct Args {
     } MSPSBWWrite = {};
     
     struct {
-        uintptr_t addr = 0;
-        size_t len = 0;
+        SD::Block addr = 0;
+        SD::Block count = 0;
         std::string filePath;
     } SDRead = {};
     
@@ -202,7 +202,7 @@ static Args parseArgs(int argc, const char* argv[]) {
     } else if (args.cmd == lower(SDReadCmd)) {
         if (strs.size() < 4) throw std::runtime_error("missing argument: address/length/file");
         IntForStr(args.SDRead.addr, strs[1]);
-        IntForStr(args.SDRead.len, strs[2]);
+        IntForStr(args.SDRead.count, strs[2]);
         args.SDRead.filePath = strs[3];
     
     } else if (args.cmd == lower(ImgCaptureCmd)) {
@@ -362,7 +362,8 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(     "    crc:                   0x%02jx\n",     (uintmax_t)state.sd.cardId.crc);
     
     printf(     "  imgCap:                  %ju\n",         (uintmax_t)state.sd.imgCap);
-    printf(     "  thumbBlockStart:         %ju\n",         (uintmax_t)state.sd.thumbBlockStart);
+    printf(     "  fullBase:                %ju\n",         (uintmax_t)state.sd.fullBase);
+    printf(     "  thumbBase:               %ju\n",         (uintmax_t)state.sd.thumbBase);
     
     printf(     "  imgRingBufs[0]\n");
     printf(     "    buf\n");
@@ -484,25 +485,20 @@ static void MSPSBWWrite(const Args& args, MDCUSBDevice& device) {
 }
 
 static void SDRead(const Args& args, MDCUSBDevice& device) {
-    if (args.SDRead.addr % SD::BlockLen)
-        throw Toastbox::RuntimeError("address must be a multiple of the SD block size (%ju)",
-            (uintmax_t)SD::BlockLen);
-    
-    if (args.SDRead.len % Toastbox::USB::Endpoint::MaxPacketSizeBulk)
-        throw Toastbox::RuntimeError("length must be a multiple of the USB packet size (%ju)",
-            (uintmax_t)Toastbox::USB::Endpoint::MaxPacketSizeBulk);
+    static_assert(!(SD::BlockLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk));
+    const size_t len = (size_t)args.SDRead.count * (size_t)SD::BlockLen;
     
     printf("Sending SDInit command...\n");
     device.sdInit();
     printf("-> OK\n\n");
     
     printf("Sending SDRead command...\n");
-    device.sdRead((SD::Block)(args.SDRead.addr / SD::BlockLen));
+    device.sdRead(args.SDRead.addr);
     printf("-> OK\n\n");
     
     printf("Reading data...\n");
-    auto buf = std::make_unique<uint8_t[]>(args.SDRead.len);
-    device.readout(buf.get(), args.SDRead.len);
+    auto buf = std::make_unique<uint8_t[]>(len);
+    device.readout(buf.get(), len);
     printf("-> OK\n\n");
     
     // Write data
@@ -510,8 +506,8 @@ static void SDRead(const Args& args, MDCUSBDevice& device) {
     std::ofstream f;
     f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     f.open(args.SDRead.filePath.c_str());
-    f.write((char*)buf.get(), args.SDRead.len);
-    printf("-> Wrote %ju bytes\n", (uintmax_t)args.SDRead.len);
+    f.write((char*)buf.get(), len);
+    printf("-> Wrote %ju blocks (%ju bytes)\n", (uintmax_t)args.SDRead.count, (uintmax_t)len);
 }
 
 static void ImgCapture(const Args& args, MDCUSBDevice& device) {

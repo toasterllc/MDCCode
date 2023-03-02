@@ -17,7 +17,6 @@
 #include "SPI.h"
 #include "WDT.h"
 #include "RegLocker.h"
-#include "Util.h"
 #include "MSP.h"
 #include "GetBits.h"
 #include "ImgSD.h"
@@ -297,13 +296,13 @@ struct _TaskSD {
         
         // Copy full-size image from RAM -> SD card
         {
-            const SD::Block dstSDBlock = widx * ImgSD::Full::ImageBlockCount;
+            const SD::Block dstSDBlock = _State.sd.fullBase + widx * ImgSD::Full::ImageBlockCount;
             _SDCard::WriteImage(*_RCA, srcRAMBlock, dstSDBlock, Img::Size::Full);
         }
         
         // Copy thumbnail from RAM -> SD card
         {
-            const SD::Block dstSDBlock = _State.sd.thumbBlockStart + (widx * ImgSD::Thumb::ImageBlockCount);
+            const SD::Block dstSDBlock = _State.sd.thumbBase + (widx * ImgSD::Thumb::ImageBlockCount);
             _SDCard::WriteImage(*_RCA, srcRAMBlock, dstSDBlock, Img::Size::Thumb);
         }
         
@@ -337,9 +336,10 @@ struct _TaskSD {
             _State.sd.imgCap = cardImgCap;
         }
         
-        // Set .thumbBlockStart
+        // Set .fullBase / .thumbBase
         {
-            _State.sd.thumbBlockStart = cardImgCap * ImgSD::Full::ImageBlockCount;
+            _State.sd.fullBase = 0;
+            _State.sd.thumbBase = cardImgCap * ImgSD::Full::ImageBlockCount;
         }
         
         // Set .imgRingBufs

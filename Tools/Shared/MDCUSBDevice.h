@@ -55,7 +55,7 @@ public:
         return _dev == x._dev;
     }
     
-    USBDevice& dev() { return _dev; }
+    const USBDevice& dev() const { return _dev; }
     
     // MARK: - Accessors
     
@@ -627,5 +627,3 @@ private:
     std::string _serial = {};
     STM::Status::Mode _mode = STM::Status::Mode::None;
 };
-
-using MDCUSBDevicePtr = std::shared_ptr<MDCTools::Lockable<MDCUSBDevice>>;

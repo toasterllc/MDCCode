@@ -1,19 +1,22 @@
 #pragma once
-#import "Tools/Shared/Mat.h"
+#import "Mat.h"
 
 namespace MDCTools {
 
+using Float = double;
+using Float3 = Mat<Float,3,1>;
+
 namespace White {
     struct D50 {
-        static inline const Mat<double,3,1> XYZ = {0.96422, 1.00000, 0.82521};
+        static inline const Float3 XYZ = {0.96422, 1.00000, 0.82521};
     };
     
     struct D55 {
-        static inline const Mat<double,3,1> XYZ = {0.95682, 1.00000, 0.92149};
+        static inline const Float3 XYZ = {0.95682, 1.00000, 0.92149};
     };
     
     struct D65 {
-        static inline const Mat<double,3,1> XYZ = {0.95047, 1.00000, 1.08883};
+        static inline const Float3 XYZ = {0.95047, 1.00000, 1.08883};
     };
     
     struct Unknown {
@@ -50,7 +53,7 @@ namespace ColorSpace {
             Zr, Zg, Zb
         );
         
-        const Mat<double,3,1> S = XYZ.solve(Space::White::XYZ);
+        const Float3 S = XYZ.solve(Space::White::XYZ);
         const Mat<double,3,3> M(
             S[0]*Xr, S[1]*Xg, S[2]*Xb,
             S[0]*Yr, S[1]*Yg, S[2]*Yb,
@@ -113,7 +116,7 @@ namespace ColorSpace {
     
     // X<->X (converting between the same colorspace -- no-op)
     template <typename X>
-    Mat<double,3,1> Convert(X, X, const Mat<double,3,1>& c) {
+    Float3 Convert(X, X, const Float3& c) {
         return c;
     }
     
@@ -121,7 +124,7 @@ namespace ColorSpace {
     template <typename WhiteSrc, typename WhiteDst,
     // Only enable if WhiteSrc!=WhiteDst, otherwise this will be ambiguous with Convert(X,X)
     typename std::enable_if<!std::is_same<WhiteSrc,WhiteDst>::value, bool>::type = false>
-    Mat<double,3,1> Convert(XYZ<WhiteSrc>, XYZ<WhiteDst>, const Mat<double,3,1>& c) {
+    Float3 Convert(XYZ<WhiteSrc>, XYZ<WhiteDst>, const Float3& c) {
         // From http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_xyY.html
         const Mat<double,3,3> BradfordForward(
             0.8951000,  0.2664000,  -0.1614000,
@@ -135,8 +138,8 @@ namespace ColorSpace {
             -0.0085287, 0.0400428,  0.9684867
         );
         
-        const Mat<double,3,1> S = BradfordForward*WhiteSrc::XYZ;
-        const Mat<double,3,1> D = BradfordForward*WhiteDst::XYZ;
+        const Float3 S = BradfordForward*WhiteSrc::XYZ;
+        const Float3 D = BradfordForward*WhiteDst::XYZ;
         
         const Mat<double,3,3> K(
             D[0]/S[0],  0.,         0.,
@@ -149,38 +152,38 @@ namespace ColorSpace {
     }
     
     // LSRGB<->XYZ
-    inline Mat<double,3,1> Convert(LSRGB, XYZ<LSRGB::White>, const Mat<double,3,1>& c) {
+    inline Float3 Convert(LSRGB, XYZ<LSRGB::White>, const Float3& c) {
         return XYZFromRGBMatrix<LSRGB>()*c;
     }
     
-    inline Mat<double,3,1> Convert(XYZ<LSRGB::White>, LSRGB, const Mat<double,3,1>& c) {
+    inline Float3 Convert(XYZ<LSRGB::White>, LSRGB, const Float3& c) {
         return RGBFromXYZMatrix<LSRGB>()*c;
     }
     
     // LSRGB<->SRGB specialization
-    inline Mat<double,3,1> Convert(LSRGB, SRGB, const Mat<double,3,1>& c) {
+    inline Float3 Convert(LSRGB, SRGB, const Float3& c) {
         return { SRGB::GammaForward(c[0]), SRGB::GammaForward(c[1]), SRGB::GammaForward(c[2]) };
     }
     
-    inline Mat<double,3,1> Convert(SRGB, LSRGB, const Mat<double,3,1>& c) {
+    inline Float3 Convert(SRGB, LSRGB, const Float3& c) {
         return { SRGB::GammaReverse(c[0]), SRGB::GammaReverse(c[1]), SRGB::GammaReverse(c[2]) };
     }
     
     // SRGB<->XYZ (convert between LSRGB using SRGB gamma function)
-    inline Mat<double,3,1> Convert(SRGB, XYZ<SRGB::White>, const Mat<double,3,1>& c) {
+    inline Float3 Convert(SRGB, XYZ<SRGB::White>, const Float3& c) {
         return XYZFromRGBMatrix<LSRGB>()*Convert(SRGB{}, LSRGB{}, c);
     }
     
-    inline Mat<double,3,1> Convert(XYZ<SRGB::White>, SRGB, const Mat<double,3,1>& c) {
+    inline Float3 Convert(XYZ<SRGB::White>, SRGB, const Float3& c) {
         return Convert(LSRGB{}, SRGB{}, RGBFromXYZMatrix<LSRGB>()*c);
     }
     
     // ProPhotoRGB<->XYZ
-    inline Mat<double,3,1> Convert(ProPhotoRGB, XYZ<ProPhotoRGB::White>, const Mat<double,3,1>& c) {
+    inline Float3 Convert(ProPhotoRGB, XYZ<ProPhotoRGB::White>, const Float3& c) {
         return XYZFromRGBMatrix<ProPhotoRGB>()*c;
     }
     
-    inline Mat<double,3,1> Convert(XYZ<ProPhotoRGB::White>, ProPhotoRGB, const Mat<double,3,1>& c) {
+    inline Float3 Convert(XYZ<ProPhotoRGB::White>, ProPhotoRGB, const Float3& c) {
         return RGBFromXYZMatrix<ProPhotoRGB>()*c;
     }
     
@@ -195,7 +198,7 @@ template <typename Space>
 class Color {
 public:
     Color() {}
-    Color(const Mat<double,3,1> m) : m(m) {}
+    Color(const Float3 m) : m(m) {}
     Color(double x0, double x1, double x2) : m(x0,x1,x2) {}
     
     // Direct conversion (SpaceSrc -> Space)
@@ -241,13 +244,13 @@ public:
         );
     }
     
-//    operator Mat<double,3,1>() { return m; }
-//    operator const Mat<double,3,1>() const { return m; }
+//    operator Float3() { return m; }
+//    operator const Float3() const { return m; }
     
     double& operator[](size_t i) { return m[i]; }
     const double& operator[](size_t i) const { return m[i]; }
     
-    Mat<double,3,1> m;
+    Float3 m;
 };
 
 } // namespace MDCTools

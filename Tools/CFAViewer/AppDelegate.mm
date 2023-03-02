@@ -14,6 +14,7 @@
 #import "ImageLayer.h"
 //#import "HistogramLayer.h"
 #import "Toastbox/Mmap.h"
+#import "Toastbox/Mac/Util.h"
 #import "Util.h"
 #import "Mat.h"
 #import "MainView.h"
@@ -54,6 +55,7 @@ struct ExposureSettings {
 @end
 
 @implementation AppDelegate {
+    IBOutlet NSWindow* _inspectorWindow;
     IBOutlet MainView* _mainView;
     
     IBOutlet NSSwitch* _streamImagesSwitch;
@@ -69,10 +71,14 @@ struct ExposureSettings {
     IBOutlet NSSwitch* _analogGainSlider;
     IBOutlet NSTextField* _analogGainLabel;
     
-    IBOutlet NSTextField* _illumTextField;
-    
     IBOutlet NSButton* _colorCheckersCheckbox;
     IBOutlet NSButton* _resetColorCheckersButton;
+    
+    IBOutlet NSButton* _illumCheckbox;
+    IBOutlet NSTextField* _illumTextField;
+    
+    IBOutlet NSButton* _colorMatrixCheckbox;
+    IBOutlet NSTextField* _colorMatrixTextField;
     
     IBOutlet NSButton* _defringeCheckbox;
     IBOutlet NSSlider* _defringeRoundsSlider;
@@ -87,8 +93,6 @@ struct ExposureSettings {
     IBOutlet NSTextField* _defringeδFactorLabel;
     
     IBOutlet NSButton* _reconstructHighlightsCheckbox;
-    
-    IBOutlet NSTextField* _colorMatrixTextField;
     
     IBOutlet NSButton* _debayerLMMSEGammaCheckbox;
     
@@ -193,11 +197,14 @@ struct ExposureSettings {
     // /Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa
 //    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker"}];
 //    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker"}];
-    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_43.cfa"}];
+//    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_43.cfa"}];
+    
+    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_200.cfa"}];
+//    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_78.cfa"}];
+//    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_64.cfa"}];
+    
     
     _imagePipelineManager->options = {
-        .rawMode = false,
-        
         .illum = std::nullopt,
         
         .reconstructHighlights = {
@@ -211,7 +218,14 @@ struct ExposureSettings {
         .defringe = {
             .en = false,
         },
+        
+        .localContrast = {
+            .en = true,
+            .amount = .5,
+            .radius = 50,
+        },
     };
+    
     
     [self _updateInspectorUI];
     
@@ -794,14 +808,19 @@ Mat<double,H,W> _matFromString(const std::string& str) {
     return _matrixFromString<H,W>(str);
 }
 
-- (void)controlTextDidChange:(NSNotification*)note {
+- (void)controlTextDidEndEditing:(NSNotification*)note {
+    NSLog(@"controlTextDidEndEditing:");
     auto& opts = _imagePipelineManager->options;
-    if ([note object] == _illumTextField) {
+    NSTextField* textField = Toastbox::CastOrNull<NSTextField*>([note object]);
+    if (!textField) return;
+    if (textField == _illumTextField) {
+        if (!opts.illum) return;
         opts.illum = _matFromString<3,1>([[_illumTextField stringValue] UTF8String]);
         [self _updateInspectorUI];
         [[_mainView imageLayer] setNeedsDisplay];
     
-    } else if ([note object] == _colorMatrixTextField) {
+    } else if (textField == _colorMatrixTextField) {
+        if (!opts.colorMatrix) return;
         opts.colorMatrix = _matFromString<3,3>([[_colorMatrixTextField stringValue] UTF8String]);
         [self _updateInspectorUI];
         [[_mainView imageLayer] setNeedsDisplay];
@@ -1034,15 +1053,36 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 //        (uintmax_t)exp.analogGain]];
 //}
 
-- (IBAction)_illumIdentityButtonAction:(id)sender {
+- (IBAction)_illumCheckboxAction:(id)sender {
     auto& opts = _imagePipelineManager->options;
-    opts.illum = { 1.,1.,1. };
+    const bool en = ([_illumCheckbox state] == NSControlStateValueOn);
+    if (en) opts.illum = _imagePipelineManager->result.illum;
+    else    opts.illum = std::nullopt;
     [self _updateInspectorUI];
     [[_mainView imageLayer] setNeedsDisplay];
 }
 
-- (IBAction)_colorMatrixIdentityButtonAction:(id)sender {
+- (IBAction)_illumIdentityAction:(id)sender {
     auto& opts = _imagePipelineManager->options;
+    [_inspectorWindow makeFirstResponder:nil];
+    opts.illum = { 1.,1.,1. };
+    [self _updateInspectorUI];
+    [_inspectorWindow makeFirstResponder:_illumTextField];
+    [[_mainView imageLayer] setNeedsDisplay];
+}
+
+- (IBAction)_colorMatrixCheckboxAction:(id)sender {
+    auto& opts = _imagePipelineManager->options;
+    const bool en = ([_colorMatrixCheckbox state] == NSControlStateValueOn);
+    if (en) opts.colorMatrix = _imagePipelineManager->result.colorMatrix;
+    else    opts.colorMatrix = std::nullopt;
+    [self _updateInspectorUI];
+    [[_mainView imageLayer] setNeedsDisplay];
+}
+
+- (IBAction)_colorMatrixIdentityAction:(id)sender {
+    auto& opts = _imagePipelineManager->options;
+    [_inspectorWindow makeFirstResponder:nil];
     [self _setColorCheckersEnabled:false];
     opts.colorMatrix = {
         1.,0.,0.,
@@ -1050,16 +1090,30 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
         0.,0.,1.
     };
     [self _updateInspectorUI];
+    [_inspectorWindow makeFirstResponder:_colorMatrixTextField];
+    [[_mainView imageLayer] setNeedsDisplay];
+}
+
+- (IBAction)_colorMatrixClearAction:(id)sender {
+    auto& opts = _imagePipelineManager->options;
+    [self _setColorCheckersEnabled:false];
+    opts.colorMatrix = std::nullopt;
+    [self _updateInspectorUI];
     [[_mainView imageLayer] setNeedsDisplay];
 }
 
 - (void)_setColorCheckersEnabled:(bool)en {
+    auto& opts = _imagePipelineManager->options;
+    if (_colorCheckersEnabled == en) return;
+    
     _colorCheckersEnabled = en;
     [_colorCheckersCheckbox setState:
         (_colorCheckersEnabled ? NSControlStateValueOn : NSControlStateValueOff)];
     [_colorMatrixTextField setEditable:!_colorCheckersEnabled];
     [_mainView setColorCheckersVisible:_colorCheckersEnabled];
     [_resetColorCheckersButton setHidden:!_colorCheckersEnabled];
+    opts.illum = std::nullopt;
+    opts.colorMatrix = std::nullopt;
 }
 
 - (IBAction)_resetColorCheckersButtonAction:(id)sender {
@@ -1067,11 +1121,13 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     [self _updateColorMatrix];
 }
 
-- (IBAction)_colorCheckersAction:(id)sender {
+- (IBAction)_colorCheckersCheckboxAction:(id)sender {
     [self _setColorCheckersEnabled:([_colorCheckersCheckbox state]==NSControlStateValueOn)];
     if (_colorCheckersEnabled) {
         [self _updateColorMatrix];
     }
+    [self _updateInspectorUI];
+    [[_mainView imageLayer] setNeedsDisplay];
 }
 
 - (IBAction)_imageOptionsAction:(id)sender {
@@ -1102,12 +1158,6 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 
 - (void)_updateInspectorUI {
     const auto& opts = _imagePipelineManager->options;
-    // Illuminant matrix
-    {
-        if (_imagePipelineManager->options.illum) {
-            [self _updateIllumEstTextField:*_imagePipelineManager->options.illum];
-        }
-    }
     
     // Defringe
     {
@@ -1143,16 +1193,34 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
             NSControlStateValueOn : NSControlStateValueOff)];
     }
     
+    // Illuminant
+    {
+        if (_colorCheckersEnabled) {
+            [_illumCheckbox setState:NSControlStateValueOff];
+            [_illumCheckbox setEnabled:false];
+            [_illumTextField setEditable:false];
+        
+        } else {
+            [_illumCheckbox setState:((bool)opts.illum ? NSControlStateValueOn : NSControlStateValueOff)];
+            [_illumCheckbox setEnabled:true];
+            [_illumTextField setEditable:(bool)opts.illum];
+            [self _setIllumText:opts.illum.value_or(Color<ColorSpace::Raw>{})];
+        }
+    }
+    
     // Color matrix
     {
-        [_colorMatrixTextField setStringValue:[NSString stringWithFormat:
-            @"%f %f %f\n"
-            @"%f %f %f\n"
-            @"%f %f %f\n",
-            opts.colorMatrix.at(0,0), opts.colorMatrix.at(0,1), opts.colorMatrix.at(0,2),
-            opts.colorMatrix.at(1,0), opts.colorMatrix.at(1,1), opts.colorMatrix.at(1,2),
-            opts.colorMatrix.at(2,0), opts.colorMatrix.at(2,1), opts.colorMatrix.at(2,2)
-        ]];
+        if (_colorCheckersEnabled) {
+            [_colorMatrixCheckbox setState:NSControlStateValueOff];
+            [_colorMatrixCheckbox setEnabled:false];
+            [_colorMatrixTextField setEditable:false];
+        
+        } else {
+            [_colorMatrixCheckbox setState:((bool)opts.colorMatrix ? NSControlStateValueOn : NSControlStateValueOff)];
+            [_colorMatrixCheckbox setEnabled:true];
+            [_colorMatrixTextField setEditable:(bool)opts.colorMatrix];
+            [self _setColorMatrixText:opts.colorMatrix.value_or(Mat<double,3,3>{})];
+        }
     }
     
     {
@@ -1212,9 +1280,20 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 //    [self mainViewSampleRectChanged:nil];
 }
 
-- (void)_updateIllumEstTextField:(const Color<ColorSpace::Raw>&)illumEst {
+- (void)_setIllumText:(const Color<ColorSpace::Raw>&)illum {
     [_illumTextField setStringValue:[NSString stringWithFormat:
-        @"%f %f %f", illumEst[0], illumEst[1], illumEst[2]
+        @"%f %f %f", illum[0], illum[1], illum[2]
+    ]];
+}
+
+- (void)_setColorMatrixText:(const Mat<double,3,3>&)colorMatrix {
+    [_colorMatrixTextField setStringValue:[NSString stringWithFormat:
+        @"%+f %+f %+f\n"
+        @"%+f %+f %+f\n"
+        @"%+f %+f %+f\n",
+        colorMatrix.at(0,0), colorMatrix.at(0,1), colorMatrix.at(0,2),
+        colorMatrix.at(1,0), colorMatrix.at(1,1), colorMatrix.at(1,2),
+        colorMatrix.at(2,0), colorMatrix.at(2,1), colorMatrix.at(2,2)
     ]];
 }
 
@@ -1222,12 +1301,9 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     // Commit and wait so we can read the sample buffers
     _imagePipelineManager->renderer.commitAndWait();
     
-    // Update the estimated illuminant in the inspector UI,
-    // if we weren't overriding the illuminant
-    if (!_imagePipelineManager->options.illum) {
-        [self _updateIllumEstTextField:_imagePipelineManager->result.illumEst];
-    }
-    
+    // Update the estimated illuminant in the inspector UI
+    [self _setIllumText:_imagePipelineManager->result.illum];
+    [self _setColorMatrixText:_imagePipelineManager->result.colorMatrix];
     [self _updateSampleColorsUI];
 }
 
@@ -1258,17 +1334,22 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 }
 
 - (void)_updateColorMatrix {
-    auto points = [_mainView colorCheckerPositions];
+    assert(_colorCheckersEnabled);
+    
+    auto& opts = _imagePipelineManager->options;
+    
+    const std::vector<CGPoint> points = [_mainView colorCheckerPositions];
     assert(points.size() == ColorChecker::Count);
     
-    // Use the illuminant override (if specified), otherwise use
-    // the estimated illuminant
-    Color<ColorSpace::Raw> illum;
-    if (_imagePipelineManager->options.illum) {
-        illum = *_imagePipelineManager->options.illum;
-    } else {
-        illum = _imagePipelineManager->result.illumEst;
-    }
+    // Sample the white square to get the illuminant
+    const CGPoint whitePos = points[ColorChecker::WhiteIdx];
+    const Color<ColorSpace::Raw> illum = sampleImageCircle(
+        _rawImage.img,
+        round(whitePos.x*_rawImage.img.width),
+        round(whitePos.y*_rawImage.img.height),
+        _colorCheckerCircleRadius
+    );
+    
     const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
     const Mat<double,3,1> whiteBalance(factor/illum[0], factor/illum[1], factor/illum[2]);
     
@@ -1328,7 +1409,6 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     //   Ax=b  =>  (Ax)'=b'  =>  x'A'=b'
     // and solve for A' (which is now in the position that x is in, in the standard
     // matrix equation Ax=b), and finally transpose A' to get A (since (A')' = A).
-    auto& opts = _imagePipelineManager->options;
     Mat<double,3,3> colorMatrix = x.trans().solve(b.trans()).trans();
     
     // Force each row of `colorMatrix` sums to 1. See comment above.
@@ -1339,6 +1419,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
         }
     }
     
+    opts.illum = illum;
     opts.colorMatrix = colorMatrix;
     [self _updateInspectorUI];
     [[_mainView imageLayer] setNeedsDisplay];

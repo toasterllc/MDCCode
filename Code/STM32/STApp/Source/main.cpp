@@ -1,12 +1,13 @@
 #define SchedulerARM32
 #include "Toastbox/Scheduler.h"
+#include "Toastbox/Queue.h"
+#include "Toastbox/Math.h"
 #include "Assert.h"
 #include "System.h"
 #include "ICE.h"
 #include "STM.h"
 #include "USB.h"
 #include "QSPI.h"
-#include "BufQueue.h"
 #include "SDCard.h"
 #include "ImgSensor.h"
 #include "ImgSD.h"
@@ -39,7 +40,13 @@ using _MSPJTAG = _System::MSPJTAG;
 // We're using 63K buffers instead of 64K, because the
 // max DMA transfer is 65535 bytes, not 65536.
 static void _BufQueueAssert(bool c) { Assert(c); }
-using _BufQueue = BufQueue<uint8_t, 63*1024, 2, _BufQueueAssert>;
+
+struct _Buf {
+    uint8_t data[63*1024];
+    size_t len = 0;
+};
+
+using _BufQueue = Toastbox::Queue<_Buf, 2, _BufQueueAssert>;
 
 #warning TODO: were not putting the _BufQueue code in .sram1 too are we?
 [[gnu::section(".sram1")]]
@@ -416,44 +423,42 @@ struct _TaskUSBDataOut {
     static void Start(size_t len) {
         // Make sure this task isn't already running
         Assert(!_Scheduler::Running<_TaskUSBDataOut>());
-        _Len = len;
+        _LenRem = len;
         _Scheduler::Start<_TaskUSBDataOut>(Run);
     }
     
     static void Run() {
-        size_t len = _Len;
         for (;;) {
             _Scheduler::Wait([] { return _Bufs.wok(); });
+            _Buf& buf = _Bufs.wget();
+            buf.len = 0;
             
-            auto& buf = _Bufs.wget();
-            if (!len) {
-                // Signal EOF when there's no more data to receive
-                buf.len = 0;
-                _Bufs.wpush();
-                break;
+            if (_LenRem) {
+                // Prepare to receive either `len` bytes or the buffer capacity bytes,
+                // whichever is smaller.
+                const size_t cap = Toastbox::Ceil(_USB::MaxPacketSizeOut(), std::min(_LenRem, sizeof(buf.data)));
+                // Ensure that after rounding up to the nearest packet size, we don't
+                // exceed the buffer capacity. (This should always be safe as long as
+                // the buffer capacity is a multiple of the max packet size.)
+                Assert(cap <= sizeof(buf.data));
+                const std::optional<size_t> recvLenOpt = _USB::Recv(Endpoint::DataOut, buf.data, cap);
+                #warning TODO: handle errors somehow
+                if (!recvLenOpt) break;
+                
+                // Never claim that we read more than the requested data, even if ceiling
+                // to the max packet size caused us to read more than requested.
+                const size_t recvLen = std::min(_LenRem, *recvLenOpt);
+                buf.len = recvLen;
+                _LenRem -= recvLen;
             }
             
-            // Prepare to receive either `len` bytes or the buffer capacity bytes,
-            // whichever is smaller.
-            const size_t cap = _USB::CeilToMaxPacketSize(_USB::MaxPacketSizeOut(), std::min(len, sizeof(buf.data)));
-            // Ensure that after rounding up to the nearest packet size, we don't
-            // exceed the buffer capacity. (This should always be safe as long as
-            // the buffer capacity is a multiple of the max packet size.)
-            Assert(cap <= sizeof(buf.data));
-            const std::optional<size_t> recvLenOpt = _USB::Recv(Endpoint::DataOut, buf.data, cap);
-            #warning TODO: handle errors somehow
-            if (!recvLenOpt) break;
-            
-            // Never claim that we read more than the requested data, even if ceiling
-            // to the max packet size caused us to read more than requested.
-            const size_t recvLen = std::min(len, *recvLenOpt);
-            len -= recvLen;
-            buf.len = recvLen;
             _Bufs.wpush();
+            // We're done when we push an empty buffer (which signals EOF)
+            if (!buf.len) break;
         }
     }
     
-    static inline size_t _Len = 0;
+    static inline size_t _LenRem = 0;
     
     // Task stack
     [[gnu::section(".stack._TaskUSBDataOut")]]
@@ -465,7 +470,7 @@ struct _TaskReadout {
     static void Start(std::optional<size_t> len) {
         // Make sure this task isn't already running
         Assert(!_Scheduler::Running<_TaskReadout>());
-        _RemLen = len;
+        _LenRem = len;
         _Scheduler::Start<_TaskReadout>(Run);
     }
     
@@ -481,42 +486,36 @@ struct _TaskReadout {
         _QSPI::Command(_QSPICmd::ICEApp(_ICE::ReadoutMsg(), 0));
         
         // Read data over QSPI and write it to USB, indefinitely
-        for (;;) {
+        while (_LenRem.value_or(SIZE_MAX)) {
             // Wait until there's a buffer available
             _Scheduler::Wait([] { return _Bufs.wok(); });
+            _Buf& buf = _Bufs.wget();
+            buf.len = 0;
             
-            const size_t len = std::min(_RemLen.value_or(SIZE_MAX), _ICE::ReadoutMsg::ReadoutLen);
-            auto& buf = _Bufs.wget();
-            
-            // If there's no more data to read, bail
-            if (!len) {
-                // Before bailing, push the final buffer if it holds data
-                if (buf.len) _Bufs.wpush();
-                break;
+            while (_LenRem.value_or(SIZE_MAX)) {
+                const size_t lenRead = std::min(_LenRem.value_or(SIZE_MAX), _ICE::ReadoutMsg::ReadoutLen);
+                const size_t lenBuf = sizeof(buf.data)-buf.len;
+                // If the buffer can't fit `lenRead` more bytes, we're done with this buffer
+                if (lenBuf < lenRead) break;
+                
+                // Wait until ICE40 signals that data is ready to be read
+                #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
+                while (!_ICE_ST_SPI_D_READY::Read());
+                
+                _QSPI::Read(_QSPICmd::ICEAppReadOnly(lenRead), buf.data+buf.len);
+                buf.len += lenRead;
+                if (_LenRem) *_LenRem -= lenRead;
             }
             
-            // If we can't read any more data into the producer buffer,
-            // push it so the data will be sent over USB
-            if (sizeof(buf.data)-buf.len < len) {
-                _Bufs.wpush();
-                continue;
-            }
-            
-            // Wait until ICE40 signals that data is ready to be read
-            #warning TODO: we should institute yield after some number of retries to avoid crashing the system if we never get data
-            while (!_ICE_ST_SPI_D_READY::Read());
-            
-            _QSPI::Read(_QSPICmd::ICEAppReadOnly(len), buf.data+buf.len);
-            buf.len += len;
-            
-            if (_RemLen) *_RemLen -= len;
+            // Push buffer if it has data
+            if (buf.len) _Bufs.wpush();
         }
         
         // Release chip-select to exit readout mode
         _ICE_ST_SPI_CS_::Write(1);
     }
     
-    static inline std::optional<size_t> _RemLen;
+    static inline std::optional<size_t> _LenRem;
     
     // Task stack
     [[gnu::section(".stack._TaskReadout")]]
@@ -751,16 +750,14 @@ static void _ICEFlashRead(const STM::Cmd& cmd) {
     uint32_t len = arg.len;
     while (len) {
         _Scheduler::Wait([] { return _Bufs.wok(); });
-        
-        auto& buf = _Bufs.wget();
+        _Buf& buf = _Bufs.wget();
         // Prepare to receive either `len` bytes or the
         // buffer capacity bytes, whichever is smaller.
-        const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
-        __ICEFlashIn(buf.data, chunkLen);
-        addr += chunkLen;
-        len -= chunkLen;
+        buf.len = std::min((size_t)len, sizeof(buf.data));
+        __ICEFlashIn(buf.data, buf.len);
+        addr += buf.len;
+        len -= buf.len;
         // Enqueue the buffer
-        buf.len = chunkLen;
         _Bufs.wpush();
     }
     
@@ -957,7 +954,7 @@ static bool __MSPStateRead(uint8_t* data, size_t len) {
 static void _MSPStateRead(const STM::Cmd& cmd) {
     // Reset state
     _Bufs.reset();
-    auto& buf = _Bufs.wget();
+    _Buf& buf = _Bufs.wget();
     
     auto& arg = cmd.arg.MSPStateRead;
     if (arg.len > sizeof(buf.data)) {
@@ -1079,16 +1076,14 @@ static void _MSPSBWRead(const STM::Cmd& cmd) {
     uint32_t len = arg.len;
     while (len) {
         _Scheduler::Wait([] { return _Bufs.wok(); });
-        
-        auto& buf = _Bufs.wget();
+        _Buf& buf = _Bufs.wget();
         // Prepare to receive either `len` bytes or the
         // buffer capacity bytes, whichever is smaller.
-        const size_t chunkLen = std::min((size_t)len, sizeof(buf.data));
-        _MSPJTAG::Read(addr, buf.data, chunkLen);
-        addr += chunkLen;
-        len -= chunkLen;
+        buf.len = std::min((size_t)len, sizeof(buf.data));
+        _MSPJTAG::Read(addr, buf.data, buf.len);
+        addr += buf.len;
+        len -= buf.len;
         // Enqueue the buffer
-        buf.len = chunkLen;
         _Bufs.wpush();
     }
     
@@ -1134,7 +1129,7 @@ struct _MSPSBWDebugState {
     bool ok = true;
 };
 
-static void _MSPSBWDebugPushReadBits(_MSPSBWDebugState& state, _BufQueue::Buf& buf) {
+static void _MSPSBWDebugPushReadBits(_MSPSBWDebugState& state, _Buf& buf) {
     if (state.len >= sizeof(buf.data)) {
         state.ok = false;
         return;
@@ -1148,7 +1143,7 @@ static void _MSPSBWDebugPushReadBits(_MSPSBWDebugState& state, _BufQueue::Buf& b
     state.bitsLen = 0;
 }
 
-static void _MSPSBWDebugHandleSBWIO(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& state, _BufQueue::Buf& buf) {
+static void _MSPSBWDebugHandleSBWIO(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& state, _Buf& buf) {
     const bool tdo = _MSPJTAG::DebugSBWIO(cmd.tmsGet(), cmd.tclkGet(), cmd.tdiGet());
     if (cmd.tdoReadGet()) {
         // Enqueue a new bit
@@ -1163,7 +1158,7 @@ static void _MSPSBWDebugHandleSBWIO(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState
     }
 }
 
-static void _MSPSBWDebugHandleCmd(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& state, _BufQueue::Buf& buf) {
+static void _MSPSBWDebugHandleCmd(const MSPSBWDebugCmd& cmd, _MSPSBWDebugState& state, _Buf& buf) {
     switch (cmd.opGet()) {
     case MSPSBWDebugCmd::Op::TestSet:       _MSPJTAG::DebugTestSet(cmd.pinValGet());    break;
     case MSPSBWDebugCmd::Op::RstSet:        _MSPJTAG::DebugRstSet(cmd.pinValGet());     break;
@@ -1177,7 +1172,7 @@ static void _MSPSBWDebug(const STM::Cmd& cmd) {
     auto& arg = cmd.arg.MSPSBWDebug;
     
     // Bail if more data was requested than the size of our buffer
-    if (arg.respLen > sizeof(_BufQueue::Buf::data)) {
+    if (arg.respLen > sizeof(_Buf::data)) {
         // Reject command
         _System::USBAcceptCommand(false);
         return;
@@ -1188,9 +1183,9 @@ static void _MSPSBWDebug(const STM::Cmd& cmd) {
     
     // Reset state
     _Bufs.reset();
-    auto& bufIn = _Bufs.wget();
+    _Buf& bufIn = _Bufs.wget();
     _Bufs.wpush();
-    auto& bufOut = _Bufs.wget();
+    _Buf& bufOut = _Bufs.wget();
     
     _MSPSBWDebugState state;
     

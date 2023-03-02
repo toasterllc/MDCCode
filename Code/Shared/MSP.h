@@ -57,10 +57,10 @@ static_assert(!(sizeof(AbortType) % 2)); // Check alignment
 
 // AbortHistory: records history of an abort type, where an abort type is a (domain,line) tuple
 struct [[gnu::packed]] AbortHistory {
-    AbortType type          = {};
+    AbortType type                   = {};
     Time::Instant timestampEarliest  = {};
     Time::Instant timestampLatest    = {};
-    uint16_t count          = 0;
+    uint16_t count                   = 0;
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
@@ -81,11 +81,11 @@ struct [[gnu::packed]] State {
         SD::CardId cardId;
         // imgCap: image capacity; the number of images that bounds the ring buffer
         uint32_t imgCap = 0;
-        // thumbBlockStart: the first block of the thumbnail image region.
-        // The SD card is broken into 2 regions (fullSize, thumbnails), to allow
-        // the thumbnails to be efficiently read from the host. `thumbBlockStart`
-        // is the start of the thumbnail region.
-        SD::Block thumbBlockStart = 0;
+        // fullBase / thumbBase: the first block of the full-size and thumb image regions.
+        // The SD card is broken into 2 regions (fullSize, thumbnails), to allow the host to quickly
+        // read the thumbnails.
+        SD::Block fullBase = 0;
+        SD::Block thumbBase = 0;
         // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
         // power failure while updating one
         ImgRingBuf imgRingBufs[2] = {};

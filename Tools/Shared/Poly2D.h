@@ -1,7 +1,7 @@
 #include <vector>
 #include <cmath>
 #include <optional>
-#include "Tools/Shared/Mat.h"
+#include "Mat.h"
 
 // Poly2D represents a 2D polynomial of a specified order, that's solved for given
 // the supplied {x,y,z} triplets, where f(x,y)=z.
@@ -89,7 +89,7 @@ private:
 
 //#include <vector>
 //#include <cmath>
-//#include "Tools/Shared/Mat.h"
+//#include "Mat.h"
 //
 //// Poly2D represents a 2D polynomial of a specified order, that's solved for given
 //// the supplied {x,y,z} triplets, where f(x,y)=z.

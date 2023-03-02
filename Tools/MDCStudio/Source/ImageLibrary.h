@@ -2,19 +2,30 @@
 #include <forward_list>
 #include <set>
 #include "Code/Shared/Time.h"
-#include "RecordStore.h"
 #include "Code/Shared/Img.h"
-#include "Tools/Shared/Lockable.h"
+#include "RecordStore.h"
+#include "ImageOptions.h"
+#include "ImageThumb.h"
+#include "ImageUtil.h"
 
 namespace MDCStudio {
 
+struct [[gnu::packed]] ImageAddr {
+    uint64_t full = 0;
+    uint64_t thumb = 0;
+    uint8_t _reserved[16];
+};
+
+static_assert(!(sizeof(ImageAddr) % 8)); // Ensure that ImageAddr is a multiple of 8 bytes
+
+struct ImageFlags {
+    static constexpr uint64_t Loaded = 1<<0;
+};
+
 struct [[gnu::packed]] ImageInfo {
     Img::Id id = 0;
-    
-    // addr: address of the full-size image on the device
-    uint64_t addr = 0;
-    
     Time::Instant timestamp = 0;
+    uint64_t flags = 0;
     
     uint16_t imageWidth = 0;
     uint16_t imageHeight = 0;
@@ -26,89 +37,28 @@ struct [[gnu::packed]] ImageInfo {
     double illumEst[3] = {0,0,0};
     
     // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64] = {};
+    uint8_t _reserved[128];
 };
 
 static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple of 8 bytes
 
-struct [[gnu::packed]] ImageOptions {
-    enum class Rotation : uint8_t {
-        Clockwise0,
-        Clockwise90,
-        Clockwise180,
-        Clockwise270,
-    };
-    
-    enum class Corner : uint8_t {
-        BottomRight,
-        BottomLeft,
-        TopLeft,
-        TopRight,
-    };
-    
-    Rotation rotation = Rotation::Clockwise0;
-    bool defringe = false;
-    bool reconstructHighlights = false;
-    struct [[gnu::packed]] {
-        bool show = false;
-        Corner corner = Corner::BottomRight;
-    } timestamp;
-    uint8_t _pad[3];
-    
-    float exposure = 0;
-    float saturation = 0;
-    float brightness = 0;
-    float contrast = 0;
-    struct {
-        float amount = 0;
-        float radius = 0;
-    } localContrast;
-    
-    // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64] = {};
-};
-
-static_assert(!(sizeof(ImageOptions) % 8)); // Ensure that ImageOptions is a multiple of 8 bytes
-
-struct [[gnu::packed]] ImageThumb {
-//    static constexpr size_t ThumbWidth      = 288;
-//    static constexpr size_t ThumbHeight     = 162;
-
-//    static constexpr size_t ThumbWidth      = 400;
-//    static constexpr size_t ThumbHeight     = 225;
-    
-//    static constexpr size_t ThumbWidth      = 432;
-//    static constexpr size_t ThumbHeight     = 243;
-    
-//    static constexpr size_t ThumbWidth      = 480;
-//    static constexpr size_t ThumbHeight     = 270;
-    
-    static constexpr size_t ThumbWidth      = 512;
-    static constexpr size_t ThumbHeight     = 288;
-    
-//    static constexpr size_t ThumbWidth      = 576;
-//    static constexpr size_t ThumbHeight     = 324;
-    
-//    static constexpr size_t ThumbWidth      = 2304;
-//    static constexpr size_t ThumbHeight     = 1296;
-    
-    static constexpr size_t ThumbPixelSize  = 3;
-    
-    uint8_t data[ThumbWidth*ThumbHeight*ThumbPixelSize];
-};
-
-static_assert(!(sizeof(ImageThumb) % 8)); // Ensure that ImageThumb is a multiple of 8 bytes
-
 struct [[gnu::packed]] ImageRecord {
     static constexpr uint32_t Version = 0;
+    
+    ImageAddr addr;
     ImageInfo info;
     ImageOptions options;
+//    // _pad: necessary for our thumbnail compression to keep our `thumb` member aligned
+//    // to a 4-pixel boundary. Each row of the thumbnail is ThumbWidth bytes, and info+options consume 1 row  (where each row is 512 bytes)
+//    uint8_t _pad[ImageThumb::ThumbWidth*3];
+    
     ImageThumb thumb;
 };
 
 static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageRecord is a multiple of 8 bytes
+//static_assert(!(offsetof(ImageRecord, thumb) % (ImageThumb::ThumbWidth*4)); // Ensure that the thumbnail is aligned to a 4-pixel boundary in the Y dimension
 
-class ImageLibrary : public RecordStore<ImageRecord, 512> {
+class ImageLibrary : public RecordStore<ImageRecord, 128>, public std::mutex {
 public:
     using RecordStore::RecordStore;
     
@@ -142,8 +92,6 @@ public:
                 );
             }
             
-            _state.deviceImgIdEnd = state.deviceImgIdEnd;
-            
         } catch (const std::exception& e) {
             printf("Recreating ImageLibrary; cause: %s\n", e.what());
         }
@@ -153,18 +101,19 @@ public:
         std::ofstream f = RecordStore::write();
         const _SerializedState state {
             .version = _Version,
-            .deviceImgIdEnd = _state.deviceImgIdEnd,
         };
         f.write((char*)&state, sizeof(state));
     }
     
-    void add() {
+    void add(size_t count) {
         Event ev = { .type = Event::Type::Add };
-        for (auto i=reservedBegin(); i!=reservedEnd(); i++) {
+        auto begin = reservedBegin();
+        auto end = begin+count;
+        for (auto i=begin; i!=end; i++) {
             ev.records.insert(*i);
         }
         
-        RecordStore::add();
+        RecordStore::add(count);
         // Notify observers that we changed
         notify(ev);
     }
@@ -201,12 +150,9 @@ public:
         _state.observers.push_front(std::move(observer));
     }
     
-    Img::Id deviceImgIdEnd() const { return _state.deviceImgIdEnd; }
-    void deviceImgIdEnd(Img::Id id) { _state.deviceImgIdEnd = id; }
-    
     // notify(): notifies each observer of an event.
     // The notifications are delivered synchronously on the calling thread.
-    // The ImageLibraryPtr lock will therefore be held when events are delivered!
+    // The ImageLibrary lock will therefore be held when events are delivered!
     void notify(const Event& ev) {
         auto prev = _state.observers.before_begin();
         for (auto it=_state.observers.begin(); it!=_state.observers.end();) {
@@ -232,18 +178,15 @@ private:
     
     struct [[gnu::packed]] _SerializedState {
         uint32_t version = 0;
-        Img::Id deviceImgIdEnd = 0;
     };
     
     struct {
-        Img::Id deviceImgIdEnd = 0;
         std::forward_list<Observer> observers;
     } _state;
 };
 
-using ImageLibraryPtr = std::shared_ptr<MDCTools::Lockable<ImageLibrary>>;
+using ImageRecordIter = ImageLibrary::RecordRefConstIter;
 using ImageRecordPtr = ImageLibrary::RecordStrongRef;
-
 using ImageSet = std::set<ImageRecordPtr>;
 
 // ImageSetsOverlap: returns whether there's an intersection between a and b.

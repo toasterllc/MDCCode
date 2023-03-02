@@ -1,7 +1,6 @@
 #pragma once
 #include "Toastbox/Enum.h"
 #include "Toastbox/USB.h"
-#include "Util.h"
 #include "Img.h"
 #include "SD.h"
 #include "ImgSD.h"
@@ -228,21 +227,6 @@ struct [[gnu::packed]] ImgCaptureStats {
 // (ie a packet < the MPS).
 static_assert((ImgSD::Full::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
 static_assert((ImgSD::Thumb::ImagePaddedLen % Toastbox::USB::Endpoint::MaxPacketSizeBulk) == 0);
-
-//    // ImagePaddedLen: Ceil the image size to the SD block size
-//    // This is the amount of data that's sent from device -> host, for each image.
-//    constexpr uint32_t ImagePaddedLen = Util::Ceil(
-//        (uint32_t)Img::Len,
-//        (uint32_t)SD::BlockLen
-//    );
-//    // Ceil the image size to the SD block size
-//    constexpr uint32_t ImgCeilLen = Util::Ceil(
-//        Util::Ceil(
-//            (uint32_t)Img::Len,
-//            (uint32_t)SD::BlockLen
-//        ),
-//        (uint32_t)USB::Endpoint::MaxPacketSizeBulk
-//    );
 
 struct [[gnu::packed]] BatteryStatus {
     enum class ChargeStatus : uint8_t {

@@ -6,6 +6,8 @@
 #import <queue>
 #import <string>
 #import <list>
+#import <set>
+#import <mutex>
 #import <functional>
 #import <assert.h>
 #import "Assert.h"
@@ -44,40 +46,32 @@ public:
     public:
         // Default constructor
         Resource() {}
-        // Copy constructor: illegal
+        
+        // Copy: deleted
         Resource(const Resource& x) = delete;
-        // Copy assignment operator: illegal
         Resource& operator=(const Resource& x) = delete;
-        // Move constructor: use move assignment operator
-        Resource(Resource&& x) { *this = std::move(x); }
-        // Move assignment operator
-        Resource& operator=(Resource&& x) {
-            if (this != &x) {
-                _recycle();
-                _state = x._state;
-                x._state = {};
-            }
-            return *this;
+        // Move: allowed
+        Resource(Resource&& x) { swap(x); }
+        Resource& operator=(Resource&& x) { swap(x); return *this; }
+        
+        void swap(Resource& x) {
+            std::swap(_state, x._state);
         }
         
         ~Resource() {
-            _recycle();
+            if (_state.renderer) _state.renderer->_recycle(_state.resource, _state.deferRecycle);
         }
         
         operator T() const { return _state.resource; }
         
     private:
-        Resource(Renderer& renderer, T resource) : _state{&renderer, resource} {}
+        Resource(Renderer& renderer, T resource, bool deferRecycle=false) : _state{&renderer, resource} {}
         
         struct {
             Renderer* renderer = nullptr;
             T resource = nil;
+            bool deferRecycle = false;
         } _state;
-        
-        void _recycle() {
-            if (_state.renderer) _state.renderer->_recycle(_state.resource);
-            _state = {};
-        }
         
         friend class Renderer;
     };
@@ -90,9 +84,26 @@ public:
         Over,
     };
     
+    static CGColorSpaceRef GrayColorSpace() {
+        static CGColorSpaceRef cs = CGColorSpaceCreateDeviceGray();
+        return cs;
+    }
+    
+    static CGColorSpaceRef LSRGBColorSpace() {
+        static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+        return cs;
+    }
+    
     Renderer() {}
     Renderer(id<MTLDevice> dev, id<MTLLibrary> lib, id<MTLCommandQueue> commandQueue) :
-    dev(dev), _lib(lib), _commandQueue(commandQueue) {
+    dev(dev), _lib(lib), _commandQueue(commandQueue), _recycleBufs(std::make_shared<_RecycleBufs>()) {
+    }
+    
+    ~Renderer() {
+        // When the renderer is destroyed, make sure that there are no resources that were waiting to be recycled.
+        // If there are, we likely have a memory leak and our -addCompletedHandler: was never called.
+        auto lock = std::unique_lock(_recycleBufs->lock);
+        assert(!_recycleBufs->pending);
     }
     
     static size_t SamplesPerPixel(MTLPixelFormat fmt) {
@@ -433,7 +444,7 @@ public:
     ) {
         // Check if we already have a texture matching the given criteria
         TxtKey key(fmt, width, height, usage);
-        TxtQueue& txts = _txts[key];
+        TxtQueue& txts = _recycleTxts[key];
         // Check if we have a cached texture that matches our criteria
         if (!txts.empty()) {
             Txt txt = Txt(*this, txts.front());
@@ -458,13 +469,22 @@ public:
         return textureCreate([txt pixelFormat], [txt width], [txt height], [txt usage]);
     }
     
+    Txt textureCreate(id<MTLTexture> txt, MTLPixelFormat fmt) {
+        assert(txt);
+        return textureCreate(fmt, [txt width], [txt height], [txt usage]);
+    }
+    
     Txt textureCreate(id<MTLTexture> txt, MTLTextureUsage usage) {
         assert(txt);
         return textureCreate([txt pixelFormat], [txt width], [txt height], usage);
     }
     
     Buf bufferCreate(const void* data, size_t len, MTLStorageMode storageMode=MTLStorageModeShared) {
-        Buf buf = bufferCreate(len, storageMode);
+        // Note that we're returning a buffer with deferRecycle=true!
+        // This is important because we use memcpy() to copy into the buffer, and the CPU doesn't know
+        // when the GPU's done with the buffer. Therefore the buffer can't be recycled until the
+        // MTLCommandBuffer is complete. See recycle login in _prepareDeferredRecycle().
+        Buf buf = _bufferCreate(len, storageMode, true);
         memcpy([buf contents], data, len);
         if (storageMode == MTLStorageModeManaged) {
             [buf didModifyRange:{0,len}];
@@ -473,27 +493,12 @@ public:
     }
     
     Buf bufferCreate(size_t len, MTLStorageMode storageMode=MTLStorageModeShared) {
-        // Return an existing buffer if its length is between len and 2*len,
-        // and its options match `opts`
-        for (auto it=_bufs.begin(); it!=_bufs.end(); it++) {
-            id<MTLBuffer> buf = *it;
-            const size_t bufLen = [buf length];
-            const MTLStorageMode bufStorageMode = [buf storageMode];
-            if (bufLen>=len && bufLen<=2*len && bufStorageMode==storageMode) {
-                Buf b(*this, buf);
-                _bufs.erase(it);
-                return b;
-            }
-        }
-        
-        id<MTLBuffer> buf = [dev newBufferWithLength:len options:(storageMode<<MTLResourceStorageModeShift)];
-        Assert(buf, return Buf());
-        return Buf(*this, buf);
+        return _bufferCreate(len, storageMode, false);
     }
     
     Buf bufferCreate(id<MTLBuffer> buf) {
         assert(buf);
-        return bufferCreate([buf length], [buf storageMode]);
+        return _bufferCreate([buf length], [buf storageMode], false);
     }
     
     // Write samples (from a raw pointer) to a texture
@@ -505,12 +510,11 @@ public:
         size_t bytesPerSample=sizeof(T),
         uintmax_t maxValue=std::numeric_limits<T>::max()
     ) {
-        // Create a Metal buffer, and copy the image contents into it
+        // Create a Metal buffer from `samples`, and copy it into the texture
         const size_t w = [txt width];
         const size_t h = [txt height];
         const size_t len = w*h*samplesPerPixel*sizeof(T);
-        Renderer::Buf buf = bufferCreate(len);
-        memcpy([buf contents], samples, len);
+        const Renderer::Buf buf = bufferCreate(samples, len);
         textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
     }
     
@@ -668,9 +672,9 @@ public:
         // Choose a colorspace if one wasn't supplied
         if (!colorSpace) {
             if (samplesPerPixel == 1) {
-                colorSpace = _GrayColorSpace();
+                colorSpace = (__bridge id)GrayColorSpace();
             } else if (samplesPerPixel == 4) {
-                colorSpace = _LSRGBColorSpace();
+                colorSpace = (__bridge id)LSRGBColorSpace();
             } else {
                 throw std::runtime_error("invalid texture format");
             }
@@ -709,12 +713,35 @@ public:
         return _cmdBuf;
     }
     
+    // _prepareDeferredRecycle(): arrange for resources to be recycled after the MTLCommandBuffer is completed
+    void _prepareDeferredRecycle() {
+        __block std::list<id<MTLBuffer>> pending;
+        {
+            auto lock = std::unique_lock(_recycleBufs->lock);
+            
+            // Nothing to do if there are no pending buffers
+            if (_recycleBufs->defer.empty()) return;
+            
+            _recycleBufs->pending++;
+            pending = std::move(_recycleBufs->defer);
+        }
+        
+        std::shared_ptr<_RecycleBufs> bufs = _recycleBufs;
+        [_cmdBuf addCompletedHandler:^(id<MTLCommandBuffer>) {
+            auto lock = std::unique_lock(bufs->lock);
+            bufs->bufs.splice(bufs->bufs.end(), pending);
+            _recycleBufs->pending--;
+        }];
+    }
+    
     void commit() {
+        _prepareDeferredRecycle();
         [_cmdBuf commit];
         _cmdBuf = nil;
     }
     
     void commitAndWait() {
+        _prepareDeferredRecycle();
         [_cmdBuf commit];
         [_cmdBuf waitUntilCompleted];
         _cmdBuf = nil;
@@ -836,22 +863,37 @@ private:
     
     
     
-    static id _GrayColorSpace() {
-        static CGColorSpaceRef cs = CGColorSpaceCreateDeviceGray();
-        return (__bridge id)cs;
+    Buf _bufferCreate(size_t len, MTLStorageMode storageMode, bool deferRecycle) {
+        // Return an existing buffer if its length is between len and 2*len,
+        // and its options match `opts`
+        auto lock = std::unique_lock(_recycleBufs->lock);
+        for (auto it=_recycleBufs->bufs.begin(); it!=_recycleBufs->bufs.end(); it++) {
+            id<MTLBuffer> buf = *it;
+            const size_t bufLen = [buf length];
+            const MTLStorageMode bufStorageMode = [buf storageMode];
+            if (bufLen>=len && bufLen<=2*len && bufStorageMode==storageMode) {
+                Buf b(*this, buf);
+                _recycleBufs->bufs.erase(it);
+                return b;
+            }
+        }
+        
+        id<MTLBuffer> buf = [dev newBufferWithLength:len options:(storageMode<<MTLResourceStorageModeShift)];
+        Assert(buf, return Buf());
+        return Buf(*this, buf);
     }
     
-    static id _LSRGBColorSpace() {
-        static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
-        return (__bridge id)cs;
+    void _recycle(id<MTLTexture> txt, bool deferRecycle) {
+        _recycleTxts[txt].push(txt);
     }
     
-    void _recycle(id<MTLTexture> txt) {
-        _txts[txt].push(txt);
-    }
-    
-    void _recycle(id<MTLBuffer> buf) {
-        _bufs.push_back(buf);
+    void _recycle(id<MTLBuffer> buf, bool deferRecycle) {
+        auto lock = std::unique_lock(_recycleBufs->lock);
+        if (deferRecycle) {
+            _recycleBufs->bufs.push_back(buf);
+        } else {
+            _recycleBufs->defer.push_back(buf);
+        }
     }
     
     id<MTLRenderPipelineState> _renderPipelineState(std::string_view vertName, std::string_view fragName, MTLPixelFormat fmt, BlendType blendType) {
@@ -976,12 +1018,21 @@ private:
     };
     
     using TxtQueue = std::queue<id<MTLTexture>>;
+    
+    struct _RecycleBufs {
+        std::mutex lock; // Protects this struct
+        std::list<id<MTLBuffer>> bufs;
+        std::list<id<MTLBuffer>> defer;
+        uint32_t pending = 0;
+    };
+    
     id <MTLLibrary> _lib = nil;
     id <MTLCommandQueue> _commandQueue = nil;
     std::map<RenderPipelineStateKey,id<MTLRenderPipelineState>> _renderPipelineStates;
     std::map<std::string,id<MTLComputePipelineState>,std::less<>> _computePipelineStates;
-    std::map<TxtKey,TxtQueue> _txts;
-    std::list<id<MTLBuffer>> _bufs;
+    std::map<TxtKey,TxtQueue> _recycleTxts;
+    std::shared_ptr<_RecycleBufs> _recycleBufs;
+    
     id<MTLCommandBuffer> _cmdBuf = nil;
     
     template <class...> static constexpr std::false_type _AlwaysFalse;

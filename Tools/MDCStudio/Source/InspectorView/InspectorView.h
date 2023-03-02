@@ -1,8 +1,8 @@
 #import <Cocoa/Cocoa.h>
-#import "ImageLibrary.h"
+#import "ImageSource.h"
 #import "Code/Shared/Img.h"
 
 @interface InspectorView : NSView
-- (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib;
+- (instancetype)initWithImageSource:(MDCStudio::ImageSourcePtr)imageSource;
 - (void)setSelection:(MDCStudio::ImageSet)selection;
 @end

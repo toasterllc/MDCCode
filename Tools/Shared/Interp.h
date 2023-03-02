@@ -1,5 +1,5 @@
 #pragma once
-#import "Tools/Shared/Mat.h"
+#import "Mat.h"
 
 #pragma mark - Linear
 

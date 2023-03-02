@@ -47,6 +47,7 @@
 		55C456882955A1AE00A20363 /* FixedDocumentView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55C456852955A1AE00A20363 /* FixedDocumentView.mm */; };
 		55C6C843278FE5CB005ABD39 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C6C842278FE5CB005ABD39 /* IOSurface.framework */; };
 		55C6C847279001CA005ABD39 /* ImageGridLayer.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55C6C846279001CA005ABD39 /* ImageGridLayer.metal */; };
+		55C90C7129B795B3007CC97E /* libbc7enc_rdo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C90C6E29B795A4007CC97E /* libbc7enc_rdo.a */; };
 		55D30A2E29A828E60080BCBD /* tz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55D30A2C29A828070080BCBD /* tz.cpp */; };
 		55D30A3F29A96D670080BCBD /* ImageCornerButton-3.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55D30A3A29A96D670080BCBD /* ImageCornerButton-3.pdf */; };
 		55D30A4029A96D670080BCBD /* ImageCornerButton-4.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 55D30A3B29A96D670080BCBD /* ImageCornerButton-4.pdf */; };
@@ -70,10 +71,21 @@
 		55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F9228C00D6B00FCCEA0 /* FFCC.mm */; };
 		55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */; };
 		55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */; };
+		55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */; };
 		55F8D01027BDF26400757165 /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00F27BDF26400757165 /* Shadow.png */; };
 		55F8D01427BEF3E500757165 /* ImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* ImageView.mm */; };
 		55F8D01927BEF97200757165 /* ImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* ImageView.metal */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		55C90C6D29B795A4007CC97E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 55C90BC329B66A44007CC97E;
+			remoteInfo = bc7enc_rdo;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		551328B727B45D7C00CD823B /* ImageGridView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageGridView.h; sourceTree = "<group>"; };
@@ -81,6 +93,8 @@
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
 		552F4BB429AD7ECE000CEAB2 /* ImageRender.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageRender.h; sourceTree = "<group>"; };
 		552F4BB529AE6E83000CEAB2 /* Inspector-Clear.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-Clear.pdf"; sourceTree = "<group>"; };
+		552F4BF529B28543000CEAB2 /* ImageUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageUtil.h; sourceTree = "<group>"; };
+		552F4BF629B306DB000CEAB2 /* ImageOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageOptions.h; sourceTree = "<group>"; };
 		553031F827BC45A100BEFFEA /* Selection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Selection.png; sourceTree = "<group>"; };
 		553031F927BC45A100BEFFEA /* Outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Outline.png; sourceTree = "<group>"; };
 		553031FB27BC45A100BEFFEA /* Mask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Mask.png; sourceTree = "<group>"; };
@@ -180,6 +194,10 @@
 		55C456852955A1AE00A20363 /* FixedDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FixedDocumentView.mm; sourceTree = "<group>"; };
 		55C6C842278FE5CB005ABD39 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
+		55C90B9229B58283007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageThumb.h; sourceTree = "<group>"; };
+		55C90C6329B70494007CC97E /* LRU.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LRU.h; sourceTree = "<group>"; };
+		55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = bc7enc_rdo.xcodeproj; path = ../../Code/Lib/bc7enc_rdo/bc7enc_rdo.xcodeproj; sourceTree = "<group>"; };
+		55C90C7329B79651007CC97E /* BC7Encoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BC7Encoder.h; sourceTree = "<group>"; };
 		55D3097E29A80F2E0080BCBD /* Time.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Time.h; sourceTree = "<group>"; };
 		55D3099229A822D60080BCBD /* TimeConvert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeConvert.h; sourceTree = "<group>"; };
 		55D30A1B29A828070080BCBD /* tz_private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz_private.h; sourceTree = "<group>"; };
@@ -228,6 +246,13 @@
 		55E43F9228C00D6B00FCCEA0 /* FFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FFCC.mm; sourceTree = "<group>"; };
 		55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DownsampleDiscardRaw.metal; sourceTree = "<group>"; };
 		55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageView-Shadow@2x.png"; sourceTree = "<group>"; };
+		55F7551829B955C100241672 /* MockImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MockImageSource.h; sourceTree = "<group>"; };
+		55F7556C29BC21B500241672 /* ColorMatrix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorMatrix.h; sourceTree = "<group>"; };
+		55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageGrid-ImagePlaceholder.png"; sourceTree = "<group>"; };
+		55F755C829C2C9A900241672 /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
+		55F755C929C2CA4000241672 /* Signal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Signal.h; sourceTree = "<group>"; };
+		55F755CA29C2CA4000241672 /* SignalQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SignalQueue.h; sourceTree = "<group>"; };
+		55F755DE29C3D9D700241672 /* Atomic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atomic.h; sourceTree = "<group>"; };
 		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		55F8D01227BEF3E500757165 /* ImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageView.h; sourceTree = "<group>"; };
 		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
@@ -252,6 +277,7 @@
 				55496F63278FCDD000BCA739 /* MetalKit.framework in Frameworks */,
 				55D4AAA127B1D3E70052EFEE /* MetalPerformanceShaders.framework in Frameworks */,
 				55D4AAA327B1D3F20052EFEE /* Accelerate.framework in Frameworks */,
+				55C90C7129B795B3007CC97E /* libbc7enc_rdo.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -343,8 +369,8 @@
 				5544ADF927B5E57A006AB473 /* Poly2D.h */,
 				5544ADFA27B5E57A006AB473 /* BitmapImage.h */,
 				5544ADFB27B5E57A006AB473 /* Renderer.h */,
-				5544ADFC27B5E57A006AB473 /* Color.h */,
 				5544ADFD27B5E57A006AB473 /* Renderer.metal */,
+				5544ADFC27B5E57A006AB473 /* Color.h */,
 				5544ADFE27B5E57A006AB473 /* IOServiceWatcher.h */,
 				5544ADFF27B5E57A006AB473 /* MetalUtil.h */,
 				5544AE0027B5E57A006AB473 /* ELF32Binary.h */,
@@ -353,6 +379,7 @@
 				5544AE0427B5E57A006AB473 /* Interp.h */,
 				5544AE0527B5E57A006AB473 /* Assert.h */,
 				55E43F7928C0085500FCCEA0 /* CFA.h */,
+				55C90C7329B79651007CC97E /* BC7Encoder.h */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -393,6 +420,7 @@
 			isa = PBXGroup;
 			children = (
 				5544AE1727B5E58F006AB473 /* LICENSE.md */,
+				55F755DE29C3D9D700241672 /* Atomic.h */,
 				5544AE1927B5E58F006AB473 /* Enum.h */,
 				5544AE1A27B5E58F006AB473 /* Endian.h */,
 				5544AE1B27B5E58F006AB473 /* RuntimeError.h */,
@@ -408,6 +436,10 @@
 				5544AE2627B5E58F006AB473 /* RingBuffer.h */,
 				5544AE2827B5E58F006AB473 /* SendRight.h */,
 				55D30A4629A9A0A90080BCBD /* DurationString.h */,
+				55C90C6329B70494007CC97E /* LRU.h */,
+				55F755C929C2CA4000241672 /* Signal.h */,
+				55F755C829C2C9A900241672 /* Queue.h */,
+				55F755CA29C2CA4000241672 /* SignalQueue.h */,
 				55425B1729A01BE000F25D57 /* Mac */,
 			);
 			path = Toastbox;
@@ -416,6 +448,7 @@
 		5544AE5927B6EE04006AB473 /* Document */ = {
 			isa = PBXGroup;
 			children = (
+				55F7551829B955C100241672 /* MockImageSource.h */,
 				5544AE5F27B6F16E006AB473 /* DocumentController.h */,
 				5544AE6027B6F16F006AB473 /* DocumentController.mm */,
 				5544AE5C27B6EE04006AB473 /* Document.h */,
@@ -428,6 +461,7 @@
 		55496F39278CFC0400BCA739 = {
 			isa = PBXGroup;
 			children = (
+				55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */,
 				5544AB4D27B5E3DF006AB473 /* Code */,
 				5544A7F127B5E3B3006AB473 /* Tools */,
 				55496F58278CFC7600BCA739 /* Source */,
@@ -449,6 +483,7 @@
 			isa = PBXGroup;
 			children = (
 				55496F48278CFC0600BCA739 /* Assets.xcassets */,
+				55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */,
 				55425B7E29A3F39600F25D57 /* Inspector-Brightness-Max.pdf */,
 				55425B8229A3F39700F25D57 /* Inspector-Brightness-Min.pdf */,
 				55425B7F29A3F39600F25D57 /* Inspector-Contrast-Max.pdf */,
@@ -490,10 +525,14 @@
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
 				55F8D01B27BF5F0700757165 /* Image.h */,
 				55F8D03027BF9F8000757165 /* ImageCache.h */,
+				55C90B9229B58283007CC97E /* ImageThumb.h */,
+				552F4BF629B306DB000CEAB2 /* ImageOptions.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				55F8D09227C2EE9D00757165 /* ImageSource.h */,
 				552F4BB429AD7ECE000CEAB2 /* ImageRender.h */,
+				552F4BF529B28543000CEAB2 /* ImageUtil.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
+				55F7556C29BC21B500241672 /* ColorMatrix.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,
 				5562353A27B5086E0008074C /* Util.h */,
 				55496F46278CFC0400BCA739 /* AppDelegate.mm */,
@@ -515,6 +554,14 @@
 				55496F5A278CFCE200BCA739 /* Cocoa.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		55C90C6A29B795A4007CC97E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				55C90C6E29B795A4007CC97E /* libbc7enc_rdo.a */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 		55D3099329A828070080BCBD /* date */ = {
@@ -571,14 +618,14 @@
 				55E43F7C28C00D6B00FCCEA0 /* Defringe.mm */,
 				55E43F7E28C00D6B00FCCEA0 /* EstimateIlluminantFFCC.h */,
 				55E43F8A28C00D6B00FCCEA0 /* EstimateIlluminantFFCC.mm */,
-				55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */,
 				55E43F8228C00D6B00FCCEA0 /* FFCC.h */,
 				55E43F8128C00D6B00FCCEA0 /* FFCC.metal */,
 				55E43F9228C00D6B00FCCEA0 /* FFCC.mm */,
+				55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */,
+				55E43F8628C00D6B00FCCEA0 /* ImagePipelineTypes.h */,
 				55E43F7B28C00D6B00FCCEA0 /* ImagePipeline.h */,
 				55E43F8928C00D6B00FCCEA0 /* ImagePipeline.metal */,
 				55E43F8428C00D6B00FCCEA0 /* ImagePipeline.mm */,
-				55E43F8628C00D6B00FCCEA0 /* ImagePipelineTypes.h */,
 				55E43F7F28C00D6B00FCCEA0 /* LocalContrast.h */,
 				55E43F7D28C00D6B00FCCEA0 /* LocalContrast.metal */,
 				55E43F8E28C00D6B00FCCEA0 /* ReconstructHighlights.h */,
@@ -648,12 +695,28 @@
 			mainGroup = 55496F39278CFC0400BCA739;
 			productRefGroup = 55496F43278CFC0400BCA739 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 55C90C6A29B795A4007CC97E /* Products */;
+					ProjectRef = 55C90C6929B795A4007CC97E /* bc7enc_rdo.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				55496F41278CFC0400BCA739 /* MDCStudio */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		55C90C6E29B795A4007CC97E /* libbc7enc_rdo.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libbc7enc_rdo.a;
+			remoteRef = 55C90C6D29B795A4007CC97E /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		55496F40278CFC0400BCA739 /* Resources */ = {
@@ -665,6 +728,7 @@
 				552F4BB629AE6E84000CEAB2 /* Inspector-Clear.pdf in Resources */,
 				55425B8C29A3F39700F25D57 /* Inspector-Brightness-Min.pdf in Resources */,
 				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
+				55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */,
 				55425B8A29A3F39700F25D57 /* Inspector-WhiteBalance-Max.pdf in Resources */,
 				55425B8F29A3F39700F25D57 /* Inspector-Contrast-Min.pdf in Resources */,
 				55425B9029A3F39700F25D57 /* Inspector-WhiteBalance-Min.pdf in Resources */,

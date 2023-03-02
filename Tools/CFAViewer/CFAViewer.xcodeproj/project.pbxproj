@@ -42,6 +42,9 @@
 
 /* Begin PBXFileReference section */
 		552E7D5A24C9316900438AAF /* CFAViewer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CFAViewer.entitlements; sourceTree = "<group>"; };
+		552F4BCB29B1BE82000CEAB2 /* ThreePartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreePartView.h; sourceTree = "<group>"; };
+		552F4BCC29B1BE82000CEAB2 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
+		552F4BCD29B1BE82000CEAB2 /* ThreePartView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ThreePartView.mm; sourceTree = "<group>"; };
 		55671A30257E94BD00C1CDA4 /* ELF32Binary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELF32Binary.h; sourceTree = "<group>"; };
 		55671A37257E984E00C1CDA4 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		556E45F526B13CBD006681FA /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
@@ -146,6 +149,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		552F4BCA29B1BE82000CEAB2 /* Mac */ = {
+			isa = PBXGroup;
+			children = (
+				552F4BCB29B1BE82000CEAB2 /* ThreePartView.h */,
+				552F4BCC29B1BE82000CEAB2 /* Util.h */,
+				552F4BCD29B1BE82000CEAB2 /* ThreePartView.mm */,
+			);
+			path = Mac;
+			sourceTree = "<group>";
+		};
 		55671A29257E94BD00C1CDA4 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
@@ -192,6 +205,7 @@
 				556E45FD26B13CBD006681FA /* USBDevice.h */,
 				556E45FE26B13CBD006681FA /* RingBuffer.h */,
 				556E45FF26B13CBD006681FA /* SendRight.h */,
+				552F4BCA29B1BE82000CEAB2 /* Mac */,
 			);
 			path = Toastbox;
 			sourceTree = "<group>";

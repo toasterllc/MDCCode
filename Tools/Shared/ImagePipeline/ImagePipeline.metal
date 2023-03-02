@@ -123,6 +123,14 @@ fragment float WhiteBalance(
     }
 }
 
+fragment float4 WhiteBalanceRGB(
+    constant float3& wb [[buffer(0)]],
+    texture2d<float> txt [[texture(0)]],
+    VertexOutput in [[stage_in]]
+) {
+    return float4(wb*Sample::RGB(txt, int2(in.pos.xy)), 1);
+}
+
 //fragment float4 WhiteBalance(
 //    texture2d<float> txt [[texture(0)]],
 //    VertexOutput in [[stage_in]]

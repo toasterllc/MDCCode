@@ -1,67 +1,75 @@
 #import <Foundation/Foundation.h>
 #import <filesystem>
 #import <thread>
+#import <set>
+#import <array>
 #import <chrono>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
+#import "Toastbox/Atomic.h"
 #import "Toastbox/Mmap.h"
+#import "Toastbox/Queue.h"
+#import "Toastbox/Math.h"
+#import "Toastbox/Signal.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/TimeConvert.h"
 #import "Code/Shared/MSP.h"
 #import "Code/Shared/ImgSD.h"
-#import "Code/Shared/BufQueue.h"
 #import "Tools/Shared/MDCUSBDevice.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
+#import "Tools/Shared/BC7Encoder.h"
 #import "ImageLibrary.h"
 #import "ImageCache.h"
 #import "ImageSource.h"
 
 namespace MDCStudio {
 
-class MDCDevice : public std::enable_shared_from_this<MDCDevice>, public ImageSource {
+class MDCDevice : public ImageSource {
+private:
+    using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
+    
 public:
     using Observer = std::function<bool()>;
+    using Device = MDCTools::Lockable<MDCUSBDevice>;
     
     MDCDevice(MDCUSBDevice&& dev) :
-    _dev(std::make_shared<MDCTools::Lockable<MDCUSBDevice>>(std::move(dev))),
-    _dir(_DirForSerial(_dev->serial())),
-    _imageLibrary(std::make_shared<MDCTools::Lockable<ImageLibrary>>(_dir / "ImageLibrary")) {
-    
-        auto lock = std::unique_lock(_state.lock);
-        
+    _dev(std::move(dev)),
+    _dir(_DirForSerial(_dev.serial())),
+    _imageLibrary(_dir / "ImageLibrary"),
+    _imageCache(_imageLibrary, _imageProvider()) {
         printf("MDCDevice()\n");
         
         // Give device a default name
         char name[256];
-        snprintf(name, sizeof(name), "MDC Device %s", _dev->serial().c_str());
-        _state.name = std::string(name);
+        snprintf(name, sizeof(name), "MDC Device %s", _dev.serial().c_str());
+        _name = std::string(name);
         
         // Read state from disk
         try {
             _SerializedState state = _SerializedStateRead(_dir);
-            _state.name = std::string(state.name);
+            _name = std::string(state.name);
         } catch (const std::exception& e) {}
         
         // Perform device IO
         {
-            auto lock = std::unique_lock(*_dev);
+            auto lock = std::unique_lock(_dev);
             
             // Update our _mspState from the device
-            _mspState = _dev->mspStateRead();
+            _mspState = _dev.mspStateRead();
             
             // Enter host mode
-            _dev->mspHostModeSet(true);
+            _dev.mspHostModeSet(true);
             
             // Update the device's time
             {
                 using namespace std::chrono;
                 using namespace date;
                 
-                const Time::Instant mdcTime = _dev->mspTimeGet();
+                const Time::Instant mdcTime = _dev.mspTimeGet();
                 const Time::Instant actualTime = Time::Current();
                 
                 auto startTime = steady_clock::now();
-                _dev->mspTimeSet(actualTime);
+                _dev.mspTimeSet(actualTime);
                 const milliseconds timeSetDuration = duration_cast<milliseconds>(steady_clock::now()-startTime);
                 
                 if (Time::Absolute(mdcTime)) {
@@ -77,54 +85,12 @@ public:
                     (uintmax_t)timeSetDuration.count());
             }
             
-            
-//            
-//            sleep(15);
-            
-//            // Update device time
-//            {
-//                _dev->mspSBWConnect();
-//                _dev->mspSBWRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
-//                
-//                if (_mspState.magic != MSP::State::MagicNumber) {
-//                    // Program MSPApp onto MSP
-//                    #warning TODO: implement
-//                    throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
-//                }
-//                
-//                if (_mspState.version > MSP::State::Version) {
-//                    // Newer version than we understand -- tell user to upgrade or re-program
-//                    #warning TODO: implement
-//                    throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
-//                }
-//                
-//                _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
-//                _mspState.startTime.valid = true;
-//                _dev->mspSBWWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
-//                
-//                // MSPHostMode=true: make MSP enter host mode until physically disconnected from USB.
-//                // (When USB is disconnected, STM will lose power, causing STM to stop asserting
-//                // MSP_HOST_MODE_, allowing MSP_HOST_MODE_ to be pulled high by MSP's pullup, thereby
-//                // allowing MSP to run again.)
-//                constexpr bool MSPHostMode = true;
-//                
-//                startTime = std::chrono::steady_clock::now();
-//                _dev->mspSBWDisconnect(MSPHostMode);
-//            }
-            
-//            usleep(180000);
-            
-//            exit(0);
-            
-//            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-//            printf("durationMs: %ju\n", (uintmax_t)durationMs);
-            
             // Load ICE40 with our app
-            _ICEConfigure(*_dev);
+            _ICEConfigure(_dev);
             
             // Init SD card
             #warning TODO: how should we handle sdInit() failing (throwing)?
-            _sdCardInfo = _dev->sdInit();
+            _sdCardInfo = _dev.sdInit();
             
             if (!_mspState.sd.valid) {
                 // MSPApp state isn't valid -- ignore
@@ -141,67 +107,104 @@ public:
         
         // Load the library
         {
-            auto lock = std::unique_lock(*_imageLibrary);
-            _imageLibrary->read();
+            auto lock = std::unique_lock(_imageLibrary);
+            _imageLibrary.read();
         }
         
-        // Start updating image library
-        _state.updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
-        _state.updateImageLibraryThread.detach();
+        // Start threads
+        {
+            _sync.thread = std::thread([&] { _sync_thread(); });
+            
+            _thumbUpdate.thread = std::thread([&] { _thumbUpdate_thread(); });
+            
+            _sdRead.thread = std::thread([&] { _sdRead_thread(); });
+            
+            for (int i=0; i<_ThreadCount(); i++) {
+                _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
+            }
+        }
     }
     
     ~MDCDevice() {
-        auto lock = std::unique_lock(_state.lock);
-        #warning TODO: this will deadlock if the thread tries to acquire the lock...
-        if (_state.updateImageLibraryThread.joinable()) {
-            _state.updateImageLibraryThread.join();
-        }
+        _thumbUpdate.signal.stop();
+        _sdRead.signal.stop();
+        _thumbRender.signal.stop();
+        
+        // Wait for threads to stop
+        _sync.thread.join();
+        _thumbUpdate.thread.join();
+        _sdRead.thread.join();
+        for (std::thread& t : _thumbRender.threads) t.join();
     }
     
     const std::string& name() {
-        auto lock = std::unique_lock(_state.lock);
-        return _state.name;
+        assert([NSThread isMainThread]);
+        return _name;
     }
     
-    void setName(const std::string_view& name) {
-        auto lock = std::unique_lock(_state.lock);
-        _state.name = name;
-        _write();
+    void name(const std::string_view& name) {
+        assert([NSThread isMainThread]);
+        _name = name;
+        write();
         _notifyObservers();
     }
     
-    MDCUSBDevicePtr device() { return _dev; }
-    ImageLibraryPtr imageLibrary() override { return _imageLibrary; }
-    
-    ImageCachePtr imageCache() override {
-        // We're implementing this lazily because shared_from_this()
-        // can't be called from the constructor
-        auto lock = std::unique_lock(_state.lock);
-        if (!_state.imageCache) {
-            std::weak_ptr<MDCDevice> weakThis = shared_from_this();
-            ImageCache::ImageProvider imageProvider = [=] (uint64_t addr) -> ImagePtr {
-                auto strongThis = weakThis.lock();
-                if (!strongThis) return nullptr;
-                return strongThis->_imageProvider(addr);
-            };
-            
-            _state.imageCache = std::make_shared<ImageCache>(_imageLibrary, std::move(imageProvider));
-        }
-        return _state.imageCache;
+    const Toastbox::SendRight& service() const {
+        return _dev.dev().service();
     }
     
     void observerAdd(Observer&& observer) {
-        auto lock = std::unique_lock(_state.lock);
-        _state.observers.push_front(std::move(observer));
+        assert([NSThread isMainThread]);
+        _observers.push_front(std::move(observer));
     }
     
     void write() {
-        auto lock = std::unique_lock(_state.lock);
-        _write();
+        assert([NSThread isMainThread]);
+        
+        _SerializedState state;
+        state.version = _Version;
+        // Copy UTF8 device name into state.name
+        // state.name is initialized with zeroes, so we don't need to explicitly set a
+        // null byte, but we do need to limit the number of copied bytes to
+        // `sizeof(state.name)-1` to ensure that the null byte isn't overwritten
+        _name.copy(state.name, sizeof(state.name)-1);
+        
+        _SerializedStateWrite(_dir, state);
+    }
+    
+    // MARK: - ImageSource
+    
+    ImageLibrary& imageLibrary() override { return _imageLibrary; }
+    
+    ImageCache& imageCache() override { return _imageCache; }
+    
+    void visibleThumbs(ImageRecordIter begin, ImageRecordIter end) override {
+        bool enqueued = false;
+        {
+            auto lock = _thumbUpdate.signal.lock();
+            _thumbUpdate.recs.clear();
+            for (auto it=begin; it!=end; it++) {
+                ImageRecordPtr rec = *it;
+                if (rec->options.thumb.render) {
+                    _thumbUpdate.recs.insert(rec);
+                    enqueued = true;
+                }
+            }
+        }
+        if (enqueued) _thumbUpdate.signal.signalOne();
     }
     
 private:
+    // MARK: - Private
+    
     using _Path = std::filesystem::path;
+    
+    // _SDBlock: we're intentionally not using SD::Block because we want our block addressing type
+    // to be wider than the SD card's addressing. This is because in our math logic, we want to be
+    // able to use an 'end strategy' (ie last+1) instead of a 'last strategy', and the former can't
+    // address the last block if it's the same width as the SD card's addressing.
+    using _SDBlock = uint64_t;
+    
     static constexpr uint32_t _Version = 0;
     static constexpr uint64_t _UnixTimeOffset = 1640995200; // 2022-01-01 00:00:00 +0000
     
@@ -215,43 +218,77 @@ private:
         char name[128] = {}; // UTF-8 with NULL byte
     };
     
-    struct _Range {
-        uint32_t idx  = 0;
-        uint32_t len = 0;
+    enum class _Priority : uint8_t { High, Low, Count };
+    
+    using _SDWorkCallback = std::function<void()>;
+    
+    struct _SDReadOp;
+    struct _SDWork {
+        static constexpr size_t BufferThumbCount = 32;
+        uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
+        
+        struct {
+            std::vector<_SDReadOp> ops; // Sorted by SD block
+            
+            struct {
+                _SDWorkCallback callback;
+            } read;
+            
+            struct {
+                bool initial = false;
+                Toastbox::Atomic<size_t> idx = 0;
+                Toastbox::Atomic<size_t> idxDone = 0;
+                _SDWorkCallback callback;
+            } render;
+        } state;
     };
     
-    template <size_t T_BufCap>
-    class _BufQueue {
-    public:
-        auto& rget() {
-            auto lock = std::unique_lock(_lock);
-            while (!_bufs.rok()) _signal.wait(lock);
-            return _bufs.rget();
+    struct _SDReadOp {
+        _SDBlock block = 0;
+        size_t len = 0;
+        ImageRecordPtr rec;
+        const uint8_t* data = nullptr;
+        
+        bool operator<(const _SDReadOp& x) const {
+            if (block != x.block) return block < x.block;
+            if (len != x.len) return len < x.len;
+            return false;
         }
         
-        void rpop() {
-            auto lock = std::unique_lock(_lock);
-            _bufs.rpop();
-            _signal.notify_all();
+        bool operator==(const _SDReadOp& x) const {
+            if (block != x.block) return false;
+            if (len != x.len) return false;
+            return true;
         }
-        
-        auto& wget() {
-            auto lock = std::unique_lock(_lock);
-            while (!_bufs.wok()) _signal.wait(lock);
-            return _bufs.wget();
-        }
-        
-        void wpush() {
-            auto lock = std::unique_lock(_lock);
-            _bufs.wpush();
-            _signal.notify_all();
-        }
-        
-    private:
-        std::mutex _lock;
-        std::condition_variable _signal;
-        BufQueue<uint8_t, T_BufCap, 2> _bufs;
     };
+    
+    using _SDWorkQueue = std::queue<_SDWork*>;
+    
+    struct _LoadImagesState {
+        Toastbox::Signal signal;
+        std::vector<_SDWork> works;
+        std::set<_SDWork*> underway;
+    };
+    
+    static int _ThreadCount() {
+        static int ThreadCount = std::max(1, (int)std::thread::hardware_concurrency());
+        return ThreadCount;
+    }
+    
+    static _SDBlock _AddrFull(const MSP::State& msp, uint32_t idx) {
+        return msp.sd.fullBase + ((_SDBlock)idx * ImgSD::Full::ImageBlockCount);
+    }
+    
+    static _SDBlock _AddrThumb(const MSP::State& msp, uint32_t idx) {
+        return msp.sd.thumbBase + ((_SDBlock)idx * ImgSD::Thumb::ImageBlockCount);
+    }
+    
+    static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
+        const _SDBlock blockCount = Toastbox::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
+        // Verify that block+blockLen doesn't overflow _SDBlock
+        assert(std::numeric_limits<_SDBlock>::max()-block >= blockCount);
+        return block + blockCount;
+    }
     
     static _Path _StatePath(const _Path& dir) { return dir / "State"; }
     
@@ -305,205 +342,7 @@ private:
         dev.iceRAMWrite(mmap.data(), mmap.len());
     }
     
-//    static MSP::Time _MSPTimeCurrent() {
-//        return MSP::TimeFromUnixTime(std::time(nullptr));
-//        const std::time_t t = std::time(nullptr);
-//        return MSP::TimeAbsoluteBase | (t-MSP::TimeAbsoluteUnixReference);
-//    }
-    
-    ImagePtr _imageProvider(uint64_t addr) {
-        // Lock the device for the duration of this function
-        auto lock = std::unique_lock(*_dev);
-        
-        auto imageData = std::make_unique<uint8_t[]>(ImgSD::Full::ImagePaddedLen);
-        _dev->reset();
-        _dev->sdRead((SD::Block)addr);
-        _dev->readout(imageData.get(), ImgSD::Full::ImagePaddedLen);
-        
-        if (_ChecksumValid(imageData.get(), Img::Size::Full)) {
-//            printf("Checksum valid (size: full)\n");
-        } else {
-            printf("Checksum INVALID (size: full)\n");
-//            abort();
-        }
-        
-//        // Validate checksum
-//        const size_t checksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
-//        const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), checksumOffset);
-//        uint32_t checksumGot = 0;
-//        memcpy(&checksumGot, (uint8_t*)buf.get()+checksumOffset, Img::ChecksumLen);
-//        if (checksumGot != checksumExpected) {
-//            throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
-//        }
-        
-        const Img::Header& header = *(const Img::Header*)imageData.get();
-        ImagePtr image = std::make_shared<Image>(Image{
-            .width      = header.imageWidth,
-            .height     = header.imageHeight,
-            .cfaDesc    = _CFADesc,
-            .data       = std::move(imageData),
-            .off        = sizeof(header),
-        });
-        return image;
-    }
-    
-    // _state.lock must be held
-    void _write() {
-        _SerializedState state;
-        state.version = _Version;
-        // Copy UTF8 device name into state.name
-        // state.name is initialized with zeroes, so we don't need to explicitly set a
-        // null byte, but we do need to limit the number of copied bytes to
-        // `sizeof(state.name)-1` to ensure that the null byte isn't overwritten
-        _state.name.copy(state.name, sizeof(state.name)-1);
-        
-        _SerializedStateWrite(_dir, state);
-    }
-    
-    void _threadUpdateImageLibrary() {
-        try {
-            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(_mspState);
-            const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
-            const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
-            
-            {
-                // Remove images from beginning of library: lib has, device doesn't
-                {
-                    auto lock = std::unique_lock(*_imageLibrary);
-                    
-                    const auto removeBegin = _imageLibrary->begin();
-                    
-                    // Find the first image >= `deviceImgIdBegin`
-                    const auto removeEnd = std::lower_bound(_imageLibrary->begin(), _imageLibrary->end(), 0,
-                        [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                            return sample->info.id < deviceImgIdBegin;
-                        });
-                    
-                    printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
-                    _imageLibrary->remove(removeBegin, removeEnd);
-                }
-                
-                // Add images to end of library: device has, lib doesn't
-                {
-                    Img::Id libImgIdEnd = 0;
-                    {
-                        auto lock = std::unique_lock(*_imageLibrary);
-                        libImgIdEnd = _imageLibrary->deviceImgIdEnd();
-                    }
-                    
-                    if (libImgIdEnd > deviceImgIdEnd) {
-                        throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImgIdEnd: %ju)",
-                            (uintmax_t)libImgIdEnd,
-                            (uintmax_t)deviceImgIdEnd
-                        );
-                    }
-                    
-                    const uint32_t addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
-                    printf("Adding %ju images\n", (uintmax_t)addCount);
-                    
-                    _Range newest;
-                    newest.idx = imgRingBuf.buf.widx - std::min((uint32_t)imgRingBuf.buf.widx, addCount);
-                    newest.len = imgRingBuf.buf.widx - newest.idx;
-                    
-                    _Range oldest;
-                    oldest.len = addCount - newest.len;
-                    oldest.idx = _mspState.sd.imgCap - oldest.len;
-                    
-                    _loadImages(oldest);
-                    _loadImages(newest);
-                }
-            }
-        
-        } catch (const std::exception& e) {
-            fprintf(stderr, "Failed to update image library: %s", e.what());
-        }
-    }
-    
-    void _loadImages(const _Range& range) {
-        using namespace MDCTools;
-        if (!range.len) return; // Short-circuit if there are no images to read in this range
-        
-        // Lock the device for the duration of this function
-        auto lock = std::unique_lock(*_dev);
-        
-        constexpr size_t ChunkImgCount = 128; // Number of images to read at a time
-        constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
-        auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
-        auto& bufQueue = *bufQueuePtr;
-        const SD::Block fullBlockStart = range.idx * ImgSD::Full::ImageBlockCount;
-        const SD::Block thumbBlockStart = _mspState.sd.thumbBlockStart + (range.idx * ImgSD::Thumb::ImageBlockCount);
-        
-        _dev->reset();
-        _dev->sdRead(thumbBlockStart);
-        
-        // Consumer
-        std::thread consumerThread([&] {
-            constexpr size_t WriteInterval = ChunkImgCount*8;
-            
-            id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-            if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
-            Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
-            
-            SD::Block block = fullBlockStart;
-            size_t addedImageCount = 0;
-            
-            for (;;) @autoreleasepool {
-                const auto& buf = bufQueue.rget();
-                
-                auto startTime = std::chrono::steady_clock::now();
-                const size_t imageCount = buf.len;
-                if (!imageCount) break; // We're done when we get an empty buffer
-                _addImages(renderer, buf.data, imageCount, block);
-                
-                block += imageCount * ImgSD::Full::ImageBlockCount;
-                addedImageCount += imageCount;
-                
-                bufQueue.rpop();
-                
-                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-                printf("Consumer took %ju ms for %ju images (avg %f ms / img)\n", (uintmax_t)durationMs, (uintmax_t)imageCount, ((double)durationMs/imageCount));
-                
-                // Periodically write the library
-                if (!(addedImageCount % WriteInterval)) {
-                    auto lock = std::unique_lock(*_imageLibrary);
-                    printf("Writing library (%ju images)\n", (uintmax_t)_imageLibrary->recordCount());
-                    _imageLibrary->write();
-                }
-            }
-            
-            // Write the library
-            {
-                auto lock = std::unique_lock(*_imageLibrary);
-                printf("Writing library (%ju images)\n", (uintmax_t)_imageLibrary->recordCount());
-                _imageLibrary->write();
-            }
-        });
-        
-        // Producer
-        for (size_t i=0; i<range.len;) {
-            const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
-            auto& buf = bufQueue.wget();
-            buf.len = chunkImgCount; // buffer length = count of images (not byte count)
-            _dev->readout(buf.data, chunkImgCount*ImgSD::Thumb::ImagePaddedLen);
-            bufQueue.wpush();
-            i += chunkImgCount;
-            
-            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
-            printf("Read %ju images (ms: %ju)\n", (uintmax_t)chunkImgCount, (uintmax_t)ms.count());
-        }
-        
-        // Wait until we're complete
-        {
-            // Tell consumerThread to bail by sending an empty buf
-            auto& buf = bufQueue.wget();
-            buf.len = 0;
-            bufQueue.wpush();
-            // Wait for thread to exit...
-            consumerThread.join();
-        }
-    }
-    
-    static bool _ChecksumValid(const void* data, Img::Size size) {
+    static bool _ImageChecksumValid(const void* data, Img::Size size) {
         const size_t ChecksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
         // Validate thumbnail checksum
         const uint32_t checksumExpected = ChecksumFletcher32(data, ChecksumOffset);
@@ -516,111 +355,139 @@ private:
         return true;
     }
     
-    void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount, SD::Block block) {
+    static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
+    using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
+    
+    // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
+    // destination buffer (dst), as BC7-compressed data
+    static CCM _ThumbRender(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage,
+        const ImageOptions& opts, bool estimateIlluminant, const void* src, void* dst) {
+        
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
         using namespace Toastbox;
         
-        // Reserve space for `imgCount` additional images
+        CCM ccm;
+        
+        // Render thumbnail into `thumbTxt`
+        constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+        const Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
+            ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
         {
-            auto lock = std::unique_lock(*_imageLibrary);
-            _imageLibrary->reserve(imgCount);
+            Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
+            
+            Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
+            
+            const Pipeline::DebayerOptions debayerOpts = {
+                .cfaDesc        = _CFADesc,
+                .illum          = (estimateIlluminant ? std::nullopt : std::optional<ColorRaw>(opts.whiteBalance.illum)),
+                .debayerLMMSE   = { .applyGamma = true, },
+            };
+            
+            const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
+            
+            ccm = {
+                .illum = (estimateIlluminant ? debayerResult.illum : ColorRaw(opts.whiteBalance.illum)),
+                .matrix = (estimateIlluminant ? ColorMatrixForIlluminant(debayerResult.illum).matrix : ColorMatrix((double*)opts.whiteBalance.colorMatrix))
+            };
+            
+            const Pipeline::ProcessOptions processOpts = {
+                .illum          = ccm.illum,
+                .colorMatrix    = ccm.matrix,
+                
+                .exposure   = (float)opts.exposure,
+                .saturation = (float)opts.saturation,
+                .brightness = (float)opts.brightness,
+                .contrast   = (float)opts.contrast,
+                
+                .localContrast = {
+                    .en     = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
+                    .amount = (float)opts.localContrast.amount,
+                    .radius = (float)opts.localContrast.radius,
+                },
+            };
+            
+            Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
+            renderer.sync(thumbTxt);
+            renderer.commitAndWait();
         }
         
-        Img::Id deviceImgIdLast = 0;
-        for (size_t idx=0; idx<imgCount; idx++) {
-            const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
-            const Img::Header& imgHeader = *(const Img::Header*)imgData;
-            // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
-            const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
-            ImageRecord& rec = **recordRefIter;
-            
-            // Validate thumbnail checksum
-            if (_ChecksumValid(imgData, Img::Size::Thumb)) {
-                printf("Checksum valid (size: thumb)\n");
-            } else {
-                printf("Invalid checksum\n");
-//                throw Toastbox::RuntimeError("invalid checksum");
-//                abort();
-//                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
-            }
-            
-            // Populate ImageInfo fields
-            {
-                rec.info.id              = imgHeader.id;
-                rec.info.addr            = block;
-                
-                rec.info.timestamp       = imgHeader.timestamp;
-                
-                rec.info.imageWidth      = imgHeader.imageWidth;
-                rec.info.imageHeight     = imgHeader.imageHeight;
-                
-                rec.info.coarseIntTime   = imgHeader.coarseIntTime;
-                rec.info.analogGain      = imgHeader.analogGain;
-                
-                block += ImgSD::Full::ImageBlockCount;
-            }
-            
-            // Render the thumbnail into rec.thumb
-            {
-                const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
-                
-                Pipeline::RawImage rawImage = {
-                    .cfaDesc = _CFADesc,
-                    .width = Img::Thumb::PixelWidth,
-                    .height = Img::Thumb::PixelHeight,
-                    .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
-                };
-                
-                const Pipeline::Options pipelineOpts = {
-                    .rawMode = false,
-//                    .reconstructHighlights  = { .en = true, },
-                    .debayerLMMSE           = { .applyGamma = true, },
-                };
-                
-                Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
-                const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
-                
-                constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-                id<MTLBuffer> buf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
-                
-                const RenderThumb::Options thumbOpts = {
-                    .thumbWidth = ImageThumb::ThumbWidth,
-                    .thumbHeight = ImageThumb::ThumbHeight,
-                    .dataOff = thumbDataOff,
-                };
-                
-                RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, buf);
-                
-                // Populate the illuminant
-                rec.info.illumEst[0] = renderResult.illumEst[0];
-                rec.info.illumEst[1] = renderResult.illumEst[1];
-                rec.info.illumEst[2] = renderResult.illumEst[2];
-            }
-            
-            deviceImgIdLast = imgHeader.id;
-        }
-        
-        // Make sure all rendering is complete before adding the images to the library
-        renderer.commitAndWait();
-        
+        // Compress thumbnail into `dst`
         {
-            auto lock = std::unique_lock(*_imageLibrary);
-            // Add the records that we previously reserved
-            _imageLibrary->add();
-            // Update the device's image id 'end' == last image id that we've observed from the device +1
-            _imageLibrary->deviceImgIdEnd(deviceImgIdLast+1);
+            [thumbTxt getBytes:&tmpStorage[0] bytesPerRow:ImageThumb::ThumbWidth*4
+                fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+            
+            compressor.encode(&tmpStorage[0], dst);
         }
+        
+        return ccm;
     }
     
-    // _state.lock must be held
+    ImageCache::ImageProvider _imageProvider() {
+        return [&] (uint64_t addr) -> ImagePtr {
+            return _imageForAddr(addr);
+        };
+    }
+    
+    #warning TODO: add priority to this function
+    #warning TODO: it'd be nice if we could avoid the memcpy by giving the buffer to _SDWork
+    ImagePtr _imageForAddr(uint64_t addr) {
+        bool done = false;
+        auto work = std::make_unique<_SDWork>();
+        work->state = {
+            .ops = {_SDReadOp{
+                .block = addr,
+                .len = Img::Full::ImageLen,
+            }},
+            .read = {
+                .callback = [&] {
+                    done = true;
+                    _imageForAddrSignal.signalAll();
+                },
+            },
+        };
+        
+        // Enqueue SD read
+        {
+            {
+                auto lock = _sdRead.signal.lock();
+                _SDWorkQueue& queue = _sdRead.queues[(size_t)_Priority::High];
+                queue.push(work.get());
+            }
+            _sdRead.signal.signalOne();
+        }
+        
+        _imageForAddrSignal.wait([&] { return done; });
+        
+        if (_ImageChecksumValid(work->buffer, Img::Size::Full)) {
+//                printf("Checksum valid (size: full)\n");
+        } else {
+            printf("Checksum INVALID (size: full)\n");
+//                abort();
+        }
+        
+        std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
+        memcpy(data.get(), work->buffer, Img::Full::ImageLen);
+        
+        const Img::Header& header = *(const Img::Header*)work->buffer;
+        ImagePtr image = std::make_shared<Image>(Image{
+            .width      = header.imageWidth,
+            .height     = header.imageHeight,
+            .cfaDesc    = _CFADesc,
+            .data       = std::move(data),
+            .off        = sizeof(header),
+        });
+        return image;
+    }
+    
     void _notifyObservers() {
-        auto prev = _state.observers.before_begin();
-        for (auto it=_state.observers.begin(); it!=_state.observers.end();) {
+        auto prev = _observers.before_begin();
+        for (auto it=_observers.begin(); it!=_observers.end();) {
             // Notify the observer; it returns whether it's still valid
             // If it's not valid (it returned false), remove it from the list
             if (!(*it)()) {
-                it = _state.observers.erase_after(prev);
+                it = _observers.erase_after(prev);
             } else {
                 prev = it;
                 it++;
@@ -628,19 +495,458 @@ private:
         }
     }
     
-    MDCUSBDevicePtr _dev;
+    void _readCompleteCallback(_LoadImagesState& state, _SDWork& work) {
+        // Enqueue _SDWork into _thumbRender.work
+        {
+            auto lock = _thumbRender.signal.lock();
+            _thumbRender.work.push(&work);
+        }
+        
+        // Notify _thumbRender of more work
+        _thumbRender.signal.signalAll();
+    }
+    
+    void _renderCompleteCallback(_LoadImagesState& state, _SDWork& work) {
+        std::set<ImageRecordPtr> recs;
+        for (const _SDReadOp& op : work.state.ops) {
+            recs.insert(op.rec);
+        }
+        
+        // Post notification
+        {
+            auto lock = std::unique_lock(_imageLibrary);
+            _imageLibrary.notifyChange(recs);
+        }
+        
+        // Announce that `work` is done
+        {
+            auto lock = state.signal.lock();
+            state.underway.erase(&work);
+        }
+        state.signal.signalOne();
+    }
+    
+    void _loadImages(_LoadImagesState& state, _Priority priority,
+        bool initial, const std::set<ImageRecordPtr>& recs) {
+        
+        // WriteIntervalThumbCount: the number of loaded thumbnails after which we'll write the ImageLibrary to disk
+        constexpr size_t WriteIntervalThumbCount = 256;
+        assert(!recs.empty());
+        
+        // Reset each work
+        // This is necessary because our loop below interprets _SDWork.state.ops as the _SDReadOps from its
+        // previous iteration, so _SDWork.state.ops needs to start off empty for correct operation.
+        for (_SDWork& work : state.works) {
+            work.state = {};
+        }
+        
+//        if (initial) {
+//            auto lock = std::unique_lock(_imageLibrary);
+//            printf("[_loadImages] reserving %ju images\n", (uintmax_t)recs.size());
+//            _imageLibrary.reserve(recs.size());
+//        }
+        
+        size_t addCountRem = recs.size();
+        size_t writeCount = 0;
+        size_t workIdx = 0;
+        for (auto it=recs.begin(); it!=recs.end();) {
+            // Get a _SDWork
+            _SDWork& work = state.works.at(workIdx);
+            workIdx++;
+            if (workIdx == state.works.size()) workIdx = 0;
+            
+            // Wait until the _SDWork is ready
+            {
+                auto lock = state.signal.wait([&] { return state.underway.find(&work) == state.underway.end(); });
+                state.underway.insert(&work);
+            }
+            
+            // Add the _SDWork's records to the library if the _SDWork is populated from
+            // the previous iteration. (We do that here because at this point we know the
+            // _SDWork is complete, because it's ready to be used again.)
+            // Also write the library if we crossed the WriteIntervalThumbCount threshold.
+            if (initial) {
+                auto lock = std::unique_lock(_imageLibrary);
+                
+                const size_t addCount = work.state.ops.size();
+                _imageLibrary.add(addCount);
+                writeCount += addCount;
+                addCountRem -= addCount;
+                printf("[_loadImages] Add %ju images\n", (uintmax_t)addCount);
+                
+                if (writeCount >= WriteIntervalThumbCount) {
+                    printf("[_loadImages] Write library (writeCount: %ju)\n", (uintmax_t)writeCount);
+                    writeCount = 0;
+                    _imageLibrary.write();
+                }
+            }
+            
+            // Populate _SDWork
+            {
+                // Prepare the _SDWork
+                work.state = {
+                    .read = {
+                        .callback = [&] { _readCompleteCallback(state, work); },
+                    },
+                    
+                    .render = {
+                        .initial = initial,
+                        .callback = [&] { _renderCompleteCallback(state, work); },
+                    },
+                };
+                
+                // Push _SDReadOps until we run out, or we hit the capacity of _SDWork.buffer
+                const _SDBlock workBlockBegin = (*it)->addr.thumb;
+                for (; it!=recs.end(); it++) {
+                    const ImageRecordPtr& rec = *it;
+                    const _SDBlock blockBegin = rec->addr.thumb;
+                    // If the block addresses wrap around, start a new _SDWork
+                    if (blockBegin < workBlockBegin) break;
+                    const _SDBlock blockEnd = _SDBlockEnd(blockBegin, ImgSD::Thumb::ImagePaddedLen);
+                    const size_t span = (size_t)SD::BlockLen * (size_t)(blockEnd-workBlockBegin);
+                    // Bail if we hit a _SDReadOp that would put us over the capacity of work.buffer
+                    if (span > sizeof(work.buffer)) break;
+                    work.state.ops.push_back(_SDReadOp{
+                        .block = blockBegin,
+                        .len = ImgSD::Thumb::ImagePaddedLen,
+                        .rec = rec,
+                    });
+                }
+                
+                printf("[_loadImages] Enqueued _SDWork:%p ops.size():%ju idx:%zu idxDone:%zu\n",
+                    &work, (uintmax_t)work.state.ops.size(), work.state.render.idx.load(), work.state.render.idxDone.load());
+            }
+            
+            // Enqueue _SDWork into _sdRead.queues
+            {
+                {
+                    auto lock = _sdRead.signal.lock();
+                    _SDWorkQueue& queue = _sdRead.queues[(size_t)priority];
+                    queue.push(&work);
+                }
+                _sdRead.signal.signalOne();
+            }
+        }
+        
+        // Wait until remaining _SDWorks are complete
+        state.signal.wait([&] { return state.underway.empty(); });
+        
+        // Add remaining images and write library
+        if (initial && addCountRem) {
+            auto lock = std::unique_lock(_imageLibrary);
+            _imageLibrary.add(addCountRem);
+            _imageLibrary.write();
+        }
+    }
+    
+    // MARK: - Sync
+    
+    void _sync_thread() {
+        try {
+            const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(_mspState);
+            const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
+            const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
+            
+            {
+                // Modify the image library to reflect the images that have been added and removed
+                // since the last time we sync'd
+                uint32_t addCount = 0;
+                {
+                    auto lock = std::unique_lock(_imageLibrary);
+                    
+                    // Remove images from beginning of library: lib has, device doesn't
+                    {
+                        const auto removeBegin = _imageLibrary.begin();
+                        
+                        // Find the first image >= `deviceImgIdBegin`
+                        const auto removeEnd = std::lower_bound(_imageLibrary.begin(), _imageLibrary.end(), 0,
+                            [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
+                                return sample->info.id < deviceImgIdBegin;
+                            });
+                        
+                        printf("Removing %ju stale images\n", (uintmax_t)(removeEnd-removeBegin));
+                        _imageLibrary.remove(removeBegin, removeEnd);
+                    }
+                    
+                    // Calculate how many images to add to the end of the library: device has, lib doesn't
+                    {
+                        const Img::Id libImgIdEnd = (!_imageLibrary.empty() ? _imageLibrary.back()->info.id+1 : 0);
+                        if (libImgIdEnd > deviceImgIdEnd) {
+                            throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImgIdEnd: %ju)",
+                                (uintmax_t)libImgIdEnd,
+                                (uintmax_t)deviceImgIdEnd
+                            );
+                        }
+                        
+                        addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        printf("Adding %ju images\n", (uintmax_t)addCount);
+                        _imageLibrary.reserve(addCount);
+                    }
+                }
+                
+                // Populate .addr for each new ImageRecord that we're adding
+                std::set<ImageRecordPtr> recs;
+                {
+                    const uint32_t newestIdx = imgRingBuf.buf.widx - std::min((uint32_t)imgRingBuf.buf.widx, addCount);
+                    const uint32_t newestLen = imgRingBuf.buf.widx - newestIdx;
+                    const uint32_t oldestLen = addCount - newestLen;
+                    const uint32_t oldestIdx = _mspState.sd.imgCap - oldestLen;
+                    
+                    auto it = _imageLibrary.reservedBegin();
+                    for (uint32_t i=0; i<oldestLen; i++) {
+                        const uint32_t idx = oldestIdx+i;
+                        ImageRecordPtr rec = *it;
+                        rec->addr.full = _AddrFull(_mspState, idx);
+                        rec->addr.thumb = _AddrThumb(_mspState, idx);
+                        recs.insert(rec);
+                        it++;
+                    }
+                    
+                    for (uint32_t i=0; i<newestLen; i++) {
+                        const uint32_t idx = newestIdx+i;
+                        ImageRecordPtr rec = *it;
+                        rec->addr.full = _AddrFull(_mspState, idx);
+                        rec->addr.thumb = _AddrThumb(_mspState, idx);
+                        recs.insert(rec);
+                        it++;
+                    }
+                }
+                
+                // Load the images from the SD card
+                {
+                    _loadImages(_sync.loadImages, _Priority::Low, true, recs);
+                }
+            }
+        
+        } catch (const Toastbox::Signal::Stop&) {
+            fprintf(stderr, "_sync_thread stopping\n");
+        
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Failed to update image library: %s", e.what());
+        }
+    }
+    
+    // MARK: - Thumb Update
+    
+    void _thumbUpdate_thread() {
+        try {
+            for (;;) {
+                std::set<ImageRecordPtr> recs;
+                {
+                    auto lock = _thumbUpdate.signal.wait([&] { return !_thumbUpdate.recs.empty(); });
+                    recs = std::move(_thumbUpdate.recs);
+                    // Update .thumb.render asap (ie before we've actually rendered) so that the
+                    // visibleThumbs() function on the main thread stops enqueuing work asap
+                    for (const ImageRecordPtr& rec : recs) {
+                        rec->options.thumb.render = false;
+                    }
+                }
+                
+                _loadImages(_thumbUpdate.loadImages, _Priority::High, false, recs);
+            }
+        
+        } catch (const Toastbox::Signal::Stop&) {
+            fprintf(stderr, "_thumbUpdate_thread stopping\n");
+        }
+    }
+    
+    // MARK: - SD Read
+    
+    // _sdRead.lock must be held!
+    _SDWorkQueue* _sdRead_nextWorkQueue() {
+        for (_SDWorkQueue& x : _sdRead.queues) {
+            if (!x.empty()) return &x;
+        }
+        return nullptr;
+    }
+    
+    void _sdRead_handleWork(_SDWork& work) {
+        assert(!work.state.ops.empty());
+        
+        // Read the data from the device
+        const _SDBlock blockBegin = work.state.ops.front().block;
+        {
+            const _SDBlock blockEnd = _SDBlockEnd(work.state.ops.back().block, work.state.ops.back().len);
+            const size_t len = (size_t)SD::BlockLen * (size_t)(blockEnd-blockBegin);
+            assert(len <= sizeof(work.buffer));
+            
+            auto lock = std::unique_lock(_dev);
+            _dev.reset();
+            // Verify that blockBegin can be safely cast to SD::Block
+            assert(std::numeric_limits<SD::Block>::max() >= blockBegin);
+            _dev.sdRead((SD::Block)blockBegin);
+            _dev.readout(work.buffer, len);
+        }
+        
+        // Update each _SDReadOp with its data address
+        {
+            for (_SDReadOp& op : work.state.ops) {
+                const size_t off = (size_t)SD::BlockLen * (size_t)(op.block-blockBegin);
+                op.data = work.buffer + off;
+            }
+        }
+        
+        // Execute the _SDWork callback
+        {
+            work.state.read.callback();
+        }
+    }
+    
+    void _sdRead_thread() {
+        try {
+            for (;;) {
+                _SDWork* work = nullptr;
+                {
+                    // Wait for work
+                    _SDWorkQueue* queue = nullptr;
+                    auto lock = _sdRead.signal.wait([&] { return (queue = _sdRead_nextWorkQueue()); });
+                    work = queue->front();
+                    queue->pop();
+                }
+                _sdRead_handleWork(*work);
+            }
+        
+        } catch (const Toastbox::Signal::Stop&) {
+            fprintf(stderr, "_sdRead_thread stopping\n");
+        }
+    }
+    
+    // MARK: - Thumb Render
+    
+    void _thumbRender_thread() {
+        using namespace MDCTools;
+        
+        try {
+            id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
+            Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
+            _ThumbCompressor compressor;
+            std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
+            
+            for (;;) @autoreleasepool {
+                _SDWork* work = nullptr;
+                size_t idx = 0;
+                {
+                    auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.work.empty(); });
+                    work = _thumbRender.work.front();
+                    idx = work->state.render.idx.fetch_add(1);
+                    // Our logic guarantees that we should never observe a _SDWork in _thumbRender.work
+                    // unless it has available indexes (state.render.idx) that need to be handled.
+                    // Confirm that's true.
+                    assert(idx < work->state.ops.size());
+                    // If we're handling the last _SDReadOp in the _SDWork, remove the _SDWork
+                    // from _thumbRender.work. See assertion comment directly above.
+                    if (idx == work->state.ops.size()-1) {
+                        _thumbRender.work.pop();
+                    }
+                    
+//                    printf("[_thumbRender_thread] Dequeued _SDWork=%p idx:%zu ops.size():%zu\n", work, idx, work->state.ops.size());
+                }
+                
+                const _SDReadOp& op = work->state.ops.at(idx);
+                ImageRecord& rec = *op.rec;
+                
+                // Validate checksum
+                if (_ImageChecksumValid(op.data, Img::Size::Thumb)) {
+    //                printf("Checksum valid (size: full)\n");
+                } else {
+                    printf("Checksum INVALID (size: full)\n");
+    //                abort();
+                }
+                
+                if (work->state.render.initial) {
+                    // Populate .info
+                    {
+                        const Img::Header& imgHeader = *(const Img::Header*)op.data;
+                        
+                        rec.info.id             = imgHeader.id;
+                        rec.info.timestamp      = imgHeader.timestamp;
+                        rec.info.flags          = ImageFlags::Loaded;
+                        
+                        rec.info.imageWidth     = imgHeader.imageWidth;
+                        rec.info.imageHeight    = imgHeader.imageHeight;
+                        
+                        rec.info.coarseIntTime  = imgHeader.coarseIntTime;
+                        rec.info.analogGain     = imgHeader.analogGain;
+                    }
+                    
+                    // Populate .options
+                    {
+                        rec.options = {};
+                    }
+                }
+                
+                // Render the thumbnail into rec.thumb
+                {
+                    const void* thumbSrc = op.data+Img::PixelsOffset;
+                    void* thumbDst = rec.thumb.data;
+                    
+                    // estimateIlluminant: only perform illuminant estimation upon our initial import
+                    const bool estimateIlluminant = work->state.render.initial;
+                    const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, rec.options,
+                        estimateIlluminant, thumbSrc, thumbDst);
+                    
+                    if (estimateIlluminant) {
+                        // Populate .info.illumEst
+                        ccm.illum.m.get(rec.info.illumEst);
+                        // Populate .options.whiteBalance
+                        ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
+                    }
+                }
+                
+                // Increment state.render.idxDone, and call the callback if this
+                // was last _SDReadOp in the _SDWork.
+                const size_t idxDone = work->state.render.idxDone.fetch_add(1);
+                assert(idxDone < work->state.ops.size());
+                if (idxDone == work->state.ops.size()-1) {
+                    work->state.render.callback();
+                }
+            }
+        
+        } catch (const Toastbox::Signal::Stop&) {
+            fprintf(stderr, "_thumbRender_thread stopping\n");
+        }
+    }
+    
+    // MARK: - Members
+    
+    Device _dev;
     const _Path _dir;
-    ImageLibraryPtr _imageLibrary;
+    ImageLibrary _imageLibrary;
+    ImageCache _imageCache;
     MSP::State _mspState;
     STM::SDCardInfo _sdCardInfo;
     
+    std::string _name;
+    std::forward_list<Observer> _observers;
+    Toastbox::Signal _imageForAddrSignal;
+    
     struct {
-        std::mutex lock; // Protects this struct
-        std::string name;
-        std::forward_list<Observer> observers;
-        std::thread updateImageLibraryThread;
-        ImageCachePtr imageCache;
-    } _state;
+        std::thread thread;
+        _LoadImagesState loadImages = {
+            .works = std::vector<_SDWork>(2),
+        };
+    } _sync;
+    
+    struct {
+        Toastbox::Signal signal; // Protects this struct
+        std::thread thread;
+        _LoadImagesState loadImages = {
+            .works = std::vector<_SDWork>(1),
+        };
+        std::set<ImageRecordPtr> recs;
+    } _thumbUpdate;
+    
+    struct {
+        Toastbox::Signal signal; // Protects this struct
+        std::thread thread;
+        _SDWorkQueue queues[(size_t)_Priority::Count];
+    } _sdRead;
+    
+    struct {
+        Toastbox::Signal signal; // Protects this struct
+        std::vector<std::thread> threads;
+        _SDWorkQueue work;
+    } _thumbRender;
 };
 
 using MDCDevicePtr = std::shared_ptr<MDCDevice>;
