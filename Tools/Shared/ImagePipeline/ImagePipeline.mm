@@ -178,21 +178,21 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
             ReconstructHighlights::Run(renderer, rawImg.cfaDesc, illum.m, raw);
         }
         
-        // White balance
-        {
-            const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
-            const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
-            const simd::float3 simdWB = simdForMat(wb);
-            renderer.render(raw,
-                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
-                    // Buffer args
-                    rawImg.cfaDesc,
-                    simdWB,
-                    // Texture args
-                    raw
-                )
-            );
-        }
+//        // White balance
+//        {
+//            const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
+//            const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+//            const simd::float3 simdWB = simdForMat(wb);
+//            renderer.render(raw,
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
+//                    // Buffer args
+//                    rawImg.cfaDesc,
+//                    simdWB,
+//                    // Texture args
+//                    raw
+//                )
+//            );
+//        }
         
         if (opts.defringe.en) {
             Defringe::Run(renderer, rawImg.cfaDesc, opts.defringe.opts, raw);
@@ -202,6 +202,111 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         {
             DebayerLMMSE::Run(renderer, rawImg.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
         }
+        
+        
+        
+        
+        
+        
+        
+//        // ProPhotoRGB -> XYZ.D50
+//        {
+//            renderer.render(rgb,
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGB",
+//                    // Texture args
+//                    rgb
+//                )
+//            );
+//        }
+//        
+//        // XYZ.D50 -> Lab.D50
+//        {
+//            renderer.render(rgb,
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
+//                    // Texture args
+//                    rgb
+//                )
+//            );
+//        }
+//        
+//        // Local contrast
+//        if (opts.localContrast.en) {
+//            LocalContrast::Run(renderer, opts.localContrast.amount,
+//                opts.localContrast.radius, rgb);
+//        }
+//        
+//        // Lab.D50 -> XYZ.D50
+//        {
+//            renderer.render(rgb,
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
+//                    // Texture args
+//                    rgb
+//                )
+//            );
+//        }
+//        
+//        // XYZ.D50 -> ProPhotoRGB
+//        {
+//            renderer.render(rgb,
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ProPhotoRGBFromXYZD50",
+//                    // Texture args
+//                    rgb
+//                )
+//            );
+//        }
+        
+        
+        
+        
+        
+        // White balance
+        {
+            const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
+            const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+            const simd::float3 simdWB = simdForMat(wb);
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance2",
+                    // Buffer args
+                    simdWB,
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        
+        
+        
+        
+        // XYZ.D50 -> Lab.D50
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        // Local contrast
+        if (opts.localContrast.en) {
+            LocalContrast::Run(renderer, opts.localContrast.amount,
+                opts.localContrast.radius, rgb);
+        }
+        
+        // Lab.D50 -> XYZ.D50
+        {
+            renderer.render(rgb,
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
+                    // Texture args
+                    rgb
+                )
+            );
+        }
+        
+        
+        
+        
         
         // Camera raw -> ProPhotoRGB
         {
@@ -297,11 +402,11 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
             );
         }
         
-        // Local contrast
-        if (opts.localContrast.en) {
-            LocalContrast::Run(renderer, opts.localContrast.amount,
-                opts.localContrast.radius, rgb);
-        }
+//        // Local contrast
+//        if (opts.localContrast.en) {
+//            LocalContrast::Run(renderer, opts.localContrast.amount,
+//                opts.localContrast.radius, rgb);
+//        }
         
         // Lab.D50 -> XYZ.D50
         {

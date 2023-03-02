@@ -211,6 +211,12 @@ struct ExposureSettings {
         .defringe = {
             .en = false,
         },
+        
+        .localContrast = {
+            .en = true,
+            .amount = .5,
+            .radius = 50,
+        },
     };
     
     [self _updateInspectorUI];
