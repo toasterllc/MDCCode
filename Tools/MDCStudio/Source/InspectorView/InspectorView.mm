@@ -678,69 +678,81 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             section->darkBackground = true;
             
             {
-                Item_Stat* stat = [self _createItemWithClass:[Item_Stat class]];
-                stat->name = @"Image ID";
-                stat->valueIndent = 115;
-                stat->modelGetter = _GetterCreate(self, _Get_id);
-                stat->darkBackground = true;
-                [section addItem:stat];
+                Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
+                it->name = @"Image ID";
+                it->valueIndent = 115;
+                it->modelGetter = _GetterCreate(self, _Get_id);
+                it->darkBackground = true;
+                [section addItem:it];
             }
             
             {
-                Item_Stat* stat = [self _createItemWithClass:[Item_Stat class]];
-                stat->name = @"Timestamp";
-                stat->valueIndent = 115;
-                stat->modelGetter = _GetterCreate(self, _Get_timestamp);
-                stat->darkBackground = true;
-                [section addItem:stat];
+                Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
+                it->name = @"Timestamp";
+                it->valueIndent = 115;
+                it->modelGetter = _GetterCreate(self, _Get_timestamp);
+                it->darkBackground = true;
+                [section addItem:it];
             }
             
             {
-                Item_Stat* stat = [self _createItemWithClass:[Item_Stat class]];
-                stat->name = @"Integration Time";
-                stat->valueIndent = 115;
-                stat->modelGetter = _GetterCreate(self, _Get_integrationTime);
-                stat->darkBackground = true;
-                [section addItem:stat];
+                Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
+                it->name = @"Integration Time";
+                it->valueIndent = 115;
+                it->modelGetter = _GetterCreate(self, _Get_integrationTime);
+                it->darkBackground = true;
+                [section addItem:it];
             }
             
             {
-                Item_Stat* stat = [self _createItemWithClass:[Item_Stat class]];
-                stat->name = @"Analog Gain";
-                stat->valueIndent = 115;
-                stat->modelGetter = _GetterCreate(self, _Get_analogGain);
-                stat->darkBackground = true;
-                [section addItem:stat];
+                Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
+                it->name = @"Analog Gain";
+                it->valueIndent = 115;
+                it->modelGetter = _GetterCreate(self, _Get_analogGain);
+                it->darkBackground = true;
+                [section addItem:it];
             }
             
             {
-                Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-                spacer->height = 10;
-                spacer->darkBackground = true;
-                [section addItem:spacer];
+                Item_Spacer* it = [self _createItemWithClass:[Item_Spacer class]];
+                it->height = 10;
+                it->darkBackground = true;
+                [section addItem:it];
             }
             
             [_rootItem addItem:section];
         }
         
         {
-            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = 10;
-            [_rootItem addItem:spacer];
+            Item_Spacer* it = [self _createItemWithClass:[Item_Spacer class]];
+            it->height = 10;
+            [_rootItem addItem:it];
         }
         
         {
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"White Balance";
-            Item_SliderWithIcon* slider = [self _createItemWithClass:[Item_SliderWithIcon class]];
-            slider->icon = @"Inspector-WhiteBalance";
-            slider->modelGetter = _GetterCreate(self, _Get_whiteBalance);
-            slider->modelSetter = _SetterCreate(self, _Set_whiteBalance);
-            slider->section = section;
-            slider->valueMin = -1;
-            slider->valueMax = +1;
-            slider->valueDefault = 0;
-            [section addItem:slider];
+            
+            {
+                Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
+                it->name = @"Auto";
+                it->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
+                it->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
+                it->section = section;
+                [section addItem:it];
+            }
+            
+            {
+                Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
+                it->icon = @"Inspector-WhiteBalance";
+                it->modelGetter = _GetterCreate(self, _Get_whiteBalance);
+                it->modelSetter = _SetterCreate(self, _Set_whiteBalance);
+                it->section = section;
+                it->valueMin = -1;
+                it->valueMax = +1;
+                it->valueDefault = 0;
+                [section addItem:it];
+            }
             
 //            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
 //            spacer->height = SpacerSize;
@@ -752,15 +764,18 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         {
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Exposure";
-            Item_SliderWithIcon* slider = [self _createItemWithClass:[Item_SliderWithIcon class]];
-            slider->icon = @"Inspector-Exposure";
-            slider->modelGetter = _GetterCreate(self, _Get_exposure);
-            slider->modelSetter = _SetterCreate(self, _Set_exposure);
-            slider->section = section;
-            slider->valueMin = -1;
-            slider->valueMax = +1;
-            slider->valueDefault = 0;
-            [section addItem:slider];
+            
+            {
+                Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
+                it->icon = @"Inspector-Exposure";
+                it->modelGetter = _GetterCreate(self, _Get_exposure);
+                it->modelSetter = _SetterCreate(self, _Set_exposure);
+                it->section = section;
+                it->valueMin = -1;
+                it->valueMax = +1;
+                it->valueDefault = 0;
+                [section addItem:it];
+            }
             
 //            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
 //            spacer->height = SpacerSize;
@@ -772,15 +787,18 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         {
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Saturation";
-            Item_SliderWithIcon* slider = [self _createItemWithClass:[Item_SliderWithIcon class]];
-            slider->icon = @"Inspector-Saturation";
-            slider->modelGetter = _GetterCreate(self, _Get_saturation);
-            slider->modelSetter = _SetterCreate(self, _Set_saturation);
-            slider->section = section;
-            slider->valueMin = -1;
-            slider->valueMax = +1;
-            slider->valueDefault = 0;
-            [section addItem:slider];
+            
+            {
+                Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
+                it->icon = @"Inspector-Saturation";
+                it->modelGetter = _GetterCreate(self, _Get_saturation);
+                it->modelSetter = _SetterCreate(self, _Set_saturation);
+                it->section = section;
+                it->valueMin = -1;
+                it->valueMax = +1;
+                it->valueDefault = 0;
+                [section addItem:it];
+            }
             
 //            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
 //            spacer->height = SpacerSize;
@@ -792,15 +810,18 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         {
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Brightness";
-            Item_SliderWithIcon* slider = [self _createItemWithClass:[Item_SliderWithIcon class]];
-            slider->icon = @"Inspector-Brightness";
-            slider->modelGetter = _GetterCreate(self, _Get_brightness);
-            slider->modelSetter = _SetterCreate(self, _Set_brightness);
-            slider->section = section;
-            slider->valueMin = -1;
-            slider->valueMax = +1;
-            slider->valueDefault = 0;
-            [section addItem:slider];
+            
+            {
+                Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
+                it->icon = @"Inspector-Brightness";
+                it->modelGetter = _GetterCreate(self, _Get_brightness);
+                it->modelSetter = _SetterCreate(self, _Set_brightness);
+                it->section = section;
+                it->valueMin = -1;
+                it->valueMax = +1;
+                it->valueDefault = 0;
+                [section addItem:it];
+            }
             
 //            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
 //            spacer->height = SpacerSize;
@@ -812,15 +833,18 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         {
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Contrast";
-            Item_SliderWithIcon* slider = [self _createItemWithClass:[Item_SliderWithIcon class]];
-            slider->icon = @"Inspector-Contrast";
-            slider->modelGetter = _GetterCreate(self, _Get_contrast);
-            slider->modelSetter = _SetterCreate(self, _Set_contrast);
-            slider->section = section;
-            slider->valueMin = -1;
-            slider->valueMax = +1;
-            slider->valueDefault = 0;
-            [section addItem:slider];
+            
+            {
+                Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
+                it->icon = @"Inspector-Contrast";
+                it->modelGetter = _GetterCreate(self, _Get_contrast);
+                it->modelSetter = _SetterCreate(self, _Set_contrast);
+                it->section = section;
+                it->valueMin = -1;
+                it->valueMax = +1;
+                it->valueDefault = 0;
+                [section addItem:it];
+            }
             
 //            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
 //            spacer->height = SpacerSize;
@@ -833,29 +857,35 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Local Contrast";
             
-            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = 2;
-            [section addItem:spacer];
+            {
+                Item_Spacer* it = [self _createItemWithClass:[Item_Spacer class]];
+                it->height = 2;
+                [section addItem:it];
+            }
             
-            Item_SliderWithLabel* slider1 = [self _createItemWithClass:[Item_SliderWithLabel class]];
-            slider1->name = @"Amount";
-            slider1->modelGetter = _GetterCreate(self, _Get_localContrastAmount);
-            slider1->modelSetter = _SetterCreate(self, _Set_localContrastAmount);
-            slider1->section = section;
-            slider1->valueMin = -1;
-            slider1->valueMax = +1;
-            slider1->valueDefault = 0;
-            [section addItem:slider1];
+            {
+                Item_SliderWithLabel* it = [self _createItemWithClass:[Item_SliderWithLabel class]];
+                it->name = @"Amount";
+                it->modelGetter = _GetterCreate(self, _Get_localContrastAmount);
+                it->modelSetter = _SetterCreate(self, _Set_localContrastAmount);
+                it->section = section;
+                it->valueMin = -1;
+                it->valueMax = +1;
+                it->valueDefault = 0;
+                [section addItem:it];
+            }
             
-            Item_SliderWithLabel* slider2 = [self _createItemWithClass:[Item_SliderWithLabel class]];
-            slider2->name = @"Radius";
-            slider2->modelGetter = _GetterCreate(self, _Get_localContrastRadius);
-            slider2->modelSetter = _SetterCreate(self, _Set_localContrastRadius);
-            slider2->section = section;
-            slider2->valueMin = -1;
-            slider2->valueMax = +1;
-            slider2->valueDefault = 0;
-            [section addItem:slider2];
+            {
+                Item_SliderWithLabel* it = [self _createItemWithClass:[Item_SliderWithLabel class]];
+                it->name = @"Radius";
+                it->modelGetter = _GetterCreate(self, _Get_localContrastRadius);
+                it->modelSetter = _SetterCreate(self, _Set_localContrastRadius);
+                it->section = section;
+                it->valueMin = -1;
+                it->valueMax = +1;
+                it->valueDefault = 0;
+                [section addItem:it];
+            }
             
 //            Item_Spacer* spacer2 = [self _createItemWithClass:[Item_Spacer class]];
 //            spacer2->height = SpacerSize;
@@ -867,15 +897,20 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         {
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"Rotation";
-            Item_Rotation* rotation = [self _createItemWithClass:[Item_Rotation class]];
-            rotation->modelGetter = _GetterCreate(self, _Get_rotation);
-            rotation->modelSetter = _SetterCreate(self, _Set_rotation);
-            rotation->section = section;
-            [section addItem:rotation];
             
-            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
-            spacer->height = 16;
-            [section addItem:spacer];
+            {
+                Item_Rotation* it = [self _createItemWithClass:[Item_Rotation class]];
+                it->modelGetter = _GetterCreate(self, _Get_rotation);
+                it->modelSetter = _SetterCreate(self, _Set_rotation);
+                it->section = section;
+                [section addItem:it];
+            }
+            
+            {
+                Item_Spacer* it = [self _createItemWithClass:[Item_Spacer class]];
+                it->height = 16;
+                [section addItem:it];
+            }
             
             [_rootItem addItem:section];
         }
@@ -885,32 +920,32 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             section->name = @"Other";
             
             {
-                Item_Checkbox* checkbox = [self _createItemWithClass:[Item_Checkbox class]];
-                checkbox->name = @"Defringe";
-                checkbox->modelGetter = _GetterCreate(self, _Get_defringe);
-                checkbox->modelSetter = _SetterCreate(self, _Set_defringe);
-                checkbox->section = section;
-                [section addItem:checkbox];
+                Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
+                it->name = @"Defringe";
+                it->modelGetter = _GetterCreate(self, _Get_defringe);
+                it->modelSetter = _SetterCreate(self, _Set_defringe);
+                it->section = section;
+                [section addItem:it];
             }
             
             {
-                Item_Checkbox* checkbox = [self _createItemWithClass:[Item_Checkbox class]];
-                checkbox->name = @"Reconstruct highlights";
-                checkbox->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
-                checkbox->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
-                checkbox->section = section;
-                [section addItem:checkbox];
+                Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
+                it->name = @"Reconstruct highlights";
+                it->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
+                it->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
+                it->section = section;
+                [section addItem:it];
             }
             
             {
-                Item_Timestamp* timestamp = [self _createItemWithClass:[Item_Timestamp class]];
-                timestamp->name = @"Timestamp";
-                timestamp->modelGetter = _GetterCreate(self, _Get_timestampShow);
-                timestamp->modelSetter = _SetterCreate(self, _Set_timestampShow);
-                timestamp->cornerModelGetter = _GetterCreate(self, _Get_timestampCorner);
-                timestamp->cornerModelSetter = _SetterCreate(self, _Set_timestampCorner);
-                timestamp->section = section;
-                [section addItem:timestamp];
+                Item_Timestamp* it = [self _createItemWithClass:[Item_Timestamp class]];
+                it->name = @"Timestamp";
+                it->modelGetter = _GetterCreate(self, _Get_timestampShow);
+                it->modelSetter = _SetterCreate(self, _Set_timestampShow);
+                it->cornerModelGetter = _GetterCreate(self, _Get_timestampCorner);
+                it->cornerModelSetter = _SetterCreate(self, _Set_timestampCorner);
+                it->section = section;
+                [section addItem:it];
             }
             
 //            Item_Spacer* spacer = [self _createItemWithClass:[Item_Spacer class]];
