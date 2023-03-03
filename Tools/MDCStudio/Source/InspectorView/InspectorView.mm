@@ -747,17 +747,17 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"White Balance";
             
-//            {
-//                Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
-//                it->name = @"Auto";
-//                it->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
-//                it->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
-//                it->section = section;
-//                [section addItem:it];
-//            }
+            {
+                Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
+                it->name = @"Auto";
+                it->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
+                it->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
+                it->section = section;
+                [section addItem:it];
+            }
             
             {
-                Item_WhiteBalance* it = [self _createItemWithClass:[Item_WhiteBalance class]];
+                Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
                 it->icon = @"Inspector-WhiteBalance";
                 it->modelGetter = _GetterCreate(self, _Get_whiteBalance);
                 it->modelSetter = _SetterCreate(self, _Set_whiteBalance);
