@@ -219,6 +219,7 @@ struct ExposureSettings {
         },
     };
     
+    
     [self _updateInspectorUI];
     
     auto points = [self _prefsColorCheckerPositions];
@@ -1047,7 +1048,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     [[_mainView imageLayer] setNeedsDisplay];
 }
 
-- (IBAction)_colorMatrixIdentityButtonAction:(id)sender {
+- (IBAction)_colorMatrixIdentityAction:(id)sender {
     auto& opts = _imagePipelineManager->options;
     [self _setColorCheckersEnabled:false];
     opts.colorMatrix = {
@@ -1055,6 +1056,14 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
         0.,1.,0.,
         0.,0.,1.
     };
+    [self _updateInspectorUI];
+    [[_mainView imageLayer] setNeedsDisplay];
+}
+
+- (IBAction)_colorMatrixClearAction:(id)sender {
+    auto& opts = _imagePipelineManager->options;
+    [self _setColorCheckersEnabled:false];
+    opts.colorMatrix = std::nullopt;
     [self _updateInspectorUI];
     [[_mainView imageLayer] setNeedsDisplay];
 }
@@ -1151,14 +1160,18 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     
     // Color matrix
     {
-        [_colorMatrixTextField setStringValue:[NSString stringWithFormat:
-            @"%f %f %f\n"
-            @"%f %f %f\n"
-            @"%f %f %f\n",
-            opts.colorMatrix.at(0,0), opts.colorMatrix.at(0,1), opts.colorMatrix.at(0,2),
-            opts.colorMatrix.at(1,0), opts.colorMatrix.at(1,1), opts.colorMatrix.at(1,2),
-            opts.colorMatrix.at(2,0), opts.colorMatrix.at(2,1), opts.colorMatrix.at(2,2)
-        ]];
+        if (opts.colorMatrix) {
+            [_colorMatrixTextField setStringValue:[NSString stringWithFormat:
+                @"%f %f %f\n"
+                @"%f %f %f\n"
+                @"%f %f %f\n",
+                opts.colorMatrix->at(0,0), opts.colorMatrix->at(0,1), opts.colorMatrix->at(0,2),
+                opts.colorMatrix->at(1,0), opts.colorMatrix->at(1,1), opts.colorMatrix->at(1,2),
+                opts.colorMatrix->at(2,0), opts.colorMatrix->at(2,1), opts.colorMatrix->at(2,2)
+            ]];
+        } else {
+            [_colorMatrixTextField setStringValue:@""];
+        }
     }
     
     {
@@ -1231,7 +1244,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     // Update the estimated illuminant in the inspector UI,
     // if we weren't overriding the illuminant
     if (!_imagePipelineManager->options.illum) {
-        [self _updateIllumEstTextField:_imagePipelineManager->result.illumEst];
+        [self _updateIllumEstTextField:_imagePipelineManager->result.illum];
     }
     
     [self _updateSampleColorsUI];
@@ -1273,7 +1286,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
     if (_imagePipelineManager->options.illum) {
         illum = *_imagePipelineManager->options.illum;
     } else {
-        illum = _imagePipelineManager->result.illumEst;
+        illum = _imagePipelineManager->result.illum;
     }
     const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
     const Mat<double,3,1> whiteBalance(factor/illum[0], factor/illum[1], factor/illum[2]);
@@ -1345,6 +1358,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
         }
     }
     
+    opts.illum = std::nullopt;
     opts.colorMatrix = colorMatrix;
     [self _updateInspectorUI];
     [[_mainView imageLayer] setNeedsDisplay];

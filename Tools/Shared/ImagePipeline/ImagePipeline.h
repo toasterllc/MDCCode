@@ -21,6 +21,7 @@ public:
         bool rawMode = false;
         
         std::optional<MDCTools::Color<MDCTools::ColorSpace::Raw>> illum;
+        std::optional<Mat<double,3,3>> colorMatrix;
         
         struct {
             bool en = false;
@@ -34,12 +35,6 @@ public:
         struct {
             bool applyGamma = false;
         } debayerLMMSE;
-        
-        Mat<double,3,3> colorMatrix = {
-            1.,0.,0.,
-            0.,1.,0.,
-            0.,0.,1.,
-        };
         
         float exposure = 0;
         float saturation = 0;
@@ -57,7 +52,8 @@ public:
     
     struct Result {
         MDCTools::Renderer::Txt txt; // LSRGB colorspace
-        MDCTools::Color<MDCTools::ColorSpace::Raw> illumEst; // Estimated illuminant
+        MDCTools::Color<MDCTools::ColorSpace::Raw> illum; // Illuminant that was used
+        Mat<double,3,3> colorMatrix; // Color matrix that was used
         struct {
             MDCTools::Renderer::Buf raw;
             MDCTools::Renderer::Buf xyzD50;

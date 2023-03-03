@@ -123,7 +123,7 @@ fragment float WhiteBalance(
     }
 }
 
-fragment float4 WhiteBalance2(
+fragment float4 WhiteBalanceRGB(
     constant float3& wb [[buffer(0)]],
     texture2d<float> txt [[texture(0)]],
     VertexOutput in [[stage_in]]

@@ -745,7 +745,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="400" height="1045"/>
                         <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="jUT-Pl-9aw">
                             <rect key="frame" x="0.0" y="0.0" width="400" height="1045"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="Htl-ND-O3N">
                                     <rect key="frame" x="0.0" y="-775" width="400" height="1820"/>
@@ -775,8 +775,8 @@
                                             </textFieldCell>
                                         </textField>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kbI-BK-MGm">
-                                            <rect key="frame" x="18" y="1478" width="247" height="16"/>
-                                            <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Color matrix (CamRaw.D50 to XYZ.D50)" id="Chd-sJ-4mL">
+                                            <rect key="frame" x="18" y="1478" width="215" height="16"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" selectable="YES" title="Color matrix (raw to ProPhotoRGB)" id="Chd-sJ-4mL">
                                                 <font key="font" metaFont="system"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -787,7 +787,7 @@
                                             <constraints>
                                                 <constraint firstAttribute="height" constant="72" id="jiO-w4-Cpg"/>
                                             </constraints>
-                                            <textFieldCell key="cell" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="hwj-1l-ozR">
+                                            <textFieldCell key="cell" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="none" drawsBackground="YES" id="hwj-1l-ozR">
                                                 <font key="font" size="14" name="Menlo-Regular"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -906,13 +906,23 @@
                                             </textFieldCell>
                                         </textField>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="OY7-eb-czI">
-                                            <rect key="frame" x="319" y="1471" width="66" height="27"/>
-                                            <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
+                                            <rect key="frame" x="331" y="1471" width="54" height="27"/>
+                                            <buttonCell key="cell" type="push" title="Clear" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3n5-Oj-HZg">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="message" size="11"/>
+                                                <font key="font" metaFont="controlContent" size="11"/>
                                             </buttonCell>
                                             <connections>
-                                                <action selector="_colorMatrixIdentityButtonAction:" target="Voe-Tx-rLC" id="7yg-Wc-LMe"/>
+                                                <action selector="_colorMatrixClearAction:" target="Voe-Tx-rLC" id="XQE-ya-e9A"/>
+                                            </connections>
+                                        </button>
+                                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="EL2-w7-89T">
+                                            <rect key="frame" x="267" y="1471" width="66" height="27"/>
+                                            <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="kWi-ZT-WfE">
+                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="controlContent" size="11"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="_colorMatrixIdentityAction:" target="Voe-Tx-rLC" id="Xr6-sP-4dR"/>
                                             </connections>
                                         </button>
                                         <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1Th-eO-8Sc">
@@ -1101,7 +1111,7 @@
                                             <rect key="frame" x="329" y="1498" width="56" height="27"/>
                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hsH-kE-yRp">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="message" size="11"/>
+                                                <font key="font" metaFont="controlContent" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>
@@ -1571,7 +1581,7 @@
                                             <rect key="frame" x="319" y="1569" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cKq-CO-v4Z">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="message" size="11"/>
+                                                <font key="font" metaFont="controlContent" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_illumIdentityButtonAction:" target="Voe-Tx-rLC" id="2kN-Yb-ZXe"/>
@@ -1648,6 +1658,7 @@
                                         <constraint firstItem="Yz0-oE-QrP" firstAttribute="centerY" secondItem="VIy-yc-WPP" secondAttribute="centerY" id="Cnb-7q-DdY"/>
                                         <constraint firstAttribute="trailing" secondItem="In1-oc-0pA" secondAttribute="trailing" id="Cw4-xe-X31"/>
                                         <constraint firstItem="k5K-pT-L2W" firstAttribute="top" secondItem="KIo-4m-3AR" secondAttribute="bottom" constant="8" id="D2a-Gp-frX"/>
+                                        <constraint firstItem="OY7-eb-czI" firstAttribute="leading" secondItem="EL2-w7-89T" secondAttribute="trailing" constant="8" id="Dyh-cd-mbf"/>
                                         <constraint firstItem="48V-lI-UpB" firstAttribute="top" secondItem="Htl-ND-O3N" secondAttribute="top" constant="12" id="ENJ-nv-iUj"/>
                                         <constraint firstItem="9jB-cM-ghW" firstAttribute="top" secondItem="NSW-Ho-NVP" secondAttribute="bottom" constant="8" id="EWG-IQ-Orj"/>
                                         <constraint firstAttribute="trailing" secondItem="Q4n-34-nSq" secondAttribute="trailing" constant="20" id="EpF-sT-x0l"/>
@@ -1658,6 +1669,7 @@
                                         <constraint firstItem="cXS-kH-qXh" firstAttribute="leading" secondItem="hXh-me-JP4" secondAttribute="trailing" constant="20" id="GyO-uq-Opm"/>
                                         <constraint firstAttribute="bottom" secondItem="2iy-ao-YZy" secondAttribute="bottom" constant="20" id="Hk0-cF-neN"/>
                                         <constraint firstItem="knO-PS-2Af" firstAttribute="leading" secondItem="MXr-va-vh1" secondAttribute="trailing" constant="20" id="I7h-OE-DpB"/>
+                                        <constraint firstItem="OY7-eb-czI" firstAttribute="centerY" secondItem="EL2-w7-89T" secondAttribute="centerY" id="IOD-f9-nSt"/>
                                         <constraint firstItem="Dec-Qn-Kgz" firstAttribute="leading" secondItem="NSW-Ho-NVP" secondAttribute="trailing" constant="20" id="IYv-Rq-3bH"/>
                                         <constraint firstItem="Rr6-mK-7nW" firstAttribute="top" secondItem="PeP-Zp-s42" secondAttribute="bottom" constant="12" id="Iom-qb-vWh"/>
                                         <constraint firstItem="OY7-eb-czI" firstAttribute="centerY" secondItem="kbI-BK-MGm" secondAttribute="centerY" id="ItO-O9-rNW"/>
@@ -1806,7 +1818,6 @@
                                         <constraint firstItem="kzO-GG-ZYP" firstAttribute="leading" secondItem="cXS-kH-qXh" secondAttribute="trailing" constant="20" id="qsJ-3D-1MW"/>
                                         <constraint firstItem="2iy-ao-YZy" firstAttribute="top" secondItem="9jB-cM-ghW" secondAttribute="bottom" constant="8" id="qsj-6R-dfy"/>
                                         <constraint firstItem="q61-MO-178" firstAttribute="centerY" secondItem="1Th-eO-8Sc" secondAttribute="centerY" id="rAp-Xv-nGL"/>
-                                        <constraint firstItem="OY7-eb-czI" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="kbI-BK-MGm" secondAttribute="trailing" constant="20" id="rDx-Ba-ReJ"/>
                                         <constraint firstAttribute="trailing" secondItem="Igu-Le-QYW" secondAttribute="trailing" id="rQT-Pc-5hA"/>
                                         <constraint firstItem="pzH-hm-Uiv" firstAttribute="top" secondItem="Y7p-mh-v4H" secondAttribute="bottom" constant="12" id="rTW-b3-u8f"/>
                                         <constraint firstItem="gAk-uD-BoR" firstAttribute="leading" secondItem="Htl-ND-O3N" secondAttribute="leading" constant="20" id="rYY-tG-WNr"/>
@@ -1867,7 +1878,7 @@
                             <rect key="frame" x="0.0" y="1029" width="400" height="16"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
-                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="9ve-T6-sMB">
+                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" doubleValue="0.094193548387096815" horizontal="NO" id="9ve-T6-sMB">
                             <rect key="frame" x="384" y="0.0" width="16" height="1045"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>

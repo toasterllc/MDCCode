@@ -147,7 +147,8 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     }
     
     Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
-    Color<ColorSpace::Raw> illumEst;
+    Color<ColorSpace::Raw> illum;
+    Mat<double,3,3> colorMatrix;
     
     // Raw mode (bilinear debayer only)
     if (opts.rawMode) {
@@ -164,13 +165,12 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     } else {
 //        renderer.debugShowTexture(raw);
         
-        // Estimate illuminant, if an illuminant isn't provided in `opts.illum`
-        Color<ColorSpace::Raw> illum;
+        // If an illuminant was provided, use it.
+        // Otherwise, estimate it with FFCC.
         if (opts.illum) {
             illum = *opts.illum;
         } else {
             illum = EstimateIlluminantFFCC::Run(renderer, rawImg.cfaDesc, raw);
-            illumEst = illum;
         }
         
         // Reconstruct highlights
@@ -259,13 +259,43 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         
         
         
+//        // XYZ.D50 -> Lab.D50
+//        {
+//            renderer.render(rgb,
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
+//                    // Texture args
+//                    rgb
+//                )
+//            );
+//        }
+//        
+//        // Local contrast
+//        if (opts.localContrast.en) {
+//            LocalContrast::Run(renderer, opts.localContrast.amount,
+//                opts.localContrast.radius, rgb);
+//        }
+//        
+//        // Lab.D50 -> XYZ.D50
+//        {
+//            renderer.render(rgb,
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
+//                    // Texture args
+//                    rgb
+//                )
+//            );
+//        }
+        
+        
+        
+        
+        
         // White balance
         {
             const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
             const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
             const simd::float3 simdWB = simdForMat(wb);
             renderer.render(rgb,
-                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance2",
+                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalanceRGB",
                     // Buffer args
                     simdWB,
                     // Texture args
@@ -275,50 +305,21 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         }
         
         
-        
-        
-        
-        // XYZ.D50 -> Lab.D50
-        {
-            renderer.render(rgb,
-                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
-                    // Texture args
-                    rgb
-                )
-            );
-        }
-        
-        // Local contrast
-        if (opts.localContrast.en) {
-            LocalContrast::Run(renderer, opts.localContrast.amount,
-                opts.localContrast.radius, rgb);
-        }
-        
-        // Lab.D50 -> XYZ.D50
-        {
-            renderer.render(rgb,
-                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
-                    // Texture args
-                    rgb
-                )
-            );
-        }
-        
-        
-        
-        
-        
         // Camera raw -> ProPhotoRGB
         {
-            const CCM ccm = CCMForIlluminant(illum);
-//            printf("CCT: %f\n", ccm.cct);
-            const simd::float3x3 colorMatrix = simdForMat(ccm.m);
+            // If a color matrix was provided, use it.
+            // Otherwise estimate it by interpolating between known color matrices.
+            if (opts.colorMatrix) {
+                colorMatrix = *opts.colorMatrix;
+            } else {
+                const CCM ccm = CCMForIlluminant(illum);
+                colorMatrix = ccm.m;
+            }
             
-//            const simd::float3x3 colorMatrix = simdForMat(opts.colorMatrix);
             renderer.render(rgb,
                 renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
                     // Buffer args
-                    colorMatrix,
+                    simdForMat(colorMatrix),
                     // Texture args
                     rgb
                 )
@@ -402,11 +403,11 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
             );
         }
         
-//        // Local contrast
-//        if (opts.localContrast.en) {
-//            LocalContrast::Run(renderer, opts.localContrast.amount,
-//                opts.localContrast.radius, rgb);
-//        }
+        // Local contrast
+        if (opts.localContrast.en) {
+            LocalContrast::Run(renderer, opts.localContrast.amount,
+                opts.localContrast.radius, rgb);
+        }
         
         // Lab.D50 -> XYZ.D50
         {
@@ -453,7 +454,8 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     
     return Result{
         .txt = std::move(rgb),
-        .illumEst = illumEst,
+        .illum = illum,
+        .colorMatrix = colorMatrix,
     };
 }
 
