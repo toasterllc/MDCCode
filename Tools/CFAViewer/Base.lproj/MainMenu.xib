@@ -66,6 +66,7 @@
                 <outlet property="_illumCheckbox" destination="Sf3-DK-soP" id="kfr-jF-OgD"/>
                 <outlet property="_illumTextField" destination="4lq-F3-K8B" id="6XH-ar-OKl"/>
                 <outlet property="_inputHistogramView" destination="osY-3C-qNQ" id="Ou4-HW-UsG"/>
+                <outlet property="_inspectorWindow" destination="MxN-x5-RZK" id="STY-DA-Waf"/>
                 <outlet property="_localContrastAmountLabel" destination="6sK-KP-lMd" id="l0F-xv-AGG"/>
                 <outlet property="_localContrastAmountSlider" destination="yZM-Fz-P7W" id="UyR-qz-4Gz"/>
                 <outlet property="_localContrastCheckbox" destination="9BP-nP-E8G" id="gZO-Hs-zFc"/>
@@ -903,7 +904,7 @@
                                             <rect key="frame" x="319" y="1466" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="kWi-ZT-WfE">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu" size="11"/>
+                                                <font key="font" metaFont="controlContent" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_colorMatrixIdentityAction:" target="Voe-Tx-rLC" id="Xr6-sP-4dR"/>
@@ -1095,7 +1096,7 @@
                                             <rect key="frame" x="329" y="1563" width="56" height="27"/>
                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="hsH-kE-yRp">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu" size="11"/>
+                                                <font key="font" metaFont="controlContent" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_resetColorCheckersButtonAction:" target="Voe-Tx-rLC" id="Wwe-18-diV"/>
@@ -1562,7 +1563,7 @@
                                             <rect key="frame" x="319" y="1504" width="66" height="27"/>
                                             <buttonCell key="cell" type="push" title="Identity" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cKq-CO-v4Z">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                <font key="font" metaFont="menu" size="11"/>
+                                                <font key="font" metaFont="controlContent" size="11"/>
                                             </buttonCell>
                                             <connections>
                                                 <action selector="_illumIdentityAction:" target="Voe-Tx-rLC" id="2kN-Yb-ZXe"/>

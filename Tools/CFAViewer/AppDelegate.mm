@@ -14,6 +14,7 @@
 #import "ImageLayer.h"
 //#import "HistogramLayer.h"
 #import "Toastbox/Mmap.h"
+#import "Toastbox/Mac/Util.h"
 #import "Util.h"
 #import "Mat.h"
 #import "MainView.h"
@@ -54,6 +55,7 @@ struct ExposureSettings {
 @end
 
 @implementation AppDelegate {
+    IBOutlet NSWindow* _inspectorWindow;
     IBOutlet MainView* _mainView;
     
     IBOutlet NSSwitch* _streamImagesSwitch;
@@ -804,14 +806,17 @@ Mat<double,H,W> _matFromString(const std::string& str) {
 }
 
 - (void)controlTextDidEndEditing:(NSNotification*)note {
+    NSLog(@"controlTextDidEndEditing:");
     auto& opts = _imagePipelineManager->options;
-    if ([note object] == _illumTextField) {
+    NSTextField* textField = Toastbox::CastOrNull<NSTextField*>([note object]);
+    if (!textField) return;
+    if (textField == _illumTextField) {
         if (!opts.illum) return;
         opts.illum = _matFromString<3,1>([[_illumTextField stringValue] UTF8String]);
         [self _updateInspectorUI];
         [[_mainView imageLayer] setNeedsDisplay];
     
-    } else if ([note object] == _colorMatrixTextField) {
+    } else if (textField == _colorMatrixTextField) {
         if (!opts.colorMatrix) return;
         opts.colorMatrix = _matFromString<3,3>([[_colorMatrixTextField stringValue] UTF8String]);
         [self _updateInspectorUI];
@@ -1056,8 +1061,10 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 
 - (IBAction)_illumIdentityAction:(id)sender {
     auto& opts = _imagePipelineManager->options;
+    [_inspectorWindow makeFirstResponder:nil];
     opts.illum = { 1.,1.,1. };
     [self _updateInspectorUI];
+    [_inspectorWindow makeFirstResponder:_illumTextField];
     [[_mainView imageLayer] setNeedsDisplay];
 }
 
@@ -1072,6 +1079,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 
 - (IBAction)_colorMatrixIdentityAction:(id)sender {
     auto& opts = _imagePipelineManager->options;
+    [_inspectorWindow makeFirstResponder:nil];
     [self _setColorCheckersEnabled:false];
     opts.colorMatrix = {
         1.,0.,0.,
@@ -1079,6 +1087,7 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
         0.,0.,1.
     };
     [self _updateInspectorUI];
+    [_inspectorWindow makeFirstResponder:_colorMatrixTextField];
     [[_mainView imageLayer] setNeedsDisplay];
 }
 
@@ -1092,6 +1101,8 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 
 - (void)_setColorCheckersEnabled:(bool)en {
     auto& opts = _imagePipelineManager->options;
+    if (_colorCheckersEnabled == en) return;
+    
     _colorCheckersEnabled = en;
     [_colorCheckersCheckbox setState:
         (_colorCheckersEnabled ? NSControlStateValueOn : NSControlStateValueOff)];
