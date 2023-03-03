@@ -22,6 +22,7 @@ struct _ModelData {
 using _ModelGetter = _ModelData(^)(InspectorViewItem*);
 using _ModelSetter = void(^)(InspectorViewItem*, id);
 
+// InspectorCheckboxCell: a checkbox cell; we have to subclass to make the mixed state unattainable by clicking the checkbox
 @interface InspectorCheckboxCell : NSButtonCell
 @end
 
@@ -87,9 +88,16 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 @private
     IBOutlet NSTextField* _label;
     IBOutlet NSButton* _clearButton;
+    IBOutlet NSButton* _checkbox;
     std::vector<InspectorViewItem*> _items;
 @public
     NSString* name;
+    struct {
+        NSString* name;
+        bool valueDefault;
+        _ModelGetter modelGetter;
+        _ModelSetter modelSetter;
+    } checkbox;
 }
 
 - (void)addItem:(InspectorViewItem*)it {
@@ -106,16 +114,43 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     for (InspectorViewItem* it : _items) {
         modified |= [it updateView];
     }
+    
     [_label setStringValue:[name uppercaseString]];
     [_label setTextColor:(modified ? [NSColor labelColor] : [NSColor secondaryLabelColor])];
     [_clearButton setHidden:!modified];
+    
+    // Checkbox handling
+    [_checkbox setHidden:!checkbox.name];
+    if (checkbox.name) {
+        const _ModelData data = checkbox.modelGetter(self);
+        switch (data.type) {
+        case _ModelData::Type::Normal:
+            modified |= ![data.data isEqual:@(checkbox.valueDefault)];
+            [_checkbox setState:([data.data boolValue] ? NSControlStateValueOn : NSControlStateValueOff)];
+            break;
+        case _ModelData::Type::Mixed:
+            modified = true;
+            [_checkbox setState:NSControlStateValueMixed];
+            break;
+        }
+    }
     return modified;
 }
 
-- (IBAction)clear:(id)sender {
+- (IBAction)clearAction:(id)sender {
     for (InspectorViewItem* it : _items) {
         [it clear];
     }
+    
+    if (checkbox.name) {
+        checkbox.modelSetter(self, @(checkbox.valueDefault));
+    }
+    
+    [self updateView];
+}
+
+- (IBAction)checkboxAction:(id)sender {
+    checkbox.modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
     [self updateView];
 }
 
@@ -311,22 +346,6 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 }
 
 @end
-
-
-
-
-
-@interface InspectorViewItem_WhiteBalance : InspectorViewItem_SliderWithIcon
-@end
-
-@implementation InspectorViewItem_WhiteBalance {
-@private
-    IBOutlet NSButton* _checkbox;
-}
-@end
-
-
-
 
 
 
@@ -562,16 +581,6 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 
 
 
-
-@interface InspectorViewItem_WhiteBalanceSection : InspectorViewItem_Section
-@end
-
-@implementation InspectorViewItem_WhiteBalanceSection
-@end
-
-
-
-
 @interface InspectorView_DarkRowView : NSTableRowView
 @end
 
@@ -629,7 +638,6 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 #define Item_Timestamp          InspectorViewItem_Timestamp
 #define Item_Rotation           InspectorViewItem_Rotation
 #define Item_Stat               InspectorViewItem_Stat
-#define Item_WhiteBalance       InspectorViewItem_WhiteBalance
 
 // MARK: - InspectorView
 
@@ -751,8 +759,10 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            InspectorViewItem_WhiteBalanceSection* section = [self _createItemWithClass:[InspectorViewItem_WhiteBalanceSection class]];
+            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"White Balance";
+            section->checkbox.name = @"Auto";
+            section->checkbox.modelGetter = 
             
 //            {
 //                Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
@@ -764,7 +774,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 //            }
             
             {
-                Item_WhiteBalance* it = [self _createItemWithClass:[Item_WhiteBalance class]];
+                Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
                 it->icon = @"Inspector-WhiteBalance";
                 it->modelGetter = _GetterCreate(self, _Get_whiteBalance);
                 it->modelSetter = _SetterCreate(self, _Set_whiteBalance);
