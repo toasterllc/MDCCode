@@ -1289,9 +1289,9 @@ static Color<ColorSpace::Raw> sampleImageCircle(const Pipeline::RawImage& img, i
 
 - (void)_setColorMatrixText:(const Mat<double,3,3>&)colorMatrix {
     [_colorMatrixTextField setStringValue:[NSString stringWithFormat:
-        @"%f %f %f\n"
-        @"%f %f %f\n"
-        @"%f %f %f\n",
+        @"%+f %+f %+f\n"
+        @"%+f %+f %+f\n"
+        @"%+f %+f %+f\n",
         colorMatrix.at(0,0), colorMatrix.at(0,1), colorMatrix.at(0,2),
         colorMatrix.at(1,0), colorMatrix.at(1,1), colorMatrix.at(1,2),
         colorMatrix.at(2,0), colorMatrix.at(2,1), colorMatrix.at(2,2)
