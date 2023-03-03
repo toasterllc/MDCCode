@@ -1,5 +1,6 @@
 #import <metal_stdlib>
 #import "ImageGridLayerTypes.h"
+#import "ImageWhiteBalance.h"
 #import "Tools/Shared/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools::MetalUtil;
@@ -62,7 +63,7 @@ static float4 blendMask(float mask, float4 a) {
 
 
 
-float3 XYZD50FromProPhotoRGB(float3 c) {
+float3 XYZD50FromProPhotoRGBD50(float3 c) {
     // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     const float3x3 M = transpose(float3x3(
         0.7976749,  0.1351917,  0.0313534,
@@ -345,11 +346,8 @@ struct [[gnu::packed]] ImageOptions {
     } timestamp;
     uint8_t _pad[3];
     
-    struct [[gnu::packed]] {
-        bool automatic = false;
-        uint8_t _pad[3];
-        float value = 0;
-    } whiteBalance;
+    ImageWhiteBalance whiteBalance;
+    static_assert(!(sizeof(whiteBalance) % 8)); // Ensure that ImageOptions is a multiple of 8 bytes
     
     float exposure = 0;
     float saturation = 0;
@@ -361,14 +359,61 @@ struct [[gnu::packed]] ImageOptions {
     } localContrast;
     
     // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64] = {};
+    uint8_t _reserved[64];
 };
 
 
+//        // White balance
+//        {
+//            const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
+//            const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+//            const simd::float3 simdWB = _SimdForMat(wb);
+//            renderer.render(rgb,
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalanceRGB",
+//                    // Buffer args
+//                    simdWB,
+//                    // Texture args
+//                    rgb
+//                )
+//            );
+//        }
+//        
+//        
+//        // Camera raw -> ProPhotoRGB.D50
+//        {
+//            // If a color matrix was provided, use it.
+//            // Otherwise estimate it by interpolating between known color matrices.
+//            colorMatrix = (opts.colorMatrix ? *opts.colorMatrix : _CCMForIlluminant(illum).m);
+//            
+//            renderer.render(rgb,
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
+//                    // Buffer args
+//                    _SimdForMat(colorMatrix),
+//                    // Texture args
+//                    rgb
+//                )
+//            );
+//        }
 
-static float3 ColorAdjustments(device const ImageOptions& opts, float3 c) {
-    // XYZD50 <- ProPhotoRGB
-    c = XYZD50FromProPhotoRGB(c);
+float3 WhiteBalance(float3 illum, float3 c) {
+    const float factor = max(max(illum.r, illum.g), illum.b);
+    const float3 wb = factor / illum;
+    return wb*c;
+}
+
+float3 ColorMatrixApply(float3x3 colorMatrix, float3 c) {
+    return colorMatrix*c;
+}
+
+static float3 ColorAdjust(device const ImageOptions& opts, float3 c) {
+    // ProPhotoRGB.D50 <- CamRaw.D50
+    const float3 illum = *reinterpret_cast<device const float3*>(opts.whiteBalance.illum);
+    c = WhiteBalance(illum, c);
+    const float3x3 colorMatrix = *reinterpret_cast<device const float3x3*>(opts.whiteBalance.colorMatrix);
+    c = ColorMatrixApply(colorMatrix, c);
+    
+    // XYZ.D50 <- ProPhotoRGB.D50
+    c = XYZD50FromProPhotoRGBD50(c);
     // XYY.D50 <- XYZ.D50
     c = XYYFromXYZ(c);
         // Exposure
@@ -468,7 +513,7 @@ static float3 ColorAdjustments(device const ImageOptions& opts, float3 c) {
 //            );
 //        }
 //        
-//        // Camera raw -> ProPhotoRGB
+//        // Camera raw -> ProPhotoRGB.D50
 //        {
 //            const CCM ccm = CCMForIlluminant(illum);
 ////            printf("CCT: %f\n", ccm.cct);
@@ -485,10 +530,10 @@ static float3 ColorAdjustments(device const ImageOptions& opts, float3 c) {
 //            );
 //        }
         
-//        // ProPhotoRGB -> XYZ.D50
+//        // ProPhotoRGB.D50 -> XYZ.D50
 //        {
 //            renderer.render(rgb,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGB",
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGBD50",
 //                    // Texture args
 //                    rgb
 //                )
@@ -642,7 +687,7 @@ fragment float4 FragmentShader(
     
     const bool inThumb = (pos.x>=0 && pos.y>=0 && pos.x<(int)ctx.thumb.width && pos.y<(int)ctx.thumb.height);
     if (!inThumb) return 0;
-    return float4(ColorAdjustments(imageOpts, thumb), 1);
+    return float4(ColorAdjust(imageOpts, thumb), 1);
     
 //    // Calculate mask value
 //    float mask = 0;

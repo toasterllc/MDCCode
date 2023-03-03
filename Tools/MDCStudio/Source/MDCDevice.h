@@ -598,6 +598,12 @@ private:
                 rec.info.illumEst[2] = renderResult.illum[2];
             }
             
+            // Set image white balance options
+            {
+                const simd::float3 illum = { (float)rec.info.illumEst[0], (float)rec.info.illumEst[1], (float)rec.info.illumEst[2] };
+                ImageWhiteBalanceSetAuto(rec.options.whiteBalance, illum);
+            }
+            
             deviceImgIdLast = imgHeader.id;
         }
         

@@ -5,6 +5,7 @@
 #import "Code/Shared/Time.h"
 #import "Code/Shared/TimeConvert.h"
 #import "Toastbox/DurationString.h"
+#import "ImageWhiteBalanceUtil.h"
 using namespace MDCStudio;
 
 struct _ModelData {
@@ -782,8 +783,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->getter = _GetterCreate(self, _Get_whiteBalance);
                 it->setter = _SetterCreate(self, _Set_whiteBalance);
                 it->section = section;
-                it->valueMin = -1;
-                it->valueMax = +1;
+                it->valueMin = -3;
+                it->valueMax = +3;
                 it->valueDefault = 0;
                 [section addItem:it];
             }
@@ -1168,13 +1169,18 @@ static id _Get_timestampCorner(const ImageRecord& rec) {
 // MARK: - Setters
 
 static void _Set_whiteBalanceAuto(ImageRecord& rec, id data) {
-    rec.options.whiteBalance.automatic = [data boolValue];
+    const bool automatic = [data boolValue];
+    rec.options.whiteBalance.automatic = automatic;
+    if (automatic) {
+        const simd::float3 illum = { (float)rec.info.illumEst[0], (float)rec.info.illumEst[1], (float)rec.info.illumEst[2] };
+        ImageWhiteBalanceSetAuto(rec.options.whiteBalance, illum);
+    } else {
+        ImageWhiteBalanceSetManual(rec.options.whiteBalance, rec.options.whiteBalance.value);
+    }
 }
 
 static void _Set_whiteBalance(ImageRecord& rec, id data) {
-    // When the user tweaks the white balance, disable automatic white balance
-    rec.options.whiteBalance.automatic = false;
-    rec.options.whiteBalance.value = [data floatValue];
+    ImageWhiteBalanceSetManual(rec.options.whiteBalance, [data floatValue]);
 }
 
 static void _Set_exposure(ImageRecord& rec, id data) {

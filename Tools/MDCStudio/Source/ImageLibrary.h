@@ -2,9 +2,11 @@
 #include <forward_list>
 #include <set>
 #include "Code/Shared/Time.h"
-#include "RecordStore.h"
 #include "Code/Shared/Img.h"
 #include "Tools/Shared/Lockable.h"
+#include "RecordStore.h"
+#include "ImageWhiteBalance.h"
+#include "ImageWhiteBalanceUtil.h"
 
 namespace MDCStudio {
 
@@ -26,7 +28,7 @@ struct [[gnu::packed]] ImageInfo {
     double illumEst[3] = {0,0,0};
     
     // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64] = {};
+    uint8_t _reserved[64];
 };
 
 static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple of 8 bytes
@@ -55,11 +57,8 @@ struct [[gnu::packed]] ImageOptions {
     } timestamp;
     uint8_t _pad[3];
     
-    struct [[gnu::packed]] {
-        bool automatic = false;
-        uint8_t _pad[3];
-        float value = 0;
-    } whiteBalance;
+    ImageWhiteBalance whiteBalance;
+    static_assert(!(sizeof(whiteBalance) % 8)); // Ensure that ImageOptions is a multiple of 8 bytes
     
     float exposure = 0;
     float saturation = 0;
@@ -71,7 +70,7 @@ struct [[gnu::packed]] ImageOptions {
     } localContrast;
     
     // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64] = {};
+    uint8_t _reserved[64];
 };
 
 static_assert(!(sizeof(ImageOptions) % 8)); // Ensure that ImageOptions is a multiple of 8 bytes
