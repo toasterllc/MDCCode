@@ -115,10 +115,6 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
         modified |= [it updateView];
     }
     
-    [_label setStringValue:[name uppercaseString]];
-    [_label setTextColor:(modified ? [NSColor labelColor] : [NSColor secondaryLabelColor])];
-    [_clearButton setHidden:!modified];
-    
     // Checkbox handling
     [_checkbox setHidden:!checkbox.name];
     if (checkbox.name) {
@@ -134,6 +130,11 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
             break;
         }
     }
+    
+    [_label setStringValue:[name uppercaseString]];
+    [_label setTextColor:(modified ? [NSColor labelColor] : [NSColor secondaryLabelColor])];
+    [_clearButton setHidden:!modified];
+    
     return modified;
 }
 
