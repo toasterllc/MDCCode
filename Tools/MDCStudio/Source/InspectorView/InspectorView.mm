@@ -50,8 +50,8 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     IBOutlet NSLayoutConstraint* _indentLeft;
     IBOutlet NSLayoutConstraint* _indentRight;
 @public
-    _ModelGetter modelGetter;
-    _ModelSetter modelSetter;
+    _ModelGetter getter;
+    _ModelSetter setter;
     bool darkBackground;
     __weak InspectorViewItem_Section* section;
 }
@@ -95,8 +95,8 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     struct {
         NSString* name;
         bool valueDefault;
-        _ModelGetter modelGetter;
-        _ModelSetter modelSetter;
+        _ModelGetter getter;
+        _ModelSetter setter;
     } checkbox;
 }
 
@@ -122,7 +122,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     // Checkbox handling
     [_checkbox setHidden:!checkbox.name];
     if (checkbox.name) {
-        const _ModelData data = checkbox.modelGetter(self);
+        const _ModelData data = checkbox.getter(self);
         switch (data.type) {
         case _ModelData::Type::Normal:
             modified |= ![data.data isEqual:@(checkbox.valueDefault)];
@@ -143,14 +143,14 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     }
     
     if (checkbox.name) {
-        checkbox.modelSetter(self, @(checkbox.valueDefault));
+        checkbox.setter(self, @(checkbox.valueDefault));
     }
     
     [self updateView];
 }
 
 - (IBAction)checkboxAction:(id)sender {
-    checkbox.modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
+    checkbox.setter(self, @([_checkbox state]!=NSControlStateValueOff));
     [self updateView];
 }
 
@@ -214,7 +214,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     [_numberFormatter setMinimum:@(valueMin)];
     [_numberFormatter setMaximum:@(valueMax)];
     
-    const _ModelData data = modelGetter(self);
+    const _ModelData data = getter(self);
     switch (data.type) {
     case _ModelData::Type::Normal:
         modified |= ![data.data isEqual:@(valueDefault)];
@@ -236,7 +236,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 }
 
 - (void)clear {
-    modelSetter(self, @(valueDefault));
+    setter(self, @(valueDefault));
 }
 
 - (void)setMouseState:(bool)state {
@@ -253,7 +253,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 
 - (IBAction)sliderAction:(id)sender {
     const id val = [_slider objectValue];
-    modelSetter(self, val);
+    setter(self, val);
     [section updateView];
 }
 
@@ -261,7 +261,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     const id val = [_numberField objectValue];
     // Don't set nil values, since they represent an empty text field
     if (val) {
-        modelSetter(self, val);
+        setter(self, val);
     }
     [section updateView];
 }
@@ -304,13 +304,13 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     const int StepCount = 40;
     const float interval = (valueMax-valueMin)/StepCount;
     const float factor = 1/interval;
-    const _ModelData data = modelGetter(self);
+    const _ModelData data = getter(self);
     
     float value = (data.type==_ModelData::Type::Normal ? [data.data floatValue] : valueDefault);
     if (delta > 0) value = std::min(valueMax, std::ceil(((value*factor)+interval))/factor);
     else           value = std::max(valueMin, std::floor(((value*factor)-interval))/factor);
     
-    modelSetter(self, @(value));
+    setter(self, @(value));
     [section updateView];
 }
 
@@ -364,7 +364,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     bool modified = [super updateView];
     [_checkbox setTitle:name];
     
-    const _ModelData data = modelGetter(self);
+    const _ModelData data = getter(self);
     switch (data.type) {
     case _ModelData::Type::Normal:
         modified |= ((bool)[data.data boolValue] != valueDefault);
@@ -379,11 +379,11 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 }
 
 - (void)clear {
-    modelSetter(self, @(valueDefault));
+    setter(self, @(valueDefault));
 }
 
 - (IBAction)checkboxAction:(id)sender {
-    modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
+    setter(self, @([_checkbox state]!=NSControlStateValueOff));
     [section updateView];
 }
 
@@ -421,7 +421,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
     bool modified = [super updateView];
     
     {
-        const _ModelData data = modelGetter(self);
+        const _ModelData data = getter(self);
         switch (data.type) {
         case _ModelData::Type::Normal:
             modified |= ((bool)[data.data boolValue] != valueDefault);
@@ -456,7 +456,7 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 }
 
 - (IBAction)checkboxAction:(id)sender {
-    modelSetter(self, @([_checkbox state]!=NSControlStateValueOff));
+    setter(self, @([_checkbox state]!=NSControlStateValueOff));
     [section updateView];
 }
 
@@ -502,7 +502,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 - (bool)updateView {
     bool modified = [super updateView];
     
-    const _ModelData data = modelGetter(self);
+    const _ModelData data = getter(self);
     switch (data.type) {
     case _ModelData::Type::Normal:
         modified |= ((ImageOptions::Rotation)[data.data intValue] != valueDefault);
@@ -516,7 +516,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 }
 
 - (void)clear {
-    modelSetter(self, @((int)valueDefault));
+    setter(self, @((int)valueDefault));
 }
 
 - (IBAction)buttonAction:(id)sender {
@@ -524,7 +524,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     const int delta = (([ev modifierFlags] & NSEventModifierFlagShift) ? -1 : 1);
     
     ImageOptions::Rotation rotationNext = ImageOptions::Rotation::Clockwise0;
-    const _ModelData data = modelGetter(self);
+    const _ModelData data = getter(self);
     switch (data.type) {
     case _ModelData::Type::Normal:
         rotationNext = _RotationNext((ImageOptions::Rotation)[data.data intValue], delta);
@@ -534,7 +534,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         break;
     }
     
-    modelSetter(self, @((int)rotationNext));
+    setter(self, @((int)rotationNext));
     [section updateView];
 }
 
@@ -560,7 +560,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     const bool modified = [super updateView];
     [_nameLabel setStringValue:name];
     
-    const _ModelData data = modelGetter(self);
+    const _ModelData data = getter(self);
     switch (data.type) {
     case _ModelData::Type::Normal:
         [_valueLabel setObjectValue:data.data];
@@ -710,7 +710,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
                 it->name = @"Image ID";
                 it->valueIndent = 115;
-                it->modelGetter = _GetterCreate(self, _Get_id);
+                it->getter = _GetterCreate(self, _Get_id);
                 it->darkBackground = true;
                 [section addItem:it];
             }
@@ -719,7 +719,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
                 it->name = @"Timestamp";
                 it->valueIndent = 115;
-                it->modelGetter = _GetterCreate(self, _Get_timestamp);
+                it->getter = _GetterCreate(self, _Get_timestamp);
                 it->darkBackground = true;
                 [section addItem:it];
             }
@@ -728,7 +728,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
                 it->name = @"Integration Time";
                 it->valueIndent = 115;
-                it->modelGetter = _GetterCreate(self, _Get_integrationTime);
+                it->getter = _GetterCreate(self, _Get_integrationTime);
                 it->darkBackground = true;
                 [section addItem:it];
             }
@@ -737,7 +737,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 Item_Stat* it = [self _createItemWithClass:[Item_Stat class]];
                 it->name = @"Analog Gain";
                 it->valueIndent = 115;
-                it->modelGetter = _GetterCreate(self, _Get_analogGain);
+                it->getter = _GetterCreate(self, _Get_analogGain);
                 it->darkBackground = true;
                 [section addItem:it];
             }
@@ -762,13 +762,15 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             Item_Section* section = [self _createItemWithClass:[Item_Section class]];
             section->name = @"White Balance";
             section->checkbox.name = @"Auto";
-            section->checkbox.modelGetter = 
+            section->checkbox.getter = _GetterCreate(self, _Get_whiteBalanceAuto);
+            section->checkbox.setter = _SetterCreate(self, _Set_whiteBalanceAuto);
+            section->checkbox.valueDefault = true;
             
 //            {
 //                Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
 //                it->name = @"Auto";
-//                it->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
-//                it->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
+//                it->getter = _GetterCreate(self, _Get_reconstructHighlights);
+//                it->setter = _SetterCreate(self, _Set_reconstructHighlights);
 //                it->section = section;
 //                [section addItem:it];
 //            }
@@ -776,8 +778,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
                 it->icon = @"Inspector-WhiteBalance";
-                it->modelGetter = _GetterCreate(self, _Get_whiteBalance);
-                it->modelSetter = _SetterCreate(self, _Set_whiteBalance);
+                it->getter = _GetterCreate(self, _Get_whiteBalance);
+                it->setter = _SetterCreate(self, _Set_whiteBalance);
                 it->section = section;
                 it->valueMin = -1;
                 it->valueMax = +1;
@@ -799,8 +801,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
                 it->icon = @"Inspector-Exposure";
-                it->modelGetter = _GetterCreate(self, _Get_exposure);
-                it->modelSetter = _SetterCreate(self, _Set_exposure);
+                it->getter = _GetterCreate(self, _Get_exposure);
+                it->setter = _SetterCreate(self, _Set_exposure);
                 it->section = section;
                 it->valueMin = -1;
                 it->valueMax = +1;
@@ -822,8 +824,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
                 it->icon = @"Inspector-Saturation";
-                it->modelGetter = _GetterCreate(self, _Get_saturation);
-                it->modelSetter = _SetterCreate(self, _Set_saturation);
+                it->getter = _GetterCreate(self, _Get_saturation);
+                it->setter = _SetterCreate(self, _Set_saturation);
                 it->section = section;
                 it->valueMin = -1;
                 it->valueMax = +1;
@@ -845,8 +847,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
                 it->icon = @"Inspector-Brightness";
-                it->modelGetter = _GetterCreate(self, _Get_brightness);
-                it->modelSetter = _SetterCreate(self, _Set_brightness);
+                it->getter = _GetterCreate(self, _Get_brightness);
+                it->setter = _SetterCreate(self, _Set_brightness);
                 it->section = section;
                 it->valueMin = -1;
                 it->valueMax = +1;
@@ -868,8 +870,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_SliderWithIcon* it = [self _createItemWithClass:[Item_SliderWithIcon class]];
                 it->icon = @"Inspector-Contrast";
-                it->modelGetter = _GetterCreate(self, _Get_contrast);
-                it->modelSetter = _SetterCreate(self, _Set_contrast);
+                it->getter = _GetterCreate(self, _Get_contrast);
+                it->setter = _SetterCreate(self, _Set_contrast);
                 it->section = section;
                 it->valueMin = -1;
                 it->valueMax = +1;
@@ -897,8 +899,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_SliderWithLabel* it = [self _createItemWithClass:[Item_SliderWithLabel class]];
                 it->name = @"Amount";
-                it->modelGetter = _GetterCreate(self, _Get_localContrastAmount);
-                it->modelSetter = _SetterCreate(self, _Set_localContrastAmount);
+                it->getter = _GetterCreate(self, _Get_localContrastAmount);
+                it->setter = _SetterCreate(self, _Set_localContrastAmount);
                 it->section = section;
                 it->valueMin = -1;
                 it->valueMax = +1;
@@ -909,8 +911,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_SliderWithLabel* it = [self _createItemWithClass:[Item_SliderWithLabel class]];
                 it->name = @"Radius";
-                it->modelGetter = _GetterCreate(self, _Get_localContrastRadius);
-                it->modelSetter = _SetterCreate(self, _Set_localContrastRadius);
+                it->getter = _GetterCreate(self, _Get_localContrastRadius);
+                it->setter = _SetterCreate(self, _Set_localContrastRadius);
                 it->section = section;
                 it->valueMin = -1;
                 it->valueMax = +1;
@@ -931,8 +933,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             
             {
                 Item_Rotation* it = [self _createItemWithClass:[Item_Rotation class]];
-                it->modelGetter = _GetterCreate(self, _Get_rotation);
-                it->modelSetter = _SetterCreate(self, _Set_rotation);
+                it->getter = _GetterCreate(self, _Get_rotation);
+                it->setter = _SetterCreate(self, _Set_rotation);
                 it->section = section;
                 [section addItem:it];
             }
@@ -953,8 +955,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
                 it->name = @"Defringe";
-                it->modelGetter = _GetterCreate(self, _Get_defringe);
-                it->modelSetter = _SetterCreate(self, _Set_defringe);
+                it->getter = _GetterCreate(self, _Get_defringe);
+                it->setter = _SetterCreate(self, _Set_defringe);
                 it->section = section;
                 [section addItem:it];
             }
@@ -962,8 +964,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_Checkbox* it = [self _createItemWithClass:[Item_Checkbox class]];
                 it->name = @"Reconstruct highlights";
-                it->modelGetter = _GetterCreate(self, _Get_reconstructHighlights);
-                it->modelSetter = _SetterCreate(self, _Set_reconstructHighlights);
+                it->getter = _GetterCreate(self, _Get_reconstructHighlights);
+                it->setter = _SetterCreate(self, _Set_reconstructHighlights);
                 it->section = section;
                 [section addItem:it];
             }
@@ -971,8 +973,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
             {
                 Item_Timestamp* it = [self _createItemWithClass:[Item_Timestamp class]];
                 it->name = @"Timestamp";
-                it->modelGetter = _GetterCreate(self, _Get_timestampShow);
-                it->modelSetter = _SetterCreate(self, _Set_timestampShow);
+                it->getter = _GetterCreate(self, _Get_timestampShow);
+                it->setter = _SetterCreate(self, _Set_timestampShow);
                 it->cornerModelGetter = _GetterCreate(self, _Get_timestampCorner);
                 it->cornerModelSetter = _SetterCreate(self, _Set_timestampCorner);
                 it->section = section;
@@ -1110,9 +1112,12 @@ static id _Get_analogGain(const ImageRecord& rec) {
     return @(rec.info.analogGain);
 }
 
+static id _Get_whiteBalanceAuto(const ImageRecord& rec) {
+    return @(rec.options.whiteBalance.automatic);
+}
+
 static id _Get_whiteBalance(const ImageRecord& rec) {
-    // meowmix
-    return @(0);
+    return @(rec.options.whiteBalance.value);
 }
 
 static id _Get_exposure(const ImageRecord& rec) {
@@ -1161,8 +1166,14 @@ static id _Get_timestampCorner(const ImageRecord& rec) {
 
 // MARK: - Setters
 
+static void _Set_whiteBalanceAuto(ImageRecord& rec, id data) {
+    rec.options.whiteBalance.automatic = [data boolValue];
+}
+
 static void _Set_whiteBalance(ImageRecord& rec, id data) {
-    // meowmix
+    // When the user tweaks the white balance, disable automatic white balance
+    rec.options.whiteBalance.automatic = false;
+    rec.options.whiteBalance.value = [data floatValue];
 }
 
 static void _Set_exposure(ImageRecord& rec, id data) {
