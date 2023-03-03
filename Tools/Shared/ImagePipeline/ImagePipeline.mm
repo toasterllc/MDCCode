@@ -13,16 +13,14 @@
 #import "EstimateIlluminantFFCC.h"
 using namespace MDCTools;
 
-struct CCM {
-    double cct = 0;
+struct _CCM {
     Color<ColorSpace::Raw> illum;
     Mat<double,3,3> m; // CamRaw -> ProPhotoRGB
 };
 
 // Indoor, night
 // Calculated from indoor_night2_200.cfa
-const CCM CCM1 = {
-    .cct = 3400, // Guess for indoor lighting
+const _CCM _CCM1 = {
     .illum = { 0.879884, 0.901580, 0.341031 },
     .m = {
         +0.626076, +0.128755, +0.245169,
@@ -33,9 +31,7 @@ const CCM CCM1 = {
 
 // Outdoor, 5pm
 // Calculated from outdoor_5pm_78.cfa
-const CCM CCM2 = {
-    .cct = 6504,    // D65, guesstimated to find a value such that most images' illuminants
-                    // aren't capped at 6504 (via the CCMForIlluminant algorithm)
+const _CCM _CCM2 = {
     .illum = { 0.632708, 0.891153, 0.561737 },
     .m = {
         +0.724397, +0.115398, +0.160204,
@@ -47,47 +43,15 @@ const CCM CCM2 = {
 template <typename T, typename K>
 static T _MatrixInterp(const T& lo, const T& hi, K k) {
     return lo*(1-k) + hi*k;
-//    return lo + (hi-lo)*k;
-    
-    
-//    const double k = ((1/cct) - (1/lo.cct)) / ((1/hi.cct) - (1/lo.cct));
-//    return lo.m*(1-k) + hi.m*k;
 }
 
-static Mat<double,3,3> _CCMInterp_Old(const CCM& lo, const CCM& hi, double cct) {
-    const double k = ((1/cct) - (1/lo.cct)) / ((1/hi.cct) - (1/lo.cct));
-    printf("PROGRESS (OLD): %f\n", k);
-    return lo.m*(1-k) + hi.m*k;
-}
-
-// Approximate CCT given xy chromaticity, using the Hernandez-Andres equation
-static double CCTForXYChromaticity(double x, double y) {
-    const double xe[]   = { 0.3366,      0.3356     };
-    const double ye[]   = { 0.1735,      0.1691     };
-    const double A0[]   = { -949.86315,  36284.48953};
-    const double A1[]   = { 6253.80338,  0.00228    };
-    const double t1[]   = { 0.92159,     0.07861    };
-    const double A2[]   = { 28.70599,    5.4535e-36 };
-    const double t2[]   = { 0.20039,     0.01543    };
-    const double A3[]   = { 0.00004,     0          };
-    const double t3[]   = { 0.07125,     0.07125    };
-    const double n[]    = {(x-xe[0])/(y-ye[0]), (x-xe[1])/(y-ye[1])};
-    const double cct[]  = {
-        A0[0] + A1[0]*exp(-n[0]/t1[0]) + A2[0]*exp(-n[0]/t2[0]) + A3[0]*exp(-n[0]/t3[0]),
-        A0[1] + A1[1]*exp(-n[1]/t1[1]) + A2[1]*exp(-n[1]/t2[1]) + A3[1]*exp(-n[1]/t3[1]),
-    };
-    
-    if (cct[0] <= 50000) return cct[0];
-    else                 return cct[1];
-}
-
-static simd::float3 simdForMat(const Mat<double,3,1>& m) {
+static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {
     return {
         simd::float3{(float)m[0], (float)m[1], (float)m[2]},
     };
 }
 
-static simd::float3x3 simdForMat(const Mat<double,3,3>& m) {
+static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
     return {
         simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
         simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
@@ -95,10 +59,10 @@ static simd::float3x3 simdForMat(const Mat<double,3,3>& m) {
     };
 }
 
-static CCM _CCMForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
-    const simd::float3 a = simdForMat(CCM1.illum.m);
-    const simd::float3 b = simdForMat(CCM2.illum.m);
-    const simd::float3 c = simdForMat(illumRaw.m);
+static _CCM _CCMForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
+    const simd::float3 a = _SimdForMat(_CCM1.illum.m);
+    const simd::float3 b = _SimdForMat(_CCM2.illum.m);
+    const simd::float3 c = _SimdForMat(illumRaw.m);
     
     const simd::float3 ab = (b-a);
     const simd::float3 ac = (c-a);
@@ -106,109 +70,11 @@ static CCM _CCMForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
     const simd::float3 pd = a+ad;
     
     const float k = simd::length(ad) / simd::length(ab);
-    printf("PROGRESS (NEW): %f\n", k);
     return {
         .illum = { pd[0], pd[1], pd[2] },
-        .m = _MatrixInterp(CCM1.m, CCM2.m, k),
+        .m = _MatrixInterp(_CCM1.m, _CCM2.m, k),
     };
-    
-//    printf("%f", k);
-//    
-////    simd::float3 a3 = simdForMat(CCM1.illum.m);
-////    simd::float3 b3 = simdForMat(CCM2.illum.m);
-////    simd::float4 a{a3[0], a3[1], a3[2], 1};
-////    simd::float4 b{b3[0], b3[1], b3[2], 1};
-//    
-////    simd_cross(a,b);
-//    
-//    return {};
-//    .illum = { 0.879884, 0.901580, 0.341031 },
-//    .m = {
-//        +0.724397, +0.115398, +0.160204,
-//        -0.238233, +1.361934, -0.123701,
-//        -0.061917, -0.651388, +1.713306,
-//    },
 }
-
-
-
-static CCM _CCMForIlluminant_Old(const Color<ColorSpace::Raw>& illumRaw) {
-    // Start out with a guess for the xy coordinates (D55 chromaticity)
-    double x = 0.332424;
-    double y = 0.347426;
-    CCM ccm;
-    
-    // Iteratively estimate the xy chromaticity of `illumRaw`,
-    // along with the CCT and interpolated CCM.
-    constexpr int MaxIter = 50;
-    for (int i=0; i<MaxIter; i++) {
-        // Calculate CCT from current xy chromaticity estimate, and interpolate between
-        // CCM1 and CCM2 based on that CCT
-        CCM ccm2;
-        ccm2.cct = std::clamp(CCTForXYChromaticity(x,y), CCM1.cct, CCM2.cct);
-        ccm2.m = _CCMInterp_Old(CCM1, CCM2, ccm2.cct);
-        
-        // Convert `illumRaw` to ProPhotoRGB coordinates using ccm2 (the new interpolated CCM)
-        const Color<ColorSpace::ProPhotoRGB> illumRGB(ccm2.m * illumRaw.m);
-        // Convert illumRGB to XYZ coordinates
-        const Color<ColorSpace::XYZ<ColorSpace::ProPhotoRGB::White>> illumXYZ(illumRGB);
-        
-        constexpr double Eps = 1;
-        const double x2 = illumXYZ[0]/(illumXYZ[0]+illumXYZ[1]+illumXYZ[2]);
-        const double y2 = illumXYZ[1]/(illumXYZ[0]+illumXYZ[1]+illumXYZ[2]);
-        const double Δx = std::abs((x-x2)/x);
-        const double Δy = std::abs((y-y2)/y);
-        const double Δcct = std::abs((ccm.cct-ccm2.cct)/ccm.cct);
-        double Δccm = 0;
-        for (int y=0; y<3; y++) {
-            for (int x=0; x<3; x++) {
-                Δccm = std::max(Δccm, std::abs((ccm.m.at(y,x)-ccm2.m.at(y,x))/ccm.m.at(y,x)));
-            }
-        }
-        
-        ccm = ccm2;
-        x = x2;
-        y = y2;
-        
-        if (Δx<Eps && Δy<Eps && Δcct<Eps && Δccm<Eps) return ccm;
-    }
-    
-    throw std::runtime_error("didn't converge");
-}
-
-
-
-
-
-//static Mat<double,3,3> _CCMForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
-//    const simd::float3 a = simdForMat(CCM1.illum.m);
-//    const simd::float3 b = simdForMat(CCM2.illum.m);
-//    const simd::float3 c = simdForMat(illumRaw.m);
-//    
-//    const simd::float3 ab = (b-a);
-//    const simd::float3 ac = (c-a);
-//    const simd::float3 ad = simd::project(ac, ab);
-//    
-//    const float k = simd::length(ad) / simd::length(ab);
-//    return _MatrixInterp(CCM1.m, CCM2.m, k);
-//    
-////    printf("%f", k);
-////    
-//////    simd::float3 a3 = simdForMat(CCM1.illum.m);
-//////    simd::float3 b3 = simdForMat(CCM2.illum.m);
-//////    simd::float4 a{a3[0], a3[1], a3[2], 1};
-//////    simd::float4 b{b3[0], b3[1], b3[2], 1};
-////    
-//////    simd_cross(a,b);
-////    
-////    return {};
-////    .illum = { 0.879884, 0.901580, 0.341031 },
-////    .m = {
-////        +0.724397, +0.115398, +0.160204,
-////        -0.238233, +1.361934, -0.123701,
-////        -0.061917, -0.651388, +1.713306,
-////    },
-//}
 
 namespace MDCTools::ImagePipeline {
 
@@ -266,7 +132,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
 //        {
 //            const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
 //            const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
-//            const simd::float3 simdWB = simdForMat(wb);
+//            const simd::float3 simdWB = _SimdForMat(wb);
 //            renderer.render(raw,
 //                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
 //                    // Buffer args
@@ -377,7 +243,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         {
             const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
             const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
-            const simd::float3 simdWB = simdForMat(wb);
+            const simd::float3 simdWB = _SimdForMat(wb);
             renderer.render(rgb,
                 renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalanceRGB",
                     // Buffer args
@@ -393,19 +259,12 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
         {
             // If a color matrix was provided, use it.
             // Otherwise estimate it by interpolating between known color matrices.
-            if (opts.colorMatrix) {
-                colorMatrix = *opts.colorMatrix;
-            } else {
-                const CCM ccm = _CCMForIlluminant_Old(illum);
-                printf("CCT: %f\n", ccm.cct);
-                colorMatrix = ccm.m;
-//                colorMatrix[1] += 1;
-            }
+            colorMatrix = (opts.colorMatrix ? *opts.colorMatrix : _CCMForIlluminant(illum).m);
             
             renderer.render(rgb,
                 renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
                     // Buffer args
-                    simdForMat(colorMatrix),
+                    _SimdForMat(colorMatrix),
                     // Texture args
                     rgb
                 )

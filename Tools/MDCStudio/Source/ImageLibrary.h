@@ -55,6 +55,12 @@ struct [[gnu::packed]] ImageOptions {
     } timestamp;
     uint8_t _pad[3];
     
+    struct [[gnu::packed]] {
+        bool automatic = false;
+        uint8_t _pad[3];
+        float value = 0;
+    } whiteBalance;
+    
     float exposure = 0;
     float saturation = 0;
     float brightness = 0;

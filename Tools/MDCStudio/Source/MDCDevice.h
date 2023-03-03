@@ -593,9 +593,9 @@ private:
                 RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, buf);
                 
                 // Populate the illuminant
-                rec.info.illumEst[0] = renderResult.illumEst[0];
-                rec.info.illumEst[1] = renderResult.illumEst[1];
-                rec.info.illumEst[2] = renderResult.illumEst[2];
+                rec.info.illumEst[0] = renderResult.illum[0];
+                rec.info.illumEst[1] = renderResult.illum[1];
+                rec.info.illumEst[2] = renderResult.illum[2];
             }
             
             deviceImgIdLast = imgHeader.id;
