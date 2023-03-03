@@ -563,6 +563,13 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 
 
 
+@interface InspectorViewItem_WhiteBalanceSection : InspectorViewItem_Section
+@end
+
+@implementation InspectorViewItem_WhiteBalanceSection
+@end
+
+
 
 
 @interface InspectorView_DarkRowView : NSTableRowView
@@ -744,7 +751,7 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
         }
         
         {
-            Item_Section* section = [self _createItemWithClass:[Item_Section class]];
+            InspectorViewItem_WhiteBalanceSection* section = [self _createItemWithClass:[InspectorViewItem_WhiteBalanceSection class]];
             section->name = @"White Balance";
             
 //            {
