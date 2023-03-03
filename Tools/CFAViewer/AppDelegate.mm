@@ -197,7 +197,11 @@ struct ExposureSettings {
     // /Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker/outdoor_5pm_45.cfa
 //    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Indoor-Night2-ColorChecker"}];
 //    [self _loadImages:{"/Users/dave/Desktop/Old/2021:4:4/C5ImageSets/Outdoor-5pm-ColorChecker"}];
-    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_43.cfa"}];
+//    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_43.cfa"}];
+    
+//    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/outdoor_5pm_78.cfa"}];
+    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_200.cfa"}];
+    
     
     _imagePipelineManager->options = {
         .rawMode = false,
