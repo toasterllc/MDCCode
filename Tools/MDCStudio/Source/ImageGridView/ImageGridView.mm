@@ -285,6 +285,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     .transform = [self fixedTransform],
                     .off = {
                         .id         = (uint32_t)(offsetof(ImageLibrary::Record, info.id)),
+                        .options    = (uint32_t)(offsetof(ImageLibrary::Record, options)),
                         .thumbData  = (uint32_t)(offsetof(ImageLibrary::Record, thumb)),
                     },
                     .thumb = {

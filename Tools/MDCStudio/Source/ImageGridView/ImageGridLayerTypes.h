@@ -19,7 +19,8 @@ struct RenderContext {
     matrix_float4x4 transform = {};
     
     struct {
-        uint32_t id = 0; // Offset of image id from image base
+        uint32_t id = 0;        // Offset of image id from image base
+        uint32_t options = 0;   // Offset of image options from image base
         uint32_t thumbData = 0; // Offset of thumbnail from image base
     } off;
     
