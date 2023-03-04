@@ -528,6 +528,8 @@ private:
         }
         
         Img::Id deviceImgIdLast = 0;
+        const ImageLibrary::Chunk* chunkPrev = nullptr;
+        id<MTLBuffer> chunkBuf = nil;
         for (size_t idx=0; idx<imgCount; idx++) {
             const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
@@ -572,8 +574,17 @@ private:
                     .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
                 };
                 
+                const Color<MDCTools::ColorSpace::Raw> illum(0.879884, 0.901580, 0.341031);
+                const Mat<double,3,3> colorMatrix(
+                    +0.626076, +0.128755, +0.245169,
+                    -0.396581, +1.438671, -0.042090,
+                    -0.195309, -0.784350, +1.979659
+                );
+                
                 const Pipeline::Options pipelineOpts = {
                     .rawMode = false,
+                    .illum = illum,
+                    .colorMatrix = colorMatrix,
 //                    .reconstructHighlights  = { .en = true, },
                     .debayerLMMSE           = { .applyGamma = true, },
                 };
@@ -581,8 +592,10 @@ private:
                 Pipeline::Result renderResult = Pipeline::RunThumb(renderer, rawImage, pipelineOpts);
                 const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
                 
-                constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-                id<MTLBuffer> buf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+                if (&chunk != chunkPrev) {
+                    constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
+                    chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+                }
                 
                 const RenderThumb::Options thumbOpts = {
                     .thumbWidth = ImageThumb::ThumbWidth,
@@ -590,12 +603,20 @@ private:
                     .dataOff = thumbDataOff,
                 };
                 
-                RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, buf);
+                RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, chunkBuf);
+                
+                // We have to commit here because our Pipeline::Result gets destroyed after each iteration,
+                // which returns our textures to the pool, allowing them to be reused by the next iteration.
+                // If we didn't commit, only the last iteration would take effect.
+                #warning TODO: for perf, try keeping the Pipeline::Result.txt alive in a vector until we call commitAndWait(), below. Does that speed us up?
+                renderer.commit();
                 
                 // Populate the illuminant (ImageRecord.info.illumEst)
                 rec.info.illumEst[0] = renderResult.illum[0];
                 rec.info.illumEst[1] = renderResult.illum[1];
                 rec.info.illumEst[2] = renderResult.illum[2];
+                
+                chunkPrev = &chunk;
             }
             
             // Populate ImageOptions fields
