@@ -355,7 +355,47 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
                 .dataOff = thumbDataOff,
             };
             
-            RenderThumb::RGB3FromTexture(renderer, thumbOpts, rgb, chunkBuf);
+            
+            {
+                assert(thumbDataOff <= [chunkBuf length]);
+                
+                // Ensure that the destination is large enough
+                const size_t capNeeded = ImageThumb::ThumbWidth*ImageThumb::ThumbHeight*3;
+                assert([chunkBuf length]-thumbDataOff >= capNeeded);
+                
+                Renderer::Txt thumbTxtRef;
+                id<MTLTexture> thumbTxt = rgb;
+                const bool resize = (ImageThumb::ThumbWidth!=[rgb width] || ImageThumb::ThumbHeight!=[rgb height]);
+                if (resize) {
+                    thumbTxtRef = renderer.textureCreate(MTLPixelFormatRGBA8Unorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
+                        MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
+                    thumbTxt = thumbTxtRef;
+                    
+                    MPSImageLanczosScale* resample = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
+                    [resample encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:rgb destinationTexture:thumbTxt];
+                }
+                
+                renderer.render(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
+                    renderer.FragmentShader(ImagePipelineShaderNamespace "RenderThumb::RGB3FromTexture",
+                        // Buffer args
+                        (uint32_t)thumbDataOff,
+                        (uint32_t)ImageThumb::ThumbWidth,
+                        chunkBuf,
+                        // Texture args
+                        thumbTxt
+                    )
+                );
+            }
+            
+            
+            
+            
+            
+            
+            
+            
+            
+//            RenderThumb::RGB3FromTexture(renderer, thumbOpts, rgb, chunkBuf);
             txts.push_back(std::move(rgb));
             renderer.commit();
             
