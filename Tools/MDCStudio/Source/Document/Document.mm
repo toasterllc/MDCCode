@@ -236,9 +236,9 @@ using namespace MDCStudio;
         
         [[_splitView window] makeFirstResponder:imageGridView];
         
-        [NSThread detachNewThreadWithBlock:^{
-            [self _addFakeImages:il];
-        }];
+//        [NSThread detachNewThreadWithBlock:^{
+//            [self _addFakeImages:il];
+//        }];
     }
     
     
@@ -271,135 +271,144 @@ using namespace MDCStudio;
 
 
 
-static constexpr MDCTools::CFADesc _CFADesc = {
-    MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
-    MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
-};
-
-static bool _ChecksumValid(const void* data, Img::Size size) {
-    const size_t ChecksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
-    // Validate thumbnail checksum
-    const uint32_t checksumExpected = ChecksumFletcher32(data, ChecksumOffset);
-    uint32_t checksumGot = 0;
-    memcpy(&checksumGot, (uint8_t*)data+ChecksumOffset, Img::ChecksumLen);
-    if (checksumGot != checksumExpected) {
-        printf("Checksum invalid (expected:0x%08x got:0x%08x)\n", checksumExpected, checksumGot);
-        return false;
-    }
-    return true;
-}
-
-
-
-static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {
-    return {
-        simd::float3{(float)m[0], (float)m[1], (float)m[2]},
-    };
-}
-
-static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
-    return {
-        simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
-        simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
-        simd::float3{(float)m.at(0,2), (float)m.at(1,2), (float)m.at(2,2)},
-    };
-}
-
-
-- (void)_addFakeImages:(ImageLibraryPtr)imgLib {
-    using namespace MDCTools;
-    using namespace MDCTools::ImagePipeline;
-    using namespace Toastbox;
-    
-    Mmap mmap("/Users/dave/Desktop/images.bin");
-    const uint8_t* data = mmap.data();
-    const size_t imgCount = 31;
-    
-    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
-    Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
-    
-    // Reserve space for `imgCount` additional images
-    {
-        auto lock = std::unique_lock(*imgLib);
-        imgLib->reserve(imgCount);
-    }
-    
-    Img::Id deviceImgIdLast = 0;
-    std::vector<Renderer::Buf> bufs;
-    id<MTLBuffer> chunkBuf = nil;
-    
-    for (size_t idx=0; idx<imgCount; idx++) {
-        const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
-        const Img::Header& imgHeader = *(const Img::Header*)imgData;
-        // Accessing `imgLib` without a lock because we're the only entity using the image library's reserved space
-        const auto recordRefIter = imgLib->reservedBegin()+idx;
-        ImageRecord& rec = **recordRefIter;
-        
-        rec.info.id = imgHeader.id;
-        
-        // Render the thumbnail into rec.thumb
-        {
-            const ImagePixel* rawImagePixels = (ImagePixel*)(imgData+Img::PixelsOffset);
-            
-//            Renderer::Buf rawImagePixelsBuf = renderer.bufferCreate(rawImagePixels, Img::Thumb::PixelLen);
-            
-//        const size_t w = [txt width];
-//        const size_t h = [txt height];
-//        const size_t len = w*h*samplesPerPixel*sizeof(T);
-//        Renderer::Buf buf = bufferCreate(len);
-//        memcpy([buf contents], samples, len);
-//        textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
+//static constexpr MDCTools::CFADesc _CFADesc = {
+//    MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
+//    MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
+//};
+//
+//static bool _ChecksumValid(const void* data, Img::Size size) {
+//    const size_t ChecksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
+//    // Validate thumbnail checksum
+//    const uint32_t checksumExpected = ChecksumFletcher32(data, ChecksumOffset);
+//    uint32_t checksumGot = 0;
+//    memcpy(&checksumGot, (uint8_t*)data+ChecksumOffset, Img::ChecksumLen);
+//    if (checksumGot != checksumExpected) {
+//        printf("Checksum invalid (expected:0x%08x got:0x%08x)\n", checksumExpected, checksumGot);
+//        return false;
+//    }
+//    return true;
+//}
+//
+//
+//
+//static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {
+//    return {
+//        simd::float3{(float)m[0], (float)m[1], (float)m[2]},
+//    };
+//}
+//
+//static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
+//    return {
+//        simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
+//        simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
+//        simd::float3{(float)m.at(0,2), (float)m.at(1,2), (float)m.at(2,2)},
+//    };
+//}
+//
+//
+//- (void)_addFakeImages:(ImageLibraryPtr)imgLib {
+//    using namespace MDCTools;
+//    using namespace MDCTools::ImagePipeline;
+//    using namespace Toastbox;
+//    
+//    Mmap mmap("/Users/dave/Desktop/images.bin");
+//    const uint8_t* data = mmap.data();
+//    const size_t imgCount = 31;
+//    
+//    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+//    if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
+//    Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+//    
+//    // Reserve space for `imgCount` additional images
+//    {
+//        auto lock = std::unique_lock(*imgLib);
+//        imgLib->reserve(imgCount);
+//    }
+//    
+//    Img::Id deviceImgIdLast = 0;
+//    std::vector<Renderer::Buf> bufs;
+//    id<MTLBuffer> chunkBuf = nil;
+//    
+//    for (size_t idx=0; idx<imgCount; idx++) {
+//        const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
+//        const Img::Header& imgHeader = *(const Img::Header*)imgData;
+//        // Accessing `imgLib` without a lock because we're the only entity using the image library's reserved space
+//        const auto recordRefIter = imgLib->reservedBegin()+idx;
+//        ImageRecord& rec = **recordRefIter;
+//        
+//        rec.info.id = imgHeader.id;
+//        
+//        // Render the thumbnail into rec.thumb
+//        {
+//            const ImagePixel* rawImagePixels = (ImagePixel*)(imgData+Img::PixelsOffset);
 //            
+////            Renderer::Buf rawImagePixelsBuf = renderer.bufferCreate(rawImagePixels, Img::Thumb::PixelLen);
 //            
-//            [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
-            
-            Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
-//            renderer.textureWrite(rgb, rawImagePixelsBuf, 1, sizeof(*rawImagePixels), ImagePixelMax);
-            
-            renderer.textureWrite(rgb, rawImagePixels, 1, sizeof(*rawImagePixels), ImagePixelMax);
-            
-            const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
-            const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
-            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-            
-            if (!chunkBuf) {
-                chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
-            }
-            
-            renderer.render(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
-                renderer.FragmentShader(ImagePipelineShaderNamespace "RenderThumb::RGB3FromTexture",
-                    // Buffer args
-                    (uint32_t)thumbDataOff,
-                    (uint32_t)ImageThumb::ThumbWidth,
-                    chunkBuf,
-                    // Texture args
-                    rgb
-                )
-            );
-            
-//            NSLog(@"%@", @([renderer.cmdBuf() retainedReferences]));
-//            [renderer.cmdBuf() enqueue];
-//            renderer.commit();
-//            txts.push_back(std::move(raw));
-//            bufs.push_back(std::move(rawImagePixelsBuf));
-            
-            // Add non-determinism
-            usleep(arc4random_uniform(1000));
-        }
-        
-        deviceImgIdLast = imgHeader.id;
-    }
-    
-    // Make sure all rendering is complete before adding the images to the library
-    renderer.commitAndWait();
-    
-    {
-        auto lock = std::unique_lock(*imgLib);
-        // Add the records that we previously reserved
-        imgLib->add();
-    }
-}
+////        const size_t w = [txt width];
+////        const size_t h = [txt height];
+////        const size_t len = w*h*samplesPerPixel*sizeof(T);
+////        Renderer::Buf buf = bufferCreate(len);
+////        memcpy([buf contents], samples, len);
+////        textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
+////            
+////            
+////            [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+//            
+//            Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
+////            renderer.textureWrite(rgb, rawImagePixelsBuf, 1, sizeof(*rawImagePixels), ImagePixelMax);
+//            
+//            renderer.textureWrite(rgb, rawImagePixels, 1, sizeof(*rawImagePixels), ImagePixelMax);
+//            
+//            const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
+//            const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
+//            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
+//            
+//            if (!chunkBuf) {
+//                chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+//            }
+//            
+//            renderer.render(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
+//                renderer.FragmentShader(ImagePipelineShaderNamespace "RenderThumb::RGB3FromTexture",
+//                    // Buffer args
+//                    (uint32_t)thumbDataOff,
+//                    (uint32_t)ImageThumb::ThumbWidth,
+//                    chunkBuf,
+//                    // Texture args
+//                    rgb
+//                )
+//            );
+//            
+////            NSLog(@"%@", @([renderer.cmdBuf() retainedReferences]));
+////            [renderer.cmdBuf() enqueue];
+////            renderer.commit();
+////            txts.push_back(std::move(raw));
+////            bufs.push_back(std::move(rawImagePixelsBuf));
+//            
+//            // Add non-determinism
+//            usleep(arc4random_uniform(1000));
+//        }
+//        
+//        deviceImgIdLast = imgHeader.id;
+//    }
+//    
+//    // Make sure all rendering is complete before adding the images to the library
+//    renderer.commitAndWait();
+//    
+//    {
+//        auto lock = std::unique_lock(*imgLib);
+//        // Add the records that we previously reserved
+//        imgLib->add();
+//    }
+//}
+
+
+
+
+
+
+
+
+
 
 // _openImage: open a particular image id, or an image offset from a particular image id
 - (bool)_openImage:(ImageRecordPtr)rec delta:(ssize_t)delta {

@@ -465,6 +465,10 @@ public:
     }
     
     Buf bufferCreate(const void* data, size_t len, MTLStorageMode storageMode=MTLStorageModeShared) {
+        // Note that we're returning a buffer with deferRecycle=true!
+        // This is important because we use memcpy() to copy into the buffer, and the CPU doesn't know
+        // when the GPU's done with the buffer. Therefore the buffer can't be recycled until the
+        // MTLCommandBuffer is complete. See recycle login in _prepareDeferredRecycle().
         Buf buf = _bufferCreate(len, storageMode, true);
         memcpy([buf contents], data, len);
         if (storageMode == MTLStorageModeManaged) {
@@ -694,8 +698,8 @@ public:
         return _cmdBuf;
     }
     
-    // _scheduleRecycle(): arrange for resources to be recycled after the MTLCommandBuffer is completed
-    void _scheduleRecycle() {
+    // _prepareDeferredRecycle(): arrange for resources to be recycled after the MTLCommandBuffer is completed
+    void _prepareDeferredRecycle() {
         __block std::list<id<MTLBuffer>> pending;
         {
             auto lock = std::unique_lock(_recycleBufs->lock);
@@ -716,13 +720,13 @@ public:
     }
     
     void commit() {
-        _scheduleRecycle();
+        _prepareDeferredRecycle();
         [_cmdBuf commit];
         _cmdBuf = nil;
     }
     
     void commitAndWait() {
-        _scheduleRecycle();
+        _prepareDeferredRecycle();
         [_cmdBuf commit];
         [_cmdBuf waitUntilCompleted];
         _cmdBuf = nil;
