@@ -345,9 +345,7 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
                 Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
                 Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
                 renderer.textureWrite(raw, rawImagePixels, 1, sizeof(*rawImagePixels), ImagePixelMax);
-                
-                DebayerLMMSE::Run(renderer, _CFADesc, false, raw, rgb);
-                
+                renderer.copy(raw, rgb);
                 renderResultTxt = std::move(rgb);
             }
             
