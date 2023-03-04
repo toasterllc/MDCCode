@@ -376,7 +376,7 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
             
 //            NSLog(@"%@", @([renderer.cmdBuf() retainedReferences]));
 //            [renderer.cmdBuf() enqueue];
-            renderer.commit();
+//            renderer.commit();
 //            txts.push_back(std::move(raw));
             bufs.push_back(std::move(rawImagePixelsBuf));
             
