@@ -314,40 +314,43 @@ static bool _ChecksumValid(const void* data, Img::Size size) {
         
         // Render the thumbnail into rec.thumb
         {
-//            const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
-//            
-//            Pipeline::RawImage rawImage = {
-//                .cfaDesc = _CFADesc,
-//                .width = Img::Thumb::PixelWidth,
-//                .height = Img::Thumb::PixelHeight,
-//                .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
-//            };
-//            
-//            const Pipeline::Options pipelineOpts = {
-//                .rawMode = false,
-//                .illum = Color<MDCTools::ColorSpace::Raw>(1,1,1),
-//                .colorMatrix = Mat<double,3,3>(1.,0.,0.,0.,1.,0.,0.,0.,1.),
-//                .debayerLMMSE = { .applyGamma = true, },
-//            };
-//            
-//            Pipeline::Result renderResult = Pipeline::RunThumb(renderer, rawImage, pipelineOpts);
-//            const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
-//            
-//            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-//            id<MTLBuffer> chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
-//            
-//            const RenderThumb::Options thumbOpts = {
-//                .thumbWidth = ImageThumb::ThumbWidth,
-//                .thumbHeight = ImageThumb::ThumbHeight,
-//                .dataOff = thumbDataOff,
-//            };
-//            
-//            RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, chunkBuf);
-//            txts.push_back(std::move(renderResult.txt));
-//            renderer.commit();
+            const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
             
-            const size_t lenMin = std::min(sizeof(rec.thumb.data), (size_t)Img::Thumb::PixelLen);
-            memcpy(rec.thumb.data, imgData+Img::PixelsOffset, lenMin);
+            Pipeline::RawImage rawImage = {
+                .cfaDesc = _CFADesc,
+                .width = Img::Thumb::PixelWidth,
+                .height = Img::Thumb::PixelHeight,
+                .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
+            };
+            
+            const Pipeline::Options pipelineOpts = {
+                .rawMode = false,
+                .illum = Color<MDCTools::ColorSpace::Raw>(1,1,1),
+                .colorMatrix = Mat<double,3,3>(1.,0.,0.,0.,1.,0.,0.,0.,1.),
+                .debayerLMMSE = { .applyGamma = true, },
+            };
+            
+            Pipeline::Result renderResult = Pipeline::RunThumb(renderer, rawImage, pipelineOpts);
+            const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
+            
+            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
+            id<MTLBuffer> chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+            
+            const RenderThumb::Options thumbOpts = {
+                .thumbWidth = ImageThumb::ThumbWidth,
+                .thumbHeight = ImageThumb::ThumbHeight,
+                .dataOff = thumbDataOff,
+            };
+            
+            RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, chunkBuf);
+            txts.push_back(std::move(renderResult.txt));
+            renderer.commit();
+            
+            // Add non-determinism
+            usleep(arc4random_uniform(2500));
+            
+//            const size_t lenMin = std::min(sizeof(rec.thumb.data), (size_t)Img::Thumb::PixelLen);
+//            memcpy(rec.thumb.data, imgData+Img::PixelsOffset, lenMin);
         }
         
         deviceImgIdLast = imgHeader.id;
