@@ -578,7 +578,7 @@ private:
                     .debayerLMMSE           = { .applyGamma = true, },
                 };
                 
-                Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
+                Pipeline::Result renderResult = Pipeline::RunThumb(renderer, rawImage, pipelineOpts);
                 const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
                 
                 constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;

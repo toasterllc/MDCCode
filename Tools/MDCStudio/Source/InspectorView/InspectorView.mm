@@ -783,8 +783,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->getter = _GetterCreate(self, _Get_whiteBalance);
                 it->setter = _SetterCreate(self, _Set_whiteBalance);
                 it->section = section;
-                it->valueMin = -3;
-                it->valueMax = +3;
+                it->valueMin = -1;
+                it->valueMax = +1;
                 it->valueDefault = 0;
                 [section addItem:it];
             }

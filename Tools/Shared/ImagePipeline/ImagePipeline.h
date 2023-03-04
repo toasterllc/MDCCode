@@ -62,6 +62,7 @@ public:
     };
     
     static Result Run(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts);
+    static Result RunThumb(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts);
 };
 
 } // namespace MDCTools::ImagePipeline

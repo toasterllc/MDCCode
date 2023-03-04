@@ -404,4 +404,68 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     };
 }
 
+
+
+
+
+
+
+Pipeline::Result Pipeline::RunThumb(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts) {
+    assert(rawImg.width);
+    assert(rawImg.height);
+    assert(rawImg.pixels);
+    
+    constexpr uint32_t DownsampleFactor = 1;
+    const size_t w = rawImg.width/DownsampleFactor;
+    const size_t h = rawImg.height/DownsampleFactor;
+    
+    Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
+    
+    // Load `raw`
+    {
+        constexpr size_t SamplesPerPixel = 1;
+        constexpr size_t BytesPerSample = sizeof(*rawImg.pixels);
+        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
+    }
+    
+    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
+    Color<ColorSpace::Raw> illum;
+    Mat<double,3,3> colorMatrix;
+    
+    // If an illuminant was provided, use it.
+    // Otherwise, estimate it with FFCC.
+    if (opts.illum) {
+        illum = *opts.illum;
+    } else {
+        illum = EstimateIlluminantFFCC::Run(renderer, rawImg.cfaDesc, raw);
+    }
+    
+    // Reconstruct highlights
+    if (opts.reconstructHighlights.en) {
+        ReconstructHighlights::Run(renderer, rawImg.cfaDesc, illum.m, raw);
+    }
+    
+    if (opts.defringe.en) {
+        Defringe::Run(renderer, rawImg.cfaDesc, opts.defringe.opts, raw);
+    }
+    
+    // LMMSE Debayer
+    {
+        DebayerLMMSE::Run(renderer, rawImg.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
+    }
+    
+    return Result{
+        .txt = std::move(rgb),
+        .illum = illum,
+        .colorMatrix = colorMatrix,
+    };
+}
+
+
+
+
+
+
+
+
 } // namespace MDCTools::ImagePipeline
