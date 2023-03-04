@@ -1,6 +1,7 @@
 #import <metal_stdlib>
 #import "ImageGridLayerTypes.h"
 #import "ImageWhiteBalance.h"
+#import "ImageOptions.h"
 #import "Tools/Shared/MetalUtil.h"
 using namespace metal;
 using namespace MDCTools::MetalUtil;
@@ -322,79 +323,6 @@ float3 Saturation(float saturation, float3 c) {
 //    return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
 //}
 
-struct [[gnu::packed]] ImageOptions {
-    enum class Rotation : uint8_t {
-        Clockwise0,
-        Clockwise90,
-        Clockwise180,
-        Clockwise270,
-    };
-    
-    enum class Corner : uint8_t {
-        BottomRight,
-        BottomLeft,
-        TopLeft,
-        TopRight,
-    };
-    
-    Rotation rotation = Rotation::Clockwise0;
-    bool defringe = false;
-    bool reconstructHighlights = false;
-    struct [[gnu::packed]] {
-        bool show = false;
-        Corner corner = Corner::BottomRight;
-    } timestamp;
-    uint8_t _pad[3];
-    
-    ImageWhiteBalance whiteBalance;
-    static_assert(!(sizeof(whiteBalance) % 8), "ImageOptions must be a multiple of 8 bytes");
-    
-    float exposure = 0;
-    float saturation = 0;
-    float brightness = 0;
-    float contrast = 0;
-    struct {
-        float amount = 0;
-        float radius = 0;
-    } localContrast;
-    
-    // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64];
-};
-
-
-//        // White balance
-//        {
-//            const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
-//            const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
-//            const simd::float3 simdWB = _SimdForMat(wb);
-//            renderer.render(rgb,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalanceRGB",
-//                    // Buffer args
-//                    simdWB,
-//                    // Texture args
-//                    rgb
-//                )
-//            );
-//        }
-//        
-//        
-//        // Camera raw -> ProPhotoRGB.D50
-//        {
-//            // If a color matrix was provided, use it.
-//            // Otherwise estimate it by interpolating between known color matrices.
-//            colorMatrix = (opts.colorMatrix ? *opts.colorMatrix : _CCMForIlluminant(illum).m);
-//            
-//            renderer.render(rgb,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
-//                    // Buffer args
-//                    _SimdForMat(colorMatrix),
-//                    // Texture args
-//                    rgb
-//                )
-//            );
-//        }
-
 float3 WhiteBalance(float3 illum, float3 c) {
     const float factor = max(max(illum.r, illum.g), illum.b);
     const float3 wb = factor / illum;
@@ -439,8 +367,6 @@ static float3 ColorAdjust(device const ImageOptions& opts, float3 c) {
     return c;
 }
 
-
-
 fragment float4 FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
     device uint8_t* images [[buffer(1)]],
@@ -476,121 +402,124 @@ fragment float4 FragmentShader(
     const int2 marginY = int2(maskHeight2, (ctx.thumb.height-maskHeight2));
     
     const uint32_t pxOff = pxIdx*ctx.thumb.pxSize;
-    const float3 thumb = float3(
+    
+    float3 thumb = float3(
         ((float)thumbData[pxOff+0] / 255),
         ((float)thumbData[pxOff+1] / 255),
         ((float)thumbData[pxOff+2] / 255)
     );
     
-    const bool inThumb = (pos.x>=0 && pos.y>=0 && pos.x<(int)ctx.thumb.width && pos.y<(int)ctx.thumb.height);
-    if (!inThumb) return 0;
-    return float4(ColorAdjust(imageOpts, thumb), 1);
+    thumb = ColorAdjust(imageOpts, thumb);
     
-//    // Calculate mask value
-//    float mask = 0;
-//    if (inThumb) {
-//        if (pos.x<=marginX[0] && pos.y<=marginY[0]) {
-//            // Top left
-//            mask = Sample::R(maskTxt, int2(pos.x, pos.y));
-//        
-//        } else if (pos.x>=marginX[1] && pos.y<=marginY[0]) {
-//            // Top right
-//            mask = Sample::R(maskTxt, int2(maskWidth2+(pos.x-marginX[1]), pos.y));
-//        
-//        } else if (pos.x<=marginX[0] && pos.y>=marginY[1]) {
-//            // Bottom left
-//            mask = Sample::R(maskTxt, int2(pos.x, maskHeight2+(pos.y-marginY[1])));
-//        
-//        } else if (pos.x>=marginX[1] & pos.y>=marginY[1]) {
-//            // Bottom right
-//            mask = Sample::R(maskTxt, int2(maskWidth2+(pos.x-marginX[1]), maskHeight2+(pos.y-marginY[1])));
-//        
-//        } else {
-//            mask = 1;
-//        }
-//    }
-//    
-//    // Calculate outline colors
-//    float4 outlineOver = 0;
-//    float4 outlineColorDodge = 0;
-//    if (inThumb) {
-//        int2 outlinePos = pos;
-//        if (pos.x <= marginX[0])        outlinePos.x = pos.x;
-//        else if (pos.x >= marginX[1])   outlinePos.x = maskWidth2+(pos.x-marginX[1]);
-//        else                            outlinePos.x = maskWidth2;
-//        
-//        if (pos.y <= marginY[0])        outlinePos.y = pos.y;
-//        else if (pos.y >= marginY[1])   outlinePos.y = maskHeight2+(pos.y-marginY[1]);
-//        else                            outlinePos.y = maskHeight2;
-//        
-//        const float outline = Sample::R(outlineTxt, outlinePos);
-//        
-//        if (!selected) {
-//            outlineOver = float4(float3(1), .03*outline);
-//            outlineColorDodge = float4(float3(.7*outline), 1);
-//        
-//        } else {
-//            outlineOver = float4(float3(1), 0*outline);
-//            outlineColorDodge = float4(float3(.5*outline), 1);
-//        }
-//    }
-//    
-//    // Calculate shadow value
-//    float4 shadow = 0;
-//    if (!selected) {
-//        const int2 pos = int2(in.posPx);
-//        
-//        const int shadowWidth = shadowTxt.get_width();
-//        const int shadowHeight = shadowTxt.get_height();
-//        const int shadowWidth2 = shadowWidth/2;
-//        const int shadowHeight2 = shadowHeight/2;
-//        const int2 marginX = int2(shadowWidth2, (ctx.cellWidth-shadowWidth2));
-//        const int2 marginY = int2(shadowHeight2, (ctx.cellHeight-shadowHeight2));
-//        
-//        int2 shadowPos = pos;
-//        if (pos.x <= marginX[0])        shadowPos.x = pos.x;
-//        else if (pos.x >= marginX[1])   shadowPos.x = shadowWidth2+(pos.x-marginX[1]);
-//        else                            shadowPos.x = shadowWidth2;
-//        
-//        if (pos.y <= marginY[0])        shadowPos.y = pos.y;
-//        else if (pos.y >= marginY[1])   shadowPos.y = shadowHeight2+(pos.y-marginY[1]);
-//        else                            shadowPos.y = shadowHeight2;
-//        
-//        shadow = float4(0, 0, 0, shadowTxt.sample(coord::pixel, float2(shadowPos.x, shadowPos.y)).a);
-//    }
-//    
-//    // Calculate selection value
-//    float4 selection = 0;
-//    if (selected) {
-//        const int2 pos = int2(in.posPx);
-//        
-//        const int selectionWidth = selectionTxt.get_width();
-//        const int selectionHeight = selectionTxt.get_height();
-//        const int selectionWidth2 = selectionWidth/2;
-//        const int selectionHeight2 = selectionHeight/2;
-//        const int2 marginX = int2(selectionWidth2, (ctx.cellWidth-selectionWidth2));
-//        const int2 marginY = int2(selectionHeight2, (ctx.cellHeight-selectionHeight2));
-//        
-//        int2 selectionPos = pos;
-//        if (pos.x <= marginX[0])        selectionPos.x = pos.x;
-//        else if (pos.x >= marginX[1])   selectionPos.x = selectionWidth2+(pos.x-marginX[1]);
-//        else                            selectionPos.x = selectionWidth2;
-//        
-//        if (pos.y <= marginY[0])        selectionPos.y = pos.y;
-//        else if (pos.y >= marginY[1])   selectionPos.y = selectionHeight2+(pos.y-marginY[1]);
-//        else                            selectionPos.y = selectionHeight2;
-//        
-//        selection = selectionTxt.sample(coord::pixel, float2(selectionPos.x, selectionPos.y));
-//    }
-//    
-//    return
-//        blendOver(
-//            blendOver(
-//                blendMask(mask,
-//                blendColorDodge(outlineColorDodge,
-//                blendOver(outlineOver, thumb
-//            ))), shadow),
-//        selection);
+    const bool inThumb = (pos.x>=0 && pos.y>=0 && pos.x<(int)ctx.thumb.width && pos.y<(int)ctx.thumb.height);
+//    if (!inThumb) return 0;
+//    return float4(ColorAdjust(imageOpts, thumb), 1);
+    
+    // Calculate mask value
+    float mask = 0;
+    if (inThumb) {
+        if (pos.x<=marginX[0] && pos.y<=marginY[0]) {
+            // Top left
+            mask = Sample::R(maskTxt, int2(pos.x, pos.y));
+        
+        } else if (pos.x>=marginX[1] && pos.y<=marginY[0]) {
+            // Top right
+            mask = Sample::R(maskTxt, int2(maskWidth2+(pos.x-marginX[1]), pos.y));
+        
+        } else if (pos.x<=marginX[0] && pos.y>=marginY[1]) {
+            // Bottom left
+            mask = Sample::R(maskTxt, int2(pos.x, maskHeight2+(pos.y-marginY[1])));
+        
+        } else if (pos.x>=marginX[1] & pos.y>=marginY[1]) {
+            // Bottom right
+            mask = Sample::R(maskTxt, int2(maskWidth2+(pos.x-marginX[1]), maskHeight2+(pos.y-marginY[1])));
+        
+        } else {
+            mask = 1;
+        }
+    }
+    
+    // Calculate outline colors
+    float4 outlineOver = 0;
+    float4 outlineColorDodge = 0;
+    if (inThumb) {
+        int2 outlinePos = pos;
+        if (pos.x <= marginX[0])        outlinePos.x = pos.x;
+        else if (pos.x >= marginX[1])   outlinePos.x = maskWidth2+(pos.x-marginX[1]);
+        else                            outlinePos.x = maskWidth2;
+        
+        if (pos.y <= marginY[0])        outlinePos.y = pos.y;
+        else if (pos.y >= marginY[1])   outlinePos.y = maskHeight2+(pos.y-marginY[1]);
+        else                            outlinePos.y = maskHeight2;
+        
+        const float outline = Sample::R(outlineTxt, outlinePos);
+        
+        if (!selected) {
+            outlineOver = float4(float3(1), .03*outline);
+            outlineColorDodge = float4(float3(.7*outline), 1);
+        
+        } else {
+            outlineOver = float4(float3(1), 0*outline);
+            outlineColorDodge = float4(float3(.5*outline), 1);
+        }
+    }
+    
+    // Calculate shadow value
+    float4 shadow = 0;
+    if (!selected) {
+        const int2 pos = int2(in.posPx);
+        
+        const int shadowWidth = shadowTxt.get_width();
+        const int shadowHeight = shadowTxt.get_height();
+        const int shadowWidth2 = shadowWidth/2;
+        const int shadowHeight2 = shadowHeight/2;
+        const int2 marginX = int2(shadowWidth2, (ctx.cellWidth-shadowWidth2));
+        const int2 marginY = int2(shadowHeight2, (ctx.cellHeight-shadowHeight2));
+        
+        int2 shadowPos = pos;
+        if (pos.x <= marginX[0])        shadowPos.x = pos.x;
+        else if (pos.x >= marginX[1])   shadowPos.x = shadowWidth2+(pos.x-marginX[1]);
+        else                            shadowPos.x = shadowWidth2;
+        
+        if (pos.y <= marginY[0])        shadowPos.y = pos.y;
+        else if (pos.y >= marginY[1])   shadowPos.y = shadowHeight2+(pos.y-marginY[1]);
+        else                            shadowPos.y = shadowHeight2;
+        
+        shadow = float4(0, 0, 0, shadowTxt.sample(coord::pixel, float2(shadowPos.x, shadowPos.y)).a);
+    }
+    
+    // Calculate selection value
+    float4 selection = 0;
+    if (selected) {
+        const int2 pos = int2(in.posPx);
+        
+        const int selectionWidth = selectionTxt.get_width();
+        const int selectionHeight = selectionTxt.get_height();
+        const int selectionWidth2 = selectionWidth/2;
+        const int selectionHeight2 = selectionHeight/2;
+        const int2 marginX = int2(selectionWidth2, (ctx.cellWidth-selectionWidth2));
+        const int2 marginY = int2(selectionHeight2, (ctx.cellHeight-selectionHeight2));
+        
+        int2 selectionPos = pos;
+        if (pos.x <= marginX[0])        selectionPos.x = pos.x;
+        else if (pos.x >= marginX[1])   selectionPos.x = selectionWidth2+(pos.x-marginX[1]);
+        else                            selectionPos.x = selectionWidth2;
+        
+        if (pos.y <= marginY[0])        selectionPos.y = pos.y;
+        else if (pos.y >= marginY[1])   selectionPos.y = selectionHeight2+(pos.y-marginY[1]);
+        else                            selectionPos.y = selectionHeight2;
+        
+        selection = selectionTxt.sample(coord::pixel, float2(selectionPos.x, selectionPos.y));
+    }
+    
+    return
+        blendOver(
+            blendOver(
+                blendMask(mask,
+                blendColorDodge(outlineColorDodge,
+                blendOver(outlineOver, float4(thumb, 1)
+            ))), shadow),
+        selection);
 }
 
 } // namespace ImageGridLayerShader
