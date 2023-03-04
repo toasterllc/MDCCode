@@ -703,6 +703,8 @@ public:
             // Nothing to do if there are no pending buffers
             if (_recycleBufs->defer.empty()) return;
             
+            printf("_scheduleRecycle TAKEOFF\n");
+            
             _recycleBufs->pending++;
             pending = std::move(_recycleBufs->defer);
         }
@@ -710,8 +712,13 @@ public:
         std::shared_ptr<_RecycleBufs> bufs = _recycleBufs;
         [_cmdBuf addCompletedHandler:^(id<MTLCommandBuffer>) {
             auto lock = std::unique_lock(bufs->lock);
+            
+            const size_t sizeBefore = bufs->bufs.size();
             bufs->bufs.splice(bufs->bufs.end(), pending);
             _recycleBufs->pending--;
+            const size_t sizeAfter = bufs->bufs.size();
+            
+            printf("_scheduleRecycle LAND (%zu -> %zu)\n", sizeBefore, sizeAfter);
         }];
     }
     
