@@ -1,5 +1,6 @@
 #pragma once
 #include <simd/simd.h>
+#include <simd/packed.h>
 #include "ImageWhiteBalance.h"
 
 namespace MDCStudio {
@@ -61,27 +62,28 @@ static _CCM _CCMInterp(const _CCM& ccm1, const _CCM& ccm2, const simd::float3& i
 }
 
 inline void ImageWhiteBalanceSetAuto(ImageWhiteBalance& x, const simd::float3& illum) {
+    const _CCM ccm = _CCMInterp(_CCM1, _CCM2, illum);
+    
     x.automatic = true;
     
-    static_assert(sizeof(x.illum) == sizeof(simd::float3));
-    reinterpret_cast<simd::float3&>(x.illum) = illum;
+    static_assert(sizeof(x.illum) == sizeof(illum));
+    memcpy(&x.illum, &illum, sizeof(illum));
     
-    const _CCM ccm = _CCMInterp(_CCM1, _CCM2, illum);
-    static_assert(sizeof(x.colorMatrix) == sizeof(simd::float3x3));
-    reinterpret_cast<simd::float3x3&>(x.colorMatrix) = ccm.matrix;
+    static_assert(sizeof(x.colorMatrix) == sizeof(ccm.matrix));
+    memcpy(&x.colorMatrix, &ccm.matrix, sizeof(ccm.matrix));
 }
 
 inline void ImageWhiteBalanceSetManual(ImageWhiteBalance& x, float value) {
+    const _CCM ccm = _CCMInterp(_CCM1, _CCM2, value);
+    
     x.automatic = false;
     x.value = value;
     
-    const _CCM ccm = _CCMInterp(_CCM1, _CCM2, value);
+    static_assert(sizeof(x.illum) == sizeof(ccm.illum));
+    memcpy(&x.illum, &ccm.illum, sizeof(ccm.illum));
     
-    static_assert(sizeof(x.illum) == sizeof(simd::float3));
-    reinterpret_cast<simd::float3&>(x.illum) = ccm.illum;
-    
-    static_assert(sizeof(x.colorMatrix) == sizeof(simd::float3x3));
-    reinterpret_cast<simd::float3x3&>(x.colorMatrix) = ccm.matrix;
+    static_assert(sizeof(x.colorMatrix) == sizeof(ccm.matrix));
+    memcpy(&x.colorMatrix, &ccm.matrix, sizeof(ccm.matrix));
 }
 
 } // namespace MDCStudio

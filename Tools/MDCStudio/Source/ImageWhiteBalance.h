@@ -4,8 +4,8 @@ namespace MDCStudio {
 
 struct [[gnu::packed]] ImageWhiteBalance {
     bool automatic = false;
-    float value = 0;
     uint8_t _pad[3];
+    float value = 0;
     
     // illum: float3
     //   Memory layout matches simd::float3, which has a padding

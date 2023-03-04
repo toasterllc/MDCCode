@@ -5,6 +5,7 @@
 #include "Code/Shared/Img.h"
 #include "Tools/Shared/Lockable.h"
 #include "RecordStore.h"
+#include "ImageOptions.h"
 #include "ImageWhiteBalance.h"
 #include "ImageWhiteBalanceUtil.h"
 
@@ -25,55 +26,14 @@ struct [[gnu::packed]] ImageInfo {
     uint16_t analogGain = 0;
     
     // illumEst: estimated illuminant
-    double illumEst[3] = {0,0,0};
+    float illumEst[3] = {0,0,0};
+    uint8_t _pad[4];
     
     // _reserved: so we can add fields in the future without doing a data migration
     uint8_t _reserved[64];
 };
 
 static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple of 8 bytes
-
-struct [[gnu::packed]] ImageOptions {
-    enum class Rotation : uint8_t {
-        Clockwise0,
-        Clockwise90,
-        Clockwise180,
-        Clockwise270,
-    };
-    
-    enum class Corner : uint8_t {
-        BottomRight,
-        BottomLeft,
-        TopLeft,
-        TopRight,
-    };
-    
-    Rotation rotation = Rotation::Clockwise0;
-    bool defringe = false;
-    bool reconstructHighlights = false;
-    struct [[gnu::packed]] {
-        bool show = false;
-        Corner corner = Corner::BottomRight;
-    } timestamp;
-    uint8_t _pad[3];
-    
-    ImageWhiteBalance whiteBalance;
-    static_assert(!(sizeof(whiteBalance) % 8)); // Ensure that ImageOptions is a multiple of 8 bytes
-    
-    float exposure = 0;
-    float saturation = 0;
-    float brightness = 0;
-    float contrast = 0;
-    struct {
-        float amount = 0;
-        float radius = 0;
-    } localContrast;
-    
-    // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64];
-};
-
-static_assert(!(sizeof(ImageOptions) % 8)); // Ensure that ImageOptions is a multiple of 8 bytes
 
 struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 288;
