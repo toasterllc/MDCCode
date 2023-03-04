@@ -93,7 +93,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const RawImage& raw
     {
         constexpr size_t SamplesPerPixel = 1;
         constexpr size_t BytesPerSample = sizeof(*rawImg.pixels);
-        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
+//        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
     }
     
     Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
@@ -425,7 +425,7 @@ Pipeline::Result Pipeline::RunThumb(MDCTools::Renderer& renderer, const RawImage
     {
         constexpr size_t SamplesPerPixel = 1;
         constexpr size_t BytesPerSample = sizeof(*rawImg.pixels);
-        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
+//        renderer.textureWrite(raw, rawImg.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
     }
     
     Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);

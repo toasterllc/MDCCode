@@ -324,7 +324,9 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
     }
     
     Img::Id deviceImgIdLast = 0;
-    std::vector<Renderer::Txt> txts;
+    std::vector<Renderer::Buf> bufs;
+    id<MTLBuffer> chunkBuf = nil;
+    
     for (size_t idx=0; idx<imgCount; idx++) {
         const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
         const Img::Header& imgHeader = *(const Img::Header*)imgData;
@@ -338,15 +340,28 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
         {
             const ImagePixel* rawImagePixels = (ImagePixel*)(imgData+Img::PixelsOffset);
             
+            Renderer::Buf rawImagePixelsBuf = renderer.bufferCreate(rawImagePixels, Img::Thumb::PixelLen);
+            
+//        const size_t w = [txt width];
+//        const size_t h = [txt height];
+//        const size_t len = w*h*samplesPerPixel*sizeof(T);
+//        Renderer::Buf buf = bufferCreate(len);
+//        memcpy([buf contents], samples, len);
+//        textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
+//            
+//            
+//            [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+            
             Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
-            Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
-            renderer.textureWrite(raw, rawImagePixels, 1, sizeof(*rawImagePixels), ImagePixelMax);
-            renderer.copy(raw, rgb);
+            renderer.textureWrite(rgb, rawImagePixelsBuf, 1, sizeof(*rawImagePixels), ImagePixelMax);
             
             const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
             const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
             constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-            id<MTLBuffer> chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+            
+            if (!chunkBuf) {
+                chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+            }
             
             renderer.render(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
                 renderer.FragmentShader(ImagePipelineShaderNamespace "RenderThumb::RGB3FromTexture",
@@ -362,8 +377,8 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
 //            NSLog(@"%@", @([renderer.cmdBuf() retainedReferences]));
 //            [renderer.cmdBuf() enqueue];
             renderer.commit();
-            txts.push_back(std::move(raw));
-            txts.push_back(std::move(rgb));
+//            txts.push_back(std::move(raw));
+            bufs.push_back(std::move(rawImagePixelsBuf));
             
             // Add non-determinism
             usleep(arc4random_uniform(1000));

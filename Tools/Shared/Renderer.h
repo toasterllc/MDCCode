@@ -44,24 +44,20 @@ public:
     public:
         // Default constructor
         Resource() {}
-        // Copy constructor: illegal
+        
+        // Copy: deleted
         Resource(const Resource& x) = delete;
-        // Copy assignment operator: illegal
         Resource& operator=(const Resource& x) = delete;
-        // Move constructor: use move assignment operator
-        Resource(Resource&& x) { *this = std::move(x); }
-        // Move assignment operator
-        Resource& operator=(Resource&& x) {
-            if (this != &x) {
-                _recycle();
-                _state = x._state;
-                x._state = {};
-            }
-            return *this;
+        // Move: allowed
+        Resource(Resource&& x) { swap(x); }
+        Resource& operator=(Resource&& x) { swap(x); return *this; }
+        
+        void swap(Resource& x) {
+            std::swap(_state, x._state);
         }
         
         ~Resource() {
-            _recycle();
+            if (_state.renderer) _state.renderer->_recycle(_state.resource);
         }
         
         operator T() const { return _state.resource; }
@@ -73,12 +69,6 @@ public:
             Renderer* renderer = nullptr;
             T resource = nil;
         } _state;
-        
-        void _recycle() {
-//            printf("RECYCLE\n");
-            if (_state.renderer) _state.renderer->_recycle(_state.resource);
-            _state = {};
-        }
         
         friend class Renderer;
     };
@@ -481,6 +471,7 @@ public:
             const size_t bufLen = [buf length];
             const MTLStorageMode bufStorageMode = [buf storageMode];
             if (bufLen>=len && bufLen<=2*len && bufStorageMode==storageMode) {
+                printf("[ REUSE ] buffer %p (len=%ju)\n", buf, (uintmax_t)[buf length]);
                 Buf b(*this, buf);
                 _bufs.erase(it);
                 return b;
@@ -497,23 +488,23 @@ public:
         return bufferCreate([buf length], [buf storageMode]);
     }
     
-    // Write samples (from a raw pointer) to a texture
-    template <typename T>
-    void textureWrite(
-        id<MTLTexture> txt,
-        T* samples,
-        size_t samplesPerPixel,
-        size_t bytesPerSample=sizeof(T),
-        uintmax_t maxValue=std::numeric_limits<T>::max()
-    ) {
-        // Create a Metal buffer, and copy the image contents into it
-        const size_t w = [txt width];
-        const size_t h = [txt height];
-        const size_t len = w*h*samplesPerPixel*sizeof(T);
-        Renderer::Buf buf = bufferCreate(len);
-        memcpy([buf contents], samples, len);
-        textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
-    }
+//    // Write samples (from a raw pointer) to a texture
+//    template <typename T>
+//    void textureWrite(
+//        id<MTLTexture> txt,
+//        T* samples,
+//        size_t samplesPerPixel,
+//        size_t bytesPerSample=sizeof(T),
+//        uintmax_t maxValue=std::numeric_limits<T>::max()
+//    ) {
+//        // Create a Metal buffer, and copy the image contents into it
+//        const size_t w = [txt width];
+//        const size_t h = [txt height];
+//        const size_t len = w*h*samplesPerPixel*sizeof(T);
+//        Renderer::Buf buf = bufferCreate(len);
+//        memcpy([buf contents], samples, len);
+//        textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
+//    }
     
     // Write samples (from a MTLBuffer) to a texture
     void textureWrite(
@@ -852,6 +843,7 @@ private:
     }
     
     void _recycle(id<MTLBuffer> buf) {
+        printf("[RECYCLE] buffer %p (len=%ju)\n", buf, (uintmax_t)[buf length]);
         _bufs.push_back(buf);
     }
     
