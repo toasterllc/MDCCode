@@ -592,15 +592,17 @@ private:
                 
                 RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, buf);
                 
-                // Populate the illuminant
+                // Populate the illuminant (ImageRecord.info.illumEst)
                 rec.info.illumEst[0] = renderResult.illum[0];
                 rec.info.illumEst[1] = renderResult.illum[1];
                 rec.info.illumEst[2] = renderResult.illum[2];
             }
             
-            // Set image white balance options
+            // Populate ImageOptions fields
             {
-                const simd::float3 illum = { (float)rec.info.illumEst[0], (float)rec.info.illumEst[1], (float)rec.info.illumEst[2] };
+                rec.options = {};
+                // Set image white balance options
+                const simd::float3 illum = { rec.info.illumEst[0], rec.info.illumEst[1], rec.info.illumEst[2] };
                 ImageWhiteBalanceSetAuto(rec.options.whiteBalance, illum);
             }
             

@@ -1,7 +1,7 @@
 #pragma once
 #include <simd/simd.h>
 #include <simd/packed.h>
-#include "ImageWhiteBalance.h"
+#include "ImageOptions.h"
 
 namespace MDCStudio {
 

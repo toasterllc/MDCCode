@@ -1,6 +1,5 @@
 #import <metal_stdlib>
 #import "ImageGridLayerTypes.h"
-#import "ImageWhiteBalance.h"
 #import "ImageOptions.h"
 #import "Tools/Shared/MetalUtil.h"
 using namespace metal;
@@ -336,11 +335,11 @@ float3 ColorMatrixApply(float3x3 colorMatrix, float3 c) {
 static float3 ColorAdjust(device const ImageOptions& opts, float3 c) {
     // ProPhotoRGB.D50 <- CamRaw.D50
     const float3 illum(opts.whiteBalance.illum[0], opts.whiteBalance.illum[1], opts.whiteBalance.illum[2]);
-    device auto& cmm = opts.whiteBalance.colorMatrix;
+    device auto& m = opts.whiteBalance.colorMatrix;
     const float3x3 colorMatrix(
-        cmm[0][0], cmm[0][1], cmm[0][2],
-        cmm[1][0], cmm[1][1], cmm[1][2],
-        cmm[2][0], cmm[2][1], cmm[2][2]
+        m[0][0], m[0][1], m[0][2],
+        m[1][0], m[1][1], m[1][2],
+        m[2][0], m[2][1], m[2][2]
     );
     c = WhiteBalance(illum, c);
     c = ColorMatrixApply(colorMatrix, c);

@@ -6,7 +6,6 @@
 #include "Tools/Shared/Lockable.h"
 #include "RecordStore.h"
 #include "ImageOptions.h"
-#include "ImageWhiteBalance.h"
 #include "ImageWhiteBalanceUtil.h"
 
 namespace MDCStudio {
