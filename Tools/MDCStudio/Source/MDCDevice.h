@@ -530,11 +530,22 @@ private:
         Img::Id deviceImgIdLast = 0;
         const ImageLibrary::Chunk* chunkPrev = nullptr;
         id<MTLBuffer> chunkBuf = nil;
-        std::vector<Renderer::Txt> txts;
-        txts.reserve(imgCount);
+        
+        // bufs: maintains references to the Renderer::Buf instances that contain the thumbnail data.
+        // We have to keep these around to prevent them from being reused until Renderer's
+        // MTLCommandBuffer is completed (via renderer.commitAndWait()). This is because we copy into
+        // these buffers using memcpy() and don't know when the GPU is done consuming the data in them,
+        // so if we were to reuse the buffer before the MTLCommandBuffer was completed, we end up
+        // clobbering the data that the GPU was still using.
+        #warning TODO: perf: in the future we could ensure that our `data` argument is mmap'd and
+        #warning TODO: perf: use -newBufferWithBytesNoCopy: to avoid creating all these temporary buffers
+        std::vector<Renderer::Buf> bufs;
+        bufs.reserve(imgCount);
         for (size_t idx=0; idx<imgCount; idx++) {
             const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
+            Renderer::Buf& imgDataBuf = bufs.emplace_back(renderer.bufferCreate(imgData+Img::PixelsOffset, Img::Thumb::PixelLen));
+            
             // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
             const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
             ImageRecord& rec = **recordRefIter;
@@ -573,7 +584,7 @@ private:
                     .cfaDesc = _CFADesc,
                     .width = Img::Thumb::PixelWidth,
                     .height = Img::Thumb::PixelHeight,
-                    .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
+                    .pixels = imgDataBuf,
                 };
                 
                 const Color<MDCTools::ColorSpace::Raw> illum(0.879884, 0.901580, 0.341031);
@@ -606,16 +617,6 @@ private:
                 };
                 
                 RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, chunkBuf);
-                
-                txts.push_back(std::move(renderResult.txt));
-                
-                renderer.commit();
-                
-//                // We have to commit here because our Pipeline::Result gets destroyed after each iteration,
-//                // which returns our textures to the pool, allowing them to be reused by the next iteration.
-//                // If we didn't commit, only the last iteration would take effect.
-//                #warning TODO: for perf, try keeping the Pipeline::Result.txt alive in a vector until we call commitAndWait(), below. Does that speed us up?
-//                renderer.commitAndWait();
                 
                 // Populate the illuminant (ImageRecord.info.illumEst)
                 rec.info.illumEst[0] = renderResult.illum[0];

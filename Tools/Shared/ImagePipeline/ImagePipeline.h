@@ -14,7 +14,7 @@ public:
         MDCTools::CFADesc cfaDesc;
         size_t width = 0;
         size_t height = 0;
-        const ImagePixel* pixels = nullptr;
+        id<MTLBuffer> pixels = nil; // ImagePixel[]
     };
     
     struct Options {

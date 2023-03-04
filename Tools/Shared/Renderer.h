@@ -6,6 +6,8 @@
 #import <queue>
 #import <string>
 #import <list>
+#import <set>
+#import <mutex>
 #import <functional>
 #import <assert.h>
 #import "Assert.h"
@@ -83,7 +85,7 @@ public:
     
     Renderer() {}
     Renderer(id<MTLDevice> dev, id<MTLLibrary> lib, id<MTLCommandQueue> commandQueue) :
-    dev(dev), _lib(lib), _commandQueue(commandQueue) {
+    dev(dev), _lib(lib), _commandQueue(commandQueue), _bufs(std::make_shared<_Bufs>()) {
     }
     
     static size_t SamplesPerPixel(MTLPixelFormat fmt) {
@@ -466,14 +468,14 @@ public:
     Buf bufferCreate(size_t len, MTLStorageMode storageMode=MTLStorageModeShared) {
         // Return an existing buffer if its length is between len and 2*len,
         // and its options match `opts`
-        for (auto it=_bufs.begin(); it!=_bufs.end(); it++) {
+        auto lock = std::unique_lock(_bufs->lock);
+        for (auto it=_bufs->bufs.begin(); it!=_bufs->bufs.end(); it++) {
             id<MTLBuffer> buf = *it;
             const size_t bufLen = [buf length];
             const MTLStorageMode bufStorageMode = [buf storageMode];
             if (bufLen>=len && bufLen<=2*len && bufStorageMode==storageMode) {
-                printf("[ REUSE ] buffer %p (len=%ju)\n", buf, (uintmax_t)[buf length]);
                 Buf b(*this, buf);
-                _bufs.erase(it);
+                _bufs->bufs.erase(it);
                 return b;
             }
         }
@@ -701,12 +703,31 @@ public:
         return _cmdBuf;
     }
     
+    // _scheduleRecycle(): arrange for resources to be recycled after the MTLCommandBuffer is completed
+    void _scheduleRecycle() {
+        __block std::list<Buf> pending;
+        {
+            auto lock = std::unique_lock(_bufs->lock);
+            pending = std::move(_bufs->pending);
+        }
+        
+        // Nothing to do if there are no pending buffers
+        if (pending.empty()) return;
+        
+        std::shared_ptr<_Bufs> bufs = _bufs;
+        [_cmdBuf addCompletedHandler:^(id<MTLCommandBuffer>) {
+            pending.clear();
+        }];
+    }
+    
     void commit() {
+        _scheduleRecycle();
         [_cmdBuf commit];
         _cmdBuf = nil;
     }
     
     void commitAndWait() {
+        _scheduleRecycle();
         [_cmdBuf commit];
         [_cmdBuf waitUntilCompleted];
         _cmdBuf = nil;
@@ -843,8 +864,8 @@ private:
     }
     
     void _recycle(id<MTLBuffer> buf) {
-        printf("[RECYCLE] buffer %p (len=%ju)\n", buf, (uintmax_t)[buf length]);
-        _bufs.push_back(buf);
+        auto lock = std::unique_lock(_bufs->lock);
+        _bufs->bufs.push_back(buf);
     }
     
     id<MTLRenderPipelineState> _renderPipelineState(std::string_view vertName, std::string_view fragName, MTLPixelFormat fmt, BlendType blendType) {
@@ -969,12 +990,20 @@ private:
     };
     
     using TxtQueue = std::queue<id<MTLTexture>>;
+    
+    struct _Bufs {
+        std::mutex lock; // Protects this struct
+        std::list<id<MTLBuffer>> bufs;
+        std::list<Buf> pending;
+    };
+    
     id <MTLLibrary> _lib = nil;
     id <MTLCommandQueue> _commandQueue = nil;
     std::map<RenderPipelineStateKey,id<MTLRenderPipelineState>> _renderPipelineStates;
     std::map<std::string,id<MTLComputePipelineState>,std::less<>> _computePipelineStates;
     std::map<TxtKey,TxtQueue> _txts;
-    std::list<id<MTLBuffer>> _bufs;
+    std::shared_ptr<_Bufs> _bufs;
+    
     id<MTLCommandBuffer> _cmdBuf = nil;
     
     template <class...> static constexpr std::false_type _AlwaysFalse;
