@@ -133,7 +133,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
             .pixels     = (ImagePixel*)(_image->data.get() + _image->off),
         };
         
-        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(_imageRecord->info.illumEst);
+        const auto& f = _imageRecord->info.illumEst;
+        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(f[0], f[1], f[2]);
         const Pipeline::Options pipelineOpts = {
             .illum = illum,
             

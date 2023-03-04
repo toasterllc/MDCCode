@@ -18,6 +18,6 @@ struct [[gnu::packed]] ImageWhiteBalance {
     uint8_t _reserved[16]; // For future use (we may want to specify which 2 illuminants we're interpolating between)
 };
 
-static_assert(!(sizeof(ImageWhiteBalance) % 8)); // Ensure that ImageWhiteBalance is a multiple of 8 bytes
+static_assert(!(sizeof(ImageWhiteBalance) % 8), "ImageWhiteBalance must be multiple of 8 bytes");
 
 } // namespace MDCStudio
