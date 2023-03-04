@@ -340,14 +340,10 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
             const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
             const ImagePixel* rawImagePixels = (ImagePixel*)(imgData+Img::PixelsOffset);
             
-            MDCTools::Renderer::Txt renderResultTxt;
-            {
-                Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
-                Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
-                renderer.textureWrite(raw, rawImagePixels, 1, sizeof(*rawImagePixels), ImagePixelMax);
-                renderer.copy(raw, rgb);
-                renderResultTxt = std::move(rgb);
-            }
+            Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
+            Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
+            renderer.textureWrite(raw, rawImagePixels, 1, sizeof(*rawImagePixels), ImagePixelMax);
+            renderer.copy(raw, rgb);
             
             const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
             constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
@@ -359,8 +355,8 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
                 .dataOff = thumbDataOff,
             };
             
-            RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResultTxt, chunkBuf);
-            txts.push_back(std::move(renderResultTxt));
+            RenderThumb::RGB3FromTexture(renderer, thumbOpts, rgb, chunkBuf);
+            txts.push_back(std::move(rgb));
             renderer.commit();
             
             // Add non-determinism
