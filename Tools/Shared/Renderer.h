@@ -59,17 +59,18 @@ public:
         }
         
         ~Resource() {
-            if (_state.renderer) _state.renderer->_recycle(_state.resource);
+            if (_state.renderer) _state.renderer->_recycle(_state.resource, _state.deferRecycle);
         }
         
         operator T() const { return _state.resource; }
         
     private:
-        Resource(Renderer& renderer, T resource) : _state{&renderer, resource} {}
+        Resource(Renderer& renderer, T resource, bool deferRecycle=false) : _state{&renderer, resource} {}
         
         struct {
             Renderer* renderer = nullptr;
             T resource = nil;
+            bool deferRecycle = false;
         } _state;
         
         friend class Renderer;
@@ -85,7 +86,14 @@ public:
     
     Renderer() {}
     Renderer(id<MTLDevice> dev, id<MTLLibrary> lib, id<MTLCommandQueue> commandQueue) :
-    dev(dev), _lib(lib), _commandQueue(commandQueue), _bufs(std::make_shared<_Bufs>()) {
+    dev(dev), _lib(lib), _commandQueue(commandQueue), _recycleBufs(std::make_shared<_RecycleBufs>()) {
+    }
+    
+    ~Renderer() {
+        // When the renderer is destroyed, make sure that there are no resources that were waiting to be recycled.
+        // If there are, we likely have a memory leak and our -addCompletedHandler: was never called.
+        auto lock = std::unique_lock(_recycleBufs->lock);
+        assert(!_recycleBufs->pending);
     }
     
     static size_t SamplesPerPixel(MTLPixelFormat fmt) {
@@ -426,7 +434,7 @@ public:
     ) {
         // Check if we already have a texture matching the given criteria
         TxtKey key(fmt, width, height, usage);
-        TxtQueue& txts = _txts[key];
+        TxtQueue& txts = _recycleTxts[key];
         // Check if we have a cached texture that matches our criteria
         if (!txts.empty()) {
             Txt txt = Txt(*this, txts.front());
@@ -457,7 +465,7 @@ public:
     }
     
     Buf bufferCreate(const void* data, size_t len, MTLStorageMode storageMode=MTLStorageModeShared) {
-        Buf buf = bufferCreate(len, storageMode);
+        Buf buf = _bufferCreate(len, storageMode, true);
         memcpy([buf contents], data, len);
         if (storageMode == MTLStorageModeManaged) {
             [buf didModifyRange:{0,len}];
@@ -466,47 +474,30 @@ public:
     }
     
     Buf bufferCreate(size_t len, MTLStorageMode storageMode=MTLStorageModeShared) {
-        // Return an existing buffer if its length is between len and 2*len,
-        // and its options match `opts`
-        auto lock = std::unique_lock(_bufs->lock);
-        for (auto it=_bufs->bufs.begin(); it!=_bufs->bufs.end(); it++) {
-            id<MTLBuffer> buf = *it;
-            const size_t bufLen = [buf length];
-            const MTLStorageMode bufStorageMode = [buf storageMode];
-            if (bufLen>=len && bufLen<=2*len && bufStorageMode==storageMode) {
-                Buf b(*this, buf);
-                _bufs->bufs.erase(it);
-                return b;
-            }
-        }
-        
-        id<MTLBuffer> buf = [dev newBufferWithLength:len options:(storageMode<<MTLResourceStorageModeShift)];
-        Assert(buf, return Buf());
-        return Buf(*this, buf);
+        return _bufferCreate(len, storageMode, false);
     }
     
     Buf bufferCreate(id<MTLBuffer> buf) {
         assert(buf);
-        return bufferCreate([buf length], [buf storageMode]);
+        return _bufferCreate([buf length], [buf storageMode], false);
     }
     
-//    // Write samples (from a raw pointer) to a texture
-//    template <typename T>
-//    void textureWrite(
-//        id<MTLTexture> txt,
-//        T* samples,
-//        size_t samplesPerPixel,
-//        size_t bytesPerSample=sizeof(T),
-//        uintmax_t maxValue=std::numeric_limits<T>::max()
-//    ) {
-//        // Create a Metal buffer, and copy the image contents into it
-//        const size_t w = [txt width];
-//        const size_t h = [txt height];
-//        const size_t len = w*h*samplesPerPixel*sizeof(T);
-//        Renderer::Buf buf = bufferCreate(len);
-//        memcpy([buf contents], samples, len);
-//        textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
-//    }
+    // Write samples (from a raw pointer) to a texture
+    template <typename T>
+    void textureWrite(
+        id<MTLTexture> txt,
+        T* samples,
+        size_t samplesPerPixel,
+        size_t bytesPerSample=sizeof(T),
+        uintmax_t maxValue=std::numeric_limits<T>::max()
+    ) {
+        // Create a Metal buffer from `samples`, and copy it into the texture
+        const size_t w = [txt width];
+        const size_t h = [txt height];
+        const size_t len = w*h*samplesPerPixel*sizeof(T);
+        const Renderer::Buf buf = bufferCreate(samples, len);
+        textureWrite(txt, buf, samplesPerPixel, bytesPerSample, maxValue);
+    }
     
     // Write samples (from a MTLBuffer) to a texture
     void textureWrite(
@@ -705,18 +696,22 @@ public:
     
     // _scheduleRecycle(): arrange for resources to be recycled after the MTLCommandBuffer is completed
     void _scheduleRecycle() {
-        __block std::list<Buf> pending;
+        __block std::list<id<MTLBuffer>> pending;
         {
-            auto lock = std::unique_lock(_bufs->lock);
-            pending = std::move(_bufs->pending);
+            auto lock = std::unique_lock(_recycleBufs->lock);
+            
+            // Nothing to do if there are no pending buffers
+            if (_recycleBufs->defer.empty()) return;
+            
+            _recycleBufs->pending++;
+            pending = std::move(_recycleBufs->defer);
         }
         
-        // Nothing to do if there are no pending buffers
-        if (pending.empty()) return;
-        
-        std::shared_ptr<_Bufs> bufs = _bufs;
+        std::shared_ptr<_RecycleBufs> bufs = _recycleBufs;
         [_cmdBuf addCompletedHandler:^(id<MTLCommandBuffer>) {
-            pending.clear();
+            auto lock = std::unique_lock(bufs->lock);
+            bufs->bufs.splice(bufs->bufs.end(), pending);
+            _recycleBufs->pending--;
         }];
     }
     
@@ -859,13 +854,37 @@ private:
         return (__bridge id)cs;
     }
     
-    void _recycle(id<MTLTexture> txt) {
-        _txts[txt].push(txt);
+    Buf _bufferCreate(size_t len, MTLStorageMode storageMode, bool deferRecycle) {
+        // Return an existing buffer if its length is between len and 2*len,
+        // and its options match `opts`
+        auto lock = std::unique_lock(_recycleBufs->lock);
+        for (auto it=_recycleBufs->bufs.begin(); it!=_recycleBufs->bufs.end(); it++) {
+            id<MTLBuffer> buf = *it;
+            const size_t bufLen = [buf length];
+            const MTLStorageMode bufStorageMode = [buf storageMode];
+            if (bufLen>=len && bufLen<=2*len && bufStorageMode==storageMode) {
+                Buf b(*this, buf);
+                _recycleBufs->bufs.erase(it);
+                return b;
+            }
+        }
+        
+        id<MTLBuffer> buf = [dev newBufferWithLength:len options:(storageMode<<MTLResourceStorageModeShift)];
+        Assert(buf, return Buf());
+        return Buf(*this, buf);
     }
     
-    void _recycle(id<MTLBuffer> buf) {
-        auto lock = std::unique_lock(_bufs->lock);
-        _bufs->bufs.push_back(buf);
+    void _recycle(id<MTLTexture> txt, bool deferRecycle) {
+        _recycleTxts[txt].push(txt);
+    }
+    
+    void _recycle(id<MTLBuffer> buf, bool deferRecycle) {
+        auto lock = std::unique_lock(_recycleBufs->lock);
+        if (deferRecycle) {
+            _recycleBufs->bufs.push_back(buf);
+        } else {
+            _recycleBufs->defer.push_back(buf);
+        }
     }
     
     id<MTLRenderPipelineState> _renderPipelineState(std::string_view vertName, std::string_view fragName, MTLPixelFormat fmt, BlendType blendType) {
@@ -991,18 +1010,19 @@ private:
     
     using TxtQueue = std::queue<id<MTLTexture>>;
     
-    struct _Bufs {
+    struct _RecycleBufs {
         std::mutex lock; // Protects this struct
         std::list<id<MTLBuffer>> bufs;
-        std::list<Buf> pending;
+        std::list<id<MTLBuffer>> defer;
+        uint32_t pending = 0;
     };
     
     id <MTLLibrary> _lib = nil;
     id <MTLCommandQueue> _commandQueue = nil;
     std::map<RenderPipelineStateKey,id<MTLRenderPipelineState>> _renderPipelineStates;
     std::map<std::string,id<MTLComputePipelineState>,std::less<>> _computePipelineStates;
-    std::map<TxtKey,TxtQueue> _txts;
-    std::shared_ptr<_Bufs> _bufs;
+    std::map<TxtKey,TxtQueue> _recycleTxts;
+    std::shared_ptr<_RecycleBufs> _recycleBufs;
     
     id<MTLCommandBuffer> _cmdBuf = nil;
     

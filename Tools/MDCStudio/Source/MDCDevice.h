@@ -539,12 +539,12 @@ private:
         // clobbering the data that the GPU was still using.
         #warning TODO: perf: in the future we could ensure that our `data` argument is mmap'd and
         #warning TODO: perf: use -newBufferWithBytesNoCopy: to avoid creating all these temporary buffers
-        std::vector<Renderer::Buf> bufs;
-        bufs.reserve(imgCount);
+//        std::vector<Renderer::Buf> bufs;
+//        bufs.reserve(imgCount);
         for (size_t idx=0; idx<imgCount; idx++) {
             const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
-            Renderer::Buf& imgDataBuf = bufs.emplace_back(renderer.bufferCreate(imgData+Img::PixelsOffset, Img::Thumb::PixelLen));
+//            Renderer::Buf& imgDataBuf = bufs.emplace_back(renderer.bufferCreate(imgData+Img::PixelsOffset, Img::Thumb::PixelLen));
             
             // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
             const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
@@ -584,7 +584,7 @@ private:
                     .cfaDesc = _CFADesc,
                     .width = Img::Thumb::PixelWidth,
                     .height = Img::Thumb::PixelHeight,
-                    .pixels = imgDataBuf,
+                    .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
                 };
                 
                 const Color<MDCTools::ColorSpace::Raw> illum(0.879884, 0.901580, 0.341031);
