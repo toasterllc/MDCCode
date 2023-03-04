@@ -10,12 +10,7 @@
 
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "Tools/Shared/ImagePipeline/ImagePipelineTypes.h"
-#import "Tools/Shared/ImagePipeline/Defringe.h"
-#import "Tools/Shared/ImagePipeline/ReconstructHighlights.h"
 #import "Tools/Shared/ImagePipeline/DebayerLMMSE.h"
-#import "Tools/Shared/ImagePipeline/LocalContrast.h"
-#import "Tools/Shared/ImagePipeline/Saturation.h"
-#import "Tools/Shared/ImagePipeline/EstimateIlluminantFFCC.h"
 
 using namespace MDCStudio;
 
@@ -351,13 +346,6 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
                 .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
             };
             
-            const Pipeline::Options pipelineOpts = {
-                .rawMode = false,
-                .illum = Color<MDCTools::ColorSpace::Raw>(1,1,1),
-                .colorMatrix = Mat<double,3,3>(1.,0.,0.,0.,1.,0.,0.,0.,1.),
-                .debayerLMMSE = { .applyGamma = true, },
-            };
-            
             Pipeline::Result renderResult;
             {
                 constexpr uint32_t DownsampleFactor = 1;
@@ -374,25 +362,8 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
                 }
                 
                 Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
-                Color<ColorSpace::Raw> illum;
-                Mat<double,3,3> colorMatrix;
-                
-                // If an illuminant was provided, use it.
-                // Otherwise, estimate it with FFCC.
-                if (pipelineOpts.illum) {
-                    illum = *pipelineOpts.illum;
-                } else {
-                    illum = EstimateIlluminantFFCC::Run(renderer, rawImage.cfaDesc, raw);
-                }
-                
-                // Reconstruct highlights
-                if (pipelineOpts.reconstructHighlights.en) {
-                    ReconstructHighlights::Run(renderer, rawImage.cfaDesc, illum.m, raw);
-                }
-                
-                if (pipelineOpts.defringe.en) {
-                    Defringe::Run(renderer, rawImage.cfaDesc, pipelineOpts.defringe.opts, raw);
-                }
+                Color<ColorSpace::Raw> illum(1,1,1);
+                Mat<double,3,3> colorMatrix(1.,0.,0.,0.,1.,0.,0.,0.,1.);
                 
                 // White balance
                 {
@@ -402,7 +373,7 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
                     renderer.render(raw,
                         renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
                             // Buffer args
-                            rawImage.cfaDesc,
+                            _CFADesc,
                             simdWB,
                             // Texture args
                             raw
@@ -417,7 +388,7 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
                     renderer.render(raw,
                         renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
                             // Buffer args
-                            _SimdForMat(*pipelineOpts.colorMatrix),
+                            _SimdForMat(colorMatrix),
                             // Texture args
                             raw
                         )
@@ -426,7 +397,7 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
                 
                 // LMMSE Debayer
                 {
-                    DebayerLMMSE::Run(renderer, rawImage.cfaDesc, pipelineOpts.debayerLMMSE.applyGamma, raw, rgb);
+                    DebayerLMMSE::Run(renderer, _CFADesc, false, raw, rgb);
                 }
                 
                 renderResult = Pipeline::Result{
