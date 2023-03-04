@@ -6,6 +6,17 @@
 #import "ImageGridView/ImageGridView.h"
 #import "ImageView/ImageView.h"
 #import "FixedScrollView.h"
+
+
+#import "Tools/Shared/ImagePipeline/ImagePipeline.h"
+#import "Tools/Shared/ImagePipeline/ImagePipelineTypes.h"
+#import "Tools/Shared/ImagePipeline/Defringe.h"
+#import "Tools/Shared/ImagePipeline/ReconstructHighlights.h"
+#import "Tools/Shared/ImagePipeline/DebayerLMMSE.h"
+#import "Tools/Shared/ImagePipeline/LocalContrast.h"
+#import "Tools/Shared/ImagePipeline/Saturation.h"
+#import "Tools/Shared/ImagePipeline/EstimateIlluminantFFCC.h"
+
 using namespace MDCStudio;
 
 @interface Document () <NSSplitViewDelegate, SourceListViewDelegate, ImageGridViewDelegate, ImageViewDelegate>
@@ -281,6 +292,23 @@ static bool _ChecksumValid(const void* data, Img::Size size) {
     return true;
 }
 
+
+
+static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {
+    return {
+        simd::float3{(float)m[0], (float)m[1], (float)m[2]},
+    };
+}
+
+static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
+    return {
+        simd::float3{(float)m.at(0,0), (float)m.at(1,0), (float)m.at(2,0)},
+        simd::float3{(float)m.at(0,1), (float)m.at(1,1), (float)m.at(2,1)},
+        simd::float3{(float)m.at(0,2), (float)m.at(1,2), (float)m.at(2,2)},
+    };
+}
+
+
 - (void)_addFakeImages:(ImageLibraryPtr)imgLib {
     using namespace MDCTools;
     using namespace MDCTools::ImagePipeline;
@@ -330,7 +358,84 @@ static bool _ChecksumValid(const void* data, Img::Size size) {
                 .debayerLMMSE = { .applyGamma = true, },
             };
             
-            Pipeline::Result renderResult = Pipeline::RunThumb(renderer, rawImage, pipelineOpts);
+            Pipeline::Result renderResult;
+            {
+                constexpr uint32_t DownsampleFactor = 1;
+                const size_t w = rawImage.width/DownsampleFactor;
+                const size_t h = rawImage.height/DownsampleFactor;
+                
+                Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
+                
+                // Load `raw`
+                {
+                    constexpr size_t SamplesPerPixel = 1;
+                    constexpr size_t BytesPerSample = sizeof(*rawImage.pixels);
+                    renderer.textureWrite(raw, rawImage.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
+                }
+                
+                Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
+                Color<ColorSpace::Raw> illum;
+                Mat<double,3,3> colorMatrix;
+                
+                // If an illuminant was provided, use it.
+                // Otherwise, estimate it with FFCC.
+                if (pipelineOpts.illum) {
+                    illum = *pipelineOpts.illum;
+                } else {
+                    illum = EstimateIlluminantFFCC::Run(renderer, rawImage.cfaDesc, raw);
+                }
+                
+                // Reconstruct highlights
+                if (pipelineOpts.reconstructHighlights.en) {
+                    ReconstructHighlights::Run(renderer, rawImage.cfaDesc, illum.m, raw);
+                }
+                
+                if (pipelineOpts.defringe.en) {
+                    Defringe::Run(renderer, rawImage.cfaDesc, pipelineOpts.defringe.opts, raw);
+                }
+                
+                // White balance
+                {
+                    const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
+                    const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+                    const simd::float3 simdWB = _SimdForMat(wb);
+                    renderer.render(raw,
+                        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
+                            // Buffer args
+                            rawImage.cfaDesc,
+                            simdWB,
+                            // Texture args
+                            raw
+                        )
+                    );
+                }
+                
+                // Camera raw -> ProPhotoRGB
+                {
+                    // If a color matrix was provided, use it.
+                    // Otherwise estimate it by interpolating between known color matrices.
+                    renderer.render(raw,
+                        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
+                            // Buffer args
+                            _SimdForMat(*pipelineOpts.colorMatrix),
+                            // Texture args
+                            raw
+                        )
+                    );
+                }
+                
+                // LMMSE Debayer
+                {
+                    DebayerLMMSE::Run(renderer, rawImage.cfaDesc, pipelineOpts.debayerLMMSE.applyGamma, raw, rgb);
+                }
+                
+                renderResult = Pipeline::Result{
+                    .txt = std::move(rgb),
+                    .illum = illum,
+                    .colorMatrix = colorMatrix,
+                };
+            }
+            
             const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
             
             constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
