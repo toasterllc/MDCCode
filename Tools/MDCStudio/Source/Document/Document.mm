@@ -338,77 +338,20 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
         // Render the thumbnail into rec.thumb
         {
             const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
+            const ImagePixel* rawImagePixels = (ImagePixel*)(imgData+Img::PixelsOffset);
             
-            Pipeline::RawImage rawImage = {
-                .cfaDesc = _CFADesc,
-                .width = Img::Thumb::PixelWidth,
-                .height = Img::Thumb::PixelHeight,
-                .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
-            };
-            
-            Pipeline::Result renderResult;
+            MDCTools::Renderer::Txt renderResultTxt;
             {
-                constexpr uint32_t DownsampleFactor = 1;
-                const size_t w = rawImage.width/DownsampleFactor;
-                const size_t h = rawImage.height/DownsampleFactor;
+                Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
+                Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
+                renderer.textureWrite(raw, rawImagePixels, 1, sizeof(*rawImagePixels), ImagePixelMax);
                 
-                Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
+                DebayerLMMSE::Run(renderer, _CFADesc, false, raw, rgb);
                 
-                // Load `raw`
-                {
-                    constexpr size_t SamplesPerPixel = 1;
-                    constexpr size_t BytesPerSample = sizeof(*rawImage.pixels);
-                    renderer.textureWrite(raw, rawImage.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
-                }
-                
-                Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
-                Color<ColorSpace::Raw> illum(1,1,1);
-                Mat<double,3,3> colorMatrix(1.,0.,0.,0.,1.,0.,0.,0.,1.);
-                
-                // White balance
-                {
-                    const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
-                    const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
-                    const simd::float3 simdWB = _SimdForMat(wb);
-                    renderer.render(raw,
-                        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
-                            // Buffer args
-                            _CFADesc,
-                            simdWB,
-                            // Texture args
-                            raw
-                        )
-                    );
-                }
-                
-                // Camera raw -> ProPhotoRGB
-                {
-                    // If a color matrix was provided, use it.
-                    // Otherwise estimate it by interpolating between known color matrices.
-                    renderer.render(raw,
-                        renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
-                            // Buffer args
-                            _SimdForMat(colorMatrix),
-                            // Texture args
-                            raw
-                        )
-                    );
-                }
-                
-                // LMMSE Debayer
-                {
-                    DebayerLMMSE::Run(renderer, _CFADesc, false, raw, rgb);
-                }
-                
-                renderResult = Pipeline::Result{
-                    .txt = std::move(rgb),
-                    .illum = illum,
-                    .colorMatrix = colorMatrix,
-                };
+                renderResultTxt = std::move(rgb);
             }
             
             const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
-            
             constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
             id<MTLBuffer> chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
             
@@ -418,15 +361,12 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
                 .dataOff = thumbDataOff,
             };
             
-            RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, chunkBuf);
-            txts.push_back(std::move(renderResult.txt));
+            RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResultTxt, chunkBuf);
+            txts.push_back(std::move(renderResultTxt));
             renderer.commit();
             
             // Add non-determinism
             usleep(arc4random_uniform(2500));
-            
-//            const size_t lenMin = std::min(sizeof(rec.thumb.data), (size_t)Img::Thumb::PixelLen);
-//            memcpy(rec.thumb.data, imgData+Img::PixelsOffset, lenMin);
         }
         
         deviceImgIdLast = imgHeader.id;
