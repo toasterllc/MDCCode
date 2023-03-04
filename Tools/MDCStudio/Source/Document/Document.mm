@@ -325,7 +325,6 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
     
     Img::Id deviceImgIdLast = 0;
     std::vector<Renderer::Txt> txts;
-    txts.reserve(imgCount);
     for (size_t idx=0; idx<imgCount; idx++) {
         const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
         const Img::Header& imgHeader = *(const Img::Header*)imgData;
@@ -337,7 +336,6 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
         
         // Render the thumbnail into rec.thumb
         {
-            const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
             const ImagePixel* rawImagePixels = (ImagePixel*)(imgData+Img::PixelsOffset);
             
             Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, Img::Thumb::PixelWidth, Img::Thumb::PixelHeight);
@@ -345,6 +343,7 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
             renderer.textureWrite(raw, rawImagePixels, 1, sizeof(*rawImagePixels), ImagePixelMax);
             renderer.copy(raw, rgb);
             
+            const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
             const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
             constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
             id<MTLBuffer> chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
@@ -360,16 +359,11 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
                 )
             );
             
-            
-            
-            
-            
-            
-            
-            
-            
-            txts.push_back(std::move(rgb));
+//            NSLog(@"%@", @([renderer.cmdBuf() retainedReferences]));
+//            [renderer.cmdBuf() enqueue];
             renderer.commit();
+            txts.push_back(std::move(raw));
+            txts.push_back(std::move(rgb));
             
             // Add non-determinism
             usleep(arc4random_uniform(1000));
