@@ -531,20 +531,11 @@ private:
         const ImageLibrary::Chunk* chunkPrev = nullptr;
         id<MTLBuffer> chunkBuf = nil;
         
-        // bufs: maintains references to the Renderer::Buf instances that contain the thumbnail data.
-        // We have to keep these around to prevent them from being reused until Renderer's
-        // MTLCommandBuffer is completed (via renderer.commitAndWait()). This is because we copy into
-        // these buffers using memcpy() and don't know when the GPU is done consuming the data in them,
-        // so if we were to reuse the buffer before the MTLCommandBuffer was completed, we end up
-        // clobbering the data that the GPU was still using.
         #warning TODO: perf: in the future we could ensure that our `data` argument is mmap'd and
-        #warning TODO: perf: use -newBufferWithBytesNoCopy: to avoid creating all these temporary buffers
-//        std::vector<Renderer::Buf> bufs;
-//        bufs.reserve(imgCount);
+        #warning TODO: perf: use -newBufferWithBytesNoCopy: to avoid creating a bunch of temporary buffers
         for (size_t idx=0; idx<imgCount; idx++) {
             const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
-//            Renderer::Buf& imgDataBuf = bufs.emplace_back(renderer.bufferCreate(imgData+Img::PixelsOffset, Img::Thumb::PixelLen));
             
             // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
             const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
