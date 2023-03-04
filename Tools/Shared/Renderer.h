@@ -75,6 +75,7 @@ public:
         } _state;
         
         void _recycle() {
+//            printf("RECYCLE\n");
             if (_state.renderer) _state.renderer->_recycle(_state.resource);
             _state = {};
         }

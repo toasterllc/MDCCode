@@ -530,6 +530,8 @@ private:
         Img::Id deviceImgIdLast = 0;
         const ImageLibrary::Chunk* chunkPrev = nullptr;
         id<MTLBuffer> chunkBuf = nil;
+        std::vector<Renderer::Txt> txts;
+        txts.reserve(imgCount);
         for (size_t idx=0; idx<imgCount; idx++) {
             const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
@@ -605,11 +607,15 @@ private:
                 
                 RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, chunkBuf);
                 
-                // We have to commit here because our Pipeline::Result gets destroyed after each iteration,
-                // which returns our textures to the pool, allowing them to be reused by the next iteration.
-                // If we didn't commit, only the last iteration would take effect.
-                #warning TODO: for perf, try keeping the Pipeline::Result.txt alive in a vector until we call commitAndWait(), below. Does that speed us up?
+                txts.push_back(std::move(renderResult.txt));
+                
                 renderer.commit();
+                
+//                // We have to commit here because our Pipeline::Result gets destroyed after each iteration,
+//                // which returns our textures to the pool, allowing them to be reused by the next iteration.
+//                // If we didn't commit, only the last iteration would take effect.
+//                #warning TODO: for perf, try keeping the Pipeline::Result.txt alive in a vector until we call commitAndWait(), below. Does that speed us up?
+//                renderer.commitAndWait();
                 
                 // Populate the illuminant (ImageRecord.info.illumEst)
                 rec.info.illumEst[0] = renderResult.illum[0];
