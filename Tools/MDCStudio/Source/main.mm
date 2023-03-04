@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
 #import "Toastbox/Mmap.h"
+#import <filesystem>
 
 //void CreateThumbBuf() {
 //    using ThumbFile = Mmap<uint8_t>;
@@ -17,6 +18,10 @@
 int main(int argc, const char* argv[]) {
     
 //    CreateThumbBuf();
+    
+    
+    
+    std::filesystem::remove_all("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio");
     
     return NSApplicationMain(argc, argv);
 }

@@ -289,7 +289,6 @@ static bool _ChecksumValid(const void* data, Img::Size size) {
     Mmap mmap("/Users/dave/Desktop/images.bin");
     const uint8_t* data = mmap.data();
     const size_t imgCount = 31;
-    SD::Block block = 0;
     
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
@@ -302,8 +301,6 @@ static bool _ChecksumValid(const void* data, Img::Size size) {
     }
     
     Img::Id deviceImgIdLast = 0;
-    const ImageLibrary::Chunk* chunkPrev = nullptr;
-    id<MTLBuffer> chunkBuf = nil;
     std::vector<Renderer::Txt> txts;
     txts.reserve(imgCount);
     for (size_t idx=0; idx<imgCount; idx++) {
@@ -313,98 +310,44 @@ static bool _ChecksumValid(const void* data, Img::Size size) {
         const auto recordRefIter = imgLib->reservedBegin()+idx;
         ImageRecord& rec = **recordRefIter;
         
-        // Validate thumbnail checksum
-        if (_ChecksumValid(imgData, Img::Size::Thumb)) {
-            printf("Checksum valid (size: thumb)\n");
-        } else {
-            printf("Invalid checksum\n");
-//                throw Toastbox::RuntimeError("invalid checksum");
-//                abort();
-//                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
-        }
-        
-        // Populate ImageInfo fields
-        {
-            rec.info.id              = imgHeader.id;
-            rec.info.addr            = block;
-            
-            rec.info.timestamp       = imgHeader.timestamp;
-            
-            rec.info.imageWidth      = imgHeader.imageWidth;
-            rec.info.imageHeight     = imgHeader.imageHeight;
-            
-            rec.info.coarseIntTime   = imgHeader.coarseIntTime;
-            rec.info.analogGain      = imgHeader.analogGain;
-            
-            block += ImgSD::Full::ImageBlockCount;
-        }
+        rec.info.id = imgHeader.id;
         
         // Render the thumbnail into rec.thumb
         {
-            const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
+//            const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
+//            
+//            Pipeline::RawImage rawImage = {
+//                .cfaDesc = _CFADesc,
+//                .width = Img::Thumb::PixelWidth,
+//                .height = Img::Thumb::PixelHeight,
+//                .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
+//            };
+//            
+//            const Pipeline::Options pipelineOpts = {
+//                .rawMode = false,
+//                .illum = Color<MDCTools::ColorSpace::Raw>(1,1,1),
+//                .colorMatrix = Mat<double,3,3>(1.,0.,0.,0.,1.,0.,0.,0.,1.),
+//                .debayerLMMSE = { .applyGamma = true, },
+//            };
+//            
+//            Pipeline::Result renderResult = Pipeline::RunThumb(renderer, rawImage, pipelineOpts);
+//            const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
+//            
+//            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
+//            id<MTLBuffer> chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+//            
+//            const RenderThumb::Options thumbOpts = {
+//                .thumbWidth = ImageThumb::ThumbWidth,
+//                .thumbHeight = ImageThumb::ThumbHeight,
+//                .dataOff = thumbDataOff,
+//            };
+//            
+//            RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, chunkBuf);
+//            txts.push_back(std::move(renderResult.txt));
+//            renderer.commit();
             
-            Pipeline::RawImage rawImage = {
-                .cfaDesc = _CFADesc,
-                .width = Img::Thumb::PixelWidth,
-                .height = Img::Thumb::PixelHeight,
-                .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
-            };
-            
-            const Color<MDCTools::ColorSpace::Raw> illum(0.879884, 0.901580, 0.341031);
-            const Mat<double,3,3> colorMatrix(
-                +0.626076, +0.128755, +0.245169,
-                -0.396581, +1.438671, -0.042090,
-                -0.195309, -0.784350, +1.979659
-            );
-            
-            const Pipeline::Options pipelineOpts = {
-                .rawMode = false,
-                .illum = illum,
-                .colorMatrix = colorMatrix,
-//                    .reconstructHighlights  = { .en = true, },
-                .debayerLMMSE           = { .applyGamma = true, },
-            };
-            
-            Pipeline::Result renderResult = Pipeline::RunThumb(renderer, rawImage, pipelineOpts);
-            const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
-            
-            if (&chunk != chunkPrev) {
-                constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-                chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
-            }
-            
-            const RenderThumb::Options thumbOpts = {
-                .thumbWidth = ImageThumb::ThumbWidth,
-                .thumbHeight = ImageThumb::ThumbHeight,
-                .dataOff = thumbDataOff,
-            };
-            
-            RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, chunkBuf);
-            
-            txts.push_back(std::move(renderResult.txt));
-            
-            renderer.commit();
-            
-//                // We have to commit here because our Pipeline::Result gets destroyed after each iteration,
-//                // which returns our textures to the pool, allowing them to be reused by the next iteration.
-//                // If we didn't commit, only the last iteration would take effect.
-//                #warning TODO: for perf, try keeping the Pipeline::Result.txt alive in a vector until we call commitAndWait(), below. Does that speed us up?
-//                renderer.commitAndWait();
-            
-            // Populate the illuminant (ImageRecord.info.illumEst)
-            rec.info.illumEst[0] = renderResult.illum[0];
-            rec.info.illumEst[1] = renderResult.illum[1];
-            rec.info.illumEst[2] = renderResult.illum[2];
-            
-            chunkPrev = &chunk;
-        }
-        
-        // Populate ImageOptions fields
-        {
-            rec.options = {};
-            // Set image white balance options
-            const simd::float3 illum = { rec.info.illumEst[0], rec.info.illumEst[1], rec.info.illumEst[2] };
-            ImageWhiteBalanceSetAuto(rec.options.whiteBalance, illum);
+            const size_t lenMin = std::min(sizeof(rec.thumb.data), (size_t)Img::Thumb::PixelLen);
+            memcpy(rec.thumb.data, imgData+Img::PixelsOffset, lenMin);
         }
         
         deviceImgIdLast = imgHeader.id;
@@ -417,8 +360,6 @@ static bool _ChecksumValid(const void* data, Img::Size size) {
         auto lock = std::unique_lock(*imgLib);
         // Add the records that we previously reserved
         imgLib->add();
-        // Update the device's image id 'end' == last image id that we've observed from the device +1
-        imgLib->deviceImgIdEnd(deviceImgIdLast+1);
     }
 }
 
