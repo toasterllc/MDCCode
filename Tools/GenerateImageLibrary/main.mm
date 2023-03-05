@@ -112,24 +112,30 @@ int main(int argc, const char* argv[]) {
             imgLib.add();
             auto it = imgLib.begin()+beginOff;
             
-            printf("Writing %ju thumbnails...\n", (uintmax_t)txtCount);
-            
-            // Generate thumbnails in the necessary format (RGBA)
-            for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
-                id<MTLTexture> txtSrc = txtsSrc[txtIdx];
-                Renderer::Txt& txtDst = txtsDst.at(txtIdx);
-                renderer.render(txtDst,
-                    renderer.FragmentShader("SampleTexture",
-                        // Buffer args
-                        // Texture args
-                        txtSrc
-                    )
-                );
-                #warning TODO: figure out if we need this
-                renderer.sync(txtDst);
+            {
+                printf("Generating RGBA thumbnails...\n", (uintmax_t)txtCount);
+                
+                auto startTime = std::chrono::steady_clock::now();
+                // Generate thumbnails in the necessary format (RGBA)
+                for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
+                    id<MTLTexture> txtSrc = txtsSrc[txtIdx];
+                    Renderer::Txt& txtDst = txtsDst.at(txtIdx);
+                    renderer.render(txtDst,
+                        renderer.FragmentShader("SampleTexture",
+                            // Buffer args
+                            // Texture args
+                            txtSrc
+                        )
+                    );
+                    #warning TODO: figure out if we need this
+                    renderer.sync(txtDst);
+                }
+                
+                renderer.commitAndWait();
+                
+                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+                printf("-> took %ju ms\n", (uintmax_t)durationMs);
             }
-            
-            renderer.commitAndWait();
             
             // Encode thumbnails with BC7
             constexpr size_t BytesPerRow = ImageThumb::ThumbWidth*4;
@@ -174,10 +180,6 @@ int main(int argc, const char* argv[]) {
             rp.m_rdo_max_threads = 1;
             
             rdo_bc::rdo_bc_encoder encoder;
-//            bool br = encoder.init(srcImg, rp);
-//            assert(br);
-            
-            bool initDone = false;
             
             for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
                 Renderer::Txt& txtDst = txtsDst.at(txtIdx);
@@ -189,25 +191,18 @@ int main(int argc, const char* argv[]) {
                 [txtDst getBytes:srcImg.get_pixels().data() bytesPerRow:BytesPerRow
                     fromRegion:MTLRegionMake2D(0, 0, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight) mipmapLevel:0];
                 
-                if (!initDone) {
-                    bool br = encoder.init(srcImg, rp);
-                    assert(br);
-                    initDone = true;
-                } else {
-                    encoder.clear();
-                }
-                
-                encoder.init_source_image();
+                bool br = encoder.init(srcImg, rp);
+                assert(br);
                 
 //                auto startTime = std::chrono::steady_clock::now();
-                bool br = encoder.encode();
+                br = encoder.encode();
                 assert(br);
                 
-                NSString*const path = [NSString stringWithFormat:@"/Users/dave/Desktop/dds/debug-%zu.dds", txtIdx];
-                static constexpr size_t pixel_format_bpp = 8;
-                br = utils::save_dds([path UTF8String], encoder.get_orig_width(), encoder.get_orig_height(), encoder.get_blocks(),
-                    pixel_format_bpp, rp.m_dxgi_format, rp.m_perceptual, false);
-                assert(br);
+//                NSString*const path = [NSString stringWithFormat:@"/Users/dave/Desktop/dds/debug-%zu.dds", txtIdx];
+//                static constexpr size_t pixel_format_bpp = 8;
+//                br = utils::save_dds([path UTF8String], encoder.get_orig_width(), encoder.get_orig_height(), encoder.get_blocks(),
+//                    pixel_format_bpp, rp.m_dxgi_format, rp.m_perceptual, false);
+//                assert(br);
                 
                 
 //                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
