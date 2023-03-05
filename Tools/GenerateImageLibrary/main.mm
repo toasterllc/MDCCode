@@ -5,6 +5,7 @@
 #import "Renderer.h"
 #import "Toastbox/Mmap.h"
 #import "ImageLibrary.h"
+#import "rdo_bc_encoder.h"
 namespace fs = std::filesystem;
 using namespace MDCStudio;
 using namespace MDCTools;
@@ -112,24 +113,11 @@ int main(int argc, const char* argv[]) {
             auto it = imgLib.begin()+beginOff;
             
             printf("Writing %ju thumbnails...\n", (uintmax_t)txtCount);
+            
+            // Generate thumbnails in the necessary format (RGBA)
             for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
                 id<MTLTexture> txtSrc = txtsSrc[txtIdx];
                 Renderer::Txt& txtDst = txtsDst.at(txtIdx);
-                ImageRecord& rec = *(*it);
-//                ImageThumb& thumb = rec.thumb;
-                
-                rec.info.id = imageId;
-                imageId++;
-                
-//                const uintptr_t start = _FloorToPageSize((uintptr_t)thumb.data);
-//                const uintptr_t end = _CeilToPageSize((uintptr_t)(thumb.data)+sizeof(ImageLibrary::Record));
-//                const size_t len = end-start;
-//                const size_t off = ((uintptr_t)thumb.data + offsetof(ImageLibrary::Record, thumb.data)) - start;
-//                
-//                constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-//                id<MTLBuffer> thumbBuf = [dev newBufferWithBytesNoCopy:(void*)start length:len options:BufOpts deallocator:nil];
-//                assert(thumbBuf);
-                
                 renderer.render(txtDst,
                     renderer.FragmentShader("SampleTexture",
                         // Buffer args
@@ -137,29 +125,110 @@ int main(int argc, const char* argv[]) {
                         txtSrc
                     )
                 );
-                
-//                renderer.commitAndWait();
-//                
-//                renderer.debugShowTexture(txtDst);
-//                exit(0);
-                
-//                renderer.render(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
-//                    renderer.FragmentShader("RenderThumb",
-//                        // Buffer args
-//                        (uint32_t)off,
-//                        (uint32_t)ImageThumb::ThumbWidth,
-//                        thumbBuf,
-//                        // Texture args
-//                        txt
-//                    )
-//                );
-                
-                it++;
+                #warning TODO: figure out if we need this
+                renderer.sync(txtDst);
             }
             
-//            sleep(2);
-            
             renderer.commitAndWait();
+            
+            // Encode thumbnails with BC7
+            constexpr size_t BytesPerRow = ImageThumb::ThumbWidth*4;
+            constexpr size_t BytesPerImage = ImageThumb::ThumbWidth*ImageThumb::ThumbHeight*4;
+            utils::image_u8 srcImg;
+            srcImg.init(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight);
+            
+            rdo_bc::rdo_bc_params rp;
+            rp.m_bc7_uber_level = 0;
+            rp.m_bc7enc_max_partitions_to_scan = 64;
+            rp.m_perceptual = false;
+            rp.m_y_flip = false;
+            rp.m_bc45_channel0 = 0;
+            rp.m_bc45_channel1 = 1;
+            rp.m_bc1_mode = rgbcx::bc1_approx_mode::cBC1Ideal;
+            rp.m_use_bc1_3color_mode = true;
+            rp.m_use_bc1_3color_mode_for_black = true;
+            rp.m_bc1_quality_level = 18;
+            rp.m_dxgi_format = DXGI_FORMAT_BC7_UNORM;
+            rp.m_rdo_lambda = 0;
+            rp.m_rdo_debug_output = false;
+            rp.m_rdo_smooth_block_error_scale = 15;
+            rp.m_custom_rdo_smooth_block_error_scale = false;
+            rp.m_lookback_window_size = 128;
+            rp.m_custom_lookback_window_size = false;
+            rp.m_bc7enc_rdo_bc7_quant_mode6_endpoints = true;
+            rp.m_bc7enc_rdo_bc7_weight_modes = true;
+            rp.m_bc7enc_rdo_bc7_weight_low_frequency_partitions = true;
+            rp.m_bc7enc_rdo_bc7_pbit1_weighting = true;
+            rp.m_rdo_max_smooth_block_std_dev = 18;
+            rp.m_rdo_allow_relative_movement = false;
+            rp.m_rdo_try_2_matches = true;
+            rp.m_rdo_ultrasmooth_block_handling = true;
+            rp.m_use_hq_bc345 = true;
+            rp.m_bc345_search_rad = 5;
+            rp.m_bc345_mode_mask = 3;
+            rp.m_bc7enc_mode6_only = false;
+            rp.m_rdo_multithreading = true;
+            rp.m_bc7enc_reduce_entropy = false;
+            rp.m_use_bc7e = true;
+            rp.m_status_output = false;
+            rp.m_rdo_max_threads = 1;
+            
+            rdo_bc::rdo_bc_encoder encoder;
+//            bool br = encoder.init(srcImg, rp);
+//            assert(br);
+            
+            bool initDone = false;
+            
+            for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
+                Renderer::Txt& txtDst = txtsDst.at(txtIdx);
+                
+//                renderer.debugShowTexture(txtDst);
+//                
+//                renderer.sync(txtDst);
+//                auto startTime = std::chrono::steady_clock::now();
+                [txtDst getBytes:srcImg.get_pixels().data() bytesPerRow:BytesPerRow
+                    fromRegion:MTLRegionMake2D(0, 0, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight) mipmapLevel:0];
+                
+                if (!initDone) {
+                    bool br = encoder.init(srcImg, rp);
+                    assert(br);
+                    initDone = true;
+                } else {
+                    encoder.clear();
+                }
+                
+                encoder.init_source_image();
+                
+//                auto startTime = std::chrono::steady_clock::now();
+                bool br = encoder.encode();
+                assert(br);
+                
+                NSString*const path = [NSString stringWithFormat:@"/Users/dave/Desktop/dds/debug-%zu.dds", txtIdx];
+                static constexpr size_t pixel_format_bpp = 8;
+                br = utils::save_dds([path UTF8String], encoder.get_orig_width(), encoder.get_orig_height(), encoder.get_blocks(),
+                    pixel_format_bpp, rp.m_dxgi_format, rp.m_perceptual, false);
+                assert(br);
+                
+                
+//                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+//                printf("Encode took %ju ms\n", (uintmax_t)durationMs);
+                
+                
+//                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+//                printf("Iter took %ju ms\n", (uintmax_t)durationMs);
+                
+                
+//                
+//                id<MTLTexture> txtSrc = txtsSrc[txtIdx];
+//                Renderer::Txt& txtDst = txtsDst.at(txtIdx);
+//                renderer.render(txtDst,
+//                    renderer.FragmentShader("SampleTexture",
+//                        // Buffer args
+//                        // Texture args
+//                        txtSrc
+//                    )
+//                );
+            }
             
             exit(0);
         }

@@ -1,0 +1,3 @@
+/Users/dave/Desktop/BC7Test/bc7enc_rdo/CMakeFiles/rebuild_cache.dir
+/Users/dave/Desktop/BC7Test/bc7enc_rdo/CMakeFiles/edit_cache.dir
+/Users/dave/Desktop/BC7Test/bc7enc_rdo/CMakeFiles/bc7enc.dir
