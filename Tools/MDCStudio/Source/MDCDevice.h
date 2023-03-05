@@ -578,17 +578,17 @@ private:
                     .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
                 };
                 
-                const Color<MDCTools::ColorSpace::Raw> illum(0.879884, 0.901580, 0.341031);
-                const Mat<double,3,3> colorMatrix(
-                    +0.626076, +0.128755, +0.245169,
-                    -0.396581, +1.438671, -0.042090,
-                    -0.195309, -0.784350, +1.979659
-                );
+//                const Color<MDCTools::ColorSpace::Raw> illum(0.879884, 0.901580, 0.341031);
+//                const Mat<double,3,3> colorMatrix(
+//                    +0.626076, +0.128755, +0.245169,
+//                    -0.396581, +1.438671, -0.042090,
+//                    -0.195309, -0.784350, +1.979659
+//                );
                 
                 const Pipeline::Options pipelineOpts = {
                     .rawMode = false,
-                    .illum = illum,
-                    .colorMatrix = colorMatrix,
+//                    .illum = illum,
+//                    .colorMatrix = colorMatrix,
 //                    .reconstructHighlights  = { .en = true, },
                     .debayerLMMSE           = { .applyGamma = true, },
                 };

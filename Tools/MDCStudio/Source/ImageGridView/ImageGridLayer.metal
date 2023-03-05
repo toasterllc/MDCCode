@@ -333,8 +333,8 @@ float3 ColorMatrixApply(float3x3 colorMatrix, float3 c) {
 }
 
 static float3 ColorAdjust(device const ImageOptions& opts, float3 c) {
-    // ProPhotoRGB.D50 <- CamRaw.D50
-    
+//    // ProPhotoRGB.D50 <- CamRaw.D50
+//    
 //    const float3 illum(0.879884, 0.901580, 0.341031);
 //    const float3x3 colorMatrix(transpose(float3x3(
 //        +0.626076, +0.128755, +0.245169,
@@ -342,15 +342,15 @@ static float3 ColorAdjust(device const ImageOptions& opts, float3 c) {
 //        -0.195309, -0.784350, +1.979659
 //    )));
 
-//    const float3 illum(opts.whiteBalance.illum[0], opts.whiteBalance.illum[1], opts.whiteBalance.illum[2]);
-//    device auto& m = opts.whiteBalance.colorMatrix;
-//    const float3x3 colorMatrix(
-//        m[0][0], m[0][1], m[0][2],
-//        m[1][0], m[1][1], m[1][2],
-//        m[2][0], m[2][1], m[2][2]
-//    );
-//    c = WhiteBalance(illum, c);
-//    c = ColorMatrixApply(colorMatrix, c);
+    const float3 illum(opts.whiteBalance.illum[0], opts.whiteBalance.illum[1], opts.whiteBalance.illum[2]);
+    device auto& m = opts.whiteBalance.colorMatrix;
+    const float3x3 colorMatrix(
+        m[0][0], m[0][1], m[0][2],
+        m[1][0], m[1][1], m[1][2],
+        m[2][0], m[2][1], m[2][2]
+    );
+    c = WhiteBalance(illum, c);
+    c = ColorMatrixApply(colorMatrix, c);
     // XYZ.D50 <- ProPhotoRGB.D50
     c = XYZD50FromProPhotoRGBD50(c);
     // XYY.D50 <- XYZ.D50

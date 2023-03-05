@@ -455,48 +455,62 @@ Pipeline::Result Pipeline::RunThumb(MDCTools::Renderer& renderer, const RawImage
     
     
     
-    // White balance
-    {
-        const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
-        const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
-        const simd::float3 simdWB = _SimdForMat(wb);
-        renderer.render(raw,
-            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
-                // Buffer args
-                rawImg.cfaDesc,
-                simdWB,
-                // Texture args
-                raw
-            )
-        );
-    }
-    
-    
-    // Camera raw -> ProPhotoRGB
-    {
-        // If a color matrix was provided, use it.
-        // Otherwise estimate it by interpolating between known color matrices.
-        colorMatrix = (opts.colorMatrix ? *opts.colorMatrix : _CCMForIlluminant(illum).m);
-        
-        renderer.render(raw,
-            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
-                // Buffer args
-                _SimdForMat(colorMatrix),
-                // Texture args
-                raw
-            )
-        );
-    }
-    
-    
-    
-    
-    
+//    // White balance
+//    {
+//        const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
+//        const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+//        const simd::float3 simdWB = _SimdForMat(wb);
+//        renderer.render(raw,
+//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
+//                // Buffer args
+//                rawImg.cfaDesc,
+//                simdWB,
+//                // Texture args
+//                raw
+//            )
+//        );
+//    }
     
     // LMMSE Debayer
     {
         DebayerLMMSE::Run(renderer, rawImg.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
     }
+    
+    
+    
+    
+//    // White balance
+//    {
+//        const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
+//        const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+//        const simd::float3 simdWB = _SimdForMat(wb);
+//        renderer.render(rgb,
+//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalanceRGB",
+//                // Buffer args
+//                simdWB,
+//                // Texture args
+//                rgb
+//            )
+//        );
+//    }
+    
+    
+    
+//    // Camera raw -> ProPhotoRGB
+//    {
+//        // If a color matrix was provided, use it.
+//        // Otherwise estimate it by interpolating between known color matrices.
+//        colorMatrix = (opts.colorMatrix ? *opts.colorMatrix : _CCMForIlluminant(illum).m);
+//        
+//        renderer.render(rgb,
+//            renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
+//                // Buffer args
+//                _SimdForMat(colorMatrix),
+//                // Texture args
+//                rgb
+//            )
+//        );
+//    }
     
     return Result{
         .txt = std::move(rgb),
