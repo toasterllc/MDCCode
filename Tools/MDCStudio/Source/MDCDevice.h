@@ -532,7 +532,7 @@ private:
         id<MTLBuffer> chunkBuf = nil;
         
         #warning TODO: perf: in the future we could ensure that our `data` argument is mmap'd and
-        #warning TODO: perf: use -newBufferWithBytesNoCopy: to avoid creating a bunch of temporary buffers
+        #warning             use -newBufferWithBytesNoCopy: to avoid creating a bunch of temporary buffers
         for (size_t idx=0; idx<imgCount; idx++) {
             const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
