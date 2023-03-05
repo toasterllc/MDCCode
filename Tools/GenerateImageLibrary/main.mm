@@ -5,7 +5,7 @@
 #import "Renderer.h"
 #import "Toastbox/Mmap.h"
 #import "ImageLibrary.h"
-#import "rdo_bc_encoder.h"
+#import "bc7e_ispc.h"
 namespace fs = std::filesystem;
 using namespace MDCStudio;
 using namespace MDCTools;
@@ -61,6 +61,44 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //    
 //    renderer.debugShowTexture(debugTxt);
 //}
+
+struct color_quad_u8
+{
+	uint8_t m_c[4];
+	
+	inline color_quad_u8(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+	{
+		set(r, g, b, a);
+	}
+
+	inline color_quad_u8(uint8_t y = 0, uint8_t a = 255)
+	{
+		set(y, a);
+	}
+
+	inline color_quad_u8 &set(uint8_t y, uint8_t a = 255)
+	{
+		m_c[0] = y;
+		m_c[1] = y;
+		m_c[2] = y;
+		m_c[3] = a;
+		return *this;
+	}
+	
+	inline color_quad_u8 &set(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+	{
+		m_c[0] = r;
+		m_c[1] = g;
+		m_c[2] = b;
+		m_c[3] = a;
+		return *this;
+	}
+
+	inline uint8_t &operator[] (uint32_t i) { assert(i < 4);  return m_c[i]; }
+	inline uint8_t operator[] (uint32_t i) const { assert(i < 4); return m_c[i]; }
+
+	inline int get_luma() const { return (13938U * m_c[0] + 46869U * m_c[1] + 4729U * m_c[2] + 32768U) >> 16U; } // REC709 weightings
+};
 
 int main(int argc, const char* argv[]) {
 //    DebugShowThumb(40000-1);
@@ -140,7 +178,86 @@ int main(int argc, const char* argv[]) {
             // Encode thumbnails with BC7
             constexpr size_t BytesPerRow = ImageThumb::ThumbWidth*4;
             constexpr size_t BytesPerImage = ImageThumb::ThumbWidth*ImageThumb::ThumbHeight*4;
-            utils::image_u8 srcImg;
+            image_u8 srcImg;
+            
+            
+            
+            
+            const uint32_t blocks_x = source_image.width() / 4;
+            const uint32_t blocks_y = source_image.height() / 4;
+
+            bc7_block_vec packed_image(blocks_x * blocks_y);
+
+            // Initialize the BC7 compressor (only need to call once). 
+            // If you don't call this function (say by accident), the compressor will always return all-0 blocks.
+            ispc::bc7e_compress_block_init();
+
+            // Now initialize the BC7 compressor's parameters.
+            ispc::bc7e_compress_block_params pack_params;
+            memset(&pack_params, 0, sizeof(pack_params));
+            int uber_level = 0;
+            bool perceptual = true;
+            switch (uber_level)
+            {
+            case 0:
+                ispc::bc7e_compress_block_params_init_ultrafast(&pack_params, perceptual);
+                break;
+            case 1:
+                ispc::bc7e_compress_block_params_init_veryfast(&pack_params, perceptual);
+                break;
+            case 2:
+                ispc::bc7e_compress_block_params_init_fast(&pack_params, perceptual);
+                break;
+            case 3:
+                ispc::bc7e_compress_block_params_init_basic(&pack_params, perceptual);
+                break;
+            case 4:
+                ispc::bc7e_compress_block_params_init_slow(&pack_params, perceptual);
+                break;
+            case 5:
+                ispc::bc7e_compress_block_params_init_veryslow(&pack_params, perceptual);
+                break;
+            case 6:
+            default:
+                ispc::bc7e_compress_block_params_init_slowest(&pack_params, perceptual);
+                break;
+            }
+            
+            for (int32_t by = 0; by < static_cast<int32_t>(blocks_y); by++)
+            {
+                // Process 64 blocks at a time, for efficient SIMD processing.
+                // Ideally, N >= 8 (or more) and (N % 8) == 0.
+                const int N = 64;
+
+                for (uint32_t bx = 0; bx < blocks_x; bx += N)
+                {
+                    const uint32_t num_blocks_to_process = std::min<uint32_t>(blocks_x - bx, N);
+
+                    color_quad_u8 pixels[16 * N];
+
+                    // Extract num_blocks_to_process 4x4 pixel blocks from the source image and put them into the pixels[] array.
+                    for (uint32_t b = 0; b < num_blocks_to_process; b++)
+                        source_image.get_block(bx + b, by, 4, 4, pixels + b * 16);
+                    
+                    // Compress the blocks to BC7.
+                    // Note: If you've used Intel's ispc_texcomp, the input pixels are different. BC7E requires a pointer to an array of 16 pixels for each block.
+                    bc7_block *pBlock = &packed_image[bx + by * blocks_x];
+                    ispc::bc7e_compress_blocks(num_blocks_to_process, reinterpret_cast<uint64_t *>(pBlock), reinterpret_cast<const uint32_t *>(pixels), &pack_params);
+                }
+
+                if ((by & 63) == 0)
+                    printf(".");
+            }
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             srcImg.init(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight);
             
             rdo_bc::rdo_bc_params rp;
