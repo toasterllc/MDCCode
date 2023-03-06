@@ -11,6 +11,14 @@ struct ImageRecordRef {
 };
 
 struct RenderContext {
+    uint32_t imageRecordSize = 0;
+    
+    uint32_t thumbCountX = 0;
+    uint32_t thumbCountY = 0;
+    
+    uint32_t thumbWidth = 0;
+    uint32_t thumbHeight = 0;
+    
     Grid grid;
     uint32_t idxOff = 0;
     uint32_t imagesOff = 0;

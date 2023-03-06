@@ -182,6 +182,7 @@
 		55C456852955A1AE00A20363 /* FixedDocumentView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FixedDocumentView.mm; sourceTree = "<group>"; };
 		55C6C842278FE5CB005ABD39 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		55C6C846279001CA005ABD39 /* ImageGridLayer.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = ImageGridLayer.metal; sourceTree = "<group>"; };
+		55C90B9229B58283007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageThumb.h; sourceTree = "<group>"; };
 		55D3097E29A80F2E0080BCBD /* Time.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Time.h; sourceTree = "<group>"; };
 		55D3099229A822D60080BCBD /* TimeConvert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeConvert.h; sourceTree = "<group>"; };
 		55D30A1B29A828070080BCBD /* tz_private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tz_private.h; sourceTree = "<group>"; };
@@ -493,6 +494,7 @@
 				55F8D01B27BF5F0700757165 /* Image.h */,
 				55F8D03027BF9F8000757165 /* ImageCache.h */,
 				552F4BF529B28543000CEAB2 /* ImageWhiteBalanceUtil.h */,
+				55C90B9229B58283007CC97E /* ImageThumb.h */,
 				552F4BF629B306DB000CEAB2 /* ImageOptions.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				55F8D09227C2EE9D00757165 /* ImageSource.h */,

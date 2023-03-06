@@ -56,7 +56,7 @@ struct [[gnu::packed]] ImageOptions {
     } localContrast;
     
     // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64];
+    uint8_t _reserved[136];
 };
 
 static_assert(!(sizeof(ImageOptions) % 8), "ImageOptions must be multiple of 8 bytes");

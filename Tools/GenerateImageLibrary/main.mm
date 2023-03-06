@@ -227,6 +227,7 @@ int main(int argc, const char* argv[]) {
                     
                     const size_t blocksSize = blocks.size() * sizeof(*blocks.data());
                     memcpy(rec.thumb.data, blocks.data(), blocksSize);
+                    assert(blocksSize == sizeof(rec.thumb.data));
                     
                     imageId++;
                     imgRecIt++;

@@ -6,6 +6,7 @@
 #include "Tools/Shared/Lockable.h"
 #include "RecordStore.h"
 #include "ImageOptions.h"
+#include "ImageThumb.h"
 #include "ImageWhiteBalanceUtil.h"
 
 namespace MDCStudio {
@@ -29,50 +30,25 @@ struct [[gnu::packed]] ImageInfo {
     uint8_t _pad[4];
     
     // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[64];
+    // Also so that our size is half of
+    uint8_t _reserved[208];
 };
 
 static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple of 8 bytes
 
-struct [[gnu::packed]] ImageThumb {
-//    static constexpr size_t ThumbWidth      = 288;
-//    static constexpr size_t ThumbHeight     = 162;
-
-//    static constexpr size_t ThumbWidth      = 400;
-//    static constexpr size_t ThumbHeight     = 225;
-    
-//    static constexpr size_t ThumbWidth      = 432;
-//    static constexpr size_t ThumbHeight     = 243;
-    
-//    static constexpr size_t ThumbWidth      = 480;
-//    static constexpr size_t ThumbHeight     = 270;
-    
-    static constexpr size_t ThumbWidth      = 512;
-    static constexpr size_t ThumbHeight     = 288;
-    
-//    static constexpr size_t ThumbWidth      = 576;
-//    static constexpr size_t ThumbHeight     = 324;
-    
-//    static constexpr size_t ThumbWidth      = 2304;
-//    static constexpr size_t ThumbHeight     = 1296;
-    
-    static constexpr size_t ThumbPixelSize  = 1;
-    
-    uint8_t data[ThumbWidth*ThumbHeight*ThumbPixelSize];
-};
-
-static_assert(!(sizeof(ImageThumb) % 8)); // Ensure that ImageThumb is a multiple of 8 bytes
-
 struct [[gnu::packed]] ImageRecord {
     static constexpr uint32_t Version = 0;
+    ImageThumb thumb;
+    uint8_t _pad[512*3];
+    
     ImageInfo info;
     ImageOptions options;
-    ImageThumb thumb;
 };
 
 static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageRecord is a multiple of 8 bytes
+static_assert(!(offsetof(ImageRecord, thumb) % ImageThumb::ThumbWidth*ImageThumb::ThumbPixelSize)); // Ensure that ImageRecord is a multiple of 8 bytes
 
-class ImageLibrary : public RecordStore<ImageRecord, 448> {
+class ImageLibrary : public RecordStore<ImageRecord, 50> {
 public:
     using RecordStore::RecordStore;
     
