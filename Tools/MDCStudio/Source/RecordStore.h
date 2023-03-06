@@ -49,22 +49,20 @@ public:
             if (chunk != x.chunk) return false;
             return true;
         }
-        
-        operator bool() const { return chunk; }
     };
     
     // ChunkStrongRef: a strong reference to a mmap'd chunk, which keeps the chunk alive
     // across store writes (via write()).
     // This is useful if multiple threads access the store (with appropriate locking), and one thread needs
     // to ensure that the chunk that it references stays alive while other threads modify the store.
-    class ChunkStrongRef : public ChunkRef {
+    class ChunkStrongRef {
     public:
         ChunkStrongRef() {}
         ChunkStrongRef(ChunkRef ref) { _set(ref); }
         
         // Copy
-        ChunkStrongRef(const ChunkStrongRef& x) { _set(x); }
-        ChunkStrongRef& operator=(const ChunkStrongRef& x) { _set(x); return *this; }
+        ChunkStrongRef(const ChunkStrongRef& x) { _set(x._ref); }
+        ChunkStrongRef& operator=(const ChunkStrongRef& x) { _set(x._ref); return *this; }
         // Move
         ChunkStrongRef(ChunkStrongRef&& x) { _swap(x); }
         ChunkStrongRef& operator=(ChunkStrongRef&& x) { _swap(x); return *this; }
@@ -73,59 +71,149 @@ public:
     private:
         void _set(const ChunkRef& ref) {
             if (ref.chunk) ref.chunk->strongCount++;
-            if (ChunkRef::chunk) ChunkRef::chunk->strongCount--;
-            static_cast<ChunkRef&>(*this) = ref;
+            if (_ref.chunk) _ref.chunk->strongCount--;
+            _ref = ref;
         }
         
-        void _swap(ChunkStrongRef& ref) {
-            std::swap(static_cast<ChunkRef&>(*this), static_cast<ChunkRef&>(ref));
+        void _swap(ChunkRef& ref) {
+            std::swap(_ref, ref.ref);
         }
+        
+        ChunkRef _ref;
     };
     
-    template <typename T_ChunkRef>
-    class T_RecordRef : public T_ChunkRef {
+    class RecordRef {
     public:
-        using T_ChunkRef::T_ChunkRef;
+        ChunkRef chunk;
         size_t idx = 0;
         
-        const T_ChunkRef& chunkRef() const { return *this; }
-        
-        template <typename T>
-        bool operator<(const T& x) const {
-            if (chunkRef() != x.chunkRef()) return chunkRef() < x.chunkRef();
-            if (idx != x.idx)               return idx < x.idx;
+        bool operator<(const RecordRef& x) const {
+            if (chunk != x.chunk) return chunk < x.chunk;
+            if (idx != x.idx)     return idx < x.idx;
             return false;
         }
         
-        template <typename T>
-        bool operator==(const T& x) const {
-            if (chunkRef() != x.chunkRef()) return false;
-            if (idx != x.idx)               return false;
+        bool operator==(const RecordRef& x) const {
+            if (chunk != x.chunk) return false;
+            if (idx != x.idx)     return false;
             return true;
         }
         
-        operator bool() const { return (bool)chunkRef(); }
+//        operator bool() const { return (bool)chunkRef(); }
         T_Record* operator->() const { return &record(); }
         T_Record& operator*() const { return record(); }
         T_Record& record() const {
-            return *(T_Record*)chunkRef().chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
+            return *(T_Record*)chunk.chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
         }
     };
     
-    // RecordRef: a reference to a record
-    // RecordRefs may be invalidated after the store is written (via write()) because
-    // the Chunk may have been compacted or deleted entirely (if it no longer contained records).
-    // Use RecordStrongRef if you need a RecordRef to stay valid across store writes.
-    class RecordRef : public T_RecordRef<ChunkRef> {};
-    
-    // RecordStrongRef: a strong reference to a record, which keeps the record's backing data alive
-    // across record removals (via remove()) and store writes (via write()). This is useful if
-    // multiple threads access the store (with appropriate locking), and one thread needs to ensure
-    // that the data that it references stays alive while other threads modify the store.
-    class RecordStrongRef : public T_RecordRef<ChunkStrongRef> {
-        using T_RecordRef<ChunkStrongRef>::T_RecordRef;
-//        RecordStrongRef(RecordRef ref) : ChunkStrongRef
+    class RecordStrongRef {
+    public:
+        ChunkStrongRef chunk;
+        size_t idx = 0;
+        
+        bool operator<(const RecordStrongRef& x) const {
+            if (chunk != x.chunk) return chunk < x.chunk;
+            if (idx != x.idx)     return idx < x.idx;
+            return false;
+        }
+        
+        bool operator==(const RecordStrongRef& x) const {
+            if (chunk != x.chunk) return false;
+            if (idx != x.idx)     return false;
+            return true;
+        }
+        
+//        operator bool() const { return (bool)chunkRef(); }
+        T_Record* operator->() const { return &record(); }
+        T_Record& operator*() const { return record(); }
+        T_Record& record() const {
+            return *(T_Record*)chunk.chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
+        }
     };
+    
+    
+    
+    
+    
+    
+    
+    
+//    template <typename T_ChunkRef>
+//    class T_RecordRef : public T_ChunkRef {
+//    public:
+//        using T_ChunkRef::T_ChunkRef;
+//        size_t idx = 0;
+//        
+//        const T_ChunkRef& chunkRef() const { return *this; }
+//        
+//        template <typename T>
+//        bool operator<(const T& x) const {
+//            if (chunkRef() != x.chunkRef()) return chunkRef() < x.chunkRef();
+//            if (idx != x.idx)               return idx < x.idx;
+//            return false;
+//        }
+//        
+//        template <typename T>
+//        bool operator==(const T& x) const {
+//            if (chunkRef() != x.chunkRef()) return false;
+//            if (idx != x.idx)               return false;
+//            return true;
+//        }
+//        
+//        operator bool() const { return (bool)chunkRef(); }
+//        T_Record* operator->() const { return &record(); }
+//        T_Record& operator*() const { return record(); }
+//        T_Record& record() const {
+//            return *(T_Record*)chunkRef().chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
+//        }
+//    };
+    
+    
+//    template <typename T_ChunkRef>
+//    class T_RecordRef : public T_ChunkRef {
+//    public:
+//        using T_ChunkRef::T_ChunkRef;
+//        size_t idx = 0;
+//        
+//        const T_ChunkRef& chunkRef() const { return *this; }
+//        
+//        template <typename T>
+//        bool operator<(const T& x) const {
+//            if (chunkRef() != x.chunkRef()) return chunkRef() < x.chunkRef();
+//            if (idx != x.idx)               return idx < x.idx;
+//            return false;
+//        }
+//        
+//        template <typename T>
+//        bool operator==(const T& x) const {
+//            if (chunkRef() != x.chunkRef()) return false;
+//            if (idx != x.idx)               return false;
+//            return true;
+//        }
+//        
+//        operator bool() const { return (bool)chunkRef(); }
+//        T_Record* operator->() const { return &record(); }
+//        T_Record& operator*() const { return record(); }
+//        T_Record& record() const {
+//            return *(T_Record*)chunkRef().chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
+//        }
+//    };
+    
+//    // RecordRef: a reference to a record
+//    // RecordRefs may be invalidated after the store is written (via write()) because
+//    // the Chunk may have been compacted or deleted entirely (if it no longer contained records).
+//    // Use RecordStrongRef if you need a RecordRef to stay valid across store writes.
+//    class RecordRef : public T_RecordRef<ChunkRef> {};
+//    
+//    // RecordStrongRef: a strong reference to a record, which keeps the record's backing data alive
+//    // across record removals (via remove()) and store writes (via write()). This is useful if
+//    // multiple threads access the store (with appropriate locking), and one thread needs to ensure
+//    // that the data that it references stays alive while other threads modify the store.
+//    class RecordStrongRef : public T_RecordRef<ChunkStrongRef> {
+//        using T_RecordRef<ChunkStrongRef>::T_RecordRef;
+////        RecordStrongRef(RecordRef ref) : ChunkStrongRef
+//    };
     
 //    using RecordStrongRef = T_RecordRef<ChunkStrongRef>;
     
