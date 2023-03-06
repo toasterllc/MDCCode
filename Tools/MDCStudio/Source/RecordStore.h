@@ -32,23 +32,31 @@ public:
     
     using Chunks = std::list<Chunk>;
     
+    // ChunkRef: a reference to a mmap'd chunk
+    // ChunkRef may be invalidated after the store is written (via write()) because
+    // the Chunk may have been deleted (if it no longer contained records).
+    // Use ChunkStrongRef if you need a ChunkRef to stay valid across store writes.
     class ChunkRef {
     public:
         Chunk* chunk = nullptr;
         
         bool operator<(const ChunkRef& x) const {
-            if (chunk != x.chunk)   return chunk->order < x.chunk->order;
+            if (chunk != x.chunk) return chunk->order < x.chunk->order;
             return false;
         }
         
         bool operator==(const ChunkRef& x) const {
-            if (chunk != x.chunk)   return false;
+            if (chunk != x.chunk) return false;
             return true;
         }
         
         operator bool() const { return chunk; }
     };
     
+    // ChunkStrongRef: a strong reference to a mmap'd chunk, which keeps the chunk alive
+    // across store writes (via write()).
+    // This is useful if multiple threads access the store (with appropriate locking), and one thread needs
+    // to ensure that the chunk that it references stays alive while other threads modify the store.
     class ChunkStrongRef : public ChunkRef {
     public:
         ChunkStrongRef() {}
@@ -74,44 +82,57 @@ public:
         }
     };
     
-    // RecordRef: a reference to a record
-    // RecordRefs may be invalidated after the store is written (via write()) because
-    // the Chunk may have been compacted or deleted entirely (if it no longer contained records).
-    // Use RecordStrongRef if you need a RecordRef to stay valid across store writes.
     template <typename T_ChunkRef>
     class T_RecordRef : public T_ChunkRef {
     public:
+        using T_ChunkRef::T_ChunkRef;
         size_t idx = 0;
         
         const T_ChunkRef& chunkRef() const { return *this; }
         
-        bool operator<(const T_RecordRef& x) const {
+        template <typename T>
+        bool operator<(const T& x) const {
             if (chunkRef() != x.chunkRef()) return chunkRef() < x.chunkRef();
             if (idx != x.idx)               return idx < x.idx;
             return false;
         }
         
-        bool operator==(const T_RecordRef& x) const {
+        template <typename T>
+        bool operator==(const T& x) const {
             if (chunkRef() != x.chunkRef()) return false;
             if (idx != x.idx)               return false;
             return true;
         }
         
-        operator bool() const { return T_ChunkRef::chunk; }
+        operator bool() const { return (bool)chunkRef(); }
         T_Record* operator->() const { return &record(); }
         T_Record& operator*() const { return record(); }
         T_Record& record() const {
-            return *(T_Record*)T_ChunkRef::chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
+            return *(T_Record*)chunkRef().chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
         }
     };
     
-    using RecordRef = T_RecordRef<ChunkRef>;
-    using RecordStrongRef = T_RecordRef<ChunkStrongRef>;
+    // RecordRef: a reference to a record
+    // RecordRefs may be invalidated after the store is written (via write()) because
+    // the Chunk may have been compacted or deleted entirely (if it no longer contained records).
+    // Use RecordStrongRef if you need a RecordRef to stay valid across store writes.
+    class RecordRef : public T_RecordRef<ChunkRef> {};
+    
+    // RecordStrongRef: a strong reference to a record, which keeps the record's backing data alive
+    // across record removals (via remove()) and store writes (via write()). This is useful if
+    // multiple threads access the store (with appropriate locking), and one thread needs to ensure
+    // that the data that it references stays alive while other threads modify the store.
+    class RecordStrongRef : public T_RecordRef<ChunkStrongRef> {
+        using T_RecordRef<ChunkStrongRef>::T_RecordRef;
+//        RecordStrongRef(RecordRef ref) : ChunkStrongRef
+    };
+    
+//    using RecordStrongRef = T_RecordRef<ChunkStrongRef>;
     
 //    // RecordStrongRef: a strong reference to a record, which keeps the record's backing data alive
 //    // across record removals (via remove()) and store writes (via write()). This is useful if
-//    // multiple threads access the RecordStore (with appropriate locking), and one thread needs
-//    // to ensure that the data that it references stays alive.
+//    // multiple threads access the store (with appropriate locking), and one thread needs to ensure
+//    // that the data that it references stays alive.
 //    class RecordStrongRef : public ChunkStrongRef {
 //    public:
 //        RecordStrongRef() {}
@@ -136,8 +157,8 @@ public:
 //            std::swap(static_cast<RecordRef&>(*this), static_cast<RecordRef&>(ref));
 //        }
 //    };
-//    
-//    
+    
+    
 //    class RecordStrongRef {
 //    public:
 //        RecordStrongRef() {}
@@ -286,12 +307,8 @@ public:
         
         for (RecordRef& ref : _state.reserved) {
             Chunk& chunk = _chunkGetWritable();
-            
-            ref = {
-                .chunk = &chunk,
-                .idx = chunk.recordIdx,
-            };
-            
+            ref.chunk = &chunk;
+            ref.idx = chunk.recordIdx;
             chunk.recordIdx++;
         }
     }
@@ -417,10 +434,8 @@ private:
                 );
             }
             
-            recordRefs[i] = {
-                .chunk = chunksVec.at(ref.chunkIdx),
-                .idx = ref.idx,
-            };
+            recordRefs[i].chunk = chunksVec.at(ref.chunkIdx);
+            recordRefs[i].idx = ref.idx;
             
             chunk.recordCount++;
             chunk.recordIdx = ref.idx+1;
