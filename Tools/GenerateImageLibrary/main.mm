@@ -113,11 +113,13 @@ int main(int argc, const char* argv[]) {
             imgLib.add();
             auto it = imgLib.begin()+beginOff;
             
+            auto batchStartTime = std::chrono::steady_clock::now();
+            
+            // Generate thumbnails in the necessary format (RGBA)
             {
                 printf("Generating RGBA thumbnails...\n", (uintmax_t)txtCount);
                 
                 auto startTime = std::chrono::steady_clock::now();
-                // Generate thumbnails in the necessary format (RGBA)
                 for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
                     id<MTLTexture> txtSrc = txtsSrc[txtIdx];
                     Renderer::Txt& txtDst = txtsDst.at(txtIdx);
@@ -139,123 +141,125 @@ int main(int argc, const char* argv[]) {
             }
             
             // Encode thumbnails with BC7
-            constexpr size_t BytesPerRow = ImageThumb::ThumbWidth*4;
-            constexpr size_t BytesPerImage = ImageThumb::ThumbWidth*ImageThumb::ThumbHeight*4;
-            utils::image_u8 srcImg;
-            
-            struct bc7_block
             {
-                uint64_t m_vals[2];
-            };
-            using bc7_block_vec = std::vector<bc7_block>;
-            
-            // Initialize the BC7 compressor (only need to call once). 
-            // If you don't call this function (say by accident), the compressor will always return all-0 blocks.
-            ispc::bc7e_compress_block_init();
-
-            // Now initialize the BC7 compressor's parameters.
-            ispc::bc7e_compress_block_params pack_params;
-            memset(&pack_params, 0, sizeof(pack_params));
-            int uber_level = 0;
-            bool perceptual = true;
-            switch (uber_level)
-            {
-            case 0:
-                ispc::bc7e_compress_block_params_init_ultrafast(&pack_params, perceptual);
-                break;
-            case 1:
-                ispc::bc7e_compress_block_params_init_veryfast(&pack_params, perceptual);
-                break;
-            case 2:
-                ispc::bc7e_compress_block_params_init_fast(&pack_params, perceptual);
-                break;
-            case 3:
-                ispc::bc7e_compress_block_params_init_basic(&pack_params, perceptual);
-                break;
-            case 4:
-                ispc::bc7e_compress_block_params_init_slow(&pack_params, perceptual);
-                break;
-            case 5:
-                ispc::bc7e_compress_block_params_init_veryslow(&pack_params, perceptual);
-                break;
-            case 6:
-            default:
-                ispc::bc7e_compress_block_params_init_slowest(&pack_params, perceptual);
-                break;
-            }
-            
-            srcImg.init(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight);
-            
-            const uint32_t blocks_x = srcImg.width() / 4;
-            const uint32_t blocks_y = srcImg.height() / 4;
-            bc7_block_vec packed_image(blocks_x * blocks_y);
-            
-            for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
-                Renderer::Txt& txtDst = txtsDst.at(txtIdx);
+                constexpr size_t BytesPerRow = ImageThumb::ThumbWidth*4;
+                constexpr size_t BytesPerImage = ImageThumb::ThumbWidth*ImageThumb::ThumbHeight*4;
+                utils::image_u8 srcImg;
                 
-//                renderer.debugShowTexture(txtDst);
-//                
-//                renderer.sync(txtDst);
-//                auto startTime = std::chrono::steady_clock::now();
-                [txtDst getBytes:srcImg.get_pixels().data() bytesPerRow:BytesPerRow
-                    fromRegion:MTLRegionMake2D(0, 0, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight) mipmapLevel:0];
-                
-                for (int32_t by = 0; by < static_cast<int32_t>(blocks_y); by++)
+                struct bc7_block
                 {
-                    // Process 64 blocks at a time, for efficient SIMD processing.
-                    // Ideally, N >= 8 (or more) and (N % 8) == 0.
-                    const int N = 64;
+                    uint64_t m_vals[2];
+                };
+                using bc7_block_vec = std::vector<bc7_block>;
+                
+                // Initialize the BC7 compressor (only need to call once). 
+                // If you don't call this function (say by accident), the compressor will always return all-0 blocks.
+                ispc::bc7e_compress_block_init();
+
+                // Now initialize the BC7 compressor's parameters.
+                ispc::bc7e_compress_block_params pack_params;
+                memset(&pack_params, 0, sizeof(pack_params));
+                int uber_level = 0;
+                bool perceptual = true;
+                switch (uber_level)
+                {
+                case 0:
+                    ispc::bc7e_compress_block_params_init_ultrafast(&pack_params, perceptual);
+                    break;
+                case 1:
+                    ispc::bc7e_compress_block_params_init_veryfast(&pack_params, perceptual);
+                    break;
+                case 2:
+                    ispc::bc7e_compress_block_params_init_fast(&pack_params, perceptual);
+                    break;
+                case 3:
+                    ispc::bc7e_compress_block_params_init_basic(&pack_params, perceptual);
+                    break;
+                case 4:
+                    ispc::bc7e_compress_block_params_init_slow(&pack_params, perceptual);
+                    break;
+                case 5:
+                    ispc::bc7e_compress_block_params_init_veryslow(&pack_params, perceptual);
+                    break;
+                case 6:
+                default:
+                    ispc::bc7e_compress_block_params_init_slowest(&pack_params, perceptual);
+                    break;
+                }
+                
+                srcImg.init(ImageThumb::ThumbWidth, ImageThumb::ThumbHeight);
+                
+                const uint32_t blocks_x = srcImg.width() / 4;
+                const uint32_t blocks_y = srcImg.height() / 4;
+                bc7_block_vec packed_image(blocks_x * blocks_y);
+                
+                for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
+                    Renderer::Txt& txtDst = txtsDst.at(txtIdx);
                     
-                    for (uint32_t bx = 0; bx < blocks_x; bx += N)
+    //                renderer.debugShowTexture(txtDst);
+    //                
+    //                renderer.sync(txtDst);
+    //                auto startTime = std::chrono::steady_clock::now();
+                    [txtDst getBytes:srcImg.get_pixels().data() bytesPerRow:BytesPerRow
+                        fromRegion:MTLRegionMake2D(0, 0, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight) mipmapLevel:0];
+                    
+                    for (int32_t by = 0; by < static_cast<int32_t>(blocks_y); by++)
                     {
-                        const uint32_t num_blocks_to_process = std::min<uint32_t>(blocks_x - bx, N);
-
-                        utils::color_quad_u8 pixels[16 * N];
-
-                        // Extract num_blocks_to_process 4x4 pixel blocks from the source image and put them into the pixels[] array.
-                        for (uint32_t b = 0; b < num_blocks_to_process; b++)
-                            srcImg.get_block(bx + b, by, 4, 4, pixels + b * 16);
+                        // Process 64 blocks at a time, for efficient SIMD processing.
+                        // Ideally, N >= 8 (or more) and (N % 8) == 0.
+                        const int N = 64;
                         
-                        // Compress the blocks to BC7.
-                        // Note: If you've used Intel's ispc_texcomp, the input pixels are different. BC7E requires a pointer to an array of 16 pixels for each block.
-                        bc7_block *pBlock = &packed_image[bx + by * blocks_x];
-                        ispc::bc7e_compress_blocks(num_blocks_to_process, reinterpret_cast<uint64_t *>(pBlock), reinterpret_cast<const uint32_t *>(pixels), &pack_params);
+                        for (uint32_t bx = 0; bx < blocks_x; bx += N)
+                        {
+                            const uint32_t num_blocks_to_process = std::min<uint32_t>(blocks_x - bx, N);
+
+                            utils::color_quad_u8 pixels[16 * N];
+
+                            // Extract num_blocks_to_process 4x4 pixel blocks from the source image and put them into the pixels[] array.
+                            for (uint32_t b = 0; b < num_blocks_to_process; b++)
+                                srcImg.get_block(bx + b, by, 4, 4, pixels + b * 16);
+                            
+                            // Compress the blocks to BC7.
+                            // Note: If you've used Intel's ispc_texcomp, the input pixels are different. BC7E requires a pointer to an array of 16 pixels for each block.
+                            bc7_block *pBlock = &packed_image[bx + by * blocks_x];
+                            ispc::bc7e_compress_blocks(num_blocks_to_process, reinterpret_cast<uint64_t *>(pBlock), reinterpret_cast<const uint32_t *>(pixels), &pack_params);
+                        }
                     }
+                    
+    //                {
+    //                    NSString*const path = [NSString stringWithFormat:@"/Users/dave/Desktop/dds/debug-%zu.dds", txtIdx];
+    //                    static constexpr size_t pixel_format_bpp = 8;
+    //                    static constexpr DXGI_FORMAT fmt = DXGI_FORMAT_BC7_UNORM;
+    //                    bool br = utils::save_dds([path UTF8String], srcImg.width(), srcImg.height(), &packed_image[0],
+    //                        pixel_format_bpp, fmt, perceptual, false);
+    //                    assert(br);
+    //                }
+                    
+    //                exit(0);
+                    
+                    
+    //                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+    //                printf("Encode took %ju ms\n", (uintmax_t)durationMs);
+                    
+                    
+    //                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+    //                printf("Iter took %ju ms\n", (uintmax_t)durationMs);
+                    
+                    
+    //                
+    //                id<MTLTexture> txtSrc = txtsSrc[txtIdx];
+    //                Renderer::Txt& txtDst = txtsDst.at(txtIdx);
+    //                renderer.render(txtDst,
+    //                    renderer.FragmentShader("SampleTexture",
+    //                        // Buffer args
+    //                        // Texture args
+    //                        txtSrc
+    //                    )
+    //                );
                 }
-                
-                {
-                    NSString*const path = [NSString stringWithFormat:@"/Users/dave/Desktop/dds/debug-%zu.dds", txtIdx];
-                    static constexpr size_t pixel_format_bpp = 8;
-                    static constexpr DXGI_FORMAT fmt = DXGI_FORMAT_BC7_UNORM;
-                    bool br = utils::save_dds([path UTF8String], srcImg.width(), srcImg.height(), &packed_image[0],
-                        pixel_format_bpp, fmt, perceptual, false);
-                    assert(br);
-                }
-                
-//                exit(0);
-                
-                
-//                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-//                printf("Encode took %ju ms\n", (uintmax_t)durationMs);
-                
-                
-//                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-//                printf("Iter took %ju ms\n", (uintmax_t)durationMs);
-                
-                
-//                
-//                id<MTLTexture> txtSrc = txtsSrc[txtIdx];
-//                Renderer::Txt& txtDst = txtsDst.at(txtIdx);
-//                renderer.render(txtDst,
-//                    renderer.FragmentShader("SampleTexture",
-//                        // Buffer args
-//                        // Texture args
-//                        txtSrc
-//                    )
-//                );
             }
             
-            exit(0);
+//            exit(0);
         }
     }
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
