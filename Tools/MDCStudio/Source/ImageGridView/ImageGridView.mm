@@ -192,6 +192,25 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //    return true;
 //}
 
+- (id<MTLTexture>)textureForChunk:() {
+    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
+    [txtDesc setTextureType:MTLTextureType2DArray];
+    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB];
+    [txtDesc setWidth:ThumbsTxtWidth];
+    [txtDesc setHeight:ThumbsTxtHeight];
+    [txtDesc setArrayLength:SliceCount];
+    
+    id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
+    
+    for (auto imageRefIter=chunkImageRefBegin; imageRefIter<chunkImageRefEnd; imageRefIter++) {
+        const auto& imageRef = *imageRefIter;
+        const uint8_t* b = chunk.mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb);
+        [txt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
+            slice:imageRef.idx withBytes:b bytesPerRow:ThumbsTxtWidth*4 bytesPerImage:0];
+        b += ThumbsPerSlice*sizeof(ImageRecord);
+    }
+}
+
 - (void)display {
 //    auto startTime = std::chrono::steady_clock::now();
     [super display];
@@ -303,7 +322,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     .thumb = {
                         .width  = ImageThumb::ThumbWidth,
                         .height = ImageThumb::ThumbHeight,
-                        .pxSize = ImageThumb::ThumbPixelSize,
+                        .pxSize = 1,
                     },
                     .selection = {
                         .first = (uint32_t)_selection.first,
@@ -335,13 +354,12 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     
                     _thumbsTxt = [_device newTextureWithDescriptor:txtDesc];
                     
-                    {
-                        const uint8_t* b = chunk.mmap.data();
-                        for (size_t i=0; i<SliceCount; i++) {
-                            [_thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
-                                slice:i withBytes:b bytesPerRow:ThumbsTxtWidth*4 bytesPerImage:0];
-                            b += ThumbsPerSlice*sizeof(ImageRecord);
-                        }
+                    for (auto imageRefIter=chunkImageRefBegin; imageRefIter<chunkImageRefEnd; imageRefIter++) {
+                        const auto& imageRef = *imageRefIter;
+                        const uint8_t* b = chunk.mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb);
+                        [_thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
+                            slice:imageRef.idx withBytes:b bytesPerRow:ThumbsTxtWidth*4 bytesPerImage:0];
+                        b += ThumbsPerSlice*sizeof(ImageRecord);
                     }
                     
                     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
@@ -386,6 +404,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //                    [_thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
 //                        withBytes:chunk.mmap.data() bytesPerRow:ThumbsTxtWidth*4];
 //                }
+                
+                id<MTLTexture> chunkTxt = nil;
                 
                 [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
                 [renderEncoder setFragmentTexture:_thumbsTxt atIndex:0];

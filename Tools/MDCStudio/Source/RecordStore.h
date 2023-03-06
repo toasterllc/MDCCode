@@ -32,6 +32,10 @@ public:
     
     using Chunks = std::list<Chunk>;
     
+    // RecordRef: a reference to a record
+    // RecordRefs may be invalidated after the store is written (via write()) because
+    // the Chunk may have been compacted or deleted entirely (if it no longer contained records).
+    // Use RecordStrongRef if you need a RecordRef to stay valid across store writes.
     class RecordRef {
     public:
         Chunk* chunk = nullptr;
@@ -57,6 +61,10 @@ public:
         }
     };
     
+    // RecordStrongRef: a strong reference to a record, which keeps the record's backing data alive
+    // across record removals (via remove()) and store writes (via write()). This is useful if
+    // multiple threads access the RecordStore (with appropriate locking), and one thread needs
+    // to ensure that the data that it references stays alive.
     class RecordStrongRef : public RecordRef {
     public:
         RecordStrongRef() {}

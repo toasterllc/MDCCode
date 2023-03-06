@@ -24,9 +24,7 @@ struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 2304;
 //    static constexpr size_t ThumbHeight     = 1296;
     
-    static constexpr size_t ThumbPixelSize  = 1;
-    
-    uint8_t data[ThumbHeight][ThumbWidth][ThumbPixelSize];
+    uint8_t data[ThumbHeight][ThumbWidth];
 };
 
 static_assert(!(sizeof(ImageThumb) % 8)); // Ensure that ImageThumb is a multiple of 8 bytes

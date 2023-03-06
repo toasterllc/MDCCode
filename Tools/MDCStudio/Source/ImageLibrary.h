@@ -38,15 +38,17 @@ static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple 
 
 struct [[gnu::packed]] ImageRecord {
     static constexpr uint32_t Version = 0;
-    ImageThumb thumb;
-    uint8_t _pad[512*3];
-    
     ImageInfo info;
     ImageOptions options;
+//    // _pad: necessary for our thumbnail compression to keep our `thumb` member aligned
+//    // to a 4-pixel boundary. Each row of the thumbnail is ThumbWidth bytes, and info+options consume 1 row  (where each row is 512 bytes)
+//    uint8_t _pad[ImageThumb::ThumbWidth*3];
+    
+    ImageThumb thumb;
 };
 
 static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageRecord is a multiple of 8 bytes
-static_assert(!(offsetof(ImageRecord, thumb) % ImageThumb::ThumbWidth*ImageThumb::ThumbPixelSize)); // Ensure that ImageRecord is a multiple of 8 bytes
+//static_assert(!(offsetof(ImageRecord, thumb) % (ImageThumb::ThumbWidth*4)); // Ensure that the thumbnail is aligned to a 4-pixel boundary in the Y dimension
 
 class ImageLibrary : public RecordStore<ImageRecord, 128> {
 public:
