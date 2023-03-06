@@ -304,7 +304,7 @@ private:
         uint32_t idx = 0;
     };
     
-    static constexpr size_t _ChunkCap = sizeof(T_Record)*T_ChunkRecordCap;
+    static constexpr size_t _ChunkLen = sizeof(T_Record)*T_ChunkRecordCap;
     
     static std::tuple<RecordRefs,Chunks,std::ifstream> _IndexRead(const Path& path) {
         std::ifstream f;
@@ -433,7 +433,8 @@ private:
         constexpr int ChunkPerm = (S_IRUSR|S_IWUSR) | (S_IRGRP) | (S_IROTH);
         const int fd = open(path.c_str(), O_RDWR|O_CREAT|O_CLOEXEC, ChunkPerm);
         if (fd < 0) throw Toastbox::RuntimeError("failed to create chunk file: %s", strerror(errno));
-        return Toastbox::Mmap(fd, _ChunkCap, MAP_SHARED);
+        const size_t cap = Toastbox::Mmap::PageCeil(_ChunkLen);
+        return Toastbox::Mmap(fd, cap, MAP_SHARED);
     }
     
     static Toastbox::Mmap _ChunkFileOpen(const Path& path) {
@@ -445,9 +446,8 @@ private:
         struct stat st;
         int ir = fstat(fd, &st);
         if (ir) throw Toastbox::RuntimeError("fstat failed: %s", strerror(errno));
-        
-        // Create the mapping with a capacity of either the file size or _ChunkCap, whichever is larger.
-        const size_t cap = std::max((size_t)st.st_size, _ChunkCap);
+        // Create the mapping with a capacity of either the file size or _ChunkLen, whichever is larger.
+        const size_t cap = Toastbox::Mmap::PageCeil(std::max((size_t)st.st_size, _ChunkLen));
         return Toastbox::Mmap(std::move(fd), cap, MAP_SHARED);
     }
     
@@ -464,7 +464,7 @@ private:
             // Currently, _ChunkFileCreate() creates 0-byte chunk files, so we set their size here.
             // In the future, when we implement compaction, chunks could have arbitrary sizes, making it
             // doubly necessary to set the file size here.
-            lastChunk->mmap.len(_ChunkCap);
+            lastChunk->mmap.len(_ChunkLen);
             return *lastChunk;
         }
     }
