@@ -103,6 +103,7 @@
 		55A36B1127A3C46A00FD0181 /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImageLibrary.h; path = ../MDCStudio/Source/ImageLibrary.h; sourceTree = "<group>"; };
 		55C90C1929B6709A007CC97E /* bc7enc_rdo.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = bc7enc_rdo.xcodeproj; path = ../../Code/Lib/bc7enc_rdo/bc7enc_rdo.xcodeproj; sourceTree = "<group>"; };
 		55C90C2229B67355007CC97E /* BC7Encoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BC7Encoder.h; sourceTree = "<group>"; };
+		55C90C2629B68261007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImageThumb.h; path = ../MDCStudio/Source/ImageThumb.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,7 +113,6 @@
 			files = (
 				55C90C2129B670AC007CC97E /* libbc7enc_rdo.a in Frameworks */,
 				551B224F279139DE00D62121 /* Foundation.framework in Frameworks */,
-				55C90B7329B54DDB007CC97E /* bc7e_avx2.o in Frameworks */,
 				551B2251279139E400D62121 /* CoreGraphics.framework in Frameworks */,
 				5533A291279141C700EF4614 /* Metal.framework in Frameworks */,
 				5533A2AB2791532200EF4614 /* MetalKit.framework in Frameworks */,
@@ -153,6 +153,7 @@
 				5513289427B3793100CD823B /* Shared */,
 				55A36AEE27A36A9200FD0181 /* Lib */,
 				55A36B1127A3C46A00FD0181 /* ImageLibrary.h */,
+				55C90C2629B68261007CC97E /* ImageThumb.h */,
 				55A36A7F27A2377300FD0181 /* RecordStore.h */,
 				5533A2942791426600EF4614 /* RenderThumb.metal */,
 				5513289027B378BF00CD823B /* MetalUtil.h */,

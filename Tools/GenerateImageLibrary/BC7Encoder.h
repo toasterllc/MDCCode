@@ -19,15 +19,15 @@ public:
     void encode(const void* src, void* dst) {
         for (size_t by=0; by<_BlockCountY; by++) {
             for (size_t bx=0; bx<_BlockCountX; bx+=_ChunkSize) {
-                const uint32_t blockCount = std::min<size_t>(_ChunkSize, _BlockCountX-bx);
+                const size_t blockCount = std::min<size_t>(_ChunkSize, _BlockCountX-bx);
                 
-                // Extract blockCount 4x4 pixel blocks from the source image and put them into the _tmp
+                // Extract blockCount 4x4 pixel blocks from the source image and put them in _tmp
                 for (size_t b=0; b<blockCount; b++) {
                     _BlockGet(bx+b, by, _tmp, _tmp+b*16);
                 }
                 
                 // Compress the blocks to BC7
-                ispc::bc7e_compress_blocks(blockCount, (uint64_t*)_blocks[by][bx], (uint32_t*)_tmp, &_params);
+                ispc::bc7e_compress_blocks((uint32_t)blockCount, (uint64_t*)&_blocks[by][bx], (uint32_t*)_tmp, &_params);
             }
         }
         
