@@ -15,6 +15,7 @@ template <
 class RecordStore {
 public:
     static constexpr uint32_t Version = T_Record::Version;
+    static constexpr uint32_t ChunkRecordCap = T_ChunkRecordCap;
     
     using Path = std::filesystem::path;
     using Record = T_Record;

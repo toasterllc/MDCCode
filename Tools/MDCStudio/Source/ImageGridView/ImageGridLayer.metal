@@ -387,7 +387,7 @@ static float3 ColorAdjust(device const ImageOptions& opts, float3 c) {
 
 fragment float4 FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
-    texture2d<float> txt [[texture(0)]],
+    texture2d_array<float> txt [[texture(0)]],
     texture2d<float> debugTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
@@ -426,9 +426,11 @@ fragment float4 FragmentShader(
     
 //    float2 posOff(gridX*ctx.thumbWidth, gridY*ctx.thumbHeight);
     
+    return txt.read(pos, in.idx);
+    
 //    uint xoff = in.idx % ;
-    constexpr sampler s(coord::pixel, filter::nearest);
-    return txt.sample(s, float2(posAbs));
+//    constexpr sampler s(coord::pixel, filter::nearest);
+//    return txt.sample(s, float2(posAbs));
     
 //    return txt.sample(s, posOffInTxt+float2(-0.5,-0.5));
 //    return txt.sample(s, posOffInTxt+float2(-0.5,+0.0));

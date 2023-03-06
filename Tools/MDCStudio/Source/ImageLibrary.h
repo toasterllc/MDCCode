@@ -48,7 +48,7 @@ struct [[gnu::packed]] ImageRecord {
 static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageRecord is a multiple of 8 bytes
 static_assert(!(offsetof(ImageRecord, thumb) % ImageThumb::ThumbWidth*ImageThumb::ThumbPixelSize)); // Ensure that ImageRecord is a multiple of 8 bytes
 
-class ImageLibrary : public RecordStore<ImageRecord, 50> {
+class ImageLibrary : public RecordStore<ImageRecord, 128> {
 public:
     using RecordStore::RecordStore;
     

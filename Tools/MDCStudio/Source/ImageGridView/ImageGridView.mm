@@ -277,8 +277,11 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
                 }
                 
-                size_t ThumbsTxtWidth  = 512;
-                size_t ThumbsTxtHeight = chunk.recordIdx * 292;
+                constexpr size_t ThumbsPerSlice = 1;
+                constexpr size_t SliceCount = ImageLibrary::ChunkRecordCap / ThumbsPerSlice;
+                
+                const size_t ThumbsTxtWidth  = 512;
+                const size_t ThumbsTxtHeight = ThumbsPerSlice*292;
                 
                 ImageGridLayerTypes::RenderContext ctx = {
                     .imageRecordSize = sizeof(ImageRecord),
@@ -317,14 +320,30 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //                txt = 67108864
 //                mmap = 100*
                 
-                MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB
-                    width:ThumbsTxtWidth height:ThumbsTxtHeight mipmapped:false];
-//                [txtDesc setArrayLength:];
+                MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
+                [txtDesc setTextureType:MTLTextureType2DArray];
+                [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB];
+                [txtDesc setWidth:ThumbsTxtWidth];
+                [txtDesc setHeight:ThumbsTxtHeight];
+                [txtDesc setArrayLength:SliceCount];
+                
+//                MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+//                    width:ThumbsTxtWidth height:512 mipmapped:false];
+//                [txtDesc setArrayLength:SliceCount];
                 
                 id<MTLTexture> thumbsTxt = [_device newTextureWithDescriptor:txtDesc];
-            
-                [thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
-                    withBytes:chunk.mmap.data() bytesPerRow:ThumbsTxtWidth*4];
+                
+                {
+                    const uint8_t* b = chunk.mmap.data();
+                    for (size_t i=0; i<SliceCount; i++) {
+                        [thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
+                            slice:i withBytes:b bytesPerRow:ThumbsTxtWidth*4 bytesPerImage:0];
+                        b += ThumbsPerSlice*sizeof(ImageRecord);
+                    }
+                }
+                
+//                [thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
+//                    withBytes:chunk.mmap.data() bytesPerRow:ThumbsTxtWidth*4];
                 
                 
                 
