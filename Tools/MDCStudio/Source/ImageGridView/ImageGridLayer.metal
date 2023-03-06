@@ -30,15 +30,17 @@ vertex VertexOutput VertexShader(
     uint vidx [[vertex_id]],
     uint iidx [[instance_id]]
 ) {
-    const uint relIdx = iidx; // Index within chunk
-    const uint absIdx = ctx.idxOff + relIdx;
-    const Grid::Rect rect = ctx.grid.rectForCellIndex(absIdx);
+    const uint idxAbs = ctx.idx + iidx; // Absolute index in grid
+    const uint idxRel = imageRecordRefs[idxAbs].idx; // Relative idx in chunk
+    const Grid::Rect rect = ctx.grid.rectForCellIndex(idxAbs);
     const int2 voff = int2(rect.size.x, rect.size.y) * int2(_Verts[vidx]);
     const int2 vabs = int2(rect.point.x, rect.point.y) + voff;
     const float2 vnorm = float2(vabs) / ctx.viewSize;
     
+//    imageRecordRefs->
+    
     return VertexOutput{
-        .idx = relIdx,
+        .idx = idxRel,
         .posView = ctx.transform * float4(vnorm, 0, 1),
         .posPx = float2(voff),
     };

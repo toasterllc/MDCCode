@@ -183,7 +183,6 @@ private:
 
 using ImageLibraryPtr = std::shared_ptr<MDCTools::Lockable<ImageLibrary>>;
 using ImageRecordPtr = ImageLibrary::RecordStrongRef;
-
 using ImageSet = std::set<ImageRecordPtr>;
 
 // ImageSetsOverlap: returns whether there's an intersection between a and b.

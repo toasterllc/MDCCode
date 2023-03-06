@@ -277,8 +277,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
                 }
                 
-                constexpr size_t ThumbsTxtWidth  = 512;
-                constexpr size_t ThumbsTxtHeight = 16*1024;
+                size_t ThumbsTxtWidth  = 512;
+                size_t ThumbsTxtHeight = 50*290;
+                ThumbsTxtHeight = chunk.recordIdx * 290;
                 
                 ImageGridLayerTypes::RenderContext ctx = {
                     .imageRecordSize = sizeof(ImageRecord),
@@ -287,7 +288,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //                    .thumbCountY = ThumbsTxtWidth / ,
                     
                     .grid = _grid,
-                    .idxOff = (uint32_t)(chunkImageRefFirst-_imageLibrary->begin()),
+                    .idx = (uint32_t)(chunkImageRefFirst-_imageLibrary->begin()), // Start index into `imageRefs`
                     .imagesOff = (uint32_t)(addrBegin-addrAlignedBegin),
                     .imageSize = (uint32_t)sizeof(ImageLibrary::Record),
                     .viewSize = {(float)viewSize.width, (float)viewSize.height},
@@ -310,37 +311,49 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                     .cellHeight = _cellHeight,
                 };
                 
+                printf("ctx.idx = %ju\n", (uintmax_t)ctx.idx);
+                
                 [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
                 [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
 //                txt = 67108864
 //                mmap = 100*
                 
-                if (!_thumbsTxt) {
-                    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB
-                        width:ThumbsTxtWidth height:ThumbsTxtHeight mipmapped:false];
-                    
-                    _thumbsTxt = [_device newTextureWithDescriptor:txtDesc];
-                    
-                    printf("Recreated _thumbsTxt\n");
+                MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB
+                    width:ThumbsTxtWidth height:ThumbsTxtHeight mipmapped:false];
                 
-                    [_thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
-                        withBytes:chunk.mmap.data() bytesPerRow:ThumbsTxtWidth*4];
-                }
+                id<MTLTexture> thumbsTxt = [_device newTextureWithDescriptor:txtDesc];
+            
+                [thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
+                    withBytes:chunk.mmap.data() bytesPerRow:ThumbsTxtWidth*4];
                 
-                id<MTLTexture> debugTxt;
-                {
-                    size_t DebugTxtWidth = 512;
-                    size_t DebugTxtHeight = 288;
-                    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB
-                        width:DebugTxtWidth height:DebugTxtHeight mipmapped:false];
-                    
-                    debugTxt = [_device newTextureWithDescriptor:txtDesc];
-                    
-                    [debugTxt replaceRegion:MTLRegionMake2D(0,0,DebugTxtWidth,DebugTxtHeight) mipmapLevel:0
-                        withBytes:chunk.mmap.data() bytesPerRow:DebugTxtWidth*4];
-                    
-                    printf("Created debugTxt\n");
-                }
+                
+                
+//                if (!_thumbsTxt) {
+//                    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB
+//                        width:ThumbsTxtWidth height:ThumbsTxtHeight mipmapped:false];
+//                    
+//                    _thumbsTxt = [_device newTextureWithDescriptor:txtDesc];
+//                    
+//                    printf("Recreated _thumbsTxt\n");
+//                
+//                    [_thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
+//                        withBytes:chunk.mmap.data() bytesPerRow:ThumbsTxtWidth*4];
+//                }
+                
+//                id<MTLTexture> debugTxt;
+//                {
+//                    size_t DebugTxtWidth = 512;
+//                    size_t DebugTxtHeight = 288;
+//                    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB
+//                        width:DebugTxtWidth height:DebugTxtHeight mipmapped:false];
+//                    
+//                    debugTxt = [_device newTextureWithDescriptor:txtDesc];
+//                    
+//                    [debugTxt replaceRegion:MTLRegionMake2D(0,0,DebugTxtWidth,DebugTxtHeight) mipmapLevel:0
+//                        withBytes:chunk.mmap.data() bytesPerRow:DebugTxtWidth*4];
+//                    
+//                    printf("Created debugTxt\n");
+//                }
                 
                 
 //                if (!(rand() % 10)) {
@@ -350,8 +363,8 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //                }
                 
                 [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-                [renderEncoder setFragmentTexture:_thumbsTxt atIndex:0];
-                [renderEncoder setFragmentTexture:debugTxt atIndex:1];
+                [renderEncoder setFragmentTexture:thumbsTxt atIndex:0];
+//                [renderEncoder setFragmentTexture:debugTxt atIndex:1];
                 
 //                [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
 //                [renderEncoder setFragmentBuffer:imageBuf offset:0 atIndex:1];
