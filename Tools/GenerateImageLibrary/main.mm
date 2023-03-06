@@ -245,7 +245,7 @@ int main(int argc, const char* argv[]) {
             auto batchDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-batchStartTime).count();
             printf("-> Batch took %ju ms\n", (uintmax_t)batchDurationMs);
             
-            exit(0);
+            break;
         }
     }
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
