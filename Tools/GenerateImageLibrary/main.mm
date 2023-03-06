@@ -166,15 +166,15 @@ int main(int argc, const char* argv[]) {
                     imageId++;
                     imgRecIt++;
                     
-                    {
-                        NSString*const path = [NSString stringWithFormat:@"/Users/dave/Desktop/dds/debug-%zu.dds", txtIdx];
-                        static constexpr size_t pixel_format_bpp = 8;
-                        static constexpr DXGI_FORMAT fmt = DXGI_FORMAT_BC7_UNORM;
-                        static constexpr bool perceptual = true;
-                        bool br = utils::save_dds([path UTF8String], ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, rec.thumb.data,
-                            pixel_format_bpp, fmt, perceptual, false);
-                        assert(br);
-                    }
+//                    {
+//                        NSString*const path = [NSString stringWithFormat:@"/Users/dave/Desktop/dds/debug-%zu.dds", txtIdx];
+//                        static constexpr size_t pixel_format_bpp = 8;
+//                        static constexpr DXGI_FORMAT fmt = DXGI_FORMAT_BC7_UNORM;
+//                        static constexpr bool perceptual = true;
+//                        bool br = utils::save_dds([path UTF8String], ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, rec.thumb.data,
+//                            pixel_format_bpp, fmt, perceptual, false);
+//                        assert(br);
+//                    }
                 }
             }
             
