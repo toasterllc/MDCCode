@@ -16,3 +16,6 @@
 [submodule "Code/Lib/date"]
 	path = Code/Lib/date
 	url = git@github.com:heytoaster/date-MDC.git
+[submodule "Code/Lib/bc7enc_rdo"]
+	path = Code/Lib/bc7enc_rdo
+	url = git@github.com:heytoaster/bc7enc_rdo-MDC.git
