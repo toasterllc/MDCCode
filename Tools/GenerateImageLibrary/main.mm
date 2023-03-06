@@ -174,7 +174,6 @@ int main(int argc, const char* argv[]) {
                         bool br = utils::save_dds([path UTF8String], ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, rec.thumb.data,
                             pixel_format_bpp, fmt, perceptual, false);
                         assert(br);
-                        exit(0);
                     }
                 }
             }
