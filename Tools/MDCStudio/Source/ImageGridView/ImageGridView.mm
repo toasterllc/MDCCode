@@ -192,24 +192,24 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //    return true;
 //}
 
-- (id<MTLTexture>)textureForChunk:() {
-    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
-    [txtDesc setTextureType:MTLTextureType2DArray];
-    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB];
-    [txtDesc setWidth:ThumbsTxtWidth];
-    [txtDesc setHeight:ThumbsTxtHeight];
-    [txtDesc setArrayLength:SliceCount];
-    
-    id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
-    
-    for (auto imageRefIter=chunkImageRefBegin; imageRefIter<chunkImageRefEnd; imageRefIter++) {
-        const auto& imageRef = *imageRefIter;
-        const uint8_t* b = chunk.mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb);
-        [txt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
-            slice:imageRef.idx withBytes:b bytesPerRow:ThumbsTxtWidth*4 bytesPerImage:0];
-        b += ThumbsPerSlice*sizeof(ImageRecord);
-    }
-}
+//- (id<MTLTexture>)textureForChunk:() {
+//    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
+//    [txtDesc setTextureType:MTLTextureType2DArray];
+//    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB];
+//    [txtDesc setWidth:ThumbsTxtWidth];
+//    [txtDesc setHeight:ThumbsTxtHeight];
+//    [txtDesc setArrayLength:SliceCount];
+//    
+//    id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
+//    
+//    for (auto imageRefIter=chunkImageRefBegin; imageRefIter<chunkImageRefEnd; imageRefIter++) {
+//        const auto& imageRef = *imageRefIter;
+//        const uint8_t* b = chunk.mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb);
+//        [txt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
+//            slice:imageRef.idx withBytes:b bytesPerRow:ThumbsTxtWidth*4 bytesPerImage:0];
+//        b += ThumbsPerSlice*sizeof(ImageRecord);
+//    }
+//}
 
 - (void)display {
 //    auto startTime = std::chrono::steady_clock::now();
