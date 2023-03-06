@@ -111,13 +111,12 @@ int main(int argc, const char* argv[]) {
             const size_t beginOff = imgLib.recordCount();
             imgLib.reserve(txtCount);
             imgLib.add();
-            auto it = imgLib.begin()+beginOff;
             
             auto batchStartTime = std::chrono::steady_clock::now();
             
             // Generate thumbnails in the necessary format (RGBA)
             {
-                printf("Generating RGBA thumbnails...\n", (uintmax_t)txtCount);
+//                printf("Generating RGBA thumbnails...\n", (uintmax_t)txtCount);
                 
                 auto startTime = std::chrono::steady_clock::now();
                 for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
@@ -136,8 +135,8 @@ int main(int argc, const char* argv[]) {
                 
                 renderer.commitAndWait();
                 
-                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-                printf("-> took %ju ms\n", (uintmax_t)durationMs);
+//                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+//                printf("-> took %ju ms\n", (uintmax_t)durationMs);
             }
             
             // Encode thumbnails with BC7
@@ -191,15 +190,12 @@ int main(int argc, const char* argv[]) {
                 
                 const uint32_t blocks_x = srcImg.width() / 4;
                 const uint32_t blocks_y = srcImg.height() / 4;
-                bc7_block_vec packed_image(blocks_x * blocks_y);
+                bc7_block_vec blocks(blocks_x * blocks_y);
                 
+                auto imgRecIt = imgLib.begin()+beginOff;
                 for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
                     Renderer::Txt& txtDst = txtsDst.at(txtIdx);
                     
-    //                renderer.debugShowTexture(txtDst);
-    //                
-    //                renderer.sync(txtDst);
-    //                auto startTime = std::chrono::steady_clock::now();
                     [txtDst getBytes:srcImg.get_pixels().data() bytesPerRow:BytesPerRow
                         fromRegion:MTLRegionMake2D(0, 0, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight) mipmapLevel:0];
                     
@@ -221,45 +217,35 @@ int main(int argc, const char* argv[]) {
                             
                             // Compress the blocks to BC7.
                             // Note: If you've used Intel's ispc_texcomp, the input pixels are different. BC7E requires a pointer to an array of 16 pixels for each block.
-                            bc7_block *pBlock = &packed_image[bx + by * blocks_x];
+                            bc7_block *pBlock = &blocks[bx + by * blocks_x];
                             ispc::bc7e_compress_blocks(num_blocks_to_process, reinterpret_cast<uint64_t *>(pBlock), reinterpret_cast<const uint32_t *>(pixels), &pack_params);
                         }
                     }
                     
-    //                {
-    //                    NSString*const path = [NSString stringWithFormat:@"/Users/dave/Desktop/dds/debug-%zu.dds", txtIdx];
-    //                    static constexpr size_t pixel_format_bpp = 8;
-    //                    static constexpr DXGI_FORMAT fmt = DXGI_FORMAT_BC7_UNORM;
-    //                    bool br = utils::save_dds([path UTF8String], srcImg.width(), srcImg.height(), &packed_image[0],
-    //                        pixel_format_bpp, fmt, perceptual, false);
-    //                    assert(br);
-    //                }
+                    ImageRecord& rec = **imgRecIt;
+                    rec.info.id = imageId;
                     
-    //                exit(0);
+                    const size_t blocksSize = blocks.size() * sizeof(*blocks.data());
+                    memcpy(rec.thumb.data, blocks.data(), blocksSize);
                     
+                    imageId++;
+                    imgRecIt++;
                     
-    //                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-    //                printf("Encode took %ju ms\n", (uintmax_t)durationMs);
-                    
-                    
-    //                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-    //                printf("Iter took %ju ms\n", (uintmax_t)durationMs);
-                    
-                    
-    //                
-    //                id<MTLTexture> txtSrc = txtsSrc[txtIdx];
-    //                Renderer::Txt& txtDst = txtsDst.at(txtIdx);
-    //                renderer.render(txtDst,
-    //                    renderer.FragmentShader("SampleTexture",
-    //                        // Buffer args
-    //                        // Texture args
-    //                        txtSrc
-    //                    )
-    //                );
+//                    {
+//                        NSString*const path = [NSString stringWithFormat:@"/Users/dave/Desktop/dds/debug-%zu.dds", txtIdx];
+//                        static constexpr size_t pixel_format_bpp = 8;
+//                        static constexpr DXGI_FORMAT fmt = DXGI_FORMAT_BC7_UNORM;
+//                        bool br = utils::save_dds([path UTF8String], srcImg.width(), srcImg.height(), &packed_image[0],
+//                            pixel_format_bpp, fmt, perceptual, false);
+//                        assert(br);
+//                    }
                 }
             }
             
-//            exit(0);
+            auto batchDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-batchStartTime).count();
+            printf("-> Batch took %ju ms\n", (uintmax_t)batchDurationMs);
+            
+            exit(0);
         }
     }
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
