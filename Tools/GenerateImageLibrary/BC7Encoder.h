@@ -2,6 +2,45 @@
 #include "Code/Lib/bc7enc_rdo/bc7e_ispc.h"
 #include "Code/Lib/bc7enc_rdo/rdo_bc_encoder.h"
 
+
+
+
+//for (int32_t by = 0; by < static_cast<int32_t>(blocks_y); by++)
+//{
+//    // Process 64 blocks at a time, for efficient SIMD processing.
+//    // Ideally, N >= 8 (or more) and (N % 8) == 0.
+//    const int N = 64;
+//    
+//    for (uint32_t bx = 0; bx < blocks_x; bx += N)
+//    {
+//        const uint32_t num_blocks_to_process = std::min<uint32_t>(blocks_x - bx, N);
+//
+//        utils::color_quad_u8 pixels[16 * N];
+//
+//        // Extract num_blocks_to_process 4x4 pixel blocks from the source image and put them into the pixels[] array.
+//        for (uint32_t b = 0; b < num_blocks_to_process; b++)
+//            srcImg.get_block(bx + b, by, 4, 4, pixels + b * 16);
+//        
+//        // Compress the blocks to BC7.
+//        // Note: If you've used Intel's ispc_texcomp, the input pixels are different. BC7E requires a pointer to an array of 16 pixels for each block.
+//        bc7_block *pBlock = &blocks[bx + by * blocks_x];
+//        ispc::bc7e_compress_blocks(num_blocks_to_process, reinterpret_cast<uint64_t *>(pBlock), reinterpret_cast<const uint32_t *>(pixels), &pack_params);
+//    }
+//}
+//
+//ImageRecord& rec = **imgRecIt;
+//rec.info.id = imageId;
+//
+//const size_t blocksSize = blocks.size() * sizeof(*blocks.data());
+//memcpy(rec.thumb.data, blocks.data(), blocksSize);
+//assert(blocksSize == sizeof(rec.thumb.data));
+
+
+
+
+
+
+
 template <size_t T_Width, size_t T_Height>
 class BC7Encoder {
 public:
@@ -21,13 +60,15 @@ public:
             for (size_t bx=0; bx<_BlockCountX; bx+=_ChunkSize) {
                 const size_t blockCount = std::min<size_t>(_ChunkSize, _BlockCountX-bx);
                 
-                // Extract blockCount 4x4 pixel blocks from the source image and put them in _tmp
+                utils::color_quad_u8 tmp[16*_ChunkSize];
+                
+                // Extract blockCount 4x4 pixel blocks from the source image and put them in tmp
                 for (size_t b=0; b<blockCount; b++) {
-                    _BlockGet(bx+b, by, _tmp, _tmp+b*16);
+                    _BlockGet(bx+b, by, (utils::color_quad_u8*)src, tmp+b*16);
                 }
                 
                 // Compress the blocks to BC7
-                ispc::bc7e_compress_blocks((uint32_t)blockCount, (uint64_t*)&_blocks[by][bx], (uint32_t*)_tmp, &_params);
+                ispc::bc7e_compress_blocks((uint32_t)blockCount, (uint64_t*)&_blocks[by][bx], (uint32_t*)tmp, &_params);
             }
         }
         
@@ -75,5 +116,4 @@ private:
     
     ispc::bc7e_compress_block_params _params = {};
     _Block _blocks[_BlockCountY][_BlockCountX];
-    utils::color_quad_u8 _tmp[16*_ChunkSize];
 };
