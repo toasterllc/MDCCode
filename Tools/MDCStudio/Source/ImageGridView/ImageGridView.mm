@@ -278,8 +278,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 }
                 
                 size_t ThumbsTxtWidth  = 512;
-                size_t ThumbsTxtHeight = 50*290;
-                ThumbsTxtHeight = chunk.recordIdx * 290;
+                size_t ThumbsTxtHeight = chunk.recordIdx * 292;
                 
                 ImageGridLayerTypes::RenderContext ctx = {
                     .imageRecordSize = sizeof(ImageRecord),
@@ -320,6 +319,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
                 
                 MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB
                     width:ThumbsTxtWidth height:ThumbsTxtHeight mipmapped:false];
+//                [txtDesc setArrayLength:];
                 
                 id<MTLTexture> thumbsTxt = [_device newTextureWithDescriptor:txtDesc];
             

@@ -408,7 +408,7 @@ fragment float4 FragmentShader(
 //    in.idx = 1;
 //    uint chunkPxOffset = in.idx * ctx.imageRecordSize - 512 + 128;
     
-//    in.idx = 3;
+//    in.idx = 0;
     uint chunkPxOffset = in.idx * 512*(288+4);
     uint thumbPxOffsetRel = pos.y*512 + pos.x;
     uint thumbPxOffsetAbs = chunkPxOffset + thumbPxOffsetRel;
