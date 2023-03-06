@@ -68,7 +68,7 @@ private:
 //            
 //            
 //            
-            size_t srcY = by * T_Size + y;
+            size_t srcY = y + by*T_Size;
 			memcpy(dst+y*T_Size, &src[srcX+T_Width*srcY], T_Size*sizeof(*dst));
         }
 	}
