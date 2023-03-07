@@ -90,62 +90,66 @@ public:
         }
     };
     
-    // RecordRef: a reference to a record
-    // RecordRefs may be invalidated after the store is written (via write()) because
-    // the Chunk may have been compacted or deleted entirely (if it no longer contained records).
-    // Use RecordStrongRef if you need a RecordRef to stay valid across store writes.
-    class RecordRef {
+    template <typename T_ChunkRef>
+    class _RecordRef : public T_ChunkRef {
     public:
-        Chunk* chunk = nullptr;
         size_t idx = 0;
         
-        bool operator<(const RecordRef& x) const {
-            if (chunk != x.chunk)   return chunk->order < x.chunk->order;
-            if (idx != x.idx)       return idx < x.idx;
+        _RecordRef() {}
+        _RecordRef(const T_ChunkRef& chunk, size_t idx) : T_ChunkRef(chunk), idx(idx) {}
+        
+//        using T_ChunkRef::T_ChunkRef;
+        const T_ChunkRef& chunkRef() const { return *this; }
+        
+        template <typename T>
+        bool operator<(const T& x) const {
+            if (chunkRef() != x.chunkRef()) return chunkRef() < x.chunkRef();
+            if (idx != x.idx)               return idx < x.idx;
             return false;
         }
         
-        bool operator==(const RecordRef& x) const {
-            if (chunk != x.chunk)   return false;
-            if (idx != x.idx)       return false;
+        template <typename T>
+        bool operator==(const T& x) const {
+            if (chunkRef() != x.chunkRef()) return false;
+            if (idx != x.idx)               return false;
             return true;
         }
         
-        bool operator!=(const RecordRef& x) const { return !(*this == x); }
+        template <typename T>
+        bool operator!=(const T& x) const { return !(*this == x); }
         
         T_Record* operator->() const { return &record(); }
         T_Record& operator*() const { return record(); }
         T_Record& record() const {
-            return *(T_Record*)chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
+            return *(T_Record*)chunkRef().chunk->mmap.data(idx*sizeof(T_Record), sizeof(T_Record));
         }
+    };
+    
+    // RecordRef: a reference to a record
+    // RecordRefs may be invalidated after the store is written (via write()) because
+    // the Chunk may have been compacted or deleted entirely (if it no longer contained records).
+    // Use RecordStrongRef if you need a RecordRef to stay valid across store writes.
+    class RecordRef : public _RecordRef<ChunkRef> {
+    public:
+        using _RecordRef<ChunkRef>::_RecordRef;
     };
     
     // RecordStrongRef: a strong reference to a record, which keeps the record's backing data alive
     // across record removals (via remove()) and store writes (via write()). This is useful if
     // multiple threads access the store (with appropriate locking), and one thread needs to ensure
     // that the data that it references stays alive while other threads modify the store.
-    class RecordStrongRef : public RecordRef {
+    class RecordStrongRef : public _RecordRef<ChunkStrongRef> {
     public:
         RecordStrongRef() {}
-        RecordStrongRef(RecordRef ref) { _set(ref); }
+        RecordStrongRef(const RecordRef& ref) : _RecordRef<ChunkStrongRef>(ref, ref.idx) {}
         
-        // Copy
-        RecordStrongRef(const RecordStrongRef& x) { _set(x); }
-        RecordStrongRef& operator=(const RecordStrongRef& x) { _set(x); return *this; }
-        // Move
-        RecordStrongRef(RecordStrongRef&& x) { _swap(x); }
-        RecordStrongRef& operator=(RecordStrongRef&& x) { _swap(x); return *this; }
-        ~RecordStrongRef() { _set({}); }
+//        using _RecordRef<ChunkStrongRef>::_RecordRef;
         
-    private:
-        void _set(const RecordRef& ref) {
-            if (ref.chunk) ref.chunk->strongCount++;
-            if (RecordRef::chunk) RecordRef::chunk->strongCount--;
-            static_cast<RecordRef&>(*this) = ref;
-        }
-        
-        void _swap(RecordStrongRef& ref) {
-            std::swap(static_cast<RecordRef&>(*this), static_cast<RecordRef&>(ref));
+        operator const RecordRef() const {
+            return RecordRef(*this, this->idx);
+//            static_cast<ChunkRef&>(ref) = *this;
+//            ref.idx = _RecordRef<ChunkStrongRef>::idx;
+//            return ref;
         }
     };
     
