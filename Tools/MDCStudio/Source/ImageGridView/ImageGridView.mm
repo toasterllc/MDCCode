@@ -6,6 +6,7 @@
 #import "Util.h"
 #import "Grid.h"
 #import "Code/Shared/Img.h"
+#include "Toastbox/LRU.h"
 using namespace MDCStudio;
 
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
@@ -41,6 +42,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     id<MTLTexture> _shadowTexture;
     id<MTLTexture> _selectionTexture;
     id<MTLTexture> _thumbsTxt;
+    
+    LRU<ImageLibrary::ChunkStrongRef,id<MTLTexture>> _chunkTxts;
     
     Grid _grid;
     uint32_t _cellWidth;
@@ -195,6 +198,19 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 - (id<MTLTexture>)_textureForChunk:(ImageLibrary::RecordRefConstIter)iter {
     constexpr size_t TxtSliceCount = ImageLibrary::ChunkRecordCap;
     
+    const auto chunkBegin = ImageLibrary::FindChunkBegin(iter, _imageLibrary->begin());
+    const auto chunkEnd = ImageLibrary::FindChunkEnd(iter, _imageLibrary->end());
+    const ImageLibrary::ChunkStrongRef chunk = chunkBegin->chunkRef();
+    
+    assert(chunkBegin != chunkEnd);
+    
+    const auto it = _chunkTxts.get(chunk);
+    if (it != _chunkTxts.end()) {
+        return it->val;
+    }
+    
+    auto startTime = std::chrono::steady_clock::now();
+    
     MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
     [txtDesc setTextureType:MTLTextureType2DArray];
     [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB];
@@ -204,17 +220,18 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     
     id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
     
-    const auto chunkBegin = ImageLibrary::FindChunkBegin(iter, _imageLibrary->begin());
-    const auto chunkEnd = ImageLibrary::FindChunkEnd(iter, _imageLibrary->end());
-    if (chunkBegin != chunkEnd) {
-        const ImageLibrary::ChunkStrongRef chunk = chunkBegin->chunkRef();
-        for (auto it=chunkBegin; it!=chunkEnd; it++) {
-            const auto& imageRef = *it;
-            const uint8_t* b = chunk->mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb);
-            [txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
-                slice:imageRef.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
-        }
+    for (auto it=chunkBegin; it!=chunkEnd; it++) {
+        const auto& imageRef = *it;
+        const uint8_t* b = chunk->mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb);
+        [txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
+            slice:imageRef.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
     }
+    
+    _chunkTxts.insert(chunk, std::move(txt));
+    
+    auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+    printf("Texture creation took %ju ms\n", (uintmax_t)durationMs);
+    
     return txt;
 }
 
@@ -414,10 +431,9 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //                        withBytes:chunk.mmap.data() bytesPerRow:ThumbsTxtWidth*4];
 //                }
                 
-                id<MTLTexture> chunkTxt = nil;
-                
+                id<MTLTexture> chunkTxt = [self _textureForChunk:it];
                 [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-                [renderEncoder setFragmentTexture:_thumbsTxt atIndex:0];
+                [renderEncoder setFragmentTexture:chunkTxt atIndex:0];
 //                [renderEncoder setFragmentTexture:debugTxt atIndex:1];
                 
 //                [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
@@ -444,10 +460,10 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     
 //    auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
 //    printf("Took %ju ms\n", (uintmax_t)durationMs);
-    
-    if (!(rand() % 10)) {
-        _thumbsTxt = nil;
-    }
+//    
+//    if (!(rand() % 10)) {
+//        _thumbsTxt = nil;
+//    }
 }
 
 - (ImageSet)imagesForRect:(CGRect)rect {
