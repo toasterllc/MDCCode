@@ -447,8 +447,6 @@ private:
             id<MTLDevice> device = MTLCreateSystemDefaultDevice();
             if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
             Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
-            _ThumbCompressor compressor;
-            
             SD::Block block = fullBlockStart;
             size_t addedImageCount = 0;
             
@@ -458,7 +456,7 @@ private:
                 auto startTime = std::chrono::steady_clock::now();
                 const size_t imageCount = buf.len;
                 if (!imageCount) break; // We're done when we get an empty buffer
-                _addImages(renderer, compressor, buf.data, imageCount, block);
+                _addImages(renderer, buf.data, imageCount, block);
                 
                 block += imageCount * ImgSD::Full::ImageBlockCount;
                 addedImageCount += imageCount;
@@ -521,7 +519,7 @@ private:
         return true;
     }
     
-    void _addImages(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, const uint8_t* data, size_t imgCount, SD::Block block) {
+    void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount, SD::Block block) {
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
         using namespace Toastbox;
@@ -645,18 +643,34 @@ private:
         // Make sure all rendering is complete before adding the images to the library
         renderer.commitAndWait();
         
-        // Compress the thumbnail and copy it into the ImageRecord
-        auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
-        for (size_t idx=0; idx<imgCount; idx++) {
-            const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
-            const Renderer::Txt& thumbTxt = thumbTxts.at(idx);
-            ImageRecord& rec = **recordRefIter;
-            
-            [thumbTxt getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
-                fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
-            
-            compressor.encode(thumbData.get(), rec.thumb.data);
+        // Compress each thumbnail and copy the compressed data into the respective ImageRecord
+        // Spawn N worker threads (N=number of cores) to do the work in parallel
+        // The work is complete when all threads have exited
+        std::vector<std::thread> workers;
+        std::atomic<size_t> workIdx = 0;
+        for (int i=0; i<std::max(1,(int)std::thread::hardware_concurrency()); i++) {
+            workers.emplace_back([&](){
+                _ThumbCompressor compressor;
+                auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
+                
+                for (;;) {
+                    const size_t idx = workIdx.fetch_add(1);
+                    if (idx >= thumbTxts.size()) break;
+                    
+                    const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
+                    const Renderer::Txt& thumbTxt = thumbTxts.at(idx);
+                    ImageRecord& rec = **recordRefIter;
+                    
+                    [thumbTxt getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
+                        fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+                    
+                    compressor.encode(thumbData.get(), rec.thumb.data);
+                }
+            });
         }
+        
+        // Wait for workers to complete
+        for (std::thread& t : workers) t.join();
         
         {
             auto lock = std::unique_lock(*_imageLibrary);
