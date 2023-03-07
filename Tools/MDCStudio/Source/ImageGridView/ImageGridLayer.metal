@@ -391,6 +391,7 @@ fragment float4 FragmentShader(
     texture2d<float> debugTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
+//    return float4(0.5,0.5,0.5,1);
 //    constexpr sampler s(coord::pixel, filter::linear);
 //    return debugTxt.sample(s, in.posPx);
 

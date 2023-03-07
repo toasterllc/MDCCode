@@ -11,8 +11,9 @@ using namespace MDCStudio;
 using namespace MDCTools;
 using namespace Toastbox;
 
-//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
+//const fs::path ImagesDirPath = "/Users/dave/Desktop/SourceImages";
+const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
+//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
 
 static bool _IsJPGFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".jpg";
@@ -96,7 +97,12 @@ int main(int argc, const char* argv[]) {
             const size_t batchLenCapped = std::min((size_t)([urls count]-i), MaxBatchLen);
             NSArray* batchURLs = [urls subarrayWithRange:{i, batchLenCapped}];
             printf("Loading %ju textures...\n", (uintmax_t)batchLenCapped);
-            NSArray<id<MTLTexture>>* txtsSrc = [txtLoader newTexturesWithContentsOfURLs:batchURLs options:nil error:nil];
+            NSDictionary* opts = @{
+                // Assume all images are sRGB. In some cases there may be a different profile attached,
+                // but that should be the minority of cases compared to the cases where there's no profile
+                MTKTextureLoaderOptionSRGB: @YES,
+            };
+            NSArray<id<MTLTexture>>* txtsSrc = [txtLoader newTexturesWithContentsOfURLs:batchURLs options:opts error:nil];
             const size_t txtCount = [txtsSrc count];
             
             std::vector<Renderer::Txt> txtsDst;
@@ -178,6 +184,8 @@ int main(int argc, const char* argv[]) {
             
             auto batchDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-batchStartTime).count();
             printf("-> Batch took %ju ms\n", (uintmax_t)batchDurationMs);
+            
+//            break;
         }
     }
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();

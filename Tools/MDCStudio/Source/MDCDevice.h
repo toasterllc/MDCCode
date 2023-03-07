@@ -12,6 +12,7 @@
 #import "Tools/Shared/MDCUSBDevice.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
+#import "Tools/Shared/BC7Encoder.h"
 #import "ImageLibrary.h"
 #import "ImageCache.h"
 #import "ImageSource.h"
@@ -19,6 +20,9 @@
 namespace MDCStudio {
 
 class MDCDevice : public std::enable_shared_from_this<MDCDevice>, public ImageSource {
+private:
+    using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
+    
 public:
     using Observer = std::function<bool()>;
     
@@ -443,6 +447,7 @@ private:
             id<MTLDevice> device = MTLCreateSystemDefaultDevice();
             if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
             Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+            _ThumbCompressor compressor;
             
             SD::Block block = fullBlockStart;
             size_t addedImageCount = 0;
@@ -453,7 +458,7 @@ private:
                 auto startTime = std::chrono::steady_clock::now();
                 const size_t imageCount = buf.len;
                 if (!imageCount) break; // We're done when we get an empty buffer
-                _addImages(renderer, buf.data, imageCount, block);
+                _addImages(renderer, compressor, buf.data, imageCount, block);
                 
                 block += imageCount * ImgSD::Full::ImageBlockCount;
                 addedImageCount += imageCount;
@@ -516,7 +521,7 @@ private:
         return true;
     }
     
-    void _addImages(MDCTools::Renderer& renderer, const uint8_t* data, size_t imgCount, SD::Block block) {
+    void _addImages(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, const uint8_t* data, size_t imgCount, SD::Block block) {
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
         using namespace Toastbox;
@@ -586,28 +591,29 @@ private:
 //                );
                 
                 const Pipeline::Options pipelineOpts = {
-                    .rawMode = false,
 //                    .illum = illum,
 //                    .colorMatrix = colorMatrix,
 //                    .reconstructHighlights  = { .en = true, },
                     .debayerLMMSE           = { .applyGamma = true, },
                 };
                 
-                Pipeline::Result renderResult = Pipeline::RunThumb(renderer, rawImage, pipelineOpts);
-                const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
+                Renderer::Txt thumbTxt;
+                Pipeline::Result renderResult = Pipeline::Run(renderer, pipelineOpts, rawImage, thumbTxt);
                 
-                if (&chunk != chunkPrev) {
-                    constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-                    chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
-                }
-                
-                const RenderThumb::Options thumbOpts = {
-                    .thumbWidth = ImageThumb::ThumbWidth,
-                    .thumbHeight = ImageThumb::ThumbHeight,
-                    .dataOff = thumbDataOff,
-                };
-                
-                RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, chunkBuf);
+//                const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
+//                
+//                if (&chunk != chunkPrev) {
+//                    constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
+//                    chunkBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data() length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
+//                }
+//                
+//                const RenderThumb::Options thumbOpts = {
+//                    .thumbWidth = ImageThumb::ThumbWidth,
+//                    .thumbHeight = ImageThumb::ThumbHeight,
+//                    .dataOff = thumbDataOff,
+//                };
+//                
+//                RenderThumb::RGB3FromTexture(renderer, thumbOpts, renderResult.txt, chunkBuf);
                 
                 // Populate the illuminant (ImageRecord.info.illumEst)
                 rec.info.illumEst[0] = renderResult.illum[0];

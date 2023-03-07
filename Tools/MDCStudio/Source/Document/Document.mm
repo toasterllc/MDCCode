@@ -162,7 +162,6 @@ using namespace MDCStudio;
 //            };
 //            
 //            const Pipeline::Options pipelineOpts = {
-//                .rawMode = false,
 //                .reconstructHighlights  = { .en = true, },
 //                .debayerLMMSE           = { .applyGamma = true, },
 //            };

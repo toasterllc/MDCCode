@@ -84,6 +84,16 @@ public:
         Over,
     };
     
+    static CGColorSpaceRef GrayColorSpace() {
+        static CGColorSpaceRef cs = CGColorSpaceCreateDeviceGray();
+        return cs;
+    }
+    
+    static CGColorSpaceRef LSRGBColorSpace() {
+        static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+        return cs;
+    }
+    
     Renderer() {}
     Renderer(id<MTLDevice> dev, id<MTLLibrary> lib, id<MTLCommandQueue> commandQueue) :
     dev(dev), _lib(lib), _commandQueue(commandQueue), _recycleBufs(std::make_shared<_RecycleBufs>()) {
@@ -657,9 +667,9 @@ public:
         // Choose a colorspace if one wasn't supplied
         if (!colorSpace) {
             if (samplesPerPixel == 1) {
-                colorSpace = _GrayColorSpace();
+                colorSpace = (__bridge id)GrayColorSpace();
             } else if (samplesPerPixel == 4) {
-                colorSpace = _LSRGBColorSpace();
+                colorSpace = (__bridge id)LSRGBColorSpace();
             } else {
                 throw std::runtime_error("invalid texture format");
             }
@@ -847,16 +857,6 @@ private:
     
     
     
-    
-    static id _GrayColorSpace() {
-        static CGColorSpaceRef cs = CGColorSpaceCreateDeviceGray();
-        return (__bridge id)cs;
-    }
-    
-    static id _LSRGBColorSpace() {
-        static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
-        return (__bridge id)cs;
-    }
     
     Buf _bufferCreate(size_t len, MTLStorageMode storageMode, bool deferRecycle) {
         // Return an existing buffer if its length is between len and 2*len,

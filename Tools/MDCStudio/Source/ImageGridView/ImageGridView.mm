@@ -12,9 +12,11 @@ using namespace MDCStudio;
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
 static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 
-// _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
-// so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+// _PixelFormat: Our pixels are in the linear RGB space (LSRGB), and need conversion to the display color space.
+// To do so, we declare that our pixels are LSRGB (ie we _don't_ use the _sRGB MTLPixelFormat variant!),
+// and we opt-in to color matching by setting the colorspace on our CAMetalLayer via -setColorspace:.
+// Without calling -setColorspace:, CAMetalLayers don't perform color matching!
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
 @interface ImageGridLayer : FixedMetalDocumentLayer
 
@@ -57,6 +59,11 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     } _selection;
 }
 
+static CGColorSpaceRef _LSRGBColorSpace() {
+    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+    return cs;
+}
+
 - (instancetype)initWithImageLibrary:(ImageLibraryPtr)imageLibrary {
     NSParameterAssert(imageLibrary);
     
@@ -68,6 +75,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     assert(_device);
     [self setDevice:_device];
     [self setPixelFormat:_PixelFormat];
+    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
     
     MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:_device];
     // TODO: supply scaleFactor properly
@@ -213,7 +221,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     
     MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
     [txtDesc setTextureType:MTLTextureType2DArray];
-    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB];
+    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm];
     [txtDesc setWidth:ImageThumb::ThumbWidth];
     [txtDesc setHeight:ImageThumb::ThumbHeight];
     [txtDesc setArrayLength:TxtSliceCount];

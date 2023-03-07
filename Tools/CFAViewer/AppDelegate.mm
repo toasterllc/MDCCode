@@ -205,8 +205,6 @@ struct ExposureSettings {
     
     
     _imagePipelineManager->options = {
-        .rawMode = false,
-        
         .illum = std::nullopt,
         
         .reconstructHighlights = {

@@ -18,8 +18,6 @@ public:
     };
     
     struct Options {
-        bool rawMode = false;
-        
         std::optional<MDCTools::Color<MDCTools::ColorSpace::Raw>> illum;
         std::optional<Mat<double,3,3>> colorMatrix;
         
@@ -51,7 +49,6 @@ public:
     };
     
     struct Result {
-        MDCTools::Renderer::Txt txt; // LSRGB colorspace
         MDCTools::Color<MDCTools::ColorSpace::Raw> illum; // Illuminant that was used
         Mat<double,3,3> colorMatrix; // Color matrix that was used
         struct {
@@ -61,8 +58,7 @@ public:
         } sampleBufs;
     };
     
-    static Result Run(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts);
-    static Result RunThumb(MDCTools::Renderer& renderer, const RawImage& rawImg, const Options& opts);
+    static Result Run(MDCTools::Renderer& renderer, const Options& opts, const RawImage& srcRaw, id<MTLTexture> dst);
 };
 
 } // namespace MDCTools::ImagePipeline

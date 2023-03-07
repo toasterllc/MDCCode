@@ -11,26 +11,11 @@ using namespace MDCStudio;
 using namespace MDCStudio::ImageViewTypes;
 using namespace MDCTools;
 
-// _PixelFormat: Our pixels are in the linear (LSRGB) space, and need conversion to SRGB,
-// so our layer needs to have the _sRGB pixel format to enable the automatic conversion.
-static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// _PixelFormat: Our pixels are in the linear RGB space (LSRGB), and need conversion to the display color space.
+// To do so, we declare that our pixels are LSRGB (ie we _don't_ use the _sRGB MTLPixelFormat variant!),
+// and we opt-in to color matching by setting the colorspace on our CAMetalLayer via -setColorspace:.
+// Without calling -setColorspace:, CAMetalLayers don't perform color matching!
+static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
 @interface ImageLayer : FixedMetalDocumentLayer
 @end
@@ -45,8 +30,13 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     
     std::atomic<bool> _dirty;
     ImagePtr _image;
-    id<MTLTexture> _thumbTxt;
-    id<MTLTexture> _imageTxt;
+    Renderer::Txt _thumbTxt;
+    Renderer::Txt _imageTxt;
+}
+
+static CGColorSpaceRef _LSRGBColorSpace() {
+    static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+    return cs;
 }
 
 - (instancetype)initWithImageRecord:(ImageRecordPtr)imageRecord imageSource:(ImageSourcePtr)imageSource {
@@ -71,6 +61,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     assert(_device);
     [self setDevice:_device];
     [self setPixelFormat:_PixelFormat];
+    [self setColorspace:_LSRGBColorSpace()]; // See comment for _PixelFormat
     
     _library = [_device newDefaultLibrary];
     _commandQueue = [_device newCommandQueue];
@@ -169,28 +160,30 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
             },
         };
         
-        Pipeline::Result renderResult = Pipeline::Run(renderer, rawImage, pipelineOpts);
-        _imageTxt = renderResult.txt;
+        if (!_imageTxt) {
+            // _imageTxt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
+            // representation of the pipeline result without clipping to 8-bit components, so we can
+            // render to an HDR display and make use of the depth.
+            _imageTxt = renderer.textureCreate(MTLPixelFormatRGBA16Float, _image->width, _image->height);
+        }
+        
+//        } else {
+//            // If we already have _imageTxt, confirm that the size matches _image
+//            assert([_imageTxt width] == _image->width);
+//            assert([_imageTxt height] == _image->height);
+//        }
+        
+        Pipeline::Run(renderer, pipelineOpts, rawImage, _imageTxt);
     }
     
     // If we don't have the thumbnail texture yet, create it
     if (!_thumbTxt || dirty) {
-        #warning TODO: try removing the Write usage flag
-        _thumbTxt = renderer.textureCreate(MTLPixelFormatBGRA8Unorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight,
-            MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite);
+        if (!_thumbTxt) {
+            _thumbTxt = renderer.textureCreate(MTLPixelFormatBC7_RGBAUnorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight);
+        }
         
-        const ImageLibrary::Chunk& chunk = *_imageRecord.chunk;
-        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache | MTLResourceStorageModeShared;
-        id<MTLBuffer> thumbBuf = [renderer.dev newBufferWithBytesNoCopy:(void*)chunk.mmap.data()
-            length:Mmap::PageCeil(chunk.mmap.len()) options:BufOpts deallocator:nil];
-        const size_t thumbDataOff = (uintptr_t)&_imageRecord->thumb - (uintptr_t)chunk.mmap.data();
-        
-        const RenderThumb::Options thumbOpts = {
-            .thumbWidth = ImageThumb::ThumbWidth,
-            .thumbHeight = ImageThumb::ThumbHeight,
-            .dataOff = thumbDataOff,
-        };
-        RenderThumb::TextureFromRGB3(renderer, thumbOpts, thumbBuf, _thumbTxt);
+        [_thumbTxt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
+            slice:0 withBytes:_imageRecord->thumb.data bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
     }
     
     // Finally render into `drawableTxt`, from the full-size image if it
