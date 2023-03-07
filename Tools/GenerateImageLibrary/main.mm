@@ -7,28 +7,28 @@
 #import "ImageLibrary.h"
 #import "Code/Lib/bc7enc_rdo/bc7e_ispc.h"
 #import "Code/Lib/bc7enc_rdo/rdo_bc_encoder.h"
-#import "BC7Encoder.h"
+#import "Tools/Shared/BC7Encoder.h"
 namespace fs = std::filesystem;
 using namespace MDCStudio;
 using namespace MDCTools;
 using namespace Toastbox;
 
-const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
+//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
+const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
 
 static bool _IsJPGFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".jpg";
 }
 
-static uintptr_t _FloorToPageSize(uintptr_t x) {
-    const uintptr_t s = getpagesize();
-    return (x/s)*s;
-}
-
-static uintptr_t _CeilToPageSize(uintptr_t x) {
-    const uintptr_t s = getpagesize();
-    return ((x+s-1)/s)*s;
-}
+//static uintptr_t _FloorToPageSize(uintptr_t x) {
+//    const uintptr_t s = getpagesize();
+//    return (x/s)*s;
+//}
+//
+//static uintptr_t _CeilToPageSize(uintptr_t x) {
+//    const uintptr_t s = getpagesize();
+//    return ((x+s-1)/s)*s;
+//}
 
 //static void DebugShowThumb(size_t thumbIdx) {
 //    id<MTLDevice> dev = MTLCreateSystemDefaultDevice();

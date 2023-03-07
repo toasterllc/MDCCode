@@ -102,8 +102,8 @@
 		55A36B1027A36AEB00FD0181 /* Assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Assert.h; sourceTree = "<group>"; };
 		55A36B1127A3C46A00FD0181 /* ImageLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImageLibrary.h; path = ../MDCStudio/Source/ImageLibrary.h; sourceTree = "<group>"; };
 		55C90C1929B6709A007CC97E /* bc7enc_rdo.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = bc7enc_rdo.xcodeproj; path = ../../Code/Lib/bc7enc_rdo/bc7enc_rdo.xcodeproj; sourceTree = "<group>"; };
-		55C90C2229B67355007CC97E /* BC7Encoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BC7Encoder.h; sourceTree = "<group>"; };
 		55C90C2629B68261007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImageThumb.h; path = ../MDCStudio/Source/ImageThumb.h; sourceTree = "<group>"; };
+		55C90C6629B79398007CC97E /* BC7Encoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BC7Encoder.h; path = ../../Tools/Shared/BC7Encoder.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -127,6 +127,7 @@
 		5513289427B3793100CD823B /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				55C90C6629B79398007CC97E /* BC7Encoder.h */,
 				5513289527B3793100CD823B /* ImgAutoExposure.h */,
 				5513289627B3793100CD823B /* GetBits.h */,
 				5513289727B3793100CD823B /* ChecksumFletcher32.h */,
@@ -159,7 +160,6 @@
 				5513289027B378BF00CD823B /* MetalUtil.h */,
 				5513289227B378BF00CD823B /* Renderer.h */,
 				5513289127B378BF00CD823B /* Renderer.metal */,
-				55C90C2229B67355007CC97E /* BC7Encoder.h */,
 				551B22462791391400D62121 /* main.mm */,
 				551B22442791391400D62121 /* Products */,
 				551B224D279139DE00D62121 /* Frameworks */,
