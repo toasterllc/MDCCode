@@ -133,14 +133,15 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     _cellHeight = _ThumbHeight+excess;
     
     _grid.setBorderSize({
-        .left   = (int32_t)_cellWidth/5,
-        .right  = (int32_t)_cellWidth/5,
-        .top    = (int32_t)_cellHeight/5,
-        .bottom = (int32_t)_cellHeight/5,
+        .left   = 6,//(int32_t)_cellWidth/5,
+        .right  = 6,//(int32_t)_cellWidth/5,
+        .top    = 6,//(int32_t)_cellHeight/5,
+        .bottom = 6,//(int32_t)_cellHeight/5,
     });
     
     _grid.setCellSize({(int32_t)_cellWidth, (int32_t)_cellHeight});
-    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
+    _grid.setCellSpacing({6, 6});
+//    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
     
     return self;
 }

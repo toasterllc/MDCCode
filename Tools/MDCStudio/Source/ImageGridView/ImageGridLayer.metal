@@ -410,10 +410,10 @@ fragment float4 FragmentShader(
 //    uint chunkPxOffset = in.idx * ctx.imageRecordSize - 512 + 128;
     
 //    in.idx = 0;
-    uint chunkPxOffset = in.idx * 512*(288+4);
-    uint thumbPxOffsetRel = pos.y*512 + pos.x;
-    uint thumbPxOffsetAbs = chunkPxOffset + thumbPxOffsetRel;
-    uint2 posAbs(thumbPxOffsetAbs % txt.get_width(), thumbPxOffsetAbs / txt.get_width());
+//    uint chunkPxOffset = in.idx * 512*(288+4);
+//    uint thumbPxOffsetRel = pos.y*512 + pos.x;
+//    uint thumbPxOffsetAbs = chunkPxOffset + thumbPxOffsetRel;
+//    uint2 posAbs(thumbPxOffsetAbs % txt.get_width(), thumbPxOffsetAbs / txt.get_width());
 //    uint byteOffsetInRecord = pxOffsetInRecord*4;
     
 //    const float2 posOffInTxt((byteOffsetInRecord/4) % txt.get_width(), (byteOffsetInRecord/4) / txt.get_width());
