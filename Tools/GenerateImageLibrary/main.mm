@@ -13,8 +13,8 @@ using namespace MDCStudio;
 using namespace MDCTools;
 using namespace Toastbox;
 
-//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
+const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
+//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
 
 static bool _IsJPGFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".jpg";
@@ -180,8 +180,6 @@ int main(int argc, const char* argv[]) {
             
             auto batchDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-batchStartTime).count();
             printf("-> Batch took %ju ms\n", (uintmax_t)batchDurationMs);
-            
-            break;
         }
     }
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();

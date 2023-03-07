@@ -194,6 +194,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //    return true;
 //}
 
+#warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
 - (id<MTLTexture>)_textureForChunk:(ImageLibrary::RecordRefConstIter)iter {
     constexpr size_t TxtSliceCount = ImageLibrary::ChunkRecordCap;
     
