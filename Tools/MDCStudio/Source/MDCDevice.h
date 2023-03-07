@@ -534,10 +534,11 @@ private:
         
         Img::Id deviceImgIdLast = 0;
         const ImageLibrary::Chunk* chunkPrev = nullptr;
-        id<MTLBuffer> chunkBuf = nil;
         
         #warning TODO: perf: in the future we could ensure that our `data` argument is mmap'd and
         #warning             use -newBufferWithBytesNoCopy: to avoid creating a bunch of temporary buffers
+        std::vector<Renderer::Txt> thumbTxts;
+        thumbTxts.reserve(imgCount);
         for (size_t idx=0; idx<imgCount; idx++) {
             const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
             const Img::Header& imgHeader = *(const Img::Header*)imgData;
@@ -597,8 +598,15 @@ private:
                     .debayerLMMSE           = { .applyGamma = true, },
                 };
                 
-                Renderer::Txt thumbTxt;
+                constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+                Renderer::Txt& thumbTxt = thumbTxts.emplace_back(renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
+                    ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage));
+                
                 Pipeline::Result renderResult = Pipeline::Run(renderer, pipelineOpts, rawImage, thumbTxt);
+                renderer.sync(thumbTxt);
+                
+                
+                
                 
 //                const size_t thumbDataOff = (uintptr_t)&rec.thumb - (uintptr_t)chunk.mmap.data();
 //                
@@ -636,6 +644,19 @@ private:
         
         // Make sure all rendering is complete before adding the images to the library
         renderer.commitAndWait();
+        
+        // Compress the thumbnail and copy it into the ImageRecord
+        auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
+        for (size_t idx=0; idx<imgCount; idx++) {
+            const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
+            const Renderer::Txt& thumbTxt = thumbTxts.at(idx);
+            ImageRecord& rec = **recordRefIter;
+            
+            [thumbTxt getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
+                fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+            
+            compressor.encode(thumbData.get(), rec.thumb.data);
+        }
         
         {
             auto lock = std::unique_lock(*_imageLibrary);
