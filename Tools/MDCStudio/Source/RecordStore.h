@@ -8,6 +8,14 @@
 #include "Toastbox/Mmap.h"
 #include "Toastbox/IntForStr.h"
 
+// RecordStore: a persistence data structure designed with the following properties:
+//          storage amount: many gigabytes of data
+//             data format: data is stored as individual records, where each record follows a common schema (T_Record)
+//     data access pattern: optimally records are added to the end of the store, and removed from the beginning of the store;
+//                          random-removal is supported and doesn't affect adjacent records. The space of a deleted record is
+//                          not recovered until chunk compaction occurs (currently unimplemented).
+//               threading: data can be written from one thread and read from another in parallel
+
 template <
     typename T_Record,
     size_t T_ChunkRecordCap // Max number of records per chunk
