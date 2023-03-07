@@ -5,8 +5,6 @@
 #import "Renderer.h"
 #import "Toastbox/Mmap.h"
 #import "ImageLibrary.h"
-#import "Code/Lib/bc7enc_rdo/bc7e_ispc.h"
-#import "Code/Lib/bc7enc_rdo/rdo_bc_encoder.h"
 #import "Tools/Shared/BC7Encoder.h"
 namespace fs = std::filesystem;
 using namespace MDCStudio;
