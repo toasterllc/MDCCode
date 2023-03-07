@@ -192,24 +192,31 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //    return true;
 //}
 
-//- (id<MTLTexture>)textureForChunk:() {
-//    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
-//    [txtDesc setTextureType:MTLTextureType2DArray];
-//    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB];
-//    [txtDesc setWidth:ThumbsTxtWidth];
-//    [txtDesc setHeight:ThumbsTxtHeight];
-//    [txtDesc setArrayLength:SliceCount];
-//    
-//    id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
-//    
-//    for (auto imageRefIter=chunkImageRefBegin; imageRefIter<chunkImageRefEnd; imageRefIter++) {
-//        const auto& imageRef = *imageRefIter;
-//        const uint8_t* b = chunk.mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb);
-//        [txt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
-//            slice:imageRef.idx withBytes:b bytesPerRow:ThumbsTxtWidth*4 bytesPerImage:0];
-//        b += ThumbsPerSlice*sizeof(ImageRecord);
-//    }
-//}
+- (id<MTLTexture>)_textureForChunk:(ImageLibrary::RecordRefConstIter)iter {
+    constexpr size_t TxtSliceCount = ImageLibrary::ChunkRecordCap;
+    
+    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
+    [txtDesc setTextureType:MTLTextureType2DArray];
+    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB];
+    [txtDesc setWidth:ImageThumb::ThumbWidth];
+    [txtDesc setHeight:ImageThumb::ThumbHeight];
+    [txtDesc setArrayLength:TxtSliceCount];
+    
+    id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
+    
+    const auto chunkBegin = ImageLibrary::FindChunkBegin(iter, _imageLibrary->begin());
+    const auto chunkEnd = ImageLibrary::FindChunkEnd(iter, _imageLibrary->end());
+    if (chunkBegin != chunkEnd) {
+        const ImageLibrary::ChunkStrongRef chunk = chunkBegin->chunkRef();
+        for (auto it=chunkBegin; it!=chunkEnd; it++) {
+            const auto& imageRef = *it;
+            const uint8_t* b = chunk->mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb);
+            [txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
+                slice:imageRef.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
+        }
+    }
+    return txt;
+}
 
 - (void)display {
 //    auto startTime = std::chrono::steady_clock::now();
@@ -263,7 +270,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         
         for (auto it=imageRefBegin; it<imageRefEnd;) {
             const auto& chunk = *(it->chunk);
-            const auto nextChunkStart = ImageLibrary::FindNextChunk(it, _imageLibrary->end());
+            const auto nextChunkStart = ImageLibrary::FindChunkEnd(it, _imageLibrary->end());
             
             const auto chunkImageRefBegin = it;
             const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
@@ -339,32 +346,34 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //                txt = 67108864
 //                mmap = 100*
                 
-                if (!_thumbsTxt) {
-                    auto startTime = std::chrono::steady_clock::now();
-                    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
-                    [txtDesc setTextureType:MTLTextureType2DArray];
-                    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB];
-                    [txtDesc setWidth:ThumbsTxtWidth];
-                    [txtDesc setHeight:ThumbsTxtHeight];
-                    [txtDesc setArrayLength:SliceCount];
-                    
-    //                MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
-    //                    width:ThumbsTxtWidth height:512 mipmapped:false];
-    //                [txtDesc setArrayLength:SliceCount];
-                    
-                    _thumbsTxt = [_device newTextureWithDescriptor:txtDesc];
-                    
-                    for (auto imageRefIter=chunkImageRefBegin; imageRefIter<chunkImageRefEnd; imageRefIter++) {
-                        const auto& imageRef = *imageRefIter;
-                        const uint8_t* b = chunk.mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb);
-                        [_thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
-                            slice:imageRef.idx withBytes:b bytesPerRow:ThumbsTxtWidth*4 bytesPerImage:0];
-                        b += ThumbsPerSlice*sizeof(ImageRecord);
-                    }
-                    
-                    auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-                    printf("Took %ju ms\n", (uintmax_t)durationMs);
-                }
+                _thumbsTxt = [self _textureForChunk:it];
+                
+//                if (!_thumbsTxt) {
+//                    auto startTime = std::chrono::steady_clock::now();
+//                    MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor new];
+//                    [txtDesc setTextureType:MTLTextureType2DArray];
+//                    [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm_sRGB];
+//                    [txtDesc setWidth:ThumbsTxtWidth];
+//                    [txtDesc setHeight:ThumbsTxtHeight];
+//                    [txtDesc setArrayLength:SliceCount];
+//                    
+//    //                MTLTextureDescriptor* txtDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+//    //                    width:ThumbsTxtWidth height:512 mipmapped:false];
+//    //                [txtDesc setArrayLength:SliceCount];
+//                    
+//                    _thumbsTxt = [_device newTextureWithDescriptor:txtDesc];
+//                    
+//                    for (auto imageRefIter=chunkImageRefBegin; imageRefIter<chunkImageRefEnd; imageRefIter++) {
+//                        const auto& imageRef = *imageRefIter;
+//                        const uint8_t* b = chunk.mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb);
+//                        [_thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
+//                            slice:imageRef.idx withBytes:b bytesPerRow:ThumbsTxtWidth*4 bytesPerImage:0];
+//                        b += ThumbsPerSlice*sizeof(ImageRecord);
+//                    }
+//                    
+//                    auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+//                    printf("Took %ju ms\n", (uintmax_t)durationMs);
+//                }
                 
 //                [thumbsTxt replaceRegion:MTLRegionMake2D(0,0,ThumbsTxtWidth,ThumbsTxtHeight) mipmapLevel:0
 //                    withBytes:chunk.mmap.data() bytesPerRow:ThumbsTxtWidth*4];

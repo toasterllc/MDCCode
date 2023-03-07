@@ -8,13 +8,13 @@
 #include "Toastbox/Mmap.h"
 #include "Toastbox/IntForStr.h"
 
-// RecordStore: a persistence data structure designed with the following properties:
+// RecordStore: a persistent data structure designed with the following properties:
 //          storage amount: many gigabytes of data
-//             data format: data is stored as individual records, where each record follows a common schema (T_Record)
-//     data access pattern: optimally records are added to the end of the store, and removed from the beginning of the store;
-//                          random-removal is supported and doesn't affect adjacent records. The space of a deleted record is
-//                          not recovered until chunk compaction occurs (currently unimplemented).
-//               threading: data can be written from one thread and read from another in parallel
+//             data format: data is stored as individual records, where each record follows a common templated schema (T_Record)
+//     data access pattern: records are optimally added to the end of the store, and removed from the beginning of the store;
+//                          random-removal is supported and doesn't affect adjacent records;
+//                          the space of a randomly-deleted record is not recovered until chunk compaction occurs (currently unimplemented)
+//               threading: data can be written from one thread and read from another thread in parallel
 
 template <
     typename T_Record,
@@ -59,6 +59,10 @@ public:
         }
         
         bool operator!=(const ChunkRef& x) const { return !(*this == x); }
+        
+        Chunk* operator->() const { return &get(); }
+        Chunk& operator*() const { return get(); }
+        Chunk& get() const { return *chunk; }
     };
     
     // ChunkStrongRef: a strong reference to a mmap'd chunk, which keeps the chunk alive
@@ -304,22 +308,23 @@ public:
     using RecordRefConstIter = typename RecordRefs::const_iterator;
     using RecordRefConstReverseIter = typename RecordRefs::const_reverse_iterator;
     
-    // FindNextChunk(): finds the first RecordRef for the next chunk after the given RecordRef's chunk
-    static RecordRefConstIter FindNextChunk(RecordRefConstIter iter, RecordRefConstIter end) {
+    // FindChunkBegin(): finds the iterator for the beginning of iter's chunk
+    static RecordRefConstIter FindChunkBegin(RecordRefConstIter iter, RecordRefConstIter begin) {
+        if (iter == begin) return begin;
+        const ChunkRef iterChunk = *iter;
+        return std::lower_bound(begin, iter, 0,
+            [&](const ChunkRef& sample, auto) -> bool {
+                return sample != iterChunk;
+            });
+    }
+
+    // FindChunkEnd(): finds the iterator for the end (last+1) of iter's chunk
+    static RecordRefConstIter FindChunkEnd(RecordRefConstIter iter, RecordRefConstIter end) {
         if (iter == end) return end;
-        const Chunk*const startChunk = iter->chunk;
-        
+        const ChunkRef iterChunk = *iter;
         return std::lower_bound(iter, end, 0,
-            [&](const RecordRef& sample, auto) -> bool {
-                if (sample.chunk == startChunk) {
-                    // If `sample`'s chunk is the same chunk as `iter`,
-                    // then `sample` is less than the target
-                    return true;
-                }
-                
-                // Otherwise, `sample`'s chunk is neither the same chunk as `iter`,
-                // nor the target chunk, so it's greater than the target
-                return false;
+            [&](const ChunkRef& sample, auto) -> bool {
+                return sample == iterChunk;
             });
     }
     
