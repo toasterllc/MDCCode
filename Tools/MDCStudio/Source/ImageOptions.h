@@ -15,7 +15,8 @@ struct [[gnu::packed]] ImageWhiteBalance {
     //   Memory layout matches simd::float3x3 (column-major),
     //   which has a padding float for each column, hence the `4`.
     float colorMatrix[3][4] = {};
-    uint8_t _reserved[16]; // For future use (we may want to specify which 2 illuminants we're interpolating between)
+    
+    uint8_t _reserved[128]; // For future use (we may want to specify which 2 illuminants we're interpolating between)
 };
 
 static_assert(!(sizeof(ImageWhiteBalance) % 8), "ImageWhiteBalance must be multiple of 8 bytes");
@@ -56,7 +57,7 @@ struct [[gnu::packed]] ImageOptions {
     } localContrast;
     
     // _reserved: so we can add fields in the future without doing a data migration
-    uint8_t _reserved[136];
+    uint8_t _reserved[128];
 };
 
 static_assert(!(sizeof(ImageOptions) % 8), "ImageOptions must be multiple of 8 bytes");

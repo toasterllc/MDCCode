@@ -175,6 +175,19 @@ public:
     }
     
     MDCUSBDevicePtr device() { return _dev; }
+    
+    void observerAdd(Observer&& observer) {
+        auto lock = std::unique_lock(_state.lock);
+        _state.observers.push_front(std::move(observer));
+    }
+    
+    void write() {
+        auto lock = std::unique_lock(_state.lock);
+        _write();
+    }
+    
+    // MARK: - ImageSource Functions
+    
     ImageLibraryPtr imageLibrary() override { return _imageLibrary; }
     
     ImageCachePtr imageCache() override {
@@ -194,17 +207,13 @@ public:
         return _state.imageCache;
     }
     
-    void observerAdd(Observer&& observer) {
-        auto lock = std::unique_lock(_state.lock);
-        _state.observers.push_front(std::move(observer));
-    }
-    
-    void write() {
-        auto lock = std::unique_lock(_state.lock);
-        _write();
+    void renderThumbs(ImageRecordIter begin, ImageRecordIter end) override {
+        printf("renderThumbs %zu\n", end-begin);
     }
     
 private:
+    // MARK: - Private
+    
     using _Path = std::filesystem::path;
     static constexpr uint32_t _Version = 0;
     static constexpr uint64_t _UnixTimeOffset = 1640995200; // 2022-01-01 00:00:00 +0000

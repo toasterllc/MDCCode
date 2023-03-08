@@ -30,8 +30,7 @@ struct [[gnu::packed]] ImageInfo {
     uint8_t _pad[4];
     
     // _reserved: so we can add fields in the future without doing a data migration
-    // Also so that our size is half of
-    uint8_t _reserved[208];
+    uint8_t _reserved[128];
 };
 
 static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple of 8 bytes
@@ -184,6 +183,7 @@ private:
 };
 
 using ImageLibraryPtr = std::shared_ptr<MDCTools::Lockable<ImageLibrary>>;
+using ImageRecordIter = ImageLibrary::RecordRefConstIter;
 using ImageRecordPtr = ImageLibrary::RecordStrongRef;
 using ImageSet = std::set<ImageRecordPtr>;
 
