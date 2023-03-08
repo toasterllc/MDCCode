@@ -40,9 +40,11 @@ vertex VertexOutput VertexShader(
     const float2 vnorm = float2(vabs) / ctx.viewSize;
     
     const bool selected = (
-        idxAbs>=ctx.selection.base &&
-        idxAbs<ctx.selection.base+ctx.selection.count &&
-        selectedImages[idxAbs-ctx.selection.base]
+        !ctx.selection.count || (
+            idxAbs>=ctx.selection.base &&
+            idxAbs<ctx.selection.base+ctx.selection.count &&
+            selectedImages[idxAbs-ctx.selection.base]
+        )
     );
     
     return VertexOutput{
@@ -60,7 +62,7 @@ fragment float4 FragmentShader(
 ) {
     const uint2 pos = uint2(in.posPx);
     float3 c = txt.read(pos, in.idx).rgb;
-    if (in.selected) c /= 12;
+    if (!in.selected) c /= 32;
     return float4(c, 1);
 }
 
