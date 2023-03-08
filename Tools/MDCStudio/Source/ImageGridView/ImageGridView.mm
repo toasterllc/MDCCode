@@ -53,7 +53,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
     
     struct {
         ImageSet images;
-        Img::Id first = 0;
+        size_t base = 0;
         size_t count = 0;
         id<MTLBuffer> buf;
     } _selection;
@@ -296,84 +296,46 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         const auto imageRefEnd = std::next(imageRefLast);
         
         for (auto it=imageRefBegin; it<imageRefEnd;) {
-            const auto& chunk = *(it->chunk);
             const auto nextChunkStart = ImageLibrary::FindChunkEnd(it, _imageLibrary->end());
             
             const auto chunkImageRefBegin = it;
             const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
-            
-            const auto chunkImageRefFirst = chunkImageRefBegin;
-            const auto chunkImageRefLast = std::prev(chunkImageRefEnd);
             
             id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
             [renderEncoder setRenderPipelineState:_pipelineState];
             [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
             [renderEncoder setCullMode:MTLCullModeNone];
             
-            const uintptr_t addrBegin = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageLibrary::Record)*chunkImageRefFirst->idx));
-            const uintptr_t addrEnd = (uintptr_t)(chunk.mmap.data()+(sizeof(ImageLibrary::Record)*(chunkImageRefLast->idx+1)));
+            assert(_selection.base <= UINT32_MAX);
+            assert(_selection.count <= UINT32_MAX);
             
-            const uintptr_t addrAlignedBegin = _FloorToPageSize(addrBegin);
-            const uintptr_t addrAlignedEnd = _CeilToPageSize(addrEnd);
-            
-            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
-            id<MTLBuffer> imageBuf = [_device newBufferWithBytesNoCopy:(void*)addrAlignedBegin
-                length:(addrAlignedEnd-addrAlignedBegin) options:BufOpts deallocator:nil];
-            
-            if (imageBuf) {
-                assert(imageBuf);
-                assert(_selection.first <= UINT32_MAX);
-                assert(_selection.count <= UINT32_MAX);
-                
-                // Make sure _selection.buf != nil
-                if (!_selection.buf) {
-                    _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
-                }
-                
-                ImageGridLayerTypes::RenderContext ctx = {
-                    .imageRecordSize = sizeof(ImageRecord),
-//                    .thumbSize = sizeof(ImageRecord),
-//                    .thumbCountX = ThumbsTxtWidth / ,
-//                    .thumbCountY = ThumbsTxtWidth / ,
-                    
-                    .grid = _grid,
-                    .idx = (uint32_t)(chunkImageRefFirst-_imageLibrary->begin()), // Start index into `imageRefs`
-                    .imagesOff = (uint32_t)(addrBegin-addrAlignedBegin),
-                    .imageSize = (uint32_t)sizeof(ImageLibrary::Record),
-                    .viewSize = {(float)viewSize.width, (float)viewSize.height},
-                    .transform = [self fixedTransform],
-                    .off = {
-                        .id         = (uint32_t)(offsetof(ImageLibrary::Record, info.id)),
-                        .options    = (uint32_t)(offsetof(ImageLibrary::Record, options)),
-                        .thumbData  = (uint32_t)(offsetof(ImageLibrary::Record, thumb)),
-                    },
-                    .thumb = {
-                        .width  = ImageThumb::ThumbWidth,
-                        .height = ImageThumb::ThumbHeight,
-                        .pxSize = 1,
-                    },
-                    .selection = {
-                        .first = (uint32_t)_selection.first,
-                        .count = (uint32_t)_selection.count,
-                    },
-                    .cellWidth = _cellWidth,
-                    .cellHeight = _cellHeight,
-                };
-                
-//                printf("ctx.idx = %ju\n", (uintmax_t)ctx.idx);
-                
-                [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
-                [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
-                
-                id<MTLTexture> chunkTxt = [self _textureForChunk:it];
-                assert(chunkTxt);
-                [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-                [renderEncoder setFragmentTexture:chunkTxt atIndex:0];
-                
-                const size_t chunkImageCount = chunkImageRefEnd-chunkImageRefBegin;
-                [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6 instanceCount:chunkImageCount];
+            // Make sure _selection.buf != nil
+            if (!_selection.buf) {
+                _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
             }
             
+            ImageGridLayerTypes::RenderContext ctx = {
+                .grid = _grid,
+                .idx = (uint32_t)(chunkImageRefBegin-_imageLibrary->begin()), // Start index into `imageRefs`
+                .viewSize = {(float)viewSize.width, (float)viewSize.height},
+                .transform = [self fixedTransform],
+                .selection = {
+                    .base = (uint32_t)_selection.base,
+                    .count = (uint32_t)_selection.count,
+                },
+            };
+            
+            [renderEncoder setVertexBytes:&ctx length:sizeof(ctx) atIndex:0];
+            [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
+            [renderEncoder setVertexBuffer:_selection.buf offset:0 atIndex:2];
+            
+            id<MTLTexture> chunkTxt = [self _textureForChunk:it];
+            assert(chunkTxt);
+            [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
+            [renderEncoder setFragmentTexture:chunkTxt atIndex:0];
+            
+            const size_t chunkImageCount = chunkImageRefEnd-chunkImageRefBegin;
+            [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6 instanceCount:chunkImageCount];
             [renderEncoder endEncoding];
             
             it = chunkImageRefEnd;
@@ -409,19 +371,28 @@ done:
 }
 
 - (void)setSelection:(ImageSet)images {
-    if (!images.empty()) {
-        _selection.images = std::move(images);
+    auto lock = std::unique_lock(*_imageLibrary);
+    const auto itBegin = (!images.empty() ? _imageLibrary->find(*images.begin()) : _imageLibrary->end());
+    const auto itLast = (!images.empty() ? _imageLibrary->find(*std::prev(images.end())) : _imageLibrary->end());
+    const auto itEnd = (itLast!=_imageLibrary->end() ? std::next(itLast) : _imageLibrary->end());
+    
+    if (itBegin!=_imageLibrary->end() &&
+        itLast!=_imageLibrary->end()) {
         
-        const Img::Id idMin = (*(_selection.images.begin()))->info.id;
-        const Img::Id idMax = (*std::prev((_selection.images.end())))->info.id;
-        _selection.first = idMin;
-        _selection.count = idMax-idMin+1;
+        _selection.images = std::move(images);
+        _selection.base = itBegin-_imageLibrary->begin();
+        _selection.count = itEnd-itBegin;
         
         constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
         _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
         bool* bools = (bool*)[_selection.buf contents];
-        for (const ImageRecordPtr& image : _selection.images) {
-            bools[image->info.id-_selection.first] = true;
+        
+        size_t i = 0;
+        for (auto it=itBegin; it!=itEnd; it++) {
+            if (_selection.images.find(*it) != _selection.images.end()) {
+                bools[i] = true;
+            }
+            i++;
         }
     
     } else {

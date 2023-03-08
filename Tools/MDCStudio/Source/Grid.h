@@ -7,7 +7,7 @@ namespace std = metal;
 #endif
 
 #ifdef __METAL_VERSION__
-#define CONSTANT const constant
+#define CONSTANT constant const
 #else
 #define CONSTANT const
 #endif

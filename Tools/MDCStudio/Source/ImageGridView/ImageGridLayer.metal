@@ -11,6 +11,7 @@ namespace ImageGridLayerShader {
 
 struct VertexOutput {
     uint idx;
+    bool selected;
     float4 posView [[position]];
     float2 posPx;
 };
@@ -27,6 +28,7 @@ static constexpr constant float2 _Verts[6] = {
 vertex VertexOutput VertexShader(
     constant RenderContext& ctx [[buffer(0)]],
     constant ImageRecordRef* imageRecordRefs [[buffer(1)]],
+    constant const bool* selectedImages [[buffer(2)]],
     uint vidx [[vertex_id]],
     uint iidx [[instance_id]]
 ) {
@@ -37,353 +39,19 @@ vertex VertexOutput VertexShader(
     const int2 vabs = int2(rect.point.x, rect.point.y) + voff;
     const float2 vnorm = float2(vabs) / ctx.viewSize;
     
-//    imageRecordRefs->
+    const bool selected = (
+        idxAbs>=ctx.selection.base &&
+        idxAbs<ctx.selection.base+ctx.selection.count &&
+        selectedImages[idxAbs-ctx.selection.base]
+    );
     
     return VertexOutput{
         .idx = idxRel,
+        .selected = selected,
         .posView = ctx.transform * float4(vnorm, 0, 1),
         .posPx = float2(voff),
     };
 }
-
-static float4 blendOver(float4 a, float4 b) {
-    const float oa = a.a + b.a*(1-a.a);
-    if (oa == 0) return 0;
-    const float3 oc = (a.rgb*a.a + b.rgb*b.a*(1-a.a)) / oa;
-    return float4(oc, oa);
-}
-
-static float4 blendColorDodge(float4 a, float4 b) {
-    if (a.a == 0) return b;
-    const float3 oc = min(float3(1), b.rgb / (float3(1)-a.rgb)); // min to prevent nan/infinity
-    return float4(oc, a.a);
-}
-
-static float4 blendMask(float mask, float4 a) {
-    return float4(a.rgb, a.a*mask);
-}
-
-
-
-float3 XYZD50FromProPhotoRGBD50(float3 c) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const float3x3 M = transpose(float3x3(
-        0.7976749,  0.1351917,  0.0313534,
-        0.2880402,  0.7118741,  0.0000857,
-        0.0000000,  0.0000000,  0.8252100
-    ));
-    return M*c;
-}
-
-float3 BradfordXYZD65FromXYZD50(float3 c) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-    const float3x3 M = transpose(float3x3(
-        0.9555766,  -0.0230393, 0.0631636,
-        -0.0282895, 1.0099416,  0.0210077,
-        0.0122982,  -0.0204830, 1.3299098
-    ));
-    return M*c;
-}
-
-float3 LSRGBD65FromXYZD65(float3 c) {
-    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-    const float3x3 M = transpose(float3x3(
-        3.2404542,  -1.5371385, -0.4985314,
-        -0.9692660, 1.8760108,  0.0415560,
-        0.0556434,  -0.2040259, 1.0572252
-    ));
-    return M*c;
-}
-
-float3 XYYFromXYZ(float3 xyz) {
-    const float denom = xyz[0] + xyz[1] + xyz[2];
-    return {xyz[0]/denom, xyz[1]/denom, xyz[1]};
-}
-
-float3 XYZFromXYY(float3 xyy) {
-    const float X = (xyy[0]*xyy[2])/xyy[1];
-    const float Y = xyy[2];
-    const float Z = ((1.-xyy[0]-xyy[1])*xyy[2])/xyy[1];
-    return {X,Y,Z};
-}
-
-float Labf(float x) {
-    const float d = 6./29;
-    const float d3 = d*d*d;
-    if (x > d3) return pow(x, 1./3);
-    else        return (x/(3*d*d)) + 4./29;
-}
-
-float LabfInv(float x) {
-    // From https://en.wikipedia.org/wiki/CIELAB_color_space
-    const float d = 6./29;
-    if (x > d)  return pow(x, 3);
-    else        return 3*d*d*(x - 4./29);
-}
-
-float3 LabFromXYZ(float3 white_XYZ, float3 c_XYZ) {
-    const float k = Labf(c_XYZ.y/white_XYZ.y);
-    const float L = 116*k - 16;
-    const float a = 500*(Labf(c_XYZ.x/white_XYZ.x) - k);
-    const float b = 200*(k - Labf(c_XYZ.z/white_XYZ.z));
-    return float3(L,a,b);
-}
-
-float3 XYZFromLab(float3 white_XYZ, float3 c_Lab) {
-    // From https://en.wikipedia.org/wiki/CIELAB_color_space
-    const float k = (c_Lab.x+16)/116;
-    const float X = white_XYZ.x * LabfInv(k+c_Lab.y/500);
-    const float Y = white_XYZ.y * LabfInv(k);
-    const float Z = white_XYZ.z * LabfInv(k-c_Lab.z/200);
-    return float3(X,Y,Z);
-}
-
-float3 LabD50FromXYZD50(float3 xyz) {
-    const float3 D50(0.96422, 1.00000, 0.82521);
-    return LabFromXYZ(D50, xyz);
-}
-
-float3 XYZD50FromLabD50(float3 lab) {
-    const float3 D50(0.96422, 1.00000, 0.82521);
-    return XYZFromLab(D50, lab);
-}
-
-float3 Exposure(float exposure, float3 c) {
-    c[2] *= pow(2, exposure);
-    return c;
-}
-
-float3 Brightness(float brightness, float3 c) {
-    c[0] = 100*brightness + c[0]*(1-brightness);
-    return c;
-}
-
-float bellcurve(float width, int plateau, float x) {
-    return exp(-pow(width*x, plateau));
-}
-
-float3 Contrast(float contrast, float3 c) {
-    const float k = 1+((bellcurve(2.7, 4, (c[0]/100)-.5))*contrast);
-    c[0] = (k*(c[0]-50))+50;
-    return c;
-}
-
-
-
-
-
-
-
-float Luv_u(float3 c_XYZ) {
-    return 4*c_XYZ.x/(c_XYZ.x+15*c_XYZ.y+3*c_XYZ.z);
-}
-
-float Luv_v(float3 c_XYZ) {
-    return 9*c_XYZ.y/(c_XYZ.x+15*c_XYZ.y+3*c_XYZ.z);
-}
-
-float3 LuvFromXYZ(float3 white_XYZ, float3 c_XYZ) {
-    const float k1 = 24389./27;
-    const float k2 = 216./24389;
-    const float y = c_XYZ.y/white_XYZ.y;
-    const float L = (y<=k2 ? k1*y : 116*pow(y, 1./3)-16);
-    const float u_ = Luv_u(c_XYZ);
-    const float v_ = Luv_v(c_XYZ);
-    const float uw_ = Luv_u(white_XYZ);
-    const float vw_ = Luv_v(white_XYZ);
-    const float u = 13*L*(u_-uw_);
-    const float v = 13*L*(v_-vw_);
-    return {L,u,v};
-}
-
-float3 XYZFromLuv(float3 white_XYZ, float3 c_Luv) {
-    const float uw_ = Luv_u(white_XYZ);
-    const float vw_ = Luv_v(white_XYZ);
-    const float u_ = c_Luv[1]/(13*c_Luv[0]) + uw_;
-    const float v_ = c_Luv[2]/(13*c_Luv[0]) + vw_;
-    const float Y = white_XYZ.y*(c_Luv[0]<=8 ? c_Luv[0]*(27./24389) : pow((c_Luv[0]+16)/116, 3));
-    const float X = Y*(9*u_)/(4*v_);
-    const float Z = Y*(12-3*u_-20*v_)/(4*v_);
-    return {X,Y,Z};
-}
-
-float3 LuvD50FromXYZD50(float3 c) {
-    const float3 D50_XYZ(0.96422, 1.00000, 0.82521);
-    return LuvFromXYZ(D50_XYZ, c);
-}
-
-float3 XYZD50FromLuvD50(float3 c) {
-    const float3 D50_XYZ(0.96422, 1.00000, 0.82521);
-    return XYZFromLuv(D50_XYZ, c);
-}
-
-float3 LCHuvFromLuv(float3 c_Luv) {
-    const float L = c_Luv[0];
-    const float C = sqrt(c_Luv[1]*c_Luv[1] + c_Luv[2]*c_Luv[2]);
-    const float H = atan2(c_Luv[2], c_Luv[1]);
-    return {L,C,H};
-}
-
-float3 LuvFromLCHuv(float3 c_LCHuv) {
-    const float L = c_LCHuv[0];
-    const float u = c_LCHuv[1]*cos(c_LCHuv[2]);
-    const float v = c_LCHuv[1]*sin(c_LCHuv[2]);
-    return {L,u,v};
-}
-
-float3 Saturation(float saturation, float3 c) {
-    c = LuvD50FromXYZD50(c);
-    c = LCHuvFromLuv(c);
-    c[1] *= pow(2, 2*saturation);
-    c = LuvFromLCHuv(c);
-    c = XYZD50FromLuvD50(c);
-    return c;
-}
-
-
-
-//
-//float3 XYZFromXYY(const float3 xyy) {
-//    const float X = (xyy[0]*xyy[2])/xyy[1];
-//    const float Y = xyy[2];
-//    const float Z = ((1.-xyy[0]-xyy[1])*xyy[2])/xyy[1];
-//    return {X,Y,Z};
-//}
-//
-//fragment float4 Exposure(
-//    constant float& exposure [[buffer(0)]],
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
-//    c[2] *= exposure;
-//    return float4(c, 1);
-//}
-//
-//
-//fragment float4 LabD50FromXYZD50(
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const float3 D50(0.96422, 1.00000, 0.82521);
-//    return float4(LabFromXYZ(D50, Sample::RGB(txt, int2(in.pos.xy))), 1);
-//}
-//
-//fragment float4 Brightness(
-//    constant float& brightness [[buffer(0)]],
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
-//    c[0] = 100*brightness + c[0]*(1-brightness);
-//    return float4(c, 1);
-//}
-//
-//fragment float4 Contrast(
-//    constant float& contrast [[buffer(0)]],
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    float3 c = Sample::RGB(txt, int2(in.pos.xy));
-//    const float k = 1+((bellcurve(2.7, 4, (c[0]/100)-.5))*contrast);
-//    c[0] = (k*(c[0]-50))+50;
-//    return float4(c, 1);
-//}
-//
-//fragment float4 XYZD50FromLabD50(
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    const float3 D50(0.96422, 1.00000, 0.82521);
-//    return float4(XYZFromLab(D50, Sample::RGB(txt, int2(in.pos.xy))), 1);
-//}
-//
-//fragment float4 BradfordXYZD65FromXYZD50(
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    // From http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
-//    const float3x3 M = transpose(float3x3(
-//        0.9555766,  -0.0230393, 0.0631636,
-//        -0.0282895, 1.0099416,  0.0210077,
-//        0.0122982,  -0.0204830, 1.3299098
-//    ));
-//    return float4(M*Sample::RGB(txt, int2(in.pos.xy)), 1);
-//}
-//
-//fragment float4 LSRGBD65FromXYZD65(
-//    texture2d<float> txt [[texture(0)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    // From http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-//    const float3x3 M = transpose(float3x3(
-//        3.2404542,  -1.5371385, -0.4985314,
-//        -0.9692660, 1.8760108,  0.0415560,
-//        0.0556434,  -0.2040259, 1.0572252
-//    ));
-//    return float4(M * Sample::RGB(txt, int2(in.pos.xy)), 1);
-//}
-
-float3 WhiteBalance(float3 illum, float3 c) {
-    const float factor = max(max(illum.r, illum.g), illum.b);
-    const float3 wb = factor / illum;
-    return wb*c;
-}
-
-float3 ColorMatrixApply(float3x3 colorMatrix, float3 c) {
-    return colorMatrix*c;
-}
-
-static float3 ColorAdjust(device const ImageOptions& opts, float3 c) {
-    // ProPhotoRGB.D50 <- CamRaw.D50
-    const float3 illum(opts.whiteBalance.illum[0], opts.whiteBalance.illum[1], opts.whiteBalance.illum[2]);
-    device auto& m = opts.whiteBalance.colorMatrix;
-    const float3x3 colorMatrix(
-        m[0][0], m[0][1], m[0][2],
-        m[1][0], m[1][1], m[1][2],
-        m[2][0], m[2][1], m[2][2]
-    );
-    c = WhiteBalance(illum, c);
-    c = ColorMatrixApply(colorMatrix, c);
-    // XYZ.D50 <- ProPhotoRGB.D50
-    c = XYZD50FromProPhotoRGBD50(c);
-    // XYY.D50 <- XYZ.D50
-    c = XYYFromXYZ(c);
-        // Exposure
-        c = Exposure(opts.exposure, c);
-    // XYZ.D50 <- XYY.D50
-    c = XYZFromXYY(c);
-    
-    // Lab.D50 <- XYZ.D50
-    c = LabD50FromXYZD50(c);
-        c = Brightness(opts.brightness, c);
-        c = Contrast(opts.contrast, c);
-    // XYZ.D50 <- Lab.D50
-    c = XYZD50FromLabD50(c);
-        c = Saturation(opts.saturation, c);
-    // XYZ.D65 <- XYZ.D50
-    c = BradfordXYZD65FromXYZD50(c);
-    // LSRGB.D65 <- XYZ.D65
-    c = LSRGBD65FromXYZD65(c);
-    return c;
-}
-
-
-//fragment float4 FragmentShader(
-//    constant RenderContext& ctx [[buffer(0)]],
-//    texture2d<float> txt [[texture(0)]],
-//    texture2d<float> debugTxt [[texture(1)]],
-//    VertexOutput in [[stage_in]]
-//) {
-//    constexpr sampler s(coord::pixel, filter::nearest);
-//    return txt.sample(s, float2(in.posPx));
-//}
-
-
-
-
-
-
 
 fragment float4 FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
@@ -391,7 +59,9 @@ fragment float4 FragmentShader(
     VertexOutput in [[stage_in]]
 ) {
     const uint2 pos = uint2(in.posPx);
-    return txt.read(pos, in.idx);
+    float3 c = txt.read(pos, in.idx).rgb;
+    if (in.selected) c /= 12;
+    return float4(c, 1);
 }
 
 
