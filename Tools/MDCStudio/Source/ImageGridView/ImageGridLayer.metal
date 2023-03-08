@@ -388,60 +388,10 @@ static float3 ColorAdjust(device const ImageOptions& opts, float3 c) {
 fragment float4 FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d_array<float> txt [[texture(0)]],
-    texture2d<float> debugTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
-//    return float4(0.5,0.5,0.5,1);
-//    constexpr sampler s(coord::pixel, filter::linear);
-//    return debugTxt.sample(s, in.posPx);
-
-    
-//    uint x = in.posPx.x;
-//    uint y = in.posPx.y;
-    
     const uint2 pos = uint2(in.posPx);
-    
-//    uint recordByteOffsetInChunk = in.idx * ctx.imageRecordSize;
-    
-//    in.idx = 0;
-//    uint chunkPxOffset = in.idx * ctx.imageRecordSize;
-    
-//    in.idx = 1;
-//    uint chunkPxOffset = in.idx * ctx.imageRecordSize - 512 + 128;
-    
-//    in.idx = 0;
-//    uint chunkPxOffset = in.idx * 512*(288+4);
-//    uint thumbPxOffsetRel = pos.y*512 + pos.x;
-//    uint thumbPxOffsetAbs = chunkPxOffset + thumbPxOffsetRel;
-//    uint2 posAbs(thumbPxOffsetAbs % txt.get_width(), thumbPxOffsetAbs / txt.get_width());
-//    uint byteOffsetInRecord = pxOffsetInRecord*4;
-    
-//    const float2 posOffInTxt((byteOffsetInRecord/4) % txt.get_width(), (byteOffsetInRecord/4) / txt.get_width());
-    
-    
-    
-//    ctx.thumbWidth * ctx.thumbWidth
-//    
-//    const uint gridX = in.idx % ctx.thumbCountX;
-//    const uint gridY = in.idx / ctx.thumbCountX;
-    
-//    float2 posOff(gridX*ctx.thumbWidth, gridY*ctx.thumbHeight);
-    
     return txt.read(pos, in.idx);
-    
-//    uint xoff = in.idx % ;
-//    constexpr sampler s(coord::pixel, filter::nearest);
-//    return txt.sample(s, float2(posAbs));
-    
-//    return txt.sample(s, posOffInTxt+float2(-0.5,-0.5));
-//    return txt.sample(s, posOffInTxt+float2(-0.5,+0.0));
-//    return txt.sample(s, posOffInTxt+float2(-0.5,+0.5));
-//    return txt.sample(s, posOffInTxt+float2(+0.0,-0.5));
-//    return txt.sample(s, posOffInTxt+float2(+0.0,+0.0));
-//    return txt.sample(s, posOffInTxt+float2(+0.0,+0.5));
-//    return txt.sample(s, posOffInTxt+float2(+0.5,-0.5));
-//    return txt.sample(s, posOffInTxt+float2(+0.5,+0.0));
-//    return txt.sample(s, posOffInTxt+float2(+0.5,+0.5));
 }
 
 
