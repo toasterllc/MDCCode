@@ -58,8 +58,7 @@ struct [[gnu::packed]] ImageOptions {
     
     struct {
         bool render = false;
-        bool originalOnDisk = false;
-        uint8_t _pad[6];
+        uint8_t _pad[7];
     } thumb;
     
     // _reserved: so we can add fields in the future without doing a data migration

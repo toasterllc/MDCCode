@@ -316,6 +316,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
         it = chunkImageRefEnd;
     }
     
+    // Re-render the visible thumbnails that are marked dirty
     _imageSource->renderThumbs(imageRefBegin, imageRefEnd);
 }
 
