@@ -539,13 +539,14 @@ private:
         #warning             use -newBufferWithBytesNoCopy: to avoid creating a bunch of temporary buffers
         auto thumbTxts = std::make_unique<id<MTLTexture>[]>(imgCount);
         {
+            id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+            if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
+            
             std::vector<std::thread> workers;
             std::atomic<size_t> workIdx = 0;
-            for (int i=0; i<std::max(1,(int)std::thread::hardware_concurrency()); i++) {
+            const uint32_t threadCount = std::max(1,(int)std::thread::hardware_concurrency());
+            for (uint32_t i=0; i<threadCount; i++) {
                 workers.emplace_back([&](){
-                    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-                    printf("BACKGROUND THREAD device = %p\n", device);
-                    if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
                     Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
                     std::vector<Renderer::Txt> txts;
                     
@@ -641,7 +642,8 @@ private:
         {
             std::vector<std::thread> workers;
             std::atomic<size_t> workIdx = 0;
-            for (int i=0; i<std::max(1,(int)std::thread::hardware_concurrency()); i++) {
+            const uint32_t threadCount = std::max(1,(int)std::thread::hardware_concurrency());
+            for (uint32_t i=0; i<threadCount; i++) {
                 workers.emplace_back([&](){
                     _ThumbCompressor compressor;
                     auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);

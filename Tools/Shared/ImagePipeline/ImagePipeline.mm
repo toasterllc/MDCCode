@@ -135,16 +135,10 @@ Pipeline::ProcessResult Pipeline::Process(MDCTools::Renderer& renderer, const Pr
     assert(srcRgb);
     assert(dstRgb);
     
-    const size_t w = [srcRgb width];
-    const size_t h = [srcRgb height];
-    
-    Color<ColorSpace::Raw> illum;
-    Mat<double,3,3> colorMatrix;
-    
     // White balance
     {
-        const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
-        const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
+        const double factor = std::max(std::max(opts.illum[0], opts.illum[1]), opts.illum[2]);
+        const Mat<double,3,1> wb(factor/opts.illum[0], factor/opts.illum[1], factor/opts.illum[2]);
         const simd::float3 simdWB = _SimdForMat(wb);
         renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalanceRGB",
@@ -157,11 +151,10 @@ Pipeline::ProcessResult Pipeline::Process(MDCTools::Renderer& renderer, const Pr
     }
     
     // Camera raw -> ProPhotoRGB
+    Mat<double,3,3> colorMatrix = (opts.colorMatrix ? *opts.colorMatrix : _CCMForIlluminant(opts.illum).m);
     {
         // If a color matrix was provided, use it.
         // Otherwise estimate it by interpolating between known color matrices.
-        colorMatrix = (opts.colorMatrix ? *opts.colorMatrix : _CCMForIlluminant(illum).m);
-        
         renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
                 // Buffer args
