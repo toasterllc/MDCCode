@@ -2,6 +2,7 @@
 #import <filesystem>
 #import <MetalKit/MetalKit.h>
 #import "Tools/Shared/Renderer.h"
+#import "Tools/Shared/BC7Encoder.h"
 
 class FakeImageSource : public MDCStudio::ImageSource {
 public:
@@ -48,11 +49,15 @@ public:
     }
     
     void _threadRenderThumbs() {
+        using namespace MDCStudio;
         using namespace MDCTools;
+        using namespace MDCTools::ImagePipeline;
         
         id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
         MTKTextureLoader* txtLoader = [[MTKTextureLoader alloc] initWithDevice:dev];
         Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
+        BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight> compressor;
+        auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
         
         for (;;) @autoreleasepool {
             MDCStudio::ImageRecordPtr rec;
@@ -149,13 +154,60 @@ public:
             
             
             
+//            const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
+//            ImagesDirPath / / ".jpg"
             
+            constexpr MTLTextureUsage TxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+            const Renderer::Txt txtRgba32 = renderer.textureCreate(MTLPixelFormatRGBA32Float, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, TxtUsage);
+            const Renderer::Txt txtRgba8 = renderer.textureCreate(txtRgba32, MTLPixelFormatRGBA8Unorm);
             
+            // Load thumbnail, store in txtRgba32
+            {
+                const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
+    //            const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
+                NSString*const path = [NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->info.addr];
+                
+                NSDictionary*const loadOpts = @{
+                    MTKTextureLoaderOptionSRGB: @YES,
+                };
+                
+                const id<MTLTexture> txtOrig = [txtLoader newTextureWithContentsOfURL:[NSURL fileURLWithPath:path] options:loadOpts error:nil];
+                MPSImageLanczosScale* scale = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
+                [scale encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:txtOrig destinationTexture:txtRgba32];
+            }
             
-            rec->options.thumb.render = false;
-            printf("Rendered %ju\n", (uintmax_t)rec->info.id);
+            // Process image, store in txtRgba8
+            {
+                const ImageOptions& imageOpts = rec->options;
+                const Pipeline::ProcessOptions processOpts = {
+                    .exposure = imageOpts.exposure,
+                    .saturation = imageOpts.saturation,
+                    .brightness = imageOpts.brightness,
+                    .contrast = imageOpts.contrast,
+                    
+                    .localContrast = {
+                        .en = false,
+                        .amount = imageOpts.localContrast.amount,
+                        .radius = imageOpts.localContrast.radius,
+                    },
+                };
+                
+                Pipeline::Process(renderer, processOpts, txtRgba32, txtRgba8);
+                renderer.sync(txtRgba8);
+            }
             
-            
+            // Compress thumbnail, store in rec->thumb.data
+            {
+                renderer.commitAndWait();
+                
+                [txtRgba8 getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
+                    fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+                
+                compressor.encode(thumbData.get(), rec->thumb.data);
+                
+                rec->options.thumb.render = false;
+                printf("Rendered %ju\n", (uintmax_t)rec->info.id);
+            }
             
             // Notify image library that the image changed
             {

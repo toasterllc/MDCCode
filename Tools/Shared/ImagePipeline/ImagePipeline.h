@@ -10,10 +10,13 @@ namespace MDCTools::ImagePipeline {
 
 class Pipeline {
 public:
+    using ColorRaw = MDCTools::Color<MDCTools::ColorSpace::Raw>;
+    using ColorMatrix = Mat<double,3,3>;
+    
     struct DebayerOptions {
         const MDCTools::CFADesc cfaDesc;
         
-        std::optional<MDCTools::Color<MDCTools::ColorSpace::Raw>> illum;
+        std::optional<ColorRaw> illum;
         
         struct {
             bool en = false;
@@ -29,9 +32,13 @@ public:
         } debayerLMMSE;
     };
     
+    struct DebayerResult {
+        ColorRaw illum; // Illuminant that was used
+    };
+    
     struct ProcessOptions {
-        MDCTools::Color<MDCTools::ColorSpace::Raw> illum;
-        std::optional<Mat<double,3,3>> colorMatrix;
+        std::optional<ColorRaw> illum;
+        std::optional<ColorMatrix> colorMatrix;
         
         float exposure = 0;
         float saturation = 0;
@@ -45,14 +52,6 @@ public:
         } localContrast;
     };
     
-    struct DebayerResult {
-        MDCTools::Color<MDCTools::ColorSpace::Raw> illum; // Illuminant that was used
-    };
-    
-    struct ProcessResult {
-        Mat<double,3,3> colorMatrix; // Color matrix that was used
-    };
-    
     static Renderer::Txt TextureForRaw(MDCTools::Renderer& renderer, size_t width, size_t height, const ImagePixel* pixels) {
         constexpr size_t SamplesPerPixel = 1;
         constexpr size_t BytesPerSample = sizeof(*pixels);
@@ -61,8 +60,11 @@ public:
         return raw;
     }
     
+//    static ColorRaw IlluminantEstimate(const ColorRaw& illum);
+    static ColorMatrix ColorMatrixForIlluminant(const ColorRaw& illum);
+    
     static DebayerResult Debayer(MDCTools::Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
-    static ProcessResult Process(MDCTools::Renderer& renderer, const ProcessOptions& opts, id<MTLTexture> srcRgb, id<MTLTexture> dstRgb);
+    static void Process(MDCTools::Renderer& renderer, const ProcessOptions& opts, id<MTLTexture> srcRgb, id<MTLTexture> dstRgb);
 };
 
 } // namespace MDCTools::ImagePipeline

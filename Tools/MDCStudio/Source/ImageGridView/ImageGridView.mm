@@ -145,6 +145,18 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     _grid.setCellSpacing({6, 6});
 //    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
     
+    // Add ourself as an observer of the image library
+    {
+        auto lock = std::unique_lock(*_imageLibrary);
+        __weak auto selfWeak = self;
+        _imageLibrary->observerAdd([=](const ImageLibrary::Event& ev) {
+            auto selfStrong = selfWeak;
+            if (!selfStrong) return false;
+            [self _handleImageLibraryEvent:ev];
+            return true;
+        });
+    }
+    
     return self;
 }
 
@@ -414,6 +426,31 @@ done:
     return true;
 }
 
+// MARK: - ImageLibrary Observer
+// _handleImageLibraryEvent: called on whatever thread where the modification happened,
+// and with the ImageLibraryPtr lock held!
+- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
+    // Trampoline the event to our main thread, if we're not on the main thread
+    if (![NSThread isMainThread]) {
+        ImageLibrary::Event recordsCopy = ev;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self _handleImageLibraryEvent:recordsCopy];
+        });
+        return;
+    }
+    
+    if (ev.type == ImageLibrary::Event::Type::Change) {
+        // Erase textures for any of the changed records
+        for (const ImageRecordPtr& rec : ev.records) {
+            auto it = _chunkTxts.get(rec);
+            if (it == _chunkTxts.end()) continue;
+            _chunkTxts.erase(it);
+        }
+    }
+    
+    [self setNeedsDisplay];
+}
+
 @end
 
 
@@ -457,7 +494,7 @@ done:
     
     _imageSource = imageSource;
     _imageGridLayer = imageGridLayer;
-    [self _handleImageLibraryChanged];
+//    [self _handleImageLibraryChanged];
     
     // Create _selectionRectLayer
     {
@@ -470,18 +507,18 @@ done:
         [_imageGridLayer addSublayer:_selectionRectLayer];
     }
     
-    // Observe image library changes so that we update the image grid
-    {
-        __weak auto selfWeak = self;
-        ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
-        auto lock = std::unique_lock(*imageLibrary);
-        imageLibrary->observerAdd([=] (const ImageLibrary::Event& ev) {
-            auto selfStrong = selfWeak;
-            if (!selfStrong) return false;
-            dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong _handleImageLibraryChanged]; });
-            return true;
-        });
-    }
+//    // Observe image library changes so that we update the image grid
+//    {
+//        __weak auto selfWeak = self;
+//        ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
+//        auto lock = std::unique_lock(*imageLibrary);
+//        imageLibrary->observerAdd([=] (const ImageLibrary::Event& ev) {
+//            auto selfStrong = selfWeak;
+//            if (!selfStrong) return false;
+//            dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong _handleImageLibraryChanged]; });
+//            return true;
+//        });
+//    }
     
     return self;
 }
@@ -509,10 +546,9 @@ done:
     [_docHeight setConstant:[_imageGridLayer containerHeight]];
 }
 
-- (void)_handleImageLibraryChanged {
-    [[self enclosingScrollView] tile];
-    [_imageGridLayer setNeedsDisplay];
-}
+//- (void)_handleImageLibraryChanged {
+//    [[self enclosingScrollView] tile];
+//}
 
 // MARK: - Event Handling
 

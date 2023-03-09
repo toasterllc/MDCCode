@@ -608,6 +608,7 @@ private:
                             
                             const Pipeline::ProcessOptions processOpts = {
                                 .illum = debayerResult.illum,
+                                .colorMatrix = Pipeline::ColorMatrixForIlluminant(debayerResult.illum),
                             };
                             
                             Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);

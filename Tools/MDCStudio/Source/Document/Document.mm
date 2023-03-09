@@ -204,37 +204,15 @@ using namespace MDCStudio;
 
 
 - (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
-//    {
-//        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/ImageLibrary"));
-////        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/335E36593137/ImageLibrary"));
-//        il->read();
-//        
-//        ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (uint64_t addr) { return nullptr; });
-//        
-//        auto imageSource = std::make_shared<FakeImageSource>(il, ic);
-//        
-//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
-//        [imageGridView setDelegate:self];
-//        
-//        [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
-//        [self setInspectorView:[[InspectorView alloc] initWithImageLibrary:imageSource->imageLibrary()]];
-//        
-//        [[_splitView window] makeFirstResponder:imageGridView];
-//        
-////        [NSThread detachNewThreadWithBlock:^{
-////            [self _addFakeImages:il];
-////        }];
-//    }
-    
-    
-    
-    
-    
-    
-    
-    
-    ImageSourcePtr imageSource = [_sourceListView selection];
-    if (imageSource) {
+    {
+        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/ImageLibrary"));
+//        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/335E36593137/ImageLibrary"));
+        il->read();
+        
+        ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (uint64_t addr) { return nullptr; });
+        
+        auto imageSource = std::make_shared<FakeImageSource>(il, ic);
+        
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
         [imageGridView setDelegate:self];
         
@@ -242,11 +220,33 @@ using namespace MDCStudio;
         [self setInspectorView:[[InspectorView alloc] initWithImageLibrary:imageSource->imageLibrary()]];
         
         [[_splitView window] makeFirstResponder:imageGridView];
-//        [_mainView setContentView:sv animation:MainViewAnimation::None];
-    
-    } else {
-//        [_mainView setCenterView:nil];
+        
+//        [NSThread detachNewThreadWithBlock:^{
+//            [self _addFakeImages:il];
+//        }];
     }
+    
+    
+    
+    
+    
+    
+    
+    
+//    ImageSourcePtr imageSource = [_sourceListView selection];
+//    if (imageSource) {
+//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
+//        [imageGridView setDelegate:self];
+//        
+//        [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
+//        [self setInspectorView:[[InspectorView alloc] initWithImageLibrary:imageSource->imageLibrary()]];
+//        
+//        [[_splitView window] makeFirstResponder:imageGridView];
+////        [_mainView setContentView:sv animation:MainViewAnimation::None];
+//    
+//    } else {
+////        [_mainView setCenterView:nil];
+//    }
 }
 
 
