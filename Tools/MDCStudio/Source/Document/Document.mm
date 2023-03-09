@@ -6,6 +6,7 @@
 #import "ImageGridView/ImageGridView.h"
 #import "ImageView/ImageView.h"
 #import "FixedScrollView.h"
+#import "FakeImageSource.h"
 
 using namespace MDCStudio;
 
@@ -204,90 +205,6 @@ using namespace MDCStudio;
 
 - (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
     {
-        class FakeImageSource : public ImageSource {
-        public:
-            FakeImageSource(ImageLibraryPtr il, ImageCachePtr ic) : _il(il), _ic(ic) {
-                _renderThumbs.thread = std::thread([&] { _threadRenderThumbs(); });
-            }
-            
-            ~FakeImageSource() {
-                // Signal thread and wait for it to exit
-                {
-                    auto lock = std::unique_lock(_renderThumbs.lock);
-                    _renderThumbs.stop = true;
-                }
-                _renderThumbs.signal.notify_one();
-                _renderThumbs.thread.join();
-            }
-            
-            ImageLibraryPtr imageLibrary() override {
-                return _il;
-            }
-            
-            ImageCachePtr imageCache() override {
-                return _ic;
-            }
-            
-            void renderThumbs(ImageRecordIter begin, ImageRecordIter end) override {
-                bool enqueued = false;
-                {
-                    auto lock = std::unique_lock(_renderThumbs.lock);
-                    for (auto it=begin; it!=end; it++) {
-                        ImageRecordPtr ref = *it;
-                        if (ref->thumb.render) {
-                            _renderThumbs.recs.insert(ref);
-                            enqueued = true;
-                        }
-                    }
-                }
-                if (enqueued) _renderThumbs.signal.notify_one();
-            }
-            
-            void _threadRenderThumbs() {
-                for (;;) {
-                    ImageRecordPtr rec;
-                    {
-                        auto lock = std::unique_lock(_renderThumbs.lock);
-                        // Wait for data, or to be signalled to stop
-                        _renderThumbs.signal.wait(lock, [&] { return !_renderThumbs.recs.empty() || _renderThumbs.stop; });
-                        if (_renderThumbs.stop) return;
-                        const auto it = _renderThumbs.recs.begin();
-                        rec = *it;
-                        _renderThumbs.recs.erase(it);
-                    }
-                    
-                    // Re-render thumbnail
-                    rec->thumb.render = false;
-                    printf("Rendered %ju\n", (uintmax_t)rec->info.id);
-                    
-                    // Notify image library that the image changed
-                    {
-                        auto lock = std::unique_lock(*_il);
-                        _il->notifyChange({ rec });
-                    }
-                    
-//                    auto lock = std::unique_lock(*_imgLib);
-//                    std::set<ImageRecordPtr> records;
-//                    for (const ImageRecordPtr& x : _selection) records.insert(x);
-//                    _imgLib->notifyChange(std::move(records));
-                    
-                    
-                }
-            }
-        
-        private:
-            ImageLibraryPtr _il;
-            ImageCachePtr _ic;
-            
-            struct {
-                std::mutex lock; // Protects this struct
-                std::condition_variable signal;
-                std::thread thread;
-                std::set<ImageRecordPtr> recs;
-                bool stop = false;
-            } _renderThumbs;
-        };
-        
         ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/ImageLibrary"));
 //        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/335E36593137/ImageLibrary"));
         il->read();

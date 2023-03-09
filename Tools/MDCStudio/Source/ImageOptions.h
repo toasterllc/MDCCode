@@ -56,6 +56,12 @@ struct [[gnu::packed]] ImageOptions {
         float radius = 0;
     } localContrast;
     
+    struct {
+        bool render = false;
+        bool originalOnDisk = false;
+        uint8_t _pad[6];
+    } thumb;
+    
     // _reserved: so we can add fields in the future without doing a data migration
     uint8_t _reserved[128];
 };

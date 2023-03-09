@@ -24,9 +24,6 @@ struct [[gnu::packed]] ImageThumb {
 //    static constexpr size_t ThumbWidth      = 2304;
 //    static constexpr size_t ThumbHeight     = 1296;
     
-    bool render = false;
-    uint8_t _pad[7];
-    
     uint8_t data[ThumbHeight][ThumbWidth];
 };
 

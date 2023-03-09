@@ -1177,68 +1177,68 @@ static void _Set_whiteBalanceAuto(ImageRecord& rec, id data) {
     } else {
         ImageWhiteBalanceSetManual(rec.options.whiteBalance, rec.options.whiteBalance.value);
     }
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_whiteBalance(ImageRecord& rec, id data) {
     ImageWhiteBalanceSetManual(rec.options.whiteBalance, [data floatValue]);
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_exposure(ImageRecord& rec, id data) {
     rec.options.exposure = [data floatValue];
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_saturation(ImageRecord& rec, id data) {
     rec.options.saturation = [data floatValue];
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_brightness(ImageRecord& rec, id data) {
     rec.options.brightness = [data floatValue];
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_contrast(ImageRecord& rec, id data) {
     rec.options.contrast = [data floatValue];
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_localContrastAmount(ImageRecord& rec, id data) {
     rec.options.localContrast.amount = [data floatValue];
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_localContrastRadius(ImageRecord& rec, id data) {
     rec.options.localContrast.radius = [data floatValue];
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_rotation(ImageRecord& rec, id data) {
     rec.options.rotation = (ImageOptions::Rotation)[data intValue];
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_defringe(ImageRecord& rec, id data) {
     rec.options.defringe = [data boolValue];
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_reconstructHighlights(ImageRecord& rec, id data) {
     rec.options.reconstructHighlights = [data boolValue];
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_timestampShow(ImageRecord& rec, id data) {
     rec.options.timestamp.show = [data boolValue];
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 static void _Set_timestampCorner(ImageRecord& rec, id data) {
     const ImageOptions::Corner corner = _Convert((ImageCornerButtonTypes::Corner)[data intValue]);
     rec.options.timestamp.corner = corner;
-    rec.thumb.render = true;
+    rec.options.thumb.render = true;
 }
 
 
