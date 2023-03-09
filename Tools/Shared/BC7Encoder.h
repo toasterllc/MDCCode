@@ -6,7 +6,7 @@ template <size_t T_Width, size_t T_Height>
 class BC7Encoder {
 public:
     static constexpr size_t OutputLen() {
-        return sizeof(_blocks);
+        return sizeof(_Blocks);
     }
     
     BC7Encoder() {
@@ -17,6 +17,9 @@ public:
     // `src` must be in the RGBA format
     // `dst` is in compressed BC7 format, with length `OutputLen()`
     void encode(const void* src, void* dst) {
+        // Verify that `dst` is as aligned as _Blocks requires
+        assert(!((uintptr_t)dst & (alignof(_Blocks)-1)));
+        _Blocks& blocks = *reinterpret_cast<_Blocks*>(dst);
         for (size_t by=0; by<_BlockCountY; by++) {
             for (size_t bx=0; bx<_BlockCountX; bx+=_ChunkSize) {
                 const size_t blockCount = std::min<size_t>(_ChunkSize, _BlockCountX-bx);
@@ -27,17 +30,14 @@ public:
                 }
                 
                 // Compress the blocks to BC7
-                ispc::bc7e_compress_blocks((uint32_t)blockCount, (uint64_t*)&_blocks[by][bx], (uint32_t*)_tmp, &_params);
+                ispc::bc7e_compress_blocks((uint32_t)blockCount, (uint64_t*)&blocks[by][bx], (uint32_t*)_tmp, &_params);
             }
         }
-        
-        memcpy(dst, _blocks, sizeof(_blocks));
     }
     
 private:
     static_assert(!(T_Width % 4));
     static_assert(!(T_Height % 4));
-    struct [[gnu::packed]] _Block { uint64_t vals[2]; };
     
     // _ChunkSize: process 64 blocks at a time, for efficient SIMD processing.
     // Ideally, _ChunkSize >= 8 (or more) and (N % 8) == 0.
@@ -45,6 +45,8 @@ private:
     static constexpr bool _Perceptual = true;
     static constexpr size_t _BlockCountX = T_Width/4;
     static constexpr size_t _BlockCountY = T_Height/4;
+    
+    using _Blocks = uint64_t[_BlockCountY][_BlockCountX][2];
     
     template <size_t T_Size=4>
 	static void _BlockGet(size_t bx, size_t by, const utils::color_quad_u8* src, utils::color_quad_u8* dst) {
@@ -56,6 +58,5 @@ private:
 	}
     
     ispc::bc7e_compress_block_params _params = {};
-    _Block _blocks[_BlockCountY][_BlockCountX];
     utils::color_quad_u8 _tmp[16*_ChunkSize];
 };
