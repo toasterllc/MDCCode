@@ -6,7 +6,7 @@
 #import "ImageGridView/ImageGridView.h"
 #import "ImageView/ImageView.h"
 #import "FixedScrollView.h"
-#import "FakeImageSource.h"
+#import "MockImageSource.h"
 
 using namespace MDCStudio;
 
@@ -211,7 +211,7 @@ using namespace MDCStudio;
         
         ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (uint64_t addr) { return nullptr; });
         
-        auto imageSource = std::make_shared<FakeImageSource>(il, ic);
+        auto imageSource = std::make_shared<MockImageSource>(il, ic);
         
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
         [imageGridView setDelegate:self];

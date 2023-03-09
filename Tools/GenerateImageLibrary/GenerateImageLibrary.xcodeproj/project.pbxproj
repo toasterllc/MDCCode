@@ -17,6 +17,7 @@
 		5533A2B02791613500EF4614 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5533A2AF2791613500EF4614 /* ImageIO.framework */; };
 		5533A2B22791614300EF4614 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5533A2B12791614300EF4614 /* CoreServices.framework */; };
 		55C90C2129B670AC007CC97E /* libbc7enc_rdo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C90C1E29B6709B007CC97E /* libbc7enc_rdo.a */; };
+		55F7552929BA8C4600241672 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F7552729BA8C4600241672 /* MetalPerformanceShaders.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,6 +105,7 @@
 		55C90C1929B6709A007CC97E /* bc7enc_rdo.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = bc7enc_rdo.xcodeproj; path = ../../Code/Lib/bc7enc_rdo/bc7enc_rdo.xcodeproj; sourceTree = "<group>"; };
 		55C90C2629B68261007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImageThumb.h; path = ../MDCStudio/Source/ImageThumb.h; sourceTree = "<group>"; };
 		55C90C6629B79398007CC97E /* BC7Encoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BC7Encoder.h; path = ../../Tools/Shared/BC7Encoder.h; sourceTree = "<group>"; };
+		55F7552729BA8C4600241672 /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +120,7 @@
 				5533A2AB2791532200EF4614 /* MetalKit.framework in Frameworks */,
 				5533A2B02791613500EF4614 /* ImageIO.framework in Frameworks */,
 				5533A2B22791614300EF4614 /* CoreServices.framework in Frameworks */,
+				55F7552929BA8C4600241672 /* MetalPerformanceShaders.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -177,6 +180,7 @@
 		551B224D279139DE00D62121 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				55F7552729BA8C4600241672 /* MetalPerformanceShaders.framework */,
 				5533A2B12791614300EF4614 /* CoreServices.framework */,
 				5533A2AF2791613500EF4614 /* ImageIO.framework */,
 				5533A2AD2791612700EF4614 /* QuartzCore.framework */,

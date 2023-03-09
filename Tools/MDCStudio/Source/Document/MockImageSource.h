@@ -4,18 +4,18 @@
 #import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/BC7Encoder.h"
 
-class FakeImageSource : public MDCStudio::ImageSource {
+class MockImageSource : public MDCStudio::ImageSource {
 public:
-    FakeImageSource(const std::filesystem::path& path) : _path(path) {
+    MockImageSource(const std::filesystem::path& path) : _path(path) {
         _il = std::make_shared<MDCTools::Lockable<MDCStudio::ImageLibrary>>(_path / "ImageLibrary");
         _ic = std::make_shared<MDCStudio::ImageCache>(_il, [] (uint64_t addr) { return nullptr; });
     }
     
-    FakeImageSource(MDCStudio::ImageLibraryPtr il, MDCStudio::ImageCachePtr ic) : _il(il), _ic(ic) {
+    MockImageSource(MDCStudio::ImageLibraryPtr il, MDCStudio::ImageCachePtr ic) : _il(il), _ic(ic) {
         _renderThumbs.thread = std::thread([&] { _threadRenderThumbs(); });
     }
     
-    ~FakeImageSource() {
+    ~MockImageSource() {
         // Signal thread and wait for it to exit
         {
             auto lock = std::unique_lock(_renderThumbs.lock);
@@ -46,6 +46,46 @@ public:
             }
         }
         if (enqueued) _renderThumbs.signal.notify_one();
+    }
+    
+    static MDCTools::Renderer::Txt _ThumbRender(MDCTools::Renderer& renderer, id<MTLTexture> src, MTLPixelFormat dstFormat) {
+        using namespace MDCStudio;
+        using namespace MDCTools;
+        using namespace MDCTools::ImagePipeline;
+        
+        // Calculate transform to fit source image in thumbnail aspect ratio
+        MPSScaleTransform transform;
+        {
+            const float srcAspect = (float)[src width] / [src height];
+            const float dstAspect = (float)ImageThumb::ThumbWidth / ImageThumb::ThumbHeight;
+            const float scale = (srcAspect<dstAspect ? ((float)ImageThumb::ThumbWidth / [src width]) : ((float)ImageThumb::ThumbHeight / [src height]));
+            transform = {
+                .scaleX = scale,
+                .scaleY = scale,
+                .translateX = 0,
+                .translateY = 0,
+            };
+        }
+        
+        // Scale image
+        constexpr MTLTextureUsage DstUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+        Renderer::Txt dst = renderer.textureCreate(dstFormat, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, DstUsage);
+        {
+            MPSImageLanczosScale* filter = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
+            [filter setScaleTransform:&transform];
+            [filter encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:src destinationTexture:dst];
+        }
+        return dst;
+    }
+    
+    static MDCTools::Renderer::Txt _ThumbCompress(id<MTLTexture> src, MTLPixelFormat dstFormat) {
+        [txtRgba8 getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
+            fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+        
+        compressor.encode(thumbData.get(), rec->thumb.data);
+        
+        rec->options.thumb.render = false;
+        printf("Rendered %ju\n", (uintmax_t)rec->info.id);
     }
     
     void _threadRenderThumbs() {
@@ -157,36 +197,42 @@ public:
 //            const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
 //            ImagesDirPath / / ".jpg"
             
-            constexpr MTLTextureUsage TxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
-            const Renderer::Txt txtRgba32 = renderer.textureCreate(MTLPixelFormatRGBA32Float, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, TxtUsage);
-            const Renderer::Txt txtRgba8 = renderer.textureCreate(txtRgba32, MTLPixelFormatRGBA8Unorm);
-            
             // Load thumbnail, store in txtRgba32
+            Renderer::Txt txtRgba32;
             {
-                const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-    //            const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
-                NSString*const path = [NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->info.addr];
+                // Load thumbnail from disk
+                id<MTLTexture> txtOrig = nil;
+                {
+//                    const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
+                    const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
+                    NSString*const path = [NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->info.addr];
+                    NSDictionary*const loadOpts = @{
+                        MTKTextureLoaderOptionSRGB: @YES,
+                    };
+                    txtOrig = [txtLoader newTextureWithContentsOfURL:[NSURL fileURLWithPath:path] options:loadOpts error:nil];
+                }
                 
-                NSDictionary*const loadOpts = @{
-                    MTKTextureLoaderOptionSRGB: @YES,
-                };
-                
-                const id<MTLTexture> txtOrig = [txtLoader newTextureWithContentsOfURL:[NSURL fileURLWithPath:path] options:loadOpts error:nil];
-                MPSImageLanczosScale* scale = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
-                [scale encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:txtOrig destinationTexture:txtRgba32];
+                txtRgba32 = _ThumbRender(renderer, txtOrig, MTLPixelFormatRGBA32Float);
             }
             
             // Process image, store in txtRgba8
+            const Renderer::Txt txtRgba8 = renderer.textureCreate(txtRgba32, MTLPixelFormatRGBA8Unorm);
             {
                 const ImageOptions& imageOpts = rec->options;
+                // colorMatrix: converts colorspace from LSRGB.D65 -> ProPhotoRGB.D50, which the pipeline expects
+                const Pipeline::ColorMatrix colorMatrix = {
+                   0.5293458, 0.3300728, 0.1405813,
+                   0.0983744, 0.8734610, 0.0281647,
+                   0.0168832, 0.1176725, 0.8654443,
+                };
                 const Pipeline::ProcessOptions processOpts = {
+                    .colorMatrix = colorMatrix,
                     .exposure = imageOpts.exposure,
                     .saturation = imageOpts.saturation,
                     .brightness = imageOpts.brightness,
                     .contrast = imageOpts.contrast,
-                    
                     .localContrast = {
-                        .en = false,
+                        .en = (imageOpts.localContrast.amount!=0 && imageOpts.localContrast.radius!=0),
                         .amount = imageOpts.localContrast.amount,
                         .radius = imageOpts.localContrast.radius,
                     },

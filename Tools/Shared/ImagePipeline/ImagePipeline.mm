@@ -164,7 +164,7 @@ void Pipeline::Process(Renderer& renderer, const ProcessOptions& opts, id<MTLTex
         );
     }
     
-    // Camera raw -> ProPhotoRGB
+    // Camera raw -> ProPhotoRGB.D50
     if (opts.colorMatrix) {
         const ColorMatrix& colorMatrix = *opts.colorMatrix;
         // If a color matrix was provided, use it.
@@ -179,7 +179,7 @@ void Pipeline::Process(Renderer& renderer, const ProcessOptions& opts, id<MTLTex
         );
     }
     
-    // ProPhotoRGB -> XYZ.D50
+    // ProPhotoRGB.D50 -> XYZ.D50
     {
         renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGB",

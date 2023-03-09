@@ -2,6 +2,7 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <filesystem>
 #import <MetalKit/MetalKit.h>
+#import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "Renderer.h"
 #import "Toastbox/Mmap.h"
 #import "ImageLibrary.h"
@@ -12,8 +13,8 @@ using namespace MDCTools;
 using namespace Toastbox;
 
 //const fs::path ImagesDirPath = "/Users/dave/Desktop/SourceImages";
-const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
+//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
+const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
 
 static bool _IsJPGFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".jpg";
@@ -105,10 +106,11 @@ int main(int argc, const char* argv[]) {
             NSArray<id<MTLTexture>>* txtsSrc = [txtLoader newTexturesWithContentsOfURLs:batchURLs options:opts error:nil];
             const size_t txtCount = [txtsSrc count];
             
+            constexpr MTLTextureUsage TxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
             std::vector<Renderer::Txt> txtsDst;
             txtsDst.reserve(txtCount);
             for (size_t i=0; i<txtCount; i++) {
-                txtsDst.emplace_back(renderer.textureCreate(MTLPixelFormatRGBA8Unorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight));
+                txtsDst.emplace_back(renderer.textureCreate(MTLPixelFormatRGBA8Unorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, TxtUsage));
             }
             
 //            NSMutableArray* txts = [NSMutableArray new];
@@ -126,17 +128,36 @@ int main(int argc, const char* argv[]) {
             {
 //                printf("Generating RGBA thumbnails...\n", (uintmax_t)txtCount);
                 
-                auto startTime = std::chrono::steady_clock::now();
+//                auto startTime = std::chrono::steady_clock::now();
                 for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
                     id<MTLTexture> txtSrc = txtsSrc[txtIdx];
                     Renderer::Txt& txtDst = txtsDst.at(txtIdx);
-                    renderer.render(txtDst,
-                        renderer.FragmentShader("SampleTexture",
-                            // Buffer args
-                            // Texture args
-                            txtSrc
-                        )
-                    );
+                    
+                    // Calculate transform to fit source image in thumbnail aspect ratio
+                    MPSScaleTransform transform;
+                    {
+                        const float srcAspect = (float)[txtSrc width] / [txtSrc height];
+                        const float dstAspect = (float)ImageThumb::ThumbWidth / ImageThumb::ThumbHeight;
+                        const float scale = (srcAspect<dstAspect ? ((float)ImageThumb::ThumbWidth / [txtSrc width]) : ((float)ImageThumb::ThumbHeight / [txtSrc height]));
+                        transform = {
+                            .scaleX = scale,
+                            .scaleY = scale,
+                            .translateX = 0,
+                            .translateY = 0,
+                        };
+                    }
+                    
+                    // Scale image
+                    {
+                        MPSImageLanczosScale* filter = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
+                        [filter setScaleTransform:&transform];
+                        if ([txtSrc pixelFormat] == MTLPixelFormatR8Unorm) {
+                            NSLog(@"Failed: %@\n", batchURLs[txtIdx]);
+                            continue;
+                        }
+                        [filter encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:txtSrc destinationTexture:txtDst];
+                    }
+                    
                     #warning TODO: figure out if we need this
                     renderer.sync(txtDst);
                 }

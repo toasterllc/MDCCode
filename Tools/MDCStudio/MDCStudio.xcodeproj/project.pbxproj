@@ -245,7 +245,7 @@
 		55E43F9228C00D6B00FCCEA0 /* FFCC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FFCC.mm; sourceTree = "<group>"; };
 		55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DownsampleDiscardRaw.metal; sourceTree = "<group>"; };
 		55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageView-Shadow@2x.png"; sourceTree = "<group>"; };
-		55F7551829B955C100241672 /* FakeImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FakeImageSource.h; sourceTree = "<group>"; };
+		55F7551829B955C100241672 /* MockImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MockImageSource.h; sourceTree = "<group>"; };
 		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		55F8D01227BEF3E500757165 /* ImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageView.h; sourceTree = "<group>"; };
 		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
@@ -437,7 +437,7 @@
 		5544AE5927B6EE04006AB473 /* Document */ = {
 			isa = PBXGroup;
 			children = (
-				55F7551829B955C100241672 /* FakeImageSource.h */,
+				55F7551829B955C100241672 /* MockImageSource.h */,
 				5544AE5F27B6F16E006AB473 /* DocumentController.h */,
 				5544AE6027B6F16F006AB473 /* DocumentController.mm */,
 				5544AE5C27B6EE04006AB473 /* Document.h */,
