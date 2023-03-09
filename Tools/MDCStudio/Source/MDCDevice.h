@@ -591,12 +591,11 @@ private:
                         {
                             const ImageLibrary::Chunk& chunk = *recordRefIter->chunk;
                             
-                            Pipeline::RawImage rawImage = {
-                                .cfaDesc = _CFADesc,
-                                .width = Img::Thumb::PixelWidth,
-                                .height = Img::Thumb::PixelHeight,
-                                .pixels = (ImagePixel*)(imgData+Img::PixelsOffset),
-                            };
+                            Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+                                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (ImagePixel*)(imgData+Img::PixelsOffset));
+                            
+                            Renderer::Txt rgbTxt = Pipeline::TextureForRaw(renderer, _CFADesc,
+                                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (ImagePixel*)(imgData+Img::PixelsOffset));
                             
             //                const Color<MDCTools::ColorSpace::Raw> illum(0.879884, 0.901580, 0.341031);
             //                const Mat<double,3,3> colorMatrix(
@@ -605,12 +604,14 @@ private:
             //                    -0.195309, -0.784350, +1.979659
             //                );
                             
-                            const Pipeline::Options pipelineOpts = {
+                            const Pipeline::DebayerOptions debayerOpts = {
             //                    .illum = illum,
             //                    .colorMatrix = colorMatrix,
             //                    .reconstructHighlights  = { .en = true, },
                                 .debayerLMMSE           = { .applyGamma = true, },
                             };
+                            
+                            Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, thumbTxt);
                             
                             constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
                             Renderer::Txt& thumbTxt = txts.emplace_back(renderer.textureCreate(MTLPixelFormatRGBA8Unorm,

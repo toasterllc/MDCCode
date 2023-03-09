@@ -58,39 +58,39 @@ public:
                 _renderThumbs.recs.erase(it);
             }
             
-            // Re-render thumbnail
-            
-            const Pipeline::Options pipelineOpts = {
-//                    .illum = illum,
-//                    .colorMatrix = colorMatrix,
-//                    .reconstructHighlights  = { .en = true, },
-                .debayerLMMSE           = { .applyGamma = true, },
-            };
-            
-            constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
-            Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
-                ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
-            
-            Pipeline::Result renderResult = Pipeline::Run(renderer, pipelineOpts, rawImage, thumbTxt);
-            renderer.sync(thumbTxt);
-            
-            
-            _ThumbCompressor compressor;
-            auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
-            
-            for (;;) {
-                const size_t idx = workIdx.fetch_add(1);
-                if (idx >= imgCount) break;
-                
-                const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
-                id<MTLTexture> thumbTxt = thumbTxts[idx];
-                ImageRecord& rec = **recordRefIter;
-                
-                [thumbTxt getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
-                    fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
-                
-                compressor.encode(thumbData.get(), rec.thumb.data);
-            }
+//            // Re-render thumbnail
+//            
+//            const Pipeline::Options pipelineOpts = {
+////                    .illum = illum,
+////                    .colorMatrix = colorMatrix,
+////                    .reconstructHighlights  = { .en = true, },
+//                .debayerLMMSE           = { .applyGamma = true, },
+//            };
+//            
+//            constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+//            Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
+//                ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
+//            
+//            Pipeline::Result renderResult = Pipeline::Run(renderer, pipelineOpts, rawImage, thumbTxt);
+//            renderer.sync(thumbTxt);
+//            
+//            
+//            _ThumbCompressor compressor;
+//            auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
+//            
+//            for (;;) {
+//                const size_t idx = workIdx.fetch_add(1);
+//                if (idx >= imgCount) break;
+//                
+//                const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
+//                id<MTLTexture> thumbTxt = thumbTxts[idx];
+//                ImageRecord& rec = **recordRefIter;
+//                
+//                [thumbTxt getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
+//                    fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+//                
+//                compressor.encode(thumbData.get(), rec.thumb.data);
+//            }
             
             
             

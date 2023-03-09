@@ -10,16 +10,10 @@ namespace MDCTools::ImagePipeline {
 
 class Pipeline {
 public:
-    struct RawImage {
-        MDCTools::CFADesc cfaDesc;
-        size_t width = 0;
-        size_t height = 0;
-        const ImagePixel* pixels = nullptr;
-    };
-    
-    struct Options {
+    struct DebayerOptions {
+        const MDCTools::CFADesc cfaDesc;
+        
         std::optional<MDCTools::Color<MDCTools::ColorSpace::Raw>> illum;
-        std::optional<Mat<double,3,3>> colorMatrix;
         
         struct {
             bool en = false;
@@ -33,6 +27,11 @@ public:
         struct {
             bool applyGamma = false;
         } debayerLMMSE;
+    };
+    
+    struct ProcessOptions {
+        MDCTools::Color<MDCTools::ColorSpace::Raw> illum;
+        std::optional<Mat<double,3,3>> colorMatrix;
         
         float exposure = 0;
         float saturation = 0;
@@ -44,21 +43,26 @@ public:
             float amount = 0;
             float radius = 0;
         } localContrast;
-        
-        SampleRect sampleRect;
     };
     
-    struct Result {
+    struct DebayerResult {
         MDCTools::Color<MDCTools::ColorSpace::Raw> illum; // Illuminant that was used
-        Mat<double,3,3> colorMatrix; // Color matrix that was used
-        struct {
-            MDCTools::Renderer::Buf raw;
-            MDCTools::Renderer::Buf xyzD50;
-            MDCTools::Renderer::Buf lsrgb;
-        } sampleBufs;
     };
     
-    static Result Run(MDCTools::Renderer& renderer, const Options& opts, const RawImage& srcRaw, id<MTLTexture> dst);
+    struct ProcessResult {
+        Mat<double,3,3> colorMatrix; // Color matrix that was used
+    };
+    
+    static Renderer::Txt TextureForRaw(MDCTools::Renderer& renderer, size_t width, size_t height, const ImagePixel* pixels) {
+        constexpr size_t SamplesPerPixel = 1;
+        constexpr size_t BytesPerSample = sizeof(*pixels);
+        Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, width, height);
+        renderer.textureWrite(raw, pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
+        return raw;
+    }
+    
+    static DebayerResult Debayer(MDCTools::Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
+    static ProcessResult Process(MDCTools::Renderer& renderer, const ProcessOptions& opts, id<MTLTexture> srcRgb, id<MTLTexture> dstRgb);
 };
 
 } // namespace MDCTools::ImagePipeline

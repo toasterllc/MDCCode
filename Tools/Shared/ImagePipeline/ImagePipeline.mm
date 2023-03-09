@@ -78,42 +78,31 @@ static _CCM _CCMForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
 
 namespace MDCTools::ImagePipeline {
 
-Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const Options& opts, const RawImage& src, id<MTLTexture> dst) {
+Pipeline::DebayerResult Pipeline::Debayer(MDCTools::Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb) {
     assert(src.width);
     assert(src.height);
     assert(src.pixels);
     assert(dst);
+    assert([dst width] == src.width);
+    assert([dst height] == src.height);
     
-    constexpr uint32_t DownsampleFactor = 1;
-    const size_t w = src.width/DownsampleFactor;
-    const size_t h = src.height/DownsampleFactor;
-    
-    Renderer::Txt raw = renderer.textureCreate(MTLPixelFormatR32Float, w, h);
-    
-    // Load `raw`
-    {
-        constexpr size_t SamplesPerPixel = 1;
-        constexpr size_t BytesPerSample = sizeof(*src.pixels);
-        renderer.textureWrite(raw, src.pixels, SamplesPerPixel, BytesPerSample, ImagePixelMax);
-    }
+    const size_t w = src.width;
+    const size_t h = src.height;
     
     Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
     Color<ColorSpace::Raw> illum;
-    Mat<double,3,3> colorMatrix;
-    
-//        renderer.debugShowTexture(raw);
     
     // If an illuminant was provided, use it.
     // Otherwise, estimate it with FFCC.
     if (opts.illum) {
         illum = *opts.illum;
     } else {
-        illum = EstimateIlluminantFFCC::Run(renderer, src.cfaDesc, raw);
+        illum = EstimateIlluminantFFCC::Run(renderer, opts.cfaDesc, srcRaw);
     }
     
     // Reconstruct highlights
     if (opts.reconstructHighlights.en) {
-        ReconstructHighlights::Run(renderer, src.cfaDesc, illum.m, raw);
+        ReconstructHighlights::Run(renderer, src.cfaDesc, illum.m, srcRaw);
     }
     
 //        // White balance
@@ -121,111 +110,42 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const Options& opts
 //            const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
 //            const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
 //            const simd::float3 simdWB = _SimdForMat(wb);
-//            renderer.render(raw,
+//            renderer.render(srcRaw,
 //                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
 //                    // Buffer args
 //                    src.cfaDesc,
 //                    simdWB,
 //                    // Texture args
-//                    raw
+//                    srcRaw
 //                )
 //            );
 //        }
     
     if (opts.defringe.en) {
-        Defringe::Run(renderer, src.cfaDesc, opts.defringe.opts, raw);
+        Defringe::Run(renderer, src.cfaDesc, opts.defringe.opts, srcRaw);
     }
     
     // LMMSE Debayer
     {
-        DebayerLMMSE::Run(renderer, src.cfaDesc, opts.debayerLMMSE.applyGamma, raw, rgb);
+        DebayerLMMSE::Run(renderer, src.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, rgb);
     }
     
+    renderer.copy(rgb, dstRgb);
+    return Pipeline::DebayerResult{
+        .illum = illum,
+    };
+}
+
+Pipeline::ProcessResult Pipeline::Process(MDCTools::Renderer& renderer, const ProcessOptions& opts, id<MTLTexture> srcRgb, id<MTLTexture> dstRgb) {
+    assert(srcRgb);
+    assert(dstRgb);
     
+    const size_t w = [srcRgb width];
+    const size_t h = [srcRgb height]
     
-    
-    
-    
-    
-//        // ProPhotoRGB -> XYZ.D50
-//        {
-//            renderer.render(rgb,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGB",
-//                    // Texture args
-//                    rgb
-//                )
-//            );
-//        }
-//        
-//        // XYZ.D50 -> Lab.D50
-//        {
-//            renderer.render(rgb,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
-//                    // Texture args
-//                    rgb
-//                )
-//            );
-//        }
-//        
-//        // Local contrast
-//        if (opts.localContrast.en) {
-//            LocalContrast::Run(renderer, opts.localContrast.amount,
-//                opts.localContrast.radius, rgb);
-//        }
-//        
-//        // Lab.D50 -> XYZ.D50
-//        {
-//            renderer.render(rgb,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
-//                    // Texture args
-//                    rgb
-//                )
-//            );
-//        }
-//        
-//        // XYZ.D50 -> ProPhotoRGB
-//        {
-//            renderer.render(rgb,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ProPhotoRGBFromXYZD50",
-//                    // Texture args
-//                    rgb
-//                )
-//            );
-//        }
-    
-    
-    
-    
-    
-//        // XYZ.D50 -> Lab.D50
-//        {
-//            renderer.render(rgb,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
-//                    // Texture args
-//                    rgb
-//                )
-//            );
-//        }
-//        
-//        // Local contrast
-//        if (opts.localContrast.en) {
-//            LocalContrast::Run(renderer, opts.localContrast.amount,
-//                opts.localContrast.radius, rgb);
-//        }
-//        
-//        // Lab.D50 -> XYZ.D50
-//        {
-//            renderer.render(rgb,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
-//                    // Texture args
-//                    rgb
-//                )
-//            );
-//        }
-    
-    
-    
-    
+    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
+    Color<ColorSpace::Raw> illum;
+    Mat<double,3,3> colorMatrix;
     
     // White balance
     {
@@ -241,7 +161,6 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const Options& opts
             )
         );
     }
-    
     
     // Camera raw -> ProPhotoRGB
     {
@@ -385,19 +304,7 @@ Pipeline::Result Pipeline::Run(MDCTools::Renderer& renderer, const Options& opts
         renderer.copy(rgb, dst);
     }
     
-    
-    
-    // We changed our semantics to explicitly output LSRGB, so we no longer apply the SRGB gamma ourselves
-//        // Apply SRGB gamma
-//        {
-//            renderer.render(rgb, ImagePipelineShaderNamespace "Base::SRGBGamma",
-//                // Texture args
-//                rgb
-//            );
-//        }
-    
-    return Result{
-        .illum = illum,
+    return ProcessResult{
         .colorMatrix = colorMatrix,
     };
 }
