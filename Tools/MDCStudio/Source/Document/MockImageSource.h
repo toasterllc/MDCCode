@@ -78,15 +78,38 @@ public:
         return dst;
     }
     
-    static MDCTools::Renderer::Txt _ThumbCompress(id<MTLTexture> src, MTLPixelFormat dstFormat) {
-        [txtRgba8 getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
-            fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
-        
-        compressor.encode(thumbData.get(), rec->thumb.data);
-        
-        rec->options.thumb.render = false;
-        printf("Rendered %ju\n", (uintmax_t)rec->info.id);
-    }
+//    static MDCTools::Renderer::Txt _ThumbRender2(MDCTools::Renderer& renderer, NSURL* srcUrl, MTLPixelFormat dstFormat) {
+//        using namespace MDCStudio;
+//        using namespace MDCTools;
+//        using namespace MDCTools::ImagePipeline;
+//        
+//        // Calculate transform to fit source image in thumbnail aspect ratio
+//        MPSScaleTransform transform;
+//        {
+//            const float srcAspect = (float)[src width] / [src height];
+//            const float dstAspect = (float)ImageThumb::ThumbWidth / ImageThumb::ThumbHeight;
+//            const float scale = (srcAspect<dstAspect ? ((float)ImageThumb::ThumbWidth / [src width]) : ((float)ImageThumb::ThumbHeight / [src height]));
+//            transform = {
+//                .scaleX = scale,
+//                .scaleY = scale,
+//                .translateX = 0,
+//                .translateY = 0,
+//            };
+//        }
+//        
+//        // Scale image
+//        constexpr MTLTextureUsage DstUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+//        Renderer::Txt dst = renderer.textureCreate(dstFormat, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, DstUsage);
+//        {
+//            MPSImageLanczosScale* filter = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
+//            [filter setScaleTransform:&transform];
+//            [filter encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:src destinationTexture:dst];
+//        }
+//        return dst;
+//    }
+    
+    
+    
     
     void _threadRenderThumbs() {
         using namespace MDCStudio;
@@ -203,8 +226,8 @@ public:
                 // Load thumbnail from disk
                 id<MTLTexture> txtOrig = nil;
                 {
-//                    const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-                    const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
+                    const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
+//                    const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
                     NSString*const path = [NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->info.addr];
                     NSDictionary*const loadOpts = @{
                         MTKTextureLoaderOptionSRGB: @YES,

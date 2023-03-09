@@ -13,8 +13,8 @@ using namespace MDCTools;
 using namespace Toastbox;
 
 //const fs::path ImagesDirPath = "/Users/dave/Desktop/SourceImages";
-//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
+const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
+//const fs::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
 
 static bool _IsJPGFile(const fs::path& path) {
     return fs::is_regular_file(path) && path.extension() == ".jpg";
