@@ -79,21 +79,17 @@ static _CCM _CCMForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
 namespace MDCTools::ImagePipeline {
 
 Pipeline::DebayerResult Pipeline::Debayer(MDCTools::Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb) {
-    assert(src.width);
-    assert(src.height);
-    assert(src.pixels);
-    assert(dst);
-    assert([dst width] == src.width);
-    assert([dst height] == src.height);
+    assert(srcRaw);
+    assert(dstRgb);
+    assert([srcRaw width] == [dstRgb width]);
+    assert([srcRaw height] == [dstRgb height]);
     
-    const size_t w = src.width;
-    const size_t h = src.height;
-    
-    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
-    Color<ColorSpace::Raw> illum;
+//    const size_t w = src.width;
+//    const size_t h = src.height;
     
     // If an illuminant was provided, use it.
     // Otherwise, estimate it with FFCC.
+    Color<ColorSpace::Raw> illum;
     if (opts.illum) {
         illum = *opts.illum;
     } else {
@@ -102,7 +98,7 @@ Pipeline::DebayerResult Pipeline::Debayer(MDCTools::Renderer& renderer, const De
     
     // Reconstruct highlights
     if (opts.reconstructHighlights.en) {
-        ReconstructHighlights::Run(renderer, src.cfaDesc, illum.m, srcRaw);
+        ReconstructHighlights::Run(renderer, opts.cfaDesc, illum.m, srcRaw);
     }
     
 //        // White balance
@@ -122,15 +118,14 @@ Pipeline::DebayerResult Pipeline::Debayer(MDCTools::Renderer& renderer, const De
 //        }
     
     if (opts.defringe.en) {
-        Defringe::Run(renderer, src.cfaDesc, opts.defringe.opts, srcRaw);
+        Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
     }
     
     // LMMSE Debayer
     {
-        DebayerLMMSE::Run(renderer, src.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, rgb);
+        DebayerLMMSE::Run(renderer, opts.cfaDesc, opts.debayerLMMSE.applyGamma, srcRaw, dstRgb);
     }
     
-    renderer.copy(rgb, dstRgb);
     return Pipeline::DebayerResult{
         .illum = illum,
     };
@@ -141,9 +136,8 @@ Pipeline::ProcessResult Pipeline::Process(MDCTools::Renderer& renderer, const Pr
     assert(dstRgb);
     
     const size_t w = [srcRgb width];
-    const size_t h = [srcRgb height]
+    const size_t h = [srcRgb height];
     
-    Renderer::Txt rgb = renderer.textureCreate(MTLPixelFormatRGBA32Float, w, h);
     Color<ColorSpace::Raw> illum;
     Mat<double,3,3> colorMatrix;
     
@@ -152,12 +146,12 @@ Pipeline::ProcessResult Pipeline::Process(MDCTools::Renderer& renderer, const Pr
         const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
         const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
         const simd::float3 simdWB = _SimdForMat(wb);
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalanceRGB",
                 // Buffer args
                 simdWB,
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
@@ -168,32 +162,32 @@ Pipeline::ProcessResult Pipeline::Process(MDCTools::Renderer& renderer, const Pr
         // Otherwise estimate it by interpolating between known color matrices.
         colorMatrix = (opts.colorMatrix ? *opts.colorMatrix : _CCMForIlluminant(illum).m);
         
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::ApplyColorMatrix",
                 // Buffer args
                 _SimdForMat(colorMatrix),
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
     
     // ProPhotoRGB -> XYZ.D50
     {
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromProPhotoRGB",
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
     
     // XYZ.D50 -> XYY.D50
     {
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYYFromXYZ",
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
@@ -201,56 +195,56 @@ Pipeline::ProcessResult Pipeline::Process(MDCTools::Renderer& renderer, const Pr
     // Exposure
     {
         const float exposure = pow(2, opts.exposure);
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Exposure",
                 // Buffer args
                 exposure,
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
     
     // XYY.D50 -> XYZ.D50
     {
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZFromXYY",
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
     
     // XYZ.D50 -> Lab.D50
     {
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LabD50FromXYZD50",
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
     
     // Brightness
     {
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Brightness",
                 // Buffer args
                 opts.brightness,
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
     
     // Contrast
     {
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::Contrast",
                 // Buffer args
                 opts.contrast,
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
@@ -258,50 +252,52 @@ Pipeline::ProcessResult Pipeline::Process(MDCTools::Renderer& renderer, const Pr
     // Local contrast
     if (opts.localContrast.en) {
         LocalContrast::Run(renderer, opts.localContrast.amount,
-            opts.localContrast.radius, rgb);
+            opts.localContrast.radius, srcRgb);
     }
     
     // Lab.D50 -> XYZ.D50
     {
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::XYZD50FromLabD50",
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
     
     // Saturation
-    Saturation::Run(renderer, opts.saturation, rgb);
+    Saturation::Run(renderer, opts.saturation, srcRgb);
     
     // XYZ.D50 -> XYZ.D65
     {
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::BradfordXYZD65FromXYZD50",
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
     
     // XYZ.D65 -> LSRGB.D65
     {
-        renderer.render(rgb,
+        renderer.render(srcRgb,
             renderer.FragmentShader(ImagePipelineShaderNamespace "Base::LSRGBD65FromXYZD65",
                 // Texture args
-                rgb
+                srcRgb
             )
         );
     }
     
-    // Copy image from rgb -> dst, resizing if needed
-    const bool resize = (src.width!=[dst width] || src.height!=[dst height]);
-    if (resize) {
-        MPSImageLanczosScale* scale = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
-        [scale encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:rgb destinationTexture:dst];
-    
-    } else {
-        renderer.copy(rgb, dst);
+    // Copy image from srcRgb -> dstRgb if they're different textures, resizing if needed
+    if (srcRgb != dstRgb) {
+        const bool resize = ([srcRgb width]!=[dstRgb width] || [srcRgb height]!=[dstRgb height]);
+        if (resize) {
+            MPSImageLanczosScale* scale = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
+            [scale encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:srcRgb destinationTexture:dstRgb];
+        
+        } else {
+            renderer.copy(srcRgb, dstRgb);
+        }
     }
     
     return ProcessResult{

@@ -117,49 +117,6 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     // Create _imageTxt if it doesn't exist yet and we have the image
     if ((!_imageTxt || dirty) && _image) {
-        Pipeline::RawImage rawImage = {
-            .cfaDesc    = _image->cfaDesc,
-            .width      = _image->width,
-            .height     = _image->height,
-            .pixels     = (ImagePixel*)(_image->data.get() + _image->off),
-        };
-        
-        const auto& f = _imageRecord->info.illumEst;
-        const MDCTools::Color<MDCTools::ColorSpace::Raw> illum(f[0], f[1], f[2]);
-        const Pipeline::Options pipelineOpts = {
-            .illum = illum,
-            
-            .debayerLMMSE = {
-                .applyGamma = true,
-            },
-            
-            // TODO: implement
-//            rotation = Rotation::None;
-            .defringe = {
-                .en = _imageRecord->options.defringe,
-            },
-            
-            .reconstructHighlights = {
-                .en = _imageRecord->options.reconstructHighlights,
-            },
-            
-            // TODO: implement
-//            struct [[gnu::packed]] {
-//                bool show = false;
-//                Corner corner = Corner::BottomRight;
-//            } timestamp;
-            
-            .exposure = _imageRecord->options.exposure,
-            .saturation = _imageRecord->options.saturation,
-            .brightness = _imageRecord->options.brightness,
-            .contrast = _imageRecord->options.contrast,
-            .localContrast = {
-                .en = false,
-                .amount = _imageRecord->options.localContrast.amount,
-                .radius = _imageRecord->options.localContrast.radius,
-            },
-        };
-        
         if (!_imageTxt) {
             // _imageTxt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
             // representation of the pipeline result without clipping to 8-bit components, so we can
@@ -167,13 +124,23 @@ static CGColorSpaceRef _LSRGBColorSpace() {
             _imageTxt = renderer.textureCreate(MTLPixelFormatRGBA16Float, _image->width, _image->height);
         }
         
-//        } else {
-//            // If we already have _imageTxt, confirm that the size matches _image
-//            assert([_imageTxt width] == _image->width);
-//            assert([_imageTxt height] == _image->height);
-//        }
+        Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+            _image->width, _image->height, (ImagePixel*)(_image->data.get() + _image->off));
         
-        Pipeline::Run(renderer, pipelineOpts, rawImage, _imageTxt);
+        Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
+        
+        // Debayer raw image
+        const Pipeline::DebayerOptions debayerOpts = {
+            .cfaDesc        = _image->cfaDesc,
+            .debayerLMMSE   = { .applyGamma = true, },
+        };
+        const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
+        
+        // Process rgb image
+        const Pipeline::ProcessOptions processOpts = {
+            .illum = debayerResult.illum,
+        };
+        Pipeline::Process(renderer, processOpts, rgbTxt, _imageTxt);
     }
     
     // If we don't have the thumbnail texture yet, create it

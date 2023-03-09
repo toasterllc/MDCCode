@@ -469,6 +469,11 @@ public:
         return textureCreate([txt pixelFormat], [txt width], [txt height], [txt usage]);
     }
     
+    Txt textureCreate(id<MTLTexture> txt, MTLPixelFormat fmt) {
+        assert(txt);
+        return textureCreate(fmt, [txt width], [txt height], [txt usage]);
+    }
+    
     Txt textureCreate(id<MTLTexture> txt, MTLTextureUsage usage) {
         assert(txt);
         return textureCreate([txt pixelFormat], [txt width], [txt height], usage);

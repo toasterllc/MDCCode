@@ -1,5 +1,7 @@
 #import "ImageLibrary.h"
 #import <filesystem>
+#import <MetalKit/MetalKit.h>
+#import "Tools/Shared/Renderer.h"
 
 class FakeImageSource : public MDCStudio::ImageSource {
 public:
@@ -46,7 +48,13 @@ public:
     }
     
     void _threadRenderThumbs() {
-        for (;;) {
+        using namespace MDCTools;
+        
+        id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
+        MTKTextureLoader* txtLoader = [[MTKTextureLoader alloc] initWithDevice:dev];
+        Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
+        
+        for (;;) @autoreleasepool {
             MDCStudio::ImageRecordPtr rec;
             {
                 auto lock = std::unique_lock(_renderThumbs.lock);
@@ -96,6 +104,47 @@ public:
             
             
             
+//            // Render the thumbnail into rec.thumb
+//            {
+//                Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+//                    Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (ImagePixel*)(imgData+Img::PixelsOffset));
+//                
+//                Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
+//                
+//                const Pipeline::DebayerOptions debayerOpts = {
+//                    .cfaDesc        = _CFADesc,
+//                    .debayerLMMSE   = { .applyGamma = true, },
+//                };
+//                
+//                const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
+//                
+//                constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+//                Renderer::Txt& thumbTxt = txts.emplace_back(renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
+//                    ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage));
+//                thumbTxts[idx] = thumbTxt;
+//                
+//                const Pipeline::ProcessOptions processOpts = {
+//                    .illum = debayerResult.illum,
+//                };
+//                
+//                Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
+//                renderer.sync(thumbTxt);
+//                
+//                // Populate the illuminant (ImageRecord.info.illumEst)
+//                rec.info.illumEst[0] = debayerResult.illum[0];
+//                rec.info.illumEst[1] = debayerResult.illum[1];
+//                rec.info.illumEst[2] = debayerResult.illum[2];
+//            }
+//            
+//            
+//            
+//            
+//            
+//            
+//            
+//            - (nullable id <MTLTexture>)newTextureWithContentsOfURL:(nonnull NSURL *)URL
+//            options:(nullable NSDictionary <MTKTextureLoaderOption, id> *)options
+//            error:(NSError *__nullable *__nullable)error;
             
             
             
@@ -106,9 +155,7 @@ public:
             rec->options.thumb.render = false;
             printf("Rendered %ju\n", (uintmax_t)rec->info.id);
             
-            if (rec->options.thumb.originalOnDisk) {
-                
-            }
+            
             
             // Notify image library that the image changed
             {

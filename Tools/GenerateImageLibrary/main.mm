@@ -152,6 +152,8 @@ int main(int argc, const char* argv[]) {
                 auto imgRecIt = imgLib.begin()+beginOff;
                 for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
                     ImageRecord& rec = **imgRecIt;
+                    NSURL* url = batchURLs[txtIdx];
+                    NSString* filename = [[url URLByDeletingPathExtension] lastPathComponent];
                     
                     // Set ImageRecord.id
                     rec.info.id = imageId;
@@ -163,6 +165,7 @@ int main(int argc, const char* argv[]) {
                     
                     // Set ImageRecord.id
                     rec.info.id = imageId;
+                    rec.info.addr = IntForStr<uint64_t>([filename UTF8String], 10);
                     
                     // Compress thumbnail data as BC7
                     bc7.encode(tmp, rec.thumb.data);
