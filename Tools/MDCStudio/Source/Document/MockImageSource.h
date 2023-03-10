@@ -52,36 +52,6 @@ public:
         if (enqueued) _renderThumbs.signal.notify_one();
     }
     
-    static MDCTools::Renderer::Txt _ThumbRender(MDCTools::Renderer& renderer, id<MTLTexture> src, MTLPixelFormat dstFormat) {
-        using namespace MDCStudio;
-        using namespace MDCTools;
-        using namespace MDCTools::ImagePipeline;
-        
-        // Calculate transform to fit source image in thumbnail aspect ratio
-        MPSScaleTransform transform;
-        {
-            const float srcAspect = (float)[src width] / [src height];
-            const float dstAspect = (float)ImageThumb::ThumbWidth / ImageThumb::ThumbHeight;
-            const float scale = (srcAspect<dstAspect ? ((float)ImageThumb::ThumbWidth / [src width]) : ((float)ImageThumb::ThumbHeight / [src height]));
-            transform = {
-                .scaleX = scale,
-                .scaleY = scale,
-                .translateX = 0,
-                .translateY = 0,
-            };
-        }
-        
-        // Scale image
-        constexpr MTLTextureUsage DstUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
-        Renderer::Txt dst = renderer.textureCreate(dstFormat, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, DstUsage);
-        {
-            MPSImageLanczosScale* filter = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
-            [filter setScaleTransform:&transform];
-            [filter encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:src destinationTexture:dst];
-        }
-        return dst;
-    }
-    
     static constexpr size_t _TmpStorageLen = MDCStudio::ImageThumb::ThumbWidth * MDCStudio::ImageThumb::ThumbWidth * 4;
     using _TmpStorage = std::array<uint8_t, _TmpStorageLen>;
     
