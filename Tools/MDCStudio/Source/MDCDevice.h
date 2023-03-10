@@ -208,7 +208,6 @@ public:
     }
     
     void renderThumbs(ImageRecordIter begin, ImageRecordIter end) override {
-        printf("renderThumbs %zu\n", end-begin);
     }
     
 private:

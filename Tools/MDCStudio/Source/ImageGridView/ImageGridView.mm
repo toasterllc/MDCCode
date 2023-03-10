@@ -477,7 +477,7 @@ done:
     }
     
     if (ev.type == ImageLibrary::Event::Type::Change) {
-        // Erase textures for any of the changed records
+        // Update textures for any of the changed records
         for (const ImageRecordPtr& rec : ev.records) {
             auto it = _chunkTxts.get(rec);
             if (it == _chunkTxts.end()) continue;
