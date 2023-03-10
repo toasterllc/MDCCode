@@ -147,7 +147,7 @@ public:
     
     // notify(): notifies each observer of an event.
     // The notifications are delivered synchronously on the calling thread.
-    // The ImageLibraryPtr lock will therefore be held when events are delivered!
+    // The ImageLibrary lock will therefore be held when events are delivered!
     void notify(const Event& ev) {
         auto prev = _state.observers.before_begin();
         for (auto it=_state.observers.begin(); it!=_state.observers.end();) {
@@ -182,7 +182,6 @@ private:
     } _state;
 };
 
-using ImageLibraryPtr = std::shared_ptr<MDCTools::Lockable<ImageLibrary>>;
 using ImageRecordIter = ImageLibrary::RecordRefConstIter;
 using ImageRecordPtr = ImageLibrary::RecordStrongRef;
 using ImageSet = std::set<ImageRecordPtr>;
