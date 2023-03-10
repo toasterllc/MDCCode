@@ -98,8 +98,30 @@ public:
             NSDictionary*const loadOpts = @{
                 MTKTextureLoaderOptionSRGB: @YES,
             };
-            id<MTLTexture> txtOrig = [txtLoader newTextureWithContentsOfURL:url options:loadOpts error:nil];
-            txtRgba32 = _ThumbRender(renderer, txtOrig, MTLPixelFormatRGBA32Float);
+            id<MTLTexture> src = [txtLoader newTextureWithContentsOfURL:url options:loadOpts error:nil];
+            
+            // Calculate transform to fit source image in thumbnail aspect ratio
+            MPSScaleTransform transform;
+            {
+                const float srcAspect = (float)[src width] / [src height];
+                const float dstAspect = (float)ImageThumb::ThumbWidth / ImageThumb::ThumbHeight;
+                const float scale = (srcAspect<dstAspect ? ((float)ImageThumb::ThumbWidth / [src width]) : ((float)ImageThumb::ThumbHeight / [src height]));
+                transform = {
+                    .scaleX = scale,
+                    .scaleY = scale,
+                    .translateX = 0,
+                    .translateY = 0,
+                };
+            }
+            
+            // Scale image
+            constexpr MTLTextureUsage DstUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+            txtRgba32 = renderer.textureCreate(MTLPixelFormatRGBA32Float, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, DstUsage);
+            {
+                MPSImageLanczosScale* filter = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
+                [filter setScaleTransform:&transform];
+                [filter encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:src destinationTexture:txtRgba32];
+            }
         }
         
         // Process image, store in txtRgba8
