@@ -159,9 +159,7 @@ private:
                 for (const _SendRight& service : _TerminatedServices) {
                     auto lock = std::unique_lock(_State.lock);
                     for (auto it=_State.devices.begin(); it!=_State.devices.end(); it++) {
-                        #warning TODO: cleanup these function names
-                        MDCUSBDevicePtr mdcUSBDevPtr = it->dev->device();
-                        const _USBDevice& usbDev = mdcUSBDevPtr->dev();
+                        const _USBDevice& usbDev = it->dev->device().dev();
                         if (usbDev.service() == service) {
                             _State.devices.erase(it);
                             changed = true;

@@ -25,10 +25,11 @@ private:
     
 public:
     using Observer = std::function<bool()>;
+    using Device = MDCTools::Lockable<MDCUSBDevice>;
     
     MDCDevice(MDCUSBDevice&& dev) :
-    _dev(std::make_shared<MDCTools::Lockable<MDCUSBDevice>>(std::move(dev))),
-    _dir(_DirForSerial(_dev->serial())),
+    _dev(std::move(dev)),
+    _dir(_DirForSerial(_dev.serial())),
     _imageLibrary(_dir / "ImageLibrary"),
     _imageCache(_imageLibrary, _ImageProvider(_dev)) {
     
@@ -38,7 +39,7 @@ public:
         
         // Give device a default name
         char name[256];
-        snprintf(name, sizeof(name), "MDC Device %s", _dev->serial().c_str());
+        snprintf(name, sizeof(name), "MDC Device %s", _dev.serial().c_str());
         _state.name = std::string(name);
         
         // Read state from disk
@@ -49,24 +50,24 @@ public:
         
         // Perform device IO
         {
-            auto lock = std::unique_lock(*_dev);
+            auto lock = std::unique_lock(_dev);
             
             // Update our _mspState from the device
-            _mspState = _dev->mspStateRead();
+            _mspState = _dev.mspStateRead();
             
             // Enter host mode
-            _dev->mspHostModeSet(true);
+            _dev.mspHostModeSet(true);
             
             // Update the device's time
             {
                 using namespace std::chrono;
                 using namespace date;
                 
-                const Time::Instant mdcTime = _dev->mspTimeGet();
+                const Time::Instant mdcTime = _dev.mspTimeGet();
                 const Time::Instant actualTime = Time::Current();
                 
                 auto startTime = steady_clock::now();
-                _dev->mspTimeSet(actualTime);
+                _dev.mspTimeSet(actualTime);
                 const milliseconds timeSetDuration = duration_cast<milliseconds>(steady_clock::now()-startTime);
                 
                 if (Time::Absolute(mdcTime)) {
@@ -88,8 +89,8 @@ public:
             
 //            // Update device time
 //            {
-//                _dev->mspSBWConnect();
-//                _dev->mspSBWRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
+//                _dev.mspSBWConnect();
+//                _dev.mspSBWRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
 //                
 //                if (_mspState.magic != MSP::State::MagicNumber) {
 //                    // Program MSPApp onto MSP
@@ -105,7 +106,7 @@ public:
 //                
 //                _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
 //                _mspState.startTime.valid = true;
-//                _dev->mspSBWWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
+//                _dev.mspSBWWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
 //                
 //                // MSPHostMode=true: make MSP enter host mode until physically disconnected from USB.
 //                // (When USB is disconnected, STM will lose power, causing STM to stop asserting
@@ -114,7 +115,7 @@ public:
 //                constexpr bool MSPHostMode = true;
 //                
 //                startTime = std::chrono::steady_clock::now();
-//                _dev->mspSBWDisconnect(MSPHostMode);
+//                _dev.mspSBWDisconnect(MSPHostMode);
 //            }
             
 //            usleep(180000);
@@ -125,11 +126,11 @@ public:
 //            printf("durationMs: %ju\n", (uintmax_t)durationMs);
             
             // Load ICE40 with our app
-            _ICEConfigure(*_dev);
+            _ICEConfigure(_dev);
             
             // Init SD card
             #warning TODO: how should we handle sdInit() failing (throwing)?
-            _sdCardInfo = _dev->sdInit();
+            _sdCardInfo = _dev.sdInit();
             
             if (!_mspState.sd.valid) {
                 // MSPApp state isn't valid -- ignore
@@ -175,7 +176,7 @@ public:
         _notifyObservers();
     }
     
-    MDCUSBDevicePtr device() { return _dev; }
+    Device& device() { return _dev; }
     
     void observerAdd(Observer&& observer) {
         auto lock = std::unique_lock(_state.lock);
@@ -309,19 +310,19 @@ private:
 //        return MSP::TimeAbsoluteBase | (t-MSP::TimeAbsoluteUnixReference);
 //    }
     
-    static ImageCache::ImageProvider _ImageProvider(MDCUSBDevicePtr dev) {
-        return [=] (uint64_t addr) -> ImagePtr {
+    static ImageCache::ImageProvider _ImageProvider(Device& dev) {
+        return [&] (uint64_t addr) -> ImagePtr {
             return _ImageForAddr(dev, addr);
         };
     }
     
-    static ImagePtr _ImageForAddr(MDCUSBDevicePtr dev, uint64_t addr) {
+    static ImagePtr _ImageForAddr(Device& dev, uint64_t addr) {
         // Lock the device for the duration of this function
-        auto lock = std::unique_lock(*dev);
+        auto lock = std::unique_lock(dev);
         auto imageData = std::make_unique<uint8_t[]>(ImgSD::Full::ImagePaddedLen);
-        dev->reset();
-        dev->sdRead((SD::Block)addr);
-        dev->readout(imageData.get(), ImgSD::Full::ImagePaddedLen);
+        dev.reset();
+        dev.sdRead((SD::Block)addr);
+        dev.readout(imageData.get(), ImgSD::Full::ImagePaddedLen);
         
         if (_ChecksumValid(imageData.get(), Img::Size::Full)) {
 //            printf("Checksum valid (size: full)\n");
@@ -427,7 +428,7 @@ private:
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
         // Lock the device for the duration of this function
-        auto lock = std::unique_lock(*_dev);
+        auto lock = std::unique_lock(_dev);
         
         constexpr size_t ChunkImgCount = 128; // Number of images to read at a time
         constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
@@ -436,8 +437,8 @@ private:
         const SD::Block fullBlockStart = range.idx * ImgSD::Full::ImageBlockCount;
         const SD::Block thumbBlockStart = _mspState.sd.thumbBlockStart + (range.idx * ImgSD::Thumb::ImageBlockCount);
         
-        _dev->reset();
-        _dev->sdRead(thumbBlockStart);
+        _dev.reset();
+        _dev.sdRead(thumbBlockStart);
         
         // Consumer
         std::thread consumerThread([&] {
@@ -482,7 +483,7 @@ private:
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
             auto& buf = bufQueue.wget();
             buf.len = chunkImgCount; // buffer length = count of images (not byte count)
-            _dev->readout(buf.data, chunkImgCount*ImgSD::Thumb::ImagePaddedLen);
+            _dev.readout(buf.data, chunkImgCount*ImgSD::Thumb::ImagePaddedLen);
             bufQueue.wpush();
             i += chunkImgCount;
             
@@ -685,7 +686,7 @@ private:
         }
     }
     
-    MDCUSBDevicePtr _dev;
+    Device _dev;
     const _Path _dir;
     ImageLibrary _imageLibrary;
     ImageCache _imageCache;

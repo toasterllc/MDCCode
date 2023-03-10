@@ -627,5 +627,3 @@ private:
     std::string _serial = {};
     STM::Status::Mode _mode = STM::Status::Mode::None;
 };
-
-using MDCUSBDevicePtr = std::shared_ptr<MDCTools::Lockable<MDCUSBDevice>>;

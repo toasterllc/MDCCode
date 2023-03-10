@@ -205,20 +205,6 @@ static CGRect _CGRectFromGridRect(Grid::Rect rect, CGFloat scale) {
     };
 }
 
-static uintptr_t _FloorToPageSize(uintptr_t x) {
-    const uintptr_t s = getpagesize();
-    return (x/s)*s;
-}
-
-static uintptr_t _CeilToPageSize(uintptr_t x) {
-    const uintptr_t s = getpagesize();
-    return ((x+s-1)/s)*s;
-}
-
-//- (BOOL)isGeometryFlipped {
-//    return true;
-//}
-
 static void _TextureUpdateSlice(id<MTLTexture> txt, const ImageLibrary::RecordRef& ref) {
     const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
     [txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0

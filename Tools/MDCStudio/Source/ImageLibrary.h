@@ -3,7 +3,6 @@
 #include <set>
 #include "Code/Shared/Time.h"
 #include "Code/Shared/Img.h"
-#include "Tools/Shared/Lockable.h"
 #include "RecordStore.h"
 #include "ImageOptions.h"
 #include "ImageThumb.h"

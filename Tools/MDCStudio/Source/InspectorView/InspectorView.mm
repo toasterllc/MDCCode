@@ -698,7 +698,6 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
     
     // Create NSOutlineView items
     {
-        static constexpr CGFloat SpacerSize = 0;
         _rootItem = [self _createItemWithClass:[Item_Section class]];
         _rootItem->name = @"";
         
