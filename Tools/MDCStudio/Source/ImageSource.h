@@ -9,8 +9,8 @@ namespace MDCStudio {
 // Concrete implementations: MDCDevice, and 'LocalImageLibrary' (not implemented yet)
 class ImageSource {
 public:
-    virtual ImageLibraryPtr imageLibrary() = 0;
-    virtual ImageCachePtr imageCache() = 0;
+    virtual ImageLibrary& imageLibrary() = 0;
+    virtual ImageCache& imageCache() = 0;
     
     // renderThumbs(): within the given range, asynchronously re-render each thumbnail that has the `thumb.render` flag set
     // ImageLibrary must be locked! 

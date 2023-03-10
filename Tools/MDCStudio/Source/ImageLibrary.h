@@ -49,7 +49,7 @@ struct [[gnu::packed]] ImageRecord {
 static_assert(!(sizeof(ImageRecord) % 8)); // Ensure that ImageRecord is a multiple of 8 bytes
 //static_assert(!(offsetof(ImageRecord, thumb) % (ImageThumb::ThumbWidth*4)); // Ensure that the thumbnail is aligned to a 4-pixel boundary in the Y dimension
 
-class ImageLibrary : public RecordStore<ImageRecord, 128> {
+class ImageLibrary : public RecordStore<ImageRecord, 128>, public std::mutex {
 public:
     using RecordStore::RecordStore;
     

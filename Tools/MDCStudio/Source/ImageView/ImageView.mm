@@ -47,9 +47,9 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     // Add ourself as an observer of the image library
     {
-        auto lock = std::unique_lock(*_imageSource->imageLibrary());
+        auto lock = std::unique_lock(_imageSource->imageLibrary());
         __weak auto selfWeak = self;
-        _imageSource->imageLibrary()->observerAdd([=](const ImageLibrary::Event& ev) {
+        _imageSource->imageLibrary().observerAdd([=](const ImageLibrary::Event& ev) {
             auto selfStrong = selfWeak;
             if (!selfStrong) return false;
             [self _handleImageLibraryEvent:ev];
@@ -108,7 +108,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     // Fetch the image from the cache, if we don't have _image yet
     if (!_image) {
         __weak auto selfWeak = self;
-        _image = _imageSource->imageCache()->image(_imageRecord, [=] (ImagePtr image) {
+        _image = _imageSource->imageCache().image(_imageRecord, [=] (ImagePtr image) {
             dispatch_async(dispatch_get_main_queue(), ^{ [selfWeak _handleImageLoaded:image]; });
         });
     }

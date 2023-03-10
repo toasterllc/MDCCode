@@ -19,7 +19,7 @@
 
 namespace MDCStudio {
 
-class MDCDevice : public std::enable_shared_from_this<MDCDevice>, public ImageSource {
+class MDCDevice : public ImageSource {
 private:
     using _ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
     
@@ -29,7 +29,8 @@ public:
     MDCDevice(MDCUSBDevice&& dev) :
     _dev(std::make_shared<MDCTools::Lockable<MDCUSBDevice>>(std::move(dev))),
     _dir(_DirForSerial(_dev->serial())),
-    _imageLibrary(std::make_shared<MDCTools::Lockable<ImageLibrary>>(_dir / "ImageLibrary")) {
+    _imageLibrary(_dir / "ImageLibrary"),
+    _imageCache(_imageLibrary, _ImageProvider(_dev)) {
     
         auto lock = std::unique_lock(_state.lock);
         
@@ -145,8 +146,8 @@ public:
         
         // Load the library
         {
-            auto lock = std::unique_lock(*_imageLibrary);
-            _imageLibrary->read();
+            auto lock = std::unique_lock(_imageLibrary);
+            _imageLibrary.read();
         }
         
         // Start updating image library
@@ -188,24 +189,9 @@ public:
     
     // MARK: - ImageSource Functions
     
-    ImageLibraryPtr imageLibrary() override { return _imageLibrary; }
+    ImageLibrary& imageLibrary() override { return _imageLibrary; }
     
-    ImageCachePtr imageCache() override {
-        // We're implementing this lazily because shared_from_this()
-        // can't be called from the constructor
-        auto lock = std::unique_lock(_state.lock);
-        if (!_state.imageCache) {
-            std::weak_ptr<MDCDevice> weakThis = shared_from_this();
-            ImageCache::ImageProvider imageProvider = [=] (uint64_t addr) -> ImagePtr {
-                auto strongThis = weakThis.lock();
-                if (!strongThis) return nullptr;
-                return strongThis->_imageProvider(addr);
-            };
-            
-            _state.imageCache = std::make_shared<ImageCache>(_imageLibrary, std::move(imageProvider));
-        }
-        return _state.imageCache;
-    }
+    ImageCache& imageCache() override { return _imageCache; }
     
     void renderThumbs(ImageRecordIter begin, ImageRecordIter end) override {
     }
@@ -323,14 +309,19 @@ private:
 //        return MSP::TimeAbsoluteBase | (t-MSP::TimeAbsoluteUnixReference);
 //    }
     
-    ImagePtr _imageProvider(uint64_t addr) {
+    static ImageCache::ImageProvider _ImageProvider(MDCUSBDevicePtr dev) {
+        return [=] (uint64_t addr) -> ImagePtr {
+            return _ImageForAddr(dev, addr);
+        };
+    }
+    
+    static ImagePtr _ImageForAddr(MDCUSBDevicePtr dev, uint64_t addr) {
         // Lock the device for the duration of this function
-        auto lock = std::unique_lock(*_dev);
-        
+        auto lock = std::unique_lock(*dev);
         auto imageData = std::make_unique<uint8_t[]>(ImgSD::Full::ImagePaddedLen);
-        _dev->reset();
-        _dev->sdRead((SD::Block)addr);
-        _dev->readout(imageData.get(), ImgSD::Full::ImagePaddedLen);
+        dev->reset();
+        dev->sdRead((SD::Block)addr);
+        dev->readout(imageData.get(), ImgSD::Full::ImagePaddedLen);
         
         if (_ChecksumValid(imageData.get(), Img::Size::Full)) {
 //            printf("Checksum valid (size: full)\n");
@@ -381,26 +372,26 @@ private:
             {
                 // Remove images from beginning of library: lib has, device doesn't
                 {
-                    auto lock = std::unique_lock(*_imageLibrary);
+                    auto lock = std::unique_lock(_imageLibrary);
                     
-                    const auto removeBegin = _imageLibrary->begin();
+                    const auto removeBegin = _imageLibrary.begin();
                     
                     // Find the first image >= `deviceImgIdBegin`
-                    const auto removeEnd = std::lower_bound(_imageLibrary->begin(), _imageLibrary->end(), 0,
+                    const auto removeEnd = std::lower_bound(_imageLibrary.begin(), _imageLibrary.end(), 0,
                         [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
                             return sample->info.id < deviceImgIdBegin;
                         });
                     
                     printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
-                    _imageLibrary->remove(removeBegin, removeEnd);
+                    _imageLibrary.remove(removeBegin, removeEnd);
                 }
                 
                 // Add images to end of library: device has, lib doesn't
                 {
                     Img::Id libImgIdEnd = 0;
                     {
-                        auto lock = std::unique_lock(*_imageLibrary);
-                        libImgIdEnd = _imageLibrary->deviceImgIdEnd();
+                        auto lock = std::unique_lock(_imageLibrary);
+                        libImgIdEnd = _imageLibrary.deviceImgIdEnd();
                     }
                     
                     if (libImgIdEnd > deviceImgIdEnd) {
@@ -472,17 +463,17 @@ private:
                 
                 // Periodically write the library
                 if (!(addedImageCount % WriteInterval)) {
-                    auto lock = std::unique_lock(*_imageLibrary);
-                    printf("Writing library (%ju images)\n", (uintmax_t)_imageLibrary->recordCount());
-                    _imageLibrary->write();
+                    auto lock = std::unique_lock(_imageLibrary);
+                    printf("Writing library (%ju images)\n", (uintmax_t)_imageLibrary.recordCount());
+                    _imageLibrary.write();
                 }
             }
             
             // Write the library
             {
-                auto lock = std::unique_lock(*_imageLibrary);
-                printf("Writing library (%ju images)\n", (uintmax_t)_imageLibrary->recordCount());
-                _imageLibrary->write();
+                auto lock = std::unique_lock(_imageLibrary);
+                printf("Writing library (%ju images)\n", (uintmax_t)_imageLibrary.recordCount());
+                _imageLibrary.write();
             }
         });
         
@@ -530,8 +521,8 @@ private:
         
         // Reserve space for `imgCount` additional images
         {
-            auto lock = std::unique_lock(*_imageLibrary);
-            _imageLibrary->reserve(imgCount);
+            auto lock = std::unique_lock(_imageLibrary);
+            _imageLibrary.reserve(imgCount);
         }
         
         #warning TODO: perf: in the future we could ensure that our `data` argument is mmap'd and
@@ -557,7 +548,7 @@ private:
                         const Img::Header& imgHeader = *(const Img::Header*)imgData;
                         
                         // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
-                        const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
+                        const auto recordRefIter = _imageLibrary.reservedBegin()+idx;
                         ImageRecord& rec = **recordRefIter;
                         
                         // Validate thumbnail checksum
@@ -652,7 +643,7 @@ private:
                         const size_t idx = workIdx.fetch_add(1);
                         if (idx >= imgCount) break;
                         
-                        const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
+                        const auto recordRefIter = _imageLibrary.reservedBegin()+idx;
                         id<MTLTexture> thumbTxt = thumbTxts[idx];
                         ImageRecord& rec = **recordRefIter;
                         
@@ -670,12 +661,12 @@ private:
         
         {
             
-            const Img::Id deviceImgIdLast = (*_imageLibrary->reservedBack()).info.id;
-            auto lock = std::unique_lock(*_imageLibrary);
+            const Img::Id deviceImgIdLast = _imageLibrary.reservedBack()->info.id;
+            auto lock = std::unique_lock(_imageLibrary);
             // Add the records that we previously reserved
-            _imageLibrary->add();
+            _imageLibrary.add();
             // Update the device's image id 'end' == last image id that we've observed from the device +1
-            _imageLibrary->deviceImgIdEnd(deviceImgIdLast+1);
+            _imageLibrary.deviceImgIdEnd(deviceImgIdLast+1);
         }
     }
     
@@ -696,7 +687,8 @@ private:
     
     MDCUSBDevicePtr _dev;
     const _Path _dir;
-    ImageLibraryPtr _imageLibrary;
+    ImageLibrary _imageLibrary;
+    ImageCache _imageCache;
     MSP::State _mspState;
     STM::SDCardInfo _sdCardInfo;
     
@@ -705,7 +697,6 @@ private:
         std::string name;
         std::forward_list<Observer> observers;
         std::thread updateImageLibraryThread;
-        ImageCachePtr imageCache;
     } _state;
 };
 

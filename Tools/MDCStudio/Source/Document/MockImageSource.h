@@ -7,16 +7,17 @@
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "ImageSource.h"
 
-class MockImageSource : public MDCStudio::ImageSource {
+namespace MDCStudio {
+
+class MockImageSource : public ImageSource {
 public:
-    using ThumbCompressor = BC7Encoder<MDCStudio::ImageThumb::ThumbWidth, MDCStudio::ImageThumb::ThumbHeight>;
+    using ThumbCompressor = BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight>;
     
-    MockImageSource(const std::filesystem::path& path) : _path(path) {
-        _il = std::make_shared<MDCTools::Lockable<MDCStudio::ImageLibrary>>(_path / "ImageLibrary");
-        _ic = std::make_shared<MDCStudio::ImageCache>(_il, [] (uint64_t addr) { return nullptr; });
-    }
-    
-    MockImageSource(MDCStudio::ImageLibraryPtr il, MDCStudio::ImageCachePtr ic) : _il(il), _ic(ic) {
+    MockImageSource(const std::filesystem::path& path) :
+    _path(path),
+    _imageLibrary(_path),
+    _imageCache(_imageLibrary, _ImageProvider()) {
+        _imageLibrary.read();
         _renderThumbs.thread = std::thread([&] { _threadRenderThumbs(); });
     }
     
@@ -30,20 +31,20 @@ public:
         _renderThumbs.thread.join();
     }
     
-    MDCStudio::ImageLibraryPtr imageLibrary() override {
-        return _il;
+    ImageLibrary& imageLibrary() override {
+        return _imageLibrary;
     }
     
-    MDCStudio::ImageCachePtr imageCache() override {
-        return _ic;
+    ImageCache& imageCache() override {
+        return _imageCache;
     }
     
-    void renderThumbs(MDCStudio::ImageRecordIter begin, MDCStudio::ImageRecordIter end) override {
+    void renderThumbs(ImageRecordIter begin, ImageRecordIter end) override {
         bool enqueued = false;
         {
             auto lock = std::unique_lock(_renderThumbs.lock);
             for (auto it=begin; it!=end; it++) {
-                MDCStudio::ImageRecordPtr ref = *it;
+                ImageRecordPtr ref = *it;
                 if (ref->options.thumb.render) {
                     _renderThumbs.recs.insert(ref);
                     enqueued = true;
@@ -53,11 +54,11 @@ public:
         if (enqueued) _renderThumbs.signal.notify_one();
     }
     
-    static constexpr size_t TmpStorageLen = MDCStudio::ImageThumb::ThumbWidth * MDCStudio::ImageThumb::ThumbWidth * 4;
+    static constexpr size_t TmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
     using TmpStorage = std::array<uint8_t, TmpStorageLen>;
     
     static void ThumbRender(MDCTools::Renderer& renderer, MTKTextureLoader* txtLoader,
-        ThumbCompressor& compressor, TmpStorage& tmpStorage, NSURL* url, MDCStudio::ImageRecord& rec) {
+        ThumbCompressor& compressor, TmpStorage& tmpStorage, NSURL* url, ImageRecord& rec) {
         
         using namespace MDCStudio;
         using namespace MDCTools;
@@ -134,7 +135,11 @@ public:
     }
     
     
-    
+    static ImageCache::ImageProvider _ImageProvider() {
+        return [=] (uint64_t addr) -> ImagePtr {
+            return nullptr;
+        };
+    }
     
     void _threadRenderThumbs() {
         using namespace MDCStudio;
@@ -149,7 +154,7 @@ public:
         auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
         
         for (;;) @autoreleasepool {
-            MDCStudio::ImageRecordPtr rec;
+            ImageRecordPtr rec;
             {
                 auto lock = std::unique_lock(_renderThumbs.lock);
                 // Wait for data, or to be signalled to stop
@@ -170,8 +175,8 @@ public:
             
             // Notify image library that the image changed
             {
-                auto lock = std::unique_lock(*_il);
-                _il->notifyChange({ rec });
+                auto lock = std::unique_lock(_imageLibrary);
+                _imageLibrary.notifyChange({ rec });
             }
         }
     }
@@ -182,14 +187,16 @@ private:
     }
     
     std::filesystem::path _path;
-    MDCStudio::ImageLibraryPtr _il;
-    MDCStudio::ImageCachePtr _ic;
+    ImageLibrary _imageLibrary;
+    ImageCache _imageCache;
     
     struct {
         std::mutex lock; // Protects this struct
         std::condition_variable signal;
         std::thread thread;
-        std::set<MDCStudio::ImageRecordPtr> recs;
+        std::set<ImageRecordPtr> recs;
         bool stop = false;
     } _renderThumbs;
 };
+
+} // namespace MDCStudio

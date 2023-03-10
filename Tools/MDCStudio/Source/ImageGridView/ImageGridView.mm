@@ -52,7 +52,7 @@ using _ChunkTextures = LRU<ImageLibrary::ChunkStrongRef,id<MTLTexture>>;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
     ImageSourcePtr _imageSource;
-    ImageLibraryPtr _imageLibrary;
+    ImageLibrary* _imageLibrary;
     
     struct {
         ImageSet images;
@@ -73,7 +73,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     if (!(self = [super init])) return nil;
     
     _imageSource = imageSource;
-    _imageLibrary = imageSource->imageLibrary();
+    _imageLibrary = &imageSource->imageLibrary();
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
@@ -643,20 +643,20 @@ struct SelectionDelta {
     ImageRecordPtr newImg;
     ImageSet selection = [_imageGridLayer selection];
     {
-        ImageLibraryPtr imgLib = _imageSource->imageLibrary();
-        auto lock = std::unique_lock(*imgLib);
+        ImageLibrary& imgLib = _imageSource->imageLibrary();
+        auto lock = std::unique_lock(imgLib);
         
-        const size_t imgCount = imgLib->recordCount();
+        const size_t imgCount = imgLib.recordCount();
         if (!imgCount) return;
         
         if (!selection.empty()) {
-            const auto it = imgLib->find(*std::prev(selection.end()));
-            if (it == imgLib->end()) {
+            const auto it = imgLib.find(*std::prev(selection.end()));
+            if (it == imgLib.end()) {
                 NSLog(@"Image no longer in library");
                 return;
             }
             
-            const size_t idx = std::distance(imgLib->begin(), it);
+            const size_t idx = std::distance(imgLib.begin(), it);
             const size_t colCount = [_imageGridLayer columnCount];
             const size_t rem = (imgCount % colCount);
             const size_t lastRowCount = (rem ? rem : colCount);
@@ -703,7 +703,7 @@ struct SelectionDelta {
         }
         
     //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
-        newImg = *(imgLib->begin()+newIdx);
+        newImg = *(imgLib.begin()+newIdx);
     }
     
     [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
@@ -736,9 +736,9 @@ struct SelectionDelta {
 - (void)selectAll:(id)sender {
     ImageSet selection;
     {
-        ImageLibraryPtr imgLib = _imageSource->imageLibrary();
-        auto lock = std::unique_lock(*imgLib);
-        for (auto it=imgLib->begin(); it!=imgLib->end(); it++) {
+        ImageLibrary& imgLib = _imageSource->imageLibrary();
+        auto lock = std::unique_lock(imgLib);
+        for (auto it=imgLib.begin(); it!=imgLib.end(); it++) {
             selection.insert(*it);
         }
     }

@@ -205,19 +205,19 @@ using namespace MDCStudio;
 
 - (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
     {
-        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/ImageLibrary"));
-//        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/335E36593137/ImageLibrary"));
-        il->read();
+//        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Desktop/ImageLibrary"));
+////        ImageLibraryPtr il = std::make_shared<MDCTools::Lockable<ImageLibrary>>(std::filesystem::path("/Users/dave/Library/Application Support/com.heytoaster.MDCStudio/Devices/335E36593137/ImageLibrary"));
+//        il->read();
+//        
+//        ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (uint64_t addr) { return nullptr; });
         
-        ImageCachePtr ic = std::make_shared<ImageCache>(il, [] (uint64_t addr) { return nullptr; });
-        
-        auto imageSource = std::make_shared<MockImageSource>(il, ic);
+        auto imageSource = std::make_shared<MockImageSource>("/Users/dave/Desktop/ImageLibrary");
         
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
         [imageGridView setDelegate:self];
         
         [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
-        [self setInspectorView:[[InspectorView alloc] initWithImageLibrary:imageSource->imageLibrary()]];
+        [self setInspectorView:[[InspectorView alloc] initWithImageSource:imageSource]];
         
         [[_splitView window] makeFirstResponder:imageGridView];
         
@@ -400,18 +400,18 @@ using namespace MDCStudio;
     ImageSourcePtr imageSource = [_sourceListView selection];
     if (!imageSource) return false;
     
-    ImageLibraryPtr imageLibrary = imageSource->imageLibrary();
+    ImageLibrary& imageLibrary = imageSource->imageLibrary();
     {
         ImageRecordPtr imageRecord;
         {
-            auto lock = std::unique_lock(*imageLibrary);
-            if (imageLibrary->empty()) return false;
+            auto lock = std::unique_lock(imageLibrary);
+            if (imageLibrary.empty()) return false;
             
-            const auto find = imageLibrary->find(rec);
-            if (find == imageLibrary->end()) return false;
+            const auto find = imageLibrary.find(rec);
+            if (find == imageLibrary.end()) return false;
             
-            const ssize_t deltaMin = std::distance(find, imageLibrary->begin());
-            const ssize_t deltaMax = std::distance(find, std::prev(imageLibrary->end()));
+            const ssize_t deltaMin = std::distance(find, imageLibrary.begin());
+            const ssize_t deltaMax = std::distance(find, std::prev(imageLibrary.end()));
             if (delta<deltaMin || delta>deltaMax) return false;
             
             imageRecord = *(find+delta);

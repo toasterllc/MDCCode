@@ -647,7 +647,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 @end
 
 @implementation InspectorView {
-    ImageLibraryPtr _imgLib;
+    ImageSourcePtr _imageSource;
+    ImageLibrary* _imageLibrary;
     Item_Section* _rootItem;
     ImageSet _selection;
     bool _notifying;
@@ -662,16 +663,19 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 
 // MARK: - Creation
 
-- (instancetype)initWithImageLibrary:(MDCStudio::ImageLibraryPtr)imgLib {
+- (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
+    assert(imageSource);
+    
     if (!(self = [super initWithFrame:{}])) return nil;
     
-    _imgLib = imgLib;
+    _imageSource = imageSource;
+    _imageLibrary = &_imageSource->imageLibrary();
     
     // Add ourself as an observer of the image library
     {
-        auto lock = std::unique_lock(*_imgLib);
+        auto lock = std::unique_lock(*_imageLibrary);
         __weak auto selfWeak = self;
-        _imgLib->observerAdd([=](const ImageLibrary::Event& ev) {
+        _imageLibrary->observerAdd([=] (const ImageLibrary::Event& ev) {
             auto selfStrong = selfWeak;
             if (!selfStrong) return false;
             [self _handleImageLibraryEvent:ev];
@@ -1004,32 +1008,6 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
 using _ModelGetterFn = id(*)(const ImageRecord&);
 using _ModelSetterFn = void(*)(ImageRecord&, id);
 
-//static _ModelData _Getter(InspectorView* self, _ModelGetterFn fn) {
-//    // first: holds the first non-nil value
-//    id first = nil;
-//    // mixed: tracks whether there are at least 2 differing values
-//    bool mixed = false;
-//    
-//    auto lock = std::unique_lock(*self->_imgLib);
-//    for (const Img::Id imgId : self->_selection) {
-//        auto find = self->_imgLib->find(imgId);
-//        if (find == self->_imgLib->end()) continue;
-//        const id obj = fn(*self->_imgLib->recordGet(find));
-//        if (!obj) continue;
-//        if (!first) {
-//            first = obj;
-//        } else {
-//            mixed |= ![first isEqual:obj];
-//        }
-//    }
-//    
-//    if (!mixed) {
-//        return _ModelData{ .data = first };
-//    }
-//    
-//    return _ModelData{ .type = _ModelData::Type::Mixed };
-//}
-
 static _ModelGetter _GetterCreate(InspectorView* self, _ModelGetterFn fn) {
     __weak const auto selfWeak = self;
     return ^_ModelData(InspectorViewItem*) {
@@ -1339,10 +1317,10 @@ static void _Update(Item* it) {
     
     _notifying = true;
     {
-        auto lock = std::unique_lock(*_imgLib);
+        auto lock = std::unique_lock(*_imageLibrary);
         std::set<ImageRecordPtr> records;
         for (const ImageRecordPtr& x : _selection) records.insert(x);
-        _imgLib->notifyChange(std::move(records));
+        _imageLibrary->notifyChange(std::move(records));
     }
     _notifying = false;
 }
