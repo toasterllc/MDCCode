@@ -151,10 +151,20 @@ public:
         
         // Start updating image library
         _updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
+        
+        _renderThumbs.thread = std::thread([&] { _threadRenderThumbs(); });
     }
     
     ~MDCDevice() {
         _updateImageLibraryThread.join();
+        
+        // Wait for _renderThumbs.thread to exit
+        {
+            auto lock = std::unique_lock(_renderThumbs.lock);
+            _renderThumbs.stop = true;
+        }
+        _renderThumbs.signal.notify_one();
+        _renderThumbs.thread.join();
     }
     
     const std::string& name() {
@@ -162,7 +172,7 @@ public:
         return _name;
     }
     
-    void setName(const std::string_view& name) {
+    void name(const std::string_view& name) {
         assert([NSThread isMainThread]);
         _name = name;
         write();
@@ -197,6 +207,18 @@ public:
     ImageCache& imageCache() override { return _imageCache; }
     
     void renderThumbs(ImageRecordIter begin, ImageRecordIter end) override {
+        bool enqueued = false;
+        {
+            auto lock = std::unique_lock(_renderThumbs.lock);
+            for (auto it=begin; it!=end; it++) {
+                ImageRecordPtr ref = *it;
+                if (ref->options.thumb.render) {
+                    _renderThumbs.recs.insert(ref);
+                    enqueued = true;
+                }
+            }
+        }
+        if (enqueued) _renderThumbs.signal.notify_one();
     }
     
 private:
@@ -657,6 +679,42 @@ private:
             _imageLibrary.add();
             // Update the device's image id 'end' == last image id that we've observed from the device +1
             _imageLibrary.deviceImgIdEnd(deviceImgIdLast+1);
+        }
+    }
+    
+    void _threadRenderThumbs() {
+        using namespace MDCStudio;
+        using namespace MDCTools;
+        using namespace MDCTools::ImagePipeline;
+        
+        id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
+        Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
+        _ThumbCompressor compressor;
+        auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
+        
+        for (;;) @autoreleasepool {
+            ImageRecordPtr rec;
+            {
+                auto lock = std::unique_lock(_renderThumbs.lock);
+                // Wait for data, or to be signalled to stop
+                _renderThumbs.signal.wait(lock, [&] { return !_renderThumbs.recs.empty() || _renderThumbs.stop; });
+                if (_renderThumbs.stop) return;
+                const auto it = _renderThumbs.recs.begin();
+                rec = *it;
+                _renderThumbs.recs.erase(it);
+            }
+            
+            // Render thumb to `rec.thumb`
+            {
+                
+                rec->options.thumb.render = false;
+            }
+            
+            // Notify image library that the image changed
+            {
+                auto lock = std::unique_lock(_imageLibrary);
+                _imageLibrary.notifyChange({ rec });
+            }
         }
     }
     

@@ -91,7 +91,7 @@ using namespace MDCStudio;
 }
 
 - (IBAction)textFieldAction:(id)sender {
-    device->setName([[[self textField] stringValue] UTF8String]);
+    device->name([[[self textField] stringValue] UTF8String]);
 }
 
 @end
