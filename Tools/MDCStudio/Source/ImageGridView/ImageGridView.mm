@@ -431,15 +431,47 @@ done:
     return true;
 }
 
+
+
+//// MARK: - ImageLibrary Observer
+//// _handleImageLibraryEvent: called on whatever thread where the modification happened,
+//// and with the ImageLibraryPtr lock held!
+//- (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
+//    // Trampoline the event to our main thread, if we're not on the main thread
+//    if ([NSThread isMainThread]) {
+//        ImageLibrary::Event evCopy = ev;
+//        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
+//            [self _handleImageLibraryEvent:evCopy];
+//        });
+//        return;
+//    }
+//    
+//    if (ev.type == ImageLibrary::Event::Type::Change) {
+//        // Erase textures for any of the changed records
+//        for (const ImageRecordPtr& rec : ev.records) {
+//            auto it = _chunkTxts.get(rec);
+//            if (it == _chunkTxts.end()) continue;
+//            id<MTLTexture> txt = it->val;
+//            _TextureUpdateSlice(txt, rec);
+//        }
+//    }
+//    
+//    dispatch_async(dispatch_get_main_queue(), ^{
+//        [self setNeedsDisplay];
+//    });
+//}
+
+
+
 // MARK: - ImageLibrary Observer
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
 // and with the ImageLibraryPtr lock held!
 - (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
     // Trampoline the event to our main thread, if we're not on the main thread
     if (![NSThread isMainThread]) {
-        ImageLibrary::Event recordsCopy = ev;
+        ImageLibrary::Event evCopy = ev;
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self _handleImageLibraryEvent:recordsCopy];
+            [self _handleImageLibraryEvent:evCopy];
         });
         return;
     }
