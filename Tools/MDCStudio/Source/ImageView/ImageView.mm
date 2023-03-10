@@ -139,6 +139,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         // Process rgb image
         const Pipeline::ProcessOptions processOpts = {
             .illum = debayerResult.illum,
+            .colorMatrix = Pipeline::ColorMatrixForIlluminant(debayerResult.illum),
         };
         Pipeline::Process(renderer, processOpts, rgbTxt, _imageTxt);
     }
