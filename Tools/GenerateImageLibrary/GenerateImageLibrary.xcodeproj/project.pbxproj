@@ -18,6 +18,21 @@
 		5533A2B22791614300EF4614 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5533A2B12791614300EF4614 /* CoreServices.framework */; };
 		55C90C2129B670AC007CC97E /* libbc7enc_rdo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C90C1E29B6709B007CC97E /* libbc7enc_rdo.a */; };
 		55F7552929BA8C4600241672 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F7552729BA8C4600241672 /* MetalPerformanceShaders.framework */; };
+		55F7555629BBB01B00241672 /* ImagePipeline.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F7554829BBB00700241672 /* ImagePipeline.mm */; };
+		55F7555729BBB02100241672 /* LocalContrast.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F7554029BBB00700241672 /* LocalContrast.metal */; };
+		55F7555829BBB02100241672 /* DownsampleDiscardRaw.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F7554229BBB00700241672 /* DownsampleDiscardRaw.metal */; };
+		55F7555929BBB02100241672 /* Saturation.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F7554429BBB00700241672 /* Saturation.metal */; };
+		55F7555A29BBB02100241672 /* FFCC.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F7554529BBB00700241672 /* FFCC.metal */; };
+		55F7555B29BBB02100241672 /* Defringe.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F7554729BBB00700241672 /* Defringe.metal */; };
+		55F7555C29BBB02100241672 /* DebayerLMMSE.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F7554929BBB00700241672 /* DebayerLMMSE.metal */; };
+		55F7555D29BBB02100241672 /* ReconstructHighlights.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F7554C29BBB00700241672 /* ReconstructHighlights.metal */; };
+		55F7555E29BBB02100241672 /* ImagePipeline.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F7554D29BBB00700241672 /* ImagePipeline.metal */; };
+		55F7555F29BBB02100241672 /* DebayerBilinear.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F7555229BBB00700241672 /* DebayerBilinear.metal */; };
+		55F7556029BBB02100241672 /* RenderThumb.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F7555329BBB00700241672 /* RenderThumb.metal */; };
+		55F7556129BBB02F00241672 /* Defringe.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F7553F29BBB00700241672 /* Defringe.mm */; };
+		55F7556229BBB02F00241672 /* EstimateIlluminantFFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F7554E29BBB00700241672 /* EstimateIlluminantFFCC.mm */; };
+		55F7556329BBB02F00241672 /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F7555529BBB00700241672 /* FFCC.mm */; };
+		55F7556529BBB03D00241672 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F7556429BBB03D00241672 /* Accelerate.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,6 +121,33 @@
 		55C90C2629B68261007CC97E /* ImageThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImageThumb.h; path = ../MDCStudio/Source/ImageThumb.h; sourceTree = "<group>"; };
 		55C90C6629B79398007CC97E /* BC7Encoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BC7Encoder.h; path = ../../Tools/Shared/BC7Encoder.h; sourceTree = "<group>"; };
 		55F7552729BA8C4600241672 /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
+		55F7553729BBA8F900241672 /* MockImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MockImageSource.h; path = ../MDCStudio/Source/Document/MockImageSource.h; sourceTree = "<group>"; };
+		55F7553A29BBA93900241672 /* ImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImageSource.h; path = ../MDCStudio/Source/ImageSource.h; sourceTree = "<group>"; };
+		55F7553E29BBB00700241672 /* ImagePipeline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipeline.h; sourceTree = "<group>"; };
+		55F7553F29BBB00700241672 /* Defringe.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Defringe.mm; sourceTree = "<group>"; };
+		55F7554029BBB00700241672 /* LocalContrast.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = LocalContrast.metal; sourceTree = "<group>"; };
+		55F7554129BBB00700241672 /* EstimateIlluminantFFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EstimateIlluminantFFCC.h; sourceTree = "<group>"; };
+		55F7554229BBB00700241672 /* DownsampleDiscardRaw.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DownsampleDiscardRaw.metal; sourceTree = "<group>"; };
+		55F7554329BBB00700241672 /* LocalContrast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LocalContrast.h; sourceTree = "<group>"; };
+		55F7554429BBB00700241672 /* Saturation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Saturation.metal; sourceTree = "<group>"; };
+		55F7554529BBB00700241672 /* FFCC.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = FFCC.metal; sourceTree = "<group>"; };
+		55F7554629BBB00700241672 /* FFCC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FFCC.h; sourceTree = "<group>"; };
+		55F7554729BBB00700241672 /* Defringe.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Defringe.metal; sourceTree = "<group>"; };
+		55F7554829BBB00700241672 /* ImagePipeline.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ImagePipeline.mm; sourceTree = "<group>"; };
+		55F7554929BBB00700241672 /* DebayerLMMSE.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DebayerLMMSE.metal; sourceTree = "<group>"; };
+		55F7554A29BBB00700241672 /* ImagePipelineTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImagePipelineTypes.h; sourceTree = "<group>"; };
+		55F7554B29BBB00700241672 /* DebayerLMMSE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DebayerLMMSE.h; sourceTree = "<group>"; };
+		55F7554C29BBB00700241672 /* ReconstructHighlights.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ReconstructHighlights.metal; sourceTree = "<group>"; };
+		55F7554D29BBB00700241672 /* ImagePipeline.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ImagePipeline.metal; sourceTree = "<group>"; };
+		55F7554E29BBB00700241672 /* EstimateIlluminantFFCC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EstimateIlluminantFFCC.mm; sourceTree = "<group>"; };
+		55F7554F29BBB00700241672 /* RenderThumb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderThumb.h; sourceTree = "<group>"; };
+		55F7555029BBB00700241672 /* Defringe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defringe.h; sourceTree = "<group>"; };
+		55F7555129BBB00700241672 /* ReconstructHighlights.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReconstructHighlights.h; sourceTree = "<group>"; };
+		55F7555229BBB00700241672 /* DebayerBilinear.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = DebayerBilinear.metal; sourceTree = "<group>"; };
+		55F7555329BBB00700241672 /* RenderThumb.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = RenderThumb.metal; sourceTree = "<group>"; };
+		55F7555429BBB00700241672 /* Saturation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Saturation.h; sourceTree = "<group>"; };
+		55F7555529BBB00700241672 /* FFCC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = FFCC.mm; sourceTree = "<group>"; };
+		55F7556429BBB03D00241672 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -121,6 +163,7 @@
 				5533A2B02791613500EF4614 /* ImageIO.framework in Frameworks */,
 				5533A2B22791614300EF4614 /* CoreServices.framework in Frameworks */,
 				55F7552929BA8C4600241672 /* MetalPerformanceShaders.framework in Frameworks */,
+				55F7556529BBB03D00241672 /* Accelerate.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -163,6 +206,8 @@
 				5513289027B378BF00CD823B /* MetalUtil.h */,
 				5513289227B378BF00CD823B /* Renderer.h */,
 				5513289127B378BF00CD823B /* Renderer.metal */,
+				55F7553729BBA8F900241672 /* MockImageSource.h */,
+				55F7553A29BBA93900241672 /* ImageSource.h */,
 				551B22462791391400D62121 /* main.mm */,
 				551B22442791391400D62121 /* Products */,
 				551B224D279139DE00D62121 /* Frameworks */,
@@ -180,6 +225,7 @@
 		551B224D279139DE00D62121 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				55F7556429BBB03D00241672 /* Accelerate.framework */,
 				55F7552729BA8C4600241672 /* MetalPerformanceShaders.framework */,
 				5533A2B12791614300EF4614 /* CoreServices.framework */,
 				5533A2AF2791613500EF4614 /* ImageIO.framework */,
@@ -229,6 +275,7 @@
 		55A36B0327A36AEB00FD0181 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				55F7553D29BBB00700241672 /* ImagePipeline */,
 				55A36B0427A36AEB00FD0181 /* MDCUSBDevice.h */,
 				55A36B0527A36AEB00FD0181 /* Mat.h */,
 				55A36B0627A36AEB00FD0181 /* PixelSampler.h */,
@@ -253,6 +300,37 @@
 				55C90C1E29B6709B007CC97E /* libbc7enc_rdo.a */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		55F7553D29BBB00700241672 /* ImagePipeline */ = {
+			isa = PBXGroup;
+			children = (
+				55F7555229BBB00700241672 /* DebayerBilinear.metal */,
+				55F7554B29BBB00700241672 /* DebayerLMMSE.h */,
+				55F7554929BBB00700241672 /* DebayerLMMSE.metal */,
+				55F7555029BBB00700241672 /* Defringe.h */,
+				55F7554729BBB00700241672 /* Defringe.metal */,
+				55F7553F29BBB00700241672 /* Defringe.mm */,
+				55F7554229BBB00700241672 /* DownsampleDiscardRaw.metal */,
+				55F7554129BBB00700241672 /* EstimateIlluminantFFCC.h */,
+				55F7554E29BBB00700241672 /* EstimateIlluminantFFCC.mm */,
+				55F7554629BBB00700241672 /* FFCC.h */,
+				55F7554529BBB00700241672 /* FFCC.metal */,
+				55F7555529BBB00700241672 /* FFCC.mm */,
+				55F7553E29BBB00700241672 /* ImagePipeline.h */,
+				55F7554D29BBB00700241672 /* ImagePipeline.metal */,
+				55F7554829BBB00700241672 /* ImagePipeline.mm */,
+				55F7554A29BBB00700241672 /* ImagePipelineTypes.h */,
+				55F7554329BBB00700241672 /* LocalContrast.h */,
+				55F7554029BBB00700241672 /* LocalContrast.metal */,
+				55F7555129BBB00700241672 /* ReconstructHighlights.h */,
+				55F7554C29BBB00700241672 /* ReconstructHighlights.metal */,
+				55F7554F29BBB00700241672 /* RenderThumb.h */,
+				55F7555329BBB00700241672 /* RenderThumb.metal */,
+				55F7555429BBB00700241672 /* Saturation.h */,
+				55F7554429BBB00700241672 /* Saturation.metal */,
+			);
+			path = ImagePipeline;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -328,9 +406,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55F7555D29BBB02100241672 /* ReconstructHighlights.metal in Sources */,
 				5533A2952791426600EF4614 /* RenderThumb.metal in Sources */,
+				55F7555629BBB01B00241672 /* ImagePipeline.mm in Sources */,
+				55F7555729BBB02100241672 /* LocalContrast.metal in Sources */,
+				55F7555829BBB02100241672 /* DownsampleDiscardRaw.metal in Sources */,
+				55F7555F29BBB02100241672 /* DebayerBilinear.metal in Sources */,
+				55F7556029BBB02100241672 /* RenderThumb.metal in Sources */,
+				55F7555B29BBB02100241672 /* Defringe.metal in Sources */,
+				55F7555C29BBB02100241672 /* DebayerLMMSE.metal in Sources */,
+				55F7556329BBB02F00241672 /* FFCC.mm in Sources */,
+				55F7555929BBB02100241672 /* Saturation.metal in Sources */,
+				55F7555A29BBB02100241672 /* FFCC.metal in Sources */,
+				55F7555E29BBB02100241672 /* ImagePipeline.metal in Sources */,
+				55F7556229BBB02F00241672 /* EstimateIlluminantFFCC.mm in Sources */,
 				551B22472791391400D62121 /* main.mm in Sources */,
 				5513289327B378BF00CD823B /* Renderer.metal in Sources */,
+				55F7556129BBB02F00241672 /* Defringe.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

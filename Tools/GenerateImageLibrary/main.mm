@@ -7,6 +7,7 @@
 #import "Toastbox/Mmap.h"
 #import "ImageLibrary.h"
 #import "Tools/Shared/BC7Encoder.h"
+#import "MockImageSource.h"
 namespace fs = std::filesystem;
 using namespace MDCStudio;
 using namespace MDCTools;
@@ -68,10 +69,10 @@ int main(int argc, const char* argv[]) {
 //    DebugShowThumb(40000-1);
 //    return 0;
     
-    NSMutableArray* urls = [NSMutableArray new];
+    std::vector<fs::path> paths;
     for (const fs::path& p : fs::directory_iterator(ImagesDirPath)) {
         if (_IsJPGFile(p)) {
-            [urls addObject:[NSURL fileURLWithPath:@(p.c_str())]];
+            paths.push_back(p);
         }
     }
     
@@ -82,135 +83,40 @@ int main(int argc, const char* argv[]) {
         printf("Recreating ImageLibrary, cause: %s\n", e.what());
     }
     
-    Img::Id imageId = 0;
+    imgLib.reserve(paths.size());
+    imgLib.add();
+    
     auto startTime = std::chrono::steady_clock::now();
     {
-        constexpr size_t MaxBatchLen = 512;
-        BC7Encoder<ImageThumb::ThumbWidth, ImageThumb::ThumbHeight> bc7;
-        uint8_t tmp[ImageThumb::ThumbHeight][ImageThumb::ThumbWidth][4];
-        
-        for (size_t i=0; i<[urls count]; i+=MaxBatchLen) @autoreleasepool {
-            id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
-            MTKTextureLoader* txtLoader = [[MTKTextureLoader alloc] initWithDevice:dev];
-            id<MTLLibrary> lib = [dev newDefaultLibrary];
-            Renderer renderer(dev, lib, [dev newCommandQueue]);
-            
-            const size_t batchLenCapped = std::min((size_t)([urls count]-i), MaxBatchLen);
-            NSArray* batchURLs = [urls subarrayWithRange:{i, batchLenCapped}];
-            printf("Loading %ju textures...\n", (uintmax_t)batchLenCapped);
-            NSDictionary* opts = @{
-                // Assume all images are sRGB. In some cases there may be a different profile attached,
-                // but that should be the minority of cases compared to the cases where there's no profile
-                MTKTextureLoaderOptionSRGB: @YES,
-            };
-            NSArray<id<MTLTexture>>* txtsSrc = [txtLoader newTexturesWithContentsOfURLs:batchURLs options:opts error:nil];
-            const size_t txtCount = [txtsSrc count];
-            
-            constexpr MTLTextureUsage TxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
-            std::vector<Renderer::Txt> txtsDst;
-            txtsDst.reserve(txtCount);
-            for (size_t i=0; i<txtCount; i++) {
-                txtsDst.emplace_back(renderer.textureCreate(MTLPixelFormatRGBA8Unorm, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, TxtUsage));
-            }
-            
-//            NSMutableArray* txts = [NSMutableArray new];
-//            for (int i=0; i<MaxBatchLen; i++) {
-//                [txts addObject:@0];
-//            }
-            
-            const size_t beginOff = imgLib.recordCount();
-            imgLib.reserve(txtCount);
-            imgLib.add();
-            
-            auto batchStartTime = std::chrono::steady_clock::now();
-            
-            // Generate thumbnails in the necessary format (RGBA)
-            {
-//                printf("Generating RGBA thumbnails...\n", (uintmax_t)txtCount);
+        std::vector<std::thread> workers;
+        std::atomic<size_t> workIdx = 0;
+        const uint32_t threadCount = std::max(1,(int)std::thread::hardware_concurrency());
+        for (uint32_t i=0; i<threadCount; i++) {
+            workers.emplace_back([&](){
+                id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
+                MTKTextureLoader* txtLoader = [[MTKTextureLoader alloc] initWithDevice:dev];
+                Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
+                MockImageSource::ThumbCompressor compressor;
+                std::unique_ptr<MockImageSource::TmpStorage> tmpStorage = std::make_unique<MockImageSource::TmpStorage>();
                 
-//                auto startTime = std::chrono::steady_clock::now();
-                for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
-                    id<MTLTexture> txtSrc = txtsSrc[txtIdx];
-                    Renderer::Txt& txtDst = txtsDst.at(txtIdx);
+                for (;;) @autoreleasepool {
+                    const size_t idx = workIdx.fetch_add(1);
+                    if (idx >= paths.size()) break;
+                    ImageRecord& rec = **(imgLib.begin()+idx);
+                    const fs::path& path = paths.at(idx);
+                    NSURL*const url = [NSURL fileURLWithPath:@(path.c_str())];
                     
-                    // Calculate transform to fit source image in thumbnail aspect ratio
-                    MPSScaleTransform transform;
-                    {
-                        const float srcAspect = (float)[txtSrc width] / [txtSrc height];
-                        const float dstAspect = (float)ImageThumb::ThumbWidth / ImageThumb::ThumbHeight;
-                        const float scale = (srcAspect<dstAspect ? ((float)ImageThumb::ThumbWidth / [txtSrc width]) : ((float)ImageThumb::ThumbHeight / [txtSrc height]));
-                        transform = {
-                            .scaleX = scale,
-                            .scaleY = scale,
-                            .translateX = 0,
-                            .translateY = 0,
-                        };
-                    }
-                    
-                    // Scale image
-                    {
-                        MPSImageLanczosScale* filter = [[MPSImageLanczosScale alloc] initWithDevice:renderer.dev];
-                        [filter setScaleTransform:&transform];
-                        if ([txtSrc pixelFormat] == MTLPixelFormatR8Unorm) {
-                            NSLog(@"Failed: %@\n", batchURLs[txtIdx]);
-                            continue;
-                        }
-                        [filter encodeToCommandBuffer:renderer.cmdBuf() sourceTexture:txtSrc destinationTexture:txtDst];
-                    }
-                    
-                    #warning TODO: figure out if we need this
-                    renderer.sync(txtDst);
-                }
-                
-                renderer.commitAndWait();
-                
-//                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-//                printf("-> took %ju ms\n", (uintmax_t)durationMs);
-            }
-            
-            // Encode thumbnails with BC7
-            {
-                auto imgRecIt = imgLib.begin()+beginOff;
-                for (size_t txtIdx=0; txtIdx<txtCount; txtIdx++) @autoreleasepool {
-                    ImageRecord& rec = **imgRecIt;
-                    NSURL* url = batchURLs[txtIdx];
-                    NSString* filename = [[url URLByDeletingPathExtension] lastPathComponent];
+                    MockImageSource::ThumbRender(renderer, txtLoader, compressor, *tmpStorage, url, rec);
                     
                     // Set ImageRecord.id
-                    rec.info.id = imageId;
-                    
-                    // Load RGBA data into `tmp`
-                    Renderer::Txt& txtDst = txtsDst.at(txtIdx);
-                    [txtDst getBytes:tmp bytesPerRow:ImageThumb::ThumbWidth*4
-                        fromRegion:MTLRegionMake2D(0, 0, ImageThumb::ThumbWidth, ImageThumb::ThumbHeight) mipmapLevel:0];
-                    
-                    // Set ImageRecord.id
-                    rec.info.id = imageId;
-                    rec.info.addr = IntForStr<uint64_t>([filename UTF8String], 10);
-                    
-                    // Compress thumbnail data as BC7
-                    bc7.encode(tmp, rec.thumb.data);
-                    
-                    imageId++;
-                    imgRecIt++;
-                    
-//                    {
-//                        NSString*const path = [NSString stringWithFormat:@"/Users/dave/Desktop/dds/debug-%zu.dds", txtIdx];
-//                        static constexpr size_t pixel_format_bpp = 8;
-//                        static constexpr DXGI_FORMAT fmt = DXGI_FORMAT_BC7_UNORM;
-//                        static constexpr bool perceptual = true;
-//                        bool br = utils::save_dds([path UTF8String], ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, rec.thumb.data,
-//                            pixel_format_bpp, fmt, perceptual, false);
-//                        assert(br);
-//                    }
+                    rec.info.id = idx;
+                    rec.info.addr = IntForStr<uint64_t>(path.stem().c_str(), 10);
                 }
-            }
-            
-            auto batchDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-batchStartTime).count();
-            printf("-> Batch took %ju ms\n", (uintmax_t)batchDurationMs);
-            
-//            break;
+            });
         }
+        
+        // Wait for workers to complete
+        for (std::thread& t : workers) t.join();
     }
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
     printf("Took %ju ms\n", (uintmax_t)durationMs);

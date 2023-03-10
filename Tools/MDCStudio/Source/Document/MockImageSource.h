@@ -4,12 +4,13 @@
 #import <MetalKit/MetalKit.h>
 #import "Tools/Shared/Renderer.h"
 #import "Tools/Shared/BC7Encoder.h"
+#import "Tools/Shared/ImagePipeline/ImagePipeline.h"
+#import "ImageSource.h"
 
 class MockImageSource : public MDCStudio::ImageSource {
-private:
-    using _ThumbCompressor = BC7Encoder<MDCStudio::ImageThumb::ThumbWidth, MDCStudio::ImageThumb::ThumbHeight>;
-    
 public:
+    using ThumbCompressor = BC7Encoder<MDCStudio::ImageThumb::ThumbWidth, MDCStudio::ImageThumb::ThumbHeight>;
+    
     MockImageSource(const std::filesystem::path& path) : _path(path) {
         _il = std::make_shared<MDCTools::Lockable<MDCStudio::ImageLibrary>>(_path / "ImageLibrary");
         _ic = std::make_shared<MDCStudio::ImageCache>(_il, [] (uint64_t addr) { return nullptr; });
@@ -52,11 +53,11 @@ public:
         if (enqueued) _renderThumbs.signal.notify_one();
     }
     
-    static constexpr size_t _TmpStorageLen = MDCStudio::ImageThumb::ThumbWidth * MDCStudio::ImageThumb::ThumbWidth * 4;
-    using _TmpStorage = std::array<uint8_t, _TmpStorageLen>;
+    static constexpr size_t TmpStorageLen = MDCStudio::ImageThumb::ThumbWidth * MDCStudio::ImageThumb::ThumbWidth * 4;
+    using TmpStorage = std::array<uint8_t, TmpStorageLen>;
     
-    static void _ThumbRender(MDCTools::Renderer& renderer, MTKTextureLoader* txtLoader,
-        _ThumbCompressor& compressor, _TmpStorage& tmpStorage, NSURL* url, MDCStudio::ImageRecord& rec) {
+    static void ThumbRender(MDCTools::Renderer& renderer, MTKTextureLoader* txtLoader,
+        ThumbCompressor& compressor, TmpStorage& tmpStorage, NSURL* url, MDCStudio::ImageRecord& rec) {
         
         using namespace MDCStudio;
         using namespace MDCTools;
@@ -143,8 +144,8 @@ public:
         id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
         MTKTextureLoader* txtLoader = [[MTKTextureLoader alloc] initWithDevice:dev];
         Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
-        _ThumbCompressor compressor;
-        std::unique_ptr<_TmpStorage> tmpStorage = std::make_unique<_TmpStorage>();
+        ThumbCompressor compressor;
+        std::unique_ptr<TmpStorage> tmpStorage = std::make_unique<TmpStorage>();
         auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
         
         for (;;) @autoreleasepool {
@@ -163,7 +164,7 @@ public:
             {
                 const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
                 NSURL* url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->info.addr]];
-                _ThumbRender(renderer, txtLoader, compressor, *tmpStorage, url, *rec);
+                ThumbRender(renderer, txtLoader, compressor, *tmpStorage, url, *rec);
                 rec->options.thumb.render = false;
             }
             
