@@ -35,6 +35,8 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
 @end
 
+using _ChunkTextures = LRU<ImageLibrary::ChunkStrongRef,id<MTLTexture>>;
+
 @implementation ImageGridLayer {
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
@@ -44,7 +46,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
     id<MTLTexture> _shadowTexture;
     id<MTLTexture> _selectionTexture;
     
-    LRU<ImageLibrary::ChunkStrongRef,id<MTLTexture>> _chunkTxts;
+    _ChunkTextures _chunkTxts;
     
     Grid _grid;
     uint32_t _cellWidth;
@@ -217,6 +219,12 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
 //    return true;
 //}
 
+static void _TextureUpdateSlice(id<MTLTexture> txt, const ImageLibrary::RecordRef& ref) {
+    const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
+    [txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
+        slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
+}
+
 #warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
 // _textureForChunk: returns a texture containing all thumbnails for a given chunk
 // ImageLibrary must be locked!
@@ -247,10 +255,7 @@ static uintptr_t _CeilToPageSize(uintptr_t x) {
     assert(txt);
     
     for (auto it=chunkBegin; it!=chunkEnd; it++) {
-        const auto& imageRef = *it;
-        const uint8_t* b = chunk->mmap.data() + imageRef.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
-        [txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
-            slice:imageRef.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
+        _TextureUpdateSlice(txt, *it);
     }
     
     _chunkTxts.insert(chunk, txt);
@@ -444,7 +449,8 @@ done:
         for (const ImageRecordPtr& rec : ev.records) {
             auto it = _chunkTxts.get(rec);
             if (it == _chunkTxts.end()) continue;
-            _chunkTxts.erase(it);
+            id<MTLTexture> txt = it->val;
+            _TextureUpdateSlice(txt, rec);
         }
     }
     
