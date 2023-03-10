@@ -85,7 +85,7 @@ public:
     static constexpr size_t _TmpStorageLen = MDCStudio::ImageThumb::ThumbWidth * MDCStudio::ImageThumb::ThumbWidth * 4;
     using _TmpStorage = std::array<uint8_t, _TmpStorageLen>;
     
-    static void _ThumbRender2(MDCTools::Renderer& renderer, MTKTextureLoader* txtLoader,
+    static void _ThumbRender(MDCTools::Renderer& renderer, MTKTextureLoader* txtLoader,
         _ThumbCompressor& compressor, _TmpStorage& tmpStorage, NSURL* url, MDCStudio::ImageRecord& rec) {
         
         using namespace MDCStudio;
@@ -167,165 +167,19 @@ public:
                 _renderThumbs.recs.erase(it);
             }
             
-//            // Re-render thumbnail
-//            
-//            const Pipeline::Options pipelineOpts = {
-////                    .illum = illum,
-////                    .colorMatrix = colorMatrix,
-////                    .reconstructHighlights  = { .en = true, },
-//                .debayerLMMSE           = { .applyGamma = true, },
-//            };
-//            
-//            constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
-//            Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
-//                ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
-//            
-//            Pipeline::Result renderResult = Pipeline::Run(renderer, pipelineOpts, rawImage, thumbTxt);
-//            renderer.sync(thumbTxt);
-//            
-//            
-//            _ThumbCompressor compressor;
-//            auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
-//            
-//            for (;;) {
-//                const size_t idx = workIdx.fetch_add(1);
-//                if (idx >= imgCount) break;
-//                
-//                const auto recordRefIter = _imageLibrary->reservedBegin()+idx;
-//                id<MTLTexture> thumbTxt = thumbTxts[idx];
-//                ImageRecord& rec = **recordRefIter;
-//                
-//                [thumbTxt getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
-//                    fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
-//                
-//                compressor.encode(thumbData.get(), rec.thumb.data);
-//            }
-            
-            
-            
-            
-            
-//            // Render the thumbnail into rec.thumb
-//            {
-//                Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
-//                    Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (ImagePixel*)(imgData+Img::PixelsOffset));
-//                
-//                Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
-//                
-//                const Pipeline::DebayerOptions debayerOpts = {
-//                    .cfaDesc        = _CFADesc,
-//                    .debayerLMMSE   = { .applyGamma = true, },
-//                };
-//                
-//                const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
-//                
-//                constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
-//                Renderer::Txt& thumbTxt = txts.emplace_back(renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
-//                    ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage));
-//                thumbTxts[idx] = thumbTxt;
-//                
-//                const Pipeline::ProcessOptions processOpts = {
-//                    .illum = debayerResult.illum,
-//                };
-//                
-//                Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
-//                renderer.sync(thumbTxt);
-//                
-//                // Populate the illuminant (ImageRecord.info.illumEst)
-//                rec.info.illumEst[0] = debayerResult.illum[0];
-//                rec.info.illumEst[1] = debayerResult.illum[1];
-//                rec.info.illumEst[2] = debayerResult.illum[2];
-//            }
-//            
-//            
-//            
-//            
-//            
-//            
-//            
-//            - (nullable id <MTLTexture>)newTextureWithContentsOfURL:(nonnull NSURL *)URL
-//            options:(nullable NSDictionary <MTKTextureLoaderOption, id> *)options
-//            error:(NSError *__nullable *__nullable)error;
-            
-            const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-//                    const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
-            NSURL* url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->info.addr]];
-            
-            _ThumbRender2(renderer, txtLoader, compressor, *tmpStorage, url, *rec);
-            
-//            const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-//            ImagesDirPath / / ".jpg"
-            
-//            // Load thumbnail, store in txtRgba32
-//            Renderer::Txt txtRgba32;
-//            {
-//                // Load thumbnail from disk
-//                id<MTLTexture> txtOrig = nil;
-//                {
-//                    const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-////                    const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-40k";
-//                    NSString*const path = [NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->info.addr];
-//                    NSDictionary*const loadOpts = @{
-//                        MTKTextureLoaderOptionSRGB: @YES,
-//                    };
-//                    txtOrig = [txtLoader newTextureWithContentsOfURL:[NSURL fileURLWithPath:path] options:loadOpts error:nil];
-//                }
-//                
-//                txtRgba32 = _ThumbRender(renderer, txtOrig, MTLPixelFormatRGBA32Float);
-//            }
-//            
-//            // Process image, store in txtRgba8
-//            const Renderer::Txt txtRgba8 = renderer.textureCreate(txtRgba32, MTLPixelFormatRGBA8Unorm);
-//            {
-//                const ImageOptions& imageOpts = rec->options;
-//                // colorMatrix: converts colorspace from LSRGB.D65 -> ProPhotoRGB.D50, which the pipeline expects
-//                const Pipeline::ColorMatrix colorMatrix = {
-//                   0.5293458, 0.3300728, 0.1405813,
-//                   0.0983744, 0.8734610, 0.0281647,
-//                   0.0168832, 0.1176725, 0.8654443,
-//                };
-//                const Pipeline::ProcessOptions processOpts = {
-//                    .colorMatrix = colorMatrix,
-//                    .exposure = imageOpts.exposure,
-//                    .saturation = imageOpts.saturation,
-//                    .brightness = imageOpts.brightness,
-//                    .contrast = imageOpts.contrast,
-//                    .localContrast = {
-//                        .en = (imageOpts.localContrast.amount!=0 && imageOpts.localContrast.radius!=0),
-//                        .amount = imageOpts.localContrast.amount,
-//                        .radius = imageOpts.localContrast.radius,
-//                    },
-//                };
-//                
-//                Pipeline::Process(renderer, processOpts, txtRgba32, txtRgba8);
-//                renderer.sync(txtRgba8);
-//            }
-//            
-//            // Compress thumbnail, store in rec->thumb.data
-//            {
-//                renderer.commitAndWait();
-//                
-//                [txtRgba8 getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
-//                    fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
-//                
-//                compressor.encode(thumbData.get(), rec->thumb.data);
-//                
-//                rec->options.thumb.render = false;
-//                printf("Rendered %ju\n", (uintmax_t)rec->info.id);
-//            }
+            // Render thumb to `rec.thumb`
+            {
+                const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
+                NSURL* url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->info.addr]];
+                _ThumbRender(renderer, txtLoader, compressor, *tmpStorage, url, *rec);
+                rec->options.thumb.render = false;
+            }
             
             // Notify image library that the image changed
             {
                 auto lock = std::unique_lock(*_il);
                 _il->notifyChange({ rec });
             }
-            
-//                    auto lock = std::unique_lock(*_imgLib);
-//                    std::set<ImageRecordPtr> records;
-//                    for (const ImageRecordPtr& x : _selection) records.insert(x);
-//                    _imgLib->notifyChange(std::move(records));
-            
-            
         }
     }
 
