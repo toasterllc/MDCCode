@@ -33,19 +33,17 @@ public:
     _imageLibrary(_dir / "ImageLibrary"),
     _imageCache(_imageLibrary, _ImageProvider(_dev)) {
     
-        auto lock = std::unique_lock(_state.lock);
-        
         printf("MDCDevice()\n");
         
         // Give device a default name
         char name[256];
         snprintf(name, sizeof(name), "MDC Device %s", _dev.serial().c_str());
-        _state.name = std::string(name);
+        _name = std::string(name);
         
         // Read state from disk
         try {
             _SerializedState state = _SerializedStateRead(_dir);
-            _state.name = std::string(state.name);
+            _name = std::string(state.name);
         } catch (const std::exception& e) {}
         
         // Perform device IO
@@ -152,40 +150,44 @@ public:
         }
         
         // Start updating image library
-        _state.updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
-        _state.updateImageLibraryThread.detach();
+        _updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
     }
     
     ~MDCDevice() {
-        auto lock = std::unique_lock(_state.lock);
-        #warning TODO: this will deadlock if the thread tries to acquire the lock...
-        if (_state.updateImageLibraryThread.joinable()) {
-            _state.updateImageLibraryThread.join();
-        }
+        _updateImageLibraryThread.join();
     }
     
     const std::string& name() {
-        auto lock = std::unique_lock(_state.lock);
-        return _state.name;
+        assert([NSThread isMainThread]);
+        return _name;
     }
     
     void setName(const std::string_view& name) {
-        auto lock = std::unique_lock(_state.lock);
-        _state.name = name;
-        _write();
+        assert([NSThread isMainThread]);
+        _name = name;
+        write();
         _notifyObservers();
     }
     
     Device& device() { return _dev; }
     
     void observerAdd(Observer&& observer) {
-        auto lock = std::unique_lock(_state.lock);
-        _state.observers.push_front(std::move(observer));
+        assert([NSThread isMainThread]);
+        _observers.push_front(std::move(observer));
     }
     
     void write() {
-        auto lock = std::unique_lock(_state.lock);
-        _write();
+        assert([NSThread isMainThread]);
+        
+        _SerializedState state;
+        state.version = _Version;
+        // Copy UTF8 device name into state.name
+        // state.name is initialized with zeroes, so we don't need to explicitly set a
+        // null byte, but we do need to limit the number of copied bytes to
+        // `sizeof(state.name)-1` to ensure that the null byte isn't overwritten
+        _name.copy(state.name, sizeof(state.name)-1);
+        
+        _SerializedStateWrite(_dir, state);
     }
     
     // MARK: - ImageSource Functions
@@ -349,19 +351,6 @@ private:
             .off        = sizeof(header),
         });
         return image;
-    }
-    
-    // _state.lock must be held
-    void _write() {
-        _SerializedState state;
-        state.version = _Version;
-        // Copy UTF8 device name into state.name
-        // state.name is initialized with zeroes, so we don't need to explicitly set a
-        // null byte, but we do need to limit the number of copied bytes to
-        // `sizeof(state.name)-1` to ensure that the null byte isn't overwritten
-        _state.name.copy(state.name, sizeof(state.name)-1);
-        
-        _SerializedStateWrite(_dir, state);
     }
     
     void _threadUpdateImageLibrary() {
@@ -671,14 +660,13 @@ private:
         }
     }
     
-    // _state.lock must be held
     void _notifyObservers() {
-        auto prev = _state.observers.before_begin();
-        for (auto it=_state.observers.begin(); it!=_state.observers.end();) {
+        auto prev = _observers.before_begin();
+        for (auto it=_observers.begin(); it!=_observers.end();) {
             // Notify the observer; it returns whether it's still valid
             // If it's not valid (it returned false), remove it from the list
             if (!(*it)()) {
-                it = _state.observers.erase_after(prev);
+                it = _observers.erase_after(prev);
             } else {
                 prev = it;
                 it++;
@@ -693,12 +681,17 @@ private:
     MSP::State _mspState;
     STM::SDCardInfo _sdCardInfo;
     
+    std::string _name;
+    std::forward_list<Observer> _observers;
+    std::thread _updateImageLibraryThread;
+    
     struct {
         std::mutex lock; // Protects this struct
-        std::string name;
-        std::forward_list<Observer> observers;
-        std::thread updateImageLibraryThread;
-    } _state;
+        std::condition_variable signal;
+        std::thread thread;
+        std::set<ImageRecordPtr> recs;
+        bool stop = false;
+    } _renderThumbs;
 };
 
 using MDCDevicePtr = std::shared_ptr<MDCDevice>;
