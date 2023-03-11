@@ -721,25 +721,23 @@ private:
         auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
         
         for (;;) @autoreleasepool {
-            ImageRecordPtr rec;
+            std::set<ImageRecordPtr> work;
             {
                 auto lock = std::unique_lock(_renderThumbs.lock);
-                // Wait for data, or to be signalled to stop
+                // Wait for work, or to be signalled to stop
                 _renderThumbs.signal.wait(lock, [&] { return !_renderThumbs.work.empty() || _renderThumbs.stop; });
                 if (_renderThumbs.stop) return;
-                const auto it = _renderThumbs.work.begin();
-                rec = *it;
-                _renderThumbs.work.erase(it);
+                work = std::move(_renderThumbs.work);
             }
             
-            // Render thumb to `rec.thumb`
+            // Render thumbnails
             {
             }
             
-            // Notify image library that the image changed
+            // Notify image library that the images changed
             {
                 auto lock = std::unique_lock(_imageLibrary);
-                _imageLibrary.notifyChange({ rec });
+                _imageLibrary.notifyChange(work);
             }
         }
     }
