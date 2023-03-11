@@ -232,34 +232,6 @@ public:
         if (enqueued) _renderThumbs.signal.notify_one();
     }
     
-    // MARK: - SDRead Functions
-    
-    enum class SDReadPriority : uint8_t { High, Low, Count };
-    
-    void SDRead(SDReadPriority priority, SD::Block block, size_t len, void* dst) {
-        const _SDReadWork work = {
-            .block = block,
-            .len = len,
-            .dst = dst,
-        };
-        
-        // Enqueue the work
-        {
-            auto lock = std::unique_lock(_sdReadProduce.lock);
-            _SDReadWorkQueue& queue = _sdReadProduce.queues[(size_t)priority];
-            queue.set.insert(work);
-        }
-        
-        // Wait for the work to be completed
-        {
-            auto lock = std::unique_lock(_sdReadConsume.lock);
-            _sdReadConsume.signal.wait(lock, [&] { return *work.status!=_SDReadWork::Status::Underway; });
-            if (*work.status != _SDReadWork::Status::Finished) {
-                throw Toastbox::RuntimeError("SDRead failed; status: %d", (int)*work.status);
-            }
-        }
-    }
-    
 private:
     // MARK: - Private
     
@@ -484,9 +456,6 @@ private:
         using namespace MDCTools;
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
-        // Lock the device for the duration of this function
-        auto lock = std::unique_lock(_dev);
-        
         constexpr size_t ChunkImgCount = 128; // Number of images to read at a time
         constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
@@ -540,7 +509,7 @@ private:
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
             auto& buf = bufQueue.wget();
             buf.len = chunkImgCount; // buffer length = count of images (not byte count)
-            _dev.readout(buf.data, chunkImgCount*ImgSD::Thumb::ImagePaddedLen);
+            _SDRead(_SDReadWork::Priority::Low, thumbBlockStart, chunkImgCount*ImgSD::Thumb::ImagePaddedLen, buf.data);
             bufQueue.wpush();
             i += chunkImgCount;
             
@@ -781,7 +750,11 @@ private:
         }
     }
     
+    // MARK: - SDRead
+    
     struct _SDReadWork {
+        enum Priority : uint8_t { High, Low, Count };
+        
         enum class Status {
             Underway,
             Finished,
@@ -812,6 +785,30 @@ private:
 //        std::queue<_SDReadWork> queue;
         std::set<_SDReadWork> set;
     };
+    
+    void _SDRead(_SDReadWork::Priority priority, _SDBlock block, size_t len, void* dst) {
+        const _SDReadWork work = {
+            .block = block,
+            .len = len,
+            .dst = dst,
+        };
+        
+        // Enqueue the work
+        {
+            auto lock = std::unique_lock(_sdReadProduce.lock);
+            _SDReadWorkQueue& queue = _sdReadProduce.queues[priority];
+            queue.set.insert(work);
+        }
+        
+        // Wait for the work to be completed
+        {
+            auto lock = std::unique_lock(_sdReadConsume.lock);
+            _sdReadConsume.signal.wait(lock, [&] { return *work.status!=_SDReadWork::Status::Underway; });
+            if (*work.status != _SDReadWork::Status::Finished) {
+                throw Toastbox::RuntimeError("SDRead failed; status: %d", (int)*work.status);
+            }
+        }
+    }
     
     // _sdReadProduce.lock must be held!
     _SDReadWorkQueue* _sdReadNextWorkQueue() {
@@ -932,7 +929,7 @@ private:
         std::condition_variable signal;
         std::thread thread;
         bool stop = false;
-        _SDReadWorkQueue queues[(size_t)SDReadPriority::Count];
+        _SDReadWorkQueue queues[_SDReadWork::Priority::Count];
     } _sdReadProduce;
     
     struct {
