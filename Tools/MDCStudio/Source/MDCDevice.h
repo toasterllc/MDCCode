@@ -193,7 +193,7 @@ public:
         _notifyObservers();
     }
     
-    const Toastbox::SendRight& service() {
+    const Toastbox::SendRight& service() const {
         return _dev.dev().service();
     }
     
