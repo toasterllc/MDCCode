@@ -83,48 +83,6 @@ public:
                     (uintmax_t)timeSetDuration.count());
             }
             
-            
-//            
-//            sleep(15);
-            
-//            // Update device time
-//            {
-//                _dev.mspSBWConnect();
-//                _dev.mspSBWRead(MSP::StateAddr, &_mspState, sizeof(_mspState));
-//                
-//                if (_mspState.magic != MSP::State::MagicNumber) {
-//                    // Program MSPApp onto MSP
-//                    #warning TODO: implement
-//                    throw Toastbox::RuntimeError("TODO: _mspState.magic != MSP::State::MagicNumber");
-//                }
-//                
-//                if (_mspState.version > MSP::State::Version) {
-//                    // Newer version than we understand -- tell user to upgrade or re-program
-//                    #warning TODO: implement
-//                    throw Toastbox::RuntimeError("TODO: _mspState.version > MSP::State::Version");
-//                }
-//                
-//                _mspState.startTime.time = MSP::TimeFromUnixTime(std::time(nullptr));
-//                _mspState.startTime.valid = true;
-//                _dev.mspSBWWrite(MSP::StateAddr, &_mspState, sizeof(_mspState));
-//                
-//                // MSPHostMode=true: make MSP enter host mode until physically disconnected from USB.
-//                // (When USB is disconnected, STM will lose power, causing STM to stop asserting
-//                // MSP_HOST_MODE_, allowing MSP_HOST_MODE_ to be pulled high by MSP's pullup, thereby
-//                // allowing MSP to run again.)
-//                constexpr bool MSPHostMode = true;
-//                
-//                startTime = std::chrono::steady_clock::now();
-//                _dev.mspSBWDisconnect(MSPHostMode);
-//            }
-            
-//            usleep(180000);
-            
-//            exit(0);
-            
-//            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-//            printf("durationMs: %ju\n", (uintmax_t)durationMs);
-            
             // Load ICE40 with our app
             _ICEConfigure(_dev);
             
@@ -151,15 +109,14 @@ public:
             _imageLibrary.read();
         }
         
-        // Start updating image library
-        _updateImageLibraryThread = std::thread([this] { _sync_thread(); });
-        
+        // Start threads
+        _sync.thread = std::thread([&] { _sync_thread(); });
         _renderThumbs.thread = std::thread([&] { _renderThumbs_thread(); });
         _sdReadProduce.thread = std::thread([&] { _sdRead_thread(); });
     }
     
     ~MDCDevice() {
-        _updateImageLibraryThread.join();
+        _sync.thread.join();
         
         // Wait for _renderThumbs.thread to exit
         {
@@ -911,7 +868,10 @@ private:
     
     std::string _name;
     std::forward_list<Observer> _observers;
-    std::thread _updateImageLibraryThread;
+    
+    struct {
+        std::thread thread;
+    } _sync;
     
     struct {
         std::mutex lock; // Protects this struct
