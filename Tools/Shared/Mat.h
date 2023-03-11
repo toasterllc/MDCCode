@@ -353,11 +353,18 @@ public:
         return &_state.vals[x*H];
     }
     
-//    template <size_t T_N>
-//    void get(T (&x)[T_N]) {
-//        static_assert(T_N == Count);
-//        memcpy(_state.vals, x, sizeof(Msg::payload));
-//    }
+    template <size_t T_N>
+    void get(T (&x)[T_N]) const {
+        static_assert(T_N == Count);
+        std::copy(begin(), end(), std::begin(x));
+    }
+    
+    template <size_t T_H, size_t T_W>
+    void get(T (&x)[T_W][T_H]) const {
+        static_assert(T_H == T_H);
+        static_assert(T_W == T_W);
+        std::copy(begin(), end(), std::begin(x[0]));
+    }
     
     std::string str(int precision=6) const {
         std::stringstream ss;

@@ -97,10 +97,8 @@ inline CCM ColorMatrixForInterpolation(double interpolation) {
 inline void ImageWhiteBalanceSet(ImageWhiteBalance& x, bool automatic, double value, const CCM& ccm) {
     x.automatic = automatic;
     x.value = value;
-    
-    #warning TODO: add static_asserts to confirm that the source/dest have the same number of elements
-    std::copy(ccm.illum.m.begin(), ccm.illum.m.end(), std::begin(x.illum));
-    std::copy(ccm.matrix.begin(), ccm.matrix.end(), std::begin(x.colorMatrix[0]));
+    ccm.illum.m.get(x.illum);
+    ccm.matrix.get(x.colorMatrix);
 }
 
 
