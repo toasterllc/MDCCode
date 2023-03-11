@@ -155,7 +155,7 @@ public:
         _updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
         
         _renderThumbs.thread = std::thread([&] { _threadRenderThumbs(); });
-        _sdReadProduce.thread = std::thread([&] { _threadSDRead(); });
+        _sdReadProduce.thread = std::thread([&] { _sdReadThread(); });
     }
     
     ~MDCDevice() {
@@ -172,6 +172,9 @@ public:
         // Wait for _sdReadProduce.thread to exit
         {
             auto lock = std::unique_lock(_sdReadProduce.lock);
+            // Upon our destruction, there shouldn't be any work to do, because whatever was
+            // scheduling work should've ensured that we'd stay alive. Check that assumption.
+            assert(!_sdReadNextWorkQueue());
             _sdReadProduce.stop = true;
         }
         _sdReadProduce.signal.notify_one();
@@ -190,7 +193,11 @@ public:
         _notifyObservers();
     }
     
-    Device& device() { return _dev; }
+    const Toastbox::SendRight& service() {
+        return _dev.dev().service();
+    }
+    
+//    Device& device() { return _dev; }
     
     void observerAdd(Observer&& observer) {
         assert([NSThread isMainThread]);
@@ -462,9 +469,6 @@ private:
         auto& bufQueue = *bufQueuePtr;
         const _SDBlock fullBlockStart = range.idx * ImgSD::Full::ImageBlockCount;
         const _SDBlock thumbBlockStart = _mspState.sd.thumbBlockStart + (range.idx * ImgSD::Thumb::ImageBlockCount);
-        
-        _dev.reset();
-        _dev.sdRead(thumbBlockStart);
         
         // Consumer
         std::thread consumerThread([&] {
@@ -786,6 +790,19 @@ private:
         std::set<_SDReadWork> set;
     };
     
+    struct _SDCoalescedWork {
+        std::vector<_SDReadWork> works;
+        _SDBlock blockBegin = 0;
+        _SDBlock blockEnd = 0;
+    };
+    
+    static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
+        const _SDBlock blockLen = Util::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
+        // Verify that block+blockLen doesn't overflow _SDBlock
+        assert(std::numeric_limits<_SDBlock>::max()-block >= blockLen);
+        return block + blockLen;
+    }
+    
     void _SDRead(_SDReadWork::Priority priority, _SDBlock block, size_t len, void* dst) {
         const _SDReadWork work = {
             .block = block,
@@ -817,19 +834,6 @@ private:
         }
         return nullptr;
     }
-    
-    static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
-        const _SDBlock blockLen = Util::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
-        // Verify that block+blockLen doesn't overflow _SDBlock
-        assert(std::numeric_limits<_SDBlock>::max()-block >= blockLen);
-        return block + blockLen;
-    }
-    
-    struct _SDCoalescedWork {
-        std::vector<_SDReadWork> works;
-        _SDBlock blockBegin = 0;
-        _SDBlock blockEnd = 0;
-    };
     
     // _sdReadProduce.lock must be held!
     _SDCoalescedWork _sdReadCoalesceWork(_SDReadWorkQueue& queue) {
@@ -890,7 +894,7 @@ private:
         _sdReadConsume.signal.notify_all();
     }
     
-    void _threadSDRead() {
+    void _sdReadThread() {
         for (;;) {
             _SDCoalescedWork coalesced;
             {

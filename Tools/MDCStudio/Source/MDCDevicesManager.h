@@ -159,8 +159,7 @@ private:
                 for (const _SendRight& service : _TerminatedServices) {
                     auto lock = std::unique_lock(_State.lock);
                     for (auto it=_State.devices.begin(); it!=_State.devices.end(); it++) {
-                        const _USBDevice& usbDev = it->dev->device().dev();
-                        if (usbDev.service() == service) {
+                        if (it->dev->service() == service) {
                             _State.devices.erase(it);
                             changed = true;
                             printf("Device disconnected\n");
