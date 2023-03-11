@@ -627,7 +627,7 @@ private:
                             renderer.sync(thumbTxt);
                             
                             // Populate .info.illumEst
-                            std::copy(ccm.illum.m.begin(), ccm.illum.m.end(), std::begin(rec.info.illumEst));
+                            ccm.illum.m.get(rec.info.illumEst);
                             
                             // Populate .options.whiteBalance
                             ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
