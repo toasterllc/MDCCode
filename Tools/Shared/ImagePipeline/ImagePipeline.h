@@ -8,11 +8,11 @@
 
 namespace MDCTools::ImagePipeline {
 
+using ColorRaw = MDCTools::Color<MDCTools::ColorSpace::Raw>;
+using ColorMatrix = Mat<double,3,3>;
+
 class Pipeline {
 public:
-    using ColorRaw = MDCTools::Color<MDCTools::ColorSpace::Raw>;
-    using ColorMatrix = Mat<double,3,3>;
-    
     struct DebayerOptions {
         const MDCTools::CFADesc cfaDesc;
         

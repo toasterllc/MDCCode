@@ -8,9 +8,9 @@
 #import "LocalContrast.h"
 #import "Saturation.h"
 #import "EstimateIlluminantFFCC.h"
-#import "Tools/Shared/MetalUtil.h"
-#import "Tools/Shared/Renderer.h"
-#import "Tools/Shared/Mat.h"
+#import "../MetalUtil.h"
+#import "../Renderer.h"
+#import "../Mat.h"
 using namespace MDCTools;
 
 static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {

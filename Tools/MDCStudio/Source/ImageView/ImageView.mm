@@ -132,15 +132,15 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         // Debayer raw image
         const Pipeline::DebayerOptions debayerOpts = {
             .cfaDesc        = _image->cfaDesc,
-            .illum          = Pipeline::ColorRaw(_imageRecord->options.whiteBalance.illum),
+            .illum          = ColorRaw(_imageRecord->options.whiteBalance.illum),
             .debayerLMMSE   = { .applyGamma = true, },
         };
         Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
         
         // Process rgb image
         const Pipeline::ProcessOptions processOpts = {
-            .illum = Pipeline::ColorRaw(_imageRecord->options.whiteBalance.illum),
-            .colorMatrix = Pipeline::ColorMatrix((double*)_imageRecord->options.whiteBalance.colorMatrix),
+            .illum = ColorRaw(_imageRecord->options.whiteBalance.illum),
+            .colorMatrix = ColorMatrix((double*)_imageRecord->options.whiteBalance.colorMatrix),
         };
         Pipeline::Process(renderer, processOpts, rgbTxt, _imageTxt);
     }

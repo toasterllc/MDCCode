@@ -6,6 +6,7 @@
 #import "Tools/Shared/BC7Encoder.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "ImageSource.h"
+#import "ColorMatrix.h"
 
 namespace MDCStudio {
 
@@ -101,7 +102,7 @@ public:
         {
             const ImageOptions& imageOpts = rec.options;
             // colorMatrix: converts colorspace from LSRGB.D65 -> ProPhotoRGB.D50, which Pipeline::Process expects
-            const Pipeline::ColorMatrix colorMatrix = {
+            const ColorMatrix colorMatrix = {
                0.5293458, 0.3300728, 0.1405813,
                0.0983744, 0.8734610, 0.0281647,
                0.0168832, 0.1176725, 0.8654443,

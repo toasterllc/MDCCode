@@ -246,6 +246,7 @@
 		55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = DownsampleDiscardRaw.metal; sourceTree = "<group>"; };
 		55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageView-Shadow@2x.png"; sourceTree = "<group>"; };
 		55F7551829B955C100241672 /* MockImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MockImageSource.h; sourceTree = "<group>"; };
+		55F7556C29BC21B500241672 /* ColorMatrix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorMatrix.h; sourceTree = "<group>"; };
 		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		55F8D01227BEF3E500757165 /* ImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageView.h; sourceTree = "<group>"; };
 		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
@@ -519,6 +520,7 @@
 				55F8D09227C2EE9D00757165 /* ImageSource.h */,
 				552F4BB429AD7ECE000CEAB2 /* ImageRender.h */,
 				552F4BF529B28543000CEAB2 /* ImageUtil.h */,
+				55F7556C29BC21B500241672 /* ColorMatrix.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,
 				5562353A27B5086E0008074C /* Util.h */,
