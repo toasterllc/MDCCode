@@ -117,6 +117,9 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     // Create _imageTxt if it doesn't exist yet and we have the image
     if ((!_imageTxt || dirty) && _image) {
+        const ImageOptions& opts = _imageRecord->options;
+        
+        printf("REGEN\n");
         if (!_imageTxt) {
             // _imageTxt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
             // representation of the pipeline result without clipping to 8-bit components, so we can
@@ -132,16 +135,28 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         // Debayer raw image
         const Pipeline::DebayerOptions debayerOpts = {
             .cfaDesc        = _image->cfaDesc,
-            .illum          = ColorRaw(_imageRecord->options.whiteBalance.illum),
+            .illum          = ColorRaw(opts.whiteBalance.illum),
             .debayerLMMSE   = { .applyGamma = true, },
         };
         Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
         
         // Process rgb image
         const Pipeline::ProcessOptions processOpts = {
-            .illum = ColorRaw(_imageRecord->options.whiteBalance.illum),
-            .colorMatrix = ColorMatrix((double*)_imageRecord->options.whiteBalance.colorMatrix),
+            .illum = ColorRaw(opts.whiteBalance.illum),
+            .colorMatrix = ColorMatrix((double*)opts.whiteBalance.colorMatrix),
+            
+            .exposure   = (float)opts.exposure,
+            .saturation = (float)opts.saturation,
+            .brightness = (float)opts.brightness,
+            .contrast   = (float)opts.contrast,
+            
+            .localContrast = {
+                .en = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
+                .amount = (float)opts.localContrast.amount,
+                .radius = (float)opts.localContrast.radius,
+            },
         };
+        
         Pipeline::Process(renderer, processOpts, rgbTxt, _imageTxt);
     }
     

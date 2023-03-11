@@ -202,9 +202,9 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
         bool editing;
     } _numberFieldState;
 @public
-    float valueMin;
-    float valueMax;
-    float valueDefault;
+    double valueMin;
+    double valueMax;
+    double valueDefault;
 }
 
 - (bool)updateView {
@@ -304,11 +304,11 @@ using _ModelSetter = void(^)(InspectorViewItem*, id);
 
 - (void)_buttonAction:(int)delta {
     const int StepCount = 40;
-    const float interval = (valueMax-valueMin)/StepCount;
-    const float factor = 1/interval;
+    const double interval = (valueMax-valueMin)/StepCount;
+    const double factor = 1/interval;
     const _ModelData data = getter(self);
     
-    float value = (data.type==_ModelData::Type::Normal ? [data.data floatValue] : valueDefault);
+    double value = (data.type==_ModelData::Type::Normal ? [data.data doubleValue] : valueDefault);
     if (delta > 0) value = std::min(valueMax, std::ceil(((value*factor)+interval))/factor);
     else           value = std::max(valueMin, std::floor(((value*factor)-interval))/factor);
     
@@ -907,8 +907,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->getter = _GetterCreate(self, _Get_localContrastAmount);
                 it->setter = _SetterCreate(self, _Set_localContrastAmount);
                 it->section = section;
-                it->valueMin = -1;
-                it->valueMax = +1;
+                it->valueMin = -2;
+                it->valueMax = +2;
                 it->valueDefault = 0;
                 [section addItem:it];
             }
@@ -919,8 +919,8 @@ static ImageOptions::Rotation _RotationNext(ImageOptions::Rotation x, int delta)
                 it->getter = _GetterCreate(self, _Get_localContrastRadius);
                 it->setter = _SetterCreate(self, _Set_localContrastRadius);
                 it->section = section;
-                it->valueMin = -1;
-                it->valueMax = +1;
+                it->valueMin = 0;
+                it->valueMax = +100;
                 it->valueDefault = 0;
                 [section addItem:it];
             }
@@ -1154,39 +1154,39 @@ static void _Set_whiteBalanceAuto(ImageRecord& rec, id data) {
 }
 
 static void _Set_whiteBalance(ImageRecord& rec, id data) {
-    const double interpolation = [data floatValue];
+    const double interpolation = [data doubleValue];
     const CCM ccm = ColorMatrixForInterpolation(interpolation);
     ImageWhiteBalanceSet(rec.options.whiteBalance, false, interpolation, ccm);
     rec.options.thumb.render = true;
 }
 
 static void _Set_exposure(ImageRecord& rec, id data) {
-    rec.options.exposure = [data floatValue];
+    rec.options.exposure = [data doubleValue];
     rec.options.thumb.render = true;
 }
 
 static void _Set_saturation(ImageRecord& rec, id data) {
-    rec.options.saturation = [data floatValue];
+    rec.options.saturation = [data doubleValue];
     rec.options.thumb.render = true;
 }
 
 static void _Set_brightness(ImageRecord& rec, id data) {
-    rec.options.brightness = [data floatValue];
+    rec.options.brightness = [data doubleValue];
     rec.options.thumb.render = true;
 }
 
 static void _Set_contrast(ImageRecord& rec, id data) {
-    rec.options.contrast = [data floatValue];
+    rec.options.contrast = [data doubleValue];
     rec.options.thumb.render = true;
 }
 
 static void _Set_localContrastAmount(ImageRecord& rec, id data) {
-    rec.options.localContrast.amount = [data floatValue];
+    rec.options.localContrast.amount = [data doubleValue];
     rec.options.thumb.render = true;
 }
 
 static void _Set_localContrastRadius(ImageRecord& rec, id data) {
-    rec.options.localContrast.radius = [data floatValue];
+    rec.options.localContrast.radius = [data doubleValue];
     rec.options.thumb.render = true;
 }
 
