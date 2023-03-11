@@ -589,6 +589,11 @@ private:
                             block += ImgSD::Full::ImageBlockCount;
                         }
                         
+                        // Populate ImageOptions fields
+                        {
+                            rec.options = {};
+                        }
+                        
                         // Render the thumbnail into rec.thumb
                         {
                             Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
@@ -608,26 +613,22 @@ private:
                                 ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage));
                             thumbTxts[idx] = thumbTxt;
                             
-                            const Pipeline::ProcessOptions processOpts = {
+                            const CCM ccm = {
                                 .illum = debayerResult.illum,
-                                .colorMatrix = Pipeline::ColorMatrixForIlluminant(debayerResult.illum),
+                                .matrix = ColorMatrixForIlluminant(debayerResult.illum),
+                            };
+                            const Pipeline::ProcessOptions processOpts = {
+                                .illum = ccm.illum,
+                                .colorMatrix = ccm.matrix,
                             };
                             
                             Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
                             renderer.sync(thumbTxt);
                             
                             // Populate the illuminant (ImageRecord.info.illumEst)
-                            rec.info.illumEst[0] = debayerResult.illum[0];
-                            rec.info.illumEst[1] = debayerResult.illum[1];
-                            rec.info.illumEst[2] = debayerResult.illum[2];
-                        }
-                        
-                        // Populate ImageOptions fields
-                        {
-                            rec.options = {};
-                            // Set image white balance options
-                            const simd::float3 illum = { rec.info.illumEst[0], rec.info.illumEst[1], rec.info.illumEst[2] };
-                            ImageWhiteBalanceSetAuto(rec.options.whiteBalance, illum);
+                            std::copy(ccm.illum.m.begin(), ccm.illum.m.end(), std::begin(rec.info.illumEst));
+                            
+                            ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
                         }
                     }
                     

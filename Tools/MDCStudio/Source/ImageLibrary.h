@@ -6,7 +6,7 @@
 #include "RecordStore.h"
 #include "ImageOptions.h"
 #include "ImageThumb.h"
-#include "ImageWhiteBalanceUtil.h"
+#include "ImageUtil.h"
 
 namespace MDCStudio {
 
@@ -25,8 +25,7 @@ struct [[gnu::packed]] ImageInfo {
     uint16_t analogGain = 0;
     
     // illumEst: estimated illuminant
-    float illumEst[3] = {0,0,0};
-    uint8_t _pad[4];
+    double illumEst[3] = {0,0,0};
     
     // _reserved: so we can add fields in the future without doing a data migration
     uint8_t _reserved[128];

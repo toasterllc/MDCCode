@@ -6,6 +6,8 @@
 template <typename T, size_t H, size_t W>
 class Mat {
 public:
+    static constexpr bool Vector = (W==1);
+    
     Mat() {
         if constexpr (std::is_same_v<_Storage, _StorageHeap>) {
             _state.storage = std::make_unique<T[]>(Count);
@@ -351,6 +353,12 @@ public:
         return &_state.vals[x*H];
     }
     
+//    template <size_t T_N>
+//    void get(T (&x)[T_N]) {
+//        static_assert(T_N == Count);
+//        memcpy(_state.vals, x, sizeof(Msg::payload));
+//    }
+    
     std::string str(int precision=6) const {
         std::stringstream ss;
         ss.precision(precision);
@@ -421,6 +429,55 @@ public:
             std::copy(col, col+W, &r.at(0,x));
         }
         return r;
+    }
+    
+    // Vector length (Euclidian length)
+    template<
+    bool _Vector = Vector,
+    typename std::enable_if_t<_Vector, int> = 0
+    >
+    T length() const {
+        if constexpr (std::is_same_v<T, float>) {
+            return cblas_snrm2(Count, _state.vals, 1);
+        } else if constexpr (std::is_same_v<T, double>) {
+            return cblas_dnrm2(Count, _state.vals, 1);
+        } else {
+            static_assert(_AlwaysFalse<T>);
+        }
+    }
+    
+    // Vector length^2
+    template<
+    bool _Vector = Vector,
+    typename std::enable_if_t<_Vector, int> = 0
+    >
+    T length2() const {
+        T r = length();
+        return r*r;
+    }
+    
+    // Vector dot product
+    template<
+    bool _Vector = Vector,
+    typename std::enable_if_t<_Vector, int> = 0
+    >
+    T dot(const Mat<T,H,W>& x) const {
+        if constexpr (std::is_same_v<T, float>) {
+            return cblas_sdot(Count, _state.vals, 1, x._state.vals, 1);
+        } else if constexpr (std::is_same_v<T, double>) {
+            return cblas_ddot(Count, _state.vals, 1, x._state.vals, 1);
+        } else {
+            static_assert(_AlwaysFalse<T>);
+        }
+    }
+    
+    // Vector projection
+    template<
+    bool _Vector = Vector,
+    typename std::enable_if_t<_Vector, int> = 0
+    >
+    Mat<T,H,W> project(const Mat<T,H,W>& x) const {
+        return x * (dot(x) / x.length2());
     }
     
     T sum() const {

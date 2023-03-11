@@ -40,15 +40,15 @@ public:
         std::optional<ColorRaw> illum;
         std::optional<ColorMatrix> colorMatrix;
         
-        float exposure = 0;
-        float saturation = 0;
-        float brightness = 0;
-        float contrast = 0;
+        double exposure = 0;
+        double saturation = 0;
+        double brightness = 0;
+        double contrast = 0;
         
         struct {
             bool en = false;
-            float amount = 0;
-            float radius = 0;
+            double amount = 0;
+            double radius = 0;
         } localContrast;
     };
     
@@ -61,7 +61,7 @@ public:
     }
     
 //    static ColorRaw IlluminantEstimate(const ColorRaw& illum);
-    static ColorMatrix ColorMatrixForIlluminant(const ColorRaw& illum);
+//    static ColorMatrix ColorMatrixForIlluminant(const ColorRaw& illum);
     
     static DebayerResult Debayer(MDCTools::Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb);
     static void Process(MDCTools::Renderer& renderer, const ProcessOptions& opts, id<MTLTexture> srcRgb, id<MTLTexture> dstRgb);

@@ -92,7 +92,7 @@
 		551B22382790245000D62121 /* ImageGridLayerTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageGridLayerTypes.h; sourceTree = "<group>"; };
 		552F4BB429AD7ECE000CEAB2 /* ImageRender.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageRender.h; sourceTree = "<group>"; };
 		552F4BB529AE6E83000CEAB2 /* Inspector-Clear.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Inspector-Clear.pdf"; sourceTree = "<group>"; };
-		552F4BF529B28543000CEAB2 /* ImageWhiteBalanceUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageWhiteBalanceUtil.h; sourceTree = "<group>"; };
+		552F4BF529B28543000CEAB2 /* ImageUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageUtil.h; sourceTree = "<group>"; };
 		552F4BF629B306DB000CEAB2 /* ImageOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImageOptions.h; sourceTree = "<group>"; };
 		553031F827BC45A100BEFFEA /* Selection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Selection.png; sourceTree = "<group>"; };
 		553031F927BC45A100BEFFEA /* Outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Outline.png; sourceTree = "<group>"; };
@@ -513,12 +513,12 @@
 				55A36A9F27A3343300FD0181 /* MDCDevicesManager.h */,
 				55F8D01B27BF5F0700757165 /* Image.h */,
 				55F8D03027BF9F8000757165 /* ImageCache.h */,
-				552F4BF529B28543000CEAB2 /* ImageWhiteBalanceUtil.h */,
 				55C90B9229B58283007CC97E /* ImageThumb.h */,
 				552F4BF629B306DB000CEAB2 /* ImageOptions.h */,
 				557ECB1D279C0F0900440E4B /* ImageLibrary.h */,
 				55F8D09227C2EE9D00757165 /* ImageSource.h */,
 				552F4BB429AD7ECE000CEAB2 /* ImageRender.h */,
+				552F4BF529B28543000CEAB2 /* ImageUtil.h */,
 				557ECB1B279BD72400440E4B /* RecordStore.h */,
 				55496F60278E88B800BCA739 /* Grid.h */,
 				5562353A27B5086E0008074C /* Util.h */,

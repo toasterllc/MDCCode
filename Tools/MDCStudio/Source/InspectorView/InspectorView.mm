@@ -5,7 +5,7 @@
 #import "Code/Shared/Time.h"
 #import "Code/Shared/TimeConvert.h"
 #import "Toastbox/DurationString.h"
-#import "ImageWhiteBalanceUtil.h"
+#import "ImageUtil.h"
 using namespace MDCStudio;
 
 struct _ModelData {
@@ -1147,18 +1147,16 @@ static id _Get_timestampCorner(const ImageRecord& rec) {
 
 static void _Set_whiteBalanceAuto(ImageRecord& rec, id data) {
     const bool automatic = [data boolValue];
-    rec.options.whiteBalance.automatic = automatic;
-    if (automatic) {
-        const simd::float3 illum = { (float)rec.info.illumEst[0], (float)rec.info.illumEst[1], (float)rec.info.illumEst[2] };
-        ImageWhiteBalanceSetAuto(rec.options.whiteBalance, illum);
-    } else {
-        ImageWhiteBalanceSetManual(rec.options.whiteBalance, rec.options.whiteBalance.value);
-    }
+    const ColorRaw illum(rec.info.illumEst);
+    const CCM ccm = ColorMatrixForIlluminant(illum);
+    ImageWhiteBalanceSet(rec.options.whiteBalance, automatic, rec.options.whiteBalance.value, ccm);
     rec.options.thumb.render = true;
 }
 
 static void _Set_whiteBalance(ImageRecord& rec, id data) {
-    ImageWhiteBalanceSetManual(rec.options.whiteBalance, [data floatValue]);
+    const double interpolation = [data floatValue];
+    const CCM ccm = ColorMatrixForInterpolation(interpolation);
+    ImageWhiteBalanceSet(rec.options.whiteBalance, rec.options.whiteBalance.automatic, interpolation, ccm);
     rec.options.thumb.render = true;
 }
 

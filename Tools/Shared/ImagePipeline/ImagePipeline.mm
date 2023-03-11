@@ -59,26 +59,7 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
     };
 }
 
-//static _CCM _CCMForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
-//    const simd::float3 a = _SimdForMat(_CCM1.illum.m);
-//    const simd::float3 b = _SimdForMat(_CCM2.illum.m);
-//    const simd::float3 c = _SimdForMat(illumRaw.m);
-//    
-//    const simd::float3 ab = (b-a);
-//    const simd::float3 ac = (c-a);
-//    const simd::float3 ad = simd::project(ac, ab);
-//    const simd::float3 pd = a+ad;
-//    
-//    const float k = simd::length(ad) / simd::length(ab);
-//    return {
-//        .illum = { pd[0], pd[1], pd[2] },
-//        .m = _MatrixInterp(_CCM1.m, _CCM2.m, k),
-//    };
-//}
-
-namespace MDCTools::ImagePipeline {
-
-Pipeline::ColorMatrix Pipeline::ColorMatrixForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
+static _CCM _CCMForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
     const simd::float3 a = _SimdForMat(_CCM1.illum.m);
     const simd::float3 b = _SimdForMat(_CCM2.illum.m);
     const simd::float3 c = _SimdForMat(illumRaw.m);
@@ -86,10 +67,29 @@ Pipeline::ColorMatrix Pipeline::ColorMatrixForIlluminant(const Color<ColorSpace:
     const simd::float3 ab = (b-a);
     const simd::float3 ac = (c-a);
     const simd::float3 ad = simd::project(ac, ab);
+    const simd::float3 pd = a+ad;
     
     const float k = simd::length(ad) / simd::length(ab);
-    return _MatrixInterp(_CCM1.m, _CCM2.m, k);
+    return {
+        .illum = { pd[0], pd[1], pd[2] },
+        .m = _MatrixInterp(_CCM1.m, _CCM2.m, k),
+    };
 }
+
+namespace MDCTools::ImagePipeline {
+
+//Pipeline::ColorMatrix Pipeline::ColorMatrixForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
+//    const simd::float3 a = _SimdForMat(_CCM1.illum.m);
+//    const simd::float3 b = _SimdForMat(_CCM2.illum.m);
+//    const simd::float3 c = _SimdForMat(illumRaw.m);
+//    
+//    const simd::float3 ab = (b-a);
+//    const simd::float3 ac = (c-a);
+//    const simd::float3 ad = simd::project(ac, ab);
+//    
+//    const float k = simd::length(ad) / simd::length(ab);
+//    return _MatrixInterp(_CCM1.m, _CCM2.m, k);
+//}
 
 Pipeline::DebayerResult Pipeline::Debayer(Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb) {
     assert(srcRaw);
