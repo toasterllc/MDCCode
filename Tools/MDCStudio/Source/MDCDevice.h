@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <filesystem>
 #import <thread>
+#import <set>
 #import <chrono>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "Toastbox/Mmap.h"
@@ -153,6 +154,7 @@ public:
         _updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
         
         _renderThumbs.thread = std::thread([&] { _threadRenderThumbs(); });
+        _sdRead.thread = std::thread([&] { _threadSDRead(); });
     }
     
     ~MDCDevice() {
@@ -165,6 +167,14 @@ public:
         }
         _renderThumbs.signal.notify_one();
         _renderThumbs.thread.join();
+        
+        // Wait for _sdRead.thread to exit
+        {
+            auto lock = std::unique_lock(_sdRead.lock);
+            _sdRead.stop = true;
+        }
+        _sdRead.signal.notify_one();
+        _sdRead.thread.join();
     }
     
     const std::string& name() {
@@ -213,7 +223,7 @@ public:
             for (auto it=begin; it!=end; it++) {
                 ImageRecordPtr ref = *it;
                 if (ref->options.thumb.render) {
-                    _renderThumbs.recs.insert(ref);
+                    _renderThumbs.work.insert(ref);
                     enqueued = true;
                 }
             }
@@ -568,9 +578,9 @@ private:
                             printf("Checksum valid (size: thumb)\n");
                         } else {
                             printf("Invalid checksum\n");
-            //                throw Toastbox::RuntimeError("invalid checksum");
-            //                abort();
-            //                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+//                            throw Toastbox::RuntimeError("invalid checksum");
+//                            abort();
+//                            throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
                         }
                         
                         // Populate .info
@@ -700,11 +710,11 @@ private:
             {
                 auto lock = std::unique_lock(_renderThumbs.lock);
                 // Wait for data, or to be signalled to stop
-                _renderThumbs.signal.wait(lock, [&] { return !_renderThumbs.recs.empty() || _renderThumbs.stop; });
+                _renderThumbs.signal.wait(lock, [&] { return !_renderThumbs.work.empty() || _renderThumbs.stop; });
                 if (_renderThumbs.stop) return;
-                const auto it = _renderThumbs.recs.begin();
+                const auto it = _renderThumbs.work.begin();
                 rec = *it;
-                _renderThumbs.recs.erase(it);
+                _renderThumbs.work.erase(it);
             }
             
             // Render thumb to `rec.thumb`
@@ -735,6 +745,106 @@ private:
         }
     }
     
+    struct _SDReadWork {
+        using Callback = std::function<void(const uint8_t*)>;
+        enum Priority : uint8_t { High, Low, Count };
+        SD::Block blockBegin = 0;
+        SD::Block blockEnd = 0;
+        uint64_t id = 0;
+        Callback callback;
+        
+        _SDReadWork() : id(_Id.fetch_add(1)) {}
+        
+        bool operator<(const _SDReadWork& x) const {
+            if (blockBegin != x.blockBegin) return blockBegin < x.blockBegin;
+            if (blockEnd != x.blockEnd) return blockEnd < x.blockEnd;
+            if (id != x.id) return id < x.id;
+            return false;
+        }
+        
+        bool operator==(const _SDReadWork& x) const {
+            if (blockBegin != x.blockBegin) return false;
+            if (blockEnd != x.blockEnd) return false;
+            if (id != x.id) return false;
+            return true;
+        }
+        
+        static inline std::atomic<uint64_t> _Id = 0;
+    };
+    
+    struct _SDReadWorkQueue {
+//        std::queue<_SDReadWork> queue;
+        std::set<_SDReadWork> set;
+    };
+    
+    // _sdRead.lock must be held!
+    _SDReadWorkQueue* _sdReadNextWorkQueue() {
+        for (_SDReadWorkQueue& x : _sdRead.queues) {
+            if (!x.set.empty()) return &x;
+        }
+        return nullptr;
+    }
+    
+    // _sdRead.lock must be held!
+    void _sdReadHandleWork(_SDReadWorkQueue& queue) {
+        assert(!queue.set.empty());
+        
+        // CoalesceBudget: coalesce adjacent blocks until this budget is exceeded
+        static constexpr SD::Block CoalesceBudget = 8192;
+        std::vector<_SDReadWork> works;
+        SD::Block blockBegin = queue.set.begin()->blockBegin;
+        SD::Block blockEnd = queue.set.begin()->blockEnd;
+        SD::Block budget = CoalesceBudget;
+        for (auto it=queue.set.begin(); it!=queue.set.end();) {
+            const _SDReadWork& work = *it;
+            
+            // The set ordering guarantees that the blockBegins are in ascending order.
+            // Check that assumption.
+            assert(blockBegin <= work.blockBegin);
+            
+            const SD::Block cost = (work.blockEnd>blockEnd ? work.blockEnd-blockEnd : 0);
+            // Stop coalescing work once the cost exceeds our budget
+            if (cost > budget) break;
+            
+            blockEnd = std::max(blockEnd, work.blockEnd);
+            works.push_back(work);
+            budget -= cost;
+            it = queue.set.erase(it);
+        }
+        
+        const size_t len = (size_t)(blockEnd-blockBegin) * (size_t)SD::BlockLen;
+        std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(len);
+        {
+            auto lock = std::unique_lock(_dev);
+            _dev.reset();
+            _dev.sdRead(blockBegin);
+            _dev.readout(data.get(), len);
+        }
+        
+        
+//        SD::Block blockBegin = 0;
+//        SD::Block blockEnd = 0;
+//        uint64_t id = 0;
+//        Callback callback;
+        
+        
+        for (_SDReadWork& work : works) {
+            const uint8_t* d = data.get() + (size_t)(work.blockBegin-blockBegin)*SD::BlockLen;
+            work.callback(d);
+        }
+    }
+    
+    void _threadSDRead() {
+        for (;;) {
+            auto lock = std::unique_lock(_sdRead.lock);
+            // Wait for work, or to be signalled to stop
+            _SDReadWorkQueue* work = nullptr;
+            _sdRead.signal.wait(lock, [&] { work = _sdReadNextWorkQueue(); return (work || _sdRead.stop); });
+            if (_sdRead.stop) return;
+            _sdReadHandleWork(*work);
+        }
+    }
+    
     Device _dev;
     const _Path _dir;
     ImageLibrary _imageLibrary;
@@ -750,9 +860,17 @@ private:
         std::mutex lock; // Protects this struct
         std::condition_variable signal;
         std::thread thread;
-        std::set<ImageRecordPtr> recs;
         bool stop = false;
+        std::set<ImageRecordPtr> work;
     } _renderThumbs;
+    
+    struct {
+        std::mutex lock; // Protects this struct
+        std::condition_variable signal;
+        std::thread thread;
+        bool stop = false;
+        _SDReadWorkQueue queues[_SDReadWork::Priority::Count];
+    } _sdRead;
 };
 
 using MDCDevicePtr = std::shared_ptr<MDCDevice>;
