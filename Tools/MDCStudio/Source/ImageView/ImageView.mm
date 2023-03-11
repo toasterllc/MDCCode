@@ -119,7 +119,6 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     if ((!_imageTxt || dirty) && _image) {
         const ImageOptions& opts = _imageRecord->options;
         
-        printf("REGEN\n");
         if (!_imageTxt) {
             // _imageTxt: using RGBA16 (instead of RGBA8 or similar) so that we maintain a full-depth
             // representation of the pipeline result without clipping to 8-bit components, so we can

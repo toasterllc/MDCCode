@@ -154,8 +154,8 @@ public:
         // Start updating image library
         _updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
         
-        _renderThumbs.thread = std::thread([&] { _threadRenderThumbs(); });
-        _sdReadProduce.thread = std::thread([&] { _sdReadThread(); });
+        _renderThumbs.thread = std::thread([&] { _renderThumbs_thread(); });
+        _sdReadProduce.thread = std::thread([&] { _sdRead_thread(); });
     }
     
     ~MDCDevice() {
@@ -174,7 +174,7 @@ public:
             auto lock = std::unique_lock(_sdReadProduce.lock);
             // Upon our destruction, there shouldn't be any work to do, because whatever was
             // scheduling work should've ensured that we'd stay alive. Check that assumption.
-            assert(!_sdReadNextWorkQueue());
+            assert(!_sdRead_nextWorkQueue());
             _sdReadProduce.stop = true;
         }
         _sdReadProduce.signal.notify_one();
@@ -231,6 +231,7 @@ public:
             for (auto it=begin; it!=end; it++) {
                 ImageRecordPtr ref = *it;
                 if (ref->options.thumb.render) {
+                    ref->options.thumb.render = false;
                     _renderThumbs.work.insert(ref);
                     enqueued = true;
                 }
@@ -367,7 +368,7 @@ private:
     
     ImagePtr _imageForAddr(uint64_t addr) {
         auto data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
-        _SDRead(_SDReadWork::Priority::Low, (_SDBlock)addr, Img::Full::ImageLen, data.get());
+        _sdRead(_SDReadWork::Priority::Low, (_SDBlock)addr, Img::Full::ImageLen, data.get());
         
         if (_ChecksumValid(data.get(), Img::Size::Full)) {
 //            printf("Checksum valid (size: full)\n");
@@ -500,7 +501,7 @@ private:
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
             auto& buf = bufQueue.wget();
             buf.len = chunkImgCount; // buffer length = count of images (not byte count)
-            _SDRead(_SDReadWork::Priority::Low, thumbBlockStart, chunkImgCount*ImgSD::Thumb::ImagePaddedLen, buf.data);
+            _sdRead(_SDReadWork::Priority::Low, thumbBlockStart, chunkImgCount*ImgSD::Thumb::ImagePaddedLen, buf.data);
             bufQueue.wpush();
             i += chunkImgCount;
             
@@ -691,7 +692,23 @@ private:
         }
     }
     
-    void _threadRenderThumbs() {
+    void _notifyObservers() {
+        auto prev = _observers.before_begin();
+        for (auto it=_observers.begin(); it!=_observers.end();) {
+            // Notify the observer; it returns whether it's still valid
+            // If it's not valid (it returned false), remove it from the list
+            if (!(*it)()) {
+                it = _observers.erase_after(prev);
+            } else {
+                prev = it;
+                it++;
+            }
+        }
+    }
+    
+    // MARK: - Render Thumbs
+    
+    void _renderThumbs_thread() {
         using namespace MDCStudio;
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
@@ -715,28 +732,12 @@ private:
             
             // Render thumb to `rec.thumb`
             {
-                
-                rec->options.thumb.render = false;
             }
             
             // Notify image library that the image changed
             {
                 auto lock = std::unique_lock(_imageLibrary);
                 _imageLibrary.notifyChange({ rec });
-            }
-        }
-    }
-    
-    void _notifyObservers() {
-        auto prev = _observers.before_begin();
-        for (auto it=_observers.begin(); it!=_observers.end();) {
-            // Notify the observer; it returns whether it's still valid
-            // If it's not valid (it returned false), remove it from the list
-            if (!(*it)()) {
-                it = _observers.erase_after(prev);
-            } else {
-                prev = it;
-                it++;
             }
         }
     }
@@ -790,7 +791,7 @@ private:
         return block + blockLen;
     }
     
-    void _SDRead(_SDReadWork::Priority priority, _SDBlock block, size_t len, void* dst) {
+    void _sdRead(_SDReadWork::Priority priority, _SDBlock block, size_t len, void* dst) {
         const _SDReadWork work = {
             .block = block,
             .len = len,
@@ -818,7 +819,7 @@ private:
     }
     
     // _sdReadProduce.lock must be held!
-    _SDReadWorkQueue* _sdReadNextWorkQueue() {
+    _SDReadWorkQueue* _sdRead_nextWorkQueue() {
         for (_SDReadWorkQueue& x : _sdReadProduce.queues) {
             if (!x.set.empty()) return &x;
         }
@@ -826,7 +827,7 @@ private:
     }
     
     // _sdReadProduce.lock must be held!
-    _SDCoalescedWork _sdReadCoalesceWork(_SDReadWorkQueue& queue) {
+    _SDCoalescedWork _sdRead_coalesceWork(_SDReadWorkQueue& queue) {
         assert(!queue.set.empty());
         
         // CoalesceBudget: coalesce adjacent blocks until this budget is exceeded
@@ -857,7 +858,7 @@ private:
         return coalesced;
     }
     
-    void _sdReadHandleWork(const _SDCoalescedWork& coalesced) {
+    void _sdRead_handleWork(const _SDCoalescedWork& coalesced) {
         // Read the data from the device
         const size_t len = (size_t)SD::BlockLen * (coalesced.blockEnd-coalesced.blockBegin);
         std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(len);
@@ -884,18 +885,18 @@ private:
         _sdReadConsume.signal.notify_all();
     }
     
-    void _sdReadThread() {
+    void _sdRead_thread() {
         for (;;) {
             _SDCoalescedWork coalesced;
             {
                 auto lock = std::unique_lock(_sdReadProduce.lock);
                 // Wait for work, or to be signalled to stop
                 _SDReadWorkQueue* queue = nullptr;
-                _sdReadProduce.signal.wait(lock, [&] { queue = _sdReadNextWorkQueue(); return (queue || _sdReadProduce.stop); });
+                _sdReadProduce.signal.wait(lock, [&] { queue = _sdRead_nextWorkQueue(); return (queue || _sdReadProduce.stop); });
                 if (_sdReadProduce.stop) return;
-                coalesced = _sdReadCoalesceWork(*queue);
+                coalesced = _sdRead_coalesceWork(*queue);
             }
-            _sdReadHandleWork(coalesced);
+            _sdRead_handleWork(coalesced);
         }
     }
     
