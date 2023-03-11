@@ -13,38 +13,6 @@
 #import "Tools/Shared/Mat.h"
 using namespace MDCTools;
 
-struct _CCM {
-    Color<ColorSpace::Raw> illum;
-    Mat<double,3,3> m; // CamRaw -> ProPhotoRGB
-};
-
-// Indoor, night
-// Calculated from indoor_night2_200.cfa
-const _CCM _CCM1 = {
-    .illum = { 0.879884, 0.901580, 0.341031 },
-    .m = {
-        +0.626076, +0.128755, +0.245169,
-        -0.396581, +1.438671, -0.042090,
-        -0.195309, -0.784350, +1.979659,
-    },
-};
-
-// Outdoor, 5pm
-// Calculated from outdoor_5pm_78.cfa
-const _CCM _CCM2 = {
-    .illum = { 0.632708, 0.891153, 0.561737 },
-    .m = {
-        +0.724397, +0.115398, +0.160204,
-        -0.238233, +1.361934, -0.123701,
-        -0.061917, -0.651388, +1.713306,
-    },
-};
-
-template <typename T, typename K>
-static T _MatrixInterp(const T& lo, const T& hi, K k) {
-    return lo*(1-k) + hi*k;
-}
-
 static simd::float3 _SimdForMat(const Mat<double,3,1>& m) {
     return {
         simd::float3{(float)m[0], (float)m[1], (float)m[2]},
@@ -61,27 +29,11 @@ static simd::float3x3 _SimdForMat(const Mat<double,3,3>& m) {
 
 namespace MDCTools::ImagePipeline {
 
-//Pipeline::ColorMatrix Pipeline::ColorMatrixForIlluminant(const Color<ColorSpace::Raw>& illumRaw) {
-//    const simd::float3 a = _SimdForMat(_CCM1.illum.m);
-//    const simd::float3 b = _SimdForMat(_CCM2.illum.m);
-//    const simd::float3 c = _SimdForMat(illumRaw.m);
-//    
-//    const simd::float3 ab = (b-a);
-//    const simd::float3 ac = (c-a);
-//    const simd::float3 ad = simd::project(ac, ab);
-//    
-//    const float k = simd::length(ad) / simd::length(ab);
-//    return _MatrixInterp(_CCM1.m, _CCM2.m, k);
-//}
-
 Pipeline::DebayerResult Pipeline::Debayer(Renderer& renderer, const DebayerOptions& opts, id<MTLTexture> srcRaw, id<MTLTexture> dstRgb) {
     assert(srcRaw);
     assert(dstRgb);
     assert([srcRaw width] == [dstRgb width]);
     assert([srcRaw height] == [dstRgb height]);
-    
-//    const size_t w = src.width;
-//    const size_t h = src.height;
     
     // If an illuminant was provided, use it.
     // Otherwise, estimate it with FFCC.
@@ -96,22 +48,6 @@ Pipeline::DebayerResult Pipeline::Debayer(Renderer& renderer, const DebayerOptio
     if (opts.reconstructHighlights.en) {
         ReconstructHighlights::Run(renderer, opts.cfaDesc, illum.m, srcRaw);
     }
-    
-//        // White balance
-//        {
-//            const double factor = std::max(std::max(illum[0], illum[1]), illum[2]);
-//            const Mat<double,3,1> wb(factor/illum[0], factor/illum[1], factor/illum[2]);
-//            const simd::float3 simdWB = _SimdForMat(wb);
-//            renderer.render(srcRaw,
-//                renderer.FragmentShader(ImagePipelineShaderNamespace "Base::WhiteBalance",
-//                    // Buffer args
-//                    src.cfaDesc,
-//                    simdWB,
-//                    // Texture args
-//                    srcRaw
-//                )
-//            );
-//        }
     
     if (opts.defringe.en) {
         Defringe::Run(renderer, opts.cfaDesc, opts.defringe.opts, srcRaw);
