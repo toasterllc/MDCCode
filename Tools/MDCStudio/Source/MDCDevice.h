@@ -152,7 +152,7 @@ public:
         }
         
         // Start updating image library
-        _updateImageLibraryThread = std::thread([this] { _threadUpdateImageLibrary(); });
+        _updateImageLibraryThread = std::thread([this] { _sync_thread(); });
         
         _renderThumbs.thread = std::thread([&] { _renderThumbs_thread(); });
         _sdReadProduce.thread = std::thread([&] { _sdRead_thread(); });
@@ -218,7 +218,7 @@ public:
         _SerializedStateWrite(_dir, state);
     }
     
-    // MARK: - ImageSource Functions
+    // MARK: - ImageSource
     
     ImageLibrary& imageLibrary() override { return _imageLibrary; }
     
@@ -354,6 +354,19 @@ private:
         dev.iceRAMWrite(mmap.data(), mmap.len());
     }
     
+    static bool _ImageChecksumValid(const void* data, Img::Size size) {
+        const size_t ChecksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
+        // Validate thumbnail checksum
+        const uint32_t checksumExpected = ChecksumFletcher32(data, ChecksumOffset);
+        uint32_t checksumGot = 0;
+        memcpy(&checksumGot, (uint8_t*)data+ChecksumOffset, Img::ChecksumLen);
+        if (checksumGot != checksumExpected) {
+            printf("Checksum invalid (expected:0x%08x got:0x%08x)\n", checksumExpected, checksumGot);
+            return false;
+        }
+        return true;
+    }
+    
 //    static MSP::Time _MSPTimeCurrent() {
 //        return MSP::TimeFromUnixTime(std::time(nullptr));
 //        const std::time_t t = std::time(nullptr);
@@ -370,7 +383,7 @@ private:
         auto data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
         _sdRead(_SDReadWork::Priority::Low, (_SDBlock)addr, Img::Full::ImageLen, data.get());
         
-        if (_ChecksumValid(data.get(), Img::Size::Full)) {
+        if (_ImageChecksumValid(data.get(), Img::Size::Full)) {
 //            printf("Checksum valid (size: full)\n");
         } else {
             printf("Checksum INVALID (size: full)\n");
@@ -388,7 +401,23 @@ private:
         return image;
     }
     
-    void _threadUpdateImageLibrary() {
+    void _notifyObservers() {
+        auto prev = _observers.before_begin();
+        for (auto it=_observers.begin(); it!=_observers.end();) {
+            // Notify the observer; it returns whether it's still valid
+            // If it's not valid (it returned false), remove it from the list
+            if (!(*it)()) {
+                it = _observers.erase_after(prev);
+            } else {
+                prev = it;
+                it++;
+            }
+        }
+    }
+    
+    // MARK: - Sync
+    
+    void _sync_thread() {
         try {
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(_mspState);
             const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
@@ -437,8 +466,8 @@ private:
                     oldest.len = addCount - newest.len;
                     oldest.idx = _mspState.sd.imgCap - oldest.len;
                     
-                    _loadImages(oldest);
-                    _loadImages(newest);
+                    _sync_loadImages(oldest);
+                    _sync_loadImages(newest);
                 }
             }
         
@@ -447,7 +476,7 @@ private:
         }
     }
     
-    void _loadImages(const _Range& range) {
+    void _sync_loadImages(const _Range& range) {
         using namespace MDCTools;
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
@@ -470,7 +499,7 @@ private:
                 auto startTime = std::chrono::steady_clock::now();
                 const size_t imageCount = buf.len;
                 if (!imageCount) break; // We're done when we get an empty buffer
-                _addImages(buf.data, imageCount, block);
+                _sync_addImages(buf.data, imageCount, block);
                 
                 block += imageCount * ImgSD::Full::ImageBlockCount;
                 addedImageCount += imageCount;
@@ -520,20 +549,7 @@ private:
         }
     }
     
-    static bool _ChecksumValid(const void* data, Img::Size size) {
-        const size_t ChecksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
-        // Validate thumbnail checksum
-        const uint32_t checksumExpected = ChecksumFletcher32(data, ChecksumOffset);
-        uint32_t checksumGot = 0;
-        memcpy(&checksumGot, (uint8_t*)data+ChecksumOffset, Img::ChecksumLen);
-        if (checksumGot != checksumExpected) {
-            printf("Checksum invalid (expected:0x%08x got:0x%08x)\n", checksumExpected, checksumGot);
-            return false;
-        }
-        return true;
-    }
-    
-    void _addImages(const uint8_t* data, size_t imgCount, _SDBlock block) {
+    void _sync_addImages(const uint8_t* data, size_t imgCount, _SDBlock block) {
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
         using namespace Toastbox;
@@ -571,7 +587,7 @@ private:
                         ImageRecord& rec = **recordRefIter;
                         
                         // Validate thumbnail checksum
-                        if (_ChecksumValid(imgData, Img::Size::Thumb)) {
+                        if (_ImageChecksumValid(imgData, Img::Size::Thumb)) {
                             printf("Checksum valid (size: thumb)\n");
                         } else {
                             printf("Invalid checksum\n");
@@ -689,20 +705,6 @@ private:
             _imageLibrary.add();
             // Update the device's image id 'end' == last image id that we've observed from the device +1
             _imageLibrary.deviceImgIdEnd(deviceImgIdLast+1);
-        }
-    }
-    
-    void _notifyObservers() {
-        auto prev = _observers.before_begin();
-        for (auto it=_observers.begin(); it!=_observers.end();) {
-            // Notify the observer; it returns whether it's still valid
-            // If it's not valid (it returned false), remove it from the list
-            if (!(*it)()) {
-                it = _observers.erase_after(prev);
-            } else {
-                prev = it;
-                it++;
-            }
         }
     }
     
@@ -899,6 +901,8 @@ private:
             _sdRead_handleWork(coalesced);
         }
     }
+    
+    // MARK: - Members
     
     Device _dev;
     const _Path _dir;
