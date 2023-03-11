@@ -95,7 +95,7 @@ inline CCM ColorMatrixForInterpolation(double interpolation) {
 //}
 
 inline void ImageWhiteBalanceSet(ImageWhiteBalance& x, bool automatic, double value, const CCM& ccm) {
-    x.automatic = false;
+    x.automatic = automatic;
     x.value = value;
     
     #warning TODO: add static_asserts to confirm that the source/dest have the same number of elements

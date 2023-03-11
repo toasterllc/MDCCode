@@ -1156,7 +1156,7 @@ static void _Set_whiteBalanceAuto(ImageRecord& rec, id data) {
 static void _Set_whiteBalance(ImageRecord& rec, id data) {
     const double interpolation = [data floatValue];
     const CCM ccm = ColorMatrixForInterpolation(interpolation);
-    ImageWhiteBalanceSet(rec.options.whiteBalance, rec.options.whiteBalance.automatic, interpolation, ccm);
+    ImageWhiteBalanceSet(rec.options.whiteBalance, false, interpolation, ccm);
     rec.options.thumb.render = true;
 }
 

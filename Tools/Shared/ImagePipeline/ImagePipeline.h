@@ -40,15 +40,15 @@ public:
         std::optional<ColorRaw> illum;
         std::optional<ColorMatrix> colorMatrix;
         
-        double exposure = 0;
-        double saturation = 0;
-        double brightness = 0;
-        double contrast = 0;
+        float exposure = 0;
+        float saturation = 0;
+        float brightness = 0;
+        float contrast = 0;
         
         struct {
             bool en = false;
-            double amount = 0;
-            double radius = 0;
+            float amount = 0;
+            float radius = 0;
         } localContrast;
     };
     

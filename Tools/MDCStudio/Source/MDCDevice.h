@@ -573,7 +573,7 @@ private:
             //                throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
                         }
                         
-                        // Populate ImageInfo fields
+                        // Populate .info
                         {
                             rec.info.id              = imgHeader.id;
                             rec.info.addr            = block;
@@ -589,7 +589,7 @@ private:
                             block += ImgSD::Full::ImageBlockCount;
                         }
                         
-                        // Populate ImageOptions fields
+                        // Populate .options
                         {
                             rec.options = {};
                         }
@@ -615,8 +615,9 @@ private:
                             
                             const CCM ccm = {
                                 .illum = debayerResult.illum,
-                                .matrix = ColorMatrixForIlluminant(debayerResult.illum),
+                                .matrix = ColorMatrixForIlluminant(debayerResult.illum).matrix,
                             };
+                            
                             const Pipeline::ProcessOptions processOpts = {
                                 .illum = ccm.illum,
                                 .colorMatrix = ccm.matrix,
@@ -625,9 +626,10 @@ private:
                             Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
                             renderer.sync(thumbTxt);
                             
-                            // Populate the illuminant (ImageRecord.info.illumEst)
+                            // Populate .info.illumEst
                             std::copy(ccm.illum.m.begin(), ccm.illum.m.end(), std::begin(rec.info.illumEst));
                             
+                            // Populate .options.whiteBalance
                             ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
                         }
                     }

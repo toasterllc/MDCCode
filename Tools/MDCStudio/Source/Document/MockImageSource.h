@@ -108,14 +108,14 @@ public:
             };
             const Pipeline::ProcessOptions processOpts = {
                 .colorMatrix = colorMatrix,
-                .exposure = imageOpts.exposure,
-                .saturation = imageOpts.saturation,
-                .brightness = imageOpts.brightness,
-                .contrast = imageOpts.contrast,
+                .exposure = (float)imageOpts.exposure,
+                .saturation = (float)imageOpts.saturation,
+                .brightness = (float)imageOpts.brightness,
+                .contrast = (float)imageOpts.contrast,
                 .localContrast = {
                     .en = (imageOpts.localContrast.amount!=0 && imageOpts.localContrast.radius!=0),
-                    .amount = imageOpts.localContrast.amount,
-                    .radius = imageOpts.localContrast.radius,
+                    .amount = (float)imageOpts.localContrast.amount,
+                    .radius = (float)imageOpts.localContrast.radius,
                 },
             };
             

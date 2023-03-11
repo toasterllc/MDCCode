@@ -140,7 +140,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
         // Process rgb image
         const Pipeline::ProcessOptions processOpts = {
             .illum = Pipeline::ColorRaw(_imageRecord->options.whiteBalance.illum),
-            .colorMatrix = _imageRecord->options.whiteBalance.colorMatrix,
+            .colorMatrix = Pipeline::ColorMatrix((double*)_imageRecord->options.whiteBalance.colorMatrix),
         };
         Pipeline::Process(renderer, processOpts, rgbTxt, _imageTxt);
     }
