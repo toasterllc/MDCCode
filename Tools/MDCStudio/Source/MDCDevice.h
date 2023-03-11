@@ -812,9 +812,12 @@ private:
         
         // Enqueue the work
         {
-            auto lock = std::unique_lock(_sdReadProduce.lock);
-            _SDReadWorkQueue& queue = _sdReadProduce.queues[priority];
-            queue.set.insert(work);
+            {
+                auto lock = std::unique_lock(_sdReadProduce.lock);
+                _SDReadWorkQueue& queue = _sdReadProduce.queues[priority];
+                queue.set.insert(work);
+            }
+            _sdReadProduce.signal.notify_one();
         }
         
         // Wait for the work to be completed

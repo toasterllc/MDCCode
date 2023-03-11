@@ -518,7 +518,7 @@ done:
     
     _imageSource = imageSource;
     _imageGridLayer = imageGridLayer;
-//    [self _handleImageLibraryChanged];
+    [self _handleImageLibraryChanged];
     
     // Create _selectionRectLayer
     {
@@ -531,18 +531,18 @@ done:
         [_imageGridLayer addSublayer:_selectionRectLayer];
     }
     
-//    // Observe image library changes so that we update the image grid
-//    {
-//        __weak auto selfWeak = self;
-//        ImageLibraryPtr imageLibrary = _imageSource->imageLibrary();
-//        auto lock = std::unique_lock(*imageLibrary);
-//        imageLibrary->observerAdd([=] (const ImageLibrary::Event& ev) {
-//            auto selfStrong = selfWeak;
-//            if (!selfStrong) return false;
-//            dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong _handleImageLibraryChanged]; });
-//            return true;
-//        });
-//    }
+    // Observe image library changes so that we update the image grid
+    {
+        __weak auto selfWeak = self;
+        ImageLibrary& imageLibrary = _imageSource->imageLibrary();
+        auto lock = std::unique_lock(imageLibrary);
+        imageLibrary.observerAdd([=] (const ImageLibrary::Event& ev) {
+            auto selfStrong = selfWeak;
+            if (!selfStrong) return false;
+            dispatch_async(dispatch_get_main_queue(), ^{ [selfStrong _handleImageLibraryChanged]; });
+            return true;
+        });
+    }
     
     return self;
 }
@@ -570,9 +570,9 @@ done:
     [_docHeight setConstant:[_imageGridLayer containerHeight]];
 }
 
-//- (void)_handleImageLibraryChanged {
-//    [[self enclosingScrollView] tile];
-//}
+- (void)_handleImageLibraryChanged {
+    [[self enclosingScrollView] tile];
+}
 
 // MARK: - Event Handling
 
