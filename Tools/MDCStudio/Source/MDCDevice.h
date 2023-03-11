@@ -33,7 +33,7 @@ public:
     _dev(std::move(dev)),
     _dir(_DirForSerial(_dev.serial())),
     _imageLibrary(_dir / "ImageLibrary"),
-    _imageCache(_imageLibrary, _ImageProvider(_dev)) {
+    _imageCache(_imageLibrary, _imageProvider()) {
     
         printf("MDCDevice()\n");
         
@@ -359,42 +359,29 @@ private:
 //        return MSP::TimeAbsoluteBase | (t-MSP::TimeAbsoluteUnixReference);
 //    }
     
-    static ImageCache::ImageProvider _ImageProvider(Device& dev) {
+    ImageCache::ImageProvider _imageProvider() {
         return [&] (uint64_t addr) -> ImagePtr {
-            return _ImageForAddr(dev, addr);
+            return _imageForAddr(addr);
         };
     }
     
-    static ImagePtr _ImageForAddr(Device& dev, uint64_t addr) {
-        // Lock the device for the duration of this function
-        auto lock = std::unique_lock(dev);
-        auto imageData = std::make_unique<uint8_t[]>(ImgSD::Full::ImagePaddedLen);
-        dev.reset();
-        dev.sdRead((SD::Block)addr);
-        dev.readout(imageData.get(), ImgSD::Full::ImagePaddedLen);
+    ImagePtr _imageForAddr(uint64_t addr) {
+        auto data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
+        _SDRead(_SDReadWork::Priority::Low, (_SDBlock)addr, Img::Full::ImageLen, data.get());
         
-        if (_ChecksumValid(imageData.get(), Img::Size::Full)) {
+        if (_ChecksumValid(data.get(), Img::Size::Full)) {
 //            printf("Checksum valid (size: full)\n");
         } else {
             printf("Checksum INVALID (size: full)\n");
 //            abort();
         }
         
-//        // Validate checksum
-//        const size_t checksumOffset = (size==Img::Size::Full ? Img::Full::ChecksumOffset : Img::Thumb::ChecksumOffset);
-//        const uint32_t checksumExpected = ChecksumFletcher32(buf.get(), checksumOffset);
-//        uint32_t checksumGot = 0;
-//        memcpy(&checksumGot, (uint8_t*)buf.get()+checksumOffset, Img::ChecksumLen);
-//        if (checksumGot != checksumExpected) {
-//            throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
-//        }
-        
-        const Img::Header& header = *(const Img::Header*)imageData.get();
+        const Img::Header& header = *(const Img::Header*)data.get();
         ImagePtr image = std::make_shared<Image>(Image{
             .width      = header.imageWidth,
             .height     = header.imageHeight,
             .cfaDesc    = _CFADesc,
-            .data       = std::move(imageData),
+            .data       = std::move(data),
             .off        = sizeof(header),
         });
         return image;
