@@ -325,6 +325,64 @@ private:
         return true;
     }
     
+    static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
+    using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
+    
+    // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
+    // destination buffer (dst), as BC7-compressed data
+    static CCM _ThumbRender(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage,
+        const std::optional<CCM>& ccmOpt, const void* src, void* dst) {
+        
+        using namespace MDCTools;
+        using namespace MDCTools::ImagePipeline;
+        using namespace Toastbox;
+        
+        CCM ccm;
+        
+        // Render thumbnail into `thumbTxt`
+        constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+        const Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
+            ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
+        {
+            Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
+            
+            Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
+            
+            const Pipeline::DebayerOptions debayerOpts = {
+                .cfaDesc        = _CFADesc,
+                .illum          = (ccmOpt ? std::optional<ColorRaw>(ccmOpt->illum) : std::nullopt),
+                .debayerLMMSE   = { .applyGamma = true, },
+            };
+            
+            const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
+            
+            ccm = {
+                .illum = (ccmOpt ? ccmOpt->illum : debayerResult.illum),
+                .matrix = (ccmOpt ? ccmOpt->matrix : ColorMatrixForIlluminant(debayerResult.illum).matrix)
+            };
+            
+            const Pipeline::ProcessOptions processOpts = {
+                .illum = ccm.illum,
+                .colorMatrix = ccm.matrix,
+            };
+            
+            Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
+            renderer.sync(thumbTxt);
+            renderer.commitAndWait();
+        }
+        
+        // Compress thumbnail into `dst`
+        {
+            [thumbTxt getBytes:&tmpStorage[0] bytesPerRow:ImageThumb::ThumbWidth*4
+                fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+            
+            compressor.encode(&tmpStorage[0], dst);
+        }
+        
+        return ccm;
+    }
+    
 //    static MSP::Time _MSPTimeCurrent() {
 //        return MSP::TimeFromUnixTime(std::time(nullptr));
 //        const std::time_t t = std::time(nullptr);
@@ -413,7 +471,7 @@ private:
                         );
                     }
                     
-                    const uint32_t addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                    const uint32_t addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                     printf("Adding %ju images\n", (uintmax_t)addCount);
                     
                     _Range newest;
@@ -442,13 +500,14 @@ private:
         constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
-        const _SDBlock fullBlockStart = range.idx * ImgSD::Full::ImageBlockCount;
         const _SDBlock thumbBlockStart = _mspState.sd.thumbBlockStart + (range.idx * ImgSD::Thumb::ImageBlockCount);
+        const _SDBlock fullBlockStart = range.idx * ImgSD::Full::ImageBlockCount;
         
         // Consumer
         std::thread consumerThread([&] {
             constexpr size_t WriteInterval = ChunkImgCount*8;
-            _SDBlock block = fullBlockStart;
+            _SDBlock addrThumb = thumbBlockStart;
+            _SDBlock addrFull = fullBlockStart;
             size_t addedImageCount = 0;
             
             for (;;) @autoreleasepool {
@@ -457,9 +516,10 @@ private:
                 auto startTime = std::chrono::steady_clock::now();
                 const size_t imageCount = buf.len;
                 if (!imageCount) break; // We're done when we get an empty buffer
-                _sync_addImages(buf.data, imageCount, block);
+                _sync_addImages(buf.data, imageCount, addrThumb, addrFull);
                 
-                block += imageCount * ImgSD::Full::ImageBlockCount;
+                addrThumb += imageCount * ImgSD::Thumb::ImageBlockCount;
+                addrFull += imageCount * ImgSD::Full::ImageBlockCount;
                 addedImageCount += imageCount;
                 bufQueue.rpop();
                 
@@ -508,66 +568,7 @@ private:
         }
     }
     
-    static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
-    using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
-    
-    // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
-    // destination buffer (dst), as BC7-compressed data
-    static CCM _ThumbRender(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage,
-        const std::optional<CCM>& ccmOpt, const void* src, void* dst) {
-        
-        using namespace MDCTools;
-        using namespace MDCTools::ImagePipeline;
-        using namespace Toastbox;
-        
-        CCM ccm;
-        
-        // Render thumbnail into `thumbTxt`
-        constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
-        const Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
-            ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
-        {
-            Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
-                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
-            
-            Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
-            
-            const Pipeline::DebayerOptions debayerOpts = {
-                .cfaDesc        = _CFADesc,
-                .illum          = (ccmOpt ? std::optional<ColorRaw>(ccmOpt->illum) : std::nullopt),
-                .debayerLMMSE   = { .applyGamma = true, },
-            };
-            
-            const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
-            
-            ccm = {
-                .illum = (ccmOpt ? ccmOpt->illum : debayerResult.illum),
-                .matrix = (ccmOpt ? ccmOpt->matrix : ColorMatrixForIlluminant(debayerResult.illum).matrix)
-            };
-            
-            const Pipeline::ProcessOptions processOpts = {
-                .illum = ccm.illum,
-                .colorMatrix = ccm.matrix,
-            };
-            
-            Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
-            renderer.sync(thumbTxt);
-            renderer.commitAndWait();
-        }
-        
-        // Compress thumbnail into `dst`
-        {
-            [thumbTxt getBytes:&tmpStorage[0] bytesPerRow:ImageThumb::ThumbWidth*4
-                fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
-            
-            compressor.encode(&tmpStorage[0], dst);
-        }
-        
-        return ccm;
-    }
-    
-    
-    void _sync_addImages(const uint8_t* data, size_t imgCount, _SDBlock block) {
+    void _sync_addImages(const uint8_t* data, size_t imgCount, _SDBlock addrThumb, _SDBlock addrFull) {
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
         using namespace Toastbox;
@@ -616,16 +617,17 @@ private:
                         
                         // Populate .info
                         {
-                            rec.info.id              = imgHeader.id;
-                            rec.info.addr            = block + idx*ImgSD::Full::ImageBlockCount;
+                            rec.info.id             = imgHeader.id;
+                            rec.info.addrThumb      = addrThumb + idx*ImgSD::Thumb::ImageBlockCount;
+                            rec.info.addrFull       = addrFull + idx*ImgSD::Full::ImageBlockCount;
                             
-                            rec.info.timestamp       = imgHeader.timestamp;
+                            rec.info.timestamp      = imgHeader.timestamp;
                             
-                            rec.info.imageWidth      = imgHeader.imageWidth;
-                            rec.info.imageHeight     = imgHeader.imageHeight;
+                            rec.info.imageWidth     = imgHeader.imageWidth;
+                            rec.info.imageHeight    = imgHeader.imageHeight;
                             
-                            rec.info.coarseIntTime   = imgHeader.coarseIntTime;
-                            rec.info.analogGain      = imgHeader.analogGain;
+                            rec.info.coarseIntTime  = imgHeader.coarseIntTime;
+                            rec.info.analogGain     = imgHeader.analogGain;
                         }
                         
                         // Populate .options
@@ -673,26 +675,97 @@ private:
         id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
         Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
         _ThumbCompressor compressor;
-        auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
         
         for (;;) @autoreleasepool {
-            std::set<ImageRecordPtr> work;
+            // Wait for work to arrive
+            std::set<ImageRecordPtr> recs;
             {
                 auto lock = std::unique_lock(_renderThumbs.lock);
                 // Wait for work, or to be signalled to stop
                 _renderThumbs.signal.wait(lock, [&] { return !_renderThumbs.work.empty() || _renderThumbs.stop; });
                 if (_renderThumbs.stop) return;
-                work = std::move(_renderThumbs.work);
+                recs = std::move(_renderThumbs.work);
             }
             
-            // Render thumbnails
+            printf("Rendering thumbs:\n");
+            for (const ImageRecordPtr& rec : recs) {
+                printf("%ju\n", (uintmax_t)rec->info.id);
+            }
+            printf("\n");
+            
+            // Read thumbnail data from device
+            struct ThumbRenderWork : _SDReadWork {
+                ImageRecordPtr rec;
+                std::unique_ptr<uint8_t[]> data;
+            };
+            std::set<ThumbRenderWork> works;
             {
+                {
+                    auto lock = std::unique_lock(_sdReadProduce.lock);
+                    _SDReadWorkQueue& queue = _sdReadProduce.queues[_SDReadWork::Priority::High];
+                    for (const ImageRecordPtr& rec : recs) {
+                        std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(Img::Thumb::ImageLen);
+                        auto [it, _] = works.emplace(ThumbRenderWork{
+                            _SDReadWork{
+                                .block = rec->info.addrThumb,
+                                .len = Img::Thumb::ImageLen,
+                                .dst = data.get(),
+                            },
+                            .rec = rec,
+                            .data = std::move(data),
+                        });
+                        
+                        queue.set.insert(*it);
+                    }
+                }
+                _sdReadProduce.signal.notify_one();
+            }
+            
+            // Render thumbnails as the data arrives from the device
+            {
+                id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
+                Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
+                _ThumbCompressor compressor;
+                std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
+                
+                for (;;) {
+                    auto lock = std::unique_lock(_sdReadConsume.lock);
+                    for (auto it=works.begin(); it!=works.end();) {
+                        const ThumbRenderWork& work = *it;
+                        switch (*work.status) {
+                        case _SDReadWork::Status::Underway:
+                            it++;
+                            break;
+                        
+                        case _SDReadWork::Status::Finished: {
+                            printf("Rendering thumb: %ju\n", (uintmax_t)work.rec->info.id);
+                            const CCM ccm = {
+                                .illum = ColorRaw(work.rec->options.whiteBalance.illum),
+                                .matrix = ColorMatrix((double*)work.rec->options.whiteBalance.colorMatrix),
+                            };
+                            const void* src = work.data.get()+Img::PixelsOffset;
+                            void* dst = work.rec->thumb.data;
+                            _ThumbRender(renderer, compressor, *thumbTmpStorage, ccm, src, dst);
+                            it = works.erase(it);
+                            break;
+                        }
+                        
+                        default:
+                            throw Toastbox::RuntimeError("SDRead failed; status: %d", (int)*work.status);
+                        }
+                    }
+                    
+                    if (works.empty()) break;
+                    // We still have work that isn't complete; wait to be signalled
+                    _sdReadConsume.signal.wait(lock);
+                }
+                
             }
             
             // Notify image library that the images changed
             {
                 auto lock = std::unique_lock(_imageLibrary);
-                _imageLibrary.notifyChange(work);
+                _imageLibrary.notifyChange(recs);
             }
         }
     }
@@ -702,7 +775,7 @@ private:
     struct _SDReadWork {
         enum Priority : uint8_t { High, Low, Count };
         
-        enum class Status {
+        enum class Status : uint8_t {
             Underway,
             Finished,
             Error,
@@ -764,12 +837,15 @@ private:
         }
         
         // Wait for the work to be completed
-        {
-            auto lock = std::unique_lock(_sdReadConsume.lock);
-            _sdReadConsume.signal.wait(lock, [&] { return *work.status!=_SDReadWork::Status::Underway; });
-            if (*work.status != _SDReadWork::Status::Finished) {
-                throw Toastbox::RuntimeError("SDRead failed; status: %d", (int)*work.status);
-            }
+        _sdReadWait(work);
+    }
+    
+    void _sdReadWait(const _SDReadWork& work) {
+        // Wait for the work to be completed
+        auto lock = std::unique_lock(_sdReadConsume.lock);
+        _sdReadConsume.signal.wait(lock, [&] { return *work.status!=_SDReadWork::Status::Underway; });
+        if (*work.status != _SDReadWork::Status::Finished) {
+            throw Toastbox::RuntimeError("SDRead failed; status: %d", (int)*work.status);
         }
     }
     

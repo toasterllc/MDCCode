@@ -84,7 +84,7 @@ private:
             if (work.loadImage) {
                 ImagePtr image;
                 // Load the image
-                image = _imageProvider(work.rec->info.addr);
+                image = _imageProvider(work.rec->info.addrFull);
                 if (image) {
                     // Put the image in the cache
                     _state.images[work.rec->info.id] = image;
@@ -116,12 +116,12 @@ private:
                         
                         if (it != _imageLibrary.end()) {
                             const ImageRecord& thumb = **it;
-                            idAddrs.push_back({ thumb.info.id, thumb.info.addr });
+                            idAddrs.push_back({ thumb.info.id, thumb.info.addrFull });
                         }
                         
                         if (rit != _imageLibrary.rend()) {
                             const ImageRecord& thumb = **rit;
-                            idAddrs.push_back({ thumb.info.id, thumb.info.addr });
+                            idAddrs.push_back({ thumb.info.id, thumb.info.addrFull });
                         }
                         
                         // make_reverse_iterator() returns an iterator that points to the element _before_ the

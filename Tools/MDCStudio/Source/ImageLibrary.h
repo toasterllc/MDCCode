@@ -13,8 +13,8 @@ namespace MDCStudio {
 struct [[gnu::packed]] ImageInfo {
     Img::Id id = 0;
     
-    // addr: address of the full-size image on the device
-    uint64_t addr = 0;
+    uint64_t addrThumb = 0;
+    uint64_t addrFull = 0;
     
     Time::Instant timestamp = 0;
     
