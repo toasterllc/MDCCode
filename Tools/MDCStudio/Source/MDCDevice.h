@@ -2,6 +2,7 @@
 #import <filesystem>
 #import <thread>
 #import <set>
+#import <array>
 #import <chrono>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "Toastbox/Mmap.h"
@@ -412,7 +413,7 @@ private:
                         );
                     }
                     
-                    const uint32_t addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                    const uint32_t addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                     printf("Adding %ju images\n", (uintmax_t)addCount);
                     
                     _Range newest;
@@ -437,7 +438,7 @@ private:
         using namespace MDCTools;
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
-        constexpr size_t ChunkImgCount = 128; // Number of images to read at a time
+        constexpr size_t ChunkImgCount = 512; // Number of images to read at a time
         constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
@@ -451,16 +452,15 @@ private:
             size_t addedImageCount = 0;
             
             for (;;) @autoreleasepool {
-                const auto& buf = bufQueue.rget();
-                
                 auto startTime = std::chrono::steady_clock::now();
+                
+                const auto& buf = bufQueue.rget();
                 const size_t imageCount = buf.len;
                 if (!imageCount) break; // We're done when we get an empty buffer
                 _sync_addImages(buf.data, imageCount, block);
                 
                 block += imageCount * ImgSD::Full::ImageBlockCount;
                 addedImageCount += imageCount;
-                
                 bufQueue.rpop();
                 
                 auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
@@ -484,6 +484,8 @@ private:
         
         // Producer
         for (size_t i=0; i<range.len;) {
+            auto startTime = std::chrono::steady_clock::now();
+            
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
             auto& buf = bufQueue.wget();
             buf.len = chunkImgCount; // buffer length = count of images (not byte count)
@@ -491,8 +493,8 @@ private:
             bufQueue.wpush();
             i += chunkImgCount;
             
-            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
-            printf("Read %ju images (ms: %ju)\n", (uintmax_t)chunkImgCount, (uintmax_t)ms.count());
+            auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
+            printf("Read %ju images (ms: %ju)\n", (uintmax_t)chunkImgCount, (uintmax_t)durationMs);
         }
         
         // Wait until we're complete
@@ -505,6 +507,63 @@ private:
             consumerThread.join();
         }
     }
+    
+    static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
+    using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
+    
+    static CCM _ThumbRender(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage,
+        const std::optional<CCM>& ccmOpt, const void* src, void* dst) {
+        
+        using namespace MDCTools;
+        using namespace MDCTools::ImagePipeline;
+        using namespace Toastbox;
+        
+        CCM ccm;
+        
+        // Render thumbnail into `thumbTxt`
+        constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+        const Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
+            ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
+        {
+            Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
+            
+            Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
+            
+            const Pipeline::DebayerOptions debayerOpts = {
+                .cfaDesc        = _CFADesc,
+                .illum          = (ccmOpt ? std::optional<ColorRaw>(ccmOpt->illum) : std::nullopt),
+                .debayerLMMSE   = { .applyGamma = true, },
+            };
+            
+            const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
+            
+            ccm = {
+                .illum = (ccmOpt ? ccmOpt->illum : debayerResult.illum),
+                .matrix = (ccmOpt ? ccmOpt->matrix : ColorMatrixForIlluminant(debayerResult.illum).matrix)
+            };
+            
+            const Pipeline::ProcessOptions processOpts = {
+                .illum = ccm.illum,
+                .colorMatrix = ccm.matrix,
+            };
+            
+            Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
+            renderer.sync(thumbTxt);
+            renderer.commitAndWait();
+        }
+        
+        // Compress thumbnail into `dst`
+        {
+            [thumbTxt getBytes:&tmpStorage[0] bytesPerRow:ImageThumb::ThumbWidth*4
+                fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+            
+            compressor.encode(&tmpStorage[0], dst);
+        }
+        
+        return ccm;
+    }
+    
     
     void _sync_addImages(const uint8_t* data, size_t imgCount, _SDBlock block) {
         using namespace MDCTools;
@@ -530,6 +589,8 @@ private:
             for (uint32_t i=0; i<threadCount; i++) {
                 workers.emplace_back([&](){
                     Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+                    _ThumbCompressor compressor;
+                    std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
                     std::vector<Renderer::Txt> txts;
                     
                     for (;;) {
@@ -576,35 +637,9 @@ private:
                         
                         // Render the thumbnail into rec.thumb
                         {
-                            Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
-                                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (ImagePixel*)(imgData+Img::PixelsOffset));
-                            
-                            Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
-                            
-                            const Pipeline::DebayerOptions debayerOpts = {
-                                .cfaDesc        = _CFADesc,
-                                .debayerLMMSE   = { .applyGamma = true, },
-                            };
-                            
-                            const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
-                            
-                            constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
-                            Renderer::Txt& thumbTxt = txts.emplace_back(renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
-                                ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage));
-                            thumbTxts[idx] = thumbTxt;
-                            
-                            const CCM ccm = {
-                                .illum = debayerResult.illum,
-                                .matrix = ColorMatrixForIlluminant(debayerResult.illum).matrix,
-                            };
-                            
-                            const Pipeline::ProcessOptions processOpts = {
-                                .illum = ccm.illum,
-                                .colorMatrix = ccm.matrix,
-                            };
-                            
-                            Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
-                            renderer.sync(thumbTxt);
+                            const void* src = imgData+Img::PixelsOffset;
+                            void* dst = rec.thumb.data;
+                            const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, std::nullopt, src, dst);
                             
                             // Populate .info.illumEst
                             ccm.illum.m.get(rec.info.illumEst);
@@ -613,40 +648,6 @@ private:
                             ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
                         }
                     }
-                    
-                    renderer.commitAndWait();
-                });
-            }
-            
-            // Wait for workers to complete
-            for (std::thread& t : workers) t.join();
-        }
-        
-        // Compress each thumbnail and copy the compressed data into the respective ImageRecord
-        // Spawn N worker threads (N=number of cores) to do the work in parallel
-        // The work is complete when all threads have exited
-        {
-            std::vector<std::thread> workers;
-            std::atomic<size_t> workIdx = 0;
-            const uint32_t threadCount = std::max(1,(int)std::thread::hardware_concurrency());
-            for (uint32_t i=0; i<threadCount; i++) {
-                workers.emplace_back([&](){
-                    _ThumbCompressor compressor;
-                    auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
-                    
-                    for (;;) {
-                        const size_t idx = workIdx.fetch_add(1);
-                        if (idx >= imgCount) break;
-                        
-                        const auto recordRefIter = _imageLibrary.reservedBegin()+idx;
-                        id<MTLTexture> thumbTxt = thumbTxts[idx];
-                        ImageRecord& rec = **recordRefIter;
-                        
-                        [thumbTxt getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
-                            fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
-                        
-                        compressor.encode(thumbData.get(), rec.thumb.data);
-                    }
                 });
             }
             
@@ -655,7 +656,6 @@ private:
         }
         
         {
-            
             const Img::Id deviceImgIdLast = _imageLibrary.reservedBack()->info.id;
             auto lock = std::unique_lock(_imageLibrary);
             // Add the records that we previously reserved

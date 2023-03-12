@@ -50,9 +50,8 @@ struct [[gnu::packed]] ImageOptions {
     } localContrast;
     
     struct {
-        uint8_t modified = 0;
-        uint8_t render = 0;
-        uint8_t _pad[6];
+        bool render = false;
+        uint8_t _pad[7];
     } thumb;
     
     // _reserved: so we can add fields in the future without doing a data migration
