@@ -637,21 +637,24 @@ private:
     }
     
     Chunk& _chunkGetWritable() {
-        auto lastChunk = std::prev(_state.chunks.end());
-        if (lastChunk==_state.chunks.end() || lastChunk->recordIdx>=T_ChunkRecordCap) {
+        Chunk* chunk = nullptr;
+        auto last = std::prev(_state.chunks.end());
+        if (last==_state.chunks.end() || last->recordIdx>=T_ChunkRecordCap) {
             // We don't have any chunks, or the last chunk is full
             // Create a new chunk
-            return _ChunkPush(_state.chunks, _ChunkFileCreate(_chunkPath(_state.chunks.size())));
+            chunk = &_ChunkPush(_state.chunks, _ChunkFileCreate(_chunkPath(_state.chunks.size())));
         
         } else {
             // The last chunk can fit more records
-            // Resize the chunk file to be a full chunk, in case it wasn't already.
-            // Currently, _ChunkFileCreate() creates 0-byte chunk files, so we set their size here.
-            // In the future, when we implement compaction, chunks could have arbitrary sizes, making it
-            // doubly necessary to set the file size here.
-            lastChunk->mmap.len(_ChunkLen);
-            return *lastChunk;
+            chunk = &(*last);
         }
+        
+        // Resize the chunk file to be a full chunk, in case it wasn't already.
+        // Currently, _ChunkFileCreate() creates 0-byte chunk files, so we set their size here.
+        // In the future, when we implement compaction, chunks could have arbitrary sizes, making it
+        // doubly necessary to set the file size here.
+        chunk->mmap.len(_ChunkLen);
+        return *chunk;
     }
     
     const Path _path;
