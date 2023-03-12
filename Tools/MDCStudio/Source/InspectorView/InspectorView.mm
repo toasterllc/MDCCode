@@ -1147,8 +1147,17 @@ static id _Get_timestampCorner(const ImageRecord& rec) {
 
 static void _Set_whiteBalanceAuto(ImageRecord& rec, id data) {
     const bool automatic = [data boolValue];
-    const ColorRaw illum(rec.info.illumEst);
-    const CCM ccm = ColorMatrixForIlluminant(illum);
+    CCM ccm;
+    if (automatic) {
+        const ColorRaw illum(rec.info.illumEst);
+        ccm = CCM{
+            .illum = illum,
+            .matrix = ColorMatrixForIlluminant(illum).matrix,
+        };
+    } else {
+        ccm = ColorMatrixForInterpolation(rec.options.whiteBalance.value);
+    }
+    
     ImageWhiteBalanceSet(rec.options.whiteBalance, automatic, rec.options.whiteBalance.value, ccm);
     rec.options.thumb.render = true;
 }
