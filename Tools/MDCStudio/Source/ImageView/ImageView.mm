@@ -193,7 +193,7 @@ static CGColorSpaceRef _LSRGBColorSpace() {
 }
 
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
-// and with the ImageLibraryPtr lock held!
+// and with the ImageLibrary lock held!
 - (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
     switch (ev.type) {
     case ImageLibrary::Event::Type::Add:

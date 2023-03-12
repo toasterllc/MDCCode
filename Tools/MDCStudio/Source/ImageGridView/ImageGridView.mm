@@ -451,7 +451,7 @@ done:
 
 // MARK: - ImageLibrary Observer
 // _handleImageLibraryEvent: called on whatever thread where the modification happened,
-// and with the ImageLibraryPtr lock held!
+// and with the ImageLibrary lock held!
 - (void)_handleImageLibraryEvent:(const ImageLibrary::Event&)ev {
     // Trampoline the event to our main thread, if we're not on the main thread
     if (![NSThread isMainThread]) {
@@ -463,9 +463,7 @@ done:
     }
     
     // If we added records or changed records, we need to update the relevent textures
-    if (ev.type==ImageLibrary::Event::Type::Add ||
-        ev.type == ImageLibrary::Event::Type::Change) {
-        
+    if (ev.type==ImageLibrary::Event::Type::Add || ev.type==ImageLibrary::Event::Type::Change) {
         for (const ImageRecordPtr& rec : ev.records) {
             auto it = _chunkTxts.get(rec);
             if (it == _chunkTxts.end()) continue;
