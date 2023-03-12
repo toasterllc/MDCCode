@@ -462,8 +462,10 @@ done:
         return;
     }
     
-    if (ev.type == ImageLibrary::Event::Type::Change) {
-        // Update textures for any of the changed records
+    // If we added records or changed records, we need to update the relevent textures
+    if (ev.type==ImageLibrary::Event::Type::Add ||
+        ev.type == ImageLibrary::Event::Type::Change) {
+        
         for (const ImageRecordPtr& rec : ev.records) {
             auto it = _chunkTxts.get(rec);
             if (it == _chunkTxts.end()) continue;
