@@ -482,7 +482,7 @@ private:
                         );
                     }
                     
-                    const uint32_t addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                    const uint32_t addCount = 32;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                     printf("Adding %ju images\n", (uintmax_t)addCount);
                     
                     _Range newest;
