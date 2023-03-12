@@ -511,6 +511,8 @@ private:
     static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
     using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
     
+    // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
+    // destination buffer (dst), as BC7-compressed data
     static CCM _ThumbRender(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage,
         const std::optional<CCM>& ccmOpt, const void* src, void* dst) {
         
