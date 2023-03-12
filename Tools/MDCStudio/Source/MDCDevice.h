@@ -331,7 +331,7 @@ private:
     // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
     // destination buffer (dst), as BC7-compressed data
     static CCM _ThumbRender(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage,
-        const ImageOptions& opts, const std::optional<CCM>& ccmOpt, const void* src, void* dst) {
+        const ImageOptions& opts, bool estimateIlluminant, const void* src, void* dst) {
         
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
@@ -351,20 +351,20 @@ private:
             
             const Pipeline::DebayerOptions debayerOpts = {
                 .cfaDesc        = _CFADesc,
-                .illum          = (ccmOpt ? std::optional<ColorRaw>(ccmOpt->illum) : std::nullopt),
+                .illum          = (estimateIlluminant ? std::nullopt : std::optional<ColorRaw>(opts.whiteBalance.illum)),
                 .debayerLMMSE   = { .applyGamma = true, },
             };
             
             const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
             
             ccm = {
-                .illum = (ccmOpt ? ccmOpt->illum : debayerResult.illum),
-                .matrix = (ccmOpt ? ccmOpt->matrix : ColorMatrixForIlluminant(debayerResult.illum).matrix)
+                .illum = (estimateIlluminant ? debayerResult.illum : ColorRaw(opts.whiteBalance.illum)),
+                .matrix = (estimateIlluminant ? ColorMatrixForIlluminant(debayerResult.illum).matrix : ColorMatrix((double*)opts.whiteBalance.colorMatrix))
             };
             
             const Pipeline::ProcessOptions processOpts = {
-                .illum = ccm.illum,
-                .colorMatrix = ccm.matrix,
+                .illum          = ccm.illum,
+                .colorMatrix    = ccm.matrix,
                 
                 .exposure   = (float)opts.exposure,
                 .saturation = (float)opts.saturation,
@@ -372,7 +372,7 @@ private:
                 .contrast   = (float)opts.contrast,
                 
                 .localContrast = {
-                    .en = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
+                    .en     = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
                     .amount = (float)opts.localContrast.amount,
                     .radius = (float)opts.localContrast.radius,
                 },
@@ -650,7 +650,7 @@ private:
                         {
                             const void* src = imgData+Img::PixelsOffset;
                             void* dst = rec.thumb.data;
-                            const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, rec.options, std::nullopt, src, dst);
+                            const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, rec.options, true, src, dst);
                             
                             // Populate .info.illumEst
                             ccm.illum.m.get(rec.info.illumEst);
@@ -750,13 +750,9 @@ private:
                         
                         case _SDReadWork::Status::Finished: {
                             printf("Rendering thumb: %ju\n", (uintmax_t)work.rec->info.id);
-                            const CCM ccm = {
-                                .illum = ColorRaw(work.rec->options.whiteBalance.illum),
-                                .matrix = ColorMatrix((double*)work.rec->options.whiteBalance.colorMatrix),
-                            };
                             const void* src = work.data.get()+Img::PixelsOffset;
                             void* dst = work.rec->thumb.data;
-                            _ThumbRender(renderer, compressor, *thumbTmpStorage, work.rec->options, ccm, src, dst);
+                            _ThumbRender(renderer, compressor, *thumbTmpStorage, work.rec->options, false, src, dst);
                             it = works.erase(it);
                             break;
                         }
