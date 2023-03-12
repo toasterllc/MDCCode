@@ -508,52 +508,62 @@ private:
         }
     }
     
-    static std::tuple<MDCTools::Renderer::Txt,CCM> _ThumbRender(MDCTools::Renderer& renderer, const std::optional<CCM>& ccmOpt, const void* src) {
+    static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
+    using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
+    
+    static CCM _ThumbRender(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage,
+        const std::optional<CCM>& ccmOpt, const void* src, void* dst) {
+        
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
         using namespace Toastbox;
         
-        Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
-            Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
-        
-        Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
-        
-        const Pipeline::DebayerOptions debayerOpts = {
-            .cfaDesc        = _CFADesc,
-            .illum          = (ccmOpt ? std::optional<ColorRaw>(ccmOpt->illum) : std::nullopt),
-            .debayerLMMSE   = { .applyGamma = true, },
-        };
-        
-        const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
-        
-        CCM ccm = {
-            .illum = (ccmOpt ? ccmOpt->illum : debayerResult.illum),
-            .matrix = (ccmOpt ? ccmOpt->matrix : ColorMatrixForIlluminant(debayerResult.illum).matrix)
-        };
-        
-        const Pipeline::ProcessOptions processOpts = {
-            .illum = ccm.illum,
-            .colorMatrix = ccm.matrix,
-        };
+        CCM ccm;
         
         // Render thumbnail into `thumbTxt`
         constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
         const Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
             ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
+        {
+            Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (const ImagePixel*)src);
+            
+            Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
+            
+            const Pipeline::DebayerOptions debayerOpts = {
+                .cfaDesc        = _CFADesc,
+                .illum          = (ccmOpt ? std::optional<ColorRaw>(ccmOpt->illum) : std::nullopt),
+                .debayerLMMSE   = { .applyGamma = true, },
+            };
+            
+            const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
+            
+            ccm = {
+                .illum = (ccmOpt ? ccmOpt->illum : debayerResult.illum),
+                .matrix = (ccmOpt ? ccmOpt->matrix : ColorMatrixForIlluminant(debayerResult.illum).matrix)
+            };
+            
+            const Pipeline::ProcessOptions processOpts = {
+                .illum = ccm.illum,
+                .colorMatrix = ccm.matrix,
+            };
+            
+            Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
+            renderer.sync(thumbTxt);
+            renderer.commitAndWait();
+        }
         
-        Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
-        renderer.sync(thumbTxt);
-        return std::make_tuple(thumbTxt, ccm);
+        // Compress thumbnail into `dst`
+        {
+            [thumbTxt getBytes:&tmpStorage[0] bytesPerRow:ImageThumb::ThumbWidth*4
+                fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+            
+            compressor.encode(&tmpStorage[0], dst);
+        }
+        
+        return ccm;
     }
     
-    static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
-    using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
-    static void _ThumbCompress(_ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage, id<MTLTexture> src, void* dst) {
-        [src getBytes:&tmpStorage[0] bytesPerRow:ImageThumb::ThumbWidth*4
-            fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
-        
-        compressor.encode(&tmpStorage[0], dst);
-    }
     
     void _sync_addImages(const uint8_t* data, size_t imgCount, _SDBlock block) {
         using namespace MDCTools;
