@@ -438,7 +438,7 @@ private:
         using namespace MDCTools;
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
-        constexpr size_t ChunkImgCount = 512; // Number of images to read at a time
+        constexpr size_t ChunkImgCount = 128; // Number of images to read at a time
         constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
         auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
         auto& bufQueue = *bufQueuePtr;
@@ -494,7 +494,7 @@ private:
             i += chunkImgCount;
             
             auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-            printf("Read %ju images (ms: %ju)\n", (uintmax_t)chunkImgCount, (uintmax_t)durationMs);
+            printf("Read %ju images (took %ju ms)\n", (uintmax_t)chunkImgCount, (uintmax_t)durationMs);
         }
         
         // Wait until we're complete
