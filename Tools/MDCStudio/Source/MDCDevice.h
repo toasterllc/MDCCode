@@ -578,7 +578,6 @@ private:
         
         #warning TODO: perf: in the future we could ensure that our `data` argument is mmap'd and
         #warning             use -newBufferWithBytesNoCopy: to avoid creating a bunch of temporary buffers
-        auto thumbTxts = std::make_unique<id<MTLTexture>[]>(imgCount);
         {
             id<MTLDevice> device = MTLCreateSystemDefaultDevice();
             if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
@@ -591,7 +590,6 @@ private:
                     Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
                     _ThumbCompressor compressor;
                     std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
-                    std::vector<Renderer::Txt> txts;
                     
                     for (;;) {
                         const size_t idx = workIdx.fetch_add(1);
@@ -617,7 +615,7 @@ private:
                         // Populate .info
                         {
                             rec.info.id              = imgHeader.id;
-                            rec.info.addr            = block;
+                            rec.info.addr            = block + idx*ImgSD::Full::ImageBlockCount;
                             
                             rec.info.timestamp       = imgHeader.timestamp;
                             
@@ -626,8 +624,6 @@ private:
                             
                             rec.info.coarseIntTime   = imgHeader.coarseIntTime;
                             rec.info.analogGain      = imgHeader.analogGain;
-                            
-                            block += ImgSD::Full::ImageBlockCount;
                         }
                         
                         // Populate .options
