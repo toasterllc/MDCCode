@@ -331,7 +331,7 @@ private:
     // _ThumbRender(): renders a thumbnail from the RAW source pixels (src) into the
     // destination buffer (dst), as BC7-compressed data
     static CCM _ThumbRender(MDCTools::Renderer& renderer, _ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage,
-        const std::optional<CCM>& ccmOpt, const void* src, void* dst) {
+        const ImageOptions& opts, const std::optional<CCM>& ccmOpt, const void* src, void* dst) {
         
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
@@ -365,6 +365,17 @@ private:
             const Pipeline::ProcessOptions processOpts = {
                 .illum = ccm.illum,
                 .colorMatrix = ccm.matrix,
+                
+                .exposure   = (float)opts.exposure,
+                .saturation = (float)opts.saturation,
+                .brightness = (float)opts.brightness,
+                .contrast   = (float)opts.contrast,
+                
+                .localContrast = {
+                    .en = (opts.localContrast.amount!=0 && opts.localContrast.radius!=0),
+                    .amount = (float)opts.localContrast.amount,
+                    .radius = (float)opts.localContrast.radius,
+                },
             };
             
             Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
@@ -471,7 +482,7 @@ private:
                         );
                     }
                     
-                    const uint32_t addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                    const uint32_t addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                     printf("Adding %ju images\n", (uintmax_t)addCount);
                     
                     _Range newest;
@@ -639,7 +650,7 @@ private:
                         {
                             const void* src = imgData+Img::PixelsOffset;
                             void* dst = rec.thumb.data;
-                            const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, std::nullopt, src, dst);
+                            const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, rec.options, std::nullopt, src, dst);
                             
                             // Populate .info.illumEst
                             ccm.illum.m.get(rec.info.illumEst);
@@ -745,7 +756,7 @@ private:
                             };
                             const void* src = work.data.get()+Img::PixelsOffset;
                             void* dst = work.rec->thumb.data;
-                            _ThumbRender(renderer, compressor, *thumbTmpStorage, ccm, src, dst);
+                            _ThumbRender(renderer, compressor, *thumbTmpStorage, work.rec->options, ccm, src, dst);
                             it = works.erase(it);
                             break;
                         }
