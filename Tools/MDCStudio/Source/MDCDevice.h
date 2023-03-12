@@ -452,9 +452,9 @@ private:
             size_t addedImageCount = 0;
             
             for (;;) @autoreleasepool {
-                auto startTime = std::chrono::steady_clock::now();
-                
                 const auto& buf = bufQueue.rget();
+                
+                auto startTime = std::chrono::steady_clock::now();
                 const size_t imageCount = buf.len;
                 if (!imageCount) break; // We're done when we get an empty buffer
                 _sync_addImages(buf.data, imageCount, block);
