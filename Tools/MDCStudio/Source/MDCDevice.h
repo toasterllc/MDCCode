@@ -538,22 +538,192 @@ private:
         
         // Render thumbnail into `thumbTxt`
         constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
-        const Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
+        Renderer::Txt thumbTxt = renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
             ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage);
         
         Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
         renderer.sync(thumbTxt);
-        return std::make_tuple(thumbTxt, ccm);
+        return std::make_tuple(std::move(thumbTxt), std::move(ccm));
     }
     
     static constexpr size_t _ThumbTmpStorageLen = ImageThumb::ThumbWidth * ImageThumb::ThumbWidth * 4;
     using _ThumbTmpStorage = std::array<uint8_t, _ThumbTmpStorageLen>;
+    
     static void _ThumbCompress(_ThumbCompressor& compressor, _ThumbTmpStorage& tmpStorage, id<MTLTexture> src, void* dst) {
         [src getBytes:&tmpStorage[0] bytesPerRow:ImageThumb::ThumbWidth*4
             fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
         
         compressor.encode(&tmpStorage[0], dst);
     }
+    
+    
+    
+    
+    
+//    void _sync_addImages(const uint8_t* data, size_t imgCount, _SDBlock block) {
+//        using namespace MDCTools;
+//        using namespace MDCTools::ImagePipeline;
+//        using namespace Toastbox;
+//        
+//        // Reserve space for `imgCount` additional images
+//        {
+//            auto lock = std::unique_lock(_imageLibrary);
+//            _imageLibrary.reserve(imgCount);
+//        }
+//        
+//        #warning TODO: perf: in the future we could ensure that our `data` argument is mmap'd and
+//        #warning             use -newBufferWithBytesNoCopy: to avoid creating a bunch of temporary buffers
+//        auto thumbTxts = std::make_unique<id<MTLTexture>[]>(imgCount);
+//        {
+//            id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+//            if (!device) throw std::runtime_error("MTLCreateSystemDefaultDevice returned nil");
+//            
+//            std::vector<std::thread> workers;
+//            std::atomic<size_t> workIdx = 0;
+//            const uint32_t threadCount = std::max(1,(int)std::thread::hardware_concurrency());
+//            for (uint32_t i=0; i<threadCount; i++) {
+//                workers.emplace_back([&](){
+//                    Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
+//                    std::vector<Renderer::Txt> txts;
+//                    
+//                    for (;;) {
+//                        const size_t idx = workIdx.fetch_add(1);
+//                        if (idx >= imgCount) break;
+//                        
+//                        const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
+//                        const Img::Header& imgHeader = *(const Img::Header*)imgData;
+//                        
+//                        // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
+//                        const auto recordRefIter = _imageLibrary.reservedBegin()+idx;
+//                        ImageRecord& rec = **recordRefIter;
+//                        
+//                        // Validate thumbnail checksum
+//                        if (_ImageChecksumValid(imgData, Img::Size::Thumb)) {
+//                            printf("Checksum valid (size: thumb)\n");
+//                        } else {
+//                            printf("Invalid checksum\n");
+////                            throw Toastbox::RuntimeError("invalid checksum");
+////                            abort();
+////                            throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
+//                        }
+//                        
+//                        // Populate .info
+//                        {
+//                            rec.info.id              = imgHeader.id;
+//                            rec.info.addr            = block;
+//                            
+//                            rec.info.timestamp       = imgHeader.timestamp;
+//                            
+//                            rec.info.imageWidth      = imgHeader.imageWidth;
+//                            rec.info.imageHeight     = imgHeader.imageHeight;
+//                            
+//                            rec.info.coarseIntTime   = imgHeader.coarseIntTime;
+//                            rec.info.analogGain      = imgHeader.analogGain;
+//                            
+//                            block += ImgSD::Full::ImageBlockCount;
+//                        }
+//                        
+//                        // Populate .options
+//                        {
+//                            rec.options = {};
+//                        }
+//                        
+//                        // Render the thumbnail into rec.thumb
+//                        {
+//                            Renderer::Txt rawTxt = Pipeline::TextureForRaw(renderer,
+//                                Img::Thumb::PixelWidth, Img::Thumb::PixelHeight, (ImagePixel*)(imgData+Img::PixelsOffset));
+//                            
+//                            Renderer::Txt rgbTxt = renderer.textureCreate(rawTxt, MTLPixelFormatRGBA32Float);
+//                            
+//                            const Pipeline::DebayerOptions debayerOpts = {
+//                                .cfaDesc        = _CFADesc,
+//                                .debayerLMMSE   = { .applyGamma = true, },
+//                            };
+//                            
+//                            const Pipeline::DebayerResult debayerResult = Pipeline::Debayer(renderer, debayerOpts, rawTxt, rgbTxt);
+//                            
+//                            constexpr MTLTextureUsage ThumbTxtUsage = MTLTextureUsageRenderTarget|MTLTextureUsageShaderRead|MTLTextureUsageShaderWrite;
+//                            Renderer::Txt& thumbTxt = txts.emplace_back(renderer.textureCreate(MTLPixelFormatRGBA8Unorm,
+//                                ImageThumb::ThumbWidth, ImageThumb::ThumbHeight, ThumbTxtUsage));
+//                            thumbTxts[idx] = thumbTxt;
+//                            
+//                            const CCM ccm = {
+//                                .illum = debayerResult.illum,
+//                                .matrix = ColorMatrixForIlluminant(debayerResult.illum).matrix,
+//                            };
+//                            
+//                            const Pipeline::ProcessOptions processOpts = {
+//                                .illum = ccm.illum,
+//                                .colorMatrix = ccm.matrix,
+//                            };
+//                            
+//                            Pipeline::Process(renderer, processOpts, rgbTxt, thumbTxt);
+//                            renderer.sync(thumbTxt);
+//                            
+//                            // Populate .info.illumEst
+//                            ccm.illum.m.get(rec.info.illumEst);
+//                            
+//                            // Populate .options.whiteBalance
+//                            ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
+//                        }
+//                    }
+//                    
+//                    renderer.commitAndWait();
+//                });
+//            }
+//            
+//            // Wait for workers to complete
+//            for (std::thread& t : workers) t.join();
+//        }
+//        
+//        // Compress each thumbnail and copy the compressed data into the respective ImageRecord
+//        // Spawn N worker threads (N=number of cores) to do the work in parallel
+//        // The work is complete when all threads have exited
+//        {
+//            std::vector<std::thread> workers;
+//            std::atomic<size_t> workIdx = 0;
+//            const uint32_t threadCount = std::max(1,(int)std::thread::hardware_concurrency());
+//            for (uint32_t i=0; i<threadCount; i++) {
+//                workers.emplace_back([&](){
+//                    _ThumbCompressor compressor;
+//                    auto thumbData = std::make_unique<uint8_t[]>(ImageThumb::ThumbWidth * ImageThumb::ThumbHeight * 4);
+//                    
+//                    for (;;) {
+//                        const size_t idx = workIdx.fetch_add(1);
+//                        if (idx >= imgCount) break;
+//                        
+//                        const auto recordRefIter = _imageLibrary.reservedBegin()+idx;
+//                        id<MTLTexture> thumbTxt = thumbTxts[idx];
+//                        ImageRecord& rec = **recordRefIter;
+//                        
+//                        [thumbTxt getBytes:thumbData.get() bytesPerRow:ImageThumb::ThumbWidth*4
+//                            fromRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0];
+//                        
+//                        compressor.encode(thumbData.get(), rec.thumb.data);
+//                    }
+//                });
+//            }
+//            
+//            // Wait for workers to complete
+//            for (std::thread& t : workers) t.join();
+//        }
+//        
+//        {
+//            
+//            const Img::Id deviceImgIdLast = _imageLibrary.reservedBack()->info.id;
+//            auto lock = std::unique_lock(_imageLibrary);
+//            // Add the records that we previously reserved
+//            _imageLibrary.add();
+//            // Update the device's image id 'end' == last image id that we've observed from the device +1
+//            _imageLibrary.deviceImgIdEnd(deviceImgIdLast+1);
+//        }
+//    }
+    
+    
+    
+    
+    
+    
     
     void _sync_addImages(const uint8_t* data, size_t imgCount, _SDBlock block) {
         using namespace MDCTools;
@@ -579,11 +749,9 @@ private:
             for (uint32_t i=0; i<threadCount; i++) {
                 workers.emplace_back([&](){
                     Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
-                    _ThumbCompressor compressor;
-                    std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
                     std::vector<Renderer::Txt> txts;
                     
-                    for (;;) {
+                    for (;;) @autoreleasepool {
                         const size_t idx = workIdx.fetch_add(1);
                         if (idx >= imgCount) break;
                         
@@ -607,7 +775,7 @@ private:
                         // Populate .info
                         {
                             rec.info.id              = imgHeader.id;
-                            rec.info.addr            = block;
+                            rec.info.addr            = block + idx*ImgSD::Full::ImageBlockCount;
                             
                             rec.info.timestamp       = imgHeader.timestamp;
                             
@@ -616,8 +784,6 @@ private:
                             
                             rec.info.coarseIntTime   = imgHeader.coarseIntTime;
                             rec.info.analogGain      = imgHeader.analogGain;
-                            
-                            block += ImgSD::Full::ImageBlockCount;
                         }
                         
                         // Populate .options
@@ -628,8 +794,9 @@ private:
                         // Render the thumbnail into rec.thumb
                         {
                             const void* src = imgData+Img::PixelsOffset;
-                            void* dst = rec.thumb.data;
-                            const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, std::nullopt, src, dst);
+                            auto [txt, ccm] = _ThumbRender(renderer, std::nullopt, src);
+                            thumbTxts[idx] = txt;
+                            txts.push_back(std::move(txt)); // Keep Renderer::Txt around to prevent texture from being reused on the next iteration
                             
                             // Populate .info.illumEst
                             ccm.illum.m.get(rec.info.illumEst);
@@ -637,6 +804,37 @@ private:
                             // Populate .options.whiteBalance
                             ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
                         }
+                    }
+                    
+                    renderer.commitAndWait();
+                });
+            }
+            
+            // Wait for workers to complete
+            for (std::thread& t : workers) t.join();
+        }
+        
+        // Compress each thumbnail and copy the compressed data into the respective ImageRecord
+        // Spawn N worker threads (N=number of cores) to do the work in parallel
+        // The work is complete when all threads have exited
+        {
+            std::vector<std::thread> workers;
+            std::atomic<size_t> workIdx = 0;
+            const uint32_t threadCount = std::max(1,(int)std::thread::hardware_concurrency());
+            for (uint32_t i=0; i<threadCount; i++) {
+                workers.emplace_back([&](){
+                    _ThumbCompressor compressor;
+                    std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
+                    
+                    for (;;) {
+                        const size_t idx = workIdx.fetch_add(1);
+                        if (idx >= imgCount) break;
+                        
+                        const auto recordRefIter = _imageLibrary.reservedBegin()+idx;
+                        id<MTLTexture> thumbTxt = thumbTxts[idx];
+                        ImageRecord& rec = **recordRefIter;
+                        
+                        _ThumbCompress(compressor, *thumbTmpStorage, thumbTxt, rec.thumb.data);
                     }
                 });
             }
