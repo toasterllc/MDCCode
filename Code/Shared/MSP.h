@@ -57,10 +57,10 @@ static_assert(!(sizeof(AbortType) % 2)); // Check alignment
 
 // AbortHistory: records history of an abort type, where an abort type is a (domain,line) tuple
 struct [[gnu::packed]] AbortHistory {
-    AbortType type          = {};
+    AbortType type                   = {};
     Time::Instant timestampEarliest  = {};
     Time::Instant timestampLatest    = {};
-    uint16_t count          = 0;
+    uint16_t count                   = 0;
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
