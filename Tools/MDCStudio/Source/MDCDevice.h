@@ -728,6 +728,8 @@ private:
                 uint8_t data[Img::Thumb::ImageLen];
             };
             const auto status = std::make_shared<_SDReadStatus>();
+            // Preallocate status->done slots, so we can access the elements without holding _sdReadConsume.lock
+            status->done.reserve(recs.size());
             {
                 {
                     auto lock = std::unique_lock(_sdReadProduce.lock);
@@ -757,10 +759,18 @@ private:
                 _ThumbCompressor compressor;
                 std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
                 
+                size_t doneCount = 0;
                 size_t idx = 0;
-                for (;;) {
-                    auto lock = std::unique_lock(_sdReadConsume.lock);
-                    const size_t doneCount = status->done.size();
+                do {
+                    // Wait for more work to complete
+                    {
+                        auto lock = std::unique_lock(_sdReadConsume.lock);
+                        _sdReadConsume.signal.wait(lock, [&] {
+                            doneCount = status->done.size();
+                            return idx<doneCount;
+                        });
+                    }
+                    
                     for (; idx<doneCount; idx++) {
                         const _SDReadWork& work = status->done[idx];
                         const WorkContext& ctx = static_cast<WorkContext&>(*work.context.get());
@@ -769,13 +779,7 @@ private:
                         void* dst = ctx.rec->thumb.data;
                         _ThumbRender(renderer, compressor, *thumbTmpStorage, ctx.rec->options, false, src, dst);
                     }
-                    
-                    // We're done when the completed work count == the enqueued work count
-                    if (doneCount == recs.size()) break;
-                    
-                    // We still have work that isn't complete; wait to be signalled
-                    _sdReadConsume.signal.wait(lock);
-                }
+                } while (doneCount < recs.size());
             }
             
             // Notify image library that the images changed
