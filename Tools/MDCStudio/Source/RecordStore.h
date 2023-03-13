@@ -12,7 +12,7 @@
 //          storage amount: many gigabytes of data
 //             data format: data is stored as individual records, where each record follows a common templated schema (T_Record)
 //     data access pattern: records are optimally added to the end of the store, and removed from the beginning of the store;
-//                          random-removal is supported and doesn't affect adjacent records;
+//                          random-removal is supported and does not move or affect adjacent records;
 //                          the space of a randomly-deleted record is not recovered until chunk compaction occurs (currently unimplemented)
 //               threading: data can be written from one thread and read from another thread in parallel
 

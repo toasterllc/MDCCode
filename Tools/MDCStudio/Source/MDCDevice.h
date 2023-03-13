@@ -412,7 +412,7 @@ private:
     
     ImagePtr _imageForAddr(uint64_t addr) {
         auto data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
-        _sdRead(_SDReadWork::Priority::Low, (_SDBlock)addr, Img::Full::ImageLen, data.get());
+        _sdRead(_Priority::Low, (_SDBlock)addr, Img::Full::ImageLen, data.get());
         
         if (_ImageChecksumValid(data.get(), Img::Size::Full)) {
 //            printf("Checksum valid (size: full)\n");
@@ -570,7 +570,7 @@ private:
             
             auto startTime = std::chrono::steady_clock::now();
             {
-                _sdRead(_SDReadWork::Priority::Low, addrThumb, chunkImgCount*ImgSD::Thumb::ImagePaddedLen, chunk.data);
+                _sdRead(_Priority::Low, addrThumb, chunkImgCount*ImgSD::Thumb::ImagePaddedLen, chunk.data);
             }
             auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
             printf("_sdRead() took %ju ms for %ju images (%.1f ms / img)\n", (uintmax_t)durationMs, (uintmax_t)chunk.count, ((double)durationMs/chunk.count));
@@ -592,6 +592,11 @@ private:
         }
     }
     
+    static int _ThreadCount() {
+        static int ThreadCount = std::max(1, (int)std::thread::hardware_concurrency());
+        return ThreadCount;
+    }
+    
     void _sync_addImages(const uint8_t* data, size_t imgCount, _SDBlock addrFull, _SDBlock addrThumb) {
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
@@ -611,8 +616,7 @@ private:
             
             std::vector<std::thread> workers;
             std::atomic<size_t> workIdx = 0;
-            const uint32_t threadCount = std::max(1,(int)std::thread::hardware_concurrency());
-            for (uint32_t i=0; i<threadCount; i++) {
+            for (uint32_t i=0; i<_ThreadCount(); i++) {
                 workers.emplace_back([&](){
                     Renderer renderer(device, [device newDefaultLibrary], [device newCommandQueue]);
                     _ThumbCompressor compressor;
@@ -638,13 +642,17 @@ private:
 //                            throw Toastbox::RuntimeError("invalid checksum (expected:0x%08x got:0x%08x)", checksumExpected, checksumGot);
                         }
                         
+                        // Populate .addr
+                        {
+                            rec.addr.full   = addrFull + idx*ImgSD::Full::ImageBlockCount;
+                            rec.addr.thumb  = addrThumb + idx*ImgSD::Thumb::ImageBlockCount;
+                        }
+                        
                         // Populate .info
                         {
                             const Img::Header& imgHeader = *(const Img::Header*)imgData;
                             
                             rec.info.id             = imgHeader.id;
-                            rec.info.addrThumb      = addrThumb + idx*ImgSD::Thumb::ImageBlockCount;
-                            rec.info.addrFull       = addrFull + idx*ImgSD::Full::ImageBlockCount;
                             
                             rec.info.timestamp      = imgHeader.timestamp;
                             
@@ -733,13 +741,13 @@ private:
             {
                 {
                     auto lock = std::unique_lock(_sdReadProduce.lock);
-                    _SDReadWorkQueue& queue = _sdReadProduce.queues[_SDReadWork::Priority::High];
+                    _SDReadWorkQueue& queue = _sdReadProduce.queues[_Priority::High];
                     for (const ImageRecordPtr& rec : recs) {
                         std::unique_ptr<WorkContext> ctx = std::make_unique<WorkContext>(WorkContext{
                             .rec = rec,
                         });
                         _SDReadWork work = {
-                            .block = rec->info.addrThumb,
+                            .block = rec->addr.thumb,
                             .len = Img::Thumb::ImageLen,
                             .dst = ctx->data,
                             .status = status,
@@ -790,22 +798,84 @@ private:
         }
     }
     
+    // MARK: - Load Images
+    
+    enum class _Priority : uint8_t { High, Low, Count };
+    
+    struct _LoadImagesWork {
+        _Priority priority;
+        std::vector<ImageRecordPtr> recs;
+    };
+    
+    void _loadImages_thread() {
+        for (;;) {
+            _LoadImagesWork work;
+            {
+                auto lock = std::unique_lock(_loadImages.lock);
+                _loadImages.signal.wait(lock, [&] { return (!_loadImages.queue.empty() || _loadImages.stop); });
+                if (_loadImages.stop) return;
+                work = std::move(_loadImages.queue.front());
+                _loadImages.queue.pop();
+            }
+            
+            // Create _SDReadStatus, one for each worker
+            std::vector<std::shared_ptr<_SDReadStatus>> statuses;
+            {
+                const size_t statusesCount = std::min((size_t)_ThreadCount(), work.recs.size());
+                for (size_t i=0; i<statusesCount; i++) {
+                    statuses.push_back(std::make_shared<_SDReadStatus>());
+                }
+            }
+            
+            // Create and enqueue _SDReadWork objects
+            {
+                auto lock = std::unique_lock(_sdReadProduce.lock);
+                _SDReadWorkQueue& queue = _sdReadProduce.queues[_Priority::High];
+                
+                size_t statusIdx = 0;
+                for (const ImageRecordPtr& rec : work.recs) {
+                    std::shared_ptr<_SDReadStatus>& status = statuses.at(statusIdx);
+                    _SDReadWork work = {
+                        .block = rec->addr.thumb,
+                        .len = Img::Thumb::ImageLen,
+                        .status = status,
+                    };
+                    
+                    queue.set.insert(std::move(work));
+                    statusIdx = (statusIdx<(statuses.size()-1) ? statusIdx+1 : 0);
+                }
+            }
+            
+            std::vector<std::thread> workers;
+            for (size_t i=0; i<statuses.size(); i++) {
+                workers.emplace_back([i](){
+                    _SDReadStatus& status = *statuses.at(i);
+                });
+            }
+            
+            const auto status = std::make_shared<_SDReadStatus>();
+            
+            _SDReadStatus
+            
+            _ThreadCount()
+        }
+    }
+    
     // MARK: - SDRead
     struct _SDReadWork;
     struct _SDReadStatus {
+        std::mutex lock;
+        std::condition_variable signal;
         std::vector<_SDReadWork> done;
     };
     
     struct _SDReadContext {};
     
     struct _SDReadWork {
-        enum Priority : uint8_t { High, Low, Count };
-        
         _SDBlock block = 0;
         size_t len = 0;
-        void* dst = nullptr;
+        std::unique_ptr<uint8_t[]> data;
         std::weak_ptr<_SDReadStatus> status; // Weak to prevent _SDReadStatus/_SDReadWork retain cycle
-        std::unique_ptr<_SDReadContext> context;
         
 //        std::shared_ptr<_SDReadStatus> statusLock() {
 //            return status.lock();
@@ -911,7 +981,7 @@ private:
             // Stop coalescing work once the cost exceeds our budget
             if (cost > budget) break;
             
-            it++; // Increment before we extract, because extract invalidates
+            it++; // Increment before we extract, because extract invalidates iterator
             coalesced.blockEnd = std::max(coalesced.blockEnd, workBlockEnd);
             coalesced.works.push_back(std::move(queue.set.extract(itPrev).value()));
             budget -= cost;
@@ -981,6 +1051,14 @@ private:
         std::condition_variable signal;
         std::thread thread;
         bool stop = false;
+        std::queue<_LoadImagesWork> queue;
+    } _loadImages;
+    
+    struct {
+        std::mutex lock; // Protects this struct
+        std::condition_variable signal;
+        std::thread thread;
+        bool stop = false;
         std::set<ImageRecordPtr> work;
     } _renderThumbs;
     
@@ -989,7 +1067,7 @@ private:
         std::condition_variable signal;
         std::thread thread;
         bool stop = false;
-        _SDReadWorkQueue queues[_SDReadWork::Priority::Count];
+        _SDReadWorkQueue queues[_Priority::Count];
     } _sdReadProduce;
     
     struct {

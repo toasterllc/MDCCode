@@ -169,7 +169,7 @@ public:
             // Render thumb to `rec.thumb`
             {
                 const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-                NSURL* url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->info.addrFull]];
+                NSURL* url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->addr.full]];
                 ThumbRender(renderer, txtLoader, compressor, *tmpStorage, url, *rec);
                 rec->options.thumb.render = false;
             }

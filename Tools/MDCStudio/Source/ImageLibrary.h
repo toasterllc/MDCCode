@@ -10,11 +10,16 @@
 
 namespace MDCStudio {
 
+struct [[gnu::packed]] ImageAddr {
+    uint64_t full = 0;
+    uint64_t thumb = 0;
+    uint8_t _reserved[16];
+};
+
+static_assert(!(sizeof(ImageAddr) % 8)); // Ensure that ImageAddr is a multiple of 8 bytes
+
 struct [[gnu::packed]] ImageInfo {
     Img::Id id = 0;
-    
-    uint64_t addrThumb = 0;
-    uint64_t addrFull = 0;
     
     Time::Instant timestamp = 0;
     
@@ -35,6 +40,8 @@ static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple 
 
 struct [[gnu::packed]] ImageRecord {
     static constexpr uint32_t Version = 0;
+    
+    ImageAddr addr;
     ImageInfo info;
     ImageOptions options;
 //    // _pad: necessary for our thumbnail compression to keep our `thumb` member aligned
