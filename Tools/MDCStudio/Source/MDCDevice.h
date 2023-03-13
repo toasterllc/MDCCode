@@ -182,15 +182,15 @@ public:
     
     ImageCache& imageCache() override { return _imageCache; }
     
-    void renderThumbs(ImageRecordIter begin, ImageRecordIter end) override {
+    void visibleThumbs(ImageRecordIter begin, ImageRecordIter end) override {
         bool enqueued = false;
         {
             auto lock = std::unique_lock(_renderThumbs.lock);
+            _renderThumbs.work.clear();
             for (auto it=begin; it!=end; it++) {
-                ImageRecordPtr ref = *it;
-                if (ref->options.thumb.render) {
-                    ref->options.thumb.render = false;
-                    _renderThumbs.work.insert(ref);
+                ImageRecordPtr rec = *it;
+                if (rec->options.thumb.render) {
+                    _renderThumbs.work.insert(rec);
                     enqueued = true;
                 }
             }
@@ -710,6 +710,10 @@ private:
                 _renderThumbs.signal.wait(lock, [&] { return !_renderThumbs.work.empty() || _renderThumbs.stop; });
                 if (_renderThumbs.stop) return;
                 recs = std::move(_renderThumbs.work);
+                
+                for (ImageRecordPtr rec : recs) {
+                    rec->options.thumb.render = false;
+                }
             }
             
             printf("Rendering thumbs:\n");

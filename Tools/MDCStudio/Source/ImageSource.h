@@ -12,9 +12,10 @@ public:
     virtual ImageLibrary& imageLibrary() = 0;
     virtual ImageCache& imageCache() = 0;
     
-    // renderThumbs(): within the given range, asynchronously re-render each thumbnail that has the `thumb.render` flag set
-    // ImageLibrary must be locked! 
-    virtual void renderThumbs(ImageRecordIter begin, ImageRecordIter end) = 0;
+    // visibleThumbs(): notifies the ImageSource which thumbnails are currently visible.
+    // Used to asynchronously re-render the thumbnails that have the `thumb.render` flag set.
+    // ImageLibrary must be locked!
+    virtual void visibleThumbs(ImageRecordIter begin, ImageRecordIter end) = 0;
 };
 
 using ImageSourcePtr = std::shared_ptr<ImageSource>;

@@ -320,7 +320,7 @@ static void _TextureUpdateSlice(id<MTLTexture> txt, const ImageLibrary::RecordRe
     }
     
     // Re-render the visible thumbnails that are marked dirty
-    _imageSource->renderThumbs(imageRefBegin, imageRefEnd);
+    _imageSource->visibleThumbs(imageRefBegin, imageRefEnd);
 }
 
 - (void)display {
