@@ -2,10 +2,10 @@
 #include <algorithm>
 #define SchedulerARM32
 #include "Toastbox/Scheduler.h"
+#include "Toastbox/Math.h"
 #include "Assert.h"
 #include "STM.h"
 #include "USB.h"
-#include "BufQueue.h"
 #include "System.h"
 using namespace STM;
 
@@ -21,9 +21,6 @@ using _System = System<
 
 using _Scheduler = _System::Scheduler;
 using _USB = _System::USB;
-
-using _BufQueue = BufQueue<uint8_t,1024,2>;
-static _BufQueue _Bufs;
 
 // The Startup class needs to exist in the `uninit` section,
 // so that its _appEntryPointAddr member doesn't get clobbered
@@ -54,7 +51,7 @@ static void _STMWrite(const STM::Cmd& cmd) {
     
     // Bail if the region capacity is too small to hold the
     // incoming data length (ceiled to the packet length)
-    const size_t len = _USB::CeilToMaxPacketSize(_USB::MaxPacketSizeOut(), arg.len);
+    const size_t len = Toastbox::Ceil(_USB::MaxPacketSizeOut(), (size_t)arg.len);
     if (len > _STMRegionCapacity((void*)arg.addr)) {
         // Reject command
         _System::USBAcceptCommand(false);

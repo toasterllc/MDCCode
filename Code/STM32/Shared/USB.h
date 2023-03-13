@@ -92,14 +92,6 @@ public:
         ) * sizeof(uint32_t);
     }
     
-    static constexpr size_t CeilToMaxPacketSize(size_t maxPacketSize, size_t len) {
-        // Round `len` up to the nearest packet size, since the USB hardware limits
-        // the data received based on packets instead of bytes
-        const size_t rem = len%maxPacketSize;
-        len += (rem>0 ? maxPacketSize-rem : 0);
-        return len;
-    }
-    
     // Types
     enum class State : uint8_t {
         Disconnected,

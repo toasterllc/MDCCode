@@ -23,7 +23,6 @@
 #pragma once
 #include "Toastbox/Scheduler.h"
 #include "stm32f7xx.h"
-#include "Util.h"
 
 namespace GPIO {
 

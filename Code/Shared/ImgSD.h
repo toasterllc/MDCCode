@@ -1,4 +1,5 @@
 #pragma once
+#include "Toastbox/Math.h"
 #include "Img.h"
 #include "SD.h"
 
@@ -9,7 +10,7 @@ namespace ImgSD {
 
 namespace Full {
     // ImagePaddedLen: the length of the image padded to a multiple of 512 bytes
-    constexpr uint32_t ImagePaddedLen = Util::Ceil(Img::Full::ImageLen, SD::BlockLen);
+    constexpr uint32_t ImagePaddedLen = Toastbox::Ceil(SD::BlockLen, Img::Full::ImageLen);
     static_assert(ImagePaddedLen == 5972480); // Debug
     
     // ImageBlockCount: the length of an image in SD blocks
@@ -18,7 +19,7 @@ namespace Full {
 }
 
 namespace Thumb {
-    constexpr uint32_t ImagePaddedLen = Util::Ceil(Img::Thumb::ImageLen, SD::BlockLen);
+    constexpr uint32_t ImagePaddedLen = Toastbox::Ceil(SD::BlockLen, Img::Thumb::ImageLen);
     static_assert(ImagePaddedLen == 373760); // Debug
     
     constexpr uint32_t ImageBlockCount = ImagePaddedLen / SD::BlockLen;

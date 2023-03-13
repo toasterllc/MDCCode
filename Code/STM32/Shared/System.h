@@ -1,7 +1,6 @@
 #pragma once
 #include <cstring>
 #include "GPIO.h"
-#include "Util.h"
 #include "STM.h"
 #include "USB.h"
 #include "I2C.h"
@@ -11,6 +10,7 @@
 #include "Assert.h"
 #include "MSP430JTAG.h"
 #include "Toastbox/Scheduler.h"
+#include "Toastbox/Stringify.h"
 
 // MARK: - Interrupt Stack
 // This is the stack that's used to handle interrupts.

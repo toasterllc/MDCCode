@@ -6,12 +6,12 @@
 #import <chrono>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 #import "Toastbox/Mmap.h"
+#import "Toastbox/Queue.h"
+#import "Toastbox/Math.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/TimeConvert.h"
 #import "Code/Shared/MSP.h"
 #import "Code/Shared/ImgSD.h"
-#import "Code/Shared/BufQueue.h"
-#import "Code/Shared/Util.h"
 #import "Tools/Shared/MDCUSBDevice.h"
 #import "Tools/Shared/ImagePipeline/ImagePipeline.h"
 #import "Tools/Shared/ImagePipeline/RenderThumb.h"
@@ -227,8 +227,8 @@ private:
         uint32_t len = 0;
     };
     
-    template <size_t T_BufCap>
-    class _BufQueue {
+    template <typename T>
+    class _Queue {
     public:
         auto& rget() {
             auto lock = std::unique_lock(_lock);
@@ -237,8 +237,10 @@ private:
         }
         
         void rpop() {
-            auto lock = std::unique_lock(_lock);
-            _bufs.rpop();
+            {
+                auto lock = std::unique_lock(_lock);
+                _bufs.rpop();
+            }
             _signal.notify_all();
         }
         
@@ -249,15 +251,17 @@ private:
         }
         
         void wpush() {
-            auto lock = std::unique_lock(_lock);
-            _bufs.wpush();
+            {
+                auto lock = std::unique_lock(_lock);
+                _bufs.wpush();
+            }
             _signal.notify_all();
         }
         
     private:
         std::mutex _lock;
         std::condition_variable _signal;
-        BufQueue<uint8_t, T_BufCap, 2> _bufs;
+        Toastbox::Queue<T,2> _bufs;
     };
     
     static _Path _StatePath(const _Path& dir) { return dir / "State"; }
@@ -482,7 +486,7 @@ private:
                         );
                     }
                     
-                    const uint32_t addCount = 32;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                    const uint32_t addCount = 2048;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                     printf("Adding %ju images\n", (uintmax_t)addCount);
                     
                     _Range newest;
@@ -508,34 +512,34 @@ private:
         if (!range.len) return; // Short-circuit if there are no images to read in this range
         
         constexpr size_t ChunkImgCount = 128; // Number of images to read at a time
-        constexpr size_t BufCap = ChunkImgCount * ImgSD::Thumb::ImagePaddedLen;
-        auto bufQueuePtr = std::make_unique<_BufQueue<BufCap>>();
-        auto& bufQueue = *bufQueuePtr;
-        const _SDBlock thumbBlockStart = _mspState.sd.thumbBlockStart + (range.idx * ImgSD::Thumb::ImageBlockCount);
-        const _SDBlock fullBlockStart = range.idx * ImgSD::Full::ImageBlockCount;
+        
+        struct Chunk {
+            _SDBlock addrFull = 0;
+            _SDBlock addrThumb = 0;
+            size_t count = 0;
+            uint8_t data[ChunkImgCount * ImgSD::Thumb::ImagePaddedLen];
+        };
+        
+        auto queuePtr = std::make_unique<_Queue<Chunk>>();
+        auto& queue = *queuePtr;
         
         // Consumer
         std::thread consumerThread([&] {
             constexpr size_t WriteInterval = ChunkImgCount*8;
-            _SDBlock addrThumb = thumbBlockStart;
-            _SDBlock addrFull = fullBlockStart;
             size_t addedImageCount = 0;
             
             for (;;) @autoreleasepool {
-                const auto& buf = bufQueue.rget();
+                const Chunk& chunk = queue.rget();
+                if (!chunk.count) break; // We're done when we get an empty buffer
                 
                 auto startTime = std::chrono::steady_clock::now();
-                const size_t imageCount = buf.len;
-                if (!imageCount) break; // We're done when we get an empty buffer
-                _sync_addImages(buf.data, imageCount, addrThumb, addrFull);
-                
-                addrThumb += imageCount * ImgSD::Thumb::ImageBlockCount;
-                addrFull += imageCount * ImgSD::Full::ImageBlockCount;
-                addedImageCount += imageCount;
-                bufQueue.rpop();
-                
+                {
+                    _sync_addImages(chunk.data, chunk.count, chunk.addrFull, chunk.addrThumb);
+                }
                 auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-                printf("Consumer took %ju ms for %ju images (avg %f ms / img)\n", (uintmax_t)durationMs, (uintmax_t)imageCount, ((double)durationMs/imageCount));
+                printf("_sync_addImages() took %ju ms for %ju images (%.1f ms / img)\n", (uintmax_t)durationMs, (uintmax_t)chunk.count, ((double)durationMs/chunk.count));
+                
+                queue.rpop();
                 
                 // Periodically write the library
                 if (!(addedImageCount % WriteInterval)) {
@@ -554,32 +558,41 @@ private:
         });
         
         // Producer
+        _SDBlock addrFull = _mspState.sd.fullBase + (range.idx * ImgSD::Full::ImageBlockCount);
+        _SDBlock addrThumb = _mspState.sd.thumbBase + (range.idx * ImgSD::Thumb::ImageBlockCount);
         for (size_t i=0; i<range.len;) {
-            auto startTime = std::chrono::steady_clock::now();
-            
             const size_t chunkImgCount = std::min(ChunkImgCount, range.len-i);
-            auto& buf = bufQueue.wget();
-            buf.len = chunkImgCount; // buffer length = count of images (not byte count)
-            _sdRead(_SDReadWork::Priority::Low, thumbBlockStart, chunkImgCount*ImgSD::Thumb::ImagePaddedLen, buf.data);
-            bufQueue.wpush();
-            i += chunkImgCount;
             
+            Chunk& chunk = queue.wget();
+            chunk.addrFull = addrFull;
+            chunk.addrThumb = addrThumb;
+            chunk.count = chunkImgCount;
+            
+            auto startTime = std::chrono::steady_clock::now();
+            {
+                _sdRead(_SDReadWork::Priority::Low, addrThumb, chunkImgCount*ImgSD::Thumb::ImagePaddedLen, chunk.data);
+            }
             auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
-            printf("Read %ju images (took %ju ms)\n", (uintmax_t)chunkImgCount, (uintmax_t)durationMs);
+            printf("_sdRead() took %ju ms for %ju images (%.1f ms / img)\n", (uintmax_t)durationMs, (uintmax_t)chunk.count, ((double)durationMs/chunk.count));
+            
+            queue.wpush();
+            i += chunkImgCount;
+            addrFull += chunkImgCount*ImgSD::Full::ImageBlockCount;
+            addrThumb += chunkImgCount*ImgSD::Thumb::ImageBlockCount;
         }
         
         // Wait until we're complete
         {
-            // Tell consumerThread to bail by sending an empty buf
-            auto& buf = bufQueue.wget();
-            buf.len = 0;
-            bufQueue.wpush();
+            // Tell consumerThread to bail by sending an empty chunk
+            auto& chunk = queue.wget();
+            chunk.count = 0;
+            queue.wpush();
             // Wait for thread to exit...
             consumerThread.join();
         }
     }
     
-    void _sync_addImages(const uint8_t* data, size_t imgCount, _SDBlock addrThumb, _SDBlock addrFull) {
+    void _sync_addImages(const uint8_t* data, size_t imgCount, _SDBlock addrFull, _SDBlock addrThumb) {
         using namespace MDCTools;
         using namespace MDCTools::ImagePipeline;
         using namespace Toastbox;
@@ -610,11 +623,10 @@ private:
                         if (idx >= imgCount) break;
                         
                         const uint8_t* imgData = data+idx*ImgSD::Thumb::ImagePaddedLen;
-                        const Img::Header& imgHeader = *(const Img::Header*)imgData;
                         
                         // Accessing `_imageLibrary` without a lock because we're the only entity using the image library's reserved space
-                        const auto recordRefIter = _imageLibrary.reservedBegin()+idx;
-                        ImageRecord& rec = **recordRefIter;
+                        const auto it = _imageLibrary.reservedBegin()+idx;
+                        ImageRecord& rec = **it;
                         
                         // Validate thumbnail checksum
                         if (_ImageChecksumValid(imgData, Img::Size::Thumb)) {
@@ -628,6 +640,8 @@ private:
                         
                         // Populate .info
                         {
+                            const Img::Header& imgHeader = *(const Img::Header*)imgData;
+                            
                             rec.info.id             = imgHeader.id;
                             rec.info.addrThumb      = addrThumb + idx*ImgSD::Thumb::ImageBlockCount;
                             rec.info.addrFull       = addrFull + idx*ImgSD::Full::ImageBlockCount;
@@ -750,6 +764,7 @@ private:
                         
                         case _SDReadWork::Status::Finished: {
                             printf("Rendering thumb: %ju\n", (uintmax_t)work.rec->info.id);
+                            
                             const void* src = work.data.get()+Img::PixelsOffset;
                             void* dst = work.rec->thumb.data;
                             _ThumbRender(renderer, compressor, *thumbTmpStorage, work.rec->options, false, src, dst);
@@ -820,10 +835,10 @@ private:
     };
     
     static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
-        const _SDBlock blockLen = Util::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
+        const _SDBlock blockCount = Toastbox::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
         // Verify that block+blockLen doesn't overflow _SDBlock
-        assert(std::numeric_limits<_SDBlock>::max()-block >= blockLen);
-        return block + blockLen;
+        assert(std::numeric_limits<_SDBlock>::max()-block >= blockCount);
+        return block + blockCount;
     }
     
     void _sdRead(_SDReadWork::Priority priority, _SDBlock block, size_t len, void* dst) {
