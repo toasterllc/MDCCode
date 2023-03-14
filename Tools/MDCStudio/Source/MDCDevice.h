@@ -485,12 +485,6 @@ private:
         return ccm;
     }
     
-//    static MSP::Time _MSPTimeCurrent() {
-//        return MSP::TimeFromUnixTime(std::time(nullptr));
-//        const std::time_t t = std::time(nullptr);
-//        return MSP::TimeAbsoluteBase | (t-MSP::TimeAbsoluteUnixReference);
-//    }
-    
     ImageCache::ImageProvider _imageProvider() {
         return [&] (uint64_t addr) -> ImagePtr {
             return _imageForAddr(addr);
@@ -730,6 +724,14 @@ private:
             ImageRecord& rec = *work.rec;
             std::unique_ptr<uint8_t[]> data = std::move(work.data);
             
+            // Validate checksum
+            if (_ImageChecksumValid(data.get(), Img::Size::Thumb)) {
+//                printf("Checksum valid (size: full)\n");
+            } else {
+                printf("Checksum INVALID (size: full)\n");
+//                abort();
+            }
+            
             if (work.initial) {
                 // Populate .info
                 {
@@ -806,15 +808,6 @@ private:
 //            _sdReadConsume.signal.wait(lock, [&] { return !status->done.empty(); });
 //        }
     }
-    
-//    void _sdReadWait(const _SDReadWork& work) {
-//        // Wait for the work to be completed
-//        auto lock = std::unique_lock(_sdReadConsume.lock);
-//        _sdReadConsume.signal.wait(lock, [&] { return *work.status!=_SDReadWork::Status::Underway; });
-//        if (*work.status != _SDReadWork::Status::Finished) {
-//            throw Toastbox::RuntimeError("SDRead failed; status: %d", (int)*work.status);
-//        }
-//    }
     
     // _sdReadProduce.lock must be held!
     _SDReadWorkQueue* _sdRead_nextWorkQueue() {
