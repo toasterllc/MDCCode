@@ -126,14 +126,14 @@ public:
     
     ~MDCDevice() {
         // Signal our threads to stop
+        _sync.signal.stop();
         _sync.loadImages.read.signal.stop();
         _sync.loadImages.render.signal.stop();
+        _thumbUpdate.signal.stop();
         _thumbUpdate.loadImages.read.signal.stop();
         _thumbUpdate.loadImages.render.signal.stop();
-        _sync.signal.stop();
         _sdRead.signal.stop();
         _thumbRender.signal.stop();
-        _thumbUpdate.signal.stop();
         
         // Wait for threads to stop
         _sync.thread.join();
@@ -475,27 +475,43 @@ private:
         };
     }
     
+    #warning TODO: add priority to this function
     ImagePtr _imageForAddr(uint64_t addr) {
-        abort();
-//        auto data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
-//        _sdRead(_Priority::Low, (_SDBlock)addr, Img::Full::ImageLen, data.get());
-//        
-//        if (_ImageChecksumValid(data.get(), Img::Size::Full)) {
-////            printf("Checksum valid (size: full)\n");
-//        } else {
-//            printf("Checksum INVALID (size: full)\n");
-////            abort();
-//        }
-//        
-//        const Img::Header& header = *(const Img::Header*)data.get();
-//        ImagePtr image = std::make_shared<Image>(Image{
-//            .width      = header.imageWidth,
-//            .height     = header.imageHeight,
-//            .cfaDesc    = _CFADesc,
-//            .data       = std::move(data),
-//            .off        = sizeof(header),
-//        });
-//        return image;
+        _SDReadStatus status;
+        
+        // Enqueue SD read
+        {
+            auto lock = _sdRead.signal.lock();
+            _SDReadWorkQueue& queue = _sdRead.queues[(size_t)_Priority::High];
+            queue.set.insert(_SDReadWork{
+                .block = addr,
+                .len = Img::Full::ImageLen,
+                .status = status,
+            });
+        }
+        
+        std::unique_ptr<uint8_t[]> data;
+        {
+            auto lock = status.signal.wait([&] { return !status.done.empty(); });
+            data = std::move(status.done.front().data);
+        }
+        
+        if (_ImageChecksumValid(data.get(), Img::Size::Full)) {
+//                printf("Checksum valid (size: full)\n");
+        } else {
+            printf("Checksum INVALID (size: full)\n");
+//                abort();
+        }
+        
+        const Img::Header& header = *(const Img::Header*)data.get();
+        ImagePtr image = std::make_shared<Image>(Image{
+            .width      = header.imageWidth,
+            .height     = header.imageHeight,
+            .cfaDesc    = _CFADesc,
+            .data       = std::move(data),
+            .off        = sizeof(header),
+        });
+        return image;
     }
     
     void _notifyObservers() {
@@ -968,8 +984,6 @@ private:
         std::vector<std::thread> threads;
         std::queue<_ThumbRenderWork> work;
     } _thumbRender;
-    
-    std::set<ImageRecordPtr> _thumbUpdateWorkPrev;
 };
 
 using MDCDevicePtr = std::shared_ptr<MDCDevice>;
