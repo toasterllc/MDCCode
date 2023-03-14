@@ -117,7 +117,7 @@ public:
             _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
         }
         
-        _sdReadProduce.thread = std::thread([&] { _sdRead_thread(); });
+        _sdRead.thread = std::thread([&] { _sdRead_thread(); });
     }
     
     ~MDCDevice() {
@@ -134,16 +134,16 @@ public:
             t.join();
         }
         
-        // Wait for _sdReadProduce.thread to exit
+        // Wait for _sdRead.thread to exit
         {
-            auto lock = std::unique_lock(_sdReadProduce.lock);
+            auto lock = std::unique_lock(_sdRead.lock);
             // Upon our destruction, there shouldn't be any work to do, because whatever was
             // scheduling work should've ensured that we'd stay alive. Check that assumption.
             assert(!_sdRead_nextWorkQueue());
-            _sdReadProduce.stop = true;
+            _sdRead.stop = true;
         }
-        _sdReadProduce.signal.notify_one();
-        _sdReadProduce.thread.join();
+        _sdRead.signal.notify_one();
+        _sdRead.thread.join();
     }
     
     const std::string& name() {
@@ -628,8 +628,8 @@ private:
         
         // Enqueue SD reads
         {
-            auto lock = std::unique_lock(_sdReadProduce.lock);
-            _SDReadWorkQueue& queue = _sdReadProduce.queues[(size_t)priority];
+            auto lock = std::unique_lock(_sdRead.lock);
+            _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
             
             for (const ImageRecordPtr& rec : recs) {
                 _SDReadWork work = {
@@ -790,8 +790,8 @@ private:
 //        // Enqueue the work
 //        {
 //            {
-//                auto lock = std::unique_lock(_sdReadProduce.lock);
-//                _SDReadWorkQueue& queue = _sdReadProduce.queues[priority];
+//                auto lock = std::unique_lock(_sdRead.lock);
+//                _SDReadWorkQueue& queue = _sdRead.queues[priority];
 //                queue.set.emplace(_SDReadWork{
 //                    .block = block,
 //                    .len = len,
@@ -799,7 +799,7 @@ private:
 //                    .status = status,
 //                });
 //            }
-//            _sdReadProduce.signal.notify_one();
+//            _sdRead.signal.notify_one();
 //        }
 //        
 //        // Wait for the work to be completed
@@ -809,15 +809,15 @@ private:
 //        }
     }
     
-    // _sdReadProduce.lock must be held!
+    // _sdRead.lock must be held!
     _SDReadWorkQueue* _sdRead_nextWorkQueue() {
-        for (_SDReadWorkQueue& x : _sdReadProduce.queues) {
+        for (_SDReadWorkQueue& x : _sdRead.queues) {
             if (!x.set.empty()) return &x;
         }
         return nullptr;
     }
     
-    // _sdReadProduce.lock must be held!
+    // _sdRead.lock must be held!
     _SDCoalescedWork _sdRead_coalesceWork(_SDReadWorkQueue& queue) {
         assert(!queue.set.empty());
         
@@ -876,23 +876,20 @@ private:
                 }
             }
         }
-        
-        // Notify the works that they're done
-        _sdReadConsume.signal.notify_all();
     }
     
     void _sdRead_thread() {
         for (;;) {
             _SDCoalescedWork coalesced;
             {
-                auto lock = std::unique_lock(_sdReadProduce.lock);
+                auto lock = std::unique_lock(_sdRead.lock);
                 // Wait for work, or to be signalled to stop
                 _SDReadWorkQueue* queue = nullptr;
-                _sdReadProduce.signal.wait(lock, [&] {
+                _sdRead.signal.wait(lock, [&] {
                     queue = _sdRead_nextWorkQueue();
-                    return (queue || _sdReadProduce.stop);
+                    return (queue || _sdRead.stop);
                 });
-                if (_sdReadProduce.stop) return;
+                if (_sdRead.stop) return;
                 coalesced = _sdRead_coalesceWork(*queue);
             }
             _sdRead_handleWork(coalesced);
@@ -919,23 +916,18 @@ private:
     struct {
         std::mutex lock; // Protects this struct
         std::condition_variable signal;
+        std::thread thread;
+        bool stop = false;
+        _SDReadWorkQueue queues[(size_t)_Priority::Count];
+    } _sdRead;
+    
+    struct {
+        std::mutex lock; // Protects this struct
+        std::condition_variable signal;
         std::vector<std::thread> threads;
         bool stop = false;
         std::queue<_ThumbRenderWork> work;
     } _thumbRender;
-    
-    struct {
-        std::mutex lock; // Protects this struct
-        std::condition_variable signal;
-        std::thread thread;
-        bool stop = false;
-        _SDReadWorkQueue queues[(size_t)_Priority::Count];
-    } _sdReadProduce;
-    
-    struct {
-        std::mutex lock; // Protects this struct
-        std::condition_variable signal;
-    } _sdReadConsume;
 };
 
 using MDCDevicePtr = std::shared_ptr<MDCDevice>;
