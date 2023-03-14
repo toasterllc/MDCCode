@@ -111,7 +111,7 @@ public:
         }
         
         // Start threads
-        _sync.thread = std::thread([&] { _sync_thread(); });
+        _sync.thread = _Thread([&] { _sync_thread(); });
         
         for (int i=0; i<_ThreadCount(); i++) {
             _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
@@ -810,11 +810,47 @@ private:
     
     // MARK: - SD Read
     
-    static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
+    static constexpr _SDBlock _SDRead_BlockEnd(_SDBlock block, size_t len) {
         const _SDBlock blockCount = Toastbox::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
         // Verify that block+blockLen doesn't overflow _SDBlock
         assert(std::numeric_limits<_SDBlock>::max()-block >= blockCount);
         return block + blockCount;
+    }
+    
+    static _SDCoalescedWork _SDRead_CoalesceWork(_SDReadWorkQueue& queue) {
+        assert(!queue.set.empty());
+        
+        // CoalesceBudget: coalesce adjacent blocks until this budget is exceeded
+        static constexpr _SDBlock CoalesceBudget = 8192;
+        const _SDReadStatus& status = *queue.set.begin()->status;
+        _SDCoalescedWork coalesced = {
+            .blockBegin = queue.set.begin()->block,
+            .blockEnd   = _SDRead_BlockEnd(queue.set.begin()->block, queue.set.begin()->len),
+        };
+        _SDBlock budget = CoalesceBudget;
+        for (auto it=queue.set.begin(); it!=queue.set.end();) {
+            const auto itPrev = it;
+            const _SDReadWork& work = *it;
+            const _SDBlock workBlockBegin = work.block;
+            const _SDBlock workBlockEnd = _SDRead_BlockEnd(workBlockBegin, work.len);
+            
+            // The queue.set ordering guarantees that the blockBegins are in ascending order.
+            // Check that assumption.
+            assert(coalesced.blockBegin <= work.block);
+            
+            const _SDBlock cost = (workBlockEnd>coalesced.blockEnd ? workBlockEnd-coalesced.blockEnd : 0);
+            // Stop coalescing work once the cost exceeds our budget
+            if (cost > budget) break;
+            // Stop coalescing work if the .status member doesn't match
+            // (Ie, we don't coalesce across .status boundaries)
+            if (work.status != &status) break;
+            
+            it++; // Increment before we extract, because extract invalidates iterator
+            coalesced.blockEnd = std::max(coalesced.blockEnd, workBlockEnd);
+            coalesced.works.push_back(std::move(queue.set.extract(itPrev).value()));
+            budget -= cost;
+        }
+        return coalesced;
     }
     
 //    void _sdRead(_Priority priority, _SDBlock block, size_t len, void* dst) {
@@ -851,40 +887,10 @@ private:
         return nullptr;
     }
     
-    // _sdRead.lock must be held!
-    _SDCoalescedWork _sdRead_coalesceWork(_SDReadWorkQueue& queue) {
-        assert(!queue.set.empty());
-        
-        // CoalesceBudget: coalesce adjacent blocks until this budget is exceeded
-        static constexpr _SDBlock CoalesceBudget = 8192;
-        _SDCoalescedWork coalesced = {
-            .blockBegin = queue.set.begin()->block,
-            .blockEnd   = _SDBlockEnd(queue.set.begin()->block, queue.set.begin()->len),
-        };
-        _SDBlock budget = CoalesceBudget;
-        for (auto it=queue.set.begin(); it!=queue.set.end();) {
-            const auto itPrev = it;
-            const _SDReadWork& work = *it;
-            const _SDBlock workBlockBegin = work.block;
-            const _SDBlock workBlockEnd = _SDBlockEnd(workBlockBegin, work.len);
-            
-            // The queue.set ordering guarantees that the blockBegins are in ascending order.
-            // Check that assumption.
-            assert(coalesced.blockBegin <= work.block);
-            
-            const _SDBlock cost = (workBlockEnd>coalesced.blockEnd ? workBlockEnd-coalesced.blockEnd : 0);
-            // Stop coalescing work once the cost exceeds our budget
-            if (cost > budget) break;
-            
-            it++; // Increment before we extract, because extract invalidates iterator
-            coalesced.blockEnd = std::max(coalesced.blockEnd, workBlockEnd);
-            coalesced.works.push_back(std::move(queue.set.extract(itPrev).value()));
-            budget -= cost;
-        }
-        return coalesced;
-    }
-    
     void _sdRead_handleWork(_SDCoalescedWork& coalesced) {
+        assert(!coalesced.works.empty());
+        _SDReadStatus& status = *coalesced.works.front().status;
+        
         // Read the data from the device
         const size_t len = (size_t)SD::BlockLen * (coalesced.blockEnd-coalesced.blockBegin);
         std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(len);
@@ -896,19 +902,26 @@ private:
             _dev.readout(data.get(), len);
         }
         
-        // Copy the data into each work
+        // Copy the data into each _SDReadWork
         {
-            #warning TODO: don't acquire lock for each work -- figure out a way to acquire lock once and copy all the items
-            #warning TODO: we're not signalling here!
+            #warning TODO: use a preallocated storage associated with the _SDReadStatus, instead of making lots of individual allocations
+            // Copy data into each individual _SDReadWork
             for (_SDReadWork& work : coalesced.works) {
                 const uint8_t* d = data.get() + (size_t)(work.block-coalesced.blockBegin)*SD::BlockLen;
                 work.data = std::make_unique<uint8_t[]>(work.len);
                 memcpy(work.data.get(), d, work.len);
-                {
-                    auto lock = std::unique_lock(work.status->lock);
-                    work.status->done.push_back(std::move(work));
+            }
+        }
+        
+        // Move each _SDReadWork into status.work and send signal
+        {
+            {
+                auto lock = std::unique_lock(status.lock);
+                for (_SDReadWork& work : coalesced.works) {
+                    status.done.push_back(std::move(work));
                 }
             }
+            status.signal.notify_one();
         }
     }
     
@@ -924,7 +937,7 @@ private:
                     return (queue || _sdRead.stop);
                 });
                 if (_sdRead.stop) return;
-                coalesced = _sdRead_coalesceWork(*queue);
+                coalesced = _SDRead_CoalesceWork(*queue);
             }
             _sdRead_handleWork(coalesced);
         }
@@ -961,8 +974,51 @@ private:
     std::string _name;
     std::forward_list<Observer> _observers;
     
+    struct _Thread : std::thread, std::mutex, std::condition_variable {
+        struct Stop : std::exception {};
+        
+        _Thread() {}
+        
+        template <typename T>
+        _Thread(T t) : std::thread(t) {}
+        
+        // Copy constructor: illegal
+        _Thread(const _Thread& x) = delete;
+        _Thread& operator=(const _Thread& x) = delete;
+        // Move constructor: OK
+        _Thread(_Thread&& x) { swap(x); }
+        _Thread& operator=(_Thread&& x) { swap(x); return *this; }
+        
+        template <typename T_Cond>
+        void wait(std::unique_lock<std::mutex>& lock, T_Cond cond) {
+            wait(lock, [&] {
+                if (_state.stop) throw Stop();
+                return cond();
+            });
+        }
+        
+        void swap(_Thread& x) {
+            std::swap(static_cast<std::thread&>(*this), static_cast<std::thread&>(x));
+            std::swap(_state, x._state);
+        }
+        
+        ~_Thread() {
+            {
+                auto lock = std::unique_lock(*this);
+                _state.stop = true;
+            }
+            
+            if (joinable()) join();
+        }
+        
+    private:
+        struct {
+            bool stop = false;
+        } _state;
+    };
+    
     struct {
-        std::thread thread;
+        _Thread thread;
         _LoadImagesState loadImages;
     } _sync;
     
