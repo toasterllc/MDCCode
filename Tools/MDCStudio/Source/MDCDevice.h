@@ -186,37 +186,6 @@ public:
     ImageCache& imageCache() override { return _imageCache; }
     
     void visibleThumbs(ImageRecordIter begin, ImageRecordIter end) override {
-//        // Determine whether we need to 
-//        bool recreate = false;
-//        for (auto it=begin; it!=end; it++) {
-//            ImageRecordPtr rec = *it;
-//            if (rec->options.thumb.render) {
-//                if (_thumbUpdateWorkPrev.find() != _thumbUpdateWorkPrev.end()) {
-//                    recreate = true;
-//                    break;
-//                }
-//            }
-//        }
-//        
-//        if (recreate) {
-//            std::set<ImageRecordPtr> recs;
-//            for (auto it=begin; it!=end; it++) {
-//                ImageRecordPtr rec = *it;
-//                if (rec->options.thumb.render) {
-//                    recs.insert(rec);
-//                }
-//            }
-//            {
-//                auto lock = std::unique_lock(_thumbUpdate.lock);
-//                _thumbUpdate.work = recs;
-//            }
-//            _thumbUpdateWorkPrev = std::move(recs);
-//        }
-        
-        
-//        _thumbUpdateWorkPrev
-//        
-//        #warning TODO: we should cache the last value set on _thumbUpdate, and only do something if there's a new record
         bool enqueued = false;
         {
             auto lock = _thumbUpdate.signal.lock();
@@ -306,31 +275,26 @@ private:
         std::vector<_SDReadWork> done;
     };
     
-    struct _SDReadContext {};
+    #warning TODO: add try/catch to our threads, to catch _Signal::Stop
     
     struct _SDReadWork {
         _SDBlock block = 0;
         size_t len = 0;
-        #warning TODO: switch status to be a reference
-        _SDReadStatus* status = nullptr;
+        _SDReadStatus& status;
         ImageRecordPtr rec;
         std::unique_ptr<uint8_t[]> data;
-//        
-//        std::shared_ptr<_SDReadStatus> statusLock() {
-//            return status.lock();
-//        }
         
         bool operator<(const _SDReadWork& x) const {
             if (block != x.block) return block < x.block;
             if (len != x.len) return len < x.len;
-            if (status != x.status) return (uintptr_t)status < (uintptr_t)x.status;
+            if (&status != &x.status) return (uintptr_t)&status < (uintptr_t)&x.status;
             return false;
         }
         
         bool operator==(const _SDReadWork& x) const {
             if (block != x.block) return false;
             if (len != x.len) return false;
-            if (status != x.status) return false;
+            if (&status != &x.status) return false;
             return true;
         }
     };
@@ -661,7 +625,7 @@ private:
                     .block = rec->addr.thumb,
                     .len = Img::Thumb::ImageLen,
                     .rec = rec,
-                    .status = &state.read,
+                    .status = state.read,
                 };
                 
                 queue.set.insert(std::move(work));
@@ -810,7 +774,7 @@ private:
         
         // CoalesceBudget: coalesce adjacent blocks until this budget is exceeded
         static constexpr _SDBlock CoalesceBudget = 8192;
-        const _SDReadStatus& status = *queue.set.begin()->status;
+        const _SDReadStatus& status = queue.set.begin()->status;
         _SDCoalescedWork coalesced = {
             .blockBegin = queue.set.begin()->block,
             .blockEnd   = _SDRead_BlockEnd(queue.set.begin()->block, queue.set.begin()->len),
@@ -831,7 +795,7 @@ private:
             if (cost > budget) break;
             // Stop coalescing work if the .status member doesn't match
             // (Ie, we don't coalesce across .status boundaries)
-            if (work.status != &status) break;
+            if (&work.status != &status) break;
             
             it++; // Increment before we extract, because extract invalidates iterator
             coalesced.blockEnd = std::max(coalesced.blockEnd, workBlockEnd);
@@ -877,7 +841,7 @@ private:
     
     void _sdRead_handleWork(_SDCoalescedWork& coalesced) {
         assert(!coalesced.works.empty());
-        _SDReadStatus& status = *coalesced.works.front().status;
+        _SDReadStatus& status = coalesced.works.front().status;
         
         // Read the data from the device
         const size_t len = (size_t)SD::BlockLen * (coalesced.blockEnd-coalesced.blockBegin);
