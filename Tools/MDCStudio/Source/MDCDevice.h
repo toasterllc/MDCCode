@@ -190,19 +190,50 @@ public:
     ImageCache& imageCache() override { return _imageCache; }
     
     void visibleThumbs(ImageRecordIter begin, ImageRecordIter end) override {
-//        bool enqueued = false;
-//        {
-//            auto lock = std::unique_lock(_thumbRender.lock);
-//            _thumbRender.work.clear();
-//            for (auto it=begin; it!=end; it++) {
-//                ImageRecordPtr rec = *it;
-//                if (rec->options.thumb.render) {
-//                    _thumbRender.work.insert(rec);
-//                    enqueued = true;
+//        // Determine whether we need to 
+//        bool recreate = false;
+//        for (auto it=begin; it!=end; it++) {
+//            ImageRecordPtr rec = *it;
+//            if (rec->options.thumb.render) {
+//                if (_thumbUpdateWorkPrev.find() != _thumbUpdateWorkPrev.end()) {
+//                    recreate = true;
+//                    break;
 //                }
 //            }
 //        }
-//        if (enqueued) _thumbRender.signal.notify_one();
+//        
+//        if (recreate) {
+//            std::set<ImageRecordPtr> recs;
+//            for (auto it=begin; it!=end; it++) {
+//                ImageRecordPtr rec = *it;
+//                if (rec->options.thumb.render) {
+//                    recs.insert(rec);
+//                }
+//            }
+//            {
+//                auto lock = std::unique_lock(_thumbUpdate.lock);
+//                _thumbUpdate.work = recs;
+//            }
+//            _thumbUpdateWorkPrev = std::move(recs);
+//        }
+        
+        
+//        _thumbUpdateWorkPrev
+//        
+//        #warning TODO: we should cache the last value set on _thumbUpdate, and only do something if there's a new record
+        bool enqueued = false;
+        {
+            auto lock = std::unique_lock(_thumbUpdate.lock);
+            _thumbUpdate.work.clear();
+            for (auto it=begin; it!=end; it++) {
+                ImageRecordPtr rec = *it;
+                if (rec->options.thumb.render) {
+                    _thumbUpdate.work.insert(rec);
+                    enqueued = true;
+                }
+            }
+        }
+        if (enqueued) _thumbUpdate.signal.notify_one();
     }
     
 private:
@@ -492,25 +523,26 @@ private:
     }
     
     ImagePtr _imageForAddr(uint64_t addr) {
-        auto data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
-        _sdRead(_Priority::Low, (_SDBlock)addr, Img::Full::ImageLen, data.get());
-        
-        if (_ImageChecksumValid(data.get(), Img::Size::Full)) {
-//            printf("Checksum valid (size: full)\n");
-        } else {
-            printf("Checksum INVALID (size: full)\n");
-//            abort();
-        }
-        
-        const Img::Header& header = *(const Img::Header*)data.get();
-        ImagePtr image = std::make_shared<Image>(Image{
-            .width      = header.imageWidth,
-            .height     = header.imageHeight,
-            .cfaDesc    = _CFADesc,
-            .data       = std::move(data),
-            .off        = sizeof(header),
-        });
-        return image;
+        abort();
+//        auto data = std::make_unique<uint8_t[]>(Img::Full::ImageLen);
+//        _sdRead(_Priority::Low, (_SDBlock)addr, Img::Full::ImageLen, data.get());
+//        
+//        if (_ImageChecksumValid(data.get(), Img::Size::Full)) {
+////            printf("Checksum valid (size: full)\n");
+//        } else {
+//            printf("Checksum INVALID (size: full)\n");
+////            abort();
+//        }
+//        
+//        const Img::Header& header = *(const Img::Header*)data.get();
+//        ImagePtr image = std::make_shared<Image>(Image{
+//            .width      = header.imageWidth,
+//            .height     = header.imageHeight,
+//            .cfaDesc    = _CFADesc,
+//            .data       = std::move(data),
+//            .off        = sizeof(header),
+//        });
+//        return image;
     }
     
     void _notifyObservers() {
@@ -702,6 +734,8 @@ private:
         renderThread.join();
     }
     
+    // MARK: - Thumb Render
+    
     void _thumbRender_thread() {
         using namespace MDCTools;
         
@@ -774,7 +808,7 @@ private:
         }
     }
     
-    // MARK: - SDRead
+    // MARK: - SD Read
     
     static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
         const _SDBlock blockCount = Toastbox::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
@@ -783,31 +817,31 @@ private:
         return block + blockCount;
     }
     
-    void _sdRead(_Priority priority, _SDBlock block, size_t len, void* dst) {
-        abort();
-//        const auto status = std::make_shared<_SDReadStatus>();
-//        
-//        // Enqueue the work
-//        {
-//            {
-//                auto lock = std::unique_lock(_sdRead.lock);
-//                _SDReadWorkQueue& queue = _sdRead.queues[priority];
-//                queue.set.emplace(_SDReadWork{
-//                    .block = block,
-//                    .len = len,
-//                    .dst = dst,
-//                    .status = status,
-//                });
-//            }
-//            _sdRead.signal.notify_one();
-//        }
-//        
-//        // Wait for the work to be completed
-//        {
-//            auto lock = std::unique_lock(_sdReadConsume.lock);
-//            _sdReadConsume.signal.wait(lock, [&] { return !status->done.empty(); });
-//        }
-    }
+//    void _sdRead(_Priority priority, _SDBlock block, size_t len, void* dst) {
+//        abort();
+////        const auto status = std::make_shared<_SDReadStatus>();
+////        
+////        // Enqueue the work
+////        {
+////            {
+////                auto lock = std::unique_lock(_sdRead.lock);
+////                _SDReadWorkQueue& queue = _sdRead.queues[priority];
+////                queue.set.emplace(_SDReadWork{
+////                    .block = block,
+////                    .len = len,
+////                    .dst = dst,
+////                    .status = status,
+////                });
+////            }
+////            _sdRead.signal.notify_one();
+////        }
+////        
+////        // Wait for the work to be completed
+////        {
+////            auto lock = std::unique_lock(_sdReadConsume.lock);
+////            _sdReadConsume.signal.wait(lock, [&] { return !status->done.empty(); });
+////        }
+//    }
     
     // _sdRead.lock must be held!
     _SDReadWorkQueue* _sdRead_nextWorkQueue() {
@@ -896,6 +930,25 @@ private:
         }
     }
     
+    // MARK: - Update Thumbs
+    void _thumbUpdate_thread() {
+        for (;;) {
+            std::set<ImageRecordPtr> work;
+            {
+                auto lock = std::unique_lock(_thumbUpdate.lock);
+                _thumbUpdate.signal.wait(lock, [&] { return !_thumbUpdate.work.empty(); });
+                work = std::move(_thumbUpdate.work);
+                // Update .thumb.render asap (ie before we've actually rendered) so that the
+                // visibleThumbs() function on the main thread stops enqueuing work asap
+                for (const ImageRecordPtr& rec : work) {
+                    rec->options.thumb.render = false;
+                }
+            }
+            
+            _loadImages(_thumbUpdate.loadImages, _Priority::High, false, work);
+        }
+    }
+    
     // MARK: - Members
     
     Device _dev;
@@ -928,6 +981,17 @@ private:
         bool stop = false;
         std::queue<_ThumbRenderWork> work;
     } _thumbRender;
+    
+    struct {
+        std::mutex lock; // Protects this struct
+        std::condition_variable signal;
+        std::thread thread;
+        bool stop = false;
+        std::set<ImageRecordPtr> work;
+        _LoadImagesState loadImages;
+    } _thumbUpdate;
+    
+    std::set<ImageRecordPtr> _thumbUpdateWorkPrev;
 };
 
 using MDCDevicePtr = std::shared_ptr<MDCDevice>;
