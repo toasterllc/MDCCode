@@ -114,13 +114,13 @@ public:
         {
             _sync.thread = std::thread([&] { _sync_thread(); });
             
+            _thumbUpdate.thread = std::thread([&] { _thumbUpdate_thread(); });
+            
             _sdRead.thread = std::thread([&] { _sdRead_thread(); });
             
             for (int i=0; i<_ThreadCount(); i++) {
                 _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
             }
-            
-            _thumbUpdate.thread = std::thread([&] { _thumbUpdate_thread(); });
         }
     }
     
@@ -157,8 +157,6 @@ public:
     const Toastbox::SendRight& service() const {
         return _dev.dev().service();
     }
-    
-//    Device& device() { return _dev; }
     
     void observerAdd(Observer&& observer) {
         assert([NSThread isMainThread]);
@@ -516,6 +514,91 @@ private:
         }
     }
     
+    void _loadImages(_LoadImagesState& state, _Priority priority, bool initial, const std::set<ImageRecordPtr>& recs) {
+        const size_t imageCount = recs.size();
+        
+        // Enqueue SD reads
+        {
+            auto lock = _sdRead.signal.lock();
+            _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
+            
+            for (const ImageRecordPtr& rec : recs) {
+                _SDReadWork work = {
+                    .block = rec->addr.thumb,
+                    .len = Img::Thumb::ImageLen,
+                    .rec = rec,
+                    .status = state.read,
+                };
+                
+                queue.set.insert(std::move(work));
+            }
+        }
+        
+        // Enqueue rendering as SD reads complete
+        std::thread renderThread([&] {
+            try {
+                size_t doneCount = 0;
+                while (doneCount < imageCount) {
+                    // Dequeue _SDReadWork
+                    std::vector<_SDReadWork> done;
+                    {
+                        auto lock = state.read.signal.wait([&] { return !state.read.done.empty(); });
+                        done = std::move(state.read.done);
+                    }
+                    
+                    // Enqueue _ThumbRenderWork
+                    {
+                        auto lock = _thumbRender.signal.lock();
+                        for (_SDReadWork& read : done) {
+                            _thumbRender.work.push(_ThumbRenderWork{
+                                .rec = std::move(read.rec),
+                                .initial = initial,
+                                .data = std::move(read.data),
+                            });
+                        }
+                    }
+                    
+                    // Notify _thumbRender of more work
+                    _thumbRender.signal.signalAll();
+                    doneCount += done.size();
+                }
+            
+            } catch (const _Signal::Stop&) {
+                fprintf(stderr, "_loadImages.renderThread stopping\n");
+            }
+        });
+        
+        // Post notifications (in chunks of `NotifyThreshold`) as rendering completes
+        {
+            constexpr size_t NotifyThreshold = 32;
+            size_t doneCount = 0;
+            std::set<ImageRecordPtr> done;
+            while (doneCount < imageCount) {
+                {
+                    auto lock = state.render.signal.wait([&] { return !state.render.done.empty(); });
+                    
+                    for (_ThumbRenderWork& work : state.render.done) {
+                        done.insert(std::move(work.rec));
+                    }
+                    
+                    doneCount += state.render.done.size();
+                    state.render.done.clear();
+                }
+                
+                if (done.size() >= NotifyThreshold) {
+                    _imageLibrary.notifyChange(done);
+                    done.clear();
+                }
+            }
+            
+            // Post notifications for remaining records
+            if (!done.empty()) _imageLibrary.notifyChange(done);
+        }
+        
+        // Wait for threads to return
+        renderThread.join();
+    }
+    
     // MARK: - Sync
     
     void _sync_thread() {
@@ -607,156 +690,35 @@ private:
                 }
             }
         
+        } catch (const _Signal::Stop&) {
+            fprintf(stderr, "_sync_thread stopping\n");
+        
         } catch (const std::exception& e) {
             fprintf(stderr, "Failed to update image library: %s", e.what());
         }
     }
     
-    void _loadImages(_LoadImagesState& state, _Priority priority, bool initial, const std::set<ImageRecordPtr>& recs) {
-        const size_t imageCount = recs.size();
-        
-        // Enqueue SD reads
-        {
-            auto lock = _sdRead.signal.lock();
-            _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
-            
-            for (const ImageRecordPtr& rec : recs) {
-                _SDReadWork work = {
-                    .block = rec->addr.thumb,
-                    .len = Img::Thumb::ImageLen,
-                    .rec = rec,
-                    .status = state.read,
-                };
-                
-                queue.set.insert(std::move(work));
-            }
-        }
-        
-        // Enqueue rendering as SD reads complete
-        std::thread renderThread([&] {
-            size_t doneCount = 0;
-            while (doneCount < imageCount) {
-                std::vector<_SDReadWork> done;
+    // MARK: - Thumb Update
+    
+    void _thumbUpdate_thread() {
+        try {
+            for (;;) {
+                std::set<ImageRecordPtr> work;
                 {
-                    auto lock = state.read.signal.wait([&] { return !state.read.done.empty(); });
-                    done = std::move(state.read.done);
-                }
-                
-                {
-                    auto lock = _thumbRender.signal.lock();
-                    for (_SDReadWork& read : done) {
-                        _thumbRender.work.push(_ThumbRenderWork{
-                            .rec = std::move(read.rec),
-                            .initial = initial,
-                            .data = std::move(read.data),
-                        });
+                    auto lock = _thumbUpdate.signal.wait([&] { return !_thumbUpdate.work.empty(); });
+                    work = std::move(_thumbUpdate.work);
+                    // Update .thumb.render asap (ie before we've actually rendered) so that the
+                    // visibleThumbs() function on the main thread stops enqueuing work asap
+                    for (const ImageRecordPtr& rec : work) {
+                        rec->options.thumb.render = false;
                     }
                 }
                 
-                _thumbRender.signal.signalAll();
-                doneCount += done.size();
+                _loadImages(_thumbUpdate.loadImages, _Priority::High, false, work);
             }
-        });
         
-        // Post notifications (in chunks of `NotifyThreshold`) as rendering completes
-        {
-            constexpr size_t NotifyThreshold = 32;
-            size_t doneCount = 0;
-            std::set<ImageRecordPtr> done;
-            while (doneCount < imageCount) {
-                {
-                    auto lock = state.render.signal.wait([&] { return !state.render.done.empty(); });
-                    
-                    for (_ThumbRenderWork& work : state.render.done) {
-                        done.insert(std::move(work.rec));
-                    }
-                    
-                    doneCount += state.render.done.size();
-                    state.render.done.clear();
-                }
-                
-                if (done.size() >= NotifyThreshold) {
-                    _imageLibrary.notifyChange(done);
-                    done.clear();
-                }
-            }
-            
-            // Post notifications for remaining records
-            if (!done.empty()) _imageLibrary.notifyChange(done);
-        }
-        
-        // Wait for threads to return
-        renderThread.join();
-    }
-    
-    // MARK: - Thumb Render
-    
-    void _thumbRender_thread() {
-        using namespace MDCTools;
-        
-        id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
-        Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
-        _ThumbCompressor compressor;
-        std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
-        
-        for (;;) @autoreleasepool {
-            _ThumbRenderWork work;
-            {
-                auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.work.empty(); });
-                work = std::move(_thumbRender.work.front());
-                _thumbRender.work.pop();
-            }
-            
-            ImageRecord& rec = *work.rec;
-            std::unique_ptr<uint8_t[]> data = std::move(work.data);
-            
-            // Validate checksum
-            if (_ImageChecksumValid(data.get(), Img::Size::Thumb)) {
-//                printf("Checksum valid (size: full)\n");
-            } else {
-                printf("Checksum INVALID (size: full)\n");
-//                abort();
-            }
-            
-            if (work.initial) {
-                // Populate .info
-                {
-                    const Img::Header& imgHeader = *(const Img::Header*)data.get();
-                    
-                    rec.info.id             = imgHeader.id;
-                    
-                    rec.info.timestamp      = imgHeader.timestamp;
-                    
-                    rec.info.imageWidth     = imgHeader.imageWidth;
-                    rec.info.imageHeight    = imgHeader.imageHeight;
-                    
-                    rec.info.coarseIntTime  = imgHeader.coarseIntTime;
-                    rec.info.analogGain     = imgHeader.analogGain;
-                }
-                
-                // Populate .options
-                {
-                    rec.options = {};
-                }
-            }
-            
-            // Render the thumbnail into rec.thumb
-            {
-                const void* thumbSrc = data.get()+Img::PixelsOffset;
-                void* thumbDst = rec.thumb.data;
-                
-                // estimateIlluminant: only perform illuminant estimation upon our initial import
-                const bool estimateIlluminant = work.initial;
-                const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, rec.options,
-                    estimateIlluminant, thumbSrc, thumbDst);
-                
-                if (estimateIlluminant) {
-                    // Populate .info.illumEst
-                    ccm.illum.m.get(rec.info.illumEst);
-                    // Populate .options.whiteBalance
-                    ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
-                }
-            }
+        } catch (const _Signal::Stop&) {
+            fprintf(stderr, "_thumbUpdate_thread stopping\n");
         }
     }
     
@@ -878,34 +840,97 @@ private:
     }
     
     void _sdRead_thread() {
-        for (;;) {
-            _SDCoalescedWork coalesced;
-            {
-                // Wait for work, or to be signalled to stop
-                _SDReadWorkQueue* queue = nullptr;
-                
-                auto lock = _sdRead.signal.wait([&] { return _sdRead_nextWorkQueue(); });
-                coalesced = _SDRead_CoalesceWork(*queue);
+        try {
+            for (;;) {
+                _SDCoalescedWork coalesced;
+                {
+                    // Wait for work, or to be signalled to stop
+                    _SDReadWorkQueue* queue = nullptr;
+                    
+                    auto lock = _sdRead.signal.wait([&] { return _sdRead_nextWorkQueue(); });
+                    coalesced = _SDRead_CoalesceWork(*queue);
+                }
+                _sdRead_handleWork(coalesced);
             }
-            _sdRead_handleWork(coalesced);
+        
+        } catch (const _Signal::Stop&) {
+            fprintf(stderr, "_sdRead_thread stopping\n");
         }
     }
     
-    // MARK: - Update Thumbs
-    void _thumbUpdate_thread() {
-        for (;;) {
-            std::set<ImageRecordPtr> work;
-            {
-                auto lock = _thumbUpdate.signal.wait([&] { return !_thumbUpdate.work.empty(); });
-                work = std::move(_thumbUpdate.work);
-                // Update .thumb.render asap (ie before we've actually rendered) so that the
-                // visibleThumbs() function on the main thread stops enqueuing work asap
-                for (const ImageRecordPtr& rec : work) {
-                    rec->options.thumb.render = false;
+    // MARK: - Thumb Render
+    
+    void _thumbRender_thread() {
+        using namespace MDCTools;
+        
+        try {
+            id<MTLDevice> dev = MTLCreateSystemDefaultDevice();
+            Renderer renderer(dev, [dev newDefaultLibrary], [dev newCommandQueue]);
+            _ThumbCompressor compressor;
+            std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
+            
+            for (;;) @autoreleasepool {
+                _ThumbRenderWork work;
+                {
+                    auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.work.empty(); });
+                    work = std::move(_thumbRender.work.front());
+                    _thumbRender.work.pop();
+                }
+                
+                ImageRecord& rec = *work.rec;
+                std::unique_ptr<uint8_t[]> data = std::move(work.data);
+                
+                // Validate checksum
+                if (_ImageChecksumValid(data.get(), Img::Size::Thumb)) {
+    //                printf("Checksum valid (size: full)\n");
+                } else {
+                    printf("Checksum INVALID (size: full)\n");
+    //                abort();
+                }
+                
+                if (work.initial) {
+                    // Populate .info
+                    {
+                        const Img::Header& imgHeader = *(const Img::Header*)data.get();
+                        
+                        rec.info.id             = imgHeader.id;
+                        
+                        rec.info.timestamp      = imgHeader.timestamp;
+                        
+                        rec.info.imageWidth     = imgHeader.imageWidth;
+                        rec.info.imageHeight    = imgHeader.imageHeight;
+                        
+                        rec.info.coarseIntTime  = imgHeader.coarseIntTime;
+                        rec.info.analogGain     = imgHeader.analogGain;
+                    }
+                    
+                    // Populate .options
+                    {
+                        rec.options = {};
+                    }
+                }
+                
+                // Render the thumbnail into rec.thumb
+                {
+                    const void* thumbSrc = data.get()+Img::PixelsOffset;
+                    void* thumbDst = rec.thumb.data;
+                    
+                    // estimateIlluminant: only perform illuminant estimation upon our initial import
+                    const bool estimateIlluminant = work.initial;
+                    const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, rec.options,
+                        estimateIlluminant, thumbSrc, thumbDst);
+                    
+                    if (estimateIlluminant) {
+                        // Populate .info.illumEst
+                        ccm.illum.m.get(rec.info.illumEst);
+                        // Populate .options.whiteBalance
+                        ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
+                    }
                 }
             }
-            
-            _loadImages(_thumbUpdate.loadImages, _Priority::High, false, work);
+        
+        } catch (const _Signal::Stop&) {
+            fprintf(stderr, "_thumbRender_thread stopping\n");
         }
     }
     
@@ -930,24 +955,21 @@ private:
     struct {
         _Signal signal; // Protects this struct
         std::thread thread;
-        bool stop = false;
+        std::set<ImageRecordPtr> work;
+        _LoadImagesState loadImages;
+    } _thumbUpdate;
+    
+    struct {
+        _Signal signal; // Protects this struct
+        std::thread thread;
         _SDReadWorkQueue queues[(size_t)_Priority::Count];
     } _sdRead;
     
     struct {
         _Signal signal; // Protects this struct
         std::vector<std::thread> threads;
-        bool stop = false;
         std::queue<_ThumbRenderWork> work;
     } _thumbRender;
-    
-    struct {
-        _Signal signal; // Protects this struct
-        std::thread thread;
-        bool stop = false;
-        std::set<ImageRecordPtr> work;
-        _LoadImagesState loadImages;
-    } _thumbUpdate;
     
     std::set<ImageRecordPtr> _thumbUpdateWorkPrev;
 };
