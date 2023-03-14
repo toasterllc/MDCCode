@@ -273,8 +273,6 @@ private:
         std::vector<_SDReadWork> done;
     };
     
-    #warning TODO: add try/catch to our threads, to catch _Signal::Stop
-    
     struct _SDReadWork {
         _SDBlock block = 0;
         size_t len = 0;
