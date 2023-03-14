@@ -448,6 +448,14 @@ private:
     
     // MARK: - Sync
     
+    static _SDBlock _AddrFull(const MSP::State& msp, uint32_t idx) {
+        return msp.sd.fullBase + ((_SDBlock)idx * ImgSD::Full::ImageBlockCount);
+    }
+    
+    static _SDBlock _AddrThumb(const MSP::State& msp, uint32_t idx) {
+        return msp.sd.thumbBase + ((_SDBlock)idx * ImgSD::Thumb::ImageBlockCount);
+    }
+    
     void _sync_thread() {
         try {
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(_mspState);
@@ -455,40 +463,42 @@ private:
             const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
             
             {
-                // Remove images from beginning of library: lib has, device doesn't
+                uint32_t addCount = 0;
                 {
                     auto lock = std::unique_lock(_imageLibrary);
                     
-                    const auto removeBegin = _imageLibrary.begin();
+                    // Remove images from beginning of library: lib has, device doesn't
+                    {
+                        const auto removeBegin = _imageLibrary.begin();
+                        
+                        // Find the first image >= `deviceImgIdBegin`
+                        const auto removeEnd = std::lower_bound(_imageLibrary.begin(), _imageLibrary.end(), 0,
+                            [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
+                                return sample->info.id < deviceImgIdBegin;
+                            });
+                        
+                        printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
+                        _imageLibrary.remove(removeBegin, removeEnd);
+                    }
                     
-                    // Find the first image >= `deviceImgIdBegin`
-                    const auto removeEnd = std::lower_bound(_imageLibrary.begin(), _imageLibrary.end(), 0,
-                        [&](const ImageLibrary::RecordRef& sample, auto) -> bool {
-                            return sample->info.id < deviceImgIdBegin;
-                        });
-                    
-                    printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
-                    _imageLibrary.remove(removeBegin, removeEnd);
+                    // Add images to end of library: device has, lib doesn't
+                    {
+                        const Img::Id libImgIdEnd = _imageLibrary.deviceImgIdEnd();
+                        if (libImgIdEnd > deviceImgIdEnd) {
+                            throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImgIdEnd: %ju)",
+                                (uintmax_t)libImgIdEnd,
+                                (uintmax_t)deviceImgIdEnd
+                            );
+                        }
+                        
+                        addCount = 2048;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        printf("Adding %ju images\n", (uintmax_t)addCount);
+                        _imageLibrary.reserve(addCount);
+                    }
                 }
                 
-                // Add images to end of library: device has, lib doesn't
+                // Populate .addr for each new ImageRecord
                 {
-                    Img::Id libImgIdEnd = 0;
-                    {
-                        auto lock = std::unique_lock(_imageLibrary);
-                        libImgIdEnd = _imageLibrary.deviceImgIdEnd();
-                    }
-                    
-                    if (libImgIdEnd > deviceImgIdEnd) {
-                        throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImgIdEnd: %ju)",
-                            (uintmax_t)libImgIdEnd,
-                            (uintmax_t)deviceImgIdEnd
-                        );
-                    }
-                    
-                    const uint32_t addCount = 2048;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
-                    printf("Adding %ju images\n", (uintmax_t)addCount);
-                    
                     _Range newest;
                     newest.idx = imgRingBuf.buf.widx - std::min((uint32_t)imgRingBuf.buf.widx, addCount);
                     newest.len = imgRingBuf.buf.widx - newest.idx;
@@ -497,6 +507,23 @@ private:
                     oldest.len = addCount - newest.len;
                     oldest.idx = _mspState.sd.imgCap - oldest.len;
                     
+                    auto it = _imageLibrary.reservedBegin();
+                    for (uint32_t i=0; i<oldest.len; i++) {
+                        const uint32_t idx = oldest.idx+i;
+                        ImageRecord& rec = **it;
+                        rec.addr.full = _AddrFull(_mspState, idx);
+                        rec.addr.thumb = _AddrThumb(_mspState, idx);
+                        it++;
+                    }
+                    
+                    for (uint32_t i=0; i<newest.len; i++) {
+                        const uint32_t idx = newest.idx+i;
+                        ImageRecord& rec = **it;
+                        rec.addr.full = _AddrFull(_mspState, idx);
+                        rec.addr.thumb = _AddrThumb(_mspState, idx);
+                        it++;
+                    }
+                    
                     _sync_loadImages(oldest);
                     _sync_loadImages(newest);
                 }
@@ -504,6 +531,58 @@ private:
         
         } catch (const std::exception& e) {
             fprintf(stderr, "Failed to update image library: %s", e.what());
+        }
+    }
+    
+    struct _LoadImagesState {
+        _SDReadStatus sdReadStatus;
+    }
+    
+    void _loadImages(_LoadImagesState& state, _Priority priority, const std::set<ImageRecordPtr>& recs) {
+        const size_t imageCount = recs.size();
+        _SDReadStatus& sdReadStatus = state.sdReadStatus;
+        
+        // Schedule reads from SD cards
+        {
+            auto lock = std::unique_lock(_sdReadProduce.lock);
+            _SDReadWorkQueue& queue = _sdReadProduce.queues[(size_t)priority];
+            
+            for (const ImageRecordPtr& rec : recs) {
+                _SDReadWork work = {
+                    .block = rec->addr.thumb,
+                    .len = Img::Thumb::ImageLen,
+                    .rec = rec,
+                    .status = &sdReadStatus,
+                };
+                
+                queue.set.insert(std::move(work));
+            }
+        }
+        
+        // As SD reads complete, schedule rendering
+        for (;;) {
+            ImageRecordPtr work;
+            {
+                auto lock = std::unique_lock(sdReadStatus.lock);
+                status.signal.wait(sdReadStatus.lock, [&] { return !status.done.empty(); });
+                work = std::move(status.done.front());
+                status.done.pop();
+            }
+            
+            
+        }
+        
+        // As rendering completes, post notifications
+        
+        for (const ImageRecordPtr& rec : work.recs) {
+            _SDReadWork work = {
+                .block = rec->addr.thumb,
+                .len = Img::Thumb::ImageLen,
+                .rec = rec,
+                .status = _loadImages.sdReadStatus,
+            };
+            
+            queue.set.insert(std::move(work));
         }
     }
     
@@ -1152,6 +1231,7 @@ private:
     
     struct {
         std::thread thread;
+        _SDReadStatus sdReadStatus;
     } _sync;
     
     struct {
