@@ -111,39 +111,35 @@ public:
         }
         
         // Start threads
-        _sync.thread = _Thread([&] { _sync_thread(); });
-        
-        for (int i=0; i<_ThreadCount(); i++) {
-            _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
+        {
+            _sync.thread = std::thread([&] { _sync_thread(); });
+            
+            _sdRead.thread = std::thread([&] { _sdRead_thread(); });
+            
+            for (int i=0; i<_ThreadCount(); i++) {
+                _thumbRender.threads.emplace_back([&] { _thumbRender_thread(); });
+            }
+            
+            _thumbUpdate.thread = std::thread([&] { _thumbUpdate_thread(); });
         }
-        
-        _sdRead.thread = std::thread([&] { _sdRead_thread(); });
     }
     
     ~MDCDevice() {
+        // Signal our threads to stop
+        _sync.loadImages.read.signal.stop();
+        _sync.loadImages.render.signal.stop();
+        _thumbUpdate.loadImages.read.signal.stop();
+        _thumbUpdate.loadImages.render.signal.stop();
+        _sync.signal.stop();
+        _sdRead.signal.stop();
+        _thumbRender.signal.stop();
+        _thumbUpdate.signal.stop();
+        
+        // Wait for threads to stop
         _sync.thread.join();
-        
-        // Wait for _thumbRender.thread to exit
-        {
-            auto lock = std::unique_lock(_thumbRender.lock);
-            _thumbRender.stop = true;
-        }
-        _thumbRender.signal.notify_one();
-        
-        for (std::thread& t : _thumbRender.threads) {
-            t.join();
-        }
-        
-        // Wait for _sdRead.thread to exit
-        {
-            auto lock = std::unique_lock(_sdRead.lock);
-            // Upon our destruction, there shouldn't be any work to do, because whatever was
-            // scheduling work should've ensured that we'd stay alive. Check that assumption.
-            assert(!_sdRead_nextWorkQueue());
-            _sdRead.stop = true;
-        }
-        _sdRead.signal.notify_one();
         _sdRead.thread.join();
+        for (std::thread& t : _thumbRender.threads) t.join();
+        _thumbUpdate.thread.join();
     }
     
     const std::string& name() {
@@ -223,7 +219,7 @@ public:
 //        #warning TODO: we should cache the last value set on _thumbUpdate, and only do something if there's a new record
         bool enqueued = false;
         {
-            auto lock = std::unique_lock(_thumbUpdate.lock);
+            auto lock = _thumbUpdate.signal.lock();
             _thumbUpdate.work.clear();
             for (auto it=begin; it!=end; it++) {
                 ImageRecordPtr rec = *it;
@@ -233,7 +229,7 @@ public:
                 }
             }
         }
-        if (enqueued) _thumbUpdate.signal.notify_one();
+        if (enqueued) _thumbUpdate.signal.signalOne();
     }
     
 private:
@@ -262,6 +258,42 @@ private:
     
     enum class _Priority : uint8_t { High, Low, Count };
     
+    struct _Signal {
+        struct Stop : std::exception {};
+        
+        template <typename T_Cond>
+        auto wait(T_Cond cond) {
+            auto l = std::unique_lock(_lock);
+            _cv.wait(l, [&] {
+                if (_stop) throw Stop();
+                return cond();
+            });
+            return l;
+        }
+        
+        std::unique_lock<std::mutex> lock() {
+            auto l = std::unique_lock(_lock);
+            if (_stop) throw Stop();
+            return l;
+        }
+        
+        void signalOne() { _cv.notify_one(); }
+        void signalAll() { _cv.notify_all(); }
+        
+        void stop() {
+            {
+                auto l = std::unique_lock(_lock);
+                _stop = true;
+            }
+            _cv.notify_all();
+        }
+        
+    private:
+        std::mutex _lock;
+        std::condition_variable _cv;
+        bool _stop = false;
+    };
+    
     struct _LoadImagesWork {
         _Priority priority;
         std::vector<ImageRecordPtr> recs;
@@ -270,8 +302,7 @@ private:
     
     struct _SDReadWork;
     struct _SDReadStatus {
-        std::mutex lock;
-        std::condition_variable signal;
+        _Signal signal; // Protects this struct
         std::vector<_SDReadWork> done;
     };
     
@@ -322,51 +353,13 @@ private:
     };
     
     struct _ThumbRenderStatus {
-        std::mutex lock;
-        std::condition_variable signal;
+        _Signal signal; // Protects this struct
         std::vector<_ThumbRenderWork> done;
     };
     
     struct _LoadImagesState {
         _SDReadStatus read;
         _ThumbRenderStatus render;
-    };
-    
-    template <typename T>
-    class _Queue {
-    public:
-        auto& rget() {
-            auto lock = std::unique_lock(_lock);
-            while (!_bufs.rok()) _signal.wait(lock);
-            return _bufs.rget();
-        }
-        
-        void rpop() {
-            {
-                auto lock = std::unique_lock(_lock);
-                _bufs.rpop();
-            }
-            _signal.notify_all();
-        }
-        
-        auto& wget() {
-            auto lock = std::unique_lock(_lock);
-            while (!_bufs.wok()) _signal.wait(lock);
-            return _bufs.wget();
-        }
-        
-        void wpush() {
-            {
-                auto lock = std::unique_lock(_lock);
-                _bufs.wpush();
-            }
-            _signal.notify_all();
-        }
-        
-    private:
-        std::mutex _lock;
-        std::condition_variable _signal;
-        Toastbox::Queue<T,2> _bufs;
     };
     
     static int _ThreadCount() {
@@ -660,7 +653,7 @@ private:
         
         // Enqueue SD reads
         {
-            auto lock = std::unique_lock(_sdRead.lock);
+            auto lock = _sdRead.signal.lock();
             _SDReadWorkQueue& queue = _sdRead.queues[(size_t)priority];
             
             for (const ImageRecordPtr& rec : recs) {
@@ -681,13 +674,12 @@ private:
             while (doneCount < imageCount) {
                 std::vector<_SDReadWork> done;
                 {
-                    auto lock = std::unique_lock(state.read.lock);
-                    state.read.signal.wait(lock, [&] { return !state.read.done.empty(); });
+                    auto lock = state.read.signal.wait([&] { return !state.read.done.empty(); });
                     done = std::move(state.read.done);
                 }
                 
                 {
-                    auto lock = std::unique_lock(_thumbRender.lock);
+                    auto lock = _thumbRender.signal.lock();
                     for (_SDReadWork& read : done) {
                         _thumbRender.work.push(_ThumbRenderWork{
                             .rec = std::move(read.rec),
@@ -697,7 +689,7 @@ private:
                     }
                 }
                 
-                _thumbRender.signal.notify_all();
+                _thumbRender.signal.signalAll();
                 doneCount += done.size();
             }
         });
@@ -709,8 +701,7 @@ private:
             std::set<ImageRecordPtr> done;
             while (doneCount < imageCount) {
                 {
-                    auto lock = std::unique_lock(state.render.lock);
-                    state.render.signal.wait(lock, [&] { return !state.render.done.empty(); });
+                    auto lock = state.render.signal.wait([&] { return !state.render.done.empty(); });
                     
                     for (_ThumbRenderWork& work : state.render.done) {
                         done.insert(std::move(work.rec));
@@ -747,10 +738,7 @@ private:
         for (;;) @autoreleasepool {
             _ThumbRenderWork work;
             {
-                auto lock = std::unique_lock(_thumbRender.lock);
-                _thumbRender.signal.wait(lock, [&] { return (_thumbRender.stop || !_thumbRender.work.empty()); });
-                // Exit worker if we're being stopped
-                if (_thumbRender.stop) break;
+                auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.work.empty(); });
                 work = std::move(_thumbRender.work.front());
                 _thumbRender.work.pop();
             }
@@ -916,12 +904,12 @@ private:
         // Move each _SDReadWork into status.work and send signal
         {
             {
-                auto lock = std::unique_lock(status.lock);
+                auto lock = status.signal.lock();
                 for (_SDReadWork& work : coalesced.works) {
                     status.done.push_back(std::move(work));
                 }
             }
-            status.signal.notify_one();
+            status.signal.signalOne();
         }
     }
     
@@ -929,14 +917,10 @@ private:
         for (;;) {
             _SDCoalescedWork coalesced;
             {
-                auto lock = std::unique_lock(_sdRead.lock);
                 // Wait for work, or to be signalled to stop
                 _SDReadWorkQueue* queue = nullptr;
-                _sdRead.signal.wait(lock, [&] {
-                    queue = _sdRead_nextWorkQueue();
-                    return (queue || _sdRead.stop);
-                });
-                if (_sdRead.stop) return;
+                
+                auto lock = _sdRead.signal.wait([&] { return _sdRead_nextWorkQueue(); });
                 coalesced = _SDRead_CoalesceWork(*queue);
             }
             _sdRead_handleWork(coalesced);
@@ -948,8 +932,7 @@ private:
         for (;;) {
             std::set<ImageRecordPtr> work;
             {
-                auto lock = std::unique_lock(_thumbUpdate.lock);
-                _thumbUpdate.signal.wait(lock, [&] { return !_thumbUpdate.work.empty(); });
+                auto lock = _thumbUpdate.signal.wait([&] { return !_thumbUpdate.work.empty(); });
                 work = std::move(_thumbUpdate.work);
                 // Update .thumb.render asap (ie before we've actually rendered) so that the
                 // visibleThumbs() function on the main thread stops enqueuing work asap
@@ -974,73 +957,28 @@ private:
     std::string _name;
     std::forward_list<Observer> _observers;
     
-    struct _Thread : std::thread, std::mutex, std::condition_variable {
-        struct Stop : std::exception {};
-        
-        _Thread() {}
-        
-        template <typename T>
-        _Thread(T t) : std::thread(t) {}
-        
-        // Copy constructor: illegal
-        _Thread(const _Thread& x) = delete;
-        _Thread& operator=(const _Thread& x) = delete;
-        // Move constructor: OK
-        _Thread(_Thread&& x) { swap(x); }
-        _Thread& operator=(_Thread&& x) { swap(x); return *this; }
-        
-        template <typename T_Cond>
-        void wait(std::unique_lock<std::mutex>& lock, T_Cond cond) {
-            wait(lock, [&] {
-                if (_state.stop) throw Stop();
-                return cond();
-            });
-        }
-        
-        void swap(_Thread& x) {
-            std::swap(static_cast<std::thread&>(*this), static_cast<std::thread&>(x));
-            std::swap(_state, x._state);
-        }
-        
-        ~_Thread() {
-            {
-                auto lock = std::unique_lock(*this);
-                _state.stop = true;
-            }
-            
-            if (joinable()) join();
-        }
-        
-    private:
-        struct {
-            bool stop = false;
-        } _state;
-    };
-    
     struct {
-        _Thread thread;
+        _Signal signal; // Protects this struct
+        std::thread thread;
         _LoadImagesState loadImages;
     } _sync;
     
     struct {
-        std::mutex lock; // Protects this struct
-        std::condition_variable signal;
+        _Signal signal; // Protects this struct
         std::thread thread;
         bool stop = false;
         _SDReadWorkQueue queues[(size_t)_Priority::Count];
     } _sdRead;
     
     struct {
-        std::mutex lock; // Protects this struct
-        std::condition_variable signal;
+        _Signal signal; // Protects this struct
         std::vector<std::thread> threads;
         bool stop = false;
         std::queue<_ThumbRenderWork> work;
     } _thumbRender;
     
     struct {
-        std::mutex lock; // Protects this struct
-        std::condition_variable signal;
+        _Signal signal; // Protects this struct
         std::thread thread;
         bool stop = false;
         std::set<ImageRecordPtr> work;
