@@ -35,7 +35,13 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
 @end
 
-using _ChunkTextures = LRU<ImageLibrary::ChunkStrongRef,id<MTLTexture>>;
+struct _ChunkTexture {
+    static constexpr size_t SliceCount = ImageLibrary::ChunkRecordCap;
+    id<MTLTexture> txt = nil;
+    bool loaded[SliceCount] = {};
+};
+
+using _ChunkTextures = LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture>;
 
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
@@ -188,28 +194,32 @@ static CGRect _CGRectFromGridRect(Grid::Rect rect, CGFloat scale) {
     };
 }
 
-static void _TextureUpdateSlice(id<MTLTexture> txt, const ImageLibrary::RecordRef& ref) {
-    const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
-    [txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
-        slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
+static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::RecordRef& ref) {
+    const bool loaded = ref->info.flags & ImageFlags::Loaded;
+    if (loaded) {
+        const uint8_t* b = ref.chunk->mmap.data() + ref.idx*sizeof(ImageRecord) + offsetof(ImageRecord, thumb.data);
+        [ct.txt replaceRegion:MTLRegionMake2D(0,0,ImageThumb::ThumbWidth,ImageThumb::ThumbHeight) mipmapLevel:0
+            slice:ref.idx withBytes:b bytesPerRow:ImageThumb::ThumbWidth*4 bytesPerImage:0];
+    }
+    
+    ct.loaded[ref.idx] = loaded;
 }
 
 #warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
-// _textureForChunk: returns a texture containing all thumbnails for a given chunk
+// _getChunkTexture: returns a _ChunkTexture& containing all thumbnails for a given chunk
 // ImageLibrary must be locked!
-- (id<MTLTexture>)_textureForChunk:(ImageRecordIter)iter {
-    constexpr size_t TxtSliceCount = ImageLibrary::ChunkRecordCap;
-    
-    const auto chunkBegin = ImageLibrary::FindChunkBegin(iter, _imageLibrary->begin());
-    const auto chunkEnd = ImageLibrary::FindChunkEnd(iter, _imageLibrary->end());
-    const ImageLibrary::ChunkStrongRef chunk = chunkBegin->chunkRef();
-    
-    assert(chunkBegin != chunkEnd);
-    
+- (_ChunkTexture&)_getChunkTexture:(ImageRecordIter)iter {
+    // If we already have a _ChunkTexture for the iter's chunk, return it.
+    // Otherwise we need to create it.
+    const ImageLibrary::ChunkStrongRef chunk = iter->chunkRef();
     const auto it = _chunkTxts.get(chunk);
     if (it != _chunkTxts.end()) {
         return it->val;
     }
+    
+    const auto chunkBegin = ImageLibrary::FindChunkBegin(iter, _imageLibrary->begin());
+    const auto chunkEnd = ImageLibrary::FindChunkEnd(iter, _imageLibrary->end());
+    assert(chunkBegin != chunkEnd);
     
     auto startTime = std::chrono::steady_clock::now();
     
@@ -218,21 +228,20 @@ static void _TextureUpdateSlice(id<MTLTexture> txt, const ImageLibrary::RecordRe
     [txtDesc setPixelFormat:MTLPixelFormatBC7_RGBAUnorm];
     [txtDesc setWidth:ImageThumb::ThumbWidth];
     [txtDesc setHeight:ImageThumb::ThumbHeight];
-    [txtDesc setArrayLength:TxtSliceCount];
+    [txtDesc setArrayLength:_ChunkTexture::SliceCount];
     
     id<MTLTexture> txt = [_device newTextureWithDescriptor:txtDesc];
     assert(txt);
     
+    _ChunkTexture& ct = _chunkTxts.insert(chunk, _ChunkTexture{ .txt=txt })->val;
     for (auto it=chunkBegin; it!=chunkEnd; it++) {
-        _TextureUpdateSlice(txt, *it);
+        _ChunkTextureUpdateSlice(ct, *it);
     }
-    
-    _chunkTxts.insert(chunk, txt);
     
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-startTime).count();
     printf("Texture creation took %ju ms\n", (uintmax_t)durationMs);
     
-    return txt;
+    return ct;
 }
 
 //static void _Display(ImageGridLayer* self, id<MTLTexture> drawableTxt) {
@@ -290,10 +299,10 @@ static void _TextureUpdateSlice(id<MTLTexture> txt, const ImageLibrary::RecordRe
         [renderEncoder setVertexBuffer:imageRefs offset:0 atIndex:1];
         [renderEncoder setVertexBuffer:_selection.buf offset:0 atIndex:2];
         
-        id<MTLTexture> chunkTxt = [self _textureForChunk:it];
-        assert(chunkTxt);
+        _ChunkTexture& ct = [self _getChunkTexture:it];
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
-        [renderEncoder setFragmentTexture:chunkTxt atIndex:0];
+        [renderEncoder setFragmentBytes:&ct.loaded length:sizeof(ct.loaded) atIndex:1];
+        [renderEncoder setFragmentTexture:ct.txt atIndex:0];
         [renderEncoder setFragmentTexture:_placeholderTexture atIndex:1];
         
         const size_t chunkImageCount = chunkImageRefEnd-chunkImageRefBegin;
@@ -423,7 +432,7 @@ done:
 //            auto it = _chunkTxts.get(rec);
 //            if (it == _chunkTxts.end()) continue;
 //            id<MTLTexture> txt = it->val;
-//            _TextureUpdateSlice(txt, rec);
+//            _ChunkTextureUpdateSlice(txt, rec);
 //        }
 //    }
 //    
@@ -452,8 +461,8 @@ done:
         for (const ImageRecordPtr& rec : ev.records) {
             auto it = _chunkTxts.get(rec);
             if (it == _chunkTxts.end()) continue;
-            id<MTLTexture> txt = it->val;
-            _TextureUpdateSlice(txt, rec);
+            _ChunkTexture& ct = it->val;
+            _ChunkTextureUpdateSlice(ct, rec);
         }
     }
     

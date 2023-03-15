@@ -915,8 +915,8 @@ private:
                         const Img::Header& imgHeader = *(const Img::Header*)data.get();
                         
                         rec.info.id             = imgHeader.id;
-                        
                         rec.info.timestamp      = imgHeader.timestamp;
+                        rec.info.flags          = ImageFlags::Loaded;
                         
                         rec.info.imageWidth     = imgHeader.imageWidth;
                         rec.info.imageHeight    = imgHeader.imageHeight;

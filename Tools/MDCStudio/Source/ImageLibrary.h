@@ -18,10 +18,14 @@ struct [[gnu::packed]] ImageAddr {
 
 static_assert(!(sizeof(ImageAddr) % 8)); // Ensure that ImageAddr is a multiple of 8 bytes
 
+struct ImageFlags {
+    static constexpr uint64_t Loaded = 1<<0;
+};
+
 struct [[gnu::packed]] ImageInfo {
     Img::Id id = 0;
-    
     Time::Instant timestamp = 0;
+    uint64_t flags = 0;
     
     uint16_t imageWidth = 0;
     uint16_t imageHeight = 0;
