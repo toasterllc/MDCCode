@@ -38,22 +38,18 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 using _ChunkTextures = LRU<ImageLibrary::ChunkStrongRef,id<MTLTexture>>;
 
 @implementation ImageGridLayer {
-    id<MTLDevice> _device;
-    id<MTLCommandQueue> _commandQueue;
-    id<MTLRenderPipelineState> _pipelineState;
-    id<MTLTexture> _outlineTexture;
-    id<MTLTexture> _maskTexture;
-    id<MTLTexture> _shadowTexture;
-    id<MTLTexture> _selectionTexture;
-    id<MTLTexture> _placeholderTexture;
-    
-    _ChunkTextures _chunkTxts;
-    
+    ImageSourcePtr _imageSource;
+    ImageLibrary* _imageLibrary;
     Grid _grid;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
-    ImageSourcePtr _imageSource;
-    ImageLibrary* _imageLibrary;
+    
+    id<MTLDevice> _device;
+    id<MTLCommandQueue> _commandQueue;
+    id<MTLRenderPipelineState> _pipelineState;
+    id<MTLTexture> _placeholderTexture;
+    
+    _ChunkTextures _chunkTxts;
     
     struct {
         ImageSet images;
@@ -68,68 +64,6 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     return cs;
 }
 
-//static id<MTLTexture> _TextureForPDF(id<MTLDevice> dev, NSString* name) {
-//    constexpr CGFloat ContentsScale = 2;
-//    
-//    NSURL* url = [[NSBundle mainBundle] URLForImageResource:name];
-//    NSData* data = [NSData dataWithContentsOfURL:url];
-//    NSPDFImageRep* pdf = [[NSPDFImageRep alloc] initWithData:data];
-//    const CGSize size = [pdf bounds].size;
-//    const size_t width = std::round(ContentsScale*size.width);
-//    const size_t height = std::round(ContentsScale*size.height);
-//    const size_t bytesPerRow = width*4;
-//    
-//    id /* CGContextRef */ cgctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, width, height, 8, bytesPerRow,
-//        _LSRGBColorSpace(), kCGImageAlphaLast));
-//    
-//    [NSGraphicsContext saveGraphicsState];
-//        NSGraphicsContext* ctx = [NSGraphicsContext graphicsContextWithCGContext:(CGContextRef)cgctx flipped:false];
-//        [NSGraphicsContext setCurrentContext:ctx];
-//        [pdf drawInRect:{{0,0},{(CGFloat)width,(CGFloat)height}}];
-//    [NSGraphicsContext restoreGraphicsState];
-//    
-////    {
-////        CGImageRef imageRef = CGBitmapContextCreateImage((CGContextRef)cgctx);
-////        NSImage* image = [[NSImage alloc] initWithCGImage:imageRef size:NSZeroSize];
-////        [[image TIFFRepresentation] writeToFile:@"/Users/dave/Desktop/test.tiff" atomically:true];
-////        exit(0);
-////    }
-//    
-//    
-//    MTLTextureDescriptor* desc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm width:width height:height mipmapped:false];
-//    id<MTLTexture> txt = [dev newTextureWithDescriptor:desc];
-//    [txt replaceRegion:MTLRegionMake2D(0,0,width,height) mipmapLevel:0 withBytes:CGBitmapContextGetData((CGContextRef)cgctx) bytesPerRow:bytesPerRow];
-//    
-////    size_t w = 
-////    CGBitmapContextCreate(nullptr, <#size_t width#>, <#size_t height#>, 8, <#size_t bytesPerRow#>, <#CGColorSpaceRef  _Nullable space#>, <#uint32_t bitmapInfo#>);
-//    
-////    NSURL* url = [[NSBundle mainBundle] URLForImageResource:name];
-////    CGImageRef cgimage = [image CGImageForProposedRect:nil context:nil hints:nil];
-//    
-////    id /* CGImageSourceRef */ imageSource = CFBridgingRelease(CGImageSourceCreateWithURL((CFURLRef)url, nil));
-//    return txt;
-//    
-//    
-//////    NSDictionary* opts = nil;
-////    NSDictionary* opts = @{
-////        (id)kCGImageSourceShouldAllowFloat: @YES,
-////        (id)kCGImageSourceThumbnailMaxPixelSize: @500,
-////    };
-////    id /* CGImageRef */ img = CFBridgingRelease(CGImageSourceCreateImageAtIndex((CGImageSourceRef)imageSource, 0, (CFDictionaryRef)opts));
-////    
-//////    let options = [ kCGImageSourceShouldCache : true, kCGImageSourceShouldAllowFloat : true ] as CFDictionary
-//////    guard let image = CGImageSourceCreateImageAtIndex(imageSource, 0, options) else { return nil }
-//////
-//////
-//////    
-//////    
-//////    NSImage* image = [NSImage imageNamed:name];
-//////    CGImageRef cgimage = [image CGImageForProposedRect:nil context:nil hints:nil];
-////    NSError* err = nil;
-////    id<MTLTexture> txt = [loader newTextureWithCGImage:(CGImageRef)img options:nil error:&err];
-////    return txt;
-//}
-
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
     NSParameterAssert(imageSource);
     
@@ -137,6 +71,20 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     _imageSource = imageSource;
     _imageLibrary = &imageSource->imageLibrary();
+    
+    _cellWidth = _ThumbWidth;
+    _cellHeight = _ThumbHeight;
+    
+    _grid.setBorderSize({
+        .left   = 6,//(int32_t)_cellWidth/5,
+        .right  = 6,//(int32_t)_cellWidth/5,
+        .top    = 6,//(int32_t)_cellHeight/5,
+        .bottom = 6,//(int32_t)_cellHeight/5,
+    });
+    
+    _grid.setCellSize({(int32_t)_cellWidth, (int32_t)_cellHeight});
+    _grid.setCellSpacing({6, 6});
+//    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
@@ -147,36 +95,10 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:_device];
     // TODO: supply scaleFactor properly
     
-    // Loading these textures from an asset catalog causes incorrect colors to be
-    // sampled by our fragment shader (particularly noticeable when rendering the
-    // thumbnail shadow texture). Meanwhile loading the textures directly from
-    // the file within the bundle works fine.
-    // We were unable to determine why this happens, but it likely has something
-    // to do with the APIs doing something wrong with color profiles.
-    _outlineTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Outline"] options:nil error:nil];
-    assert(_outlineTexture);
-    
-    _maskTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Mask"] options:nil error:nil];
-    assert(_maskTexture);
-    
-    _shadowTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Shadow"] options:nil error:nil];
-    assert(_shadowTexture);
-    
-    _selectionTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Selection"] options:nil error:nil];
-    assert(_selectionTexture);
-    
     _placeholderTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"ImageGrid-ImagePlaceholder"] options:nil error:nil];
     assert(_placeholderTexture);
-    
-//    {
-//        const NSUInteger width = [_placeholderTexture width];
-//        const NSUInteger height = [_placeholderTexture height];
-//        const NSUInteger bytesPerRow = width*4;
-//        const NSUInteger len = bytesPerRow*height;
-//        auto data = std::make_unique<uint8_t[]>(len);
-//        [_placeholderTexture getBytes:data.get() bytesPerRow:bytesPerRow fromRegion:MTLRegionMake2D(0, 0, 100, 100) mipmapLevel:0];
-//        [[NSData dataWithBytes:data.get() length:len] writeToFile:@"/Users/dave/Desktop/test.bin" atomically:true];
-//    }
+    assert([_placeholderTexture width] == _cellWidth);
+    assert([_placeholderTexture height] == _cellHeight);
     
     _commandQueue = [_device newCommandQueue];
     
@@ -207,21 +129,6 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:nil];
     assert(_pipelineState);
-    
-    const uint32_t excess = 0;//(uint32_t)([_shadowTexture width]-[_maskTexture width]);
-    _cellWidth = _ThumbWidth+excess;
-    _cellHeight = _ThumbHeight+excess;
-    
-    _grid.setBorderSize({
-        .left   = 6,//(int32_t)_cellWidth/5,
-        .right  = 6,//(int32_t)_cellWidth/5,
-        .top    = 6,//(int32_t)_cellHeight/5,
-        .bottom = 6,//(int32_t)_cellHeight/5,
-    });
-    
-    _grid.setCellSize({(int32_t)_cellWidth, (int32_t)_cellHeight});
-    _grid.setCellSpacing({6, 6});
-//    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
     
     // Add ourself as an observer of the image library
     {
