@@ -661,9 +661,10 @@ private:
                             );
                         }
                         
-                        addCount = 128;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.reserve(addCount);
+                        _imageLibrary.add();
                     }
                 }
                 

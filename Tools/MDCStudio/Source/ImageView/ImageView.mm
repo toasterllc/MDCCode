@@ -14,7 +14,7 @@ using namespace MDCTools;
 // _PixelFormat: Our pixels are in the linear RGB space (LSRGB), and need conversion to the display color space.
 // To do so, we declare that our pixels are LSRGB (ie we _don't_ use the _sRGB MTLPixelFormat variant!),
 // and we opt-in to color matching by setting the colorspace on our CAMetalLayer via -setColorspace:.
-// Without calling -setColorspace:, CAMetalLayers don't perform color matching!
+// (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
 @interface ImageLayer : FixedMetalDocumentLayer

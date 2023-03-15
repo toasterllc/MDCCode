@@ -15,7 +15,7 @@ static constexpr auto _ThumbHeight = ImageThumb::ThumbHeight;
 // _PixelFormat: Our pixels are in the linear RGB space (LSRGB), and need conversion to the display color space.
 // To do so, we declare that our pixels are LSRGB (ie we _don't_ use the _sRGB MTLPixelFormat variant!),
 // and we opt-in to color matching by setting the colorspace on our CAMetalLayer via -setColorspace:.
-// Without calling -setColorspace:, CAMetalLayers don't perform color matching!
+// (Without calling -setColorspace:, CAMetalLayers don't perform color matching!)
 static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 
 @interface ImageGridLayer : FixedMetalDocumentLayer
@@ -45,6 +45,7 @@ using _ChunkTextures = LRU<ImageLibrary::ChunkStrongRef,id<MTLTexture>>;
     id<MTLTexture> _maskTexture;
     id<MTLTexture> _shadowTexture;
     id<MTLTexture> _selectionTexture;
+    id<MTLTexture> _placeholderTexture;
     
     _ChunkTextures _chunkTxts;
     
@@ -66,6 +67,68 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     static CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
     return cs;
 }
+
+//static id<MTLTexture> _TextureForPDF(id<MTLDevice> dev, NSString* name) {
+//    constexpr CGFloat ContentsScale = 2;
+//    
+//    NSURL* url = [[NSBundle mainBundle] URLForImageResource:name];
+//    NSData* data = [NSData dataWithContentsOfURL:url];
+//    NSPDFImageRep* pdf = [[NSPDFImageRep alloc] initWithData:data];
+//    const CGSize size = [pdf bounds].size;
+//    const size_t width = std::round(ContentsScale*size.width);
+//    const size_t height = std::round(ContentsScale*size.height);
+//    const size_t bytesPerRow = width*4;
+//    
+//    id /* CGContextRef */ cgctx = CFBridgingRelease(CGBitmapContextCreate(nullptr, width, height, 8, bytesPerRow,
+//        _LSRGBColorSpace(), kCGImageAlphaLast));
+//    
+//    [NSGraphicsContext saveGraphicsState];
+//        NSGraphicsContext* ctx = [NSGraphicsContext graphicsContextWithCGContext:(CGContextRef)cgctx flipped:false];
+//        [NSGraphicsContext setCurrentContext:ctx];
+//        [pdf drawInRect:{{0,0},{(CGFloat)width,(CGFloat)height}}];
+//    [NSGraphicsContext restoreGraphicsState];
+//    
+////    {
+////        CGImageRef imageRef = CGBitmapContextCreateImage((CGContextRef)cgctx);
+////        NSImage* image = [[NSImage alloc] initWithCGImage:imageRef size:NSZeroSize];
+////        [[image TIFFRepresentation] writeToFile:@"/Users/dave/Desktop/test.tiff" atomically:true];
+////        exit(0);
+////    }
+//    
+//    
+//    MTLTextureDescriptor* desc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm width:width height:height mipmapped:false];
+//    id<MTLTexture> txt = [dev newTextureWithDescriptor:desc];
+//    [txt replaceRegion:MTLRegionMake2D(0,0,width,height) mipmapLevel:0 withBytes:CGBitmapContextGetData((CGContextRef)cgctx) bytesPerRow:bytesPerRow];
+//    
+////    size_t w = 
+////    CGBitmapContextCreate(nullptr, <#size_t width#>, <#size_t height#>, 8, <#size_t bytesPerRow#>, <#CGColorSpaceRef  _Nullable space#>, <#uint32_t bitmapInfo#>);
+//    
+////    NSURL* url = [[NSBundle mainBundle] URLForImageResource:name];
+////    CGImageRef cgimage = [image CGImageForProposedRect:nil context:nil hints:nil];
+//    
+////    id /* CGImageSourceRef */ imageSource = CFBridgingRelease(CGImageSourceCreateWithURL((CFURLRef)url, nil));
+//    return txt;
+//    
+//    
+//////    NSDictionary* opts = nil;
+////    NSDictionary* opts = @{
+////        (id)kCGImageSourceShouldAllowFloat: @YES,
+////        (id)kCGImageSourceThumbnailMaxPixelSize: @500,
+////    };
+////    id /* CGImageRef */ img = CFBridgingRelease(CGImageSourceCreateImageAtIndex((CGImageSourceRef)imageSource, 0, (CFDictionaryRef)opts));
+////    
+//////    let options = [ kCGImageSourceShouldCache : true, kCGImageSourceShouldAllowFloat : true ] as CFDictionary
+//////    guard let image = CGImageSourceCreateImageAtIndex(imageSource, 0, options) else { return nil }
+//////
+//////
+//////    
+//////    
+//////    NSImage* image = [NSImage imageNamed:name];
+//////    CGImageRef cgimage = [image CGImageForProposedRect:nil context:nil hints:nil];
+////    NSError* err = nil;
+////    id<MTLTexture> txt = [loader newTextureWithCGImage:(CGImageRef)img options:nil error:&err];
+////    return txt;
+//}
 
 - (instancetype)initWithImageSource:(ImageSourcePtr)imageSource {
     NSParameterAssert(imageSource);
@@ -101,6 +164,19 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     
     _selectionTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"Selection"] options:nil error:nil];
     assert(_selectionTexture);
+    
+    _placeholderTexture = [loader newTextureWithContentsOfURL:[[NSBundle mainBundle] URLForImageResource:@"ImageGrid-ImagePlaceholder"] options:nil error:nil];
+    assert(_placeholderTexture);
+    
+//    {
+//        const NSUInteger width = [_placeholderTexture width];
+//        const NSUInteger height = [_placeholderTexture height];
+//        const NSUInteger bytesPerRow = width*4;
+//        const NSUInteger len = bytesPerRow*height;
+//        auto data = std::make_unique<uint8_t[]>(len);
+//        [_placeholderTexture getBytes:data.get() bytesPerRow:bytesPerRow fromRegion:MTLRegionMake2D(0, 0, 100, 100) mipmapLevel:0];
+//        [[NSData dataWithBytes:data.get() length:len] writeToFile:@"/Users/dave/Desktop/test.bin" atomically:true];
+//    }
     
     _commandQueue = [_device newCommandQueue];
     
@@ -311,6 +387,7 @@ static void _TextureUpdateSlice(id<MTLTexture> txt, const ImageLibrary::RecordRe
         assert(chunkTxt);
         [renderEncoder setFragmentBytes:&ctx length:sizeof(ctx) atIndex:0];
         [renderEncoder setFragmentTexture:chunkTxt atIndex:0];
+        [renderEncoder setFragmentTexture:_placeholderTexture atIndex:1];
         
         const size_t chunkImageCount = chunkImageRefEnd-chunkImageRefBegin;
         [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6 instanceCount:chunkImageCount];
@@ -340,6 +417,7 @@ static void _TextureUpdateSlice(id<MTLTexture> txt, const ImageLibrary::RecordRe
         MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
         [[renderPassDescriptor colorAttachments][0] setTexture:drawableTxt];
         [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionClear];
+//        [[renderPassDescriptor colorAttachments][0] setClearColor:{0, 0, 0, 1}];
         [[renderPassDescriptor colorAttachments][0] setClearColor:{WindowBackgroundColor.lsrgb[0], WindowBackgroundColor.lsrgb[1], WindowBackgroundColor.lsrgb[2], 1}];
         [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
         

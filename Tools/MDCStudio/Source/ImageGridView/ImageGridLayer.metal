@@ -12,6 +12,7 @@ struct VertexOutput {
     uint idx;
     bool selected;
     float4 posView [[position]];
+    float2 posNorm;
     float2 posPx;
 };
 
@@ -50,17 +51,28 @@ vertex VertexOutput VertexShader(
         .idx = idxRel,
         .selected = selected,
         .posView = ctx.transform * float4(vnorm, 0, 1),
+        .posNorm = _Verts[vidx],
         .posPx = float2(voff),
     };
 }
 
+
+
 fragment float4 FragmentShader(
     constant RenderContext& ctx [[buffer(0)]],
     texture2d_array<float> txt [[texture(0)]],
+    texture2d<float> placeholderTxt [[texture(1)]],
     VertexOutput in [[stage_in]]
 ) {
+//    return float4(1,1,1,0.003935939504);
+//    return float4(1,1,1,.01/2);
+    return placeholderTxt.sample({}, in.posNorm);
+    return float4(placeholderTxt.sample({}, in.posNorm).rgb, 1);
+    return float4(.2,.5,.7,1);
     const uint2 pos = uint2(in.posPx);
-    float3 c = txt.read(pos, in.idx).rgb;
+    return float4(placeholderTxt.read(pos).rgb, 1);
+//    float3 c = txt.read(pos, in.idx).rgb;
+    float3 c = placeholderTxt.read(pos, in.idx).rgb;
     if (!in.selected) c /= 32;
     return float4(c, 1);
 }

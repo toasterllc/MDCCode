@@ -71,6 +71,7 @@
 		55E43FA028C00D6B00FCCEA0 /* FFCC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55E43F9228C00D6B00FCCEA0 /* FFCC.mm */; };
 		55E43FF028C01EEA00FCCEA0 /* DownsampleDiscardRaw.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55E43FEF28C01EE900FCCEA0 /* DownsampleDiscardRaw.metal */; };
 		55F1144C27C8C60900C24343 /* ImageView-Shadow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */; };
+		55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */; };
 		55F8D01027BDF26400757165 /* Shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 55F8D00F27BDF26400757165 /* Shadow.png */; };
 		55F8D01427BEF3E500757165 /* ImageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01327BEF3E500757165 /* ImageView.mm */; };
 		55F8D01927BEF97200757165 /* ImageView.metal in Sources */ = {isa = PBXBuildFile; fileRef = 55F8D01627BEF97200757165 /* ImageView.metal */; };
@@ -247,6 +248,7 @@
 		55F1144B27C8C60900C24343 /* ImageView-Shadow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageView-Shadow@2x.png"; sourceTree = "<group>"; };
 		55F7551829B955C100241672 /* MockImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MockImageSource.h; sourceTree = "<group>"; };
 		55F7556C29BC21B500241672 /* ColorMatrix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorMatrix.h; sourceTree = "<group>"; };
+		55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageGrid-ImagePlaceholder.png"; sourceTree = "<group>"; };
 		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		55F8D01227BEF3E500757165 /* ImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageView.h; sourceTree = "<group>"; };
 		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
@@ -473,6 +475,7 @@
 			isa = PBXGroup;
 			children = (
 				55496F48278CFC0600BCA739 /* Assets.xcassets */,
+				55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */,
 				55425B7E29A3F39600F25D57 /* Inspector-Brightness-Max.pdf */,
 				55425B8229A3F39700F25D57 /* Inspector-Brightness-Min.pdf */,
 				55425B7F29A3F39600F25D57 /* Inspector-Contrast-Max.pdf */,
@@ -717,6 +720,7 @@
 				552F4BB629AE6E84000CEAB2 /* Inspector-Clear.pdf in Resources */,
 				55425B8C29A3F39700F25D57 /* Inspector-Brightness-Min.pdf in Resources */,
 				553031FC27BC45A100BEFFEA /* Selection.png in Resources */,
+				55F755C529C2455E00241672 /* ImageGrid-ImagePlaceholder.png in Resources */,
 				55425B8A29A3F39700F25D57 /* Inspector-WhiteBalance-Max.pdf in Resources */,
 				55425B8F29A3F39700F25D57 /* Inspector-Contrast-Min.pdf in Resources */,
 				55425B9029A3F39700F25D57 /* Inspector-WhiteBalance-Min.pdf in Resources */,
