@@ -147,7 +147,7 @@ public:
         return segs;
     }
     
-    template<typename T_Fn>
+    template <typename T_Fn>
     void enumerateLoadableSections(T_Fn fn) {
         auto segs = segments();
         for (const auto& seg : segs) {

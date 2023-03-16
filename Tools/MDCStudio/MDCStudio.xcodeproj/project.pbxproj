@@ -249,6 +249,10 @@
 		55F7551829B955C100241672 /* MockImageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MockImageSource.h; sourceTree = "<group>"; };
 		55F7556C29BC21B500241672 /* ColorMatrix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorMatrix.h; sourceTree = "<group>"; };
 		55F755C429C2455E00241672 /* ImageGrid-ImagePlaceholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageGrid-ImagePlaceholder.png"; sourceTree = "<group>"; };
+		55F755C829C2C9A900241672 /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
+		55F755C929C2CA4000241672 /* Signal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Signal.h; sourceTree = "<group>"; };
+		55F755CA29C2CA4000241672 /* SignalQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SignalQueue.h; sourceTree = "<group>"; };
+		55F755DE29C3D9D700241672 /* Atomic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atomic.h; sourceTree = "<group>"; };
 		55F8D00F27BDF26400757165 /* Shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Shadow.png; sourceTree = "<group>"; };
 		55F8D01227BEF3E500757165 /* ImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageView.h; sourceTree = "<group>"; };
 		55F8D01327BEF3E500757165 /* ImageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ImageView.mm; sourceTree = "<group>"; };
@@ -416,6 +420,7 @@
 			isa = PBXGroup;
 			children = (
 				5544AE1727B5E58F006AB473 /* LICENSE.md */,
+				55F755DE29C3D9D700241672 /* Atomic.h */,
 				5544AE1927B5E58F006AB473 /* Enum.h */,
 				5544AE1A27B5E58F006AB473 /* Endian.h */,
 				5544AE1B27B5E58F006AB473 /* RuntimeError.h */,
@@ -432,6 +437,9 @@
 				5544AE2827B5E58F006AB473 /* SendRight.h */,
 				55D30A4629A9A0A90080BCBD /* DurationString.h */,
 				55C90C6329B70494007CC97E /* LRU.h */,
+				55F755C829C2C9A900241672 /* Queue.h */,
+				55F755C929C2CA4000241672 /* Signal.h */,
+				55F755CA29C2CA4000241672 /* SignalQueue.h */,
 				55425B1729A01BE000F25D57 /* Mac */,
 			);
 			path = Toastbox;
