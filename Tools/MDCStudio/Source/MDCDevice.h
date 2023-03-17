@@ -226,7 +226,7 @@ private:
     
     struct _SDReadOp;
     struct _SDWork {
-        static constexpr size_t BufferThumbCount = 16;
+        static constexpr size_t BufferThumbCount = 32;
         uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
         
         struct {
@@ -529,17 +529,21 @@ private:
         _thumbRender.signal.signalAll();
     }
     
-    void _renderCompleteCallback(const _LoadImagesState& state, _SDWork& work) {
-        // Post notification
+    void _renderCompleteCallback(const _LoadImagesState& state, _SDWork& work, bool write) {
+        std::set<ImageRecordPtr> recs;
+        for (const _SDReadOp& op : work.state.ops) {
+            recs.insert(op.rec);
+        }
+        
         {
-            std::set<ImageRecordPtr> recs;
-            for (const _SDReadOp& op : work.state.ops) {
-                recs.insert(op.rec);
-            }
+            auto lock = std::unique_lock(_imageLibrary);
             
-            {
-                auto lock = std::unique_lock(_imageLibrary);
-                _imageLibrary.notifyChange(recs);
+            // Post notification
+            _imageLibrary.notifyChange(recs);
+            
+            // Write library if needed
+            if (write) {
+                _imageLibrary.write();
             }
         }
         
@@ -551,6 +555,9 @@ private:
     
     void _loadImages(const _LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
+        
+        // WriteInterval: the number of loaded thumbnails after which we'll write the ImageLibrary to disk
+        constexpr size_t WriteInterval = 256;
         assert(!recs.empty());
         
         auto debugStartTime = std::chrono::steady_clock::now();
@@ -567,6 +574,7 @@ private:
         }
         const _SDReadOp debugLastOp = *std::prev(ops.end());
         const size_t debugLoadCount = ops.size();
+        size_t countSinceWrite = 0;
         
         for (auto it=ops.begin(); it!=ops.end();) {
             // Get a _SDWork
@@ -586,7 +594,11 @@ private:
                     opsv.push_back(*it);
                 }
                 
-                const bool debugLast = (it==ops.end());
+                const bool last = (it==ops.end());
+                
+                countSinceWrite += opsv.size();
+                const bool write = (last || countSinceWrite>WriteInterval);
+                if (write) countSinceWrite = 0;
                 
                 // Prepare the _SDWork
                 work.state = {
@@ -599,9 +611,9 @@ private:
                     .render = {
                         .initial = initial,
                         .callback = [=, &state, &work] {
-                            _renderCompleteCallback(state, work);
+                            _renderCompleteCallback(state, work, write);
                             
-                            if (debugLast) {
+                            if (last) {
                                 auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-debugStartTime).count();
                                 printf("[_loadImages] took %ju ms for %ju images (%f ms / image, throughput: %f MB/sec)\n",
                                     (uintmax_t)durationMs, (uintmax_t)debugLoadCount,
