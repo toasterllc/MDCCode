@@ -128,13 +128,7 @@ public:
     }
     
     ~MDCDevice() {
-        // Signal our threads to stop
-        _sync.signal.stop();
-        _sync.loadImages.read.signal.stop();
-        _sync.loadImages.render.signal.stop();
         _thumbUpdate.signal.stop();
-        _thumbUpdate.loadImages.read.signal.stop();
-        _thumbUpdate.loadImages.render.signal.stop();
         _sdRead.signal.stop();
         _thumbRender.signal.stop();
         
@@ -233,7 +227,6 @@ private:
     struct _SDReadOp;
     struct _SDWork {
         static constexpr size_t BufferThumbCount = 128;
-//        Toastbox::Signal signal; // Protects this struct
         uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
         
         struct {
@@ -246,6 +239,7 @@ private:
             struct {
                 bool initial = false;
                 Toastbox::Atomic<size_t> idx = 0;
+                Toastbox::Atomic<size_t> idxDone = 0;
                 _SDWorkCallback callback;
             } render;
         } state;
@@ -278,27 +272,12 @@ private:
         _SDBlock blockEnd = 0;
     };
     
-//    struct _ThumbRenderWork;
-//    struct _ThumbRenderStatus {
-//        Toastbox::Signal signal; // Protects this struct
-//        std::vector<_ThumbRenderWork> done;
-//    };
-//    
-//    struct _ThumbRenderWork {
-//        ImageRecordPtr rec;
-//        bool initial = false;
-//        std::unique_ptr<uint8_t[]> data;
-//        _ThumbRenderStatus& status;
-//    };
-    
     using _SDWorkPopFn  = _SDWork&(MDCDevice::*)();
     using _SDWorkPushFn = void(MDCDevice::*)(_SDWork&);
     
     struct _LoadImagesState {
         _SDWorkPopFn workPop;
         _SDWorkPushFn workPush;
-        Toastbox::Signal signal; // Protects this struct
-        std::queue<_SDWork*> queue;
     };
     
     static int _ThreadCount() {
@@ -462,8 +441,9 @@ private:
     }
     
     #warning TODO: add priority to this function
+    #warning TODO: it'd be nice if we could avoid the memcpy by giving the buffer to _SDWork
     ImagePtr _imageForAddr(uint64_t addr) {
-//        bool done = false;
+        bool done = false;
         auto work = std::make_unique<_SDWork>();
         work->state = {
             .ops = {_SDReadOp{
@@ -472,6 +452,8 @@ private:
             }},
             .read = {
                 .callback = [&] {
+                    done = true;
+                    _imageForAddrSignal.signalAll();
 //                    {
 //                        auto lock = work->signal.lock();
 //                        done = true;
@@ -491,7 +473,7 @@ private:
             _sdRead.signal.signalOne();
         }
         
-//        work->signal.wait([&] { return done; });
+        _imageForAddrSignal.wait([&] { return done; });
         
         if (_ImageChecksumValid(work->buffer, Img::Size::Full)) {
 //                printf("Checksum valid (size: full)\n");
@@ -886,28 +868,33 @@ private:
                 {
                     auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.work.empty(); });
                     work = _thumbRender.work.front();
-                    
-                    size_t idx = work->render.idx.fetch_add(1);
-                    if (idxPrev == )
-                    
-                    _thumbRender.work.pop();
+                    idx = work->state.render.idx.fetch_add(1);
+                    // Our logic guarantees that we should never observe a _SDWork in _thumbRender.work
+                    // unless it has available indexes (state.render.idx) that need to be handled.
+                    // Confirm that's true.
+                    assert(idx < work->state.ops.size());
+                    // If we're handling the last _SDReadOp in the _SDWork, remove the _SDWork
+                    // from _thumbRender.work. See assertion comment directly above.
+                    if (idx == work->state.ops.size()-1) {
+                        _thumbRender.work.pop();
+                    }
                 }
                 
-                ImageRecord& rec = *work->rec;
-                std::unique_ptr<uint8_t[]> data = std::move(work->data);
+                const _SDReadOp& op = work->state.ops.at(idx);
+                ImageRecord& rec = *op.rec;
                 
                 // Validate checksum
-                if (_ImageChecksumValid(data.get(), Img::Size::Thumb)) {
+                if (_ImageChecksumValid(op.data, Img::Size::Thumb)) {
     //                printf("Checksum valid (size: full)\n");
                 } else {
                     printf("Checksum INVALID (size: full)\n");
     //                abort();
                 }
                 
-                if (work.initial) {
+                if (work->state.render.initial) {
                     // Populate .info
                     {
-                        const Img::Header& imgHeader = *(const Img::Header*)data.get();
+                        const Img::Header& imgHeader = *(const Img::Header*)op.data;
                         
                         rec.info.id             = imgHeader.id;
                         rec.info.timestamp      = imgHeader.timestamp;
@@ -928,11 +915,11 @@ private:
                 
                 // Render the thumbnail into rec.thumb
                 {
-                    const void* thumbSrc = data.get()+Img::PixelsOffset;
+                    const void* thumbSrc = op.data+Img::PixelsOffset;
                     void* thumbDst = rec.thumb.data;
                     
                     // estimateIlluminant: only perform illuminant estimation upon our initial import
-                    const bool estimateIlluminant = work.initial;
+                    const bool estimateIlluminant = work->state.render.initial;
                     const CCM ccm = _ThumbRender(renderer, compressor, *thumbTmpStorage, rec.options,
                         estimateIlluminant, thumbSrc, thumbDst);
                     
@@ -944,11 +931,11 @@ private:
                     }
                 }
                 
-                // Move the _ThumbRenderWork to the .done vector and send signal
-                {
-                    auto lock = work.status.signal.lock();
-                    work.status.done.push_back(std::move(work));
-                    work.status.signal.signalOne();
+                // Increment state.render.idxDone, and call the callback if this
+                // was last _SDReadOp in the _SDWork.
+                const size_t idxDone = work->state.render.idxDone.fetch_add(1);
+                if (idxDone == work->state.ops.size()-1) {
+                    work->state.render.callback();
                 }
             }
         
@@ -968,9 +955,9 @@ private:
     
     std::string _name;
     std::forward_list<Observer> _observers;
+    Toastbox::Signal _imageForAddrSignal;
     
     struct {
-        Toastbox::Signal signal; // Protects this struct
         std::thread thread;
         _LoadImagesState loadImages;
     } _sync;
