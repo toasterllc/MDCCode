@@ -276,8 +276,9 @@ private:
     using _SDWorkPushFn = void(MDCDevice::*)(_SDWork&);
     
     struct _LoadImagesState {
-        _SDWorkPopFn workPop;
-        _SDWorkPushFn workPush;
+        Toastbox::Signal signal;
+        std::vector<_SDWork> works;
+        std::set<_SDWork*> underway;
     };
     
     static int _ThreadCount() {
@@ -510,15 +511,15 @@ private:
         }
     }
     
-    _SDWork& _sdWorkPop(const _LoadImagesState& state) {
-        return (this->*(state.workPop))();
-    }
+//    _SDWork& _sdWorkPop(const _LoadImagesState& state) {
+//        return (this->*(state.workPop))();
+//    }
+//    
+//    void _sdWorkPush(const _LoadImagesState& state, _SDWork& work) {
+//        (this->*(state.workPush))(work);
+//    }
     
-    void _sdWorkPush(const _LoadImagesState& state, _SDWork& work) {
-        (this->*(state.workPush))(work);
-    }
-    
-    void _readCompleteCallback(const _LoadImagesState& state, _SDWork& work) {
+    void _readCompleteCallback(_LoadImagesState& state, _SDWork& work) {
         // Enqueue _SDWork into _thumbRender.work
         {
             auto lock = _thumbRender.signal.lock();
@@ -529,31 +530,32 @@ private:
         _thumbRender.signal.signalAll();
     }
     
-    void _renderCompleteCallback(const _LoadImagesState& state, _SDWork& work, bool write) {
+    void _renderCompleteCallback(_LoadImagesState& state, _SDWork& work) {
         std::set<ImageRecordPtr> recs;
         for (const _SDReadOp& op : work.state.ops) {
             recs.insert(op.rec);
         }
         
+        // Post notification
         {
             auto lock = std::unique_lock(_imageLibrary);
-            
-            // Post notification
             _imageLibrary.notifyChange(recs);
-            
-            // Write library if needed
-            if (write) {
-                _imageLibrary.write();
-            }
         }
+        
+        // Announce that `work` is done
+        {
+            auto lock = state.signal.lock();
+            state.underway.erase(&work);
+        }
+        state.signal.signalOne();
         
         #warning TODO: update our imageIdEnd or equivalent (make sure doing so is properly serialized though, so we can't clobber imageIdEnd with the wrong value because things completed out of order)
         
-        // Return _SDWork to pool
-        _sdWorkPush(state, work);
+//        // Return _SDWork to pool
+//        _sdWorkPush(state, work);
     }
     
-    void _loadImages(const _LoadImagesState& state, _Priority priority,
+    void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
         
         // WriteInterval: the number of loaded thumbnails after which we'll write the ImageLibrary to disk
@@ -576,9 +578,19 @@ private:
         const size_t debugLoadCount = ops.size();
         size_t countSinceWrite = 0;
         
+        struct {
+            Toastbox::Signal signal;
+            std::set<_SDWork*> set;
+        } underway;
+        
+        size_t workIdx = 0;
         for (auto it=ops.begin(); it!=ops.end();) {
             // Get a _SDWork
-            _SDWork& work = _sdWorkPop(state);
+            _SDWork& work = state.works.at(workIdx);
+            {
+                auto lock = underway.signal.wait([&] { return underway.set.find(&work) == underway.set.end(); });
+                underway.set.insert(&work);
+            }
             
             // Populate _SDWork
             {
@@ -611,7 +623,7 @@ private:
                     .render = {
                         .initial = initial,
                         .callback = [=, &state, &work] {
-                            _renderCompleteCallback(state, work, write);
+                            _renderCompleteCallback(state, work);
                             
                             if (last) {
                                 auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-debugStartTime).count();
@@ -627,6 +639,11 @@ private:
                 
 //                printf("[_loadImages] Enqueued _SDWork:%p ops.size():%ju idx:%zu idxDone:%zu\n",
 //                    &work, (uintmax_t)work.state.ops.size(), work.state.render.idx.load(), work.state.render.idxDone.load());
+            }
+            
+            // Update 
+            {
+                underway.set.insert(&work);
             }
             
             // Enqueue _SDWork into _sdRead.queues
@@ -728,8 +745,8 @@ private:
                 
                 // Load the images from the SD card
                 {
-                    _loadImages(_LoadImagesStateSync, _Priority::Low, true, oldestRecs);
-                    _loadImages(_LoadImagesStateSync, _Priority::Low, true, newestRecs);
+                    _loadImages(_sync.loadImages, _Priority::Low, true, oldestRecs);
+                    _loadImages(_sync.loadImages, _Priority::Low, true, newestRecs);
                 }
             }
         
@@ -757,7 +774,7 @@ private:
                     }
                 }
                 
-                _loadImages(_LoadImagesStateThumbUpdate, _Priority::High, false, recs);
+                _loadImages(_thumbUpdate.loadImages, _Priority::High, false, recs);
             }
         
         } catch (const Toastbox::Signal::Stop&) {
@@ -1000,31 +1017,31 @@ private:
 //    }
     
     
-    _SDWork& workPop_sync() {
-        _SDWork& work = _sync.works.rget();
-//        printf("[workPop_sync] returned %p\n", &work);
-        _sync.works.rpop();
-        return work;
-    }
-    
-    void workPush_sync(_SDWork& work) {
-        assert(&_sync.works.wget() == &work);
-//        printf("[workPush_sync] %p\n", &work);
-        _sync.works.wpush();
-    }
-    
-    _SDWork& workPop_thumbUpdate() {
-        _SDWork& work = _thumbUpdate.works.rget();
-//        printf("[workPop_thumbUpdate] returned %p\n", &work);
-        _thumbUpdate.works.rpop();
-        return work;
-    }
-    
-    void workPush_thumbUpdate(_SDWork& work) {
-        assert(&_thumbUpdate.works.wget() == &work);
-//        printf("[workPush_thumbUpdate] %p\n", &work);
-        _thumbUpdate.works.wpush();
-    }
+//    _SDWork& workPop_sync() {
+//        _SDWork& work = _sync.works.rget();
+////        printf("[workPop_sync] returned %p\n", &work);
+//        _sync.works.rpop();
+//        return work;
+//    }
+//    
+//    void workPush_sync(_SDWork& work) {
+//        assert(&_sync.works.wget() == &work);
+////        printf("[workPush_sync] %p\n", &work);
+//        _sync.works.wpush();
+//    }
+//    
+//    _SDWork& workPop_thumbUpdate() {
+//        _SDWork& work = _thumbUpdate.works.rget();
+////        printf("[workPop_thumbUpdate] returned %p\n", &work);
+//        _thumbUpdate.works.rpop();
+//        return work;
+//    }
+//    
+//    void workPush_thumbUpdate(_SDWork& work) {
+//        assert(&_thumbUpdate.works.wget() == &work);
+////        printf("[workPush_thumbUpdate] %p\n", &work);
+//        _thumbUpdate.works.wpush();
+//    }
     
     // MARK: - Members
     
@@ -1039,26 +1056,19 @@ private:
     std::forward_list<Observer> _observers;
     Toastbox::Signal _imageForAddrSignal;
     
-    
-    static constexpr _LoadImagesState _LoadImagesStateSync = {
-        .workPop = &MDCDevice::workPop_sync,
-        .workPush = &MDCDevice::workPush_sync,
-    };
-    
-    static constexpr _LoadImagesState _LoadImagesStateThumbUpdate = {
-        .workPop = &MDCDevice::workPop_thumbUpdate,
-        .workPush = &MDCDevice::workPush_thumbUpdate,
-    };
-    
     struct {
         std::thread thread;
-        Toastbox::SignalQueue<_SDWork,2,true> works;
+        _LoadImagesState loadImages = {
+            .works = { _SDWork{}, _SDWork{} },
+        };
     } _sync;
     
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        Toastbox::SignalQueue<_SDWork,1,true> works;
+        _LoadImagesState loadImages = {
+            .works = { _SDWork{} },
+        };
         std::set<ImageRecordPtr> recs;
     } _thumbUpdate;
     
