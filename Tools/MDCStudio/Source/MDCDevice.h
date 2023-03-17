@@ -590,6 +590,8 @@ private:
                     if (span > sizeof(work.buffer)) break;
                     work.state.ops.push_back(*it);
                 }
+//                printf("[_loadImages] Enqueued _SDWork:%p ops.size():%ju idx:%zu idxDone:%zu\n",
+//                    &work, (uintmax_t)work.state.ops.size(), work.state.render.idx.load(), work.state.render.idxDone.load());
             }
             
             // Enqueue _SDWork into _sdRead.queues
@@ -878,6 +880,8 @@ private:
                     if (idx == work->state.ops.size()-1) {
                         _thumbRender.work.pop();
                     }
+                    
+//                    printf("[_thumbRender_thread] Dequeued _SDWork=%p idx:%zu ops.size():%zu\n", work, idx, work->state.ops.size());
                 }
                 
                 const _SDReadOp& op = work->state.ops.at(idx);
@@ -934,6 +938,7 @@ private:
                 // Increment state.render.idxDone, and call the callback if this
                 // was last _SDReadOp in the _SDWork.
                 const size_t idxDone = work->state.render.idxDone.fetch_add(1);
+                assert(idxDone < work->state.ops.size());
                 if (idxDone == work->state.ops.size()-1) {
                     work->state.render.callback();
                 }
@@ -945,11 +950,15 @@ private:
     }
     
     _SDWork& syncWorkPop() {
-        return _sync.works.rget();
+        _SDWork& work = _sync.works.rget();
+//        printf("[syncWorkPop] returned %p\n", &work);
+        _sync.works.rpop();
+        return work;
     }
     
     void syncWorkPush(_SDWork& work) {
         assert(&_sync.works.wget() == &work);
+//        printf("[syncWorkPush] %p\n", &work);
         _sync.works.wpush();
     }
     
