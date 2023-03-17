@@ -226,7 +226,7 @@ private:
     
     struct _SDReadOp;
     struct _SDWork {
-        static constexpr size_t BufferThumbCount = 128;
+        static constexpr size_t BufferThumbCount = 16;
         uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
         
         struct {
@@ -518,7 +518,7 @@ private:
         (this->*(state.workPush))(work);
     }
     
-    void _readComplete(const _LoadImagesState& state, _SDWork& work) {
+    void _readCompleteCallback(const _LoadImagesState& state, _SDWork& work) {
         // Enqueue _SDWork into _thumbRender.work
         {
             auto lock = _thumbRender.signal.lock();
@@ -529,11 +529,11 @@ private:
         _thumbRender.signal.signalAll();
     }
     
-    void _renderComplete(const _LoadImagesState& state, _SDWork& work) {
+    void _renderCompleteCallback(const _LoadImagesState& state, _SDWork& work) {
         // Post notification
         {
             std::set<ImageRecordPtr> recs;
-            for (_SDReadOp& op : work.state.ops) {
+            for (const _SDReadOp& op : work.state.ops) {
                 recs.insert(op.rec);
             }
             
@@ -551,6 +551,9 @@ private:
     
     void _loadImages(const _LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
+        assert(!recs.empty());
+        
+        auto debugStartTime = std::chrono::steady_clock::now();
         
         // Create a _SDReadOp for each ImageRecordPtr
         // These will be sorted by SD block
@@ -562,6 +565,8 @@ private:
                 .rec = rec,
             });
         }
+        const _SDReadOp debugLastOp = *std::prev(ops.end());
+        const size_t debugLoadCount = ops.size();
         
         for (auto it=ops.begin(); it!=ops.end();) {
             // Get a _SDWork
@@ -569,27 +574,45 @@ private:
             
             // Populate _SDWork
             {
-                // Prepare the _SDWork
-                work.state = {
-                    .read = {
-                        .callback = [&] { _readComplete(state, work); },
-                    },
-                    .render = {
-                        .initial = initial,
-                        .callback = [&] { _renderComplete(state, work); },
-                    },
-                };
-                
                 // Push _SDReadOps until there are no more, or we hit the capacity of _SDWork.buffer
                 const _SDBlock blockBegin = it->block;
+                std::vector<_SDReadOp> opsv;
                 for (; it!=ops.end(); it++) {
                     const _SDBlock blockEnd = _SDBlockEnd(it->block, it->len);
                     const size_t span = (size_t)SD::BlockLen * (size_t)(blockEnd-blockBegin);
                     // Bail if we hit a _SDReadOp that would put us over the capacity
                     // of the _SDWork.buffer
                     if (span > sizeof(work.buffer)) break;
-                    work.state.ops.push_back(*it);
+                    opsv.push_back(*it);
                 }
+                
+                const bool debugLast = (it==ops.end());
+                
+                // Prepare the _SDWork
+                work.state = {
+                    .ops = std::move(opsv),
+                    
+                    .read = {
+                        .callback = [&] { _readCompleteCallback(state, work); },
+                    },
+                    
+                    .render = {
+                        .initial = initial,
+                        .callback = [=, &state, &work] {
+                            _renderCompleteCallback(state, work);
+                            
+                            if (debugLast) {
+                                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-debugStartTime).count();
+                                printf("[_loadImages] took %ju ms for %ju images (%f ms / image, throughput: %f MB/sec)\n",
+                                    (uintmax_t)durationMs, (uintmax_t)debugLoadCount,
+                                    (float)durationMs/debugLoadCount,
+                                    ((((float)(debugLoadCount*ImgSD::Thumb::ImagePaddedLen))/(1024*1024)) / ((float)durationMs/1000))
+                                );
+                            }
+                        },
+                    },
+                };
+                
 //                printf("[_loadImages] Enqueued _SDWork:%p ops.size():%ju idx:%zu idxDone:%zu\n",
 //                    &work, (uintmax_t)work.state.ops.size(), work.state.render.idx.load(), work.state.render.idxDone.load());
             }
@@ -949,25 +972,46 @@ private:
         }
     }
     
-    _SDWork& syncWorkPop() {
+//    template<auto& T_Queue>
+//    _SDWork& workPop() {
+//        _SDWork& work = T_Queue.rget();
+////        printf("[workPop] returned %p\n", &work);
+//        T_Queue.works.rpop();
+//        return work;
+//    }
+//    
+//    template<auto& T_Queue>
+//    void workPush(_SDWork& work) {
+//        assert(&T_Queue.wget() == &work);
+////        printf("[workPush] %p\n", &work);
+//        T_Queue.wpush();
+//    }
+    
+    
+    _SDWork& workPop_sync() {
         _SDWork& work = _sync.works.rget();
-//        printf("[syncWorkPop] returned %p\n", &work);
+//        printf("[workPop_sync] returned %p\n", &work);
         _sync.works.rpop();
         return work;
     }
     
-    void syncWorkPush(_SDWork& work) {
+    void workPush_sync(_SDWork& work) {
         assert(&_sync.works.wget() == &work);
-//        printf("[syncWorkPush] %p\n", &work);
+//        printf("[workPush_sync] %p\n", &work);
         _sync.works.wpush();
     }
     
-    _SDWork& thumbUpdateWorkPop() {
-        return _thumbUpdate.work;
+    _SDWork& workPop_thumbUpdate() {
+        _SDWork& work = _thumbUpdate.works.rget();
+//        printf("[workPop_thumbUpdate] returned %p\n", &work);
+        _thumbUpdate.works.rpop();
+        return work;
     }
     
-    void thumbUpdateWorkPush(_SDWork& work) {
-        assert(&_thumbUpdate.work == &work);
+    void workPush_thumbUpdate(_SDWork& work) {
+        assert(&_thumbUpdate.works.wget() == &work);
+//        printf("[workPush_thumbUpdate] %p\n", &work);
+        _thumbUpdate.works.wpush();
     }
     
     // MARK: - Members
@@ -985,13 +1029,13 @@ private:
     
     
     static constexpr _LoadImagesState _LoadImagesStateSync = {
-        .workPop = &MDCDevice::syncWorkPop,
-        .workPush = &MDCDevice::syncWorkPush,
+        .workPop = &MDCDevice::workPop_sync,
+        .workPush = &MDCDevice::workPush_sync,
     };
     
     static constexpr _LoadImagesState _LoadImagesStateThumbUpdate = {
-        .workPop = &MDCDevice::syncWorkPop,
-        .workPush = &MDCDevice::syncWorkPush,
+        .workPop = &MDCDevice::workPop_thumbUpdate,
+        .workPush = &MDCDevice::workPush_thumbUpdate,
     };
     
     struct {
@@ -1002,7 +1046,7 @@ private:
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        _SDWork work;
+        Toastbox::SignalQueue<_SDWork,1,true> works;
         std::set<ImageRecordPtr> recs;
     } _thumbUpdate;
     
