@@ -457,7 +457,7 @@ private:
     #warning TODO: add priority to this function
     ImagePtr _imageForAddr(uint64_t addr) {
         auto work = std::make_unique<_SDWork>();
-        work->state.ops.insert({
+        work->state.ops.push_back({
             .block = addr,
             .len = Img::Full::ImageLen,
         });
@@ -472,7 +472,7 @@ private:
             _sdRead.signal.signalOne();
         }
         
-        work->signal.wait([&] { return !work->state.readDone; });
+        work->signal.wait([&] { return (bool)work->state.ops.front().data; });
         
         if (_ImageChecksumValid(work->buffer, Img::Size::Full)) {
 //                printf("Checksum valid (size: full)\n");
