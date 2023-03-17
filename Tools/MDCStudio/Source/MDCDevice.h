@@ -233,11 +233,11 @@ private:
     struct _SDReadOp;
     struct _SDWork {
         static constexpr size_t BufferThumbCount = 128;
-        Toastbox::Signal signal; // Protects this struct
+//        Toastbox::Signal signal; // Protects this struct
         uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
         
         struct {
-            std::vector<_SDReadOp> ops;
+            std::vector<_SDReadOp> ops; // Must be sorted by SD block
             
             struct {
                 _SDWorkCallback callback;
@@ -255,7 +255,7 @@ private:
         _SDBlock block = 0;
         size_t len = 0;
         ImageRecordPtr rec;
-        void* data = nullptr;
+        const uint8_t* data = nullptr;
         
         bool operator<(const _SDReadOp& x) const {
             if (block != x.block) return block < x.block;
@@ -312,6 +312,13 @@ private:
     
     static _SDBlock _AddrThumb(const MSP::State& msp, uint32_t idx) {
         return msp.sd.thumbBase + ((_SDBlock)idx * ImgSD::Thumb::ImageBlockCount);
+    }
+    
+    static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
+        const _SDBlock blockCount = Toastbox::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
+        // Verify that block+blockLen doesn't overflow _SDBlock
+        assert(std::numeric_limits<_SDBlock>::max()-block >= blockCount);
+        return block + blockCount;
     }
     
     static _Path _StatePath(const _Path& dir) { return dir / "State"; }
@@ -456,11 +463,23 @@ private:
     
     #warning TODO: add priority to this function
     ImagePtr _imageForAddr(uint64_t addr) {
+//        bool done = false;
         auto work = std::make_unique<_SDWork>();
-        work->state.ops.push_back({
-            .block = addr,
-            .len = Img::Full::ImageLen,
-        });
+        work->state = {
+            .ops = {_SDReadOp{
+                .block = addr,
+                .len = Img::Full::ImageLen,
+            }},
+            .read = {
+                .callback = [&] {
+//                    {
+//                        auto lock = work->signal.lock();
+//                        done = true;
+//                    }
+//                    work->signal.
+                },
+            },
+        };
         
         // Enqueue SD read
         {
@@ -472,7 +491,7 @@ private:
             _sdRead.signal.signalOne();
         }
         
-        work->signal.wait([&] { return (bool)work->state.ops.front().data; });
+//        work->signal.wait([&] { return done; });
         
         if (_ImageChecksumValid(work->buffer, Img::Size::Full)) {
 //                printf("Checksum valid (size: full)\n");
@@ -551,7 +570,18 @@ private:
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
         
-        for (auto it=recs.begin(); it!=recs.end();) {
+        // Create a _SDReadOp for each ImageRecordPtr
+        // These will be sorted by SD block
+        std::set<_SDReadOp> ops;
+        for (const ImageRecordPtr& rec : recs) {
+            ops.insert({
+                .block = rec->addr.thumb,
+                .len = ImgSD::Thumb::ImagePaddedLen,
+                .rec = rec,
+            });
+        }
+        
+        for (auto it=ops.begin(); it!=ops.end();) {
             // Get a _SDWork
             _SDWork& work = _sdWorkPop(state);
             
@@ -568,16 +598,15 @@ private:
                     },
                 };
                 
-                // Create a _SDReadOp for each ImageRecordPtr, until no more can be held in the buffer of the _SDWork
-                size_t cap = sizeof(work.buffer);
-                for (; it!=recs.end(); it++) {
-                    if (cap < ImgSD::Thumb::ImagePaddedLen) break;
-                    work.state.ops.push_back({
-                        .block = (*it)->addr.thumb,
-                        .len = ImgSD::Thumb::ImagePaddedLen,
-                        .rec = *it,
-                    });
-                    cap -= ImgSD::Thumb::ImagePaddedLen;
+                // Push _SDReadOps until there are no more, or we hit the capacity of _SDWork.buffer
+                const _SDBlock blockBegin = it->block;
+                for (; it!=ops.end(); it++) {
+                    const _SDBlock blockEnd = _SDBlockEnd(it->block, it->len);
+                    const size_t span = (size_t)SD::BlockLen * (size_t)(blockEnd-blockBegin);
+                    // Bail if we hit a _SDReadOp that would put us over the capacity
+                    // of the _SDWork.buffer
+                    if (span > sizeof(work.buffer)) break;
+                    work.state.ops.push_back(*it);
                 }
             }
             
@@ -719,48 +748,41 @@ private:
     
     // MARK: - SD Read
     
-    static constexpr _SDBlock _SDRead_BlockEnd(_SDBlock block, size_t len) {
-        const _SDBlock blockCount = Toastbox::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
-        // Verify that block+blockLen doesn't overflow _SDBlock
-        assert(std::numeric_limits<_SDBlock>::max()-block >= blockCount);
-        return block + blockCount;
-    }
-    
-    static _SDCoalescedOps _SDRead_CoalesceWork(_SDWorkQueue& queue) {
-        assert(!queue.empty());
-        
-        // CoalesceBudget: coalesce adjacent blocks until this budget is exceeded
-        static constexpr _SDBlock CoalesceBudget = 8192;
-        const _SDWork& status = queue.begin()->status;
-        _SDCoalescedOps coalesced = {
-            .blockBegin = queue.begin()->block,
-            .blockEnd   = _SDRead_BlockEnd(queue.begin()->block, queue.begin()->len),
-        };
-        _SDBlock budget = CoalesceBudget;
-        for (auto it=queue.begin(); it!=queue.end();) {
-            const auto itPrev = it;
-            const _SDReadOp& work = *it;
-            const _SDBlock workBlockBegin = work.block;
-            const _SDBlock workBlockEnd = _SDRead_BlockEnd(workBlockBegin, work.len);
-            
-            // The queue ordering guarantees that the blockBegins are in ascending order.
-            // Check that assumption.
-            assert(coalesced.blockBegin <= work.block);
-            
-            const _SDBlock cost = (workBlockEnd>coalesced.blockEnd ? workBlockEnd-coalesced.blockEnd : 0);
-            // Stop coalescing work once the cost exceeds our budget
-            if (cost > budget) break;
-            // Stop coalescing work if the .status member doesn't match
-            // (Ie, we don't coalesce across .status boundaries)
-            if (&work.status != &status) break;
-            
-            it++; // Increment before we extract, because extract invalidates iterator
-            coalesced.blockEnd = std::max(coalesced.blockEnd, workBlockEnd);
-            coalesced.works.push_back(std::move(queue.extract(itPrev).value()));
-            budget -= cost;
-        }
-        return coalesced;
-    }
+//    static _SDCoalescedOps _SDRead_CoalesceWork(_SDWorkQueue& queue) {
+//        assert(!queue.empty());
+//        
+//        // CoalesceBudget: coalesce adjacent blocks until this budget is exceeded
+//        static constexpr _SDBlock CoalesceBudget = 8192;
+//        const _SDWork& status = queue.begin()->status;
+//        _SDCoalescedOps coalesced = {
+//            .blockBegin = queue.begin()->block,
+//            .blockEnd   = _SDRead_BlockEnd(queue.begin()->block, queue.begin()->len),
+//        };
+//        _SDBlock budget = CoalesceBudget;
+//        for (auto it=queue.begin(); it!=queue.end();) {
+//            const auto itPrev = it;
+//            const _SDReadOp& work = *it;
+//            const _SDBlock workBlockBegin = work.block;
+//            const _SDBlock workBlockEnd = _SDRead_BlockEnd(workBlockBegin, work.len);
+//            
+//            // The queue ordering guarantees that the blockBegins are in ascending order.
+//            // Check that assumption.
+//            assert(coalesced.blockBegin <= work.block);
+//            
+//            const _SDBlock cost = (workBlockEnd>coalesced.blockEnd ? workBlockEnd-coalesced.blockEnd : 0);
+//            // Stop coalescing work once the cost exceeds our budget
+//            if (cost > budget) break;
+//            // Stop coalescing work if the .status member doesn't match
+//            // (Ie, we don't coalesce across .status boundaries)
+//            if (&work.status != &status) break;
+//            
+//            it++; // Increment before we extract, because extract invalidates iterator
+//            coalesced.blockEnd = std::max(coalesced.blockEnd, workBlockEnd);
+//            coalesced.works.push_back(std::move(queue.extract(itPrev).value()));
+//            budget -= cost;
+//        }
+//        return coalesced;
+//    }
     
 //    void _sdRead(_Priority priority, _SDBlock block, size_t len, void* dst) {
 //        abort();
@@ -796,55 +818,50 @@ private:
         return nullptr;
     }
     
-    void _sdRead_handleWork(_SDCoalescedOps& coalesced) {
-        assert(!coalesced.works.empty());
-        _SDWork& status = coalesced.works.front().status;
+    void _sdRead_handleWork(_SDWork& work) {
+        assert(!work.state.ops.empty());
         
         // Read the data from the device
-        const size_t len = (size_t)SD::BlockLen * (coalesced.blockEnd-coalesced.blockBegin);
-        std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(len);
+        const _SDBlock blockBegin = work.state.ops.front().block;
         {
+            const _SDBlock blockEnd = _SDBlockEnd(work.state.ops.back().block, work.state.ops.back().len);
+            const size_t len = (size_t)SD::BlockLen * (size_t)(blockEnd-blockBegin);
+            assert(len <= sizeof(work.buffer));
+            
             auto lock = std::unique_lock(_dev);
             _dev.reset();
-            assert(std::numeric_limits<SD::Block>::max() >= coalesced.blockBegin);
-            _dev.sdRead((SD::Block)coalesced.blockBegin);
-            _dev.readout(data.get(), len);
+            // Verify that blockBegin can be safely cast to SD::Block
+            assert(std::numeric_limits<SD::Block>::max() >= blockBegin);
+            _dev.sdRead((SD::Block)blockBegin);
+            _dev.readout(work.buffer, len);
         }
         
-        // Copy the data into each _SDReadOp
+        // Update each _SDReadOp with its data address
         {
-            #warning TODO: use a preallocated storage associated with the _SDWork, instead of making lots of individual allocations
-            // Copy data into each individual _SDReadOp
-            for (_SDReadOp& work : coalesced.works) {
-                const uint8_t* d = data.get() + (size_t)(work.block-coalesced.blockBegin)*SD::BlockLen;
-                work.data = std::make_unique<uint8_t[]>(work.len);
-                memcpy(work.data.get(), d, work.len);
+            for (_SDReadOp& op : work.state.ops) {
+                const size_t off = (size_t)SD::BlockLen * (size_t)(op.block-blockBegin);
+                op.data = work.buffer + off;
             }
         }
         
-        // Move each _SDReadOp into status.work and send signal
+        // Execute the _SDWork callback
         {
-            {
-                auto lock = status.signal.lock();
-                for (_SDReadOp& work : coalesced.works) {
-                    status.done.push_back(std::move(work));
-                }
-            }
-            status.signal.signalOne();
+            work.state.read.callback();
         }
     }
     
     void _sdRead_thread() {
         try {
             for (;;) {
-                _SDCoalescedOps coalesced;
+                _SDWork* work = nullptr;
                 {
                     // Wait for work
                     _SDWorkQueue* queue = nullptr;
                     auto lock = _sdRead.signal.wait([&] { return (queue = _sdRead_nextWorkQueue()); });
-                    coalesced = _SDRead_CoalesceWork(*queue);
+                    work = queue->front();
+                    queue->pop();
                 }
-                _sdRead_handleWork(coalesced);
+                _sdRead_handleWork(*work);
             }
         
         } catch (const Toastbox::Signal::Stop&) {
@@ -864,13 +881,20 @@ private:
             std::unique_ptr<_ThumbTmpStorage> thumbTmpStorage = std::make_unique<_ThumbTmpStorage>();
             
             for (;;) @autoreleasepool {
-                auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.work.empty(); });
-                    _ThumbRenderWork work = std::move(_thumbRender.work.front());
+                _SDWork* work = nullptr;
+                size_t idx = 0;
+                {
+                    auto lock = _thumbRender.signal.wait([&] { return !_thumbRender.work.empty(); });
+                    work = _thumbRender.work.front();
+                    
+                    size_t idx = work->render.idx.fetch_add(1);
+                    if (idxPrev == )
+                    
                     _thumbRender.work.pop();
-                lock.unlock();
+                }
                 
-                ImageRecord& rec = *work.rec;
-                std::unique_ptr<uint8_t[]> data = std::move(work.data);
+                ImageRecord& rec = *work->rec;
+                std::unique_ptr<uint8_t[]> data = std::move(work->data);
                 
                 // Validate checksum
                 if (_ImageChecksumValid(data.get(), Img::Size::Thumb)) {
