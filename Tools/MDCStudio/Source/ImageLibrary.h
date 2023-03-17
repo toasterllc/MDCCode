@@ -92,7 +92,7 @@ public:
                 );
             }
             
-            _state.deviceImgIdEnd = state.deviceImgIdEnd;
+            _state.loadedCount = state.loadedCount;
             
         } catch (const std::exception& e) {
             printf("Recreating ImageLibrary; cause: %s\n", e.what());
@@ -103,7 +103,7 @@ public:
         std::ofstream f = RecordStore::write();
         const _SerializedState state {
             .version = _Version,
-            .deviceImgIdEnd = _state.deviceImgIdEnd,
+            .loadedCount = _state.loadedCount,
         };
         f.write((char*)&state, sizeof(state));
     }
@@ -151,8 +151,8 @@ public:
         _state.observers.push_front(std::move(observer));
     }
     
-    Img::Id deviceImgIdEnd() const { return _state.deviceImgIdEnd; }
-    void deviceImgIdEnd(Img::Id id) { _state.deviceImgIdEnd = id; }
+    uint64_t loadedCount() const { return _state.loadedCount; }
+    void loadedCount(uint64_t x) { _state.loadedCount = x; }
     
     // notify(): notifies each observer of an event.
     // The notifications are delivered synchronously on the calling thread.
@@ -182,11 +182,11 @@ private:
     
     struct [[gnu::packed]] _SerializedState {
         uint32_t version = 0;
-        Img::Id deviceImgIdEnd = 0;
+        uint64_t loadedCount = 0;
     };
     
     struct {
-        Img::Id deviceImgIdEnd = 0;
+        uint64_t loadedCount = 0;
         std::forward_list<Observer> observers;
     } _state;
 };

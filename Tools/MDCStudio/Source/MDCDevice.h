@@ -230,7 +230,7 @@ private:
         uint8_t buffer[BufferThumbCount * ImgSD::Thumb::ImagePaddedLen];
         
         struct {
-            std::vector<_SDReadOp> ops; // Must be sorted by SD block
+            std::vector<_SDReadOp> ops; // Sorted by SD block
             
             struct {
                 _SDWorkCallback callback;
@@ -555,14 +555,26 @@ private:
 //        _sdWorkPush(state, work);
     }
     
+    void _write(const ImageRecordPtr& last) {
+        auto lock = std::unique_lock(_imageLibrary);
+        _imageLibrary.find()
+        _imageLibrary.loadedCount(loadedCount);
+        _imageLibrary.write();
+    }
+    
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
         
-        // WriteInterval: the number of loaded thumbnails after which we'll write the ImageLibrary to disk
-        constexpr size_t WriteInterval = 256;
+        // WriteIntervalThumbCount: the number of loaded thumbnails after which we'll write the ImageLibrary to disk
+        constexpr size_t WriteIntervalThumbCount = 256;
         assert(!recs.empty());
         
-        auto debugStartTime = std::chrono::steady_clock::now();
+        // Reset each work
+        // This is necessary because our loop below interprets _SDWork.state.ops as the _SDReadOps from its
+        // previous iteration, so _SDWork.state.ops needs to start off empty for correct operation.
+        for (_SDWork& work : state.works) {
+            work = {};
+        }
         
         // Create a _SDReadOp for each ImageRecordPtr
         // These will be sorted by SD block
@@ -574,23 +586,27 @@ private:
                 .rec = rec,
             });
         }
-        const _SDReadOp debugLastOp = *std::prev(ops.end());
-        const size_t debugLoadCount = ops.size();
-        size_t countSinceWrite = 0;
-        
-        struct {
-            Toastbox::Signal signal;
-            std::set<_SDWork*> set;
-        } underway;
         
         size_t workIdx = 0;
+        size_t countSinceWrite = 0;
         for (auto it=ops.begin(); it!=ops.end();) {
             // Get a _SDWork
             _SDWork& work = state.works.at(workIdx);
             {
-                auto lock = underway.signal.wait([&] { return underway.set.find(&work) == underway.set.end(); });
-                underway.set.insert(&work);
+                auto lock = state.signal.wait([&] { return state.underway.find(&work) == state.underway.end(); });
+                state.underway.insert(&work);
             }
+            
+            countSinceWrite += work.state.ops.size();
+            if (countSinceWrite >= WriteIntervalThumbCount) {
+                countSinceWrite = 0;
+                
+                assert(!work.state.ops.empty());
+                _write(work.state.ops.back().rec);
+            }
+            
+            workIdx++;
+            if (workIdx == state.works.size()) workIdx = 0;
             
             // Populate _SDWork
             {
@@ -606,12 +622,6 @@ private:
                     opsv.push_back(*it);
                 }
                 
-                const bool last = (it==ops.end());
-                
-                countSinceWrite += opsv.size();
-                const bool write = (last || countSinceWrite>WriteInterval);
-                if (write) countSinceWrite = 0;
-                
                 // Prepare the _SDWork
                 work.state = {
                     .ops = std::move(opsv),
@@ -622,28 +632,12 @@ private:
                     
                     .render = {
                         .initial = initial,
-                        .callback = [=, &state, &work] {
-                            _renderCompleteCallback(state, work);
-                            
-                            if (last) {
-                                auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-debugStartTime).count();
-                                printf("[_loadImages] took %ju ms for %ju images (%f ms / image, throughput: %f MB/sec)\n",
-                                    (uintmax_t)durationMs, (uintmax_t)debugLoadCount,
-                                    (float)durationMs/debugLoadCount,
-                                    ((((float)(debugLoadCount*ImgSD::Thumb::ImagePaddedLen))/(1024*1024)) / ((float)durationMs/1000))
-                                );
-                            }
-                        },
+                        .callback = [&] { _renderCompleteCallback(state, work); },
                     },
                 };
                 
 //                printf("[_loadImages] Enqueued _SDWork:%p ops.size():%ju idx:%zu idxDone:%zu\n",
 //                    &work, (uintmax_t)work.state.ops.size(), work.state.render.idx.load(), work.state.render.idxDone.load());
-            }
-            
-            // Update 
-            {
-                underway.set.insert(&work);
             }
             
             // Enqueue _SDWork into _sdRead.queues
@@ -656,6 +650,12 @@ private:
                 _sdRead.signal.signalOne();
             }
         }
+        
+        // Wait until everything's done
+        state.signal.wait([&] { return state.underway.empty(); });
+        
+        // Write library now that everything's done
+        _write(XXX);
     }
     
     // MARK: - Sync
@@ -673,6 +673,22 @@ private:
                 {
                     auto lock = std::unique_lock(_imageLibrary);
                     
+                    // Remove unloaded images from the library
+                    {
+                        const uint64_t loadedCount = _imageLibrary.loadedCount();
+                        if (loadedCount > _imageLibrary.recordCount()) {
+                            throw Toastbox::RuntimeError("image library loadedCount (%ju) > image library record count (%ju)",
+                                (uintmax_t)loadedCount,
+                                (uintmax_t)_imageLibrary.recordCount()
+                            );
+                        }
+                        
+                        const auto removeBegin = _imageLibrary.begin() + loadedCount;
+                        const auto removeEnd = _imageLibrary.end();
+                        printf("Removing %ju unloaded images\n", (uintmax_t)(removeEnd-removeBegin));
+                        _imageLibrary.remove(removeBegin, removeEnd);
+                    }
+                    
                     // Remove images from beginning of library: lib has, device doesn't
                     {
                         const auto removeBegin = _imageLibrary.begin();
@@ -683,13 +699,20 @@ private:
                                 return sample->info.id < deviceImgIdBegin;
                             });
                         
-                        printf("Removing %ju images\n", (uintmax_t)std::distance(removeBegin, removeEnd));
+                        printf("Removing %ju stale images\n", (uintmax_t)(removeEnd-removeBegin));
                         _imageLibrary.remove(removeBegin, removeEnd);
+                    }
+                    
+                    // Update loadedCount
+                    {
+                        const uint64_t loadedCount = _imageLibrary.end()-_imageLibrary.begin();
+                        printf("Updating loadedCount: %ju\n", (uintmax_t)loadedCount);
+                        _imageLibrary.loadedCount(loadedCount);
                     }
                     
                     // Add images to end of library: device has, lib doesn't
                     {
-                        const Img::Id libImgIdEnd = _imageLibrary.deviceImgIdEnd();
+                        const Img::Id libImgIdEnd = (!_imageLibrary.empty() ? _imageLibrary.back()->info.id+1 : 0);
                         if (libImgIdEnd > deviceImgIdEnd) {
                             throw Toastbox::RuntimeError("image library claims to have newer images than the device (libImgIdEnd: %ju, deviceImgIdEnd: %ju)",
                                 (uintmax_t)libImgIdEnd,
@@ -697,7 +720,7 @@ private:
                             );
                         }
                         
-                        addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.reserve(addCount);
                         _imageLibrary.add();
