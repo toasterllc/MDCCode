@@ -134,9 +134,9 @@ public:
         
         // Wait for threads to stop
         _sync.thread.join();
+        _thumbUpdate.thread.join();
         _sdRead.thread.join();
         for (std::thread& t : _thumbRender.threads) t.join();
-        _thumbUpdate.thread.join();
     }
     
     const std::string& name() {
@@ -184,11 +184,11 @@ public:
         bool enqueued = false;
         {
             auto lock = _thumbUpdate.signal.lock();
-            _thumbUpdate.work.clear();
+            _thumbUpdate.recs.clear();
             for (auto it=begin; it!=end; it++) {
                 ImageRecordPtr rec = *it;
                 if (rec->options.thumb.render) {
-                    _thumbUpdate.work.insert(rec);
+                    _thumbUpdate.recs.insert(rec);
                     enqueued = true;
                 }
             }
@@ -518,7 +518,7 @@ private:
         (this->*(state.workPush))(work);
     }
     
-    void _readComplete(_LoadImagesState& state, _SDWork& work) {
+    void _readComplete(const _LoadImagesState& state, _SDWork& work) {
         // Enqueue _SDWork into _thumbRender.work
         {
             auto lock = _thumbRender.signal.lock();
@@ -529,7 +529,7 @@ private:
         _thumbRender.signal.signalAll();
     }
     
-    void _renderComplete(_LoadImagesState& state, _SDWork& work) {
+    void _renderComplete(const _LoadImagesState& state, _SDWork& work) {
         // Post notification
         {
             std::set<ImageRecordPtr> recs;
@@ -549,7 +549,7 @@ private:
         _sdWorkPush(state, work);
     }
     
-    void _loadImages(_LoadImagesState& state, _Priority priority,
+    void _loadImages(const _LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
         
         // Create a _SDReadOp for each ImageRecordPtr
@@ -691,8 +691,8 @@ private:
                 
                 // Load the images from the SD card
                 {
-                    _loadImages(_sync.loadImages, _Priority::Low, true, oldestRecs);
-                    _loadImages(_sync.loadImages, _Priority::Low, true, newestRecs);
+                    _loadImages(_LoadImagesStateSync, _Priority::Low, true, oldestRecs);
+                    _loadImages(_LoadImagesStateSync, _Priority::Low, true, newestRecs);
                 }
             }
         
@@ -709,18 +709,18 @@ private:
     void _thumbUpdate_thread() {
         try {
             for (;;) {
-                std::set<ImageRecordPtr> work;
+                std::set<ImageRecordPtr> recs;
                 {
-                    auto lock = _thumbUpdate.signal.wait([&] { return !_thumbUpdate.work.empty(); });
-                    work = std::move(_thumbUpdate.work);
+                    auto lock = _thumbUpdate.signal.wait([&] { return !_thumbUpdate.recs.empty(); });
+                    recs = std::move(_thumbUpdate.recs);
                     // Update .thumb.render asap (ie before we've actually rendered) so that the
                     // visibleThumbs() function on the main thread stops enqueuing work asap
-                    for (const ImageRecordPtr& rec : work) {
+                    for (const ImageRecordPtr& rec : recs) {
                         rec->options.thumb.render = false;
                     }
                 }
                 
-                _loadImages(_thumbUpdate.loadImages, _Priority::High, false, work);
+                _loadImages(_LoadImagesStateThumbUpdate, _Priority::High, false, recs);
             }
         
         } catch (const Toastbox::Signal::Stop&) {
@@ -944,6 +944,23 @@ private:
         }
     }
     
+    _SDWork& syncWorkPop() {
+        return _sync.works.rget();
+    }
+    
+    void syncWorkPush(_SDWork& work) {
+        assert(&_sync.works.wget() == &work);
+        _sync.works.wpush();
+    }
+    
+    _SDWork& thumbUpdateWorkPop() {
+        return _thumbUpdate.work;
+    }
+    
+    void thumbUpdateWorkPush(_SDWork& work) {
+        assert(&_thumbUpdate.work == &work);
+    }
+    
     // MARK: - Members
     
     Device _dev;
@@ -957,16 +974,27 @@ private:
     std::forward_list<Observer> _observers;
     Toastbox::Signal _imageForAddrSignal;
     
+    
+    static constexpr _LoadImagesState _LoadImagesStateSync = {
+        .workPop = &MDCDevice::syncWorkPop,
+        .workPush = &MDCDevice::syncWorkPush,
+    };
+    
+    static constexpr _LoadImagesState _LoadImagesStateThumbUpdate = {
+        .workPop = &MDCDevice::syncWorkPop,
+        .workPush = &MDCDevice::syncWorkPush,
+    };
+    
     struct {
         std::thread thread;
-        _LoadImagesState loadImages;
+        Toastbox::SignalQueue<_SDWork,2,true> works;
     } _sync;
     
     struct {
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
-        std::set<ImageRecordPtr> work;
-        _LoadImagesState loadImages;
+        _SDWork work;
+        std::set<ImageRecordPtr> recs;
     } _thumbUpdate;
     
     struct {
