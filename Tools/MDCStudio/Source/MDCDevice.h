@@ -540,8 +540,15 @@ private:
             work.state = {};
         }
         
+//        if (initial) {
+//            auto lock = std::unique_lock(_imageLibrary);
+//            printf("[_loadImages] reserving %ju images\n", (uintmax_t)recs.size());
+//            _imageLibrary.reserve(recs.size());
+//        }
+        
+        size_t addCountRem = recs.size();
+        size_t writeCount = 0;
         size_t workIdx = 0;
-        size_t countSinceWrite = 0;
         for (auto it=recs.begin(); it!=recs.end();) {
             // Get a _SDWork
             _SDWork& work = state.works.at(workIdx);
@@ -558,14 +565,16 @@ private:
             // the previous iteration. (We do that here because at this point we know the
             // _SDWork is complete, because it's ready to be used again.)
             // Also write the library if we crossed the WriteIntervalThumbCount threshold.
-            {
-                const size_t addCount = work.state.ops.size();
+            if (initial) {
                 auto lock = std::unique_lock(_imageLibrary);
-                _imageLibrary.add(addCount);
                 
-                countSinceWrite += addCount;
-                if (countSinceWrite >= WriteIntervalThumbCount) {
-                    countSinceWrite = 0;
+                const size_t addCount = work.state.ops.size();
+                _imageLibrary.add(addCount);
+                writeCount += addCount;
+                addCountRem -= addCount;
+                
+                if (writeCount >= WriteIntervalThumbCount) {
+                    writeCount = 0;
                     _imageLibrary.write();
                 }
             }
@@ -617,12 +626,13 @@ private:
             }
         }
         
-        // Wait until all _SDWorks are complete
+        // Wait until remaining _SDWorks are complete
         state.signal.wait([&] { return state.underway.empty(); });
         
-        // Write library now that everything's done
-        {
+        // Add remaining images and write library
+        if (initial) {
             auto lock = std::unique_lock(_imageLibrary);
+            _imageLibrary.add(addCountRem);
             _imageLibrary.write();
         }
     }
@@ -656,7 +666,7 @@ private:
                         _imageLibrary.remove(removeBegin, removeEnd);
                     }
                     
-                    // Add images to end of library: device has, lib doesn't
+                    // Calculate how many images to add to the end of the library: device has, lib doesn't
                     {
                         const Img::Id libImgIdEnd = (!_imageLibrary.empty() ? _imageLibrary.back()->info.id+1 : 0);
                         if (libImgIdEnd > deviceImgIdEnd) {
@@ -666,7 +676,7 @@ private:
                             );
                         }
                         
-                        addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.reserve(addCount);
                     }
