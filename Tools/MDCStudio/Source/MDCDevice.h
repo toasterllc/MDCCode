@@ -634,7 +634,9 @@ private:
         // Add remaining images and write library
         if (initial && addCountRem) {
             auto lock = std::unique_lock(_imageLibrary);
+            printf("[_loadImages] Add %ju images (remainder)\n", (uintmax_t)addCountRem);
             _imageLibrary.add(addCountRem);
+            printf("[_loadImages] Write library (remainder)\n");
             _imageLibrary.write();
         }
     }
