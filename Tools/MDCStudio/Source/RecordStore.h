@@ -427,15 +427,18 @@ public:
         }
     }
     
-    // add(): adds the records previously reserved via reserve()
-    void add() {
-        for (auto it=_state.reserved.begin(); it!=_state.reserved.end(); it++) {
+    // add(): adds records previously reserved via reserve()
+    void add(size_t count) {
+        assert(_state.reserved.size() >= count);
+        auto begin = _state.reserved.begin();
+        auto end = begin+count;
+        for (auto it=begin; it!=end; it++) {
             Chunk& chunk = const_cast<Chunk&>(*it->chunk);
             chunk.recordCount++;
         }
         
-        _state.recordRefs.insert(_state.recordRefs.end(), _state.reserved.begin(), _state.reserved.end());
-        _state.reserved.clear();
+        _state.recordRefs.insert(_state.recordRefs.end(), begin, end);
+        _state.reserved.erase(begin, end);
     }
     
     void remove(RecordRefConstIter begin, RecordRefConstIter end) {

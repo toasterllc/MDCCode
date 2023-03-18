@@ -555,12 +555,13 @@ private:
 //        _sdWorkPush(state, work);
     }
     
-    void _write(const ImageRecordPtr& last) {
-        auto lock = std::unique_lock(_imageLibrary);
-        _imageLibrary.find()
-        _imageLibrary.loadedCount(loadedCount);
-        _imageLibrary.write();
-    }
+//    void _write(size_t count) {
+//        auto lock = std::unique_lock(_imageLibrary);
+//        _imageLibrary.add(count);
+////        _imageLibrary.find()
+////        _imageLibrary.loadedCount(loadedCount);
+////        _imageLibrary.write();
+//    }
     
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
@@ -576,56 +577,51 @@ private:
             work = {};
         }
         
-        // Create a _SDReadOp for each ImageRecordPtr
-        // These will be sorted by SD block
-        std::set<_SDReadOp> ops;
-        for (const ImageRecordPtr& rec : recs) {
-            ops.insert({
-                .block = rec->addr.thumb,
-                .len = ImgSD::Thumb::ImagePaddedLen,
-                .rec = rec,
-            });
-        }
+//        // Create a _SDReadOp for each ImageRecordPtr
+//        // These will be sorted by SD block
+//        std::set<_SDReadOp> ops;
+//        for (const ImageRecordPtr& rec : recs) {
+//            ops.insert({
+//                .block = rec->addr.thumb,
+//                .len = ImgSD::Thumb::ImagePaddedLen,
+//                .rec = rec,
+//            });
+//        }
         
         size_t workIdx = 0;
         size_t countSinceWrite = 0;
-        for (auto it=ops.begin(); it!=ops.end();) {
+        for (auto it=recs.begin(); it!=recs.end();) {
             // Get a _SDWork
             _SDWork& work = state.works.at(workIdx);
+            workIdx++;
+            if (workIdx == state.works.size()) workIdx = 0;
+            
+            // Wait until the _SDWork is ready
             {
                 auto lock = state.signal.wait([&] { return state.underway.find(&work) == state.underway.end(); });
                 state.underway.insert(&work);
             }
             
-            countSinceWrite += work.state.ops.size();
-            if (countSinceWrite >= WriteIntervalThumbCount) {
-                countSinceWrite = 0;
+            // Add the _SDWork's records to the library if the _SDWork is populated from
+            // the previous iteration. (We do that here because at this point we know the
+            // _SDWork is complete, because it's ready to be used again.)
+            // Also write the library if we crossed the WriteIntervalThumbCount threshold.
+            {
+                const size_t addCount = work.state.ops.size();
+                auto lock = std::unique_lock(_imageLibrary);
+                _imageLibrary.add(addCount);
                 
-                assert(!work.state.ops.empty());
-                _write(work.state.ops.back().rec);
+                countSinceWrite += addCount;
+                if (countSinceWrite >= WriteIntervalThumbCount) {
+                    countSinceWrite = 0;
+                    _imageLibrary.write();
+                }
             }
-            
-            workIdx++;
-            if (workIdx == state.works.size()) workIdx = 0;
             
             // Populate _SDWork
             {
-                // Push _SDReadOps until there are no more, or we hit the capacity of _SDWork.buffer
-                const _SDBlock blockBegin = it->block;
-                std::vector<_SDReadOp> opsv;
-                for (; it!=ops.end(); it++) {
-                    const _SDBlock blockEnd = _SDBlockEnd(it->block, it->len);
-                    const size_t span = (size_t)SD::BlockLen * (size_t)(blockEnd-blockBegin);
-                    // Bail if we hit a _SDReadOp that would put us over the capacity
-                    // of the _SDWork.buffer
-                    if (span > sizeof(work.buffer)) break;
-                    opsv.push_back(*it);
-                }
-                
                 // Prepare the _SDWork
                 work.state = {
-                    .ops = std::move(opsv),
-                    
                     .read = {
                         .callback = [&] { _readCompleteCallback(state, work); },
                     },
@@ -636,8 +632,26 @@ private:
                     },
                 };
                 
-//                printf("[_loadImages] Enqueued _SDWork:%p ops.size():%ju idx:%zu idxDone:%zu\n",
-//                    &work, (uintmax_t)work.state.ops.size(), work.state.render.idx.load(), work.state.render.idxDone.load());
+                // Push _SDReadOps until we run out, or we hit the capacity of _SDWork.buffer
+                const _SDBlock workBlockBegin = (*it)->addr.thumb;
+                for (; it!=recs.end(); it++) {
+                    const ImageRecordPtr& rec = *it;
+                    const _SDBlock blockBegin = rec->addr.thumb;
+                    // If the block addresses wrap around, start a new _SDWork
+                    if (blockBegin < workBlockBegin) break;
+                    const _SDBlock blockEnd = _SDBlockEnd(blockBegin, ImgSD::Thumb::ImagePaddedLen);
+                    const size_t span = (size_t)SD::BlockLen * (size_t)(blockEnd-workBlockBegin);
+                    // Bail if we hit a _SDReadOp that would put us over the capacity of work.buffer
+                    if (span > sizeof(work.buffer)) break;
+                    work.state.ops.push_back(_SDReadOp{
+                        .block = blockBegin,
+                        .len = ImgSD::Thumb::ImagePaddedLen,
+                        .rec = rec,
+                    });
+                }
+                
+                printf("[_loadImages] Enqueued _SDWork:%p ops.size():%ju idx:%zu idxDone:%zu\n",
+                    &work, (uintmax_t)work.state.ops.size(), work.state.render.idx.load(), work.state.render.idxDone.load());
             }
             
             // Enqueue _SDWork into _sdRead.queues
@@ -651,11 +665,14 @@ private:
             }
         }
         
-        // Wait until everything's done
+        // Wait until all _SDWorks are complete
         state.signal.wait([&] { return state.underway.empty(); });
         
         // Write library now that everything's done
-        _write(XXX);
+        {
+            auto lock = std::unique_lock(_imageLibrary);
+            _imageLibrary.write();
+        }
     }
     
     // MARK: - Sync
@@ -673,21 +690,21 @@ private:
                 {
                     auto lock = std::unique_lock(_imageLibrary);
                     
-                    // Remove unloaded images from the library
-                    {
-                        const uint64_t loadedCount = _imageLibrary.loadedCount();
-                        if (loadedCount > _imageLibrary.recordCount()) {
-                            throw Toastbox::RuntimeError("image library loadedCount (%ju) > image library record count (%ju)",
-                                (uintmax_t)loadedCount,
-                                (uintmax_t)_imageLibrary.recordCount()
-                            );
-                        }
-                        
-                        const auto removeBegin = _imageLibrary.begin() + loadedCount;
-                        const auto removeEnd = _imageLibrary.end();
-                        printf("Removing %ju unloaded images\n", (uintmax_t)(removeEnd-removeBegin));
-                        _imageLibrary.remove(removeBegin, removeEnd);
-                    }
+//                    // Remove unloaded images from the library
+//                    {
+//                        const uint64_t loadedCount = _imageLibrary.loadedCount();
+//                        if (loadedCount > _imageLibrary.recordCount()) {
+//                            throw Toastbox::RuntimeError("image library loadedCount (%ju) > image library record count (%ju)",
+//                                (uintmax_t)loadedCount,
+//                                (uintmax_t)_imageLibrary.recordCount()
+//                            );
+//                        }
+//                        
+//                        const auto removeBegin = _imageLibrary.begin() + loadedCount;
+//                        const auto removeEnd = _imageLibrary.end();
+//                        printf("Removing %ju unloaded images\n", (uintmax_t)(removeEnd-removeBegin));
+//                        _imageLibrary.remove(removeBegin, removeEnd);
+//                    }
                     
                     // Remove images from beginning of library: lib has, device doesn't
                     {
@@ -723,53 +740,40 @@ private:
                         addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.reserve(addCount);
-                        _imageLibrary.add();
                     }
                 }
                 
-                // Populate .addr for each new ImageRecord that we added, and collect
-                // the set of oldestRecs / newestRecs, which we'll then load from the
-                // SD card
-                std::set<ImageRecordPtr> oldestRecs;
-                std::set<ImageRecordPtr> newestRecs;
+                // Populate .addr for each new ImageRecord that we're adding
+                std::set<ImageRecordPtr> recs;
                 {
-                    struct Range {
-                        uint32_t idx  = 0;
-                        uint32_t len = 0;
-                    };
-                    
-                    Range newest;
-                    newest.idx = imgRingBuf.buf.widx - std::min((uint32_t)imgRingBuf.buf.widx, addCount);
-                    newest.len = imgRingBuf.buf.widx - newest.idx;
-                    
-                    Range oldest;
-                    oldest.len = addCount - newest.len;
-                    oldest.idx = _mspState.sd.imgCap - oldest.len;
+                    const uint32_t newestIdx = imgRingBuf.buf.widx - std::min((uint32_t)imgRingBuf.buf.widx, addCount);
+                    const uint32_t newestLen = imgRingBuf.buf.widx - newestIdx;
+                    const uint32_t oldestLen = addCount - newestLen;
+                    const uint32_t oldestIdx = _mspState.sd.imgCap - oldestLen;
                     
                     auto it = _imageLibrary.reservedBegin();
-                    for (uint32_t i=0; i<oldest.len; i++) {
-                        const uint32_t idx = oldest.idx+i;
+                    for (uint32_t i=0; i<oldestLen; i++) {
+                        const uint32_t idx = oldestIdx+i;
                         ImageRecordPtr rec = *it;
                         rec->addr.full = _AddrFull(_mspState, idx);
                         rec->addr.thumb = _AddrThumb(_mspState, idx);
-                        oldestRecs.insert(rec);
+                        recs.insert(rec);
                         it++;
                     }
                     
-                    for (uint32_t i=0; i<newest.len; i++) {
-                        const uint32_t idx = newest.idx+i;
+                    for (uint32_t i=0; i<newestLen; i++) {
+                        const uint32_t idx = newestIdx+i;
                         ImageRecordPtr rec = *it;
                         rec->addr.full = _AddrFull(_mspState, idx);
                         rec->addr.thumb = _AddrThumb(_mspState, idx);
-                        newestRecs.insert(rec);
+                        recs.insert(rec);
                         it++;
                     }
                 }
                 
                 // Load the images from the SD card
                 {
-                    _loadImages(_sync.loadImages, _Priority::Low, true, oldestRecs);
-                    _loadImages(_sync.loadImages, _Priority::Low, true, newestRecs);
+                    _loadImages(_sync.loadImages, _Priority::Low, true, recs);
                 }
             }
         

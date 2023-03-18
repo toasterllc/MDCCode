@@ -108,13 +108,15 @@ public:
         f.write((char*)&state, sizeof(state));
     }
     
-    void add() {
+    void add(size_t count) {
         Event ev = { .type = Event::Type::Add };
-        for (auto i=reservedBegin(); i!=reservedEnd(); i++) {
+        auto begin = reservedBegin();
+        auto end = begin+count;
+        for (auto i=begin; i!=end; i++) {
             ev.records.insert(*i);
         }
         
-        RecordStore::add();
+        RecordStore::add(count);
         // Notify observers that we changed
         notify(ev);
     }
