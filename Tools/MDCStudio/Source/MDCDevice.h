@@ -10,7 +10,6 @@
 #import "Toastbox/Queue.h"
 #import "Toastbox/Math.h"
 #import "Toastbox/Signal.h"
-#import "Toastbox/SignalQueue.h"
 #import "Code/Shared/Time.h"
 #import "Code/Shared/TimeConvert.h"
 #import "Code/Shared/MSP.h"
@@ -266,15 +265,6 @@ private:
     
     using _SDWorkQueue = std::queue<_SDWork*>;
     
-    struct _SDCoalescedOps {
-        std::vector<_SDReadOp> works;
-        _SDBlock blockBegin = 0;
-        _SDBlock blockEnd = 0;
-    };
-    
-    using _SDWorkPopFn  = _SDWork&(MDCDevice::*)();
-    using _SDWorkPushFn = void(MDCDevice::*)(_SDWork&);
-    
     struct _LoadImagesState {
         Toastbox::Signal signal;
         std::vector<_SDWork> works;
@@ -511,14 +501,6 @@ private:
         }
     }
     
-//    _SDWork& _sdWorkPop(const _LoadImagesState& state) {
-//        return (this->*(state.workPop))();
-//    }
-//    
-//    void _sdWorkPush(const _LoadImagesState& state, _SDWork& work) {
-//        (this->*(state.workPush))(work);
-//    }
-    
     void _readCompleteCallback(_LoadImagesState& state, _SDWork& work) {
         // Enqueue _SDWork into _thumbRender.work
         {
@@ -548,11 +530,6 @@ private:
             state.underway.erase(&work);
         }
         state.signal.signalOne();
-        
-        #warning TODO: update our imageIdEnd or equivalent (make sure doing so is properly serialized though, so we can't clobber imageIdEnd with the wrong value because things completed out of order)
-        
-//        // Return _SDWork to pool
-//        _sdWorkPush(state, work);
     }
     
     void _loadImages(_LoadImagesState& state, _Priority priority,
@@ -568,17 +545,6 @@ private:
         for (_SDWork& work : state.works) {
             work = {};
         }
-        
-//        // Create a _SDReadOp for each ImageRecordPtr
-//        // These will be sorted by SD block
-//        std::set<_SDReadOp> ops;
-//        for (const ImageRecordPtr& rec : recs) {
-//            ops.insert({
-//                .block = rec->addr.thumb,
-//                .len = ImgSD::Thumb::ImagePaddedLen,
-//                .rec = rec,
-//            });
-//        }
         
         size_t workIdx = 0;
         size_t countSinceWrite = 0;
@@ -780,68 +746,6 @@ private:
     
     // MARK: - SD Read
     
-//    static _SDCoalescedOps _SDRead_CoalesceWork(_SDWorkQueue& queue) {
-//        assert(!queue.empty());
-//        
-//        // CoalesceBudget: coalesce adjacent blocks until this budget is exceeded
-//        static constexpr _SDBlock CoalesceBudget = 8192;
-//        const _SDWork& status = queue.begin()->status;
-//        _SDCoalescedOps coalesced = {
-//            .blockBegin = queue.begin()->block,
-//            .blockEnd   = _SDRead_BlockEnd(queue.begin()->block, queue.begin()->len),
-//        };
-//        _SDBlock budget = CoalesceBudget;
-//        for (auto it=queue.begin(); it!=queue.end();) {
-//            const auto itPrev = it;
-//            const _SDReadOp& work = *it;
-//            const _SDBlock workBlockBegin = work.block;
-//            const _SDBlock workBlockEnd = _SDRead_BlockEnd(workBlockBegin, work.len);
-//            
-//            // The queue ordering guarantees that the blockBegins are in ascending order.
-//            // Check that assumption.
-//            assert(coalesced.blockBegin <= work.block);
-//            
-//            const _SDBlock cost = (workBlockEnd>coalesced.blockEnd ? workBlockEnd-coalesced.blockEnd : 0);
-//            // Stop coalescing work once the cost exceeds our budget
-//            if (cost > budget) break;
-//            // Stop coalescing work if the .status member doesn't match
-//            // (Ie, we don't coalesce across .status boundaries)
-//            if (&work.status != &status) break;
-//            
-//            it++; // Increment before we extract, because extract invalidates iterator
-//            coalesced.blockEnd = std::max(coalesced.blockEnd, workBlockEnd);
-//            coalesced.works.push_back(std::move(queue.extract(itPrev).value()));
-//            budget -= cost;
-//        }
-//        return coalesced;
-//    }
-    
-//    void _sdRead(_Priority priority, _SDBlock block, size_t len, void* dst) {
-//        abort();
-////        const auto status = std::make_shared<_SDWork>();
-////        
-////        // Enqueue the work
-////        {
-////            {
-////                auto lock = std::unique_lock(_sdRead.lock);
-////                _SDWorkQueue& queue = _sdRead.queues[priority];
-////                queue.emplace(_SDReadOp{
-////                    .block = block,
-////                    .len = len,
-////                    .dst = dst,
-////                    .status = status,
-////                });
-////            }
-////            _sdRead.signal.notify_one();
-////        }
-////        
-////        // Wait for the work to be completed
-////        {
-////            auto lock = std::unique_lock(_sdReadConsume.lock);
-////            _sdReadConsume.signal.wait(lock, [&] { return !status->done.empty(); });
-////        }
-//    }
-    
     // _sdRead.lock must be held!
     _SDWorkQueue* _sdRead_nextWorkQueue() {
         for (_SDWorkQueue& x : _sdRead.queues) {
@@ -996,48 +900,6 @@ private:
             fprintf(stderr, "_thumbRender_thread stopping\n");
         }
     }
-    
-//    template<auto& T_Queue>
-//    _SDWork& workPop() {
-//        _SDWork& work = T_Queue.rget();
-////        printf("[workPop] returned %p\n", &work);
-//        T_Queue.works.rpop();
-//        return work;
-//    }
-//    
-//    template<auto& T_Queue>
-//    void workPush(_SDWork& work) {
-//        assert(&T_Queue.wget() == &work);
-////        printf("[workPush] %p\n", &work);
-//        T_Queue.wpush();
-//    }
-    
-    
-//    _SDWork& workPop_sync() {
-//        _SDWork& work = _sync.works.rget();
-////        printf("[workPop_sync] returned %p\n", &work);
-//        _sync.works.rpop();
-//        return work;
-//    }
-//    
-//    void workPush_sync(_SDWork& work) {
-//        assert(&_sync.works.wget() == &work);
-////        printf("[workPush_sync] %p\n", &work);
-//        _sync.works.wpush();
-//    }
-//    
-//    _SDWork& workPop_thumbUpdate() {
-//        _SDWork& work = _thumbUpdate.works.rget();
-////        printf("[workPop_thumbUpdate] returned %p\n", &work);
-//        _thumbUpdate.works.rpop();
-//        return work;
-//    }
-//    
-//    void workPush_thumbUpdate(_SDWork& work) {
-//        assert(&_thumbUpdate.works.wget() == &work);
-////        printf("[workPush_thumbUpdate] %p\n", &work);
-//        _thumbUpdate.works.wpush();
-//    }
     
     // MARK: - Members
     
