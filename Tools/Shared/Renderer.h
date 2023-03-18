@@ -730,17 +730,19 @@ public:
         [_cmdBuf addCompletedHandler:^(id<MTLCommandBuffer>) {
             auto lock = std::unique_lock(bufs->lock);
             bufs->bufs.splice(bufs->bufs.end(), pending);
-            _recycleBufs->pending--;
+            bufs->pending--;
         }];
     }
     
     void commit() {
+        if (!_cmdBuf) return;
         _prepareDeferredRecycle();
         [_cmdBuf commit];
         _cmdBuf = nil;
     }
     
     void commitAndWait() {
+        if (!_cmdBuf) return;
         _prepareDeferredRecycle();
         [_cmdBuf commit];
         [_cmdBuf waitUntilCompleted];
@@ -872,7 +874,7 @@ private:
             const size_t bufLen = [buf length];
             const MTLStorageMode bufStorageMode = [buf storageMode];
             if (bufLen>=len && bufLen<=2*len && bufStorageMode==storageMode) {
-                Buf b(*this, buf);
+                Buf b(*this, buf, deferRecycle);
                 _recycleBufs->bufs.erase(it);
                 return b;
             }
@@ -880,19 +882,20 @@ private:
         
         id<MTLBuffer> buf = [dev newBufferWithLength:len options:(storageMode<<MTLResourceStorageModeShift)];
         Assert(buf, return Buf());
-        return Buf(*this, buf);
+        return Buf(*this, buf, deferRecycle);
     }
     
     void _recycle(id<MTLTexture> txt, bool deferRecycle) {
+        assert(!deferRecycle); // We only defer recycling of buffers
         _recycleTxts[txt].push(txt);
     }
     
     void _recycle(id<MTLBuffer> buf, bool deferRecycle) {
         auto lock = std::unique_lock(_recycleBufs->lock);
         if (deferRecycle) {
-            _recycleBufs->bufs.push_back(buf);
-        } else {
             _recycleBufs->defer.push_back(buf);
+        } else {
+            _recycleBufs->bufs.push_back(buf);
         }
     }
     

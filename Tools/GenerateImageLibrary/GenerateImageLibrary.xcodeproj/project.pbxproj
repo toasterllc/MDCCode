@@ -84,6 +84,7 @@
 		5533A2AD2791612700EF4614 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		5533A2AF2791613500EF4614 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		5533A2B12791614300EF4614 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
+		558FFC4B29C7FC7D0022E840 /* ColorMatrix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ColorMatrix.h; path = ../MDCStudio/Source/ColorMatrix.h; sourceTree = "<group>"; };
 		55A36A7F27A2377300FD0181 /* RecordStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RecordStore.h; path = ../MDCStudio/Source/RecordStore.h; sourceTree = "<group>"; };
 		55A36AF027A36A9200FD0181 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		55A36AF127A36A9200FD0181 /* Task.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Task.h; sourceTree = "<group>"; };
@@ -208,6 +209,7 @@
 				5513289127B378BF00CD823B /* Renderer.metal */,
 				55F7553729BBA8F900241672 /* MockImageSource.h */,
 				55F7553A29BBA93900241672 /* ImageSource.h */,
+				558FFC4B29C7FC7D0022E840 /* ColorMatrix.h */,
 				551B22462791391400D62121 /* main.mm */,
 				551B22442791391400D62121 /* Products */,
 				551B224D279139DE00D62121 /* Frameworks */,

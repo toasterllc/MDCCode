@@ -1,6 +1,7 @@
 #pragma once
 #include <forward_list>
 #include <set>
+#include "Toastbox/AnyIter.h"
 #include "Code/Shared/Time.h"
 #include "Code/Shared/Img.h"
 #include "RecordStore.h"
@@ -10,22 +11,17 @@
 
 namespace MDCStudio {
 
-struct [[gnu::packed]] ImageAddr {
-    uint64_t full = 0;
-    uint64_t thumb = 0;
-    uint8_t _reserved[16];
-};
-
-static_assert(!(sizeof(ImageAddr) % 8)); // Ensure that ImageAddr is a multiple of 8 bytes
-
 struct ImageFlags {
     static constexpr uint64_t Loaded = 1<<0;
 };
 
 struct [[gnu::packed]] ImageInfo {
     Img::Id id = 0;
-    Time::Instant timestamp = 0;
+    uint64_t addrFull = 0;
+    uint64_t addrThumb = 0;
     uint64_t flags = 0;
+    
+    Time::Instant timestamp = 0;
     
     uint16_t imageWidth = 0;
     uint16_t imageHeight = 0;
@@ -45,7 +41,6 @@ static_assert(!(sizeof(ImageInfo) % 8)); // Ensure that ImageInfo is a multiple 
 struct [[gnu::packed]] ImageRecord {
     static constexpr uint32_t Version = 0;
     
-    ImageAddr addr;
     ImageInfo info;
     ImageOptions options;
 //    // _pad: necessary for our thumbnail compression to keep our `thumb` member aligned
@@ -106,15 +101,13 @@ public:
     }
     
     void add(size_t count) {
-        Event ev = { .type = Event::Type::Add };
-        auto begin = reservedBegin();
-        auto end = begin+count;
-        for (auto i=begin; i!=end; i++) {
-            ev.records.insert(*i);
-        }
-        
         RecordStore::add(count);
         // Notify observers that we changed
+        
+        Event ev = { .type = Event::Type::Add };
+        for (auto i=end()-count; i!=end(); i++) {
+            ev.records.insert(*i);
+        }
         notify(ev);
     }
     
@@ -186,6 +179,8 @@ private:
 };
 
 using ImageRecordIter = ImageLibrary::RecordRefConstIter;
+using ImageRecordRevIter = ImageLibrary::RecordRefConstReverseIter;
+using ImageRecordAnyIter = Toastbox::AnyIter<ImageRecordIter>;
 using ImageRecordPtr = ImageLibrary::RecordStrongRef;
 using ImageSet = std::set<ImageRecordPtr>;
 

@@ -3,6 +3,7 @@
 #include <atomic>
 #include "Img.h"
 #include "SD.h"
+#include "ImgSD.h"
 #include "Time.h"
 
 namespace MSP {
@@ -11,14 +12,19 @@ using BatteryChargeLevel = uint8_t;
 static constexpr BatteryChargeLevel BatteryChargeLevelMin = 0;
 static constexpr BatteryChargeLevel BatteryChargeLevelMax = 100;
 
+static constexpr SD::Block SDBlockFull(SD::Block base, uint32_t idx) {
+    return base - ((idx+1) * ImgSD::Full::ImageBlockCount);
+}
+
+static constexpr SD::Block SDBlockThumb(SD::Block base, uint32_t idx) {
+    return base - ((idx+1) * ImgSD::Thumb::ImageBlockCount);
+}
+
 // ImgRingBuf: stats to track captured images
 struct [[gnu::packed]] ImgRingBuf {
     struct [[gnu::packed]] {
-        Img::Id idBegin = 0;
-        Img::Id idEnd   = 0;
-        uint32_t widx   = 0;
-        uint32_t ridx   = 0;
-        bool full       = false;
+        Img::Id id   = 0; // Next image id
+        uint32_t idx = 0; // Next image index
     } buf;
     bool valid = false;
     
@@ -34,8 +40,8 @@ struct [[gnu::packed]] ImgRingBuf {
     
     static std::optional<int> Compare(const ImgRingBuf& a, const ImgRingBuf& b) {
         if (a.valid && b.valid) {
-            if (a.buf.idEnd > b.buf.idEnd) return 1;
-            else if (a.buf.idEnd < b.buf.idEnd) return -1;
+            if (a.buf.id > b.buf.id) return 1;
+            else if (a.buf.id < b.buf.id) return -1;
             else return 0;
         
         } else if (a.valid) {
@@ -64,8 +70,6 @@ struct [[gnu::packed]] AbortHistory {
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
 
-static constexpr uint32_t StateAddr = 0x1800;
-
 struct [[gnu::packed]] State {
     struct [[gnu::packed]] Header {
         uint32_t magic   = 0;
@@ -81,11 +85,11 @@ struct [[gnu::packed]] State {
         SD::CardId cardId;
         // imgCap: image capacity; the number of images that bounds the ring buffer
         uint32_t imgCap = 0;
-        // fullBase / thumbBase: the first block of the full-size and thumb image regions.
-        // The SD card is broken into 2 regions (fullSize, thumbnails), to allow the host to quickly
-        // read the thumbnails.
-        SD::Block fullBase = 0;
-        SD::Block thumbBase = 0;
+        // baseFull / baseThumb: the first block of the full-size and thumb image regions.
+        // The SD card is broken into 2 regions (fullSize, thumbnails), to allow the host
+        // to quickly read the thumbnails.
+        SD::Block baseFull = 0;
+        SD::Block baseThumb = 0;
         // ringBufs: tracks captured images on the SD card; 2 copies in case there's a
         // power failure while updating one
         ImgRingBuf imgRingBufs[2] = {};

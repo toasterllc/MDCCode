@@ -6,7 +6,8 @@
 #import "Util.h"
 #import "Grid.h"
 #import "Code/Shared/Img.h"
-#include "Toastbox/LRU.h"
+#import "Toastbox/LRU.h"
+#import "Toastbox/AnyIter.h"
 using namespace MDCStudio;
 
 static constexpr auto _ThumbWidth = ImageThumb::ThumbWidth;
@@ -28,7 +29,7 @@ static constexpr MTLPixelFormat _PixelFormat = MTLPixelFormatBGRA8Unorm;
 - (void)recomputeGrid;
 
 - (ImageSet)imagesForRect:(CGRect)rect;
-- (CGRect)rectForImageAtIndex:(size_t)idx;
+//- (CGRect)rectForImageAtIndex:(size_t)idx;
 
 - (const ImageSet&)selection;
 - (void)setSelection:(ImageSet)selection;
@@ -46,9 +47,10 @@ using _ChunkTextures = LRU<ImageLibrary::ChunkStrongRef,_ChunkTexture>;
 @implementation ImageGridLayer {
     ImageSourcePtr _imageSource;
     ImageLibrary* _imageLibrary;
-    Grid _grid;
     uint32_t _cellWidth;
     uint32_t _cellHeight;
+    Grid _grid;
+    bool _reverse;
     
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
@@ -91,6 +93,8 @@ static CGColorSpaceRef _LSRGBColorSpace() {
     _grid.setCellSize({(int32_t)_cellWidth, (int32_t)_cellHeight});
     _grid.setCellSpacing({6, 6});
 //    _grid.setCellSpacing({(int32_t)_cellWidth/10, (int32_t)_cellHeight/10});
+    
+    _reverse = true;
     
     _device = MTLCreateSystemDefaultDevice();
     assert(_device);
@@ -208,7 +212,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
 #warning TODO: throw out the oldest textures from _chunkTxts after it hits a high-water mark
 // _getChunkTexture: returns a _ChunkTexture& containing all thumbnails for a given chunk
 // ImageLibrary must be locked!
-- (_ChunkTexture&)_getChunkTexture:(ImageRecordIter)iter {
+- (_ChunkTexture&)_getChunkTexture:(ImageRecordAnyIter)iter {
     // If we already have a _ChunkTexture for the iter's chunk, return it.
     // Otherwise we need to create it.
     const ImageLibrary::ChunkStrongRef chunk = iter->chunkRef();
@@ -217,8 +221,8 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         return it->val;
     }
     
-    const auto chunkBegin = ImageLibrary::FindChunkBegin(iter, _imageLibrary->begin());
-    const auto chunkEnd = ImageLibrary::FindChunkEnd(iter, _imageLibrary->end());
+    const auto chunkBegin = ImageLibrary::FindChunkBegin([self _begin], iter);
+    const auto chunkEnd = ImageLibrary::FindChunkEnd([self _end], iter);
     assert(chunkBegin != chunkEnd);
     
     auto startTime = std::chrono::steady_clock::now();
@@ -258,18 +262,52 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     [[renderPassDescriptor colorAttachments][0] setLoadAction:MTLLoadActionLoad];
     [[renderPassDescriptor colorAttachments][0] setStoreAction:MTLStoreActionStore];
     
+    // Recreate _selection properties
+    if (!_selection.buf) {
+        const auto itBegin = (!_selection.images.empty() ?
+            _imageLibrary->find(*_selection.images.begin()) : _imageLibrary->end());
+        const auto itLast = (!_selection.images.empty() ?
+            _imageLibrary->find(*std::prev(_selection.images.end())) : _imageLibrary->end());
+        const auto itEnd = (itLast!=_imageLibrary->end() ? std::next(itLast) : _imageLibrary->end());
+        
+        if (itBegin!=_imageLibrary->end() && itLast!=_imageLibrary->end()) {
+            _selection.base = itBegin-_imageLibrary->begin();
+            _selection.count = itEnd-itBegin;
+            
+            constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
+            _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
+            bool* bools = (bool*)[_selection.buf contents];
+            
+            size_t i = 0;
+            for (auto it=itBegin; it!=itEnd; it++) {
+                if (_selection.images.find(*it) != _selection.images.end()) {
+                    bools[i] = true;
+                }
+                i++;
+            }
+        
+        } else {
+            _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
+        }
+        
+        assert(_selection.buf);
+    }
+    
     const uintptr_t imageRefsBegin = (uintptr_t)&*_imageLibrary->begin();
     const uintptr_t imageRefsEnd = (uintptr_t)&*_imageLibrary->end();
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    const auto imageRefBegin = _imageLibrary->begin()+indexRange.start;
-    const auto imageRefEnd = _imageLibrary->begin()+indexRange.start+indexRange.count;
+    ImageRecordAnyIter begin = [self _begin];
+    ImageRecordAnyIter end = [self _end];
     
-    for (auto it=imageRefBegin; it!=imageRefEnd;) {
-        const auto nextChunkStart = ImageLibrary::FindChunkEnd(it, _imageLibrary->end());
+    const auto visibleBegin = begin+indexRange.start;
+    const auto visibleEnd = begin+indexRange.start+indexRange.count;
+    
+    for (auto it=visibleBegin; it!=visibleEnd;) {
+        const auto nextChunkStart = ImageLibrary::FindChunkEnd(end, it);
         const auto chunkImageRefBegin = it;
-        const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
+        const auto chunkImageRefEnd = std::min(visibleEnd, nextChunkStart);
         
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         [renderEncoder setRenderPipelineState:_pipelineState];
@@ -279,14 +317,10 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
         assert(_selection.base <= UINT32_MAX);
         assert(_selection.count <= UINT32_MAX);
         
-        // Make sure _selection.buf != nil
-        if (!_selection.buf) {
-            _selection.buf = [_device newBufferWithLength:1 options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModePrivate];
-        }
-        
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
-            .idx = (uint32_t)(chunkImageRefBegin-_imageLibrary->begin()), // Start index into `imageRefs`
+            .idx = (uint32_t)(chunkImageRefBegin-begin),
+            .reverse = _reverse,
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
             .transform = [self fixedTransform],
             .selection = {
@@ -313,7 +347,7 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     }
     
     // Re-render the visible thumbnails that are marked dirty
-    _imageSource->visibleThumbs(imageRefBegin, imageRefEnd);
+    _imageSource->visibleThumbs(visibleBegin, visibleEnd);
 }
 
 - (void)display {
@@ -355,55 +389,135 @@ static void _ChunkTextureUpdateSlice(_ChunkTexture& ct, const ImageLibrary::Reco
     auto lock = std::unique_lock(*_imageLibrary);
     const Grid::IndexRect indexRect = _grid.indexRectForRect(_GridRectFromCGRect(rect, [self contentsScale]));
     ImageSet images;
+    auto begin = [self _begin];
     for (int32_t y=indexRect.y.start; y<(indexRect.y.start+indexRect.y.count); y++) {
         for (int32_t x=indexRect.x.start; x<(indexRect.x.start+indexRect.x.count); x++) {
             const int32_t idx = _grid.columnCount()*y + x;
             if (idx >= _imageLibrary->recordCount()) goto done;
-            images.insert(*(_imageLibrary->begin()+idx));
+            images.insert(*(begin+idx));
         }
     }
 done:
     return images;
 }
 
-- (CGRect)rectForImageAtIndex:(size_t)idx {
-    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
-}
+//- (CGRect)rectForImages:(ImageSet)images {
+//    CGRect rect = {};
+//    for (const ImageRecordPtr& rec : images) {
+//        
+//    }
+//    return rect;
+//}
+
+//- (CGRect)rectForImageAtIndex:(size_t)idx {
+//    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)idx), [self contentsScale]);
+//}
 
 - (const ImageSet&)selection {
     return _selection.images;
 }
 
 - (void)setSelection:(ImageSet)images {
-    auto lock = std::unique_lock(*_imageLibrary);
-    const auto itBegin = (!images.empty() ? _imageLibrary->find(*images.begin()) : _imageLibrary->end());
-    const auto itLast = (!images.empty() ? _imageLibrary->find(*std::prev(images.end())) : _imageLibrary->end());
-    const auto itEnd = (itLast!=_imageLibrary->end() ? std::next(itLast) : _imageLibrary->end());
-    
-    if (itBegin!=_imageLibrary->end() &&
-        itLast!=_imageLibrary->end()) {
+    // Trigger buffer regeneration
+    _selection = {
+        .images = std::move(images),
+    };
+    [self setNeedsDisplay];
+}
+
+- (void)setReverse:(bool)x {
+    _reverse = x;
+    // Trigger selection update
+    [self setSelection:std::move(_selection.images)];
+    [self setNeedsDisplay];
+}
+
+struct SelectionDelta {
+    int x = 0;
+    int y = 0;
+};
+
+- (std::optional<CGRect>)moveSelection:(SelectionDelta)delta extend:(bool)extend {
+    ssize_t newIdx = 0;
+    ImageRecordPtr newImg;
+    ImageSet selection = _selection.images;
+    {
+        auto lock = std::unique_lock(*_imageLibrary);
         
-        _selection.images = std::move(images);
-        _selection.base = itBegin-_imageLibrary->begin();
-        _selection.count = itEnd-itBegin;
+        const size_t imgCount = _imageLibrary->recordCount();
+        if (!imgCount) return std::nullopt;
         
-        constexpr MTLResourceOptions BufOpts = MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared;
-        _selection.buf = [_device newBufferWithLength:_selection.count options:BufOpts];
-        bool* bools = (bool*)[_selection.buf contents];
-        
-        size_t i = 0;
-        for (auto it=itBegin; it!=itEnd; it++) {
-            if (_selection.images.find(*it) != _selection.images.end()) {
-                bools[i] = true;
+        if (!selection.empty()) {
+            const auto it = _imageLibrary->find(*std::prev(selection.end()));
+            if (it == _imageLibrary->end()) {
+                NSLog(@"Image no longer in library");
+                return std::nullopt;
             }
-            i++;
+            
+            const size_t idx = std::abs(&*it - &*[self _begin]);
+            const size_t colCount = _grid.columnCount();
+            const size_t rem = (imgCount % colCount);
+            const size_t lastRowCount = (rem ? rem : colCount);
+            const bool firstRow = (idx < colCount);
+            const bool lastRow = (idx >= (imgCount-lastRowCount));
+            const bool firstCol = !(idx % colCount);
+            const bool lastCol = ((idx % colCount) == (colCount-1));
+            const bool lastElm = (idx == (imgCount-1));
+            
+            newIdx = idx;
+            if (delta.x > 0) {
+                // Right
+                if (lastCol || lastElm) return std::nullopt;
+                newIdx += 1;
+            
+            } else if (delta.x < 0) {
+                // Left
+                if (firstCol) return std::nullopt;
+                newIdx -= 1;
+            
+            } else if (delta.y > 0) {
+                // Down
+                if (lastRow) return std::nullopt;
+                newIdx += colCount;
+            
+            } else if (delta.y < 0) {
+                // Up
+                if (firstRow) return std::nullopt;
+                newIdx -= colCount;
+            }
+            
+            newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
+        
+        } else {
+            if (delta.x>0 || delta.y>0) {
+                // Select first element
+                newIdx = 0;
+            } else if (delta.x<0 || delta.y<0) {
+                // Select last element
+                newIdx = imgCount-1;
+            } else {
+                return std::nullopt;
+            }
         }
-    
-    } else {
-        _selection = {};
+        
+    //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
+        newImg = *([self _begin]+newIdx);
     }
     
-    [self setNeedsDisplay];
+    if (!extend) selection.clear();
+    selection.insert(newImg);
+    [self setSelection:std::move(selection)];
+    return _CGRectFromGridRect(_grid.rectForCellIndex((int32_t)newIdx), [self contentsScale]);
+}
+
+- (ImageRecordAnyIter)_begin {
+    if (_reverse) return _imageLibrary->rbegin();
+    else          return _imageLibrary->begin();
+}
+
+- (ImageRecordAnyIter)_end {
+    if (_reverse) return _imageLibrary->rend();
+    else          return _imageLibrary->end();
 }
 
 // MARK: - FixedScrollViewDocument
@@ -553,8 +667,19 @@ done:
     return [_imageGridLayer selection];
 }
 
+- (void)setReverse:(bool)x {
+    [_imageGridLayer setReverse:x];
+}
+
 - (void)_setSelection:(ImageSet)selection {
     [_imageGridLayer setSelection:std::move(selection)];
+    [_delegate imageGridViewSelectionChanged:self];
+}
+
+- (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
+    std::optional<CGRect> rect = [_imageGridLayer moveSelection:delta extend:extend];
+    if (!rect) return;
+    [self scrollRectToVisible:[self convertRect:*rect fromView:[self superview]]];
     [_delegate imageGridViewSelectionChanged:self];
 }
 
@@ -611,86 +736,6 @@ done:
     if ([event clickCount] == 2) {
         [_delegate imageGridViewOpenSelectedImage:self];
     }
-}
-
-struct SelectionDelta {
-    int x = 0;
-    int y = 0;
-};
-
-- (void)_moveSelection:(SelectionDelta)delta extend:(bool)extend {
-    ssize_t newIdx = 0;
-    ImageRecordPtr newImg;
-    ImageSet selection = [_imageGridLayer selection];
-    {
-        ImageLibrary& imgLib = _imageSource->imageLibrary();
-        auto lock = std::unique_lock(imgLib);
-        
-        const size_t imgCount = imgLib.recordCount();
-        if (!imgCount) return;
-        
-        if (!selection.empty()) {
-            const auto it = imgLib.find(*std::prev(selection.end()));
-            if (it == imgLib.end()) {
-                NSLog(@"Image no longer in library");
-                return;
-            }
-            
-            const size_t idx = std::distance(imgLib.begin(), it);
-            const size_t colCount = [_imageGridLayer columnCount];
-            const size_t rem = (imgCount % colCount);
-            const size_t lastRowCount = (rem ? rem : colCount);
-            const bool firstRow = (idx < colCount);
-            const bool lastRow = (idx >= (imgCount-lastRowCount));
-            const bool firstCol = !(idx % colCount);
-            const bool lastCol = ((idx % colCount) == (colCount-1));
-            const bool lastElm = (idx == (imgCount-1));
-            
-            newIdx = idx;
-            if (delta.x > 0) {
-                // Right
-                if (lastCol || lastElm) return;
-                newIdx += 1;
-            
-            } else if (delta.x < 0) {
-                // Left
-                if (firstCol) return;
-                newIdx -= 1;
-            
-            } else if (delta.y > 0) {
-                // Down
-                if (lastRow) return;
-                newIdx += colCount;
-            
-            } else if (delta.y < 0) {
-                // Up
-                if (firstRow) return;
-                newIdx -= colCount;
-            }
-            
-            newIdx = std::clamp(newIdx, (ssize_t)0, (ssize_t)imgCount-1);
-        
-        } else {
-            if (delta.x>0 || delta.y>0) {
-                // Select first element
-                newIdx = 0;
-            } else if (delta.x<0 || delta.y<0) {
-                // Select last element
-                newIdx = imgCount-1;
-            } else {
-                return;
-            }
-        }
-        
-    //    const size_t newIdx = std::min(imgCount-1, idx+[_imageGridLayer columnCount]);
-        newImg = *(imgLib.begin()+newIdx);
-    }
-    
-    [self scrollRectToVisible:[self convertRect:[_imageGridLayer rectForImageAtIndex:newIdx] fromView:[self superview]]];
-    
-    if (!extend) selection.clear();
-    selection.insert(newImg);
-    [self _setSelection:std::move(selection)];
 }
 
 - (void)moveDown:(id)sender {

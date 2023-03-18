@@ -6,7 +6,7 @@
 
 namespace MDCTools::ImagePipeline {
 
-class EstimateIlluminantFFCC {
+class EstimateIlluminant {
 public:
     static MDCTools::Color<MDCTools::ColorSpace::Raw> Run(
         MDCTools::Renderer& renderer,

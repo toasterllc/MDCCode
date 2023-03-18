@@ -40,7 +40,7 @@ public:
         return _imageCache;
     }
     
-    void visibleThumbs(ImageRecordIter begin, ImageRecordIter end) override {
+    void visibleThumbs(ImageRecordAnyIter begin, ImageRecordAnyIter end) override {
         bool enqueued = false;
         {
             auto lock = std::unique_lock(_renderThumbs.lock);
@@ -107,7 +107,7 @@ public:
                0.0983744, 0.8734610, 0.0281647,
                0.0168832, 0.1176725, 0.8654443,
             };
-            const Pipeline::ProcessOptions processOpts = {
+            const Pipeline::Options popts = {
                 .colorMatrix = colorMatrix,
                 .exposure = (float)imageOpts.exposure,
                 .saturation = (float)imageOpts.saturation,
@@ -120,7 +120,7 @@ public:
                 },
             };
             
-            Pipeline::Process(renderer, processOpts, txtRgba32, txtRgba8);
+            Pipeline::Run(renderer, popts, txtRgba32, txtRgba8);
             renderer.sync(txtRgba8);
         }
         
@@ -169,7 +169,7 @@ public:
             // Render thumb to `rec.thumb`
             {
                 const std::filesystem::path ImagesDirPath = "/Users/dave/Desktop/Old/2022-1-26/TestImages-5k";
-                NSURL* url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->addr.full]];
+                NSURL* url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%s/%012ju.jpg", ImagesDirPath.c_str(), (uintmax_t)rec->info.addrFull]];
                 ThumbRender(renderer, txtLoader, compressor, *tmpStorage, url, *rec);
                 rec->options.thumb.render = false;
             }

@@ -362,25 +362,19 @@ static void MSPStateRead(const Args& args, MDCUSBDevice& device) {
     printf(     "    crc:                   0x%02jx\n",     (uintmax_t)state.sd.cardId.crc);
     
     printf(     "  imgCap:                  %ju\n",         (uintmax_t)state.sd.imgCap);
-    printf(     "  fullBase:                %ju\n",         (uintmax_t)state.sd.fullBase);
-    printf(     "  thumbBase:               %ju\n",         (uintmax_t)state.sd.thumbBase);
+    printf(     "  baseFull:                %ju\n",         (uintmax_t)state.sd.baseFull);
+    printf(     "  baseThumb:               %ju\n",         (uintmax_t)state.sd.baseThumb);
     
     printf(     "  imgRingBufs[0]\n");
     printf(     "    buf\n");
-    printf(     "      idBegin:             %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.idBegin);
-    printf(     "      idEnd:               %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.idEnd);
-    printf(     "      widx:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.widx);
-    printf(     "      ridx:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.ridx);
-    printf(     "      full:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.full);
+    printf(     "      id:                  %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.id);
+    printf(     "      idx:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].buf.idx);
     printf(     "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[0].valid);
     
     printf(     "  imgRingBufs[1]\n");
     printf(     "    buf\n");
-    printf(     "      idBegin:             %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.idBegin);
-    printf(     "      idEnd:               %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.idEnd);
-    printf(     "      widx:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.widx);
-    printf(     "      ridx:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.ridx);
-    printf(     "      full:                %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.full);
+    printf(     "      id:                  %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.id);
+    printf(     "      idx:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].buf.idx);
     printf(     "    valid:                 %ju\n",         (uintmax_t)state.sd.imgRingBufs[1].valid);
     printf(     "\n");
     

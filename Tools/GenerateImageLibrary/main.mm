@@ -83,8 +83,8 @@ int main(int argc, const char* argv[]) {
         printf("Recreating ImageLibrary, cause: %s\n", e.what());
     }
     
-    imgLib.reserve(paths.size());
-    imgLib.add();
+    paths.resize(16);
+    imgLib.add(paths.size());
     
     auto startTime = std::chrono::steady_clock::now();
     {
@@ -110,7 +110,9 @@ int main(int argc, const char* argv[]) {
                     
                     // Set ImageRecord.id
                     rec.info.id = idx;
-                    rec.info.addr = IntForStr<uint64_t>(path.stem().c_str(), 10);
+                    rec.info.addrFull = IntForStr<uint64_t>(path.stem().c_str(), 10);
+                    rec.info.addrThumb = IntForStr<uint64_t>(path.stem().c_str(), 10);
+                    rec.info.flags = ImageFlags::Loaded;
                 }
             });
         }
