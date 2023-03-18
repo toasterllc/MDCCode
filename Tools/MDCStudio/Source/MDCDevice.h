@@ -555,14 +555,6 @@ private:
 //        _sdWorkPush(state, work);
     }
     
-//    void _write(size_t count) {
-//        auto lock = std::unique_lock(_imageLibrary);
-//        _imageLibrary.add(count);
-////        _imageLibrary.find()
-////        _imageLibrary.loadedCount(loadedCount);
-////        _imageLibrary.write();
-//    }
-    
     void _loadImages(_LoadImagesState& state, _Priority priority,
         bool initial, const std::set<ImageRecordPtr>& recs) {
         
@@ -690,22 +682,6 @@ private:
                 {
                     auto lock = std::unique_lock(_imageLibrary);
                     
-//                    // Remove unloaded images from the library
-//                    {
-//                        const uint64_t loadedCount = _imageLibrary.loadedCount();
-//                        if (loadedCount > _imageLibrary.recordCount()) {
-//                            throw Toastbox::RuntimeError("image library loadedCount (%ju) > image library record count (%ju)",
-//                                (uintmax_t)loadedCount,
-//                                (uintmax_t)_imageLibrary.recordCount()
-//                            );
-//                        }
-//                        
-//                        const auto removeBegin = _imageLibrary.begin() + loadedCount;
-//                        const auto removeEnd = _imageLibrary.end();
-//                        printf("Removing %ju unloaded images\n", (uintmax_t)(removeEnd-removeBegin));
-//                        _imageLibrary.remove(removeBegin, removeEnd);
-//                    }
-                    
                     // Remove images from beginning of library: lib has, device doesn't
                     {
                         const auto removeBegin = _imageLibrary.begin();
@@ -718,13 +694,6 @@ private:
                         
                         printf("Removing %ju stale images\n", (uintmax_t)(removeEnd-removeBegin));
                         _imageLibrary.remove(removeBegin, removeEnd);
-                    }
-                    
-                    // Update loadedCount
-                    {
-                        const uint64_t loadedCount = _imageLibrary.end()-_imageLibrary.begin();
-                        printf("Updating loadedCount: %ju\n", (uintmax_t)loadedCount);
-                        _imageLibrary.loadedCount(loadedCount);
                     }
                     
                     // Add images to end of library: device has, lib doesn't
