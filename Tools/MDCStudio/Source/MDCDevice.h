@@ -572,8 +572,10 @@ private:
                 _imageLibrary.add(addCount);
                 writeCount += addCount;
                 addCountRem -= addCount;
+                printf("[_loadImages] Add %ju images\n", (uintmax_t)addCount);
                 
                 if (writeCount >= WriteIntervalThumbCount) {
+                    printf("[_loadImages] Write library (writeCount: %ju)\n", (uintmax_t)writeCount);
                     writeCount = 0;
                     _imageLibrary.write();
                 }
@@ -630,7 +632,7 @@ private:
         state.signal.wait([&] { return state.underway.empty(); });
         
         // Add remaining images and write library
-        if (initial) {
+        if (initial && addCountRem) {
             auto lock = std::unique_lock(_imageLibrary);
             _imageLibrary.add(addCountRem);
             _imageLibrary.write();
