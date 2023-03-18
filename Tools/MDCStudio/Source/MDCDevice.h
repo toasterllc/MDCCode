@@ -445,11 +445,6 @@ private:
                 .callback = [&] {
                     done = true;
                     _imageForAddrSignal.signalAll();
-//                    {
-//                        auto lock = work->signal.lock();
-//                        done = true;
-//                    }
-//                    work->signal.
                 },
             },
         };
