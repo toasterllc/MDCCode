@@ -346,13 +346,6 @@ public:
     std::ofstream write() {
         namespace fs = std::filesystem;
         
-        // Prohibit syncing between reserve() / add() calls.
-        // This isn't allowed because _state.reserved may be referencing chunks whose recordCount==0,
-        // and those chunks get deleted below. When add() is called to commit the reserved records,
-        // recordCount will be incremented appropriately and sync() can be called safely.
-        #warning TODO: we could actually save between reserve() / add() calls, as long as we don't perform the chunk removal. this would be useful if the main thread removes images (and saves after removing them) while the background thread adds images
-        assert(_state.reserved.empty());
-        
         #warning TODO: implement optional 'thorough compaction' (based on argument) to shift records in order to compact chunks into the smallest size possible. skip compaction for chunks with outstanding strong references though (Chunk.strongCount), because the strong references need the addresses to remain constant!
         
         // Ensure that all chunks are written to disk
@@ -423,6 +416,7 @@ public:
             Chunk& chunk = _chunkGetWritable();
             ref.chunk = &chunk;
             ref.idx = chunk.recordIdx;
+            chunk.recordCount++;
             chunk.recordIdx++;
         }
     }
@@ -432,11 +426,6 @@ public:
         assert(_state.reserved.size() >= count);
         auto begin = _state.reserved.begin();
         auto end = begin+count;
-        for (auto it=begin; it!=end; it++) {
-            Chunk& chunk = const_cast<Chunk&>(*it->chunk);
-            chunk.recordCount++;
-        }
-        
         _state.recordRefs.insert(_state.recordRefs.end(), begin, end);
         _state.reserved.erase(begin, end);
     }

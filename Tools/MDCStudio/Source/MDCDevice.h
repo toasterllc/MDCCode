@@ -37,7 +37,6 @@ public:
     _dir(_DirForSerial(_dev.serial())),
     _imageLibrary(_dir / "ImageLibrary"),
     _imageCache(_imageLibrary, _imageProvider()) {
-    
         printf("MDCDevice()\n");
         
         // Give device a default name
@@ -538,7 +537,7 @@ private:
         // This is necessary because our loop below interprets _SDWork.state.ops as the _SDReadOps from its
         // previous iteration, so _SDWork.state.ops needs to start off empty for correct operation.
         for (_SDWork& work : state.works) {
-            work = {};
+            work.state = {};
         }
         
         size_t workIdx = 0;
@@ -912,7 +911,7 @@ private:
     struct {
         std::thread thread;
         _LoadImagesState loadImages = {
-            .works = { _SDWork{}, _SDWork{} },
+            .works = std::vector<_SDWork>(2),
         };
     } _sync;
     
@@ -920,7 +919,7 @@ private:
         Toastbox::Signal signal; // Protects this struct
         std::thread thread;
         _LoadImagesState loadImages = {
-            .works = { _SDWork{} },
+            .works = std::vector<_SDWork>(1),
         };
         std::set<ImageRecordPtr> recs;
     } _thumbUpdate;
