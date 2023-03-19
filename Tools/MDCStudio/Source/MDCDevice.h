@@ -453,9 +453,9 @@ private:
         _imageForAddrSignal.wait([&] { return done; });
         
         if (_ImageChecksumValid(work->buffer, Img::Size::Full)) {
-//                printf("Checksum valid (size: full)\n");
+//                printf("Checksum valid (full-size)\n");
         } else {
-            printf("Checksum INVALID (size: full)\n");
+            printf("Checksum INVALID (full-size)\n");
 //                abort();
         }
         
@@ -540,7 +540,7 @@ private:
         
         size_t writeCount = 0;
         size_t workIdx = 0;
-        for (auto it=recs.begin(); it!=recs.end();) {
+        for (auto it=recs.rbegin(); it!=recs.rend();) {
             // Get a _SDWork
             _SDWork& work = state.works.at(workIdx);
             workIdx++;
@@ -585,7 +585,7 @@ private:
                 
                 // Push _SDReadOps until we run out, or we hit the capacity of _SDWork.buffer
                 const _SDBlock workBlockBegin = (*it)->info.addrThumb;
-                for (; it!=recs.end(); it++) {
+                for (; it!=recs.rend(); it++) {
                     const ImageRecordPtr& rec = *it;
                     const _SDBlock blockBegin = rec->info.addrThumb;
                     // If the block addresses wrap around, start a new _SDWork
@@ -622,7 +622,7 @@ private:
         // Add remaining images and write library
         if (initial) {
             auto lock = std::unique_lock(_imageLibrary);
-            printf("[_loadImages] Write library remainder (writeCount: %ju)\n", (uintmax_t)writeCount);
+            printf("[_loadImages] Write library remainder\n");
             _imageLibrary.write();
         }
     }
@@ -666,7 +666,7 @@ private:
                             );
                         }
                         
-                        addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.add(addCount);
                     }
@@ -761,6 +761,8 @@ private:
             const size_t len = (size_t)SD::BlockLen * (size_t)(blockEnd-blockBegin);
             assert(len <= sizeof(work.buffer));
             
+            printf("[_sdRead_handleWork] Reading [%ju,%ju)\n", (uintmax_t)blockBegin, (uintmax_t)blockEnd);
+            
             auto lock = std::unique_lock(_dev);
             _dev.reset();
             // Verify that blockBegin can be safely cast to SD::Block
@@ -838,9 +840,9 @@ private:
                 
                 // Validate checksum
                 if (_ImageChecksumValid(op.data, Img::Size::Thumb)) {
-    //                printf("Checksum valid (size: full)\n");
+    //                printf("Checksum valid (thumb)\n");
                 } else {
-                    printf("Checksum INVALID (size: full)\n");
+                    printf("Checksum INVALID (thumb)\n");
     //                abort();
                 }
                 
@@ -850,10 +852,10 @@ private:
                         const Img::Header& imgHeader = *(const Img::Header*)op.data;
                         
                         if (imgHeader.id != rec.info.id) {
-//                            printf("[_thumbRender_thread] Invalid image id (got: %ju, expected: %ju)\n", (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
                             #warning TODO: how do we properly handle this?
-                            throw Toastbox::RuntimeError("invalid image id (got: %ju, expected: %ju)",
-                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
+                            printf("[_thumbRender_thread] Invalid image id (got: %ju, expected: %ju)\n", (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
+//                            throw Toastbox::RuntimeError("invalid image id (got: %ju, expected: %ju)",
+//                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
                         }
                         
                         rec.info.timestamp      = imgHeader.timestamp;
