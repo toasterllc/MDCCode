@@ -523,7 +523,6 @@ private:
         
         // WriteIntervalThumbCount: the number of loaded thumbnails after which we'll write the ImageLibrary to disk
         constexpr size_t WriteIntervalThumbCount = 256;
-        assert(!recs.empty());
         
         // Reset each work
         // This is necessary because our loop below interprets _SDWork.state.ops as the _SDReadOps from its
@@ -666,7 +665,7 @@ private:
                             );
                         }
                         
-                        addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.add(addCount);
                     }
