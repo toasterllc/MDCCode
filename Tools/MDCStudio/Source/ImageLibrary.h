@@ -106,15 +106,13 @@ public:
     }
     
     void add(size_t count) {
-        Event ev = { .type = Event::Type::Add };
-        auto begin = reservedBegin();
-        auto end = begin+count;
-        for (auto i=begin; i!=end; i++) {
-            ev.records.insert(*i);
-        }
-        
         RecordStore::add(count);
         // Notify observers that we changed
+        
+        Event ev = { .type = Event::Type::Add };
+        for (auto i=end()-count; i!=end(); i++) {
+            ev.records.insert(*i);
+        }
         notify(ev);
     }
     

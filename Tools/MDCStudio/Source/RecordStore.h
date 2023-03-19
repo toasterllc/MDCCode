@@ -406,28 +406,17 @@ public:
         return _IndexWrite(_path, _state.recordRefs, _state.chunks);
     }
     
-    // reserve(): reserves space for `count` additional records, but does not actually add them
-    // to the store. add() must be called after reserve() to add the records to the store.
-    void reserve(size_t count) {
-        assert(_state.reserved.empty());
-        _state.reserved.resize(count);
-        
-        for (RecordRef& ref : _state.reserved) {
+    // add(): adds records to the end
+    void add(size_t count) {
+        _state.recordRefs.resize(_state.recordRefs.size()+count);
+        for (auto it=_state.recordRefs.end()-count; it!=_state.recordRefs.end(); it++) {
+            RecordRef& ref = *it;
             Chunk& chunk = _chunkGetWritable();
             ref.chunk = &chunk;
             ref.idx = chunk.recordIdx;
             chunk.recordCount++;
             chunk.recordIdx++;
         }
-    }
-    
-    // add(): adds records previously reserved via reserve()
-    void add(size_t count) {
-        assert(_state.reserved.size() >= count);
-        auto begin = _state.reserved.begin();
-        auto end = begin+count;
-        _state.recordRefs.insert(_state.recordRefs.end(), begin, end);
-        _state.reserved.erase(begin, end);
     }
     
     void remove(RecordRefConstIter begin, RecordRefConstIter end) {
@@ -458,13 +447,6 @@ public:
     RecordRefConstIter end() const              { return _state.recordRefs.end(); }
     RecordRefConstReverseIter rbegin() const    { return _state.recordRefs.rbegin(); }
     RecordRefConstReverseIter rend() const      { return _state.recordRefs.rend(); }
-    
-    const RecordRef& reservedFront() const              { return _state.reserved.front(); }
-    const RecordRef& reservedBack() const               { return _state.reserved.back(); }
-    RecordRefConstIter reservedBegin() const            { return _state.reserved.begin(); }
-    RecordRefConstIter reservedEnd() const              { return _state.reserved.end(); }
-    RecordRefConstReverseIter reservedRBegin() const    { return _state.reserved.rbegin(); }
-    RecordRefConstReverseIter reservedREnd() const      { return _state.reserved.rend(); }
     
     size_t recordCount() const {
         return _state.recordRefs.size();
@@ -653,7 +635,6 @@ private:
     
     struct {
         RecordRefs recordRefs;
-        RecordRefs reserved;
         Chunks chunks;
     } _state;
 };

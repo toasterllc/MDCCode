@@ -546,7 +546,6 @@ private:
 //            _imageLibrary.reserve(recs.size());
 //        }
         
-        size_t addCountRem = recs.size();
         size_t writeCount = 0;
         size_t workIdx = 0;
         for (auto it=recs.begin(); it!=recs.end();) {
@@ -569,10 +568,7 @@ private:
                 auto lock = std::unique_lock(_imageLibrary);
                 
                 const size_t addCount = work.state.ops.size();
-                _imageLibrary.add(addCount);
                 writeCount += addCount;
-                addCountRem -= addCount;
-                printf("[_loadImages] Add %ju images\n", (uintmax_t)addCount);
                 
                 if (writeCount >= WriteIntervalThumbCount) {
                     printf("[_loadImages] Write library (writeCount: %ju)\n", (uintmax_t)writeCount);
@@ -632,10 +628,8 @@ private:
         state.signal.wait([&] { return state.underway.empty(); });
         
         // Add remaining images and write library
-        if (initial && addCountRem) {
+        if (initial) {
             auto lock = std::unique_lock(_imageLibrary);
-            printf("[_loadImages] Add %ju images (remainder)\n", (uintmax_t)addCountRem);
-            _imageLibrary.add(addCountRem);
             printf("[_loadImages] Write library (remainder)\n");
             _imageLibrary.write();
         }
@@ -682,7 +676,7 @@ private:
                         
                         addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("Adding %ju images\n", (uintmax_t)addCount);
-                        _imageLibrary.reserve(addCount);
+                        _imageLibrary.add(addCount);
                     }
                 }
                 
@@ -694,7 +688,7 @@ private:
                     const uint32_t oldestLen = addCount - newestLen;
                     const uint32_t oldestIdx = _mspState.sd.imgCap - oldestLen;
                     
-                    auto it = _imageLibrary.reservedBegin();
+                    auto it = _imageLibrary.end()-addCount;
                     for (uint32_t i=0; i<oldestLen; i++) {
                         const uint32_t idx = oldestIdx+i;
                         ImageRecordPtr rec = *it;
