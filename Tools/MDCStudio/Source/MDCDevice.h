@@ -630,7 +630,7 @@ private:
         // Add remaining images and write library
         if (initial) {
             auto lock = std::unique_lock(_imageLibrary);
-            printf("[_loadImages] Write library (remainder)\n");
+            printf("[_loadImages] Write library remainder (writeCount: %ju)\n", (uintmax_t)writeCount);
             _imageLibrary.write();
         }
     }
@@ -647,7 +647,6 @@ private:
                 // Modify the image library to reflect the images that have been added and removed
                 // since the last time we sync'd
                 uint32_t addCount = 0;
-                std::set<ImageRecordPtr> recs;
                 {
                     auto lock = std::unique_lock(_imageLibrary);
                     
@@ -661,7 +660,7 @@ private:
                                 return sample->info.id < deviceImgIdBegin;
                             });
                         
-                        printf("Removing %ju stale images\n", (uintmax_t)(removeEnd-removeBegin));
+                        printf("[_sync_thread] Removing %ju stale images\n", (uintmax_t)(removeEnd-removeBegin));
                         _imageLibrary.remove(removeBegin, removeEnd);
                     }
                     
@@ -676,7 +675,7 @@ private:
                         }
                         
                         addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
-                        printf("Adding %ju images\n", (uintmax_t)addCount);
+                        printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.add(addCount);
                     }
                     
@@ -695,7 +694,6 @@ private:
                             rec->info.id = id;
                             rec->info.addrFull = _AddrFull(_mspState, idx);
                             rec->info.addrThumb = _AddrThumb(_mspState, idx);
-                            recs.insert(rec);
                             it++;
                             id++;
                         }
@@ -706,7 +704,6 @@ private:
                             rec->info.id = id;
                             rec->info.addrFull = _AddrFull(_mspState, idx);
                             rec->info.addrThumb = _AddrThumb(_mspState, idx);
-                            recs.insert(rec);
                             it++;
                             id++;
                         }
@@ -716,17 +713,27 @@ private:
                     _imageLibrary.write();
                 }
                 
-                // Load the images from the SD card
+                // Load all unloaded images from the SD card
+                // Note that this will also load unloaded images from a previous session, since we may have
+                // been killed or crashed before we finished loading all images.
                 {
+                    std::set<ImageRecordPtr> recs;
+                    for (const ImageLibrary::RecordRef& rec : _imageLibrary) {
+                        if (!(rec->info.flags & ImageFlags::Loaded)) {
+                            recs.insert(rec);
+                        }
+                    }
+                    
+                    printf("[_sync_thread] Loading %ju images\n", (uintmax_t)recs.size());
                     _loadImages(_sync.loadImages, _Priority::Low, true, recs);
                 }
             }
         
         } catch (const Toastbox::Signal::Stop&) {
-            fprintf(stderr, "_sync_thread stopping\n");
+            printf("[_sync_thread] Stopping\n");
         
         } catch (const std::exception& e) {
-            fprintf(stderr, "Failed to update image library: %s", e.what());
+            printf("[_sync_thread] Failed to update image library: %s", e.what());
         }
     }
     
@@ -750,7 +757,7 @@ private:
             }
         
         } catch (const Toastbox::Signal::Stop&) {
-            fprintf(stderr, "_thumbUpdate_thread stopping\n");
+            printf("[_thumbUpdate_thread] Stopping\n");
         }
     }
     
@@ -811,7 +818,7 @@ private:
             }
         
         } catch (const Toastbox::Signal::Stop&) {
-            fprintf(stderr, "_sdRead_thread stopping\n");
+            printf("[_sdRead_thread] Stopping\n");
         }
     }
     
@@ -863,8 +870,10 @@ private:
                         const Img::Header& imgHeader = *(const Img::Header*)op.data;
                         
                         if (imgHeader.id != rec.info.id) {
-                            throw Toastbox::RuntimeError("invalid image id (got: %ju, expected: %ju)",
-                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
+//                            printf("[_thumbRender_thread] Invalid image id (got: %ju, expected: %ju)\n", (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
+                            
+//                            throw Toastbox::RuntimeError("invalid image id (got: %ju, expected: %ju)",
+//                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
                         }
                         
                         rec.info.timestamp      = imgHeader.timestamp;
@@ -917,7 +926,7 @@ private:
             }
         
         } catch (const Toastbox::Signal::Stop&) {
-            fprintf(stderr, "_thumbRender_thread stopping\n");
+            printf("[_thumbRender_thread] Stopping\n");
         }
     }
     
