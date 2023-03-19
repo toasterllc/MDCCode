@@ -674,7 +674,7 @@ private:
                             );
                         }
                         
-                        addCount = 1024;//(uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
+                        addCount = (uint32_t)(deviceImgIdEnd - std::max(deviceImgIdBegin, libImgIdEnd));
                         printf("[_sync_thread] Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.add(addCount);
                     }
@@ -871,9 +871,9 @@ private:
                         
                         if (imgHeader.id != rec.info.id) {
 //                            printf("[_thumbRender_thread] Invalid image id (got: %ju, expected: %ju)\n", (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
-                            
-//                            throw Toastbox::RuntimeError("invalid image id (got: %ju, expected: %ju)",
-//                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
+                            #warning TODO: how do we properly handle this?
+                            throw Toastbox::RuntimeError("invalid image id (got: %ju, expected: %ju)",
+                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
                         }
                         
                         rec.info.timestamp      = imgHeader.timestamp;
