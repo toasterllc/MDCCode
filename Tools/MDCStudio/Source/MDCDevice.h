@@ -592,10 +592,10 @@ private:
                 };
                 
                 // Push _SDReadOps until we run out, or we hit the capacity of _SDWork.buffer
-                const _SDBlock workBlockBegin = (*it)->addr.thumb;
+                const _SDBlock workBlockBegin = (*it)->info.addrThumb;
                 for (; it!=recs.end(); it++) {
                     const ImageRecordPtr& rec = *it;
-                    const _SDBlock blockBegin = rec->addr.thumb;
+                    const _SDBlock blockBegin = rec->info.addrThumb;
                     // If the block addresses wrap around, start a new _SDWork
                     if (blockBegin < workBlockBegin) break;
                     const _SDBlock blockEnd = _SDBlockEnd(blockBegin, ImgSD::Thumb::ImagePaddedLen);
@@ -647,6 +647,7 @@ private:
                 // Modify the image library to reflect the images that have been added and removed
                 // since the last time we sync'd
                 uint32_t addCount = 0;
+                std::set<ImageRecordPtr> recs;
                 {
                     auto lock = std::unique_lock(_imageLibrary);
                     
@@ -678,34 +679,41 @@ private:
                         printf("Adding %ju images\n", (uintmax_t)addCount);
                         _imageLibrary.add(addCount);
                     }
-                }
-                
-                // Populate .addr for each new ImageRecord that we're adding
-                std::set<ImageRecordPtr> recs;
-                {
-                    const uint32_t newestIdx = imgRingBuf.buf.widx - std::min((uint32_t)imgRingBuf.buf.widx, addCount);
-                    const uint32_t newestLen = imgRingBuf.buf.widx - newestIdx;
-                    const uint32_t oldestLen = addCount - newestLen;
-                    const uint32_t oldestIdx = _mspState.sd.imgCap - oldestLen;
                     
-                    auto it = _imageLibrary.end()-addCount;
-                    for (uint32_t i=0; i<oldestLen; i++) {
-                        const uint32_t idx = oldestIdx+i;
-                        ImageRecordPtr rec = *it;
-                        rec->addr.full = _AddrFull(_mspState, idx);
-                        rec->addr.thumb = _AddrThumb(_mspState, idx);
-                        recs.insert(rec);
-                        it++;
+                    // Populate .addr for each new ImageRecord that we're adding
+                    {
+                        const uint32_t newestIdx = imgRingBuf.buf.widx - std::min((uint32_t)imgRingBuf.buf.widx, addCount);
+                        const uint32_t newestLen = imgRingBuf.buf.widx - newestIdx;
+                        const uint32_t oldestLen = addCount - newestLen;
+                        const uint32_t oldestIdx = _mspState.sd.imgCap - oldestLen;
+                        
+                        Img::Id id = deviceImgIdEnd-addCount;
+                        auto it = _imageLibrary.end()-addCount;
+                        for (uint32_t i=0; i<oldestLen; i++) {
+                            const uint32_t idx = oldestIdx+i;
+                            ImageRecordPtr rec = *it;
+                            rec->info.id = id;
+                            rec->info.addrFull = _AddrFull(_mspState, idx);
+                            rec->info.addrThumb = _AddrThumb(_mspState, idx);
+                            recs.insert(rec);
+                            it++;
+                            id++;
+                        }
+                        
+                        for (uint32_t i=0; i<newestLen; i++) {
+                            const uint32_t idx = newestIdx+i;
+                            ImageRecordPtr rec = *it;
+                            rec->info.id = id;
+                            rec->info.addrFull = _AddrFull(_mspState, idx);
+                            rec->info.addrThumb = _AddrThumb(_mspState, idx);
+                            recs.insert(rec);
+                            it++;
+                            id++;
+                        }
                     }
                     
-                    for (uint32_t i=0; i<newestLen; i++) {
-                        const uint32_t idx = newestIdx+i;
-                        ImageRecordPtr rec = *it;
-                        rec->addr.full = _AddrFull(_mspState, idx);
-                        rec->addr.thumb = _AddrThumb(_mspState, idx);
-                        recs.insert(rec);
-                        it++;
-                    }
+                    // Write library now that we've added our new images and populated their info.id / info.addr
+                    _imageLibrary.write();
                 }
                 
                 // Load the images from the SD card
@@ -854,9 +862,12 @@ private:
                     {
                         const Img::Header& imgHeader = *(const Img::Header*)op.data;
                         
-                        rec.info.id             = imgHeader.id;
+                        if (imgHeader.id != rec.info.id) {
+                            throw Toastbox::RuntimeError("invalid image id (got: %ju, expected: %ju)",
+                                (uintmax_t)imgHeader.id, (uintmax_t)rec.info.id);
+                        }
+                        
                         rec.info.timestamp      = imgHeader.timestamp;
-                        rec.info.flags          = ImageFlags::Loaded;
                         
                         rec.info.imageWidth     = imgHeader.imageWidth;
                         rec.info.imageHeight    = imgHeader.imageHeight;
@@ -887,6 +898,13 @@ private:
                         // Populate .options.whiteBalance
                         ImageWhiteBalanceSet(rec.options.whiteBalance, true, 0, ccm);
                     }
+                }
+                
+                // Once the thumbnail is fully loaded, set the Loaded flag
+                if (work->state.render.initial) {
+                    // Issue a memory barrier to ensure all the previous writes are complete before we set the Loaded flag
+                    std::atomic_thread_fence(std::memory_order_seq_cst);
+                    rec.info.flags = ImageFlags::Loaded;
                 }
                 
                 // Increment state.render.idxDone, and call the callback if this
