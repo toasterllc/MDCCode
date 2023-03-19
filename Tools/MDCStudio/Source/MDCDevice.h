@@ -275,14 +275,6 @@ private:
         return ThreadCount;
     }
     
-    static _SDBlock _AddrFull(const MSP::State& msp, uint32_t idx) {
-        return msp.sd.fullBase + ((_SDBlock)idx * ImgSD::Full::ImageBlockCount);
-    }
-    
-    static _SDBlock _AddrThumb(const MSP::State& msp, uint32_t idx) {
-        return msp.sd.thumbBase + ((_SDBlock)idx * ImgSD::Thumb::ImageBlockCount);
-    }
-    
     static constexpr _SDBlock _SDBlockEnd(_SDBlock block, size_t len) {
         const _SDBlock blockCount = Toastbox::DivCeil((_SDBlock)len, (_SDBlock)SD::BlockLen);
         // Verify that block+blockLen doesn't overflow _SDBlock
@@ -640,8 +632,8 @@ private:
     void _sync_thread() {
         try {
             const MSP::ImgRingBuf& imgRingBuf = _GetImgRingBuf(_mspState);
-            const Img::Id deviceImgIdBegin = imgRingBuf.buf.idBegin;
-            const Img::Id deviceImgIdEnd = imgRingBuf.buf.idEnd;
+            const Img::Id deviceImgIdBegin = imgRingBuf.buf.id - std::min(imgRingBuf.buf.id, (Img::Id)_mspState.sd.imgCap);
+            const Img::Id deviceImgIdEnd = imgRingBuf.buf.id;
             
             {
                 // Modify the image library to reflect the images that have been added and removed
@@ -679,37 +671,25 @@ private:
                         _imageLibrary.add(addCount);
                     }
                     
-                    // Populate .addr for each new ImageRecord that we're adding
+                    // Populate .id / .addr for the ImageRecords that we're adding
                     {
-                        const uint32_t newestIdx = imgRingBuf.buf.widx - std::min((uint32_t)imgRingBuf.buf.widx, addCount);
-                        const uint32_t newestLen = imgRingBuf.buf.widx - newestIdx;
-                        const uint32_t oldestLen = addCount - newestLen;
-                        const uint32_t oldestIdx = _mspState.sd.imgCap - oldestLen;
-                        
-                        Img::Id id = deviceImgIdEnd-addCount;
-                        auto it = _imageLibrary.end()-addCount;
-                        for (uint32_t i=0; i<oldestLen; i++) {
-                            const uint32_t idx = oldestIdx+i;
+                        auto it = _imageLibrary.end();
+                        Img::Id id = deviceImgIdEnd;
+                        uint32_t idx = imgRingBuf.buf.idx;
+                        while (addCount) {
+                            it--;
+                            id--;
+                            idx = (idx ? idx-1 : _mspState.sd.imgCap-1);
+                            addCount--;
+                            
                             ImageRecordPtr rec = *it;
                             rec->info.id = id;
-                            rec->info.addrFull = _AddrFull(_mspState, idx);
-                            rec->info.addrThumb = _AddrThumb(_mspState, idx);
-                            it++;
-                            id++;
-                        }
-                        
-                        for (uint32_t i=0; i<newestLen; i++) {
-                            const uint32_t idx = newestIdx+i;
-                            ImageRecordPtr rec = *it;
-                            rec->info.id = id;
-                            rec->info.addrFull = _AddrFull(_mspState, idx);
-                            rec->info.addrThumb = _AddrThumb(_mspState, idx);
-                            it++;
-                            id++;
+                            rec->info.addrFull = MSP::SDBlockFull(_mspState.sd.baseFull, idx);
+                            rec->info.addrThumb = MSP::SDBlockThumb(_mspState.sd.baseThumb, idx);
                         }
                     }
                     
-                    // Write library now that we've added our new images and populated their info.id / info.addr
+                    // Write library now that we've added our new images and populated their .id / .addr
                     _imageLibrary.write();
                 }
                 

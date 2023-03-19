@@ -3,6 +3,7 @@
 #include <atomic>
 #include "Img.h"
 #include "SD.h"
+#include "ImgSD.h"
 #include "Time.h"
 
 namespace MSP {
@@ -11,12 +12,19 @@ using BatteryChargeLevel = uint8_t;
 static constexpr BatteryChargeLevel BatteryChargeLevelMin = 0;
 static constexpr BatteryChargeLevel BatteryChargeLevelMax = 100;
 
+static constexpr SD::Block SDBlockFull(SD::Block base, uint32_t idx) {
+    return base - ((idx+1) * ImgSD::Full::ImageBlockCount);
+}
+
+static constexpr SD::Block SDBlockThumb(SD::Block base, uint32_t idx) {
+    return base - ((idx+1) * ImgSD::Thumb::ImageBlockCount);
+}
+
 // ImgRingBuf: stats to track captured images
 struct [[gnu::packed]] ImgRingBuf {
     struct [[gnu::packed]] {
-        Img::Id id      = 0; // Next image id
-        uint32_t idx    = 0; // Next image index
-        uint32_t count  = 0; // Stored image count
+        Img::Id id   = 0; // Next image id
+        uint32_t idx = 0; // Next image index
     } buf;
     bool valid = false;
     
@@ -61,8 +69,6 @@ struct [[gnu::packed]] AbortHistory {
     uint16_t count                   = 0;
 };
 static_assert(!(sizeof(AbortHistory) % 2)); // Check alignment
-
-static constexpr uint32_t StateAddr = 0x1800;
 
 struct [[gnu::packed]] State {
     struct [[gnu::packed]] Header {

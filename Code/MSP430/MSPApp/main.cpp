@@ -292,22 +292,21 @@ struct _TaskSD {
     }
     
     static void _Write(uint8_t srcRAMBlock) {
-        const MSP::ImgRingBuf& ringBuf = _State.sd.imgRingBufs[0];
-        const MSP::ImgRingBuf ringBufNext = _ImgRingBufNext(ringBuf);
+        const MSP::ImgRingBuf& imgRingBuf = _State.sd.imgRingBufs[0];
         
         // Copy full-size image from RAM -> SD card
         {
-            const SD::Block dstSDBlock = _State.sd.baseFull + widx * ImgSD::Full::ImageBlockCount;
-            _SDCard::WriteImage(*_RCA, srcRAMBlock, dstSDBlock, Img::Size::Full);
+            const SD::Block block = MSP::SDBlockFull(_State.sd.baseFull, imgRingBuf.buf.idx);
+            _SDCard::WriteImage(*_RCA, srcRAMBlock, block, Img::Size::Full);
         }
         
         // Copy thumbnail from RAM -> SD card
         {
-            const SD::Block dstSDBlock = _State.sd.baseThumb + (widx * ImgSD::Thumb::ImageBlockCount);
-            _SDCard::WriteImage(*_RCA, srcRAMBlock, dstSDBlock, Img::Size::Thumb);
+            const SD::Block block = MSP::SDBlockThumb(_State.sd.baseThumb, imgRingBuf.buf.idx);
+            _SDCard::WriteImage(*_RCA, srcRAMBlock, block, Img::Size::Thumb);
         }
         
-        _ImgRingBufDecrement();
+        _ImgRingBufIncrement();
         _Writing = false;
     }
     
@@ -316,10 +315,10 @@ struct _TaskSD {
         using namespace MSP;
         // CombinedBlockCount: thumbnail block count + full-size block count
         constexpr uint32_t CombinedBlockCount = ImgSD::Thumb::ImageBlockCount + ImgSD::Full::ImageBlockCount;
-        // cardBlockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
-        const uint32_t cardBlockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
-        // cardImgCap: the capacity of the SD card in number of images
-        const uint32_t cardImgCap = cardBlockCap / CombinedBlockCount;
+        // blockCap: the capacity of the SD card in SD blocks (1 block == 512 bytes)
+        const uint32_t blockCap = ((uint32_t)GetBits<69,48>(cardData)+1) * (uint32_t)1024;
+        // imgCap: the capacity of the SD card in number of images
+        const uint32_t imgCap = blockCap / CombinedBlockCount;
         
         FRAMWriteEn writeEn; // Enable FRAM writing
         
@@ -334,13 +333,13 @@ struct _TaskSD {
         
         // Set .imgCap
         {
-            _State.sd.imgCap = cardImgCap;
+            _State.sd.imgCap = imgCap;
         }
         
         // Set .baseFull / .baseThumb
         {
-            _State.sd.baseFull = 0;
-            _State.sd.baseThumb = cardImgCap * ImgSD::Full::ImageBlockCount;
+            _State.sd.baseFull = imgCap * ImgSD::Full::ImageBlockCount;
+            _State.sd.baseThumb = _State.sd.baseFull + imgCap * ImgSD::Thumb::ImageBlockCount;
         }
         
         // Set .imgRingBufs
@@ -378,54 +377,20 @@ struct _TaskSD {
         }
     }
     
-//    static void _ImgRingBufUpdate(const MSP::ImgRingBuf& x) {
-//        using namespace MSP;
-//        FRAMWriteEn writeEn; // Enable FRAM writing
-//        ImgRingBuf::Set(a, x);
-//        ImgRingBuf::Set(b, x);
-//    }
-    
-//    static void _ImgRingBufDecrement() {
-//        using namespace MSP;
-//        FRAMWriteEn writeEn; // Enable FRAM writing
-//        const uint32_t imgCap = _State.sd.imgCap;
-//        MSP::ImgRingBuf x = _State.sd.imgRingBufs[0];
-//        
-//        // Update write index
-//        x.buf.widx = (x.buf.widx ? x.buf.widx-1 : imgCap-1);
-//        if (x.buf.count < imgCap) x.buf.count++
-//        
-//        // Update the end image id (the next image id that'll be used)
-//        x.buf.id++;
-//        
-//        ImgRingBuf::Set(_State.sd.imgRingBufs[0], x);
-//        ImgRingBuf::Set(_State.sd.imgRingBufs[1], x);
-//    }
-    
-//    static MSP::ImgRingBuf _ImgRingBufNext(MSP::ImgRingBuf x) {
-//        using namespace MSP;
-//        const uint32_t imgCap = _State.sd.imgCap;
-//        
-//        // Update write index
-//        x.buf.widx = (x.buf.widx ? x.buf.widx-1 : imgCap-1);
-//        if (x.buf.count < imgCap) x.buf.count++
-//        
-//        // Update the end image id (the next image id that'll be used)
-//        x.buf.id++;
-//        
-//        ImgRingBuf::Set(_State.sd.imgRingBufs[0], x);
-//        ImgRingBuf::Set(_State.sd.imgRingBufs[1], x);
-//    }
-    
-    static MSP::ImgRingBuf _ImgRingBufNext(MSP::ImgRingBuf x) {
+    static void _ImgRingBufIncrement() {
         using namespace MSP;
         const uint32_t imgCap = _State.sd.imgCap;
+        
+        MSP::ImgRingBuf x = _State.sd.imgRingBufs[0];
         x.buf.id++;
-        x.buf.idx = (x.buf.idx ? x.buf.idx-1 : imgCap-1);
-        x.buf.count = std::min(x.buf.count, imgCap-1) + 1;
-        return x;
+        x.buf.idx = (x.buf.idx<imgCap-1 ? x.buf.idx+1 : 0);
+        
+        {
+            FRAMWriteEn writeEn; // Enable FRAM writing
+            ImgRingBuf::Set(_State.sd.imgRingBufs[0], x);
+            ImgRingBuf::Set(_State.sd.imgRingBufs[1], x);
+        }
     }
-    
     
     // _RCA: SD card 'relative card address'; needed for SD comms after initialization.
     // As an optional, _RCA also signifies whether we've successfully initiated comms
