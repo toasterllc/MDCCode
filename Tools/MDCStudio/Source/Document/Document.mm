@@ -204,27 +204,9 @@ using namespace MDCStudio;
 
 
 - (void)sourceListViewSelectionChanged:(SourceListView*)sourceListView {
-//    {
-//        auto imageSource = std::make_shared<MockImageSource>("/Users/dave/Desktop/ImageLibrary");
-//        
-//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
-//        [imageGridView setDelegate:self];
-//        
-//        [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
-//        [self setInspectorView:[[InspectorView alloc] initWithImageSource:imageSource]];
-//        
-//        [[_splitView window] makeFirstResponder:imageGridView];
-//    }
-    
-    
-    
-    
-    
-    
-    
-    
-    ImageSourcePtr imageSource = [_sourceListView selection];
-    if (imageSource) {
+    {
+        auto imageSource = std::make_shared<MockImageSource>("/Users/dave/Desktop/ImageLibrary");
+        
         ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
         [imageGridView setDelegate:self];
         
@@ -232,11 +214,29 @@ using namespace MDCStudio;
         [self setInspectorView:[[InspectorView alloc] initWithImageSource:imageSource]];
         
         [[_splitView window] makeFirstResponder:imageGridView];
-//        [_mainView setContentView:sv animation:MainViewAnimation::None];
-    
-    } else {
-//        [_mainView setCenterView:nil];
     }
+    
+    
+    
+    
+    
+    
+    
+    
+//    ImageSourcePtr imageSource = [_sourceListView selection];
+//    if (imageSource) {
+//        ImageGridView* imageGridView = [[ImageGridView alloc] initWithImageSource:imageSource];
+//        [imageGridView setDelegate:self];
+//        
+//        [self setCenterView:[[ImageGridScrollView alloc] initWithFixedDocument:imageGridView]];
+//        [self setInspectorView:[[InspectorView alloc] initWithImageSource:imageSource]];
+//        
+//        [[_splitView window] makeFirstResponder:imageGridView];
+////        [_mainView setContentView:sv animation:MainViewAnimation::None];
+//    
+//    } else {
+////        [_mainView setCenterView:nil];
+//    }
 }
 
 

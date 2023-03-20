@@ -271,11 +271,11 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
     id<MTLBuffer> imageRefs = [_device newBufferWithBytes:(void*)imageRefsBegin
         length:imageRefsEnd-imageRefsBegin options:MTLResourceCPUCacheModeDefaultCache|MTLResourceStorageModeShared];
     
-    const auto imageRefBegin = _imageLibrary->rbegin()+indexRange.start;
-    const auto imageRefEnd = _imageLibrary->rbegin()+indexRange.start+indexRange.count;
+    const auto imageRefBegin = _imageLibrary->begin()+indexRange.start;
+    const auto imageRefEnd = _imageLibrary->begin()+indexRange.start+indexRange.count;
     
     for (auto it=imageRefBegin; it!=imageRefEnd;) {
-        const auto nextChunkStart = ImageLibrary::FindChunkEnd(_imageLibrary->rend(), it);
+        const auto nextChunkStart = ImageLibrary::FindChunkEnd(_imageLibrary->end(), it);
         const auto chunkImageRefBegin = it;
         const auto chunkImageRefEnd = std::min(imageRefEnd, nextChunkStart);
         
@@ -294,7 +294,7 @@ static ImageLibrary::RecordRefConstIter _ForwardIter(const ImageLibrary::RecordR
         
         const ImageGridLayerTypes::RenderContext ctx = {
             .grid = _grid,
-            .idx = (uint32_t)(chunkImageRefBegin-_imageLibrary->rbegin()), // Start index into `imageRefs`
+            .idx = (uint32_t)(chunkImageRefBegin-_imageLibrary->begin()), // Start index into `imageRefs`
             .viewSize = {(float)viewSize.width, (float)viewSize.height},
             .transform = [self fixedTransform],
             .selection = {
