@@ -205,8 +205,18 @@ struct ExposureSettings {
 //    [self _loadImages:{"/Users/dave/repos/ffcc/data/AR0330_64x36/indoor_night2_64.cfa"}];
     
     
-    _imagePipelineManager->options = {
+    static constexpr MDCTools::CFADesc CFADesc = {
+        MDCTools::CFAColor::Green, MDCTools::CFAColor::Red,
+        MDCTools::CFAColor::Blue, MDCTools::CFAColor::Green,
+    };
+    
+    _imagePipelineManager->debayerOptions = {
+        .cfaDesc = CFADesc,
         .illum = std::nullopt,
+        
+        .defringe = {
+            .en = false,
+        },
         
         .reconstructHighlights = {
             .en = true,
@@ -215,10 +225,16 @@ struct ExposureSettings {
         .debayerLMMSE = {
             .applyGamma = true,
         },
+    };
+    
+    _imagePipelineManager->processOptions = {
+        .illum = std::nullopt,
+        .colorMatrix = std::nullopt,
         
-        .defringe = {
-            .en = false,
-        },
+        .exposure = 0,
+        .saturation = 0,
+        .brightness = 0,
+        .contrast = 0,
         
         .localContrast = {
             .en = true,
